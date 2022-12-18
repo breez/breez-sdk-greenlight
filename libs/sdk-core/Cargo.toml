@@ -1,0 +1,45 @@
+[package]
+name = "breez-sdk-core"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "breez_sdk_core"
+crate-type = ["staticlib", "cdylib", "lib"]
+
+[dependencies]
+flutter_rust_bridge = "1"
+anyhow = { version = "1.0.57", features = ["backtrace"] }
+hex = "*"
+bip21 = "*"
+bitcoin_hashes = "*"
+bitcoin = "^0"
+# Note: private repo, might need git credentials helper to be setup
+# If so, see https://techexpertise.medium.com/storing-git-credentials-with-git-credential-helper-33d22a6b5ce7
+gl-client = { git = "https://github.com/Blockstream/greenlight", features = ["permissive"] }
+base64 = "0.13.0"
+ecies = {version = "0.2", default-features = false, features = ["pure"]}
+ripemd = "*"
+rand = "*"
+tiny-bip39 = "*"
+tokio = { version = "1", features = ["full"] }
+prost = "^0.11"
+querystring = "*"
+rusqlite = { version = "0.28.0", features = ["serde_json", "bundled"] }
+rusqlite_migration = "*"
+reqwest = { version = "0.11", features = ["json"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tonic = { version = "^0.8", features = ["tls", "tls-roots", "tls-webpki-roots"] }
+lazy_static = "^1.4.0"
+lightning = "*"
+lightning-invoice = "*"
+log = "*"
+once_cell = "*"
+openssl = { version = "0.10.42", features = ["vendored"] }
+
+[dev-dependencies]
+mockito = "*"
+
+[build-dependencies]
+tonic-build = "^0.8"

@@ -1,0 +1,6 @@
+[bindings.swift]
+cdylib_name = "breez_sdk_bindings"
+
+[bindings.kotlin]
+package_name = "breez_sdk"
+cdylib_name = "breez_sdk_bindings"

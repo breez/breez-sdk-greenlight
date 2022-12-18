@@ -1,0 +1,406 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "io.grpc.breez.service";
+option java_outer_classname = "BreezProto";
+
+package breez;
+
+service Invoicer {
+  rpc RegisterDevice(RegisterRequest) returns (RegisterReply) {}
+  rpc SendInvoice(PaymentRequest) returns (InvoiceReply) {}
+}
+
+service CardOrderer {
+  rpc Order(OrderRequest) returns (OrderReply) {}
+}
+
+service Pos {
+  rpc RegisterDevice(RegisterRequest) returns (RegisterReply) {}
+  rpc UploadLogo(UploadFileRequest) returns (UploadFileReply) {}
+}
+
+service Information {
+  rpc Ping(PingRequest) returns (PingReply) {}
+  rpc Rates(RatesRequest) returns (RatesReply) {}
+  rpc BreezAppVersions(BreezAppVersionsRequest)
+      returns (BreezAppVersionsReply) {}
+  rpc ReceiverInfo(ReceiverInfoRequest) returns (ReceiverInfoReply) {}
+}
+
+service ChannelOpener {
+  rpc LSPList(LSPListRequest) returns (LSPListReply) {}
+  rpc OpenLSPChannel(OpenLSPChannelRequest) returns (OpenLSPChannelReply) {}
+  rpc RegisterPayment(RegisterPaymentRequest) returns (RegisterPaymentReply) {}
+  rpc CheckChannels(CheckChannelsRequest) returns (CheckChannelsReply) {}
+}
+
+service PublicChannelOpener {
+  rpc OpenPublicChannel(OpenPublicChannelRequest)
+      returns (OpenPublicChannelReply) {}
+}
+
+service FundManager {
+  rpc OpenChannel(OpenChannelRequest) returns (OpenChannelReply) {}
+  rpc UpdateChannelPolicy(UpdateChannelPolicyRequest)
+      returns (UpdateChannelPolicyReply) {}
+  rpc AddFundInit(AddFundInitRequest) returns (AddFundInitReply) {}
+  rpc AddFundStatus(AddFundStatusRequest) returns (AddFundStatusReply) {}
+  rpc RemoveFund(RemoveFundRequest) returns (RemoveFundReply) {}
+  rpc RedeemRemovedFunds(RedeemRemovedFundsRequest)
+      returns (RedeemRemovedFundsReply) {}
+  rpc GetSwapPayment(GetSwapPaymentRequest) returns (GetSwapPaymentReply) {}
+  rpc RegisterTransactionConfirmation(RegisterTransactionConfirmationRequest)
+      returns (RegisterTransactionConfirmationResponse) {}
+}
+
+service Swapper {
+  rpc AddFundInit(AddFundInitRequest) returns (AddFundInitReply) {}
+  rpc AddFundStatus(AddFundStatusRequest) returns (AddFundStatusReply) {}
+  rpc GetSwapPayment(GetSwapPaymentRequest) returns (GetSwapPaymentReply) {}
+  rpc RedeemSwapPayment(RedeemSwapPaymentRequest)
+      returns (RedeemSwapPaymentReply) {}
+  rpc GetReverseRoutingNode(GetReverseRoutingNodeRequest)
+      returns (GetReverseRoutingNodeReply) {}
+}
+
+service CTP {
+  rpc JoinCTPSession(JoinCTPSessionRequest) returns (JoinCTPSessionResponse) {}
+  rpc TerminateCTPSession(TerminateCTPSessionRequest)
+      returns (TerminateCTPSessionResponse) {}
+}
+
+service NodeInfo {
+  rpc SetNodeInfo(SetNodeInfoRequest) returns (SetNodeInfoResponse) {}
+  rpc GetNodeInfo(GetNodeInfoRequest) returns (GetNodeInfoResponse) {}
+}
+
+service SyncNotifier {
+  rpc RegisterPeriodicSync(RegisterPeriodicSyncRequest)
+      returns (RegisterPeriodicSyncResponse) {}
+}
+
+service PushTxNotifier {
+  rpc RegisterTxNotification(PushTxNotificationRequest)
+      returns (PushTxNotificationResponse) {}
+}
+
+service InactiveNotifier {
+  rpc InactiveNotify(InactiveNotifyRequest) returns (InactiveNotifyResponse) {}
+}
+
+service Signer {
+  rpc SignUrl(SignUrlRequest) returns (SignUrlResponse) {}
+}
+
+message SignUrlRequest {
+  string baseUrl = 1 [ json_name = "base_url" ];
+  string queryString = 2 [ json_name = "query_string" ];
+}
+
+message SignUrlResponse { string fullUrl = 1 [ json_name = "full_url" ]; }
+
+message InactiveNotifyRequest {
+  bytes pubkey = 1 [ json_name = "pubkey" ];
+  int32 days = 2 [ json_name = "days" ];
+}
+message InactiveNotifyResponse {}
+
+message ReceiverInfoRequest {}
+message ReceiverInfoReply { string pubkey = 1 [ json_name = "pubkey" ]; }
+
+message RatesRequest {}
+message Rate {
+  string coin = 1;
+  double value = 2;
+}
+message RatesReply { repeated Rate rates = 1; }
+
+message LSPListRequest {
+  /// The identity pubkey of the client
+  string pubkey = 2 [ json_name = "pubkey" ];
+}
+message LSPInformation {
+  /// The name of of lsp
+  string name = 1 [ json_name = "name" ];
+
+  /// The name of of lsp
+  string widget_url = 2 [ json_name = "widget_url" ];
+
+  /// The identity pubkey of the Lightning node
+  string pubkey = 3 [ json_name = "pubkey" ];
+  /// The network location of the lightning node, e.g. `12.34.56.78:9012` or
+  /// `localhost:10011`
+  string host = 4 [ json_name = "host" ];
+
+  /// The channel capacity in satoshis
+  int64 channel_capacity = 5 [ json_name = "channel_capacity" ];
+  /// The target number of blocks that the funding transaction should be
+  /// confirmed by.
+  int32 target_conf = 6 [ json_name = "target_conf" ];
+
+  /// The base fee charged regardless of the number of milli-satoshis sent.
+  int64 base_fee_msat = 7 [ json_name = "base_fee_msat" ];
+  /// The effective fee rate in milli-satoshis. The precision of this value goes
+  /// up to 6 decimal places, so 1e-6.
+  double fee_rate = 8 [ json_name = "fee_rate" ];
+  /// The required timelock delta for HTLCs forwarded over the channel.
+  uint32 time_lock_delta = 9 [ json_name = "time_lock_delta" ];
+  /// The minimum value in millisatoshi we will require for incoming HTLCs on
+  /// the channel.
+  int64 min_htlc_msat = 10 [ json_name = "min_htlc_msat" ];
+
+  int64 channel_fee_permyriad = 11;
+
+  bytes lsp_pubkey = 12;
+  // The channel can be closed if not used this duration in seconds.
+  int64 max_inactive_duration = 13;
+
+  int64 channel_minimum_fee_msat = 14;
+}
+message LSPListReply {
+  map<string, LSPInformation> lsps = 1; // The key is the lsp id
+}
+
+message RegisterPaymentRequest {
+  string lsp_id = 1;
+  bytes blob = 3;
+}
+message RegisterPaymentReply {}
+
+message CheckChannelsRequest {
+  string lsp_id = 1;
+  bytes blob = 2;
+}
+message CheckChannelsReply { bytes blob = 2; }
+
+message OpenLSPChannelRequest {
+  string lsp_id = 1;
+  string pubkey = 2;
+}
+message OpenLSPChannelReply {}
+
+message OpenChannelRequest {
+  string pubKey = 1;
+  string notificationToken = 2;
+}
+
+message OpenChannelReply {}
+
+message OpenPublicChannelRequest { string pubkey = 1; }
+
+message OpenPublicChannelReply {}
+
+message Captcha {
+  string id = 1;
+  bytes image = 2;
+}
+
+message UpdateChannelPolicyRequest { string pubKey = 1; }
+
+message UpdateChannelPolicyReply {}
+
+message AddFundInitRequest {
+  string nodeID = 1;
+  string notificationToken = 2;
+  bytes pubkey = 3;
+  bytes hash = 4;
+}
+
+message AddFundInitReply {
+  string address = 1;
+  bytes pubkey = 2;
+  int64 lockHeight = 3;
+  int64 maxAllowedDeposit = 4;
+  string errorMessage = 5;
+  int64 requiredReserve = 6;
+  int64 minAllowedDeposit = 7;
+}
+
+message AddFundStatusRequest {
+  repeated string addresses = 1;
+  string notificationToken = 2;
+}
+
+message AddFundStatusReply {
+  message AddressStatus {
+    string tx = 1;
+    int64 amount = 2;
+    bool confirmed = 3;
+    string blockHash = 4;
+  }
+  map<string, AddressStatus> statuses = 1;
+}
+
+message RemoveFundRequest {
+  string address = 1;
+  int64 amount = 2;
+}
+
+message RemoveFundReply {
+  string paymentRequest = 1;
+  string errorMessage = 2;
+}
+
+message RedeemRemovedFundsRequest { string paymenthash = 1; }
+
+message RedeemRemovedFundsReply { string txid = 1; }
+
+message GetSwapPaymentRequest { string paymentRequest = 1; }
+
+message GetSwapPaymentReply {
+  enum SwapError {
+    NO_ERROR = 0;
+    FUNDS_EXCEED_LIMIT = 1;
+    TX_TOO_SMALL = 2;
+    INVOICE_AMOUNT_MISMATCH = 3;
+    SWAP_EXPIRED = 4;
+  }
+
+  string paymentError = 1;
+
+  // deprecated
+  bool funds_exceeded_limit = 2;
+
+  SwapError swap_error = 3;
+}
+
+message RedeemSwapPaymentRequest {
+  bytes preimage = 1;
+
+  /// The target number of blocks that the funding transaction should be
+  /// confirmed by.
+  int32 target_conf = 2;
+
+  /// A manual fee rate set in sat/byte that should be used when crafting the
+  /// funding transaction.
+  int64 sat_per_byte = 3;
+}
+
+message RedeemSwapPaymentReply { string txid = 1; }
+
+// The request message containing the device id and lightning id
+message RegisterRequest {
+  string deviceID = 1;
+  string lightningID = 2;
+}
+
+// The response message containing the breez id
+message RegisterReply { string breezID = 1; }
+
+message PaymentRequest {
+  string breezID = 1;
+  string invoice = 2;
+  string payee = 3;
+  int64 amount = 4;
+}
+
+message InvoiceReply { string Error = 1; }
+
+message UploadFileRequest { bytes content = 1; }
+
+message UploadFileReply { string url = 1; }
+
+message PingRequest {}
+
+message PingReply { string version = 1; }
+
+message OrderRequest {
+  string FullName = 1;
+  string Address = 2;
+  string City = 3;
+  string State = 4;
+  string Zip = 5;
+  string Country = 6;
+  string Email = 7;
+}
+
+message OrderReply {}
+
+message SetNodeInfoRequest {
+  bytes pubkey = 1;
+  string key = 2;
+  bytes value = 3;
+  int64 timestamp = 4;
+  bytes signature = 5;
+}
+
+message SetNodeInfoResponse {}
+
+message GetNodeInfoRequest {
+  bytes pubkey = 1;
+  string key = 2;
+}
+
+message GetNodeInfoResponse {
+  bytes value = 1;
+  int64 timestamp = 2;
+  bytes signature = 3;
+}
+
+message JoinCTPSessionRequest {
+  enum PartyType {
+    PAYER = 0;
+    PAYEE = 1;
+  }
+
+  PartyType partyType = 1;
+  string partyName = 2;
+  string notificationToken = 3;
+  string sessionID = 4;
+}
+
+message JoinCTPSessionResponse {
+  string sessionID = 1;
+  int64 expiry = 2;
+}
+
+message TerminateCTPSessionRequest { string sessionID = 1; }
+
+message TerminateCTPSessionResponse {}
+
+message RegisterTransactionConfirmationRequest {
+  enum NotificationType {
+    READY_RECEIVE_PAYMENT = 0;
+    CHANNEL_OPENED = 1;
+  }
+
+  string txID = 1;
+  string notificationToken = 2;
+  NotificationType notificationType = 3;
+}
+
+message RegisterTransactionConfirmationResponse {}
+
+message RegisterPeriodicSyncRequest { string notificationToken = 1; }
+
+message RegisterPeriodicSyncResponse {}
+
+message BoltzReverseSwapLockupTx {
+  string boltz_id = 1;
+  uint32 timeout_block_height = 2;
+}
+message PushTxNotificationRequest {
+  string device_id = 1;
+  string title = 2;
+  string body = 3;
+  bytes tx_hash = 4;
+  bytes script = 5;
+  uint32 block_height_hint = 6;
+  oneof info { BoltzReverseSwapLockupTx boltz_reverse_swap_lockup_tx_info = 7; }
+}
+message PushTxNotificationResponse {}
+
+message BreezAppVersionsRequest {}
+message BreezAppVersionsReply { repeated string version = 1; }
+
+message GetReverseRoutingNodeRequest {}
+message GetReverseRoutingNodeReply { bytes node_id = 1; }
+
+message PaymentInformation {
+  bytes payment_hash = 1;
+  bytes payment_secret = 2;
+  bytes destination = 3;
+  int64 incoming_amount_msat = 4;
+  int64 outgoing_amount_msat = 5;
+}

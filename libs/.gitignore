@@ -1,0 +1,6 @@
+target
+*.so
+*.a
+ffigen/*
+sdk-flutter/.dart_tool
+sdk-bindings/ffi
