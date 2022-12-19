@@ -93,18 +93,16 @@ aarch64-apple-darwin: $(SOURCES)
 android: aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
 
 aarch64-linux-android: $(SOURCES) ndk-home
-	@mkdir -p ../target/aarch64-linux-android/release/deps
-	@echo "INPUT(-lunwind)" > ../target/aarch64-linux-android/release/deps/libgcc.a
+	@mkdir -p target/aarch64-linux-android/release/deps	
 	CC_aarch64_linux_android=$(ANDROID_AARCH64_CC) \
 	CXX_aarch64_linux_android=$(ANDROID_AARCH64_CXX) \
 	AR_aarch64_linux_android=$(ANDROID_AARCH64_AR) \
 	CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER=$(ANDROID_AARCH64_CC) \
-		cargo build --target aarch64-linux-android --release	
+		cargo build --target aarch64-linux-android --release
 	@echo "[DONE] $@"
 
 armv7-linux-androideabi: $(SOURCES) ndk-home
-	@mkdir -p ../target/armv7-linux-androideabi/release/deps
-	@echo "INPUT(-lunwind)" > ../target/armv7-linux-androideabi/release/deps/libgcc.a
+	@mkdir -p ../target/armv7-linux-androideabi/release/deps	
 	CC_armv7_linux_androideabi=$(ANDROID_ARMV7_CC) \
 	CXX_armv7_linux_androideabi=$(ANDROID_ARMV7_CXX) \
 	AR_armv7_linux_androideabi=$(ANDROID_ARMV7_AR) \
@@ -113,8 +111,7 @@ armv7-linux-androideabi: $(SOURCES) ndk-home
 	@echo "[DONE] $@"
 
 i686-linux-android: $(SOURCES) ndk-home
-	@mkdir -p ../target/i686-linux-android/release/deps
-	@echo "INPUT(-lunwind)" > ../target/i686-linux-android/release/deps/libgcc.a
+	@mkdir -p ../target/i686-linux-android/release/deps	
 	CC_i686_linux_android=$(ANDROID_I686_CC) \
 	CXX_i686_linux_android=$(ANDROID_I686_CXX) \
 	AR_i686_linux_android=$(ANDROID_I686_AR) \
@@ -123,8 +120,7 @@ i686-linux-android: $(SOURCES) ndk-home
 	@echo "[DONE] $@"
 
 x86_64-linux-android: $(SOURCES) ndk-home
-	@mkdir -p ../target/x86_64-linux-android/release/deps
-	@echo "INPUT(-lunwind)" > ../target/x86_64-linux-android/release/deps/libgcc.a
+	@mkdir -p ../target/x86_64-linux-android/release/deps	
 	CC_x86_64_linux_android=$(ANDROID_X86_64_CC) \
 	CXX_x86_64_linux_android=$(ANDROID_X86_64_CXX) \
 	AR_x86_64_linux_android=$(ANDROID_X86_64_AR) \
