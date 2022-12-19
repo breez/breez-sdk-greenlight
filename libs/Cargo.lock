@@ -339,12 +339,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
 
 [[package]]
-name = "base64"
-version = "0.20.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ea22880d78093b0cbe17c89f64a7d457941e65759157ec6cb31a31d652b05e5"
-
-[[package]]
 name = "bech32"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -423,7 +417,7 @@ dependencies = [
 [[package]]
 name = "bolt-derive"
 version = "0.1.0"
-source = "git+https://github.com/Blockstream/greenlight#66456004d74390c42760d8e458214980b6d63610"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#66456004d74390c42760d8e458214980b6d63610"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -435,7 +429,7 @@ name = "breez-sdk-core"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "base64 0.13.1",
+ "base64",
  "bip21",
  "bitcoin",
  "bitcoin_hashes",
@@ -1069,10 +1063,10 @@ checksum = "dec7af912d60cdbd3677c1af9352ebae6fb8394d165568a2234df0fa00f87793"
 [[package]]
 name = "gl-client"
 version = "0.1.4"
-source = "git+https://github.com/Blockstream/greenlight#66456004d74390c42760d8e458214980b6d63610"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#66456004d74390c42760d8e458214980b6d63610"
 dependencies = [
  "anyhow",
- "base64 0.20.0",
+ "base64",
  "bitcoin",
  "bytes",
  "hex",
@@ -1443,7 +1437,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "95b09eff1b35ed3b33b877ced3a691fc7a481919c7e29c53c906226fcf55e2a1"
 dependencies = [
  "arrayref",
- "base64 0.13.1",
+ "base64",
  "digest 0.9.0",
  "hmac-drbg",
  "libsecp256k1-core",
@@ -1540,7 +1534,7 @@ dependencies = [
 [[package]]
 name = "lightning-signer-core"
 version = "0.1.0-5"
-source = "git+https://github.com/Blockstream/greenlight#66456004d74390c42760d8e458214980b6d63610"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#66456004d74390c42760d8e458214980b6d63610"
 dependencies = [
  "anyhow",
  "bitcoin",
@@ -1556,7 +1550,7 @@ dependencies = [
 [[package]]
 name = "lightning-signer-server"
 version = "0.1.0-5"
-source = "git+https://github.com/Blockstream/greenlight#66456004d74390c42760d8e458214980b6d63610"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#66456004d74390c42760d8e458214980b6d63610"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1878,7 +1872,7 @@ version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "03c64931a1a212348ec4f3b4362585eca7159d0d09cbdf4a7f74f02173596fd4"
 dependencies = [
- "base64 0.13.1",
+ "base64",
 ]
 
 [[package]]
@@ -2221,7 +2215,7 @@ version = "0.11.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68cc60575865c7831548863cc02356512e3f1dc2f3f82cb837d7fc4cc8f3c97c"
 dependencies = [
- "base64 0.13.1",
+ "base64",
  "bytes",
  "encoding_rs",
  "futures-core",
@@ -2361,7 +2355,7 @@ version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0864aeff53f8c05aa08d86e5ef839d3dfcf07aeba2db32f12db0ef716e87bd55"
 dependencies = [
- "base64 0.13.1",
+ "base64",
 ]
 
 [[package]]
@@ -2555,7 +2549,7 @@ version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "25bf4a5a814902cd1014dbccfa4d4560fb8432c779471e96e035602519f82eef"
 dependencies = [
- "base64 0.13.1",
+ "base64",
  "chrono",
  "hex",
  "serde",
@@ -3045,7 +3039,7 @@ dependencies = [
  "async-stream",
  "async-trait",
  "axum",
- "base64 0.13.1",
+ "base64",
  "bytes",
  "futures-core",
  "futures-util",
@@ -3401,7 +3395,7 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 [[package]]
 name = "vls-persist"
 version = "0.1.0"
-source = "git+https://github.com/Blockstream/greenlight#66456004d74390c42760d8e458214980b6d63610"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#66456004d74390c42760d8e458214980b6d63610"
 dependencies = [
  "hex",
  "lightning-signer-core",
@@ -3414,7 +3408,7 @@ dependencies = [
 [[package]]
 name = "vls-protocol"
 version = "0.1.0"
-source = "git+https://github.com/Blockstream/greenlight#66456004d74390c42760d8e458214980b6d63610"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#66456004d74390c42760d8e458214980b6d63610"
 dependencies = [
  "as-any",
  "bolt-derive",
@@ -3427,7 +3421,7 @@ dependencies = [
 [[package]]
 name = "vls-protocol-signer"
 version = "0.1.0"
-source = "git+https://github.com/Blockstream/greenlight#66456004d74390c42760d8e458214980b6d63610"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#66456004d74390c42760d8e458214980b6d63610"
 dependencies = [
  "bit-vec",
  "lightning-signer-core",
@@ -3720,7 +3714,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9fb9bace5b5589ffead1afb76e43e34cff39cd0f3ce7e170ae0c29e53b88eb1c"
 dependencies = [
  "asn1-rs",
- "base64 0.13.1",
+ "base64",
  "data-encoding",
  "der-parser",
  "lazy_static",
