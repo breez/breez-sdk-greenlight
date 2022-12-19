@@ -11,7 +11,7 @@ The Breez SDK provides the following services:
 This diagram is a high-level description of the Breez SDK:
 ![sdk](https://user-images.githubusercontent.com/5394889/174237369-05aad114-4af8-448e-9fbb-ad6adff835a5.png)
 
-Youcan watch a basic demo here: https://twitter.com/Breez_Tech/status/1602650230088151040?s=20&t=w7Ej2oXjZ0hsXiwZV8K4SA
+You can watch a basic demo here: https://twitter.com/Breez_Tech/status/1602650230088151040?s=20&t=w7Ej2oXjZ0hsXiwZV8K4SA
 
 ### Signer
 This module handles everything related to the signing of lightning messages. It is initialized with the user’s seed.
