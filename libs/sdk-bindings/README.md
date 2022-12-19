@@ -2,8 +2,8 @@
 
 This project provides bindings for breez-sdk to various languages.
 Currently supported languges are kotlin, swift and dart.
-For dart currenty the [flutter_rust_bridge](https://github.com/fzyzcjy/flutter_rust_bridge) to generate the bindings.
-For kotlin & swift we are using [uniffi](https://github.com/mozilla/uniffi-rs)
+For dart, the [flutter_rust_bridge](https://github.com/fzyzcjy/flutter_rust_bridge) is used to generate the bindings.
+For kotlin & swift, we are using [uniffi](https://github.com/mozilla/uniffi-rs).
 
 ## prerequisite
 Install the uniffi-bindgen binary version 0.21.0 on your system using:
@@ -43,7 +43,7 @@ This will build the android libraries for different platforms copy them to the b
 In addition the kotlin binding code is generated and copied to the binding/android/breez-sdk folder.
 
 ### Dart
-TODO
+TBA
 
 ## Test
 
