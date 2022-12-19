@@ -1,14 +1,27 @@
-# breez_sdk
+# sdk-flutter
 
-A flutter plugin project that wraps a rust library and expose its interface using ffi. 
+A flutter plugin project that exposes the sdk-core using ffi. 
+The [flutter_rust_bridge](https://github.com/fzyzcjy/flutter_rust_bridge) is used to generate the bindings.
 
 ## Build
 
-On the rust folder:
+### Prerequisites:
+* set the ANDROID_NDK_HOME env variable to your sdk home folder
+* install cargo-ndk to provide simplified android build: ```cargo install cargo-ndk```
+* install [flutter_rust_bridge](https://github.com/fzyzcjy/flutter_rust_bridge): ```cargo install flutter_rust_bridge_codegen --version 1.53.0```
 
+### Building the plugin
+On first usage you will need to run:
 ```
 make init
-make all
+```
+Then for iOS:
+```
+make ios
+```
+And for android
+```
+make android
 ```
 
 Generated artifacts:
@@ -20,17 +33,3 @@ Generated artifacts:
  >* android/src/main/jniLibs/x86_64/libbreez_sdk_core.so
 * iOS library
  >* ios/libbreez_sdk_core.a
-* Bindings header
- >* target/bindings.h
-
-Now that the bindings is generated and the native libraries are built we can generate the dart interface.
-We are using [flutter_rust_bridge](https://github.com/fzyzcjy/flutter_rust_bridge) to generate the rust and dart bindings, please refer to the documentation for [prerequisites](http://cjycode.com/flutter_rust_bridge/integrate/deps.html)
-This requires an installation of llvm then from the root folder, run the following:
-
-```
-flutter_rust_bridge_codegen -r rust/src/binding.rs -d lib/bridge_generated.dart -c ios/Classes/bridge_generated.h --llvm-path=<path to llvm>
-```
-
-
-
-The rust interface is now exposed in lib/breez_sdk.dart

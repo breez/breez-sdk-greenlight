@@ -1,19 +1,17 @@
 # breez-sdk-bindings
 
 This project provides bindings for breez-sdk to various languages.
-Currently supported languges are kotlin, swift and dart.
-For dart, the [flutter_rust_bridge](https://github.com/fzyzcjy/flutter_rust_bridge) is used to generate the bindings.
+Currently supported languges are kotlin & swift.
 For kotlin & swift, we are using [uniffi](https://github.com/mozilla/uniffi-rs).
 
 ## prerequisite
-Install the uniffi-bindgen binary version 0.21.0 on your system using:
- ```
- cargo install --version 0.21.0 uniffi_bindgen
- ```
+* Install the uniffi-bindgen binary version 0.22.0 on your system using: ```cargo install --version 0.22.0 uniffi_bindgen```
+* set the ANDROID_NDK_HOME env variable to your sdk home folder
+* install cargo-ndk to provide simplified android build: ```cargo install cargo-ndk``` 
 
 ## Build
 
-At the root folder:
+On first usage you will need to run:
 
 ```
 make init
@@ -32,18 +30,15 @@ We also provides the same binding for mac os by running the following command:
 ```
 make swift-darwing
 ```
-The above will generate the artifacts in the bindings/swift-darwin folder.
+The above will generate the artifacts in the ffi/swift-darwin folder.
 
 ### Kotlin
 ```
 make kotlin
 ```
 
-This will build the android libraries for different platforms copy them to the binding/android/jniLibs folder.
-In addition the kotlin binding code is generated and copied to the binding/android/breez-sdk folder.
-
-### Dart
-TBA
+This will build the android libraries for different platforms copy them to the ffi/kotlin/jniLibs folder.
+In addition the kotlin binding code is generated and copied to the ffi/kotlin/breez-sdk folder.
 
 ## Test
 

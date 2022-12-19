@@ -5,12 +5,15 @@ OS_NAME=$(shell uname | tr '[:upper:]' '[:lower:]')
 ## all: Compile iOS, Android
 all: ios-universal android
 
-ios-universal: $(SOURCES)
+flutter_rust_bridge:
+	flutter_rust_bridge_codegen -r ../sdk-core/src/binding.rs -d lib/bridge_generated.dart -c ios/Classes/bridge_generated.h
+
+ios-universal: $(SOURCES) flutter_rust_bridge
 	cd ../sdk-core && make ios	
 	cp ../target/universal/release/libbreez_sdk_core.a ./ios/libbreez_sdk_core.a
 
 ## android: Compile the android targets (arm64, armv7 and i686)
-android: $(SOURCES)
+android: $(SOURCES) flutter_rust_bridge	
 	cd ../sdk-core && make android	
 	mkdir -p ./android/src/main/jniLibs/arm64-v8a
 	mkdir -p ./android/src/main/jniLibs/armeabi-v7a
