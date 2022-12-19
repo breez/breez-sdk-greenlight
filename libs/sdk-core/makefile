@@ -1,31 +1,7 @@
-.DEFAULT_GOAL := help
 PROJECTNAME=$(shell basename "$(PWD)")
 SOURCES=$(sort $(wildcard ./src/*.rs ./src/**/*.rs))
 
-OS_NAME=$(shell uname | tr '[:upper:]' '[:lower:]')
-PATH := $(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/$(OS_NAME)-x86_64/bin:$(PATH)
-
-ANDROID_AARCH64_CC=$(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/$(OS_NAME)-x86_64/bin/aarch64-linux-android29-clang
-ANDROID_AARCH64_CXX=$(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/$(OS_NAME)-x86_64/bin/aarch64-linux-android29-clang++
-ANDROID_AARCH64_AR=$(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/$(OS_NAME)-x86_64/bin/llvm-ar
-
-ANDROID_ARMV7_CC=$(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/$(OS_NAME)-x86_64/bin/armv7a-linux-androideabi29-clang
-ANDROID_ARMV7_CXX=$(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/$(OS_NAME)-x86_64/bin/armv7a-linux-androideabi29-clang++
-ANDROID_ARMV7_AR=$(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/$(OS_NAME)-x86_64/bin/llvm-ar
-
-ANDROID_I686_CC=$(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/$(OS_NAME)-x86_64/bin/i686-linux-android29-clang
-ANDROID_I686_CXX=$(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/$(OS_NAME)-x86_64/bin/i686-linux-android29-clang++
-ANDROID_I686_AR=$(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/$(OS_NAME)-x86_64/bin/llvm-ar
-
-ANDROID_X86_64_CC=$(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/$(OS_NAME)-x86_64/bin/x86_64-linux-android29-clang
-ANDROID_X86_64_CXX=$(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/$(OS_NAME)-x86_64/bin/x86_64-linux-android29-clang++
-ANDROID_X86_64_AR=$(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/$(OS_NAME)-x86_64/bin/llvm-ar
-
 SHELL := /bin/bash
-
-# ##############################################################################
-# # GENERAL
-# ##############################################################################
 
 .PHONY: help
 help: makefile
@@ -93,40 +69,16 @@ aarch64-apple-darwin: $(SOURCES)
 android: aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
 
 aarch64-linux-android: $(SOURCES) ndk-home
-	@mkdir -p target/aarch64-linux-android/release/deps	
-	CC_aarch64_linux_android=$(ANDROID_AARCH64_CC) \
-	CXX_aarch64_linux_android=$(ANDROID_AARCH64_CXX) \
-	AR_aarch64_linux_android=$(ANDROID_AARCH64_AR) \
-	CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER=$(ANDROID_AARCH64_CC) \
-		cargo build --target aarch64-linux-android --release
-	@echo "[DONE] $@"
+	cargo ndk -t aarch64-linux-android build --release
 
 armv7-linux-androideabi: $(SOURCES) ndk-home
-	@mkdir -p ../target/armv7-linux-androideabi/release/deps	
-	CC_armv7_linux_androideabi=$(ANDROID_ARMV7_CC) \
-	CXX_armv7_linux_androideabi=$(ANDROID_ARMV7_CXX) \
-	AR_armv7_linux_androideabi=$(ANDROID_ARMV7_AR) \
-	CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER=$(ANDROID_ARMV7_CC) \
-		cargo build --target armv7-linux-androideabi --release	
-	@echo "[DONE] $@"
+	cargo ndk -t armv7-linux-androideabi build --release
 
 i686-linux-android: $(SOURCES) ndk-home
-	@mkdir -p ../target/i686-linux-android/release/deps	
-	CC_i686_linux_android=$(ANDROID_I686_CC) \
-	CXX_i686_linux_android=$(ANDROID_I686_CXX) \
-	AR_i686_linux_android=$(ANDROID_I686_AR) \
-	CARGO_TARGET_I686_LINUX_ANDROID_LINKER=$(ANDROID_I686_CC) \
-		cargo  build --target i686-linux-android --release	
-	@echo "[DONE] $@"
+	cargo ndk -t i686-linux-android build --release
 
 x86_64-linux-android: $(SOURCES) ndk-home
-	@mkdir -p ../target/x86_64-linux-android/release/deps	
-	CC_x86_64_linux_android=$(ANDROID_X86_64_CC) \
-	CXX_x86_64_linux_android=$(ANDROID_X86_64_CXX) \
-	AR_x86_64_linux_android=$(ANDROID_X86_64_AR) \
-	CARGO_TARGET_X86_64_LINUX_ANDROID_LINKER=$(ANDROID_X86_64_CC) \
-		cargo build --target x86_64-linux-android --release	
-	@echo "[DONE] $@"
+	cargo ndk -t x86_64-linux-android build --release
 		
 .PHONY: ndk-home
 ndk-home:
