@@ -13,15 +13,16 @@ ios-universal: $(SOURCES) flutter_rust_bridge
 	cp ../target/universal/release/libbreez_sdk_core.a ./ios/libbreez_sdk_core.a
 
 ## android: Compile the android targets (arm64, armv7 and i686)
-android: $(SOURCES) flutter_rust_bridge	
-	cd ../sdk-core && make android	
+.PHONY: android
+android: $(SOURCES) flutter_rust_bridge
+	cd ../sdk-core && make android
 	mkdir -p ./android/src/main/jniLibs/arm64-v8a
 	mkdir -p ./android/src/main/jniLibs/armeabi-v7a
 	mkdir -p ./android/src/main/jniLibs/x86
 	mkdir -p ./android/src/main/jniLibs/x86_64
-	cp ../target/aarch64-linux-android/release/libbreez_sdk_core.so ./android/src/main/jniLibs/arm64-v8a/libbreez_sdk_core.so	
-	cp ../target/armv7-linux-androideabi/release/libbreez_sdk_core.so android/src/main/jniLibs/armeabi-v7a/libbreez_sdk_core.so	
-	cp ../target/i686-linux-android/release/libbreez_sdk_core.so android/src/main/jniLibs/x86/libbreez_sdk_core.so	
+	cp ../target/aarch64-linux-android/release/libbreez_sdk_core.so ./android/src/main/jniLibs/arm64-v8a/libbreez_sdk_core.so
+	cp ../target/armv7-linux-androideabi/release/libbreez_sdk_core.so android/src/main/jniLibs/armeabi-v7a/libbreez_sdk_core.so
+	cp ../target/i686-linux-android/release/libbreez_sdk_core.so android/src/main/jniLibs/x86/libbreez_sdk_core.so
 	cp ../target/x86_64-linux-android/release/libbreez_sdk_core.so android/src/main/jniLibs/x86_64/libbreez_sdk_core.so
 
 ## clean:
