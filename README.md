@@ -32,4 +32,5 @@ The libs folder contains three sub folders and is a structured as a cargo worksp
 * sdk-bindings: ffi bindings for Kotlin & Swift. 
 * sdk-flutter: a flutter plugin (includes ffi bindings for dart).
 
+The tools folder contains a simple command line interface (sdk-cli) to the sdk
 See instruction in each sub project readme on how to build, test and run.
