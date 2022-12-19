@@ -1,6 +1,6 @@
 # breez_sdk
 
-A flutter plugin project that wraps a rust library and expose its interface using ffi
+A flutter plugin project that wraps a rust library and expose its interface using ffi. 
 
 ## Build
 
