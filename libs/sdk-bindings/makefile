@@ -45,7 +45,7 @@ init:
 # ##############################################################################
 
 ## all: Compile iOS, Android
-all: ios-universal macos android
+all: ios-universal aarch64-apple-darwin android
 
 ios-universal: $(SOURCES)	
 	mkdir -p target/universal/release
@@ -71,10 +71,10 @@ swift-darwin: aarch64-apple-darwin
 	cp $(CURRENT_DIR)/target/aarch64-apple-darwin/release/libbreez_sdk_bindings.dylib ffi/swift-darwin	
 	cd ffi/swift-darwin && "swiftc" "-emit-module" "-module-name" "breez_sdk_bindings"  "-Xcc" "-fmodule-map-file=$(CURRENT_DIR)/ffi/swift-ios/breez_sdkFFI.modulemap" "-I" "."  "-L" "." "-lbreez_sdk_bindings" breez_sdk.swift
 
-kotlin: android-build
+kotlin: android
 	uniffi-bindgen generate src/breez_sdk.udl --language kotlin -o ffi/kotlin 
 
-android-build: aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+android: aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
 
 aarch64-linux-android: $(SOURCES) ndk-home
 	@mkdir -p target/aarch64-linux-android/release/deps
