@@ -27,8 +27,8 @@ TBA - LSP related services.
 
 ## Build & Testing
 The libs folder contains three sub folders and is a structured as a cargo workspace:
-* sdk-core - The core rust library
-* sdk-bindings - FFI bindings for kotlin & swift
-* sdk-flutter - The sdk flutter plugin (includes FFI bindings for dart)
+* sdk-core: the core SDK rust library. 
+* sdk-bindings: ffi bindings for Kotlin & Swift. 
+* sdk-flutter - a flutter plugin (includes ffi bindings for dart).
 
-See instruction in each sub project home page on how to build, test and use.
+See instruction in each sub project readme on how to build, test and run.
