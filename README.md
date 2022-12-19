@@ -18,7 +18,7 @@ For a higher resolution video, click [here](https://youtu.be/PRVWB4K52Es).
 ## Architechture
 This diagram is a high-level description of the Breez SDK:
 
-![sdk](https://user-images.githubusercontent.com/5394889/174237369-05aad114-4af8-448e-9fbb-ad6adff835a5.png)
+![SDK Architecture](https://user-images.githubusercontent.com/31890660/208512955-6e648b86-4c8a-457a-b844-3dda8b2aa8ec.png)
 
 ### Signer
 This module handles everything related to the signing of lightning messages. It is initialized with the user’s seed.
