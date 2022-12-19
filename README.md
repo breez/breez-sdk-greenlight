@@ -1,5 +1,6 @@
 # Breez SDK
 
+## Overview
 The Breez SDK enables mobile developers to integrate Lightning and bitcoin payments into their apps with a very shallow learning curve. The use cases are endless – from social apps that want to integrate tipping between users to content-creation apps interested in adding bitcoin monetization. Crucially, this SDK is an end-to-end, non-custodial, drop-in solution powered by Greenlight, a built-in LSP, on-chain interoperability, third-party fiat on-ramps, and other services users and operators need.
    
 The Breez SDK provides the following services:
@@ -8,10 +9,16 @@ The Breez SDK provides the following services:
 * Fetching node status (e.g. balance, max allow to pay, max allow to receive, on-chain balance, etc.)
 * Connecting to a new or existing node.
 
-This diagram is a high-level description of the Breez SDK:
-![sdk](https://user-images.githubusercontent.com/5394889/174237369-05aad114-4af8-448e-9fbb-ad6adff835a5.png)
+## Demo
 
-You can watch a basic demo here: https://twitter.com/Breez_Tech/status/1602650230088151040?s=20&t=w7Ej2oXjZ0hsXiwZV8K4SA
+https://user-images.githubusercontent.com/31890660/208511040-989ff42c-ceb8-4a34-b2cb-a17a0a8c0150.mp4
+
+For a higher resolution video, click [here](https://youtu.be/PRVWB4K52Es).
+
+## Architechture
+This diagram is a high-level description of the Breez SDK:
+
+![sdk](https://user-images.githubusercontent.com/5394889/174237369-05aad114-4af8-448e-9fbb-ad6adff835a5.png)
 
 ### Signer
 This module handles everything related to the signing of lightning messages. It is initialized with the user’s seed.
@@ -26,7 +33,7 @@ This module provides fiat currencies conversion services and fiat on-ramp servic
 ### LSP
 This module provides the interface of interacting with one or more LSPs.
 
-## Build & Testing
+## Build & Test
 The libs folder contains three sub folders and is a structured as a cargo workspace:
 * sdk-core: the core SDK rust library. 
 * sdk-bindings: ffi bindings for Kotlin & Swift. 
