@@ -11,6 +11,7 @@ init:
 	rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
 	@if [ $$(uname) == "Darwin" ] ; then cargo install cargo-lipo ; fi
 	cargo install cbindgen
+	cargo install cargo-ndk
 
 ## all: Compile iOS, Android
 all: swift-ios swift-darwin kotlin

@@ -1,6 +1,8 @@
 SOURCES=$(sort $(wildcard ../sdk-core/src/*.rs ../sdk-core/src/**/*.rs))
-SHELL := /bin/bash
-OS_NAME=$(shell uname | tr '[:upper:]' '[:lower:]')
+
+.PHONY: init
+init:
+	flutter pub get
 
 ## all: Compile iOS, Android
 all: ios-universal android
