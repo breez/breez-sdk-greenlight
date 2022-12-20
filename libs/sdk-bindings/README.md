@@ -28,7 +28,7 @@ All files are generated in the bindings/swift-ios folder.
 We also provides the same binding for mac os by running the following command:
 
 ```
-make swift-darwing
+make swift-darwin
 ```
 The above will generate the artifacts in the ffi/swift-darwin folder.
 
