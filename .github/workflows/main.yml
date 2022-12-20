@@ -1,0 +1,37 @@
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push events but only for the "main" branch
+  # push:
+  #   branches: [ "main" ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+
+  build:
+
+    runs-on: macOS-latest
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+      
+      - name: install dependencies
+        run: |
+          echo $ANDROID_NDK_HOME
+          cargo install cargo-ndk
+          cargo install uniffi-bindgen --version 0.22.0 uniffi_bindgen
+          curl -o jna https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.12.1/jna-5.12.1.jar
+          export CLASSPATH=$(pwd)/jna;
+
+      - name: run tests
+        run: |
+          cargo test
+
+      - uses: actions/setup-java@v2
+        with:
+          distribution: 'zulu'
+          java-version: '17'
