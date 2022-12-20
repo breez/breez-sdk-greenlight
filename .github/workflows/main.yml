@@ -26,11 +26,9 @@ jobs:
           echo $ANDROID_NDK_HOME
           cargo install cargo-ndk
           cargo install --version 0.22.0 uniffi_bindgen          
-          brew install protobuf
-          curl -o jna-5.12.1.jar https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.12.1/jna-5.12.1.jar
-          export CLASSPATH=$(pwd)/jna-5.12.1.jar;
+          brew install protobuf          
 
-      - name: run tests
+      - name: run lib tests
         env:
           SSH_PRIVATE_KEY: ${{secrets.REPO_SSH_KEY}}
         run: |
@@ -38,5 +36,12 @@ jobs:
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           sudo chmod 600 ~/.ssh/id_rsa
           ssh-add ~/.ssh/id_rsa
+          curl -o jna-5.12.1.jar https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.12.1/jna-5.12.1.jar
+          export CLASSPATH=$(pwd)/jna-5.12.1.jar;
           cd libs
-          cargo test     
+          cargo test  
+      
+      - name: run clitests        
+        run: |
+          cd tools
+          cargo test
