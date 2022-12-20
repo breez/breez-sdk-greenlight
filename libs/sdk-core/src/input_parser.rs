@@ -6,9 +6,9 @@ use bitcoin::bech32;
 use bitcoin::bech32::FromBase32;
 use serde::Deserialize;
 
+use crate::input_parser::InputType::*;
+use crate::input_parser::LnUrlRequestData::*;
 use crate::invoice::{parse_invoice, LNInvoice};
-use crate::lnurl::input_parser::InputType::*;
-use crate::lnurl::input_parser::LnUrlRequestData::*;
 
 use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 
@@ -492,8 +492,8 @@ mod tests {
     use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
     use mockito::Mock;
 
-    use crate::lnurl::input_parser::LnUrlRequestData::*;
-    use crate::lnurl::input_parser::*;
+    use crate::input_parser::LnUrlRequestData::*;
+    use crate::input_parser::*;
     use crate::models::Network;
 
     #[tokio::test]

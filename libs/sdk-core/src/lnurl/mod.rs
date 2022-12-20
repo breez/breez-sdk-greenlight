@@ -1,4 +1,3 @@
-pub mod input_parser;
 pub mod pay;
 
 use anyhow::Result;
