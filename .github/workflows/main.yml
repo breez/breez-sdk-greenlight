@@ -25,7 +25,7 @@ jobs:
         run: |
           echo $ANDROID_NDK_HOME
           cargo install cargo-ndk
-          cargo install uniffi-bindgen --version 0.22.0 uniffi_bindgen
+          cargo install --version 0.22.0 uniffi_bindgen
           curl -o jna https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.12.1/jna-5.12.1.jar
           export CLASSPATH=$(pwd)/jna;
 
