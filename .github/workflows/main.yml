@@ -30,7 +30,13 @@ jobs:
           export CLASSPATH=$(pwd)/jna;
 
       - name: run tests
+        env:
+          SSH_PRIVATE_KEY: ${{secrets.REPO_SSH_KEY}}
         run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          sudo chmod 600 ~/.ssh/id_rsa
+          ssh-add ~/.ssh/id_rsa
           cd libs
           cargo test
 
