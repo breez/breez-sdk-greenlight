@@ -146,8 +146,11 @@ fn main() -> Result<()> {
                             .next()
                             .ok_or("Expected bolt11 arg")
                             .map_err(|err| anyhow!(err))?;
+                        let amount_sats: Option<u64> = command
+                            .next()
+                            .map_or(None, |v| Some(v.parse::<u64>().ok()?));
 
-                        show_results(binding::send_payment(bolt11.into()))
+                        show_results(binding::send_payment(bolt11.into(), amount_sats))
                     }
                     Some("send_spontaneous_payment") => {
                         let node_id = command

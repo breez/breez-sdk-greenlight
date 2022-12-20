@@ -249,7 +249,7 @@ interface BlockingBreezServices {
    void stop();
 
    [Throws=SDKError]
-   void send_payment(string bolt11);
+   void send_payment(string bolt11, u64? amount_sats);
     
    [Throws=SDKError]
    void send_spontaneous_payment(string node_id, u64 amount_sats);
