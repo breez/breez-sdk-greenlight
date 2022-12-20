@@ -27,6 +27,7 @@ jobs:
           cargo install cargo-ndk
           cargo install --version 0.22.0 uniffi_bindgen
           curl -o jna https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.12.1/jna-5.12.1.jar
+          brew install protobuf
           export CLASSPATH=$(pwd)/jna;
 
       - name: run tests
