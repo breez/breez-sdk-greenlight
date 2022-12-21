@@ -85,8 +85,9 @@ class BreezBridge {
   /// # Arguments
   ///
   /// * `bolt11` - The bolt11 invoice
-  Future sendPayment({required String bolt11}) async {
-    await _lnToolkit.sendPayment(bolt11: bolt11);
+  /// * `amountSats` - The amount to pay in satoshis
+  Future sendPayment({required String bolt11, int? amountSats}) async {
+    await _lnToolkit.sendPayment(bolt11: bolt11, amountSats: amountSats);
     await getNodeState();
     await listPayments();
   }

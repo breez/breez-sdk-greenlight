@@ -79,6 +79,7 @@ abstract class BreezSdkCore {
   /// # Arguments
   ///
   /// * `bolt11` - The bolt11 invoice
+  /// * `amount_sats` - The amount to pay in satoshis
   Future<void> sendPayment(
       {required String bolt11, int? amountSats, dynamic hint});
 
