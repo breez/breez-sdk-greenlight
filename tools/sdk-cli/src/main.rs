@@ -7,6 +7,7 @@ use std::str::SplitWhitespace;
 
 use anyhow::{anyhow, Result};
 use bip39::{Language, Mnemonic, MnemonicType, Seed};
+use breez_sdk_core::InputType::LnUrlWithdraw;
 use breez_sdk_core::{
     binding, FeeratePreset, GreenlightCredentials, InputType::LnUrlPay, LspInformation, Network,
     PaymentTypeFilter,
@@ -14,7 +15,6 @@ use breez_sdk_core::{
 use env_logger::Env;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
-use breez_sdk_core::InputType::LnUrlWithdraw;
 
 fn get_seed() -> Vec<u8> {
     let filename = "phrase";

@@ -352,11 +352,7 @@ mod tests {
             .create())
     }
 
-    fn get_test_pay_req_data(
-        min_sat: u64,
-        max_sat: u64,
-        comment_len: u16,
-    ) -> LnUrlPayRequestData {
+    fn get_test_pay_req_data(min_sat: u64, max_sat: u64, comment_len: u16) -> LnUrlPayRequestData {
         LnUrlPayRequestData {
             min_sendable: min_sat * 1000,
             max_sendable: max_sat * 1000,
