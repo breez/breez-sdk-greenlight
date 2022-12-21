@@ -118,7 +118,7 @@ fn main() -> Result<()> {
                             description.to_string(),
                         ));
                     }
-                    Some("send-lnurl") => {
+                    Some("send_lnurl") => {
                         let lnurl_endpoint =
                             rl.readline("Destination LNURL-pay or LN Address: ")?;
 
@@ -235,6 +235,10 @@ fn main() -> Result<()> {
                     }),
                     Some("exit") => break,
 
+                    Some("help") => {
+                        println!("{}", help_message());
+                    }
+
                     Some(_) => {
                         info!("Unrecognized command: {}", line.as_str());
                     }
@@ -269,4 +273,36 @@ where
         }
         Err(err) => error!("Error: {}", err),
     }
+}
+
+fn help_message() -> String {
+    return r#"
+Node:
+    init
+    recover_node
+    register_node
+    stop_node
+    node_info
+LSP:
+    close_lsp_channels
+    connect_lsp
+    list_lsps
+Payments:
+    list_payments
+    receive_onchain
+    receive_payment
+    send_lnurl
+    send_payment
+    send_spontaneous_payment
+    sweep
+    list_refundables
+    refund
+Fiat:
+    fetch_fiat_rates
+    list_fiat
+Misc:
+    exit: exit the program
+    help: show this help
+"#
+    .to_string();
 }
