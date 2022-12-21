@@ -7,8 +7,8 @@ use rusqlite::{named_params, OptionalExtension, Row};
 impl SqliteStorage {
     pub fn insert_swap(&self, swap_info: SwapInfo) -> Result<()> {
         self.get_connection()?.execute(
-         "INSERT INTO swaps (bitcoin_address, created_at, lock_height, payment_hash, preimage, private_key, public_key, swapper_public_key, bolt11, paid_sats, confirmed_sats, script, status, refund_tx_ids, confirmed_tx_ids)
-          VALUES (:bitcoin_address, :created_at, :lock_height, :payment_hash, :preimage, :private_key, :public_key, :swapper_public_key, :bolt11, :paid_sats, :confirmed_sats, :script, :status, :refund_tx_ids, :confirmed_tx_ids)",
+         "INSERT INTO swaps (bitcoin_address, created_at, lock_height, payment_hash, preimage, private_key, public_key, swapper_public_key, bolt11, paid_sats, confirmed_sats, script, status, refund_tx_ids, confirmed_tx_ids, min_allowed_deposit, max_allowed_deposit)
+          VALUES (:bitcoin_address, :created_at, :lock_height, :payment_hash, :preimage, :private_key, :public_key, :swapper_public_key, :bolt11, :paid_sats, :confirmed_sats, :script, :status, :refund_tx_ids, :confirmed_tx_ids, :min_allowed_deposit, :max_allowed_deposit)",
          named_params! {
              ":bitcoin_address": swap_info.bitcoin_address,
              ":created_at": swap_info.created_at,
@@ -24,7 +24,9 @@ impl SqliteStorage {
              ":bolt11": None::<String>,
              ":status": swap_info.status as u32,
              ":refund_tx_ids": StringArray(swap_info.refund_tx_ids),
-             ":confirmed_tx_ids": StringArray(swap_info.confirmed_tx_ids)
+             ":confirmed_tx_ids": StringArray(swap_info.confirmed_tx_ids),
+             ":min_allowed_deposit": swap_info.min_allowed_deposit,
+             ":max_allowed_deposit": swap_info.max_allowed_deposit
          },
         )?;
 
@@ -130,8 +132,10 @@ impl SqliteStorage {
                     paid_sats: row.get(10)?,
                     confirmed_sats: row.get(11)?,
                     status: status,
-                    confirmed_tx_ids: confirmed_tx_ids.0,
                     refund_tx_ids: refund_tx_ids.0,
+                    confirmed_tx_ids: confirmed_tx_ids.0,
+                    min_allowed_deposit: row.get(15)?,
+                    max_allowed_deposit: row.get(16)?,
                 })
             })?
             .map(|i| i.unwrap())
@@ -161,6 +165,8 @@ impl SqliteStorage {
             refund_tx_ids: refund_txs_raw.0,
             confirmed_tx_ids: confirmed_txs_raw.0,
             status: status,
+            min_allowed_deposit: row.get(15)?,
+            max_allowed_deposit: row.get(16)?,
         })
     }
 }
@@ -189,6 +195,8 @@ fn test_swaps() -> Result<(), Box<dyn std::error::Error>> {
         status: crate::models::SwapStatus::Initial,
         refund_tx_ids: Vec::new(),
         confirmed_tx_ids: Vec::new(),
+        min_allowed_deposit: 0,
+        max_allowed_deposit: 100,
     };
     storage.insert_swap(tested_swap_info.clone())?;
     let item_value = storage.get_swap_info_by_address("1".to_string())?.unwrap();

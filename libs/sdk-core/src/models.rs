@@ -307,6 +307,8 @@ pub struct SwapInfo {
     pub status: SwapStatus,
     pub refund_tx_ids: Vec<String>,
     pub confirmed_tx_ids: Vec<String>,
+    pub min_allowed_deposit: i64,
+    pub max_allowed_deposit: i64,
 }
 
 impl SwapInfo {

@@ -224,6 +224,8 @@ dictionary SwapInfo {
     SwapStatus status;
     sequence<string> refund_tx_ids;
     sequence<string> confirmed_tx_ids;
+    i64 min_allowed_deposit;
+    i64 max_allowed_deposit;
 };
 
 dictionary BitcoinAddressData {
