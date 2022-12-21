@@ -61,7 +61,7 @@ fn validate_user_input(
     comment: &Option<String>,
     condition_min_amount_msat: u64,
     condition_max_amount_msat: u64,
-    condition_max_comment_len: usize,
+    condition_max_comment_len: u16,
 ) -> Result<()> {
     if user_amount_msat < condition_min_amount_msat {
         return Err(anyhow!("Amount is smaller than the minimum allowed"));
@@ -73,7 +73,7 @@ fn validate_user_input(
 
     match comment {
         None => Ok(()),
-        Some(msg) => match msg.len() <= condition_max_comment_len {
+        Some(msg) => match msg.len() <= condition_max_comment_len as usize {
             true => Ok(()),
             false => Err(anyhow!(
                 "Comment is longer than the maximum allowed comment length"
@@ -355,7 +355,7 @@ mod tests {
     fn get_test_pay_req_data(
         min_sat: u64,
         max_sat: u64,
-        comment_len: usize,
+        comment_len: u16,
     ) -> LnUrlPayRequestData {
         LnUrlPayRequestData {
             min_sendable: min_sat * 1000,

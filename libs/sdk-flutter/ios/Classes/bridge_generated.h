@@ -31,7 +31,7 @@ typedef struct wire_LnUrlPayRequestData {
   uint64_t min_sendable;
   uint64_t max_sendable;
   struct wire_uint_8_list *metadata_str;
-  uintptr_t comment_allowed;
+  uint16_t comment_allowed;
 } wire_LnUrlPayRequestData;
 
 typedef struct wire_LnUrlWithdrawRequestData {

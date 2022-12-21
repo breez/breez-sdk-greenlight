@@ -508,6 +508,11 @@ impl Wire2Api<PaymentTypeFilter> for i32 {
         }
     }
 }
+impl Wire2Api<u16> for u16 {
+    fn wire2api(self) -> u16 {
+        self
+    }
+}
 impl Wire2Api<u32> for u32 {
     fn wire2api(self) -> u32 {
         self
@@ -524,11 +529,6 @@ impl Wire2Api<u8> for u8 {
     }
 }
 
-impl Wire2Api<usize> for usize {
-    fn wire2api(self) -> usize {
-        self
-    }
-}
 // Section: impl IntoDart
 
 impl support::IntoDart for BitcoinAddressData {

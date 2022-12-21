@@ -430,7 +430,7 @@ pub struct LnUrlPayRequestData {
     /// Use `metadata_vec()` to get the parsed items.
     #[serde(rename(deserialize = "metadata"))]
     pub metadata_str: String,
-    pub comment_allowed: usize,
+    pub comment_allowed: u16,
 }
 
 impl LnUrlPayRequestData {

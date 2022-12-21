@@ -1527,7 +1527,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       minSendable: _wire2api_u64(arr[1]),
       maxSendable: _wire2api_u64(arr[2]),
       metadataStr: _wire2api_String(arr[3]),
-      commentAllowed: _wire2api_usize(arr[4]),
+      commentAllowed: _wire2api_u16(arr[4]),
     );
   }
 
@@ -1802,6 +1802,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     );
   }
 
+  int _wire2api_u16(dynamic raw) {
+    return raw as int;
+  }
+
   int _wire2api_u32(dynamic raw) {
     return raw as int;
   }
@@ -1831,10 +1835,6 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       url: _wire2api_String(arr[1]),
     );
   }
-
-  int _wire2api_usize(dynamic raw) {
-    return castInt(raw);
-  }
 }
 
 // Section: api2wire
@@ -1860,6 +1860,11 @@ int api2wire_payment_type_filter(PaymentTypeFilter raw) {
 }
 
 @protected
+int api2wire_u16(int raw) {
+  return raw;
+}
+
+@protected
 int api2wire_u32(int raw) {
   return raw;
 }
@@ -1869,10 +1874,6 @@ int api2wire_u8(int raw) {
   return raw;
 }
 
-@protected
-int api2wire_usize(int raw) {
-  return raw;
-}
 // Section: finalizer
 
 class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
@@ -1964,7 +1965,6 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     ans.ref.ptr.asTypedList(raw.length).setAll(0, raw);
     return ans;
   }
-
 // Section: finalizer
 
 // Section: api_fill_to_wire
@@ -2013,7 +2013,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.min_sendable = api2wire_u64(apiObj.minSendable);
     wireObj.max_sendable = api2wire_u64(apiObj.maxSendable);
     wireObj.metadata_str = api2wire_String(apiObj.metadataStr);
-    wireObj.comment_allowed = api2wire_usize(apiObj.commentAllowed);
+    wireObj.comment_allowed = api2wire_u16(apiObj.commentAllowed);
   }
 
   void _api_fill_to_wire_ln_url_withdraw_request_data(
@@ -2739,11 +2739,9 @@ class wire_LnUrlPayRequestData extends ffi.Struct {
 
   external ffi.Pointer<wire_uint_8_list> metadata_str;
 
-  @uintptr_t()
+  @ffi.Uint16()
   external int comment_allowed;
 }
-
-typedef uintptr_t = ffi.UnsignedLong;
 
 class wire_LnUrlWithdrawRequestData extends ffi.Struct {
   external ffi.Pointer<wire_uint_8_list> callback;
@@ -2762,3 +2760,4 @@ class wire_LnUrlWithdrawRequestData extends ffi.Struct {
 typedef DartPostCObjectFnType = ffi.Pointer<
     ffi.NativeFunction<ffi.Bool Function(DartPort, ffi.Pointer<ffi.Void>)>>;
 typedef DartPort = ffi.Int64;
+typedef uintptr_t = ffi.UnsignedLong;

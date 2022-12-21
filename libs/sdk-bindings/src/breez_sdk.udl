@@ -211,15 +211,15 @@ dictionary LnUrlPayRequestData {
     u64 min_sendable;
     u64 max_sendable; 
     string metadata_str;
-    u64 comment_allowed;
+    u16 comment_allowed;
 };
 
 dictionary LnUrlWithdrawRequestData {
     string callback;
     string k1;
     string default_description;
-    u16 min_withdrawable;
-    u16 max_withdrawable;
+    u64 min_withdrawable;
+    u64 max_withdrawable;
 };
 
 dictionary LnUrlAuthRequestData {
