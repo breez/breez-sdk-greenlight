@@ -71,7 +71,7 @@ void wire_breez_log_stream(int64_t port_);
 
 void wire_stop_node(int64_t port_);
 
-void wire_send_payment(int64_t port_, struct wire_uint_8_list *bolt11);
+void wire_send_payment(int64_t port_, struct wire_uint_8_list *bolt11, uint64_t *amount_sats);
 
 void wire_send_spontaneous_payment(int64_t port_,
                                    struct wire_uint_8_list *node_id,
@@ -130,6 +130,8 @@ int64_t *new_box_autoadd_i64_0(int64_t value);
 
 struct wire_LnUrlPayRequestData *new_box_autoadd_ln_url_pay_request_data_0(void);
 
+uint64_t *new_box_autoadd_u64_0(uint64_t value);
+
 struct wire_uint_8_list *new_uint_8_list_0(int32_t len);
 
 void free_WireSyncReturnStruct(struct WireSyncReturnStruct val);
@@ -165,6 +167,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_greenlight_credentials_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_i64_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_pay_request_data_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_u64_0);
     dummy_var ^= ((int64_t) (void*) new_uint_8_list_0);
     dummy_var ^= ((int64_t) (void*) free_WireSyncReturnStruct);
     dummy_var ^= ((int64_t) (void*) store_dart_post_cobject);

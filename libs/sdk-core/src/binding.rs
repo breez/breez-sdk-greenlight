@@ -158,8 +158,12 @@ pub fn stop_node() -> Result<()> {
 /// # Arguments
 ///
 /// * `bolt11` - The bolt11 invoice
-pub fn send_payment(bolt11: String) -> Result<()> {
-    block_on(async { get_breez_services()?.send_payment(bolt11).await })
+pub fn send_payment(bolt11: String, amount_sats: Option<u64>) -> Result<()> {
+    block_on(async {
+        get_breez_services()?
+            .send_payment(bolt11, amount_sats)
+            .await
+    })
 }
 
 /// pay directly to a node id using keysend

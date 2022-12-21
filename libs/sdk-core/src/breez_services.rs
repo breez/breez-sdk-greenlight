@@ -150,9 +150,9 @@ impl BreezServices {
         sender.send(()).await.map_err(anyhow::Error::msg)
     }
 
-    pub async fn send_payment(&self, bolt11: String) -> Result<()> {
+    pub async fn send_payment(&self, bolt11: String, amount_sats: Option<u64>) -> Result<()> {
         self.start_node().await?;
-        self.node_api.send_payment(bolt11, None).await?;
+        self.node_api.send_payment(bolt11, amount_sats).await?;
         self.sync().await?;
         Ok(())
     }
@@ -177,7 +177,7 @@ impl BreezServices {
                 Ok(LnUrlPayResult::EndpointError { data: e })
             }
             ValidatedCallbackResponse::EndpointSuccess { data: cb } => {
-                self.send_payment(cb.pr).await?;
+                self.send_payment(cb.pr, None).await?;
                 Ok(LnUrlPayResult::EndpointSuccess {
                     data: cb.success_action,
                 })

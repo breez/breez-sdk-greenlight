@@ -144,7 +144,11 @@ fn wire_stop_node_impl(port_: MessagePort) {
         move || move |task_callback| stop_node(),
     )
 }
-fn wire_send_payment_impl(port_: MessagePort, bolt11: impl Wire2Api<String> + UnwindSafe) {
+fn wire_send_payment_impl(
+    port_: MessagePort,
+    bolt11: impl Wire2Api<String> + UnwindSafe,
+    amount_sats: impl Wire2Api<Option<u64>> + UnwindSafe,
+) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
             debug_name: "send_payment",
@@ -153,7 +157,8 @@ fn wire_send_payment_impl(port_: MessagePort, bolt11: impl Wire2Api<String> + Un
         },
         move || {
             let api_bolt11 = bolt11.wire2api();
-            move |task_callback| send_payment(api_bolt11)
+            let api_amount_sats = amount_sats.wire2api();
+            move |task_callback| send_payment(api_bolt11, api_amount_sats)
         },
     )
 }
@@ -428,6 +433,12 @@ where
 
 impl Wire2Api<i64> for *mut i64 {
     fn wire2api(self) -> i64 {
+        unsafe { *support::box_from_leak_ptr(self) }
+    }
+}
+
+impl Wire2Api<u64> for *mut u64 {
+    fn wire2api(self) -> u64 {
         unsafe { *support::box_from_leak_ptr(self) }
     }
 }

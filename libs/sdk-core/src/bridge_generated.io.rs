@@ -47,8 +47,12 @@ pub extern "C" fn wire_stop_node(port_: i64) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_send_payment(port_: i64, bolt11: *mut wire_uint_8_list) {
-    wire_send_payment_impl(port_, bolt11)
+pub extern "C" fn wire_send_payment(
+    port_: i64,
+    bolt11: *mut wire_uint_8_list,
+    amount_sats: *mut u64,
+) {
+    wire_send_payment_impl(port_, bolt11, amount_sats)
 }
 
 #[no_mangle]
@@ -187,6 +191,11 @@ pub extern "C" fn new_box_autoadd_ln_url_pay_request_data_0() -> *mut wire_LnUrl
 }
 
 #[no_mangle]
+pub extern "C" fn new_box_autoadd_u64_0(value: u64) -> *mut u64 {
+    support::new_leak_box_ptr(value)
+}
+
+#[no_mangle]
 pub extern "C" fn new_uint_8_list_0(len: i32) -> *mut wire_uint_8_list {
     let ans = wire_uint_8_list {
         ptr: support::new_leak_vec_ptr(Default::default(), len),
@@ -224,6 +233,7 @@ impl Wire2Api<LnUrlPayRequestData> for *mut wire_LnUrlPayRequestData {
         Wire2Api::<LnUrlPayRequestData>::wire2api(*wrap).into()
     }
 }
+
 impl Wire2Api<Config> for wire_Config {
     fn wire2api(self) -> Config {
         Config {
