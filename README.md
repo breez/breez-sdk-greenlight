@@ -54,16 +54,16 @@ See instruction in each sub project readme on how to build, test and run.
 - [x] Send spontaneous payments
 - [x] Send to a Lightning address
 - [x] cli inteface 
+- [x] Swift bindings
+- [x] Kotlin bindings
 - [ ] Send to an on-chain address
 - [ ] LNURL-Auth
 - [ ] Send to BIP 21
 - [ ] MoonPay fiat on-ramp
-- [ ] Swift bindings
-- [ ] Kotlin bindings
+- [ ] Spend all funds
 - [ ] React-native bindings
 - [ ] Mobile Notifications
 - [ ] Offline receive via notifications
-- [ ] Spend all funds
 - [ ] Receive 0 amount invoice via LSP (unified QR)
 - [ ] Async payments
 - [ ] LDK support
