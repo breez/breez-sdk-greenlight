@@ -9,6 +9,7 @@ mod crypt;
 mod fiat;
 mod greenlight;
 mod grpc;
+mod input_parser;
 mod invoice;
 mod lnurl;
 mod lsp;
@@ -21,11 +22,11 @@ pub use breez_services::{
     mnemonic_to_seed, BreezEvent, BreezServices, EventListener, InvoicePaidDetails,
 };
 pub use fiat::{CurrencyInfo, FiatCurrency, LocaleOverrides, LocalizedName, Rate, Symbol};
-pub use invoice::{parse_invoice, LNInvoice, RouteHint, RouteHintHop};
-pub use lnurl::input_parser::{
+pub use input_parser::{
     parse, BitcoinAddressData, InputType, LnUrlAuthRequestData, LnUrlErrorData,
     LnUrlPayRequestData, LnUrlRequestData, LnUrlWithdrawRequestData, MetadataItem,
 };
+pub use invoice::{parse_invoice, LNInvoice, RouteHint, RouteHintHop};
 
 pub use lnurl::pay::model::LnUrlPayResult;
 pub use lsp::LspInformation;
