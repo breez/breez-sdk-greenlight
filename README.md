@@ -41,3 +41,31 @@ The libs folder contains three sub folders and is a structured as a cargo worksp
 
 The tools folder contains a simple command line interface (sdk-cli) to the sdk
 See instruction in each sub project readme on how to build, test and run.
+
+## Features
+- [x] ‘On-the-fly’ channel creation
+- [x] Send/receive bolt11
+- [x] LNURL-Pay
+- [x] LNURL-Withdraw
+- [x] Receive via on-chain address
+- [x] Backup/restore using mnemonics 
+- [x] Send zero-amount invoices
+- [x] Fiat currencies
+- [x] Send spontaneous payments
+- [x] Send to a Lightning address
+- [x] cli inteface 
+- [ ] Send to an on-chain address
+- [ ] LNURL-Auth
+- [ ] Send to BIP 21
+- [ ] MoonPay fiat on-ramp
+- [ ] Swift bindings
+- [ ] Kotlin bindings
+- [ ] React-native bindings
+- [ ] Mobile Notifications
+- [ ] Offline receive via notifications
+- [ ] Spend all funds
+- [ ] Receive 0 amount invoice via LSP (unified QR)
+- [ ] Async payments
+- [ ] LDK support
+- [ ] Splicing
+- [ ] WebAssembly support
