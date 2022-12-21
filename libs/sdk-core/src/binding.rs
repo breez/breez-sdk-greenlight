@@ -13,6 +13,7 @@ use tokio::sync::mpsc;
 
 use crate::breez_services::BreezServices;
 use crate::invoice::LNInvoice;
+use crate::lnurl::withdraw::model::LnUrlWithdrawCallbackStatus;
 use crate::models::{
     Config, FeeratePreset, GreenlightCredentials, Network, NodeState, Payment, PaymentTypeFilter,
     SwapInfo,
@@ -21,6 +22,7 @@ use crate::models::{
 use crate::input_parser::InputType;
 use crate::invoice::{self};
 use crate::lnurl::pay::model::LnUrlPayResult;
+use crate::LnUrlWithdrawRequestData;
 use bip39::{Language, Mnemonic, Seed};
 
 static BREEZ_SERVICES_INSTANCE: OnceCell<Arc<BreezServices>> = OnceCell::new();
@@ -311,6 +313,20 @@ pub fn pay_lnurl(
     block_on(async {
         get_breez_services()?
             .pay_lnurl(user_amount_sat, comment, req_data)
+            .await
+    })
+}
+
+/// Second step of LNURL-withdraw. The first step is `parse()`, which also validates the LNURL destination
+/// and generates the `LnUrlW` payload needed here.
+pub fn withdraw_lnurl(
+    req_data: LnUrlWithdrawRequestData,
+    amount_sats: u64,
+    description: Option<String>,
+) -> Result<LnUrlWithdrawCallbackStatus> {
+    block_on(async {
+        get_breez_services()?
+            .withdraw_lnurl(req_data, amount_sats, description)
             .await
     })
 }

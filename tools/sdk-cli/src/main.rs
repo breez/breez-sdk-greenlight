@@ -14,6 +14,7 @@ use breez_sdk_core::{
 use env_logger::Env;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
+use breez_sdk_core::InputType::LnUrlWithdraw;
 
 fn get_seed() -> Vec<u8> {
     let filename = "phrase";
@@ -118,14 +119,14 @@ fn main() -> Result<()> {
                             description.to_string(),
                         ));
                     }
-                    Some("send_lnurl") => {
+                    Some("lnurl_pay") => {
                         let lnurl_endpoint =
                             rl.readline("Destination LNURL-pay or LN Address: ")?;
 
                         match binding::parse(lnurl_endpoint)? {
                             LnUrlPay { data: pd } => {
                                 let prompt = format!(
-                                    "Amount in sats (min {} sat, max {} sat: ",
+                                    "Amount to pay in sats (min {} sat, max {} sat: ",
                                     pd.min_sendable / 1000,
                                     pd.max_sendable / 1000
                                 );
@@ -135,10 +136,49 @@ fn main() -> Result<()> {
                                     binding::pay_lnurl(amount_sat.parse::<u64>()?, None, pd);
                                 show_results(pay_res);
                             }
-                            _ => {
-                                error!("Unexpected result type");
-                                break;
+                            _ => error!("Unexpected result type"),
+                        }
+                    }
+                    Some("lnurl_withdraw") => {
+                        let lnurl_endpoint = rl.readline("LNURL-withdraw link: ")?;
+
+                        match binding::parse(lnurl_endpoint)? {
+                            LnUrlWithdraw { data: wd } => {
+                                info!("Endpoint description: {}", wd.default_description);
+
+                                // Bounds for a withdrawal amount. Normally these would also consider NodeState params:
+                                // max can receive = min(maxWithdrawable, local estimation of how much can be routed into wallet)
+                                // min can receive = max(minWithdrawable, local minimal value allowed by wallet)
+                                // However, for simplicity, we just use the LNURL-withdraw min/max bounds
+                                let user_input_max_sat = wd.max_withdrawable / 1000;
+                                let user_input_min_sat = 2001;
+
+                                if user_input_max_sat < user_input_min_sat {
+                                    error!("The LNURLw endpoint needs to accept at least {} sats, but min / max withdrawable are {} sat / {} sat",
+                                        user_input_min_sat,
+                                        wd.min_withdrawable / 1000,
+                                        wd.max_withdrawable / 1000
+                                    );
+                                    break;
+                                }
+
+                                let prompt = format!(
+                                    "Amount to withdraw in sats (min {} sat, max {} sat: ",
+                                    user_input_min_sat, user_input_max_sat
+                                );
+                                let user_input_withdraw_amount_sat = rl.readline(&prompt)?;
+
+                                let amount_sats: u64 = user_input_withdraw_amount_sat.parse()?;
+                                let description = "LNURL-withdraw";
+
+                                let withdraw_res = binding::withdraw_lnurl(
+                                    wd,
+                                    amount_sats,
+                                    Some(description.into()),
+                                );
+                                show_results(withdraw_res);
                             }
+                            _ => error!("Unexpected result type"),
                         }
                     }
                     Some("send_payment") => {
@@ -289,9 +329,10 @@ LSP:
     list_lsps
 Payments:
     list_payments
+    lnurl_pay
+    lnurl_withdraw
     receive_onchain
     receive_payment
-    send_lnurl
     send_payment
     send_spontaneous_payment
     sweep

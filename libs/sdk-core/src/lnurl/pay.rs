@@ -1,5 +1,4 @@
 use crate::input_parser::*;
-use crate::input_parser::*;
 use crate::invoice::parse_invoice;
 use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 use crate::lnurl::pay::model::{CallbackResponse, ValidatedCallbackResponse};
@@ -13,9 +12,15 @@ pub(crate) async fn validate_lnurl_pay(
     comment: Option<String>,
     req_data: LnUrlPayRequestData,
 ) -> Result<ValidatedCallbackResponse> {
-    validate_user_input(user_amount_sat, &comment, &req_data)?;
+    validate_user_input(
+        user_amount_sat * 1000,
+        &comment,
+        req_data.min_sendable,
+        req_data.max_sendable,
+        req_data.comment_allowed,
+    )?;
 
-    let callback_url = build_callback_url(user_amount_sat, &comment, &req_data)?;
+    let callback_url = build_pay_callback_url(user_amount_sat, &comment, &req_data)?;
     let callback_resp_text = reqwest::get(&callback_url).await?.text().await?;
 
     if let Ok(err) = serde_json::from_str::<LnUrlErrorData>(&callback_resp_text) {
@@ -33,7 +38,7 @@ pub(crate) async fn validate_lnurl_pay(
     }
 }
 
-fn build_callback_url(
+fn build_pay_callback_url(
     user_amount_sat: u64,
     user_comment: &Option<String>,
     req_data: &LnUrlPayRequestData,
@@ -52,21 +57,23 @@ fn build_callback_url(
 }
 
 fn validate_user_input(
-    user_amount_sat: u64,
+    user_amount_msat: u64,
     comment: &Option<String>,
-    req_data: &LnUrlPayRequestData,
+    condition_min_amount_msat: u64,
+    condition_max_amount_msat: u64,
+    condition_max_comment_len: usize,
 ) -> Result<()> {
-    if user_amount_sat * 1000 < req_data.min_sendable {
+    if user_amount_msat < condition_min_amount_msat {
         return Err(anyhow!("Amount is smaller than the minimum allowed"));
     }
 
-    if user_amount_sat * 1000 > req_data.max_sendable {
+    if user_amount_msat > condition_max_amount_msat {
         return Err(anyhow!("Amount is bigger than the maximum allowed"));
     }
 
     match comment {
         None => Ok(()),
-        Some(msg) => match msg.len() <= req_data.comment_allowed as usize {
+        Some(msg) => match msg.len() <= condition_max_comment_len {
             true => Ok(()),
             false => Err(anyhow!(
                 "Comment is longer than the maximum allowed comment length"
@@ -202,13 +209,11 @@ pub(crate) mod model {
 
 #[cfg(test)]
 mod tests {
-    use crate::input_parser::*;
     use crate::lnurl::pay::model::{
         LnUrlPayResult, MessageSuccessActionData, SuccessAction, UrlSuccessActionData,
     };
     use crate::lnurl::pay::*;
     use anyhow::{anyhow, Result};
-    use mockito;
     use mockito::Mock;
 
     use crate::test_utils::{rand_invoice_with_description_hash, rand_string};
@@ -220,7 +225,7 @@ mod tests {
         error: Option<String>,
         pr: String,
     ) -> Result<Mock> {
-        let callback_url = build_callback_url(user_amount_sat, &None, pay_req)?;
+        let callback_url = build_pay_callback_url(user_amount_sat, &None, pay_req)?;
         let url = reqwest::Url::parse(&callback_url)?;
         let mockito_path: &str = &format!("{}?{}", url.path(), url.query().unwrap());
 
@@ -250,7 +255,7 @@ mod tests {
         user_amount_sat: u64,
         error: Option<String>,
     ) -> Result<Mock> {
-        let callback_url = build_callback_url(user_amount_sat, &None, pay_req)?;
+        let callback_url = build_pay_callback_url(user_amount_sat, &None, pay_req)?;
         let url = reqwest::Url::parse(&callback_url)?;
         let mockito_path: &str = &format!("{}?{}", url.path(), url.query().unwrap());
 
@@ -283,7 +288,7 @@ mod tests {
         error: Option<String>,
         pr: String,
     ) -> Result<Mock> {
-        let callback_url = build_callback_url(user_amount_sat, &None, pay_req)?;
+        let callback_url = build_pay_callback_url(user_amount_sat, &None, pay_req)?;
         let url = reqwest::Url::parse(&callback_url)?;
         let mockito_path: &str = &format!("{}?{}", url.path(), url.query().unwrap());
 
@@ -318,7 +323,7 @@ mod tests {
         error: Option<String>,
         pr: String,
     ) -> Result<Mock> {
-        let callback_url = build_callback_url(user_amount_sat, &None, pay_req)?;
+        let callback_url = build_pay_callback_url(user_amount_sat, &None, pay_req)?;
         let url = reqwest::Url::parse(&callback_url)?;
         let mockito_path: &str = &format!("{}?{}", url.path(), url.query().unwrap());
 
@@ -355,7 +360,7 @@ mod tests {
         LnUrlPayRequestData {
             min_sendable: min_sat * 1000,
             max_sendable: max_sat * 1000,
-            comment_allowed: comment_len as u64,
+            comment_allowed: comment_len,
             metadata_str: "".into(),
             callback: "https://localhost/callback".into(),
         }
@@ -363,20 +368,12 @@ mod tests {
 
     #[test]
     fn test_lnurl_pay_validate_input() -> Result<()> {
-        assert!(validate_user_input(100, &None, &get_test_pay_req_data(0, 100, 0)).is_ok());
-        assert!(
-            validate_user_input(100, &Some("test".into()), &get_test_pay_req_data(0, 100, 5))
-                .is_ok()
-        );
+        assert!(validate_user_input(100, &None, 0, 100, 0).is_ok());
+        assert!(validate_user_input(100, &Some("test".into()), 0, 100, 5).is_ok());
 
-        assert!(validate_user_input(5, &None, &get_test_pay_req_data(10, 100, 5)).is_err());
-        assert!(validate_user_input(200, &None, &get_test_pay_req_data(10, 100, 5)).is_err());
-        assert!(validate_user_input(
-            100,
-            &Some("test".into()),
-            &get_test_pay_req_data(10, 100, 0)
-        )
-        .is_err());
+        assert!(validate_user_input(5, &None, 10, 100, 5).is_err());
+        assert!(validate_user_input(200, &None, 10, 100, 5).is_err());
+        assert!(validate_user_input(100, &Some("test".into()), 10, 100, 0).is_err());
 
         Ok(())
     }
@@ -617,7 +614,7 @@ mod tests {
     }
 
     #[test]
-    fn test_lnurl_pay_build_callback_url() -> Result<()> {
+    fn test_lnurl_pay_build_pay_callback_url() -> Result<()> {
         let pay_req = get_test_pay_req_data(0, 100, 0);
         let user_amount_sat = 50;
 
@@ -625,12 +622,12 @@ mod tests {
         let user_comment = "test comment".to_string();
         let comment_arg = format!("comment={}", user_comment);
 
-        let url_amount_no_comment = build_callback_url(user_amount_sat, &None, &pay_req)?;
+        let url_amount_no_comment = build_pay_callback_url(user_amount_sat, &None, &pay_req)?;
         assert!(url_amount_no_comment.contains(&amount_arg));
         assert!(!url_amount_no_comment.contains(&comment_arg));
 
         let url_amount_with_comment =
-            build_callback_url(user_amount_sat, &Some(user_comment), &pay_req)?;
+            build_pay_callback_url(user_amount_sat, &Some(user_comment), &pay_req)?;
         assert!(url_amount_with_comment.contains(&amount_arg));
         assert!(url_amount_with_comment.contains("comment=test+comment"));
 

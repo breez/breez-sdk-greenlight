@@ -40,6 +40,7 @@ use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::lnurl::pay::model::MessageSuccessActionData;
 use crate::lnurl::pay::model::SuccessAction;
 use crate::lnurl::pay::model::UrlSuccessActionData;
+use crate::lnurl::withdraw::model::LnUrlWithdrawCallbackStatus;
 use crate::lsp::LspInformation;
 use crate::models::Config;
 use crate::models::FeeratePreset;
@@ -395,6 +396,26 @@ fn wire_pay_lnurl_impl(
         },
     )
 }
+fn wire_withdraw_lnurl_impl(
+    port_: MessagePort,
+    req_data: impl Wire2Api<LnUrlWithdrawRequestData> + UnwindSafe,
+    amount_sats: impl Wire2Api<u64> + UnwindSafe,
+    description: impl Wire2Api<Option<String>> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "withdraw_lnurl",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_req_data = req_data.wire2api();
+            let api_amount_sats = amount_sats.wire2api();
+            let api_description = description.wire2api();
+            move |task_callback| withdraw_lnurl(api_req_data, api_amount_sats, api_description)
+        },
+    )
+}
 fn wire_mnemonic_to_seed_impl(port_: MessagePort, phrase: impl Wire2Api<String> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -503,6 +524,11 @@ impl Wire2Api<u8> for u8 {
     }
 }
 
+impl Wire2Api<usize> for usize {
+    fn wire2api(self) -> usize {
+        self
+    }
+}
 // Section: impl IntoDart
 
 impl support::IntoDart for BitcoinAddressData {
@@ -639,6 +665,16 @@ impl support::IntoDart for LnUrlPayResult {
     }
 }
 impl support::IntoDartExceptPrimitive for LnUrlPayResult {}
+impl support::IntoDart for LnUrlWithdrawCallbackStatus {
+    fn into_dart(self) -> support::DartAbi {
+        match self {
+            Self::Ok => vec![0.into_dart()],
+            Self::Error(field0) => vec![1.into_dart(), field0.into_dart()],
+        }
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for LnUrlWithdrawCallbackStatus {}
 impl support::IntoDart for LnUrlWithdrawRequestData {
     fn into_dart(self) -> support::DartAbi {
         vec![

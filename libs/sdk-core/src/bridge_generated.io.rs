@@ -164,6 +164,16 @@ pub extern "C" fn wire_pay_lnurl(
 }
 
 #[no_mangle]
+pub extern "C" fn wire_withdraw_lnurl(
+    port_: i64,
+    req_data: *mut wire_LnUrlWithdrawRequestData,
+    amount_sats: u64,
+    description: *mut wire_uint_8_list,
+) {
+    wire_withdraw_lnurl_impl(port_, req_data, amount_sats, description)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_mnemonic_to_seed(port_: i64, phrase: *mut wire_uint_8_list) {
     wire_mnemonic_to_seed_impl(port_, phrase)
 }
@@ -188,6 +198,12 @@ pub extern "C" fn new_box_autoadd_i64_0(value: i64) -> *mut i64 {
 #[no_mangle]
 pub extern "C" fn new_box_autoadd_ln_url_pay_request_data_0() -> *mut wire_LnUrlPayRequestData {
     support::new_leak_box_ptr(wire_LnUrlPayRequestData::new_with_null_ptr())
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_autoadd_ln_url_withdraw_request_data_0(
+) -> *mut wire_LnUrlWithdrawRequestData {
+    support::new_leak_box_ptr(wire_LnUrlWithdrawRequestData::new_with_null_ptr())
 }
 
 #[no_mangle]
@@ -233,6 +249,12 @@ impl Wire2Api<LnUrlPayRequestData> for *mut wire_LnUrlPayRequestData {
         Wire2Api::<LnUrlPayRequestData>::wire2api(*wrap).into()
     }
 }
+impl Wire2Api<LnUrlWithdrawRequestData> for *mut wire_LnUrlWithdrawRequestData {
+    fn wire2api(self) -> LnUrlWithdrawRequestData {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<LnUrlWithdrawRequestData>::wire2api(*wrap).into()
+    }
+}
 
 impl Wire2Api<Config> for wire_Config {
     fn wire2api(self) -> Config {
@@ -267,6 +289,17 @@ impl Wire2Api<LnUrlPayRequestData> for wire_LnUrlPayRequestData {
         }
     }
 }
+impl Wire2Api<LnUrlWithdrawRequestData> for wire_LnUrlWithdrawRequestData {
+    fn wire2api(self) -> LnUrlWithdrawRequestData {
+        LnUrlWithdrawRequestData {
+            callback: self.callback.wire2api(),
+            k1: self.k1.wire2api(),
+            default_description: self.default_description.wire2api(),
+            min_withdrawable: self.min_withdrawable.wire2api(),
+            max_withdrawable: self.max_withdrawable.wire2api(),
+        }
+    }
+}
 
 impl Wire2Api<Vec<u8>> for *mut wire_uint_8_list {
     fn wire2api(self) -> Vec<u8> {
@@ -276,6 +309,7 @@ impl Wire2Api<Vec<u8>> for *mut wire_uint_8_list {
         }
     }
 }
+
 // Section: wire structs
 
 #[repr(C)]
@@ -303,7 +337,17 @@ pub struct wire_LnUrlPayRequestData {
     min_sendable: u64,
     max_sendable: u64,
     metadata_str: *mut wire_uint_8_list,
-    comment_allowed: u64,
+    comment_allowed: usize,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_LnUrlWithdrawRequestData {
+    callback: *mut wire_uint_8_list,
+    k1: *mut wire_uint_8_list,
+    default_description: *mut wire_uint_8_list,
+    min_withdrawable: u64,
+    max_withdrawable: u64,
 }
 
 #[repr(C)]
@@ -355,6 +399,18 @@ impl NewWithNullPtr for wire_LnUrlPayRequestData {
             max_sendable: Default::default(),
             metadata_str: core::ptr::null_mut(),
             comment_allowed: Default::default(),
+        }
+    }
+}
+
+impl NewWithNullPtr for wire_LnUrlWithdrawRequestData {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            callback: core::ptr::null_mut(),
+            k1: core::ptr::null_mut(),
+            default_description: core::ptr::null_mut(),
+            min_withdrawable: Default::default(),
+            max_withdrawable: Default::default(),
         }
     }
 }
