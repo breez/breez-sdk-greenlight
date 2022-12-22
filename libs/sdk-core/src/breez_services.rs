@@ -9,6 +9,8 @@ use crate::input_parser::LnUrlPayRequestData;
 use crate::invoice::{add_routing_hints, parse_invoice, LNInvoice, RouteHint, RouteHintHop};
 use crate::lnurl::pay::model::{LnUrlPayResult, ValidatedCallbackResponse};
 use crate::lnurl::pay::validate_lnurl_pay;
+use crate::lnurl::withdraw::model::LnUrlWithdrawCallbackStatus;
+use crate::lnurl::withdraw::validate_lnurl_withdraw;
 use crate::lsp::LspInformation;
 use crate::models::{
     parse_short_channel_id, Config, FeeratePreset, FiatAPI, GreenlightCredentials, LspAPI, Network,
@@ -16,7 +18,7 @@ use crate::models::{
 };
 use crate::persist::db::SqliteStorage;
 use crate::swap::BTCReceiveSwap;
-use crate::{lnurl, persist};
+use crate::{persist, LnUrlWithdrawRequestData};
 use anyhow::{anyhow, Result};
 use bip39::*;
 use core::time;
@@ -183,6 +185,18 @@ impl BreezServices {
                 })
             }
         }
+    }
+
+    pub async fn withdraw_lnurl(
+        &self,
+        req_data: LnUrlWithdrawRequestData,
+        amount_sats: u64,
+        description: Option<String>,
+    ) -> Result<LnUrlWithdrawCallbackStatus> {
+        let invoice = self
+            .receive_payment(amount_sats, description.unwrap_or_default())
+            .await?;
+        validate_lnurl_withdraw(req_data, invoice).await
     }
 
     pub async fn receive_payment(

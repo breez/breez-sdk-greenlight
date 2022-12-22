@@ -430,7 +430,7 @@ pub struct LnUrlPayRequestData {
     /// Use `metadata_vec()` to get the parsed items.
     #[serde(rename(deserialize = "metadata"))]
     pub metadata_str: String,
-    pub comment_allowed: u64,
+    pub comment_allowed: u16,
 }
 
 impl LnUrlPayRequestData {
@@ -447,8 +447,8 @@ pub struct LnUrlWithdrawRequestData {
     pub callback: String,
     pub k1: String,
     pub default_description: String,
-    pub min_withdrawable: u16,
-    pub max_withdrawable: u16,
+    pub min_withdrawable: u64,
+    pub max_withdrawable: u64,
 }
 
 #[derive(Deserialize, Debug)]

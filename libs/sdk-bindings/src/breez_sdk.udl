@@ -211,15 +211,21 @@ dictionary LnUrlPayRequestData {
     u64 min_sendable;
     u64 max_sendable; 
     string metadata_str;
-    u64 comment_allowed;
+    u16 comment_allowed;
 };
 
 dictionary LnUrlWithdrawRequestData {
     string callback;
     string k1;
     string default_description;
-    u16 min_withdrawable;
-    u16 max_withdrawable;
+    u64 min_withdrawable;
+    u64 max_withdrawable;
+};
+
+[Enum]
+interface LnUrlWithdrawCallbackStatus {
+    Ok();
+    ErrorStatus(LnUrlErrorData data);
 };
 
 dictionary LnUrlAuthRequestData {
@@ -256,6 +262,9 @@ interface BlockingBreezServices {
 
    [Throws=SDKError]
    LNInvoice receive_payment(u64 amount_sats, string description);
+
+   [Throws=SDKError]
+   LnUrlWithdrawCallbackStatus withdraw_lnurl(LnUrlWithdrawRequestData req_data, u64 amount_sats, string? description);
 
    [Throws=SDKError]
    NodeState? node_info();

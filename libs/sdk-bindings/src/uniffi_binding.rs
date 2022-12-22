@@ -7,9 +7,9 @@ use breez_sdk_core::{
     parse_invoice as sdk_parse_invoice, BitcoinAddressData, BreezEvent, BreezServices, Config,
     CurrencyInfo, EventListener, FeeratePreset, FiatCurrency, GreenlightCredentials, InputType,
     InvoicePaidDetails, LNInvoice, LnUrlAuthRequestData, LnUrlErrorData, LnUrlPayRequestData,
-    LnUrlRequestData, LnUrlWithdrawRequestData, LocaleOverrides, LocalizedName, LogEntry,
-    LspInformation, MetadataItem, Network, NodeState, Payment, PaymentTypeFilter, Rate, RouteHint,
-    RouteHintHop, SwapInfo, SwapStatus, Symbol,
+    LnUrlRequestData, LnUrlWithdrawCallbackStatus, LnUrlWithdrawRequestData, LocaleOverrides,
+    LocalizedName, LogEntry, LspInformation, MetadataItem, Network, NodeState, Payment,
+    PaymentTypeFilter, Rate, RouteHint, RouteHintHop, SwapInfo, SwapStatus, Symbol,
 };
 use log::Metadata;
 use log::Record;
@@ -174,6 +174,19 @@ impl BlockingBreezServices {
         rt().block_on(
             self.breez_services
                 .list_payments(filter, from_timestamp, to_timestamp),
+        )
+        .map_err(|e| e.into())
+    }
+
+    pub fn withdraw_lnurl(
+        &self,
+        req_data: LnUrlWithdrawRequestData,
+        amount_sats: u64,
+        description: Option<String>,
+    ) -> Result<LnUrlWithdrawCallbackStatus, SDKError> {
+        rt().block_on(
+            self.breez_services
+                .withdraw_lnurl(req_data, amount_sats, description),
         )
         .map_err(|e| e.into())
     }

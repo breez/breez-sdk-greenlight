@@ -29,5 +29,6 @@ pub use input_parser::{
 pub use invoice::{parse_invoice, LNInvoice, RouteHint, RouteHintHop};
 
 pub use lnurl::pay::model::LnUrlPayResult;
+pub use lnurl::withdraw::model::LnUrlWithdrawCallbackStatus;
 pub use lsp::LspInformation;
 pub use models::*;
