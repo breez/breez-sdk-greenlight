@@ -12,6 +12,17 @@ on:
 
 jobs:
 
+  fmt:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          cd libs
+          cargo fmt -- --check
+          cd ../tools/sdk-cli
+          cargo fmt -- --check
+
   build:
 
     runs-on: macOS-latest
