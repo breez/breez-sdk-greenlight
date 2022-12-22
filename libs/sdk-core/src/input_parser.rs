@@ -505,11 +505,17 @@ mod tests {
 
     #[tokio::test]
     async fn test_bitcoin_address() -> Result<()> {
-        assert!(matches!(
-            parse("1andreas3batLhQa2FawWjeyjCqyBzypd").await?,
-            InputType::BitcoinAddress { address: _ }
-        ));
-
+        for address in [
+            "1andreas3batLhQa2FawWjeyjCqyBzypd",
+            "12c6DSiU4Rq3P4ZxziKxzrL5LmMBrzjrJX",
+            "bc1qxhmdufsvnuaaaer4ynz88fspdsxq2h9e9cetdj",
+            "3CJ7cNxChpcUykQztFSqKFrMVQDN4zTTsp",
+        ] {
+            assert!(matches!(
+                parse(address).await?,
+                InputType::BitcoinAddress { address: _ }
+            ));
+        }
         Ok(())
     }
 
