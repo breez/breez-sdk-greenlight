@@ -68,7 +68,10 @@ pub(crate) mod model {
         Ok,
         /// On-wire format is: `{"status": "ERROR", "reason": "error details..."}`
         #[serde(rename = "ERROR")]
-        ErrorStatus { data: LnUrlErrorData },
+        ErrorStatus {
+            #[serde(flatten)]
+            data: LnUrlErrorData,
+        },
     }
 }
 
