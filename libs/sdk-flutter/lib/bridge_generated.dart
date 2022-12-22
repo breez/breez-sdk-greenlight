@@ -452,9 +452,9 @@ class LnUrlWithdrawCallbackStatus with _$LnUrlWithdrawCallbackStatus {
       LnUrlWithdrawCallbackStatus_Ok;
 
   /// On-wire format is: `{"status": "ERROR", "reason": "error details..."}`
-  const factory LnUrlWithdrawCallbackStatus.error(
-    LnUrlErrorData field0,
-  ) = LnUrlWithdrawCallbackStatus_Error;
+  const factory LnUrlWithdrawCallbackStatus.errorStatus({
+    required LnUrlErrorData data,
+  }) = LnUrlWithdrawCallbackStatus_ErrorStatus;
 }
 
 class LnUrlWithdrawRequestData {
@@ -1552,8 +1552,8 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       case 0:
         return LnUrlWithdrawCallbackStatus_Ok();
       case 1:
-        return LnUrlWithdrawCallbackStatus_Error(
-          _wire2api_box_autoadd_ln_url_error_data(raw[1]),
+        return LnUrlWithdrawCallbackStatus_ErrorStatus(
+          data: _wire2api_box_autoadd_ln_url_error_data(raw[1]),
         );
       default:
         throw Exception("unreachable");

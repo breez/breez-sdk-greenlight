@@ -669,7 +669,7 @@ impl support::IntoDart for LnUrlWithdrawCallbackStatus {
     fn into_dart(self) -> support::DartAbi {
         match self {
             Self::Ok => vec![0.into_dart()],
-            Self::Error(field0) => vec![1.into_dart(), field0.into_dart()],
+            Self::ErrorStatus { data } => vec![1.into_dart(), data.into_dart()],
         }
         .into_dart()
     }

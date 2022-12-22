@@ -24,9 +24,7 @@ pub(crate) async fn validate_lnurl_withdraw(
         )),
         _ => {
             let callback_url = build_withdraw_callback_url(&req_data, &invoice)?;
-            dbg!(&callback_url);
             let callback_resp_text = reqwest::get(&callback_url).await?.text().await?;
-            debug!("Callback response: {}", &callback_resp_text);
 
             serde_json::from_str::<LnUrlWithdrawCallbackStatus>(&callback_resp_text)
                 .map_err(|e| anyhow!(e))
@@ -45,7 +43,7 @@ fn build_withdraw_callback_url(
 
     let mut callback_url = url.to_string();
     callback_url = maybe_replace_host_with_mockito_test_host(callback_url)?;
-    Result::Ok(callback_url)
+    Ok(callback_url)
 }
 
 pub(crate) mod model {
@@ -69,7 +67,8 @@ pub(crate) mod model {
         /// On-wire format is: `{"status": "OK"}`
         Ok,
         /// On-wire format is: `{"status": "ERROR", "reason": "error details..."}`
-        Error(LnUrlErrorData),
+        #[serde(rename = "ERROR")]
+        ErrorStatus { data: LnUrlErrorData },
     }
 }
 
@@ -159,7 +158,7 @@ mod tests {
 
         assert!(matches!(
             validate_lnurl_withdraw(withdraw_req, invoice).await?,
-            LnUrlWithdrawCallbackStatus::Error(_)
+            LnUrlWithdrawCallbackStatus::ErrorStatus { data: _ }
         ));
 
         Ok(())
