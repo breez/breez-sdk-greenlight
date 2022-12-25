@@ -1,6 +1,6 @@
 use crate::invoice::parse_invoice;
 use crate::models::{
-    Config, FeeratePreset, GreenlightCredentials, Network, NodeAPI, NodeState, SyncResponse,
+    self, Config, FeeratePreset, GreenlightCredentials, Network, NodeAPI, NodeState, SyncResponse,
 };
 
 use anyhow::{anyhow, Result};
@@ -513,10 +513,69 @@ impl From<pb::Channel> for crate::models::Channel {
 
         return crate::models::Channel {
             short_channel_id: c.short_channel_id,
-            state: state,
+            state,
             funding_txid: c.funding_txid,
             spendable_msat: amount_to_msat(parse_amount(c.spendable).unwrap_or_default()),
             receivable_msat: amount_to_msat(parse_amount(c.receivable).unwrap_or_default()),
         };
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::models;
+    use anyhow::anyhow;
+    use anyhow::Result;
+    use gl_client::pb;
+
+    #[test]
+    fn test_channel_states() -> Result<()> {
+        for s in vec!["OPENINGD", "CHANNELD_AWAITING_LOCKIN"] {
+            let c: models::Channel = gl_channel(s).into();
+            assert_eq!(c.state, models::ChannelState::PendingOpen);
+        }
+        for s in vec!["CHANNELD_NORMAL"] {
+            let c: models::Channel = gl_channel(s).into();
+            assert_eq!(c.state, models::ChannelState::Opened);
+        }
+        for s in vec![
+            "CHANNELD_SHUTTING_DOWN",
+            "CLOSINGD_SIGEXCHANGE",
+            "CLOSINGD_COMPLETE",
+            "AWAITING_UNILATERAL",
+            "FUNDING_SPEND_SEEN",
+            "ONCHAIN",
+        ] {
+            let c: models::Channel = gl_channel(s).into();
+            assert_eq!(c.state, models::ChannelState::PendingClose);
+        }
+        for s in vec!["CLOSED"] {
+            let c: models::Channel = gl_channel(s).into();
+            assert_eq!(c.state, models::ChannelState::Closed);
+        }
+        Ok(())
+        //let c =
+    }
+
+    fn gl_channel(state: &str) -> pb::Channel {
+        pb::Channel {
+            state: state.to_string(),
+            owner: "".to_string(),
+            short_channel_id: "".to_string(),
+            direction: 0,
+            channel_id: "".to_string(),
+            funding_txid: "".to_string(),
+            close_to_addr: "".to_string(),
+            close_to: "".to_string(),
+            private: true,
+            total: "1000msat".to_string(),
+            dust_limit: "10msat".to_string(),
+            spendable: "20msat".to_string(),
+            receivable: "960msat".to_string(),
+            their_to_self_delay: 144,
+            our_to_self_delay: 144,
+            status: vec![],
+            htlcs: vec![],
+        }
     }
 }
