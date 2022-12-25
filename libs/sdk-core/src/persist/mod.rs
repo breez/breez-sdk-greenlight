@@ -6,9 +6,12 @@ pub(crate) mod swap;
 pub(crate) mod transactions;
 
 mod test_utils {
+    use rand::Rng;
+
     pub fn create_test_sql_file(suffix: String) -> String {
         let mut tmp_file = std::env::temp_dir();
-        tmp_file.push(format!("test_{}.sql", suffix));
+        let mut rng = rand::thread_rng();
+        tmp_file.push(format!("test_{}{}.sql", suffix, rng.gen::<u32>()));
         let path = tmp_file.as_path();
         if path.exists() {
             std::fs::remove_file(path).unwrap();

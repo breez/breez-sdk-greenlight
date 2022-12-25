@@ -754,7 +754,10 @@ pub(crate) mod test {
     use crate::breez_services::{BreezServices, BreezServicesBuilder, Config};
     use crate::chain::MempoolSpace;
     use crate::fiat::Rate;
-    use crate::models::{NodeState, Payment, PaymentTypeFilter};
+    use crate::models::{
+        ClosesChannelPaymentDetails, LnPaymentDetails, NodeState, Payment, PaymentDetails,
+        PaymentTypeFilter,
+    };
     use crate::persist;
     use crate::test_utils::*;
 
@@ -775,32 +778,42 @@ pub(crate) mod test {
 
         let dummy_transactions = vec![
             Payment {
+                id: "1111".to_string(),
                 payment_type: crate::models::PAYMENT_TYPE_RECEIVED.to_string(),
-                payment_hash: "1111".to_string(),
                 payment_time: 100000,
-                label: "".to_string(),
-                destination_pubkey: "1111".to_string(),
                 amount_msat: 10,
-                fees_msat: 0,
-                payment_preimage: "2222".to_string(),
-                keysend: false,
-                bolt11: "1111".to_string(),
+                fee_msat: 0,
                 pending: false,
                 description: Some("test receive".to_string()),
+                details: PaymentDetails::Ln {
+                    data: LnPaymentDetails {
+                        payment_hash: "1111".to_string(),
+                        label: "".to_string(),
+                        destination_pubkey: "1111".to_string(),
+                        payment_preimage: "2222".to_string(),
+                        keysend: false,
+                        bolt11: "1111".to_string(),
+                    },
+                },
             },
             Payment {
+                id: "3333".to_string(),
                 payment_type: crate::models::PAYMENT_TYPE_SENT.to_string(),
-                payment_hash: "3333".to_string(),
                 payment_time: 200000,
-                label: "".to_string(),
-                destination_pubkey: "123".to_string(),
                 amount_msat: 8,
-                fees_msat: 2,
-                payment_preimage: "4444".to_string(),
-                keysend: false,
-                bolt11: "123".to_string(),
+                fee_msat: 2,
                 pending: false,
                 description: Some("test payment".to_string()),
+                details: PaymentDetails::Ln {
+                    data: LnPaymentDetails {
+                        payment_hash: "3333".to_string(),
+                        label: "".to_string(),
+                        destination_pubkey: "123".to_string(),
+                        payment_preimage: "4444".to_string(),
+                        keysend: false,
+                        bolt11: "123".to_string(),
+                    },
+                },
             },
         ];
         let node_api = Arc::new(MockNodeAPI {

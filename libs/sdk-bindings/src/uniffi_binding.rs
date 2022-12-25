@@ -4,11 +4,12 @@ use anyhow::{anyhow, Result};
 
 use breez_sdk_core::{
     mnemonic_to_seed as sdk_mnemonic_to_seed, parse as sdk_parse_input,
-    parse_invoice as sdk_parse_invoice, BitcoinAddressData, BreezEvent, BreezServices, Config,
-    CurrencyInfo, EventListener, FeeratePreset, FiatCurrency, GreenlightCredentials, InputType,
-    InvoicePaidDetails, LNInvoice, LnUrlAuthRequestData, LnUrlErrorData, LnUrlPayRequestData,
-    LnUrlRequestData, LnUrlWithdrawCallbackStatus, LnUrlWithdrawRequestData, LocaleOverrides,
-    LocalizedName, LogEntry, LspInformation, MetadataItem, Network, NodeState, Payment,
+    parse_invoice as sdk_parse_invoice, BitcoinAddressData, BreezEvent, BreezServices,
+    ChannelState, ClosesChannelPaymentDetails, Config, CurrencyInfo, EventListener, FeeratePreset,
+    FiatCurrency, GreenlightCredentials, InputType, InvoicePaidDetails, LNInvoice,
+    LnPaymentDetails, LnUrlAuthRequestData, LnUrlErrorData, LnUrlPayRequestData, LnUrlRequestData,
+    LnUrlWithdrawCallbackStatus, LnUrlWithdrawRequestData, LocaleOverrides, LocalizedName,
+    LogEntry, LspInformation, MetadataItem, Network, NodeState, Payment, PaymentDetails,
     PaymentTypeFilter, Rate, RouteHint, RouteHintHop, SwapInfo, SwapStatus, Symbol,
 };
 use log::Metadata;

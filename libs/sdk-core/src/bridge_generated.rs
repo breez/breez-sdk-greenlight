@@ -42,13 +42,17 @@ use crate::lnurl::pay::model::SuccessAction;
 use crate::lnurl::pay::model::UrlSuccessActionData;
 use crate::lnurl::withdraw::model::LnUrlWithdrawCallbackStatus;
 use crate::lsp::LspInformation;
+use crate::models::ChannelState;
+use crate::models::ClosesChannelPaymentDetails;
 use crate::models::Config;
 use crate::models::FeeratePreset;
 use crate::models::GreenlightCredentials;
+use crate::models::LnPaymentDetails;
 use crate::models::LogEntry;
 use crate::models::Network;
 use crate::models::NodeState;
 use crate::models::Payment;
+use crate::models::PaymentDetails;
 use crate::models::PaymentTypeFilter;
 use crate::models::SwapInfo;
 use crate::models::SwapStatus;
@@ -555,6 +559,29 @@ impl support::IntoDart for BreezEvent {
     }
 }
 impl support::IntoDartExceptPrimitive for BreezEvent {}
+impl support::IntoDart for ChannelState {
+    fn into_dart(self) -> support::DartAbi {
+        match self {
+            Self::PendingOpen => 0,
+            Self::Opened => 1,
+            Self::PendingClose => 2,
+            Self::Closed => 3,
+        }
+        .into_dart()
+    }
+}
+impl support::IntoDart for ClosesChannelPaymentDetails {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.short_channel_id.into_dart(),
+            self.state.into_dart(),
+            self.funding_txid.into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for ClosesChannelPaymentDetails {}
+
 impl support::IntoDart for CurrencyInfo {
     fn into_dart(self) -> support::DartAbi {
         vec![
@@ -626,6 +653,21 @@ impl support::IntoDart for LNInvoice {
     }
 }
 impl support::IntoDartExceptPrimitive for LNInvoice {}
+
+impl support::IntoDart for LnPaymentDetails {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.payment_hash.into_dart(),
+            self.label.into_dart(),
+            self.destination_pubkey.into_dart(),
+            self.payment_preimage.into_dart(),
+            self.keysend.into_dart(),
+            self.bolt11.into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for LnPaymentDetails {}
 
 impl support::IntoDart for LnUrlAuthRequestData {
     fn into_dart(self) -> support::DartAbi {
@@ -779,24 +821,30 @@ impl support::IntoDartExceptPrimitive for NodeState {}
 impl support::IntoDart for Payment {
     fn into_dart(self) -> support::DartAbi {
         vec![
+            self.id.into_dart(),
             self.payment_type.into_dart(),
-            self.payment_hash.into_dart(),
             self.payment_time.into_dart(),
-            self.label.into_dart(),
-            self.destination_pubkey.into_dart(),
             self.amount_msat.into_dart(),
-            self.fees_msat.into_dart(),
-            self.payment_preimage.into_dart(),
-            self.keysend.into_dart(),
-            self.bolt11.into_dart(),
+            self.fee_msat.into_dart(),
             self.pending.into_dart(),
             self.description.into_dart(),
+            self.details.into_dart(),
         ]
         .into_dart()
     }
 }
 impl support::IntoDartExceptPrimitive for Payment {}
 
+impl support::IntoDart for PaymentDetails {
+    fn into_dart(self) -> support::DartAbi {
+        match self {
+            Self::Ln { data } => vec![0.into_dart(), data.into_dart()],
+            Self::ClosedChannel { data } => vec![1.into_dart(), data.into_dart()],
+        }
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for PaymentDetails {}
 impl support::IntoDart for Rate {
     fn into_dart(self) -> support::DartAbi {
         vec![self.coin.into_dart(), self.value.into_dart()].into_dart()

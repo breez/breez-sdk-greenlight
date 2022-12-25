@@ -16,6 +16,7 @@ use crate::models::Network::*;
 
 pub const PAYMENT_TYPE_SENT: &str = "sent";
 pub const PAYMENT_TYPE_RECEIVED: &str = "received";
+pub const PAYMENT_TYPE_CLOSED_CHANNEL: &str = "closed_channel";
 
 #[tonic::async_trait]
 pub trait NodeAPI: Send + Sync {
@@ -204,18 +205,44 @@ pub struct SyncResponse {
 
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub struct Payment {
+    pub id: String,
     pub payment_type: String,
-    pub payment_hash: String,
     pub payment_time: i64,
+    pub amount_msat: i32,
+    pub fee_msat: i32,
+    pub pending: bool,
+    pub description: Option<String>,
+    pub details: PaymentDetails,
+}
+
+#[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
+#[serde(untagged)]
+pub enum PaymentDetails {
+    Ln {
+        #[serde(flatten)]
+        data: LnPaymentDetails,
+    },
+    ClosedChannel {
+        #[serde(flatten)]
+        data: ClosesChannelPaymentDetails,
+    },
+}
+
+#[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
+pub struct LnPaymentDetails {
+    pub payment_hash: String,
     pub label: String,
     pub destination_pubkey: String,
-    pub amount_msat: i32,
-    pub fees_msat: i32,
     pub payment_preimage: String,
     pub keysend: bool,
     pub bolt11: String,
-    pub pending: bool,
-    pub description: Option<String>,
+}
+
+#[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
+pub struct ClosesChannelPaymentDetails {
+    pub short_channel_id: String,
+    pub state: ChannelState,
+    pub funding_txid: String,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -227,7 +254,7 @@ pub struct Channel {
     pub receivable_msat: u64,
 }
 
-#[derive(Clone, PartialEq, Eq, Debug, EnumString, Display)]
+#[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
 pub enum ChannelState {
     PendingOpen,
     Opened,

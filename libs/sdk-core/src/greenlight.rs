@@ -1,6 +1,7 @@
 use crate::invoice::parse_invoice;
 use crate::models::{
-    self, Config, FeeratePreset, GreenlightCredentials, Network, NodeAPI, NodeState, SyncResponse,
+    Config, FeeratePreset, GreenlightCredentials, LnPaymentDetails, Network, NodeAPI, NodeState,
+    PaymentDetails, SyncResponse,
 };
 
 use anyhow::{anyhow, Result};
@@ -419,18 +420,23 @@ fn invoice_to_transaction(
 ) -> Result<crate::models::Payment> {
     let ln_invoice = parse_invoice(&invoice.bolt11)?;
     Ok(crate::models::Payment {
+        id: hex::encode(invoice.payment_hash.clone()),
         payment_type: crate::models::PAYMENT_TYPE_RECEIVED.to_string(),
-        payment_hash: hex::encode(invoice.payment_hash),
         payment_time: invoice.payment_time as i64,
-        label: invoice.label,
-        destination_pubkey: node_pubkey,
         amount_msat: amount_to_msat(invoice.amount.unwrap_or_default()) as i32,
-        fees_msat: 0,
-        payment_preimage: hex::encode(invoice.payment_preimage),
-        keysend: false,
-        bolt11: invoice.bolt11,
+        fee_msat: 0,
         pending: false,
         description: ln_invoice.description,
+        details: PaymentDetails::Ln {
+            data: LnPaymentDetails {
+                payment_hash: hex::encode(invoice.payment_hash),
+                label: invoice.label,
+                destination_pubkey: node_pubkey,
+                payment_preimage: hex::encode(invoice.payment_preimage),
+                keysend: false,
+                bolt11: invoice.bolt11,
+            },
+        },
     })
 }
 
@@ -445,18 +451,23 @@ fn payment_to_transaction(payment: pb::Payment) -> Result<crate::models::Payment
     let payment_amount_sent = amount_to_msat(payment.amount_sent.unwrap_or_default()) as i32;
 
     Ok(crate::models::Payment {
+        id: hex::encode(payment.payment_hash.clone()),
         payment_type: crate::models::PAYMENT_TYPE_SENT.to_string(),
-        payment_hash: hex::encode(payment.payment_hash),
         payment_time: payment.created_at as i64,
-        label: "".to_string(),
-        destination_pubkey: hex::encode(payment.destination),
         amount_msat: payment_amount,
-        fees_msat: payment_amount - payment_amount_sent,
-        payment_preimage: hex::encode(payment.payment_preimage),
-        keysend: payment.bolt11.is_empty(),
-        bolt11: payment.bolt11,
+        fee_msat: payment_amount - payment_amount_sent,
         pending: pb::PayStatus::from_i32(payment.status) == Some(pb::PayStatus::Pending),
         description,
+        details: PaymentDetails::Ln {
+            data: LnPaymentDetails {
+                payment_hash: hex::encode(payment.payment_hash),
+                label: "".to_string(),
+                destination_pubkey: hex::encode(payment.destination),
+                payment_preimage: hex::encode(payment.payment_preimage),
+                keysend: payment.bolt11.is_empty(),
+                bolt11: payment.bolt11,
+            },
+        },
     })
 }
 
