@@ -4,6 +4,8 @@ use gl_client::pb::WithdrawResponse;
 use gl_client::pb::{CloseChannelResponse, Invoice};
 use lightning_invoice::RawInvoice;
 use serde::{Deserialize, Serialize};
+use strum_macros::Display;
+use strum_macros::EnumString;
 use tokio::sync::mpsc;
 use tonic::Streaming;
 
@@ -197,6 +199,7 @@ pub struct NodeState {
 pub struct SyncResponse {
     pub node_state: NodeState,
     pub payments: Vec<crate::models::Payment>,
+    pub channels: Vec<crate::models::Channel>,
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]
@@ -213,6 +216,23 @@ pub struct Payment {
     pub bolt11: String,
     pub pending: bool,
     pub description: Option<String>,
+}
+
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct Channel {
+    pub funding_txid: String,
+    pub short_channel_id: String,
+    pub state: ChannelState,
+    pub spendable_msat: u64,
+    pub receivable_msat: u64,
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, EnumString, Display)]
+pub enum ChannelState {
+    PendingOpen,
+    Opened,
+    PendingClose,
+    Closed,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]

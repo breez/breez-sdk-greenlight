@@ -178,6 +178,7 @@ impl NodeAPI for MockNodeAPI {
         Ok(SyncResponse {
             node_state: self.node_state.clone(),
             payments: self.transactions.clone(),
+            channels: Vec::new(),
         })
     }
 

@@ -301,6 +301,7 @@ impl BreezServices {
         );
         self.persister.set_node_state(&new_data.node_state)?;
         self.persister.insert_payments(&new_data.payments)?;
+        self.persister.update_channels(&new_data.channels)?;
         Ok(())
     }
 

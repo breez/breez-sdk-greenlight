@@ -15,8 +15,9 @@ impl SqliteStorage {
     }
 
     pub fn init(&self) -> Result<()> {
-        let migrations = Migrations::new(vec![M::up(
-            "CREATE TABLE IF NOT EXISTS payments (
+        let migrations = Migrations::new(vec![
+            M::up(
+                "CREATE TABLE IF NOT EXISTS payments (
                payment_type TEXT NOT NULL check( payment_type in('sent', 'received')),
                payment_hash TEXT NOT NULL PRIMARY KEY,
                payment_time INTEGER NOT NULL,
@@ -59,7 +60,17 @@ impl SqliteStorage {
                confirmed_tx_ids TEXT NOT NULL
              ) STRICT;
         ",
-        )]);
+            ),
+            M::up("
+             CREATE TABLE channels (
+              funding_txid TEXT NOT NULL PRIMARY KEY,
+              short_channel_id TEXT,
+              state TEXT NOT NULL check( state in('PendingOpen', 'Opened', 'PendingClose', 'Closed')),
+              spendable_msat INTEGER NOT NULL,
+              receivable_msat INTEGER NOT NULL
+             )
+            "),
+        ]);
 
         let mut conn = self.get_connection()?;
         migrations

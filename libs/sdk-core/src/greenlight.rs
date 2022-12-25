@@ -256,6 +256,7 @@ impl NodeAPI for Greenlight {
             node_state,
             payments: pull_transactions(node_pubkey.clone(), since_timestamp, client.clone())
                 .await?,
+            channels: all_channels.clone().into_iter().map(|c| c.into()).collect(),
         })
     }
 
@@ -499,4 +500,23 @@ fn parse_amount(amount_str: String) -> Result<pb::Amount> {
     };
 
     Ok(pb::Amount { unit: Some(unit) })
+}
+
+impl From<pb::Channel> for crate::models::Channel {
+    fn from(c: pb::Channel) -> Self {
+        let state = match c.state.as_str() {
+            "OPENINGD" | "CHANNELD_AWAITING_LOCKIN" => crate::models::ChannelState::PendingOpen,
+            "CHANNELD_NORMAL" => crate::models::ChannelState::Opened,
+            "CLOSED" => crate::models::ChannelState::Closed,
+            _ => crate::models::ChannelState::PendingClose,
+        };
+
+        return crate::models::Channel {
+            short_channel_id: c.short_channel_id,
+            state: state,
+            funding_txid: c.funding_txid,
+            spendable_msat: amount_to_msat(parse_amount(c.spendable).unwrap_or_default()),
+            receivable_msat: amount_to_msat(parse_amount(c.receivable).unwrap_or_default()),
+        };
+    }
 }

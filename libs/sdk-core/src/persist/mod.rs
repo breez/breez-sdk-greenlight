@@ -1,4 +1,5 @@
 pub(crate) mod cache;
+pub(crate) mod channels;
 pub(crate) mod db;
 pub(crate) mod settings;
 pub(crate) mod swap;
