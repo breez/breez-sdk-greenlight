@@ -208,8 +208,8 @@ pub struct Payment {
     pub id: String,
     pub payment_type: String,
     pub payment_time: i64,
-    pub amount_msat: i32,
-    pub fee_msat: i32,
+    pub amount_msat: i64,
+    pub fee_msat: i64,
     pub pending: bool,
     pub description: Option<String>,
     pub details: PaymentDetails,
@@ -252,6 +252,7 @@ pub struct Channel {
     pub state: ChannelState,
     pub spendable_msat: u64,
     pub receivable_msat: u64,
+    pub closed_at: Option<u64>,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]

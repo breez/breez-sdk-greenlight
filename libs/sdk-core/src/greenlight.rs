@@ -423,7 +423,7 @@ fn invoice_to_transaction(
         id: hex::encode(invoice.payment_hash.clone()),
         payment_type: crate::models::PAYMENT_TYPE_RECEIVED.to_string(),
         payment_time: invoice.payment_time as i64,
-        amount_msat: amount_to_msat(invoice.amount.unwrap_or_default()) as i32,
+        amount_msat: amount_to_msat(invoice.amount.unwrap_or_default()) as i64,
         fee_msat: 0,
         pending: false,
         description: ln_invoice.description,
@@ -447,8 +447,8 @@ fn payment_to_transaction(payment: pb::Payment) -> Result<crate::models::Payment
         description = parse_invoice(&payment.bolt11)?.description;
     }
 
-    let payment_amount = amount_to_msat(payment.amount.unwrap_or_default()) as i32;
-    let payment_amount_sent = amount_to_msat(payment.amount_sent.unwrap_or_default()) as i32;
+    let payment_amount = amount_to_msat(payment.amount.unwrap_or_default()) as i64;
+    let payment_amount_sent = amount_to_msat(payment.amount_sent.unwrap_or_default()) as i64;
 
     Ok(crate::models::Payment {
         id: hex::encode(payment.payment_hash.clone()),
@@ -528,6 +528,7 @@ impl From<pb::Channel> for crate::models::Channel {
             funding_txid: c.funding_txid,
             spendable_msat: amount_to_msat(parse_amount(c.spendable).unwrap_or_default()),
             receivable_msat: amount_to_msat(parse_amount(c.receivable).unwrap_or_default()),
+            closed_at: None,
         };
     }
 }
