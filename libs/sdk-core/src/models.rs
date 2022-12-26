@@ -14,9 +14,12 @@ use crate::grpc::{PaymentInformation, RegisterPaymentReply};
 use crate::lsp::LspInformation;
 use crate::models::Network::*;
 
-pub const PAYMENT_TYPE_SENT: &str = "sent";
-pub const PAYMENT_TYPE_RECEIVED: &str = "received";
-pub const PAYMENT_TYPE_CLOSED_CHANNEL: &str = "closed_channel";
+#[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
+pub enum PaymentType {
+    Sent,
+    Received,
+    ClosedChannel,
+}
 
 #[tonic::async_trait]
 pub trait NodeAPI: Send + Sync {
@@ -206,7 +209,7 @@ pub struct SyncResponse {
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub struct Payment {
     pub id: String,
-    pub payment_type: String,
+    pub payment_type: PaymentType,
     pub payment_time: i64,
     pub amount_msat: i64,
     pub fee_msat: i64,

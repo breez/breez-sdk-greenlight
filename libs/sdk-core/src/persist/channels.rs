@@ -86,7 +86,7 @@ impl SqliteStorage {
                    state,
                    spendable_msat, 
                    receivable_msat,
-                   closed_at    
+                   closed_at
                   )
                   VALUES (?1,?2,?3,?4,?5,?6)
                   ON CONFLICT(funding_txid) DO UPDATE SET
@@ -95,13 +95,13 @@ impl SqliteStorage {
                    spendable_msat=excluded.spendable_msat,
                    receivable_msat=excluded.receivable_msat,
                    closed_at = unixepoch()    
-                  WHERE closed_at is null and state in ('PendingClose', 'Closed') OR excluded.state in ('PendingClose', 'Closed')
+                  WHERE closed_at IS NULL AND excluded.state IN ('PendingClose', 'Closed')
                   ON CONFLICT(funding_txid) DO UPDATE SET
                    short_channel_id=excluded.short_channel_id,
                    state=excluded.state,
                    spendable_msat=excluded.spendable_msat,
                    receivable_msat=excluded.receivable_msat                            
-                  WHERE closed_at is not null
+                  WHERE closed_at IS NOT NULL
 
                ",
             (
@@ -111,9 +111,9 @@ impl SqliteStorage {
                 c.spendable_msat,
                 c.receivable_msat,
                 match c.state {
-                 ChannelState::Opened | ChannelState::PendingOpen => None,
-                 _ => Some(SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs())
-                }
+                    ChannelState::Opened | ChannelState::PendingOpen => None,
+                    _ => Some(SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs()),
+                },
             ),
         )?;
         Ok(())
@@ -145,6 +145,10 @@ fn test_simple_sync_channels() {
             closed_at: None,
         },
     ];
+
+    storage.update_channels(&channels).unwrap();
+    let queried_channels = storage.list_channels().unwrap();
+    assert_eq!(channels, queried_channels);
 
     storage.update_channels(&channels).unwrap();
     let queried_channels = storage.list_channels().unwrap();
@@ -182,6 +186,10 @@ fn test_sync_closed_channels() {
     assert_eq!(2, queried_channels.len());
     assert_eq!(channels[0], queried_channels[0]);
     assert!(queried_channels[1].closed_at != None);
+
+    storage.update_channels(&channels).unwrap();
+    let queried_channels = storage.list_channels().unwrap();
+    assert_eq!(channels[0], queried_channels[0]);
 
     // test all channels were closed
     storage.update_channels(&Vec::new()).unwrap();

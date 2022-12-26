@@ -623,7 +623,7 @@ class NodeState {
 
 class Payment {
   final String id;
-  final String paymentType;
+  final PaymentType paymentType;
   final int paymentTime;
   final int amountMsat;
   final int feeMsat;
@@ -651,6 +651,12 @@ class PaymentDetails with _$PaymentDetails {
   const factory PaymentDetails.closedChannel({
     required ClosesChannelPaymentDetails data,
   }) = PaymentDetails_ClosedChannel;
+}
+
+enum PaymentType {
+  Sent,
+  Received,
+  ClosedChannel,
 }
 
 enum PaymentTypeFilter {
@@ -1779,10 +1785,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
     return Payment(
       id: _wire2api_String(arr[0]),
-      paymentType: _wire2api_String(arr[1]),
+      paymentType: _wire2api_payment_type(arr[1]),
       paymentTime: _wire2api_i64(arr[2]),
-      amountMsat: _wire2api_i32(arr[3]),
-      feeMsat: _wire2api_i32(arr[4]),
+      amountMsat: _wire2api_i64(arr[3]),
+      feeMsat: _wire2api_i64(arr[4]),
       pending: _wire2api_bool(arr[5]),
       description: _wire2api_opt_String(arr[6]),
       details: _wire2api_payment_details(arr[7]),
@@ -1802,6 +1808,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       default:
         throw Exception("unreachable");
     }
+  }
+
+  PaymentType _wire2api_payment_type(dynamic raw) {
+    return PaymentType.values[raw];
   }
 
   Rate _wire2api_rate(dynamic raw) {

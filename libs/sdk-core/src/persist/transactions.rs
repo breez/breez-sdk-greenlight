@@ -1,9 +1,14 @@
 use super::db::SqliteStorage;
-use crate::models::PaymentTypeFilter;
 use crate::models::{Payment, PaymentDetails};
-use crate::LnPaymentDetails;
+use crate::models::{PaymentType, PaymentTypeFilter};
 use anyhow::Result;
 use rusqlite::types::{FromSql, FromSqlError, ToSql, ToSqlOutput};
+use std::{
+    fmt::format,
+    str::FromStr,
+    time::{SystemTime, UNIX_EPOCH},
+    vec,
+};
 
 impl SqliteStorage {
     pub fn insert_payments(&self, transactions: &[Payment]) -> Result<()> {
@@ -27,7 +32,7 @@ impl SqliteStorage {
         for ln_tx in transactions {
             _ = prep_statment.execute((
                 &ln_tx.id,
-                &ln_tx.payment_type,
+                &ln_tx.payment_type.to_string(),
                 &ln_tx.payment_time,
                 &ln_tx.amount_msat,
                 &ln_tx.fee_msat,
@@ -76,9 +81,10 @@ impl SqliteStorage {
 
         let vec: Vec<Payment> = stmt
             .query_map([], |row| {
+                let payment_type_str: String = row.get(1)?;
                 Ok(Payment {
                     id: row.get(0)?,
-                    payment_type: row.get(1)?,
+                    payment_type: PaymentType::from_str(payment_type_str.as_str()).unwrap(),
                     payment_time: row.get(2)?,
                     amount_msat: row.get(3)?,
                     fee_msat: row.get(4)?,
@@ -115,10 +121,14 @@ fn filter_to_where_clause(
     };
     match type_filter {
         PaymentTypeFilter::Sent => {
-            where_clause.push("payment_type = 'sent' ".to_string());
+            where_clause.push(format!(
+                "payment_type in ('{}','{}') ",
+                PaymentType::Sent,
+                PaymentType::ClosedChannel
+            ));
         }
         PaymentTypeFilter::Received => {
-            where_clause.push("payment_type = 'received' ".to_string());
+            where_clause.push(format!("payment_type = '{}' ", PaymentType::Received));
         }
         PaymentTypeFilter::All => (),
     }
@@ -153,7 +163,7 @@ fn test_ln_transactions() {
     let txs = [
         Payment {
             id: "123".to_string(),
-            payment_type: "sent".to_string(),
+            payment_type: PaymentType::Sent,
             payment_time: 1001,
             amount_msat: 100,
             fee_msat: 20,
@@ -172,7 +182,7 @@ fn test_ln_transactions() {
         },
         Payment {
             id: "124".to_string(),
-            payment_type: "received".to_string(),
+            payment_type: PaymentType::Received,
             payment_time: 1000,
             amount_msat: 100,
             fee_msat: 20,

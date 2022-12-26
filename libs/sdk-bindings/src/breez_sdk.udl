@@ -70,9 +70,15 @@ enum PaymentTypeFilter {
     "All",
 };
 
+enum PaymentType {
+    "Sent",
+    "Received",
+    "ClosedChannel"
+};
+
 dictionary Payment {
     string id;
-    string payment_type;    
+    PaymentType payment_type;    
     i64 payment_time;    
     i64 amount_msat;
     i64 fee_msat;    

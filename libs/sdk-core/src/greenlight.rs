@@ -1,7 +1,7 @@
 use crate::invoice::parse_invoice;
 use crate::models::{
     Config, FeeratePreset, GreenlightCredentials, LnPaymentDetails, Network, NodeAPI, NodeState,
-    PaymentDetails, SyncResponse,
+    PaymentDetails, PaymentType, SyncResponse,
 };
 
 use anyhow::{anyhow, Result};
@@ -421,7 +421,7 @@ fn invoice_to_transaction(
     let ln_invoice = parse_invoice(&invoice.bolt11)?;
     Ok(crate::models::Payment {
         id: hex::encode(invoice.payment_hash.clone()),
-        payment_type: crate::models::PAYMENT_TYPE_RECEIVED.to_string(),
+        payment_type: PaymentType::Received,
         payment_time: invoice.payment_time as i64,
         amount_msat: amount_to_msat(invoice.amount.unwrap_or_default()) as i64,
         fee_msat: 0,
@@ -452,7 +452,7 @@ fn payment_to_transaction(payment: pb::Payment) -> Result<crate::models::Payment
 
     Ok(crate::models::Payment {
         id: hex::encode(payment.payment_hash.clone()),
-        payment_type: crate::models::PAYMENT_TYPE_SENT.to_string(),
+        payment_type: PaymentType::Sent,
         payment_time: payment.created_at as i64,
         amount_msat: payment_amount,
         fee_msat: payment_amount - payment_amount_sent,

@@ -15,7 +15,7 @@ use crate::lsp::LspInformation;
 use crate::models::{
     parse_short_channel_id, ChannelState, ClosesChannelPaymentDetails, Config, FeeratePreset,
     FiatAPI, GreenlightCredentials, LspAPI, Network, NodeAPI, NodeState, Payment, PaymentDetails,
-    PaymentTypeFilter, SwapInfo, SwapperAPI,
+    PaymentType, PaymentTypeFilter, SwapInfo, SwapperAPI,
 };
 use crate::persist::db::SqliteStorage;
 use crate::swap::BTCReceiveSwap;
@@ -449,7 +449,7 @@ fn closed_channel_to_transaction(
     let now = SystemTime::now();
     Ok(crate::models::Payment {
         id: channel.funding_txid.clone(),
-        payment_type: crate::models::PAYMENT_TYPE_CLOSED_CHANNEL.to_string(),
+        payment_type: PaymentType::ClosedChannel,
         payment_time: channel
             .closed_at
             .unwrap_or(now.duration_since(UNIX_EPOCH)?.as_secs()) as i64,
@@ -805,8 +805,8 @@ pub(crate) mod test {
         ClosesChannelPaymentDetails, LnPaymentDetails, NodeState, Payment, PaymentDetails,
         PaymentTypeFilter,
     };
-    use crate::persist;
     use crate::test_utils::*;
+    use crate::{persist, PaymentType};
 
     #[test]
     fn test_config() {
@@ -826,7 +826,7 @@ pub(crate) mod test {
         let dummy_transactions = vec![
             Payment {
                 id: "1111".to_string(),
-                payment_type: crate::models::PAYMENT_TYPE_RECEIVED.to_string(),
+                payment_type: PaymentType::Received,
                 payment_time: 100000,
                 amount_msat: 10,
                 fee_msat: 0,
@@ -845,7 +845,7 @@ pub(crate) mod test {
             },
             Payment {
                 id: "3333".to_string(),
-                payment_type: crate::models::PAYMENT_TYPE_SENT.to_string(),
+                payment_type: PaymentType::Sent,
                 payment_time: 200000,
                 amount_msat: 8,
                 fee_msat: 2,

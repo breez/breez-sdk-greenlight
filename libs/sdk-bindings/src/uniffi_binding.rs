@@ -10,7 +10,7 @@ use breez_sdk_core::{
     LnPaymentDetails, LnUrlAuthRequestData, LnUrlErrorData, LnUrlPayRequestData, LnUrlRequestData,
     LnUrlWithdrawCallbackStatus, LnUrlWithdrawRequestData, LocaleOverrides, LocalizedName,
     LogEntry, LspInformation, MetadataItem, Network, NodeState, Payment, PaymentDetails,
-    PaymentTypeFilter, Rate, RouteHint, RouteHintHop, SwapInfo, SwapStatus, Symbol,
+    PaymentType, PaymentTypeFilter, Rate, RouteHint, RouteHintHop, SwapInfo, SwapStatus, Symbol,
 };
 use log::Metadata;
 use log::Record;

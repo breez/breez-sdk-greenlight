@@ -53,6 +53,7 @@ use crate::models::Network;
 use crate::models::NodeState;
 use crate::models::Payment;
 use crate::models::PaymentDetails;
+use crate::models::PaymentType;
 use crate::models::PaymentTypeFilter;
 use crate::models::SwapInfo;
 use crate::models::SwapStatus;
@@ -845,6 +846,16 @@ impl support::IntoDart for PaymentDetails {
     }
 }
 impl support::IntoDartExceptPrimitive for PaymentDetails {}
+impl support::IntoDart for PaymentType {
+    fn into_dart(self) -> support::DartAbi {
+        match self {
+            Self::Sent => 0,
+            Self::Received => 1,
+            Self::ClosedChannel => 2,
+        }
+        .into_dart()
+    }
+}
 impl support::IntoDart for Rate {
     fn into_dart(self) -> support::DartAbi {
         vec![self.coin.into_dart(), self.value.into_dart()].into_dart()
