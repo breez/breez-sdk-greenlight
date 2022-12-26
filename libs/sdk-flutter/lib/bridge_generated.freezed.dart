@@ -2485,6 +2485,341 @@ abstract class LnUrlWithdrawCallbackStatus_ErrorStatus
 }
 
 /// @nodoc
+mixin _$PaymentDetails {
+  Object get data => throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(LnPaymentDetails data) ln,
+    required TResult Function(ClosesChannelPaymentDetails data) closedChannel,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(LnPaymentDetails data)? ln,
+    TResult? Function(ClosesChannelPaymentDetails data)? closedChannel,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(LnPaymentDetails data)? ln,
+    TResult Function(ClosesChannelPaymentDetails data)? closedChannel,
+    required TResult orElse(),
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(PaymentDetails_Ln value) ln,
+    required TResult Function(PaymentDetails_ClosedChannel value) closedChannel,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(PaymentDetails_Ln value)? ln,
+    TResult? Function(PaymentDetails_ClosedChannel value)? closedChannel,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(PaymentDetails_Ln value)? ln,
+    TResult Function(PaymentDetails_ClosedChannel value)? closedChannel,
+    required TResult orElse(),
+  }) =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $PaymentDetailsCopyWith<$Res> {
+  factory $PaymentDetailsCopyWith(
+          PaymentDetails value, $Res Function(PaymentDetails) then) =
+      _$PaymentDetailsCopyWithImpl<$Res, PaymentDetails>;
+}
+
+/// @nodoc
+class _$PaymentDetailsCopyWithImpl<$Res, $Val extends PaymentDetails>
+    implements $PaymentDetailsCopyWith<$Res> {
+  _$PaymentDetailsCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+}
+
+/// @nodoc
+abstract class _$$PaymentDetails_LnCopyWith<$Res> {
+  factory _$$PaymentDetails_LnCopyWith(
+          _$PaymentDetails_Ln value, $Res Function(_$PaymentDetails_Ln) then) =
+      __$$PaymentDetails_LnCopyWithImpl<$Res>;
+  @useResult
+  $Res call({LnPaymentDetails data});
+}
+
+/// @nodoc
+class __$$PaymentDetails_LnCopyWithImpl<$Res>
+    extends _$PaymentDetailsCopyWithImpl<$Res, _$PaymentDetails_Ln>
+    implements _$$PaymentDetails_LnCopyWith<$Res> {
+  __$$PaymentDetails_LnCopyWithImpl(
+      _$PaymentDetails_Ln _value, $Res Function(_$PaymentDetails_Ln) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? data = null,
+  }) {
+    return _then(_$PaymentDetails_Ln(
+      data: null == data
+          ? _value.data
+          : data // ignore: cast_nullable_to_non_nullable
+              as LnPaymentDetails,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$PaymentDetails_Ln implements PaymentDetails_Ln {
+  const _$PaymentDetails_Ln({required this.data});
+
+  @override
+  final LnPaymentDetails data;
+
+  @override
+  String toString() {
+    return 'PaymentDetails.ln(data: $data)';
+  }
+
+  @override
+  bool operator ==(dynamic other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$PaymentDetails_Ln &&
+            (identical(other.data, data) || other.data == data));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, data);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$PaymentDetails_LnCopyWith<_$PaymentDetails_Ln> get copyWith =>
+      __$$PaymentDetails_LnCopyWithImpl<_$PaymentDetails_Ln>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(LnPaymentDetails data) ln,
+    required TResult Function(ClosesChannelPaymentDetails data) closedChannel,
+  }) {
+    return ln(data);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(LnPaymentDetails data)? ln,
+    TResult? Function(ClosesChannelPaymentDetails data)? closedChannel,
+  }) {
+    return ln?.call(data);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(LnPaymentDetails data)? ln,
+    TResult Function(ClosesChannelPaymentDetails data)? closedChannel,
+    required TResult orElse(),
+  }) {
+    if (ln != null) {
+      return ln(data);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(PaymentDetails_Ln value) ln,
+    required TResult Function(PaymentDetails_ClosedChannel value) closedChannel,
+  }) {
+    return ln(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(PaymentDetails_Ln value)? ln,
+    TResult? Function(PaymentDetails_ClosedChannel value)? closedChannel,
+  }) {
+    return ln?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(PaymentDetails_Ln value)? ln,
+    TResult Function(PaymentDetails_ClosedChannel value)? closedChannel,
+    required TResult orElse(),
+  }) {
+    if (ln != null) {
+      return ln(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class PaymentDetails_Ln implements PaymentDetails {
+  const factory PaymentDetails_Ln({required final LnPaymentDetails data}) =
+      _$PaymentDetails_Ln;
+
+  @override
+  LnPaymentDetails get data;
+  @JsonKey(ignore: true)
+  _$$PaymentDetails_LnCopyWith<_$PaymentDetails_Ln> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$PaymentDetails_ClosedChannelCopyWith<$Res> {
+  factory _$$PaymentDetails_ClosedChannelCopyWith(
+          _$PaymentDetails_ClosedChannel value,
+          $Res Function(_$PaymentDetails_ClosedChannel) then) =
+      __$$PaymentDetails_ClosedChannelCopyWithImpl<$Res>;
+  @useResult
+  $Res call({ClosesChannelPaymentDetails data});
+}
+
+/// @nodoc
+class __$$PaymentDetails_ClosedChannelCopyWithImpl<$Res>
+    extends _$PaymentDetailsCopyWithImpl<$Res, _$PaymentDetails_ClosedChannel>
+    implements _$$PaymentDetails_ClosedChannelCopyWith<$Res> {
+  __$$PaymentDetails_ClosedChannelCopyWithImpl(
+      _$PaymentDetails_ClosedChannel _value,
+      $Res Function(_$PaymentDetails_ClosedChannel) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? data = null,
+  }) {
+    return _then(_$PaymentDetails_ClosedChannel(
+      data: null == data
+          ? _value.data
+          : data // ignore: cast_nullable_to_non_nullable
+              as ClosesChannelPaymentDetails,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$PaymentDetails_ClosedChannel implements PaymentDetails_ClosedChannel {
+  const _$PaymentDetails_ClosedChannel({required this.data});
+
+  @override
+  final ClosesChannelPaymentDetails data;
+
+  @override
+  String toString() {
+    return 'PaymentDetails.closedChannel(data: $data)';
+  }
+
+  @override
+  bool operator ==(dynamic other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$PaymentDetails_ClosedChannel &&
+            (identical(other.data, data) || other.data == data));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, data);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$PaymentDetails_ClosedChannelCopyWith<_$PaymentDetails_ClosedChannel>
+      get copyWith => __$$PaymentDetails_ClosedChannelCopyWithImpl<
+          _$PaymentDetails_ClosedChannel>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(LnPaymentDetails data) ln,
+    required TResult Function(ClosesChannelPaymentDetails data) closedChannel,
+  }) {
+    return closedChannel(data);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(LnPaymentDetails data)? ln,
+    TResult? Function(ClosesChannelPaymentDetails data)? closedChannel,
+  }) {
+    return closedChannel?.call(data);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(LnPaymentDetails data)? ln,
+    TResult Function(ClosesChannelPaymentDetails data)? closedChannel,
+    required TResult orElse(),
+  }) {
+    if (closedChannel != null) {
+      return closedChannel(data);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(PaymentDetails_Ln value) ln,
+    required TResult Function(PaymentDetails_ClosedChannel value) closedChannel,
+  }) {
+    return closedChannel(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(PaymentDetails_Ln value)? ln,
+    TResult? Function(PaymentDetails_ClosedChannel value)? closedChannel,
+  }) {
+    return closedChannel?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(PaymentDetails_Ln value)? ln,
+    TResult Function(PaymentDetails_ClosedChannel value)? closedChannel,
+    required TResult orElse(),
+  }) {
+    if (closedChannel != null) {
+      return closedChannel(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class PaymentDetails_ClosedChannel implements PaymentDetails {
+  const factory PaymentDetails_ClosedChannel(
+          {required final ClosesChannelPaymentDetails data}) =
+      _$PaymentDetails_ClosedChannel;
+
+  @override
+  ClosesChannelPaymentDetails get data;
+  @JsonKey(ignore: true)
+  _$$PaymentDetails_ClosedChannelCopyWith<_$PaymentDetails_ClosedChannel>
+      get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
 mixin _$SuccessAction {
   Object get field0 => throw _privateConstructorUsedError;
   @optionalTypeArgs

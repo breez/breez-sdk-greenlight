@@ -242,6 +242,25 @@ class BreezEvent with _$BreezEvent {
   }) = BreezEvent_InvoicePaid;
 }
 
+enum ChannelState {
+  PendingOpen,
+  Opened,
+  PendingClose,
+  Closed,
+}
+
+class ClosesChannelPaymentDetails {
+  final String shortChannelId;
+  final ChannelState state;
+  final String fundingTxid;
+
+  ClosesChannelPaymentDetails({
+    required this.shortChannelId,
+    required this.state,
+    required this.fundingTxid,
+  });
+}
+
 class Config {
   final String breezserver;
   final String mempoolspaceUrl;
@@ -398,6 +417,24 @@ class LNInvoice {
     required this.expiry,
     required this.routingHints,
     required this.paymentSecret,
+  });
+}
+
+class LnPaymentDetails {
+  final String paymentHash;
+  final String label;
+  final String destinationPubkey;
+  final String paymentPreimage;
+  final bool keysend;
+  final String bolt11;
+
+  LnPaymentDetails({
+    required this.paymentHash,
+    required this.label,
+    required this.destinationPubkey,
+    required this.paymentPreimage,
+    required this.keysend,
+    required this.bolt11,
   });
 }
 
@@ -585,33 +622,41 @@ class NodeState {
 }
 
 class Payment {
-  final String paymentType;
-  final String paymentHash;
+  final String id;
+  final PaymentType paymentType;
   final int paymentTime;
-  final String label;
-  final String destinationPubkey;
   final int amountMsat;
-  final int feesMsat;
-  final String paymentPreimage;
-  final bool keysend;
-  final String bolt11;
+  final int feeMsat;
   final bool pending;
   final String? description;
+  final PaymentDetails details;
 
   Payment({
+    required this.id,
     required this.paymentType,
-    required this.paymentHash,
     required this.paymentTime,
-    required this.label,
-    required this.destinationPubkey,
     required this.amountMsat,
-    required this.feesMsat,
-    required this.paymentPreimage,
-    required this.keysend,
-    required this.bolt11,
+    required this.feeMsat,
     required this.pending,
     this.description,
+    required this.details,
   });
+}
+
+@freezed
+class PaymentDetails with _$PaymentDetails {
+  const factory PaymentDetails.ln({
+    required LnPaymentDetails data,
+  }) = PaymentDetails_Ln;
+  const factory PaymentDetails.closedChannel({
+    required ClosesChannelPaymentDetails data,
+  }) = PaymentDetails_ClosedChannel;
+}
+
+enum PaymentType {
+  Sent,
+  Received,
+  ClosedChannel,
 }
 
 enum PaymentTypeFilter {
@@ -1283,12 +1328,21 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return raw as bool;
   }
 
+  ClosesChannelPaymentDetails
+      _wire2api_box_autoadd_closes_channel_payment_details(dynamic raw) {
+    return _wire2api_closes_channel_payment_details(raw);
+  }
+
   InvoicePaidDetails _wire2api_box_autoadd_invoice_paid_details(dynamic raw) {
     return _wire2api_invoice_paid_details(raw);
   }
 
   LNInvoice _wire2api_box_autoadd_ln_invoice(dynamic raw) {
     return _wire2api_ln_invoice(raw);
+  }
+
+  LnPaymentDetails _wire2api_box_autoadd_ln_payment_details(dynamic raw) {
+    return _wire2api_ln_payment_details(raw);
   }
 
   LnUrlAuthRequestData _wire2api_box_autoadd_ln_url_auth_request_data(
@@ -1349,6 +1403,22 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       default:
         throw Exception("unreachable");
     }
+  }
+
+  ChannelState _wire2api_channel_state(dynamic raw) {
+    return ChannelState.values[raw];
+  }
+
+  ClosesChannelPaymentDetails _wire2api_closes_channel_payment_details(
+      dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return ClosesChannelPaymentDetails(
+      shortChannelId: _wire2api_String(arr[0]),
+      state: _wire2api_channel_state(arr[1]),
+      fundingTxid: _wire2api_String(arr[2]),
+    );
   }
 
   CurrencyInfo _wire2api_currency_info(dynamic raw) {
@@ -1498,6 +1568,20 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       expiry: _wire2api_u64(arr[7]),
       routingHints: _wire2api_list_route_hint(arr[8]),
       paymentSecret: _wire2api_uint_8_list(arr[9]),
+    );
+  }
+
+  LnPaymentDetails _wire2api_ln_payment_details(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return LnPaymentDetails(
+      paymentHash: _wire2api_String(arr[0]),
+      label: _wire2api_String(arr[1]),
+      destinationPubkey: _wire2api_String(arr[2]),
+      paymentPreimage: _wire2api_String(arr[3]),
+      keysend: _wire2api_bool(arr[4]),
+      bolt11: _wire2api_String(arr[5]),
     );
   }
 
@@ -1697,22 +1781,37 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   Payment _wire2api_payment(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 12)
-      throw Exception('unexpected arr length: expect 12 but see ${arr.length}');
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
     return Payment(
-      paymentType: _wire2api_String(arr[0]),
-      paymentHash: _wire2api_String(arr[1]),
+      id: _wire2api_String(arr[0]),
+      paymentType: _wire2api_payment_type(arr[1]),
       paymentTime: _wire2api_i64(arr[2]),
-      label: _wire2api_String(arr[3]),
-      destinationPubkey: _wire2api_String(arr[4]),
-      amountMsat: _wire2api_i32(arr[5]),
-      feesMsat: _wire2api_i32(arr[6]),
-      paymentPreimage: _wire2api_String(arr[7]),
-      keysend: _wire2api_bool(arr[8]),
-      bolt11: _wire2api_String(arr[9]),
-      pending: _wire2api_bool(arr[10]),
-      description: _wire2api_opt_String(arr[11]),
+      amountMsat: _wire2api_i64(arr[3]),
+      feeMsat: _wire2api_i64(arr[4]),
+      pending: _wire2api_bool(arr[5]),
+      description: _wire2api_opt_String(arr[6]),
+      details: _wire2api_payment_details(arr[7]),
     );
+  }
+
+  PaymentDetails _wire2api_payment_details(dynamic raw) {
+    switch (raw[0]) {
+      case 0:
+        return PaymentDetails_Ln(
+          data: _wire2api_box_autoadd_ln_payment_details(raw[1]),
+        );
+      case 1:
+        return PaymentDetails_ClosedChannel(
+          data: _wire2api_box_autoadd_closes_channel_payment_details(raw[1]),
+        );
+      default:
+        throw Exception("unreachable");
+    }
+  }
+
+  PaymentType _wire2api_payment_type(dynamic raw) {
+    return PaymentType.values[raw];
   }
 
   Rate _wire2api_rate(dynamic raw) {

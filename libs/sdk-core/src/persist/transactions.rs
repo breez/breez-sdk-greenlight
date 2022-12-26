@@ -1,46 +1,45 @@
 use super::db::SqliteStorage;
-use crate::models::Payment;
-use crate::models::PaymentTypeFilter;
+use crate::models::{Payment, PaymentDetails};
+use crate::models::{PaymentType, PaymentTypeFilter};
 use anyhow::Result;
+use rusqlite::types::{FromSql, FromSqlError, ToSql, ToSqlOutput};
+use std::{
+    fmt::format,
+    str::FromStr,
+    time::{SystemTime, UNIX_EPOCH},
+    vec,
+};
 
 impl SqliteStorage {
     pub fn insert_payments(&self, transactions: &[Payment]) -> Result<()> {
         let con = self.get_connection()?;
         let mut prep_statment = con.prepare(
             "
-               INSERT INTO payments (
-                 payment_type,
-                 payment_hash, 
-                 payment_time,
-                 label, 
-                 destination_pubkey, 
-                 amount_msats, 
-                 fee_msat,
-                 payment_preimage,
-                 keysend,
-                 bolt11,
-                 pending,
-                 description
-               )
-               VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12)
-              ",
+         INSERT INTO payments (
+           id,
+           payment_type,                 
+           payment_time,                                  
+           amount_msat, 
+           fee_msat,                 
+           pending,
+           description,
+           details
+         )
+         VALUES (?1,?2,?3,?4,?5,?6,?7,?8)
+        ",
         )?;
+
         for ln_tx in transactions {
-            let size = prep_statment.execute((
-                &ln_tx.payment_type,
-                &ln_tx.payment_hash,
+            _ = prep_statment.execute((
+                &ln_tx.id,
+                &ln_tx.payment_type.to_string(),
                 &ln_tx.payment_time,
-                &ln_tx.label,
-                &ln_tx.destination_pubkey,
                 &ln_tx.amount_msat,
-                &ln_tx.fees_msat,
-                &ln_tx.payment_preimage,
-                &ln_tx.keysend,
-                &ln_tx.bolt11,
+                &ln_tx.fee_msat,
                 &ln_tx.pending,
                 &ln_tx.description,
+                &ln_tx.details,
             ))?;
-            print!("size = {}", size);
         }
         Ok(())
     }
@@ -64,27 +63,34 @@ impl SqliteStorage {
         let mut stmt = con.prepare(
             format!(
                 "
-               SELECT * FROM payments
-               {where_clause} ORDER BY payment_time DESC
-             "
+            SELECT 
+             id, 
+             payment_type, 
+             payment_time, 
+             amount_msat, 
+             fee_msat, 
+             pending, 
+             description,
+             details
+            FROM payments            
+            {where_clause} ORDER BY payment_time DESC
+          "
             )
             .as_str(),
         )?;
+
         let vec: Vec<Payment> = stmt
             .query_map([], |row| {
+                let payment_type_str: String = row.get(1)?;
                 Ok(Payment {
-                    payment_type: row.get(0)?,
-                    payment_hash: row.get(1)?,
+                    id: row.get(0)?,
+                    payment_type: PaymentType::from_str(payment_type_str.as_str()).unwrap(),
                     payment_time: row.get(2)?,
-                    label: row.get(3)?,
-                    destination_pubkey: row.get(4)?,
-                    amount_msat: row.get(5)?,
-                    fees_msat: row.get(6)?,
-                    payment_preimage: row.get(7)?,
-                    keysend: row.get(8)?,
-                    bolt11: row.get(9)?,
-                    pending: row.get(10)?,
-                    description: row.get(11)?,
+                    amount_msat: row.get(3)?,
+                    fee_msat: row.get(4)?,
+                    pending: row.get(5)?,
+                    description: row.get(6)?,
+                    details: row.get(7)?,
                 })
             })?
             .map(|i| i.unwrap())
@@ -115,10 +121,14 @@ fn filter_to_where_clause(
     };
     match type_filter {
         PaymentTypeFilter::Sent => {
-            where_clause.push("payment_type = 'sent' ".to_string());
+            where_clause.push(format!(
+                "payment_type in ('{}','{}') ",
+                PaymentType::Sent,
+                PaymentType::ClosedChannel
+            ));
         }
         PaymentTypeFilter::Received => {
-            where_clause.push("payment_type = 'received' ".to_string());
+            where_clause.push(format!("payment_type = '{}' ", PaymentType::Received));
         }
         PaymentTypeFilter::All => (),
     }
@@ -131,38 +141,63 @@ fn filter_to_where_clause(
     where_clause_str
 }
 
+impl FromSql for PaymentDetails {
+    fn column_result(value: rusqlite::types::ValueRef<'_>) -> rusqlite::types::FromSqlResult<Self> {
+        serde_json::from_str(value.as_str()?).map_err(|_| FromSqlError::InvalidType)
+    }
+}
+
+impl ToSql for PaymentDetails {
+    fn to_sql(&self) -> rusqlite::Result<rusqlite::types::ToSqlOutput<'_>> {
+        Ok(ToSqlOutput::from(
+            serde_json::to_string(&self).map_err(|_| FromSqlError::InvalidType)?,
+        ))
+    }
+}
+
 #[test]
 fn test_ln_transactions() {
+    use crate::models::{ClosesChannelPaymentDetails, LnPaymentDetails, Payment, PaymentDetails};
     use crate::persist::test_utils;
 
     let txs = [
         Payment {
-            payment_type: "sent".to_string(),
-            payment_hash: "123".to_string(),
+            id: "123".to_string(),
+            payment_type: PaymentType::Sent,
             payment_time: 1001,
-            label: "label".to_string(),
-            destination_pubkey: "pubey".to_string(),
             amount_msat: 100,
-            fees_msat: 20,
-            payment_preimage: "payment_preimage".to_string(),
-            keysend: true,
-            bolt11: "bolt11".to_string(),
+            fee_msat: 20,
             pending: false,
             description: None,
+            details: PaymentDetails::Ln {
+                data: LnPaymentDetails {
+                    payment_hash: "123".to_string(),
+                    label: "label".to_string(),
+                    destination_pubkey: "pubey".to_string(),
+                    payment_preimage: "payment_preimage".to_string(),
+                    keysend: true,
+                    bolt11: "bolt11".to_string(),
+                },
+            },
         },
         Payment {
-            payment_type: "received".to_string(),
-            payment_hash: "124".to_string(),
+            id: "124".to_string(),
+            payment_type: PaymentType::Received,
             payment_time: 1000,
-            label: "label".to_string(),
-            destination_pubkey: "pubey".to_string(),
             amount_msat: 100,
-            fees_msat: 20,
-            payment_preimage: "payment_preimage".to_string(),
-            keysend: true,
-            bolt11: "bolt11".to_string(),
+            fee_msat: 20,
             pending: false,
             description: Some("desc".to_string()),
+            details: PaymentDetails::Ln {
+                data: LnPaymentDetails {
+                    payment_hash: "124".to_string(),
+                    label: "label".to_string(),
+                    destination_pubkey: "pubey".to_string(),
+                    payment_preimage: "payment_preimage".to_string(),
+                    keysend: true,
+                    bolt11: "bolt11".to_string(),
+                },
+            },
         },
     ];
     let storage =
