@@ -4,6 +4,8 @@ use gl_client::pb::WithdrawResponse;
 use gl_client::pb::{CloseChannelResponse, Invoice};
 use lightning_invoice::RawInvoice;
 use serde::{Deserialize, Serialize};
+use strum_macros::Display;
+use strum_macros::EnumString;
 use tokio::sync::mpsc;
 use tonic::Streaming;
 
@@ -12,8 +14,12 @@ use crate::grpc::{PaymentInformation, RegisterPaymentReply};
 use crate::lsp::LspInformation;
 use crate::models::Network::*;
 
-pub const PAYMENT_TYPE_SENT: &str = "sent";
-pub const PAYMENT_TYPE_RECEIVED: &str = "received";
+#[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
+pub enum PaymentType {
+    Sent,
+    Received,
+    ClosedChannel,
+}
 
 #[tonic::async_trait]
 pub trait NodeAPI: Send + Sync {
@@ -197,22 +203,67 @@ pub struct NodeState {
 pub struct SyncResponse {
     pub node_state: NodeState,
     pub payments: Vec<crate::models::Payment>,
+    pub channels: Vec<crate::models::Channel>,
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub struct Payment {
-    pub payment_type: String,
-    pub payment_hash: String,
+    pub id: String,
+    pub payment_type: PaymentType,
     pub payment_time: i64,
+    pub amount_msat: i64,
+    pub fee_msat: i64,
+    pub pending: bool,
+    pub description: Option<String>,
+    pub details: PaymentDetails,
+}
+
+#[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
+#[serde(untagged)]
+pub enum PaymentDetails {
+    Ln {
+        #[serde(flatten)]
+        data: LnPaymentDetails,
+    },
+    ClosedChannel {
+        #[serde(flatten)]
+        data: ClosesChannelPaymentDetails,
+    },
+}
+
+#[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
+pub struct LnPaymentDetails {
+    pub payment_hash: String,
     pub label: String,
     pub destination_pubkey: String,
-    pub amount_msat: i32,
-    pub fees_msat: i32,
     pub payment_preimage: String,
     pub keysend: bool,
     pub bolt11: String,
-    pub pending: bool,
-    pub description: Option<String>,
+}
+
+#[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
+pub struct ClosesChannelPaymentDetails {
+    pub short_channel_id: String,
+    pub state: ChannelState,
+    pub funding_txid: String,
+}
+
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct Channel {
+    pub funding_txid: String,
+    pub short_channel_id: String,
+    pub state: ChannelState,
+    pub spendable_msat: u64,
+    pub receivable_msat: u64,
+    pub closed_at: Option<u64>,
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
+pub enum ChannelState {
+    PendingOpen,
+    Opened,
+    PendingClose,
+    Closed,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]

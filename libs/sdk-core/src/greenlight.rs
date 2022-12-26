@@ -1,6 +1,7 @@
 use crate::invoice::parse_invoice;
 use crate::models::{
-    Config, FeeratePreset, GreenlightCredentials, Network, NodeAPI, NodeState, SyncResponse,
+    Config, FeeratePreset, GreenlightCredentials, LnPaymentDetails, Network, NodeAPI, NodeState,
+    PaymentDetails, PaymentType, SyncResponse,
 };
 
 use anyhow::{anyhow, Result};
@@ -256,6 +257,7 @@ impl NodeAPI for Greenlight {
             node_state,
             payments: pull_transactions(node_pubkey.clone(), since_timestamp, client.clone())
                 .await?,
+            channels: all_channels.clone().into_iter().map(|c| c.into()).collect(),
         })
     }
 
@@ -418,18 +420,23 @@ fn invoice_to_transaction(
 ) -> Result<crate::models::Payment> {
     let ln_invoice = parse_invoice(&invoice.bolt11)?;
     Ok(crate::models::Payment {
-        payment_type: crate::models::PAYMENT_TYPE_RECEIVED.to_string(),
-        payment_hash: hex::encode(invoice.payment_hash),
+        id: hex::encode(invoice.payment_hash.clone()),
+        payment_type: PaymentType::Received,
         payment_time: invoice.payment_time as i64,
-        label: invoice.label,
-        destination_pubkey: node_pubkey,
-        amount_msat: amount_to_msat(invoice.amount.unwrap_or_default()) as i32,
-        fees_msat: 0,
-        payment_preimage: hex::encode(invoice.payment_preimage),
-        keysend: false,
-        bolt11: invoice.bolt11,
+        amount_msat: amount_to_msat(invoice.amount.unwrap_or_default()) as i64,
+        fee_msat: 0,
         pending: false,
         description: ln_invoice.description,
+        details: PaymentDetails::Ln {
+            data: LnPaymentDetails {
+                payment_hash: hex::encode(invoice.payment_hash),
+                label: invoice.label,
+                destination_pubkey: node_pubkey,
+                payment_preimage: hex::encode(invoice.payment_preimage),
+                keysend: false,
+                bolt11: invoice.bolt11,
+            },
+        },
     })
 }
 
@@ -440,22 +447,27 @@ fn payment_to_transaction(payment: pb::Payment) -> Result<crate::models::Payment
         description = parse_invoice(&payment.bolt11)?.description;
     }
 
-    let payment_amount = amount_to_msat(payment.amount.unwrap_or_default()) as i32;
-    let payment_amount_sent = amount_to_msat(payment.amount_sent.unwrap_or_default()) as i32;
+    let payment_amount = amount_to_msat(payment.amount.unwrap_or_default()) as i64;
+    let payment_amount_sent = amount_to_msat(payment.amount_sent.unwrap_or_default()) as i64;
 
     Ok(crate::models::Payment {
-        payment_type: crate::models::PAYMENT_TYPE_SENT.to_string(),
-        payment_hash: hex::encode(payment.payment_hash),
+        id: hex::encode(payment.payment_hash.clone()),
+        payment_type: PaymentType::Sent,
         payment_time: payment.created_at as i64,
-        label: "".to_string(),
-        destination_pubkey: hex::encode(payment.destination),
         amount_msat: payment_amount,
-        fees_msat: payment_amount - payment_amount_sent,
-        payment_preimage: hex::encode(payment.payment_preimage),
-        keysend: payment.bolt11.is_empty(),
-        bolt11: payment.bolt11,
+        fee_msat: payment_amount - payment_amount_sent,
         pending: pb::PayStatus::from_i32(payment.status) == Some(pb::PayStatus::Pending),
         description,
+        details: PaymentDetails::Ln {
+            data: LnPaymentDetails {
+                payment_hash: hex::encode(payment.payment_hash),
+                label: "".to_string(),
+                destination_pubkey: hex::encode(payment.destination),
+                payment_preimage: hex::encode(payment.payment_preimage),
+                keysend: payment.bolt11.is_empty(),
+                bolt11: payment.bolt11,
+            },
+        },
     })
 }
 
@@ -499,4 +511,83 @@ fn parse_amount(amount_str: String) -> Result<pb::Amount> {
     };
 
     Ok(pb::Amount { unit: Some(unit) })
+}
+
+impl From<pb::Channel> for crate::models::Channel {
+    fn from(c: pb::Channel) -> Self {
+        let state = match c.state.as_str() {
+            "OPENINGD" | "CHANNELD_AWAITING_LOCKIN" => crate::models::ChannelState::PendingOpen,
+            "CHANNELD_NORMAL" => crate::models::ChannelState::Opened,
+            "CLOSED" => crate::models::ChannelState::Closed,
+            _ => crate::models::ChannelState::PendingClose,
+        };
+
+        return crate::models::Channel {
+            short_channel_id: c.short_channel_id,
+            state,
+            funding_txid: c.funding_txid,
+            spendable_msat: amount_to_msat(parse_amount(c.spendable).unwrap_or_default()),
+            receivable_msat: amount_to_msat(parse_amount(c.receivable).unwrap_or_default()),
+            closed_at: None,
+        };
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::models;
+    use anyhow::anyhow;
+    use anyhow::Result;
+    use gl_client::pb;
+
+    #[test]
+    fn test_channel_states() -> Result<()> {
+        for s in vec!["OPENINGD", "CHANNELD_AWAITING_LOCKIN"] {
+            let c: models::Channel = gl_channel(s).into();
+            assert_eq!(c.state, models::ChannelState::PendingOpen);
+        }
+        for s in vec!["CHANNELD_NORMAL"] {
+            let c: models::Channel = gl_channel(s).into();
+            assert_eq!(c.state, models::ChannelState::Opened);
+        }
+        for s in vec![
+            "CHANNELD_SHUTTING_DOWN",
+            "CLOSINGD_SIGEXCHANGE",
+            "CLOSINGD_COMPLETE",
+            "AWAITING_UNILATERAL",
+            "FUNDING_SPEND_SEEN",
+            "ONCHAIN",
+        ] {
+            let c: models::Channel = gl_channel(s).into();
+            assert_eq!(c.state, models::ChannelState::PendingClose);
+        }
+        for s in vec!["CLOSED"] {
+            let c: models::Channel = gl_channel(s).into();
+            assert_eq!(c.state, models::ChannelState::Closed);
+        }
+        Ok(())
+        //let c =
+    }
+
+    fn gl_channel(state: &str) -> pb::Channel {
+        pb::Channel {
+            state: state.to_string(),
+            owner: "".to_string(),
+            short_channel_id: "".to_string(),
+            direction: 0,
+            channel_id: "".to_string(),
+            funding_txid: "".to_string(),
+            close_to_addr: "".to_string(),
+            close_to: "".to_string(),
+            private: true,
+            total: "1000msat".to_string(),
+            dust_limit: "10msat".to_string(),
+            spendable: "20msat".to_string(),
+            receivable: "960msat".to_string(),
+            their_to_self_delay: 144,
+            our_to_self_delay: 144,
+            status: vec![],
+            htlcs: vec![],
+        }
+    }
 }

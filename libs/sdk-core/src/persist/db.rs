@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 use rusqlite::{
     types::{FromSql, FromSqlError, ToSqlOutput},
-    Connection, ToSql,
+    Connection, LoadExtensionGuard, ToSql,
 };
 use rusqlite_migration::{Migrations, M};
 
@@ -15,8 +15,10 @@ impl SqliteStorage {
     }
 
     pub fn init(&self) -> Result<()> {
-        let migrations = Migrations::new(vec![M::up(
-            "CREATE TABLE IF NOT EXISTS payments (
+        let migrations = Migrations::new(vec![
+            M::up(
+                "
+             CREATE TABLE IF NOT EXISTS payments (
                payment_type TEXT NOT NULL check( payment_type in('sent', 'received')),
                payment_hash TEXT NOT NULL PRIMARY KEY,
                payment_time INTEGER NOT NULL,
@@ -58,8 +60,57 @@ impl SqliteStorage {
                refund_tx_ids TEXT NOT NULL, 
                confirmed_tx_ids TEXT NOT NULL
              ) STRICT;
-        ",
-        )]);
+            ",
+            ),
+            M::up("
+             CREATE TABLE channels (
+              funding_txid TEXT NOT NULL PRIMARY KEY,
+              short_channel_id TEXT,
+              state TEXT NOT NULL check( state in('PendingOpen', 'Opened', 'PendingClose', 'Closed')),
+              spendable_msat INTEGER NOT NULL,
+              receivable_msat INTEGER NOT NULL,
+              closed_at INTEGER
+             ) STRICT;
+            "),
+
+            M::up("
+             ALTER TABLE payments RENAME TO old_payments;
+
+             CREATE TABLE IF NOT EXISTS payments (
+              id TEXT NOT NULL PRIMARY KEY,
+              payment_type TEXT NOT NULL check( payment_type in('Sent', 'Received', 'ClosedChannel')),             
+              payment_time INTEGER NOT NULL,             
+              amount_msat INTEGER NOT NULL,
+              fee_msat INTEGER NOT NULL,             
+              pending INTEGER NOT NULL,
+              description TEXT,
+              details TEXT
+             ) STRICT;
+             
+             INSERT INTO payments
+              (id, payment_type, payment_time, amount_msat, fee_msat, pending, description, details)
+              SELECT 
+               payment_hash, 
+               case when payment_type = 'received' then 'Received' else 'Sent' end, 
+               payment_time, 
+               amount_msats,
+               fee_msat, 
+               pending, 
+               description, 
+               json_object(
+                'payment_hash', payment_hash, 
+                'label', label, 
+                'destination_pubkey', destination_pubkey, 
+                'payment_preimage', payment_preimage, 
+                'keysend', CASE keysend WHEN 1 THEN json('true') ELSE json('false') END, 
+                'bolt11', bolt11
+               )
+              FROM old_payments;
+             
+             DROP TABLE old_payments;            
+            "),
+
+        ]);
 
         let mut conn = self.get_connection()?;
         migrations

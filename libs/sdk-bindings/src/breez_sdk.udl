@@ -70,19 +70,49 @@ enum PaymentTypeFilter {
     "All",
 };
 
+enum PaymentType {
+    "Sent",
+    "Received",
+    "ClosedChannel"
+};
+
 dictionary Payment {
-    string payment_type;
+    string id;
+    PaymentType payment_type;    
+    i64 payment_time;    
+    i64 amount_msat;
+    i64 fee_msat;    
+    boolean pending;
+    string? description;
+    PaymentDetails details;
+};
+
+[Enum]
+interface PaymentDetails {
+    Ln(LnPaymentDetails data);
+    ClosedChannel(ClosesChannelPaymentDetails data);
+};
+
+dictionary LnPaymentDetails {
     string payment_hash;
-    i64 payment_time;
     string label;
     string destination_pubkey;
-    i32 amount_msat;
-    i32 fees_msat;
     string payment_preimage;
     boolean keysend;
     string bolt11;
-    boolean pending;
-    string? description;
+};
+
+dictionary ClosesChannelPaymentDetails {
+    string short_channel_id;
+    ChannelState state;
+    string funding_txid;
+};
+
+enum ChannelState {
+    "PendingOpen",
+    "Opened",
+    "PendingClose",
+    "Closed",
 };
 
 dictionary Rate {

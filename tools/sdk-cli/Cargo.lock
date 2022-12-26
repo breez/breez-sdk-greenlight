@@ -352,7 +352,7 @@ dependencies = [
 [[package]]
 name = "bolt-derive"
 version = "0.1.0"
-source = "git+https://github.com/Blockstream/greenlight#66456004d74390c42760d8e458214980b6d63610"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#a45772ad22ad0e364a3389bbd9c4f8f5221a1430"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -401,6 +401,8 @@ dependencies = [
  "rusqlite_migration",
  "serde",
  "serde_json",
+ "strum",
+ "strum_macros",
  "tiny-bip39",
  "tokio",
  "tonic",
@@ -980,7 +982,7 @@ checksum = "22030e2c5a68ec659fde1e949a745124b48e6fa8b045b7ed5bd1fe4ccc5c4e5d"
 [[package]]
 name = "gl-client"
 version = "0.1.4"
-source = "git+https://github.com/Blockstream/greenlight#66456004d74390c42760d8e458214980b6d63610"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#a45772ad22ad0e364a3389bbd9c4f8f5221a1430"
 dependencies = [
  "anyhow",
  "base64",
@@ -1440,7 +1442,7 @@ dependencies = [
 [[package]]
 name = "lightning-signer-core"
 version = "0.1.0-5"
-source = "git+https://github.com/Blockstream/greenlight#66456004d74390c42760d8e458214980b6d63610"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#a45772ad22ad0e364a3389bbd9c4f8f5221a1430"
 dependencies = [
  "anyhow",
  "bitcoin",
@@ -1456,7 +1458,7 @@ dependencies = [
 [[package]]
 name = "lightning-signer-server"
 version = "0.1.0-5"
-source = "git+https://github.com/Blockstream/greenlight#66456004d74390c42760d8e458214980b6d63610"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#a45772ad22ad0e364a3389bbd9c4f8f5221a1430"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2263,6 +2265,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "rustversion"
+version = "1.0.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5583e89e108996506031660fe09baa5011b9dd0341b89029313006d1fb508d70"
+
+[[package]]
 name = "rustyline"
 version = "10.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2610,6 +2618,25 @@ name = "strsim"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
+
+[[package]]
+name = "strum"
+version = "0.24.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "063e6045c0e62079840579a7e47a355ae92f60eb74daaf156fb1e84ba164e63f"
+
+[[package]]
+name = "strum_macros"
+version = "0.24.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e385be0d24f186b4ce2f9982191e7101bb737312ad61c1f2f984f34bcf85d59"
+dependencies = [
+ "heck 0.4.0",
+ "proc-macro2",
+ "quote",
+ "rustversion",
+ "syn",
+]
 
 [[package]]
 name = "subtle"
@@ -3151,7 +3178,7 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 [[package]]
 name = "vls-persist"
 version = "0.1.0"
-source = "git+https://github.com/Blockstream/greenlight#66456004d74390c42760d8e458214980b6d63610"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#a45772ad22ad0e364a3389bbd9c4f8f5221a1430"
 dependencies = [
  "hex",
  "lightning-signer-core",
@@ -3164,7 +3191,7 @@ dependencies = [
 [[package]]
 name = "vls-protocol"
 version = "0.1.0"
-source = "git+https://github.com/Blockstream/greenlight#66456004d74390c42760d8e458214980b6d63610"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#a45772ad22ad0e364a3389bbd9c4f8f5221a1430"
 dependencies = [
  "as-any",
  "bolt-derive",
@@ -3177,7 +3204,7 @@ dependencies = [
 [[package]]
 name = "vls-protocol-signer"
 version = "0.1.0"
-source = "git+https://github.com/Blockstream/greenlight#66456004d74390c42760d8e458214980b6d63610"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#a45772ad22ad0e364a3389bbd9c4f8f5221a1430"
 dependencies = [
  "bit-vec",
  "lightning-signer-core",
