@@ -1,4 +1,9 @@
-use std::{fmt::format, str::FromStr, vec};
+use std::{
+    fmt::format,
+    str::FromStr,
+    time::{SystemTime, UNIX_EPOCH},
+    vec,
+};
 
 use crate::models::*;
 
@@ -22,7 +27,11 @@ impl SqliteStorage {
         self.get_connection()?.execute(
             format!(
                 "
-                 UPDATE channels SET state=?1 where funding_txid not in ({})
+                 UPDATE channels 
+                 SET 
+                  state=?1, 
+                  closed_at = case when closed_at is null then unixepoch() else closed_at end 
+                 where funding_txid not in ({})
                 ",
                 funding_txs.join(",")
             )
@@ -43,7 +52,8 @@ impl SqliteStorage {
                 short_channel_id,
                 state, 
                 spendable_msat, 
-                receivable_msat
+                receivable_msat,
+                closed_at
                FROM channels             
              "
             )
@@ -59,6 +69,7 @@ impl SqliteStorage {
                         .unwrap_or(ChannelState::Closed),
                     spendable_msat: row.get(3)?,
                     receivable_msat: row.get(4)?,
+                    closed_at: row.get(5)?,
                 })
             })?
             .map(|i| i.unwrap())
@@ -69,19 +80,40 @@ impl SqliteStorage {
 
     fn insert_or_update_channel(&self, c: Channel) -> Result<()> {
         self.get_connection()?.execute(
-            "INSERT OR REPLACE INTO channels (
+            "INSERT INTO channels (
                    funding_txid, 
                    short_channel_id,
-                   state, 
+                   state,
                    spendable_msat, 
-                   receivable_msat) 
-                  VALUES (?1,?2,?3,?4,?5)",
+                   receivable_msat,
+                   closed_at
+                  )
+                  VALUES (?1,?2,?3,?4,?5,?6)
+                  ON CONFLICT(funding_txid) DO UPDATE SET
+                   short_channel_id=excluded.short_channel_id,
+                   state=excluded.state,
+                   spendable_msat=excluded.spendable_msat,
+                   receivable_msat=excluded.receivable_msat,
+                   closed_at = unixepoch()    
+                  WHERE closed_at IS NULL AND excluded.state IN ('PendingClose', 'Closed')
+                  ON CONFLICT(funding_txid) DO UPDATE SET
+                   short_channel_id=excluded.short_channel_id,
+                   state=excluded.state,
+                   spendable_msat=excluded.spendable_msat,
+                   receivable_msat=excluded.receivable_msat                            
+                  WHERE closed_at IS NOT NULL
+
+               ",
             (
                 c.funding_txid,
                 c.short_channel_id,
                 c.state.to_string(),
                 c.spendable_msat,
                 c.receivable_msat,
+                match c.state {
+                    ChannelState::Opened | ChannelState::PendingOpen => None,
+                    _ => Some(SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs()),
+                },
             ),
         )?;
         Ok(())
@@ -102,6 +134,7 @@ fn test_simple_sync_channels() {
             state: ChannelState::Opened,
             spendable_msat: 100,
             receivable_msat: 1000,
+            closed_at: None,
         },
         Channel {
             funding_txid: "456".to_string(),
@@ -109,8 +142,13 @@ fn test_simple_sync_channels() {
             state: ChannelState::Opened,
             spendable_msat: 200,
             receivable_msat: 2000,
+            closed_at: None,
         },
     ];
+
+    storage.update_channels(&channels).unwrap();
+    let queried_channels = storage.list_channels().unwrap();
+    assert_eq!(channels, queried_channels);
 
     storage.update_channels(&channels).unwrap();
     let queried_channels = storage.list_channels().unwrap();
@@ -131,6 +169,7 @@ fn test_sync_closed_channels() {
             state: ChannelState::Opened,
             spendable_msat: 100,
             receivable_msat: 1000,
+            closed_at: None,
         },
         Channel {
             funding_txid: "456".to_string(),
@@ -138,12 +177,19 @@ fn test_sync_closed_channels() {
             state: ChannelState::Closed,
             spendable_msat: 200,
             receivable_msat: 2000,
+            closed_at: None,
         },
     ];
 
     storage.update_channels(&channels).unwrap();
     let queried_channels = storage.list_channels().unwrap();
-    assert_eq!(channels, queried_channels);
+    assert_eq!(2, queried_channels.len());
+    assert_eq!(channels[0], queried_channels[0]);
+    assert!(queried_channels[1].closed_at != None);
+
+    storage.update_channels(&channels).unwrap();
+    let queried_channels = storage.list_channels().unwrap();
+    assert_eq!(channels[0], queried_channels[0]);
 
     // test all channels were closed
     storage.update_channels(&Vec::new()).unwrap();
@@ -155,6 +201,7 @@ fn test_sync_closed_channels() {
             state: ChannelState::Closed,
             spendable_msat: 100,
             receivable_msat: 1000,
+            closed_at: None,
         },
         Channel {
             funding_txid: "456".to_string(),
@@ -162,12 +209,15 @@ fn test_sync_closed_channels() {
             state: ChannelState::Closed,
             spendable_msat: 200,
             receivable_msat: 2000,
+            closed_at: None,
         },
     ];
-    assert_eq!(expected, queried_channels);
+    assert_eq!(expected.len(), queried_channels.len());
+    assert!(queried_channels[0].closed_at != None);
+    assert!(queried_channels[1].closed_at != None);
 
     // test dedup channels in db
     storage.update_channels(&channels).unwrap();
     let queried_channels = storage.list_channels().unwrap();
-    assert_eq!(channels, queried_channels);
+    assert_eq!(channels.len(), queried_channels.len());
 }

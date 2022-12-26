@@ -13,8 +13,9 @@ use crate::lnurl::withdraw::model::LnUrlWithdrawCallbackStatus;
 use crate::lnurl::withdraw::validate_lnurl_withdraw;
 use crate::lsp::LspInformation;
 use crate::models::{
-    parse_short_channel_id, Config, FeeratePreset, FiatAPI, GreenlightCredentials, LspAPI, Network,
-    NodeAPI, NodeState, Payment, PaymentTypeFilter, SwapInfo, SwapperAPI,
+    parse_short_channel_id, ChannelState, ClosesChannelPaymentDetails, Config, FeeratePreset,
+    FiatAPI, GreenlightCredentials, LspAPI, Network, NodeAPI, NodeState, Payment, PaymentDetails,
+    PaymentType, PaymentTypeFilter, SwapInfo, SwapperAPI,
 };
 use crate::persist::db::SqliteStorage;
 use crate::swap::BTCReceiveSwap;
@@ -25,6 +26,7 @@ use core::time;
 use std::cmp::max;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
+use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::runtime::Runtime;
 use tokio::sync::mpsc;
 use tokio::time::{sleep, Duration};
@@ -288,20 +290,41 @@ impl BreezServices {
             .await
     }
 
+    /// This method sync the local state with the remote node state.
+    /// The synced items are as follows:
+    /// * node state - General information about the node and its liquidity status
+    /// * channels - The list of channels and their status
+    /// * payments - The incoming/outgoing payments
     async fn sync(&self) -> Result<()> {
         self.start_node().await?;
         self.connect_lsp_peer().await?;
-        let since_timestamp = self.persister.last_payment_timestamp().unwrap_or(0);
 
+        // First query the changes since last sync time.
+        let since_timestamp = self.persister.last_payment_timestamp().unwrap_or(0);
         let new_data = &self.node_api.pull_changed(since_timestamp).await?;
 
         debug!(
             "pull changed time={:?} {:?}",
             since_timestamp, new_data.payments
         );
+
+        // update node state and channels state
         self.persister.set_node_state(&new_data.node_state)?;
-        self.persister.insert_payments(&new_data.payments)?;
         self.persister.update_channels(&new_data.channels)?;
+
+        //fetch closed_channel and convert them to Payment items.
+        let closed_channel_payments_res: Result<Vec<crate::models::Payment>> = self
+            .persister
+            .list_channels()?
+            .into_iter()
+            .filter(|c| c.state == ChannelState::Closed || c.state == ChannelState::PendingClose)
+            .map(|c| closed_channel_to_transaction(c))
+            .collect();
+
+        // update both closed channels and lightning transation payments
+        let mut payments = closed_channel_payments_res?;
+        payments.extend(new_data.payments.clone());
+        self.persister.insert_payments(&payments)?;
         Ok(())
     }
 
@@ -418,6 +441,30 @@ async fn poll_events(breez_services: Arc<BreezServices>, mut current_block: u32)
          }
         }
     }
+}
+
+fn closed_channel_to_transaction(
+    channel: crate::models::Channel,
+) -> Result<crate::models::Payment> {
+    let now = SystemTime::now();
+    Ok(crate::models::Payment {
+        id: channel.funding_txid.clone(),
+        payment_type: PaymentType::ClosedChannel,
+        payment_time: channel
+            .closed_at
+            .unwrap_or(now.duration_since(UNIX_EPOCH)?.as_secs()) as i64,
+        amount_msat: -1 * channel.spendable_msat as i64,
+        fee_msat: 0,
+        pending: channel.state == ChannelState::PendingClose,
+        description: Some("Closed Channel".to_string()),
+        details: PaymentDetails::ClosedChannel {
+            data: ClosesChannelPaymentDetails {
+                short_channel_id: channel.short_channel_id,
+                state: channel.state,
+                funding_txid: channel.funding_txid,
+            },
+        },
+    })
 }
 
 /// A helper struct to configure and build BreezServices
@@ -758,8 +805,8 @@ pub(crate) mod test {
         ClosesChannelPaymentDetails, LnPaymentDetails, NodeState, Payment, PaymentDetails,
         PaymentTypeFilter,
     };
-    use crate::persist;
     use crate::test_utils::*;
+    use crate::{persist, PaymentType};
 
     #[test]
     fn test_config() {
@@ -779,7 +826,7 @@ pub(crate) mod test {
         let dummy_transactions = vec![
             Payment {
                 id: "1111".to_string(),
-                payment_type: crate::models::PAYMENT_TYPE_RECEIVED.to_string(),
+                payment_type: PaymentType::Received,
                 payment_time: 100000,
                 amount_msat: 10,
                 fee_msat: 0,
@@ -798,7 +845,7 @@ pub(crate) mod test {
             },
             Payment {
                 id: "3333".to_string(),
-                payment_type: crate::models::PAYMENT_TYPE_SENT.to_string(),
+                payment_type: PaymentType::Sent,
                 payment_time: 200000,
                 amount_msat: 8,
                 fee_msat: 2,

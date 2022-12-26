@@ -1,7 +1,7 @@
 use crate::invoice::parse_invoice;
 use crate::models::{
     Config, FeeratePreset, GreenlightCredentials, LnPaymentDetails, Network, NodeAPI, NodeState,
-    PaymentDetails, SyncResponse,
+    PaymentDetails, PaymentType, SyncResponse,
 };
 
 use anyhow::{anyhow, Result};
@@ -421,9 +421,9 @@ fn invoice_to_transaction(
     let ln_invoice = parse_invoice(&invoice.bolt11)?;
     Ok(crate::models::Payment {
         id: hex::encode(invoice.payment_hash.clone()),
-        payment_type: crate::models::PAYMENT_TYPE_RECEIVED.to_string(),
+        payment_type: PaymentType::Received,
         payment_time: invoice.payment_time as i64,
-        amount_msat: amount_to_msat(invoice.amount.unwrap_or_default()) as i32,
+        amount_msat: amount_to_msat(invoice.amount.unwrap_or_default()) as i64,
         fee_msat: 0,
         pending: false,
         description: ln_invoice.description,
@@ -447,12 +447,12 @@ fn payment_to_transaction(payment: pb::Payment) -> Result<crate::models::Payment
         description = parse_invoice(&payment.bolt11)?.description;
     }
 
-    let payment_amount = amount_to_msat(payment.amount.unwrap_or_default()) as i32;
-    let payment_amount_sent = amount_to_msat(payment.amount_sent.unwrap_or_default()) as i32;
+    let payment_amount = amount_to_msat(payment.amount.unwrap_or_default()) as i64;
+    let payment_amount_sent = amount_to_msat(payment.amount_sent.unwrap_or_default()) as i64;
 
     Ok(crate::models::Payment {
         id: hex::encode(payment.payment_hash.clone()),
-        payment_type: crate::models::PAYMENT_TYPE_SENT.to_string(),
+        payment_type: PaymentType::Sent,
         payment_time: payment.created_at as i64,
         amount_msat: payment_amount,
         fee_msat: payment_amount - payment_amount_sent,
@@ -528,6 +528,7 @@ impl From<pb::Channel> for crate::models::Channel {
             funding_txid: c.funding_txid,
             spendable_msat: amount_to_msat(parse_amount(c.spendable).unwrap_or_default()),
             receivable_msat: amount_to_msat(parse_amount(c.receivable).unwrap_or_default()),
+            closed_at: None,
         };
     }
 }

@@ -68,7 +68,8 @@ impl SqliteStorage {
               short_channel_id TEXT,
               state TEXT NOT NULL check( state in('PendingOpen', 'Opened', 'PendingClose', 'Closed')),
               spendable_msat INTEGER NOT NULL,
-              receivable_msat INTEGER NOT NULL
+              receivable_msat INTEGER NOT NULL,
+              closed_at INTEGER
              ) STRICT;
             "),
 
@@ -77,7 +78,7 @@ impl SqliteStorage {
 
              CREATE TABLE IF NOT EXISTS payments (
               id TEXT NOT NULL PRIMARY KEY,
-              payment_type TEXT NOT NULL check( payment_type in('sent', 'received', 'closed_channels')),             
+              payment_type TEXT NOT NULL check( payment_type in('Sent', 'Received', 'ClosedChannel')),             
               payment_time INTEGER NOT NULL,             
               amount_msat INTEGER NOT NULL,
               fee_msat INTEGER NOT NULL,             
@@ -90,9 +91,9 @@ impl SqliteStorage {
               (id, payment_type, payment_time, amount_msat, fee_msat, pending, description, details)
               SELECT 
                payment_hash, 
-               payment_type, 
+               case when payment_type = 'received' then 'Received' else 'Sent' end, 
                payment_time, 
-               amount_msats, 
+               amount_msats,
                fee_msat, 
                pending, 
                description, 
