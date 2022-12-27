@@ -1,21 +1,18 @@
 use super::db::SqliteStorage;
 use crate::models::{Payment, PaymentDetails};
 use crate::models::{PaymentType, PaymentTypeFilter};
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use rusqlite::types::{FromSql, FromSqlError, ToSql, ToSqlOutput};
-use std::{
-    fmt::format,
-    str::FromStr,
-    time::{SystemTime, UNIX_EPOCH},
-    vec,
-};
+use rusqlite::OptionalExtension;
+use rusqlite::Row;
+use std::str::FromStr;
 
 impl SqliteStorage {
     pub fn insert_payments(&self, transactions: &[Payment]) -> Result<()> {
         let con = self.get_connection()?;
         let mut prep_statment = con.prepare(
             "
-         INSERT INTO payments (
+         INSERT OR REPLACE INTO payments (
            id,
            payment_type,                 
            payment_time,                                  
@@ -80,23 +77,46 @@ impl SqliteStorage {
         )?;
 
         let vec: Vec<Payment> = stmt
-            .query_map([], |row| {
-                let payment_type_str: String = row.get(1)?;
-                Ok(Payment {
-                    id: row.get(0)?,
-                    payment_type: PaymentType::from_str(payment_type_str.as_str()).unwrap(),
-                    payment_time: row.get(2)?,
-                    amount_msat: row.get(3)?,
-                    fee_msat: row.get(4)?,
-                    pending: row.get(5)?,
-                    description: row.get(6)?,
-                    details: row.get(7)?,
-                })
-            })?
+            .query_map([], |row| self.sql_row_to_payment(row))?
             .map(|i| i.unwrap())
             .collect();
 
         Ok(vec)
+    }
+
+    pub(crate) fn get_payment_by_hash(&self, hash: &String) -> Result<Option<Payment>> {
+        self.get_connection()?
+            .query_row(
+                "
+                SELECT
+                 id, 
+                 payment_type, 
+                 payment_time, 
+                 amount_msat, 
+                 fee_msat, 
+                 pending, 
+                 description,
+                 details
+                FROM payments where id = ?1",
+                [hash],
+                |row| self.sql_row_to_payment(row),
+            )
+            .optional()
+            .map_err(|e| anyhow!(e))
+    }
+
+    fn sql_row_to_payment(&self, row: &Row) -> Result<Payment, rusqlite::Error> {
+        let payment_type_str: String = row.get(1)?;
+        Ok(Payment {
+            id: row.get(0)?,
+            payment_type: PaymentType::from_str(payment_type_str.as_str()).unwrap(),
+            payment_time: row.get(2)?,
+            amount_msat: row.get(3)?,
+            fee_msat: row.get(4)?,
+            pending: row.get(5)?,
+            description: row.get(6)?,
+            details: row.get(7)?,
+        })
     }
 }
 

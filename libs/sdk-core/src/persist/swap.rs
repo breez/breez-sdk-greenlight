@@ -2,7 +2,7 @@ use crate::models::{SwapInfo, SwapStatus};
 
 use super::db::{SqliteStorage, StringArray};
 use anyhow::{anyhow, Result};
-use rusqlite::{named_params, Connection, OptionalExtension};
+use rusqlite::{named_params, OptionalExtension, Row};
 
 impl SqliteStorage {
     pub fn insert_swap(&self, swap_info: SwapInfo) -> Result<()> {
@@ -73,37 +73,26 @@ impl SqliteStorage {
              ":status": status as u32
             },
         )?;
-        Ok(self.get_swap_info(bitcoin_address)?.unwrap())
+        Ok(self.get_swap_info_by_address(bitcoin_address)?.unwrap())
     }
 
-    pub fn get_swap_info(&self, address: String) -> Result<Option<SwapInfo>> {
+    pub fn get_swap_info_by_hash(&self, hash: &Vec<u8>) -> Result<Option<SwapInfo>> {
         self.get_connection()?
             .query_row(
-                "SELECT * FROM swaps where bitcoin_address= ?1",
+                "SELECT * FROM swaps where payment_hash = ?1",
+                [hash],
+                |row| self.sql_row_to_swap(row),
+            )
+            .optional()
+            .map_err(|e| anyhow!(e))
+    }
+
+    pub fn get_swap_info_by_address(&self, address: String) -> Result<Option<SwapInfo>> {
+        self.get_connection()?
+            .query_row(
+                "SELECT * FROM swaps where bitcoin_address = ?1",
                 [address],
-                |row| {
-                    let status: i32 = row.get(12)?;
-                    let status: SwapStatus = status.try_into().map_or(SwapStatus::Initial, |v| v);
-                    let refund_txs_raw: StringArray = row.get(13)?;
-                    let confirmed_txs_raw: StringArray = row.get(14)?;
-                    Ok(SwapInfo {
-                        bitcoin_address: row.get(0)?,
-                        created_at: row.get(1)?,
-                        lock_height: row.get(2)?,
-                        payment_hash: row.get(3)?,
-                        preimage: row.get(4)?,
-                        private_key: row.get(5)?,
-                        public_key: row.get(6)?,
-                        swapper_public_key: row.get(7)?,
-                        script: row.get(8)?,
-                        bolt11: row.get(9)?,
-                        paid_sats: row.get(10)?,
-                        confirmed_sats: row.get(11)?,
-                        refund_tx_ids: refund_txs_raw.0,
-                        confirmed_tx_ids: confirmed_txs_raw.0,
-                        status: status,
-                    })
-                },
+                |row| self.sql_row_to_swap(row),
             )
             .optional()
             .map_err(|e| anyhow!(e))
@@ -150,6 +139,30 @@ impl SqliteStorage {
 
         Ok(vec)
     }
+
+    fn sql_row_to_swap(&self, row: &Row) -> Result<SwapInfo, rusqlite::Error> {
+        let status: i32 = row.get(12)?;
+        let status: SwapStatus = status.try_into().map_or(SwapStatus::Initial, |v| v);
+        let refund_txs_raw: StringArray = row.get(13)?;
+        let confirmed_txs_raw: StringArray = row.get(14)?;
+        Ok(SwapInfo {
+            bitcoin_address: row.get(0)?,
+            created_at: row.get(1)?,
+            lock_height: row.get(2)?,
+            payment_hash: row.get(3)?,
+            preimage: row.get(4)?,
+            private_key: row.get(5)?,
+            public_key: row.get(6)?,
+            swapper_public_key: row.get(7)?,
+            script: row.get(8)?,
+            bolt11: row.get(9)?,
+            paid_sats: row.get(10)?,
+            confirmed_sats: row.get(11)?,
+            refund_tx_ids: refund_txs_raw.0,
+            confirmed_tx_ids: confirmed_txs_raw.0,
+            status: status,
+        })
+    }
 }
 
 #[test]
@@ -178,10 +191,10 @@ fn test_swaps() -> Result<(), Box<dyn std::error::Error>> {
         confirmed_tx_ids: Vec::new(),
     };
     storage.insert_swap(tested_swap_info.clone())?;
-    let item_value = storage.get_swap_info("1".to_string())?.unwrap();
+    let item_value = storage.get_swap_info_by_address("1".to_string())?.unwrap();
     assert_eq!(item_value, tested_swap_info);
 
-    let non_existent_swap = storage.get_swap_info("non-existent".to_string())?;
+    let non_existent_swap = storage.get_swap_info_by_address("non-existent".to_string())?;
     assert!(non_existent_swap.is_none());
 
     let empty_swaps = storage.list_swaps_with_status(SwapStatus::Expired)?;
@@ -204,7 +217,7 @@ fn test_swaps() -> Result<(), Box<dyn std::error::Error>> {
 
     storage.update_swap_paid_amount(tested_swap_info.bitcoin_address.clone(), 30)?;
     let updated_swap = storage
-        .get_swap_info(tested_swap_info.bitcoin_address)?
+        .get_swap_info_by_address(tested_swap_info.bitcoin_address)?
         .unwrap();
     assert_eq!(updated_swap.paid_sats, 30);
     assert_eq!(updated_swap.confirmed_sats, 20);

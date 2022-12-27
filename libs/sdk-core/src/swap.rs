@@ -71,7 +71,9 @@ impl SwapperAPI for BreezServer {
     }
 }
 
-pub struct BTCReceiveSwap {
+/// This struct is responsible for handling on-chain funds with lightning payments.
+/// It uses internally an implementation of SwapperAPI that represents the actualy swapper service.
+pub(crate) struct BTCReceiveSwap {
     network: bitcoin::Network,
     swapper_api: Arc<dyn SwapperAPI>,
     persister: Arc<crate::persist::db::SqliteStorage>,
@@ -97,6 +99,11 @@ impl BTCReceiveSwap {
         swapper
     }
 
+    /// Listening to events is required in order to:
+    /// * Refresh on-chain status of swap addresses.
+    /// * Refresh lighting status of swap addresses, e.g lookup for corresponding lightning payment
+    /// * Redeem funds related to swap addresses, e.g when on chain funds are discovered use the SwapperAPI to
+    ///   request payment by passing bolt11 invoice.
     pub(crate) async fn on_event(&self, e: BreezEvent) -> Result<()> {
         match e {
             BreezEvent::NewBlock { block: tip } => {
@@ -140,21 +147,38 @@ impl BTCReceiveSwap {
                     }
                 }
             }
+
+            /// When invoice is paid we lookup for a swap that matches the same hash.
+            /// In case we find one, we update its paid amount.
+            BreezEvent::InvoicePaid { details } => {
+                debug!("swap InvoicePaid event!");
+                let hash_raw = hex::decode(details.payment_hash.clone())?;
+                let swap_info = self.persister.get_swap_info_by_hash(&hash_raw)?;
+                if swap_info.is_some() {
+                    let payment = self.persister.get_payment_by_hash(&details.payment_hash)?;
+                    if payment.is_some() {
+                        self.persister.update_swap_paid_amount(
+                            swap_info.unwrap().bitcoin_address,
+                            payment.unwrap().amount_msat as u32,
+                        )?;
+                    }
+                }
+            }
             _ => {} // skip events were are not interested in
         }
 
         Ok(())
     }
 
-    /// Create a SwapInfo that represents all the up to date details of an on-going swap.
+    /// Create a SwapInfo that represents the details of an on-going swap.
     /// Once this SwapInfo is created it will be monitored on-chain and its state is
-    /// updated in the persistent storage.
+    /// saved to the persistent storage.
     ///
-    /// The SwapInfo has a status which is changes accordingly:
+    /// The SwapInfo has a status which changes accordingly:
     ///
     /// Initial - The swap address has been created and either there aren't any confirmed transactions associated with it
     /// or there are confirmed transactions that are bellow the lock timeout which means the funds are still
-    /// eligible for completing the swap.
+    /// eligible to be redeemed normally.
     ///
     /// Expired - The swap address has confirmed transactions associated with it and the lock timeout has passed since
     /// the earliest confirmed transaction. This means the only way to spend the funds from this address is by
@@ -241,13 +265,18 @@ impl BTCReceiveSwap {
     }
 
     pub(crate) fn get_swap_info(&self, address: String) -> Result<Option<SwapInfo>> {
-        self.persister.get_swap_info(address)
+        self.persister.get_swap_info_by_address(address)
     }
 
     fn list_swaps(&self, status: SwapStatus) -> Result<Vec<SwapInfo>> {
         self.persister.list_swaps_with_status(status)
     }
 
+    /// refreshes the on-chain status of the swap. This method updates the following information
+    /// on a SwapInfo and save it to the persistent storage:
+    /// confirmed_sats - the number of unspent satoshis that were sent to this address
+    /// confirmed_txs - all utxo that are sent to this address
+    /// swap_status - Either Initial or Expired.
     pub(crate) async fn refresh_swap_on_chain_status(
         &self,
         bitcoin_address: String,
@@ -255,7 +284,7 @@ impl BTCReceiveSwap {
     ) -> Result<SwapInfo> {
         let swap_info = self
             .persister
-            .get_swap_info(bitcoin_address.clone())?
+            .get_swap_info_by_address(bitcoin_address.clone())?
             .ok_or_else(|| {
                 anyhow!(format!(
                     "swap address {} was not found",
@@ -291,8 +320,23 @@ impl BTCReceiveSwap {
 
         debug!(
             "updating swap on-chain info {:?}: confirmed_sats={:?} refund_tx_ids={:?}, confirmed_tx_ids={:?} swap_status={:?}",
-            bitcoin_address, confirmed_sats, swap_info.refund_tx_ids, confirmed_txs, swap_status
+            bitcoin_address.clone(), confirmed_sats, swap_info.refund_tx_ids, confirmed_txs, swap_status
         );
+
+        let payment = self
+            .persister
+            .get_payment_by_hash(&hex::encode(swap_info.payment_hash.clone()))?;
+        print!(
+            "found payment for hash {:?}, {:?}",
+            &hex::encode(swap_info.payment_hash.clone()),
+            payment
+        );
+        if payment.is_some() {
+            self.persister.update_swap_paid_amount(
+                bitcoin_address.clone(),
+                payment.unwrap().amount_msat as u32,
+            )?;
+        }
 
         self.persister.update_swap_chain_info(
             bitcoin_address,
@@ -308,7 +352,7 @@ impl BTCReceiveSwap {
     pub(crate) async fn redeem_swap(&self, bitcoin_address: String) -> Result<()> {
         let mut swap_info = self
             .persister
-            .get_swap_info(bitcoin_address.clone())?
+            .get_swap_info_by_address(bitcoin_address.clone())?
             .ok_or_else(|| anyhow!(format!("swap address {} was not found", bitcoin_address)))?;
 
         // we are creating and invoice for this swap if we didn't
@@ -326,30 +370,24 @@ impl BTCReceiveSwap {
                 .update_swap_bolt11(bitcoin_address.clone(), invoice.bolt11)?;
             swap_info = self
                 .persister
-                .get_swap_info(bitcoin_address.clone())?
+                .get_swap_info_by_address(bitcoin_address.clone())?
                 .unwrap();
         }
 
         // Making sure the invoice amount matches the on-chain amount
         let payreq = swap_info.bolt11.unwrap();
         let ln_invoice = parse_invoice(payreq.clone())?;
-        println!("confirmed = {}", swap_info.confirmed_sats);
+        debug!("swap info confirmed = {}", swap_info.confirmed_sats);
         if ln_invoice.amount_msat.unwrap() != (swap_info.confirmed_sats as u64 * 1000) {
-            println!(
+            warn!(
                 "invoice amount doesn't match confirmed sats {:?}",
                 ln_invoice.amount_msat.unwrap()
             );
             return Err(anyhow!("invoice amount doesn't match confirmed sats"));
         }
 
-        // Asking the service to initiate the lightning payment
-        let result = self.swapper_api.complete_swap(payreq.clone()).await;
-        match result {
-            Ok(_) => self
-                .persister
-                .update_swap_paid_amount(bitcoin_address, swap_info.confirmed_sats),
-            Err(e) => Err(e),
-        }
+        // Asking the service to initiate the lightning payment.
+        self.swapper_api.complete_swap(payreq.clone()).await
     }
 
     // refund_swap is the user way to receive on-chain refund for failed swaps.
@@ -361,7 +399,7 @@ impl BTCReceiveSwap {
     ) -> Result<String> {
         let swap_info = self
             .persister
-            .get_swap_info(swap_address.clone())?
+            .get_swap_info_by_address(swap_address.clone())?
             .ok_or_else(|| anyhow!(format!("swap address {} was not found", swap_address)))?;
 
         let transactions = self
@@ -476,6 +514,8 @@ fn get_utxos(swap_address: String, transactions: Vec<OnchainTx>) -> Result<Vec<U
     Ok(utxos)
 }
 
+/// Creating the refund transaction that is to be used by the user in case where the swap has
+/// expired.
 fn create_refund_tx(
     utxos: Vec<Utxo>,
     private_key: Vec<u8>,
@@ -580,13 +620,15 @@ mod tests {
 
     use crate::{
         breez_services::test::get_dummy_node_state,
-        chain::{ChainService, MempoolSpace, OnchainTx, RecommendedFees},
+        chain::{ChainService, OnchainTx},
+        models::*,
+        persist::db::SqliteStorage,
         swap::{BTCReceiveSwap, Utxo},
         test_utils::{
             create_test_config, create_test_persister, MockChainService, MockReceiver,
             MockSwapperAPI,
         },
-        BreezEvent, Network, SwapInfo, SwapStatus,
+        BreezEvent,
     };
 
     use super::{create_refund_tx, create_submarine_swap_script, create_swap_keys, get_utxos};
@@ -651,13 +693,13 @@ mod tests {
         assert_eq!(utxos.len(), 1);
     }
 
-    // 1. User sent funds to swap address
+    // 1. User has sent funds to swap address
     // 2. Swap didn't complete before timeout
     // Swap should move to Expired status and returned in the refundable list.
     #[tokio::test]
     async fn test_expired_swap() {
         let chain_service = Arc::new(MockChainService::default());
-        let mut swapper = create_swapper(chain_service.clone());
+        let (mut swapper, _) = create_swapper(chain_service.clone());
         let swap_info = swapper.create_swap_address().await.unwrap();
 
         // We test the case that a confirmed transaction was detected on chain that
@@ -701,6 +743,8 @@ mod tests {
             .unwrap();
         assert_eq!(swap.status, SwapStatus::Expired);
         assert_eq!(swapper.list_redeemables().unwrap().len(), 0);
+
+        // the swap should be refundable by now
         let refundables = swapper.list_refundables().unwrap();
         assert_eq!(refundables.len(), 1);
         assert_eq!(refundables[0].clone().refund_tx_ids.len(), 1);
@@ -713,8 +757,31 @@ mod tests {
     #[tokio::test]
     async fn test_redeem_swap() {
         let chain_service = Arc::new(MockChainService::default());
-        let mut swapper = create_swapper(chain_service.clone());
+        let (mut swapper, persister) = create_swapper(chain_service.clone());
         let swap_info = swapper.create_swap_address().await.unwrap();
+
+        // add a payment with the same hash and test that the swapper updates the paid_amount for
+        // the swap.
+        let payment = Payment {
+            id: hex::encode(swap_info.payment_hash.clone()),
+            payment_type: PaymentType::Received,
+            payment_time: 0,
+            amount_msat: 5000 as i64,
+            fee_msat: 0,
+            pending: false,
+            description: Some("desc".to_string()),
+            details: PaymentDetails::Ln {
+                data: LnPaymentDetails {
+                    payment_hash: hex::encode(swap_info.payment_hash.clone()),
+                    label: "".to_string(),
+                    destination_pubkey: "".to_string(),
+                    payment_preimage: "111".to_string(),
+                    keysend: false,
+                    bolt11: "".to_string(),
+                },
+            },
+        };
+        persister.insert_payments(&vec![payment.clone()]).unwrap();
 
         // We test the case that a confirmed transaction was detected on chain that
         // sent funds to this address.
@@ -735,10 +802,32 @@ mod tests {
             swap.confirmed_tx_ids,
             vec!["ec901bcab07df7d475d98fff2933dcb56d57bbdaa029c4142aed93462b6928fe".to_string()]
         );
+
         assert_eq!(swap.confirmed_sats, 50000);
-        assert_eq!(swap.paid_sats, 50000);
+        assert_eq!(swap.paid_sats, 5000);
+
         assert_eq!(swapper.list_redeemables().unwrap().len(), 0);
         assert_eq!(swapper.list_refundables().unwrap().len(), 0);
+
+        // change payment amout and test that the InvoicePaid event triggers updating the
+        // paid_amount of the swap.
+        let mut payment = payment.clone();
+        payment.amount_msat = 2000;
+        persister.insert_payments(&vec![payment]).unwrap();
+        swapper
+            .on_event(BreezEvent::InvoicePaid {
+                details: crate::InvoicePaidDetails {
+                    payment_hash: hex::encode(swap_info.payment_hash.clone()),
+                    bolt11: "".to_string(),
+                },
+            })
+            .await
+            .unwrap();
+        let swap = swapper
+            .get_swap_info(swap_info.clone().bitcoin_address)
+            .unwrap()
+            .unwrap();
+        assert_eq!(swap.paid_sats, 2000);
     }
 
     // 1. User sent funds to swap address
@@ -747,7 +836,7 @@ mod tests {
     #[tokio::test]
     async fn test_spent_swap() {
         let chain_service = Arc::new(MockChainService::default());
-        let mut swapper = create_swapper(chain_service.clone());
+        let (mut swapper, _) = create_swapper(chain_service.clone());
         let swap_info = swapper.create_swap_address().await.unwrap();
 
         // Once swap is spent on-chain the confirmed_sats whould be set to zero again.
@@ -781,6 +870,7 @@ mod tests {
             .get_swap_info(swap_info.clone().bitcoin_address)
             .unwrap()
             .unwrap();
+
         assert_eq!(swap.status, SwapStatus::Expired);
         assert_eq!(swapper.list_redeemables().unwrap().len(), 0);
         assert_eq!(swapper.list_refundables().unwrap().len(), 0);
@@ -885,7 +975,9 @@ mod tests {
         assert_eq!(hex::encode(refund_tx), "0200000000010130037fa97f58d7f685ce861f7862112d8377364c4898f1d63213ff949ffeb31a00000000002001000001204e00000000000016001465c96c830168b8f0b584294d3b9716bb8584c2d80347304402203285efcf44640551a56c53bde677988964ef1b4d11182d5d6634096042c320120220227b625f7827993aca5b9d2f4690c5e5fae44d8d42fdd5f3778ba21df8ba7c7b010064a9148a486ff2e31d6158bf39e2608864d63fefd09d5b876321024d4b6cd1361032ca9bd2aeb9d900aa4d45d9ead80ac9423374c451a7254d076667022001b27521031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f68ac80af0a00");
     }
 
-    fn create_swapper(chain_service: Arc<dyn ChainService>) -> BTCReceiveSwap {
+    fn create_swapper(
+        chain_service: Arc<dyn ChainService>,
+    ) -> (BTCReceiveSwap, Arc<SqliteStorage>) {
         let config = create_test_config();
         println!("working = {}", config.working_dir);
 
@@ -898,11 +990,11 @@ mod tests {
         let swapper = BTCReceiveSwap {
             network: bitcoin::Network::Bitcoin,
             swapper_api: Arc::new(MockSwapperAPI {}),
-            persister: persister,
+            persister: persister.clone(),
             chain_service: chain_service.clone(),
             payment_receiver: Arc::new(MockReceiver::default()),
         };
-        swapper
+        (swapper, persister.clone())
     }
 
     fn chain_service_with_confirmed_txs(address: String) -> Arc<dyn ChainService> {
