@@ -267,6 +267,14 @@ dictionary MetadataItem {
     string value;
 };
 
+dictionary RecommendedFees {
+    u32 fastest_fee;
+    u32 half_hour_fee;
+    u32 hour_fee;
+    u32 economy_fee;
+    u32 minimum_fee;
+};
+
 [Enum]
 interface InputType {
     BitcoinAddress(BitcoinAddressData address);   
@@ -331,6 +339,9 @@ interface BlockingBreezServices {
    
    [Throws=SDKError]
    string refund(string swap_address, string to_address, u32 sat_per_vbyte); 
+
+   [Throws=SDKError]
+   RecommendedFees recommended_fees();
 };
 
 namespace breez_sdk { 
