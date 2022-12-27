@@ -15,7 +15,7 @@ impl SqliteStorage {
         let con = self.get_connection()?;
         let mut prep_statment = con.prepare(
             "
-         INSERT INTO payments (
+         INSERT OR REPLACE INTO payments (
            id,
            payment_type,                 
            payment_time,                                  
@@ -228,4 +228,11 @@ fn test_ln_transactions() {
 
     let max_ts = storage.last_payment_timestamp().unwrap();
     assert_eq!(max_ts, 1001);
+
+    storage.insert_payments(&txs).unwrap();
+    let retrieve_txs = storage
+        .list_payments(PaymentTypeFilter::All, None, None)
+        .unwrap();
+    assert_eq!(retrieve_txs.len(), 2);
+    assert_eq!(retrieve_txs, txs);
 }
