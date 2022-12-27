@@ -180,6 +180,10 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kRefundConstMeta;
 
+  Future<String> executeCommand({required String command, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kExecuteCommandConstMeta;
+
   Future<LNInvoice> parseInvoice({required String invoice, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kParseInvoiceConstMeta;
@@ -1188,6 +1192,23 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       const FlutterRustBridgeTaskConstMeta(
         debugName: "refund",
         argNames: ["swapAddress", "toAddress", "satPerVbyte"],
+      );
+
+  Future<String> executeCommand({required String command, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(command);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_execute_command(port_, arg0),
+      parseSuccessData: _wire2api_String,
+      constMeta: kExecuteCommandConstMeta,
+      argValues: [command],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kExecuteCommandConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "execute_command",
+        argNames: ["command"],
       );
 
   Future<LNInvoice> parseInvoice({required String invoice, dynamic hint}) {
@@ -2589,6 +2610,23 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_refund = _wire_refundPtr.asFunction<
       void Function(int, ffi.Pointer<wire_uint_8_list>,
           ffi.Pointer<wire_uint_8_list>, int)>();
+
+  void wire_execute_command(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> command,
+  ) {
+    return _wire_execute_command(
+      port_,
+      command,
+    );
+  }
+
+  late final _wire_execute_commandPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Int64,
+              ffi.Pointer<wire_uint_8_list>)>>('wire_execute_command');
+  late final _wire_execute_command = _wire_execute_commandPtr
+      .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
   void wire_parse_invoice(
     int port_,
