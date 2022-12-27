@@ -228,6 +228,9 @@ class BreezBridge {
     return  _lnToolkit.payLnurl(userAmountSat: userAmountSat, reqData: reqData, comment: comment);
   }
 
+  /// Fetches the current recommended fees
+  Future<RecommendedFees> recommendedFees() => _lnToolkit.recommendedFees();
+
   void _registerToolkitLog(LogEntry log) {
     switch (log.level) {
       case "ERROR":

@@ -14,7 +14,7 @@ pub(crate) struct MempoolSpace {
     pub(crate) base_url: String,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct RecommendedFees {
     #[serde(rename(deserialize = "fastestFee"))]
     pub fastest_fee: u32,
