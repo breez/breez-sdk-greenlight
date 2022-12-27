@@ -135,7 +135,7 @@ impl BreezServices {
         // create the node services instance and set it globally
         let breez_services = BreezServicesBuilder::new(sdk_config.clone())
             .greenlight_credentials(creds, seed)
-            .build(None)?;
+            .build(Some(event_listener))?;
 
         // create a shutdown channel (sender and receiver)
         let (stop_sender, stop_receiver) = mpsc::channel(1);

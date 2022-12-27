@@ -5,7 +5,7 @@ use crate::lsp::LspInformation;
 use crate::models::LogEntry;
 use anyhow::{anyhow, Result};
 use flutter_rust_bridge::StreamSink;
-use log::{Metadata, Record};
+use log::{LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
 use std::future::Future;
 use std::sync::Arc;
@@ -35,7 +35,8 @@ struct BindingLogger;
 
 impl BindingLogger {
     fn init() {
-        log::set_logger(&BindingLogger {}).unwrap();
+        log::set_boxed_logger(Box::new(BindingLogger {})).unwrap();
+        log::set_max_level(LevelFilter::Trace)
     }
 }
 
