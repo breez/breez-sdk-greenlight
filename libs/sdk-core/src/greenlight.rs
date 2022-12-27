@@ -19,9 +19,12 @@ use gl_client::{node, pb};
 
 use gl_client::pb::Peer;
 use lightning_invoice::{RawInvoice, SignedRawInvoice};
+use serde::{Deserialize, Serialize};
 use std::cmp::{max, min};
+use std::str::FromStr;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::usize::MIN;
+use strum_macros::{Display, EnumString};
 use tokio::sync::mpsc;
 use tonic::Streaming;
 
@@ -363,6 +366,79 @@ impl NodeAPI for Greenlight {
 
         Ok(client.withdraw(request).await?.into_inner())
     }
+
+    async fn execute_command(&self, command: &String) -> Result<String> {
+        let node_cmd = NodeCommand::from_str(command)?;
+        match node_cmd {
+            NodeCommand::ListPeers => {
+                let resp = self
+                    .get_client()
+                    .await?
+                    .list_peers(pb::ListPeersRequest::default())
+                    .await?
+                    .into_inner();
+                Ok(format!("{:?}", resp))
+            }
+            NodeCommand::ListFunds => {
+                let resp = self
+                    .get_client()
+                    .await?
+                    .list_funds(pb::ListFundsRequest::default())
+                    .await?
+                    .into_inner();
+                Ok(format!("{:?}", resp))
+            }
+            NodeCommand::ListPayments => {
+                let resp = self
+                    .get_client()
+                    .await?
+                    .list_payments(pb::ListPaymentsRequest::default())
+                    .await?
+                    .into_inner();
+                Ok(format!("{:?}", resp))
+            }
+            NodeCommand::ListInvoices => {
+                let resp = self
+                    .get_client()
+                    .await?
+                    .list_invoices(pb::ListInvoicesRequest::default())
+                    .await?
+                    .into_inner();
+                Ok(format!("{:?}", resp))
+            }
+            NodeCommand::CloseAllChannels => {
+                let peers_res = self
+                    .get_client()
+                    .await?
+                    .list_peers(pb::ListPeersRequest::default())
+                    .await?
+                    .into_inner();
+                for p in peers_res.peers {
+                    self.close_peer_channels(hex::encode(p.id)).await?;
+                }
+
+                Ok("All channels were closed".to_string())
+            }
+        }
+    }
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
+enum NodeCommand {
+    #[strum(serialize = "listpeers")]
+    ListPeers,
+
+    #[strum(serialize = "listfunds")]
+    ListFunds,
+
+    #[strum(serialize = "listpayments")]
+    ListPayments,
+
+    #[strum(serialize = "listinvoices")]
+    ListInvoices,
+
+    #[strum(serialize = "closeallchannels")]
+    CloseAllChannels,
 }
 
 // pulls transactions from greenlight based on last sync timestamp.

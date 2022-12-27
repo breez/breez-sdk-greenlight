@@ -241,6 +241,10 @@ impl NodeAPI for MockNodeAPI {
     async fn stream_log_messages(&self) -> Result<Streaming<gl_client::pb::LogEntry>> {
         Err(anyhow!("Not implemented"))
     }
+
+    async fn execute_command(&self, command: &String) -> Result<String> {
+        Err(anyhow!("Not implemented"))
+    }
 }
 
 impl MockNodeAPI {

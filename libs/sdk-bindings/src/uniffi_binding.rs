@@ -254,6 +254,11 @@ impl BlockingBreezServices {
         )
         .map_err(|e| e.into())
     }
+
+    pub fn execute_dev_command(&self, command: String) -> Result<String> {
+        rt().block_on(self.breez_services.execute_dev_command(&command))
+            .map_err(|e| e.into())
+    }
 }
 
 pub fn parse_invoice(invoice: String) -> Result<LNInvoice, SDKError> {
