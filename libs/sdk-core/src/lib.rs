@@ -21,7 +21,7 @@ mod test_utils;
 pub use breez_services::{
     mnemonic_to_seed, BreezEvent, BreezServices, EventListener, InvoicePaidDetails,
 };
-pub use chain::{RecommendedFees};
+pub use chain::RecommendedFees;
 pub use fiat::{CurrencyInfo, FiatCurrency, LocaleOverrides, LocalizedName, Rate, Symbol};
 pub use input_parser::{
     parse, BitcoinAddressData, InputType, LnUrlAuthRequestData, LnUrlErrorData,
