@@ -173,6 +173,7 @@ dictionary InvoicePaidDetails {
 interface BreezEvent {
     NewBlock(u32 block);
     InvoicePaid(InvoicePaidDetails details);
+    Synced();
 };
 
 callback interface LogStream {

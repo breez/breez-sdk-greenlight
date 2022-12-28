@@ -565,6 +565,7 @@ impl support::IntoDart for BreezEvent {
         match self {
             Self::NewBlock { block } => vec![0.into_dart(), block.into_dart()],
             Self::InvoicePaid { details } => vec![1.into_dart(), details.into_dart()],
+            Self::Synced => vec![2.into_dart()],
         }
         .into_dart()
     }

@@ -11,13 +11,22 @@ class BreezBridge {
   final _log = FimberLog("BreezBridge");
 
   BreezBridge() {
-    _lnToolkit.breezEventsStream().listen((event) {
+    _lnToolkit.breezEventsStream().listen((event) async {
       _log.v("Received breez event: $event");
       if (event is BreezEvent_InvoicePaid) {
         _invoicePaidStream.add(event.details);
+        await fetchNodeData();
+      }
+      if (event is BreezEvent_Synced) {
+        await fetchNodeData();
       }
     });
     _lnToolkit.breezLogStream().listen(_registerToolkitLog);
+  }
+
+  Future fetchNodeData() async {
+    await getNodeState();
+    await listPayments();
   }
 
   /// Register a new node in the cloud and return credentials to interact with it
@@ -76,8 +85,7 @@ class BreezBridge {
       seed: seed,
       creds: creds,
     );
-    await getNodeState();
-    await listPayments();
+    await fetchNodeData();
     await _lnToolkit.startNode();
   }
 
@@ -88,9 +96,7 @@ class BreezBridge {
   /// * `bolt11` - The bolt11 invoice
   /// * `amountSats` - The amount to pay in satoshis
   Future sendPayment({required String bolt11, int? amountSats}) async {
-    await _lnToolkit.sendPayment(bolt11: bolt11, amountSats: amountSats);
-    await getNodeState();
-    await listPayments();
+    await _lnToolkit.sendPayment(bolt11: bolt11, amountSats: amountSats);   
   }
 
   /// pay directly to a node id using keysend
@@ -102,9 +108,7 @@ class BreezBridge {
   Future sendSpontaneousPayment(
       {required String nodeId, required int amountSats}) async {
     await _lnToolkit.sendSpontaneousPayment(
-        nodeId: nodeId, amountSats: amountSats);
-    await getNodeState();
-    await listPayments();
+        nodeId: nodeId, amountSats: amountSats);   
   }
 
   /// Creates an bolt11 payment request.
@@ -158,8 +162,7 @@ class BreezBridge {
 
   /// Select the lsp to be used and provide inbound liquidity
   Future connectLSP(String lspId) async {
-    await _lnToolkit.connectLsp(lspId: lspId);
-    await getNodeState();
+    await _lnToolkit.connectLsp(lspId: lspId);    
   }
 
   /// Convenience method to look up LSP info
@@ -184,9 +187,7 @@ class BreezBridge {
   /// Withdraw on-chain funds in the wallet to an external btc address
   Future sweep(
       {required String toAddress, required FeeratePreset feeratePreset}) async {
-    await _lnToolkit.sweep(toAddress: toAddress, feeratePreset: feeratePreset);
-    await getNodeState();
-    await listPayments();
+    await _lnToolkit.sweep(toAddress: toAddress, feeratePreset: feeratePreset);    
   }
 
   /// Onchain receive swap API

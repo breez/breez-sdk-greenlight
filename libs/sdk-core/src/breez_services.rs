@@ -40,6 +40,7 @@ pub trait EventListener: Send + Sync {
 pub enum BreezEvent {
     NewBlock { block: u32 },
     InvoicePaid { details: InvoicePaidDetails },
+    Synced,
 }
 
 #[derive(Clone, Debug)]
@@ -326,6 +327,7 @@ impl BreezServices {
         let mut payments = closed_channel_payments_res?;
         payments.extend(new_data.payments.clone());
         self.persister.insert_payments(&payments)?;
+        self.notify_event_listeners(BreezEvent::Synced).await?;
         Ok(())
     }
 
@@ -351,8 +353,12 @@ impl BreezServices {
             BreezEvent::InvoicePaid { details: _ } => self.sync().await?,
             BreezEvent::NewBlock { block: _ } => self.sync().await?,
             _ => {}
-        }
+        };
 
+        self.notify_event_listeners(e.clone()).await
+    }
+
+    async fn notify_event_listeners(&self, e: BreezEvent) -> Result<()> {
         if let Err(err) = self.btc_receive_swapper.on_event(e.clone()).await {
             debug!(
                 "btc_receive_swapper failed to processed event {:?}: {:?}",
