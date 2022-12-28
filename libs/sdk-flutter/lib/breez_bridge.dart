@@ -185,9 +185,20 @@ class BreezBridge {
   Future closeLspChannels() async => await _lnToolkit.closeLspChannels();
 
   /// Withdraw on-chain funds in the wallet to an external btc address
-  Future sweep(
-      {required String toAddress, required FeeratePreset feeratePreset}) async {
-    await _lnToolkit.sweep(toAddress: toAddress, feeratePreset: feeratePreset);
+  Future sweep({
+    required String toAddress,
+    required FeeratePreset feeratePreset,
+    int? feeratePerkw,
+    int? feeratePerkb,
+  }) async {
+    await _lnToolkit.sweep(
+      toAddress: toAddress,
+      feeratePreset: feeratePreset,
+      feeratePerkw: feeratePerkw,
+      feeratePerkb: feeratePerkb,
+    );
+    await getNodeState();
+    await listPayments();
   }
 
   /// Onchain receive swap API

@@ -224,6 +224,8 @@ fn main() -> Result<()> {
                         show_results(binding::sweep(
                             to_address.into(),
                             FeeratePreset::try_from(feerate_preset)?,
+                            None,
+                            None,
                         ))
                     }
                     Some("list_lsps") => show_results(binding::list_lsps()),

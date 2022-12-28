@@ -263,10 +263,28 @@ pub fn close_lsp_channels() -> Result<()> {
 }
 
 /// Withdraw on-chain funds in the wallet to an external btc address
-pub fn sweep(to_address: String, feerate_preset: FeeratePreset) -> Result<()> {
+pub fn sweep(
+    to_address: String,
+    // TODO wrap FeeratePreset in an Option when this bug
+    // https://github.com/fzyzcjy/flutter_rust_bridge/issues/828 is fixed
+    feerate_preset: FeeratePreset,
+    feerate_perkw: Option<u64>,
+    feerate_perkb: Option<u64>,
+) -> Result<()> {
+    // TODO remove this option wrap when this bug
+    // https://github.com/fzyzcjy/flutter_rust_bridge/issues/828 is fixed
+    let feerate_preset_option = match (feerate_perkw, feerate_perkb) {
+        (None, None) => Some(feerate_preset),
+        _ => None,
+    };
     block_on(async {
         get_breez_services()?
-            .sweep(to_address, feerate_preset)
+            .sweep(
+                to_address,
+                feerate_preset_option,
+                feerate_perkw,
+                feerate_perkb,
+            )
             .await
     })
 }

@@ -342,16 +342,27 @@ impl NodeAPI for Greenlight {
     async fn sweep(
         &self,
         to_address: String,
-        feerate_preset: FeeratePreset,
+        feerate_preset: Option<FeeratePreset>,
+        feerate_perkw: Option<u64>,
+        feerate_perkb: Option<u64>,
     ) -> Result<WithdrawResponse> {
+        assert!(
+            feerate_preset.is_some() || feerate_perkw.is_some() || feerate_perkb.is_some(),
+            "feerate_preset or feerate_perkw or feerate_perkb must be set"
+        );
         let mut client = self.get_client().await?;
 
         let fee_rate = pb::Feerate {
-            value: Some(pb::feerate::Value::Preset(match feerate_preset {
-                FeeratePreset::Regular => pb::FeeratePreset::Normal,
-                FeeratePreset::Economy => pb::FeeratePreset::Slow,
-                FeeratePreset::Priority => pb::FeeratePreset::Urgent,
-            } as i32)),
+            value: match (feerate_preset, feerate_perkw, feerate_perkb) {
+                (Some(preset), _, _) => Some(pb::feerate::Value::Preset(match preset {
+                    FeeratePreset::Regular => pb::FeeratePreset::Normal,
+                    FeeratePreset::Economy => pb::FeeratePreset::Slow,
+                    FeeratePreset::Priority => pb::FeeratePreset::Urgent,
+                } as i32)),
+                (_, Some(perkw), _) => Some(pb::feerate::Value::Perkw(perkw)),
+                (_, _, Some(perkb)) => Some(pb::feerate::Value::Perkb(perkb)),
+                _ => None,
+            },
         };
 
         let request = pb::WithdrawRequest {

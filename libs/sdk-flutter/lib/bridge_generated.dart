@@ -162,6 +162,8 @@ abstract class BreezSdkCore {
   Future<void> sweep(
       {required String toAddress,
       required FeeratePreset feeratePreset,
+      int? feeratePerkw,
+      int? feeratePerkb,
       dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kSweepConstMeta;
@@ -1163,14 +1165,19 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   Future<void> sweep(
       {required String toAddress,
       required FeeratePreset feeratePreset,
+      int? feeratePerkw,
+      int? feeratePerkb,
       dynamic hint}) {
     var arg0 = _platform.api2wire_String(toAddress);
     var arg1 = api2wire_feerate_preset(feeratePreset);
+    var arg2 = _platform.api2wire_opt_box_autoadd_u64(feeratePerkw);
+    var arg3 = _platform.api2wire_opt_box_autoadd_u64(feeratePerkb);
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_sweep(port_, arg0, arg1),
+      callFfi: (port_) =>
+          _platform.inner.wire_sweep(port_, arg0, arg1, arg2, arg3),
       parseSuccessData: _wire2api_unit,
       constMeta: kSweepConstMeta,
-      argValues: [toAddress, feeratePreset],
+      argValues: [toAddress, feeratePreset, feeratePerkw, feeratePerkb],
       hint: hint,
     ));
   }
@@ -1178,7 +1185,12 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kSweepConstMeta =>
       const FlutterRustBridgeTaskConstMeta(
         debugName: "sweep",
-        argNames: ["toAddress", "feeratePreset"],
+        argNames: [
+          "toAddress",
+          "feeratePreset",
+          "feeratePerkw",
+          "feeratePerkb"
+        ],
       );
 
   Future<SwapInfo> receiveOnchain({dynamic hint}) {
@@ -2633,20 +2645,25 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
     int port_,
     ffi.Pointer<wire_uint_8_list> to_address,
     int feerate_preset,
+    ffi.Pointer<ffi.Uint64> feerate_perkw,
+    ffi.Pointer<ffi.Uint64> feerate_perkb,
   ) {
     return _wire_sweep(
       port_,
       to_address,
       feerate_preset,
+      feerate_perkw,
+      feerate_perkb,
     );
   }
 
   late final _wire_sweepPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>,
-              ffi.Int32)>>('wire_sweep');
-  late final _wire_sweep = _wire_sweepPtr
-      .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>, int)>();
+          ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>, ffi.Int32,
+              ffi.Pointer<ffi.Uint64>, ffi.Pointer<ffi.Uint64>)>>('wire_sweep');
+  late final _wire_sweep = _wire_sweepPtr.asFunction<
+      void Function(int, ffi.Pointer<wire_uint_8_list>, int,
+          ffi.Pointer<ffi.Uint64>, ffi.Pointer<ffi.Uint64>)>();
 
   void wire_receive_onchain(
     int port_,

@@ -312,6 +312,8 @@ fn wire_sweep_impl(
     port_: MessagePort,
     to_address: impl Wire2Api<String> + UnwindSafe,
     feerate_preset: impl Wire2Api<FeeratePreset> + UnwindSafe,
+    feerate_perkw: impl Wire2Api<Option<u64>> + UnwindSafe,
+    feerate_perkb: impl Wire2Api<Option<u64>> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -322,7 +324,16 @@ fn wire_sweep_impl(
         move || {
             let api_to_address = to_address.wire2api();
             let api_feerate_preset = feerate_preset.wire2api();
-            move |task_callback| sweep(api_to_address, api_feerate_preset)
+            let api_feerate_perkw = feerate_perkw.wire2api();
+            let api_feerate_perkb = feerate_perkb.wire2api();
+            move |task_callback| {
+                sweep(
+                    api_to_address,
+                    api_feerate_preset,
+                    api_feerate_perkw,
+                    api_feerate_perkb,
+                )
+            }
         },
     )
 }
