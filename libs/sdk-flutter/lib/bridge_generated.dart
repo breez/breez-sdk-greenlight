@@ -44,7 +44,7 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kRecoverNodeConstMeta;
 
-  /// init_node initialized the global NodeService, schedule the node to run in the cloud and
+  /// init_services initialized the global NodeService, schedule the node to run in the cloud and
   /// run the signer. This must be called in order to start comunicate with the node
   ///
   /// # Arguments
@@ -53,13 +53,17 @@ abstract class BreezSdkCore {
   /// * `seed` - The node private key
   /// * `creds` - The greenlight credentials
   ///
-  Future<void> initNode(
+  Future<void> initServices(
       {Config? config,
       required Uint8List seed,
       required GreenlightCredentials creds,
       dynamic hint});
 
-  FlutterRustBridgeTaskConstMeta get kInitNodeConstMeta;
+  FlutterRustBridgeTaskConstMeta get kInitServicesConstMeta;
+
+  Future<void> startNode({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kStartNodeConstMeta;
 
   Stream<BreezEvent> breezEventsStream({dynamic hint});
 
@@ -846,7 +850,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["network", "seed", "config"],
       );
 
-  Future<void> initNode(
+  Future<void> initServices(
       {Config? config,
       required Uint8List seed,
       required GreenlightCredentials creds,
@@ -856,18 +860,34 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     var arg2 = _platform.api2wire_box_autoadd_greenlight_credentials(creds);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) =>
-          _platform.inner.wire_init_node(port_, arg0, arg1, arg2),
+          _platform.inner.wire_init_services(port_, arg0, arg1, arg2),
       parseSuccessData: _wire2api_unit,
-      constMeta: kInitNodeConstMeta,
+      constMeta: kInitServicesConstMeta,
       argValues: [config, seed, creds],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kInitNodeConstMeta =>
+  FlutterRustBridgeTaskConstMeta get kInitServicesConstMeta =>
       const FlutterRustBridgeTaskConstMeta(
-        debugName: "init_node",
+        debugName: "init_services",
         argNames: ["config", "seed", "creds"],
+      );
+
+  Future<void> startNode({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_start_node(port_),
+      parseSuccessData: _wire2api_unit,
+      constMeta: kStartNodeConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kStartNodeConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "start_node",
+        argNames: [],
       );
 
   Stream<BreezEvent> breezEventsStream({dynamic hint}) {
@@ -2270,13 +2290,13 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
       void Function(
           int, int, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_Config>)>();
 
-  void wire_init_node(
+  void wire_init_services(
     int port_,
     ffi.Pointer<wire_Config> config,
     ffi.Pointer<wire_uint_8_list> seed,
     ffi.Pointer<wire_GreenlightCredentials> creds,
   ) {
-    return _wire_init_node(
+    return _wire_init_services(
       port_,
       config,
       seed,
@@ -2284,19 +2304,33 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
     );
   }
 
-  late final _wire_init_nodePtr = _lookup<
+  late final _wire_init_servicesPtr = _lookup<
       ffi.NativeFunction<
           ffi.Void Function(
               ffi.Int64,
               ffi.Pointer<wire_Config>,
               ffi.Pointer<wire_uint_8_list>,
-              ffi.Pointer<wire_GreenlightCredentials>)>>('wire_init_node');
-  late final _wire_init_node = _wire_init_nodePtr.asFunction<
+              ffi.Pointer<wire_GreenlightCredentials>)>>('wire_init_services');
+  late final _wire_init_services = _wire_init_servicesPtr.asFunction<
       void Function(
           int,
           ffi.Pointer<wire_Config>,
           ffi.Pointer<wire_uint_8_list>,
           ffi.Pointer<wire_GreenlightCredentials>)>();
+
+  void wire_start_node(
+    int port_,
+  ) {
+    return _wire_start_node(
+      port_,
+    );
+  }
+
+  late final _wire_start_nodePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+          'wire_start_node');
+  late final _wire_start_node =
+      _wire_start_nodePtr.asFunction<void Function(int)>();
 
   void wire_breez_events_stream(
     int port_,

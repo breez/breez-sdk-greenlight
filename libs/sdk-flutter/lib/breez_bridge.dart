@@ -58,7 +58,7 @@ class BreezBridge {
     return creds;
   }
 
-  /// init_node initialized the global NodeService, schedule the node to run in the cloud and
+  /// initServices initialized the global NodeService, schedule the node to run in the cloud and
   /// run the signer. This must be called in order to start comunicate with the node
   ///
   /// # Arguments
@@ -66,18 +66,19 @@ class BreezBridge {
   /// * `config` - The sdk configuration
   /// * `seed` - The node private key
   /// * `creds` -
-  Future initNode({
+  Future initServices({
     required Config config,
     required Uint8List seed,
     required GreenlightCredentials creds,
   }) async {
-    await _lnToolkit.initNode(
+    await _lnToolkit.initServices(
       config: config,
       seed: seed,
       creds: creds,
     );
     await getNodeState();
     await listPayments();
+    await _lnToolkit.startNode();
   }
 
   /// pay a bolt11 invoice

@@ -68,10 +68,12 @@ void wire_recover_node(int64_t port_,
                        struct wire_uint_8_list *seed,
                        struct wire_Config *config);
 
-void wire_init_node(int64_t port_,
-                    struct wire_Config *config,
-                    struct wire_uint_8_list *seed,
-                    struct wire_GreenlightCredentials *creds);
+void wire_init_services(int64_t port_,
+                        struct wire_Config *config,
+                        struct wire_uint_8_list *seed,
+                        struct wire_GreenlightCredentials *creds);
+
+void wire_start_node(int64_t port_);
 
 void wire_breez_events_stream(int64_t port_);
 
@@ -155,7 +157,8 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     int64_t dummy_var = 0;
     dummy_var ^= ((int64_t) (void*) wire_register_node);
     dummy_var ^= ((int64_t) (void*) wire_recover_node);
-    dummy_var ^= ((int64_t) (void*) wire_init_node);
+    dummy_var ^= ((int64_t) (void*) wire_init_services);
+    dummy_var ^= ((int64_t) (void*) wire_start_node);
     dummy_var ^= ((int64_t) (void*) wire_breez_events_stream);
     dummy_var ^= ((int64_t) (void*) wire_breez_log_stream);
     dummy_var ^= ((int64_t) (void*) wire_stop_node);

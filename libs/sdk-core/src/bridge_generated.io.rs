@@ -22,13 +22,18 @@ pub extern "C" fn wire_recover_node(
 }
 
 #[no_mangle]
-pub extern "C" fn wire_init_node(
+pub extern "C" fn wire_init_services(
     port_: i64,
     config: *mut wire_Config,
     seed: *mut wire_uint_8_list,
     creds: *mut wire_GreenlightCredentials,
 ) {
-    wire_init_node_impl(port_, config, seed, creds)
+    wire_init_services_impl(port_, config, seed, creds)
+}
+
+#[no_mangle]
+pub extern "C" fn wire_start_node(port_: i64) {
+    wire_start_node_impl(port_)
 }
 
 #[no_mangle]

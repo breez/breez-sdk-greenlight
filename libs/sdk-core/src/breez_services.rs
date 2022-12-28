@@ -123,8 +123,7 @@ impl BreezServices {
         Ok(creds)
     }
 
-    pub async fn start(
-        runtime: &Runtime,
+    pub async fn init_services(
         config: Option<Config>,
         seed: Vec<u8>,
         creds: GreenlightCredentials,
@@ -136,13 +135,15 @@ impl BreezServices {
         let breez_services = BreezServicesBuilder::new(sdk_config.clone())
             .greenlight_credentials(creds, seed)
             .build(Some(event_listener))?;
+        Ok(breez_services.clone())
+    }
 
+    pub async fn start(runtime: &Runtime, breez_services: &Arc<BreezServices>) -> Result<()> {
         // create a shutdown channel (sender and receiver)
         let (stop_sender, stop_receiver) = mpsc::channel(1);
         breez_services.set_shutdown_sender(stop_sender);
 
-        _ = crate::breez_services::start(&runtime, breez_services.clone(), stop_receiver).await?;
-        Ok(breez_services.clone())
+        crate::breez_services::start(&runtime, breez_services.clone(), stop_receiver).await
     }
 
     pub async fn stop(&self) -> Result<()> {
@@ -365,7 +366,7 @@ impl BreezServices {
         Ok(())
     }
 
-    fn set_shutdown_sender(&self, sender: mpsc::Sender<()>) {
+    pub fn set_shutdown_sender(&self, sender: mpsc::Sender<()>) {
         *self.shutdown_sender.lock().unwrap() = Some(sender);
     }
 
