@@ -135,6 +135,8 @@ void wire_withdraw_lnurl(int64_t port_,
 
 void wire_mnemonic_to_seed(int64_t port_, struct wire_uint_8_list *phrase);
 
+void wire_recommended_fees(int64_t port_);
+
 struct wire_Config *new_box_autoadd_config_0(void);
 
 struct wire_GreenlightCredentials *new_box_autoadd_greenlight_credentials_0(void);
@@ -179,6 +181,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_pay_lnurl);
     dummy_var ^= ((int64_t) (void*) wire_withdraw_lnurl);
     dummy_var ^= ((int64_t) (void*) wire_mnemonic_to_seed);
+    dummy_var ^= ((int64_t) (void*) wire_recommended_fees);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_config_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_greenlight_credentials_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_i64_0);

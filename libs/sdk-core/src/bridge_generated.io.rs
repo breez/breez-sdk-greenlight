@@ -178,6 +178,11 @@ pub extern "C" fn wire_mnemonic_to_seed(port_: i64, phrase: *mut wire_uint_8_lis
     wire_mnemonic_to_seed_impl(port_, phrase)
 }
 
+#[no_mangle]
+pub extern "C" fn wire_recommended_fees(port_: i64) {
+    wire_recommended_fees_impl(port_)
+}
+
 // Section: allocate functions
 
 #[no_mangle]

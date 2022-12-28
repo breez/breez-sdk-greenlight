@@ -1,4 +1,5 @@
 use crate::breez_services::{self, BreezEvent, BreezServicesBuilder, EventListener};
+use crate::chain::RecommendedFees;
 use crate::fiat::{FiatCurrency, Rate};
 use crate::input_parser::LnUrlPayRequestData;
 use crate::lsp::LspInformation;
@@ -338,4 +339,9 @@ pub fn withdraw_lnurl(
 /// If the phrase is not a valid mnemonic, an error is returned.
 pub fn mnemonic_to_seed(phrase: String) -> Result<Vec<u8>> {
     breez_services::mnemonic_to_seed(phrase)
+}
+
+/// Fetches the current recommended fees
+pub fn recommended_fees() -> Result<RecommendedFees> {
+    block_on(async { get_breez_services()?.recommended_fees().await })
 }

@@ -250,7 +250,7 @@ fn main() -> Result<()> {
                     Some("fetch_fiat_rates") => show_results(binding::fetch_fiat_rates()),
                     Some("close_lsp_channels") => show_results(binding::close_lsp_channels()),
                     Some("stop_node") => show_results(binding::stop_node()),
-
+                    Some("recommended_fees") => show_results(binding::recommended_fees()),
                     Some("receive_onchain") => show_results(binding::receive_onchain()),
                     Some("list_refundables") => show_results(binding::list_refundables()),
                     Some("refund") => show_results({
@@ -333,6 +333,7 @@ Payments:
     lnurl_withdraw
     receive_onchain
     receive_payment
+    recommended_fees
     send_payment
     send_spontaneous_payment
     sweep
