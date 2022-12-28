@@ -259,7 +259,7 @@ fn main() -> Result<()> {
                             .ok_or("Expected command")
                             .map_err(|err| anyhow!(err))?;
 
-                        show_results(binding::execute_command(&cmd.to_string()));
+                        show_results(binding::execute_command(cmd.to_string()));
                     }
                     Some("refund") => show_results({
                         let swap_address = command

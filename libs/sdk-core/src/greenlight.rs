@@ -368,7 +368,8 @@ impl NodeAPI for Greenlight {
     }
 
     async fn execute_command(&self, command: &String) -> Result<String> {
-        let node_cmd = NodeCommand::from_str(command)?;
+        let node_cmd = NodeCommand::from_str(command)
+            .map_err(|_| anyhow!(format!("command not found: {}", command)))?;
         match node_cmd {
             NodeCommand::ListPeers => {
                 let resp = self
