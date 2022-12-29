@@ -108,7 +108,7 @@ fn main() -> Result<()> {
                             info!("credentials not found");
                             continue;
                         }
-                        show_results(binding::init_node(None, seed.to_vec(), creds.unwrap()));
+                        show_results(binding::init_services(None, seed.to_vec(), creds.unwrap()));
                     }
                     Some("receive_payment") => {
                         let amount_sats: u64 = command.next().unwrap().parse()?;

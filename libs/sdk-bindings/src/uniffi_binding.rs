@@ -96,7 +96,7 @@ pub fn recover_node(
     Ok(creds)
 }
 
-/// init_node initialized the global NodeService, schedule the node to run in the cloud and
+/// init_services initialized the global NodeService, schedule the node to run in the cloud and
 /// run the signer. This must be called in order to start comunicate with the node
 ///
 /// # Arguments
@@ -105,14 +105,14 @@ pub fn recover_node(
 /// * `seed` - The node private key
 /// * `creds` - The greenlight credentials
 ///
-pub fn start(
+pub fn init_services(
     config: Option<Config>,
     seed: Vec<u8>,
     creds: GreenlightCredentials,
     listener: Box<dyn EventListener>,
 ) -> Result<Arc<BlockingBreezServices>> {
     rt().block_on(async move {
-        let breez_services = BreezServices::start(rt(), config, seed, creds, listener).await?;
+        let breez_services = BreezServices::init_services(config, seed, creds, listener).await?;
         Ok(Arc::new(BlockingBreezServices { breez_services }))
     })
 }
@@ -130,6 +130,10 @@ pub struct BlockingBreezServices {
 }
 
 impl BlockingBreezServices {
+    pub fn start(&self) -> Result<()> {
+        rt().block_on(async move { BreezServices::start(rt(), &self.breez_services).await })
+    }
+
     pub fn stop(&self) -> Result<()> {
         rt().block_on(self.breez_services.stop())
     }

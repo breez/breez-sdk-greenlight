@@ -173,6 +173,7 @@ dictionary InvoicePaidDetails {
 interface BreezEvent {
     NewBlock(u32 block);
     InvoicePaid(InvoicePaidDetails details);
+    Synced();
 };
 
 callback interface LogStream {
@@ -288,6 +289,8 @@ interface InputType {
 };
 
 interface BlockingBreezServices {
+   [Throws=SDKError]
+   void start();
 
    [Throws=SDKError]
    void stop();
@@ -353,7 +356,7 @@ namespace breez_sdk {
  GreenlightCredentials recover_node(Network network, sequence<u8> seed, Config? config);
 
  [Throws=SDKError]
- BlockingBreezServices start(Config? config, sequence<u8> seed, GreenlightCredentials creds, EventListener listener);
+ BlockingBreezServices init_services(Config? config, sequence<u8> seed, GreenlightCredentials creds, EventListener listener);
 
  [Throws=SDKError]
  void set_log_stream(LogStream log_stream);

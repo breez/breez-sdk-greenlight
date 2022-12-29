@@ -101,7 +101,7 @@ fn wire_recover_node_impl(
         },
     )
 }
-fn wire_init_node_impl(
+fn wire_init_services_impl(
     port_: MessagePort,
     config: impl Wire2Api<Option<Config>> + UnwindSafe,
     seed: impl Wire2Api<Vec<u8>> + UnwindSafe,
@@ -109,7 +109,7 @@ fn wire_init_node_impl(
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
-            debug_name: "init_node",
+            debug_name: "init_services",
             port: Some(port_),
             mode: FfiCallMode::Normal,
         },
@@ -117,8 +117,18 @@ fn wire_init_node_impl(
             let api_config = config.wire2api();
             let api_seed = seed.wire2api();
             let api_creds = creds.wire2api();
-            move |task_callback| init_node(api_config, api_seed, api_creds)
+            move |task_callback| init_services(api_config, api_seed, api_creds)
         },
+    )
+}
+fn wire_start_node_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "start_node",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || move |task_callback| start_node(),
     )
 }
 fn wire_breez_events_stream_impl(port_: MessagePort) {
@@ -566,6 +576,7 @@ impl support::IntoDart for BreezEvent {
         match self {
             Self::NewBlock { block } => vec![0.into_dart(), block.into_dart()],
             Self::InvoicePaid { details } => vec![1.into_dart(), details.into_dart()],
+            Self::Synced => vec![2.into_dart()],
         }
         .into_dart()
     }

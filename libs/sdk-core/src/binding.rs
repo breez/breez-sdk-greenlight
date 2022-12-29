@@ -6,7 +6,7 @@ use crate::lsp::LspInformation;
 use crate::models::LogEntry;
 use anyhow::{anyhow, Result};
 use flutter_rust_bridge::StreamSink;
-use log::{LevelFilter, Metadata, Record};
+use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
 use std::future::Future;
 use std::sync::Arc;
@@ -42,8 +42,8 @@ impl BindingLogger {
 }
 
 impl log::Log for BindingLogger {
-    fn enabled(&self, _: &Metadata) -> bool {
-        true
+    fn enabled(&self, m: &Metadata) -> bool {
+        m.level() <= Level::Debug
     }
 
     fn log(&self, record: &Record) {
@@ -83,7 +83,7 @@ pub fn register_node(
     config: Option<Config>,
 ) -> Result<GreenlightCredentials> {
     let creds = block_on(BreezServices::register_node(network, seed.clone()))?;
-    init_node(config, seed, creds.clone())?;
+    init_services(config, seed, creds.clone())?;
     Ok(creds)
 }
 
@@ -100,12 +100,12 @@ pub fn recover_node(
     config: Option<Config>,
 ) -> Result<GreenlightCredentials> {
     let creds = block_on(BreezServices::recover_node(network, seed.clone()))?;
-    init_node(config, seed, creds.clone())?;
+    init_services(config, seed, creds.clone())?;
 
     Ok(creds)
 }
 
-/// init_node initialized the global NodeService, schedule the node to run in the cloud and
+/// init_services initialized the global NodeService, schedule the node to run in the cloud and
 /// run the signer. This must be called in order to start comunicate with the node
 ///
 /// # Arguments
@@ -114,20 +114,32 @@ pub fn recover_node(
 /// * `seed` - The node private key
 /// * `creds` - The greenlight credentials
 ///
-pub fn init_node(
+pub fn init_services(
     config: Option<Config>,
     seed: Vec<u8>,
     creds: GreenlightCredentials,
 ) -> Result<()> {
     block_on(async move {
         let breez_services =
-            BreezServices::start(rt(), config, seed, creds, Box::new(BindingEventListener {}))
+            BreezServices::init_services(config, seed, creds, Box::new(BindingEventListener {}))
                 .await?;
         BREEZ_SERVICES_INSTANCE
             .set(breez_services.clone())
             .map_err(|_| anyhow!("static node services already set"))?;
 
         Ok(())
+    })
+}
+
+pub fn start_node() -> Result<()> {
+    block_on(async {
+        BreezServices::start(
+            rt(),
+            BREEZ_SERVICES_INSTANCE
+                .get()
+                .ok_or(anyhow!("breez services instance was not initialized"))?,
+        )
+        .await
     })
 }
 
