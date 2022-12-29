@@ -260,6 +260,10 @@ impl BlockingBreezServices {
         .map_err(|e| e.into())
     }
 
+    pub fn execute_dev_command(&self, command: String) -> Result<String> {
+        rt().block_on(self.breez_services.execute_dev_command(&command))
+    }
+
     pub fn recommended_fees(&self) -> Result<RecommendedFees, SDKError> {
         rt().block_on(self.breez_services.recommended_fees())
             .map_err(|e| e.into())

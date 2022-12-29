@@ -344,6 +344,9 @@ interface BlockingBreezServices {
    string refund(string swap_address, string to_address, u32 sat_per_vbyte); 
 
    [Throws=SDKError]
+   string execute_dev_command(string command);
+
+   [Throws=SDKError]
    RecommendedFees recommended_fees();
 };
 

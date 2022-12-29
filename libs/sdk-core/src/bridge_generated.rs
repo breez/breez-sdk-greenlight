@@ -366,6 +366,19 @@ fn wire_refund_impl(
         },
     )
 }
+fn wire_execute_command_impl(port_: MessagePort, command: impl Wire2Api<String> + UnwindSafe) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "execute_command",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_command = command.wire2api();
+            move |task_callback| execute_command(api_command)
+        },
+    )
+}
 fn wire_parse_invoice_impl(port_: MessagePort, invoice: impl Wire2Api<String> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {

@@ -253,6 +253,14 @@ fn main() -> Result<()> {
                     Some("recommended_fees") => show_results(binding::recommended_fees()),
                     Some("receive_onchain") => show_results(binding::receive_onchain()),
                     Some("list_refundables") => show_results(binding::list_refundables()),
+                    Some("execute_dev_command") => {
+                        let cmd = command
+                            .next()
+                            .ok_or("Expected command")
+                            .map_err(|err| anyhow!(err))?;
+
+                        show_results(binding::execute_command(cmd.to_string()));
+                    }
                     Some("refund") => show_results({
                         let swap_address = command
                             .next()
@@ -323,6 +331,7 @@ Node:
     register_node
     stop_node
     node_info
+    execute_command
 LSP:
     close_lsp_channels
     connect_lsp

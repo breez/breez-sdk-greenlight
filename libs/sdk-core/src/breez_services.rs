@@ -292,6 +292,12 @@ impl BreezServices {
             .await
     }
 
+    /// Excute a command directly on the NodeAPI interface.
+    /// Mainly used to debugging.
+    pub async fn execute_dev_command(&self, command: &String) -> Result<String> {
+        self.node_api.execute_command(command).await
+    }
+
     /// This method sync the local state with the remote node state.
     /// The synced items are as follows:
     /// * node state - General information about the node and its liquidity status
