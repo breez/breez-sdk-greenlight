@@ -46,7 +46,6 @@ use crate::lsp::LspInformation;
 use crate::models::ChannelState;
 use crate::models::ClosesChannelPaymentDetails;
 use crate::models::Config;
-use crate::models::FeeratePreset;
 use crate::models::GreenlightCredentials;
 use crate::models::LnPaymentDetails;
 use crate::models::LogEntry;
@@ -311,9 +310,7 @@ fn wire_close_lsp_channels_impl(port_: MessagePort) {
 fn wire_sweep_impl(
     port_: MessagePort,
     to_address: impl Wire2Api<String> + UnwindSafe,
-    feerate_preset: impl Wire2Api<FeeratePreset> + UnwindSafe,
-    feerate_perkw: impl Wire2Api<Option<u64>> + UnwindSafe,
-    feerate_perkb: impl Wire2Api<Option<u64>> + UnwindSafe,
+    fee_rate_sats_per_byte: impl Wire2Api<u64> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -323,17 +320,8 @@ fn wire_sweep_impl(
         },
         move || {
             let api_to_address = to_address.wire2api();
-            let api_feerate_preset = feerate_preset.wire2api();
-            let api_feerate_perkw = feerate_perkw.wire2api();
-            let api_feerate_perkb = feerate_perkb.wire2api();
-            move |task_callback| {
-                sweep(
-                    api_to_address,
-                    api_feerate_preset,
-                    api_feerate_perkw,
-                    api_feerate_perkb,
-                )
-            }
+            let api_fee_rate_sats_per_byte = fee_rate_sats_per_byte.wire2api();
+            move |task_callback| sweep(api_to_address, api_fee_rate_sats_per_byte)
         },
     )
 }
@@ -511,17 +499,6 @@ impl Wire2Api<i64> for *mut i64 {
 impl Wire2Api<u64> for *mut u64 {
     fn wire2api(self) -> u64 {
         unsafe { *support::box_from_leak_ptr(self) }
-    }
-}
-
-impl Wire2Api<FeeratePreset> for i32 {
-    fn wire2api(self) -> FeeratePreset {
-        match self {
-            0 => FeeratePreset::Regular,
-            1 => FeeratePreset::Economy,
-            2 => FeeratePreset::Priority,
-            _ => unreachable!("Invalid variant for FeeratePreset: {}", self),
-        }
     }
 }
 

@@ -215,17 +215,15 @@ fn main() -> Result<()> {
                             .next()
                             .ok_or("Expected to_address arg")
                             .map_err(|err| anyhow!(err))?;
-                        let feerate_preset: i32 = command
+                        let fee_rate_sats_per_byte: u64 = command
                             .next()
-                            .ok_or("Expected feerate_preset arg")
+                            .ok_or("Expected fee_rate_sats_per_byte arg")
                             .map_err(|err| anyhow!(err))?
                             .parse()?;
 
                         show_results(binding::sweep(
                             to_address.into(),
-                            FeeratePreset::try_from(feerate_preset)?,
-                            None,
-                            None,
+                            fee_rate_sats_per_byte,
                         ))
                     }
                     Some("list_lsps") => show_results(binding::list_lsps()),

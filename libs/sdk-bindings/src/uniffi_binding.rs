@@ -200,15 +200,11 @@ impl BlockingBreezServices {
     pub fn sweep(
         &self,
         to_address: String,
-        feerate_preset: Option<FeeratePreset>,
-        feerate_perkw: Option<u64>,
-        feerate_perkb: Option<u64>,
+        fee_rate_sats_per_byte: u64,
     ) -> Result<(), SDKError> {
         rt().block_on(self.breez_services.sweep(
             to_address,
-            feerate_preset,
-            feerate_perkw,
-            feerate_perkb,
+            fee_rate_sats_per_byte,
         ))
         .map_err(|e| e.into())
     }

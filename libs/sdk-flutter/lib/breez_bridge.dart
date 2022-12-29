@@ -187,15 +187,11 @@ class BreezBridge {
   /// Withdraw on-chain funds in the wallet to an external btc address
   Future sweep({
     required String toAddress,
-    required FeeratePreset feeratePreset,
-    int? feeratePerkw,
-    int? feeratePerkb,
+    required int feeRateSatsPerByte,
   }) async {
     await _lnToolkit.sweep(
       toAddress: toAddress,
-      feeratePreset: feeratePreset,
-      feeratePerkw: feeratePerkw,
-      feeratePerkb: feeratePerkb,
+      feeRateSatsPerByte: feeRateSatsPerByte,
     );
     await getNodeState();
     await listPayments();

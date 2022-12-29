@@ -231,13 +231,11 @@ impl BreezServices {
     pub async fn sweep(
         &self,
         to_address: String,
-        feerate_preset: Option<FeeratePreset>,
-        feerate_perkw: Option<u64>,
-        feerate_perkb: Option<u64>,
+        fee_rate_sats_per_byte: u64,
     ) -> Result<()> {
         self.start_node().await?;
         self.node_api
-            .sweep(to_address, feerate_preset, feerate_perkw, feerate_perkb)
+            .sweep(to_address, fee_rate_sats_per_byte)
             .await?;
         self.sync().await?;
         Ok(())
