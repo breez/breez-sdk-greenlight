@@ -1,4 +1,4 @@
-use crate::chain::{ChainService, MempoolSpace};
+use crate::chain::{ChainService, MempoolSpace, RecommendedFees};
 use crate::fiat::{FiatCurrency, Rate};
 use crate::greenlight::Greenlight;
 use crate::grpc::channel_opener_client::ChannelOpenerClient;
@@ -377,6 +377,10 @@ impl BreezServices {
 
     pub(crate) async fn start_node(&self) -> Result<()> {
         self.node_api.start().await
+    }
+
+    pub async fn recommended_fees(&self) -> Result<RecommendedFees> {
+        self.chain_service.recommended_fees().await
     }
 }
 

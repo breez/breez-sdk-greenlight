@@ -218,6 +218,11 @@ abstract class BreezSdkCore {
   Future<Uint8List> mnemonicToSeed({required String phrase, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kMnemonicToSeedConstMeta;
+
+  /// Fetches the current recommended fees
+  Future<RecommendedFees> recommendedFees({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kRecommendedFeesConstMeta;
 }
 
 class BitcoinAddressData {
@@ -676,6 +681,22 @@ class Rate {
   Rate({
     required this.coin,
     required this.value,
+  });
+}
+
+class RecommendedFees {
+  final int fastestFee;
+  final int halfHourFee;
+  final int hourFee;
+  final int economyFee;
+  final int minimumFee;
+
+  RecommendedFees({
+    required this.fastestFee,
+    required this.halfHourFee,
+    required this.hourFee,
+    required this.economyFee,
+    required this.minimumFee,
   });
 }
 
@@ -1311,6 +1332,22 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["phrase"],
       );
 
+  Future<RecommendedFees> recommendedFees({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_recommended_fees(port_),
+      parseSuccessData: _wire2api_recommended_fees,
+      constMeta: kRecommendedFeesConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kRecommendedFeesConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "recommended_fees",
+        argNames: [],
+      );
+
   void dispose() {
     _platform.dispose();
   }
@@ -1842,6 +1879,19 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return Rate(
       coin: _wire2api_String(arr[0]),
       value: _wire2api_f64(arr[1]),
+    );
+  }
+
+  RecommendedFees _wire2api_recommended_fees(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return RecommendedFees(
+      fastestFee: _wire2api_u32(arr[0]),
+      halfHourFee: _wire2api_u32(arr[1]),
+      hourFee: _wire2api_u32(arr[2]),
+      economyFee: _wire2api_u32(arr[3]),
+      minimumFee: _wire2api_u32(arr[4]),
     );
   }
 
@@ -2728,6 +2778,20 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
               ffi.Pointer<wire_uint_8_list>)>>('wire_mnemonic_to_seed');
   late final _wire_mnemonic_to_seed = _wire_mnemonic_to_seedPtr
       .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_recommended_fees(
+    int port_,
+  ) {
+    return _wire_recommended_fees(
+      port_,
+    );
+  }
+
+  late final _wire_recommended_feesPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+          'wire_recommended_fees');
+  late final _wire_recommended_fees =
+      _wire_recommended_feesPtr.asFunction<void Function(int)>();
 
   ffi.Pointer<wire_Config> new_box_autoadd_config_0() {
     return _new_box_autoadd_config_0();

@@ -7,10 +7,11 @@ use breez_sdk_core::{
     parse_invoice as sdk_parse_invoice, BitcoinAddressData, BreezEvent, BreezServices,
     ChannelState, ClosesChannelPaymentDetails, Config, CurrencyInfo, EventListener, FeeratePreset,
     FiatCurrency, GreenlightCredentials, InputType, InvoicePaidDetails, LNInvoice,
-    LnPaymentDetails, LnUrlAuthRequestData, LnUrlErrorData, LnUrlPayRequestData, LnUrlRequestData,
+    LnPaymentDetails, LnUrlAuthRequestData, LnUrlErrorData, LnUrlPayRequestData,
     LnUrlWithdrawCallbackStatus, LnUrlWithdrawRequestData, LocaleOverrides, LocalizedName,
     LogEntry, LspInformation, MetadataItem, Network, NodeState, Payment, PaymentDetails,
-    PaymentType, PaymentTypeFilter, Rate, RouteHint, RouteHintHop, SwapInfo, SwapStatus, Symbol,
+    PaymentType, PaymentTypeFilter, Rate, RecommendedFees, RouteHint, RouteHintHop, SwapInfo,
+    SwapStatus, Symbol,
 };
 use log::Metadata;
 use log::Record;
@@ -257,6 +258,10 @@ impl BlockingBreezServices {
 
     pub fn execute_dev_command(&self, command: String) -> Result<String> {
         rt().block_on(self.breez_services.execute_dev_command(&command))
+    }
+
+    pub fn recommended_fees(&self) -> Result<RecommendedFees, SDKError> {
+        rt().block_on(self.breez_services.recommended_fees())
             .map_err(|e| e.into())
     }
 }

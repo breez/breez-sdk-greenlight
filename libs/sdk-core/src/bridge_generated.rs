@@ -21,6 +21,7 @@ use std::sync::Arc;
 
 use crate::breez_services::BreezEvent;
 use crate::breez_services::InvoicePaidDetails;
+use crate::chain::RecommendedFees;
 use crate::fiat::CurrencyInfo;
 use crate::fiat::FiatCurrency;
 use crate::fiat::LocaleOverrides;
@@ -445,6 +446,16 @@ fn wire_mnemonic_to_seed_impl(port_: MessagePort, phrase: impl Wire2Api<String> 
             let api_phrase = phrase.wire2api();
             move |task_callback| mnemonic_to_seed(api_phrase)
         },
+    )
+}
+fn wire_recommended_fees_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "recommended_fees",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || move |task_callback| recommended_fees(),
     )
 }
 // Section: wrapper structs
@@ -875,6 +886,20 @@ impl support::IntoDart for Rate {
     }
 }
 impl support::IntoDartExceptPrimitive for Rate {}
+
+impl support::IntoDart for RecommendedFees {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.fastest_fee.into_dart(),
+            self.half_hour_fee.into_dart(),
+            self.hour_fee.into_dart(),
+            self.economy_fee.into_dart(),
+            self.minimum_fee.into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for RecommendedFees {}
 
 impl support::IntoDart for RouteHint {
     fn into_dart(self) -> support::DartAbi {

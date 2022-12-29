@@ -1,1 +1,4 @@
 libs/sdk-bindings/storage.sql
+.DS_Store
+.idea/
+
