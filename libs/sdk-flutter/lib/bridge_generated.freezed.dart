@@ -20,18 +20,21 @@ mixin _$BreezEvent {
   TResult when<TResult extends Object?>({
     required TResult Function(int block) newBlock,
     required TResult Function(InvoicePaidDetails details) invoicePaid,
+    required TResult Function() synced,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(int block)? newBlock,
     TResult? Function(InvoicePaidDetails details)? invoicePaid,
+    TResult? Function()? synced,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(int block)? newBlock,
     TResult Function(InvoicePaidDetails details)? invoicePaid,
+    TResult Function()? synced,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -39,18 +42,21 @@ mixin _$BreezEvent {
   TResult map<TResult extends Object?>({
     required TResult Function(BreezEvent_NewBlock value) newBlock,
     required TResult Function(BreezEvent_InvoicePaid value) invoicePaid,
+    required TResult Function(BreezEvent_Synced value) synced,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(BreezEvent_NewBlock value)? newBlock,
     TResult? Function(BreezEvent_InvoicePaid value)? invoicePaid,
+    TResult? Function(BreezEvent_Synced value)? synced,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(BreezEvent_NewBlock value)? newBlock,
     TResult Function(BreezEvent_InvoicePaid value)? invoicePaid,
+    TResult Function(BreezEvent_Synced value)? synced,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -141,6 +147,7 @@ class _$BreezEvent_NewBlock implements BreezEvent_NewBlock {
   TResult when<TResult extends Object?>({
     required TResult Function(int block) newBlock,
     required TResult Function(InvoicePaidDetails details) invoicePaid,
+    required TResult Function() synced,
   }) {
     return newBlock(block);
   }
@@ -150,6 +157,7 @@ class _$BreezEvent_NewBlock implements BreezEvent_NewBlock {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(int block)? newBlock,
     TResult? Function(InvoicePaidDetails details)? invoicePaid,
+    TResult? Function()? synced,
   }) {
     return newBlock?.call(block);
   }
@@ -159,6 +167,7 @@ class _$BreezEvent_NewBlock implements BreezEvent_NewBlock {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(int block)? newBlock,
     TResult Function(InvoicePaidDetails details)? invoicePaid,
+    TResult Function()? synced,
     required TResult orElse(),
   }) {
     if (newBlock != null) {
@@ -172,6 +181,7 @@ class _$BreezEvent_NewBlock implements BreezEvent_NewBlock {
   TResult map<TResult extends Object?>({
     required TResult Function(BreezEvent_NewBlock value) newBlock,
     required TResult Function(BreezEvent_InvoicePaid value) invoicePaid,
+    required TResult Function(BreezEvent_Synced value) synced,
   }) {
     return newBlock(this);
   }
@@ -181,6 +191,7 @@ class _$BreezEvent_NewBlock implements BreezEvent_NewBlock {
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(BreezEvent_NewBlock value)? newBlock,
     TResult? Function(BreezEvent_InvoicePaid value)? invoicePaid,
+    TResult? Function(BreezEvent_Synced value)? synced,
   }) {
     return newBlock?.call(this);
   }
@@ -190,6 +201,7 @@ class _$BreezEvent_NewBlock implements BreezEvent_NewBlock {
   TResult maybeMap<TResult extends Object?>({
     TResult Function(BreezEvent_NewBlock value)? newBlock,
     TResult Function(BreezEvent_InvoicePaid value)? invoicePaid,
+    TResult Function(BreezEvent_Synced value)? synced,
     required TResult orElse(),
   }) {
     if (newBlock != null) {
@@ -276,6 +288,7 @@ class _$BreezEvent_InvoicePaid implements BreezEvent_InvoicePaid {
   TResult when<TResult extends Object?>({
     required TResult Function(int block) newBlock,
     required TResult Function(InvoicePaidDetails details) invoicePaid,
+    required TResult Function() synced,
   }) {
     return invoicePaid(details);
   }
@@ -285,6 +298,7 @@ class _$BreezEvent_InvoicePaid implements BreezEvent_InvoicePaid {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(int block)? newBlock,
     TResult? Function(InvoicePaidDetails details)? invoicePaid,
+    TResult? Function()? synced,
   }) {
     return invoicePaid?.call(details);
   }
@@ -294,6 +308,7 @@ class _$BreezEvent_InvoicePaid implements BreezEvent_InvoicePaid {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(int block)? newBlock,
     TResult Function(InvoicePaidDetails details)? invoicePaid,
+    TResult Function()? synced,
     required TResult orElse(),
   }) {
     if (invoicePaid != null) {
@@ -307,6 +322,7 @@ class _$BreezEvent_InvoicePaid implements BreezEvent_InvoicePaid {
   TResult map<TResult extends Object?>({
     required TResult Function(BreezEvent_NewBlock value) newBlock,
     required TResult Function(BreezEvent_InvoicePaid value) invoicePaid,
+    required TResult Function(BreezEvent_Synced value) synced,
   }) {
     return invoicePaid(this);
   }
@@ -316,6 +332,7 @@ class _$BreezEvent_InvoicePaid implements BreezEvent_InvoicePaid {
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(BreezEvent_NewBlock value)? newBlock,
     TResult? Function(BreezEvent_InvoicePaid value)? invoicePaid,
+    TResult? Function(BreezEvent_Synced value)? synced,
   }) {
     return invoicePaid?.call(this);
   }
@@ -325,6 +342,7 @@ class _$BreezEvent_InvoicePaid implements BreezEvent_InvoicePaid {
   TResult maybeMap<TResult extends Object?>({
     TResult Function(BreezEvent_NewBlock value)? newBlock,
     TResult Function(BreezEvent_InvoicePaid value)? invoicePaid,
+    TResult Function(BreezEvent_Synced value)? synced,
     required TResult orElse(),
   }) {
     if (invoicePaid != null) {
@@ -342,6 +360,114 @@ abstract class BreezEvent_InvoicePaid implements BreezEvent {
   @JsonKey(ignore: true)
   _$$BreezEvent_InvoicePaidCopyWith<_$BreezEvent_InvoicePaid> get copyWith =>
       throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$BreezEvent_SyncedCopyWith<$Res> {
+  factory _$$BreezEvent_SyncedCopyWith(
+          _$BreezEvent_Synced value, $Res Function(_$BreezEvent_Synced) then) =
+      __$$BreezEvent_SyncedCopyWithImpl<$Res>;
+}
+
+/// @nodoc
+class __$$BreezEvent_SyncedCopyWithImpl<$Res>
+    extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_Synced>
+    implements _$$BreezEvent_SyncedCopyWith<$Res> {
+  __$$BreezEvent_SyncedCopyWithImpl(
+      _$BreezEvent_Synced _value, $Res Function(_$BreezEvent_Synced) _then)
+      : super(_value, _then);
+}
+
+/// @nodoc
+
+class _$BreezEvent_Synced implements BreezEvent_Synced {
+  const _$BreezEvent_Synced();
+
+  @override
+  String toString() {
+    return 'BreezEvent.synced()';
+  }
+
+  @override
+  bool operator ==(dynamic other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType && other is _$BreezEvent_Synced);
+  }
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(int block) newBlock,
+    required TResult Function(InvoicePaidDetails details) invoicePaid,
+    required TResult Function() synced,
+  }) {
+    return synced();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(int block)? newBlock,
+    TResult? Function(InvoicePaidDetails details)? invoicePaid,
+    TResult? Function()? synced,
+  }) {
+    return synced?.call();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(int block)? newBlock,
+    TResult Function(InvoicePaidDetails details)? invoicePaid,
+    TResult Function()? synced,
+    required TResult orElse(),
+  }) {
+    if (synced != null) {
+      return synced();
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(BreezEvent_NewBlock value) newBlock,
+    required TResult Function(BreezEvent_InvoicePaid value) invoicePaid,
+    required TResult Function(BreezEvent_Synced value) synced,
+  }) {
+    return synced(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(BreezEvent_NewBlock value)? newBlock,
+    TResult? Function(BreezEvent_InvoicePaid value)? invoicePaid,
+    TResult? Function(BreezEvent_Synced value)? synced,
+  }) {
+    return synced?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(BreezEvent_NewBlock value)? newBlock,
+    TResult Function(BreezEvent_InvoicePaid value)? invoicePaid,
+    TResult Function(BreezEvent_Synced value)? synced,
+    required TResult orElse(),
+  }) {
+    if (synced != null) {
+      return synced(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class BreezEvent_Synced implements BreezEvent {
+  const factory BreezEvent_Synced() = _$BreezEvent_Synced;
 }
 
 /// @nodoc

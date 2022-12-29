@@ -5,7 +5,7 @@ use crate::lsp::LspInformation;
 use crate::models::LogEntry;
 use anyhow::{anyhow, Result};
 use flutter_rust_bridge::StreamSink;
-use log::{LevelFilter, Metadata, Record};
+use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
 use std::future::Future;
 use std::sync::Arc;
@@ -41,8 +41,8 @@ impl BindingLogger {
 }
 
 impl log::Log for BindingLogger {
-    fn enabled(&self, _: &Metadata) -> bool {
-        true
+    fn enabled(&self, m: &Metadata) -> bool {
+        m.level() <= Level::Debug
     }
 
     fn log(&self, record: &Record) {

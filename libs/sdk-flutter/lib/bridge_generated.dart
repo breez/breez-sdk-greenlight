@@ -244,6 +244,7 @@ class BreezEvent with _$BreezEvent {
   const factory BreezEvent.invoicePaid({
     required InvoicePaidDetails details,
   }) = BreezEvent_InvoicePaid;
+  const factory BreezEvent.synced() = BreezEvent_Synced;
 }
 
 enum ChannelState {
@@ -1420,6 +1421,8 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         return BreezEvent_InvoicePaid(
           details: _wire2api_box_autoadd_invoice_paid_details(raw[1]),
         );
+      case 2:
+        return BreezEvent_Synced();
       default:
         throw Exception("unreachable");
     }
