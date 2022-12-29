@@ -1,9 +1,9 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:breez_sdk/bridge_generated.dart';
 import 'package:breez_sdk/native_toolkit.dart';
 import 'package:fimber/fimber.dart';
-import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:rxdart/rxdart.dart';
 
 class BreezBridge {
@@ -96,7 +96,7 @@ class BreezBridge {
   /// * `bolt11` - The bolt11 invoice
   /// * `amountSats` - The amount to pay in satoshis
   Future sendPayment({required String bolt11, int? amountSats}) async {
-    await _lnToolkit.sendPayment(bolt11: bolt11, amountSats: amountSats);   
+    await _lnToolkit.sendPayment(bolt11: bolt11, amountSats: amountSats);
   }
 
   /// pay directly to a node id using keysend
@@ -108,7 +108,7 @@ class BreezBridge {
   Future sendSpontaneousPayment(
       {required String nodeId, required int amountSats}) async {
     await _lnToolkit.sendSpontaneousPayment(
-        nodeId: nodeId, amountSats: amountSats);   
+        nodeId: nodeId, amountSats: amountSats);
   }
 
   /// Creates an bolt11 payment request.
@@ -162,7 +162,7 @@ class BreezBridge {
 
   /// Select the lsp to be used and provide inbound liquidity
   Future connectLSP(String lspId) async {
-    await _lnToolkit.connectLsp(lspId: lspId);    
+    await _lnToolkit.connectLsp(lspId: lspId);
   }
 
   /// Convenience method to look up LSP info
@@ -187,7 +187,7 @@ class BreezBridge {
   /// Withdraw on-chain funds in the wallet to an external btc address
   Future sweep(
       {required String toAddress, required FeeratePreset feeratePreset}) async {
-    await _lnToolkit.sweep(toAddress: toAddress, feeratePreset: feeratePreset);    
+    await _lnToolkit.sweep(toAddress: toAddress, feeratePreset: feeratePreset);
   }
 
   /// Onchain receive swap API
@@ -227,11 +227,15 @@ class BreezBridge {
     String? comment,
     required LnUrlPayRequestData reqData,
   }) async {
-    return  _lnToolkit.payLnurl(userAmountSat: userAmountSat, reqData: reqData, comment: comment);
+    return _lnToolkit.payLnurl(
+        userAmountSat: userAmountSat, reqData: reqData, comment: comment);
   }
 
   /// Fetches the current recommended fees
   Future<RecommendedFees> recommendedFees() => _lnToolkit.recommendedFees();
+
+  Future<String> executeCommand({required String command}) =>
+      _lnToolkit.executeCommand(command: command);
 
   void _registerToolkitLog(LogEntry log) {
     switch (log.level) {

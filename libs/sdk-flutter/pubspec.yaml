@@ -1,6 +1,6 @@
 name: breez_sdk
 description: A new flutter plugin project.
-version: 0.0.3+1
+version: 0.0.3+2
 publish_to: none
 
 environment:
@@ -13,45 +13,22 @@ dependencies:
   dart_lnurl:
     git:
       url: https://github.com/breez/dart_lnurl
-  drift: ^2.3.0
-  drift_dev: ^2.3.2
-  encrypt: ^5.0.1
   ffi: ^2.0.1
   fimber: ^0.6.6
-  fimber_io: ^0.6.6
-  flutter_fgbg:
-    git:
-      url: https://github.com/breez/flutter_fgbg.git
-      ref: 976b28ff3c299836f215b6deb2003838c49a8001
-  flutter_rust_bridge: ^1.53.0
-  freezed: ^2.3.1
+  freezed: ^2.3.2
   freezed_annotation: ^2.2.0
-  grpc: ^3.1.0
-  hex: ^0.2.0
-  http: ^0.13.5
-  ini: ^2.1.0
-  json_annotation: ^4.7.0
-  json_serializable: ^6.5.4
-  path: ^1.8.3
-  path_provider: ^2.0.11
-  protobuf: ^2.1.0
   rxdart: ^0.27.7
-  sqflite_common_ffi: ^2.2.0+1
-  sqlite3_flutter_libs: ^0.5.12
   url_launcher: ^6.1.7
   validators: ^3.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  build_runner: ^2.3.2
+  build_runner: ^2.3.3
   flutter_lints: ^2.0.1
   # The following dependencies are required by flutter_rust_bridge_codegen to
   # be defined under dev_dependencies to generate Dart files
-  ffigen: ^7.2.2
-
-dependency_overrides:
-  path: ^1.8.3
+  ffigen: ^7.2.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
