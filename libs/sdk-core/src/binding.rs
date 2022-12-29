@@ -263,10 +263,10 @@ pub fn close_lsp_channels() -> Result<()> {
 }
 
 /// Withdraw on-chain funds in the wallet to an external btc address
-pub fn sweep(to_address: String, feerate_preset: FeeratePreset) -> Result<()> {
+pub fn sweep(to_address: String, fee_rate_sats_per_byte: u64) -> Result<()> {
     block_on(async {
         get_breez_services()?
-            .sweep(to_address, feerate_preset)
+            .sweep(to_address, fee_rate_sats_per_byte)
             .await
     })
 }

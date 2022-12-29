@@ -124,8 +124,12 @@ pub extern "C" fn wire_close_lsp_channels(port_: i64) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_sweep(port_: i64, to_address: *mut wire_uint_8_list, feerate_preset: i32) {
-    wire_sweep_impl(port_, to_address, feerate_preset)
+pub extern "C" fn wire_sweep(
+    port_: i64,
+    to_address: *mut wire_uint_8_list,
+    fee_rate_sats_per_byte: u64,
+) {
+    wire_sweep_impl(port_, to_address, fee_rate_sats_per_byte)
 }
 
 #[no_mangle]
@@ -283,7 +287,6 @@ impl Wire2Api<Config> for wire_Config {
         }
     }
 }
-
 impl Wire2Api<GreenlightCredentials> for wire_GreenlightCredentials {
     fn wire2api(self) -> GreenlightCredentials {
         GreenlightCredentials {

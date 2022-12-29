@@ -110,7 +110,9 @@ void wire_list_fiat_currencies(int64_t port_);
 
 void wire_close_lsp_channels(int64_t port_);
 
-void wire_sweep(int64_t port_, struct wire_uint_8_list *to_address, int32_t feerate_preset);
+void wire_sweep(int64_t port_,
+                struct wire_uint_8_list *to_address,
+                uint64_t fee_rate_sats_per_byte);
 
 void wire_receive_onchain(int64_t port_);
 

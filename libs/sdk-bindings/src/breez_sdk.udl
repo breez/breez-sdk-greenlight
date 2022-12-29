@@ -314,7 +314,7 @@ interface BlockingBreezServices {
    sequence<Payment> list_payments(PaymentTypeFilter filter, i64? from_timestamp, i64? to_timestamp);
 
    [Throws=SDKError]
-   void sweep(string to_address, FeeratePreset feerate_preset); 
+   void sweep(string to_address, u64 fee_rate_sats_per_byte);
 
    [Throws=SDKError]
    sequence<Rate> fetch_fiat_rates();

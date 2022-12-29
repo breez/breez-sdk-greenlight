@@ -342,20 +342,14 @@ impl NodeAPI for Greenlight {
     async fn sweep(
         &self,
         to_address: String,
-        feerate_preset: FeeratePreset,
+        fee_rate_sats_per_byte: u64,
     ) -> Result<WithdrawResponse> {
         let mut client = self.get_client().await?;
 
-        let fee_rate = pb::Feerate {
-            value: Some(pb::feerate::Value::Preset(match feerate_preset {
-                FeeratePreset::Regular => pb::FeeratePreset::Normal,
-                FeeratePreset::Economy => pb::FeeratePreset::Slow,
-                FeeratePreset::Priority => pb::FeeratePreset::Urgent,
-            } as i32)),
-        };
-
         let request = pb::WithdrawRequest {
-            feerate: Some(fee_rate),
+            feerate: Some(pb::Feerate {
+                value: Some(pb::feerate::Value::Perkb(fee_rate_sats_per_byte * 1000)),
+            }),
             amount: Some(Amount {
                 unit: Some(Unit::All(true)),
             }),

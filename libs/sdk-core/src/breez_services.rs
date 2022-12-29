@@ -228,9 +228,11 @@ impl BreezServices {
             .map_err(|err| anyhow!(err))
     }
 
-    pub async fn sweep(&self, to_address: String, feerate_preset: FeeratePreset) -> Result<()> {
+    pub async fn sweep(&self, to_address: String, fee_rate_sats_per_byte: u64) -> Result<()> {
         self.start_node().await?;
-        self.node_api.sweep(to_address, feerate_preset).await?;
+        self.node_api
+            .sweep(to_address, fee_rate_sats_per_byte)
+            .await?;
         self.sync().await?;
         Ok(())
     }
