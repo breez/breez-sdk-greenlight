@@ -2273,7 +2273,7 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   }
 
   late final _get_dart_objectPtr =
-      _lookup<ffi.NativeFunction<ffi.Handle Function(uintptr_t)>>(
+      _lookup<ffi.NativeFunction<ffi.Handle Function(ffi.UintPtr)>>(
           'get_dart_object');
   late final _get_dart_object =
       _get_dart_objectPtr.asFunction<Object Function(int)>();
@@ -2287,7 +2287,7 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   }
 
   late final _drop_dart_objectPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(uintptr_t)>>(
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.UintPtr)>>(
           'drop_dart_object');
   late final _drop_dart_object =
       _drop_dart_objectPtr.asFunction<void Function(int)>();
@@ -2301,7 +2301,7 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   }
 
   late final _new_dart_opaquePtr =
-      _lookup<ffi.NativeFunction<uintptr_t Function(ffi.Handle)>>(
+      _lookup<ffi.NativeFunction<ffi.UintPtr Function(ffi.Handle)>>(
           'new_dart_opaque');
   late final _new_dart_opaque =
       _new_dart_opaquePtr.asFunction<int Function(Object)>();
@@ -2999,4 +2999,3 @@ class wire_LnUrlWithdrawRequestData extends ffi.Struct {
 typedef DartPostCObjectFnType = ffi.Pointer<
     ffi.NativeFunction<ffi.Bool Function(DartPort, ffi.Pointer<ffi.Void>)>>;
 typedef DartPort = ffi.Int64;
-typedef uintptr_t = ffi.UnsignedLong;
