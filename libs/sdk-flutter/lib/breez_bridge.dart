@@ -193,7 +193,6 @@ class BreezBridge {
       toAddress: toAddress,
       feeRateSatsPerByte: feeRateSatsPerByte,
     );
-    await getNodeState();
     await listPayments();
   }
 
