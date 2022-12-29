@@ -221,10 +221,7 @@ fn main() -> Result<()> {
                             .map_err(|err| anyhow!(err))?
                             .parse()?;
 
-                        show_results(binding::sweep(
-                            to_address.into(),
-                            fee_rate_sats_per_byte,
-                        ))
+                        show_results(binding::sweep(to_address.into(), fee_rate_sats_per_byte))
                     }
                     Some("list_lsps") => show_results(binding::list_lsps()),
                     Some("connect_lsp") => {
