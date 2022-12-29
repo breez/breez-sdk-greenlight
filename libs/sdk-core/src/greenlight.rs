@@ -348,7 +348,7 @@ impl NodeAPI for Greenlight {
 
         let request = pb::WithdrawRequest {
             feerate: Some(pb::Feerate {
-                value: Some(pb::feerate::Value::Perkb(fee_rate_sats_per_byte)),
+                value: Some(pb::feerate::Value::Perkb(fee_rate_sats_per_byte * 1000)),
             }),
             amount: Some(Amount {
                 unit: Some(Unit::All(true)),
