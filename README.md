@@ -47,7 +47,6 @@ See instruction in each sub project readme on how to build, test and run.
 - [x] Send/receive bolt11
 - [x] LNURL-Pay
 - [x] LNURL-Withdraw
-- [x] Receive via on-chain address
 - [x] Backup/restore using mnemonics 
 - [x] Send zero-amount invoices
 - [x] Fiat currencies
@@ -57,6 +56,7 @@ See instruction in each sub project readme on how to build, test and run.
 - [x] cli inteface 
 - [x] Swift bindings
 - [x] Kotlin bindings
+- [ ] Receive via on-chain address
 - [ ] Send to an on-chain address
 - [ ] LNURL-Auth
 - [ ] MoonPay fiat on-ramp
