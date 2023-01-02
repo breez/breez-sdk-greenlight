@@ -30,7 +30,12 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::runtime::Runtime;
 use tokio::sync::mpsc;
 use tokio::time::{sleep, Duration};
+use tonic::codegen::InterceptedService;
+use tonic::metadata::errors::InvalidMetadataValue;
+use tonic::metadata::{Ascii, MetadataValue};
+use tonic::service::Interceptor;
 use tonic::transport::{Channel, Uri};
+use tonic::{Request, Status};
 
 pub trait EventListener: Send + Sync {
     fn on_event(&self, e: BreezEvent);
@@ -564,7 +569,10 @@ impl BreezServicesBuilder {
         let unwrapped_node_api = node_api.unwrap();
 
         // breez_server provides both FiatAPI & LspAPI implementations
-        let breez_server = Arc::new(BreezServer::new(self.config.breezserver.clone()));
+        let breez_server = Arc::new(BreezServer::new(
+            self.config.breezserver.clone(),
+            self.config.api_key.clone(),
+        ));
 
         // mempool space is used to monitor the chain
         let chain_service = Arc::new(MempoolSpace {
@@ -618,17 +626,30 @@ impl BreezServicesBuilder {
 #[derive(Clone)]
 pub struct BreezServer {
     server_url: String,
+    api_key: Option<String>,
 }
 
 impl BreezServer {
-    pub fn new(server_url: String) -> Self {
-        Self { server_url }
+    pub fn new(server_url: String, api_key: Option<String>) -> Self {
+        Self {
+            server_url,
+            api_key,
+        }
     }
 
-    pub(crate) async fn get_channel_opener_client(&self) -> Result<ChannelOpenerClient<Channel>> {
-        ChannelOpenerClient::connect(Uri::from_str(&self.server_url)?)
-            .await
-            .map_err(|e| anyhow!(e))
+    pub(crate) async fn get_channel_opener_client(
+        &self,
+    ) -> Result<ChannelOpenerClient<InterceptedService<Channel, ApiKeyInterceptor>>> {
+        let s = self.server_url.clone();
+        let channel = Channel::from_shared(s)?.connect().await?;
+
+        let api_key_metadata: Option<MetadataValue<Ascii>> = match &self.api_key {
+            Some(key) => Some(format!("Bearer {}", key).parse()?),
+            _ => None,
+        };
+        let client =
+            ChannelOpenerClient::with_interceptor(channel, ApiKeyInterceptor { api_key_metadata });
+        Ok(client)
     }
 
     pub(crate) async fn get_information_client(&self) -> Result<InformationClient<Channel>> {
@@ -641,6 +662,19 @@ impl BreezServer {
         FundManagerClient::connect(Uri::from_str(&self.server_url)?)
             .await
             .map_err(|e| anyhow!(e))
+    }
+}
+
+pub(crate) struct ApiKeyInterceptor {
+    api_key_metadata: Option<MetadataValue<Ascii>>,
+}
+impl Interceptor for ApiKeyInterceptor {
+    fn call(&mut self, mut req: Request<()>) -> Result<Request<()>, Status> {
+        if self.api_key_metadata.clone().is_some() {
+            req.metadata_mut()
+                .insert("authorization", self.api_key_metadata.clone().unwrap());
+        }
+        Ok(req)
     }
 }
 

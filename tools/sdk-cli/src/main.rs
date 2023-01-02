@@ -83,6 +83,7 @@ fn main() -> Result<()> {
                             hex::encode_upper(greenlight_credentials.clone().unwrap().device_key)
                         );
                         save_creds(greenlight_credentials.unwrap())?;
+                        show_results(binding::start_node());
                     }
                     Some("recover_node") => {
                         let r =
@@ -95,6 +96,7 @@ fn main() -> Result<()> {
                                     hex::encode_upper(greenlight_credentials.device_key.clone())
                                 );
                                 save_creds(greenlight_credentials)?;
+                                show_results(binding::start_node());
                             }
                             Err(e) => {
                                 error!("recover_node failed: {}", e);
@@ -108,7 +110,8 @@ fn main() -> Result<()> {
                             info!("credentials not found");
                             continue;
                         }
-                        show_results(binding::init_services(None, seed.to_vec(), creds.unwrap()));
+                        binding::init_services(None, seed.to_vec(), creds.unwrap())?;
+                        show_results(binding::start_node());
                     }
                     Some("receive_payment") => {
                         let amount_sats: u64 = command.next().unwrap().parse()?;

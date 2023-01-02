@@ -32,6 +32,7 @@ dictionary Config {
     Network network;
     u32 payment_timeout_sec;
     string? default_lsp_id;
+    string? api_key;
 };
 
 dictionary RouteHint {
