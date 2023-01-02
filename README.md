@@ -62,11 +62,10 @@ See instruction in each sub project readme on how to build, test and run.
 - [ ] Send to an on-chain address
 - [ ] LNURL-Auth
 - [ ] MoonPay fiat on-ramp
-- [ ] Make mempool.space dependency optional 
 - [ ] Spend all funds
-- [ ] React-native bindings
 - [ ] Mobile Notifications
 - [ ] Offline receive via notifications
+- [ ] Make mempool.space dependency optional 
 - [ ] Receive 0 amount invoice via LSP (unified QR)
 - [ ] Send/receive bolt12
 - [ ] Async payments
