@@ -284,7 +284,7 @@ impl Wire2Api<Config> for wire_Config {
             network: self.network.wire2api(),
             payment_timeout_sec: self.payment_timeout_sec.wire2api(),
             default_lsp_id: self.default_lsp_id.wire2api(),
-            lsp_api_key: self.lsp_api_key.wire2api(),
+            api_key: self.api_key.wire2api(),
         }
     }
 }
@@ -339,7 +339,7 @@ pub struct wire_Config {
     network: i32,
     payment_timeout_sec: u32,
     default_lsp_id: *mut wire_uint_8_list,
-    lsp_api_key: *mut wire_uint_8_list,
+    api_key: *mut wire_uint_8_list,
 }
 
 #[repr(C)]
@@ -397,7 +397,7 @@ impl NewWithNullPtr for wire_Config {
             network: Default::default(),
             payment_timeout_sec: Default::default(),
             default_lsp_id: core::ptr::null_mut(),
-            lsp_api_key: core::ptr::null_mut(),
+            api_key: core::ptr::null_mut(),
         }
     }
 }

@@ -282,7 +282,7 @@ class Config {
   final Network network;
   final int paymentTimeoutSec;
   final String? defaultLspId;
-  final String? lspApiKey;
+  final String? apiKey;
 
   Config({
     required this.breezserver,
@@ -291,7 +291,7 @@ class Config {
     required this.network,
     required this.paymentTimeoutSec,
     this.defaultLspId,
-    this.lspApiKey,
+    this.apiKey,
   });
 }
 
@@ -2184,7 +2184,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.network = api2wire_network(apiObj.network);
     wireObj.payment_timeout_sec = api2wire_u32(apiObj.paymentTimeoutSec);
     wireObj.default_lsp_id = api2wire_opt_String(apiObj.defaultLspId);
-    wireObj.lsp_api_key = api2wire_opt_String(apiObj.lspApiKey);
+    wireObj.api_key = api2wire_opt_String(apiObj.apiKey);
   }
 
   void _api_fill_to_wire_greenlight_credentials(
@@ -2952,7 +2952,7 @@ class wire_Config extends ffi.Struct {
 
   external ffi.Pointer<wire_uint_8_list> default_lsp_id;
 
-  external ffi.Pointer<wire_uint_8_list> lsp_api_key;
+  external ffi.Pointer<wire_uint_8_list> api_key;
 }
 
 class wire_GreenlightCredentials extends ffi.Struct {

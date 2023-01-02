@@ -571,7 +571,7 @@ impl BreezServicesBuilder {
         // breez_server provides both FiatAPI & LspAPI implementations
         let breez_server = Arc::new(BreezServer::new(
             self.config.breezserver.clone(),
-            self.config.lsp_api_key.clone(),
+            self.config.api_key.clone(),
         ));
 
         // mempool space is used to monitor the chain
@@ -626,14 +626,14 @@ impl BreezServicesBuilder {
 #[derive(Clone)]
 pub struct BreezServer {
     server_url: String,
-    lsp_api_key: Option<String>,
+    api_key: Option<String>,
 }
 
 impl BreezServer {
-    pub fn new(server_url: String, lsp_api_key: Option<String>) -> Self {
+    pub fn new(server_url: String, api_key: Option<String>) -> Self {
         Self {
             server_url,
-            lsp_api_key,
+            api_key,
         }
     }
 
@@ -643,7 +643,7 @@ impl BreezServer {
         let s = self.server_url.clone();
         let channel = Channel::from_shared(s)?.connect().await?;
 
-        let api_key_metadata: Option<MetadataValue<Ascii>> = match &self.lsp_api_key {
+        let api_key_metadata: Option<MetadataValue<Ascii>> = match &self.api_key {
             Some(key) => Some(format!("Bearer {}", key).parse()?),
             _ => None,
         };

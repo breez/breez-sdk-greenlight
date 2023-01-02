@@ -110,7 +110,7 @@ pub struct Config {
     pub network: Network,
     pub payment_timeout_sec: u32,
     pub default_lsp_id: Option<String>,
-    pub lsp_api_key: Option<String>,
+    pub api_key: Option<String>,
 }
 
 impl Default for Config {
@@ -122,7 +122,7 @@ impl Default for Config {
             network: Bitcoin,
             payment_timeout_sec: 30,
             default_lsp_id: Some(String::from("ea51d025-042d-456c-8325-63e430797481")),
-            lsp_api_key: None,
+            api_key: None,
         }
     }
 }
