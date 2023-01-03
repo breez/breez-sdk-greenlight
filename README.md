@@ -65,6 +65,8 @@ See instruction in each sub project readme on how to build, test and run.
 - [ ] Spend all funds
 - [ ] Mobile Notifications
 - [ ] Offline receive via notifications
+- [ ] Performance optimizations
+- [ ] Close channels to a predefined address 
 - [ ] Make mempool.space dependency optional 
 - [ ] Receive 0 amount invoice via LSP (unified QR)
 - [ ] Send/receive bolt12
