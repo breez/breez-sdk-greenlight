@@ -243,6 +243,17 @@ class BreezBridge {
   Future<String> executeCommand({required String command}) =>
       _lnToolkit.executeCommand(command: command);
 
+  Future<bool> isValidBitcoinAddress(
+    String address,
+  ) async {
+    try {
+      final inputType = await _lnToolkit.parse(s: address);
+      return inputType is InputType_BitcoinAddress;
+    } catch (e) {
+      return false;
+    }
+  }
+
   void _registerToolkitLog(LogEntry log) {
     switch (log.level) {
       case "ERROR":
