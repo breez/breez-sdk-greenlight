@@ -237,11 +237,23 @@ class BreezBridge {
         userAmountSat: userAmountSat, reqData: reqData, comment: comment);
   }
 
+  Future<LnUrlWithdrawCallbackStatus> withdrawLnurl({
+    required int amountSats,
+    String? description,
+    required LnUrlWithdrawRequestData reqData,
+  }) async {
+    return _lnToolkit.withdrawLnurl(
+        amountSats: amountSats, reqData: reqData, description: description);
+  }
+
   /// Fetches the current recommended fees
   Future<RecommendedFees> recommendedFees() => _lnToolkit.recommendedFees();
 
   Future<String> executeCommand({required String command}) =>
       _lnToolkit.executeCommand(command: command);
+
+  Future<void> exportPersistentData({required String destPath}) =>
+      _lnToolkit.exportPersistentData(destPath: destPath);
 
   Future<bool> isValidBitcoinAddress(
     String address,
