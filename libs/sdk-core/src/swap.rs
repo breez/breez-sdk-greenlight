@@ -239,6 +239,8 @@ impl BTCReceiveSwap {
             refund_tx_ids: Vec::new(),
             confirmed_tx_ids: Vec::new(),
             status: SwapStatus::Initial,
+            min_allowed_deposit: swap_reply.min_allowed_deposit,
+            max_allowed_deposit: swap_reply.max_allowed_deposit,
         };
 
         // persist the address

@@ -766,6 +766,8 @@ class SwapInfo {
   final SwapStatus status;
   final List<String> refundTxIds;
   final List<String> confirmedTxIds;
+  final int minAllowedDeposit;
+  final int maxAllowedDeposit;
 
   SwapInfo({
     required this.bitcoinAddress,
@@ -783,6 +785,8 @@ class SwapInfo {
     required this.status,
     required this.refundTxIds,
     required this.confirmedTxIds,
+    required this.minAllowedDeposit,
+    required this.maxAllowedDeposit,
   });
 }
 
@@ -1955,8 +1959,8 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   SwapInfo _wire2api_swap_info(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 15)
-      throw Exception('unexpected arr length: expect 15 but see ${arr.length}');
+    if (arr.length != 17)
+      throw Exception('unexpected arr length: expect 17 but see ${arr.length}');
     return SwapInfo(
       bitcoinAddress: _wire2api_String(arr[0]),
       createdAt: _wire2api_i64(arr[1]),
@@ -1973,6 +1977,8 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       status: _wire2api_swap_status(arr[12]),
       refundTxIds: _wire2api_StringList(arr[13]),
       confirmedTxIds: _wire2api_StringList(arr[14]),
+      minAllowedDeposit: _wire2api_i64(arr[15]),
+      maxAllowedDeposit: _wire2api_i64(arr[16]),
     );
   }
 

@@ -109,7 +109,11 @@ impl SqliteStorage {
              
              DROP TABLE old_payments;            
             "),
-
+            // Add min & max allowed deposit information to SwapInfo migrations
+            M::up("
+             ALTER TABLE swaps ADD COLUMN min_allowed_deposit INTEGER NOT NULL;
+             ALTER TABLE swaps ADD COLUMN max_allowed_deposit INTEGER NOT NULL;
+            "),
         ]);
 
         let mut conn = self.get_connection()?;
