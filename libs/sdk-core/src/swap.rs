@@ -119,7 +119,11 @@ impl BTCReceiveSwap {
                         .await;
                     match refresh_status {
                         Ok(updated) => {
-                            debug!("status refreshed for address: {}", address.clone());
+                            debug!(
+                                "swap status refreshed for address: {} redeemable={}",
+                                address.clone(),
+                                updated.redeemable()
+                            );
                             if updated.redeemable() {
                                 redeemable_swaps.push(updated);
                             }
@@ -140,10 +144,17 @@ impl BTCReceiveSwap {
 
                     if redeem_res.is_err() {
                         error!(
-                            "failed to redeem swap {:?}: {}",
+                            "failed to redeem swap {:?}: {} {}",
                             redeem_res.err().unwrap(),
-                            s.bitcoin_address
+                            s.bitcoin_address,
+                            s.bolt11.unwrap_or_default(),
                         );
+                    } else {
+                        info!(
+                            "succeed to redeem swap {:?}: {}",
+                            s.bitcoin_address,
+                            s.bolt11.unwrap_or_default()
+                        )
                     }
                 }
             }
