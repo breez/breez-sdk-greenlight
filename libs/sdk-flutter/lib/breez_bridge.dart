@@ -10,7 +10,27 @@ class BreezBridge {
   final _lnToolkit = getNativeToolkit();
   final _log = FimberLog("BreezBridge");
 
+  /* Streams */
+  /// Listen to node state
+  final StreamController<NodeState?> nodeStateController =
+      BehaviorSubject<NodeState?>();
+
+  Stream<NodeState?> get nodeStateStream => nodeStateController.stream;
+
+  /// Listen to payment list
+  final StreamController<List<Payment>> paymentsController =
+      BehaviorSubject<List<Payment>>();
+
+  Stream<List<Payment>> get paymentsStream => paymentsController.stream;
+
+  /// Listen to paid Invoice events
+  final StreamController<InvoicePaidDetails> _invoicePaidStream =
+      BehaviorSubject<InvoicePaidDetails>();
+
+  Stream<InvoicePaidDetails> get invoicePaidStream => _invoicePaidStream.stream;
+
   BreezBridge() {
+    /// Listen to BreezEvent's(new block, invoice paid, synced)
     _lnToolkit.breezEventsStream().listen((event) async {
       _log.v("Received breez event: $event");
       if (event is BreezEvent_InvoicePaid) {
@@ -21,12 +41,9 @@ class BreezBridge {
         await fetchNodeData();
       }
     });
-    _lnToolkit.breezLogStream().listen(_registerToolkitLog);
-  }
 
-  Future fetchNodeData() async {
-    await getNodeState();
-    await listPayments();
+    /// Listen to SDK logs and log them accordingly to their severity
+    _lnToolkit.breezLogStream().listen(_registerToolkitLog);
   }
 
   /// Register a new node in the cloud and return credentials to interact with it
@@ -35,6 +52,7 @@ class BreezBridge {
   ///
   /// * `network` - The network type which is one of (Bitcoin, Testnet, Signet, Regtest)
   /// * `seed` - The node private key
+  /// * `config` - The sdk configuration
   Future<GreenlightCredentials> registerNode({
     required Config config,
     required Network network,
@@ -45,6 +63,8 @@ class BreezBridge {
       network: network,
       seed: seed,
     );
+    await fetchNodeData();
+    await startNode();
     return creds;
   }
 
@@ -54,6 +74,7 @@ class BreezBridge {
   ///
   /// * `network` - The network type which is one of (Bitcoin, Testnet, Signet, Regtest)
   /// * `seed` - The node private key
+  /// * `config` - The sdk configuration
   Future<GreenlightCredentials> recoverNode({
     required Config config,
     required Network network,
@@ -64,17 +85,19 @@ class BreezBridge {
       network: network,
       seed: seed,
     );
+    await fetchNodeData();
+    await startNode();
     return creds;
   }
 
-  /// initServices initialized the global NodeService, schedule the node to run in the cloud and
+  /// init_services initialized the global NodeService, schedule the node to run in the cloud and
   /// run the signer. This must be called in order to start comunicate with the node
   ///
   /// # Arguments
   ///
   /// * `config` - The sdk configuration
   /// * `seed` - The node private key
-  /// * `creds` -
+  /// * `creds` - The greenlight credentials
   Future initServices({
     required Config config,
     required Uint8List seed,
@@ -86,8 +109,13 @@ class BreezBridge {
       creds: creds,
     );
     await fetchNodeData();
-    await _lnToolkit.startNode();
+    await startNode();
   }
+
+  Future<void> startNode() async => await _lnToolkit.startNode();
+
+  /// Cleanup node resources and stop the signer.
+  Future<void> stopNode() async => await _lnToolkit.stopNode();
 
   /// pay a bolt11 invoice
   ///
@@ -132,11 +160,6 @@ class BreezBridge {
     return nodeState;
   }
 
-  final StreamController<NodeState?> nodeStateController =
-      BehaviorSubject<NodeState?>();
-
-  Stream<NodeState?> get nodeStateStream => nodeStateController.stream;
-
   /// list payments (incoming/outgoing payments) from the persistent storage
   Future<List<Payment>> listPayments({
     PaymentTypeFilter filter = PaymentTypeFilter.All,
@@ -151,11 +174,6 @@ class BreezBridge {
     paymentsController.add(paymentsList);
     return paymentsList;
   }
-
-  final StreamController<List<Payment>> paymentsController =
-      BehaviorSubject<List<Payment>>();
-
-  Stream<List<Payment>> get paymentsStream => paymentsController.stream;
 
   /// List available lsps that can be selected by the user
   Future<List<LspInformation>> listLsps() async => await _lnToolkit.listLsps();
@@ -213,30 +231,31 @@ class BreezBridge {
         satPerVbyte: satPerVbyte,
       );
 
+  Future<String> executeCommand({required String command}) =>
+      _lnToolkit.executeCommand(command: command);
+
   Future<LNInvoice> parseInvoice(String invoice) async =>
       await _lnToolkit.parseInvoice(invoice: invoice);
 
-  /// Attempts to convert the phrase to a mnemonic, then to a seed.
-  ///
-  /// If the phrase is not a valid mnemonic, an error is returned.
-  Future<Uint8List> mnemonicToSeed(String phrase) async =>
-      await _lnToolkit.mnemonicToSeed(phrase: phrase);
+  Future<InputType> parseInput({required String input}) async =>
+      await _lnToolkit.parse(s: input);
 
-  /// Listen to paid Invoice events
-  final StreamController<InvoicePaidDetails> _invoicePaidStream =
-      BehaviorSubject<InvoicePaidDetails>();
-
-  Stream<InvoicePaidDetails> get invoicePaidStream => _invoicePaidStream.stream;
-
+  /// Second step of LNURL-pay. The first step is `parse()`, which also validates the LNURL destination
+  /// and generates the `LnUrlPayRequestData` payload needed here.
   Future<LnUrlPayResult> payLnUrl({
     required int userAmountSat,
     String? comment,
     required LnUrlPayRequestData reqData,
   }) async {
     return _lnToolkit.payLnurl(
-        userAmountSat: userAmountSat, reqData: reqData, comment: comment);
+      userAmountSat: userAmountSat,
+      comment: comment,
+      reqData: reqData,
+    );
   }
 
+  /// Second step of LNURL-withdraw. The first step is `parse()`, which also validates the LNURL destination
+  /// and generates the `LnUrlW` payload needed here.
   Future<LnUrlWithdrawCallbackStatus> withdrawLnurl({
     required int amountSats,
     String? description,
@@ -246,15 +265,17 @@ class BreezBridge {
         amountSats: amountSats, reqData: reqData, description: description);
   }
 
+  /// Attempts to convert the phrase to a mnemonic, then to a seed.
+  ///
+  /// If the phrase is not a valid mnemonic, an error is returned.
+  Future<Uint8List> mnemonicToSeed(String phrase) async =>
+      await _lnToolkit.mnemonicToSeed(phrase: phrase);
+
   /// Fetches the current recommended fees
   Future<RecommendedFees> recommendedFees() => _lnToolkit.recommendedFees();
 
-  Future<String> executeCommand({required String command}) =>
-      _lnToolkit.executeCommand(command: command);
-
-  // Future<void> exportPersistentData({required String destPath}) =>
-  //     _lnToolkit.exportPersistentData(destPath: destPath);
-
+  /* Helper Methods */
+  /// Validate if given address is a valid BTC address
   Future<bool> isValidBitcoinAddress(
     String address,
   ) async {
@@ -266,6 +287,7 @@ class BreezBridge {
     }
   }
 
+  /// Log entries according to their severity
   void _registerToolkitLog(LogEntry log) {
     switch (log.level) {
       case "ERROR":
@@ -284,5 +306,11 @@ class BreezBridge {
         _log.v(log.line);
         break;
     }
+  }
+
+  /// Fetch node state & payment list
+  Future fetchNodeData() async {
+    await getNodeState();
+    await listPayments();
   }
 }
