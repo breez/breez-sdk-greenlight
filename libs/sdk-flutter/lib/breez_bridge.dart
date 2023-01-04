@@ -252,8 +252,8 @@ class BreezBridge {
   Future<String> executeCommand({required String command}) =>
       _lnToolkit.executeCommand(command: command);
 
-  Future<void> exportPersistentData({required String destPath}) =>
-      _lnToolkit.exportPersistentData(destPath: destPath);
+  // Future<void> exportPersistentData({required String destPath}) =>
+  //     _lnToolkit.exportPersistentData(destPath: destPath);
 
   Future<bool> isValidBitcoinAddress(
     String address,
