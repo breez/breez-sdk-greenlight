@@ -1,3 +1,100 @@
+//! # Breez SDK
+//!
+//! The Breez SDK allows developers to build Bitcoin and Lightning enabled applications.
+//!
+//!
+//! ## Getting Started
+//!
+//! The first step is to initialize the SDK and start the node:
+//!
+//! ```
+//! use bip39::{Language::*, Mnemonic, MnemonicType::*, Seed};
+//! use breez_sdk_core::{binding, Network};
+//!
+//! let mnemonic = Mnemonic::new(Words12, English);
+//! let seed = Seed::new(&mnemonic, "");
+//!
+//! binding::register_node(Network::Bitcoin, seed.as_bytes().to_vec(), None)?;
+//! binding::start_node()?;
+//! ```
+//! We can now receive payments
+//!
+//! ```
+//! use breez_sdk_core::{binding, LNInvoice};
+//!
+//! let invoice : LNInvoice = binding::receive_payment(1000, "Invoice for 1000 sats".into())?;
+//! ```
+//!
+//! or make payments
+//! ```
+//! use breez_sdk_core::binding;
+//!
+//! let bolt11 = "..."; // LN invoice
+//! binding::send_payment(bolt11.into(), Some(1000))?;
+//! ```
+//!
+//! At any point we can fetch our balance from the Greenlight node
+//! ```
+//! use breez_sdk_core::binding;
+//!
+//! if let Some(node_state) = binding::node_info()? {
+//!     let balance_ln = node_state.channels_balance_msat;
+//!     let balance_onchain = node_state.onchain_balance_msat;
+//! }
+//! ```
+//!
+//! or fetch other useful infos, like the current mempool [RecommendedFees]
+//! ```
+//! use breez_sdk_core::{binding, RecommendedFees};
+//!
+//! let fees: RecommendedFees = binding::recommended_fees()?;
+//! ```
+//!
+//! These different types of operations are described below in more detail.
+//!
+//! ### A. Initialize the SDK
+//!
+//! There are three ways to initialize the SDK:
+//!
+//! 1. [binding::register_node] will register a new Greenlight node and return the [GreenlightCredentials]
+//! 2. [binding::recover_node] will recover an existing Greenlight node from a given BIP39 mnemonic
+//! 3. [binding::init_services] will initialize an existing node from its [GreenlightCredentials]
+//!
+//! After calling any of these three methods and starting the node with [binding::start_node], the SDK is ready to be used.
+//!
+//! ### B. LN Operations
+//!
+//! Send / receive, lnurl, bolt11
+//!
+//! ### C. On-chain Operations
+//!
+//! Send / receive
+//!
+//! ### D. LNURL Workflows
+//!
+//! pay, withdraw
+//!
+//! ### E. Utilities
+//!
+//! * [binding::list_payments] to get a `Vec` of [Payment] based on from/to timestamps or a [PaymentTypeFilter]
+//! * [binding::list_fiat_currencies] and [binding::fetch_fiat_rates] to get the current exchange rates
+//! * [binding::recommended_fees] for the recommended mempool fees
+//!
+//! ### E. Node Management
+//!
+//! * [binding::list_lsps] to get a list of available LSPs
+//! * [binding::lsp_info] to get [LspInformation] on the currently selected LSP
+//! * [binding::node_info] to get the current node state (LN and onchain balance, payment limits, etc)
+//! * [binding::execute_command] to execute dev commands
+//!
+//! ### E. Cleanup
+//!
+//! TODO: Shutdown node? Implement [Drop] to automatically close connections (Node, LSP)?
+//!
+//! ## Bindings and Supported Platforms
+//!
+//! The library can be built both for Android and iOS.
+
 mod bridge_generated; /* AUTO INJECTED BY flutter_rust_bridge. This line may not be accurate, and you can change it according to your needs. */
 #[macro_use]
 extern crate log;
