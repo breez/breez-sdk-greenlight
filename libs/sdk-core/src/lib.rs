@@ -65,9 +65,21 @@
 //!
 //! ### E. Utilities
 //!
-//! * [binding::list_payments] to get a `Vec` of [Payment] based on from/to timestamps or a [PaymentTypeFilter]
-//! * [binding::list_fiat_currencies] and [binding::fetch_fiat_rates] to get the current exchange rates
+//! Use [binding::parse] to parse generic input. The input can come from the user, from a clicked link or from a QR code.
+//! The resulting [InputType] will tell you what the input is and how to treat it, as well as present relevant payload data
+//! in a structured form.
+//!
+//! The SDK also includes payment-related utilities:
+//!
+//! * [binding::list_fiat_currencies] to get the supported fiat currencies
+//! * [binding::fetch_fiat_rates] to get the current exchange rates
 //! * [binding::recommended_fees] for the recommended mempool fees
+//!
+//! as well as wallet utilities:
+//!
+//! * [binding::list_payments] to get a `Vec` of [Payment] based on from/to timestamps or a [PaymentTypeFilter]
+//! * [binding::list_refundables] for a list of swaps
+//! * [binding::mnemonic_to_seed]
 //!
 //! ### E. Node Management
 //!
