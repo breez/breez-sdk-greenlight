@@ -553,7 +553,6 @@ fn amount_to_msat(amount: pb::Amount) -> u64 {
 fn parse_amount(amount_str: String) -> Result<pb::Amount> {
     let mut unit = pb::amount::Unit::Millisatoshi(0);
     if amount_str.ends_with("msat") {
-        let t = amount_str.strip_suffix("msat").unwrap().to_string();
         unit = pb::amount::Unit::Millisatoshi(
             amount_str
                 .strip_suffix("msat")

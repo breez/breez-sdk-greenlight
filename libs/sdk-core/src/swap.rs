@@ -505,7 +505,7 @@ fn get_utxos(swap_address: String, transactions: Vec<OnchainTx>) -> Result<Vec<U
         }
     }
 
-    for (i, tx) in transactions.iter().enumerate() {
+    for (_i, tx) in transactions.iter().enumerate() {
         for (index, vout) in tx.vout.iter().enumerate() {
             if tx.status.confirmed && vout.scriptpubkey_address == swap_address {
                 let outpoint = OutPoint {
