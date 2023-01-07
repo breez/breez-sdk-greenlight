@@ -1,4 +1,4 @@
-use crate::breez_services::{self, BreezEvent, BreezServicesBuilder, EventListener};
+use crate::breez_services::{self, BreezEvent, EventListener};
 use crate::chain::RecommendedFees;
 use crate::fiat::{FiatCurrency, Rate};
 use crate::input_parser::LnUrlPayRequestData;
@@ -16,7 +16,7 @@ use crate::breez_services::BreezServices;
 use crate::invoice::LNInvoice;
 use crate::lnurl::withdraw::model::LnUrlWithdrawCallbackStatus;
 use crate::models::{
-    Config, FeeratePreset, GreenlightCredentials, Network, NodeState, Payment, PaymentTypeFilter,
+    Config, GreenlightCredentials, Network, NodeState, Payment, PaymentTypeFilter,
     SwapInfo,
 };
 
@@ -24,7 +24,6 @@ use crate::input_parser::InputType;
 use crate::invoice::{self};
 use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::LnUrlWithdrawRequestData;
-use bip39::{Language, Mnemonic, Seed};
 
 static BREEZ_SERVICES_INSTANCE: OnceCell<Arc<BreezServices>> = OnceCell::new();
 static BREEZ_SERVICES_SHUTDOWN: OnceCell<mpsc::Sender<()>> = OnceCell::new();

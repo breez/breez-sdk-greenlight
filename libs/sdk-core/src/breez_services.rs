@@ -13,7 +13,7 @@ use crate::lnurl::withdraw::model::LnUrlWithdrawCallbackStatus;
 use crate::lnurl::withdraw::validate_lnurl_withdraw;
 use crate::lsp::LspInformation;
 use crate::models::{
-    parse_short_channel_id, ChannelState, ClosesChannelPaymentDetails, Config, FeeratePreset,
+    parse_short_channel_id, ChannelState, ClosesChannelPaymentDetails, Config,
     FiatAPI, GreenlightCredentials, LspAPI, Network, NodeAPI, NodeState, Payment, PaymentDetails,
     PaymentType, PaymentTypeFilter, SwapInfo, SwapperAPI,
 };
@@ -31,7 +31,6 @@ use tokio::runtime::Runtime;
 use tokio::sync::mpsc;
 use tokio::time::{sleep, Duration};
 use tonic::codegen::InterceptedService;
-use tonic::metadata::errors::InvalidMetadataValue;
 use tonic::metadata::{Ascii, MetadataValue};
 use tonic::service::Interceptor;
 use tonic::transport::{Channel, Uri};

@@ -1,8 +1,6 @@
 use std::{
-    fmt::format,
     str::FromStr,
     time::{SystemTime, UNIX_EPOCH},
-    vec,
 };
 
 use crate::models::*;

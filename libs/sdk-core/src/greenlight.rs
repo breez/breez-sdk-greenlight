@@ -1,6 +1,6 @@
 use crate::invoice::parse_invoice;
 use crate::models::{
-    Config, FeeratePreset, GreenlightCredentials, LnPaymentDetails, Network, NodeAPI, NodeState,
+    Config, GreenlightCredentials, LnPaymentDetails, Network, NodeAPI, NodeState,
     PaymentDetails, PaymentType, SyncResponse,
 };
 
@@ -23,7 +23,6 @@ use serde::{Deserialize, Serialize};
 use std::cmp::{max, min};
 use std::str::FromStr;
 use std::time::{SystemTime, UNIX_EPOCH};
-use std::usize::MIN;
 use strum_macros::{Display, EnumString};
 use tokio::sync::mpsc;
 use tonic::Streaming;
