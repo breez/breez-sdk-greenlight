@@ -49,8 +49,8 @@ impl Greenlight {
         let signer = Signer::new(seed, greenlight_network, tls_config.clone())?;
         Ok(Greenlight {
             sdk_config,
-            tls_config: tls_config.clone(),
-            signer: signer.clone(),
+            tls_config,
+            signer,
         })
     }
 
@@ -130,8 +130,8 @@ impl NodeAPI for Greenlight {
         let data_len: u16 = data_bytes.len().try_into()?;
         let mut data_len_bytes = data_len.to_be_bytes().to_vec();
         let mut data_buf = data_bytes
-            .to_vec()
-            .into_iter()
+            .iter()
+            .copied()
             .map(u5::to_u8)
             .collect();
 
@@ -211,7 +211,7 @@ impl NodeAPI for Greenlight {
         // filter only opened channels
         let opened_channels: &mut Vec<&pb::Channel> = &mut all_channels
             .iter()
-            .filter(|c| c.state == String::from("CHANNELD_NORMAL"))
+            .filter(|c| c.state == *"CHANNELD_NORMAL")
             .collect();
 
         // calculate channels balance only from opened channels
@@ -290,7 +290,7 @@ impl NodeAPI for Greenlight {
                 SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis()
             ),
             description,
-            preimage: preimage.unwrap_or(vec![]),
+            preimage: preimage.unwrap_or_default(),
         };
 
         Ok(client.create_invoice(request).await?.into_inner())
@@ -559,7 +559,7 @@ fn parse_amount(amount_str: String) -> Result<pb::Amount> {
         unit = pb::amount::Unit::Millisatoshi(
             amount_str
                 .strip_suffix("msat")
-                .ok_or(anyhow!("wrong amount format {}", amount_str))?
+                .ok_or_else(|| anyhow!("wrong amount format {}", amount_str))?
                 .to_string()
                 .parse::<u64>()?,
         );
@@ -567,7 +567,7 @@ fn parse_amount(amount_str: String) -> Result<pb::Amount> {
         unit = pb::amount::Unit::Satoshi(
             amount_str
                 .strip_suffix("sat")
-                .ok_or(anyhow!("wrong amount format {}", amount_str))?
+                .ok_or_else(|| anyhow!("wrong amount format {}", amount_str))?
                 .to_string()
                 .parse::<u64>()?,
         );
@@ -575,7 +575,7 @@ fn parse_amount(amount_str: String) -> Result<pb::Amount> {
         unit = pb::amount::Unit::Bitcoin(
             amount_str
                 .strip_suffix("bitcoin")
-                .ok_or(anyhow!("wrong amount format {}", amount_str))?
+                .ok_or_else(|| anyhow!("wrong amount format {}", amount_str))?
                 .to_string()
                 .parse::<u64>()?,
         );

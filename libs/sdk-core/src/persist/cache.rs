@@ -29,7 +29,7 @@ impl SqliteStorage {
 
     pub fn set_node_state(&self, state: &NodeState) -> Result<()> {
         let serialized_state = serde_json::to_string(state)?;
-        self.update_cached_item("node_state".to_string(), serialized_state.to_string())?;
+        self.update_cached_item("node_state".to_string(), serialized_state)?;
         Ok(())
     }
 

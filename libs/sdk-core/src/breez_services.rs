@@ -135,13 +135,12 @@ impl BreezServices {
         creds: GreenlightCredentials,
         event_listener: Box<dyn EventListener>,
     ) -> Result<Arc<BreezServices>> {
-        let sdk_config = config.unwrap_or(Config::default());
+        let sdk_config = config.unwrap_or_default();
 
         // create the node services instance and set it globally
-        let breez_services = BreezServicesBuilder::new(sdk_config.clone())
+        BreezServicesBuilder::new(sdk_config)
             .greenlight_credentials(creds, seed)
-            .build(Some(event_listener))?;
-        Ok(breez_services.clone())
+            .build(Some(event_listener))
     }
 
     pub async fn start(runtime: &Runtime, breez_services: &Arc<BreezServices>) -> Result<()> {
@@ -252,7 +251,7 @@ impl BreezServices {
 
     pub async fn list_lsps(&self) -> Result<Vec<LspInformation>> {
         self.lsp_api
-            .list_lsps(self.node_info()?.ok_or(anyhow!("err"))?.id)
+            .list_lsps(self.node_info()?.ok_or_else(|| anyhow!("err"))?.id)
             .await
     }
 
@@ -596,7 +595,7 @@ impl BreezServicesBuilder {
 
         let btc_receive_swapper = Arc::new(BTCReceiveSwap::new(
             self.config.network.clone().into(),
-            self.swapper_api.clone().unwrap_or(breez_server.clone()),
+            self.swapper_api.clone().unwrap_or_else(|| breez_server.clone()),
             persister.clone(),
             chain_service.clone(),
             payment_receiver.clone(),
@@ -606,11 +605,11 @@ impl BreezServicesBuilder {
         let breez_services = Arc::new(BreezServices {
             config: self.config.clone(),
             node_api: unwrapped_node_api.clone(),
-            lsp_api: self.lsp_api.clone().unwrap_or(breez_server.clone()),
-            fiat_api: self.fiat_api.clone().unwrap_or(breez_server.clone()),
-            chain_service: chain_service.clone(),
-            persister: persister.clone(),
-            btc_receive_swapper: btc_receive_swapper.clone(),
+            lsp_api: self.lsp_api.clone().unwrap_or_else(|| breez_server.clone()),
+            fiat_api: self.fiat_api.clone().unwrap_or_else(|| breez_server.clone()),
+            chain_service,
+            persister,
+            btc_receive_swapper,
             payment_receiver,
             event_listener: listener,
             shutdown_sender: Mutex::new(None),

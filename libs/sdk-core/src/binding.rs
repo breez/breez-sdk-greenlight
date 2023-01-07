@@ -124,7 +124,7 @@ pub fn init_services(
             BreezServices::init_services(config, seed, creds, Box::new(BindingEventListener {}))
                 .await?;
         BREEZ_SERVICES_INSTANCE
-            .set(breez_services.clone())
+            .set(breez_services)
             .map_err(|_| anyhow!("static node services already set"))?;
 
         Ok(())
@@ -137,7 +137,7 @@ pub fn start_node() -> Result<()> {
             rt(),
             BREEZ_SERVICES_INSTANCE
                 .get()
-                .ok_or(anyhow!("breez services instance was not initialized"))?,
+                .ok_or_else(|| anyhow!("breez services instance was not initialized"))?,
         )
         .await
     })

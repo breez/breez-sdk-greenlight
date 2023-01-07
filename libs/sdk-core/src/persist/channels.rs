@@ -13,13 +13,13 @@ use anyhow::Result;
 impl SqliteStorage {
     pub(crate) fn update_channels(&self, channels: &[Channel]) -> Result<()> {
         // insert all channels
-        for c in channels.to_owned() {
+        for c in channels.iter().cloned() {
             self.insert_or_update_channel(c)?
         }
 
         let funding_txs: Vec<String> = channels
-            .to_owned()
-            .into_iter()
+            .iter()
+            .cloned()
             .map(|c| format!("'{}'", c.funding_txid))
             .collect();
 
