@@ -207,11 +207,6 @@ fn prepend_if_missing(prefix: &str, input: &str) -> String {
     format!("{}{}", prefix, input.trim_start_matches(prefix))
 }
 
-/// Removes the input's prefix, if indeed it starts with that prefix
-fn strip_prefix_if_present(prefix: &str, input: &str) -> String {
-    input.trim_start_matches(prefix).to_string()
-}
-
 /// Converts the LN Address to the corresponding LNURL-pay endpoint, as per LUD-16:
 ///
 /// - https://<domain>/.well-known/lnurlp/<username> for clearnet domains
