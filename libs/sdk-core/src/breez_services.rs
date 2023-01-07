@@ -149,7 +149,7 @@ impl BreezServices {
         let (stop_sender, stop_receiver) = mpsc::channel(1);
         breez_services.set_shutdown_sender(stop_sender);
 
-        crate::breez_services::start(&runtime, breez_services.clone(), stop_receiver).await
+        crate::breez_services::start(runtime, breez_services.clone(), stop_receiver).await
     }
 
     pub async fn stop(&self) -> Result<()> {
@@ -299,9 +299,9 @@ impl BreezServices {
             .await
     }
 
-    /// Excute a command directly on the NodeAPI interface.
+    /// Execute a command directly on the NodeAPI interface.
     /// Mainly used to debugging.
-    pub async fn execute_dev_command(&self, command: &String) -> Result<String> {
+    pub async fn execute_dev_command(&self, command: String) -> Result<String> {
         self.node_api.execute_command(command).await
     }
 
@@ -333,7 +333,7 @@ impl BreezServices {
             .list_channels()?
             .into_iter()
             .filter(|c| c.state == ChannelState::Closed || c.state == ChannelState::PendingClose)
-            .map(|c| closed_channel_to_transaction(c))
+            .map(closed_channel_to_transaction)
             .collect();
 
         // update both closed channels and lightning transation payments
@@ -426,14 +426,11 @@ async fn poll_events(breez_services: Arc<BreezServices>, mut current_block: u32)
           match paid_invoice_res {
            Ok(Some(i)) => {
             debug!("invoice stream got new invoice");
-            match i.details {
-             Some(gl_client::pb::incoming_payment::Details::Offchain(p)) => {
-              _  = breez_services.on_event(BreezEvent::InvoicePaid{details: InvoicePaidDetails {
+            if let Some(gl_client::pb::incoming_payment::Details::Offchain(p)) = i.details {
+                _  = breez_services.on_event(BreezEvent::InvoicePaid{details: InvoicePaidDetails {
                     payment_hash: hex::encode(p.payment_hash),
                     bolt11: p.bolt11,
                 }}).await;
-             },
-             None => {}
             }
            }
            // stream is closed, renew it
@@ -477,7 +474,7 @@ fn closed_channel_to_transaction(
         payment_time: channel
             .closed_at
             .unwrap_or(now.duration_since(UNIX_EPOCH)?.as_secs()) as i64,
-        amount_msat: -1 * channel.spendable_msat as i64,
+        amount_msat: -(channel.spendable_msat as i64),
         fee_msat: 0,
         pending: channel.state == ChannelState::PendingClose,
         description: Some("Closed Channel".to_string()),
@@ -505,7 +502,7 @@ pub struct BreezServicesBuilder {
 impl BreezServicesBuilder {
     pub fn new(config: Config) -> BreezServicesBuilder {
         BreezServicesBuilder {
-            config: config,
+            config,
             node_api: None,
             creds: None,
             seed: None,
@@ -787,7 +784,7 @@ impl Receiver for PaymentReceiver {
         info!("lsp hop = {:?}", lsp_hop);
 
         let raw_invoice_with_hint = add_routing_hints(
-            &invoice.bolt11,
+            invoice.bolt11.clone(),
             vec![RouteHint {
                 hops: vec![lsp_hop],
             }],

@@ -87,7 +87,7 @@ impl RouteHint {
 }
 
 pub fn add_routing_hints(
-    invoice: &String,
+    invoice: String,
     hints: Vec<RouteHint>,
     new_amount_msats: u64,
 ) -> Result<RawInvoice> {
@@ -148,9 +148,7 @@ pub fn parse_invoice(bolt11: &str) -> Result<LNInvoice> {
     let invoice_hints = invoice.route_hints();
     let converted_hints = invoice_hints
         .iter()
-        .map(|h| {
-            return RouteHint::from_ldk_hint(h);
-        })
+        .map(RouteHint::from_ldk_hint)
         .collect();
     // return the parsed invoice
     let ln_invoice = LNInvoice {

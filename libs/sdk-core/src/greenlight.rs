@@ -132,7 +132,7 @@ impl NodeAPI for Greenlight {
         let mut data_buf = data_bytes
             .to_vec()
             .into_iter()
-            .map(|b| u5::to_u8(b))
+            .map(u5::to_u8)
             .collect();
 
         let hrp_len: u16 = hrp_bytes.len().try_into()?;
@@ -211,7 +211,7 @@ impl NodeAPI for Greenlight {
         // filter only opened channels
         let opened_channels: &mut Vec<&pb::Channel> = &mut all_channels
             .iter()
-            .filter(|c| return c.state == String::from("CHANNELD_NORMAL"))
+            .filter(|c| c.state == String::from("CHANNELD_NORMAL"))
             .collect();
 
         // calculate channels balance only from opened channels
@@ -220,7 +220,7 @@ impl NodeAPI for Greenlight {
             if opened_channels.iter().any(|c| c.funding_txid == hex_txid) {
                 return a + b.our_amount_msat;
             }
-            return a;
+            a
         });
 
         // calculate onchain balance
@@ -253,7 +253,7 @@ impl NodeAPI for Greenlight {
             max_receivable_msat: max_allowed_to_receive_msats,
             max_single_payment_amount_msat: MAX_PAYMENT_AMOUNT_MSAT,
             max_chan_reserve_msats: channels_balance - min(max_payable, channels_balance),
-            connected_peers: connected_peers,
+            connected_peers,
             inbound_liquidity_msats: max_receivable_single_channel,
         };
         Ok(SyncResponse {
@@ -361,8 +361,8 @@ impl NodeAPI for Greenlight {
         Ok(client.withdraw(request).await?.into_inner())
     }
 
-    async fn execute_command(&self, command: &String) -> Result<String> {
-        let node_cmd = NodeCommand::from_str(command)
+    async fn execute_command(&self, command: String) -> Result<String> {
+        let node_cmd = NodeCommand::from_str(&command)
             .map_err(|_| anyhow!(format!("command not found: {}", command)))?;
         match node_cmd {
             NodeCommand::ListPeers => {
@@ -474,7 +474,7 @@ async fn pull_transactions(
         .payments
         .into_iter()
         .filter(|p| p.created_at as i64 > since_timestamp && p.status() == PayStatus::Complete)
-        .map(|p| payment_to_transaction(p))
+        .map(payment_to_transaction)
         .collect();
 
     let mut transactions: Vec<crate::models::Payment> = Vec::new();
@@ -593,14 +593,14 @@ impl From<pb::Channel> for crate::models::Channel {
             _ => crate::models::ChannelState::PendingClose,
         };
 
-        return crate::models::Channel {
+        crate::models::Channel {
             short_channel_id: c.short_channel_id,
             state,
             funding_txid: c.funding_txid,
             spendable_msat: amount_to_msat(parse_amount(c.spendable).unwrap_or_default()),
             receivable_msat: amount_to_msat(parse_amount(c.receivable).unwrap_or_default()),
             closed_at: None,
-        };
+        }
     }
 }
 

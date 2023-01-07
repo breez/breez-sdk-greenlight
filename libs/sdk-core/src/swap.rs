@@ -89,14 +89,13 @@ impl BTCReceiveSwap {
         chain_service: Arc<MempoolSpace>,
         payment_receiver: Arc<PaymentReceiver>,
     ) -> Self {
-        let swapper = Self {
+        Self {
             network,
             swapper_api,
             persister,
             chain_service,
             payment_receiver,
-        };
-        swapper
+        }
     }
 
     /// Listening to events is required in order to:
@@ -321,7 +320,7 @@ impl BTCReceiveSwap {
 
         let mut swap_status = swap_info.status.clone();
 
-        if txs.len() > 0 && current_tip - confirmed_block >= swap_info.lock_height as u32 {
+        if !txs.is_empty() && current_tip - confirmed_block >= swap_info.lock_height as u32 {
             swap_status = SwapStatus::Expired
         }
 
@@ -537,7 +536,7 @@ fn create_refund_tx(
     input_script: Script,
     sat_per_vbyte: u32,
 ) -> Result<Vec<u8>> {
-    if utxos.len() == 0 {
+    if utxos.is_empty() {
         return Err(anyhow!("must have at least one input"));
     }
 

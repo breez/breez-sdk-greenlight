@@ -54,7 +54,7 @@ pub trait NodeAPI: Send + Sync {
     async fn close_peer_channels(&self, node_id: String) -> Result<CloseChannelResponse>;
     async fn stream_incoming_payments(&self) -> Result<Streaming<gl_client::pb::IncomingPayment>>;
     async fn stream_log_messages(&self) -> Result<Streaming<gl_client::pb::LogEntry>>;
-    async fn execute_command(&self, command: &String) -> Result<String>;
+    async fn execute_command(&self, command: String) -> Result<String>;
 }
 
 #[tonic::async_trait]

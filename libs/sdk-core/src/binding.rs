@@ -283,7 +283,7 @@ pub fn list_refundables() -> Result<Vec<SwapInfo>> {
     block_on(async { get_breez_services()?.list_refundables().await })
 }
 
-// construct and broadcast a refund transaction for a faile/expired swap
+// construct and broadcast a refund transaction for a failed/expired swap
 pub fn refund(swap_address: String, to_address: String, sat_per_vbyte: u32) -> Result<String> {
     block_on(async {
         get_breez_services()?
@@ -294,7 +294,7 @@ pub fn refund(swap_address: String, to_address: String, sat_per_vbyte: u32) -> R
 
 // execute developers command
 pub fn execute_command(command: String) -> Result<String> {
-    block_on(async { get_breez_services()?.execute_dev_command(&command).await })
+    block_on(async { get_breez_services()?.execute_dev_command(command).await })
 }
 
 fn get_breez_services() -> Result<&'static BreezServices> {

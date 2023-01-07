@@ -11,14 +11,14 @@ use super::db::SqliteStorage;
 use anyhow::Result;
 
 impl SqliteStorage {
-    pub(crate) fn update_channels(&self, channels: &Vec<Channel>) -> Result<()> {
+    pub(crate) fn update_channels(&self, channels: &[Channel]) -> Result<()> {
         // insert all channels
-        for c in channels.clone() {
+        for c in channels.to_owned() {
             self.insert_or_update_channel(c)?
         }
 
         let funding_txs: Vec<String> = channels
-            .clone()
+            .to_owned()
             .into_iter()
             .map(|c| format!("'{}'", c.funding_txid))
             .collect();
