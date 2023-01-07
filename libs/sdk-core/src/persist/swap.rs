@@ -103,12 +103,9 @@ impl SqliteStorage {
     pub fn list_swaps_with_status(&self, status: SwapStatus) -> Result<Vec<SwapInfo>> {
         let con = self.get_connection()?;
         let mut stmt = con.prepare(
-            format!(
-                "
+            "
               SELECT * FROM swaps WHERE status=?         
-             "
-            )
-            .as_str(),
+            "
         )?;
 
         let vec: Vec<SwapInfo> = stmt

@@ -344,7 +344,7 @@ impl BreezServices {
 
     async fn connect_lsp_peer(&self) -> Result<()> {
         let lsp = self.lsp_info().await.ok();
-        if !lsp.is_none() {
+        if lsp.is_some() {
             let lsp_info = lsp.unwrap().clone();
             let node_id = lsp_info.pubkey;
             let address = lsp_info.host;
@@ -377,7 +377,7 @@ impl BreezServices {
             )
         };
 
-        if !self.event_listener.is_none() {
+        if self.event_listener.is_some() {
             self.event_listener.as_ref().unwrap().on_event(e.clone())
         }
         Ok(())

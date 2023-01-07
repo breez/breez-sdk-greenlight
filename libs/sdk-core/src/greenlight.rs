@@ -153,8 +153,7 @@ impl NodeAPI for Greenlight {
         let rid = RecoveryId::from_i32(raw_result[64] as i32).expect("recovery ID");
         let sig = &raw_result[0..64];
         let recoverable_sig = RecoverableSignature::from_compact(sig, rid)
-            .map_err(|e| anyhow!(e))?
-            .clone();
+            .map_err(|e| anyhow!(e))?;
 
         let signed_invoice: Result<SignedRawInvoice> = invoice.sign(|_| Ok(recoverable_sig));
         Ok(signed_invoice?.to_string())

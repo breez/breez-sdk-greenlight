@@ -43,8 +43,7 @@ impl SqliteStorage {
     pub(crate) fn list_channels(&self) -> Result<Vec<Channel>> {
         let con = self.get_connection()?;
         let mut stmt = con.prepare(
-            format!(
-                "
+            "
                SELECT
                 funding_txid, 
                 short_channel_id,
@@ -53,9 +52,7 @@ impl SqliteStorage {
                 receivable_msat,
                 closed_at
                FROM channels             
-             "
-            )
-            .as_str(),
+             ",
         )?;
         let channels: Vec<Channel> = stmt
             .query_map([], |row| {

@@ -579,6 +579,7 @@ fn create_refund_tx(
         output: tx_out,
     };
 
+    #[allow(clippy::identity_op)] // Allow "+ 0" term in sum below for clarity
     let refund_witness_input_size: u32 = 1 + 1 + 73 + 1 + 0 + 1 + 100;
     let tx_weight = tx.strippedsize() as u32 * WITNESS_SCALE_FACTOR as u32
         + refund_witness_input_size * txins.len() as u32;

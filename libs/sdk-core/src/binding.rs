@@ -62,9 +62,8 @@ struct BindingEventListener;
 
 impl EventListener for BindingEventListener {
     fn on_event(&self, e: BreezEvent) {
-        let s = NOTIFICATION_STREAM.get();
-        if s.is_some() {
-            s.unwrap().add(e);
+        if let Some(stream) = NOTIFICATION_STREAM.get() {
+            stream.add(e);
         }
     }
 }
