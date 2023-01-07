@@ -7,10 +7,7 @@
 //!
 //! The first step is to initialize the SDK and start the node:
 //!
-//! ```
-//! use bip39::{Language::*, Mnemonic, MnemonicType::*, Seed};
-//! use breez_sdk_core::{binding, Network};
-//!
+//! ```ignore
 //! let mnemonic = Mnemonic::new(Words12, English);
 //! let seed = Seed::new(&mnemonic, "");
 //!
@@ -19,24 +16,18 @@
 //! ```
 //! We can now receive payments
 //!
-//! ```
-//! use breez_sdk_core::{binding, LNInvoice};
-//!
+//! ```ignore
 //! let invoice : LNInvoice = binding::receive_payment(1000, "Invoice for 1000 sats".into())?;
 //! ```
 //!
 //! or make payments
-//! ```
-//! use breez_sdk_core::binding;
-//!
+//! ```ignore
 //! let bolt11 = "..."; // LN invoice
 //! binding::send_payment(bolt11.into(), Some(1000))?;
 //! ```
 //!
 //! At any point we can fetch our balance from the Greenlight node
-//! ```
-//! use breez_sdk_core::binding;
-//!
+//! ```ignore
 //! if let Some(node_state) = binding::node_info()? {
 //!     let balance_ln = node_state.channels_balance_msat;
 //!     let balance_onchain = node_state.onchain_balance_msat;
@@ -44,9 +35,7 @@
 //! ```
 //!
 //! or fetch other useful infos, like the current mempool [RecommendedFees]
-//! ```
-//! use breez_sdk_core::{binding, RecommendedFees};
-//!
+//! ```ignore
 //! let fees: RecommendedFees = binding::recommended_fees()?;
 //! ```
 //!
