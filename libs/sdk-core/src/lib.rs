@@ -17,13 +17,13 @@
 //! We can now receive payments
 //!
 //! ```ignore
-//! let invoice : LNInvoice = binding::receive_payment(1000, "Invoice for 1000 sats".into())?;
+//! let invoice : LNInvoice = binding::receive_payment(3000, "Invoice for 3000 sats".into())?;
 //! ```
 //!
 //! or make payments
 //! ```ignore
 //! let bolt11 = "..."; // LN invoice
-//! binding::send_payment(bolt11.into(), Some(1000))?;
+//! binding::send_payment(bolt11.into(), Some(3000))?;
 //! ```
 //!
 //! At any point we can fetch our balance from the Greenlight node
@@ -80,13 +80,14 @@
 //! * [binding::list_payments] to get a `Vec` of [Payment] based on from/to timestamps or a [PaymentTypeFilter]
 //! * [binding::list_refundables] for a list of swaps
 //! * [binding::mnemonic_to_seed]
-//!
-//! ### E. Node Management
-//!
-//! * [binding::list_lsps] to get a list of available LSPs
-//! * [binding::lsp_info] to get [LspInformation] on the currently selected LSP
 //! * [binding::node_info] to get the current node state (LN and onchain balance, payment limits, etc)
 //! * [binding::execute_command] to execute dev commands
+//!
+//! ### E. LSP Management
+//!
+//! * [binding::list_lsps] to get a list of available LSPs
+//! * [binding::connect_lsp] to connect to a chosen LSP
+//! * [binding::lsp_info] to get [LspInformation] on the currently selected LSP
 //!
 //! ### E. Cleanup
 //!
