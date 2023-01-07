@@ -620,6 +620,7 @@ fn create_refund_tx(
     Ok(tx.serialize())
 }
 
+#[cfg(test)]
 mod tests {
     use std::sync::Arc;
 
