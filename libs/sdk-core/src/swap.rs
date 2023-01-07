@@ -158,8 +158,8 @@ impl BTCReceiveSwap {
                 }
             }
 
-            /// When invoice is paid we lookup for a swap that matches the same hash.
-            /// In case we find one, we update its paid amount.
+            // When invoice is paid we lookup for a swap that matches the same hash.
+            // In case we find one, we update its paid amount.
             BreezEvent::InvoicePaid { details } => {
                 debug!("swap InvoicePaid event!");
                 let hash_raw = hex::decode(details.payment_hash.clone())?;
