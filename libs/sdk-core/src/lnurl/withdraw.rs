@@ -2,11 +2,17 @@ use std::str::FromStr;
 
 use crate::lnurl::withdraw::model::*;
 use crate::lnurl::*;
-use crate::{LNInvoice, LnUrlWithdrawRequestData};
+use crate::{input_parser, LNInvoice, LnUrlWithdrawRequestData};
 use anyhow::{anyhow, Result};
 
-/// Validates invoice and performs the last step of LNURL-withdraw, as per
+/// Validates invoice and performs the second and last step of LNURL-withdraw, as per
 /// <https://github.com/lnurl/luds/blob/luds/03.md>
+///
+/// See the [parse] docs for more detail on the full workflow.
+///
+/// Note that the invoice amount has to respect two separate min/max limits:
+/// * those in the [LnUrlWithdrawRequestData] showing the limits of the LNURL endpoint, and
+/// * those of the current node, depending on the LSP settings and LN channel conditions
 pub(crate) async fn validate_lnurl_withdraw(
     req_data: LnUrlWithdrawRequestData,
     invoice: LNInvoice,

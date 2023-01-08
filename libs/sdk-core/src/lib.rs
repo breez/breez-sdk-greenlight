@@ -67,10 +67,10 @@
 //! 1. [BreezServices::init_services] to setup the Breez SDK services
 //! 2. [BreezServices::start] to start the Greenlight node and all needed Breez SDK services
 //!
-//! The first step takes the [GreenlightCredentials] as an argument. There are three ways to provide them:
+//! The first step takes the [GreenlightCredentials] as an argument. There are three ways to get them:
 //!
-//! * by loading the credentials from local storage, or
-//! * [BreezServices::register_node] to register a new Greenlight node, or
+//! * by loading the credentials from local storage, or with
+//! * [BreezServices::register_node] to register a new Greenlight node, or with
 //! * [BreezServices::recover_node] to recover an existing Greenlight node from a given BIP39 mnemonic
 //!
 //! After initializing the Breez SDK services and starting them, the SDK is ready to be used.
@@ -85,7 +85,11 @@
 //!
 //! ### D. LNURL Workflows
 //!
-//! pay, withdraw
+//! LNURL-pay and withdraw are supported. Both workflows consist of two interactive steps:
+//!
+//! 1. [parse] the LNURL endpoint URL to get the workflow parameters
+//! 2. After getting the user input or confirmation, complete the workflow with [BreezServices::pay_lnurl] or
+//! [BreezServices::withdraw_lnurl].
 //!
 //! ### E. Utilities
 //!

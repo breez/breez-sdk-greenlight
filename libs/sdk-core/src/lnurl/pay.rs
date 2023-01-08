@@ -7,6 +7,10 @@ use anyhow::{anyhow, Result};
 use bitcoin_hashes::{sha256, Hash};
 use std::str::FromStr;
 
+/// Validates invoice and performs the second and last step of LNURL-pay, as per
+/// <https://github.com/lnurl/luds/blob/luds/06.md>
+///
+/// See the [parse] docs for more detail on the full workflow.
 pub(crate) async fn validate_lnurl_pay(
     user_amount_sat: u64,
     comment: Option<String>,
