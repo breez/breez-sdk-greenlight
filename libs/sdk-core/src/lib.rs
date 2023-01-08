@@ -22,24 +22,32 @@
 //! let mnemonic = Mnemonic::new(Words12, English);
 //! let seed = Seed::new(&mnemonic, "");
 //!
-//! binding::register_node(Network::Bitcoin, seed.as_bytes().to_vec(), None)?;
-//! binding::start_node()?;
+//! let creds = BreezServices::register_node(Network::Bitcoin, seed.as_bytes().to_vec()).await?;
+//! let breez_services = BreezServices::init_services(
+//!         None,
+//!         seed.to_vec(),
+//!         creds.clone(),
+//!         Box::new(AppEventListener {}),
+//!     )
+//!     .await?;
+//!
+//! BreezServices::start(rt(), &breez_services).await?;
 //! ```
 //! We can now receive payments
 //!
 //! ```ignore
-//! let invoice : LNInvoice = binding::receive_payment(3000, "Invoice for 3000 sats".into())?;
+//! let invoice = breez_services.receive_payment(3000, "Invoice for 3000 sats".into()).await?;
 //! ```
 //!
 //! or make payments
 //! ```ignore
 //! let bolt11 = "..."; // LN invoice
-//! binding::send_payment(bolt11.into(), Some(3000))?;
+//! breez_services.send_payment(bolt11.into(), Some(3000)).await?;
 //! ```
 //!
 //! At any point we can fetch our balance from the Greenlight node
 //! ```ignore
-//! if let Some(node_state) = binding::node_info()? {
+//! if let Some(node_state) = breez_services.node_info()? {
 //!     let balance_ln = node_state.channels_balance_msat;
 //!     let balance_onchain = node_state.onchain_balance_msat;
 //! }
@@ -47,20 +55,25 @@
 //!
 //! or fetch other useful infos, like the current mempool [RecommendedFees]
 //! ```ignore
-//! let fees: RecommendedFees = binding::recommended_fees()?;
+//! let fees: RecommendedFees = breez_services.recommended_fees().await?;
 //! ```
 //!
 //! These different types of operations are described below in more detail.
 //!
 //! ### A. Initialize the SDK
 //!
-//! There are three ways to initialize the SDK:
+//! There are two steps necessary to initialize the SDK:
 //!
-//! 1. [binding::register_node] will register a new Greenlight node and return the [GreenlightCredentials]
-//! 2. [binding::recover_node] will recover an existing Greenlight node from a given BIP39 mnemonic
-//! 3. [binding::init_services] will initialize an existing node from its [GreenlightCredentials]
+//! 1. [BreezServices::init_services] to setup the Breez SDK services
+//! 2. [BreezServices::start] to start the Greenlight node and all needed Breez SDK services
 //!
-//! After calling any of these three methods and starting the node with [binding::start_node], the SDK is ready to be used.
+//! The first step takes the [GreenlightCredentials] as an argument. There are three ways to provide them:
+//!
+//! * by loading the credentials from local storage, or
+//! * [BreezServices::register_node] to register a new Greenlight node, or
+//! * [BreezServices::recover_node] to recover an existing Greenlight node from a given BIP39 mnemonic
+//!
+//! After initializing the Breez SDK services and starting them, the SDK is ready to be used.
 //!
 //! ### B. LN Operations
 //!
@@ -76,33 +89,36 @@
 //!
 //! ### E. Utilities
 //!
-//! Use [binding::parse] to parse generic input. The input can come from the user, from a clicked link or from a QR code.
+//! Use [input_parser::parse] to parse generic input. The input can come from the user, from a clicked link or from a QR code.
 //! The resulting [InputType] will tell you what the input is and how to treat it, as well as present relevant payload data
 //! in a structured form.
 //!
 //! The SDK also includes payment-related utilities:
 //!
-//! * [binding::list_fiat_currencies] to get the supported fiat currencies
-//! * [binding::fetch_fiat_rates] to get the current exchange rates
-//! * [binding::recommended_fees] for the recommended mempool fees
+//! * [BreezServices::list_fiat_currencies] to get the supported fiat currencies
+//! * [BreezServices::fetch_fiat_rates] to get the current exchange rates
+//! * [BreezServices::recommended_fees] for the recommended mempool fees
 //!
 //! as well as wallet utilities:
 //!
-//! * [binding::list_payments] to get a `Vec` of [Payment] based on from/to timestamps or a [PaymentTypeFilter]
-//! * [binding::list_refundables] for a list of swaps
-//! * [binding::mnemonic_to_seed]
-//! * [binding::node_info] to get the current node state (LN and onchain balance, payment limits, etc)
-//! * [binding::execute_command] to execute dev commands
+//! * [BreezServices::list_payments] to get a `Vec` of [Payment] based on from/to timestamps or a [PaymentTypeFilter]
+//! * [BreezServices::list_refundables] for a list of swaps
+//! * [BreezServices::node_info] to get the current node state (LN and onchain balance, payment limits, etc)
+//! * [BreezServices::execute_dev_command] to execute dev commands
+//! * [mnemonic_to_seed]
 //!
 //! ### E. LSP Management
 //!
-//! * [binding::list_lsps] to get a list of available LSPs
-//! * [binding::connect_lsp] to connect to a chosen LSP
-//! * [binding::lsp_info] to get [LspInformation] on the currently selected LSP
+//! * [BreezServices::list_lsps] to get a list of available LSPs
+//! * [BreezServices::connect_lsp] to connect to a chosen LSP
+//! * [BreezServices::lsp_info] to get [LspInformation] on the currently selected LSP
 //!
-//! ### E. Cleanup
+//! ### E. Stop and Cleanup
 //!
-//! TODO: Shutdown node? Implement [Drop] to automatically close connections (Node, LSP)?
+//! On app shutdown, the Breez SDK can be closed with
+//! ```ignore
+//! breez_services.stop()?;
+//! ```
 //!
 //! ## Bindings and Supported Platforms
 //!

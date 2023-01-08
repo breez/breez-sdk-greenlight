@@ -299,7 +299,7 @@ impl BreezServices {
             .await
     }
 
-    /// Excute a command directly on the NodeAPI interface.
+    /// Execute a command directly on the NodeAPI interface.
     /// Mainly used to debugging.
     pub async fn execute_dev_command(&self, command: &String) -> Result<String> {
         self.node_api.execute_command(command).await
