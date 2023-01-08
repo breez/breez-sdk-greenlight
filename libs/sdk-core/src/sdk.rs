@@ -3,10 +3,24 @@
 use std::sync::Arc;
 use anyhow::{anyhow, Result};
 use once_cell::sync::{Lazy, OnceCell};
-use crate::{BreezEvent, BreezServices, EventListener, GreenlightCredentials};
+use crate::{BreezEvent, BreezServices, EventListener, GreenlightCredentials, Network};
 
 static BREEZ_SERVICES: OnceCell<Arc<BreezServices>> = OnceCell::new();
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
+
+pub async fn init_sdk_register(seed: &[u8]) -> Result<GreenlightCredentials> {
+    let creds =
+        BreezServices::register_node(Network::Bitcoin, seed.to_vec()).await?;
+    init_sdk(seed, &creds).await?;
+    Ok(creds)
+}
+
+pub async fn init_sdk_recover(seed: &[u8]) -> Result<GreenlightCredentials> {
+    let creds =
+        BreezServices::recover_node(Network::Bitcoin, seed.to_vec()).await?;
+    init_sdk(seed, &creds).await?;
+    Ok(creds)
+}
 
 pub async fn init_sdk(seed: &[u8], creds: &GreenlightCredentials) -> Result<()> {
     let service = BreezServices::init_services(

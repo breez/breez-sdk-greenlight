@@ -7,15 +7,14 @@ use std::str::SplitWhitespace;
 
 use anyhow::{anyhow, Result};
 use bip39::{Language, Mnemonic, MnemonicType, Seed};
+use breez_sdk_core::sdk::*;
 use breez_sdk_core::InputType::LnUrlWithdraw;
 use breez_sdk_core::{
-    parse, BreezServices, GreenlightCredentials, InputType::LnUrlPay,
-    LspInformation, Network, PaymentTypeFilter,
+    parse, GreenlightCredentials, InputType::LnUrlPay, LspInformation, PaymentTypeFilter,
 };
 use env_logger::Env;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
-use breez_sdk_core::sdk::{init_sdk, sdk};
 
 fn get_seed() -> Vec<u8> {
     let filename = "phrase";
@@ -76,30 +75,22 @@ async fn main() -> Result<()> {
                 let mut command: SplitWhitespace = line.as_str().split_whitespace();
                 match command.next() {
                     Some("register_node") => {
-                        let creds =
-                            BreezServices::register_node(Network::Bitcoin, seed.to_vec()).await?;
-
-                        let res = init_sdk(&seed, &creds).await;
+                        let creds = init_sdk_register(&seed).await?;
                         info!(
                             "device_cert: {}; device_key: {}",
                             hex::encode(&creds.device_cert),
                             hex::encode_upper(&creds.device_key)
                         );
                         save_creds(creds)?;
-                        show_results(res);
                     }
                     Some("recover_node") => {
-                        let creds =
-                            BreezServices::recover_node(Network::Bitcoin, seed.to_vec()).await?;
-
-                        let res = init_sdk(&seed, &creds).await;
+                        let creds = init_sdk_recover(&seed).await?;
                         info!(
                             "device_cert: {}; device_key: {}",
                             hex::encode(&creds.device_cert),
                             hex::encode_upper(&creds.device_key)
                         );
                         save_creds(creds)?;
-                        show_results(res);
                     }
                     Some("init") => match get_creds() {
                         Some(creds) => {
