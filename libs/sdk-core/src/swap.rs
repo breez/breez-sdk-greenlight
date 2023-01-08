@@ -181,20 +181,9 @@ impl BTCReceiveSwap {
         Ok(())
     }
 
-    /// Create a SwapInfo that represents the details of an on-going swap.
-    /// Once this SwapInfo is created it will be monitored on-chain and its state is
-    /// saved to the persistent storage.
+    /// Create a [SwapInfo] that represents the details of an on-going swap.
     ///
-    /// The SwapInfo has a status which changes accordingly:
-    ///
-    /// Initial - The swap address has been created and either there aren't any confirmed transactions associated with it
-    /// or there are confirmed transactions that are bellow the lock timeout which means the funds are still
-    /// eligible to be redeemed normally.
-    ///
-    /// Expired - The swap address has confirmed transactions associated with it and the lock timeout has passed since
-    /// the earliest confirmed transaction. This means the only way to spend the funds from this address is by
-    /// broadcasting a refund transaction.
-    ///
+    /// See [SwapInfo] for details.
     pub(crate) async fn create_swap_address(&self) -> Result<SwapInfo> {
         let node_state = self.persister.get_node_state()?;
         if node_state.is_none() {

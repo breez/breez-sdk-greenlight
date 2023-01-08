@@ -278,6 +278,10 @@ impl BreezServices {
     }
 
     /// Onchain receive swap API
+    ///
+    /// Create a [SwapInfo] that represents the details of an on-going swap.
+    ///
+    /// See [SwapInfo] for details.
     pub async fn receive_onchain(&self) -> Result<SwapInfo> {
         self.btc_receive_swapper.create_swap_address().await
     }
@@ -287,7 +291,7 @@ impl BreezServices {
         self.btc_receive_swapper.list_refundables()
     }
 
-    // construct and broadcast a refund transaction for a faile/expired swap
+    /// Construct and broadcast a refund transaction for a failed/expired swap
     pub async fn refund(
         &self,
         swap_address: String,

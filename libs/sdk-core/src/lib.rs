@@ -88,7 +88,9 @@
 //!
 //! ### C. On-chain Operations
 //!
-//! Send / receive
+//! * [BreezServices::receive_onchain]
+//! * [BreezServices::refund] to broadcast a transaction for failed or expired swaps
+//! * [BreezServices::sweep] to send all onchain funds to a specific address
 //!
 //! ### D. LNURL Workflows
 //!
