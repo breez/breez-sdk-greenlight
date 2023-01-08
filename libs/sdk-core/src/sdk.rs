@@ -1,23 +1,21 @@
 //! This is a thin layer that simplifies the use of `BreezServices` from Rust.
 
-use std::sync::Arc;
+use crate::{BreezEvent, BreezServices, EventListener, GreenlightCredentials, Network};
 use anyhow::{anyhow, Result};
 use once_cell::sync::{Lazy, OnceCell};
-use crate::{BreezEvent, BreezServices, EventListener, GreenlightCredentials, Network};
+use std::sync::Arc;
 
 static BREEZ_SERVICES: OnceCell<Arc<BreezServices>> = OnceCell::new();
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
 
 pub async fn init_sdk_register(seed: &[u8]) -> Result<GreenlightCredentials> {
-    let creds =
-        BreezServices::register_node(Network::Bitcoin, seed.to_vec()).await?;
+    let creds = BreezServices::register_node(Network::Bitcoin, seed.to_vec()).await?;
     init_sdk(seed, &creds).await?;
     Ok(creds)
 }
 
 pub async fn init_sdk_recover(seed: &[u8]) -> Result<GreenlightCredentials> {
-    let creds =
-        BreezServices::recover_node(Network::Bitcoin, seed.to_vec()).await?;
+    let creds = BreezServices::recover_node(Network::Bitcoin, seed.to_vec()).await?;
     init_sdk(seed, &creds).await?;
     Ok(creds)
 }
@@ -29,7 +27,7 @@ pub async fn init_sdk(seed: &[u8], creds: &GreenlightCredentials) -> Result<()> 
         creds.clone(),
         Box::new(NoOpEventListener {}),
     )
-        .await?;
+    .await?;
 
     BREEZ_SERVICES
         .set(service)
@@ -52,5 +50,5 @@ fn rt() -> &'static tokio::runtime::Runtime {
 
 struct NoOpEventListener {}
 impl EventListener for NoOpEventListener {
-    fn on_event(&self, _e: BreezEvent) { }
+    fn on_event(&self, _e: BreezEvent) {}
 }
