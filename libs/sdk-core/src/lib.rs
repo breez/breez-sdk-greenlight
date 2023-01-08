@@ -121,7 +121,7 @@
 //!
 //! On app shutdown, the Breez SDK can be closed with
 //! ```ignore
-//! sdk.stop()?;
+//! sdk.stop().await?;
 //! ```
 //!
 //! ## Bindings and Supported Platforms
