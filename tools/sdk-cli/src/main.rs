@@ -4,17 +4,34 @@ extern crate log;
 use std::fs;
 use std::io;
 use std::str::SplitWhitespace;
+use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
 use bip39::{Language, Mnemonic, MnemonicType, Seed};
 use breez_sdk_core::InputType::LnUrlWithdraw;
 use breez_sdk_core::{
-    binding, FeeratePreset, GreenlightCredentials, InputType::LnUrlPay, LspInformation, Network,
-    PaymentTypeFilter,
+    parse, BreezEvent, BreezServices, EventListener, GreenlightCredentials, InputType::LnUrlPay,
+    LspInformation, Network, PaymentTypeFilter,
 };
 use env_logger::Env;
+use once_cell::sync::{Lazy, OnceCell};
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
+
+static BREEZ_SERVICES: OnceCell<Arc<BreezServices>> = OnceCell::new();
+static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
+
+fn sdk() -> Result<Arc<BreezServices>> {
+    BREEZ_SERVICES
+        .get()
+        .ok_or("Breez Services not initialized")
+        .map_err(|err| anyhow!(err))
+        .cloned()
+}
+
+fn rt() -> &'static tokio::runtime::Runtime {
+    &RT
+}
 
 fn get_seed() -> Vec<u8> {
     let filename = "phrase";
@@ -53,7 +70,31 @@ fn get_creds() -> Option<GreenlightCredentials> {
     creds
 }
 
-fn main() -> Result<()> {
+struct CliEventListener {}
+impl EventListener for CliEventListener {
+    fn on_event(&self, e: BreezEvent) {
+        info!("Received Breez event: {:?}", e);
+    }
+}
+
+async fn init_sdk(seed: &[u8], creds: &GreenlightCredentials) -> Result<()> {
+    let service = BreezServices::init_services(
+        None,
+        seed.to_vec(),
+        creds.clone(),
+        Box::new(CliEventListener {}),
+    )
+    .await?;
+
+    BREEZ_SERVICES
+        .set(service)
+        .map_err(|_| anyhow!("Failed to set Breez Service"))?;
+
+    BreezServices::start(rt(), &sdk()?).await
+}
+
+#[tokio::main]
+async fn main() -> Result<()> {
     env_logger::Builder::from_env(
         Env::default()
             .default_filter_or("debug,rustyline=warn,hyper=warn,reqwest=warn,rustls=warn,h2=warn"),
@@ -74,59 +115,49 @@ fn main() -> Result<()> {
                 let mut command: SplitWhitespace = line.as_str().split_whitespace();
                 match command.next() {
                     Some("register_node") => {
-                        let r =
-                            binding::register_node(Network::Bitcoin, seed.to_vec(), Option::None);
-                        let greenlight_credentials = Some(r.unwrap());
+                        let creds =
+                            BreezServices::register_node(Network::Bitcoin, seed.to_vec()).await?;
+
+                        let res = init_sdk(&seed, &creds).await;
                         info!(
                             "device_cert: {}; device_key: {}",
-                            hex::encode(greenlight_credentials.clone().unwrap().device_cert),
-                            hex::encode_upper(greenlight_credentials.clone().unwrap().device_key)
+                            hex::encode(&creds.device_cert),
+                            hex::encode_upper(&creds.device_key)
                         );
-                        save_creds(greenlight_credentials.unwrap())?;
-                        show_results(binding::start_node());
+                        save_creds(creds)?;
+                        show_results(res);
                     }
                     Some("recover_node") => {
-                        let r =
-                            binding::recover_node(Network::Bitcoin, seed.to_vec(), Option::None);
-                        match r {
-                            Ok(greenlight_credentials) => {
-                                info!(
-                                    "device_cert: {}; device_key: {}",
-                                    hex::encode(greenlight_credentials.device_cert.clone()),
-                                    hex::encode_upper(greenlight_credentials.device_key.clone())
-                                );
-                                save_creds(greenlight_credentials)?;
-                                show_results(binding::start_node());
-                            }
-                            Err(e) => {
-                                error!("recover_node failed: {}", e);
-                            }
-                        }
-                    }
+                        let creds =
+                            BreezServices::recover_node(Network::Bitcoin, seed.to_vec()).await?;
 
-                    Some("init") => {
-                        let creds = get_creds();
-                        if creds.is_none() {
-                            info!("credentials not found");
-                            continue;
-                        }
-                        binding::init_services(None, seed.to_vec(), creds.unwrap())?;
-                        show_results(binding::start_node());
+                        let res = init_sdk(&seed, &creds).await;
+                        info!(
+                            "device_cert: {}; device_key: {}",
+                            hex::encode(&creds.device_cert),
+                            hex::encode_upper(&creds.device_key)
+                        );
+                        save_creds(creds)?;
+                        show_results(res);
                     }
+                    Some("init") => match get_creds() {
+                        Some(creds) => {
+                            let res = init_sdk(&seed, &creds).await;
+                            show_results(res);
+                        }
+                        None => error!("Credentials not found"),
+                    },
                     Some("receive_payment") => {
                         let amount_sats: u64 = command.next().unwrap().parse()?;
-                        let description = command.next().unwrap();
+                        let description = command.next().unwrap().parse()?;
 
-                        show_results(binding::receive_payment(
-                            amount_sats,
-                            description.to_string(),
-                        ));
+                        show_results(sdk()?.receive_payment(amount_sats, description).await);
                     }
                     Some("lnurl_pay") => {
                         let lnurl_endpoint =
                             rl.readline("Destination LNURL-pay or LN Address: ")?;
 
-                        match binding::parse(lnurl_endpoint)? {
+                        match parse(&lnurl_endpoint).await? {
                             LnUrlPay { data: pd } => {
                                 let prompt = format!(
                                     "Amount to pay in sats (min {} sat, max {} sat: ",
@@ -136,7 +167,7 @@ fn main() -> Result<()> {
 
                                 let amount_sat = rl.readline(&prompt)?;
                                 let pay_res =
-                                    binding::pay_lnurl(amount_sat.parse::<u64>()?, None, pd);
+                                    sdk()?.pay_lnurl(amount_sat.parse::<u64>()?, None, pd).await;
                                 show_results(pay_res);
                             }
                             _ => error!("Unexpected result type"),
@@ -145,7 +176,7 @@ fn main() -> Result<()> {
                     Some("lnurl_withdraw") => {
                         let lnurl_endpoint = rl.readline("LNURL-withdraw link: ")?;
 
-                        match binding::parse(lnurl_endpoint)? {
+                        match parse(&lnurl_endpoint).await? {
                             LnUrlWithdraw { data: wd } => {
                                 info!("Endpoint description: {}", wd.default_description);
 
@@ -174,11 +205,9 @@ fn main() -> Result<()> {
                                 let amount_sats: u64 = user_input_withdraw_amount_sat.parse()?;
                                 let description = "LNURL-withdraw";
 
-                                let withdraw_res = binding::withdraw_lnurl(
-                                    wd,
-                                    amount_sats,
-                                    Some(description.into()),
-                                );
+                                let withdraw_res = sdk()?
+                                    .withdraw_lnurl(wd, amount_sats, Some(description.into()))
+                                    .await;
                                 show_results(withdraw_res);
                             }
                             _ => error!("Unexpected result type"),
@@ -189,11 +218,10 @@ fn main() -> Result<()> {
                             .next()
                             .ok_or("Expected bolt11 arg")
                             .map_err(|err| anyhow!(err))?;
-                        let amount_sats: Option<u64> = command
-                            .next()
-                            .map_or(None, |v| Some(v.parse::<u64>().ok()?));
+                        let amount_sats: Option<u64> =
+                            command.next().and_then(|v| v.parse::<u64>().ok());
 
-                        show_results(binding::send_payment(bolt11.into(), amount_sats))
+                        show_results(sdk()?.send_payment(bolt11.into(), amount_sats).await)
                     }
                     Some("send_spontaneous_payment") => {
                         let node_id = command
@@ -205,14 +233,17 @@ fn main() -> Result<()> {
                             .ok_or("Expected amount_sats arg")
                             .map_err(|err| anyhow!(err))?;
 
-                        show_results(binding::send_spontaneous_payment(
-                            node_id.into(),
-                            amount_sats.parse()?,
-                        ))
+                        show_results(
+                            sdk()?
+                                .send_spontaneous_payment(node_id.into(), amount_sats.parse()?)
+                                .await,
+                        )
                     }
-                    Some("list_payments") => {
-                        show_results(binding::list_payments(PaymentTypeFilter::All, None, None))
-                    }
+                    Some("list_payments") => show_results(
+                        sdk()?
+                            .list_payments(PaymentTypeFilter::All, None, None)
+                            .await,
+                    ),
                     Some("sweep") => {
                         let to_address = command
                             .next()
@@ -224,11 +255,15 @@ fn main() -> Result<()> {
                             .map_err(|err| anyhow!(err))?
                             .parse()?;
 
-                        show_results(binding::sweep(to_address.into(), fee_rate_sats_per_byte))
+                        show_results(
+                            sdk()?
+                                .sweep(to_address.into(), fee_rate_sats_per_byte)
+                                .await,
+                        )
                     }
-                    Some("list_lsps") => show_results(binding::list_lsps()),
+                    Some("list_lsps") => show_results(sdk()?.list_lsps().await),
                     Some("connect_lsp") => {
-                        let lsps: Vec<LspInformation> = binding::list_lsps()?;
+                        let lsps: Vec<LspInformation> = sdk()?.list_lsps().await?;
                         let chosen_lsp_id = command
                             .next()
                             .ok_or("Expected LSP ID arg")
@@ -238,28 +273,28 @@ fn main() -> Result<()> {
                             .find(|lsp| lsp.id == chosen_lsp_id)
                             .ok_or("No LSP found for given LSP ID")
                             .map_err(|err| anyhow!(err))?;
-                        binding::connect_lsp(chosen_lsp_id.to_string())?;
+                        sdk()?.connect_lsp(chosen_lsp_id.to_string()).await?;
 
                         info!(
                             "Set LSP ID: {} / LSP Name: {}",
                             chosen_lsp_id, chosen_lsp.name
                         );
                     }
-                    Some("node_info") => show_results(binding::node_info()),
-                    Some("list_fiat") => show_results(binding::list_fiat_currencies()),
-                    Some("fetch_fiat_rates") => show_results(binding::fetch_fiat_rates()),
-                    Some("close_lsp_channels") => show_results(binding::close_lsp_channels()),
-                    Some("stop_node") => show_results(binding::stop_node()),
-                    Some("recommended_fees") => show_results(binding::recommended_fees()),
-                    Some("receive_onchain") => show_results(binding::receive_onchain()),
-                    Some("list_refundables") => show_results(binding::list_refundables()),
+                    Some("node_info") => show_results(sdk()?.node_info()),
+                    Some("list_fiat") => show_results(sdk()?.list_fiat_currencies()),
+                    Some("fetch_fiat_rates") => show_results(sdk()?.fetch_fiat_rates().await),
+                    Some("close_lsp_channels") => show_results(sdk()?.close_lsp_channels().await),
+                    Some("stop_node") => show_results(sdk()?.stop().await),
+                    Some("recommended_fees") => show_results(sdk()?.recommended_fees().await),
+                    Some("receive_onchain") => show_results(sdk()?.receive_onchain().await),
+                    Some("list_refundables") => show_results(sdk()?.list_refundables().await),
                     Some("execute_dev_command") => {
                         let cmd = command
                             .next()
                             .ok_or("Expected command")
                             .map_err(|err| anyhow!(err))?;
 
-                        show_results(binding::execute_command(cmd.to_string()));
+                        show_results(sdk()?.execute_dev_command(&cmd.to_string()).await);
                     }
                     Some("refund") => show_results({
                         let swap_address = command
@@ -275,21 +310,18 @@ fn main() -> Result<()> {
                             .ok_or("Expected to_address arg")
                             .map_err(|err| anyhow!(err))?
                             .parse()?;
-                        binding::refund(
-                            swap_address.to_string(),
-                            to_address.to_string(),
-                            sat_per_vbyte,
-                        )
+
+                        sdk()?
+                            .refund(
+                                swap_address.to_string(),
+                                to_address.to_string(),
+                                sat_per_vbyte,
+                            )
+                            .await
                     }),
                     Some("exit") => break,
-
-                    Some("help") => {
-                        println!("{}", help_message());
-                    }
-
-                    Some(_) => {
-                        info!("Unrecognized command: {}", line.as_str());
-                    }
+                    Some("help") => println!("{}", help_message()),
+                    Some(_) => error!("Unrecognized command: {}", line.as_str()),
                     None => (),
                 }
                 //info!("Line: {}", line);
@@ -324,7 +356,7 @@ where
 }
 
 fn help_message() -> String {
-    return r#"
+    r#"
 Node:
     init
     recover_node
@@ -355,5 +387,5 @@ Misc:
     exit: exit the program
     help: show this help
 "#
-    .to_string();
+    .to_string()
 }
