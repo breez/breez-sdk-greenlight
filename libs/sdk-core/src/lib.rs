@@ -23,7 +23,7 @@
 //! let seed = Seed::new(&mnemonic, "");
 //!
 //! let creds = BreezServices::register_node(Network::Bitcoin, seed.as_bytes().to_vec()).await?;
-//! let breez_services = BreezServices::init_services(
+//! let sdk = BreezServices::init_services(
 //!         None,
 //!         seed.to_vec(),
 //!         creds.clone(),
@@ -31,23 +31,23 @@
 //!     )
 //!     .await?;
 //!
-//! BreezServices::start(rt(), &breez_services).await?;
+//! BreezServices::start(rt(), &sdk).await?;
 //! ```
 //! We can now receive payments
 //!
 //! ```ignore
-//! let invoice = breez_services.receive_payment(3000, "Invoice for 3000 sats".into()).await?;
+//! let invoice = sdk.receive_payment(3000, "Invoice for 3000 sats".into()).await?;
 //! ```
 //!
 //! or make payments
 //! ```ignore
 //! let bolt11 = "..."; // LN invoice
-//! breez_services.send_payment(bolt11.into(), Some(3000)).await?;
+//! sdk.send_payment(bolt11.into(), Some(3000)).await?;
 //! ```
 //!
 //! At any point we can fetch our balance from the Greenlight node
 //! ```ignore
-//! if let Some(node_state) = breez_services.node_info()? {
+//! if let Some(node_state) = sdk.node_info()? {
 //!     let balance_ln = node_state.channels_balance_msat;
 //!     let balance_onchain = node_state.onchain_balance_msat;
 //! }
@@ -55,7 +55,7 @@
 //!
 //! or fetch other useful infos, like the current mempool [RecommendedFees]
 //! ```ignore
-//! let fees: RecommendedFees = breez_services.recommended_fees().await?;
+//! let fees: RecommendedFees = sdk.recommended_fees().await?;
 //! ```
 //!
 //! These different types of operations are described below in more detail.
@@ -89,7 +89,7 @@
 //!
 //! ### E. Utilities
 //!
-//! Use [input_parser::parse] to parse generic input. The input can come from the user, from a clicked link or from a QR code.
+//! Use [parse] to parse generic input. The input can come from the user, from a clicked link or from a QR code.
 //! The resulting [InputType] will tell you what the input is and how to treat it, as well as present relevant payload data
 //! in a structured form.
 //!
@@ -117,7 +117,7 @@
 //!
 //! On app shutdown, the Breez SDK can be closed with
 //! ```ignore
-//! breez_services.stop()?;
+//! sdk.stop()?;
 //! ```
 //!
 //! ## Bindings and Supported Platforms
