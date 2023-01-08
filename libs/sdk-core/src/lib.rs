@@ -1,7 +1,18 @@
 //! # Breez SDK
 //!
-//! The Breez SDK allows developers to build Bitcoin and Lightning enabled applications.
+//! The Breez SDK makes it easy to build non-custodial Bitcoin and Lightning applications.
 //!
+//! The Greenlight integration allows it to separate the running of a LN node from the signing of LN
+//! transactions. The node runs in the cloud and is ready to receive payments non-custodially,
+//! while the caller of the SDK has full custodial access to these funds and can sign spending transactions
+//! locally.
+//!
+//! On initializing the SDK, the caller gets its [GreenlightCredentials]. These can later be used to
+//! restore access to the same cloud node, either in the same app (backup / restore) or in another app
+//! using the SDK.
+//!
+//! In addition, the SDK includes utilities for LSP management, on-chain payments and fiat on- and
+//! off-ramps.
 //!
 //! ## Getting Started
 //!
