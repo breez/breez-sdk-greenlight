@@ -77,7 +77,14 @@
 //!
 //! ### B. LN Operations
 //!
-//! Send / receive, lnurl, bolt11
+//! Supported BOLT11 operations are
+//!
+//! * [BreezServices::receive_payment] to create an invoice
+//! * [BreezServices::send_payment] to pay an invoice
+//!
+//! Keysend is possible with [BreezServices::send_spontaneous_payment].
+//!
+//! See LNURL section below for LNURL-pay and -withdraw.
 //!
 //! ### C. On-chain Operations
 //!
