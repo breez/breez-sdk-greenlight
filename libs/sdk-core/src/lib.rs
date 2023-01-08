@@ -15,6 +15,7 @@ mod lnurl;
 mod lsp;
 mod models;
 mod persist;
+pub mod sdk;
 mod swap;
 mod test_utils;
 

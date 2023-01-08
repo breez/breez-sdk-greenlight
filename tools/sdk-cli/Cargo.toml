@@ -11,7 +11,6 @@ breez-sdk-core = { path = "../../libs/sdk-core"}
 env_logger = "*"
 hex = "*"
 log = "*"
-once_cell = "*"
 rustyline = "10.0.0"
 serde_json = "1.0"
 tiny-bip39 = "*"

@@ -4,34 +4,18 @@ extern crate log;
 use std::fs;
 use std::io;
 use std::str::SplitWhitespace;
-use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
 use bip39::{Language, Mnemonic, MnemonicType, Seed};
 use breez_sdk_core::InputType::LnUrlWithdraw;
 use breez_sdk_core::{
-    parse, BreezEvent, BreezServices, EventListener, GreenlightCredentials, InputType::LnUrlPay,
+    parse, BreezServices, GreenlightCredentials, InputType::LnUrlPay,
     LspInformation, Network, PaymentTypeFilter,
 };
 use env_logger::Env;
-use once_cell::sync::{Lazy, OnceCell};
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
-
-static BREEZ_SERVICES: OnceCell<Arc<BreezServices>> = OnceCell::new();
-static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
-
-fn sdk() -> Result<Arc<BreezServices>> {
-    BREEZ_SERVICES
-        .get()
-        .ok_or("Breez Services not initialized")
-        .map_err(|err| anyhow!(err))
-        .cloned()
-}
-
-fn rt() -> &'static tokio::runtime::Runtime {
-    &RT
-}
+use breez_sdk_core::sdk::{init_sdk, sdk};
 
 fn get_seed() -> Vec<u8> {
     let filename = "phrase";
@@ -68,29 +52,6 @@ fn get_creds() -> Option<GreenlightCredentials> {
         }
     };
     creds
-}
-
-struct CliEventListener {}
-impl EventListener for CliEventListener {
-    fn on_event(&self, e: BreezEvent) {
-        info!("Received Breez event: {:?}", e);
-    }
-}
-
-async fn init_sdk(seed: &[u8], creds: &GreenlightCredentials) -> Result<()> {
-    let service = BreezServices::init_services(
-        None,
-        seed.to_vec(),
-        creds.clone(),
-        Box::new(CliEventListener {}),
-    )
-    .await?;
-
-    BREEZ_SERVICES
-        .set(service)
-        .map_err(|_| anyhow!("Failed to set Breez Service"))?;
-
-    BreezServices::start(rt(), &sdk()?).await
 }
 
 #[tokio::main]
