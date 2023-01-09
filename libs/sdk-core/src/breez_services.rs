@@ -1032,7 +1032,7 @@ pub(crate) mod tests {
             .map_err(|err| anyhow!(err))?
             .id;
         let lsps = breez_services.lsp_api.list_lsps(node_pubkey).await?;
-        assert!(lsps.is_empty()); // The mock returns an empty list
+        assert_eq!(lsps.len(), 1); // The mock returns an empty list
 
         Ok(())
     }
