@@ -25,10 +25,10 @@ use bip39::*;
 use core::time;
 use std::cmp::max;
 use std::str::FromStr;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::runtime::Runtime;
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, Mutex};
 use tokio::time::{sleep, Duration};
 use tonic::codegen::InterceptedService;
 use tonic::metadata::{Ascii, MetadataValue};
@@ -144,13 +144,13 @@ impl BreezServices {
     pub async fn start(runtime: &Runtime, breez_services: &Arc<BreezServices>) -> Result<()> {
         // create a shutdown channel (sender and receiver)
         let (stop_sender, stop_receiver) = mpsc::channel(1);
-        breez_services.set_shutdown_sender(stop_sender);
+        breez_services.set_shutdown_sender(stop_sender).await;
 
         crate::breez_services::start(runtime, breez_services.clone(), stop_receiver).await
     }
 
     pub async fn stop(&self) -> Result<()> {
-        let unlocked = self.shutdown_sender.lock().unwrap();
+        let unlocked = self.shutdown_sender.lock().await;
         if unlocked.is_none() {
             return Err(anyhow!("node has not been started"));
         }
@@ -388,8 +388,8 @@ impl BreezServices {
         Ok(())
     }
 
-    pub fn set_shutdown_sender(&self, sender: mpsc::Sender<()>) {
-        *self.shutdown_sender.lock().unwrap() = Some(sender);
+    pub async fn set_shutdown_sender(&self, sender: mpsc::Sender<()>) {
+        *self.shutdown_sender.lock().await = Some(sender);
     }
 
     pub(crate) async fn start_node(&self) -> Result<()> {
