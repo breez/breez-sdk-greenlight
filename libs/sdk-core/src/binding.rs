@@ -16,8 +16,7 @@ use crate::breez_services::BreezServices;
 use crate::invoice::LNInvoice;
 use crate::lnurl::withdraw::model::LnUrlWithdrawCallbackStatus;
 use crate::models::{
-    Config, GreenlightCredentials, Network, NodeState, Payment, PaymentTypeFilter,
-    SwapInfo,
+    Config, GreenlightCredentials, Network, NodeState, Payment, PaymentTypeFilter, SwapInfo,
 };
 
 use crate::input_parser::InputType;

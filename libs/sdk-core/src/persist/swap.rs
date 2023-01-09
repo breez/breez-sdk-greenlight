@@ -105,7 +105,7 @@ impl SqliteStorage {
         let mut stmt = con.prepare(
             "
               SELECT * FROM swaps WHERE status=?         
-            "
+            ",
         )?;
 
         let vec: Vec<SwapInfo> = stmt

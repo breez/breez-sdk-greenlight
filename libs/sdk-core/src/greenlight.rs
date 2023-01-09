@@ -1,7 +1,7 @@
 use crate::invoice::parse_invoice;
 use crate::models::{
-    Config, GreenlightCredentials, LnPaymentDetails, Network, NodeAPI, NodeState,
-    PaymentDetails, PaymentType, SyncResponse,
+    Config, GreenlightCredentials, LnPaymentDetails, Network, NodeAPI, NodeState, PaymentDetails,
+    PaymentType, SyncResponse,
 };
 
 use anyhow::{anyhow, Result};
@@ -128,11 +128,7 @@ impl NodeAPI for Greenlight {
         let msg_type: u16 = 8;
         let data_len: u16 = data_bytes.len().try_into()?;
         let mut data_len_bytes = data_len.to_be_bytes().to_vec();
-        let mut data_buf = data_bytes
-            .iter()
-            .copied()
-            .map(u5::to_u8)
-            .collect();
+        let mut data_buf = data_bytes.iter().copied().map(u5::to_u8).collect();
 
         let hrp_len: u16 = hrp_bytes.len().try_into()?;
         let mut hrp_len_bytes = hrp_len.to_be_bytes().to_vec();
@@ -152,8 +148,8 @@ impl NodeAPI for Greenlight {
         // contruct the RecoveryId
         let rid = RecoveryId::from_i32(raw_result[64] as i32).expect("recovery ID");
         let sig = &raw_result[0..64];
-        let recoverable_sig = RecoverableSignature::from_compact(sig, rid)
-            .map_err(|e| anyhow!(e))?;
+        let recoverable_sig =
+            RecoverableSignature::from_compact(sig, rid).map_err(|e| anyhow!(e))?;
 
         let signed_invoice: Result<SignedRawInvoice> = invoice.sign(|_| Ok(recoverable_sig));
         Ok(signed_invoice?.to_string())

@@ -324,10 +324,7 @@ impl BTCReceiveSwap {
             swap_status = SwapStatus::Expired
         }
 
-        let confirmed_txs = utxos
-            .into_iter()
-            .map(|u| u.out.txid.to_string())
-            .collect();
+        let confirmed_txs = utxos.into_iter().map(|u| u.out.txid.to_string()).collect();
 
         debug!(
             "updating swap on-chain info {:?}: confirmed_sats={:?} refund_tx_ids={:?}, confirmed_tx_ids={:?} swap_status={:?}",
@@ -564,12 +561,10 @@ fn create_refund_tx(
 
     // create the tx outputs
     let btc_address = Address::from_str(&to_address)?;
-    let tx_out: Vec<TxOut> = vec![
-        TxOut {
-            value: confirmed_amount,
-            script_pubkey: btc_address.script_pubkey(),
-        }
-    ];
+    let tx_out: Vec<TxOut> = vec![TxOut {
+        value: confirmed_amount,
+        script_pubkey: btc_address.script_pubkey(),
+    }];
 
     // construct the transaction
     let mut tx = Transaction {
@@ -605,11 +600,7 @@ fn create_refund_tx(
         let mut sigvec = sig.serialize_der().to_vec();
         sigvec.push(EcdsaSighashType::All as u8);
 
-        let witness: Vec<Vec<u8>> = vec![
-            sigvec,
-            vec![],
-            input_script.serialize()
-        ];
+        let witness: Vec<Vec<u8>> = vec![sigvec, vec![], input_script.serialize()];
 
         let mut signed_input = input.clone();
         let w = Witness::from_vec(witness);

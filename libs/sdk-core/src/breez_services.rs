@@ -13,8 +13,8 @@ use crate::lnurl::withdraw::model::LnUrlWithdrawCallbackStatus;
 use crate::lnurl::withdraw::validate_lnurl_withdraw;
 use crate::lsp::LspInformation;
 use crate::models::{
-    parse_short_channel_id, ChannelState, ClosesChannelPaymentDetails, Config,
-    FiatAPI, GreenlightCredentials, LspAPI, Network, NodeAPI, NodeState, Payment, PaymentDetails,
+    parse_short_channel_id, ChannelState, ClosesChannelPaymentDetails, Config, FiatAPI,
+    GreenlightCredentials, LspAPI, Network, NodeAPI, NodeState, Payment, PaymentDetails,
     PaymentType, PaymentTypeFilter, SwapInfo, SwapperAPI,
 };
 use crate::persist::db::SqliteStorage;
@@ -593,7 +593,9 @@ impl BreezServicesBuilder {
 
         let btc_receive_swapper = Arc::new(BTCReceiveSwap::new(
             self.config.network.clone().into(),
-            self.swapper_api.clone().unwrap_or_else(|| breez_server.clone()),
+            self.swapper_api
+                .clone()
+                .unwrap_or_else(|| breez_server.clone()),
             persister.clone(),
             chain_service.clone(),
             payment_receiver.clone(),
@@ -603,7 +605,10 @@ impl BreezServicesBuilder {
         let breez_services = Arc::new(BreezServices {
             node_api: unwrapped_node_api.clone(),
             lsp_api: self.lsp_api.clone().unwrap_or_else(|| breez_server.clone()),
-            fiat_api: self.fiat_api.clone().unwrap_or_else(|| breez_server.clone()),
+            fiat_api: self
+                .fiat_api
+                .clone()
+                .unwrap_or_else(|| breez_server.clone()),
             chain_service,
             persister,
             btc_receive_swapper,

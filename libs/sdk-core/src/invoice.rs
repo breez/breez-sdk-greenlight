@@ -146,10 +146,7 @@ pub fn parse_invoice(bolt11: &str) -> Result<LNInvoice> {
 
     // convert hints to bridge interface
     let invoice_hints = invoice.route_hints();
-    let converted_hints = invoice_hints
-        .iter()
-        .map(RouteHint::from_ldk_hint)
-        .collect();
+    let converted_hints = invoice_hints.iter().map(RouteHint::from_ldk_hint).collect();
     // return the parsed invoice
     let ln_invoice = LNInvoice {
         bolt11: bolt11.to_string(),
