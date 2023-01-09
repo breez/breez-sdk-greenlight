@@ -277,6 +277,16 @@ fn wire_lsp_info_impl(port_: MessagePort) {
         move || move |task_callback| lsp_info(),
     )
 }
+fn wire_lsp_id_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "lsp_id",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || move |task_callback| lsp_id(),
+    )
+}
 fn wire_fetch_fiat_rates_impl(port_: MessagePort) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {

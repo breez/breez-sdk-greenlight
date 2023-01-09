@@ -335,6 +335,9 @@ interface BlockingBreezServices {
    LspInformation lsp_info();
 
    [Throws=SDKError]
+   string lsp_id();   
+
+   [Throws=SDKError]
    void close_lsp_channels(); 
 
    [Throws=SDKError]

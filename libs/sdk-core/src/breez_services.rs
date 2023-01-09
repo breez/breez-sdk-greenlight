@@ -259,6 +259,12 @@ impl BreezServices {
         Ok(())
     }
 
+    pub async fn lsp_id(&self) -> Result<String> {
+        self.persister
+            .get_lsp_id()?
+            .ok_or(anyhow!("No LSP ID found"))
+    }
+
     /// Convenience method to look up LSP info based on current LSP ID
     pub async fn lsp_info(&self) -> Result<LspInformation> {
         get_lsp(self.persister.clone(), self.lsp_api.clone()).await
