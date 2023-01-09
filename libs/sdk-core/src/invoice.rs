@@ -196,7 +196,7 @@ mod tests {
             hops: vec![hint_hop],
         };
 
-        let encoded = add_routing_hints(&payreq, vec![route_hint], 100).unwrap();
+        let encoded = add_routing_hints(payreq, vec![route_hint], 100).unwrap();
 
         print!("{:?}", encoded);
     }
