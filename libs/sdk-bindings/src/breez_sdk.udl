@@ -62,6 +62,7 @@ dictionary NodeState {
     u32 block_height;
     u64 channels_balance_msat;
     u64 onchain_balance_msat;
+    u32 onchain_outputs_count;
     u64 max_payable_msat;
     u64 max_receivable_msat;
     u64 max_single_payment_amount_msat;

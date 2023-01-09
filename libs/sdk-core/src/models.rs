@@ -219,6 +219,7 @@ pub struct NodeState {
     pub block_height: u32,
     pub channels_balance_msat: u64,
     pub onchain_balance_msat: u64,
+    pub onchain_outputs_count: u32,
     pub max_payable_msat: u64,
     pub max_receivable_msat: u64,
     pub max_single_payment_amount_msat: u64,

@@ -886,6 +886,7 @@ impl support::IntoDart for NodeState {
             self.block_height.into_dart(),
             self.channels_balance_msat.into_dart(),
             self.onchain_balance_msat.into_dart(),
+            self.onchain_outputs_count.into_dart(),
             self.max_payable_msat.into_dart(),
             self.max_receivable_msat.into_dart(),
             self.max_single_payment_amount_msat.into_dart(),

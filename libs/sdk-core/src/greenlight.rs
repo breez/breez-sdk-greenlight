@@ -243,6 +243,7 @@ impl NodeAPI for Greenlight {
             block_height: node_info.blockheight,
             channels_balance_msat: channels_balance,
             onchain_balance_msat: onchain_balance,
+            onchain_outputs_count: onchain_funds.len().try_into().unwrap(),
             max_payable_msat: max_payable,
             max_receivable_msat: max_allowed_to_receive_msats,
             max_single_payment_amount_msat: MAX_PAYMENT_AMOUNT_MSAT,
