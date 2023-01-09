@@ -105,7 +105,6 @@ pub(crate) async fn start(
 /// BreezServices is a facade and the single entry point for the sdk use cases providing
 /// by exposing a simplified API
 pub struct BreezServices {
-    config: Config,
     node_api: Arc<dyn NodeAPI>,
     lsp_api: Arc<dyn LspAPI>,
     fiat_api: Arc<dyn FiatAPI>,
@@ -602,7 +601,6 @@ impl BreezServicesBuilder {
 
         // Create the node services and it them statically
         let breez_services = Arc::new(BreezServices {
-            config: self.config.clone(),
             node_api: unwrapped_node_api.clone(),
             lsp_api: self.lsp_api.clone().unwrap_or_else(|| breez_server.clone()),
             fiat_api: self.fiat_api.clone().unwrap_or_else(|| breez_server.clone()),
