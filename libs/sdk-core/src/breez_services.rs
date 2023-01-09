@@ -496,6 +496,7 @@ pub struct BreezServicesBuilder {
     swapper_api: Option<Arc<dyn SwapperAPI>>,
 }
 
+#[allow(dead_code)]
 impl BreezServicesBuilder {
     pub fn new(config: Config) -> BreezServicesBuilder {
         BreezServicesBuilder {
