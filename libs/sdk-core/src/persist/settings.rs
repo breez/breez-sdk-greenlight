@@ -24,6 +24,7 @@ impl SqliteStorage {
         Ok(res.ok())
     }
 
+    #[allow(dead_code)]
     pub fn delete_setting(&self, key: String) -> Result<()> {
         self.get_connection()?
             .execute("DELETE FROM settings WHERE key = ?1", [key])?;

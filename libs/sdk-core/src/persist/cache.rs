@@ -21,6 +21,7 @@ impl SqliteStorage {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn delete_cached_item(&self, key: String) -> Result<()> {
         self.get_connection()?
             .execute("DELETE FROM cached_items WHERE key = ?1", [key])?;
