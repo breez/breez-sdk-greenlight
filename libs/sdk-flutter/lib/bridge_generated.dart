@@ -143,6 +143,10 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kLspInfoConstMeta;
 
+  Future<String> lspId({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kLspIdConstMeta;
+
   /// Fetch live rates of fiat currencies
   Future<List<Rate>> fetchFiatRates({dynamic hint});
 
@@ -1109,6 +1113,22 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kLspInfoConstMeta =>
       const FlutterRustBridgeTaskConstMeta(
         debugName: "lsp_info",
+        argNames: [],
+      );
+
+  Future<String> lspId({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_lsp_id(port_),
+      parseSuccessData: _wire2api_String,
+      constMeta: kLspIdConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kLspIdConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "lsp_id",
         argNames: [],
       );
 
@@ -2584,6 +2604,18 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
           'wire_lsp_info');
   late final _wire_lsp_info =
       _wire_lsp_infoPtr.asFunction<void Function(int)>();
+
+  void wire_lsp_id(
+    int port_,
+  ) {
+    return _wire_lsp_id(
+      port_,
+    );
+  }
+
+  late final _wire_lsp_idPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_lsp_id');
+  late final _wire_lsp_id = _wire_lsp_idPtr.asFunction<void Function(int)>();
 
   void wire_fetch_fiat_rates(
     int port_,

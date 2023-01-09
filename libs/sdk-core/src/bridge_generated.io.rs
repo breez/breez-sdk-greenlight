@@ -109,6 +109,11 @@ pub extern "C" fn wire_lsp_info(port_: i64) {
 }
 
 #[no_mangle]
+pub extern "C" fn wire_lsp_id(port_: i64) {
+    wire_lsp_id_impl(port_)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_fetch_fiat_rates(port_: i64) {
     wire_fetch_fiat_rates_impl(port_)
 }
