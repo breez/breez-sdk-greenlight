@@ -842,7 +842,7 @@ async fn get_lsp(persister: Arc<SqliteStorage>, lsp: Arc<dyn LspAPI>) -> Result<
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use rand::Rng;
     use std::sync::Arc;
     use std::time::SystemTime;

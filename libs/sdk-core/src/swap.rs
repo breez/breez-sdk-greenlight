@@ -625,7 +625,7 @@ mod tests {
     use ripemd::{Digest, Ripemd160};
 
     use crate::{
-        breez_services::test::get_dummy_node_state,
+        breez_services::tests::get_dummy_node_state,
         chain::{ChainService, OnchainTx},
         models::*,
         persist::db::SqliteStorage,
