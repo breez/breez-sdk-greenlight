@@ -368,9 +368,11 @@ dependencies = [
  "env_logger",
  "hex",
  "log",
+ "once_cell",
  "rustyline",
  "serde_json",
  "tiny-bip39",
+ "tokio",
 ]
 
 [[package]]
