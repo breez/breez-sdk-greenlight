@@ -225,7 +225,7 @@ impl BTCReceiveSwap {
             swap_reply.lock_height,
         )?;
 
-        let address = bitcoin::Address::p2wsh(&our_script, self.network);
+        let address = Address::p2wsh(&our_script, self.network);
         let address_str = address.to_string();
 
         // Ensure our address generation match the service
@@ -268,6 +268,7 @@ impl BTCReceiveSwap {
             .collect())
     }
 
+    #[allow(dead_code)]
     pub(crate) fn list_redeemables(&self) -> Result<Vec<SwapInfo>> {
         Ok(self
             .list_swaps(SwapStatus::Initial)?
@@ -276,6 +277,7 @@ impl BTCReceiveSwap {
             .collect())
     }
 
+    #[allow(dead_code)]
     pub(crate) fn get_swap_info(&self, address: String) -> Result<Option<SwapInfo>> {
         self.persister.get_swap_info_by_address(address)
     }
@@ -591,7 +593,7 @@ fn create_refund_tx(
             index,
             &input_script,
             utxos[index].value as u64,
-            bitcoin::EcdsaSighashType::All,
+            EcdsaSighashType::All,
         )?;
         let msg = Message::from_slice(&sig[..])?;
         let secret_key = SecretKey::from_slice(private_key.as_slice())?;
