@@ -569,9 +569,9 @@ impl BreezServicesBuilder {
         ));
 
         // mempool space is used to monitor the chain
-        let chain_service = Arc::new(MempoolSpace {
-            base_url: self.config.mempoolspace_url.clone(),
-        });
+        let chain_service = Arc::new(MempoolSpace::from_base_url(
+            self.config.mempoolspace_url.clone(),
+        ));
 
         // The storage is implemented via sqlite.
         let persister = Arc::new(crate::persist::db::SqliteStorage::from_file(format!(
