@@ -761,7 +761,12 @@ impl Receiver for PaymentReceiver {
                         .find(|&c| c.state == "CHANNELD_NORMAL")
                         .ok_or("No open channel found")
                         .map_err(|err| anyhow!(err))?;
-                    short_channel_id = parse_short_channel_id(&active_channel.short_channel_id)?;
+                    let hint = match active_channel.clone().alias {
+                        Some(aliases) => aliases.local,
+                        _ => active_channel.clone().short_channel_id,
+                    };
+
+                    short_channel_id = parse_short_channel_id(&hint)?;
                     info!(
                         "Found channel ID: {} {:?}",
                         short_channel_id, active_channel
@@ -778,29 +783,40 @@ impl Receiver for PaymentReceiver {
             .await?;
         info!("Invoice created {}", invoice.bolt11);
 
-        info!("Adding routing hint");
-        let lsp_hop = RouteHintHop {
-            src_node_id: lsp_info.pubkey.clone(), // TODO correct?
-            short_channel_id: short_channel_id as u64,
-            fees_base_msat: lsp_info.base_fee_msat as u32,
-            fees_proportional_millionths: 10, // TODO
-            cltv_expiry_delta: lsp_info.time_lock_delta as u64,
-            htlc_minimum_msat: Some(lsp_info.min_htlc_msat as u64), // TODO correct?
-            htlc_maximum_msat: Some(1000000000),                    // TODO ?
-        };
+        let mut parsed_invoice = parse_invoice(&invoice.bolt11)?;
 
-        info!("lsp hop = {:?}", lsp_hop);
+        // check if the lsp hint already exists
+        let has_lsp_hint = parsed_invoice.routing_hints.iter().any(|h| {
+            h.hops
+                .iter()
+                .any(|h| h.src_node_id == lsp_info.pubkey.clone())
+        });
 
-        let raw_invoice_with_hint = add_routing_hints(
-            invoice.bolt11.clone(),
-            vec![RouteHint {
-                hops: vec![lsp_hop],
-            }],
-            amount_sats * 1000,
-        )?;
-        info!("Routing hint added");
-        let signed_invoice_with_hint = self.node_api.sign_invoice(raw_invoice_with_hint)?;
-        let parsed_invoice = parse_invoice(&signed_invoice_with_hint.to_string())?;
+        if !has_lsp_hint {
+            info!("Adding routing hint");
+            let lsp_hop = RouteHintHop {
+                src_node_id: lsp_info.pubkey.clone(), // TODO correct?
+                short_channel_id: short_channel_id as u64,
+                fees_base_msat: lsp_info.base_fee_msat as u32,
+                fees_proportional_millionths: 10, // TODO
+                cltv_expiry_delta: lsp_info.time_lock_delta as u64,
+                htlc_minimum_msat: Some(lsp_info.min_htlc_msat as u64), // TODO correct?
+                htlc_maximum_msat: Some(1000000000),                    // TODO ?
+            };
+
+            info!("lsp hop = {:?}", lsp_hop);
+
+            let raw_invoice_with_hint = add_routing_hints(
+                invoice.bolt11.clone(),
+                vec![RouteHint {
+                    hops: vec![lsp_hop],
+                }],
+                amount_sats * 1000,
+            )?;
+            info!("Routing hint added");
+            let signed_invoice_with_hint = self.node_api.sign_invoice(raw_invoice_with_hint)?;
+            parsed_invoice = parse_invoice(&signed_invoice_with_hint)?;
+        }
 
         // register the payment at the lsp if needed
         if destination_invoice_amount_sats < amount_sats {
@@ -864,8 +880,10 @@ pub(crate) mod tests {
         ClosesChannelPaymentDetails, LnPaymentDetails, NodeState, Payment, PaymentDetails,
         PaymentTypeFilter,
     };
-    use crate::test_utils::*;
+    use crate::{parse_short_channel_id, test_utils::*};
     use crate::{persist, PaymentType};
+
+    use super::{PaymentReceiver, Receiver};
 
     #[test]
     fn test_config() {
@@ -960,6 +978,43 @@ pub(crate) mod tests {
             .await?;
         assert_eq!(sent, vec![cloned[1].clone()]);
 
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_receive_with_open_channel() -> Result<(), Box<dyn std::error::Error>> {
+        let config = create_test_config();
+        let persister = Arc::new(create_test_persister(config.clone()));
+        persister.init().unwrap();
+
+        let dummy_node_state = get_dummy_node_state();
+        let node_api = Arc::new(MockNodeAPI {
+            node_state: dummy_node_state.clone(),
+            transactions: vec![],
+        });
+
+        let breez_server = Arc::new(MockBreezServer {});
+        persister.set_lsp_id(breez_server.lsp_id()).unwrap();
+        persister.set_node_state(&dummy_node_state).unwrap();
+
+        let receiver: Arc<dyn Receiver> = Arc::new(PaymentReceiver {
+            node_api,
+            persister,
+            lsp: breez_server.clone(),
+        });
+        let ln_invoice = receiver
+            .receive_payment(3000, "should populate lsp hints".to_string(), None)
+            .await?;
+        assert_eq!(ln_invoice.routing_hints[0].hops.len(), 1);
+        let lsp_hop = &ln_invoice.routing_hints[0].hops[0];
+        assert_eq!(
+            lsp_hop.src_node_id,
+            breez_server.clone().lsp_pub_key().clone()
+        );
+        assert_eq!(
+            lsp_hop.short_channel_id,
+            parse_short_channel_id("1x0x0").unwrap()
+        );
         Ok(())
     }
 

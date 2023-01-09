@@ -417,7 +417,7 @@ dependencies = [
 [[package]]
 name = "bolt-derive"
 version = "0.1.0"
-source = "git+ssh://git@github.com/Blockstream/greenlight.git#66456004d74390c42760d8e458214980b6d63610"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#951a78c184308ee85bffd1fc11fa241e0531166b"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1065,7 +1065,7 @@ checksum = "dec7af912d60cdbd3677c1af9352ebae6fb8394d165568a2234df0fa00f87793"
 [[package]]
 name = "gl-client"
 version = "0.1.4"
-source = "git+ssh://git@github.com/Blockstream/greenlight.git#66456004d74390c42760d8e458214980b6d63610"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#951a78c184308ee85bffd1fc11fa241e0531166b"
 dependencies = [
  "anyhow",
  "base64",
@@ -1536,7 +1536,7 @@ dependencies = [
 [[package]]
 name = "lightning-signer-core"
 version = "0.1.0-5"
-source = "git+ssh://git@github.com/Blockstream/greenlight.git#66456004d74390c42760d8e458214980b6d63610"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#951a78c184308ee85bffd1fc11fa241e0531166b"
 dependencies = [
  "anyhow",
  "bitcoin",
@@ -1552,7 +1552,7 @@ dependencies = [
 [[package]]
 name = "lightning-signer-server"
 version = "0.1.0-5"
-source = "git+ssh://git@github.com/Blockstream/greenlight.git#66456004d74390c42760d8e458214980b6d63610"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#951a78c184308ee85bffd1fc11fa241e0531166b"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3416,7 +3416,7 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 [[package]]
 name = "vls-persist"
 version = "0.1.0"
-source = "git+ssh://git@github.com/Blockstream/greenlight.git#66456004d74390c42760d8e458214980b6d63610"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#951a78c184308ee85bffd1fc11fa241e0531166b"
 dependencies = [
  "hex",
  "lightning-signer-core",
@@ -3429,7 +3429,7 @@ dependencies = [
 [[package]]
 name = "vls-protocol"
 version = "0.1.0"
-source = "git+ssh://git@github.com/Blockstream/greenlight.git#66456004d74390c42760d8e458214980b6d63610"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#951a78c184308ee85bffd1fc11fa241e0531166b"
 dependencies = [
  "as-any",
  "bolt-derive",
@@ -3442,7 +3442,7 @@ dependencies = [
 [[package]]
 name = "vls-protocol-signer"
 version = "0.1.0"
-source = "git+ssh://git@github.com/Blockstream/greenlight.git#66456004d74390c42760d8e458214980b6d63610"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#951a78c184308ee85bffd1fc11fa241e0531166b"
 dependencies = [
  "bit-vec",
  "lightning-signer-core",
