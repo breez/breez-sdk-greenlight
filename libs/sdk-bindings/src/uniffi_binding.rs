@@ -232,6 +232,11 @@ impl BlockingBreezServices {
             .map_err(|e| e.into())
     }
 
+    pub fn lsp_id(&self) -> Result<String, SDKError> {
+        rt().block_on(self.breez_services.lsp_id())
+            .map_err(|e| e.into())
+    }
+
     pub fn close_lsp_channels(&self) -> Result<(), SDKError> {
         rt().block_on(self.breez_services.close_lsp_channels())
             .map_err(|e| e.into())

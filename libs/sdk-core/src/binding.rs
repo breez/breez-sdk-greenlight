@@ -247,6 +247,10 @@ pub fn lsp_info() -> Result<LspInformation> {
     block_on(async { get_breez_services()?.lsp_info().await })
 }
 
+pub fn lsp_id() -> Result<String> {
+    block_on(async { get_breez_services()?.lsp_id().await })
+}
+
 /// Fetch live rates of fiat currencies
 pub fn fetch_fiat_rates() -> Result<Vec<Rate>> {
     block_on(async { get_breez_services()?.fetch_fiat_rates().await })
