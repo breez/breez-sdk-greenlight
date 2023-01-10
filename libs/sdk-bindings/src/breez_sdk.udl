@@ -26,13 +26,13 @@ dictionary GreenlightCredentials {
 };
 
 dictionary Config {
-    string breezserver;
-    string mempoolspace_url;
-    string working_dir;
-    Network network;
-    u32 payment_timeout_sec;
-    string? default_lsp_id;
-    string? api_key;
+    string breezserver = "https://bs1-st.breez.technology:443";
+    string mempoolspace_url = "https://mempool.space";
+    string working_dir = ".";
+    Network network = "Bitcoin";
+    u32 payment_timeout_sec = 30;
+    string? default_lsp_id = "ea51d025-042d-456c-8325-63e430797481";
+    string? api_key = null;
 };
 
 dictionary RouteHint {
