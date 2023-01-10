@@ -106,7 +106,7 @@ pub struct LogEntry {
 ///
 /// You can use the defaults with `Config::default()`.
 ///
-/// If you wish to only set a few fields but otherwise use the defaults, you can use a construct like:
+/// If you wish to only set a few fields but otherwise use the defaults, use a construct like:
 /// ```
 /// use breez_sdk_core::Config;
 ///
