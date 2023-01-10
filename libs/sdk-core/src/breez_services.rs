@@ -796,7 +796,7 @@ impl Receiver for PaymentReceiver {
             info!("Adding routing hint");
             let lsp_hop = RouteHintHop {
                 src_node_id: lsp_info.pubkey.clone(), // TODO correct?
-                short_channel_id: short_channel_id as u64,
+                short_channel_id,
                 fees_base_msat: lsp_info.base_fee_msat as u32,
                 fees_proportional_millionths: 10, // TODO
                 cltv_expiry_delta: lsp_info.time_lock_delta as u64,
