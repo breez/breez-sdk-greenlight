@@ -231,6 +231,11 @@ abstract class BreezSdkCore {
   Future<RecommendedFees> recommendedFees({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kRecommendedFeesConstMeta;
+
+  /// Fetches the default config, depending on the environment type
+  Future<Config> defaultConfig({required ConfigType configType, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kDefaultConfigConstMeta;
 }
 
 class BitcoinAddressData {
@@ -310,6 +315,12 @@ class Config {
     this.defaultLspId,
     this.apiKey,
   });
+}
+
+/// Indicates the different kinds of supported environments for [crate::BreezServices]
+enum ConfigType {
+  Production,
+  Staging,
 }
 
 class CurrencyInfo {
@@ -1402,6 +1413,23 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: [],
       );
 
+  Future<Config> defaultConfig({required ConfigType configType, dynamic hint}) {
+    var arg0 = api2wire_config_type(configType);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_default_config(port_, arg0),
+      parseSuccessData: _wire2api_config,
+      constMeta: kDefaultConfigConstMeta,
+      argValues: [configType],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kDefaultConfigConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "default_config",
+        argNames: ["configType"],
+      );
+
   void dispose() {
     _platform.dispose();
   }
@@ -1532,6 +1560,21 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       shortChannelId: _wire2api_String(arr[0]),
       state: _wire2api_channel_state(arr[1]),
       fundingTxid: _wire2api_String(arr[2]),
+    );
+  }
+
+  Config _wire2api_config(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    return Config(
+      breezserver: _wire2api_String(arr[0]),
+      mempoolspaceUrl: _wire2api_String(arr[1]),
+      workingDir: _wire2api_String(arr[2]),
+      network: _wire2api_network(arr[3]),
+      paymentTimeoutSec: _wire2api_u32(arr[4]),
+      defaultLspId: _wire2api_opt_String(arr[5]),
+      apiKey: _wire2api_opt_String(arr[6]),
     );
   }
 
@@ -2067,6 +2110,11 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 }
 
 // Section: api2wire
+
+@protected
+int api2wire_config_type(ConfigType raw) {
+  return api2wire_i32(raw.index);
+}
 
 @protected
 int api2wire_i32(int raw) {
@@ -2862,6 +2910,22 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
           'wire_recommended_fees');
   late final _wire_recommended_fees =
       _wire_recommended_feesPtr.asFunction<void Function(int)>();
+
+  void wire_default_config(
+    int port_,
+    int config_type,
+  ) {
+    return _wire_default_config(
+      port_,
+      config_type,
+    );
+  }
+
+  late final _wire_default_configPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Int32)>>(
+          'wire_default_config');
+  late final _wire_default_config =
+      _wire_default_configPtr.asFunction<void Function(int, int)>();
 
   ffi.Pointer<wire_Config> new_box_autoadd_config_0() {
     return _new_box_autoadd_config_0();

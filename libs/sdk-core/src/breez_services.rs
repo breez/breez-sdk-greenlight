@@ -13,7 +13,7 @@ use crate::lnurl::withdraw::model::LnUrlWithdrawCallbackStatus;
 use crate::lnurl::withdraw::validate_lnurl_withdraw;
 use crate::lsp::LspInformation;
 use crate::models::{
-    parse_short_channel_id, ChannelState, ClosesChannelPaymentDetails, Config, FiatAPI,
+    parse_short_channel_id, ChannelState, ClosesChannelPaymentDetails, Config, ConfigType, FiatAPI,
     GreenlightCredentials, LspAPI, Network, NodeAPI, NodeState, Payment, PaymentDetails,
     PaymentType, PaymentTypeFilter, SwapInfo, SwapperAPI,
 };
@@ -396,6 +396,10 @@ impl BreezServices {
 
     pub async fn recommended_fees(&self) -> Result<RecommendedFees> {
         self.chain_service.recommended_fees().await
+    }
+
+    pub fn default_config(_config_type: ConfigType) -> Config {
+        Config::default()
     }
 }
 

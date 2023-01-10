@@ -140,6 +140,13 @@ impl Default for Config {
     }
 }
 
+/// Indicates the different kinds of supported environments for [crate::BreezServices]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ConfigType {
+    Production,
+    Staging,
+}
+
 #[derive(Clone, Serialize, Deserialize)]
 pub struct GreenlightCredentials {
     pub device_key: Vec<u8>,

@@ -22,7 +22,7 @@ use crate::models::{
 use crate::input_parser::InputType;
 use crate::invoice::{self};
 use crate::lnurl::pay::model::LnUrlPayResult;
-use crate::LnUrlWithdrawRequestData;
+use crate::{ConfigType, LnUrlWithdrawRequestData};
 
 static BREEZ_SERVICES_INSTANCE: OnceCell<Arc<BreezServices>> = OnceCell::new();
 static BREEZ_SERVICES_SHUTDOWN: OnceCell<mpsc::Sender<()>> = OnceCell::new();
@@ -358,4 +358,9 @@ pub fn mnemonic_to_seed(phrase: String) -> Result<Vec<u8>> {
 /// Fetches the current recommended fees
 pub fn recommended_fees() -> Result<RecommendedFees> {
     block_on(async { get_breez_services()?.recommended_fees().await })
+}
+
+/// Fetches the default config, depending on the environment type
+pub fn default_config(config_type: ConfigType) -> Config {
+    BreezServices::default_config(config_type)
 }
