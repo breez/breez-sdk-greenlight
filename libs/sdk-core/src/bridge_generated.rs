@@ -267,14 +267,17 @@ fn wire_connect_lsp_impl(port_: MessagePort, lsp_id: impl Wire2Api<String> + Unw
         },
     )
 }
-fn wire_lsp_info_impl(port_: MessagePort) {
+fn wire_fetch_lsp_info_impl(port_: MessagePort, id: impl Wire2Api<String> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
-            debug_name: "lsp_info",
+            debug_name: "fetch_lsp_info",
             port: Some(port_),
             mode: FfiCallMode::Normal,
         },
-        move || move |task_callback| lsp_info(),
+        move || {
+            let api_id = id.wire2api();
+            move |task_callback| fetch_lsp_info(api_id)
+        },
     )
 }
 fn wire_lsp_id_impl(port_: MessagePort) {
