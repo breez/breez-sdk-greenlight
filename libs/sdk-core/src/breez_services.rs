@@ -1088,7 +1088,7 @@ pub(crate) mod tests {
             block_height: 1,
             channels_balance_msat: 100,
             onchain_balance_msat: 1000,
-            onchain_outputs_count: 2,
+            utxos: vec![],
             max_payable_msat: 95,
             max_receivable_msat: 1000,
             max_single_payment_amount_msat: 1000,

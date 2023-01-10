@@ -630,7 +630,7 @@ class NodeState {
   final int blockHeight;
   final int channelsBalanceMsat;
   final int onchainBalanceMsat;
-  final int onchainOutputsCount;
+  final List<UnspentTransactionOutput> utxos;
   final int maxPayableMsat;
   final int maxReceivableMsat;
   final int maxSinglePaymentAmountMsat;
@@ -643,7 +643,7 @@ class NodeState {
     required this.blockHeight,
     required this.channelsBalanceMsat,
     required this.onchainBalanceMsat,
-    required this.onchainOutputsCount,
+    required this.utxos,
     required this.maxPayableMsat,
     required this.maxReceivableMsat,
     required this.maxSinglePaymentAmountMsat,
@@ -828,6 +828,20 @@ class Symbol {
     this.template,
     this.rtl,
     this.position,
+  });
+}
+
+class UnspentTransactionOutput {
+  final Uint8List txid;
+  final int outnum;
+  final int amountMillisatoshi;
+  final String address;
+
+  UnspentTransactionOutput({
+    required this.txid,
+    required this.outnum,
+    required this.amountMillisatoshi,
+    required this.address,
   });
 }
 
@@ -1710,6 +1724,13 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return (raw as List<dynamic>).map(_wire2api_swap_info).toList();
   }
 
+  List<UnspentTransactionOutput> _wire2api_list_unspent_transaction_output(
+      dynamic raw) {
+    return (raw as List<dynamic>)
+        .map(_wire2api_unspent_transaction_output)
+        .toList();
+  }
+
   LNInvoice _wire2api_ln_invoice(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 10)
@@ -1891,7 +1912,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       blockHeight: _wire2api_u32(arr[1]),
       channelsBalanceMsat: _wire2api_u64(arr[2]),
       onchainBalanceMsat: _wire2api_u64(arr[3]),
-      onchainOutputsCount: _wire2api_u32(arr[4]),
+      utxos: _wire2api_list_unspent_transaction_output(arr[4]),
       maxPayableMsat: _wire2api_u64(arr[5]),
       maxReceivableMsat: _wire2api_u64(arr[6]),
       maxSinglePaymentAmountMsat: _wire2api_u64(arr[7]),
@@ -2101,6 +2122,18 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   void _wire2api_unit(dynamic raw) {
     return;
+  }
+
+  UnspentTransactionOutput _wire2api_unspent_transaction_output(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return UnspentTransactionOutput(
+      txid: _wire2api_uint_8_list(arr[0]),
+      outnum: _wire2api_u32(arr[1]),
+      amountMillisatoshi: _wire2api_u64(arr[2]),
+      address: _wire2api_String(arr[3]),
+    );
   }
 
   UrlSuccessActionData _wire2api_url_success_action_data(dynamic raw) {

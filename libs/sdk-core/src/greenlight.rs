@@ -1,7 +1,7 @@
 use crate::invoice::parse_invoice;
 use crate::models::{
-    Config, GreenlightCredentials, LnPaymentDetails, Network, NodeAPI, NodeState, PaymentDetails,
-    PaymentType, SyncResponse,
+    Config, FeeratePreset, GreenlightCredentials, LnPaymentDetails, Network, NodeAPI, NodeState,
+    PaymentDetails, PaymentType, SyncResponse, UnspentTransactionOutput,
 };
 
 use anyhow::{anyhow, Result};
@@ -219,15 +219,34 @@ impl NodeAPI for Greenlight {
 
         // calculate onchain balance
         let onchain_balance = onchain_funds.iter().fold(0, |a, b| {
-            a + amount_to_msat(b.amount.clone().unwrap_or_default())
+            a + amount_to_msat(&b.amount.clone().unwrap_or_default())
         });
+
+        // Collect utxos from onchain funds
+        let utxos = onchain_funds
+            .iter()
+            .map(|listFundsOutput| match &listFundsOutput.output {
+                Some(output) => Some(UnspentTransactionOutput {
+                    txid: output.txid.clone(),
+                    outnum: output.outnum,
+                    amount_millisatoshi: match &listFundsOutput.amount {
+                        Some(amount) => amount_to_msat(amount),
+                        None => 0,
+                    },
+                    address: listFundsOutput.address.clone(),
+                }),
+                None => None,
+            })
+            .filter(|it| it.is_some())
+            .map(|it| it.unwrap())
+            .collect();
 
         // calculate payment limits and inbound liquidity
         let mut max_payable: u64 = 0;
         let mut max_receivable_single_channel: u64 = 0;
         opened_channels.iter().try_for_each(|c| -> Result<()> {
-            max_payable += amount_to_msat(parse_amount(c.spendable.clone())?);
-            let receivable_amount = amount_to_msat(parse_amount(c.receivable.clone())?);
+            max_payable += amount_to_msat(&parse_amount(c.spendable.clone())?);
+            let receivable_amount = amount_to_msat(&parse_amount(c.receivable.clone())?);
             if receivable_amount > max_receivable_single_channel {
                 max_receivable_single_channel = receivable_amount;
             }
@@ -243,7 +262,7 @@ impl NodeAPI for Greenlight {
             block_height: node_info.blockheight,
             channels_balance_msat: channels_balance,
             onchain_balance_msat: onchain_balance,
-            onchain_outputs_count: onchain_funds.len().try_into().unwrap(),
+            utxos: utxos,
             max_payable_msat: max_payable,
             max_receivable_msat: max_allowed_to_receive_msats,
             max_single_payment_amount_msat: MAX_PAYMENT_AMOUNT_MSAT,
@@ -489,7 +508,7 @@ fn invoice_to_transaction(
         id: hex::encode(invoice.payment_hash.clone()),
         payment_type: PaymentType::Received,
         payment_time: invoice.payment_time as i64,
-        amount_msat: amount_to_msat(invoice.amount.unwrap_or_default()) as i64,
+        amount_msat: amount_to_msat(&invoice.amount.unwrap_or_default()) as i64,
         fee_msat: 0,
         pending: false,
         description: ln_invoice.description,
@@ -513,8 +532,8 @@ fn payment_to_transaction(payment: pb::Payment) -> Result<crate::models::Payment
         description = parse_invoice(&payment.bolt11)?.description;
     }
 
-    let payment_amount = amount_to_msat(payment.amount.unwrap_or_default()) as i64;
-    let payment_amount_sent = amount_to_msat(payment.amount_sent.unwrap_or_default()) as i64;
+    let payment_amount = amount_to_msat(&payment.amount.unwrap_or_default()) as i64;
+    let payment_amount_sent = amount_to_msat(&payment.amount_sent.unwrap_or_default()) as i64;
 
     Ok(crate::models::Payment {
         id: hex::encode(payment.payment_hash.clone()),
@@ -537,7 +556,7 @@ fn payment_to_transaction(payment: pb::Payment) -> Result<crate::models::Payment
     })
 }
 
-fn amount_to_msat(amount: pb::Amount) -> u64 {
+fn amount_to_msat(amount: &pb::Amount) -> u64 {
     match amount.unit {
         Some(pb::amount::Unit::Millisatoshi(val)) => val,
         Some(pb::amount::Unit::Satoshi(val)) => val * 1000,
@@ -591,8 +610,8 @@ impl From<pb::Channel> for crate::models::Channel {
             short_channel_id: c.short_channel_id,
             state,
             funding_txid: c.funding_txid,
-            spendable_msat: amount_to_msat(parse_amount(c.spendable).unwrap_or_default()),
-            receivable_msat: amount_to_msat(parse_amount(c.receivable).unwrap_or_default()),
+            spendable_msat: amount_to_msat(&parse_amount(c.spendable).unwrap_or_default()),
+            receivable_msat: amount_to_msat(&parse_amount(c.receivable).unwrap_or_default()),
             closed_at: None,
         }
     }
