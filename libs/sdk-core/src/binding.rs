@@ -114,11 +114,7 @@ pub fn recover_node(
 /// * `seed` - The node private key
 /// * `creds` - The greenlight credentials
 ///
-pub fn init_services(
-    config: Config,
-    seed: Vec<u8>,
-    creds: GreenlightCredentials,
-) -> Result<()> {
+pub fn init_services(config: Config, seed: Vec<u8>, creds: GreenlightCredentials) -> Result<()> {
     block_on(async move {
         let breez_services =
             BreezServices::init_services(config, seed, creds, Box::new(BindingEventListener {}))
