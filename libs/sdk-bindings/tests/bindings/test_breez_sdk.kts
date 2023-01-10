@@ -9,7 +9,7 @@ class SDKListener: breez_sdk.EventListener {
 
 try {
     var seed = breez_sdk.mnemonicToSeed("cruise clever syrup coil cute execute laundry general cover prevent law sheriff");
-    var credentials = breez_sdk.recoverNode(breez_sdk.Network.BITCOIN, seed, null);
+    var credentials = breez_sdk.recoverNode(breez_sdk.Network.BITCOIN, seed);
     var sdkServices = breez_sdk.initServices(null, seed, credentials, SDKListener());
     sdkServices.start();
     var nodeInfo = sdkServices.nodeInfo();

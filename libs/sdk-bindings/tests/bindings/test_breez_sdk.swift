@@ -9,7 +9,7 @@ class SDKListener: EventListener {
 
 do {
     let seed = try mnemonicToSeed(phrase: "cruise clever syrup coil cute execute laundry general cover prevent law sheriff");
-    let credentials = try recoverNode(network: Network.bitcoin, seed: seed, config: nil);
+    let credentials = try recoverNode(network: Network.bitcoin, seed: seed);
     let sdkServices = try initServices(config: nil, seed: seed, creds: credentials, listener: SDKListener());
     try sdkServices.start();
     let nodeInfo = try sdkServices.nodeInfo();
