@@ -64,7 +64,7 @@ fn wire_register_node_impl(
     port_: MessagePort,
     network: impl Wire2Api<Network> + UnwindSafe,
     seed: impl Wire2Api<Vec<u8>> + UnwindSafe,
-    config: impl Wire2Api<Option<Config>> + UnwindSafe,
+    config: impl Wire2Api<Config> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -84,7 +84,7 @@ fn wire_recover_node_impl(
     port_: MessagePort,
     network: impl Wire2Api<Network> + UnwindSafe,
     seed: impl Wire2Api<Vec<u8>> + UnwindSafe,
-    config: impl Wire2Api<Option<Config>> + UnwindSafe,
+    config: impl Wire2Api<Config> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -102,7 +102,7 @@ fn wire_recover_node_impl(
 }
 fn wire_init_services_impl(
     port_: MessagePort,
-    config: impl Wire2Api<Option<Config>> + UnwindSafe,
+    config: impl Wire2Api<Config> + UnwindSafe,
     seed: impl Wire2Api<Vec<u8>> + UnwindSafe,
     creds: impl Wire2Api<GreenlightCredentials> + UnwindSafe,
 ) {

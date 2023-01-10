@@ -130,15 +130,13 @@ impl BreezServices {
     }
 
     pub async fn init_services(
-        config: Option<Config>,
+        config: Config,
         seed: Vec<u8>,
         creds: GreenlightCredentials,
         event_listener: Box<dyn EventListener>,
     ) -> Result<Arc<BreezServices>> {
-        let sdk_config = config.unwrap_or(Config::default());
-
         // create the node services instance and set it globally
-        let breez_services = BreezServicesBuilder::new(sdk_config.clone())
+        let breez_services = BreezServicesBuilder::new(config)
             .greenlight_credentials(creds, seed)
             .build(Some(event_listener))?;
         Ok(breez_services.clone())

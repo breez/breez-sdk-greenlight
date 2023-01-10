@@ -70,11 +70,9 @@ impl From<anyhow::Error> for SDKError {
 ///
 /// * `network` - The network type which is one of (Bitcoin, Testnet, Signet, Regtest)
 /// * `seed` - The node private key
-/// * `config` - The sdk configuration
 pub fn register_node(
     network: Network,
     seed: Vec<u8>,
-    config: Option<Config>,
 ) -> Result<GreenlightCredentials> {
     let creds = rt().block_on(BreezServices::register_node(network, seed.clone()))?;
     Ok(creds)
@@ -86,11 +84,9 @@ pub fn register_node(
 ///
 /// * `network` - The network type which is one of (Bitcoin, Testnet, Signet, Regtest)
 /// * `seed` - The node private key
-/// * `config` - The sdk configuration
 pub fn recover_node(
     network: Network,
     seed: Vec<u8>,
-    config: Option<Config>,
 ) -> Result<GreenlightCredentials> {
     let creds = rt().block_on(BreezServices::recover_node(network, seed.clone()))?;
     Ok(creds)
@@ -106,7 +102,7 @@ pub fn recover_node(
 /// * `creds` - The greenlight credentials
 ///
 pub fn init_services(
-    config: Option<Config>,
+    config: Config,
     seed: Vec<u8>,
     creds: GreenlightCredentials,
     listener: Box<dyn EventListener>,

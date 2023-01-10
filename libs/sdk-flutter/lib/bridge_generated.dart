@@ -24,7 +24,7 @@ abstract class BreezSdkCore {
   Future<GreenlightCredentials> registerNode(
       {required Network network,
       required Uint8List seed,
-      Config? config,
+      required Config config,
       dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kRegisterNodeConstMeta;
@@ -39,13 +39,13 @@ abstract class BreezSdkCore {
   Future<GreenlightCredentials> recoverNode(
       {required Network network,
       required Uint8List seed,
-      Config? config,
+      required Config config,
       dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kRecoverNodeConstMeta;
 
   /// init_services initialized the global NodeService, schedule the node to run in the cloud and
-  /// run the signer. This must be called in order to start comunicate with the node
+  /// run the signer. This must be called in order to start communicate with the node
   ///
   /// # Arguments
   ///
@@ -54,7 +54,7 @@ abstract class BreezSdkCore {
   /// * `creds` - The greenlight credentials
   ///
   Future<void> initServices(
-      {Config? config,
+      {required Config config,
       required Uint8List seed,
       required GreenlightCredentials creds,
       dynamic hint});
@@ -279,6 +279,19 @@ class ClosesChannelPaymentDetails {
   });
 }
 
+/// Configuration for the Breez Services.
+///
+/// You can use the defaults with `Config::default()`.
+///
+/// If you wish to only set a few fields but otherwise use the defaults, you can use
+/// ```
+/// use breez_sdk_core::Config;
+///
+/// let config = Config {
+///     mempoolspace_url: "https://my.mempool.space".to_string(),
+///     ..Config::default()
+/// };
+/// ```
 class Config {
   final String breezserver;
   final String mempoolspaceUrl;
@@ -835,11 +848,11 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   Future<GreenlightCredentials> registerNode(
       {required Network network,
       required Uint8List seed,
-      Config? config,
+      required Config config,
       dynamic hint}) {
     var arg0 = api2wire_network(network);
     var arg1 = _platform.api2wire_uint_8_list(seed);
-    var arg2 = _platform.api2wire_opt_box_autoadd_config(config);
+    var arg2 = _platform.api2wire_box_autoadd_config(config);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) =>
           _platform.inner.wire_register_node(port_, arg0, arg1, arg2),
@@ -859,11 +872,11 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   Future<GreenlightCredentials> recoverNode(
       {required Network network,
       required Uint8List seed,
-      Config? config,
+      required Config config,
       dynamic hint}) {
     var arg0 = api2wire_network(network);
     var arg1 = _platform.api2wire_uint_8_list(seed);
-    var arg2 = _platform.api2wire_opt_box_autoadd_config(config);
+    var arg2 = _platform.api2wire_box_autoadd_config(config);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) =>
           _platform.inner.wire_recover_node(port_, arg0, arg1, arg2),
@@ -881,11 +894,11 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       );
 
   Future<void> initServices(
-      {Config? config,
+      {required Config config,
       required Uint8List seed,
       required GreenlightCredentials creds,
       dynamic hint}) {
-    var arg0 = _platform.api2wire_opt_box_autoadd_config(config);
+    var arg0 = _platform.api2wire_box_autoadd_config(config);
     var arg1 = _platform.api2wire_uint_8_list(seed);
     var arg2 = _platform.api2wire_box_autoadd_greenlight_credentials(creds);
     return _platform.executeNormal(FlutterRustBridgeTask(
@@ -2151,11 +2164,6 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
-  ffi.Pointer<wire_Config> api2wire_opt_box_autoadd_config(Config? raw) {
-    return raw == null ? ffi.nullptr : api2wire_box_autoadd_config(raw);
-  }
-
-  @protected
   ffi.Pointer<ffi.Int64> api2wire_opt_box_autoadd_i64(int? raw) {
     return raw == null ? ffi.nullptr : api2wire_box_autoadd_i64(raw);
   }
@@ -2235,11 +2243,6 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.default_description = api2wire_String(apiObj.defaultDescription);
     wireObj.min_withdrawable = api2wire_u64(apiObj.minWithdrawable);
     wireObj.max_withdrawable = api2wire_u64(apiObj.maxWithdrawable);
-  }
-
-  void _api_fill_to_wire_opt_box_autoadd_config(
-      Config? apiObj, ffi.Pointer<wire_Config> wireObj) {
-    if (apiObj != null) _api_fill_to_wire_box_autoadd_config(apiObj, wireObj);
   }
 }
 

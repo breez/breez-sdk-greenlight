@@ -359,13 +359,13 @@ interface BlockingBreezServices {
 namespace breez_sdk { 
  
  [Throws=SDKError]
- GreenlightCredentials register_node(Network network, sequence<u8> seed, Config? config);
+ GreenlightCredentials register_node(Network network, sequence<u8> seed);
 
  [Throws=SDKError]
- GreenlightCredentials recover_node(Network network, sequence<u8> seed, Config? config);
+ GreenlightCredentials recover_node(Network network, sequence<u8> seed);
 
  [Throws=SDKError]
- BlockingBreezServices init_services(Config? config, sequence<u8> seed, GreenlightCredentials creds, EventListener listener);
+ BlockingBreezServices init_services(Config config, sequence<u8> seed, GreenlightCredentials creds, EventListener listener);
 
  [Throws=SDKError]
  void set_log_stream(LogStream log_stream);

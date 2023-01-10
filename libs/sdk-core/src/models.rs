@@ -102,6 +102,19 @@ pub struct LogEntry {
     pub level: String,
 }
 
+/// Configuration for the Breez Services.
+///
+/// You can use the defaults with `Config::default()`.
+///
+/// If you wish to only set a few fields but otherwise use the defaults, you can use a construct like:
+/// ```
+/// use breez_sdk_core::Config;
+///
+/// let config = Config {
+///     mempoolspace_url: "https://my.mempool.space".to_string(),
+///     ..Config::default()
+/// };
+/// ```
 #[derive(Clone)]
 pub struct Config {
     pub breezserver: String,

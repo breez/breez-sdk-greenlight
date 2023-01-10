@@ -80,7 +80,7 @@ impl EventListener for BindingEventListener {
 pub fn register_node(
     network: Network,
     seed: Vec<u8>,
-    config: Option<Config>,
+    config: Config,
 ) -> Result<GreenlightCredentials> {
     let creds = block_on(BreezServices::register_node(network, seed.clone()))?;
     init_services(config, seed, creds.clone())?;
@@ -97,7 +97,7 @@ pub fn register_node(
 pub fn recover_node(
     network: Network,
     seed: Vec<u8>,
-    config: Option<Config>,
+    config: Config,
 ) -> Result<GreenlightCredentials> {
     let creds = block_on(BreezServices::recover_node(network, seed.clone()))?;
     init_services(config, seed, creds.clone())?;
@@ -106,7 +106,7 @@ pub fn recover_node(
 }
 
 /// init_services initialized the global NodeService, schedule the node to run in the cloud and
-/// run the signer. This must be called in order to start comunicate with the node
+/// run the signer. This must be called in order to start communicate with the node
 ///
 /// # Arguments
 ///
@@ -115,7 +115,7 @@ pub fn recover_node(
 /// * `creds` - The greenlight credentials
 ///
 pub fn init_services(
-    config: Option<Config>,
+    config: Config,
     seed: Vec<u8>,
     creds: GreenlightCredentials,
 ) -> Result<()> {
