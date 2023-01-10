@@ -89,14 +89,13 @@ impl BTCReceiveSwap {
         chain_service: Arc<MempoolSpace>,
         payment_receiver: Arc<PaymentReceiver>,
     ) -> Self {
-        let swapper = Self {
+        Self {
             network,
             swapper_api,
             persister,
             chain_service,
             payment_receiver,
-        };
-        swapper
+        }
     }
 
     /// Listening to events is required in order to:
@@ -159,8 +158,8 @@ impl BTCReceiveSwap {
                 }
             }
 
-            /// When invoice is paid we lookup for a swap that matches the same hash.
-            /// In case we find one, we update its paid amount.
+            // When invoice is paid we lookup for a swap that matches the same hash.
+            // In case we find one, we update its paid amount.
             BreezEvent::InvoicePaid { details } => {
                 debug!("swap InvoicePaid event!");
                 let hash_raw = hex::decode(details.payment_hash.clone())?;
@@ -226,7 +225,7 @@ impl BTCReceiveSwap {
             swap_reply.lock_height,
         )?;
 
-        let address = bitcoin::Address::p2wsh(&our_script, self.network);
+        let address = Address::p2wsh(&our_script, self.network);
         let address_str = address.to_string();
 
         // Ensure our address generation match the service
@@ -269,6 +268,7 @@ impl BTCReceiveSwap {
             .collect())
     }
 
+    #[allow(dead_code)]
     pub(crate) fn list_redeemables(&self) -> Result<Vec<SwapInfo>> {
         Ok(self
             .list_swaps(SwapStatus::Initial)?
@@ -277,6 +277,7 @@ impl BTCReceiveSwap {
             .collect())
     }
 
+    #[allow(dead_code)]
     pub(crate) fn get_swap_info(&self, address: String) -> Result<Option<SwapInfo>> {
         self.persister.get_swap_info_by_address(address)
     }
@@ -321,15 +322,11 @@ impl BTCReceiveSwap {
 
         let mut swap_status = swap_info.status.clone();
 
-        if txs.len() > 0 && current_tip - confirmed_block >= swap_info.lock_height as u32 {
+        if !txs.is_empty() && current_tip - confirmed_block >= swap_info.lock_height as u32 {
             swap_status = SwapStatus::Expired
         }
 
-        let confirmed_txs = utxos
-            .clone()
-            .into_iter()
-            .map(|u| u.out.txid.to_string())
-            .collect();
+        let confirmed_txs = utxos.into_iter().map(|u| u.out.txid.to_string()).collect();
 
         debug!(
             "updating swap on-chain info {:?}: confirmed_sats={:?} refund_tx_ids={:?}, confirmed_tx_ids={:?} swap_status={:?}",
@@ -507,7 +504,7 @@ fn get_utxos(swap_address: String, transactions: Vec<OnchainTx>) -> Result<Vec<U
         }
     }
 
-    for (i, tx) in transactions.iter().enumerate() {
+    for (_i, tx) in transactions.iter().enumerate() {
         for (index, vout) in tx.vout.iter().enumerate() {
             if tx.status.confirmed && vout.scriptpubkey_address == swap_address {
                 let outpoint = OutPoint {
@@ -537,7 +534,7 @@ fn create_refund_tx(
     input_script: Script,
     sat_per_vbyte: u32,
 ) -> Result<Vec<u8>> {
-    if utxos.len() == 0 {
+    if utxos.is_empty() {
         return Err(anyhow!("must have at least one input"));
     }
 
@@ -566,11 +563,10 @@ fn create_refund_tx(
 
     // create the tx outputs
     let btc_address = Address::from_str(&to_address)?;
-    let mut tx_out: Vec<TxOut> = Vec::new();
-    tx_out.push(TxOut {
+    let tx_out: Vec<TxOut> = vec![TxOut {
         value: confirmed_amount,
         script_pubkey: btc_address.script_pubkey(),
-    });
+    }];
 
     // construct the transaction
     let mut tx = Transaction {
@@ -580,6 +576,7 @@ fn create_refund_tx(
         output: tx_out,
     };
 
+    #[allow(clippy::identity_op)] // Allow "+ 0" term in sum below for clarity
     let refund_witness_input_size: u32 = 1 + 1 + 73 + 1 + 0 + 1 + 100;
     let tx_weight = tx.strippedsize() as u32 * WITNESS_SCALE_FACTOR as u32
         + refund_witness_input_size * txins.len() as u32;
@@ -596,7 +593,7 @@ fn create_refund_tx(
             index,
             &input_script,
             utxos[index].value as u64,
-            bitcoin::EcdsaSighashType::All,
+            EcdsaSighashType::All,
         )?;
         let msg = Message::from_slice(&sig[..])?;
         let secret_key = SecretKey::from_slice(private_key.as_slice())?;
@@ -605,10 +602,7 @@ fn create_refund_tx(
         let mut sigvec = sig.serialize_der().to_vec();
         sigvec.push(EcdsaSighashType::All as u8);
 
-        let mut witness: Vec<Vec<u8>> = Vec::new();
-        witness.push(sigvec);
-        witness.push(vec![]);
-        witness.push(input_script.serialize());
+        let witness: Vec<Vec<u8>> = vec![sigvec, vec![], input_script.serialize()];
 
         let mut signed_input = input.clone();
         let w = Witness::from_vec(witness);
@@ -621,6 +615,7 @@ fn create_refund_tx(
     Ok(tx.serialize())
 }
 
+#[cfg(test)]
 mod tests {
     use std::sync::Arc;
 
@@ -632,7 +627,7 @@ mod tests {
     use ripemd::{Digest, Ripemd160};
 
     use crate::{
-        breez_services::test::get_dummy_node_state,
+        breez_services::tests::get_dummy_node_state,
         chain::{ChainService, OnchainTx},
         models::*,
         persist::db::SqliteStorage,

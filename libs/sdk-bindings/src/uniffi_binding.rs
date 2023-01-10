@@ -259,7 +259,7 @@ impl BlockingBreezServices {
     }
 
     pub fn execute_dev_command(&self, command: String) -> Result<String> {
-        rt().block_on(self.breez_services.execute_dev_command(&command))
+        rt().block_on(self.breez_services.execute_dev_command(command))
     }
 
     pub fn recommended_fees(&self) -> Result<RecommendedFees, SDKError> {

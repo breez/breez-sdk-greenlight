@@ -90,7 +90,7 @@ impl Default for MockChainService {
         ).unwrap();
         Self {
             tip: 767640,
-            recommended_fees: recommended_fees,
+            recommended_fees,
             address_to_transactions: HashMap::from([(
                 "bc1qkd9hm2qwvck3mvlul035kl6v4nz04s6dmryeq5".to_string(),
                 txs,
@@ -242,7 +242,7 @@ impl NodeAPI for MockNodeAPI {
         Err(anyhow!("Not implemented"))
     }
 
-    async fn execute_command(&self, command: &String) -> Result<String> {
+    async fn execute_command(&self, command: String) -> Result<String> {
         Err(anyhow!("Not implemented"))
     }
 }
@@ -332,9 +332,10 @@ pub fn rand_vec_u8(len: usize) -> Vec<u8> {
 }
 
 pub fn create_test_config() -> crate::models::Config {
-    let mut cfg = crate::models::Config::default();
-    cfg.working_dir = get_test_working_dir();
-    cfg
+    crate::models::Config {
+        working_dir: get_test_working_dir(),
+        ..Default::default()
+    }
 }
 
 pub fn create_test_persister(config: crate::models::Config) -> crate::persist::db::SqliteStorage {

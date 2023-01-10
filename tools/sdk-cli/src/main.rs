@@ -294,7 +294,7 @@ async fn main() -> Result<()> {
                             .ok_or("Expected command")
                             .map_err(|err| anyhow!(err))?;
 
-                        show_results(sdk()?.execute_dev_command(&cmd.to_string()).await);
+                        show_results(sdk()?.execute_dev_command(cmd.to_string()).await);
                     }
                     Some("refund") => show_results({
                         let swap_address = command

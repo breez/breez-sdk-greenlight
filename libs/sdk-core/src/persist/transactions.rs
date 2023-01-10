@@ -127,18 +127,13 @@ fn filter_to_where_clause(
 ) -> String {
     let mut where_clause: Vec<String> = Vec::new();
 
-    match from_timestamp {
-        Some(t) => {
-            where_clause.push(format!("payment_time >= {t}"));
-        }
-        None => (),
+    if let Some(t) = from_timestamp {
+        where_clause.push(format!("payment_time >= {t}"));
     };
-    match to_timestamp {
-        Some(t) => {
-            where_clause.push(format!("payment_time <= {t}"));
-        }
-        None => (),
+    if let Some(t) = to_timestamp {
+        where_clause.push(format!("payment_time <= {t}"));
     };
+
     match type_filter {
         PaymentTypeFilter::Sent => {
             where_clause.push(format!(
@@ -154,7 +149,7 @@ fn filter_to_where_clause(
     }
 
     let mut where_clause_str = String::new();
-    if where_clause.len() > 0 {
+    if !where_clause.is_empty() {
         where_clause_str = String::from("where ");
         where_clause_str.push_str(where_clause.join(" and ").as_str());
     }

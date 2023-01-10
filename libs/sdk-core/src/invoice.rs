@@ -87,7 +87,7 @@ impl RouteHint {
 }
 
 pub fn add_routing_hints(
-    invoice: &String,
+    invoice: String,
     hints: Vec<RouteHint>,
     new_amount_msats: u64,
 ) -> Result<RawInvoice> {
@@ -146,12 +146,7 @@ pub fn parse_invoice(bolt11: &str) -> Result<LNInvoice> {
 
     // convert hints to bridge interface
     let invoice_hints = invoice.route_hints();
-    let converted_hints = invoice_hints
-        .iter()
-        .map(|h| {
-            return RouteHint::from_ldk_hint(h);
-        })
-        .collect();
+    let converted_hints = invoice_hints.iter().map(RouteHint::from_ldk_hint).collect();
     // return the parsed invoice
     let ln_invoice = LNInvoice {
         bolt11: bolt11.to_string(),
@@ -201,7 +196,7 @@ mod tests {
             hops: vec![hint_hop],
         };
 
-        let encoded = add_routing_hints(&payreq, vec![route_hint], 100).unwrap();
+        let encoded = add_routing_hints(payreq, vec![route_hint], 100).unwrap();
 
         print!("{:?}", encoded);
     }

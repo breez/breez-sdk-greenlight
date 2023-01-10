@@ -1,8 +1,6 @@
 use std::{
-    fmt::format,
     str::FromStr,
     time::{SystemTime, UNIX_EPOCH},
-    vec,
 };
 
 use crate::models::*;
@@ -11,15 +9,15 @@ use super::db::SqliteStorage;
 use anyhow::Result;
 
 impl SqliteStorage {
-    pub(crate) fn update_channels(&self, channels: &Vec<Channel>) -> Result<()> {
+    pub(crate) fn update_channels(&self, channels: &[Channel]) -> Result<()> {
         // insert all channels
-        for c in channels.clone() {
+        for c in channels.iter().cloned() {
             self.insert_or_update_channel(c)?
         }
 
         let funding_txs: Vec<String> = channels
-            .clone()
-            .into_iter()
+            .iter()
+            .cloned()
             .map(|c| format!("'{}'", c.funding_txid))
             .collect();
 
@@ -45,8 +43,7 @@ impl SqliteStorage {
     pub(crate) fn list_channels(&self) -> Result<Vec<Channel>> {
         let con = self.get_connection()?;
         let mut stmt = con.prepare(
-            format!(
-                "
+            "
                SELECT
                 funding_txid, 
                 short_channel_id,
@@ -55,9 +52,7 @@ impl SqliteStorage {
                 receivable_msat,
                 closed_at
                FROM channels             
-             "
-            )
-            .as_str(),
+             ",
         )?;
         let channels: Vec<Channel> = stmt
             .query_map([], |row| {
