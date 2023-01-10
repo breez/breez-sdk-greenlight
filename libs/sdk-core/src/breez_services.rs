@@ -13,8 +13,8 @@ use crate::lnurl::withdraw::model::LnUrlWithdrawCallbackStatus;
 use crate::lnurl::withdraw::validate_lnurl_withdraw;
 use crate::lsp::LspInformation;
 use crate::models::{
-    parse_short_channel_id, ChannelState, ClosesChannelPaymentDetails, Config, FeeratePreset,
-    FiatAPI, GreenlightCredentials, LspAPI, Network, NodeAPI, NodeState, Payment, PaymentDetails,
+    parse_short_channel_id, ChannelState, ClosesChannelPaymentDetails, Config, FiatAPI,
+    GreenlightCredentials, LspAPI, Network, NodeAPI, NodeState, Payment, PaymentDetails,
     PaymentType, PaymentTypeFilter, SwapInfo, SwapperAPI,
 };
 use crate::persist::db::SqliteStorage;
@@ -25,13 +25,12 @@ use bip39::*;
 use core::time;
 use std::cmp::max;
 use std::str::FromStr;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::runtime::Runtime;
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, Mutex};
 use tokio::time::{sleep, Duration};
 use tonic::codegen::InterceptedService;
-use tonic::metadata::errors::InvalidMetadataValue;
 use tonic::metadata::{Ascii, MetadataValue};
 use tonic::service::Interceptor;
 use tonic::transport::{Channel, Uri};
@@ -106,7 +105,6 @@ pub(crate) async fn start(
 /// BreezServices is a facade and the single entry point for the sdk use cases providing
 /// by exposing a simplified API
 pub struct BreezServices {
-    config: Config,
     node_api: Arc<dyn NodeAPI>,
     lsp_api: Arc<dyn LspAPI>,
     fiat_api: Arc<dyn FiatAPI>,
@@ -135,25 +133,24 @@ impl BreezServices {
         creds: GreenlightCredentials,
         event_listener: Box<dyn EventListener>,
     ) -> Result<Arc<BreezServices>> {
-        let sdk_config = config.unwrap_or(Config::default());
+        let sdk_config = config.unwrap_or_default();
 
         // create the node services instance and set it globally
-        let breez_services = BreezServicesBuilder::new(sdk_config.clone())
+        BreezServicesBuilder::new(sdk_config)
             .greenlight_credentials(creds, seed)
-            .build(Some(event_listener))?;
-        Ok(breez_services.clone())
+            .build(Some(event_listener))
     }
 
     pub async fn start(runtime: &Runtime, breez_services: &Arc<BreezServices>) -> Result<()> {
         // create a shutdown channel (sender and receiver)
         let (stop_sender, stop_receiver) = mpsc::channel(1);
-        breez_services.set_shutdown_sender(stop_sender);
+        breez_services.set_shutdown_sender(stop_sender).await;
 
-        crate::breez_services::start(&runtime, breez_services.clone(), stop_receiver).await
+        crate::breez_services::start(runtime, breez_services.clone(), stop_receiver).await
     }
 
     pub async fn stop(&self) -> Result<()> {
-        let unlocked = self.shutdown_sender.lock().unwrap();
+        let unlocked = self.shutdown_sender.lock().await;
         if unlocked.is_none() {
             return Err(anyhow!("node has not been started"));
         }
@@ -252,7 +249,7 @@ impl BreezServices {
 
     pub async fn list_lsps(&self) -> Result<Vec<LspInformation>> {
         self.lsp_api
-            .list_lsps(self.node_info()?.ok_or(anyhow!("err"))?.id)
+            .list_lsps(self.node_info()?.ok_or_else(|| anyhow!("err"))?.id)
             .await
     }
 
@@ -265,7 +262,7 @@ impl BreezServices {
     pub async fn lsp_id(&self) -> Result<String> {
         self.persister
             .get_lsp_id()?
-            .ok_or(anyhow!("No LSP ID found"))
+            .ok_or_else(|| anyhow!("No LSP ID found"))
     }
 
     /// Convenience method to look up LSP info based on current LSP ID
@@ -305,9 +302,9 @@ impl BreezServices {
             .await
     }
 
-    /// Excute a command directly on the NodeAPI interface.
+    /// Execute a command directly on the NodeAPI interface.
     /// Mainly used to debugging.
-    pub async fn execute_dev_command(&self, command: &String) -> Result<String> {
+    pub async fn execute_dev_command(&self, command: String) -> Result<String> {
         self.node_api.execute_command(command).await
     }
 
@@ -339,7 +336,7 @@ impl BreezServices {
             .list_channels()?
             .into_iter()
             .filter(|c| c.state == ChannelState::Closed || c.state == ChannelState::PendingClose)
-            .map(|c| closed_channel_to_transaction(c))
+            .map(closed_channel_to_transaction)
             .collect();
 
         // update both closed channels and lightning transation payments
@@ -352,7 +349,7 @@ impl BreezServices {
 
     async fn connect_lsp_peer(&self) -> Result<()> {
         let lsp = self.lsp_info().await.ok();
-        if !lsp.is_none() {
+        if lsp.is_some() {
             let lsp_info = lsp.unwrap().clone();
             let node_id = lsp_info.pubkey;
             let address = lsp_info.host;
@@ -385,14 +382,14 @@ impl BreezServices {
             )
         };
 
-        if !self.event_listener.is_none() {
+        if self.event_listener.is_some() {
             self.event_listener.as_ref().unwrap().on_event(e.clone())
         }
         Ok(())
     }
 
-    pub fn set_shutdown_sender(&self, sender: mpsc::Sender<()>) {
-        *self.shutdown_sender.lock().unwrap() = Some(sender);
+    pub async fn set_shutdown_sender(&self, sender: mpsc::Sender<()>) {
+        *self.shutdown_sender.lock().await = Some(sender);
     }
 
     pub(crate) async fn start_node(&self) -> Result<()> {
@@ -432,14 +429,11 @@ async fn poll_events(breez_services: Arc<BreezServices>, mut current_block: u32)
           match paid_invoice_res {
            Ok(Some(i)) => {
             debug!("invoice stream got new invoice");
-            match i.details {
-             Some(gl_client::pb::incoming_payment::Details::Offchain(p)) => {
-              _  = breez_services.on_event(BreezEvent::InvoicePaid{details: InvoicePaidDetails {
+            if let Some(gl_client::pb::incoming_payment::Details::Offchain(p)) = i.details {
+                _  = breez_services.on_event(BreezEvent::InvoicePaid{details: InvoicePaidDetails {
                     payment_hash: hex::encode(p.payment_hash),
                     bolt11: p.bolt11,
                 }}).await;
-             },
-             None => {}
             }
            }
            // stream is closed, renew it
@@ -483,7 +477,7 @@ fn closed_channel_to_transaction(
         payment_time: channel
             .closed_at
             .unwrap_or(now.duration_since(UNIX_EPOCH)?.as_secs()) as i64,
-        amount_msat: -1 * channel.spendable_msat as i64,
+        amount_msat: -(channel.spendable_msat as i64),
         fee_msat: 0,
         pending: channel.state == ChannelState::PendingClose,
         description: Some("Closed Channel".to_string()),
@@ -508,10 +502,11 @@ pub struct BreezServicesBuilder {
     swapper_api: Option<Arc<dyn SwapperAPI>>,
 }
 
+#[allow(dead_code)]
 impl BreezServicesBuilder {
     pub fn new(config: Config) -> BreezServicesBuilder {
         BreezServicesBuilder {
-            config: config,
+            config,
             node_api: None,
             creds: None,
             seed: None,
@@ -581,9 +576,9 @@ impl BreezServicesBuilder {
         ));
 
         // mempool space is used to monitor the chain
-        let chain_service = Arc::new(MempoolSpace {
-            base_url: self.config.mempoolspace_url.clone(),
-        });
+        let chain_service = Arc::new(MempoolSpace::from_base_url(
+            self.config.mempoolspace_url.clone(),
+        ));
 
         // The storage is implemented via sqlite.
         let persister = Arc::new(crate::persist::db::SqliteStorage::from_file(format!(
@@ -605,7 +600,9 @@ impl BreezServicesBuilder {
 
         let btc_receive_swapper = Arc::new(BTCReceiveSwap::new(
             self.config.network.clone().into(),
-            self.swapper_api.clone().unwrap_or(breez_server.clone()),
+            self.swapper_api
+                .clone()
+                .unwrap_or_else(|| breez_server.clone()),
             persister.clone(),
             chain_service.clone(),
             payment_receiver.clone(),
@@ -613,13 +610,15 @@ impl BreezServicesBuilder {
 
         // Create the node services and it them statically
         let breez_services = Arc::new(BreezServices {
-            config: self.config.clone(),
             node_api: unwrapped_node_api.clone(),
-            lsp_api: self.lsp_api.clone().unwrap_or(breez_server.clone()),
-            fiat_api: self.fiat_api.clone().unwrap_or(breez_server.clone()),
-            chain_service: chain_service.clone(),
-            persister: persister.clone(),
-            btc_receive_swapper: btc_receive_swapper.clone(),
+            lsp_api: self.lsp_api.clone().unwrap_or_else(|| breez_server.clone()),
+            fiat_api: self
+                .fiat_api
+                .clone()
+                .unwrap_or_else(|| breez_server.clone()),
+            chain_service,
+            persister,
+            btc_receive_swapper,
             payment_receiver,
             event_listener: listener,
             shutdown_sender: Mutex::new(None),
@@ -793,7 +792,7 @@ impl Receiver for PaymentReceiver {
         info!("lsp hop = {:?}", lsp_hop);
 
         let raw_invoice_with_hint = add_routing_hints(
-            &invoice.bolt11,
+            invoice.bolt11.clone(),
             vec![RouteHint {
                 hops: vec![lsp_hop],
             }],
@@ -849,7 +848,8 @@ async fn get_lsp(persister: Arc<SqliteStorage>, lsp: Arc<dyn LspAPI>) -> Result<
         .cloned()
 }
 
-pub(crate) mod test {
+#[cfg(test)]
+pub(crate) mod tests {
     use rand::Rng;
     use std::sync::Arc;
     use std::time::SystemTime;

@@ -1,4 +1,4 @@
-use crate::breez_services::{self, BreezEvent, BreezServicesBuilder, EventListener};
+use crate::breez_services::{self, BreezEvent, EventListener};
 use crate::chain::RecommendedFees;
 use crate::fiat::{FiatCurrency, Rate};
 use crate::input_parser::LnUrlPayRequestData;
@@ -16,15 +16,13 @@ use crate::breez_services::BreezServices;
 use crate::invoice::LNInvoice;
 use crate::lnurl::withdraw::model::LnUrlWithdrawCallbackStatus;
 use crate::models::{
-    Config, FeeratePreset, GreenlightCredentials, Network, NodeState, Payment, PaymentTypeFilter,
-    SwapInfo,
+    Config, GreenlightCredentials, Network, NodeState, Payment, PaymentTypeFilter, SwapInfo,
 };
 
 use crate::input_parser::InputType;
 use crate::invoice::{self};
 use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::LnUrlWithdrawRequestData;
-use bip39::{Language, Mnemonic, Seed};
 
 static BREEZ_SERVICES_INSTANCE: OnceCell<Arc<BreezServices>> = OnceCell::new();
 static BREEZ_SERVICES_SHUTDOWN: OnceCell<mpsc::Sender<()>> = OnceCell::new();
@@ -63,9 +61,8 @@ struct BindingEventListener;
 
 impl EventListener for BindingEventListener {
     fn on_event(&self, e: BreezEvent) {
-        let s = NOTIFICATION_STREAM.get();
-        if s.is_some() {
-            s.unwrap().add(e);
+        if let Some(stream) = NOTIFICATION_STREAM.get() {
+            stream.add(e);
         }
     }
 }
@@ -124,7 +121,7 @@ pub fn init_services(
             BreezServices::init_services(config, seed, creds, Box::new(BindingEventListener {}))
                 .await?;
         BREEZ_SERVICES_INSTANCE
-            .set(breez_services.clone())
+            .set(breez_services)
             .map_err(|_| anyhow!("static node services already set"))?;
 
         Ok(())
@@ -137,7 +134,7 @@ pub fn start_node() -> Result<()> {
             rt(),
             BREEZ_SERVICES_INSTANCE
                 .get()
-                .ok_or(anyhow!("breez services instance was not initialized"))?,
+                .ok_or_else(|| anyhow!("breez services instance was not initialized"))?,
         )
         .await
     })
@@ -287,7 +284,7 @@ pub fn list_refundables() -> Result<Vec<SwapInfo>> {
     block_on(async { get_breez_services()?.list_refundables().await })
 }
 
-// construct and broadcast a refund transaction for a faile/expired swap
+// construct and broadcast a refund transaction for a failed/expired swap
 pub fn refund(swap_address: String, to_address: String, sat_per_vbyte: u32) -> Result<String> {
     block_on(async {
         get_breez_services()?
@@ -298,7 +295,7 @@ pub fn refund(swap_address: String, to_address: String, sat_per_vbyte: u32) -> R
 
 // execute developers command
 pub fn execute_command(command: String) -> Result<String> {
-    block_on(async { get_breez_services()?.execute_dev_command(&command).await })
+    block_on(async { get_breez_services()?.execute_dev_command(command).await })
 }
 
 fn get_breez_services() -> Result<&'static BreezServices> {

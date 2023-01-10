@@ -74,9 +74,9 @@ impl From<anyhow::Error> for SDKError {
 pub fn register_node(
     network: Network,
     seed: Vec<u8>,
-    config: Option<Config>,
+    _config: Option<Config>,
 ) -> Result<GreenlightCredentials> {
-    let creds = rt().block_on(BreezServices::register_node(network, seed.clone()))?;
+    let creds = rt().block_on(BreezServices::register_node(network, seed))?;
     Ok(creds)
 }
 
@@ -90,9 +90,9 @@ pub fn register_node(
 pub fn recover_node(
     network: Network,
     seed: Vec<u8>,
-    config: Option<Config>,
+    _config: Option<Config>,
 ) -> Result<GreenlightCredentials> {
-    let creds = rt().block_on(BreezServices::recover_node(network, seed.clone()))?;
+    let creds = rt().block_on(BreezServices::recover_node(network, seed))?;
     Ok(creds)
 }
 
@@ -269,7 +269,7 @@ impl BlockingBreezServices {
     }
 
     pub fn execute_dev_command(&self, command: String) -> Result<String> {
-        rt().block_on(self.breez_services.execute_dev_command(&command))
+        rt().block_on(self.breez_services.execute_dev_command(command))
     }
 
     pub fn recommended_fees(&self) -> Result<RecommendedFees, SDKError> {

@@ -16,6 +16,7 @@ mod lsp;
 mod models;
 mod persist;
 mod swap;
+#[cfg(test)]
 mod test_utils;
 
 pub use breez_services::{

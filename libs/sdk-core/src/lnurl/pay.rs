@@ -457,7 +457,7 @@ mod tests {
             inv.to_string(),
         )?;
 
-        let mock_breez_services = crate::breez_services::test::breez_services().await;
+        let mock_breez_services = crate::breez_services::tests::breez_services().await;
         match mock_breez_services
             .pay_lnurl(user_amount_sat, None, pay_req)
             .await?
@@ -480,7 +480,7 @@ mod tests {
             None,
         )?;
 
-        let mock_breez_services = crate::breez_services::test::breez_services().await;
+        let mock_breez_services = crate::breez_services::tests::breez_services().await;
         let r = mock_breez_services
             .pay_lnurl(user_amount_sat, None, pay_req)
             .await;
@@ -503,7 +503,7 @@ mod tests {
             inv.to_string(),
         )?;
 
-        let mock_breez_services = crate::breez_services::test::breez_services().await;
+        let mock_breez_services = crate::breez_services::tests::breez_services().await;
         match mock_breez_services
             .pay_lnurl(user_amount_sat, None, pay_req)
             .await?
@@ -534,7 +534,7 @@ mod tests {
             inv.to_string(),
         )?;
 
-        let mock_breez_services = crate::breez_services::test::breez_services().await;
+        let mock_breez_services = crate::breez_services::tests::breez_services().await;
         assert!(mock_breez_services
             .pay_lnurl(user_amount_sat, None, pay_req)
             .await
@@ -557,7 +557,7 @@ mod tests {
             inv.to_string(),
         )?;
 
-        let mock_breez_services = crate::breez_services::test::breez_services().await;
+        let mock_breez_services = crate::breez_services::tests::breez_services().await;
         let res = mock_breez_services
             .pay_lnurl(user_amount_sat, None, pay_req)
             .await;
@@ -587,7 +587,7 @@ mod tests {
             inv.to_string(),
         )?;
 
-        let mock_breez_services = crate::breez_services::test::breez_services().await;
+        let mock_breez_services = crate::breez_services::tests::breez_services().await;
         match mock_breez_services
             .pay_lnurl(user_amount_sat, None, pay_req)
             .await?
