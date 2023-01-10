@@ -1,21 +1,24 @@
 use std::collections::HashMap;
+use std::time::{Duration, SystemTime};
 
 use crate::breez_services::Receiver;
 use crate::chain::{ChainService, OnchainTx, RecommendedFees};
 use crate::fiat::{FiatCurrency, Rate};
-use crate::parse_invoice;
 use crate::swap::create_submarine_swap_script;
+use crate::{parse_invoice, LNInvoice, RouteHint};
 use anyhow::{anyhow, Result};
-use bitcoin::secp256k1::KeyPair;
+use bitcoin::secp256k1::ecdsa::RecoverableSignature;
+use bitcoin::secp256k1::{KeyPair, Message};
 use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
-use bitcoin_hashes::Hash;
+use bitcoin_hashes::{sha256, Hash};
 use gl_client::pb::amount::Unit;
 use gl_client::pb::{
     Amount, CloseChannelResponse, CloseChannelType, Invoice, Peer, WithdrawResponse,
 };
 use lightning::ln::PaymentSecret;
-use lightning_invoice::{Currency, InvoiceBuilder, RawInvoice};
+use lightning_invoice::{Currency, InvoiceBuilder, RawInvoice, SignedRawInvoice};
 use rand::distributions::{Alphanumeric, DistString, Standard};
+use rand::rngs::OsRng;
 use rand::{random, Rng};
 use tonic::Streaming;
 
@@ -24,7 +27,10 @@ use crate::lsp::LspInformation;
 use crate::models::{
     FeeratePreset, FiatAPI, LspAPI, NodeAPI, NodeState, Payment, Swap, SwapperAPI, SyncResponse,
 };
+use bitcoin::secp256k1::ecdsa;
 use tokio::sync::mpsc;
+//use bitcoin::secp256k1::{ecdsa::{SigningKey, Signature, signature::Signer, VerifyingKey, signature::Verifier}};
+//use rand_core::OsRng;
 
 pub struct MockSwapperAPI {}
 
@@ -158,18 +164,19 @@ impl NodeAPI for MockNodeAPI {
         description: String,
         preimage: Option<Vec<u8>>,
     ) -> Result<Invoice> {
+        let invoice = create_invoice(description.clone(), amount_sats * 1000, vec![], preimage);
         Ok(Invoice {
             label: "".to_string(),
-            description,
+            description: description.clone(),
             amount: Some(Amount {
                 unit: Some(Unit::Satoshi(amount_sats)),
             }),
             received: None,
             status: 0,
             payment_time: 0,
-            expiry_time: 0,
-            bolt11: "".to_string(),
-            payment_hash: vec![],
+            expiry_time: invoice.expiry as u32,
+            bolt11: invoice.bolt11,
+            payment_hash: hex::decode(invoice.payment_hash).unwrap(),
             payment_preimage: vec![],
         })
     }
@@ -224,7 +231,7 @@ impl NodeAPI for MockNodeAPI {
     }
 
     fn sign_invoice(&self, invoice: RawInvoice) -> Result<String> {
-        Ok("".to_string())
+        Ok(sign_invoice(invoice))
     }
 
     async fn close_peer_channels(&self, node_id: String) -> Result<CloseChannelResponse> {
@@ -270,10 +277,35 @@ impl MockNodeAPI {
 
 pub struct MockBreezServer {}
 
+impl MockBreezServer {
+    pub(crate) fn lsp_pub_key(&self) -> String {
+        "02d4e7e420d9dcf6f0206c27ecc69c400cc269b1f5f5ec856d8c9d1fc7e6d910d6".to_string()
+    }
+    pub(crate) fn lsp_id(&self) -> String {
+        "1".to_string()
+    }
+}
+
 #[tonic::async_trait]
 impl LspAPI for MockBreezServer {
     async fn list_lsps(&self, _node_pubkey: String) -> Result<Vec<LspInformation>> {
-        Ok(Vec::new())
+        Ok(vec![LspInformation {
+            id: "1".to_string(),
+            name: "test lsp".to_string(),
+            widget_url: "".to_string(),
+            pubkey: self.lsp_pub_key(),
+            host: "localhost".to_string(),
+            channel_capacity: 1000000,
+            target_conf: 1,
+            base_fee_msat: 1,
+            fee_rate: 1.0,
+            time_lock_delta: 32,
+            min_htlc_msat: 1000,
+            channel_fee_permyriad: 1000,
+            lsp_pubkey: hex::decode(self.lsp_pub_key()).unwrap(),
+            max_inactive_duration: 3600,
+            channel_minimum_fee_msat: 1,
+        }])
     }
 
     async fn register_payment(
@@ -349,4 +381,42 @@ pub fn get_test_working_dir() -> String {
     let dir = format!("{}{}", s, rng.gen::<u32>());
     std::fs::create_dir_all(dir.clone()).unwrap();
     dir
+}
+
+pub fn create_invoice(
+    description: String,
+    amount_msat: u64,
+    hints: Vec<RouteHint>,
+    invoice_preimage: Option<Vec<u8>>,
+) -> LNInvoice {
+    let preimage = invoice_preimage.map_or(rand::thread_rng().gen::<[u8; 32]>().to_vec(), |p| p);
+    let hashed = Message::from_hashed_data::<sha256::Hash>(&preimage[..]);
+    let hash = hashed.as_ref();
+
+    let mut invoice_builder = InvoiceBuilder::new(Currency::Bitcoin)
+        .description(description)
+        .payment_hash(sha256::Hash::hash(hash))
+        .timestamp(SystemTime::now())
+        .amount_milli_satoshis(amount_msat)
+        .expiry_time(Duration::new(3600, 0))
+        .payment_secret(PaymentSecret(rand::thread_rng().gen::<[u8; 32]>()))
+        .min_final_cltv_expiry(32);
+
+    for hint in hints {
+        invoice_builder = invoice_builder.private_route(hint.to_ldk_hint().unwrap());
+    }
+
+    let raw_invoice = invoice_builder.build_raw().unwrap();
+    parse_invoice(&sign_invoice(raw_invoice)).unwrap()
+}
+
+fn sign_invoice(invoice: RawInvoice) -> String {
+    let secp = Secp256k1::new();
+    let (secret_key, _) = secp.generate_keypair(&mut OsRng);
+    invoice
+        .sign(|m| -> Result<RecoverableSignature, anyhow::Error> {
+            Ok(secp.sign_ecdsa_recoverable(&m, &secret_key))
+        })
+        .unwrap()
+        .to_string()
 }

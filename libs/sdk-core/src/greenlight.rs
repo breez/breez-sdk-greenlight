@@ -651,6 +651,7 @@ mod tests {
             their_to_self_delay: 144,
             our_to_self_delay: 144,
             status: vec![],
+            alias: None,
             htlcs: vec![],
         }
     }
