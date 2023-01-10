@@ -104,8 +104,8 @@ pub extern "C" fn wire_connect_lsp(port_: i64, lsp_id: *mut wire_uint_8_list) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_lsp_info(port_: i64) {
-    wire_lsp_info_impl(port_)
+pub extern "C" fn wire_fetch_lsp_info(port_: i64, id: *mut wire_uint_8_list) {
+    wire_fetch_lsp_info_impl(port_, id)
 }
 
 #[no_mangle]

@@ -240,11 +240,11 @@ pub fn connect_lsp(lsp_id: String) -> Result<()> {
 }
 
 /// Convenience method to look up LSP info based on current LSP ID
-pub fn lsp_info() -> Result<LspInformation> {
-    block_on(async { get_breez_services()?.lsp_info().await })
+pub fn fetch_lsp_info(id: String) -> Result<Option<LspInformation>> {
+    block_on(async { get_breez_services()?.fetch_lsp_info(id).await })
 }
 
-pub fn lsp_id() -> Result<String> {
+pub fn lsp_id() -> Result<Option<String>> {
     block_on(async { get_breez_services()?.lsp_id().await })
 }
 

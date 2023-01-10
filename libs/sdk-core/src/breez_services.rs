@@ -259,15 +259,12 @@ impl BreezServices {
         Ok(())
     }
 
-    pub async fn lsp_id(&self) -> Result<String> {
-        self.persister
-            .get_lsp_id()?
-            .ok_or_else(|| anyhow!("No LSP ID found"))
+    pub async fn lsp_id(&self) -> Result<Option<String>> {
+        self.persister.get_lsp_id()
     }
 
-    /// Convenience method to look up LSP info based on current LSP ID
-    pub async fn lsp_info(&self) -> Result<LspInformation> {
-        get_lsp(self.persister.clone(), self.lsp_api.clone()).await
+    pub async fn fetch_lsp_info(&self, id: String) -> Result<Option<LspInformation>> {
+        get_lsp_by_id(self.persister.clone(), self.lsp_api.clone(), id.as_str()).await
     }
 
     pub async fn close_lsp_channels(&self) -> Result<()> {
@@ -386,6 +383,11 @@ impl BreezServices {
             self.event_listener.as_ref().unwrap().on_event(e.clone())
         }
         Ok(())
+    }
+
+    /// Convenience method to look up LSP info based on current LSP ID
+    async fn lsp_info(&self) -> Result<LspInformation> {
+        get_lsp(self.persister.clone(), self.lsp_api.clone()).await
     }
 
     pub async fn set_shutdown_sender(&self, sender: mpsc::Sender<()>) {
@@ -849,19 +851,28 @@ async fn get_lsp(persister: Arc<SqliteStorage>, lsp: Arc<dyn LspAPI>) -> Result<
         .ok_or("No LSP ID found")
         .map_err(|err| anyhow!(err))?;
 
+    get_lsp_by_id(persister, lsp, lsp_id.as_str())
+        .await?
+        .ok_or_else(|| anyhow!("No LSP found for id {}", lsp_id))
+}
+
+async fn get_lsp_by_id(
+    persister: Arc<SqliteStorage>,
+    lsp: Arc<dyn LspAPI>,
+    lsp_id: &str,
+) -> Result<Option<LspInformation>> {
     let node_pubkey = persister
         .get_node_state()?
         .ok_or("No NodeState found")
         .map_err(|err| anyhow!(err))?
         .id;
 
-    lsp.list_lsps(node_pubkey)
+    Ok(lsp
+        .list_lsps(node_pubkey)
         .await?
         .iter()
-        .find(|&lsp| lsp.id == lsp_id)
-        .ok_or("No LSP found for given LSP ID")
-        .map_err(|err| anyhow!(err))
-        .cloned()
+        .find(|&lsp| lsp.id.as_str() == lsp_id)
+        .cloned())
 }
 
 #[cfg(test)]
