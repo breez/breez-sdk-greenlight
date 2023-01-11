@@ -13,8 +13,8 @@ use crate::lnurl::withdraw::model::LnUrlWithdrawCallbackStatus;
 use crate::lnurl::withdraw::validate_lnurl_withdraw;
 use crate::lsp::LspInformation;
 use crate::models::{
-    parse_short_channel_id, ChannelState, ClosesChannelPaymentDetails, Config, FiatAPI,
-    GreenlightCredentials, LspAPI, Network, NodeAPI, NodeState, Payment, PaymentDetails,
+    parse_short_channel_id, ChannelState, ClosesChannelPaymentDetails, Config, EnvironmentType,
+    FiatAPI, GreenlightCredentials, LspAPI, Network, NodeAPI, NodeState, Payment, PaymentDetails,
     PaymentType, PaymentTypeFilter, SwapInfo, SwapperAPI,
 };
 use crate::persist::db::SqliteStorage;
