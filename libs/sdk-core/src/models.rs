@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Result};
+use gl_client::pb::ListFundsOutput;
 use gl_client::pb::Peer;
 use gl_client::pb::WithdrawResponse;
 use gl_client::pb::{CloseChannelResponse, Invoice};
@@ -219,6 +220,7 @@ pub struct NodeState {
     pub block_height: u32,
     pub channels_balance_msat: u64,
     pub onchain_balance_msat: u64,
+    pub utxos: Vec<UnspentTransactionOutput>,
     pub max_payable_msat: u64,
     pub max_receivable_msat: u64,
     pub max_single_payment_amount_msat: u64,
@@ -352,6 +354,15 @@ pub fn parse_short_channel_id(id_str: &str) -> Result<u64> {
 
     Ok((block_num & 0xFFFFFF) << 40 | (tx_num & 0xFFFFFF) << 16 | (tx_out & 0xFFFF))
 }
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
+pub struct UnspentTransactionOutput {
+    pub txid: Vec<u8>,
+    pub outnum: u32,
+    pub amount_millisatoshi: u64,
+    pub address: String,
+}
+
 #[cfg(test)]
 mod tests {
     use prost::Message;

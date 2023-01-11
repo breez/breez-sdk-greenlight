@@ -58,6 +58,7 @@ use crate::models::PaymentType;
 use crate::models::PaymentTypeFilter;
 use crate::models::SwapInfo;
 use crate::models::SwapStatus;
+use crate::models::UnspentTransactionOutput;
 
 // Section: wire functions
 
@@ -886,6 +887,7 @@ impl support::IntoDart for NodeState {
             self.block_height.into_dart(),
             self.channels_balance_msat.into_dart(),
             self.onchain_balance_msat.into_dart(),
+            self.utxos.into_dart(),
             self.max_payable_msat.into_dart(),
             self.max_receivable_msat.into_dart(),
             self.max_single_payment_amount_msat.into_dart(),
@@ -1036,6 +1038,19 @@ impl support::IntoDart for Symbol {
     }
 }
 impl support::IntoDartExceptPrimitive for Symbol {}
+
+impl support::IntoDart for UnspentTransactionOutput {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.txid.into_dart(),
+            self.outnum.into_dart(),
+            self.amount_millisatoshi.into_dart(),
+            self.address.into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for UnspentTransactionOutput {}
 
 impl support::IntoDart for UrlSuccessActionData {
     fn into_dart(self) -> support::DartAbi {
