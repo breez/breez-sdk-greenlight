@@ -139,11 +139,11 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kConnectLspConstMeta;
 
   /// Convenience method to look up LSP info based on current LSP ID
-  Future<LspInformation> lspInfo({dynamic hint});
+  Future<LspInformation?> fetchLspInfo({required String id, dynamic hint});
 
-  FlutterRustBridgeTaskConstMeta get kLspInfoConstMeta;
+  FlutterRustBridgeTaskConstMeta get kFetchLspInfoConstMeta;
 
-  Future<String> lspId({dynamic hint});
+  Future<String?> lspId({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kLspIdConstMeta;
 
@@ -1116,26 +1116,27 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["lspId"],
       );
 
-  Future<LspInformation> lspInfo({dynamic hint}) {
+  Future<LspInformation?> fetchLspInfo({required String id, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(id);
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_lsp_info(port_),
-      parseSuccessData: _wire2api_lsp_information,
-      constMeta: kLspInfoConstMeta,
-      argValues: [],
+      callFfi: (port_) => _platform.inner.wire_fetch_lsp_info(port_, arg0),
+      parseSuccessData: _wire2api_opt_box_autoadd_lsp_information,
+      constMeta: kFetchLspInfoConstMeta,
+      argValues: [id],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kLspInfoConstMeta =>
+  FlutterRustBridgeTaskConstMeta get kFetchLspInfoConstMeta =>
       const FlutterRustBridgeTaskConstMeta(
-        debugName: "lsp_info",
-        argNames: [],
+        debugName: "fetch_lsp_info",
+        argNames: ["id"],
       );
 
-  Future<String> lspId({dynamic hint}) {
+  Future<String?> lspId({dynamic hint}) {
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_lsp_id(port_),
-      parseSuccessData: _wire2api_String,
+      parseSuccessData: _wire2api_opt_String,
       constMeta: kLspIdConstMeta,
       argValues: [],
       hint: hint,
@@ -1495,6 +1496,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   LnUrlWithdrawRequestData _wire2api_box_autoadd_ln_url_withdraw_request_data(
       dynamic raw) {
     return _wire2api_ln_url_withdraw_request_data(raw);
+  }
+
+  LspInformation _wire2api_box_autoadd_lsp_information(dynamic raw) {
+    return _wire2api_lsp_information(raw);
   }
 
   MessageSuccessActionData _wire2api_box_autoadd_message_success_action_data(
@@ -1899,6 +1904,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   bool? _wire2api_opt_box_autoadd_bool(dynamic raw) {
     return raw == null ? null : _wire2api_box_autoadd_bool(raw);
+  }
+
+  LspInformation? _wire2api_opt_box_autoadd_lsp_information(dynamic raw) {
+    return raw == null ? null : _wire2api_box_autoadd_lsp_information(raw);
   }
 
   NodeState? _wire2api_opt_box_autoadd_node_state(dynamic raw) {
@@ -2635,19 +2644,22 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_connect_lsp = _wire_connect_lspPtr
       .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
-  void wire_lsp_info(
+  void wire_fetch_lsp_info(
     int port_,
+    ffi.Pointer<wire_uint_8_list> id,
   ) {
-    return _wire_lsp_info(
+    return _wire_fetch_lsp_info(
       port_,
+      id,
     );
   }
 
-  late final _wire_lsp_infoPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
-          'wire_lsp_info');
-  late final _wire_lsp_info =
-      _wire_lsp_infoPtr.asFunction<void Function(int)>();
+  late final _wire_fetch_lsp_infoPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Int64,
+              ffi.Pointer<wire_uint_8_list>)>>('wire_fetch_lsp_info');
+  late final _wire_fetch_lsp_info = _wire_fetch_lsp_infoPtr
+      .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
   void wire_lsp_id(
     int port_,

@@ -337,10 +337,10 @@ interface BlockingBreezServices {
    void connect_lsp(string lsp_id);
 
    [Throws=SDKError]
-   LspInformation lsp_info();
+   LspInformation? fetch_lsp_info(string lsp_id);
 
    [Throws=SDKError]
-   string lsp_id();   
+   string? lsp_id();   
 
    [Throws=SDKError]
    void close_lsp_channels(); 

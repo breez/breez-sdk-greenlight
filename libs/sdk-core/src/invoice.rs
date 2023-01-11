@@ -21,7 +21,7 @@ pub struct LNInvoice {
     pub payment_secret: Vec<u8>,
 }
 
-#[derive(Default, Debug, PartialEq)]
+#[derive(Default, Debug, PartialEq, Eq)]
 pub struct RouteHintHop {
     /// The node_id of the non-target end of the route
     pub src_node_id: String,
@@ -39,7 +39,7 @@ pub struct RouteHintHop {
     pub htlc_maximum_msat: Option<u64>,
 }
 
-#[derive(Default, Debug, PartialEq)]
+#[derive(Default, Debug, PartialEq, Eq)]
 pub struct RouteHint {
     pub hops: Vec<RouteHintHop>,
 }

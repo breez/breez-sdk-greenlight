@@ -184,7 +184,9 @@ class BreezBridge {
   }
 
   /// Convenience method to look up LSP info
-  Future<LspInformation> getLspInfo() async => await _lnToolkit.lspInfo();
+  Future<LspInformation?> fetchLspInfo(String lspId) async => await _lnToolkit.fetchLspInfo(id: lspId);
+
+  Future<String?> getLspId() async => await _lnToolkit.lspId();
 
   /// Fetch live rates of fiat currencies
   Future<Map<String, Rate>> fetchFiatRates() async {
