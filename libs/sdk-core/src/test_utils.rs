@@ -5,7 +5,7 @@ use crate::breez_services::Receiver;
 use crate::chain::{ChainService, OnchainTx, RecommendedFees};
 use crate::fiat::{FiatCurrency, Rate};
 use crate::swap::create_submarine_swap_script;
-use crate::{parse_invoice, LNInvoice, RouteHint};
+use crate::{parse_invoice, Config, LNInvoice, RouteHint};
 use anyhow::{anyhow, Result};
 use bitcoin::secp256k1::ecdsa::RecoverableSignature;
 use bitcoin::secp256k1::{KeyPair, Message};
@@ -364,9 +364,9 @@ pub fn rand_vec_u8(len: usize) -> Vec<u8> {
 }
 
 pub fn create_test_config() -> crate::models::Config {
-    crate::models::Config {
+    Config {
         working_dir: get_test_working_dir(),
-        ..Default::default()
+        ..Config::staging()
     }
 }
 

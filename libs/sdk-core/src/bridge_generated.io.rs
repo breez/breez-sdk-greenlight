@@ -202,6 +202,11 @@ pub extern "C" fn wire_recommended_fees(port_: i64) {
     wire_recommended_fees_impl(port_)
 }
 
+#[no_mangle]
+pub extern "C" fn wire_default_config(port_: i64, config_type: i32) {
+    wire_default_config_impl(port_, config_type)
+}
+
 // Section: allocate functions
 
 #[no_mangle]
@@ -293,6 +298,7 @@ impl Wire2Api<Config> for wire_Config {
         }
     }
 }
+
 impl Wire2Api<GreenlightCredentials> for wire_GreenlightCredentials {
     fn wire2api(self) -> GreenlightCredentials {
         GreenlightCredentials {

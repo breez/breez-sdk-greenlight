@@ -13,8 +13,8 @@ use crate::lnurl::withdraw::model::LnUrlWithdrawCallbackStatus;
 use crate::lnurl::withdraw::validate_lnurl_withdraw;
 use crate::lsp::LspInformation;
 use crate::models::{
-    parse_short_channel_id, ChannelState, ClosesChannelPaymentDetails, Config, FiatAPI,
-    GreenlightCredentials, LspAPI, Network, NodeAPI, NodeState, Payment, PaymentDetails,
+    parse_short_channel_id, ChannelState, ClosesChannelPaymentDetails, Config, EnvironmentType,
+    FiatAPI, GreenlightCredentials, LspAPI, Network, NodeAPI, NodeState, Payment, PaymentDetails,
     PaymentType, PaymentTypeFilter, SwapInfo, SwapperAPI,
 };
 use crate::persist::db::SqliteStorage;
@@ -128,15 +128,13 @@ impl BreezServices {
     }
 
     pub async fn init_services(
-        config: Option<Config>,
+        config: Config,
         seed: Vec<u8>,
         creds: GreenlightCredentials,
         event_listener: Box<dyn EventListener>,
     ) -> Result<Arc<BreezServices>> {
-        let sdk_config = config.unwrap_or_default();
-
         // create the node services instance and set it globally
-        BreezServicesBuilder::new(sdk_config)
+        BreezServicesBuilder::new(config)
             .greenlight_credentials(creds, seed)
             .build(Some(event_listener))
     }
@@ -400,6 +398,13 @@ impl BreezServices {
 
     pub async fn recommended_fees(&self) -> Result<RecommendedFees> {
         self.chain_service.recommended_fees().await
+    }
+
+    pub fn default_config(env_type: EnvironmentType) -> Config {
+        match env_type {
+            EnvironmentType::Production => Config::production(),
+            EnvironmentType::Staging => Config::staging(),
+        }
     }
 }
 
@@ -895,14 +900,6 @@ pub(crate) mod tests {
     use crate::{persist, PaymentType};
 
     use super::{PaymentReceiver, Receiver};
-
-    #[test]
-    fn test_config() {
-        // Before the state is initialized, the config defaults to using ::default() for its values
-        let config = Config::default();
-        assert_eq!(config.breezserver, "https://bs1-st.breez.technology:443");
-        assert_eq!(config.mempoolspace_url, "https://mempool.space");
-    }
 
     #[tokio::test]
     async fn test_node_state() -> Result<(), Box<dyn std::error::Error>> {

@@ -24,7 +24,7 @@ abstract class BreezSdkCore {
   Future<GreenlightCredentials> registerNode(
       {required Network network,
       required Uint8List seed,
-      Config? config,
+      required Config config,
       dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kRegisterNodeConstMeta;
@@ -39,13 +39,13 @@ abstract class BreezSdkCore {
   Future<GreenlightCredentials> recoverNode(
       {required Network network,
       required Uint8List seed,
-      Config? config,
+      required Config config,
       dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kRecoverNodeConstMeta;
 
   /// init_services initialized the global NodeService, schedule the node to run in the cloud and
-  /// run the signer. This must be called in order to start comunicate with the node
+  /// run the signer. This must be called in order to start communicate with the node
   ///
   /// # Arguments
   ///
@@ -54,7 +54,7 @@ abstract class BreezSdkCore {
   /// * `creds` - The greenlight credentials
   ///
   Future<void> initServices(
-      {Config? config,
+      {required Config config,
       required Uint8List seed,
       required GreenlightCredentials creds,
       dynamic hint});
@@ -231,6 +231,12 @@ abstract class BreezSdkCore {
   Future<RecommendedFees> recommendedFees({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kRecommendedFeesConstMeta;
+
+  /// Fetches the default config, depending on the environment type
+  Future<Config> defaultConfig(
+      {required EnvironmentType configType, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kDefaultConfigConstMeta;
 }
 
 class BitcoinAddressData {
@@ -279,6 +285,10 @@ class ClosesChannelPaymentDetails {
   });
 }
 
+/// Configuration for the Breez Services.
+///
+/// Use [Config::production] or [Config::staging] for default configs of the different supported
+/// environments.
 class Config {
   final String breezserver;
   final String mempoolspaceUrl;
@@ -317,6 +327,12 @@ class CurrencyInfo {
     this.localizedName,
     this.localeOverrides,
   });
+}
+
+/// Indicates the different kinds of supported environments for [crate::BreezServices]
+enum EnvironmentType {
+  Production,
+  Staging,
 }
 
 class FiatCurrency {
@@ -835,11 +851,11 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   Future<GreenlightCredentials> registerNode(
       {required Network network,
       required Uint8List seed,
-      Config? config,
+      required Config config,
       dynamic hint}) {
     var arg0 = api2wire_network(network);
     var arg1 = _platform.api2wire_uint_8_list(seed);
-    var arg2 = _platform.api2wire_opt_box_autoadd_config(config);
+    var arg2 = _platform.api2wire_box_autoadd_config(config);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) =>
           _platform.inner.wire_register_node(port_, arg0, arg1, arg2),
@@ -859,11 +875,11 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   Future<GreenlightCredentials> recoverNode(
       {required Network network,
       required Uint8List seed,
-      Config? config,
+      required Config config,
       dynamic hint}) {
     var arg0 = api2wire_network(network);
     var arg1 = _platform.api2wire_uint_8_list(seed);
-    var arg2 = _platform.api2wire_opt_box_autoadd_config(config);
+    var arg2 = _platform.api2wire_box_autoadd_config(config);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) =>
           _platform.inner.wire_recover_node(port_, arg0, arg1, arg2),
@@ -881,11 +897,11 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       );
 
   Future<void> initServices(
-      {Config? config,
+      {required Config config,
       required Uint8List seed,
       required GreenlightCredentials creds,
       dynamic hint}) {
-    var arg0 = _platform.api2wire_opt_box_autoadd_config(config);
+    var arg0 = _platform.api2wire_box_autoadd_config(config);
     var arg1 = _platform.api2wire_uint_8_list(seed);
     var arg2 = _platform.api2wire_box_autoadd_greenlight_credentials(creds);
     return _platform.executeNormal(FlutterRustBridgeTask(
@@ -1390,6 +1406,24 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: [],
       );
 
+  Future<Config> defaultConfig(
+      {required EnvironmentType configType, dynamic hint}) {
+    var arg0 = api2wire_environment_type(configType);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_default_config(port_, arg0),
+      parseSuccessData: _wire2api_config,
+      constMeta: kDefaultConfigConstMeta,
+      argValues: [configType],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kDefaultConfigConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "default_config",
+        argNames: ["configType"],
+      );
+
   void dispose() {
     _platform.dispose();
   }
@@ -1524,6 +1558,21 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       shortChannelId: _wire2api_String(arr[0]),
       state: _wire2api_channel_state(arr[1]),
       fundingTxid: _wire2api_String(arr[2]),
+    );
+  }
+
+  Config _wire2api_config(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    return Config(
+      breezserver: _wire2api_String(arr[0]),
+      mempoolspaceUrl: _wire2api_String(arr[1]),
+      workingDir: _wire2api_String(arr[2]),
+      network: _wire2api_network(arr[3]),
+      paymentTimeoutSec: _wire2api_u32(arr[4]),
+      defaultLspId: _wire2api_opt_String(arr[5]),
+      apiKey: _wire2api_opt_String(arr[6]),
     );
   }
 
@@ -2065,6 +2114,11 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 // Section: api2wire
 
 @protected
+int api2wire_environment_type(EnvironmentType raw) {
+  return api2wire_i32(raw.index);
+}
+
+@protected
 int api2wire_i32(int raw) {
   return raw;
 }
@@ -2160,11 +2214,6 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
-  ffi.Pointer<wire_Config> api2wire_opt_box_autoadd_config(Config? raw) {
-    return raw == null ? ffi.nullptr : api2wire_box_autoadd_config(raw);
-  }
-
-  @protected
   ffi.Pointer<ffi.Int64> api2wire_opt_box_autoadd_i64(int? raw) {
     return raw == null ? ffi.nullptr : api2wire_box_autoadd_i64(raw);
   }
@@ -2244,11 +2293,6 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.default_description = api2wire_String(apiObj.defaultDescription);
     wireObj.min_withdrawable = api2wire_u64(apiObj.minWithdrawable);
     wireObj.max_withdrawable = api2wire_u64(apiObj.maxWithdrawable);
-  }
-
-  void _api_fill_to_wire_opt_box_autoadd_config(
-      Config? apiObj, ffi.Pointer<wire_Config> wireObj) {
-    if (apiObj != null) _api_fill_to_wire_box_autoadd_config(apiObj, wireObj);
   }
 }
 
@@ -2871,6 +2915,22 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
           'wire_recommended_fees');
   late final _wire_recommended_fees =
       _wire_recommended_feesPtr.asFunction<void Function(int)>();
+
+  void wire_default_config(
+    int port_,
+    int config_type,
+  ) {
+    return _wire_default_config(
+      port_,
+      config_type,
+    );
+  }
+
+  late final _wire_default_configPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Int32)>>(
+          'wire_default_config');
+  late final _wire_default_config =
+      _wire_default_configPtr.asFunction<void Function(int, int)>();
 
   ffi.Pointer<wire_Config> new_box_autoadd_config_0() {
     return _new_box_autoadd_config_0();

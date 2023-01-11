@@ -10,8 +10,8 @@ use anyhow::{anyhow, Result};
 use bip39::{Language, Mnemonic, MnemonicType, Seed};
 use breez_sdk_core::InputType::LnUrlWithdraw;
 use breez_sdk_core::{
-    parse, BreezEvent, BreezServices, EventListener, GreenlightCredentials, InputType::LnUrlPay,
-    LspInformation, Network, PaymentTypeFilter,
+    parse, BreezEvent, BreezServices, EnvironmentType, EventListener, GreenlightCredentials,
+    InputType::LnUrlPay, LspInformation, Network, PaymentTypeFilter,
 };
 use env_logger::Env;
 use once_cell::sync::{Lazy, OnceCell};
@@ -79,7 +79,7 @@ impl EventListener for CliEventListener {
 
 async fn init_sdk(seed: &[u8], creds: &GreenlightCredentials) -> Result<()> {
     let service = BreezServices::init_services(
-        None,
+        BreezServices::default_config(EnvironmentType::Production),
         seed.to_vec(),
         creds.clone(),
         Box::new(CliEventListener {}),

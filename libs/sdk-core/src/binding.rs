@@ -22,7 +22,7 @@ use crate::models::{
 use crate::input_parser::InputType;
 use crate::invoice::{self};
 use crate::lnurl::pay::model::LnUrlPayResult;
-use crate::LnUrlWithdrawRequestData;
+use crate::{EnvironmentType, LnUrlWithdrawRequestData};
 
 static BREEZ_SERVICES_INSTANCE: OnceCell<Arc<BreezServices>> = OnceCell::new();
 static BREEZ_SERVICES_SHUTDOWN: OnceCell<mpsc::Sender<()>> = OnceCell::new();
@@ -77,7 +77,7 @@ impl EventListener for BindingEventListener {
 pub fn register_node(
     network: Network,
     seed: Vec<u8>,
-    config: Option<Config>,
+    config: Config,
 ) -> Result<GreenlightCredentials> {
     let creds = block_on(BreezServices::register_node(network, seed.clone()))?;
     init_services(config, seed, creds.clone())?;
@@ -94,7 +94,7 @@ pub fn register_node(
 pub fn recover_node(
     network: Network,
     seed: Vec<u8>,
-    config: Option<Config>,
+    config: Config,
 ) -> Result<GreenlightCredentials> {
     let creds = block_on(BreezServices::recover_node(network, seed.clone()))?;
     init_services(config, seed, creds.clone())?;
@@ -103,7 +103,7 @@ pub fn recover_node(
 }
 
 /// init_services initialized the global NodeService, schedule the node to run in the cloud and
-/// run the signer. This must be called in order to start comunicate with the node
+/// run the signer. This must be called in order to start communicate with the node
 ///
 /// # Arguments
 ///
@@ -111,11 +111,7 @@ pub fn recover_node(
 /// * `seed` - The node private key
 /// * `creds` - The greenlight credentials
 ///
-pub fn init_services(
-    config: Option<Config>,
-    seed: Vec<u8>,
-    creds: GreenlightCredentials,
-) -> Result<()> {
+pub fn init_services(config: Config, seed: Vec<u8>, creds: GreenlightCredentials) -> Result<()> {
     block_on(async move {
         let breez_services =
             BreezServices::init_services(config, seed, creds, Box::new(BindingEventListener {}))
@@ -362,4 +358,9 @@ pub fn mnemonic_to_seed(phrase: String) -> Result<Vec<u8>> {
 /// Fetches the current recommended fees
 pub fn recommended_fees() -> Result<RecommendedFees> {
     block_on(async { get_breez_services()?.recommended_fees().await })
+}
+
+/// Fetches the default config, depending on the environment type
+pub fn default_config(config_type: EnvironmentType) -> Config {
+    BreezServices::default_config(config_type)
 }
