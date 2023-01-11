@@ -1,7 +1,7 @@
 use crate::invoice::parse_invoice;
 use crate::models::{
-    Config, FeeratePreset, GreenlightCredentials, LnPaymentDetails, Network, NodeAPI, NodeState,
-    PaymentDetails, PaymentType, SyncResponse, UnspentTransactionOutput,
+    Config, GreenlightCredentials, LnPaymentDetails, Network, NodeAPI, NodeState, PaymentDetails,
+    PaymentType, SyncResponse, UnspentTransactionOutput,
 };
 
 use anyhow::{anyhow, Result};
@@ -225,20 +225,21 @@ impl NodeAPI for Greenlight {
         // Collect utxos from onchain funds
         let utxos = onchain_funds
             .iter()
-            .map(|listFundsOutput| match &listFundsOutput.output {
-                Some(output) => Some(UnspentTransactionOutput {
-                    txid: output.txid.clone(),
-                    outnum: output.outnum,
-                    amount_millisatoshi: match &listFundsOutput.amount {
-                        Some(amount) => amount_to_msat(amount),
-                        None => 0,
-                    },
-                    address: listFundsOutput.address.clone(),
-                }),
-                None => None,
+            .filter_map(|list_funds_output| {
+                list_funds_output
+                    .output
+                    .as_ref()
+                    .map(|output| UnspentTransactionOutput {
+                        txid: output.txid.clone(),
+                        outnum: output.outnum,
+                        amount_millisatoshi: list_funds_output
+                            .amount
+                            .as_ref()
+                            .map(amount_to_msat)
+                            .unwrap_or_default(),
+                        address: list_funds_output.address.clone(),
+                    })
             })
-            .filter(|it| it.is_some())
-            .map(|it| it.unwrap())
             .collect();
 
         // calculate payment limits and inbound liquidity
@@ -262,7 +263,7 @@ impl NodeAPI for Greenlight {
             block_height: node_info.blockheight,
             channels_balance_msat: channels_balance,
             onchain_balance_msat: onchain_balance,
-            utxos: utxos,
+            utxos,
             max_payable_msat: max_payable,
             max_receivable_msat: max_allowed_to_receive_msats,
             max_single_payment_amount_msat: MAX_PAYMENT_AMOUNT_MSAT,
