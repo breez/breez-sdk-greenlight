@@ -6,13 +6,13 @@ use breez_sdk_core::binding::default_config;
 use breez_sdk_core::{
     mnemonic_to_seed as sdk_mnemonic_to_seed, parse as sdk_parse_input,
     parse_invoice as sdk_parse_invoice, BitcoinAddressData, BreezEvent, BreezServices,
-    ChannelState, ClosesChannelPaymentDetails, Config, ConfigType, CurrencyInfo, EventListener,
-    FeeratePreset, FiatCurrency, GreenlightCredentials, InputType, InvoicePaidDetails, LNInvoice,
-    LnPaymentDetails, LnUrlAuthRequestData, LnUrlErrorData, LnUrlPayRequestData,
-    LnUrlWithdrawCallbackStatus, LnUrlWithdrawRequestData, LocaleOverrides, LocalizedName,
-    LogEntry, LspInformation, MetadataItem, Network, NodeState, Payment, PaymentDetails,
-    PaymentType, PaymentTypeFilter, Rate, RecommendedFees, RouteHint, RouteHintHop, SwapInfo,
-    SwapStatus, Symbol,
+    ChannelState, ClosesChannelPaymentDetails, Config, CurrencyInfo, EnvironmentType,
+    EventListener, FeeratePreset, FiatCurrency, GreenlightCredentials, InputType,
+    InvoicePaidDetails, LNInvoice, LnPaymentDetails, LnUrlAuthRequestData, LnUrlErrorData,
+    LnUrlPayRequestData, LnUrlWithdrawCallbackStatus, LnUrlWithdrawRequestData, LocaleOverrides,
+    LocalizedName, LogEntry, LspInformation, MetadataItem, Network, NodeState, Payment,
+    PaymentDetails, PaymentType, PaymentTypeFilter, Rate, RecommendedFees, RouteHint, RouteHintHop,
+    SwapInfo, SwapStatus, Symbol,
 };
 use log::Metadata;
 use log::Record;

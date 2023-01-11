@@ -13,7 +13,7 @@ enum SDKError {
   "Error",
 };
 
-enum ConfigType {
+enum EnvironmentType {
     "Production",
     "Staging",
 };
@@ -384,5 +384,5 @@ namespace breez_sdk {
  [Throws=SDKError]
  sequence<u8> mnemonic_to_seed(string phrase);
 
- Config default_config(ConfigType config_type);
+ Config default_config(EnvironmentType env_type);
 };

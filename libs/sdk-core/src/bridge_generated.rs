@@ -46,7 +46,7 @@ use crate::lsp::LspInformation;
 use crate::models::ChannelState;
 use crate::models::ClosesChannelPaymentDetails;
 use crate::models::Config;
-use crate::models::ConfigType;
+use crate::models::EnvironmentType;
 use crate::models::GreenlightCredentials;
 use crate::models::LnPaymentDetails;
 use crate::models::LogEntry;
@@ -480,7 +480,7 @@ fn wire_recommended_fees_impl(port_: MessagePort) {
 }
 fn wire_default_config_impl(
     port_: MessagePort,
-    config_type: impl Wire2Api<ConfigType> + UnwindSafe,
+    config_type: impl Wire2Api<EnvironmentType> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -529,12 +529,12 @@ impl Wire2Api<u64> for *mut u64 {
     }
 }
 
-impl Wire2Api<ConfigType> for i32 {
-    fn wire2api(self) -> ConfigType {
+impl Wire2Api<EnvironmentType> for i32 {
+    fn wire2api(self) -> EnvironmentType {
         match self {
-            0 => ConfigType::Production,
-            1 => ConfigType::Staging,
-            _ => unreachable!("Invalid variant for ConfigType: {}", self),
+            0 => EnvironmentType::Production,
+            1 => EnvironmentType::Staging,
+            _ => unreachable!("Invalid variant for EnvironmentType: {}", self),
         }
     }
 }

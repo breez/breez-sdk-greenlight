@@ -104,17 +104,8 @@ pub struct LogEntry {
 
 /// Configuration for the Breez Services.
 ///
-/// You can use the defaults with `Config::default()`.
-///
-/// If you wish to only set a few fields but otherwise use the defaults, use a construct like:
-/// ```
-/// use breez_sdk_core::Config;
-///
-/// let config = Config {
-///     mempoolspace_url: "https://my.mempool.space".to_string(),
-///     ..Config::default()
-/// };
-/// ```
+/// Use [Config::production] or [Config::staging] for default configs of the different supported
+/// environments.
 #[derive(Clone)]
 pub struct Config {
     pub breezserver: String,
@@ -126,8 +117,21 @@ pub struct Config {
     pub api_key: Option<String>,
 }
 
-impl Default for Config {
-    fn default() -> Self {
+impl Config {
+    pub(crate) fn production() -> Self {
+        Config {
+            breezserver: "https://bs1-st.breez.technology:443".to_string(),
+            mempoolspace_url: "https://mempool.space".to_string(),
+            working_dir: ".".to_string(),
+            network: Bitcoin,
+            payment_timeout_sec: 30,
+            default_lsp_id: Some(String::from("ea51d025-042d-456c-8325-63e430797481")),
+            api_key: None,
+        }
+    }
+
+    pub(crate) fn staging() -> Self {
+        // TODO Update with staging values
         Config {
             breezserver: "https://bs1-st.breez.technology:443".to_string(),
             mempoolspace_url: "https://mempool.space".to_string(),
@@ -142,7 +146,7 @@ impl Default for Config {
 
 /// Indicates the different kinds of supported environments for [crate::BreezServices]
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum ConfigType {
+pub enum EnvironmentType {
     Production,
     Staging,
 }

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::breez_services::Receiver;
 use crate::chain::{ChainService, OnchainTx, RecommendedFees};
 use crate::fiat::{FiatCurrency, Rate};
-use crate::parse_invoice;
+use crate::{Config, parse_invoice};
 use crate::swap::create_submarine_swap_script;
 use anyhow::{anyhow, Result};
 use bitcoin::secp256k1::KeyPair;
@@ -332,9 +332,9 @@ pub fn rand_vec_u8(len: usize) -> Vec<u8> {
 }
 
 pub fn create_test_config() -> crate::models::Config {
-    crate::models::Config {
+    Config {
         working_dir: get_test_working_dir(),
-        ..Default::default()
+        ..Config::staging()
     }
 }
 

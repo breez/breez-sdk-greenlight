@@ -22,7 +22,7 @@ use crate::models::{
 use crate::input_parser::InputType;
 use crate::invoice::{self};
 use crate::lnurl::pay::model::LnUrlPayResult;
-use crate::{ConfigType, LnUrlWithdrawRequestData};
+use crate::{EnvironmentType, LnUrlWithdrawRequestData};
 
 static BREEZ_SERVICES_INSTANCE: OnceCell<Arc<BreezServices>> = OnceCell::new();
 static BREEZ_SERVICES_SHUTDOWN: OnceCell<mpsc::Sender<()>> = OnceCell::new();
@@ -361,6 +361,6 @@ pub fn recommended_fees() -> Result<RecommendedFees> {
 }
 
 /// Fetches the default config, depending on the environment type
-pub fn default_config(config_type: ConfigType) -> Config {
+pub fn default_config(config_type: EnvironmentType) -> Config {
     BreezServices::default_config(config_type)
 }

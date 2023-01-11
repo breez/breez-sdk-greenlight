@@ -233,7 +233,8 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kRecommendedFeesConstMeta;
 
   /// Fetches the default config, depending on the environment type
-  Future<Config> defaultConfig({required ConfigType configType, dynamic hint});
+  Future<Config> defaultConfig(
+      {required EnvironmentType configType, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kDefaultConfigConstMeta;
 }
@@ -286,17 +287,8 @@ class ClosesChannelPaymentDetails {
 
 /// Configuration for the Breez Services.
 ///
-/// You can use the defaults with `Config::default()`.
-///
-/// If you wish to only set a few fields but otherwise use the defaults, use a construct like:
-/// ```
-/// use breez_sdk_core::Config;
-///
-/// let config = Config {
-///     mempoolspace_url: "https://my.mempool.space".to_string(),
-///     ..Config::default()
-/// };
-/// ```
+/// Use [Config::production] or [Config::staging] for default configs of the different supported
+/// environments.
 class Config {
   final String breezserver;
   final String mempoolspaceUrl;
@@ -317,12 +309,6 @@ class Config {
   });
 }
 
-/// Indicates the different kinds of supported environments for [crate::BreezServices]
-enum ConfigType {
-  Production,
-  Staging,
-}
-
 class CurrencyInfo {
   final String name;
   final int fractionSize;
@@ -341,6 +327,12 @@ class CurrencyInfo {
     this.localizedName,
     this.localeOverrides,
   });
+}
+
+/// Indicates the different kinds of supported environments for [crate::BreezServices]
+enum EnvironmentType {
+  Production,
+  Staging,
 }
 
 class FiatCurrency {
@@ -1413,8 +1405,9 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: [],
       );
 
-  Future<Config> defaultConfig({required ConfigType configType, dynamic hint}) {
-    var arg0 = api2wire_config_type(configType);
+  Future<Config> defaultConfig(
+      {required EnvironmentType configType, dynamic hint}) {
+    var arg0 = api2wire_environment_type(configType);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_default_config(port_, arg0),
       parseSuccessData: _wire2api_config,
@@ -2112,7 +2105,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 // Section: api2wire
 
 @protected
-int api2wire_config_type(ConfigType raw) {
+int api2wire_environment_type(EnvironmentType raw) {
   return api2wire_i32(raw.index);
 }
 
