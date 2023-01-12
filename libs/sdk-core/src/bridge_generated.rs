@@ -46,6 +46,7 @@ use crate::lsp::LspInformation;
 use crate::models::ChannelState;
 use crate::models::ClosesChannelPaymentDetails;
 use crate::models::Config;
+use crate::models::EnvironmentType;
 use crate::models::GreenlightCredentials;
 use crate::models::LnPaymentDetails;
 use crate::models::LogEntry;
@@ -57,6 +58,7 @@ use crate::models::PaymentType;
 use crate::models::PaymentTypeFilter;
 use crate::models::SwapInfo;
 use crate::models::SwapStatus;
+use crate::models::UnspentTransactionOutput;
 
 // Section: wire functions
 
@@ -64,7 +66,7 @@ fn wire_register_node_impl(
     port_: MessagePort,
     network: impl Wire2Api<Network> + UnwindSafe,
     seed: impl Wire2Api<Vec<u8>> + UnwindSafe,
-    config: impl Wire2Api<Option<Config>> + UnwindSafe,
+    config: impl Wire2Api<Config> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -84,7 +86,7 @@ fn wire_recover_node_impl(
     port_: MessagePort,
     network: impl Wire2Api<Network> + UnwindSafe,
     seed: impl Wire2Api<Vec<u8>> + UnwindSafe,
-    config: impl Wire2Api<Option<Config>> + UnwindSafe,
+    config: impl Wire2Api<Config> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -102,7 +104,7 @@ fn wire_recover_node_impl(
 }
 fn wire_init_services_impl(
     port_: MessagePort,
-    config: impl Wire2Api<Option<Config>> + UnwindSafe,
+    config: impl Wire2Api<Config> + UnwindSafe,
     seed: impl Wire2Api<Vec<u8>> + UnwindSafe,
     creds: impl Wire2Api<GreenlightCredentials> + UnwindSafe,
 ) {
@@ -267,14 +269,27 @@ fn wire_connect_lsp_impl(port_: MessagePort, lsp_id: impl Wire2Api<String> + Unw
         },
     )
 }
-fn wire_lsp_info_impl(port_: MessagePort) {
+fn wire_fetch_lsp_info_impl(port_: MessagePort, id: impl Wire2Api<String> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
-            debug_name: "lsp_info",
+            debug_name: "fetch_lsp_info",
             port: Some(port_),
             mode: FfiCallMode::Normal,
         },
-        move || move |task_callback| lsp_info(),
+        move || {
+            let api_id = id.wire2api();
+            move |task_callback| fetch_lsp_info(api_id)
+        },
+    )
+}
+fn wire_lsp_id_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "lsp_id",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || move |task_callback| lsp_id(),
     )
 }
 fn wire_fetch_fiat_rates_impl(port_: MessagePort) {
@@ -467,6 +482,22 @@ fn wire_recommended_fees_impl(port_: MessagePort) {
         move || move |task_callback| recommended_fees(),
     )
 }
+fn wire_default_config_impl(
+    port_: MessagePort,
+    config_type: impl Wire2Api<EnvironmentType> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "default_config",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_config_type = config_type.wire2api();
+            move |task_callback| Ok(default_config(api_config_type))
+        },
+    )
+}
 // Section: wrapper structs
 
 // Section: static checks
@@ -499,6 +530,16 @@ impl Wire2Api<i64> for *mut i64 {
 impl Wire2Api<u64> for *mut u64 {
     fn wire2api(self) -> u64 {
         unsafe { *support::box_from_leak_ptr(self) }
+    }
+}
+
+impl Wire2Api<EnvironmentType> for i32 {
+    fn wire2api(self) -> EnvironmentType {
+        match self {
+            0 => EnvironmentType::Production,
+            1 => EnvironmentType::Staging,
+            _ => unreachable!("Invalid variant for EnvironmentType: {}", self),
+        }
     }
 }
 
@@ -605,6 +646,22 @@ impl support::IntoDart for ClosesChannelPaymentDetails {
     }
 }
 impl support::IntoDartExceptPrimitive for ClosesChannelPaymentDetails {}
+
+impl support::IntoDart for Config {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.breezserver.into_dart(),
+            self.mempoolspace_url.into_dart(),
+            self.working_dir.into_dart(),
+            self.network.into_dart(),
+            self.payment_timeout_sec.into_dart(),
+            self.default_lsp_id.into_dart(),
+            self.api_key.into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for Config {}
 
 impl support::IntoDart for CurrencyInfo {
     fn into_dart(self) -> support::DartAbi {
@@ -830,6 +887,7 @@ impl support::IntoDart for NodeState {
             self.block_height.into_dart(),
             self.channels_balance_msat.into_dart(),
             self.onchain_balance_msat.into_dart(),
+            self.utxos.into_dart(),
             self.max_payable_msat.into_dart(),
             self.max_receivable_msat.into_dart(),
             self.max_single_payment_amount_msat.into_dart(),
@@ -980,6 +1038,19 @@ impl support::IntoDart for Symbol {
     }
 }
 impl support::IntoDartExceptPrimitive for Symbol {}
+
+impl support::IntoDart for UnspentTransactionOutput {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.txid.into_dart(),
+            self.outnum.into_dart(),
+            self.amount_millisatoshi.into_dart(),
+            self.address.into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for UnspentTransactionOutput {}
 
 impl support::IntoDart for UrlSuccessActionData {
     fn into_dart(self) -> support::DartAbi {

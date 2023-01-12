@@ -21,6 +21,7 @@ impl SqliteStorage {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn delete_cached_item(&self, key: String) -> Result<()> {
         self.get_connection()?
             .execute("DELETE FROM cached_items WHERE key = ?1", [key])?;
@@ -29,7 +30,7 @@ impl SqliteStorage {
 
     pub fn set_node_state(&self, state: &NodeState) -> Result<()> {
         let serialized_state = serde_json::to_string(state)?;
-        self.update_cached_item("node_state".to_string(), serialized_state.to_string())?;
+        self.update_cached_item("node_state".to_string(), serialized_state)?;
         Ok(())
     }
 

@@ -24,7 +24,7 @@ abstract class BreezSdkCore {
   Future<GreenlightCredentials> registerNode(
       {required Network network,
       required Uint8List seed,
-      Config? config,
+      required Config config,
       dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kRegisterNodeConstMeta;
@@ -39,13 +39,13 @@ abstract class BreezSdkCore {
   Future<GreenlightCredentials> recoverNode(
       {required Network network,
       required Uint8List seed,
-      Config? config,
+      required Config config,
       dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kRecoverNodeConstMeta;
 
   /// init_services initialized the global NodeService, schedule the node to run in the cloud and
-  /// run the signer. This must be called in order to start comunicate with the node
+  /// run the signer. This must be called in order to start communicate with the node
   ///
   /// # Arguments
   ///
@@ -54,7 +54,7 @@ abstract class BreezSdkCore {
   /// * `creds` - The greenlight credentials
   ///
   Future<void> initServices(
-      {Config? config,
+      {required Config config,
       required Uint8List seed,
       required GreenlightCredentials creds,
       dynamic hint});
@@ -139,9 +139,13 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kConnectLspConstMeta;
 
   /// Convenience method to look up LSP info based on current LSP ID
-  Future<LspInformation> lspInfo({dynamic hint});
+  Future<LspInformation?> fetchLspInfo({required String id, dynamic hint});
 
-  FlutterRustBridgeTaskConstMeta get kLspInfoConstMeta;
+  FlutterRustBridgeTaskConstMeta get kFetchLspInfoConstMeta;
+
+  Future<String?> lspId({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kLspIdConstMeta;
 
   /// Fetch live rates of fiat currencies
   Future<List<Rate>> fetchFiatRates({dynamic hint});
@@ -227,6 +231,12 @@ abstract class BreezSdkCore {
   Future<RecommendedFees> recommendedFees({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kRecommendedFeesConstMeta;
+
+  /// Fetches the default config, depending on the environment type
+  Future<Config> defaultConfig(
+      {required EnvironmentType configType, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kDefaultConfigConstMeta;
 }
 
 class BitcoinAddressData {
@@ -275,6 +285,10 @@ class ClosesChannelPaymentDetails {
   });
 }
 
+/// Configuration for the Breez Services.
+///
+/// Use [Config::production] or [Config::staging] for default configs of the different supported
+/// environments.
 class Config {
   final String breezserver;
   final String mempoolspaceUrl;
@@ -313,6 +327,12 @@ class CurrencyInfo {
     this.localizedName,
     this.localeOverrides,
   });
+}
+
+/// Indicates the different kinds of supported environments for [crate::BreezServices]
+enum EnvironmentType {
+  Production,
+  Staging,
 }
 
 class FiatCurrency {
@@ -610,6 +630,7 @@ class NodeState {
   final int blockHeight;
   final int channelsBalanceMsat;
   final int onchainBalanceMsat;
+  final List<UnspentTransactionOutput> utxos;
   final int maxPayableMsat;
   final int maxReceivableMsat;
   final int maxSinglePaymentAmountMsat;
@@ -622,6 +643,7 @@ class NodeState {
     required this.blockHeight,
     required this.channelsBalanceMsat,
     required this.onchainBalanceMsat,
+    required this.utxos,
     required this.maxPayableMsat,
     required this.maxReceivableMsat,
     required this.maxSinglePaymentAmountMsat,
@@ -809,6 +831,20 @@ class Symbol {
   });
 }
 
+class UnspentTransactionOutput {
+  final Uint8List txid;
+  final int outnum;
+  final int amountMillisatoshi;
+  final String address;
+
+  UnspentTransactionOutput({
+    required this.txid,
+    required this.outnum,
+    required this.amountMillisatoshi,
+    required this.address,
+  });
+}
+
 class UrlSuccessActionData {
   final String description;
   final String url;
@@ -831,11 +867,11 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   Future<GreenlightCredentials> registerNode(
       {required Network network,
       required Uint8List seed,
-      Config? config,
+      required Config config,
       dynamic hint}) {
     var arg0 = api2wire_network(network);
     var arg1 = _platform.api2wire_uint_8_list(seed);
-    var arg2 = _platform.api2wire_opt_box_autoadd_config(config);
+    var arg2 = _platform.api2wire_box_autoadd_config(config);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) =>
           _platform.inner.wire_register_node(port_, arg0, arg1, arg2),
@@ -855,11 +891,11 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   Future<GreenlightCredentials> recoverNode(
       {required Network network,
       required Uint8List seed,
-      Config? config,
+      required Config config,
       dynamic hint}) {
     var arg0 = api2wire_network(network);
     var arg1 = _platform.api2wire_uint_8_list(seed);
-    var arg2 = _platform.api2wire_opt_box_autoadd_config(config);
+    var arg2 = _platform.api2wire_box_autoadd_config(config);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) =>
           _platform.inner.wire_recover_node(port_, arg0, arg1, arg2),
@@ -877,11 +913,11 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       );
 
   Future<void> initServices(
-      {Config? config,
+      {required Config config,
       required Uint8List seed,
       required GreenlightCredentials creds,
       dynamic hint}) {
-    var arg0 = _platform.api2wire_opt_box_autoadd_config(config);
+    var arg0 = _platform.api2wire_box_autoadd_config(config);
     var arg1 = _platform.api2wire_uint_8_list(seed);
     var arg2 = _platform.api2wire_box_autoadd_greenlight_credentials(creds);
     return _platform.executeNormal(FlutterRustBridgeTask(
@@ -1096,19 +1132,36 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["lspId"],
       );
 
-  Future<LspInformation> lspInfo({dynamic hint}) {
+  Future<LspInformation?> fetchLspInfo({required String id, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(id);
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_lsp_info(port_),
-      parseSuccessData: _wire2api_lsp_information,
-      constMeta: kLspInfoConstMeta,
+      callFfi: (port_) => _platform.inner.wire_fetch_lsp_info(port_, arg0),
+      parseSuccessData: _wire2api_opt_box_autoadd_lsp_information,
+      constMeta: kFetchLspInfoConstMeta,
+      argValues: [id],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kFetchLspInfoConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "fetch_lsp_info",
+        argNames: ["id"],
+      );
+
+  Future<String?> lspId({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_lsp_id(port_),
+      parseSuccessData: _wire2api_opt_String,
+      constMeta: kLspIdConstMeta,
       argValues: [],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kLspInfoConstMeta =>
+  FlutterRustBridgeTaskConstMeta get kLspIdConstMeta =>
       const FlutterRustBridgeTaskConstMeta(
-        debugName: "lsp_info",
+        debugName: "lsp_id",
         argNames: [],
       );
 
@@ -1369,6 +1422,24 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: [],
       );
 
+  Future<Config> defaultConfig(
+      {required EnvironmentType configType, dynamic hint}) {
+    var arg0 = api2wire_environment_type(configType);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_default_config(port_, arg0),
+      parseSuccessData: _wire2api_config,
+      constMeta: kDefaultConfigConstMeta,
+      argValues: [configType],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kDefaultConfigConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "default_config",
+        argNames: ["configType"],
+      );
+
   void dispose() {
     _platform.dispose();
   }
@@ -1443,6 +1514,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return _wire2api_ln_url_withdraw_request_data(raw);
   }
 
+  LspInformation _wire2api_box_autoadd_lsp_information(dynamic raw) {
+    return _wire2api_lsp_information(raw);
+  }
+
   MessageSuccessActionData _wire2api_box_autoadd_message_success_action_data(
       dynamic raw) {
     return _wire2api_message_success_action_data(raw);
@@ -1499,6 +1574,21 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       shortChannelId: _wire2api_String(arr[0]),
       state: _wire2api_channel_state(arr[1]),
       fundingTxid: _wire2api_String(arr[2]),
+    );
+  }
+
+  Config _wire2api_config(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    return Config(
+      breezserver: _wire2api_String(arr[0]),
+      mempoolspaceUrl: _wire2api_String(arr[1]),
+      workingDir: _wire2api_String(arr[2]),
+      network: _wire2api_network(arr[3]),
+      paymentTimeoutSec: _wire2api_u32(arr[4]),
+      defaultLspId: _wire2api_opt_String(arr[5]),
+      apiKey: _wire2api_opt_String(arr[6]),
     );
   }
 
@@ -1632,6 +1722,13 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   List<SwapInfo> _wire2api_list_swap_info(dynamic raw) {
     return (raw as List<dynamic>).map(_wire2api_swap_info).toList();
+  }
+
+  List<UnspentTransactionOutput> _wire2api_list_unspent_transaction_output(
+      dynamic raw) {
+    return (raw as List<dynamic>)
+        .map(_wire2api_unspent_transaction_output)
+        .toList();
   }
 
   LNInvoice _wire2api_ln_invoice(dynamic raw) {
@@ -1808,19 +1905,20 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   NodeState _wire2api_node_state(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 10)
-      throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
+    if (arr.length != 11)
+      throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
     return NodeState(
       id: _wire2api_String(arr[0]),
       blockHeight: _wire2api_u32(arr[1]),
       channelsBalanceMsat: _wire2api_u64(arr[2]),
       onchainBalanceMsat: _wire2api_u64(arr[3]),
-      maxPayableMsat: _wire2api_u64(arr[4]),
-      maxReceivableMsat: _wire2api_u64(arr[5]),
-      maxSinglePaymentAmountMsat: _wire2api_u64(arr[6]),
-      maxChanReserveMsats: _wire2api_u64(arr[7]),
-      connectedPeers: _wire2api_StringList(arr[8]),
-      inboundLiquidityMsats: _wire2api_u64(arr[9]),
+      utxos: _wire2api_list_unspent_transaction_output(arr[4]),
+      maxPayableMsat: _wire2api_u64(arr[5]),
+      maxReceivableMsat: _wire2api_u64(arr[6]),
+      maxSinglePaymentAmountMsat: _wire2api_u64(arr[7]),
+      maxChanReserveMsats: _wire2api_u64(arr[8]),
+      connectedPeers: _wire2api_StringList(arr[9]),
+      inboundLiquidityMsats: _wire2api_u64(arr[10]),
     );
   }
 
@@ -1830,6 +1928,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   bool? _wire2api_opt_box_autoadd_bool(dynamic raw) {
     return raw == null ? null : _wire2api_box_autoadd_bool(raw);
+  }
+
+  LspInformation? _wire2api_opt_box_autoadd_lsp_information(dynamic raw) {
+    return raw == null ? null : _wire2api_box_autoadd_lsp_information(raw);
   }
 
   NodeState? _wire2api_opt_box_autoadd_node_state(dynamic raw) {
@@ -2022,6 +2124,18 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return;
   }
 
+  UnspentTransactionOutput _wire2api_unspent_transaction_output(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return UnspentTransactionOutput(
+      txid: _wire2api_uint_8_list(arr[0]),
+      outnum: _wire2api_u32(arr[1]),
+      amountMillisatoshi: _wire2api_u64(arr[2]),
+      address: _wire2api_String(arr[3]),
+    );
+  }
+
   UrlSuccessActionData _wire2api_url_success_action_data(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 2)
@@ -2034,6 +2148,11 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 }
 
 // Section: api2wire
+
+@protected
+int api2wire_environment_type(EnvironmentType raw) {
+  return api2wire_i32(raw.index);
+}
 
 @protected
 int api2wire_i32(int raw) {
@@ -2131,11 +2250,6 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
-  ffi.Pointer<wire_Config> api2wire_opt_box_autoadd_config(Config? raw) {
-    return raw == null ? ffi.nullptr : api2wire_box_autoadd_config(raw);
-  }
-
-  @protected
   ffi.Pointer<ffi.Int64> api2wire_opt_box_autoadd_i64(int? raw) {
     return raw == null ? ffi.nullptr : api2wire_box_autoadd_i64(raw);
   }
@@ -2215,11 +2329,6 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.default_description = api2wire_String(apiObj.defaultDescription);
     wireObj.min_withdrawable = api2wire_u64(apiObj.minWithdrawable);
     wireObj.max_withdrawable = api2wire_u64(apiObj.maxWithdrawable);
-  }
-
-  void _api_fill_to_wire_opt_box_autoadd_config(
-      Config? apiObj, ffi.Pointer<wire_Config> wireObj) {
-    if (apiObj != null) _api_fill_to_wire_box_autoadd_config(apiObj, wireObj);
   }
 }
 
@@ -2571,19 +2680,34 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_connect_lsp = _wire_connect_lspPtr
       .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
-  void wire_lsp_info(
+  void wire_fetch_lsp_info(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> id,
+  ) {
+    return _wire_fetch_lsp_info(
+      port_,
+      id,
+    );
+  }
+
+  late final _wire_fetch_lsp_infoPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Int64,
+              ffi.Pointer<wire_uint_8_list>)>>('wire_fetch_lsp_info');
+  late final _wire_fetch_lsp_info = _wire_fetch_lsp_infoPtr
+      .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_lsp_id(
     int port_,
   ) {
-    return _wire_lsp_info(
+    return _wire_lsp_id(
       port_,
     );
   }
 
-  late final _wire_lsp_infoPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
-          'wire_lsp_info');
-  late final _wire_lsp_info =
-      _wire_lsp_infoPtr.asFunction<void Function(int)>();
+  late final _wire_lsp_idPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_lsp_id');
+  late final _wire_lsp_id = _wire_lsp_idPtr.asFunction<void Function(int)>();
 
   void wire_fetch_fiat_rates(
     int port_,
@@ -2827,6 +2951,22 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
           'wire_recommended_fees');
   late final _wire_recommended_fees =
       _wire_recommended_feesPtr.asFunction<void Function(int)>();
+
+  void wire_default_config(
+    int port_,
+    int config_type,
+  ) {
+    return _wire_default_config(
+      port_,
+      config_type,
+    );
+  }
+
+  late final _wire_default_configPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Int32)>>(
+          'wire_default_config');
+  late final _wire_default_config =
+      _wire_default_configPtr.asFunction<void Function(int, int)>();
 
   ffi.Pointer<wire_Config> new_box_autoadd_config_0() {
     return _new_box_autoadd_config_0();

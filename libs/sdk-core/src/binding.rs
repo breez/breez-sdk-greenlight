@@ -1,4 +1,4 @@
-use crate::breez_services::{self, BreezEvent, BreezServicesBuilder, EventListener};
+use crate::breez_services::{self, BreezEvent, EventListener};
 use crate::chain::RecommendedFees;
 use crate::fiat::{FiatCurrency, Rate};
 use crate::input_parser::LnUrlPayRequestData;
@@ -16,15 +16,13 @@ use crate::breez_services::BreezServices;
 use crate::invoice::LNInvoice;
 use crate::lnurl::withdraw::model::LnUrlWithdrawCallbackStatus;
 use crate::models::{
-    Config, FeeratePreset, GreenlightCredentials, Network, NodeState, Payment, PaymentTypeFilter,
-    SwapInfo,
+    Config, GreenlightCredentials, Network, NodeState, Payment, PaymentTypeFilter, SwapInfo,
 };
 
 use crate::input_parser::InputType;
 use crate::invoice::{self};
 use crate::lnurl::pay::model::LnUrlPayResult;
-use crate::LnUrlWithdrawRequestData;
-use bip39::{Language, Mnemonic, Seed};
+use crate::{EnvironmentType, LnUrlWithdrawRequestData};
 
 static BREEZ_SERVICES_INSTANCE: OnceCell<Arc<BreezServices>> = OnceCell::new();
 static BREEZ_SERVICES_SHUTDOWN: OnceCell<mpsc::Sender<()>> = OnceCell::new();
@@ -63,9 +61,8 @@ struct BindingEventListener;
 
 impl EventListener for BindingEventListener {
     fn on_event(&self, e: BreezEvent) {
-        let s = NOTIFICATION_STREAM.get();
-        if s.is_some() {
-            s.unwrap().add(e);
+        if let Some(stream) = NOTIFICATION_STREAM.get() {
+            stream.add(e);
         }
     }
 }
@@ -80,7 +77,7 @@ impl EventListener for BindingEventListener {
 pub fn register_node(
     network: Network,
     seed: Vec<u8>,
-    config: Option<Config>,
+    config: Config,
 ) -> Result<GreenlightCredentials> {
     let creds = block_on(BreezServices::register_node(network, seed.clone()))?;
     init_services(config, seed, creds.clone())?;
@@ -97,7 +94,7 @@ pub fn register_node(
 pub fn recover_node(
     network: Network,
     seed: Vec<u8>,
-    config: Option<Config>,
+    config: Config,
 ) -> Result<GreenlightCredentials> {
     let creds = block_on(BreezServices::recover_node(network, seed.clone()))?;
     init_services(config, seed, creds.clone())?;
@@ -106,7 +103,7 @@ pub fn recover_node(
 }
 
 /// init_services initialized the global NodeService, schedule the node to run in the cloud and
-/// run the signer. This must be called in order to start comunicate with the node
+/// run the signer. This must be called in order to start communicate with the node
 ///
 /// # Arguments
 ///
@@ -114,17 +111,13 @@ pub fn recover_node(
 /// * `seed` - The node private key
 /// * `creds` - The greenlight credentials
 ///
-pub fn init_services(
-    config: Option<Config>,
-    seed: Vec<u8>,
-    creds: GreenlightCredentials,
-) -> Result<()> {
+pub fn init_services(config: Config, seed: Vec<u8>, creds: GreenlightCredentials) -> Result<()> {
     block_on(async move {
         let breez_services =
             BreezServices::init_services(config, seed, creds, Box::new(BindingEventListener {}))
                 .await?;
         BREEZ_SERVICES_INSTANCE
-            .set(breez_services.clone())
+            .set(breez_services)
             .map_err(|_| anyhow!("static node services already set"))?;
 
         Ok(())
@@ -137,7 +130,7 @@ pub fn start_node() -> Result<()> {
             rt(),
             BREEZ_SERVICES_INSTANCE
                 .get()
-                .ok_or(anyhow!("breez services instance was not initialized"))?,
+                .ok_or_else(|| anyhow!("breez services instance was not initialized"))?,
         )
         .await
     })
@@ -243,8 +236,12 @@ pub fn connect_lsp(lsp_id: String) -> Result<()> {
 }
 
 /// Convenience method to look up LSP info based on current LSP ID
-pub fn lsp_info() -> Result<LspInformation> {
-    block_on(async { get_breez_services()?.lsp_info().await })
+pub fn fetch_lsp_info(id: String) -> Result<Option<LspInformation>> {
+    block_on(async { get_breez_services()?.fetch_lsp_info(id).await })
+}
+
+pub fn lsp_id() -> Result<Option<String>> {
+    block_on(async { get_breez_services()?.lsp_id().await })
 }
 
 /// Fetch live rates of fiat currencies
@@ -283,7 +280,7 @@ pub fn list_refundables() -> Result<Vec<SwapInfo>> {
     block_on(async { get_breez_services()?.list_refundables().await })
 }
 
-// construct and broadcast a refund transaction for a faile/expired swap
+// construct and broadcast a refund transaction for a failed/expired swap
 pub fn refund(swap_address: String, to_address: String, sat_per_vbyte: u32) -> Result<String> {
     block_on(async {
         get_breez_services()?
@@ -294,7 +291,7 @@ pub fn refund(swap_address: String, to_address: String, sat_per_vbyte: u32) -> R
 
 // execute developers command
 pub fn execute_command(command: String) -> Result<String> {
-    block_on(async { get_breez_services()?.execute_dev_command(&command).await })
+    block_on(async { get_breez_services()?.execute_dev_command(command).await })
 }
 
 fn get_breez_services() -> Result<&'static BreezServices> {
@@ -361,4 +358,9 @@ pub fn mnemonic_to_seed(phrase: String) -> Result<Vec<u8>> {
 /// Fetches the current recommended fees
 pub fn recommended_fees() -> Result<RecommendedFees> {
     block_on(async { get_breez_services()?.recommended_fees().await })
+}
+
+/// Fetches the default config, depending on the environment type
+pub fn default_config(config_type: EnvironmentType) -> Config {
+    BreezServices::default_config(config_type)
 }

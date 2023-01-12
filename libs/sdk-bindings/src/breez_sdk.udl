@@ -13,6 +13,11 @@ enum SDKError {
   "Error",
 };
 
+enum EnvironmentType {
+    "Production",
+    "Staging",
+};
+
 enum Network {
     "Bitcoin",
     "Testnet",
@@ -52,11 +57,19 @@ dictionary LNInvoice {
     sequence<u8> payment_secret;
 };
 
+dictionary UnspentTransactionOutput {
+    sequence<u8> txid;
+    u32 outnum;
+    u64 amount_millisatoshi;
+    string address;
+};
+
 dictionary NodeState {
     string id;
     u32 block_height;
     u64 channels_balance_msat;
     u64 onchain_balance_msat;
+    sequence<UnspentTransactionOutput> utxos;
     u64 max_payable_msat;
     u64 max_receivable_msat;
     u64 max_single_payment_amount_msat;
@@ -332,7 +345,10 @@ interface BlockingBreezServices {
    void connect_lsp(string lsp_id);
 
    [Throws=SDKError]
-   LspInformation lsp_info();
+   LspInformation? fetch_lsp_info(string lsp_id);
+
+   [Throws=SDKError]
+   string? lsp_id();   
 
    [Throws=SDKError]
    void close_lsp_channels(); 
@@ -356,13 +372,13 @@ interface BlockingBreezServices {
 namespace breez_sdk { 
  
  [Throws=SDKError]
- GreenlightCredentials register_node(Network network, sequence<u8> seed, Config? config);
+ GreenlightCredentials register_node(Network network, sequence<u8> seed);
 
  [Throws=SDKError]
- GreenlightCredentials recover_node(Network network, sequence<u8> seed, Config? config);
+ GreenlightCredentials recover_node(Network network, sequence<u8> seed);
 
  [Throws=SDKError]
- BlockingBreezServices init_services(Config? config, sequence<u8> seed, GreenlightCredentials creds, EventListener listener);
+ BlockingBreezServices init_services(Config config, sequence<u8> seed, GreenlightCredentials creds, EventListener listener);
 
  [Throws=SDKError]
  void set_log_stream(LogStream log_stream);
@@ -376,4 +392,5 @@ namespace breez_sdk {
  [Throws=SDKError]
  sequence<u8> mnemonic_to_seed(string phrase);
 
+ Config default_config(EnvironmentType env_type);
 };

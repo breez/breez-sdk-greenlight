@@ -5,6 +5,7 @@ pub(crate) mod settings;
 pub(crate) mod swap;
 pub(crate) mod transactions;
 
+#[cfg(test)]
 mod test_utils {
     use rand::Rng;
 

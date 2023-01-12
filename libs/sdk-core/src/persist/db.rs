@@ -1,7 +1,7 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use rusqlite::{
     types::{FromSql, FromSqlError, ToSqlOutput},
-    Connection, LoadExtensionGuard, ToSql,
+    Connection, ToSql,
 };
 use rusqlite_migration::{Migrations, M};
 

@@ -54,7 +54,7 @@ pub trait NodeAPI: Send + Sync {
     async fn close_peer_channels(&self, node_id: String) -> Result<CloseChannelResponse>;
     async fn stream_incoming_payments(&self) -> Result<Streaming<gl_client::pb::IncomingPayment>>;
     async fn stream_log_messages(&self) -> Result<Streaming<gl_client::pb::LogEntry>>;
-    async fn execute_command(&self, command: &String) -> Result<String>;
+    async fn execute_command(&self, command: String) -> Result<String>;
 }
 
 #[tonic::async_trait]
@@ -102,6 +102,10 @@ pub struct LogEntry {
     pub level: String,
 }
 
+/// Configuration for the Breez Services.
+///
+/// Use [Config::production] or [Config::staging] for default configs of the different supported
+/// environments.
 #[derive(Clone)]
 pub struct Config {
     pub breezserver: String,
@@ -113,8 +117,8 @@ pub struct Config {
     pub api_key: Option<String>,
 }
 
-impl Default for Config {
-    fn default() -> Self {
+impl Config {
+    pub(crate) fn production() -> Self {
         Config {
             breezserver: "https://bs1-st.breez.technology:443".to_string(),
             mempoolspace_url: "https://mempool.space".to_string(),
@@ -125,6 +129,26 @@ impl Default for Config {
             api_key: None,
         }
     }
+
+    pub(crate) fn staging() -> Self {
+        // TODO Update with staging values
+        Config {
+            breezserver: "https://bs1-st.breez.technology:443".to_string(),
+            mempoolspace_url: "https://mempool.space".to_string(),
+            working_dir: ".".to_string(),
+            network: Bitcoin,
+            payment_timeout_sec: 30,
+            default_lsp_id: Some(String::from("ea51d025-042d-456c-8325-63e430797481")),
+            api_key: None,
+        }
+    }
+}
+
+/// Indicates the different kinds of supported environments for [crate::BreezServices]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum EnvironmentType {
+    Production,
+    Staging,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -195,6 +219,9 @@ pub struct NodeState {
     pub block_height: u32,
     pub channels_balance_msat: u64,
     pub onchain_balance_msat: u64,
+
+    #[serde(default)]
+    pub utxos: Vec<UnspentTransactionOutput>,
     pub max_payable_msat: u64,
     pub max_receivable_msat: u64,
     pub max_single_payment_amount_msat: u64,
@@ -332,17 +359,26 @@ impl SwapInfo {
     }
 }
 
-pub fn parse_short_channel_id(id_str: &str) -> Result<i64> {
+pub fn parse_short_channel_id(id_str: &str) -> Result<u64> {
     let parts: Vec<&str> = id_str.split('x').collect();
     if parts.len() != 3 {
         return Ok(0);
     }
-    let block_num = parts[0].parse::<i64>()?;
-    let tx_num = parts[1].parse::<i64>()?;
-    let tx_out = parts[2].parse::<i64>()?;
+    let block_num = parts[0].parse::<u64>()?;
+    let tx_num = parts[1].parse::<u64>()?;
+    let tx_out = parts[2].parse::<u64>()?;
 
     Ok((block_num & 0xFFFFFF) << 40 | (tx_num & 0xFFFFFF) << 16 | (tx_out & 0xFFFF))
 }
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
+pub struct UnspentTransactionOutput {
+    pub txid: Vec<u8>,
+    pub outnum: u32,
+    pub amount_millisatoshi: u64,
+    pub address: String,
+}
+
 #[cfg(test)]
 mod tests {
     use prost::Message;

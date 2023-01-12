@@ -1,7 +1,7 @@
 use crate::invoice::parse_invoice;
 use crate::models::{
-    Config, FeeratePreset, GreenlightCredentials, LnPaymentDetails, Network, NodeAPI, NodeState,
-    PaymentDetails, PaymentType, SyncResponse,
+    Config, GreenlightCredentials, LnPaymentDetails, Network, NodeAPI, NodeState, PaymentDetails,
+    PaymentType, SyncResponse, UnspentTransactionOutput,
 };
 
 use anyhow::{anyhow, Result};
@@ -23,7 +23,6 @@ use serde::{Deserialize, Serialize};
 use std::cmp::{max, min};
 use std::str::FromStr;
 use std::time::{SystemTime, UNIX_EPOCH};
-use std::usize::MIN;
 use strum_macros::{Display, EnumString};
 use tokio::sync::mpsc;
 use tonic::Streaming;
@@ -49,8 +48,8 @@ impl Greenlight {
         let signer = Signer::new(seed, greenlight_network, tls_config.clone())?;
         Ok(Greenlight {
             sdk_config,
-            tls_config: tls_config.clone(),
-            signer: signer.clone(),
+            tls_config,
+            signer,
         })
     }
 
@@ -129,11 +128,7 @@ impl NodeAPI for Greenlight {
         let msg_type: u16 = 8;
         let data_len: u16 = data_bytes.len().try_into()?;
         let mut data_len_bytes = data_len.to_be_bytes().to_vec();
-        let mut data_buf = data_bytes
-            .to_vec()
-            .into_iter()
-            .map(|b| u5::to_u8(b))
-            .collect();
+        let mut data_buf = data_bytes.iter().copied().map(u5::to_u8).collect();
 
         let hrp_len: u16 = hrp_bytes.len().try_into()?;
         let mut hrp_len_bytes = hrp_len.to_be_bytes().to_vec();
@@ -153,9 +148,8 @@ impl NodeAPI for Greenlight {
         // contruct the RecoveryId
         let rid = RecoveryId::from_i32(raw_result[64] as i32).expect("recovery ID");
         let sig = &raw_result[0..64];
-        let recoverable_sig = RecoverableSignature::from_compact(sig, rid)
-            .map_err(|e| anyhow!(e))?
-            .clone();
+        let recoverable_sig =
+            RecoverableSignature::from_compact(sig, rid).map_err(|e| anyhow!(e))?;
 
         let signed_invoice: Result<SignedRawInvoice> = invoice.sign(|_| Ok(recoverable_sig));
         Ok(signed_invoice?.to_string())
@@ -211,7 +205,7 @@ impl NodeAPI for Greenlight {
         // filter only opened channels
         let opened_channels: &mut Vec<&pb::Channel> = &mut all_channels
             .iter()
-            .filter(|c| return c.state == String::from("CHANNELD_NORMAL"))
+            .filter(|c| c.state == *"CHANNELD_NORMAL")
             .collect();
 
         // calculate channels balance only from opened channels
@@ -220,20 +214,40 @@ impl NodeAPI for Greenlight {
             if opened_channels.iter().any(|c| c.funding_txid == hex_txid) {
                 return a + b.our_amount_msat;
             }
-            return a;
+            a
         });
 
         // calculate onchain balance
         let onchain_balance = onchain_funds.iter().fold(0, |a, b| {
-            a + amount_to_msat(b.amount.clone().unwrap_or_default())
+            a + amount_to_msat(&b.amount.clone().unwrap_or_default())
         });
+
+        // Collect utxos from onchain funds
+        let utxos = onchain_funds
+            .iter()
+            .filter_map(|list_funds_output| {
+                list_funds_output
+                    .output
+                    .as_ref()
+                    .map(|output| UnspentTransactionOutput {
+                        txid: output.txid.clone(),
+                        outnum: output.outnum,
+                        amount_millisatoshi: list_funds_output
+                            .amount
+                            .as_ref()
+                            .map(amount_to_msat)
+                            .unwrap_or_default(),
+                        address: list_funds_output.address.clone(),
+                    })
+            })
+            .collect();
 
         // calculate payment limits and inbound liquidity
         let mut max_payable: u64 = 0;
         let mut max_receivable_single_channel: u64 = 0;
         opened_channels.iter().try_for_each(|c| -> Result<()> {
-            max_payable += amount_to_msat(parse_amount(c.spendable.clone())?);
-            let receivable_amount = amount_to_msat(parse_amount(c.receivable.clone())?);
+            max_payable += amount_to_msat(&parse_amount(c.spendable.clone())?);
+            let receivable_amount = amount_to_msat(&parse_amount(c.receivable.clone())?);
             if receivable_amount > max_receivable_single_channel {
                 max_receivable_single_channel = receivable_amount;
             }
@@ -249,11 +263,12 @@ impl NodeAPI for Greenlight {
             block_height: node_info.blockheight,
             channels_balance_msat: channels_balance,
             onchain_balance_msat: onchain_balance,
+            utxos,
             max_payable_msat: max_payable,
             max_receivable_msat: max_allowed_to_receive_msats,
             max_single_payment_amount_msat: MAX_PAYMENT_AMOUNT_MSAT,
             max_chan_reserve_msats: channels_balance - min(max_payable, channels_balance),
-            connected_peers: connected_peers,
+            connected_peers,
             inbound_liquidity_msats: max_receivable_single_channel,
         };
         Ok(SyncResponse {
@@ -290,7 +305,7 @@ impl NodeAPI for Greenlight {
                 SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis()
             ),
             description,
-            preimage: preimage.unwrap_or(vec![]),
+            preimage: preimage.unwrap_or_default(),
         };
 
         Ok(client.create_invoice(request).await?.into_inner())
@@ -361,8 +376,8 @@ impl NodeAPI for Greenlight {
         Ok(client.withdraw(request).await?.into_inner())
     }
 
-    async fn execute_command(&self, command: &String) -> Result<String> {
-        let node_cmd = NodeCommand::from_str(command)
+    async fn execute_command(&self, command: String) -> Result<String> {
+        let node_cmd = NodeCommand::from_str(&command)
             .map_err(|_| anyhow!(format!("command not found: {}", command)))?;
         match node_cmd {
             NodeCommand::ListPeers => {
@@ -474,7 +489,7 @@ async fn pull_transactions(
         .payments
         .into_iter()
         .filter(|p| p.created_at as i64 > since_timestamp && p.status() == PayStatus::Complete)
-        .map(|p| payment_to_transaction(p))
+        .map(payment_to_transaction)
         .collect();
 
     let mut transactions: Vec<crate::models::Payment> = Vec::new();
@@ -494,7 +509,7 @@ fn invoice_to_transaction(
         id: hex::encode(invoice.payment_hash.clone()),
         payment_type: PaymentType::Received,
         payment_time: invoice.payment_time as i64,
-        amount_msat: amount_to_msat(invoice.amount.unwrap_or_default()) as i64,
+        amount_msat: amount_to_msat(&invoice.amount.unwrap_or_default()) as i64,
         fee_msat: 0,
         pending: false,
         description: ln_invoice.description,
@@ -518,8 +533,8 @@ fn payment_to_transaction(payment: pb::Payment) -> Result<crate::models::Payment
         description = parse_invoice(&payment.bolt11)?.description;
     }
 
-    let payment_amount = amount_to_msat(payment.amount.unwrap_or_default()) as i64;
-    let payment_amount_sent = amount_to_msat(payment.amount_sent.unwrap_or_default()) as i64;
+    let payment_amount = amount_to_msat(&payment.amount.unwrap_or_default()) as i64;
+    let payment_amount_sent = amount_to_msat(&payment.amount_sent.unwrap_or_default()) as i64;
 
     Ok(crate::models::Payment {
         id: hex::encode(payment.payment_hash.clone()),
@@ -542,7 +557,7 @@ fn payment_to_transaction(payment: pb::Payment) -> Result<crate::models::Payment
     })
 }
 
-fn amount_to_msat(amount: pb::Amount) -> u64 {
+fn amount_to_msat(amount: &pb::Amount) -> u64 {
     match amount.unit {
         Some(pb::amount::Unit::Millisatoshi(val)) => val,
         Some(pb::amount::Unit::Satoshi(val)) => val * 1000,
@@ -555,11 +570,10 @@ fn amount_to_msat(amount: pb::Amount) -> u64 {
 fn parse_amount(amount_str: String) -> Result<pb::Amount> {
     let mut unit = pb::amount::Unit::Millisatoshi(0);
     if amount_str.ends_with("msat") {
-        let t = amount_str.strip_suffix("msat").unwrap().to_string();
         unit = pb::amount::Unit::Millisatoshi(
             amount_str
                 .strip_suffix("msat")
-                .ok_or(anyhow!("wrong amount format {}", amount_str))?
+                .ok_or_else(|| anyhow!("wrong amount format {}", amount_str))?
                 .to_string()
                 .parse::<u64>()?,
         );
@@ -567,7 +581,7 @@ fn parse_amount(amount_str: String) -> Result<pb::Amount> {
         unit = pb::amount::Unit::Satoshi(
             amount_str
                 .strip_suffix("sat")
-                .ok_or(anyhow!("wrong amount format {}", amount_str))?
+                .ok_or_else(|| anyhow!("wrong amount format {}", amount_str))?
                 .to_string()
                 .parse::<u64>()?,
         );
@@ -575,7 +589,7 @@ fn parse_amount(amount_str: String) -> Result<pb::Amount> {
         unit = pb::amount::Unit::Bitcoin(
             amount_str
                 .strip_suffix("bitcoin")
-                .ok_or(anyhow!("wrong amount format {}", amount_str))?
+                .ok_or_else(|| anyhow!("wrong amount format {}", amount_str))?
                 .to_string()
                 .parse::<u64>()?,
         );
@@ -593,14 +607,14 @@ impl From<pb::Channel> for crate::models::Channel {
             _ => crate::models::ChannelState::PendingClose,
         };
 
-        return crate::models::Channel {
+        crate::models::Channel {
             short_channel_id: c.short_channel_id,
             state,
             funding_txid: c.funding_txid,
-            spendable_msat: amount_to_msat(parse_amount(c.spendable).unwrap_or_default()),
-            receivable_msat: amount_to_msat(parse_amount(c.receivable).unwrap_or_default()),
+            spendable_msat: amount_to_msat(&parse_amount(c.spendable).unwrap_or_default()),
+            receivable_msat: amount_to_msat(&parse_amount(c.receivable).unwrap_or_default()),
             closed_at: None,
-        };
+        }
     }
 }
 
@@ -658,6 +672,7 @@ mod tests {
             their_to_self_delay: 144,
             our_to_self_delay: 144,
             status: vec![],
+            alias: None,
             htlcs: vec![],
         }
     }

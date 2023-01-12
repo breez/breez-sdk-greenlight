@@ -55,3 +55,10 @@ jobs:
         run: |
           cd tools/sdk-cli
           cargo test
+
+      - name: clippy
+        run: |
+          cd libs
+          cargo clippy -- -D warnings
+          cd ../tools/sdk-cli
+          cargo clippy -- -D warnings

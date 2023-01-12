@@ -1,6 +1,7 @@
 use super::db::SqliteStorage;
 use anyhow::{anyhow, Result};
 
+#[allow(dead_code)]
 pub struct SettingItem {
     key: String,
     value: String,
@@ -24,12 +25,14 @@ impl SqliteStorage {
         Ok(res.ok())
     }
 
+    #[allow(dead_code)]
     pub fn delete_setting(&self, key: String) -> Result<()> {
         self.get_connection()?
             .execute("DELETE FROM settings WHERE key = ?1", [key])?;
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn list_settings(&self) -> Result<Vec<SettingItem>> {
         let con = self.get_connection()?;
         let mut stmt = con.prepare("SELECT * FROM settings ORDER BY key")?;

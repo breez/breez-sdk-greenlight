@@ -5,13 +5,13 @@ use anyhow::{anyhow, Result};
 use breez_sdk_core::{
     mnemonic_to_seed as sdk_mnemonic_to_seed, parse as sdk_parse_input,
     parse_invoice as sdk_parse_invoice, BitcoinAddressData, BreezEvent, BreezServices,
-    ChannelState, ClosesChannelPaymentDetails, Config, CurrencyInfo, EventListener, FeeratePreset,
-    FiatCurrency, GreenlightCredentials, InputType, InvoicePaidDetails, LNInvoice,
-    LnPaymentDetails, LnUrlAuthRequestData, LnUrlErrorData, LnUrlPayRequestData,
-    LnUrlWithdrawCallbackStatus, LnUrlWithdrawRequestData, LocaleOverrides, LocalizedName,
-    LogEntry, LspInformation, MetadataItem, Network, NodeState, Payment, PaymentDetails,
-    PaymentType, PaymentTypeFilter, Rate, RecommendedFees, RouteHint, RouteHintHop, SwapInfo,
-    SwapStatus, Symbol,
+    ChannelState, ClosesChannelPaymentDetails, Config, CurrencyInfo, EnvironmentType,
+    EventListener, FeeratePreset, FiatCurrency, GreenlightCredentials, InputType,
+    InvoicePaidDetails, LNInvoice, LnPaymentDetails, LnUrlAuthRequestData, LnUrlErrorData,
+    LnUrlPayRequestData, LnUrlWithdrawCallbackStatus, LnUrlWithdrawRequestData, LocaleOverrides,
+    LocalizedName, LogEntry, LspInformation, MetadataItem, Network, NodeState, Payment,
+    PaymentDetails, PaymentType, PaymentTypeFilter, Rate, RecommendedFees, RouteHint, RouteHintHop,
+    SwapInfo, SwapStatus, Symbol, UnspentTransactionOutput,
 };
 use log::Metadata;
 use log::Record;
@@ -70,13 +70,8 @@ impl From<anyhow::Error> for SDKError {
 ///
 /// * `network` - The network type which is one of (Bitcoin, Testnet, Signet, Regtest)
 /// * `seed` - The node private key
-/// * `config` - The sdk configuration
-pub fn register_node(
-    network: Network,
-    seed: Vec<u8>,
-    config: Option<Config>,
-) -> Result<GreenlightCredentials> {
-    let creds = rt().block_on(BreezServices::register_node(network, seed.clone()))?;
+pub fn register_node(network: Network, seed: Vec<u8>) -> Result<GreenlightCredentials> {
+    let creds = rt().block_on(BreezServices::register_node(network, seed))?;
     Ok(creds)
 }
 
@@ -86,14 +81,13 @@ pub fn register_node(
 ///
 /// * `network` - The network type which is one of (Bitcoin, Testnet, Signet, Regtest)
 /// * `seed` - The node private key
-/// * `config` - The sdk configuration
-pub fn recover_node(
-    network: Network,
-    seed: Vec<u8>,
-    config: Option<Config>,
-) -> Result<GreenlightCredentials> {
-    let creds = rt().block_on(BreezServices::recover_node(network, seed.clone()))?;
+pub fn recover_node(network: Network, seed: Vec<u8>) -> Result<GreenlightCredentials> {
+    let creds = rt().block_on(BreezServices::recover_node(network, seed))?;
     Ok(creds)
+}
+
+pub fn default_config(env_type: EnvironmentType) -> Config {
+    BreezServices::default_config(env_type)
 }
 
 /// init_services initialized the global NodeService, schedule the node to run in the cloud and
@@ -106,7 +100,7 @@ pub fn recover_node(
 /// * `creds` - The greenlight credentials
 ///
 pub fn init_services(
-    config: Option<Config>,
+    config: Config,
     seed: Vec<u8>,
     creds: GreenlightCredentials,
     listener: Box<dyn EventListener>,
@@ -227,8 +221,13 @@ impl BlockingBreezServices {
     }
 
     /// Convenience method to look up LSP info based on current LSP ID
-    pub fn lsp_info(&self) -> Result<LspInformation, SDKError> {
-        rt().block_on(self.breez_services.lsp_info())
+    pub fn fetch_lsp_info(&self, lsp_id: String) -> Result<Option<LspInformation>, SDKError> {
+        rt().block_on(self.breez_services.fetch_lsp_info(lsp_id))
+            .map_err(|e| e.into())
+    }
+
+    pub fn lsp_id(&self) -> Result<Option<String>, SDKError> {
+        rt().block_on(self.breez_services.lsp_id())
             .map_err(|e| e.into())
     }
 
@@ -264,7 +263,7 @@ impl BlockingBreezServices {
     }
 
     pub fn execute_dev_command(&self, command: String) -> Result<String> {
-        rt().block_on(self.breez_services.execute_dev_command(&command))
+        rt().block_on(self.breez_services.execute_dev_command(command))
     }
 
     pub fn recommended_fees(&self) -> Result<RecommendedFees, SDKError> {
