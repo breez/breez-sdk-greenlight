@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
 
-use breez_sdk_core::binding::default_config;
 use breez_sdk_core::{
     mnemonic_to_seed as sdk_mnemonic_to_seed, parse as sdk_parse_input,
     parse_invoice as sdk_parse_invoice, BitcoinAddressData, BreezEvent, BreezServices,
@@ -85,6 +84,10 @@ pub fn register_node(network: Network, seed: Vec<u8>) -> Result<GreenlightCreden
 pub fn recover_node(network: Network, seed: Vec<u8>) -> Result<GreenlightCredentials> {
     let creds = rt().block_on(BreezServices::recover_node(network, seed))?;
     Ok(creds)
+}
+
+pub fn default_config(env_type: EnvironmentType) -> Config {
+    BreezServices::default_config(env_type)
 }
 
 /// init_services initialized the global NodeService, schedule the node to run in the cloud and
