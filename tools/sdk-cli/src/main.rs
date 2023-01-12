@@ -1,11 +1,13 @@
 #[macro_use]
 extern crate log;
+mod config;
 
 use std::fs;
 use std::io;
 use std::str::SplitWhitespace;
 use std::sync::Arc;
 
+use crate::config::{get_or_create_config, save_config};
 use anyhow::{anyhow, Result};
 use bip39::{Language, Mnemonic, MnemonicType, Seed};
 use breez_sdk_core::InputType::LnUrlWithdraw;
@@ -79,7 +81,7 @@ impl EventListener for CliEventListener {
 
 async fn init_sdk(seed: &[u8], creds: &GreenlightCredentials) -> Result<()> {
     let service = BreezServices::init_services(
-        BreezServices::default_config(EnvironmentType::Production),
+        get_or_create_config()?.to_sdk_config(),
         seed.to_vec(),
         creds.clone(),
         Box::new(CliEventListener {}),
@@ -114,6 +116,27 @@ async fn main() -> Result<()> {
                 rl.add_history_entry(line.as_str());
                 let mut command: SplitWhitespace = line.as_str().split_whitespace();
                 match command.next() {
+                    Some("set_api_key") => {
+                        let api_key = command
+                            .next()
+                            .ok_or("missing api_key")
+                            .map_err(|err| anyhow!(err))?;
+
+                        let mut config = get_or_create_config()?;
+                        config.api_key = Some(api_key.to_string());
+                        save_config(config)?;
+                    }
+                    Some("set_env") => {
+                        let env: EnvironmentType = command
+                            .next()
+                            .ok_or("missing env")
+                            .map_err(|err| anyhow!(err))?
+                            .parse()?;
+
+                        let mut config = get_or_create_config()?;
+                        config.env = env;
+                        save_config(config)?;
+                    }
                     Some("register_node") => {
                         let creds =
                             BreezServices::register_node(Network::Bitcoin, seed.to_vec()).await?;
@@ -357,6 +380,9 @@ where
 
 fn help_message() -> String {
     r#"
+Configuration:
+    set_api_key <key>
+    set_env <staging|production>
 Node:
     init
     recover_node

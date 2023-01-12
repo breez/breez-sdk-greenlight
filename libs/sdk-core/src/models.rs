@@ -145,9 +145,11 @@ impl Config {
 }
 
 /// Indicates the different kinds of supported environments for [crate::BreezServices]
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, EnumString)]
 pub enum EnvironmentType {
+    #[strum(serialize = "production")]
     Production,
+    #[strum(serialize = "staging")]
     Staging,
 }
 

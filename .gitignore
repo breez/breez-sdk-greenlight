@@ -2,3 +2,4 @@ libs/sdk-bindings/storage.sql
 .DS_Store
 .idea/
 
+tools/sdk-cli/config.json
