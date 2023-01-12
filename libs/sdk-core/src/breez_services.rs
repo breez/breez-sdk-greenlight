@@ -41,6 +41,8 @@ pub trait EventListener: Send + Sync {
     fn on_event(&self, e: BreezEvent);
 }
 
+/// Event emitted by the SDK. To listen for and react to these events, use an [EventListener] when
+/// initializing the [BreezServices].
 #[derive(Clone, Debug)]
 pub enum BreezEvent {
     NewBlock { block: u32 },
@@ -48,6 +50,7 @@ pub enum BreezEvent {
     Synced,
 }
 
+/// Details of an invoice that has been paid, included as payload in an emitted [BreezEvent]
 #[derive(Clone, Debug)]
 pub struct InvoicePaidDetails {
     pub payment_hash: String,

@@ -28,6 +28,7 @@ pub struct LocalizedName {
     pub name: String,
 }
 
+/// Details about a supported currency in the fiat rate feed
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct CurrencyInfo {

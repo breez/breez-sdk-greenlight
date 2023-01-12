@@ -151,12 +151,14 @@ pub enum EnvironmentType {
     Staging,
 }
 
+/// Client-specific credentials to connect to and manage a Greenlight node in the cloud
 #[derive(Clone, Serialize, Deserialize)]
 pub struct GreenlightCredentials {
     pub device_key: Vec<u8>,
     pub device_cert: Vec<u8>,
 }
 
+/// The different supported bitcoin networks
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Network {
     /// Mainnet
@@ -261,6 +263,7 @@ pub enum PaymentDetails {
     },
 }
 
+/// Details of a LN payment, as included in a [Payment]
 #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
 pub struct LnPaymentDetails {
     pub payment_hash: String,
@@ -278,6 +281,7 @@ pub struct ClosesChannelPaymentDetails {
     pub funding_txid: String,
 }
 
+/// LN channel managed by the LSP
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Channel {
     pub funding_txid: String,
@@ -296,18 +300,17 @@ pub enum ChannelState {
     Closed,
 }
 
-/// The possible status states are:
-///
-/// Initial - The swap address has been created and either there aren't any confirmed transactions associated with it
-/// or there are confirmed transactions that are bellow the lock timeout which means the funds are still
-/// eligible to be redeemed normally.
-///
-/// Expired - The swap address has confirmed transactions associated with it and the lock timeout has passed since
-/// the earliest confirmed transaction. This means the only way to spend the funds from this address is by
-/// broadcasting a refund transaction.
+/// The status of a swap
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum SwapStatus {
+    /// The swap address has been created and either there aren't any confirmed transactions associated with it
+    /// or there are confirmed transactions that are bellow the lock timeout which means the funds are still
+    /// eligible to be redeemed normally.
     Initial = 0,
+
+    /// The swap address has confirmed transactions associated with it and the lock timeout has passed since
+    /// the earliest confirmed transaction. This means the only way to spend the funds from this address is by
+    /// broadcasting a refund transaction.
     Expired = 1,
 }
 
@@ -359,7 +362,7 @@ impl SwapInfo {
     }
 }
 
-pub fn parse_short_channel_id(id_str: &str) -> Result<u64> {
+pub(crate) fn parse_short_channel_id(id_str: &str) -> Result<u64> {
     let parts: Vec<&str> = id_str.split('x').collect();
     if parts.len() != 3 {
         return Ok(0);

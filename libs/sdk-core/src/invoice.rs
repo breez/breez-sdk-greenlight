@@ -7,6 +7,7 @@ use lightning_invoice::*;
 use std::str::FromStr;
 use std::time::UNIX_EPOCH;
 
+/// Wrapper for a BOLT11 LN invoice
 #[derive(Debug)]
 pub struct LNInvoice {
     pub bolt11: String,
@@ -122,7 +123,7 @@ pub fn add_routing_hints(
     }
 }
 
-// parse_invoice parse a bolt11 payment request and returns a structure contains the parsed fields.
+/// Parse a BOLT11 payment request and return a structure contains the parsed fields.
 pub fn parse_invoice(bolt11: &str) -> Result<LNInvoice> {
     let signed = bolt11
         .strip_prefix("lightning:")
