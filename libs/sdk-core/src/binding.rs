@@ -1,3 +1,5 @@
+//! Bindings for the Dart integration
+
 use crate::breez_services::{self, BreezEvent, EventListener};
 use crate::chain::RecommendedFees;
 use crate::fiat::{FiatCurrency, Rate};
