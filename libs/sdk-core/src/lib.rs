@@ -7,7 +7,8 @@
 //! while the caller of the SDK has full custodial access to these funds and can sign spending transactions
 //! locally.
 //!
-//! On initializing the SDK, the caller gets its [GreenlightCredentials]. These can later be used to
+//! On initializing the SDK, the caller gets its [GreenlightCredentials]. These are used to interact
+//! with the Greenlight LN node running in the cloud. Together with the BIP39 mnemonic, these can be used to
 //! restore access to the same cloud node, either in the same app (backup / restore) or in another app
 //! using the SDK.
 //!
@@ -71,7 +72,7 @@
 //!
 //! * by loading the credentials from local storage, or with
 //! * [BreezServices::register_node] to register a new Greenlight node, or with
-//! * [BreezServices::recover_node] to recover an existing Greenlight node from a given BIP39 mnemonic
+//! * [BreezServices::recover_node] to recover an existing Greenlight node
 //!
 //! After initializing the Breez SDK services and starting them, the SDK is ready to be used.
 //!
