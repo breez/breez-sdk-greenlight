@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use crate::lnurl::withdraw::model::*;
 use crate::lnurl::*;
-use crate::{input_parser, LNInvoice, LnUrlWithdrawRequestData};
+use crate::{LNInvoice, LnUrlWithdrawRequestData};
 use anyhow::{anyhow, Result};
 
 /// Validates invoice and performs the second and last step of LNURL-withdraw, as per

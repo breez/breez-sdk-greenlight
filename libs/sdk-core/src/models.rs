@@ -118,7 +118,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub(crate) fn production() -> Self {
+    pub fn production() -> Self {
         Config {
             breezserver: "https://bs1-st.breez.technology:443".to_string(),
             mempoolspace_url: "https://mempool.space".to_string(),
@@ -130,7 +130,7 @@ impl Config {
         }
     }
 
-    pub(crate) fn staging() -> Self {
+    pub fn staging() -> Self {
         // TODO Update with staging values
         Config {
             breezserver: "https://bs1-st.breez.technology:443".to_string(),
