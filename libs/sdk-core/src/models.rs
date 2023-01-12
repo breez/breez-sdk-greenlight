@@ -1,5 +1,4 @@
 use anyhow::{anyhow, Result};
-use gl_client::pb::ListFundsOutput;
 use gl_client::pb::Peer;
 use gl_client::pb::WithdrawResponse;
 use gl_client::pb::{CloseChannelResponse, Invoice};

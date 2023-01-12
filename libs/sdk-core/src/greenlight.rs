@@ -1,6 +1,6 @@
 use crate::invoice::parse_invoice;
 use crate::models::{
-    Config, FeeratePreset, GreenlightCredentials, LnPaymentDetails, Network, NodeAPI, NodeState,
+    Config, GreenlightCredentials, LnPaymentDetails, Network, NodeAPI, NodeState,
     PaymentDetails, PaymentType, SyncResponse, UnspentTransactionOutput,
 };
 
@@ -225,15 +225,15 @@ impl NodeAPI for Greenlight {
         // Collect utxos from onchain funds
         let utxos = onchain_funds
             .iter()
-            .map(|listFundsOutput| match &listFundsOutput.output {
+            .map(|list_funds_output| match &list_funds_output.output {
                 Some(output) => Some(UnspentTransactionOutput {
                     txid: output.txid.clone(),
                     outnum: output.outnum,
-                    amount_millisatoshi: match &listFundsOutput.amount {
+                    amount_millisatoshi: match &list_funds_output.amount {
                         Some(amount) => amount_to_msat(amount),
                         None => 0,
                     },
-                    address: listFundsOutput.address.clone(),
+                    address: list_funds_output.address.clone(),
                 }),
                 None => None,
             })
