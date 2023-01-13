@@ -114,7 +114,7 @@ pub struct BreezServices {
     lsp_api: Arc<dyn LspAPI>,
     fiat_api: Arc<dyn FiatAPI>,
     chain_service: Arc<dyn ChainService>,
-    persister: Arc<persist::db::SqliteStorage>,
+    persister: Arc<SqliteStorage>,
     payment_receiver: Arc<PaymentReceiver>,
     btc_receive_swapper: Arc<BTCReceiveSwap>,
     event_listener: Option<Box<dyn EventListener>>,
@@ -356,7 +356,7 @@ impl BreezServices {
         self.persister.update_channels(&new_data.channels)?;
 
         //fetch closed_channel and convert them to Payment items.
-        let closed_channel_payments_res: Result<Vec<crate::models::Payment>> = self
+        let closed_channel_payments_res: Result<Vec<Payment>> = self
             .persister
             .list_channels()?
             .into_iter()
@@ -441,7 +441,7 @@ impl BreezServices {
 }
 
 async fn poll_events(breez_services: Arc<BreezServices>, mut current_block: u32) -> Result<()> {
-    let mut interval = tokio::time::interval(time::Duration::from_secs(30));
+    let mut interval = tokio::time::interval(Duration::from_secs(30));
     let mut invoice_stream = breez_services.node_api.stream_incoming_payments().await?;
     let mut log_stream = breez_services.node_api.stream_log_messages().await?;
 
@@ -508,9 +508,9 @@ async fn poll_events(breez_services: Arc<BreezServices>, mut current_block: u32)
 
 fn closed_channel_to_transaction(
     channel: crate::models::Channel,
-) -> Result<crate::models::Payment> {
+) -> Result<Payment> {
     let now = SystemTime::now();
-    Ok(crate::models::Payment {
+    Ok(Payment {
         id: channel.funding_txid.clone(),
         payment_type: PaymentType::ClosedChannel,
         payment_time: channel
@@ -620,7 +620,7 @@ impl BreezServicesBuilder {
         ));
 
         // The storage is implemented via sqlite.
-        let persister = Arc::new(crate::persist::db::SqliteStorage::from_file(format!(
+        let persister = Arc::new(SqliteStorage::from_file(format!(
             "{}/storage.sql",
             self.config.working_dir
         )));
@@ -744,7 +744,7 @@ pub trait Receiver: Send + Sync {
 pub(crate) struct PaymentReceiver {
     node_api: Arc<dyn NodeAPI>,
     lsp: Arc<dyn LspAPI>,
-    persister: Arc<persist::db::SqliteStorage>,
+    persister: Arc<SqliteStorage>,
 }
 
 #[tonic::async_trait]
