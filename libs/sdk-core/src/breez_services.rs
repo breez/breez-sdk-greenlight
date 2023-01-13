@@ -414,7 +414,7 @@ impl BreezServices {
     }
 
     /// Convenience method to look up LSP info based on current LSP ID
-    async fn lsp_info(&self) -> Result<LspInformation> {
+    pub async fn lsp_info(&self) -> Result<LspInformation> {
         get_lsp(self.persister.clone(), self.lsp_api.clone()).await
     }
 
