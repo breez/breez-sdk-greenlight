@@ -35,10 +35,11 @@ pub(crate) struct Greenlight {
     sdk_config: Config,
     tls_config: TlsConfig,
     signer: Signer,
+    scheduler: Scheduler,
 }
 
 impl Greenlight {
-    pub(crate) fn new(
+    pub(crate) async fn new(
         sdk_config: Config,
         seed: Vec<u8>,
         creds: GreenlightCredentials,
@@ -46,10 +47,12 @@ impl Greenlight {
         let greenlight_network = sdk_config.network.clone().into();
         let tls_config = TlsConfig::new()?.identity(creds.device_cert, creds.device_key);
         let signer = Signer::new(seed, greenlight_network, tls_config.clone())?;
+        let scheduler = Scheduler::new(signer.node_id(), greenlight_network).await?;
         Ok(Greenlight {
             sdk_config,
             tls_config,
             signer,
+            scheduler,
         })
     }
 
@@ -80,12 +83,7 @@ impl Greenlight {
     }
 
     async fn get_client(&self) -> Result<node::Client> {
-        let scheduler = Scheduler::new(
-            self.signer.node_id(),
-            self.sdk_config.network.clone().into(),
-        )
-        .await?;
-        let client: node::Client = scheduler.schedule(self.tls_config.clone()).await?;
+        let client: node::Client = self.scheduler.schedule(self.tls_config.clone()).await?;
         Ok(client)
     }
 }
