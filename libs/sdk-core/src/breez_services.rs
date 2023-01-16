@@ -322,7 +322,9 @@ impl BreezServices {
         get_lsp_by_id(self.persister.clone(), self.lsp_api.clone(), id.as_str()).await
     }
 
-    /// Close all channels with the current LSP
+    /// Close all channels with the current LSP.
+    ///
+    /// Should be called  when the user wants to close all the channels.
     pub async fn close_lsp_channels(&self) -> Result<()> {
         self.start_node().await?;
         let lsp = self.lsp_info().await?;
@@ -404,6 +406,7 @@ impl BreezServices {
         Ok(())
     }
 
+    /// Connects to the selected LSP, if any
     async fn connect_lsp_peer(&self) -> Result<()> {
         let lsp = self.lsp_info().await.ok();
         if lsp.is_some() {
