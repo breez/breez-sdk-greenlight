@@ -44,7 +44,7 @@ use crate::lnurl::pay::model::UrlSuccessActionData;
 use crate::lnurl::withdraw::model::LnUrlWithdrawCallbackStatus;
 use crate::lsp::LspInformation;
 use crate::models::ChannelState;
-use crate::models::ClosesChannelPaymentDetails;
+use crate::models::ClosedChannelPaymentDetails;
 use crate::models::Config;
 use crate::models::EnvironmentType;
 use crate::models::GreenlightCredentials;
@@ -635,7 +635,7 @@ impl support::IntoDart for ChannelState {
         .into_dart()
     }
 }
-impl support::IntoDart for ClosesChannelPaymentDetails {
+impl support::IntoDart for ClosedChannelPaymentDetails {
     fn into_dart(self) -> support::DartAbi {
         vec![
             self.short_channel_id.into_dart(),
@@ -645,7 +645,7 @@ impl support::IntoDart for ClosesChannelPaymentDetails {
         .into_dart()
     }
 }
-impl support::IntoDartExceptPrimitive for ClosesChannelPaymentDetails {}
+impl support::IntoDartExceptPrimitive for ClosedChannelPaymentDetails {}
 
 impl support::IntoDart for Config {
     fn into_dart(self) -> support::DartAbi {

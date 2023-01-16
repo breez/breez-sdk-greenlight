@@ -237,7 +237,8 @@ pub struct NodeState {
     pub inbound_liquidity_msats: u64,
 }
 
-pub(crate) struct SyncResponse {
+/// Internal response to a [NodeAPI::pull_changed] call
+pub struct SyncResponse {
     pub node_state: NodeState,
     pub payments: Vec<crate::models::Payment>,
     pub channels: Vec<crate::models::Channel>,
@@ -266,7 +267,7 @@ pub enum PaymentDetails {
     },
     ClosedChannel {
         #[serde(flatten)]
-        data: ClosesChannelPaymentDetails,
+        data: ClosedChannelPaymentDetails,
     },
 }
 
@@ -281,8 +282,9 @@ pub struct LnPaymentDetails {
     pub bolt11: String,
 }
 
+/// Details for a payment which closed a channel
 #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
-pub struct ClosesChannelPaymentDetails {
+pub struct ClosedChannelPaymentDetails {
     pub short_channel_id: String,
     pub state: ChannelState,
     pub funding_txid: String,

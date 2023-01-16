@@ -13,16 +13,15 @@ use crate::lnurl::withdraw::model::LnUrlWithdrawCallbackStatus;
 use crate::lnurl::withdraw::validate_lnurl_withdraw;
 use crate::lsp::LspInformation;
 use crate::models::{
-    parse_short_channel_id, ChannelState, ClosesChannelPaymentDetails, Config, EnvironmentType,
+    parse_short_channel_id, ChannelState, ClosedChannelPaymentDetails, Config, EnvironmentType,
     FiatAPI, GreenlightCredentials, LspAPI, Network, NodeAPI, NodeState, Payment, PaymentDetails,
     PaymentType, PaymentTypeFilter, SwapInfo, SwapperAPI,
 };
 use crate::persist::db::SqliteStorage;
 use crate::swap::BTCReceiveSwap;
-use crate::{persist, LnUrlWithdrawRequestData};
+use crate::LnUrlWithdrawRequestData;
 use anyhow::{anyhow, Result};
 use bip39::*;
-use core::time;
 use std::cmp::max;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -541,9 +540,7 @@ async fn poll_events(breez_services: Arc<BreezServices>, mut current_block: u32)
     }
 }
 
-fn closed_channel_to_transaction(
-    channel: crate::models::Channel,
-) -> Result<Payment> {
+fn closed_channel_to_transaction(channel: crate::models::Channel) -> Result<Payment> {
     let now = SystemTime::now();
     Ok(Payment {
         id: channel.funding_txid.clone(),
@@ -556,7 +553,7 @@ fn closed_channel_to_transaction(
         pending: channel.state == ChannelState::PendingClose,
         description: Some("Closed Channel".to_string()),
         details: PaymentDetails::ClosedChannel {
-            data: ClosesChannelPaymentDetails {
+            data: ClosedChannelPaymentDetails {
                 short_channel_id: channel.short_channel_id,
                 state: channel.state,
                 funding_txid: channel.funding_txid,
@@ -960,7 +957,7 @@ pub(crate) mod tests {
     use crate::chain::MempoolSpace;
     use crate::fiat::Rate;
     use crate::models::{
-        ClosesChannelPaymentDetails, LnPaymentDetails, NodeState, Payment, PaymentDetails,
+        ClosedChannelPaymentDetails, LnPaymentDetails, NodeState, Payment, PaymentDetails,
         PaymentTypeFilter,
     };
     use crate::{parse_short_channel_id, test_utils::*};

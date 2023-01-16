@@ -418,7 +418,6 @@ pub struct LnUrlErrorData {
     pub reason: String,
 }
 
-
 /// Wrapped in a [LnUrlPay], this is the result of [parse] when given a LNURL-pay endpoint.
 ///
 /// It represents the endpoint's parameters for the LNURL workflow.
