@@ -126,6 +126,7 @@ pub fn init_services(config: Config, seed: Vec<u8>, creds: GreenlightCredentials
     })
 }
 
+/// See [BreezServices::start]
 pub fn start_node() -> Result<()> {
     block_on(async {
         BreezServices::start(
@@ -164,12 +165,7 @@ pub fn stop_node() -> Result<()> {
     })
 }
 
-/// pay a bolt11 invoice
-///
-/// # Arguments
-///
-/// * `bolt11` - The bolt11 invoice
-/// * `amount_sats` - The amount to pay in satoshis
+/// See [BreezServices::send_payment]
 pub fn send_payment(bolt11: String, amount_sats: Option<u64>) -> Result<()> {
     block_on(async {
         get_breez_services()?
@@ -178,12 +174,7 @@ pub fn send_payment(bolt11: String, amount_sats: Option<u64>) -> Result<()> {
     })
 }
 
-/// pay directly to a node id using keysend
-///
-/// # Arguments
-///
-/// * `node_id` - The destination node_id
-/// * `amount_sats` - The amount to pay in satoshis
+/// See [BreezServices::send_spontaneous_payment]
 pub fn send_spontaneous_payment(node_id: String, amount_sats: u64) -> Result<()> {
     block_on(async {
         get_breez_services()?
@@ -192,15 +183,7 @@ pub fn send_spontaneous_payment(node_id: String, amount_sats: u64) -> Result<()>
     })
 }
 
-/// Creates an bolt11 payment request.
-/// This also works when the node doesn't have any channels and need inbound liquidity.
-/// In such case when the invoice is paid a new zero-conf channel will be open by the LSP,
-/// providing inbound liquidity and the payment will be routed via this new channel.
-///
-/// # Arguments
-///
-/// * `description` - The bolt11 payment request description
-/// * `amount_sats` - The amount to receive in satoshis
+/// See [BreezServices::receive_payment]
 pub fn receive_payment(amount_sats: u64, description: String) -> Result<LNInvoice> {
     block_on(async {
         get_breez_services()?
@@ -209,12 +192,12 @@ pub fn receive_payment(amount_sats: u64, description: String) -> Result<LNInvoic
     })
 }
 
-/// get the node state from the persistent storage
+/// See [BreezServices::node_info]
 pub fn node_info() -> Result<Option<NodeState>> {
     block_on(async { get_breez_services()?.node_info() })
 }
 
-/// list transactions (incoming/outgoing payments) from the persistent storage
+/// See [BreezServices::list_payments]
 pub fn list_payments(
     filter: PaymentTypeFilter,
     from_timestamp: Option<i64>,
@@ -227,41 +210,42 @@ pub fn list_payments(
     })
 }
 
-/// List available lsps that can be selected by the user
+/// See [BreezServices::list_lsps]
 pub fn list_lsps() -> Result<Vec<LspInformation>> {
     block_on(async { get_breez_services()?.list_lsps().await })
 }
 
-/// Select the lsp to be used and provide inbound liquidity
+/// See [BreezServices::connect_lsp]
 pub fn connect_lsp(lsp_id: String) -> Result<()> {
     block_on(async { get_breez_services()?.connect_lsp(lsp_id).await })
 }
 
-/// Convenience method to look up LSP info based on current LSP ID
+/// See [BreezServices::fetch_lsp_info]
 pub fn fetch_lsp_info(id: String) -> Result<Option<LspInformation>> {
     block_on(async { get_breez_services()?.fetch_lsp_info(id).await })
 }
 
+/// See [BreezServices::lsp_id]
 pub fn lsp_id() -> Result<Option<String>> {
     block_on(async { get_breez_services()?.lsp_id().await })
 }
 
-/// Fetch live rates of fiat currencies
+/// See [BreezServices::fetch_fiat_rates]
 pub fn fetch_fiat_rates() -> Result<Vec<Rate>> {
     block_on(async { get_breez_services()?.fetch_fiat_rates().await })
 }
 
-/// List all available fiat currencies
+/// See [BreezServices::list_fiat_currencies]
 pub fn list_fiat_currencies() -> Result<Vec<FiatCurrency>> {
     block_on(async { get_breez_services()?.list_fiat_currencies() })
 }
 
-/// close all channels with the current lsp
+/// See [BreezServices::close_lsp_channels]
 pub fn close_lsp_channels() -> Result<()> {
     block_on(async { get_breez_services()?.close_lsp_channels().await })
 }
 
-/// Withdraw on-chain funds in the wallet to an external btc address
+/// See [BreezServices::sweep]
 pub fn sweep(to_address: String, fee_rate_sats_per_byte: u64) -> Result<()> {
     block_on(async {
         get_breez_services()?
@@ -270,19 +254,17 @@ pub fn sweep(to_address: String, fee_rate_sats_per_byte: u64) -> Result<()> {
     })
 }
 
-/// swaps
-
-/// Onchain receive swap API
+/// See [BreezServices::receive_onchain]
 pub fn receive_onchain() -> Result<SwapInfo> {
     block_on(async { get_breez_services()?.receive_onchain().await })
 }
 
-// list swaps history (all of them: expired, refunded and active)
+/// See [BreezServices::list_refundables]
 pub fn list_refundables() -> Result<Vec<SwapInfo>> {
     block_on(async { get_breez_services()?.list_refundables().await })
 }
 
-// construct and broadcast a refund transaction for a failed/expired swap
+/// See [BreezServices::refund]
 pub fn refund(swap_address: String, to_address: String, sat_per_vbyte: u32) -> Result<String> {
     block_on(async {
         get_breez_services()?
@@ -291,7 +273,7 @@ pub fn refund(swap_address: String, to_address: String, sat_per_vbyte: u32) -> R
     })
 }
 
-// execute developers command
+/// See [BreezServices::execute_dev_command]
 pub fn execute_command(command: String) -> Result<String> {
     block_on(async { get_breez_services()?.execute_dev_command(command).await })
 }
@@ -322,8 +304,7 @@ pub fn parse(s: String) -> Result<InputType> {
     block_on(async { crate::input_parser::parse(&s).await })
 }
 
-/// Second step of LNURL-pay. The first step is `parse()`, which also validates the LNURL destination
-/// and generates the `LnUrlPayRequestData` payload needed here.
+/// See [BreezServices::pay_lnurl]
 pub fn pay_lnurl(
     user_amount_sat: u64,
     comment: Option<String>,
@@ -336,8 +317,7 @@ pub fn pay_lnurl(
     })
 }
 
-/// Second step of LNURL-withdraw. The first step is `parse()`, which also validates the LNURL destination
-/// and generates the `LnUrlW` payload needed here.
+/// See [BreezServices::withdraw_lnurl]
 pub fn withdraw_lnurl(
     req_data: LnUrlWithdrawRequestData,
     amount_sats: u64,
@@ -350,19 +330,17 @@ pub fn withdraw_lnurl(
     })
 }
 
-/// Attempts to convert the phrase to a mnemonic, then to a seed.
-///
-/// If the phrase is not a valid mnemonic, an error is returned.
+/// See [breez_services::mnemonic_to_seed]
 pub fn mnemonic_to_seed(phrase: String) -> Result<Vec<u8>> {
     breez_services::mnemonic_to_seed(phrase)
 }
 
-/// Fetches the current recommended fees
+/// See [BreezServices::recommended_fees]
 pub fn recommended_fees() -> Result<RecommendedFees> {
     block_on(async { get_breez_services()?.recommended_fees().await })
 }
 
-/// Fetches the default config, depending on the environment type
+/// See [BreezServices::default_config]
 pub fn default_config(config_type: EnvironmentType) -> Config {
     BreezServices::default_config(config_type)
 }

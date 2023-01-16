@@ -145,6 +145,12 @@ impl BreezServices {
     }
 
     /// Starts the BreezServices background threads for this instance.
+    ///
+    /// It should be called once right after creating [BreezServices], since it is essential for the
+    /// communicating with the node.
+    ///
+    /// It should be called only once when the app is started, regardless whether the app is sent to
+    /// background and back.
     pub async fn start(runtime: &Runtime, breez_services: &Arc<BreezServices>) -> Result<()> {
         // create a shutdown channel (sender and receiver)
         let (stop_sender, stop_receiver) = mpsc::channel(1);
@@ -163,6 +169,14 @@ impl BreezServices {
         sender.send(()).await.map_err(anyhow::Error::msg)
     }
 
+    /// Pay a bolt11 invoice
+    ///
+    /// If the invoice doesn't specify an amount, the amount is taken from the `amount_sats` arg.
+    ///
+    /// # Arguments
+    ///
+    /// * `bolt11` - The bolt11 invoice
+    /// * `amount_sats` - The amount to pay in satoshis
     pub async fn send_payment(&self, bolt11: String, amount_sats: Option<u64>) -> Result<()> {
         self.start_node().await?;
         self.node_api.send_payment(bolt11, amount_sats).await?;
@@ -170,7 +184,12 @@ impl BreezServices {
         Ok(())
     }
 
-    /// Send a keysend payment
+    /// Pay directly to a node id using keysend
+    ///
+    /// # Arguments
+    ///
+    /// * `node_id` - The destination node_id
+    /// * `amount_sats` - The amount to pay in satoshis
     pub async fn send_spontaneous_payment(&self, node_id: String, amount_sats: u64) -> Result<()> {
         self.start_node().await?;
         self.node_api
@@ -180,7 +199,8 @@ impl BreezServices {
         Ok(())
     }
 
-    /// Complete a LNURL-pay workflow.
+    /// Second step of LNURL-pay. The first step is `parse()`, which also validates the LNURL destination
+    /// and generates the `LnUrlPayRequestData` payload needed here.
     ///
     /// This call will validate the given `user_amount_sat` and `comment` against the parameters
     /// of the LNURL endpoint (`req_data`). If they match the endpoint requirements, the LNURL payment
@@ -204,7 +224,8 @@ impl BreezServices {
         }
     }
 
-    /// Complete a LNURL-withdraw workflow.
+    /// Second step of LNURL-withdraw. The first step is `parse()`, which also validates the LNURL destination
+    /// and generates the `LnUrlWithdrawRequestData` payload needed here.
     ///
     /// This call will validate the given `amount_sats` against the parameters
     /// of the LNURL endpoint (`req_data`). If they match the endpoint requirements, the LNURL withdraw
@@ -221,7 +242,15 @@ impl BreezServices {
         validate_lnurl_withdraw(req_data, invoice).await
     }
 
-    /// Create a BOLT11 invoice
+    /// Creates an bolt11 payment request.
+    /// This also works when the node doesn't have any channels and need inbound liquidity.
+    /// In such case when the invoice is paid a new zero-conf channel will be open by the LSP,
+    /// providing inbound liquidity and the payment will be routed via this new channel.
+    ///
+    /// # Arguments
+    ///
+    /// * `description` - The bolt11 payment request description
+    /// * `amount_sats` - The amount to receive in satoshis
     pub async fn receive_payment(
         &self,
         amount_sats: u64,
@@ -232,12 +261,12 @@ impl BreezServices {
             .await
     }
 
-    /// Retrieve the state of this node
+    /// Retrieve the node state from the persistent storage
     pub fn node_info(&self) -> Result<Option<NodeState>> {
         self.persister.get_node_state()
     }
 
-    /// List payments matching the given filters
+    /// List payments matching the given filters, as retrieved from persistent storage
     pub async fn list_payments(
         &self,
         filter: PaymentTypeFilter,
@@ -249,7 +278,7 @@ impl BreezServices {
             .map_err(|err| anyhow!(err))
     }
 
-    /// Sweep all funds to the specified on-chain address, with the given feerate
+    /// Sweep on-chain funds to the specified on-chain address, with the given feerate
     pub async fn sweep(&self, to_address: String, fee_rate_sats_per_byte: u64) -> Result<()> {
         self.start_node().await?;
         self.node_api
@@ -259,22 +288,24 @@ impl BreezServices {
         Ok(())
     }
 
+    /// Fetch live rates of fiat currencies
     pub async fn fetch_fiat_rates(&self) -> Result<Vec<Rate>> {
         self.fiat_api.fetch_fiat_rates().await
     }
 
+    /// List all available fiat currencies
     pub fn list_fiat_currencies(&self) -> Result<Vec<FiatCurrency>> {
         self.fiat_api.list_fiat_currencies()
     }
 
-    /// List available LSPs
+    /// List available LSPs that can be selected by the user
     pub async fn list_lsps(&self) -> Result<Vec<LspInformation>> {
         self.lsp_api
             .list_lsps(self.node_info()?.ok_or_else(|| anyhow!("err"))?.id)
             .await
     }
 
-    /// Connect to a specific LSP
+    /// Select the LSP to be used and provide inbound liquidity
     pub async fn connect_lsp(&self, lsp_id: String) -> Result<()> {
         self.persister.set_lsp_id(lsp_id)?;
         self.sync().await?;
@@ -286,11 +317,12 @@ impl BreezServices {
         self.persister.get_lsp_id()
     }
 
-    /// Fetch the current LSP's [LspInformation]
+    /// Convenience method to look up [LspInformation] for a given LSP ID
     pub async fn fetch_lsp_info(&self, id: String) -> Result<Option<LspInformation>> {
         get_lsp_by_id(self.persister.clone(), self.lsp_api.clone(), id.as_str()).await
     }
 
+    /// Close all channels with the current LSP
     pub async fn close_lsp_channels(&self) -> Result<()> {
         self.start_node().await?;
         let lsp = self.lsp_info().await?;
