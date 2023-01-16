@@ -14,6 +14,7 @@ use crate::grpc::{PaymentInformation, RegisterPaymentReply};
 use crate::lsp::LspInformation;
 use crate::models::Network::*;
 
+/// Different types of supported payments
 #[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
 pub enum PaymentType {
     Sent,
@@ -96,6 +97,7 @@ pub trait SwapperAPI: Send + Sync {
     async fn complete_swap(&self, bolt11: String) -> Result<()>;
 }
 
+/// Internal SDK log entry
 #[derive(Clone, Debug)]
 pub struct LogEntry {
     pub line: String,
@@ -190,12 +192,14 @@ impl From<Network> for bitcoin::network::constants::Network {
     }
 }
 
+/// Different types of supported filters which can be applied when retrieving the transaction list
 pub enum PaymentTypeFilter {
     Sent,
     Received,
     All,
 }
 
+/// Different types of supported feerates
 pub enum FeeratePreset {
     Regular,
     Economy,
@@ -215,6 +219,7 @@ impl TryFrom<i32> for FeeratePreset {
     }
 }
 
+/// The node state of a Greenlight LN node running in the cloud
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
 pub struct NodeState {
     pub id: String,
@@ -232,12 +237,13 @@ pub struct NodeState {
     pub inbound_liquidity_msats: u64,
 }
 
-pub struct SyncResponse {
+pub(crate) struct SyncResponse {
     pub node_state: NodeState,
     pub payments: Vec<crate::models::Payment>,
     pub channels: Vec<crate::models::Channel>,
 }
 
+/// Represents a payment, including its [PaymentType] and [PaymentDetails]
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub struct Payment {
     pub id: String,
@@ -250,6 +256,7 @@ pub struct Payment {
     pub details: PaymentDetails,
 }
 
+/// Wrapper for the different types of payments
 #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum PaymentDetails {
@@ -292,6 +299,7 @@ pub struct Channel {
     pub closed_at: Option<u64>,
 }
 
+/// State of a LN channel
 #[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
 pub enum ChannelState {
     PendingOpen,
@@ -374,6 +382,7 @@ pub(crate) fn parse_short_channel_id(id_str: &str) -> Result<u64> {
     Ok((block_num & 0xFFFFFF) << 40 | (tx_num & 0xFFFFFF) << 16 | (tx_out & 0xFFFF))
 }
 
+/// UTXO known to the LN node
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
 pub struct UnspentTransactionOutput {
     pub txid: Vec<u8>,

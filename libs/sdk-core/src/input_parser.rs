@@ -314,6 +314,7 @@ fn lnurl_decode(encoded: &str) -> Result<String> {
     }
 }
 
+/// Different kinds of inputs supported by [parse], including any relevant details extracted from the input.
 #[derive(Debug)]
 pub enum InputType {
     /// # Supported standards

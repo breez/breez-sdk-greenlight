@@ -22,6 +22,7 @@ pub struct LNInvoice {
     pub payment_secret: Vec<u8>,
 }
 
+/// Details of a specific hop in a larger route hint
 #[derive(Default, Debug, PartialEq, Eq)]
 pub struct RouteHintHop {
     /// The node_id of the non-target end of the route
@@ -40,6 +41,7 @@ pub struct RouteHintHop {
     pub htlc_maximum_msat: Option<u64>,
 }
 
+/// A route hint for a LN payment
 #[derive(Default, Debug, PartialEq, Eq)]
 pub struct RouteHint {
     pub hops: Vec<RouteHintHop>,
