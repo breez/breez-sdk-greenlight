@@ -25,7 +25,7 @@
 //!
 //! let creds = BreezServices::register_node(Network::Bitcoin, seed.as_bytes().to_vec()).await?;
 //! let sdk = BreezServices::init_services(
-//!         None,
+//!         BreezServices::default_config(EnvironmentType::Production),
 //!         seed.to_vec(),
 //!         creds.clone(),
 //!         Box::new(AppEventListener {}),
