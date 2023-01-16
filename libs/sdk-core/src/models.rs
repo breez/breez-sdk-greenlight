@@ -22,6 +22,7 @@ pub enum PaymentType {
     ClosedChannel,
 }
 
+/// Trait covering functions affecting the LN node
 #[tonic::async_trait]
 pub trait NodeAPI: Send + Sync {
     async fn create_invoice(
@@ -58,6 +59,7 @@ pub trait NodeAPI: Send + Sync {
     async fn execute_command(&self, command: String) -> Result<String>;
 }
 
+/// Trait covering LSP-related functionality
 #[tonic::async_trait]
 pub trait LspAPI: Send + Sync {
     async fn list_lsps(&self, node_pubkey: String) -> Result<Vec<LspInformation>>;
@@ -69,12 +71,14 @@ pub trait LspAPI: Send + Sync {
     ) -> Result<RegisterPaymentReply>;
 }
 
+/// Trait covering fiat-related functionality
 #[tonic::async_trait]
 pub trait FiatAPI: Send + Sync {
     fn list_fiat_currencies(&self) -> Result<Vec<FiatCurrency>>;
     async fn fetch_fiat_rates(&self) -> Result<Vec<Rate>>;
 }
 
+/// Summary of an ongoing swap
 pub struct Swap {
     pub bitcoin_address: String,
     pub swapper_pubkey: Vec<u8>,
@@ -85,6 +89,7 @@ pub struct Swap {
     pub min_allowed_deposit: i64,
 }
 
+/// Trait covering functionality involving swaps
 #[tonic::async_trait]
 pub trait SwapperAPI: Send + Sync {
     async fn create_swap(
