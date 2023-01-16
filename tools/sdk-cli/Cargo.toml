@@ -16,3 +16,4 @@ rustyline = "10.0.0"
 serde_json = "1.0"
 tiny-bip39 = "*"
 tokio = { version = "1", features = ["rt-multi-thread"] }
+serde = { version = "1.0", features = ["derive"] }

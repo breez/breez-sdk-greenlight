@@ -370,6 +370,7 @@ dependencies = [
  "log",
  "once_cell",
  "rustyline",
+ "serde",
  "serde_json",
  "tiny-bip39",
  "tokio",
