@@ -463,7 +463,7 @@ mod tests {
 
         let mock_breez_services = crate::breez_services::tests::breez_services().await;
         match mock_breez_services
-            .pay_lnurl(user_amount_sat, None, pay_req)
+            .lnurl_pay(user_amount_sat, None, pay_req)
             .await?
         {
             LnUrlPayResult::EndpointSuccess { data: None } => Ok(()),
@@ -486,7 +486,7 @@ mod tests {
 
         let mock_breez_services = crate::breez_services::tests::breez_services().await;
         let r = mock_breez_services
-            .pay_lnurl(user_amount_sat, None, pay_req)
+            .lnurl_pay(user_amount_sat, None, pay_req)
             .await;
         // An unsupported Success Action results in an error
         assert!(r.is_err());
@@ -509,7 +509,7 @@ mod tests {
 
         let mock_breez_services = crate::breez_services::tests::breez_services().await;
         match mock_breez_services
-            .pay_lnurl(user_amount_sat, None, pay_req)
+            .lnurl_pay(user_amount_sat, None, pay_req)
             .await?
         {
             LnUrlPayResult::EndpointSuccess { data: None } => Err(anyhow!(
@@ -540,7 +540,7 @@ mod tests {
 
         let mock_breez_services = crate::breez_services::tests::breez_services().await;
         assert!(mock_breez_services
-            .pay_lnurl(user_amount_sat, None, pay_req)
+            .lnurl_pay(user_amount_sat, None, pay_req)
             .await
             .is_err());
 
@@ -563,7 +563,7 @@ mod tests {
 
         let mock_breez_services = crate::breez_services::tests::breez_services().await;
         let res = mock_breez_services
-            .pay_lnurl(user_amount_sat, None, pay_req)
+            .lnurl_pay(user_amount_sat, None, pay_req)
             .await;
         assert!(matches!(res, Ok(LnUrlPayResult::EndpointError { data: _ })));
 
@@ -593,7 +593,7 @@ mod tests {
 
         let mock_breez_services = crate::breez_services::tests::breez_services().await;
         match mock_breez_services
-            .pay_lnurl(user_amount_sat, None, pay_req)
+            .lnurl_pay(user_amount_sat, None, pay_req)
             .await?
         {
             LnUrlPayResult::EndpointSuccess {

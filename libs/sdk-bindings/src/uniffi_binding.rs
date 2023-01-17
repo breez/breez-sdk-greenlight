@@ -186,7 +186,7 @@ impl BlockingBreezServices {
     ) -> Result<LnUrlWithdrawCallbackStatus, SDKError> {
         rt().block_on(
             self.breez_services
-                .withdraw_lnurl(req_data, amount_sats, description),
+                .lnurl_withdraw(req_data, amount_sats, description),
         )
         .map_err(|e| e.into())
     }

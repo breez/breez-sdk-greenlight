@@ -74,21 +74,18 @@
 //! * [BreezServices::register_node] to register a new Greenlight node, or with
 //! * [BreezServices::recover_node] to recover an existing Greenlight node
 //!
-//! The first step also takes an implementation of [EventListener] as an argument. That is a trait
-//! you can implement in order to be notified when a new [BreezEvent] is emitted.
+//! The first step also takes an implementation of [EventListener] as an argument, which is used to
+//! notify the caller of SDK events.
 //!
 //! After initializing the Breez SDK services and starting them, the SDK is ready to be used.
 //!
-//! ### B. LN Operations
+//! ### B. Sending and receiving Lightning Payments
 //!
 //! Supported BOLT11 operations are
 //!
 //! * [BreezServices::receive_payment] to create an invoice
 //! * [BreezServices::send_payment] to pay an invoice
-//!
-//! Keysend is possible with [BreezServices::send_spontaneous_payment].
-//!
-//! See LNURL section below for LNURL-pay and -withdraw.
+//! * [BreezServices::send_spontaneous_payment] for keysend payments
 //!
 //! ### C. On-chain Receive (swap-in)
 //!
@@ -96,13 +93,11 @@
 //! * [BreezServices::list_refundables] to get a list of swaps
 //! * [BreezServices::refund] to broadcast a transaction for failed or expired swaps
 //!
-//! ### D. LNURL Workflows
-//!
-//! LNURL-pay and withdraw are supported. Both workflows consist of two interactive steps:
+//! ### D. Using LNURL
 //!
 //! 1. [parse] the LNURL endpoint URL to get the workflow parameters
-//! 2. After getting the user input or confirmation, complete the workflow with [BreezServices::pay_lnurl] or
-//! [BreezServices::withdraw_lnurl].
+//! 2. After getting the user input or confirmation, complete the workflow with [BreezServices::lnurl_pay] or
+//! [BreezServices::lnurl_withdraw].
 //!
 //! ### E. Utilities
 //!
@@ -110,28 +105,19 @@
 //! The resulting [InputType] will tell you what the input is and how to treat it, as well as present relevant payload data
 //! in a structured form.
 //!
-//! The SDK also includes payment-related utilities:
+//! ### F. Supporting fiat currencies
 //!
 //! * [BreezServices::list_fiat_currencies] to get the supported fiat currencies
 //! * [BreezServices::fetch_fiat_rates] to get the current exchange rates
 //! * [BreezServices::recommended_fees] for the recommended mempool fees
-//! * [BreezServices::sweep] to send all onchain funds to a specific address
 //!
-//! as well as wallet utilities:
-//!
-//! * [BreezServices::list_payments] to get a `Vec` of [Payment] based on from/to timestamps or a [PaymentTypeFilter]
-//! * [BreezServices::list_refundables] for a list of swaps
-//! * [BreezServices::node_info] to get the current node state (LN and onchain balance, payment limits, etc)
-//! * [BreezServices::execute_dev_command] to execute dev commands
-//! * [mnemonic_to_seed]
-//!
-//! ### E. LSP Management
+//! ### G. LSP Management
 //!
 //! * [BreezServices::list_lsps] to get a list of available LSPs
 //! * [BreezServices::connect_lsp] to connect to a chosen LSP
 //! * [BreezServices::lsp_info] to get [LspInformation] on the currently selected LSP
 //!
-//! ### E. Stop and Cleanup
+//! ### H. Stop and Cleanup
 //!
 //! On app shutdown, the Breez SDK can be closed with
 //! ```ignore

@@ -190,7 +190,7 @@ async fn main() -> Result<()> {
 
                                 let amount_sat = rl.readline(&prompt)?;
                                 let pay_res =
-                                    sdk()?.pay_lnurl(amount_sat.parse::<u64>()?, None, pd).await;
+                                    sdk()?.lnurl_pay(amount_sat.parse::<u64>()?, None, pd).await;
                                 show_results(pay_res);
                             }
                             _ => error!("Unexpected result type"),
@@ -229,7 +229,7 @@ async fn main() -> Result<()> {
                                 let description = "LNURL-withdraw";
 
                                 let withdraw_res = sdk()?
-                                    .withdraw_lnurl(wd, amount_sats, Some(description.into()))
+                                    .lnurl_withdraw(wd, amount_sats, Some(description.into()))
                                     .await;
                                 show_results(withdraw_res);
                             }

@@ -304,7 +304,7 @@ pub fn parse(s: String) -> Result<InputType> {
     block_on(async { crate::input_parser::parse(&s).await })
 }
 
-/// See [BreezServices::pay_lnurl]
+/// See [BreezServices::lnurl_pay]
 pub fn pay_lnurl(
     user_amount_sat: u64,
     comment: Option<String>,
@@ -312,12 +312,12 @@ pub fn pay_lnurl(
 ) -> Result<LnUrlPayResult> {
     block_on(async {
         get_breez_services()?
-            .pay_lnurl(user_amount_sat, comment, req_data)
+            .lnurl_pay(user_amount_sat, comment, req_data)
             .await
     })
 }
 
-/// See [BreezServices::withdraw_lnurl]
+/// See [BreezServices::lnurl_withdraw]
 pub fn withdraw_lnurl(
     req_data: LnUrlWithdrawRequestData,
     amount_sats: u64,
@@ -325,7 +325,7 @@ pub fn withdraw_lnurl(
 ) -> Result<LnUrlWithdrawCallbackStatus> {
     block_on(async {
         get_breez_services()?
-            .withdraw_lnurl(req_data, amount_sats, description)
+            .lnurl_withdraw(req_data, amount_sats, description)
             .await
     })
 }

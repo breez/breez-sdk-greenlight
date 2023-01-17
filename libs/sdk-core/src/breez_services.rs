@@ -208,7 +208,7 @@ impl BreezServices {
     /// This call will validate the given `user_amount_sat` and `comment` against the parameters
     /// of the LNURL endpoint (`req_data`). If they match the endpoint requirements, the LNURL payment
     /// is made.
-    pub async fn pay_lnurl(
+    pub async fn lnurl_pay(
         &self,
         user_amount_sat: u64,
         comment: Option<String>,
@@ -233,7 +233,7 @@ impl BreezServices {
     /// This call will validate the given `amount_sats` against the parameters
     /// of the LNURL endpoint (`req_data`). If they match the endpoint requirements, the LNURL withdraw
     /// request is made. A successful result here means the endpoint started the payment.
-    pub async fn withdraw_lnurl(
+    pub async fn lnurl_withdraw(
         &self,
         req_data: LnUrlWithdrawRequestData,
         amount_sats: u64,

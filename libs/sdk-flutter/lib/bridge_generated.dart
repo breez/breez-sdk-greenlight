@@ -186,7 +186,7 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kParseConstMeta;
 
-  /// See [BreezServices::pay_lnurl]
+  /// See [BreezServices::lnurl_pay]
   Future<LnUrlPayResult> payLnurl(
       {required int userAmountSat,
       String? comment,
@@ -195,7 +195,7 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kPayLnurlConstMeta;
 
-  /// See [BreezServices::withdraw_lnurl]
+  /// See [BreezServices::lnurl_withdraw]
   Future<LnUrlWithdrawCallbackStatus> withdrawLnurl(
       {required LnUrlWithdrawRequestData reqData,
       required int amountSats,
