@@ -160,6 +160,10 @@ class BreezBridge {
     return nodeState;
   }
 
+  Future<Config> defaultConfig(EnvironmentType envType) {
+    return _lnToolkit.defaultConfig(configType: envType);
+  }
+
   /// list payments (incoming/outgoing payments) from the persistent storage
   Future<List<Payment>> listPayments({
     PaymentTypeFilter filter = PaymentTypeFilter.All,
