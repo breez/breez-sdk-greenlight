@@ -14,6 +14,7 @@ use crate::grpc::{PaymentInformation, RegisterPaymentReply};
 use crate::lsp::LspInformation;
 use crate::models::Network::*;
 
+/// Different types of supported payments
 #[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
 pub enum PaymentType {
     Sent,
@@ -21,6 +22,7 @@ pub enum PaymentType {
     ClosedChannel,
 }
 
+/// Trait covering functions affecting the LN node
 #[tonic::async_trait]
 pub trait NodeAPI: Send + Sync {
     async fn create_invoice(
@@ -57,6 +59,7 @@ pub trait NodeAPI: Send + Sync {
     async fn execute_command(&self, command: String) -> Result<String>;
 }
 
+/// Trait covering LSP-related functionality
 #[tonic::async_trait]
 pub trait LspAPI: Send + Sync {
     async fn list_lsps(&self, node_pubkey: String) -> Result<Vec<LspInformation>>;
@@ -68,12 +71,14 @@ pub trait LspAPI: Send + Sync {
     ) -> Result<RegisterPaymentReply>;
 }
 
+/// Trait covering fiat-related functionality
 #[tonic::async_trait]
 pub trait FiatAPI: Send + Sync {
     fn list_fiat_currencies(&self) -> Result<Vec<FiatCurrency>>;
     async fn fetch_fiat_rates(&self) -> Result<Vec<Rate>>;
 }
 
+/// Summary of an ongoing swap
 pub struct Swap {
     pub bitcoin_address: String,
     pub swapper_pubkey: Vec<u8>,
@@ -84,6 +89,7 @@ pub struct Swap {
     pub min_allowed_deposit: i64,
 }
 
+/// Trait covering functionality involving swaps
 #[tonic::async_trait]
 pub trait SwapperAPI: Send + Sync {
     async fn create_swap(
@@ -96,6 +102,7 @@ pub trait SwapperAPI: Send + Sync {
     async fn complete_swap(&self, bolt11: String) -> Result<()>;
 }
 
+/// Internal SDK log entry
 #[derive(Clone, Debug)]
 pub struct LogEntry {
     pub line: String,
@@ -118,7 +125,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub(crate) fn production() -> Self {
+    pub fn production() -> Self {
         Config {
             breezserver: "https://bs1-st.breez.technology:443".to_string(),
             mempoolspace_url: "https://mempool.space".to_string(),
@@ -130,7 +137,7 @@ impl Config {
         }
     }
 
-    pub(crate) fn staging() -> Self {
+    pub fn staging() -> Self {
         // TODO Update with staging values
         Config {
             breezserver: "https://bs1-st.breez.technology:443".to_string(),
@@ -153,12 +160,14 @@ pub enum EnvironmentType {
     Staging,
 }
 
+/// Client-specific credentials to connect to and manage a Greenlight node in the cloud
 #[derive(Clone, Serialize, Deserialize)]
 pub struct GreenlightCredentials {
     pub device_key: Vec<u8>,
     pub device_cert: Vec<u8>,
 }
 
+/// The different supported bitcoin networks
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Network {
     /// Mainnet
@@ -190,12 +199,14 @@ impl From<Network> for bitcoin::network::constants::Network {
     }
 }
 
+/// Different types of supported filters which can be applied when retrieving the transaction list
 pub enum PaymentTypeFilter {
     Sent,
     Received,
     All,
 }
 
+/// Different types of supported feerates
 pub enum FeeratePreset {
     Regular,
     Economy,
@@ -215,6 +226,7 @@ impl TryFrom<i32> for FeeratePreset {
     }
 }
 
+/// The node state of a Greenlight LN node running in the cloud
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
 pub struct NodeState {
     pub id: String,
@@ -232,12 +244,14 @@ pub struct NodeState {
     pub inbound_liquidity_msats: u64,
 }
 
+/// Internal response to a [NodeAPI::pull_changed] call
 pub struct SyncResponse {
     pub node_state: NodeState,
     pub payments: Vec<crate::models::Payment>,
     pub channels: Vec<crate::models::Channel>,
 }
 
+/// Represents a payment, including its [PaymentType] and [PaymentDetails]
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub struct Payment {
     pub id: String,
@@ -250,6 +264,7 @@ pub struct Payment {
     pub details: PaymentDetails,
 }
 
+/// Wrapper for the different types of payments
 #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum PaymentDetails {
@@ -259,10 +274,11 @@ pub enum PaymentDetails {
     },
     ClosedChannel {
         #[serde(flatten)]
-        data: ClosesChannelPaymentDetails,
+        data: ClosedChannelPaymentDetails,
     },
 }
 
+/// Details of a LN payment, as included in a [Payment]
 #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
 pub struct LnPaymentDetails {
     pub payment_hash: String,
@@ -273,13 +289,15 @@ pub struct LnPaymentDetails {
     pub bolt11: String,
 }
 
+/// Represents the funds that were on the user side of the channel at the time it was closed
 #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
-pub struct ClosesChannelPaymentDetails {
+pub struct ClosedChannelPaymentDetails {
     pub short_channel_id: String,
     pub state: ChannelState,
     pub funding_txid: String,
 }
 
+/// LN channel
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Channel {
     pub funding_txid: String,
@@ -290,6 +308,7 @@ pub struct Channel {
     pub closed_at: Option<u64>,
 }
 
+/// State of a LN channel
 #[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
 pub enum ChannelState {
     PendingOpen,
@@ -298,9 +317,17 @@ pub enum ChannelState {
     Closed,
 }
 
+/// The status of a swap
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum SwapStatus {
+    /// The swap address has been created and either there aren't any confirmed transactions associated with it
+    /// or there are confirmed transactions that are bellow the lock timeout which means the funds are still
+    /// eligible to be redeemed normally.
     Initial = 0,
+
+    /// The swap address has confirmed transactions associated with it and the lock timeout has passed since
+    /// the earliest confirmed transaction. This means the only way to spend the funds from this address is by
+    /// broadcasting a refund transaction.
     Expired = 1,
 }
 
@@ -316,6 +343,12 @@ impl TryFrom<i32> for SwapStatus {
     }
 }
 
+/// Represents the details of an on-going swap.
+///
+/// Once this SwapInfo is created it will be monitored on-chain and its state is
+/// saved to the persistent storage.
+///
+/// The SwapInfo has a status which changes accordingly, documented in [SwapStatus].
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct SwapInfo {
     //static immutable data
@@ -346,7 +379,7 @@ impl SwapInfo {
     }
 }
 
-pub fn parse_short_channel_id(id_str: &str) -> Result<u64> {
+pub(crate) fn parse_short_channel_id(id_str: &str) -> Result<u64> {
     let parts: Vec<&str> = id_str.split('x').collect();
     if parts.len() != 3 {
         return Ok(0);
@@ -358,6 +391,7 @@ pub fn parse_short_channel_id(id_str: &str) -> Result<u64> {
     Ok((block_num & 0xFFFFFF) << 40 | (tx_num & 0xFFFFFF) << 16 | (tx_out & 0xFFFF))
 }
 
+/// UTXO known to the LN node
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
 pub struct UnspentTransactionOutput {
     pub txid: Vec<u8>,

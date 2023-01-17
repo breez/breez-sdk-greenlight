@@ -7,6 +7,7 @@ use lightning_invoice::*;
 use std::str::FromStr;
 use std::time::UNIX_EPOCH;
 
+/// Wrapper for a BOLT11 LN invoice
 #[derive(Debug)]
 pub struct LNInvoice {
     pub bolt11: String,
@@ -21,6 +22,7 @@ pub struct LNInvoice {
     pub payment_secret: Vec<u8>,
 }
 
+/// Details of a specific hop in a larger route hint
 #[derive(Default, Debug, PartialEq, Eq)]
 pub struct RouteHintHop {
     /// The node_id of the non-target end of the route
@@ -39,6 +41,7 @@ pub struct RouteHintHop {
     pub htlc_maximum_msat: Option<u64>,
 }
 
+/// A route hint for a LN payment
 #[derive(Default, Debug, PartialEq, Eq)]
 pub struct RouteHint {
     pub hops: Vec<RouteHintHop>,
@@ -122,7 +125,7 @@ pub fn add_routing_hints(
     }
 }
 
-// parse_invoice parse a bolt11 payment request and returns a structure contains the parsed fields.
+/// Parse a BOLT11 payment request and return a structure contains the parsed fields.
 pub fn parse_invoice(bolt11: &str) -> Result<LNInvoice> {
     let signed = bolt11
         .strip_prefix("lightning:")

@@ -13,16 +13,15 @@ use crate::lnurl::withdraw::model::LnUrlWithdrawCallbackStatus;
 use crate::lnurl::withdraw::validate_lnurl_withdraw;
 use crate::lsp::LspInformation;
 use crate::models::{
-    parse_short_channel_id, ChannelState, ClosesChannelPaymentDetails, Config, EnvironmentType,
+    parse_short_channel_id, ChannelState, ClosedChannelPaymentDetails, Config, EnvironmentType,
     FiatAPI, GreenlightCredentials, LspAPI, Network, NodeAPI, NodeState, Payment, PaymentDetails,
     PaymentType, PaymentTypeFilter, SwapInfo, SwapperAPI,
 };
 use crate::persist::db::SqliteStorage;
 use crate::swap::BTCReceiveSwap;
-use crate::{persist, LnUrlWithdrawRequestData};
+use crate::LnUrlWithdrawRequestData;
 use anyhow::{anyhow, Result};
 use bip39::*;
-use core::time;
 use std::cmp::max;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -36,25 +35,34 @@ use tonic::service::Interceptor;
 use tonic::transport::{Channel, Uri};
 use tonic::{Request, Status};
 
+/// Trait that can be used to react to various [BreezEvent]s emitted by the SDK
 pub trait EventListener: Send + Sync {
     fn on_event(&self, e: BreezEvent);
 }
 
+/// Event emitted by the SDK. To listen for and react to these events, use an [EventListener] when
+/// initializing the [BreezServices].
 #[derive(Clone, Debug)]
 pub enum BreezEvent {
+    /// Indicates that a new block has just been found
     NewBlock { block: u32 },
+    /// Indicates that a new invoice has just been paid
     InvoicePaid { details: InvoicePaidDetails },
+    /// Indicates that the local SDK state has just been sync-ed with the remote components
     Synced,
 }
 
+/// Details of an invoice that has been paid, included as payload in an emitted [BreezEvent]
 #[derive(Clone, Debug)]
 pub struct InvoicePaidDetails {
     pub payment_hash: String,
     pub bolt11: String,
 }
 
-/// starts the BreezServices background threads.
-pub(crate) async fn start(
+/// Starts the BreezServices background threads.
+///
+/// Internal method. Should only be used as part of [BreezServices::start]
+async fn start_threads(
     rt: &Runtime,
     breez_services: Arc<BreezServices>,
     mut shutdown_receiver: mpsc::Receiver<()>,
@@ -102,14 +110,13 @@ pub(crate) async fn start(
     Ok(())
 }
 
-/// BreezServices is a facade and the single entry point for the sdk use cases providing
-/// by exposing a simplified API
+/// BreezServices is a facade and the single entry point for the SDK.
 pub struct BreezServices {
     node_api: Arc<dyn NodeAPI>,
     lsp_api: Arc<dyn LspAPI>,
     fiat_api: Arc<dyn FiatAPI>,
     chain_service: Arc<dyn ChainService>,
-    persister: Arc<persist::db::SqliteStorage>,
+    persister: Arc<SqliteStorage>,
     payment_receiver: Arc<PaymentReceiver>,
     btc_receive_swapper: Arc<BTCReceiveSwap>,
     event_listener: Option<Box<dyn EventListener>>,
@@ -117,36 +124,44 @@ pub struct BreezServices {
 }
 
 impl BreezServices {
+    /// Create a new node for the given network, from the given seed
     pub async fn register_node(network: Network, seed: Vec<u8>) -> Result<GreenlightCredentials> {
-        let creds = Greenlight::register(network, seed.clone()).await?;
-        Ok(creds)
+        Greenlight::register(network, seed.clone()).await
     }
 
+    /// Try to recover a previously created node
     pub async fn recover_node(network: Network, seed: Vec<u8>) -> Result<GreenlightCredentials> {
-        let creds = Greenlight::recover(network, seed.clone()).await?;
-        Ok(creds)
+        Greenlight::recover(network, seed.clone()).await
     }
 
+    /// Create and initialize the node services instance
     pub async fn init_services(
         config: Config,
         seed: Vec<u8>,
         creds: GreenlightCredentials,
         event_listener: Box<dyn EventListener>,
     ) -> Result<Arc<BreezServices>> {
-        // create the node services instance and set it globally
         BreezServicesBuilder::new(config)
             .greenlight_credentials(creds, seed)
             .build(Some(event_listener))
     }
 
+    /// Starts the BreezServices background threads for this instance.
+    ///
+    /// It should be called once right after creating [BreezServices], since it is essential for the
+    /// communicating with the node.
+    ///
+    /// It should be called only once when the app is started, regardless whether the app is sent to
+    /// background and back.
     pub async fn start(runtime: &Runtime, breez_services: &Arc<BreezServices>) -> Result<()> {
         // create a shutdown channel (sender and receiver)
         let (stop_sender, stop_receiver) = mpsc::channel(1);
         breez_services.set_shutdown_sender(stop_sender).await;
 
-        crate::breez_services::start(runtime, breez_services.clone(), stop_receiver).await
+        start_threads(runtime, breez_services.clone(), stop_receiver).await
     }
 
+    /// Trigger the stopping of BreezServices background threads for this instance.
     pub async fn stop(&self) -> Result<()> {
         let unlocked = self.shutdown_sender.lock().await;
         if unlocked.is_none() {
@@ -156,6 +171,14 @@ impl BreezServices {
         sender.send(()).await.map_err(anyhow::Error::msg)
     }
 
+    /// Pay a bolt11 invoice
+    ///
+    /// If the invoice doesn't specify an amount, the amount is taken from the `amount_sats` arg.
+    ///
+    /// # Arguments
+    ///
+    /// * `bolt11` - The bolt11 invoice
+    /// * `amount_sats` - The amount to pay in satoshis
     pub async fn send_payment(&self, bolt11: String, amount_sats: Option<u64>) -> Result<()> {
         self.start_node().await?;
         self.node_api.send_payment(bolt11, amount_sats).await?;
@@ -163,6 +186,12 @@ impl BreezServices {
         Ok(())
     }
 
+    /// Pay directly to a node id using keysend
+    ///
+    /// # Arguments
+    ///
+    /// * `node_id` - The destination node_id
+    /// * `amount_sats` - The amount to pay in satoshis
     pub async fn send_spontaneous_payment(&self, node_id: String, amount_sats: u64) -> Result<()> {
         self.start_node().await?;
         self.node_api
@@ -172,6 +201,12 @@ impl BreezServices {
         Ok(())
     }
 
+    /// Second step of LNURL-pay. The first step is `parse()`, which also validates the LNURL destination
+    /// and generates the `LnUrlPayRequestData` payload needed here.
+    ///
+    /// This call will validate the given `user_amount_sat` and `comment` against the parameters
+    /// of the LNURL endpoint (`req_data`). If they match the endpoint requirements, the LNURL payment
+    /// is made.
     pub async fn pay_lnurl(
         &self,
         user_amount_sat: u64,
@@ -191,6 +226,12 @@ impl BreezServices {
         }
     }
 
+    /// Second step of LNURL-withdraw. The first step is `parse()`, which also validates the LNURL destination
+    /// and generates the `LnUrlWithdrawRequestData` payload needed here.
+    ///
+    /// This call will validate the given `amount_sats` against the parameters
+    /// of the LNURL endpoint (`req_data`). If they match the endpoint requirements, the LNURL withdraw
+    /// request is made. A successful result here means the endpoint started the payment.
     pub async fn withdraw_lnurl(
         &self,
         req_data: LnUrlWithdrawRequestData,
@@ -203,6 +244,15 @@ impl BreezServices {
         validate_lnurl_withdraw(req_data, invoice).await
     }
 
+    /// Creates an bolt11 payment request.
+    /// This also works when the node doesn't have any channels and need inbound liquidity.
+    /// In such case when the invoice is paid a new zero-conf channel will be open by the LSP,
+    /// providing inbound liquidity and the payment will be routed via this new channel.
+    ///
+    /// # Arguments
+    ///
+    /// * `description` - The bolt11 payment request description
+    /// * `amount_sats` - The amount to receive in satoshis
     pub async fn receive_payment(
         &self,
         amount_sats: u64,
@@ -213,10 +263,12 @@ impl BreezServices {
             .await
     }
 
+    /// Retrieve the node state from the persistent storage
     pub fn node_info(&self) -> Result<Option<NodeState>> {
         self.persister.get_node_state()
     }
 
+    /// List payments matching the given filters, as retrieved from persistent storage
     pub async fn list_payments(
         &self,
         filter: PaymentTypeFilter,
@@ -228,6 +280,7 @@ impl BreezServices {
             .map_err(|err| anyhow!(err))
     }
 
+    /// Sweep on-chain funds to the specified on-chain address, with the given feerate
     pub async fn sweep(&self, to_address: String, fee_rate_sats_per_byte: u64) -> Result<()> {
         self.start_node().await?;
         self.node_api
@@ -237,34 +290,43 @@ impl BreezServices {
         Ok(())
     }
 
+    /// Fetch live rates of fiat currencies
     pub async fn fetch_fiat_rates(&self) -> Result<Vec<Rate>> {
         self.fiat_api.fetch_fiat_rates().await
     }
 
+    /// List all available fiat currencies
     pub fn list_fiat_currencies(&self) -> Result<Vec<FiatCurrency>> {
         self.fiat_api.list_fiat_currencies()
     }
 
+    /// List available LSPs that can be selected by the user
     pub async fn list_lsps(&self) -> Result<Vec<LspInformation>> {
         self.lsp_api
             .list_lsps(self.node_info()?.ok_or_else(|| anyhow!("err"))?.id)
             .await
     }
 
+    /// Select the LSP to be used and provide inbound liquidity
     pub async fn connect_lsp(&self, lsp_id: String) -> Result<()> {
         self.persister.set_lsp_id(lsp_id)?;
         self.sync().await?;
         Ok(())
     }
 
+    /// Get the current LSP's ID
     pub async fn lsp_id(&self) -> Result<Option<String>> {
         self.persister.get_lsp_id()
     }
 
+    /// Convenience method to look up [LspInformation] for a given LSP ID
     pub async fn fetch_lsp_info(&self, id: String) -> Result<Option<LspInformation>> {
         get_lsp_by_id(self.persister.clone(), self.lsp_api.clone(), id.as_str()).await
     }
 
+    /// Close all channels with the current LSP.
+    ///
+    /// Should be called  when the user wants to close all the channels.
     pub async fn close_lsp_channels(&self) -> Result<()> {
         self.start_node().await?;
         let lsp = self.lsp_info().await?;
@@ -276,16 +338,20 @@ impl BreezServices {
     }
 
     /// Onchain receive swap API
+    ///
+    /// Create a [SwapInfo] that represents the details of an on-going swap.
+    ///
+    /// See [SwapInfo] for details.
     pub async fn receive_onchain(&self) -> Result<SwapInfo> {
         self.btc_receive_swapper.create_swap_address().await
     }
 
-    // list swaps history (all of them: expired, refunded and active)
+    /// List the full swap history. Includes swaps in all states: expired, refunded and active.
     pub async fn list_refundables(&self) -> Result<Vec<SwapInfo>> {
         self.btc_receive_swapper.list_refundables()
     }
 
-    // construct and broadcast a refund transaction for a faile/expired swap
+    /// Construct and broadcast a refund transaction for a failed/expired swap
     pub async fn refund(
         &self,
         swap_address: String,
@@ -326,7 +392,7 @@ impl BreezServices {
         self.persister.update_channels(&new_data.channels)?;
 
         //fetch closed_channel and convert them to Payment items.
-        let closed_channel_payments_res: Result<Vec<crate::models::Payment>> = self
+        let closed_channel_payments_res: Result<Vec<Payment>> = self
             .persister
             .list_channels()?
             .into_iter()
@@ -342,6 +408,7 @@ impl BreezServices {
         Ok(())
     }
 
+    /// Connects to the selected LSP, if any
     async fn connect_lsp_peer(&self) -> Result<()> {
         let lsp = self.lsp_info().await.ok();
         if lsp.is_some() {
@@ -384,11 +451,11 @@ impl BreezServices {
     }
 
     /// Convenience method to look up LSP info based on current LSP ID
-    async fn lsp_info(&self) -> Result<LspInformation> {
+    pub async fn lsp_info(&self) -> Result<LspInformation> {
         get_lsp(self.persister.clone(), self.lsp_api.clone()).await
     }
 
-    pub async fn set_shutdown_sender(&self, sender: mpsc::Sender<()>) {
+    async fn set_shutdown_sender(&self, sender: mpsc::Sender<()>) {
         *self.shutdown_sender.lock().await = Some(sender);
     }
 
@@ -396,10 +463,12 @@ impl BreezServices {
         self.node_api.start().await
     }
 
+    /// Get the recommended fees for onchain transactions
     pub async fn recommended_fees(&self) -> Result<RecommendedFees> {
         self.chain_service.recommended_fees().await
     }
 
+    /// Get the full default config for a specific environment type
     pub fn default_config(env_type: EnvironmentType) -> Config {
         match env_type {
             EnvironmentType::Production => Config::production(),
@@ -409,7 +478,7 @@ impl BreezServices {
 }
 
 async fn poll_events(breez_services: Arc<BreezServices>, mut current_block: u32) -> Result<()> {
-    let mut interval = tokio::time::interval(time::Duration::from_secs(30));
+    let mut interval = tokio::time::interval(Duration::from_secs(30));
     let mut invoice_stream = breez_services.node_api.stream_incoming_payments().await?;
     let mut log_stream = breez_services.node_api.stream_log_messages().await?;
 
@@ -474,11 +543,9 @@ async fn poll_events(breez_services: Arc<BreezServices>, mut current_block: u32)
     }
 }
 
-fn closed_channel_to_transaction(
-    channel: crate::models::Channel,
-) -> Result<crate::models::Payment> {
+fn closed_channel_to_transaction(channel: crate::models::Channel) -> Result<Payment> {
     let now = SystemTime::now();
-    Ok(crate::models::Payment {
+    Ok(Payment {
         id: channel.funding_txid.clone(),
         payment_type: PaymentType::ClosedChannel,
         payment_time: channel
@@ -489,7 +556,7 @@ fn closed_channel_to_transaction(
         pending: channel.state == ChannelState::PendingClose,
         description: Some("Closed Channel".to_string()),
         details: PaymentDetails::ClosedChannel {
-            data: ClosesChannelPaymentDetails {
+            data: ClosedChannelPaymentDetails {
                 short_channel_id: channel.short_channel_id,
                 state: channel.state,
                 funding_txid: channel.funding_txid,
@@ -499,7 +566,7 @@ fn closed_channel_to_transaction(
 }
 
 /// A helper struct to configure and build BreezServices
-pub struct BreezServicesBuilder {
+struct BreezServicesBuilder {
     config: Config,
     node_api: Option<Arc<dyn NodeAPI>>,
     creds: Option<GreenlightCredentials>,
@@ -588,7 +655,7 @@ impl BreezServicesBuilder {
         ));
 
         // The storage is implemented via sqlite.
-        let persister = Arc::new(crate::persist::db::SqliteStorage::from_file(format!(
+        let persister = Arc::new(SqliteStorage::from_file(format!(
             "{}/storage.sql",
             self.config.working_dir
         )));
@@ -712,7 +779,7 @@ pub trait Receiver: Send + Sync {
 pub(crate) struct PaymentReceiver {
     node_api: Arc<dyn NodeAPI>,
     lsp: Arc<dyn LspAPI>,
-    persister: Arc<persist::db::SqliteStorage>,
+    persister: Arc<SqliteStorage>,
 }
 
 #[tonic::async_trait]
@@ -893,7 +960,7 @@ pub(crate) mod tests {
     use crate::chain::MempoolSpace;
     use crate::fiat::Rate;
     use crate::models::{
-        ClosesChannelPaymentDetails, LnPaymentDetails, NodeState, Payment, PaymentDetails,
+        ClosedChannelPaymentDetails, LnPaymentDetails, NodeState, Payment, PaymentDetails,
         PaymentTypeFilter,
     };
     use crate::{parse_short_channel_id, test_utils::*};

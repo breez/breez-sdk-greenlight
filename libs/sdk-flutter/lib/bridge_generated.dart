@@ -61,6 +61,7 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kInitServicesConstMeta;
 
+  /// See [BreezServices::start]
   Future<void> startNode({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kStartNodeConstMeta;
@@ -78,48 +79,30 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kStopNodeConstMeta;
 
-  /// pay a bolt11 invoice
-  ///
-  /// # Arguments
-  ///
-  /// * `bolt11` - The bolt11 invoice
-  /// * `amount_sats` - The amount to pay in satoshis
+  /// See [BreezServices::send_payment]
   Future<void> sendPayment(
       {required String bolt11, int? amountSats, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kSendPaymentConstMeta;
 
-  /// pay directly to a node id using keysend
-  ///
-  /// # Arguments
-  ///
-  /// * `node_id` - The destination node_id
-  /// * `amount_sats` - The amount to pay in satoshis
+  /// See [BreezServices::send_spontaneous_payment]
   Future<void> sendSpontaneousPayment(
       {required String nodeId, required int amountSats, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kSendSpontaneousPaymentConstMeta;
 
-  /// Creates an bolt11 payment request.
-  /// This also works when the node doesn't have any channels and need inbound liquidity.
-  /// In such case when the invoice is paid a new zero-conf channel will be open by the LSP,
-  /// providing inbound liquidity and the payment will be routed via this new channel.
-  ///
-  /// # Arguments
-  ///
-  /// * `description` - The bolt11 payment request description
-  /// * `amount_sats` - The amount to receive in satoshis
+  /// See [BreezServices::receive_payment]
   Future<LNInvoice> receivePayment(
       {required int amountSats, required String description, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kReceivePaymentConstMeta;
 
-  /// get the node state from the persistent storage
+  /// See [BreezServices::node_info]
   Future<NodeState?> nodeInfo({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kNodeInfoConstMeta;
 
-  /// list transactions (incoming/outgoing payments) from the persistent storage
+  /// See [BreezServices::list_payments]
   Future<List<Payment>> listPayments(
       {required PaymentTypeFilter filter,
       int? fromTimestamp,
@@ -128,41 +111,42 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kListPaymentsConstMeta;
 
-  /// List available lsps that can be selected by the user
+  /// See [BreezServices::list_lsps]
   Future<List<LspInformation>> listLsps({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kListLspsConstMeta;
 
-  /// Select the lsp to be used and provide inbound liquidity
+  /// See [BreezServices::connect_lsp]
   Future<void> connectLsp({required String lspId, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kConnectLspConstMeta;
 
-  /// Convenience method to look up LSP info based on current LSP ID
+  /// See [BreezServices::fetch_lsp_info]
   Future<LspInformation?> fetchLspInfo({required String id, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kFetchLspInfoConstMeta;
 
+  /// See [BreezServices::lsp_id]
   Future<String?> lspId({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kLspIdConstMeta;
 
-  /// Fetch live rates of fiat currencies
+  /// See [BreezServices::fetch_fiat_rates]
   Future<List<Rate>> fetchFiatRates({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kFetchFiatRatesConstMeta;
 
-  /// List all available fiat currencies
+  /// See [BreezServices::list_fiat_currencies]
   Future<List<FiatCurrency>> listFiatCurrencies({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kListFiatCurrenciesConstMeta;
 
-  /// close all channels with the current lsp
+  /// See [BreezServices::close_lsp_channels]
   Future<void> closeLspChannels({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kCloseLspChannelsConstMeta;
 
-  /// Withdraw on-chain funds in the wallet to an external btc address
+  /// See [BreezServices::sweep]
   Future<void> sweep(
       {required String toAddress,
       required int feeRateSatsPerByte,
@@ -170,16 +154,17 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kSweepConstMeta;
 
-  /// swaps
-  /// Onchain receive swap API
+  /// See [BreezServices::receive_onchain]
   Future<SwapInfo> receiveOnchain({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kReceiveOnchainConstMeta;
 
+  /// See [BreezServices::list_refundables]
   Future<List<SwapInfo>> listRefundables({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kListRefundablesConstMeta;
 
+  /// See [BreezServices::refund]
   Future<String> refund(
       {required String swapAddress,
       required String toAddress,
@@ -188,6 +173,7 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kRefundConstMeta;
 
+  /// See [BreezServices::execute_dev_command]
   Future<String> executeCommand({required String command, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kExecuteCommandConstMeta;
@@ -200,8 +186,7 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kParseConstMeta;
 
-  /// Second step of LNURL-pay. The first step is `parse()`, which also validates the LNURL destination
-  /// and generates the `LnUrlPayRequestData` payload needed here.
+  /// See [BreezServices::pay_lnurl]
   Future<LnUrlPayResult> payLnurl(
       {required int userAmountSat,
       String? comment,
@@ -210,8 +195,7 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kPayLnurlConstMeta;
 
-  /// Second step of LNURL-withdraw. The first step is `parse()`, which also validates the LNURL destination
-  /// and generates the `LnUrlW` payload needed here.
+  /// See [BreezServices::withdraw_lnurl]
   Future<LnUrlWithdrawCallbackStatus> withdrawLnurl(
       {required LnUrlWithdrawRequestData reqData,
       required int amountSats,
@@ -220,25 +204,24 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kWithdrawLnurlConstMeta;
 
-  /// Attempts to convert the phrase to a mnemonic, then to a seed.
-  ///
-  /// If the phrase is not a valid mnemonic, an error is returned.
+  /// See [breez_services::mnemonic_to_seed]
   Future<Uint8List> mnemonicToSeed({required String phrase, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kMnemonicToSeedConstMeta;
 
-  /// Fetches the current recommended fees
+  /// See [BreezServices::recommended_fees]
   Future<RecommendedFees> recommendedFees({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kRecommendedFeesConstMeta;
 
-  /// Fetches the default config, depending on the environment type
+  /// See [BreezServices::default_config]
   Future<Config> defaultConfig(
       {required EnvironmentType configType, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kDefaultConfigConstMeta;
 }
 
+/// Wrapped in a [BitcoinAddress], this is the result of [parse] when given a plain or BIP-21 formatted on-chain bitcoin address
 class BitcoinAddressData {
   final String address;
   final Network network;
@@ -257,15 +240,21 @@ class BitcoinAddressData {
 
 @freezed
 class BreezEvent with _$BreezEvent {
+  /// Indicates that a new block has just been found
   const factory BreezEvent.newBlock({
     required int block,
   }) = BreezEvent_NewBlock;
+
+  /// Indicates that a new invoice has just been paid
   const factory BreezEvent.invoicePaid({
     required InvoicePaidDetails details,
   }) = BreezEvent_InvoicePaid;
+
+  /// Indicates that the local SDK state has just been sync-ed with the remote components
   const factory BreezEvent.synced() = BreezEvent_Synced;
 }
 
+/// State of a LN channel
 enum ChannelState {
   PendingOpen,
   Opened,
@@ -273,12 +262,13 @@ enum ChannelState {
   Closed,
 }
 
-class ClosesChannelPaymentDetails {
+/// Represents the funds that were on the user side of the channel at the time it was closed
+class ClosedChannelPaymentDetails {
   final String shortChannelId;
   final ChannelState state;
   final String fundingTxid;
 
-  ClosesChannelPaymentDetails({
+  ClosedChannelPaymentDetails({
     required this.shortChannelId,
     required this.state,
     required this.fundingTxid,
@@ -309,6 +299,7 @@ class Config {
   });
 }
 
+/// Details about a supported currency in the fiat rate feed
 class CurrencyInfo {
   final String name;
   final int fractionSize;
@@ -335,6 +326,7 @@ enum EnvironmentType {
   Staging,
 }
 
+/// Wrapper around the [CurrencyInfo] of a fiat currency
 class FiatCurrency {
   final String id;
   final CurrencyInfo info;
@@ -345,6 +337,7 @@ class FiatCurrency {
   });
 }
 
+/// Client-specific credentials to connect to and manage a Greenlight node in the cloud
 class GreenlightCredentials {
   final Uint8List deviceKey;
   final Uint8List deviceCert;
@@ -414,6 +407,7 @@ class InputType with _$InputType {
   }) = InputType_LnUrlError;
 }
 
+/// Details of an invoice that has been paid, included as payload in an emitted [BreezEvent]
 class InvoicePaidDetails {
   final String paymentHash;
   final String bolt11;
@@ -424,6 +418,7 @@ class InvoicePaidDetails {
   });
 }
 
+/// Wrapper for a BOLT11 LN invoice
 class LNInvoice {
   final String bolt11;
   final String payeePubkey;
@@ -450,6 +445,7 @@ class LNInvoice {
   });
 }
 
+/// Details of a LN payment, as included in a [Payment]
 class LnPaymentDetails {
   final String paymentHash;
   final String label;
@@ -468,6 +464,9 @@ class LnPaymentDetails {
   });
 }
 
+/// Wrapped in a [LnUrlAuth], this is the result of [parse] when given a LNURL-auth endpoint.
+///
+/// It represents the endpoint's parameters for the LNURL workflow.
 class LnUrlAuthRequestData {
   final String k1;
 
@@ -476,6 +475,7 @@ class LnUrlAuthRequestData {
   });
 }
 
+/// Wrapped in a [LnUrlError], this represents a LNURL-endpoint error.
 class LnUrlErrorData {
   final String reason;
 
@@ -484,6 +484,9 @@ class LnUrlErrorData {
   });
 }
 
+/// Wrapped in a [LnUrlPay], this is the result of [parse] when given a LNURL-pay endpoint.
+///
+/// It represents the endpoint's parameters for the LNURL workflow.
 class LnUrlPayRequestData {
   final String callback;
   final int minSendable;
@@ -525,6 +528,9 @@ class LnUrlWithdrawCallbackStatus with _$LnUrlWithdrawCallbackStatus {
   }) = LnUrlWithdrawCallbackStatus_ErrorStatus;
 }
 
+/// Wrapped in a [LnUrlWithdraw], this is the result of [parse] when given a LNURL-withdraw endpoint.
+///
+/// It represents the endpoint's parameters for the LNURL workflow.
 class LnUrlWithdrawRequestData {
   final String callback;
   final String k1;
@@ -541,6 +547,7 @@ class LnUrlWithdrawRequestData {
   });
 }
 
+/// Locale-specific settings for the representation of a currency
 class LocaleOverrides {
   final String locale;
   final int? spacing;
@@ -553,6 +560,7 @@ class LocaleOverrides {
   });
 }
 
+/// Localized name of a currency
 class LocalizedName {
   final String locale;
   final String name;
@@ -563,6 +571,7 @@ class LocalizedName {
   });
 }
 
+/// Internal SDK log entry
 class LogEntry {
   final String line;
   final String level;
@@ -573,6 +582,7 @@ class LogEntry {
   });
 }
 
+/// Details of supported LSP
 class LspInformation {
   final String id;
   final String name;
@@ -617,6 +627,7 @@ class MessageSuccessActionData {
   });
 }
 
+/// The different supported bitcoin networks
 enum Network {
   /// Mainnet
   Bitcoin,
@@ -625,6 +636,7 @@ enum Network {
   Regtest,
 }
 
+/// The node state of a Greenlight LN node running in the cloud
 class NodeState {
   final String id;
   final int blockHeight;
@@ -653,6 +665,7 @@ class NodeState {
   });
 }
 
+/// Represents a payment, including its [PaymentType] and [PaymentDetails]
 class Payment {
   final String id;
   final PaymentType paymentType;
@@ -681,22 +694,25 @@ class PaymentDetails with _$PaymentDetails {
     required LnPaymentDetails data,
   }) = PaymentDetails_Ln;
   const factory PaymentDetails.closedChannel({
-    required ClosesChannelPaymentDetails data,
+    required ClosedChannelPaymentDetails data,
   }) = PaymentDetails_ClosedChannel;
 }
 
+/// Different types of supported payments
 enum PaymentType {
   Sent,
   Received,
   ClosedChannel,
 }
 
+/// Different types of supported filters which can be applied when retrieving the transaction list
 enum PaymentTypeFilter {
   Sent,
   Received,
   All,
 }
 
+/// Denominator in an exchange rate
 class Rate {
   final String coin;
   final double value;
@@ -707,6 +723,7 @@ class Rate {
   });
 }
 
+/// Wrapper containing the result of the recommended fees query, based on mempool.space data
 class RecommendedFees {
   final int fastestFee;
   final int halfHourFee;
@@ -723,6 +740,7 @@ class RecommendedFees {
   });
 }
 
+/// A route hint for a LN payment
 class RouteHint {
   final List<RouteHintHop> hops;
 
@@ -731,6 +749,7 @@ class RouteHint {
   });
 }
 
+/// Details of a specific hop in a larger route hint
 class RouteHintHop {
   /// The node_id of the non-target end of the route
   final String srcNodeId;
@@ -772,6 +791,12 @@ class SuccessAction with _$SuccessAction {
   ) = SuccessAction_Url;
 }
 
+/// Represents the details of an on-going swap.
+///
+/// Once this SwapInfo is created it will be monitored on-chain and its state is
+/// saved to the persistent storage.
+///
+/// The SwapInfo has a status which changes accordingly, documented in [SwapStatus].
 class SwapInfo {
   final String bitcoinAddress;
   final int createdAt;
@@ -812,11 +837,20 @@ class SwapInfo {
   });
 }
 
+/// The status of a swap
 enum SwapStatus {
+  /// The swap address has been created and either there aren't any confirmed transactions associated with it
+  /// or there are confirmed transactions that are bellow the lock timeout which means the funds are still
+  /// eligible to be redeemed normally.
   Initial,
+
+  /// The swap address has confirmed transactions associated with it and the lock timeout has passed since
+  /// the earliest confirmed transaction. This means the only way to spend the funds from this address is by
+  /// broadcasting a refund transaction.
   Expired,
 }
 
+/// Settings for the symbol representation of a currency
 class Symbol {
   final String? grapheme;
   final String? template;
@@ -831,6 +865,7 @@ class Symbol {
   });
 }
 
+/// UTXO known to the LN node
 class UnspentTransactionOutput {
   final Uint8List txid;
   final int outnum;
@@ -1478,9 +1513,9 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return raw as bool;
   }
 
-  ClosesChannelPaymentDetails
-      _wire2api_box_autoadd_closes_channel_payment_details(dynamic raw) {
-    return _wire2api_closes_channel_payment_details(raw);
+  ClosedChannelPaymentDetails
+      _wire2api_box_autoadd_closed_channel_payment_details(dynamic raw) {
+    return _wire2api_closed_channel_payment_details(raw);
   }
 
   InvoicePaidDetails _wire2api_box_autoadd_invoice_paid_details(dynamic raw) {
@@ -1565,12 +1600,12 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return ChannelState.values[raw];
   }
 
-  ClosesChannelPaymentDetails _wire2api_closes_channel_payment_details(
+  ClosedChannelPaymentDetails _wire2api_closed_channel_payment_details(
       dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 3)
       throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
-    return ClosesChannelPaymentDetails(
+    return ClosedChannelPaymentDetails(
       shortChannelId: _wire2api_String(arr[0]),
       state: _wire2api_channel_state(arr[1]),
       fundingTxid: _wire2api_String(arr[2]),
@@ -1986,7 +2021,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         );
       case 1:
         return PaymentDetails_ClosedChannel(
-          data: _wire2api_box_autoadd_closes_channel_payment_details(raw[1]),
+          data: _wire2api_box_autoadd_closed_channel_payment_details(raw[1]),
         );
       default:
         throw Exception("unreachable");

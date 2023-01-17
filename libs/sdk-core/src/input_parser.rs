@@ -314,6 +314,7 @@ fn lnurl_decode(encoded: &str) -> Result<String> {
     }
 }
 
+/// Different kinds of inputs supported by [parse], including any relevant details extracted from the input.
 #[derive(Debug)]
 pub enum InputType {
     /// # Supported standards
@@ -374,6 +375,7 @@ pub enum InputType {
     },
 }
 
+/// Generic struct containing the possible LNURL payloads returned when contacting a LNURL endpoint.
 // The uniffi bindings only supports enums with named fields.
 // We use #[serde(flatten)] to map the JSON payload fields to the inner enum "data" field
 // https://serde.rs/attr-flatten.html
@@ -410,11 +412,15 @@ impl From<LnUrlRequestData> for InputType {
     }
 }
 
+/// Wrapped in a [LnUrlError], this represents a LNURL-endpoint error.
 #[derive(Deserialize, Debug)]
 pub struct LnUrlErrorData {
     pub reason: String,
 }
 
+/// Wrapped in a [LnUrlPay], this is the result of [parse] when given a LNURL-pay endpoint.
+///
+/// It represents the endpoint's parameters for the LNURL workflow.
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct LnUrlPayRequestData {
@@ -436,6 +442,9 @@ impl LnUrlPayRequestData {
     }
 }
 
+/// Wrapped in a [LnUrlWithdraw], this is the result of [parse] when given a LNURL-withdraw endpoint.
+///
+/// It represents the endpoint's parameters for the LNURL workflow.
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct LnUrlWithdrawRequestData {
@@ -446,17 +455,22 @@ pub struct LnUrlWithdrawRequestData {
     pub max_withdrawable: u64,
 }
 
+/// Wrapped in a [LnUrlAuth], this is the result of [parse] when given a LNURL-auth endpoint.
+///
+/// It represents the endpoint's parameters for the LNURL workflow.
 #[derive(Deserialize, Debug)]
 pub struct LnUrlAuthRequestData {
     pub k1: String,
 }
 
+/// Key-value pair in the [LnUrlPayRequestData], as returned by the LNURL-pay endpoint
 #[derive(Deserialize, Debug)]
 pub struct MetadataItem {
     pub key: String,
     pub value: String,
 }
 
+/// Wrapped in a [BitcoinAddress], this is the result of [parse] when given a plain or BIP-21 formatted on-chain bitcoin address
 #[derive(Debug)]
 pub struct BitcoinAddressData {
     pub address: String,

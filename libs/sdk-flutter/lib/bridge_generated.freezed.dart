@@ -2616,19 +2616,19 @@ mixin _$PaymentDetails {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(LnPaymentDetails data) ln,
-    required TResult Function(ClosesChannelPaymentDetails data) closedChannel,
+    required TResult Function(ClosedChannelPaymentDetails data) closedChannel,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(LnPaymentDetails data)? ln,
-    TResult? Function(ClosesChannelPaymentDetails data)? closedChannel,
+    TResult? Function(ClosedChannelPaymentDetails data)? closedChannel,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(LnPaymentDetails data)? ln,
-    TResult Function(ClosesChannelPaymentDetails data)? closedChannel,
+    TResult Function(ClosedChannelPaymentDetails data)? closedChannel,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -2736,7 +2736,7 @@ class _$PaymentDetails_Ln implements PaymentDetails_Ln {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(LnPaymentDetails data) ln,
-    required TResult Function(ClosesChannelPaymentDetails data) closedChannel,
+    required TResult Function(ClosedChannelPaymentDetails data) closedChannel,
   }) {
     return ln(data);
   }
@@ -2745,7 +2745,7 @@ class _$PaymentDetails_Ln implements PaymentDetails_Ln {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(LnPaymentDetails data)? ln,
-    TResult? Function(ClosesChannelPaymentDetails data)? closedChannel,
+    TResult? Function(ClosedChannelPaymentDetails data)? closedChannel,
   }) {
     return ln?.call(data);
   }
@@ -2754,7 +2754,7 @@ class _$PaymentDetails_Ln implements PaymentDetails_Ln {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(LnPaymentDetails data)? ln,
-    TResult Function(ClosesChannelPaymentDetails data)? closedChannel,
+    TResult Function(ClosedChannelPaymentDetails data)? closedChannel,
     required TResult orElse(),
   }) {
     if (ln != null) {
@@ -2813,7 +2813,7 @@ abstract class _$$PaymentDetails_ClosedChannelCopyWith<$Res> {
           $Res Function(_$PaymentDetails_ClosedChannel) then) =
       __$$PaymentDetails_ClosedChannelCopyWithImpl<$Res>;
   @useResult
-  $Res call({ClosesChannelPaymentDetails data});
+  $Res call({ClosedChannelPaymentDetails data});
 }
 
 /// @nodoc
@@ -2834,7 +2834,7 @@ class __$$PaymentDetails_ClosedChannelCopyWithImpl<$Res>
       data: null == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
-              as ClosesChannelPaymentDetails,
+              as ClosedChannelPaymentDetails,
     ));
   }
 }
@@ -2845,7 +2845,7 @@ class _$PaymentDetails_ClosedChannel implements PaymentDetails_ClosedChannel {
   const _$PaymentDetails_ClosedChannel({required this.data});
 
   @override
-  final ClosesChannelPaymentDetails data;
+  final ClosedChannelPaymentDetails data;
 
   @override
   String toString() {
@@ -2874,7 +2874,7 @@ class _$PaymentDetails_ClosedChannel implements PaymentDetails_ClosedChannel {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(LnPaymentDetails data) ln,
-    required TResult Function(ClosesChannelPaymentDetails data) closedChannel,
+    required TResult Function(ClosedChannelPaymentDetails data) closedChannel,
   }) {
     return closedChannel(data);
   }
@@ -2883,7 +2883,7 @@ class _$PaymentDetails_ClosedChannel implements PaymentDetails_ClosedChannel {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(LnPaymentDetails data)? ln,
-    TResult? Function(ClosesChannelPaymentDetails data)? closedChannel,
+    TResult? Function(ClosedChannelPaymentDetails data)? closedChannel,
   }) {
     return closedChannel?.call(data);
   }
@@ -2892,7 +2892,7 @@ class _$PaymentDetails_ClosedChannel implements PaymentDetails_ClosedChannel {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(LnPaymentDetails data)? ln,
-    TResult Function(ClosesChannelPaymentDetails data)? closedChannel,
+    TResult Function(ClosedChannelPaymentDetails data)? closedChannel,
     required TResult orElse(),
   }) {
     if (closedChannel != null) {
@@ -2935,11 +2935,11 @@ class _$PaymentDetails_ClosedChannel implements PaymentDetails_ClosedChannel {
 
 abstract class PaymentDetails_ClosedChannel implements PaymentDetails {
   const factory PaymentDetails_ClosedChannel(
-          {required final ClosesChannelPaymentDetails data}) =
+          {required final ClosedChannelPaymentDetails data}) =
       _$PaymentDetails_ClosedChannel;
 
   @override
-  ClosesChannelPaymentDetails get data;
+  ClosedChannelPaymentDetails get data;
   @JsonKey(ignore: true)
   _$$PaymentDetails_ClosedChannelCopyWith<_$PaymentDetails_ClosedChannel>
       get copyWith => throw _privateConstructorUsedError;

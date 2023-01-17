@@ -104,7 +104,7 @@ dictionary Payment {
 [Enum]
 interface PaymentDetails {
     Ln(LnPaymentDetails data);
-    ClosedChannel(ClosesChannelPaymentDetails data);
+    ClosedChannel(ClosedChannelPaymentDetails data);
 };
 
 dictionary LnPaymentDetails {
@@ -116,7 +116,7 @@ dictionary LnPaymentDetails {
     string bolt11;
 };
 
-dictionary ClosesChannelPaymentDetails {
+dictionary ClosedChannelPaymentDetails {
     string short_channel_id;
     ChannelState state;
     string funding_txid;

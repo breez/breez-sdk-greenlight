@@ -7,6 +7,7 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use tonic::Request;
 
+/// Settings for the symbol representation of a currency
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Symbol {
     pub grapheme: Option<String>,
@@ -15,6 +16,7 @@ pub struct Symbol {
     pub position: Option<u32>,
 }
 
+/// Locale-specific settings for the representation of a currency
 #[derive(Serialize, Deserialize, Debug)]
 pub struct LocaleOverrides {
     pub locale: String,
@@ -22,12 +24,14 @@ pub struct LocaleOverrides {
     pub symbol: Symbol,
 }
 
+/// Localized name of a currency
 #[derive(Serialize, Deserialize, Debug)]
 pub struct LocalizedName {
     pub locale: String,
     pub name: String,
 }
 
+/// Details about a supported currency in the fiat rate feed
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct CurrencyInfo {
@@ -40,12 +44,14 @@ pub struct CurrencyInfo {
     pub locale_overrides: Option<Vec<LocaleOverrides>>,
 }
 
+/// Wrapper around the [CurrencyInfo] of a fiat currency
 #[derive(Debug)]
 pub struct FiatCurrency {
     pub id: String,
     pub info: CurrencyInfo,
 }
 
+/// Denominator in an exchange rate
 #[derive(Debug, PartialEq)]
 pub struct Rate {
     pub coin: String,
@@ -58,7 +64,7 @@ fn convert_to_fiat_currency_with_id(id: String, info: CurrencyInfo) -> FiatCurre
 
 #[tonic::async_trait]
 impl FiatAPI for BreezServer {
-    // retrieve all available fiat currencies from a local configuration file
+    /// Retrieve all available fiat currencies defined in a local configuration file
     fn list_fiat_currencies(&self) -> Result<Vec<FiatCurrency>> {
         let data = include_str!("../assets/json/currencies.json");
         let fiat_currency_map: HashMap<String, CurrencyInfo> = serde_json::from_str(data)?;
@@ -69,7 +75,7 @@ impl FiatAPI for BreezServer {
         Ok(fiat_currency_list)
     }
 
-    // get the live rates from the server
+    /// Get the live rates from the server
     async fn fetch_fiat_rates(&self) -> Result<Vec<Rate>> {
         let mut client = self.get_information_client().await?;
 
