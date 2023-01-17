@@ -144,6 +144,7 @@ impl BreezServices {
         BreezServicesBuilder::new(config)
             .greenlight_credentials(creds, seed)
             .build(Some(event_listener))
+            .await
     }
 
     /// Starts the BreezServices background threads for this instance.
@@ -620,7 +621,10 @@ impl BreezServicesBuilder {
         self
     }
 
-    pub fn build(&self, listener: Option<Box<dyn EventListener>>) -> Result<Arc<BreezServices>> {
+    pub async fn build(
+        &self,
+        listener: Option<Box<dyn EventListener>>,
+    ) -> Result<Arc<BreezServices>> {
         if self.node_api.is_none() && (self.creds.is_none() || self.seed.is_none()) {
             return Err(anyhow!(
                 "Either node_api or both credentials and seed should be provided"
@@ -638,7 +642,8 @@ impl BreezServicesBuilder {
                 self.config.clone(),
                 self.seed.clone().unwrap(),
                 self.creds.clone().unwrap(),
-            )?;
+            )
+            .await?;
             node_api = Some(Arc::new(greenlight));
         }
         let unwrapped_node_api = node_api.unwrap();
@@ -1025,7 +1030,8 @@ pub(crate) mod tests {
             .lsp_api(Arc::new(MockBreezServer {}))
             .fiat_api(Arc::new(MockBreezServer {}))
             .node_api(node_api)
-            .build(None)?;
+            .build(None)
+            .await?;
 
         breez_services.sync().await?;
         let fetched_state = breez_services
@@ -1143,6 +1149,7 @@ pub(crate) mod tests {
             .fiat_api(Arc::new(MockBreezServer {}))
             .node_api(node_api)
             .build(None)
+            .await
             .unwrap();
 
         breez_services
