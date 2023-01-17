@@ -1,19 +1,17 @@
 //! # Breez SDK
 //!
-//! The Breez SDK makes it easy to build non-custodial Bitcoin and Lightning applications.
+//! The Breez SDK enables mobile developers to integrate Lightning and bitcoin payments into their
+//! apps with a very shallow learning curve. The use cases are endless – from social apps that want
+//! to integrate tipping between users to content-creation apps interested in adding bitcoin monetization.
+//! Crucially, this SDK is an end-to-end, non-custodial, drop-in solution powered by Greenlight,
+//! a built-in LSP, on-chain interoperability, third-party fiat on-ramps, and other services users
+//! and operators need.
 //!
-//! The Greenlight integration allows it to separate the running of a LN node from the signing of LN
-//! transactions. The node runs in the cloud and is ready to receive payments non-custodially,
-//! while the caller of the SDK has full custodial access to these funds and can sign spending transactions
-//! locally.
-//!
-//! On initializing the SDK, the caller gets its [GreenlightCredentials]. These are used to interact
-//! with the Greenlight LN node running in the cloud. Together with the BIP39 mnemonic, these can be used to
-//! restore access to the same cloud node, either in the same app (backup / restore) or in another app
-//! using the SDK.
-//!
-//! In addition, the SDK includes utilities for LSP management, on-chain payments and fiat on- and
-//! off-ramps.
+//! The Breez SDK provides the following services:
+//! * Sending payments (via various protocols such as: bolt11, keysend, lnurl-pay, lightning address, etc.)
+//! * Receiving payments (via various protocols such as: bolt11, lnurl-withdraw, etc.)
+//! * Fetching node status (e.g. balance, max allow to pay, max allow to receive, on-chain balance, etc.)
+//! * Connecting to a new or existing node.
 //!
 //! ## Getting Started
 //!
@@ -34,6 +32,12 @@
 //!
 //! BreezServices::start(rt(), &sdk).await?;
 //! ```
+//!
+//! On initializing the SDK, the caller gets its [GreenlightCredentials]. These are used to interact
+//! with the Greenlight LN node running in the cloud. Together with the BIP39 mnemonic, these can be used to
+//! restore access to the same cloud node, either in the same app (backup / restore) or in another app
+//! using the SDK.
+//!
 //! We can now receive payments
 //!
 //! ```ignore
@@ -111,7 +115,7 @@
 //! * [BreezServices::fetch_fiat_rates] to get the current exchange rates
 //! * [BreezServices::recommended_fees] for the recommended mempool fees
 //!
-//! ### G. LSP Management
+//! ### G. Connecting to an LSP
 //!
 //! * [BreezServices::list_lsps] to get a list of available LSPs
 //! * [BreezServices::connect_lsp] to connect to a chosen LSP
