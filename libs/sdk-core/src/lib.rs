@@ -74,6 +74,9 @@
 //! * [BreezServices::register_node] to register a new Greenlight node, or with
 //! * [BreezServices::recover_node] to recover an existing Greenlight node
 //!
+//! The first step also takes an implementation of [EventListener] as an argument. That is a trait
+//! you can implement in order to be notified when a new [BreezEvent] is emitted.
+//!
 //! After initializing the Breez SDK services and starting them, the SDK is ready to be used.
 //!
 //! ### B. LN Operations
@@ -87,11 +90,11 @@
 //!
 //! See LNURL section below for LNURL-pay and -withdraw.
 //!
-//! ### C. On-chain Operations
+//! ### C. On-chain Receive (swap-in)
 //!
 //! * [BreezServices::receive_onchain]
+//! * [BreezServices::list_refundables] to get a list of swaps
 //! * [BreezServices::refund] to broadcast a transaction for failed or expired swaps
-//! * [BreezServices::sweep] to send all onchain funds to a specific address
 //!
 //! ### D. LNURL Workflows
 //!
@@ -112,6 +115,7 @@
 //! * [BreezServices::list_fiat_currencies] to get the supported fiat currencies
 //! * [BreezServices::fetch_fiat_rates] to get the current exchange rates
 //! * [BreezServices::recommended_fees] for the recommended mempool fees
+//! * [BreezServices::sweep] to send all onchain funds to a specific address
 //!
 //! as well as wallet utilities:
 //!

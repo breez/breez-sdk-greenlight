@@ -240,12 +240,17 @@ class BitcoinAddressData {
 
 @freezed
 class BreezEvent with _$BreezEvent {
+  /// Indicates that a new block has just been found
   const factory BreezEvent.newBlock({
     required int block,
   }) = BreezEvent_NewBlock;
+
+  /// Indicates that a new invoice has just been paid
   const factory BreezEvent.invoicePaid({
     required InvoicePaidDetails details,
   }) = BreezEvent_InvoicePaid;
+
+  /// Indicates that the local SDK state has just been sync-ed with the remote components
   const factory BreezEvent.synced() = BreezEvent_Synced;
 }
 
@@ -257,7 +262,7 @@ enum ChannelState {
   Closed,
 }
 
-/// Details for a payment which closed a channel
+/// Represents the funds that were on the user side of the channel at the time it was closed
 class ClosedChannelPaymentDetails {
   final String shortChannelId;
   final ChannelState state;

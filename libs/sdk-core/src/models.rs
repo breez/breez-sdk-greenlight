@@ -287,7 +287,7 @@ pub struct LnPaymentDetails {
     pub bolt11: String,
 }
 
-/// Details for a payment which closed a channel
+/// Represents the funds that were on the user side of the channel at the time it was closed
 #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
 pub struct ClosedChannelPaymentDetails {
     pub short_channel_id: String,
@@ -295,7 +295,7 @@ pub struct ClosedChannelPaymentDetails {
     pub funding_txid: String,
 }
 
-/// LN channel managed by the LSP
+/// LN channel
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Channel {
     pub funding_txid: String,

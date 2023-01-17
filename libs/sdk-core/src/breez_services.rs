@@ -44,8 +44,11 @@ pub trait EventListener: Send + Sync {
 /// initializing the [BreezServices].
 #[derive(Clone, Debug)]
 pub enum BreezEvent {
+    /// Indicates that a new block has just been found
     NewBlock { block: u32 },
+    /// Indicates that a new invoice has just been paid
     InvoicePaid { details: InvoicePaidDetails },
+    /// Indicates that the local SDK state has just been sync-ed with the remote components
     Synced,
 }
 
