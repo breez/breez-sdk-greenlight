@@ -12,7 +12,7 @@ use crate::invoice::{parse_invoice, LNInvoice};
 
 use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 
-/// Parses generic user input, typically pasted from clipboard or scanned from a QR
+/// Parses generic user input, typically pasted from clipboard or scanned from a QR.
 ///
 /// # Examples
 ///
@@ -314,7 +314,7 @@ fn lnurl_decode(encoded: &str) -> Result<String> {
     }
 }
 
-/// Different kinds of inputs supported by [parse], including any relevant details extracted from the input.
+/// Different kinds of inputs supported by [parse], including any relevant details extracted from the input
 #[derive(Debug)]
 pub enum InputType {
     /// # Supported standards
@@ -375,7 +375,7 @@ pub enum InputType {
     },
 }
 
-/// Generic struct containing the possible LNURL payloads returned when contacting a LNURL endpoint.
+/// Generic struct containing the possible LNURL payloads returned when contacting a LNURL endpoint
 // The uniffi bindings only supports enums with named fields.
 // We use #[serde(flatten)] to map the JSON payload fields to the inner enum "data" field
 // https://serde.rs/attr-flatten.html
@@ -470,7 +470,7 @@ pub struct MetadataItem {
     pub value: String,
 }
 
-/// Wrapped in a [BitcoinAddress], this is the result of [parse] when given a plain or BIP-21 formatted on-chain bitcoin address
+/// Wrapped in a [BitcoinAddress], this is the result of [parse] when given a plain or BIP-21 BTC address.
 #[derive(Debug)]
 pub struct BitcoinAddressData {
     pub address: String,

@@ -95,7 +95,7 @@
 //!
 //! ### D. Using LNURL
 //!
-//! 1. [parse] the LNURL endpoint URL to get the workflow parameters
+//! 1. [parse] the LNURL endpoint URL to get the workflow parameters.
 //! 2. After getting the user input or confirmation, complete the workflow with [BreezServices::lnurl_pay] or
 //! [BreezServices::lnurl_withdraw].
 //!

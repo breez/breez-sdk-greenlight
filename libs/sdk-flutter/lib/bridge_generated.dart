@@ -221,7 +221,7 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kDefaultConfigConstMeta;
 }
 
-/// Wrapped in a [BitcoinAddress], this is the result of [parse] when given a plain or BIP-21 formatted on-chain bitcoin address
+/// Wrapped in a [BitcoinAddress], this is the result of [parse] when given a plain or BIP-21 BTC address.
 class BitcoinAddressData {
   final String address;
   final Network network;
@@ -254,7 +254,7 @@ class BreezEvent with _$BreezEvent {
   const factory BreezEvent.synced() = BreezEvent_Synced;
 }
 
-/// State of a LN channel
+/// State of a Lightning channel
 enum ChannelState {
   PendingOpen,
   Opened,
@@ -262,7 +262,7 @@ enum ChannelState {
   Closed,
 }
 
-/// Represents the funds that were on the user side of the channel at the time it was closed
+/// Represents the funds that were on the user side of the channel at the time it was closed.
 class ClosedChannelPaymentDetails {
   final String shortChannelId;
   final ChannelState state;
@@ -275,7 +275,7 @@ class ClosedChannelPaymentDetails {
   });
 }
 
-/// Configuration for the Breez Services.
+/// Configuration for the Breez Services
 ///
 /// Use [Config::production] or [Config::staging] for default configs of the different supported
 /// environments.
@@ -320,7 +320,7 @@ class CurrencyInfo {
   });
 }
 
-/// Indicates the different kinds of supported environments for [crate::BreezServices]
+/// Indicates the different kinds of supported environments for [crate::BreezServices].
 enum EnvironmentType {
   Production,
   Staging,
@@ -665,7 +665,7 @@ class NodeState {
   });
 }
 
-/// Represents a payment, including its [PaymentType] and [PaymentDetails]
+/// Represents a payment, including its [PaymentType] and [PaymentDetails].
 class Payment {
   final String id;
   final PaymentType paymentType;

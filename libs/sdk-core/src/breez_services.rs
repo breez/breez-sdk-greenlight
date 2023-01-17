@@ -35,7 +35,7 @@ use tonic::service::Interceptor;
 use tonic::transport::{Channel, Uri};
 use tonic::{Request, Status};
 
-/// Trait that can be used to react to various [BreezEvent]s emitted by the SDK
+/// Trait that can be used to react to various [BreezEvent]s emitted by the SDK.
 pub trait EventListener: Send + Sync {
     fn on_event(&self, e: BreezEvent);
 }
