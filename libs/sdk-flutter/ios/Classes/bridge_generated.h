@@ -132,12 +132,12 @@ void wire_parse_invoice(int64_t port_, struct wire_uint_8_list *invoice);
 
 void wire_parse(int64_t port_, struct wire_uint_8_list *s);
 
-void wire_pay_lnurl(int64_t port_,
+void wire_lnurl_pay(int64_t port_,
                     uint64_t user_amount_sat,
                     struct wire_uint_8_list *comment,
                     struct wire_LnUrlPayRequestData *req_data);
 
-void wire_withdraw_lnurl(int64_t port_,
+void wire_lnurl_withdraw(int64_t port_,
                          struct wire_LnUrlWithdrawRequestData *req_data,
                          uint64_t amount_sats,
                          struct wire_uint_8_list *description);
@@ -192,8 +192,8 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_execute_command);
     dummy_var ^= ((int64_t) (void*) wire_parse_invoice);
     dummy_var ^= ((int64_t) (void*) wire_parse);
-    dummy_var ^= ((int64_t) (void*) wire_pay_lnurl);
-    dummy_var ^= ((int64_t) (void*) wire_withdraw_lnurl);
+    dummy_var ^= ((int64_t) (void*) wire_lnurl_pay);
+    dummy_var ^= ((int64_t) (void*) wire_lnurl_withdraw);
     dummy_var ^= ((int64_t) (void*) wire_mnemonic_to_seed);
     dummy_var ^= ((int64_t) (void*) wire_recommended_fees);
     dummy_var ^= ((int64_t) (void*) wire_default_config);

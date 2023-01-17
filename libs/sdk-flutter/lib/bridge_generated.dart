@@ -187,22 +187,22 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kParseConstMeta;
 
   /// See [BreezServices::lnurl_pay]
-  Future<LnUrlPayResult> payLnurl(
+  Future<LnUrlPayResult> lnurlPay(
       {required int userAmountSat,
       String? comment,
       required LnUrlPayRequestData reqData,
       dynamic hint});
 
-  FlutterRustBridgeTaskConstMeta get kPayLnurlConstMeta;
+  FlutterRustBridgeTaskConstMeta get kLnurlPayConstMeta;
 
   /// See [BreezServices::lnurl_withdraw]
-  Future<LnUrlWithdrawCallbackStatus> withdrawLnurl(
+  Future<LnUrlWithdrawCallbackStatus> lnurlWithdraw(
       {required LnUrlWithdrawRequestData reqData,
       required int amountSats,
       String? description,
       dynamic hint});
 
-  FlutterRustBridgeTaskConstMeta get kWithdrawLnurlConstMeta;
+  FlutterRustBridgeTaskConstMeta get kLnurlWithdrawConstMeta;
 
   /// See [breez_services::mnemonic_to_seed]
   Future<Uint8List> mnemonicToSeed({required String phrase, dynamic hint});
@@ -1375,7 +1375,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["s"],
       );
 
-  Future<LnUrlPayResult> payLnurl(
+  Future<LnUrlPayResult> lnurlPay(
       {required int userAmountSat,
       String? comment,
       required LnUrlPayRequestData reqData,
@@ -1385,21 +1385,21 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     var arg2 = _platform.api2wire_box_autoadd_ln_url_pay_request_data(reqData);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) =>
-          _platform.inner.wire_pay_lnurl(port_, arg0, arg1, arg2),
+          _platform.inner.wire_lnurl_pay(port_, arg0, arg1, arg2),
       parseSuccessData: _wire2api_ln_url_pay_result,
-      constMeta: kPayLnurlConstMeta,
+      constMeta: kLnurlPayConstMeta,
       argValues: [userAmountSat, comment, reqData],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kPayLnurlConstMeta =>
+  FlutterRustBridgeTaskConstMeta get kLnurlPayConstMeta =>
       const FlutterRustBridgeTaskConstMeta(
-        debugName: "pay_lnurl",
+        debugName: "lnurl_pay",
         argNames: ["userAmountSat", "comment", "reqData"],
       );
 
-  Future<LnUrlWithdrawCallbackStatus> withdrawLnurl(
+  Future<LnUrlWithdrawCallbackStatus> lnurlWithdraw(
       {required LnUrlWithdrawRequestData reqData,
       required int amountSats,
       String? description,
@@ -1410,17 +1410,17 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     var arg2 = _platform.api2wire_opt_String(description);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) =>
-          _platform.inner.wire_withdraw_lnurl(port_, arg0, arg1, arg2),
+          _platform.inner.wire_lnurl_withdraw(port_, arg0, arg1, arg2),
       parseSuccessData: _wire2api_ln_url_withdraw_callback_status,
-      constMeta: kWithdrawLnurlConstMeta,
+      constMeta: kLnurlWithdrawConstMeta,
       argValues: [reqData, amountSats, description],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kWithdrawLnurlConstMeta =>
+  FlutterRustBridgeTaskConstMeta get kLnurlWithdrawConstMeta =>
       const FlutterRustBridgeTaskConstMeta(
-        debugName: "withdraw_lnurl",
+        debugName: "lnurl_withdraw",
         argNames: ["reqData", "amountSats", "description"],
       );
 
@@ -2906,13 +2906,13 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_parse = _wire_parsePtr
       .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
-  void wire_pay_lnurl(
+  void wire_lnurl_pay(
     int port_,
     int user_amount_sat,
     ffi.Pointer<wire_uint_8_list> comment,
     ffi.Pointer<wire_LnUrlPayRequestData> req_data,
   ) {
-    return _wire_pay_lnurl(
+    return _wire_lnurl_pay(
       port_,
       user_amount_sat,
       comment,
@@ -2920,24 +2920,24 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
     );
   }
 
-  late final _wire_pay_lnurlPtr = _lookup<
+  late final _wire_lnurl_payPtr = _lookup<
       ffi.NativeFunction<
           ffi.Void Function(
               ffi.Int64,
               ffi.Uint64,
               ffi.Pointer<wire_uint_8_list>,
-              ffi.Pointer<wire_LnUrlPayRequestData>)>>('wire_pay_lnurl');
-  late final _wire_pay_lnurl = _wire_pay_lnurlPtr.asFunction<
+              ffi.Pointer<wire_LnUrlPayRequestData>)>>('wire_lnurl_pay');
+  late final _wire_lnurl_pay = _wire_lnurl_payPtr.asFunction<
       void Function(int, int, ffi.Pointer<wire_uint_8_list>,
           ffi.Pointer<wire_LnUrlPayRequestData>)>();
 
-  void wire_withdraw_lnurl(
+  void wire_lnurl_withdraw(
     int port_,
     ffi.Pointer<wire_LnUrlWithdrawRequestData> req_data,
     int amount_sats,
     ffi.Pointer<wire_uint_8_list> description,
   ) {
-    return _wire_withdraw_lnurl(
+    return _wire_lnurl_withdraw(
       port_,
       req_data,
       amount_sats,
@@ -2945,14 +2945,14 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
     );
   }
 
-  late final _wire_withdraw_lnurlPtr = _lookup<
+  late final _wire_lnurl_withdrawPtr = _lookup<
       ffi.NativeFunction<
           ffi.Void Function(
               ffi.Int64,
               ffi.Pointer<wire_LnUrlWithdrawRequestData>,
               ffi.Uint64,
-              ffi.Pointer<wire_uint_8_list>)>>('wire_withdraw_lnurl');
-  late final _wire_withdraw_lnurl = _wire_withdraw_lnurlPtr.asFunction<
+              ffi.Pointer<wire_uint_8_list>)>>('wire_lnurl_withdraw');
+  late final _wire_lnurl_withdraw = _wire_lnurl_withdrawPtr.asFunction<
       void Function(int, ffi.Pointer<wire_LnUrlWithdrawRequestData>, int,
           ffi.Pointer<wire_uint_8_list>)>();
 

@@ -305,7 +305,7 @@ pub fn parse(s: String) -> Result<InputType> {
 }
 
 /// See [BreezServices::lnurl_pay]
-pub fn pay_lnurl(
+pub fn lnurl_pay(
     user_amount_sat: u64,
     comment: Option<String>,
     req_data: LnUrlPayRequestData,
@@ -318,7 +318,7 @@ pub fn pay_lnurl(
 }
 
 /// See [BreezServices::lnurl_withdraw]
-pub fn withdraw_lnurl(
+pub fn lnurl_withdraw(
     req_data: LnUrlWithdrawRequestData,
     amount_sats: u64,
     description: Option<String>,
