@@ -419,7 +419,7 @@ fn wire_parse_impl(port_: MessagePort, s: impl Wire2Api<String> + UnwindSafe) {
         },
     )
 }
-fn wire_pay_lnurl_impl(
+fn wire_lnurl_pay_impl(
     port_: MessagePort,
     user_amount_sat: impl Wire2Api<u64> + UnwindSafe,
     comment: impl Wire2Api<Option<String>> + UnwindSafe,
@@ -427,7 +427,7 @@ fn wire_pay_lnurl_impl(
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
-            debug_name: "pay_lnurl",
+            debug_name: "lnurl_pay",
             port: Some(port_),
             mode: FfiCallMode::Normal,
         },
@@ -435,11 +435,11 @@ fn wire_pay_lnurl_impl(
             let api_user_amount_sat = user_amount_sat.wire2api();
             let api_comment = comment.wire2api();
             let api_req_data = req_data.wire2api();
-            move |task_callback| pay_lnurl(api_user_amount_sat, api_comment, api_req_data)
+            move |task_callback| lnurl_pay(api_user_amount_sat, api_comment, api_req_data)
         },
     )
 }
-fn wire_withdraw_lnurl_impl(
+fn wire_lnurl_withdraw_impl(
     port_: MessagePort,
     req_data: impl Wire2Api<LnUrlWithdrawRequestData> + UnwindSafe,
     amount_sats: impl Wire2Api<u64> + UnwindSafe,
@@ -447,7 +447,7 @@ fn wire_withdraw_lnurl_impl(
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
-            debug_name: "withdraw_lnurl",
+            debug_name: "lnurl_withdraw",
             port: Some(port_),
             mode: FfiCallMode::Normal,
         },
@@ -455,7 +455,7 @@ fn wire_withdraw_lnurl_impl(
             let api_req_data = req_data.wire2api();
             let api_amount_sats = amount_sats.wire2api();
             let api_description = description.wire2api();
-            move |task_callback| withdraw_lnurl(api_req_data, api_amount_sats, api_description)
+            move |task_callback| lnurl_withdraw(api_req_data, api_amount_sats, api_description)
         },
     )
 }

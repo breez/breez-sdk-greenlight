@@ -109,7 +109,7 @@ pub struct LogEntry {
     pub level: String,
 }
 
-/// Configuration for the Breez Services.
+/// Configuration for the Breez Services
 ///
 /// Use [Config::production] or [Config::staging] for default configs of the different supported
 /// environments.
@@ -151,7 +151,7 @@ impl Config {
     }
 }
 
-/// Indicates the different kinds of supported environments for [crate::BreezServices]
+/// Indicates the different kinds of supported environments for [crate::BreezServices].
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, EnumString)]
 pub enum EnvironmentType {
     #[strum(serialize = "production")]
@@ -251,7 +251,7 @@ pub struct SyncResponse {
     pub channels: Vec<crate::models::Channel>,
 }
 
-/// Represents a payment, including its [PaymentType] and [PaymentDetails]
+/// Represents a payment, including its [PaymentType] and [PaymentDetails].
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub struct Payment {
     pub id: String,
@@ -289,7 +289,7 @@ pub struct LnPaymentDetails {
     pub bolt11: String,
 }
 
-/// Represents the funds that were on the user side of the channel at the time it was closed
+/// Represents the funds that were on the user side of the channel at the time it was closed.
 #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
 pub struct ClosedChannelPaymentDetails {
     pub short_channel_id: String,
@@ -297,7 +297,7 @@ pub struct ClosedChannelPaymentDetails {
     pub funding_txid: String,
 }
 
-/// LN channel
+/// Lightning channel
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Channel {
     pub funding_txid: String,
@@ -308,7 +308,7 @@ pub struct Channel {
     pub closed_at: Option<u64>,
 }
 
-/// State of a LN channel
+/// State of a Lightning channel
 #[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
 pub enum ChannelState {
     PendingOpen,

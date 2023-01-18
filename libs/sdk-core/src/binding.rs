@@ -304,28 +304,28 @@ pub fn parse(s: String) -> Result<InputType> {
     block_on(async { crate::input_parser::parse(&s).await })
 }
 
-/// See [BreezServices::pay_lnurl]
-pub fn pay_lnurl(
+/// See [BreezServices::lnurl_pay]
+pub fn lnurl_pay(
     user_amount_sat: u64,
     comment: Option<String>,
     req_data: LnUrlPayRequestData,
 ) -> Result<LnUrlPayResult> {
     block_on(async {
         get_breez_services()?
-            .pay_lnurl(user_amount_sat, comment, req_data)
+            .lnurl_pay(user_amount_sat, comment, req_data)
             .await
     })
 }
 
-/// See [BreezServices::withdraw_lnurl]
-pub fn withdraw_lnurl(
+/// See [BreezServices::lnurl_withdraw]
+pub fn lnurl_withdraw(
     req_data: LnUrlWithdrawRequestData,
     amount_sats: u64,
     description: Option<String>,
 ) -> Result<LnUrlWithdrawCallbackStatus> {
     block_on(async {
         get_breez_services()?
-            .withdraw_lnurl(req_data, amount_sats, description)
+            .lnurl_withdraw(req_data, amount_sats, description)
             .await
     })
 }
