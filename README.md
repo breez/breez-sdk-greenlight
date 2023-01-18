@@ -60,7 +60,7 @@ To get started with the Breez SDK API, please follow the documentation [here](ht
 - [x] Swift bindings
 - [x] Kotlin bindings
 - [x] API key
-- [d] Receive via on-chain address
+- [x] Receive via on-chain address
 - [ ] Send to an on-chain address
 - [ ] React Native bindings
 - [ ] LNURL-Auth
