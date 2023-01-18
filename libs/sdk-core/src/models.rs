@@ -127,12 +127,12 @@ pub struct Config {
 impl Config {
     pub fn production() -> Self {
         Config {
-            breezserver: "https://bs1-st.breez.technology:443".to_string(),
+            breezserver: "https://bs1.breez.technology:443".to_string(),
             mempoolspace_url: "https://mempool.space".to_string(),
             working_dir: ".".to_string(),
             network: Bitcoin,
             payment_timeout_sec: 30,
-            default_lsp_id: Some(String::from("ea51d025-042d-456c-8325-63e430797481")),
+            default_lsp_id: Some(String::from("03cea51f-b654-4fb0-8e82-eca137f236a0")),
             api_key: None,
         }
     }
