@@ -248,12 +248,12 @@ class BreezBridge {
 
   /// Second step of LNURL-pay. The first step is `parse()`, which also validates the LNURL destination
   /// and generates the `LnUrlPayRequestData` payload needed here.
-  Future<LnUrlPayResult> payLnUrl({
+  Future<LnUrlPayResult> lnurlPay({
     required int userAmountSat,
     String? comment,
     required LnUrlPayRequestData reqData,
   }) async {
-    return _lnToolkit.payLnurl(
+    return _lnToolkit.lnurlPay(
       userAmountSat: userAmountSat,
       comment: comment,
       reqData: reqData,
@@ -262,12 +262,12 @@ class BreezBridge {
 
   /// Second step of LNURL-withdraw. The first step is `parse()`, which also validates the LNURL destination
   /// and generates the `LnUrlW` payload needed here.
-  Future<LnUrlWithdrawCallbackStatus> withdrawLnurl({
+  Future<LnUrlWithdrawCallbackStatus> lnurlWithdraw({
     required int amountSats,
     String? description,
     required LnUrlWithdrawRequestData reqData,
   }) async {
-    return _lnToolkit.withdrawLnurl(
+    return _lnToolkit.lnurlWithdraw(
         amountSats: amountSats, reqData: reqData, description: description);
   }
 
