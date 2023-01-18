@@ -39,8 +39,11 @@ The libs folder contains three sub folders and is a structured as a cargo worksp
 * **sdk-bindings**: ffi bindings for Kotlin & Swift. 
 * **sdk-flutter**: a flutter plugin (includes ffi bindings for dart).
 
-The tools folder contains a simple command line interface (sdk-cli) to the sdk
+The tools folder contains a simple command line interface (sdk-cli) to the SDK
 See instruction in each sub project readme on how to build, test and run.
+
+## API
+To get started with the Breez SDK API, please follow the documentation [here](https://breez.github.io/breez-sdk-rustdoc/doc/breez_sdk_core/). 
 
 ## Features
 - [x] ‘On-the-fly’ channel creation
@@ -74,6 +77,3 @@ See instruction in each sub project readme on how to build, test and run.
 - [ ] LDK support
 - [ ] Splicing
 - [ ] WebAssembly support
-
-## Getting Started
-To get started with the Breez SDK, please follow the API documentation [here](https://breez.github.io/breez-sdk-rustdoc/doc/breez_sdk_core/). 
