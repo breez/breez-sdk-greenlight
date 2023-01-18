@@ -60,9 +60,9 @@ To get started with the Breez SDK API, please follow the documentation [here](ht
 - [x] Swift bindings
 - [x] Kotlin bindings
 - [x] API key
-- [ ] React Native bindings
-- [ ] Receive via on-chain address
+- [d] Receive via on-chain address
 - [ ] Send to an on-chain address
+- [ ] React Native bindings
 - [ ] LNURL-Auth
 - [ ] MoonPay fiat on-ramp
 - [ ] Spend all funds
