@@ -74,3 +74,6 @@ See instruction in each sub project readme on how to build, test and run.
 - [ ] LDK support
 - [ ] Splicing
 - [ ] WebAssembly support
+
+## Getting Started
+To get started with the Breez SDK, please follow the API documentation [here](https://breez.github.io/breez-sdk-rustdoc/doc/breez_sdk_core/). 
