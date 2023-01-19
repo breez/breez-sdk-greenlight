@@ -320,7 +320,7 @@ impl LspAPI for MockBreezServer {
 
 #[tonic::async_trait]
 impl FiatAPI for MockBreezServer {
-    fn list_fiat_currencies_unfiltered(&self) -> Result<Vec<FiatCurrency>> {
+    async fn list_fiat_currencies(&self) -> Result<Vec<FiatCurrency>> {
         Ok(vec![])
     }
 

@@ -297,20 +297,8 @@ impl BreezServices {
     }
 
     /// List all supported fiat currencies for which there is a known exchange rate.
-    ///
-    /// Note: this is different than [FiatAPI::list_fiat_currencies_unfiltered].
     pub async fn list_fiat_currencies(&self) -> Result<Vec<FiatCurrency>> {
-        let known_rates = self.fetch_fiat_rates().await?;
-        let known_rates_currencies = known_rates
-            .iter()
-            .map(|r| r.coin.clone())
-            .collect::<Vec<String>>();
-        Ok(self
-            .fiat_api
-            .list_fiat_currencies_unfiltered()?
-            .into_iter()
-            .filter(|c| known_rates_currencies.contains(&c.id))
-            .collect::<Vec<FiatCurrency>>())
+        self.fiat_api.list_fiat_currencies().await
     }
 
     /// List available LSPs that can be selected by the user
