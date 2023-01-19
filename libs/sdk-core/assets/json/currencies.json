@@ -2277,47 +2277,5 @@
     "fractionSize": 2,
     "symbol": null,
     "uniqSymbol": null
-  },
-  "BTC": {
-    "name": "BTC",
-    "fractionSize": 4,
-    "symbol": {
-      "grapheme": "₿",
-      "template": "1 $",
-      "rtl": false
-    },
-    "uniqSymbol": {
-      "grapheme": "₿",
-      "template": "1 $",
-      "rtl": false
-    }
-  },
-  "ETH": {
-    "name": "ETH",
-    "fractionSize": 4,
-    "symbol": {
-      "grapheme": "Ξ",
-      "template": "1 $",
-      "rtl": false
-    },
-    "uniqSymbol": {
-      "grapheme": "Ξ",
-      "template": "1 $",
-      "rtl": false
-    }
-  },
-  "LTC": {
-    "name": "LTC",
-    "fractionSize": 4,
-    "symbol": {
-      "grapheme": "Ł",
-      "template": "1 $",
-      "rtl": false
-    },
-    "uniqSymbol": {
-      "grapheme": "Ł",
-      "template": "1 $",
-      "rtl": false
-    }
   }
 }
