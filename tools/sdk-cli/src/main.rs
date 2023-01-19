@@ -304,7 +304,7 @@ async fn main() -> Result<()> {
                         );
                     }
                     Some("node_info") => show_results(sdk()?.node_info()),
-                    Some("list_fiat") => show_results(sdk()?.list_fiat_currencies()),
+                    Some("list_fiat") => show_results(sdk()?.list_fiat_currencies().await),
                     Some("fetch_fiat_rates") => show_results(sdk()?.fetch_fiat_rates().await),
                     Some("close_lsp_channels") => show_results(sdk()?.close_lsp_channels().await),
                     Some("stop_node") => show_results(sdk()?.stop().await),
