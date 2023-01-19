@@ -65,7 +65,7 @@
 //!
 //! These different types of operations are described below in more detail.
 //!
-//! ### A. Initialize the SDK
+//! ### A. Initializing the SDK
 //!
 //! There are two steps necessary to initialize the SDK:
 //!
@@ -121,12 +121,6 @@
 //! * [BreezServices::connect_lsp] to connect to a chosen LSP
 //! * [BreezServices::lsp_info] to get [LspInformation] on the currently selected LSP
 //!
-//! ### H. Stop and Cleanup
-//!
-//! On app shutdown, the Breez SDK can be closed with
-//! ```ignore
-//! sdk.stop().await?;
-//! ```
 //!
 //! ## Bindings and Supported Platforms
 //!

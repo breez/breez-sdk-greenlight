@@ -14,7 +14,7 @@ pub(crate) struct MempoolSpace {
     pub(crate) base_url: String,
 }
 
-/// Wrapper containing the result of the recommended fees query, based on mempool.space data
+/// Wrapper containing the result of the recommended fees query, in sat/vByte, based on mempool.space data
 #[derive(Deserialize, Clone, Debug)]
 pub struct RecommendedFees {
     #[serde(rename(deserialize = "fastestFee"))]

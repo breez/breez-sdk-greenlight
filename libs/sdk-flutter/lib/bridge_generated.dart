@@ -723,7 +723,7 @@ class Rate {
   });
 }
 
-/// Wrapper containing the result of the recommended fees query, based on mempool.space data
+/// Wrapper containing the result of the recommended fees query, in sat/vByte, based on mempool.space data
 class RecommendedFees {
   final int fastestFee;
   final int halfHourFee;
