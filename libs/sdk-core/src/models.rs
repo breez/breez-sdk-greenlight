@@ -74,7 +74,10 @@ pub trait LspAPI: Send + Sync {
 /// Trait covering fiat-related functionality
 #[tonic::async_trait]
 pub trait FiatAPI: Send + Sync {
-    fn list_fiat_currencies(&self) -> Result<Vec<FiatCurrency>>;
+    /// List all supported fiat currencies for which there is a known exchange rate.
+    async fn list_fiat_currencies(&self) -> Result<Vec<FiatCurrency>>;
+
+    /// Get the live rates from the server.
     async fn fetch_fiat_rates(&self) -> Result<Vec<Rate>>;
 }
 

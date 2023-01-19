@@ -237,7 +237,7 @@ pub fn fetch_fiat_rates() -> Result<Vec<Rate>> {
 
 /// See [BreezServices::list_fiat_currencies]
 pub fn list_fiat_currencies() -> Result<Vec<FiatCurrency>> {
-    block_on(async { get_breez_services()?.list_fiat_currencies() })
+    block_on(async { get_breez_services()?.list_fiat_currencies().await })
 }
 
 /// See [BreezServices::close_lsp_channels]

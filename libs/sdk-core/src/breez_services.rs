@@ -296,9 +296,9 @@ impl BreezServices {
         self.fiat_api.fetch_fiat_rates().await
     }
 
-    /// List all available fiat currencies
-    pub fn list_fiat_currencies(&self) -> Result<Vec<FiatCurrency>> {
-        self.fiat_api.list_fiat_currencies()
+    /// List all supported fiat currencies for which there is a known exchange rate.
+    pub async fn list_fiat_currencies(&self) -> Result<Vec<FiatCurrency>> {
+        self.fiat_api.list_fiat_currencies().await
     }
 
     /// List available LSPs that can be selected by the user

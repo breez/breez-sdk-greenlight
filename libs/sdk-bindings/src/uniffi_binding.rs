@@ -205,8 +205,7 @@ impl BlockingBreezServices {
     }
 
     pub fn list_fiat_currencies(&self) -> Result<Vec<FiatCurrency>, SDKError> {
-        self.breez_services
-            .list_fiat_currencies()
+        rt().block_on(self.breez_services.list_fiat_currencies())
             .map_err(|e| e.into())
     }
 

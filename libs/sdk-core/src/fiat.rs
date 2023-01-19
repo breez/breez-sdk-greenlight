@@ -64,18 +64,24 @@ fn convert_to_fiat_currency_with_id(id: String, info: CurrencyInfo) -> FiatCurre
 
 #[tonic::async_trait]
 impl FiatAPI for BreezServer {
-    /// Retrieve all available fiat currencies defined in a local configuration file
-    fn list_fiat_currencies(&self) -> Result<Vec<FiatCurrency>> {
+    async fn list_fiat_currencies(&self) -> Result<Vec<FiatCurrency>> {
+        let known_rates = self.fetch_fiat_rates().await?;
+        let known_rates_currencies = known_rates
+            .iter()
+            .map(|r| r.coin.clone())
+            .collect::<Vec<String>>();
+
         let data = include_str!("../assets/json/currencies.json");
         let fiat_currency_map: HashMap<String, CurrencyInfo> = serde_json::from_str(data)?;
         let mut fiat_currency_list: Vec<FiatCurrency> = Vec::new();
         for (key, value) in fiat_currency_map {
-            fiat_currency_list.push(convert_to_fiat_currency_with_id(key, value));
+            if known_rates_currencies.contains(&key) {
+                fiat_currency_list.push(convert_to_fiat_currency_with_id(key, value));
+            }
         }
         Ok(fiat_currency_list)
     }
 
-    /// Get the live rates from the server
     async fn fetch_fiat_rates(&self) -> Result<Vec<Rate>> {
         let mut client = self.get_information_client().await?;
 
