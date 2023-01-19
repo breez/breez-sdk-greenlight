@@ -91,7 +91,7 @@
 //! * [BreezServices::send_payment] to pay an invoice
 //! * [BreezServices::send_spontaneous_payment] for keysend payments
 //!
-//! ### C. On-chain Receive (swap-in)
+//! ### C. Receiving an on-chain transaction (swap-in)
 //!
 //! * [BreezServices::receive_onchain]
 //! * [BreezServices::list_refundables] to get a list of swaps
@@ -103,28 +103,31 @@
 //! 2. After getting the user input or confirmation, complete the workflow with [BreezServices::lnurl_pay] or
 //! [BreezServices::lnurl_withdraw].
 //!
-//! ### E. Utilities
-//!
-//! Use [parse] to parse generic input. The input can come from the user, from a clicked link or from a QR code.
-//! The resulting [InputType] will tell you what the input is and how to treat it, as well as present relevant payload data
-//! in a structured form.
-//!
-//! ### F. Supporting fiat currencies
+//! ### E. Supporting fiat currencies
 //!
 //! * [BreezServices::list_fiat_currencies] to get the supported fiat currencies
 //! * [BreezServices::fetch_fiat_rates] to get the current exchange rates
 //! * [BreezServices::recommended_fees] for the recommended mempool fees
 //!
-//! ### G. Connecting to an LSP
+//! ### F. Connecting to an LSP
 //!
 //! * [BreezServices::list_lsps] to get a list of available LSPs
 //! * [BreezServices::connect_lsp] to connect to a chosen LSP
 //! * [BreezServices::lsp_info] to get [LspInformation] on the currently selected LSP
 //!
+//! ### G. Utilities
 //!
-//! ## Bindings and Supported Platforms
+//! Use [parse] to parse generic input. The input can come from the user, from a clicked link or from a QR code.
+//! The resulting [InputType] will tell you what the input is and how to treat it, as well as present relevant payload data
+//! in a structured form.
 //!
-//! The library can be built both for Android and iOS.
+//!
+//! ## Bindings
+//!
+//! * Dart
+//! * Swift
+//! * Kotlin
+//! * React-Native: coming soon
 
 mod bridge_generated; /* AUTO INJECTED BY flutter_rust_bridge. This line may not be accurate, and you can change it according to your needs. */
 #[macro_use]
