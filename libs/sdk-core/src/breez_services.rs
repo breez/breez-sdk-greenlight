@@ -552,7 +552,7 @@ fn closed_channel_to_transaction(channel: crate::models::Channel) -> Result<Paym
         payment_time: channel
             .closed_at
             .unwrap_or(now.duration_since(UNIX_EPOCH)?.as_secs()) as i64,
-        amount_msat: -(channel.spendable_msat as i64),
+        amount_msat: channel.spendable_msat as i64,
         fee_msat: 0,
         pending: channel.state == ChannelState::PendingClose,
         description: Some("Closed Channel".to_string()),
