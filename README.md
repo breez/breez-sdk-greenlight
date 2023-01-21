@@ -66,6 +66,7 @@ To get started with the Breez SDK API, please follow the documentation [here](ht
 - [ ] LNURL-Auth
 - [ ] MoonPay fiat on-ramp
 - [ ] Spend all funds
+- [ ] Webhook for receiving payments
 - [ ] Mobile Notifications
 - [ ] Offline receive via notifications
 - [ ] Performance optimizations
