@@ -83,7 +83,7 @@
 //!
 //! After initializing the Breez SDK services and starting them, the SDK is ready to be used.
 //!
-//! ### B. Sending and receiving Lightning Payments
+//! ### B. Sending and receiving Lightning payments
 //!
 //! Supported BOLT11 operations are
 //!
