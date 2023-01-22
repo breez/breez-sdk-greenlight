@@ -65,8 +65,7 @@ pub struct InvoicePaidDetails {
 async fn start_threads(
     rt: &Runtime,
     breez_services: Arc<BreezServices>,
-    mut shutdown_receiver: mpsc::Receiver<()>,
-) -> Result<()> {
+) -> Result<mpsc::Sender<()>> {
     // start the signer
     let (shutdown_signer_sender, signer_signer_receiver) = mpsc::channel(1);
     let signer_api = breez_services.clone();
@@ -78,7 +77,11 @@ async fn start_threads(
     });
 
     // sync with remote state
-    breez_services.clone().sync().await?;
+    let breez_cloned = breez_services.clone();
+    breez_cloned.sync().await?;
+
+    // create a shutdown channel (sender and receiver)
+    let (stop_sender, mut stop_receiver) = mpsc::channel(1);
 
     // poll sdk events
     rt.spawn(async move {
@@ -98,16 +101,15 @@ async fn start_threads(
                 }
                }
               },
-              _ = shutdown_receiver.recv() => {
+              _ = stop_receiver.recv() => {
                _ = shutdown_signer_sender.send(()).await;
-               debug!("Received the signal to exit the chain monitoring loop");
+               debug!("Received the signal to exit event polling loop");
                return;
              }
             }
         }
     });
-
-    Ok(())
+    Ok(stop_sender)
 }
 
 /// BreezServices is a facade and the single entry point for the SDK.
@@ -155,11 +157,13 @@ impl BreezServices {
     /// It should be called only once when the app is started, regardless whether the app is sent to
     /// background and back.
     pub async fn start(runtime: &Runtime, breez_services: &Arc<BreezServices>) -> Result<()> {
-        // create a shutdown channel (sender and receiver)
-        let (stop_sender, stop_receiver) = mpsc::channel(1);
-        breez_services.set_shutdown_sender(stop_sender).await;
-
-        start_threads(runtime, breez_services.clone(), stop_receiver).await
+        let mut start_lock = breez_services.shutdown_sender.lock().await;
+        if start_lock.is_some() {
+            return Err(anyhow!("start can only be called once"));
+        }
+        let shutdown_handler = start_threads(runtime, breez_services.clone()).await?;
+        *start_lock = Some(shutdown_handler);
+        Ok(())
     }
 
     /// Trigger the stopping of BreezServices background threads for this instance.
@@ -454,10 +458,6 @@ impl BreezServices {
     /// Convenience method to look up LSP info based on current LSP ID
     pub async fn lsp_info(&self) -> Result<LspInformation> {
         get_lsp(self.persister.clone(), self.lsp_api.clone()).await
-    }
-
-    async fn set_shutdown_sender(&self, sender: mpsc::Sender<()>) {
-        *self.shutdown_sender.lock().await = Some(sender);
     }
 
     pub(crate) async fn start_node(&self) -> Result<()> {
