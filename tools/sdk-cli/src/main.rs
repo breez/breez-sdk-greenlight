@@ -170,6 +170,7 @@ async fn main() -> Result<()> {
                         }
                         None => error!("Credentials not found"),
                     },
+                    Some("sync") => show_results(sdk()?.sync().await),
                     Some("receive_payment") => {
                         let amount_sats: u64 = command.next().unwrap().parse()?;
                         let description = command.next().unwrap().parse()?;
@@ -389,6 +390,7 @@ Node:
     register_node
     stop_node
     node_info
+    sync
     execute_command
 LSP:
     close_lsp_channels

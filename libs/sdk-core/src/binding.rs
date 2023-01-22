@@ -278,6 +278,10 @@ pub fn execute_command(command: String) -> Result<String> {
     block_on(async { get_breez_services()?.execute_dev_command(command).await })
 }
 
+pub async fn sync() -> Result<()> {
+    block_on(async { get_breez_services()?.sync().await })
+}
+
 fn get_breez_services() -> Result<&'static BreezServices> {
     let n = BREEZ_SERVICES_INSTANCE.get();
     match n {

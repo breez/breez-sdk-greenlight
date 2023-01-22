@@ -265,6 +265,11 @@ impl BlockingBreezServices {
         rt().block_on(self.breez_services.execute_dev_command(command))
     }
 
+    pub fn sync(&self) -> Result<(), SDKError> {
+        rt().block_on(self.breez_services.sync())
+            .map_err(|e| e.into())
+    }
+
     pub fn recommended_fees(&self) -> Result<RecommendedFees, SDKError> {
         rt().block_on(self.breez_services.recommended_fees())
             .map_err(|e| e.into())
