@@ -954,22 +954,18 @@ async fn get_lsp_by_id(
 
 #[cfg(test)]
 pub(crate) mod tests {
-    use rand::Rng;
     use std::sync::Arc;
-    use std::time::SystemTime;
-    use tokio::sync::mpsc;
 
     use anyhow::anyhow;
 
-    use crate::breez_services::{BreezServices, BreezServicesBuilder, Config};
-    use crate::chain::MempoolSpace;
+    use crate::breez_services::{BreezServices, BreezServicesBuilder};
     use crate::fiat::Rate;
     use crate::models::{
-        ClosedChannelPaymentDetails, LnPaymentDetails, NodeState, Payment, PaymentDetails,
+        LnPaymentDetails, NodeState, Payment, PaymentDetails,
         PaymentTypeFilter,
     };
     use crate::{parse_short_channel_id, test_utils::*};
-    use crate::{persist, PaymentType};
+    use crate::PaymentType;
 
     use super::{PaymentReceiver, Receiver};
 
@@ -1090,7 +1086,7 @@ pub(crate) mod tests {
         let lsp_hop = &ln_invoice.routing_hints[0].hops[0];
         assert_eq!(
             lsp_hop.src_node_id,
-            breez_server.clone().lsp_pub_key().clone()
+            breez_server.clone().lsp_pub_key()
         );
         assert_eq!(
             lsp_hop.short_channel_id,

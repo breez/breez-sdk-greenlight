@@ -634,21 +634,21 @@ impl From<pb::Channel> for crate::models::Channel {
 #[cfg(test)]
 mod tests {
     use crate::models;
-    use anyhow::anyhow;
     use anyhow::Result;
     use gl_client::pb;
 
     #[test]
     fn test_channel_states() -> Result<()> {
-        for s in vec!["OPENINGD", "CHANNELD_AWAITING_LOCKIN"] {
+        for s in &["OPENINGD", "CHANNELD_AWAITING_LOCKIN"] {
             let c: models::Channel = gl_channel(s).into();
             assert_eq!(c.state, models::ChannelState::PendingOpen);
         }
-        for s in vec!["CHANNELD_NORMAL"] {
-            let c: models::Channel = gl_channel(s).into();
-            assert_eq!(c.state, models::ChannelState::Opened);
-        }
-        for s in vec![
+
+        let s = &"CHANNELD_NORMAL";
+        let c: models::Channel = gl_channel(s).into();
+        assert_eq!(c.state, models::ChannelState::Opened);
+
+        for s in &[
             "CHANNELD_SHUTTING_DOWN",
             "CLOSINGD_SIGEXCHANGE",
             "CLOSINGD_COMPLETE",
@@ -659,10 +659,11 @@ mod tests {
             let c: models::Channel = gl_channel(s).into();
             assert_eq!(c.state, models::ChannelState::PendingClose);
         }
-        for s in vec!["CLOSED"] {
-            let c: models::Channel = gl_channel(s).into();
-            assert_eq!(c.state, models::ChannelState::Closed);
-        }
+
+        let s = &"CLOSED";
+        let c: models::Channel = gl_channel(s).into();
+        assert_eq!(c.state, models::ChannelState::Closed);
+
         Ok(())
         //let c =
     }

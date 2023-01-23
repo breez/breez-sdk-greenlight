@@ -172,7 +172,7 @@ impl ToSql for PaymentDetails {
 
 #[test]
 fn test_ln_transactions() {
-    use crate::models::{ClosedChannelPaymentDetails, LnPaymentDetails, Payment, PaymentDetails};
+    use crate::models::{LnPaymentDetails, Payment, PaymentDetails};
     use crate::persist::test_utils;
 
     let txs = [
