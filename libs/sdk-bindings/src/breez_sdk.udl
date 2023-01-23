@@ -366,6 +366,9 @@ interface BlockingBreezServices {
    string execute_dev_command(string command);
 
    [Throws=SDKError]
+   void sync();
+
+   [Throws=SDKError]
    RecommendedFees recommended_fees();
 };
 

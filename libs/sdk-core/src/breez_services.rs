@@ -379,7 +379,7 @@ impl BreezServices {
     /// * node state - General information about the node and its liquidity status
     /// * channels - The list of channels and their status
     /// * payments - The incoming/outgoing payments
-    async fn sync(&self) -> Result<()> {
+    pub async fn sync(&self) -> Result<()> {
         self.start_node().await?;
         self.connect_lsp_peer().await?;
 
