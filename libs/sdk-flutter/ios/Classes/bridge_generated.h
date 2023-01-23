@@ -128,6 +128,8 @@ void wire_refund(int64_t port_,
 
 void wire_execute_command(int64_t port_, struct wire_uint_8_list *command);
 
+void wire_sync(int64_t port_);
+
 void wire_parse_invoice(int64_t port_, struct wire_uint_8_list *invoice);
 
 void wire_parse(int64_t port_, struct wire_uint_8_list *s);
@@ -190,6 +192,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_list_refundables);
     dummy_var ^= ((int64_t) (void*) wire_refund);
     dummy_var ^= ((int64_t) (void*) wire_execute_command);
+    dummy_var ^= ((int64_t) (void*) wire_sync);
     dummy_var ^= ((int64_t) (void*) wire_parse_invoice);
     dummy_var ^= ((int64_t) (void*) wire_parse);
     dummy_var ^= ((int64_t) (void*) wire_lnurl_pay);

@@ -178,6 +178,10 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kExecuteCommandConstMeta;
 
+  Future<void> sync({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kSyncConstMeta;
+
   Future<LNInvoice> parseInvoice({required String invoice, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kParseInvoiceConstMeta;
@@ -1339,6 +1343,22 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       const FlutterRustBridgeTaskConstMeta(
         debugName: "execute_command",
         argNames: ["command"],
+      );
+
+  Future<void> sync({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_sync(port_),
+      parseSuccessData: _wire2api_unit,
+      constMeta: kSyncConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kSyncConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "sync",
+        argNames: [],
       );
 
   Future<LNInvoice> parseInvoice({required String invoice, dynamic hint}) {
@@ -2871,6 +2891,18 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
               ffi.Pointer<wire_uint_8_list>)>>('wire_execute_command');
   late final _wire_execute_command = _wire_execute_commandPtr
       .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_sync(
+    int port_,
+  ) {
+    return _wire_sync(
+      port_,
+    );
+  }
+
+  late final _wire_syncPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_sync');
+  late final _wire_sync = _wire_syncPtr.asFunction<void Function(int)>();
 
   void wire_parse_invoice(
     int port_,
