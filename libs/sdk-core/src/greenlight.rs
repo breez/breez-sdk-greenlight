@@ -24,18 +24,17 @@ use std::cmp::{max, min};
 use std::str::FromStr;
 use std::time::{SystemTime, UNIX_EPOCH};
 use strum_macros::{Display, EnumString};
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, Mutex};
 use tonic::Streaming;
 
 const MAX_PAYMENT_AMOUNT_MSAT: u64 = 4294967000;
 const MAX_INBOUND_LIQUIDITY_MSAT: u64 = 4000000000;
 
-#[derive(Clone)]
 pub(crate) struct Greenlight {
     sdk_config: Config,
     tls_config: TlsConfig,
     signer: Signer,
-    scheduler: Scheduler,
+    scheduler: Mutex<Option<Scheduler>>,
 }
 
 impl Greenlight {
@@ -47,12 +46,11 @@ impl Greenlight {
         let greenlight_network = sdk_config.network.clone().into();
         let tls_config = TlsConfig::new()?.identity(creds.device_cert, creds.device_key);
         let signer = Signer::new(seed, greenlight_network, tls_config.clone())?;
-        let scheduler = Scheduler::new(signer.node_id(), greenlight_network).await?;
         Ok(Greenlight {
             sdk_config,
             tls_config,
             signer,
-            scheduler,
+            scheduler: Mutex::new(None),
         })
     }
 
@@ -83,8 +81,25 @@ impl Greenlight {
     }
 
     async fn get_client(&self) -> Result<node::Client> {
-        let client: node::Client = self.scheduler.schedule(self.tls_config.clone()).await?;
+        let client: node::Client = self
+            .scheduler()
+            .await?
+            .schedule(self.tls_config.clone())
+            .await?;
         Ok(client)
+    }
+
+    async fn scheduler(&self) -> Result<Scheduler> {
+        let mut existing = self.scheduler.lock().await;
+        if existing.is_none() {
+            let scheduler = Scheduler::new(
+                self.signer.node_id(),
+                self.sdk_config.network.clone().into(),
+            )
+            .await?;
+            *existing = Some(scheduler);
+        }
+        Ok(existing.as_ref().unwrap().clone())
     }
 }
 

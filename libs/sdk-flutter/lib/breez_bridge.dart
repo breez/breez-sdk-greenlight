@@ -63,8 +63,7 @@ class BreezBridge {
       network: network,
       seed: seed,
     );
-    await fetchNodeData();
-    await startNode();
+    await fetchNodeData();    
     return creds;
   }
 
@@ -85,8 +84,7 @@ class BreezBridge {
       network: network,
       seed: seed,
     );
-    await fetchNodeData();
-    await startNode();
+    await fetchNodeData();    
     return creds;
   }
 
@@ -108,8 +106,7 @@ class BreezBridge {
       seed: seed,
       creds: creds,
     );
-    await fetchNodeData();
-    await startNode();
+    await fetchNodeData();    
   }
 
   Future<void> startNode() async => await _lnToolkit.startNode();
