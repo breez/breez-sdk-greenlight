@@ -960,12 +960,9 @@ pub(crate) mod tests {
 
     use crate::breez_services::{BreezServices, BreezServicesBuilder};
     use crate::fiat::Rate;
-    use crate::models::{
-        LnPaymentDetails, NodeState, Payment, PaymentDetails,
-        PaymentTypeFilter,
-    };
-    use crate::{parse_short_channel_id, test_utils::*};
+    use crate::models::{LnPaymentDetails, NodeState, Payment, PaymentDetails, PaymentTypeFilter};
     use crate::PaymentType;
+    use crate::{parse_short_channel_id, test_utils::*};
 
     use super::{PaymentReceiver, Receiver};
 
@@ -1084,10 +1081,7 @@ pub(crate) mod tests {
             .await?;
         assert_eq!(ln_invoice.routing_hints[0].hops.len(), 1);
         let lsp_hop = &ln_invoice.routing_hints[0].hops[0];
-        assert_eq!(
-            lsp_hop.src_node_id,
-            breez_server.clone().lsp_pub_key()
-        );
+        assert_eq!(lsp_hop.src_node_id, breez_server.clone().lsp_pub_key());
         assert_eq!(
             lsp_hop.short_channel_id,
             parse_short_channel_id("1x0x0").unwrap()
