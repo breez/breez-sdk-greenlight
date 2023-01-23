@@ -613,7 +613,7 @@ mod tests {
         OutPoint, Txid,
     };
     use bitcoin_hashes::{hex::FromHex, sha256};
-    use ripemd::{Digest, Ripemd160};
+    use ripemd::Ripemd160;
 
     use crate::{
         breez_services::tests::get_dummy_node_state,
@@ -628,7 +628,7 @@ mod tests {
         BreezEvent,
     };
 
-    use super::{create_refund_tx, create_submarine_swap_script, create_swap_keys, get_utxos};
+    use super::{create_refund_tx, create_submarine_swap_script, get_utxos};
 
     #[test]
     fn test_build_swap_script() {
@@ -763,7 +763,7 @@ mod tests {
             id: hex::encode(swap_info.payment_hash.clone()),
             payment_type: PaymentType::Received,
             payment_time: 0,
-            amount_msat: 5000 as i64,
+            amount_msat: 5000,
             fee_msat: 0,
             pending: false,
             description: Some("desc".to_string()),

@@ -114,6 +114,8 @@ impl SqliteStorage {
              ALTER TABLE swaps ADD COLUMN min_allowed_deposit INTEGER NOT NULL;
              ALTER TABLE swaps ADD COLUMN max_allowed_deposit INTEGER NOT NULL;
             "),
+            // Convert all negative fee_msat values to positive
+            M::up("UPDATE payments SET fee_msat = ABS(fee_msat) WHERE fee_msat < 0"),
         ]);
 
         let mut conn = self.get_connection()?;
