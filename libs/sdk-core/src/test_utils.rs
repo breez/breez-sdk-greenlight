@@ -371,14 +371,14 @@ pub fn create_test_config() -> crate::models::Config {
 }
 
 pub fn create_test_persister(config: crate::models::Config) -> crate::persist::db::SqliteStorage {
-    let storage_path = format!("{}storage.sql", config.working_dir);
+    let storage_path = format!("{}/storage.sql", config.working_dir);
     crate::persist::db::SqliteStorage::from_file(storage_path)
 }
 
 pub fn get_test_working_dir() -> String {
     let mut rng = rand::thread_rng();
     let s = std::env::temp_dir().to_str().unwrap().to_string();
-    let dir = format!("{}{}", s, rng.gen::<u32>());
+    let dir = format!("{}/{}", s, rng.gen::<u32>());
     std::fs::create_dir_all(dir.clone()).unwrap();
     dir
 }
