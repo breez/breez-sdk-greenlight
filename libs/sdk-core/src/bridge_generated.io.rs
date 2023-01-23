@@ -163,8 +163,8 @@ pub extern "C" fn wire_execute_command(port_: i64, command: *mut wire_uint_8_lis
 }
 
 #[no_mangle]
-pub extern "C" fn wire_sync(port_: i64) {
-    wire_sync_impl(port_)
+pub extern "C" fn wire_sync_node(port_: i64) {
+    wire_sync_node_impl(port_)
 }
 
 #[no_mangle]

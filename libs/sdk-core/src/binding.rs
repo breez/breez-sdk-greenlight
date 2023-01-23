@@ -278,7 +278,7 @@ pub fn execute_command(command: String) -> Result<String> {
     block_on(async { get_breez_services()?.execute_dev_command(command).await })
 }
 
-pub fn sync() -> Result<()> {
+pub fn sync_node() -> Result<()> {
     block_on(async { get_breez_services()?.sync().await })
 }
 
