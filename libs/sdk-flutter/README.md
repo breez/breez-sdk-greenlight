@@ -8,6 +8,11 @@ The [flutter_rust_bridge](https://github.com/fzyzcjy/flutter_rust_bridge) is use
 ### Prerequisites:
 * set the ANDROID_NDK_HOME env variable to your sdk home folder
 ```export ANDROID_NDK_HOME=<your android ndk directory>```
+* install protocol buffer compiler 
+#### MacOS, using Homebrew
+````brew install brew install protobuf```
+#### Linux
+```apt install -y protobuf-compiler```
 * install cargo-ndk to provide simplified android build: ```cargo install cargo-ndk```
 * install [flutter_rust_bridge](https://github.com/fzyzcjy/flutter_rust_bridge): ```cargo install flutter_rust_bridge_codegen --version 1.53.0```
 
