@@ -94,8 +94,8 @@ dictionary Payment {
     string id;
     PaymentType payment_type;    
     i64 payment_time;    
-    i64 amount_msat;
-    i64 fee_msat;    
+    u64 amount_msat;
+    u64 fee_msat;
     boolean pending;
     string? description;
     PaymentDetails details;

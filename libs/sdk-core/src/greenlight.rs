@@ -522,7 +522,7 @@ fn invoice_to_transaction(
         id: hex::encode(invoice.payment_hash.clone()),
         payment_type: PaymentType::Received,
         payment_time: invoice.payment_time as i64,
-        amount_msat: amount_to_msat(&invoice.amount.unwrap_or_default()) as i64,
+        amount_msat: amount_to_msat(&invoice.amount.unwrap_or_default()),
         fee_msat: 0,
         pending: false,
         description: ln_invoice.description,
@@ -546,8 +546,8 @@ fn payment_to_transaction(payment: pb::Payment) -> Result<crate::models::Payment
         description = parse_invoice(&payment.bolt11)?.description;
     }
 
-    let payment_amount = amount_to_msat(&payment.amount.unwrap_or_default()) as i64;
-    let payment_amount_sent = amount_to_msat(&payment.amount_sent.unwrap_or_default()) as i64;
+    let payment_amount = amount_to_msat(&payment.amount.unwrap_or_default());
+    let payment_amount_sent = amount_to_msat(&payment.amount_sent.unwrap_or_default());
 
     Ok(crate::models::Payment {
         id: hex::encode(payment.payment_hash.clone()),
