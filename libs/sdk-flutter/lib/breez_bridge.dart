@@ -114,7 +114,7 @@ class BreezBridge {
   /// Cleanup node resources and stop the signer.
   Future<void> stopNode() async => await _lnToolkit.stopNode();
 
-  Future<void> sync() async => await _lnToolkit.sync();
+  Future<void> syncNode() async => await _lnToolkit.syncNode();
 
   /// pay a bolt11 invoice
   ///
