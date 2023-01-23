@@ -16,7 +16,7 @@ use gl_client::pb::{
     Amount, CloseChannelResponse, CloseChannelType, Invoice, Peer, WithdrawResponse,
 };
 use lightning::ln::PaymentSecret;
-use lightning_invoice::{Currency, InvoiceBuilder, RawInvoice, SignedRawInvoice};
+use lightning_invoice::{Currency, InvoiceBuilder, RawInvoice};
 use rand::distributions::{Alphanumeric, DistString, Standard};
 use rand::rngs::OsRng;
 use rand::{random, Rng};
@@ -24,10 +24,7 @@ use tonic::Streaming;
 
 use crate::grpc::{PaymentInformation, RegisterPaymentReply};
 use crate::lsp::LspInformation;
-use crate::models::{
-    FeeratePreset, FiatAPI, LspAPI, NodeAPI, NodeState, Payment, Swap, SwapperAPI, SyncResponse,
-};
-use bitcoin::secp256k1::ecdsa;
+use crate::models::{FiatAPI, LspAPI, NodeAPI, NodeState, Payment, Swap, SwapperAPI, SyncResponse};
 use tokio::sync::mpsc;
 //use bitcoin::secp256k1::{ecdsa::{SigningKey, Signature, signature::Signer, VerifyingKey, signature::Verifier}};
 //use rand_core::OsRng;
@@ -40,7 +37,7 @@ impl SwapperAPI for MockSwapperAPI {
         &self,
         hash: Vec<u8>,
         payer_pubkey: Vec<u8>,
-        node_pubkey: String,
+        _node_pubkey: String,
     ) -> Result<Swap> {
         let mut swapper_priv_key_raw = [2; 32];
         rand::thread_rng().fill(&mut swapper_priv_key_raw);
@@ -67,7 +64,7 @@ impl SwapperAPI for MockSwapperAPI {
         })
     }
 
-    async fn complete_swap(&self, bolt11: String) -> Result<()> {
+    async fn complete_swap(&self, _bolt11: String) -> Result<()> {
         Ok(())
     }
 }
@@ -122,7 +119,7 @@ impl ChainService for MockChainService {
     async fn current_tip(&self) -> Result<u32> {
         Ok(self.tip)
     }
-    async fn broadcast_transaction(&self, tx: Vec<u8>) -> Result<String> {
+    async fn broadcast_transaction(&self, _tx: Vec<u8>) -> Result<String> {
         let mut array = [0; 32];
         rand::thread_rng().fill(&mut array);
         Ok(hex::encode(array))
@@ -143,9 +140,9 @@ impl Default for MockReceiver {
 impl Receiver for MockReceiver {
     async fn receive_payment(
         &self,
-        amount_sats: u64,
-        description: String,
-        preimage: Option<Vec<u8>>,
+        _amount_sats: u64,
+        _description: String,
+        _preimage: Option<Vec<u8>>,
     ) -> Result<crate::LNInvoice> {
         Ok(parse_invoice(&self.bolt11)?)
     }
@@ -167,7 +164,7 @@ impl NodeAPI for MockNodeAPI {
         let invoice = create_invoice(description.clone(), amount_sats * 1000, vec![], preimage);
         Ok(Invoice {
             label: "".to_string(),
-            description: description.clone(),
+            description,
             amount: Some(Amount {
                 unit: Some(Unit::Satoshi(amount_sats)),
             }),
@@ -226,7 +223,7 @@ impl NodeAPI for MockNodeAPI {
         Ok(vec![])
     }
 
-    async fn connect_peer(&self, node_id: String, addr: String) -> Result<()> {
+    async fn connect_peer(&self, _node_id: String, _addr: String) -> Result<()> {
         Ok(())
     }
 
@@ -234,7 +231,7 @@ impl NodeAPI for MockNodeAPI {
         Ok(sign_invoice(invoice))
     }
 
-    async fn close_peer_channels(&self, node_id: String) -> Result<CloseChannelResponse> {
+    async fn close_peer_channels(&self, _node_id: String) -> Result<CloseChannelResponse> {
         Ok(CloseChannelResponse {
             txid: Vec::new(),
             tx: Vec::new(),
@@ -249,7 +246,7 @@ impl NodeAPI for MockNodeAPI {
         Err(anyhow!("Not implemented"))
     }
 
-    async fn execute_command(&self, command: String) -> Result<String> {
+    async fn execute_command(&self, _command: String) -> Result<String> {
         Err(anyhow!("Not implemented"))
     }
 }
@@ -415,7 +412,7 @@ fn sign_invoice(invoice: RawInvoice) -> String {
     let (secret_key, _) = secp.generate_keypair(&mut OsRng);
     invoice
         .sign(|m| -> Result<RecoverableSignature, anyhow::Error> {
-            Ok(secp.sign_ecdsa_recoverable(&m, &secret_key))
+            Ok(secp.sign_ecdsa_recoverable(m, &secret_key))
         })
         .unwrap()
         .to_string()

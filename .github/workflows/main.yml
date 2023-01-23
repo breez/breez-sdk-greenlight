@@ -60,5 +60,6 @@ jobs:
         run: |
           cd libs
           cargo clippy -- -D warnings
+          cargo clippy --tests -- -D warnings
           cd ../tools/sdk-cli
           cargo clippy -- -D warnings

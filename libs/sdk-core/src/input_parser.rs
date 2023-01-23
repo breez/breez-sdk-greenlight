@@ -501,7 +501,6 @@ mod tests {
     use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
     use mockito::Mock;
 
-    use crate::input_parser::LnUrlRequestData::*;
     use crate::input_parser::*;
     use crate::models::Network;
 

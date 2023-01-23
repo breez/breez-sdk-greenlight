@@ -180,7 +180,7 @@ fn test_sync_closed_channels() {
     let queried_channels = storage.list_channels().unwrap();
     assert_eq!(2, queried_channels.len());
     assert_eq!(channels[0], queried_channels[0]);
-    assert!(queried_channels[1].closed_at != None);
+    assert!(queried_channels[1].closed_at.is_some());
 
     storage.update_channels(&channels).unwrap();
     let queried_channels = storage.list_channels().unwrap();
@@ -208,8 +208,8 @@ fn test_sync_closed_channels() {
         },
     ];
     assert_eq!(expected.len(), queried_channels.len());
-    assert!(queried_channels[0].closed_at != None);
-    assert!(queried_channels[1].closed_at != None);
+    assert!(queried_channels[0].closed_at.is_some());
+    assert!(queried_channels[1].closed_at.is_some());
 
     // test dedup channels in db
     storage.update_channels(&channels).unwrap();
