@@ -554,7 +554,7 @@ fn payment_to_transaction(payment: pb::Payment) -> Result<crate::models::Payment
         payment_type: PaymentType::Sent,
         payment_time: payment.created_at as i64,
         amount_msat: payment_amount,
-        fee_msat: payment_amount - payment_amount_sent,
+        fee_msat: payment_amount_sent - payment_amount,
         pending: pb::PayStatus::from_i32(payment.status) == Some(pb::PayStatus::Pending),
         description,
         details: PaymentDetails::Ln {
