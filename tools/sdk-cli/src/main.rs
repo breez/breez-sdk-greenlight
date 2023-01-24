@@ -311,6 +311,7 @@ async fn main() -> Result<()> {
                     Some("stop_node") => show_results(sdk()?.stop().await),
                     Some("recommended_fees") => show_results(sdk()?.recommended_fees().await),
                     Some("receive_onchain") => show_results(sdk()?.receive_onchain().await),
+                    Some("in_progress_swap") => show_results(sdk()?.in_progress_swap().await),
                     Some("list_refundables") => show_results(sdk()?.list_refundables().await),
                     Some("execute_dev_command") => {
                         let cmd = command
@@ -406,6 +407,7 @@ Payments:
     send_payment
     send_spontaneous_payment
     sweep
+    in_progress_swap
     list_refundables
     refund
 Fiat:
