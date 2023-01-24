@@ -5,7 +5,7 @@ use anyhow::{anyhow, Result};
 use rusqlite::{named_params, OptionalExtension, Row};
 
 impl SqliteStorage {
-    pub fn insert_swap(&self, swap_info: SwapInfo) -> Result<()> {
+    pub(crate) fn insert_swap(&self, swap_info: SwapInfo) -> Result<()> {
         self.get_connection()?.execute(
          "INSERT INTO swaps (bitcoin_address, created_at, lock_height, payment_hash, preimage, private_key, public_key, swapper_public_key, bolt11, paid_sats, unconfirmed_sats, confirmed_sats, script, status, refund_tx_ids, unconfirmed_tx_ids, confirmed_tx_ids, min_allowed_deposit, max_allowed_deposit)
           VALUES (:bitcoin_address, :created_at, :lock_height, :payment_hash, :preimage, :private_key, :public_key, :swapper_public_key, :bolt11, :paid_sats, :unconfirmed_sats, :confirmed_sats, :script, :status, :refund_tx_ids, :unconfirmed_tx_ids, :confirmed_tx_ids, :min_allowed_deposit, :max_allowed_deposit)",
@@ -35,7 +35,11 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub fn update_swap_paid_amount(&self, bitcoin_address: String, paid_sats: u32) -> Result<()> {
+    pub(crate) fn update_swap_paid_amount(
+        &self,
+        bitcoin_address: String,
+        paid_sats: u32,
+    ) -> Result<()> {
         self.get_connection()?.execute(
             "UPDATE swaps SET paid_sats=:paid_sats where bitcoin_address=:bitcoin_address",
             named_params! {
@@ -47,7 +51,7 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub fn update_swap_bolt11(&self, bitcoin_address: String, bolt11: String) -> Result<()> {
+    pub(crate) fn update_swap_bolt11(&self, bitcoin_address: String, bolt11: String) -> Result<()> {
         self.get_connection()?.execute(
             "UPDATE swaps SET bolt11=:bolt11 where bitcoin_address=:bitcoin_address",
             named_params! {
@@ -60,7 +64,7 @@ impl SqliteStorage {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub fn update_swap_chain_info(
+    pub(crate) fn update_swap_chain_info(
         &self,
         bitcoin_address: String,
         unconfirmed_sats: u32,
@@ -85,7 +89,7 @@ impl SqliteStorage {
         Ok(self.get_swap_info_by_address(bitcoin_address)?.unwrap())
     }
 
-    pub fn get_swap_info_by_hash(&self, hash: &Vec<u8>) -> Result<Option<SwapInfo>> {
+    pub(crate) fn get_swap_info_by_hash(&self, hash: &Vec<u8>) -> Result<Option<SwapInfo>> {
         self.get_connection()?
             .query_row(
                 "SELECT * FROM swaps where payment_hash = ?1",
@@ -96,7 +100,7 @@ impl SqliteStorage {
             .map_err(|e| anyhow!(e))
     }
 
-    pub fn get_swap_info_by_address(&self, address: String) -> Result<Option<SwapInfo>> {
+    pub(crate) fn get_swap_info_by_address(&self, address: String) -> Result<Option<SwapInfo>> {
         self.get_connection()?
             .query_row(
                 "SELECT * FROM swaps where bitcoin_address = ?1",
@@ -107,7 +111,7 @@ impl SqliteStorage {
             .map_err(|e| anyhow!(e))
     }
 
-    pub fn get_in_progress_swap(&self) -> Result<Option<SwapInfo>> {
+    pub(crate) fn get_in_progress_swap(&self) -> Result<Option<SwapInfo>> {
         self.get_connection()?
             .query_row(
              "SELECT * FROM swaps where (confirmed_sats > 0 OR unconfirmed_sats > 0) AND paid_sats = 0 AND status!=? ORDER BY created_at ASC",
@@ -118,7 +122,18 @@ impl SqliteStorage {
             .map_err(|e| anyhow!(e))
     }
 
-    pub fn list_swaps_with_status(&self, status: SwapStatus) -> Result<Vec<SwapInfo>> {
+    pub(crate) fn get_unused_swap(&self) -> Result<Option<SwapInfo>> {
+        self.get_connection()?
+         .query_row(
+          "SELECT * FROM swaps where confirmed_sats = 0 AND unconfirmed_sats = 0 AND paid_sats = 0 AND status!=? ORDER BY created_at ASC",
+             [SwapStatus::Expired as u32],
+             |row| self.sql_row_to_swap(row),
+         )
+         .optional()
+         .map_err(|e| anyhow!(e))
+    }
+
+    pub(crate) fn list_swaps_with_status(&self, status: SwapStatus) -> Result<Vec<SwapInfo>> {
         let con = self.get_connection()?;
         let mut stmt = con.prepare(
             "

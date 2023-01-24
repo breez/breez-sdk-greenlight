@@ -222,6 +222,8 @@ impl BTCReceiveSwap {
         if node_state.is_none() {
             return Err(anyhow!("node is not initialized"));
         }
+
+        // check first that we don't have any swap in progress waiting for redeem.
         let in_progress_swap = self.persister.get_in_progress_swap()?;
         if in_progress_swap.is_some() {
             return Err(anyhow!(format!(
@@ -229,6 +231,7 @@ impl BTCReceiveSwap {
                 in_progress_swap.unwrap().bitcoin_address
             )));
         }
+
         let node_id = node_state.unwrap().id;
         // create swap keys
         let swap_keys = create_swap_keys()?;
@@ -290,6 +293,10 @@ impl BTCReceiveSwap {
         Ok(swap_info)
 
         // return swap.bitcoinAddress;
+    }
+
+    pub(crate) fn get_unused_swap(&self) -> Result<Option<SwapInfo>> {
+        self.persister.get_unused_swap()
     }
 
     pub(crate) fn list_refundables(&self) -> Result<Vec<SwapInfo>> {

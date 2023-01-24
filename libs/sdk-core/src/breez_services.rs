@@ -351,6 +351,14 @@ impl BreezServices {
     ///
     /// See [SwapInfo] for details.
     pub async fn receive_onchain(&self) -> Result<SwapInfo> {
+        let unused_swap = self.btc_receive_swapper.get_unused_swap()?;
+        if unused_swap.is_some() {
+            let tip = self.chain_service.current_tip().await?;
+            return self
+                .btc_receive_swapper
+                .refresh_swap_on_chain_status(unused_swap.unwrap().bitcoin_address, tip)
+                .await;
+        }
         self.btc_receive_swapper.create_swap_address().await
     }
 
