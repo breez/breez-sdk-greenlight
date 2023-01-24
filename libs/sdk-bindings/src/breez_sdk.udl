@@ -233,9 +233,11 @@ dictionary SwapInfo {
     sequence<u8> script;
     string? bolt11;
     u32 paid_sats;
+    u32 unconfirmed_sats;
     u32 confirmed_sats;
     SwapStatus status;
     sequence<string> refund_tx_ids;
+    sequence<string> unconfirmed_tx_ids;
     sequence<string> confirmed_tx_ids;
     i64 min_allowed_deposit;
     i64 max_allowed_deposit;
@@ -355,6 +357,9 @@ interface BlockingBreezServices {
 
    [Throws=SDKError]
    SwapInfo receive_onchain();
+
+   [Throws=SDKError]
+   SwapInfo? in_progress_swap();
 
    [Throws=SDKError]
    sequence<SwapInfo> list_refundables();

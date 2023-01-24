@@ -59,17 +59,22 @@ impl SqliteStorage {
         Ok(())
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn update_swap_chain_info(
         &self,
         bitcoin_address: String,
+        unconfirmed_sats: u32,
+        unconfirmed_tx_ids: Vec<String>,
         confirmed_sats: u32,
-        refund_tx_ids: Vec<String>,
         confirmed_tx_ids: Vec<String>,
+        refund_tx_ids: Vec<String>,
         status: SwapStatus,
     ) -> Result<SwapInfo> {
         self.get_connection()?.execute(
-            "UPDATE swaps SET confirmed_sats=:confirmed_sats, refund_tx_ids=:refund_tx_ids, confirmed_tx_ids=:confirmed_tx_ids, status=:status where bitcoin_address=:bitcoin_address",
+            "UPDATE swaps SET unconfirmed_sats=:unconfirmed_sats, unconfirmed_tx_ids=:unconfirmed_tx_ids, confirmed_sats=:confirmed_sats, refund_tx_ids=:refund_tx_ids, confirmed_tx_ids=:confirmed_tx_ids, status=:status where bitcoin_address=:bitcoin_address",
             named_params! {
+             ":unconfirmed_sats": unconfirmed_sats,
+             ":unconfirmed_tx_ids": StringArray(unconfirmed_tx_ids),
              ":confirmed_sats": confirmed_sats,
              ":bitcoin_address": bitcoin_address,
              ":refund_tx_ids": StringArray(refund_tx_ids),
@@ -96,6 +101,17 @@ impl SqliteStorage {
             .query_row(
                 "SELECT * FROM swaps where bitcoin_address = ?1",
                 [address],
+                |row| self.sql_row_to_swap(row),
+            )
+            .optional()
+            .map_err(|e| anyhow!(e))
+    }
+
+    pub fn get_in_progress_swap(&self) -> Result<Option<SwapInfo>> {
+        self.get_connection()?
+            .query_row(
+             "SELECT * FROM swaps where (confirmed_sats > 0 OR unconfirmed_sats > 0) AND paid_sats = 0 AND status!=? ORDER BY created_at ASC",
+                [SwapStatus::Expired as u32],
                 |row| self.sql_row_to_swap(row),
             )
             .optional()
@@ -181,6 +197,9 @@ fn test_swaps() -> Result<(), Box<dyn std::error::Error>> {
     let item_value = storage.get_swap_info_by_address("1".to_string())?.unwrap();
     assert_eq!(item_value, tested_swap_info);
 
+    let in_progress = storage.get_in_progress_swap()?;
+    assert_eq!(in_progress, None);
+
     let non_existent_swap = storage.get_swap_info_by_address("non-existent".to_string())?;
     assert!(non_existent_swap.is_none());
 
@@ -194,13 +213,41 @@ fn test_swaps() -> Result<(), Box<dyn std::error::Error>> {
     //assert_eq!(swaps.len(), 1);
     assert!(err.is_err());
 
-    storage.update_swap_chain_info(
+    let swap_after_chain_update = storage.update_swap_chain_info(
         tested_swap_info.bitcoin_address.clone(),
         20,
-        vec![String::from("111"), String::from("222")],
         vec![String::from("333"), String::from("444")],
+        0,
+        vec![],
+        vec![],
+        SwapStatus::Initial,
+    )?;
+    let in_progress = storage.get_in_progress_swap()?;
+    assert_eq!(in_progress.unwrap(), swap_after_chain_update);
+
+    let swap_after_chain_update = storage.update_swap_chain_info(
+        tested_swap_info.bitcoin_address.clone(),
+        0,
+        vec![],
+        20,
+        vec![String::from("333"), String::from("444")],
+        vec![],
+        SwapStatus::Initial,
+    )?;
+    let in_progress = storage.get_in_progress_swap()?;
+    assert_eq!(in_progress.unwrap(), swap_after_chain_update);
+
+    storage.update_swap_chain_info(
+        tested_swap_info.bitcoin_address.clone(),
+        0,
+        vec![],
+        20,
+        vec![String::from("333"), String::from("444")],
+        vec![String::from("111"), String::from("222")],
         SwapStatus::Expired,
     )?;
+    let in_progress = storage.get_in_progress_swap()?;
+    assert_eq!(in_progress, None);
 
     storage.update_swap_paid_amount(tested_swap_info.bitcoin_address.clone(), 30)?;
     let updated_swap = storage

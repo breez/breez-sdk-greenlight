@@ -36,6 +36,34 @@ struct AddressUtxos {
     confirmed: Vec<Utxo>,
 }
 
+impl AddressUtxos {
+    fn unconfirmed_sats(&self) -> u32 {
+        self.unconfirmed
+            .iter()
+            .fold(0, |accum, item| accum + item.value)
+    }
+
+    fn unconfirmed_tx_ids(&self) -> Vec<String> {
+        self.unconfirmed
+            .iter()
+            .map(|c| c.out.txid.to_string())
+            .collect()
+    }
+
+    fn confirmed_sats(&self) -> u32 {
+        self.confirmed
+            .iter()
+            .fold(0, |accum, item| accum + item.value)
+    }
+
+    fn confirmed_tx_ids(&self) -> Vec<String> {
+        self.confirmed
+            .iter()
+            .map(|c| c.out.txid.to_string())
+            .collect()
+    }
+}
+
 #[tonic::async_trait]
 impl SwapperAPI for BreezServer {
     async fn create_swap(
@@ -194,6 +222,13 @@ impl BTCReceiveSwap {
         if node_state.is_none() {
             return Err(anyhow!("node is not initialized"));
         }
+        let in_progress_swap = self.persister.get_in_progress_swap()?;
+        if in_progress_swap.is_some() {
+            return Err(anyhow!(format!(
+                "Swap in progress was detected for address {} use get_swap_info to get the current swap state",
+                in_progress_swap.unwrap().bitcoin_address
+            )));
+        }
         let node_id = node_state.unwrap().id;
         // create swap keys
         let swap_keys = create_swap_keys()?;
@@ -279,6 +314,10 @@ impl BTCReceiveSwap {
         self.persister.get_swap_info_by_address(address)
     }
 
+    pub(crate) fn in_progress_swap(&self) -> Result<Option<SwapInfo>> {
+        self.persister.get_in_progress_swap()
+    }
+
     fn list_swaps(&self, status: SwapStatus) -> Result<Vec<SwapInfo>> {
         self.persister.list_swaps_with_status(status)
     }
@@ -308,11 +347,6 @@ impl BTCReceiveSwap {
             .await?;
         let utxos = get_utxos(bitcoin_address.clone(), txs.clone())?;
 
-        let confirmed_sats: u32 = utxos
-            .confirmed
-            .iter()
-            .fold(0, |accum, item| accum + item.value);
-
         let confirmed_block = utxos.confirmed.iter().fold(0, |b, item| {
             let confirmed_block = item.block_height.unwrap();
             if confirmed_block != 0 || confirmed_block < b {
@@ -328,15 +362,9 @@ impl BTCReceiveSwap {
             swap_status = SwapStatus::Expired
         }
 
-        let confirmed_txs = utxos
-            .confirmed
-            .into_iter()
-            .map(|u| u.out.txid.to_string())
-            .collect();
-
         debug!(
             "updating swap on-chain info {:?}: confirmed_sats={:?} refund_tx_ids={:?}, confirmed_tx_ids={:?} swap_status={:?}",
-            bitcoin_address.clone(), confirmed_sats, swap_info.refund_tx_ids, confirmed_txs, swap_status
+            bitcoin_address.clone(), utxos.confirmed_sats(), swap_info.refund_tx_ids, utxos.confirmed_tx_ids(), swap_status
         );
 
         let payment = self
@@ -356,16 +384,18 @@ impl BTCReceiveSwap {
 
         self.persister.update_swap_chain_info(
             bitcoin_address,
-            confirmed_sats,
+            utxos.unconfirmed_sats(),
+            utxos.unconfirmed_tx_ids(),
+            utxos.confirmed_sats(),
+            utxos.confirmed_tx_ids(),
             swap_info.refund_tx_ids,
-            confirmed_txs,
             swap_status,
         )
     }
 
     /// redeem_swap executes the final step of receiving lightning payment
     /// in exchange for the on chain funds.
-    pub(crate) async fn redeem_swap(&self, bitcoin_address: String) -> Result<()> {
+    async fn redeem_swap(&self, bitcoin_address: String) -> Result<()> {
         let mut swap_info = self
             .persister
             .get_swap_info_by_address(bitcoin_address.clone())?
@@ -439,19 +469,16 @@ impl BTCReceiveSwap {
             sat_per_vbyte,
         )?;
         let txid = self.chain_service.broadcast_transaction(refund_tx).await?;
-        let mut refunded_tx_ids = swap_info.refund_tx_ids.clone();
-        refunded_tx_ids.push(txid.clone());
+        let mut refund_tx_ids = swap_info.refund_tx_ids.clone();
+        refund_tx_ids.push(txid.clone());
 
         self.persister.update_swap_chain_info(
             swap_info.bitcoin_address,
-            swap_info.confirmed_sats,
-            refunded_tx_ids,
-            utxos
-                .confirmed
-                .clone()
-                .into_iter()
-                .map(|u| u.out.txid.to_string())
-                .collect(),
+            utxos.unconfirmed_sats(),
+            utxos.unconfirmed_tx_ids(),
+            utxos.confirmed_sats(),
+            utxos.confirmed_tx_ids(),
+            refund_tx_ids,
             swap_info.status,
         )?;
 

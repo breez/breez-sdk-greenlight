@@ -119,6 +119,8 @@ void wire_sweep(int64_t port_,
 
 void wire_receive_onchain(int64_t port_);
 
+void wire_in_progress_swap(int64_t port_);
+
 void wire_list_refundables(int64_t port_);
 
 void wire_refund(int64_t port_,
@@ -189,6 +191,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_close_lsp_channels);
     dummy_var ^= ((int64_t) (void*) wire_sweep);
     dummy_var ^= ((int64_t) (void*) wire_receive_onchain);
+    dummy_var ^= ((int64_t) (void*) wire_in_progress_swap);
     dummy_var ^= ((int64_t) (void*) wire_list_refundables);
     dummy_var ^= ((int64_t) (void*) wire_refund);
     dummy_var ^= ((int64_t) (void*) wire_execute_command);

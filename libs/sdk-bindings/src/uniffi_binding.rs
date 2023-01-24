@@ -241,7 +241,13 @@ impl BlockingBreezServices {
             .map_err(|e| e.into())
     }
 
-    // list swaps history (all of them: expired, refunded and active)
+    /// Onchain receive swap API
+    pub fn in_progress_swap(&self) -> Result<Option<SwapInfo>, SDKError> {
+        rt().block_on(self.breez_services.in_progress_swap())
+            .map_err(|e| e.into())
+    }
+
+    /// list non-completed expired swaps that should be refunded bu calling [BreezServices::refund]
     pub fn list_refundables(&self) -> Result<Vec<SwapInfo>, SDKError> {
         rt().block_on(self.breez_services.list_refundables())
             .map_err(|e| e.into())

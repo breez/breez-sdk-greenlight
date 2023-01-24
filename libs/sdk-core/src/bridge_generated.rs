@@ -350,6 +350,16 @@ fn wire_receive_onchain_impl(port_: MessagePort) {
         move || move |task_callback| receive_onchain(),
     )
 }
+fn wire_in_progress_swap_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "in_progress_swap",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || move |task_callback| in_progress_swap(),
+    )
+}
 fn wire_list_refundables_impl(port_: MessagePort) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -1016,8 +1026,10 @@ impl support::IntoDart for SwapInfo {
             self.bolt11.into_dart(),
             self.paid_sats.into_dart(),
             self.confirmed_sats.into_dart(),
+            self.unconfirmed_sats.into_dart(),
             self.status.into_dart(),
             self.refund_tx_ids.into_dart(),
+            self.unconfirmed_tx_ids.into_dart(),
             self.confirmed_tx_ids.into_dart(),
             self.min_allowed_deposit.into_dart(),
             self.max_allowed_deposit.into_dart(),
