@@ -75,9 +75,10 @@ async fn start_threads(
             .start_signer(signer_signer_receiver)
             .await;
     });
-
     // sync with remote state
     let breez_cloned = breez_services.clone();
+
+    debug!("start_threads: signer started, starting initial sync");
     breez_cloned.sync().await?;
 
     // create a shutdown channel (sender and receiver)
@@ -109,6 +110,8 @@ async fn start_threads(
             }
         }
     });
+
+    debug!("start_threads: finished");
     Ok(stop_sender)
 }
 
@@ -380,8 +383,11 @@ impl BreezServices {
     /// * channels - The list of channels and their status
     /// * payments - The incoming/outgoing payments
     pub async fn sync(&self) -> Result<()> {
+        debug!("sync: started");
         self.start_node().await?;
+        debug!("sync: node started");
         self.connect_lsp_peer().await?;
+        debug!("sync: lst connected");
 
         // First query the changes since last sync time.
         let since_timestamp = self.persister.last_payment_timestamp().unwrap_or(0);
