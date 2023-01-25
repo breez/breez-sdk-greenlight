@@ -379,8 +379,32 @@ pub struct SwapInfo {
 }
 
 impl SwapInfo {
+    pub(crate) fn unused(&self) -> bool {
+        self.confirmed_sats == 0
+            && self.unconfirmed_sats == 0
+            && self.paid_sats == 0
+            && self.status != SwapStatus::Expired
+    }
+
+    pub(crate) fn in_progress(&self) -> bool {
+        (self.confirmed_sats > 0 || self.unconfirmed_sats > 0)
+            && self.paid_sats == 0
+            && self.status != SwapStatus::Expired
+    }
+
     pub(crate) fn redeemable(&self) -> bool {
-        self.confirmed_sats > 0 && self.paid_sats == 0 && self.status != SwapStatus::Expired
+        self.unconfirmed_sats == 0
+            && self.confirmed_sats > 0
+            && self.paid_sats == 0
+            && self.status != SwapStatus::Expired
+    }
+
+    pub(crate) fn refundable(&self) -> bool {
+        self.confirmed_sats > self.paid_sats && self.status == SwapStatus::Expired
+    }
+
+    pub(crate) fn monitored(&self) -> bool {
+        self.unused() || self.in_progress() || self.refundable()
     }
 }
 

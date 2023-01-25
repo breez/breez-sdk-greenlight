@@ -111,28 +111,6 @@ impl SqliteStorage {
             .map_err(|e| anyhow!(e))
     }
 
-    pub(crate) fn get_in_progress_swap(&self) -> Result<Option<SwapInfo>> {
-        self.get_connection()?
-            .query_row(
-             "SELECT * FROM swaps where (confirmed_sats > 0 OR unconfirmed_sats > 0) AND paid_sats = 0 AND status!=? ORDER BY created_at ASC",
-                [SwapStatus::Expired as u32],
-                |row| self.sql_row_to_swap(row),
-            )
-            .optional()
-            .map_err(|e| anyhow!(e))
-    }
-
-    pub(crate) fn get_unused_swap(&self) -> Result<Option<SwapInfo>> {
-        self.get_connection()?
-         .query_row(
-          "SELECT * FROM swaps where confirmed_sats = 0 AND unconfirmed_sats = 0 AND paid_sats = 0 AND status!=? ORDER BY created_at ASC",
-             [SwapStatus::Expired as u32],
-             |row| self.sql_row_to_swap(row),
-         )
-         .optional()
-         .map_err(|e| anyhow!(e))
-    }
-
     pub(crate) fn list_swaps_with_status(&self, status: SwapStatus) -> Result<Vec<SwapInfo>> {
         let con = self.get_connection()?;
         let mut stmt = con.prepare(
@@ -182,6 +160,13 @@ impl SqliteStorage {
 #[test]
 fn test_swaps() -> Result<(), Box<dyn std::error::Error>> {
     use crate::persist::test_utils;
+    fn list_in_progress_swaps(storage: &SqliteStorage) -> Result<Vec<SwapInfo>> {
+        Ok(storage
+            .list_swaps_with_status(SwapStatus::Initial)?
+            .into_iter()
+            .filter(SwapInfo::in_progress)
+            .collect())
+    }
 
     let storage = SqliteStorage::from_file(test_utils::create_test_sql_file("swap".to_string()));
 
@@ -212,8 +197,8 @@ fn test_swaps() -> Result<(), Box<dyn std::error::Error>> {
     let item_value = storage.get_swap_info_by_address("1".to_string())?.unwrap();
     assert_eq!(item_value, tested_swap_info);
 
-    let in_progress = storage.get_in_progress_swap()?;
-    assert_eq!(in_progress, None);
+    let in_progress = list_in_progress_swaps(&storage)?;
+    assert_eq!(in_progress.len(), 0);
 
     let non_existent_swap = storage.get_swap_info_by_address("non-existent".to_string())?;
     assert!(non_existent_swap.is_none());
@@ -237,8 +222,8 @@ fn test_swaps() -> Result<(), Box<dyn std::error::Error>> {
         vec![],
         SwapStatus::Initial,
     )?;
-    let in_progress = storage.get_in_progress_swap()?;
-    assert_eq!(in_progress.unwrap(), swap_after_chain_update);
+    let in_progress = list_in_progress_swaps(&storage)?;
+    assert_eq!(in_progress[0], swap_after_chain_update);
 
     let swap_after_chain_update = storage.update_swap_chain_info(
         tested_swap_info.bitcoin_address.clone(),
@@ -249,8 +234,8 @@ fn test_swaps() -> Result<(), Box<dyn std::error::Error>> {
         vec![],
         SwapStatus::Initial,
     )?;
-    let in_progress = storage.get_in_progress_swap()?;
-    assert_eq!(in_progress.unwrap(), swap_after_chain_update);
+    let in_progress = list_in_progress_swaps(&storage)?;
+    assert_eq!(in_progress[0], swap_after_chain_update);
 
     storage.update_swap_chain_info(
         tested_swap_info.bitcoin_address.clone(),
@@ -261,8 +246,8 @@ fn test_swaps() -> Result<(), Box<dyn std::error::Error>> {
         vec![String::from("111"), String::from("222")],
         SwapStatus::Expired,
     )?;
-    let in_progress = storage.get_in_progress_swap()?;
-    assert_eq!(in_progress, None);
+    let in_progress = list_in_progress_swaps(&storage)?;
+    assert_eq!(in_progress.len(), 0);
 
     storage.update_swap_paid_amount(tested_swap_info.bitcoin_address.clone(), 30)?;
     let updated_swap = storage
