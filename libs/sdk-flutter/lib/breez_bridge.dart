@@ -222,6 +222,8 @@ class BreezBridge {
   /// Onchain receive swap API
   Future<SwapInfo> receiveOnchain() async => await _lnToolkit.receiveOnchain();
 
+  Future<SwapInfo?> inProgressSwap() async => await _lnToolkit.inProgressSwap();
+
   Future<List<SwapInfo>> listRefundables() async =>
       await _lnToolkit.listRefundables();
 
