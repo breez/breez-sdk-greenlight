@@ -554,8 +554,8 @@ fn invoice_to_transaction(
     })
 }
 
-// construct a lightning transaction from a payment
-pub fn payment_to_transaction(payment: pb::Payment) -> Result<crate::models::Payment> {
+/// Construct a lightning transaction from a payment
+pub(crate) fn payment_to_transaction(payment: pb::Payment) -> Result<crate::models::Payment> {
     let mut description = None;
     if !payment.bolt11.is_empty() {
         description = parse_invoice(&payment.bolt11)?.description;

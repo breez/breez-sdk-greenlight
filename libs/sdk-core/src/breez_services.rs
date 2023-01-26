@@ -7,7 +7,10 @@ use crate::grpc::information_client::InformationClient;
 use crate::grpc::PaymentInformation;
 use crate::input_parser::LnUrlPayRequestData;
 use crate::invoice::{add_routing_hints, parse_invoice, LNInvoice, RouteHint, RouteHintHop};
-use crate::lnurl::pay::model::{LnUrlPayResult, ValidatedCallbackResponse};
+use crate::lnurl::pay::model::SuccessAction::Aes;
+use crate::lnurl::pay::model::{
+    LnUrlPayResult, SuccessAction, SuccessActionProcessed, ValidatedCallbackResponse,
+};
 use crate::lnurl::pay::validate_lnurl_pay;
 use crate::lnurl::withdraw::model::LnUrlWithdrawCallbackStatus;
 use crate::lnurl::withdraw::validate_lnurl_withdraw;
@@ -129,6 +132,8 @@ pub struct BreezServices {
     shutdown_sender: Mutex<Option<mpsc::Sender<()>>>,
 }
 
+use bitcoin_hashes::{sha256, Hash};
+
 impl BreezServices {
     /// Create a new node for the given network, from the given seed
     pub async fn register_node(network: Network, seed: Vec<u8>) -> Result<GreenlightCredentials> {
@@ -219,6 +224,8 @@ impl BreezServices {
     /// This call will validate the given `user_amount_sat` and `comment` against the parameters
     /// of the LNURL endpoint (`req_data`). If they match the endpoint requirements, the LNURL payment
     /// is made.
+    ///
+    /// This method will return an [anyhow::Error] when any validation check fails.
     pub async fn lnurl_pay(
         &self,
         user_amount_sat: u64,
@@ -230,9 +237,36 @@ impl BreezServices {
                 Ok(LnUrlPayResult::EndpointError { data: e })
             }
             ValidatedCallbackResponse::EndpointSuccess { data: cb } => {
-                self.send_payment(cb.pr, None).await?;
+                let payment = self.send_payment(cb.pr, None).await?;
+                let details = match &payment.details {
+                    PaymentDetails::ClosedChannel { .. } => {
+                        return Err(anyhow!("Payment lookup found unexpected payment type"));
+                    }
+                    PaymentDetails::Ln { data } => data,
+                };
+
                 Ok(LnUrlPayResult::EndpointSuccess {
-                    data: cb.success_action,
+                    data: match cb.success_action {
+                        Some(sa) => {
+                            let processed = match sa {
+                                // For AES, we decrypt the contents on the fly
+                                Aes(data) => {
+                                    let preimage =
+                                        sha256::Hash::from_str(&details.payment_preimage)?;
+                                    let preimage_arr: [u8; 32] = preimage.into_inner();
+
+                                    let decrypted = (data, &preimage_arr).try_into()?;
+                                    SuccessActionProcessed::Aes(decrypted)
+                                }
+                                SuccessAction::Message(data) => {
+                                    SuccessActionProcessed::Message(data)
+                                }
+                                SuccessAction::Url(data) => SuccessActionProcessed::Url(data),
+                            };
+                            Some(processed)
+                        }
+                        None => None,
+                    },
                 })
             }
         }
@@ -435,7 +469,7 @@ impl BreezServices {
             .map(closed_channel_to_transaction)
             .collect();
 
-        // update both closed channels and lightning transation payments
+        // update both closed channels and lightning transaction payments
         let mut payments = closed_channel_payments_res?;
         payments.extend(new_data.payments.clone());
         self.persister.insert_payments(&payments)?;
@@ -621,6 +655,7 @@ struct BreezServicesBuilder {
     seed: Option<Vec<u8>>,
     lsp_api: Option<Arc<dyn LspAPI>>,
     fiat_api: Option<Arc<dyn FiatAPI>>,
+    persister: Option<Arc<SqliteStorage>>,
     swapper_api: Option<Arc<dyn SwapperAPI>>,
 }
 
@@ -634,6 +669,7 @@ impl BreezServicesBuilder {
             seed: None,
             lsp_api: None,
             fiat_api: None,
+            persister: None,
             swapper_api: None,
         }
     }
@@ -650,6 +686,11 @@ impl BreezServicesBuilder {
 
     pub fn fiat_api(&mut self, fiat_api: Arc<dyn FiatAPI>) -> &mut Self {
         self.fiat_api = Some(fiat_api.clone());
+        self
+    }
+
+    pub fn persister(&mut self, persister: Arc<SqliteStorage>) -> &mut Self {
+        self.persister = Some(persister);
         self
     }
 
@@ -707,10 +748,12 @@ impl BreezServicesBuilder {
         ));
 
         // The storage is implemented via sqlite.
-        let persister = Arc::new(SqliteStorage::from_file(format!(
-            "{}/storage.sql",
-            self.config.working_dir
-        )));
+        let persister = self.persister.clone().unwrap_or_else(|| {
+            Arc::new(SqliteStorage::from_file(format!(
+                "{}/storage.sql",
+                self.config.working_dir
+            )))
+        });
 
         persister.init().unwrap();
         let current_lsp_id = persister.get_lsp_id()?;
@@ -1003,7 +1046,7 @@ async fn get_lsp_by_id(
 pub(crate) mod tests {
     use std::sync::Arc;
 
-    use anyhow::anyhow;
+    use anyhow::{anyhow, Result};
 
     use crate::breez_services::{BreezServices, BreezServicesBuilder};
     use crate::fiat::Rate;
@@ -1065,11 +1108,17 @@ pub(crate) mod tests {
             transactions: dummy_transactions.clone(),
         });
 
-        let mut builder = BreezServicesBuilder::new(create_test_config());
+        let test_config = create_test_config();
+        let persister = Arc::new(create_test_persister(test_config.clone()));
+        persister.init()?;
+        persister.insert_payments(&dummy_transactions)?;
+
+        let mut builder = BreezServicesBuilder::new(test_config.clone());
         let breez_services = builder
             .lsp_api(Arc::new(MockBreezServer {}))
             .fiat_api(Arc::new(MockBreezServer {}))
             .node_api(node_api)
+            .persister(persister)
             .build(None)
             .await?;
 
@@ -1141,7 +1190,7 @@ pub(crate) mod tests {
         let storage_path = format!("{}/storage.sql", get_test_working_dir());
         std::fs::remove_file(storage_path).ok();
 
-        let breez_services = breez_services().await;
+        let breez_services = breez_services().await?;
         breez_services.sync().await?;
 
         let node_pubkey = breez_services
@@ -1157,7 +1206,7 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn test_fetch_rates() -> Result<(), Box<dyn std::error::Error>> {
-        let breez_services = breez_services().await;
+        let breez_services = breez_services().await?;
         breez_services.sync().await?;
 
         let rates = breez_services.fiat_api.fetch_fiat_rates().await?;
@@ -1173,23 +1222,36 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    /// build node service for tests
-    pub(crate) async fn breez_services() -> Arc<BreezServices> {
+    /// Build node service for tests
+    pub(crate) async fn breez_services() -> Result<Arc<BreezServices>> {
+        breez_services_with(vec![]).await
+    }
+
+    /// Build node service for tests with a list of known payments
+    pub(crate) async fn breez_services_with(
+        known_payments: Vec<Payment>,
+    ) -> Result<Arc<BreezServices>> {
         let node_api = Arc::new(MockNodeAPI {
             node_state: get_dummy_node_state(),
-            transactions: vec![],
+            transactions: known_payments.clone(),
         });
 
-        let mut builder = BreezServicesBuilder::new(create_test_config());
+        let test_config = create_test_config();
+        let persister = Arc::new(create_test_persister(test_config.clone()));
+        persister.init()?;
+        persister.insert_payments(&known_payments)?;
+
+        let mut builder = BreezServicesBuilder::new(test_config.clone());
         let breez_services = builder
             .lsp_api(Arc::new(MockBreezServer {}))
             .fiat_api(Arc::new(MockBreezServer {}))
+            .persister(persister)
             .node_api(node_api)
             .build(None)
             .await
             .unwrap();
 
-        breez_services
+        Ok(breez_services)
     }
 
     /// Build dummy NodeState for tests
