@@ -332,7 +332,7 @@ async fn main() -> Result<()> {
                             .map_err(|err| anyhow!(err))?;
                         let sat_per_vbyte: u32 = command
                             .next()
-                            .ok_or("Expected to_address arg")
+                            .ok_or("Expected fee (sat per vbyte) arg")
                             .map_err(|err| anyhow!(err))?
                             .parse()?;
 

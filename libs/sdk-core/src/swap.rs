@@ -235,6 +235,7 @@ impl BTCReceiveSwap {
             status: SwapStatus::Initial,
             min_allowed_deposit: swap_reply.min_allowed_deposit,
             max_allowed_deposit: swap_reply.max_allowed_deposit,
+            last_redeem_error: None,
         };
 
         // persist the address
@@ -305,12 +306,15 @@ impl BTCReceiveSwap {
             let redeem_res = self.redeem_swap(s.bitcoin_address.clone()).await;
 
             if redeem_res.is_err() {
+                let err = redeem_res.as_ref().err().unwrap();
                 error!(
                     "failed to redeem swap {:?}: {} {}",
-                    redeem_res.err().unwrap(),
+                    err,
                     s.bitcoin_address,
                     s.bolt11.unwrap_or_default(),
                 );
+                self.persister
+                    .update_swap_redeem_error(s.bitcoin_address, err.to_string())?;
             } else {
                 info!(
                     "succeed to redeem swap {:?}: {}",

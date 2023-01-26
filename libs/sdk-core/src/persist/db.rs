@@ -115,7 +115,7 @@ impl SqliteStorage {
              ALTER TABLE swaps ADD COLUMN max_allowed_deposit INTEGER NOT NULL;
             "),
             // Convert all negative fee_msat values to positive
-            M::up("UPDATE payments SET fee_msat = ABS(fee_msat) WHERE fee_msat < 0"),
+            M::up("UPDATE payments SET fee_msat = ABS(fee_msat) WHERE fee_msat < 0"),           
             M::up("
              ALTER TABLE swaps RENAME TO old_swaps;
 
@@ -138,7 +138,8 @@ impl SqliteStorage {
               unconfirmed_tx_ids TEXT NOT NULL,
               confirmed_tx_ids TEXT NOT NULL,
               min_allowed_deposit INTEGER NOT NULL,
-              max_allowed_deposit INTEGER NOT NULL                 
+              max_allowed_deposit INTEGER NOT NULL,
+              last_redeem_error TEXT   
              ) STRICT;
              
              INSERT INTO swaps
@@ -161,7 +162,8 @@ impl SqliteStorage {
                unconfirmed_tx_ids,
                confirmed_tx_ids,
                min_allowed_deposit,
-               max_allowed_deposit
+               max_allowed_deposit,
+               last_redeem_error
               )
               SELECT 
                bitcoin_address, 
@@ -179,10 +181,11 @@ impl SqliteStorage {
                confirmed_sats,
                status,
                refund_tx_ids,
-               '',
+               '[]',
                confirmed_tx_ids,
                min_allowed_deposit,
-               max_allowed_deposit
+               max_allowed_deposit,
+               NULL
               FROM old_swaps;
              
              DROP TABLE old_swaps;            

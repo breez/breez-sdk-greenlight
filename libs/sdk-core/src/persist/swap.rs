@@ -51,6 +51,22 @@ impl SqliteStorage {
         Ok(())
     }
 
+    pub(crate) fn update_swap_redeem_error(
+        &self,
+        bitcoin_address: String,
+        redeem_err: String,
+    ) -> Result<()> {
+        self.get_connection()?.execute(
+            "UPDATE swaps SET last_redeem_error=:redeem_err where bitcoin_address=:bitcoin_address",
+            named_params! {
+             ":redeem_err": redeem_err,
+             ":bitcoin_address": bitcoin_address,
+            },
+        )?;
+
+        Ok(())
+    }
+
     pub(crate) fn update_swap_bolt11(&self, bitcoin_address: String, bolt11: String) -> Result<()> {
         self.get_connection()?.execute(
             "UPDATE swaps SET bolt11=:bolt11 where bitcoin_address=:bitcoin_address",
@@ -153,6 +169,7 @@ impl SqliteStorage {
             confirmed_tx_ids: confirmed_txs_raw.0,
             min_allowed_deposit: row.get(17)?,
             max_allowed_deposit: row.get(18)?,
+            last_redeem_error: row.get(19)?,
         })
     }
 }
@@ -192,6 +209,7 @@ fn test_swaps() -> Result<(), Box<dyn std::error::Error>> {
         confirmed_tx_ids: Vec::new(),
         min_allowed_deposit: 0,
         max_allowed_deposit: 100,
+        last_redeem_error: None,
     };
     storage.insert_swap(tested_swap_info.clone())?;
     let item_value = storage.get_swap_info_by_address("1".to_string())?.unwrap();
@@ -248,6 +266,18 @@ fn test_swaps() -> Result<(), Box<dyn std::error::Error>> {
     )?;
     let in_progress = list_in_progress_swaps(&storage)?;
     assert_eq!(in_progress.len(), 0);
+
+    storage.update_swap_redeem_error(
+        tested_swap_info.bitcoin_address.clone(),
+        String::from("test error"),
+    )?;
+    let updated_swap = storage
+        .get_swap_info_by_address(tested_swap_info.bitcoin_address.clone())?
+        .unwrap();
+    assert_eq!(
+        updated_swap.last_redeem_error.unwrap(),
+        String::from("test error")
+    );
 
     storage.update_swap_paid_amount(tested_swap_info.bitcoin_address.clone(), 30)?;
     let updated_swap = storage
