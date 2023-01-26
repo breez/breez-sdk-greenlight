@@ -141,30 +141,7 @@ impl BTCReceiveSwap {
         match e {
             BreezEvent::NewBlock { block: tip } => {
                 debug!("got chain event {:?}", e);
-
-                // first refresh all swaps we monitor
-                _ = self.refresh_monitored_swaps(tip).await?;
-
-                // redeem swaps
-                let redeemable_swaps = self.list_redeemables()?;
-                for s in redeemable_swaps {
-                    let redeem_res = self.redeem_swap(s.bitcoin_address.clone()).await;
-
-                    if redeem_res.is_err() {
-                        error!(
-                            "failed to redeem swap {:?}: {} {}",
-                            redeem_res.err().unwrap(),
-                            s.bitcoin_address,
-                            s.bolt11.unwrap_or_default(),
-                        );
-                    } else {
-                        info!(
-                            "succeed to redeem swap {:?}: {}",
-                            s.bitcoin_address,
-                            s.bolt11.unwrap_or_default()
-                        )
-                    }
-                }
+                _ = self.execute_pending_swaps(tip).await;
             }
 
             // When invoice is paid we lookup for a swap that matches the same hash.
@@ -276,8 +253,7 @@ impl BTCReceiveSwap {
             .collect())
     }
 
-    pub(crate) async fn list_in_progress(&self, tip: u32) -> Result<Vec<SwapInfo>> {
-        self.refresh_monitored_swaps(tip).await?;
+    pub(crate) async fn list_in_progress(&self) -> Result<Vec<SwapInfo>> {
         Ok(self
             .persister
             .list_swaps_with_status(SwapStatus::Initial)?
@@ -317,6 +293,34 @@ impl BTCReceiveSwap {
     #[allow(dead_code)]
     pub(crate) fn get_swap_info(&self, address: String) -> Result<Option<SwapInfo>> {
         self.persister.get_swap_info_by_address(address)
+    }
+
+    pub(crate) async fn execute_pending_swaps(&self, tip: u32) -> Result<()> {
+        // first refresh all swaps we monitor
+        _ = self.refresh_monitored_swaps(tip).await?;
+
+        // redeem swaps
+        let redeemable_swaps = self.list_redeemables()?;
+        for s in redeemable_swaps {
+            let redeem_res = self.redeem_swap(s.bitcoin_address.clone()).await;
+
+            if redeem_res.is_err() {
+                error!(
+                    "failed to redeem swap {:?}: {} {}",
+                    redeem_res.err().unwrap(),
+                    s.bitcoin_address,
+                    s.bolt11.unwrap_or_default(),
+                );
+            } else {
+                info!(
+                    "succeed to redeem swap {:?}: {}",
+                    s.bitcoin_address,
+                    s.bolt11.unwrap_or_default()
+                )
+            }
+        }
+
+        Ok(())
     }
 
     async fn refresh_monitored_swaps(&self, tip: u32) -> Result<Vec<SwapInfo>> {
