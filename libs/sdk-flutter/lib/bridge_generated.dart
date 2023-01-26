@@ -230,6 +230,23 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kDefaultConfigConstMeta;
 }
 
+class AesSuccessActionData {
+  /// Contents description, up to 144 characters
+  final String description;
+
+  /// Base64, AES-encrypted data where encryption key is payment preimage, up to 4kb of characters
+  final String ciphertext;
+
+  /// Base64, initialization vector, exactly 24 characters
+  final String iv;
+
+  AesSuccessActionData({
+    required this.description,
+    required this.ciphertext,
+    required this.iv,
+  });
+}
+
 /// Wrapped in a [BitcoinAddress], this is the result of [parse] when given a plain or BIP-21 BTC address.
 class BitcoinAddressData {
   final String address;
@@ -806,9 +823,17 @@ class RouteHintHop {
 
 @freezed
 class SuccessAction with _$SuccessAction {
+  /// AES type, described in LUD-10
+  const factory SuccessAction.aes(
+    AesSuccessActionData field0,
+  ) = SuccessAction_Aes;
+
+  /// Message type, described in LUD-09
   const factory SuccessAction.message(
     MessageSuccessActionData field0,
   ) = SuccessAction_Message;
+
+  /// URL type, described in LUD-09
   const factory SuccessAction.url(
     UrlSuccessActionData field0,
   ) = SuccessAction_Url;
@@ -1549,6 +1574,17 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return (raw as List<dynamic>).cast<String>();
   }
 
+  AesSuccessActionData _wire2api_aes_success_action_data(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return AesSuccessActionData(
+      description: _wire2api_String(arr[0]),
+      ciphertext: _wire2api_String(arr[1]),
+      iv: _wire2api_String(arr[2]),
+    );
+  }
+
   BitcoinAddressData _wire2api_bitcoin_address_data(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 5)
@@ -1564,6 +1600,11 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   bool _wire2api_bool(dynamic raw) {
     return raw as bool;
+  }
+
+  AesSuccessActionData _wire2api_box_autoadd_aes_success_action_data(
+      dynamic raw) {
+    return _wire2api_aes_success_action_data(raw);
   }
 
   BitcoinAddressData _wire2api_box_autoadd_bitcoin_address_data(dynamic raw) {
@@ -2165,10 +2206,14 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   SuccessAction _wire2api_success_action(dynamic raw) {
     switch (raw[0]) {
       case 0:
+        return SuccessAction_Aes(
+          _wire2api_box_autoadd_aes_success_action_data(raw[1]),
+        );
+      case 1:
         return SuccessAction_Message(
           _wire2api_box_autoadd_message_success_action_data(raw[1]),
         );
-      case 1:
+      case 2:
         return SuccessAction_Url(
           _wire2api_box_autoadd_url_success_action_data(raw[1]),
         );

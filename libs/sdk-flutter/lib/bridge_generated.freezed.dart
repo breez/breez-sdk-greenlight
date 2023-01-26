@@ -3306,18 +3306,21 @@ mixin _$SuccessAction {
   Object get field0 => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
+    required TResult Function(AesSuccessActionData field0) aes,
     required TResult Function(MessageSuccessActionData field0) message,
     required TResult Function(UrlSuccessActionData field0) url,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(AesSuccessActionData field0)? aes,
     TResult? Function(MessageSuccessActionData field0)? message,
     TResult? Function(UrlSuccessActionData field0)? url,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
+    TResult Function(AesSuccessActionData field0)? aes,
     TResult Function(MessageSuccessActionData field0)? message,
     TResult Function(UrlSuccessActionData field0)? url,
     required TResult orElse(),
@@ -3325,18 +3328,21 @@ mixin _$SuccessAction {
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
+    required TResult Function(SuccessAction_Aes value) aes,
     required TResult Function(SuccessAction_Message value) message,
     required TResult Function(SuccessAction_Url value) url,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(SuccessAction_Aes value)? aes,
     TResult? Function(SuccessAction_Message value)? message,
     TResult? Function(SuccessAction_Url value)? url,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
+    TResult Function(SuccessAction_Aes value)? aes,
     TResult Function(SuccessAction_Message value)? message,
     TResult Function(SuccessAction_Url value)? url,
     required TResult orElse(),
@@ -3360,6 +3366,147 @@ class _$SuccessActionCopyWithImpl<$Res, $Val extends SuccessAction>
   final $Val _value;
   // ignore: unused_field
   final $Res Function($Val) _then;
+}
+
+/// @nodoc
+abstract class _$$SuccessAction_AesCopyWith<$Res> {
+  factory _$$SuccessAction_AesCopyWith(
+          _$SuccessAction_Aes value, $Res Function(_$SuccessAction_Aes) then) =
+      __$$SuccessAction_AesCopyWithImpl<$Res>;
+  @useResult
+  $Res call({AesSuccessActionData field0});
+}
+
+/// @nodoc
+class __$$SuccessAction_AesCopyWithImpl<$Res>
+    extends _$SuccessActionCopyWithImpl<$Res, _$SuccessAction_Aes>
+    implements _$$SuccessAction_AesCopyWith<$Res> {
+  __$$SuccessAction_AesCopyWithImpl(
+      _$SuccessAction_Aes _value, $Res Function(_$SuccessAction_Aes) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? field0 = null,
+  }) {
+    return _then(_$SuccessAction_Aes(
+      null == field0
+          ? _value.field0
+          : field0 // ignore: cast_nullable_to_non_nullable
+              as AesSuccessActionData,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$SuccessAction_Aes implements SuccessAction_Aes {
+  const _$SuccessAction_Aes(this.field0);
+
+  @override
+  final AesSuccessActionData field0;
+
+  @override
+  String toString() {
+    return 'SuccessAction.aes(field0: $field0)';
+  }
+
+  @override
+  bool operator ==(dynamic other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$SuccessAction_Aes &&
+            (identical(other.field0, field0) || other.field0 == field0));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, field0);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$SuccessAction_AesCopyWith<_$SuccessAction_Aes> get copyWith =>
+      __$$SuccessAction_AesCopyWithImpl<_$SuccessAction_Aes>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(AesSuccessActionData field0) aes,
+    required TResult Function(MessageSuccessActionData field0) message,
+    required TResult Function(UrlSuccessActionData field0) url,
+  }) {
+    return aes(field0);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(AesSuccessActionData field0)? aes,
+    TResult? Function(MessageSuccessActionData field0)? message,
+    TResult? Function(UrlSuccessActionData field0)? url,
+  }) {
+    return aes?.call(field0);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(AesSuccessActionData field0)? aes,
+    TResult Function(MessageSuccessActionData field0)? message,
+    TResult Function(UrlSuccessActionData field0)? url,
+    required TResult orElse(),
+  }) {
+    if (aes != null) {
+      return aes(field0);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(SuccessAction_Aes value) aes,
+    required TResult Function(SuccessAction_Message value) message,
+    required TResult Function(SuccessAction_Url value) url,
+  }) {
+    return aes(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(SuccessAction_Aes value)? aes,
+    TResult? Function(SuccessAction_Message value)? message,
+    TResult? Function(SuccessAction_Url value)? url,
+  }) {
+    return aes?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(SuccessAction_Aes value)? aes,
+    TResult Function(SuccessAction_Message value)? message,
+    TResult Function(SuccessAction_Url value)? url,
+    required TResult orElse(),
+  }) {
+    if (aes != null) {
+      return aes(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class SuccessAction_Aes implements SuccessAction {
+  const factory SuccessAction_Aes(final AesSuccessActionData field0) =
+      _$SuccessAction_Aes;
+
+  @override
+  AesSuccessActionData get field0;
+  @JsonKey(ignore: true)
+  _$$SuccessAction_AesCopyWith<_$SuccessAction_Aes> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
@@ -3427,6 +3574,7 @@ class _$SuccessAction_Message implements SuccessAction_Message {
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
+    required TResult Function(AesSuccessActionData field0) aes,
     required TResult Function(MessageSuccessActionData field0) message,
     required TResult Function(UrlSuccessActionData field0) url,
   }) {
@@ -3436,6 +3584,7 @@ class _$SuccessAction_Message implements SuccessAction_Message {
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(AesSuccessActionData field0)? aes,
     TResult? Function(MessageSuccessActionData field0)? message,
     TResult? Function(UrlSuccessActionData field0)? url,
   }) {
@@ -3445,6 +3594,7 @@ class _$SuccessAction_Message implements SuccessAction_Message {
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
+    TResult Function(AesSuccessActionData field0)? aes,
     TResult Function(MessageSuccessActionData field0)? message,
     TResult Function(UrlSuccessActionData field0)? url,
     required TResult orElse(),
@@ -3458,6 +3608,7 @@ class _$SuccessAction_Message implements SuccessAction_Message {
   @override
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
+    required TResult Function(SuccessAction_Aes value) aes,
     required TResult Function(SuccessAction_Message value) message,
     required TResult Function(SuccessAction_Url value) url,
   }) {
@@ -3467,6 +3618,7 @@ class _$SuccessAction_Message implements SuccessAction_Message {
   @override
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(SuccessAction_Aes value)? aes,
     TResult? Function(SuccessAction_Message value)? message,
     TResult? Function(SuccessAction_Url value)? url,
   }) {
@@ -3476,6 +3628,7 @@ class _$SuccessAction_Message implements SuccessAction_Message {
   @override
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
+    TResult Function(SuccessAction_Aes value)? aes,
     TResult Function(SuccessAction_Message value)? message,
     TResult Function(SuccessAction_Url value)? url,
     required TResult orElse(),
@@ -3562,6 +3715,7 @@ class _$SuccessAction_Url implements SuccessAction_Url {
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
+    required TResult Function(AesSuccessActionData field0) aes,
     required TResult Function(MessageSuccessActionData field0) message,
     required TResult Function(UrlSuccessActionData field0) url,
   }) {
@@ -3571,6 +3725,7 @@ class _$SuccessAction_Url implements SuccessAction_Url {
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(AesSuccessActionData field0)? aes,
     TResult? Function(MessageSuccessActionData field0)? message,
     TResult? Function(UrlSuccessActionData field0)? url,
   }) {
@@ -3580,6 +3735,7 @@ class _$SuccessAction_Url implements SuccessAction_Url {
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
+    TResult Function(AesSuccessActionData field0)? aes,
     TResult Function(MessageSuccessActionData field0)? message,
     TResult Function(UrlSuccessActionData field0)? url,
     required TResult orElse(),
@@ -3593,6 +3749,7 @@ class _$SuccessAction_Url implements SuccessAction_Url {
   @override
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
+    required TResult Function(SuccessAction_Aes value) aes,
     required TResult Function(SuccessAction_Message value) message,
     required TResult Function(SuccessAction_Url value) url,
   }) {
@@ -3602,6 +3759,7 @@ class _$SuccessAction_Url implements SuccessAction_Url {
   @override
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(SuccessAction_Aes value)? aes,
     TResult? Function(SuccessAction_Message value)? message,
     TResult? Function(SuccessAction_Url value)? url,
   }) {
@@ -3611,6 +3769,7 @@ class _$SuccessAction_Url implements SuccessAction_Url {
   @override
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
+    TResult Function(SuccessAction_Aes value)? aes,
     TResult Function(SuccessAction_Message value)? message,
     TResult Function(SuccessAction_Url value)? url,
     required TResult orElse(),

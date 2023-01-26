@@ -353,6 +353,32 @@ pub(crate) fn rand_invoice_with_description_hash(
         .unwrap()
 }
 
+pub(crate) fn rand_invoice_with_description_hash_and_preimage(
+    expected_desc: String,
+    preimage: sha256::Hash,
+) -> Result<lightning_invoice::Invoice> {
+    let expected_desc_hash = Hash::hash(expected_desc.as_bytes());
+
+    let hashed_preimage = Message::from_hashed_data::<sha256::Hash>(&preimage[..]);
+    let payment_hash = hashed_preimage.as_ref();
+
+    let payment_secret = PaymentSecret([42u8; 32]);
+
+    let secp = Secp256k1::new();
+    let key_pair = KeyPair::new(&secp, &mut rand::thread_rng());
+    let private_key = key_pair.secret_key();
+
+    InvoiceBuilder::new(Currency::Bitcoin)
+        .description_hash(expected_desc_hash)
+        .amount_milli_satoshis(50 * 1000)
+        .payment_hash(Hash::from_slice(payment_hash)?)
+        .payment_secret(payment_secret)
+        .current_timestamp()
+        .min_final_cltv_expiry(144)
+        .build_signed(|hash| Secp256k1::new().sign_ecdsa_recoverable(hash, &private_key))
+        .map_err(|err| anyhow!(err))
+}
+
 pub fn rand_string(len: usize) -> String {
     Alphanumeric.sample_string(&mut rand::thread_rng(), len)
 }

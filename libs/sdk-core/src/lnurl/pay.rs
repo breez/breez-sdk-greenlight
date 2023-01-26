@@ -1,11 +1,14 @@
 use crate::input_parser::*;
 use crate::invoice::parse_invoice;
 use crate::lnurl::maybe_replace_host_with_mockito_test_host;
-use crate::lnurl::pay::model::{CallbackResponse, ValidatedCallbackResponse};
+use crate::lnurl::pay::model::{CallbackResponse, SuccessAction, ValidatedCallbackResponse};
 use crate::LnUrlErrorData;
 use anyhow::{anyhow, Result};
 use bitcoin_hashes::{sha256, Hash};
 use std::str::FromStr;
+
+type Aes256CbcEnc = cbc::Encryptor<aes::Aes256>;
+type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
 
 /// Validates invoice and performs the second and last step of LNURL-pay, as per
 /// <https://github.com/lnurl/luds/blob/luds/06.md>
@@ -32,7 +35,11 @@ pub(crate) async fn validate_lnurl_pay(
     } else {
         let callback_resp: CallbackResponse = reqwest::get(&callback_url).await?.json().await?;
         if let Some(ref sa) = callback_resp.success_action {
-            sa.validate(&req_data)?;
+            match sa {
+                SuccessAction::Aes(data) => data.validate()?,
+                SuccessAction::Message(data) => data.validate()?,
+                SuccessAction::Url(data) => data.validate(&req_data)?,
+            }
         }
 
         validate_invoice(user_amount_sat, &callback_resp.pr, &req_data)?;
@@ -117,7 +124,9 @@ fn validate_invoice(
 
 pub(crate) mod model {
     use crate::input_parser::*;
+    use crate::lnurl::pay::{Aes256CbcDec, Aes256CbcEnc};
 
+    use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
     use anyhow::{anyhow, Result};
     use serde::Deserialize;
 
@@ -148,6 +157,18 @@ pub(crate) mod model {
     }
 
     #[derive(Deserialize, Debug)]
+    pub struct AesSuccessActionData {
+        /// Contents description, up to 144 characters
+        pub description: String,
+
+        /// Base64, AES-encrypted data where encryption key is payment preimage, up to 4kb of characters
+        pub ciphertext: String,
+
+        /// Base64, initialization vector, exactly 24 characters
+        pub iv: String,
+    }
+
+    #[derive(Deserialize, Debug)]
     pub struct MessageSuccessActionData {
         pub message: String,
     }
@@ -158,69 +179,118 @@ pub(crate) mod model {
         pub url: String,
     }
 
+    /// Supported success action types
+    ///
+    /// Receiving any other (unsupported) success action type will result in a failed parsing,
+    /// which will abort the LNURL-pay workflow, as per LUD-09.
     #[derive(Deserialize, Debug)]
     #[serde(rename_all = "camelCase")]
     #[serde(tag = "tag")]
     pub enum SuccessAction {
-        // Any other successAction type is considered not supported, so the parsing would fail
-        // and abort payment, as per LUD-09
+        /// AES type, described in LUD-10
+        Aes(AesSuccessActionData),
+
+        /// Message type, described in LUD-09
         Message(MessageSuccessActionData),
+
+        /// URL type, described in LUD-09
         Url(UrlSuccessActionData),
     }
 
-    impl SuccessAction {
-        pub fn validate(&self, req_data: &LnUrlPayRequestData) -> Result<()> {
-            match self {
-                SuccessAction::Message(msg_action_data) => {
-                    match msg_action_data.message.len() <= 144 {
-                        true => Ok(()),
-                        false => Err(anyhow!(
-                            "Success action message is longer than the maximum allowed length"
-                        )),
-                    }
-                }
-
-                SuccessAction::Url(url_action_data) => {
-                    match url_action_data.description.len() <= 144 {
-                        true => Ok(()),
-                        false => Err(anyhow!(
-                            "Success action description is longer than the maximum allowed length"
-                        )),
-                    }
-                    .and_then(|_| {
-                        let req_url = reqwest::Url::parse(&req_data.callback)?;
-                        let req_domain = req_url
-                            .domain()
-                            .ok_or_else(|| anyhow!("Could not determine callback domain"))?;
-
-                        let action_res_url = reqwest::Url::parse(&url_action_data.url)?;
-                        let action_res_domain = action_res_url.domain().ok_or_else(|| {
-                            anyhow!("Could not determine Success Action URL domain")
-                        })?;
-
-                        match req_domain == action_res_domain {
-                            true => Ok(()),
-                            false => Err(anyhow!(
-                                "Success Action URL has different domain than the callback domain"
-                            )),
-                        }
-                    })
-                }
+    impl AesSuccessActionData {
+        /// Validates the fields, but does not decrypt and validate the ciphertext.
+        pub fn validate(&self) -> Result<()> {
+            if self.description.len() > 144 {
+                return Err(anyhow!(
+                    "AES action description length is larger than the maximum allowed"
+                ));
             }
+
+            if self.ciphertext.len() > 4096 {
+                return Err(anyhow!(
+                    "AES action ciphertext length is larger than the maximum allowed"
+                ));
+            }
+            base64::decode(&self.ciphertext)?;
+
+            if self.iv.len() != 24 {
+                return Err(anyhow!("AES action iv has unexpected length"));
+            }
+            base64::decode(&self.iv)?;
+
+            Ok(())
+        }
+
+        /// Decrypts the ciphertext as a UTF-8 string, given the key (invoice preimage) parameter.
+        pub fn decrypt(&self, key: &[u8; 32]) -> Result<String> {
+            let plaintext_bytes =
+                Aes256CbcDec::new_from_slices(key, &base64::decode(&self.iv)?)?
+                    .decrypt_padded_vec_mut::<Pkcs7>(&base64::decode(&self.ciphertext)?)?;
+
+            String::from_utf8(plaintext_bytes).map_err(|e| e.into())
+        }
+
+        /// Helper method that encrypts a given plaintext, with a given key and IV.
+        pub fn encrypt(key: &[u8; 32], iv: &[u8; 16], plaintext: String) -> Result<String> {
+            let ciphertext_bytes = Aes256CbcEnc::new_from_slices(key, iv)?
+                .encrypt_padded_vec_mut::<Pkcs7>(plaintext.as_bytes());
+
+            Ok(base64::encode(ciphertext_bytes))
+        }
+    }
+
+    impl MessageSuccessActionData {
+        pub fn validate(&self) -> Result<()> {
+            match self.message.len() <= 144 {
+                true => Ok(()),
+                false => Err(anyhow!(
+                    "Success action message is longer than the maximum allowed length"
+                )),
+            }
+        }
+    }
+
+    impl UrlSuccessActionData {
+        pub fn validate(&self, req_data: &LnUrlPayRequestData) -> Result<()> {
+            match self.description.len() <= 144 {
+                true => Ok(()),
+                false => Err(anyhow!(
+                    "Success action description is longer than the maximum allowed length"
+                )),
+            }
+            .and_then(|_| {
+                let req_url = reqwest::Url::parse(&req_data.callback)?;
+                let req_domain = req_url
+                    .domain()
+                    .ok_or_else(|| anyhow!("Could not determine callback domain"))?;
+
+                let action_res_url = reqwest::Url::parse(&self.url)?;
+                let action_res_domain = action_res_url
+                    .domain()
+                    .ok_or_else(|| anyhow!("Could not determine Success Action URL domain"))?;
+
+                match req_domain == action_res_domain {
+                    true => Ok(()),
+                    false => Err(anyhow!(
+                        "Success Action URL has different domain than the callback domain"
+                    )),
+                }
+            })
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::lnurl::pay::model::{
-        LnUrlPayResult, MessageSuccessActionData, SuccessAction, UrlSuccessActionData,
-    };
+    use crate::lnurl::pay::model::*;
     use crate::lnurl::pay::*;
+
+    use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
     use anyhow::{anyhow, Result};
     use mockito::Mock;
+    use rand::Rng;
 
-    use crate::test_utils::{rand_invoice_with_description_hash, rand_string};
+    use crate::test_utils::*;
 
     /// Mock an LNURL-pay endpoint that responds with no Success Action
     fn mock_lnurl_pay_callback_endpoint_no_success_action(
@@ -356,6 +426,51 @@ mod tests {
             .create())
     }
 
+    /// Mock an LNURL-pay endpoint that responds with a Success Action of type AES
+    fn mock_lnurl_pay_callback_endpoint_aes_success_action(
+        pay_req: &LnUrlPayRequestData,
+        user_amount_sat: u64,
+        error: Option<String>,
+        pr: String,
+        plaintext: String,
+        iv_bytes: [u8; 16],
+        key_bytes: [u8; 32],
+    ) -> Result<Mock> {
+        let callback_url = build_pay_callback_url(user_amount_sat, &None, pay_req)?;
+        let url = reqwest::Url::parse(&callback_url)?;
+        let mockito_path: &str = &format!("{}?{}", url.path(), url.query().unwrap());
+
+        let iv_base64 = base64::encode(iv_bytes);
+        let cipertext = AesSuccessActionData::encrypt(&key_bytes, &iv_bytes, plaintext)?;
+
+        let expected_payload = r#"
+{
+    "pr":"token-invoice",
+    "routes":[],
+    "successAction": {
+        "tag":"aes",
+        "description":"test description",
+        "iv":"token-iv",
+        "ciphertext":"token-ciphertext"
+    }
+}
+        "#
+        .replace('\n', "")
+        .replace("token-iv", &iv_base64)
+        .replace("token-ciphertext", &cipertext)
+        .replace("token-invoice", &pr);
+
+        let response_body = match error {
+            None => expected_payload,
+            Some(err_reason) => {
+                ["{\"status\": \"ERROR\", \"reason\": \"", &err_reason, "\"}"].join("")
+            }
+        };
+        Ok(mockito::mock("GET", mockito_path)
+            .with_body(response_body)
+            .create())
+    }
+
     fn get_test_pay_req_data(min_sat: u64, max_sat: u64, comment_len: u16) -> LnUrlPayRequestData {
         LnUrlPayRequestData {
             min_sendable: min_sat * 1000,
@@ -399,20 +514,129 @@ mod tests {
     }
 
     #[test]
-    fn test_lnurl_pay_validate_success_action_msg() -> Result<()> {
-        let pay_req_data = get_test_pay_req_data(0, 100, 100);
+    fn test_lnurl_pay_validate_success_action_encrypt_decrypt() -> Result<()> {
+        // Simulate a preimage, which will be the AES key
+        let key = sha256::Hash::hash(&[0x42; 16]);
+        let key_bytes = key.as_inner();
 
-        assert!(SuccessAction::Message(MessageSuccessActionData {
+        let iv_bytes = [0x24; 16]; // 16 bytes = 24 chars
+        let iv_base64 = base64::encode(&iv_bytes); // JCQkJCQkJCQkJCQkJCQkJA==
+
+        let plaintext = "hello world! this is my plaintext.";
+        let plaintext_bytes = plaintext.as_bytes();
+
+        // hex = 91239ab5d94369a18474ee58372c7d0fcee5e227903f671bfe19ef32f1cada804d10f0f006265289d936317343dbc0ca
+        // base64 = kSOatdlDaaGEdO5YNyx9D87l4ieQP2cb/hnvMvHK2oBNEPDwBiZSidk2MXND28DK
+        let ciphertext_bytes =
+            &hex::decode("91239ab5d94369a18474ee58372c7d0fcee5e227903f671bfe19ef32f1cada804d10f0f006265289d936317343dbc0ca")?;
+        let ciphertext_base64 = base64::encode(&ciphertext_bytes);
+
+        // Encrypt raw (which returns raw bytes)
+        let res = Aes256CbcEnc::new_from_slices(key_bytes, &iv_bytes)?
+            .encrypt_padded_vec_mut::<Pkcs7>(&plaintext_bytes);
+        assert_eq!(res[..], ciphertext_bytes[..]);
+
+        // Decrypt raw (which returns raw bytes)
+        let res = Aes256CbcDec::new_from_slices(key_bytes, &iv_bytes)?
+            .decrypt_padded_vec_mut::<Pkcs7>(&res)?;
+        assert_eq!(res[..], plaintext_bytes[..]);
+
+        // Encrypt via AesSuccessActionData helper method (which returns a base64 representation of the bytes)
+        let res = AesSuccessActionData::encrypt(key_bytes, &iv_bytes, plaintext.into())?;
+        assert_eq!(res, base64::encode(ciphertext_bytes));
+
+        // Decrypt via AesSuccessActionData instance method (which returns an UTF-8 string of the plaintext bytes)
+        let res = AesSuccessActionData {
+            description: "Test AES successData description".into(),
+            ciphertext: ciphertext_base64,
+            iv: iv_base64,
+        }
+        .decrypt(key_bytes)?;
+        assert_eq!(&res.as_bytes()[..], &plaintext_bytes[..]);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_lnurl_pay_validate_success_action_aes() -> Result<()> {
+        assert!(AesSuccessActionData {
+            description: "Test AES successData description".into(),
+            ciphertext: "kSOatdlDaaGEdO5YNyx9D87l4ieQP2cb/hnvMvHK2oBNEPDwBiZSidk2MXND28DK".into(),
+            iv: base64::encode(&[0xa; 16]).into()
+        }
+        .validate()
+        .is_ok());
+
+        // Description longer than 144 chars
+        assert!(AesSuccessActionData {
+            description: rand_string(150),
+            ciphertext: "kSOatdlDaaGEdO5YNyx9D87l4ieQP2cb/hnvMvHK2oBNEPDwBiZSidk2MXND28DK".into(),
+            iv: base64::encode(&[0xa; 16]).into()
+        }
+        .validate()
+        .is_err());
+
+        // IV size below 16 bytes (24 chars)
+        assert!(AesSuccessActionData {
+            description: "Test AES successData description".into(),
+            ciphertext: "kSOatdlDaaGEdO5YNyx9D87l4ieQP2cb/hnvMvHK2oBNEPDwBiZSidk2MXND28DK".into(),
+            iv: base64::encode(&[0xa; 10]).into()
+        }
+        .validate()
+        .is_err());
+
+        // IV size above 16 bytes (24 chars)
+        assert!(AesSuccessActionData {
+            description: "Test AES successData description".into(),
+            ciphertext: "kSOatdlDaaGEdO5YNyx9D87l4ieQP2cb/hnvMvHK2oBNEPDwBiZSidk2MXND28DK".into(),
+            iv: base64::encode(&[0xa; 20]).into()
+        }
+        .validate()
+        .is_err());
+
+        // IV is not base64 encoded (but fits length of 24 chars)
+        assert!(AesSuccessActionData {
+            description: "Test AES successData description".into(),
+            ciphertext: "kSOatdlDaaGEdO5YNyx9D87l4ieQP2cb/hnvMvHK2oBNEPDwBiZSidk2MXND28DK".into(),
+            iv: ",".repeat(24).into()
+        }
+        .validate()
+        .is_err());
+
+        // Ciphertext is not base64 encoded
+        assert!(AesSuccessActionData {
+            description: "Test AES successData description".into(),
+            ciphertext: ",".repeat(96).into(),
+            iv: base64::encode(&[0xa; 16]).into()
+        }
+        .validate()
+        .is_err());
+
+        // Ciphertext longer than 4KB
+        assert!(AesSuccessActionData {
+            description: "Test AES successData description".into(),
+            ciphertext: base64::encode(&rand_string(5000)).into(),
+            iv: base64::encode(&[0xa; 16]).into()
+        }
+        .validate()
+        .is_err());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_lnurl_pay_validate_success_action_msg() -> Result<()> {
+        assert!(MessageSuccessActionData {
             message: "short msg".into()
-        })
-        .validate(&pay_req_data)
+        }
+        .validate()
         .is_ok());
 
         // Too long message
-        assert!(SuccessAction::Message(MessageSuccessActionData {
+        assert!(MessageSuccessActionData {
             message: rand_string(150)
-        })
-        .validate(&pay_req_data)
+        }
+        .validate()
         .is_err());
 
         Ok(())
@@ -422,26 +646,26 @@ mod tests {
     fn test_lnurl_pay_validate_success_url() -> Result<()> {
         let pay_req_data = get_test_pay_req_data(0, 100, 100);
 
-        assert!(SuccessAction::Url(UrlSuccessActionData {
+        assert!(UrlSuccessActionData {
             description: "short msg".into(),
             url: pay_req_data.callback.clone()
-        })
+        }
         .validate(&pay_req_data)
         .is_ok());
 
         // Too long description
-        assert!(SuccessAction::Url(UrlSuccessActionData {
+        assert!(UrlSuccessActionData {
             description: rand_string(150),
             url: pay_req_data.callback.clone()
-        })
+        }
         .validate(&pay_req_data)
         .is_err());
 
         // Different Success Action domain than in the callback URL
-        assert!(SuccessAction::Url(UrlSuccessActionData {
+        assert!(UrlSuccessActionData {
             description: "short msg".into(),
             url: "https://new-domain.com/test-url".into()
-        })
+        }
         .validate(&pay_req_data)
         .is_err());
 
@@ -604,6 +828,53 @@ mod tests {
                     Ok(())
                 } else {
                     Err(anyhow!("Unexpected success action content"))
+                }
+            }
+            LnUrlPayResult::EndpointSuccess { data: None } => Err(anyhow!(
+                "Expected success action in callback, but none provided"
+            )),
+            _ => Err(anyhow!("Unexpected success action type")),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_lnurl_pay_aes_success_action() -> Result<()> {
+        let plaintext = "Hello, test plaintext";
+
+        // Generate preimage
+        let preimage = sha256::Hash::hash(&rand_vec_u8(10));
+
+        let pay_req = get_test_pay_req_data(0, 100, 0);
+        let temp_desc = pay_req.metadata_str.clone();
+
+        // The invoice (served by LNURL-pay endpoint, matching preimage and description hash)
+        let inv = rand_invoice_with_description_hash_and_preimage(temp_desc, preimage)?;
+
+        let user_amount_sat = inv.amount_milli_satoshis().unwrap() / 1000;
+        let _m = mock_lnurl_pay_callback_endpoint_aes_success_action(
+            &pay_req,
+            user_amount_sat,
+            None,
+            inv.to_string(),
+            plaintext.into(),
+            rand::thread_rng().gen::<[u8; 16]>(),
+            preimage.into_inner(),
+        )?;
+
+        let mock_breez_services = crate::breez_services::tests::breez_services().await;
+        match mock_breez_services
+            .lnurl_pay(user_amount_sat, None, pay_req)
+            .await?
+        {
+            LnUrlPayResult::EndpointSuccess {
+                data: Some(SuccessAction::Aes(aes_data)),
+            } => {
+                if aes_data.decrypt(&preimage.into_inner())? == plaintext {
+                    Ok(())
+                } else {
+                    Err(anyhow!(
+                        "Unexpected success action content (decryption failed)"
+                    ))
                 }
             }
             LnUrlPayResult::EndpointSuccess { data: None } => Err(anyhow!(
