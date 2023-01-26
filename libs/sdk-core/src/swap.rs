@@ -869,6 +869,7 @@ mod tests {
                     payment_preimage: "111".to_string(),
                     keysend: false,
                     bolt11: "".to_string(),
+                    lnurl_success_action: None,
                 },
             },
         };

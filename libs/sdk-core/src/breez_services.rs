@@ -248,7 +248,7 @@ impl BreezServices {
                 Ok(LnUrlPayResult::EndpointSuccess {
                     data: match cb.success_action {
                         Some(sa) => {
-                            let processed = match sa {
+                            let processed_sa = match sa {
                                 // For AES, we decrypt the contents on the fly
                                 Aes(data) => {
                                     let preimage =
@@ -256,14 +256,21 @@ impl BreezServices {
                                     let preimage_arr: [u8; 32] = preimage.into_inner();
 
                                     let decrypted = (data, &preimage_arr).try_into()?;
-                                    SuccessActionProcessed::Aes(decrypted)
+                                    SuccessActionProcessed::Aes { data: decrypted }
                                 }
                                 SuccessAction::Message(data) => {
-                                    SuccessActionProcessed::Message(data)
+                                    SuccessActionProcessed::Message { data }
                                 }
-                                SuccessAction::Url(data) => SuccessActionProcessed::Url(data),
+                                SuccessAction::Url(data) => SuccessActionProcessed::Url { data },
                             };
-                            Some(processed)
+
+                            // Store SA in its own table, associated to payment_hash
+                            self.persister.insert_lnurl_success_action(
+                                &details.payment_hash,
+                                &processed_sa,
+                            )?;
+
+                            Some(processed_sa)
                         }
                         None => None,
                     },
@@ -1050,6 +1057,8 @@ pub(crate) mod tests {
 
     use crate::breez_services::{BreezServices, BreezServicesBuilder};
     use crate::fiat::Rate;
+    use crate::lnurl::pay::model::MessageSuccessActionData;
+    use crate::lnurl::pay::model::SuccessActionProcessed;
     use crate::models::{LnPaymentDetails, NodeState, Payment, PaymentDetails, PaymentTypeFilter};
     use crate::PaymentType;
     use crate::{parse_short_channel_id, test_utils::*};
@@ -1063,6 +1072,13 @@ pub(crate) mod tests {
 
         let dummy_node_state = get_dummy_node_state();
 
+        let sa = SuccessActionProcessed::Message {
+            data: MessageSuccessActionData {
+                message: "test message".into(),
+            },
+        };
+
+        let payment_hash_with_lnurl_success_action = "3333";
         let dummy_transactions = vec![
             Payment {
                 id: "1111".to_string(),
@@ -1080,11 +1096,12 @@ pub(crate) mod tests {
                         payment_preimage: "2222".to_string(),
                         keysend: false,
                         bolt11: "1111".to_string(),
+                        lnurl_success_action: None,
                     },
                 },
             },
             Payment {
-                id: "3333".to_string(),
+                id: payment_hash_with_lnurl_success_action.to_string(),
                 payment_type: PaymentType::Sent,
                 payment_time: 200000,
                 amount_msat: 8,
@@ -1093,12 +1110,13 @@ pub(crate) mod tests {
                 description: Some("test payment".to_string()),
                 details: PaymentDetails::Ln {
                     data: LnPaymentDetails {
-                        payment_hash: "3333".to_string(),
+                        payment_hash: payment_hash_with_lnurl_success_action.to_string(),
                         label: "".to_string(),
                         destination_pubkey: "123".to_string(),
                         payment_preimage: "4444".to_string(),
                         keysend: false,
                         bolt11: "123".to_string(),
+                        lnurl_success_action: Some(sa.clone()),
                     },
                 },
             },
@@ -1112,6 +1130,7 @@ pub(crate) mod tests {
         let persister = Arc::new(create_test_persister(test_config.clone()));
         persister.init()?;
         persister.insert_payments(&dummy_transactions)?;
+        persister.insert_lnurl_success_action(&payment_hash_with_lnurl_success_action, &sa)?;
 
         let mut builder = BreezServicesBuilder::new(test_config.clone());
         let breez_services = builder
@@ -1147,6 +1166,8 @@ pub(crate) mod tests {
             .list_payments(PaymentTypeFilter::Sent, None, None)
             .await?;
         assert_eq!(sent, vec![cloned[1].clone()]);
+        assert!(matches!(
+                &sent[0].details, PaymentDetails::Ln {data: LnPaymentDetails {lnurl_success_action, ..}} if lnurl_success_action == &Some(sa)));
 
         Ok(())
     }

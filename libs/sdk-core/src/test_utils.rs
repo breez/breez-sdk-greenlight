@@ -301,6 +301,34 @@ impl MockNodeAPI {
         Self::save_payment_for_future_sync_updates(gl_payment.clone()).await
     }
 
+    /// Include payment in the result of [MockNodeAPI::pull_changed].
+    async fn save_payment_for_future_sync_updates(
+        gl_payment: gl_client::pb::Payment,
+    ) -> Result<gl_client::pb::Payment> {
+        let mut cloud_payments = CLOUD_PAYMENTS.lock().await;
+
+        // Only store it if a payment with the same ID doesn't already exist
+        // This allows us to initialize a MockBreezServer with a list of known payments using
+        // breez_services::tests::breez_services_with(vec), but not replace them when
+        // send_payment is called in tests for those payments.
+        match cloud_payments
+            .iter()
+            .find(|p| p.payment_hash == gl_payment.payment_hash)
+        {
+            None => {
+                // If payment is not already known, add it to the list and return it
+                cloud_payments.push(gl_payment.clone());
+                Ok(gl_payment)
+            }
+            Some(p) => {
+                // If a payment already exists (by ID), then do not replace it and return it
+                // The existing version is returned, because that's initialized with the preimage
+                // on mock breez service init
+                Ok(p.clone())
+            }
+        }
+    }
+
     /// Adds a dummy payment with random attributes.
     pub(crate) async fn add_dummy_payment_rand() -> Result<Payment> {
         let preimage = sha256::Hash::hash(&rand_vec_u8(10));

@@ -11,6 +11,7 @@ use tonic::Streaming;
 
 use crate::fiat::{FiatCurrency, Rate};
 use crate::grpc::{PaymentInformation, RegisterPaymentReply};
+use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lsp::LspInformation;
 use crate::models::Network::*;
 
@@ -296,6 +297,10 @@ pub struct LnPaymentDetails {
     pub payment_preimage: String,
     pub keysend: bool,
     pub bolt11: String,
+
+    /// Only set for [PaymentType::Sent] payments that are part of a LNURL-pay workflow where
+    /// the endpoint returns a success action
+    pub lnurl_success_action: Option<SuccessActionProcessed>,
 }
 
 /// Represents the funds that were on the user side of the channel at the time it was closed.

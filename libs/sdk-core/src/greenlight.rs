@@ -527,7 +527,7 @@ async fn pull_transactions(
     Ok(transactions)
 }
 
-// construct a lightning transaction from an invoice
+/// Construct a lightning transaction from an invoice
 fn invoice_to_transaction(
     node_pubkey: String,
     invoice: pb::Invoice,
@@ -549,6 +549,7 @@ fn invoice_to_transaction(
                 payment_preimage: hex::encode(invoice.payment_preimage),
                 keysend: false,
                 bolt11: invoice.bolt11,
+                lnurl_success_action: None, // For received payments, this is None
             },
         },
     })
@@ -580,6 +581,7 @@ pub(crate) fn payment_to_transaction(payment: pb::Payment) -> Result<crate::mode
                 payment_preimage: hex::encode(payment.payment_preimage),
                 keysend: payment.bolt11.is_empty(),
                 bolt11: payment.bolt11,
+                lnurl_success_action: None,
             },
         },
     })
