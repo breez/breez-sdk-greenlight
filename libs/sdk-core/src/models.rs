@@ -376,11 +376,36 @@ pub struct SwapInfo {
     pub confirmed_tx_ids: Vec<String>,
     pub min_allowed_deposit: i64,
     pub max_allowed_deposit: i64,
+    pub last_redeem_error: Option<String>,
 }
 
 impl SwapInfo {
+    pub(crate) fn unused(&self) -> bool {
+        self.confirmed_sats == 0
+            && self.unconfirmed_sats == 0
+            && self.paid_sats == 0
+            && self.status != SwapStatus::Expired
+    }
+
+    pub(crate) fn in_progress(&self) -> bool {
+        (self.confirmed_sats > 0 || self.unconfirmed_sats > 0)
+            && self.paid_sats == 0
+            && self.status != SwapStatus::Expired
+    }
+
     pub(crate) fn redeemable(&self) -> bool {
-        self.confirmed_sats > 0 && self.paid_sats == 0 && self.status != SwapStatus::Expired
+        self.unconfirmed_sats == 0
+            && self.confirmed_sats > 0
+            && self.paid_sats == 0
+            && self.status != SwapStatus::Expired
+    }
+
+    pub(crate) fn refundable(&self) -> bool {
+        self.confirmed_sats > self.paid_sats && self.status == SwapStatus::Expired
+    }
+
+    pub(crate) fn monitored(&self) -> bool {
+        self.unused() || self.in_progress() || self.refundable()
     }
 }
 

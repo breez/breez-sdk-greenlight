@@ -241,6 +241,7 @@ dictionary SwapInfo {
     sequence<string> confirmed_tx_ids;
     i64 min_allowed_deposit;
     i64 max_allowed_deposit;
+    string? last_redeem_error;
 };
 
 dictionary BitcoinAddressData {

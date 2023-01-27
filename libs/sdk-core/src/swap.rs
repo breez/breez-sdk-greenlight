@@ -141,55 +141,7 @@ impl BTCReceiveSwap {
         match e {
             BreezEvent::NewBlock { block: tip } => {
                 debug!("got chain event {:?}", e);
-                let mut to_check = self.list_swaps(SwapStatus::Initial)?;
-                to_check.extend(self.list_refundables()?);
-
-                let mut redeemable_swaps: Vec<SwapInfo> = Vec::new();
-                for s in to_check {
-                    let address = s.bitcoin_address.clone();
-                    let refresh_status = self
-                        .refresh_swap_on_chain_status(address.clone(), tip)
-                        .await;
-                    match refresh_status {
-                        Ok(updated) => {
-                            debug!(
-                                "swap status refreshed for address: {} redeemable={}",
-                                address.clone(),
-                                updated.redeemable()
-                            );
-                            if updated.redeemable() {
-                                redeemable_swaps.push(updated);
-                            }
-                        }
-                        Err(e) => {
-                            error!(
-                                "failed to refresh status for address {}: {}",
-                                address.clone(),
-                                e
-                            );
-                        }
-                    };
-                }
-
-                // redeem swaps
-                for s in redeemable_swaps {
-                    let redeem_res = self.redeem_swap(s.bitcoin_address.clone()).await;
-
-                    if redeem_res.is_err() {
-                        error!(
-                            "failed to redeem swap {:?}: {} {}",
-                            redeem_res.err().unwrap(),
-                            s.bitcoin_address,
-                            s.bolt11.unwrap_or_default(),
-                        );
-                    } else {
-                        info!(
-                            "succeed to redeem swap {:?}: {}",
-                            s.bitcoin_address,
-                            s.bolt11.unwrap_or_default()
-                        )
-                    }
-                }
+                _ = self.execute_pending_swaps(tip).await;
             }
 
             // When invoice is paid we lookup for a swap that matches the same hash.
@@ -222,13 +174,13 @@ impl BTCReceiveSwap {
         if node_state.is_none() {
             return Err(anyhow!("node is not initialized"));
         }
-        let in_progress_swap = self.persister.get_in_progress_swap()?;
-        if in_progress_swap.is_some() {
-            return Err(anyhow!(format!(
-                "Swap in progress was detected for address {} use get_swap_info to get the current swap state",
-                in_progress_swap.unwrap().bitcoin_address
-            )));
+
+        // check first that we don't have any swap in progress waiting for redeem.
+        let unused_swaps = self.list_unused()?;
+        if !unused_swaps.is_empty() {
+            return Ok(unused_swaps[0].clone());
         }
+
         let node_id = node_state.unwrap().id;
         // create swap keys
         let swap_keys = create_swap_keys()?;
@@ -283,6 +235,7 @@ impl BTCReceiveSwap {
             status: SwapStatus::Initial,
             min_allowed_deposit: swap_reply.min_allowed_deposit,
             max_allowed_deposit: swap_reply.max_allowed_deposit,
+            last_redeem_error: None,
         };
 
         // persist the address
@@ -292,18 +245,47 @@ impl BTCReceiveSwap {
         // return swap.bitcoinAddress;
     }
 
+    fn list_unused(&self) -> Result<Vec<SwapInfo>> {
+        Ok(self
+            .persister
+            .list_swaps_with_status(SwapStatus::Initial)?
+            .into_iter()
+            .filter(SwapInfo::unused)
+            .collect())
+    }
+
+    pub(crate) async fn list_in_progress(&self) -> Result<Vec<SwapInfo>> {
+        Ok(self
+            .persister
+            .list_swaps_with_status(SwapStatus::Initial)?
+            .into_iter()
+            .filter(SwapInfo::in_progress)
+            .collect())
+    }
+
+    pub fn list_monitored(&self) -> Result<Vec<SwapInfo>> {
+        Ok(self
+            .persister
+            .list_swaps_with_status(SwapStatus::Initial)?
+            .into_iter()
+            .filter(SwapInfo::monitored)
+            .collect())
+    }
+
     pub(crate) fn list_refundables(&self) -> Result<Vec<SwapInfo>> {
         Ok(self
-            .list_swaps(SwapStatus::Expired)?
+            .persister
+            .list_swaps_with_status(SwapStatus::Expired)?
             .into_iter()
-            .filter(|s| s.confirmed_sats > s.paid_sats)
+            .filter(SwapInfo::refundable)
             .collect())
     }
 
     #[allow(dead_code)]
     pub(crate) fn list_redeemables(&self) -> Result<Vec<SwapInfo>> {
         Ok(self
-            .list_swaps(SwapStatus::Initial)?
+            .persister
+            .list_swaps_with_status(SwapStatus::Initial)?
             .into_iter()
             .filter(SwapInfo::redeemable)
             .collect())
@@ -314,12 +296,53 @@ impl BTCReceiveSwap {
         self.persister.get_swap_info_by_address(address)
     }
 
-    pub(crate) fn in_progress_swap(&self) -> Result<Option<SwapInfo>> {
-        self.persister.get_in_progress_swap()
+    pub(crate) async fn execute_pending_swaps(&self, tip: u32) -> Result<()> {
+        // first refresh all swaps we monitor
+        _ = self.refresh_monitored_swaps(tip).await?;
+
+        // redeem swaps
+        let redeemable_swaps = self.list_redeemables()?;
+        for s in redeemable_swaps {
+            let redeem_res = self.redeem_swap(s.bitcoin_address.clone()).await;
+
+            if redeem_res.is_err() {
+                let err = redeem_res.as_ref().err().unwrap();
+                error!(
+                    "failed to redeem swap {:?}: {} {}",
+                    err,
+                    s.bitcoin_address,
+                    s.bolt11.unwrap_or_default(),
+                );
+                self.persister
+                    .update_swap_redeem_error(s.bitcoin_address, err.to_string())?;
+            } else {
+                info!(
+                    "succeed to redeem swap {:?}: {}",
+                    s.bitcoin_address,
+                    s.bolt11.unwrap_or_default()
+                )
+            }
+        }
+
+        Ok(())
     }
 
-    fn list_swaps(&self, status: SwapStatus) -> Result<Vec<SwapInfo>> {
-        self.persister.list_swaps_with_status(status)
+    async fn refresh_monitored_swaps(&self, tip: u32) -> Result<Vec<SwapInfo>> {
+        let to_check = self.list_monitored()?;
+        for s in to_check {
+            let address = s.bitcoin_address.clone();
+            let result = self
+                .refresh_swap_on_chain_status(address.clone(), tip)
+                .await;
+            if result.is_err() {
+                error!(
+                    "failed to refresh swap status for address {} {}",
+                    address.clone(),
+                    result.err().unwrap()
+                )
+            }
+        }
+        self.list_monitored()
     }
 
     /// refreshes the on-chain status of the swap. This method updates the following information
@@ -345,10 +368,14 @@ impl BTCReceiveSwap {
             .chain_service
             .address_transactions(bitcoin_address.clone())
             .await?;
-        let utxos = get_utxos(bitcoin_address.clone(), txs.clone())?;
-
-        let confirmed_block = utxos.confirmed.iter().fold(0, |b, item| {
-            let confirmed_block = item.block_height.unwrap();
+        let confirmed_txs: Vec<OnchainTx> = txs
+            .clone()
+            .into_iter()
+            .filter(|t| t.status.block_height.is_some())
+            .collect();
+        let utxos = get_utxos(bitcoin_address.clone(), txs)?;
+        let confirmed_block = confirmed_txs.iter().fold(0, |b, item| {
+            let confirmed_block = item.status.block_height.unwrap();
             if confirmed_block != 0 || confirmed_block < b {
                 confirmed_block
             } else {
@@ -357,8 +384,9 @@ impl BTCReceiveSwap {
         });
 
         let mut swap_status = swap_info.status.clone();
-
-        if !txs.is_empty() && current_tip - confirmed_block >= swap_info.lock_height as u32 {
+        if !confirmed_txs.is_empty()
+            && current_tip - confirmed_block >= swap_info.lock_height as u32
+        {
             swap_status = SwapStatus::Expired
         }
 

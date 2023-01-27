@@ -1033,6 +1033,7 @@ impl support::IntoDart for SwapInfo {
             self.confirmed_tx_ids.into_dart(),
             self.min_allowed_deposit.into_dart(),
             self.max_allowed_deposit.into_dart(),
+            self.last_redeem_error.into_dart(),
         ]
         .into_dart()
     }
