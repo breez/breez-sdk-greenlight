@@ -94,6 +94,7 @@
 //! ### C. Receiving an on-chain transaction (swap-in)
 //!
 //! * [BreezServices::receive_onchain]
+//! * [BreezServices::in_progress_swap]
 //! * [BreezServices::list_refundables] to get a list of swaps
 //! * [BreezServices::refund] to broadcast a transaction for failed or expired swaps
 //!

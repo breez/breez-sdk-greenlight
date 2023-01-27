@@ -344,14 +344,37 @@ impl BreezServices {
 
     /// Onchain receive swap API
     ///
-    /// Create a [SwapInfo] that represents the details of an on-going swap.
+    /// Create a [SwapInfo] that represents the details required to start a swap.
+    /// Since we only allow one in-progress swap this method will return error if there is currenly
+    /// a swap waiting for confirmation to be redeemed and by that complete the swap.
+    /// In such case the [BreezServices::in_progress_swap] can be used to query the live swap status.
     ///
     /// See [SwapInfo] for details.
     pub async fn receive_onchain(&self) -> Result<SwapInfo> {
+        let in_progress = self.in_progress_swap().await?;
+        if in_progress.is_some() {
+            return Err(anyhow!(format!(
+                  "Swap in progress was detected for address {}.Use in_progress_swap method to get the current swap state",
+                  in_progress.unwrap().bitcoin_address
+              )));
+        }
+
         self.btc_receive_swapper.create_swap_address().await
     }
 
-    /// List the full swap history. Includes swaps in all states: expired, refunded and active.
+    /// Returns an optional in-progress [SwapInfo].
+    /// A [SwapInfo] is in-progress if it is waiting for confirmation to be redeemed and complete the swap.    
+    pub async fn in_progress_swap(&self) -> Result<Option<SwapInfo>> {
+        let tip = self.chain_service.current_tip().await?;
+        self.btc_receive_swapper.execute_pending_swaps(tip).await?;
+        let in_progress = self.btc_receive_swapper.list_in_progress().await?;
+        if !in_progress.is_empty() {
+            return Ok(Some(in_progress[0].clone()));
+        }
+        Ok(None)
+    }
+
+    /// list non-completed expired swaps that should be refunded bu calling [BreezServices::refund]
     pub async fn list_refundables(&self) -> Result<Vec<SwapInfo>> {
         self.btc_receive_swapper.list_refundables()
     }

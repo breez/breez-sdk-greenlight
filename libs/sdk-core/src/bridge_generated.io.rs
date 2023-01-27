@@ -143,6 +143,11 @@ pub extern "C" fn wire_receive_onchain(port_: i64) {
 }
 
 #[no_mangle]
+pub extern "C" fn wire_in_progress_swap(port_: i64) {
+    wire_in_progress_swap_impl(port_)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_list_refundables(port_: i64) {
     wire_list_refundables_impl(port_)
 }

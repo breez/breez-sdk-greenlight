@@ -115,7 +115,81 @@ impl SqliteStorage {
              ALTER TABLE swaps ADD COLUMN max_allowed_deposit INTEGER NOT NULL;
             "),
             // Convert all negative fee_msat values to positive
-            M::up("UPDATE payments SET fee_msat = ABS(fee_msat) WHERE fee_msat < 0"),
+            M::up("UPDATE payments SET fee_msat = ABS(fee_msat) WHERE fee_msat < 0"),           
+            M::up("
+             ALTER TABLE swaps RENAME TO old_swaps;
+
+             CREATE TABLE IF NOT EXISTS swaps (
+              bitcoin_address TEXT PRIMARY KEY NOT NULL,
+              created_at INTEGER DEFAULT CURRENT_TIMESTAMP,
+              lock_height INTEGER NOT NULL,
+              payment_hash BLOB NOT NULL UNIQUE,
+              preimage BLOB NOT NULL UNIQUE,
+              private_key BLOB NOT NULL UNIQUE,
+              public_key BLOB NOT NULL UNIQUE,
+              swapper_public_key BLOB NOT NULL UNIQUE,
+              script BLOB NOT NULL UNIQUE,
+              bolt11 TEXT,
+              paid_sats INTEGER NOT NULL DEFAULT 0,
+              unconfirmed_sats INTEGER NOT NULL DEFAULT 0, 
+              confirmed_sats INTEGER NOT NULL DEFAULT 0,               
+              status INTEGER NOT NULL DEFAULT 0,
+              refund_tx_ids TEXT NOT NULL,  
+              unconfirmed_tx_ids TEXT NOT NULL,
+              confirmed_tx_ids TEXT NOT NULL,
+              min_allowed_deposit INTEGER NOT NULL,
+              max_allowed_deposit INTEGER NOT NULL,
+              last_redeem_error TEXT   
+             ) STRICT;
+             
+             INSERT INTO swaps
+              (
+               bitcoin_address, 
+               created_at,
+               lock_height,
+               payment_hash,
+               preimage,
+               private_key,
+               public_key,
+               swapper_public_key,
+               script,
+               bolt11,
+               paid_sats,
+               unconfirmed_sats,
+               confirmed_sats,
+               status,
+               refund_tx_ids,
+               unconfirmed_tx_ids,
+               confirmed_tx_ids,
+               min_allowed_deposit,
+               max_allowed_deposit,
+               last_redeem_error
+              )
+              SELECT 
+               bitcoin_address, 
+               created_at,
+               lock_height,
+               payment_hash,
+               preimage,
+               private_key,
+               public_key,
+               swapper_public_key,
+               script,
+               bolt11,
+               paid_sats,
+               0,
+               confirmed_sats,
+               status,
+               refund_tx_ids,
+               '[]',
+               confirmed_tx_ids,
+               min_allowed_deposit,
+               max_allowed_deposit,
+               NULL
+              FROM old_swaps;
+             
+             DROP TABLE old_swaps;            
+            "),
         ]);
 
         let mut conn = self.get_connection()?;

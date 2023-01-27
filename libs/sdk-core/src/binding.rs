@@ -258,6 +258,10 @@ pub fn sweep(to_address: String, fee_rate_sats_per_byte: u64) -> Result<()> {
 pub fn receive_onchain() -> Result<SwapInfo> {
     block_on(async { get_breez_services()?.receive_onchain().await })
 }
+/// See [BreezServices::in_progress_swap]
+pub fn in_progress_swap() -> Result<Option<SwapInfo>> {
+    block_on(async { get_breez_services()?.in_progress_swap().await })
+}
 
 /// See [BreezServices::list_refundables]
 pub fn list_refundables() -> Result<Vec<SwapInfo>> {

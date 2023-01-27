@@ -159,6 +159,11 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kReceiveOnchainConstMeta;
 
+  /// See [BreezServices::in_progress_swap]
+  Future<SwapInfo?> inProgressSwap({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kInProgressSwapConstMeta;
+
   /// See [BreezServices::list_refundables]
   Future<List<SwapInfo>> listRefundables({dynamic hint});
 
@@ -814,11 +819,14 @@ class SwapInfo {
   final String? bolt11;
   final int paidSats;
   final int confirmedSats;
+  final int unconfirmedSats;
   final SwapStatus status;
   final List<String> refundTxIds;
+  final List<String> unconfirmedTxIds;
   final List<String> confirmedTxIds;
   final int minAllowedDeposit;
   final int maxAllowedDeposit;
+  final String? lastRedeemError;
 
   SwapInfo({
     required this.bitcoinAddress,
@@ -833,11 +841,14 @@ class SwapInfo {
     this.bolt11,
     required this.paidSats,
     required this.confirmedSats,
+    required this.unconfirmedSats,
     required this.status,
     required this.refundTxIds,
+    required this.unconfirmedTxIds,
     required this.confirmedTxIds,
     required this.minAllowedDeposit,
     required this.maxAllowedDeposit,
+    this.lastRedeemError,
   });
 }
 
@@ -1289,6 +1300,22 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: [],
       );
 
+  Future<SwapInfo?> inProgressSwap({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_in_progress_swap(port_),
+      parseSuccessData: _wire2api_opt_box_autoadd_swap_info,
+      constMeta: kInProgressSwapConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kInProgressSwapConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "in_progress_swap",
+        argNames: [],
+      );
+
   Future<List<SwapInfo>> listRefundables({dynamic hint}) {
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_list_refundables(port_),
@@ -1580,6 +1607,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   NodeState _wire2api_box_autoadd_node_state(dynamic raw) {
     return _wire2api_node_state(raw);
+  }
+
+  SwapInfo _wire2api_box_autoadd_swap_info(dynamic raw) {
+    return _wire2api_swap_info(raw);
   }
 
   Symbol _wire2api_box_autoadd_symbol(dynamic raw) {
@@ -1993,6 +2024,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return raw == null ? null : _wire2api_box_autoadd_node_state(raw);
   }
 
+  SwapInfo? _wire2api_opt_box_autoadd_swap_info(dynamic raw) {
+    return raw == null ? null : _wire2api_box_autoadd_swap_info(raw);
+  }
+
   Symbol? _wire2api_opt_box_autoadd_symbol(dynamic raw) {
     return raw == null ? null : _wire2api_box_autoadd_symbol(raw);
   }
@@ -2116,8 +2151,8 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   SwapInfo _wire2api_swap_info(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 17)
-      throw Exception('unexpected arr length: expect 17 but see ${arr.length}');
+    if (arr.length != 20)
+      throw Exception('unexpected arr length: expect 20 but see ${arr.length}');
     return SwapInfo(
       bitcoinAddress: _wire2api_String(arr[0]),
       createdAt: _wire2api_i64(arr[1]),
@@ -2131,11 +2166,14 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       bolt11: _wire2api_opt_String(arr[9]),
       paidSats: _wire2api_u32(arr[10]),
       confirmedSats: _wire2api_u32(arr[11]),
-      status: _wire2api_swap_status(arr[12]),
-      refundTxIds: _wire2api_StringList(arr[13]),
-      confirmedTxIds: _wire2api_StringList(arr[14]),
-      minAllowedDeposit: _wire2api_i64(arr[15]),
-      maxAllowedDeposit: _wire2api_i64(arr[16]),
+      unconfirmedSats: _wire2api_u32(arr[12]),
+      status: _wire2api_swap_status(arr[13]),
+      refundTxIds: _wire2api_StringList(arr[14]),
+      unconfirmedTxIds: _wire2api_StringList(arr[15]),
+      confirmedTxIds: _wire2api_StringList(arr[16]),
+      minAllowedDeposit: _wire2api_i64(arr[17]),
+      maxAllowedDeposit: _wire2api_i64(arr[18]),
+      lastRedeemError: _wire2api_opt_String(arr[19]),
     );
   }
 
@@ -2838,6 +2876,20 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
           'wire_receive_onchain');
   late final _wire_receive_onchain =
       _wire_receive_onchainPtr.asFunction<void Function(int)>();
+
+  void wire_in_progress_swap(
+    int port_,
+  ) {
+    return _wire_in_progress_swap(
+      port_,
+    );
+  }
+
+  late final _wire_in_progress_swapPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+          'wire_in_progress_swap');
+  late final _wire_in_progress_swap =
+      _wire_in_progress_swapPtr.asFunction<void Function(int)>();
 
   void wire_list_refundables(
     int port_,
