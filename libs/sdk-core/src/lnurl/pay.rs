@@ -520,7 +520,7 @@ mod tests {
         let key_bytes = key.as_inner();
 
         let iv_bytes = [0x24; 16]; // 16 bytes = 24 chars
-        let iv_base64 = base64::encode(&iv_bytes); // JCQkJCQkJCQkJCQkJCQkJA==
+        let iv_base64 = base64::encode(iv_bytes); // JCQkJCQkJCQkJCQkJCQkJA==
 
         let plaintext = "hello world! this is my plaintext.";
         let plaintext_bytes = plaintext.as_bytes();
@@ -529,11 +529,11 @@ mod tests {
         // base64 = kSOatdlDaaGEdO5YNyx9D87l4ieQP2cb/hnvMvHK2oBNEPDwBiZSidk2MXND28DK
         let ciphertext_bytes =
             &hex::decode("91239ab5d94369a18474ee58372c7d0fcee5e227903f671bfe19ef32f1cada804d10f0f006265289d936317343dbc0ca")?;
-        let ciphertext_base64 = base64::encode(&ciphertext_bytes);
+        let ciphertext_base64 = base64::encode(ciphertext_bytes);
 
         // Encrypt raw (which returns raw bytes)
         let res = Aes256CbcEnc::new_from_slices(key_bytes, &iv_bytes)?
-            .encrypt_padded_vec_mut::<Pkcs7>(&plaintext_bytes);
+            .encrypt_padded_vec_mut::<Pkcs7>(plaintext_bytes);
         assert_eq!(res[..], ciphertext_bytes[..]);
 
         // Decrypt raw (which returns raw bytes)
@@ -552,7 +552,7 @@ mod tests {
             iv: iv_base64,
         }
         .decrypt(key_bytes)?;
-        assert_eq!(&res.as_bytes()[..], &plaintext_bytes[..]);
+        assert_eq!(res.as_bytes(), plaintext_bytes);
 
         Ok(())
     }
@@ -562,7 +562,7 @@ mod tests {
         assert!(AesSuccessActionData {
             description: "Test AES successData description".into(),
             ciphertext: "kSOatdlDaaGEdO5YNyx9D87l4ieQP2cb/hnvMvHK2oBNEPDwBiZSidk2MXND28DK".into(),
-            iv: base64::encode(&[0xa; 16]).into()
+            iv: base64::encode([0xa; 16])
         }
         .validate()
         .is_ok());
@@ -571,7 +571,7 @@ mod tests {
         assert!(AesSuccessActionData {
             description: rand_string(150),
             ciphertext: "kSOatdlDaaGEdO5YNyx9D87l4ieQP2cb/hnvMvHK2oBNEPDwBiZSidk2MXND28DK".into(),
-            iv: base64::encode(&[0xa; 16]).into()
+            iv: base64::encode([0xa; 16])
         }
         .validate()
         .is_err());
@@ -580,7 +580,7 @@ mod tests {
         assert!(AesSuccessActionData {
             description: "Test AES successData description".into(),
             ciphertext: "kSOatdlDaaGEdO5YNyx9D87l4ieQP2cb/hnvMvHK2oBNEPDwBiZSidk2MXND28DK".into(),
-            iv: base64::encode(&[0xa; 10]).into()
+            iv: base64::encode([0xa; 10])
         }
         .validate()
         .is_err());
@@ -589,7 +589,7 @@ mod tests {
         assert!(AesSuccessActionData {
             description: "Test AES successData description".into(),
             ciphertext: "kSOatdlDaaGEdO5YNyx9D87l4ieQP2cb/hnvMvHK2oBNEPDwBiZSidk2MXND28DK".into(),
-            iv: base64::encode(&[0xa; 20]).into()
+            iv: base64::encode([0xa; 20])
         }
         .validate()
         .is_err());
@@ -598,7 +598,7 @@ mod tests {
         assert!(AesSuccessActionData {
             description: "Test AES successData description".into(),
             ciphertext: "kSOatdlDaaGEdO5YNyx9D87l4ieQP2cb/hnvMvHK2oBNEPDwBiZSidk2MXND28DK".into(),
-            iv: ",".repeat(24).into()
+            iv: ",".repeat(24)
         }
         .validate()
         .is_err());
@@ -606,8 +606,8 @@ mod tests {
         // Ciphertext is not base64 encoded
         assert!(AesSuccessActionData {
             description: "Test AES successData description".into(),
-            ciphertext: ",".repeat(96).into(),
-            iv: base64::encode(&[0xa; 16]).into()
+            ciphertext: ",".repeat(96),
+            iv: base64::encode([0xa; 16])
         }
         .validate()
         .is_err());
@@ -615,8 +615,8 @@ mod tests {
         // Ciphertext longer than 4KB
         assert!(AesSuccessActionData {
             description: "Test AES successData description".into(),
-            ciphertext: base64::encode(&rand_string(5000)).into(),
-            iv: base64::encode(&[0xa; 16]).into()
+            ciphertext: base64::encode(rand_string(5000)),
+            iv: base64::encode([0xa; 16])
         }
         .validate()
         .is_err());
