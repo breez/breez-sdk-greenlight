@@ -376,6 +376,7 @@ pub struct SwapInfo {
     pub confirmed_tx_ids: Vec<String>,
     pub min_allowed_deposit: i64,
     pub max_allowed_deposit: i64,
+    pub last_redeem_error: Option<String>,
 }
 
 impl SwapInfo {
