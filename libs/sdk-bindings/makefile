@@ -17,24 +17,28 @@ init:
 all: swift-ios swift-darwin kotlin
 
 ios-universal: $(SOURCES)		
-	mkdir -p ../target/universal/release
+	mkdir -p ../target/ios-universal/release
 	cargo build --release --target aarch64-apple-ios ;\
 	cargo build --release --target x86_64-apple-ios ;\
-	lipo -create -output ../target/universal/release/libbreez_sdk_bindings.a ../target/aarch64-apple-ios/release/libbreez_sdk_bindings.a ../target/x86_64-apple-ios/release/libbreez_sdk_bindings.a	
+	lipo -create -output ../target/ios-universal/release/libbreez_sdk_bindings.a ../target/aarch64-apple-ios/release/libbreez_sdk_bindings.a ../target/x86_64-apple-ios/release/libbreez_sdk_bindings.a	
 
 
-aarch64-apple-darwin: $(SOURCES)
+darwin-universal: $(SOURCES)
+	mkdir -p ../target/darwin-universal/release
 	cargo lipo --release --targets aarch64-apple-darwin		
+	cargo lipo --release --targets x86_64-apple-darwin		
+	lipo -create -output ../target/darwin-universal/release/libbreez_sdk_bindings.dylib ../target/aarch64-apple-darwin/release/libbreez_sdk_bindings.dylib ../target/x86_64-apple-darwin/release/libbreez_sdk_bindings.dylib
+
 
 swift-ios: ios-universal
 	uniffi-bindgen generate src/breez_sdk.udl -l swift -o ffi/swift-ios
-	cp ../target/universal/release/libbreez_sdk_bindings.a ffi/swift-ios
+	cp ../target/ios-universal/release/libbreez_sdk_bindings.a ffi/swift-ios
 	cd ffi/swift-ios && "swiftc" "-emit-module" "-module-name" "breez_sdk_bindings"  "-Xcc" "-fmodule-map-file=$(CURRENT_DIR)/ffi/swift-ios/breez_sdkFFI.modulemap" "-I" "."  "-L" "." "-lbreez_sdk_bindings" breez_sdk.swift
 
-swift-darwin: aarch64-apple-darwin
+swift-darwin: darwin-universal
 	uniffi-bindgen generate src/breez_sdk.udl -l swift -o ffi/swift-darwin
-	cp ../target/aarch64-apple-darwin/release/libbreez_sdk_bindings.dylib ffi/swift-darwin
-	cd ffi/swift-darwin && "swiftc" "-emit-module" "-module-name" "breez_sdk_bindings"  "-Xcc" "-fmodule-map-file=$(CURRENT_DIR)/ffi/swift-ios/breez_sdkFFI.modulemap" "-I" "."  "-L" "." "-lbreez_sdk_bindings" breez_sdk.swift
+	cp ../target/darwin-universal/release/libbreez_sdk_bindings.dylib ffi/swift-darwin
+	cd ffi/swift-darwin && "swiftc" "-emit-module" "-module-name" "breez_sdk_bindings"  "-Xcc" "-fmodule-map-file=$(CURRENT_DIR)/ffi/swift-darwin/breez_sdkFFI.modulemap" "-I" "."  "-L" "." "-lbreez_sdk_bindings" breez_sdk.swift
 
 kotlin: android
 	uniffi-bindgen generate src/breez_sdk.udl --language kotlin -o ffi/kotlin 
