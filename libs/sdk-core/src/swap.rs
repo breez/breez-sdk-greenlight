@@ -266,7 +266,7 @@ impl BTCReceiveSwap {
     pub fn list_monitored(&self) -> Result<Vec<SwapInfo>> {
         Ok(self
             .persister
-            .list_swaps_with_status(SwapStatus::Initial)?
+            .list_swaps()?
             .into_iter()
             .filter(SwapInfo::monitored)
             .collect())

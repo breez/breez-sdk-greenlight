@@ -143,6 +143,22 @@ impl SqliteStorage {
         Ok(vec)
     }
 
+    pub(crate) fn list_swaps(&self) -> Result<Vec<SwapInfo>> {
+        let con = self.get_connection()?;
+        let mut stmt = con.prepare(
+            "
+           SELECT * FROM swaps        
+         ",
+        )?;
+
+        let vec: Vec<SwapInfo> = stmt
+            .query_map([], |row| self.sql_row_to_swap(row))?
+            .map(|i| i.unwrap())
+            .collect();
+
+        Ok(vec)
+    }
+
     fn sql_row_to_swap(&self, row: &Row) -> Result<SwapInfo, rusqlite::Error> {
         let status: i32 = row.get(13)?;
         let status: SwapStatus = status.try_into().map_or(SwapStatus::Initial, |v| v);
