@@ -864,7 +864,7 @@ impl Receiver for PaymentReceiver {
                         .ok_or("No open channel found")
                         .map_err(|err| anyhow!(err))?;
                     let hint = match active_channel.clone().alias {
-                        Some(aliases) => aliases.local,
+                        Some(aliases) => aliases.remote,
                         _ => active_channel.clone().short_channel_id,
                     };
 
