@@ -132,7 +132,11 @@ impl BlockingBreezServices {
         rt().block_on(self.breez_services.stop())
     }
 
-    pub fn send_payment(&self, bolt11: String, amount_sats: Option<u64>) -> Result<(), SDKError> {
+    pub fn send_payment(
+        &self,
+        bolt11: String,
+        amount_sats: Option<u64>,
+    ) -> Result<Payment, SDKError> {
         rt().block_on(self.breez_services.send_payment(bolt11, amount_sats))
             .map_err(|e| e.into())
     }
@@ -141,7 +145,7 @@ impl BlockingBreezServices {
         &self,
         node_id: String,
         amount_sats: u64,
-    ) -> Result<(), SDKError> {
+    ) -> Result<Payment, SDKError> {
         rt().block_on(
             self.breez_services
                 .send_spontaneous_payment(node_id, amount_sats),

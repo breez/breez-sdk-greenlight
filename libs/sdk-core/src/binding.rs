@@ -166,7 +166,7 @@ pub fn stop_node() -> Result<()> {
 }
 
 /// See [BreezServices::send_payment]
-pub fn send_payment(bolt11: String, amount_sats: Option<u64>) -> Result<()> {
+pub fn send_payment(bolt11: String, amount_sats: Option<u64>) -> Result<Payment> {
     block_on(async {
         get_breez_services()?
             .send_payment(bolt11, amount_sats)
@@ -175,7 +175,7 @@ pub fn send_payment(bolt11: String, amount_sats: Option<u64>) -> Result<()> {
 }
 
 /// See [BreezServices::send_spontaneous_payment]
-pub fn send_spontaneous_payment(node_id: String, amount_sats: u64) -> Result<()> {
+pub fn send_spontaneous_payment(node_id: String, amount_sats: u64) -> Result<Payment> {
     block_on(async {
         get_breez_services()?
             .send_spontaneous_payment(node_id, amount_sats)

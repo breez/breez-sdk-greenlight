@@ -80,13 +80,13 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kStopNodeConstMeta;
 
   /// See [BreezServices::send_payment]
-  Future<void> sendPayment(
+  Future<Payment> sendPayment(
       {required String bolt11, int? amountSats, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kSendPaymentConstMeta;
 
   /// See [BreezServices::send_spontaneous_payment]
-  Future<void> sendSpontaneousPayment(
+  Future<Payment> sendSpontaneousPayment(
       {required String nodeId, required int amountSats, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kSendSpontaneousPaymentConstMeta;
@@ -261,6 +261,14 @@ class BreezEvent with _$BreezEvent {
 
   /// Indicates that the local SDK state has just been sync-ed with the remote components
   const factory BreezEvent.synced() = BreezEvent_Synced;
+
+  /// Indicates that an outgoing payment has been completed succesfully
+  const factory BreezEvent.paymentSucceed({
+    required Payment details,
+  }) = BreezEvent_PaymentSucceed;
+
+  /// Indicates that an outgoing payment has been failed to complete
+  const factory BreezEvent.paymentFailed() = BreezEvent_PaymentFailed;
 }
 
 /// State of a Lightning channel
@@ -1050,13 +1058,13 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: [],
       );
 
-  Future<void> sendPayment(
+  Future<Payment> sendPayment(
       {required String bolt11, int? amountSats, dynamic hint}) {
     var arg0 = _platform.api2wire_String(bolt11);
     var arg1 = _platform.api2wire_opt_box_autoadd_u64(amountSats);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_send_payment(port_, arg0, arg1),
-      parseSuccessData: _wire2api_unit,
+      parseSuccessData: _wire2api_payment,
       constMeta: kSendPaymentConstMeta,
       argValues: [bolt11, amountSats],
       hint: hint,
@@ -1069,14 +1077,14 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["bolt11", "amountSats"],
       );
 
-  Future<void> sendSpontaneousPayment(
+  Future<Payment> sendSpontaneousPayment(
       {required String nodeId, required int amountSats, dynamic hint}) {
     var arg0 = _platform.api2wire_String(nodeId);
     var arg1 = _platform.api2wire_u64(amountSats);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) =>
           _platform.inner.wire_send_spontaneous_payment(port_, arg0, arg1),
-      parseSuccessData: _wire2api_unit,
+      parseSuccessData: _wire2api_payment,
       constMeta: kSendSpontaneousPaymentConstMeta,
       argValues: [nodeId, amountSats],
       hint: hint,
@@ -1609,6 +1617,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return _wire2api_node_state(raw);
   }
 
+  Payment _wire2api_box_autoadd_payment(dynamic raw) {
+    return _wire2api_payment(raw);
+  }
+
   SwapInfo _wire2api_box_autoadd_swap_info(dynamic raw) {
     return _wire2api_swap_info(raw);
   }
@@ -1642,6 +1654,12 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         );
       case 2:
         return BreezEvent_Synced();
+      case 3:
+        return BreezEvent_PaymentSucceed(
+          details: _wire2api_box_autoadd_payment(raw[1]),
+        );
+      case 4:
+        return BreezEvent_PaymentFailed();
       default:
         throw Exception("unreachable");
     }

@@ -10,7 +10,7 @@ use bitcoin::secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
 use gl_client::pb::amount::Unit;
 use gl_client::pb::{
     Amount, CloseChannelRequest, CloseChannelResponse, Invoice, InvoiceRequest, InvoiceStatus,
-    PayStatus, Payment, WithdrawResponse,
+    PayStatus, WithdrawResponse,
 };
 use gl_client::scheduler::Scheduler;
 use gl_client::signer::Signer;
@@ -324,7 +324,11 @@ impl NodeAPI for Greenlight {
         Ok(client.create_invoice(request).await?.into_inner())
     }
 
-    async fn send_payment(&self, bolt11: String, amount_sats: Option<u64>) -> Result<Payment> {
+    async fn send_payment(
+        &self,
+        bolt11: String,
+        amount_sats: Option<u64>,
+    ) -> Result<crate::models::Payment> {
         let mut client = self.get_client().await?;
 
         let request = pb::PayRequest {
@@ -335,10 +339,14 @@ impl NodeAPI for Greenlight {
             bolt11,
             timeout: self.sdk_config.payment_timeout_sec,
         };
-        Ok(client.pay(request).await?.into_inner())
+        payment_to_transaction(client.pay(request).await?.into_inner())
     }
 
-    async fn send_spontaneous_payment(&self, node_id: String, amount_sats: u64) -> Result<Payment> {
+    async fn send_spontaneous_payment(
+        &self,
+        node_id: String,
+        amount_sats: u64,
+    ) -> Result<crate::models::Payment> {
         let mut client = self.get_client().await?;
 
         let request = pb::KeysendRequest {
@@ -353,7 +361,7 @@ impl NodeAPI for Greenlight {
             extratlvs: vec![],
             routehints: vec![],
         };
-        Ok(client.keysend(request).await?.into_inner())
+        payment_to_transaction(client.keysend(request).await?.into_inner())
     }
 
     async fn close_peer_channels(&self, node_id: String) -> Result<CloseChannelResponse> {
@@ -540,7 +548,7 @@ fn invoice_to_transaction(
 }
 
 // construct a lightning transaction from a payment
-fn payment_to_transaction(payment: pb::Payment) -> Result<crate::models::Payment> {
+pub fn payment_to_transaction(payment: pb::Payment) -> Result<crate::models::Payment> {
     let mut description = None;
     if !payment.bolt11.is_empty() {
         description = parse_invoice(&payment.bolt11)?.description;
