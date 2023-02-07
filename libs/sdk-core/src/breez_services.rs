@@ -50,6 +50,10 @@ pub enum BreezEvent {
     InvoicePaid { details: InvoicePaidDetails },
     /// Indicates that the local SDK state has just been sync-ed with the remote components
     Synced,
+    /// Indicates that an outgoing payment has been completed succesfully
+    PaymentSucceed { details: Payment },
+    /// Indicates that an outgoing payment has been failed to complete
+    PaymentFailed,
 }
 
 /// Details of an invoice that has been paid, included as payload in an emitted [BreezEvent]
@@ -184,11 +188,10 @@ impl BreezServices {
     ///
     /// * `bolt11` - The bolt11 invoice
     /// * `amount_sats` - The amount to pay in satoshis
-    pub async fn send_payment(&self, bolt11: String, amount_sats: Option<u64>) -> Result<()> {
+    pub async fn send_payment(&self, bolt11: String, amount_sats: Option<u64>) -> Result<Payment> {
         self.start_node().await?;
-        self.node_api.send_payment(bolt11, amount_sats).await?;
-        self.sync().await?;
-        Ok(())
+        let payment_res = self.node_api.send_payment(bolt11, amount_sats).await;
+        self.on_payment_completed(payment_res).await
     }
 
     /// Pay directly to a node id using keysend
@@ -197,13 +200,17 @@ impl BreezServices {
     ///
     /// * `node_id` - The destination node_id
     /// * `amount_sats` - The amount to pay in satoshis
-    pub async fn send_spontaneous_payment(&self, node_id: String, amount_sats: u64) -> Result<()> {
+    pub async fn send_spontaneous_payment(
+        &self,
+        node_id: String,
+        amount_sats: u64,
+    ) -> Result<Payment> {
         self.start_node().await?;
-        self.node_api
+        let payment_res = self
+            .node_api
             .send_spontaneous_payment(node_id, amount_sats)
-            .await?;
-        self.sync().await?;
-        Ok(())
+            .await;
+        self.on_payment_completed(payment_res).await
     }
 
     /// Second step of LNURL-pay. The first step is `parse()`, which also validates the LNURL destination
@@ -451,6 +458,21 @@ impl BreezServices {
             debug!("connected to lsp {}@{}", node_id.clone(), address.clone());
         }
         Ok(())
+    }
+
+    async fn on_payment_completed(&self, payment_res: Result<Payment>) -> Result<Payment> {
+        if payment_res.is_err() {
+            self.notify_event_listeners(BreezEvent::PaymentFailed {})
+                .await?;
+            return payment_res;
+        }
+        let payment = payment_res.unwrap();
+        self.sync().await?;
+        self.notify_event_listeners(BreezEvent::PaymentSucceed {
+            details: payment.clone(),
+        })
+        .await?;
+        Ok(payment)
     }
 
     async fn on_event(&self, e: BreezEvent) -> Result<()> {

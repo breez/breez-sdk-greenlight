@@ -188,6 +188,8 @@ interface BreezEvent {
     NewBlock(u32 block);
     InvoicePaid(InvoicePaidDetails details);
     Synced();
+    PaymentSucceed(Payment details);
+    PaymentFailed();
 };
 
 callback interface LogStream {
@@ -315,10 +317,10 @@ interface BlockingBreezServices {
    void stop();
 
    [Throws=SDKError]
-   void send_payment(string bolt11, u64? amount_sats);
+   Payment send_payment(string bolt11, u64? amount_sats);
     
    [Throws=SDKError]
-   void send_spontaneous_payment(string node_id, u64 amount_sats);
+   Payment send_spontaneous_payment(string node_id, u64 amount_sats);
 
    [Throws=SDKError]
    LNInvoice receive_payment(u64 amount_sats, string description);

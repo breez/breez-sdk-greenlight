@@ -122,8 +122,8 @@ class BreezBridge {
   ///
   /// * `bolt11` - The bolt11 invoice
   /// * `amountSats` - The amount to pay in satoshis
-  Future sendPayment({required String bolt11, int? amountSats}) async {
-    await _lnToolkit.sendPayment(bolt11: bolt11, amountSats: amountSats);
+  Future<Payment> sendPayment({required String bolt11, int? amountSats}) async {
+    return await _lnToolkit.sendPayment(bolt11: bolt11, amountSats: amountSats);
   }
 
   /// pay directly to a node id using keysend
@@ -132,9 +132,9 @@ class BreezBridge {
   ///
   /// * `nodeId` - The destination nodeId
   /// * `amountSats` - The amount to pay in satoshis
-  Future sendSpontaneousPayment(
+  Future<Payment> sendSpontaneousPayment(
       {required String nodeId, required int amountSats}) async {
-    await _lnToolkit.sendSpontaneousPayment(
+    return await _lnToolkit.sendSpontaneousPayment(
         nodeId: nodeId, amountSats: amountSats);
   }
 

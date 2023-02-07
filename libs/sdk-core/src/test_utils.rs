@@ -5,7 +5,9 @@ use crate::breez_services::Receiver;
 use crate::chain::{ChainService, OnchainTx, RecommendedFees};
 use crate::fiat::{FiatCurrency, Rate};
 use crate::swap::create_submarine_swap_script;
-use crate::{parse_invoice, Config, LNInvoice, RouteHint};
+use crate::{
+    parse_invoice, Config, LNInvoice, LnPaymentDetails, PaymentDetails, PaymentType, RouteHint,
+};
 use anyhow::{anyhow, Result};
 use bitcoin::secp256k1::ecdsa::RecoverableSignature;
 use bitcoin::secp256k1::{KeyPair, Message};
@@ -186,11 +188,7 @@ impl NodeAPI for MockNodeAPI {
         })
     }
 
-    async fn send_payment(
-        &self,
-        _bolt11: String,
-        _amount_sats: Option<u64>,
-    ) -> Result<gl_client::pb::Payment> {
+    async fn send_payment(&self, _bolt11: String, _amount_sats: Option<u64>) -> Result<Payment> {
         Ok(MockNodeAPI::get_dummy_payment())
     }
 
@@ -198,7 +196,7 @@ impl NodeAPI for MockNodeAPI {
         &self,
         _node_id: String,
         _amount_sats: u64,
-    ) -> Result<gl_client::pb::Payment> {
+    ) -> Result<Payment> {
         Ok(MockNodeAPI::get_dummy_payment())
     }
 
@@ -252,22 +250,25 @@ impl NodeAPI for MockNodeAPI {
 }
 
 impl MockNodeAPI {
-    fn get_dummy_payment() -> gl_client::pb::Payment {
-        gl_client::pb::Payment {
-            payment_hash: rand_vec_u8(32),
-            bolt11: rand_string(32),
-            amount: Some(random())
-                .map(Unit::Satoshi)
-                .map(Some)
-                .map(|amt| Amount { unit: amt }),
-            amount_sent: Some(random())
-                .map(Unit::Satoshi)
-                .map(Some)
-                .map(|amt| Amount { unit: amt }),
-            payment_preimage: rand_vec_u8(32),
-            status: 1,
-            created_at: random(),
-            destination: rand_vec_u8(32),
+    fn get_dummy_payment() -> Payment {
+        crate::models::Payment {
+            id: hex::encode(rand_vec_u8(32)),
+            payment_type: PaymentType::Sent,
+            payment_time: random(),
+            amount_msat: random(),
+            fee_msat: random(),
+            pending: false,
+            description: Some("desc".to_string()),
+            details: PaymentDetails::Ln {
+                data: LnPaymentDetails {
+                    payment_hash: hex::encode(rand_vec_u8(32)),
+                    label: "".to_string(),
+                    destination_pubkey: "".to_string(),
+                    payment_preimage: hex::encode(rand_vec_u8(32)),
+                    keysend: false,
+                    bolt11: hex::encode(rand_vec_u8(32)),
+                },
+            },
         }
     }
 }

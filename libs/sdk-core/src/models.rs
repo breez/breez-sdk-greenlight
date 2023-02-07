@@ -37,12 +37,12 @@ pub trait NodeAPI: Send + Sync {
         &self,
         bolt11: String,
         amount_sats: Option<u64>,
-    ) -> Result<gl_client::pb::Payment>;
+    ) -> Result<crate::models::Payment>;
     async fn send_spontaneous_payment(
         &self,
         node_id: String,
         amount_sats: u64,
-    ) -> Result<gl_client::pb::Payment>;
+    ) -> Result<crate::models::Payment>;
     async fn start(&self) -> Result<()>;
     async fn sweep(
         &self,
