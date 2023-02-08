@@ -59,7 +59,7 @@ impl Greenlight {
         let tls_config = TlsConfig::new()?;
         let signer = Signer::new(seed, greenlight_network, tls_config.clone())?;
         let scheduler = Scheduler::new(signer.node_id(), greenlight_network).await?;
-        let recover_res: pb::RegistrationResponse = scheduler.register(&signer).await?;
+        let recover_res: pb::RegistrationResponse = scheduler.register(&signer, None).await?;
 
         Ok(GreenlightCredentials {
             device_key: recover_res.device_key.into(),
@@ -338,6 +338,13 @@ impl NodeAPI for Greenlight {
                 .map(|amt| Amount { unit: amt }),
             bolt11,
             timeout: self.sdk_config.payment_timeout_sec,
+            maxfee: self
+                .sdk_config
+                .maxfee_sat
+                .map(Unit::Satoshi)
+                .map(Some)
+                .map(|amt| Amount { unit: amt }),
+            maxfeepercent: self.sdk_config.maxfeepercent,
         };
         payment_to_transaction(client.pay(request).await?.into_inner())
     }

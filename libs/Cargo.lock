@@ -339,6 +339,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
 
 [[package]]
+name = "base64"
+version = "0.21.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a4a4ddaa51a5bc52a6948f74c06d20aaaddb71924eab79b8c97a8c556e942d6a"
+
+[[package]]
 name = "bech32"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -417,7 +423,7 @@ dependencies = [
 [[package]]
 name = "bolt-derive"
 version = "0.1.0"
-source = "git+ssh://git@github.com/Blockstream/greenlight.git#951a78c184308ee85bffd1fc11fa241e0531166b"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#7b9086f2e05d1bb04a95d557da2a24808b584c79"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -429,7 +435,7 @@ name = "breez-sdk-core"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "base64",
+ "base64 0.13.1",
  "bip21",
  "bitcoin",
  "bitcoin_hashes",
@@ -612,6 +618,40 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2850f2f5a82cbf437dd5af4d49848fbdfc27c157c3d010345776f952765261c5"
 dependencies = [
  "os_str_bytes",
+]
+
+[[package]]
+name = "cln-grpc"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "caec91d57288b55b30704be8ba1ff15a933f6e4e8f5be45f3395bd5a8cf7eecd"
+dependencies = [
+ "anyhow",
+ "bitcoin",
+ "cln-rpc",
+ "hex",
+ "log",
+ "prost 0.11.3",
+ "tonic",
+ "tonic-build 0.8.4",
+]
+
+[[package]]
+name = "cln-rpc"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "39f2cc1b4417e08a0b65a62395125998cd5ba5d38af96836dd1bfab3e168105a"
+dependencies = [
+ "anyhow",
+ "bitcoin",
+ "bytes",
+ "futures-util",
+ "hex",
+ "log",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-util",
 ]
 
 [[package]]
@@ -1000,6 +1040,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04909a7a7e4633ae6c4a9ab280aeb86da1236243a77b694a49eacd659a4bd3ac"
 
 [[package]]
+name = "futures-macro"
+version = "0.3.25"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bdfb8ce053d86b91919aad980c220b1fb8401a9394410e1c289ed7e66b61835d"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "futures-sink"
 version = "0.3.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1018,9 +1069,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "197676987abd2f9cadff84926f410af1c183608d36641465df73ae8211dc65d6"
 dependencies = [
  "futures-core",
+ "futures-macro",
+ "futures-sink",
  "futures-task",
  "pin-project-lite",
  "pin-utils",
+ "slab",
 ]
 
 [[package]]
@@ -1065,12 +1119,13 @@ checksum = "dec7af912d60cdbd3677c1af9352ebae6fb8394d165568a2234df0fa00f87793"
 [[package]]
 name = "gl-client"
 version = "0.1.4"
-source = "git+ssh://git@github.com/Blockstream/greenlight.git#951a78c184308ee85bffd1fc11fa241e0531166b"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#7b9086f2e05d1bb04a95d557da2a24808b584c79"
 dependencies = [
  "anyhow",
- "base64",
+ "base64 0.21.0",
  "bitcoin",
  "bytes",
+ "cln-grpc",
  "hex",
  "http",
  "http-body",
@@ -1439,7 +1494,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "95b09eff1b35ed3b33b877ced3a691fc7a481919c7e29c53c906226fcf55e2a1"
 dependencies = [
  "arrayref",
- "base64",
+ "base64 0.13.1",
  "digest 0.9.0",
  "hmac-drbg",
  "libsecp256k1-core",
@@ -1536,7 +1591,7 @@ dependencies = [
 [[package]]
 name = "lightning-signer-core"
 version = "0.1.0-5"
-source = "git+ssh://git@github.com/Blockstream/greenlight.git#951a78c184308ee85bffd1fc11fa241e0531166b"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#7b9086f2e05d1bb04a95d557da2a24808b584c79"
 dependencies = [
  "anyhow",
  "bitcoin",
@@ -1552,7 +1607,7 @@ dependencies = [
 [[package]]
 name = "lightning-signer-server"
 version = "0.1.0-5"
-source = "git+ssh://git@github.com/Blockstream/greenlight.git#951a78c184308ee85bffd1fc11fa241e0531166b"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#7b9086f2e05d1bb04a95d557da2a24808b584c79"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1874,7 +1929,7 @@ version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "03c64931a1a212348ec4f3b4362585eca7159d0d09cbdf4a7f74f02173596fd4"
 dependencies = [
- "base64",
+ "base64 0.13.1",
 ]
 
 [[package]]
@@ -2217,7 +2272,7 @@ version = "0.11.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68cc60575865c7831548863cc02356512e3f1dc2f3f82cb837d7fc4cc8f3c97c"
 dependencies = [
- "base64",
+ "base64 0.13.1",
  "bytes",
  "encoding_rs",
  "futures-core",
@@ -2357,7 +2412,7 @@ version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0864aeff53f8c05aa08d86e5ef839d3dfcf07aeba2db32f12db0ef716e87bd55"
 dependencies = [
- "base64",
+ "base64 0.13.1",
 ]
 
 [[package]]
@@ -2551,7 +2606,7 @@ version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "25bf4a5a814902cd1014dbccfa4d4560fb8432c779471e96e035602519f82eef"
 dependencies = [
- "base64",
+ "base64 0.13.1",
  "chrono",
  "hex",
  "serde",
@@ -3060,7 +3115,7 @@ dependencies = [
  "async-stream",
  "async-trait",
  "axum",
- "base64",
+ "base64 0.13.1",
  "bytes",
  "futures-core",
  "futures-util",
@@ -3416,7 +3471,7 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 [[package]]
 name = "vls-persist"
 version = "0.1.0"
-source = "git+ssh://git@github.com/Blockstream/greenlight.git#951a78c184308ee85bffd1fc11fa241e0531166b"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#7b9086f2e05d1bb04a95d557da2a24808b584c79"
 dependencies = [
  "hex",
  "lightning-signer-core",
@@ -3429,7 +3484,7 @@ dependencies = [
 [[package]]
 name = "vls-protocol"
 version = "0.1.0"
-source = "git+ssh://git@github.com/Blockstream/greenlight.git#951a78c184308ee85bffd1fc11fa241e0531166b"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#7b9086f2e05d1bb04a95d557da2a24808b584c79"
 dependencies = [
  "as-any",
  "bolt-derive",
@@ -3442,7 +3497,7 @@ dependencies = [
 [[package]]
 name = "vls-protocol-signer"
 version = "0.1.0"
-source = "git+ssh://git@github.com/Blockstream/greenlight.git#951a78c184308ee85bffd1fc11fa241e0531166b"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git#7b9086f2e05d1bb04a95d557da2a24808b584c79"
 dependencies = [
  "bit-vec",
  "lightning-signer-core",
@@ -3735,7 +3790,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9fb9bace5b5589ffead1afb76e43e34cff39cd0f3ce7e170ae0c29e53b88eb1c"
 dependencies = [
  "asn1-rs",
- "base64",
+ "base64 0.13.1",
  "data-encoding",
  "der-parser",
  "lazy_static",
