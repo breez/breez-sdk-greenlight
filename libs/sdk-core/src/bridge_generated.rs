@@ -562,6 +562,11 @@ impl Wire2Api<EnvironmentType> for i32 {
         }
     }
 }
+impl Wire2Api<f64> for f64 {
+    fn wire2api(self) -> f64 {
+        self
+    }
+}
 
 impl Wire2Api<i32> for i32 {
     fn wire2api(self) -> i32 {
@@ -679,6 +684,8 @@ impl support::IntoDart for Config {
             self.payment_timeout_sec.into_dart(),
             self.default_lsp_id.into_dart(),
             self.api_key.into_dart(),
+            self.maxfee_sat.into_dart(),
+            self.maxfeepercent.into_dart(),
         ]
         .into_dart()
     }

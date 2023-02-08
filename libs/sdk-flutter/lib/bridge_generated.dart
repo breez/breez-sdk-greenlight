@@ -304,6 +304,8 @@ class Config {
   final int paymentTimeoutSec;
   final String? defaultLspId;
   final String? apiKey;
+  final int? maxfeeSat;
+  final double maxfeepercent;
 
   Config({
     required this.breezserver,
@@ -313,6 +315,8 @@ class Config {
     required this.paymentTimeoutSec,
     this.defaultLspId,
     this.apiKey,
+    this.maxfeeSat,
+    required this.maxfeepercent,
   });
 }
 
@@ -1683,8 +1687,8 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   Config _wire2api_config(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 7)
-      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    if (arr.length != 9)
+      throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
     return Config(
       breezserver: _wire2api_String(arr[0]),
       mempoolspaceUrl: _wire2api_String(arr[1]),
@@ -1693,6 +1697,8 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       paymentTimeoutSec: _wire2api_u32(arr[4]),
       defaultLspId: _wire2api_opt_String(arr[5]),
       apiKey: _wire2api_opt_String(arr[6]),
+      maxfeeSat: _wire2api_opt_box_autoadd_u64(arr[7]),
+      maxfeepercent: _wire2api_f64(arr[8]),
     );
   }
 
@@ -2266,6 +2272,11 @@ int api2wire_environment_type(EnvironmentType raw) {
 }
 
 @protected
+double api2wire_f64(double raw) {
+  return raw;
+}
+
+@protected
 int api2wire_i32(int raw) {
   return raw;
 }
@@ -2416,6 +2427,8 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.payment_timeout_sec = api2wire_u32(apiObj.paymentTimeoutSec);
     wireObj.default_lsp_id = api2wire_opt_String(apiObj.defaultLspId);
     wireObj.api_key = api2wire_opt_String(apiObj.apiKey);
+    wireObj.maxfee_sat = api2wire_opt_box_autoadd_u64(apiObj.maxfeeSat);
+    wireObj.maxfeepercent = api2wire_f64(apiObj.maxfeepercent);
   }
 
   void _api_fill_to_wire_greenlight_credentials(
@@ -3238,6 +3251,11 @@ class wire_Config extends ffi.Struct {
   external ffi.Pointer<wire_uint_8_list> default_lsp_id;
 
   external ffi.Pointer<wire_uint_8_list> api_key;
+
+  external ffi.Pointer<ffi.Uint64> maxfee_sat;
+
+  @ffi.Double()
+  external double maxfeepercent;
 }
 
 class wire_GreenlightCredentials extends ffi.Struct {

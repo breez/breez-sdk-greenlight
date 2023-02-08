@@ -125,6 +125,8 @@ pub struct Config {
     pub payment_timeout_sec: u32,
     pub default_lsp_id: Option<String>,
     pub api_key: Option<String>,
+    pub maxfee_sat: Option<u64>,
+    pub maxfeepercent: f64,
 }
 
 impl Config {
@@ -134,9 +136,11 @@ impl Config {
             mempoolspace_url: "https://mempool.space".to_string(),
             working_dir: ".".to_string(),
             network: Bitcoin,
-            payment_timeout_sec: 30,
+            payment_timeout_sec: 60,
             default_lsp_id: Some(String::from("03cea51f-b654-4fb0-8e82-eca137f236a0")),
             api_key: None,
+            maxfee_sat: None,
+            maxfeepercent: 0.5,
         }
     }
 
@@ -147,9 +151,11 @@ impl Config {
             mempoolspace_url: "https://mempool.space".to_string(),
             working_dir: ".".to_string(),
             network: Bitcoin,
-            payment_timeout_sec: 30,
+            payment_timeout_sec: 60,
             default_lsp_id: Some(String::from("ea51d025-042d-456c-8325-63e430797481")),
             api_key: None,
+            maxfee_sat: None,
+            maxfeepercent: 0.5,
         }
     }
 }
