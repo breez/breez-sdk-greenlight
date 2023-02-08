@@ -120,15 +120,21 @@ impl SqliteStorage {
             .query_row(
                 "
                 SELECT
-                 id, 
-                 payment_type, 
-                 payment_time, 
-                 amount_msat, 
-                 fee_msat, 
-                 pending, 
-                 description,
-                 details
-                FROM payments where id = ?1",
+                 p.id,
+                 p.payment_type,
+                 p.payment_time,
+                 p.amount_msat,
+                 p.fee_msat,
+                 p.pending,
+                 p.description,
+                 p.details,
+                 e.lnurl_success_action
+                FROM payments p
+                LEFT JOIN payments_external_info e
+                ON
+                 p.id = e.payment_id
+                WHERE
+                 id = ?1",
                 [hash],
                 |row| self.sql_row_to_payment(row),
             )
