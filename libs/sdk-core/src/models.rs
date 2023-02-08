@@ -434,6 +434,10 @@ pub struct UnspentTransactionOutput {
     pub outnum: u32,
     pub amount_millisatoshi: u64,
     pub address: String,
+    #[serde(default)]
+    pub reserved: bool,
+    #[serde(default)]
+    pub reserved_to_block: u32,
 }
 
 #[cfg(test)]

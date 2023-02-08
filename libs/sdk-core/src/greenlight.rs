@@ -8,6 +8,7 @@ use anyhow::{anyhow, Result};
 use bitcoin::bech32::{u5, ToBase32};
 use bitcoin::secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
 use gl_client::pb::amount::Unit;
+
 use gl_client::pb::{
     Amount, CloseChannelRequest, CloseChannelResponse, Invoice, InvoiceRequest, InvoiceStatus,
     PayStatus, WithdrawResponse,
@@ -232,6 +233,9 @@ impl NodeAPI for Greenlight {
 
         // calculate onchain balance
         let onchain_balance = onchain_funds.iter().fold(0, |a, b| {
+            if b.reserved {
+                return a;
+            }
             a + amount_to_msat(&b.amount.clone().unwrap_or_default())
         });
 
@@ -251,6 +255,8 @@ impl NodeAPI for Greenlight {
                             .map(amount_to_msat)
                             .unwrap_or_default(),
                         address: list_funds_output.address.clone(),
+                        reserved: list_funds_output.reserved,
+                        reserved_to_block: list_funds_output.reserved_to_block,
                     })
             })
             .collect();
