@@ -155,11 +155,8 @@ impl SqliteStorage {
             details: row.get(7)?,
         };
 
-        match payment.details {
-            PaymentDetails::Ln { ref mut data } => {
-                data.lnurl_success_action = row.get(8)?;
-            }
-            _ => {}
+        if let PaymentDetails::Ln { ref mut data } = payment.details {
+            data.lnurl_success_action = row.get(8)?;
         }
 
         Ok(payment)
@@ -290,7 +287,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
         SqliteStorage::from_file(test_utils::create_test_sql_file("transactions".to_string()));
     storage.init()?;
     storage.insert_payments(&txs)?;
-    storage.insert_lnurl_success_action(&payment_hash_with_lnurl_success_action, &sa)?;
+    storage.insert_lnurl_success_action(payment_hash_with_lnurl_success_action, &sa)?;
 
     // retrieve all
     let retrieve_txs = storage.list_payments(PaymentTypeFilter::All, None, None)?;

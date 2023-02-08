@@ -46,6 +46,7 @@ pub trait EventListener: Send + Sync {
 /// Event emitted by the SDK. To listen for and react to these events, use an [EventListener] when
 /// initializing the [BreezServices].
 #[derive(Clone, Debug)]
+#[allow(clippy::large_enum_variant)]
 pub enum BreezEvent {
     /// Indicates that a new block has just been found
     NewBlock { block: u32 },
@@ -53,7 +54,7 @@ pub enum BreezEvent {
     InvoicePaid { details: InvoicePaidDetails },
     /// Indicates that the local SDK state has just been sync-ed with the remote components
     Synced,
-    /// Indicates that an outgoing payment has been completed succesfully
+    /// Indicates that an outgoing payment has been completed successfully
     PaymentSucceed { details: Payment },
     /// Indicates that an outgoing payment has been failed to complete
     PaymentFailed { error: String },
@@ -1130,7 +1131,7 @@ pub(crate) mod tests {
         let persister = Arc::new(create_test_persister(test_config.clone()));
         persister.init()?;
         persister.insert_payments(&dummy_transactions)?;
-        persister.insert_lnurl_success_action(&payment_hash_with_lnurl_success_action, &sa)?;
+        persister.insert_lnurl_success_action(payment_hash_with_lnurl_success_action, &sa)?;
 
         let mut builder = BreezServicesBuilder::new(test_config.clone());
         let breez_services = builder
