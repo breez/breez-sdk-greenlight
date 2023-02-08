@@ -268,7 +268,9 @@ class BreezEvent with _$BreezEvent {
   }) = BreezEvent_PaymentSucceed;
 
   /// Indicates that an outgoing payment has been failed to complete
-  const factory BreezEvent.paymentFailed() = BreezEvent_PaymentFailed;
+  const factory BreezEvent.paymentFailed({
+    required String error,
+  }) = BreezEvent_PaymentFailed;
 }
 
 /// State of a Lightning channel
@@ -1663,7 +1665,9 @@ class BreezSdkCoreImpl implements BreezSdkCore {
           details: _wire2api_box_autoadd_payment(raw[1]),
         );
       case 4:
-        return BreezEvent_PaymentFailed();
+        return BreezEvent_PaymentFailed(
+          error: _wire2api_String(raw[1]),
+        );
       default:
         throw Exception("unreachable");
     }

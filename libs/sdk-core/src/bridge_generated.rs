@@ -645,7 +645,7 @@ impl support::IntoDart for BreezEvent {
             Self::InvoicePaid { details } => vec![1.into_dart(), details.into_dart()],
             Self::Synced => vec![2.into_dart()],
             Self::PaymentSucceed { details } => vec![3.into_dart(), details.into_dart()],
-            Self::PaymentFailed => vec![4.into_dart()],
+            Self::PaymentFailed { error } => vec![4.into_dart(), error.into_dart()],
         }
         .into_dart()
     }
