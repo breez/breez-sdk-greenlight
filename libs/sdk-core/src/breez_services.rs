@@ -53,7 +53,7 @@ pub enum BreezEvent {
     /// Indicates that an outgoing payment has been completed succesfully
     PaymentSucceed { details: Payment },
     /// Indicates that an outgoing payment has been failed to complete
-    PaymentFailed,
+    PaymentFailed { error: String },
 }
 
 /// Details of an invoice that has been paid, included as payload in an emitted [BreezEvent]
@@ -462,8 +462,10 @@ impl BreezServices {
 
     async fn on_payment_completed(&self, payment_res: Result<Payment>) -> Result<Payment> {
         if payment_res.is_err() {
-            self.notify_event_listeners(BreezEvent::PaymentFailed {})
-                .await?;
+            self.notify_event_listeners(BreezEvent::PaymentFailed {
+                error: payment_res.as_ref().err().unwrap().to_string(),
+            })
+            .await?;
             return payment_res;
         }
         let payment = payment_res.unwrap();

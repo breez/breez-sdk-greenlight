@@ -189,7 +189,7 @@ interface BreezEvent {
     InvoicePaid(InvoicePaidDetails details);
     Synced();
     PaymentSucceed(Payment details);
-    PaymentFailed();
+    PaymentFailed(string error);
 };
 
 callback interface LogStream {
