@@ -781,6 +781,7 @@ impl support::IntoDart for LnPaymentDetails {
             self.payment_preimage.into_dart(),
             self.keysend.into_dart(),
             self.bolt11.into_dart(),
+            self.lnurl_success_action.into_dart(),
         ]
         .into_dart()
     }
@@ -1021,9 +1022,9 @@ impl support::IntoDartExceptPrimitive for RouteHintHop {}
 impl support::IntoDart for SuccessActionProcessed {
     fn into_dart(self) -> support::DartAbi {
         match self {
-            Self::Aes(field0) => vec![0.into_dart(), field0.into_dart()],
-            Self::Message(field0) => vec![1.into_dart(), field0.into_dart()],
-            Self::Url(field0) => vec![2.into_dart(), field0.into_dart()],
+            Self::Aes { data } => vec![0.into_dart(), data.into_dart()],
+            Self::Message { data } => vec![1.into_dart(), data.into_dart()],
+            Self::Url { data } => vec![2.into_dart(), data.into_dart()],
         }
         .into_dart()
     }

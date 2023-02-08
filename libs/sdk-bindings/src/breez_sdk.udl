@@ -109,6 +109,27 @@ interface PaymentDetails {
     ClosedChannel(ClosedChannelPaymentDetails data);
 };
 
+dictionary AesSuccessActionDataDecrypted {
+    string description;
+    string plaintext;
+};
+
+dictionary MessageSuccessActionData {
+    string message;
+};
+
+dictionary UrlSuccessActionData {
+    string description;
+    string url;
+};
+
+[Enum]
+interface SuccessActionProcessed {
+    Aes(AesSuccessActionDataDecrypted data);
+    Message(MessageSuccessActionData data);
+    Url(UrlSuccessActionData data);
+};
+
 dictionary LnPaymentDetails {
     string payment_hash;
     string label;
@@ -116,6 +137,7 @@ dictionary LnPaymentDetails {
     string payment_preimage;
     boolean keysend;
     string bolt11;
+    SuccessActionProcessed? lnurl_success_action;
 };
 
 dictionary ClosedChannelPaymentDetails {

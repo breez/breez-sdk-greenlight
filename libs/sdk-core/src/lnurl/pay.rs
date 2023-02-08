@@ -128,7 +128,7 @@ pub(crate) mod model {
 
     use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
     use anyhow::{anyhow, Result};
-    use serde::Deserialize;
+    use serde::{Deserialize, Serialize};
 
     pub(crate) enum ValidatedCallbackResponse {
         EndpointSuccess { data: CallbackResponse },
@@ -176,7 +176,7 @@ pub(crate) mod model {
     }
 
     /// Wrapper for the decrypted [AesSuccessActionData] payload
-    #[derive(Deserialize, Debug)]
+    #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
     pub struct AesSuccessActionDataDecrypted {
         /// Contents description, up to 144 characters
         pub description: String,
@@ -185,12 +185,12 @@ pub(crate) mod model {
         pub plaintext: String,
     }
 
-    #[derive(Deserialize, Debug)]
+    #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
     pub struct MessageSuccessActionData {
         pub message: String,
     }
 
-    #[derive(Deserialize, Debug)]
+    #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
     pub struct UrlSuccessActionData {
         pub description: String,
         pub url: String,
@@ -199,18 +199,18 @@ pub(crate) mod model {
     /// [SuccessAction] where contents are ready to be consumed by the caller
     ///
     /// Contents are identical to [SuccessAction], except for AES where the ciphertext is decrypted.
-    #[derive(Deserialize, Debug)]
+    #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
     pub enum SuccessActionProcessed {
         /// See [SuccessAction::Aes] for received payload
         ///
         /// See [AesSuccessActionDataDecrypted] for decrypted payload
-        Aes(AesSuccessActionDataDecrypted),
+        Aes { data: AesSuccessActionDataDecrypted },
 
         /// See [SuccessAction::Message]
-        Message(MessageSuccessActionData),
+        Message { data: MessageSuccessActionData },
 
         /// See [SuccessAction::Url]
-        Url(UrlSuccessActionData),
+        Url { data: UrlSuccessActionData },
     }
 
     /// Supported success action types
@@ -482,7 +482,7 @@ mod tests {
         user_amount_sat: u64,
         error: Option<String>,
         pr: String,
-        plaintext: String,
+        sa_data: AesSuccessActionDataDecrypted,
         iv_bytes: [u8; 16],
         key_bytes: [u8; 32],
     ) -> Result<Mock> {
@@ -491,7 +491,7 @@ mod tests {
         let mockito_path: &str = &format!("{}?{}", url.path(), url.query().unwrap());
 
         let iv_base64 = base64::encode(iv_bytes);
-        let cipertext = AesSuccessActionData::encrypt(&key_bytes, &iv_bytes, plaintext)?;
+        let cipertext = AesSuccessActionData::encrypt(&key_bytes, &iv_bytes, sa_data.plaintext)?;
 
         let expected_payload = r#"
 {
@@ -499,7 +499,7 @@ mod tests {
     "routes":[],
     "successAction": {
         "tag":"aes",
-        "description":"test description",
+        "description":"token-description",
         "iv":"token-iv",
         "ciphertext":"token-ciphertext"
     }
@@ -508,6 +508,7 @@ mod tests {
         .replace('\n', "")
         .replace("token-iv", &iv_base64)
         .replace("token-ciphertext", &cipertext)
+        .replace("token-description", &sa_data.description)
         .replace("token-invoice", &pr);
 
         let response_body = match error {
@@ -790,7 +791,7 @@ mod tests {
                 "Expected success action in callback, but none provided"
             )),
             LnUrlPayResult::EndpointSuccess {
-                data: Some(SuccessActionProcessed::Message(msg)),
+                data: Some(SuccessActionProcessed::Message { data: msg }),
             } => match msg.message {
                 s if s == "test msg" => Ok(()),
                 _ => Err(anyhow!("Unexpected success action message content")),
@@ -871,7 +872,7 @@ mod tests {
             .await?
         {
             LnUrlPayResult::EndpointSuccess {
-                data: Some(SuccessActionProcessed::Url(url)),
+                data: Some(SuccessActionProcessed::Url { data: url }),
             } => {
                 if url.url == "https://localhost/test-url" && url.description == "test description"
                 {
@@ -889,7 +890,16 @@ mod tests {
 
     #[tokio::test]
     async fn test_lnurl_pay_aes_success_action() -> Result<()> {
-        let plaintext = "Hello, test plaintext";
+        // Expected fields in the AES payload
+        let description = "test description in AES payload".to_string();
+        let plaintext = "Hello, test plaintext".to_string();
+        let sa_data = AesSuccessActionDataDecrypted {
+            description: description.clone(),
+            plaintext: plaintext.clone(),
+        };
+        let sa = SuccessActionProcessed::Aes {
+            data: sa_data.clone(),
+        };
 
         // Generate preimage
         let preimage = sha256::Hash::hash(&rand_vec_u8(10));
@@ -907,7 +917,7 @@ mod tests {
             user_amount_sat,
             None,
             bolt11.clone(),
-            plaintext.into(),
+            sa_data.clone(),
             rand::thread_rng().gen::<[u8; 16]>(),
             preimage.into_inner(),
         )?;
@@ -922,11 +932,11 @@ mod tests {
             .await?
         {
             LnUrlPayResult::EndpointSuccess {
-                data: Some(SuccessActionProcessed::Aes(aes_data)),
-            } => match aes_data.plaintext == plaintext {
+                data: Some(received_sa),
+            } => match received_sa == sa {
                 true => Ok(()),
                 false => Err(anyhow!(
-                    "Decrypted payload doesn't match original plaintext"
+                    "Decrypted payload and description doesn't match expected success action"
                 )),
             },
             LnUrlPayResult::EndpointSuccess { data: None } => Err(anyhow!(
