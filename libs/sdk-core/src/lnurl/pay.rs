@@ -953,7 +953,7 @@ mod tests {
 
         let amount_arg = format!("amount={}", user_amount_sat * 1000);
         let user_comment = "test comment".to_string();
-        let comment_arg = format!("comment={}", user_comment);
+        let comment_arg = format!("comment={user_comment}");
 
         let url_amount_no_comment = build_pay_callback_url(user_amount_sat, &None, &pay_req)?;
         assert!(url_amount_no_comment.contains(&amount_arg));

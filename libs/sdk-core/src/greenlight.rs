@@ -406,7 +406,7 @@ impl NodeAPI for Greenlight {
 
     async fn execute_command(&self, command: String) -> Result<String> {
         let node_cmd = NodeCommand::from_str(&command)
-            .map_err(|_| anyhow!(format!("command not found: {}", command)))?;
+            .map_err(|_| anyhow!(format!("command not found: {command}")))?;
         match node_cmd {
             NodeCommand::ListPeers => {
                 let resp = self
@@ -415,7 +415,7 @@ impl NodeAPI for Greenlight {
                     .list_peers(pb::ListPeersRequest::default())
                     .await?
                     .into_inner();
-                Ok(format!("{:?}", resp))
+                Ok(format!("{resp:?}"))
             }
             NodeCommand::ListFunds => {
                 let resp = self
@@ -424,7 +424,7 @@ impl NodeAPI for Greenlight {
                     .list_funds(pb::ListFundsRequest::default())
                     .await?
                     .into_inner();
-                Ok(format!("{:?}", resp))
+                Ok(format!("{resp:?}"))
             }
             NodeCommand::ListPayments => {
                 let resp = self
@@ -433,7 +433,7 @@ impl NodeAPI for Greenlight {
                     .list_payments(pb::ListPaymentsRequest::default())
                     .await?
                     .into_inner();
-                Ok(format!("{:?}", resp))
+                Ok(format!("{resp:?}"))
             }
             NodeCommand::ListInvoices => {
                 let resp = self
@@ -442,7 +442,7 @@ impl NodeAPI for Greenlight {
                     .list_invoices(pb::ListInvoicesRequest::default())
                     .await?
                     .into_inner();
-                Ok(format!("{:?}", resp))
+                Ok(format!("{resp:?}"))
             }
             NodeCommand::CloseAllChannels => {
                 let peers_res = self

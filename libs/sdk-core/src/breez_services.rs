@@ -826,7 +826,7 @@ impl BreezServer {
         let channel = Channel::from_shared(s)?.connect().await?;
 
         let api_key_metadata: Option<MetadataValue<Ascii>> = match &self.api_key {
-            Some(key) => Some(format!("Bearer {}", key).parse()?),
+            Some(key) => Some(format!("Bearer {key}").parse()?),
             _ => None,
         };
         let client =
