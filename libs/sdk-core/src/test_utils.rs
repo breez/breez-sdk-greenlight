@@ -425,7 +425,6 @@ pub(crate) fn rand_invoice_with_description_hash(
     rand_invoice_with_description_hash_and_preimage(expected_desc, preimage)
 }
 
-
 pub(crate) fn rand_invoice_with_description_hash_and_preimage(
     expected_desc: String,
     preimage: sha256::Hash,
