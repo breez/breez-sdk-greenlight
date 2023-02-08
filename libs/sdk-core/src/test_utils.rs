@@ -5,9 +5,7 @@ use crate::breez_services::Receiver;
 use crate::chain::{ChainService, OnchainTx, RecommendedFees};
 use crate::fiat::{FiatCurrency, Rate};
 use crate::swap::create_submarine_swap_script;
-use crate::{
-    parse_invoice, Config, LNInvoice, LnPaymentDetails, PaymentDetails, PaymentType, RouteHint,
-};
+use crate::{parse_invoice, Config, LNInvoice, RouteHint};
 use anyhow::{anyhow, Result};
 use bitcoin::secp256k1::ecdsa::RecoverableSignature;
 use bitcoin::secp256k1::{KeyPair, Message};
@@ -204,11 +202,7 @@ impl NodeAPI for MockNodeAPI {
         })
     }
 
-    async fn send_payment(
-        &self,
-        bolt11: String,
-        _amount_sats: Option<u64>,
-    ) -> Result<Payment> {
+    async fn send_payment(&self, bolt11: String, _amount_sats: Option<u64>) -> Result<Payment> {
         Self::add_dummy_payment_for(bolt11, None).await
     }
 
@@ -301,13 +295,14 @@ impl MockNodeAPI {
             status: 1,
             created_at: random(),
             destination: rand_vec_u8(32),
+            completed_at: random(),
         };
 
         Self::save_payment_for_future_sync_updates(gl_payment.clone()).await
     }
 
     /// Adds a dummy payment with random attributes.
-    pub(crate) async fn add_dummy_payment_rand() -> Result<gl_client::pb::Payment> {
+    pub(crate) async fn add_dummy_payment_rand() -> Result<Payment> {
         let preimage = sha256::Hash::hash(&rand_vec_u8(10));
         let inv = rand_invoice_with_description_hash_and_preimage("test".into(), preimage)?;
 
@@ -328,6 +323,7 @@ impl MockNodeAPI {
             status: 1,
             created_at: random(),
             destination: rand_vec_u8(32),
+            completed_at: random(),
         };
 
         Self::save_payment_for_future_sync_updates(gl_payment.clone()).await
@@ -336,29 +332,31 @@ impl MockNodeAPI {
     /// Include payment in the result of [MockNodeAPI::pull_changed].
     async fn save_payment_for_future_sync_updates(
         gl_payment: gl_client::pb::Payment,
-    ) -> Result<gl_client::pb::Payment> {
+    ) -> Result<Payment> {
         let mut cloud_payments = CLOUD_PAYMENTS.lock().await;
 
         // Only store it if a payment with the same ID doesn't already exist
         // This allows us to initialize a MockBreezServer with a list of known payments using
         // breez_services::tests::breez_services_with(vec), but not replace them when
         // send_payment is called in tests for those payments.
-        match cloud_payments
+        let gl_payment = match cloud_payments
             .iter()
             .find(|p| p.payment_hash == gl_payment.payment_hash)
         {
             None => {
                 // If payment is not already known, add it to the list and return it
                 cloud_payments.push(gl_payment.clone());
-                Ok(gl_payment)
+                gl_payment
             }
             Some(p) => {
                 // If a payment already exists (by ID), then do not replace it and return it
                 // The existing version is returned, because that's initialized with the preimage
                 // on mock breez service init
-                Ok(p.clone())
+                p.clone()
             }
-        }
+        };
+
+        crate::greenlight::payment_to_transaction(gl_payment)
     }
 }
 
@@ -427,31 +425,6 @@ pub(crate) fn rand_invoice_with_description_hash(
     rand_invoice_with_description_hash_and_preimage(expected_desc, preimage)
 }
 
-pub(crate) fn rand_invoice_with_description_hash_and_preimage(
-    expected_desc: String,
-    preimage: sha256::Hash,
-) -> Result<lightning_invoice::Invoice> {
-    let expected_desc_hash = Hash::hash(expected_desc.as_bytes());
-
-    let hashed_preimage = Message::from_hashed_data::<sha256::Hash>(&preimage[..]);
-    let payment_hash = hashed_preimage.as_ref();
-
-    let payment_secret = PaymentSecret([42u8; 32]);
-
-    let secp = Secp256k1::new();
-    let key_pair = KeyPair::new(&secp, &mut rand::thread_rng());
-    let private_key = key_pair.secret_key();
-
-    InvoiceBuilder::new(Currency::Bitcoin)
-        .description_hash(expected_desc_hash)
-        .amount_milli_satoshis(50 * 1000)
-        .payment_hash(Hash::from_slice(payment_hash)?)
-        .payment_secret(payment_secret)
-        .current_timestamp()
-        .min_final_cltv_expiry(144)
-        .build_signed(|hash| Secp256k1::new().sign_ecdsa_recoverable(hash, &private_key))
-        .map_err(|err| anyhow!(err))
-}
 
 pub(crate) fn rand_invoice_with_description_hash_and_preimage(
     expected_desc: String,

@@ -230,20 +230,17 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kDefaultConfigConstMeta;
 }
 
-class AesSuccessActionData {
+/// Wrapper for the decrypted [AesSuccessActionData] payload
+class AesSuccessActionDataDecrypted {
   /// Contents description, up to 144 characters
   final String description;
 
-  /// Base64, AES-encrypted data where encryption key is payment preimage, up to 4kb of characters
-  final String ciphertext;
+  /// Decrypted content
+  final String plaintext;
 
-  /// Base64, initialization vector, exactly 24 characters
-  final String iv;
-
-  AesSuccessActionData({
+  AesSuccessActionDataDecrypted({
     required this.description,
-    required this.ciphertext,
-    required this.iv,
+    required this.plaintext,
   });
 }
 
@@ -549,7 +546,7 @@ class LnUrlPayRequestData {
 @freezed
 class LnUrlPayResult with _$LnUrlPayResult {
   const factory LnUrlPayResult.endpointSuccess({
-    SuccessAction? data,
+    SuccessActionProcessed? data,
   }) = LnUrlPayResult_EndpointSuccess;
   const factory LnUrlPayResult.endpointError({
     required LnUrlErrorData data,
@@ -822,21 +819,23 @@ class RouteHintHop {
 }
 
 @freezed
-class SuccessAction with _$SuccessAction {
-  /// AES type, described in LUD-10
-  const factory SuccessAction.aes(
-    AesSuccessActionData field0,
-  ) = SuccessAction_Aes;
+class SuccessActionProcessed with _$SuccessActionProcessed {
+  /// See [SuccessAction::Aes] for received payload
+  ///
+  /// See [AesSuccessActionDataDecrypted] for decrypted payload
+  const factory SuccessActionProcessed.aes(
+    AesSuccessActionDataDecrypted field0,
+  ) = SuccessActionProcessed_Aes;
 
-  /// Message type, described in LUD-09
-  const factory SuccessAction.message(
+  /// See [SuccessAction::Message]
+  const factory SuccessActionProcessed.message(
     MessageSuccessActionData field0,
-  ) = SuccessAction_Message;
+  ) = SuccessActionProcessed_Message;
 
-  /// URL type, described in LUD-09
-  const factory SuccessAction.url(
+  /// See [SuccessAction::Url]
+  const factory SuccessActionProcessed.url(
     UrlSuccessActionData field0,
-  ) = SuccessAction_Url;
+  ) = SuccessActionProcessed_Url;
 }
 
 /// Represents the details of an on-going swap.
@@ -1574,14 +1573,14 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return (raw as List<dynamic>).cast<String>();
   }
 
-  AesSuccessActionData _wire2api_aes_success_action_data(dynamic raw) {
+  AesSuccessActionDataDecrypted _wire2api_aes_success_action_data_decrypted(
+      dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 3)
-      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
-    return AesSuccessActionData(
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return AesSuccessActionDataDecrypted(
       description: _wire2api_String(arr[0]),
-      ciphertext: _wire2api_String(arr[1]),
-      iv: _wire2api_String(arr[2]),
+      plaintext: _wire2api_String(arr[1]),
     );
   }
 
@@ -1602,9 +1601,9 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return raw as bool;
   }
 
-  AesSuccessActionData _wire2api_box_autoadd_aes_success_action_data(
-      dynamic raw) {
-    return _wire2api_aes_success_action_data(raw);
+  AesSuccessActionDataDecrypted
+      _wire2api_box_autoadd_aes_success_action_data_decrypted(dynamic raw) {
+    return _wire2api_aes_success_action_data_decrypted(raw);
   }
 
   BitcoinAddressData _wire2api_box_autoadd_bitcoin_address_data(dynamic raw) {
@@ -1953,7 +1952,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     switch (raw[0]) {
       case 0:
         return LnUrlPayResult_EndpointSuccess(
-          data: _wire2api_opt_success_action(raw[1]),
+          data: _wire2api_opt_success_action_processed(raw[1]),
         );
       case 1:
         return LnUrlPayResult_EndpointError(
@@ -2117,8 +2116,8 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return raw == null ? null : _wire2api_list_localized_name(raw);
   }
 
-  SuccessAction? _wire2api_opt_success_action(dynamic raw) {
-    return raw == null ? null : _wire2api_success_action(raw);
+  SuccessActionProcessed? _wire2api_opt_success_action_processed(dynamic raw) {
+    return raw == null ? null : _wire2api_success_action_processed(raw);
   }
 
   Payment _wire2api_payment(dynamic raw) {
@@ -2203,18 +2202,18 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     );
   }
 
-  SuccessAction _wire2api_success_action(dynamic raw) {
+  SuccessActionProcessed _wire2api_success_action_processed(dynamic raw) {
     switch (raw[0]) {
       case 0:
-        return SuccessAction_Aes(
-          _wire2api_box_autoadd_aes_success_action_data(raw[1]),
+        return SuccessActionProcessed_Aes(
+          _wire2api_box_autoadd_aes_success_action_data_decrypted(raw[1]),
         );
       case 1:
-        return SuccessAction_Message(
+        return SuccessActionProcessed_Message(
           _wire2api_box_autoadd_message_success_action_data(raw[1]),
         );
       case 2:
-        return SuccessAction_Url(
+        return SuccessActionProcessed_Url(
           _wire2api_box_autoadd_url_success_action_data(raw[1]),
         );
       default:

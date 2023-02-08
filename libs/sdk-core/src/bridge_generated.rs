@@ -37,10 +37,10 @@ use crate::input_parser::LnUrlWithdrawRequestData;
 use crate::invoice::LNInvoice;
 use crate::invoice::RouteHint;
 use crate::invoice::RouteHintHop;
-use crate::lnurl::pay::model::AesSuccessActionData;
+use crate::lnurl::pay::model::AesSuccessActionDataDecrypted;
 use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::lnurl::pay::model::MessageSuccessActionData;
-use crate::lnurl::pay::model::SuccessAction;
+use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lnurl::pay::model::UrlSuccessActionData;
 use crate::lnurl::withdraw::model::LnUrlWithdrawCallbackStatus;
 use crate::lsp::LspInformation;
@@ -625,17 +625,12 @@ impl Wire2Api<u8> for u8 {
 
 // Section: impl IntoDart
 
-impl support::IntoDart for AesSuccessActionData {
+impl support::IntoDart for AesSuccessActionDataDecrypted {
     fn into_dart(self) -> support::DartAbi {
-        vec![
-            self.description.into_dart(),
-            self.ciphertext.into_dart(),
-            self.iv.into_dart(),
-        ]
-        .into_dart()
+        vec![self.description.into_dart(), self.plaintext.into_dart()].into_dart()
     }
 }
-impl support::IntoDartExceptPrimitive for AesSuccessActionData {}
+impl support::IntoDartExceptPrimitive for AesSuccessActionDataDecrypted {}
 
 impl support::IntoDart for BitcoinAddressData {
     fn into_dart(self) -> support::DartAbi {
@@ -1023,7 +1018,7 @@ impl support::IntoDart for RouteHintHop {
 }
 impl support::IntoDartExceptPrimitive for RouteHintHop {}
 
-impl support::IntoDart for SuccessAction {
+impl support::IntoDart for SuccessActionProcessed {
     fn into_dart(self) -> support::DartAbi {
         match self {
             Self::Aes(field0) => vec![0.into_dart(), field0.into_dart()],
@@ -1033,7 +1028,7 @@ impl support::IntoDart for SuccessAction {
         .into_dart()
     }
 }
-impl support::IntoDartExceptPrimitive for SuccessAction {}
+impl support::IntoDartExceptPrimitive for SuccessActionProcessed {}
 impl support::IntoDart for SwapInfo {
     fn into_dart(self) -> support::DartAbi {
         vec![
