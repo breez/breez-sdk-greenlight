@@ -42,7 +42,7 @@ The libs folder contains three sub folders and is a structured as a cargo worksp
 The tools folder contains a simple command line interface (sdk-cli) to the SDK
 See instruction in each sub project readme on how to build, test and run.
 
-Remark: in order to build the Breez SDK you need to have access to the Greenlight repository. Greenlight will eventually be open-sourced (with an MIT license), but is not quite ready at this time. Feel free to open an issue like [this one](https://github.com/breez/breez-sdk/issues/70) if you want to access ahead of time.
+Remark: in order to build the Breez SDK you need to have access to the Greenlight repository. Greenlight will eventually be open-sourced (with an MIT license), but is not yet public. To access Greenlight, please email us at contact@breez.technology.
 
 ## API
 To get started with the Breez SDK API, please follow the documentation [here](https://breez.github.io/breez-sdk-rustdoc/doc/breez_sdk_core/). 
