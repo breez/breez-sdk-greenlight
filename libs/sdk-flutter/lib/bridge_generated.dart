@@ -230,6 +230,20 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kDefaultConfigConstMeta;
 }
 
+/// Wrapper for the decrypted [AesSuccessActionData] payload
+class AesSuccessActionDataDecrypted {
+  /// Contents description, up to 144 characters
+  final String description;
+
+  /// Decrypted content
+  final String plaintext;
+
+  AesSuccessActionDataDecrypted({
+    required this.description,
+    required this.plaintext,
+  });
+}
+
 /// Wrapped in a [BitcoinAddress], this is the result of [parse] when given a plain or BIP-21 BTC address.
 class BitcoinAddressData {
   final String address;
@@ -262,7 +276,7 @@ class BreezEvent with _$BreezEvent {
   /// Indicates that the local SDK state has just been sync-ed with the remote components
   const factory BreezEvent.synced() = BreezEvent_Synced;
 
-  /// Indicates that an outgoing payment has been completed succesfully
+  /// Indicates that an outgoing payment has been completed successfully
   const factory BreezEvent.paymentSucceed({
     required Payment details,
   }) = BreezEvent_PaymentSucceed;
@@ -477,6 +491,10 @@ class LnPaymentDetails {
   final bool keysend;
   final String bolt11;
 
+  /// Only set for [PaymentType::Sent] payments that are part of a LNURL-pay workflow where
+  /// the endpoint returns a success action
+  final SuccessActionProcessed? lnurlSuccessAction;
+
   LnPaymentDetails({
     required this.paymentHash,
     required this.label,
@@ -484,6 +502,7 @@ class LnPaymentDetails {
     required this.paymentPreimage,
     required this.keysend,
     required this.bolt11,
+    this.lnurlSuccessAction,
   });
 }
 
@@ -532,7 +551,7 @@ class LnUrlPayRequestData {
 @freezed
 class LnUrlPayResult with _$LnUrlPayResult {
   const factory LnUrlPayResult.endpointSuccess({
-    SuccessAction? data,
+    SuccessActionProcessed? data,
   }) = LnUrlPayResult_EndpointSuccess;
   const factory LnUrlPayResult.endpointError({
     required LnUrlErrorData data,
@@ -805,13 +824,23 @@ class RouteHintHop {
 }
 
 @freezed
-class SuccessAction with _$SuccessAction {
-  const factory SuccessAction.message(
-    MessageSuccessActionData field0,
-  ) = SuccessAction_Message;
-  const factory SuccessAction.url(
-    UrlSuccessActionData field0,
-  ) = SuccessAction_Url;
+class SuccessActionProcessed with _$SuccessActionProcessed {
+  /// See [SuccessAction::Aes] for received payload
+  ///
+  /// See [AesSuccessActionDataDecrypted] for decrypted payload
+  const factory SuccessActionProcessed.aes({
+    required AesSuccessActionDataDecrypted data,
+  }) = SuccessActionProcessed_Aes;
+
+  /// See [SuccessAction::Message]
+  const factory SuccessActionProcessed.message({
+    required MessageSuccessActionData data,
+  }) = SuccessActionProcessed_Message;
+
+  /// See [SuccessAction::Url]
+  const factory SuccessActionProcessed.url({
+    required UrlSuccessActionData data,
+  }) = SuccessActionProcessed_Url;
 }
 
 /// Represents the details of an on-going swap.
@@ -1549,6 +1578,17 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return (raw as List<dynamic>).cast<String>();
   }
 
+  AesSuccessActionDataDecrypted _wire2api_aes_success_action_data_decrypted(
+      dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return AesSuccessActionDataDecrypted(
+      description: _wire2api_String(arr[0]),
+      plaintext: _wire2api_String(arr[1]),
+    );
+  }
+
   BitcoinAddressData _wire2api_bitcoin_address_data(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 5)
@@ -1564,6 +1604,11 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   bool _wire2api_bool(dynamic raw) {
     return raw as bool;
+  }
+
+  AesSuccessActionDataDecrypted
+      _wire2api_box_autoadd_aes_success_action_data_decrypted(dynamic raw) {
+    return _wire2api_aes_success_action_data_decrypted(raw);
   }
 
   BitcoinAddressData _wire2api_box_autoadd_bitcoin_address_data(dynamic raw) {
@@ -1865,8 +1910,8 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   LnPaymentDetails _wire2api_ln_payment_details(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 6)
-      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
     return LnPaymentDetails(
       paymentHash: _wire2api_String(arr[0]),
       label: _wire2api_String(arr[1]),
@@ -1874,6 +1919,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       paymentPreimage: _wire2api_String(arr[3]),
       keysend: _wire2api_bool(arr[4]),
       bolt11: _wire2api_String(arr[5]),
+      lnurlSuccessAction: _wire2api_opt_success_action_processed(arr[6]),
     );
   }
 
@@ -1912,7 +1958,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     switch (raw[0]) {
       case 0:
         return LnUrlPayResult_EndpointSuccess(
-          data: _wire2api_opt_success_action(raw[1]),
+          data: _wire2api_opt_success_action_processed(raw[1]),
         );
       case 1:
         return LnUrlPayResult_EndpointError(
@@ -2076,8 +2122,8 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return raw == null ? null : _wire2api_list_localized_name(raw);
   }
 
-  SuccessAction? _wire2api_opt_success_action(dynamic raw) {
-    return raw == null ? null : _wire2api_success_action(raw);
+  SuccessActionProcessed? _wire2api_opt_success_action_processed(dynamic raw) {
+    return raw == null ? null : _wire2api_success_action_processed(raw);
   }
 
   Payment _wire2api_payment(dynamic raw) {
@@ -2162,15 +2208,19 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     );
   }
 
-  SuccessAction _wire2api_success_action(dynamic raw) {
+  SuccessActionProcessed _wire2api_success_action_processed(dynamic raw) {
     switch (raw[0]) {
       case 0:
-        return SuccessAction_Message(
-          _wire2api_box_autoadd_message_success_action_data(raw[1]),
+        return SuccessActionProcessed_Aes(
+          data: _wire2api_box_autoadd_aes_success_action_data_decrypted(raw[1]),
         );
       case 1:
-        return SuccessAction_Url(
-          _wire2api_box_autoadd_url_success_action_data(raw[1]),
+        return SuccessActionProcessed_Message(
+          data: _wire2api_box_autoadd_message_success_action_data(raw[1]),
+        );
+      case 2:
+        return SuccessActionProcessed_Url(
+          data: _wire2api_box_autoadd_url_success_action_data(raw[1]),
         );
       default:
         throw Exception("unreachable");

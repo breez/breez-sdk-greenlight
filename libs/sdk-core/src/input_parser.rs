@@ -540,7 +540,7 @@ mod tests {
         let addr = "1andreas3batLhQa2FawWjeyjCqyBzypd";
 
         // Address with amount
-        let addr_1 = format!("bitcoin:{}?amount=0.00002000", addr);
+        let addr_1 = format!("bitcoin:{addr}?amount=0.00002000");
         match parse(&addr_1).await? {
             InputType::BitcoinAddress {
                 address: addr_with_amount_parsed,
@@ -556,7 +556,7 @@ mod tests {
 
         // Address with amount and label
         let label = "test-label";
-        let addr_2 = format!("bitcoin:{}?amount=0.00002000&label={}", addr, label);
+        let addr_2 = format!("bitcoin:{addr}?amount=0.00002000&label={label}");
         match parse(&addr_2).await? {
             InputType::BitcoinAddress {
                 address: addr_with_amount_parsed,
@@ -572,10 +572,7 @@ mod tests {
 
         // Address with amount, label and message
         let message = "test-message";
-        let addr_3 = format!(
-            "bitcoin:{}?amount=0.00002000&label={}&message={}",
-            addr, label, message
-        );
+        let addr_3 = format!("bitcoin:{addr}?amount=0.00002000&label={label}&message={message}");
         match parse(&addr_3).await? {
             InputType::BitcoinAddress {
                 address: addr_with_amount_parsed,
@@ -603,7 +600,7 @@ mod tests {
         ));
 
         // Invoice with prefix
-        let invoice_with_prefix = format!("lightning:{}", bolt11);
+        let invoice_with_prefix = format!("lightning:{bolt11}");
         assert!(matches!(
             parse(&invoice_with_prefix).await?,
             InputType::Bolt11 { invoice: _invoice }
@@ -619,7 +616,7 @@ mod tests {
 
         // Address and invoice
         // BOLT11 is the first URI arg (preceded by '?')
-        let addr_1 = format!("bitcoin:{}?lightning={}", addr, bolt11);
+        let addr_1 = format!("bitcoin:{addr}?lightning={bolt11}");
         assert!(matches!(
             parse(&addr_1).await?,
             InputType::Bolt11 { invoice: _invoice }
@@ -627,7 +624,7 @@ mod tests {
 
         // Address, amount and invoice
         // BOLT11 is not the first URI arg (preceded by '&')
-        let addr_2 = format!("bitcoin:{}?amount=0.00002000&lightning={}", addr, bolt11);
+        let addr_2 = format!("bitcoin:{addr}?amount=0.00002000&lightning={bolt11}");
         assert!(matches!(
             parse(&addr_2).await?,
             InputType::Bolt11 { invoice: _invoice }
@@ -774,7 +771,7 @@ mod tests {
         let lnurl_withdraw_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4exctthd96xserjv9mn7um9wdekjmmw843xxwpexdnxzen9vgunsvfexq6rvdecx93rgdmyxcuxverrvcursenpxvukzv3c8qunsdecx33nzwpnvg6ryc3hv93nzvecxgcxgwp3h33lxk";
         assert_eq!(
             lnurl_decode(lnurl_withdraw_encoded)?,
-            format!("https://localhost{}", path)
+            format!("https://localhost{path}")
         );
 
         if let LnUrlWithdraw { data: wd } = parse(lnurl_withdraw_encoded).await? {
@@ -893,7 +890,7 @@ mod tests {
         let lnurl_pay_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttsv9un7um9wdekjmmw84jxywf5x43rvv35xgmr2enrxanr2cfcvsmnwe3jxcukvde48qukgdec89snwde3vfjxvepjxpjnjvtpxd3kvdnxx5crxwpjvyunsephsz36jf";
         assert_eq!(
             lnurl_decode(lnurl_pay_encoded)?,
-            format!("https://localhost{}", path)
+            format!("https://localhost{path}")
         );
 
         if let LnUrlPay { data: pd } = parse(lnurl_pay_encoded).await? {
@@ -1062,7 +1059,7 @@ mod tests {
             "/lnurl-pay?session=db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7";
         let _m = mock_lnurl_pay_endpoint(pay_path, None);
 
-        let lnurl_pay_url = format!("lnurlp://localhost{}", pay_path);
+        let lnurl_pay_url = format!("lnurlp://localhost{pay_path}");
         if let LnUrlPay { data: pd } = parse(&lnurl_pay_url).await? {
             assert_eq!(pd.callback, "https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7");
             assert_eq!(pd.max_sendable, 16000);
@@ -1101,7 +1098,7 @@ mod tests {
         let _m = mock_lnurl_withdraw_endpoint(withdraw_path, None);
 
         if let LnUrlWithdraw { data: wd } =
-            parse(&format!("lnurlw://localhost{}", withdraw_path)).await?
+            parse(&format!("lnurlw://localhost{withdraw_path}")).await?
         {
             assert_eq!(wd.callback, "https://localhost/lnurl-withdraw/callback/e464f841c44dbdd86cee4f09f4ccd3ced58d2e24f148730ec192748317b74538");
             assert_eq!(
@@ -1120,7 +1117,7 @@ mod tests {
     async fn test_lnurl_auth_lud_17() -> Result<()> {
         let auth_path = "/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822";
 
-        if let LnUrlAuth { data: ad } = parse(&format!("keyauth://localhost{}", auth_path)).await? {
+        if let LnUrlAuth { data: ad } = parse(&format!("keyauth://localhost{auth_path}")).await? {
             assert_eq!(
                 ad.k1,
                 "1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822"
@@ -1137,7 +1134,7 @@ mod tests {
         let expected_error_msg = "test pay error";
         let _m = mock_lnurl_pay_endpoint(pay_path, Some(expected_error_msg.to_string()));
 
-        if let LnUrlError { data: msg } = parse(&format!("lnurlp://localhost{}", pay_path)).await? {
+        if let LnUrlError { data: msg } = parse(&format!("lnurlp://localhost{pay_path}")).await? {
             assert_eq!(msg.reason, expected_error_msg);
             return Ok(());
         }
@@ -1152,7 +1149,7 @@ mod tests {
         let _m = mock_lnurl_withdraw_endpoint(withdraw_path, Some(expected_error_msg.to_string()));
 
         if let LnUrlError { data: msg } =
-            parse(&format!("lnurlw://localhost{}", withdraw_path)).await?
+            parse(&format!("lnurlw://localhost{withdraw_path}")).await?
         {
             assert_eq!(msg.reason, expected_error_msg);
             return Ok(());
