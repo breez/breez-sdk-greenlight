@@ -29,6 +29,12 @@ class BreezBridge {
 
   Stream<InvoicePaidDetails> get invoicePaidStream => _invoicePaidStream.stream;
 
+  /// Listen to payment results
+  final StreamController<Payment> _paymentResultStream =
+      BehaviorSubject<Payment>();
+
+  Stream<Payment> get paymentResultStream => _paymentResultStream.stream;
+
   BreezBridge() {
     /// Listen to BreezEvent's(new block, invoice paid, synced)
     _lnToolkit.breezEventsStream().listen((event) async {
@@ -39,6 +45,12 @@ class BreezBridge {
       }
       if (event is BreezEvent_Synced) {
         await fetchNodeData();
+      }
+      if (event is BreezEvent_PaymentSucceed) {
+        _paymentResultStream.add(event.details);
+      }
+      if (event is BreezEvent_PaymentFailed) {
+        _paymentResultStream.addError(Exception(event.error));
       }
     });
 
