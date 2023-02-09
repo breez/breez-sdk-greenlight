@@ -421,6 +421,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "block-padding"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0a90ec2df9600c28a01c56c4784c9207a96d2451833aeceb8cc97e4c9548bb78"
+dependencies = [
+ "generic-array",
+]
+
+[[package]]
 name = "bolt-derive"
 version = "0.1.0"
 source = "git+ssh://git@github.com/Blockstream/greenlight.git#7b9086f2e05d1bb04a95d557da2a24808b584c79"
@@ -434,11 +443,13 @@ dependencies = [
 name = "breez-sdk-core"
 version = "0.1.0"
 dependencies = [
+ "aes",
  "anyhow",
  "base64 0.13.1",
  "bip21",
  "bitcoin",
  "bitcoin_hashes",
+ "cbc",
  "ecies",
  "flutter_rust_bridge",
  "gl-client",
@@ -541,6 +552,15 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror",
+]
+
+[[package]]
+name = "cbc"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "26b52a9543ae338f279b96b0b9fed9c8093744685043739079ce85cd58f289a6"
+dependencies = [
+ "cipher",
 ]
 
 [[package]]
@@ -1433,6 +1453,7 @@ version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a0c10553d664a4d0bcff9f4215d0aac67a639cc68ef660840afe309b807bc9f5"
 dependencies = [
+ "block-padding",
  "generic-array",
 ]
 
