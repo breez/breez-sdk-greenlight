@@ -190,6 +190,15 @@ impl SqliteStorage {
              
              DROP TABLE old_swaps;            
             "),
+            M::up(
+                "
+             CREATE TABLE IF NOT EXISTS payments_external_info (
+              payment_id TEXT NOT NULL PRIMARY KEY,
+              lnurl_success_action TEXT,
+              FOREIGN KEY(payment_id) REFERENCES payments(id)
+             ) STRICT;
+            ",
+            ),
         ]);
 
         let mut conn = self.get_connection()?;

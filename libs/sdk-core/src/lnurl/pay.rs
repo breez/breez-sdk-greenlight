@@ -128,7 +128,7 @@ pub(crate) mod model {
 
     use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
     use anyhow::{anyhow, Result};
-    use serde::Deserialize;
+    use serde::{Deserialize, Serialize};
 
     pub(crate) enum ValidatedCallbackResponse {
         EndpointSuccess { data: CallbackResponse },
@@ -137,7 +137,7 @@ pub(crate) mod model {
 
     /// Contains the result of the entire LNURL-pay interaction, as reported by the LNURL endpoint.
     ///
-    /// * `EndpointSuccess` indicates the payment is complete. The endpoint may return a `SuccessAction`,
+    /// * `EndpointSuccess` indicates the payment is complete. The endpoint may return a `SuccessActionProcessed`,
     /// in which case, the wallet has to present it to the user as described in
     /// <https://github.com/lnurl/luds/blob/luds/09.md>
     ///
@@ -145,8 +145,12 @@ pub(crate) mod model {
     /// field with the reason.
     #[derive(Debug)]
     pub enum LnUrlPayResult {
-        EndpointSuccess { data: Option<SuccessAction> },
-        EndpointError { data: LnUrlErrorData },
+        EndpointSuccess {
+            data: Option<SuccessActionProcessed>,
+        },
+        EndpointError {
+            data: LnUrlErrorData,
+        },
     }
 
     #[derive(Deserialize, Debug)]
@@ -156,6 +160,9 @@ pub(crate) mod model {
         pub success_action: Option<SuccessAction>,
     }
 
+    /// Payload of the AES success action, as received from the LNURL endpoint
+    ///
+    /// See [AesSuccessActionDataDecrypted] for a similar wrapper containing the decrypted payload
     #[derive(Deserialize, Debug)]
     pub struct AesSuccessActionData {
         /// Contents description, up to 144 characters
@@ -168,15 +175,42 @@ pub(crate) mod model {
         pub iv: String,
     }
 
-    #[derive(Deserialize, Debug)]
+    /// Wrapper for the decrypted [AesSuccessActionData] payload
+    #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
+    pub struct AesSuccessActionDataDecrypted {
+        /// Contents description, up to 144 characters
+        pub description: String,
+
+        /// Decrypted content
+        pub plaintext: String,
+    }
+
+    #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
     pub struct MessageSuccessActionData {
         pub message: String,
     }
 
-    #[derive(Deserialize, Debug)]
+    #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
     pub struct UrlSuccessActionData {
         pub description: String,
         pub url: String,
+    }
+
+    /// [SuccessAction] where contents are ready to be consumed by the caller
+    ///
+    /// Contents are identical to [SuccessAction], except for AES where the ciphertext is decrypted.
+    #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
+    pub enum SuccessActionProcessed {
+        /// See [SuccessAction::Aes] for received payload
+        ///
+        /// See [AesSuccessActionDataDecrypted] for decrypted payload
+        Aes { data: AesSuccessActionDataDecrypted },
+
+        /// See [SuccessAction::Message]
+        Message { data: MessageSuccessActionData },
+
+        /// See [SuccessAction::Url]
+        Url { data: UrlSuccessActionData },
     }
 
     /// Supported success action types
@@ -236,6 +270,22 @@ pub(crate) mod model {
                 .encrypt_padded_vec_mut::<Pkcs7>(plaintext.as_bytes());
 
             Ok(base64::encode(ciphertext_bytes))
+        }
+    }
+
+    impl TryFrom<(AesSuccessActionData, &[u8; 32])> for AesSuccessActionDataDecrypted {
+        type Error = anyhow::Error;
+
+        fn try_from(
+            value: (AesSuccessActionData, &[u8; 32]),
+        ) -> std::result::Result<Self, Self::Error> {
+            let data = value.0;
+            let key = value.1;
+
+            Ok(AesSuccessActionDataDecrypted {
+                description: data.description.clone(),
+                plaintext: data.decrypt(key)?,
+            })
         }
     }
 
@@ -432,7 +482,7 @@ mod tests {
         user_amount_sat: u64,
         error: Option<String>,
         pr: String,
-        plaintext: String,
+        sa_data: AesSuccessActionDataDecrypted,
         iv_bytes: [u8; 16],
         key_bytes: [u8; 32],
     ) -> Result<Mock> {
@@ -441,7 +491,7 @@ mod tests {
         let mockito_path: &str = &format!("{}?{}", url.path(), url.query().unwrap());
 
         let iv_base64 = base64::encode(iv_bytes);
-        let cipertext = AesSuccessActionData::encrypt(&key_bytes, &iv_bytes, plaintext)?;
+        let cipertext = AesSuccessActionData::encrypt(&key_bytes, &iv_bytes, sa_data.plaintext)?;
 
         let expected_payload = r#"
 {
@@ -449,7 +499,7 @@ mod tests {
     "routes":[],
     "successAction": {
         "tag":"aes",
-        "description":"test description",
+        "description":"token-description",
         "iv":"token-iv",
         "ciphertext":"token-ciphertext"
     }
@@ -458,6 +508,7 @@ mod tests {
         .replace('\n', "")
         .replace("token-iv", &iv_base64)
         .replace("token-ciphertext", &cipertext)
+        .replace("token-description", &sa_data.description)
         .replace("token-invoice", &pr);
 
         let response_body = match error {
@@ -497,8 +548,8 @@ mod tests {
     fn test_lnurl_pay_validate_invoice() -> Result<()> {
         let req = get_test_pay_req_data(0, 100, 0);
         let temp_desc = req.metadata_str.clone();
-        let inv = rand_invoice_with_description_hash(temp_desc.clone());
-        let payreq: String = rand_invoice_with_description_hash(temp_desc).to_string();
+        let inv = rand_invoice_with_description_hash(temp_desc.clone())?;
+        let payreq: String = rand_invoice_with_description_hash(temp_desc)?.to_string();
 
         assert!(
             validate_invoice(inv.amount_milli_satoshis().unwrap() / 1000, &payreq, &req).is_ok()
@@ -676,7 +727,7 @@ mod tests {
     async fn test_lnurl_pay_no_success_action() -> Result<()> {
         let pay_req = get_test_pay_req_data(0, 100, 0);
         let temp_desc = pay_req.metadata_str.clone();
-        let inv = rand_invoice_with_description_hash(temp_desc);
+        let inv = rand_invoice_with_description_hash(temp_desc)?;
         let user_amount_sat = inv.amount_milli_satoshis().unwrap() / 1000;
         let _m = mock_lnurl_pay_callback_endpoint_no_success_action(
             &pay_req,
@@ -685,7 +736,7 @@ mod tests {
             inv.to_string(),
         )?;
 
-        let mock_breez_services = crate::breez_services::tests::breez_services().await;
+        let mock_breez_services = crate::breez_services::tests::breez_services().await?;
         match mock_breez_services
             .lnurl_pay(user_amount_sat, None, pay_req)
             .await?
@@ -708,7 +759,7 @@ mod tests {
             None,
         )?;
 
-        let mock_breez_services = crate::breez_services::tests::breez_services().await;
+        let mock_breez_services = crate::breez_services::tests::breez_services().await?;
         let r = mock_breez_services
             .lnurl_pay(user_amount_sat, None, pay_req)
             .await;
@@ -722,7 +773,7 @@ mod tests {
     async fn test_lnurl_pay_msg_success_action() -> Result<()> {
         let pay_req = get_test_pay_req_data(0, 100, 0);
         let temp_desc = pay_req.metadata_str.clone();
-        let inv = rand_invoice_with_description_hash(temp_desc);
+        let inv = rand_invoice_with_description_hash(temp_desc)?;
         let user_amount_sat = inv.amount_milli_satoshis().unwrap() / 1000;
         let _m = mock_lnurl_pay_callback_endpoint_msg_success_action(
             &pay_req,
@@ -731,7 +782,7 @@ mod tests {
             inv.to_string(),
         )?;
 
-        let mock_breez_services = crate::breez_services::tests::breez_services().await;
+        let mock_breez_services = crate::breez_services::tests::breez_services().await?;
         match mock_breez_services
             .lnurl_pay(user_amount_sat, None, pay_req)
             .await?
@@ -740,7 +791,7 @@ mod tests {
                 "Expected success action in callback, but none provided"
             )),
             LnUrlPayResult::EndpointSuccess {
-                data: Some(SuccessAction::Message(msg)),
+                data: Some(SuccessActionProcessed::Message { data: msg }),
             } => match msg.message {
                 s if s == "test msg" => Ok(()),
                 _ => Err(anyhow!("Unexpected success action message content")),
@@ -753,7 +804,7 @@ mod tests {
     async fn test_lnurl_pay_msg_success_action_incorrect_amount() -> Result<()> {
         let pay_req = get_test_pay_req_data(0, 100, 0);
         let temp_desc = pay_req.metadata_str.clone();
-        let inv = rand_invoice_with_description_hash(temp_desc);
+        let inv = rand_invoice_with_description_hash(temp_desc)?;
         let user_amount_sat = (inv.amount_milli_satoshis().unwrap() / 1000) + 1;
         let _m = mock_lnurl_pay_callback_endpoint_msg_success_action(
             &pay_req,
@@ -762,7 +813,7 @@ mod tests {
             inv.to_string(),
         )?;
 
-        let mock_breez_services = crate::breez_services::tests::breez_services().await;
+        let mock_breez_services = crate::breez_services::tests::breez_services().await?;
         assert!(mock_breez_services
             .lnurl_pay(user_amount_sat, None, pay_req)
             .await
@@ -775,7 +826,7 @@ mod tests {
     async fn test_lnurl_pay_msg_success_action_error_from_endpoint() -> Result<()> {
         let pay_req = get_test_pay_req_data(0, 100, 0);
         let temp_desc = pay_req.metadata_str.clone();
-        let inv = rand_invoice_with_description_hash(temp_desc);
+        let inv = rand_invoice_with_description_hash(temp_desc)?;
         let user_amount_sat = inv.amount_milli_satoshis().unwrap() / 1000;
         let expected_error_msg = "Error message from LNURL endpoint";
         let _m = mock_lnurl_pay_callback_endpoint_msg_success_action(
@@ -785,7 +836,7 @@ mod tests {
             inv.to_string(),
         )?;
 
-        let mock_breez_services = crate::breez_services::tests::breez_services().await;
+        let mock_breez_services = crate::breez_services::tests::breez_services().await?;
         let res = mock_breez_services
             .lnurl_pay(user_amount_sat, None, pay_req)
             .await;
@@ -806,7 +857,7 @@ mod tests {
     async fn test_lnurl_pay_url_success_action() -> Result<()> {
         let pay_req = get_test_pay_req_data(0, 100, 0);
         let temp_desc = pay_req.metadata_str.clone();
-        let inv = rand_invoice_with_description_hash(temp_desc);
+        let inv = rand_invoice_with_description_hash(temp_desc)?;
         let user_amount_sat = inv.amount_milli_satoshis().unwrap() / 1000;
         let _m = mock_lnurl_pay_callback_endpoint_url_success_action(
             &pay_req,
@@ -815,13 +866,13 @@ mod tests {
             inv.to_string(),
         )?;
 
-        let mock_breez_services = crate::breez_services::tests::breez_services().await;
+        let mock_breez_services = crate::breez_services::tests::breez_services().await?;
         match mock_breez_services
             .lnurl_pay(user_amount_sat, None, pay_req)
             .await?
         {
             LnUrlPayResult::EndpointSuccess {
-                data: Some(SuccessAction::Url(url)),
+                data: Some(SuccessActionProcessed::Url { data: url }),
             } => {
                 if url.url == "https://localhost/test-url" && url.description == "test description"
                 {
@@ -839,7 +890,16 @@ mod tests {
 
     #[tokio::test]
     async fn test_lnurl_pay_aes_success_action() -> Result<()> {
-        let plaintext = "Hello, test plaintext";
+        // Expected fields in the AES payload
+        let description = "test description in AES payload".to_string();
+        let plaintext = "Hello, test plaintext".to_string();
+        let sa_data = AesSuccessActionDataDecrypted {
+            description: description.clone(),
+            plaintext: plaintext.clone(),
+        };
+        let sa = SuccessActionProcessed::Aes {
+            data: sa_data.clone(),
+        };
 
         // Generate preimage
         let preimage = sha256::Hash::hash(&rand_vec_u8(10));
@@ -851,32 +911,34 @@ mod tests {
         let inv = rand_invoice_with_description_hash_and_preimage(temp_desc, preimage)?;
 
         let user_amount_sat = inv.amount_milli_satoshis().unwrap() / 1000;
+        let bolt11 = inv.to_string();
         let _m = mock_lnurl_pay_callback_endpoint_aes_success_action(
             &pay_req,
             user_amount_sat,
             None,
-            inv.to_string(),
-            plaintext.into(),
+            bolt11.clone(),
+            sa_data.clone(),
             rand::thread_rng().gen::<[u8; 16]>(),
             preimage.into_inner(),
         )?;
 
-        let mock_breez_services = crate::breez_services::tests::breez_services().await;
+        let model_payment = MockNodeAPI::add_dummy_payment_for(bolt11, Some(preimage)).await?;
+
+        let known_payments: Vec<crate::models::Payment> = vec![model_payment];
+        let mock_breez_services =
+            crate::breez_services::tests::breez_services_with(known_payments).await?;
         match mock_breez_services
             .lnurl_pay(user_amount_sat, None, pay_req)
             .await?
         {
             LnUrlPayResult::EndpointSuccess {
-                data: Some(SuccessAction::Aes(aes_data)),
-            } => {
-                if aes_data.decrypt(&preimage.into_inner())? == plaintext {
-                    Ok(())
-                } else {
-                    Err(anyhow!(
-                        "Unexpected success action content (decryption failed)"
-                    ))
-                }
-            }
+                data: Some(received_sa),
+            } => match received_sa == sa {
+                true => Ok(()),
+                false => Err(anyhow!(
+                    "Decrypted payload and description doesn't match expected success action"
+                )),
+            },
             LnUrlPayResult::EndpointSuccess { data: None } => Err(anyhow!(
                 "Expected success action in callback, but none provided"
             )),
@@ -891,7 +953,7 @@ mod tests {
 
         let amount_arg = format!("amount={}", user_amount_sat * 1000);
         let user_comment = "test comment".to_string();
-        let comment_arg = format!("comment={}", user_comment);
+        let comment_arg = format!("comment={user_comment}");
 
         let url_amount_no_comment = build_pay_callback_url(user_amount_sat, &None, &pay_req)?;
         assert!(url_amount_no_comment.contains(&amount_arg));

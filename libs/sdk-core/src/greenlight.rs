@@ -406,7 +406,7 @@ impl NodeAPI for Greenlight {
 
     async fn execute_command(&self, command: String) -> Result<String> {
         let node_cmd = NodeCommand::from_str(&command)
-            .map_err(|_| anyhow!(format!("command not found: {}", command)))?;
+            .map_err(|_| anyhow!(format!("command not found: {command}")))?;
         match node_cmd {
             NodeCommand::ListPeers => {
                 let resp = self
@@ -415,7 +415,7 @@ impl NodeAPI for Greenlight {
                     .list_peers(pb::ListPeersRequest::default())
                     .await?
                     .into_inner();
-                Ok(format!("{:?}", resp))
+                Ok(format!("{resp:?}"))
             }
             NodeCommand::ListFunds => {
                 let resp = self
@@ -424,7 +424,7 @@ impl NodeAPI for Greenlight {
                     .list_funds(pb::ListFundsRequest::default())
                     .await?
                     .into_inner();
-                Ok(format!("{:?}", resp))
+                Ok(format!("{resp:?}"))
             }
             NodeCommand::ListPayments => {
                 let resp = self
@@ -433,7 +433,7 @@ impl NodeAPI for Greenlight {
                     .list_payments(pb::ListPaymentsRequest::default())
                     .await?
                     .into_inner();
-                Ok(format!("{:?}", resp))
+                Ok(format!("{resp:?}"))
             }
             NodeCommand::ListInvoices => {
                 let resp = self
@@ -442,7 +442,7 @@ impl NodeAPI for Greenlight {
                     .list_invoices(pb::ListInvoicesRequest::default())
                     .await?
                     .into_inner();
-                Ok(format!("{:?}", resp))
+                Ok(format!("{resp:?}"))
             }
             NodeCommand::CloseAllChannels => {
                 let peers_res = self
@@ -527,7 +527,7 @@ async fn pull_transactions(
     Ok(transactions)
 }
 
-// construct a lightning transaction from an invoice
+/// Construct a lightning transaction from an invoice
 fn invoice_to_transaction(
     node_pubkey: String,
     invoice: pb::Invoice,
@@ -549,13 +549,14 @@ fn invoice_to_transaction(
                 payment_preimage: hex::encode(invoice.payment_preimage),
                 keysend: false,
                 bolt11: invoice.bolt11,
+                lnurl_success_action: None, // For received payments, this is None
             },
         },
     })
 }
 
-// construct a lightning transaction from a payment
-pub fn payment_to_transaction(payment: pb::Payment) -> Result<crate::models::Payment> {
+/// Construct a lightning transaction from a payment
+pub(crate) fn payment_to_transaction(payment: pb::Payment) -> Result<crate::models::Payment> {
     let mut description = None;
     if !payment.bolt11.is_empty() {
         description = parse_invoice(&payment.bolt11)?.description;
@@ -580,6 +581,7 @@ pub fn payment_to_transaction(payment: pb::Payment) -> Result<crate::models::Pay
                 payment_preimage: hex::encode(payment.payment_preimage),
                 keysend: payment.bolt11.is_empty(),
                 bolt11: payment.bolt11,
+                lnurl_success_action: None,
             },
         },
     })

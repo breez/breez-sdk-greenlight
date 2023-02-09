@@ -201,6 +201,6 @@ mod tests {
 
         let encoded = add_routing_hints(payreq, vec![route_hint], 100).unwrap();
 
-        print!("{:?}", encoded);
+        print!("{encoded:?}");
     }
 }
