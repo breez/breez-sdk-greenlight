@@ -15,9 +15,10 @@ use crate::lsp::LspInformation;
 use crate::models::{
     parse_short_channel_id, ChannelState, ClosedChannelPaymentDetails, Config, EnvironmentType,
     FiatAPI, GreenlightCredentials, LspAPI, Network, NodeAPI, NodeState, Payment, PaymentDetails,
-    PaymentType, PaymentTypeFilter, SwapInfo, SwapperAPI,
+    PaymentType, PaymentTypeFilter, ReverseSwapInfo, ReverseSwapperAPI, SwapInfo, SwapperAPI,
 };
 use crate::persist::db::SqliteStorage;
+use crate::reverseswap::BTCSendSwap;
 use crate::swap::BTCReceiveSwap;
 use crate::LnUrlWithdrawRequestData;
 use anyhow::{anyhow, Result};
@@ -381,6 +382,11 @@ impl BreezServices {
         Ok(None)
     }
 
+    pub async fn reverse_swap_info(&self) -> Result<ReverseSwapInfo> {
+        let rsi = crate::boltzswap::reverse_swap_info().await?;
+        return Ok(rsi);
+    }
+
     /// list non-completed expired swaps that should be refunded bu calling [BreezServices::refund]
     pub async fn list_refundables(&self) -> Result<Vec<SwapInfo>> {
         self.btc_receive_swapper.list_refundables()
@@ -622,6 +628,7 @@ struct BreezServicesBuilder {
     lsp_api: Option<Arc<dyn LspAPI>>,
     fiat_api: Option<Arc<dyn FiatAPI>>,
     swapper_api: Option<Arc<dyn SwapperAPI>>,
+    reverse_swapper_api: Option<Arc<dyn ReverseSwapperAPI>>,
 }
 
 #[allow(dead_code)]
@@ -635,6 +642,7 @@ impl BreezServicesBuilder {
             lsp_api: None,
             fiat_api: None,
             swapper_api: None,
+            reverse_swapper_api: None,
         }
     }
 
@@ -655,6 +663,14 @@ impl BreezServicesBuilder {
 
     pub fn swapper_api(&mut self, swapper_api: Arc<dyn SwapperAPI>) -> &mut Self {
         self.swapper_api = Some(swapper_api.clone());
+        self
+    }
+
+    pub fn reverse_swapper_api(
+        &mut self,
+        reverse_swapper_api: Arc<dyn ReverseSwapperAPI>,
+    ) -> &mut Self {
+        self.reverse_swapper_api = Some(reverse_swapper_api.clone());
         self
     }
 
