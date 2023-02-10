@@ -310,6 +310,7 @@ async fn main() -> Result<()> {
                     Some("stop_node") => show_results(sdk()?.stop().await),
                     Some("recommended_fees") => show_results(sdk()?.recommended_fees().await),
                     Some("receive_onchain") => show_results(sdk()?.receive_onchain().await),
+                    Some("reverse_swap_info") => show_results(sdk()?.reverse_swap_info().await),
                     Some("in_progress_swap") => show_results(sdk()?.in_progress_swap().await),
                     Some("list_refundables") => show_results(sdk()?.list_refundables().await),
                     Some("execute_dev_command") => {
