@@ -41,6 +41,7 @@ once_cell = "*"
 openssl = { version = "0.10.42", features = ["vendored"] }
 strum = "0.24.1"
 strum_macros = "0.24.1"
+const_format = "*"
 
 [dev-dependencies]
 mockito = "*"

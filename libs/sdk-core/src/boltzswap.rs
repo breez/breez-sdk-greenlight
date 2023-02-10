@@ -1,0 +1,101 @@
+use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
+use serde_json;
+
+use anyhow::Result;
+
+use const_format::concatcp;
+
+use crate::models::ReverseSwapInfo;
+
+const BOLTZ_API_URL: &str = "https://boltz.exchange/api/";
+const GETPAIRS_ENDPOINT: &str = concatcp!(BOLTZ_API_URL, "getpairs");
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Post {
+    id: Option<i32>,
+    title: String,
+    body: String,
+    #[serde(rename = "userId")]
+    user_id: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct MaximalZeroConf {
+    #[serde(rename = "baseAsset")]
+    base_asset: u64,
+    #[serde(rename = "quoteAsset")]
+    quote_asset: u64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Limits {
+    maximal: u64,
+    minimal: u64,
+    #[serde(rename = "maximalZeroConf")]
+    maximal_zero_conf: MaximalZeroConf,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct ReverseFeesAsset {
+    lockup: u64,
+    claim: u64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct FeesAsset {
+    normal: u64,
+    reverse: ReverseFeesAsset,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct MinerFees {
+    #[serde(rename = "baseAsset")]
+    base_asset: FeesAsset,
+    #[serde(rename = "quoteAsset")]
+    quote_asset: FeesAsset,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Fees {
+    percentage: f64,
+    #[serde(rename = "minerFees")]
+    miner_fees: MinerFees,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Pair {
+    rate: f64,
+    hash: String,
+    limits: Limits,
+    fees: Fees,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Pairs {
+    warnings: Vec<String>,
+    info: Vec<String>,
+    pairs: HashMap<String, Pair>,
+}
+
+pub async fn reverse_swap_info() -> Result<ReverseSwapInfo> {
+    let pairs = reqwest::get(GETPAIRS_ENDPOINT)
+        .await?
+        .json::<Pairs>()
+        .await?;
+    let btc_pair = &pairs.pairs["BTC/BTC"];
+    println!(
+        "result: {}",
+        serde_json::to_string_pretty(&btc_pair).unwrap()
+    );
+    let hash = String::from(&btc_pair.hash);
+    Ok(ReverseSwapInfo {
+        fees_hash: hash,
+        min: btc_pair.limits.minimal,
+        max: btc_pair.limits.maximal,
+        fees_percentage: btc_pair.fees.percentage,
+        fees_lockup: btc_pair.fees.miner_fees.base_asset.reverse.lockup,
+        fees_claim: btc_pair.fees.miner_fees.base_asset.reverse.claim,
+    })
+}
