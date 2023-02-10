@@ -113,6 +113,26 @@ pub trait SwapperAPI: Send + Sync {
     async fn complete_swap(&self, bolt11: String) -> Result<()>;
 }
 
+#[derive(Clone, PartialEq, Debug)]
+pub struct ReverseSwapInfo {
+    pub min: u64,
+    pub max: u64,
+    pub fees_hash: String,
+    pub fees_percentage: f64,
+    pub fees_lockup: u64,
+    pub fees_claim: u64,
+}
+
+pub struct ReverseSwap {
+    pub error_message: String,
+}
+
+/// Trait covering functionality involving swaps
+#[tonic::async_trait]
+pub trait ReverseSwapperAPI: Send + Sync {
+    async fn create_reverse_swap(&self) -> Result<ReverseSwap>;
+}
+
 /// Internal SDK log entry
 #[derive(Clone, Debug)]
 pub struct LogEntry {

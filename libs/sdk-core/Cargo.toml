@@ -53,6 +53,7 @@ openssl = { version = "0.10.42", features = ["vendored"] }
 strum = "0.24.1"
 strum_macros = "0.24.1"
 tempfile = "3"
+const_format = "*"
 
 [dev-dependencies]
 futures = "0.3.28"

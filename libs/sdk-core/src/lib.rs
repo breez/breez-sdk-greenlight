@@ -142,6 +142,7 @@ mod bridge_generated; /* AUTO INJECTED BY flutter_rust_bridge. This line may not
 extern crate log;
 
 pub mod binding;
+mod boltzswap;
 mod breez_services;
 mod chain;
 mod crypt;
@@ -155,6 +156,7 @@ mod lsp;
 mod models;
 mod moonpay;
 mod persist;
+mod reverseswap;
 mod swap;
 #[cfg(test)]
 mod test_utils;
