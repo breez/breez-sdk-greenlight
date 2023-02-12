@@ -16,7 +16,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     fun mnemonicToSeed(mnemonic: String, promise: Promise) {
         try {
             var seed = mnemonicToSeed(mnemonic);
-            var response = writableMapOf("type" to "seed", "data" to seed);
+            var response = readableArrayOf(seed);
 
             promise.resolve(response);
         } catch (e: SdkException) {

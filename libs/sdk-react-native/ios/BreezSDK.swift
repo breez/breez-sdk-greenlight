@@ -40,7 +40,7 @@ class BreezSDK: RCTEventEmitter {
         do {
             let seed = try breez_sdk.mnemonicToSeed(phrase: phrase)
             
-            resolve(["type": "seed", "data": seed])
+            resolve(seed)
         } catch let err {
             reject("error", err.localizedDescription, err)
         }

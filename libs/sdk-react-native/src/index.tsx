@@ -19,7 +19,7 @@ const BreezSDK = NativeModules.BreezSDK
 
 export async function mnemonicToSeed(phrase: string): Promise<Uint8Array> {
   const response = await BreezSDK.mnemonicToSeed(phrase);
-  console.log(response)
+  console.log(JSON.stringify(response))
 
-  return response.data;
+  return response;
 }

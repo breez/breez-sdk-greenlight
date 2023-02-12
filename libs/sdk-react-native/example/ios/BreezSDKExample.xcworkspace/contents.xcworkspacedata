@@ -2,12 +2,9 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "group:/Users/rosssavage/Source/Projects/react-native-breez-sdk/example/ios/BreezSDKExample.xcodeproj">
+      location = "group:BreezSDKExample.xcodeproj">
    </FileRef>
    <FileRef
       location = "group:Pods/Pods.xcodeproj">
-   </FileRef>
-   <FileRef
-      location = "group:BreezSDKExample.xcodeproj">
    </FileRef>
 </Workspace>

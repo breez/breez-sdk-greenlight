@@ -7,7 +7,8 @@
     "ios": "react-native run-ios",
     "start": "react-native start",
     "test": "jest",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "pods": "cd ios && pod install"
   },
   "dependencies": {
     "react": "17.0.2",
