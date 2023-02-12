@@ -11,7 +11,7 @@ class BreezSDK: RCTEventEmitter {
     }
     
     override func supportedEvents() -> [String]! {
-        return [BreezListener.emitterName]
+        return [BreezSDKListener.emitterName]
     }
     
     @objc
@@ -27,7 +27,7 @@ class BreezSDK: RCTEventEmitter {
         config.apiKey = Bundle.main.object(forInfoDictionaryKey: "BREEZ_API_KEY") as? String
         
         do {
-            self.breezServices = try breez_sdk.initServices(config: config, seed: seed, creds: self.creds, listener: BreezListener(emitter: self))
+            self.breezServices = try breez_sdk.initServices(config: config, seed: seed, creds: self.creds, listener: BreezSDKListener(emitter: self))
             
             resolve([])
         } catch let err {
@@ -41,6 +41,17 @@ class BreezSDK: RCTEventEmitter {
             let seed = try breez_sdk.mnemonicToSeed(phrase: phrase)
             
             resolve(seed)
+        } catch let err {
+            reject("error", err.localizedDescription, err)
+        }
+    }
+    
+    @objc(parseInvoice:resolver:rejecter:)
+    func parseInvoice(_ invoice: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        do {
+            let lnInvoice = try breez_sdk.parseInvoice(invoice: invoice)
+            
+            resolve(BreezSDKMapping.dictionaryOf(lnInvoice: lnInvoice))
         } catch let err {
             reject("error", err.localizedDescription, err)
         }

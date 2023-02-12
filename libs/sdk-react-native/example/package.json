@@ -8,7 +8,8 @@
     "start": "react-native start",
     "test": "jest",
     "lint": "eslint .",
-    "pods": "cd ios && pod install"
+    "pods": "cd ios && pod install",
+    "rebuild": "rm -rf node_modules && yarn && yarn pods"
   },
   "dependencies": {
     "react": "17.0.2",

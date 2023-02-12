@@ -16,12 +16,21 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     fun mnemonicToSeed(mnemonic: String, promise: Promise) {
         try {
             var seed = mnemonicToSeed(mnemonic);
-            var response = readableArrayOf(seed);
-
-            promise.resolve(response);
+            promise.resolve(readableArrayOf(seed));
         } catch (e: SdkException) {
             e.printStackTrace();
-            promise.reject("SdkException");
+            promise.reject(e);
+        }
+    }
+
+    @ReactMethod
+    fun parseInvoice(invoice: String, promise: Promise) {
+        try {
+            var lnInvoice = parseInvoice(invoice);
+            promise.resolve(readableMapOf(lnInvoice));
+        } catch (e: SdkException) {
+            e.printStackTrace();
+            promise.reject(e);
         }
     }
 }
