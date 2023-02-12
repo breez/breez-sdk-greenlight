@@ -38,6 +38,7 @@ The libs folder contains three sub folders and is a structured as a cargo worksp
 * **sdk-core**: the core SDK rust library. 
 * **sdk-bindings**: ffi bindings for Kotlin & Swift. 
 * **sdk-flutter**: a flutter plugin (includes ffi bindings for dart).
+* **sdk-react-native**: a react-native plugin.
 
 The tools folder contains a simple command line interface (sdk-cli) to the SDK
 See instruction in each sub project readme on how to build, test and run.
