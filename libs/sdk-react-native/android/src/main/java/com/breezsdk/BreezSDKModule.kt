@@ -24,6 +24,17 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
+    fun parseInput(input: String, promise: Promise) {
+        try {
+            var inputType = parseInput(input);
+            promise.resolve(readableMapOf(inputType));
+        } catch (e: SdkException) {
+            e.printStackTrace();
+            promise.reject(e);
+        }
+    }
+
+    @ReactMethod
     fun parseInvoice(invoice: String, promise: Promise) {
         try {
             var lnInvoice = parseInvoice(invoice);

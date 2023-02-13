@@ -46,6 +46,17 @@ class BreezSDK: RCTEventEmitter {
         }
     }
     
+    @objc(parseInput:resolver:rejecter:)
+    func parseInput(_ input: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        do {
+            let inputType = try breez_sdk.parseInput(s: input)
+            
+            resolve(BreezSDKMapping.dictionaryOf(inputType: inputType))
+        } catch let err {
+            reject("error", err.localizedDescription, err)
+        }
+    }
+    
     @objc(parseInvoice:resolver:rejecter:)
     func parseInvoice(_ invoice: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         do {

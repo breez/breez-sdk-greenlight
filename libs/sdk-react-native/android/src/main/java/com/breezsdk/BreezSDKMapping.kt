@@ -1,13 +1,34 @@
 package com.breezsdk
 
-import breez_sdk.LnInvoice
-import breez_sdk.RouteHint
-import breez_sdk.RouteHintHop
+import breez_sdk.*
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableArray
 import com.facebook.react.bridge.WritableMap
+
+fun readableMapOf(bitcoinAddressData: BitcoinAddressData): ReadableMap {
+    return readableMapOf(
+            "address" to bitcoinAddressData.address,
+            "network" to bitcoinAddressData.network.name.lowercase(),
+            "amountSat" to bitcoinAddressData.amountSat,
+            "label" to bitcoinAddressData.label,
+            "message" to bitcoinAddressData.message
+    )
+}
+
+fun readableMapOf(inputType: InputType): ReadableMap {
+    return when (inputType) {
+        is InputType.BitcoinAddress -> readableMapOf("type" to "bitcoinAddress", "data" to readableMapOf(inputType.address))
+        is InputType.Bolt11 -> readableMapOf("type" to "bolt11", "data" to readableMapOf(inputType.invoice))
+        is InputType.LnUrlAuth -> readableMapOf("type" to "lnUrlAuth", "data" to readableMapOf(inputType.data))
+        is InputType.LnUrlError -> readableMapOf("type" to "lnUrlError", "data" to readableMapOf(inputType.data))
+        is InputType.LnUrlPay -> readableMapOf("type" to "lnUrlPay", "data" to readableMapOf(inputType.data))
+        is InputType.LnUrlWithdraw -> readableMapOf("type" to "lnUrlWithdraw", "data" to readableMapOf(inputType.data))
+        is InputType.NodeId -> readableMapOf("type" to "nodeId", "data" to inputType.nodeId)
+        is InputType.Url -> readableMapOf("type" to "url", "data" to inputType.url)
+    }
+}
 
 fun readableMapOf(lnInvoice: LnInvoice): ReadableMap {
     return readableMapOf(
@@ -24,10 +45,36 @@ fun readableMapOf(lnInvoice: LnInvoice): ReadableMap {
     )
 }
 
-fun readableMapOf(routeHint: RouteHint): ReadableMap {
+fun readableMapOf(lnUrlAuthRequestData: LnUrlAuthRequestData): ReadableMap {
+    return readableMapOf("k1" to lnUrlAuthRequestData.k1)
+}
+
+fun readableMapOf(lnUrlErrorData: LnUrlErrorData): ReadableMap {
+    return readableMapOf("reason" to lnUrlErrorData.reason)
+}
+
+fun readableMapOf(lnUrlPayRequestData: LnUrlPayRequestData): ReadableMap {
     return readableMapOf(
-            "hops" to readableArrayOf(routeHint.hops),
+            "callback" to lnUrlPayRequestData.callback,
+            "minSendable" to lnUrlPayRequestData.minSendable,
+            "maxSendable" to lnUrlPayRequestData.maxSendable,
+            "metadataStr" to lnUrlPayRequestData.metadataStr,
+            "commentAllowed" to lnUrlPayRequestData.commentAllowed
     )
+}
+
+fun readableMapOf(lnUrlWithdrawRequestData: LnUrlWithdrawRequestData): ReadableMap {
+    return readableMapOf(
+            "callback" to lnUrlWithdrawRequestData.callback,
+            "k1" to lnUrlWithdrawRequestData.k1,
+            "defaultDescription" to lnUrlWithdrawRequestData.defaultDescription,
+            "minWithdrawable" to lnUrlWithdrawRequestData.minWithdrawable,
+            "maxWithdrawable" to lnUrlWithdrawRequestData.maxWithdrawable
+    )
+}
+
+fun readableMapOf(routeHint: RouteHint): ReadableMap {
+    return readableMapOf("hops" to readableArrayOf(routeHint.hops))
 }
 
 fun readableMapOf(routeHintHop: RouteHintHop): ReadableMap {
