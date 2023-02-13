@@ -1,4 +1,4 @@
-import { NativeModules, Platform } from "react-native"
+import { NativeModules, NativeEventEmitter, Platform } from "react-native"
 import type Long from "long"
 
 const LINKING_ERROR =
@@ -29,14 +29,16 @@ enum InputType {
     URL = "url"
 }
 
-enum Network {
+const BreezSDKEmitter = new NativeEventEmitter(BreezSDK)
+
+export enum Network {
     BITCOIN = "bitcoin",
     REGTEST = "regtest",
     SIGNET = "signet",
     TESTNET = "testnet"
 }
 
-type BitcoinAddressData = {
+export type BitcoinAddressData = {
     address: string
     network: Network
     amountSat?: Long
@@ -44,7 +46,7 @@ type BitcoinAddressData = {
     message?: string
 }
 
-type LnInvoice = {
+export type LnInvoice = {
     bolt11: string
     payeePubkey: string
     paymentHash: string
@@ -57,15 +59,15 @@ type LnInvoice = {
     paymentSecret?: Uint8Array
 }
 
-type LnUrlAuthData = {
+export type LnUrlAuthData = {
     k1: string
 }
 
-type LnUrlErrorData = {
+export type LnUrlErrorData = {
     reason: string
 }
 
-type LnUrlPayRequestData = {
+export type LnUrlPayRequestData = {
     callback: string
     minSendable: Long
     maxSendable: Long
@@ -73,7 +75,7 @@ type LnUrlPayRequestData = {
     commentAllowed: number
 }
 
-type LnUrlWithdrawRequestData = {
+export type LnUrlWithdrawRequestData = {
     callback: string
     k1: string
     defaultDescription: string
@@ -81,11 +83,18 @@ type LnUrlWithdrawRequestData = {
     maxWithdrawable: Long
 }
 
-type RouteHint = {
+export type RouteHint = {
     hops: RouteHintHops[]
 }
 
-type RouteHintHops = {
+export type LogEntry = {
+    line: string
+    level: string
+}
+
+export type LogEntryFn = (l: LogEntry) => void
+
+export type RouteHintHops = {
     srcNodeId: string
     shortChannelId: Long
     feesBaseMsat: number
@@ -134,4 +143,13 @@ export async function mnemonicToSeed(phrase: string): Promise<Uint8Array> {
     console.log(JSON.stringify(response))
 
     return response
+}
+
+export async function setLogStream(logEntryFn: LogEntryFn): Promise<void> {
+    BreezSDKEmitter.addListener("breezSdkLog", logEntryFn)
+
+    const response = await BreezSDK.startLogStream()
+    console.log(JSON.stringify(response))
+
+    return
 }

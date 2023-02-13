@@ -29,4 +29,9 @@ RCT_EXTERN_METHOD(
     rejecter: (RCTPromiseRejectBlock)reject
 )
 
+RCT_EXTERN_METHOD(
+    startLogStream: (RCTPromiseResolveBlock)resolve
+    rejecter: (RCTPromiseRejectBlock)reject
+)
+
 @end

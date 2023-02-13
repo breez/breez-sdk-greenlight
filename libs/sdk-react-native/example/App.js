@@ -8,7 +8,7 @@
 
 import React, { useState } from "react"
 import { SafeAreaView, ScrollView, StatusBar, Text, View } from "react-native"
-import { mnemonicToSeed, parseInput, parseInvoice } from "react-native-breez-sdk"
+import { mnemonicToSeed, parseInput, parseInvoice, setLogStream } from "react-native-breez-sdk"
 
 const TEXT_MNEMONIC =
     "reveal man culture nominee tag abuse keen behave refuse warfare crisp thunder " +
@@ -26,6 +26,10 @@ const App = () => {
 
     React.useEffect(() => {
         const asyncFn = async () => {
+            await setLogStream((l) => {
+                console.log(`${l.line} ${l.level}`)
+            })
+
             console.log(`Mnemonic: ${TEXT_MNEMONIC}`)
             const seedResponse = await mnemonicToSeed(TEXT_MNEMONIC)
             console.log(`seedResponse: ${seedResponse}`)

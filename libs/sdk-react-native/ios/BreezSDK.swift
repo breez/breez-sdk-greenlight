@@ -11,7 +11,7 @@ class BreezSDK: RCTEventEmitter {
     }
     
     override func supportedEvents() -> [String]! {
-        return [BreezSDKListener.emitterName]
+        return [BreezSDKListener.emitterName, BreezSDKLogStream.emitterName]
     }
     
     @objc
@@ -63,6 +63,18 @@ class BreezSDK: RCTEventEmitter {
             let lnInvoice = try breez_sdk.parseInvoice(invoice: invoice)
             
             resolve(BreezSDKMapping.dictionaryOf(lnInvoice: lnInvoice))
+        } catch let err {
+            reject("error", err.localizedDescription, err)
+        }
+    }
+    
+    @objc(startLogStream:rejecter:)
+    func startLogStream(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        
+        do {
+            try breez_sdk.setLogStream(logStream: BreezSDKLogStream(emitter: self))
+            
+            resolve("Log stream started")
         } catch let err {
             reject("error", err.localizedDescription, err)
         }

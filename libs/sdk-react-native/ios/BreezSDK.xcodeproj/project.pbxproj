@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		7355F8D529998CCE0094712A /* BreezSDKMapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7355F8D429998CCE0094712A /* BreezSDKMapping.swift */; };
+		7355F8D7299A3FC40094712A /* BreezSDKLogStream.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7355F8D6299A3FC40094712A /* BreezSDKLogStream.swift */; };
 		73A00D8F298D635800BC1BDA /* libbreez_sdk_bindings.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 73A00D8E298D635800BC1BDA /* libbreez_sdk_bindings.a */; };
 		73A00D9A298E918D00BC1BDA /* breez_sdk.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A00D93298D988100BC1BDA /* breez_sdk.swift */; };
 		73A00D9C298E9DCD00BC1BDA /* BreezSDKListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A00D9B298E9DCD00BC1BDA /* BreezSDKListener.swift */; };
@@ -28,6 +29,7 @@
 
 /* Begin PBXFileReference section */
 		7355F8D429998CCE0094712A /* BreezSDKMapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BreezSDKMapping.swift; sourceTree = "<group>"; };
+		7355F8D6299A3FC40094712A /* BreezSDKLogStream.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BreezSDKLogStream.swift; sourceTree = "<group>"; };
 		73A00D8E298D635800BC1BDA /* libbreez_sdk_bindings.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libbreez_sdk_bindings.a; path = libs/libbreez_sdk_bindings.a; sourceTree = "<group>"; };
 		73A00D91298D67D200BC1BDA /* breez_sdkFFI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = breez_sdkFFI.h; path = include/breez_sdkFFI.h; sourceTree = "<group>"; };
 		73A00D93298D988100BC1BDA /* breez_sdk.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = breez_sdk.swift; sourceTree = "<group>"; };
@@ -55,6 +57,7 @@
 			children = (
 				7355F8D429998CCE0094712A /* BreezSDKMapping.swift */,
 				73A00D9B298E9DCD00BC1BDA /* BreezSDKListener.swift */,
+				7355F8D6299A3FC40094712A /* BreezSDKLogStream.swift */,
 				73A00D93298D988100BC1BDA /* breez_sdk.swift */,
 				73A00D91298D67D200BC1BDA /* breez_sdkFFI.h */,
 				F4FF95D6245B92E800C19C63 /* BreezSDK.swift */,
@@ -134,6 +137,7 @@
 				73A00D9A298E918D00BC1BDA /* breez_sdk.swift in Sources */,
 				7355F8D529998CCE0094712A /* BreezSDKMapping.swift in Sources */,
 				73A00D9C298E9DCD00BC1BDA /* BreezSDKListener.swift in Sources */,
+				7355F8D7299A3FC40094712A /* BreezSDKLogStream.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

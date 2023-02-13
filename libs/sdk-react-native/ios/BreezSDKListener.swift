@@ -3,7 +3,7 @@ import Foundation
 class BreezSDKListener: NSObject, EventListener {
     var emitter: RCTEventEmitter
     
-    static let emitterName: String = "breezEvent"
+    static let emitterName: String = "breezSdkEvent"
     
     init(emitter: RCTEventEmitter) {
         self.emitter = emitter
