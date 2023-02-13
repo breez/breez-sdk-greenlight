@@ -46,6 +46,11 @@ export type BitcoinAddressData = {
     message?: string
 }
 
+export type GreenlightCredentials = {
+    deviceKey: Uint8Array
+    deviceCert: Uint8Array
+}
+
 export type LnInvoice = {
     bolt11: string
     payeePubkey: string
@@ -102,6 +107,20 @@ export type RouteHintHops = {
     cltvExpiryDelta: Long
     htlcMinimumMsat?: Long
     htlcMaximumMsat: Long
+}
+
+export async function registerNode(network: Network, seed: Uint8Array): Promise<GreenlightCredentials> {
+    const response = await BreezSDK.registerNode(network, seed)
+    console.log(JSON.stringify(response))
+
+    return response
+}
+
+export async function recoverNode(network: Network, seed: Uint8Array): Promise<GreenlightCredentials> {
+    const response = await BreezSDK.recoverNode(network, seed)
+    console.log(JSON.stringify(response))
+
+    return response
 }
 
 export async function parseInput(

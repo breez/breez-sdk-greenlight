@@ -7,6 +7,24 @@ import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableArray
 import com.facebook.react.bridge.WritableMap
 
+fun asNetwork(network: String): Network {
+    return Network.valueOf(network.uppercase())
+}
+
+fun asUByteList(arr: ReadableArray): List<UByte> {
+    var list = ArrayList<UByte>()
+    for (value in arr.toArrayList()) {
+        when(value) {
+            is Double -> list.add(value.toInt().toUByte())
+            is Int -> list.add(value.toUByte())
+            is UByte -> list.add(value)
+            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+        }
+    }
+
+    return list
+}
+
 fun readableMapOf(bitcoinAddressData: BitcoinAddressData): ReadableMap {
     return readableMapOf(
             "address" to bitcoinAddressData.address,
@@ -14,6 +32,13 @@ fun readableMapOf(bitcoinAddressData: BitcoinAddressData): ReadableMap {
             "amountSat" to bitcoinAddressData.amountSat,
             "label" to bitcoinAddressData.label,
             "message" to bitcoinAddressData.message
+    )
+}
+
+fun readableMapOf(greenlightCredentials: GreenlightCredentials): ReadableMap {
+    return readableMapOf(
+            "deviceKey" to greenlightCredentials.deviceKey,
+            "deviceCert" to greenlightCredentials.deviceCert
     )
 }
 

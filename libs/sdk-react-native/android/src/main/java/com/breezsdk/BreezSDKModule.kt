@@ -1,11 +1,8 @@
 package com.breezsdk;
 
 import breez_sdk.*;
+import com.facebook.react.bridge.*
 
-import com.facebook.react.bridge.Promise;
-import com.facebook.react.bridge.ReactApplicationContext;
-import com.facebook.react.bridge.ReactContextBaseJavaModule;
-import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter
 
 class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {  
@@ -18,6 +15,28 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
     @ReactMethod
     fun removeListeners(count: Int) {}
+
+    @ReactMethod
+    fun registerNode(network: String, seed: ReadableArray, promise: Promise) {
+        try {
+            var creds = registerNode(asNetwork(network), asUByteList(seed));
+            promise.resolve(readableMapOf(creds));
+        } catch (e: SdkException) {
+            e.printStackTrace();
+            promise.reject(e);
+        }
+    }
+
+    @ReactMethod
+    fun recoverNode(network: String, seed: ReadableArray, promise: Promise) {
+        try {
+            var creds = recoverNode(asNetwork(network), asUByteList(seed));
+            promise.resolve(readableMapOf(creds));
+        } catch (e: SdkException) {
+            e.printStackTrace();
+            promise.reject(e);
+        }
+    }
 
     @ReactMethod
     fun mnemonicToSeed(mnemonic: String, promise: Promise) {

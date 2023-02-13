@@ -3,7 +3,6 @@ import Foundation
 @objc(BreezSDK)
 class BreezSDK: RCTEventEmitter {
     private var breezServices: BlockingBreezServices!
-    private var creds: GreenlightCredentials!
     
     @objc
     override static func moduleName() -> String! {
@@ -18,16 +17,37 @@ class BreezSDK: RCTEventEmitter {
     override static func requiresMainQueueSetup() -> Bool {
         return false
     }
+    
+    @objc(registerNode:seed:resolver:rejecter:)
+    func registerNode(_ network:String, seed:[UInt8], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        do {
+            let creds = try breez_sdk.registerNode(network: BreezSDKMapper.asNetwork(network: network), seed: seed)
+            
+            resolve(BreezSDKMapper.dictionaryOf(greenlightCredentials: creds))
+        } catch let err {
+            reject("error", err.localizedDescription, err)
+        }
+    }
+    
+    @objc(recoverNode:seed:resolver:rejecter:)
+    func recoverNode(_ network:String, seed:[UInt8], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        do {
+            let creds = try breez_sdk.recoverNode(network: BreezSDKMapper.asNetwork(network: network), seed: seed)
+            
+            resolve(BreezSDKMapper.dictionaryOf(greenlightCredentials: creds))
+        } catch let err {
+            reject("error", err.localizedDescription, err)
+        }
+    }
 
     @objc(initServices:deviceCert:seed:resolver:rejecter:)
     func initServices(_ deviceKey:[UInt8], deviceCert:[UInt8], seed:[UInt8], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        self.creds = GreenlightCredentials(deviceKey: deviceKey, deviceCert: deviceCert)
-                
+        let creds = GreenlightCredentials(deviceKey: deviceKey, deviceCert: deviceCert)
         var config = breez_sdk.defaultConfig(envType: EnvironmentType.production)
         config.apiKey = Bundle.main.object(forInfoDictionaryKey: "BREEZ_API_KEY") as? String
         
         do {
-            self.breezServices = try breez_sdk.initServices(config: config, seed: seed, creds: self.creds, listener: BreezSDKListener(emitter: self))
+            self.breezServices = try breez_sdk.initServices(config: config, seed: seed, creds: creds, listener: BreezSDKListener(emitter: self))
             
             resolve([])
         } catch let err {
@@ -51,7 +71,7 @@ class BreezSDK: RCTEventEmitter {
         do {
             let inputType = try breez_sdk.parseInput(s: input)
             
-            resolve(BreezSDKMapping.dictionaryOf(inputType: inputType))
+            resolve(BreezSDKMapper.dictionaryOf(inputType: inputType))
         } catch let err {
             reject("error", err.localizedDescription, err)
         }
@@ -62,7 +82,7 @@ class BreezSDK: RCTEventEmitter {
         do {
             let lnInvoice = try breez_sdk.parseInvoice(invoice: invoice)
             
-            resolve(BreezSDKMapping.dictionaryOf(lnInvoice: lnInvoice))
+            resolve(BreezSDKMapper.dictionaryOf(lnInvoice: lnInvoice))
         } catch let err {
             reject("error", err.localizedDescription, err)
         }

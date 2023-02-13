@@ -1,6 +1,6 @@
 import Foundation
 
-class BreezSDKMapping {
+class BreezSDKMapper {
     static func arrayOf(routeHints: [RouteHint]) -> [Any] {
         return routeHints.map { (routeHint) -> [String: Any] in return dictionaryOf(routeHint: routeHint) }
     }
@@ -16,6 +16,13 @@ class BreezSDKMapping {
             "amountSat": bitcoinAddressData.amountSat,
             "label": bitcoinAddressData.label,
             "message": bitcoinAddressData.message,
+        ]
+    }
+    
+    static func dictionaryOf(greenlightCredentials: GreenlightCredentials) -> [String: Any] {
+        return [
+            "deviceKey": greenlightCredentials.deviceKey,
+            "deviceCert": greenlightCredentials.deviceCert
         ]
     }
 
@@ -105,6 +112,16 @@ class BreezSDKMapping {
         case .regtest: return "regtest"
         case .signet: return "signet"
         case .testnet: return "testnet"
+        }
+    }
+    
+    static func asNetwork(network: String) throws -> Network {
+        switch(network) {
+        case "bitcoin": return Network.bitcoin
+        case "regtest": return Network.regtest
+        case "signet": return Network.signet
+        case "testnet": return Network.testnet
+        default: throw SdkError.Error(message: "Invalid network")
         }
     }
 }
