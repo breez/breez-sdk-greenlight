@@ -17,20 +17,22 @@ init:
 	rustup target add aarch64-apple-ios x86_64-apple-ios
 	rustup target add aarch64-apple-darwin x86_64-apple-darwin
 	rustup target add aarch64-apple-ios-sim
-	#rustup target add armv7-apple-ios armv7s-apple-ios i386-apple-ios ## deprecated
 	rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+	rustup target add aarch64-unknown-linux-gnu
 	@if [ $$(uname) == "Darwin" ] ; then cargo install cargo-lipo ; fi
 	cargo install cbindgen
 	cargo install cargo-ndk
 
 ## all: Compile iOS, Android
-all: ios macos android
+all: ios macos android linux
 
 ## ios: Compile the iOS universal library
 ios: ios-universal
 
 ios-universal: $(SOURCES) ndk-home
-	cargo lipo --release
+	@if [ $$(uname) == "Darwin" ] ; then \
+		cargo lipo --release; \
+	fi
 	@echo "[DONE] $@"
 
 target/x86_64-apple-ios/debug/libbreez-sdk.a: $(SOURCES) ndk-home
@@ -80,7 +82,13 @@ i686-linux-android: $(SOURCES) ndk-home
 
 x86_64-linux-android: $(SOURCES) ndk-home
 	cargo ndk -t x86_64-linux-android build --release
-		
+
+## linux: Compile the the following linux targets: arm64
+linux: aarch64-unknown-linux-gnu
+
+aarch64-unknown-linux-gnu: $(SOURCES)
+	cargo build --release --target aarch64-unknown-linux-gnu
+
 .PHONY: ndk-home
 ndk-home:
 	@if [ ! -d "${ANDROID_NDK_HOME}" ] ; then \
