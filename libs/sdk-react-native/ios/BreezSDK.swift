@@ -2,11 +2,13 @@ import Foundation
 
 @objc(BreezSDK)
 class BreezSDK: RCTEventEmitter {
+    static let TAG: String = "BreezSDK"
+    
     private var breezServices: BlockingBreezServices!
     
     @objc
     override static func moduleName() -> String! {
-        "BreezSDK"
+        TAG
     }
     
     override func supportedEvents() -> [String]! {
@@ -25,7 +27,7 @@ class BreezSDK: RCTEventEmitter {
             
             resolve(BreezSDKMapper.dictionaryOf(greenlightCredentials: creds))
         } catch let err {
-            reject("error", err.localizedDescription, err)
+            reject(BreezSDK.TAG, "Error calling registerNode", err)
         }
     }
     
@@ -36,17 +38,15 @@ class BreezSDK: RCTEventEmitter {
             
             resolve(BreezSDKMapper.dictionaryOf(greenlightCredentials: creds))
         } catch let err {
-            reject("error", err.localizedDescription, err)
+            reject(BreezSDK.TAG, "Error calling recoverNode", err)
         }
     }
 
     @objc(initServices:deviceKey:deviceCert:seed:resolver:rejecter:)
     func initServices(_ apiKey:String, deviceKey:[UInt8], deviceCert:[UInt8], seed:[UInt8], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         if (self.breezServices != nil) {
-            do {
-                try self.breezServices.stop()
-                self.breezServices = nil
-            } catch {}
+            reject(BreezSDK.TAG, "BreezServices already initialized", nil)
+            return
         }
         
         let creds = GreenlightCredentials(deviceKey: deviceKey, deviceCert: deviceCert)
@@ -56,9 +56,9 @@ class BreezSDK: RCTEventEmitter {
         do {
             self.breezServices = try breez_sdk.initServices(config: config, seed: seed, creds: creds, listener: BreezSDKListener(emitter: self))
             
-            resolve("Services initialized")
+            resolve("BreezServices initialized")
         } catch let err {
-            reject("error", err.localizedDescription, err)
+            reject(BreezSDK.TAG, "Error calling initServices", err)
         }
     }
     
@@ -69,7 +69,7 @@ class BreezSDK: RCTEventEmitter {
             
             resolve(seed)
         } catch let err {
-            reject("error", err.localizedDescription, err)
+            reject(BreezSDK.TAG, "Error calling mnemonicToSeed", err)
         }
     }
     
@@ -80,7 +80,7 @@ class BreezSDK: RCTEventEmitter {
             
             resolve(BreezSDKMapper.dictionaryOf(inputType: inputType))
         } catch let err {
-            reject("error", err.localizedDescription, err)
+            reject(BreezSDK.TAG, "Error calling parseInput", err)
         }
     }
     
@@ -91,7 +91,7 @@ class BreezSDK: RCTEventEmitter {
             
             resolve(BreezSDKMapper.dictionaryOf(lnInvoice: lnInvoice))
         } catch let err {
-            reject("error", err.localizedDescription, err)
+            reject(BreezSDK.TAG, "Error calling parseInvoice", err)
         }
     }
     
@@ -103,7 +103,7 @@ class BreezSDK: RCTEventEmitter {
             
             resolve("Log stream started")
         } catch let err {
-            reject("error", err.localizedDescription, err)
+            reject(BreezSDK.TAG, "Error calling setLogStream", err)
         }
     }
 }

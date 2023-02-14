@@ -1,15 +1,18 @@
 package com.breezsdk;
 
-import com.breezsdk.BuildConfig;
-import breez_sdk.*;
+import breez_sdk.*
 import com.facebook.react.bridge.*
 import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter
 
 class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
     private var breezServices: BlockingBreezServices? = null
 
+    companion object {
+        var TAG = "BreezSDK"
+    }
+
     override fun getName(): String {
-        return "BreezSDK";
+        return TAG;
     }
 
     @ReactMethod
@@ -25,7 +28,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableMapOf(creds));
         } catch (e: SdkException) {
             e.printStackTrace();
-            promise.reject(e);
+            promise.reject(TAG, "Error calling registerNode", e);
         }
     }
 
@@ -36,32 +39,28 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableMapOf(creds));
         } catch (e: SdkException) {
             e.printStackTrace();
-            promise.reject(e);
+            promise.reject(TAG, "Error calling recoverNode", e);
         }
     }
 
     @ReactMethod
     fun initServices(apiKey: String, deviceKey: ReadableArray, deviceCert: ReadableArray, seed: ReadableArray, promise: Promise) {
+        if (this.breezServices != null) {
+            promise.reject(TAG, "BreezServices already initialized");
+        }
+
+        var emitter = reactApplicationContext.getJSModule(RCTDeviceEventEmitter::class.java)
+        var creds = GreenlightCredentials(asUByteList(deviceKey), asUByteList(deviceCert))
+        var config = defaultConfig(EnvironmentType.PRODUCTION)
+        config.apiKey = apiKey
+
         try {
-            this.breezServices?.let {
-                try {
-                    it.stop()
-                    it.destroy()
-                } catch (e: SdkException) {}
-            }
-
-            var emitter = reactApplicationContext
-                    .getJSModule(RCTDeviceEventEmitter::class.java)
-            var creds = GreenlightCredentials(asUByteList(deviceKey), asUByteList(deviceCert))
-            var config = defaultConfig(EnvironmentType.PRODUCTION)
-            config.apiKey = apiKey
-
             this.breezServices = initServices(config, asUByteList(seed), creds, BreezSDKListener(emitter))
 
-            promise.resolve("Services initialized");
+            promise.resolve("BreezServices initialized");
         } catch (e: SdkException) {
             e.printStackTrace();
-            promise.reject(e);
+            promise.reject(TAG, "Error calling initServices", e);
         }
     }
 
@@ -72,7 +71,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableArrayOf(seed));
         } catch (e: SdkException) {
             e.printStackTrace();
-            promise.reject(e);
+            promise.reject(TAG, "Error calling mnemonicToSeed", e);
         }
     }
 
@@ -83,7 +82,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableMapOf(inputType));
         } catch (e: SdkException) {
             e.printStackTrace();
-            promise.reject(e);
+            promise.reject(TAG, "Error calling parseInput", e);
         }
     }
 
@@ -94,7 +93,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableMapOf(lnInvoice));
         } catch (e: SdkException) {
             e.printStackTrace();
-            promise.reject(e);
+            promise.reject(TAG, "Error calling parseInvoice", e);
         }
     }
 
@@ -108,7 +107,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve("Log stream started");
         } catch (e: SdkException) {
             e.printStackTrace();
-            promise.reject(e);
+            promise.reject(TAG, "Error calling setLogStream", e);
         }
     }
 }
