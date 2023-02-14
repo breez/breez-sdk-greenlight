@@ -15,24 +15,13 @@ class BreezSDKListener: NSObject, EventListener {
             self.emitter.sendEvent(withName: BreezSDKListener.emitterName,
                                    body: [
                                     "type": "invoicePaid",
-                                    "data": details
+                                    "data": BreezSDKMapper.dictionaryOf(invoicePaidDetails: details)
                                    ])
         case let .newBlock(block):
             self.emitter.sendEvent(withName: BreezSDKListener.emitterName,
                                    body: [
                                     "type": "newBlock",
                                     "data": block
-                                    ])
-        case .synced:
-            self.emitter.sendEvent(withName: BreezSDKListener.emitterName,
-                                   body: [
-                                    "type": "synced"
-                                   ])
-        case let .paymentSucceed(details):
-            self.emitter.sendEvent(withName: BreezSDKListener.emitterName,
-                                   body: [
-                                    "type": "paymentSucceed",
-                                    "data": details
                                    ])
         case let .paymentFailed(error):
             self.emitter.sendEvent(withName: BreezSDKListener.emitterName,
@@ -40,7 +29,17 @@ class BreezSDKListener: NSObject, EventListener {
                                     "type": "paymentFailed",
                                     "data": error
                                    ])
+        case let .paymentSucceed(details):
+            self.emitter.sendEvent(withName: BreezSDKListener.emitterName,
+                                   body: [
+                                    "type": "paymentSucceed",
+                                    "data": BreezSDKMapper.dictionaryOf(payment: details)
+                                   ])
+       case .synced:
+            self.emitter.sendEvent(withName: BreezSDKListener.emitterName,
+                                   body: [
+                                    "type": "synced"
+                                   ])
         }
-        
     }
 }

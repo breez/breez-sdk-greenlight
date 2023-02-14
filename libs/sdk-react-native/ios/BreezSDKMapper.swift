@@ -9,6 +9,14 @@ class BreezSDKMapper {
         return routeHintHops.map { (routeHintHop) -> [String: Any?] in return dictionaryOf(routeHintHop: routeHintHop) }
     }
     
+    static func dictionaryOf(aesSuccessActionDataDecrypted: AesSuccessActionDataDecrypted) -> [String: Any] {
+        return [
+            "type": "aes",
+            "description": aesSuccessActionDataDecrypted.description,
+            "plaintext": aesSuccessActionDataDecrypted.plaintext,
+        ]
+    }
+    
     static func dictionaryOf(bitcoinAddressData: BitcoinAddressData) -> [String: Any?] {
         return [
             "address": bitcoinAddressData.address,
@@ -16,6 +24,15 @@ class BreezSDKMapper {
             "amountSat": bitcoinAddressData.amountSat,
             "label": bitcoinAddressData.label,
             "message": bitcoinAddressData.message,
+        ]
+    }
+    
+    static func dictionaryOf(closedChannelPaymentDetails: ClosedChannelPaymentDetails) -> [String: Any] {
+        return [
+            "type": "closed_channel",
+            "shortChannelId": closedChannelPaymentDetails.shortChannelId,
+            "state": valueOf(channelState: closedChannelPaymentDetails.state),
+            "fundingTxid": closedChannelPaymentDetails.fundingTxid
         ]
     }
     
@@ -47,6 +64,13 @@ class BreezSDKMapper {
         }
     }
     
+    static func dictionaryOf(invoicePaidDetails: InvoicePaidDetails) -> [String: Any?] {
+        return [
+            "paymentHash": invoicePaidDetails.paymentHash,
+            "bolt11": invoicePaidDetails.bolt11
+        ]
+    }
+    
     static func dictionaryOf(lnInvoice: LnInvoice) -> [String: Any?] {
         return [
             "bolt11": lnInvoice.bolt11,
@@ -59,6 +83,19 @@ class BreezSDKMapper {
             "expiry": lnInvoice.expiry,
             "routingHints": self.arrayOf(routeHints: lnInvoice.routingHints),
             "paymentSecret": lnInvoice.paymentSecret
+        ]
+    }
+    
+    static func dictionaryOf(lnPaymentDetails: LnPaymentDetails) -> [String: Any?] {
+        return [
+            "type": "ln",
+            "paymentHash": lnPaymentDetails.paymentHash,
+            "label": lnPaymentDetails.label,
+            "destinationPubkey": lnPaymentDetails.destinationPubkey,
+            "paymentPreimage": lnPaymentDetails.paymentPreimage,
+            "keysend": lnPaymentDetails.keysend,
+            "bolt11": lnPaymentDetails.bolt11,
+            "lnurlSuccessAction": dictionaryOf(successActionProcessed: lnPaymentDetails.lnurlSuccessAction)
         ]
     }
     
@@ -89,11 +126,40 @@ class BreezSDKMapper {
             "maxWithdrawable": lnUrlWithdrawRequestData.maxWithdrawable,
         ]
     }
+    
+    static func dictionaryOf(messageSuccessActionData: MessageSuccessActionData) -> [String: Any] {
+        return [
+            "type": "message",
+            "message": messageSuccessActionData.message
+        ]
+    }
+    
+    static func dictionaryOf(payment: Payment) -> [String: Any?] {
+        return [
+            "id": payment.id,
+            "paymentType": payment.paymentType,
+            "paymentTime": payment.paymentTime,
+            "amountMsat": payment.amountMsat,
+            "feeMsat": payment.feeMsat,
+            "pending": payment.pending,
+            "description": payment.description,
+            "details": dictionaryOf(paymentDetails: payment.details),
+        ]
+    }
+
+    static func dictionaryOf(paymentDetails: PaymentDetails) -> [String: Any?] {
+        switch(paymentDetails) {
+        case let .closedChannel(data):
+            return dictionaryOf(closedChannelPaymentDetails: data)
+        case let .ln(data):
+            return dictionaryOf(lnPaymentDetails: data)
+        }
+    }
 
     static func dictionaryOf(routeHint: RouteHint) -> [String: Any] {
         return ["hops": self.arrayOf(routeHintHops: routeHint.hops)]
     }
-    
+
     static func dictionaryOf(routeHintHop: RouteHintHop) -> [String: Any?] {
         return [
             "srcNodeId": routeHintHop.srcNodeId,
@@ -104,6 +170,36 @@ class BreezSDKMapper {
             "htlcMinimumMsat": routeHintHop.htlcMinimumMsat,
             "htlcMaximumMsat": routeHintHop.htlcMaximumMsat
         ]
+    }
+    
+    static func dictionaryOf(successActionProcessed: SuccessActionProcessed?) -> [String: Any]? {
+        switch(successActionProcessed) {
+        case let .aes(data):
+            return dictionaryOf(aesSuccessActionDataDecrypted: data)
+        case let .message(data):
+            return dictionaryOf(messageSuccessActionData: data)
+        case let .url(data):
+            return dictionaryOf(urlSuccessActionData: data)
+        case .none:
+            return nil
+        }
+    }
+    
+    static func dictionaryOf(urlSuccessActionData: UrlSuccessActionData) -> [String: Any] {
+        return [
+            "type": "url",
+            "description": urlSuccessActionData.description,
+            "url": urlSuccessActionData.url,
+        ]
+    }
+    
+    static func valueOf(channelState: ChannelState) -> String {
+        switch(channelState) {
+        case .pendingOpen: return "pendingOpen"
+        case .opened: return "opened"
+        case .pendingClose: return "pendingClose"
+        case .closed: return "closed"
+        }
     }
     
     static func valueOf(network: Network) -> String {

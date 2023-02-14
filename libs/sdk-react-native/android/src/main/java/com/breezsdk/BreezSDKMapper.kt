@@ -25,6 +25,14 @@ fun asUByteList(arr: ReadableArray): List<UByte> {
     return list
 }
 
+fun readableMapOf(aesSuccessActionDataDecrypted: AesSuccessActionDataDecrypted): ReadableMap {
+    return readableMapOf(
+            "type" to "aes",
+            "description" to aesSuccessActionDataDecrypted.description,
+            "plaintext" to aesSuccessActionDataDecrypted.plaintext
+    )
+}
+
 fun readableMapOf(bitcoinAddressData: BitcoinAddressData): ReadableMap {
     return readableMapOf(
             "address" to bitcoinAddressData.address,
@@ -32,6 +40,15 @@ fun readableMapOf(bitcoinAddressData: BitcoinAddressData): ReadableMap {
             "amountSat" to bitcoinAddressData.amountSat,
             "label" to bitcoinAddressData.label,
             "message" to bitcoinAddressData.message
+    )
+}
+
+fun readableMapOf(closedChannelPaymentDetails: ClosedChannelPaymentDetails): ReadableMap {
+    return readableMapOf(
+            "type" to "closed_channel",
+            "shortChannelId" to closedChannelPaymentDetails.shortChannelId,
+            "state" to closedChannelPaymentDetails.state.name.lowercase(),
+            "fundingTxid" to closedChannelPaymentDetails.fundingTxid
     )
 }
 
@@ -55,6 +72,13 @@ fun readableMapOf(inputType: InputType): ReadableMap {
     }
 }
 
+fun readableMapOf(invoicePaidDetails: InvoicePaidDetails): ReadableMap {
+    return readableMapOf(
+            "paymentHash" to invoicePaidDetails.paymentHash,
+            "bolt11" to invoicePaidDetails.bolt11
+    )
+}
+
 fun readableMapOf(lnInvoice: LnInvoice): ReadableMap {
     return readableMapOf(
             "bolt11" to lnInvoice.bolt11,
@@ -67,6 +91,19 @@ fun readableMapOf(lnInvoice: LnInvoice): ReadableMap {
             "expiry" to lnInvoice.expiry,
             "routingHints" to readableArrayOf(lnInvoice.routingHints),
             "paymentSecret" to readableArrayOf(lnInvoice.paymentSecret)
+    )
+}
+
+fun readableMapOf(lnPaymentDetails: LnPaymentDetails): ReadableMap {
+    return readableMapOf(
+            "type" to "ln",
+            "paymentHash" to lnPaymentDetails.paymentHash,
+            "label" to lnPaymentDetails.label,
+            "destinationPubkey" to lnPaymentDetails.destinationPubkey,
+            "paymentPreimage" to lnPaymentDetails.paymentPreimage,
+            "keysend" to lnPaymentDetails.keysend,
+            "bolt11" to lnPaymentDetails.bolt11,
+            "lnurlSuccessAction" to readableMapOf(lnPaymentDetails.lnurlSuccessAction)
     )
 }
 
@@ -98,6 +135,33 @@ fun readableMapOf(lnUrlWithdrawRequestData: LnUrlWithdrawRequestData): ReadableM
     )
 }
 
+fun readableMapOf(messageSuccessActionData: MessageSuccessActionData): ReadableMap {
+    return readableMapOf(
+            "type" to "message",
+            "message" to messageSuccessActionData.message
+    )
+}
+
+fun readableMapOf(payment: Payment): ReadableMap {
+    return readableMapOf(
+            "id" to payment.id,
+            "paymentType" to payment.paymentType.name.lowercase(),
+            "paymentTime" to payment.paymentTime,
+            "amountMsat" to payment.amountMsat,
+            "feeMsat" to payment.feeMsat,
+            "pending" to payment.pending,
+            "description" to payment.description,
+            "details" to readableMapOf(payment.details)
+    )
+}
+
+fun readableMapOf(paymentDetails: PaymentDetails): ReadableMap {
+    return when(paymentDetails) {
+        is PaymentDetails.Ln -> readableMapOf(paymentDetails.data)
+        is PaymentDetails.ClosedChannel -> readableMapOf(paymentDetails.data)
+    }
+}
+
 fun readableMapOf(routeHint: RouteHint): ReadableMap {
     return readableMapOf("hops" to readableArrayOf(routeHint.hops))
 }
@@ -111,6 +175,25 @@ fun readableMapOf(routeHintHop: RouteHintHop): ReadableMap {
             "cltvExpiryDelta" to routeHintHop.cltvExpiryDelta,
             "htlcMinimumMsat" to routeHintHop.htlcMinimumMsat,
             "htlcMaximumMsat" to routeHintHop.htlcMaximumMsat
+    )
+}
+
+fun readableMapOf(successActionProcessed: SuccessActionProcessed?): ReadableMap? {
+    if (successActionProcessed != null) {
+        return when (successActionProcessed) {
+            is SuccessActionProcessed.Aes -> readableMapOf(successActionProcessed.data)
+            is SuccessActionProcessed.Message -> readableMapOf(successActionProcessed.data)
+            is SuccessActionProcessed.Url -> readableMapOf(successActionProcessed.data)
+        }
+    }
+    return null
+}
+
+fun readableMapOf(urlSuccessActionData: UrlSuccessActionData): ReadableMap {
+    return readableMapOf(
+            "type" to "url",
+            "description" to urlSuccessActionData.description,
+            "url" to urlSuccessActionData.url
     )
 }
 

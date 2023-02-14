@@ -18,7 +18,8 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
-    initServices: (NSArray*)deviceKey
+    initServices: (NSString*)apiKey
+    deviceKey: (NSArray*)deviceKey
     deviceCert: (NSArray*)deviceCert
     seed: (NSArray*)seed
     resolver: (RCTPromiseResolveBlock)resolve

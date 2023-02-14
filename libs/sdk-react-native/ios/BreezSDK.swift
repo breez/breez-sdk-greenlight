@@ -40,16 +40,23 @@ class BreezSDK: RCTEventEmitter {
         }
     }
 
-    @objc(initServices:deviceCert:seed:resolver:rejecter:)
-    func initServices(_ deviceKey:[UInt8], deviceCert:[UInt8], seed:[UInt8], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+    @objc(initServices:deviceKey:deviceCert:seed:resolver:rejecter:)
+    func initServices(_ apiKey:String, deviceKey:[UInt8], deviceCert:[UInt8], seed:[UInt8], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        if (self.breezServices != nil) {
+            do {
+                try self.breezServices.stop()
+                self.breezServices = nil
+            } catch {}
+        }
+        
         let creds = GreenlightCredentials(deviceKey: deviceKey, deviceCert: deviceCert)
         var config = breez_sdk.defaultConfig(envType: EnvironmentType.production)
-        config.apiKey = Bundle.main.object(forInfoDictionaryKey: "BREEZ_API_KEY") as? String
+        config.apiKey = apiKey
         
         do {
             self.breezServices = try breez_sdk.initServices(config: config, seed: seed, creds: creds, listener: BreezSDKListener(emitter: self))
             
-            resolve([])
+            resolve("Services initialized")
         } catch let err {
             reject("error", err.localizedDescription, err)
         }

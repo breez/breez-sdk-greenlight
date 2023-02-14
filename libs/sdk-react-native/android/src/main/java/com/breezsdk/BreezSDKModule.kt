@@ -1,11 +1,13 @@
 package com.breezsdk;
 
+import com.breezsdk.BuildConfig;
 import breez_sdk.*;
 import com.facebook.react.bridge.*
-
 import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter
 
-class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {  
+class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
+    private var breezServices: BlockingBreezServices? = null
+
     override fun getName(): String {
         return "BreezSDK";
     }
@@ -32,6 +34,31 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
         try {
             var creds = recoverNode(asNetwork(network), asUByteList(seed));
             promise.resolve(readableMapOf(creds));
+        } catch (e: SdkException) {
+            e.printStackTrace();
+            promise.reject(e);
+        }
+    }
+
+    @ReactMethod
+    fun initServices(apiKey: String, deviceKey: ReadableArray, deviceCert: ReadableArray, seed: ReadableArray, promise: Promise) {
+        try {
+            this.breezServices?.let {
+                try {
+                    it.stop()
+                    it.destroy()
+                } catch (e: SdkException) {}
+            }
+
+            var emitter = reactApplicationContext
+                    .getJSModule(RCTDeviceEventEmitter::class.java)
+            var creds = GreenlightCredentials(asUByteList(deviceKey), asUByteList(deviceCert))
+            var config = defaultConfig(EnvironmentType.PRODUCTION)
+            config.apiKey = apiKey
+
+            this.breezServices = initServices(config, asUByteList(seed), creds, BreezSDKListener(emitter))
+
+            promise.resolve("Services initialized");
         } catch (e: SdkException) {
             e.printStackTrace();
             promise.reject(e);
