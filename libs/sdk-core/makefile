@@ -30,9 +30,7 @@ all: ios macos android linux
 ios: ios-universal
 
 ios-universal: $(SOURCES) ndk-home
-	@if [ $$(uname) == "Darwin" ] ; then \
-		cargo lipo --release; \
-	fi
+	cargo lipo --release
 	@echo "[DONE] $@"
 
 target/x86_64-apple-ios/debug/libbreez-sdk.a: $(SOURCES) ndk-home
