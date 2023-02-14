@@ -231,34 +231,17 @@ export async function addEventListener(eventFn: EventFn) {
 export async function addLogListener(logEntryFn: LogEntryFn): Promise<void> {
     BreezSDKEmitter.addListener("breezSdkLog", logEntryFn)
 
-    const response = await BreezSDK.startLogStream()
-    console.log(JSON.stringify(response))
+    await BreezSDK.startLogStream()
 }
 
-export async function registerNode(network: Network, seed: Uint8Array): Promise<GreenlightCredentials> {
-    const response = await BreezSDK.registerNode(network, seed)
-    console.log(JSON.stringify(response))
-
-    return response
-}
-
-export async function recoverNode(network: Network, seed: Uint8Array): Promise<GreenlightCredentials> {
-    const response = await BreezSDK.recoverNode(network, seed)
-    console.log(JSON.stringify(response))
-
-    return response
-}
-
-export async function initServices(apiKey: string, deviceKey: Uint8Array, deviceCert: Uint8Array, seed: Uint8Array): Promise<void> {
-    const response = await BreezSDK.initServices(apiKey, deviceKey, deviceCert, seed)
-    console.log(JSON.stringify(response))
+export async function mnemonicToSeed(phrase: string): Promise<Uint8Array> {
+    return BreezSDK.mnemonicToSeed(phrase)
 }
 
 export async function parseInput(
     input: string
 ): Promise<BitcoinAddressData | LnInvoice | LnUrlAuthData | LnUrlErrorData | LnUrlPayRequestData | LnUrlWithdrawRequestData | string> {
     const response = await BreezSDK.parseInput(input)
-    console.log(JSON.stringify(response))
 
     switch (response.type) {
         case InputType.BITCOIN_ADDRESS:
@@ -278,19 +261,36 @@ export async function parseInput(
             return response.data
     }
 
-    return response
+    throw Error(`Unknown input type: ${response.type}`)
 }
 
 export async function parseInvoice(invoice: string): Promise<LnInvoice> {
     const response = await BreezSDK.parseInvoice(invoice)
-    console.log(JSON.stringify(response))
-
-    return response
+    return response as LnInvoice
 }
 
-export async function mnemonicToSeed(phrase: string): Promise<Uint8Array> {
-    const response = await BreezSDK.mnemonicToSeed(phrase)
-    console.log(JSON.stringify(response))
+export async function registerNode(network: Network, seed: Uint8Array): Promise<GreenlightCredentials> {
+    const response = await BreezSDK.registerNode(network, seed)
+    return response as GreenlightCredentials
+}
 
-    return response
+export async function recoverNode(network: Network, seed: Uint8Array): Promise<GreenlightCredentials> {
+    const response = await BreezSDK.recoverNode(network, seed)
+    return response as GreenlightCredentials
+}
+
+export async function initServices(apiKey: string, deviceKey: Uint8Array, deviceCert: Uint8Array, seed: Uint8Array): Promise<void> {
+    await BreezSDK.initServices(apiKey, deviceKey, deviceCert, seed)
+}
+
+export async function start(): Promise<void> {
+    await BreezSDK.start()
+}
+
+export async function sync(): Promise<void> {
+    await BreezSDK.sync()
+}
+
+export async function stop(): Promise<void> {
+    await BreezSDK.stop()
 }

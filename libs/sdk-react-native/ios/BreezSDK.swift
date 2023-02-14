@@ -20,48 +20,6 @@ class BreezSDK: RCTEventEmitter {
         return false
     }
     
-    @objc(registerNode:seed:resolver:rejecter:)
-    func registerNode(_ network:String, seed:[UInt8], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        do {
-            let creds = try breez_sdk.registerNode(network: BreezSDKMapper.asNetwork(network: network), seed: seed)
-            
-            resolve(BreezSDKMapper.dictionaryOf(greenlightCredentials: creds))
-        } catch let err {
-            reject(BreezSDK.TAG, "Error calling registerNode", err)
-        }
-    }
-    
-    @objc(recoverNode:seed:resolver:rejecter:)
-    func recoverNode(_ network:String, seed:[UInt8], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        do {
-            let creds = try breez_sdk.recoverNode(network: BreezSDKMapper.asNetwork(network: network), seed: seed)
-            
-            resolve(BreezSDKMapper.dictionaryOf(greenlightCredentials: creds))
-        } catch let err {
-            reject(BreezSDK.TAG, "Error calling recoverNode", err)
-        }
-    }
-
-    @objc(initServices:deviceKey:deviceCert:seed:resolver:rejecter:)
-    func initServices(_ apiKey:String, deviceKey:[UInt8], deviceCert:[UInt8], seed:[UInt8], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        if (self.breezServices != nil) {
-            reject(BreezSDK.TAG, "BreezServices already initialized", nil)
-            return
-        }
-        
-        let creds = GreenlightCredentials(deviceKey: deviceKey, deviceCert: deviceCert)
-        var config = breez_sdk.defaultConfig(envType: EnvironmentType.production)
-        config.apiKey = apiKey
-        
-        do {
-            self.breezServices = try breez_sdk.initServices(config: config, seed: seed, creds: creds, listener: BreezSDKListener(emitter: self))
-            
-            resolve("BreezServices initialized")
-        } catch let err {
-            reject(BreezSDK.TAG, "Error calling initServices", err)
-        }
-    }
-    
     @objc(mnemonicToSeed:resolver:rejecter:)
     func mnemonicToSeed(_ phrase: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         do {
@@ -95,15 +53,104 @@ class BreezSDK: RCTEventEmitter {
         }
     }
     
+    @objc(registerNode:seed:resolver:rejecter:)
+    func registerNode(_ network:String, seed:[UInt8], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        do {
+            let creds = try breez_sdk.registerNode(network: BreezSDKMapper.asNetwork(network: network), seed: seed)
+            
+            resolve(BreezSDKMapper.dictionaryOf(greenlightCredentials: creds))
+        } catch let err {
+            reject(BreezSDK.TAG, "Error calling registerNode", err)
+        }
+    }
+    
+    @objc(recoverNode:seed:resolver:rejecter:)
+    func recoverNode(_ network:String, seed:[UInt8], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        do {
+            let creds = try breez_sdk.recoverNode(network: BreezSDKMapper.asNetwork(network: network), seed: seed)
+            
+            resolve(BreezSDKMapper.dictionaryOf(greenlightCredentials: creds))
+        } catch let err {
+            reject(BreezSDK.TAG, "Error calling recoverNode", err)
+        }
+    }
+    
     @objc(startLogStream:rejecter:)
     func startLogStream(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        
         do {
             try breez_sdk.setLogStream(logStream: BreezSDKLogStream(emitter: self))
             
             resolve("Log stream started")
         } catch let err {
             reject(BreezSDK.TAG, "Error calling setLogStream", err)
+        }
+    }
+    
+    @objc(initServices:deviceKey:deviceCert:seed:resolver:rejecter:)
+    func initServices(_ apiKey:String, deviceKey:[UInt8], deviceCert:[UInt8], seed:[UInt8], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        if (self.breezServices != nil) {
+            reject(BreezSDK.TAG, "BreezServices already initialized", nil)
+            return
+        }
+        
+        let creds = GreenlightCredentials(deviceKey: deviceKey, deviceCert: deviceCert)
+        var config = breez_sdk.defaultConfig(envType: EnvironmentType.production)
+        config.apiKey = apiKey
+        
+        do {
+            self.breezServices = try breez_sdk.initServices(config: config, seed: seed, creds: creds, listener: BreezSDKListener(emitter: self))
+            
+            resolve("BreezServices initialized")
+        } catch let err {
+            reject(BreezSDK.TAG, "Error calling initServices", err)
+        }
+    }
+    
+    @objc(start:rejecter:)
+    func start(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        if (self.breezServices == nil) {
+            reject(BreezSDK.TAG, "BreezServices not initialized", nil)
+            return
+        }
+        
+        do {
+            try self.breezServices.start()
+            
+            resolve("BreezServices started")
+        } catch let err {
+            reject(BreezSDK.TAG, "Error calling start", err)
+        }
+    }
+    
+    @objc(sync:rejecter:)
+    func sync(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        if (self.breezServices == nil) {
+            reject(BreezSDK.TAG, "BreezServices not initialized", nil)
+            return
+        }
+        
+        do {
+            try self.breezServices.sync()
+            
+            resolve("BreezServices syncing")
+        } catch let err {
+            reject(BreezSDK.TAG, "Error calling sync", err)
+        }
+    }
+    
+    @objc(stop:rejecter:)
+    func stop(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        if (self.breezServices == nil) {
+            reject(BreezSDK.TAG, "BreezServices not initialized", nil)
+            return
+        }
+        
+        do {
+            try self.breezServices.stop()
+            
+            resolve("BreezServices stopped")
+        } catch let err {
+            reject(BreezSDK.TAG, "Error calling stop", err)
         }
     }
 }

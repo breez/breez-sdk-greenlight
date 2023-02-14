@@ -22,49 +22,6 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     fun removeListeners(count: Int) {}
 
     @ReactMethod
-    fun registerNode(network: String, seed: ReadableArray, promise: Promise) {
-        try {
-            var creds = registerNode(asNetwork(network), asUByteList(seed));
-            promise.resolve(readableMapOf(creds));
-        } catch (e: SdkException) {
-            e.printStackTrace();
-            promise.reject(TAG, "Error calling registerNode", e);
-        }
-    }
-
-    @ReactMethod
-    fun recoverNode(network: String, seed: ReadableArray, promise: Promise) {
-        try {
-            var creds = recoverNode(asNetwork(network), asUByteList(seed));
-            promise.resolve(readableMapOf(creds));
-        } catch (e: SdkException) {
-            e.printStackTrace();
-            promise.reject(TAG, "Error calling recoverNode", e);
-        }
-    }
-
-    @ReactMethod
-    fun initServices(apiKey: String, deviceKey: ReadableArray, deviceCert: ReadableArray, seed: ReadableArray, promise: Promise) {
-        if (this.breezServices != null) {
-            promise.reject(TAG, "BreezServices already initialized");
-        }
-
-        var emitter = reactApplicationContext.getJSModule(RCTDeviceEventEmitter::class.java)
-        var creds = GreenlightCredentials(asUByteList(deviceKey), asUByteList(deviceCert))
-        var config = defaultConfig(EnvironmentType.PRODUCTION)
-        config.apiKey = apiKey
-
-        try {
-            this.breezServices = initServices(config, asUByteList(seed), creds, BreezSDKListener(emitter))
-
-            promise.resolve("BreezServices initialized");
-        } catch (e: SdkException) {
-            e.printStackTrace();
-            promise.reject(TAG, "Error calling initServices", e);
-        }
-    }
-
-    @ReactMethod
     fun mnemonicToSeed(mnemonic: String, promise: Promise) {
         try {
             var seed = mnemonicToSeed(mnemonic);
@@ -98,6 +55,28 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
+    fun registerNode(network: String, seed: ReadableArray, promise: Promise) {
+        try {
+            var creds = registerNode(asNetwork(network), asUByteList(seed));
+            promise.resolve(readableMapOf(creds));
+        } catch (e: SdkException) {
+            e.printStackTrace();
+            promise.reject(TAG, "Error calling registerNode", e);
+        }
+    }
+
+    @ReactMethod
+    fun recoverNode(network: String, seed: ReadableArray, promise: Promise) {
+        try {
+            var creds = recoverNode(asNetwork(network), asUByteList(seed));
+            promise.resolve(readableMapOf(creds));
+        } catch (e: SdkException) {
+            e.printStackTrace();
+            promise.reject(TAG, "Error calling recoverNode", e);
+        }
+    }
+
+    @ReactMethod
     fun startLogStream(promise: Promise) {
         try {
             var emitter = reactApplicationContext
@@ -108,6 +87,74 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
         } catch (e: SdkException) {
             e.printStackTrace();
             promise.reject(TAG, "Error calling setLogStream", e);
+        }
+    }
+
+    @ReactMethod
+    fun initServices(apiKey: String, deviceKey: ReadableArray, deviceCert: ReadableArray, seed: ReadableArray, promise: Promise) {
+        if (this.breezServices != null) {
+            promise.reject(TAG, "BreezServices already initialized");
+        }
+
+        var emitter = reactApplicationContext.getJSModule(RCTDeviceEventEmitter::class.java)
+        var creds = GreenlightCredentials(asUByteList(deviceKey), asUByteList(deviceCert))
+        var config = defaultConfig(EnvironmentType.PRODUCTION)
+        config.apiKey = apiKey
+
+        try {
+            this.breezServices = initServices(config, asUByteList(seed), creds, BreezSDKListener(emitter))
+            promise.resolve("BreezServices initialized");
+        } catch (e: SdkException) {
+            e.printStackTrace();
+            promise.reject(TAG, "Error calling initServices", e);
+        }
+    }
+
+    @ReactMethod
+    fun start(promise: Promise) {
+        if (this.breezServices == null) {
+            promise.reject(TAG, "BreezServices not initialized");
+            return
+        }
+
+        try {
+            this.breezServices?.start();
+            promise.resolve("BreezServices started");
+        } catch (e: SdkException) {
+            e.printStackTrace();
+            promise.reject(TAG, "Error calling start", e);
+        }
+    }
+
+    @ReactMethod
+    fun sync(promise: Promise) {
+        if (this.breezServices == null) {
+            promise.reject(TAG, "BreezServices not initialized");
+            return
+        }
+
+        try {
+            this.breezServices?.sync();
+            promise.resolve("BreezServices syncing");
+        } catch (e: SdkException) {
+            e.printStackTrace();
+            promise.reject(TAG, "Error calling sync", e);
+        }
+    }
+
+    @ReactMethod
+    fun stop(promise: Promise) {
+        if (this.breezServices == null) {
+            promise.reject(TAG, "BreezServices not initialized");
+            return
+        }
+
+        try {
+            this.breezServices?.stop();
+            promise.resolve("BreezServices stopped");
+        } catch (e: SdkException) {
+            e.printStackTrace();
+            promise.reject(TAG, "Error calling stop", e);
         }
     }
 }

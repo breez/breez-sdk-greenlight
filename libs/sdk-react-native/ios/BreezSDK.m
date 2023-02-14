@@ -4,29 +4,6 @@
 @interface RCT_EXTERN_MODULE(BreezSDK, RCTEventEmitter)
 
 RCT_EXTERN_METHOD(
-    registerNode: (NSString*)network
-    seed: (NSArray*)seed
-    resolver: (RCTPromiseResolveBlock)resolve
-    rejecter: (RCTPromiseRejectBlock)reject
-)
-
-RCT_EXTERN_METHOD(
-    recoverNode: (NSString*)network
-    seed: (NSArray*)seed
-    resolver: (RCTPromiseResolveBlock)resolve
-    rejecter: (RCTPromiseRejectBlock)reject
-)
-
-RCT_EXTERN_METHOD(
-    initServices: (NSString*)apiKey
-    deviceKey: (NSArray*)deviceKey
-    deviceCert: (NSArray*)deviceCert
-    seed: (NSArray*)seed
-    resolver: (RCTPromiseResolveBlock)resolve
-    rejecter: (RCTPromiseRejectBlock)reject
-)
-
-RCT_EXTERN_METHOD(
     mnemonicToSeed: (NSString*)phrase
     resolver: (RCTPromiseResolveBlock)resolve
     rejecter: (RCTPromiseRejectBlock)reject
@@ -45,8 +22,47 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
+    registerNode: (NSString*)network
+    seed: (NSArray*)seed
+    resolver: (RCTPromiseResolveBlock)resolve
+    rejecter: (RCTPromiseRejectBlock)reject
+)
+
+RCT_EXTERN_METHOD(
+    recoverNode: (NSString*)network
+    seed: (NSArray*)seed
+    resolver: (RCTPromiseResolveBlock)resolve
+    rejecter: (RCTPromiseRejectBlock)reject
+)
+
+RCT_EXTERN_METHOD(
     startLogStream: (RCTPromiseResolveBlock)resolve
     rejecter: (RCTPromiseRejectBlock)reject
 )
+
+RCT_EXTERN_METHOD(
+    initServices: (NSString*)apiKey
+    deviceKey: (NSArray*)deviceKey
+    deviceCert: (NSArray*)deviceCert
+    seed: (NSArray*)seed
+    resolver: (RCTPromiseResolveBlock)resolve
+    rejecter: (RCTPromiseRejectBlock)reject
+)
+
+RCT_EXTERN_METHOD(
+    start: (RCTPromiseResolveBlock)resolve
+    rejecter: (RCTPromiseRejectBlock)reject
+)
+
+RCT_EXTERN_METHOD(
+    sync: (RCTPromiseResolveBlock)resolve
+    rejecter: (RCTPromiseRejectBlock)reject
+)
+
+RCT_EXTERN_METHOD(
+    stop: (RCTPromiseResolveBlock)resolve
+    rejecter: (RCTPromiseRejectBlock)reject
+)
+
 
 @end
