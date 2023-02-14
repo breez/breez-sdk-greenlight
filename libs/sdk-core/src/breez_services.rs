@@ -616,7 +616,7 @@ async fn poll_events(breez_services: Arc<BreezServices>, mut current_block: u32)
          log_message_res = log_stream.message() => {
           match log_message_res {
            Ok(Some(l)) => {
-            debug!("{}", l.line);
+            debug!("node-logs: {}", l.line);
            },
            // stream is closed, renew it
            Ok(None) => {
