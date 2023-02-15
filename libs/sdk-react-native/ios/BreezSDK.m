@@ -64,5 +64,18 @@ RCT_EXTERN_METHOD(
     rejecter: (RCTPromiseRejectBlock)reject
 )
 
+RCT_EXTERN_METHOD(
+    sendPayment: (NSString*)bolt11
+    amountSats: (NSString*)amountSats
+    resolver: (RCTPromiseResolveBlock)resolve
+    rejecter: (RCTPromiseRejectBlock)reject
+)
+
+RCT_EXTERN_METHOD(
+    sendSpontaneousPayment: (NSString*)nodeId
+    amountSats: (NSString*)amountSats
+    resolver: (RCTPromiseResolveBlock)resolve
+    rejecter: (RCTPromiseRejectBlock)reject
+)
 
 @end

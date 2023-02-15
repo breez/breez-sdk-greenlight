@@ -1,4 +1,4 @@
-package com.breezsdk;
+package com.breezsdk
 
 import breez_sdk.*
 import com.facebook.react.bridge.*
@@ -12,7 +12,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     override fun getName(): String {
-        return TAG;
+        return TAG
     }
 
     @ReactMethod
@@ -24,55 +24,55 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     @ReactMethod
     fun mnemonicToSeed(mnemonic: String, promise: Promise) {
         try {
-            var seed = mnemonicToSeed(mnemonic);
-            promise.resolve(readableArrayOf(seed));
+            var seed = mnemonicToSeed(mnemonic)
+            promise.resolve(readableArrayOf(seed))
         } catch (e: SdkException) {
-            e.printStackTrace();
-            promise.reject(TAG, "Error calling mnemonicToSeed", e);
+            e.printStackTrace()
+            promise.reject(TAG, "Error calling mnemonicToSeed", e)
         }
     }
 
     @ReactMethod
     fun parseInput(input: String, promise: Promise) {
         try {
-            var inputType = parseInput(input);
-            promise.resolve(readableMapOf(inputType));
+            var inputType = parseInput(input)
+            promise.resolve(readableMapOf(inputType))
         } catch (e: SdkException) {
-            e.printStackTrace();
-            promise.reject(TAG, "Error calling parseInput", e);
+            e.printStackTrace()
+            promise.reject(TAG, "Error calling parseInput", e)
         }
     }
 
     @ReactMethod
     fun parseInvoice(invoice: String, promise: Promise) {
         try {
-            var lnInvoice = parseInvoice(invoice);
-            promise.resolve(readableMapOf(lnInvoice));
+            var lnInvoice = parseInvoice(invoice)
+            promise.resolve(readableMapOf(lnInvoice))
         } catch (e: SdkException) {
-            e.printStackTrace();
-            promise.reject(TAG, "Error calling parseInvoice", e);
+            e.printStackTrace()
+            promise.reject(TAG, "Error calling parseInvoice", e)
         }
     }
 
     @ReactMethod
     fun registerNode(network: String, seed: ReadableArray, promise: Promise) {
         try {
-            var creds = registerNode(asNetwork(network), asUByteList(seed));
-            promise.resolve(readableMapOf(creds));
+            var creds = registerNode(asNetwork(network), asUByteList(seed))
+            promise.resolve(readableMapOf(creds))
         } catch (e: SdkException) {
-            e.printStackTrace();
-            promise.reject(TAG, "Error calling registerNode", e);
+            e.printStackTrace()
+            promise.reject(TAG, "Error calling registerNode", e)
         }
     }
 
     @ReactMethod
     fun recoverNode(network: String, seed: ReadableArray, promise: Promise) {
         try {
-            var creds = recoverNode(asNetwork(network), asUByteList(seed));
-            promise.resolve(readableMapOf(creds));
+            var creds = recoverNode(asNetwork(network), asUByteList(seed))
+            promise.resolve(readableMapOf(creds))
         } catch (e: SdkException) {
-            e.printStackTrace();
-            promise.reject(TAG, "Error calling recoverNode", e);
+            e.printStackTrace()
+            promise.reject(TAG, "Error calling recoverNode", e)
         }
     }
 
@@ -82,18 +82,18 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             var emitter = reactApplicationContext
                     .getJSModule(RCTDeviceEventEmitter::class.java)
 
-            setLogStream(BreezSDKLogStream(emitter));
-            promise.resolve("Log stream started");
+            setLogStream(BreezSDKLogStream(emitter))
+            promise.resolve("Log stream started")
         } catch (e: SdkException) {
-            e.printStackTrace();
-            promise.reject(TAG, "Error calling setLogStream", e);
+            e.printStackTrace()
+            promise.reject(TAG, "Error calling setLogStream", e)
         }
     }
 
     @ReactMethod
     fun initServices(apiKey: String, deviceKey: ReadableArray, deviceCert: ReadableArray, seed: ReadableArray, promise: Promise) {
         if (this.breezServices != null) {
-            promise.reject(TAG, "BreezServices already initialized");
+            promise.reject(TAG, "BreezServices already initialized")
         }
 
         var emitter = reactApplicationContext.getJSModule(RCTDeviceEventEmitter::class.java)
@@ -103,58 +103,90 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
         try {
             this.breezServices = initServices(config, asUByteList(seed), creds, BreezSDKListener(emitter))
-            promise.resolve("BreezServices initialized");
+            promise.resolve("BreezServices initialized")
         } catch (e: SdkException) {
-            e.printStackTrace();
-            promise.reject(TAG, "Error calling initServices", e);
+            e.printStackTrace()
+            promise.reject(TAG, "Error calling initServices", e)
         }
     }
 
     @ReactMethod
     fun start(promise: Promise) {
-        if (this.breezServices == null) {
-            promise.reject(TAG, "BreezServices not initialized");
-            return
-        }
-
-        try {
-            this.breezServices?.start();
-            promise.resolve("BreezServices started");
-        } catch (e: SdkException) {
-            e.printStackTrace();
-            promise.reject(TAG, "Error calling start", e);
+        this.breezServices?.let {breezServices->
+            try {
+                breezServices.start()
+                promise.resolve("BreezServices started")
+            } catch (e: SdkException) {
+                e.printStackTrace()
+                promise.reject(TAG, "Error calling start", e)
+            }
+        } ?: run {
+            promise.reject(TAG, "BreezServices not initialized")
         }
     }
 
     @ReactMethod
     fun sync(promise: Promise) {
-        if (this.breezServices == null) {
-            promise.reject(TAG, "BreezServices not initialized");
-            return
-        }
-
-        try {
-            this.breezServices?.sync();
-            promise.resolve("BreezServices syncing");
-        } catch (e: SdkException) {
-            e.printStackTrace();
-            promise.reject(TAG, "Error calling sync", e);
+        this.breezServices?.let {breezServices->
+            try {
+                breezServices.sync()
+                promise.resolve("BreezServices syncing")
+            } catch (e: SdkException) {
+                e.printStackTrace()
+                promise.reject(TAG, "Error calling sync", e)
+            }
+        } ?: run {
+            promise.reject(TAG, "BreezServices not initialized")
         }
     }
 
     @ReactMethod
     fun stop(promise: Promise) {
-        if (this.breezServices == null) {
-            promise.reject(TAG, "BreezServices not initialized");
-            return
+        this.breezServices?.let {breezServices->
+            try {
+                breezServices.stop()
+                promise.resolve("BreezServices stopped")
+            } catch (e: SdkException) {
+                e.printStackTrace()
+                promise.reject(TAG, "Error calling stop", e)
+            }
+        } ?: run {
+            promise.reject(TAG, "BreezServices not initialized")
         }
+    }
 
-        try {
-            this.breezServices?.stop();
-            promise.resolve("BreezServices stopped");
-        } catch (e: SdkException) {
-            e.printStackTrace();
-            promise.reject(TAG, "Error calling stop", e);
+    @ReactMethod
+    fun sendPayment(bolt11: String, amountSats: String?, promise: Promise) {
+        this.breezServices?.let {breezServices->
+            try {
+                var payment = breezServices.sendPayment(bolt11, amountSats?.toULong())
+
+                promise.resolve(readableMapOf(payment))
+            } catch (e: SdkException) {
+                e.printStackTrace()
+                promise.reject(TAG, "Error calling sendPayment", e)
+            }
+        } ?: run {
+            promise.reject(TAG, "BreezServices not initialized")
+        }
+    }
+
+    @ReactMethod
+    fun sendSpontaneousPayment(nodeId: String, amountSats: String, promise: Promise) {
+        this.breezServices?.let {breezServices->
+            try {
+                var payment = breezServices.sendSpontaneousPayment(nodeId, amountSats.toULong())
+
+                promise.resolve(readableMapOf(payment))
+            } catch (e: NumberFormatException) {
+                e.printStackTrace()
+                promise.reject(TAG, "Invalid amountSats", e)
+            } catch (e: SdkException) {
+                e.printStackTrace()
+                promise.reject(TAG, "Error calling sendSpontaneousPayment", e)
+            }
+        } ?: run {
+            promise.reject(TAG, "BreezServices not initialized")
         }
     }
 }

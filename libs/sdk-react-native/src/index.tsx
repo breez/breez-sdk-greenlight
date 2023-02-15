@@ -294,3 +294,13 @@ export async function sync(): Promise<void> {
 export async function stop(): Promise<void> {
     await BreezSDK.stop()
 }
+
+export async function sendPayment(bolt11: string, amountSats?: Long): Promise<Payment> {
+    const response = await BreezSDK.sendPayment(bolt11, amountSats?.toString())
+    return response as Payment
+}
+
+export async function sendSpontaneousPayment(nodeId: string, amountSats: Long): Promise<Payment> {
+    const response = await BreezSDK.sendSpontaneousPayment(nodeId, amountSats.toString())
+    return response as Payment
+}
