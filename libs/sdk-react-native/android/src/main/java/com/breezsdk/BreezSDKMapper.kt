@@ -7,6 +7,22 @@ import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableArray
 import com.facebook.react.bridge.WritableMap
 
+fun asLnUrlWithdrawRequestData(reqData: ReadableMap): LnUrlWithdrawRequestData? {
+    var callback = reqData.getString("callback")
+    var k1 = reqData.getString("k1")
+    var defaultDescription = reqData.getString("defaultDescription")
+    var minWithdrawable = reqData.getString("minWithdrawable")
+    var maxWithdrawable = reqData.getString("maxWithdrawable")
+
+    try {
+        if (callback != null && k1 != null && defaultDescription != null && minWithdrawable != null && maxWithdrawable != null) {
+            return LnUrlWithdrawRequestData(callback, k1, defaultDescription, minWithdrawable.toULong(), maxWithdrawable.toULong())
+        }
+    } catch (e: NumberFormatException) {}
+
+    return null
+}
+
 fun asNetwork(network: String): Network {
     return Network.valueOf(network.uppercase())
 }
@@ -133,6 +149,18 @@ fun readableMapOf(lnUrlWithdrawRequestData: LnUrlWithdrawRequestData): ReadableM
             "minWithdrawable" to lnUrlWithdrawRequestData.minWithdrawable,
             "maxWithdrawable" to lnUrlWithdrawRequestData.maxWithdrawable
     )
+}
+
+fun readableMapOf(lnUrlWithdrawCallbackStatus: LnUrlWithdrawCallbackStatus): ReadableMap {
+    return when(lnUrlWithdrawCallbackStatus) {
+        is LnUrlWithdrawCallbackStatus.Ok -> readableMapOf("status" to "ok")
+        is LnUrlWithdrawCallbackStatus.ErrorStatus -> {
+            var response = Arguments.createMap()
+            response.putString("status", "error")
+            response.merge(readableMapOf(lnUrlWithdrawCallbackStatus.data))
+            response
+        }
+    }
 }
 
 fun readableMapOf(messageSuccessActionData: MessageSuccessActionData): ReadableMap {

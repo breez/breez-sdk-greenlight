@@ -140,6 +140,11 @@ export type LnUrlPayRequestData = {
     commentAllowed: number
 }
 
+export type LnUrlWithdrawCallbackStatus = {
+    status: string
+    reason?: string
+}
+
 export type LnUrlWithdrawRequestData = {
     callback: string
     k1: string
@@ -303,4 +308,22 @@ export async function sendPayment(bolt11: string, amountSats?: Long): Promise<Pa
 export async function sendSpontaneousPayment(nodeId: string, amountSats: Long): Promise<Payment> {
     const response = await BreezSDK.sendSpontaneousPayment(nodeId, amountSats.toString())
     return response as Payment
+}
+
+export async function receivePayment(amountSats: Long, description: string): Promise<LnInvoice> {
+    const response = await BreezSDK.receivePayment(amountSats.toString(), description)
+    return response as LnInvoice
+}
+
+export async function withdrawLnurl(reqData: LnUrlWithdrawRequestData, amountSats: Long, description?: string): Promise<LnUrlWithdrawCallbackStatus> {
+    const response = await BreezSDK.withdrawLnurl(
+        {
+            ...reqData,
+            minWithdrawable: reqData.minWithdrawable.toString(),
+            maxWithdrawable: reqData.maxWithdrawable.toString()
+        },
+        amountSats.toString(),
+        description
+    )
+    return response as LnUrlWithdrawCallbackStatus
 }

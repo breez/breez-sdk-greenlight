@@ -183,4 +183,46 @@ class BreezSDK: RCTEventEmitter {
             reject(BreezSDK.TAG, "BreezServices not initialized", nil)
         }
     }
+    
+    @objc(receivePayment:description:resolver:rejecter:)
+    func receivePayment(_ amountSats:String, description:String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        if let breezServices = self.breezServices {
+            do {
+                if let amount = UInt64(amountSats) {
+                    let response = try breezServices.receivePayment(amountSats: amount, description: description)
+                    
+                    resolve(BreezSDKMapper.dictionaryOf(lnInvoice: response))
+                } else {
+                    reject(BreezSDK.TAG, "Invalid amountSats", nil)
+                }
+            } catch let err {
+                reject(BreezSDK.TAG, "Error calling receivePayment", err)
+            }
+        } else {
+            reject(BreezSDK.TAG, "BreezServices not initialized", nil)
+        }
+    }
+    
+    @objc(withdrawLnurl:amountSats:description:resolver:rejecter:)
+    func withdrawLnurl(_ reqData:[String: Any], amountSats:String, description:String?, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        if let breezServices = self.breezServices {
+            do {
+                if let lnUrlWithdrawRequestData = BreezSDKMapper.asLnUrlWithdrawRequestData(reqData: reqData) {
+                    if let amount = UInt64(amountSats) {
+                        let response = try breezServices.withdrawLnurl(reqData: lnUrlWithdrawRequestData, amountSats: amount, description: description)
+                        
+                        resolve(BreezSDKMapper.dictionaryOf(lnUrlWithdrawCallbackStatus: response))
+                    } else {
+                        reject(BreezSDK.TAG, "Invalid amountSats", nil)
+                    }
+                } else {
+                    reject(BreezSDK.TAG, "Invalid reqData", nil)
+                }
+            } catch let err {
+                reject(BreezSDK.TAG, "Error calling receivePayment", err)
+            }
+        } else {
+            reject(BreezSDK.TAG, "BreezServices not initialized", nil)
+        }
+    }
 }

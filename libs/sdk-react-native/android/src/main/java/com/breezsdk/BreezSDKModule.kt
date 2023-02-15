@@ -189,4 +189,48 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.reject(TAG, "BreezServices not initialized")
         }
     }
+
+    @ReactMethod
+    fun receivePayment(amountSats: String, description: String, promise: Promise) {
+        this.breezServices?.let {breezServices->
+            try {
+                var payment = breezServices.receivePayment(amountSats.toULong(), description)
+
+                promise.resolve(readableMapOf(payment))
+            } catch (e: NumberFormatException) {
+                e.printStackTrace()
+                promise.reject(TAG, "Invalid amountSats", e)
+            } catch (e: SdkException) {
+                e.printStackTrace()
+                promise.reject(TAG, "Error calling receivePayment", e)
+            }
+        } ?: run {
+            promise.reject(TAG, "BreezServices not initialized")
+        }
+    }
+
+    @ReactMethod
+    fun withdrawLnurl(reqData: ReadableMap, amountSats: String, description: String?, promise: Promise) {
+        this.breezServices?.let {breezServices->
+            var lnUrlWithdrawRequestData = asLnUrlWithdrawRequestData(reqData)
+
+            if (lnUrlWithdrawRequestData == null) {
+                promise.reject(TAG, "Invalid reqData")
+            } else {
+                try {
+                    var lnUrlWithdrawCallbackStatus = breezServices.withdrawLnurl(lnUrlWithdrawRequestData, amountSats.toULong(), description)
+
+                    promise.resolve(readableMapOf(lnUrlWithdrawCallbackStatus))
+                } catch (e: NumberFormatException) {
+                    e.printStackTrace()
+                    promise.reject(TAG, "Invalid amountSats", e)
+                } catch (e: SdkException) {
+                    e.printStackTrace()
+                    promise.reject(TAG, "Error calling receivePayment", e)
+                }
+            }
+        } ?: run {
+            promise.reject(TAG, "BreezServices not initialized")
+        }
+    }
 }

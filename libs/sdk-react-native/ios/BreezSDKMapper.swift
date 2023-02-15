@@ -117,6 +117,17 @@ class BreezSDKMapper {
         ]
     }
     
+    static func dictionaryOf(lnUrlWithdrawCallbackStatus: LnUrlWithdrawCallbackStatus) -> [String: Any] {
+        switch(lnUrlWithdrawCallbackStatus) {
+        case .ok:
+            return ["status": "ok"]
+        case let .errorStatus(data):
+            var response: [String: Any] = ["status": "error"]
+            response.merge(dictionaryOf(lnUrlErrorData: data)) {(_,new) in new}
+            return response
+        }
+    }
+    
     static func dictionaryOf(lnUrlWithdrawRequestData: LnUrlWithdrawRequestData) -> [String: Any] {
         return [
             "callback": lnUrlWithdrawRequestData.callback,
@@ -209,6 +220,20 @@ class BreezSDKMapper {
         case .signet: return "signet"
         case .testnet: return "testnet"
         }
+    }
+    
+    static func asLnUrlWithdrawRequestData(reqData: [String: Any]) -> LnUrlWithdrawRequestData? {
+        if let callback = reqData["callback"] as? String,
+            let k1 = reqData["k1"] as? String,
+            let defaultDescription = reqData["defaultDescription"] as? String,
+            let minWithdrawableStr = reqData["minWithdrawable"] as? String,
+            let maxWithdrawableStr = reqData["maxWithdrawable"] as? String {
+            if let minWithdrawable = UInt64(minWithdrawableStr), let maxWithdrawable = UInt64(maxWithdrawableStr) {
+                return LnUrlWithdrawRequestData(callback: callback, k1: k1, defaultDescription: defaultDescription, minWithdrawable: minWithdrawable, maxWithdrawable: maxWithdrawable)
+            }
+        }
+        
+        return nil
     }
     
     static func asNetwork(network: String) throws -> Network {
