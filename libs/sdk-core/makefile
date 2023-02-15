@@ -18,7 +18,7 @@ init:
 	rustup target add aarch64-apple-darwin x86_64-apple-darwin
 	rustup target add aarch64-apple-ios-sim
 	rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
-	rustup target add aarch64-unknown-linux-gnu
+	rustup target add aarch64-unknown-linux-gnu armv7-unknown-linux-gnueabi i686-unknown-linux-gnu x86_64-unknown-linux-gnu
 	@if [ $$(uname) == "Darwin" ] ; then cargo install cargo-lipo ; fi
 	cargo install cbindgen
 	cargo install cargo-ndk
@@ -66,14 +66,14 @@ aarch64-apple-darwin: $(SOURCES)
 	fi
 	@echo "[DONE] $@"
 
-## android: Compile the android targets (arm64, armv7 and i686)
-android: aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
-
-aarch64-linux-android: $(SOURCES) ndk-home
-	cargo ndk -t aarch64-linux-android build --release
+## android: Compile the android targets: armv7 arm64 i686 x86_64
+android: armv7-linux-androideabi aarch64-linux-android i686-linux-android x86_64-linux-android
 
 armv7-linux-androideabi: $(SOURCES) ndk-home
 	cargo ndk -t armv7-linux-androideabi build --release
+
+aarch64-linux-android: $(SOURCES) ndk-home
+	cargo ndk -t aarch64-linux-android build --release
 
 i686-linux-android: $(SOURCES) ndk-home
 	cargo ndk -t i686-linux-android build --release
@@ -81,11 +81,20 @@ i686-linux-android: $(SOURCES) ndk-home
 x86_64-linux-android: $(SOURCES) ndk-home
 	cargo ndk -t x86_64-linux-android build --release
 
-## linux: Compile the the following linux targets: arm64
-linux: aarch64-unknown-linux-gnu
+## linux: Compile the linux targets: armv7 arm64 i686 x86_64
+linux: armv7-unknown-linux-gnueabi aarch64-unknown-linux-gnu i686-unknown-linux-gnu x86_64-unknown-linux-gnu
+
+armv7-unknown-linux-gnueabi: $(SOURCES)
+	cargo build --release --target armv7-unknown-linux-gnueabi
 
 aarch64-unknown-linux-gnu: $(SOURCES)
 	cargo build --release --target aarch64-unknown-linux-gnu
+
+i686-unknown-linux-gnu: $(SOURCES)
+	cargo build --release --target i686-unknown-linux-gnu
+
+x86_64-unknown-linux-gnu: $(SOURCES)
+	cargo build --release --target x86_64-unknown-linux-gnu
 
 .PHONY: ndk-home
 ndk-home:
