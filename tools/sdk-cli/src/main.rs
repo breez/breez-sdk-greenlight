@@ -41,7 +41,7 @@ fn get_seed() -> Vec<u8> {
         Ok(phrase) => Mnemonic::from_phrase(phrase.as_str(), Language::English).unwrap(),
         Err(e) => {
             if e.kind() != io::ErrorKind::NotFound {
-                panic!("Can't read from file: {}, err {}", filename, e);
+                panic!("Can't read from file: {filename}, err {e}");
             }
             let mnemonic = Mnemonic::new(MnemonicType::Words12, Language::English);
             fs::write(filename, mnemonic.phrase()).unwrap();
@@ -64,7 +64,7 @@ fn get_creds() -> Option<GreenlightCredentials> {
         Ok(raw) => Some(serde_json::from_slice(raw.as_slice()).unwrap()),
         Err(e) => {
             if e.kind() != io::ErrorKind::NotFound {
-                panic!("Can't read from file: {}, err {}", filename, e);
+                panic!("Can't read from file: {filename}, err {e}");
             }
             None
         }
@@ -221,8 +221,7 @@ async fn main() -> Result<()> {
                                 }
 
                                 let prompt = format!(
-                                    "Amount to withdraw in sats (min {} sat, max {} sat: ",
-                                    user_input_min_sat, user_input_max_sat
+                                    "Amount to withdraw in sats (min {user_input_min_sat} sat, max {user_input_max_sat} sat: ",
                                 );
                                 let user_input_withdraw_amount_sat = rl.readline(&prompt)?;
 
