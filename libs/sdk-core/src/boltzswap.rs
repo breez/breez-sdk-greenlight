@@ -13,27 +13,26 @@ const BOLTZ_API_URL: &str = "https://boltz.exchange/api/";
 const GETPAIRS_ENDPOINT: &str = concatcp!(BOLTZ_API_URL, "getpairs");
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct Post {
     id: Option<i32>,
     title: String,
     body: String,
-    #[serde(rename = "userId")]
     user_id: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct MaximalZeroConf {
-    #[serde(rename = "baseAsset")]
     base_asset: u64,
-    #[serde(rename = "quoteAsset")]
     quote_asset: u64,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct Limits {
     maximal: u64,
     minimal: u64,
-    #[serde(rename = "maximalZeroConf")]
     maximal_zero_conf: MaximalZeroConf,
 }
 
@@ -50,17 +49,16 @@ struct FeesAsset {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct MinerFees {
-    #[serde(rename = "baseAsset")]
     base_asset: FeesAsset,
-    #[serde(rename = "quoteAsset")]
     quote_asset: FeesAsset,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct Fees {
     percentage: f64,
-    #[serde(rename = "minerFees")]
     miner_fees: MinerFees,
 }
 
