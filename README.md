@@ -73,6 +73,7 @@ To get started with the Breez SDK API, please follow the documentation [here](ht
 - [ ] Mobile Notifications
 - [ ] Offline receive via notifications
 - [ ] Performance optimizations
+- [ ] Improve key share 
 - [ ] Close channels to a predefined address 
 - [ ] Make mempool.space dependency optional 
 - [ ] Receive 0 amount invoice via LSP (unified QR)
