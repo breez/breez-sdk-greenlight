@@ -17,6 +17,7 @@ use crate::grpc::{PaymentInformation, RegisterPaymentReply};
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lsp::LspInformation;
 use crate::models::Network::*;
+use crate::reverseswap::CreateReverseSwapResponse;
 use crate::LnUrlErrorData;
 
 /// Different types of supported payments
@@ -123,14 +124,18 @@ pub struct ReverseSwapInfo {
     pub fees_claim: u64,
 }
 
+/// Information about a reverse swap that was just started with Boltz
+#[derive(Debug)]
 pub struct ReverseSwap {
-    pub error_message: String,
+    pub error_message: Option<String>,
+    pub response: CreateReverseSwapResponse,
 }
 
 /// Trait covering functionality involving swaps
 #[tonic::async_trait]
 pub trait ReverseSwapperAPI: Send + Sync {
-    async fn create_reverse_swap(&self) -> Result<ReverseSwap>;
+    /// Creates a reverse submarine swap
+    async fn create_reverse_swap(&self, amount_sat: u64, onchain_claim_address: String) -> Result<ReverseSwap>;
 }
 
 /// Internal SDK log entry

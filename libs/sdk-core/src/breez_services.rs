@@ -144,6 +144,7 @@ pub struct BreezServices {
     persister: Arc<SqliteStorage>,
     payment_receiver: Arc<PaymentReceiver>,
     btc_receive_swapper: Arc<BTCReceiveSwap>,
+    btc_send_swapper: Arc<BTCSendSwap>,
     event_listener: Option<Box<dyn EventListener>>,
     shutdown_sender: Mutex<Option<mpsc::Sender<()>>>,
 }
@@ -462,8 +463,25 @@ impl BreezServices {
     }
 
     pub async fn reverse_swap_info(&self) -> Result<ReverseSwapInfo> {
-        let rsi = crate::boltzswap::reverse_swap_info().await?;
-        return Ok(rsi);
+        crate::boltzswap::reverse_swap_info().await
+    }
+
+    pub async fn send_onchain(&self, amount_sat: u64, onchain_recipient_address: String) -> Result<ReverseSwap> {
+        // TODO 1. Start reverse swap
+        // TODO 1. Get input: desired amount, destination BTC address
+        // TODO 2. Receive HODL invoice from Boltz
+        // TODO 3. Pay the HODL invoice
+
+        // TODO 4. Schedule monitoring of on-chain "lock" tx
+
+        let rev_swap = self.btc_send_swapper.create_reverse_swap(amount_sat, onchain_recipient_address).await?;
+        Ok(rev_swap)
+    }
+
+    pub async fn complete_reverse_swap(&self) -> Result<()> {
+        // TODO 5. Broadcast "claim" tx (reveal preimage)
+
+        Ok(())
     }
 
     /// list non-completed expired swaps that should be refunded bu calling [BreezServices::refund]
@@ -870,6 +888,14 @@ impl BreezServicesBuilder {
             payment_receiver.clone(),
         ));
 
+        let btc_send_swapper = Arc::new(BTCSendSwap::new(
+            self.config.network.clone().into(),
+            self.reverse_swapper_api.clone()
+                .unwrap_or_else(|| breez_server.clone()),
+            persister.clone(),
+            chain_service.clone(),
+        ));
+
         // Create the node services and it them statically
         let breez_services = Arc::new(BreezServices {
             node_api: unwrapped_node_api.clone(),
@@ -885,6 +911,7 @@ impl BreezServicesBuilder {
             chain_service,
             persister,
             btc_receive_swapper,
+            btc_send_swapper,
             payment_receiver,
             event_listener: listener,
             shutdown_sender: Mutex::new(None),
