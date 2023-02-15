@@ -10,7 +10,8 @@ use const_format::concatcp;
 use crate::models::ReverseSwapInfo;
 
 const BOLTZ_API_URL: &str = "https://boltz.exchange/api/";
-const GETPAIRS_ENDPOINT: &str = concatcp!(BOLTZ_API_URL, "getpairs");
+const GET_PAIRS_ENDPOINT: &str = concatcp!(BOLTZ_API_URL, "getpairs");
+pub(crate) const CREATE_REVERSE_SWAP_ENDPOINT: &str = concatcp!(BOLTZ_API_URL, "reversesubmarine");
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -78,7 +79,7 @@ struct Pairs {
 }
 
 pub async fn reverse_swap_info() -> Result<ReverseSwapInfo> {
-    let pairs = reqwest::get(GETPAIRS_ENDPOINT)
+    let pairs = reqwest::get(GET_PAIRS_ENDPOINT)
         .await?
         .json::<Pairs>()
         .await?;
