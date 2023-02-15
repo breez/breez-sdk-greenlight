@@ -29,6 +29,12 @@ class BreezBridge {
 
   Stream<InvoicePaidDetails> get invoicePaidStream => _invoicePaidStream.stream;
 
+  /// Listen to payment results
+  final StreamController<Payment> _paymentResultStream =
+      BehaviorSubject<Payment>();
+
+  Stream<Payment> get paymentResultStream => _paymentResultStream.stream;
+
   BreezBridge() {
     /// Listen to BreezEvent's(new block, invoice paid, synced)
     _lnToolkit.breezEventsStream().listen((event) async {
@@ -39,6 +45,12 @@ class BreezBridge {
       }
       if (event is BreezEvent_Synced) {
         await fetchNodeData();
+      }
+      if (event is BreezEvent_PaymentSucceed) {
+        _paymentResultStream.add(event.details);
+      }
+      if (event is BreezEvent_PaymentFailed) {
+        _paymentResultStream.addError(Exception(event.error));
       }
     });
 
@@ -63,7 +75,7 @@ class BreezBridge {
       network: network,
       seed: seed,
     );
-    await fetchNodeData();    
+    await fetchNodeData();
     return creds;
   }
 
@@ -84,7 +96,7 @@ class BreezBridge {
       network: network,
       seed: seed,
     );
-    await fetchNodeData();    
+    await fetchNodeData();
     return creds;
   }
 
@@ -106,7 +118,7 @@ class BreezBridge {
       seed: seed,
       creds: creds,
     );
-    await fetchNodeData();    
+    await fetchNodeData();
   }
 
   Future<void> startNode() async => await _lnToolkit.startNode();
@@ -122,8 +134,14 @@ class BreezBridge {
   ///
   /// * `bolt11` - The bolt11 invoice
   /// * `amountSats` - The amount to pay in satoshis
-  Future<Payment> sendPayment({required String bolt11, int? amountSats}) async {
-    return await _lnToolkit.sendPayment(bolt11: bolt11, amountSats: amountSats);
+  Future<Payment> sendPayment({
+    required String bolt11,
+    int? amountSats,
+  }) async {
+    return await _lnToolkit.sendPayment(
+      bolt11: bolt11,
+      amountSats: amountSats,
+    );
   }
 
   /// pay directly to a node id using keysend
@@ -132,10 +150,14 @@ class BreezBridge {
   ///
   /// * `nodeId` - The destination nodeId
   /// * `amountSats` - The amount to pay in satoshis
-  Future<Payment> sendSpontaneousPayment(
-      {required String nodeId, required int amountSats}) async {
+  Future<Payment> sendSpontaneousPayment({
+    required String nodeId,
+    required int amountSats,
+  }) async {
     return await _lnToolkit.sendSpontaneousPayment(
-        nodeId: nodeId, amountSats: amountSats);
+      nodeId: nodeId,
+      amountSats: amountSats,
+    );
   }
 
   /// Creates an bolt11 payment request.
@@ -147,10 +169,14 @@ class BreezBridge {
   ///
   /// * `amountSats` - The amount to receive in satoshis
   /// * `description` - The bolt11 payment request description
-  Future<LNInvoice> receivePayment(
-          {required int amountSats, required String description}) async =>
+  Future<LNInvoice> receivePayment({
+    required int amountSats,
+    required String description,
+  }) async =>
       await _lnToolkit.receivePayment(
-          amountSats: amountSats, description: description);
+        amountSats: amountSats,
+        description: description,
+      );
 
   /// get the node state from the persistent storage
   Future<NodeState?> getNodeState() async {
@@ -187,7 +213,8 @@ class BreezBridge {
   }
 
   /// Convenience method to look up LSP info
-  Future<LspInformation?> fetchLspInfo(String lspId) async => await _lnToolkit.fetchLspInfo(id: lspId);
+  Future<LspInformation?> fetchLspInfo(String lspId) async =>
+      await _lnToolkit.fetchLspInfo(id: lspId);
 
   Future<String?> getLspId() async => await _lnToolkit.lspId();
 
@@ -269,7 +296,10 @@ class BreezBridge {
     required LnUrlWithdrawRequestData reqData,
   }) async {
     return _lnToolkit.lnurlWithdraw(
-        amountSats: amountSats, reqData: reqData, description: description);
+      amountSats: amountSats,
+      reqData: reqData,
+      description: description,
+    );
   }
 
   /// Attempts to convert the phrase to a mnemonic, then to a seed.

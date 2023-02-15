@@ -9,7 +9,9 @@ crate-type = ["staticlib", "cdylib", "lib"]
 
 [dependencies]
 flutter_rust_bridge = "1"
+aes = "0.8"
 anyhow = { version = "1.0.57", features = ["backtrace"] }
+cbc = { version = "0.1", features = ["std"] }
 hex = "*"
 bip21 = "*"
 bitcoin_hashes = "*"

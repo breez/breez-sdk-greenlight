@@ -427,7 +427,7 @@ impl BTCReceiveSwap {
         let mut swap_info = self
             .persister
             .get_swap_info_by_address(bitcoin_address.clone())?
-            .ok_or_else(|| anyhow!(format!("swap address {} was not found", bitcoin_address)))?;
+            .ok_or_else(|| anyhow!(format!("swap address {bitcoin_address} was not found")))?;
 
         // we are creating and invoice for this swap if we didn't
         // do it already
@@ -474,7 +474,7 @@ impl BTCReceiveSwap {
         let swap_info = self
             .persister
             .get_swap_info_by_address(swap_address.clone())?
-            .ok_or_else(|| anyhow!(format!("swap address {} was not found", swap_address)))?;
+            .ok_or_else(|| anyhow!(format!("swap address {swap_address} was not found")))?;
 
         let transactions = self
             .chain_service
@@ -869,6 +869,7 @@ mod tests {
                     payment_preimage: "111".to_string(),
                     keysend: false,
                     bolt11: "".to_string(),
+                    lnurl_success_action: None,
                 },
             },
         };
