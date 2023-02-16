@@ -46,7 +46,7 @@
 //!
 //! or make payments
 //! ```ignore
-//! let bolt11 = "..."; // LN invoice
+//! let bolt11 = "...";
 //! sdk.send_payment(bolt11.into(), Some(3000)).await?;
 //! ```
 //!
