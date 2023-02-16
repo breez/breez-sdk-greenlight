@@ -49,6 +49,12 @@ enum PaymentDetailType {
     CLOSED_CHANNEL = "closed_channel"
 }
 
+export enum PaymentTypeFilter {
+    SENT = "sent",
+    RECEIVED = "received",
+    ALL = "all"
+}
+
 export enum Network {
     BITCOIN = "bitcoin",
     REGTEST = "regtest",
@@ -327,8 +333,8 @@ export async function stop(): Promise<void> {
     await BreezSDK.stop()
 }
 
-export async function sendPayment(bolt11: string, amountSats?: number): Promise<Payment> {
-    const response = await BreezSDK.sendPayment(bolt11, amountSats || 0)
+export async function sendPayment(bolt11: string, amountSats: number = 0): Promise<Payment> {
+    const response = await BreezSDK.sendPayment(bolt11, amountSats)
     return response as Payment
 }
 
@@ -354,4 +360,9 @@ export async function withdrawLnurl(
 export async function nodeInfo(): Promise<NodeState> {
     const response = await BreezSDK.nodeInfo()
     return response as NodeState
+}
+
+export async function listPayments(filter: PaymentTypeFilter, fromTimestamp: number = 0, toTimestamp: number = 0): Promise<Payment[]> {
+    const response = await BreezSDK.listPayments(filter, fromTimestamp, toTimestamp)
+    return response as Payment[]
 }

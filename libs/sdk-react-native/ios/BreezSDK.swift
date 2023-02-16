@@ -231,4 +231,20 @@ class BreezSDK: RCTEventEmitter {
             reject(BreezSDK.TAG, "BreezServices not initialized", nil)
         }
     }
-}
+    
+    @objc(listPayments:fromTimestamp:toTimestamp:resolver:rejecter:)
+    func listPayments(_ filter:String, fromTimestamp:Int64, toTimestamp:Int64, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        if let breezServices = self.breezServices {
+            do {
+                let optionalFromTimestamp = fromTimestamp == 0 ? nil : fromTimestamp
+                let optionalToTimestamp = toTimestamp == 0 ? nil : toTimestamp
+                let response = try breezServices.listPayments(filter: BreezSDKMapper.asPaymentTypeFilter(filter: filter), fromTimestamp: optionalFromTimestamp, toTimestamp: optionalToTimestamp)
+                        
+                resolve(BreezSDKMapper.arrayOf(payments: response))
+            } catch let err {
+                reject(BreezSDK.TAG, "Error calling listPayments", err)
+            }
+        } else {
+            reject(BreezSDK.TAG, "BreezServices not initialized", nil)
+        }
+    }}

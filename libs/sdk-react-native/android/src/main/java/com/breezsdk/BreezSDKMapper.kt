@@ -22,6 +22,10 @@ fun asLnUrlWithdrawRequestData(reqData: ReadableMap): LnUrlWithdrawRequestData? 
     return null
 }
 
+fun asPaymentTypeFilter(filter: String): PaymentTypeFilter {
+    return PaymentTypeFilter.valueOf(filter.uppercase())
+}
+
 fun asNetwork(network: String): Network {
     return Network.valueOf(network.uppercase())
 }
@@ -38,6 +42,52 @@ fun asUByteList(arr: ReadableArray): List<UByte> {
     }
 
     return list
+}
+
+fun pushToArray(array: WritableArray, value: Any?) {
+    when (value) {
+        null -> array.pushNull()
+        is Boolean -> array.pushBoolean(value)
+        is Double -> array.pushDouble(value)
+        is Int -> array.pushInt(value)
+        is Payment -> array.pushMap(readableMapOf(value))
+        is RouteHint -> array.pushMap(readableMapOf(value))
+        is RouteHintHop -> array.pushMap(readableMapOf(value))
+        is String -> array.pushString(value)
+        is UByte -> array.pushInt(value.toInt())
+        is ULong -> array.pushDouble(value.toDouble())
+        is UnspentTransactionOutput -> array.pushMap(readableMapOf(value))
+        is WritableArray -> array.pushArray(value)
+        is WritableMap -> array.pushMap(value)
+        is Array<*> -> array.pushArray(readableArrayOf(value.asIterable()))
+        is List<*> -> array.pushArray(readableArrayOf(value))
+        else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+    }
+}
+
+fun pushToMap(map: WritableMap, key: String, value: Any?) {
+    when (value) {
+        null -> map.putNull(key)
+        is Boolean -> map.putBoolean(key, value)
+        is Double -> map.putDouble(key, value)
+        is Int -> map.putInt(key, value)
+        is String -> map.putString(key, value)
+        is UByte -> map.putInt(key, value.toInt())
+        is ULong -> map.putDouble(key, value.toDouble())
+        is WritableMap -> map.putMap(key, value)
+        is WritableArray -> map.putArray(key, value)
+        is Array<*> -> map.putArray(key, readableArrayOf(value.asIterable()))
+        is List<*> -> map.putArray(key, readableArrayOf(value))
+        else -> throw IllegalArgumentException("Unsupported value type ${value::class.java.name} for key [$key]")
+    }
+}
+
+fun readableArrayOf(values: Iterable<*>): ReadableArray {
+    val array = Arguments.createArray()
+    for (value in values) {
+        pushToArray(array, value)
+    }
+    return array
 }
 
 fun readableMapOf(aesSuccessActionDataDecrypted: AesSuccessActionDataDecrypted): ReadableMap {
@@ -259,47 +309,3 @@ fun readableMapOf(vararg values: Pair<String, *>): ReadableMap {
     return map
 }
 
-fun readableArrayOf(values: Iterable<*>): ReadableArray {
-    val array = Arguments.createArray()
-    for (value in values) {
-        pushToArray(array, value)
-    }
-    return array
-}
-
-fun pushToArray(array: WritableArray, value: Any?) {
-    when (value) {
-        null -> array.pushNull()
-        is Boolean -> array.pushBoolean(value)
-        is Double -> array.pushDouble(value)
-        is Int -> array.pushInt(value)
-        is RouteHint -> array.pushMap(readableMapOf(value))
-        is RouteHintHop -> array.pushMap(readableMapOf(value))
-        is String -> array.pushString(value)
-        is UByte -> array.pushInt(value.toInt())
-        is ULong -> array.pushDouble(value.toDouble())
-        is UnspentTransactionOutput -> array.pushMap(readableMapOf(value))
-        is WritableArray -> array.pushArray(value)
-        is WritableMap -> array.pushMap(value)
-        is Array<*> -> array.pushArray(readableArrayOf(value.asIterable()))
-        is List<*> -> array.pushArray(readableArrayOf(value))
-        else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
-    }
-}
-
-fun pushToMap(map: WritableMap, key: String, value: Any?) {
-    when (value) {
-        null -> map.putNull(key)
-        is Boolean -> map.putBoolean(key, value)
-        is Double -> map.putDouble(key, value)
-        is Int -> map.putInt(key, value)
-        is String -> map.putString(key, value)
-        is UByte -> map.putInt(key, value.toInt())
-        is ULong -> map.putDouble(key, value.toDouble())
-        is WritableMap -> map.putMap(key, value)
-        is WritableArray -> map.putArray(key, value)
-        is Array<*> -> map.putArray(key, readableArrayOf(value.asIterable()))
-        is List<*> -> map.putArray(key, readableArrayOf(value))
-        else -> throw IllegalArgumentException("Unsupported value type ${value::class.java.name} for key [$key]")
-    }
-}

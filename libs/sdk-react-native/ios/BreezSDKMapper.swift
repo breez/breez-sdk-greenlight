@@ -1,16 +1,51 @@
 import Foundation
 
 class BreezSDKMapper {
+    static func arrayOf(payments: [Payment]) -> [Any] {
+        return payments.map { (payment) -> [String: Any?] in return dictionaryOf(payment: payment) }
+    }
+    
     static func arrayOf(routeHints: [RouteHint]) -> [Any] {
         return routeHints.map { (routeHint) -> [String: Any] in return dictionaryOf(routeHint: routeHint) }
     }
-    
+ 
     static func arrayOf(routeHintHops: [RouteHintHop]) -> [Any] {
         return routeHintHops.map { (routeHintHop) -> [String: Any?] in return dictionaryOf(routeHintHop: routeHintHop) }
     }
     
     static func arrayOf(unspentTransactionOutputs: [UnspentTransactionOutput]) -> [Any] {
         return unspentTransactionOutputs.map { (unspentTransactionOutput) -> [String: Any] in return dictionaryOf(unspentTransactionOutput: unspentTransactionOutput) }
+    }
+    
+    static func asLnUrlWithdrawRequestData(reqData: [String: Any]) -> LnUrlWithdrawRequestData? {
+        if let callback = reqData["callback"] as? String,
+            let k1 = reqData["k1"] as? String,
+            let defaultDescription = reqData["defaultDescription"] as? String,
+            let minWithdrawable = reqData["minWithdrawable"] as? UInt64,
+            let maxWithdrawable = reqData["maxWithdrawable"] as? UInt64 {
+            return LnUrlWithdrawRequestData(callback: callback, k1: k1, defaultDescription: defaultDescription, minWithdrawable: minWithdrawable, maxWithdrawable: maxWithdrawable)
+        }
+        
+        return nil
+    }
+    
+    static func asPaymentTypeFilter(filter: String) throws -> PaymentTypeFilter {
+        switch(filter) {
+        case "sent": return PaymentTypeFilter.sent
+        case "received": return PaymentTypeFilter.received
+        case "all": return PaymentTypeFilter.all
+        default: throw SdkError.Error(message: "Invalid filter")
+        }
+    }
+    
+    static func asNetwork(network: String) throws -> Network {
+        switch(network) {
+        case "bitcoin": return Network.bitcoin
+        case "regtest": return Network.regtest
+        case "signet": return Network.signet
+        case "testnet": return Network.testnet
+        default: throw SdkError.Error(message: "Invalid network")
+        }
     }
     
     static func dictionaryOf(aesSuccessActionDataDecrypted: AesSuccessActionDataDecrypted) -> [String: Any] {
@@ -250,28 +285,6 @@ class BreezSDKMapper {
         case .regtest: return "regtest"
         case .signet: return "signet"
         case .testnet: return "testnet"
-        }
-    }
-    
-    static func asLnUrlWithdrawRequestData(reqData: [String: Any]) -> LnUrlWithdrawRequestData? {
-        if let callback = reqData["callback"] as? String,
-            let k1 = reqData["k1"] as? String,
-            let defaultDescription = reqData["defaultDescription"] as? String,
-            let minWithdrawable = reqData["minWithdrawable"] as? UInt64,
-            let maxWithdrawable = reqData["maxWithdrawable"] as? UInt64 {
-            return LnUrlWithdrawRequestData(callback: callback, k1: k1, defaultDescription: defaultDescription, minWithdrawable: minWithdrawable, maxWithdrawable: maxWithdrawable)
-        }
-        
-        return nil
-    }
-    
-    static func asNetwork(network: String) throws -> Network {
-        switch(network) {
-        case "bitcoin": return Network.bitcoin
-        case "regtest": return Network.regtest
-        case "signet": return Network.signet
-        case "testnet": return Network.testnet
-        default: throw SdkError.Error(message: "Invalid network")
         }
     }
 }

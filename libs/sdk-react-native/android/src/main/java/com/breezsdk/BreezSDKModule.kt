@@ -243,4 +243,22 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.reject(TAG, "BreezServices not initialized")
         }
     }
+
+    @ReactMethod
+    fun listPayments(filter: String, fromTimestamp: Double, toTimestamp: Double, promise: Promise) {
+        this.breezServices?.let {breezServices->
+            try {
+                var optionalFromTimestamp = fromTimestamp.takeUnless { it == 0.0 }
+                var optionalToTimestamp = toTimestamp.takeUnless { it == 0.0 }
+                var payments = breezServices.listPayments(asPaymentTypeFilter(filter), optionalFromTimestamp?.toLong(), optionalToTimestamp?.toLong())
+
+                promise.resolve(readableArrayOf(payments))
+            } catch (e: SdkException) {
+                e.printStackTrace()
+                promise.reject(TAG, "Error calling listPayments", e)
+            }
+        } ?: run {
+            promise.reject(TAG, "BreezServices not initialized")
+        }
+    }
 }

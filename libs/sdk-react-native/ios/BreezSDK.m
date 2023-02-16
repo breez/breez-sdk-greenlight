@@ -98,4 +98,12 @@ RCT_EXTERN_METHOD(
     rejecter: (RCTPromiseRejectBlock)reject
 )
 
+RCT_EXTERN_METHOD(
+    listPayments: (NSString*)filter
+    fromTimestamp: (NSInteger*)fromTimestamp
+    toTimestamp: (NSInteger*)toTimestamp
+    resolver: (RCTPromiseResolveBlock)resolve
+    rejecter: (RCTPromiseRejectBlock)reject
+)
+
 @end
