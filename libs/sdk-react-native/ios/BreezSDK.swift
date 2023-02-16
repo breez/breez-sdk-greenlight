@@ -56,9 +56,9 @@ class BreezSDK: RCTEventEmitter {
     @objc(registerNode:seed:resolver:rejecter:)
     func registerNode(_ network:String, seed:[UInt8], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         do {
-            let creds = try breez_sdk.registerNode(network: BreezSDKMapper.asNetwork(network: network), seed: seed)
+            let greenlightCredentials = try breez_sdk.registerNode(network: BreezSDKMapper.asNetwork(network: network), seed: seed)
             
-            resolve(BreezSDKMapper.dictionaryOf(greenlightCredentials: creds))
+            resolve(BreezSDKMapper.dictionaryOf(greenlightCredentials: greenlightCredentials))
         } catch let err {
             reject(BreezSDK.TAG, "Error calling registerNode", err)
         }
@@ -67,9 +67,9 @@ class BreezSDK: RCTEventEmitter {
     @objc(recoverNode:seed:resolver:rejecter:)
     func recoverNode(_ network:String, seed:[UInt8], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         do {
-            let creds = try breez_sdk.recoverNode(network: BreezSDKMapper.asNetwork(network: network), seed: seed)
+            let greenlightCredentials = try breez_sdk.recoverNode(network: BreezSDKMapper.asNetwork(network: network), seed: seed)
             
-            resolve(BreezSDKMapper.dictionaryOf(greenlightCredentials: creds))
+            resolve(BreezSDKMapper.dictionaryOf(greenlightCredentials: greenlightCredentials))
         } catch let err {
             reject(BreezSDK.TAG, "Error calling recoverNode", err)
         }
@@ -80,7 +80,7 @@ class BreezSDK: RCTEventEmitter {
         do {
             try breez_sdk.setLogStream(logStream: BreezSDKLogStream(emitter: self))
             
-            resolve("Log stream started")
+            resolve(["status": "ok"])
         } catch let err {
             reject(BreezSDK.TAG, "Error calling setLogStream", err)
         }
@@ -91,14 +91,14 @@ class BreezSDK: RCTEventEmitter {
         if self.breezServices != nil {
             reject(BreezSDK.TAG, "BreezServices already initialized", nil)
         } else {
-            let creds = GreenlightCredentials(deviceKey: deviceKey, deviceCert: deviceCert)
+            let greenlightCredentials = GreenlightCredentials(deviceKey: deviceKey, deviceCert: deviceCert)
             var config = breez_sdk.defaultConfig(envType: EnvironmentType.production)
             config.apiKey = apiKey
             
             do {
-                self.breezServices = try breez_sdk.initServices(config: config, seed: seed, creds: creds, listener: BreezSDKListener(emitter: self))
+                self.breezServices = try breez_sdk.initServices(config: config, seed: seed, creds: greenlightCredentials, listener: BreezSDKListener(emitter: self))
                 
-                resolve("BreezServices initialized")
+                resolve(["status": "ok"])
             } catch let err {
                 reject(BreezSDK.TAG, "Error calling initServices", err)
             }
@@ -111,7 +111,7 @@ class BreezSDK: RCTEventEmitter {
             do {
                 try breezServices.start()
                 
-                resolve("BreezServices started")
+                resolve(["status": "ok"])
             } catch let err {
                 reject(BreezSDK.TAG, "Error calling start", err)
             }
@@ -126,7 +126,7 @@ class BreezSDK: RCTEventEmitter {
             do {
                 try breezServices.sync()
                 
-                resolve("BreezServices syncing")
+                resolve(["status": "ok"])
             } catch let err {
                 reject(BreezSDK.TAG, "Error calling sync", err)
             }
@@ -141,7 +141,7 @@ class BreezSDK: RCTEventEmitter {
             do {
                 try breezServices.stop()
                 
-                resolve("BreezServices stopped")
+                resolve(["status": "ok"])
             } catch let err {
                 reject(BreezSDK.TAG, "Error calling stop", err)
             }
@@ -155,9 +155,9 @@ class BreezSDK: RCTEventEmitter {
         if let breezServices = self.breezServices {
             do {
                 let optionalAmountSats = amountSats == 0 ? nil : amountSats
-                let response = try breezServices.sendPayment(bolt11: bolt11, amountSats: optionalAmountSats)
+                let payment = try breezServices.sendPayment(bolt11: bolt11, amountSats: optionalAmountSats)
                 
-                resolve(BreezSDKMapper.dictionaryOf(payment: response))
+                resolve(BreezSDKMapper.dictionaryOf(payment: payment))
             } catch let err {
                 reject(BreezSDK.TAG, "Error calling sendPayment", err)
             }
@@ -170,9 +170,9 @@ class BreezSDK: RCTEventEmitter {
     func sendSpontaneousPayment(_ nodeId:String, amountSats:UInt64, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         if let breezServices = self.breezServices {
             do {
-                let response = try breezServices.sendSpontaneousPayment(nodeId: nodeId, amountSats: amountSats)
+                let payment = try breezServices.sendSpontaneousPayment(nodeId: nodeId, amountSats: amountSats)
                     
-                resolve(BreezSDKMapper.dictionaryOf(payment: response))
+                resolve(BreezSDKMapper.dictionaryOf(payment: payment))
             } catch let err {
                 reject(BreezSDK.TAG, "Error calling sendSpontaneousPayment", err)
             }
@@ -185,9 +185,9 @@ class BreezSDK: RCTEventEmitter {
     func receivePayment(_ amountSats:UInt64, description:String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         if let breezServices = self.breezServices {
             do {
-                let response = try breezServices.receivePayment(amountSats: amountSats, description: description)
+                let lnInvoice = try breezServices.receivePayment(amountSats: amountSats, description: description)
                     
-                resolve(BreezSDKMapper.dictionaryOf(lnInvoice: response))
+                resolve(BreezSDKMapper.dictionaryOf(lnInvoice: lnInvoice))
             } catch let err {
                 reject(BreezSDK.TAG, "Error calling receivePayment", err)
             }
@@ -201,9 +201,9 @@ class BreezSDK: RCTEventEmitter {
         if let breezServices = self.breezServices {
             do {
                 if let lnUrlWithdrawRequestData = BreezSDKMapper.asLnUrlWithdrawRequestData(reqData: reqData) {
-                    let response = try breezServices.withdrawLnurl(reqData: lnUrlWithdrawRequestData, amountSats: amountSats, description: description)
+                    let lnUrlWithdrawCallbackStatus = try breezServices.withdrawLnurl(reqData: lnUrlWithdrawRequestData, amountSats: amountSats, description: description)
                         
-                    resolve(BreezSDKMapper.dictionaryOf(lnUrlWithdrawCallbackStatus: response))
+                    resolve(BreezSDKMapper.dictionaryOf(lnUrlWithdrawCallbackStatus: lnUrlWithdrawCallbackStatus))
                 } else {
                     reject(BreezSDK.TAG, "Invalid reqData", nil)
                 }
@@ -219,8 +219,8 @@ class BreezSDK: RCTEventEmitter {
     func nodeInfo(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         if let breezServices = self.breezServices {
             do {
-                if let response = try breezServices.nodeInfo() {
-                    resolve(BreezSDKMapper.dictionaryOf(nodeState: response))
+                if let nodeState = try breezServices.nodeInfo() {
+                    resolve(BreezSDKMapper.dictionaryOf(nodeState: nodeState))
                 } else {
                     reject(BreezSDK.TAG, "No available node info", nil)
                 }
@@ -238,13 +238,138 @@ class BreezSDK: RCTEventEmitter {
             do {
                 let optionalFromTimestamp = fromTimestamp == 0 ? nil : fromTimestamp
                 let optionalToTimestamp = toTimestamp == 0 ? nil : toTimestamp
-                let response = try breezServices.listPayments(filter: BreezSDKMapper.asPaymentTypeFilter(filter: filter), fromTimestamp: optionalFromTimestamp, toTimestamp: optionalToTimestamp)
+                let payments = try breezServices.listPayments(filter: BreezSDKMapper.asPaymentTypeFilter(filter: filter), fromTimestamp: optionalFromTimestamp, toTimestamp: optionalToTimestamp)
                         
-                resolve(BreezSDKMapper.arrayOf(payments: response))
+                resolve(BreezSDKMapper.arrayOf(payments: payments))
             } catch let err {
                 reject(BreezSDK.TAG, "Error calling listPayments", err)
             }
         } else {
             reject(BreezSDK.TAG, "BreezServices not initialized", nil)
         }
-    }}
+    }
+    
+    @objc(sweep:feeRateSatsPerByte:resolver:rejecter:)
+    func sweep(_ toAddress:String, feeRateSatsPerByte:UInt64, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        if let breezServices = self.breezServices {
+            do {
+                try breezServices.sweep(toAddress: toAddress, feeRateSatsPerByte: feeRateSatsPerByte)
+                    
+                resolve(["status": "ok"])
+            } catch let err {
+                reject(BreezSDK.TAG, "Error calling sweep", err)
+            }
+        } else {
+            reject(BreezSDK.TAG, "BreezServices not initialized", nil)
+        }
+    }
+    
+    @objc(fetchFiatRates:rejecter:)
+    func fetchFiatRates(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        if let breezServices = self.breezServices {
+            do {
+                let rates = try breezServices.fetchFiatRates()
+                        
+                resolve(BreezSDKMapper.arrayOf(rates: rates))
+            } catch let err {
+                reject(BreezSDK.TAG, "Error calling fetchFiatRates", err)
+            }
+        } else {
+            reject(BreezSDK.TAG, "BreezServices not initialized", nil)
+        }
+    }
+    
+    @objc(listFiatCurrencies:rejecter:)
+    func listFiatCurrencies(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        if let breezServices = self.breezServices {
+            do {
+                let fiatCurrencies = try breezServices.listFiatCurrencies()
+                        
+                resolve(BreezSDKMapper.arrayOf(fiatCurrencies: fiatCurrencies))
+            } catch let err {
+                reject(BreezSDK.TAG, "Error calling listFiatCurrencies", err)
+            }
+        } else {
+            reject(BreezSDK.TAG, "BreezServices not initialized", nil)
+        }
+    }
+    
+    @objc(listLsps:rejecter:)
+    func listLsps(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        if let breezServices = self.breezServices {
+            do {
+                let lsps = try breezServices.listLsps()
+                        
+                resolve(BreezSDKMapper.arrayOf(lsps: lsps))
+            } catch let err {
+                reject(BreezSDK.TAG, "Error calling listLsps", err)
+            }
+        } else {
+            reject(BreezSDK.TAG, "BreezServices not initialized", nil)
+        }
+    }
+    
+    @objc(connectLsp:resolver:rejecter:)
+    func connectLsp(_ lspId:String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        if let breezServices = self.breezServices {
+            do {
+                try breezServices.connectLsp(lspId: lspId)
+                    
+                resolve(["status": "ok"])
+            } catch let err {
+                reject(BreezSDK.TAG, "Error calling connectLsp", err)
+            }
+        } else {
+            reject(BreezSDK.TAG, "BreezServices not initialized", nil)
+        }
+    }
+    
+    @objc(fetchLspInfo:resolver:rejecter:)
+    func fetchLspInfo(_ lspId:String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        if let breezServices = self.breezServices {
+            do {
+                if let lspInformation = try breezServices.fetchLspInfo(lspId: lspId) {
+                    resolve(BreezSDKMapper.dictionaryOf(lspInformation: lspInformation))
+                } else {
+                    reject(BreezSDK.TAG, "No available lsp info", nil)
+                }
+            } catch let err {
+                reject(BreezSDK.TAG, "Error calling fetchLspInfo", err)
+            }
+        } else {
+            reject(BreezSDK.TAG, "BreezServices not initialized", nil)
+        }
+    }
+    
+    @objc(lspId:rejecter:)
+    func lspId(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        if let breezServices = self.breezServices {
+            do {
+                if let lspId = try breezServices.lspId() {
+                    resolve(lspId)
+                } else {
+                    reject(BreezSDK.TAG, "No available lsp id", nil)
+                }
+            } catch let err {
+                reject(BreezSDK.TAG, "Error calling lspId", err)
+            }
+        } else {
+            reject(BreezSDK.TAG, "BreezServices not initialized", nil)
+        }
+    }
+    
+    @objc(closeLspChannels:rejecter:)
+    func closeLspChannels(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        if let breezServices = self.breezServices {
+            do {
+                try breezServices.closeLspChannels()
+                    
+                resolve(["status": "ok"])
+            } catch let err {
+                reject(BreezSDK.TAG, "Error calling closeLspChannels", err)
+            }
+        } else {
+            reject(BreezSDK.TAG, "BreezServices not initialized", nil)
+        }
+    }
+}

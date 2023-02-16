@@ -87,9 +87,24 @@ export type ClosedChannelPaymentDetails = {
     fundingTxid: string
 }
 
+export type CurrencyInfo = {
+    name: string
+    fractionSize: number
+    spacing: number
+    symbol?: Symbol
+    uniqSymbol?: Symbol
+    localizedName?: LocalizedName[]
+    localeOverrides?: LocaleOverrides[]
+}
+
 export type GreenlightCredentials = {
     deviceKey: Uint8Array
     deviceCert: Uint8Array
+}
+
+export type FiatCurrency = {
+    id: string
+    info: CurrencyInfo
 }
 
 export type InvoicePaidDetails = {
@@ -158,6 +173,35 @@ export type LnUrlWithdrawRequestData = {
     maxWithdrawable: number
 }
 
+export type LocaleOverrides = {
+    locale: string
+    spacing?: number
+    symbol: Symbol
+}
+
+export type LocalizedName = {
+    locale: string
+    name: string
+}
+
+export type LspInformation = {
+    id: string
+    name: string
+    widgetUrl: string
+    pubkey: string
+    host: string
+    channelCapacity: number
+    targetConf: number
+    baseFeeMsat: number
+    feeRate: number
+    timeLockDelta: number
+    minHtlcMsat: number
+    channelFeePermyriad: number
+    lspPubkey: Uint8Array
+    maxInactiveDuration: number
+    channelMinimumFeeMsat: number
+}
+
 export type MessageSuccessActionData = {
     message: string
 }
@@ -189,6 +233,11 @@ export type Payment = {
     details: LnPaymentDetails | ClosedChannelPaymentDetails
 }
 
+export type Rate = {
+    coin: string
+    value: number
+}
+
 export type RouteHint = {
     hops: RouteHintHops[]
 }
@@ -201,6 +250,13 @@ export type RouteHintHops = {
     cltvExpiryDelta: number
     htlcMinimumMsat?: number
     htlcMaximumMsat: number
+}
+
+export type Symbol = {
+    grapheme?: string
+    template?: string
+    rtl?: boolean
+    position?: number
 }
 
 export type Url = string
@@ -365,4 +421,41 @@ export async function nodeInfo(): Promise<NodeState> {
 export async function listPayments(filter: PaymentTypeFilter, fromTimestamp: number = 0, toTimestamp: number = 0): Promise<Payment[]> {
     const response = await BreezSDK.listPayments(filter, fromTimestamp, toTimestamp)
     return response as Payment[]
+}
+
+export async function sweep(toAddress: string, feeRateSatsPerByte: number): Promise<void> {
+    await BreezSDK.sweep(toAddress, feeRateSatsPerByte)
+}
+
+export async function fetchFiatRates(): Promise<Rate[]> {
+    const response = await BreezSDK.fetchFiatRates()
+    return response as Rate[]
+}
+
+export async function listFiatCurrencies(): Promise<FiatCurrency[]> {
+    const response = await BreezSDK.listFiatCurrencies()
+    return response as FiatCurrency[]
+}
+
+export async function listLsps(): Promise<LspInformation[]> {
+    const response = await BreezSDK.listLsps()
+    return response as LspInformation[]
+}
+
+export async function connectLsp(lspId: string): Promise<void> {
+    await BreezSDK.connectLsp(lspId)
+}
+
+export async function fetchLspInfo(lspId: string): Promise<LspInformation> {
+    const response = await BreezSDK.fetchLspInfo(lspId)
+    return response as LspInformation
+}
+
+export async function lspId(): Promise<string> {
+    const response = await BreezSDK.lspId(lspId)
+    return response
+}
+
+export async function closeLspChannels(): Promise<void> {
+    await BreezSDK.closeLspChannels()
 }

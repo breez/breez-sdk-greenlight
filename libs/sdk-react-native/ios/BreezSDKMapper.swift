@@ -1,14 +1,42 @@
 import Foundation
 
 class BreezSDKMapper {
+    static func arrayOf(fiatCurrencies: [FiatCurrency]) -> [Any] {
+        return fiatCurrencies.map { (fiatCurrency) -> [String: Any] in return dictionaryOf(fiatCurrency: fiatCurrency) }
+    }
+    
+    static func arrayOf(localizedNames: [LocalizedName]?) -> [Any]? {
+        if localizedNames != nil {
+            return localizedNames?.map { (localizedName) -> [String: Any] in return dictionaryOf(localizedName: localizedName) }
+        }
+        
+        return nil
+    }
+    
+    static func arrayOf(localeOverrides: [LocaleOverrides]?) -> [Any]? {
+        if localeOverrides != nil {
+            return localeOverrides?.map { (localeOverride) -> [String: Any?] in return dictionaryOf(localeOverride: localeOverride) }
+        }
+        
+        return nil
+    }
+    
+    static func arrayOf(lsps: [LspInformation]) -> [Any] {
+        return lsps.map { (lspInformation) -> [String: Any?] in return dictionaryOf(lspInformation: lspInformation) }
+    }
+    
     static func arrayOf(payments: [Payment]) -> [Any] {
         return payments.map { (payment) -> [String: Any?] in return dictionaryOf(payment: payment) }
+    }
+
+    static func arrayOf(rates: [Rate]) -> [Any] {
+        return rates.map { (rate) -> [String: Any] in return dictionaryOf(rate: rate) }
     }
     
     static func arrayOf(routeHints: [RouteHint]) -> [Any] {
         return routeHints.map { (routeHint) -> [String: Any] in return dictionaryOf(routeHint: routeHint) }
     }
- 
+
     static func arrayOf(routeHintHops: [RouteHintHop]) -> [Any] {
         return routeHintHops.map { (routeHintHop) -> [String: Any?] in return dictionaryOf(routeHintHop: routeHintHop) }
     }
@@ -72,6 +100,26 @@ class BreezSDKMapper {
             "shortChannelId": closedChannelPaymentDetails.shortChannelId,
             "state": valueOf(channelState: closedChannelPaymentDetails.state),
             "fundingTxid": closedChannelPaymentDetails.fundingTxid
+        ]
+    }
+
+    static func dictionaryOf(currencyInfo: CurrencyInfo) -> [String: Any?] {
+        return [
+            "name": currencyInfo.name,
+            "fractionSize": currencyInfo.fractionSize,
+            "spacing": currencyInfo.spacing,
+            "symbol": dictionaryOf(symbol: currencyInfo.symbol),
+            "uniqSymbol": dictionaryOf(symbol: currencyInfo.uniqSymbol),
+            "fractionSize": currencyInfo.fractionSize,
+            "localizedName": arrayOf(localizedNames: currencyInfo.localizedName),
+            "localeOverrides": arrayOf(localeOverrides: currencyInfo.localeOverrides)
+        ]
+    }
+    
+    static func dictionaryOf(fiatCurrency: FiatCurrency) -> [String: Any] {
+        return [
+            "id": fiatCurrency.id,
+            "info": dictionaryOf(currencyInfo: fiatCurrency.info)
         ]
     }
     
@@ -177,6 +225,41 @@ class BreezSDKMapper {
         ]
     }
     
+    static func dictionaryOf(localeOverride: LocaleOverrides) -> [String: Any?] {
+        return [
+            "locale": localeOverride.locale,
+            "spacing": localeOverride.spacing,
+            "symbol": dictionaryOf(symbol: localeOverride.symbol)
+        ]
+    }
+    
+    static func dictionaryOf(localizedName: LocalizedName) -> [String: Any] {
+        return [
+            "locale": localizedName.locale,
+            "name": localizedName.name
+        ]
+    }
+    
+    static func dictionaryOf(lspInformation: LspInformation) -> [String: Any?] {
+        return [
+            "id": lspInformation.id,
+            "name": lspInformation.name,
+            "widgetUrl": lspInformation.widgetUrl,
+            "pubkey": lspInformation.pubkey,
+            "host": lspInformation.host,
+            "channelCapacity": lspInformation.channelCapacity,
+            "targetConf": lspInformation.targetConf,
+            "baseFeeMsat": lspInformation.baseFeeMsat,
+            "feeRate": lspInformation.feeRate,
+            "timeLockDelta": lspInformation.timeLockDelta,
+            "minHtlcMsat": lspInformation.minHtlcMsat,
+            "channelFeePermyriad": lspInformation.channelFeePermyriad,
+            "lspPubkey": lspInformation.lspPubkey,
+            "maxInactiveDuration": lspInformation.maxInactiveDuration,
+            "channelMinimumFeeMsat": lspInformation.channelMinimumFeeMsat
+        ]
+    }
+    
     static func dictionaryOf(messageSuccessActionData: MessageSuccessActionData) -> [String: Any] {
         return [
             "type": "message",
@@ -221,7 +304,14 @@ class BreezSDKMapper {
             return dictionaryOf(lnPaymentDetails: data)
         }
     }
-
+    
+    static func dictionaryOf(rate: Rate) -> [String: Any] {
+        return [
+            "coin": rate.coin,
+            "value": rate.value
+        ]
+    }
+    
     static func dictionaryOf(routeHint: RouteHint) -> [String: Any] {
         return ["hops": self.arrayOf(routeHintHops: routeHint.hops)]
     }
@@ -249,6 +339,19 @@ class BreezSDKMapper {
         case .none:
             return nil
         }
+    }
+    
+    static func dictionaryOf(symbol: Symbol?) -> [String: Any?]? {
+        if symbol != nil {
+            return [
+                "grapheme": symbol?.grapheme,
+                "template": symbol?.template,
+                "rtl": symbol?.rtl,
+                "position": symbol?.position
+            ]
+        }
+        
+        return nil
     }
     
     static func dictionaryOf(unspentTransactionOutput: UnspentTransactionOutput) -> [String: Any] {

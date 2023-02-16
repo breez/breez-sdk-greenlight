@@ -49,8 +49,13 @@ fun pushToArray(array: WritableArray, value: Any?) {
         null -> array.pushNull()
         is Boolean -> array.pushBoolean(value)
         is Double -> array.pushDouble(value)
+        is FiatCurrency -> array.pushMap(readableMapOf(value))
         is Int -> array.pushInt(value)
+        is LocaleOverrides -> array.pushMap(readableMapOf(value))
+        is LocalizedName -> array.pushMap(readableMapOf(value))
+        is LspInformation -> array.pushMap(readableMapOf(value))
         is Payment -> array.pushMap(readableMapOf(value))
+        is Rate -> array.pushMap(readableMapOf(value))
         is RouteHint -> array.pushMap(readableMapOf(value))
         is RouteHintHop -> array.pushMap(readableMapOf(value))
         is String -> array.pushString(value)
@@ -82,12 +87,16 @@ fun pushToMap(map: WritableMap, key: String, value: Any?) {
     }
 }
 
-fun readableArrayOf(values: Iterable<*>): ReadableArray {
-    val array = Arguments.createArray()
-    for (value in values) {
-        pushToArray(array, value)
+fun readableArrayOf(values: Iterable<*>?): ReadableArray? {
+    if (values != null) {
+        val array = Arguments.createArray()
+        for (value in values) {
+            pushToArray(array, value)
+        }
+        return array
     }
-    return array
+
+    return null
 }
 
 fun readableMapOf(aesSuccessActionDataDecrypted: AesSuccessActionDataDecrypted): ReadableMap {
@@ -114,6 +123,26 @@ fun readableMapOf(closedChannelPaymentDetails: ClosedChannelPaymentDetails): Rea
             "shortChannelId" to closedChannelPaymentDetails.shortChannelId,
             "state" to closedChannelPaymentDetails.state.name.lowercase(),
             "fundingTxid" to closedChannelPaymentDetails.fundingTxid
+    )
+}
+
+fun readableMapOf(currencyInfo: CurrencyInfo): ReadableMap {
+    return readableMapOf(
+            "name" to currencyInfo.name,
+            "fractionSize" to currencyInfo.fractionSize,
+            "spacing" to currencyInfo.spacing,
+            "symbol" to readableMapOf(currencyInfo.symbol),
+            "uniqSymbol" to readableMapOf(currencyInfo.uniqSymbol),
+            "fractionSize" to currencyInfo.fractionSize,
+            "localizedName" to readableArrayOf(currencyInfo.localizedName),
+            "localeOverrides" to readableArrayOf(currencyInfo.localeOverrides)
+    )
+}
+
+fun readableMapOf(fiatCurrency: FiatCurrency): ReadableMap {
+    return readableMapOf(
+            "id" to fiatCurrency.id,
+            "info" to readableMapOf(fiatCurrency.info)
     )
 }
 
@@ -212,6 +241,41 @@ fun readableMapOf(lnUrlWithdrawCallbackStatus: LnUrlWithdrawCallbackStatus): Rea
     }
 }
 
+fun readableMapOf(localeOverride: LocaleOverrides): ReadableMap {
+    return readableMapOf(
+            "locale" to localeOverride.locale,
+            "spacing" to localeOverride.spacing,
+            "symbol" to readableMapOf(localeOverride.symbol)
+    )
+}
+
+fun readableMapOf(localizedName: LocalizedName): ReadableMap {
+    return readableMapOf(
+            "name" to localizedName.name,
+            "locale" to localizedName.locale
+    )
+}
+
+fun readableMapOf(lspInformation: LspInformation): ReadableMap {
+    return readableMapOf(
+            "id" to lspInformation.id,
+            "name" to lspInformation.name,
+            "widgetUrl" to lspInformation.widgetUrl,
+            "pubkey" to lspInformation.pubkey,
+            "host" to lspInformation.host,
+            "channelCapacity" to lspInformation.channelCapacity,
+            "targetConf" to lspInformation.targetConf,
+            "baseFeeMsat" to lspInformation.baseFeeMsat,
+            "feeRate" to lspInformation.feeRate,
+            "timeLockDelta" to lspInformation.timeLockDelta,
+            "minHtlcMsat" to lspInformation.minHtlcMsat,
+            "channelFeePermyriad" to lspInformation.channelFeePermyriad,
+            "lspPubkey" to lspInformation.lspPubkey,
+            "maxInactiveDuration" to lspInformation.maxInactiveDuration,
+            "channelMinimumFeeMsat" to lspInformation.channelMinimumFeeMsat
+    )
+}
+
 fun readableMapOf(messageSuccessActionData: MessageSuccessActionData): ReadableMap {
     return readableMapOf(
             "type" to "message",
@@ -255,6 +319,13 @@ fun readableMapOf(paymentDetails: PaymentDetails): ReadableMap {
     }
 }
 
+fun readableMapOf(rate: Rate): ReadableMap {
+    return readableMapOf(
+            "coin" to rate.coin,
+            "value" to rate.value
+    )
+}
+
 fun readableMapOf(routeHint: RouteHint): ReadableMap {
     return readableMapOf("hops" to readableArrayOf(routeHint.hops))
 }
@@ -270,6 +341,19 @@ fun readableMapOf(routeHintHop: RouteHintHop): ReadableMap {
             "htlcMaximumMsat" to routeHintHop.htlcMaximumMsat
     )
 }
+
+fun readableMapOf(symbol: Symbol?): ReadableMap? {
+    if (symbol != null) {
+        return readableMapOf(
+                "grapheme" to symbol.grapheme,
+                "template" to symbol.template,
+                "rtl" to symbol.rtl,
+                "position" to symbol.position
+        )
+    }
+    return null
+}
+
 
 fun readableMapOf(successActionProcessed: SuccessActionProcessed?): ReadableMap? {
     if (successActionProcessed != null) {
