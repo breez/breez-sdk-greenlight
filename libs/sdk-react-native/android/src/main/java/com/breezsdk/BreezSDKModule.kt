@@ -156,10 +156,11 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun sendPayment(bolt11: String, amountSats: String?, promise: Promise) {
+    fun sendPayment(bolt11: String, amountSats: Double, promise: Promise) {
         this.breezServices?.let {breezServices->
             try {
-                var payment = breezServices.sendPayment(bolt11, amountSats?.toULong())
+                var optionalAmountSats = amountSats.takeUnless { it == 0.0 }
+                var payment = breezServices.sendPayment(bolt11, optionalAmountSats?.toULong())
 
                 promise.resolve(readableMapOf(payment))
             } catch (e: SdkException) {
@@ -172,15 +173,12 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun sendSpontaneousPayment(nodeId: String, amountSats: String, promise: Promise) {
+    fun sendSpontaneousPayment(nodeId: String, amountSats: Double, promise: Promise) {
         this.breezServices?.let {breezServices->
             try {
                 var payment = breezServices.sendSpontaneousPayment(nodeId, amountSats.toULong())
 
                 promise.resolve(readableMapOf(payment))
-            } catch (e: NumberFormatException) {
-                e.printStackTrace()
-                promise.reject(TAG, "Invalid amountSats", e)
             } catch (e: SdkException) {
                 e.printStackTrace()
                 promise.reject(TAG, "Error calling sendSpontaneousPayment", e)
@@ -191,15 +189,12 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun receivePayment(amountSats: String, description: String, promise: Promise) {
+    fun receivePayment(amountSats: Double, description: String, promise: Promise) {
         this.breezServices?.let {breezServices->
             try {
                 var payment = breezServices.receivePayment(amountSats.toULong(), description)
 
                 promise.resolve(readableMapOf(payment))
-            } catch (e: NumberFormatException) {
-                e.printStackTrace()
-                promise.reject(TAG, "Invalid amountSats", e)
             } catch (e: SdkException) {
                 e.printStackTrace()
                 promise.reject(TAG, "Error calling receivePayment", e)
@@ -210,7 +205,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun withdrawLnurl(reqData: ReadableMap, amountSats: String, description: String?, promise: Promise) {
+    fun withdrawLnurl(reqData: ReadableMap, amountSats: Double, description: String?, promise: Promise) {
         this.breezServices?.let {breezServices->
             var lnUrlWithdrawRequestData = asLnUrlWithdrawRequestData(reqData)
 
@@ -221,9 +216,6 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                     var lnUrlWithdrawCallbackStatus = breezServices.withdrawLnurl(lnUrlWithdrawRequestData, amountSats.toULong(), description)
 
                     promise.resolve(readableMapOf(lnUrlWithdrawCallbackStatus))
-                } catch (e: NumberFormatException) {
-                    e.printStackTrace()
-                    promise.reject(TAG, "Invalid amountSats", e)
                 } catch (e: SdkException) {
                     e.printStackTrace()
                     promise.reject(TAG, "Error calling withdrawLnurl", e)

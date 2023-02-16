@@ -257,11 +257,9 @@ class BreezSDKMapper {
         if let callback = reqData["callback"] as? String,
             let k1 = reqData["k1"] as? String,
             let defaultDescription = reqData["defaultDescription"] as? String,
-            let minWithdrawableStr = reqData["minWithdrawable"] as? String,
-            let maxWithdrawableStr = reqData["maxWithdrawable"] as? String {
-            if let minWithdrawable = UInt64(minWithdrawableStr), let maxWithdrawable = UInt64(maxWithdrawableStr) {
-                return LnUrlWithdrawRequestData(callback: callback, k1: k1, defaultDescription: defaultDescription, minWithdrawable: minWithdrawable, maxWithdrawable: maxWithdrawable)
-            }
+            let minWithdrawable = reqData["minWithdrawable"] as? UInt64,
+            let maxWithdrawable = reqData["maxWithdrawable"] as? UInt64 {
+            return LnUrlWithdrawRequestData(callback: callback, k1: k1, defaultDescription: defaultDescription, minWithdrawable: minWithdrawable, maxWithdrawable: maxWithdrawable)
         }
         
         return nil

@@ -151,10 +151,11 @@ class BreezSDK: RCTEventEmitter {
     }
     
     @objc(sendPayment:amountSats:resolver:rejecter:)
-    func sendPayment(_ bolt11:String, amountSats:String?, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+    func sendPayment(_ bolt11:String, amountSats:UInt64, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         if let breezServices = self.breezServices {
             do {
-                let response = try breezServices.sendPayment(bolt11: bolt11, amountSats: UInt64(amountSats ?? ""))
+                let optionalAmountSats = amountSats == 0 ? nil : amountSats
+                let response = try breezServices.sendPayment(bolt11: bolt11, amountSats: optionalAmountSats)
                 
                 resolve(BreezSDKMapper.dictionaryOf(payment: response))
             } catch let err {
@@ -166,16 +167,12 @@ class BreezSDK: RCTEventEmitter {
     }
     
     @objc(sendSpontaneousPayment:amountSats:resolver:rejecter:)
-    func sendSpontaneousPayment(_ nodeId:String, amountSats:String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+    func sendSpontaneousPayment(_ nodeId:String, amountSats:UInt64, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         if let breezServices = self.breezServices {
             do {
-                if let amount = UInt64(amountSats) {
-                    let response = try breezServices.sendSpontaneousPayment(nodeId: nodeId, amountSats: amount)
+                let response = try breezServices.sendSpontaneousPayment(nodeId: nodeId, amountSats: amountSats)
                     
-                    resolve(BreezSDKMapper.dictionaryOf(payment: response))
-                } else {
-                    reject(BreezSDK.TAG, "Invalid amountSats", nil)
-                }
+                resolve(BreezSDKMapper.dictionaryOf(payment: response))
             } catch let err {
                 reject(BreezSDK.TAG, "Error calling sendSpontaneousPayment", err)
             }
@@ -185,16 +182,12 @@ class BreezSDK: RCTEventEmitter {
     }
     
     @objc(receivePayment:description:resolver:rejecter:)
-    func receivePayment(_ amountSats:String, description:String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+    func receivePayment(_ amountSats:UInt64, description:String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         if let breezServices = self.breezServices {
             do {
-                if let amount = UInt64(amountSats) {
-                    let response = try breezServices.receivePayment(amountSats: amount, description: description)
+                let response = try breezServices.receivePayment(amountSats: amountSats, description: description)
                     
-                    resolve(BreezSDKMapper.dictionaryOf(lnInvoice: response))
-                } else {
-                    reject(BreezSDK.TAG, "Invalid amountSats", nil)
-                }
+                resolve(BreezSDKMapper.dictionaryOf(lnInvoice: response))
             } catch let err {
                 reject(BreezSDK.TAG, "Error calling receivePayment", err)
             }
@@ -204,17 +197,13 @@ class BreezSDK: RCTEventEmitter {
     }
     
     @objc(withdrawLnurl:amountSats:description:resolver:rejecter:)
-    func withdrawLnurl(_ reqData:[String: Any], amountSats:String, description:String?, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+    func withdrawLnurl(_ reqData:[String: Any], amountSats:UInt64, description:String?, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         if let breezServices = self.breezServices {
             do {
                 if let lnUrlWithdrawRequestData = BreezSDKMapper.asLnUrlWithdrawRequestData(reqData: reqData) {
-                    if let amount = UInt64(amountSats) {
-                        let response = try breezServices.withdrawLnurl(reqData: lnUrlWithdrawRequestData, amountSats: amount, description: description)
+                    let response = try breezServices.withdrawLnurl(reqData: lnUrlWithdrawRequestData, amountSats: amountSats, description: description)
                         
-                        resolve(BreezSDKMapper.dictionaryOf(lnUrlWithdrawCallbackStatus: response))
-                    } else {
-                        reject(BreezSDK.TAG, "Invalid amountSats", nil)
-                    }
+                    resolve(BreezSDKMapper.dictionaryOf(lnUrlWithdrawCallbackStatus: response))
                 } else {
                     reject(BreezSDK.TAG, "Invalid reqData", nil)
                 }

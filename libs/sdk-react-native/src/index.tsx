@@ -1,5 +1,4 @@
 import { NativeModules, NativeEventEmitter, Platform } from "react-native"
-import type Long from "long"
 
 const LINKING_ERROR =
     `The package 'react-native-breez-sdk' doesn't seem to be linked. Make sure: \n\n` +
@@ -71,7 +70,7 @@ export type AesSuccessActionDataDecrypted = {
 export type BitcoinAddressData = {
     address: string
     network: Network
-    amountSat?: Long
+    amountSat?: number
     label?: string
     message?: string
 }
@@ -98,9 +97,9 @@ export type LnInvoice = {
     paymentHash: string
     description?: string
     descriptionHash?: string
-    amountMsat?: Long
-    timestamp: Long
-    expiry: Long
+    amountMsat?: number
+    timestamp: number
+    expiry: number
     routingHints: RouteHint[]
     paymentSecret?: Uint8Array
 }
@@ -134,8 +133,8 @@ export type LnUrlErrorData = {
 
 export type LnUrlPayRequestData = {
     callback: string
-    minSendable: Long
-    maxSendable: Long
+    minSendable: number
+    maxSendable: number
     metadataStr: string
     commentAllowed: number
 }
@@ -149,8 +148,8 @@ export type LnUrlWithdrawRequestData = {
     callback: string
     k1: string
     defaultDescription: string
-    minWithdrawable: Long
-    maxWithdrawable: Long
+    minWithdrawable: number
+    maxWithdrawable: number
 }
 
 export type MessageSuccessActionData = {
@@ -176,9 +175,9 @@ export type NodeState = {
 export type Payment = {
     id: string
     paymentType: PaymentType
-    paymentTime: Long
-    amountMsat: Long
-    feeMsat: Long
+    paymentTime: number
+    amountMsat: number
+    feeMsat: number
     pending: boolean
     description?: string
     details: LnPaymentDetails | ClosedChannelPaymentDetails
@@ -190,12 +189,12 @@ export type RouteHint = {
 
 export type RouteHintHops = {
     srcNodeId: string
-    shortChannelId: Long
+    shortChannelId: number
     feesBaseMsat: number
     feesProportionalMillionths: number
-    cltvExpiryDelta: Long
-    htlcMinimumMsat?: Long
-    htlcMaximumMsat: Long
+    cltvExpiryDelta: number
+    htlcMinimumMsat?: number
+    htlcMaximumMsat: number
 }
 
 export type Url = string
@@ -328,31 +327,27 @@ export async function stop(): Promise<void> {
     await BreezSDK.stop()
 }
 
-export async function sendPayment(bolt11: string, amountSats?: Long): Promise<Payment> {
-    const response = await BreezSDK.sendPayment(bolt11, amountSats?.toString())
+export async function sendPayment(bolt11: string, amountSats?: number): Promise<Payment> {
+    const response = await BreezSDK.sendPayment(bolt11, amountSats || 0)
     return response as Payment
 }
 
-export async function sendSpontaneousPayment(nodeId: string, amountSats: Long): Promise<Payment> {
-    const response = await BreezSDK.sendSpontaneousPayment(nodeId, amountSats.toString())
+export async function sendSpontaneousPayment(nodeId: string, amountSats: number): Promise<Payment> {
+    const response = await BreezSDK.sendSpontaneousPayment(nodeId, amountSats)
     return response as Payment
 }
 
-export async function receivePayment(amountSats: Long, description: string): Promise<LnInvoice> {
-    const response = await BreezSDK.receivePayment(amountSats.toString(), description)
+export async function receivePayment(amountSats: number, description: string): Promise<LnInvoice> {
+    const response = await BreezSDK.receivePayment(amountSats, description)
     return response as LnInvoice
 }
 
-export async function withdrawLnurl(reqData: LnUrlWithdrawRequestData, amountSats: Long, description?: string): Promise<LnUrlWithdrawCallbackStatus> {
-    const response = await BreezSDK.withdrawLnurl(
-        {
-            ...reqData,
-            minWithdrawable: reqData.minWithdrawable.toString(),
-            maxWithdrawable: reqData.maxWithdrawable.toString()
-        },
-        amountSats.toString(),
-        description
-    )
+export async function withdrawLnurl(
+    reqData: LnUrlWithdrawRequestData,
+    amountSats: number,
+    description?: string
+): Promise<LnUrlWithdrawCallbackStatus> {
+    const response = await BreezSDK.withdrawLnurl(reqData, amountSats, description)
     return response as LnUrlWithdrawCallbackStatus
 }
 

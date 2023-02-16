@@ -66,20 +66,20 @@ RCT_EXTERN_METHOD(
 
 RCT_EXTERN_METHOD(
     sendPayment: (NSString*)bolt11
-    amountSats: (NSString*)amountSats
+    amountSats: (NSUInteger*)amountSats
     resolver: (RCTPromiseResolveBlock)resolve
     rejecter: (RCTPromiseRejectBlock)reject
 )
 
 RCT_EXTERN_METHOD(
     sendSpontaneousPayment: (NSString*)nodeId
-    amountSats: (NSString*)amountSats
+    amountSats: (NSUInteger*)amountSats
     resolver: (RCTPromiseResolveBlock)resolve
     rejecter: (RCTPromiseRejectBlock)reject
 )
 
 RCT_EXTERN_METHOD(
-    receivePayment: (NSString*)amountSats
+    receivePayment: (NSUInteger*)amountSats
     description: (NSString*)description
     resolver: (RCTPromiseResolveBlock)resolve
     rejecter: (RCTPromiseRejectBlock)reject
@@ -87,7 +87,7 @@ RCT_EXTERN_METHOD(
 
 RCT_EXTERN_METHOD(
     withdrawLnurl: (NSObject*)reqData
-    amountSats: (NSString*)amountSats
+    amountSats: (NSUInteger*)amountSats
     description: (NSString*)description
     resolver: (RCTPromiseResolveBlock)resolve
     rejecter: (RCTPromiseRejectBlock)reject

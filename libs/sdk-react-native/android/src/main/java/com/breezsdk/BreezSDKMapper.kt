@@ -11,14 +11,13 @@ fun asLnUrlWithdrawRequestData(reqData: ReadableMap): LnUrlWithdrawRequestData? 
     var callback = reqData.getString("callback")
     var k1 = reqData.getString("k1")
     var defaultDescription = reqData.getString("defaultDescription")
-    var minWithdrawable = reqData.getString("minWithdrawable")
-    var maxWithdrawable = reqData.getString("maxWithdrawable")
 
-    try {
-        if (callback != null && k1 != null && defaultDescription != null && minWithdrawable != null && maxWithdrawable != null) {
-            return LnUrlWithdrawRequestData(callback, k1, defaultDescription, minWithdrawable.toULong(), maxWithdrawable.toULong())
-        }
-    } catch (e: NumberFormatException) {}
+    if (callback != null && k1 != null && defaultDescription != null && reqData.hasKey("minWithdrawable") && reqData.hasKey("maxWithdrawable")) {
+        var minWithdrawable = reqData.getDouble("minWithdrawable")
+        var maxWithdrawable = reqData.getDouble("maxWithdrawable")
+
+        return LnUrlWithdrawRequestData(callback, k1, defaultDescription, minWithdrawable.toULong(), maxWithdrawable.toULong())
+    }
 
     return null
 }
