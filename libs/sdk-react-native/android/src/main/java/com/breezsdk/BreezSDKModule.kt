@@ -393,4 +393,102 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.reject(TAG, "BreezServices not initialized")
         }
     }
+
+    @ReactMethod
+    fun receiveOnchain(promise: Promise) {
+        this.breezServices?.let {breezServices->
+            try {
+                var swapInfo = breezServices.receiveOnchain()
+
+                promise.resolve(readableMapOf(swapInfo))
+            } catch (e: SdkException) {
+                e.printStackTrace()
+                promise.reject(TAG, "Error calling receiveOnchain", e)
+            }
+        } ?: run {
+            promise.reject(TAG, "BreezServices not initialized")
+        }
+    }
+
+    @ReactMethod
+    fun inProgressSwap(promise: Promise) {
+        this.breezServices?.let {breezServices->
+            try {
+                breezServices.inProgressSwap()?.let {swapInfo->
+                    promise.resolve(readableMapOf(swapInfo))
+                } ?: run {
+                    promise.reject(TAG, "No available in progress swap")
+                }
+            } catch (e: SdkException) {
+                e.printStackTrace()
+                promise.reject(TAG, "Error calling inProgressSwap", e)
+            }
+        } ?: run {
+            promise.reject(TAG, "BreezServices not initialized")
+        }
+    }
+
+    @ReactMethod
+    fun listRefundables(promise: Promise) {
+        this.breezServices?.let {breezServices->
+            try {
+                var swapInfos = breezServices.listRefundables()
+
+                promise.resolve(readableArrayOf(swapInfos))
+            } catch (e: SdkException) {
+                e.printStackTrace()
+                promise.reject(TAG, "Error calling listRefundables", e)
+            }
+        } ?: run {
+            promise.reject(TAG, "BreezServices not initialized")
+        }
+    }
+
+    @ReactMethod
+    fun refund(swapAddress: String, toAddress: String, satPerVbyte: Double, promise: Promise) {
+        this.breezServices?.let {breezServices->
+            try {
+                var result = breezServices.refund(swapAddress, toAddress, satPerVbyte.toUInt())
+
+                promise.resolve(result)
+            } catch (e: SdkException) {
+                e.printStackTrace()
+                promise.reject(TAG, "Error calling listRefundables", e)
+            }
+        } ?: run {
+            promise.reject(TAG, "BreezServices not initialized")
+        }
+    }
+
+    @ReactMethod
+    fun executeDevCommand(command: String, promise: Promise) {
+        this.breezServices?.let {breezServices->
+            try {
+                var result = breezServices.executeDevCommand(command)
+
+                promise.resolve(result)
+            } catch (e: SdkException) {
+                e.printStackTrace()
+                promise.reject(TAG, "Error calling executeDevCommand", e)
+            }
+        } ?: run {
+            promise.reject(TAG, "BreezServices not initialized")
+        }
+    }
+
+    @ReactMethod
+    fun recommendedFees(promise: Promise) {
+        this.breezServices?.let {breezServices->
+            try {
+                var fees = breezServices.recommendedFees()
+
+                promise.resolve(readableMapOf(fees))
+            } catch (e: SdkException) {
+                e.printStackTrace()
+                promise.reject(TAG, "Error calling recommendedFees", e)
+            }
+        } ?: run {
+            promise.reject(TAG, "BreezServices not initialized")
+        }
+    }
 }

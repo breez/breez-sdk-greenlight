@@ -41,6 +41,10 @@ class BreezSDKMapper {
         return routeHintHops.map { (routeHintHop) -> [String: Any?] in return dictionaryOf(routeHintHop: routeHintHop) }
     }
     
+    static func arrayOf(swapInfos: [SwapInfo]) -> [Any] {
+        return swapInfos.map { (swapInfo) -> [String: Any?] in return dictionaryOf(swapInfo: swapInfo) }
+    }
+    
     static func arrayOf(unspentTransactionOutputs: [UnspentTransactionOutput]) -> [Any] {
         return unspentTransactionOutputs.map { (unspentTransactionOutput) -> [String: Any] in return dictionaryOf(unspentTransactionOutput: unspentTransactionOutput) }
     }
@@ -312,6 +316,16 @@ class BreezSDKMapper {
         ]
     }
     
+    static func dictionaryOf(recommendedFees: RecommendedFees) -> [String: Any] {
+        return [
+            "fastestFee": recommendedFees.fastestFee,
+            "halfHourFee": recommendedFees.halfHourFee,
+            "hourFee": recommendedFees.hourFee,
+            "economyFee": recommendedFees.economyFee,
+            "minimumFee": recommendedFees.minimumFee
+        ]
+    }
+
     static func dictionaryOf(routeHint: RouteHint) -> [String: Any] {
         return ["hops": self.arrayOf(routeHintHops: routeHint.hops)]
     }
@@ -354,6 +368,31 @@ class BreezSDKMapper {
         return nil
     }
     
+    static func dictionaryOf(swapInfo: SwapInfo) -> [String: Any?] {
+        return [
+            "bitcoinAddress": swapInfo.bitcoinAddress,
+            "createdAt": swapInfo.createdAt,
+            "lockHeight": swapInfo.lockHeight,
+            "paymentHash": swapInfo.paymentHash,
+            "preimage": swapInfo.preimage,
+            "privateKey": swapInfo.privateKey,
+            "publicKey": swapInfo.publicKey,
+            "swapperPublicKey": swapInfo.swapperPublicKey,
+            "script": swapInfo.script,
+            "bolt11": swapInfo.bolt11,
+            "paidSats": swapInfo.paidSats,
+            "unconfirmedSats": swapInfo.unconfirmedSats,
+            "confirmedSats": swapInfo.confirmedSats,
+            "status": valueOf(swapStatus: swapInfo.status),
+            "refundTxIds": swapInfo.refundTxIds,
+            "unconfirmedTxIds": swapInfo.unconfirmedTxIds,
+            "confirmedTxIds": swapInfo.confirmedTxIds,
+            "minAllowedDeposit": swapInfo.minAllowedDeposit,
+            "maxAllowedDeposit": swapInfo.maxAllowedDeposit,
+            "lastRedeemError": swapInfo.lastRedeemError
+        ]
+    }
+
     static func dictionaryOf(unspentTransactionOutput: UnspentTransactionOutput) -> [String: Any] {
         return [
             "txid": unspentTransactionOutput.txid,
@@ -388,6 +427,13 @@ class BreezSDKMapper {
         case .regtest: return "regtest"
         case .signet: return "signet"
         case .testnet: return "testnet"
+        }
+    }
+    
+    static func valueOf(swapStatus: SwapStatus) -> String {
+        switch(swapStatus) {
+        case .initial: return "initial"
+        case .expired: return "expired"
         }
     }
 }

@@ -59,6 +59,7 @@ fun pushToArray(array: WritableArray, value: Any?) {
         is RouteHint -> array.pushMap(readableMapOf(value))
         is RouteHintHop -> array.pushMap(readableMapOf(value))
         is String -> array.pushString(value)
+        is SwapInfo -> array.pushMap(readableMapOf(value))
         is UByte -> array.pushInt(value.toInt())
         is ULong -> array.pushDouble(value.toDouble())
         is UnspentTransactionOutput -> array.pushMap(readableMapOf(value))
@@ -326,6 +327,16 @@ fun readableMapOf(rate: Rate): ReadableMap {
     )
 }
 
+fun readableMapOf(recommendedFees: RecommendedFees): ReadableMap {
+    return readableMapOf(
+            "fastestFee" to recommendedFees.fastestFee,
+            "halfHourFee" to recommendedFees.halfHourFee,
+            "hourFee" to recommendedFees.hourFee,
+            "economyFee" to recommendedFees.economyFee,
+            "minimumFee" to recommendedFees.minimumFee
+    )
+}
+
 fun readableMapOf(routeHint: RouteHint): ReadableMap {
     return readableMapOf("hops" to readableArrayOf(routeHint.hops))
 }
@@ -354,7 +365,6 @@ fun readableMapOf(symbol: Symbol?): ReadableMap? {
     return null
 }
 
-
 fun readableMapOf(successActionProcessed: SuccessActionProcessed?): ReadableMap? {
     if (successActionProcessed != null) {
         return when (successActionProcessed) {
@@ -364,6 +374,31 @@ fun readableMapOf(successActionProcessed: SuccessActionProcessed?): ReadableMap?
         }
     }
     return null
+}
+
+fun readableMapOf(swapInfo: SwapInfo): ReadableMap {
+    return readableMapOf(
+            "bitcoinAddress" to swapInfo.bitcoinAddress,
+            "createdAt" to swapInfo.createdAt,
+            "lockHeight" to swapInfo.lockHeight,
+            "paymentHash" to swapInfo.paymentHash,
+            "preimage" to swapInfo.preimage,
+            "privateKey" to swapInfo.privateKey,
+            "publicKey" to swapInfo.publicKey,
+            "swapperPublicKey" to swapInfo.swapperPublicKey,
+            "script" to swapInfo.script,
+            "bolt11" to swapInfo.bolt11,
+            "paidSats" to swapInfo.paidSats,
+            "unconfirmedSats" to swapInfo.unconfirmedSats,
+            "confirmedSats" to swapInfo.confirmedSats,
+            "status" to swapInfo.status.name.lowercase(),
+            "refundTxIds" to swapInfo.refundTxIds,
+            "unconfirmedTxIds" to swapInfo.unconfirmedTxIds,
+            "confirmedTxIds" to swapInfo.confirmedTxIds,
+            "minAllowedDeposit" to swapInfo.minAllowedDeposit,
+            "maxAllowedDeposit" to swapInfo.maxAllowedDeposit,
+            "lastRedeemError" to swapInfo.lastRedeemError
+    )
 }
 
 fun readableMapOf(unspentTransactionOutput: UnspentTransactionOutput): ReadableMap {

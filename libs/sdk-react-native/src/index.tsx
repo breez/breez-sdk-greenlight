@@ -68,6 +68,11 @@ enum SuccessActionDataType {
     URL = "url"
 }
 
+enum SwapStatus {
+    INITIAL = "initial",
+    EXPIRED = "expired"
+}
+
 export type AesSuccessActionDataDecrypted = {
     description: string
     plaintext: string
@@ -238,6 +243,14 @@ export type Rate = {
     value: number
 }
 
+export type RecommendedFees = {
+    fastestFee: number
+    halfHourFee: number
+    hourFee: number
+    economyFee: number
+    minimumFee: number
+}
+
 export type RouteHint = {
     hops: RouteHintHops[]
 }
@@ -250,6 +263,29 @@ export type RouteHintHops = {
     cltvExpiryDelta: number
     htlcMinimumMsat?: number
     htlcMaximumMsat: number
+}
+
+export type SwapInfo = {
+    bitcoinAddress: string
+    createdAt: number
+    lockHeight: number
+    paymentHash: Uint8Array
+    preimage: Uint8Array
+    privateKey: Uint8Array
+    publicKey: Uint8Array
+    swapperPublicKey: Uint8Array
+    script: Uint8Array
+    bolt11?: string
+    paidSats: number
+    unconfirmedSats: number
+    confirmedSats: number
+    status: SwapStatus
+    refundTxIds: string[]
+    unconfirmedTxIds: string[]
+    confirmedTxIds: string[]
+    minAllowedDeposit: number
+    maxAllowedDeposit: number
+    lastRedeemError?: string
 }
 
 export type Symbol = {
@@ -458,4 +494,34 @@ export async function lspId(): Promise<string> {
 
 export async function closeLspChannels(): Promise<void> {
     await BreezSDK.closeLspChannels()
+}
+
+export async function receiveOnchain(): Promise<SwapInfo> {
+    const response = await BreezSDK.receiveOnchain()
+    return response as SwapInfo
+}
+
+export async function inProgressSwap(): Promise<SwapInfo> {
+    const response = await BreezSDK.inProgressSwap()
+    return response as SwapInfo
+}
+
+export async function listRefundables(): Promise<SwapInfo[]> {
+    const response = await BreezSDK.listRefundables()
+    return response as SwapInfo[]
+}
+
+export async function refund(swapAddress: string, toAddress: string, satPerVbyte: number): Promise<string> {
+    const response = await BreezSDK.refund(swapAddress, toAddress, satPerVbyte)
+    return response
+}
+
+export async function executeDevCommand(command: string): Promise<string> {
+    const response = await BreezSDK.executeDevCommand(command)
+    return response
+}
+
+export async function recommendedFees(): Promise<RecommendedFees> {
+    const response = await BreezSDK.recommendedFees()
+    return response as RecommendedFees
 }
