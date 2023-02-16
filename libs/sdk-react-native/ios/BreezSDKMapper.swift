@@ -9,6 +9,10 @@ class BreezSDKMapper {
         return routeHintHops.map { (routeHintHop) -> [String: Any?] in return dictionaryOf(routeHintHop: routeHintHop) }
     }
     
+    static func arrayOf(unspentTransactionOutputs: [UnspentTransactionOutput]) -> [Any] {
+        return unspentTransactionOutputs.map { (unspentTransactionOutput) -> [String: Any] in return dictionaryOf(unspentTransactionOutput: unspentTransactionOutput) }
+    }
+    
     static func dictionaryOf(aesSuccessActionDataDecrypted: AesSuccessActionDataDecrypted) -> [String: Any] {
         return [
             "type": "aes",
@@ -145,6 +149,22 @@ class BreezSDKMapper {
         ]
     }
     
+    static func dictionaryOf(nodeState: NodeState) -> [String: Any] {
+        return [
+            "id": nodeState.id,
+            "blockHeight": nodeState.blockHeight,
+            "channelsBalanceMsat": nodeState.channelsBalanceMsat,
+            "onchainBalanceMsat": nodeState.onchainBalanceMsat,
+            "utxos": arrayOf(unspentTransactionOutputs: nodeState.utxos),
+            "maxPayableMsat": nodeState.maxPayableMsat,
+            "maxReceivableMsat": nodeState.maxReceivableMsat,
+            "maxSinglePaymentAmountMsat": nodeState.maxSinglePaymentAmountMsat,
+            "maxChanReserveMsats": nodeState.maxChanReserveMsats,
+            "connectedPeers": nodeState.connectedPeers,
+            "inboundLiquidityMsats": nodeState.inboundLiquidityMsats
+        ]
+    }
+
     static func dictionaryOf(payment: Payment) -> [String: Any?] {
         return [
             "id": payment.id,
@@ -194,6 +214,17 @@ class BreezSDKMapper {
         case .none:
             return nil
         }
+    }
+    
+    static func dictionaryOf(unspentTransactionOutput: UnspentTransactionOutput) -> [String: Any] {
+        return [
+            "txid": unspentTransactionOutput.txid,
+            "outnum": unspentTransactionOutput.outnum,
+            "amountMillisatoshi": unspentTransactionOutput.amountMillisatoshi,
+            "address": unspentTransactionOutput.address,
+            "reserved": unspentTransactionOutput.reserved,
+            "reservedToBlock": unspentTransactionOutput.reservedToBlock,
+        ]
     }
     
     static func dictionaryOf(urlSuccessActionData: UrlSuccessActionData) -> [String: Any] {

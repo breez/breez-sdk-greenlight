@@ -30,7 +30,7 @@ fun asNetwork(network: String): Network {
 fun asUByteList(arr: ReadableArray): List<UByte> {
     var list = ArrayList<UByte>()
     for (value in arr.toArrayList()) {
-        when(value) {
+        when (value) {
             is Double -> list.add(value.toInt().toUByte())
             is Int -> list.add(value.toUByte())
             is UByte -> list.add(value)
@@ -152,7 +152,7 @@ fun readableMapOf(lnUrlWithdrawRequestData: LnUrlWithdrawRequestData): ReadableM
 }
 
 fun readableMapOf(lnUrlWithdrawCallbackStatus: LnUrlWithdrawCallbackStatus): ReadableMap {
-    return when(lnUrlWithdrawCallbackStatus) {
+    return when (lnUrlWithdrawCallbackStatus) {
         is LnUrlWithdrawCallbackStatus.Ok -> readableMapOf("status" to "ok")
         is LnUrlWithdrawCallbackStatus.ErrorStatus -> {
             var response = Arguments.createMap()
@@ -170,6 +170,22 @@ fun readableMapOf(messageSuccessActionData: MessageSuccessActionData): ReadableM
     )
 }
 
+fun readableMapOf(nodeState: NodeState): ReadableMap {
+    return readableMapOf(
+            "id" to nodeState.id,
+            "blockHeight" to nodeState.blockHeight,
+            "channelsBalanceMsat" to nodeState.channelsBalanceMsat,
+            "onchainBalanceMsat" to nodeState.onchainBalanceMsat,
+            "utxos" to readableArrayOf(nodeState.utxos),
+            "maxPayableMsat" to nodeState.maxPayableMsat,
+            "maxReceivableMsat" to nodeState.maxReceivableMsat,
+            "maxSinglePaymentAmountMsat" to nodeState.maxSinglePaymentAmountMsat,
+            "maxChanReserveMsats" to nodeState.maxChanReserveMsats,
+            "connectedPeers" to readableArrayOf(nodeState.connectedPeers),
+            "inboundLiquidityMsats" to nodeState.inboundLiquidityMsats
+    )
+}
+
 fun readableMapOf(payment: Payment): ReadableMap {
     return readableMapOf(
             "id" to payment.id,
@@ -184,7 +200,7 @@ fun readableMapOf(payment: Payment): ReadableMap {
 }
 
 fun readableMapOf(paymentDetails: PaymentDetails): ReadableMap {
-    return when(paymentDetails) {
+    return when (paymentDetails) {
         is PaymentDetails.Ln -> readableMapOf(paymentDetails.data)
         is PaymentDetails.ClosedChannel -> readableMapOf(paymentDetails.data)
     }
@@ -215,6 +231,17 @@ fun readableMapOf(successActionProcessed: SuccessActionProcessed?): ReadableMap?
         }
     }
     return null
+}
+
+fun readableMapOf(unspentTransactionOutput: UnspentTransactionOutput): ReadableMap {
+    return readableMapOf(
+            "txid" to unspentTransactionOutput.txid,
+            "outnum" to unspentTransactionOutput.outnum,
+            "amountMillisatoshi" to unspentTransactionOutput.amountMillisatoshi,
+            "address" to unspentTransactionOutput.address,
+            "reserved" to unspentTransactionOutput.reserved,
+            "reservedToBlock" to unspentTransactionOutput.reservedToBlock
+    )
 }
 
 fun readableMapOf(urlSuccessActionData: UrlSuccessActionData): ReadableMap {
@@ -252,6 +279,7 @@ fun pushToArray(array: WritableArray, value: Any?) {
         is String -> array.pushString(value)
         is UByte -> array.pushInt(value.toInt())
         is ULong -> array.pushDouble(value.toDouble())
+        is UnspentTransactionOutput -> array.pushMap(readableMapOf(value))
         is WritableArray -> array.pushArray(value)
         is WritableMap -> array.pushMap(value)
         is Array<*> -> array.pushArray(readableArrayOf(value.asIterable()))

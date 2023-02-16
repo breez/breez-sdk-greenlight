@@ -157,6 +157,22 @@ export type MessageSuccessActionData = {
     message: string
 }
 
+export type NodeId = string
+
+export type NodeState = {
+    id: string
+    blockHeight: number
+    channelsBalanceMsat: number
+    onchainBalanceMsat: number
+    utxos: UnspentTransactionOutput[]
+    maxPayableMsat: number
+    maxReceivableMsat: number
+    maxSinglePaymentAmountMsat: number
+    maxChanReserveMsats: number
+    connectedPeers: string[]
+    inboundLiquidityMsats: number
+}
+
 export type Payment = {
     id: string
     paymentType: PaymentType
@@ -182,9 +198,20 @@ export type RouteHintHops = {
     htlcMaximumMsat: Long
 }
 
+export type Url = string
+
 export type UrlSuccessActionData = {
     description: string
     url: string
+}
+
+export type UnspentTransactionOutput = {
+    txid: Uint8Array
+    outnum: number
+    amountMillisatoshi: number
+    address: string
+    reserved: boolean
+    reservedToBlock: number
 }
 
 function eventProcessor(eventFn: EventFn) {
@@ -245,7 +272,7 @@ export async function mnemonicToSeed(phrase: string): Promise<Uint8Array> {
 
 export async function parseInput(
     input: string
-): Promise<BitcoinAddressData | LnInvoice | LnUrlAuthData | LnUrlErrorData | LnUrlPayRequestData | LnUrlWithdrawRequestData | string> {
+): Promise<BitcoinAddressData | LnInvoice | LnUrlAuthData | LnUrlErrorData | LnUrlPayRequestData | LnUrlWithdrawRequestData | NodeId | Url> {
     const response = await BreezSDK.parseInput(input)
 
     switch (response.type) {
@@ -262,8 +289,9 @@ export async function parseInput(
         case InputType.LNURL_WITHDRAW:
             return response.data as LnUrlWithdrawRequestData
         case InputType.NODE_ID:
+            return response.data as NodeId
         case InputType.URL:
-            return response.data
+            return response.data as Url
     }
 
     throw Error(`Unknown input type: ${response.type}`)
@@ -326,4 +354,9 @@ export async function withdrawLnurl(reqData: LnUrlWithdrawRequestData, amountSat
         description
     )
     return response as LnUrlWithdrawCallbackStatus
+}
+
+export async function nodeInfo(): Promise<NodeState> {
+    const response = await BreezSDK.nodeInfo()
+    return response as NodeState
 }

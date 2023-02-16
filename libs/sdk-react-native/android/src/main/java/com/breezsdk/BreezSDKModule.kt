@@ -226,8 +226,26 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                     promise.reject(TAG, "Invalid amountSats", e)
                 } catch (e: SdkException) {
                     e.printStackTrace()
-                    promise.reject(TAG, "Error calling receivePayment", e)
+                    promise.reject(TAG, "Error calling withdrawLnurl", e)
                 }
+            }
+        } ?: run {
+            promise.reject(TAG, "BreezServices not initialized")
+        }
+    }
+
+    @ReactMethod
+    fun nodeInfo(promise: Promise) {
+        this.breezServices?.let {breezServices->
+            try {
+                breezServices.nodeInfo()?.let {nodeState->
+                    promise.resolve(readableMapOf(nodeState))
+                } ?: run {
+                    promise.reject(TAG, "No available node state")
+                }
+            } catch (e: SdkException) {
+                e.printStackTrace()
+                promise.reject(TAG, "Error calling nodeInfo", e)
             }
         } ?: run {
             promise.reject(TAG, "BreezServices not initialized")

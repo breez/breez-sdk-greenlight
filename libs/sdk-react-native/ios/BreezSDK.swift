@@ -219,7 +219,24 @@ class BreezSDK: RCTEventEmitter {
                     reject(BreezSDK.TAG, "Invalid reqData", nil)
                 }
             } catch let err {
-                reject(BreezSDK.TAG, "Error calling receivePayment", err)
+                reject(BreezSDK.TAG, "Error calling withdrawLnurl", err)
+            }
+        } else {
+            reject(BreezSDK.TAG, "BreezServices not initialized", nil)
+        }
+    }
+    
+    @objc(nodeInfo:rejecter:)
+    func nodeInfo(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        if let breezServices = self.breezServices {
+            do {
+                if let response = try breezServices.nodeInfo() {
+                    resolve(BreezSDKMapper.dictionaryOf(nodeState: response))
+                } else {
+                    reject(BreezSDK.TAG, "No available node info", nil)
+                }
+            } catch let err {
+                reject(BreezSDK.TAG, "Error calling nodeInfo", err)
             }
         } else {
             reject(BreezSDK.TAG, "BreezServices not initialized", nil)
