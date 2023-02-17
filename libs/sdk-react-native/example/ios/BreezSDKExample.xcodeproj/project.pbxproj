@@ -41,6 +41,7 @@
 		6F82CA2AA8D142F96C6306CB /* Pods-BreezSDKExample.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BreezSDKExample.release.xcconfig"; path = "Target Support Files/Pods-BreezSDKExample/Pods-BreezSDKExample.release.xcconfig"; sourceTree = "<group>"; };
 		7355F8D02996477D0094712A /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = BreezSDKExample/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		7355F8D2299647960094712A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = BreezSDKExample/Images.xcassets; sourceTree = "<group>"; };
+		7371DDB829A02561005F0578 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		BDFB208B0B2CC90B30CD3D09 /* Pods-BreezSDKExample.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BreezSDKExample.debug.xcconfig"; path = "Target Support Files/Pods-BreezSDKExample/Pods-BreezSDKExample.debug.xcconfig"; sourceTree = "<group>"; };
 		C0EBEFCA2DF43AFD6252F976 /* Pods-BreezSDKExample-BreezSDKExampleTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BreezSDKExample-BreezSDKExampleTests.debug.xcconfig"; path = "Target Support Files/Pods-BreezSDKExample-BreezSDKExampleTests/Pods-BreezSDKExample-BreezSDKExampleTests.debug.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
@@ -86,6 +87,7 @@
 		13B07FAE1A68108700A75B9A /* BreezSDKExample */ = {
 			isa = PBXGroup;
 			children = (
+				7371DDB829A02561005F0578 /* Secrets.xcconfig */,
 				13B07FAF1A68108700A75B9A /* AppDelegate.h */,
 				13B07FB01A68108700A75B9A /* AppDelegate.mm */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
@@ -686,6 +688,7 @@
 		};
 		83CBBA201A601CBA00E9B192 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7371DDB829A02561005F0578 /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
@@ -757,6 +760,7 @@
 		};
 		83CBBA211A601CBA00E9B192 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7371DDB829A02561005F0578 /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;

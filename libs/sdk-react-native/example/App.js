@@ -8,7 +8,8 @@
 
 import React, { useState } from "react"
 import { SafeAreaView, ScrollView, StatusBar, Text, View } from "react-native"
-import { addLogListener, mnemonicToSeed, parseInput, parseInvoice, sendPayment } from "react-native-breez-sdk"
+import { addLogListener, mnemonicToSeed, parseInput, parseInvoice } from "react-native-breez-sdk"
+import BuildConfig from "react-native-build-config"
 
 const TEXT_MNEMONIC =
     "reveal man culture nominee tag abuse keen behave refuse warfare crisp thunder " +
@@ -43,8 +44,7 @@ const App = () => {
             console.log(`inputResponse: ${inputTypeResponse}`)
             setInputType(JSON.stringify(inputTypeResponse))
 
-            const paymentResponse = await sendPayment(INVOICE)
-            console.log(`paymentResponse: ${paymentResponse}`)
+            console.log(BuildConfig.BREEZ_API_KEY)
         }
         asyncFn()
     }, [])

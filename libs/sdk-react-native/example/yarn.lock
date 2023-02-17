@@ -5493,6 +5493,11 @@ react-is@^16.13.1:
 "react-native-breez-sdk@file:..":
   version "0.1.0"
 
+react-native-build-config@^0.3.2:
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/react-native-build-config/-/react-native-build-config-0.3.2.tgz#bb5f2eaa13bb2ebe0870875fdb92faec3caeee4e"
+  integrity sha512-yGWzeJNR1m0Cml6grVEnE/5/5dcKvDLmnubJkA/6Tt5P/40JAgrtjwEnC8NifhLIKZ1rEzbL/inIh/m7qkvEtg==
+
 react-native-codegen@^0.0.17:
   version "0.0.17"
   resolved "https://registry.yarnpkg.com/react-native-codegen/-/react-native-codegen-0.0.17.tgz#83fb814d94061cbd46667f510d2ddba35ffb50ac"
