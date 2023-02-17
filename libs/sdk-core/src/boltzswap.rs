@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
-use serde_json;
 
 use anyhow::{anyhow, Result};
 
@@ -86,10 +85,7 @@ pub async fn reverse_swap_info() -> Result<ReverseSwapInfo> {
     match pairs.pairs.get("BTC/BTC") {
         None => Err(anyhow!("BTC pair not found")),
         Some(btc_pair) => {
-            println!(
-                "result: {}",
-                serde_json::to_string_pretty(&btc_pair)?
-            );
+            println!("result: {}", serde_json::to_string_pretty(&btc_pair)?);
             let hash = String::from(&btc_pair.hash);
             Ok(ReverseSwapInfo {
                 fees_hash: hash,

@@ -135,7 +135,13 @@ pub struct ReverseSwap {
 #[tonic::async_trait]
 pub trait ReverseSwapperAPI: Send + Sync {
     /// Creates a reverse submarine swap
-    async fn create_reverse_swap(&self, amount_sat: u64, onchain_claim_address: String) -> Result<ReverseSwap>;
+    async fn create_reverse_swap(
+        &self,
+        amount_sat: u64,
+        onchain_claim_address: String,
+        pair_hash: String,
+        routing_node: String,
+    ) -> Result<ReverseSwap>;
 }
 
 /// Internal SDK log entry
