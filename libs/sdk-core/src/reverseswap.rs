@@ -13,7 +13,6 @@ use serde_json::json;
 
 use crate::breez_services::BreezServer;
 use crate::models::{ReverseSwap, ReverseSwapperAPI};
-use crate::ReverseSwapInfo;
 
 fn get_boltz_reverse_swap_args(
     amount_sat: u64,
@@ -67,7 +66,7 @@ impl ReverseSwapperAPI for BreezServer {
             .header(CONTENT_TYPE, "application/json")
             .body(get_boltz_reverse_swap_args(
                 amount_sat,
-                preimage_hash_hex.into(),
+                preimage_hash_hex,
                 pair_hash,
                 onchain_claim_address,
                 routing_node,
