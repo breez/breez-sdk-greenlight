@@ -323,9 +323,10 @@ async fn main() -> Result<()> {
                             .map_err(|err| anyhow!(err))?
                             .into();
 
+                        let temp = sdk()?.reverse_swap_info().await?;
                         show_results(
                             sdk()?
-                                .send_onchain(amount_sat, onchain_recipient_address)
+                                .send_onchain(amount_sat, onchain_recipient_address, temp.fees_hash)
                                 .await,
                         )
                     }

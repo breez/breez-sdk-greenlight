@@ -429,7 +429,12 @@ impl BreezServices {
         crate::boltzswap::reverse_swap_info().await
     }
 
-    pub async fn send_onchain(&self, amount_sat: u64, onchain_recipient_address: String) -> Result<ReverseSwap> {
+    pub async fn send_onchain(
+        &self,
+        amount_sat: u64,
+        onchain_recipient_address: String,
+        pair_hash: String,
+    ) -> Result<ReverseSwap> {
         // TODO 1. Start reverse swap
         // TODO 1. Get input: desired amount, destination BTC address
         // TODO 2. Receive HODL invoice from Boltz
@@ -437,7 +442,17 @@ impl BreezServices {
 
         // TODO 4. Schedule monitoring of on-chain "lock" tx
 
-        let rev_swap = self.btc_send_swapper.create_reverse_swap(amount_sat, onchain_recipient_address).await?;
+        let routing_hop = self.lsp_info().await?;
+
+        let rev_swap = self
+            .btc_send_swapper
+            .create_reverse_swap(
+                amount_sat,
+                onchain_recipient_address,
+                pair_hash,
+                routing_hop.pubkey,
+            )
+            .await?;
         Ok(rev_swap)
     }
 
@@ -821,7 +836,8 @@ impl BreezServicesBuilder {
 
         let btc_send_swapper = Arc::new(BTCSendSwap::new(
             self.config.network.clone().into(),
-            self.reverse_swapper_api.clone()
+            self.reverse_swapper_api
+                .clone()
                 .unwrap_or_else(|| breez_server.clone()),
             persister.clone(),
             chain_service.clone(),
