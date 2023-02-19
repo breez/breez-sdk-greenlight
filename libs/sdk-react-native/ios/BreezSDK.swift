@@ -6,6 +6,17 @@ class BreezSDK: RCTEventEmitter {
     
     private var breezServices: BlockingBreezServices!
     
+    static var breezSdkDirectory: URL {
+      let applicationDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+      let breezSdkDirectory = applicationDirectory.appendingPathComponent("breezSdk", isDirectory: true)
+      
+      if !FileManager.default.fileExists(atPath: breezSdkDirectory.path) {
+        try! FileManager.default.createDirectory(atPath: breezSdkDirectory.path, withIntermediateDirectories: true)
+      }
+      
+      return breezSdkDirectory
+    }
+    
     @objc
     override static func moduleName() -> String! {
         TAG
@@ -102,6 +113,7 @@ class BreezSDK: RCTEventEmitter {
             let greenlightCredentials = GreenlightCredentials(deviceKey: deviceKey, deviceCert: deviceCert)
             var config = breez_sdk.defaultConfig(envType: EnvironmentType.production)
             config.apiKey = apiKey
+            config.workingDir = BreezSDK.breezSdkDirectory.absoluteString
             
             do {
                 self.breezServices = try breez_sdk.initServices(config: config, seed: seed, creds: greenlightCredentials, listener: BreezSDKListener(emitter: self))

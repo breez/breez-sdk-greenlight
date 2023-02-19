@@ -265,6 +265,8 @@ dependencies {
 
     implementation project(':react-native-build-config')
 
+    implementation project(':react-native-secure-storage')
+
     implementation fileTree(dir: "libs", include: ["*.jar"])
 
     //noinspection GradleDynamicVersion

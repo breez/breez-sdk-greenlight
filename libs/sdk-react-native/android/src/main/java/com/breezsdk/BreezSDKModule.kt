@@ -3,9 +3,11 @@ package com.breezsdk
 import breez_sdk.*
 import com.facebook.react.bridge.*
 import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter
+import java.io.File
 
 class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
     private var breezServices: BlockingBreezServices? = null
+
 
     companion object {
         var TAG = "BreezSDK"
@@ -105,10 +107,17 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.reject(TAG, "BreezServices already initialized")
         }
 
+        var workingDir = File(reactApplicationContext.filesDir.toString() + "/breezSdk")
+
+        if (!workingDir.exists()) {
+            workingDir.mkdirs()
+        }
+
         var emitter = reactApplicationContext.getJSModule(RCTDeviceEventEmitter::class.java)
         var creds = GreenlightCredentials(asUByteList(deviceKey), asUByteList(deviceCert))
         var config = defaultConfig(EnvironmentType.PRODUCTION)
         config.apiKey = apiKey
+        config.workingDir = workingDir.absolutePath
 
         try {
             this.breezServices = initServices(config, asUByteList(seed), creds, BreezSDKListener(emitter))
