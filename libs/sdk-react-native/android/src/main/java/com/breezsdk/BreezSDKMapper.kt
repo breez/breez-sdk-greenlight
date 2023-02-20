@@ -75,10 +75,13 @@ fun pushToMap(map: WritableMap, key: String, value: Any?) {
     when (value) {
         null -> map.putNull(key)
         is Boolean -> map.putBoolean(key, value)
+        is Byte -> map.putInt(key, value.toInt())
         is Double -> map.putDouble(key, value)
         is Int -> map.putInt(key, value)
+        is Long -> map.putDouble(key, value.toDouble())
         is String -> map.putString(key, value)
         is UByte -> map.putInt(key, value.toInt())
+        is UInt -> map.putInt(key, value.toInt())
         is ULong -> map.putDouble(key, value.toDouble())
         is WritableMap -> map.putMap(key, value)
         is WritableArray -> map.putArray(key, value)
