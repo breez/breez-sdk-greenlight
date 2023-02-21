@@ -3,11 +3,16 @@ apply from: file("../node_modules/@react-native-community/cli-platform-android/n
 include ':app'
 includeBuild('../node_modules/react-native-gradle-plugin')
 
+include ':react-native-breez-sdk'
+project(':react-native-breez-sdk').projectDir = new File(rootProject.projectDir, '../../android')
+
+include ':react-native-build-config'
+project(':react-native-build-config').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-build-config/android')
+
+include ':react-native-secure-storage'
+project(':react-native-secure-storage').projectDir = new File(rootProject.projectDir, 	'../node_modules/react-native-secure-storage/android')
+
 if (settings.hasProperty("newArchEnabled") && settings.newArchEnabled == "true") {
     include(":ReactAndroid")
     project(":ReactAndroid").projectDir = file('../node_modules/react-native/ReactAndroid')
 }
-
-include ':react-native-breez-sdk'
-project(':react-native-breez-sdk').projectDir = new File(rootProject.projectDir, '../../android')
-
