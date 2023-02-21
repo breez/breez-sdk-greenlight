@@ -3,3 +3,4 @@ libs/sdk-bindings/storage.sql
 .idea/
 
 tools/sdk-cli/config.json
+libs/sdk-react-native/ios/breez_sdk.swift
