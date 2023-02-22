@@ -332,8 +332,10 @@ pub(crate) mod model {
 
 #[cfg(test)]
 mod tests {
-    use crate::lnurl::pay::model::*;
+    use std::sync::Arc;
+
     use crate::lnurl::pay::*;
+    use crate::{breez_services::tests::get_dummy_node_state, lnurl::pay::model::*};
 
     use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
     use anyhow::{anyhow, Result};
@@ -922,11 +924,17 @@ mod tests {
             preimage.into_inner(),
         )?;
 
-        let model_payment = MockNodeAPI::add_dummy_payment_for(bolt11, Some(preimage)).await?;
+        let mock_node_api = MockNodeAPI::new(get_dummy_node_state());
+        let model_payment = mock_node_api
+            .add_dummy_payment_for(bolt11, Some(preimage))
+            .await?;
 
         let known_payments: Vec<crate::models::Payment> = vec![model_payment];
-        let mock_breez_services =
-            crate::breez_services::tests::breez_services_with(known_payments).await?;
+        let mock_breez_services = crate::breez_services::tests::breez_services_with(
+            Some(Arc::new(mock_node_api)),
+            known_payments,
+        )
+        .await?;
         match mock_breez_services
             .lnurl_pay(user_amount_sat, None, pay_req)
             .await?

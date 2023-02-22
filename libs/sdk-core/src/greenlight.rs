@@ -11,7 +11,7 @@ use gl_client::pb::amount::Unit;
 
 use gl_client::pb::{
     Amount, CloseChannelRequest, CloseChannelResponse, Invoice, InvoiceRequest, InvoiceStatus,
-    PayStatus, WithdrawResponse,
+    OffChainPayment, PayStatus, WithdrawResponse,
 };
 use gl_client::scheduler::Scheduler;
 use gl_client::signer::Signer;
@@ -292,8 +292,7 @@ impl NodeAPI for Greenlight {
         };
         Ok(SyncResponse {
             node_state,
-            payments: pull_transactions(node_pubkey.clone(), since_timestamp, client.clone())
-                .await?,
+            payments: pull_transactions(since_timestamp, client.clone()).await?,
             channels: all_channels.clone().into_iter().map(|c| c.into()).collect(),
         })
     }
@@ -352,7 +351,7 @@ impl NodeAPI for Greenlight {
                 .map(|amt| Amount { unit: amt }),
             maxfeepercent: self.sdk_config.maxfeepercent,
         };
-        payment_to_transaction(client.pay(request).await?.into_inner())
+        client.pay(request).await?.into_inner().try_into()
     }
 
     async fn send_spontaneous_payment(
@@ -374,7 +373,7 @@ impl NodeAPI for Greenlight {
             extratlvs: vec![],
             routehints: vec![],
         };
-        payment_to_transaction(client.keysend(request).await?.into_inner())
+        client.keysend(request).await?.into_inner().try_into()
     }
 
     async fn close_peer_channels(&self, node_id: String) -> Result<CloseChannelResponse> {
@@ -488,7 +487,6 @@ enum NodeCommand {
 // pulls transactions from greenlight based on last sync timestamp.
 // greenlight gives us the payments via API and for received payments we are looking for settled invoices.
 async fn pull_transactions(
-    node_pubkey: String,
     since_timestamp: i64,
     client: node::Client,
 ) -> Result<Vec<crate::models::Payment>> {
@@ -509,7 +507,7 @@ async fn pull_transactions(
                 && i.status() == InvoiceStatus::Paid
                 && i.payment_time as i64 > since_timestamp
         })
-        .map(|i| invoice_to_transaction(node_pubkey.clone(), i))
+        .map(TryInto::try_into)
         .collect();
 
     // fetch payments from greenlight
@@ -523,7 +521,7 @@ async fn pull_transactions(
         .payments
         .into_iter()
         .filter(|p| p.created_at as i64 > since_timestamp && p.status() == PayStatus::Complete)
-        .map(payment_to_transaction)
+        .map(TryInto::try_into)
         .collect();
 
     let mut transactions: Vec<crate::models::Payment> = Vec::new();
@@ -533,64 +531,100 @@ async fn pull_transactions(
     Ok(transactions)
 }
 
-/// Construct a lightning transaction from an invoice
-fn invoice_to_transaction(
-    node_pubkey: String,
-    invoice: pb::Invoice,
-) -> Result<crate::models::Payment> {
-    let ln_invoice = parse_invoice(&invoice.bolt11)?;
-    Ok(crate::models::Payment {
-        id: hex::encode(invoice.payment_hash.clone()),
-        payment_type: PaymentType::Received,
-        payment_time: invoice.payment_time as i64,
-        amount_msat: amount_to_msat(&invoice.amount.unwrap_or_default()),
-        fee_msat: 0,
-        pending: false,
-        description: ln_invoice.description,
-        details: PaymentDetails::Ln {
-            data: LnPaymentDetails {
-                payment_hash: hex::encode(invoice.payment_hash),
-                label: invoice.label,
-                destination_pubkey: node_pubkey,
-                payment_preimage: hex::encode(invoice.payment_preimage),
-                keysend: false,
-                bolt11: invoice.bolt11,
-                lnurl_success_action: None, // For received payments, this is None
+//pub(crate) fn offchain_payment_to_transaction
+impl TryFrom<OffChainPayment> for crate::models::Payment {
+    type Error = anyhow::Error;
+
+    fn try_from(p: OffChainPayment) -> std::result::Result<Self, Self::Error> {
+        let ln_invoice = parse_invoice(&p.bolt11)?;
+        Ok(crate::models::Payment {
+            id: hex::encode(p.payment_hash.clone()),
+            payment_type: PaymentType::Received,
+            payment_time: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64,
+            amount_msat: amount_to_msat(&p.amount.unwrap_or_default()),
+            fee_msat: 0,
+            pending: false,
+            description: ln_invoice.description,
+            details: PaymentDetails::Ln {
+                data: LnPaymentDetails {
+                    payment_hash: hex::encode(p.payment_hash),
+                    label: p.label,
+                    destination_pubkey: ln_invoice.payee_pubkey,
+                    payment_preimage: hex::encode(p.preimage),
+                    keysend: false,
+                    bolt11: p.bolt11,
+                    lnurl_success_action: None, // For received payments, this is None
+                },
             },
-        },
-    })
+        })
+    }
+    // fn from(p: OffChainPayment) -> Self {
+
+    //}
 }
 
-/// Construct a lightning transaction from a payment
-pub(crate) fn payment_to_transaction(payment: pb::Payment) -> Result<crate::models::Payment> {
-    let mut description = None;
-    if !payment.bolt11.is_empty() {
-        description = parse_invoice(&payment.bolt11)?.description;
-    }
+/// Construct a lightning transaction from an invoice
+impl TryFrom<pb::Invoice> for crate::models::Payment {
+    type Error = anyhow::Error;
 
-    let payment_amount = amount_to_msat(&payment.amount.unwrap_or_default());
-    let payment_amount_sent = amount_to_msat(&payment.amount_sent.unwrap_or_default());
-
-    Ok(crate::models::Payment {
-        id: hex::encode(payment.payment_hash.clone()),
-        payment_type: PaymentType::Sent,
-        payment_time: payment.created_at as i64,
-        amount_msat: payment_amount,
-        fee_msat: payment_amount_sent - payment_amount,
-        pending: pb::PayStatus::from_i32(payment.status) == Some(pb::PayStatus::Pending),
-        description,
-        details: PaymentDetails::Ln {
-            data: LnPaymentDetails {
-                payment_hash: hex::encode(payment.payment_hash),
-                label: "".to_string(),
-                destination_pubkey: hex::encode(payment.destination),
-                payment_preimage: hex::encode(payment.payment_preimage),
-                keysend: payment.bolt11.is_empty(),
-                bolt11: payment.bolt11,
-                lnurl_success_action: None,
+    fn try_from(invoice: pb::Invoice) -> std::result::Result<Self, Self::Error> {
+        let ln_invoice = parse_invoice(&invoice.bolt11)?;
+        Ok(crate::models::Payment {
+            id: hex::encode(invoice.payment_hash.clone()),
+            payment_type: PaymentType::Received,
+            payment_time: invoice.payment_time as i64,
+            amount_msat: amount_to_msat(&invoice.amount.unwrap_or_default()),
+            fee_msat: 0,
+            pending: false,
+            description: ln_invoice.description,
+            details: PaymentDetails::Ln {
+                data: LnPaymentDetails {
+                    payment_hash: hex::encode(invoice.payment_hash),
+                    label: invoice.label,
+                    destination_pubkey: ln_invoice.payee_pubkey,
+                    payment_preimage: hex::encode(invoice.payment_preimage),
+                    keysend: false,
+                    bolt11: invoice.bolt11,
+                    lnurl_success_action: None, // For received payments, this is None
+                },
             },
-        },
-    })
+        })
+    }
+}
+
+impl TryFrom<pb::Payment> for crate::models::Payment {
+    type Error = anyhow::Error;
+
+    fn try_from(payment: pb::Payment) -> std::result::Result<Self, Self::Error> {
+        let mut description = None;
+        if !payment.bolt11.is_empty() {
+            description = parse_invoice(&payment.bolt11)?.description;
+        }
+
+        let payment_amount = amount_to_msat(&payment.amount.unwrap_or_default());
+        let payment_amount_sent = amount_to_msat(&payment.amount_sent.unwrap_or_default());
+
+        Ok(crate::models::Payment {
+            id: hex::encode(payment.payment_hash.clone()),
+            payment_type: PaymentType::Sent,
+            payment_time: payment.created_at as i64,
+            amount_msat: payment_amount,
+            fee_msat: payment_amount_sent - payment_amount,
+            pending: pb::PayStatus::from_i32(payment.status) == Some(pb::PayStatus::Pending),
+            description,
+            details: PaymentDetails::Ln {
+                data: LnPaymentDetails {
+                    payment_hash: hex::encode(payment.payment_hash),
+                    label: "".to_string(),
+                    destination_pubkey: hex::encode(payment.destination),
+                    payment_preimage: hex::encode(payment.payment_preimage),
+                    keysend: payment.bolt11.is_empty(),
+                    bolt11: payment.bolt11,
+                    lnurl_success_action: None,
+                },
+            },
+        })
+    }
 }
 
 fn amount_to_msat(amount: &pb::Amount) -> u64 {

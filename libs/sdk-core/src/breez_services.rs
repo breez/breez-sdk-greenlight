@@ -521,12 +521,6 @@ impl BreezServices {
 
     async fn on_event(&self, e: BreezEvent) -> Result<()> {
         debug!("breez services got event {:?}", e);
-        match e {
-            BreezEvent::InvoicePaid { details: _ } => self.sync().await?,
-            BreezEvent::NewBlock { block: _ } => self.sync().await?,
-            _ => {}
-        };
-
         self.notify_event_listeners(e.clone()).await
     }
 
@@ -582,6 +576,7 @@ async fn poll_events(breez_services: Arc<BreezServices>, mut current_block: u32)
            Ok(next_block) => {
             debug!("got tip {:?}", next_block);
             if next_block > current_block {
+             _ = breez_services.sync().await;
              _  = breez_services.on_event(BreezEvent::NewBlock{block: next_block}).await;
             }
             current_block = next_block
@@ -596,10 +591,16 @@ async fn poll_events(breez_services: Arc<BreezServices>, mut current_block: u32)
            Ok(Some(i)) => {
             debug!("invoice stream got new invoice");
             if let Some(gl_client::pb::incoming_payment::Details::Offchain(p)) = i.details {
-                _  = breez_services.on_event(BreezEvent::InvoicePaid{details: InvoicePaidDetails {
-                    payment_hash: hex::encode(p.payment_hash),
-                    bolt11: p.bolt11,
-                }}).await;
+             let payment: Option<crate::models::Payment> = p.clone().try_into().ok();
+             if payment.is_some() {
+              let res = breez_services.persister.insert_payments(&vec![payment.unwrap()]);
+              debug!("paid invoice was added to payments list {:?}", res);
+             }
+             _  = breez_services.on_event(BreezEvent::InvoicePaid{details: InvoicePaidDetails {
+                 payment_hash: hex::encode(p.payment_hash),
+                 bolt11: p.bolt11,
+             }}).await;
+             _ = breez_services.sync().await;
             }
            }
            // stream is closed, renew it
@@ -616,7 +617,7 @@ async fn poll_events(breez_services: Arc<BreezServices>, mut current_block: u32)
          log_message_res = log_stream.message() => {
           match log_message_res {
            Ok(Some(l)) => {
-            debug!("{}", l.line);
+            debug!("node-logs: {}", l.line);
            },
            // stream is closed, renew it
            Ok(None) => {
@@ -1061,15 +1062,15 @@ pub(crate) mod tests {
     use crate::lnurl::pay::model::MessageSuccessActionData;
     use crate::lnurl::pay::model::SuccessActionProcessed;
     use crate::models::{LnPaymentDetails, NodeState, Payment, PaymentDetails, PaymentTypeFilter};
-    use crate::PaymentType;
     use crate::{parse_short_channel_id, test_utils::*};
+    use crate::{NodeAPI, PaymentType};
 
     use super::{PaymentReceiver, Receiver};
 
     #[tokio::test]
     async fn test_node_state() -> Result<(), Box<dyn std::error::Error>> {
-        let storage_path = format!("{}/storage.sql", get_test_working_dir());
-        std::fs::remove_file(storage_path).ok();
+        // let storage_path = format!("{}/storage.sql", get_test_working_dir());
+        // std::fs::remove_file(storage_path).ok();
 
         let dummy_node_state = get_dummy_node_state();
 
@@ -1122,10 +1123,7 @@ pub(crate) mod tests {
                 },
             },
         ];
-        let node_api = Arc::new(MockNodeAPI {
-            node_state: dummy_node_state.clone(),
-            transactions: dummy_transactions.clone(),
-        });
+        let node_api = Arc::new(MockNodeAPI::new(dummy_node_state.clone()));
 
         let test_config = create_test_config();
         let persister = Arc::new(create_test_persister(test_config.clone()));
@@ -1180,10 +1178,8 @@ pub(crate) mod tests {
         persister.init().unwrap();
 
         let dummy_node_state = get_dummy_node_state();
-        let node_api = Arc::new(MockNodeAPI {
-            node_state: dummy_node_state.clone(),
-            transactions: vec![],
-        });
+
+        let node_api = Arc::new(MockNodeAPI::new(dummy_node_state.clone()));
 
         let breez_server = Arc::new(MockBreezServer {});
         persister.set_lsp_id(breez_server.lsp_id()).unwrap();
@@ -1246,17 +1242,16 @@ pub(crate) mod tests {
 
     /// Build node service for tests
     pub(crate) async fn breez_services() -> Result<Arc<BreezServices>> {
-        breez_services_with(vec![]).await
+        breez_services_with(None, vec![]).await
     }
 
     /// Build node service for tests with a list of known payments
     pub(crate) async fn breez_services_with(
+        node_api: Option<Arc<dyn NodeAPI>>,
         known_payments: Vec<Payment>,
     ) -> Result<Arc<BreezServices>> {
-        let node_api = Arc::new(MockNodeAPI {
-            node_state: get_dummy_node_state(),
-            transactions: known_payments.clone(),
-        });
+        let node_api =
+            node_api.unwrap_or_else(|| Arc::new(MockNodeAPI::new(get_dummy_node_state())));
 
         let test_config = create_test_config();
         let persister = Arc::new(create_test_persister(test_config.clone()));
