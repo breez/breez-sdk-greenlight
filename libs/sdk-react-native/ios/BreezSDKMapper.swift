@@ -205,6 +205,7 @@ class BreezSDKMapper {
             "maxSendable": lnUrlPayRequestData.maxSendable,
             "metadataStr": lnUrlPayRequestData.metadataStr,
             "commentAllowed": lnUrlPayRequestData.commentAllowed,
+            "domain": lnUrlPayRequestData.domain,
         ]
     }
     

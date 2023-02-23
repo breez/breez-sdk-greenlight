@@ -219,7 +219,8 @@ fun readableMapOf(lnUrlPayRequestData: LnUrlPayRequestData): ReadableMap {
             "minSendable" to lnUrlPayRequestData.minSendable,
             "maxSendable" to lnUrlPayRequestData.maxSendable,
             "metadataStr" to lnUrlPayRequestData.metadataStr,
-            "commentAllowed" to lnUrlPayRequestData.commentAllowed
+            "commentAllowed" to lnUrlPayRequestData.commentAllowed,
+            "domain" to lnUrlPayRequestData.domain
     )
 }
 

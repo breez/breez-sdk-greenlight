@@ -163,6 +163,7 @@ export type LnUrlPayRequestData = {
     maxSendable: number
     metadataStr: string
     commentAllowed: number
+    domain: string
 }
 
 export type LnUrlWithdrawCallbackStatus = {
