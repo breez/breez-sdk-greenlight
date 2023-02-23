@@ -33,14 +33,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.2"
-  asn1lib:
-    dependency: transitive
-    description:
-      name: asn1lib
-      sha256: ab96a1cb3beeccf8145c52e449233fe68364c9641623acd3adad66f8184f1039
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.4.0"
   async:
     dependency: transitive
     description:
@@ -49,14 +41,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.10.0"
-  bech32:
-    dependency: transitive
-    description:
-      name: bech32
-      sha256: "156cbace936f7720c79a79d16a03efad343b1ef17106716e04b8b8e39f99f7f7"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.2"
   boolean_selector:
     dependency: transitive
     description:
@@ -209,15 +193,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.2"
-  dart_lnurl:
-    dependency: "direct main"
-    description:
-      path: "."
-      ref: HEAD
-      resolved-ref: fa7bfeb76e9528733c539782a9090d55c8f2cdd9
-      url: "https://github.com/breez/dart_lnurl"
-    source: git
-    version: "0.1.0"
   dart_style:
     dependency: transitive
     description:
@@ -226,14 +201,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.4"
-  encrypt:
-    dependency: transitive
-    description:
-      name: encrypt
-      sha256: "4fd4e4fdc21b9d7d4141823e1e6515cd94e7b8d84749504c232999fba25d9bbb"
-      url: "https://pub.dev"
-    source: hosted
-    version: "5.0.1"
   fake_async:
     dependency: transitive
     description:

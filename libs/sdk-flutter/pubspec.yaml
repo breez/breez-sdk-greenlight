@@ -10,9 +10,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  dart_lnurl:
-    git:
-      url: https://github.com/breez/dart_lnurl
   fimber: ^0.6.6
   ### flutter_rust_bridge_codegen dependencies
   ffi: ^2.0.1
