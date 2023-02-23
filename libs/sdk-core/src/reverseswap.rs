@@ -59,9 +59,7 @@ impl ReverseSwapperAPI for BreezServer {
         let preimage_hash = sha256::Hash::hash(&preimage);
         let preimage_hash_hex = preimage_hash.to_hex();
 
-        // TODO Ensure onchain address is in compressed format
-
-        let temp_res = Client::new()
+        let response_body = Client::new()
             .post(CREATE_REVERSE_SWAP_ENDPOINT)
             .header(CONTENT_TYPE, "application/json")
             .body(get_boltz_reverse_swap_args(
@@ -75,9 +73,9 @@ impl ReverseSwapperAPI for BreezServer {
             .await?
             .text()
             .await?;
-        info!("received: {temp_res}");
-        let response: CreateReverseSwapResponse = serde_json::from_str(&temp_res)?;
+        let response: CreateReverseSwapResponse = serde_json::from_str(&response_body)?;
 
+        // TODO In case of error, return Err(str) or Ok(ReverseSwap{ error_message = ..} ) ?
         return Ok(ReverseSwap {
             error_message: None,
             response,

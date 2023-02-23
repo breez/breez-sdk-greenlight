@@ -135,6 +135,13 @@ pub struct ReverseSwap {
 #[tonic::async_trait]
 pub trait ReverseSwapperAPI: Send + Sync {
     /// Creates a reverse submarine swap
+    ///
+    /// # Arguments
+    ///
+    /// * `amount_sat` - Amount that is to be swapped
+    /// * `onchain_claim_address` - BTC address at which the reverse swap will be claimed, in compressed format
+    /// * `pair_hash` - The hash of the exchange rate, looked-up before this call
+    /// * `routing_node` - Pubkey of a LN node used as routing hint
     async fn create_reverse_swap(
         &self,
         amount_sat: u64,
