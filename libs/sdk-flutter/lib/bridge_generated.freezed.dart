@@ -833,7 +833,7 @@ mixin _$InputType {
     required TResult Function(BitcoinAddressData address) bitcoinAddress,
     required TResult Function(LNInvoice invoice) bolt11,
     required TResult Function(String nodeId) nodeId,
-    required TResult Function(String url) url,
+    required TResult Function(String url, String? domain) url,
     required TResult Function(LnUrlPayRequestData data) lnUrlPay,
     required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
     required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
@@ -845,7 +845,7 @@ mixin _$InputType {
     TResult? Function(BitcoinAddressData address)? bitcoinAddress,
     TResult? Function(LNInvoice invoice)? bolt11,
     TResult? Function(String nodeId)? nodeId,
-    TResult? Function(String url)? url,
+    TResult? Function(String url, String? domain)? url,
     TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
@@ -857,7 +857,7 @@ mixin _$InputType {
     TResult Function(BitcoinAddressData address)? bitcoinAddress,
     TResult Function(LNInvoice invoice)? bolt11,
     TResult Function(String nodeId)? nodeId,
-    TResult Function(String url)? url,
+    TResult Function(String url, String? domain)? url,
     TResult Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,
@@ -990,7 +990,7 @@ class _$InputType_BitcoinAddress implements InputType_BitcoinAddress {
     required TResult Function(BitcoinAddressData address) bitcoinAddress,
     required TResult Function(LNInvoice invoice) bolt11,
     required TResult Function(String nodeId) nodeId,
-    required TResult Function(String url) url,
+    required TResult Function(String url, String? domain) url,
     required TResult Function(LnUrlPayRequestData data) lnUrlPay,
     required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
     required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
@@ -1005,7 +1005,7 @@ class _$InputType_BitcoinAddress implements InputType_BitcoinAddress {
     TResult? Function(BitcoinAddressData address)? bitcoinAddress,
     TResult? Function(LNInvoice invoice)? bolt11,
     TResult? Function(String nodeId)? nodeId,
-    TResult? Function(String url)? url,
+    TResult? Function(String url, String? domain)? url,
     TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
@@ -1020,7 +1020,7 @@ class _$InputType_BitcoinAddress implements InputType_BitcoinAddress {
     TResult Function(BitcoinAddressData address)? bitcoinAddress,
     TResult Function(LNInvoice invoice)? bolt11,
     TResult Function(String nodeId)? nodeId,
-    TResult Function(String url)? url,
+    TResult Function(String url, String? domain)? url,
     TResult Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,
@@ -1160,7 +1160,7 @@ class _$InputType_Bolt11 implements InputType_Bolt11 {
     required TResult Function(BitcoinAddressData address) bitcoinAddress,
     required TResult Function(LNInvoice invoice) bolt11,
     required TResult Function(String nodeId) nodeId,
-    required TResult Function(String url) url,
+    required TResult Function(String url, String? domain) url,
     required TResult Function(LnUrlPayRequestData data) lnUrlPay,
     required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
     required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
@@ -1175,7 +1175,7 @@ class _$InputType_Bolt11 implements InputType_Bolt11 {
     TResult? Function(BitcoinAddressData address)? bitcoinAddress,
     TResult? Function(LNInvoice invoice)? bolt11,
     TResult? Function(String nodeId)? nodeId,
-    TResult? Function(String url)? url,
+    TResult? Function(String url, String? domain)? url,
     TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
@@ -1190,7 +1190,7 @@ class _$InputType_Bolt11 implements InputType_Bolt11 {
     TResult Function(BitcoinAddressData address)? bitcoinAddress,
     TResult Function(LNInvoice invoice)? bolt11,
     TResult Function(String nodeId)? nodeId,
-    TResult Function(String url)? url,
+    TResult Function(String url, String? domain)? url,
     TResult Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,
@@ -1330,7 +1330,7 @@ class _$InputType_NodeId implements InputType_NodeId {
     required TResult Function(BitcoinAddressData address) bitcoinAddress,
     required TResult Function(LNInvoice invoice) bolt11,
     required TResult Function(String nodeId) nodeId,
-    required TResult Function(String url) url,
+    required TResult Function(String url, String? domain) url,
     required TResult Function(LnUrlPayRequestData data) lnUrlPay,
     required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
     required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
@@ -1345,7 +1345,7 @@ class _$InputType_NodeId implements InputType_NodeId {
     TResult? Function(BitcoinAddressData address)? bitcoinAddress,
     TResult? Function(LNInvoice invoice)? bolt11,
     TResult? Function(String nodeId)? nodeId,
-    TResult? Function(String url)? url,
+    TResult? Function(String url, String? domain)? url,
     TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
@@ -1360,7 +1360,7 @@ class _$InputType_NodeId implements InputType_NodeId {
     TResult Function(BitcoinAddressData address)? bitcoinAddress,
     TResult Function(LNInvoice invoice)? bolt11,
     TResult Function(String nodeId)? nodeId,
-    TResult Function(String url)? url,
+    TResult Function(String url, String? domain)? url,
     TResult Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,
@@ -1439,7 +1439,7 @@ abstract class _$$InputType_UrlCopyWith<$Res> {
           _$InputType_Url value, $Res Function(_$InputType_Url) then) =
       __$$InputType_UrlCopyWithImpl<$Res>;
   @useResult
-  $Res call({String url});
+  $Res call({String url, String? domain});
 }
 
 /// @nodoc
@@ -1454,12 +1454,17 @@ class __$$InputType_UrlCopyWithImpl<$Res>
   @override
   $Res call({
     Object? url = null,
+    Object? domain = freezed,
   }) {
     return _then(_$InputType_Url(
       url: null == url
           ? _value.url
           : url // ignore: cast_nullable_to_non_nullable
               as String,
+      domain: freezed == domain
+          ? _value.domain
+          : domain // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -1467,14 +1472,16 @@ class __$$InputType_UrlCopyWithImpl<$Res>
 /// @nodoc
 
 class _$InputType_Url implements InputType_Url {
-  const _$InputType_Url({required this.url});
+  const _$InputType_Url({required this.url, this.domain});
 
   @override
   final String url;
+  @override
+  final String? domain;
 
   @override
   String toString() {
-    return 'InputType.url(url: $url)';
+    return 'InputType.url(url: $url, domain: $domain)';
   }
 
   @override
@@ -1482,11 +1489,12 @@ class _$InputType_Url implements InputType_Url {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$InputType_Url &&
-            (identical(other.url, url) || other.url == url));
+            (identical(other.url, url) || other.url == url) &&
+            (identical(other.domain, domain) || other.domain == domain));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, url);
+  int get hashCode => Object.hash(runtimeType, url, domain);
 
   @JsonKey(ignore: true)
   @override
@@ -1500,13 +1508,13 @@ class _$InputType_Url implements InputType_Url {
     required TResult Function(BitcoinAddressData address) bitcoinAddress,
     required TResult Function(LNInvoice invoice) bolt11,
     required TResult Function(String nodeId) nodeId,
-    required TResult Function(String url) url,
+    required TResult Function(String url, String? domain) url,
     required TResult Function(LnUrlPayRequestData data) lnUrlPay,
     required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
     required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
     required TResult Function(LnUrlErrorData data) lnUrlError,
   }) {
-    return url(this.url);
+    return url(this.url, domain);
   }
 
   @override
@@ -1515,13 +1523,13 @@ class _$InputType_Url implements InputType_Url {
     TResult? Function(BitcoinAddressData address)? bitcoinAddress,
     TResult? Function(LNInvoice invoice)? bolt11,
     TResult? Function(String nodeId)? nodeId,
-    TResult? Function(String url)? url,
+    TResult? Function(String url, String? domain)? url,
     TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
     TResult? Function(LnUrlErrorData data)? lnUrlError,
   }) {
-    return url?.call(this.url);
+    return url?.call(this.url, domain);
   }
 
   @override
@@ -1530,7 +1538,7 @@ class _$InputType_Url implements InputType_Url {
     TResult Function(BitcoinAddressData address)? bitcoinAddress,
     TResult Function(LNInvoice invoice)? bolt11,
     TResult Function(String nodeId)? nodeId,
-    TResult Function(String url)? url,
+    TResult Function(String url, String? domain)? url,
     TResult Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,
@@ -1538,7 +1546,7 @@ class _$InputType_Url implements InputType_Url {
     required TResult orElse(),
   }) {
     if (url != null) {
-      return url(this.url);
+      return url(this.url, domain);
     }
     return orElse();
   }
@@ -1594,9 +1602,11 @@ class _$InputType_Url implements InputType_Url {
 }
 
 abstract class InputType_Url implements InputType {
-  const factory InputType_Url({required final String url}) = _$InputType_Url;
+  const factory InputType_Url(
+      {required final String url, final String? domain}) = _$InputType_Url;
 
   String get url;
+  String? get domain;
   @JsonKey(ignore: true)
   _$$InputType_UrlCopyWith<_$InputType_Url> get copyWith =>
       throw _privateConstructorUsedError;
@@ -1670,7 +1680,7 @@ class _$InputType_LnUrlPay implements InputType_LnUrlPay {
     required TResult Function(BitcoinAddressData address) bitcoinAddress,
     required TResult Function(LNInvoice invoice) bolt11,
     required TResult Function(String nodeId) nodeId,
-    required TResult Function(String url) url,
+    required TResult Function(String url, String? domain) url,
     required TResult Function(LnUrlPayRequestData data) lnUrlPay,
     required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
     required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
@@ -1685,7 +1695,7 @@ class _$InputType_LnUrlPay implements InputType_LnUrlPay {
     TResult? Function(BitcoinAddressData address)? bitcoinAddress,
     TResult? Function(LNInvoice invoice)? bolt11,
     TResult? Function(String nodeId)? nodeId,
-    TResult? Function(String url)? url,
+    TResult? Function(String url, String? domain)? url,
     TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
@@ -1700,7 +1710,7 @@ class _$InputType_LnUrlPay implements InputType_LnUrlPay {
     TResult Function(BitcoinAddressData address)? bitcoinAddress,
     TResult Function(LNInvoice invoice)? bolt11,
     TResult Function(String nodeId)? nodeId,
-    TResult Function(String url)? url,
+    TResult Function(String url, String? domain)? url,
     TResult Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,
@@ -1841,7 +1851,7 @@ class _$InputType_LnUrlWithdraw implements InputType_LnUrlWithdraw {
     required TResult Function(BitcoinAddressData address) bitcoinAddress,
     required TResult Function(LNInvoice invoice) bolt11,
     required TResult Function(String nodeId) nodeId,
-    required TResult Function(String url) url,
+    required TResult Function(String url, String? domain) url,
     required TResult Function(LnUrlPayRequestData data) lnUrlPay,
     required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
     required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
@@ -1856,7 +1866,7 @@ class _$InputType_LnUrlWithdraw implements InputType_LnUrlWithdraw {
     TResult? Function(BitcoinAddressData address)? bitcoinAddress,
     TResult? Function(LNInvoice invoice)? bolt11,
     TResult? Function(String nodeId)? nodeId,
-    TResult? Function(String url)? url,
+    TResult? Function(String url, String? domain)? url,
     TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
@@ -1871,7 +1881,7 @@ class _$InputType_LnUrlWithdraw implements InputType_LnUrlWithdraw {
     TResult Function(BitcoinAddressData address)? bitcoinAddress,
     TResult Function(LNInvoice invoice)? bolt11,
     TResult Function(String nodeId)? nodeId,
-    TResult Function(String url)? url,
+    TResult Function(String url, String? domain)? url,
     TResult Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,
@@ -2013,7 +2023,7 @@ class _$InputType_LnUrlAuth implements InputType_LnUrlAuth {
     required TResult Function(BitcoinAddressData address) bitcoinAddress,
     required TResult Function(LNInvoice invoice) bolt11,
     required TResult Function(String nodeId) nodeId,
-    required TResult Function(String url) url,
+    required TResult Function(String url, String? domain) url,
     required TResult Function(LnUrlPayRequestData data) lnUrlPay,
     required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
     required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
@@ -2028,7 +2038,7 @@ class _$InputType_LnUrlAuth implements InputType_LnUrlAuth {
     TResult? Function(BitcoinAddressData address)? bitcoinAddress,
     TResult? Function(LNInvoice invoice)? bolt11,
     TResult? Function(String nodeId)? nodeId,
-    TResult? Function(String url)? url,
+    TResult? Function(String url, String? domain)? url,
     TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
@@ -2043,7 +2053,7 @@ class _$InputType_LnUrlAuth implements InputType_LnUrlAuth {
     TResult Function(BitcoinAddressData address)? bitcoinAddress,
     TResult Function(LNInvoice invoice)? bolt11,
     TResult Function(String nodeId)? nodeId,
-    TResult Function(String url)? url,
+    TResult Function(String url, String? domain)? url,
     TResult Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,
@@ -2184,7 +2194,7 @@ class _$InputType_LnUrlError implements InputType_LnUrlError {
     required TResult Function(BitcoinAddressData address) bitcoinAddress,
     required TResult Function(LNInvoice invoice) bolt11,
     required TResult Function(String nodeId) nodeId,
-    required TResult Function(String url) url,
+    required TResult Function(String url, String? domain) url,
     required TResult Function(LnUrlPayRequestData data) lnUrlPay,
     required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
     required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
@@ -2199,7 +2209,7 @@ class _$InputType_LnUrlError implements InputType_LnUrlError {
     TResult? Function(BitcoinAddressData address)? bitcoinAddress,
     TResult? Function(LNInvoice invoice)? bolt11,
     TResult? Function(String nodeId)? nodeId,
-    TResult? Function(String url)? url,
+    TResult? Function(String url, String? domain)? url,
     TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
@@ -2214,7 +2224,7 @@ class _$InputType_LnUrlError implements InputType_LnUrlError {
     TResult Function(BitcoinAddressData address)? bitcoinAddress,
     TResult Function(LNInvoice invoice)? bolt11,
     TResult Function(String nodeId)? nodeId,
-    TResult Function(String url)? url,
+    TResult Function(String url, String? domain)? url,
     TResult Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,

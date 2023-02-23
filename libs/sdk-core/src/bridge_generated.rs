@@ -736,7 +736,7 @@ impl support::IntoDart for InputType {
             Self::BitcoinAddress { address } => vec![0.into_dart(), address.into_dart()],
             Self::Bolt11 { invoice } => vec![1.into_dart(), invoice.into_dart()],
             Self::NodeId { node_id } => vec![2.into_dart(), node_id.into_dart()],
-            Self::Url { url } => vec![3.into_dart(), url.into_dart()],
+            Self::Url { url, domain } => vec![3.into_dart(), url.into_dart(), domain.into_dart()],
             Self::LnUrlPay { data } => vec![4.into_dart(), data.into_dart()],
             Self::LnUrlWithdraw { data } => vec![5.into_dart(), data.into_dart()],
             Self::LnUrlAuth { data } => vec![6.into_dart(), data.into_dart()],

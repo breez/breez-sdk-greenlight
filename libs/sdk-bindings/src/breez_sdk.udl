@@ -328,7 +328,7 @@ interface InputType {
     BitcoinAddress(BitcoinAddressData address);   
     Bolt11(LNInvoice invoice);
     NodeId(string node_id);
-    Url(string url);
+    Url(string url, string? domain);
     LnUrlPay(LnUrlPayRequestData data);
     LnUrlWithdraw(LnUrlWithdrawRequestData data);
     LnUrlAuth(LnUrlAuthRequestData data);

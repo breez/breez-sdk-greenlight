@@ -59,9 +59,9 @@ use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 ///
 /// #[tokio::main]
 /// async fn main() {
-///     assert!(matches!( parse("https://breez.technology").await, Ok(Url{url: _}) ));
-///     assert!(matches!( parse("https://breez.technology/test-path").await, Ok(Url{url: _}) ));
-///     assert!(matches!( parse("https://breez.technology/test-path?arg=val").await, Ok(Url{url: _}) ));
+///     assert!(matches!( parse("https://breez.technology").await, Ok(Url{url, domain}) ));
+///     assert!(matches!( parse("https://breez.technology/test-path").await, Ok(Url{url, domain}) ));
+///     assert!(matches!( parse("https://breez.technology/test-path?arg=val").await, Ok(Url{url, domain}) ));
 /// }
 /// ```
 ///
@@ -172,7 +172,10 @@ pub async fn parse(input: &str) -> Result<InputType> {
 
     if let Ok(url) = reqwest::Url::parse(input) {
         if ["http", "https"].contains(&url.scheme()) {
-            return Ok(Url { url: input.into() });
+            return Ok(Url {
+                url: input.into(),
+                domain: url.domain().map(|host| host.to_string()),
+            });
         }
     }
 
@@ -335,6 +338,7 @@ pub enum InputType {
     },
     Url {
         url: String,
+        domain: Option<String>,
     },
 
     /// # Supported standards
@@ -635,21 +639,36 @@ mod tests {
 
     #[tokio::test]
     async fn test_url() -> Result<()> {
+        let expected_domain = Some("breez.technology".to_string());
+
+        let expected_url = "https://breez.technology".to_string();
         assert!(matches!(
-            parse("https://breez.technology").await?,
-            InputType::Url { url: _url }
+            parse(&expected_url).await?,
+            InputType::Url { url, domain } if url == expected_url && domain == expected_domain
         ));
+
+        let expected_url = "https://breez.technology/".to_string();
         assert!(matches!(
-            parse("https://breez.technology/").await?,
-            InputType::Url { url: _url }
+            parse(&expected_url).await?,
+            InputType::Url { url, domain } if url == expected_url && domain == expected_domain
         ));
+
+        let expected_url = "https://breez.technology/test-path".to_string();
         assert!(matches!(
-            parse("https://breez.technology/test-path").await?,
-            InputType::Url { url: _url }
+            parse(&expected_url).await?,
+            InputType::Url { url, domain } if url == expected_url && domain == expected_domain
         ));
+
+        let expected_url = "https://breez.technology/test-path?arg1=val1&arg2=val2".to_string();
         assert!(matches!(
-            parse("https://breez.technology/test-path?arg1=val1&arg2=val2").await?,
-            InputType::Url { url: _url }
+            parse(&expected_url).await?,
+            InputType::Url { url, domain } if url == expected_url && domain == expected_domain
+        ));
+
+        let expected_url = "https://1.2.3.4/test-path?arg1=val1&arg2=val2".to_string();
+        assert!(matches!(
+            parse(&expected_url).await?,
+            InputType::Url { url, domain } if url == expected_url && domain == None
         ));
 
         Ok(())

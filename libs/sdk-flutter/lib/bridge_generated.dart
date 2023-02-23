@@ -405,6 +405,7 @@ class InputType with _$InputType {
   }) = InputType_NodeId;
   const factory InputType.url({
     required String url,
+    String? domain,
   }) = InputType_Url;
 
   /// # Supported standards
@@ -1819,6 +1820,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       case 3:
         return InputType_Url(
           url: _wire2api_String(raw[1]),
+          domain: _wire2api_opt_String(raw[2]),
         );
       case 4:
         return InputType_LnUrlPay(
