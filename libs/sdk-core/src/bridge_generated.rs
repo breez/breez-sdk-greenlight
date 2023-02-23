@@ -810,6 +810,7 @@ impl support::IntoDart for LnUrlPayRequestData {
             self.max_sendable.into_dart(),
             self.metadata_str.into_dart(),
             self.comment_allowed.into_dart(),
+            self.domain.into_dart(),
         ]
         .into_dart()
     }
