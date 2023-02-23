@@ -176,7 +176,7 @@ pub async fn parse(input: &str) -> Result<InputType> {
         }
     }
 
-    if let Ok(mut lnurl_endpoint) = lnurl_decode(input) {
+    if let Ok((domain, mut lnurl_endpoint)) = lnurl_decode(input) {
         // For LNURL-auth links, their type is already known if the link contains the login tag
         // No need to query the endpoint for details
         if lnurl_endpoint.contains("tag=login") {
@@ -196,7 +196,16 @@ pub async fn parse(input: &str) -> Result<InputType> {
 
         lnurl_endpoint = maybe_replace_host_with_mockito_test_host(lnurl_endpoint)?;
         let lnurl_data: LnUrlRequestData = reqwest::get(lnurl_endpoint).await?.json().await?;
-        return Ok(lnurl_data.into());
+        let temp = lnurl_data.into();
+        let temp = match temp {
+            // Modify the LnUrlPay payload by adding the domain of the LNURL endpoint
+            LnUrlPay { data } => LnUrlPay {
+                data: LnUrlPayRequestData { domain, ..data },
+            },
+            _ => temp,
+        };
+
+        return Ok(temp);
     }
 
     Err(anyhow!("Unrecognized input type"))
@@ -213,7 +222,9 @@ fn prepend_if_missing(prefix: &str, input: &str) -> String {
 /// - http://<domain>/.well-known/lnurlp/<username> for onion domains
 ///
 /// Valid characters for the username are `a-z0-9-_.`
-fn ln_address_decode(ln_address: &str) -> Result<String> {
+///
+/// The result is a tuple of (domain, LNURL-pay endpoint)
+fn ln_address_decode(ln_address: &str) -> Result<(String, String)> {
     if ln_address.contains('@') {
         let split = ln_address.split('@').collect::<Vec<&str>>();
         let user = split[0];
@@ -235,13 +246,16 @@ fn ln_address_decode(ln_address: &str) -> Result<String> {
             false => "https://",
         };
 
-        return Ok(format!("{schema}{domain}/.well-known/lnurlp/{user}"));
+        return Ok((
+            domain.into(),
+            format!("{schema}{domain}/.well-known/lnurlp/{user}"),
+        ));
     }
 
     Err(anyhow!("Invalid LN address"))
 }
 
-/// Decodes the input to a human-readable http or https LNURL.
+/// Decodes the input to a human-readable http or https LNURL. Returns a tuple of (domain, url).
 ///
 /// It can handle three kinds of input:
 ///
@@ -256,7 +270,7 @@ fn ln_address_decode(ln_address: &str) -> Result<String> {
 /// LNURLs in all uppercase or all lowercase are valid, but mixed case ones are invalid.
 ///
 /// For LN addresses, the username is limited to `a-z0-9-_.`, which is more restrictive than email addresses.
-fn lnurl_decode(encoded: &str) -> Result<String> {
+fn lnurl_decode(encoded: &str) -> Result<(String, String)> {
     if let Ok(lnurl_pay_endpoint) = ln_address_decode(encoded) {
         return Ok(lnurl_pay_endpoint);
     }
@@ -277,7 +291,7 @@ fn lnurl_decode(encoded: &str) -> Result<String> {
                 return Err(anyhow!("HTTPS scheme not allowed for onion domains"));
             }
 
-            Ok(decoded)
+            Ok((domain.into(), decoded))
         }
         Err(_) => {
             let supported_prefixes = ["lnurlp", "lnurlw", "keyauth"];
@@ -309,7 +323,7 @@ fn lnurl_decode(encoded: &str) -> Result<String> {
                 false => "https",
             };
 
-            Ok(encoded.replace(scheme, new_scheme))
+            Ok((domain.into(), encoded.replace(scheme, new_scheme)))
         }
     }
 }
@@ -432,6 +446,13 @@ pub struct LnUrlPayRequestData {
     #[serde(rename(deserialize = "metadata"))]
     pub metadata_str: String,
     pub comment_allowed: u16,
+
+    /// Indicates the domain of the LNURL-pay service, to be shown to the user when asking for
+    /// payment input, as per LUD-06 spec.
+    ///
+    /// Note: this is not the domain of the callback, but the domain of the LNURL-pay endpoint.
+    #[serde(skip_serializing, skip_deserializing)]
+    pub domain: String,
 }
 
 impl LnUrlPayRequestData {
@@ -542,7 +563,7 @@ mod tests {
         // Address with amount
         let addr_1 = format!("bitcoin:{addr}?amount=0.00002000");
         match parse(&addr_1).await? {
-            InputType::BitcoinAddress {
+            BitcoinAddress {
                 address: addr_with_amount_parsed,
             } => {
                 assert_eq!(addr_with_amount_parsed.address, addr);
@@ -558,7 +579,7 @@ mod tests {
         let label = "test-label";
         let addr_2 = format!("bitcoin:{addr}?amount=0.00002000&label={label}");
         match parse(&addr_2).await? {
-            InputType::BitcoinAddress {
+            BitcoinAddress {
                 address: addr_with_amount_parsed,
             } => {
                 assert_eq!(addr_with_amount_parsed.address, addr);
@@ -574,7 +595,7 @@ mod tests {
         let message = "test-message";
         let addr_3 = format!("bitcoin:{addr}?amount=0.00002000&label={label}&message={message}");
         match parse(&addr_3).await? {
-            InputType::BitcoinAddress {
+            BitcoinAddress {
                 address: addr_with_amount_parsed,
             } => {
                 assert_eq!(addr_with_amount_parsed.address, addr);
@@ -662,7 +683,7 @@ mod tests {
         let public_key = PublicKey::from_secret_key(&secp, &secret_key);
 
         match parse(&public_key.to_string()).await? {
-            InputType::NodeId { node_id } => {
+            NodeId { node_id } => {
                 assert_eq!(node_id, public_key.to_string());
             }
             _ => return Err(anyhow!("Unexpected type")),
@@ -687,12 +708,12 @@ mod tests {
 
         // HTTPS allowed with clearnet domains
         assert_eq!(
-            &lnurl_decode(&bech32::encode(
+            lnurl_decode(&bech32::encode(
                 "LNURL",
                 "https://domain.com".to_base32(),
                 Variant::Bech32
             )?)?,
-            "https://domain.com"
+            ("domain.com".into(), "https://domain.com".into())
         );
 
         // HTTP not allowed with clearnet domains
@@ -705,12 +726,12 @@ mod tests {
 
         // HTTP allowed with onion domains
         assert_eq!(
-            &lnurl_decode(&bech32::encode(
+            lnurl_decode(&bech32::encode(
                 "LNURL",
                 "http://3fdsf.onion".to_base32(),
                 Variant::Bech32
             )?)?,
-            "http://3fdsf.onion"
+            ("3fdsf.onion".into(), "http://3fdsf.onion".into())
         );
 
         // HTTPS not allowed with onion domains
@@ -724,7 +745,10 @@ mod tests {
         let decoded_url = "https://service.com/api?q=3fc3645b439ce8e7f2553a69e5267081d96dcd340693afabe04be7b0ccd178df";
         let lnurl_raw = "LNURL1DP68GURN8GHJ7UM9WFMXJCM99E3K7MF0V9CXJ0M385EKVCENXC6R2C35XVUKXEFCV5MKVV34X5EKZD3EV56NYD3HXQURZEPEXEJXXEPNXSCRVWFNV9NXZCN9XQ6XYEFHVGCXXCMYXYMNSERXFQ5FNS";
 
-        assert_eq!(lnurl_decode(lnurl_raw)?, decoded_url);
+        assert_eq!(
+            lnurl_decode(lnurl_raw)?,
+            ("service.com".into(), decoded_url.into())
+        );
 
         // Uppercase and lowercase allowed, but mixed case is invalid
         assert!(lnurl_decode(&lnurl_raw.to_uppercase()).is_ok());
@@ -771,7 +795,7 @@ mod tests {
         let lnurl_withdraw_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4exctthd96xserjv9mn7um9wdekjmmw843xxwpexdnxzen9vgunsvfexq6rvdecx93rgdmyxcuxverrvcursenpxvukzv3c8qunsdecx33nzwpnvg6ryc3hv93nzvecxgcxgwp3h33lxk";
         assert_eq!(
             lnurl_decode(lnurl_withdraw_encoded)?,
-            format!("https://localhost{path}")
+            ("localhost".into(), format!("https://localhost{path}"))
         );
 
         if let LnUrlWithdraw { data: wd } = parse(lnurl_withdraw_encoded).await? {
@@ -795,7 +819,10 @@ mod tests {
 
         let decoded_url = "https://localhost/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822";
         let lnurl_auth_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgeqgntfgu";
-        assert_eq!(lnurl_decode(lnurl_auth_encoded)?, decoded_url);
+        assert_eq!(
+            lnurl_decode(lnurl_auth_encoded)?,
+            ("localhost".into(), decoded_url.into())
+        );
 
         if let LnUrlAuth { data: ad } = parse(lnurl_auth_encoded).await? {
             assert_eq!(
@@ -843,7 +870,7 @@ mod tests {
         ln_address: &str,
         return_lnurl_error: Option<String>,
     ) -> Result<Mock> {
-        let lnurl_pay_url = ln_address_decode(ln_address)?;
+        let (_domain, lnurl_pay_url) = ln_address_decode(ln_address)?;
         let url = reqwest::Url::parse(&lnurl_pay_url)?;
         let path = url.path();
 
@@ -890,7 +917,7 @@ mod tests {
         let lnurl_pay_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttsv9un7um9wdekjmmw84jxywf5x43rvv35xgmr2enrxanr2cfcvsmnwe3jxcukvde48qukgdec89snwde3vfjxvepjxpjnjvtpxd3kvdnxx5crxwpjvyunsephsz36jf";
         assert_eq!(
             lnurl_decode(lnurl_pay_encoded)?,
-            format!("https://localhost{path}")
+            ("localhost".into(), format!("https://localhost{path}"))
         );
 
         if let LnUrlPay { data: pd } = parse(lnurl_pay_encoded).await? {
@@ -898,6 +925,7 @@ mod tests {
             assert_eq!(pd.max_sendable, 16000);
             assert_eq!(pd.min_sendable, 4000);
             assert_eq!(pd.comment_allowed, 0);
+            assert_eq!(pd.domain, "localhost");
 
             assert_eq!(pd.metadata_vec()?.len(), 3);
             assert_eq!(
@@ -938,6 +966,7 @@ mod tests {
             assert_eq!(pd.max_sendable, 16000);
             assert_eq!(pd.min_sendable, 4000);
             assert_eq!(pd.comment_allowed, 0);
+            assert_eq!(pd.domain, "domain.net");
 
             assert_eq!(pd.metadata_vec()?.len(), 3);
             assert_eq!(
@@ -985,16 +1014,25 @@ mod tests {
     #[test]
     fn test_ln_address_lud_16_decode() -> Result<(), Box<dyn std::error::Error>> {
         assert_eq!(
-            &lnurl_decode("user@domain.onion")?,
-            "http://domain.onion/.well-known/lnurlp/user"
+            lnurl_decode("user@domain.onion")?,
+            (
+                "domain.onion".into(),
+                "http://domain.onion/.well-known/lnurlp/user".into()
+            )
         );
         assert_eq!(
-            &lnurl_decode("user@domain.com")?,
-            "https://domain.com/.well-known/lnurlp/user"
+            lnurl_decode("user@domain.com")?,
+            (
+                "domain.com".into(),
+                "https://domain.com/.well-known/lnurlp/user".into()
+            )
         );
         assert_eq!(
-            &lnurl_decode("user@domain.net")?,
-            "https://domain.net/.well-known/lnurlp/user"
+            lnurl_decode("user@domain.net")?,
+            (
+                "domain.net".into(),
+                "https://domain.net/.well-known/lnurlp/user".into()
+            )
         );
         assert!(ln_address_decode("invalid_ln_address").is_err());
 
@@ -1015,40 +1053,76 @@ mod tests {
 
         // For onion addresses, the prefix maps to an equivalent HTTP URL
         assert_eq!(
-            &lnurl_decode("lnurlp://asfddf2dsf3f.onion")?,
-            "http://asfddf2dsf3f.onion"
+            lnurl_decode("lnurlp://asfddf2dsf3f.onion")?,
+            (
+                "asfddf2dsf3f.onion".into(),
+                "http://asfddf2dsf3f.onion".into()
+            )
         );
         assert_eq!(
-            &lnurl_decode("lnurlw://asfddf2dsf3f.onion")?,
-            "http://asfddf2dsf3f.onion"
+            lnurl_decode("lnurlw://asfddf2dsf3f.onion")?,
+            (
+                "asfddf2dsf3f.onion".into(),
+                "http://asfddf2dsf3f.onion".into()
+            )
         );
         assert_eq!(
-            &lnurl_decode("keyauth://asfddf2dsf3f.onion")?,
-            "http://asfddf2dsf3f.onion"
+            lnurl_decode("keyauth://asfddf2dsf3f.onion")?,
+            (
+                "asfddf2dsf3f.onion".into(),
+                "http://asfddf2dsf3f.onion".into()
+            )
         );
 
         // For non-onion addresses, the prefix maps to an equivalent HTTPS URL
-        assert_eq!(&lnurl_decode("lnurlp://domain.com")?, "https://domain.com");
-        assert_eq!(&lnurl_decode("lnurlw://domain.com")?, "https://domain.com");
-        assert_eq!(&lnurl_decode("keyauth://domain.com")?, "https://domain.com");
+        assert_eq!(
+            lnurl_decode("lnurlp://domain.com")?,
+            ("domain.com".into(), "https://domain.com".into())
+        );
+        assert_eq!(
+            lnurl_decode("lnurlw://domain.com")?,
+            ("domain.com".into(), "https://domain.com".into())
+        );
+        assert_eq!(
+            lnurl_decode("keyauth://domain.com")?,
+            ("domain.com".into(), "https://domain.com".into())
+        );
 
         // Same as above, but prefix: approach instead of prefix://
         assert_eq!(
-            &lnurl_decode("lnurlp:asfddf2dsf3f.onion")?,
-            "http://asfddf2dsf3f.onion"
+            lnurl_decode("lnurlp:asfddf2dsf3f.onion")?,
+            (
+                "asfddf2dsf3f.onion".into(),
+                "http://asfddf2dsf3f.onion".into()
+            )
         );
         assert_eq!(
-            &lnurl_decode("lnurlw:asfddf2dsf3f.onion")?,
-            "http://asfddf2dsf3f.onion"
+            lnurl_decode("lnurlw:asfddf2dsf3f.onion")?,
+            (
+                "asfddf2dsf3f.onion".into(),
+                "http://asfddf2dsf3f.onion".into()
+            )
         );
         assert_eq!(
-            &lnurl_decode("keyauth:asfddf2dsf3f.onion")?,
-            "http://asfddf2dsf3f.onion"
+            lnurl_decode("keyauth:asfddf2dsf3f.onion")?,
+            (
+                "asfddf2dsf3f.onion".into(),
+                "http://asfddf2dsf3f.onion".into()
+            )
         );
 
-        assert_eq!(&lnurl_decode("lnurlp:domain.com")?, "https://domain.com");
-        assert_eq!(&lnurl_decode("lnurlw:domain.com")?, "https://domain.com");
-        assert_eq!(&lnurl_decode("keyauth:domain.com")?, "https://domain.com");
+        assert_eq!(
+            lnurl_decode("lnurlp:domain.com")?,
+            ("domain.com".into(), "https://domain.com".into())
+        );
+        assert_eq!(
+            lnurl_decode("lnurlw:domain.com")?,
+            ("domain.com".into(), "https://domain.com".into())
+        );
+        assert_eq!(
+            lnurl_decode("keyauth:domain.com")?,
+            ("domain.com".into(), "https://domain.com".into())
+        );
 
         Ok(())
     }
@@ -1065,6 +1139,7 @@ mod tests {
             assert_eq!(pd.max_sendable, 16000);
             assert_eq!(pd.min_sendable, 4000);
             assert_eq!(pd.comment_allowed, 0);
+            assert_eq!(pd.domain, "localhost");
 
             assert_eq!(pd.metadata_vec()?.len(), 3);
             assert_eq!(

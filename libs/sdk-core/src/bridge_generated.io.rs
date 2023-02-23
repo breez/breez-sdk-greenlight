@@ -328,6 +328,7 @@ impl Wire2Api<LnUrlPayRequestData> for wire_LnUrlPayRequestData {
             max_sendable: self.max_sendable.wire2api(),
             metadata_str: self.metadata_str.wire2api(),
             comment_allowed: self.comment_allowed.wire2api(),
+            domain: self.domain.wire2api(),
         }
     }
 }
@@ -382,6 +383,7 @@ pub struct wire_LnUrlPayRequestData {
     max_sendable: u64,
     metadata_str: *mut wire_uint_8_list,
     comment_allowed: u16,
+    domain: *mut wire_uint_8_list,
 }
 
 #[repr(C)]
@@ -446,6 +448,7 @@ impl NewWithNullPtr for wire_LnUrlPayRequestData {
             max_sendable: Default::default(),
             metadata_str: core::ptr::null_mut(),
             comment_allowed: Default::default(),
+            domain: core::ptr::null_mut(),
         }
     }
 }

@@ -539,12 +539,19 @@ class LnUrlPayRequestData {
   final String metadataStr;
   final int commentAllowed;
 
+  /// Indicates the domain of the LNURL-pay service, to be shown to the user when asking for
+  /// payment input, as per LUD-06 spec.
+  ///
+  /// Note: this is not the domain of the callback, but the domain of the LNURL-pay endpoint.
+  final String domain;
+
   LnUrlPayRequestData({
     required this.callback,
     required this.minSendable,
     required this.maxSendable,
     required this.metadataStr,
     required this.commentAllowed,
+    required this.domain,
   });
 }
 
@@ -1947,14 +1954,15 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   LnUrlPayRequestData _wire2api_ln_url_pay_request_data(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 5)
-      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
     return LnUrlPayRequestData(
       callback: _wire2api_String(arr[0]),
       minSendable: _wire2api_u64(arr[1]),
       maxSendable: _wire2api_u64(arr[2]),
       metadataStr: _wire2api_String(arr[3]),
       commentAllowed: _wire2api_u16(arr[4]),
+      domain: _wire2api_String(arr[5]),
     );
   }
 
@@ -2504,6 +2512,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.max_sendable = api2wire_u64(apiObj.maxSendable);
     wireObj.metadata_str = api2wire_String(apiObj.metadataStr);
     wireObj.comment_allowed = api2wire_u16(apiObj.commentAllowed);
+    wireObj.domain = api2wire_String(apiObj.domain);
   }
 
   void _api_fill_to_wire_ln_url_withdraw_request_data(
@@ -3337,6 +3346,8 @@ class wire_LnUrlPayRequestData extends ffi.Struct {
 
   @ffi.Uint16()
   external int comment_allowed;
+
+  external ffi.Pointer<wire_uint_8_list> domain;
 }
 
 class wire_LnUrlWithdrawRequestData extends ffi.Struct {

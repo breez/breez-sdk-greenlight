@@ -531,6 +531,7 @@ mod tests {
             comment_allowed: comment_len,
             metadata_str: "".into(),
             callback: "https://localhost/callback".into(),
+            domain: "localhost".into(),
         }
     }
 

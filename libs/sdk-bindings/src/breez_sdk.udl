@@ -290,6 +290,7 @@ dictionary LnUrlPayRequestData {
     u64 max_sendable; 
     string metadata_str;
     u16 comment_allowed;
+    string domain;
 };
 
 dictionary LnUrlWithdrawRequestData {
