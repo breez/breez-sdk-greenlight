@@ -9,6 +9,7 @@ The Breez SDK provides the following services:
 * Fetching node status (e.g. balance, max allow to pay, max allow to receive, on-chain balance, etc.)
 * Connecting to a new or existing node.
 
+Download our one pager [here](https://drive.google.com/file/d/1MBINTyEXX9tFLVXd3QoTUKLNWgjgWN2I/view?usp=drivesdk). 
 ## Demo
 
 https://user-images.githubusercontent.com/31890660/208511040-989ff42c-ceb8-4a34-b2cb-a17a0a8c0150.mp4
