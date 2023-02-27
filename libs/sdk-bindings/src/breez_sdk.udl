@@ -292,6 +292,7 @@ dictionary LnUrlPayRequestData {
     string metadata_str;
     u16 comment_allowed;
     string domain;
+    string? ln_address;
 };
 
 dictionary LnUrlWithdrawRequestData {

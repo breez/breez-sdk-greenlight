@@ -147,6 +147,7 @@ export type LnPaymentDetails = {
     keysend: boolean
     bolt11: string
     lnurlSuccessAction?: AesSuccessActionDataDecrypted | MessageSuccessActionData | UrlSuccessActionData
+    lnAddress?: string
 }
 
 export type LnUrlAuthData = {
@@ -163,7 +164,7 @@ export type LnUrlPayRequestData = {
     maxSendable: number
     metadataStr: string
     commentAllowed: number
-    domain?: string
+    domain: string
     lnAddress?: string
 }
 
