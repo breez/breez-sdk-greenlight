@@ -233,7 +233,7 @@ impl BreezServices {
         comment: Option<String>,
         req_data: LnUrlPayRequestData,
     ) -> Result<LnUrlPayResult> {
-        match validate_lnurl_pay(user_amount_sat, comment, req_data).await? {
+        match validate_lnurl_pay(user_amount_sat, comment, req_data.clone()).await? {
             ValidatedCallbackResponse::EndpointError { data: e } => {
                 Ok(LnUrlPayResult::EndpointError { data: e })
             }
@@ -265,10 +265,11 @@ impl BreezServices {
                                 SuccessAction::Url(data) => SuccessActionProcessed::Url { data },
                             };
 
-                            // Store SA in its own table, associated to payment_hash
-                            self.persister.insert_lnurl_success_action(
+                            // Store SA + LN Address in separate table, associated to payment_hash
+                            self.persister.insert_lnurl_payment_external_info(
                                 &details.payment_hash,
-                                &processed_sa,
+                                Some(&processed_sa),
+                                req_data.ln_address,
                             )?;
 
                             Some(processed_sa)
@@ -1074,6 +1075,7 @@ pub(crate) mod tests {
 
         let dummy_node_state = get_dummy_node_state();
 
+        let test_ln_address = "test@ln-address.com";
         let sa = SuccessActionProcessed::Message {
             data: MessageSuccessActionData {
                 message: "test message".into(),
@@ -1099,6 +1101,7 @@ pub(crate) mod tests {
                         keysend: false,
                         bolt11: "1111".to_string(),
                         lnurl_success_action: None,
+                        ln_address: None,
                     },
                 },
             },
@@ -1119,6 +1122,7 @@ pub(crate) mod tests {
                         keysend: false,
                         bolt11: "123".to_string(),
                         lnurl_success_action: Some(sa.clone()),
+                        ln_address: Some(test_ln_address.to_string()),
                     },
                 },
             },
@@ -1129,7 +1133,11 @@ pub(crate) mod tests {
         let persister = Arc::new(create_test_persister(test_config.clone()));
         persister.init()?;
         persister.insert_payments(&dummy_transactions)?;
-        persister.insert_lnurl_success_action(payment_hash_with_lnurl_success_action, &sa)?;
+        persister.insert_lnurl_payment_external_info(
+            payment_hash_with_lnurl_success_action,
+            Some(&sa),
+            Some(test_ln_address.to_string()),
+        )?;
 
         let mut builder = BreezServicesBuilder::new(test_config.clone());
         let breez_services = builder
@@ -1167,6 +1175,8 @@ pub(crate) mod tests {
         assert_eq!(sent, vec![cloned[1].clone()]);
         assert!(matches!(
                 &sent[0].details, PaymentDetails::Ln {data: LnPaymentDetails {lnurl_success_action, ..}} if lnurl_success_action == &Some(sa)));
+        assert!(matches!(
+                &sent[0].details, PaymentDetails::Ln {data: LnPaymentDetails {ln_address, ..}} if ln_address == &Some(test_ln_address.to_string())));
 
         Ok(())
     }

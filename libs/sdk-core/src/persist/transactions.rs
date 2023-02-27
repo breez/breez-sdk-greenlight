@@ -12,7 +12,7 @@ impl SqliteStorage {
     ///
     /// Note that, if a payment has details of type [LnPaymentDetails] which contain a [SuccessActionProcessed],
     /// then the [LnPaymentDetails] will NOT be persisted. In that case, the [SuccessActionProcessed]
-    /// can be inserted separately via [SqliteStorage::insert_lnurl_success_action].
+    /// can be inserted separately via [SqliteStorage::insert_lnurl_payment_external_info].
     pub fn insert_payments(&self, transactions: &[Payment]) -> Result<()> {
         let con = self.get_connection()?;
         let mut prep_statement = con.prepare(
@@ -46,23 +46,26 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub fn insert_lnurl_success_action(
+    /// Inserts LNURL-related metadata associated with this payment
+    pub fn insert_lnurl_payment_external_info(
         &self,
         payment_hash: &str,
-        sa: &SuccessActionProcessed,
+        lnurl_pay_success_action: Option<&SuccessActionProcessed>,
+        ln_address: Option<String>,
     ) -> Result<()> {
         let con = self.get_connection()?;
         let mut prep_statement = con.prepare(
             "
          INSERT OR REPLACE INTO payments_external_info (
            payment_id,
-           lnurl_success_action
+           lnurl_success_action,
+           ln_address
          )
-         VALUES (?1,?2)
+         VALUES (?1,?2,?3)
         ",
         )?;
 
-        _ = prep_statement.execute((payment_hash, &sa))?;
+        _ = prep_statement.execute((payment_hash, &lnurl_pay_success_action, ln_address))?;
 
         Ok(())
     }
@@ -96,7 +99,8 @@ impl SqliteStorage {
              p.pending,
              p.description,
              p.details,
-             e.lnurl_success_action
+             e.lnurl_success_action,
+             e.ln_address
             FROM payments p
             LEFT JOIN payments_external_info e
             ON
@@ -157,6 +161,7 @@ impl SqliteStorage {
 
         if let PaymentDetails::Ln { ref mut data } = payment.details {
             data.lnurl_success_action = row.get(8)?;
+            data.ln_address = row.get(9)?;
         }
 
         Ok(payment)
@@ -234,6 +239,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
     use crate::models::{LnPaymentDetails, Payment, PaymentDetails};
     use crate::persist::test_utils;
 
+    let test_ln_address = "test@ln.adddress.com";
     let sa = SuccessActionProcessed::Message {
         data: MessageSuccessActionData {
             message: "test message".into(),
@@ -259,6 +265,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
                     keysend: true,
                     bolt11: "bolt11".to_string(),
                     lnurl_success_action: Some(sa.clone()),
+                    ln_address: Some(test_ln_address.to_string()),
                 },
             },
         },
@@ -279,6 +286,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
                     keysend: true,
                     bolt11: "bolt11".to_string(),
                     lnurl_success_action: None,
+                    ln_address: None,
                 },
             },
         },
@@ -287,7 +295,11 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
         SqliteStorage::from_file(test_utils::create_test_sql_file("transactions".to_string()));
     storage.init()?;
     storage.insert_payments(&txs)?;
-    storage.insert_lnurl_success_action(payment_hash_with_lnurl_success_action, &sa)?;
+    storage.insert_lnurl_payment_external_info(
+        payment_hash_with_lnurl_success_action,
+        Some(&sa),
+        Some(test_ln_address.to_string()),
+    )?;
 
     // retrieve all
     let retrieve_txs = storage.list_payments(PaymentTypeFilter::All, None, None)?;
@@ -300,6 +312,9 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(retrieve_txs[0], txs[0]);
     assert!(
         matches!( &retrieve_txs[0].details, PaymentDetails::Ln {data: LnPaymentDetails {lnurl_success_action, ..}} if lnurl_success_action == &Some(sa))
+    );
+    assert!(
+        matches!( &retrieve_txs[0].details, PaymentDetails::Ln {data: LnPaymentDetails {ln_address, ..}} if ln_address == &Some(test_ln_address.to_string()))
     );
 
     //test only received

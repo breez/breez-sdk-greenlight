@@ -36,6 +36,7 @@ typedef struct wire_LnUrlPayRequestData {
   struct wire_uint_8_list *metadata_str;
   uint16_t comment_allowed;
   struct wire_uint_8_list *domain;
+  struct wire_uint_8_list *ln_address;
 } wire_LnUrlPayRequestData;
 
 typedef struct wire_LnUrlWithdrawRequestData {

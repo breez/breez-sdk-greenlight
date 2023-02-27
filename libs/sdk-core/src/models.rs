@@ -301,6 +301,9 @@ pub struct LnPaymentDetails {
     /// Only set for [PaymentType::Sent] payments that are part of a LNURL-pay workflow where
     /// the endpoint returns a success action
     pub lnurl_success_action: Option<SuccessActionProcessed>,
+
+    /// Only set for [PaymentType::Sent] payments that are sent to a Lightning Address
+    pub ln_address: Option<String>,
 }
 
 /// Represents the funds that were on the user side of the channel at the time it was closed.
