@@ -201,7 +201,8 @@ fun readableMapOf(lnPaymentDetails: LnPaymentDetails): ReadableMap {
             "paymentPreimage" to lnPaymentDetails.paymentPreimage,
             "keysend" to lnPaymentDetails.keysend,
             "bolt11" to lnPaymentDetails.bolt11,
-            "lnurlSuccessAction" to readableMapOf(lnPaymentDetails.lnurlSuccessAction)
+            "lnurlSuccessAction" to readableMapOf(lnPaymentDetails.lnurlSuccessAction),
+            "lnAddress" to lnPaymentDetails.lnAddress
     )
 }
 
@@ -220,7 +221,8 @@ fun readableMapOf(lnUrlPayRequestData: LnUrlPayRequestData): ReadableMap {
             "maxSendable" to lnUrlPayRequestData.maxSendable,
             "metadataStr" to lnUrlPayRequestData.metadataStr,
             "commentAllowed" to lnUrlPayRequestData.commentAllowed,
-            "domain" to lnUrlPayRequestData.domain
+            "domain" to lnUrlPayRequestData.domain,
+            "lnAddress" to lnUrlPayRequestData.lnAddress
     )
 }
 
