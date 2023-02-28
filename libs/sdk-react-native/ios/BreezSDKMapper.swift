@@ -186,7 +186,8 @@ class BreezSDKMapper {
             "paymentPreimage": lnPaymentDetails.paymentPreimage,
             "keysend": lnPaymentDetails.keysend,
             "bolt11": lnPaymentDetails.bolt11,
-            "lnurlSuccessAction": dictionaryOf(successActionProcessed: lnPaymentDetails.lnurlSuccessAction)
+            "lnurlSuccessAction": dictionaryOf(successActionProcessed: lnPaymentDetails.lnurlSuccessAction),
+            "lnAddress": lnPaymentDetails.lnAddress
         ]
     }
     
@@ -206,6 +207,7 @@ class BreezSDKMapper {
             "metadataStr": lnUrlPayRequestData.metadataStr,
             "commentAllowed": lnUrlPayRequestData.commentAllowed,
             "domain": lnUrlPayRequestData.domain,
+            "lnAddress": lnUrlPayRequestData.lnAddress
         ]
     }
     
