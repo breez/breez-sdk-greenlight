@@ -79,6 +79,8 @@ impl SqliteStorage {
     }
 
     /// Constructs [Payment] by joining data in the `payment` and `payments_external_info` tables
+    ///
+    /// This queries all payments. To query a single payment, see [Self::get_payment_by_hash]
     pub fn list_payments(
         &self,
         type_filter: PaymentTypeFilter,
@@ -119,6 +121,9 @@ impl SqliteStorage {
         Ok(vec)
     }
 
+    /// This queries a single payment by hash.
+    ///
+    /// To query all payments, see [Self::list_payments]
     pub(crate) fn get_payment_by_hash(&self, hash: &String) -> Result<Option<Payment>> {
         self.get_connection()?
             .query_row(
@@ -132,7 +137,8 @@ impl SqliteStorage {
                  p.pending,
                  p.description,
                  p.details,
-                 e.lnurl_success_action
+                 e.lnurl_success_action,
+                 e.ln_address
                 FROM payments p
                 LEFT JOIN payments_external_info e
                 ON
