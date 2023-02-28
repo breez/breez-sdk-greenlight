@@ -532,6 +532,7 @@ mod tests {
             metadata_str: "".into(),
             callback: "https://localhost/callback".into(),
             domain: "localhost".into(),
+            ln_address: None,
         }
     }
 

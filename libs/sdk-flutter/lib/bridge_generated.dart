@@ -495,6 +495,9 @@ class LnPaymentDetails {
   /// the endpoint returns a success action
   final SuccessActionProcessed? lnurlSuccessAction;
 
+  /// Only set for [PaymentType::Sent] payments that are sent to a Lightning Address
+  final String? lnAddress;
+
   LnPaymentDetails({
     required this.paymentHash,
     required this.label,
@@ -503,6 +506,7 @@ class LnPaymentDetails {
     required this.keysend,
     required this.bolt11,
     this.lnurlSuccessAction,
+    this.lnAddress,
   });
 }
 
@@ -545,6 +549,9 @@ class LnUrlPayRequestData {
   /// Note: this is not the domain of the callback, but the domain of the LNURL-pay endpoint.
   final String domain;
 
+  /// If sending to a LN Address, this will be filled.
+  final String? lnAddress;
+
   LnUrlPayRequestData({
     required this.callback,
     required this.minSendable,
@@ -552,6 +559,7 @@ class LnUrlPayRequestData {
     required this.metadataStr,
     required this.commentAllowed,
     required this.domain,
+    this.lnAddress,
   });
 }
 
@@ -1921,8 +1929,8 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   LnPaymentDetails _wire2api_ln_payment_details(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 7)
-      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
     return LnPaymentDetails(
       paymentHash: _wire2api_String(arr[0]),
       label: _wire2api_String(arr[1]),
@@ -1931,6 +1939,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       keysend: _wire2api_bool(arr[4]),
       bolt11: _wire2api_String(arr[5]),
       lnurlSuccessAction: _wire2api_opt_success_action_processed(arr[6]),
+      lnAddress: _wire2api_opt_String(arr[7]),
     );
   }
 
@@ -1954,8 +1963,8 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   LnUrlPayRequestData _wire2api_ln_url_pay_request_data(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 6)
-      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
     return LnUrlPayRequestData(
       callback: _wire2api_String(arr[0]),
       minSendable: _wire2api_u64(arr[1]),
@@ -1963,6 +1972,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       metadataStr: _wire2api_String(arr[3]),
       commentAllowed: _wire2api_u16(arr[4]),
       domain: _wire2api_String(arr[5]),
+      lnAddress: _wire2api_opt_String(arr[6]),
     );
   }
 
@@ -2513,6 +2523,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.metadata_str = api2wire_String(apiObj.metadataStr);
     wireObj.comment_allowed = api2wire_u16(apiObj.commentAllowed);
     wireObj.domain = api2wire_String(apiObj.domain);
+    wireObj.ln_address = api2wire_opt_String(apiObj.lnAddress);
   }
 
   void _api_fill_to_wire_ln_url_withdraw_request_data(
@@ -3348,6 +3359,8 @@ class wire_LnUrlPayRequestData extends ffi.Struct {
   external int comment_allowed;
 
   external ffi.Pointer<wire_uint_8_list> domain;
+
+  external ffi.Pointer<wire_uint_8_list> ln_address;
 }
 
 class wire_LnUrlWithdrawRequestData extends ffi.Struct {

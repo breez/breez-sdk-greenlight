@@ -147,6 +147,7 @@ export type LnPaymentDetails = {
     keysend: boolean
     bolt11: string
     lnurlSuccessAction?: AesSuccessActionDataDecrypted | MessageSuccessActionData | UrlSuccessActionData
+    lnAddress?: string
 }
 
 export type LnUrlAuthData = {
@@ -164,6 +165,7 @@ export type LnUrlPayRequestData = {
     metadataStr: string
     commentAllowed: number
     domain: string
+    lnAddress?: string
 }
 
 export type LnUrlWithdrawCallbackStatus = {
