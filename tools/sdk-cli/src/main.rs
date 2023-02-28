@@ -13,7 +13,7 @@ use bip39::{Language, Mnemonic, MnemonicType, Seed};
 use breez_sdk_core::InputType::LnUrlWithdraw;
 use breez_sdk_core::{
     parse, BreezEvent, BreezServices, EnvironmentType, EventListener, GreenlightCredentials,
-    InputType::LnUrlPay, LspInformation, Network, PaymentTypeFilter,
+    InputType::LnUrlPay, LspInformation, PaymentTypeFilter,
 };
 use env_logger::Env;
 use once_cell::sync::{Lazy, OnceCell};
@@ -138,8 +138,9 @@ async fn main() -> Result<()> {
                         save_config(config)?;
                     }
                     Some("register_node") => {
+                        let config = get_or_create_config()?.to_sdk_config();
                         let creds =
-                            BreezServices::register_node(Network::Bitcoin, seed.to_vec()).await?;
+                            BreezServices::register_node(config.network, seed.to_vec()).await?;
 
                         let res = init_sdk(&seed, &creds).await;
                         info!(
@@ -151,8 +152,9 @@ async fn main() -> Result<()> {
                         show_results(res);
                     }
                     Some("recover_node") => {
+                        let config = get_or_create_config()?.to_sdk_config();
                         let creds =
-                            BreezServices::recover_node(Network::Bitcoin, seed.to_vec()).await?;
+                            BreezServices::recover_node(config.network, seed.to_vec()).await?;
 
                         let res = init_sdk(&seed, &creds).await;
                         info!(

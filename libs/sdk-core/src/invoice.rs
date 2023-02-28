@@ -101,7 +101,7 @@ pub fn add_routing_hints(
         InvoiceDescription::Hash(_) => String::from(""),
     };
 
-    let mut invoice_builder = InvoiceBuilder::new(Currency::Bitcoin)
+    let mut invoice_builder = InvoiceBuilder::new(invoice.currency())
         .description(description)
         .payment_hash(*invoice.payment_hash())
         .timestamp(invoice.timestamp())
