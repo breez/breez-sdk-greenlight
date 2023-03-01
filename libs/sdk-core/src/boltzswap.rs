@@ -3,18 +3,18 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 use anyhow::{anyhow, Result};
-use bitcoin_hashes::{Hash, sha256};
 use bitcoin_hashes::hex::ToHex;
+use bitcoin_hashes::{sha256, Hash};
 use serde_json::json;
 
 use const_format::concatcp;
 use rand::random;
-use reqwest::Client;
 use reqwest::header::CONTENT_TYPE;
+use reqwest::Client;
 
 use crate::models::ReverseSwapInfo;
-use crate::{ReverseSwap, ReverseSwapperAPI};
 use crate::reverseswap::CreateReverseSwapResponse;
+use crate::{ReverseSwap, ReverseSwapperAPI};
 
 const BOLTZ_API_URL: &str = "https://boltz.exchange/api/";
 const GET_PAIRS_ENDPOINT: &str = concatcp!(BOLTZ_API_URL, "getpairs");
@@ -93,7 +93,13 @@ impl ReverseSwapperAPI for BoltzApi {
         crate::boltzswap::reverse_swap_info().await
     }
 
-    async fn create_reverse_swap(&self, amount_sat: u64, onchain_claim_address: String, pair_hash: String, routing_node: String) -> Result<ReverseSwap> {
+    async fn create_reverse_swap(
+        &self,
+        amount_sat: u64,
+        onchain_claim_address: String,
+        pair_hash: String,
+        routing_node: String,
+    ) -> Result<ReverseSwap> {
         let rand_bytes: [u8; 32] = random();
         let preimage = sha256::Hash::hash(&rand_bytes);
         let preimage_hash = sha256::Hash::hash(&preimage);
@@ -122,7 +128,6 @@ impl ReverseSwapperAPI for BoltzApi {
         });
     }
 }
-
 
 pub async fn reverse_swap_info() -> Result<ReverseSwapInfo> {
     let pairs = reqwest::get(GET_PAIRS_ENDPOINT)
@@ -163,5 +168,5 @@ fn get_boltz_reverse_swap_args(
         "claimPublicKey": claim_pubkey,
         "routingNode": routing_node
     })
-        .to_string()
+    .to_string()
 }

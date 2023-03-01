@@ -135,8 +135,8 @@ pub struct BreezServices {
     shutdown_sender: Mutex<Option<mpsc::Sender<()>>>,
 }
 
-use bitcoin_hashes::{sha256, Hash};
 use crate::boltzswap::BoltzApi;
+use bitcoin_hashes::{sha256, Hash};
 
 impl BreezServices {
     /// Create a new node for the given network, from the given seed
@@ -427,7 +427,10 @@ impl BreezServices {
     }
 
     pub async fn reverse_swap_info(&self) -> Result<ReverseSwapInfo> {
-        self.btc_send_swapper.reverse_swapper_api.reverse_swap_info().await
+        self.btc_send_swapper
+            .reverse_swapper_api
+            .reverse_swap_info()
+            .await
     }
 
     /// The steps for a full reverse swap are:

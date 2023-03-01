@@ -1,10 +1,9 @@
 use std::sync::Arc;
 
 use crate::chain::{ChainService, MempoolSpace};
+use crate::models::{ReverseSwap, ReverseSwapperAPI};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use crate::models::{ReverseSwap, ReverseSwapperAPI};
-
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
