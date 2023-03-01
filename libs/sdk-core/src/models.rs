@@ -127,6 +127,8 @@ pub struct ReverseSwap {
 /// Trait covering functionality involving swaps
 #[tonic::async_trait]
 pub trait ReverseSwapperAPI: Send + Sync {
+    async fn reverse_swap_info(&self) -> Result<ReverseSwapInfo>;
+
     /// Creates a reverse submarine swap
     ///
     /// # Arguments
