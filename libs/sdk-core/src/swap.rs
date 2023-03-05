@@ -325,10 +325,12 @@ impl BTCReceiveSwap {
             .address_transactions(bitcoin_address.clone())
             .await?;
         let utxos = get_utxos(bitcoin_address.clone(), txs)?;
+        let confirmed_txs = &utxos.confirmed;
         let confirmed_block = utxos.confirmed_block();
 
         let mut swap_status = swap_info.status.clone();
-        if current_tip - confirmed_block >= swap_info.lock_height as u32
+        if !confirmed_txs.is_empty()
+            && current_tip - confirmed_block >= swap_info.lock_height as u32
         {
             swap_status = SwapStatus::Expired
         }
