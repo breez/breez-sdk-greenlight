@@ -2,7 +2,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use crate::binding::parse_invoice;
-use crate::chain::{ChainService, MempoolSpace, OnchainTx};
+use crate::chain::{get_utxos, AddressUtxos, ChainService, MempoolSpace};
 use crate::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
 use anyhow::{anyhow, Result};
 use bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
@@ -23,47 +23,6 @@ use ripemd::{Digest, Ripemd160};
 
 use crate::breez_services::{BreezEvent, BreezServer, PaymentReceiver, Receiver};
 use crate::models::{Swap, SwapInfo, SwapStatus, SwapperAPI};
-
-#[derive(Clone)]
-struct Utxo {
-    out: OutPoint,
-    value: u32,
-    block_height: Option<u32>,
-}
-
-#[derive(Clone)]
-struct AddressUtxos {
-    unconfirmed: Vec<Utxo>,
-    confirmed: Vec<Utxo>,
-}
-
-impl AddressUtxos {
-    fn unconfirmed_sats(&self) -> u32 {
-        self.unconfirmed
-            .iter()
-            .fold(0, |accum, item| accum + item.value)
-    }
-
-    fn unconfirmed_tx_ids(&self) -> Vec<String> {
-        self.unconfirmed
-            .iter()
-            .map(|c| c.out.txid.to_string())
-            .collect()
-    }
-
-    fn confirmed_sats(&self) -> u32 {
-        self.confirmed
-            .iter()
-            .fold(0, |accum, item| accum + item.value)
-    }
-
-    fn confirmed_tx_ids(&self) -> Vec<String> {
-        self.confirmed
-            .iter()
-            .map(|c| c.out.txid.to_string())
-            .collect()
-    }
-}
 
 #[tonic::async_trait]
 impl SwapperAPI for BreezServer {
@@ -369,24 +328,11 @@ impl BTCReceiveSwap {
             .chain_service
             .address_transactions(bitcoin_address.clone())
             .await?;
-        let confirmed_txs: Vec<OnchainTx> = txs
-            .clone()
-            .into_iter()
-            .filter(|t| t.status.block_height.is_some())
-            .collect();
         let utxos = get_utxos(bitcoin_address.clone(), txs)?;
-        let confirmed_block = confirmed_txs.iter().fold(0, |b, item| {
-            let confirmed_block = item.status.block_height.unwrap();
-            if confirmed_block != 0 || confirmed_block < b {
-                confirmed_block
-            } else {
-                b
-            }
-        });
+        let confirmed_block = utxos.confirmed_block();
 
         let mut swap_status = swap_info.status.clone();
-        if !confirmed_txs.is_empty()
-            && current_tip - confirmed_block >= swap_info.lock_height as u32
+        if current_tip - confirmed_block >= swap_info.lock_height as u32
         {
             swap_status = SwapStatus::Expired
         }
@@ -551,53 +497,6 @@ pub(crate) fn create_submarine_swap_script(
         .into_script())
 }
 
-fn get_utxos(swap_address: String, transactions: Vec<OnchainTx>) -> Result<AddressUtxos> {
-    // calcualte confirmed amount associated with this address
-    let mut spent_outputs: Vec<OutPoint> = Vec::new();
-    let mut utxos: Vec<Utxo> = Vec::new();
-    for (_, tx) in transactions.iter().enumerate() {
-        for (_, vin) in tx.vin.iter().enumerate() {
-            if vin.prevout.scriptpubkey_address == swap_address.clone() {
-                spent_outputs.push(OutPoint {
-                    txid: Txid::from_hex(vin.txid.as_str())?,
-                    vout: vin.vout,
-                })
-            }
-        }
-    }
-
-    for (_i, tx) in transactions.iter().enumerate() {
-        for (index, vout) in tx.vout.iter().enumerate() {
-            if vout.scriptpubkey_address == swap_address {
-                let outpoint = OutPoint {
-                    txid: Txid::from_hex(tx.txid.as_str())?,
-                    vout: index as u32,
-                };
-                if !spent_outputs.contains(&outpoint) {
-                    utxos.push(Utxo {
-                        out: outpoint,
-                        value: vout.value,
-                        block_height: tx.status.block_height,
-                    });
-                }
-            }
-        }
-    }
-    let address_utxos = AddressUtxos {
-        unconfirmed: utxos
-            .clone()
-            .into_iter()
-            .filter(|u| u.block_height.is_none())
-            .collect(),
-        confirmed: utxos
-            .clone()
-            .into_iter()
-            .filter(|u| u.block_height.is_some())
-            .collect(),
-    };
-    Ok(address_utxos)
-}
-
 /// Creating the refund transaction that is to be used by the user in case where the swap has
 /// expired.
 fn create_refund_tx(
@@ -707,12 +606,13 @@ mod tests {
         OutPoint, Txid,
     };
 
+    use crate::chain::{AddressUtxos, Utxo};
     use crate::{
         breez_services::tests::get_dummy_node_state,
         chain::{ChainService, OnchainTx},
         models::*,
         persist::db::SqliteStorage,
-        swap::{AddressUtxos, BTCReceiveSwap, Utxo},
+        swap::BTCReceiveSwap,
         test_utils::{
             create_test_config, create_test_persister, MockChainService, MockReceiver,
             MockSwapperAPI,
@@ -938,7 +838,7 @@ mod tests {
         let (mut swapper, _) = create_swapper(chain_service.clone());
         let swap_info = swapper.create_swap_address().await.unwrap();
 
-        // Once swap is spent on-chain the confirmed_sats whould be set to zero again.
+        // Once swap is spent on-chain the confirmed_sats would be set to zero again.
         swapper.chain_service = chain_service_after_spent(swap_info.clone().bitcoin_address);
         swapper
             .on_event(BreezEvent::NewBlock {
