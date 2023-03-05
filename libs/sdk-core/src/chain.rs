@@ -65,7 +65,7 @@ impl AddressUtxos {
 }
 
 pub(crate) fn get_utxos(
-    swap_address: String,
+    address: String,
     transactions: Vec<OnchainTx>,
 ) -> Result<AddressUtxos> {
     // Calculate confirmed amount associated with this address
@@ -73,7 +73,7 @@ pub(crate) fn get_utxos(
     let mut utxos: Vec<Utxo> = Vec::new();
     for (_, tx) in transactions.iter().enumerate() {
         for (_, vin) in tx.vin.iter().enumerate() {
-            if vin.prevout.scriptpubkey_address == swap_address.clone() {
+            if vin.prevout.scriptpubkey_address == address.clone() {
                 spent_outputs.push(OutPoint {
                     txid: Txid::from_hex(vin.txid.as_str())?,
                     vout: vin.vout,
@@ -84,7 +84,7 @@ pub(crate) fn get_utxos(
 
     for (_i, tx) in transactions.iter().enumerate() {
         for (index, vout) in tx.vout.iter().enumerate() {
-            if vout.scriptpubkey_address == swap_address {
+            if vout.scriptpubkey_address == address {
                 let outpoint = OutPoint {
                     txid: Txid::from_hex(tx.txid.as_str())?,
                     vout: index as u32,
