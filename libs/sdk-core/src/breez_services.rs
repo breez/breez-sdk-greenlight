@@ -38,7 +38,7 @@ use crate::lsp::LspInformation;
 use crate::models::{
     parse_short_channel_id, ChannelState, ClosedChannelPaymentDetails, Config, EnvironmentType,
     FiatAPI, GreenlightCredentials, LnUrlCallbackStatus, LspAPI, Network, NodeAPI, NodeState, Payment, PaymentDetails,
-    PaymentType, PaymentTypeFilter, ReverseSwapInfo, ReverseSwapperAPI, SwapInfo, SwapperAPI,
+    PaymentType, PaymentTypeFilter, ReverseSwapPairInfo, ReverseSwapperAPI, SwapInfo, SwapperAPI,
 };
 use crate::moonpay::MoonPayApi;
 use crate::persist::db::SqliteStorage;
@@ -464,7 +464,7 @@ impl BreezServices {
         Ok(None)
     }
 
-    pub async fn reverse_swap_info(&self) -> Result<ReverseSwapInfo> {
+    pub async fn reverse_swap_info(&self) -> Result<ReverseSwapPairInfo> {
         self.btc_send_swapper.reverse_swap_info().await
     }
 
@@ -482,19 +482,16 @@ impl BreezServices {
         amount_sat: u64,
         onchain_recipient_address: String,
         pair_hash: String,
-    ) -> Result<ReverseSwap> {
+    ) -> Result<ReverseSwapInfo> {
         let routing_hop = self.lsp_info().await?;
-
-        let rev_swap = self
-            .btc_send_swapper
+        self.btc_send_swapper
             .create_reverse_swap(
                 amount_sat,
-                onchain_recipient_address,
+                onchain_recipient_address.clone(),
                 pair_hash,
                 routing_hop.pubkey,
             )
-            .await?;
-        Ok(rev_swap)
+            .await
     }
 
     /// list non-completed expired swaps that should be refunded bu calling [BreezServices::refund]

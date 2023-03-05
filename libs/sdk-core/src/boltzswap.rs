@@ -12,7 +12,7 @@ use rand::random;
 use reqwest::header::CONTENT_TYPE;
 use reqwest::Client;
 
-use crate::models::ReverseSwapInfo;
+use crate::models::ReverseSwapPairInfo;
 use crate::reverseswap::CreateReverseSwapResponse;
 use crate::{ReverseSwap, ReverseSwapperAPI};
 
@@ -89,8 +89,8 @@ pub struct BoltzApi {}
 
 #[tonic::async_trait]
 impl ReverseSwapperAPI for BoltzApi {
-    async fn reverse_swap_info(&self) -> Result<ReverseSwapInfo> {
-        reverse_swap_info().await
+    async fn reverse_swap_info(&self) -> Result<ReverseSwapPairInfo> {
+        crate::boltzswap::reverse_swap_info().await
     }
 
     async fn create_reverse_swap(
@@ -128,7 +128,7 @@ impl ReverseSwapperAPI for BoltzApi {
     }
 }
 
-pub async fn reverse_swap_info() -> Result<ReverseSwapInfo> {
+pub async fn reverse_swap_info() -> Result<ReverseSwapPairInfo> {
     let pairs = reqwest::get(GET_PAIRS_ENDPOINT)
         .await?
         .json::<Pairs>()
@@ -138,7 +138,7 @@ pub async fn reverse_swap_info() -> Result<ReverseSwapInfo> {
         Some(btc_pair) => {
             println!("result: {}", serde_json::to_string_pretty(&btc_pair)?);
             let hash = String::from(&btc_pair.hash);
-            Ok(ReverseSwapInfo {
+            Ok(ReverseSwapPairInfo {
                 fees_hash: hash,
                 min: btc_pair.limits.minimal,
                 max: btc_pair.limits.maximal,
