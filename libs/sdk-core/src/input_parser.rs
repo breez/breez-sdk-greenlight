@@ -176,6 +176,8 @@ pub async fn parse(input: &str) -> Result<InputType> {
         }
     }
 
+    // Try to strip the "lightning:" prefix from possible lnurl string. If prefix is not there, default to original input
+    let input = input.strip_prefix("lightning:").unwrap_or(input);
     if let Ok((domain, mut lnurl_endpoint, is_ln_address)) = lnurl_decode(input) {
         // For LNURL-auth links, their type is already known if the link contains the login tag
         // No need to query the endpoint for details
