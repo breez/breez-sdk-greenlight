@@ -452,6 +452,7 @@ pub struct LnUrlPayRequestData {
     /// Use `metadata_vec()` to get the parsed items.
     #[serde(rename(deserialize = "metadata"))]
     pub metadata_str: String,
+    #[serde(default)]
     pub comment_allowed: u16,
 
     /// Indicates the domain of the LNURL-pay service, to be shown to the user when asking for
