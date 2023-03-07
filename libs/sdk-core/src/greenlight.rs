@@ -554,7 +554,7 @@ impl TryFrom<OffChainPayment> for crate::models::Payment {
                     keysend: false,
                     bolt11: p.bolt11,
                     lnurl_success_action: None, // For received payments, this is None
-                    lnurl_metadata: None, // For received payments, this is None
+                    lnurl_metadata: None,       // For received payments, this is None
                     ln_address: None,
                 },
             },
@@ -588,7 +588,7 @@ impl TryFrom<pb::Invoice> for crate::models::Payment {
                     keysend: false,
                     bolt11: invoice.bolt11,
                     lnurl_success_action: None, // For received payments, this is None
-                    lnurl_metadata: None, // For received payments, this is None
+                    lnurl_metadata: None,       // For received payments, this is None
                     ln_address: None,
                 },
             },
