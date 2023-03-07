@@ -140,6 +140,7 @@ dictionary LnPaymentDetails {
     boolean keysend;
     string bolt11;
     SuccessActionProcessed? lnurl_success_action;
+    string? lnurl_metadata;
     string? ln_address;
 };
 

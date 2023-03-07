@@ -304,6 +304,9 @@ pub struct LnPaymentDetails {
 
     /// Only set for [PaymentType::Sent] payments that are sent to a Lightning Address
     pub ln_address: Option<String>,
+
+    /// Only set for [PaymentType::Sent] payments where the receiver endpoint returned LNURL metadata
+    pub lnurl_metadata: Option<String>,
 }
 
 /// Represents the funds that were on the user side of the channel at the time it was closed.

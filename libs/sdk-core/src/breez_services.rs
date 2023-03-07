@@ -271,6 +271,7 @@ impl BreezServices {
                 self.persister.insert_lnurl_payment_external_info(
                     &details.payment_hash,
                     maybe_sa_processed.as_ref(),
+                    Some(req_data.metadata_str),
                     req_data.ln_address,
                 )?;
 
@@ -1075,6 +1076,7 @@ pub(crate) mod tests {
 
         let dummy_node_state = get_dummy_node_state();
 
+        let lnurl_metadata = "{'key': 'sample-metadata-val'}";
         let test_ln_address = "test@ln-address.com";
         let sa = SuccessActionProcessed::Message {
             data: MessageSuccessActionData {
@@ -1101,6 +1103,7 @@ pub(crate) mod tests {
                         keysend: false,
                         bolt11: "1111".to_string(),
                         lnurl_success_action: None,
+                        lnurl_metadata: None,
                         ln_address: None,
                     },
                 },
@@ -1122,6 +1125,7 @@ pub(crate) mod tests {
                         keysend: false,
                         bolt11: "123".to_string(),
                         lnurl_success_action: Some(sa.clone()),
+                        lnurl_metadata: Some(lnurl_metadata.to_string()),
                         ln_address: Some(test_ln_address.to_string()),
                     },
                 },
@@ -1136,6 +1140,7 @@ pub(crate) mod tests {
         persister.insert_lnurl_payment_external_info(
             payment_hash_with_lnurl_success_action,
             Some(&sa),
+            Some(lnurl_metadata.to_string()),
             Some(test_ln_address.to_string()),
         )?;
 
