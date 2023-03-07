@@ -202,6 +202,9 @@ impl SqliteStorage {
             M::up("
              ALTER TABLE payments_external_info ADD COLUMN ln_address TEXT;
             "),
+            M::up("
+             ALTER TABLE payments_external_info ADD COLUMN lnurl_metadata TEXT;
+            "),
         ]);
 
         let mut conn = self.get_connection()?;

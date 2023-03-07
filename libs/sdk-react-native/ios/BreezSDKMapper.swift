@@ -187,6 +187,7 @@ class BreezSDKMapper {
             "keysend": lnPaymentDetails.keysend,
             "bolt11": lnPaymentDetails.bolt11,
             "lnurlSuccessAction": dictionaryOf(successActionProcessed: lnPaymentDetails.lnurlSuccessAction),
+            "lnurlMetadata": lnPaymentDetails.lnurlMetadata
             "lnAddress": lnPaymentDetails.lnAddress
         ]
     }

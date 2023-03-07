@@ -51,6 +51,7 @@ impl SqliteStorage {
         &self,
         payment_hash: &str,
         lnurl_pay_success_action: Option<&SuccessActionProcessed>,
+        lnurl_metadata: Option<String>,
         ln_address: Option<String>,
     ) -> Result<()> {
         let con = self.get_connection()?;
@@ -59,13 +60,14 @@ impl SqliteStorage {
          INSERT OR REPLACE INTO payments_external_info (
            payment_id,
            lnurl_success_action,
+           lnurl_metadata,
            ln_address
          )
-         VALUES (?1,?2,?3)
+         VALUES (?1,?2,?3,?4)
         ",
         )?;
 
-        _ = prep_statement.execute((payment_hash, &lnurl_pay_success_action, ln_address))?;
+        _ = prep_statement.execute((payment_hash, &lnurl_pay_success_action, lnurl_metadata, ln_address))?;
 
         Ok(())
     }
@@ -102,6 +104,7 @@ impl SqliteStorage {
              p.description,
              p.details,
              e.lnurl_success_action,
+             e.lnurl_metadata,
              e.ln_address
             FROM payments p
             LEFT JOIN payments_external_info e
@@ -138,6 +141,7 @@ impl SqliteStorage {
                  p.description,
                  p.details,
                  e.lnurl_success_action,
+                 e.lnurl_metadata,
                  e.ln_address
                 FROM payments p
                 LEFT JOIN payments_external_info e
@@ -167,7 +171,8 @@ impl SqliteStorage {
 
         if let PaymentDetails::Ln { ref mut data } = payment.details {
             data.lnurl_success_action = row.get(8)?;
-            data.ln_address = row.get(9)?;
+            data.lnurl_metadata = row.get(9)?;
+            data.ln_address = row.get(10)?;
         }
 
         Ok(payment)
@@ -245,6 +250,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
     use crate::models::{LnPaymentDetails, Payment, PaymentDetails};
     use crate::persist::test_utils;
 
+    let lnurl_metadata = "{'key': 'sample-metadata-val'}";
     let test_ln_address = "test@ln.adddress.com";
     let sa = SuccessActionProcessed::Message {
         data: MessageSuccessActionData {
@@ -271,6 +277,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
                     keysend: true,
                     bolt11: "bolt11".to_string(),
                     lnurl_success_action: Some(sa.clone()),
+                    lnurl_metadata: Some(lnurl_metadata.to_string()),
                     ln_address: Some(test_ln_address.to_string()),
                 },
             },
@@ -292,6 +299,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
                     keysend: true,
                     bolt11: "bolt11".to_string(),
                     lnurl_success_action: None,
+                    lnurl_metadata: None,
                     ln_address: None,
                 },
             },
@@ -304,6 +312,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
     storage.insert_lnurl_payment_external_info(
         payment_hash_with_lnurl_success_action,
         Some(&sa),
+        Some(lnurl_metadata.to_string()),
         Some(test_ln_address.to_string()),
     )?;
 

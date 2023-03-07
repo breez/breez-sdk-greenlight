@@ -498,6 +498,9 @@ class LnPaymentDetails {
   /// Only set for [PaymentType::Sent] payments that are sent to a Lightning Address
   final String? lnAddress;
 
+  /// Only set for [PaymentType::Sent] payments where the receiver endpoint returned LNURL metadata
+  final String? lnurlMetadata;
+
   LnPaymentDetails({
     required this.paymentHash,
     required this.label,
@@ -507,6 +510,7 @@ class LnPaymentDetails {
     required this.bolt11,
     this.lnurlSuccessAction,
     this.lnAddress,
+    this.lnurlMetadata,
   });
 }
 
@@ -1929,8 +1933,8 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   LnPaymentDetails _wire2api_ln_payment_details(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 8)
-      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    if (arr.length != 9)
+      throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
     return LnPaymentDetails(
       paymentHash: _wire2api_String(arr[0]),
       label: _wire2api_String(arr[1]),
@@ -1940,6 +1944,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       bolt11: _wire2api_String(arr[5]),
       lnurlSuccessAction: _wire2api_opt_success_action_processed(arr[6]),
       lnAddress: _wire2api_opt_String(arr[7]),
+      lnurlMetadata: _wire2api_opt_String(arr[8]),
     );
   }
 

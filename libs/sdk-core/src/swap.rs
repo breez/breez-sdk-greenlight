@@ -870,6 +870,7 @@ mod tests {
                     keysend: false,
                     bolt11: "".to_string(),
                     lnurl_success_action: None,
+                    lnurl_metadata: None,
                     ln_address: None,
                 },
             },
