@@ -246,36 +246,36 @@ impl BreezServices {
                     PaymentDetails::Ln { data } => data,
                 };
 
+                let maybe_sa_processed: Option<SuccessActionProcessed> = match cb.success_action {
+                    Some(sa) => {
+                        let processed_sa = match sa {
+                            // For AES, we decrypt the contents on the fly
+                            Aes(data) => {
+                                let preimage = sha256::Hash::from_str(&details.payment_preimage)?;
+                                let preimage_arr: [u8; 32] = preimage.into_inner();
+
+                                let decrypted = (data, &preimage_arr).try_into()?;
+                                SuccessActionProcessed::Aes { data: decrypted }
+                            }
+                            SuccessAction::Message(data) => {
+                                SuccessActionProcessed::Message { data }
+                            }
+                            SuccessAction::Url(data) => SuccessActionProcessed::Url { data },
+                        };
+                        Some(processed_sa)
+                    }
+                    None => None,
+                };
+
+                // Store SA (if available) + LN Address in separate table, associated to payment_hash
+                self.persister.insert_lnurl_payment_external_info(
+                    &details.payment_hash,
+                    maybe_sa_processed.as_ref(),
+                    req_data.ln_address,
+                )?;
+
                 Ok(LnUrlPayResult::EndpointSuccess {
-                    data: match cb.success_action {
-                        Some(sa) => {
-                            let processed_sa = match sa {
-                                // For AES, we decrypt the contents on the fly
-                                Aes(data) => {
-                                    let preimage =
-                                        sha256::Hash::from_str(&details.payment_preimage)?;
-                                    let preimage_arr: [u8; 32] = preimage.into_inner();
-
-                                    let decrypted = (data, &preimage_arr).try_into()?;
-                                    SuccessActionProcessed::Aes { data: decrypted }
-                                }
-                                SuccessAction::Message(data) => {
-                                    SuccessActionProcessed::Message { data }
-                                }
-                                SuccessAction::Url(data) => SuccessActionProcessed::Url { data },
-                            };
-
-                            // Store SA + LN Address in separate table, associated to payment_hash
-                            self.persister.insert_lnurl_payment_external_info(
-                                &details.payment_hash,
-                                Some(&processed_sa),
-                                req_data.ln_address,
-                            )?;
-
-                            Some(processed_sa)
-                        }
-                        None => None,
-                    },
+                    data: maybe_sa_processed,
                 })
             }
         }
