@@ -67,7 +67,12 @@ impl SqliteStorage {
         ",
         )?;
 
-        _ = prep_statement.execute((payment_hash, &lnurl_pay_success_action, lnurl_metadata, ln_address))?;
+        _ = prep_statement.execute((
+            payment_hash,
+            &lnurl_pay_success_action,
+            lnurl_metadata,
+            ln_address,
+        ))?;
 
         Ok(())
     }
