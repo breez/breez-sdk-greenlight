@@ -39,15 +39,27 @@ The following endpoints are needed:
 - `subscribe_tx_confirmation(registration_id, url, txid)` API for subscribing to specific transaction notifications.
 The `registration_id` is a random unique identifier that identify the caller and allow the sdk client to both update the hook url and subscribe to notification services.
 
-### Notification Delivery Service
+### Notification Delivery Service (NDS)
 This service is the destination of the web hooks. Its job is to identify the protocol, type and data of the notification, craft the formatted notification and send it over the right channel (mobile push for example)
 Such service should be operated by an app provider that would like to send push notifications to users.
 
 ## Webhook structure
-A webhook is just a url but for mobile we require `platform` and `token` parameters for example: <base_url>?platform=<platform>&token=<token>
+A webhook is just a url that is used for a POST request when the notification is needed.
+This URL should have enough information for the NDS to know where to send the notification.
+We don't impose any structure or specify any required parameters for this URL.
+
+### Example - mobile push
+Let's assume the SDK is used within a mobile app and the user wants to be notified when a payment is pending. For the NDS to identify the device a push `token` is used and it is possible also to add the `platform` that generated the token (android, ios), so one option is to use the following structure:
+
+`<base_url>?platform=<platform>&token=<token>`
+
 Where:
-- `platform` is one of: apn, fcm
+- `platform` is one of: android, ios
 - `token` is the token given by the client OS.
+- `base_url` points to the NDS
+
+
+## Webhook payload
 
 Triggering the webhook is done by initiating a POST request with the following json payload:
 
