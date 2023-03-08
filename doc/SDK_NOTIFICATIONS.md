@@ -59,7 +59,7 @@ Where:
 - `base_url` points to the NDS
 
 
-## Webhook payload
+## Webhook request payload
 
 Triggering the webhook is done by initiating a POST request with the following json payload:
 
