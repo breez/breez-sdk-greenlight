@@ -310,6 +310,12 @@ interface LnUrlWithdrawCallbackStatus {
     ErrorStatus(LnUrlErrorData data);
 };
 
+[Enum]
+interface LnUrlPayResult {
+    EndpointSuccess(SuccessActionProcessed? data);
+    EndpointError(LnUrlErrorData data);
+};
+
 dictionary LnUrlAuthRequestData {
     string k1;
 };
@@ -354,6 +360,9 @@ interface BlockingBreezServices {
 
    [Throws=SDKError]
    LNInvoice receive_payment(u64 amount_sats, string description);
+
+   [Throws=SDKError]
+   LnUrlPayResult pay_lnurl(LnUrlPayRequestData req_data, u64 amount_sats, string? comment);
 
    [Throws=SDKError]
    LnUrlWithdrawCallbackStatus withdraw_lnurl(LnUrlWithdrawRequestData req_data, u64 amount_sats, string? description);
