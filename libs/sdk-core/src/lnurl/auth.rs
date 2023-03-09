@@ -1,7 +1,7 @@
 use crate::{mnemonic_to_seed, LnUrlAuthRequestData, LnUrlWithdrawCallbackStatus};
 use anyhow::{anyhow, Result};
 use bitcoin::secp256k1::{Message, Secp256k1};
-use bitcoin::util::bip32::{DerivationPath, ExtendedPrivKey};
+use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey};
 use bitcoin::{KeyPair, Network};
 use bitcoin_hashes::hex::ToHex;
 use bitcoin_hashes::{sha256, Hash, HashEngine, Hmac, HmacEngine};
@@ -9,8 +9,6 @@ use reqwest::Url;
 use std::str::FromStr;
 
 use LnUrlWithdrawCallbackStatus as LnUrlAuthCallbackStatus;
-
-const TWO_POW_31: u32 = 2_u32.pow(31);
 
 /// Performs the second and last step of LNURL-auth, as per
 /// <https://github.com/lnurl/luds/blob/luds/04.md>
@@ -97,36 +95,22 @@ fn derive_linking_keys(network: Network, seed: Vec<u8>, url: Url) -> Result<KeyP
     let hmac_bytes = hmac.as_inner();
 
     // m/138'/<long1>/<long2>/<long3>/<long4>
-    let linking_key_derivation_path = format!(
-        "m/138'/{}/{}/{}/{}",
-        build_path_element(hmac_bytes[0..4].try_into()?),
-        build_path_element(hmac_bytes[4..8].try_into()?),
-        build_path_element(hmac_bytes[8..12].try_into()?),
-        build_path_element(hmac_bytes[12..16].try_into()?)
-    );
-    debug!("Derivation path: {linking_key_derivation_path}");
     let linking_key = root_key.derive_priv(
         &ctx,
-        &linking_key_derivation_path.parse::<DerivationPath>()?,
+        &vec![
+            ChildNumber::from_hardened_idx(138)?,
+            ChildNumber::from(build_path_element_u32(hmac_bytes[0..4].try_into()?)),
+            ChildNumber::from(build_path_element_u32(hmac_bytes[4..8].try_into()?)),
+            ChildNumber::from(build_path_element_u32(hmac_bytes[8..12].try_into()?)),
+            ChildNumber::from(build_path_element_u32(hmac_bytes[12..16].try_into()?)),
+        ],
     )?;
 
     Ok(linking_key.to_keypair(&ctx))
 }
 
-fn build_path_element(hmac_bytes: [u8; 4]) -> String {
+fn build_path_element_u32(hmac_bytes: [u8; 4]) -> u32 {
     let mut buf = [0u8; 4];
     buf[..4].copy_from_slice(&hmac_bytes);
-
-    let long = u32::from_be_bytes(buf);
-    match long > TWO_POW_31 - 1 {
-        true => {
-            // Hardened (we add apostrophe and map it to the 0 - 2^31 range)
-            let long = long - TWO_POW_31;
-            format!("{long}'")
-        }
-        false => {
-            // Normal, unhardened
-            format!("{long}")
-        }
-    }
+    u32::from_be_bytes(buf)
 }
