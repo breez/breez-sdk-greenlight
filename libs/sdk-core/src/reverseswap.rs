@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use crate::chain::{ChainService, MempoolSpace};
 use crate::models::{ReverseSwap, ReverseSwapperAPI};
+use crate::ReverseSwapInfo;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
@@ -20,7 +21,7 @@ pub struct CreateReverseSwapResponse {
 /// It uses internally an implementation of [ReverseSwapperAPI] that represents Boltz reverse swapper service.
 pub(crate) struct BTCSendSwap {
     network: bitcoin::Network,
-    pub(crate) reverse_swapper_api: Arc<dyn ReverseSwapperAPI>,
+    reverse_swapper_api: Arc<dyn ReverseSwapperAPI>,
     persister: Arc<crate::persist::db::SqliteStorage>,
     chain_service: Arc<dyn ChainService>,
     //payment_sender: Arc<dyn Sender>,
@@ -53,5 +54,9 @@ impl BTCSendSwap {
         self.reverse_swapper_api
             .create_reverse_swap(amount_sat, onchain_claim_address, pair_hash, routing_node)
             .await
+    }
+
+    pub(crate) async fn reverse_swap_info(&self) -> Result<ReverseSwapInfo> {
+        self.reverse_swapper_api.reverse_swap_info().await
     }
 }
