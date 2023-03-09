@@ -182,18 +182,9 @@ pub async fn parse(input: &str) -> Result<InputType> {
         // For LNURL-auth links, their type is already known if the link contains the login tag
         // No need to query the endpoint for details
         if lnurl_endpoint.contains("tag=login") {
-            if let Some(auth_request_data) = reqwest::Url::from_str(&lnurl_endpoint)?
-                .query_pairs()
-                .into_iter()
-                .find(|(key, _)| key == "k1")
-                .map(|(_, val)| LnUrlAuthRequestData {
-                    k1: val.to_string(),
-                })
-            {
-                return Ok(LnUrlAuth {
-                    data: auth_request_data,
-                });
-            }
+            return Ok(LnUrlAuth {
+                data: crate::lnurl::auth::validate_request(domain, lnurl_endpoint)?
+            });
         }
 
         lnurl_endpoint = maybe_replace_host_with_mockito_test_host(lnurl_endpoint)?;
@@ -414,6 +405,7 @@ pub enum LnUrlRequestData {
         #[serde(flatten)]
         data: LnUrlWithdrawRequestData,
     },
+    #[serde(rename = "login")]
     AuthRequest {
         #[serde(flatten)]
         data: LnUrlAuthRequestData,
@@ -495,7 +487,21 @@ pub struct LnUrlWithdrawRequestData {
 /// It represents the endpoint's parameters for the LNURL workflow.
 #[derive(Deserialize, Debug)]
 pub struct LnUrlAuthRequestData {
+    /// Hex encoded 32 bytes of challenge
     pub k1: String,
+
+    /// When available, one of: register, login, link, auth
+    pub action: Option<String>,
+
+    /// Indicates the domain of the LNURL-auth service, to be shown to the user when asking for
+    /// auth confirmation, as per LUD-04 spec.
+    #[serde(skip_serializing, skip_deserializing)]
+    pub domain: String,
+
+    /// Indicates the URL of the LNURL-auth service, including the query arguments. This will be
+    /// extended with the signed challenge and the linking key, then called in the second step of the workflow.
+    #[serde(skip_serializing, skip_deserializing)]
+    pub url: String,
 }
 
 /// Key-value pair in the [LnUrlPayRequestData], as returned by the LNURL-pay endpoint
@@ -835,6 +841,7 @@ mod tests {
         // Covers cases in LUD-04: `auth` base spec
         // https://github.com/lnurl/luds/blob/luds/04.md
 
+        // No action specified
         let decoded_url = "https://localhost/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822";
         let lnurl_auth_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgeqgntfgu";
         assert_eq!(
@@ -847,7 +854,62 @@ mod tests {
                 ad.k1,
                 "1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822"
             );
+            assert_eq!(ad.domain, "localhost".to_string());
+            assert_eq!(ad.action, None);
         }
+
+        // Action = register
+        let _decoded_url = "https://localhost/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822&action=register";
+        let lnurl_auth_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgezvctrw35k7m3awfjkw6tnw3jhys2umys";
+        if let LnUrlAuth { data: ad } = parse(lnurl_auth_encoded).await? {
+            assert_eq!(
+                ad.k1,
+                "1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822"
+            );
+            assert_eq!(ad.domain, "localhost".to_string());
+            assert_eq!(ad.action, Some("register".into()));
+        }
+
+        // Action = login
+        let _decoded_url = "https://localhost/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822&action=login";
+        let lnurl_auth_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgezvctrw35k7m3ad3hkw6tw2acjtx";
+        if let LnUrlAuth { data: ad } = parse(lnurl_auth_encoded).await? {
+            assert_eq!(
+                ad.k1,
+                "1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822"
+            );
+            assert_eq!(ad.domain, "localhost".to_string());
+            assert_eq!(ad.action, Some("login".into()));
+        }
+
+        // Action = link
+        let _decoded_url = "https://localhost/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822&action=link";
+        let lnurl_auth_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgezvctrw35k7m3ad35ku6cc8mvs6";
+        if let LnUrlAuth { data: ad } = parse(lnurl_auth_encoded).await? {
+            assert_eq!(
+                ad.k1,
+                "1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822"
+            );
+            assert_eq!(ad.domain, "localhost".to_string());
+            assert_eq!(ad.action, Some("link".into()));
+        }
+
+        // Action = auth
+        let _decoded_url = "https://localhost/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822&action=auth";
+        let lnurl_auth_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgezvctrw35k7m3av96hg6qmg6zgu";
+        if let LnUrlAuth { data: ad } = parse(lnurl_auth_encoded).await? {
+            assert_eq!(
+                ad.k1,
+                "1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822"
+            );
+            assert_eq!(ad.domain, "localhost".to_string());
+            assert_eq!(ad.action, Some("auth".into()));
+        }
+
+        // Action = another, invalid type
+        let _decoded_url = "https://localhost/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822&action=invalid";
+        let lnurl_auth_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgezvctrw35k7m3ad9h8vctvd9jq2s4vfw";
+        assert!(parse(lnurl_auth_encoded).await.is_err());
 
         Ok(())
     }
