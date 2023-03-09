@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Result};
+use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use gl_client::pb::Peer;
 use gl_client::pb::WithdrawResponse;
 use gl_client::pb::{CloseChannelResponse, Invoice};
@@ -58,6 +59,15 @@ pub trait NodeAPI: Send + Sync {
     async fn stream_incoming_payments(&self) -> Result<Streaming<gl_client::pb::IncomingPayment>>;
     async fn stream_log_messages(&self) -> Result<Streaming<gl_client::pb::LogEntry>>;
     async fn execute_command(&self, command: String) -> Result<String>;
+
+    /// Gets the private key at `m/138'/0`
+    fn get_lnurl_auth_hashing_key(&self) -> Result<ExtendedPrivKey>;
+
+    /// Gets the private key at `m/138'/<long1>/<long2>/<long3>/<long4>`, where the longs are derived
+    /// as per LUD-05
+    ///
+    /// https://github.com/lnurl/luds/blob/luds/05.md
+    fn get_lnurl_auth_linking_key(&self, path: [ChildNumber; 4]) -> Result<ExtendedPrivKey>;
 }
 
 /// Trait covering LSP-related functionality

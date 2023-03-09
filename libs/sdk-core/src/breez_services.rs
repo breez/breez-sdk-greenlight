@@ -131,9 +131,6 @@ pub struct BreezServices {
     btc_receive_swapper: Arc<BTCReceiveSwap>,
     event_listener: Option<Box<dyn EventListener>>,
     shutdown_sender: Mutex<Option<mpsc::Sender<()>>>,
-
-    /// Convenience field for easier access. Set during initialization via [Config]
-    network: Network,
 }
 
 use bitcoin_hashes::{sha256, Hash};
@@ -307,7 +304,7 @@ impl BreezServices {
         &self,
         req_data: LnUrlAuthRequestData,
     ) -> Result<LnUrlWithdrawCallbackStatus> {
-        crate::lnurl::auth::perform_lnurl_auth(self.network.into(), req_data).await
+        crate::lnurl::auth::perform_lnurl_auth(self.node_api.clone(), req_data).await
     }
 
     /// Creates an bolt11 payment request.
@@ -812,7 +809,6 @@ impl BreezServicesBuilder {
             payment_receiver,
             event_listener: listener,
             shutdown_sender: Mutex::new(None),
-            network: self.config.network
         });
 
         Ok(breez_services)

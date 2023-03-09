@@ -10,6 +10,7 @@ use anyhow::{anyhow, Result};
 use bitcoin::secp256k1::ecdsa::RecoverableSignature;
 use bitcoin::secp256k1::{KeyPair, Message};
 use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
+use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin_hashes::hex::ToHex;
 use bitcoin_hashes::{sha256, Hash};
 use gl_client::pb::amount::Unit;
@@ -257,6 +258,14 @@ impl NodeAPI for MockNodeAPI {
     }
 
     async fn execute_command(&self, _command: String) -> Result<String> {
+        Err(anyhow!("Not implemented"))
+    }
+
+    fn get_lnurl_auth_hashing_key(&self) -> Result<ExtendedPrivKey> {
+        Err(anyhow!("Not implemented"))
+    }
+
+    fn get_lnurl_auth_linking_key(&self, _path: [ChildNumber; 4]) -> Result<ExtendedPrivKey> {
         Err(anyhow!("Not implemented"))
     }
 }

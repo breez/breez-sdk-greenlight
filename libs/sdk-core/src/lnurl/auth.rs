@@ -1,12 +1,13 @@
-use crate::{mnemonic_to_seed, LnUrlAuthRequestData, LnUrlWithdrawCallbackStatus};
+use crate::{LnUrlAuthRequestData, LnUrlWithdrawCallbackStatus, NodeAPI};
 use anyhow::{anyhow, Result};
 use bitcoin::secp256k1::{Message, Secp256k1};
-use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey};
-use bitcoin::{KeyPair, Network};
+use bitcoin::util::bip32::ChildNumber;
+use bitcoin::KeyPair;
 use bitcoin_hashes::hex::ToHex;
 use bitcoin_hashes::{sha256, Hash, HashEngine, Hmac, HmacEngine};
 use reqwest::Url;
 use std::str::FromStr;
+use std::sync::Arc;
 
 use LnUrlWithdrawCallbackStatus as LnUrlAuthCallbackStatus;
 
@@ -15,12 +16,11 @@ use LnUrlWithdrawCallbackStatus as LnUrlAuthCallbackStatus;
 ///
 /// See the [parse] docs for more detail on the full workflow.
 pub(crate) async fn perform_lnurl_auth(
-    network: Network,
+    node_api: Arc<dyn NodeAPI>,
     req_data: LnUrlAuthRequestData,
 ) -> Result<LnUrlAuthCallbackStatus> {
-    // TODO Clarify how we get the seed. As arg?
-    let master_prv_key = mnemonic_to_seed("abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string())?;
-    let linking_keys = derive_linking_keys(network, master_prv_key, Url::from_str(&req_data.url)?)?;
+    let linking_keys = derive_linking_keys(node_api, Url::from_str(&req_data.url)?)?;
+
     let k1_to_sign = Message::from_slice(&hex::decode(req_data.k1)?)?;
     let sig = Secp256k1::new().sign_ecdsa(&k1_to_sign, &linking_keys.secret_key());
 
@@ -84,29 +84,22 @@ fn hmac_sha256(key: &[u8], input: &[u8]) -> Hmac<sha256::Hash> {
 /// Linking key is derived as per LUD-05
 ///
 /// https://github.com/lnurl/luds/blob/luds/05.md
-fn derive_linking_keys(network: Network, seed: Vec<u8>, url: Url) -> Result<KeyPair> {
+fn derive_linking_keys(node_api: Arc<dyn NodeAPI>, url: Url) -> Result<KeyPair> {
     let domain = url.domain().ok_or(anyhow!("Could not determine domain"))?;
-    let ctx = Secp256k1::new();
 
-    let root_key = ExtendedPrivKey::new_master(network, &seed)?;
-    let hashing_key = root_key.derive_priv(&ctx, &"m/138'/0".parse::<DerivationPath>()?)?;
-
+    let hashing_key = node_api.get_lnurl_auth_hashing_key()?;
     let hmac = hmac_sha256(&hashing_key.to_priv().to_bytes(), domain.as_bytes());
     let hmac_bytes = hmac.as_inner();
 
     // m/138'/<long1>/<long2>/<long3>/<long4>
-    let linking_key = root_key.derive_priv(
-        &ctx,
-        &vec![
-            ChildNumber::from_hardened_idx(138)?,
-            ChildNumber::from(build_path_element_u32(hmac_bytes[0..4].try_into()?)),
-            ChildNumber::from(build_path_element_u32(hmac_bytes[4..8].try_into()?)),
-            ChildNumber::from(build_path_element_u32(hmac_bytes[8..12].try_into()?)),
-            ChildNumber::from(build_path_element_u32(hmac_bytes[12..16].try_into()?)),
-        ],
-    )?;
+    let linking_key = node_api.get_lnurl_auth_linking_key([
+        ChildNumber::from(build_path_element_u32(hmac_bytes[0..4].try_into()?)),
+        ChildNumber::from(build_path_element_u32(hmac_bytes[4..8].try_into()?)),
+        ChildNumber::from(build_path_element_u32(hmac_bytes[8..12].try_into()?)),
+        ChildNumber::from(build_path_element_u32(hmac_bytes[12..16].try_into()?)),
+    ])?;
 
-    Ok(linking_key.to_keypair(&ctx))
+    Ok(linking_key.to_keypair(&Secp256k1::new()))
 }
 
 fn build_path_element_u32(hmac_bytes: [u8; 4]) -> u32 {
