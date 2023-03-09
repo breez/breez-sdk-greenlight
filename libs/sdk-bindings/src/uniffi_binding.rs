@@ -7,8 +7,8 @@ use breez_sdk_core::{
     parse_invoice as sdk_parse_invoice, AesSuccessActionDataDecrypted, BitcoinAddressData,
     BreezEvent, BreezServices, ChannelState, ClosedChannelPaymentDetails, Config, CurrencyInfo,
     EnvironmentType, EventListener, FeeratePreset, FiatCurrency, GreenlightCredentials, InputType,
-    InvoicePaidDetails, LNInvoice, LnPaymentDetails, LnUrlAuthCallbackStatus, LnUrlAuthRequestData,
-    LnUrlErrorData, LnUrlPayRequestData, LnUrlWithdrawCallbackStatus, LnUrlWithdrawRequestData,
+    InvoicePaidDetails, LNInvoice, LnPaymentDetails, LnUrlAuthRequestData, LnUrlErrorData,
+    LnUrlPayRequestData, LnUrlPayResult, LnUrlWithdrawCallbackStatus, LnUrlWithdrawRequestData,
     LocaleOverrides, LocalizedName, LogEntry, LspInformation, MessageSuccessActionData,
     MetadataItem, Network, NodeState, Payment, PaymentDetails, PaymentType, PaymentTypeFilter,
     Rate, RecommendedFees, RouteHint, RouteHintHop, SuccessActionProcessed, SwapInfo, SwapStatus,
@@ -179,6 +179,19 @@ impl BlockingBreezServices {
         rt().block_on(
             self.breez_services
                 .list_payments(filter, from_timestamp, to_timestamp),
+        )
+        .map_err(|e| e.into())
+    }
+
+    pub fn pay_lnurl(
+        &self,
+        req_data: LnUrlPayRequestData,
+        amount_sats: u64,
+        comment: Option<String>,
+    ) -> Result<LnUrlPayResult, SDKError> {
+        rt().block_on(
+            self.breez_services
+                .lnurl_pay(amount_sats, comment, req_data),
         )
         .map_err(|e| e.into())
     }
