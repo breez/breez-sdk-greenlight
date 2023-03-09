@@ -19,7 +19,7 @@ use gl_client::tls::TlsConfig;
 use gl_client::{node, pb};
 
 use bitcoin::secp256k1::Secp256k1;
-use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey};
+use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use gl_client::pb::Peer;
 use lightning_invoice::{RawInvoice, SignedRawInvoice};
 use serde::{Deserialize, Serialize};
@@ -464,24 +464,9 @@ impl NodeAPI for Greenlight {
         }
     }
 
-    fn get_lnurl_auth_hashing_key(&self) -> Result<ExtendedPrivKey> {
+    fn derive_bip32_key(&self, path: Vec<ChildNumber>) -> Result<ExtendedPrivKey> {
         ExtendedPrivKey::new_master(self.sdk_config.network.into(), &self.signer.bip32_ext_key())?
-            .derive_priv(&Secp256k1::new(), &"m/138'/0".parse::<DerivationPath>()?)
-            .map_err(|e| anyhow!(e))
-    }
-
-    fn get_lnurl_auth_linking_key(&self, path: [ChildNumber; 4]) -> Result<ExtendedPrivKey> {
-        ExtendedPrivKey::new_master(self.sdk_config.network.into(), &self.signer.bip32_ext_key())?
-            .derive_priv(
-                &Secp256k1::new(),
-                &vec![
-                    ChildNumber::from_hardened_idx(138)?,
-                    path[0],
-                    path[1],
-                    path[2],
-                    path[3],
-                ],
-            )
+            .derive_priv(&Secp256k1::new(), &path)
             .map_err(|e| anyhow!(e))
     }
 }

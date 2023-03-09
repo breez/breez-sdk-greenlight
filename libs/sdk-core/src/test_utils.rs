@@ -261,11 +261,7 @@ impl NodeAPI for MockNodeAPI {
         Err(anyhow!("Not implemented"))
     }
 
-    fn get_lnurl_auth_hashing_key(&self) -> Result<ExtendedPrivKey> {
-        Err(anyhow!("Not implemented"))
-    }
-
-    fn get_lnurl_auth_linking_key(&self, _path: [ChildNumber; 4]) -> Result<ExtendedPrivKey> {
+    fn derive_bip32_key(&self, _path: Vec<ChildNumber>) -> Result<ExtendedPrivKey> {
         Err(anyhow!("Not implemented"))
     }
 }

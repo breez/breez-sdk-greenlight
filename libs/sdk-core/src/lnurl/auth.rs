@@ -87,12 +87,17 @@ fn hmac_sha256(key: &[u8], input: &[u8]) -> Hmac<sha256::Hash> {
 fn derive_linking_keys(node_api: Arc<dyn NodeAPI>, url: Url) -> Result<KeyPair> {
     let domain = url.domain().ok_or(anyhow!("Could not determine domain"))?;
 
-    let hashing_key = node_api.get_lnurl_auth_hashing_key()?;
+    // m/138'/0
+    let hashing_key = node_api.derive_bip32_key(vec![
+        ChildNumber::from_hardened_idx(138)?,
+        ChildNumber::from(0),
+    ])?;
     let hmac = hmac_sha256(&hashing_key.to_priv().to_bytes(), domain.as_bytes());
     let hmac_bytes = hmac.as_inner();
 
     // m/138'/<long1>/<long2>/<long3>/<long4>
-    let linking_key = node_api.get_lnurl_auth_linking_key([
+    let linking_key = node_api.derive_bip32_key(vec![
+        ChildNumber::from_hardened_idx(138)?,
         ChildNumber::from(build_path_element_u32(hmac_bytes[0..4].try_into()?)),
         ChildNumber::from(build_path_element_u32(hmac_bytes[4..8].try_into()?)),
         ChildNumber::from(build_path_element_u32(hmac_bytes[8..12].try_into()?)),
