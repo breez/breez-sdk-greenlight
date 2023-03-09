@@ -312,6 +312,9 @@ interface LnUrlWithdrawCallbackStatus {
 
 dictionary LnUrlAuthRequestData {
     string k1;
+    string? action;
+    string domain;
+    string url;
 };
 
 dictionary MetadataItem {
