@@ -304,13 +304,9 @@ impl BreezServices {
         &self,
         req_data: LnUrlAuthRequestData,
     ) -> Result<LnUrlWithdrawCallbackStatus> {
-
         // TODO Get the configured network from Breez Services?
 
-        crate::lnurl::auth::perform_lnurl_auth(
-            Network::Bitcoin.into(),
-            req_data
-        ).await
+        crate::lnurl::auth::perform_lnurl_auth(Network::Bitcoin.into(), req_data).await
     }
 
     /// Creates an bolt11 payment request.

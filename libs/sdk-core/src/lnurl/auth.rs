@@ -1,12 +1,12 @@
+use crate::{mnemonic_to_seed, LnUrlAuthRequestData, LnUrlWithdrawCallbackStatus};
 use anyhow::{anyhow, Result};
-use bitcoin::{KeyPair, Network};
 use bitcoin::secp256k1::{Message, Secp256k1};
 use bitcoin::util::bip32::{DerivationPath, ExtendedPrivKey};
-use bitcoin_hashes::{Hash, HashEngine, Hmac, HmacEngine, sha256};
-use reqwest::Url;
-use crate::{LnUrlAuthRequestData, LnUrlWithdrawCallbackStatus, mnemonic_to_seed};
-use std::str::FromStr;
+use bitcoin::{KeyPair, Network};
 use bitcoin_hashes::hex::ToHex;
+use bitcoin_hashes::{sha256, Hash, HashEngine, Hmac, HmacEngine};
+use reqwest::Url;
+use std::str::FromStr;
 
 use LnUrlWithdrawCallbackStatus as LnUrlAuthCallbackStatus;
 
@@ -28,25 +28,33 @@ pub(crate) async fn perform_lnurl_auth(
 
     // <LNURL_hostname_and_path>?<LNURL_existing_query_parameters>&sig=<hex(sign(utf8ToBytes(k1), linkingPrivKey))>&key=<hex(linkingKey)>
     let mut callback_url = Url::from_str(&req_data.url)?;
-    callback_url.query_pairs_mut().append_pair("sig", &sig.serialize_der().to_hex());
-    callback_url.query_pairs_mut().append_pair("key", &linking_keys.public_key().to_hex());
+    callback_url
+        .query_pairs_mut()
+        .append_pair("sig", &sig.serialize_der().to_hex());
+    callback_url
+        .query_pairs_mut()
+        .append_pair("key", &linking_keys.public_key().to_hex());
     debug!("Trying to call {}", callback_url.to_string());
 
     let callback_resp_text = reqwest::get(callback_url).await?.text().await?;
-    serde_json::from_str::<LnUrlAuthCallbackStatus>(&callback_resp_text)
-        .map_err(|e| anyhow!(e))
+    serde_json::from_str::<LnUrlAuthCallbackStatus>(&callback_resp_text).map_err(|e| anyhow!(e))
 }
 
-pub(crate) fn validate_request(domain: String, lnurl_endpoint: String) -> Result<LnUrlAuthRequestData> {
+pub(crate) fn validate_request(
+    domain: String,
+    lnurl_endpoint: String,
+) -> Result<LnUrlAuthRequestData> {
     let query = Url::from_str(&lnurl_endpoint)?;
     let query_pairs = query.query_pairs();
 
-    let k1 = query_pairs.into_iter()
+    let k1 = query_pairs
+        .into_iter()
         .find(|(key, _)| key == "k1")
         .map(|(_, v)| v.to_string())
         .ok_or(anyhow!("LNURL-auth k1 arg not found"))?;
 
-    let maybe_action = query_pairs.into_iter()
+    let maybe_action = query_pairs
+        .into_iter()
         .find(|(key, _)| key == "action")
         .map(|(_, v)| v.to_string());
 
@@ -56,7 +64,7 @@ pub(crate) fn validate_request(domain: String, lnurl_endpoint: String) -> Result
     }
 
     if let Some(action) = &maybe_action {
-        if ! ["register", "login", "link", "auth"].contains(&action.as_str()) {
+        if !["register", "login", "link", "auth"].contains(&action.as_str()) {
             return Err(anyhow!("LNURL-auth action is of unexpected type"));
         }
     }
@@ -65,7 +73,7 @@ pub(crate) fn validate_request(domain: String, lnurl_endpoint: String) -> Result
         k1,
         action: maybe_action,
         domain,
-        url: lnurl_endpoint
+        url: lnurl_endpoint,
     })
 }
 
@@ -83,30 +91,24 @@ fn derive_linking_keys(network: Network, seed: Vec<u8>, url: Url) -> Result<KeyP
     let ctx = Secp256k1::new();
 
     let root_key = ExtendedPrivKey::new_master(network, &seed)?;
-    let hashing_key = root_key
-        .derive_priv(
-            &ctx,
-            &"m/138'/0"
-                .parse::<DerivationPath>()?,
-        )?;
+    let hashing_key = root_key.derive_priv(&ctx, &"m/138'/0".parse::<DerivationPath>()?)?;
 
     let hmac = hmac_sha256(&hashing_key.to_priv().to_bytes(), domain.as_bytes());
     let hmac_bytes = hmac.as_inner();
 
     // m/138'/<long1>/<long2>/<long3>/<long4>
-    let linking_key_derivation_path = format!("m/138'/{}/{}/{}/{}",
+    let linking_key_derivation_path = format!(
+        "m/138'/{}/{}/{}/{}",
         build_path_element(hmac_bytes[0..4].try_into()?),
         build_path_element(hmac_bytes[4..8].try_into()?),
         build_path_element(hmac_bytes[8..12].try_into()?),
         build_path_element(hmac_bytes[12..16].try_into()?)
     );
     debug!("Derivation path: {linking_key_derivation_path}");
-    let linking_key = root_key
-        .derive_priv(
-            &ctx,
-            &linking_key_derivation_path
-                .parse::<DerivationPath>()?,
-        )?;
+    let linking_key = root_key.derive_priv(
+        &ctx,
+        &linking_key_derivation_path.parse::<DerivationPath>()?,
+    )?;
 
     Ok(linking_key.to_keypair(&ctx))
 }

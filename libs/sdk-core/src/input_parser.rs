@@ -183,7 +183,7 @@ pub async fn parse(input: &str) -> Result<InputType> {
         // No need to query the endpoint for details
         if lnurl_endpoint.contains("tag=login") {
             return Ok(LnUrlAuth {
-                data: crate::lnurl::auth::validate_request(domain, lnurl_endpoint)?
+                data: crate::lnurl::auth::validate_request(domain, lnurl_endpoint)?,
             });
         }
 
