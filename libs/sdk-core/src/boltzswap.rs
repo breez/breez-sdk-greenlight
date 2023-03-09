@@ -90,7 +90,7 @@ pub struct BoltzApi {}
 #[tonic::async_trait]
 impl ReverseSwapperAPI for BoltzApi {
     async fn reverse_swap_info(&self) -> Result<ReverseSwapInfo> {
-        crate::boltzswap::reverse_swap_info().await
+        reverse_swap_info().await
     }
 
     async fn create_reverse_swap(
@@ -105,7 +105,7 @@ impl ReverseSwapperAPI for BoltzApi {
         let preimage_hash = sha256::Hash::hash(&preimage);
         let preimage_hash_hex = preimage_hash.to_hex();
 
-        let response_body = Client::new()
+        let response: CreateReverseSwapResponse = Client::new()
             .post(CREATE_REVERSE_SWAP_ENDPOINT)
             .header(CONTENT_TYPE, "application/json")
             .body(get_boltz_reverse_swap_args(
@@ -117,9 +117,8 @@ impl ReverseSwapperAPI for BoltzApi {
             ))
             .send()
             .await?
-            .text()
+            .json()
             .await?;
-        let response: CreateReverseSwapResponse = serde_json::from_str(&response_body)?;
 
         // TODO In case of error, return Err(str) or Ok(ReverseSwap{ error_message = ..} ) ?
         return Ok(ReverseSwap {
