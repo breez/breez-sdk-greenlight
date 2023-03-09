@@ -239,16 +239,15 @@ async fn main() -> Result<()> {
                         }
                     }
                     Some("lnurl_auth") => {
-                        let lnurl_endpoint = rl.readline("LNURL-auth link (lnurl1.. or keyauth:..) : ")?;
+                        let lnurl_endpoint =
+                            rl.readline("LNURL-auth link (lnurl1.. or keyauth:..) : ")?;
                         let lnurl_endpoint = lnurl_endpoint.trim();
 
                         match parse(lnurl_endpoint).await? {
                             LnUrlAuth { data: ad } => {
                                 println!("received {ad:?}");
 
-                                let auth_res = sdk()?
-                                    .lnurl_auth(ad)
-                                    .await;
+                                let auth_res = sdk()?.lnurl_auth(ad).await;
                                 show_results(auth_res);
                             }
                             _ => error!("Unexpected result type"),
