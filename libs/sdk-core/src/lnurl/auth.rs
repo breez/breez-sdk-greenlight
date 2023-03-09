@@ -9,7 +9,7 @@ use reqwest::Url;
 use std::str::FromStr;
 use std::sync::Arc;
 
-use LnUrlWithdrawCallbackStatus as LnUrlAuthCallbackStatus;
+pub type LnUrlAuthCallbackStatus = LnUrlWithdrawCallbackStatus;
 
 /// Performs the second and last step of LNURL-auth, as per
 /// <https://github.com/lnurl/luds/blob/luds/04.md>

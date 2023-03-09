@@ -177,6 +177,11 @@ export type LnUrlWithdrawCallbackStatus = {
     reason?: string
 }
 
+export type LnUrlAuthCallbackStatus = {
+    status: string
+    reason?: string
+}
+
 export type LnUrlWithdrawRequestData = {
     callback: string
     k1: string
@@ -454,6 +459,13 @@ export async function withdrawLnurl(
 ): Promise<LnUrlWithdrawCallbackStatus> {
     const response = await BreezSDK.withdrawLnurl(reqData, amountSats, description)
     return response as LnUrlWithdrawCallbackStatus
+}
+
+export async function lnurlAuth(
+    reqData: LnUrlAuthRequestData
+): Promise<LnUrlAuthCallbackStatus> {
+    const response = await BreezSDK.lnurlAuth(reqData)
+    return response as LnUrlAuthCallbackStatus
 }
 
 export async function nodeInfo(): Promise<NodeState> {

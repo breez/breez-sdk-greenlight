@@ -133,6 +133,7 @@ pub struct BreezServices {
     shutdown_sender: Mutex<Option<mpsc::Sender<()>>>,
 }
 
+use crate::lnurl::auth::LnUrlAuthCallbackStatus;
 use bitcoin_hashes::{sha256, Hash};
 
 impl BreezServices {
@@ -303,7 +304,7 @@ impl BreezServices {
     pub async fn lnurl_auth(
         &self,
         req_data: LnUrlAuthRequestData,
-    ) -> Result<LnUrlWithdrawCallbackStatus> {
+    ) -> Result<LnUrlAuthCallbackStatus> {
         crate::lnurl::auth::perform_lnurl_auth(self.node_api.clone(), req_data).await
     }
 
