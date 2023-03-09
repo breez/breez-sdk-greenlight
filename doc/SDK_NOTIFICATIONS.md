@@ -70,20 +70,23 @@ Triggering the webhook is done by initiating a POST request with the following j
 
 Every kind of hook `type` has its own optional `data` structure.
 For example a payload for a hook of incoming payment may look like this:
+
+```
 {
  "type": "payment_received",
- "data": {
-  "destination_node_id": <destination>
+ "data": {  
   "payment_hash" : <payment hash>
  }
 }
+```
 
-Or for a tranansaction confirmation related to some address:
+Or for a trannsaction confirmation related to some address:
+
+```
 {
  "type": "tx_confirmed"
- "data": {
-  "address": <btc address>
-  "txid": <transaction_id>
-  "incoming": true
+ "data": {  
+  "txid": <transaction_id>  
  }
 }
+```
