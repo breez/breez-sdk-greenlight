@@ -44,7 +44,7 @@ impl Greenlight {
         seed: Vec<u8>,
         creds: GreenlightCredentials,
     ) -> Result<Greenlight> {
-        let greenlight_network = sdk_config.network.clone().into();
+        let greenlight_network = sdk_config.network.into();
         let tls_config = TlsConfig::new()?.identity(creds.device_cert, creds.device_key);
         let signer = Signer::new(seed, greenlight_network, tls_config.clone())?;
         Ok(Greenlight {
@@ -95,7 +95,7 @@ impl Greenlight {
         if existing.is_none() {
             let scheduler = Scheduler::new(
                 self.signer.node_id(),
-                self.sdk_config.network.clone().into(),
+                self.sdk_config.network.into(),
             )
             .await?;
             *existing = Some(scheduler);
