@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::chain::{ChainService, MempoolSpace};
 use crate::models::ReverseSwapperAPI;
-use crate::{ReverseSwapInfo, ReverseSwapStatus};
+use crate::{ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
@@ -83,7 +83,7 @@ impl BTCSendSwap {
         Ok(rev_swap_info)
     }
 
-    pub(crate) async fn reverse_swap_info(&self) -> Result<ReverseSwapInfo> {
+    pub(crate) async fn reverse_swap_info(&self) -> Result<ReverseSwapPairInfo> {
         self.reverse_swapper_api.reverse_swap_info().await
     }
 }

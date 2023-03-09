@@ -427,9 +427,7 @@ impl BreezServices {
     }
 
     pub async fn reverse_swap_info(&self) -> Result<ReverseSwapPairInfo> {
-        self.btc_send_swapper
-            .reverse_swap_info()
-            .await
+        self.btc_send_swapper.reverse_swap_info().await
     }
 
     /// The steps for a full reverse swap are:
