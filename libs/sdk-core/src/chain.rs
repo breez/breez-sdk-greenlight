@@ -53,7 +53,7 @@ impl AddressUtxos {
     }
 
     /// Get the highest block height of all confirmed transactions that paid to the given onchain address
-    pub(crate) fn confirmed_block(&self) -> u32 {
+    pub(crate) fn _confirmed_block(&self) -> u32 {
         self.confirmed.iter().fold(0, |b, item| {
             let confirmed_block = item.block_height.unwrap_or_default();
             if confirmed_block != 0 || confirmed_block < b {
