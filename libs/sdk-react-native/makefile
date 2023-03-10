@@ -3,6 +3,11 @@ init: ndk-home
 	cargo install --version 0.22.0 uniffi_bindgen
 	make -C ../sdk-bindings init
 	
+## clean:
+.PHONY: clean
+clean:
+	make -C ../sdk-bindings clean
+
 .PHONY: ndk-home
 ndk-home:
 	@if [ ! -d "${ANDROID_NDK_HOME}" ] ; then \

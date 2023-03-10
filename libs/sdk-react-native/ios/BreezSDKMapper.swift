@@ -187,12 +187,12 @@ class BreezSDKMapper {
             "keysend": lnPaymentDetails.keysend,
             "bolt11": lnPaymentDetails.bolt11,
             "lnurlSuccessAction": dictionaryOf(successActionProcessed: lnPaymentDetails.lnurlSuccessAction),
-            "lnurlMetadata": lnPaymentDetails.lnurlMetadata
+            "lnurlMetadata": lnPaymentDetails.lnurlMetadata,
             "lnAddress": lnPaymentDetails.lnAddress
         ]
     }
     
-    static func dictionaryOf(lnUrlAuthRequestData: LnUrlAuthRequestData) -> [String: Any] {
+    static func dictionaryOf(lnUrlAuthRequestData: LnUrlAuthRequestData) -> [String: Any?] {
         return [
             "k1": lnUrlAuthRequestData.k1,
             "action": lnUrlAuthRequestData.action,
@@ -205,7 +205,7 @@ class BreezSDKMapper {
         return ["reason": lnUrlErrorData.reason]
     }
     
-    static func dictionaryOf(lnUrlPayRequestData: LnUrlPayRequestData) -> [String: Any] {
+    static func dictionaryOf(lnUrlPayRequestData: LnUrlPayRequestData) -> [String: Any?] {
         return [
             "callback": lnUrlPayRequestData.callback,
             "minSendable": lnUrlPayRequestData.minSendable,

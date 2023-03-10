@@ -202,7 +202,7 @@ fun readableMapOf(lnPaymentDetails: LnPaymentDetails): ReadableMap {
             "keysend" to lnPaymentDetails.keysend,
             "bolt11" to lnPaymentDetails.bolt11,
             "lnurlSuccessAction" to readableMapOf(lnPaymentDetails.lnurlSuccessAction),
-            "lnurlMetadata" to lnPaymentDetails.lnurlMetadata
+            "lnurlMetadata" to lnPaymentDetails.lnurlMetadata,
             "lnAddress" to lnPaymentDetails.lnAddress
     )
 }
