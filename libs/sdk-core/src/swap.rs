@@ -2,7 +2,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use crate::binding::parse_invoice;
-use crate::chain::{get_utxos, AddressUtxos, ChainService, MempoolSpace};
+use crate::chain::{get_utxos, AddressUtxos, ChainService, MempoolSpace, OnchainTx};
 use crate::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
 use anyhow::{anyhow, Result};
 use bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
@@ -328,9 +328,20 @@ impl BTCReceiveSwap {
             .chain_service
             .address_transactions(bitcoin_address.clone())
             .await?;
+        let confirmed_txs: Vec<OnchainTx> = txs
+            .clone()
+            .into_iter()
+            .filter(|t| t.status.block_height.is_some())
+            .collect();
         let utxos = get_utxos(bitcoin_address.clone(), txs)?;
-        let confirmed_txs = &utxos.confirmed;
-        let confirmed_block = utxos.confirmed_block();
+        let confirmed_block = confirmed_txs.iter().fold(0, |b, item| {
+            let confirmed_block = item.status.block_height.unwrap();
+            if confirmed_block != 0 || confirmed_block < b {
+                confirmed_block
+            } else {
+                b
+            }
+        });
 
         let mut swap_status = swap_info.status.clone();
         if !confirmed_txs.is_empty()
@@ -983,7 +994,7 @@ mod tests {
         chain_service: Arc<dyn ChainService>,
     ) -> (BTCReceiveSwap, Arc<SqliteStorage>) {
         let config = create_test_config();
-        println!("working = {}", config.working_dir);
+        debug!("working = {}", config.working_dir);
 
         let persister = Arc::new(create_test_persister(config));
         persister.init().unwrap();
