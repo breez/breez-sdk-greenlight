@@ -86,6 +86,12 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
+    lnurlAuth: (NSObject*)reqData
+    resolver: (RCTPromiseResolveBlock)resolve
+    rejecter: (RCTPromiseRejectBlock)reject
+)
+
+RCT_EXTERN_METHOD(
     withdrawLnurl: (NSObject*)reqData
     amountSats: (NSUInteger*)amountSats
     description: (NSString*)description

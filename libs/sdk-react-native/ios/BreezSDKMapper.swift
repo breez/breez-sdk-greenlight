@@ -49,6 +49,17 @@ class BreezSDKMapper {
         return unspentTransactionOutputs.map { (unspentTransactionOutput) -> [String: Any] in return dictionaryOf(unspentTransactionOutput: unspentTransactionOutput) }
     }
     
+    static func asLnUrlAuthRequestData(reqData: [String: Any]) -> LnUrlAuthRequestData? {
+        if let k1 = reqData["k1"] as? String,
+           let action = reqData["action"] as? String,
+           let domain = reqData["domain"] as? String,
+           let url = reqData["url"] as? String {
+            return LnUrlAuthRequestData(k1: k1, action: action, domain: domain, url: url)
+        }
+        
+        return nil
+    }
+    
     static func asLnUrlWithdrawRequestData(reqData: [String: Any]) -> LnUrlWithdrawRequestData? {
         if let callback = reqData["callback"] as? String,
             let k1 = reqData["k1"] as? String,
@@ -215,6 +226,17 @@ class BreezSDKMapper {
             "domain": lnUrlPayRequestData.domain,
             "lnAddress": lnUrlPayRequestData.lnAddress
         ]
+    }
+    
+    static func dictionaryOf(lnUrlAuthCallbackStatus: LnUrlAuthCallbackStatus) -> [String: Any] {
+        switch(lnUrlAuthCallbackStatus) {
+        case .ok:
+            return ["status": "ok"]
+        case let .errorStatus(data):
+            var response: [String: Any] = ["status": "error"]
+            response.merge(dictionaryOf(lnUrlErrorData: data)) {(_,new) in new}
+            return response
+        }
     }
     
     static func dictionaryOf(lnUrlWithdrawCallbackStatus: LnUrlWithdrawCallbackStatus) -> [String: Any] {
