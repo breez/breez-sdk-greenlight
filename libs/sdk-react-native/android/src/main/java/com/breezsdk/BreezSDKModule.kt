@@ -196,6 +196,23 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
+    fun lnurlAuth(reqData: ReadableMap, promise: Promise) {
+        var lnUrlAuthRequestData = asLnUrlAuthRequestData(reqData)
+
+        if (lnUrlAuthRequestData == null) {
+            promise.reject(TAG, "Invalid reqData")
+        } else {
+            try {
+                var lnUrlAuthCallbackStatus = getBreezServices().lnurlAuth(lnUrlAuthRequestData)
+                promise.resolve(readableMapOf(lnUrlAuthCallbackStatus))
+            } catch (e: SdkException) {
+                e.printStackTrace()
+                promise.reject(TAG, "Error calling lnurlAuth", e)
+            }
+        }
+    }
+
+    @ReactMethod
     fun withdrawLnurl(reqData: ReadableMap, amountSats: Double, description: String?, promise: Promise) {
         var lnUrlWithdrawRequestData = asLnUrlWithdrawRequestData(reqData)
 

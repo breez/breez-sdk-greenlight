@@ -186,6 +186,21 @@ class BreezSDK: RCTEventEmitter {
         }
     }
     
+    @objc(lnurlAuth:resolver:rejecter:)
+    func lnurlAuth(_ reqData:[String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        if let lnUrlAuthRequestData = BreezSDKMapper.asLnUrlAuthRequestData(reqData: reqData) {
+            do {
+                let lnUrlAuthCallbackStatus = try getBreezServices().lnurlAuth(reqData: lnUrlAuthRequestData)
+                
+                resolve(BreezSDKMapper.dictionaryOf(lnUrlAuthCallbackStatus: lnUrlAuthCallbackStatus))
+            } catch let err {
+                reject(BreezSDK.TAG, "Error calling lnurlAuth", err)
+            }
+        } else {
+            reject(BreezSDK.TAG, "Invalid reqData", nil)
+        }
+    }
+    
     @objc(withdrawLnurl:amountSats:description:resolver:rejecter:)
     func withdrawLnurl(_ reqData:[String: Any], amountSats:UInt64, description:String?, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         if let lnUrlWithdrawRequestData = BreezSDKMapper.asLnUrlWithdrawRequestData(reqData: reqData) {
