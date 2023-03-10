@@ -136,6 +136,8 @@ use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 /// }
 /// ```
 pub async fn parse(input: &str) -> Result<InputType> {
+    let input = input.trim();
+
     // Covers BIP 21 URIs and simple onchain BTC addresses (which are valid BIP 21 with the 'bitcoin:' prefix)
     if let Ok(bip21_uri) = prepend_if_missing("bitcoin:", input).parse::<Uri<'_>>() {
         let bitcoin_addr_data = bip21_uri.into();
@@ -543,6 +545,27 @@ mod tests {
     async fn test_generic_invalid_input() -> Result<(), Box<dyn std::error::Error>> {
         assert!(parse("invalid_input").await.is_err());
 
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_trim_input() -> Result<()> {
+        for address in [
+            r#"1andreas3batLhQa2FawWjeyjCqyBzypd"#,
+            r#"1andreas3batLhQa2FawWjeyjCqyBzypd "#,
+            r#"1andreas3batLhQa2FawWjeyjCqyBzypd
+            "#,
+            r#"
+            1andreas3batLhQa2FawWjeyjCqyBzypd
+            "#,
+            r#" 1andreas3batLhQa2FawWjeyjCqyBzypd
+            "#,
+        ] {
+            assert!(matches!(
+                parse(address).await?,
+                InputType::BitcoinAddress { address: _ }
+            ));
+        }
         Ok(())
     }
 
