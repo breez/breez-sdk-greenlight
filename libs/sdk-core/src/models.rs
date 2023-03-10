@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Result};
+use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use gl_client::pb::Peer;
 use gl_client::pb::WithdrawResponse;
 use gl_client::pb::{CloseChannelResponse, Invoice};
@@ -58,6 +59,9 @@ pub trait NodeAPI: Send + Sync {
     async fn stream_incoming_payments(&self) -> Result<Streaming<gl_client::pb::IncomingPayment>>;
     async fn stream_log_messages(&self) -> Result<Streaming<gl_client::pb::LogEntry>>;
     async fn execute_command(&self, command: String) -> Result<String>;
+
+    /// Gets the private key at the path specified
+    fn derive_bip32_key(&self, path: Vec<ChildNumber>) -> Result<ExtendedPrivKey>;
 }
 
 /// Trait covering LSP-related functionality
@@ -178,7 +182,7 @@ pub struct GreenlightCredentials {
 }
 
 /// The different supported bitcoin networks
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Network {
     /// Mainnet
     Bitcoin,

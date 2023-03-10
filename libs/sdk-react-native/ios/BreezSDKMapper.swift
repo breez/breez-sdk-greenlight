@@ -193,7 +193,12 @@ class BreezSDKMapper {
     }
     
     static func dictionaryOf(lnUrlAuthRequestData: LnUrlAuthRequestData) -> [String: Any] {
-        return ["k1": lnUrlAuthRequestData.k1]
+        return [
+            "k1": lnUrlAuthRequestData.k1,
+            "action": lnUrlAuthRequestData.action,
+            "domain": lnUrlAuthRequestData.domain,
+            "url": lnUrlAuthRequestData.url
+        ]
     }
     
     static func dictionaryOf(lnUrlErrorData: LnUrlErrorData) -> [String: Any] {

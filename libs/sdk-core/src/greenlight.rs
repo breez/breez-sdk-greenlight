@@ -18,6 +18,8 @@ use gl_client::signer::Signer;
 use gl_client::tls::TlsConfig;
 use gl_client::{node, pb};
 
+use bitcoin::secp256k1::Secp256k1;
+use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use gl_client::pb::Peer;
 use lightning_invoice::{RawInvoice, SignedRawInvoice};
 use serde::{Deserialize, Serialize};
@@ -44,7 +46,7 @@ impl Greenlight {
         seed: Vec<u8>,
         creds: GreenlightCredentials,
     ) -> Result<Greenlight> {
-        let greenlight_network = sdk_config.network.clone().into();
+        let greenlight_network = sdk_config.network.into();
         let tls_config = TlsConfig::new()?.identity(creds.device_cert, creds.device_key);
         let signer = Signer::new(seed, greenlight_network, tls_config.clone())?;
         Ok(Greenlight {
@@ -93,11 +95,8 @@ impl Greenlight {
     async fn scheduler(&self) -> Result<Scheduler> {
         let mut existing = self.scheduler.lock().await;
         if existing.is_none() {
-            let scheduler = Scheduler::new(
-                self.signer.node_id(),
-                self.sdk_config.network.clone().into(),
-            )
-            .await?;
+            let scheduler =
+                Scheduler::new(self.signer.node_id(), self.sdk_config.network.into()).await?;
             *existing = Some(scheduler);
         }
         Ok(existing.as_ref().unwrap().clone())
@@ -463,6 +462,12 @@ impl NodeAPI for Greenlight {
                 Ok("All channels were closed".to_string())
             }
         }
+    }
+
+    fn derive_bip32_key(&self, path: Vec<ChildNumber>) -> Result<ExtendedPrivKey> {
+        ExtendedPrivKey::new_master(self.sdk_config.network.into(), &self.signer.bip32_ext_key())?
+            .derive_priv(&Secp256k1::new(), &path)
+            .map_err(|e| anyhow!(e))
     }
 }
 

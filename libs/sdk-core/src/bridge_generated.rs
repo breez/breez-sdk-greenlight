@@ -792,7 +792,13 @@ impl support::IntoDartExceptPrimitive for LnPaymentDetails {}
 
 impl support::IntoDart for LnUrlAuthRequestData {
     fn into_dart(self) -> support::DartAbi {
-        vec![self.k1.into_dart()].into_dart()
+        vec![
+            self.k1.into_dart(),
+            self.action.into_dart(),
+            self.domain.into_dart(),
+            self.url.into_dart(),
+        ]
+        .into_dart()
     }
 }
 impl support::IntoDartExceptPrimitive for LnUrlAuthRequestData {}

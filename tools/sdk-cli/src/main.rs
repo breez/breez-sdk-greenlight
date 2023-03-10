@@ -10,7 +10,7 @@ use std::sync::Arc;
 use crate::config::{get_or_create_config, save_config};
 use anyhow::{anyhow, Result};
 use bip39::{Language, Mnemonic, MnemonicType, Seed};
-use breez_sdk_core::InputType::LnUrlWithdraw;
+use breez_sdk_core::InputType::{LnUrlAuth, LnUrlWithdraw};
 use breez_sdk_core::{
     parse, BreezEvent, BreezServices, EnvironmentType, EventListener, GreenlightCredentials,
     InputType::LnUrlPay, LspInformation, PaymentTypeFilter,
@@ -238,6 +238,21 @@ async fn main() -> Result<()> {
                             _ => error!("Unexpected result type"),
                         }
                     }
+                    Some("lnurl_auth") => {
+                        let lnurl_endpoint =
+                            rl.readline("LNURL-auth link (lnurl1.. or keyauth:..) : ")?;
+                        let lnurl_endpoint = lnurl_endpoint.trim();
+
+                        match parse(lnurl_endpoint).await? {
+                            LnUrlAuth { data: ad } => {
+                                println!("received {ad:?}");
+
+                                let auth_res = sdk()?.lnurl_auth(ad).await;
+                                show_results(auth_res);
+                            }
+                            _ => error!("Unexpected result type"),
+                        }
+                    }
                     Some("send_payment") => {
                         let bolt11 = command
                             .next()
@@ -415,6 +430,7 @@ Fiat:
     fetch_fiat_rates
     list_fiat
 Misc:
+    lnurl_auth
     exit: exit the program
     help: show this help
 "#

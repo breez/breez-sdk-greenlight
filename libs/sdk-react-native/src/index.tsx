@@ -151,8 +151,11 @@ export type LnPaymentDetails = {
     lnAddress?: string
 }
 
-export type LnUrlAuthData = {
+export type LnUrlAuthRequestData = {
     k1: string
+    action?: string
+    domain: string
+    url: string
 }
 
 export type LnUrlErrorData = {
@@ -170,6 +173,11 @@ export type LnUrlPayRequestData = {
 }
 
 export type LnUrlWithdrawCallbackStatus = {
+    status: string
+    reason?: string
+}
+
+export type LnUrlAuthCallbackStatus = {
     status: string
     reason?: string
 }
@@ -373,7 +381,7 @@ export async function mnemonicToSeed(phrase: string): Promise<Uint8Array> {
 
 export async function parseInput(
     input: string
-): Promise<BitcoinAddressData | LnInvoice | LnUrlAuthData | LnUrlErrorData | LnUrlPayRequestData | LnUrlWithdrawRequestData | NodeId | Url> {
+): Promise<BitcoinAddressData | LnInvoice | LnUrlAuthRequestData | LnUrlErrorData | LnUrlPayRequestData | LnUrlWithdrawRequestData | NodeId | Url> {
     const response = await BreezSDK.parseInput(input)
 
     switch (response.type) {
@@ -382,7 +390,7 @@ export async function parseInput(
         case InputType.BOLT11:
             return response.data as LnInvoice
         case InputType.LNURL_AUTH:
-            return response.data as LnUrlAuthData
+            return response.data as LnUrlAuthRequestData
         case InputType.LNURL_ERROR:
             return response.data as LnUrlErrorData
         case InputType.LNURL_PAY:
@@ -451,6 +459,13 @@ export async function withdrawLnurl(
 ): Promise<LnUrlWithdrawCallbackStatus> {
     const response = await BreezSDK.withdrawLnurl(reqData, amountSats, description)
     return response as LnUrlWithdrawCallbackStatus
+}
+
+export async function lnurlAuth(
+    reqData: LnUrlAuthRequestData
+): Promise<LnUrlAuthCallbackStatus> {
+    const response = await BreezSDK.lnurlAuth(reqData)
+    return response as LnUrlAuthCallbackStatus
 }
 
 export async function nodeInfo(): Promise<NodeState> {

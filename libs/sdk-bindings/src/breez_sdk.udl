@@ -316,8 +316,17 @@ interface LnUrlPayResult {
     EndpointError(LnUrlErrorData data);
 };
 
+[Enum]
+interface LnUrlAuthCallbackStatus {
+    Ok();
+    ErrorStatus(LnUrlErrorData data);
+};
+
 dictionary LnUrlAuthRequestData {
     string k1;
+    string? action;
+    string domain;
+    string url;
 };
 
 dictionary MetadataItem {
@@ -366,6 +375,9 @@ interface BlockingBreezServices {
 
    [Throws=SDKError]
    LnUrlWithdrawCallbackStatus withdraw_lnurl(LnUrlWithdrawRequestData req_data, u64 amount_sats, string? description);
+
+   [Throws=SDKError]
+   LnUrlAuthCallbackStatus lnurl_auth(LnUrlAuthRequestData req_data);
 
    [Throws=SDKError]
    NodeState? node_info();

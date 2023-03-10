@@ -7,12 +7,13 @@ use breez_sdk_core::{
     parse_invoice as sdk_parse_invoice, AesSuccessActionDataDecrypted, BitcoinAddressData,
     BreezEvent, BreezServices, ChannelState, ClosedChannelPaymentDetails, Config, CurrencyInfo,
     EnvironmentType, EventListener, FeeratePreset, FiatCurrency, GreenlightCredentials, InputType,
-    InvoicePaidDetails, LNInvoice, LnPaymentDetails, LnUrlAuthRequestData, LnUrlErrorData,
-    LnUrlPayRequestData, LnUrlPayResult, LnUrlWithdrawCallbackStatus, LnUrlWithdrawRequestData,
-    LocaleOverrides, LocalizedName, LogEntry, LspInformation, MessageSuccessActionData,
-    MetadataItem, Network, NodeState, Payment, PaymentDetails, PaymentType, PaymentTypeFilter,
-    Rate, RecommendedFees, RouteHint, RouteHintHop, SuccessActionProcessed, SwapInfo, SwapStatus,
-    Symbol, UnspentTransactionOutput, UrlSuccessActionData,
+    InvoicePaidDetails, LNInvoice, LnPaymentDetails, LnUrlAuthCallbackStatus, LnUrlAuthRequestData,
+    LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult, LnUrlWithdrawCallbackStatus,
+    LnUrlWithdrawRequestData, LocaleOverrides, LocalizedName, LogEntry, LspInformation,
+    MessageSuccessActionData, MetadataItem, Network, NodeState, Payment, PaymentDetails,
+    PaymentType, PaymentTypeFilter, Rate, RecommendedFees, RouteHint, RouteHintHop,
+    SuccessActionProcessed, SwapInfo, SwapStatus, Symbol, UnspentTransactionOutput,
+    UrlSuccessActionData,
 };
 use log::Metadata;
 use log::Record;
@@ -207,6 +208,14 @@ impl BlockingBreezServices {
                 .lnurl_withdraw(req_data, amount_sats, description),
         )
         .map_err(|e| e.into())
+    }
+
+    pub fn lnurl_auth(
+        &self,
+        req_data: LnUrlAuthRequestData,
+    ) -> Result<LnUrlAuthCallbackStatus, SDKError> {
+        rt().block_on(self.breez_services.lnurl_auth(req_data))
+            .map_err(|e| e.into())
     }
 
     pub fn sweep(&self, to_address: String, fee_rate_sats_per_byte: u64) -> Result<(), SDKError> {

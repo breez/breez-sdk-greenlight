@@ -518,10 +518,25 @@ class LnPaymentDetails {
 ///
 /// It represents the endpoint's parameters for the LNURL workflow.
 class LnUrlAuthRequestData {
+  /// Hex encoded 32 bytes of challenge
   final String k1;
+
+  /// When available, one of: register, login, link, auth
+  final String? action;
+
+  /// Indicates the domain of the LNURL-auth service, to be shown to the user when asking for
+  /// auth confirmation, as per LUD-04 spec.
+  final String domain;
+
+  /// Indicates the URL of the LNURL-auth service, including the query arguments. This will be
+  /// extended with the signed challenge and the linking key, then called in the second step of the workflow.
+  final String url;
 
   LnUrlAuthRequestData({
     required this.k1,
+    this.action,
+    required this.domain,
+    required this.url,
   });
 }
 
@@ -1950,10 +1965,13 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   LnUrlAuthRequestData _wire2api_ln_url_auth_request_data(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 1)
-      throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
     return LnUrlAuthRequestData(
       k1: _wire2api_String(arr[0]),
+      action: _wire2api_opt_String(arr[1]),
+      domain: _wire2api_String(arr[2]),
+      url: _wire2api_String(arr[3]),
     );
   }
 

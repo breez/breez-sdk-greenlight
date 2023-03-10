@@ -22,7 +22,7 @@ use crate::models::{
 };
 use crate::persist::db::SqliteStorage;
 use crate::swap::BTCReceiveSwap;
-use crate::LnUrlWithdrawRequestData;
+use crate::{LnUrlAuthRequestData, LnUrlWithdrawRequestData};
 use anyhow::{anyhow, Result};
 use bip39::*;
 use std::cmp::max;
@@ -133,6 +133,7 @@ pub struct BreezServices {
     shutdown_sender: Mutex<Option<mpsc::Sender<()>>>,
 }
 
+use crate::lnurl::auth::LnUrlAuthCallbackStatus;
 use bitcoin_hashes::{sha256, Hash};
 
 impl BreezServices {
@@ -298,6 +299,13 @@ impl BreezServices {
             .receive_payment(amount_sats, description.unwrap_or_default())
             .await?;
         validate_lnurl_withdraw(req_data, invoice).await
+    }
+
+    pub async fn lnurl_auth(
+        &self,
+        req_data: LnUrlAuthRequestData,
+    ) -> Result<LnUrlAuthCallbackStatus> {
+        crate::lnurl::auth::perform_lnurl_auth(self.node_api.clone(), req_data).await
     }
 
     /// Creates an bolt11 payment request.
@@ -779,7 +787,7 @@ impl BreezServicesBuilder {
         });
 
         let btc_receive_swapper = Arc::new(BTCReceiveSwap::new(
-            self.config.network.clone().into(),
+            self.config.network.into(),
             self.swapper_api
                 .clone()
                 .unwrap_or_else(|| breez_server.clone()),
