@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 #[tonic::async_trait]
 pub trait ChainService: Send + Sync {
     async fn recommended_fees(&self) -> Result<RecommendedFees>;
+    /// Gets all transactions associated with this address. Does not distinguish between spent and unspent.
     async fn address_transactions(&self, address: String) -> Result<Vec<OnchainTx>>;
     async fn current_tip(&self) -> Result<u32>;
     async fn broadcast_transaction(&self, tx: Vec<u8>) -> Result<String>;
@@ -64,6 +65,7 @@ impl AddressUtxos {
     }
 }
 
+/// Gets unspent tx outputs. Specifically filters out inbound utxos that have been spent.
 pub(crate) fn get_utxos(
     address: String,
     transactions: Vec<OnchainTx>,
