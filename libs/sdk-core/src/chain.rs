@@ -66,10 +66,7 @@ impl AddressUtxos {
 }
 
 /// Gets unspent tx outputs. Specifically filters out inbound utxos that have been spent.
-pub(crate) fn get_utxos(
-    address: String,
-    transactions: Vec<OnchainTx>,
-) -> Result<AddressUtxos> {
+pub(crate) fn get_utxos(address: String, transactions: Vec<OnchainTx>) -> Result<AddressUtxos> {
     // Calculate confirmed amount associated with this address
     let mut spent_outputs: Vec<OutPoint> = Vec::new();
     let mut utxos: Vec<Utxo> = Vec::new();
