@@ -19,7 +19,7 @@ const BreezSDK = NativeModules.BreezSDK
 
 const BreezSDKEmitter = new NativeEventEmitter(BreezSDK)
 
-enum EventType {
+export enum EventType {
     INVOICE_PAID = "invoicePaid",
     NEW_BLOCK = "newBlock",
     PAYMENT_SUCCEED = "paymentSucceed",
@@ -27,7 +27,7 @@ enum EventType {
     SYNCED = "synced"
 }
 
-enum InputType {
+export enum InputType {
     BITCOIN_ADDRESS = "bitcoinAddress",
     BOLT11 = "bolt11",
     LNURL_AUTH = "lnUrlAuth",
@@ -44,7 +44,7 @@ export enum PaymentType {
     CLOSED_CHANNEL = "closed_channel"
 }
 
-enum PaymentDetailType {
+export enum PaymentDetailType {
     LN = "ln",
     CLOSED_CHANNEL = "closed_channel"
 }
@@ -62,13 +62,13 @@ export enum Network {
     TESTNET = "testnet"
 }
 
-enum SuccessActionDataType {
+export enum SuccessActionDataType {
     AES = "aes",
     MESSAGE = "message",
     URL = "url"
 }
 
-enum SwapStatus {
+export enum SwapStatus {
     INITIAL = "initial",
     EXPIRED = "expired"
 }
@@ -135,7 +135,9 @@ export type LogEntry = {
     level: string
 }
 
-export type EventFn = (type: EventType, data?: InvoicePaidDetails | Payment | number | string) => void
+export type EventData = InvoicePaidDetails | Payment | number | string
+
+export type EventFn = (type: EventType, data?: EventData) => void
 
 export type LogEntryFn = (l: LogEntry) => void
 
