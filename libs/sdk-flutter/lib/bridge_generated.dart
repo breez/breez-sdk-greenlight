@@ -777,12 +777,12 @@ class PaymentDetails with _$PaymentDetails {
 class PaymentFailedData {
   final String error;
   final String nodeId;
-  final LNInvoice? bolt11;
+  final LNInvoice? invoice;
 
   PaymentFailedData({
     required this.error,
     required this.nodeId,
-    this.bolt11,
+    this.invoice,
   });
 }
 
@@ -2229,7 +2229,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return PaymentFailedData(
       error: _wire2api_String(arr[0]),
       nodeId: _wire2api_String(arr[1]),
-      bolt11: _wire2api_opt_box_autoadd_ln_invoice(arr[2]),
+      invoice: _wire2api_opt_box_autoadd_ln_invoice(arr[2]),
     );
   }
 

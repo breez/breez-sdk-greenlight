@@ -119,7 +119,7 @@ export type InvoicePaidDetails = {
 
 export type PaymentFailedData = {
     error: string
-    bolt11?: LnInvoice
+    invoice?: LnInvoice
     nodeId: string
 }
 

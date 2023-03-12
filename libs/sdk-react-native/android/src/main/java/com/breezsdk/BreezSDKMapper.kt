@@ -193,7 +193,7 @@ fun readableMapOf(invoicePaidDetails: InvoicePaidDetails): ReadableMap {
 fun readableMapOf(paymentFailedData: PaymentFailedData): ReadableMap {
     return readableMapOf(
             "error" to paymentFailedData.error,
-            "bolt11" to if (paymentFailedData.bolt11 == null) null else readableMapOf(paymentFailedData.bolt11!!),
+            "bolt11" to if (paymentFailedData.invoice == null) null else readableMapOf(paymentFailedData.invoice!!),
             "nodeId" to paymentFailedData.nodeId
     )
 }

@@ -64,7 +64,7 @@ pub enum BreezEvent {
 pub struct PaymentFailedData {
     pub error: String,
     pub node_id: String,
-    pub bolt11: Option<LNInvoice>,
+    pub invoice: Option<LNInvoice>,
 }
 
 /// Details of an invoice that has been paid, included as payload in an emitted [BreezEvent]
@@ -531,7 +531,7 @@ impl BreezServices {
     async fn on_payment_completed(
         &self,
         node_id: String,
-        bolt11: Option<LNInvoice>,
+        invoice: Option<LNInvoice>,
         payment_res: Result<Payment>,
     ) -> Result<Payment> {
         if payment_res.is_err() {
@@ -539,7 +539,7 @@ impl BreezServices {
                 details: PaymentFailedData {
                     error: payment_res.as_ref().err().unwrap().to_string(),
                     node_id,
-                    bolt11,
+                    invoice,
                 },
             })
             .await?;

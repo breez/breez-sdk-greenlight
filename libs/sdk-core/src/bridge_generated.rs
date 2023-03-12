@@ -981,7 +981,7 @@ impl support::IntoDart for PaymentFailedData {
         vec![
             self.error.into_dart(),
             self.node_id.into_dart(),
-            self.bolt11.into_dart(),
+            self.invoice.into_dart(),
         ]
         .into_dart()
     }
