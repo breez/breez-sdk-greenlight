@@ -117,6 +117,12 @@ export type InvoicePaidDetails = {
     bolt11: string
 }
 
+export type PaymentFailedData = {
+    error: string
+    bolt11?: LnInvoice
+    nodeId: string
+}
+
 export type LnInvoice = {
     bolt11: string
     payeePubkey: string
@@ -135,7 +141,7 @@ export type LogEntry = {
     level: string
 }
 
-export type EventData = InvoicePaidDetails | Payment | number | string
+export type EventData = InvoicePaidDetails | Payment | number | PaymentFailedData
 
 export type EventFn = (type: EventType, data?: EventData) => void
 
@@ -183,7 +189,6 @@ export type LnUrlWithdrawCallbackStatus = {
     status: string
     reason?: string
 }
-
 
 export type LnUrlWithdrawRequestData = {
     callback: string
@@ -334,7 +339,7 @@ function processEvent(eventFn: EventFn) {
             case EventType.NEW_BLOCK:
                 return eventFn(EventType.NEW_BLOCK, event.data)
             case EventType.PAYMENT_FAILED:
-                return eventFn(EventType.PAYMENT_FAILED, event.data)
+                return eventFn(EventType.PAYMENT_FAILED, event.data as PaymentFailedData)
             case EventType.PAYMENT_SUCCEED:
                 const payment = event.data as Payment
 
@@ -355,7 +360,7 @@ function processEvent(eventFn: EventFn) {
     }
 }
 
-function processSuccessActionProcessed (data: any): AesSuccessActionDataDecrypted | MessageSuccessActionData | UrlSuccessActionData | undefined {
+function processSuccessActionProcessed(data: any): AesSuccessActionDataDecrypted | MessageSuccessActionData | UrlSuccessActionData | undefined {
     switch (data.type) {
         case SuccessActionDataType.AES:
             return data as AesSuccessActionDataDecrypted
@@ -455,9 +460,7 @@ export async function receivePayment(amountSats: number, description: string): P
     return response as LnInvoice
 }
 
-export async function lnurlAuth(
-    reqData: LnUrlAuthRequestData
-): Promise<LnUrlAuthCallbackStatus> {
+export async function lnurlAuth(reqData: LnUrlAuthRequestData): Promise<LnUrlAuthCallbackStatus> {
     const response = await BreezSDK.lnurlAuth(reqData)
     return response as LnUrlAuthCallbackStatus
 }

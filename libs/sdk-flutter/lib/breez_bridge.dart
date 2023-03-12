@@ -50,7 +50,7 @@ class BreezBridge {
         _paymentResultStream.add(event.details);
       }
       if (event is BreezEvent_PaymentFailed) {
-        _paymentResultStream.addError(Exception(event.error));
+        _paymentResultStream.addError(Exception(event.details.error));
       }
     });
 

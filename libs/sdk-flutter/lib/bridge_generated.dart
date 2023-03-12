@@ -283,7 +283,7 @@ class BreezEvent with _$BreezEvent {
 
   /// Indicates that an outgoing payment has been failed to complete
   const factory BreezEvent.paymentFailed({
-    required String error,
+    required PaymentFailedData details,
   }) = BreezEvent_PaymentFailed;
 }
 
@@ -772,6 +772,18 @@ class PaymentDetails with _$PaymentDetails {
   const factory PaymentDetails.closedChannel({
     required ClosedChannelPaymentDetails data,
   }) = PaymentDetails_ClosedChannel;
+}
+
+class PaymentFailedData {
+  final String error;
+  final String nodeId;
+  final LNInvoice? bolt11;
+
+  PaymentFailedData({
+    required this.error,
+    required this.nodeId,
+    this.bolt11,
+  });
 }
 
 /// Different types of supported payments
@@ -1710,6 +1722,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return _wire2api_payment(raw);
   }
 
+  PaymentFailedData _wire2api_box_autoadd_payment_failed_data(dynamic raw) {
+    return _wire2api_payment_failed_data(raw);
+  }
+
   SwapInfo _wire2api_box_autoadd_swap_info(dynamic raw) {
     return _wire2api_swap_info(raw);
   }
@@ -1749,7 +1765,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         );
       case 4:
         return BreezEvent_PaymentFailed(
-          error: _wire2api_String(raw[1]),
+          details: _wire2api_box_autoadd_payment_failed_data(raw[1]),
         );
       default:
         throw Exception("unreachable");
@@ -2135,6 +2151,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return raw == null ? null : _wire2api_box_autoadd_bool(raw);
   }
 
+  LNInvoice? _wire2api_opt_box_autoadd_ln_invoice(dynamic raw) {
+    return raw == null ? null : _wire2api_box_autoadd_ln_invoice(raw);
+  }
+
   LspInformation? _wire2api_opt_box_autoadd_lsp_information(dynamic raw) {
     return raw == null ? null : _wire2api_box_autoadd_lsp_information(raw);
   }
@@ -2200,6 +2220,17 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       default:
         throw Exception("unreachable");
     }
+  }
+
+  PaymentFailedData _wire2api_payment_failed_data(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return PaymentFailedData(
+      error: _wire2api_String(arr[0]),
+      nodeId: _wire2api_String(arr[1]),
+      bolt11: _wire2api_opt_box_autoadd_ln_invoice(arr[2]),
+    );
   }
 
   PaymentType _wire2api_payment_type(dynamic raw) {

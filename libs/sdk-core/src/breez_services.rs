@@ -57,7 +57,14 @@ pub enum BreezEvent {
     /// Indicates that an outgoing payment has been completed successfully
     PaymentSucceed { details: Payment },
     /// Indicates that an outgoing payment has been failed to complete
-    PaymentFailed { error: String },
+    PaymentFailed { details: PaymentFailedData },
+}
+
+#[derive(Clone, Debug)]
+pub struct PaymentFailedData {
+    pub error: String,
+    pub node_id: String,
+    pub bolt11: Option<LNInvoice>,
 }
 
 /// Details of an invoice that has been paid, included as payload in an emitted [BreezEvent]
@@ -197,8 +204,17 @@ impl BreezServices {
     /// * `amount_sats` - The amount to pay in satoshis
     pub async fn send_payment(&self, bolt11: String, amount_sats: Option<u64>) -> Result<Payment> {
         self.start_node().await?;
-        let payment_res = self.node_api.send_payment(bolt11, amount_sats).await;
-        self.on_payment_completed(payment_res).await
+        let parsed_invoice = parse_invoice(bolt11.as_str())?;
+        let payment_res = self
+            .node_api
+            .send_payment(bolt11.clone(), amount_sats)
+            .await;
+        self.on_payment_completed(
+            parsed_invoice.payee_pubkey.clone(),
+            Some(parsed_invoice),
+            payment_res,
+        )
+        .await
     }
 
     /// Pay directly to a node id using keysend
@@ -215,9 +231,9 @@ impl BreezServices {
         self.start_node().await?;
         let payment_res = self
             .node_api
-            .send_spontaneous_payment(node_id, amount_sats)
+            .send_spontaneous_payment(node_id.clone(), amount_sats)
             .await;
-        self.on_payment_completed(payment_res).await
+        self.on_payment_completed(node_id, None, payment_res).await
     }
 
     /// Second step of LNURL-pay. The first step is `parse()`, which also validates the LNURL destination
@@ -512,10 +528,19 @@ impl BreezServices {
         Ok(())
     }
 
-    async fn on_payment_completed(&self, payment_res: Result<Payment>) -> Result<Payment> {
+    async fn on_payment_completed(
+        &self,
+        node_id: String,
+        bolt11: Option<LNInvoice>,
+        payment_res: Result<Payment>,
+    ) -> Result<Payment> {
         if payment_res.is_err() {
             self.notify_event_listeners(BreezEvent::PaymentFailed {
-                error: payment_res.as_ref().err().unwrap().to_string(),
+                details: PaymentFailedData {
+                    error: payment_res.as_ref().err().unwrap().to_string(),
+                    node_id,
+                    bolt11,
+                },
             })
             .await?;
             return payment_res;
