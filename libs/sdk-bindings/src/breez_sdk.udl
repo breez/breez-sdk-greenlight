@@ -211,13 +211,19 @@ dictionary InvoicePaidDetails {
     string bolt11;
 };
 
+dictionary PaymentFailedData {
+    string error;
+    string node_id;
+    LNInvoice? invoice;
+};
+
 [Enum]
 interface BreezEvent {
     NewBlock(u32 block);
     InvoicePaid(InvoicePaidDetails details);
     Synced();
     PaymentSucceed(Payment details);
-    PaymentFailed(string error);
+    PaymentFailed(PaymentFailedData details);
 };
 
 callback interface LogStream {

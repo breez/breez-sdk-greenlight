@@ -172,6 +172,14 @@ class BreezSDKMapper {
             "bolt11": invoicePaidDetails.bolt11
         ]
     }
+
+    static func dictionaryOf(paymentFailedData: PaymentFailedData) -> [String: Any?] {
+        return [
+            "error": paymentFailedData.error,
+            "bolt11": paymentFailedData.invoice == nil ? nil : dictionaryOf(lnInvoice: paymentFailedData.invoice!),
+            "nodeId": paymentFailedData.nodeId
+        ]
+    }
     
     static func dictionaryOf(lnInvoice: LnInvoice) -> [String: Any?] {
         return [

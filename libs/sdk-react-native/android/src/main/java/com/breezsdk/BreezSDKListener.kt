@@ -13,7 +13,7 @@ class BreezSDKListener(private val emitter: RCTDeviceEventEmitter): EventListene
         when (e) {
             is BreezEvent.InvoicePaid -> emitter.emit(emitterName, readableMapOf("type" to "invoicePaid", "data" to readableMapOf(e.details)))
             is BreezEvent.NewBlock -> emitter.emit(emitterName, readableMapOf("type" to "newBlock", "data" to e.block))
-            is BreezEvent.PaymentFailed -> emitter.emit(emitterName, readableMapOf("type" to "paymentFailed", "data" to e.error))
+            is BreezEvent.PaymentFailed -> emitter.emit(emitterName, readableMapOf("type" to "paymentFailed", "data" to readableMapOf(e.details)))
             is BreezEvent.PaymentSucceed -> emitter.emit(emitterName, readableMapOf("type" to "paymentSucceed", "data" to readableMapOf(e.details)))
             is BreezEvent.Synced -> emitter.emit(emitterName, readableMapOf("type" to "synced"))
         }

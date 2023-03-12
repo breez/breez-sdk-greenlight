@@ -21,6 +21,7 @@ use std::sync::Arc;
 
 use crate::breez_services::BreezEvent;
 use crate::breez_services::InvoicePaidDetails;
+use crate::breez_services::PaymentFailedData;
 use crate::chain::RecommendedFees;
 use crate::fiat::CurrencyInfo;
 use crate::fiat::FiatCurrency;
@@ -653,7 +654,7 @@ impl support::IntoDart for BreezEvent {
             Self::InvoicePaid { details } => vec![1.into_dart(), details.into_dart()],
             Self::Synced => vec![2.into_dart()],
             Self::PaymentSucceed { details } => vec![3.into_dart(), details.into_dart()],
-            Self::PaymentFailed { error } => vec![4.into_dart(), error.into_dart()],
+            Self::PaymentFailed { details } => vec![4.into_dart(), details.into_dart()],
         }
         .into_dart()
     }
@@ -975,6 +976,18 @@ impl support::IntoDart for PaymentDetails {
     }
 }
 impl support::IntoDartExceptPrimitive for PaymentDetails {}
+impl support::IntoDart for PaymentFailedData {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.error.into_dart(),
+            self.node_id.into_dart(),
+            self.invoice.into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for PaymentFailedData {}
+
 impl support::IntoDart for PaymentType {
     fn into_dart(self) -> support::DartAbi {
         match self {

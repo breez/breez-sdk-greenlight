@@ -22,7 +22,7 @@ mixin _$BreezEvent {
     required TResult Function(InvoicePaidDetails details) invoicePaid,
     required TResult Function() synced,
     required TResult Function(Payment details) paymentSucceed,
-    required TResult Function(String error) paymentFailed,
+    required TResult Function(PaymentFailedData details) paymentFailed,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -31,7 +31,7 @@ mixin _$BreezEvent {
     TResult? Function(InvoicePaidDetails details)? invoicePaid,
     TResult? Function()? synced,
     TResult? Function(Payment details)? paymentSucceed,
-    TResult? Function(String error)? paymentFailed,
+    TResult? Function(PaymentFailedData details)? paymentFailed,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -40,7 +40,7 @@ mixin _$BreezEvent {
     TResult Function(InvoicePaidDetails details)? invoicePaid,
     TResult Function()? synced,
     TResult Function(Payment details)? paymentSucceed,
-    TResult Function(String error)? paymentFailed,
+    TResult Function(PaymentFailedData details)? paymentFailed,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -161,7 +161,7 @@ class _$BreezEvent_NewBlock implements BreezEvent_NewBlock {
     required TResult Function(InvoicePaidDetails details) invoicePaid,
     required TResult Function() synced,
     required TResult Function(Payment details) paymentSucceed,
-    required TResult Function(String error) paymentFailed,
+    required TResult Function(PaymentFailedData details) paymentFailed,
   }) {
     return newBlock(block);
   }
@@ -173,7 +173,7 @@ class _$BreezEvent_NewBlock implements BreezEvent_NewBlock {
     TResult? Function(InvoicePaidDetails details)? invoicePaid,
     TResult? Function()? synced,
     TResult? Function(Payment details)? paymentSucceed,
-    TResult? Function(String error)? paymentFailed,
+    TResult? Function(PaymentFailedData details)? paymentFailed,
   }) {
     return newBlock?.call(block);
   }
@@ -185,7 +185,7 @@ class _$BreezEvent_NewBlock implements BreezEvent_NewBlock {
     TResult Function(InvoicePaidDetails details)? invoicePaid,
     TResult Function()? synced,
     TResult Function(Payment details)? paymentSucceed,
-    TResult Function(String error)? paymentFailed,
+    TResult Function(PaymentFailedData details)? paymentFailed,
     required TResult orElse(),
   }) {
     if (newBlock != null) {
@@ -314,7 +314,7 @@ class _$BreezEvent_InvoicePaid implements BreezEvent_InvoicePaid {
     required TResult Function(InvoicePaidDetails details) invoicePaid,
     required TResult Function() synced,
     required TResult Function(Payment details) paymentSucceed,
-    required TResult Function(String error) paymentFailed,
+    required TResult Function(PaymentFailedData details) paymentFailed,
   }) {
     return invoicePaid(details);
   }
@@ -326,7 +326,7 @@ class _$BreezEvent_InvoicePaid implements BreezEvent_InvoicePaid {
     TResult? Function(InvoicePaidDetails details)? invoicePaid,
     TResult? Function()? synced,
     TResult? Function(Payment details)? paymentSucceed,
-    TResult? Function(String error)? paymentFailed,
+    TResult? Function(PaymentFailedData details)? paymentFailed,
   }) {
     return invoicePaid?.call(details);
   }
@@ -338,7 +338,7 @@ class _$BreezEvent_InvoicePaid implements BreezEvent_InvoicePaid {
     TResult Function(InvoicePaidDetails details)? invoicePaid,
     TResult Function()? synced,
     TResult Function(Payment details)? paymentSucceed,
-    TResult Function(String error)? paymentFailed,
+    TResult Function(PaymentFailedData details)? paymentFailed,
     required TResult orElse(),
   }) {
     if (invoicePaid != null) {
@@ -440,7 +440,7 @@ class _$BreezEvent_Synced implements BreezEvent_Synced {
     required TResult Function(InvoicePaidDetails details) invoicePaid,
     required TResult Function() synced,
     required TResult Function(Payment details) paymentSucceed,
-    required TResult Function(String error) paymentFailed,
+    required TResult Function(PaymentFailedData details) paymentFailed,
   }) {
     return synced();
   }
@@ -452,7 +452,7 @@ class _$BreezEvent_Synced implements BreezEvent_Synced {
     TResult? Function(InvoicePaidDetails details)? invoicePaid,
     TResult? Function()? synced,
     TResult? Function(Payment details)? paymentSucceed,
-    TResult? Function(String error)? paymentFailed,
+    TResult? Function(PaymentFailedData details)? paymentFailed,
   }) {
     return synced?.call();
   }
@@ -464,7 +464,7 @@ class _$BreezEvent_Synced implements BreezEvent_Synced {
     TResult Function(InvoicePaidDetails details)? invoicePaid,
     TResult Function()? synced,
     TResult Function(Payment details)? paymentSucceed,
-    TResult Function(String error)? paymentFailed,
+    TResult Function(PaymentFailedData details)? paymentFailed,
     required TResult orElse(),
   }) {
     if (synced != null) {
@@ -588,7 +588,7 @@ class _$BreezEvent_PaymentSucceed implements BreezEvent_PaymentSucceed {
     required TResult Function(InvoicePaidDetails details) invoicePaid,
     required TResult Function() synced,
     required TResult Function(Payment details) paymentSucceed,
-    required TResult Function(String error) paymentFailed,
+    required TResult Function(PaymentFailedData details) paymentFailed,
   }) {
     return paymentSucceed(details);
   }
@@ -600,7 +600,7 @@ class _$BreezEvent_PaymentSucceed implements BreezEvent_PaymentSucceed {
     TResult? Function(InvoicePaidDetails details)? invoicePaid,
     TResult? Function()? synced,
     TResult? Function(Payment details)? paymentSucceed,
-    TResult? Function(String error)? paymentFailed,
+    TResult? Function(PaymentFailedData details)? paymentFailed,
   }) {
     return paymentSucceed?.call(details);
   }
@@ -612,7 +612,7 @@ class _$BreezEvent_PaymentSucceed implements BreezEvent_PaymentSucceed {
     TResult Function(InvoicePaidDetails details)? invoicePaid,
     TResult Function()? synced,
     TResult Function(Payment details)? paymentSucceed,
-    TResult Function(String error)? paymentFailed,
+    TResult Function(PaymentFailedData details)? paymentFailed,
     required TResult orElse(),
   }) {
     if (paymentSucceed != null) {
@@ -678,7 +678,7 @@ abstract class _$$BreezEvent_PaymentFailedCopyWith<$Res> {
           $Res Function(_$BreezEvent_PaymentFailed) then) =
       __$$BreezEvent_PaymentFailedCopyWithImpl<$Res>;
   @useResult
-  $Res call({String error});
+  $Res call({PaymentFailedData details});
 }
 
 /// @nodoc
@@ -692,13 +692,13 @@ class __$$BreezEvent_PaymentFailedCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? error = null,
+    Object? details = null,
   }) {
     return _then(_$BreezEvent_PaymentFailed(
-      error: null == error
-          ? _value.error
-          : error // ignore: cast_nullable_to_non_nullable
-              as String,
+      details: null == details
+          ? _value.details
+          : details // ignore: cast_nullable_to_non_nullable
+              as PaymentFailedData,
     ));
   }
 }
@@ -706,14 +706,14 @@ class __$$BreezEvent_PaymentFailedCopyWithImpl<$Res>
 /// @nodoc
 
 class _$BreezEvent_PaymentFailed implements BreezEvent_PaymentFailed {
-  const _$BreezEvent_PaymentFailed({required this.error});
+  const _$BreezEvent_PaymentFailed({required this.details});
 
   @override
-  final String error;
+  final PaymentFailedData details;
 
   @override
   String toString() {
-    return 'BreezEvent.paymentFailed(error: $error)';
+    return 'BreezEvent.paymentFailed(details: $details)';
   }
 
   @override
@@ -721,11 +721,11 @@ class _$BreezEvent_PaymentFailed implements BreezEvent_PaymentFailed {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$BreezEvent_PaymentFailed &&
-            (identical(other.error, error) || other.error == error));
+            (identical(other.details, details) || other.details == details));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, error);
+  int get hashCode => Object.hash(runtimeType, details);
 
   @JsonKey(ignore: true)
   @override
@@ -742,9 +742,9 @@ class _$BreezEvent_PaymentFailed implements BreezEvent_PaymentFailed {
     required TResult Function(InvoicePaidDetails details) invoicePaid,
     required TResult Function() synced,
     required TResult Function(Payment details) paymentSucceed,
-    required TResult Function(String error) paymentFailed,
+    required TResult Function(PaymentFailedData details) paymentFailed,
   }) {
-    return paymentFailed(error);
+    return paymentFailed(details);
   }
 
   @override
@@ -754,9 +754,9 @@ class _$BreezEvent_PaymentFailed implements BreezEvent_PaymentFailed {
     TResult? Function(InvoicePaidDetails details)? invoicePaid,
     TResult? Function()? synced,
     TResult? Function(Payment details)? paymentSucceed,
-    TResult? Function(String error)? paymentFailed,
+    TResult? Function(PaymentFailedData details)? paymentFailed,
   }) {
-    return paymentFailed?.call(error);
+    return paymentFailed?.call(details);
   }
 
   @override
@@ -766,11 +766,11 @@ class _$BreezEvent_PaymentFailed implements BreezEvent_PaymentFailed {
     TResult Function(InvoicePaidDetails details)? invoicePaid,
     TResult Function()? synced,
     TResult Function(Payment details)? paymentSucceed,
-    TResult Function(String error)? paymentFailed,
+    TResult Function(PaymentFailedData details)? paymentFailed,
     required TResult orElse(),
   }) {
     if (paymentFailed != null) {
-      return paymentFailed(error);
+      return paymentFailed(details);
     }
     return orElse();
   }
@@ -817,10 +817,10 @@ class _$BreezEvent_PaymentFailed implements BreezEvent_PaymentFailed {
 }
 
 abstract class BreezEvent_PaymentFailed implements BreezEvent {
-  const factory BreezEvent_PaymentFailed({required final String error}) =
-      _$BreezEvent_PaymentFailed;
+  const factory BreezEvent_PaymentFailed(
+      {required final PaymentFailedData details}) = _$BreezEvent_PaymentFailed;
 
-  String get error;
+  PaymentFailedData get details;
   @JsonKey(ignore: true)
   _$$BreezEvent_PaymentFailedCopyWith<_$BreezEvent_PaymentFailed>
       get copyWith => throw _privateConstructorUsedError;
