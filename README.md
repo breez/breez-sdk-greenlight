@@ -79,6 +79,7 @@ To get started with the Breez SDK API, please follow the documentation [here](ht
 - [ ] Make mempool.space dependency optional 
 - [ ] Receive 0 amount invoice via LSP (unified QR)
 - [ ] Send/receive bolt12
+- [ ] Cloud key backup? 
 - [ ] Async payments
 - [ ] LDK support
 - [ ] Splicing
