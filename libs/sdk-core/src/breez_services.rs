@@ -7,20 +7,18 @@ use crate::grpc::information_client::InformationClient;
 use crate::grpc::PaymentInformation;
 use crate::input_parser::LnUrlPayRequestData;
 use crate::invoice::{add_routing_hints, parse_invoice, LNInvoice, RouteHint, RouteHintHop};
-use crate::lnurl::auth::model::LnUrlAuthCallbackStatus;
 use crate::lnurl::auth::perform_lnurl_auth;
 use crate::lnurl::pay::model::SuccessAction::Aes;
 use crate::lnurl::pay::model::{
     LnUrlPayResult, SuccessAction, SuccessActionProcessed, ValidatedCallbackResponse,
 };
 use crate::lnurl::pay::validate_lnurl_pay;
-use crate::lnurl::withdraw::model::LnUrlWithdrawCallbackStatus;
 use crate::lnurl::withdraw::validate_lnurl_withdraw;
 use crate::lsp::LspInformation;
 use crate::models::{
     parse_short_channel_id, ChannelState, ClosedChannelPaymentDetails, Config, EnvironmentType,
-    FiatAPI, GreenlightCredentials, LspAPI, Network, NodeAPI, NodeState, Payment, PaymentDetails,
-    PaymentType, PaymentTypeFilter, SwapInfo, SwapperAPI,
+    FiatAPI, GreenlightCredentials, LnUrlCallbackStatus, LspAPI, Network, NodeAPI, NodeState,
+    Payment, PaymentDetails, PaymentType, PaymentTypeFilter, SwapInfo, SwapperAPI,
 };
 use crate::persist::db::SqliteStorage;
 use crate::swap::BTCReceiveSwap;
@@ -310,7 +308,7 @@ impl BreezServices {
         req_data: LnUrlWithdrawRequestData,
         amount_sats: u64,
         description: Option<String>,
-    ) -> Result<LnUrlWithdrawCallbackStatus> {
+    ) -> Result<LnUrlCallbackStatus> {
         let invoice = self
             .receive_payment(amount_sats, description.unwrap_or_default())
             .await?;
@@ -322,10 +320,7 @@ impl BreezServices {
     ///
     /// This call will sign `k1` of the LNURL endpoint (`req_data`) on `secp256k1` using `linkingPrivKey` and DER-encodes the signature.
     /// If they match the endpoint requirements, the LNURL auth request is made. A successful result here means the client signature is verified.
-    pub async fn lnurl_auth(
-        &self,
-        req_data: LnUrlAuthRequestData,
-    ) -> Result<LnUrlAuthCallbackStatus> {
+    pub async fn lnurl_auth(&self, req_data: LnUrlAuthRequestData) -> Result<LnUrlCallbackStatus> {
         perform_lnurl_auth(self.node_api.clone(), req_data).await
     }
 

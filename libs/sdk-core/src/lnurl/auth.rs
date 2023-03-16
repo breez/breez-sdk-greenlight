@@ -1,5 +1,4 @@
-use crate::lnurl::auth::model::*;
-use crate::{LnUrlAuthRequestData, NodeAPI};
+use crate::{LnUrlAuthRequestData, LnUrlCallbackStatus, NodeAPI};
 use anyhow::{anyhow, Result};
 use bitcoin::secp256k1::{Message, Secp256k1};
 use bitcoin::util::bip32::ChildNumber;
@@ -10,34 +9,6 @@ use reqwest::Url;
 use std::str::FromStr;
 use std::sync::Arc;
 
-pub(crate) mod model {
-    use crate::input_parser::*;
-
-    use serde::Deserialize;
-
-    /// Contains the result of the entire LNURL-auth interaction, as reported by the LNURL endpoint.
-    ///
-    /// * `Ok` indicates the interaction with the endpoint was valid, and the client signature is verified.
-    ///
-    /// * `Error` indicates a generic issue the LNURL endpoint encountered, including a freetext
-    /// description of the reason.
-    ///
-    /// Both cases are described in LUD-04: <https://github.com/lnurl/luds/blob/luds/04.md>
-    #[derive(Deserialize, Debug)]
-    #[serde(rename_all = "UPPERCASE")]
-    #[serde(tag = "status")]
-    pub enum LnUrlAuthCallbackStatus {
-        /// On-wire format is: `{"status": "OK"}`
-        Ok,
-        /// On-wire format is: `{"status": "ERROR", "reason": "error details..."}`
-        #[serde(rename = "ERROR")]
-        ErrorStatus {
-            #[serde(flatten)]
-            data: LnUrlErrorData,
-        },
-    }
-}
-
 /// Performs the third and last step of LNURL-auth, as per
 /// <https://github.com/lnurl/luds/blob/luds/04.md>
 ///
@@ -45,7 +16,7 @@ pub(crate) mod model {
 pub(crate) async fn perform_lnurl_auth(
     node_api: Arc<dyn NodeAPI>,
     req_data: LnUrlAuthRequestData,
-) -> Result<LnUrlAuthCallbackStatus> {
+) -> Result<LnUrlCallbackStatus> {
     let linking_keys = derive_linking_keys(node_api, Url::from_str(&req_data.url)?)?;
 
     let k1_to_sign = Message::from_slice(&hex::decode(req_data.k1)?)?;
@@ -62,7 +33,7 @@ pub(crate) async fn perform_lnurl_auth(
     debug!("Trying to call {}", callback_url.to_string());
 
     let callback_resp_text = reqwest::get(callback_url).await?.text().await?;
-    serde_json::from_str::<LnUrlAuthCallbackStatus>(&callback_resp_text).map_err(|e| anyhow!(e))
+    serde_json::from_str::<LnUrlCallbackStatus>(&callback_resp_text).map_err(|e| anyhow!(e))
 }
 
 pub(crate) fn validate_request(

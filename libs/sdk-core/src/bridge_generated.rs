@@ -38,13 +38,11 @@ use crate::input_parser::LnUrlWithdrawRequestData;
 use crate::invoice::LNInvoice;
 use crate::invoice::RouteHint;
 use crate::invoice::RouteHintHop;
-use crate::lnurl::auth::model::LnUrlAuthCallbackStatus;
 use crate::lnurl::pay::model::AesSuccessActionDataDecrypted;
 use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::lnurl::pay::model::MessageSuccessActionData;
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lnurl::pay::model::UrlSuccessActionData;
-use crate::lnurl::withdraw::model::LnUrlWithdrawCallbackStatus;
 use crate::lsp::LspInformation;
 use crate::models::ChannelState;
 use crate::models::ClosedChannelPaymentDetails;
@@ -52,6 +50,7 @@ use crate::models::Config;
 use crate::models::EnvironmentType;
 use crate::models::GreenlightCredentials;
 use crate::models::LnPaymentDetails;
+use crate::models::LnUrlCallbackStatus;
 use crate::models::LogEntry;
 use crate::models::Network;
 use crate::models::NodeState;
@@ -796,16 +795,6 @@ impl support::IntoDart for LnPaymentDetails {
 }
 impl support::IntoDartExceptPrimitive for LnPaymentDetails {}
 
-impl support::IntoDart for LnUrlAuthCallbackStatus {
-    fn into_dart(self) -> support::DartAbi {
-        match self {
-            Self::Ok => vec![0.into_dart()],
-            Self::ErrorStatus { data } => vec![1.into_dart(), data.into_dart()],
-        }
-        .into_dart()
-    }
-}
-impl support::IntoDartExceptPrimitive for LnUrlAuthCallbackStatus {}
 impl support::IntoDart for LnUrlAuthRequestData {
     fn into_dart(self) -> support::DartAbi {
         vec![
@@ -819,6 +808,16 @@ impl support::IntoDart for LnUrlAuthRequestData {
 }
 impl support::IntoDartExceptPrimitive for LnUrlAuthRequestData {}
 
+impl support::IntoDart for LnUrlCallbackStatus {
+    fn into_dart(self) -> support::DartAbi {
+        match self {
+            Self::Ok => vec![0.into_dart()],
+            Self::ErrorStatus { data } => vec![1.into_dart(), data.into_dart()],
+        }
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for LnUrlCallbackStatus {}
 impl support::IntoDart for LnUrlErrorData {
     fn into_dart(self) -> support::DartAbi {
         vec![self.reason.into_dart()].into_dart()
@@ -852,16 +851,6 @@ impl support::IntoDart for LnUrlPayResult {
     }
 }
 impl support::IntoDartExceptPrimitive for LnUrlPayResult {}
-impl support::IntoDart for LnUrlWithdrawCallbackStatus {
-    fn into_dart(self) -> support::DartAbi {
-        match self {
-            Self::Ok => vec![0.into_dart()],
-            Self::ErrorStatus { data } => vec![1.into_dart(), data.into_dart()],
-        }
-        .into_dart()
-    }
-}
-impl support::IntoDartExceptPrimitive for LnUrlWithdrawCallbackStatus {}
 impl support::IntoDart for LnUrlWithdrawRequestData {
     fn into_dart(self) -> support::DartAbi {
         vec![
