@@ -34,7 +34,7 @@ jobs:
       - name: install dependencies
         run: |
           echo $ANDROID_NDK_HOME
-          cargo install cargo-ndk
+          cargo install cargo-ndk --locked
           cargo install --version 0.22.0 uniffi_bindgen          
           brew install protobuf          
 
