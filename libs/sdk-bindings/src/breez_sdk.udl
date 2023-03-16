@@ -311,19 +311,13 @@ dictionary LnUrlWithdrawRequestData {
 };
 
 [Enum]
-interface LnUrlWithdrawCallbackStatus {
-    Ok();
-    ErrorStatus(LnUrlErrorData data);
-};
-
-[Enum]
 interface LnUrlPayResult {
     EndpointSuccess(SuccessActionProcessed? data);
     EndpointError(LnUrlErrorData data);
 };
 
 [Enum]
-interface LnUrlAuthCallbackStatus {
+interface LnUrlCallbackStatus {
     Ok();
     ErrorStatus(LnUrlErrorData data);
 };
@@ -380,10 +374,10 @@ interface BlockingBreezServices {
    LnUrlPayResult pay_lnurl(LnUrlPayRequestData req_data, u64 amount_sats, string? comment);
 
    [Throws=SDKError]
-   LnUrlWithdrawCallbackStatus withdraw_lnurl(LnUrlWithdrawRequestData req_data, u64 amount_sats, string? description);
+   LnUrlCallbackStatus withdraw_lnurl(LnUrlWithdrawRequestData req_data, u64 amount_sats, string? description);
 
    [Throws=SDKError]
-   LnUrlAuthCallbackStatus lnurl_auth(LnUrlAuthRequestData req_data);
+   LnUrlCallbackStatus lnurl_auth(LnUrlAuthRequestData req_data);
 
    [Throws=SDKError]
    NodeState? node_info();

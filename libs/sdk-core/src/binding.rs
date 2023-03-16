@@ -6,6 +6,7 @@ use crate::fiat::{FiatCurrency, Rate};
 use crate::input_parser::{LnUrlAuthRequestData, LnUrlPayRequestData, LnUrlWithdrawRequestData};
 use crate::lsp::LspInformation;
 use crate::models::LogEntry;
+use crate::LnUrlCallbackStatus;
 use anyhow::{anyhow, Result};
 use flutter_rust_bridge::StreamSink;
 use log::{Level, LevelFilter, Metadata, Record};
@@ -16,8 +17,6 @@ use tokio::sync::mpsc;
 
 use crate::breez_services::BreezServices;
 use crate::invoice::LNInvoice;
-use crate::lnurl::auth::model::LnUrlAuthCallbackStatus;
-use crate::lnurl::withdraw::model::LnUrlWithdrawCallbackStatus;
 use crate::models::{
     Config, EnvironmentType, GreenlightCredentials, Network, NodeState, Payment, PaymentTypeFilter,
     SwapInfo,
@@ -331,7 +330,7 @@ pub fn lnurl_withdraw(
     req_data: LnUrlWithdrawRequestData,
     amount_sats: u64,
     description: Option<String>,
-) -> Result<LnUrlWithdrawCallbackStatus> {
+) -> Result<LnUrlCallbackStatus> {
     block_on(async {
         get_breez_services()?
             .lnurl_withdraw(req_data, amount_sats, description)
@@ -340,7 +339,7 @@ pub fn lnurl_withdraw(
 }
 
 /// See [BreezServices::lnurl_auth]
-pub fn lnurl_auth(req_data: LnUrlAuthRequestData) -> Result<LnUrlAuthCallbackStatus> {
+pub fn lnurl_auth(req_data: LnUrlAuthRequestData) -> Result<LnUrlCallbackStatus> {
     block_on(async { get_breez_services()?.lnurl_auth(req_data).await })
 }
 

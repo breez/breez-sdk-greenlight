@@ -180,7 +180,7 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kLnurlPayConstMeta;
 
   /// See [BreezServices::lnurl_withdraw]
-  Future<LnUrlWithdrawCallbackStatus> lnurlWithdraw(
+  Future<LnUrlCallbackStatus> lnurlWithdraw(
       {required LnUrlWithdrawRequestData reqData,
       required int amountSats,
       String? description,
@@ -189,7 +189,7 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kLnurlWithdrawConstMeta;
 
   /// See [BreezServices::lnurl_auth]
-  Future<LnUrlAuthCallbackStatus> lnurlAuth({required LnUrlAuthRequestData reqData, dynamic hint});
+  Future<LnUrlCallbackStatus> lnurlAuth({required LnUrlAuthRequestData reqData, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kLnurlAuthConstMeta;
 
@@ -493,17 +493,6 @@ class LnPaymentDetails {
   });
 }
 
-@freezed
-class LnUrlAuthCallbackStatus with _$LnUrlAuthCallbackStatus {
-  /// On-wire format is: `{"status": "OK"}`
-  const factory LnUrlAuthCallbackStatus.ok() = LnUrlAuthCallbackStatus_Ok;
-
-  /// On-wire format is: `{"status": "ERROR", "reason": "error details..."}`
-  const factory LnUrlAuthCallbackStatus.errorStatus({
-    required LnUrlErrorData data,
-  }) = LnUrlAuthCallbackStatus_ErrorStatus;
-}
-
 /// Wrapped in a [LnUrlAuth], this is the result of [parse] when given a LNURL-auth endpoint.
 ///
 /// It represents the endpoint's parameters for the LNURL workflow.
@@ -528,6 +517,17 @@ class LnUrlAuthRequestData {
     required this.domain,
     required this.url,
   });
+}
+
+@freezed
+class LnUrlCallbackStatus with _$LnUrlCallbackStatus {
+  /// On-wire format is: `{"status": "OK"}`
+  const factory LnUrlCallbackStatus.ok() = LnUrlCallbackStatus_Ok;
+
+  /// On-wire format is: `{"status": "ERROR", "reason": "error details..."}`
+  const factory LnUrlCallbackStatus.errorStatus({
+    required LnUrlErrorData data,
+  }) = LnUrlCallbackStatus_ErrorStatus;
 }
 
 /// Wrapped in a [LnUrlError], this represents a LNURL-endpoint error.
@@ -580,17 +580,6 @@ class LnUrlPayResult with _$LnUrlPayResult {
   const factory LnUrlPayResult.endpointError({
     required LnUrlErrorData data,
   }) = LnUrlPayResult_EndpointError;
-}
-
-@freezed
-class LnUrlWithdrawCallbackStatus with _$LnUrlWithdrawCallbackStatus {
-  /// On-wire format is: `{"status": "OK"}`
-  const factory LnUrlWithdrawCallbackStatus.ok() = LnUrlWithdrawCallbackStatus_Ok;
-
-  /// On-wire format is: `{"status": "ERROR", "reason": "error details..."}`
-  const factory LnUrlWithdrawCallbackStatus.errorStatus({
-    required LnUrlErrorData data,
-  }) = LnUrlWithdrawCallbackStatus_ErrorStatus;
 }
 
 /// Wrapped in a [LnUrlWithdraw], this is the result of [parse] when given a LNURL-withdraw endpoint.
@@ -1466,7 +1455,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["userAmountSat", "comment", "reqData"],
       );
 
-  Future<LnUrlWithdrawCallbackStatus> lnurlWithdraw(
+  Future<LnUrlCallbackStatus> lnurlWithdraw(
       {required LnUrlWithdrawRequestData reqData,
       required int amountSats,
       String? description,
@@ -1476,7 +1465,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     var arg2 = _platform.api2wire_opt_String(description);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_lnurl_withdraw(port_, arg0, arg1, arg2),
-      parseSuccessData: _wire2api_ln_url_withdraw_callback_status,
+      parseSuccessData: _wire2api_ln_url_callback_status,
       constMeta: kLnurlWithdrawConstMeta,
       argValues: [reqData, amountSats, description],
       hint: hint,
@@ -1488,11 +1477,11 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["reqData", "amountSats", "description"],
       );
 
-  Future<LnUrlAuthCallbackStatus> lnurlAuth({required LnUrlAuthRequestData reqData, dynamic hint}) {
+  Future<LnUrlCallbackStatus> lnurlAuth({required LnUrlAuthRequestData reqData, dynamic hint}) {
     var arg0 = _platform.api2wire_box_autoadd_ln_url_auth_request_data(reqData);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_lnurl_auth(port_, arg0),
-      parseSuccessData: _wire2api_ln_url_auth_callback_status,
+      parseSuccessData: _wire2api_ln_url_callback_status,
       constMeta: kLnurlAuthConstMeta,
       argValues: [reqData],
       hint: hint,
@@ -1897,19 +1886,6 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     );
   }
 
-  LnUrlAuthCallbackStatus _wire2api_ln_url_auth_callback_status(dynamic raw) {
-    switch (raw[0]) {
-      case 0:
-        return LnUrlAuthCallbackStatus_Ok();
-      case 1:
-        return LnUrlAuthCallbackStatus_ErrorStatus(
-          data: _wire2api_box_autoadd_ln_url_error_data(raw[1]),
-        );
-      default:
-        throw Exception("unreachable");
-    }
-  }
-
   LnUrlAuthRequestData _wire2api_ln_url_auth_request_data(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 4) throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
@@ -1919,6 +1895,19 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       domain: _wire2api_String(arr[2]),
       url: _wire2api_String(arr[3]),
     );
+  }
+
+  LnUrlCallbackStatus _wire2api_ln_url_callback_status(dynamic raw) {
+    switch (raw[0]) {
+      case 0:
+        return LnUrlCallbackStatus_Ok();
+      case 1:
+        return LnUrlCallbackStatus_ErrorStatus(
+          data: _wire2api_box_autoadd_ln_url_error_data(raw[1]),
+        );
+      default:
+        throw Exception("unreachable");
+    }
   }
 
   LnUrlErrorData _wire2api_ln_url_error_data(dynamic raw) {
@@ -1951,19 +1940,6 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         );
       case 1:
         return LnUrlPayResult_EndpointError(
-          data: _wire2api_box_autoadd_ln_url_error_data(raw[1]),
-        );
-      default:
-        throw Exception("unreachable");
-    }
-  }
-
-  LnUrlWithdrawCallbackStatus _wire2api_ln_url_withdraw_callback_status(dynamic raw) {
-    switch (raw[0]) {
-      case 0:
-        return LnUrlWithdrawCallbackStatus_Ok();
-      case 1:
-        return LnUrlWithdrawCallbackStatus_ErrorStatus(
           data: _wire2api_box_autoadd_ln_url_error_data(raw[1]),
         );
       default:

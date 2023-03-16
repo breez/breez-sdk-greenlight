@@ -284,7 +284,7 @@ class BreezBridge {
   /// This call will validate the given `amount_sats` against the parameters
   /// of the LNURL endpoint (`req_data`). If they match the endpoint requirements, the LNURL withdraw
   /// request is made. A successful result here means the endpoint started the payment.
-  Future<LnUrlWithdrawCallbackStatus> lnurlWithdraw({
+  Future<LnUrlCallbackStatus> lnurlWithdraw({
     required int amountSats,
     String? description,
     required LnUrlWithdrawRequestData reqData,
@@ -301,7 +301,7 @@ class BreezBridge {
   ///
   /// This call will sign `k1` of the LNURL endpoint (`req_data`) on `secp256k1` using `linkingPrivKey` and DER-encodes the signature.
   /// If they match the endpoint requirements, the LNURL auth request is made. A successful result here means the client signature is verified.
-  Future<LnUrlAuthCallbackStatus> lnurlAuth({
+  Future<LnUrlCallbackStatus> lnurlAuth({
     required LnUrlAuthRequestData reqData,
   }) async {
     return _lnToolkit.lnurlAuth(

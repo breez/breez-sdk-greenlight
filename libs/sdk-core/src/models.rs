@@ -15,6 +15,7 @@ use crate::grpc::{PaymentInformation, RegisterPaymentReply};
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lsp::LspInformation;
 use crate::models::Network::*;
+use crate::LnUrlErrorData;
 
 /// Different types of supported payments
 #[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
@@ -453,6 +454,28 @@ pub struct UnspentTransactionOutput {
     pub reserved: bool,
     #[serde(default)]
     pub reserved_to_block: u32,
+}
+
+//// Contains the result of the entire LNURL interaction, as reported by the LNURL endpoint.
+///
+/// * `Ok` indicates the interaction with the endpoint was valid, and the endpoint
+///  - started to pay the invoice asynchronously in the case of LNURL-withdraw,
+///  - verified the client signature in the case of LNURL-auth,////// * `Error` indicates a generic issue the LNURL endpoint encountered, including a freetext
+/// description of the reason.
+///
+/// Both cases are described in LUD-03 <https://github.com/lnurl/luds/blob/luds/03.md> & LUD-04: <https://github.com/lnurl/luds/blob/luds/04.md>
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "UPPERCASE")]
+#[serde(tag = "status")]
+pub enum LnUrlCallbackStatus {
+    /// On-wire format is: `{"status": "OK"}`
+    Ok,
+    /// On-wire format is: `{"status": "ERROR", "reason": "error details..."}`
+    #[serde(rename = "ERROR")]
+    ErrorStatus {
+        #[serde(flatten)]
+        data: LnUrlErrorData,
+    },
 }
 
 #[cfg(test)]

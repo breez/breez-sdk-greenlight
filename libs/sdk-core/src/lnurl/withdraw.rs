@@ -1,7 +1,6 @@
 use std::str::FromStr;
 
-use crate::lnurl::withdraw::model::*;
-use crate::lnurl::*;
+use crate::{lnurl::*, LnUrlCallbackStatus};
 use crate::{LNInvoice, LnUrlWithdrawRequestData};
 use anyhow::{anyhow, Result};
 
@@ -16,7 +15,7 @@ use anyhow::{anyhow, Result};
 pub(crate) async fn validate_lnurl_withdraw(
     req_data: LnUrlWithdrawRequestData,
     invoice: LNInvoice,
-) -> Result<LnUrlWithdrawCallbackStatus> {
+) -> Result<LnUrlCallbackStatus> {
     match invoice
         .amount_msat
         .ok_or("Expected invoice amount, but found none")
@@ -32,8 +31,7 @@ pub(crate) async fn validate_lnurl_withdraw(
             let callback_url = build_withdraw_callback_url(&req_data, &invoice)?;
             let callback_resp_text = reqwest::get(&callback_url).await?.text().await?;
 
-            serde_json::from_str::<LnUrlWithdrawCallbackStatus>(&callback_resp_text)
-                .map_err(|e| anyhow!(e))
+            serde_json::from_str::<LnUrlCallbackStatus>(&callback_resp_text).map_err(|e| anyhow!(e))
         }
     }
 }
@@ -50,35 +48,6 @@ fn build_withdraw_callback_url(
     let mut callback_url = url.to_string();
     callback_url = maybe_replace_host_with_mockito_test_host(callback_url)?;
     Ok(callback_url)
-}
-
-pub(crate) mod model {
-    use crate::input_parser::*;
-
-    use serde::Deserialize;
-
-    /// Contains the result of the entire LNURL-withdraw interaction, as reported by the LNURL endpoint.
-    ///
-    /// * `Ok` indicates the interaction with the endpoint was valid, and the endpoint started to
-    /// pay the invoice asynchronously.
-    ///
-    /// * `Error` indicates a generic issue the LNURL endpoint encountered, including a freetext
-    /// description of the reason.
-    ///
-    /// Both cases are described in LUD-03: <https://github.com/lnurl/luds/blob/luds/03.md>
-    #[derive(Deserialize, Debug)]
-    #[serde(rename_all = "UPPERCASE")]
-    #[serde(tag = "status")]
-    pub enum LnUrlWithdrawCallbackStatus {
-        /// On-wire format is: `{"status": "OK"}`
-        Ok,
-        /// On-wire format is: `{"status": "ERROR", "reason": "error details..."}`
-        #[serde(rename = "ERROR")]
-        ErrorStatus {
-            #[serde(flatten)]
-            data: LnUrlErrorData,
-        },
-    }
 }
 
 #[cfg(test)]
@@ -136,7 +105,7 @@ mod tests {
 
         assert!(matches!(
             validate_lnurl_withdraw(withdraw_req, invoice).await?,
-            LnUrlWithdrawCallbackStatus::Ok
+            LnUrlCallbackStatus::Ok
         ));
 
         Ok(())
@@ -167,7 +136,7 @@ mod tests {
 
         assert!(matches!(
             validate_lnurl_withdraw(withdraw_req, invoice).await?,
-            LnUrlWithdrawCallbackStatus::ErrorStatus { data: _ }
+            LnUrlCallbackStatus::ErrorStatus { data: _ }
         ));
 
         Ok(())
