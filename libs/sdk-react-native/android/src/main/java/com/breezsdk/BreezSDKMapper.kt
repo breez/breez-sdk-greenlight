@@ -7,6 +7,19 @@ import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableArray
 import com.facebook.react.bridge.WritableMap
 
+fun asLnUrlAuthRequestData(reqData: ReadableMap): LnUrlAuthRequestData? {
+    var k1 = reqData.getString("k1")
+    var action = reqData.getString("action")
+    var domain = reqData.getString("domain")
+    var url = reqData.getString("url")
+
+    if (k1 != null && domain != null && url != null) {
+        return LnUrlAuthRequestData(k1, action, domain, url)
+    }
+
+    return null
+}
+
 fun asLnUrlWithdrawRequestData(reqData: ReadableMap): LnUrlWithdrawRequestData? {
     var callback = reqData.getString("callback")
     var k1 = reqData.getString("k1")
@@ -177,6 +190,14 @@ fun readableMapOf(invoicePaidDetails: InvoicePaidDetails): ReadableMap {
     )
 }
 
+fun readableMapOf(paymentFailedData: PaymentFailedData): ReadableMap {
+    return readableMapOf(
+            "error" to paymentFailedData.error,
+            "bolt11" to if (paymentFailedData.invoice == null) null else readableMapOf(paymentFailedData.invoice!!),
+            "nodeId" to paymentFailedData.nodeId
+    )
+}
+
 fun readableMapOf(lnInvoice: LnInvoice): ReadableMap {
     return readableMapOf(
             "bolt11" to lnInvoice.bolt11,
@@ -202,7 +223,7 @@ fun readableMapOf(lnPaymentDetails: LnPaymentDetails): ReadableMap {
             "keysend" to lnPaymentDetails.keysend,
             "bolt11" to lnPaymentDetails.bolt11,
             "lnurlSuccessAction" to readableMapOf(lnPaymentDetails.lnurlSuccessAction),
-            "lnurlMetadata" to lnPaymentDetails.lnurlMetadata
+            "lnurlMetadata" to lnPaymentDetails.lnurlMetadata,
             "lnAddress" to lnPaymentDetails.lnAddress
     )
 }
@@ -213,6 +234,18 @@ fun readableMapOf(lnUrlAuthRequestData: LnUrlAuthRequestData): ReadableMap {
 
 fun readableMapOf(lnUrlErrorData: LnUrlErrorData): ReadableMap {
     return readableMapOf("reason" to lnUrlErrorData.reason)
+}
+
+fun readableMapOf(lnUrlAuthCallbackStatus: LnUrlAuthCallbackStatus): ReadableMap {
+    return when (lnUrlAuthCallbackStatus) {
+        is LnUrlAuthCallbackStatus.Ok -> readableMapOf("status" to "ok")
+        is LnUrlAuthCallbackStatus.ErrorStatus -> {
+            var response = Arguments.createMap()
+            response.putString("status", "error")
+            response.merge(readableMapOf(lnUrlAuthCallbackStatus.data))
+            response
+        }
+    }
 }
 
 fun readableMapOf(lnUrlPayRequestData: LnUrlPayRequestData): ReadableMap {

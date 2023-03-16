@@ -23,11 +23,11 @@ class BreezSDKListener: NSObject, EventListener {
                                     "type": "newBlock",
                                     "data": block
                                    ])
-        case let .paymentFailed(error):
+        case let .paymentFailed(details):
             self.emitter.sendEvent(withName: BreezSDKListener.emitterName,
                                    body: [
                                     "type": "paymentFailed",
-                                    "data": error
+                                    "data": BreezSDKMapper.dictionaryOf(paymentFailedData: details)
                                    ])
         case let .paymentSucceed(details):
             self.emitter.sendEvent(withName: BreezSDKListener.emitterName,

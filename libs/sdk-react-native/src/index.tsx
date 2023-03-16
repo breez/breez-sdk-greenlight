@@ -19,7 +19,7 @@ const BreezSDK = NativeModules.BreezSDK
 
 const BreezSDKEmitter = new NativeEventEmitter(BreezSDK)
 
-enum EventType {
+export enum EventType {
     INVOICE_PAID = "invoicePaid",
     NEW_BLOCK = "newBlock",
     PAYMENT_SUCCEED = "paymentSucceed",
@@ -27,7 +27,7 @@ enum EventType {
     SYNCED = "synced"
 }
 
-enum InputType {
+export enum InputType {
     BITCOIN_ADDRESS = "bitcoinAddress",
     BOLT11 = "bolt11",
     LNURL_AUTH = "lnUrlAuth",
@@ -49,7 +49,7 @@ export enum PaymentType {
     CLOSED_CHANNEL = "closed_channel"
 }
 
-enum PaymentDetailType {
+export enum PaymentDetailType {
     LN = "ln",
     CLOSED_CHANNEL = "closed_channel"
 }
@@ -67,13 +67,13 @@ export enum Network {
     TESTNET = "testnet"
 }
 
-enum SuccessActionDataType {
+export enum SuccessActionDataType {
     AES = "aes",
     MESSAGE = "message",
     URL = "url"
 }
 
-enum SwapStatus {
+export enum SwapStatus {
     INITIAL = "initial",
     EXPIRED = "expired"
 }
@@ -107,6 +107,18 @@ export type CurrencyInfo = {
     localeOverrides?: LocaleOverrides[]
 }
 
+export type EndpointSuccess = {
+    data?: AesSuccessActionDataDecrypted | MessageSuccessActionData | UrlSuccessActionData
+}
+
+export type EndpointFailure = {
+    data: LnUrlErrorData
+}
+
+export type EventData = InvoicePaidDetails | Payment | number | PaymentFailedData
+
+export type EventFn = (type: EventType, data?: EventData) => void
+
 export type GreenlightCredentials = {
     deviceKey: Uint8Array
     deviceCert: Uint8Array
@@ -120,6 +132,12 @@ export type FiatCurrency = {
 export type InvoicePaidDetails = {
     paymentHash: string
     bolt11: string
+}
+
+export type PaymentFailedData = {
+    error: string
+    invoice?: LnInvoice
+    nodeId: string
 }
 
 export type LnInvoice = {
@@ -139,8 +157,6 @@ export type LogEntry = {
     line: string
     level: string
 }
-
-export type EventFn = (type: EventType, data?: InvoicePaidDetails | Payment | number | string) => void
 
 export type LogEntryFn = (l: LogEntry) => void
 
@@ -163,6 +179,11 @@ export type LnUrlAuthRequestData = {
     url: string
 }
 
+export type LnUrlAuthCallbackStatus = {
+    status: string
+    reason?: string
+}
+
 export type LnUrlErrorData = {
     reason: string
 }
@@ -180,19 +201,6 @@ export type LnUrlPayRequestData = {
 export type LnUrlWithdrawCallbackStatus = {
     status: string
     reason?: string
-}
-
-export type LnUrlAuthCallbackStatus = {
-    status: string
-    reason?: string
-}
-
-export type EndpointSuccess = {
-    data?: AesSuccessActionDataDecrypted | MessageSuccessActionData | UrlSuccessActionData
-}
-
-export type EndpointFailure = {
-    data: LnUrlErrorData
 }
 
 export type LnUrlWithdrawRequestData = {
@@ -336,7 +344,7 @@ export type UnspentTransactionOutput = {
     reservedToBlock: number
 }
 
-function eventProcessor(eventFn: EventFn) {
+function processEvent(eventFn: EventFn) {
     return (event: any) => {
         switch (event.type) {
             case EventType.INVOICE_PAID:
@@ -344,7 +352,7 @@ function eventProcessor(eventFn: EventFn) {
             case EventType.NEW_BLOCK:
                 return eventFn(EventType.NEW_BLOCK, event.data)
             case EventType.PAYMENT_FAILED:
-                return eventFn(EventType.PAYMENT_FAILED, event.data)
+                return eventFn(EventType.PAYMENT_FAILED, event.data as PaymentFailedData)
             case EventType.PAYMENT_SUCCEED:
                 const payment = event.data as Payment
 
@@ -354,20 +362,7 @@ function eventProcessor(eventFn: EventFn) {
                         break
                     case PaymentDetailType.LN:
                         payment.details = event.data.details as LnPaymentDetails
-
-                        if (event.data.details.lnurlSuccessAction) {
-                            switch (event.data.details.lnurlSuccessAction.type) {
-                                case SuccessActionDataType.AES:
-                                    payment.details.lnurlSuccessAction = event.data.details.lnurlSuccessAction as AesSuccessActionDataDecrypted
-                                    break
-                                case SuccessActionDataType.MESSAGE:
-                                    payment.details.lnurlSuccessAction = event.data.details.lnurlSuccessAction as MessageSuccessActionData
-                                    break
-                                case SuccessActionDataType.URL:
-                                    payment.details.lnurlSuccessAction = event.data.details.lnurlSuccessAction as UrlSuccessActionData
-                                    break
-                            }
-                        }
+                        payment.details.lnurlSuccessAction = processSuccessActionProcessed(event.data.details.lnurlSuccessAction)
                         break
                 }
 
@@ -378,8 +373,21 @@ function eventProcessor(eventFn: EventFn) {
     }
 }
 
+function processSuccessActionProcessed(data: any): AesSuccessActionDataDecrypted | MessageSuccessActionData | UrlSuccessActionData | undefined {
+    switch (data.type) {
+        case SuccessActionDataType.AES:
+            return data as AesSuccessActionDataDecrypted
+        case SuccessActionDataType.MESSAGE:
+            return data as MessageSuccessActionData
+        case SuccessActionDataType.URL:
+            return data as UrlSuccessActionData
+    }
+
+    return
+}
+
 export async function addEventListener(eventFn: EventFn) {
-    BreezSDKEmitter.addListener("breezSdkEvent", eventProcessor(eventFn))
+    BreezSDKEmitter.addListener("breezSdkEvent", processEvent(eventFn))
 }
 
 export async function addLogListener(logEntryFn: LogEntryFn): Promise<void> {
@@ -465,6 +473,11 @@ export async function receivePayment(amountSats: number, description: string): P
     return response as LnInvoice
 }
 
+export async function lnurlAuth(reqData: LnUrlAuthRequestData): Promise<LnUrlAuthCallbackStatus> {
+    const response = await BreezSDK.lnurlAuth(reqData)
+    return response as LnUrlAuthCallbackStatus
+}
+
 export async function withdrawLnurl(
     reqData: LnUrlWithdrawRequestData,
     amountSats: number,
@@ -472,13 +485,6 @@ export async function withdrawLnurl(
 ): Promise<LnUrlWithdrawCallbackStatus> {
     const response = await BreezSDK.withdrawLnurl(reqData, amountSats, description)
     return response as LnUrlWithdrawCallbackStatus
-}
-
-export async function lnurlAuth(
-    reqData: LnUrlAuthRequestData
-): Promise<LnUrlAuthCallbackStatus> {
-    const response = await BreezSDK.lnurlAuth(reqData)
-    return response as LnUrlAuthCallbackStatus
 }
 
 export async function payLnurl(

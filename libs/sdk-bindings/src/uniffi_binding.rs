@@ -11,8 +11,8 @@ use breez_sdk_core::{
     LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult, LnUrlWithdrawCallbackStatus,
     LnUrlWithdrawRequestData, LocaleOverrides, LocalizedName, LogEntry, LspInformation,
     MessageSuccessActionData, MetadataItem, Network, NodeState, Payment, PaymentDetails,
-    PaymentType, PaymentTypeFilter, Rate, RecommendedFees, RouteHint, RouteHintHop,
-    SuccessActionProcessed, SwapInfo, SwapStatus, Symbol, UnspentTransactionOutput,
+    PaymentFailedData, PaymentType, PaymentTypeFilter, Rate, RecommendedFees, RouteHint,
+    RouteHintHop, SuccessActionProcessed, SwapInfo, SwapStatus, Symbol, UnspentTransactionOutput,
     UrlSuccessActionData,
 };
 use log::Metadata;

@@ -66,8 +66,8 @@ To get started with the Breez SDK API, please follow the documentation [here](ht
 - [x] API key
 - [x] Receive via on-chain address
 - [x] React Native bindings
+- [x] LNURL-Auth
 - [ ] Send to an on-chain address
-- [ ] LNURL-Auth
 - [ ] MoonPay fiat on-ramp
 - [ ] Spend all funds
 - [ ] Webhook for receiving payments
@@ -79,6 +79,7 @@ To get started with the Breez SDK API, please follow the documentation [here](ht
 - [ ] Make mempool.space dependency optional 
 - [ ] Receive 0 amount invoice via LSP (unified QR)
 - [ ] Send/receive bolt12
+- [ ] Cloud key backup? 
 - [ ] Async payments
 - [ ] LDK support
 - [ ] Splicing
