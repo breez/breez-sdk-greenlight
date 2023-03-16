@@ -1,8 +1,9 @@
 {
-  "name": "react-native-breeze-sdk-example",
+  "name": "react-native-breez-sdk-example",
   "version": "0.0.1",
   "private": true,
   "scripts": {
+    "clean": "rm -rf /tmp/metro-* && yarn start --reset-cache",
     "android": "react-native run-android",
     "ios": "react-native run-ios",
     "start": "react-native start",
