@@ -38,6 +38,7 @@ use crate::input_parser::LnUrlWithdrawRequestData;
 use crate::invoice::LNInvoice;
 use crate::invoice::RouteHint;
 use crate::invoice::RouteHintHop;
+use crate::lnurl::auth::model::LnUrlAuthCallbackStatus;
 use crate::lnurl::pay::model::AesSuccessActionDataDecrypted;
 use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::lnurl::pay::model::MessageSuccessActionData;
@@ -481,6 +482,22 @@ fn wire_lnurl_withdraw_impl(
         },
     )
 }
+fn wire_lnurl_auth_impl(
+    port_: MessagePort,
+    req_data: impl Wire2Api<LnUrlAuthRequestData> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "lnurl_auth",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_req_data = req_data.wire2api();
+            move |task_callback| lnurl_auth(api_req_data)
+        },
+    )
+}
 fn wire_mnemonic_to_seed_impl(port_: MessagePort, phrase: impl Wire2Api<String> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -779,6 +796,16 @@ impl support::IntoDart for LnPaymentDetails {
 }
 impl support::IntoDartExceptPrimitive for LnPaymentDetails {}
 
+impl support::IntoDart for LnUrlAuthCallbackStatus {
+    fn into_dart(self) -> support::DartAbi {
+        match self {
+            Self::Ok => vec![0.into_dart()],
+            Self::ErrorStatus { data } => vec![1.into_dart(), data.into_dart()],
+        }
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for LnUrlAuthCallbackStatus {}
 impl support::IntoDart for LnUrlAuthRequestData {
     fn into_dart(self) -> support::DartAbi {
         vec![

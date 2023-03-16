@@ -7,6 +7,8 @@ use crate::grpc::information_client::InformationClient;
 use crate::grpc::PaymentInformation;
 use crate::input_parser::LnUrlPayRequestData;
 use crate::invoice::{add_routing_hints, parse_invoice, LNInvoice, RouteHint, RouteHintHop};
+use crate::lnurl::auth::model::LnUrlAuthCallbackStatus;
+use crate::lnurl::auth::perform_lnurl_auth;
 use crate::lnurl::pay::model::SuccessAction::Aes;
 use crate::lnurl::pay::model::{
     LnUrlPayResult, SuccessAction, SuccessActionProcessed, ValidatedCallbackResponse,
@@ -25,6 +27,7 @@ use crate::swap::BTCReceiveSwap;
 use crate::{LnUrlAuthRequestData, LnUrlWithdrawRequestData};
 use anyhow::{anyhow, Result};
 use bip39::*;
+use bitcoin_hashes::{sha256, Hash};
 use std::cmp::max;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -139,9 +142,6 @@ pub struct BreezServices {
     event_listener: Option<Box<dyn EventListener>>,
     shutdown_sender: Mutex<Option<mpsc::Sender<()>>>,
 }
-
-use crate::lnurl::auth::LnUrlAuthCallbackStatus;
-use bitcoin_hashes::{sha256, Hash};
 
 impl BreezServices {
     /// Create a new node for the given network, from the given seed
@@ -317,11 +317,16 @@ impl BreezServices {
         validate_lnurl_withdraw(req_data, invoice).await
     }
 
+    /// Third and last step of LNURL-auth. The first step is `parse()`, which also validates the LNURL destination
+    /// and generates the `LnUrlAuthRequestData` payload needed here. The second step is user approval of auth action.
+    ///
+    /// This call will sign `k1` of the LNURL endpoint (`req_data`) on `secp256k1` using `linkingPrivKey` and DER-encodes the signature.
+    /// If they match the endpoint requirements, the LNURL auth request is made. A successful result here means the client signature is verified.
     pub async fn lnurl_auth(
         &self,
         req_data: LnUrlAuthRequestData,
     ) -> Result<LnUrlAuthCallbackStatus> {
-        crate::lnurl::auth::perform_lnurl_auth(self.node_api.clone(), req_data).await
+        perform_lnurl_auth(self.node_api.clone(), req_data).await
     }
 
     /// Creates an bolt11 payment request.

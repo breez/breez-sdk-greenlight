@@ -188,6 +188,11 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kLnurlWithdrawConstMeta;
 
+  /// See [BreezServices::lnurl_auth]
+  Future<LnUrlAuthCallbackStatus> lnurlAuth({required LnUrlAuthRequestData reqData, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kLnurlAuthConstMeta;
+
   /// See [breez_services::mnemonic_to_seed]
   Future<Uint8List> mnemonicToSeed({required String phrase, dynamic hint});
 
@@ -486,6 +491,17 @@ class LnPaymentDetails {
     this.lnAddress,
     this.lnurlMetadata,
   });
+}
+
+@freezed
+class LnUrlAuthCallbackStatus with _$LnUrlAuthCallbackStatus {
+  /// On-wire format is: `{"status": "OK"}`
+  const factory LnUrlAuthCallbackStatus.ok() = LnUrlAuthCallbackStatus_Ok;
+
+  /// On-wire format is: `{"status": "ERROR", "reason": "error details..."}`
+  const factory LnUrlAuthCallbackStatus.errorStatus({
+    required LnUrlErrorData data,
+  }) = LnUrlAuthCallbackStatus_ErrorStatus;
 }
 
 /// Wrapped in a [LnUrlAuth], this is the result of [parse] when given a LNURL-auth endpoint.
@@ -1472,6 +1488,22 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["reqData", "amountSats", "description"],
       );
 
+  Future<LnUrlAuthCallbackStatus> lnurlAuth({required LnUrlAuthRequestData reqData, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_ln_url_auth_request_data(reqData);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_lnurl_auth(port_, arg0),
+      parseSuccessData: _wire2api_ln_url_auth_callback_status,
+      constMeta: kLnurlAuthConstMeta,
+      argValues: [reqData],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kLnurlAuthConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "lnurl_auth",
+        argNames: ["reqData"],
+      );
+
   Future<Uint8List> mnemonicToSeed({required String phrase, dynamic hint}) {
     var arg0 = _platform.api2wire_String(phrase);
     return _platform.executeNormal(FlutterRustBridgeTask(
@@ -1863,6 +1895,19 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       lnAddress: _wire2api_opt_String(arr[7]),
       lnurlMetadata: _wire2api_opt_String(arr[8]),
     );
+  }
+
+  LnUrlAuthCallbackStatus _wire2api_ln_url_auth_callback_status(dynamic raw) {
+    switch (raw[0]) {
+      case 0:
+        return LnUrlAuthCallbackStatus_Ok();
+      case 1:
+        return LnUrlAuthCallbackStatus_ErrorStatus(
+          data: _wire2api_box_autoadd_ln_url_error_data(raw[1]),
+        );
+      default:
+        throw Exception("unreachable");
+    }
   }
 
   LnUrlAuthRequestData _wire2api_ln_url_auth_request_data(dynamic raw) {
@@ -2336,6 +2381,14 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<wire_LnUrlAuthRequestData> api2wire_box_autoadd_ln_url_auth_request_data(
+      LnUrlAuthRequestData raw) {
+    final ptr = inner.new_box_autoadd_ln_url_auth_request_data_0();
+    _api_fill_to_wire_ln_url_auth_request_data(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
   ffi.Pointer<wire_LnUrlPayRequestData> api2wire_box_autoadd_ln_url_pay_request_data(
       LnUrlPayRequestData raw) {
     final ptr = inner.new_box_autoadd_ln_url_pay_request_data_0();
@@ -2400,6 +2453,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     _api_fill_to_wire_greenlight_credentials(apiObj, wireObj.ref);
   }
 
+  void _api_fill_to_wire_box_autoadd_ln_url_auth_request_data(
+      LnUrlAuthRequestData apiObj, ffi.Pointer<wire_LnUrlAuthRequestData> wireObj) {
+    _api_fill_to_wire_ln_url_auth_request_data(apiObj, wireObj.ref);
+  }
+
   void _api_fill_to_wire_box_autoadd_ln_url_pay_request_data(
       LnUrlPayRequestData apiObj, ffi.Pointer<wire_LnUrlPayRequestData> wireObj) {
     _api_fill_to_wire_ln_url_pay_request_data(apiObj, wireObj.ref);
@@ -2426,6 +2484,14 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
       GreenlightCredentials apiObj, wire_GreenlightCredentials wireObj) {
     wireObj.device_key = api2wire_uint_8_list(apiObj.deviceKey);
     wireObj.device_cert = api2wire_uint_8_list(apiObj.deviceCert);
+  }
+
+  void _api_fill_to_wire_ln_url_auth_request_data(
+      LnUrlAuthRequestData apiObj, wire_LnUrlAuthRequestData wireObj) {
+    wireObj.k1 = api2wire_String(apiObj.k1);
+    wireObj.action = api2wire_opt_String(apiObj.action);
+    wireObj.domain = api2wire_String(apiObj.domain);
+    wireObj.url = api2wire_String(apiObj.url);
   }
 
   void _api_fill_to_wire_ln_url_pay_request_data(
@@ -2995,6 +3061,22 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_lnurl_withdraw = _wire_lnurl_withdrawPtr.asFunction<
       void Function(int, ffi.Pointer<wire_LnUrlWithdrawRequestData>, int, ffi.Pointer<wire_uint_8_list>)>();
 
+  void wire_lnurl_auth(
+    int port_,
+    ffi.Pointer<wire_LnUrlAuthRequestData> req_data,
+  ) {
+    return _wire_lnurl_auth(
+      port_,
+      req_data,
+    );
+  }
+
+  late final _wire_lnurl_authPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_LnUrlAuthRequestData>)>>(
+          'wire_lnurl_auth');
+  late final _wire_lnurl_auth =
+      _wire_lnurl_authPtr.asFunction<void Function(int, ffi.Pointer<wire_LnUrlAuthRequestData>)>();
+
   void wire_mnemonic_to_seed(
     int port_,
     ffi.Pointer<wire_uint_8_list> phrase,
@@ -3068,6 +3150,16 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
       _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Int64> Function(ffi.Int64)>>('new_box_autoadd_i64_0');
   late final _new_box_autoadd_i64_0 =
       _new_box_autoadd_i64_0Ptr.asFunction<ffi.Pointer<ffi.Int64> Function(int)>();
+
+  ffi.Pointer<wire_LnUrlAuthRequestData> new_box_autoadd_ln_url_auth_request_data_0() {
+    return _new_box_autoadd_ln_url_auth_request_data_0();
+  }
+
+  late final _new_box_autoadd_ln_url_auth_request_data_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_LnUrlAuthRequestData> Function()>>(
+          'new_box_autoadd_ln_url_auth_request_data_0');
+  late final _new_box_autoadd_ln_url_auth_request_data_0 = _new_box_autoadd_ln_url_auth_request_data_0Ptr
+      .asFunction<ffi.Pointer<wire_LnUrlAuthRequestData> Function()>();
 
   ffi.Pointer<wire_LnUrlPayRequestData> new_box_autoadd_ln_url_pay_request_data_0() {
     return _new_box_autoadd_ln_url_pay_request_data_0();
@@ -3198,6 +3290,16 @@ class wire_LnUrlWithdrawRequestData extends ffi.Struct {
 
   @ffi.Uint64()
   external int max_withdrawable;
+}
+
+class wire_LnUrlAuthRequestData extends ffi.Struct {
+  external ffi.Pointer<wire_uint_8_list> k1;
+
+  external ffi.Pointer<wire_uint_8_list> action;
+
+  external ffi.Pointer<wire_uint_8_list> domain;
+
+  external ffi.Pointer<wire_uint_8_list> url;
 }
 
 typedef DartPostCObjectFnType

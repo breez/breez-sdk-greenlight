@@ -12,26 +12,22 @@ class BreezBridge {
 
   /* Streams */
   /// Listen to node state
-  final StreamController<NodeState?> nodeStateController =
-      BehaviorSubject<NodeState?>();
+  final StreamController<NodeState?> nodeStateController = BehaviorSubject<NodeState?>();
 
   Stream<NodeState?> get nodeStateStream => nodeStateController.stream;
 
   /// Listen to payment list
-  final StreamController<List<Payment>> paymentsController =
-      BehaviorSubject<List<Payment>>();
+  final StreamController<List<Payment>> paymentsController = BehaviorSubject<List<Payment>>();
 
   Stream<List<Payment>> get paymentsStream => paymentsController.stream;
 
   /// Listen to paid Invoice events
-  final StreamController<InvoicePaidDetails> _invoicePaidStream =
-      BehaviorSubject<InvoicePaidDetails>();
+  final StreamController<InvoicePaidDetails> _invoicePaidStream = BehaviorSubject<InvoicePaidDetails>();
 
   Stream<InvoicePaidDetails> get invoicePaidStream => _invoicePaidStream.stream;
 
   /// Listen to payment results
-  final StreamController<Payment> _paymentResultStream =
-      BehaviorSubject<Payment>();
+  final StreamController<Payment> _paymentResultStream = BehaviorSubject<Payment>();
 
   Stream<Payment> get paymentResultStream => _paymentResultStream.stream;
 
@@ -213,8 +209,7 @@ class BreezBridge {
   }
 
   /// Convenience method to look up LSP info
-  Future<LspInformation?> fetchLspInfo(String lspId) async =>
-      await _lnToolkit.fetchLspInfo(id: lspId);
+  Future<LspInformation?> fetchLspInfo(String lspId) async => await _lnToolkit.fetchLspInfo(id: lspId);
 
   Future<String?> getLspId() async => await _lnToolkit.lspId();
 
@@ -228,8 +223,7 @@ class BreezBridge {
   }
 
   /// List all available fiat currencies
-  Future<List<FiatCurrency>> listFiatCurrencies() async =>
-      await _lnToolkit.listFiatCurrencies();
+  Future<List<FiatCurrency>> listFiatCurrencies() async => await _lnToolkit.listFiatCurrencies();
 
   /// close all channels with the current lsp
   Future closeLspChannels() async => await _lnToolkit.closeLspChannels();
@@ -251,8 +245,7 @@ class BreezBridge {
 
   Future<SwapInfo?> inProgressSwap() async => await _lnToolkit.inProgressSwap();
 
-  Future<List<SwapInfo>> listRefundables() async =>
-      await _lnToolkit.listRefundables();
+  Future<List<SwapInfo>> listRefundables() async => await _lnToolkit.listRefundables();
 
   Future<String> refund({
     required String swapAddress,
@@ -265,14 +258,11 @@ class BreezBridge {
         satPerVbyte: satPerVbyte,
       );
 
-  Future<String> executeCommand({required String command}) =>
-      _lnToolkit.executeCommand(command: command);
+  Future<String> executeCommand({required String command}) => _lnToolkit.executeCommand(command: command);
 
-  Future<LNInvoice> parseInvoice(String invoice) async =>
-      await _lnToolkit.parseInvoice(invoice: invoice);
+  Future<LNInvoice> parseInvoice(String invoice) async => await _lnToolkit.parseInvoice(invoice: invoice);
 
-  Future<InputType> parseInput({required String input}) async =>
-      await _lnToolkit.parse(s: input);
+  Future<InputType> parseInput({required String input}) async => await _lnToolkit.parse(s: input);
 
   /// Second step of LNURL-pay. The first step is `parse()`, which also validates the LNURL destination
   /// and generates the `LnUrlPayRequestData` payload needed here.
@@ -289,7 +279,11 @@ class BreezBridge {
   }
 
   /// Second step of LNURL-withdraw. The first step is `parse()`, which also validates the LNURL destination
-  /// and generates the `LnUrlW` payload needed here.
+  /// and generates the `LnUrlWithdrawRequestData` payload needed here.
+  ///
+  /// This call will validate the given `amount_sats` against the parameters
+  /// of the LNURL endpoint (`req_data`). If they match the endpoint requirements, the LNURL withdraw
+  /// request is made. A successful result here means the endpoint started the payment.
   Future<LnUrlWithdrawCallbackStatus> lnurlWithdraw({
     required int amountSats,
     String? description,
@@ -302,11 +296,23 @@ class BreezBridge {
     );
   }
 
+  /// Third and last step of LNURL-auth. The first step is `parse()`, which also validates the LNURL destination
+  /// and generates the `LnUrlAuthRequestData` payload needed here. The second step is user approval of auth action.
+  ///
+  /// This call will sign `k1` of the LNURL endpoint (`req_data`) on `secp256k1` using `linkingPrivKey` and DER-encodes the signature.
+  /// If they match the endpoint requirements, the LNURL auth request is made. A successful result here means the client signature is verified.
+  Future<LnUrlAuthCallbackStatus> lnurlAuth({
+    required LnUrlAuthRequestData reqData,
+  }) async {
+    return _lnToolkit.lnurlAuth(
+      reqData: reqData,
+    );
+  }
+
   /// Attempts to convert the phrase to a mnemonic, then to a seed.
   ///
   /// If the phrase is not a valid mnemonic, an error is returned.
-  Future<Uint8List> mnemonicToSeed(String phrase) async =>
-      await _lnToolkit.mnemonicToSeed(phrase: phrase);
+  Future<Uint8List> mnemonicToSeed(String phrase) async => await _lnToolkit.mnemonicToSeed(phrase: phrase);
 
   /// Fetches the current recommended fees
   Future<RecommendedFees> recommendedFees() => _lnToolkit.recommendedFees();

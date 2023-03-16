@@ -2240,6 +2240,303 @@ abstract class InputType_LnUrlError implements InputType {
 }
 
 /// @nodoc
+mixin _$LnUrlAuthCallbackStatus {
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function() ok,
+    required TResult Function(LnUrlErrorData data) errorStatus,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function()? ok,
+    TResult? Function(LnUrlErrorData data)? errorStatus,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function()? ok,
+    TResult Function(LnUrlErrorData data)? errorStatus,
+    required TResult orElse(),
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(LnUrlAuthCallbackStatus_Ok value) ok,
+    required TResult Function(LnUrlAuthCallbackStatus_ErrorStatus value) errorStatus,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(LnUrlAuthCallbackStatus_Ok value)? ok,
+    TResult? Function(LnUrlAuthCallbackStatus_ErrorStatus value)? errorStatus,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(LnUrlAuthCallbackStatus_Ok value)? ok,
+    TResult Function(LnUrlAuthCallbackStatus_ErrorStatus value)? errorStatus,
+    required TResult orElse(),
+  }) =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $LnUrlAuthCallbackStatusCopyWith<$Res> {
+  factory $LnUrlAuthCallbackStatusCopyWith(
+          LnUrlAuthCallbackStatus value, $Res Function(LnUrlAuthCallbackStatus) then) =
+      _$LnUrlAuthCallbackStatusCopyWithImpl<$Res, LnUrlAuthCallbackStatus>;
+}
+
+/// @nodoc
+class _$LnUrlAuthCallbackStatusCopyWithImpl<$Res, $Val extends LnUrlAuthCallbackStatus>
+    implements $LnUrlAuthCallbackStatusCopyWith<$Res> {
+  _$LnUrlAuthCallbackStatusCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+}
+
+/// @nodoc
+abstract class _$$LnUrlAuthCallbackStatus_OkCopyWith<$Res> {
+  factory _$$LnUrlAuthCallbackStatus_OkCopyWith(
+          _$LnUrlAuthCallbackStatus_Ok value, $Res Function(_$LnUrlAuthCallbackStatus_Ok) then) =
+      __$$LnUrlAuthCallbackStatus_OkCopyWithImpl<$Res>;
+}
+
+/// @nodoc
+class __$$LnUrlAuthCallbackStatus_OkCopyWithImpl<$Res>
+    extends _$LnUrlAuthCallbackStatusCopyWithImpl<$Res, _$LnUrlAuthCallbackStatus_Ok>
+    implements _$$LnUrlAuthCallbackStatus_OkCopyWith<$Res> {
+  __$$LnUrlAuthCallbackStatus_OkCopyWithImpl(
+      _$LnUrlAuthCallbackStatus_Ok _value, $Res Function(_$LnUrlAuthCallbackStatus_Ok) _then)
+      : super(_value, _then);
+}
+
+/// @nodoc
+
+class _$LnUrlAuthCallbackStatus_Ok implements LnUrlAuthCallbackStatus_Ok {
+  const _$LnUrlAuthCallbackStatus_Ok();
+
+  @override
+  String toString() {
+    return 'LnUrlAuthCallbackStatus.ok()';
+  }
+
+  @override
+  bool operator ==(dynamic other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType && other is _$LnUrlAuthCallbackStatus_Ok);
+  }
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function() ok,
+    required TResult Function(LnUrlErrorData data) errorStatus,
+  }) {
+    return ok();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function()? ok,
+    TResult? Function(LnUrlErrorData data)? errorStatus,
+  }) {
+    return ok?.call();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function()? ok,
+    TResult Function(LnUrlErrorData data)? errorStatus,
+    required TResult orElse(),
+  }) {
+    if (ok != null) {
+      return ok();
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(LnUrlAuthCallbackStatus_Ok value) ok,
+    required TResult Function(LnUrlAuthCallbackStatus_ErrorStatus value) errorStatus,
+  }) {
+    return ok(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(LnUrlAuthCallbackStatus_Ok value)? ok,
+    TResult? Function(LnUrlAuthCallbackStatus_ErrorStatus value)? errorStatus,
+  }) {
+    return ok?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(LnUrlAuthCallbackStatus_Ok value)? ok,
+    TResult Function(LnUrlAuthCallbackStatus_ErrorStatus value)? errorStatus,
+    required TResult orElse(),
+  }) {
+    if (ok != null) {
+      return ok(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class LnUrlAuthCallbackStatus_Ok implements LnUrlAuthCallbackStatus {
+  const factory LnUrlAuthCallbackStatus_Ok() = _$LnUrlAuthCallbackStatus_Ok;
+}
+
+/// @nodoc
+abstract class _$$LnUrlAuthCallbackStatus_ErrorStatusCopyWith<$Res> {
+  factory _$$LnUrlAuthCallbackStatus_ErrorStatusCopyWith(_$LnUrlAuthCallbackStatus_ErrorStatus value,
+          $Res Function(_$LnUrlAuthCallbackStatus_ErrorStatus) then) =
+      __$$LnUrlAuthCallbackStatus_ErrorStatusCopyWithImpl<$Res>;
+  @useResult
+  $Res call({LnUrlErrorData data});
+}
+
+/// @nodoc
+class __$$LnUrlAuthCallbackStatus_ErrorStatusCopyWithImpl<$Res>
+    extends _$LnUrlAuthCallbackStatusCopyWithImpl<$Res, _$LnUrlAuthCallbackStatus_ErrorStatus>
+    implements _$$LnUrlAuthCallbackStatus_ErrorStatusCopyWith<$Res> {
+  __$$LnUrlAuthCallbackStatus_ErrorStatusCopyWithImpl(_$LnUrlAuthCallbackStatus_ErrorStatus _value,
+      $Res Function(_$LnUrlAuthCallbackStatus_ErrorStatus) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? data = null,
+  }) {
+    return _then(_$LnUrlAuthCallbackStatus_ErrorStatus(
+      data: null == data
+          ? _value.data
+          : data // ignore: cast_nullable_to_non_nullable
+              as LnUrlErrorData,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$LnUrlAuthCallbackStatus_ErrorStatus implements LnUrlAuthCallbackStatus_ErrorStatus {
+  const _$LnUrlAuthCallbackStatus_ErrorStatus({required this.data});
+
+  @override
+  final LnUrlErrorData data;
+
+  @override
+  String toString() {
+    return 'LnUrlAuthCallbackStatus.errorStatus(data: $data)';
+  }
+
+  @override
+  bool operator ==(dynamic other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$LnUrlAuthCallbackStatus_ErrorStatus &&
+            (identical(other.data, data) || other.data == data));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, data);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$LnUrlAuthCallbackStatus_ErrorStatusCopyWith<_$LnUrlAuthCallbackStatus_ErrorStatus> get copyWith =>
+      __$$LnUrlAuthCallbackStatus_ErrorStatusCopyWithImpl<_$LnUrlAuthCallbackStatus_ErrorStatus>(
+          this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function() ok,
+    required TResult Function(LnUrlErrorData data) errorStatus,
+  }) {
+    return errorStatus(data);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function()? ok,
+    TResult? Function(LnUrlErrorData data)? errorStatus,
+  }) {
+    return errorStatus?.call(data);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function()? ok,
+    TResult Function(LnUrlErrorData data)? errorStatus,
+    required TResult orElse(),
+  }) {
+    if (errorStatus != null) {
+      return errorStatus(data);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(LnUrlAuthCallbackStatus_Ok value) ok,
+    required TResult Function(LnUrlAuthCallbackStatus_ErrorStatus value) errorStatus,
+  }) {
+    return errorStatus(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(LnUrlAuthCallbackStatus_Ok value)? ok,
+    TResult? Function(LnUrlAuthCallbackStatus_ErrorStatus value)? errorStatus,
+  }) {
+    return errorStatus?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(LnUrlAuthCallbackStatus_Ok value)? ok,
+    TResult Function(LnUrlAuthCallbackStatus_ErrorStatus value)? errorStatus,
+    required TResult orElse(),
+  }) {
+    if (errorStatus != null) {
+      return errorStatus(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class LnUrlAuthCallbackStatus_ErrorStatus implements LnUrlAuthCallbackStatus {
+  const factory LnUrlAuthCallbackStatus_ErrorStatus({required final LnUrlErrorData data}) =
+      _$LnUrlAuthCallbackStatus_ErrorStatus;
+
+  LnUrlErrorData get data;
+  @JsonKey(ignore: true)
+  _$$LnUrlAuthCallbackStatus_ErrorStatusCopyWith<_$LnUrlAuthCallbackStatus_ErrorStatus> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
 mixin _$LnUrlPayResult {
   Object? get data => throw _privateConstructorUsedError;
   @optionalTypeArgs
