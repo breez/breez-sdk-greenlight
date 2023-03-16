@@ -38,9 +38,9 @@ export enum InputType {
     URL = "url"
 }
 
-enum LnUrlPayResultType {
+export enum LnUrlPayResultType {
     ENDPOINT_SUCCESS = "endpointSuccess",
-    ENDPOINT_FAILURE = "endpointFailure"
+    ENDPOINT_ERROR = "endpointError"
 }
 
 export enum PaymentType {
@@ -469,7 +469,7 @@ export const payLnurl = async (reqData: LnUrlPayRequestData, amountSats: number,
 
     if (response.data) {
         switch (response.type) {
-            case LnUrlPayResultType.ENDPOINT_FAILURE:
+            case LnUrlPayResultType.ENDPOINT_ERROR:
                 lnUrlPayResult.data = response.data as LnUrlErrorData
                 break
             case LnUrlPayResultType.ENDPOINT_SUCCESS:

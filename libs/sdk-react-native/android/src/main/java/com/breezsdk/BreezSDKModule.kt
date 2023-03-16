@@ -213,6 +213,23 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
+    fun payLnurl(reqData: ReadableMap, amountSats: Double, comment: String?, promise: Promise) {
+        var lnUrlPayRequestData = asLnUrlPayRequestData(reqData)
+
+        if (lnUrlPayRequestData == null) {
+            promise.reject(TAG, "Invalid reqData")
+        } else {
+            try {
+                var lnUrlPayResult = getBreezServices().payLnurl(lnUrlPayRequestData, amountSats.toULong(), comment)
+                promise.resolve(readableMapOf(lnUrlPayResult))
+            } catch (e: SdkException) {
+                e.printStackTrace()
+                promise.reject(TAG, "Error calling payLnurl", e)
+            }
+        }
+    }
+
+    @ReactMethod
     fun withdrawLnurl(reqData: ReadableMap, amountSats: Double, description: String?, promise: Promise) {
         var lnUrlWithdrawRequestData = asLnUrlWithdrawRequestData(reqData)
 

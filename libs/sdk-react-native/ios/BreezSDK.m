@@ -92,6 +92,14 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
+    payLnurl: (NSDictionary*)reqData
+    amountSats: (NSUInteger*)amountSats
+    comment: (NSString*)comment
+    resolver: (RCTPromiseResolveBlock)resolve
+    rejecter: (RCTPromiseRejectBlock)reject
+)
+
+RCT_EXTERN_METHOD(
     withdrawLnurl: (NSDictionary*)reqData
     amountSats: (NSUInteger*)amountSats
     description: (NSString*)description

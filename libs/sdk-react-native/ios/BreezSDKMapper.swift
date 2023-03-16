@@ -60,6 +60,20 @@ class BreezSDKMapper {
         return nil
     }
     
+    static func asLnUrlPayRequestData(reqData: [String: Any]) -> LnUrlPayRequestData? {
+        if let callback = reqData["callback"] as? String,
+           let minSendable = reqData["minSendable"] as? UInt64,
+           let maxSendable = reqData["maxSendable"] as? UInt64,
+           let metadataStr = reqData["metadataStr"] as? String,
+           let commentAllowed = reqData["commentAllowed"] as? UInt16,
+           let domain = reqData["domain"] as? String {
+            let lnAddress = reqData["lnAddress"] as? String
+            return LnUrlPayRequestData(callback: callback, minSendable: minSendable, maxSendable: maxSendable, metadataStr: metadataStr, commentAllowed: commentAllowed, domain: domain, lnAddress: lnAddress)
+        }
+        
+        return nil
+    }
+    
     static func asLnUrlWithdrawRequestData(reqData: [String: Any]) -> LnUrlWithdrawRequestData? {
         if let callback = reqData["callback"] as? String,
            let k1 = reqData["k1"] as? String,
@@ -244,6 +258,21 @@ class BreezSDKMapper {
             var response: [String: Any] = ["status": "error"]
             response.merge(dictionaryOf(lnUrlErrorData: data)) {(_,new) in new}
             return response
+        }
+    }
+    
+    static func dictionaryOf(lnUrlPayResult: LnUrlPayResult) -> [String: Any?] {
+        switch(lnUrlPayResult) {
+        case let .endpointSuccess(data):
+            return [
+                "type": "endpointSuccess",
+                "data": dictionaryOf(successActionProcessed: data)
+            ]
+        case let .endpointError(data):
+            return [
+                "type": "endpointError",
+                "data": dictionaryOf(lnUrlErrorData: data)
+            ]
         }
     }
     
