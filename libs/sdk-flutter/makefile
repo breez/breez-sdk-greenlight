@@ -3,14 +3,14 @@ SOURCES=$(sort $(wildcard ../sdk-core/src/*.rs ../sdk-core/src/**/*.rs))
 .PHONY: init
 init:
 	cargo install cargo-ndk
-	cargo install flutter_rust_bridge_codegen --version 1.53.0
+	cargo install flutter_rust_bridge_codegen --version 1.70.0
 	flutter pub get
 
 ## all: Compile iOS, Android
 all: ios-universal android
 
 flutter_rust_bridge:
-	flutter_rust_bridge_codegen -r ../sdk-core/src/binding.rs -d lib/bridge_generated.dart -c ios/Classes/bridge_generated.h
+	flutter_rust_bridge_codegen --dart-format-line-length 110 -r ../sdk-core/src/binding.rs -d lib/bridge_generated.dart -c ios/Classes/bridge_generated.h
 
 ios-universal: $(SOURCES) flutter_rust_bridge
 	cd ../sdk-core && make ios	

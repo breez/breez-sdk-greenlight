@@ -76,14 +76,12 @@ mixin _$BreezEvent {
 
 /// @nodoc
 abstract class $BreezEventCopyWith<$Res> {
-  factory $BreezEventCopyWith(
-          BreezEvent value, $Res Function(BreezEvent) then) =
+  factory $BreezEventCopyWith(BreezEvent value, $Res Function(BreezEvent) then) =
       _$BreezEventCopyWithImpl<$Res, BreezEvent>;
 }
 
 /// @nodoc
-class _$BreezEventCopyWithImpl<$Res, $Val extends BreezEvent>
-    implements $BreezEventCopyWith<$Res> {
+class _$BreezEventCopyWithImpl<$Res, $Val extends BreezEvent> implements $BreezEventCopyWith<$Res> {
   _$BreezEventCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
@@ -94,16 +92,15 @@ class _$BreezEventCopyWithImpl<$Res, $Val extends BreezEvent>
 
 /// @nodoc
 abstract class _$$BreezEvent_NewBlockCopyWith<$Res> {
-  factory _$$BreezEvent_NewBlockCopyWith(_$BreezEvent_NewBlock value,
-          $Res Function(_$BreezEvent_NewBlock) then) =
+  factory _$$BreezEvent_NewBlockCopyWith(
+          _$BreezEvent_NewBlock value, $Res Function(_$BreezEvent_NewBlock) then) =
       __$$BreezEvent_NewBlockCopyWithImpl<$Res>;
   @useResult
   $Res call({int block});
 }
 
 /// @nodoc
-class __$$BreezEvent_NewBlockCopyWithImpl<$Res>
-    extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_NewBlock>
+class __$$BreezEvent_NewBlockCopyWithImpl<$Res> extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_NewBlock>
     implements _$$BreezEvent_NewBlockCopyWith<$Res> {
   __$$BreezEvent_NewBlockCopyWithImpl(
       _$BreezEvent_NewBlock _value, $Res Function(_$BreezEvent_NewBlock) _then)
@@ -151,8 +148,7 @@ class _$BreezEvent_NewBlock implements BreezEvent_NewBlock {
   @override
   @pragma('vm:prefer-inline')
   _$$BreezEvent_NewBlockCopyWith<_$BreezEvent_NewBlock> get copyWith =>
-      __$$BreezEvent_NewBlockCopyWithImpl<_$BreezEvent_NewBlock>(
-          this, _$identity);
+      __$$BreezEvent_NewBlockCopyWithImpl<_$BreezEvent_NewBlock>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -236,19 +232,17 @@ class _$BreezEvent_NewBlock implements BreezEvent_NewBlock {
 }
 
 abstract class BreezEvent_NewBlock implements BreezEvent {
-  const factory BreezEvent_NewBlock({required final int block}) =
-      _$BreezEvent_NewBlock;
+  const factory BreezEvent_NewBlock({required final int block}) = _$BreezEvent_NewBlock;
 
   int get block;
   @JsonKey(ignore: true)
-  _$$BreezEvent_NewBlockCopyWith<_$BreezEvent_NewBlock> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$BreezEvent_NewBlockCopyWith<_$BreezEvent_NewBlock> get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
 abstract class _$$BreezEvent_InvoicePaidCopyWith<$Res> {
-  factory _$$BreezEvent_InvoicePaidCopyWith(_$BreezEvent_InvoicePaid value,
-          $Res Function(_$BreezEvent_InvoicePaid) then) =
+  factory _$$BreezEvent_InvoicePaidCopyWith(
+          _$BreezEvent_InvoicePaid value, $Res Function(_$BreezEvent_InvoicePaid) then) =
       __$$BreezEvent_InvoicePaidCopyWithImpl<$Res>;
   @useResult
   $Res call({InvoicePaidDetails details});
@@ -258,8 +252,8 @@ abstract class _$$BreezEvent_InvoicePaidCopyWith<$Res> {
 class __$$BreezEvent_InvoicePaidCopyWithImpl<$Res>
     extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_InvoicePaid>
     implements _$$BreezEvent_InvoicePaidCopyWith<$Res> {
-  __$$BreezEvent_InvoicePaidCopyWithImpl(_$BreezEvent_InvoicePaid _value,
-      $Res Function(_$BreezEvent_InvoicePaid) _then)
+  __$$BreezEvent_InvoicePaidCopyWithImpl(
+      _$BreezEvent_InvoicePaid _value, $Res Function(_$BreezEvent_InvoicePaid) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -304,8 +298,7 @@ class _$BreezEvent_InvoicePaid implements BreezEvent_InvoicePaid {
   @override
   @pragma('vm:prefer-inline')
   _$$BreezEvent_InvoicePaidCopyWith<_$BreezEvent_InvoicePaid> get copyWith =>
-      __$$BreezEvent_InvoicePaidCopyWithImpl<_$BreezEvent_InvoicePaid>(
-          this, _$identity);
+      __$$BreezEvent_InvoicePaidCopyWithImpl<_$BreezEvent_InvoicePaid>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -389,8 +382,8 @@ class _$BreezEvent_InvoicePaid implements BreezEvent_InvoicePaid {
 }
 
 abstract class BreezEvent_InvoicePaid implements BreezEvent {
-  const factory BreezEvent_InvoicePaid(
-      {required final InvoicePaidDetails details}) = _$BreezEvent_InvoicePaid;
+  const factory BreezEvent_InvoicePaid({required final InvoicePaidDetails details}) =
+      _$BreezEvent_InvoicePaid;
 
   InvoicePaidDetails get details;
   @JsonKey(ignore: true)
@@ -400,17 +393,14 @@ abstract class BreezEvent_InvoicePaid implements BreezEvent {
 
 /// @nodoc
 abstract class _$$BreezEvent_SyncedCopyWith<$Res> {
-  factory _$$BreezEvent_SyncedCopyWith(
-          _$BreezEvent_Synced value, $Res Function(_$BreezEvent_Synced) then) =
+  factory _$$BreezEvent_SyncedCopyWith(_$BreezEvent_Synced value, $Res Function(_$BreezEvent_Synced) then) =
       __$$BreezEvent_SyncedCopyWithImpl<$Res>;
 }
 
 /// @nodoc
-class __$$BreezEvent_SyncedCopyWithImpl<$Res>
-    extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_Synced>
+class __$$BreezEvent_SyncedCopyWithImpl<$Res> extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_Synced>
     implements _$$BreezEvent_SyncedCopyWith<$Res> {
-  __$$BreezEvent_SyncedCopyWithImpl(
-      _$BreezEvent_Synced _value, $Res Function(_$BreezEvent_Synced) _then)
+  __$$BreezEvent_SyncedCopyWithImpl(_$BreezEvent_Synced _value, $Res Function(_$BreezEvent_Synced) _then)
       : super(_value, _then);
 }
 
@@ -426,8 +416,7 @@ class _$BreezEvent_Synced implements BreezEvent_Synced {
 
   @override
   bool operator ==(dynamic other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType && other is _$BreezEvent_Synced);
+    return identical(this, other) || (other.runtimeType == runtimeType && other is _$BreezEvent_Synced);
   }
 
   @override
@@ -521,8 +510,7 @@ abstract class BreezEvent_Synced implements BreezEvent {
 /// @nodoc
 abstract class _$$BreezEvent_PaymentSucceedCopyWith<$Res> {
   factory _$$BreezEvent_PaymentSucceedCopyWith(
-          _$BreezEvent_PaymentSucceed value,
-          $Res Function(_$BreezEvent_PaymentSucceed) then) =
+          _$BreezEvent_PaymentSucceed value, $Res Function(_$BreezEvent_PaymentSucceed) then) =
       __$$BreezEvent_PaymentSucceedCopyWithImpl<$Res>;
   @useResult
   $Res call({Payment details});
@@ -532,8 +520,8 @@ abstract class _$$BreezEvent_PaymentSucceedCopyWith<$Res> {
 class __$$BreezEvent_PaymentSucceedCopyWithImpl<$Res>
     extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_PaymentSucceed>
     implements _$$BreezEvent_PaymentSucceedCopyWith<$Res> {
-  __$$BreezEvent_PaymentSucceedCopyWithImpl(_$BreezEvent_PaymentSucceed _value,
-      $Res Function(_$BreezEvent_PaymentSucceed) _then)
+  __$$BreezEvent_PaymentSucceedCopyWithImpl(
+      _$BreezEvent_PaymentSucceed _value, $Res Function(_$BreezEvent_PaymentSucceed) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -577,9 +565,8 @@ class _$BreezEvent_PaymentSucceed implements BreezEvent_PaymentSucceed {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$BreezEvent_PaymentSucceedCopyWith<_$BreezEvent_PaymentSucceed>
-      get copyWith => __$$BreezEvent_PaymentSucceedCopyWithImpl<
-          _$BreezEvent_PaymentSucceed>(this, _$identity);
+  _$$BreezEvent_PaymentSucceedCopyWith<_$BreezEvent_PaymentSucceed> get copyWith =>
+      __$$BreezEvent_PaymentSucceedCopyWithImpl<_$BreezEvent_PaymentSucceed>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -663,19 +650,18 @@ class _$BreezEvent_PaymentSucceed implements BreezEvent_PaymentSucceed {
 }
 
 abstract class BreezEvent_PaymentSucceed implements BreezEvent {
-  const factory BreezEvent_PaymentSucceed({required final Payment details}) =
-      _$BreezEvent_PaymentSucceed;
+  const factory BreezEvent_PaymentSucceed({required final Payment details}) = _$BreezEvent_PaymentSucceed;
 
   Payment get details;
   @JsonKey(ignore: true)
-  _$$BreezEvent_PaymentSucceedCopyWith<_$BreezEvent_PaymentSucceed>
-      get copyWith => throw _privateConstructorUsedError;
+  _$$BreezEvent_PaymentSucceedCopyWith<_$BreezEvent_PaymentSucceed> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
 abstract class _$$BreezEvent_PaymentFailedCopyWith<$Res> {
-  factory _$$BreezEvent_PaymentFailedCopyWith(_$BreezEvent_PaymentFailed value,
-          $Res Function(_$BreezEvent_PaymentFailed) then) =
+  factory _$$BreezEvent_PaymentFailedCopyWith(
+          _$BreezEvent_PaymentFailed value, $Res Function(_$BreezEvent_PaymentFailed) then) =
       __$$BreezEvent_PaymentFailedCopyWithImpl<$Res>;
   @useResult
   $Res call({PaymentFailedData details});
@@ -685,8 +671,8 @@ abstract class _$$BreezEvent_PaymentFailedCopyWith<$Res> {
 class __$$BreezEvent_PaymentFailedCopyWithImpl<$Res>
     extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_PaymentFailed>
     implements _$$BreezEvent_PaymentFailedCopyWith<$Res> {
-  __$$BreezEvent_PaymentFailedCopyWithImpl(_$BreezEvent_PaymentFailed _value,
-      $Res Function(_$BreezEvent_PaymentFailed) _then)
+  __$$BreezEvent_PaymentFailedCopyWithImpl(
+      _$BreezEvent_PaymentFailed _value, $Res Function(_$BreezEvent_PaymentFailed) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -730,10 +716,8 @@ class _$BreezEvent_PaymentFailed implements BreezEvent_PaymentFailed {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$BreezEvent_PaymentFailedCopyWith<_$BreezEvent_PaymentFailed>
-      get copyWith =>
-          __$$BreezEvent_PaymentFailedCopyWithImpl<_$BreezEvent_PaymentFailed>(
-              this, _$identity);
+  _$$BreezEvent_PaymentFailedCopyWith<_$BreezEvent_PaymentFailed> get copyWith =>
+      __$$BreezEvent_PaymentFailedCopyWithImpl<_$BreezEvent_PaymentFailed>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -817,13 +801,13 @@ class _$BreezEvent_PaymentFailed implements BreezEvent_PaymentFailed {
 }
 
 abstract class BreezEvent_PaymentFailed implements BreezEvent {
-  const factory BreezEvent_PaymentFailed(
-      {required final PaymentFailedData details}) = _$BreezEvent_PaymentFailed;
+  const factory BreezEvent_PaymentFailed({required final PaymentFailedData details}) =
+      _$BreezEvent_PaymentFailed;
 
   PaymentFailedData get details;
   @JsonKey(ignore: true)
-  _$$BreezEvent_PaymentFailedCopyWith<_$BreezEvent_PaymentFailed>
-      get copyWith => throw _privateConstructorUsedError;
+  _$$BreezEvent_PaymentFailedCopyWith<_$BreezEvent_PaymentFailed> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
@@ -911,8 +895,7 @@ abstract class $InputTypeCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$InputTypeCopyWithImpl<$Res, $Val extends InputType>
-    implements $InputTypeCopyWith<$Res> {
+class _$InputTypeCopyWithImpl<$Res, $Val extends InputType> implements $InputTypeCopyWith<$Res> {
   _$InputTypeCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
@@ -923,8 +906,8 @@ class _$InputTypeCopyWithImpl<$Res, $Val extends InputType>
 
 /// @nodoc
 abstract class _$$InputType_BitcoinAddressCopyWith<$Res> {
-  factory _$$InputType_BitcoinAddressCopyWith(_$InputType_BitcoinAddress value,
-          $Res Function(_$InputType_BitcoinAddress) then) =
+  factory _$$InputType_BitcoinAddressCopyWith(
+          _$InputType_BitcoinAddress value, $Res Function(_$InputType_BitcoinAddress) then) =
       __$$InputType_BitcoinAddressCopyWithImpl<$Res>;
   @useResult
   $Res call({BitcoinAddressData address});
@@ -934,8 +917,8 @@ abstract class _$$InputType_BitcoinAddressCopyWith<$Res> {
 class __$$InputType_BitcoinAddressCopyWithImpl<$Res>
     extends _$InputTypeCopyWithImpl<$Res, _$InputType_BitcoinAddress>
     implements _$$InputType_BitcoinAddressCopyWith<$Res> {
-  __$$InputType_BitcoinAddressCopyWithImpl(_$InputType_BitcoinAddress _value,
-      $Res Function(_$InputType_BitcoinAddress) _then)
+  __$$InputType_BitcoinAddressCopyWithImpl(
+      _$InputType_BitcoinAddress _value, $Res Function(_$InputType_BitcoinAddress) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -979,10 +962,8 @@ class _$InputType_BitcoinAddress implements InputType_BitcoinAddress {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$InputType_BitcoinAddressCopyWith<_$InputType_BitcoinAddress>
-      get copyWith =>
-          __$$InputType_BitcoinAddressCopyWithImpl<_$InputType_BitcoinAddress>(
-              this, _$identity);
+  _$$InputType_BitcoinAddressCopyWith<_$InputType_BitcoinAddress> get copyWith =>
+      __$$InputType_BitcoinAddressCopyWithImpl<_$InputType_BitcoinAddress>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -1084,30 +1065,27 @@ class _$InputType_BitcoinAddress implements InputType_BitcoinAddress {
 }
 
 abstract class InputType_BitcoinAddress implements InputType {
-  const factory InputType_BitcoinAddress(
-      {required final BitcoinAddressData address}) = _$InputType_BitcoinAddress;
+  const factory InputType_BitcoinAddress({required final BitcoinAddressData address}) =
+      _$InputType_BitcoinAddress;
 
   BitcoinAddressData get address;
   @JsonKey(ignore: true)
-  _$$InputType_BitcoinAddressCopyWith<_$InputType_BitcoinAddress>
-      get copyWith => throw _privateConstructorUsedError;
+  _$$InputType_BitcoinAddressCopyWith<_$InputType_BitcoinAddress> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
 abstract class _$$InputType_Bolt11CopyWith<$Res> {
-  factory _$$InputType_Bolt11CopyWith(
-          _$InputType_Bolt11 value, $Res Function(_$InputType_Bolt11) then) =
+  factory _$$InputType_Bolt11CopyWith(_$InputType_Bolt11 value, $Res Function(_$InputType_Bolt11) then) =
       __$$InputType_Bolt11CopyWithImpl<$Res>;
   @useResult
   $Res call({LNInvoice invoice});
 }
 
 /// @nodoc
-class __$$InputType_Bolt11CopyWithImpl<$Res>
-    extends _$InputTypeCopyWithImpl<$Res, _$InputType_Bolt11>
+class __$$InputType_Bolt11CopyWithImpl<$Res> extends _$InputTypeCopyWithImpl<$Res, _$InputType_Bolt11>
     implements _$$InputType_Bolt11CopyWith<$Res> {
-  __$$InputType_Bolt11CopyWithImpl(
-      _$InputType_Bolt11 _value, $Res Function(_$InputType_Bolt11) _then)
+  __$$InputType_Bolt11CopyWithImpl(_$InputType_Bolt11 _value, $Res Function(_$InputType_Bolt11) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -1254,30 +1232,25 @@ class _$InputType_Bolt11 implements InputType_Bolt11 {
 }
 
 abstract class InputType_Bolt11 implements InputType {
-  const factory InputType_Bolt11({required final LNInvoice invoice}) =
-      _$InputType_Bolt11;
+  const factory InputType_Bolt11({required final LNInvoice invoice}) = _$InputType_Bolt11;
 
   LNInvoice get invoice;
   @JsonKey(ignore: true)
-  _$$InputType_Bolt11CopyWith<_$InputType_Bolt11> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$InputType_Bolt11CopyWith<_$InputType_Bolt11> get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
 abstract class _$$InputType_NodeIdCopyWith<$Res> {
-  factory _$$InputType_NodeIdCopyWith(
-          _$InputType_NodeId value, $Res Function(_$InputType_NodeId) then) =
+  factory _$$InputType_NodeIdCopyWith(_$InputType_NodeId value, $Res Function(_$InputType_NodeId) then) =
       __$$InputType_NodeIdCopyWithImpl<$Res>;
   @useResult
   $Res call({String nodeId});
 }
 
 /// @nodoc
-class __$$InputType_NodeIdCopyWithImpl<$Res>
-    extends _$InputTypeCopyWithImpl<$Res, _$InputType_NodeId>
+class __$$InputType_NodeIdCopyWithImpl<$Res> extends _$InputTypeCopyWithImpl<$Res, _$InputType_NodeId>
     implements _$$InputType_NodeIdCopyWith<$Res> {
-  __$$InputType_NodeIdCopyWithImpl(
-      _$InputType_NodeId _value, $Res Function(_$InputType_NodeId) _then)
+  __$$InputType_NodeIdCopyWithImpl(_$InputType_NodeId _value, $Res Function(_$InputType_NodeId) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -1424,30 +1397,25 @@ class _$InputType_NodeId implements InputType_NodeId {
 }
 
 abstract class InputType_NodeId implements InputType {
-  const factory InputType_NodeId({required final String nodeId}) =
-      _$InputType_NodeId;
+  const factory InputType_NodeId({required final String nodeId}) = _$InputType_NodeId;
 
   String get nodeId;
   @JsonKey(ignore: true)
-  _$$InputType_NodeIdCopyWith<_$InputType_NodeId> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$InputType_NodeIdCopyWith<_$InputType_NodeId> get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
 abstract class _$$InputType_UrlCopyWith<$Res> {
-  factory _$$InputType_UrlCopyWith(
-          _$InputType_Url value, $Res Function(_$InputType_Url) then) =
+  factory _$$InputType_UrlCopyWith(_$InputType_Url value, $Res Function(_$InputType_Url) then) =
       __$$InputType_UrlCopyWithImpl<$Res>;
   @useResult
   $Res call({String url});
 }
 
 /// @nodoc
-class __$$InputType_UrlCopyWithImpl<$Res>
-    extends _$InputTypeCopyWithImpl<$Res, _$InputType_Url>
+class __$$InputType_UrlCopyWithImpl<$Res> extends _$InputTypeCopyWithImpl<$Res, _$InputType_Url>
     implements _$$InputType_UrlCopyWith<$Res> {
-  __$$InputType_UrlCopyWithImpl(
-      _$InputType_Url _value, $Res Function(_$InputType_Url) _then)
+  __$$InputType_UrlCopyWithImpl(_$InputType_Url _value, $Res Function(_$InputType_Url) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -1598,25 +1566,22 @@ abstract class InputType_Url implements InputType {
 
   String get url;
   @JsonKey(ignore: true)
-  _$$InputType_UrlCopyWith<_$InputType_Url> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$InputType_UrlCopyWith<_$InputType_Url> get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
 abstract class _$$InputType_LnUrlPayCopyWith<$Res> {
-  factory _$$InputType_LnUrlPayCopyWith(_$InputType_LnUrlPay value,
-          $Res Function(_$InputType_LnUrlPay) then) =
+  factory _$$InputType_LnUrlPayCopyWith(
+          _$InputType_LnUrlPay value, $Res Function(_$InputType_LnUrlPay) then) =
       __$$InputType_LnUrlPayCopyWithImpl<$Res>;
   @useResult
   $Res call({LnUrlPayRequestData data});
 }
 
 /// @nodoc
-class __$$InputType_LnUrlPayCopyWithImpl<$Res>
-    extends _$InputTypeCopyWithImpl<$Res, _$InputType_LnUrlPay>
+class __$$InputType_LnUrlPayCopyWithImpl<$Res> extends _$InputTypeCopyWithImpl<$Res, _$InputType_LnUrlPay>
     implements _$$InputType_LnUrlPayCopyWith<$Res> {
-  __$$InputType_LnUrlPayCopyWithImpl(
-      _$InputType_LnUrlPay _value, $Res Function(_$InputType_LnUrlPay) _then)
+  __$$InputType_LnUrlPayCopyWithImpl(_$InputType_LnUrlPay _value, $Res Function(_$InputType_LnUrlPay) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -1661,8 +1626,7 @@ class _$InputType_LnUrlPay implements InputType_LnUrlPay {
   @override
   @pragma('vm:prefer-inline')
   _$$InputType_LnUrlPayCopyWith<_$InputType_LnUrlPay> get copyWith =>
-      __$$InputType_LnUrlPayCopyWithImpl<_$InputType_LnUrlPay>(
-          this, _$identity);
+      __$$InputType_LnUrlPayCopyWithImpl<_$InputType_LnUrlPay>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -1764,19 +1728,17 @@ class _$InputType_LnUrlPay implements InputType_LnUrlPay {
 }
 
 abstract class InputType_LnUrlPay implements InputType {
-  const factory InputType_LnUrlPay({required final LnUrlPayRequestData data}) =
-      _$InputType_LnUrlPay;
+  const factory InputType_LnUrlPay({required final LnUrlPayRequestData data}) = _$InputType_LnUrlPay;
 
   LnUrlPayRequestData get data;
   @JsonKey(ignore: true)
-  _$$InputType_LnUrlPayCopyWith<_$InputType_LnUrlPay> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$InputType_LnUrlPayCopyWith<_$InputType_LnUrlPay> get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
 abstract class _$$InputType_LnUrlWithdrawCopyWith<$Res> {
-  factory _$$InputType_LnUrlWithdrawCopyWith(_$InputType_LnUrlWithdraw value,
-          $Res Function(_$InputType_LnUrlWithdraw) then) =
+  factory _$$InputType_LnUrlWithdrawCopyWith(
+          _$InputType_LnUrlWithdraw value, $Res Function(_$InputType_LnUrlWithdraw) then) =
       __$$InputType_LnUrlWithdrawCopyWithImpl<$Res>;
   @useResult
   $Res call({LnUrlWithdrawRequestData data});
@@ -1786,8 +1748,8 @@ abstract class _$$InputType_LnUrlWithdrawCopyWith<$Res> {
 class __$$InputType_LnUrlWithdrawCopyWithImpl<$Res>
     extends _$InputTypeCopyWithImpl<$Res, _$InputType_LnUrlWithdraw>
     implements _$$InputType_LnUrlWithdrawCopyWith<$Res> {
-  __$$InputType_LnUrlWithdrawCopyWithImpl(_$InputType_LnUrlWithdraw _value,
-      $Res Function(_$InputType_LnUrlWithdraw) _then)
+  __$$InputType_LnUrlWithdrawCopyWithImpl(
+      _$InputType_LnUrlWithdraw _value, $Res Function(_$InputType_LnUrlWithdraw) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -1832,8 +1794,7 @@ class _$InputType_LnUrlWithdraw implements InputType_LnUrlWithdraw {
   @override
   @pragma('vm:prefer-inline')
   _$$InputType_LnUrlWithdrawCopyWith<_$InputType_LnUrlWithdraw> get copyWith =>
-      __$$InputType_LnUrlWithdrawCopyWithImpl<_$InputType_LnUrlWithdraw>(
-          this, _$identity);
+      __$$InputType_LnUrlWithdrawCopyWithImpl<_$InputType_LnUrlWithdraw>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -1935,8 +1896,7 @@ class _$InputType_LnUrlWithdraw implements InputType_LnUrlWithdraw {
 }
 
 abstract class InputType_LnUrlWithdraw implements InputType {
-  const factory InputType_LnUrlWithdraw(
-          {required final LnUrlWithdrawRequestData data}) =
+  const factory InputType_LnUrlWithdraw({required final LnUrlWithdrawRequestData data}) =
       _$InputType_LnUrlWithdraw;
 
   LnUrlWithdrawRequestData get data;
@@ -1947,16 +1907,15 @@ abstract class InputType_LnUrlWithdraw implements InputType {
 
 /// @nodoc
 abstract class _$$InputType_LnUrlAuthCopyWith<$Res> {
-  factory _$$InputType_LnUrlAuthCopyWith(_$InputType_LnUrlAuth value,
-          $Res Function(_$InputType_LnUrlAuth) then) =
+  factory _$$InputType_LnUrlAuthCopyWith(
+          _$InputType_LnUrlAuth value, $Res Function(_$InputType_LnUrlAuth) then) =
       __$$InputType_LnUrlAuthCopyWithImpl<$Res>;
   @useResult
   $Res call({LnUrlAuthRequestData data});
 }
 
 /// @nodoc
-class __$$InputType_LnUrlAuthCopyWithImpl<$Res>
-    extends _$InputTypeCopyWithImpl<$Res, _$InputType_LnUrlAuth>
+class __$$InputType_LnUrlAuthCopyWithImpl<$Res> extends _$InputTypeCopyWithImpl<$Res, _$InputType_LnUrlAuth>
     implements _$$InputType_LnUrlAuthCopyWith<$Res> {
   __$$InputType_LnUrlAuthCopyWithImpl(
       _$InputType_LnUrlAuth _value, $Res Function(_$InputType_LnUrlAuth) _then)
@@ -2004,8 +1963,7 @@ class _$InputType_LnUrlAuth implements InputType_LnUrlAuth {
   @override
   @pragma('vm:prefer-inline')
   _$$InputType_LnUrlAuthCopyWith<_$InputType_LnUrlAuth> get copyWith =>
-      __$$InputType_LnUrlAuthCopyWithImpl<_$InputType_LnUrlAuth>(
-          this, _$identity);
+      __$$InputType_LnUrlAuthCopyWithImpl<_$InputType_LnUrlAuth>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -2107,30 +2065,27 @@ class _$InputType_LnUrlAuth implements InputType_LnUrlAuth {
 }
 
 abstract class InputType_LnUrlAuth implements InputType {
-  const factory InputType_LnUrlAuth(
-      {required final LnUrlAuthRequestData data}) = _$InputType_LnUrlAuth;
+  const factory InputType_LnUrlAuth({required final LnUrlAuthRequestData data}) = _$InputType_LnUrlAuth;
 
   LnUrlAuthRequestData get data;
   @JsonKey(ignore: true)
-  _$$InputType_LnUrlAuthCopyWith<_$InputType_LnUrlAuth> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$InputType_LnUrlAuthCopyWith<_$InputType_LnUrlAuth> get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
 abstract class _$$InputType_LnUrlErrorCopyWith<$Res> {
-  factory _$$InputType_LnUrlErrorCopyWith(_$InputType_LnUrlError value,
-          $Res Function(_$InputType_LnUrlError) then) =
+  factory _$$InputType_LnUrlErrorCopyWith(
+          _$InputType_LnUrlError value, $Res Function(_$InputType_LnUrlError) then) =
       __$$InputType_LnUrlErrorCopyWithImpl<$Res>;
   @useResult
   $Res call({LnUrlErrorData data});
 }
 
 /// @nodoc
-class __$$InputType_LnUrlErrorCopyWithImpl<$Res>
-    extends _$InputTypeCopyWithImpl<$Res, _$InputType_LnUrlError>
+class __$$InputType_LnUrlErrorCopyWithImpl<$Res> extends _$InputTypeCopyWithImpl<$Res, _$InputType_LnUrlError>
     implements _$$InputType_LnUrlErrorCopyWith<$Res> {
-  __$$InputType_LnUrlErrorCopyWithImpl(_$InputType_LnUrlError _value,
-      $Res Function(_$InputType_LnUrlError) _then)
+  __$$InputType_LnUrlErrorCopyWithImpl(
+      _$InputType_LnUrlError _value, $Res Function(_$InputType_LnUrlError) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -2175,8 +2130,7 @@ class _$InputType_LnUrlError implements InputType_LnUrlError {
   @override
   @pragma('vm:prefer-inline')
   _$$InputType_LnUrlErrorCopyWith<_$InputType_LnUrlError> get copyWith =>
-      __$$InputType_LnUrlErrorCopyWithImpl<_$InputType_LnUrlError>(
-          this, _$identity);
+      __$$InputType_LnUrlErrorCopyWithImpl<_$InputType_LnUrlError>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -2278,13 +2232,11 @@ class _$InputType_LnUrlError implements InputType_LnUrlError {
 }
 
 abstract class InputType_LnUrlError implements InputType {
-  const factory InputType_LnUrlError({required final LnUrlErrorData data}) =
-      _$InputType_LnUrlError;
+  const factory InputType_LnUrlError({required final LnUrlErrorData data}) = _$InputType_LnUrlError;
 
   LnUrlErrorData get data;
   @JsonKey(ignore: true)
-  _$$InputType_LnUrlErrorCopyWith<_$InputType_LnUrlError> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$InputType_LnUrlErrorCopyWith<_$InputType_LnUrlError> get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
@@ -2311,8 +2263,7 @@ mixin _$LnUrlPayResult {
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
-    required TResult Function(LnUrlPayResult_EndpointSuccess value)
-        endpointSuccess,
+    required TResult Function(LnUrlPayResult_EndpointSuccess value) endpointSuccess,
     required TResult Function(LnUrlPayResult_EndpointError value) endpointError,
   }) =>
       throw _privateConstructorUsedError;
@@ -2333,8 +2284,7 @@ mixin _$LnUrlPayResult {
 
 /// @nodoc
 abstract class $LnUrlPayResultCopyWith<$Res> {
-  factory $LnUrlPayResultCopyWith(
-          LnUrlPayResult value, $Res Function(LnUrlPayResult) then) =
+  factory $LnUrlPayResultCopyWith(LnUrlPayResult value, $Res Function(LnUrlPayResult) then) =
       _$LnUrlPayResultCopyWithImpl<$Res, LnUrlPayResult>;
 }
 
@@ -2352,8 +2302,7 @@ class _$LnUrlPayResultCopyWithImpl<$Res, $Val extends LnUrlPayResult>
 /// @nodoc
 abstract class _$$LnUrlPayResult_EndpointSuccessCopyWith<$Res> {
   factory _$$LnUrlPayResult_EndpointSuccessCopyWith(
-          _$LnUrlPayResult_EndpointSuccess value,
-          $Res Function(_$LnUrlPayResult_EndpointSuccess) then) =
+          _$LnUrlPayResult_EndpointSuccess value, $Res Function(_$LnUrlPayResult_EndpointSuccess) then) =
       __$$LnUrlPayResult_EndpointSuccessCopyWithImpl<$Res>;
   @useResult
   $Res call({SuccessActionProcessed? data});
@@ -2366,8 +2315,7 @@ class __$$LnUrlPayResult_EndpointSuccessCopyWithImpl<$Res>
     extends _$LnUrlPayResultCopyWithImpl<$Res, _$LnUrlPayResult_EndpointSuccess>
     implements _$$LnUrlPayResult_EndpointSuccessCopyWith<$Res> {
   __$$LnUrlPayResult_EndpointSuccessCopyWithImpl(
-      _$LnUrlPayResult_EndpointSuccess _value,
-      $Res Function(_$LnUrlPayResult_EndpointSuccess) _then)
+      _$LnUrlPayResult_EndpointSuccess _value, $Res Function(_$LnUrlPayResult_EndpointSuccess) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -2398,8 +2346,7 @@ class __$$LnUrlPayResult_EndpointSuccessCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$LnUrlPayResult_EndpointSuccess
-    implements LnUrlPayResult_EndpointSuccess {
+class _$LnUrlPayResult_EndpointSuccess implements LnUrlPayResult_EndpointSuccess {
   const _$LnUrlPayResult_EndpointSuccess({this.data});
 
   @override
@@ -2424,9 +2371,8 @@ class _$LnUrlPayResult_EndpointSuccess
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$LnUrlPayResult_EndpointSuccessCopyWith<_$LnUrlPayResult_EndpointSuccess>
-      get copyWith => __$$LnUrlPayResult_EndpointSuccessCopyWithImpl<
-          _$LnUrlPayResult_EndpointSuccess>(this, _$identity);
+  _$$LnUrlPayResult_EndpointSuccessCopyWith<_$LnUrlPayResult_EndpointSuccess> get copyWith =>
+      __$$LnUrlPayResult_EndpointSuccessCopyWithImpl<_$LnUrlPayResult_EndpointSuccess>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -2462,8 +2408,7 @@ class _$LnUrlPayResult_EndpointSuccess
   @override
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
-    required TResult Function(LnUrlPayResult_EndpointSuccess value)
-        endpointSuccess,
+    required TResult Function(LnUrlPayResult_EndpointSuccess value) endpointSuccess,
     required TResult Function(LnUrlPayResult_EndpointError value) endpointError,
   }) {
     return endpointSuccess(this);
@@ -2493,21 +2438,20 @@ class _$LnUrlPayResult_EndpointSuccess
 }
 
 abstract class LnUrlPayResult_EndpointSuccess implements LnUrlPayResult {
-  const factory LnUrlPayResult_EndpointSuccess(
-      {final SuccessActionProcessed? data}) = _$LnUrlPayResult_EndpointSuccess;
+  const factory LnUrlPayResult_EndpointSuccess({final SuccessActionProcessed? data}) =
+      _$LnUrlPayResult_EndpointSuccess;
 
   @override
   SuccessActionProcessed? get data;
   @JsonKey(ignore: true)
-  _$$LnUrlPayResult_EndpointSuccessCopyWith<_$LnUrlPayResult_EndpointSuccess>
-      get copyWith => throw _privateConstructorUsedError;
+  _$$LnUrlPayResult_EndpointSuccessCopyWith<_$LnUrlPayResult_EndpointSuccess> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
 abstract class _$$LnUrlPayResult_EndpointErrorCopyWith<$Res> {
   factory _$$LnUrlPayResult_EndpointErrorCopyWith(
-          _$LnUrlPayResult_EndpointError value,
-          $Res Function(_$LnUrlPayResult_EndpointError) then) =
+          _$LnUrlPayResult_EndpointError value, $Res Function(_$LnUrlPayResult_EndpointError) then) =
       __$$LnUrlPayResult_EndpointErrorCopyWithImpl<$Res>;
   @useResult
   $Res call({LnUrlErrorData data});
@@ -2518,8 +2462,7 @@ class __$$LnUrlPayResult_EndpointErrorCopyWithImpl<$Res>
     extends _$LnUrlPayResultCopyWithImpl<$Res, _$LnUrlPayResult_EndpointError>
     implements _$$LnUrlPayResult_EndpointErrorCopyWith<$Res> {
   __$$LnUrlPayResult_EndpointErrorCopyWithImpl(
-      _$LnUrlPayResult_EndpointError _value,
-      $Res Function(_$LnUrlPayResult_EndpointError) _then)
+      _$LnUrlPayResult_EndpointError _value, $Res Function(_$LnUrlPayResult_EndpointError) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -2563,9 +2506,8 @@ class _$LnUrlPayResult_EndpointError implements LnUrlPayResult_EndpointError {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$LnUrlPayResult_EndpointErrorCopyWith<_$LnUrlPayResult_EndpointError>
-      get copyWith => __$$LnUrlPayResult_EndpointErrorCopyWithImpl<
-          _$LnUrlPayResult_EndpointError>(this, _$identity);
+  _$$LnUrlPayResult_EndpointErrorCopyWith<_$LnUrlPayResult_EndpointError> get copyWith =>
+      __$$LnUrlPayResult_EndpointErrorCopyWithImpl<_$LnUrlPayResult_EndpointError>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -2601,8 +2543,7 @@ class _$LnUrlPayResult_EndpointError implements LnUrlPayResult_EndpointError {
   @override
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
-    required TResult Function(LnUrlPayResult_EndpointSuccess value)
-        endpointSuccess,
+    required TResult Function(LnUrlPayResult_EndpointSuccess value) endpointSuccess,
     required TResult Function(LnUrlPayResult_EndpointError value) endpointError,
   }) {
     return endpointError(this);
@@ -2632,14 +2573,14 @@ class _$LnUrlPayResult_EndpointError implements LnUrlPayResult_EndpointError {
 }
 
 abstract class LnUrlPayResult_EndpointError implements LnUrlPayResult {
-  const factory LnUrlPayResult_EndpointError(
-      {required final LnUrlErrorData data}) = _$LnUrlPayResult_EndpointError;
+  const factory LnUrlPayResult_EndpointError({required final LnUrlErrorData data}) =
+      _$LnUrlPayResult_EndpointError;
 
   @override
   LnUrlErrorData get data;
   @JsonKey(ignore: true)
-  _$$LnUrlPayResult_EndpointErrorCopyWith<_$LnUrlPayResult_EndpointError>
-      get copyWith => throw _privateConstructorUsedError;
+  _$$LnUrlPayResult_EndpointErrorCopyWith<_$LnUrlPayResult_EndpointError> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
@@ -2666,22 +2607,19 @@ mixin _$LnUrlWithdrawCallbackStatus {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(LnUrlWithdrawCallbackStatus_Ok value) ok,
-    required TResult Function(LnUrlWithdrawCallbackStatus_ErrorStatus value)
-        errorStatus,
+    required TResult Function(LnUrlWithdrawCallbackStatus_ErrorStatus value) errorStatus,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(LnUrlWithdrawCallbackStatus_Ok value)? ok,
-    TResult? Function(LnUrlWithdrawCallbackStatus_ErrorStatus value)?
-        errorStatus,
+    TResult? Function(LnUrlWithdrawCallbackStatus_ErrorStatus value)? errorStatus,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(LnUrlWithdrawCallbackStatus_Ok value)? ok,
-    TResult Function(LnUrlWithdrawCallbackStatus_ErrorStatus value)?
-        errorStatus,
+    TResult Function(LnUrlWithdrawCallbackStatus_ErrorStatus value)? errorStatus,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -2690,15 +2628,12 @@ mixin _$LnUrlWithdrawCallbackStatus {
 /// @nodoc
 abstract class $LnUrlWithdrawCallbackStatusCopyWith<$Res> {
   factory $LnUrlWithdrawCallbackStatusCopyWith(
-          LnUrlWithdrawCallbackStatus value,
-          $Res Function(LnUrlWithdrawCallbackStatus) then) =
-      _$LnUrlWithdrawCallbackStatusCopyWithImpl<$Res,
-          LnUrlWithdrawCallbackStatus>;
+          LnUrlWithdrawCallbackStatus value, $Res Function(LnUrlWithdrawCallbackStatus) then) =
+      _$LnUrlWithdrawCallbackStatusCopyWithImpl<$Res, LnUrlWithdrawCallbackStatus>;
 }
 
 /// @nodoc
-class _$LnUrlWithdrawCallbackStatusCopyWithImpl<$Res,
-        $Val extends LnUrlWithdrawCallbackStatus>
+class _$LnUrlWithdrawCallbackStatusCopyWithImpl<$Res, $Val extends LnUrlWithdrawCallbackStatus>
     implements $LnUrlWithdrawCallbackStatusCopyWith<$Res> {
   _$LnUrlWithdrawCallbackStatusCopyWithImpl(this._value, this._then);
 
@@ -2711,26 +2646,22 @@ class _$LnUrlWithdrawCallbackStatusCopyWithImpl<$Res,
 /// @nodoc
 abstract class _$$LnUrlWithdrawCallbackStatus_OkCopyWith<$Res> {
   factory _$$LnUrlWithdrawCallbackStatus_OkCopyWith(
-          _$LnUrlWithdrawCallbackStatus_Ok value,
-          $Res Function(_$LnUrlWithdrawCallbackStatus_Ok) then) =
+          _$LnUrlWithdrawCallbackStatus_Ok value, $Res Function(_$LnUrlWithdrawCallbackStatus_Ok) then) =
       __$$LnUrlWithdrawCallbackStatus_OkCopyWithImpl<$Res>;
 }
 
 /// @nodoc
 class __$$LnUrlWithdrawCallbackStatus_OkCopyWithImpl<$Res>
-    extends _$LnUrlWithdrawCallbackStatusCopyWithImpl<$Res,
-        _$LnUrlWithdrawCallbackStatus_Ok>
+    extends _$LnUrlWithdrawCallbackStatusCopyWithImpl<$Res, _$LnUrlWithdrawCallbackStatus_Ok>
     implements _$$LnUrlWithdrawCallbackStatus_OkCopyWith<$Res> {
   __$$LnUrlWithdrawCallbackStatus_OkCopyWithImpl(
-      _$LnUrlWithdrawCallbackStatus_Ok _value,
-      $Res Function(_$LnUrlWithdrawCallbackStatus_Ok) _then)
+      _$LnUrlWithdrawCallbackStatus_Ok _value, $Res Function(_$LnUrlWithdrawCallbackStatus_Ok) _then)
       : super(_value, _then);
 }
 
 /// @nodoc
 
-class _$LnUrlWithdrawCallbackStatus_Ok
-    implements LnUrlWithdrawCallbackStatus_Ok {
+class _$LnUrlWithdrawCallbackStatus_Ok implements LnUrlWithdrawCallbackStatus_Ok {
   const _$LnUrlWithdrawCallbackStatus_Ok();
 
   @override
@@ -2741,8 +2672,7 @@ class _$LnUrlWithdrawCallbackStatus_Ok
   @override
   bool operator ==(dynamic other) {
     return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$LnUrlWithdrawCallbackStatus_Ok);
+        (other.runtimeType == runtimeType && other is _$LnUrlWithdrawCallbackStatus_Ok);
   }
 
   @override
@@ -2783,8 +2713,7 @@ class _$LnUrlWithdrawCallbackStatus_Ok
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(LnUrlWithdrawCallbackStatus_Ok value) ok,
-    required TResult Function(LnUrlWithdrawCallbackStatus_ErrorStatus value)
-        errorStatus,
+    required TResult Function(LnUrlWithdrawCallbackStatus_ErrorStatus value) errorStatus,
   }) {
     return ok(this);
   }
@@ -2793,8 +2722,7 @@ class _$LnUrlWithdrawCallbackStatus_Ok
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(LnUrlWithdrawCallbackStatus_Ok value)? ok,
-    TResult? Function(LnUrlWithdrawCallbackStatus_ErrorStatus value)?
-        errorStatus,
+    TResult? Function(LnUrlWithdrawCallbackStatus_ErrorStatus value)? errorStatus,
   }) {
     return ok?.call(this);
   }
@@ -2803,8 +2731,7 @@ class _$LnUrlWithdrawCallbackStatus_Ok
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(LnUrlWithdrawCallbackStatus_Ok value)? ok,
-    TResult Function(LnUrlWithdrawCallbackStatus_ErrorStatus value)?
-        errorStatus,
+    TResult Function(LnUrlWithdrawCallbackStatus_ErrorStatus value)? errorStatus,
     required TResult orElse(),
   }) {
     if (ok != null) {
@@ -2814,16 +2741,13 @@ class _$LnUrlWithdrawCallbackStatus_Ok
   }
 }
 
-abstract class LnUrlWithdrawCallbackStatus_Ok
-    implements LnUrlWithdrawCallbackStatus {
-  const factory LnUrlWithdrawCallbackStatus_Ok() =
-      _$LnUrlWithdrawCallbackStatus_Ok;
+abstract class LnUrlWithdrawCallbackStatus_Ok implements LnUrlWithdrawCallbackStatus {
+  const factory LnUrlWithdrawCallbackStatus_Ok() = _$LnUrlWithdrawCallbackStatus_Ok;
 }
 
 /// @nodoc
 abstract class _$$LnUrlWithdrawCallbackStatus_ErrorStatusCopyWith<$Res> {
-  factory _$$LnUrlWithdrawCallbackStatus_ErrorStatusCopyWith(
-          _$LnUrlWithdrawCallbackStatus_ErrorStatus value,
+  factory _$$LnUrlWithdrawCallbackStatus_ErrorStatusCopyWith(_$LnUrlWithdrawCallbackStatus_ErrorStatus value,
           $Res Function(_$LnUrlWithdrawCallbackStatus_ErrorStatus) then) =
       __$$LnUrlWithdrawCallbackStatus_ErrorStatusCopyWithImpl<$Res>;
   @useResult
@@ -2832,11 +2756,9 @@ abstract class _$$LnUrlWithdrawCallbackStatus_ErrorStatusCopyWith<$Res> {
 
 /// @nodoc
 class __$$LnUrlWithdrawCallbackStatus_ErrorStatusCopyWithImpl<$Res>
-    extends _$LnUrlWithdrawCallbackStatusCopyWithImpl<$Res,
-        _$LnUrlWithdrawCallbackStatus_ErrorStatus>
+    extends _$LnUrlWithdrawCallbackStatusCopyWithImpl<$Res, _$LnUrlWithdrawCallbackStatus_ErrorStatus>
     implements _$$LnUrlWithdrawCallbackStatus_ErrorStatusCopyWith<$Res> {
-  __$$LnUrlWithdrawCallbackStatus_ErrorStatusCopyWithImpl(
-      _$LnUrlWithdrawCallbackStatus_ErrorStatus _value,
+  __$$LnUrlWithdrawCallbackStatus_ErrorStatusCopyWithImpl(_$LnUrlWithdrawCallbackStatus_ErrorStatus _value,
       $Res Function(_$LnUrlWithdrawCallbackStatus_ErrorStatus) _then)
       : super(_value, _then);
 
@@ -2856,8 +2778,7 @@ class __$$LnUrlWithdrawCallbackStatus_ErrorStatusCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$LnUrlWithdrawCallbackStatus_ErrorStatus
-    implements LnUrlWithdrawCallbackStatus_ErrorStatus {
+class _$LnUrlWithdrawCallbackStatus_ErrorStatus implements LnUrlWithdrawCallbackStatus_ErrorStatus {
   const _$LnUrlWithdrawCallbackStatus_ErrorStatus({required this.data});
 
   @override
@@ -2882,10 +2803,10 @@ class _$LnUrlWithdrawCallbackStatus_ErrorStatus
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$LnUrlWithdrawCallbackStatus_ErrorStatusCopyWith<
-          _$LnUrlWithdrawCallbackStatus_ErrorStatus>
-      get copyWith => __$$LnUrlWithdrawCallbackStatus_ErrorStatusCopyWithImpl<
-          _$LnUrlWithdrawCallbackStatus_ErrorStatus>(this, _$identity);
+  _$$LnUrlWithdrawCallbackStatus_ErrorStatusCopyWith<_$LnUrlWithdrawCallbackStatus_ErrorStatus>
+      get copyWith =>
+          __$$LnUrlWithdrawCallbackStatus_ErrorStatusCopyWithImpl<_$LnUrlWithdrawCallbackStatus_ErrorStatus>(
+              this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -2922,8 +2843,7 @@ class _$LnUrlWithdrawCallbackStatus_ErrorStatus
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(LnUrlWithdrawCallbackStatus_Ok value) ok,
-    required TResult Function(LnUrlWithdrawCallbackStatus_ErrorStatus value)
-        errorStatus,
+    required TResult Function(LnUrlWithdrawCallbackStatus_ErrorStatus value) errorStatus,
   }) {
     return errorStatus(this);
   }
@@ -2932,8 +2852,7 @@ class _$LnUrlWithdrawCallbackStatus_ErrorStatus
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(LnUrlWithdrawCallbackStatus_Ok value)? ok,
-    TResult? Function(LnUrlWithdrawCallbackStatus_ErrorStatus value)?
-        errorStatus,
+    TResult? Function(LnUrlWithdrawCallbackStatus_ErrorStatus value)? errorStatus,
   }) {
     return errorStatus?.call(this);
   }
@@ -2942,8 +2861,7 @@ class _$LnUrlWithdrawCallbackStatus_ErrorStatus
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(LnUrlWithdrawCallbackStatus_Ok value)? ok,
-    TResult Function(LnUrlWithdrawCallbackStatus_ErrorStatus value)?
-        errorStatus,
+    TResult Function(LnUrlWithdrawCallbackStatus_ErrorStatus value)? errorStatus,
     required TResult orElse(),
   }) {
     if (errorStatus != null) {
@@ -2953,16 +2871,13 @@ class _$LnUrlWithdrawCallbackStatus_ErrorStatus
   }
 }
 
-abstract class LnUrlWithdrawCallbackStatus_ErrorStatus
-    implements LnUrlWithdrawCallbackStatus {
-  const factory LnUrlWithdrawCallbackStatus_ErrorStatus(
-          {required final LnUrlErrorData data}) =
+abstract class LnUrlWithdrawCallbackStatus_ErrorStatus implements LnUrlWithdrawCallbackStatus {
+  const factory LnUrlWithdrawCallbackStatus_ErrorStatus({required final LnUrlErrorData data}) =
       _$LnUrlWithdrawCallbackStatus_ErrorStatus;
 
   LnUrlErrorData get data;
   @JsonKey(ignore: true)
-  _$$LnUrlWithdrawCallbackStatus_ErrorStatusCopyWith<
-          _$LnUrlWithdrawCallbackStatus_ErrorStatus>
+  _$$LnUrlWithdrawCallbackStatus_ErrorStatusCopyWith<_$LnUrlWithdrawCallbackStatus_ErrorStatus>
       get copyWith => throw _privateConstructorUsedError;
 }
 
@@ -3011,8 +2926,7 @@ mixin _$PaymentDetails {
 
 /// @nodoc
 abstract class $PaymentDetailsCopyWith<$Res> {
-  factory $PaymentDetailsCopyWith(
-          PaymentDetails value, $Res Function(PaymentDetails) then) =
+  factory $PaymentDetailsCopyWith(PaymentDetails value, $Res Function(PaymentDetails) then) =
       _$PaymentDetailsCopyWithImpl<$Res, PaymentDetails>;
 }
 
@@ -3029,19 +2943,16 @@ class _$PaymentDetailsCopyWithImpl<$Res, $Val extends PaymentDetails>
 
 /// @nodoc
 abstract class _$$PaymentDetails_LnCopyWith<$Res> {
-  factory _$$PaymentDetails_LnCopyWith(
-          _$PaymentDetails_Ln value, $Res Function(_$PaymentDetails_Ln) then) =
+  factory _$$PaymentDetails_LnCopyWith(_$PaymentDetails_Ln value, $Res Function(_$PaymentDetails_Ln) then) =
       __$$PaymentDetails_LnCopyWithImpl<$Res>;
   @useResult
   $Res call({LnPaymentDetails data});
 }
 
 /// @nodoc
-class __$$PaymentDetails_LnCopyWithImpl<$Res>
-    extends _$PaymentDetailsCopyWithImpl<$Res, _$PaymentDetails_Ln>
+class __$$PaymentDetails_LnCopyWithImpl<$Res> extends _$PaymentDetailsCopyWithImpl<$Res, _$PaymentDetails_Ln>
     implements _$$PaymentDetails_LnCopyWith<$Res> {
-  __$$PaymentDetails_LnCopyWithImpl(
-      _$PaymentDetails_Ln _value, $Res Function(_$PaymentDetails_Ln) _then)
+  __$$PaymentDetails_LnCopyWithImpl(_$PaymentDetails_Ln _value, $Res Function(_$PaymentDetails_Ln) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -3152,21 +3063,18 @@ class _$PaymentDetails_Ln implements PaymentDetails_Ln {
 }
 
 abstract class PaymentDetails_Ln implements PaymentDetails {
-  const factory PaymentDetails_Ln({required final LnPaymentDetails data}) =
-      _$PaymentDetails_Ln;
+  const factory PaymentDetails_Ln({required final LnPaymentDetails data}) = _$PaymentDetails_Ln;
 
   @override
   LnPaymentDetails get data;
   @JsonKey(ignore: true)
-  _$$PaymentDetails_LnCopyWith<_$PaymentDetails_Ln> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$PaymentDetails_LnCopyWith<_$PaymentDetails_Ln> get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
 abstract class _$$PaymentDetails_ClosedChannelCopyWith<$Res> {
   factory _$$PaymentDetails_ClosedChannelCopyWith(
-          _$PaymentDetails_ClosedChannel value,
-          $Res Function(_$PaymentDetails_ClosedChannel) then) =
+          _$PaymentDetails_ClosedChannel value, $Res Function(_$PaymentDetails_ClosedChannel) then) =
       __$$PaymentDetails_ClosedChannelCopyWithImpl<$Res>;
   @useResult
   $Res call({ClosedChannelPaymentDetails data});
@@ -3177,8 +3085,7 @@ class __$$PaymentDetails_ClosedChannelCopyWithImpl<$Res>
     extends _$PaymentDetailsCopyWithImpl<$Res, _$PaymentDetails_ClosedChannel>
     implements _$$PaymentDetails_ClosedChannelCopyWith<$Res> {
   __$$PaymentDetails_ClosedChannelCopyWithImpl(
-      _$PaymentDetails_ClosedChannel _value,
-      $Res Function(_$PaymentDetails_ClosedChannel) _then)
+      _$PaymentDetails_ClosedChannel _value, $Res Function(_$PaymentDetails_ClosedChannel) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -3222,9 +3129,8 @@ class _$PaymentDetails_ClosedChannel implements PaymentDetails_ClosedChannel {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$PaymentDetails_ClosedChannelCopyWith<_$PaymentDetails_ClosedChannel>
-      get copyWith => __$$PaymentDetails_ClosedChannelCopyWithImpl<
-          _$PaymentDetails_ClosedChannel>(this, _$identity);
+  _$$PaymentDetails_ClosedChannelCopyWith<_$PaymentDetails_ClosedChannel> get copyWith =>
+      __$$PaymentDetails_ClosedChannelCopyWithImpl<_$PaymentDetails_ClosedChannel>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -3290,15 +3196,14 @@ class _$PaymentDetails_ClosedChannel implements PaymentDetails_ClosedChannel {
 }
 
 abstract class PaymentDetails_ClosedChannel implements PaymentDetails {
-  const factory PaymentDetails_ClosedChannel(
-          {required final ClosedChannelPaymentDetails data}) =
+  const factory PaymentDetails_ClosedChannel({required final ClosedChannelPaymentDetails data}) =
       _$PaymentDetails_ClosedChannel;
 
   @override
   ClosedChannelPaymentDetails get data;
   @JsonKey(ignore: true)
-  _$$PaymentDetails_ClosedChannelCopyWith<_$PaymentDetails_ClosedChannel>
-      get copyWith => throw _privateConstructorUsedError;
+  _$$PaymentDetails_ClosedChannelCopyWith<_$PaymentDetails_ClosedChannel> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
@@ -3352,14 +3257,13 @@ mixin _$SuccessActionProcessed {
 
 /// @nodoc
 abstract class $SuccessActionProcessedCopyWith<$Res> {
-  factory $SuccessActionProcessedCopyWith(SuccessActionProcessed value,
-          $Res Function(SuccessActionProcessed) then) =
+  factory $SuccessActionProcessedCopyWith(
+          SuccessActionProcessed value, $Res Function(SuccessActionProcessed) then) =
       _$SuccessActionProcessedCopyWithImpl<$Res, SuccessActionProcessed>;
 }
 
 /// @nodoc
-class _$SuccessActionProcessedCopyWithImpl<$Res,
-        $Val extends SuccessActionProcessed>
+class _$SuccessActionProcessedCopyWithImpl<$Res, $Val extends SuccessActionProcessed>
     implements $SuccessActionProcessedCopyWith<$Res> {
   _$SuccessActionProcessedCopyWithImpl(this._value, this._then);
 
@@ -3372,8 +3276,7 @@ class _$SuccessActionProcessedCopyWithImpl<$Res,
 /// @nodoc
 abstract class _$$SuccessActionProcessed_AesCopyWith<$Res> {
   factory _$$SuccessActionProcessed_AesCopyWith(
-          _$SuccessActionProcessed_Aes value,
-          $Res Function(_$SuccessActionProcessed_Aes) then) =
+          _$SuccessActionProcessed_Aes value, $Res Function(_$SuccessActionProcessed_Aes) then) =
       __$$SuccessActionProcessed_AesCopyWithImpl<$Res>;
   @useResult
   $Res call({AesSuccessActionDataDecrypted data});
@@ -3381,12 +3284,10 @@ abstract class _$$SuccessActionProcessed_AesCopyWith<$Res> {
 
 /// @nodoc
 class __$$SuccessActionProcessed_AesCopyWithImpl<$Res>
-    extends _$SuccessActionProcessedCopyWithImpl<$Res,
-        _$SuccessActionProcessed_Aes>
+    extends _$SuccessActionProcessedCopyWithImpl<$Res, _$SuccessActionProcessed_Aes>
     implements _$$SuccessActionProcessed_AesCopyWith<$Res> {
   __$$SuccessActionProcessed_AesCopyWithImpl(
-      _$SuccessActionProcessed_Aes _value,
-      $Res Function(_$SuccessActionProcessed_Aes) _then)
+      _$SuccessActionProcessed_Aes _value, $Res Function(_$SuccessActionProcessed_Aes) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -3430,9 +3331,8 @@ class _$SuccessActionProcessed_Aes implements SuccessActionProcessed_Aes {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$SuccessActionProcessed_AesCopyWith<_$SuccessActionProcessed_Aes>
-      get copyWith => __$$SuccessActionProcessed_AesCopyWithImpl<
-          _$SuccessActionProcessed_Aes>(this, _$identity);
+  _$$SuccessActionProcessed_AesCopyWith<_$SuccessActionProcessed_Aes> get copyWith =>
+      __$$SuccessActionProcessed_AesCopyWithImpl<_$SuccessActionProcessed_Aes>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -3504,22 +3404,20 @@ class _$SuccessActionProcessed_Aes implements SuccessActionProcessed_Aes {
 }
 
 abstract class SuccessActionProcessed_Aes implements SuccessActionProcessed {
-  const factory SuccessActionProcessed_Aes(
-          {required final AesSuccessActionDataDecrypted data}) =
+  const factory SuccessActionProcessed_Aes({required final AesSuccessActionDataDecrypted data}) =
       _$SuccessActionProcessed_Aes;
 
   @override
   AesSuccessActionDataDecrypted get data;
   @JsonKey(ignore: true)
-  _$$SuccessActionProcessed_AesCopyWith<_$SuccessActionProcessed_Aes>
-      get copyWith => throw _privateConstructorUsedError;
+  _$$SuccessActionProcessed_AesCopyWith<_$SuccessActionProcessed_Aes> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
 abstract class _$$SuccessActionProcessed_MessageCopyWith<$Res> {
   factory _$$SuccessActionProcessed_MessageCopyWith(
-          _$SuccessActionProcessed_Message value,
-          $Res Function(_$SuccessActionProcessed_Message) then) =
+          _$SuccessActionProcessed_Message value, $Res Function(_$SuccessActionProcessed_Message) then) =
       __$$SuccessActionProcessed_MessageCopyWithImpl<$Res>;
   @useResult
   $Res call({MessageSuccessActionData data});
@@ -3527,12 +3425,10 @@ abstract class _$$SuccessActionProcessed_MessageCopyWith<$Res> {
 
 /// @nodoc
 class __$$SuccessActionProcessed_MessageCopyWithImpl<$Res>
-    extends _$SuccessActionProcessedCopyWithImpl<$Res,
-        _$SuccessActionProcessed_Message>
+    extends _$SuccessActionProcessedCopyWithImpl<$Res, _$SuccessActionProcessed_Message>
     implements _$$SuccessActionProcessed_MessageCopyWith<$Res> {
   __$$SuccessActionProcessed_MessageCopyWithImpl(
-      _$SuccessActionProcessed_Message _value,
-      $Res Function(_$SuccessActionProcessed_Message) _then)
+      _$SuccessActionProcessed_Message _value, $Res Function(_$SuccessActionProcessed_Message) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -3551,8 +3447,7 @@ class __$$SuccessActionProcessed_MessageCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$SuccessActionProcessed_Message
-    implements SuccessActionProcessed_Message {
+class _$SuccessActionProcessed_Message implements SuccessActionProcessed_Message {
   const _$SuccessActionProcessed_Message({required this.data});
 
   @override
@@ -3577,9 +3472,8 @@ class _$SuccessActionProcessed_Message
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$SuccessActionProcessed_MessageCopyWith<_$SuccessActionProcessed_Message>
-      get copyWith => __$$SuccessActionProcessed_MessageCopyWithImpl<
-          _$SuccessActionProcessed_Message>(this, _$identity);
+  _$$SuccessActionProcessed_MessageCopyWith<_$SuccessActionProcessed_Message> get copyWith =>
+      __$$SuccessActionProcessed_MessageCopyWithImpl<_$SuccessActionProcessed_Message>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -3650,24 +3544,21 @@ class _$SuccessActionProcessed_Message
   }
 }
 
-abstract class SuccessActionProcessed_Message
-    implements SuccessActionProcessed {
-  const factory SuccessActionProcessed_Message(
-          {required final MessageSuccessActionData data}) =
+abstract class SuccessActionProcessed_Message implements SuccessActionProcessed {
+  const factory SuccessActionProcessed_Message({required final MessageSuccessActionData data}) =
       _$SuccessActionProcessed_Message;
 
   @override
   MessageSuccessActionData get data;
   @JsonKey(ignore: true)
-  _$$SuccessActionProcessed_MessageCopyWith<_$SuccessActionProcessed_Message>
-      get copyWith => throw _privateConstructorUsedError;
+  _$$SuccessActionProcessed_MessageCopyWith<_$SuccessActionProcessed_Message> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
 abstract class _$$SuccessActionProcessed_UrlCopyWith<$Res> {
   factory _$$SuccessActionProcessed_UrlCopyWith(
-          _$SuccessActionProcessed_Url value,
-          $Res Function(_$SuccessActionProcessed_Url) then) =
+          _$SuccessActionProcessed_Url value, $Res Function(_$SuccessActionProcessed_Url) then) =
       __$$SuccessActionProcessed_UrlCopyWithImpl<$Res>;
   @useResult
   $Res call({UrlSuccessActionData data});
@@ -3675,12 +3566,10 @@ abstract class _$$SuccessActionProcessed_UrlCopyWith<$Res> {
 
 /// @nodoc
 class __$$SuccessActionProcessed_UrlCopyWithImpl<$Res>
-    extends _$SuccessActionProcessedCopyWithImpl<$Res,
-        _$SuccessActionProcessed_Url>
+    extends _$SuccessActionProcessedCopyWithImpl<$Res, _$SuccessActionProcessed_Url>
     implements _$$SuccessActionProcessed_UrlCopyWith<$Res> {
   __$$SuccessActionProcessed_UrlCopyWithImpl(
-      _$SuccessActionProcessed_Url _value,
-      $Res Function(_$SuccessActionProcessed_Url) _then)
+      _$SuccessActionProcessed_Url _value, $Res Function(_$SuccessActionProcessed_Url) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -3724,9 +3613,8 @@ class _$SuccessActionProcessed_Url implements SuccessActionProcessed_Url {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$SuccessActionProcessed_UrlCopyWith<_$SuccessActionProcessed_Url>
-      get copyWith => __$$SuccessActionProcessed_UrlCopyWithImpl<
-          _$SuccessActionProcessed_Url>(this, _$identity);
+  _$$SuccessActionProcessed_UrlCopyWith<_$SuccessActionProcessed_Url> get copyWith =>
+      __$$SuccessActionProcessed_UrlCopyWithImpl<_$SuccessActionProcessed_Url>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -3798,13 +3686,12 @@ class _$SuccessActionProcessed_Url implements SuccessActionProcessed_Url {
 }
 
 abstract class SuccessActionProcessed_Url implements SuccessActionProcessed {
-  const factory SuccessActionProcessed_Url(
-          {required final UrlSuccessActionData data}) =
+  const factory SuccessActionProcessed_Url({required final UrlSuccessActionData data}) =
       _$SuccessActionProcessed_Url;
 
   @override
   UrlSuccessActionData get data;
   @JsonKey(ignore: true)
-  _$$SuccessActionProcessed_UrlCopyWith<_$SuccessActionProcessed_Url>
-      get copyWith => throw _privateConstructorUsedError;
+  _$$SuccessActionProcessed_UrlCopyWith<_$SuccessActionProcessed_Url> get copyWith =>
+      throw _privateConstructorUsedError;
 }
