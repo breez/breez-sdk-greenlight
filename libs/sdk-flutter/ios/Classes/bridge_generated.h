@@ -49,6 +49,13 @@ typedef struct wire_LnUrlWithdrawRequestData {
   uint64_t max_withdrawable;
 } wire_LnUrlWithdrawRequestData;
 
+typedef struct wire_LnUrlAuthRequestData {
+  struct wire_uint_8_list *k1;
+  struct wire_uint_8_list *action;
+  struct wire_uint_8_list *domain;
+  struct wire_uint_8_list *url;
+} wire_LnUrlAuthRequestData;
+
 typedef struct DartCObject *WireSyncReturn;
 
 void store_dart_post_cobject(DartPostCObjectFnType ptr);
@@ -148,6 +155,8 @@ void wire_lnurl_withdraw(int64_t port_,
                          uint64_t amount_sats,
                          struct wire_uint_8_list *description);
 
+void wire_lnurl_auth(int64_t port_, struct wire_LnUrlAuthRequestData *req_data);
+
 void wire_mnemonic_to_seed(int64_t port_, struct wire_uint_8_list *phrase);
 
 void wire_recommended_fees(int64_t port_);
@@ -159,6 +168,8 @@ struct wire_Config *new_box_autoadd_config_0(void);
 struct wire_GreenlightCredentials *new_box_autoadd_greenlight_credentials_0(void);
 
 int64_t *new_box_autoadd_i64_0(int64_t value);
+
+struct wire_LnUrlAuthRequestData *new_box_autoadd_ln_url_auth_request_data_0(void);
 
 struct wire_LnUrlPayRequestData *new_box_autoadd_ln_url_pay_request_data_0(void);
 
@@ -202,12 +213,14 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_parse);
     dummy_var ^= ((int64_t) (void*) wire_lnurl_pay);
     dummy_var ^= ((int64_t) (void*) wire_lnurl_withdraw);
+    dummy_var ^= ((int64_t) (void*) wire_lnurl_auth);
     dummy_var ^= ((int64_t) (void*) wire_mnemonic_to_seed);
     dummy_var ^= ((int64_t) (void*) wire_recommended_fees);
     dummy_var ^= ((int64_t) (void*) wire_default_config);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_config_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_greenlight_credentials_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_i64_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_auth_request_data_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_pay_request_data_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_withdraw_request_data_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_u64_0);

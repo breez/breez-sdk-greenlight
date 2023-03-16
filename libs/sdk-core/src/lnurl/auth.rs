@@ -1,4 +1,5 @@
-use crate::{LnUrlAuthRequestData, LnUrlWithdrawCallbackStatus, NodeAPI};
+use crate::lnurl::auth::model::*;
+use crate::{LnUrlAuthRequestData, NodeAPI};
 use anyhow::{anyhow, Result};
 use bitcoin::secp256k1::{Message, Secp256k1};
 use bitcoin::util::bip32::ChildNumber;
@@ -9,9 +10,35 @@ use reqwest::Url;
 use std::str::FromStr;
 use std::sync::Arc;
 
-pub type LnUrlAuthCallbackStatus = LnUrlWithdrawCallbackStatus;
+pub(crate) mod model {
+    use crate::input_parser::*;
 
-/// Performs the second and last step of LNURL-auth, as per
+    use serde::Deserialize;
+
+    /// Contains the result of the entire LNURL-auth interaction, as reported by the LNURL endpoint.
+    ///
+    /// * `Ok` indicates the interaction with the endpoint was valid, and the client signature is verified.
+    ///
+    /// * `Error` indicates a generic issue the LNURL endpoint encountered, including a freetext
+    /// description of the reason.
+    ///
+    /// Both cases are described in LUD-04: <https://github.com/lnurl/luds/blob/luds/04.md>
+    #[derive(Deserialize, Debug)]
+    #[serde(rename_all = "UPPERCASE")]
+    #[serde(tag = "status")]
+    pub enum LnUrlAuthCallbackStatus {
+        /// On-wire format is: `{"status": "OK"}`
+        Ok,
+        /// On-wire format is: `{"status": "ERROR", "reason": "error details..."}`
+        #[serde(rename = "ERROR")]
+        ErrorStatus {
+            #[serde(flatten)]
+            data: LnUrlErrorData,
+        },
+    }
+}
+
+/// Performs the third and last step of LNURL-auth, as per
 /// <https://github.com/lnurl/luds/blob/luds/04.md>
 ///
 /// See the [parse] docs for more detail on the full workflow.

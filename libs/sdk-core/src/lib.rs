@@ -168,7 +168,7 @@ pub use input_parser::{
 };
 pub use invoice::{parse_invoice, LNInvoice, RouteHint, RouteHintHop};
 
-pub use lnurl::auth::LnUrlAuthCallbackStatus;
+pub use lnurl::auth::model::LnUrlAuthCallbackStatus;
 pub use lnurl::pay::model::*;
 pub use lnurl::withdraw::model::LnUrlWithdrawCallbackStatus;
 pub use lsp::LspInformation;

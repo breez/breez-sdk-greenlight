@@ -203,6 +203,11 @@ pub extern "C" fn wire_lnurl_withdraw(
 }
 
 #[no_mangle]
+pub extern "C" fn wire_lnurl_auth(port_: i64, req_data: *mut wire_LnUrlAuthRequestData) {
+    wire_lnurl_auth_impl(port_, req_data)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_mnemonic_to_seed(port_: i64, phrase: *mut wire_uint_8_list) {
     wire_mnemonic_to_seed_impl(port_, phrase)
 }
@@ -232,6 +237,11 @@ pub extern "C" fn new_box_autoadd_greenlight_credentials_0() -> *mut wire_Greenl
 #[no_mangle]
 pub extern "C" fn new_box_autoadd_i64_0(value: i64) -> *mut i64 {
     support::new_leak_box_ptr(value)
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_autoadd_ln_url_auth_request_data_0() -> *mut wire_LnUrlAuthRequestData {
+    support::new_leak_box_ptr(wire_LnUrlAuthRequestData::new_with_null_ptr())
 }
 
 #[no_mangle]
@@ -286,6 +296,12 @@ impl Wire2Api<i64> for *mut i64 {
         unsafe { *support::box_from_leak_ptr(self) }
     }
 }
+impl Wire2Api<LnUrlAuthRequestData> for *mut wire_LnUrlAuthRequestData {
+    fn wire2api(self) -> LnUrlAuthRequestData {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<LnUrlAuthRequestData>::wire2api(*wrap).into()
+    }
+}
 impl Wire2Api<LnUrlPayRequestData> for *mut wire_LnUrlPayRequestData {
     fn wire2api(self) -> LnUrlPayRequestData {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
@@ -328,6 +344,16 @@ impl Wire2Api<GreenlightCredentials> for wire_GreenlightCredentials {
     }
 }
 
+impl Wire2Api<LnUrlAuthRequestData> for wire_LnUrlAuthRequestData {
+    fn wire2api(self) -> LnUrlAuthRequestData {
+        LnUrlAuthRequestData {
+            k1: self.k1.wire2api(),
+            action: self.action.wire2api(),
+            domain: self.domain.wire2api(),
+            url: self.url.wire2api(),
+        }
+    }
+}
 impl Wire2Api<LnUrlPayRequestData> for wire_LnUrlPayRequestData {
     fn wire2api(self) -> LnUrlPayRequestData {
         LnUrlPayRequestData {
@@ -382,6 +408,15 @@ pub struct wire_Config {
 pub struct wire_GreenlightCredentials {
     device_key: *mut wire_uint_8_list,
     device_cert: *mut wire_uint_8_list,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_LnUrlAuthRequestData {
+    k1: *mut wire_uint_8_list,
+    action: *mut wire_uint_8_list,
+    domain: *mut wire_uint_8_list,
+    url: *mut wire_uint_8_list,
 }
 
 #[repr(C)]
@@ -457,6 +492,23 @@ impl NewWithNullPtr for wire_GreenlightCredentials {
 }
 
 impl Default for wire_GreenlightCredentials {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_LnUrlAuthRequestData {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            k1: core::ptr::null_mut(),
+            action: core::ptr::null_mut(),
+            domain: core::ptr::null_mut(),
+            url: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_LnUrlAuthRequestData {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }

@@ -3,7 +3,7 @@
 use crate::breez_services::{self, BreezEvent, EventListener};
 use crate::chain::RecommendedFees;
 use crate::fiat::{FiatCurrency, Rate};
-use crate::input_parser::LnUrlPayRequestData;
+use crate::input_parser::{LnUrlAuthRequestData, LnUrlPayRequestData, LnUrlWithdrawRequestData};
 use crate::lsp::LspInformation;
 use crate::models::LogEntry;
 use anyhow::{anyhow, Result};
@@ -16,15 +16,16 @@ use tokio::sync::mpsc;
 
 use crate::breez_services::BreezServices;
 use crate::invoice::LNInvoice;
+use crate::lnurl::auth::model::LnUrlAuthCallbackStatus;
 use crate::lnurl::withdraw::model::LnUrlWithdrawCallbackStatus;
 use crate::models::{
-    Config, GreenlightCredentials, Network, NodeState, Payment, PaymentTypeFilter, SwapInfo,
+    Config, EnvironmentType, GreenlightCredentials, Network, NodeState, Payment, PaymentTypeFilter,
+    SwapInfo,
 };
 
 use crate::input_parser::InputType;
 use crate::invoice::{self};
 use crate::lnurl::pay::model::LnUrlPayResult;
-use crate::{EnvironmentType, LnUrlWithdrawRequestData};
 
 static BREEZ_SERVICES_INSTANCE: OnceCell<Arc<BreezServices>> = OnceCell::new();
 static BREEZ_SERVICES_SHUTDOWN: OnceCell<mpsc::Sender<()>> = OnceCell::new();
@@ -336,6 +337,11 @@ pub fn lnurl_withdraw(
             .lnurl_withdraw(req_data, amount_sats, description)
             .await
     })
+}
+
+/// See [BreezServices::lnurl_auth]
+pub fn lnurl_auth(req_data: LnUrlAuthRequestData) -> Result<LnUrlAuthCallbackStatus> {
+    block_on(async { get_breez_services()?.lnurl_auth(req_data).await })
 }
 
 /// See [breez_services::mnemonic_to_seed]
