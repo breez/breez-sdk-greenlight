@@ -1,4 +1,4 @@
-import { NativeModules, NativeEventEmitter, Platform } from "react-native"
+import { NativeModules, Platform, EmitterSubscription, NativeEventEmitter } from "react-native"
 
 const LINKING_ERROR =
     `The package 'react-native-breez-sdk' doesn't seem to be linked. Make sure: \n\n` +
@@ -38,6 +38,11 @@ export enum InputType {
     URL = "url"
 }
 
+export enum LnUrlPayResultType {
+    ENDPOINT_SUCCESS = "endpointSuccess",
+    ENDPOINT_ERROR = "endpointError"
+}
+
 export enum PaymentType {
     SEND = "send",
     RECEIVED = "received",
@@ -74,6 +79,7 @@ export enum SwapStatus {
 }
 
 export type AesSuccessActionDataDecrypted = {
+    type: string
     description: string
     plaintext: string
 }
@@ -102,6 +108,10 @@ export type CurrencyInfo = {
     localeOverrides?: LocaleOverrides[]
 }
 
+export type EventData = InvoicePaidDetails | Payment | number | PaymentFailedData
+
+export type EventFn = (type: EventType, data?: EventData) => void
+
 export type GreenlightCredentials = {
     deviceKey: Uint8Array
     deviceCert: Uint8Array
@@ -110,6 +120,11 @@ export type GreenlightCredentials = {
 export type FiatCurrency = {
     id: string
     info: CurrencyInfo
+}
+
+export type InputResponse = {
+    type: InputType
+    data: BitcoinAddressData | LnInvoice | LnUrlAuthRequestData | LnUrlErrorData | LnUrlPayRequestData | LnUrlWithdrawRequestData | NodeId | Url
 }
 
 export type InvoicePaidDetails = {
@@ -140,10 +155,6 @@ export type LogEntry = {
     line: string
     level: string
 }
-
-export type EventData = InvoicePaidDetails | Payment | number | PaymentFailedData
-
-export type EventFn = (type: EventType, data?: EventData) => void
 
 export type LogEntryFn = (l: LogEntry) => void
 
@@ -183,6 +194,11 @@ export type LnUrlPayRequestData = {
     commentAllowed: number
     domain: string
     lnAddress?: string
+}
+
+export type LnUrlPayResult = {
+    type: LnUrlPayResultType
+    data?: AesSuccessActionDataDecrypted | LnUrlErrorData | MessageSuccessActionData | UrlSuccessActionData
 }
 
 export type LnUrlWithdrawCallbackStatus = {
@@ -228,6 +244,7 @@ export type LspInformation = {
 }
 
 export type MessageSuccessActionData = {
+    type: string
     message: string
 }
 
@@ -318,6 +335,7 @@ export type Symbol = {
 export type Url = string
 
 export type UrlSuccessActionData = {
+    type: string
     description: string
     url: string
 }
@@ -331,7 +349,7 @@ export type UnspentTransactionOutput = {
     reservedToBlock: number
 }
 
-function processEvent(eventFn: EventFn) {
+const processEvent = (eventFn: EventFn) => {
     return (event: any) => {
         switch (event.type) {
             case EventType.INVOICE_PAID:
@@ -360,7 +378,7 @@ function processEvent(eventFn: EventFn) {
     }
 }
 
-function processSuccessActionProcessed(data: any): AesSuccessActionDataDecrypted | MessageSuccessActionData | UrlSuccessActionData | undefined {
+const processSuccessActionProcessed = (data: any): AesSuccessActionDataDecrypted | MessageSuccessActionData | UrlSuccessActionData | undefined => {
     switch (data.type) {
         case SuccessActionDataType.AES:
             return data as AesSuccessActionDataDecrypted
@@ -373,180 +391,178 @@ function processSuccessActionProcessed(data: any): AesSuccessActionDataDecrypted
     return
 }
 
-export async function addEventListener(eventFn: EventFn) {
-    BreezSDKEmitter.addListener("breezSdkEvent", processEvent(eventFn))
+export const addEventListener = (eventFn: EventFn): EmitterSubscription => {
+    return BreezSDKEmitter.addListener("breezSdkEvent", processEvent(eventFn))
 }
 
-export async function addLogListener(logEntryFn: LogEntryFn): Promise<void> {
-    BreezSDKEmitter.addListener("breezSdkLog", logEntryFn)
+export const addLogListener = async (logEntryFn: LogEntryFn): Promise<EmitterSubscription> => {
+    const subscription = BreezSDKEmitter.addListener("breezSdkLog", logEntryFn)
 
     await BreezSDK.startLogStream()
+
+    return subscription
 }
 
-export async function mnemonicToSeed(phrase: string): Promise<Uint8Array> {
+export const mnemonicToSeed = async (phrase: string): Promise<Uint8Array> => {
     return BreezSDK.mnemonicToSeed(phrase)
 }
 
-export async function parseInput(
-    input: string
-): Promise<BitcoinAddressData | LnInvoice | LnUrlAuthRequestData | LnUrlErrorData | LnUrlPayRequestData | LnUrlWithdrawRequestData | NodeId | Url> {
+export const parseInput = async (input: string): Promise<InputResponse> => {
     const response = await BreezSDK.parseInput(input)
-
-    switch (response.type) {
-        case InputType.BITCOIN_ADDRESS:
-            return response.data as BitcoinAddressData
-        case InputType.BOLT11:
-            return response.data as LnInvoice
-        case InputType.LNURL_AUTH:
-            return response.data as LnUrlAuthRequestData
-        case InputType.LNURL_ERROR:
-            return response.data as LnUrlErrorData
-        case InputType.LNURL_PAY:
-            return response.data as LnUrlPayRequestData
-        case InputType.LNURL_WITHDRAW:
-            return response.data as LnUrlWithdrawRequestData
-        case InputType.NODE_ID:
-            return response.data as NodeId
-        case InputType.URL:
-            return response.data as Url
-    }
-
-    throw Error(`Unknown input type: ${response.type}`)
+    return response as InputResponse
 }
 
-export async function parseInvoice(invoice: string): Promise<LnInvoice> {
+export const parseInvoice = async (invoice: string): Promise<LnInvoice> => {
     const response = await BreezSDK.parseInvoice(invoice)
     return response as LnInvoice
 }
 
-export async function registerNode(network: Network, seed: Uint8Array): Promise<GreenlightCredentials> {
+export const registerNode = async (network: Network, seed: Uint8Array): Promise<GreenlightCredentials> => {
     const response = await BreezSDK.registerNode(network, seed)
     return response as GreenlightCredentials
 }
 
-export async function recoverNode(network: Network, seed: Uint8Array): Promise<GreenlightCredentials> {
+export const recoverNode = async (network: Network, seed: Uint8Array): Promise<GreenlightCredentials> => {
     const response = await BreezSDK.recoverNode(network, seed)
     return response as GreenlightCredentials
 }
 
-export async function initServices(apiKey: string, deviceKey: Uint8Array, deviceCert: Uint8Array, seed: Uint8Array): Promise<void> {
+export const initServices = async (apiKey: string, deviceKey: Uint8Array, deviceCert: Uint8Array, seed: Uint8Array): Promise<void> => {
     await BreezSDK.initServices(apiKey, deviceKey, deviceCert, seed)
 }
 
-export async function start(): Promise<void> {
+export const start = async (): Promise<void> => {
     await BreezSDK.start()
 }
 
-export async function sync(): Promise<void> {
+export const sync = async (): Promise<void> => {
     await BreezSDK.sync()
 }
 
-export async function stop(): Promise<void> {
+export const stop = async (): Promise<void> => {
     await BreezSDK.stop()
 }
 
-export async function sendPayment(bolt11: string, amountSats: number = 0): Promise<Payment> {
+export const sendPayment = async (bolt11: string, amountSats: number = 0): Promise<Payment> => {
     const response = await BreezSDK.sendPayment(bolt11, amountSats)
     return response as Payment
 }
 
-export async function sendSpontaneousPayment(nodeId: string, amountSats: number): Promise<Payment> {
+export const sendSpontaneousPayment = async (nodeId: string, amountSats: number): Promise<Payment> => {
     const response = await BreezSDK.sendSpontaneousPayment(nodeId, amountSats)
     return response as Payment
 }
 
-export async function receivePayment(amountSats: number, description: string): Promise<LnInvoice> {
+export const receivePayment = async (amountSats: number, description: string): Promise<LnInvoice> => {
     const response = await BreezSDK.receivePayment(amountSats, description)
     return response as LnInvoice
 }
 
-export async function lnurlAuth(reqData: LnUrlAuthRequestData): Promise<LnUrlAuthCallbackStatus> {
+export const lnurlAuth = async (reqData: LnUrlAuthRequestData): Promise<LnUrlAuthCallbackStatus> => {
     const response = await BreezSDK.lnurlAuth(reqData)
     return response as LnUrlAuthCallbackStatus
 }
 
-export async function withdrawLnurl(
+export const payLnurl = async (reqData: LnUrlPayRequestData, amountSats: number, comment?: string): Promise<LnUrlPayResult> => {
+    const response = await BreezSDK.payLnurl(reqData, amountSats, comment)
+    const lnUrlPayResult = response as LnUrlPayResult
+
+    if (response.data) {
+        switch (response.type) {
+            case LnUrlPayResultType.ENDPOINT_ERROR:
+                lnUrlPayResult.data = response.data as LnUrlErrorData
+                break
+            case LnUrlPayResultType.ENDPOINT_SUCCESS:
+                lnUrlPayResult.data = processSuccessActionProcessed(response.data)
+                break
+        }
+    }
+
+    return lnUrlPayResult
+}
+
+export const withdrawLnurl = async (
     reqData: LnUrlWithdrawRequestData,
     amountSats: number,
     description?: string
-): Promise<LnUrlWithdrawCallbackStatus> {
+): Promise<LnUrlWithdrawCallbackStatus> => {
     const response = await BreezSDK.withdrawLnurl(reqData, amountSats, description)
     return response as LnUrlWithdrawCallbackStatus
 }
 
-export async function nodeInfo(): Promise<NodeState> {
+export const nodeInfo = async (): Promise<NodeState> => {
     const response = await BreezSDK.nodeInfo()
     return response as NodeState
 }
 
-export async function listPayments(filter: PaymentTypeFilter, fromTimestamp: number = 0, toTimestamp: number = 0): Promise<Payment[]> {
+export const listPayments = async (filter: PaymentTypeFilter, fromTimestamp: number = 0, toTimestamp: number = 0): Promise<Payment[]> => {
     const response = await BreezSDK.listPayments(filter, fromTimestamp, toTimestamp)
     return response as Payment[]
 }
 
-export async function sweep(toAddress: string, feeRateSatsPerByte: number): Promise<void> {
+export const sweep = async (toAddress: string, feeRateSatsPerByte: number): Promise<void> => {
     await BreezSDK.sweep(toAddress, feeRateSatsPerByte)
 }
 
-export async function fetchFiatRates(): Promise<Rate[]> {
+export const fetchFiatRates = async (): Promise<Rate[]> => {
     const response = await BreezSDK.fetchFiatRates()
     return response as Rate[]
 }
 
-export async function listFiatCurrencies(): Promise<FiatCurrency[]> {
+export const listFiatCurrencies = async (): Promise<FiatCurrency[]> => {
     const response = await BreezSDK.listFiatCurrencies()
     return response as FiatCurrency[]
 }
 
-export async function listLsps(): Promise<LspInformation[]> {
+export const listLsps = async (): Promise<LspInformation[]> => {
     const response = await BreezSDK.listLsps()
     return response as LspInformation[]
 }
 
-export async function connectLsp(lspId: string): Promise<void> {
+export const connectLsp = async (lspId: string): Promise<void> => {
     await BreezSDK.connectLsp(lspId)
 }
 
-export async function fetchLspInfo(lspId: string): Promise<LspInformation> {
+export const fetchLspInfo = async (lspId: string): Promise<LspInformation> => {
     const response = await BreezSDK.fetchLspInfo(lspId)
     return response as LspInformation
 }
 
-export async function lspId(): Promise<string> {
-    const response = await BreezSDK.lspId(lspId)
+export const lspId = async (): Promise<string> => {
+    const response = await BreezSDK.lspId()
     return response
 }
 
-export async function closeLspChannels(): Promise<void> {
+export const closeLspChannels = async (): Promise<void> => {
     await BreezSDK.closeLspChannels()
 }
 
-export async function receiveOnchain(): Promise<SwapInfo> {
+export const receiveOnchain = async (): Promise<SwapInfo> => {
     const response = await BreezSDK.receiveOnchain()
     return response as SwapInfo
 }
 
-export async function inProgressSwap(): Promise<SwapInfo> {
+export const inProgressSwap = async (): Promise<SwapInfo> => {
     const response = await BreezSDK.inProgressSwap()
     return response as SwapInfo
 }
 
-export async function listRefundables(): Promise<SwapInfo[]> {
+export const listRefundables = async (): Promise<SwapInfo[]> => {
     const response = await BreezSDK.listRefundables()
     return response as SwapInfo[]
 }
 
-export async function refund(swapAddress: string, toAddress: string, satPerVbyte: number): Promise<string> {
+export const refund = async (swapAddress: string, toAddress: string, satPerVbyte: number): Promise<string> => {
     const response = await BreezSDK.refund(swapAddress, toAddress, satPerVbyte)
     return response
 }
 
-export async function executeDevCommand(command: string): Promise<string> {
+export const executeDevCommand = async (command: string): Promise<string> => {
     const response = await BreezSDK.executeDevCommand(command)
     return response
 }
 
-export async function recommendedFees(): Promise<RecommendedFees> {
+export const recommendedFees = async (): Promise<RecommendedFees> => {
     const response = await BreezSDK.recommendedFees()
     return response as RecommendedFees
 }

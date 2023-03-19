@@ -20,6 +20,23 @@ fun asLnUrlAuthRequestData(reqData: ReadableMap): LnUrlAuthRequestData? {
     return null
 }
 
+fun asLnUrlPayRequestData(reqData: ReadableMap): LnUrlPayRequestData? {
+    var callback = reqData.getString("callback")
+    var metadataStr = reqData.getString("metadataStr")
+    var domain = reqData.getString("domain")
+    var lnAddress = reqData.getString("lnAddress")
+
+    if (callback != null && metadataStr != null && domain != null && reqData.hasKey("minSendable") && reqData.hasKey("minSendable") && reqData.hasKey("commentAllowed")) {
+        var minSendable = reqData.getDouble("minSendable")
+        var maxSendable = reqData.getDouble("maxSendable")
+        var commentAllowed = reqData.getInt("commentAllowed")
+
+        return LnUrlPayRequestData(callback, minSendable.toULong(), maxSendable.toULong(), metadataStr, commentAllowed.toUShort(), domain, lnAddress)
+    }
+
+    return null
+}
+
 fun asLnUrlWithdrawRequestData(reqData: ReadableMap): LnUrlWithdrawRequestData? {
     var callback = reqData.getString("callback")
     var k1 = reqData.getString("k1")
@@ -258,6 +275,23 @@ fun readableMapOf(lnUrlPayRequestData: LnUrlPayRequestData): ReadableMap {
             "domain" to lnUrlPayRequestData.domain,
             "lnAddress" to lnUrlPayRequestData.lnAddress
     )
+}
+
+fun readableMapOf(lnUrlPayResult: LnUrlPayResult): ReadableMap {
+    return when (lnUrlPayResult) {
+        is LnUrlPayResult.EndpointSuccess -> {
+            return readableMapOf(
+                    "type" to "endpointSuccess",
+                    "data" to readableMapOf(lnUrlPayResult.data)
+            )
+        }
+        is LnUrlPayResult.EndpointError -> {
+            return readableMapOf(
+                    "type" to "endpointError",
+                    "data" to readableMapOf(lnUrlPayResult.data)
+            )
+        }
+    }
 }
 
 fun readableMapOf(lnUrlWithdrawRequestData: LnUrlWithdrawRequestData): ReadableMap {

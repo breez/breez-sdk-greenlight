@@ -28,7 +28,7 @@ class BreezSDKMapper {
     static func arrayOf(payments: [Payment]) -> [Any] {
         return payments.map { (payment) -> [String: Any?] in return dictionaryOf(payment: payment) }
     }
-
+    
     static func arrayOf(rates: [Rate]) -> [Any] {
         return rates.map { (rate) -> [String: Any] in return dictionaryOf(rate: rate) }
     }
@@ -36,7 +36,7 @@ class BreezSDKMapper {
     static func arrayOf(routeHints: [RouteHint]) -> [Any] {
         return routeHints.map { (routeHint) -> [String: Any] in return dictionaryOf(routeHint: routeHint) }
     }
-
+    
     static func arrayOf(routeHintHops: [RouteHintHop]) -> [Any] {
         return routeHintHops.map { (routeHintHop) -> [String: Any?] in return dictionaryOf(routeHintHop: routeHintHop) }
     }
@@ -51,10 +51,24 @@ class BreezSDKMapper {
     
     static func asLnUrlAuthRequestData(reqData: [String: Any]) -> LnUrlAuthRequestData? {
         if let k1 = reqData["k1"] as? String,
-           let action = reqData["action"] as? String,
            let domain = reqData["domain"] as? String,
            let url = reqData["url"] as? String {
+            let action = reqData["action"] as? String
             return LnUrlAuthRequestData(k1: k1, action: action, domain: domain, url: url)
+        }
+        
+        return nil
+    }
+    
+    static func asLnUrlPayRequestData(reqData: [String: Any]) -> LnUrlPayRequestData? {
+        if let callback = reqData["callback"] as? String,
+           let minSendable = reqData["minSendable"] as? UInt64,
+           let maxSendable = reqData["maxSendable"] as? UInt64,
+           let metadataStr = reqData["metadataStr"] as? String,
+           let commentAllowed = reqData["commentAllowed"] as? UInt16,
+           let domain = reqData["domain"] as? String {
+            let lnAddress = reqData["lnAddress"] as? String
+            return LnUrlPayRequestData(callback: callback, minSendable: minSendable, maxSendable: maxSendable, metadataStr: metadataStr, commentAllowed: commentAllowed, domain: domain, lnAddress: lnAddress)
         }
         
         return nil
@@ -62,10 +76,10 @@ class BreezSDKMapper {
     
     static func asLnUrlWithdrawRequestData(reqData: [String: Any]) -> LnUrlWithdrawRequestData? {
         if let callback = reqData["callback"] as? String,
-            let k1 = reqData["k1"] as? String,
-            let defaultDescription = reqData["defaultDescription"] as? String,
-            let minWithdrawable = reqData["minWithdrawable"] as? UInt64,
-            let maxWithdrawable = reqData["maxWithdrawable"] as? UInt64 {
+           let k1 = reqData["k1"] as? String,
+           let defaultDescription = reqData["defaultDescription"] as? String,
+           let minWithdrawable = reqData["minWithdrawable"] as? UInt64,
+           let maxWithdrawable = reqData["maxWithdrawable"] as? UInt64 {
             return LnUrlWithdrawRequestData(callback: callback, k1: k1, defaultDescription: defaultDescription, minWithdrawable: minWithdrawable, maxWithdrawable: maxWithdrawable)
         }
         
@@ -117,7 +131,7 @@ class BreezSDKMapper {
             "fundingTxid": closedChannelPaymentDetails.fundingTxid
         ]
     }
-
+    
     static func dictionaryOf(currencyInfo: CurrencyInfo) -> [String: Any?] {
         return [
             "name": currencyInfo.name,
@@ -144,7 +158,7 @@ class BreezSDKMapper {
             "deviceCert": greenlightCredentials.deviceCert
         ]
     }
-
+    
     static func dictionaryOf(inputType: InputType) -> [String: Any?] {
         switch(inputType) {
         case let .bitcoinAddress(address):
@@ -172,7 +186,7 @@ class BreezSDKMapper {
             "bolt11": invoicePaidDetails.bolt11
         ]
     }
-
+    
     static func dictionaryOf(paymentFailedData: PaymentFailedData) -> [String: Any?] {
         return [
             "error": paymentFailedData.error,
@@ -244,6 +258,21 @@ class BreezSDKMapper {
             var response: [String: Any] = ["status": "error"]
             response.merge(dictionaryOf(lnUrlErrorData: data)) {(_,new) in new}
             return response
+        }
+    }
+    
+    static func dictionaryOf(lnUrlPayResult: LnUrlPayResult) -> [String: Any?] {
+        switch(lnUrlPayResult) {
+        case let .endpointSuccess(data):
+            return [
+                "type": "endpointSuccess",
+                "data": dictionaryOf(successActionProcessed: data)
+            ]
+        case let .endpointError(data):
+            return [
+                "type": "endpointError",
+                "data": dictionaryOf(lnUrlErrorData: data)
+            ]
         }
     }
     
@@ -325,7 +354,7 @@ class BreezSDKMapper {
             "inboundLiquidityMsats": nodeState.inboundLiquidityMsats
         ]
     }
-
+    
     static func dictionaryOf(payment: Payment) -> [String: Any?] {
         return [
             "id": payment.id,
@@ -338,7 +367,7 @@ class BreezSDKMapper {
             "details": dictionaryOf(paymentDetails: payment.details),
         ]
     }
-
+    
     static func dictionaryOf(paymentDetails: PaymentDetails) -> [String: Any?] {
         switch(paymentDetails) {
         case let .closedChannel(data):
@@ -364,11 +393,11 @@ class BreezSDKMapper {
             "minimumFee": recommendedFees.minimumFee
         ]
     }
-
+    
     static func dictionaryOf(routeHint: RouteHint) -> [String: Any] {
         return ["hops": self.arrayOf(routeHintHops: routeHint.hops)]
     }
-
+    
     static func dictionaryOf(routeHintHop: RouteHintHop) -> [String: Any?] {
         return [
             "srcNodeId": routeHintHop.srcNodeId,
@@ -431,7 +460,7 @@ class BreezSDKMapper {
             "lastRedeemError": swapInfo.lastRedeemError
         ]
     }
-
+    
     static func dictionaryOf(unspentTransactionOutput: UnspentTransactionOutput) -> [String: Any] {
         return [
             "txid": unspentTransactionOutput.txid,
