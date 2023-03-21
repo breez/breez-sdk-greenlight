@@ -9,13 +9,13 @@ const LINKING_ERROR =
 const BreezSDK = NativeModules.BreezSDK
     ? NativeModules.BreezSDK
     : new Proxy(
-          {},
-          {
-              get() {
-                  throw new Error(LINKING_ERROR)
-              }
-          }
-      )
+        {},
+        {
+            get() {
+                throw new Error(LINKING_ERROR)
+            }
+        }
+    )
 
 const BreezSDKEmitter = new NativeEventEmitter(BreezSDK)
 
@@ -177,7 +177,7 @@ export type LnUrlAuthRequestData = {
     url: string
 }
 
-export type LnUrlAuthCallbackStatus = {
+export type LnUrlCallbackStatus = {
     status: string
     reason?: string
 }
@@ -199,11 +199,6 @@ export type LnUrlPayRequestData = {
 export type LnUrlPayResult = {
     type: LnUrlPayResultType
     data?: AesSuccessActionDataDecrypted | LnUrlErrorData | MessageSuccessActionData | UrlSuccessActionData
-}
-
-export type LnUrlWithdrawCallbackStatus = {
-    status: string
-    reason?: string
 }
 
 export type LnUrlWithdrawRequestData = {
@@ -458,9 +453,9 @@ export const receivePayment = async (amountSats: number, description: string): P
     return response as LnInvoice
 }
 
-export const lnurlAuth = async (reqData: LnUrlAuthRequestData): Promise<LnUrlAuthCallbackStatus> => {
+export const lnurlAuth = async (reqData: LnUrlAuthRequestData): Promise<LnUrlCallbackStatus> => {
     const response = await BreezSDK.lnurlAuth(reqData)
-    return response as LnUrlAuthCallbackStatus
+    return response as LnUrlCallbackStatus
 }
 
 export const payLnurl = async (reqData: LnUrlPayRequestData, amountSats: number, comment?: string): Promise<LnUrlPayResult> => {
@@ -485,9 +480,9 @@ export const withdrawLnurl = async (
     reqData: LnUrlWithdrawRequestData,
     amountSats: number,
     description?: string
-): Promise<LnUrlWithdrawCallbackStatus> => {
+): Promise<LnUrlCallbackStatus> => {
     const response = await BreezSDK.withdrawLnurl(reqData, amountSats, description)
-    return response as LnUrlWithdrawCallbackStatus
+    return response as LnUrlCallbackStatus
 }
 
 export const nodeInfo = async (): Promise<NodeState> => {

@@ -255,13 +255,13 @@ fun readableMapOf(lnUrlErrorData: LnUrlErrorData): ReadableMap {
     return readableMapOf("reason" to lnUrlErrorData.reason)
 }
 
-fun readableMapOf(lnUrlAuthCallbackStatus: LnUrlAuthCallbackStatus): ReadableMap {
-    return when (lnUrlAuthCallbackStatus) {
-        is LnUrlAuthCallbackStatus.Ok -> readableMapOf("status" to "ok")
-        is LnUrlAuthCallbackStatus.ErrorStatus -> {
+fun readableMapOf(lnUrlCallbackStatus: LnUrlCallbackStatus): ReadableMap {
+    return when (lnUrlCallbackStatus) {
+        is LnUrlCallbackStatus.Ok -> readableMapOf("status" to "ok")
+        is LnUrlCallbackStatus.ErrorStatus -> {
             var response = Arguments.createMap()
             response.putString("status", "error")
-            response.merge(readableMapOf(lnUrlAuthCallbackStatus.data))
+            response.merge(readableMapOf(lnUrlCallbackStatus.data))
             response
         }
     }
@@ -304,18 +304,6 @@ fun readableMapOf(lnUrlWithdrawRequestData: LnUrlWithdrawRequestData): ReadableM
             "minWithdrawable" to lnUrlWithdrawRequestData.minWithdrawable,
             "maxWithdrawable" to lnUrlWithdrawRequestData.maxWithdrawable
     )
-}
-
-fun readableMapOf(lnUrlWithdrawCallbackStatus: LnUrlWithdrawCallbackStatus): ReadableMap {
-    return when (lnUrlWithdrawCallbackStatus) {
-        is LnUrlWithdrawCallbackStatus.Ok -> readableMapOf("status" to "ok")
-        is LnUrlWithdrawCallbackStatus.ErrorStatus -> {
-            var response = Arguments.createMap()
-            response.putString("status", "error")
-            response.merge(readableMapOf(lnUrlWithdrawCallbackStatus.data))
-            response
-        }
-    }
 }
 
 fun readableMapOf(localeOverride: LocaleOverrides): ReadableMap {
