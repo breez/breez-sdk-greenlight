@@ -250,8 +250,8 @@ class BreezSDKMapper {
         ]
     }
     
-    static func dictionaryOf(lnUrlAuthCallbackStatus: LnUrlAuthCallbackStatus) -> [String: Any] {
-        switch(lnUrlAuthCallbackStatus) {
+    static func dictionaryOf(lnUrlCallbackStatus: LnUrlCallbackStatus) -> [String: Any] {
+        switch(lnUrlCallbackStatus) {
         case .ok:
             return ["status": "ok"]
         case let .errorStatus(data):
@@ -273,17 +273,6 @@ class BreezSDKMapper {
                 "type": "endpointError",
                 "data": dictionaryOf(lnUrlErrorData: data)
             ]
-        }
-    }
-    
-    static func dictionaryOf(lnUrlWithdrawCallbackStatus: LnUrlWithdrawCallbackStatus) -> [String: Any] {
-        switch(lnUrlWithdrawCallbackStatus) {
-        case .ok:
-            return ["status": "ok"]
-        case let .errorStatus(data):
-            var response: [String: Any] = ["status": "error"]
-            response.merge(dictionaryOf(lnUrlErrorData: data)) {(_,new) in new}
-            return response
         }
     }
     

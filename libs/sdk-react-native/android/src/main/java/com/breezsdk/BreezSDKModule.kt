@@ -203,8 +203,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.reject(TAG, "Invalid reqData")
         } else {
             try {
-                var lnUrlAuthCallbackStatus = getBreezServices().lnurlAuth(lnUrlAuthRequestData)
-                promise.resolve(readableMapOf(lnUrlAuthCallbackStatus))
+                var lnUrlCallbackStatus = getBreezServices().lnurlAuth(lnUrlAuthRequestData)
+                promise.resolve(readableMapOf(lnUrlCallbackStatus))
             } catch (e: SdkException) {
                 e.printStackTrace()
                 promise.reject(TAG, "Error calling lnurlAuth", e)
@@ -237,8 +237,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.reject(TAG, "Invalid reqData")
         } else {
             try {
-                var lnUrlWithdrawCallbackStatus = getBreezServices().withdrawLnurl(lnUrlWithdrawRequestData, amountSats.toULong(), description)
-                promise.resolve(readableMapOf(lnUrlWithdrawCallbackStatus))
+                var lnUrlCallbackStatus = getBreezServices().withdrawLnurl(lnUrlWithdrawRequestData, amountSats.toULong(), description)
+                promise.resolve(readableMapOf(lnUrlCallbackStatus))
             } catch (e: SdkException) {
                 e.printStackTrace()
                 promise.reject(TAG, "Error calling withdrawLnurl", e)
