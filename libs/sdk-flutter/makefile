@@ -29,6 +29,15 @@ android: $(SOURCES) flutter_rust_bridge
 	cp ../target/i686-linux-android/release/libbreez_sdk_core.so android/src/main/jniLibs/x86/libbreez_sdk_core.so
 	cp ../target/x86_64-linux-android/release/libbreez_sdk_core.so android/src/main/jniLibs/x86_64/libbreez_sdk_core.so
 
+## desktop: compiles for x86_64-unknown-linux-gnu by default, other targets can be specified
+## with the TARGET variable eg. make desktop TARGET=aarch64-unknown-linux-gnu
+TARGET ?= x86_64-unknown-linux-gnu
+.PHONY: desktop
+desktop: $(SOURCES) flutter_rust_bridge
+	cd ../sdk-core && make $(TARGET)
+	mkdir -p ./$(TARGET)
+	cp ../target/$(TARGET)/release/libbreez_sdk_core.so ./$(TARGET)/libbreez_sdk_core.so
+
 ## clean:
 .PHONY: clean
 clean:

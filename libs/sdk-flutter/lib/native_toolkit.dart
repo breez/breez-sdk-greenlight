@@ -4,12 +4,24 @@ import 'bridge_generated.dart';
 
 BreezSdkCore? _breezSDK;
 
+const _libName = "libbreez_sdk_core.so";
+
+class UnsupportedPlatform implements Exception {
+  UnsupportedPlatform(String s);
+}
+
 BreezSdkCore getNativeToolkit() {
   if (_breezSDK == null) {
-    final DynamicLibrary lib = Platform.isAndroid
-      ? DynamicLibrary.open("libbreez_sdk_core.so")   // Load the dynamic library on Android
-      : DynamicLibrary.process();
-    _breezSDK = BreezSdkCoreImpl(lib);
+    if (Platform.isAndroid || Platform.isLinux) {
+      // On Linux the lib needs to be in LD_LIBRARY_PATH or working directory
+      _breezSDK = BreezSdkCoreImpl(DynamicLibrary.open(_libName));
+    } else if (Platform.isIOS || Platform.isMacOS) {
+      // iOS and macOS are statically linked
+      _breezSDK = BreezSdkCoreImpl(DynamicLibrary.process());
+    } else {
+      throw UnsupportedPlatform(
+          '${Platform.operatingSystem} is not yet supported!');
+    }
   }
   return _breezSDK!;
 }
