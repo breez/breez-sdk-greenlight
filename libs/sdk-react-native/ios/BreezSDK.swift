@@ -202,10 +202,11 @@ class BreezSDK: RCTEventEmitter {
     }
     
     @objc(payLnurl:amountSats:comment:resolver:rejecter:)
-    func payLnurl(_ reqData:[String: Any], amountSats:UInt64, comment:String?, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+    func payLnurl(_ reqData:[String: Any], amountSats:UInt64, comment:String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         if let lnUrlPayRequestData = BreezSDKMapper.asLnUrlPayRequestData(reqData: reqData) {
             do {
-                let lnUrlPayResult = try getBreezServices().payLnurl(reqData: lnUrlPayRequestData, amountSats: amountSats, comment: comment)
+                let optionalComment = comment.count == 0 ? nil : comment
+                let lnUrlPayResult = try getBreezServices().payLnurl(reqData: lnUrlPayRequestData, amountSats: amountSats, comment: optionalComment)
                 
                 resolve(BreezSDKMapper.dictionaryOf(lnUrlPayResult: lnUrlPayResult))
             } catch let err {
@@ -217,10 +218,11 @@ class BreezSDK: RCTEventEmitter {
     }
     
     @objc(withdrawLnurl:amountSats:description:resolver:rejecter:)
-    func withdrawLnurl(_ reqData:[String: Any], amountSats:UInt64, description:String?, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+    func withdrawLnurl(_ reqData:[String: Any], amountSats:UInt64, description:String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         if let lnUrlWithdrawRequestData = BreezSDKMapper.asLnUrlWithdrawRequestData(reqData: reqData) {
             do {
-                let lnUrlCallbackStatus = try getBreezServices().withdrawLnurl(reqData: lnUrlWithdrawRequestData, amountSats: amountSats, description: description)
+                let optionalDescription = description.count == 0 ? nil : description
+                let lnUrlCallbackStatus = try getBreezServices().withdrawLnurl(reqData: lnUrlWithdrawRequestData, amountSats: amountSats, description: optionalDescription)
                 
                 resolve(BreezSDKMapper.dictionaryOf(lnUrlCallbackStatus: lnUrlCallbackStatus))
             } catch let err {

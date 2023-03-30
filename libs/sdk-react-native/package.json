@@ -13,6 +13,7 @@
     "android",
     "ios",
     "breez_sdk.podspec",
+    "!example",
     "!lib/typescript/example",
     "!android/build",
     "!ios/build",

@@ -458,28 +458,15 @@ export const lnurlAuth = async (reqData: LnUrlAuthRequestData): Promise<LnUrlCal
     return response as LnUrlCallbackStatus
 }
 
-export const payLnurl = async (reqData: LnUrlPayRequestData, amountSats: number, comment?: string): Promise<LnUrlPayResult> => {
+export const payLnurl = async (reqData: LnUrlPayRequestData, amountSats: number, comment: string = ""): Promise<LnUrlPayResult> => {
     const response = await BreezSDK.payLnurl(reqData, amountSats, comment)
-    const lnUrlPayResult = response as LnUrlPayResult
-
-    if (response.data) {
-        switch (response.type) {
-            case LnUrlPayResultType.ENDPOINT_ERROR:
-                lnUrlPayResult.data = response.data as LnUrlErrorData
-                break
-            case LnUrlPayResultType.ENDPOINT_SUCCESS:
-                lnUrlPayResult.data = processSuccessActionProcessed(response.data)
-                break
-        }
-    }
-
-    return lnUrlPayResult
+    return response as LnUrlPayResult
 }
 
 export const withdrawLnurl = async (
     reqData: LnUrlWithdrawRequestData,
     amountSats: number,
-    description?: string
+    description: string = ""
 ): Promise<LnUrlCallbackStatus> => {
     const response = await BreezSDK.withdrawLnurl(reqData, amountSats, description)
     return response as LnUrlCallbackStatus
