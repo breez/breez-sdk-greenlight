@@ -213,14 +213,15 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun payLnurl(reqData: ReadableMap, amountSats: Double, comment: String?, promise: Promise) {
+    fun payLnurl(reqData: ReadableMap, amountSats: Double, comment: String, promise: Promise) {
         var lnUrlPayRequestData = asLnUrlPayRequestData(reqData)
 
         if (lnUrlPayRequestData == null) {
             promise.reject(TAG, "Invalid reqData")
         } else {
             try {
-                var lnUrlPayResult = getBreezServices().payLnurl(lnUrlPayRequestData, amountSats.toULong(), comment)
+                var optionalComment = comment.takeUnless { it.isEmpty() }
+                var lnUrlPayResult = getBreezServices().payLnurl(lnUrlPayRequestData, amountSats.toULong(), optionalComment)
                 promise.resolve(readableMapOf(lnUrlPayResult))
             } catch (e: SdkException) {
                 e.printStackTrace()
@@ -230,14 +231,15 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun withdrawLnurl(reqData: ReadableMap, amountSats: Double, description: String?, promise: Promise) {
+    fun withdrawLnurl(reqData: ReadableMap, amountSats: Double, description: String, promise: Promise) {
         var lnUrlWithdrawRequestData = asLnUrlWithdrawRequestData(reqData)
 
         if (lnUrlWithdrawRequestData == null) {
             promise.reject(TAG, "Invalid reqData")
         } else {
             try {
-                var lnUrlCallbackStatus = getBreezServices().withdrawLnurl(lnUrlWithdrawRequestData, amountSats.toULong(), description)
+                var optionalDescription = description.takeUnless { it.isEmpty() }
+                var lnUrlCallbackStatus = getBreezServices().withdrawLnurl(lnUrlWithdrawRequestData, amountSats.toULong(), optionalDescription)
                 promise.resolve(readableMapOf(lnUrlCallbackStatus))
             } catch (e: SdkException) {
                 e.printStackTrace()
