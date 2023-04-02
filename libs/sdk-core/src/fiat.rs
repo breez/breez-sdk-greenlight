@@ -45,14 +45,14 @@ pub struct CurrencyInfo {
 }
 
 /// Wrapper around the [CurrencyInfo] of a fiat currency
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct FiatCurrency {
     pub id: String,
     pub info: CurrencyInfo,
 }
 
 /// Denominator in an exchange rate
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Rate {
     pub coin: String,
     pub value: f64,

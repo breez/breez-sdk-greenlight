@@ -6,10 +6,11 @@ use crate::grpc::{
 use crate::models::LspAPI;
 use anyhow::Result;
 use prost::Message;
+use serde::{Deserialize, Serialize};
 use tonic::Request;
 
 /// Details of supported LSP
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct LspInformation {
     pub id: String,
     pub name: String,

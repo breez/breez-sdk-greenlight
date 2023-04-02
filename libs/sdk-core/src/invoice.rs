@@ -4,11 +4,12 @@ use hex::ToHex;
 use lightning::routing::gossip::RoutingFees;
 use lightning::routing::*;
 use lightning_invoice::*;
+use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use std::time::UNIX_EPOCH;
 
 /// Wrapper for a BOLT11 LN invoice
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct LNInvoice {
     pub bolt11: String,
     pub payee_pubkey: String,
@@ -23,7 +24,7 @@ pub struct LNInvoice {
 }
 
 /// Details of a specific hop in a larger route hint
-#[derive(Clone, Default, Debug, PartialEq, Eq)]
+#[derive(Clone, Default, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RouteHintHop {
     /// The node_id of the non-target end of the route
     pub src_node_id: String,
@@ -42,7 +43,7 @@ pub struct RouteHintHop {
 }
 
 /// A route hint for a LN payment
-#[derive(Clone, Default, Debug, PartialEq, Eq)]
+#[derive(Clone, Default, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RouteHint {
     pub hops: Vec<RouteHintHop>,
 }

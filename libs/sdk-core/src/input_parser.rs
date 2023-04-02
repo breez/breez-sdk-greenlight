@@ -5,6 +5,7 @@ use bip21::Uri;
 use bitcoin::bech32;
 use bitcoin::bech32::FromBase32;
 use serde::Deserialize;
+use serde::Serialize;
 
 use crate::input_parser::InputType::*;
 use crate::input_parser::LnUrlRequestData::*;
@@ -430,7 +431,7 @@ impl From<LnUrlRequestData> for InputType {
 }
 
 /// Wrapped in a [LnUrlError], this represents a LNURL-endpoint error.
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Serialize)]
 pub struct LnUrlErrorData {
     pub reason: String,
 }

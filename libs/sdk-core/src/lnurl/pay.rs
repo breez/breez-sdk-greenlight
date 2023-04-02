@@ -143,7 +143,7 @@ pub(crate) mod model {
     ///
     /// * `EndpointError` indicates a generic issue the LNURL endpoint encountered, including a freetext
     /// field with the reason.
-    #[derive(Debug)]
+    #[derive(Debug, Serialize, Deserialize)]
     pub enum LnUrlPayResult {
         EndpointSuccess {
             data: Option<SuccessActionProcessed>,
