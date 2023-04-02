@@ -7,10 +7,11 @@ mod config;
 use anyhow::{anyhow, Result};
 use clap::Parser;
 use command_handlers::handle_command;
-use commands::Commands;
+use commands::{Commands, SdkCli};
 use env_logger::Env;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
+use std::path::Path;
 
 #[tokio::main]
 async fn main() {
@@ -20,6 +21,11 @@ async fn main() {
     )
     .init();
 
+    let cli = SdkCli::parse();
+    if cli.data_dir.is_some() && !Path::new(cli.data_dir.as_ref().unwrap().as_str()).exists() {
+        println!("Error: data directory doesn't exist");
+        return;
+    }
     let rl = &mut Editor::<()>::new().unwrap();
     if rl.load_history("history.txt").is_err() {
         info!("No previous history.");
@@ -37,7 +43,8 @@ async fn main() {
                     println!("{}", cli_res.unwrap_err());
                     continue;
                 }
-                let res = handle_command(rl, cli_res.unwrap()).await;
+                let data_dir = cli.data_dir.clone().unwrap_or(".".to_string());
+                let res = handle_command(rl, &data_dir, cli_res.unwrap()).await;
                 show_results(res);
                 continue;
             }

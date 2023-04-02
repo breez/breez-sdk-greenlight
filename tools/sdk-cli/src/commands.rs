@@ -2,9 +2,10 @@ use breez_sdk_core::EnvironmentType;
 use clap::Parser;
 
 #[derive(Parser, Debug)]
-pub(crate) struct Cli {
-    /// Optional name to operate on
-    data_dir: Option<std::path::PathBuf>,
+pub(crate) struct SdkCli {
+    /// Optional data dir, default to current directory
+    #[clap(name = "data_dir", short = 'd', long = "data_dir")]
+    pub(crate) data_dir: Option<String>,
 }
 
 #[derive(Parser, Debug, Clone, PartialEq)]

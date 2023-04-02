@@ -3,6 +3,7 @@ use anyhow::Error;
 use rustyline::Editor;
 use std::fs;
 use std::io;
+use std::path::Path;
 use std::sync::Arc;
 
 use crate::config::{get_or_create_config, save_config};
@@ -30,13 +31,16 @@ fn rt() -> &'static tokio::runtime::Runtime {
     &RT
 }
 
-fn get_seed() -> Vec<u8> {
-    let filename = "phrase";
-    let mnemonic = match fs::read_to_string(filename) {
+fn get_seed(data_dir: &String) -> Vec<u8> {
+    let filename = Path::new(data_dir).join("phrase");
+    let mnemonic = match fs::read_to_string(filename.clone()) {
         Ok(phrase) => Mnemonic::from_phrase(phrase.as_str(), Language::English).unwrap(),
         Err(e) => {
             if e.kind() != io::ErrorKind::NotFound {
-                panic!("Can't read from file: {filename}, err {e}");
+                panic!(
+                    "Can't read from file: {}, err {e}",
+                    filename.to_str().unwrap()
+                );
             }
             let mnemonic = Mnemonic::new(MnemonicType::Words12, Language::English);
             fs::write(filename, mnemonic.phrase()).unwrap();
@@ -47,19 +51,22 @@ fn get_seed() -> Vec<u8> {
     seed.as_bytes().to_vec()
 }
 
-fn save_creds(creds: GreenlightCredentials) -> Result<()> {
-    let filename = "creds";
+fn save_creds(data_dir: &str, creds: GreenlightCredentials) -> Result<()> {
+    let filename = Path::new(data_dir).join("creds");
     fs::write(filename, serde_json::to_vec(&creds)?)?;
     Ok(())
 }
 
-fn get_creds() -> Option<GreenlightCredentials> {
-    let filename = "creds";
-    let creds: Option<GreenlightCredentials> = match fs::read(filename) {
+fn get_creds(data_dir: &str) -> Option<GreenlightCredentials> {
+    let filename = Path::new(data_dir).join("creds");
+    let creds: Option<GreenlightCredentials> = match fs::read(filename.clone()) {
         Ok(raw) => Some(serde_json::from_slice(raw.as_slice()).unwrap()),
         Err(e) => {
             if e.kind() != io::ErrorKind::NotFound {
-                panic!("Can't read from file: {filename}, err {e}");
+                panic!(
+                    "Can't read from file: {}, err {e}",
+                    filename.to_str().unwrap()
+                );
             }
             None
         }
@@ -74,9 +81,9 @@ impl EventListener for CliEventListener {
     }
 }
 
-async fn init_sdk(seed: &[u8], creds: &GreenlightCredentials) -> Result<()> {
+async fn init_sdk(data_dir: &String, seed: &[u8], creds: &GreenlightCredentials) -> Result<()> {
     let service = BreezServices::init_services(
-        get_or_create_config()?.to_sdk_config(),
+        get_or_create_config(data_dir)?.to_sdk_config(data_dir),
         seed.to_vec(),
         creds.clone(),
         Box::new(CliEventListener {}),
@@ -92,40 +99,43 @@ async fn init_sdk(seed: &[u8], creds: &GreenlightCredentials) -> Result<()> {
 
 pub(crate) async fn handle_command(
     rl: &mut Editor<()>,
+    data_dir: &String,
     command: Commands,
 ) -> Result<String, Error> {
     match command {
         Commands::SetAPIKey { key } => {
-            let mut config = get_or_create_config()?;
+            let mut config = get_or_create_config(data_dir)?;
             config.api_key = Some(key);
-            save_config(config)?;
+            save_config(data_dir, config)?;
             Ok("API key was set".to_string())
         }
         Commands::SetEnv { env } => {
-            let mut config = get_or_create_config()?;
+            let mut config = get_or_create_config(data_dir)?;
             config.env = env.clone();
-            save_config(config)?;
+            save_config(data_dir, config)?;
             Ok(format!("Environment was set to {:?}", env))
         }
         Commands::RegisterNode {} => {
-            let config = get_or_create_config()?.to_sdk_config();
-            let creds = BreezServices::register_node(config.network, get_seed().to_vec()).await?;
+            let config = get_or_create_config(data_dir)?.to_sdk_config(data_dir);
+            let creds =
+                BreezServices::register_node(config.network, get_seed(data_dir).to_vec()).await?;
 
-            init_sdk(&get_seed(), &creds).await?;
-            save_creds(creds)?;
+            init_sdk(data_dir, &get_seed(data_dir), &creds).await?;
+            save_creds(data_dir, creds)?;
             Ok("Node was registered succesfully".to_string())
         }
         Commands::RecoverNode {} => {
-            let config = get_or_create_config()?.to_sdk_config();
-            let creds = BreezServices::recover_node(config.network, get_seed().to_vec()).await?;
+            let config = get_or_create_config(data_dir)?.to_sdk_config(data_dir);
+            let creds =
+                BreezServices::recover_node(config.network, get_seed(data_dir).to_vec()).await?;
 
-            init_sdk(&get_seed(), &creds).await?;
-            save_creds(creds)?;
+            init_sdk(data_dir, &get_seed(data_dir), &creds).await?;
+            save_creds(data_dir, creds)?;
             Ok("Node was recovered succesfully".to_string())
         }
-        Commands::Init {} => match get_creds() {
+        Commands::Init {} => match get_creds(data_dir) {
             Some(creds) => {
-                init_sdk(&get_seed(), &creds).await?;
+                init_sdk(data_dir, &get_seed(data_dir), &creds).await?;
                 Ok("Node was initialized succesfully".to_string())
             }
             None => Err(anyhow!("Credentials not found")),
