@@ -248,7 +248,12 @@ fun readableMapOf(lnPaymentDetails: LnPaymentDetails): ReadableMap {
 }
 
 fun readableMapOf(lnUrlAuthRequestData: LnUrlAuthRequestData): ReadableMap {
-    return readableMapOf("k1" to lnUrlAuthRequestData.k1)
+    return readableMapOf(
+            "k1" to lnUrlAuthRequestData.k1,
+            "action" to lnUrlAuthRequestData.action,
+            "domain" to lnUrlAuthRequestData.domain,
+            "url" to lnUrlAuthRequestData.url
+    )
 }
 
 fun readableMapOf(lnUrlErrorData: LnUrlErrorData): ReadableMap {
