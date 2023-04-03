@@ -3,12 +3,14 @@ extern crate log;
 mod command_handlers;
 mod commands;
 mod config;
+mod persist;
 
 use anyhow::{anyhow, Result};
 use clap::Parser;
 use command_handlers::handle_command;
 use commands::{Commands, SdkCli};
 use env_logger::Env;
+use persist::CliPersistence;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 use std::path::Path;
@@ -22,12 +24,18 @@ async fn main() {
     .init();
 
     let cli = SdkCli::parse();
-    if cli.data_dir.is_some() && !Path::new(cli.data_dir.as_ref().unwrap().as_str()).exists() {
+    let data_dir = cli.data_dir.clone().unwrap_or(".".to_string());
+    let data_dir_path = Path::new(&data_dir);
+    if !data_dir_path.exists() {
         println!("Error: data directory doesn't exist");
         return;
     }
+
+    let persistence = CliPersistence { data_dir };
+    let history_file = &persistence.history_file();
+
     let rl = &mut Editor::<()>::new().unwrap();
-    if rl.load_history("history.txt").is_err() {
+    if rl.load_history(history_file).is_err() {
         info!("No previous history.");
     }
 
@@ -43,8 +51,7 @@ async fn main() {
                     println!("{}", cli_res.unwrap_err());
                     continue;
                 }
-                let data_dir = cli.data_dir.clone().unwrap_or(".".to_string());
-                let res = handle_command(rl, &data_dir, cli_res.unwrap()).await;
+                let res = handle_command(rl, &persistence, cli_res.unwrap()).await;
                 show_results(res);
                 continue;
             }
@@ -62,7 +69,7 @@ async fn main() {
             }
         }
     }
-    rl.save_history("history.txt")
+    rl.save_history(history_file)
         .map_err(|e| anyhow!(e))
         .unwrap()
 }

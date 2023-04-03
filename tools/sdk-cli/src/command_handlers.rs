@@ -1,20 +1,16 @@
+use crate::persist::CliPersistence;
 use crate::Commands;
 use anyhow::Error;
-use rustyline::Editor;
-use std::fs;
-use std::io;
-use std::path::Path;
-use std::sync::Arc;
-
-use crate::config::{get_or_create_config, save_config};
 use anyhow::{anyhow, Result};
-use bip39::{Language, Mnemonic, MnemonicType, Seed};
+use breez_sdk_core::Config;
 use breez_sdk_core::InputType::{LnUrlAuth, LnUrlWithdraw};
 use breez_sdk_core::{
     parse, BreezEvent, BreezServices, EventListener, GreenlightCredentials, InputType::LnUrlPay,
     PaymentTypeFilter,
 };
 use once_cell::sync::{Lazy, OnceCell};
+use rustyline::Editor;
+use std::sync::Arc;
 
 static BREEZ_SERVICES: OnceCell<Arc<BreezServices>> = OnceCell::new();
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
@@ -31,49 +27,6 @@ fn rt() -> &'static tokio::runtime::Runtime {
     &RT
 }
 
-fn get_seed(data_dir: &String) -> Vec<u8> {
-    let filename = Path::new(data_dir).join("phrase");
-    let mnemonic = match fs::read_to_string(filename.clone()) {
-        Ok(phrase) => Mnemonic::from_phrase(phrase.as_str(), Language::English).unwrap(),
-        Err(e) => {
-            if e.kind() != io::ErrorKind::NotFound {
-                panic!(
-                    "Can't read from file: {}, err {e}",
-                    filename.to_str().unwrap()
-                );
-            }
-            let mnemonic = Mnemonic::new(MnemonicType::Words12, Language::English);
-            fs::write(filename, mnemonic.phrase()).unwrap();
-            mnemonic
-        }
-    };
-    let seed = Seed::new(&mnemonic, "");
-    seed.as_bytes().to_vec()
-}
-
-fn save_creds(data_dir: &str, creds: GreenlightCredentials) -> Result<()> {
-    let filename = Path::new(data_dir).join("creds");
-    fs::write(filename, serde_json::to_vec(&creds)?)?;
-    Ok(())
-}
-
-fn get_creds(data_dir: &str) -> Option<GreenlightCredentials> {
-    let filename = Path::new(data_dir).join("creds");
-    let creds: Option<GreenlightCredentials> = match fs::read(filename.clone()) {
-        Ok(raw) => Some(serde_json::from_slice(raw.as_slice()).unwrap()),
-        Err(e) => {
-            if e.kind() != io::ErrorKind::NotFound {
-                panic!(
-                    "Can't read from file: {}, err {e}",
-                    filename.to_str().unwrap()
-                );
-            }
-            None
-        }
-    };
-    creds
-}
-
 struct CliEventListener {}
 impl EventListener for CliEventListener {
     fn on_event(&self, e: BreezEvent) {
@@ -81,9 +34,9 @@ impl EventListener for CliEventListener {
     }
 }
 
-async fn init_sdk(data_dir: &String, seed: &[u8], creds: &GreenlightCredentials) -> Result<()> {
+async fn init_sdk(config: Config, seed: &[u8], creds: &GreenlightCredentials) -> Result<()> {
     let service = BreezServices::init_services(
-        get_or_create_config(data_dir)?.to_sdk_config(data_dir),
+        config,
         seed.to_vec(),
         creds.clone(),
         Box::new(CliEventListener {}),
@@ -99,43 +52,56 @@ async fn init_sdk(data_dir: &String, seed: &[u8], creds: &GreenlightCredentials)
 
 pub(crate) async fn handle_command(
     rl: &mut Editor<()>,
-    data_dir: &String,
+    persistence: &CliPersistence,
     command: Commands,
 ) -> Result<String, Error> {
     match command {
         Commands::SetAPIKey { key } => {
-            let mut config = get_or_create_config(data_dir)?;
+            let mut config = persistence.get_or_create_config()?;
             config.api_key = Some(key);
-            save_config(data_dir, config)?;
+            persistence.save_config(config)?;
             Ok("API key was set".to_string())
         }
         Commands::SetEnv { env } => {
-            let mut config = get_or_create_config(data_dir)?;
+            let mut config = persistence.get_or_create_config()?;
             config.env = env.clone();
-            save_config(data_dir, config)?;
+            persistence.save_config(config)?;
             Ok(format!("Environment was set to {:?}", env))
         }
         Commands::RegisterNode {} => {
-            let config = get_or_create_config(data_dir)?.to_sdk_config(data_dir);
-            let creds =
-                BreezServices::register_node(config.network, get_seed(data_dir).to_vec()).await?;
+            let config = persistence
+                .get_or_create_config()?
+                .to_sdk_config(&persistence.data_dir);
+            let creds = BreezServices::register_node(
+                config.network,
+                persistence.get_or_create_seed().to_vec(),
+            )
+            .await?;
 
-            init_sdk(data_dir, &get_seed(data_dir), &creds).await?;
-            save_creds(data_dir, creds)?;
+            init_sdk(config, &persistence.get_or_create_seed(), &creds).await?;
+            persistence.save_credentials(creds)?;
             Ok("Node was registered succesfully".to_string())
         }
         Commands::RecoverNode {} => {
-            let config = get_or_create_config(data_dir)?.to_sdk_config(data_dir);
-            let creds =
-                BreezServices::recover_node(config.network, get_seed(data_dir).to_vec()).await?;
+            let config = persistence
+                .get_or_create_config()?
+                .to_sdk_config(&persistence.data_dir);
+            let creds = BreezServices::recover_node(
+                config.network,
+                persistence.get_or_create_seed().to_vec(),
+            )
+            .await?;
 
-            init_sdk(data_dir, &get_seed(data_dir), &creds).await?;
-            save_creds(data_dir, creds)?;
+            init_sdk(config, &persistence.get_or_create_seed(), &creds).await?;
+            persistence.save_credentials(creds)?;
             Ok("Node was recovered succesfully".to_string())
         }
-        Commands::Init {} => match get_creds(data_dir) {
+        Commands::Init {} => match persistence.credentials() {
             Some(creds) => {
-                init_sdk(data_dir, &get_seed(data_dir), &creds).await?;
+                let config = persistence
+                    .get_or_create_config()?
+                    .to_sdk_config(&persistence.data_dir);
+                init_sdk(config, &persistence.get_or_create_seed(), &creds).await?;
                 Ok("Node was initialized succesfully".to_string())
             }
             None => Err(anyhow!("Credentials not found")),
