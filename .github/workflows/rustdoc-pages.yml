@@ -20,6 +20,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Install dependencies
+        run: |
+          echo $ANDROID_NDK_HOME
+          cargo install cargo-ndk@2.12.2
+          cargo install --version 0.22.0 uniffi_bindgen          
+          brew install protobuf     
+
       - name: Build Docs
         env:
           SSH_PRIVATE_KEY: ${{secrets.REPO_SSH_KEY}}
