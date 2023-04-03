@@ -13,7 +13,8 @@ jobs:
   build:
     name: Build Docs
 
-    runs-on: ubuntu-latest
+    # Run on macOS because this auto-starts the ssh-agent, needed later for ssh-add
+    runs-on: macOS-latest
 
     steps:
       - name: Checkout
