@@ -133,7 +133,7 @@
 //!
 //! ## API Key
 //!
-//! To get an API key in order to use the SDK, please contact Breez: https://breez.technology/#contact-us-form
+//! To get an API key in order to use the SDK, please contact Breez: <https://breez.technology/#contact-us-form>
 
 mod bridge_generated; /* AUTO INJECTED BY flutter_rust_bridge. This line may not be accurate, and you can change it according to your needs. */
 #[macro_use]
