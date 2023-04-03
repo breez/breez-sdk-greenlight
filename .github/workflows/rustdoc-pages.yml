@@ -20,7 +20,14 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Build Docs
+        env:
+          SSH_PRIVATE_KEY: ${{secrets.REPO_SSH_KEY}}
+        # Import the SSH key for the gl-client, then generate the docs
         run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          sudo chmod 600 ~/.ssh/id_rsa
+          ssh-add ~/.ssh/id_rsa
           cd libs/sdk-core
           cargo doc --no-deps
 
