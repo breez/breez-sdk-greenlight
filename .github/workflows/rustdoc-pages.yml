@@ -42,8 +42,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
-          # Upload the entire doc folder
-          path: './target/doc'
+          # Upload the entire doc folder (we're 2 levels deep in libs/sdk-core)
+          path: '../../target/doc'
 
   deploy:
     name: Deploy to Pages
