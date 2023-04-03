@@ -3,8 +3,9 @@
 A simple cli tool that sends commands to the sdk.
 
 ## Run
-```cargo run```
+```cargo run -- --data_dir <data directory>```
 
+The data directory is optional (defaults to the current directory) and it is used to save the node data.
 On first run the cli will create bip39 mnemonics and save them at the current directory in a file called phrase.
 First thing we need to create a node and there are three ways (commands) to do it:
 * register_node - registers a new node in the cloud and receive credentials. The credentials are saved in the current directory (creds file)

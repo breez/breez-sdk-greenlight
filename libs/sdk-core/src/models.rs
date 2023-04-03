@@ -267,7 +267,7 @@ pub struct SyncResponse {
 }
 
 /// Represents a payment, including its [PaymentType] and [PaymentDetails].
-#[derive(PartialEq, Eq, Debug, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]
 pub struct Payment {
     pub id: String,
     pub payment_type: PaymentType,
@@ -343,7 +343,7 @@ pub enum ChannelState {
 }
 
 /// The status of a swap
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum SwapStatus {
     /// The swap address has been created and either there aren't any confirmed transactions associated with it
     /// or there are confirmed transactions that are bellow the lock timeout which means the funds are still
@@ -374,7 +374,7 @@ impl TryFrom<i32> for SwapStatus {
 /// saved to the persistent storage.
 ///
 /// The SwapInfo has a status which changes accordingly, documented in [SwapStatus].
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct SwapInfo {
     //static immutable data
     pub bitcoin_address: String,
@@ -464,7 +464,7 @@ pub struct UnspentTransactionOutput {
 /// description of the reason.
 ///
 /// Both cases are described in LUD-03 <https://github.com/lnurl/luds/blob/luds/03.md> & LUD-04: <https://github.com/lnurl/luds/blob/luds/04.md>
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Serialize)]
 #[serde(rename_all = "UPPERCASE")]
 #[serde(tag = "status")]
 pub enum LnUrlCallbackStatus {

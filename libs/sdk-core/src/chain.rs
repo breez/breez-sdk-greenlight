@@ -15,7 +15,7 @@ pub(crate) struct MempoolSpace {
 }
 
 /// Wrapper containing the result of the recommended fees query, in sat/vByte, based on mempool.space data
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct RecommendedFees {
     #[serde(rename(deserialize = "fastestFee"))]
     pub fastest_fee: u32,
