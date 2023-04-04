@@ -144,11 +144,31 @@ pub(crate) async fn handle_command(
             amount_sat,
             onchain_recipient_address,
         } => {
-            let pair_info = sdk()?.reverse_swap_info().await?;
+            let pair_info = sdk()?
+                .fetch_reverse_swap_fees()
+                .await
+                .map_err(|e| anyhow!("Failed to fetch reverse swap fee infos: {e}"))?;
             let rev_swap_res = sdk()?
                 .send_onchain(amount_sat, onchain_recipient_address, pair_info.fees_hash)
                 .await?;
             serde_json::to_string_pretty(&rev_swap_res).map_err(|e| e.into())
+        }
+        Commands::FetchOnchainFees {} => {
+            let pair_info = sdk()?
+                .fetch_reverse_swap_fees()
+                .await
+                .map_err(|e| anyhow!("Failed to fetch reverse swap fee infos: {e}"))?;
+            serde_json::to_string_pretty(&pair_info).map_err(|e| e.into())
+        }
+        Commands::InProgressReverseSwaps {} => {
+            let mut res: Vec<String> = vec![];
+            for rsi in &sdk()?.in_progress_reverse_swaps().await? {
+                res.push(format!(
+                    "Reverse swap {} is in progress with status {:?}",
+                    rsi.id, rsi.breez_status
+                ));
+            }
+            serde_json::to_string_pretty(&res).map_err(|e| e.into())
         }
         Commands::SendPayment { bolt11, amount } => {
             let payment = sdk()?.send_payment(bolt11, amount).await?;

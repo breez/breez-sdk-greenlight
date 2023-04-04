@@ -541,7 +541,7 @@ async fn pull_transactions(
         .into_inner();
 
     // construct the received transactions by filtering the invoices to those paid and beyond the filter timestamp
-    let received_transations: Result<Vec<crate::models::Payment>> = invoices
+    let received_transactions: Result<Vec<crate::models::Payment>> = invoices
         .invoices
         .into_iter()
         .filter(|i| {
@@ -558,17 +558,20 @@ async fn pull_transactions(
         .await?
         .into_inner();
     debug!("list payments: {:?}", payments);
-    // construct the payment transactions
-    let sent_transactions: Result<Vec<crate::models::Payment>> = payments
+    // construct the payment transactions (pending and complete)
+    let outbound_transactions: Result<Vec<crate::models::Payment>> = payments
         .payments
         .into_iter()
-        .filter(|p| p.created_at as i64 > since_timestamp && p.status() == PayStatus::Complete)
+        .filter(|p| {
+            p.created_at as i64 > since_timestamp
+                && (p.status() == PayStatus::Pending || p.status() == PayStatus::Complete)
+        })
         .map(TryInto::try_into)
         .collect();
 
     let mut transactions: Vec<crate::models::Payment> = Vec::new();
-    transactions.extend(received_transations?);
-    transactions.extend(sent_transactions?);
+    transactions.extend(received_transactions?);
+    transactions.extend(outbound_transactions?);
 
     Ok(transactions)
 }

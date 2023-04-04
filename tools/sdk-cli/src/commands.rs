@@ -70,6 +70,12 @@ pub(crate) enum Commands {
         onchain_recipient_address: String,
     },
 
+    /// Get the current fees for a potential new reverse swap
+    FetchOnchainFees {},
+
+    /// Get the current blocking in-progress reverse swaps, if any exist
+    InProgressReverseSwaps {},
+
     /// Send a lightning payment
     SendPayment {
         bolt11: String,
