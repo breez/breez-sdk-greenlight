@@ -10,6 +10,9 @@ The Breez SDK provides the following services:
 * Connecting to a new or existing node.
 
 Download our one pager [here](https://drive.google.com/file/d/1MBINTyEXX9tFLVXd3QoTUKLNWgjgWN2I/view?usp=drivesdk). 
+
+Browse the Breez SDK Rustdoc [here](https://breez.github.io/breez-sdk/breez_sdk_core/).
+
 ## Demo
 
 https://user-images.githubusercontent.com/31890660/208511040-989ff42c-ceb8-4a34-b2cb-a17a0a8c0150.mp4
