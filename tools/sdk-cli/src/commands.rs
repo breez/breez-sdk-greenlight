@@ -64,6 +64,12 @@ pub(crate) enum Commands {
     /// Authenticate using lnurl auth
     LnurlAuth { lnurl: String },
 
+    /// Send on-chain using a reverse swap
+    SendOnchain {
+        amount_sat: u64,
+        onchain_recipient_address: String,
+    },
+
     /// Send a lightning payment
     SendPayment {
         bolt11: String,

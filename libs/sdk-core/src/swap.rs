@@ -11,10 +11,7 @@ use bitcoin::blockdata::script::Builder;
 use bitcoin::consensus::encode;
 use bitcoin::psbt::serialize::Serialize;
 use bitcoin::secp256k1::{Message, PublicKey, Secp256k1, SecretKey};
-use bitcoin::{
-    hashes::hex::FromHex, Address, EcdsaSighashType, OutPoint, Script, Sequence, Transaction, TxIn,
-    TxOut, Txid, Witness,
-};
+use bitcoin::{Address, EcdsaSighashType, Script, Sequence, Transaction, TxIn, TxOut, Witness};
 
 use bitcoin::hashes::sha256;
 use bitcoin::util::sighash::SighashCache;

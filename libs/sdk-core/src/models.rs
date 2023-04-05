@@ -134,7 +134,7 @@ pub struct ReverseSwapPairInfo {
 }
 
 /// Details of past or ongoing reverse swaps, as stored in the Breez local DB
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 pub struct ReverseSwapInfo {
     // static immutable data
     pub claim_address: String,
@@ -145,7 +145,7 @@ pub struct ReverseSwapInfo {
 }
 
 /// The status of a reverse swap
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize)]
 pub enum ReverseSwapStatus {
     /// The reverse swap has been created. The HODL invoice is not yet paid.
     Initial = 0,

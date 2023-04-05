@@ -140,6 +140,16 @@ pub(crate) async fn handle_command(
             let res = sdk()?.receive_payment(amount, description).await?;
             serde_json::to_string_pretty(&res).map_err(|e| e.into())
         }
+        Commands::SendOnchain {
+            amount_sat,
+            onchain_recipient_address,
+        } => {
+            let pair_info = sdk()?.reverse_swap_info().await?;
+            let rev_swap_res = sdk()?
+                .send_onchain(amount_sat, onchain_recipient_address, pair_info.fees_hash)
+                .await?;
+            serde_json::to_string_pretty(&rev_swap_res).map_err(|e| e.into())
+        }
         Commands::SendPayment { bolt11, amount } => {
             let payment = sdk()?.send_payment(bolt11, amount).await?;
             serde_json::to_string_pretty(&payment).map_err(|e| e.into())

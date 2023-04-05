@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 use anyhow::{anyhow, Result};
-use bitcoin_hashes::hex::ToHex;
-use bitcoin_hashes::{sha256, Hash};
+use bitcoin::hashes::hex::ToHex;
+use bitcoin::hashes::{sha256, Hash};
 use serde_json::json;
 
 use const_format::concatcp;

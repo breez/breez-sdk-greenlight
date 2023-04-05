@@ -37,15 +37,19 @@ use crate::lnurl::withdraw::validate_lnurl_withdraw;
 use crate::lsp::LspInformation;
 use crate::models::{
     parse_short_channel_id, ChannelState, ClosedChannelPaymentDetails, Config, EnvironmentType,
-    FiatAPI, GreenlightCredentials, LnUrlCallbackStatus, LspAPI, Network, NodeAPI, NodeState, Payment, PaymentDetails,
-    PaymentType, PaymentTypeFilter, ReverseSwapPairInfo, ReverseSwapperAPI, SwapInfo, SwapperAPI,
+    FiatAPI, GreenlightCredentials, LnUrlCallbackStatus, LspAPI, Network, NodeAPI, NodeState,
+    Payment, PaymentDetails, PaymentType, PaymentTypeFilter, ReverseSwapPairInfo,
+    ReverseSwapperAPI, SwapInfo, SwapperAPI,
 };
 use crate::moonpay::MoonPayApi;
 use crate::persist::db::SqliteStorage;
 use crate::reverseswap::BTCSendSwap;
 use crate::swap::BTCReceiveSwap;
 use crate::BuyBitcoinProvider::MoonPay;
-use crate::{BuyBitcoinProvider, LnUrlAuthRequestData, LnUrlWithdrawRequestData, PaymentResponse};
+use crate::{
+    BuyBitcoinProvider, LnUrlAuthRequestData, LnUrlWithdrawRequestData, PaymentResponse,
+    ReverseSwapInfo,
+};
 
 /// Trait that can be used to react to various [BreezEvent]s emitted by the SDK.
 pub trait EventListener: Send + Sync {
@@ -899,7 +903,7 @@ impl BreezServicesBuilder {
         ));
 
         let btc_send_swapper = Arc::new(BTCSendSwap::new(
-            self.config.network.clone().into(),
+            self.config.network.into(),
             self.reverse_swapper_api
                 .clone()
                 .unwrap_or_else(|| Arc::new(BoltzApi {})),

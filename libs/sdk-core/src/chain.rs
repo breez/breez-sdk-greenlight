@@ -1,6 +1,6 @@
 use anyhow::Result;
+use bitcoin::hashes::hex::FromHex;
 use bitcoin::{OutPoint, Txid};
-use bitcoin_hashes::hex::FromHex;
 use serde::{Deserialize, Serialize};
 
 #[tonic::async_trait]
