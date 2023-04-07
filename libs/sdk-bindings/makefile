@@ -9,11 +9,12 @@ init:
 	rustup target add aarch64-apple-ios-sim
 	#rustup target add armv7-apple-ios armv7s-apple-ios i386-apple-ios ## deprecated
 	rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+	@if [ $$(uname) == "Darwin" ] ; then cargo install cargo-lipo ; fi
 	cargo install cbindgen
 	cargo install cargo-ndk
 
 ## all: Compile iOS, Android
-all: bindings-swift kotlin
+all: swift-ios swift-darwin bindings-swift kotlin
 
 ios-universal: $(SOURCES)		
 	mkdir -p ../target/ios-universal/release
@@ -24,9 +25,20 @@ ios-universal: $(SOURCES)
 
 darwin-universal: $(SOURCES)
 	mkdir -p ../target/darwin-universal/release
-	cargo build --release --target aarch64-apple-darwin
-	cargo build --release --target x86_64-apple-darwin
+	cargo lipo --release --targets aarch64-apple-darwin
+	cargo lipo --release --targets x86_64-apple-darwin
+	lipo -create -output ../target/darwin-universal/release/libbreez_sdk_bindings.dylib ../target/aarch64-apple-darwin/release/libbreez_sdk_bindings.dylib ../target/x86_64-apple-darwin/release/libbreez_sdk_bindings.dylib
 	lipo -create -output ../target/darwin-universal/release/libbreez_sdk_bindings.a ../target/aarch64-apple-darwin/release/libbreez_sdk_bindings.a ../target/x86_64-apple-darwin/release/libbreez_sdk_bindings.a
+
+swift-ios: ios-universal
+	uniffi-bindgen generate src/breez_sdk.udl -l swift -o ffi/swift-ios
+	cp ../target/ios-universal/release/libbreez_sdk_bindings.a ffi/swift-ios
+	cd ffi/swift-ios && "swiftc" "-emit-module" "-module-name" "breez_sdk_bindings"  "-Xcc" "-fmodule-map-file=$(CURRENT_DIR)/ffi/swift-ios/breez_sdkFFI.modulemap" "-I" "."  "-L" "." "-lbreez_sdk_bindings" breez_sdk.swift
+
+swift-darwin: darwin-universal
+	uniffi-bindgen generate src/breez_sdk.udl -l swift -o ffi/swift-darwin
+	cp ../target/darwin-universal/release/libbreez_sdk_bindings.dylib ffi/swift-darwin
+	cd ffi/swift-darwin && "swiftc" "-emit-module" "-module-name" "breez_sdk_bindings"  "-Xcc" "-fmodule-map-file=$(CURRENT_DIR)/ffi/swift-darwin/breez_sdkFFI.modulemap" "-I" "."  "-L" "." "-lbreez_sdk_bindings" breez_sdk.swift
 
 bindings-swift: ios-universal darwin-universal
 	mkdir -p bindings-swift/Sources/BreezSDK

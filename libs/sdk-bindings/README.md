@@ -20,6 +20,20 @@ make init
 ### Swift
 
 ```
+make swift-ios
+```
+
+This will generate all the artifacts needed to for an iOS app to start writing code that uses breez sdk in swift.
+All files are generated in the bindings/swift-ios folder.
+We also provides the same binding for mac os by running the following command:
+
+```
+make swift-darwin
+```
+
+The above will generate the artifacts in the ffi/swift-darwin folder.
+
+```
 make bindings-swift
 ```
 
