@@ -17,11 +17,11 @@ init:
 all: swift-ios swift-darwin kotlin
 
 ios-universal: $(SOURCES)		
-	mkdir -p ../target/ios-universal/release
+	mkdir -p ../target/ios-simulator/release
 	cargo build --release --target aarch64-apple-ios ;\
 	cargo build --release --target x86_64-apple-ios ;\
-	lipo -create -output ../target/ios-universal/release/libbreez_sdk_bindings.a ../target/aarch64-apple-ios/release/libbreez_sdk_bindings.a ../target/x86_64-apple-ios/release/libbreez_sdk_bindings.a	
-
+	cargo build --release --target aarch64-apple-ios-sim ;\
+	lipo -create -output ../target/ios-simulator/release/libbreez_sdk_bindings.a ../target/aarch64-apple-ios-sim/release/libbreez_sdk_bindings.a ../target/x86_64-apple-ios/release/libbreez_sdk_bindings.a
 
 darwin-universal: $(SOURCES)
 	mkdir -p ../target/darwin-universal/release
@@ -29,11 +29,19 @@ darwin-universal: $(SOURCES)
 	cargo lipo --release --targets x86_64-apple-darwin		
 	lipo -create -output ../target/darwin-universal/release/libbreez_sdk_bindings.dylib ../target/aarch64-apple-darwin/release/libbreez_sdk_bindings.dylib ../target/x86_64-apple-darwin/release/libbreez_sdk_bindings.dylib
 
-
 swift-ios: ios-universal
 	uniffi-bindgen generate src/breez_sdk.udl -l swift -o ffi/swift-ios
-	cp ../target/ios-universal/release/libbreez_sdk_bindings.a ffi/swift-ios
+	cp ../target/ios-simulator/release/libbreez_sdk_bindings.a ffi/swift-ios
 	cd ffi/swift-ios && "swiftc" "-emit-module" "-module-name" "breez_sdk_bindings"  "-Xcc" "-fmodule-map-file=$(CURRENT_DIR)/ffi/swift-ios/breez_sdkFFI.modulemap" "-I" "."  "-L" "." "-lbreez_sdk_bindings" breez_sdk.swift
+
+xcframework: swift-ios
+	mkdir -p ffi/xcframework
+	mkdir -p ffi/xcframework/build/include ffi/xcframework/build/lib/ios-simulator/release ffi/xcframework/build/lib/aarch64-apple-ios/release
+	cp -r ffi/swift-ios/breez_sdkFFI.h ffi/xcframework/build/include
+	cp ffi/swift-ios/breez_sdkFFI.modulemap ffi/xcframework/build/include/module.modulemap
+	cp ../target/ios-simulator/release/libbreez_sdk_bindings.a ffi/xcframework/build/lib/ios-simulator/release
+	cp ../target/aarch64-apple-ios/release/libbreez_sdk_bindings.a ffi/xcframework/build/lib/aarch64-apple-ios/release
+	xcodebuild -create-xcframework -library ffi/xcframework/build/lib/ios-simulator/release/libbreez_sdk_bindings.a -headers ffi/xcframework/build/include -library ffi/xcframework/build/lib/aarch64-apple-ios/release/libbreez_sdk_bindings.a -headers ffi/xcframework/build/include -output ffi/xcframework/breez_sdkFFI.xcframework
 
 swift-darwin: darwin-universal
 	uniffi-bindgen generate src/breez_sdk.udl -l swift -o ffi/swift-darwin
