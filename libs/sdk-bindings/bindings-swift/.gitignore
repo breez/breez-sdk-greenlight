@@ -1,0 +1,7 @@
+.swiftpm/
+.build/
+*.xcodeproj
+Sources/
+**/breez_sdkFFI.h
+**/breez_sdkFFI
+**/breez_sdkFFI.modulemap
