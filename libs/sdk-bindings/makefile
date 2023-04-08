@@ -14,21 +14,21 @@ init:
 	cargo install cargo-ndk
 
 ## all: Compile iOS, Android
-all: swift-ios swift-darwin kotlin
+all: swift-ios swift-darwin bindings-swift kotlin
 
 ios-universal: $(SOURCES)		
 	mkdir -p ../target/ios-universal/release
 	cargo build --release --target aarch64-apple-ios ;\
 	cargo build --release --target x86_64-apple-ios ;\
-	lipo -create -output ../target/ios-universal/release/libbreez_sdk_bindings.a ../target/aarch64-apple-ios/release/libbreez_sdk_bindings.a ../target/x86_64-apple-ios/release/libbreez_sdk_bindings.a	
-
+	cargo build --release --target aarch64-apple-ios-sim ;\
+	lipo -create -output ../target/ios-universal/release/libbreez_sdk_bindings.a ../target/aarch64-apple-ios-sim/release/libbreez_sdk_bindings.a ../target/x86_64-apple-ios/release/libbreez_sdk_bindings.a
 
 darwin-universal: $(SOURCES)
 	mkdir -p ../target/darwin-universal/release
-	cargo lipo --release --targets aarch64-apple-darwin		
-	cargo lipo --release --targets x86_64-apple-darwin		
+	cargo lipo --release --targets aarch64-apple-darwin
+	cargo lipo --release --targets x86_64-apple-darwin
 	lipo -create -output ../target/darwin-universal/release/libbreez_sdk_bindings.dylib ../target/aarch64-apple-darwin/release/libbreez_sdk_bindings.dylib ../target/x86_64-apple-darwin/release/libbreez_sdk_bindings.dylib
-
+	lipo -create -output ../target/darwin-universal/release/libbreez_sdk_bindings.a ../target/aarch64-apple-darwin/release/libbreez_sdk_bindings.a ../target/x86_64-apple-darwin/release/libbreez_sdk_bindings.a
 
 swift-ios: ios-universal
 	uniffi-bindgen generate src/breez_sdk.udl -l swift -o ffi/swift-ios
@@ -39,6 +39,19 @@ swift-darwin: darwin-universal
 	uniffi-bindgen generate src/breez_sdk.udl -l swift -o ffi/swift-darwin
 	cp ../target/darwin-universal/release/libbreez_sdk_bindings.dylib ffi/swift-darwin
 	cd ffi/swift-darwin && "swiftc" "-emit-module" "-module-name" "breez_sdk_bindings"  "-Xcc" "-fmodule-map-file=$(CURRENT_DIR)/ffi/swift-darwin/breez_sdkFFI.modulemap" "-I" "."  "-L" "." "-lbreez_sdk_bindings" breez_sdk.swift
+
+bindings-swift: ios-universal darwin-universal
+	mkdir -p bindings-swift/Sources/BreezSDK
+	uniffi-bindgen generate src/breez_sdk.udl --no-format --language swift --out-dir bindings-swift/Sources/BreezSDK
+	mv bindings-swift/Sources/BreezSDK/breez_sdk.swift bindings-swift/Sources/BreezSDK/BreezSDK.swift
+	cp bindings-swift/Sources/BreezSDK/breez_sdkFFI.h bindings-swift/breez_sdkFFI.xcframework/ios-arm64/breez_sdkFFI.framework/Headers
+	cp bindings-swift/Sources/BreezSDK/breez_sdkFFI.h bindings-swift/breez_sdkFFI.xcframework/ios-arm64_x86_64-simulator/breez_sdkFFI.framework/Headers
+	cp bindings-swift/Sources/BreezSDK/breez_sdkFFI.h bindings-swift/breez_sdkFFI.xcframework/macos-arm64_x86_64/breez_sdkFFI.framework/Headers
+	cp ../target/aarch64-apple-ios/release/libbreez_sdk_bindings.a bindings-swift/breez_sdkFFI.xcframework/ios-arm64/breez_sdkFFI.framework/breez_sdkFFI
+	cp ../target/ios-universal/release/libbreez_sdk_bindings.a bindings-swift/breez_sdkFFI.xcframework/ios-arm64_x86_64-simulator/breez_sdkFFI.framework/breez_sdkFFI
+	cp ../target/darwin-universal/release/libbreez_sdk_bindings.a bindings-swift/breez_sdkFFI.xcframework/macos-arm64_x86_64/breez_sdkFFI.framework/breez_sdkFFI
+	rm bindings-swift/Sources/BreezSDK/breez_sdkFFI.h
+	rm bindings-swift/Sources/BreezSDK/breez_sdkFFI.modulemap
 
 kotlin: android
 	uniffi-bindgen generate src/breez_sdk.udl --language kotlin -o ffi/kotlin 

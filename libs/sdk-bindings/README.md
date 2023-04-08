@@ -30,7 +30,15 @@ We also provides the same binding for mac os by running the following command:
 ```
 make swift-darwin
 ```
+
 The above will generate the artifacts in the ffi/swift-darwin folder.
+
+```
+make bindings-swift
+```
+
+This will produce a fully configured Swift Package in `bindings-swift/`.
+See [Adding package dependencies to your app](https://developer.apple.com/documentation/xcode/adding-package-dependencies-to-your-app) in Apple's docs for more information on how to integrate such a package into your project.
 
 ### Kotlin
 ```
