@@ -8,7 +8,7 @@
 
 import React, { useState } from "react"
 import { SafeAreaView, ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native"
-import { addEventListener, addLogListener, initServices, mnemonicToSeed, Network, recoverNode, registerNode, start } from "react-native-breez-sdk"
+import { addEventListener, addLogListener, fetchFiatRates, initServices, listFiatCurrencies, mnemonicToSeed, Network, recoverNode, registerNode, start } from "react-native-breez-sdk"
 import BuildConfig from "react-native-build-config"
 import { generateMnemonic } from "@dreson4/react-native-quick-bip39"
 import { obfuscateString } from "./utils/security"
@@ -90,6 +90,13 @@ const App = () => {
 
                 await start()
                 addLine("start", null)
+
+                const fiatCurrencies = await listFiatCurrencies()
+                addLine("listFiatCurrencies", JSON.stringify(fiatCurrencies))
+
+                const fiatRates = await fetchFiatRates()
+                addLine("fetchFiatRates", JSON.stringify(fiatRates))
+
             }
         }
         asyncFn()

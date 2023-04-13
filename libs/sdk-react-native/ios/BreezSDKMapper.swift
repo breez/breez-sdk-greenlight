@@ -139,7 +139,6 @@ class BreezSDKMapper {
             "spacing": currencyInfo.spacing,
             "symbol": dictionaryOf(symbol: currencyInfo.symbol),
             "uniqSymbol": dictionaryOf(symbol: currencyInfo.uniqSymbol),
-            "fractionSize": currencyInfo.fractionSize,
             "localizedName": arrayOf(localizedNames: currencyInfo.localizedName),
             "localeOverrides": arrayOf(localeOverrides: currencyInfo.localeOverrides)
         ]
