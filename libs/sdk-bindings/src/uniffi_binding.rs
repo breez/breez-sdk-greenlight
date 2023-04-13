@@ -14,39 +14,42 @@ use breez_sdk_core::{
     RecommendedFees, RouteHint, RouteHintHop, SuccessActionProcessed, SwapInfo, SwapStatus, Symbol,
     UnspentTransactionOutput, UrlSuccessActionData,
 };
+use log::LevelFilter;
 use log::Metadata;
 use log::Record;
-use once_cell::sync::{Lazy, OnceCell};
+use once_cell::sync::Lazy;
 
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
-static LOGGER_STREAM: OnceCell<Box<dyn LogStream>> = OnceCell::new();
 
 pub trait LogStream: Send + Sync {
     fn log(&self, l: LogEntry);
 }
 
-struct BindingLogger;
+struct BindingLogger {
+    log_stream: Box<dyn LogStream>,
+}
 
 impl BindingLogger {
-    fn init() {
-        log::set_logger(&BindingLogger {}).unwrap();
+    fn init(log_stream: Box<dyn LogStream>) {
+        let binding_logger = BindingLogger { log_stream };
+        log::set_boxed_logger(Box::new(binding_logger)).unwrap();
+        log::set_max_level(LevelFilter::Trace);
     }
 }
 
 impl log::Log for BindingLogger {
-    fn enabled(&self, _: &Metadata) -> bool {
-        true
+    fn enabled(&self, m: &Metadata) -> bool {
+        // ignroe the internal uniffi log to prevent infinite loop.
+        return m.target().to_string() != "breez_sdk_bindings::uniffi_binding".to_string();
     }
 
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
-            if let Some(logger) = LOGGER_STREAM.get() {
-                logger.log(LogEntry {
-                    line: record.args().to_string(),
-                    level: record.level().as_str().to_string(),
-                });
-            }
-        };
+            self.log_stream.log(LogEntry {
+                line: record.args().to_string(),
+                level: record.level().as_str().to_string(),
+            });
+        }
     }
     fn flush(&self) {}
 }
@@ -113,10 +116,7 @@ pub fn init_services(
 }
 
 pub fn set_log_stream(log_stream: Box<dyn LogStream>) -> Result<()> {
-    BindingLogger::init();
-    LOGGER_STREAM
-        .set(log_stream)
-        .map_err(|_| anyhow!("log stream already created"))?;
+    BindingLogger::init(log_stream);
     Ok(())
 }
 

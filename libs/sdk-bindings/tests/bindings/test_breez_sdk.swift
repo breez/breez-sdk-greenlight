@@ -7,7 +7,14 @@ class SDKListener: EventListener {
     }
 }
 
+class LogStreamListener: LogStream {
+    func log(l: LogEntry){
+      print(l.line);
+    }
+}
+
 do {
+    try setLogStream(logStream: LogStreamListener());
     let seed = try mnemonicToSeed(phrase: "cruise clever syrup coil cute execute laundry general cover prevent law sheriff");
     let credentials = try recoverNode(network: Network.bitcoin, seed: seed);
     let sdkServices = try initServices(config: breez_sdk.defaultConfig(envType: EnvironmentType.staging), seed: seed, creds: credentials, listener: SDKListener());
