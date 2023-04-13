@@ -29,7 +29,7 @@
     "release": "release-it",
     "example": "yarn --cwd example",
     "pods": "cd example/ios && pod install",
-    "bootstrap": "yarn && yarn example && yarn pods"
+    "bootstrap": "rm -rf node_modules && rm -rf example/node_modules && yarn && yarn example && yarn pods"
   },
   "keywords": [
     "react-native",
@@ -63,8 +63,8 @@
     "jest": "^26.0.1",
     "pod-install": "^0.1.0",
     "prettier": "^2.0.5",
-    "react": "16.13.1",
-    "react-native": "0.63.4",
+    "react": "17.0.2",
+    "react-native": "0.68.6",
     "react-native-builder-bob": "^0.18.0",
     "release-it": "^14.2.2",
     "typescript": "^4.1.3"

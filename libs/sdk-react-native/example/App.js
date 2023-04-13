@@ -37,17 +37,17 @@ const App = () => {
     }
 
     const logHandler = (l) => {
-        addLine("log", `${l.line}: ${l.level}`)
+        console.log(`[${l.level}]: ${l.line}`)
     }
 
     const eventHandler = (type, data) => {
-        addLine("event", `${type}${data ? ' : ' + JSON.stringify(data) : ''}`)
+        addLine("event", `${type}${data ? " : " + JSON.stringify(data) : ""}`)
     }
 
     React.useEffect(() => {
         const asyncFn = async () => {
             await addLogListener(logHandler)
-            await addEventListener(eventHandler)
+            addEventListener(eventHandler)
 
             let seed = null
             let mnemonic = await getSecureItem(MNEMONIC_STORE)
@@ -60,7 +60,7 @@ const App = () => {
                 addLine("mnemonicToSeed", obfuscateString(JSON.stringify(seed)))
 
                 const greenlightCredentials = await registerNode(Network.BITCOIN, seed)
-                
+
                 addLine("registerNode", null)
                 setSecureItem(GREENLIGHT_DEVICE_KEY_STORE, greenlightCredentials.deviceKey)
                 setSecureItem(GREENLIGHT_DEVICE_CERT_STORE, greenlightCredentials.deviceCert)
@@ -74,7 +74,7 @@ const App = () => {
 
             if (!deviceKey) {
                 const greenlightCredentials = await recoverNode(Network.BITCOIN, seed)
-                
+
                 addLine("recoverNode", null)
                 setSecureItem(GREENLIGHT_DEVICE_KEY_STORE, greenlightCredentials.deviceKey)
                 setSecureItem(GREENLIGHT_DEVICE_CERT_STORE, greenlightCredentials.deviceCert)
