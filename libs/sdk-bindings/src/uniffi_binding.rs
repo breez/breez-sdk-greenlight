@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 
 use breez_sdk_core::{
     mnemonic_to_seed as sdk_mnemonic_to_seed, parse as sdk_parse_input,
@@ -40,7 +40,7 @@ impl BindingLogger {
 impl log::Log for BindingLogger {
     fn enabled(&self, m: &Metadata) -> bool {
         // ignroe the internal uniffi log to prevent infinite loop.
-        return m.target().to_string() != "breez_sdk_bindings::uniffi_binding".to_string();
+        return *m.target() != *"breez_sdk_bindings::uniffi_binding";
     }
 
     fn log(&self, record: &Record) {
