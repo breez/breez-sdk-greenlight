@@ -8,7 +8,7 @@ init:
 	rustup target add aarch64-apple-darwin x86_64-apple-darwin
 	rustup target add aarch64-apple-ios-sim
 	#rustup target add armv7-apple-ios armv7s-apple-ios i386-apple-ios ## deprecated
-	rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+	rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android	
 	@if [ $$(uname) == "Darwin" ] ; then cargo install cargo-lipo ; fi
 	cargo install cbindgen
 	cargo install cargo-ndk
@@ -30,6 +30,17 @@ darwin-universal: $(SOURCES)
 	lipo -create -output ../target/darwin-universal/release/libbreez_sdk_bindings.dylib ../target/aarch64-apple-darwin/release/libbreez_sdk_bindings.dylib ../target/x86_64-apple-darwin/release/libbreez_sdk_bindings.dylib
 	lipo -create -output ../target/darwin-universal/release/libbreez_sdk_bindings.a ../target/aarch64-apple-darwin/release/libbreez_sdk_bindings.a ../target/x86_64-apple-darwin/release/libbreez_sdk_bindings.a
 
+csharp-darwin: darwin-universal
+	cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bindgen-cs
+	uniffi-bindgen-cs src/breez_sdk.udl -o ffi/csharp -c ./uniffi.toml 
+	cp ../target/darwin-universal/release/libbreez_sdk_bindings.dylib ffi/csharp
+
+TARGET ?= aarch64-unknown-linux-gnu
+csharp-linux: $(SOURCES)
+		cargo build --release --target $(TARGET)
+		uniffi-bindgen-cs src/breez_sdk.udl -o ffi/csharp -c ./uniffi.toml 
+		cp ../target/$(TARGET)/release/libbreez_sdk_bindings.so ffi/csharp
+		
 swift-ios: ios-universal
 	uniffi-bindgen generate src/breez_sdk.udl -l swift -o ffi/swift-ios
 	cp ../target/ios-universal/release/libbreez_sdk_bindings.a ffi/swift-ios

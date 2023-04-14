@@ -14,9 +14,9 @@ breez-sdk-core = { path = "../sdk-core"}
 anyhow = { version = "1.0.57", features = ["backtrace"] }
 thiserror = "1.0"
 tokio = { version = "1", features = ["full"] }
-uniffi = { version = "0.22.0", features=["builtin-bindgen"]}
-uniffi_bindgen = "0.22.0"
-uniffi_macros = "0.22.0"
+uniffi = { version = "0.23.0", features = ["bindgen-tests"]}
+uniffi_bindgen = "0.23.0"
+uniffi_macros = "0.23.0"
 lightning-invoice = "*"
 log = "*"
 once_cell = "*"
@@ -25,5 +25,5 @@ tiny-bip39 = "*"
 tonic = { version = "^0.8", features = ["tls", "tls-roots", "tls-webpki-roots"] }
 
 [build-dependencies]
-uniffi_build = {version = "0.22.0", features=["builtin-bindgen"] }
+uniffi_build = {version = "0.23.0" }
 anyhow = { version = "1.0.57", features = ["backtrace"] }
