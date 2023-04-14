@@ -169,7 +169,6 @@ fun readableMapOf(currencyInfo: CurrencyInfo): ReadableMap {
             "spacing" to currencyInfo.spacing,
             "symbol" to readableMapOf(currencyInfo.symbol),
             "uniqSymbol" to readableMapOf(currencyInfo.uniqSymbol),
-            "fractionSize" to currencyInfo.fractionSize,
             "localizedName" to readableArrayOf(currencyInfo.localizedName),
             "localeOverrides" to readableArrayOf(currencyInfo.localeOverrides)
     )

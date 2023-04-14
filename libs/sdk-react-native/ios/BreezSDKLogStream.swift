@@ -10,7 +10,7 @@ class BreezSDKLogStream: NSObject, LogStream {
     }
     
     func log(l: LogEntry) {
-        self.emitter.sendEvent(withName: BreezSDKListener.emitterName,
+        self.emitter.sendEvent(withName: BreezSDKLogStream.emitterName,
                                body: [
                                 "line":  l.line,
                                 "level": l.level
