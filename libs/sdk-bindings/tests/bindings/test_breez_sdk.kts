@@ -7,7 +7,14 @@ class SDKListener: breez_sdk.EventListener {
     }
 }
 
+class LogStreamListener: breez_sdk.LogStream { 
+    override fun log(l: breez_sdk.LogEntry) {
+        println(l.line);
+    }
+}
+
 try {
+    breez_sdk.setLogStream(LogStreamListener());
     var seed = breez_sdk.mnemonicToSeed("cruise clever syrup coil cute execute laundry general cover prevent law sheriff");
     var credentials = breez_sdk.recoverNode(breez_sdk.Network.BITCOIN, seed);
     var sdkServices = breez_sdk.initServices(breez_sdk.defaultConfig(breez_sdk.EnvironmentType.STAGING), seed, credentials, SDKListener());
