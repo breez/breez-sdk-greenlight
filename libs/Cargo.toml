@@ -11,5 +11,5 @@ members = [
 ]
 
 [workspace.dependencies]
-uniffi = "0.22.0"
-uniffi_macros = "0.22.0"
+uniffi = "0.23.0"
+uniffi_macros = "0.23.0"

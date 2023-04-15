@@ -5,7 +5,6 @@ Currently supported languges are kotlin & swift.
 For kotlin & swift, we are using [uniffi](https://github.com/mozilla/uniffi-rs).
 
 ## prerequisite
-* Install the uniffi-bindgen binary version 0.22.0 on your system using: ```cargo install --version 0.22.0 uniffi_bindgen```
 * set the ANDROID_NDK_HOME env variable to your sdk home folder
 * install cargo-ndk to provide simplified android build: ```cargo install cargo-ndk``` 
 

@@ -3,6 +3,10 @@ name = "breez_sdk"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "uniffi-bindgen"
+path = "uniffi-bindgen.rs"
+
 [lib]
 name = "breez_sdk_bindings"
 crate-type = ["staticlib", "cdylib", "lib"]
