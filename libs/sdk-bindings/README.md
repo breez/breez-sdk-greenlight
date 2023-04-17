@@ -8,9 +8,6 @@ For kotlin & swift, we are using [uniffi](https://github.com/mozilla/uniffi-rs).
 * When building for Android:
   * Set the ANDROID_NDK_HOME env variable to your sdk home folder
   * Install `cargo-ndk` to provide simplified android build: ```cargo install cargo-ndk``` 
-* When building C# bindings:
-  * Install `uniffi-bindgen-cs` with `cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bindgen-cs`
-  * Incorporate the `uniffi-bindgen-cs` requirements from [the project's README](https://github.com/NordSecurity/uniffi-bindgen-cs#how-to-integrate-bindings)
 
 ## Build
 
