@@ -17,6 +17,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '6.0.x'
       - run: |
           cd libs
           cargo fmt -- --check
@@ -40,7 +43,7 @@ jobs:
       - name: run lib tests
         env:
           SSH_PRIVATE_KEY: ${{secrets.REPO_SSH_KEY}}
-        run: |
+        run: |          
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           sudo chmod 600 ~/.ssh/id_rsa
@@ -48,6 +51,7 @@ jobs:
           curl -o jna-5.12.1.jar https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.12.1/jna-5.12.1.jar
           export CLASSPATH=$(pwd)/jna-5.12.1.jar;
           cd libs
+          make csharp-darwin          
           cargo test  
       
       - name: run tools tests        

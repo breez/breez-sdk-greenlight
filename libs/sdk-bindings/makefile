@@ -14,7 +14,7 @@ init:
 	cargo install cargo-ndk
 
 ## all: Compile iOS, Android
-all: swift-ios swift-darwin bindings-swift kotlin
+all: swift-ios swift-darwin bindings-swift kotlin csharp-darwin
 
 ios-universal: $(SOURCES)		
 	mkdir -p ../target/ios-universal/release
@@ -37,6 +37,7 @@ csharp-darwin: darwin-universal
 
 TARGET ?= aarch64-unknown-linux-gnu
 csharp-linux: $(SOURCES)
+		cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bindgen-cs
 		cargo build --release --target $(TARGET)
 		uniffi-bindgen-cs src/breez_sdk.udl -o ffi/csharp -c ./uniffi.toml 
 		cp ../target/$(TARGET)/release/libbreez_sdk_bindings.so ffi/csharp
