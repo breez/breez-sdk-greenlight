@@ -180,7 +180,6 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
        ",
        "ALTER TABLE payments_external_info ADD COLUMN ln_address TEXT;",
        "ALTER TABLE payments_external_info ADD COLUMN lnurl_metadata TEXT;",
-       
        "
        ALTER TABLE swaps RENAME TO old_swaps;
 

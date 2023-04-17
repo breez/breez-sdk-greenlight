@@ -252,7 +252,7 @@ impl SqliteStorage {
             unconfirmed_sats: row.get("unconfirmed_sats")?,
             confirmed_sats: row.get("confirmed_sats")?,
             status,
-            refund_tx_ids: refund_tx_ids,
+            refund_tx_ids,
             unconfirmed_tx_ids: unconfirmed_tx_ids.0,
             confirmed_tx_ids: confirmed_txs_raw.0,
             min_allowed_deposit: row.get("min_allowed_deposit")?,
