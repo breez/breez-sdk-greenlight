@@ -50,8 +50,9 @@ jobs:
           ssh-add ~/.ssh/id_rsa
           curl -o jna-5.12.1.jar https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.12.1/jna-5.12.1.jar
           export CLASSPATH=$(pwd)/jna-5.12.1.jar;
-          cd libs
-          make csharp-darwin          
+          cd libs/sdk-bindings
+          make csharp-darwin
+          cd ..          
           cargo test  
       
       - name: run tools tests        
