@@ -1,12 +1,16 @@
 # breez-sdk-bindings
 
 This project provides bindings for breez-sdk to various languages.
-Currently supported languges are kotlin & swift.
+Currently supported languges are kotlin, swift and C#.
 For kotlin & swift, we are using [uniffi](https://github.com/mozilla/uniffi-rs).
 
-## prerequisite
-* set the ANDROID_NDK_HOME env variable to your sdk home folder
-* install cargo-ndk to provide simplified android build: ```cargo install cargo-ndk``` 
+## Prerequisites
+* When building for Android:
+  * Set the ANDROID_NDK_HOME env variable to your sdk home folder
+  * Install `cargo-ndk` to provide simplified android build: ```cargo install cargo-ndk``` 
+* When building C# bindings:
+  * Install `uniffi-bindgen-cs` with `cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bindgen-cs`
+  * Incorporate the `uniffi-bindgen-cs` requirements from [the project's README](https://github.com/NordSecurity/uniffi-bindgen-cs#how-to-integrate-bindings)
 
 ## Build
 
@@ -30,7 +34,7 @@ We also provides the same binding for mac os by running the following command:
 make swift-darwin
 ```
 
-The above will generate the artifacts in the ffi/swift-darwin folder.
+The above will generate the artifacts in the `ffi/swift-darwin` folder.
 
 ```
 make bindings-swift
@@ -47,11 +51,24 @@ make kotlin
 This will build the android libraries for different platforms copy them to the ffi/kotlin/jniLibs folder.
 In addition the kotlin binding code is generated and copied to the ffi/kotlin/breez-sdk folder.
 
+### C#
+
+```
+# For linux
+make csharp-linux
+
+# Alternatively, for mac:
+make csharp-darwin
+```
+
+This will generate the artifacts in the `ffi/csharp` folder.
+
 ## Test
 
 In the tests directory there are some small scripts with some examples on how to use the sdk.
   * Kotlin `tests/bindings/test_breez-sdk.kts`
   * Swift `tests/bindings/test_breez-sdk.swift`  
+  * C# `tests/bindings/test_breez_sdk.cs`
 
 If you want to try them out, you will need:
 

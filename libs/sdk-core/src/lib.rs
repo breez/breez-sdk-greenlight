@@ -125,10 +125,11 @@
 //!
 //! ## Bindings
 //!
+//! * C#
 //! * Dart
-//! * Swift
 //! * Kotlin
 //! * React-Native
+//! * Swift
 //!
 //!
 //! ## API Key
