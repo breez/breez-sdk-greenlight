@@ -1,5 +1,5 @@
 ﻿
-using BreezSDK;
+using Breez.Sdk;
 
 try
 {
