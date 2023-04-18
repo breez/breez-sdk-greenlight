@@ -31,13 +31,13 @@ darwin-universal: $(SOURCES)
 	lipo -create -output ../target/darwin-universal/release/libbreez_sdk_bindings.a ../target/aarch64-apple-darwin/release/libbreez_sdk_bindings.a ../target/x86_64-apple-darwin/release/libbreez_sdk_bindings.a
 
 csharp-darwin: darwin-universal
-	cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bindgen-cs
+	cargo install uniffi-bindgen-cs --git https://github.com/breez/uniffi-bindgen-cs --branch namespace
 	uniffi-bindgen-cs src/breez_sdk.udl -o ffi/csharp -c ./uniffi.toml 
 	cp ../target/darwin-universal/release/libbreez_sdk_bindings.dylib ffi/csharp
 
 TARGET ?= aarch64-unknown-linux-gnu
 csharp-linux: $(SOURCES)
-		cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bindgen-cs
+		cargo install uniffi-bindgen-cs --git https://github.com/breez/uniffi-bindgen-cs --branch namespace
 		cargo build --release --target $(TARGET)
 		uniffi-bindgen-cs src/breez_sdk.udl -o ffi/csharp -c ./uniffi.toml 
 		cp ../target/$(TARGET)/release/libbreez_sdk_bindings.so ffi/csharp

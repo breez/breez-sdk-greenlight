@@ -8,3 +8,4 @@ cdylib_name = "breez_sdk_bindings"
 [bindings.csharp]
 package_name = "breez"
 cdylib_name = "breez_sdk_bindings"
+namespace = "BreezSDK"
