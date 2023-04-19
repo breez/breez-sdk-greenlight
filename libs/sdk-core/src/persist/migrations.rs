@@ -227,7 +227,9 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
          private_key,
          public_key,
          swapper_public_key,
-         script
+         script,
+         min_allowed_deposit,
+         max_allowed_deposit
         )
         SELECT 
          bitcoin_address, 
@@ -238,7 +240,9 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
          private_key,
          public_key,
          swapper_public_key,
-         script         
+         script,
+         min_allowed_deposit,
+         max_allowed_deposit         
         FROM old_swaps;        
 
        INSERT INTO swaps_info
