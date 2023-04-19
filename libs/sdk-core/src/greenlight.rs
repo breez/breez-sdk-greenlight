@@ -337,7 +337,7 @@ impl NodeAPI for Greenlight {
         let mut client = self.get_client().await?;
 
         // extract the amount we need to pay
-        let mut amount = amount_sats.clone();
+        let mut amount = amount_sats;
         if amount.is_none() {
             let invoice = parse_invoice(bolt11.as_str())?;
             amount = invoice.amount_msat.map(|amt| amt / 1000);
