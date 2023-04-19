@@ -16,7 +16,7 @@ jobs:
     name: Format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3      
       - run: |
           cd libs
           cargo fmt -- --check
@@ -30,25 +30,29 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
+      - uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '6.0.x'
       
       - name: install dependencies
         run: |
-          echo $ANDROID_NDK_HOME
-          cargo install cargo-ndk@2.12.2
-          cargo install --version 0.22.0 uniffi_bindgen          
+          cd libs/sdk-bindings
+          make init      
           brew install protobuf          
 
       - name: run lib tests
         env:
           SSH_PRIVATE_KEY: ${{secrets.REPO_SSH_KEY}}
-        run: |
+        run: |          
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           sudo chmod 600 ~/.ssh/id_rsa
           ssh-add ~/.ssh/id_rsa
           curl -o jna-5.12.1.jar https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.12.1/jna-5.12.1.jar
           export CLASSPATH=$(pwd)/jna-5.12.1.jar;
-          cd libs
+          cd libs/sdk-bindings
+          make csharp-darwin
+          cd ..          
           cargo test  
       
       - name: run tools tests        

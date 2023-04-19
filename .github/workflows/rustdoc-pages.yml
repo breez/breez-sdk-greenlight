@@ -23,8 +23,8 @@ jobs:
       - name: Install dependencies
         run: |
           echo $ANDROID_NDK_HOME
-          cargo install cargo-ndk@2.12.2
-          cargo install --version 0.22.0 uniffi_bindgen          
+          cd libs/sdk-bindings
+          make init   
           brew install protobuf     
 
       - name: Build Docs
