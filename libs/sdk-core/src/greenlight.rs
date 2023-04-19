@@ -336,6 +336,32 @@ impl NodeAPI for Greenlight {
     ) -> Result<crate::models::Payment> {
         let mut client = self.get_client().await?;
 
+        // extract the amount we need to pay
+        let mut amount = amount_sats.clone();
+        if amount.is_none() {
+            let invoice = parse_invoice(bolt11.as_str())?;
+            amount = invoice.amount_msat.map(|amt| amt / 1000);
+        }
+        if amount.is_none() {
+            return Err(anyhow!("amount is required"));
+        }
+
+        // In greenlight we need to set either max_fee or maxfeepercent but not both.
+        // So the strategy here is to calculate the max fee according to the maxfeepercent and the amount.
+        // If we have a maxfee_sat and it is less than the calculated fee we will use it.
+        let mut maxfee_sat: Option<u64> = None;
+        let mut maxfeepercent = self.sdk_config.maxfeepercent;
+
+        // If we have absolute fee provided and it is less than the calculated fee we will use it.
+        if let Some(max_abs_fee) = self.sdk_config.maxfee_sat {
+            let calculated_percentage_fee =
+                amount.unwrap() as f64 * self.sdk_config.maxfeepercent / 100.0;
+            if (max_abs_fee as f64) < calculated_percentage_fee {
+                maxfee_sat = self.sdk_config.maxfee_sat;
+                maxfeepercent = 0.0;
+            }
+        }
+
         let request = pb::PayRequest {
             amount: amount_sats
                 .map(Unit::Satoshi)
@@ -343,13 +369,11 @@ impl NodeAPI for Greenlight {
                 .map(|amt| Amount { unit: amt }),
             bolt11,
             timeout: self.sdk_config.payment_timeout_sec,
-            maxfee: self
-                .sdk_config
-                .maxfee_sat
+            maxfee: maxfee_sat
                 .map(Unit::Satoshi)
                 .map(Some)
                 .map(|amt| Amount { unit: amt }),
-            maxfeepercent: self.sdk_config.maxfeepercent,
+            maxfeepercent,
         };
         client.pay(request).await?.into_inner().try_into()
     }
