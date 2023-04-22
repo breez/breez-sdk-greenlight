@@ -41,7 +41,13 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
-    initServices: (NSString*)apiKey
+    defaultConfig: (NSString*)envType
+    resolver: (RCTPromiseResolveBlock)resolve
+    rejecter: (RCTPromiseRejectBlock)reject
+)
+
+RCT_EXTERN_METHOD(
+    initServices: (NSDictionary*)config
     deviceKey: (NSArray*)deviceKey
     deviceCert: (NSArray*)deviceCert
     seed: (NSArray*)seed

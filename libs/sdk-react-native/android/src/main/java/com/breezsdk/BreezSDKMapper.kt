@@ -7,6 +7,29 @@ import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableArray
 import com.facebook.react.bridge.WritableMap
 
+fun asConfig(config: ReadableMap): Config? {
+    var breezserver = config.getString("breezserver")
+    var mempoolspaceUrl = config.getString("mempoolspaceUrl")
+    var workingDir = config.getString("workingDir")
+    var network = config.getString("network")
+
+    if (breezserver != null && mempoolspaceUrl != null && workingDir != null && network != null && hasNonNullKey(config, "paymentTimeoutSec") && hasNonNullKey(config, "maxfeepercent")) {
+        var paymentTimeoutSec = config.getInt("paymentTimeoutSec")
+        var defaultLspId = config.getString("defaultLspId")
+        var apiKey = config.getString("apiKey")
+        var maxfeeSat = if (hasNonNullKey(config, "maxfeeSat")) config.getInt("maxfeeSat") else null
+        var maxfeepercent = config.getDouble("maxfeepercent")
+
+        return Config(breezserver, mempoolspaceUrl, workingDir, asNetwork(network), paymentTimeoutSec.toUInt(), defaultLspId, apiKey, maxfeeSat?.toULong(), maxfeepercent)
+    }
+
+    return null
+}
+
+fun asEnvironmentType(envType: String): EnvironmentType {
+    return EnvironmentType.valueOf(envType.uppercase())
+}
+
 fun asLnUrlAuthRequestData(reqData: ReadableMap): LnUrlAuthRequestData? {
     var k1 = reqData.getString("k1")
     var action = reqData.getString("action")
@@ -26,7 +49,7 @@ fun asLnUrlPayRequestData(reqData: ReadableMap): LnUrlPayRequestData? {
     var domain = reqData.getString("domain")
     var lnAddress = reqData.getString("lnAddress")
 
-    if (callback != null && metadataStr != null && domain != null && reqData.hasKey("minSendable") && reqData.hasKey("minSendable") && reqData.hasKey("commentAllowed")) {
+    if (callback != null && metadataStr != null && domain != null && hasNonNullKey(reqData, "minSendable") && hasNonNullKey(reqData, "minSendable") && hasNonNullKey(reqData, "commentAllowed")) {
         var minSendable = reqData.getDouble("minSendable")
         var maxSendable = reqData.getDouble("maxSendable")
         var commentAllowed = reqData.getInt("commentAllowed")
@@ -42,7 +65,7 @@ fun asLnUrlWithdrawRequestData(reqData: ReadableMap): LnUrlWithdrawRequestData? 
     var k1 = reqData.getString("k1")
     var defaultDescription = reqData.getString("defaultDescription")
 
-    if (callback != null && k1 != null && defaultDescription != null && reqData.hasKey("minWithdrawable") && reqData.hasKey("maxWithdrawable")) {
+    if (callback != null && k1 != null && defaultDescription != null && hasNonNullKey(reqData, "minWithdrawable") && hasNonNullKey(reqData, "maxWithdrawable")) {
         var minWithdrawable = reqData.getDouble("minWithdrawable")
         var maxWithdrawable = reqData.getDouble("maxWithdrawable")
 
@@ -74,6 +97,10 @@ fun asUByteList(arr: ReadableArray): List<UByte> {
     return list
 }
 
+fun hasNonNullKey(map: ReadableMap, key: String): Boolean {
+    return map.hasKey(key) && !map.isNull(key)
+}
+
 fun pushToArray(array: WritableArray, value: Any?) {
     when (value) {
         null -> array.pushNull()
@@ -91,6 +118,7 @@ fun pushToArray(array: WritableArray, value: Any?) {
         is String -> array.pushString(value)
         is SwapInfo -> array.pushMap(readableMapOf(value))
         is UByte -> array.pushInt(value.toInt())
+        is UInt -> array.pushInt(value.toInt())
         is UShort -> array.pushInt(value.toInt())
         is ULong -> array.pushDouble(value.toDouble())
         is UnspentTransactionOutput -> array.pushMap(readableMapOf(value))
@@ -159,6 +187,20 @@ fun readableMapOf(closedChannelPaymentDetails: ClosedChannelPaymentDetails): Rea
             "shortChannelId" to closedChannelPaymentDetails.shortChannelId,
             "state" to closedChannelPaymentDetails.state.name.lowercase(),
             "fundingTxid" to closedChannelPaymentDetails.fundingTxid
+    )
+}
+
+fun readableMapOf(config: Config): ReadableMap {
+    return readableMapOf(
+            "breezserver" to config.breezserver,
+            "mempoolspaceUrl" to config.mempoolspaceUrl,
+            "workingDir" to config.workingDir,
+            "network" to config.network.name.lowercase(),
+            "paymentTimeoutSec" to config.paymentTimeoutSec,
+            "defaultLspId" to config.defaultLspId,
+            "apiKey" to config.apiKey,
+            "maxfeeSat" to config.maxfeeSat,
+            "maxfeepercent" to config.maxfeepercent
     )
 }
 
