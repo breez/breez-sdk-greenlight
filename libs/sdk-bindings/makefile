@@ -14,7 +14,7 @@ init:
 	cargo install cargo-ndk
 
 ## all: Compile iOS, Android
-all: swift-ios swift-darwin bindings-swift kotlin
+all: swift-ios swift-darwin bindings-swift kotlin bindings-android
 
 ios-universal: $(SOURCES)		
 	mkdir -p ../target/ios-universal/release
