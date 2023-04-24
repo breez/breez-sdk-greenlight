@@ -1,8 +1,7 @@
 # breez-sdk-bindings
 
 This project provides bindings for breez-sdk to various languages.
-Currently supported languges are kotlin & swift.
-For kotlin & swift, we are using [uniffi](https://github.com/mozilla/uniffi-rs).
+Currently supported languages are Kotlin & Swift for which we are using [UniFFI](https://github.com/mozilla/uniffi-rs) to generate the bindings.
 
 ## prerequisite
 * Install the uniffi-bindgen binary version 0.22.0 on your system using: ```cargo install --version 0.22.0 uniffi_bindgen```
@@ -19,34 +18,51 @@ make init
 
 ### Swift
 
+For most users, we recommend using our official Swift package: [breez/breez-sdk-swift](https://github.com/breez/breez-sdk-swift).
+
+If you want to compile from source or need more options, read on.
+
+#### Swift Module
+
+These commands will build libraries for different architectures in `../target/` and generate Swift bindings as well as Swift module artifacts in `ffi/swift-ios/` and `ffi/swift-darwin/` respectively:
+
 ```
 make swift-ios
 ```
-
-This will generate all the artifacts needed to for an iOS app to start writing code that uses breez sdk in swift.
-All files are generated in the bindings/swift-ios folder.
-We also provides the same binding for mac os by running the following command:
 
 ```
 make swift-darwin
 ```
 
-The above will generate the artifacts in the ffi/swift-darwin folder.
+#### Swift Package
+
+This command will produce a fully configured Swift Package in `bindings-swift/`.
+See [Adding package dependencies to your app](https://developer.apple.com/documentation/xcode/adding-package-dependencies-to-your-app) in Apple's docs for more information on how to integrate such a package into your project.
 
 ```
 make bindings-swift
 ```
 
-This will produce a fully configured Swift Package in `bindings-swift/`.
-See [Adding package dependencies to your app](https://developer.apple.com/documentation/xcode/adding-package-dependencies-to-your-app) in Apple's docs for more information on how to integrate such a package into your project.
-
 ### Kotlin
+
+### Libraries and Bindings
+
+This command will build libraries for different platforms in `../target/` and copy them to `ffi/kotlin/jniLibs`.
+In addition it will generate Kotlin bindings in `ffi/kotlin/breez-sdk`.
+
 ```
 make kotlin
 ```
 
-This will build the android libraries for different platforms copy them to the ffi/kotlin/jniLibs folder.
-In addition the kotlin binding code is generated and copied to the ffi/kotlin/breez-sdk folder.
+### Android Archive (AAR)
+
+This command will build an AAR file in `bindings-android/lib/build/outputs/aar/lib-release.aar`:
+
+```
+make bindings-android
+```
+
+See [Add your AAR or JAR as a dependency](https://developer.android.com/studio/projects/android-library#psd-add-aar-jar-dependency) in Android's docs for more information on how to integrate such an archive into your project.
 
 ## Test
 
