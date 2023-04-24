@@ -56,7 +56,7 @@ make kotlin
 
 ### Android Archive (AAR)
 
-This command will build an AAR file in `bindings-android/lib/build/outputs/aar/lib-release.aar`:
+This command will build an AAR file in `ffi/android/lib-release.aar`:
 
 ```
 make bindings-android

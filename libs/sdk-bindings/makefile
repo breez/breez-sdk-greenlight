@@ -72,7 +72,6 @@ android: aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64
 aarch64-linux-android: $(SOURCES) ndk-home
 	cargo ndk -t aarch64-linux-android -o ffi/kotlin/jniLibs build --release	
 
-
 armv7-linux-androideabi: $(SOURCES) ndk-home
 	cargo ndk -t armv7-linux-androideabi -o ffi/kotlin/jniLibs build --release	
 
@@ -88,6 +87,8 @@ bindings-android: android
 	uniffi-bindgen generate src/breez_sdk.udl --language kotlin --config uniffi.android.toml --out-dir bindings-android/lib/src/main/kotlin/
 	rm uniffi.android.toml
 	cd bindings-android && ./gradlew assembleRelease
+	mkdir ffi/android
+	cp bindings-android/lib/build/outputs/aar/lib-release.aar ffi/android
 		
 .PHONY: ndk-home
 ndk-home:
