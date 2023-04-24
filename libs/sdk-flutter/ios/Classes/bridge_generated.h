@@ -23,7 +23,7 @@ typedef struct wire_Config {
   struct wire_uint_8_list *default_lsp_id;
   struct wire_uint_8_list *api_key;
   uint64_t *maxfee_sat;
-  double maxfeepercent;
+  double maxfee_percent;
 } wire_Config;
 
 typedef struct wire_GreenlightCredentials {

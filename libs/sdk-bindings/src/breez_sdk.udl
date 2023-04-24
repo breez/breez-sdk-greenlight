@@ -39,7 +39,7 @@ dictionary Config {
     string? default_lsp_id;
     string? api_key;
     u64? maxfee_sat;
-    f64 maxfeepercent;
+    f64 maxfee_percent;
 };
 
 dictionary RouteHint {

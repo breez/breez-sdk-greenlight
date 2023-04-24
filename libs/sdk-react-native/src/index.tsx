@@ -106,7 +106,7 @@ export type Config = {
     defaultLspId?: string
     apiKey?: string
     maxfeeSat?: number
-    maxfeepercent: number
+    maxfeePercent: number
 }
 
 export type ClosedChannelPaymentDetails = {

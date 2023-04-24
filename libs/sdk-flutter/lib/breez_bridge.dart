@@ -368,7 +368,7 @@ extension SDKConfig on Config {
       String? defaultLspId,
       String? apiKey,
       int? maxfeeSat,
-      double? maxfeepercent}) {
+      double? maxfeePercent}) {
     return Config(
         breezserver: breezserver ?? this.breezserver,
         mempoolspaceUrl: mempoolspaceUrl ?? this.mempoolspaceUrl,
@@ -378,6 +378,6 @@ extension SDKConfig on Config {
         defaultLspId: defaultLspId ?? this.defaultLspId,
         apiKey: apiKey ?? this.apiKey,
         maxfeeSat: maxfeeSat ?? this.maxfeeSat,
-        maxfeepercent: maxfeepercent ?? this.maxfeepercent);
+        maxfeePercent: maxfeePercent ?? this.maxfeePercent);
   }
 }

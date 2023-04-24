@@ -63,13 +63,13 @@ class BreezSDKMapper {
            let workingDir = config["workingDir"] as? String,
            let networkStr = config["network"] as? String,
            let paymentTimeoutSec = config["paymentTimeoutSec"] as? UInt32,
-           let maxfeepercent = config["maxfeepercent"] as? Double {
+           let maxfeePercent = config["maxfeePercent"] as? Double {
             let defaultLspId = config["defaultLspId"] as? String
             let apiKey = config["apiKey"] as? String
             let maxfeeSat = config["maxfeeSat"] as? UInt64
             do {
                 var network = try asNetwork(network: networkStr)
-                return Config(breezserver: breezserver, mempoolspaceUrl: mempoolspaceUrl, workingDir: workingDir, network: network, paymentTimeoutSec: paymentTimeoutSec, defaultLspId: defaultLspId, apiKey: apiKey, maxfeeSat: maxfeeSat, maxfeepercent: maxfeepercent)
+                return Config(breezserver: breezserver, mempoolspaceUrl: mempoolspaceUrl, workingDir: workingDir, network: network, paymentTimeoutSec: paymentTimeoutSec, defaultLspId: defaultLspId, apiKey: apiKey, maxfeeSat: maxfeeSat, maxfeePercent: maxfeePercent)
             } catch {}
         }
         
@@ -169,7 +169,7 @@ class BreezSDKMapper {
             "defaultLspId": config.defaultLspId,
             "apiKey": config.apiKey,
             "maxfeeSat": config.maxfeeSat,
-            "maxfeepercent": config.maxfeepercent
+            "maxfeePercent": config.maxfeePercent
         ]
     }
     
