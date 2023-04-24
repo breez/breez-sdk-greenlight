@@ -49,6 +49,33 @@ class BreezSDKMapper {
         return unspentTransactionOutputs.map { (unspentTransactionOutput) -> [String: Any] in return dictionaryOf(unspentTransactionOutput: unspentTransactionOutput) }
     }
     
+    static func asEnvironmentType(envType: String) throws -> EnvironmentType {
+        switch(envType) {
+        case "production": return EnvironmentType.production
+        case "staging": return EnvironmentType.staging
+        default: throw SdkError.Error(message: "Invalid environment type")
+        }
+    }
+    
+    static func asConfig(config: [String: Any?]) -> Config? {
+        if let breezserver = config["breezserver"] as? String,
+           let mempoolspaceUrl = config["mempoolspaceUrl"] as? String,
+           let workingDir = config["workingDir"] as? String,
+           let networkStr = config["network"] as? String,
+           let paymentTimeoutSec = config["paymentTimeoutSec"] as? UInt32,
+           let maxfeepercent = config["maxfeepercent"] as? Double {
+            let defaultLspId = config["defaultLspId"] as? String
+            let apiKey = config["apiKey"] as? String
+            let maxfeeSat = config["maxfeeSat"] as? UInt64
+            do {
+                var network = try asNetwork(network: networkStr)
+                return Config(breezserver: breezserver, mempoolspaceUrl: mempoolspaceUrl, workingDir: workingDir, network: network, paymentTimeoutSec: paymentTimeoutSec, defaultLspId: defaultLspId, apiKey: apiKey, maxfeeSat: maxfeeSat, maxfeepercent: maxfeepercent)
+            } catch {}
+        }
+        
+        return nil
+    }
+    
     static func asLnUrlAuthRequestData(reqData: [String: Any]) -> LnUrlAuthRequestData? {
         if let k1 = reqData["k1"] as? String,
            let domain = reqData["domain"] as? String,
@@ -129,6 +156,20 @@ class BreezSDKMapper {
             "shortChannelId": closedChannelPaymentDetails.shortChannelId,
             "state": valueOf(channelState: closedChannelPaymentDetails.state),
             "fundingTxid": closedChannelPaymentDetails.fundingTxid
+        ]
+    }
+    
+    static func dictionaryOf(config: Config) -> [String: Any?] {
+        return [
+            "breezserver": config.breezserver,
+            "mempoolspaceUrl": config.mempoolspaceUrl,
+            "workingDir": config.workingDir,
+            "network": valueOf(network: config.network),
+            "paymentTimeoutSec": config.paymentTimeoutSec,
+            "defaultLspId": config.defaultLspId,
+            "apiKey": config.apiKey,
+            "maxfeeSat": config.maxfeeSat,
+            "maxfeepercent": config.maxfeepercent
         ]
     }
     

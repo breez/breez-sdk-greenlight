@@ -19,6 +19,11 @@ const BreezSDK = NativeModules.BreezSDK
 
 const BreezSDKEmitter = new NativeEventEmitter(BreezSDK)
 
+export enum EnvironmentType {
+    PRODUCTION = "production",
+    STAGING = "staging"
+}
+
 export enum EventType {
     INVOICE_PAID = "invoicePaid",
     NEW_BLOCK = "newBlock",
@@ -90,6 +95,18 @@ export type BitcoinAddressData = {
     amountSat?: number
     label?: string
     message?: string
+}
+
+export type Config = {
+    breezserver: string
+    mempoolspaceUrl: string
+    workingDir: string
+    network: Network
+    paymentTimeoutSec: number
+    defaultLspId?: string
+    apiKey?: string
+    maxfeeSat?: number
+    maxfeepercent: number
 }
 
 export type ClosedChannelPaymentDetails = {
@@ -422,8 +439,13 @@ export const recoverNode = async (network: Network, seed: Uint8Array): Promise<G
     return response as GreenlightCredentials
 }
 
-export const initServices = async (apiKey: string, deviceKey: Uint8Array, deviceCert: Uint8Array, seed: Uint8Array): Promise<void> => {
-    await BreezSDK.initServices(apiKey, deviceKey, deviceCert, seed)
+export const defaultConfig = async (envType: EnvironmentType): Promise<Config> => {
+   const response = await BreezSDK.defaultConfig(envType)
+   return response as Config
+}
+
+export const initServices = async (config: Config, deviceKey: Uint8Array, deviceCert: Uint8Array, seed: Uint8Array): Promise<void> => {
+    await BreezSDK.initServices(config, deviceKey, deviceCert, seed)
 }
 
 export const start = async (): Promise<void> => {
