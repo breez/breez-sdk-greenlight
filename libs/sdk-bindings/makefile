@@ -76,6 +76,7 @@ bindings-android: android
 	sed 's/package_name = "breez_sdk"/package_name = "technology.breez"/' uniffi.toml > uniffi.android.toml
 	uniffi-bindgen generate src/breez_sdk.udl --language kotlin --config uniffi.android.toml --out-dir bindings-android/lib/src/main/kotlin/
 	rm uniffi.android.toml
+	cd bindings-android && ./gradlew assembleRelease
 		
 .PHONY: ndk-home
 ndk-home:
