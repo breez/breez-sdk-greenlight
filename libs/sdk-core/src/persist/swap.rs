@@ -2,13 +2,28 @@ use crate::models::{SwapInfo, SwapStatus};
 
 use super::db::{SqliteStorage, StringArray};
 use anyhow::{anyhow, Result};
-use rusqlite::{named_params, OptionalExtension, Row};
+use rusqlite::{named_params, OptionalExtension, Params, Row};
 
 impl SqliteStorage {
     pub(crate) fn insert_swap(&self, swap_info: SwapInfo) -> Result<()> {
-        self.get_connection()?.execute(
-         "INSERT INTO swaps (bitcoin_address, created_at, lock_height, payment_hash, preimage, private_key, public_key, swapper_public_key, bolt11, paid_sats, unconfirmed_sats, confirmed_sats, script, status, refund_tx_ids, unconfirmed_tx_ids, confirmed_tx_ids, min_allowed_deposit, max_allowed_deposit)
-          VALUES (:bitcoin_address, :created_at, :lock_height, :payment_hash, :preimage, :private_key, :public_key, :swapper_public_key, :bolt11, :paid_sats, :unconfirmed_sats, :confirmed_sats, :script, :status, :refund_tx_ids, :unconfirmed_tx_ids, :confirmed_tx_ids, :min_allowed_deposit, :max_allowed_deposit)",
+        let mut con = self.get_connection()?;
+        let tx = con.transaction()?;
+
+        tx.execute("
+         INSERT INTO swaps (
+           bitcoin_address, 
+           created_at, 
+           lock_height, 
+           payment_hash, 
+           preimage, 
+           private_key, 
+           public_key, 
+           swapper_public_key, 
+           script,
+           min_allowed_deposit, 
+           max_allowed_deposit
+         )
+         VALUES (:bitcoin_address, :created_at, :lock_height, :payment_hash, :preimage, :private_key, :public_key, :swapper_public_key, :script, :min_allowed_deposit, :max_allowed_deposit)",
          named_params! {
              ":bitcoin_address": swap_info.bitcoin_address,
              ":created_at": swap_info.created_at,
@@ -17,21 +32,37 @@ impl SqliteStorage {
              ":preimage": swap_info.preimage,
              ":private_key": swap_info.private_key,
              ":public_key": swap_info.public_key,
-             ":swapper_public_key": swap_info.swapper_public_key,
-             ":paid_sats": swap_info.paid_sats,
-             ":unconfirmed_sats": swap_info.unconfirmed_sats,
-             ":confirmed_sats": swap_info.confirmed_sats,
-             ":script": swap_info.script,
-             ":bolt11": None::<String>,
-             ":status": swap_info.status as u32,
-             ":refund_tx_ids": StringArray(swap_info.refund_tx_ids),
-             ":unconfirmed_tx_ids": StringArray(swap_info.unconfirmed_tx_ids),
-             ":confirmed_tx_ids": StringArray(swap_info.confirmed_tx_ids),
+             ":swapper_public_key": swap_info.swapper_public_key,            
+             ":script": swap_info.script,             
              ":min_allowed_deposit": swap_info.min_allowed_deposit,
              ":max_allowed_deposit": swap_info.max_allowed_deposit
          },
         )?;
 
+        tx.execute(
+            "
+        INSERT INTO swaps_info (
+          bitcoin_address, 
+          status,
+          bolt11,
+          paid_sats, 
+          unconfirmed_sats, 
+          unconfirmed_tx_ids, 
+          confirmed_sats,
+          confirmed_tx_ids     
+        ) VALUES (:bitcoin_address, :status, :bolt11, :paid_sats, :unconfirmed_sats, :unconfirmed_tx_ids, :confirmed_sats, :confirmed_tx_ids)",         
+            named_params! {
+               ":bitcoin_address": swap_info.bitcoin_address,
+               ":status": swap_info.status as i32,
+               ":bolt11": None::<String>,
+               ":paid_sats": swap_info.paid_sats,
+               ":unconfirmed_sats": swap_info.unconfirmed_sats,
+               ":unconfirmed_tx_ids": StringArray(swap_info.unconfirmed_tx_ids),
+               ":confirmed_sats": swap_info.confirmed_sats,
+               ":confirmed_tx_ids": StringArray(swap_info.confirmed_tx_ids)               
+            },
+        )?;
+        tx.commit()?;
         Ok(())
     }
 
@@ -41,7 +72,7 @@ impl SqliteStorage {
         paid_sats: u32,
     ) -> Result<()> {
         self.get_connection()?.execute(
-            "UPDATE swaps SET paid_sats=:paid_sats where bitcoin_address=:bitcoin_address",
+            "UPDATE swaps_info SET paid_sats=:paid_sats where bitcoin_address=:bitcoin_address",
             named_params! {
              ":paid_sats": paid_sats,
              ":bitcoin_address": bitcoin_address,
@@ -57,7 +88,7 @@ impl SqliteStorage {
         redeem_err: String,
     ) -> Result<()> {
         self.get_connection()?.execute(
-            "UPDATE swaps SET last_redeem_error=:redeem_err where bitcoin_address=:bitcoin_address",
+            "UPDATE swaps_info SET last_redeem_error=:redeem_err where bitcoin_address=:bitcoin_address",
             named_params! {
              ":redeem_err": redeem_err,
              ":bitcoin_address": bitcoin_address,
@@ -79,6 +110,22 @@ impl SqliteStorage {
         Ok(())
     }
 
+    pub(crate) fn insert_swap_refund_tx_ids(
+        &self,
+        bitcoin_address: String,
+        refund_tx_id: String,
+    ) -> Result<()> {
+        self.get_connection()?.execute(
+            "INSERT INTO swap_refunds (bitcoin_address, refund_tx_id) VALUES(:bitcoin_address, :refund_tx_id)",
+            named_params! {
+             ":bitcoin_address": bitcoin_address,
+             ":refund_tx_id": refund_tx_id,
+            },
+        )?;
+
+        Ok(())
+    }
+
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn update_swap_chain_info(
         &self,
@@ -87,53 +134,78 @@ impl SqliteStorage {
         unconfirmed_tx_ids: Vec<String>,
         confirmed_sats: u32,
         confirmed_tx_ids: Vec<String>,
-        refund_tx_ids: Vec<String>,
         status: SwapStatus,
     ) -> Result<SwapInfo> {
         self.get_connection()?.execute(
-            "UPDATE swaps SET unconfirmed_sats=:unconfirmed_sats, unconfirmed_tx_ids=:unconfirmed_tx_ids, confirmed_sats=:confirmed_sats, refund_tx_ids=:refund_tx_ids, confirmed_tx_ids=:confirmed_tx_ids, status=:status where bitcoin_address=:bitcoin_address",
+            "UPDATE swaps_info SET unconfirmed_sats=:unconfirmed_sats, unconfirmed_tx_ids=:unconfirmed_tx_ids, confirmed_sats=:confirmed_sats, confirmed_tx_ids=:confirmed_tx_ids, status=:status where bitcoin_address=:bitcoin_address",
             named_params! {
              ":unconfirmed_sats": unconfirmed_sats,
              ":unconfirmed_tx_ids": StringArray(unconfirmed_tx_ids),
              ":confirmed_sats": confirmed_sats,
-             ":bitcoin_address": bitcoin_address,
-             ":refund_tx_ids": StringArray(refund_tx_ids),
+             ":bitcoin_address": bitcoin_address,             
              ":confirmed_tx_ids": StringArray(confirmed_tx_ids),
              ":status": status as u32
             },
         )?;
         Ok(self.get_swap_info_by_address(bitcoin_address)?.unwrap())
     }
+    //(SELECT json_group_array(value) FROM json_each(json_group_array(refund_tx_id)) WHERE refund_tx_id is not null) as refund_tx_ids,
+    fn select_swap_query(&self, where_clause: &str) -> String {
+        format!(
+            "
+            SELECT
+             swaps.bitcoin_address as bitcoin_address,
+             created_at as created_at,
+             lock_height as lock_height,
+             payment_hash as payment_hash,
+             preimage as preimage,
+             private_key as private_key,
+             public_key as public_key,
+             swapper_public_key as swapper_public_key,
+             script as script,
+             min_allowed_deposit,
+             max_allowed_deposit,
+             bolt11 as bolt11,
+             paid_sats as paid_sats,
+             unconfirmed_sats as unconfirmed_sats,
+             confirmed_sats as confirmed_sats,
+             status as status,             
+             (SELECT json_group_array(refund_tx_id) FROM swap_refunds where bitcoin_address = swaps.bitcoin_address) as refund_tx_ids,
+             unconfirmed_tx_ids as unconfirmed_tx_ids,
+             confirmed_tx_ids as confirmed_tx_ids,
+             last_redeem_error as last_redeem_error               
+            FROM swaps 
+             LEFT JOIN swaps_info ON swaps.bitcoin_address = swaps_info.bitcoin_address
+             LEFT JOIN swap_refunds ON swaps.bitcoin_address = swap_refunds.bitcoin_address
+            WHERE {}
+            ",
+            where_clause
+        )
+    }
 
-    pub(crate) fn get_swap_info_by_hash(&self, hash: &Vec<u8>) -> Result<Option<SwapInfo>> {
+    fn select_single_swap<P>(&self, where_clause: &str, params: P) -> Result<Option<SwapInfo>>
+    where
+        P: Params,
+    {
         self.get_connection()?
-            .query_row(
-                "SELECT * FROM swaps where payment_hash = ?1",
-                [hash],
-                |row| self.sql_row_to_swap(row),
-            )
+            .query_row(&self.select_swap_query(where_clause), params, |row| {
+                self.sql_row_to_swap(row)
+            })
             .optional()
             .map_err(|e| anyhow!(e))
     }
 
+    pub(crate) fn get_swap_info_by_hash(&self, hash: &Vec<u8>) -> Result<Option<SwapInfo>> {
+        self.select_single_swap("payment_hash = ?1", [hash])
+    }
+
     pub(crate) fn get_swap_info_by_address(&self, address: String) -> Result<Option<SwapInfo>> {
-        self.get_connection()?
-            .query_row(
-                "SELECT * FROM swaps where bitcoin_address = ?1",
-                [address],
-                |row| self.sql_row_to_swap(row),
-            )
-            .optional()
-            .map_err(|e| anyhow!(e))
+        self.select_single_swap("swaps.bitcoin_address = ?1", [address])
     }
 
     pub(crate) fn list_swaps_with_status(&self, status: SwapStatus) -> Result<Vec<SwapInfo>> {
         let con = self.get_connection()?;
-        let mut stmt = con.prepare(
-            "
-              SELECT * FROM swaps WHERE status=?         
-            ",
-        )?;
+        let mut stmt = con.prepare(&self.select_swap_query("status = ?1"))?;
 
         let vec: Vec<SwapInfo> = stmt
             .query_map([status as u32], |row| self.sql_row_to_swap(row))?
@@ -145,11 +217,7 @@ impl SqliteStorage {
 
     pub(crate) fn list_swaps(&self) -> Result<Vec<SwapInfo>> {
         let con = self.get_connection()?;
-        let mut stmt = con.prepare(
-            "
-           SELECT * FROM swaps        
-         ",
-        )?;
+        let mut stmt = con.prepare(&self.select_swap_query("true"))?;
 
         let vec: Vec<SwapInfo> = stmt
             .query_map([], |row| self.sql_row_to_swap(row))?
@@ -160,32 +228,36 @@ impl SqliteStorage {
     }
 
     fn sql_row_to_swap(&self, row: &Row) -> Result<SwapInfo, rusqlite::Error> {
-        let status: i32 = row.get(13)?;
+        let status: i32 = row.get("status")?;
         let status: SwapStatus = status.try_into().map_or(SwapStatus::Initial, |v| v);
-        let refund_txs_raw: StringArray = row.get(14)?;
-        let unconfirmed_tx_ids: StringArray = row.get(15)?;
-        let confirmed_txs_raw: StringArray = row.get(16)?;
+        let refund_txs_raw: String = row.get("refund_tx_ids")?;
+        let refund_tx_ids: Vec<String> = serde_json::from_str(refund_txs_raw.as_str()).unwrap();
+        // let t: Vec<String> =
+        //     serde_json::from_value(refund_txs_raw).map_err(|e| FromSqlError::InvalidType)?;
+
+        let unconfirmed_tx_ids: StringArray = row.get("unconfirmed_tx_ids")?;
+        let confirmed_txs_raw: StringArray = row.get("confirmed_tx_ids")?;
         Ok(SwapInfo {
-            bitcoin_address: row.get(0)?,
-            created_at: row.get(1)?,
-            lock_height: row.get(2)?,
-            payment_hash: row.get(3)?,
-            preimage: row.get(4)?,
-            private_key: row.get(5)?,
-            public_key: row.get(6)?,
-            swapper_public_key: row.get(7)?,
-            script: row.get(8)?,
-            bolt11: row.get(9)?,
-            paid_sats: row.get(10)?,
-            unconfirmed_sats: row.get(11)?,
-            confirmed_sats: row.get(12)?,
+            bitcoin_address: row.get("bitcoin_address")?,
+            created_at: row.get("created_at")?,
+            lock_height: row.get("lock_height")?,
+            payment_hash: row.get("payment_hash")?,
+            preimage: row.get("preimage")?,
+            private_key: row.get("private_key")?,
+            public_key: row.get("public_key")?,
+            swapper_public_key: row.get("swapper_public_key")?,
+            script: row.get("script")?,
+            bolt11: row.get("bolt11")?,
+            paid_sats: row.get("paid_sats")?,
+            unconfirmed_sats: row.get("unconfirmed_sats")?,
+            confirmed_sats: row.get("confirmed_sats")?,
             status,
-            refund_tx_ids: refund_txs_raw.0,
+            refund_tx_ids,
             unconfirmed_tx_ids: unconfirmed_tx_ids.0,
             confirmed_tx_ids: confirmed_txs_raw.0,
-            min_allowed_deposit: row.get(17)?,
-            max_allowed_deposit: row.get(18)?,
-            last_redeem_error: row.get(19)?,
+            min_allowed_deposit: row.get("min_allowed_deposit")?,
+            max_allowed_deposit: row.get("max_allowed_deposit")?,
+            last_redeem_error: row.get("last_redeem_error")?,
         })
     }
 }
@@ -203,7 +275,6 @@ fn test_swaps() -> Result<(), Box<dyn std::error::Error>> {
 
     let storage = SqliteStorage::from_file(test_utils::create_test_sql_file("swap".to_string()));
 
-    println!("before init");
     storage.init()?;
     let tested_swap_info = SwapInfo {
         bitcoin_address: String::from("1"),
@@ -253,7 +324,6 @@ fn test_swaps() -> Result<(), Box<dyn std::error::Error>> {
         vec![String::from("333"), String::from("444")],
         0,
         vec![],
-        vec![],
         SwapStatus::Initial,
     )?;
     let in_progress = list_in_progress_swaps(&storage)?;
@@ -265,7 +335,6 @@ fn test_swaps() -> Result<(), Box<dyn std::error::Error>> {
         vec![],
         20,
         vec![String::from("333"), String::from("444")],
-        vec![],
         SwapStatus::Initial,
     )?;
     let in_progress = list_in_progress_swaps(&storage)?;
@@ -277,8 +346,15 @@ fn test_swaps() -> Result<(), Box<dyn std::error::Error>> {
         vec![],
         20,
         vec![String::from("333"), String::from("444")],
-        vec![String::from("111"), String::from("222")],
         SwapStatus::Expired,
+    )?;
+    storage.insert_swap_refund_tx_ids(
+        tested_swap_info.bitcoin_address.clone(),
+        String::from("111"),
+    )?;
+    storage.insert_swap_refund_tx_ids(
+        tested_swap_info.bitcoin_address.clone(),
+        String::from("222"),
     )?;
     let in_progress = list_in_progress_swaps(&storage)?;
     assert_eq!(in_progress.len(), 0);

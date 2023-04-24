@@ -19,8 +19,7 @@ BreezSdkCore getNativeToolkit() {
       // iOS and macOS are statically linked
       _breezSDK = BreezSdkCoreImpl(DynamicLibrary.process());
     } else {
-      throw UnsupportedPlatform(
-          '${Platform.operatingSystem} is not yet supported!');
+      throw UnsupportedPlatform('${Platform.operatingSystem} is not yet supported!');
     }
   }
   return _breezSDK!;

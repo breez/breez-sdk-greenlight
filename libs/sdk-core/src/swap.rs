@@ -416,7 +416,6 @@ impl BTCReceiveSwap {
             utxos.unconfirmed_tx_ids(),
             utxos.confirmed_sats(),
             utxos.confirmed_tx_ids(),
-            swap_info.refund_tx_ids,
             swap_status,
         )
     }
@@ -497,18 +496,17 @@ impl BTCReceiveSwap {
             sat_per_vbyte,
         )?;
         let txid = self.chain_service.broadcast_transaction(refund_tx).await?;
-        let mut refund_tx_ids = swap_info.refund_tx_ids.clone();
-        refund_tx_ids.push(txid.clone());
 
         self.persister.update_swap_chain_info(
-            swap_info.bitcoin_address,
+            swap_info.bitcoin_address.clone(),
             utxos.unconfirmed_sats(),
             utxos.unconfirmed_tx_ids(),
             utxos.confirmed_sats(),
             utxos.confirmed_tx_ids(),
-            refund_tx_ids,
             swap_info.status,
         )?;
+        self.persister
+            .insert_swap_refund_tx_ids(swap_info.bitcoin_address, txid.clone())?;
 
         Ok(txid)
     }

@@ -8,7 +8,20 @@
 
 import React, { useState } from "react"
 import { SafeAreaView, ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native"
-import { addEventListener, addLogListener, fetchFiatRates, initServices, listFiatCurrencies, mnemonicToSeed, Network, recoverNode, registerNode, start } from "react-native-breez-sdk"
+import {
+    addEventListener,
+    addLogListener,
+    defaultConfig,
+    EnvironmentType,
+    fetchFiatRates,
+    initServices,
+    listFiatCurrencies,
+    mnemonicToSeed,
+    Network,
+    recoverNode,
+    registerNode,
+    start
+} from "react-native-breez-sdk"
 import BuildConfig from "react-native-build-config"
 import { generateMnemonic } from "@dreson4/react-native-quick-bip39"
 import { obfuscateString } from "./utils/security"
@@ -85,7 +98,11 @@ const App = () => {
             if (deviceKey && deviceCert) {
                 addLine("greenlight deviceKey", obfuscateString(JSON.stringify(deviceKey)))
 
-                await initServices(BuildConfig.BREEZ_API_KEY, deviceKey, deviceCert, seed)
+                const config = await defaultConfig(EnvironmentType.PRODUCTION)
+                addLine("defaultConfig", JSON.stringify(config))
+                config.apiKey = BuildConfig.BREEZ_API_KEY
+
+                await initServices(config, deviceKey, deviceCert, seed)
                 addLine("initServices", null)
 
                 await start()
@@ -96,7 +113,6 @@ const App = () => {
 
                 const fiatRates = await fetchFiatRates()
                 addLine("fetchFiatRates", JSON.stringify(fiatRates))
-
             }
         }
         asyncFn()

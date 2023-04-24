@@ -102,29 +102,45 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun initServices(apiKey: String, deviceKey: ReadableArray, deviceCert: ReadableArray, seed: ReadableArray, promise: Promise) {
+    fun defaultConfig(envType: String, promise: Promise) {
+        try {
+            var workingDir = File(reactApplicationContext.filesDir.toString() + "/breezSdk")
+
+            if (!workingDir.exists()) {
+                workingDir.mkdirs()
+            }
+
+            var config = defaultConfig(asEnvironmentType(envType))
+            config.workingDir = workingDir.absolutePath
+
+            promise.resolve(readableMapOf(config))
+        } catch (e: SdkException) {
+            e.printStackTrace()
+            promise.reject(TAG, "Error calling defaultConfig", e)
+        }
+    }
+
+    @ReactMethod
+    fun initServices(config: ReadableMap, deviceKey: ReadableArray, deviceCert: ReadableArray, seed: ReadableArray, promise: Promise) {
         if (this.breezServices != null) {
             promise.reject(TAG, "BreezServices already initialized")
         }
 
-        var workingDir = File(reactApplicationContext.filesDir.toString() + "/breezSdk")
+        var configData = asConfig(config)
 
-        if (!workingDir.exists()) {
-            workingDir.mkdirs()
-        }
+        if (configData == null) {
+            promise.reject(TAG, "Invalid config")
+        } else {
+            var emitter = reactApplicationContext.getJSModule(RCTDeviceEventEmitter::class.java)
+            var creds = GreenlightCredentials(asUByteList(deviceKey), asUByteList(deviceCert))
 
-        var emitter = reactApplicationContext.getJSModule(RCTDeviceEventEmitter::class.java)
-        var creds = GreenlightCredentials(asUByteList(deviceKey), asUByteList(deviceCert))
-        var config = defaultConfig(EnvironmentType.PRODUCTION)
-        config.apiKey = apiKey
-        config.workingDir = workingDir.absolutePath
-
-        try {
-            this.breezServices = initServices(config, asUByteList(seed), creds, BreezSDKListener(emitter))
-            promise.resolve(readableMapOf("status" to "ok"))
-        } catch (e: SdkException) {
-            e.printStackTrace()
-            promise.reject(TAG, "Error calling initServices", e)
+            try {
+                this.breezServices = initServices(configData, asUByteList(seed), creds, BreezSDKListener(emitter))
+                promise.resolve(readableMapOf("status" to "ok"))
+            } catch (e: SdkException) {
+                e.printStackTrace()
+                promise.reject(TAG, "Error calling initServices", e)
+            }
         }
     }
 

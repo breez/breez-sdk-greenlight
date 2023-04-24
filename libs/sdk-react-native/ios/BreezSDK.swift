@@ -105,15 +105,24 @@ class BreezSDK: RCTEventEmitter {
         }
     }
     
+    @objc(defaultConfig:resolver:rejecter:)
+    func defaultConfig(_ envType: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        do {
+            var config = try breez_sdk.defaultConfig(envType: BreezSDKMapper.asEnvironmentType(envType: envType))
+            config.workingDir = BreezSDK.breezSdkDirectory.absoluteString
+
+            resolve(BreezSDKMapper.dictionaryOf(config: config))
+        } catch let err {
+            reject(BreezSDK.TAG, "Error calling defaultConfig", err)
+        }
+    }
+    
     @objc(initServices:deviceKey:deviceCert:seed:resolver:rejecter:)
-    func initServices(_ apiKey:String, deviceKey:[UInt8], deviceCert:[UInt8], seed:[UInt8], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+    func initServices(_ config:[String: Any], deviceKey:[UInt8], deviceCert:[UInt8], seed:[UInt8], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         if self.breezServices != nil {
             reject(BreezSDK.TAG, "BreezServices already initialized", nil)
-        } else {
+        } else if let config = BreezSDKMapper.asConfig(config: config) {
             let greenlightCredentials = GreenlightCredentials(deviceKey: deviceKey, deviceCert: deviceCert)
-            var config = breez_sdk.defaultConfig(envType: EnvironmentType.production)
-            config.apiKey = apiKey
-            config.workingDir = BreezSDK.breezSdkDirectory.absoluteString
             
             do {
                 self.breezServices = try breez_sdk.initServices(config: config, seed: seed, creds: greenlightCredentials, listener: BreezSDKListener(emitter: self))
@@ -122,6 +131,8 @@ class BreezSDK: RCTEventEmitter {
             } catch let err {
                 reject(BreezSDK.TAG, "Error calling initServices", err)
             }
+        } else {
+            reject(BreezSDK.TAG, "Invalid config", nil)
         }
     }
     

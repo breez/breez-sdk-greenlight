@@ -1,12 +1,12 @@
 # breez-sdk-bindings
 
 This project provides bindings for breez-sdk to various languages.
-Currently supported languages are Kotlin & Swift for which we are using [UniFFI](https://github.com/mozilla/uniffi-rs) to generate the bindings.
+Currently supported languages are Kotlin, Swift, and C# for which we are using [UniFFI](https://github.com/mozilla/uniffi-rs) to generate the bindings.
 
-## prerequisite
-* Install the uniffi-bindgen binary version 0.22.0 on your system using: ```cargo install --version 0.22.0 uniffi_bindgen```
-* set the ANDROID_NDK_HOME env variable to your sdk home folder
-* install cargo-ndk to provide simplified android build: ```cargo install cargo-ndk``` 
+## Prerequisites
+* When building for Android:
+  * Set the ANDROID_NDK_HOME env variable to your sdk home folder
+  * Install `cargo-ndk` to provide simplified android build: ```cargo install cargo-ndk```
 
 ## Build
 
@@ -64,11 +64,24 @@ make bindings-android
 
 See [Add your AAR or JAR as a dependency](https://developer.android.com/studio/projects/android-library#psd-add-aar-jar-dependency) in Android's docs for more information on how to integrate such an archive into your project.
 
+### C#
+
+```
+# For linux
+make csharp-linux
+
+# Alternatively, for mac:
+make csharp-darwin
+```
+
+This will generate the artifacts in the `ffi/csharp` folder.
+
 ## Test
 
 In the tests directory there are some small scripts with some examples on how to use the sdk.
   * Kotlin `tests/bindings/test_breez-sdk.kts`
   * Swift `tests/bindings/test_breez-sdk.swift`  
+  * C# `tests/bindings/test_breez_sdk.cs`
 
 If you want to try them out, you will need:
 

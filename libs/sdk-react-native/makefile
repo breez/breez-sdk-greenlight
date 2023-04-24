@@ -1,6 +1,5 @@
 .PHONY: init
 init: ndk-home
-	cargo install --version 0.22.0 uniffi_bindgen
 	make -C ../sdk-bindings init
 	
 ## clean:

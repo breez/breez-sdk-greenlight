@@ -349,7 +349,7 @@ impl NodeAPI for Greenlight {
                 .map(Unit::Satoshi)
                 .map(Some)
                 .map(|amt| Amount { unit: amt }),
-            maxfeepercent: self.sdk_config.maxfeepercent,
+            maxfeepercent: self.sdk_config.maxfee_percent,
         };
         client.pay(request).await?.into_inner().try_into()
     }
