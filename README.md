@@ -50,7 +50,10 @@ See the instructions in each sub project readme on how to build, test and run.
 Remark: in order to build the Breez SDK you need to have access to the Greenlight repository. Greenlight will eventually be open-sourced (with an MIT license), but is not yet public. To access Greenlight, please email us at contact@breez.technology.
 
 ## API
-To get started with the Breez SDK API, please follow the documentation [here](https://breez.github.io/breez-sdk-rustdoc/doc/breez_sdk_core/). 
+API documentation is [here](https://breez.github.io/breez-sdk-rustdoc/doc/breez_sdk_core/). 
+
+## Using the SDK
+To get started with the Breez SDK, follow [these examples](https://sdk-doc.breez.technology/).
 
 ## Features
 - [x] ‘On-the-fly’ channel creation
