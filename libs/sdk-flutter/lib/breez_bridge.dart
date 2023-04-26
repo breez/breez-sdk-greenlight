@@ -359,25 +359,27 @@ class BreezBridge {
 }
 
 extension SDKConfig on Config {
-  Config copyWith(
-      {String? breezserver,
-      String? mempoolspaceUrl,
-      String? workingDir,
-      Network? network,
-      int? paymentTimeoutSec,
-      String? defaultLspId,
-      String? apiKey,
-      int? maxfeeSat,
-      double? maxfeePercent}) {
+  Config copyWith({
+    String? breezserver,
+    String? mempoolspaceUrl,
+    String? workingDir,
+    Network? network,
+    int? paymentTimeoutSec,
+    String? defaultLspId,
+    String? apiKey,
+    int? maxfeeSat,
+    double? maxfeePercent,
+  }) {
     return Config(
-        breezserver: breezserver ?? this.breezserver,
-        mempoolspaceUrl: mempoolspaceUrl ?? this.mempoolspaceUrl,
-        workingDir: workingDir ?? this.workingDir,
-        network: network ?? this.network,
-        paymentTimeoutSec: paymentTimeoutSec ?? this.paymentTimeoutSec,
-        defaultLspId: defaultLspId ?? this.defaultLspId,
-        apiKey: apiKey ?? this.apiKey,
-        maxfeeSat: maxfeeSat ?? this.maxfeeSat,
-        maxfeePercent: maxfeePercent ?? this.maxfeePercent);
+      breezserver: breezserver ?? this.breezserver,
+      mempoolspaceUrl: mempoolspaceUrl ?? this.mempoolspaceUrl,
+      workingDir: workingDir ?? this.workingDir,
+      network: network ?? this.network,
+      paymentTimeoutSec: paymentTimeoutSec ?? this.paymentTimeoutSec,
+      defaultLspId: defaultLspId ?? this.defaultLspId,
+      apiKey: apiKey ?? this.apiKey,
+      maxfeeSat: maxfeeSat ?? this.maxfeeSat,
+      maxfeePercent: maxfeePercent ?? this.maxfeePercent,
+    );
   }
 }
