@@ -121,14 +121,19 @@ impl ChainService for MempoolSpace {
 
     async fn broadcast_transaction(&self, tx: Vec<u8>) -> Result<String> {
         let client = reqwest::Client::new();
-        client
+        let txidOrError = client
             .post(format!("{}/api/tx", self.base_url))
             .body(hex::encode(tx))
             .send()
             .await?
             .text()
             .await
-            .map_err(anyhow::Error::msg)
+            .map_err(anyhow::Error::msg)?;
+        if txidOrError.contains("error") {
+            Err(anyhow::Error::msg(txidOrError))
+        } else {
+            Ok(txidOrError)
+        }
     }
 }
 #[cfg(test)]
