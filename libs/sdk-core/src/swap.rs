@@ -659,6 +659,9 @@ fn create_refund_tx(
     let tx_weight = tx.strippedsize() as u32 * WITNESS_SCALE_FACTOR as u32
         + refund_witness_input_size * txins.len() as u32;
     let fees: u64 = (tx_weight * sat_per_vbyte / WITNESS_SCALE_FACTOR as u32) as u64;
+    if fees >= confirmed_amount {
+        return Err(anyhow!("insufficient funds to pay fees"));
+    }
     tx.output[0].value = confirmed_amount - fees;
 
     let scpt = Secp256k1::signing_only();
