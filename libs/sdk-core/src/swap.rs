@@ -495,6 +495,7 @@ impl BTCReceiveSwap {
             script,
             sat_per_vbyte,
         )?;
+        info!("broadcasting refund tx {:?}", hex::encode(&refund_tx));
         let txid = self.chain_service.broadcast_transaction(refund_tx).await?;
 
         self.persister.update_swap_chain_info(
