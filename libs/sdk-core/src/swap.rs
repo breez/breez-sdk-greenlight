@@ -611,6 +611,8 @@ fn create_refund_tx(
         return Err(anyhow!("must have at least one input"));
     }
 
+    info!("creating refund tx sat_per_vbyte {}", sat_per_vbyte);
+
     let lock_time = utxos.confirmed.iter().fold(0, |accum, item| {
         let confirmed_height = item.block_height.unwrap();
         if accum >= confirmed_height + lock_delay {
