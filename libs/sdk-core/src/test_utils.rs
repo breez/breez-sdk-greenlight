@@ -1,11 +1,3 @@
-use std::collections::HashMap;
-use std::time::{Duration, SystemTime};
-
-use crate::breez_services::Receiver;
-use crate::chain::{ChainService, OnchainTx, RecommendedFees};
-use crate::fiat::{FiatCurrency, Rate};
-use crate::swap::create_submarine_swap_script;
-use crate::{parse_invoice, Config, LNInvoice, PaymentResponse, RouteHint};
 use anyhow::{anyhow, Result};
 use bitcoin::hashes::hex::ToHex;
 use bitcoin::hashes::{sha256, Hash};
@@ -22,15 +14,21 @@ use lightning_invoice::{Currency, InvoiceBuilder, RawInvoice};
 use rand::distributions::{Alphanumeric, DistString, Standard};
 use rand::rngs::OsRng;
 use rand::{random, Rng};
+use std::collections::HashMap;
+use std::time::{Duration, SystemTime};
+use tokio::sync::{mpsc, Mutex};
 use tonic::Streaming;
 
+use crate::breez_services::Receiver;
+use crate::chain::{ChainService, OnchainTx, RecommendedFees};
+use crate::fiat::{FiatCurrency, Rate};
 use crate::grpc::{PaymentInformation, RegisterPaymentReply};
 use crate::lsp::LspInformation;
 use crate::models::{FiatAPI, LspAPI, NodeAPI, NodeState, Payment, Swap, SwapperAPI, SyncResponse};
-use tokio::sync::{mpsc, Mutex};
-
-//use bitcoin::secp256k1::{ecdsa::{SigningKey, Signature, signature::Signer, VerifyingKey, signature::Verifier}};
-//use rand_core::OsRng;
+use crate::moonpay::MoonPayApi;
+use crate::swap::create_submarine_swap_script;
+use crate::SwapInfo;
+use crate::{parse_invoice, Config, LNInvoice, PaymentResponse, RouteHint};
 
 pub struct MockSwapperAPI {}
 
@@ -455,6 +453,17 @@ impl FiatAPI for MockBreezServer {
             coin: "USD".to_string(),
             value: 20_000.00,
         }])
+    }
+}
+
+#[tonic::async_trait]
+impl MoonPayApi for MockBreezServer {
+    async fn buy_bitcoin_url(&self, swap_info: &SwapInfo) -> Result<String> {
+        Ok(format!(
+            "https://mock.moonpay?wa={}&ma={}",
+            swap_info.bitcoin_address.as_str(),
+            format!("{:.8}", swap_info.max_allowed_deposit as f64 / 100000000.0).as_str(),
+        ))
     }
 }
 

@@ -1,9 +1,27 @@
+use std::cmp::max;
+use std::str::FromStr;
+use std::sync::Arc;
+use std::time::{SystemTime, UNIX_EPOCH};
+
+use anyhow::{anyhow, Result};
+use bip39::*;
+use bitcoin_hashes::{sha256, Hash};
+use tokio::runtime::Runtime;
+use tokio::sync::{mpsc, Mutex};
+use tokio::time::{sleep, Duration};
+use tonic::codegen::InterceptedService;
+use tonic::metadata::{Ascii, MetadataValue};
+use tonic::service::Interceptor;
+use tonic::transport::{Channel, Uri};
+use tonic::{Request, Status};
+
 use crate::chain::{ChainService, MempoolSpace, RecommendedFees};
 use crate::fiat::{FiatCurrency, Rate};
 use crate::greenlight::Greenlight;
 use crate::grpc::channel_opener_client::ChannelOpenerClient;
 use crate::grpc::fund_manager_client::FundManagerClient;
 use crate::grpc::information_client::InformationClient;
+use crate::grpc::signer_client::SignerClient;
 use crate::grpc::PaymentInformation;
 use crate::input_parser::LnUrlPayRequestData;
 use crate::invoice::{add_routing_hints, parse_invoice, LNInvoice, RouteHint, RouteHintHop};
@@ -20,24 +38,11 @@ use crate::models::{
     FiatAPI, GreenlightCredentials, LnUrlCallbackStatus, LspAPI, Network, NodeAPI, NodeState,
     Payment, PaymentDetails, PaymentType, PaymentTypeFilter, SwapInfo, SwapperAPI,
 };
+use crate::moonpay::MoonPayApi;
 use crate::persist::db::SqliteStorage;
 use crate::swap::BTCReceiveSwap;
-use crate::{LnUrlAuthRequestData, LnUrlWithdrawRequestData, PaymentResponse};
-use anyhow::{anyhow, Result};
-use bip39::*;
-use bitcoin::hashes::{sha256, Hash};
-use std::cmp::max;
-use std::str::FromStr;
-use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
-use tokio::runtime::Runtime;
-use tokio::sync::{mpsc, Mutex};
-use tokio::time::{sleep, Duration};
-use tonic::codegen::InterceptedService;
-use tonic::metadata::{Ascii, MetadataValue};
-use tonic::service::Interceptor;
-use tonic::transport::{Channel, Uri};
-use tonic::{Request, Status};
+use crate::BuyBitcoinProvider::MoonPay;
+use crate::{BuyBitcoinProvider, LnUrlAuthRequestData, LnUrlWithdrawRequestData, PaymentResponse};
 
 /// Trait that can be used to react to various [BreezEvent]s emitted by the SDK.
 pub trait EventListener: Send + Sync {
@@ -133,6 +138,7 @@ pub struct BreezServices {
     node_api: Arc<dyn NodeAPI>,
     lsp_api: Arc<dyn LspAPI>,
     fiat_api: Arc<dyn FiatAPI>,
+    moonpay_api: Arc<dyn MoonPayApi>,
     chain_service: Arc<dyn ChainService>,
     persister: Arc<SqliteStorage>,
     payment_receiver: Arc<PaymentReceiver>,
@@ -438,7 +444,7 @@ impl BreezServices {
     }
 
     /// Returns an optional in-progress [SwapInfo].
-    /// A [SwapInfo] is in-progress if it is waiting for confirmation to be redeemed and complete the swap.    
+    /// A [SwapInfo] is in-progress if it is waiting for confirmation to be redeemed and complete the swap.
     pub async fn in_progress_swap(&self) -> Result<Option<SwapInfo>> {
         let tip = self.chain_service.current_tip().await?;
         self.btc_receive_swapper.execute_pending_swaps(tip).await?;
@@ -599,6 +605,18 @@ impl BreezServices {
             EnvironmentType::Staging => Config::staging(),
         }
     }
+
+    /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency
+    pub async fn buy_bitcoin(&self, provider: BuyBitcoinProvider) -> Result<String> {
+        let url = match provider {
+            MoonPay => {
+                self.moonpay_api
+                    .buy_bitcoin_url(&self.receive_onchain().await?)
+                    .await?
+            }
+        };
+        Ok(url)
+    }
 }
 
 async fn poll_events(breez_services: Arc<BreezServices>, mut current_block: u32) -> Result<()> {
@@ -706,6 +724,7 @@ struct BreezServicesBuilder {
     fiat_api: Option<Arc<dyn FiatAPI>>,
     persister: Option<Arc<SqliteStorage>>,
     swapper_api: Option<Arc<dyn SwapperAPI>>,
+    moonpay_api: Option<Arc<dyn MoonPayApi>>,
 }
 
 #[allow(dead_code)]
@@ -720,6 +739,7 @@ impl BreezServicesBuilder {
             fiat_api: None,
             persister: None,
             swapper_api: None,
+            moonpay_api: None,
         }
     }
 
@@ -735,6 +755,11 @@ impl BreezServicesBuilder {
 
     pub fn fiat_api(&mut self, fiat_api: Arc<dyn FiatAPI>) -> &mut Self {
         self.fiat_api = Some(fiat_api.clone());
+        self
+    }
+
+    pub fn moonpay_api(&mut self, moonpay_api: Arc<dyn MoonPayApi>) -> &mut Self {
+        self.moonpay_api = Some(moonpay_api.clone());
         self
     }
 
@@ -832,6 +857,10 @@ impl BreezServicesBuilder {
                 .fiat_api
                 .clone()
                 .unwrap_or_else(|| breez_server.clone()),
+            moonpay_api: self
+                .moonpay_api
+                .clone()
+                .unwrap_or_else(|| breez_server.clone()),
             chain_service,
             persister,
             btc_receive_swapper,
@@ -884,11 +913,20 @@ impl BreezServer {
             .await
             .map_err(|e| anyhow!(e))
     }
+
+    pub(crate) async fn get_signer_client(&self) -> Result<SignerClient<Channel>> {
+        Ok(SignerClient::new(
+            tonic::transport::Endpoint::new(Uri::from_str(&self.server_url)?)?
+                .connect()
+                .await?,
+        ))
+    }
 }
 
 pub(crate) struct ApiKeyInterceptor {
     api_key_metadata: Option<MetadataValue<Ascii>>,
 }
+
 impl Interceptor for ApiKeyInterceptor {
     fn call(&mut self, mut req: Request<()>) -> Result<Request<()>, Status> {
         if self.api_key_metadata.clone().is_some() {
@@ -1091,16 +1129,22 @@ async fn get_lsp_by_id(
 
 #[cfg(test)]
 pub(crate) mod tests {
+    use std::collections::HashMap;
     use std::sync::Arc;
 
     use anyhow::{anyhow, Result};
+    use reqwest::Url;
+
+    use regex::Regex;
 
     use crate::breez_services::{BreezServices, BreezServicesBuilder};
     use crate::fiat::Rate;
     use crate::lnurl::pay::model::MessageSuccessActionData;
     use crate::lnurl::pay::model::SuccessActionProcessed;
     use crate::models::{LnPaymentDetails, NodeState, Payment, PaymentDetails, PaymentTypeFilter};
-    use crate::{parse_short_channel_id, test_utils::*};
+    use crate::{
+        input_parser, parse_short_channel_id, test_utils::*, BuyBitcoinProvider, InputType,
+    };
     use crate::{NodeAPI, PaymentType};
 
     use super::{PaymentReceiver, Receiver};
@@ -1291,6 +1335,29 @@ pub(crate) mod tests {
         Ok(())
     }
 
+    #[tokio::test]
+    async fn test_buy_bitcoin_with_moonpay() -> Result<(), Box<dyn std::error::Error>> {
+        let breez_services = breez_services().await?;
+        breez_services.sync().await?;
+
+        let moonpay_url = breez_services
+            .buy_bitcoin(BuyBitcoinProvider::MoonPay)
+            .await?;
+        let parsed = Url::parse(&moonpay_url)?;
+        let query_pairs = parsed.query_pairs().into_owned().collect::<HashMap<_, _>>();
+
+        assert_eq!(parsed.host_str(), Some("mock.moonpay"));
+        assert_eq!(parsed.path(), "/");
+
+        let wallet_address = input_parser::parse(query_pairs.get("wa").unwrap()).await?;
+        assert!(matches!(wallet_address, InputType::BitcoinAddress { .. }));
+
+        let max_amount = query_pairs.get("ma").unwrap();
+        assert!(Regex::new(r"^\d+\.\d{8}$").unwrap().is_match(max_amount));
+
+        Ok(())
+    }
+
     /// Build node service for tests
     pub(crate) async fn breez_services() -> Result<Arc<BreezServices>> {
         breez_services_with(None, vec![]).await
@@ -1313,6 +1380,7 @@ pub(crate) mod tests {
         let breez_services = builder
             .lsp_api(Arc::new(MockBreezServer {}))
             .fiat_api(Arc::new(MockBreezServer {}))
+            .moonpay_api(Arc::new(MockBreezServer {}))
             .persister(persister)
             .node_api(node_api)
             .build(None)

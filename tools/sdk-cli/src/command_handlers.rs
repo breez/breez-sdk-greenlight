@@ -1,5 +1,5 @@
-use crate::persist::CliPersistence;
-use crate::Commands;
+use std::sync::Arc;
+
 use anyhow::Error;
 use anyhow::{anyhow, Result};
 use breez_sdk_core::Config;
@@ -10,7 +10,9 @@ use breez_sdk_core::{
 };
 use once_cell::sync::{Lazy, OnceCell};
 use rustyline::Editor;
-use std::sync::Arc;
+
+use crate::persist::CliPersistence;
+use crate::Commands;
 
 static BREEZ_SERVICES: OnceCell<Arc<BreezServices>> = OnceCell::new();
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
@@ -28,6 +30,7 @@ fn rt() -> &'static tokio::runtime::Runtime {
 }
 
 struct CliEventListener {}
+
 impl EventListener for CliEventListener {
     fn on_event(&self, e: BreezEvent) {
         info!("Received Breez event: {:?}", e);
@@ -225,8 +228,9 @@ pub(crate) async fn handle_command(
                     }
 
                     let prompt = format!(
-            "Amount to withdraw in sats (min {user_input_min_sat} sat, max {user_input_max_sat} sat: ",
-        );
+                        "Amount to withdraw in sats (min {} sat, max {} sat: ",
+                        user_input_min_sat, user_input_max_sat,
+                    );
                     let user_input_withdraw_amount_sat = rl.readline(&prompt)?;
 
                     let amount_sats: u64 = user_input_withdraw_amount_sat.parse()?;
@@ -256,6 +260,10 @@ pub(crate) async fn handle_command(
         Commands::ExecuteDevCommand { command } => {
             serde_json::to_string_pretty(&sdk()?.execute_dev_command(command).await?)
                 .map_err(|e| e.into())
+        }
+        Commands::BuyBitcoin { provider } => {
+            let res = sdk()?.buy_bitcoin(provider.clone()).await?;
+            Ok(format!("Here your {:?} url: {}", provider, res))
         }
     }
 }

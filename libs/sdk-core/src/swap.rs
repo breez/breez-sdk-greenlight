@@ -107,7 +107,7 @@ impl SwapperAPI for BreezServer {
 }
 
 /// This struct is responsible for handling on-chain funds with lightning payments.
-/// It uses internally an implementation of SwapperAPI that represents the actualy swapper service.
+/// It uses internally an implementation of SwapperAPI that represents the actually swapper service.
 pub(crate) struct BTCReceiveSwap {
     network: bitcoin::Network,
     swapper_api: Arc<dyn SwapperAPI>,

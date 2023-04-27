@@ -152,6 +152,7 @@ mod invoice;
 mod lnurl;
 mod lsp;
 mod models;
+mod moonpay;
 mod persist;
 mod swap;
 #[cfg(test)]

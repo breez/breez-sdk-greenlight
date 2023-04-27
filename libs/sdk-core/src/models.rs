@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use anyhow::{anyhow, Result};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use gl_client::pb::Peer;
@@ -483,6 +485,24 @@ pub enum LnUrlCallbackStatus {
         #[serde(flatten)]
         data: LnUrlErrorData,
     },
+}
+
+/// Different providers will demand different behaviours when the user is trying to buy bitcoin.
+#[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
+#[serde(tag = "buy_bitcoin_provider")]
+pub enum BuyBitcoinProvider {
+    MoonPay,
+}
+
+impl FromStr for BuyBitcoinProvider {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "moonpay" => Ok(BuyBitcoinProvider::MoonPay),
+            _ => Err(anyhow!("unknown buy bitcoin provider")),
+        }
+    }
 }
 
 #[cfg(test)]
