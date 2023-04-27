@@ -553,7 +553,7 @@ impl BreezServices {
             Some(p) => {
                 self.notify_event_listeners(BreezEvent::PaymentSucceed { details: p.clone() })
                     .await?;
-                return Ok(p);
+                Ok(p)
             }
             None => Err(anyhow!("payment not found")),
         }
