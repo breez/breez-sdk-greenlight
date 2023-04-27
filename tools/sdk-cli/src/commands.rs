@@ -1,3 +1,4 @@
+use breez_sdk_core::BuyBitcoinProvider;
 use breez_sdk_core::EnvironmentType;
 use clap::Parser;
 
@@ -113,4 +114,7 @@ pub(crate) enum Commands {
 
     /// Execute a low level node command (used for debugging)
     ExecuteDevCommand { command: String },
+
+    /// Generates an URL to buy bitcoin from a 3rd party provider
+    BuyBitcoin { provider: BuyBitcoinProvider },
 }
