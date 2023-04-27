@@ -343,12 +343,7 @@ impl NodeAPI for Greenlight {
                 .map(|amt| Amount { unit: amt }),
             bolt11,
             timeout: self.sdk_config.payment_timeout_sec,
-            maxfee: self
-                .sdk_config
-                .maxfee_sat
-                .map(Unit::Satoshi)
-                .map(Some)
-                .map(|amt| Amount { unit: amt }),
+            maxfee: None,
             maxfeepercent: self.sdk_config.maxfee_percent,
         };
         client.pay(request).await?.into_inner().try_into()

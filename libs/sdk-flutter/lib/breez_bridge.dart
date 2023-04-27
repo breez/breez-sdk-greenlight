@@ -367,7 +367,6 @@ extension SDKConfig on Config {
     int? paymentTimeoutSec,
     String? defaultLspId,
     String? apiKey,
-    int? maxfeeSat,
     double? maxfeePercent,
   }) {
     return Config(
@@ -377,8 +376,7 @@ extension SDKConfig on Config {
       network: network ?? this.network,
       paymentTimeoutSec: paymentTimeoutSec ?? this.paymentTimeoutSec,
       defaultLspId: defaultLspId ?? this.defaultLspId,
-      apiKey: apiKey ?? this.apiKey,
-      maxfeeSat: maxfeeSat ?? this.maxfeeSat,
+      apiKey: apiKey ?? this.apiKey,      
       maxfeePercent: maxfeePercent ?? this.maxfeePercent,
     );
   }
