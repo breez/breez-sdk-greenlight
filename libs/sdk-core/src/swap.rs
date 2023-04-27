@@ -495,6 +495,7 @@ impl BTCReceiveSwap {
             script,
             sat_per_vbyte,
         )?;
+        info!("broadcasting refund tx {:?}", hex::encode(&refund_tx));
         let txid = self.chain_service.broadcast_transaction(refund_tx).await?;
 
         self.persister.update_swap_chain_info(
@@ -610,6 +611,8 @@ fn create_refund_tx(
         return Err(anyhow!("must have at least one input"));
     }
 
+    info!("creating refund tx sat_per_vbyte {}", sat_per_vbyte);
+
     let lock_time = utxos.confirmed.iter().fold(0, |accum, item| {
         let confirmed_height = item.block_height.unwrap();
         if accum >= confirmed_height + lock_delay {
@@ -656,6 +659,9 @@ fn create_refund_tx(
     let tx_weight = tx.strippedsize() as u32 * WITNESS_SCALE_FACTOR as u32
         + refund_witness_input_size * txins.len() as u32;
     let fees: u64 = (tx_weight * sat_per_vbyte / WITNESS_SCALE_FACTOR as u32) as u64;
+    if fees >= confirmed_amount {
+        return Err(anyhow!("insufficient funds to pay fees"));
+    }
     tx.output[0].value = confirmed_amount - fees;
 
     let scpt = Secp256k1::signing_only();
