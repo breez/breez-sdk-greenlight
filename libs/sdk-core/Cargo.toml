@@ -8,7 +8,7 @@ name = "breez_sdk_core"
 crate-type = ["staticlib", "cdylib", "lib"]
 
 [dependencies]
-flutter_rust_bridge = "1.70.0"
+flutter_rust_bridge = "1.75.1"
 aes = "0.8"
 anyhow = { version = "1.0.57", features = ["backtrace"] }
 cbc = { version = "0.1", features = ["std"] }
@@ -18,21 +18,31 @@ bitcoin_hashes = "*"
 bitcoin = "^0"
 # Note: private repo, might need git credentials helper to be setup
 # If so, see https://techexpertise.medium.com/storing-git-credentials-with-git-credential-helper-33d22a6b5ce7
-gl-client = { git = "ssh://git@github.com/Blockstream/greenlight.git", features = ["permissive"] }
+gl-client = { git = "ssh://git@github.com/Blockstream/greenlight.git", features = [
+    "permissive",
+] }
 base64 = "0.13.0"
-ecies = {version = "0.2", default-features = false, features = ["pure"]}
+ecies = { version = "0.2", default-features = false, features = ["pure"] }
 ripemd = "*"
 rand = "*"
 tiny-bip39 = "*"
 tokio = { version = "1", features = ["full"] }
 prost = "^0.11"
 querystring = "*"
-rusqlite = { version = "0.28.0", features = ["serde_json", "bundled", "load_extension"] }
+rusqlite = { version = "0.28.0", features = [
+    "serde_json",
+    "bundled",
+    "load_extension",
+] }
 rusqlite_migration = "*"
 reqwest = { version = "0.11", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tonic = { version = "^0.8", features = ["tls", "tls-roots", "tls-webpki-roots"] }
+tonic = { version = "^0.8", features = [
+    "tls",
+    "tls-roots",
+    "tls-webpki-roots",
+] }
 lazy_static = "^1.4.0"
 lightning = "*"
 lightning-invoice = "*"
