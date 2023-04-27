@@ -93,6 +93,15 @@ impl Greenlight {
         Ok(client)
     }
 
+    async fn get_node_client(&self) -> Result<node::ClnClient> {
+        let client: node::ClnClient = self
+            .scheduler()
+            .await?
+            .schedule(self.tls_config.clone())
+            .await?;
+        Ok(client)
+    }
+
     async fn scheduler(&self) -> Result<Scheduler> {
         let mut existing = self.scheduler.lock().await;
         if existing.is_none() {
@@ -333,23 +342,26 @@ impl NodeAPI for Greenlight {
         &self,
         bolt11: String,
         amount_sats: Option<u64>,
-    ) -> Result<crate::models::Payment> {
-        let mut client = self.get_client().await?;
+    ) -> Result<crate::models::PaymentResponse> {
+        let mut description = None;
+        if !bolt11.is_empty() {
+            description = parse_invoice(&bolt11)?.description;
+        }
 
-        let request = pb::PayRequest {
-            amount: amount_sats
-                .map(Unit::Satoshi)
-                .map(Some)
-                .map(|amt| Amount { unit: amt }),
+        let mut client: node::ClnClient = self.get_node_client().await?;
+        let request = pb::cln::PayRequest {
             bolt11,
-            timeout: self.sdk_config.payment_timeout_sec,
-            maxfee: self
-                .sdk_config
-                .maxfee_sat
-                .map(Unit::Satoshi)
-                .map(Some)
-                .map(|amt| Amount { unit: amt }),
-            maxfeepercent: self.sdk_config.maxfee_percent,
+            amount_msat: amount_sats.map(|amt| gl_client::pb::cln::Amount { msat: amt * 1000 }),
+            maxfeepercent: Some(self.sdk_config.maxfee_percent),
+            retry_for: Some(self.sdk_config.payment_timeout_sec),
+            label: None,
+            maxdelay: None,
+            riskfactor: None,
+            localinvreqid: None,
+            exclude: vec![],
+            maxfee: None,
+            description,
+            exemptfee: None,
         };
         client.pay(request).await?.into_inner().try_into()
     }
@@ -358,22 +370,25 @@ impl NodeAPI for Greenlight {
         &self,
         node_id: String,
         amount_sats: u64,
-    ) -> Result<crate::models::Payment> {
-        let mut client = self.get_client().await?;
-
-        let request = pb::KeysendRequest {
-            node_id: hex::decode(node_id)?,
-            amount: Some(Amount {
-                unit: Some(Unit::Satoshi(amount_sats)),
+    ) -> Result<crate::models::PaymentResponse> {
+        let mut client: node::ClnClient = self.get_node_client().await?;
+        let request = pb::cln::KeysendRequest {
+            destination: hex::decode(node_id)?,
+            amount_msat: Some(gl_client::pb::cln::Amount {
+                msat: amount_sats * 1000,
             }),
-            label: format!(
+            label: Some(format!(
                 "breez-{}",
                 SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis()
-            ),
-            extratlvs: vec![],
-            routehints: vec![],
+            )),
+            extratlvs: None,
+            routehints: None,
+            maxfeepercent: Some(self.sdk_config.maxfee_percent),
+            exemptfee: None,
+            retry_for: Some(self.sdk_config.payment_timeout_sec),
+            maxdelay: None,
         };
-        client.keysend(request).await?.into_inner().try_into()
+        client.key_send(request).await?.into_inner().try_into()
     }
 
     async fn close_peer_channels(&self, node_id: String) -> Result<CloseChannelResponse> {
@@ -635,6 +650,40 @@ impl TryFrom<pb::Payment> for crate::models::Payment {
                     ln_address: None,
                 },
             },
+        })
+    }
+}
+
+impl TryFrom<pb::cln::PayResponse> for crate::models::PaymentResponse {
+    type Error = anyhow::Error;
+
+    fn try_from(payment: pb::cln::PayResponse) -> std::result::Result<Self, Self::Error> {
+        let payment_amount = payment.amount_msat.unwrap_or_default().msat;
+        let payment_amount_sent = payment.amount_sent_msat.unwrap_or_default().msat;
+
+        Ok(crate::models::PaymentResponse {
+            payment_time: payment.created_at as i64,
+            amount_msat: payment_amount,
+            fee_msat: payment_amount_sent - payment_amount,
+            payment_hash: hex::encode(payment.payment_hash),
+            payment_preimage: hex::encode(payment.payment_preimage),
+        })
+    }
+}
+
+impl TryFrom<pb::cln::KeysendResponse> for crate::models::PaymentResponse {
+    type Error = anyhow::Error;
+
+    fn try_from(payment: pb::cln::KeysendResponse) -> std::result::Result<Self, Self::Error> {
+        let payment_amount = payment.amount_msat.unwrap_or_default().msat;
+        let payment_amount_sent = payment.amount_sent_msat.unwrap_or_default().msat;
+
+        Ok(crate::models::PaymentResponse {
+            payment_time: payment.created_at as i64,
+            amount_msat: payment_amount,
+            fee_msat: payment_amount_sent - payment_amount,
+            payment_hash: hex::encode(payment.payment_hash),
+            payment_preimage: hex::encode(payment.payment_preimage),
         })
     }
 }
