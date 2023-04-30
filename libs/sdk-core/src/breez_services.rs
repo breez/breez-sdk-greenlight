@@ -22,7 +22,7 @@ use crate::models::{
 };
 use crate::persist::db::SqliteStorage;
 use crate::swap::BTCReceiveSwap;
-use crate::{LnUrlAuthRequestData, LnUrlWithdrawRequestData};
+use crate::{LnUrlAuthRequestData, LnUrlWithdrawRequestData, PaymentResponse};
 use anyhow::{anyhow, Result};
 use bip39::*;
 use bitcoin_hashes::{sha256, Hash};
@@ -532,7 +532,7 @@ impl BreezServices {
         &self,
         node_id: String,
         invoice: Option<LNInvoice>,
-        payment_res: Result<Payment>,
+        payment_res: Result<PaymentResponse>,
     ) -> Result<Payment> {
         if payment_res.is_err() {
             self.notify_event_listeners(BreezEvent::PaymentFailed {
@@ -543,15 +543,20 @@ impl BreezServices {
                 },
             })
             .await?;
-            return payment_res;
+            return Err(payment_res.err().unwrap());
         }
         let payment = payment_res.unwrap();
         self.sync().await?;
-        self.notify_event_listeners(BreezEvent::PaymentSucceed {
-            details: payment.clone(),
-        })
-        .await?;
-        Ok(payment)
+
+        let p = self.persister.get_payment_by_hash(&payment.payment_hash)?;
+        match p {
+            Some(p) => {
+                self.notify_event_listeners(BreezEvent::PaymentSucceed { details: p.clone() })
+                    .await?;
+                Ok(p)
+            }
+            None => Err(anyhow!("payment not found")),
+        }
     }
 
     async fn on_event(&self, e: BreezEvent) -> Result<()> {
