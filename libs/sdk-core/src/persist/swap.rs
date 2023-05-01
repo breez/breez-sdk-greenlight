@@ -287,7 +287,7 @@ fn test_swaps() -> Result<(), Box<dyn std::error::Error>> {
             .collect())
     }
 
-    let storage = SqliteStorage::from_file(test_utils::create_test_sql_file("swap".to_string()));
+    let storage = SqliteStorage::new(test_utils::create_test_sql_dir());
 
     storage.init()?;
     let tested_swap_info = SwapInfo {

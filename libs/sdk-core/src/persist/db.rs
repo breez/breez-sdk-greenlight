@@ -1,5 +1,3 @@
-use std::path::Path;
-
 use anyhow::Result;
 use rusqlite::{
     types::{FromSql, FromSqlError, ToSqlOutput},
@@ -11,12 +9,19 @@ use rusqlite_migration::{Migrations, M};
 use super::migrations::current_migrations;
 
 pub struct SqliteStorage {
-    file: String,
+    main_db_file: String,
+    sync_db_file: String,
 }
 
 impl SqliteStorage {
-    pub fn from_file(file: String) -> SqliteStorage {
-        SqliteStorage { file }
+    pub fn new(working_dir: String) -> SqliteStorage {
+        let main_db_file = format!("{}/storage.sql", working_dir);
+        let sync_db_file = format!("{}/sync_storage.sql", working_dir);
+
+        SqliteStorage {
+            main_db_file,
+            sync_db_file,
+        }
     }
 
     pub fn init(&self) -> Result<()> {
@@ -29,22 +34,10 @@ impl SqliteStorage {
     }
 
     pub(crate) fn get_connection(&self) -> Result<Connection> {
-        let con = Connection::open(self.file.clone()).map_err(anyhow::Error::msg)?;
-        let sync_data_file = self.sync_file_path();
+        let con = Connection::open(self.main_db_file.clone()).map_err(anyhow::Error::msg)?;
         let sql = "ATTACH DATABASE ? AS sync;";
-        con.execute(sql, [sync_data_file])?;
+        con.execute(sql, [self.sync_db_file.clone()])?;
         Ok(con)
-    }
-
-    pub(crate) fn sync_file_path(&self) -> String {
-        let path: &Path = Path::new(self.file.as_str());
-        let mut result = path.to_owned();
-        let file_name = result.file_name().unwrap();
-        result.set_file_name(format!("sync_{}", file_name.to_str().unwrap()));
-        if let Some(ext) = path.extension() {
-            result.set_extension(ext);
-        }
-        result.to_str().unwrap().to_string()
     }
 }
 

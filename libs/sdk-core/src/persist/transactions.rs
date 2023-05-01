@@ -310,8 +310,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
             },
         },
     ];
-    let storage =
-        SqliteStorage::from_file(test_utils::create_test_sql_file("transactions".to_string()));
+    let storage = SqliteStorage::new(test_utils::create_test_sql_dir());
     storage.init()?;
     storage.insert_payments(&txs)?;
     storage.insert_lnurl_payment_external_info(

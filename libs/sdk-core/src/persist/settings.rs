@@ -64,8 +64,7 @@ impl SqliteStorage {
 fn test_settings() {
     use crate::persist::test_utils;
 
-    let storage =
-        SqliteStorage::from_file(test_utils::create_test_sql_file("settings".to_string()));
+    let storage = SqliteStorage::new(test_utils::create_test_sql_dir());
     storage.init().unwrap();
     storage
         .update_setting("key1".to_string(), "val1".to_string())
