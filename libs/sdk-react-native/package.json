@@ -15,6 +15,8 @@
     "breez_sdk.podspec",
     "!example",
     "!lib/typescript/example",
+    "!android/.gradle",
+    "!android/.idea",
     "!android/build",
     "!ios/build",
     "!**/__tests__",
@@ -38,13 +40,13 @@
     "breez",
     "breez-sdk"
   ],
-  "repository": "https://github.com/breez/react-native-breez-sdk",
+  "repository": "https://github.com/breez/breez-sdk",
   "author": "Ross Savage <hello@satimoto.com> (https://github.com/satimoto)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/breez/react-native-breez-sdk/issues"
+    "url": "https://github.com/breez/breez-sdk/issues"
   },
-  "homepage": "https://github.com/breez/react-native-breez-sdk#readme",
+  "homepage": "https://breez.technology",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },
