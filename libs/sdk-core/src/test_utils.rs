@@ -481,7 +481,7 @@ pub fn create_test_config() -> crate::models::Config {
 }
 
 pub fn create_test_persister(config: crate::models::Config) -> crate::persist::db::SqliteStorage {
-    crate::persist::db::SqliteStorage::new(config.working_dir.clone())
+    crate::persist::db::SqliteStorage::new(config.working_dir)
 }
 
 pub fn get_test_working_dir() -> String {
