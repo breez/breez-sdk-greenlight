@@ -9,13 +9,13 @@ const LINKING_ERROR =
 const BreezSDK = NativeModules.BreezSDK
     ? NativeModules.BreezSDK
     : new Proxy(
-        {},
-        {
-            get() {
-                throw new Error(LINKING_ERROR)
-            }
-        }
-    )
+          {},
+          {
+              get() {
+                  throw new Error(LINKING_ERROR)
+              }
+          }
+      )
 
 const BreezSDKEmitter = new NativeEventEmitter(BreezSDK)
 
@@ -105,7 +105,6 @@ export type Config = {
     paymentTimeoutSec: number
     defaultLspId?: string
     apiKey?: string
-    maxfeeSat?: number
     maxfeePercent: number
 }
 
@@ -440,8 +439,8 @@ export const recoverNode = async (network: Network, seed: Uint8Array): Promise<G
 }
 
 export const defaultConfig = async (envType: EnvironmentType): Promise<Config> => {
-   const response = await BreezSDK.defaultConfig(envType)
-   return response as Config
+    const response = await BreezSDK.defaultConfig(envType)
+    return response as Config
 }
 
 export const initServices = async (config: Config, deviceKey: Uint8Array, deviceCert: Uint8Array, seed: Uint8Array): Promise<void> => {

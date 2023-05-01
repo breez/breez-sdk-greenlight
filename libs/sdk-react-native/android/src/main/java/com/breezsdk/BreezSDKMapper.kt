@@ -16,11 +16,10 @@ fun asConfig(config: ReadableMap): Config? {
     if (breezserver != null && mempoolspaceUrl != null && workingDir != null && network != null && hasNonNullKey(config, "paymentTimeoutSec") && hasNonNullKey(config, "maxfeePercent")) {
         var paymentTimeoutSec = config.getInt("paymentTimeoutSec")
         var defaultLspId = config.getString("defaultLspId")
-        var apiKey = config.getString("apiKey")
-        var maxfeeSat = if (hasNonNullKey(config, "maxfeeSat")) config.getInt("maxfeeSat") else null
+        var apiKey = config.getString("apiKey")        
         var maxfeePercent = config.getDouble("maxfeePercent")
 
-        return Config(breezserver, mempoolspaceUrl, workingDir, asNetwork(network), paymentTimeoutSec.toUInt(), defaultLspId, apiKey, maxfeeSat?.toULong(), maxfeePercent)
+        return Config(breezserver, mempoolspaceUrl, workingDir, asNetwork(network), paymentTimeoutSec.toUInt(), defaultLspId, apiKey, maxfeePercent)
     }
 
     return null
@@ -198,8 +197,7 @@ fun readableMapOf(config: Config): ReadableMap {
             "network" to config.network.name.lowercase(),
             "paymentTimeoutSec" to config.paymentTimeoutSec,
             "defaultLspId" to config.defaultLspId,
-            "apiKey" to config.apiKey,
-            "maxfeeSat" to config.maxfeeSat,
+            "apiKey" to config.apiKey,            
             "maxfeePercent" to config.maxfeePercent
     )
 }

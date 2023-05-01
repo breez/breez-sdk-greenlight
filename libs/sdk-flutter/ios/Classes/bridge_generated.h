@@ -22,7 +22,6 @@ typedef struct wire_Config {
   uint32_t payment_timeout_sec;
   struct wire_uint_8_list *default_lsp_id;
   struct wire_uint_8_list *api_key;
-  uint64_t *maxfee_sat;
   double maxfee_percent;
 } wire_Config;
 

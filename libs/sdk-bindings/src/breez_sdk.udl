@@ -37,8 +37,7 @@ dictionary Config {
     Network network;
     u32 payment_timeout_sec;
     string? default_lsp_id;
-    string? api_key;
-    u64? maxfee_sat;
+    string? api_key;    
     f64 maxfee_percent;
 };
 

@@ -300,7 +300,6 @@ class Config {
   final int paymentTimeoutSec;
   final String? defaultLspId;
   final String? apiKey;
-  final int? maxfeeSat;
   final double maxfeePercent;
 
   const Config({
@@ -311,7 +310,6 @@ class Config {
     required this.paymentTimeoutSec,
     this.defaultLspId,
     this.apiKey,
-    this.maxfeeSat,
     required this.maxfeePercent,
   });
 }
@@ -1708,7 +1706,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   Config _wire2api_config(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 9) throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
+    if (arr.length != 8) throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
     return Config(
       breezserver: _wire2api_String(arr[0]),
       mempoolspaceUrl: _wire2api_String(arr[1]),
@@ -1717,8 +1715,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       paymentTimeoutSec: _wire2api_u32(arr[4]),
       defaultLspId: _wire2api_opt_String(arr[5]),
       apiKey: _wire2api_opt_String(arr[6]),
-      maxfeeSat: _wire2api_opt_box_autoadd_u64(arr[7]),
-      maxfeePercent: _wire2api_f64(arr[8]),
+      maxfeePercent: _wire2api_f64(arr[7]),
     );
   }
 
@@ -2453,7 +2450,6 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.payment_timeout_sec = api2wire_u32(apiObj.paymentTimeoutSec);
     wireObj.default_lsp_id = api2wire_opt_String(apiObj.defaultLspId);
     wireObj.api_key = api2wire_opt_String(apiObj.apiKey);
-    wireObj.maxfee_sat = api2wire_opt_box_autoadd_u64(apiObj.maxfeeSat);
     wireObj.maxfee_percent = api2wire_f64(apiObj.maxfeePercent);
   }
 
@@ -3223,8 +3219,6 @@ class wire_Config extends ffi.Struct {
   external ffi.Pointer<wire_uint_8_list> default_lsp_id;
 
   external ffi.Pointer<wire_uint_8_list> api_key;
-
-  external ffi.Pointer<ffi.Uint64> maxfee_sat;
 
   @ffi.Double()
   external double maxfee_percent;
