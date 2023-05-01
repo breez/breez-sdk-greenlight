@@ -13,10 +13,10 @@
     "rebuild": "rm -rf node_modules && yarn && yarn pods"
   },
   "dependencies": {
+    "@breeztech/react-native-breez-sdk": "file:../",
     "@dreson4/react-native-quick-bip39": "^0.0.5",
     "react": "17.0.2",
     "react-native": "0.68.6",
-    "react-native-breez-sdk": "file:../",
     "react-native-build-config": "^0.3.2",
     "react-native-quick-base64": "^2.0.5",
     "react-native-quick-crypto": "^0.5.0",
