@@ -57,7 +57,7 @@ impl SqliteStorage {
         let con = self.get_connection()?;
         let mut prep_statement = con.prepare(
             "
-         INSERT OR REPLACE INTO payments_external_info (
+         INSERT OR REPLACE INTO sync.payments_external_info (
            payment_id,
            lnurl_success_action,
            lnurl_metadata,
@@ -112,7 +112,7 @@ impl SqliteStorage {
              e.lnurl_metadata,
              e.ln_address
             FROM payments p
-            LEFT JOIN payments_external_info e
+            LEFT JOIN sync.payments_external_info e
             ON
              p.id = e.payment_id
             {where_clause} ORDER BY payment_time DESC
@@ -149,7 +149,7 @@ impl SqliteStorage {
                  e.lnurl_metadata,
                  e.ln_address
                 FROM payments p
-                LEFT JOIN payments_external_info e
+                LEFT JOIN sync.payments_external_info e
                 ON
                  p.id = e.payment_id
                 WHERE

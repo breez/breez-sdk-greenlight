@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use anyhow::Result;
 use rusqlite::{
     types::{FromSql, FromSqlError, ToSqlOutput},
@@ -27,7 +29,22 @@ impl SqliteStorage {
     }
 
     pub(crate) fn get_connection(&self) -> Result<Connection> {
-        Connection::open(self.file.clone()).map_err(anyhow::Error::msg)
+        let con = Connection::open(self.file.clone()).map_err(anyhow::Error::msg)?;
+        let sync_data_file = self.sync_file_path();
+        let sql = "ATTACH DATABASE ? AS sync;";
+        con.execute(sql, [sync_data_file])?;
+        Ok(con)
+    }
+
+    pub(crate) fn sync_file_path(&self) -> String {
+        let path: &Path = Path::new(self.file.as_str());
+        let mut result = path.to_owned();
+        let file_name = result.file_name().unwrap();
+        result.set_file_name(format!("sync_{}", file_name.to_str().unwrap()));
+        if let Some(ext) = path.extension() {
+            result.set_extension(ext);
+        }
+        result.to_str().unwrap().to_string()
     }
 }
 

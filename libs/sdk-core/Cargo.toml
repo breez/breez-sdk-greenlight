@@ -33,6 +33,7 @@ rusqlite = { version = "0.28.0", features = [
     "serde_json",
     "bundled",
     "load_extension",
+    "backup",
 ] }
 rusqlite_migration = "*"
 reqwest = { version = "0.11", features = ["json"] }
@@ -51,6 +52,7 @@ once_cell = "*"
 openssl = { version = "0.10.42", features = ["vendored"] }
 strum = "0.24.1"
 strum_macros = "0.24.1"
+tempfile = "3"
 
 [dev-dependencies]
 mockito = "0.31.1"
