@@ -5,7 +5,7 @@ use crate::breez_services::Receiver;
 use crate::chain::{ChainService, OnchainTx, RecommendedFees};
 use crate::fiat::{FiatCurrency, Rate};
 use crate::swap::create_submarine_swap_script;
-use crate::{parse_invoice, Config, LNInvoice, RouteHint};
+use crate::{parse_invoice, Config, LNInvoice, PaymentResponse, RouteHint};
 use anyhow::{anyhow, Result};
 use bitcoin::secp256k1::ecdsa::RecoverableSignature;
 use bitcoin::secp256k1::{KeyPair, Message};
@@ -129,6 +129,28 @@ impl ChainService for MockChainService {
     }
 }
 
+impl TryFrom<Payment> for crate::models::PaymentResponse {
+    type Error = anyhow::Error;
+
+    fn try_from(payment: Payment) -> std::result::Result<Self, Self::Error> {
+        let payment_hash: String = match payment.details.clone() {
+            crate::models::PaymentDetails::Ln { data } => data.payment_hash,
+            _ => "".into(),
+        };
+        let payment_preimage: String = match payment.details.clone() {
+            crate::models::PaymentDetails::Ln { data } => data.payment_preimage,
+            _ => "".into(),
+        };
+        Ok(crate::models::PaymentResponse {
+            payment_time: payment.payment_time,
+            amount_msat: payment.amount_msat,
+            fee_msat: payment.fee_msat,
+            payment_hash,
+            payment_preimage,
+        })
+    }
+}
+
 pub struct MockReceiver {
     pub bolt11: String,
 }
@@ -201,16 +223,22 @@ impl NodeAPI for MockNodeAPI {
         })
     }
 
-    async fn send_payment(&self, bolt11: String, _amount_sats: Option<u64>) -> Result<Payment> {
-        self.add_dummy_payment_for(bolt11, None).await
+    async fn send_payment(
+        &self,
+        bolt11: String,
+        _amount_sats: Option<u64>,
+    ) -> Result<PaymentResponse> {
+        let payment = self.add_dummy_payment_for(bolt11, None).await?;
+        payment.try_into()
     }
 
     async fn send_spontaneous_payment(
         &self,
         _node_id: String,
         _amount_sats: u64,
-    ) -> Result<Payment> {
-        self.add_dummy_payment_rand().await
+    ) -> Result<PaymentResponse> {
+        let payment = self.add_dummy_payment_rand().await?;
+        payment.try_into()
     }
 
     async fn start(&self) -> Result<()> {

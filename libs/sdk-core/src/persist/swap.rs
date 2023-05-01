@@ -100,7 +100,7 @@ impl SqliteStorage {
 
     pub(crate) fn update_swap_bolt11(&self, bitcoin_address: String, bolt11: String) -> Result<()> {
         self.get_connection()?.execute(
-            "UPDATE swaps SET bolt11=:bolt11 where bitcoin_address=:bitcoin_address",
+            "UPDATE swaps_info SET bolt11=:bolt11 where bitcoin_address=:bitcoin_address",
             named_params! {
              ":bolt11": bolt11,
              ":bitcoin_address": bitcoin_address,
@@ -371,10 +371,12 @@ fn test_swaps() -> Result<(), Box<dyn std::error::Error>> {
         String::from("test error")
     );
 
+    storage.update_swap_bolt11(tested_swap_info.bitcoin_address.clone(), "bolt11".into())?;
     storage.update_swap_paid_amount(tested_swap_info.bitcoin_address.clone(), 30)?;
     let updated_swap = storage
         .get_swap_info_by_address(tested_swap_info.bitcoin_address)?
         .unwrap();
+    assert_eq!(updated_swap.bolt11.unwrap(), "bolt11".to_string());
     assert_eq!(updated_swap.paid_sats, 30);
     assert_eq!(updated_swap.confirmed_sats, 20);
     assert_eq!(

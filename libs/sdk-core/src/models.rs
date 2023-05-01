@@ -40,12 +40,12 @@ pub trait NodeAPI: Send + Sync {
         &self,
         bolt11: String,
         amount_sats: Option<u64>,
-    ) -> Result<crate::models::Payment>;
+    ) -> Result<crate::models::PaymentResponse>;
     async fn send_spontaneous_payment(
         &self,
         node_id: String,
         amount_sats: u64,
-    ) -> Result<crate::models::Payment>;
+    ) -> Result<crate::models::PaymentResponse>;
     async fn start(&self) -> Result<()>;
     async fn sweep(
         &self,
@@ -274,6 +274,16 @@ pub struct Payment {
     pub pending: bool,
     pub description: Option<String>,
     pub details: PaymentDetails,
+}
+
+/// Represents a payment response.
+#[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]
+pub struct PaymentResponse {
+    pub payment_time: i64,
+    pub amount_msat: u64,
+    pub fee_msat: u64,
+    pub payment_hash: String,
+    pub payment_preimage: String,
 }
 
 /// Wrapper for the different types of payments
