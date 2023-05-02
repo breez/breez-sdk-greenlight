@@ -27,3 +27,13 @@ make all
  >* ios/include/breez_sdkFFI.h
  >* ios/breez_sdk.swift
  >* ios/libs/libbreez_sdk_core.a
+
+### Publish
+When publishing, make sure the version number in `package.json` is updated. Then login to npm:
+```
+npm login --@scope=@breeztech
+```
+Then publish:
+```
+npm publish --access public
+```
