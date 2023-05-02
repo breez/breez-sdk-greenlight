@@ -20,6 +20,8 @@ $ yarn add @breeztech/react-native-breez-sdk
 
 ## Usage
 For a more in-depth look at using the Breez SDK, you can follow [these examples](https://sdk-doc.breez.technology/) in the SDK overview.
+
+Please contact [support@breez.technology](mailto:support@breez.technology?subject=Breez%20API%20Key) to request a Breez API Key. 
 ```ts
 import React, { useEffect } from "react"
 import { 
