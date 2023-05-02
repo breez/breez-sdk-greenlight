@@ -81,13 +81,11 @@ i686-linux-android: $(SOURCES) ndk-home
 x86_64-linux-android: $(SOURCES) ndk-home
 	cargo ndk -t x86_64-linux-android -o ffi/kotlin/jniLibs build --release
 
-bindings-android: android
+bindings-android: kotlin
 	cp -r ffi/kotlin/jniLibs bindings-android/lib/src/main
-	sed 's/package_name = "breez_sdk"/package_name = "technology.breez"/' uniffi.toml > uniffi.android.toml
-	uniffi-bindgen generate src/breez_sdk.udl --language kotlin --config uniffi.android.toml --out-dir bindings-android/lib/src/main/kotlin/
-	rm uniffi.android.toml
-	cd bindings-android && ./gradlew assembleRelease
-	mkdir ffi/android
+	cp -r ffi/kotlin/breez_sdk bindings-android/lib/src/main/kotlin/
+	cd bindings-android && ./gradlew assemble
+	mkdir -p ffi/android
 	cp bindings-android/lib/build/outputs/aar/lib-release.aar ffi/android
 		
 .PHONY: ndk-home
