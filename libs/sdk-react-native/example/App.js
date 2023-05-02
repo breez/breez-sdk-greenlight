@@ -21,7 +21,7 @@ import {
     recoverNode,
     registerNode,
     start
-} from "react-native-breez-sdk"
+} from "@breeztech/react-native-breez-sdk"
 import BuildConfig from "react-native-build-config"
 import { generateMnemonic } from "@dreson4/react-native-quick-bip39"
 import { obfuscateString } from "./utils/security"

@@ -1,5 +1,5 @@
 {
-  "name": "react-native-breez-sdk",
+  "name": "@breeztech/react-native-breez-sdk",
   "version": "0.1.0",
   "description": "React Native Breez SDK",
   "main": "lib/commonjs/index",
@@ -13,6 +13,7 @@
     "android",
     "ios",
     "breez_sdk.podspec",
+    "!PUBLISHING.md",
     "!example",
     "!lib/typescript/example",
     "!android/.gradle",
@@ -38,7 +39,10 @@
     "ios",
     "android",
     "breez",
-    "breez-sdk"
+    "breez-sdk",
+    "lightning",
+    "bitcoin",
+    "lnurl"
   ],
   "repository": "https://github.com/breez/breez-sdk",
   "author": "Ross Savage <hello@satimoto.com> (https://github.com/satimoto)",
