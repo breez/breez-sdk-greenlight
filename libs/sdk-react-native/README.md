@@ -1,59 +1,76 @@
-# sdk-react-native
+# React Native Breez SDK
 
-A react-native plugin project that exposes the sdk-core using ffi. 
+The Breez SDK enables mobile developers to integrate Lightning and bitcoin payments into their apps with a very shallow learning curve. The use cases are endless – from social apps that want to integrate tipping between users to content-creation apps interested in adding bitcoin monetization. Crucially, this SDK is an end-to-end, non-custodial, drop-in solution powered by Greenlight, a built-in LSP, on-chain interoperability, third-party fiat on-ramps, and other services users and operators need.
+   
+The Breez SDK provides the following services:
+* Sending payments (via various protocols such as: bolt11, keysend, lnurl-pay, lightning address, etc.)
+* Receiving payments (via various protocols such as: bolt11, lnurl-withdraw, etc.)
+* Fetching node status (e.g. balance, max allow to pay, max allow to receive, on-chain balance, etc.)
+* Connecting to a new or existing node.
 
-## Build
+## Installation
 
-### Prerequisites
-* set the ANDROID_NDK_HOME env variable to your sdk home folder
+```console
+$ npm install @breeztech/react-native-breez-sdk
 ```
-export ANDROID_NDK_HOME=<your android ndk directory>
-```
-
-### Building the plugin
-On first usage you will need to run:
-```
-make init
-```
-Then to build and copy the kotlin and ios libraries:
-```
-make all
-```
-Or individually, for iOS:
-```
-make ios
-```
-And android:
-```
-make android
+or
+```console
+$ yarn add @breeztech/react-native-breez-sdk
 ```
 
-### Generated artifacts
-* Android libraries
- >* android/src/main/java/com/breezsdk/breez_sdk.kt
- >* android/src/main/jniLibs/arm64-v8a/libbreez_sdk_core.so
- >* android/src/main/jniLibs/armeabi-v7a/libbreez_core_sdk.so
- >* android/src/main/jniLibs/x86/libbreez_sdk_core.so
- >* android/src/main/jniLibs/x86_64/libbreez_sdk_core.so
-* iOS library
- >* ios/include/breez_sdkFFI.h
- >* ios/breez_sdk.swift
- >* ios/libs/libbreez_sdk_core.a
+## Usage
+For a more in-depth look at using the Breez SDK, you can follow [these examples](https://sdk-doc.breez.technology/) in the SDK overview.
+```ts
+import React, { useEffect } from "react"
+import { 
+    defaultConfig,
+    EnvironmentType,
+    initServices,
+    sendPayment,
+    start 
+} from "@breeztech/react-native-breez-sdk";
+import BuildConfig from "react-native-build-config"
 
-## Example project
-To run the example project, first run:
+const App = () => (
+    ...
+
+    const payInvoice = async (bolt11: string, sats?: number) => {
+        // Pay invoice
+        const payment = await sendPayment(bolt11, sats)
+    }
+
+    useEffect(() => {
+        const asyncFn = async () => {
+            // Get default config
+            const config = await defaultConfig(EnvironmentType.PRODUCTION)
+            // Set the apiKey from the gradle or xcode build
+            config.apiKey = BuildConfig.BREEZ_API_KEY
+
+             // Initialize Breez SDK
+            await initServices(config, deviceKey, deviceCert, seed)
+            await start()
+        }
+
+        asyncFn()
+    }, [])
+
+    ...
+)
+
+export default App
 ```
-yarn bootstrap
+
+## Example
+
+In the `example` folder of the [Breez SDK repository](https://github.com/breez/breez-sdk/tree/main/libs/sdk-react-native/example) you will find a basic application for using Breez SDK. Change directory into the folder and install the dependencies:
+```console
+$ yarn
 ```
-Change directory into `example/`:
+Then to run on android:
+```console
+$ yarn android
 ```
-cd example
-```
-Run android or ios:
-```
-yarn android
-```
-or 
-```
-yarn ios
+or for iOS:
+```console
+$ yarn pods && yarn ios
 ```
