@@ -20,8 +20,7 @@ ios-universal: $(SOURCES)
 	mkdir -p ../target/ios-universal/release
 	cargo build --release --target aarch64-apple-ios ;\
 	cargo build --release --target x86_64-apple-ios ;\
-	cargo build --release --target aarch64-apple-ios-sim ;\
-	lipo -create -output ../target/ios-universal/release/libbreez_sdk_bindings.a ../target/aarch64-apple-ios-sim/release/libbreez_sdk_bindings.a ../target/x86_64-apple-ios/release/libbreez_sdk_bindings.a
+	lipo -create -output ../target/ios-universal/release/libbreez_sdk_bindings.a ../target/aarch64-apple-ios/release/libbreez_sdk_bindings.a ../target/x86_64-apple-ios/release/libbreez_sdk_bindings.a
 
 darwin-universal: $(SOURCES)
 	mkdir -p ../target/darwin-universal/release
