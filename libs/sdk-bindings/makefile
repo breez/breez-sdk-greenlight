@@ -8,13 +8,12 @@ init:
 	rustup target add aarch64-apple-darwin x86_64-apple-darwin
 	rustup target add aarch64-apple-ios-sim
 	#rustup target add armv7-apple-ios armv7s-apple-ios i386-apple-ios ## deprecated
-	rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android	
+	rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
 	@if [ $$(uname) == "Darwin" ] ; then cargo install cargo-lipo ; fi
 	cargo install cbindgen
 	cargo install cargo-ndk
 
-## all: Compile iOS, Android
-all: swift-ios swift-darwin bindings-swift kotlin csharp-darwin
+all: swift-ios swift-darwin bindings-swift kotlin bindings-android csharp-darwin
 
 ios-universal: $(SOURCES)		
 	mkdir -p ../target/ios-universal/release
@@ -31,16 +30,16 @@ darwin-universal: $(SOURCES)
 
 csharp-darwin: darwin-universal
 	cargo install uniffi-bindgen-cs --git https://github.com/breez/uniffi-bindgen-cs --branch namespace
-	uniffi-bindgen-cs src/breez_sdk.udl -o ffi/csharp -c ./uniffi.toml 
+	uniffi-bindgen-cs src/breez_sdk.udl -o ffi/csharp -c ./uniffi.toml
 	cp ../target/darwin-universal/release/libbreez_sdk_bindings.dylib ffi/csharp
 
 TARGET ?= aarch64-unknown-linux-gnu
 csharp-linux: $(SOURCES)
 		cargo install uniffi-bindgen-cs --git https://github.com/breez/uniffi-bindgen-cs --branch namespace
 		cargo build --release --target $(TARGET)
-		uniffi-bindgen-cs src/breez_sdk.udl -o ffi/csharp -c ./uniffi.toml 
+		uniffi-bindgen-cs src/breez_sdk.udl -o ffi/csharp -c ./uniffi.toml
 		cp ../target/$(TARGET)/release/libbreez_sdk_bindings.so ffi/csharp
-		
+
 swift-ios: ios-universal
 	cargo run --features=uniffi/cli --bin uniffi-bindgen generate src/breez_sdk.udl -l swift -o ffi/swift-ios
 	cp ../target/ios-universal/release/libbreez_sdk_bindings.a ffi/swift-ios
@@ -65,13 +64,12 @@ bindings-swift: ios-universal darwin-universal
 	rm bindings-swift/Sources/BreezSDK/breez_sdkFFI.modulemap
 
 kotlin: android
-	cargo run --features=uniffi/cli --bin uniffi-bindgen generate src/breez_sdk.udl --language kotlin -o ffi/kotlin 
+	cargo run --features=uniffi/cli --bin uniffi-bindgen generate src/breez_sdk.udl --language kotlin -o ffi/kotlin
 
 android: aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
 
 aarch64-linux-android: $(SOURCES) ndk-home
 	cargo ndk -t aarch64-linux-android -o ffi/kotlin/jniLibs build --release	
-
 
 armv7-linux-androideabi: $(SOURCES) ndk-home
 	cargo ndk -t armv7-linux-androideabi -o ffi/kotlin/jniLibs build --release	
@@ -80,7 +78,14 @@ i686-linux-android: $(SOURCES) ndk-home
 	cargo ndk -t i686-linux-android -o ffi/kotlin/jniLibs build --release	
 
 x86_64-linux-android: $(SOURCES) ndk-home
-	cargo ndk -t x86_64-linux-android -o ffi/kotlin/jniLibs build --release	
+	cargo ndk -t x86_64-linux-android -o ffi/kotlin/jniLibs build --release
+
+bindings-android: kotlin
+	cp -r ffi/kotlin/jniLibs bindings-android/lib/src/main
+	cp -r ffi/kotlin/breez_sdk bindings-android/lib/src/main/kotlin/
+	cd bindings-android && ./gradlew assemble
+	mkdir -p ffi/android
+	cp bindings-android/lib/build/outputs/aar/lib-release.aar ffi/android
 		
 .PHONY: ndk-home
 ndk-home:
