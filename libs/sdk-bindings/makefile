@@ -18,9 +18,14 @@ all: swift-ios swift-darwin bindings-swift kotlin csharp-darwin
 
 ios-universal: $(SOURCES)		
 	mkdir -p ../target/ios-universal/release
+	mkdir -p ../target/ios-universal-sim/release
 	cargo build --release --target aarch64-apple-ios ;\
 	cargo build --release --target x86_64-apple-ios ;\
+	cargo build --release --target aarch64-apple-ios-sim ;\
+	# build universal lib for arm device and x86 sim
 	lipo -create -output ../target/ios-universal/release/libbreez_sdk_bindings.a ../target/aarch64-apple-ios/release/libbreez_sdk_bindings.a ../target/x86_64-apple-ios/release/libbreez_sdk_bindings.a
+	# build universal lib for arm sim and x86 sim
+	lipo -create -output ../target/ios-universal-sim/release/libbreez_sdk_bindings.a ../target/aarch64-apple-ios-sim/release/libbreez_sdk_bindings.a ../target/x86_64-apple-ios/release/libbreez_sdk_bindings.a
 
 darwin-universal: $(SOURCES)
 	mkdir -p ../target/darwin-universal/release
@@ -59,7 +64,7 @@ bindings-swift: ios-universal darwin-universal
 	cp bindings-swift/Sources/BreezSDK/breez_sdkFFI.h bindings-swift/breez_sdkFFI.xcframework/ios-arm64_x86_64-simulator/breez_sdkFFI.framework/Headers
 	cp bindings-swift/Sources/BreezSDK/breez_sdkFFI.h bindings-swift/breez_sdkFFI.xcframework/macos-arm64_x86_64/breez_sdkFFI.framework/Headers
 	cp ../target/aarch64-apple-ios/release/libbreez_sdk_bindings.a bindings-swift/breez_sdkFFI.xcframework/ios-arm64/breez_sdkFFI.framework/breez_sdkFFI
-	cp ../target/ios-universal/release/libbreez_sdk_bindings.a bindings-swift/breez_sdkFFI.xcframework/ios-arm64_x86_64-simulator/breez_sdkFFI.framework/breez_sdkFFI
+	cp ../target/ios-universal-sim/release/libbreez_sdk_bindings.a bindings-swift/breez_sdkFFI.xcframework/ios-arm64_x86_64-simulator/breez_sdkFFI.framework/breez_sdkFFI
 	cp ../target/darwin-universal/release/libbreez_sdk_bindings.a bindings-swift/breez_sdkFFI.xcframework/macos-arm64_x86_64/breez_sdkFFI.framework/breez_sdkFFI
 	rm bindings-swift/Sources/BreezSDK/breez_sdkFFI.h
 	rm bindings-swift/Sources/BreezSDK/breez_sdkFFI.modulemap
