@@ -115,9 +115,9 @@ checksum = "8c3419eecc9f5967e6f0f29a0c3fefe22bda6ea34b15798f3c452cb81f2c3fa7"
 
 [[package]]
 name = "asn1-rs"
-version = "0.3.1"
+version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "30ff05a702273012438132f449575dbc804e27b2f3cbe3069aa237d26c98fa33"
+checksum = "7f6fd5ddaf0351dff5b8da21b2fb4ff8e08ddd02857f0bf69c47639106c0fff0"
 dependencies = [
  "asn1-rs-derive",
  "asn1-rs-impl",
@@ -131,9 +131,9 @@ dependencies = [
 
 [[package]]
 name = "asn1-rs-derive"
-version = "0.1.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db8b7511298d5b7784b40b092d9e9dcd3a627a5707e4b5e507931ab0d44eeebf"
+checksum = "726535892e8eae7e70657b4c8ea93d26b8553afb1ce617caee529ef96d7dee6c"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -782,9 +782,9 @@ checksum = "23d8666cb01533c39dde32bcbab8e227b4ed6679b2c925eba05feabea39508fb"
 
 [[package]]
 name = "der-parser"
-version = "7.0.0"
+version = "8.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fe398ac75057914d7d07307bf67dc7f3f574a26783b4fc7805a20ffa9f506e82"
+checksum = "dbd676fbbab537128ef0278adb5576cf363cff6aa22a7b24effe97347cfab61e"
 dependencies = [
  "asn1-rs",
  "displaydoc",
@@ -979,9 +979,9 @@ checksum = "0ce7134b9999ecaf8bcd65542e436736ef32ddca1b3e06094cb6ec5755203b80"
 
 [[package]]
 name = "flutter_rust_bridge"
-version = "1.71.1"
+version = "1.75.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "08359c8042886dc6e3391d10bf96d80177a6ea091025174519da55a72d86aa25"
+checksum = "f29eab4bcef83a8266245c863fdbe5bce9180f17810b24d55b8ff7b358859ada"
 dependencies = [
  "allo-isolate",
  "anyhow",
@@ -1133,7 +1133,7 @@ checksum = "ad0a93d233ebf96623465aad4046a8d3aa4da22d4f4beba5388838c8a434bbb4"
 [[package]]
 name = "gl-client"
 version = "0.1.6"
-source = "git+ssh://git@github.com/Blockstream/greenlight.git#bb650265d12c4e1166e58ac2d1e600700c11f82b"
+source = "git+ssh://git@github.com/Blockstream/greenlight.git?rev=173bce5#173bce5a821610d1f5776982884e0edb106de8dd"
 dependencies = [
  "anyhow",
  "base64 0.21.0",
@@ -1836,9 +1836,9 @@ dependencies = [
 
 [[package]]
 name = "oid-registry"
-version = "0.4.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38e20717fa0541f39bd146692035c37bedfa532b3e5071b35761082407546b2a"
+checksum = "9bedf36ffb6ba96c2eb7144ef6270557b52e54b20c0a8e1eb2ff99a6c6959bff"
 dependencies = [
  "asn1-rs",
 ]
@@ -2253,9 +2253,9 @@ dependencies = [
 
 [[package]]
 name = "rcgen"
-version = "0.9.3"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6413f3de1edee53342e6138e75b56d32e7bc6e332b3bd62d497b1929d4cfbcdd"
+checksum = "ffbe84efe2f38dea12e9bfc1f65377fdf03e53a18cb3b995faedf7934c7e785b"
 dependencies = [
  "pem",
  "ring",
@@ -3531,9 +3531,9 @@ dependencies = [
 
 [[package]]
 name = "x509-parser"
-version = "0.13.2"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9fb9bace5b5589ffead1afb76e43e34cff39cd0f3ce7e170ae0c29e53b88eb1c"
+checksum = "e0ecbeb7b67ce215e40e3cc7f2ff902f94a223acf44995934763467e7b1febc8"
 dependencies = [
  "asn1-rs",
  "base64 0.13.1",

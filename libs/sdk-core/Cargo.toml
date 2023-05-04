@@ -18,9 +18,7 @@ bitcoin_hashes = "*"
 bitcoin = "^0"
 # Note: private repo, might need git credentials helper to be setup
 # If so, see https://techexpertise.medium.com/storing-git-credentials-with-git-credential-helper-33d22a6b5ce7
-gl-client = { git = "ssh://git@github.com/Blockstream/greenlight.git", features = [
-    "permissive",
-] }
+gl-client = { git = "ssh://git@github.com/Blockstream/greenlight.git", features = [ "permissive"], rev = "173bce5"  }
 base64 = "0.13.0"
 ecies = { version = "0.2", default-features = false, features = ["pure"] }
 ripemd = "*"
