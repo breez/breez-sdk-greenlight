@@ -27,7 +27,7 @@ pub(crate) enum Commands {
     /// Recover a node using the seed only
     RecoverNode {},
 
-    /// Initialize the sdk for existing node
+    /// Initialize the sdk for an existing node based on the node credentials
     Init {},
 
     /// Sync local data with remote node
@@ -53,7 +53,7 @@ pub(crate) enum Commands {
         amount: Option<u64>,
     },
 
-    /// Send a spontaneus (keysend) payment
+    /// Send a spontaneous (keysend) payment
     SendSpontaneousPayment { node_id: String, amount: u64 },
 
     /// List all payments
@@ -92,10 +92,10 @@ pub(crate) enum Commands {
     /// Stop the node
     StopNode {},
 
-    /// List recommended fees baed on the mempool
+    /// List recommended fees based on the mempool
     RecommendedFees {},
 
-    /// Genreate address to receive onchain
+    /// Generate address to receive onchain
     ReceiveOnchain {},
 
     /// Get the current in-progress swap if exists
@@ -104,7 +104,7 @@ pub(crate) enum Commands {
     /// List refundable swap addresses
     ListRefundables {},
 
-    /// Broadcase a refund transaction for incomplete swap
+    /// Broadcast a refund transaction for an incomplete swap
     Refund {
         swap_address: String,
         to_address: String,
