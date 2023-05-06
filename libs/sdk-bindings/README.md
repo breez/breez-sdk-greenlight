@@ -45,7 +45,31 @@ make bindings-swift
 
 ### Kotlin
 
-### Libraries and Bindings
+For most users, we recommend integrating the Breez SDK as Gradle dependency from [our Maven repository](https://mvn.breez.technology/releases).
+
+To do so, add the following to your Gradle dependencies:
+
+``` groovy
+repositories {
+  maven {
+      url("https://mvn.breez.technology/releases")
+  }
+}
+
+dependencies {
+  implementation("breez_sdk:bindings-android:<version>")
+}
+```
+
+You can then import and use the Breez SDK in your app:
+
+``` kotlin
+import breez_sdk.*
+```
+
+If you want to compile from source or need more options, read on.
+
+#### Libraries and Bindings
 
 This command will build libraries for different platforms in `../target/` and copy them to `ffi/kotlin/jniLibs`.
 In addition it will generate Kotlin bindings in `ffi/kotlin/breez-sdk`.
@@ -54,7 +78,7 @@ In addition it will generate Kotlin bindings in `ffi/kotlin/breez-sdk`.
 make kotlin
 ```
 
-### Android Archive (AAR)
+#### Android Archive (AAR)
 
 This command will build an AAR file in `ffi/android/lib-release.aar`:
 
@@ -63,6 +87,23 @@ make bindings-android
 ```
 
 See [Add your AAR or JAR as a dependency](https://developer.android.com/studio/projects/android-library#psd-add-aar-jar-dependency) in Android's docs for more information on how to integrate such an archive into your project.
+
+#### Known Issues
+
+The Kotlin bindings for the Breez SDK rely on [JNA](https://github.com/java-native-access/jna) to call native methods. JNA 5.7 or greater is required. Depending on the JVM version you use, you might not have the JNA dependency in your classpath. The exception thrown will be something like:
+
+```
+class file for com.sun.jna.Pointer not found
+```
+
+The solution is to add JNA as a dependency:
+
+```
+dependencies {
+    // ...
+    implementation "net.java.dev.jna:jna:5.7.0@aar"
+}
+```
 
 ### C#
 
