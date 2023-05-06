@@ -1,0 +1,38 @@
+name: Publish Breez SDK to Breez Maven Repository
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'breez-sdk repo release (MAJOR.MINOR.PATCH)'
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Install required dependencies
+        run: |
+          brew install protobuf
+          cargo install --version 0.22.0 uniffi_bindgen
+          cargo install cargo-ndk
+      - name: Checkout breez-sdk repo
+        uses: actions/checkout@v3
+        with:
+          path: build
+          ref: ${{ inputs.version }}
+      - name: Build local Android project
+        working-directory: build/libs/sdk-bindings
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.REPO_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          sudo chmod 600 ~/.ssh/id_rsa
+          ssh-add ~/.ssh/id_rsa
+          make init
+          make bindings-android
+      - name: Publish to Breez Maven Repository
+        working-directory: build/libs/sdk-bindings/bindings-android
+        run: |
+          ./gradlew publish -PbreezReposiliteUsername=${{ secrets.BREEZ_MVN_USERNAME }} -PbreezReposilitePassword=${{ secrets.BREEZ_MVN_PASSWORD }} -PlibraryVersion=${{ inputs.version }}
