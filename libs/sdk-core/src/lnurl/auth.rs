@@ -1,10 +1,9 @@
 use crate::{LnUrlAuthRequestData, LnUrlCallbackStatus, NodeAPI};
 use anyhow::{anyhow, Result};
+use bitcoin::hashes::{hex::ToHex, sha256, Hash, HashEngine, Hmac, HmacEngine};
 use bitcoin::secp256k1::{Message, Secp256k1};
 use bitcoin::util::bip32::ChildNumber;
 use bitcoin::KeyPair;
-use bitcoin_hashes::hex::ToHex;
-use bitcoin_hashes::{sha256, Hash, HashEngine, Hmac, HmacEngine};
 use reqwest::Url;
 use std::str::FromStr;
 use std::sync::Arc;

@@ -15,8 +15,8 @@ use bitcoin::{
     Address, EcdsaSighashType, OutPoint, Script, Sequence, Transaction, TxIn, TxOut, Txid, Witness,
 };
 
-use bitcoin_hashes::hex::FromHex;
-use bitcoin_hashes::sha256;
+use bitcoin::hashes::hex::FromHex;
+use bitcoin::hashes::sha256;
 use rand::Rng;
 use ripemd::{Digest, Ripemd160};
 
@@ -704,7 +704,7 @@ mod tests {
         secp256k1::{Message, PublicKey, Secp256k1, SecretKey},
         OutPoint, Txid,
     };
-    use bitcoin_hashes::{hex::FromHex, sha256};
+    use bitcoin::hashes::{hex::FromHex, sha256};
 
     use crate::{
         breez_services::tests::get_dummy_node_state,

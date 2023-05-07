@@ -25,7 +25,7 @@ use crate::swap::BTCReceiveSwap;
 use crate::{LnUrlAuthRequestData, LnUrlWithdrawRequestData, PaymentResponse};
 use anyhow::{anyhow, Result};
 use bip39::*;
-use bitcoin_hashes::{sha256, Hash};
+use bitcoin::hashes::{sha256, Hash};
 use std::cmp::max;
 use std::str::FromStr;
 use std::sync::Arc;

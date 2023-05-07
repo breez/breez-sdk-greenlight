@@ -11,8 +11,8 @@ use bitcoin::secp256k1::ecdsa::RecoverableSignature;
 use bitcoin::secp256k1::{KeyPair, Message};
 use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
-use bitcoin_hashes::hex::ToHex;
-use bitcoin_hashes::{sha256, Hash};
+use bitcoin::hashes::hex::ToHex;
+use bitcoin::hashes::{sha256, Hash};
 use gl_client::pb::amount::Unit;
 use gl_client::pb::{
     Amount, CloseChannelResponse, CloseChannelType, Invoice, Peer, WithdrawResponse,

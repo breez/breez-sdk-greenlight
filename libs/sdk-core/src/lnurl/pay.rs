@@ -4,7 +4,7 @@ use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 use crate::lnurl::pay::model::{CallbackResponse, SuccessAction, ValidatedCallbackResponse};
 use crate::LnUrlErrorData;
 use anyhow::{anyhow, Result};
-use bitcoin_hashes::{sha256, Hash};
+use bitcoin::hashes::{sha256, Hash};
 use std::str::FromStr;
 
 type Aes256CbcEnc = cbc::Encryptor<aes::Aes256>;
