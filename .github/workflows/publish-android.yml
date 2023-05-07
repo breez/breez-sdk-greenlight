@@ -11,11 +11,11 @@ jobs:
   publish-android:
     runs-on: ubuntu-latest
     steps:
-      - name: Install dependencies
-        run: |
-          sudo apt-get install -y protobuf-compiler
-          cargo install --version 0.22.0 uniffi_bindgen
-          cargo install cargo-ndk
+      # - name: Install dependencies
+      #   run: |
+      #     sudo apt-get install -y protobuf-compiler
+      #     cargo install --version 0.22.0 uniffi_bindgen
+      #     cargo install cargo-ndk
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
@@ -29,24 +29,27 @@ jobs:
           chmod 600 /home/runner/.ssh/github_actions
           ssh-agent -a $SSH_AUTH_SOCK > /dev/null
           ssh-add /home/runner/.ssh/github_actions
-      - name: Setup Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: temurin
-          java-version: 11
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
-        with:
-          gradle-version: 7.3.2
-      - name: Build Android project
-        env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-        run: |
-          cd libs/sdk-bindings
-          make init
-          make bindings-android
+      # - name: Setup Java
+      #   uses: actions/setup-java@v3
+      #   with:
+      #     distribution: temurin
+      #     java-version: 11
+      # - name: Setup Gradle
+      #   uses: gradle/gradle-build-action@v2
+      #   with:
+      #     gradle-version: 7.3.2
+      # - name: Build Android project
+      #   env:
+      #     SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      #   run: |
+      #     cd libs/sdk-bindings
+      #     make init
+      #     make bindings-android
+      # - name: Publish artifacts
+      #   uses: gradle/gradle-build-action@v2
+      #   with:
+      #     build-root-directory: libs/sdk-bindings/bindings-android
+      #     arguments: publish -PlibraryVersion=${{ inputs.version }} -PbreezReposiliteUsername=${{ secrets.BREEZ_MVN_USERNAME }} -PbreezReposilitePassword=${{ secrets.BREEZ_MVN_PASSWORD }}
       - name: Publish artifacts
-        uses: gradle/gradle-build-action@v2
-        with:
-          build-root-directory: libs/sdk-bindings/bindings-android
-          arguments: publish -PlibraryVersion=${{ inputs.version }} -PbreezReposiliteUsername=${{ secrets.BREEZ_MVN_USERNAME }} -PbreezReposilitePassword=${{ secrets.BREEZ_MVN_PASSWORD }}
+        run: |
+          cd libs/sdk-bindings/bindings-android && pwd && ls && ./gradlew publish -PlibraryVersion=${{ inputs.version }}
