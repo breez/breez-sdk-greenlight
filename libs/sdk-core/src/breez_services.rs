@@ -945,7 +945,7 @@ impl Receiver for PaymentReceiver {
         let amount_msats = amount_sats * 1000;
 
         let mut short_channel_id = parse_short_channel_id("1x0x0")?;
-        let mut destination_invoice_amount_sats = amount_msats;
+        let mut destination_invoice_amount_sats = amount_sats;
 
         // check if we need to open channel
         if node_state.inbound_liquidity_msats < amount_msats {
@@ -997,7 +997,7 @@ impl Receiver for PaymentReceiver {
         info!("Creating invoice on NodeAPI");
         let invoice = &self
             .node_api
-            .create_invoice(amount_sats, description, preimage)
+            .create_invoice(destination_invoice_amount_sats, description, preimage)
             .await?;
         info!("Invoice created {}", invoice.bolt11);
 
