@@ -56,6 +56,6 @@ jobs:
           
       - name: Publish artifacts
         run: |
-          cd libs/sdk-bindings/bindings-android
+          cd libs/sdk-bindings/bindings-android/lib
           ./gradlew tasks --all      
           ./gradlew --info publish -PlibraryVersion=${{ inputs.version }}
