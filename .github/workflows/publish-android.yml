@@ -52,6 +52,6 @@ jobs:
       #     arguments: publish -PlibraryVersion=${{ inputs.version }} -PbreezReposiliteUsername=${{ secrets.BREEZ_MVN_USERNAME }} -PbreezReposilitePassword=${{ secrets.BREEZ_MVN_PASSWORD }}
       - name: Publish artifacts
         run: |
-          ./gradlew tasks          
           cd libs/sdk-bindings/bindings-android
+          ./gradlew tasks          
           ./gradlew --info --debug publish -PlibraryVersion=${{ inputs.version }}
