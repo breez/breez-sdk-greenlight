@@ -22,13 +22,12 @@ jobs:
           ref: ${{ inputs.version }}
       - name: Setup SSH key
         env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          SSH_PRIVATE_KEY: ${{secrets.REPO_SSH_KEY}}
         run: |
-          mkdir -p /home/runner/.ssh
-          echo "${{ secrets.REPO_SSH_KEY }}" > /home/runner/.ssh/github_actions
-          chmod 600 /home/runner/.ssh/github_actions
-          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-          ssh-add /home/runner/.ssh/github_actions
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          sudo chmod 600 ~/.ssh/id_rsa
+          ssh-add ~/.ssh/id_rsa
       # - name: Setup Java
       #   uses: actions/setup-java@v3
       #   with:
