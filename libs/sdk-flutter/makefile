@@ -12,6 +12,9 @@ all: ios-universal android
 flutter_rust_bridge:
 	flutter_rust_bridge_codegen --dart-format-line-length 110 -r ../sdk-core/src/binding.rs -d lib/bridge_generated.dart -c ios/Classes/bridge_generated.h
 
+## ios: Compile the iOS universal library
+ios: ios-universal
+
 ios-universal: $(SOURCES) flutter_rust_bridge
 	cd ../sdk-core && make ios	
 	cp ../target/universal/release/libbreez_sdk_core.a ./ios/libbreez_sdk_core.a
