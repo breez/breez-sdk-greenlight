@@ -47,7 +47,7 @@ impl SqliteStorage {
 fn test_cached_items() {
     use crate::persist::test_utils;
 
-    let storage = SqliteStorage::from_file(test_utils::create_test_sql_file("cache".to_string()));
+    let storage = SqliteStorage::new(test_utils::create_test_sql_dir());
 
     storage.init().unwrap();
     storage

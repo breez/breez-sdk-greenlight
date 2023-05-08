@@ -57,7 +57,7 @@ impl SqliteStorage {
         let con = self.get_connection()?;
         let mut prep_statement = con.prepare(
             "
-         INSERT OR REPLACE INTO payments_external_info (
+         INSERT OR REPLACE INTO sync.payments_external_info (
            payment_id,
            lnurl_success_action,
            lnurl_metadata,
@@ -112,7 +112,7 @@ impl SqliteStorage {
              e.lnurl_metadata,
              e.ln_address
             FROM payments p
-            LEFT JOIN payments_external_info e
+            LEFT JOIN sync.payments_external_info e
             ON
              p.id = e.payment_id
             {where_clause} ORDER BY payment_time DESC
@@ -149,7 +149,7 @@ impl SqliteStorage {
                  e.lnurl_metadata,
                  e.ln_address
                 FROM payments p
-                LEFT JOIN payments_external_info e
+                LEFT JOIN sync.payments_external_info e
                 ON
                  p.id = e.payment_id
                 WHERE
@@ -310,8 +310,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
             },
         },
     ];
-    let storage =
-        SqliteStorage::from_file(test_utils::create_test_sql_file("transactions".to_string()));
+    let storage = SqliteStorage::new(test_utils::create_test_sql_dir());
     storage.init()?;
     storage.insert_payments(&txs)?;
     storage.insert_lnurl_payment_external_info(

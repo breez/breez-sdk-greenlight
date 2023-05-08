@@ -270,6 +270,97 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
         FROM old_swaps;
 
        DROP TABLE old_swaps;            
+       ",
        "
+       CREATE TABLE IF NOT EXISTS sync_versions (
+        last_version INTEGER NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP   
+       ) STRICT;
+       ",
+
+       "       
+       CREATE TABLE IF NOT EXISTS sync.swaps (
+        bitcoin_address TEXT PRIMARY KEY NOT NULL,
+        created_at INTEGER DEFAULT CURRENT_TIMESTAMP,
+        lock_height INTEGER NOT NULL,
+        payment_hash BLOB NOT NULL UNIQUE,
+        preimage BLOB NOT NULL UNIQUE,
+        private_key BLOB NOT NULL UNIQUE,
+        public_key BLOB NOT NULL UNIQUE,
+        swapper_public_key BLOB NOT NULL UNIQUE,
+        script BLOB NOT NULL UNIQUE,
+        min_allowed_deposit INTEGER NOT NULL,
+        max_allowed_deposit INTEGER NOT NULL
+       ) STRICT;
+
+       ALTER TABLE swaps_info RENAME TO old_swaps_info;
+
+       CREATE TABLE IF NOT EXISTS swaps_info (
+        bitcoin_address TEXT PRIMARY KEY NOT NULL,
+        bolt11 TEXT,
+        paid_sats INTEGER NOT NULL DEFAULT 0,
+        unconfirmed_sats INTEGER NOT NULL DEFAULT 0, 
+        confirmed_sats INTEGER NOT NULL DEFAULT 0,               
+        status INTEGER NOT NULL DEFAULT 0,        
+        unconfirmed_tx_ids TEXT NOT NULL,
+        confirmed_tx_ids TEXT NOT NULL,        
+        last_redeem_error TEXT        
+       ) STRICT;
+
+       ALTER TABLE swap_refunds RENAME TO old_swap_refunds;
+       CREATE TABLE IF NOT EXISTS sync.swap_refunds (
+        bitcoin_address TEXT NOT NULL,        
+        refund_tx_id TEXT NOT NULL,
+        PRIMARY KEY (bitcoin_address, refund_tx_id)        
+       ) STRICT;
+       
+       INSERT INTO sync.swaps
+        (
+         bitcoin_address, 
+         created_at,
+         lock_height,
+         payment_hash,
+         preimage,
+         private_key,
+         public_key,
+         swapper_public_key,
+         script,
+         min_allowed_deposit,
+         max_allowed_deposit
+        )
+        SELECT 
+         bitcoin_address, 
+         created_at,
+         lock_height,
+         payment_hash,
+         preimage,
+         private_key,
+         public_key,
+         swapper_public_key,
+         script,
+         min_allowed_deposit,
+         max_allowed_deposit         
+        FROM swaps
+        WHERE bitcoin_address NOT IN (SELECT bitcoin_address FROM sync.swaps);
+
+        INSERT INTO swaps_info select * from old_swaps_info;
+        INSERT INTO sync.swap_refunds select * from old_swap_refunds where bitcoin_address in (select bitcoin_address from sync.swap_refunds);
+        DROP TABLE old_swaps_info;
+        DROP TABLE old_swap_refunds;
+        DROP TABLE swaps;
+
+        ALTER TABLE payments_external_info RENAME TO old_payments_external_info;
+        CREATE TABLE IF NOT EXISTS sync.payments_external_info (
+         payment_id TEXT NOT NULL PRIMARY KEY,
+         lnurl_success_action TEXT,
+         ln_address TEXT,
+         lnurl_metadata TEXT         
+        ) STRICT;
+
+        INSERT INTO sync.payments_external_info         
+         SELECT * FROM old_payments_external_info where payment_id not in (select payment_id from sync.payments_external_info);
+         
+         DROP TABLE old_payments_external_info;
+        ",
     ]
 }

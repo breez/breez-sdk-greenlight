@@ -10,7 +10,7 @@ impl SqliteStorage {
         let tx = con.transaction()?;
 
         tx.execute("
-         INSERT INTO swaps (
+         INSERT INTO sync.swaps (
            bitcoin_address, 
            created_at, 
            lock_height, 
@@ -116,7 +116,7 @@ impl SqliteStorage {
         refund_tx_id: String,
     ) -> Result<()> {
         self.get_connection()?.execute(
-            "INSERT INTO swap_refunds (bitcoin_address, refund_tx_id) VALUES(:bitcoin_address, :refund_tx_id)",
+            "INSERT INTO sync.swap_refunds (bitcoin_address, refund_tx_id) VALUES(:bitcoin_address, :refund_tx_id)",
             named_params! {
              ":bitcoin_address": bitcoin_address,
              ":refund_tx_id": refund_tx_id,
@@ -170,13 +170,13 @@ impl SqliteStorage {
              unconfirmed_sats as unconfirmed_sats,
              confirmed_sats as confirmed_sats,
              status as status,             
-             (SELECT json_group_array(refund_tx_id) FROM swap_refunds where bitcoin_address = swaps.bitcoin_address) as refund_tx_ids,
+             (SELECT json_group_array(refund_tx_id) FROM sync.swap_refunds as swap_refunds where bitcoin_address = swaps.bitcoin_address) as refund_tx_ids,
              unconfirmed_tx_ids as unconfirmed_tx_ids,
              confirmed_tx_ids as confirmed_tx_ids,
              last_redeem_error as last_redeem_error               
-            FROM swaps 
+            FROM sync.swaps as swaps
              LEFT JOIN swaps_info ON swaps.bitcoin_address = swaps_info.bitcoin_address
-             LEFT JOIN swap_refunds ON swaps.bitcoin_address = swap_refunds.bitcoin_address
+             LEFT JOIN sync.swap_refunds as swap_refunds ON swaps.bitcoin_address = swap_refunds.bitcoin_address
             WHERE {}
             ",
             where_clause
@@ -228,15 +228,23 @@ impl SqliteStorage {
     }
 
     fn sql_row_to_swap(&self, row: &Row) -> Result<SwapInfo, rusqlite::Error> {
-        let status: i32 = row.get("status")?;
+        let status: i32 = row
+            .get::<&str, Option<i32>>("status")?
+            .unwrap_or(SwapStatus::Initial as i32);
         let status: SwapStatus = status.try_into().map_or(SwapStatus::Initial, |v| v);
-        let refund_txs_raw: String = row.get("refund_tx_ids")?;
+        let refund_txs_raw: String = row
+            .get::<&str, Option<String>>("refund_tx_ids")?
+            .unwrap_or("[]".to_string());
         let refund_tx_ids: Vec<String> = serde_json::from_str(refund_txs_raw.as_str()).unwrap();
         // let t: Vec<String> =
         //     serde_json::from_value(refund_txs_raw).map_err(|e| FromSqlError::InvalidType)?;
 
-        let unconfirmed_tx_ids: StringArray = row.get("unconfirmed_tx_ids")?;
-        let confirmed_txs_raw: StringArray = row.get("confirmed_tx_ids")?;
+        let unconfirmed_tx_ids: StringArray = row
+            .get::<&str, Option<StringArray>>("unconfirmed_tx_ids")?
+            .unwrap_or(StringArray(vec![]));
+        let confirmed_txs_raw: StringArray = row
+            .get::<&str, Option<StringArray>>("confirmed_tx_ids")?
+            .unwrap_or(StringArray(vec![]));
         Ok(SwapInfo {
             bitcoin_address: row.get("bitcoin_address")?,
             created_at: row.get("created_at")?,
@@ -248,9 +256,15 @@ impl SqliteStorage {
             swapper_public_key: row.get("swapper_public_key")?,
             script: row.get("script")?,
             bolt11: row.get("bolt11")?,
-            paid_sats: row.get("paid_sats")?,
-            unconfirmed_sats: row.get("unconfirmed_sats")?,
-            confirmed_sats: row.get("confirmed_sats")?,
+            paid_sats: row
+                .get::<&str, Option<u32>>("paid_sats")?
+                .unwrap_or_default(),
+            unconfirmed_sats: row
+                .get::<&str, Option<u32>>("unconfirmed_sats")?
+                .unwrap_or_default(),
+            confirmed_sats: row
+                .get::<&str, Option<u32>>("confirmed_sats")?
+                .unwrap_or_default(),
             status,
             refund_tx_ids,
             unconfirmed_tx_ids: unconfirmed_tx_ids.0,
@@ -273,7 +287,7 @@ fn test_swaps() -> Result<(), Box<dyn std::error::Error>> {
             .collect())
     }
 
-    let storage = SqliteStorage::from_file(test_utils::create_test_sql_file("swap".to_string()));
+    let storage = SqliteStorage::new(test_utils::create_test_sql_dir());
 
     storage.init()?;
     let tested_swap_info = SwapInfo {

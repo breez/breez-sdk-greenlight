@@ -398,7 +398,7 @@ impl BTCReceiveSwap {
         let payment = self
             .persister
             .get_payment_by_hash(&hex::encode(swap_info.payment_hash.clone()))?;
-        print!(
+        debug!(
             "found payment for hash {:?}, {:?}",
             &hex::encode(swap_info.payment_hash.clone()),
             payment

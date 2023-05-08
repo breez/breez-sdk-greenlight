@@ -419,6 +419,7 @@ dependencies = [
  "serde_json",
  "strum",
  "strum_macros",
+ "tempfile",
  "tiny-bip39",
  "tokio",
  "tonic",

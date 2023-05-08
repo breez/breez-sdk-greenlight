@@ -9,12 +9,19 @@ use rusqlite_migration::{Migrations, M};
 use super::migrations::current_migrations;
 
 pub struct SqliteStorage {
-    file: String,
+    main_db_file: String,
+    sync_db_file: String,
 }
 
 impl SqliteStorage {
-    pub fn from_file(file: String) -> SqliteStorage {
-        SqliteStorage { file }
+    pub fn new(working_dir: String) -> SqliteStorage {
+        let main_db_file = format!("{}/storage.sql", working_dir);
+        let sync_db_file = format!("{}/sync_storage.sql", working_dir);
+
+        SqliteStorage {
+            main_db_file,
+            sync_db_file,
+        }
     }
 
     pub fn init(&self) -> Result<()> {
@@ -27,7 +34,10 @@ impl SqliteStorage {
     }
 
     pub(crate) fn get_connection(&self) -> Result<Connection> {
-        Connection::open(self.file.clone()).map_err(anyhow::Error::msg)
+        let con = Connection::open(self.main_db_file.clone()).map_err(anyhow::Error::msg)?;
+        let sql = "ATTACH DATABASE ? AS sync;";
+        con.execute(sql, [self.sync_db_file.clone()])?;
+        Ok(con)
     }
 }
 

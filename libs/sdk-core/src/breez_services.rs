@@ -797,12 +797,10 @@ impl BreezServicesBuilder {
         ));
 
         // The storage is implemented via sqlite.
-        let persister = self.persister.clone().unwrap_or_else(|| {
-            Arc::new(SqliteStorage::from_file(format!(
-                "{}/storage.sql",
-                self.config.working_dir
-            )))
-        });
+        let persister = self
+            .persister
+            .clone()
+            .unwrap_or_else(|| Arc::new(SqliteStorage::new(self.config.working_dir.clone())));
 
         persister.init().unwrap();
         let current_lsp_id = persister.get_lsp_id()?;
