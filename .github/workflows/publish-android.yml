@@ -35,4 +35,5 @@ jobs:
       - name: Publish to Breez Maven Repository
         working-directory: build/libs/sdk-bindings/bindings-android
         run: |
-          ./gradlew publish -PbreezReposiliteUsername=${{ secrets.BREEZ_MVN_USERNAME }} -PbreezReposilitePassword=${{ secrets.BREEZ_MVN_PASSWORD }} -PlibraryVersion=${{ inputs.version }}
+          ./gradlew tasks
+          ./gradlew publish --info --debug -PbreezReposiliteUsername=${{ secrets.BREEZ_MVN_USERNAME }} -PbreezReposilitePassword=${{ secrets.BREEZ_MVN_PASSWORD }} -PlibraryVersion=${{ inputs.version }}
