@@ -57,5 +57,5 @@ jobs:
       - name: Publish artifacts
         run: |
           cd libs/sdk-bindings/bindings-android
-          ../gradlew tasks --build-cache --all      
-          ../gradlew --info --build-cache publish -PlibraryVersion=${{ inputs.version }}
+          ./gradlew tasks --build-cache --all      
+          ./gradlew --info --build-cache publish -PlibraryVersion=${{ inputs.version }}
