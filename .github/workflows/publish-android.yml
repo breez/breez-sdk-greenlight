@@ -49,6 +49,11 @@ jobs:
       #   with:
       #     build-root-directory: libs/sdk-bindings/bindings-android
       #     arguments: publish -PlibraryVersion=${{ inputs.version }} -PbreezReposiliteUsername=${{ secrets.BREEZ_MVN_USERNAME }} -PbreezReposilitePassword=${{ secrets.BREEZ_MVN_PASSWORD }}
+      - uses: actions/setup-java@v2
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          
       - name: Publish artifacts
         run: |
           cd libs/sdk-bindings/bindings-android
