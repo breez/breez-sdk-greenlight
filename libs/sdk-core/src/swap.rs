@@ -8,15 +8,16 @@ use anyhow::{anyhow, Result};
 use bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
 use bitcoin::blockdata::opcodes;
 use bitcoin::blockdata::script::Builder;
+use bitcoin::consensus::encode;
 use bitcoin::psbt::serialize::Serialize;
 use bitcoin::secp256k1::{Message, PublicKey, Secp256k1, SecretKey};
-use bitcoin::util::sighash::SighashCache;
 use bitcoin::{
-    Address, EcdsaSighashType, OutPoint, Script, Sequence, Transaction, TxIn, TxOut, Txid, Witness,
+    hashes::hex::FromHex, Address, EcdsaSighashType, OutPoint, Script, Sequence, Transaction, TxIn,
+    TxOut, Txid, Witness,
 };
 
-use bitcoin_hashes::hex::FromHex;
-use bitcoin_hashes::sha256;
+use bitcoin::hashes::sha256;
+use bitcoin::util::sighash::SighashCache;
 use rand::Rng;
 use ripemd::{Digest, Ripemd160};
 
@@ -492,7 +493,7 @@ impl BTCReceiveSwap {
             swap_info.private_key,
             to_address,
             swap_info.lock_height as u32,
-            script,
+            &script,
             sat_per_vbyte,
         )?;
         info!("broadcasting refund tx {:?}", hex::encode(&refund_tx));
@@ -604,7 +605,7 @@ fn create_refund_tx(
     private_key: Vec<u8>,
     to_address: String,
     lock_delay: u32,
-    input_script: Script,
+    input_script: &Script,
     sat_per_vbyte: u32,
 ) -> Result<Vec<u8>> {
     if utxos.confirmed.is_empty() {
@@ -643,7 +644,7 @@ fn create_refund_tx(
     let btc_address = Address::from_str(&to_address)?;
     let tx_out: Vec<TxOut> = vec![TxOut {
         value: confirmed_amount,
-        script_pubkey: btc_address.script_pubkey(),
+        script_pubkey: btc_address.payload.script_pubkey(),
     }];
 
     // construct the transaction
@@ -672,7 +673,7 @@ fn create_refund_tx(
         let mut signer = SighashCache::new(&tx);
         let sig = signer.segwit_signature_hash(
             index,
-            &input_script,
+            input_script,
             utxos.confirmed[index].value as u64,
             EcdsaSighashType::All,
         )?;
@@ -693,18 +694,18 @@ fn create_refund_tx(
     tx.input = signed_inputs;
 
     //tx.output[0].value = confirmed_amount;
-    Ok(tx.serialize())
+    Ok(encode::serialize(&tx))
 }
 
 #[cfg(test)]
 mod tests {
     use std::{sync::Arc, vec};
 
+    use bitcoin::hashes::{hex::FromHex, sha256};
     use bitcoin::{
         secp256k1::{Message, PublicKey, Secp256k1, SecretKey},
         OutPoint, Txid,
     };
-    use bitcoin_hashes::{hex::FromHex, sha256};
 
     use crate::{
         breez_services::tests::get_dummy_node_state,
@@ -1025,7 +1026,7 @@ mod tests {
             payer_priv_key_raw,
             to_address,
             lock_time as u32,
-            script,
+            &script,
             0,
         )
         .unwrap();

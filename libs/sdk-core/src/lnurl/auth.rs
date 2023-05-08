@@ -1,10 +1,9 @@
 use crate::{LnUrlAuthRequestData, LnUrlCallbackStatus, NodeAPI};
 use anyhow::{anyhow, Result};
+use bitcoin::hashes::{hex::ToHex, sha256, Hash, HashEngine, Hmac, HmacEngine};
 use bitcoin::secp256k1::{Message, Secp256k1};
 use bitcoin::util::bip32::ChildNumber;
 use bitcoin::KeyPair;
-use bitcoin_hashes::hex::ToHex;
-use bitcoin_hashes::{sha256, Hash, HashEngine, Hmac, HmacEngine};
 use reqwest::Url;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -91,15 +90,14 @@ fn derive_linking_keys(node_api: Arc<dyn NodeAPI>, url: Url) -> Result<KeyPair> 
         ChildNumber::from(0),
     ])?;
     let hmac = hmac_sha256(&hashing_key.to_priv().to_bytes(), domain.as_bytes());
-    let hmac_bytes = hmac.as_inner();
 
     // m/138'/<long1>/<long2>/<long3>/<long4>
     let linking_key = node_api.derive_bip32_key(vec![
         ChildNumber::from_hardened_idx(138)?,
-        ChildNumber::from(build_path_element_u32(hmac_bytes[0..4].try_into()?)),
-        ChildNumber::from(build_path_element_u32(hmac_bytes[4..8].try_into()?)),
-        ChildNumber::from(build_path_element_u32(hmac_bytes[8..12].try_into()?)),
-        ChildNumber::from(build_path_element_u32(hmac_bytes[12..16].try_into()?)),
+        ChildNumber::from(build_path_element_u32(hmac[0..4].try_into()?)),
+        ChildNumber::from(build_path_element_u32(hmac[4..8].try_into()?)),
+        ChildNumber::from(build_path_element_u32(hmac[8..12].try_into()?)),
+        ChildNumber::from(build_path_element_u32(hmac[12..16].try_into()?)),
     ])?;
 
     Ok(linking_key.to_keypair(&Secp256k1::new()))

@@ -396,7 +396,6 @@ dependencies = [
  "base64 0.13.1",
  "bip21",
  "bitcoin",
- "bitcoin_hashes",
  "cbc",
  "ecies",
  "flutter_rust_bridge",
