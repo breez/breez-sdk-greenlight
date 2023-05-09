@@ -14,6 +14,11 @@ import 'dart:ffi' as ffi;
 part 'bridge_generated.freezed.dart';
 
 abstract class BreezSdkCore {
+  /// Check whether node service is initialized or not
+  Future<bool> initialized({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kInitializedConstMeta;
+
   /// Register a new node in the cloud and return credentials to interact with it
   ///
   /// # Arguments
@@ -982,6 +987,21 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   /// Only valid on web/WASM platforms.
   factory BreezSdkCoreImpl.wasm(FutureOr<WasmModule> module) => BreezSdkCoreImpl(module as ExternalLibrary);
   BreezSdkCoreImpl.raw(this._platform);
+  Future<bool> initialized({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_initialized(port_),
+      parseSuccessData: _wire2api_bool,
+      constMeta: kInitializedConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kInitializedConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "initialized",
+        argNames: [],
+      );
+
   Future<GreenlightCredentials> registerNode(
       {required Network network, required Uint8List seed, required Config config, dynamic hint}) {
     var arg0 = api2wire_network(network);
@@ -2571,6 +2591,18 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
       _lookup<ffi.NativeFunction<ffi.IntPtr Function(ffi.Pointer<ffi.Void>)>>('init_frb_dart_api_dl');
   late final _init_frb_dart_api_dl =
       _init_frb_dart_api_dlPtr.asFunction<int Function(ffi.Pointer<ffi.Void>)>();
+
+  void wire_initialized(
+    int port_,
+  ) {
+    return _wire_initialized(
+      port_,
+    );
+  }
+
+  late final _wire_initializedPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_initialized');
+  late final _wire_initialized = _wire_initializedPtr.asFunction<void Function(int)>();
 
   void wire_register_node(
     int port_,

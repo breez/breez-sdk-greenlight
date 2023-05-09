@@ -69,6 +69,11 @@ impl EventListener for BindingEventListener {
     }
 }
 
+/// Check whether node service is initialized or not
+pub fn initialized() -> bool {
+    block_on(async { get_breez_services().is_ok() })
+}
+
 /// Register a new node in the cloud and return credentials to interact with it
 ///
 /// # Arguments
