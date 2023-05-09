@@ -24,7 +24,7 @@ uniffi_macros = "0.23.0"
 lightning-invoice = "*"
 log = "*"
 once_cell = "*"
-flutter_rust_bridge = "1.75.1"
+flutter_rust_bridge = "1.75.2"
 tiny-bip39 = "*"
 tonic = { version = "^0.8", features = [
     "tls",
