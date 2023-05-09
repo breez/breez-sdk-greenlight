@@ -147,10 +147,10 @@ pub fn breez_events_stream(s: StreamSink<BreezEvent>) -> Result<()> {
 }
 
 pub fn breez_log_stream(s: StreamSink<LogEntry>) -> Result<()> {
-    BindingLogger::init();
     LOG_STREAM
         .set(s)
         .map_err(|_| anyhow!("log stream already created"))?;
+    BindingLogger::init();
     Ok(())
 }
 
