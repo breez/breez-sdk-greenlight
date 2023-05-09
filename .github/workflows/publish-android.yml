@@ -31,6 +31,7 @@ jobs:
       - name: Build Android project
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          ORG_GRADLE_PROJECT_libraryVersion: ${{ inputs.version }}
         run: |
           cd libs/sdk-bindings
           make init
