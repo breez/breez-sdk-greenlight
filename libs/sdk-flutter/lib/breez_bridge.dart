@@ -10,6 +10,8 @@ class BreezBridge {
   final _lnToolkit = getNativeToolkit();
   final _log = FimberLog("BreezBridge");
 
+  BreezBridge();
+
   /* Streams */
   /// Listen to node state
   final StreamController<NodeState?> nodeStateController = BehaviorSubject<NodeState?>();
@@ -31,7 +33,7 @@ class BreezBridge {
 
   Stream<Payment> get paymentResultStream => _paymentResultStream.stream;
 
-  BreezBridge() {
+  void initialize() {
     /// Listen to BreezEvent's(new block, invoice paid, synced)
     _lnToolkit.breezEventsStream().listen((event) async {
       _log.v("Received breez event: $event");
