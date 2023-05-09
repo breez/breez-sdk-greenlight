@@ -56,6 +56,9 @@ class BreezBridge {
     _lnToolkit.breezLogStream().listen(_registerToolkitLog);
   }
 
+  /// Check whether node service is initialized or not
+  Future<bool> isInitialized() async => await _lnToolkit.initialized();
+
   /// Register a new node in the cloud and return credentials to interact with it
   ///
   /// # Arguments
@@ -378,7 +381,7 @@ extension SDKConfig on Config {
       network: network ?? this.network,
       paymentTimeoutSec: paymentTimeoutSec ?? this.paymentTimeoutSec,
       defaultLspId: defaultLspId ?? this.defaultLspId,
-      apiKey: apiKey ?? this.apiKey,      
+      apiKey: apiKey ?? this.apiKey,
       maxfeePercent: maxfeePercent ?? this.maxfeePercent,
     );
   }

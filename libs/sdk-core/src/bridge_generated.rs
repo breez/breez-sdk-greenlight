@@ -64,6 +64,16 @@ use crate::models::UnspentTransactionOutput;
 
 // Section: wire functions
 
+fn wire_initialized_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "initialized",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || move |task_callback| Ok(initialized()),
+    )
+}
 fn wire_register_node_impl(
     port_: MessagePort,
     network: impl Wire2Api<Network> + UnwindSafe,

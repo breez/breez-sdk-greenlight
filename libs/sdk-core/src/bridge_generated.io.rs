@@ -2,6 +2,11 @@ use super::*;
 // Section: wire functions
 
 #[no_mangle]
+pub extern "C" fn wire_initialized(port_: i64) {
+    wire_initialized_impl(port_)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_register_node(
     port_: i64,
     network: i32,
