@@ -41,41 +41,41 @@ dependencies {
 
 val libraryVersion: String by project
 
-afterEvaluate {
-    publishing {
-        repositories {
-            maven {
-                name = "breezReposilite"
-                url = uri("https://mvn.breez.technology/releases")
-                credentials(PasswordCredentials::class)
-                authentication {
-                    create<BasicAuthentication>("basic")
-                }
+publishing {
+    repositories {
+        maven {
+            name = "breezReposilite"
+            url = uri("https://mvn.breez.technology/releases")
+            credentials(PasswordCredentials::class)
+            authentication {
+                create<BasicAuthentication>("basic")
             }
         }
-        publications {
-            create<MavenPublication>("maven") {
-                groupId = "breez_sdk"
-                artifactId = "bindings-android"
-                version = libraryVersion
+    }
+    publications {
+        create<MavenPublication>("maven") {
+            groupId = "breez_sdk"
+            artifactId = "bindings-android"
+            version = libraryVersion
 
+            afterEvaluate {
                 from(components["release"])
+            }
 
-                pom {
-                    name.set("breez-sdk")
-                    description.set("The Breez SDK enables mobile developers to integrate Lightning and bitcoin payments into their apps with a very shallow learning curve.")
-                    url.set("https://breez.technology")
-                    licenses {
-                        license {
-                            name.set("MIT")
-                            url.set("https://github.com/breez/breez-sdk/blob/main/LICENSE")
-                        }
+            pom {
+                name.set("breez-sdk")
+                description.set("The Breez SDK enables mobile developers to integrate Lightning and bitcoin payments into their apps with a very shallow learning curve.")
+                url.set("https://breez.technology")
+                licenses {
+                    license {
+                        name.set("MIT")
+                        url.set("https://github.com/breez/breez-sdk/blob/main/LICENSE")
                     }
-                    scm {
-                        connection.set("scm:git:github.com/breez/breez-sdk-ffi.git")
-                        developerConnection.set("scm:git:ssh://github.com/breez/breez-sdk.git")
-                        url.set("https://github.com/breez/breez-sdk")
-                    }
+                }
+                scm {
+                    connection.set("scm:git:github.com/breez/breez-sdk-ffi.git")
+                    developerConnection.set("scm:git:ssh://github.com/breez/breez-sdk.git")
+                    url.set("https://github.com/breez/breez-sdk")
                 }
             }
         }

@@ -1,4 +1,4 @@
-name: Publish Breez SDK to Breez Maven Repository
+name: Publish Android Bindings
 on:
   workflow_dispatch:
     inputs:
@@ -8,31 +8,35 @@ on:
         type: string
 
 jobs:
-  build:
-    runs-on: ubuntu-22.04
+  publish-android:
+    runs-on: ubuntu-latest
     steps:
-      - name: Install required dependencies
+      - name: Install dependencies
         run: |
-          brew install protobuf
+          sudo apt-get install -y protobuf-compiler
           cargo install --version 0.22.0 uniffi_bindgen
-          cargo install cargo-ndk
-      - name: Checkout breez-sdk repo
+      - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          path: build
           ref: ${{ inputs.version }}
-      - name: Build local Android project
-        working-directory: build/libs/sdk-bindings
+      - name: Setup SSH key
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.REPO_SSH_KEY }}
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          sudo chmod 600 ~/.ssh/id_rsa
-          ssh-add ~/.ssh/id_rsa
+          mkdir -p /home/runner/.ssh
+          echo "${{ secrets.REPO_SSH_KEY }}" > /home/runner/.ssh/github_actions
+          chmod 600 /home/runner/.ssh/github_actions
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add /home/runner/.ssh/github_actions
+      - name: Build Android project
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          ORG_GRADLE_PROJECT_libraryVersion: ${{ inputs.version }}
+        run: |
+          cd libs/sdk-bindings
           make init
           make bindings-android
-      - name: Publish to Breez Maven Repository
-        working-directory: build/libs/sdk-bindings/bindings-android
+      - name: Publish artifacts
         run: |
-          ./gradlew publish -PbreezReposiliteUsername=${{ secrets.BREEZ_MVN_USERNAME }} -PbreezReposilitePassword=${{ secrets.BREEZ_MVN_PASSWORD }} -PlibraryVersion=${{ inputs.version }}
+          cd libs/sdk-bindings/bindings-android
+          ./gradlew publish -PlibraryVersion=${{ inputs.version }} -PbreezReposiliteUsername=${{ secrets.BREEZ_MVN_USERNAME }} -PbreezReposilitePassword=${{ secrets.BREEZ_MVN_PASSWORD }}
