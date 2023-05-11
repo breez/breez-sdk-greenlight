@@ -39,7 +39,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableArrayOf(seed))
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling mnemonicToSeed", e)
+            promise.reject(TAG, e.message ?: "Error calling mnemonicToSeed", e)
         }
     }
 
@@ -50,7 +50,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableMapOf(inputType))
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling parseInput", e)
+            promise.reject(TAG, e.message ?: "Error calling parseInput", e)
         }
     }
 
@@ -61,7 +61,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableMapOf(lnInvoice))
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling parseInvoice", e)
+            promise.reject(TAG, e.message ?: "Error calling parseInvoice", e)
         }
     }
 
@@ -72,7 +72,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableMapOf(creds))
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling registerNode", e)
+            promise.reject(TAG, e.message ?: "Error calling registerNode", e)
         }
     }
 
@@ -83,7 +83,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableMapOf(creds))
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling recoverNode", e)
+            promise.reject(TAG, e.message ?: "Error calling recoverNode", e)
         }
     }
 
@@ -97,7 +97,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableMapOf("status" to "ok"))
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling setLogStream", e)
+            promise.reject(TAG, e.message ?: "Error calling setLogStream", e)
         }
     }
 
@@ -116,7 +116,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableMapOf(config))
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling defaultConfig", e)
+            promise.reject(TAG, e.message ?: "Error calling defaultConfig", e)
         }
     }
 
@@ -139,7 +139,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                 promise.resolve(readableMapOf("status" to "ok"))
             } catch (e: SdkException) {
                 e.printStackTrace()
-                promise.reject(TAG, "Error calling initServices", e)
+                promise.reject(TAG, e.message ?: "Error calling initServices", e)
             }
         }
     }
@@ -151,7 +151,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableMapOf("status" to "ok"))
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling start", e)
+            promise.reject(TAG, e.message ?: "Error calling start", e)
         }
     }
 
@@ -162,7 +162,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableMapOf("status" to "ok"))
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling sync", e)
+            promise.reject(TAG, e.message ?: "Error calling sync", e)
         }
     }
 
@@ -173,7 +173,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableMapOf("status" to "ok"))
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling stop", e)
+            promise.reject(TAG, e.message ?: "Error calling stop", e)
         }
     }
 
@@ -185,7 +185,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableMapOf(payment))
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling sendPayment", e)
+            promise.reject(TAG, e.message ?: "Error calling sendPayment", e)
         }
     }
 
@@ -196,7 +196,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableMapOf(payment))
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling sendSpontaneousPayment", e)
+            promise.reject(TAG, e.message ?: "Error calling sendSpontaneousPayment", e)
         }
     }
 
@@ -207,7 +207,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableMapOf(payment))
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling receivePayment", e)
+            promise.reject(TAG, e.message ?: "Error calling receivePayment", e)
         }
     }
 
@@ -223,7 +223,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                 promise.resolve(readableMapOf(lnUrlCallbackStatus))
             } catch (e: SdkException) {
                 e.printStackTrace()
-                promise.reject(TAG, "Error calling lnurlAuth", e)
+                promise.reject(TAG, e.message ?: "Error calling lnurlAuth", e)
             }
         }
     }
@@ -241,7 +241,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                 promise.resolve(readableMapOf(lnUrlPayResult))
             } catch (e: SdkException) {
                 e.printStackTrace()
-                promise.reject(TAG, "Error calling payLnurl", e)
+                promise.reject(TAG, e.message ?: "Error calling payLnurl", e)
             }
         }
     }
@@ -259,7 +259,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                 promise.resolve(readableMapOf(lnUrlCallbackStatus))
             } catch (e: SdkException) {
                 e.printStackTrace()
-                promise.reject(TAG, "Error calling withdrawLnurl", e)
+                promise.reject(TAG, e.message ?: "Error calling withdrawLnurl", e)
             }
         }
     }
@@ -274,7 +274,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             }
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling nodeInfo", e)
+            promise.reject(TAG, e.message ?: "Error calling nodeInfo", e)
         }
     }
 
@@ -287,7 +287,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableArrayOf(payments))
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling listPayments", e)
+            promise.reject(TAG, e.message ?: "Error calling listPayments", e)
         }
     }
 
@@ -298,7 +298,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableMapOf("status" to "ok"))
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling sweep", e)
+            promise.reject(TAG, e.message ?: "Error calling sweep", e)
         }
     }
 
@@ -309,7 +309,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableArrayOf(rates))
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling fetchFiatRates", e)
+            promise.reject(TAG, e.message ?: "Error calling fetchFiatRates", e)
         }
     }
 
@@ -320,7 +320,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableArrayOf(fiatCurrencies))
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling listFiatCurrencies", e)
+            promise.reject(TAG, e.message ?: "Error calling listFiatCurrencies", e)
         }
     }
 
@@ -331,7 +331,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableArrayOf(lsps))
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling listLsps", e)
+            promise.reject(TAG, e.message ?: "Error calling listLsps", e)
         }
     }
 
@@ -342,7 +342,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableMapOf("status" to "ok"))
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling connectLsp", e)
+            promise.reject(TAG, e.message ?: "Error calling connectLsp", e)
         }
     }
 
@@ -356,7 +356,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             }
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling fetchLspInfo", e)
+            promise.reject(TAG, e.message ?: "Error calling fetchLspInfo", e)
         }
     }
 
@@ -370,7 +370,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             }
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling lspId", e)
+            promise.reject(TAG, e.message ?: "Error calling lspId", e)
         }
     }
 
@@ -381,7 +381,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableMapOf("status" to "ok"))
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling closeLspChannels", e)
+            promise.reject(TAG, e.message ?: "Error calling closeLspChannels", e)
         }
     }
 
@@ -392,7 +392,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableMapOf(swapInfo))
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling receiveOnchain", e)
+            promise.reject(TAG, e.message ?: "Error calling receiveOnchain", e)
         }
     }
 
@@ -406,7 +406,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             }
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling inProgressSwap", e)
+            promise.reject(TAG, e.message ?: "Error calling inProgressSwap", e)
         }
     }
 
@@ -417,7 +417,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableArrayOf(swapInfos))
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling listRefundables", e)
+            promise.reject(TAG, e.message ?: "Error calling listRefundables", e)
         }
     }
 
@@ -428,7 +428,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(result)
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling refund", e)
+            promise.reject(TAG, e.message ?: "Error calling refund", e)
         }
     }
 
@@ -439,7 +439,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(result)
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling executeDevCommand", e)
+            promise.reject(TAG, e.message ?: "Error calling executeDevCommand", e)
         }
     }
 
@@ -450,7 +450,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.resolve(readableMapOf(fees))
         } catch (e: SdkException) {
             e.printStackTrace()
-            promise.reject(TAG, "Error calling recommendedFees", e)
+            promise.reject(TAG, e.message ?: "Error calling recommendedFees", e)
         }
     }
 }
