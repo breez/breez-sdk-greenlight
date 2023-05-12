@@ -1,30 +1,30 @@
 //! Bindings for the Dart integration
 
-use crate::breez_services::{self, BreezEvent, EventListener};
-use crate::chain::RecommendedFees;
-use crate::fiat::{FiatCurrency, Rate};
-use crate::input_parser::{LnUrlAuthRequestData, LnUrlPayRequestData, LnUrlWithdrawRequestData};
-use crate::lsp::LspInformation;
-use crate::models::LogEntry;
-use crate::{LnUrlCallbackStatus, ReverseSwapPairInfo};
+use std::future::Future;
+use std::sync::Arc;
+
 use anyhow::{anyhow, Result};
 use flutter_rust_bridge::StreamSink;
 use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
-use std::future::Future;
-use std::sync::Arc;
 use tokio::sync::mpsc;
 
 use crate::breez_services::BreezServices;
+use crate::breez_services::{self, BreezEvent, EventListener};
+use crate::chain::RecommendedFees;
+use crate::fiat::{FiatCurrency, Rate};
+use crate::input_parser::InputType;
+use crate::input_parser::{LnUrlAuthRequestData, LnUrlPayRequestData, LnUrlWithdrawRequestData};
 use crate::invoice::LNInvoice;
+use crate::invoice::{self};
+use crate::lnurl::pay::model::LnUrlPayResult;
+use crate::lsp::LspInformation;
+use crate::models::LogEntry;
 use crate::models::{
     Config, EnvironmentType, GreenlightCredentials, Network, NodeState, Payment, PaymentTypeFilter,
     SwapInfo,
 };
-
-use crate::input_parser::InputType;
-use crate::invoice::{self};
-use crate::lnurl::pay::model::LnUrlPayResult;
+use crate::{BuyBitcoinProvider, LnUrlCallbackStatus, ReverseSwapPairInfo};
 
 static BREEZ_SERVICES_INSTANCE: OnceCell<Arc<BreezServices>> = OnceCell::new();
 static BREEZ_SERVICES_SHUTDOWN: OnceCell<mpsc::Sender<()>> = OnceCell::new();
@@ -270,6 +270,7 @@ pub fn sweep(to_address: String, fee_rate_sats_per_vbyte: u64) -> Result<()> {
 pub fn receive_onchain() -> Result<SwapInfo> {
     block_on(async { get_breez_services()?.receive_onchain().await })
 }
+
 /// See [BreezServices::in_progress_swap]
 pub fn in_progress_swap() -> Result<Option<SwapInfo>> {
     block_on(async { get_breez_services()?.in_progress_swap().await })
@@ -373,4 +374,9 @@ pub fn recommended_fees() -> Result<RecommendedFees> {
 /// See [BreezServices::default_config]
 pub fn default_config(config_type: EnvironmentType) -> Config {
     BreezServices::default_config(config_type)
+}
+
+/// See [BreezServices::buy_bitcoin]
+pub fn buy_bitcoin(provider: BuyBitcoinProvider) -> Result<String> {
+    block_on(async { get_breez_services()?.buy_bitcoin(provider).await })
 }

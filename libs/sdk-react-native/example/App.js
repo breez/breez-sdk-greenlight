@@ -11,6 +11,7 @@ import { SafeAreaView, ScrollView, StatusBar, Text, TouchableOpacity, View } fro
 import {
     addEventListener,
     addLogListener,
+    BuyBitcoinProvider,
     defaultConfig,
     EnvironmentType,
     fetchFiatRates,
@@ -113,6 +114,9 @@ const App = () => {
 
                 const fiatRates = await fetchFiatRates()
                 addLine("fetchFiatRates", JSON.stringify(fiatRates))
+
+                const buyBitcoin = await buyBitcoin(BuyBitcoinProvider.MOONPAY)
+                addLine("buyBitcoin", JSON.stringify(buyBitcoin))
             }
         }
         asyncFn()

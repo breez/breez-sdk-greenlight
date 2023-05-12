@@ -5,14 +5,15 @@ use anyhow::Result;
 use breez_sdk_core::{
     mnemonic_to_seed as sdk_mnemonic_to_seed, parse as sdk_parse_input,
     parse_invoice as sdk_parse_invoice, AesSuccessActionDataDecrypted, BitcoinAddressData,
-    BreezEvent, BreezServices, ChannelState, ClosedChannelPaymentDetails, Config, CurrencyInfo,
-    EnvironmentType, EventListener, FeeratePreset, FiatCurrency, GreenlightCredentials, InputType,
-    InvoicePaidDetails, LNInvoice, LnPaymentDetails, LnUrlAuthRequestData, LnUrlCallbackStatus,
-    LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult, LnUrlWithdrawRequestData, LocaleOverrides,
-    LocalizedName, LogEntry, LspInformation, MessageSuccessActionData, MetadataItem, Network,
-    NodeState, Payment, PaymentDetails, PaymentFailedData, PaymentType, PaymentTypeFilter, Rate,
-    RecommendedFees, ReverseSwapPairInfo, RouteHint, RouteHintHop, SuccessActionProcessed,
-    SwapInfo, SwapStatus, Symbol, UnspentTransactionOutput, UrlSuccessActionData,
+    BreezEvent, BreezServices, BuyBitcoinProvider, ChannelState, ClosedChannelPaymentDetails,
+    Config, CurrencyInfo, EnvironmentType, EventListener, FeeratePreset, FiatCurrency,
+    GreenlightCredentials, InputType, InvoicePaidDetails, LNInvoice, LnPaymentDetails,
+    LnUrlAuthRequestData, LnUrlCallbackStatus, LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult,
+    LnUrlWithdrawRequestData, LocaleOverrides, LocalizedName, LogEntry, LspInformation,
+    MessageSuccessActionData, MetadataItem, Network, NodeState, Payment, PaymentDetails,
+    PaymentFailedData, PaymentType, PaymentTypeFilter, Rate, RecommendedFees, ReverseSwapPairInfo,
+    RouteHint, RouteHintHop, SuccessActionProcessed, SwapInfo, SwapStatus, Symbol,
+    UnspentTransactionOutput, UrlSuccessActionData,
 };
 use log::LevelFilter;
 use log::Metadata;
@@ -319,6 +320,11 @@ impl BlockingBreezServices {
 
     pub fn recommended_fees(&self) -> Result<RecommendedFees, SDKError> {
         rt().block_on(self.breez_services.recommended_fees())
+            .map_err(|e| e.into())
+    }
+
+    pub fn buy_bitcoin(&self, provider: BuyBitcoinProvider) -> Result<String, SDKError> {
+        rt().block_on(self.breez_services.buy_bitcoin(provider))
             .map_err(|e| e.into())
     }
 }

@@ -241,6 +241,11 @@ pub extern "C" fn wire_default_config(port_: i64, config_type: i32) {
     wire_default_config_impl(port_, config_type)
 }
 
+#[no_mangle]
+pub extern "C" fn wire_buy_bitcoin(port_: i64, provider: i32) {
+    wire_buy_bitcoin_impl(port_, provider)
+}
+
 // Section: allocate functions
 
 #[no_mangle]
@@ -338,6 +343,7 @@ impl Wire2Api<u64> for *mut u64 {
         unsafe { *support::box_from_leak_ptr(self) }
     }
 }
+
 impl Wire2Api<Config> for wire_Config {
     fn wire2api(self) -> Config {
         Config {

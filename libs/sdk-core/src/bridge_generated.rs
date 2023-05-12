@@ -44,6 +44,7 @@ use crate::lnurl::pay::model::MessageSuccessActionData;
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lnurl::pay::model::UrlSuccessActionData;
 use crate::lsp::LspInformation;
+use crate::models::BuyBitcoinProvider;
 use crate::models::ChannelState;
 use crate::models::ClosedChannelPaymentDetails;
 use crate::models::Config;
@@ -569,6 +570,22 @@ fn wire_default_config_impl(
         },
     )
 }
+fn wire_buy_bitcoin_impl(
+    port_: MessagePort,
+    provider: impl Wire2Api<BuyBitcoinProvider> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "buy_bitcoin",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_provider = provider.wire2api();
+            move |task_callback| buy_bitcoin(api_provider)
+        },
+    )
+}
 // Section: wrapper structs
 
 // Section: static checks
@@ -589,6 +606,15 @@ where
 {
     fn wire2api(self) -> Option<T> {
         (!self.is_null()).then(|| self.wire2api())
+    }
+}
+
+impl Wire2Api<BuyBitcoinProvider> for i32 {
+    fn wire2api(self) -> BuyBitcoinProvider {
+        match self {
+            0 => BuyBitcoinProvider::MoonPay,
+            _ => unreachable!("Invalid variant for BuyBitcoinProvider: {}", self),
+        }
     }
 }
 

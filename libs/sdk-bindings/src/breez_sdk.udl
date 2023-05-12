@@ -253,7 +253,7 @@ dictionary LspInformation {
 
 enum SwapStatus {
     "Initial",
-    "Expired",    
+    "Expired",
 };
 
 dictionary SwapInfo {
@@ -362,6 +362,10 @@ interface InputType {
     LnUrlError(LnUrlErrorData data);
 };
 
+enum BuyBitcoinProvider {
+    "MoonPay",
+};
+
 interface BlockingBreezServices {
    [Throws=SDKError]
    void start();
@@ -440,6 +444,9 @@ interface BlockingBreezServices {
 
    [Throws=SDKError]
    RecommendedFees recommended_fees();
+
+   [Throws=SDKError]
+   string buy_bitcoin(BuyBitcoinProvider provider);
 };
 
 namespace breez_sdk { 
