@@ -487,4 +487,16 @@ class RNBreezSDK: RCTEventEmitter {
             reject(RNBreezSDK.TAG, "Error calling recommendedFees", err)
         }
     }
+
+    @objc(buyBitcoin:resolver:rejecter:)
+    func buyBitcoin(_ provider: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        do {
+            let result = try getBreezServices().buyBitcoin(provider)
+            resolve(BreezSDKMapper.dictionaryOf(buyBitcoin: result))
+        } catch SdkError.Error(let message) {
+            reject(RNBreezSDK.TAG, message, nil)
+        } catch let err {
+            reject(RNBreezSDK.TAG, "Error calling buyBitcoin", err)
+        }
+    }
 }

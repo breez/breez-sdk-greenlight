@@ -206,4 +206,10 @@ RCT_EXTERN_METHOD(
     rejecter: (RCTPromiseRejectBlock)reject
 )
 
+RCT_EXTERN_METHOD(
+        buyBitcoin: (NSString*)provider
+        resolver: (RCTPromiseResolveBlock)resolve
+        rejecter: (RCTPromiseRejectBlock)reject
+)
+
 @end

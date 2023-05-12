@@ -223,6 +223,11 @@ abstract class BreezSdkCore {
   Future<Config> defaultConfig({required EnvironmentType configType, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kDefaultConfigConstMeta;
+
+  /// See [BreezServices::buy_bitcoin]
+  Future<String> buyBitcoin({required BuyBitcoinProvider provider, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kBuyBitcoinConstMeta;
 }
 
 /// Wrapper for the decrypted [AesSuccessActionData] payload
@@ -280,6 +285,11 @@ class BreezEvent with _$BreezEvent {
   const factory BreezEvent.paymentFailed({
     required PaymentFailedData details,
   }) = BreezEvent_PaymentFailed;
+}
+
+/// Different providers will demand different behaviours when the user is trying to buy bitcoin.
+enum BuyBitcoinProvider {
+  MoonPay,
 }
 
 /// State of a Lightning channel
@@ -1641,6 +1651,22 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["configType"],
       );
 
+  Future<String> buyBitcoin({required BuyBitcoinProvider provider, dynamic hint}) {
+    var arg0 = api2wire_buy_bitcoin_provider(provider);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_buy_bitcoin(port_, arg0),
+      parseSuccessData: _wire2api_String,
+      constMeta: kBuyBitcoinConstMeta,
+      argValues: [provider],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kBuyBitcoinConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "buy_bitcoin",
+        argNames: ["provider"],
+      );
+
   void dispose() {
     _platform.dispose();
   }
@@ -2396,6 +2422,11 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 }
 
 // Section: api2wire
+
+@protected
+int api2wire_buy_bitcoin_provider(BuyBitcoinProvider raw) {
+  return api2wire_i32(raw.index);
+}
 
 @protected
 int api2wire_environment_type(EnvironmentType raw) {
@@ -3247,6 +3278,20 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_default_configPtr =
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Int32)>>('wire_default_config');
   late final _wire_default_config = _wire_default_configPtr.asFunction<void Function(int, int)>();
+
+  void wire_buy_bitcoin(
+    int port_,
+    int provider,
+  ) {
+    return _wire_buy_bitcoin(
+      port_,
+      provider,
+    );
+  }
+
+  late final _wire_buy_bitcoinPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Int32)>>('wire_buy_bitcoin');
+  late final _wire_buy_bitcoin = _wire_buy_bitcoinPtr.asFunction<void Function(int, int)>();
 
   ffi.Pointer<wire_Config> new_box_autoadd_config_0() {
     return _new_box_autoadd_config_0();

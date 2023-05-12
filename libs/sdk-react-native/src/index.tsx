@@ -83,6 +83,10 @@ export enum SwapStatus {
     EXPIRED = "expired"
 }
 
+export enum BuyBitcoinProvider {
+    MOONPAY = "moonpay"
+}
+
 export type AesSuccessActionDataDecrypted = {
     type: string
     description: string
@@ -576,4 +580,9 @@ export const executeDevCommand = async (command: string): Promise<string> => {
 export const recommendedFees = async (): Promise<RecommendedFees> => {
     const response = await BreezSDK.recommendedFees()
     return response as RecommendedFees
+}
+
+export const buyBitcoin = async (provider: BuyBitcoinProvider): Promise<string> => {
+    const response = await BreezSDK.buyBitcoin(provider)
+    return response
 }

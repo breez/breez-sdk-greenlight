@@ -8,7 +8,6 @@ import java.io.File
 class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
     private var breezServices: BlockingBreezServices? = null
 
-
     companion object {
         var TAG = "RNBreezSDK"
     }
@@ -453,6 +452,17 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
         } catch (e: SdkException) {
             e.printStackTrace()
             promise.reject(TAG, e.message ?: "Error calling recommendedFees", e)
+        }
+    }
+
+    @ReactMethod
+    fun buyBitcoin(provider: String, promise: Promise) {
+        try {
+            var result = getBreezServices().buyBitcoin(provider)
+            promise.resolve(result)
+        } catch (e: SdkException) {
+            e.printStackTrace()
+            promise.reject(TAG, e.message ?: "Error calling buyBitcoin", e)
         }
     }
 }
