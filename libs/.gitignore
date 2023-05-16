@@ -4,3 +4,4 @@ target
 ffigen/*
 sdk-flutter/.dart_tool
 sdk-bindings/ffi
+sdk-bindings/tests/bindings/golang/breezsdk/*

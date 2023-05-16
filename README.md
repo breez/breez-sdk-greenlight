@@ -46,7 +46,7 @@ This module provides the interface of interacting with one or more LSPs.
 ## Build & Test
 The libs folder contains three sub folders and is a structured as a cargo workspace:
 * **sdk-core**: the core SDK rust library. 
-* **sdk-bindings**: ffi bindings for Kotlin & Swift. 
+* **sdk-bindings**: ffi bindings for Kotlin, Swift, C# and Go. 
 * **sdk-flutter**: a flutter plugin (includes ffi bindings for dart).
 * **sdk-react-native**: a react-native plugin.
 

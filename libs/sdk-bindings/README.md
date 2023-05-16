@@ -1,7 +1,7 @@
 # breez-sdk-bindings
 
 This project provides bindings for breez-sdk to various languages.
-Currently supported languages are Kotlin, Swift, and C# for which we are using [UniFFI](https://github.com/mozilla/uniffi-rs) to generate the bindings.
+Currently supported languages are Kotlin, Swift, C# and Go for which we are using [UniFFI](https://github.com/mozilla/uniffi-rs) to generate the bindings.
 
 ## Prerequisites
 * When building for Android:
@@ -117,12 +117,25 @@ make csharp-darwin
 
 This will generate the artifacts in the `ffi/csharp` folder.
 
+### Go
+
+```
+# For linux
+make golang-linux
+
+# Alternatively, for mac:
+make golang-darwin
+```
+
+This will generate the artifacts in the `ffi/golang` folder.
+
 ## Test
 
 In the tests directory there are some small scripts with some examples on how to use the sdk.
   * Kotlin `tests/bindings/test_breez-sdk.kts`
   * Swift `tests/bindings/test_breez-sdk.swift`  
   * C# `tests/bindings/test_breez_sdk.cs`
+  * Go `tests/bindings/golang/test_breez_sdk.go`
 
 If you want to try them out, you will need:
 
