@@ -8,7 +8,11 @@ or replace `INSERT_YOUR_BREEZ_API_KEY` in the following files:
 * `ios/Secrets.xconfig`
 
 ## Build
-First build the node modules in the example directory:
+Since the example app uses the Breez SDK react native plugin as a local file reference, you need to build the node_modules in the sdk-react-native directory:
+```
+yarn
+```
+Then build the node modules in the example directory:
 ```
 yarn
 ```
