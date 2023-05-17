@@ -22,7 +22,7 @@ fn test_csharp() {
 #[test]
 fn test_golang() {
     let output = Command::new("go")
-        .env("CGO_LDFLAGS", "-lbreez_sdk_bindings -Lffi/golang -lm -ldl")
+        .env("CGO_LDFLAGS", "-lbreez_sdk_bindings -L../../../ffi/golang -lm -ldl")
         .env("CGO_ENABLED", "1")
         .current_dir("tests/bindings/golang/")
         .arg("run")
