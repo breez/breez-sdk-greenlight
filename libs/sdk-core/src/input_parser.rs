@@ -87,8 +87,10 @@ use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 ///
 ///     if let Ok(LnUrlPay{data: pd}) = parse(lnurl_pay_url).await {
 ///         assert_eq!(pd.callback, "https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7");
-///         assert_eq!(pd.max_sendable, 16000);
-///         assert_eq!(pd.min_sendable, 4000);
+///         assert_eq!(pd.max_sendable, 16000); // Max sendable amount, in msats
+///         assert_eq!(pd.max_sendable_sats(), 16); // Max sendable amount, in sats
+///         assert_eq!(pd.min_sendable, 4000); // Min sendable amount, in msats
+///         assert_eq!(pd.min_sendable_sats(), 4); // Min sendable amount, in sats
 ///         assert_eq!(pd.comment_allowed, 0);
 ///         assert_eq!(pd.metadata_vec()?.len(), 3);
 ///     }
@@ -112,8 +114,10 @@ use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 ///     if let Ok(LnUrlWithdraw{data: wd}) = parse(lnurl_withdraw_url).await {
 ///         assert_eq!(wd.callback, "https://localhost/lnurl-withdraw/callback/e464f841c44dbdd86cee4f09f4ccd3ced58d2e24f148730ec192748317b74538");
 ///         assert_eq!(wd.k1, "37b4c919f871c090830cc47b92a544a30097f03430bc39670b8ec0da89f01a81");
-///         assert_eq!(wd.min_withdrawable, 3000);
-///         assert_eq!(wd.max_withdrawable, 12000);
+///         assert_eq!(wd.min_withdrawable, 3000); // Min withdrawable amount, in msats
+///         assert_eq!(wd.min_withdrawable_sats(), 3); // Min withdrawable amount, in sats
+///         assert_eq!(wd.max_withdrawable, 12000); // Max withdrawable amount, in msats
+///         assert_eq!(wd.max_withdrawable_sats(), 12); // Max withdrawable amount, in sats
 ///         assert_eq!(wd.default_description, "sample withdraw");
 ///     }
 /// }
@@ -439,16 +443,23 @@ pub struct LnUrlErrorData {
 /// Wrapped in a [LnUrlPay], this is the result of [parse] when given a LNURL-pay endpoint.
 ///
 /// It represents the endpoint's parameters for the LNURL workflow.
+///
+/// See https://github.com/lnurl/luds/blob/luds/06.md
 #[derive(Clone, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct LnUrlPayRequestData {
     pub callback: String,
+    /// The minimum amount, in millisats, that this LNURL-pay endpoint accepts
     pub min_sendable: u64,
+    /// The maximum amount, in millisats, that this LNURL-pay endpoint accepts
     pub max_sendable: u64,
     /// As per LUD-06, `metadata` is a raw string (e.g. a json representation of the inner map).
     /// Use `metadata_vec()` to get the parsed items.
     #[serde(rename(deserialize = "metadata"))]
     pub metadata_str: String,
+    /// The comment length accepted by this endpoint
+    ///
+    /// See https://github.com/lnurl/luds/blob/luds/12.md
     #[serde(default)]
     pub comment_allowed: u16,
 
@@ -465,6 +476,16 @@ pub struct LnUrlPayRequestData {
 }
 
 impl LnUrlPayRequestData {
+    /// The minimum amount, in sats, accepted by this LNURL-pay endpoint
+    pub fn min_sendable_sats(&self) -> u64 {
+        self.min_sendable / 1000
+    }
+
+    /// The maximum amount, in sats, accepted by this LNURL-pay endpoint
+    pub fn max_sendable_sats(&self) -> u64 {
+        self.max_sendable / 1000
+    }
+
     /// Parsed metadata items. Use `metadata_str` to get the raw metadata string, as received from
     /// the LNURL endpoint.
     pub fn metadata_vec(&self) -> Result<Vec<MetadataItem>> {
@@ -475,19 +496,37 @@ impl LnUrlPayRequestData {
 /// Wrapped in a [LnUrlWithdraw], this is the result of [parse] when given a LNURL-withdraw endpoint.
 ///
 /// It represents the endpoint's parameters for the LNURL workflow.
+///
+/// See https://github.com/lnurl/luds/blob/luds/03.md
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct LnUrlWithdrawRequestData {
     pub callback: String,
     pub k1: String,
     pub default_description: String,
+    /// The minimum amount, in millisats, that this LNURL-withdraw endpoint accepts
     pub min_withdrawable: u64,
+    /// The maximum amount, in millisats, that this LNURL-withdraw endpoint accepts
     pub max_withdrawable: u64,
+}
+
+impl LnUrlWithdrawRequestData {
+    /// The minimum amount, in sats, accepted by this LNURL-withdraw endpoint
+    pub fn min_withdrawable_sats(&self) -> u64 {
+        self.min_withdrawable / 1000
+    }
+
+    /// The maximum amount, in sats, accepted by this LNURL-withdraw endpoint
+    pub fn max_withdrawable_sats(&self) -> u64 {
+        self.max_withdrawable / 1000
+    }
 }
 
 /// Wrapped in a [LnUrlAuth], this is the result of [parse] when given a LNURL-auth endpoint.
 ///
 /// It represents the endpoint's parameters for the LNURL workflow.
+///
+/// See https://github.com/lnurl/luds/blob/luds/04.md
 #[derive(Deserialize, Debug)]
 pub struct LnUrlAuthRequestData {
     /// Hex encoded 32 bytes of challenge
