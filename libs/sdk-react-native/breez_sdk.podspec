@@ -13,8 +13,8 @@ Pod::Spec.new do |s|
   s.platforms    = { :ios => "10.0" }
   s.source       = { :git => "https://github.com/breez-sdk/react-native-breez-sdk.git", :tag => "#{s.version}" }
 
-  s.source_files = "ios/**/*.{h,m,mm,swift}"
-  s.vendored_libraries = 'ios/libs/libbreez_sdk_bindings.a'
+  s.source_files = "ios/**/*.{h,m,mm,swift}"  
 
   s.dependency "React-Core"
+  s.vendored_frameworks = "ios/bindings-swift/breez_sdkFFI.xcframework"
 end

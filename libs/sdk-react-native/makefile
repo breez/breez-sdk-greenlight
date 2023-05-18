@@ -33,13 +33,12 @@ android-copy:
 android: android-make android-copy
 
 ios-make:
-	make -C ../sdk-bindings swift-ios
+	make -C ../sdk-bindings bindings-swift
 
 ios-copy:
-	mkdir -p ios/include
-	mkdir -p ios/libs
-	cp ../sdk-bindings/ffi/swift-ios/breez_sdkFFI.h ios/include/breez_sdkFFI.h
-	cp ../sdk-bindings/ffi/swift-ios/breez_sdk.swift ios/breez_sdk.swift
-	cp ../sdk-bindings/ffi/swift-ios/libbreez_sdk_bindings.a ios/libs/libbreez_sdk_bindings.a
+	rm -rf ios/bindings-swift
+	cp -r ../sdk-bindings/bindings-swift ios/bindings-swift
+	rm -rf ios/bindings-swift/Tests
+	rm -f ios/bindings-swift/Package.swift
 
 ios: ios-make ios-copy
