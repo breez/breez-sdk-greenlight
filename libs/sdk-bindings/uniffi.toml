@@ -9,3 +9,7 @@ cdylib_name = "breez_sdk_bindings"
 package_name = "breez"
 cdylib_name = "breez_sdk_bindings"
 namespace = "Breez.Sdk"
+
+[bindings.go]
+package_name = "breez"
+cdylib_name = "breez_sdk_bindings"

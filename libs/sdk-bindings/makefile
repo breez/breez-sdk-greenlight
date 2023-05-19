@@ -13,7 +13,7 @@ init:
 	cargo install cbindgen
 	cargo install cargo-ndk
 
-all: swift-ios swift-darwin bindings-swift kotlin bindings-android csharp-darwin
+all: swift-ios swift-darwin bindings-swift kotlin bindings-android csharp-darwin golang-darwin
 
 ios-universal: $(SOURCES)		
 	mkdir -p ../target/ios-universal/release
@@ -40,10 +40,24 @@ csharp-darwin: darwin-universal
 
 TARGET ?= aarch64-unknown-linux-gnu
 csharp-linux: $(SOURCES)
-		cargo install uniffi-bindgen-cs --git https://github.com/breez/uniffi-bindgen-cs --branch namespace
-		cargo build --release --target $(TARGET)
-		uniffi-bindgen-cs src/breez_sdk.udl -o ffi/csharp -c ./uniffi.toml
-		cp ../target/$(TARGET)/release/libbreez_sdk_bindings.so ffi/csharp
+	cargo install uniffi-bindgen-cs --git https://github.com/breez/uniffi-bindgen-cs --branch namespace
+	cargo build --release --target $(TARGET)
+	uniffi-bindgen-cs src/breez_sdk.udl -o ffi/csharp -c ./uniffi.toml
+	cp ../target/$(TARGET)/release/libbreez_sdk_bindings.so ffi/csharp
+
+golang-darwin: darwin-universal
+	cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go
+	uniffi-bindgen-go src/breez_sdk.udl -o ffi/golang -c ./uniffi.toml
+	cp ../target/darwin-universal/release/libbreez_sdk_bindings.dylib ffi/golang
+	cp -r ffi/golang/breez/breez_sdk tests/bindings/golang/
+
+TARGET ?= aarch64-unknown-linux-gnu
+golang-linux: $(SOURCES)
+	cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go
+	cargo build --release --target $(TARGET)
+	uniffi-bindgen-go src/breez_sdk.udl -o ffi/golang -c ./uniffi.toml
+	cp ../target/$(TARGET)/release/libbreez_sdk_bindings.so ffi/golang
+	cp -r ffi/golang/breez/breez_sdk tests/bindings/golang/
 
 swift-ios: ios-universal
 	cargo run --features=uniffi/cli --bin uniffi-bindgen generate src/breez_sdk.udl -l swift -o ffi/swift-ios

@@ -127,6 +127,7 @@
 //!
 //! * C#
 //! * Dart
+//! * Go
 //! * Kotlin
 //! * React-Native
 //! * Swift
