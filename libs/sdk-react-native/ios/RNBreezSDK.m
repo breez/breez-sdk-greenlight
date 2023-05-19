@@ -1,7 +1,7 @@
 #import <React/RCTBridgeModule.h>
 #import <React/RCTEventEmitter.h>
 
-@interface RCT_EXTERN_MODULE(BreezSDK, RCTEventEmitter)
+@interface RCT_EXTERN_MODULE(RNBreezSDK, RCTEventEmitter)
 
 RCT_EXTERN_METHOD(
     mnemonicToSeed: (NSString*)phrase
