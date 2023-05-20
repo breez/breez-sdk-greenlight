@@ -6,8 +6,8 @@ const LINKING_ERROR =
     "- You rebuilt the app after installing the package\n" +
     "- You are not using Expo managed workflow\n"
 
-const BreezSDK = NativeModules.BreezSDK
-    ? NativeModules.BreezSDK
+const BreezSDK = NativeModules.RNBreezSDK
+    ? NativeModules.RNBreezSDK
     : new Proxy(
           {},
           {

@@ -10,7 +10,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
 
     companion object {
-        var TAG = "BreezSDK"
+        var TAG = "RNBreezSDK"
     }
 
     override fun getName(): String {
