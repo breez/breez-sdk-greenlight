@@ -113,6 +113,10 @@ pub(crate) async fn handle_command(
             sdk()?.sync().await?;
             Ok("Sync finished succesfully".to_string())
         }
+        Commands::Parse { input } => parse(&input)
+            .await
+            .map(|res| serde_json::to_string_pretty(&res))?
+            .map_err(|e| e.into()),
         Commands::ReceivePayment {
             amount,
             description,

@@ -336,7 +336,7 @@ fn lnurl_decode(encoded: &str) -> Result<(String, String, bool)> {
 }
 
 /// Different kinds of inputs supported by [parse], including any relevant details extracted from the input
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub enum InputType {
     /// # Supported standards
     ///
@@ -445,7 +445,7 @@ pub struct LnUrlErrorData {
 /// It represents the endpoint's parameters for the LNURL workflow.
 ///
 /// See https://github.com/lnurl/luds/blob/luds/06.md
-#[derive(Clone, Deserialize, Debug)]
+#[derive(Clone, Deserialize, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LnUrlPayRequestData {
     pub callback: String,
@@ -498,7 +498,7 @@ impl LnUrlPayRequestData {
 /// It represents the endpoint's parameters for the LNURL workflow.
 ///
 /// See https://github.com/lnurl/luds/blob/luds/03.md
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LnUrlWithdrawRequestData {
     pub callback: String,
@@ -527,7 +527,7 @@ impl LnUrlWithdrawRequestData {
 /// It represents the endpoint's parameters for the LNURL workflow.
 ///
 /// See https://github.com/lnurl/luds/blob/luds/04.md
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Serialize)]
 pub struct LnUrlAuthRequestData {
     /// Hex encoded 32 bytes of challenge
     pub k1: String,
@@ -554,7 +554,7 @@ pub struct MetadataItem {
 }
 
 /// Wrapped in a [BitcoinAddress], this is the result of [parse] when given a plain or BIP-21 BTC address.
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct BitcoinAddressData {
     pub address: String,
     pub network: crate::models::Network,

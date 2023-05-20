@@ -182,7 +182,7 @@ pub struct GreenlightCredentials {
 }
 
 /// The different supported bitcoin networks
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
 pub enum Network {
     /// Mainnet
     Bitcoin,
