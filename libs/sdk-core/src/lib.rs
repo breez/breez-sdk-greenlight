@@ -148,7 +148,7 @@ mod crypt;
 mod fiat;
 mod greenlight;
 mod grpc;
-mod input_parser;
+pub mod input_parser;
 mod invoice;
 mod lnurl;
 mod lsp;

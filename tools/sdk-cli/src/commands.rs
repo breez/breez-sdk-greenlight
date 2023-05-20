@@ -34,6 +34,12 @@ pub(crate) enum Commands {
     /// Sync local data with remote node
     Sync {},
 
+    /// Parse a generic string to get its type and relevant metadata
+    Parse {
+        /// Generic input (URL, LNURL, BIP-21 BTC Address, LN invoice, etc)
+        input: String,
+    },
+
     /// Generate a bolt11 invoice
     ReceivePayment { amount: u64, description: String },
 
