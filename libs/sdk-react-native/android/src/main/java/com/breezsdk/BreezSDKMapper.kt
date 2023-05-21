@@ -82,6 +82,16 @@ fun asNetwork(network: String): Network {
     return Network.valueOf(network.uppercase())
 }
 
+fun asGreenlightCredentials(creds: ReadableMap?) : GreenlightCredentials? {
+ if (creds != null && hasNonNullKey(creds, "deviceKey") && hasNonNullKey(creds, "deviceCert")) {  
+  var deviceKeyArray = creds!!.getArray("deviceKey")
+  var deviceCertArray = creds!!.getArray("deviceCert")
+  return GreenlightCredentials(asUByteList(deviceKeyArray!!), asUByteList(deviceCertArray!!)) 
+ }
+
+ return null
+}
+
 fun asUByteList(arr: ReadableArray): List<UByte> {
     var list = ArrayList<UByte>()
     for (value in arr.toArrayList()) {
@@ -223,8 +233,8 @@ fun readableMapOf(fiatCurrency: FiatCurrency): ReadableMap {
 
 fun readableMapOf(greenlightCredentials: GreenlightCredentials): ReadableMap {
     return readableMapOf(
-            "deviceKey" to greenlightCredentials.deviceKey,
-            "deviceCert" to greenlightCredentials.deviceCert
+            "deviceKey" to readableArrayOf(greenlightCredentials.deviceKey),
+            "deviceCert" to readableArrayOf(greenlightCredentials.deviceCert)
     )
 }
 

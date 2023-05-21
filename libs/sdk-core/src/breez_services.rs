@@ -149,8 +149,13 @@ pub struct BreezServices {
 
 impl BreezServices {
     /// Create a new node for the given network, from the given seed
-    pub async fn register_node(network: Network, seed: Vec<u8>) -> Result<GreenlightCredentials> {
-        Greenlight::register(network, seed.clone()).await
+    pub async fn register_node(
+        network: Network,
+        seed: Vec<u8>,
+        register_credentials: Option<GreenlightCredentials>,
+        invite_code: Option<String>,
+    ) -> Result<GreenlightCredentials> {
+        Greenlight::register(network, seed.clone(), register_credentials, invite_code).await
     }
 
     /// Try to recover a previously created node

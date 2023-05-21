@@ -24,6 +24,8 @@ RCT_EXTERN_METHOD(
 RCT_EXTERN_METHOD(
     registerNode: (NSString*)network
     seed: (NSArray*)seed
+    registerCredentials: (NSDictionary*)registerCredentials
+    inviteCode: (NSString*)inviteCode
     resolver: (RCTPromiseResolveBlock)resolve
     rejecter: (RCTPromiseRejectBlock)reject
 )

@@ -433,7 +433,7 @@ interface BlockingBreezServices {
 namespace breez_sdk { 
  
  [Throws=SDKError]
- GreenlightCredentials register_node(Network network, sequence<u8> seed);
+ GreenlightCredentials register_node(Network network, sequence<u8> seed, GreenlightCredentials? register_credentials, string? invite_code);
 
  [Throws=SDKError]
  GreenlightCredentials recover_node(Network network, sequence<u8> seed);
