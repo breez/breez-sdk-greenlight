@@ -85,8 +85,15 @@ pub fn register_node(
     network: Network,
     seed: Vec<u8>,
     config: Config,
+    register_credentials: Option<GreenlightCredentials>,
+    invite_code: Option<String>,
 ) -> Result<GreenlightCredentials> {
-    let creds = block_on(BreezServices::register_node(network, seed.clone()))?;
+    let creds = block_on(BreezServices::register_node(
+        network,
+        seed.clone(),
+        register_credentials,
+        invite_code,
+    ))?;
     init_services(config, seed, creds.clone())?;
     Ok(creds)
 }

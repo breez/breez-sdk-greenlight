@@ -12,8 +12,17 @@ pub extern "C" fn wire_register_node(
     network: i32,
     seed: *mut wire_uint_8_list,
     config: *mut wire_Config,
+    register_credentials: *mut wire_GreenlightCredentials,
+    invite_code: *mut wire_uint_8_list,
 ) {
-    wire_register_node_impl(port_, network, seed, config)
+    wire_register_node_impl(
+        port_,
+        network,
+        seed,
+        config,
+        register_credentials,
+        invite_code,
+    )
 }
 
 #[no_mangle]

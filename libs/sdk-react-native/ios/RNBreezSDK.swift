@@ -79,10 +79,11 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
     
-    @objc(registerNode:seed:resolver:rejecter:)
-    func registerNode(_ network:String, seed:[UInt8], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+    @objc(registerNode:seed:registerCredentials:inviteCode:resolver:rejecter:)
+    func registerNode(_ network:String, seed:[UInt8], registerCredentials: [String: Any]?, inviteCode: String?, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         do {
-            let greenlightCredentials = try breez_sdk.registerNode(network: BreezSDKMapper.asNetwork(network: network), seed: seed)
+            let registerCreds = BreezSDKMapper.asGreenlightCredentials(reqData: registerCredentials)
+            let greenlightCredentials = try breez_sdk.registerNode(network: BreezSDKMapper.asNetwork(network: network), seed: seed, registerCredentials: registerCreds, inviteCode: inviteCode)
             
             resolve(BreezSDKMapper.dictionaryOf(greenlightCredentials: greenlightCredentials))
         } catch SdkError.Error(let message) {

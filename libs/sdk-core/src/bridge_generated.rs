@@ -79,6 +79,8 @@ fn wire_register_node_impl(
     network: impl Wire2Api<Network> + UnwindSafe,
     seed: impl Wire2Api<Vec<u8>> + UnwindSafe,
     config: impl Wire2Api<Config> + UnwindSafe,
+    register_credentials: impl Wire2Api<Option<GreenlightCredentials>> + UnwindSafe,
+    invite_code: impl Wire2Api<Option<String>> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -90,7 +92,17 @@ fn wire_register_node_impl(
             let api_network = network.wire2api();
             let api_seed = seed.wire2api();
             let api_config = config.wire2api();
-            move |task_callback| register_node(api_network, api_seed, api_config)
+            let api_register_credentials = register_credentials.wire2api();
+            let api_invite_code = invite_code.wire2api();
+            move |task_callback| {
+                register_node(
+                    api_network,
+                    api_seed,
+                    api_config,
+                    api_register_credentials,
+                    api_invite_code,
+                )
+            }
         },
     )
 }

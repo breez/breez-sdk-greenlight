@@ -27,7 +27,12 @@ abstract class BreezSdkCore {
   /// * `seed` - The node private key
   /// * `config` - The sdk configuration
   Future<GreenlightCredentials> registerNode(
-      {required Network network, required Uint8List seed, required Config config, dynamic hint});
+      {required Network network,
+      required Uint8List seed,
+      required Config config,
+      GreenlightCredentials? registerCredentials,
+      String? inviteCode,
+      dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kRegisterNodeConstMeta;
 
@@ -500,6 +505,8 @@ class LnPaymentDetails {
 /// Wrapped in a [LnUrlAuth], this is the result of [parse] when given a LNURL-auth endpoint.
 ///
 /// It represents the endpoint's parameters for the LNURL workflow.
+///
+/// See https://github.com/lnurl/luds/blob/luds/04.md
 class LnUrlAuthRequestData {
   /// Hex encoded 32 bytes of challenge
   final String k1;
@@ -546,14 +553,24 @@ class LnUrlErrorData {
 /// Wrapped in a [LnUrlPay], this is the result of [parse] when given a LNURL-pay endpoint.
 ///
 /// It represents the endpoint's parameters for the LNURL workflow.
+///
+/// See https://github.com/lnurl/luds/blob/luds/06.md
 class LnUrlPayRequestData {
   final String callback;
+
+  /// The minimum amount, in millisats, that this LNURL-pay endpoint accepts
   final int minSendable;
+
+  /// The maximum amount, in millisats, that this LNURL-pay endpoint accepts
   final int maxSendable;
 
   /// As per LUD-06, `metadata` is a raw string (e.g. a json representation of the inner map).
   /// Use `metadata_vec()` to get the parsed items.
   final String metadataStr;
+
+  /// The comment length accepted by this endpoint
+  ///
+  /// See https://github.com/lnurl/luds/blob/luds/12.md
   final int commentAllowed;
 
   /// Indicates the domain of the LNURL-pay service, to be shown to the user when asking for
@@ -589,11 +606,17 @@ class LnUrlPayResult with _$LnUrlPayResult {
 /// Wrapped in a [LnUrlWithdraw], this is the result of [parse] when given a LNURL-withdraw endpoint.
 ///
 /// It represents the endpoint's parameters for the LNURL workflow.
+///
+/// See https://github.com/lnurl/luds/blob/luds/03.md
 class LnUrlWithdrawRequestData {
   final String callback;
   final String k1;
   final String defaultDescription;
+
+  /// The minimum amount, in millisats, that this LNURL-withdraw endpoint accepts
   final int minWithdrawable;
+
+  /// The maximum amount, in millisats, that this LNURL-withdraw endpoint accepts
   final int maxWithdrawable;
 
   const LnUrlWithdrawRequestData({
@@ -1003,22 +1026,29 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       );
 
   Future<GreenlightCredentials> registerNode(
-      {required Network network, required Uint8List seed, required Config config, dynamic hint}) {
+      {required Network network,
+      required Uint8List seed,
+      required Config config,
+      GreenlightCredentials? registerCredentials,
+      String? inviteCode,
+      dynamic hint}) {
     var arg0 = api2wire_network(network);
     var arg1 = _platform.api2wire_uint_8_list(seed);
     var arg2 = _platform.api2wire_box_autoadd_config(config);
+    var arg3 = _platform.api2wire_opt_box_autoadd_greenlight_credentials(registerCredentials);
+    var arg4 = _platform.api2wire_opt_String(inviteCode);
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_register_node(port_, arg0, arg1, arg2),
+      callFfi: (port_) => _platform.inner.wire_register_node(port_, arg0, arg1, arg2, arg3, arg4),
       parseSuccessData: _wire2api_greenlight_credentials,
       constMeta: kRegisterNodeConstMeta,
-      argValues: [network, seed, config],
+      argValues: [network, seed, config, registerCredentials, inviteCode],
       hint: hint,
     ));
   }
 
   FlutterRustBridgeTaskConstMeta get kRegisterNodeConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "register_node",
-        argNames: ["network", "seed", "config"],
+        argNames: ["network", "seed", "config", "registerCredentials", "inviteCode"],
       );
 
   Future<GreenlightCredentials> recoverNode(
@@ -2414,6 +2444,12 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<wire_GreenlightCredentials> api2wire_opt_box_autoadd_greenlight_credentials(
+      GreenlightCredentials? raw) {
+    return raw == null ? ffi.nullptr : api2wire_box_autoadd_greenlight_credentials(raw);
+  }
+
+  @protected
   ffi.Pointer<ffi.Int64> api2wire_opt_box_autoadd_i64(int? raw) {
     return raw == null ? ffi.nullptr : api2wire_box_autoadd_i64(raw);
   }
@@ -2505,6 +2541,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.default_description = api2wire_String(apiObj.defaultDescription);
     wireObj.min_withdrawable = api2wire_u64(apiObj.minWithdrawable);
     wireObj.max_withdrawable = api2wire_u64(apiObj.maxWithdrawable);
+  }
+
+  void _api_fill_to_wire_opt_box_autoadd_greenlight_credentials(
+      GreenlightCredentials? apiObj, ffi.Pointer<wire_GreenlightCredentials> wireObj) {
+    if (apiObj != null) _api_fill_to_wire_box_autoadd_greenlight_credentials(apiObj, wireObj);
   }
 }
 
@@ -2609,21 +2650,26 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
     int network,
     ffi.Pointer<wire_uint_8_list> seed,
     ffi.Pointer<wire_Config> config,
+    ffi.Pointer<wire_GreenlightCredentials> register_credentials,
+    ffi.Pointer<wire_uint_8_list> invite_code,
   ) {
     return _wire_register_node(
       port_,
       network,
       seed,
       config,
+      register_credentials,
+      invite_code,
     );
   }
 
   late final _wire_register_nodePtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(ffi.Int64, ffi.Int32, ffi.Pointer<wire_uint_8_list>,
-              ffi.Pointer<wire_Config>)>>('wire_register_node');
-  late final _wire_register_node = _wire_register_nodePtr
-      .asFunction<void Function(int, int, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_Config>)>();
+          ffi.Void Function(ffi.Int64, ffi.Int32, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_Config>,
+              ffi.Pointer<wire_GreenlightCredentials>, ffi.Pointer<wire_uint_8_list>)>>('wire_register_node');
+  late final _wire_register_node = _wire_register_nodePtr.asFunction<
+      void Function(int, int, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_Config>,
+          ffi.Pointer<wire_GreenlightCredentials>, ffi.Pointer<wire_uint_8_list>)>();
 
   void wire_recover_node(
     int port_,

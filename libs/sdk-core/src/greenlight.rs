@@ -57,9 +57,21 @@ impl Greenlight {
         })
     }
 
-    pub(crate) async fn register(network: Network, seed: Vec<u8>) -> Result<GreenlightCredentials> {
+    pub(crate) async fn register(
+        network: Network,
+        seed: Vec<u8>,
+        register_credentials: Option<GreenlightCredentials>,
+        invite_code: Option<String>,
+    ) -> Result<GreenlightCredentials> {
+        if invite_code.is_some() && register_credentials.is_some() {
+            return Err(anyhow!("Cannot specify both invite code and credentials"));
+        }
         let greenlight_network = network.into();
-        let tls_config = TlsConfig::new()?;
+        let tls_config = match register_credentials {
+            Some(creds) => TlsConfig::new()?.identity(creds.device_cert, creds.device_key),
+            None => TlsConfig::new()?,
+        };
+
         let signer = Signer::new(seed, greenlight_network, tls_config.clone())?;
         let scheduler = Scheduler::new(signer.node_id(), greenlight_network).await?;
         let recover_res: pb::scheduler::RegistrationResponse =

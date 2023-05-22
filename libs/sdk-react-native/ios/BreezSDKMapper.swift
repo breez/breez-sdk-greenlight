@@ -110,7 +110,19 @@ class BreezSDKMapper {
         }
         
         return nil
-    }
+    }    
+
+    static func asGreenlightCredentials(reqData: [String: Any]?) -> GreenlightCredentials? {
+        if let dict = reqData as? [String: Any] {
+           if let deviceKey = dict["deviceKey"] as? [UInt8],
+              let deviceCert = dict["deviceCert"] as? [UInt8] {
+               return GreenlightCredentials(deviceKey: deviceKey, deviceCert: deviceCert)
+           }
+        }
+        
+        return nil
+    } 
+
     
     static func asPaymentTypeFilter(filter: String) throws -> PaymentTypeFilter {
         switch(filter) {

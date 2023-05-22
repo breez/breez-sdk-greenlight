@@ -428,8 +428,13 @@ export const parseInvoice = async (invoice: string): Promise<LnInvoice> => {
     return response as LnInvoice
 }
 
-export const registerNode = async (network: Network, seed: Uint8Array): Promise<GreenlightCredentials> => {
-    const response = await BreezSDK.registerNode(network, seed)
+export const registerNode = async (
+    network: Network,
+    seed: Uint8Array,
+    registerCreds?: GreenlightCredentials,
+    inviteCode?: string
+): Promise<GreenlightCredentials> => {
+    const response = await BreezSDK.registerNode(network, seed, registerCreds, inviteCode)
     return response as GreenlightCredentials
 }
 

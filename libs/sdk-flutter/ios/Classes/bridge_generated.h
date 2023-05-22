@@ -72,7 +72,9 @@ void wire_initialized(int64_t port_);
 void wire_register_node(int64_t port_,
                         int32_t network,
                         struct wire_uint_8_list *seed,
-                        struct wire_Config *config);
+                        struct wire_Config *config,
+                        struct wire_GreenlightCredentials *register_credentials,
+                        struct wire_uint_8_list *invite_code);
 
 void wire_recover_node(int64_t port_,
                        int32_t network,
