@@ -5,7 +5,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{anyhow, Result};
 use bip39::*;
-use bitcoin_hashes::{sha256, Hash};
+use bitcoin::hashes::{sha256, Hash};
 use tokio::runtime::Runtime;
 use tokio::sync::{mpsc, Mutex};
 use tokio::time::{sleep, Duration};
