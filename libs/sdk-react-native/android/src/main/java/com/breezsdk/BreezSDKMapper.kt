@@ -83,13 +83,13 @@ fun asNetwork(network: String): Network {
 }
 
 fun asGreenlightCredentials(creds: ReadableMap?) : GreenlightCredentials? {
- if (creds != null && hasNonNullKey(creds, "deviceKey") && hasNonNullKey(creds, "deviceCert")) {  
-  var deviceKeyArray = creds!!.getArray("deviceKey")
-  var deviceCertArray = creds!!.getArray("deviceCert")
-  return GreenlightCredentials(asUByteList(deviceKeyArray!!), asUByteList(deviceCertArray!!)) 
- }
+    if (creds != null && hasNonNullKey(creds, "deviceKey") && hasNonNullKey(creds, "deviceCert")) {  
+         var deviceKeyArray = creds!!.getArray("deviceKey")
+         var deviceCertArray = creds!!.getArray("deviceCert")
+         return GreenlightCredentials(asUByteList(deviceKeyArray!!), asUByteList(deviceCertArray!!)) 
+    }
 
- return null
+    return null
 }
 
 fun asUByteList(arr: ReadableArray): List<UByte> {
