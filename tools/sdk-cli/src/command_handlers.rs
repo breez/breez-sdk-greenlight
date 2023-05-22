@@ -78,6 +78,8 @@ pub(crate) async fn handle_command(
             let creds = BreezServices::register_node(
                 config.network,
                 persistence.get_or_create_seed().to_vec(),
+                None,
+                None,
             )
             .await?;
 
