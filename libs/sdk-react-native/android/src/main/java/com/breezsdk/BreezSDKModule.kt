@@ -66,10 +66,11 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun registerNode(network: String, seed: ReadableArray, registerCredentials: ReadableMap?, inviteCode: String?, promise: Promise) {
+    fun registerNode(network: String, seed: ReadableArray, registerCredentials: ReadableMap, inviteCode: String, promise: Promise) {
         try {
             var registerCreds = asGreenlightCredentials(registerCredentials)
-            var creds = registerNode(asNetwork(network), asUByteList(seed), registerCreds, inviteCode)
+            var optionalInviteCode = inviteCode.takeUnless { it.isEmpty() }
+            var creds = registerNode(asNetwork(network), asUByteList(seed), registerCreds, optionalInviteCode)
             promise.resolve(readableMapOf(creds))
         } catch (e: SdkException) {
             e.printStackTrace()
