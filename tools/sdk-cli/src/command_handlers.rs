@@ -1,3 +1,4 @@
+use std::fs;
 use std::sync::Arc;
 
 use anyhow::Error;
@@ -71,15 +72,28 @@ pub(crate) async fn handle_command(
             persistence.save_config(config)?;
             Ok(format!("Environment was set to {:?}", env))
         }
-        Commands::RegisterNode {} => {
+        Commands::RegisterNode {
+            device_cert,
+            device_key,
+            invite_code,
+        } => {
             let config = persistence
                 .get_or_create_config()?
                 .to_sdk_config(&persistence.data_dir);
+            let mut register_credentials: Option<GreenlightCredentials> = None;
+            if device_cert.is_some() && device_key.is_some() {
+                let cert = fs::read(device_cert.unwrap())?;
+                let key = fs::read(device_key.unwrap())?;
+                register_credentials = Some(GreenlightCredentials {
+                    device_cert: cert,
+                    device_key: key,
+                })
+            }
             let creds = BreezServices::register_node(
                 config.network,
                 persistence.get_or_create_seed().to_vec(),
-                None,
-                None,
+                register_credentials,
+                invite_code,
             )
             .await?;
 
