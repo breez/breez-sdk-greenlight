@@ -16,7 +16,7 @@ use gl_client::pb::{
 use gl_client::scheduler::Scheduler;
 use gl_client::signer::Signer;
 use gl_client::tls::TlsConfig;
-use gl_client::{node, pb};
+use gl_client::{node, pb, utils};
 
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
@@ -68,12 +68,21 @@ impl Greenlight {
         }
         let greenlight_network = network.into();
         let tls_config = match register_credentials {
-            Some(creds) => TlsConfig::new()?.identity(creds.device_cert, creds.device_key),
+            Some(creds) => {
+                debug!("registering with credentials");
+                TlsConfig::new()?.identity(creds.device_cert, creds.device_key)
+            }
             None => TlsConfig::new()?,
         };
 
         let signer = Signer::new(seed, greenlight_network, tls_config.clone())?;
-        let scheduler = Scheduler::new(signer.node_id(), greenlight_network).await?;
+        let scheduler = Scheduler::with(
+            signer.node_id(),
+            greenlight_network,
+            utils::scheduler_uri(),
+            &tls_config,
+        )
+        .await?;
         let recover_res: pb::scheduler::RegistrationResponse =
             scheduler.register(&signer, invite_code).await?;
 

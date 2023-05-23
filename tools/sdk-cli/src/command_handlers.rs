@@ -81,12 +81,12 @@ pub(crate) async fn handle_command(
                 .get_or_create_config()?
                 .to_sdk_config(&persistence.data_dir);
             let mut register_credentials: Option<GreenlightCredentials> = None;
-            if device_cert.is_some() || device_key.is_some() {
+            if device_cert.is_some() && device_key.is_some() {
                 let cert = fs::read(device_cert.unwrap())?;
                 let key = fs::read(device_key.unwrap())?;
                 register_credentials = Some(GreenlightCredentials {
-                    device_key: cert,
-                    device_cert: key,
+                    device_cert: cert,
+                    device_key: key,
                 })
             }
             let creds = BreezServices::register_node(
