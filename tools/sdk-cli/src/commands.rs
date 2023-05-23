@@ -23,7 +23,19 @@ pub(crate) enum Commands {
         env: EnvironmentType,
     },
     /// Register a new greenlight node
-    RegisterNode {},
+    RegisterNode {
+        /// The optional greenlight device certifiate
+        #[clap(name = "device_cert", short = 'c', long = "device_cert")]
+        device_cert: Option<std::path::PathBuf>,
+
+        /// The optional greenlight device key
+        #[clap(name = "device_key", short = 'k', long = "device_key")]
+        device_key: Option<std::path::PathBuf>,
+
+        /// The optional greenlight invite code
+        #[clap(name = "invite_code", short = 'i', long = "invite_code")]
+        invite_code: Option<String>,
+    },
 
     /// Recover a node using the seed only
     RecoverNode {},
