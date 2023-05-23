@@ -81,7 +81,7 @@ pub(crate) async fn handle_command(
                 .get_or_create_config()?
                 .to_sdk_config(&persistence.data_dir);
             let mut register_credentials: Option<GreenlightCredentials> = None;
-            if !device_cert.is_none() || !device_key.is_none() {
+            if device_cert.is_some() || device_key.is_some() {
                 let cert = fs::read(device_cert.unwrap())?;
                 let key = fs::read(device_key.unwrap())?;
                 register_credentials = Some(GreenlightCredentials {
