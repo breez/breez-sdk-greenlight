@@ -75,7 +75,7 @@ impl Greenlight {
         let signer = Signer::new(seed, greenlight_network, tls_config.clone())?;
         let scheduler = Scheduler::new(signer.node_id(), greenlight_network).await?;
         let recover_res: pb::scheduler::RegistrationResponse =
-            scheduler.register(&signer, None).await?;
+            scheduler.register(&signer, invite_code).await?;
 
         Ok(GreenlightCredentials {
             device_key: recover_res.device_key.into(),
