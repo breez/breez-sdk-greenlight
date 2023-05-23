@@ -22,6 +22,7 @@ use strum_macros::EnumString;
 use tokio::sync::mpsc;
 use tonic::Streaming;
 
+use crate::chain::ChainService;
 use crate::fiat::{FiatCurrency, Rate};
 use crate::grpc::{PaymentInformation, RegisterPaymentReply};
 use crate::lnurl::pay::model::SuccessActionProcessed;
@@ -190,6 +191,8 @@ impl ReverseSwapInfo {
     pub(crate) async fn get_dynamic_breez_status(
         &self,
         persister: Arc<SqliteStorage>,
+        chain_service: Arc<dyn ChainService>,
+        network: Network,
     ) -> Result<ReverseSwapStatus> {
         let status = match &self.cache.boltz_api_status {
             BoltzApiReverseSwapStatus::SwapCreated => {
@@ -213,7 +216,29 @@ impl ReverseSwapInfo {
             }
             BoltzApiReverseSwapStatus::LockTxMempool { .. } => ReverseSwapStatus::InProgress,
             BoltzApiReverseSwapStatus::LockTxConfirmed { .. } => ReverseSwapStatus::InProgress,
-            BoltzApiReverseSwapStatus::InvoiceSettled => ReverseSwapStatus::InProgress,
+
+            // Reverse swap completed successfully on the Boltz side (they settled the HODL invoice)
+            // Boltz doesn't further distinguish between "claim tx in mempool" vs "claim tx confirmed"
+            // Therefore, to fully confirm the rev swap is completed, we check for claim tx confirmation
+            BoltzApiReverseSwapStatus::InvoiceSettled => {
+                let lockup_addr = self.get_lockup_address(network)?;
+                let is_claim_tx_confirmed = chain_service
+                    .address_transactions(self.destination_address.clone())
+                    .await?
+                    .into_iter()
+                    .filter(|t| t.status.block_height.is_some())
+                    .any(|tx| {
+                        tx.vin
+                            .iter()
+                            .any(|vin| vin.prevout.scriptpubkey_address == lockup_addr.to_string())
+                    });
+
+                match is_claim_tx_confirmed {
+                    false => ReverseSwapStatus::CompletedSeen,
+                    true => ReverseSwapStatus::CompletedConfirmed,
+                }
+            }
+
             BoltzApiReverseSwapStatus::InvoiceExpired => ReverseSwapStatus::Cancelled,
             BoltzApiReverseSwapStatus::SwapExpired => ReverseSwapStatus::Cancelled,
             BoltzApiReverseSwapStatus::LockTxFailed => ReverseSwapStatus::Cancelled,

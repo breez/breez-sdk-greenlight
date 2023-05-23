@@ -338,7 +338,13 @@ impl BTCSendSwap {
             let id = rs.id.clone();
             let api = self.reverse_swapper_api.clone();
             let fresh_boltz_status = api.get_dynamic_boltz_status(id.clone()).await?;
-            let fresh_breez_status = rs.get_dynamic_breez_status(self.persister.clone()).await?;
+            let fresh_breez_status = rs
+                .get_dynamic_breez_status(
+                    self.persister.clone(),
+                    self.chain_service.clone(),
+                    self.config.network,
+                )
+                .await?;
 
             match self.persister.update_reverse_swap_boltz_status(&id, &fresh_boltz_status, &fresh_breez_status) {
                 Ok(_) => info!("Updated Boltz status for reverse swap ID {id} to {fresh_boltz_status:?}"),
@@ -352,6 +358,10 @@ impl BTCSendSwap {
     pub async fn list_blocking(&self) -> Result<Vec<ReverseSwapInfo>> {
         let mut matching_reverse_swaps = vec![];
         for rs in self.persister.list_reverse_swaps()? {
+            debug!(
+                "State of rev swap with ID {} is: Breez status {:?} / Boltz status {:?}",
+                rs.id, rs.cache.breez_status, rs.cache.boltz_api_status
+            );
             if ReverseSwapStatus::is_blocking_state(&rs.cache.breez_status) {
                 matching_reverse_swaps.push(rs);
             }
