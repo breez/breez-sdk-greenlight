@@ -432,9 +432,12 @@ export const registerNode = async (
     network: Network,
     seed: Uint8Array,
     registerCreds?: GreenlightCredentials,
-    inviteCode?: string
+    inviteCode: string = ""
 ): Promise<GreenlightCredentials> => {
-    const response = await BreezSDK.registerNode(network, seed, registerCreds, inviteCode)
+    const response = await BreezSDK.registerNode(network, seed, registerCreds ? {
+        deviceCert: Array.from(registerCreds.deviceCert),
+        deviceKey: Array.from(registerCreds.deviceKey),
+    } : {}, inviteCode)
     return response as GreenlightCredentials
 }
 
