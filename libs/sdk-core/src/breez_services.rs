@@ -24,7 +24,7 @@ use crate::grpc::information_client::InformationClient;
 use crate::grpc::signer_client::SignerClient;
 use crate::grpc::PaymentInformation;
 use crate::input_parser::LnUrlPayRequestData;
-use crate::invoice::{add_routing_hints, parse_invoice, LNInvoice, RouteHint, RouteHintHop};
+use crate::invoice::{add_lsp_routing_hints, parse_invoice, LNInvoice, RouteHint, RouteHintHop};
 use crate::lnurl::auth::perform_lnurl_auth;
 use crate::lnurl::pay::model::SuccessAction::Aes;
 use crate::lnurl::pay::model::{
@@ -989,7 +989,8 @@ impl Receiver for PaymentReceiver {
         let mut destination_invoice_amount_sats = amount_sats;
 
         // check if we need to open channel
-        if node_state.inbound_liquidity_msats < amount_msats {
+        let open_channel_needed = node_state.inbound_liquidity_msats < amount_msats;
+        if open_channel_needed {
             info!("We need to open a channel");
 
             // we need to open channel so we are calculating the fees for the LSP
@@ -1045,14 +1046,18 @@ impl Receiver for PaymentReceiver {
         let mut parsed_invoice = parse_invoice(&invoice.bolt11)?;
 
         // check if the lsp hint already exists
+        info!("Existing routing hints {:?}", parsed_invoice.routing_hints);
+        info!("lsp info pubkey = {:?}", lsp_info.pubkey.clone());
         let has_lsp_hint = parsed_invoice.routing_hints.iter().any(|h| {
             h.hops
                 .iter()
                 .any(|h| h.src_node_id == lsp_info.pubkey.clone())
         });
 
-        let mut rout_hints: Vec<RouteHint> = Vec::new();
-        if !has_lsp_hint {
+        // We only add routing hint if we need to open a channel
+        // or if the invoice doesn't have any routing hints that points to the lsp
+        let mut lsp_hint: Option<RouteHint> = None;
+        if !has_lsp_hint || open_channel_needed {
             info!("Adding routing hint");
             let lsp_hop = RouteHintHop {
                 src_node_id: lsp_info.pubkey.clone(), // TODO correct?
@@ -1065,14 +1070,14 @@ impl Receiver for PaymentReceiver {
             };
 
             info!("lsp hop = {:?}", lsp_hop);
-            rout_hints.push(RouteHint {
+            lsp_hint = Some(RouteHint {
                 hops: vec![lsp_hop],
             });
         }
 
         // create the large amount invoice
         let raw_invoice_with_hint =
-            add_routing_hints(invoice.bolt11.clone(), rout_hints, amount_sats * 1000)?;
+            add_lsp_routing_hints(invoice.bolt11.clone(), lsp_hint, amount_sats * 1000)?;
 
         info!("Routing hint added");
         let signed_invoice_with_hint = self.node_api.sign_invoice(raw_invoice_with_hint)?;
