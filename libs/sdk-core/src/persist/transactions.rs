@@ -101,6 +101,7 @@ impl SqliteStorage {
     /// Constructs [Payment] by joining data in the `payment` and `payments_external_info` tables
     ///
     /// This queries all payments. To query a single payment, see [Self::get_payment_by_hash]
+    /// or [Self::get_completed_payment_by_hash]
     pub fn list_payments(
         &self,
         type_filter: PaymentTypeFilter,
@@ -142,7 +143,9 @@ impl SqliteStorage {
         Ok(vec)
     }
 
-    /// This queries a single payment by hash.
+    /// This queries a single payment by hash, which may be pending or completed.
+    ///
+    /// To lookup a completed payment by hash, use [Self::get_completed_payment_by_hash]
     ///
     /// To query all payments, see [Self::list_payments]
     pub(crate) fn get_payment_by_hash(&self, hash: &String) -> Result<Option<Payment>> {
@@ -172,6 +175,14 @@ impl SqliteStorage {
             )
             .optional()
             .map_err(|e| anyhow!(e))
+    }
+
+    /// Looks up a completed payment by hash.
+    ///
+    /// To include pending payments in the lookup as well, use [Self::get_payment_by_hash]
+    pub(crate) fn get_completed_payment_by_hash(&self, hash: &String) -> Result<Option<Payment>> {
+        let res = self.get_payment_by_hash(hash)?.filter(|p| !p.pending);
+        Ok(res)
     }
 
     fn sql_row_to_payment(&self, row: &Row) -> Result<Payment, rusqlite::Error> {

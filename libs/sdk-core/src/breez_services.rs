@@ -601,8 +601,10 @@ impl BreezServices {
         let payment = payment_res.unwrap();
         self.sync().await?;
 
-        let p = self.persister.get_payment_by_hash(&payment.payment_hash)?;
-        match p {
+        match self
+            .persister
+            .get_completed_payment_by_hash(&payment.payment_hash)?
+        {
             Some(p) => {
                 self.notify_event_listeners(BreezEvent::PaymentSucceed { details: p.clone() })
                     .await?;

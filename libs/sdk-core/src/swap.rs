@@ -108,7 +108,9 @@ impl BTCReceiveSwap {
                 let hash_raw = hex::decode(details.payment_hash.clone())?;
                 let swap_info = self.persister.get_swap_info_by_hash(&hash_raw)?;
                 if swap_info.is_some() {
-                    let payment = self.persister.get_payment_by_hash(&details.payment_hash)?;
+                    let payment = self
+                        .persister
+                        .get_completed_payment_by_hash(&details.payment_hash)?;
                     if payment.is_some() {
                         self.persister.update_swap_paid_amount(
                             swap_info.unwrap().bitcoin_address,
@@ -348,13 +350,13 @@ impl BTCReceiveSwap {
 
         let payment = self
             .persister
-            .get_payment_by_hash(&hex::encode(swap_info.payment_hash.clone()))?;
-        debug!(
-            "found payment for hash {:?}, {:?}",
-            &hex::encode(swap_info.payment_hash.clone()),
-            payment
-        );
+            .get_completed_payment_by_hash(&hex::encode(swap_info.payment_hash.clone()))?;
         if payment.is_some() {
+            debug!(
+                "found payment for hash {:?}, {:?}",
+                &hex::encode(swap_info.payment_hash.clone()),
+                payment
+            );
             self.persister.update_swap_paid_amount(
                 bitcoin_address.clone(),
                 payment.unwrap().amount_msat as u32,
