@@ -90,9 +90,9 @@ impl RouteHint {
     }
 }
 
-pub fn add_routing_hints(
+pub fn add_lsp_routing_hints(
     invoice: String,
-    hints: Vec<RouteHint>,
+    lsp_hint: Option<RouteHint>,
     new_amount_msats: u64,
 ) -> Result<RawInvoice> {
     let signed = invoice.parse::<SignedRawInvoice>()?;
@@ -111,11 +111,34 @@ pub fn add_routing_hints(
         .payment_secret(*invoice.payment_secret())
         .min_final_cltv_expiry_delta(invoice.min_final_cltv_expiry_delta());
 
-    for hint in invoice.route_hints() {
+    // We make sure the hint we add does not conflict with other hints.
+    // The lsp hint takes priority so in case the lsp hop is already in one of the existing hints
+    // We make sure not to include them in the new hints.
+    let unique_hop_hints: Vec<lightning::routing::router::RouteHint> = match lsp_hint {
+        None => invoice.route_hints(),
+        Some(lsp_hint) => {
+            let mut all_hints: Vec<lightning::routing::router::RouteHint> = invoice
+                .route_hints()
+                .into_iter()
+                .filter(|hint| {
+                    hint.clone().0.into_iter().all(|hop| {
+                        lsp_hint.clone().hops.into_iter().all(|lsp_hop| {
+                            hop.src_node_id.serialize().encode_hex::<String>()
+                                != lsp_hop.src_node_id
+                        })
+                    })
+                })
+                .collect();
+
+            // Adding the lsp hint
+            all_hints.push(lsp_hint.to_ldk_hint()?);
+            all_hints
+        }
+    };
+
+    // Adding the unique existing hints
+    for hint in unique_hop_hints {
         invoice_builder = invoice_builder.private_route(hint);
-    }
-    for hint in hints {
-        invoice_builder = invoice_builder.private_route(hint.to_ldk_hint()?);
     }
 
     let invoice_builder = invoice_builder.build_raw();
@@ -200,8 +223,7 @@ mod tests {
             hops: vec![hint_hop],
         };
 
-        let encoded = add_routing_hints(payreq, vec![route_hint], 100).unwrap();
-
+        let encoded = add_lsp_routing_hints(payreq, Some(route_hint), 100).unwrap();
         print!("{encoded:?}");
     }
 }
