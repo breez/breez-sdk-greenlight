@@ -477,21 +477,15 @@ impl BreezServices {
     ) -> Result<SimpleReverseSwapInfo> {
         match self.in_progress_reverse_swaps().await?.is_empty() {
             true => {
-                let create_res = self.btc_send_swapper
+                self.btc_send_swapper
                     .create_reverse_swap(
                         amount_sat,
                         onchain_recipient_address,
                         pair_hash,
                         self.lsp_info().await?.pubkey,
                     )
-                    .await;
-
-                if create_res.is_err() {
-                    warn!("Creating reverse swap failed, syncing to refresh and persist status");
-                    self.sync().await?;
-                }
-
-                create_res.map(Into::into)
+                    .await
+                    .map(Into::into)
             },
             false => Err(anyhow!(
                 "There already is at least one Reverse Swap in progress. You can only start a new one after after the ongoing ones finish. \

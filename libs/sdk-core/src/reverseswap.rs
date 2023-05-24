@@ -77,6 +77,8 @@ impl BTCSendSwap {
             .map_err(|_e| anyhow!("Invalid destination address"))
     }
 
+    /// Creates and persists a reverse swap. If the initial payment fails, the reverse swap has the new
+    /// status persisted.
     pub(crate) async fn create_reverse_swap(
         &self,
         amount_sat: u64,
@@ -102,7 +104,7 @@ impl BTCSendSwap {
         // - the regular poll of the Breez API detects the status of this reverse swap advanced to LockTxMempool
         //   (meaning Boltz detected that we paid the HODL invoice)
         // - the max allowed duration of a payment is reached
-        tokio::select! {
+        let res = tokio::select! {
             pay_thread_res = tokio::time::timeout(
                 Duration::from_secs(self.config.payment_timeout_sec as u64),
                 self.node_api.send_payment(created_rsi.hodl_bolt11.clone(), None)
@@ -120,12 +122,16 @@ impl BTCSendSwap {
                 }
             },
             paid_invoice_res = self.poll_initial_boltz_status_transition(&created_rsi.id) => {
-                match paid_invoice_res {
-                    Ok(_) => Ok(created_rsi),
-                    Err(e) => Err(anyhow!(e))
-                }
+                paid_invoice_res.map(|_| created_rsi.clone())
             }
+        };
+
+        if res.is_err() {
+            // If paying the invoice failed, we refresh this rev swap to persist the new status
+            self.refresh_reverse_swap(created_rsi).await?;
         }
+
+        res
     }
 
     async fn poll_initial_boltz_status_transition(&self, id: &str) -> Result<()> {
@@ -333,25 +339,31 @@ impl BTCSendSwap {
     /// Updates the state of monitored reverse swaps in the cache table. This includes the blocking
     /// reverse swaps as well, since the blocking statuses are a subset of the monitored statuses.
     async fn refresh_monitored_reverse_swaps(&self) -> Result<()> {
-        let to_check = self.list_monitored().await?;
-        for rs in to_check {
-            let id = rs.id.clone();
-            let api = self.reverse_swapper_api.clone();
-            let fresh_boltz_status = api.get_dynamic_boltz_status(id.clone()).await?;
-            let fresh_breez_status = rs
-                .get_dynamic_breez_status(
-                    self.persister.clone(),
-                    self.chain_service.clone(),
-                    self.config.network,
-                )
-                .await?;
-
-            match self.persister.update_reverse_swap_boltz_status(&id, &fresh_boltz_status, &fresh_breez_status) {
-                Ok(_) => info!("Updated Boltz status for reverse swap ID {id} to {fresh_boltz_status:?}"),
-                Err(e) => error!("Failed to update Boltz status for reverse swap ID {id} to {fresh_breez_status:?}: {e}"),
-            }
+        for rsi in self.list_monitored().await? {
+            self.refresh_reverse_swap(rsi).await?;
         }
         Ok(())
+    }
+
+    /// Updates the state of given reverse swaps in the cache table
+    async fn refresh_reverse_swap(&self, rsi: ReverseSwapInfo) -> Result<()> {
+        let id = rsi.id.clone();
+        let api = self.reverse_swapper_api.clone();
+        let fresh_boltz_status = api.get_dynamic_boltz_status(id.clone()).await?;
+        let fresh_breez_status = rsi
+            .get_dynamic_breez_status(
+                self.persister.clone(),
+                self.chain_service.clone(),
+                self.config.network,
+            )
+            .await?;
+
+        debug!("Got fresh statuses for reverse swap ID {id}: Breez status {fresh_boltz_status:?}, Boltz status {fresh_boltz_status:?}");
+        self.persister.update_reverse_swap_boltz_status(
+            &id,
+            &fresh_boltz_status,
+            &fresh_breez_status,
+        )
     }
 
     /// Returns the ongoing reverse swaps which have a status that block the creation of new reverse swaps
