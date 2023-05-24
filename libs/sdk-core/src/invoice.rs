@@ -121,12 +121,12 @@ pub fn add_lsp_routing_hints(
                 .route_hints()
                 .into_iter()
                 .filter(|hint| {
-                    return hint.clone().0.into_iter().all(|hop| {
-                        return lsp_hint.clone().hops.into_iter().all(|lsp_hop| {
-                            return hop.src_node_id.serialize().encode_hex::<String>()
-                                != lsp_hop.src_node_id;
-                        });
-                    });
+                    hint.clone().0.into_iter().all(|hop| {
+                        lsp_hint.clone().hops.into_iter().all(|lsp_hop| {
+                            hop.src_node_id.serialize().encode_hex::<String>()
+                                != lsp_hop.src_node_id
+                        })
+                    })
                 })
                 .collect();
 
