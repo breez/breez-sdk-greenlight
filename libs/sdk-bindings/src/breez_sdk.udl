@@ -279,6 +279,15 @@ dictionary SwapInfo {
     string? last_redeem_error;
 };
 
+dictionary ReverseSwapPairInfo {
+    u64 min;
+    u64 max;
+    string fees_hash;
+    f64 fees_percentage;
+    u64 fees_lockup;
+    u64 fees_claim;
+};
+
 dictionary BitcoinAddressData {
     string address;
     Network network;
@@ -294,7 +303,7 @@ dictionary LnUrlErrorData {
 dictionary LnUrlPayRequestData {
     string callback;
     u64 min_sendable;
-    u64 max_sendable; 
+    u64 max_sendable;
     string metadata_str;
     u16 comment_allowed;
     string domain;
@@ -343,7 +352,7 @@ dictionary RecommendedFees {
 
 [Enum]
 interface InputType {
-    BitcoinAddress(BitcoinAddressData address);   
+    BitcoinAddress(BitcoinAddressData address);
     Bolt11(LNInvoice invoice);
     NodeId(string node_id);
     Url(string url);
@@ -362,7 +371,7 @@ interface BlockingBreezServices {
 
    [Throws=SDKError]
    Payment send_payment(string bolt11, u64? amount_sats);
-    
+
    [Throws=SDKError]
    Payment send_spontaneous_payment(string node_id, u64 amount_sats);
 
@@ -391,7 +400,7 @@ interface BlockingBreezServices {
    sequence<Rate> fetch_fiat_rates();
 
    [Throws=SDKError]
-   sequence<FiatCurrency> list_fiat_currencies();        
+   sequence<FiatCurrency> list_fiat_currencies();
 
    [Throws=SDKError]
    sequence<LspInformation> list_lsps();
@@ -403,10 +412,10 @@ interface BlockingBreezServices {
    LspInformation? fetch_lsp_info(string lsp_id);
 
    [Throws=SDKError]
-   string? lsp_id();   
+   string? lsp_id();
 
    [Throws=SDKError]
-   void close_lsp_channels(); 
+   void close_lsp_channels();
 
    [Throws=SDKError]
    SwapInfo receive_onchain();
@@ -416,9 +425,12 @@ interface BlockingBreezServices {
 
    [Throws=SDKError]
    sequence<SwapInfo> list_refundables();
-   
+
    [Throws=SDKError]
-   string refund(string swap_address, string to_address, u32 sat_per_vbyte); 
+   string refund(string swap_address, string to_address, u32 sat_per_vbyte);
+
+   [Throws=SDKError]
+   ReverseSwapPairInfo fetch_reverse_swap_fees();
 
    [Throws=SDKError]
    string execute_dev_command(string command);

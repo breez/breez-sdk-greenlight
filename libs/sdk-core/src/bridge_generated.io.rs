@@ -177,6 +177,11 @@ pub extern "C" fn wire_refund(
 }
 
 #[no_mangle]
+pub extern "C" fn wire_fetch_reverse_swap_fees(port_: i64) {
+    wire_fetch_reverse_swap_fees_impl(port_)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_execute_command(port_: i64, command: *mut wire_uint_8_list) {
     wire_execute_command_impl(port_, command)
 }
