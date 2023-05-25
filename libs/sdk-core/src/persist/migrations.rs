@@ -272,10 +272,10 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
        DROP TABLE old_swaps;            
        ",
 
-        // reverse_swaps      holds the immutable data
+        // sync.reverse_swaps holds the immutable data
         // reverse_swaps_info holds the cached data, which can be reconstructed by any client
        "
-       CREATE TABLE IF NOT EXISTS reverse_swaps (
+       CREATE TABLE IF NOT EXISTS sync.reverse_swaps (
         id TEXT PRIMARY KEY NOT NULL,
         created_at INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP,
         local_preimage BLOB NOT NULL UNIQUE,

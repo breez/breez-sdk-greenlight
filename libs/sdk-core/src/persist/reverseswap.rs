@@ -11,7 +11,7 @@ impl SqliteStorage {
         let tx = con.transaction()?;
 
         tx.execute(
-            "INSERT INTO reverse_swaps (id, created_at, local_preimage, local_private_key, destination_address, timeout_block_height, hodl_bolt11, onchain_amount_sat, redeem_script)\
+            "INSERT INTO sync.reverse_swaps (id, created_at, local_preimage, local_private_key, destination_address, timeout_block_height, hodl_bolt11, onchain_amount_sat, redeem_script)\
             VALUES (:id, :created_at, :local_preimage, :local_private_key, :destination_address, :timeout_block_height, :hodl_bolt11, :onchain_amount_sat, :redeem_script)",
             named_params! {
                 ":id": rsi.id,
@@ -94,7 +94,7 @@ impl SqliteStorage {
         "
             SELECT
              *
-            FROM reverse_swaps
+            FROM sync.reverse_swaps
              LEFT JOIN reverse_swaps_info ON reverse_swaps.id = reverse_swaps_info.id
             "
         .to_string()
