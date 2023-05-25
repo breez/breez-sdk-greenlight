@@ -380,6 +380,7 @@ dependencies = [
  "hex",
  "log",
  "once_cell",
+ "qrcode-rs",
  "rustyline",
  "serde",
  "serde_json",
@@ -2196,6 +2197,12 @@ checksum = "379119666929a1afd7a043aa6cf96fa67a6dce9af60c88095a4686dbce4c9c88"
 dependencies = [
  "prost 0.11.8",
 ]
+
+[[package]]
+name = "qrcode-rs"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f61095296b64ff214ce25eb3c5de8e804833ed8deb7a73dd5d2c68850b8ef671"
 
 [[package]]
 name = "querystring"

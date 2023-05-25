@@ -10,6 +10,8 @@ use breez_sdk_core::{
     PaymentTypeFilter,
 };
 use once_cell::sync::{Lazy, OnceCell};
+use qrcode_rs::render::unicode;
+use qrcode_rs::{EcLevel, QrCode};
 use rustyline::Editor;
 
 use crate::persist::CliPersistence;
@@ -137,8 +139,11 @@ pub(crate) async fn handle_command(
             amount,
             description,
         } => {
-            let res = sdk()?.receive_payment(amount, description).await?;
-            serde_json::to_string_pretty(&res).map_err(|e| e.into())
+            let invoice = sdk()?.receive_payment(amount, description).await?;
+            let mut result = serde_json::to_string(&invoice)?;
+            result.push('\n');
+            result.push_str(&build_qr_text(&invoice.bolt11));
+            Ok(result)
         }
         Commands::SendPayment { bolt11, amount } => {
             let payment = sdk()?.send_payment(bolt11, amount).await?;
@@ -286,4 +291,13 @@ pub(crate) async fn handle_command(
             Ok(format!("Here your {:?} url: {}", provider, res))
         }
     }
+}
+
+fn build_qr_text(text: &str) -> String {
+    QrCode::with_error_correction_level(text, EcLevel::L)
+        .unwrap()
+        .render::<unicode::Dense1x2>()
+        .dark_color(unicode::Dense1x2::Light)
+        .light_color(unicode::Dense1x2::Dark)
+        .build()
 }
