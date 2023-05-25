@@ -139,9 +139,11 @@ pub(crate) async fn handle_command(
             amount,
             description,
         } => {
-            let res = sdk()?.receive_payment(amount, description).await?;
-            info!("{:?}", res);
-            Ok(build_qr_text(&res.bolt11))
+            let invoice = sdk()?.receive_payment(amount, description).await?;
+            let mut result = serde_json::to_string(&invoice)?;
+            result.push('\n');
+            result.push_str(&build_qr_text(&invoice.bolt11));
+            Ok(result)
         }
         Commands::SendPayment { bolt11, amount } => {
             let payment = sdk()?.send_payment(bolt11, amount).await?;
