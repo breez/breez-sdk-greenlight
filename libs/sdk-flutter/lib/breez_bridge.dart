@@ -70,11 +70,15 @@ class BreezBridge {
     required Config config,
     required Network network,
     required Uint8List seed,
+    String? inviteCode,
+    GreenlightCredentials? registerCredentials,
   }) async {
     var creds = await _lnToolkit.registerNode(
       config: config,
       network: network,
       seed: seed,
+      inviteCode: inviteCode,
+      registerCredentials: registerCredentials,
     );
     await fetchNodeData();
     return creds;
