@@ -267,9 +267,9 @@ dictionary SwapInfo {
     sequence<u8> swapper_public_key;
     sequence<u8> script;
     string? bolt11;
-    u32 paid_sats;
-    u32 unconfirmed_sats;
-    u32 confirmed_sats;
+    u64 paid_sats;
+    u64 unconfirmed_sats;
+    u64 confirmed_sats;
     SwapStatus status;
     sequence<string> refund_tx_ids;
     sequence<string> unconfirmed_tx_ids;

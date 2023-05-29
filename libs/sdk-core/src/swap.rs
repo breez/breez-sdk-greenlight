@@ -387,7 +387,7 @@ impl BTCReceiveSwap {
             let invoice = self
                 .payment_receiver
                 .receive_payment(
-                    swap_info.confirmed_sats as u64,
+                    swap_info.confirmed_sats,
                     String::from("Bitcoin Transfer"),
                     Some(swap_info.preimage),
                 )
@@ -404,7 +404,7 @@ impl BTCReceiveSwap {
         let payreq = swap_info.bolt11.unwrap();
         let ln_invoice = parse_invoice(payreq.clone())?;
         debug!("swap info confirmed = {}", swap_info.confirmed_sats);
-        if ln_invoice.amount_msat.unwrap() != (swap_info.confirmed_sats as u64 * 1000) {
+        if ln_invoice.amount_msat.unwrap() != (swap_info.confirmed_sats * 1000) {
             warn!(
                 "invoice amount doesn't match confirmed sats {:?}",
                 ln_invoice.amount_msat.unwrap()
@@ -554,7 +554,7 @@ fn create_refund_tx(
     let confirmed_amount: u64 = utxos
         .confirmed
         .iter()
-        .fold(0, |accum, item| accum + item.value as u64);
+        .fold(0, |accum, item| accum + item.value);
 
     // create the tx inputs
     let txins: Vec<TxIn> = utxos
@@ -602,7 +602,7 @@ fn create_refund_tx(
         let sig = signer.segwit_signature_hash(
             index,
             input_script,
-            utxos.confirmed[index].value as u64,
+            utxos.confirmed[index].value,
             EcdsaSighashType::All,
         )?;
         let msg = Message::from_slice(&sig[..])?;

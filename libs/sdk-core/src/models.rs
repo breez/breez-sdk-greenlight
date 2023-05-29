@@ -686,9 +686,9 @@ pub struct SwapInfo {
 
     // dynamic data
     pub bolt11: Option<String>,
-    pub paid_sats: u32,
-    pub confirmed_sats: u32,
-    pub unconfirmed_sats: u32,
+    pub paid_sats: u64,
+    pub confirmed_sats: u64,
+    pub unconfirmed_sats: u64,
     pub status: SwapStatus,
     pub refund_tx_ids: Vec<String>,
     pub unconfirmed_tx_ids: Vec<String>,

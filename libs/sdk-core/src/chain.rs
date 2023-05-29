@@ -15,7 +15,7 @@ pub trait ChainService: Send + Sync {
 #[derive(Clone)]
 pub struct Utxo {
     pub out: OutPoint,
-    pub value: u32,
+    pub value: u64,
     pub block_height: Option<u32>,
 }
 
@@ -26,7 +26,7 @@ pub struct AddressUtxos {
 }
 
 impl AddressUtxos {
-    pub(crate) fn unconfirmed_sats(&self) -> u32 {
+    pub(crate) fn unconfirmed_sats(&self) -> u64 {
         self.unconfirmed
             .iter()
             .fold(0, |accum, item| accum + item.value)
@@ -39,7 +39,7 @@ impl AddressUtxos {
             .collect()
     }
 
-    pub(crate) fn confirmed_sats(&self) -> u32 {
+    pub(crate) fn confirmed_sats(&self) -> u64 {
         self.confirmed
             .iter()
             .fold(0, |accum, item| accum + item.value)
@@ -164,7 +164,7 @@ pub struct Vout {
     pub scriptpubkey_asm: String,
     pub scriptpubkey_type: String,
     pub scriptpubkey_address: String,
-    pub value: u32,
+    pub value: u64,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
