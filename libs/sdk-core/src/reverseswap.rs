@@ -139,10 +139,8 @@ impl BTCSendSwap {
             sleep(Duration::from_secs(5)).await;
 
             info!("Checking reverse swap status, attempt {i}");
-            let reverse_swap_boltz_status = self
-                .reverse_swapper_api
-                .get_dynamic_boltz_status(id.into())
-                .await?;
+            let reverse_swap_boltz_status =
+                self.reverse_swapper_api.get_boltz_status(id.into()).await?;
             if let LockTxMempool { transaction: _ } = reverse_swap_boltz_status {
                 return Ok(());
             }
@@ -403,7 +401,7 @@ impl BTCSendSwap {
     }
 
     /// Determine the reverse swap status, based on the the states of the lockup and claim tx
-    pub(crate) async fn get_dynamic_breez_status(
+    pub(crate) async fn get_breez_status(
         &self,
         rsi: &ReverseSwapInfo,
     ) -> Result<ReverseSwapStatus> {
@@ -435,14 +433,13 @@ impl BTCSendSwap {
         Ok(())
     }
 
-    /// Updates the state of given reverse swaps in the cache table
+    /// Updates the state of given reverse swap in the cache table
     async fn refresh_reverse_swap(&self, rsi: ReverseSwapInfo) -> Result<()> {
         let id = rsi.id.clone();
-        let fresh_breez_status = self.get_dynamic_breez_status(&rsi).await?;
+        let new_status = self.get_breez_status(&rsi).await?;
 
-        debug!("New status for reverse swap {id} is {fresh_breez_status:?}");
-        self.persister
-            .update_reverse_swap_boltz_status(&id, &fresh_breez_status)
+        debug!("New status for reverse swap {id} is {new_status:?}");
+        self.persister.update_reverse_swap_status(&id, &new_status)
     }
 
     /// Returns the ongoing reverse swaps which have a status that block the creation of new reverse swaps

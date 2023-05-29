@@ -38,7 +38,7 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub(crate) fn update_reverse_swap_boltz_status(
+    pub(crate) fn update_reverse_swap_status(
         &self,
         id: &str,
         status: &ReverseSwapStatus,

@@ -213,7 +213,7 @@ impl ReverseSwapperAPI for BoltzApi {
     ///
     /// Boltz API errors (e.g. providing an invalid ID arg) are returned as a successful response of
     /// type [BoltzApiCreateReverseSwapResponse::BoltzApiError]
-    async fn get_dynamic_boltz_status(&self, id: String) -> Result<BoltzApiReverseSwapStatus> {
+    async fn get_boltz_status(&self, id: String) -> Result<BoltzApiReverseSwapStatus> {
         Client::new()
             .post(GET_SWAP_STATUS_ENDPOINT)
             .header(CONTENT_TYPE, "application/json")

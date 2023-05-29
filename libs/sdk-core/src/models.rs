@@ -400,7 +400,7 @@ pub(crate) trait ReverseSwapperAPI: Send + Sync {
     ) -> Result<BoltzApiCreateReverseSwapResponse>;
 
     /// Performs a live lookup of the reverse swap's status on the Boltz API
-    async fn get_dynamic_boltz_status(&self, id: String) -> Result<BoltzApiReverseSwapStatus>;
+    async fn get_boltz_status(&self, id: String) -> Result<BoltzApiReverseSwapStatus>;
 }
 
 /// Internal SDK log entry
