@@ -161,11 +161,13 @@ impl BTCSendSwap {
         routing_node: String,
     ) -> Result<ReverseSwapInfo> {
         let reverse_swap_private_data = crate::swap::create_swap_keys()?;
+        let preimage_hash_from_request = reverse_swap_private_data.preimage_hash_bytes();
+
         let boltz_response = self
             .reverse_swapper_api
             .create_reverse_swap_on_remote(
                 amount_sat,
-                reverse_swap_private_data.preimage_hash_bytes().to_hex(),
+                preimage_hash_from_request.to_hex(),
                 reverse_swap_private_data.public_key()?.to_hex(),
                 pair_hash.clone(),
                 routing_node,
@@ -188,7 +190,9 @@ impl BTCSendSwap {
                         breez_status: ReverseSwapStatus::Initial,
                     },
                 };
-                res.validate(response.lockup_address, self.config.network)?;
+
+                res.validate_hodl_invoice(amount_sat * 1000, &preimage_hash_from_request)?;
+                res.validate_redeem_script(response.lockup_address, self.config.network)?;
                 Ok(res)
             }
             BoltzApiCreateReverseSwapResponse::BoltzApiError { error } => Err(anyhow!(error)),

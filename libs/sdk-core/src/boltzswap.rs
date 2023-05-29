@@ -185,7 +185,7 @@ impl ReverseSwapperAPI for BoltzApi {
         Client::new()
             .post(CREATE_REVERSE_SWAP_ENDPOINT)
             .header(CONTENT_TYPE, "application/json")
-            .body(get_boltz_reverse_swap_args(
+            .body(build_boltz_reverse_swap_args(
                 amount_sat,
                 preimage_hash_hex,
                 pair_hash.clone(),
@@ -256,7 +256,7 @@ pub async fn reverse_swap_pair_info() -> Result<ReverseSwapPairInfo> {
     }
 }
 
-fn get_boltz_reverse_swap_args(
+fn build_boltz_reverse_swap_args(
     amount_sat: u64,
     preimage_hash_hex: String,
     pair_hash: String,

@@ -5,7 +5,7 @@ use anyhow::{anyhow, Result};
 use bitcoin::blockdata::opcodes;
 use bitcoin::blockdata::script::Builder;
 use bitcoin::hashes::hex::{FromHex, ToHex};
-use bitcoin::hashes::Hash;
+use bitcoin::hashes::{sha256, Hash};
 use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::{Address, Script};
@@ -289,7 +289,11 @@ impl ReverseSwapInfo {
     ///
     /// * `received_lockup_address` - The lockup address, as received from Boltz in the create rev swap API response
     /// * `network` - The network type which is one of (Bitcoin, Testnet, Signet, Regtest)
-    pub fn validate(&self, received_lockup_address: String, network: Network) -> Result<()> {
+    pub(crate) fn validate_redeem_script(
+        &self,
+        received_lockup_address: String,
+        network: Network,
+    ) -> Result<()> {
         let redeem_script_received = Script::from_hex(&self.redeem_script)?;
         let asm = redeem_script_received.asm();
         debug!("received asm = {asm:?}");
@@ -323,6 +327,34 @@ impl ReverseSwapInfo {
                 }
             }
             false => Err(anyhow!("Unexpected redeem script")),
+        }
+    }
+
+    /// Validates the received HODL invoice:
+    ///
+    /// - checks if amount matches the amount requested by the user
+    /// - checks if the payment hash is the same preimage hash (derived from local secret bytes)
+    /// included in the create request
+    pub(crate) fn validate_hodl_invoice(
+        &self,
+        amount_req_msat: u64,
+        preimage_hash_req: &[u8],
+    ) -> Result<()> {
+        let inv: lightning_invoice::Invoice = self.hodl_bolt11.parse()?;
+
+        // Validate if received invoice has the same amount as requested by the user
+        let amount_from_invoice_msat = inv.amount_milli_satoshis().unwrap_or_default();
+        match amount_from_invoice_msat == amount_req_msat {
+            false => Err(anyhow!("Invoice amount doesn't match the request")),
+            true => {
+                // Validate if received invoice has the same payment hash as the preimage hash in the request
+                let preimage_hash_from_invoice = inv.payment_hash();
+                let preimage_hash_from_req = &sha256::Hash::from_slice(preimage_hash_req)?;
+                match preimage_hash_from_invoice == preimage_hash_from_req {
+                    false => Err(anyhow!("Invoice payment hash doesn't match the request")),
+                    true => Ok(()),
+                }
+            }
         }
     }
 
