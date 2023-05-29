@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
+use serde_json::to_string_pretty;
 
 use anyhow::{anyhow, Result};
 use bitcoin::Txid;
@@ -8,7 +9,7 @@ use serde_json::json;
 
 use const_format::concatcp;
 use reqwest::header::CONTENT_TYPE;
-use reqwest::Client;
+use reqwest::{Body, Client};
 
 use crate::models::ReverseSwapPairInfo;
 use crate::reverseswap::CreateReverseSwapResponse;
@@ -181,7 +182,7 @@ impl ReverseSwapperAPI for BoltzApi {
         pair_hash: String,
         routing_node: String,
     ) -> Result<BoltzApiCreateReverseSwapResponse> {
-        let response = Client::new()
+        Client::new()
             .post(CREATE_REVERSE_SWAP_ENDPOINT)
             .header(CONTENT_TYPE, "application/json")
             .body(get_boltz_reverse_swap_args(
@@ -194,13 +195,13 @@ impl ReverseSwapperAPI for BoltzApi {
             .send()
             .await?
             .text()
-            .await?;
-
-        debug!(
-            "Boltz API create response: {}",
-            serde_json::to_string_pretty(&response)?
-        );
-        serde_json::from_str(&response).map_err(|err| anyhow!(err))
+            .await
+            .map_err(|e| anyhow!("Failed to request creation of reverse swap: {e}"))
+            .and_then(|res| {
+                trace!("Boltz API create raw response {}", to_string_pretty(&res)?);
+                serde_json::from_str::<BoltzApiCreateReverseSwapResponse>(&res)
+                    .map_err(|e| anyhow!("Failed to parse crate swap response: {e}"))
+            })
     }
 
     /// Call and parse response as per https://docs.boltz.exchange/en/latest/api/#getting-status-of-a-swap
@@ -213,25 +214,20 @@ impl ReverseSwapperAPI for BoltzApi {
     /// Boltz API errors (e.g. providing an invalid ID arg) are returned as a successful response of
     /// type [BoltzApiCreateReverseSwapResponse::BoltzApiError]
     async fn get_dynamic_boltz_status(&self, id: String) -> Result<BoltzApiReverseSwapStatus> {
-        let response = Client::new()
+        Client::new()
             .post(GET_SWAP_STATUS_ENDPOINT)
             .header(CONTENT_TYPE, "application/json")
-            .body(
-                json!({
-                    "id": id,
-                })
-                .to_string(),
-            )
+            .body(Body::from(json!({ "id": id }).to_string()))
             .send()
             .await?
             .text()
-            .await?;
-
-        debug!(
-            "Boltz API swap status response: {}",
-            serde_json::to_string_pretty(&response)?
-        );
-        serde_json::from_str(&response).map_err(|err| anyhow!(err))
+            .await
+            .map_err(|e| anyhow!("Failed to request swap status: {e}"))
+            .and_then(|res| {
+                trace!("Boltz API status raw response {}", to_string_pretty(&res)?);
+                serde_json::from_str::<BoltzApiReverseSwapStatus>(&res)
+                    .map_err(|e| anyhow!("Failed to parse get status response: {e}"))
+            })
     }
 }
 
