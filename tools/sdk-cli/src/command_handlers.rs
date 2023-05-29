@@ -165,7 +165,7 @@ pub(crate) async fn handle_command(
             for rsi in &sdk()?.in_progress_reverse_swaps().await? {
                 res.push(format!(
                     "Reverse swap {} is in progress with status {:?}",
-                    rsi.id, rsi.breez_status
+                    rsi.id, rsi.status
                 ));
             }
             serde_json::to_string_pretty(&res).map_err(|e| e.into())
