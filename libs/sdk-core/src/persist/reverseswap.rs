@@ -1,5 +1,4 @@
 use super::db::SqliteStorage;
-use crate::boltzswap::BoltzApiReverseSwapStatus;
 use crate::{ReverseSwapInfo, ReverseSwapInfoCached, ReverseSwapStatus};
 use anyhow::Result;
 use rusqlite::types::FromSqlError;
@@ -27,12 +26,11 @@ impl SqliteStorage {
         )?;
 
         tx.execute(
-            "INSERT INTO reverse_swaps_info (id, boltz_api_status, breez_status)\
-            VALUES (:id, :boltz_api_status, :breez_status)",
+            "INSERT INTO reverse_swaps_info (id, status)\
+            VALUES (:id, :status)",
             named_params! {
                 ":id": rsi.id,
-                ":boltz_api_status": serde_json::to_value(rsi.cache.boltz_api_status.clone())?,
-                ":breez_status": serde_json::to_value(rsi.cache.breez_status)?
+                ":status": serde_json::to_value(rsi.cache.status)?
             },
         )?;
 
@@ -43,14 +41,12 @@ impl SqliteStorage {
     pub(crate) fn update_reverse_swap_boltz_status(
         &self,
         id: &str,
-        boltz_api_status: &BoltzApiReverseSwapStatus,
-        breez_status: &ReverseSwapStatus,
+        status: &ReverseSwapStatus,
     ) -> Result<()> {
         self.get_connection()?.execute(
-            "UPDATE reverse_swaps_info SET boltz_api_status=:boltz_api_status,breez_status=:breez_status where id=:id",
+            "UPDATE reverse_swaps_info SET status=:status where id=:id",
             named_params! {
-             ":boltz_api_status": serde_json::to_value(boltz_api_status)?,
-             ":breez_status": serde_json::to_value(breez_status)?,
+             ":status": serde_json::to_value(status)?,
              ":id": id,
             },
         )?;
@@ -82,9 +78,7 @@ impl SqliteStorage {
             onchain_amount_sat: row.get("onchain_amount_sat")?,
             redeem_script: row.get("redeem_script")?,
             cache: ReverseSwapInfoCached {
-                boltz_api_status: serde_json::from_value(row.get("boltz_api_status")?)
-                    .map_err(|_| FromSqlError::InvalidType)?,
-                breez_status: serde_json::from_value(row.get("breez_status")?)
+                status: serde_json::from_value(row.get("status")?)
                     .map_err(|_| FromSqlError::InvalidType)?,
             },
         })

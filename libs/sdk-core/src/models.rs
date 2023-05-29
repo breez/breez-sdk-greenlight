@@ -5,7 +5,7 @@ use anyhow::{anyhow, Result};
 use bitcoin::blockdata::opcodes;
 use bitcoin::blockdata::script::Builder;
 use bitcoin::hashes::hex::{FromHex, ToHex};
-use bitcoin::hashes::{sha256, Hash};
+use bitcoin::hashes::Hash;
 use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::{Address, Script};
@@ -16,20 +16,17 @@ use lightning_invoice::RawInvoice;
 use ripemd::Digest;
 use ripemd::Ripemd160;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use strum_macros::Display;
 use strum_macros::EnumString;
 use tokio::sync::mpsc;
 use tonic::Streaming;
 
-use crate::chain::ChainService;
 use crate::fiat::{FiatCurrency, Rate};
 use crate::grpc::{PaymentInformation, RegisterPaymentReply};
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lsp::LspInformation;
 use crate::models::Network::*;
-use crate::persist::db::SqliteStorage;
-use crate::{parse_invoice, LnUrlErrorData};
+use crate::LnUrlErrorData;
 
 /// Different types of supported payments
 #[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
@@ -178,75 +175,10 @@ pub struct ReverseSwapInfo {
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct ReverseSwapInfoCached {
-    /// Reverse swap status, as reported by the Boltz API. Updated on every [crate::BreezServices::sync] for monitored states.
-    pub boltz_api_status: BoltzApiReverseSwapStatus,
-    pub breez_status: ReverseSwapStatus,
+    pub status: ReverseSwapStatus,
 }
 
 impl ReverseSwapInfo {
-    /// Dynamically determine the status, based on the cached Boltz API status.
-    ///
-    /// In case of [BoltzApiReverseSwapStatus::SwapCreated], the payment status is looked up on the LN node,
-    /// to distinguish between a reverse swap that is still ongoing and one where the HODL payment failed.
-    pub(crate) async fn get_dynamic_breez_status(
-        &self,
-        persister: Arc<SqliteStorage>,
-        chain_service: Arc<dyn ChainService>,
-        network: Network,
-    ) -> Result<ReverseSwapStatus> {
-        let status = match &self.cache.boltz_api_status {
-            BoltzApiReverseSwapStatus::SwapCreated => {
-                let invoice = parse_invoice(&self.invoice)?;
-                match persister.get_payment_by_hash(&invoice.payment_hash)? {
-                    None => ReverseSwapStatus::Cancelled, // We only remove a pending payment if it failed
-                    Some(payment) => match payment.pending {
-                        true => ReverseSwapStatus::Initial, // Payment is in progress
-                        false => {
-                            // The HODL invoice cannot be settled so early in the rev swap workflow
-                            // The only way it has pending=false is if it failed
-                            // In that case, it should have been removed from our DB, so finding it is unexpected
-                            warn!(
-                                "Failed payment with hash {} unexpectedly found in DB",
-                                &invoice.payment_hash
-                            );
-                            ReverseSwapStatus::Cancelled
-                        }
-                    },
-                }
-            }
-            BoltzApiReverseSwapStatus::LockTxMempool { .. } => ReverseSwapStatus::InProgress,
-            BoltzApiReverseSwapStatus::LockTxConfirmed { .. } => ReverseSwapStatus::InProgress,
-
-            // Reverse swap completed successfully on the Boltz side (they settled the HODL invoice)
-            // Boltz doesn't further distinguish between "claim tx in mempool" vs "claim tx confirmed"
-            // Therefore, to fully confirm the rev swap is completed, we check for claim tx confirmation
-            BoltzApiReverseSwapStatus::InvoiceSettled => {
-                let lockup_addr = self.get_lockup_address(network)?;
-                let is_claim_tx_confirmed = chain_service
-                    .address_transactions(self.claim_pubkey.clone())
-                    .await?
-                    .into_iter()
-                    .filter(|t| t.status.block_height.is_some())
-                    .any(|tx| {
-                        tx.vin
-                            .iter()
-                            .any(|vin| vin.prevout.scriptpubkey_address == lockup_addr.to_string())
-                    });
-
-                match is_claim_tx_confirmed {
-                    false => ReverseSwapStatus::CompletedSeen,
-                    true => ReverseSwapStatus::CompletedConfirmed,
-                }
-            }
-
-            BoltzApiReverseSwapStatus::InvoiceExpired => ReverseSwapStatus::Cancelled,
-            BoltzApiReverseSwapStatus::SwapExpired => ReverseSwapStatus::Cancelled,
-            BoltzApiReverseSwapStatus::LockTxFailed => ReverseSwapStatus::Cancelled,
-            BoltzApiReverseSwapStatus::LockTxRefunded { .. } => ReverseSwapStatus::Cancelled,
-        };
-        Ok(status)
-    }
-
     /// Builds the expected redeem script
     fn build_expected_reverse_swap_script(
         preimage_hash: Vec<u8>,
@@ -300,7 +232,6 @@ impl ReverseSwapInfo {
 
         let sk = SecretKey::from_slice(&self.private_key)?;
         let pk = PublicKey::from_secret_key(&Secp256k1::new(), &sk);
-        let preimage_hash = bitcoin::hashes::sha256::Hash::hash(&self.preimage);
 
         // The 18th asm element is the refund address, provided by the Boltz service
         let asm_elements: Vec<&str> = asm.split(' ').collect();
@@ -308,8 +239,8 @@ impl ReverseSwapInfo {
         let refund_address_bytes = hex::decode(refund_address)?;
 
         let redeem_script_expected = Self::build_expected_reverse_swap_script(
-            preimage_hash.to_vec(),  // Preimage hash
-            pk.serialize().to_vec(), // Compressed pubkey
+            self.get_preimage_hash().to_vec(), // Preimage hash
+            pk.serialize().to_vec(),           // Compressed pubkey
             refund_address_bytes,
             self.timeout_block_height,
         )?;
@@ -335,11 +266,7 @@ impl ReverseSwapInfo {
     /// - checks if amount matches the amount requested by the user
     /// - checks if the payment hash is the same preimage hash (derived from local secret bytes)
     /// included in the create request
-    pub(crate) fn validate_hodl_invoice(
-        &self,
-        amount_req_msat: u64,
-        preimage_hash_req: &[u8],
-    ) -> Result<()> {
+    pub(crate) fn validate_hodl_invoice(&self, amount_req_msat: u64) -> Result<()> {
         let inv: lightning_invoice::Invoice = self.invoice.parse()?;
 
         // Validate if received invoice has the same amount as requested by the user
@@ -349,7 +276,7 @@ impl ReverseSwapInfo {
             true => {
                 // Validate if received invoice has the same payment hash as the preimage hash in the request
                 let preimage_hash_from_invoice = inv.payment_hash();
-                let preimage_hash_from_req = &sha256::Hash::from_slice(preimage_hash_req)?;
+                let preimage_hash_from_req = &self.get_preimage_hash();
                 match preimage_hash_from_invoice == preimage_hash_from_req {
                     false => Err(anyhow!("Invoice payment hash doesn't match the request")),
                     true => Ok(()),
@@ -363,6 +290,11 @@ impl ReverseSwapInfo {
         let redeem_script = Script::from_hex(&self.redeem_script)?;
         Ok(Address::p2wsh(&redeem_script, network.into()))
     }
+
+    /// Get the preimage hash sent in the create request
+    pub(crate) fn get_preimage_hash(&self) -> bitcoin::hashes::sha256::Hash {
+        bitcoin::hashes::sha256::Hash::hash(&self.preimage)
+    }
 }
 
 /// Simplified version of [ReverseSwapInfo], containing only the user-relevant fields
@@ -371,7 +303,7 @@ pub struct SimpleReverseSwapInfo {
     pub id: String,
     pub claim_pubkey: String,
     pub onchain_amount_sat: u64,
-    pub breez_status: ReverseSwapStatus,
+    pub status: ReverseSwapStatus,
 }
 
 impl From<ReverseSwapInfo> for SimpleReverseSwapInfo {
@@ -380,7 +312,7 @@ impl From<ReverseSwapInfo> for SimpleReverseSwapInfo {
             id: rsi.id,
             claim_pubkey: rsi.claim_pubkey,
             onchain_amount_sat: rsi.onchain_amount_sat,
-            breez_status: rsi.cache.breez_status,
+            status: rsi.cache.status,
         }
     }
 }

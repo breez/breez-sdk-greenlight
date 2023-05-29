@@ -289,8 +289,7 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
 
        CREATE TABLE IF NOT EXISTS reverse_swaps_info (
         id TEXT PRIMARY KEY NOT NULL,
-        boltz_api_status TEXT NOT NULL,
-        breez_status TEXT NOT NULL
+        status TEXT NOT NULL
        ) STRICT;
        ",
        "
