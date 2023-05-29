@@ -150,22 +150,22 @@ pub struct ReverseSwapInfo {
     /// The reverse swap ID, as reported by the Boltz API in case of a successful creation
     pub id: String,
 
-    /// Local timestamp when the reverse swap is created
-    pub created_at: i64,
+    /// The blockheight at the moment the reverse swap was created
+    pub created_at_block_height: u32,
 
     /// Locally generated preimage, revealed in the last step of the reverse swap
-    pub local_preimage: Vec<u8>,
+    pub preimage: Vec<u8>,
 
     /// Locally generated private key, used to sign the claim tx
-    pub local_private_key: Vec<u8>,
+    pub private_key: Vec<u8>,
 
     /// On-chain destination address, to which the reverse swap will finally send funds to
-    pub destination_address: String,
+    pub claim_pubkey: String,
 
     pub timeout_block_height: u32,
 
-    // Only available in the first response from Boltz API:
-    pub hodl_bolt11: String,
+    /// The HODL invoice
+    pub invoice: String,
     pub redeem_script: String,
 
     /// Amount of sats that will be locked.
@@ -196,7 +196,7 @@ impl ReverseSwapInfo {
     ) -> Result<ReverseSwapStatus> {
         let status = match &self.cache.boltz_api_status {
             BoltzApiReverseSwapStatus::SwapCreated => {
-                let invoice = parse_invoice(&self.hodl_bolt11)?;
+                let invoice = parse_invoice(&self.invoice)?;
                 match persister.get_payment_by_hash(&invoice.payment_hash)? {
                     None => ReverseSwapStatus::Cancelled, // We only remove a pending payment if it failed
                     Some(payment) => match payment.pending {
@@ -223,7 +223,7 @@ impl ReverseSwapInfo {
             BoltzApiReverseSwapStatus::InvoiceSettled => {
                 let lockup_addr = self.get_lockup_address(network)?;
                 let is_claim_tx_confirmed = chain_service
-                    .address_transactions(self.destination_address.clone())
+                    .address_transactions(self.claim_pubkey.clone())
                     .await?
                     .into_iter()
                     .filter(|t| t.status.block_height.is_some())
@@ -298,9 +298,9 @@ impl ReverseSwapInfo {
         let asm = redeem_script_received.asm();
         debug!("received asm = {asm:?}");
 
-        let sk = SecretKey::from_slice(&self.local_private_key)?;
+        let sk = SecretKey::from_slice(&self.private_key)?;
         let pk = PublicKey::from_secret_key(&Secp256k1::new(), &sk);
-        let preimage_hash = bitcoin::hashes::sha256::Hash::hash(&self.local_preimage);
+        let preimage_hash = bitcoin::hashes::sha256::Hash::hash(&self.preimage);
 
         // The 18th asm element is the refund address, provided by the Boltz service
         let asm_elements: Vec<&str> = asm.split(' ').collect();
@@ -340,7 +340,7 @@ impl ReverseSwapInfo {
         amount_req_msat: u64,
         preimage_hash_req: &[u8],
     ) -> Result<()> {
-        let inv: lightning_invoice::Invoice = self.hodl_bolt11.parse()?;
+        let inv: lightning_invoice::Invoice = self.invoice.parse()?;
 
         // Validate if received invoice has the same amount as requested by the user
         let amount_from_invoice_msat = inv.amount_milli_satoshis().unwrap_or_default();
@@ -369,8 +369,7 @@ impl ReverseSwapInfo {
 #[derive(Serialize)]
 pub struct SimpleReverseSwapInfo {
     pub id: String,
-    pub created_at: i64,
-    pub destination_address: String,
+    pub claim_pubkey: String,
     pub onchain_amount_sat: u64,
     pub breez_status: ReverseSwapStatus,
 }
@@ -379,8 +378,7 @@ impl From<ReverseSwapInfo> for SimpleReverseSwapInfo {
     fn from(rsi: ReverseSwapInfo) -> Self {
         Self {
             id: rsi.id,
-            created_at: rsi.created_at,
-            destination_address: rsi.destination_address,
+            claim_pubkey: rsi.claim_pubkey,
             onchain_amount_sat: rsi.onchain_amount_sat,
             breez_status: rsi.cache.breez_status,
         }

@@ -1,6 +1,5 @@
 use std::str::FromStr;
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::boltzswap::BoltzApiReverseSwapStatus::{LockTxMempool, SwapCreated};
 use crate::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
@@ -71,8 +70,8 @@ impl BTCSendSwap {
     }
 
     /// Validates the reverse swap arguments given by the user
-    fn validate_rev_swap_args(onchain_destination_address: &str) -> Result<()> {
-        Address::from_str(onchain_destination_address)
+    fn validate_rev_swap_args(claim_pubkey: &str) -> Result<()> {
+        Address::from_str(claim_pubkey)
             .map(|_| ())
             .map_err(|_e| anyhow!("Invalid destination address"))
     }
@@ -82,16 +81,16 @@ impl BTCSendSwap {
     pub(crate) async fn create_reverse_swap(
         &self,
         amount_sat: u64,
-        onchain_destination_address: String,
+        claim_pubkey: String,
         pair_hash: String,
         routing_node: String,
     ) -> Result<ReverseSwapInfo> {
-        Self::validate_rev_swap_args(&onchain_destination_address)?;
+        Self::validate_rev_swap_args(&claim_pubkey)?;
 
         let created_rsi = self
             .create_and_validate_rev_swap_on_remote(
                 amount_sat,
-                onchain_destination_address,
+                claim_pubkey,
                 pair_hash,
                 routing_node,
             )
@@ -107,7 +106,7 @@ impl BTCSendSwap {
         let res = tokio::select! {
             pay_thread_res = tokio::time::timeout(
                 Duration::from_secs(self.config.payment_timeout_sec as u64),
-                self.node_api.send_payment(created_rsi.hodl_bolt11.clone(), None)
+                self.node_api.send_payment(created_rsi.invoice.clone(), None)
             ) => {
                 // TODO It doesn't fail when trying to pay more sats than max_payable?
                 match pay_thread_res {
@@ -156,7 +155,7 @@ impl BTCSendSwap {
     async fn create_and_validate_rev_swap_on_remote(
         &self,
         amount_sat: u64,
-        onchain_destination_address: String,
+        claim_pubkey: String,
         pair_hash: String,
         routing_node: String,
     ) -> Result<ReverseSwapInfo> {
@@ -176,11 +175,11 @@ impl BTCSendSwap {
         match boltz_response {
             BoltzApiCreateReverseSwapResponse::BoltzApiSuccess(response) => {
                 let res = ReverseSwapInfo {
-                    created_at: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64,
-                    destination_address: onchain_destination_address,
-                    hodl_bolt11: response.invoice,
-                    local_preimage: reverse_swap_private_data.preimage,
-                    local_private_key: reverse_swap_private_data.priv_key,
+                    created_at_block_height: self.chain_service.current_tip().await?,
+                    claim_pubkey,
+                    invoice: response.invoice,
+                    preimage: reverse_swap_private_data.preimage,
+                    private_key: reverse_swap_private_data.priv_key,
                     timeout_block_height: response.timeout_block_height,
                     id: response.id,
                     onchain_amount_sat: response.onchain_amount,
@@ -217,7 +216,7 @@ impl BTCSendSwap {
     /// Builds and signs claim tx
     async fn create_claim_tx(&self, rs: &ReverseSwapInfo) -> Result<Transaction> {
         let lockup_addr = rs.get_lockup_address(self.config.network)?;
-        let destination_addr = Address::from_str(&rs.destination_address)?;
+        let claim_addr = Address::from_str(&rs.claim_pubkey)?;
         let redeem_script = Script::from_hex(&rs.redeem_script)?;
 
         match lockup_addr.address_type() {
@@ -246,7 +245,7 @@ impl BTCSendSwap {
 
                 let tx_out: Vec<TxOut> = vec![TxOut {
                     value: confirmed_amount,
-                    script_pubkey: destination_addr.script_pubkey(),
+                    script_pubkey: claim_addr.script_pubkey(),
                 }];
 
                 // construct the transaction
@@ -283,17 +282,14 @@ impl BTCSendSwap {
                         EcdsaSighashType::All,
                     )?;
                     let msg = Message::from_slice(&sig[..])?;
-                    let secret_key = SecretKey::from_slice(rs.local_private_key.as_slice())?;
+                    let secret_key = SecretKey::from_slice(rs.private_key.as_slice())?;
                     let sig = scpt.sign_ecdsa(&msg, &secret_key);
 
                     let mut sigvec = sig.serialize_der().to_vec();
                     sigvec.push(EcdsaSighashType::All as u8);
 
-                    let witness: Vec<Vec<u8>> = vec![
-                        sigvec,
-                        rs.local_preimage.clone(),
-                        claim_script_bytes.clone(),
-                    ];
+                    let witness: Vec<Vec<u8>> =
+                        vec![sigvec, rs.preimage.clone(), claim_script_bytes.clone()];
 
                     let mut signed_input = input.clone();
                     let w = Witness::from_vec(witness);

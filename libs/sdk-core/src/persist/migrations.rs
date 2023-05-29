@@ -277,12 +277,12 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
        "
        CREATE TABLE IF NOT EXISTS sync.reverse_swaps (
         id TEXT PRIMARY KEY NOT NULL,
-        created_at INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        local_preimage BLOB NOT NULL UNIQUE,
-        local_private_key BLOB NOT NULL UNIQUE,
-        destination_address TEXT NOT NULL,
+        created_at_block_height INTEGER NOT NULL,
+        preimage BLOB NOT NULL UNIQUE,
+        private_key BLOB NOT NULL UNIQUE,
+        claim_pubkey TEXT NOT NULL,
         timeout_block_height INTEGER NOT NULL,
-        hodl_bolt11 TEXT NOT NULL UNIQUE,
+        invoice TEXT NOT NULL UNIQUE,
         onchain_amount_sat INTEGER NOT NULL,
         redeem_script TEXT NOT NULL
        ) STRICT;
