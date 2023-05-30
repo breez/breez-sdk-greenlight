@@ -98,25 +98,31 @@
 //! * [BreezServices::list_refundables] to get a list of swaps
 //! * [BreezServices::refund] to broadcast a transaction for failed or expired swaps
 //!
-//! ### D. Using LNURL
+//! ### D. Sending to an on-chain address (swap-out)
+//!
+//! * [BreezServices::fetch_reverse_swap_fees] to get the current swap-out fees
+//! * [BreezServices::send_onchain] to start the swap-out
+//! * [BreezServices::in_progress_reverse_swaps] to see any in-progress swaps
+//!
+//! ### E. Using LNURL
 //!
 //! 1. [parse] the LNURL endpoint URL to get the workflow parameters.
 //! 2. After getting the user input or confirmation, complete the workflow with [BreezServices::lnurl_pay] or
 //! [BreezServices::lnurl_withdraw].
 //!
-//! ### E. Supporting fiat currencies
+//! ### F. Supporting fiat currencies
 //!
 //! * [BreezServices::list_fiat_currencies] to get the supported fiat currencies
 //! * [BreezServices::fetch_fiat_rates] to get the current exchange rates
 //! * [BreezServices::recommended_fees] for the recommended mempool fees
 //!
-//! ### F. Connecting to an LSP
+//! ### G. Connecting to an LSP
 //!
 //! * [BreezServices::list_lsps] to get a list of available LSPs
 //! * [BreezServices::connect_lsp] to connect to a chosen LSP
 //! * [BreezServices::lsp_info] to get [LspInformation] on the currently selected LSP
 //!
-//! ### G. Utilities
+//! ### H. Utilities
 //!
 //! Use [parse] to parse generic input. The input can come from the user, from a clicked link or from a QR code.
 //! The resulting [InputType] will tell you what the input is and how to treat it, as well as present relevant payload data

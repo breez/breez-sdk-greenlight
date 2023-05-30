@@ -9,7 +9,9 @@ use rusqlite_migration::{Migrations, M};
 use super::migrations::current_migrations;
 
 pub struct SqliteStorage {
+    /// Local DB. Exists only on this instance of the SDK.
     main_db_file: String,
+    /// Sync DB. Gets synchronized across the different instances that connect to the same wallet.
     sync_db_file: String,
 }
 

@@ -108,7 +108,9 @@ impl BTCReceiveSwap {
                 let hash_raw = hex::decode(details.payment_hash.clone())?;
                 let swap_info = self.persister.get_swap_info_by_hash(&hash_raw)?;
                 if swap_info.is_some() {
-                    let payment = self.persister.get_payment_by_hash(&details.payment_hash)?;
+                    let payment = self
+                        .persister
+                        .get_completed_payment_by_hash(&details.payment_hash)?;
                     if payment.is_some() {
                         self.persister.update_swap_paid_amount(
                             swap_info.unwrap().bitcoin_address,
@@ -141,14 +143,8 @@ impl BTCReceiveSwap {
         let node_id = node_state.unwrap().id;
         // create swap keys
         let swap_keys = create_swap_keys()?;
-        let secp = Secp256k1::new();
-        let private_key = SecretKey::from_slice(&swap_keys.priv_key)?;
-        let pubkey = PublicKey::from_secret_key(&secp, &private_key)
-            .serialize()
-            .to_vec();
-        let hash = Message::from_hashed_data::<sha256::Hash>(&swap_keys.preimage[..])
-            .as_ref()
-            .to_vec();
+        let pubkey = swap_keys.public_key_bytes()?;
+        let hash = swap_keys.preimage_hash_bytes();
 
         // use swap API to fetch a new swap address
         let swap_reply = self
@@ -354,13 +350,13 @@ impl BTCReceiveSwap {
 
         let payment = self
             .persister
-            .get_payment_by_hash(&hex::encode(swap_info.payment_hash.clone()))?;
-        debug!(
-            "found payment for hash {:?}, {:?}",
-            &hex::encode(swap_info.payment_hash.clone()),
-            payment
-        );
+            .get_completed_payment_by_hash(&hex::encode(swap_info.payment_hash.clone()))?;
         if payment.is_some() {
+            debug!(
+                "found payment for hash {:?}, {:?}",
+                &hex::encode(swap_info.payment_hash.clone()),
+                payment
+            );
             self.persister.update_swap_paid_amount(
                 bitcoin_address.clone(),
                 payment.unwrap().amount_msat as u32,
@@ -470,12 +466,35 @@ impl BTCReceiveSwap {
     }
 }
 
-struct SwapKeys {
-    pub priv_key: Vec<u8>,
-    pub preimage: Vec<u8>,
+pub(crate) struct SwapKeys {
+    pub(crate) priv_key: Vec<u8>,
+    pub(crate) preimage: Vec<u8>,
 }
 
-fn create_swap_keys() -> Result<SwapKeys> {
+impl SwapKeys {
+    pub(crate) fn secret_key(&self) -> Result<SecretKey> {
+        SecretKey::from_slice(&self.priv_key).map_err(|e| anyhow!(e))
+    }
+
+    pub(crate) fn public_key(&self) -> Result<PublicKey> {
+        Ok(PublicKey::from_secret_key(
+            &Secp256k1::new(),
+            &self.secret_key()?,
+        ))
+    }
+
+    pub(crate) fn public_key_bytes(&self) -> Result<Vec<u8>> {
+        Ok(self.public_key()?.serialize().to_vec())
+    }
+
+    pub(crate) fn preimage_hash_bytes(&self) -> Vec<u8> {
+        Message::from_hashed_data::<sha256::Hash>(&self.preimage[..])
+            .as_ref()
+            .to_vec()
+    }
+}
+
+pub(crate) fn create_swap_keys() -> Result<SwapKeys> {
     let priv_key = rand::thread_rng().gen::<[u8; 32]>().to_vec();
     let preimage = rand::thread_rng().gen::<[u8; 32]>().to_vec();
     Ok(SwapKeys { priv_key, preimage })
@@ -790,7 +809,9 @@ mod tests {
                 },
             },
         };
-        persister.insert_payments(&vec![payment.clone()]).unwrap();
+        persister
+            .insert_or_update_payments(&vec![payment.clone()])
+            .unwrap();
 
         // We test the case that a confirmed transaction was detected on chain that
         // sent funds to this address.
@@ -822,7 +843,7 @@ mod tests {
         // paid_amount of the swap.
         let mut payment = payment.clone();
         payment.amount_msat = 2000;
-        persister.insert_payments(&vec![payment]).unwrap();
+        persister.insert_or_update_payments(&vec![payment]).unwrap();
         swapper
             .on_event(BreezEvent::InvoicePaid {
                 details: crate::InvoicePaidDetails {

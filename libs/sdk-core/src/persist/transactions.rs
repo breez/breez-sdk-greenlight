@@ -8,12 +8,16 @@ use rusqlite::Row;
 use std::str::FromStr;
 
 impl SqliteStorage {
-    /// Inserts payments into the payments table.
+    /// Inserts payments into the payments table. Covers both pending and successful payments. Before
+    /// persisting, it automatically deletes previously pending payments
     ///
     /// Note that, if a payment has details of type [LnPaymentDetails] which contain a [SuccessActionProcessed],
     /// then the [LnPaymentDetails] will NOT be persisted. In that case, the [SuccessActionProcessed]
     /// can be inserted separately via [SqliteStorage::insert_lnurl_payment_external_info].
-    pub fn insert_payments(&self, transactions: &[Payment]) -> Result<()> {
+    pub fn insert_or_update_payments(&self, transactions: &[Payment]) -> Result<()> {
+        let deleted = self.delete_pending_lightning_payments()?;
+        debug!("Deleted {deleted} pending payments");
+
         let con = self.get_connection()?;
         let mut prep_statement = con.prepare(
             "
@@ -44,6 +48,15 @@ impl SqliteStorage {
             ))?;
         }
         Ok(())
+    }
+
+    fn delete_pending_lightning_payments(&self) -> Result<usize> {
+        self.get_connection()?
+            .execute(
+                "DELETE FROM payments WHERE payment_type = ?1 AND pending = true",
+                [PaymentType::Sent.to_string()],
+            )
+            .map_err(|e| anyhow!(e))
     }
 
     /// Inserts LNURL-related metadata associated with this payment
@@ -88,6 +101,7 @@ impl SqliteStorage {
     /// Constructs [Payment] by joining data in the `payment` and `payments_external_info` tables
     ///
     /// This queries all payments. To query a single payment, see [Self::get_payment_by_hash]
+    /// or [Self::get_completed_payment_by_hash]
     pub fn list_payments(
         &self,
         type_filter: PaymentTypeFilter,
@@ -129,7 +143,9 @@ impl SqliteStorage {
         Ok(vec)
     }
 
-    /// This queries a single payment by hash.
+    /// This queries a single payment by hash, which may be pending or completed.
+    ///
+    /// To lookup a completed payment by hash, use [Self::get_completed_payment_by_hash]
     ///
     /// To query all payments, see [Self::list_payments]
     pub(crate) fn get_payment_by_hash(&self, hash: &String) -> Result<Option<Payment>> {
@@ -159,6 +175,14 @@ impl SqliteStorage {
             )
             .optional()
             .map_err(|e| anyhow!(e))
+    }
+
+    /// Looks up a completed payment by hash.
+    ///
+    /// To include pending payments in the lookup as well, use [Self::get_payment_by_hash]
+    pub(crate) fn get_completed_payment_by_hash(&self, hash: &String) -> Result<Option<Payment>> {
+        let res = self.get_payment_by_hash(hash)?.filter(|p| !p.pending);
+        Ok(res)
     }
 
     fn sql_row_to_payment(&self, row: &Row) -> Result<Payment, rusqlite::Error> {
@@ -312,7 +336,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
     ];
     let storage = SqliteStorage::new(test_utils::create_test_sql_dir());
     storage.init()?;
-    storage.insert_payments(&txs)?;
+    storage.insert_or_update_payments(&txs)?;
     storage.insert_lnurl_payment_external_info(
         payment_hash_with_lnurl_success_action,
         Some(&sa),
@@ -344,7 +368,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
     let max_ts = storage.last_payment_timestamp()?;
     assert_eq!(max_ts, 1001);
 
-    storage.insert_payments(&txs)?;
+    storage.insert_or_update_payments(&txs)?;
     let retrieve_txs = storage.list_payments(PaymentTypeFilter::All, None, None)?;
     assert_eq!(retrieve_txs.len(), 2);
     assert_eq!(retrieve_txs, txs);

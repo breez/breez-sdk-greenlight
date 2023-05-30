@@ -271,14 +271,35 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
 
        DROP TABLE old_swaps;            
        ",
+
+        // sync.reverse_swaps holds the immutable data
+        // reverse_swaps_info holds the cached data, which can be reconstructed by any client
+       "
+       CREATE TABLE IF NOT EXISTS sync.reverse_swaps (
+        id TEXT PRIMARY KEY NOT NULL,
+        created_at_block_height INTEGER NOT NULL,
+        preimage BLOB NOT NULL UNIQUE,
+        private_key BLOB NOT NULL UNIQUE,
+        claim_pubkey TEXT NOT NULL,
+        timeout_block_height INTEGER NOT NULL,
+        invoice TEXT NOT NULL UNIQUE,
+        onchain_amount_sat INTEGER NOT NULL,
+        redeem_script TEXT NOT NULL
+       ) STRICT;
+
+       CREATE TABLE IF NOT EXISTS reverse_swaps_info (
+        id TEXT PRIMARY KEY NOT NULL,
+        status TEXT NOT NULL
+       ) STRICT;
+       ",
        "
        CREATE TABLE IF NOT EXISTS sync_versions (
         last_version INTEGER NOT NULL,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP   
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
        ) STRICT;
        ",
 
-       "       
+       "
        CREATE TABLE IF NOT EXISTS sync.swaps (
         bitcoin_address TEXT PRIMARY KEY NOT NULL,
         created_at INTEGER DEFAULT CURRENT_TIMESTAMP,
@@ -299,24 +320,24 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
         bitcoin_address TEXT PRIMARY KEY NOT NULL,
         bolt11 TEXT,
         paid_sats INTEGER NOT NULL DEFAULT 0,
-        unconfirmed_sats INTEGER NOT NULL DEFAULT 0, 
-        confirmed_sats INTEGER NOT NULL DEFAULT 0,               
-        status INTEGER NOT NULL DEFAULT 0,        
+        unconfirmed_sats INTEGER NOT NULL DEFAULT 0,
+        confirmed_sats INTEGER NOT NULL DEFAULT 0,
+        status INTEGER NOT NULL DEFAULT 0,
         unconfirmed_tx_ids TEXT NOT NULL,
-        confirmed_tx_ids TEXT NOT NULL,        
-        last_redeem_error TEXT        
+        confirmed_tx_ids TEXT NOT NULL,
+        last_redeem_error TEXT
        ) STRICT;
 
        ALTER TABLE swap_refunds RENAME TO old_swap_refunds;
        CREATE TABLE IF NOT EXISTS sync.swap_refunds (
-        bitcoin_address TEXT NOT NULL,        
+        bitcoin_address TEXT NOT NULL,
         refund_tx_id TEXT NOT NULL,
-        PRIMARY KEY (bitcoin_address, refund_tx_id)        
+        PRIMARY KEY (bitcoin_address, refund_tx_id)
        ) STRICT;
-       
+
        INSERT INTO sync.swaps
         (
-         bitcoin_address, 
+         bitcoin_address,
          created_at,
          lock_height,
          payment_hash,
@@ -328,8 +349,8 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
          min_allowed_deposit,
          max_allowed_deposit
         )
-        SELECT 
-         bitcoin_address, 
+        SELECT
+         bitcoin_address,
          created_at,
          lock_height,
          payment_hash,
@@ -339,7 +360,7 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
          swapper_public_key,
          script,
          min_allowed_deposit,
-         max_allowed_deposit         
+         max_allowed_deposit
         FROM swaps
         WHERE bitcoin_address NOT IN (SELECT bitcoin_address FROM sync.swaps);
 
@@ -354,12 +375,12 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
          payment_id TEXT NOT NULL PRIMARY KEY,
          lnurl_success_action TEXT,
          ln_address TEXT,
-         lnurl_metadata TEXT         
+         lnurl_metadata TEXT
         ) STRICT;
 
-        INSERT INTO sync.payments_external_info         
+        INSERT INTO sync.payments_external_info
          SELECT * FROM old_payments_external_info where payment_id not in (select payment_id from sync.payments_external_info);
-         
+
          DROP TABLE old_payments_external_info;
         ",
     ]

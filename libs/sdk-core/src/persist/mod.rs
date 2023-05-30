@@ -2,6 +2,7 @@ pub(crate) mod cache;
 pub(crate) mod channels;
 pub(crate) mod db;
 pub(crate) mod migrations;
+pub(crate) mod reverseswap;
 pub(crate) mod settings;
 pub(crate) mod swap;
 pub(crate) mod transactions;

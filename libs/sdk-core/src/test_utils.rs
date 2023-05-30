@@ -303,7 +303,7 @@ impl MockNodeAPI {
     /// global state.
     ///
     /// This payment and its details are retrieved and stored within [crate::BreezServices::sync]
-    /// by a combination of [NodeAPI::pull_changed] and [crate::persist::db::SqliteStorage::insert_payments].
+    /// by a combination of [NodeAPI::pull_changed] and [crate::persist::db::SqliteStorage::insert_or_update_payments].
     pub(crate) async fn add_dummy_payment_for(
         &self,
         bolt11: String,
