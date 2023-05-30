@@ -1058,18 +1058,17 @@ impl Receiver for PaymentReceiver {
         // or if the invoice doesn't have any routing hints that points to the lsp
         let mut lsp_hint: Option<RouteHint> = None;
         if !has_lsp_hint || open_channel_needed {
-            info!("Adding routing hint");
             let lsp_hop = RouteHintHop {
-                src_node_id: lsp_info.pubkey.clone(), // TODO correct?
+                src_node_id: lsp_info.pubkey,
                 short_channel_id,
                 fees_base_msat: lsp_info.base_fee_msat as u32,
-                fees_proportional_millionths: 10, // TODO
+                fees_proportional_millionths: (lsp_info.fee_rate * 1000000.0) as u32,
                 cltv_expiry_delta: lsp_info.time_lock_delta as u64,
-                htlc_minimum_msat: Some(lsp_info.min_htlc_msat as u64), // TODO correct?
-                htlc_maximum_msat: Some(1000000000),                    // TODO ?
+                htlc_minimum_msat: Some(lsp_info.min_htlc_msat as u64),
+                htlc_maximum_msat: None,
             };
 
-            info!("lsp hop = {:?}", lsp_hop);
+            info!("Adding LSP hop as routing hint: {:?}", lsp_hop);
             lsp_hint = Some(RouteHint {
                 hops: vec![lsp_hop],
             });
