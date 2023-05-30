@@ -341,22 +341,20 @@ pub enum ReverseSwapStatus {
 }
 
 impl ReverseSwapStatus {
-    /// Checks whether arg is a possible "end" state, e.g. one from which the swap cannot transition
-    pub(crate) fn is_end_state(rss: &ReverseSwapStatus) -> bool {
+    pub(crate) fn is_monitored_state(&self) -> bool {
         matches!(
-            rss,
-            ReverseSwapStatus::Cancelled | ReverseSwapStatus::CompletedConfirmed
+            self,
+            ReverseSwapStatus::Initial
+                | ReverseSwapStatus::InProgress
+                | ReverseSwapStatus::CompletedSeen
         )
     }
 
-    /// Return the statuses which would not block the starting of a new reverse swap
-    pub(crate) fn is_non_blocking_state(rss: &ReverseSwapStatus) -> bool {
-        Self::is_end_state(rss) || matches!(rss, ReverseSwapStatus::CompletedSeen)
-    }
-
-    /// The opposite of [Self::is_non_blocking_state]
-    pub(crate) fn is_blocking_state(rss: &ReverseSwapStatus) -> bool {
-        !Self::is_non_blocking_state(rss)
+    pub(crate) fn is_blocking_state(&self) -> bool {
+        matches!(
+            self,
+            ReverseSwapStatus::Initial | ReverseSwapStatus::InProgress
+        )
     }
 }
 

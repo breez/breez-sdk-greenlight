@@ -1,15 +1,14 @@
 use std::str::FromStr;
 use std::sync::Arc;
 
-use crate::boltzswap::BoltzApiCreateReverseSwapResponse;
-use crate::boltzswap::BoltzApiReverseSwapStatus::LockTxMempool;
+use crate::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus::*};
 use crate::chain::{get_utxos, ChainService, MempoolSpace};
 use crate::models::ReverseSwapperAPI;
 use crate::{
     BreezEvent, Config, NodeAPI, ReverseSwapInfo, ReverseSwapInfoCached, ReverseSwapPairInfo,
     ReverseSwapStatus,
 };
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, ensure, Result};
 use bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
 use bitcoin::hashes::hex::{FromHex, ToHex};
 use bitcoin::secp256k1::{Message, Secp256k1, SecretKey};
@@ -126,8 +125,9 @@ impl BTCSendSwap {
         };
 
         if res.is_err() {
-            // If paying the invoice failed, we refresh this rev swap to persist the new status
-            self.refresh_reverse_swap(created_rsi).await?;
+            // Failed payment results in a cancelled state
+            self.persister
+                .update_reverse_swap_status(&created_rsi.id, &ReverseSwapStatus::Cancelled)?;
         }
 
         res
@@ -368,10 +368,6 @@ impl BTCSendSwap {
         self.is_lockup_tx_seen(rsi, true).await
     }
 
-    async fn is_lockup_tx_in_mempool_or_confirmed(&self, rsi: &ReverseSwapInfo) -> Result<bool> {
-        self.is_lockup_tx_seen(rsi, false).await
-    }
-
     /// The lockup tx is seen when it has an incoming tx of the expected amount
     ///
     /// If `check_if_confirmed` is true, the method checks if the lockup tx is confirmed.
@@ -400,28 +396,53 @@ impl BTCSendSwap {
         Ok(is_lockup_tx_seen)
     }
 
-    /// Determine the reverse swap status, based on the the states of the lockup and claim tx
-    pub(crate) async fn get_breez_status(
+    /// Determine the new active status of a monitored reverse swap.
+    ///
+    /// If the status has not changed, it will return [None].
+    pub(crate) async fn get_status_update_for_monitored(
         &self,
         rsi: &ReverseSwapInfo,
-    ) -> Result<ReverseSwapStatus> {
-        let payment_hash = rsi.get_preimage_hash().to_hex();
-        let is_invoice_pending = self.persister.get_payment_by_hash(&payment_hash)?.is_some();
-        let status = match is_invoice_pending {
-            true => match self.is_lockup_tx_in_mempool_or_confirmed(rsi).await? {
-                true => ReverseSwapStatus::InProgress,
-                false => ReverseSwapStatus::Cancelled,
-            },
-            false => match self.is_claim_tx_in_mempool_or_confirmed(rsi).await? {
-                true => ReverseSwapStatus::CompletedSeen,
-                false => match self.is_claim_tx_confirmed(rsi).await? {
-                    true => ReverseSwapStatus::CompletedConfirmed,
-                    false => ReverseSwapStatus::Cancelled,
+    ) -> Result<Option<ReverseSwapStatus>> {
+        let current_status = rsi.cache.status;
+        ensure!(
+            current_status.is_monitored_state(),
+            "Tried to get status for non-monitored reverse swap"
+        );
+
+        let new_status = match &current_status {
+            ReverseSwapStatus::Initial => match self
+                .persister
+                .get_payment_by_hash(&rsi.get_preimage_hash().to_hex())?
+            {
+                Some(_) => Some(ReverseSwapStatus::InProgress),
+                None => match self
+                    .reverse_swapper_api
+                    .get_boltz_status(rsi.id.clone())
+                    .await?
+                {
+                    SwapExpired | LockTxFailed | LockTxRefunded { .. } | InvoiceExpired => {
+                        // We only mark a reverse swap as Cancelled if Boltz also reports it in a cancelled or error state
+                        // We do this to avoid race conditions in the edge-case when a reverse swap status update
+                        // is triggered after creation succeeds, but before the payment is persisted in the DB
+                        Some(ReverseSwapStatus::Cancelled)
+                    }
+                    _ => None,
                 },
             },
+            ReverseSwapStatus::InProgress => {
+                match self.is_claim_tx_in_mempool_or_confirmed(rsi).await? {
+                    true => Some(ReverseSwapStatus::CompletedSeen),
+                    false => None,
+                }
+            }
+            ReverseSwapStatus::CompletedSeen => match self.is_claim_tx_confirmed(rsi).await? {
+                true => Some(ReverseSwapStatus::CompletedConfirmed),
+                false => None,
+            },
+            _ => None,
         };
 
-        Ok(status)
+        Ok(new_status)
     }
 
     /// Updates the state of monitored reverse swaps in the cache table. This includes the blocking
@@ -433,13 +454,14 @@ impl BTCSendSwap {
         Ok(())
     }
 
-    /// Updates the state of given reverse swap in the cache table
+    /// Updates the state of given reverse swap in the cache table, if the status has changed
     async fn refresh_reverse_swap(&self, rsi: ReverseSwapInfo) -> Result<()> {
-        let id = rsi.id.clone();
-        let new_status = self.get_breez_status(&rsi).await?;
-
-        debug!("New status for reverse swap {id} is {new_status:?}");
-        self.persister.update_reverse_swap_status(&id, &new_status)
+        match self.get_status_update_for_monitored(&rsi).await? {
+            None => Ok(()),
+            Some(new_status) => self
+                .persister
+                .update_reverse_swap_status(&rsi.id, &new_status),
+        }
     }
 
     /// Returns the ongoing reverse swaps which have a status that block the creation of new reverse swaps
@@ -447,7 +469,7 @@ impl BTCSendSwap {
         let mut matching_reverse_swaps = vec![];
         for rs in self.persister.list_reverse_swaps()? {
             debug!("Reverse swap {} has status {:?}", rs.id, rs.cache.status);
-            if ReverseSwapStatus::is_blocking_state(&rs.cache.status) {
+            if rs.cache.status.is_blocking_state() {
                 matching_reverse_swaps.push(rs);
             }
         }
@@ -459,7 +481,7 @@ impl BTCSendSwap {
     pub async fn list_monitored(&self) -> Result<Vec<ReverseSwapInfo>> {
         let mut matching_reverse_swaps = vec![];
         for rs in self.persister.list_reverse_swaps()? {
-            if !ReverseSwapStatus::is_end_state(&rs.cache.status) {
+            if rs.cache.status.is_monitored_state() {
                 matching_reverse_swaps.push(rs);
             }
         }

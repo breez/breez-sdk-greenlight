@@ -43,6 +43,8 @@ impl SqliteStorage {
         id: &str,
         status: &ReverseSwapStatus,
     ) -> Result<()> {
+        debug!("Persisting new status for reverse swap {id} to be {status:?}");
+
         self.get_connection()?.execute(
             "UPDATE reverse_swaps_info SET status=:status where id=:id",
             named_params! {
