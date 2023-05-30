@@ -4,6 +4,7 @@ use std::sync::Arc;
 use crate::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus::*};
 use crate::chain::{get_utxos, ChainService, MempoolSpace};
 use crate::models::ReverseSwapperAPI;
+use crate::ReverseSwapStatus::*;
 use crate::{
     BreezEvent, Config, NodeAPI, ReverseSwapInfo, ReverseSwapInfoCached, ReverseSwapPairInfo,
     ReverseSwapStatus,
@@ -39,6 +40,12 @@ pub struct CreateReverseSwapResponse {
 
     /// Address to which the funds will be locked
     lockup_address: String,
+}
+
+enum TxStatus {
+    Unknown,
+    Mempool,
+    Confirmed,
 }
 
 /// This struct is responsible for sending to an onchain address using lightning payments.
@@ -312,7 +319,7 @@ impl BTCSendSwap {
         // Depending on the new state, decide next steps and transition to the new state
         for rs in monitored {
             debug!("Checking monitored reverse swap {rs:?}");
-            if self.is_lockup_tx_confirmed(&rs).await? {
+            if matches!(self.get_lockup_tx_status(&rs).await?, TxStatus::Confirmed) {
                 info!("Lock tx is confirmed, preparing claim tx");
                 let claim_tx = self.create_claim_tx(&rs).await?;
                 let claim_tx_broadcast_res = self
@@ -328,72 +335,50 @@ impl BTCSendSwap {
         Ok(())
     }
 
-    async fn is_claim_tx_in_mempool_or_confirmed(&self, rsi: &ReverseSwapInfo) -> Result<bool> {
-        self.is_claim_tx_seen(rsi, false).await
-    }
-
-    async fn is_claim_tx_confirmed(&self, rsi: &ReverseSwapInfo) -> Result<bool> {
-        self.is_claim_tx_seen(rsi, true).await
-    }
-
     /// The claim tx is considered confirmed when it has an incoming tx from the lockup address
-    ///
-    /// If `check_if_confirmed` is true, the method checks if the claim tx is confirmed.
-    ///
-    /// If `check_if_confirmed` is false, the method checks if the claim tx is in the mempool or confirmed.
-    async fn is_claim_tx_seen(
-        &self,
-        rsi: &ReverseSwapInfo,
-        check_if_confirmed: bool,
-    ) -> Result<bool> {
+    async fn get_claim_tx_status(&self, rsi: &ReverseSwapInfo) -> Result<TxStatus> {
         let lockup_addr = rsi.get_lockup_address(self.config.network)?;
-        let is_claim_tx_seen = self
+        let maybe_claim_tx = self
             .chain_service
             .address_transactions(rsi.claim_pubkey.clone())
             .await?
             .into_iter()
-            .filter(|t| match check_if_confirmed {
-                true => t.status.block_height.is_some(), // Only consider confirmed txs
-                false => true,                           // Consider all txs
-            })
-            .any(|tx| {
+            .find(|tx| {
                 tx.vin
                     .iter()
                     .any(|vin| vin.prevout.scriptpubkey_address == lockup_addr.to_string())
             });
-        Ok(is_claim_tx_seen)
-    }
 
-    async fn is_lockup_tx_confirmed(&self, rsi: &ReverseSwapInfo) -> Result<bool> {
-        self.is_lockup_tx_seen(rsi, true).await
+        match maybe_claim_tx {
+            None => Ok(TxStatus::Unknown),
+            Some(tx) => match tx.status.block_height {
+                Some(_) => Ok(TxStatus::Confirmed),
+                None => Ok(TxStatus::Mempool),
+            },
+        }
     }
 
     /// The lockup tx is seen when it has an incoming tx of the expected amount
-    ///
-    /// If `check_if_confirmed` is true, the method checks if the lockup tx is confirmed.
-    ///
-    /// If `check_if_confirmed` is false, the method checks if the lockup tx is in the mempool or confirmed.
-    async fn is_lockup_tx_seen(
-        &self,
-        rsi: &ReverseSwapInfo,
-        check_if_confirmed: bool,
-    ) -> Result<bool> {
+    async fn get_lockup_tx_status(&self, rsi: &ReverseSwapInfo) -> Result<TxStatus> {
         let lockup_addr = rsi.get_lockup_address(self.config.network)?;
-        let is_lockup_tx_seen = self
+        let maybe_lockup_tx = self
             .chain_service
             .address_transactions(lockup_addr.to_string())
             .await?
             .into_iter()
-            .filter(|t| match check_if_confirmed {
-                true => t.status.block_height.is_some(), // Only consider confirmed txs
-                false => true,                           // Consider all txs
-            })
-            .any(|tx| {
+            .find(|tx| {
                 tx.vin
                     .iter()
                     .any(|vin| vin.prevout.value as u64 == rsi.onchain_amount_sat)
             });
-        Ok(is_lockup_tx_seen)
+
+        match maybe_lockup_tx {
+            None => Ok(TxStatus::Unknown),
+            Some(tx) => match tx.status.block_height {
+                Some(_) => Ok(TxStatus::Confirmed),
+                None => Ok(TxStatus::Mempool),
+            },
+        }
     }
 
     /// Determine the new active status of a monitored reverse swap.
@@ -410,11 +395,11 @@ impl BTCSendSwap {
         );
 
         let new_status = match &current_status {
-            ReverseSwapStatus::Initial => match self
+            Initial => match self
                 .persister
                 .get_payment_by_hash(&rsi.get_preimage_hash().to_hex())?
             {
-                Some(_) => Some(ReverseSwapStatus::InProgress),
+                Some(_) => Some(InProgress),
                 None => match self
                     .reverse_swapper_api
                     .get_boltz_status(rsi.id.clone())
@@ -424,20 +409,15 @@ impl BTCSendSwap {
                         // We only mark a reverse swap as Cancelled if Boltz also reports it in a cancelled or error state
                         // We do this to avoid race conditions in the edge-case when a reverse swap status update
                         // is triggered after creation succeeds, but before the payment is persisted in the DB
-                        Some(ReverseSwapStatus::Cancelled)
+                        Some(Cancelled)
                     }
                     _ => None,
                 },
             },
-            ReverseSwapStatus::InProgress => {
-                match self.is_claim_tx_in_mempool_or_confirmed(rsi).await? {
-                    true => Some(ReverseSwapStatus::CompletedSeen),
-                    false => None,
-                }
-            }
-            ReverseSwapStatus::CompletedSeen => match self.is_claim_tx_confirmed(rsi).await? {
-                true => Some(ReverseSwapStatus::CompletedConfirmed),
-                false => None,
+            InProgress | CompletedSeen => match self.get_claim_tx_status(rsi).await? {
+                TxStatus::Unknown => None,
+                TxStatus::Mempool => Some(CompletedSeen),
+                TxStatus::Confirmed => Some(CompletedConfirmed),
             },
             _ => None,
         };
