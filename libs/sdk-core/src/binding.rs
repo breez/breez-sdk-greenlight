@@ -6,7 +6,7 @@ use crate::fiat::{FiatCurrency, Rate};
 use crate::input_parser::{LnUrlAuthRequestData, LnUrlPayRequestData, LnUrlWithdrawRequestData};
 use crate::lsp::LspInformation;
 use crate::models::LogEntry;
-use crate::LnUrlCallbackStatus;
+use crate::{LnUrlCallbackStatus, ReverseSwapPairInfo};
 use anyhow::{anyhow, Result};
 use flutter_rust_bridge::StreamSink;
 use log::{Level, LevelFilter, Metadata, Record};
@@ -287,6 +287,11 @@ pub fn refund(swap_address: String, to_address: String, sat_per_vbyte: u32) -> R
             .refund(swap_address, to_address, sat_per_vbyte)
             .await
     })
+}
+
+/// See [BreezServices::fetch_reverse_swap_fees]
+pub fn fetch_reverse_swap_fees() -> Result<ReverseSwapPairInfo> {
+    block_on(async { get_breez_services()?.fetch_reverse_swap_fees().await })
 }
 
 /// See [BreezServices::execute_dev_command]
