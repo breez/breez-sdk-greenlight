@@ -167,6 +167,11 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kRefundConstMeta;
 
+  /// See [BreezServices::fetch_reverse_swap_fees]
+  Future<ReverseSwapPairInfo> fetchReverseSwapFees({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kFetchReverseSwapFeesConstMeta;
+
   /// See [BreezServices::execute_dev_command]
   Future<String> executeCommand({required String command, dynamic hint});
 
@@ -833,6 +838,38 @@ class RecommendedFees {
   });
 }
 
+/// Details about the BTC/BTC reverse swap pair, at this point in time
+///
+/// Maps the result of https://docs.boltz.exchange/en/latest/api/#getting-pairs for the BTC/BTC pair
+class ReverseSwapPairInfo {
+  /// Minimum amount of sats a reverse swap is allowed to have on this endpoint
+  final int min;
+
+  /// Maximum amount of sats a reverse swap is allowed to have on this endpoint
+  final int max;
+
+  /// Hash of the pair info JSON
+  final String feesHash;
+
+  /// Percentage fee for the reverse swap service
+  final double feesPercentage;
+
+  /// Estimated miner fees in sats for locking up funds
+  final int feesLockup;
+
+  /// Estimated miner fees in sats for claiming funds
+  final int feesClaim;
+
+  const ReverseSwapPairInfo({
+    required this.min,
+    required this.max,
+    required this.feesHash,
+    required this.feesPercentage,
+    required this.feesLockup,
+    required this.feesClaim,
+  });
+}
+
 /// A route hint for a LN payment
 class RouteHint {
   final List<RouteHintHop> hops;
@@ -1420,6 +1457,21 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kRefundConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "refund",
         argNames: ["swapAddress", "toAddress", "satPerVbyte"],
+      );
+
+  Future<ReverseSwapPairInfo> fetchReverseSwapFees({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_fetch_reverse_swap_fees(port_),
+      parseSuccessData: _wire2api_reverse_swap_pair_info,
+      constMeta: kFetchReverseSwapFeesConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kFetchReverseSwapFeesConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "fetch_reverse_swap_fees",
+        argNames: [],
       );
 
   Future<String> executeCommand({required String command, dynamic hint}) {
@@ -2197,6 +2249,19 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       hourFee: _wire2api_u32(arr[2]),
       economyFee: _wire2api_u32(arr[3]),
       minimumFee: _wire2api_u32(arr[4]),
+    );
+  }
+
+  ReverseSwapPairInfo _wire2api_reverse_swap_pair_info(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6) throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return ReverseSwapPairInfo(
+      min: _wire2api_u64(arr[0]),
+      max: _wire2api_u64(arr[1]),
+      feesHash: _wire2api_String(arr[2]),
+      feesPercentage: _wire2api_f64(arr[3]),
+      feesLockup: _wire2api_u64(arr[4]),
+      feesClaim: _wire2api_u64(arr[5]),
     );
   }
 
@@ -3012,6 +3077,19 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
               ffi.Uint32)>>('wire_refund');
   late final _wire_refund = _wire_refundPtr
       .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_uint_8_list>, int)>();
+
+  void wire_fetch_reverse_swap_fees(
+    int port_,
+  ) {
+    return _wire_fetch_reverse_swap_fees(
+      port_,
+    );
+  }
+
+  late final _wire_fetch_reverse_swap_feesPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_fetch_reverse_swap_fees');
+  late final _wire_fetch_reverse_swap_fees =
+      _wire_fetch_reverse_swap_feesPtr.asFunction<void Function(int)>();
 
   void wire_execute_command(
     int port_,
