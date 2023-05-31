@@ -295,6 +295,30 @@ pub fn fetch_reverse_swap_fees() -> Result<ReverseSwapPairInfo> {
     block_on(async { get_breez_services()?.fetch_reverse_swap_fees().await })
 }
 
+/// See [BreezServices::in_progress_reverse_swaps]
+pub fn in_progress_reverse_swaps() -> Result<Vec<SimpleReverseSwapInfo>> {
+    block_on(async { get_breez_services()?.in_progress_reverse_swaps().await })
+}
+
+/// See [BreezServices::send_onchain]
+pub fn send_onchain(
+    amount_sat: u64,
+    onchain_recipient_address: String,
+    pair_hash: String,
+    sat_per_vbyte: u64,
+) -> Result<SimpleReverseSwapInfo> {
+    block_on(async {
+        get_breez_services()?
+            .send_onchain(
+                amount_sat,
+                onchain_recipient_address,
+                pair_hash,
+                sat_per_vbyte,
+            )
+            .await
+    })
+}
+
 /// See [BreezServices::execute_dev_command]
 pub fn execute_command(command: String) -> Result<String> {
     block_on(async { get_breez_services()?.execute_dev_command(command).await })

@@ -172,6 +172,21 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kFetchReverseSwapFeesConstMeta;
 
+  /// See [BreezServices::in_progress_reverse_swaps]
+  Future<List<SimpleReverseSwapInfo>> inProgressReverseSwaps({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kInProgressReverseSwapsConstMeta;
+
+  /// See [BreezServices::send_onchain]
+  Future<SimpleReverseSwapInfo> sendOnchain(
+      {required int amountSat,
+      required String onchainRecipientAddress,
+      required String pairHash,
+      required int satPerVbyte,
+      dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kSendOnchainConstMeta;
+
   /// See [BreezServices::execute_dev_command]
   Future<String> executeCommand({required String command, dynamic hint});
 
@@ -880,6 +895,28 @@ class ReverseSwapPairInfo {
   });
 }
 
+/// The possible statuses of a reverse swap, from the Breez SDK perspective.
+///
+/// See [BoltzApiReverseSwapStatus] for the reverse swap status from the Breez endpoint point of view.
+enum ReverseSwapStatus {
+  /// HODL invoice payment is not completed yet
+  Initial,
+
+  /// HODL invoice payment was successfully triggered and confirmed by Boltz, but the reverse swap
+  /// is not yet complete
+  InProgress,
+
+  /// An explicit error occurs (validation error, failure reported by Boltz, expiration, etc) and
+  /// the initial invoice funds are returned to the sender (invoice is cancelled or payment failed)
+  Cancelled,
+
+  /// Successfully completed (claim tx has been seen in the mempool)
+  CompletedSeen,
+
+  /// Successfully completed (claim tx has at least one confirmation)
+  CompletedConfirmed,
+}
+
 /// A route hint for a LN payment
 class RouteHint {
   final List<RouteHintHop> hops;
@@ -918,6 +955,21 @@ class RouteHintHop {
     required this.cltvExpiryDelta,
     this.htlcMinimumMsat,
     this.htlcMaximumMsat,
+  });
+}
+
+/// Simplified version of [ReverseSwapInfo], containing only the user-relevant fields
+class SimpleReverseSwapInfo {
+  final String id;
+  final String claimPubkey;
+  final int onchainAmountSat;
+  final ReverseSwapStatus status;
+
+  const SimpleReverseSwapInfo({
+    required this.id,
+    required this.claimPubkey,
+    required this.onchainAmountSat,
+    required this.status,
   });
 }
 
@@ -1484,6 +1536,45 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: [],
       );
 
+  Future<List<SimpleReverseSwapInfo>> inProgressReverseSwaps({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_in_progress_reverse_swaps(port_),
+      parseSuccessData: _wire2api_list_simple_reverse_swap_info,
+      constMeta: kInProgressReverseSwapsConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kInProgressReverseSwapsConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "in_progress_reverse_swaps",
+        argNames: [],
+      );
+
+  Future<SimpleReverseSwapInfo> sendOnchain(
+      {required int amountSat,
+      required String onchainRecipientAddress,
+      required String pairHash,
+      required int satPerVbyte,
+      dynamic hint}) {
+    var arg0 = _platform.api2wire_u64(amountSat);
+    var arg1 = _platform.api2wire_String(onchainRecipientAddress);
+    var arg2 = _platform.api2wire_String(pairHash);
+    var arg3 = _platform.api2wire_u64(satPerVbyte);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_send_onchain(port_, arg0, arg1, arg2, arg3),
+      parseSuccessData: _wire2api_simple_reverse_swap_info,
+      constMeta: kSendOnchainConstMeta,
+      argValues: [amountSat, onchainRecipientAddress, pairHash, satPerVbyte],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kSendOnchainConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "send_onchain",
+        argNames: ["amountSat", "onchainRecipientAddress", "pairHash", "satPerVbyte"],
+      );
+
   Future<String> executeCommand({required String command, dynamic hint}) {
     var arg0 = _platform.api2wire_String(command);
     return _platform.executeNormal(FlutterRustBridgeTask(
@@ -1971,6 +2062,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return (raw as List<dynamic>).map(_wire2api_route_hint_hop).toList();
   }
 
+  List<SimpleReverseSwapInfo> _wire2api_list_simple_reverse_swap_info(dynamic raw) {
+    return (raw as List<dynamic>).map(_wire2api_simple_reverse_swap_info).toList();
+  }
+
   List<SwapInfo> _wire2api_list_swap_info(dynamic raw) {
     return (raw as List<dynamic>).map(_wire2api_swap_info).toList();
   }
@@ -2291,6 +2386,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     );
   }
 
+  ReverseSwapStatus _wire2api_reverse_swap_status(dynamic raw) {
+    return ReverseSwapStatus.values[raw as int];
+  }
+
   RouteHint _wire2api_route_hint(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
@@ -2310,6 +2409,17 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       cltvExpiryDelta: _wire2api_u64(arr[4]),
       htlcMinimumMsat: _wire2api_opt_box_autoadd_u64(arr[5]),
       htlcMaximumMsat: _wire2api_opt_box_autoadd_u64(arr[6]),
+    );
+  }
+
+  SimpleReverseSwapInfo _wire2api_simple_reverse_swap_info(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4) throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return SimpleReverseSwapInfo(
+      id: _wire2api_String(arr[0]),
+      claimPubkey: _wire2api_String(arr[1]),
+      onchainAmountSat: _wire2api_u64(arr[2]),
+      status: _wire2api_reverse_swap_status(arr[3]),
     );
   }
 
@@ -3121,6 +3231,42 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_fetch_reverse_swap_fees');
   late final _wire_fetch_reverse_swap_fees =
       _wire_fetch_reverse_swap_feesPtr.asFunction<void Function(int)>();
+
+  void wire_in_progress_reverse_swaps(
+    int port_,
+  ) {
+    return _wire_in_progress_reverse_swaps(
+      port_,
+    );
+  }
+
+  late final _wire_in_progress_reverse_swapsPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_in_progress_reverse_swaps');
+  late final _wire_in_progress_reverse_swaps =
+      _wire_in_progress_reverse_swapsPtr.asFunction<void Function(int)>();
+
+  void wire_send_onchain(
+    int port_,
+    int amount_sat,
+    ffi.Pointer<wire_uint_8_list> onchain_recipient_address,
+    ffi.Pointer<wire_uint_8_list> pair_hash,
+    int sat_per_vbyte,
+  ) {
+    return _wire_send_onchain(
+      port_,
+      amount_sat,
+      onchain_recipient_address,
+      pair_hash,
+      sat_per_vbyte,
+    );
+  }
+
+  late final _wire_send_onchainPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Int64, ffi.Uint64, ffi.Pointer<wire_uint_8_list>,
+              ffi.Pointer<wire_uint_8_list>, ffi.Uint64)>>('wire_send_onchain');
+  late final _wire_send_onchain = _wire_send_onchainPtr.asFunction<
+      void Function(int, int, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_uint_8_list>, int)>();
 
   void wire_execute_command(
     int port_,
