@@ -126,13 +126,12 @@ impl SqliteStorage {
         Ok(())
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub(crate) fn update_swap_chain_info(
         &self,
         bitcoin_address: String,
-        unconfirmed_sats: u32,
+        unconfirmed_sats: u64,
         unconfirmed_tx_ids: Vec<String>,
-        confirmed_sats: u32,
+        confirmed_sats: u64,
         confirmed_tx_ids: Vec<String>,
         status: SwapStatus,
     ) -> Result<SwapInfo> {
@@ -257,13 +256,13 @@ impl SqliteStorage {
             script: row.get("script")?,
             bolt11: row.get("bolt11")?,
             paid_sats: row
-                .get::<&str, Option<u32>>("paid_sats")?
+                .get::<&str, Option<u64>>("paid_sats")?
                 .unwrap_or_default(),
             unconfirmed_sats: row
-                .get::<&str, Option<u32>>("unconfirmed_sats")?
+                .get::<&str, Option<u64>>("unconfirmed_sats")?
                 .unwrap_or_default(),
             confirmed_sats: row
-                .get::<&str, Option<u32>>("confirmed_sats")?
+                .get::<&str, Option<u64>>("confirmed_sats")?
                 .unwrap_or_default(),
             status,
             refund_tx_ids,

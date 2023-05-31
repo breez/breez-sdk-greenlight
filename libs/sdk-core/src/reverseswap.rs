@@ -233,7 +233,7 @@ impl BTCSendSwap {
                 let confirmed_amount: u64 = utxos
                     .confirmed
                     .iter()
-                    .fold(0, |accum, item| accum + item.value as u64);
+                    .fold(0, |accum, item| accum + item.value);
 
                 let txins: Vec<TxIn> = utxos
                     .confirmed
@@ -281,7 +281,7 @@ impl BTCSendSwap {
                     let sig = signer.segwit_signature_hash(
                         index,
                         &redeem_script,
-                        utxos.confirmed[index].value as u64,
+                        utxos.confirmed[index].value,
                         EcdsaSighashType::All,
                     )?;
                     let msg = Message::from_slice(&sig[..])?;
@@ -369,7 +369,7 @@ impl BTCSendSwap {
             .find(|tx| {
                 tx.vin
                     .iter()
-                    .any(|vin| vin.prevout.value as u64 == rsi.onchain_amount_sat)
+                    .any(|vin| vin.prevout.value == rsi.onchain_amount_sat)
             });
 
         match maybe_lockup_tx {
