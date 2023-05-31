@@ -91,6 +91,7 @@ impl BTCSendSwap {
         claim_pubkey: String,
         pair_hash: String,
         routing_node: String,
+        sat_per_vbyte: u64,
     ) -> Result<ReverseSwapInfo> {
         Self::validate_rev_swap_args(&claim_pubkey)?;
 
@@ -100,6 +101,7 @@ impl BTCSendSwap {
                 claim_pubkey,
                 pair_hash,
                 routing_node,
+                sat_per_vbyte,
             )
             .await?;
         self.persister.insert_reverse_swap(&created_rsi)?;
@@ -135,7 +137,7 @@ impl BTCSendSwap {
         if res.is_err() {
             // Failed payment results in a cancelled state
             self.persister
-                .update_reverse_swap_status(&created_rsi.id, &ReverseSwapStatus::Cancelled)?;
+                .update_reverse_swap_status(&created_rsi.id, &Cancelled)?;
         }
 
         res
@@ -164,6 +166,7 @@ impl BTCSendSwap {
         claim_pubkey: String,
         pair_hash: String,
         routing_node: String,
+        sat_per_vbyte: u64,
     ) -> Result<ReverseSwapInfo> {
         let reverse_swap_keys = crate::swap::create_swap_keys()?;
 
@@ -188,10 +191,9 @@ impl BTCSendSwap {
                     timeout_block_height: response.timeout_block_height,
                     id: response.id,
                     onchain_amount_sat: response.onchain_amount,
+                    sat_per_vbyte,
                     redeem_script: response.redeem_script,
-                    cache: ReverseSwapInfoCached {
-                        status: ReverseSwapStatus::Initial,
-                    },
+                    cache: ReverseSwapInfoCached { status: Initial },
                 };
 
                 res.validate_hodl_invoice(amount_sat * 1000)?;
@@ -260,16 +262,13 @@ impl BTCSendSwap {
                     output: tx_out,
                 };
 
-                let recommended_fees = self.chain_service.recommended_fees().await?;
-                let sat_per_vbyte = recommended_fees.half_hour_fee; // TODO Configurable
-
                 let claim_script_bytes = serialize(&redeem_script);
 
                 // Based on https://github.com/breez/boltz/blob/master/boltz.go#L31
                 let claim_witness_input_size: u32 = 1 + 1 + 8 + 73 + 1 + 32 + 1 + 100;
                 let tx_weight = tx.strippedsize() as u32 * WITNESS_SCALE_FACTOR as u32
                     + claim_witness_input_size * txins.len() as u32;
-                let fees: u64 = (tx_weight * sat_per_vbyte / WITNESS_SCALE_FACTOR as u32) as u64;
+                let fees: u64 = tx_weight as u64 * rs.sat_per_vbyte / WITNESS_SCALE_FACTOR as u64;
                 tx.output[0].value = confirmed_amount - fees;
 
                 let scpt = Secp256k1::signing_only();

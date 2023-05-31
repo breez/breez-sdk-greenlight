@@ -148,13 +148,19 @@ pub(crate) async fn handle_command(
         Commands::SendOnchain {
             amount_sat,
             onchain_recipient_address,
+            sat_per_byte,
         } => {
             let pair_info = sdk()?
                 .fetch_reverse_swap_fees()
                 .await
                 .map_err(|e| anyhow!("Failed to fetch reverse swap fee infos: {e}"))?;
             let rev_swap_res = sdk()?
-                .send_onchain(amount_sat, onchain_recipient_address, pair_info.fees_hash)
+                .send_onchain(
+                    amount_sat,
+                    onchain_recipient_address,
+                    pair_info.fees_hash,
+                    sat_per_byte,
+                )
                 .await?;
             serde_json::to_string_pretty(&rev_swap_res).map_err(|e| e.into())
         }

@@ -170,6 +170,9 @@ pub struct ReverseSwapInfo {
     /// The final amount sent will be this value minus the claim tx fees.
     pub onchain_amount_sat: u64,
 
+    /// User-specified feerate for the claim tx
+    pub sat_per_vbyte: u64,
+
     pub cache: ReverseSwapInfoCached,
 }
 
