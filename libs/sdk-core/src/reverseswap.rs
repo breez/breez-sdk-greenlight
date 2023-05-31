@@ -11,6 +11,7 @@ use crate::{
 };
 use anyhow::{anyhow, ensure, Result};
 use bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
+use bitcoin::consensus::serialize;
 use bitcoin::hashes::hex::{FromHex, ToHex};
 use bitcoin::secp256k1::{Message, Secp256k1, SecretKey};
 use bitcoin::util::sighash::SighashCache;
@@ -262,8 +263,7 @@ impl BTCSendSwap {
                 let recommended_fees = self.chain_service.recommended_fees().await?;
                 let sat_per_vbyte = recommended_fees.half_hour_fee; // TODO Configurable
 
-                let claim_script_bytes =
-                    bitcoin::psbt::serialize::Serialize::serialize(&redeem_script);
+                let claim_script_bytes = serialize(&redeem_script);
 
                 // Based on https://github.com/breez/boltz/blob/master/boltz.go#L31
                 let claim_witness_input_size: u32 = 1 + 1 + 8 + 73 + 1 + 32 + 1 + 100;
@@ -319,14 +319,13 @@ impl BTCSendSwap {
         // Depending on the new state, decide next steps and transition to the new state
         for rs in monitored {
             debug!("Checking monitored reverse swap {rs:?}");
+            // (Re-)Broadcast the claim tx for monitored reverse swaps that have a confirmed lockup tx
             if matches!(self.get_lockup_tx_status(&rs).await?, TxStatus::Confirmed) {
                 info!("Lock tx is confirmed, preparing claim tx");
                 let claim_tx = self.create_claim_tx(&rs).await?;
                 let claim_tx_broadcast_res = self
                     .chain_service
-                    .broadcast_transaction(bitcoin::psbt::serialize::Serialize::serialize(
-                        &claim_tx,
-                    ))
+                    .broadcast_transaction(serialize(&claim_tx))
                     .await;
                 info!("Broadcast claim tx result: {claim_tx_broadcast_res:?}");
             }
