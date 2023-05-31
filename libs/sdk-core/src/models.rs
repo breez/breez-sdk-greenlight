@@ -1,11 +1,20 @@
 use std::str::FromStr;
 
+use crate::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use anyhow::{anyhow, Result};
+use bitcoin::blockdata::opcodes;
+use bitcoin::blockdata::script::Builder;
+use bitcoin::hashes::hex::{FromHex, ToHex};
+use bitcoin::hashes::Hash;
+use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
+use bitcoin::{Address, Script};
 use gl_client::pb::Peer;
 use gl_client::pb::WithdrawResponse;
 use gl_client::pb::{CloseChannelResponse, Invoice};
 use lightning_invoice::RawInvoice;
+use ripemd::Digest;
+use ripemd::Ripemd160;
 use serde::{Deserialize, Serialize};
 use strum_macros::Display;
 use strum_macros::EnumString;
@@ -111,6 +120,285 @@ pub trait SwapperAPI: Send + Sync {
     ) -> Result<Swap>;
 
     async fn complete_swap(&self, bolt11: String) -> Result<()>;
+}
+
+/// Details about the BTC/BTC reverse swap pair, at this point in time
+///
+/// Maps the result of https://docs.boltz.exchange/en/latest/api/#getting-pairs for the BTC/BTC pair
+#[derive(Clone, PartialEq, Debug, Serialize)]
+pub struct ReverseSwapPairInfo {
+    /// Minimum amount of sats a reverse swap is allowed to have on this endpoint
+    pub min: u64,
+    /// Maximum amount of sats a reverse swap is allowed to have on this endpoint
+    pub max: u64,
+    /// Hash of the pair info JSON
+    pub fees_hash: String,
+    /// Percentage fee for the reverse swap service
+    pub fees_percentage: f64,
+    /// Estimated miner fees in sats for locking up funds
+    pub fees_lockup: u64,
+    /// Estimated miner fees in sats for claiming funds
+    pub fees_claim: u64,
+}
+
+/// Details of past or ongoing reverse swaps, as stored in the Breez local DB
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct ReverseSwapInfo {
+    /// The reverse swap ID, as reported by the Boltz API in case of a successful creation
+    pub id: String,
+
+    /// The blockheight at the moment the reverse swap was created
+    pub created_at_block_height: u32,
+
+    /// Locally generated preimage, revealed in the last step of the reverse swap
+    pub preimage: Vec<u8>,
+
+    /// Locally generated private key, used to sign the claim tx
+    pub private_key: Vec<u8>,
+
+    /// On-chain destination address, to which the reverse swap will finally send funds to
+    pub claim_pubkey: String,
+
+    pub timeout_block_height: u32,
+
+    /// The HODL invoice
+    pub invoice: String,
+    pub redeem_script: String,
+
+    /// Amount of sats that will be locked.
+    ///
+    /// The final amount sent will be this value minus the claim tx fees.
+    pub onchain_amount_sat: u64,
+
+    pub cache: ReverseSwapInfoCached,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct ReverseSwapInfoCached {
+    pub status: ReverseSwapStatus,
+}
+
+impl ReverseSwapInfo {
+    /// Builds the expected redeem script
+    fn build_expected_reverse_swap_script(
+        preimage_hash: Vec<u8>,
+        compressed_pub_key: Vec<u8>,
+        sig: Vec<u8>,
+        lock_height: u32,
+    ) -> Result<Script> {
+        let mut ripemd160_hasher = Ripemd160::new();
+        ripemd160_hasher.update(preimage_hash);
+        let ripemd160_hash = ripemd160_hasher.finalize();
+
+        // Remove empty non-significant bytes
+        let timeout_height_le_hex = lock_height.to_le_bytes().to_hex();
+        let timeout_height_le_hex_trimmed = timeout_height_le_hex.trim_end_matches("00");
+        let timeout_height_le_bytes = hex::decode(timeout_height_le_hex_trimmed)?;
+
+        Ok(Builder::new()
+            .push_opcode(opcodes::all::OP_SIZE)
+            .push_slice(&[0x20])
+            .push_opcode(opcodes::all::OP_EQUAL)
+            .push_opcode(opcodes::all::OP_IF)
+            .push_opcode(opcodes::all::OP_HASH160)
+            .push_slice(&ripemd160_hash[..])
+            .push_opcode(opcodes::all::OP_EQUALVERIFY)
+            .push_slice(&compressed_pub_key[..])
+            .push_opcode(opcodes::all::OP_ELSE)
+            .push_opcode(opcodes::all::OP_DROP)
+            .push_slice(&timeout_height_le_bytes)
+            .push_opcode(opcodes::all::OP_CLTV)
+            .push_opcode(opcodes::all::OP_DROP)
+            .push_slice(&sig[..])
+            .push_opcode(opcodes::all::OP_ENDIF)
+            .push_opcode(opcodes::all::OP_CHECKSIG)
+            .into_script())
+    }
+
+    /// Validates the redeem script and the lockup address
+    ///
+    /// ### Arguments
+    ///
+    /// * `received_lockup_address` - The lockup address, as received from Boltz in the create rev swap API response
+    /// * `network` - The network type which is one of (Bitcoin, Testnet, Signet, Regtest)
+    pub(crate) fn validate_redeem_script(
+        &self,
+        received_lockup_address: String,
+        network: Network,
+    ) -> Result<()> {
+        let redeem_script_received = Script::from_hex(&self.redeem_script)?;
+        let asm = redeem_script_received.asm();
+        debug!("received asm = {asm:?}");
+
+        let sk = SecretKey::from_slice(&self.private_key)?;
+        let pk = PublicKey::from_secret_key(&Secp256k1::new(), &sk);
+
+        // The 18th asm element is the refund address, provided by the Boltz service
+        let asm_elements: Vec<&str> = asm.split(' ').collect();
+        let refund_address = asm_elements.get(18).unwrap_or(&"").to_string();
+        let refund_address_bytes = hex::decode(refund_address)?;
+
+        let redeem_script_expected = Self::build_expected_reverse_swap_script(
+            self.get_preimage_hash().to_vec(), // Preimage hash
+            pk.serialize().to_vec(),           // Compressed pubkey
+            refund_address_bytes,
+            self.timeout_block_height,
+        )?;
+        debug!("expected asm = {:?}", redeem_script_expected.asm());
+
+        match redeem_script_received.eq(&redeem_script_expected) {
+            true => {
+                let lockup_addr_expected = &received_lockup_address;
+                let lockup_addr_from_script =
+                    &Address::p2wsh(&redeem_script_received, network.into()).to_string();
+
+                match lockup_addr_from_script == lockup_addr_expected {
+                    true => Ok(()),
+                    false => Err(anyhow!("Unexpected lockup address")),
+                }
+            }
+            false => Err(anyhow!("Unexpected redeem script")),
+        }
+    }
+
+    /// Validates the received HODL invoice:
+    ///
+    /// - checks if amount matches the amount requested by the user
+    /// - checks if the payment hash is the same preimage hash (derived from local secret bytes)
+    /// included in the create request
+    pub(crate) fn validate_hodl_invoice(&self, amount_req_msat: u64) -> Result<()> {
+        let inv: lightning_invoice::Invoice = self.invoice.parse()?;
+
+        // Validate if received invoice has the same amount as requested by the user
+        let amount_from_invoice_msat = inv.amount_milli_satoshis().unwrap_or_default();
+        match amount_from_invoice_msat == amount_req_msat {
+            false => Err(anyhow!("Invoice amount doesn't match the request")),
+            true => {
+                // Validate if received invoice has the same payment hash as the preimage hash in the request
+                let preimage_hash_from_invoice = inv.payment_hash();
+                let preimage_hash_from_req = &self.get_preimage_hash();
+                match preimage_hash_from_invoice == preimage_hash_from_req {
+                    false => Err(anyhow!("Invoice payment hash doesn't match the request")),
+                    true => Ok(()),
+                }
+            }
+        }
+    }
+
+    /// Derives the lockup address from the redeem script
+    pub(crate) fn get_lockup_address(&self, network: Network) -> Result<Address> {
+        let redeem_script = Script::from_hex(&self.redeem_script)?;
+        Ok(Address::p2wsh(&redeem_script, network.into()))
+    }
+
+    /// Get the preimage hash sent in the create request
+    pub(crate) fn get_preimage_hash(&self) -> bitcoin::hashes::sha256::Hash {
+        bitcoin::hashes::sha256::Hash::hash(&self.preimage)
+    }
+}
+
+/// Simplified version of [ReverseSwapInfo], containing only the user-relevant fields
+#[derive(Serialize)]
+pub struct SimpleReverseSwapInfo {
+    pub id: String,
+    pub claim_pubkey: String,
+    pub onchain_amount_sat: u64,
+    pub status: ReverseSwapStatus,
+}
+
+impl From<ReverseSwapInfo> for SimpleReverseSwapInfo {
+    fn from(rsi: ReverseSwapInfo) -> Self {
+        Self {
+            id: rsi.id,
+            claim_pubkey: rsi.claim_pubkey,
+            onchain_amount_sat: rsi.onchain_amount_sat,
+            status: rsi.cache.status,
+        }
+    }
+}
+
+/// The possible statuses of a reverse swap, from the Breez SDK perspective.
+///
+/// See [BoltzApiReverseSwapStatus] for the reverse swap status from the Breez endpoint point of view.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+pub enum ReverseSwapStatus {
+    /// HODL invoice payment is not completed yet
+    Initial = 0,
+
+    /// HODL invoice payment was successfully triggered and confirmed by Boltz, but the reverse swap
+    /// is not yet complete
+    InProgress = 1,
+
+    /// An explicit error occurs (validation error, failure reported by Boltz, expiration, etc) and
+    /// the initial invoice funds are returned to the sender (invoice is cancelled or payment failed)
+    Cancelled = 2,
+
+    /// Successfully completed (claim tx has been seen in the mempool)
+    CompletedSeen = 3,
+
+    /// Successfully completed (claim tx has at least one confirmation)
+    CompletedConfirmed = 4,
+}
+
+impl ReverseSwapStatus {
+    pub(crate) fn is_monitored_state(&self) -> bool {
+        matches!(
+            self,
+            ReverseSwapStatus::Initial
+                | ReverseSwapStatus::InProgress
+                | ReverseSwapStatus::CompletedSeen
+        )
+    }
+
+    pub(crate) fn is_blocking_state(&self) -> bool {
+        matches!(
+            self,
+            ReverseSwapStatus::Initial | ReverseSwapStatus::InProgress
+        )
+    }
+}
+
+impl TryFrom<i32> for ReverseSwapStatus {
+    type Error = anyhow::Error;
+
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(ReverseSwapStatus::Initial),
+            1 => Ok(ReverseSwapStatus::InProgress),
+            2 => Ok(ReverseSwapStatus::Cancelled),
+            3 => Ok(ReverseSwapStatus::CompletedSeen),
+            4 => Ok(ReverseSwapStatus::CompletedConfirmed),
+            _ => Err(anyhow!("illegal value")),
+        }
+    }
+}
+
+/// Trait covering functionality involving swaps
+#[tonic::async_trait]
+pub(crate) trait ReverseSwapperAPI: Send + Sync {
+    /// Lookup the most recent reverse swap pair info using the Boltz API
+    async fn fetch_reverse_swap_fees(&self) -> Result<ReverseSwapPairInfo>;
+
+    /// Creates a reverse submarine swap on the remote service (Boltz).
+    ///
+    /// # Arguments
+    ///
+    /// * `amount_sat` - Amount that is to be swapped
+    /// * `preimage_hash_hex` - Hex of preimage hash
+    /// * `claim_pubkey` - Pubkey of a keypair that can allow the SDK to claim the locked funds
+    /// * `pair_hash` - The hash of the exchange rate, looked-up before this call
+    /// * `routing_node` - Pubkey of a LN node used as routing hint
+    async fn create_reverse_swap_on_remote(
+        &self,
+        amount_sat: u64,
+        preimage_hash_hex: String,
+        claim_pubkey: String,
+        pair_hash: String,
+        routing_node: String,
+    ) -> Result<BoltzApiCreateReverseSwapResponse>;
+
+    /// Performs a live lookup of the reverse swap's status on the Boltz API
+    async fn get_boltz_status(&self, id: String) -> Result<BoltzApiReverseSwapStatus>;
 }
 
 /// Internal SDK log entry

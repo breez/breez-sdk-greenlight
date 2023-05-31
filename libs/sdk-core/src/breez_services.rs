@@ -1,20 +1,4 @@
-use std::cmp::max;
-use std::str::FromStr;
-use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
-
-use anyhow::{anyhow, Result};
-use bip39::*;
-use bitcoin::hashes::{sha256, Hash};
-use tokio::runtime::Runtime;
-use tokio::sync::{mpsc, Mutex};
-use tokio::time::{sleep, Duration};
-use tonic::codegen::InterceptedService;
-use tonic::metadata::{Ascii, MetadataValue};
-use tonic::service::Interceptor;
-use tonic::transport::{Channel, Uri};
-use tonic::{Request, Status};
-
+use crate::boltzswap::BoltzApi;
 use crate::chain::{ChainService, MempoolSpace, RecommendedFees};
 use crate::fiat::{FiatCurrency, Rate};
 use crate::greenlight::Greenlight;
@@ -36,13 +20,31 @@ use crate::lsp::LspInformation;
 use crate::models::{
     parse_short_channel_id, ChannelState, ClosedChannelPaymentDetails, Config, EnvironmentType,
     FiatAPI, GreenlightCredentials, LnUrlCallbackStatus, LspAPI, Network, NodeAPI, NodeState,
-    Payment, PaymentDetails, PaymentType, PaymentTypeFilter, SwapInfo, SwapperAPI,
+    Payment, PaymentDetails, PaymentType, PaymentTypeFilter, ReverseSwapPairInfo,
+    ReverseSwapperAPI, SwapInfo, SwapperAPI,
 };
 use crate::moonpay::MoonPayApi;
 use crate::persist::db::SqliteStorage;
+use crate::reverseswap::BTCSendSwap;
 use crate::swap::BTCReceiveSwap;
 use crate::BuyBitcoinProvider::MoonPay;
+use crate::*;
 use crate::{BuyBitcoinProvider, LnUrlAuthRequestData, LnUrlWithdrawRequestData, PaymentResponse};
+use anyhow::{anyhow, Result};
+use bip39::*;
+use bitcoin::hashes::{sha256, Hash};
+use std::cmp::max;
+use std::str::FromStr;
+use std::sync::Arc;
+use std::time::{SystemTime, UNIX_EPOCH};
+use tokio::runtime::Runtime;
+use tokio::sync::{mpsc, Mutex};
+use tokio::time::{sleep, Duration};
+use tonic::codegen::InterceptedService;
+use tonic::metadata::{Ascii, MetadataValue};
+use tonic::service::Interceptor;
+use tonic::transport::{Channel, Uri};
+use tonic::{Request, Status};
 
 /// Trait that can be used to react to various [BreezEvent]s emitted by the SDK.
 pub trait EventListener: Send + Sync {
@@ -143,6 +145,7 @@ pub struct BreezServices {
     persister: Arc<SqliteStorage>,
     payment_receiver: Arc<PaymentReceiver>,
     btc_receive_swapper: Arc<BTCReceiveSwap>,
+    btc_send_swapper: Arc<BTCSendSwap>,
     event_listener: Option<Box<dyn EventListener>>,
     shutdown_sender: Mutex<Option<mpsc::Sender<()>>>,
 }
@@ -460,6 +463,45 @@ impl BreezServices {
         Ok(None)
     }
 
+    /// See [ReverseSwapperAPI::fetch_reverse_swap_fees]
+    pub async fn fetch_reverse_swap_fees(&self) -> Result<ReverseSwapPairInfo> {
+        self.btc_send_swapper.fetch_reverse_swap_fees().await
+    }
+
+    /// Creates a reverse swap and attempts to pay the HODL invoice
+    pub async fn send_onchain(
+        &self,
+        amount_sat: u64,
+        onchain_recipient_address: String,
+        pair_hash: String,
+    ) -> Result<SimpleReverseSwapInfo> {
+        match self.in_progress_reverse_swaps().await?.is_empty() {
+            true => {
+                self.btc_send_swapper
+                    .create_reverse_swap(
+                        amount_sat,
+                        onchain_recipient_address,
+                        pair_hash,
+                        self.lsp_info().await?.pubkey,
+                    )
+                    .await
+                    .map(Into::into)
+            },
+            false => Err(anyhow!(
+                "There already is at least one Reverse Swap in progress. You can only start a new one after after the ongoing ones finish. \
+                Use the in_progress_reverse_swaps method to get an overview of currently ongoing reverse swaps."
+            ))
+        }
+    }
+
+    /// Returns the blocking [SimpleReverseSwapInfo]s that are in progress
+    pub async fn in_progress_reverse_swaps(&self) -> Result<Vec<SimpleReverseSwapInfo>> {
+        self.btc_send_swapper
+            .list_blocking()
+            .await
+            .map(|x| x.into_iter().map(Into::into).collect())
+    }
+
     /// list non-completed expired swaps that should be refunded bu calling [BreezServices::refund]
     pub async fn list_refundables(&self) -> Result<Vec<SwapInfo>> {
         self.btc_receive_swapper.list_refundables()
@@ -517,7 +559,7 @@ impl BreezServices {
         // update both closed channels and lightning transaction payments
         let mut payments = closed_channel_payments_res?;
         payments.extend(new_data.payments.clone());
-        self.persister.insert_payments(&payments)?;
+        self.persister.insert_or_update_payments(&payments)?;
         self.notify_event_listeners(BreezEvent::Synced).await?;
         Ok(())
     }
@@ -559,8 +601,10 @@ impl BreezServices {
         let payment = payment_res.unwrap();
         self.sync().await?;
 
-        let p = self.persister.get_payment_by_hash(&payment.payment_hash)?;
-        match p {
+        match self
+            .persister
+            .get_completed_payment_by_hash(&payment.payment_hash)?
+        {
             Some(p) => {
                 self.notify_event_listeners(BreezEvent::PaymentSucceed { details: p.clone() })
                     .await?;
@@ -578,7 +622,13 @@ impl BreezServices {
     async fn notify_event_listeners(&self, e: BreezEvent) -> Result<()> {
         if let Err(err) = self.btc_receive_swapper.on_event(e.clone()).await {
             debug!(
-                "btc_receive_swapper failed to processed event {:?}: {:?}",
+                "btc_receive_swapper failed to process event {:?}: {:?}",
+                e, err
+            )
+        };
+        if let Err(err) = self.btc_send_swapper.on_event(e.clone()).await {
+            debug!(
+                "btc_send_swapper failed to process event {:?}: {:?}",
                 e, err
             )
         };
@@ -656,7 +706,7 @@ async fn poll_events(breez_services: Arc<BreezServices>, mut current_block: u32)
             if let Some(gl_client::pb::incoming_payment::Details::Offchain(p)) = i.details {
              let payment: Option<crate::models::Payment> = p.clone().try_into().ok();
              if payment.is_some() {
-              let res = breez_services.persister.insert_payments(&vec![payment.unwrap()]);
+              let res = breez_services.persister.insert_or_update_payments(&vec![payment.unwrap()]);
               debug!("paid invoice was added to payments list {:?}", res);
              }
              _  = breez_services.on_event(BreezEvent::InvoicePaid{details: InvoicePaidDetails {
@@ -729,6 +779,7 @@ struct BreezServicesBuilder {
     fiat_api: Option<Arc<dyn FiatAPI>>,
     persister: Option<Arc<SqliteStorage>>,
     swapper_api: Option<Arc<dyn SwapperAPI>>,
+    reverse_swapper_api: Option<Arc<dyn ReverseSwapperAPI>>,
     moonpay_api: Option<Arc<dyn MoonPayApi>>,
 }
 
@@ -744,6 +795,7 @@ impl BreezServicesBuilder {
             fiat_api: None,
             persister: None,
             swapper_api: None,
+            reverse_swapper_api: None,
             moonpay_api: None,
         }
     }
@@ -775,6 +827,14 @@ impl BreezServicesBuilder {
 
     pub fn swapper_api(&mut self, swapper_api: Arc<dyn SwapperAPI>) -> &mut Self {
         self.swapper_api = Some(swapper_api.clone());
+        self
+    }
+
+    pub fn reverse_swapper_api(
+        &mut self,
+        reverse_swapper_api: Arc<dyn ReverseSwapperAPI>,
+    ) -> &mut Self {
+        self.reverse_swapper_api = Some(reverse_swapper_api.clone());
         self
     }
 
@@ -854,6 +914,16 @@ impl BreezServicesBuilder {
             payment_receiver.clone(),
         ));
 
+        let btc_send_swapper = Arc::new(BTCSendSwap::new(
+            self.config.clone(),
+            self.reverse_swapper_api
+                .clone()
+                .unwrap_or_else(|| Arc::new(BoltzApi {})),
+            persister.clone(),
+            chain_service.clone(),
+            unwrapped_node_api.clone(),
+        ));
+
         // Create the node services and it them statically
         let breez_services = Arc::new(BreezServices {
             node_api: unwrapped_node_api.clone(),
@@ -869,6 +939,7 @@ impl BreezServicesBuilder {
             chain_service,
             persister,
             btc_receive_swapper,
+            btc_send_swapper,
             payment_receiver,
             event_listener: listener,
             shutdown_sender: Mutex::new(None),
@@ -1226,7 +1297,7 @@ pub(crate) mod tests {
         let test_config = create_test_config();
         let persister = Arc::new(create_test_persister(test_config.clone()));
         persister.init()?;
-        persister.insert_payments(&dummy_transactions)?;
+        persister.insert_or_update_payments(&dummy_transactions)?;
         persister.insert_lnurl_payment_external_info(
             payment_hash_with_lnurl_success_action,
             Some(&sa),
@@ -1384,7 +1455,7 @@ pub(crate) mod tests {
         let test_config = create_test_config();
         let persister = Arc::new(create_test_persister(test_config.clone()));
         persister.init()?;
-        persister.insert_payments(&known_payments)?;
+        persister.insert_or_update_payments(&known_payments)?;
 
         let mut builder = BreezServicesBuilder::new(test_config.clone());
         let breez_services = builder
