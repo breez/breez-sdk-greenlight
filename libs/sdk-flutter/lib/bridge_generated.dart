@@ -2436,10 +2436,6 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     );
   }
 
-  ReverseSwapStatus _wire2api_reverse_swap_status(dynamic raw) {
-    return ReverseSwapStatus.values[raw as int];
-  }
-
   RouteHint _wire2api_route_hint(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
@@ -2459,6 +2455,17 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       cltvExpiryDelta: _wire2api_u64(arr[4]),
       htlcMinimumMsat: _wire2api_opt_box_autoadd_u64(arr[5]),
       htlcMaximumMsat: _wire2api_opt_box_autoadd_u64(arr[6]),
+    );
+  }
+
+  SimpleReverseSwapInfo _wire2api_simple_reverse_swap_info(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4) throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return SimpleReverseSwapInfo(
+      id: _wire2api_String(arr[0]),
+      claimPubkey: _wire2api_String(arr[1]),
+      onchainAmountSat: _wire2api_u64(arr[2]),
+      status: _wire2api_reverse_swap_status(arr[3]),
     );
   }
 
