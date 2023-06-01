@@ -13,7 +13,7 @@ export ANDROID_NDK_HOME=<your android ndk directory>
 #### Install [protocol buffer compiler](https://github.com/protocolbuffers/protobuf/releases)
   * MacOS, using Homebrew
 ```
-brew install brew install protobuf
+brew install protobuf
 ```
   * Linux
 ```
