@@ -3,12 +3,6 @@
 use std::future::Future;
 use std::sync::Arc;
 
-use anyhow::{anyhow, Result};
-use flutter_rust_bridge::StreamSink;
-use log::{Level, LevelFilter, Metadata, Record};
-use once_cell::sync::{Lazy, OnceCell};
-use tokio::sync::mpsc;
-
 use crate::breez_services::BreezServices;
 use crate::breez_services::{self, BreezEvent, EventListener};
 use crate::chain::RecommendedFees;
@@ -24,7 +18,12 @@ use crate::models::{
     Config, EnvironmentType, GreenlightCredentials, Network, NodeState, Payment, PaymentTypeFilter,
     SwapInfo,
 };
-use crate::{BuyBitcoinProvider, LnUrlCallbackStatus, ReverseSwapPairInfo};
+use crate::{BuyBitcoinProvider, LnUrlCallbackStatus, ReverseSwapInfo, ReverseSwapPairInfo};
+use anyhow::{anyhow, Result};
+use flutter_rust_bridge::StreamSink;
+use log::{Level, LevelFilter, Metadata, Record};
+use once_cell::sync::{Lazy, OnceCell};
+use tokio::sync::mpsc;
 
 static BREEZ_SERVICES_INSTANCE: OnceCell<Arc<BreezServices>> = OnceCell::new();
 static BREEZ_SERVICES_SHUTDOWN: OnceCell<mpsc::Sender<()>> = OnceCell::new();
@@ -296,7 +295,7 @@ pub fn fetch_reverse_swap_fees() -> Result<ReverseSwapPairInfo> {
 }
 
 /// See [BreezServices::in_progress_reverse_swaps]
-pub fn in_progress_reverse_swaps() -> Result<Vec<SimpleReverseSwapInfo>> {
+pub fn in_progress_reverse_swaps() -> Result<Vec<ReverseSwapInfo>> {
     block_on(async { get_breez_services()?.in_progress_reverse_swaps().await })
 }
 
@@ -306,7 +305,7 @@ pub fn send_onchain(
     onchain_recipient_address: String,
     pair_hash: String,
     sat_per_vbyte: u64,
-) -> Result<SimpleReverseSwapInfo> {
+) -> Result<ReverseSwapInfo> {
     block_on(async {
         get_breez_services()?
             .send_onchain(

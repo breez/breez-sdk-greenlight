@@ -173,12 +173,12 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kFetchReverseSwapFeesConstMeta;
 
   /// See [BreezServices::in_progress_reverse_swaps]
-  Future<List<SimpleReverseSwapInfo>> inProgressReverseSwaps({dynamic hint});
+  Future<List<ReverseSwapInfo>> inProgressReverseSwaps({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kInProgressReverseSwapsConstMeta;
 
   /// See [BreezServices::send_onchain]
-  Future<SimpleReverseSwapInfo> sendOnchain(
+  Future<ReverseSwapInfo> sendOnchain(
       {required int amountSat,
       required String onchainRecipientAddress,
       required String pairHash,
@@ -863,6 +863,21 @@ class RecommendedFees {
   });
 }
 
+/// Simplified version of [FullReverseSwapInfo], containing only the user-relevant fields
+class ReverseSwapInfo {
+  final String id;
+  final String claimPubkey;
+  final int onchainAmountSat;
+  final ReverseSwapStatus status;
+
+  const ReverseSwapInfo({
+    required this.id,
+    required this.claimPubkey,
+    required this.onchainAmountSat,
+    required this.status,
+  });
+}
+
 /// Details about the BTC/BTC reverse swap pair, at this point in time
 ///
 /// Maps the result of https://docs.boltz.exchange/en/latest/api/#getting-pairs for the BTC/BTC pair
@@ -955,21 +970,6 @@ class RouteHintHop {
     required this.cltvExpiryDelta,
     this.htlcMinimumMsat,
     this.htlcMaximumMsat,
-  });
-}
-
-/// Simplified version of [ReverseSwapInfo], containing only the user-relevant fields
-class SimpleReverseSwapInfo {
-  final String id;
-  final String claimPubkey;
-  final int onchainAmountSat;
-  final ReverseSwapStatus status;
-
-  const SimpleReverseSwapInfo({
-    required this.id,
-    required this.claimPubkey,
-    required this.onchainAmountSat,
-    required this.status,
   });
 }
 
@@ -1536,10 +1536,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: [],
       );
 
-  Future<List<SimpleReverseSwapInfo>> inProgressReverseSwaps({dynamic hint}) {
+  Future<List<ReverseSwapInfo>> inProgressReverseSwaps({dynamic hint}) {
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_in_progress_reverse_swaps(port_),
-      parseSuccessData: _wire2api_list_simple_reverse_swap_info,
+      parseSuccessData: _wire2api_list_reverse_swap_info,
       constMeta: kInProgressReverseSwapsConstMeta,
       argValues: [],
       hint: hint,
@@ -1551,7 +1551,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: [],
       );
 
-  Future<SimpleReverseSwapInfo> sendOnchain(
+  Future<ReverseSwapInfo> sendOnchain(
       {required int amountSat,
       required String onchainRecipientAddress,
       required String pairHash,
@@ -1563,7 +1563,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     var arg3 = _platform.api2wire_u64(satPerVbyte);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_send_onchain(port_, arg0, arg1, arg2, arg3),
-      parseSuccessData: _wire2api_simple_reverse_swap_info,
+      parseSuccessData: _wire2api_reverse_swap_info,
       constMeta: kSendOnchainConstMeta,
       argValues: [amountSat, onchainRecipientAddress, pairHash, satPerVbyte],
       hint: hint,
@@ -2054,16 +2054,16 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return (raw as List<dynamic>).map(_wire2api_rate).toList();
   }
 
+  List<ReverseSwapInfo> _wire2api_list_reverse_swap_info(dynamic raw) {
+    return (raw as List<dynamic>).map(_wire2api_reverse_swap_info).toList();
+  }
+
   List<RouteHint> _wire2api_list_route_hint(dynamic raw) {
     return (raw as List<dynamic>).map(_wire2api_route_hint).toList();
   }
 
   List<RouteHintHop> _wire2api_list_route_hint_hop(dynamic raw) {
     return (raw as List<dynamic>).map(_wire2api_route_hint_hop).toList();
-  }
-
-  List<SimpleReverseSwapInfo> _wire2api_list_simple_reverse_swap_info(dynamic raw) {
-    return (raw as List<dynamic>).map(_wire2api_simple_reverse_swap_info).toList();
   }
 
   List<SwapInfo> _wire2api_list_swap_info(dynamic raw) {
@@ -2373,6 +2373,17 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     );
   }
 
+  ReverseSwapInfo _wire2api_reverse_swap_info(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4) throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return ReverseSwapInfo(
+      id: _wire2api_String(arr[0]),
+      claimPubkey: _wire2api_String(arr[1]),
+      onchainAmountSat: _wire2api_u64(arr[2]),
+      status: _wire2api_reverse_swap_status(arr[3]),
+    );
+  }
+
   ReverseSwapPairInfo _wire2api_reverse_swap_pair_info(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 6) throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
@@ -2409,17 +2420,6 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       cltvExpiryDelta: _wire2api_u64(arr[4]),
       htlcMinimumMsat: _wire2api_opt_box_autoadd_u64(arr[5]),
       htlcMaximumMsat: _wire2api_opt_box_autoadd_u64(arr[6]),
-    );
-  }
-
-  SimpleReverseSwapInfo _wire2api_simple_reverse_swap_info(dynamic raw) {
-    final arr = raw as List<dynamic>;
-    if (arr.length != 4) throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
-    return SimpleReverseSwapInfo(
-      id: _wire2api_String(arr[0]),
-      claimPubkey: _wire2api_String(arr[1]),
-      onchainAmountSat: _wire2api_u64(arr[2]),
-      status: _wire2api_reverse_swap_status(arr[3]),
     );
   }
 

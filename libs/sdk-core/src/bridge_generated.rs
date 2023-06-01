@@ -59,9 +59,9 @@ use crate::models::Payment;
 use crate::models::PaymentDetails;
 use crate::models::PaymentType;
 use crate::models::PaymentTypeFilter;
+use crate::models::ReverseSwapInfo;
 use crate::models::ReverseSwapPairInfo;
 use crate::models::ReverseSwapStatus;
-use crate::models::SimpleReverseSwapInfo;
 use crate::models::SwapInfo;
 use crate::models::SwapStatus;
 use crate::models::UnspentTransactionOutput;
@@ -1125,6 +1125,19 @@ impl support::IntoDart for RecommendedFees {
 }
 impl support::IntoDartExceptPrimitive for RecommendedFees {}
 
+impl support::IntoDart for ReverseSwapInfo {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.id.into_dart(),
+            self.claim_pubkey.into_dart(),
+            self.onchain_amount_sat.into_dart(),
+            self.status.into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for ReverseSwapInfo {}
+
 impl support::IntoDart for ReverseSwapPairInfo {
     fn into_dart(self) -> support::DartAbi {
         vec![
@@ -1175,19 +1188,6 @@ impl support::IntoDart for RouteHintHop {
     }
 }
 impl support::IntoDartExceptPrimitive for RouteHintHop {}
-
-impl support::IntoDart for SimpleReverseSwapInfo {
-    fn into_dart(self) -> support::DartAbi {
-        vec![
-            self.id.into_dart(),
-            self.claim_pubkey.into_dart(),
-            self.onchain_amount_sat.into_dart(),
-            self.status.into_dart(),
-        ]
-        .into_dart()
-    }
-}
-impl support::IntoDartExceptPrimitive for SimpleReverseSwapInfo {}
 
 impl support::IntoDart for SuccessActionProcessed {
     fn into_dart(self) -> support::DartAbi {

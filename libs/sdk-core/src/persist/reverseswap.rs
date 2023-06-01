@@ -1,11 +1,11 @@
 use super::db::SqliteStorage;
-use crate::{ReverseSwapInfo, ReverseSwapInfoCached, ReverseSwapStatus};
+use crate::{FullReverseSwapInfo, ReverseSwapInfoCached, ReverseSwapStatus};
 use anyhow::Result;
 use rusqlite::types::FromSqlError;
 use rusqlite::{named_params, Row};
 
 impl SqliteStorage {
-    pub(crate) fn insert_reverse_swap(&self, rsi: &ReverseSwapInfo) -> Result<()> {
+    pub(crate) fn insert_reverse_swap(&self, rsi: &FullReverseSwapInfo) -> Result<()> {
         let mut con = self.get_connection()?;
         let tx = con.transaction()?;
 
@@ -57,11 +57,11 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub(crate) fn list_reverse_swaps(&self) -> Result<Vec<ReverseSwapInfo>> {
+    pub(crate) fn list_reverse_swaps(&self) -> Result<Vec<FullReverseSwapInfo>> {
         let con = self.get_connection()?;
         let mut stmt = con.prepare(&self.select_reverse_swap_query())?;
 
-        let vec: Vec<ReverseSwapInfo> = stmt
+        let vec: Vec<FullReverseSwapInfo> = stmt
             .query_map([], |row| self.sql_row_to_reverse_swap(row))?
             .map(|i| i.unwrap())
             .collect();
@@ -69,8 +69,8 @@ impl SqliteStorage {
         Ok(vec)
     }
 
-    fn sql_row_to_reverse_swap(&self, row: &Row) -> Result<ReverseSwapInfo, rusqlite::Error> {
-        Ok(ReverseSwapInfo {
+    fn sql_row_to_reverse_swap(&self, row: &Row) -> Result<FullReverseSwapInfo, rusqlite::Error> {
+        Ok(FullReverseSwapInfo {
             id: row.get("id")?,
             created_at_block_height: row.get("created_at_block_height")?,
             preimage: row.get("preimage")?,

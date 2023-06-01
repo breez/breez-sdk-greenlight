@@ -475,7 +475,7 @@ impl BreezServices {
         onchain_recipient_address: String,
         pair_hash: String,
         sat_per_vbyte: u64,
-    ) -> Result<SimpleReverseSwapInfo> {
+    ) -> Result<ReverseSwapInfo> {
         match self.in_progress_reverse_swaps().await?.is_empty() {
             true => {
                 self.btc_send_swapper
@@ -496,8 +496,8 @@ impl BreezServices {
         }
     }
 
-    /// Returns the blocking [SimpleReverseSwapInfo]s that are in progress
-    pub async fn in_progress_reverse_swaps(&self) -> Result<Vec<SimpleReverseSwapInfo>> {
+    /// Returns the blocking [ReverseSwapInfo]s that are in progress
+    pub async fn in_progress_reverse_swaps(&self) -> Result<Vec<ReverseSwapInfo>> {
         self.btc_send_swapper
             .list_blocking()
             .await

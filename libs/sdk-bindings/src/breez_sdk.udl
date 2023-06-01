@@ -296,7 +296,7 @@ dictionary ReverseSwapPairInfo {
     u64 fees_claim;
 };
 
-dictionary SimpleReverseSwapInfo {
+dictionary ReverseSwapInfo {
     string id;
     string claim_pubkey;
     u64 onchain_amount_sat;
@@ -452,10 +452,10 @@ interface BlockingBreezServices {
    ReverseSwapPairInfo fetch_reverse_swap_fees();
 
    [Throws=SDKError]
-   sequence<SimpleReverseSwapInfo> in_progress_reverse_swaps();
+   sequence<ReverseSwapInfo> in_progress_reverse_swaps();
 
    [Throws=SDKError]
-   SimpleReverseSwapInfo send_onchain(u64 amount_sat, string onchain_recipient_address, string pair_hash, u64 sat_per_vbyte);
+   ReverseSwapInfo send_onchain(u64 amount_sat, string onchain_recipient_address, string pair_hash, u64 sat_per_vbyte);
 
    [Throws=SDKError]
    string execute_dev_command(string command);
