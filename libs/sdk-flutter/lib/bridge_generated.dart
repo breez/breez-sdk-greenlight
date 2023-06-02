@@ -2244,11 +2244,11 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     final arr = raw as List<dynamic>;
     if (arr.length != 5) throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
     return RecommendedFees(
-      fastestFee: _wire2api_u32(arr[0]),
-      halfHourFee: _wire2api_u32(arr[1]),
-      hourFee: _wire2api_u32(arr[2]),
-      economyFee: _wire2api_u32(arr[3]),
-      minimumFee: _wire2api_u32(arr[4]),
+      fastestFee: _wire2api_u64(arr[0]),
+      halfHourFee: _wire2api_u64(arr[1]),
+      hourFee: _wire2api_u64(arr[2]),
+      economyFee: _wire2api_u64(arr[3]),
+      minimumFee: _wire2api_u64(arr[4]),
     );
   }
 

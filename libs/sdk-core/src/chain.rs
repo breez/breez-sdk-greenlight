@@ -122,19 +122,19 @@ pub(crate) struct MempoolSpace {
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct RecommendedFees {
     #[serde(rename(deserialize = "fastestFee"))]
-    pub fastest_fee: u32,
+    pub fastest_fee: u64,
 
     #[serde(rename(deserialize = "halfHourFee"))]
-    pub half_hour_fee: u32,
+    pub half_hour_fee: u64,
 
     #[serde(rename(deserialize = "hourFee"))]
-    pub hour_fee: u32,
+    pub hour_fee: u64,
 
     #[serde(rename(deserialize = "economyFee"))]
-    pub economy_fee: u32,
+    pub economy_fee: u64,
 
     #[serde(rename(deserialize = "minimumFee"))]
-    pub minimum_fee: u32,
+    pub minimum_fee: u64,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]

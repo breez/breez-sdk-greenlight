@@ -343,11 +343,11 @@ dictionary MetadataItem {
 };
 
 dictionary RecommendedFees {
-    u32 fastest_fee;
-    u32 half_hour_fee;
-    u32 hour_fee;
-    u32 economy_fee;
-    u32 minimum_fee;
+    u64 fastest_fee;
+    u64 half_hour_fee;
+    u64 hour_fee;
+    u64 economy_fee;
+    u64 minimum_fee;
 };
 
 [Enum]
