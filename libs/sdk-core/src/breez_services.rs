@@ -1151,6 +1151,8 @@ impl Receiver for PaymentReceiver {
 
         info!("Routing hint added");
         let signed_invoice_with_hint = self.node_api.sign_invoice(raw_invoice_with_hint)?;
+        info!("Signed invoice with hint = {}", signed_invoice_with_hint);
+
         parsed_invoice = parse_invoice(&signed_invoice_with_hint)?;
 
         // register the payment at the lsp if needed
