@@ -246,7 +246,7 @@ impl NodeAPI for MockNodeAPI {
     async fn sweep(
         &self,
         _to_address: String,
-        _fee_rate_sats_per_byte: u64,
+        _fee_rate_sats_per_vbyte: u64,
     ) -> Result<WithdrawResponse> {
         Ok(WithdrawResponse {
             tx: rand_vec_u8(32),

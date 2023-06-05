@@ -350,7 +350,7 @@ fn wire_close_lsp_channels_impl(port_: MessagePort) {
 fn wire_sweep_impl(
     port_: MessagePort,
     to_address: impl Wire2Api<String> + UnwindSafe,
-    fee_rate_sats_per_byte: impl Wire2Api<u64> + UnwindSafe,
+    fee_rate_sats_per_vbyte: impl Wire2Api<u64> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -360,8 +360,8 @@ fn wire_sweep_impl(
         },
         move || {
             let api_to_address = to_address.wire2api();
-            let api_fee_rate_sats_per_byte = fee_rate_sats_per_byte.wire2api();
-            move |task_callback| sweep(api_to_address, api_fee_rate_sats_per_byte)
+            let api_fee_rate_sats_per_vbyte = fee_rate_sats_per_vbyte.wire2api();
+            move |task_callback| sweep(api_to_address, api_fee_rate_sats_per_vbyte)
         },
     )
 }

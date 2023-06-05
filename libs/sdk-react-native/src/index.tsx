@@ -511,8 +511,8 @@ export const listPayments = async (filter: PaymentTypeFilter, fromTimestamp: num
     return response as Payment[]
 }
 
-export const sweep = async (toAddress: string, feeRateSatsPerByte: number): Promise<void> => {
-    await BreezSDK.sweep(toAddress, feeRateSatsPerByte)
+export const sweep = async (toAddress: string, feeRateSatsPerVbyte: number): Promise<void> => {
+    await BreezSDK.sweep(toAddress, feeRateSatsPerVbyte)
 }
 
 export const fetchFiatRates = async (): Promise<Rate[]> => {

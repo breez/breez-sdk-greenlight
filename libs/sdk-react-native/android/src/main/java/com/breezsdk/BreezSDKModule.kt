@@ -294,9 +294,9 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun sweep(toAddress: String, feeRateSatsPerByte: Double, promise: Promise) {
+    fun sweep(toAddress: String, feeRateSatsPerVbyte: Double, promise: Promise) {
         try {
-            getBreezServices().sweep(toAddress, feeRateSatsPerByte.toULong())
+            getBreezServices().sweep(toAddress, feeRateSatsPerVbyte.toULong())
             promise.resolve(readableMapOf("status" to "ok"))
         } catch (e: SdkException) {
             e.printStackTrace()

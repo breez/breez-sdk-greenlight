@@ -142,7 +142,7 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kCloseLspChannelsConstMeta;
 
   /// See [BreezServices::sweep]
-  Future<void> sweep({required String toAddress, required int feeRateSatsPerByte, dynamic hint});
+  Future<void> sweep({required String toAddress, required int feeRateSatsPerVbyte, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kSweepConstMeta;
 
@@ -1378,21 +1378,21 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: [],
       );
 
-  Future<void> sweep({required String toAddress, required int feeRateSatsPerByte, dynamic hint}) {
+  Future<void> sweep({required String toAddress, required int feeRateSatsPerVbyte, dynamic hint}) {
     var arg0 = _platform.api2wire_String(toAddress);
-    var arg1 = _platform.api2wire_u64(feeRateSatsPerByte);
+    var arg1 = _platform.api2wire_u64(feeRateSatsPerVbyte);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_sweep(port_, arg0, arg1),
       parseSuccessData: _wire2api_unit,
       constMeta: kSweepConstMeta,
-      argValues: [toAddress, feeRateSatsPerByte],
+      argValues: [toAddress, feeRateSatsPerVbyte],
       hint: hint,
     ));
   }
 
   FlutterRustBridgeTaskConstMeta get kSweepConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "sweep",
-        argNames: ["toAddress", "feeRateSatsPerByte"],
+        argNames: ["toAddress", "feeRateSatsPerVbyte"],
       );
 
   Future<SwapInfo> receiveOnchain({dynamic hint}) {
@@ -3006,12 +3006,12 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   void wire_sweep(
     int port_,
     ffi.Pointer<wire_uint_8_list> to_address,
-    int fee_rate_sats_per_byte,
+    int fee_rate_sats_per_vbyte,
   ) {
     return _wire_sweep(
       port_,
       to_address,
-      fee_rate_sats_per_byte,
+      fee_rate_sats_per_vbyte,
     );
   }
 

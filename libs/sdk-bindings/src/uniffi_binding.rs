@@ -227,10 +227,10 @@ impl BlockingBreezServices {
             .map_err(|e| e.into())
     }
 
-    pub fn sweep(&self, to_address: String, fee_rate_sats_per_byte: u64) -> Result<(), SDKError> {
+    pub fn sweep(&self, to_address: String, fee_rate_sats_per_vbyte: u64) -> Result<(), SDKError> {
         rt().block_on(
             self.breez_services
-                .sweep(to_address, fee_rate_sats_per_byte),
+                .sweep(to_address, fee_rate_sats_per_vbyte),
         )
         .map_err(|e| e.into())
     }
