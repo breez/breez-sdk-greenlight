@@ -272,26 +272,6 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
        DROP TABLE old_swaps;            
        ",
 
-        // sync.reverse_swaps holds the immutable data
-        // reverse_swaps_info holds the cached data, which can be reconstructed by any client
-       "
-       CREATE TABLE IF NOT EXISTS sync.reverse_swaps (
-        id TEXT PRIMARY KEY NOT NULL,
-        created_at_block_height INTEGER NOT NULL,
-        preimage BLOB NOT NULL UNIQUE,
-        private_key BLOB NOT NULL UNIQUE,
-        claim_pubkey TEXT NOT NULL,
-        timeout_block_height INTEGER NOT NULL,
-        invoice TEXT NOT NULL UNIQUE,
-        onchain_amount_sat INTEGER NOT NULL,
-        redeem_script TEXT NOT NULL
-       ) STRICT;
-
-       CREATE TABLE IF NOT EXISTS reverse_swaps_info (
-        id TEXT PRIMARY KEY NOT NULL,
-        status TEXT NOT NULL
-       ) STRICT;
-       ",
        "
        CREATE TABLE IF NOT EXISTS sync_versions (
         last_version INTEGER NOT NULL,
@@ -382,6 +362,26 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
          SELECT * FROM old_payments_external_info where payment_id not in (select payment_id from sync.payments_external_info);
 
          DROP TABLE old_payments_external_info;
+        ",
+
+        "
+        CREATE TABLE IF NOT EXISTS sync.reverse_swaps (
+         id TEXT PRIMARY KEY NOT NULL,
+         created_at_block_height INTEGER NOT NULL,
+         preimage BLOB NOT NULL UNIQUE,
+         private_key BLOB NOT NULL UNIQUE,
+         claim_pubkey TEXT NOT NULL,
+         timeout_block_height INTEGER NOT NULL,
+         invoice TEXT NOT NULL UNIQUE,
+         onchain_amount_sat INTEGER NOT NULL,
+         sat_per_vbyte INTEGER NOT NULL,
+         redeem_script TEXT NOT NULL
+        ) STRICT;
+
+        CREATE TABLE IF NOT EXISTS reverse_swaps_info (
+         id TEXT PRIMARY KEY NOT NULL,
+         status TEXT NOT NULL
+        ) STRICT;
         ",
     ]
 }
