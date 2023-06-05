@@ -504,6 +504,33 @@ class BreezSDKMapper {
             "lastRedeemError": swapInfo.lastRedeemError
         ]
     }
+
+    static func dictionaryOf(reverseSwapPairInfo: ReverseSwapPairInfo) -> [String: Any?] {
+        return [
+            "min": reverseSwapPairInfo.min,
+            "max": reverseSwapPairInfo.max,
+            "feesHash": reverseSwapPairInfo.feesHash,
+            "feesPercentage": reverseSwapPairInfo.feesPercentage,
+            "feesLockup": reverseSwapPairInfo.feesLockup,
+            "feesClaim": reverseSwapPairInfo.feesClaim
+        ]
+    }
+
+    static func dictionaryOf(reverseSwapInfo: ReverseSwapInfo) -> [String: Any?] {
+        return [
+            "min": reverseSwapPairInfo.min,
+            "max": reverseSwapPairInfo.max,
+            "feesHash": reverseSwapPairInfo.feesHash,
+            "feesPercentage": reverseSwapPairInfo.feesPercentage,
+            "feesLockup": reverseSwapPairInfo.feesLockup,
+            "feesClaim": reverseSwapPairInfo.feesClaim
+
+            "id": reverseSwapInfo.id,
+            "claimPubkey": reverseSwapInfo.claimPubkey,
+            "onchainAmountSat": reverseSwapInfo.onchainAmountSat,
+            "status": valueOf(reverseSwapStatus: reverseSwapInfo.status)
+        ]
+    }
     
     static func dictionaryOf(unspentTransactionOutput: UnspentTransactionOutput) -> [String: Any] {
         return [
@@ -546,6 +573,16 @@ class BreezSDKMapper {
         switch(swapStatus) {
         case .initial: return "initial"
         case .expired: return "expired"
+        }
+    }
+
+    static func valueOf(reverseSwapStatus: ReverseSwapStatus) -> String {
+        switch(reverseSwapStatus) {
+        case .initial: return "initial"
+        case .inprogress: return "inprogress"
+        case .cancelled: return "cancelled"
+        case .completedseen: return "completedseen"
+        case .completedconfirmed: return "completedconfirmed"
         }
     }
 }

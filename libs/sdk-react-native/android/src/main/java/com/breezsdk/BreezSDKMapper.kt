@@ -126,6 +126,8 @@ fun pushToArray(array: WritableArray, value: Any?) {
         is LspInformation -> array.pushMap(readableMapOf(value))
         is Payment -> array.pushMap(readableMapOf(value))
         is Rate -> array.pushMap(readableMapOf(value))
+        is ReverseSwapInfo -> array.pushMap(readableMapOf(value))
+        is ReverseSwapPairInfo -> array.pushMap(readableMapOf(value))
         is RouteHint -> array.pushMap(readableMapOf(value))
         is RouteHintHop -> array.pushMap(readableMapOf(value))
         is String -> array.pushString(value)
@@ -520,6 +522,26 @@ fun readableMapOf(swapInfo: SwapInfo): ReadableMap {
             "minAllowedDeposit" to swapInfo.minAllowedDeposit,
             "maxAllowedDeposit" to swapInfo.maxAllowedDeposit,
             "lastRedeemError" to swapInfo.lastRedeemError
+    )
+}
+
+fun readableMapOf(reverseSwapPairInfo: ReverseSwapPairInfo): ReadableMap {
+    return readableMapOf(
+            "min" to reverseSwapPairInfo.min,
+            "max" to reverseSwapPairInfo.max,
+            "feesHash" to reverseSwapPairInfo.feesHash,
+            "feesPercentage" to reverseSwapPairInfo.feesPercentage,
+            "feesLockup" to reverseSwapPairInfo.feesLockup,
+            "feesClaim" to reverseSwapPairInfo.feesClaim
+    )
+}
+
+fun readableMapOf(reverseSwapInfo: ReverseSwapInfo): ReadableMap {
+    return readableMapOf(
+            "id" to reverseSwapInfo.id,
+            "claimPubkey" to reverseSwapInfo.claimPubkey,
+            "onchainAmountSat" to reverseSwapInfo.onchainAmountSat,
+            "status" to reverseSwapInfo.status.name.lowercase()
     )
 }
 

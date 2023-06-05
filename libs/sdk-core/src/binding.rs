@@ -14,7 +14,6 @@ use crate::invoice::{self};
 use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::lsp::LspInformation;
 use crate::models::LogEntry;
-use crate::{LnUrlCallbackStatus, ReverseSwapPairInfo, SimpleReverseSwapInfo};
 use crate::models::{
     Config, EnvironmentType, GreenlightCredentials, Network, NodeState, Payment, PaymentTypeFilter,
     SwapInfo,
