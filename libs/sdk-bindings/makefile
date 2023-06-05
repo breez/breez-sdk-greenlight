@@ -34,10 +34,18 @@ darwin-universal: $(SOURCES)
 	lipo -create -output ../target/darwin-universal/release/libbreez_sdk_bindings.dylib ../target/aarch64-apple-darwin/release/libbreez_sdk_bindings.dylib ../target/x86_64-apple-darwin/release/libbreez_sdk_bindings.dylib
 	lipo -create -output ../target/darwin-universal/release/libbreez_sdk_bindings.a ../target/aarch64-apple-darwin/release/libbreez_sdk_bindings.a ../target/x86_64-apple-darwin/release/libbreez_sdk_bindings.a
 
+windows: $(SOURCES)
+	cargo build --release --target x86_64-pc-windows-gnu
+
 csharp-darwin: darwin-universal
 	cargo install uniffi-bindgen-cs --git https://github.com/breez/uniffi-bindgen-cs --branch namespace
 	uniffi-bindgen-cs src/breez_sdk.udl -o ffi/csharp -c ./uniffi.toml
 	cp ../target/darwin-universal/release/libbreez_sdk_bindings.dylib ffi/csharp
+
+csharp-windows: windows
+	cargo install uniffi-bindgen-cs --git https://github.com/breez/uniffi-bindgen-cs --branch namespace
+	uniffi-bindgen-cs src/breez_sdk.udl -o ffi/csharp -c ./uniffi.toml
+	cp ../target/x86_64-pc-windows-gnu/release/breez_sdk_bindings.dll ffi/csharp
 
 TARGET ?= aarch64-unknown-linux-gnu
 csharp-linux: $(SOURCES)
@@ -60,9 +68,8 @@ golang-linux: $(SOURCES)
 	cp ../target/$(TARGET)/release/libbreez_sdk_bindings.so ffi/golang
 	cp -r ffi/golang/breez/breez_sdk tests/bindings/golang/
 
-golang-windows: $(SOURCES)
+golang-windows: windows
 	cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go
-	cargo build --release --target x86_64-pc-windows-gnu
 	uniffi-bindgen-go src/breez_sdk.udl -o ffi/golang -c ./uniffi.toml
 	cp ../target/x86_64-pc-windows-gnu/release/breez_sdk_bindings.dll ffi/golang
 	cp -r ffi/golang/breez/breez_sdk tests/bindings/golang/
