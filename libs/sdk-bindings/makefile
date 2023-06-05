@@ -9,6 +9,7 @@ init:
 	rustup target add aarch64-apple-ios-sim
 	#rustup target add armv7-apple-ios armv7s-apple-ios i386-apple-ios ## deprecated
 	rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+	rustup target add x86_64-pc-windows-gnu
 	@if [ $$(uname) == "Darwin" ] ; then cargo install cargo-lipo ; fi
 	cargo install cbindgen
 	cargo install cargo-ndk
@@ -57,6 +58,13 @@ golang-linux: $(SOURCES)
 	cargo build --release --target $(TARGET)
 	uniffi-bindgen-go src/breez_sdk.udl -o ffi/golang -c ./uniffi.toml
 	cp ../target/$(TARGET)/release/libbreez_sdk_bindings.so ffi/golang
+	cp -r ffi/golang/breez/breez_sdk tests/bindings/golang/
+
+golang-windows: $(SOURCES)
+	cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go
+	cargo build --release --target x86_64-pc-windows-gnu
+	uniffi-bindgen-go src/breez_sdk.udl -o ffi/golang -c ./uniffi.toml
+	cp ../target/x86_64-pc-windows-gnu/release/breez_sdk_bindings.dll ffi/golang
 	cp -r ffi/golang/breez/breez_sdk tests/bindings/golang/
 
 swift-ios: ios-universal
