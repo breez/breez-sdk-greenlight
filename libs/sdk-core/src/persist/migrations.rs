@@ -374,6 +374,7 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
          timeout_block_height INTEGER NOT NULL,
          invoice TEXT NOT NULL UNIQUE,
          onchain_amount_sat INTEGER NOT NULL,
+         sat_per_vbyte INTEGER NOT NULL,
          redeem_script TEXT NOT NULL
         ) STRICT;
 

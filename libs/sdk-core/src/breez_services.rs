@@ -474,6 +474,7 @@ impl BreezServices {
         amount_sat: u64,
         onchain_recipient_address: String,
         pair_hash: String,
+        sat_per_vbyte: u64,
     ) -> Result<SimpleReverseSwapInfo> {
         match self.in_progress_reverse_swaps().await?.is_empty() {
             true => {
@@ -483,6 +484,7 @@ impl BreezServices {
                         onchain_recipient_address,
                         pair_hash,
                         self.lsp_info().await?.pubkey,
+                        sat_per_vbyte
                     )
                     .await
                     .map(Into::into)

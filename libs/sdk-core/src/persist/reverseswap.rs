@@ -10,8 +10,8 @@ impl SqliteStorage {
         let tx = con.transaction()?;
 
         tx.execute(
-            "INSERT INTO sync.reverse_swaps (id, created_at_block_height, preimage, private_key, claim_pubkey, timeout_block_height, invoice, onchain_amount_sat, redeem_script)\
-            VALUES (:id, :created_at_block_height, :preimage, :private_key, :claim_pubkey, :timeout_block_height, :invoice, :onchain_amount_sat, :redeem_script)",
+            "INSERT INTO sync.reverse_swaps (id, created_at_block_height, preimage, private_key, claim_pubkey, timeout_block_height, invoice, onchain_amount_sat, sat_per_vbyte, redeem_script)\
+            VALUES (:id, :created_at_block_height, :preimage, :private_key, :claim_pubkey, :timeout_block_height, :invoice, :onchain_amount_sat, :sat_per_vbyte, :redeem_script)",
             named_params! {
                 ":id": rsi.id,
                 ":created_at_block_height": rsi.created_at_block_height,
@@ -21,6 +21,7 @@ impl SqliteStorage {
                 ":timeout_block_height": rsi.timeout_block_height,
                 ":invoice": rsi.invoice,
                 ":onchain_amount_sat": rsi.onchain_amount_sat,
+                ":sat_per_vbyte": rsi.sat_per_vbyte,
                 ":redeem_script": rsi.redeem_script
             },
         )?;
@@ -78,6 +79,7 @@ impl SqliteStorage {
             claim_pubkey: row.get("claim_pubkey")?,
             invoice: row.get("invoice")?,
             onchain_amount_sat: row.get("onchain_amount_sat")?,
+            sat_per_vbyte: row.get("sat_per_vbyte")?,
             redeem_script: row.get("redeem_script")?,
             cache: ReverseSwapInfoCached {
                 status: serde_json::from_value(row.get("status")?)
