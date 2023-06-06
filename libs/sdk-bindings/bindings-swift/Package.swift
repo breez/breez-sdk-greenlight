@@ -7,7 +7,7 @@ let package = Package(
     name: "bindings-swift",
     platforms: [
         .macOS(.v12),
-        .iOS(.v15),
+        .iOS(.v14),
     ],
     products: [
         .library(name: "BreezSDK", targets: ["breez_sdkFFI", "BreezSDK"]),
