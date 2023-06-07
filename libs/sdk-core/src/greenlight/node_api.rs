@@ -114,7 +114,7 @@ impl Greenlight {
         Ok(client)
     }
 
-    async fn get_node_client(&self) -> Result<node::ClnClient> {
+    pub(crate) async fn get_node_client(&self) -> Result<node::ClnClient> {
         let client: node::ClnClient = self
             .scheduler()
             .await?

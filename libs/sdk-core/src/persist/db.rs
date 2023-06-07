@@ -1,18 +1,32 @@
+use std::sync::{Arc, Mutex};
+
+use super::migrations::current_migrations;
 use anyhow::Result;
 use rusqlite::{
+    hooks::Action,
     types::{FromSql, FromSqlError, ToSqlOutput},
     Connection, ToSql,
 };
-
 use rusqlite_migration::{Migrations, M};
 
-use super::migrations::current_migrations;
+/// HookEvent is used to notify listeners about DB changes.
+/// A listener can register to be notified about specific events that occurs as part of
+/// modifications in the persistent storage.
+pub(crate) enum HookEvent {
+    Insert { table: String },
+}
 
-pub struct SqliteStorage {
+pub(crate) trait HookListener: Send + Sync {
+    fn notify(&self, event: &HookEvent);
+}
+
+pub(crate) struct SqliteStorage {
     /// Local DB. Exists only on this instance of the SDK.
     main_db_file: String,
     /// Sync DB. Gets synchronized across the different instances that connect to the same wallet.
     sync_db_file: String,
+    /// Listeners for DB hooks.
+    hook_listeners: Mutex<Vec<Arc<dyn HookListener>>>,
 }
 
 impl SqliteStorage {
@@ -23,10 +37,21 @@ impl SqliteStorage {
         SqliteStorage {
             main_db_file,
             sync_db_file,
+            hook_listeners: Mutex::new(vec![]),
         }
     }
 
-    pub fn init(&self) -> Result<()> {
+    pub(crate) fn add_hook_listener(&self, listener: Arc<dyn HookListener>) {
+        let mut listeners = self.hook_listeners.lock().unwrap();
+        listeners.push(listener);
+    }
+
+    pub(crate) fn hook_listeners(&self) -> Vec<Arc<dyn HookListener>> {
+        let listeners = self.hook_listeners.lock().unwrap();
+        return listeners.clone();
+    }
+
+    pub(crate) fn init(&self) -> Result<()> {
         let migrations = Migrations::new(current_migrations().into_iter().map(M::up).collect());
         let mut conn = self.get_connection()?;
         migrations
@@ -39,7 +64,22 @@ impl SqliteStorage {
         let con = Connection::open(self.main_db_file.clone()).map_err(anyhow::Error::msg)?;
         let sql = "ATTACH DATABASE ? AS sync;";
         con.execute(sql, [self.sync_db_file.clone()])?;
+
+        // We want to notify any listeners with hook events.
+        let listeners = self.hook_listeners();
+        con.update_hook(Some(move |action, db: &str, tbl: &str, _| {
+            if action == Action::SQLITE_INSERT && db == "sync" {
+                for listener in listeners.iter() {
+                    listener.notify(&HookEvent::Insert { table: tbl.into() });
+                }
+            }
+        }));
+
         Ok(con)
+    }
+
+    pub(crate) fn sync_db_path(&self) -> String {
+        self.sync_db_file.clone()
     }
 }
 

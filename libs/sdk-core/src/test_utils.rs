@@ -27,8 +27,24 @@ use crate::lsp::LspInformation;
 use crate::models::{FiatAPI, LspAPI, NodeAPI, NodeState, Payment, Swap, SwapperAPI, SyncResponse};
 use crate::moonpay::MoonPayApi;
 use crate::swap::create_submarine_swap_script;
+use crate::sync_storage::{SyncState, SyncTransport};
 use crate::SwapInfo;
 use crate::{parse_invoice, Config, LNInvoice, PaymentResponse, RouteHint};
+
+pub struct MockSyncTransport {}
+
+#[tonic::async_trait]
+impl SyncTransport for MockSyncTransport {
+    async fn pull(&self) -> Result<Option<SyncState>> {
+        return Ok(None);
+    }
+    async fn push(&self, version: Option<u64>, data: Vec<u8>) -> Result<u64> {
+        match version {
+            Some(v) => Ok(v + 1),
+            None => Ok(1),
+        }
+    }
+}
 
 pub struct MockSwapperAPI {}
 
@@ -517,7 +533,9 @@ pub fn create_test_config() -> crate::models::Config {
     conf
 }
 
-pub fn create_test_persister(config: crate::models::Config) -> crate::persist::db::SqliteStorage {
+pub(crate) fn create_test_persister(
+    config: crate::models::Config,
+) -> crate::persist::db::SqliteStorage {
     crate::persist::db::SqliteStorage::new(config.working_dir)
 }
 

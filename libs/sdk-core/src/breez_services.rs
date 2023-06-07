@@ -1,7 +1,7 @@
 use crate::boltzswap::BoltzApi;
 use crate::chain::{ChainService, MempoolSpace, RecommendedFees};
 use crate::fiat::{FiatCurrency, Rate};
-use crate::greenlight::Greenlight;
+use crate::greenlight::{GLSyncTransport, Greenlight};
 use crate::grpc::channel_opener_client::ChannelOpenerClient;
 use crate::grpc::fund_manager_client::FundManagerClient;
 use crate::grpc::information_client::InformationClient;
@@ -27,6 +27,7 @@ use crate::moonpay::MoonPayApi;
 use crate::persist::db::SqliteStorage;
 use crate::reverseswap::BTCSendSwap;
 use crate::swap::BTCReceiveSwap;
+use crate::sync_storage::{watch_and_sync, SyncTransport};
 use crate::BuyBitcoinProvider::Moonpay;
 use crate::*;
 use crate::{BuyBitcoinProvider, LnUrlAuthRequestData, LnUrlWithdrawRequestData, PaymentResponse};
@@ -138,6 +139,7 @@ async fn start_threads(
 /// BreezServices is a facade and the single entry point for the SDK.
 pub struct BreezServices {
     node_api: Arc<dyn NodeAPI>,
+    sync_transport: Arc<dyn SyncTransport>,
     lsp_api: Arc<dyn LspAPI>,
     fiat_api: Arc<dyn FiatAPI>,
     moonpay_api: Arc<dyn MoonPayApi>,
@@ -192,6 +194,12 @@ impl BreezServices {
             return Err(anyhow!("start can only be called once"));
         }
         let shutdown_handler = start_threads(runtime, breez_services.clone()).await?;
+
+        //We watch for every change that requires synchronization with the remote state.
+        watch_and_sync(
+            breez_services.sync_transport.clone(),
+            breez_services.persister.clone(),
+        );
         *start_lock = Some(shutdown_handler);
         Ok(())
     }
@@ -448,7 +456,8 @@ impl BreezServices {
               )));
         }
 
-        self.btc_receive_swapper.create_swap_address().await
+        let swap_info = self.btc_receive_swapper.create_swap_address().await?;
+        Ok(swap_info)
     }
 
     /// Returns an optional in-progress [SwapInfo].
@@ -775,6 +784,7 @@ fn closed_channel_to_transaction(channel: crate::models::Channel) -> Result<Paym
 struct BreezServicesBuilder {
     config: Config,
     node_api: Option<Arc<dyn NodeAPI>>,
+    sync_transport: Option<Arc<dyn SyncTransport>>,
     creds: Option<GreenlightCredentials>,
     seed: Option<Vec<u8>>,
     lsp_api: Option<Arc<dyn LspAPI>>,
@@ -799,6 +809,7 @@ impl BreezServicesBuilder {
             swapper_api: None,
             reverse_swapper_api: None,
             moonpay_api: None,
+            sync_transport: None,
         }
     }
 
@@ -840,6 +851,11 @@ impl BreezServicesBuilder {
         self
     }
 
+    pub fn sync_transport(&mut self, sync_transport: Arc<dyn SyncTransport>) -> &mut Self {
+        self.sync_transport = Some(sync_transport.clone());
+        self
+    }
+
     pub fn greenlight_credentials(
         &mut self,
         creds: GreenlightCredentials,
@@ -860,7 +876,15 @@ impl BreezServicesBuilder {
             ));
         }
 
+        // The storage is implemented via sqlite.
+        let persister = self
+            .persister
+            .clone()
+            .unwrap_or_else(|| Arc::new(SqliteStorage::new(self.config.working_dir.clone())));
+        persister.init().unwrap();
+
         let mut node_api = self.node_api.clone();
+        let mut sync_transport = self.sync_transport.clone();
         if node_api.is_none() {
             if self.creds.is_none() || self.seed.is_none() {
                 return Err(anyhow!(
@@ -873,8 +897,18 @@ impl BreezServicesBuilder {
                 self.creds.clone().unwrap(),
             )
             .await?;
-            node_api = Some(Arc::new(greenlight));
+            let gl_arc = Arc::new(greenlight);
+            node_api = Some(gl_arc.clone());
+            if sync_transport.is_none() {
+                sync_transport = Some(Arc::new(GLSyncTransport {
+                    inner: gl_arc.clone(),
+                }));
+            }
         }
+        if sync_transport.is_none() {
+            return Err(anyhow!("state synchronizer should be provided"));
+        }
+
         let unwrapped_node_api = node_api.unwrap();
 
         // breez_server provides both FiatAPI & LspAPI implementations
@@ -888,13 +922,6 @@ impl BreezServicesBuilder {
             self.config.mempoolspace_url.clone(),
         ));
 
-        // The storage is implemented via sqlite.
-        let persister = self
-            .persister
-            .clone()
-            .unwrap_or_else(|| Arc::new(SqliteStorage::new(self.config.working_dir.clone())));
-
-        persister.init().unwrap();
         let current_lsp_id = persister.get_lsp_id()?;
         if current_lsp_id.is_none() && self.config.default_lsp_id.is_some() {
             persister.set_lsp_id(self.config.default_lsp_id.clone().unwrap())?;
@@ -929,6 +956,7 @@ impl BreezServicesBuilder {
         // Create the node services and it them statically
         let breez_services = Arc::new(BreezServices {
             node_api: unwrapped_node_api.clone(),
+            sync_transport: sync_transport.unwrap(),
             lsp_api: self.lsp_api.clone().unwrap_or_else(|| breez_server.clone()),
             fiat_api: self
                 .fiat_api
@@ -1315,6 +1343,7 @@ pub(crate) mod tests {
             .fiat_api(Arc::new(MockBreezServer {}))
             .node_api(node_api)
             .persister(persister)
+            .sync_transport(Arc::new(MockSyncTransport {}))
             .build(None)
             .await?;
 
@@ -1468,6 +1497,7 @@ pub(crate) mod tests {
             .moonpay_api(Arc::new(MockBreezServer {}))
             .persister(persister)
             .node_api(node_api)
+            .sync_transport(Arc::new(MockSyncTransport {}))
             .build(None)
             .await
             .unwrap();

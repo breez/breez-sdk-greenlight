@@ -165,6 +165,7 @@ mod moonpay;
 mod persist;
 mod reverseswap;
 mod swap;
+mod sync_storage;
 #[cfg(test)]
 mod test_utils;
 
