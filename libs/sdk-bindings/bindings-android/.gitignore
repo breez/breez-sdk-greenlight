@@ -46,4 +46,3 @@ gen-external-apklibs
 
 lib/src/main/jniLibs/
 lib/src/main/kotlin/breez_sdk
-lib/src/main/kotlin/breez_sdk.kt
