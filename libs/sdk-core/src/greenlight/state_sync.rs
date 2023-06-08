@@ -5,7 +5,7 @@ use anyhow::{anyhow, Result};
 use gl_client::{node, pb};
 use std::sync::Arc;
 
-const BREEZ_SDK_DATASTORE_PATH: [&str; 2] = ["breez-sdk", "sync"];
+const BREEZ_SDK_DATASTORE_PATH: [&str; 2] = ["breez-sdk", "sync2"];
 
 pub(crate) struct GLSyncTransport {
     pub(crate) inner: Arc<Greenlight>,
@@ -26,10 +26,6 @@ impl SyncTransport for GLSyncTransport {
             .await?
             .into_inner();
         let store = response.datastore;
-        info!(
-            "pull remote storage succeeded = {:?}",
-            store[0].generation.unwrap()
-        );
         match store.len() {
             0 => Ok(None),
             1 => Ok(Some(SyncState {

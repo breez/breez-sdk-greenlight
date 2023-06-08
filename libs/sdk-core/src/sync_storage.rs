@@ -1,5 +1,6 @@
 use crate::persist::db::{HookEvent, HookListener, SqliteStorage};
 use anyhow::{anyhow, Result};
+use miniz_oxide::{deflate::compress_to_vec, inflate::decompress_to_vec_with_limit};
 use std::{
     env::temp_dir,
     fs::File,
@@ -28,17 +29,26 @@ pub trait SyncTransport: Send + Sync {
 
 /// watches for sync requests and syncs the sdk state when a request is detected.
 pub(crate) fn watch_and_sync(inner: Arc<dyn SyncTransport>, persister: Arc<SqliteStorage>) {
+    let sync_worker = SyncWorker::new(inner.clone(), persister.clone());
     persister.add_hook_listener(Arc::new(SyncStorageListener {
-        inner: inner.clone(),
-        persister: persister.clone(),
-    }))
+        sync_worker: sync_worker.clone(),
+    }));
+
+    spawn_sync_worker(sync_worker);
+}
+
+fn spawn_sync_worker(worker: SyncWorker) {
+    tokio::spawn(async move {
+        if let Err(e) = worker.sync().await {
+            error!("Failed to sync sdk state: {}", e);
+        }
+    });
 }
 
 /// SyncStorageListener is a hook listener that syncs the sdk state when a sync request is detected.
 /// It listens to events on the sync_requests table and starts a sync when a new request is detected.
 struct SyncStorageListener {
-    inner: Arc<dyn SyncTransport>,
-    persister: Arc<SqliteStorage>,
+    sync_worker: SyncWorker,
 }
 
 impl HookListener for SyncStorageListener {
@@ -46,16 +56,9 @@ impl HookListener for SyncStorageListener {
         match event {
             HookEvent::Insert { table } => {
                 if table == "sync_requests" {
-                    let transport = self.inner.clone();
-                    let persister = self.persister.clone();
                     info!("Sync request detected, starting sync");
-
                     // spawn a new worker to sync the sdk state
-                    tokio::spawn(async move {
-                        if let Err(e) = SyncWorker::new(transport, persister).sync().await {
-                            error!("Failed to sync sdk state: {}", e);
-                        }
-                    });
+                    spawn_sync_worker(self.sync_worker.clone());
                 }
             }
         }
@@ -63,6 +66,7 @@ impl HookListener for SyncStorageListener {
 }
 
 /// SyncWorker is a worker that bidirectionaly syncs the sdk state.
+#[derive(Clone)]
 struct SyncWorker {
     inner: Arc<dyn SyncTransport>,
     persister: Arc<SqliteStorage>,
@@ -82,6 +86,10 @@ impl SyncWorker {
         let last_version = self.persister.get_last_sync_version()?;
         let last_sync_request_id = self.persister.get_last_sync_request()?.unwrap_or_default();
 
+        // In case we don't  have any sync requests the worker can exit
+        if last_sync_request_id == 0 {
+            return Ok(());
+        }
         // Backup the local sdk state
         let local_storage_file = tempfile::NamedTempFile::new()?;
         self.persister.backup(local_storage_file.path())?;
@@ -97,7 +105,7 @@ impl SyncWorker {
         f.read_to_end(&mut data)?;
 
         // Try to push with the current version, if no one else has pushed then we will succeed
-        let optimistic_sync = self.inner.push(last_version, data).await;
+        let optimistic_sync = self.push(last_version, data).await;
 
         let sync_result = match optimistic_sync {
             Ok(new_version) => {
@@ -134,7 +142,7 @@ impl SyncWorker {
 
     /// Syncs the remote changes into the local changes and then tries to push the local changes again.    
     async fn sync_remote_and_push(&self) -> Result<u64> {
-        let remote_state = self.inner.pull().await?;
+        let remote_state = self.pull().await?;
         let tmp_dir = tempdir_in(temp_dir())?;
         let remote_storage_path = tmp_dir.path();
         let mut remote_storage_file = File::create(&remote_storage_path.join("sync_storage.sql"))?;
@@ -161,10 +169,34 @@ impl SyncWorker {
                 remote_storage_file.read_to_end(&mut hex)?;
 
                 // Push the local changes again
-                let new_generation = self.inner.push(Some(state.generation), hex).await?;
+                let new_generation = self.push(Some(state.generation), hex).await?;
                 Ok(new_generation)
             }
             None => Err(anyhow!("pull returned no values")),
         }
+    }
+
+    async fn pull(&self) -> Result<Option<SyncState>> {
+        let state = self.inner.pull().await?;
+        match state {
+            Some(state) => {
+                let decompressed = decompress_to_vec_with_limit(&state.data, 4000000)
+                    .expect("Failed to decompress!");
+                Ok(Some(SyncState {
+                    generation: state.generation,
+                    data: decompressed,
+                }))
+            }
+            None => Ok(None),
+        }
+    }
+
+    async fn push(&self, version: Option<u64>, data: Vec<u8>) -> Result<u64> {
+        let compressed_data = compress_to_vec(&data, 10);
+        info!(
+            "Pushing compressed data with size = {}",
+            compressed_data.len()
+        );
+        self.inner.push(version, compressed_data.to_vec()).await
     }
 }
