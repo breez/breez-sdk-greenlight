@@ -146,9 +146,9 @@ pub extern "C" fn wire_close_lsp_channels(port_: i64) {
 pub extern "C" fn wire_sweep(
     port_: i64,
     to_address: *mut wire_uint_8_list,
-    fee_rate_sats_per_byte: u64,
+    fee_rate_sats_per_vbyte: u64,
 ) {
-    wire_sweep_impl(port_, to_address, fee_rate_sats_per_byte)
+    wire_sweep_impl(port_, to_address, fee_rate_sats_per_vbyte)
 }
 
 #[no_mangle]

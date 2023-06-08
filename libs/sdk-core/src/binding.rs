@@ -258,10 +258,10 @@ pub fn close_lsp_channels() -> Result<()> {
 }
 
 /// See [BreezServices::sweep]
-pub fn sweep(to_address: String, fee_rate_sats_per_byte: u64) -> Result<()> {
+pub fn sweep(to_address: String, fee_rate_sats_per_vbyte: u64) -> Result<()> {
     block_on(async {
         get_breez_services()?
-            .sweep(to_address, fee_rate_sats_per_byte)
+            .sweep(to_address, fee_rate_sats_per_vbyte)
             .await
     })
 }
