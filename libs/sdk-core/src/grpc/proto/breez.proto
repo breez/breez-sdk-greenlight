@@ -150,13 +150,27 @@ message LSPInformation {
   /// the channel.
   int64 min_htlc_msat = 10 [ json_name = "min_htlc_msat" ];
 
-  int64 channel_fee_permyriad = 11;
+  int64 channel_fee_permyriad = 11 [deprecated = true];
 
   bytes lsp_pubkey = 12;
   // The channel can be closed if not used this duration in seconds.
-  int64 max_inactive_duration = 13;
+  int64 max_inactive_duration = 13 [deprecated = true];
 
-  int64 channel_minimum_fee_msat = 14;
+  int64 channel_minimum_fee_msat = 14 [deprecated = true];
+
+  repeated OpeningFeeParams opening_fee_params_menu = 15;
+}
+message OpeningFeeParams {
+  /// The minimum value in millisatoshi we will require for incoming HTLCs on the channel.
+  uint64 min_msat = 1;
+  /// The fee in ppm charged over liquidity when buying a channel.
+  uint32 proportional = 2;
+  /// The time this opening fee params promise expires.
+  string valid_until = 3;
+  // The channel can be closed if not used this duration in blocks.
+  uint32 max_idle_time = 4;
+  uint32 max_client_to_self_delay = 5;
+  string promise = 6;
 }
 message LSPListReply {
   map<string, LSPInformation> lsps = 1; // The key is the lsp id
@@ -403,4 +417,5 @@ message PaymentInformation {
   bytes destination = 3;
   int64 incoming_amount_msat = 4;
   int64 outgoing_amount_msat = 5;
+  OpeningFeeParams opening_fee_params = 6;
 }

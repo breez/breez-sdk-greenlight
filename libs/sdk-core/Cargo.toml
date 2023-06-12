@@ -57,6 +57,7 @@ strum_macros = "0.24.1"
 tempfile = "3"
 const_format = "*"
 miniz_oxide = "0.7.1"
+chrono = "0.4.26"
 
 [dev-dependencies]
 futures = "0.3.28"

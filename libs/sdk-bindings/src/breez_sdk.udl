@@ -245,6 +245,27 @@ callback interface EventListener {
     void on_event(BreezEvent e);
 };
 
+dictionary OpeningFeeParams {
+    u64 min_msat;
+    u32 proportional;
+    string valid_until;
+    u32 max_idle_time;
+    u32 max_client_to_self_delay;
+    string promise;
+};
+
+dictionary ReceivePaymentRequestData {
+    u64 amount_sats;
+    string description;
+    sequence<u8>? preimage;
+    OpeningFeeParams? opening_fee_params;
+};
+
+dictionary ReceivePaymentResponse {
+    LNInvoice ln_invoice;
+    OpeningFeeParams? opening_fee_params;
+};
+
 dictionary LspInformation {
     string id;
     string name;
@@ -261,6 +282,7 @@ dictionary LspInformation {
     sequence<u8> lsp_pubkey;
     i64 max_inactive_duration;
     i64 channel_minimum_fee_msat;
+    sequence<OpeningFeeParams> opening_fee_params_menu;
 };
 
 enum SwapStatus {
@@ -407,7 +429,7 @@ interface BlockingBreezServices {
    Payment send_spontaneous_payment(string node_id, u64 amount_sats);
 
    [Throws=SDKError]
-   LNInvoice receive_payment(u64 amount_sats, string description);
+   ReceivePaymentResponse receive_payment(ReceivePaymentRequestData req_data);
 
    [Throws=SDKError]
    LnUrlPayResult pay_lnurl(LnUrlPayRequestData req_data, u64 amount_sats, string? comment);

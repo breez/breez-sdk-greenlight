@@ -56,10 +56,13 @@ use crate::models::LnUrlCallbackStatus;
 use crate::models::LogEntry;
 use crate::models::Network;
 use crate::models::NodeState;
+use crate::models::OpeningFeeParams;
 use crate::models::Payment;
 use crate::models::PaymentDetails;
 use crate::models::PaymentType;
 use crate::models::PaymentTypeFilter;
+use crate::models::ReceivePaymentRequestData;
+use crate::models::ReceivePaymentResponse;
 use crate::models::ReverseSwapInfo;
 use crate::models::ReverseSwapPairInfo;
 use crate::models::ReverseSwapStatus;
@@ -229,8 +232,7 @@ fn wire_send_spontaneous_payment_impl(
 }
 fn wire_receive_payment_impl(
     port_: MessagePort,
-    amount_sats: impl Wire2Api<u64> + UnwindSafe,
-    description: impl Wire2Api<String> + UnwindSafe,
+    req_data: impl Wire2Api<ReceivePaymentRequestData> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -239,9 +241,8 @@ fn wire_receive_payment_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_amount_sats = amount_sats.wire2api();
-            let api_description = description.wire2api();
-            move |task_callback| receive_payment(api_amount_sats, api_description)
+            let api_req_data = req_data.wire2api();
+            move |task_callback| receive_payment(api_req_data)
         },
     )
 }
@@ -708,6 +709,7 @@ impl Wire2Api<PaymentTypeFilter> for i32 {
         }
     }
 }
+
 impl Wire2Api<u16> for u16 {
     fn wire2api(self) -> u16 {
         self
@@ -1020,6 +1022,7 @@ impl support::IntoDart for LspInformation {
             self.lsp_pubkey.into_dart(),
             self.max_inactive_duration.into_dart(),
             self.channel_minimum_fee_msat.into_dart(),
+            self.opening_fee_params_menu.into_dart(),
         ]
         .into_dart()
     }
@@ -1064,6 +1067,21 @@ impl support::IntoDart for NodeState {
     }
 }
 impl support::IntoDartExceptPrimitive for NodeState {}
+
+impl support::IntoDart for OpeningFeeParams {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.min_msat.into_dart(),
+            self.proportional.into_dart(),
+            self.valid_until.into_dart(),
+            self.max_idle_time.into_dart(),
+            self.max_client_to_self_delay.into_dart(),
+            self.promise.into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for OpeningFeeParams {}
 
 impl support::IntoDart for Payment {
     fn into_dart(self) -> support::DartAbi {
@@ -1121,6 +1139,17 @@ impl support::IntoDart for Rate {
     }
 }
 impl support::IntoDartExceptPrimitive for Rate {}
+
+impl support::IntoDart for ReceivePaymentResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.ln_invoice.into_dart(),
+            self.opening_fee_params.into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for ReceivePaymentResponse {}
 
 impl support::IntoDart for RecommendedFees {
     fn into_dart(self) -> support::DartAbi {

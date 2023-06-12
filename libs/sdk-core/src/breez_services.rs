@@ -35,6 +35,7 @@ use anyhow::{anyhow, Result};
 use bip39::*;
 use bitcoin::hashes::{sha256, Hash};
 use bitcoin::util::bip32::ChildNumber;
+use chrono::{DateTime, Utc};
 use std::cmp::max;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -347,8 +348,14 @@ impl BreezServices {
         description: Option<String>,
     ) -> Result<LnUrlCallbackStatus> {
         let invoice = self
-            .receive_payment(amount_sats, description.unwrap_or_default())
-            .await?;
+            .receive_payment(ReceivePaymentRequestData {
+                amount_sats,
+                description: description.unwrap_or_default(),
+                preimage: None,
+                opening_fee_params: None,
+            })
+            .await?
+            .ln_invoice;
         validate_lnurl_withdraw(req_data, invoice).await
     }
 
@@ -372,12 +379,9 @@ impl BreezServices {
     /// * `amount_sats` - The amount to receive in satoshis
     pub async fn receive_payment(
         &self,
-        amount_sats: u64,
-        description: String,
-    ) -> Result<LNInvoice> {
-        self.payment_receiver
-            .receive_payment(amount_sats, description, None)
-            .await
+        req_data: ReceivePaymentRequestData,
+    ) -> Result<ReceivePaymentResponse> {
+        self.payment_receiver.receive_payment(req_data).await
     }
 
     /// Retrieve the node state from the persistent storage
@@ -1106,10 +1110,8 @@ pub fn mnemonic_to_seed(phrase: String) -> Result<Vec<u8>> {
 pub trait Receiver: Send + Sync {
     async fn receive_payment(
         &self,
-        amount_sats: u64,
-        description: String,
-        preimage: Option<Vec<u8>>,
-    ) -> Result<LNInvoice>;
+        req_data: ReceivePaymentRequestData,
+    ) -> Result<ReceivePaymentResponse>;
 }
 
 pub(crate) struct PaymentReceiver {
@@ -1122,10 +1124,8 @@ pub(crate) struct PaymentReceiver {
 impl Receiver for PaymentReceiver {
     async fn receive_payment(
         &self,
-        amount_sats: u64,
-        description: String,
-        preimage: Option<Vec<u8>>,
-    ) -> Result<LNInvoice> {
+        req_data: ReceivePaymentRequestData,
+    ) -> Result<ReceivePaymentResponse> {
         self.node_api.start().await?;
         let lsp_info = get_lsp(self.persister.clone(), self.lsp.clone()).await?;
         let node_state = self
@@ -1134,33 +1134,58 @@ impl Receiver for PaymentReceiver {
             .ok_or("Failed to retrieve node state")
             .map_err(|err| anyhow!(err))?;
 
+        let amount_sats = req_data.amount_sats;
         let amount_msats = amount_sats * 1000;
 
         let mut short_channel_id = parse_short_channel_id("1x0x0")?;
         let mut destination_invoice_amount_sats = amount_sats;
 
+        // TODO: Validate opening_fee_params in ReceivePaymentRequestData, req_data.opening_fee_params and use it if possible
+        // We pick our own if None is supplied:
+        let cheapest_opening_fee_params =
+            get_cheapest_opening_fee_params(lsp_info.opening_fee_params_menu);
         // check if we need to open channel
         let open_channel_needed = node_state.inbound_liquidity_msats < amount_msats;
         if open_channel_needed {
             info!("We need to open a channel");
 
             // we need to open channel so we are calculating the fees for the LSP
-            let channel_fees_msat_calculated =
-                amount_msats * lsp_info.channel_fee_permyriad as u64 / 10_000 / 1_000_000;
-            let channel_fees_msat = max(
-                channel_fees_msat_calculated,
-                lsp_info.channel_minimum_fee_msat as u64,
-            );
+            if let Some(ofp) = &cheapest_opening_fee_params {
+                let channel_fees_msat_calculated =
+                    amount_msats * ofp.proportional as u64 / 1_000_000 / 1_000_000;
+                let channel_fees_msat = max(channel_fees_msat_calculated, ofp.min_msat as u64);
 
-            if amount_msats < channel_fees_msat + 1000 {
-                return Err(anyhow!(
-                    "requestPayment: Amount should be more than the minimum fees {} sats",
-                    lsp_info.channel_minimum_fee_msat / 1000
-                ));
+                info!("zero-conf fee calculation option: lsp fee rate (proportional): {}:  (minimum {}), total fees for channel: {}",
+                ofp.proportional, ofp.min_msat, channel_fees_msat);
+
+                if amount_msats < channel_fees_msat + 1000 {
+                    return Err(anyhow!(
+                        "requestPayment: Amount should be more than the minimum fees {} sats",
+                        ofp.min_msat / 1000
+                    ));
+                }
+                // remove the fees from the amount to get the small amount on the current node invoice.
+                destination_invoice_amount_sats = amount_sats - channel_fees_msat / 1000;
+            } else {
+                // TODO: This branch only exists because there may be existing swaps
+                // that use the old fee rate mechanism. Remove this after those
+                // swaps have expired.
+                let channel_fees_msat_calculated =
+                    amount_msats * lsp_info.channel_fee_permyriad as u64 / 10_000 / 1_000_000;
+                let channel_fees_msat = max(
+                    channel_fees_msat_calculated,
+                    lsp_info.channel_minimum_fee_msat as u64,
+                );
+
+                if amount_msats < channel_fees_msat + 1000 {
+                    return Err(anyhow!(
+                        "requestPayment: Amount should be more than the minimum fees {} sats",
+                        lsp_info.channel_minimum_fee_msat / 1000
+                    ));
+                }
+                // remove the fees from the amount to get the small amount on the current node invoice.
+                destination_invoice_amount_sats = amount_sats - channel_fees_msat / 1000;
             }
-
-            // remove the fees from the amount to get the small amount on the current node invoice.
-            destination_invoice_amount_sats = amount_sats - channel_fees_msat / 1000;
         } else {
             // not opening a channel so we need to get the real channel id into the routing hints
             info!("Finding channel ID for routing hint");
@@ -1190,7 +1215,11 @@ impl Receiver for PaymentReceiver {
         info!("Creating invoice on NodeAPI");
         let invoice = &self
             .node_api
-            .create_invoice(destination_invoice_amount_sats, description, preimage)
+            .create_invoice(
+                destination_invoice_amount_sats,
+                req_data.description,
+                req_data.preimage,
+            )
             .await?;
         info!("Invoice created {}", invoice.bolt11);
 
@@ -1248,6 +1277,7 @@ impl Receiver for PaymentReceiver {
                         destination: hex::decode(parsed_invoice.payee_pubkey.clone())?,
                         incoming_amount_msat: amount_msats as i64,
                         outgoing_amount_msat: (destination_invoice_amount_sats * 1000) as i64,
+                        opening_fee_params: cheapest_opening_fee_params.clone().map(Into::into),
                     },
                 )
                 .await?;
@@ -1255,7 +1285,53 @@ impl Receiver for PaymentReceiver {
         }
 
         // return the signed, converted invoice with hints
-        Ok(parsed_invoice)
+        Ok(ReceivePaymentResponse {
+            ln_invoice: parsed_invoice,
+            opening_fee_params: cheapest_opening_fee_params,
+        })
+    }
+}
+
+fn get_cheapest_opening_fee_params(
+    opening_fee_params_menu: Vec<models::OpeningFeeParams>,
+) -> Option<models::OpeningFeeParams> {
+    match validate_opening_fee_params_menu(&opening_fee_params_menu) {
+        Ok(()) => {
+            return Some(opening_fee_params_menu[0].clone());
+        }
+        Err(e) => {
+            error!("failed to validate opening_fee_params_menu{}", e);
+            return None;
+        }
+    }
+}
+
+fn validate_opening_fee_params_menu(
+    opening_fee_params_menu: &Vec<models::OpeningFeeParams>,
+) -> Result<()> {
+    match !opening_fee_params_menu.is_empty() {
+        true => {
+            // opening_fee_params_menu fees must be in ascending order
+            let is_ordered = opening_fee_params_menu.windows(2).all(|ofp| {
+                ofp[0].min_msat < ofp[1].min_msat || ofp[0].proportional < ofp[1].proportional
+            });
+            // `valid_until` must not be a past datetime
+            let is_expired =
+                opening_fee_params_menu.iter().all(|ofp| {
+                    match DateTime::parse_from_str(&ofp.valid_until, "%Y %b %d %H:%M:%S%.3f %z") {
+                        Ok(v_u_dt) => Utc::now().timestamp() > v_u_dt.timestamp(),
+                        Err(_) => false,
+                    }
+                });
+            if is_ordered && !is_expired {
+                Ok(())
+            } else {
+                Err(anyhow!("Failed to validate opening_fee_params_menu"))
+            }
+        }
+        false => Err(anyhow!(
+            "No channel opening params are available in lsp info"
+        )),
     }
 }
 
@@ -1307,6 +1383,7 @@ pub(crate) mod tests {
     use crate::models::{LnPaymentDetails, NodeState, Payment, PaymentDetails, PaymentTypeFilter};
     use crate::{
         input_parser, parse_short_channel_id, test_utils::*, BuyBitcoinProvider, InputType,
+        ReceivePaymentRequestData,
     };
     use crate::{NodeAPI, PaymentType};
 
@@ -1450,8 +1527,14 @@ pub(crate) mod tests {
             lsp: breez_server.clone(),
         });
         let ln_invoice = receiver
-            .receive_payment(3000, "should populate lsp hints".to_string(), None)
-            .await?;
+            .receive_payment(ReceivePaymentRequestData {
+                amount_sats: 3000,
+                description: "should populate lsp hints".to_string(),
+                preimage: None,
+                opening_fee_params: None,
+            })
+            .await?
+            .ln_invoice;
         assert_eq!(ln_invoice.routing_hints[0].hops.len(), 1);
         let lsp_hop = &ln_invoice.routing_hints[0].hops[0];
         assert_eq!(lsp_hop.src_node_id, breez_server.clone().lsp_pub_key());

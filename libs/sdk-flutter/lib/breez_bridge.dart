@@ -174,13 +174,11 @@ class BreezBridge {
   ///
   /// * `amountSats` - The amount to receive in satoshis
   /// * `description` - The bolt11 payment request description
-  Future<LNInvoice> receivePayment({
-    required int amountSats,
-    required String description,
+  Future<ReceivePaymentResponse> receivePayment({
+    required ReceivePaymentRequestData requestData,
   }) async =>
       await _lnToolkit.receivePayment(
-        amountSats: amountSats,
-        description: description,
+        reqData: requestData,
       );
 
   /// get the node state from the persistent storage

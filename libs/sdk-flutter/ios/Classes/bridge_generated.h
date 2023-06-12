@@ -30,6 +30,22 @@ typedef struct wire_GreenlightCredentials {
   struct wire_uint_8_list *device_cert;
 } wire_GreenlightCredentials;
 
+typedef struct wire_OpeningFeeParams {
+  uint64_t min_msat;
+  uint32_t proportional;
+  struct wire_uint_8_list *valid_until;
+  uint32_t max_idle_time;
+  uint32_t max_client_to_self_delay;
+  struct wire_uint_8_list *promise;
+} wire_OpeningFeeParams;
+
+typedef struct wire_ReceivePaymentRequestData {
+  uint64_t amount_sats;
+  struct wire_uint_8_list *description;
+  struct wire_uint_8_list *preimage;
+  struct wire_OpeningFeeParams *opening_fee_params;
+} wire_ReceivePaymentRequestData;
+
 typedef struct wire_LnUrlPayRequestData {
   struct wire_uint_8_list *callback;
   uint64_t min_sendable;
@@ -100,9 +116,7 @@ void wire_send_spontaneous_payment(int64_t port_,
                                    struct wire_uint_8_list *node_id,
                                    uint64_t amount_sats);
 
-void wire_receive_payment(int64_t port_,
-                          uint64_t amount_sats,
-                          struct wire_uint_8_list *description);
+void wire_receive_payment(int64_t port_, struct wire_ReceivePaymentRequestData *req_data);
 
 void wire_node_info(int64_t port_);
 
@@ -190,6 +204,10 @@ struct wire_LnUrlPayRequestData *new_box_autoadd_ln_url_pay_request_data_0(void)
 
 struct wire_LnUrlWithdrawRequestData *new_box_autoadd_ln_url_withdraw_request_data_0(void);
 
+struct wire_OpeningFeeParams *new_box_autoadd_opening_fee_params_0(void);
+
+struct wire_ReceivePaymentRequestData *new_box_autoadd_receive_payment_request_data_0(void);
+
 uint64_t *new_box_autoadd_u64_0(uint64_t value);
 
 struct wire_uint_8_list *new_uint_8_list_0(int32_t len);
@@ -243,6 +261,8 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_auth_request_data_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_pay_request_data_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_withdraw_request_data_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_opening_fee_params_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_receive_payment_request_data_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_u64_0);
     dummy_var ^= ((int64_t) (void*) new_uint_8_list_0);
     dummy_var ^= ((int64_t) (void*) free_WireSyncReturn);

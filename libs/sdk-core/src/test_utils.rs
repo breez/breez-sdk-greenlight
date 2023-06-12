@@ -30,8 +30,8 @@ use crate::lsp::LspInformation;
 use crate::models::{FiatAPI, LspAPI, NodeAPI, NodeState, Payment, Swap, SwapperAPI, SyncResponse};
 use crate::moonpay::MoonPayApi;
 use crate::swap::create_submarine_swap_script;
-use crate::SwapInfo;
 use crate::{parse_invoice, Config, LNInvoice, PaymentResponse, RouteHint};
+use crate::{ReceivePaymentRequestData, SwapInfo};
 
 pub struct MockBackupTransport {
     pub num_pushed: std::sync::Mutex<u32>,
@@ -224,11 +224,12 @@ impl Default for MockReceiver {
 impl Receiver for MockReceiver {
     async fn receive_payment(
         &self,
-        _amount_sats: u64,
-        _description: String,
-        _preimage: Option<Vec<u8>>,
-    ) -> Result<crate::LNInvoice> {
-        Ok(parse_invoice(&self.bolt11)?)
+        _req_data: ReceivePaymentRequestData,
+    ) -> Result<crate::ReceivePaymentResponse> {
+        Ok(crate::ReceivePaymentResponse {
+            ln_invoice: parse_invoice(&self.bolt11)?,
+            opening_fee_params: _req_data.opening_fee_params,
+        })
     }
 }
 
@@ -490,6 +491,7 @@ impl LspAPI for MockBreezServer {
             lsp_pubkey: hex::decode(self.lsp_pub_key()).unwrap(),
             max_inactive_duration: 3600,
             channel_minimum_fee_msat: 1,
+            opening_fee_params_menu: vec![],
         }])
     }
 

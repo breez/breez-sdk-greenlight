@@ -13,12 +13,11 @@ use crate::invoice::LNInvoice;
 use crate::invoice::{self};
 use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::lsp::LspInformation;
-use crate::models::LogEntry;
 use crate::models::{
-    Config, EnvironmentType, GreenlightCredentials, Network, NodeState, Payment, PaymentTypeFilter,
-    SwapInfo,
+    Config, EnvironmentType, GreenlightCredentials, LogEntry, Network, NodeState, Payment,
+    PaymentTypeFilter, ReceivePaymentResponse, SwapInfo,
 };
-use crate::{BuyBitcoinProvider, LnUrlCallbackStatus, ReverseSwapInfo, ReverseSwapPairInfo};
+use crate::{BuyBitcoinProvider, LnUrlCallbackStatus, ReverseSwapInfo, ReverseSwapPairInfo, ReceivePaymentRequestData};
 use anyhow::{anyhow, Result};
 use flutter_rust_bridge::StreamSink;
 use log::{Level, LevelFilter, Metadata, Record};
@@ -195,12 +194,8 @@ pub fn send_spontaneous_payment(node_id: String, amount_sats: u64) -> Result<Pay
 }
 
 /// See [BreezServices::receive_payment]
-pub fn receive_payment(amount_sats: u64, description: String) -> Result<LNInvoice> {
-    block_on(async {
-        get_breez_services()?
-            .receive_payment(amount_sats, description.to_string())
-            .await
-    })
+pub fn receive_payment(req_data: ReceivePaymentRequestData) -> Result<ReceivePaymentResponse> {
+    block_on(async { get_breez_services()?.receive_payment(req_data).await })
 }
 
 /// See [BreezServices::node_info]

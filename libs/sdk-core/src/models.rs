@@ -22,11 +22,11 @@ use tokio::sync::mpsc;
 use tonic::Streaming;
 
 use crate::fiat::{FiatCurrency, Rate};
-use crate::grpc::{PaymentInformation, RegisterPaymentReply};
+use crate::grpc::{self, PaymentInformation, RegisterPaymentReply};
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lsp::LspInformation;
 use crate::models::Network::*;
-use crate::LnUrlErrorData;
+use crate::{LNInvoice, LnUrlErrorData};
 
 /// Different types of supported payments
 #[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
@@ -628,6 +628,45 @@ pub struct ClosedChannelPaymentDetails {
     pub funding_txid: String,
 }
 
+/// Represents a receive payment request.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ReceivePaymentRequestData {
+    pub amount_sats: u64,
+    pub description: String,
+    pub preimage: Option<Vec<u8>>,
+    pub opening_fee_params: Option<OpeningFeeParams>,
+}
+
+/// Represents a receive payment response.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ReceivePaymentResponse {
+    pub ln_invoice: LNInvoice,
+    pub opening_fee_params: Option<OpeningFeeParams>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct OpeningFeeParams {
+    pub min_msat: u64,
+    pub proportional: u32,
+    pub valid_until: String,
+    pub max_idle_time: u32,
+    pub max_client_to_self_delay: u32,
+    pub promise: String,
+}
+
+impl From<OpeningFeeParams> for grpc::OpeningFeeParams {
+    fn from(ofp: OpeningFeeParams) -> Self {
+        Self {
+            min_msat: ofp.min_msat,
+            proportional: ofp.proportional,
+            valid_until: ofp.valid_until,
+            max_idle_time: ofp.max_idle_time,
+            max_client_to_self_delay: ofp.max_client_to_self_delay,
+            promise: ofp.promise,
+        }
+    }
+}
+
 /// Lightning channel
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Channel {
@@ -705,6 +744,7 @@ pub struct SwapInfo {
     pub min_allowed_deposit: i64,
     pub max_allowed_deposit: i64,
     pub last_redeem_error: Option<String>,
+    pub(crate) min_msat: Option<u64>,
 }
 
 impl SwapInfo {
@@ -818,6 +858,7 @@ mod tests {
             destination: rand_vec_u8(10),
             incoming_amount_msat: random(),
             outgoing_amount_msat: random(),
+            opening_fee_params: None,
         };
 
         let mut buf = Vec::new();

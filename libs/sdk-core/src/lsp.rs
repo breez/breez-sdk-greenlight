@@ -3,7 +3,7 @@ use crate::crypt::encrypt;
 use crate::grpc::{
     self, LspListRequest, PaymentInformation, RegisterPaymentReply, RegisterPaymentRequest,
 };
-use crate::models::LspAPI;
+use crate::models::{LspAPI, OpeningFeeParams};
 use anyhow::Result;
 use prost::Message;
 use serde::{Deserialize, Serialize};
@@ -23,10 +23,14 @@ pub struct LspInformation {
     pub fee_rate: f64,
     pub time_lock_delta: u32,
     pub min_htlc_msat: i64,
+    #[deprecated]
     pub channel_fee_permyriad: i64,
     pub lsp_pubkey: Vec<u8>,
+    #[deprecated]
     pub max_inactive_duration: i64,
+    #[deprecated]
     pub channel_minimum_fee_msat: i64,
+    pub opening_fee_params_menu: Vec<OpeningFeeParams>,
 }
 
 fn convert_to_lsp_info(lsp_id: String, lsp_info: grpc::LspInformation) -> LspInformation {
@@ -46,6 +50,18 @@ fn convert_to_lsp_info(lsp_id: String, lsp_info: grpc::LspInformation) -> LspInf
         lsp_pubkey: lsp_info.lsp_pubkey,
         max_inactive_duration: lsp_info.max_inactive_duration,
         channel_minimum_fee_msat: lsp_info.channel_minimum_fee_msat,
+        opening_fee_params_menu: lsp_info
+            .opening_fee_params_menu
+            .into_iter()
+            .map(|ofp| OpeningFeeParams {
+                min_msat: ofp.min_msat,
+                proportional: ofp.proportional,
+                valid_until: ofp.valid_until,
+                max_idle_time: ofp.max_idle_time,
+                max_client_to_self_delay: ofp.max_client_to_self_delay,
+                promise: ofp.promise,
+            })
+            .collect::<Vec<OpeningFeeParams>>(),
     }
 }
 

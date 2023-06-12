@@ -11,10 +11,10 @@ use breez_sdk_core::{
     LnPaymentDetails, LnUrlAuthRequestData, LnUrlCallbackStatus, LnUrlErrorData,
     LnUrlPayRequestData, LnUrlPayResult, LnUrlWithdrawRequestData, LocaleOverrides, LocalizedName,
     LogEntry, LspInformation, MessageSuccessActionData, MetadataItem, Network, NodeState, Payment,
-    PaymentDetails, PaymentFailedData, PaymentType, PaymentTypeFilter, Rate, RecommendedFees,
-    ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop,
-    SuccessActionProcessed, SwapInfo, SwapStatus, Symbol, UnspentTransactionOutput,
-    UrlSuccessActionData,
+    PaymentDetails, PaymentFailedData, PaymentType, PaymentTypeFilter, Rate,
+    ReceivePaymentRequestData, ReceivePaymentResponse, RecommendedFees, ReverseSwapInfo,
+    ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop, SuccessActionProcessed,
+    SwapInfo, SwapStatus, Symbol, UnspentTransactionOutput, UrlSuccessActionData,
 };
 use log::LevelFilter;
 use log::Metadata;
@@ -168,14 +168,10 @@ impl BlockingBreezServices {
 
     pub fn receive_payment(
         &self,
-        amount_sats: u64,
-        description: String,
-    ) -> Result<LNInvoice, SDKError> {
-        rt().block_on(
-            self.breez_services
-                .receive_payment(amount_sats, description),
-        )
-        .map_err(|e| e.into())
+        req_data: ReceivePaymentRequestData,
+    ) -> Result<ReceivePaymentResponse, SDKError> {
+        rt().block_on(self.breez_services.receive_payment(req_data))
+            .map_err(|e| e.into())
     }
 
     pub fn node_info(&self) -> Result<Option<NodeState>, SDKError> {

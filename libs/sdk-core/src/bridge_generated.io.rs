@@ -84,12 +84,8 @@ pub extern "C" fn wire_send_spontaneous_payment(
 }
 
 #[no_mangle]
-pub extern "C" fn wire_receive_payment(
-    port_: i64,
-    amount_sats: u64,
-    description: *mut wire_uint_8_list,
-) {
-    wire_receive_payment_impl(port_, amount_sats, description)
+pub extern "C" fn wire_receive_payment(port_: i64, req_data: *mut wire_ReceivePaymentRequestData) {
+    wire_receive_payment_impl(port_, req_data)
 }
 
 #[no_mangle]
@@ -302,6 +298,17 @@ pub extern "C" fn new_box_autoadd_ln_url_withdraw_request_data_0(
 }
 
 #[no_mangle]
+pub extern "C" fn new_box_autoadd_opening_fee_params_0() -> *mut wire_OpeningFeeParams {
+    support::new_leak_box_ptr(wire_OpeningFeeParams::new_with_null_ptr())
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_autoadd_receive_payment_request_data_0(
+) -> *mut wire_ReceivePaymentRequestData {
+    support::new_leak_box_ptr(wire_ReceivePaymentRequestData::new_with_null_ptr())
+}
+
+#[no_mangle]
 pub extern "C" fn new_box_autoadd_u64_0(value: u64) -> *mut u64 {
     support::new_leak_box_ptr(value)
 }
@@ -358,6 +365,18 @@ impl Wire2Api<LnUrlWithdrawRequestData> for *mut wire_LnUrlWithdrawRequestData {
     fn wire2api(self) -> LnUrlWithdrawRequestData {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
         Wire2Api::<LnUrlWithdrawRequestData>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<OpeningFeeParams> for *mut wire_OpeningFeeParams {
+    fn wire2api(self) -> OpeningFeeParams {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<OpeningFeeParams>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<ReceivePaymentRequestData> for *mut wire_ReceivePaymentRequestData {
+    fn wire2api(self) -> ReceivePaymentRequestData {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<ReceivePaymentRequestData>::wire2api(*wrap).into()
     }
 }
 impl Wire2Api<u64> for *mut u64 {
@@ -425,6 +444,30 @@ impl Wire2Api<LnUrlWithdrawRequestData> for wire_LnUrlWithdrawRequestData {
     }
 }
 
+impl Wire2Api<OpeningFeeParams> for wire_OpeningFeeParams {
+    fn wire2api(self) -> OpeningFeeParams {
+        OpeningFeeParams {
+            min_msat: self.min_msat.wire2api(),
+            proportional: self.proportional.wire2api(),
+            valid_until: self.valid_until.wire2api(),
+            max_idle_time: self.max_idle_time.wire2api(),
+            max_client_to_self_delay: self.max_client_to_self_delay.wire2api(),
+            promise: self.promise.wire2api(),
+        }
+    }
+}
+
+impl Wire2Api<ReceivePaymentRequestData> for wire_ReceivePaymentRequestData {
+    fn wire2api(self) -> ReceivePaymentRequestData {
+        ReceivePaymentRequestData {
+            amount_sats: self.amount_sats.wire2api(),
+            description: self.description.wire2api(),
+            preimage: self.preimage.wire2api(),
+            opening_fee_params: self.opening_fee_params.wire2api(),
+        }
+    }
+}
+
 impl Wire2Api<Vec<u8>> for *mut wire_uint_8_list {
     fn wire2api(self) -> Vec<u8> {
         unsafe {
@@ -484,6 +527,26 @@ pub struct wire_LnUrlWithdrawRequestData {
     default_description: *mut wire_uint_8_list,
     min_withdrawable: u64,
     max_withdrawable: u64,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_OpeningFeeParams {
+    min_msat: u64,
+    proportional: u32,
+    valid_until: *mut wire_uint_8_list,
+    max_idle_time: u32,
+    max_client_to_self_delay: u32,
+    promise: *mut wire_uint_8_list,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_ReceivePaymentRequestData {
+    amount_sats: u64,
+    description: *mut wire_uint_8_list,
+    preimage: *mut wire_uint_8_list,
+    opening_fee_params: *mut wire_OpeningFeeParams,
 }
 
 #[repr(C)]
@@ -591,6 +654,42 @@ impl NewWithNullPtr for wire_LnUrlWithdrawRequestData {
 }
 
 impl Default for wire_LnUrlWithdrawRequestData {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_OpeningFeeParams {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            min_msat: Default::default(),
+            proportional: Default::default(),
+            valid_until: core::ptr::null_mut(),
+            max_idle_time: Default::default(),
+            max_client_to_self_delay: Default::default(),
+            promise: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_OpeningFeeParams {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_ReceivePaymentRequestData {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            amount_sats: Default::default(),
+            description: core::ptr::null_mut(),
+            preimage: core::ptr::null_mut(),
+            opening_fee_params: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_ReceivePaymentRequestData {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }
