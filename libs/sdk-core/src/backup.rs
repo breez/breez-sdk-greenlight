@@ -1,5 +1,10 @@
-use crate::persist::db::{HookEvent, HookListener, SqliteStorage};
+use crate::{
+    breez_services::BackupFailedData,
+    persist::db::{HookEvent, HookListener, SqliteStorage},
+    BreezEvent,
+};
 use anyhow::{anyhow, Result};
+use ecies::utils::{aes_decrypt, aes_encrypt};
 use miniz_oxide::{deflate::compress_to_vec, inflate::decompress_to_vec_with_limit};
 use std::{
     env::temp_dir,
@@ -9,38 +14,83 @@ use std::{
     sync::Arc,
 };
 use tempfile::tempdir_in;
+use tokio::sync::mpsc::{self, Sender};
 
-// SyncState is the sdk state that requiers syncing between multiple apps.
+// BackupState is the sdk state that requiers syncing between multiple apps.
 /// It is just a blob of data marked with a specific version (generation).
 /// The generation signals for the local state if the remote state is newer,
 /// where in that case the local state should be updated with the remote state prior to pushing
 /// any local changes.
-pub struct SyncState {
+pub struct BackupState {
     pub generation: u64,
     pub data: Vec<u8>,
 }
 
-/// SyncTransport is the interface for syncing the sdk state between multiple apps.
+/// BackupTransport is the interface for syncing the sdk state between multiple apps.
 #[tonic::async_trait]
-pub trait SyncTransport: Send + Sync {
-    async fn pull(&self) -> Result<Option<SyncState>>;
+pub trait BackupTransport: Send + Sync {
+    async fn pull(&self) -> Result<Option<BackupState>>;
     async fn push(&self, version: Option<u64>, data: Vec<u8>) -> Result<u64>;
 }
 
-/// watches for sync requests and syncs the sdk state when a request is detected.
-pub(crate) fn watch_and_sync(inner: Arc<dyn SyncTransport>, persister: Arc<SqliteStorage>) {
-    let sync_worker = SyncWorker::new(inner.clone(), persister.clone());
-    persister.add_hook_listener(Arc::new(SyncStorageListener {
-        sync_worker: sync_worker.clone(),
-    }));
-
-    spawn_sync_worker(sync_worker);
+pub(crate) struct BackupWatcher {
+    pub(crate) inner: Arc<dyn BackupTransport>,
+    pub(crate) persister: Arc<SqliteStorage>,
+    pub(crate) encryption_key: Vec<u8>,
 }
 
-fn spawn_sync_worker(worker: SyncWorker) {
+/// watches for sync requests and syncs the sdk state when a request is detected.
+impl BackupWatcher {
+    pub(crate) fn new(
+        inner: Arc<dyn BackupTransport>,
+        persister: Arc<SqliteStorage>,
+        encryption_key: Vec<u8>,
+    ) -> Self {
+        Self {
+            inner,
+            persister,
+            encryption_key,
+        }
+    }
+
+    pub(crate) fn start(&self) -> mpsc::Receiver<BreezEvent> {
+        let (events_notifier, events_receiver) = mpsc::channel(1);
+        let backup_worker = BackupWorker::new(
+            self.inner.clone(),
+            self.persister.clone(),
+            self.encryption_key.clone(),
+            events_notifier,
+        );
+        self.persister
+            .add_hook_listener(Arc::new(SyncStorageListener {
+                backup_worker: backup_worker.clone(),
+            }));
+
+        spawn_backup_worker(backup_worker);
+        events_receiver
+    }
+
+    pub(crate) fn stop(&self) {}
+}
+
+/// Runs the sync process in the background.
+fn spawn_backup_worker(worker: BackupWorker) {
     tokio::spawn(async move {
-        if let Err(e) = worker.sync().await {
-            error!("Failed to sync sdk state: {}", e);
+        let notifier = worker.events_notifier.clone();
+        _ = notifier.send(BreezEvent::BackupStarted).await;
+        if let Err(e) = match worker.sync().await {
+            Ok(_) => notifier.send(BreezEvent::BackupSucceeded).await,
+            Err(e) => {
+                notifier
+                    .send(BreezEvent::BackupFailed {
+                        details: BackupFailedData {
+                            error: e.to_string(),
+                        },
+                    })
+                    .await
+            }
+        } {
+            error!("Failed to run sync worker: {}", e);
         }
     });
 }
@@ -48,7 +98,7 @@ fn spawn_sync_worker(worker: SyncWorker) {
 /// SyncStorageListener is a hook listener that syncs the sdk state when a sync request is detected.
 /// It listens to events on the sync_requests table and starts a sync when a new request is detected.
 struct SyncStorageListener {
-    sync_worker: SyncWorker,
+    backup_worker: BackupWorker,
 }
 
 impl HookListener for SyncStorageListener {
@@ -58,23 +108,35 @@ impl HookListener for SyncStorageListener {
                 if table == "sync_requests" {
                     info!("Sync request detected, starting sync");
                     // spawn a new worker to sync the sdk state
-                    spawn_sync_worker(self.sync_worker.clone());
+                    spawn_backup_worker(self.backup_worker.clone());
                 }
             }
         }
     }
 }
 
-/// SyncWorker is a worker that bidirectionaly syncs the sdk state.
+/// BackupWorker is a worker that bidirectionaly syncs the sdk state.
 #[derive(Clone)]
-struct SyncWorker {
-    inner: Arc<dyn SyncTransport>,
+struct BackupWorker {
+    inner: Arc<dyn BackupTransport>,
     persister: Arc<SqliteStorage>,
+    encryption_key: Vec<u8>,
+    events_notifier: Sender<BreezEvent>,
 }
 
-impl SyncWorker {
-    pub(crate) fn new(inner: Arc<dyn SyncTransport>, persister: Arc<SqliteStorage>) -> Self {
-        Self { inner, persister }
+impl BackupWorker {
+    pub(crate) fn new(
+        inner: Arc<dyn BackupTransport>,
+        persister: Arc<SqliteStorage>,
+        encryption_key: Vec<u8>,
+        events_notifier: Sender<BreezEvent>,
+    ) -> Self {
+        Self {
+            inner,
+            persister,
+            encryption_key,
+            events_notifier,
+        }
     }
     /// Syncs the sdk state with the remote state.
     /// The process is done in 3 steps:
@@ -145,7 +207,7 @@ impl SyncWorker {
         let remote_state = self.pull().await?;
         let tmp_dir = tempdir_in(temp_dir())?;
         let remote_storage_path = tmp_dir.path();
-        let mut remote_storage_file = File::create(&remote_storage_path.join("sync_storage.sql"))?;
+        let mut remote_storage_file = File::create(remote_storage_path.join("sync_storage.sql"))?;
         info!("remote_storage_path = {:?}", remote_storage_path);
         match remote_state {
             Some(state) => {
@@ -165,7 +227,7 @@ impl SyncWorker {
                 remote_storage.import_remote_changes(self.persister.as_ref())?;
                 let mut hex = vec![];
                 remote_storage_file =
-                    File::open(&Path::new(remote_storage_path).join("sync_storage.sql"))?;
+                    File::open(Path::new(remote_storage_path).join("sync_storage.sql"))?;
                 remote_storage_file.read_to_end(&mut hex)?;
 
                 // Push the local changes again
@@ -176,13 +238,16 @@ impl SyncWorker {
         }
     }
 
-    async fn pull(&self) -> Result<Option<SyncState>> {
+    async fn pull(&self) -> Result<Option<BackupState>> {
         let state = self.inner.pull().await?;
         match state {
             Some(state) => {
-                let decompressed = decompress_to_vec_with_limit(&state.data, 4000000)
+                let decrypted_data =
+                    aes_decrypt(self.encryption_key.as_slice(), state.data.as_slice())
+                        .ok_or(anyhow!("Failed to encrypt backup"))?;
+                let decompressed = decompress_to_vec_with_limit(&decrypted_data, 4000000)
                     .expect("Failed to decompress!");
-                Ok(Some(SyncState {
+                Ok(Some(BackupState {
                     generation: state.generation,
                     data: decompressed,
                 }))
@@ -197,6 +262,9 @@ impl SyncWorker {
             "Pushing compressed data with size = {}",
             compressed_data.len()
         );
-        self.inner.push(version, compressed_data.to_vec()).await
+        let encrypted_data =
+            aes_encrypt(self.encryption_key.as_slice(), compressed_data.as_slice())
+                .ok_or(anyhow!("Failed to encrypt backup"))?;
+        self.inner.push(version, encrypted_data).await
     }
 }

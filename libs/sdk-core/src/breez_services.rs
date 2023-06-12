@@ -1,7 +1,8 @@
+use crate::backup::{BackupTransport, BackupWatcher};
 use crate::boltzswap::BoltzApi;
 use crate::chain::{ChainService, MempoolSpace, RecommendedFees};
 use crate::fiat::{FiatCurrency, Rate};
-use crate::greenlight::{GLSyncTransport, Greenlight};
+use crate::greenlight::{GLBackupTransport, Greenlight};
 use crate::grpc::channel_opener_client::ChannelOpenerClient;
 use crate::grpc::fund_manager_client::FundManagerClient;
 use crate::grpc::information_client::InformationClient;
@@ -34,6 +35,7 @@ use crate::{BuyBitcoinProvider, LnUrlAuthRequestData, LnUrlWithdrawRequestData, 
 use anyhow::{anyhow, Result};
 use bip39::*;
 use bitcoin::hashes::{sha256, Hash};
+use bitcoin::util::bip32::ChildNumber;
 use std::cmp::max;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -67,6 +69,17 @@ pub enum BreezEvent {
     PaymentSucceed { details: Payment },
     /// Indicates that an outgoing payment has been failed to complete
     PaymentFailed { details: PaymentFailedData },
+    /// Indicates that the backup process has just started
+    BackupStarted,
+    /// Indicates that the backup process has just finished successfully
+    BackupSucceeded,
+    /// Indicates that the backup process has just failed
+    BackupFailed { details: BackupFailedData },
+}
+
+#[derive(Clone, Debug)]
+pub struct BackupFailedData {
+    pub error: String,
 }
 
 #[derive(Clone, Debug)]
@@ -104,6 +117,8 @@ async fn start_threads(
     let breez_cloned = breez_services.clone();
     breez_cloned.sync().await?;
 
+    let mut backup_events = breez_cloned.backup_watcher.start();
+
     // create a shutdown channel (sender and receiver)
     let (stop_sender, mut stop_receiver) = mpsc::channel(1);
 
@@ -112,7 +127,13 @@ async fn start_threads(
         let current_block: u32 = 0;
         loop {
             tokio::select! {
-
+              backup_event = backup_events.recv() => {
+               if let Some(e) = backup_event {
+                if let Err(err) = breez_services.notify_event_listeners(e).await {
+                    error!("error handling backup event: {:?}", err);
+                }
+               }
+              },
               poll_result = poll_events(breez_services.clone(), current_block) => {
                match poll_result {
                 Ok(()) => {
@@ -127,6 +148,7 @@ async fn start_threads(
               },
               _ = stop_receiver.recv() => {
                _ = shutdown_signer_sender.send(()).await;
+               breez_cloned.backup_watcher.stop();
                debug!("Received the signal to exit event polling loop");
                return;
              }
@@ -139,7 +161,6 @@ async fn start_threads(
 /// BreezServices is a facade and the single entry point for the SDK.
 pub struct BreezServices {
     node_api: Arc<dyn NodeAPI>,
-    sync_transport: Arc<dyn SyncTransport>,
     lsp_api: Arc<dyn LspAPI>,
     fiat_api: Arc<dyn FiatAPI>,
     moonpay_api: Arc<dyn MoonPayApi>,
@@ -149,6 +170,7 @@ pub struct BreezServices {
     btc_receive_swapper: Arc<BTCReceiveSwap>,
     btc_send_swapper: Arc<BTCSendSwap>,
     event_listener: Option<Box<dyn EventListener>>,
+    backup_watcher: BackupWatcher,
     shutdown_sender: Mutex<Option<mpsc::Sender<()>>>,
 }
 
@@ -195,11 +217,6 @@ impl BreezServices {
         }
         let shutdown_handler = start_threads(runtime, breez_services.clone()).await?;
 
-        //We watch for every change that requires synchronization with the remote state.
-        watch_and_sync(
-            breez_services.sync_transport.clone(),
-            breez_services.persister.clone(),
-        );
         *start_lock = Some(shutdown_handler);
         Ok(())
     }
@@ -784,7 +801,7 @@ fn closed_channel_to_transaction(channel: crate::models::Channel) -> Result<Paym
 struct BreezServicesBuilder {
     config: Config,
     node_api: Option<Arc<dyn NodeAPI>>,
-    sync_transport: Option<Arc<dyn SyncTransport>>,
+    backup_transport: Option<Arc<dyn BackupTransport>>,
     creds: Option<GreenlightCredentials>,
     seed: Option<Vec<u8>>,
     lsp_api: Option<Arc<dyn LspAPI>>,
@@ -809,7 +826,7 @@ impl BreezServicesBuilder {
             swapper_api: None,
             reverse_swapper_api: None,
             moonpay_api: None,
-            sync_transport: None,
+            backup_transport: None,
         }
     }
 
@@ -851,8 +868,8 @@ impl BreezServicesBuilder {
         self
     }
 
-    pub fn sync_transport(&mut self, sync_transport: Arc<dyn SyncTransport>) -> &mut Self {
-        self.sync_transport = Some(sync_transport.clone());
+    pub fn backup_transport(&mut self, backup_transport: Arc<dyn BackupTransport>) -> &mut Self {
+        self.backup_transport = Some(backup_transport.clone());
         self
     }
 
@@ -884,7 +901,7 @@ impl BreezServicesBuilder {
         persister.init().unwrap();
 
         let mut node_api = self.node_api.clone();
-        let mut sync_transport = self.sync_transport.clone();
+        let mut backup_transport = self.backup_transport.clone();
         if node_api.is_none() {
             if self.creds.is_none() || self.seed.is_none() {
                 return Err(anyhow!(
@@ -899,17 +916,16 @@ impl BreezServicesBuilder {
             .await?;
             let gl_arc = Arc::new(greenlight);
             node_api = Some(gl_arc.clone());
-            if sync_transport.is_none() {
-                sync_transport = Some(Arc::new(GLSyncTransport {
-                    inner: gl_arc.clone(),
-                }));
+            if backup_transport.is_none() {
+                backup_transport = Some(Arc::new(GLBackupTransport { inner: gl_arc }));
             }
         }
-        if sync_transport.is_none() {
+        if backup_transport.is_none() {
             return Err(anyhow!("state synchronizer should be provided"));
         }
 
         let unwrapped_node_api = node_api.unwrap();
+        let unwrapped_backup_transport = backup_transport.unwrap();
 
         // breez_server provides both FiatAPI & LspAPI implementations
         let breez_server = Arc::new(BreezServer::new(
@@ -953,10 +969,15 @@ impl BreezServicesBuilder {
             unwrapped_node_api.clone(),
         ));
 
+        //We watch for every change that requires synchronization with the remote state.
+        let backup_encryption_key = unwrapped_node_api.derive_bip32_key(vec![
+            ChildNumber::from_hardened_idx(139)?,
+            ChildNumber::from(0),
+        ])?;
+
         // Create the node services and it them statically
         let breez_services = Arc::new(BreezServices {
             node_api: unwrapped_node_api.clone(),
-            sync_transport: sync_transport.unwrap(),
             lsp_api: self.lsp_api.clone().unwrap_or_else(|| breez_server.clone()),
             fiat_api: self
                 .fiat_api
@@ -967,11 +988,16 @@ impl BreezServicesBuilder {
                 .clone()
                 .unwrap_or_else(|| breez_server.clone()),
             chain_service,
-            persister,
+            persister: persister.clone(),
             btc_receive_swapper,
             btc_send_swapper,
             payment_receiver,
             event_listener: listener,
+            backup_watcher: BackupWatcher::new(
+                unwrapped_backup_transport,
+                persister,
+                backup_encryption_key.to_priv().to_bytes(),
+            ),
             shutdown_sender: Mutex::new(None),
         });
 
@@ -1343,7 +1369,7 @@ pub(crate) mod tests {
             .fiat_api(Arc::new(MockBreezServer {}))
             .node_api(node_api)
             .persister(persister)
-            .sync_transport(Arc::new(MockSyncTransport {}))
+            .backup_transport(Arc::new(MockBackupTransport {}))
             .build(None)
             .await?;
 
@@ -1497,7 +1523,7 @@ pub(crate) mod tests {
             .moonpay_api(Arc::new(MockBreezServer {}))
             .persister(persister)
             .node_api(node_api)
-            .sync_transport(Arc::new(MockSyncTransport {}))
+            .backup_transport(Arc::new(MockBackupTransport {}))
             .build(None)
             .await
             .unwrap();

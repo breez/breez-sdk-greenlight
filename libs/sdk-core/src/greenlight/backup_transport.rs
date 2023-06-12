@@ -1,24 +1,24 @@
-use crate::sync_storage::{SyncState, SyncTransport};
+use crate::backup::{BackupState, BackupTransport};
 
 use super::node_api::Greenlight;
 use anyhow::{anyhow, Result};
 use gl_client::{node, pb};
 use std::sync::Arc;
 
-const BREEZ_SDK_DATASTORE_PATH: [&str; 2] = ["breez-sdk", "sync2"];
+const BREEZ_SDK_DATASTORE_PATH: [&str; 2] = ["breez-sdk", "sync3"];
 
-pub(crate) struct GLSyncTransport {
+pub(crate) struct GLBackupTransport {
     pub(crate) inner: Arc<Greenlight>,
 }
 
-impl GLSyncTransport {
+impl GLBackupTransport {
     fn gl_key(&self) -> Vec<String> {
         BREEZ_SDK_DATASTORE_PATH.map(|s| s.into()).to_vec()
     }
 }
 #[tonic::async_trait]
-impl SyncTransport for GLSyncTransport {
-    async fn pull(&self) -> Result<Option<SyncState>> {
+impl BackupTransport for GLBackupTransport {
+    async fn pull(&self) -> Result<Option<BackupState>> {
         let key = self.gl_key();
         let mut c: node::ClnClient = self.inner.get_node_client().await?;
         let response: pb::cln::ListdatastoreResponse = c
@@ -28,7 +28,7 @@ impl SyncTransport for GLSyncTransport {
         let store = response.datastore;
         match store.len() {
             0 => Ok(None),
-            1 => Ok(Some(SyncState {
+            1 => Ok(Some(BackupState {
                 generation: store[0].generation.unwrap(),
                 data: store[0].clone().hex.unwrap(),
             })),

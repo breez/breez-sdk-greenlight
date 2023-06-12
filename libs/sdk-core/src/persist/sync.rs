@@ -48,10 +48,7 @@ impl SqliteStorage {
 
         let mut con = self.get_connection()?;
         let tx = con.transaction()?;
-        tx.execute(
-            "ATTACH DATABASE ? AS remote_sync;",
-            [sync_data_file.clone()],
-        )?;
+        tx.execute("ATTACH DATABASE ? AS remote_sync;", [sync_data_file])?;
         tx.execute("insert into sync.swaps select * from remote_sync.swaps where bitcoin_address not in (select bitcoin_address from sync.swaps);", [])?;
         tx.execute(
             "insert into sync.swap_refunds select * from remote_sync.swap_refunds where bitcoin_address not in (select bitcoin_address from sync.swap_refunds);",

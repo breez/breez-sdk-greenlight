@@ -48,7 +48,7 @@ impl SqliteStorage {
 
     pub(crate) fn hook_listeners(&self) -> Vec<Arc<dyn HookListener>> {
         let listeners = self.hook_listeners.lock().unwrap();
-        return listeners.clone();
+        listeners.clone()
     }
 
     pub(crate) fn init(&self) -> Result<()> {

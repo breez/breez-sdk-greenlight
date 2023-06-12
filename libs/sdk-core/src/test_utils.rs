@@ -19,6 +19,7 @@ use std::time::{Duration, SystemTime};
 use tokio::sync::{mpsc, Mutex};
 use tonic::Streaming;
 
+use crate::backup::{BackupState, BackupTransport};
 use crate::breez_services::Receiver;
 use crate::chain::{ChainService, OnchainTx, RecommendedFees};
 use crate::fiat::{FiatCurrency, Rate};
@@ -27,15 +28,14 @@ use crate::lsp::LspInformation;
 use crate::models::{FiatAPI, LspAPI, NodeAPI, NodeState, Payment, Swap, SwapperAPI, SyncResponse};
 use crate::moonpay::MoonPayApi;
 use crate::swap::create_submarine_swap_script;
-use crate::sync_storage::{SyncState, SyncTransport};
 use crate::SwapInfo;
 use crate::{parse_invoice, Config, LNInvoice, PaymentResponse, RouteHint};
 
-pub struct MockSyncTransport {}
+pub struct MockBackupTransport {}
 
 #[tonic::async_trait]
-impl SyncTransport for MockSyncTransport {
-    async fn pull(&self) -> Result<Option<SyncState>> {
+impl BackupTransport for MockBackupTransport {
+    async fn pull(&self) -> Result<Option<BackupState>> {
         return Ok(None);
     }
     async fn push(&self, version: Option<u64>, data: Vec<u8>) -> Result<u64> {

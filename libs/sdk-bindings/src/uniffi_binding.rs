@@ -4,16 +4,17 @@ use anyhow::Result;
 
 use breez_sdk_core::{
     mnemonic_to_seed as sdk_mnemonic_to_seed, parse as sdk_parse_input,
-    parse_invoice as sdk_parse_invoice, AesSuccessActionDataDecrypted, BitcoinAddressData,
-    BreezEvent, BreezServices, BuyBitcoinProvider, ChannelState, ClosedChannelPaymentDetails,
-    Config, CurrencyInfo, EnvironmentType, EventListener, FeeratePreset, FiatCurrency,
-    GreenlightCredentials, InputType, InvoicePaidDetails, LNInvoice, LnPaymentDetails,
-    LnUrlAuthRequestData, LnUrlCallbackStatus, LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult,
-    LnUrlWithdrawRequestData, LocaleOverrides, LocalizedName, LogEntry, LspInformation,
-    MessageSuccessActionData, MetadataItem, Network, NodeState, Payment, PaymentDetails,
-    PaymentFailedData, PaymentType, PaymentTypeFilter, Rate, RecommendedFees, ReverseSwapInfo,
-    ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop, SuccessActionProcessed,
-    SwapInfo, SwapStatus, Symbol, UnspentTransactionOutput, UrlSuccessActionData,
+    parse_invoice as sdk_parse_invoice, AesSuccessActionDataDecrypted, BackupFailedData,
+    BitcoinAddressData, BreezEvent, BreezServices, BuyBitcoinProvider, ChannelState,
+    ClosedChannelPaymentDetails, Config, CurrencyInfo, EnvironmentType, EventListener,
+    FeeratePreset, FiatCurrency, GreenlightCredentials, InputType, InvoicePaidDetails, LNInvoice,
+    LnPaymentDetails, LnUrlAuthRequestData, LnUrlCallbackStatus, LnUrlErrorData,
+    LnUrlPayRequestData, LnUrlPayResult, LnUrlWithdrawRequestData, LocaleOverrides, LocalizedName,
+    LogEntry, LspInformation, MessageSuccessActionData, MetadataItem, Network, NodeState, Payment,
+    PaymentDetails, PaymentFailedData, PaymentType, PaymentTypeFilter, Rate, RecommendedFees,
+    ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop,
+    SuccessActionProcessed, SwapInfo, SwapStatus, Symbol, UnspentTransactionOutput,
+    UrlSuccessActionData,
 };
 use log::LevelFilter;
 use log::Metadata;

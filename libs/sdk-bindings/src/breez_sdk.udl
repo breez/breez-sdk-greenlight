@@ -216,6 +216,10 @@ dictionary PaymentFailedData {
     LNInvoice? invoice;
 };
 
+dictionary BackupFailedData {
+    string error;    
+};
+
 [Enum]
 interface BreezEvent {
     NewBlock(u32 block);
@@ -223,6 +227,9 @@ interface BreezEvent {
     Synced();
     PaymentSucceed(Payment details);
     PaymentFailed(PaymentFailedData details);
+    BackupStarted();
+    BackupSucceeded(); 
+    BackupFailed(BackupFailedData details);
 };
 
 callback interface LogStream {
