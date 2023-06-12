@@ -5,6 +5,7 @@ use bitcoin::secp256k1::ecdsa::RecoverableSignature;
 use bitcoin::secp256k1::{KeyPair, Message};
 use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
+use bitcoin::Network;
 use gl_client::pb::amount::Unit;
 use gl_client::pb::{
     Amount, CloseChannelResponse, CloseChannelType, Invoice, Peer, WithdrawResponse,
@@ -38,7 +39,7 @@ impl BackupTransport for MockBackupTransport {
     async fn pull(&self) -> Result<Option<BackupState>> {
         return Ok(None);
     }
-    async fn push(&self, version: Option<u64>, data: Vec<u8>) -> Result<u64> {
+    async fn push(&self, version: Option<u64>, _: Vec<u8>) -> Result<u64> {
         match version {
             Some(v) => Ok(v + 1),
             None => Ok(1),
@@ -304,7 +305,7 @@ impl NodeAPI for MockNodeAPI {
     }
 
     fn derive_bip32_key(&self, _path: Vec<ChildNumber>) -> Result<ExtendedPrivKey> {
-        Err(anyhow!("Not implemented"))
+        Ok(ExtendedPrivKey::new_master(Network::Bitcoin, &[])?)
     }
 }
 
