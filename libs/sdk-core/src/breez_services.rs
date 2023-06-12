@@ -117,8 +117,6 @@ async fn start_threads(
     let breez_cloned = breez_services.clone();
     breez_cloned.sync().await?;
 
-    let mut backup_events = breez_cloned.backup_watcher.start();
-
     // create a shutdown channel (sender and receiver)
     let (stop_sender, mut stop_receiver) = mpsc::channel(1);
 
@@ -127,13 +125,6 @@ async fn start_threads(
         let current_block: u32 = 0;
         loop {
             tokio::select! {
-              backup_event = backup_events.recv() => {
-               if let Some(e) = backup_event {
-                if let Err(err) = breez_services.notify_event_listeners(e).await {
-                    error!("error handling backup event: {:?}", err);
-                }
-               }
-              },
               poll_result = poll_events(breez_services.clone(), current_block) => {
                match poll_result {
                 Ok(()) => {
@@ -385,6 +376,21 @@ impl BreezServices {
     /// Retrieve the node state from the persistent storage
     pub fn node_info(&self) -> Result<Option<NodeState>> {
         self.persister.get_node_state()
+    }
+
+    /// Retrieve the node up to date BackupStatus
+    pub fn backup_status(&self) -> Result<BackupStatus> {
+        let backup_time = self.persister.get_last_backup_time()?;
+        let sync_request = self.persister.get_last_sync_request()?;
+        Ok(BackupStatus {
+            last_backup_time: backup_time,
+            backed_up: sync_request.is_none(),
+        })
+    }
+
+    /// Starts a backup process in the background
+    pub fn start_backup(&self) -> Result<()> {
+        self.persister.add_sync_request()
     }
 
     /// List payments matching the given filters, as retrieved from persistent storage
@@ -706,10 +712,19 @@ async fn poll_events(breez_services: Arc<BreezServices>, mut current_block: u32)
     let mut interval = tokio::time::interval(Duration::from_secs(30));
     let mut invoice_stream = breez_services.node_api.stream_incoming_payments().await?;
     let mut log_stream = breez_services.node_api.stream_log_messages().await?;
+    let mut backup_events = breez_services.backup_watcher.start();
 
     loop {
         tokio::select! {
-
+         backup_event = backup_events.recv() => {
+          if let Some(e) = backup_event {
+           if let Err(err) = breez_services.notify_event_listeners(e).await {
+               error!("error handling backup event: {:?}", err);
+           }
+          }
+          let backup_status = breez_services.backup_status();
+          info!("backup status: {:?}", backup_status);
+         },
          // handle chain events
          _ = interval.tick() => {
           let tip_res = breez_services.chain_service.current_tip().await;

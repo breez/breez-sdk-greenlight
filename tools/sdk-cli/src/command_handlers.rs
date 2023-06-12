@@ -326,6 +326,10 @@ pub(crate) async fn handle_command(
             let res = sdk()?.buy_bitcoin(provider.clone()).await?;
             Ok(format!("Here your {:?} url: {}", provider, res))
         }
+        Commands::Backup {} => {
+            sdk()?.start_backup()?;
+            Ok(format!("Backup started"))
+        }
     }
 }
 

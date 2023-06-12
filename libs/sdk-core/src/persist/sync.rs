@@ -43,6 +43,14 @@ impl SqliteStorage {
         Ok(())
     }
 
+    pub fn add_sync_request(&self) -> Result<()> {
+        self.get_connection()?.execute(
+            " INSERT INTO sync_requests(changed_table) VALUES('user')",
+            [],
+        )?;
+        Ok(())
+    }
+
     pub fn import_remote_changes(&self, remote_storage: &SqliteStorage) -> Result<()> {
         let sync_data_file = remote_storage.sync_db_path();
 

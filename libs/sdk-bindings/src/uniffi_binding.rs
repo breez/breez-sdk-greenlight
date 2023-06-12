@@ -5,7 +5,7 @@ use anyhow::Result;
 use breez_sdk_core::{
     mnemonic_to_seed as sdk_mnemonic_to_seed, parse as sdk_parse_input,
     parse_invoice as sdk_parse_invoice, AesSuccessActionDataDecrypted, BackupFailedData,
-    BitcoinAddressData, BreezEvent, BreezServices, BuyBitcoinProvider, ChannelState,
+    BackupStatus, BitcoinAddressData, BreezEvent, BreezServices, BuyBitcoinProvider, ChannelState,
     ClosedChannelPaymentDetails, Config, CurrencyInfo, EnvironmentType, EventListener,
     FeeratePreset, FiatCurrency, GreenlightCredentials, InputType, InvoicePaidDetails, LNInvoice,
     LnPaymentDetails, LnUrlAuthRequestData, LnUrlCallbackStatus, LnUrlErrorData,
@@ -180,6 +180,14 @@ impl BlockingBreezServices {
 
     pub fn node_info(&self) -> Result<Option<NodeState>, SDKError> {
         self.breez_services.node_info().map_err(|e| e.into())
+    }
+
+    pub fn backup_status(&self) -> Result<BackupStatus, SDKError> {
+        self.breez_services.backup_status().map_err(|e| e.into())
+    }
+
+    pub fn start_backup(&self) -> Result<(), SDKError> {
+        self.breez_services.start_backup().map_err(|e| e.into())
     }
 
     pub fn list_payments(

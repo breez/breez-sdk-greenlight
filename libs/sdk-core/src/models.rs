@@ -531,6 +531,12 @@ impl TryFrom<i32> for FeeratePreset {
     }
 }
 
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
+pub struct BackupStatus {
+    pub backed_up: bool,
+    pub last_backup_time: Option<u64>,
+}
+
 /// The node state of a Greenlight LN node running in the cloud
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
 pub struct NodeState {

@@ -232,6 +232,11 @@ interface BreezEvent {
     BackupFailed(BackupFailedData details);
 };
 
+dictionary BackupStatus {
+    boolean backed_up;
+    u64? last_backup_time;
+};
+
 callback interface LogStream {
     void log(LogEntry l);
 };
@@ -415,6 +420,12 @@ interface BlockingBreezServices {
 
    [Throws=SDKError]
    NodeState? node_info();
+
+   [Throws=SDKError]
+   BackupStatus backup_status();
+
+   [Throws=SDKError]
+   void start_backup();
 
    [Throws=SDKError]
    sequence<Payment> list_payments(PaymentTypeFilter filter, i64? from_timestamp, i64? to_timestamp);

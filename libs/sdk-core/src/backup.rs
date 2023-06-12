@@ -12,6 +12,7 @@ use std::{
     io::{Read, Write},
     path::Path,
     sync::Arc,
+    time::{SystemTime, UNIX_EPOCH},
 };
 use tempfile::tempdir_in;
 use tokio::sync::mpsc::{self, Sender};
@@ -34,9 +35,9 @@ pub trait BackupTransport: Send + Sync {
 }
 
 pub(crate) struct BackupWatcher {
-    pub(crate) inner: Arc<dyn BackupTransport>,
-    pub(crate) persister: Arc<SqliteStorage>,
-    pub(crate) encryption_key: Vec<u8>,
+    inner: Arc<dyn BackupTransport>,
+    persister: Arc<SqliteStorage>,
+    encryption_key: Vec<u8>,
 }
 
 /// watches for sync requests and syncs the sdk state when a request is detected.
@@ -55,18 +56,21 @@ impl BackupWatcher {
 
     pub(crate) fn start(&self) -> mpsc::Receiver<BreezEvent> {
         let (events_notifier, events_receiver) = mpsc::channel(1);
-        let backup_worker = BackupWorker::new(
+        let worker = BackupWorker::new(
             self.inner.clone(),
             self.persister.clone(),
             self.encryption_key.clone(),
             events_notifier,
         );
+
         self.persister
             .add_hook_listener(Arc::new(SyncStorageListener {
-                backup_worker: backup_worker.clone(),
+                backup_worker: worker.clone(),
             }));
 
-        spawn_backup_worker(backup_worker);
+        // Always check if backup is needed on startup
+        spawn_backup_worker(worker);
+
         events_receiver
     }
 
@@ -76,21 +80,8 @@ impl BackupWatcher {
 /// Runs the sync process in the background.
 fn spawn_backup_worker(worker: BackupWorker) {
     tokio::spawn(async move {
-        let notifier = worker.events_notifier.clone();
-        _ = notifier.send(BreezEvent::BackupStarted).await;
-        if let Err(e) = match worker.sync().await {
-            Ok(_) => notifier.send(BreezEvent::BackupSucceeded).await,
-            Err(e) => {
-                notifier
-                    .send(BreezEvent::BackupFailed {
-                        details: BackupFailedData {
-                            error: e.to_string(),
-                        },
-                    })
-                    .await
-            }
-        } {
-            error!("Failed to run sync worker: {}", e);
+        if let Err(e) = worker.sync().await {
+            error!("Failed to run sync worker: {:?}", e);
         }
     });
 }
@@ -138,6 +129,14 @@ impl BackupWorker {
             events_notifier,
         }
     }
+
+    async fn notify(&self, e: BreezEvent) -> Result<()> {
+        self.events_notifier
+            .send(e)
+            .await
+            .map_err(anyhow::Error::msg)
+    }
+
     /// Syncs the sdk state with the remote state.
     /// The process is done in 3 steps:
     /// 1. Try to push the local state to the remote state using the current version (optimistic).
@@ -152,6 +151,9 @@ impl BackupWorker {
         if last_sync_request_id == 0 {
             return Ok(());
         }
+
+        self.notify(BreezEvent::BackupStarted).await?;
+
         // Backup the local sdk state
         let local_storage_file = tempfile::NamedTempFile::new()?;
         self.persister.backup(local_storage_file.path())?;
@@ -189,14 +191,24 @@ impl BackupWorker {
         // 2. Update the last sync version.
         match sync_result {
             Ok(new_version) => {
+                let now = SystemTime::now();
                 self.persister.set_last_sync_version(new_version)?;
                 self.persister
                     .delete_sync_requests_up_to(last_sync_request_id)?;
+                self.persister
+                    .set_last_backup_time(now.duration_since(UNIX_EPOCH).unwrap().as_secs())?;
                 info!("Sync succeeded");
+                self.notify(BreezEvent::BackupSucceeded).await?;
                 Ok(())
             }
             Err(e) => {
                 error!("Sync failed: {}", e);
+                self.notify(BreezEvent::BackupFailed {
+                    details: BackupFailedData {
+                        error: e.to_string(),
+                    },
+                })
+                .await?;
                 Err(e)
             }
         }

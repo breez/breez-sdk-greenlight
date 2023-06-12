@@ -208,6 +208,7 @@ impl NodeAPI for Greenlight {
 
     // implemenet pull changes from greenlight
     async fn pull_changed(&self, since_timestamp: i64) -> Result<SyncResponse> {
+        info!("pull changed since {}", since_timestamp);
         let mut client = self.get_client().await?;
 
         // list all peers
