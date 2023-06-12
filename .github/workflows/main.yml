@@ -39,6 +39,9 @@ jobs:
       
       - name: install dependencies
         run: |
+          echo $ANDROID_NDK_HOME
+          echo $ANDROID_SDK
+          echo $JAVA_HOME
           cd libs/sdk-bindings
           make init      
           brew install protobuf          
@@ -46,7 +49,7 @@ jobs:
       - name: run lib tests
         env:
           SSH_PRIVATE_KEY: ${{secrets.REPO_SSH_KEY}}
-        run: |          
+        run: |
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           sudo chmod 600 ~/.ssh/id_rsa
