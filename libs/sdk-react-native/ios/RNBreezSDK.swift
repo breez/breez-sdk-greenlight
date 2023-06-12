@@ -310,10 +310,10 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
     
-    @objc(sweep:feeRateSatsPerByte:resolver:rejecter:)
-    func sweep(_ toAddress:String, feeRateSatsPerByte:UInt64, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+    @objc(sweep:feeRateSatsPerVbyte:resolver:rejecter:)
+    func sweep(_ toAddress:String, feeRateSatsPerVbyte:UInt64, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         do {
-            try getBreezServices().sweep(toAddress: toAddress, feeRateSatsPerByte: feeRateSatsPerByte)
+            try getBreezServices().sweep(toAddress: toAddress, feeRateSatsPerVbyte: feeRateSatsPerVbyte)
             resolve(["status": "ok"])
         } catch SdkError.Error(let message) {
             reject(RNBreezSDK.TAG, message, nil)
@@ -491,8 +491,9 @@ class RNBreezSDK: RCTEventEmitter {
     @objc(buyBitcoin:resolver:rejecter:)
     func buyBitcoin(_ provider: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         do {
-            let result = try getBreezServices().buyBitcoin(provider)
-            resolve(BreezSDKMapper.dictionaryOf(buyBitcoin: result))
+            let buyBitcoinProvider = try BreezSDKMapper.asBitcoinProvider(provider: provider)
+            let result = try getBreezServices().buyBitcoin(provider: buyBitcoinProvider)
+            resolve(result)
         } catch SdkError.Error(let message) {
             reject(RNBreezSDK.TAG, message, nil)
         } catch let err {
