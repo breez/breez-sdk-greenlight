@@ -84,7 +84,7 @@ export enum SwapStatus {
 }
 
 export enum BuyBitcoinProvider {
-    MOONPAY = "moonpay"
+    MOONPAY = "moonPay"
 }
 
 export type AesSuccessActionDataDecrypted = {
