@@ -256,6 +256,14 @@ enum SwapStatus {
     "Expired",
 };
 
+enum ReverseSwapStatus {
+    "Initial",
+    "InProgress",
+    "Cancelled",
+    "CompletedSeen",
+    "CompletedConfirmed",
+};
+
 dictionary SwapInfo {
     string bitcoin_address;
     i64 created_at;
@@ -286,6 +294,13 @@ dictionary ReverseSwapPairInfo {
     f64 fees_percentage;
     u64 fees_lockup;
     u64 fees_claim;
+};
+
+dictionary ReverseSwapInfo {
+    string id;
+    string claim_pubkey;
+    u64 onchain_amount_sat;
+    ReverseSwapStatus status;
 };
 
 dictionary BitcoinAddressData {
@@ -435,6 +450,12 @@ interface BlockingBreezServices {
 
    [Throws=SDKError]
    ReverseSwapPairInfo fetch_reverse_swap_fees();
+
+   [Throws=SDKError]
+   sequence<ReverseSwapInfo> in_progress_reverse_swaps();
+
+   [Throws=SDKError]
+   ReverseSwapInfo send_onchain(u64 amount_sat, string onchain_recipient_address, string pair_hash, u64 sat_per_vbyte);
 
    [Throws=SDKError]
    string execute_dev_command(string command);

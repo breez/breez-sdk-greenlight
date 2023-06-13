@@ -6,7 +6,7 @@ use crate::chain::{get_utxos, ChainService, MempoolSpace};
 use crate::models::ReverseSwapperAPI;
 use crate::ReverseSwapStatus::*;
 use crate::{
-    BreezEvent, Config, NodeAPI, ReverseSwapInfo, ReverseSwapInfoCached, ReverseSwapPairInfo,
+    BreezEvent, Config, FullReverseSwapInfo, NodeAPI, ReverseSwapInfoCached, ReverseSwapPairInfo,
     ReverseSwapStatus,
 };
 use anyhow::{anyhow, ensure, Result};
@@ -92,7 +92,7 @@ impl BTCSendSwap {
         pair_hash: String,
         routing_node: String,
         sat_per_vbyte: u64,
-    ) -> Result<ReverseSwapInfo> {
+    ) -> Result<FullReverseSwapInfo> {
         Self::validate_rev_swap_args(&claim_pubkey)?;
 
         let created_rsi = self
@@ -167,7 +167,7 @@ impl BTCSendSwap {
         pair_hash: String,
         routing_node: String,
         sat_per_vbyte: u64,
-    ) -> Result<ReverseSwapInfo> {
+    ) -> Result<FullReverseSwapInfo> {
         let reverse_swap_keys = crate::swap::create_swap_keys()?;
 
         let boltz_response = self
@@ -182,7 +182,7 @@ impl BTCSendSwap {
             .await?;
         match boltz_response {
             BoltzApiCreateReverseSwapResponse::BoltzApiSuccess(response) => {
-                let res = ReverseSwapInfo {
+                let res = FullReverseSwapInfo {
                     created_at_block_height: self.chain_service.current_tip().await?,
                     claim_pubkey,
                     invoice: response.invoice,
@@ -220,7 +220,7 @@ impl BTCSendSwap {
     }
 
     /// Builds and signs claim tx
-    async fn create_claim_tx(&self, rs: &ReverseSwapInfo) -> Result<Transaction> {
+    async fn create_claim_tx(&self, rs: &FullReverseSwapInfo) -> Result<Transaction> {
         let lockup_addr = rs.get_lockup_address(self.config.network)?;
         let claim_addr = Address::from_str(&rs.claim_pubkey)?;
         let redeem_script = Script::from_hex(&rs.redeem_script)?;
@@ -334,7 +334,7 @@ impl BTCSendSwap {
     }
 
     /// The claim tx is considered confirmed when it has an incoming tx from the lockup address
-    async fn get_claim_tx_status(&self, rsi: &ReverseSwapInfo) -> Result<TxStatus> {
+    async fn get_claim_tx_status(&self, rsi: &FullReverseSwapInfo) -> Result<TxStatus> {
         let lockup_addr = rsi.get_lockup_address(self.config.network)?;
         let maybe_claim_tx = self
             .chain_service
@@ -357,7 +357,7 @@ impl BTCSendSwap {
     }
 
     /// The lockup tx is seen when it has an incoming tx of the expected amount
-    async fn get_lockup_tx_status(&self, rsi: &ReverseSwapInfo) -> Result<TxStatus> {
+    async fn get_lockup_tx_status(&self, rsi: &FullReverseSwapInfo) -> Result<TxStatus> {
         let lockup_addr = rsi.get_lockup_address(self.config.network)?;
         let maybe_lockup_tx = self
             .chain_service
@@ -384,7 +384,7 @@ impl BTCSendSwap {
     /// If the status has not changed, it will return [None].
     pub(crate) async fn get_status_update_for_monitored(
         &self,
-        rsi: &ReverseSwapInfo,
+        rsi: &FullReverseSwapInfo,
     ) -> Result<Option<ReverseSwapStatus>> {
         let current_status = rsi.cache.status;
         ensure!(
@@ -433,7 +433,7 @@ impl BTCSendSwap {
     }
 
     /// Updates the state of given reverse swap in the cache table, if the status has changed
-    async fn refresh_reverse_swap(&self, rsi: ReverseSwapInfo) -> Result<()> {
+    async fn refresh_reverse_swap(&self, rsi: FullReverseSwapInfo) -> Result<()> {
         match self.get_status_update_for_monitored(&rsi).await? {
             None => Ok(()),
             Some(new_status) => self
@@ -443,7 +443,7 @@ impl BTCSendSwap {
     }
 
     /// Returns the ongoing reverse swaps which have a status that block the creation of new reverse swaps
-    pub async fn list_blocking(&self) -> Result<Vec<ReverseSwapInfo>> {
+    pub async fn list_blocking(&self) -> Result<Vec<FullReverseSwapInfo>> {
         let mut matching_reverse_swaps = vec![];
         for rs in self.persister.list_reverse_swaps()? {
             debug!("Reverse swap {} has status {:?}", rs.id, rs.cache.status);
@@ -456,7 +456,7 @@ impl BTCSendSwap {
 
     /// Returns the reverse swaps for which we expect the status to change, and therefore need
     /// to be monitored.
-    pub async fn list_monitored(&self) -> Result<Vec<ReverseSwapInfo>> {
+    pub async fn list_monitored(&self) -> Result<Vec<FullReverseSwapInfo>> {
         let mut matching_reverse_swaps = vec![];
         for rs in self.persister.list_reverse_swaps()? {
             if rs.cache.status.is_monitored_state() {
