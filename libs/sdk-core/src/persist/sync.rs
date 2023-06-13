@@ -102,7 +102,7 @@ fn test_sync() {
     };
     local_storage.insert_swap(local_swap_info.clone()).unwrap();
 
-    let mut remote_swap_info = local_swap_info.clone();
+    let mut remote_swap_info = local_swap_info;
     remote_swap_info.bitcoin_address = "2".into();
     remote_swap_info.script = vec![6];
     remote_swap_info.swapper_public_key = vec![6];
@@ -113,9 +113,7 @@ fn test_sync() {
 
     let remote_storage = SqliteStorage::new(test_utils::create_test_sql_dir());
     remote_storage.init().unwrap();
-    remote_storage
-        .insert_swap(remote_swap_info.clone())
-        .unwrap();
+    remote_storage.insert_swap(remote_swap_info).unwrap();
     remote_storage
         .import_remote_changes(&local_storage)
         .unwrap();
