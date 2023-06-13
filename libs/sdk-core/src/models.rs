@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use crate::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use anyhow::{anyhow, Result};
 use bitcoin::blockdata::opcodes;
@@ -781,6 +783,17 @@ pub enum LnUrlCallbackStatus {
 #[serde(tag = "buy_bitcoin_provider")]
 pub enum BuyBitcoinProvider {
     MoonPay,
+}
+
+impl FromStr for BuyBitcoinProvider {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "moonpay" => Ok(BuyBitcoinProvider::MoonPay),
+            _ => Err(anyhow!("unknown buy bitcoin provider")),
+        }
+    }
 }
 
 #[cfg(test)]
