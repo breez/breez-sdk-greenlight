@@ -130,7 +130,7 @@ RCT_EXTERN_METHOD(
 
 RCT_EXTERN_METHOD(
     sweep: (NSString*)toAddress
-    feeRateSatsPerByte: (NSUInteger*)feeRateSatsPerByte
+    feeRateSatsPerVbyte: (NSUInteger*)feeRateSatsPerVbyte
     resolver: (RCTPromiseResolveBlock)resolve
     rejecter: (RCTPromiseRejectBlock)reject
 )

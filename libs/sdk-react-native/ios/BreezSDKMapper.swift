@@ -56,6 +56,13 @@ class BreezSDKMapper {
         default: throw SdkError.Error(message: "Invalid environment type")
         }
     }
+
+    static func asBitcoinProvider(provider: String) throws -> BuyBitcoinProvider {
+        switch(provider) {
+        case "moonPay": return BuyBitcoinProvider.moonPay        
+        default: throw SdkError.Error(message: "Invalid Bitcoin provider")
+        }
+    }
     
     static func asConfig(config: [String: Any?]) -> Config? {
         if let breezserver = config["breezserver"] as? String,

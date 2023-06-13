@@ -29,6 +29,10 @@ fun asEnvironmentType(envType: String): EnvironmentType {
     return EnvironmentType.valueOf(envType.uppercase())
 }
 
+fun asBuyBitcoinProvider(envType: String): BuyBitcoinProvider {
+    return BuyBitcoinProvider.valueOf(envType.uppercase())
+}
+
 fun asLnUrlAuthRequestData(reqData: ReadableMap): LnUrlAuthRequestData? {
     var k1 = reqData.getString("k1")
     var action = reqData.getString("action")

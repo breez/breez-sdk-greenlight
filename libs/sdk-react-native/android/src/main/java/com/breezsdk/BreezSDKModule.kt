@@ -458,7 +458,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     @ReactMethod
     fun buyBitcoin(provider: String, promise: Promise) {
         try {
-            var result = getBreezServices().buyBitcoin(provider)
+            var buyBitcoinProvider = asBuyBitcoinProvider(provider)
+            var result = getBreezServices().buyBitcoin(buyBitcoinProvider)
             promise.resolve(result)
         } catch (e: SdkException) {
             e.printStackTrace()
