@@ -182,6 +182,28 @@ pub extern "C" fn wire_fetch_reverse_swap_fees(port_: i64) {
 }
 
 #[no_mangle]
+pub extern "C" fn wire_in_progress_reverse_swaps(port_: i64) {
+    wire_in_progress_reverse_swaps_impl(port_)
+}
+
+#[no_mangle]
+pub extern "C" fn wire_send_onchain(
+    port_: i64,
+    amount_sat: u64,
+    onchain_recipient_address: *mut wire_uint_8_list,
+    pair_hash: *mut wire_uint_8_list,
+    sat_per_vbyte: u64,
+) {
+    wire_send_onchain_impl(
+        port_,
+        amount_sat,
+        onchain_recipient_address,
+        pair_hash,
+        sat_per_vbyte,
+    )
+}
+
+#[no_mangle]
 pub extern "C" fn wire_execute_command(port_: i64, command: *mut wire_uint_8_list) {
     wire_execute_command_impl(port_, command)
 }

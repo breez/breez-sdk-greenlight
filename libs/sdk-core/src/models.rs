@@ -143,7 +143,7 @@ pub struct ReverseSwapPairInfo {
 
 /// Details of past or ongoing reverse swaps, as stored in the Breez local DB
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-pub struct ReverseSwapInfo {
+pub struct FullReverseSwapInfo {
     /// The reverse swap ID, as reported by the Boltz API in case of a successful creation
     pub id: String,
 
@@ -181,7 +181,7 @@ pub struct ReverseSwapInfoCached {
     pub status: ReverseSwapStatus,
 }
 
-impl ReverseSwapInfo {
+impl FullReverseSwapInfo {
     /// Builds the expected redeem script
     fn build_expected_reverse_swap_script(
         preimage_hash: Vec<u8>,
@@ -300,17 +300,17 @@ impl ReverseSwapInfo {
     }
 }
 
-/// Simplified version of [ReverseSwapInfo], containing only the user-relevant fields
+/// Simplified version of [FullReverseSwapInfo], containing only the user-relevant fields
 #[derive(Serialize)]
-pub struct SimpleReverseSwapInfo {
+pub struct ReverseSwapInfo {
     pub id: String,
     pub claim_pubkey: String,
     pub onchain_amount_sat: u64,
     pub status: ReverseSwapStatus,
 }
 
-impl From<ReverseSwapInfo> for SimpleReverseSwapInfo {
-    fn from(rsi: ReverseSwapInfo) -> Self {
+impl From<FullReverseSwapInfo> for ReverseSwapInfo {
+    fn from(rsi: FullReverseSwapInfo) -> Self {
         Self {
             id: rsi.id,
             claim_pubkey: rsi.claim_pubkey,

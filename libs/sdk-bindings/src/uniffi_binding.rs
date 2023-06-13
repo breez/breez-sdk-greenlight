@@ -11,9 +11,9 @@ use breez_sdk_core::{
     LnUrlAuthRequestData, LnUrlCallbackStatus, LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult,
     LnUrlWithdrawRequestData, LocaleOverrides, LocalizedName, LogEntry, LspInformation,
     MessageSuccessActionData, MetadataItem, Network, NodeState, Payment, PaymentDetails,
-    PaymentFailedData, PaymentType, PaymentTypeFilter, Rate, RecommendedFees, ReverseSwapPairInfo,
-    RouteHint, RouteHintHop, SuccessActionProcessed, SwapInfo, SwapStatus, Symbol,
-    UnspentTransactionOutput, UrlSuccessActionData,
+    PaymentFailedData, PaymentType, PaymentTypeFilter, Rate, RecommendedFees, ReverseSwapInfo,
+    ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop, SuccessActionProcessed,
+    SwapInfo, SwapStatus, Symbol, UnspentTransactionOutput, UrlSuccessActionData,
 };
 use log::LevelFilter;
 use log::Metadata;
@@ -307,6 +307,27 @@ impl BlockingBreezServices {
     pub fn fetch_reverse_swap_fees(&self) -> Result<ReverseSwapPairInfo, SDKError> {
         rt().block_on(self.breez_services.fetch_reverse_swap_fees())
             .map_err(|e| e.into())
+    }
+
+    pub fn in_progress_reverse_swaps(&self) -> Result<Vec<ReverseSwapInfo>, SDKError> {
+        rt().block_on(self.breez_services.in_progress_reverse_swaps())
+            .map_err(|e| e.into())
+    }
+
+    pub fn send_onchain(
+        &self,
+        amount_sat: u64,
+        onchain_recipient_address: String,
+        pair_hash: String,
+        sat_per_vbyte: u64,
+    ) -> Result<ReverseSwapInfo, SDKError> {
+        rt().block_on(self.breez_services.send_onchain(
+            amount_sat,
+            onchain_recipient_address,
+            pair_hash,
+            sat_per_vbyte,
+        ))
+        .map_err(|e| e.into())
     }
 
     pub fn execute_dev_command(&self, command: String) -> Result<String> {
