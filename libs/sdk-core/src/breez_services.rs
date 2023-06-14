@@ -113,9 +113,17 @@ async fn start_threads(
             .await;
     });
 
-    // sync with remote state
     let breez_cloned = breez_services.clone();
+
+    //restore backup state
+    if breez_cloned.persister.get_last_sync_version()?.is_none() {
+        debug!("No last sync version found, starting initial backup");
+        breez_cloned.start_backup()?;
+    }
+
+    // sync with remote node state
     breez_cloned.sync().await?;
+    breez_cloned.backup_watcher.start()?;
 
     // create a shutdown channel (sender and receiver)
     let (stop_sender, mut stop_receiver) = mpsc::channel(1);
@@ -139,7 +147,6 @@ async fn start_threads(
               },
               _ = stop_receiver.recv() => {
                _ = shutdown_signer_sender.send(()).await;
-               breez_cloned.backup_watcher.stop();
                debug!("Received the signal to exit event polling loop");
                return;
              }
@@ -712,12 +719,11 @@ async fn poll_events(breez_services: Arc<BreezServices>, mut current_block: u32)
     let mut interval = tokio::time::interval(Duration::from_secs(30));
     let mut invoice_stream = breez_services.node_api.stream_incoming_payments().await?;
     let mut log_stream = breez_services.node_api.stream_log_messages().await?;
-    let mut backup_events = breez_services.backup_watcher.start();
-
+    let mut backup_events_stream = breez_services.backup_watcher.subscribe_events();
     loop {
         tokio::select! {
-         backup_event = backup_events.recv() => {
-          if let Some(e) = backup_event {
+         backup_event = backup_events_stream.recv() => {
+          if let Ok(e) = backup_event {
            if let Err(err) = breez_services.notify_event_listeners(e).await {
                error!("error handling backup event: {:?}", err);
            }

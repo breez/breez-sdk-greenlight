@@ -1,6 +1,6 @@
 use crate::{
     breez_services::BackupFailedData,
-    persist::db::{HookEvent, HookListener, SqliteStorage},
+    persist::db::{HookEvent, SqliteStorage},
     BreezEvent,
 };
 use anyhow::{anyhow, Result};
@@ -11,11 +11,14 @@ use std::{
     fs::File,
     io::{Read, Write},
     path::Path,
-    sync::Arc,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
     time::{SystemTime, UNIX_EPOCH},
 };
 use tempfile::tempdir_in;
-use tokio::sync::mpsc::{self, Sender};
+use tokio::sync::broadcast::{self, error::RecvError};
 
 // BackupState is the sdk state that requiers syncing between multiple apps.
 /// It is just a blob of data marked with a specific version (generation).
@@ -35,9 +38,9 @@ pub trait BackupTransport: Send + Sync {
 }
 
 pub(crate) struct BackupWatcher {
-    inner: Arc<dyn BackupTransport>,
-    persister: Arc<SqliteStorage>,
-    encryption_key: Vec<u8>,
+    started: AtomicBool,
+    notifier: broadcast::Sender<BreezEvent>,
+    worker: BackupWorker,
 }
 
 /// watches for sync requests and syncs the sdk state when a request is detected.
@@ -47,62 +50,66 @@ impl BackupWatcher {
         persister: Arc<SqliteStorage>,
         encryption_key: Vec<u8>,
     ) -> Self {
+        let (notifier, _) = broadcast::channel::<BreezEvent>(1);
+        let worker = BackupWorker::new(inner, persister, encryption_key, notifier.clone());
+
         Self {
-            inner,
-            persister,
-            encryption_key,
+            started: AtomicBool::new(false),
+            notifier,
+            worker,
         }
     }
 
-    pub(crate) fn start(&self) -> mpsc::Receiver<BreezEvent> {
-        let (events_notifier, events_receiver) = mpsc::channel(1);
-        let worker = BackupWorker::new(
-            self.inner.clone(),
-            self.persister.clone(),
-            self.encryption_key.clone(),
-            events_notifier,
-        );
-
-        self.persister
-            .add_hook_listener(Arc::new(SyncStorageListener {
-                backup_worker: worker.clone(),
-            }));
-
-        // Always check if backup is needed on startup
-        spawn_backup_worker(worker);
-
-        events_receiver
-    }
-
-    pub(crate) fn stop(&self) {}
-}
-
-/// Runs the sync process in the background.
-fn spawn_backup_worker(worker: BackupWorker) {
-    tokio::spawn(async move {
-        if let Err(e) = worker.sync().await {
-            error!("Failed to run sync worker: {e}");
+    pub(crate) fn start(&self) -> Result<()> {
+        // return error if we are already started
+        if self.started.swap(true, Ordering::Relaxed) {
+            return Err(anyhow!("Backup watcher already started"));
         }
-    });
-}
 
-/// SyncStorageListener is a hook listener that syncs the sdk state when a sync request is detected.
-/// It listens to events on the sync_requests table and starts a sync when a new request is detected.
-struct SyncStorageListener {
-    backup_worker: BackupWorker,
-}
+        let worker = self.worker.clone();
+        let mut hooks_subscription = worker.persister.subscribe_hooks();
 
-impl HookListener for SyncStorageListener {
-    fn notify(&self, event: &HookEvent) {
-        match event {
-            HookEvent::Insert { table } => {
-                if table == "sync_requests" {
-                    info!("Sync request detected, starting sync");
-                    // spawn a new worker to sync the sdk state
-                    spawn_backup_worker(self.backup_worker.clone());
+        // spawn the background worker that handles backup requests
+        tokio::spawn(async move {
+            let res = worker.sync().await;
+            info!("initial backup completed with result {res:?}");
+
+            loop {
+                tokio::select! {
+
+                  // We spin the backup worker on every new entry to the sync_requests table.
+                  event = hooks_subscription.recv() => {
+                    match event {
+                        Ok(event) => {
+                            match event {
+                                HookEvent::Insert { table } => {
+                                    if table == "sync_requests" {
+                                        info!("Sync request detected, starting sync");
+                                        let res = worker.sync().await;
+                                        info!("backup completed with result {res:?}");
+                                    }
+                                }
+                            };
+                        }
+                        // If the channel is lagged we just continue
+                        Err(RecvError::Lagged(_)) => {
+                            continue;
+                        }
+                        // If the channel is closed we exit
+                        Err(_) => {
+                         return
+                        }
+                    }
+                  }
                 }
             }
-        }
+        });
+
+        Ok(())
+    }
+
+    pub(crate) fn subscribe_events(&self) -> broadcast::Receiver<BreezEvent> {
+        self.notifier.subscribe()
     }
 }
 
@@ -112,7 +119,7 @@ struct BackupWorker {
     inner: Arc<dyn BackupTransport>,
     persister: Arc<SqliteStorage>,
     encryption_key: Vec<u8>,
-    events_notifier: Sender<BreezEvent>,
+    events_notifier: broadcast::Sender<BreezEvent>,
 }
 
 impl BackupWorker {
@@ -120,7 +127,7 @@ impl BackupWorker {
         inner: Arc<dyn BackupTransport>,
         persister: Arc<SqliteStorage>,
         encryption_key: Vec<u8>,
-        events_notifier: Sender<BreezEvent>,
+        events_notifier: broadcast::Sender<BreezEvent>,
     ) -> Self {
         Self {
             inner,
@@ -131,10 +138,10 @@ impl BackupWorker {
     }
 
     async fn notify(&self, e: BreezEvent) -> Result<()> {
-        self.events_notifier
-            .send(e)
-            .await
-            .map_err(anyhow::Error::msg)
+        // we don't care for errors here as this happens if
+        // there ar eno subscribers, just ignoring them.
+        _ = self.events_notifier.send(e);
+        Ok(())
     }
 
     /// Syncs the sdk state with the remote state.

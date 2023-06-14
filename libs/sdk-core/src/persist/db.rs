@@ -1,5 +1,3 @@
-use std::sync::{Arc, Mutex};
-
 use super::migrations::current_migrations;
 use anyhow::Result;
 use rusqlite::{
@@ -8,16 +6,14 @@ use rusqlite::{
     Connection, ToSql,
 };
 use rusqlite_migration::{Migrations, M};
+use tokio::sync::broadcast;
 
 /// HookEvent is used to notify listeners about DB changes.
 /// A listener can register to be notified about specific events that occurs as part of
 /// modifications in the persistent storage.
+#[derive(Debug, Clone)]
 pub(crate) enum HookEvent {
     Insert { table: String },
-}
-
-pub(crate) trait HookListener: Send + Sync {
-    fn notify(&self, event: &HookEvent);
 }
 
 pub(crate) struct SqliteStorage {
@@ -25,30 +21,25 @@ pub(crate) struct SqliteStorage {
     main_db_file: String,
     /// Sync DB. Gets synchronized across the different instances that connect to the same wallet.
     sync_db_file: String,
-    /// Listeners for DB hooks.
-    hook_listeners: Mutex<Vec<Arc<dyn HookListener>>>,
+    /// Dispatch DB hook events.
+    events_publisher: broadcast::Sender<HookEvent>,
 }
 
 impl SqliteStorage {
     pub fn new(working_dir: String) -> SqliteStorage {
         let main_db_file = format!("{}/storage.sql", working_dir);
         let sync_db_file = format!("{}/sync_storage.sql", working_dir);
+        let (events_publisher, _) = broadcast::channel::<HookEvent>(1);
 
         SqliteStorage {
             main_db_file,
             sync_db_file,
-            hook_listeners: Mutex::new(vec![]),
+            events_publisher,
         }
     }
 
-    pub(crate) fn add_hook_listener(&self, listener: Arc<dyn HookListener>) {
-        let mut listeners = self.hook_listeners.lock().unwrap();
-        listeners.push(listener);
-    }
-
-    pub(crate) fn hook_listeners(&self) -> Vec<Arc<dyn HookListener>> {
-        let listeners = self.hook_listeners.lock().unwrap();
-        listeners.clone()
+    pub(crate) fn subscribe_hooks(&self) -> broadcast::Receiver<HookEvent> {
+        self.events_publisher.subscribe()
     }
 
     pub(crate) fn init(&self) -> Result<()> {
@@ -65,13 +56,11 @@ impl SqliteStorage {
         let sql = "ATTACH DATABASE ? AS sync;";
         con.execute(sql, [self.sync_db_file.clone()])?;
 
-        // We want to notify any listeners with hook events.
-        let listeners = self.hook_listeners();
+        // We want to notify any subscribers with hook events.
+        let events_publisher = self.events_publisher.clone();
         con.update_hook(Some(move |action, db: &str, tbl: &str, _| {
             if action == Action::SQLITE_INSERT && db == "sync" {
-                for listener in listeners.iter() {
-                    listener.notify(&HookEvent::Insert { table: tbl.into() });
-                }
+                _ = events_publisher.send(HookEvent::Insert { table: tbl.into() });
             }
         }));
 
