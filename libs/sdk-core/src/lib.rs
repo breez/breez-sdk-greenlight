@@ -20,8 +20,9 @@
 //! ```ignore
 //! let mnemonic = Mnemonic::new(Words12, English);
 //! let seed = Seed::new(&mnemonic, "");
+//! let invite_code = Some("...")
 //!
-//! let creds = BreezServices::register_node(Network::Bitcoin, seed.as_bytes().to_vec()).await?;
+//! let creds = BreezServices::register_node(Network::Bitcoin, seed.as_bytes().to_vec(), None, invite_code).await?;
 //! let sdk = BreezServices::init_services(
 //!         BreezServices::default_config(EnvironmentType::Production),
 //!         seed.to_vec(),
