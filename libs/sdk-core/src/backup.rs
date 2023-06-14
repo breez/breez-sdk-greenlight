@@ -81,7 +81,7 @@ impl BackupWatcher {
 fn spawn_backup_worker(worker: BackupWorker) {
     tokio::spawn(async move {
         if let Err(e) = worker.sync().await {
-            error!("Failed to run sync worker: {:?}", e);
+            error!("Failed to run sync worker: {e}");
         }
     });
 }
@@ -169,20 +169,17 @@ impl BackupWorker {
         f.read_to_end(&mut data)?;
 
         // Try to push with the current version, if no one else has pushed then we will succeed
-        let optimistic_sync = self.push(last_version, data).await;
+        let optimistic_sync = self.push(last_version, data.clone()).await;
 
         let sync_result = match optimistic_sync {
             Ok(new_version) => {
-                info!("Optimistic sync succeeded, new version = {:?}", new_version);
+                info!("Optimistic sync succeeded, new version = {new_version}");
                 Ok(new_version)
             }
             Err(e) => {
-                debug!(
-                    "Optimistic sync failed, trying to sync remote changes {}",
-                    e
-                );
+                debug!("Optimistic sync failed, trying to sync remote changes {e}");
                 // We need to sync remote changes and then retry the push
-                self.sync_remote_and_push().await
+                self.sync_remote_and_push(data).await
             }
         };
 
@@ -215,12 +212,12 @@ impl BackupWorker {
     }
 
     /// Syncs the remote changes into the local changes and then tries to push the local changes again.    
-    async fn sync_remote_and_push(&self) -> Result<u64> {
+    async fn sync_remote_and_push(&self, local_data: Vec<u8>) -> Result<u64> {
         let remote_state = self.pull().await?;
         let tmp_dir = tempdir_in(temp_dir())?;
         let remote_storage_path = tmp_dir.path();
         let mut remote_storage_file = File::create(remote_storage_path.join("sync_storage.sql"))?;
-        info!("remote_storage_path = {:?}", remote_storage_path);
+        info!("remote_storage_path = {remote_storage_path:?}");
         match remote_state {
             Some(state) => {
                 // Write the remote state to a file
@@ -246,7 +243,12 @@ impl BackupWorker {
                 let new_generation = self.push(Some(state.generation), hex).await?;
                 Ok(new_generation)
             }
-            None => Err(anyhow!("pull returned no values")),
+
+            // In case there is no remote state, we can just push the local changes
+            None => {
+                debug!("No remote state, pushing local changes");
+                self.push(None, local_data).await
+            }
         }
     }
 
@@ -256,13 +258,17 @@ impl BackupWorker {
             Some(state) => {
                 let decrypted_data =
                     aes_decrypt(self.encryption_key.as_slice(), state.data.as_slice())
-                        .ok_or(anyhow!("Failed to encrypt backup"))?;
-                let decompressed = decompress_to_vec_with_limit(&decrypted_data, 4000000)
-                    .expect("Failed to decompress!");
-                Ok(Some(BackupState {
-                    generation: state.generation,
-                    data: decompressed,
-                }))
+                        .ok_or(anyhow!("Failed to decrypt backup"))?;
+                match decompress_to_vec_with_limit(&decrypted_data, 4000000) {
+                    Ok(decompressed) => Ok(Some(BackupState {
+                        generation: state.generation,
+                        data: decompressed,
+                    })),
+                    Err(e) => {
+                        error!("Failed to decompress backup: {e}");
+                        Ok(None)
+                    }
+                }
             }
             None => Ok(None),
         }

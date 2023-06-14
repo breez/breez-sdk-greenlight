@@ -328,7 +328,7 @@ pub(crate) async fn handle_command(
         }
         Commands::Backup {} => {
             sdk()?.start_backup()?;
-            Ok(format!("Backup started"))
+            Ok("Backup started".into())
         }
     }
 }

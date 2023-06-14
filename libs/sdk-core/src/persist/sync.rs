@@ -35,7 +35,7 @@ impl SqliteStorage {
         res.map_err(anyhow::Error::msg)
     }
 
-    pub fn delete_sync_requests_up_to(&self, request_id: u64) -> Result<()> {
+    pub(crate) fn delete_sync_requests_up_to(&self, request_id: u64) -> Result<()> {
         self.get_connection()?.execute(
             "DELETE FROM sync.sync_requests where id <= ?1",
             [request_id],
@@ -43,7 +43,7 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub fn add_sync_request(&self) -> Result<()> {
+    pub(crate) fn add_sync_request(&self) -> Result<()> {
         self.get_connection()?.execute(
             " INSERT INTO sync_requests(changed_table) VALUES('user')",
             [],
@@ -51,7 +51,7 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub fn import_remote_changes(&self, remote_storage: &SqliteStorage) -> Result<()> {
+    pub(crate) fn import_remote_changes(&self, remote_storage: &SqliteStorage) -> Result<()> {
         let sync_data_file = remote_storage.sync_db_path();
 
         let mut con = self.get_connection()?;

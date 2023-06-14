@@ -5,7 +5,7 @@ use anyhow::{anyhow, Result};
 use gl_client::{node, pb};
 use std::sync::Arc;
 
-const BREEZ_SDK_DATASTORE_PATH: [&str; 2] = ["breez-sdk", "sync3"];
+const BREEZ_SDK_DATASTORE_PATH: [&str; 2] = ["breez-sdk", "backup"];
 
 pub(crate) struct GLBackupTransport {
     pub(crate) inner: Arc<Greenlight>,
