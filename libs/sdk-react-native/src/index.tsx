@@ -89,10 +89,10 @@ export enum BuyBitcoinProvider {
 
 export enum ReverseSwapStatus {
     INITIAL = "initial",
-    IN_PROGRESS = "inprogress",
+    IN_PROGRESS = "in_progress",
     CANCELLED = "cancelled",
-    COMPLETED_SEEN = "completedseen",
-    COMPLETED_CONFIRMED = "completedconfirmed"
+    COMPLETED_SEEN = "completed_seen",
+    COMPLETED_CONFIRMED = "completed_confirmed"
 }
 
 export type AesSuccessActionDataDecrypted = {

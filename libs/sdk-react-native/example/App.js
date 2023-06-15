@@ -68,7 +68,7 @@ const App = () => {
             let seed = null
             let mnemonic = await getSecureItem(MNEMONIC_STORE)
 
-            if (!mnemonic) {
+            if (mnemonic == null) {
                 mnemonic = generateMnemonic(256)
                 setSecureItem(MNEMONIC_STORE, mnemonic)
 
