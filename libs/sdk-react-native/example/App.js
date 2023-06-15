@@ -21,6 +21,7 @@ import {
     Network,
     recoverNode,
     registerNode,
+    buyBitcoin,
     start
 } from "@breeztech/react-native-breez-sdk"
 import BuildConfig from "react-native-build-config"
@@ -86,10 +87,11 @@ const App = () => {
             let deviceKey = await getSecureItem(GREENLIGHT_DEVICE_KEY_STORE)
             let deviceCert = await getSecureItem(GREENLIGHT_DEVICE_CERT_STORE)
 
-            if (!deviceKey) {
+            if (deviceKey == null) {
                 const greenlightCredentials = await recoverNode(Network.BITCOIN, seed)
 
                 addLine("recoverNode", null)
+                setSecureItem(MNEMONIC_STORE, mnemonic)
                 setSecureItem(GREENLIGHT_DEVICE_KEY_STORE, greenlightCredentials.deviceKey)
                 setSecureItem(GREENLIGHT_DEVICE_CERT_STORE, greenlightCredentials.deviceCert)
                 deviceKey = greenlightCredentials.deviceKey
@@ -115,8 +117,8 @@ const App = () => {
                 const fiatRates = await fetchFiatRates()
                 addLine("fetchFiatRates", JSON.stringify(fiatRates))
 
-                const buyBitcoin = await buyBitcoin(BuyBitcoinProvider.MOONPAY)
-                addLine("buyBitcoin", JSON.stringify(buyBitcoin))
+                const buyBitcoinResult = await buyBitcoin(BuyBitcoinProvider.MOONPAY)
+                addLine("buyBitcoin", JSON.stringify(buyBitcoinResult))
             }
         }
         asyncFn()

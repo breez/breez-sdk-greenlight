@@ -27,7 +27,7 @@ use crate::moonpay::MoonPayApi;
 use crate::persist::db::SqliteStorage;
 use crate::reverseswap::BTCSendSwap;
 use crate::swap::BTCReceiveSwap;
-use crate::BuyBitcoinProvider::MoonPay;
+use crate::BuyBitcoinProvider::Moonpay;
 use crate::*;
 use crate::{BuyBitcoinProvider, LnUrlAuthRequestData, LnUrlWithdrawRequestData, PaymentResponse};
 use anyhow::{anyhow, Result};
@@ -666,7 +666,7 @@ impl BreezServices {
     /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency
     pub async fn buy_bitcoin(&self, provider: BuyBitcoinProvider) -> Result<String> {
         let url = match provider {
-            MoonPay => {
+            Moonpay => {
                 self.moonpay_api
                     .buy_bitcoin_url(&self.receive_onchain().await?)
                     .await?
@@ -1426,7 +1426,7 @@ pub(crate) mod tests {
         breez_services.sync().await?;
 
         let moonpay_url = breez_services
-            .buy_bitcoin(BuyBitcoinProvider::MoonPay)
+            .buy_bitcoin(BuyBitcoinProvider::Moonpay)
             .await?;
         let parsed = Url::parse(&moonpay_url)?;
         let query_pairs = parsed.query_pairs().into_owned().collect::<HashMap<_, _>>();

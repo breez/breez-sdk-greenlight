@@ -304,7 +304,7 @@ class BreezEvent with _$BreezEvent {
 
 /// Different providers will demand different behaviours when the user is trying to buy bitcoin.
 enum BuyBitcoinProvider {
-  MoonPay,
+  Moonpay,
 }
 
 /// State of a Lightning channel
