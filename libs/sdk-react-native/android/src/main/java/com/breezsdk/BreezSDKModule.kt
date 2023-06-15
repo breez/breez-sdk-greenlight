@@ -448,7 +448,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     fun inProgressReverseSwaps(promise: Promise) {
         try {
             var inProgressReverseSwaps = getBreezServices().inProgressReverseSwaps()
-            promise.resolve(readableMapOf(inProgressReverseSwaps))
+            promise.resolve(readableArrayOf(inProgressReverseSwaps))
         } catch (e: SdkException) {
             e.printStackTrace()
             promise.reject(TAG, e.message ?: "Error calling inProgressReverseSwaps", e)
@@ -456,7 +456,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun sendOnchain(amountSat: Double, onchainRecipientAddress: String, pairHash: String, satPerVbyte: Double, promise: Promise) {
+    fun sendOnchain(amountSat: ULong, onchainRecipientAddress: String, pairHash: String, satPerVbyte: ULong, promise: Promise) {
         try {
             var response = getBreezServices().sendOnchain(amountSat, onchainRecipientAddress, pairHash, satPerVbyte)
             promise.resolve(readableMapOf(response))
