@@ -15,6 +15,7 @@ import {
     defaultConfig,
     EnvironmentType,
     fetchFiatRates,
+    fetchReverseSwapFees,
     initServices,
     listFiatCurrencies,
     mnemonicToSeed,
@@ -115,6 +116,9 @@ const App = () => {
 
                 const fiatRates = await fetchFiatRates()
                 addLine("fetchFiatRates", JSON.stringify(fiatRates))
+
+                const revSwapFees = await fetchReverseSwapFees()
+                addLine("revSwapFees", JSON.stringify(revSwapFees))
 
                 const buyBitcoinResult = await buyBitcoin(BuyBitcoinProvider.MOONPAY)
                 addLine("buyBitcoin", JSON.stringify(buyBitcoinResult))
