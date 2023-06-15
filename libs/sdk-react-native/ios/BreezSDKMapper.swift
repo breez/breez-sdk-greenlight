@@ -505,7 +505,7 @@ class BreezSDKMapper {
         ]
     }
 
-    static func dictionaryOf(reverseSwapPairInfo: ReverseSwapPairInfo) -> [String: Any?] {
+    static func dictionaryOf(reverseSwapPairInfo: ReverseSwapPairInfo) -> [String: Any] {
         return [
             "min": reverseSwapPairInfo.min,
             "max": reverseSwapPairInfo.max,
@@ -516,15 +516,8 @@ class BreezSDKMapper {
         ]
     }
 
-    static func dictionaryOf(reverseSwapInfo: ReverseSwapInfo) -> [String: Any?] {
+    static func dictionaryOf(reverseSwapInfo: ReverseSwapInfo) -> [String: Any] {
         return [
-            "min": reverseSwapPairInfo.min,
-            "max": reverseSwapPairInfo.max,
-            "feesHash": reverseSwapPairInfo.feesHash,
-            "feesPercentage": reverseSwapPairInfo.feesPercentage,
-            "feesLockup": reverseSwapPairInfo.feesLockup,
-            "feesClaim": reverseSwapPairInfo.feesClaim
-
             "id": reverseSwapInfo.id,
             "claimPubkey": reverseSwapInfo.claimPubkey,
             "onchainAmountSat": reverseSwapInfo.onchainAmountSat,
