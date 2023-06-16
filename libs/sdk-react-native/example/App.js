@@ -17,6 +17,7 @@ import {
     fetchFiatRates,
     fetchReverseSwapFees,
     initServices,
+    inProgressReverseSwaps,
     listFiatCurrencies,
     mnemonicToSeed,
     Network,
@@ -119,6 +120,9 @@ const App = () => {
 
                 const revSwapFees = await fetchReverseSwapFees()
                 addLine("revSwapFees", JSON.stringify(revSwapFees))
+
+                const inProgressRevSwaps = await inProgressReverseSwaps()
+                addLine("inProgressRevSwaps", JSON.stringify(inProgressRevSwaps))
 
                 const buyBitcoinResult = await buyBitcoin(BuyBitcoinProvider.MOONPAY)
                 addLine("buyBitcoin", JSON.stringify(buyBitcoinResult))
