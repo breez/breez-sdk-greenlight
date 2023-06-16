@@ -43,12 +43,7 @@ impl SqliteStorage {
     pub(crate) fn sync_versions_history(&self) -> Result<Vec<SyncVersion>> {
         let con = self.get_connection()?;
         let mut stmt = con.prepare(
-            format!(
-                "
-                 SELECT created_at, last_version, data FROM sync_versions ORDER BY created_at DESC;         
-                "
-            )
-            .as_str(),
+            "SELECT created_at, last_version, data FROM sync_versions ORDER BY created_at DESC;",
         )?;
 
         let vec: Vec<SyncVersion> = stmt

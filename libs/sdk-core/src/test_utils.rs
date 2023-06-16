@@ -65,7 +65,7 @@ impl BackupTransport for MockBackupTransport {
         let current_state = self.state.lock().unwrap();
 
         match current_state.clone() {
-            Some(state) => Ok(Some(state.clone())),
+            Some(state) => Ok(Some(state)),
             None => Ok(None),
         }
     }
@@ -74,7 +74,7 @@ impl BackupTransport for MockBackupTransport {
         let mut remote_version = self.remote_version.lock().unwrap();
         let mut numpushed = self.num_pushed.lock().unwrap();
         *numpushed += 1;
-        let t = *numpushed;
+
         if !remote_version.is_none() && *remote_version != version {
             return Err(anyhow!("version mismatch"));
         }

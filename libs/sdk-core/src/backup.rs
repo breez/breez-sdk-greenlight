@@ -592,7 +592,7 @@ mod tests {
             },
         };
 
-        persister.insert_swap(tested_swap_info.clone()).unwrap();
+        persister.insert_swap(tested_swap_info).unwrap();
         persister.insert_reverse_swap(&rev_swap).unwrap();
         persister
             .insert_lnurl_payment_external_info(
