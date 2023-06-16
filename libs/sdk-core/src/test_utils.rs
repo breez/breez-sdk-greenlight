@@ -33,20 +33,61 @@ use crate::swap::create_submarine_swap_script;
 use crate::SwapInfo;
 use crate::{parse_invoice, Config, LNInvoice, PaymentResponse, RouteHint};
 
-pub struct MockBackupTransport {}
+pub struct MockBackupTransport {
+    pub num_pushed: std::sync::Mutex<u32>,
+    pub num_pulled: std::sync::Mutex<u32>,
+    pub remote_version: std::sync::Mutex<Option<u64>>,
+    pub state: std::sync::Mutex<Option<BackupState>>,
+}
+
+impl MockBackupTransport {
+    pub fn new() -> Self {
+        MockBackupTransport {
+            num_pushed: std::sync::Mutex::new(0),
+            num_pulled: std::sync::Mutex::new(0),
+            remote_version: std::sync::Mutex::new(None),
+            state: std::sync::Mutex::new(None),
+        }
+    }
+    pub fn pushed(&self) -> u32 {
+        *self.num_pushed.lock().unwrap()
+    }
+    pub fn pulled(&self) -> u32 {
+        *self.num_pulled.lock().unwrap()
+    }
+}
 
 #[tonic::async_trait]
 impl BackupTransport for MockBackupTransport {
     async fn pull(&self) -> Result<Option<BackupState>> {
         sleep(Duration::from_millis(10)).await;
-        return Ok(None);
-    }
-    async fn push(&self, version: Option<u64>, _: Vec<u8>) -> Result<u64> {
-        sleep(Duration::from_millis(10)).await;
-        match version {
-            Some(v) => Ok(v + 1),
-            None => Ok(1),
+        *self.num_pulled.lock().unwrap() += 1;
+        let current_state = self.state.lock().unwrap();
+
+        match current_state.clone() {
+            Some(state) => Ok(Some(state.clone())),
+            None => Ok(None),
         }
+    }
+    async fn push(&self, version: Option<u64>, data: Vec<u8>) -> Result<u64> {
+        sleep(Duration::from_millis(10)).await;
+        let mut remote_version = self.remote_version.lock().unwrap();
+        let mut numpushed = self.num_pushed.lock().unwrap();
+        *numpushed += 1;
+        let t = *numpushed;
+        if !remote_version.is_none() && *remote_version != version {
+            return Err(anyhow!("version mismatch"));
+        }
+        let next_version = match version {
+            Some(v) => v + 1,
+            None => 1,
+        };
+        *remote_version = Some(next_version);
+        *self.state.lock().unwrap() = Some(BackupState {
+            generation: next_version,
+            data,
+        });
+        Ok(next_version)
     }
 }
 
@@ -540,6 +581,7 @@ pub fn create_test_config() -> crate::models::Config {
 pub(crate) fn create_test_persister(
     config: crate::models::Config,
 ) -> crate::persist::db::SqliteStorage {
+    println!("create_test_persister {}", config.working_dir);
     crate::persist::db::SqliteStorage::new(config.working_dir)
 }
 

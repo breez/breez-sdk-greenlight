@@ -275,6 +275,7 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
        "
        CREATE TABLE IF NOT EXISTS sync_versions (
         last_version INTEGER NOT NULL,
+        data BLOB NOT NULL,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
        ) STRICT;
        ",

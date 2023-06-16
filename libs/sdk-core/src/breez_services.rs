@@ -1394,7 +1394,7 @@ pub(crate) mod tests {
             .fiat_api(Arc::new(MockBreezServer {}))
             .node_api(node_api)
             .persister(persister)
-            .backup_transport(Arc::new(MockBackupTransport {}))
+            .backup_transport(Arc::new(MockBackupTransport::new()))
             .build(None)
             .await?;
 
@@ -1548,7 +1548,7 @@ pub(crate) mod tests {
             .moonpay_api(Arc::new(MockBreezServer {}))
             .persister(persister)
             .node_api(node_api)
-            .backup_transport(Arc::new(MockBackupTransport {}))
+            .backup_transport(Arc::new(MockBackupTransport::new()))
             .build(None)
             .await
             .unwrap();

@@ -1,6 +1,14 @@
 use super::db::SqliteStorage;
 use anyhow::Result;
+use rusqlite::Row;
 use std::path::Path;
+
+#[allow(dead_code)]
+pub(crate) struct SyncVersion {
+    pub created_at: String,
+    pub last_version: u64,
+    pub data: Vec<u8>,
+}
 
 impl SqliteStorage {
     pub(crate) fn backup<P: AsRef<Path>>(&self, dst_path: P) -> Result<()> {
@@ -9,7 +17,7 @@ impl SqliteStorage {
             .map_err(anyhow::Error::msg)
     }
 
-    pub fn get_last_sync_version(&self) -> Result<Option<u64>> {
+    pub(crate) fn get_last_sync_version(&self) -> Result<Option<u64>> {
         let res: rusqlite::Result<Option<u64>> = self.get_connection()?.query_row(
             "SELECT max(last_version) FROM sync_versions",
             [],
@@ -18,12 +26,47 @@ impl SqliteStorage {
         res.map_err(anyhow::Error::msg)
     }
 
-    pub fn set_last_sync_version(&self, last_version: u64) -> Result<()> {
-        self.get_connection()?.execute(
-            "INSERT OR REPLACE INTO sync_versions (last_version) VALUES (?1)",
-            [last_version],
+    pub(crate) fn set_last_sync_version(&self, last_version: u64, data: &Vec<u8>) -> Result<()> {
+        let con = self.get_connection()?;
+
+        // make sure we have no more than 20 history entries
+        con.execute("Delete from sync_versions where last_version not in (select last_version from sync_versions order by created_at desc limit 19);", [])?;
+        con.execute(
+            "INSERT OR REPLACE INTO sync_versions (last_version, data) VALUES (?1, ?2);",
+            (last_version, data),
         )?;
+
         Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub(crate) fn sync_versions_history(&self) -> Result<Vec<SyncVersion>> {
+        let con = self.get_connection()?;
+        let mut stmt = con.prepare(
+            format!(
+                "
+                 SELECT created_at, last_version, data FROM sync_versions ORDER BY created_at DESC;         
+                "
+            )
+            .as_str(),
+        )?;
+
+        let vec: Vec<SyncVersion> = stmt
+            .query_map([], |row| self.sql_row_to_sync_version(row))?
+            .map(|i| i.unwrap())
+            .collect();
+
+        Ok(vec)
+    }
+
+    fn sql_row_to_sync_version(&self, row: &Row) -> Result<SyncVersion, rusqlite::Error> {
+        let version = SyncVersion {
+            created_at: row.get(0)?,
+            last_version: row.get(1)?,
+            data: row.get(2)?,
+        };
+
+        Ok(version)
     }
 
     pub fn get_last_sync_request(&self) -> Result<Option<u64>> {
@@ -57,17 +100,77 @@ impl SqliteStorage {
         let mut con = self.get_connection()?;
         let tx = con.transaction()?;
         tx.execute("ATTACH DATABASE ? AS remote_sync;", [sync_data_file])?;
-        tx.execute("insert into sync.swaps select * from remote_sync.swaps where bitcoin_address not in (select bitcoin_address from sync.swaps);", [])?;
+
+        // sync remote swaps table
         tx.execute(
-            "insert into sync.swap_refunds select * from remote_sync.swap_refunds where bitcoin_address not in (select bitcoin_address from sync.swap_refunds);",
+            "
+        INSERT INTO sync.swaps 
+          SELECT
+           bitcoin_address,
+           created_at,
+           lock_height,
+           payment_hash,
+           preimage,
+           private_key,
+           public_key,
+           swapper_public_key,
+           script,
+           min_allowed_deposit,
+           max_allowed_deposit
+          FROM remote_sync.swaps
+          WHERE bitcoin_address NOT IN (SELECT bitcoin_address FROM sync.swaps);",
             [],
         )?;
+
+        // sync remote swap_refunds table
         tx.execute(
-            "insert into sync.payments_external_info select * from remote_sync.payments_external_info where payment_id not in (select payment_id from sync.payments_external_info);",
+            "
+        INSERT INTO sync.swap_refunds
+         SELECT
+          bitcoin_address,
+          refund_tx_id
+         FROM remote_sync.swap_refunds
+         WHERE bitcoin_address NOT IN (SELECT bitcoin_address FROM sync.swap_refunds);",
             [],
         )?;
+
+        // sync remote payments_external_info table
+        tx.execute(
+            "
+         INSERT into sync.payments_external_info
+         SELECT
+          payment_id,
+          lnurl_success_action,
+          ln_address,
+          lnurl_metadata
+         FROM remote_sync.payments_external_info
+         WHERE payment_id NOT IN (SELECT payment_id FROM sync.payments_external_info);",
+            [],
+        )?;
+
+        // sync remote reverse_swaps table
+        tx.execute(
+            "
+        INSERT into sync.reverse_swaps
+        SELECT
+         id,
+         created_at_block_height,
+         preimage,
+         private_key,
+         claim_pubkey,
+         timeout_block_height,
+         invoice,
+         onchain_amount_sat,
+         sat_per_vbyte,
+         redeem_script
+        FROM remote_sync.reverse_swaps
+        WHERE id NOT IN (SELECT id FROM sync.reverse_swaps);",
+            [],
+        )?;
+
         tx.commit()?;
         con.execute("DETACH DATABASE remote_sync", [])?;
+
         Ok(())
     }
 }
@@ -130,7 +233,7 @@ fn test_sync() {
     assert_eq!(local_swaps, remote_swaps);
     assert_eq!(local_swaps.len(), 2);
 
-    local_storage.set_last_sync_version(10).unwrap();
+    local_storage.set_last_sync_version(10, &vec![]).unwrap();
     let version = local_storage.get_last_sync_version().unwrap().unwrap();
     assert_eq!(version, 10);
 }
