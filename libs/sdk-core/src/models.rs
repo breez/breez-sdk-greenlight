@@ -782,7 +782,7 @@ pub enum LnUrlCallbackStatus {
 #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
 #[serde(tag = "buy_bitcoin_provider")]
 pub enum BuyBitcoinProvider {
-    MoonPay,
+    Moonpay,
 }
 
 impl FromStr for BuyBitcoinProvider {
@@ -790,7 +790,7 @@ impl FromStr for BuyBitcoinProvider {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "moonpay" => Ok(BuyBitcoinProvider::MoonPay),
+            "moonpay" => Ok(BuyBitcoinProvider::Moonpay),
             _ => Err(anyhow!("unknown buy bitcoin provider")),
         }
     }

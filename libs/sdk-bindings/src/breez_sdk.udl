@@ -378,7 +378,7 @@ interface InputType {
 };
 
 enum BuyBitcoinProvider {
-    "MoonPay",
+    "Moonpay",
 };
 
 interface BlockingBreezServices {

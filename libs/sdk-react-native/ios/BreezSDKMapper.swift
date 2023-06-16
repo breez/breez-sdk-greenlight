@@ -59,7 +59,7 @@ class BreezSDKMapper {
 
     static func asBitcoinProvider(provider: String) throws -> BuyBitcoinProvider {
         switch(provider) {
-        case "moonPay": return BuyBitcoinProvider.moonPay        
+        case "moonpay": return BuyBitcoinProvider.moonpay        
         default: throw SdkError.Error(message: "Invalid Bitcoin provider")
         }
     }

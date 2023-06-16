@@ -653,7 +653,7 @@ where
 impl Wire2Api<BuyBitcoinProvider> for i32 {
     fn wire2api(self) -> BuyBitcoinProvider {
         match self {
-            0 => BuyBitcoinProvider::MoonPay,
+            0 => BuyBitcoinProvider::Moonpay,
             _ => unreachable!("Invalid variant for BuyBitcoinProvider: {}", self),
         }
     }
