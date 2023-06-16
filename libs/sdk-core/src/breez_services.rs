@@ -56,7 +56,7 @@ pub trait EventListener: Send + Sync {
 
 /// Event emitted by the SDK. To listen for and react to these events, use an [EventListener] when
 /// initializing the [BreezServices].
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 #[allow(clippy::large_enum_variant)]
 pub enum BreezEvent {
     /// Indicates that a new block has just been found
@@ -77,12 +77,12 @@ pub enum BreezEvent {
     BackupFailed { details: BackupFailedData },
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct BackupFailedData {
     pub error: String,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct PaymentFailedData {
     pub error: String,
     pub node_id: String,
@@ -90,7 +90,7 @@ pub struct PaymentFailedData {
 }
 
 /// Details of an invoice that has been paid, included as payload in an emitted [BreezEvent]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct InvoicePaidDetails {
     pub payment_hash: String,
     pub bolt11: String,
@@ -123,13 +123,13 @@ async fn start_threads(
 
     // sync with remote node state
     breez_cloned.sync().await?;
-    breez_cloned.backup_watcher.start()?;
 
     // create a shutdown channel (sender and receiver)
     let (stop_sender, mut stop_receiver) = mpsc::channel(1);
 
     // poll sdk events
     rt.spawn(async move {
+        // start the backup watcher
         let current_block: u32 = 0;
         loop {
             tokio::select! {
@@ -168,7 +168,8 @@ pub struct BreezServices {
     btc_receive_swapper: Arc<BTCReceiveSwap>,
     btc_send_swapper: Arc<BTCSendSwap>,
     event_listener: Option<Box<dyn EventListener>>,
-    backup_watcher: BackupWatcher,
+    //backup_watcher: BackupWatcher,
+    backup_transport: Arc<dyn BackupTransport>,
     shutdown_sender: Mutex<Option<mpsc::Sender<()>>>,
 }
 
@@ -719,7 +720,20 @@ async fn poll_events(breez_services: Arc<BreezServices>, mut current_block: u32)
     let mut interval = tokio::time::interval(Duration::from_secs(30));
     let mut invoice_stream = breez_services.node_api.stream_incoming_payments().await?;
     let mut log_stream = breez_services.node_api.stream_log_messages().await?;
-    let mut backup_events_stream = breez_services.backup_watcher.subscribe_events();
+
+    // create the backup encryption key
+    let backup_encryption_key = breez_services.node_api.derive_bip32_key(vec![
+        ChildNumber::from_hardened_idx(139)?,
+        ChildNumber::from(0),
+    ])?;
+
+    let backup_watcher = BackupWatcher::start(
+        breez_services.backup_transport.clone(),
+        breez_services.persister.clone(),
+        backup_encryption_key.to_priv().to_bytes(),
+    );
+    let mut backup_events_stream = backup_watcher.subscribe_events();
+
     loop {
         tokio::select! {
          backup_event = backup_events_stream.recv() => {
@@ -990,12 +1004,6 @@ impl BreezServicesBuilder {
             unwrapped_node_api.clone(),
         ));
 
-        //We watch for every change that requires synchronization with the remote state.
-        let backup_encryption_key = unwrapped_node_api.derive_bip32_key(vec![
-            ChildNumber::from_hardened_idx(139)?,
-            ChildNumber::from(0),
-        ])?;
-
         // Create the node services and it them statically
         let breez_services = Arc::new(BreezServices {
             node_api: unwrapped_node_api.clone(),
@@ -1014,11 +1022,7 @@ impl BreezServicesBuilder {
             btc_send_swapper,
             payment_receiver,
             event_listener: listener,
-            backup_watcher: BackupWatcher::new(
-                unwrapped_backup_transport,
-                persister,
-                backup_encryption_key.to_priv().to_bytes(),
-            ),
+            backup_transport: unwrapped_backup_transport.clone(),
             shutdown_sender: Mutex::new(None),
         });
 

@@ -13,7 +13,7 @@ use tokio::sync::broadcast;
 /// modifications in the persistent storage.
 #[derive(Debug, Clone)]
 pub(crate) enum HookEvent {
-    Insert { table: String },
+    Insert {},
 }
 
 pub(crate) struct SqliteStorage {
@@ -58,9 +58,9 @@ impl SqliteStorage {
 
         // We want to notify any subscribers with hook events.
         let events_publisher = self.events_publisher.clone();
-        con.update_hook(Some(move |action, db: &str, tbl: &str, _| {
+        con.update_hook(Some(move |action, db: &str, _: &str, _| {
             if action == Action::SQLITE_INSERT && db == "sync" {
-                _ = events_publisher.send(HookEvent::Insert { table: tbl.into() });
+                _ = events_publisher.send(HookEvent::Insert {});
             }
         }));
 

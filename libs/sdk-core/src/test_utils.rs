@@ -18,6 +18,7 @@ use rand::{random, Rng};
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
 use tokio::sync::{mpsc, Mutex};
+use tokio::time::sleep;
 use tonic::Streaming;
 
 use crate::backup::{BackupState, BackupTransport};
@@ -37,9 +38,11 @@ pub struct MockBackupTransport {}
 #[tonic::async_trait]
 impl BackupTransport for MockBackupTransport {
     async fn pull(&self) -> Result<Option<BackupState>> {
+        sleep(Duration::from_millis(10)).await;
         return Ok(None);
     }
     async fn push(&self, version: Option<u64>, _: Vec<u8>) -> Result<u64> {
+        sleep(Duration::from_millis(10)).await;
         match version {
             Some(v) => Ok(v + 1),
             None => Ok(1),

@@ -1,8 +1,4 @@
-use crate::{
-    breez_services::BackupFailedData,
-    persist::db::{HookEvent, SqliteStorage},
-    BreezEvent,
-};
+use crate::{breez_services::BackupFailedData, persist::db::SqliteStorage, BreezEvent};
 use anyhow::{anyhow, Result};
 use ecies::utils::{aes_decrypt, aes_encrypt};
 use miniz_oxide::{deflate::compress_to_vec, inflate::decompress_to_vec_with_limit};
@@ -11,14 +7,18 @@ use std::{
     fs::File,
     io::{Read, Write},
     path::Path,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
+    sync::Arc,
+    thread::JoinHandle,
     time::{SystemTime, UNIX_EPOCH},
 };
 use tempfile::tempdir_in;
-use tokio::sync::broadcast::{self, error::RecvError};
+use tokio::{
+    runtime::Builder,
+    sync::{
+        broadcast::{self, error::RecvError},
+        watch,
+    },
+};
 
 // BackupState is the sdk state that requiers syncing between multiple apps.
 /// It is just a blob of data marked with a specific version (generation).
@@ -38,78 +38,80 @@ pub trait BackupTransport: Send + Sync {
 }
 
 pub(crate) struct BackupWatcher {
-    started: AtomicBool,
-    notifier: broadcast::Sender<BreezEvent>,
     worker: BackupWorker,
+    thread_handle: Option<JoinHandle<()>>,
+    quit_sender: watch::Sender<()>,
 }
 
 /// watches for sync requests and syncs the sdk state when a request is detected.
 impl BackupWatcher {
-    pub(crate) fn new(
+    pub(crate) fn start(
         inner: Arc<dyn BackupTransport>,
         persister: Arc<SqliteStorage>,
         encryption_key: Vec<u8>,
     ) -> Self {
         let (notifier, _) = broadcast::channel::<BreezEvent>(1);
-        let worker = BackupWorker::new(inner, persister, encryption_key, notifier.clone());
+        let worker = BackupWorker::new(inner, persister, encryption_key, notifier);
 
-        Self {
-            started: AtomicBool::new(false),
-            notifier,
-            worker,
-        }
-    }
-
-    pub(crate) fn start(&self) -> Result<()> {
-        // return error if we are already started
-        if self.started.swap(true, Ordering::Relaxed) {
-            return Err(anyhow!("Backup watcher already started"));
-        }
-
-        let worker = self.worker.clone();
+        let (quit_sender, mut quit_receiver) = watch::channel::<()>(());
         let mut hooks_subscription = worker.persister.subscribe_hooks();
 
-        // spawn the background worker that handles backup requests
-        tokio::spawn(async move {
-            let res = worker.sync().await;
-            info!("initial backup completed with result {res:?}");
-
-            loop {
-                tokio::select! {
-
-                  // We spin the backup worker on every new entry to the sync_requests table.
-                  event = hooks_subscription.recv() => {
-                    match event {
-                        Ok(event) => {
-                            match event {
-                                HookEvent::Insert { table } => {
-                                    if table == "sync_requests" {
-                                        info!("Sync request detected, starting sync");
-                                        let res = worker.sync().await;
-                                        info!("backup completed with result {res:?}");
-                                    }
-                                }
-                            };
+        let cloned_worker = worker.clone();
+        let rt = Builder::new_current_thread().enable_all().build().unwrap();
+        let thread_handle = std::thread::spawn(move || {
+            rt.block_on(async move {
+                loop {
+                    tokio::select! {
+                      // We spin the backup worker on every new entry to the sync_requests table.
+                      event = hooks_subscription.recv() => {
+                        match event {
+                            Ok(_) => {
+                             _ = cloned_worker.sync().await;
+                            }
+                            // If we are lagging we want to trigger sync
+                            Err(RecvError::Lagged(_)) => {
+                             _ = cloned_worker.sync().await;
+                            }
+                            // If the channel is closed we exit
+                            Err(_) => {
+                             return
+                            }
                         }
-                        // If the channel is lagged we just continue
-                        Err(RecvError::Lagged(_)) => {
-                            continue;
-                        }
-                        // If the channel is closed we exit
-                        Err(_) => {
-                         return
-                        }
+                      },
+                      // We also want to exit if we receive a quit signal
+                      _ = quit_receiver.changed() => {
+                        return
+                      }
                     }
-                  }
                 }
-            }
+            });
         });
 
-        Ok(())
+        Self {
+            worker,
+            thread_handle: Some(thread_handle),
+            quit_sender,
+        }
     }
 
     pub(crate) fn subscribe_events(&self) -> broadcast::Receiver<BreezEvent> {
-        self.notifier.subscribe()
+        self.worker.events_notifier.subscribe()
+    }
+
+    fn stop(&mut self) -> Result<()> {
+        self.quit_sender.send(())?;
+        match self.thread_handle.take() {
+            Some(handle) => handle
+                .join()
+                .map_err(|_| anyhow::Error::msg("failed to join backup thread")),
+            None => Ok(()),
+        }
+    }
+}
+
+impl Drop for BackupWatcher {
+    fn drop(&mut self) {
+        self.stop().unwrap();
     }
 }
 
@@ -291,5 +293,84 @@ impl BackupWorker {
             aes_encrypt(self.encryption_key.as_slice(), compressed_data.as_slice())
                 .ok_or(anyhow!("Failed to encrypt backup"))?;
         self.inner.push(version, encrypted_data).await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+    use tokio::sync::broadcast::Receiver;
+    use tokio::time::{sleep, Duration, Instant};
+
+    use crate::{
+        test_utils::{create_test_config, create_test_persister, MockBackupTransport},
+        BreezEvent,
+    };
+
+    use super::BackupWatcher;
+
+    fn create_test_backup_watcher() -> BackupWatcher {
+        let config = create_test_config();
+        let persister = Arc::new(create_test_persister(config));
+        persister.init().unwrap();
+        let transport = Arc::new(MockBackupTransport {});
+        BackupWatcher::start(transport, persister, vec![0; 32])
+    }
+
+    async fn test_expected_backup_events(
+        mut subscription: Receiver<BreezEvent>,
+        expected_events: Vec<BreezEvent>,
+    ) {
+        let start = Instant::now() + Duration::from_millis(100000);
+        let mut interval = tokio::time::interval_at(start, Duration::from_secs(3));
+        let mut events = vec![];
+        loop {
+            tokio::select! {
+                  _ = interval.tick() => {
+                    panic!("Timed out waiting for events");
+                 }
+                 r = subscription.recv() => {
+                    match r {
+                        Ok(event) => {
+                            events.push(event);
+                            if events.len() == expected_events.len() {
+                                assert_eq!(events, expected_events);
+                                return;
+                            }
+                        }
+                        Err(e) => {
+                            panic!("Failed to receive event: {}", e);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_start() {
+        let watcher = create_test_backup_watcher();
+        drop(watcher);
+    }
+
+    #[tokio::test]
+    async fn test_optimistic() {
+        let watcher = create_test_backup_watcher();
+        let subscription = watcher.subscribe_events();
+        let expected_events = vec![
+            BreezEvent::BackupStarted,
+            BreezEvent::BackupSucceeded,
+            BreezEvent::BackupStarted,
+            BreezEvent::BackupSucceeded,
+        ];
+
+        let persister = watcher.worker.persister.clone();
+        tokio::spawn(async move {
+            sleep(Duration::from_millis(10)).await;
+            persister.add_sync_request().unwrap();
+            sleep(Duration::from_millis(10)).await;
+            persister.add_sync_request().unwrap();
+        });
+        test_expected_backup_events(subscription, expected_events).await;
     }
 }

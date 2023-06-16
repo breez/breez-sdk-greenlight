@@ -9,7 +9,7 @@ use std::str::FromStr;
 use std::time::UNIX_EPOCH;
 
 /// Wrapper for a BOLT11 LN invoice
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct LNInvoice {
     pub bolt11: String,
     pub payee_pubkey: String,
