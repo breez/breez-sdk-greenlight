@@ -90,8 +90,7 @@ const App = () => {
             if (deviceKey == null) {
                 const greenlightCredentials = await recoverNode(Network.BITCOIN, seed)
 
-                addLine("recoverNode", null)
-                setSecureItem(MNEMONIC_STORE, mnemonic)
+                addLine("recoverNode", null)                
                 setSecureItem(GREENLIGHT_DEVICE_KEY_STORE, greenlightCredentials.deviceKey)
                 setSecureItem(GREENLIGHT_DEVICE_CERT_STORE, greenlightCredentials.deviceCert)
                 deviceKey = greenlightCredentials.deviceKey
