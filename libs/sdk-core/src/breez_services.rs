@@ -28,7 +28,6 @@ use crate::moonpay::MoonPayApi;
 use crate::persist::db::SqliteStorage;
 use crate::reverseswap::BTCSendSwap;
 use crate::swap::BTCReceiveSwap;
-use crate::sync_storage::{watch_and_sync, SyncTransport};
 use crate::BuyBitcoinProvider::Moonpay;
 use crate::*;
 use crate::{BuyBitcoinProvider, LnUrlAuthRequestData, LnUrlWithdrawRequestData, PaymentResponse};

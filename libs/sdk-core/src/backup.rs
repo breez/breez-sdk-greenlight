@@ -312,7 +312,7 @@ mod tests {
     use crate::{
         persist::db::SqliteStorage,
         test_utils::{create_test_config, create_test_persister, MockBackupTransport},
-        BreezEvent, ReverseSwapInfo, SwapInfo,
+        BreezEvent, FullReverseSwapInfo, SwapInfo,
     };
     use std::{sync::Arc, vec};
     use tokio::sync::broadcast::Receiver;
@@ -533,7 +533,7 @@ mod tests {
         tokio::spawn(async move {
             sleep(Duration::from_millis(20)).await;
             populate_sync_table(persister.clone());
-            sleep(Duration::from_millis(20)).await;
+            sleep(Duration::from_millis(1000)).await;
             persister
                 .get_connection()
                 .unwrap()
@@ -542,7 +542,6 @@ mod tests {
                     [],
                 )
                 .unwrap();
-            sleep(Duration::from_millis(100)).await;
             persister.set_last_sync_version(10, &vec![]).unwrap();
             persister.add_sync_request().unwrap();
         });
@@ -576,7 +575,7 @@ mod tests {
             max_allowed_deposit: 100,
             last_redeem_error: None,
         };
-        let rev_swap = ReverseSwapInfo {
+        let rev_swap = FullReverseSwapInfo {
             id: "1".into(),
             created_at_block_height: 10,
             preimage: vec![1],
