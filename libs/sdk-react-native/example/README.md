@@ -7,27 +7,42 @@ or replace `INSERT_YOUR_BREEZ_API_KEY` in the following files:
 * `android/app/gradle.properties`
 * `ios/Secrets.xconfig`
 
-## Build
-Since the example app uses the Breez SDK react native plugin as a local file reference, you need to build the node_modules in the sdk-react-native directory:
-```
-yarn
-```
-Then build the node modules in the example directory:
-```
-yarn
-```
-Then to install the iOS pods:
-```
-yarn pods
-```
+## Build and Run
 
-## Run
-```
-Run android or ios:
-```
+### Android
+
+```bash
+# In directory sdk-react-native
+make android
+yarn
+
+# In the example directory
+cd example
+rm -rf node_modules
+yarn
 yarn android
 ```
-or 
-```
+
+#### Android Troubleshooting
+
+* Before running `yarn android`, stop any `Metro` instances that may be running.
+* If you get the error
+  ```
+  Failed to load dynamic library 'libbreez_sdk_core.so': dlopen failed: cannot locate symbol "__extenddftf2"
+  ```
+  that is likely due to a dependency issue affecting x86_64 images. Try to run the app on a physical Android device or on a x86 image.
+
+### iOS
+
+```bash
+# In directory sdk-react-native
+make ios
+yarn
+
+# In the example directory
+cd example
+rm -rf node_modules
+yarn
+yarn pods
 yarn ios
 ```
