@@ -147,7 +147,7 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kSweepConstMeta;
 
   /// See [BreezServices::receive_onchain]
-  Future<SwapInfo> receiveOnchain({dynamic hint});
+  Future<SwapInfo> receiveOnchain({OpeningFeeParams? openingFeeParams, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kReceiveOnchainConstMeta;
 
@@ -240,7 +240,8 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kDefaultConfigConstMeta;
 
   /// See [BreezServices::buy_bitcoin]
-  Future<String> buyBitcoin({required BuyBitcoinProvider provider, dynamic hint});
+  Future<String> buyBitcoin(
+      {required BuyBitcoinProvider provider, OpeningFeeParams? openingFeeParams, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kBuyBitcoinConstMeta;
 }
@@ -1085,6 +1086,12 @@ class SwapInfo {
   final int minAllowedDeposit;
   final int maxAllowedDeposit;
   final String? lastRedeemError;
+  final int? minMsat;
+  final int? proportional;
+  final String? validUntil;
+  final int? maxIdleTime;
+  final int? maxClientToSelfDelay;
+  final String? promise;
 
   const SwapInfo({
     required this.bitcoinAddress,
@@ -1107,6 +1114,12 @@ class SwapInfo {
     required this.minAllowedDeposit,
     required this.maxAllowedDeposit,
     this.lastRedeemError,
+    this.minMsat,
+    this.proportional,
+    this.validUntil,
+    this.maxIdleTime,
+    this.maxClientToSelfDelay,
+    this.promise,
   });
 }
 
@@ -1521,19 +1534,20 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["toAddress", "feeRateSatsPerVbyte"],
       );
 
-  Future<SwapInfo> receiveOnchain({dynamic hint}) {
+  Future<SwapInfo> receiveOnchain({OpeningFeeParams? openingFeeParams, dynamic hint}) {
+    var arg0 = _platform.api2wire_opt_box_autoadd_opening_fee_params(openingFeeParams);
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_receive_onchain(port_),
+      callFfi: (port_) => _platform.inner.wire_receive_onchain(port_, arg0),
       parseSuccessData: _wire2api_swap_info,
       constMeta: kReceiveOnchainConstMeta,
-      argValues: [],
+      argValues: [openingFeeParams],
       hint: hint,
     ));
   }
 
   FlutterRustBridgeTaskConstMeta get kReceiveOnchainConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "receive_onchain",
-        argNames: [],
+        argNames: ["openingFeeParams"],
       );
 
   Future<SwapInfo?> inProgressSwap({dynamic hint}) {
@@ -1806,20 +1820,22 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["configType"],
       );
 
-  Future<String> buyBitcoin({required BuyBitcoinProvider provider, dynamic hint}) {
+  Future<String> buyBitcoin(
+      {required BuyBitcoinProvider provider, OpeningFeeParams? openingFeeParams, dynamic hint}) {
     var arg0 = api2wire_buy_bitcoin_provider(provider);
+    var arg1 = _platform.api2wire_opt_box_autoadd_opening_fee_params(openingFeeParams);
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_buy_bitcoin(port_, arg0),
+      callFfi: (port_) => _platform.inner.wire_buy_bitcoin(port_, arg0, arg1),
       parseSuccessData: _wire2api_String,
       constMeta: kBuyBitcoinConstMeta,
-      argValues: [provider],
+      argValues: [provider, openingFeeParams],
       hint: hint,
     ));
   }
 
   FlutterRustBridgeTaskConstMeta get kBuyBitcoinConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "buy_bitcoin",
-        argNames: ["provider"],
+        argNames: ["provider", "openingFeeParams"],
       );
 
   void dispose() {
@@ -2563,7 +2579,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   SwapInfo _wire2api_swap_info(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 20) throw Exception('unexpected arr length: expect 20 but see ${arr.length}');
+    if (arr.length != 26) throw Exception('unexpected arr length: expect 26 but see ${arr.length}');
     return SwapInfo(
       bitcoinAddress: _wire2api_String(arr[0]),
       createdAt: _wire2api_i64(arr[1]),
@@ -2585,6 +2601,12 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       minAllowedDeposit: _wire2api_i64(arr[17]),
       maxAllowedDeposit: _wire2api_i64(arr[18]),
       lastRedeemError: _wire2api_opt_String(arr[19]),
+      minMsat: _wire2api_opt_box_autoadd_u64(arr[20]),
+      proportional: _wire2api_opt_box_autoadd_u32(arr[21]),
+      validUntil: _wire2api_opt_String(arr[22]),
+      maxIdleTime: _wire2api_opt_box_autoadd_u32(arr[23]),
+      maxClientToSelfDelay: _wire2api_opt_box_autoadd_u32(arr[24]),
+      promise: _wire2api_opt_String(arr[25]),
     );
   }
 
@@ -3338,15 +3360,19 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
 
   void wire_receive_onchain(
     int port_,
+    ffi.Pointer<wire_OpeningFeeParams> opening_fee_params,
   ) {
     return _wire_receive_onchain(
       port_,
+      opening_fee_params,
     );
   }
 
   late final _wire_receive_onchainPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_receive_onchain');
-  late final _wire_receive_onchain = _wire_receive_onchainPtr.asFunction<void Function(int)>();
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_OpeningFeeParams>)>>(
+          'wire_receive_onchain');
+  late final _wire_receive_onchain =
+      _wire_receive_onchainPtr.asFunction<void Function(int, ffi.Pointer<wire_OpeningFeeParams>)>();
 
   void wire_in_progress_swap(
     int port_,
@@ -3602,16 +3628,20 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   void wire_buy_bitcoin(
     int port_,
     int provider,
+    ffi.Pointer<wire_OpeningFeeParams> opening_fee_params,
   ) {
     return _wire_buy_bitcoin(
       port_,
       provider,
+      opening_fee_params,
     );
   }
 
-  late final _wire_buy_bitcoinPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Int32)>>('wire_buy_bitcoin');
-  late final _wire_buy_bitcoin = _wire_buy_bitcoinPtr.asFunction<void Function(int, int)>();
+  late final _wire_buy_bitcoinPtr = _lookup<
+          ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Int32, ffi.Pointer<wire_OpeningFeeParams>)>>(
+      'wire_buy_bitcoin');
+  late final _wire_buy_bitcoin =
+      _wire_buy_bitcoinPtr.asFunction<void Function(int, int, ffi.Pointer<wire_OpeningFeeParams>)>();
 
   ffi.Pointer<wire_Config> new_box_autoadd_config_0() {
     return _new_box_autoadd_config_0();

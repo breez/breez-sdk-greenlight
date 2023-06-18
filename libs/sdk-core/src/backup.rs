@@ -607,6 +607,12 @@ mod tests {
             min_allowed_deposit: 0,
             max_allowed_deposit: 100,
             last_redeem_error: None,
+            min_msat: None,
+            proportional: None,
+            valid_until: None,
+            max_idle_time: None,
+            max_client_to_self_delay: None,
+            promise: None,
         };
         persister.insert_swap(tested_swap_info).unwrap();
     }

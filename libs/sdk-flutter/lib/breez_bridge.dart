@@ -248,7 +248,12 @@ class BreezBridge {
   }
 
   /// Onchain receive swap API
-  Future<SwapInfo> receiveOnchain() async => await _lnToolkit.receiveOnchain();
+  Future<SwapInfo> receiveOnchain(
+    OpeningFeeParams openingFeeParams,
+  ) async =>
+      await _lnToolkit.receiveOnchain(
+        openingFeeParams: openingFeeParams,
+      );
 
   Future<SwapInfo?> inProgressSwap() async => await _lnToolkit.inProgressSwap();
 
@@ -365,7 +370,14 @@ class BreezBridge {
   }
 
   /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency
-  Future<String> buyBitcoin(BuyBitcoinProvider provider) => _lnToolkit.buyBitcoin(provider: provider);
+  Future<String> buyBitcoin(
+    BuyBitcoinProvider provider,
+    OpeningFeeParams openingFeeParams,
+  ) =>
+      _lnToolkit.buyBitcoin(
+        provider: provider,
+        openingFeeParams: openingFeeParams,
+      );
 }
 
 extension SDKConfig on Config {

@@ -481,7 +481,10 @@ impl BreezServices {
     /// In such case the [BreezServices::in_progress_swap] can be used to query the live swap status.
     ///
     /// See [SwapInfo] for details.
-    pub async fn receive_onchain(&self) -> Result<SwapInfo> {
+    pub async fn receive_onchain(
+        &self,
+        _opening_fee_params: Option<OpeningFeeParams>,
+    ) -> Result<SwapInfo> {
         let in_progress = self.in_progress_swap().await?;
         if in_progress.is_some() {
             return Err(anyhow!(format!(
@@ -489,8 +492,15 @@ impl BreezServices {
                   in_progress.unwrap().bitcoin_address
               )));
         }
-
-        let swap_info = self.btc_receive_swapper.create_swap_address().await?;
+        // TODO: Validate given opening_fee_params and use it if possible
+        // We pick our own if None is supplied:
+        let longest_valid_opening_fee_params = get_longest_valid_opening_fee_params(
+            &mut self.lsp_info().await?.opening_fee_params_menu,
+        );
+        let swap_info = self
+            .btc_receive_swapper
+            .create_swap_address(longest_valid_opening_fee_params)
+            .await?;
         Ok(swap_info)
     }
 
@@ -707,11 +717,15 @@ impl BreezServices {
     }
 
     /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency
-    pub async fn buy_bitcoin(&self, provider: BuyBitcoinProvider) -> Result<String> {
+    pub async fn buy_bitcoin(
+        &self,
+        provider: BuyBitcoinProvider,
+        opening_fee_params: Option<OpeningFeeParams>,
+    ) -> Result<String> {
         let url = match provider {
             Moonpay => {
                 self.moonpay_api
-                    .buy_bitcoin_url(&self.receive_onchain().await?)
+                    .buy_bitcoin_url(&self.receive_onchain(opening_fee_params).await?)
                     .await?
             }
         };
@@ -1292,20 +1306,6 @@ impl Receiver for PaymentReceiver {
     }
 }
 
-fn get_cheapest_opening_fee_params(
-    opening_fee_params_menu: Vec<models::OpeningFeeParams>,
-) -> Option<models::OpeningFeeParams> {
-    match validate_opening_fee_params_menu(&opening_fee_params_menu) {
-        Ok(()) => {
-            return Some(opening_fee_params_menu[0].clone());
-        }
-        Err(e) => {
-            error!("failed to validate opening_fee_params_menu{}", e);
-            return None;
-        }
-    }
-}
-
 fn validate_opening_fee_params_menu(
     opening_fee_params_menu: &Vec<models::OpeningFeeParams>,
 ) -> Result<()> {
@@ -1332,6 +1332,42 @@ fn validate_opening_fee_params_menu(
         false => Err(anyhow!(
             "No channel opening params are available in lsp info"
         )),
+    }
+}
+
+fn get_cheapest_opening_fee_params(
+    opening_fee_params_menu: Vec<models::OpeningFeeParams>,
+) -> Option<models::OpeningFeeParams> {
+    match validate_opening_fee_params_menu(&opening_fee_params_menu) {
+        Ok(()) => {
+            return Some(opening_fee_params_menu[0].clone());
+        }
+        Err(e) => {
+            error!("failed to validate opening_fee_params_menu{}", e);
+            return None;
+        }
+    }
+}
+
+fn get_longest_valid_opening_fee_params(
+    opening_fee_params_menu: &mut Vec<models::OpeningFeeParams>,
+) -> Option<models::OpeningFeeParams> {
+    match validate_opening_fee_params_menu(opening_fee_params_menu) {
+        Ok(()) => {
+            // TODO: We need to pick cheapest opening fee params that's valid for at least 48 hours
+            opening_fee_params_menu.sort_by(|a, b| {
+                let dt1 =
+                    DateTime::parse_from_str(&a.valid_until, "%Y %b %d %H:%M:%S%.3f %z").unwrap();
+                let dt2 =
+                    DateTime::parse_from_str(&b.valid_until, "%Y %b %d %H:%M:%S%.3f %z").unwrap();
+                dt2.cmp(&dt1)
+            });
+            return Some(opening_fee_params_menu[0].clone());
+        }
+        Err(e) => {
+            error!("failed to validate opening_fee_params_menu{}", e);
+            return None;
+        }
     }
 }
 
@@ -1586,9 +1622,9 @@ pub(crate) mod tests {
     async fn test_buy_bitcoin_with_moonpay() -> Result<(), Box<dyn std::error::Error>> {
         let breez_services = breez_services().await?;
         breez_services.sync().await?;
-
+        // TODO: Pick default opening_fee_params from LSPInformation
         let moonpay_url = breez_services
-            .buy_bitcoin(BuyBitcoinProvider::Moonpay)
+            .buy_bitcoin(BuyBitcoinProvider::Moonpay, None)
             .await?;
         let parsed = Url::parse(&moonpay_url)?;
         let query_pairs = parsed.query_pairs().into_owned().collect::<HashMap<_, _>>();

@@ -271,6 +271,12 @@ impl SqliteStorage {
             min_allowed_deposit: row.get("min_allowed_deposit")?,
             max_allowed_deposit: row.get("max_allowed_deposit")?,
             last_redeem_error: row.get("last_redeem_error")?,
+            min_msat: row.get("min_msat")?,
+            proportional: row.get("proportional")?,
+            valid_until: row.get("valid_until")?,
+            max_idle_time: row.get("max_idle_time")?,
+            max_client_to_self_delay: row.get("max_client_to_self_delay")?,
+            promise: row.get("promise")?,
         })
     }
 }
@@ -310,6 +316,12 @@ fn test_swaps() -> Result<(), Box<dyn std::error::Error>> {
         min_allowed_deposit: 0,
         max_allowed_deposit: 100,
         last_redeem_error: None,
+        min_msat: None,
+        proportional: None,
+        valid_until: None,
+        max_idle_time: None,
+        max_client_to_self_delay: None,
+        promise: None,
     };
     storage.insert_swap(tested_swap_info.clone())?;
     let item_value = storage.get_swap_info_by_address("1".to_string())?.unwrap();

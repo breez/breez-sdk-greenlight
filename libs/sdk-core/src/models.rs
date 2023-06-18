@@ -744,7 +744,15 @@ pub struct SwapInfo {
     pub min_allowed_deposit: i64,
     pub max_allowed_deposit: i64,
     pub last_redeem_error: Option<String>,
-    pub(crate) min_msat: Option<u64>,
+
+    // Todo: use Option<OpeningFeeParams> instead, requires implementing FromSql for OpeningFeeParams
+    // dynamic fee data
+    pub min_msat: Option<u64>,
+    pub proportional: Option<u32>,
+    pub valid_until: Option<String>,
+    pub max_idle_time: Option<u32>,
+    pub max_client_to_self_delay: Option<u32>,
+    pub promise: Option<String>,
 }
 
 impl SwapInfo {

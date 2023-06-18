@@ -739,7 +739,7 @@ mod tests {
     async fn test_expired_swap() {
         let chain_service = Arc::new(MockChainService::default());
         let (mut swapper, _) = create_swapper(chain_service.clone());
-        let swap_info = swapper.create_swap_address().await.unwrap();
+        let swap_info = swapper.create_swap_address(None).await.unwrap();
 
         // We test the case that a confirmed transaction was detected on chain that
         // sent funds to this address but the lock timeout has expired.
@@ -797,7 +797,7 @@ mod tests {
     async fn test_redeem_swap() {
         let chain_service = Arc::new(MockChainService::default());
         let (mut swapper, persister) = create_swapper(chain_service.clone());
-        let swap_info = swapper.create_swap_address().await.unwrap();
+        let swap_info = swapper.create_swap_address(None).await.unwrap();
 
         // add a payment with the same hash and test that the swapper updates the paid_amount for
         // the swap.
@@ -881,7 +881,7 @@ mod tests {
     async fn test_spent_swap() {
         let chain_service = Arc::new(MockChainService::default());
         let (mut swapper, _) = create_swapper(chain_service.clone());
-        let swap_info = swapper.create_swap_address().await.unwrap();
+        let swap_info = swapper.create_swap_address(None).await.unwrap();
 
         // Once swap is spent on-chain the confirmed_sats would be set to zero again.
         swapper.chain_service = chain_service_after_spent(swap_info.clone().bitcoin_address);

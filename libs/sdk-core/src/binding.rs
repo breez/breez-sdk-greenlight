@@ -17,7 +17,10 @@ use crate::models::{
     Config, EnvironmentType, GreenlightCredentials, LogEntry, Network, NodeState, Payment,
     PaymentTypeFilter, ReceivePaymentResponse, SwapInfo,
 };
-use crate::{BuyBitcoinProvider, LnUrlCallbackStatus, ReverseSwapInfo, ReverseSwapPairInfo, ReceivePaymentRequestData};
+use crate::{
+    BuyBitcoinProvider, LnUrlCallbackStatus, OpeningFeeParams, ReceivePaymentRequestData,
+    ReverseSwapInfo, ReverseSwapPairInfo,
+};
 use anyhow::{anyhow, Result};
 use flutter_rust_bridge::StreamSink;
 use log::{Level, LevelFilter, Metadata, Record};
@@ -261,8 +264,12 @@ pub fn sweep(to_address: String, fee_rate_sats_per_vbyte: u64) -> Result<()> {
 }
 
 /// See [BreezServices::receive_onchain]
-pub fn receive_onchain() -> Result<SwapInfo> {
-    block_on(async { get_breez_services()?.receive_onchain().await })
+pub fn receive_onchain(opening_fee_params: Option<OpeningFeeParams>) -> Result<SwapInfo> {
+    block_on(async {
+        get_breez_services()?
+            .receive_onchain(opening_fee_params)
+            .await
+    })
 }
 
 /// See [BreezServices::in_progress_swap]
@@ -395,6 +402,13 @@ pub fn default_config(config_type: EnvironmentType) -> Config {
 }
 
 /// See [BreezServices::buy_bitcoin]
-pub fn buy_bitcoin(provider: BuyBitcoinProvider) -> Result<String> {
-    block_on(async { get_breez_services()?.buy_bitcoin(provider).await })
+pub fn buy_bitcoin(
+    provider: BuyBitcoinProvider,
+    opening_fee_params: Option<OpeningFeeParams>,
+) -> Result<String> {
+    block_on(async {
+        get_breez_services()?
+            .buy_bitcoin(provider, opening_fee_params)
+            .await
+    })
 }

@@ -143,7 +143,7 @@ void wire_sweep(int64_t port_,
                 struct wire_uint_8_list *to_address,
                 uint64_t fee_rate_sats_per_vbyte);
 
-void wire_receive_onchain(int64_t port_);
+void wire_receive_onchain(int64_t port_, struct wire_OpeningFeeParams *opening_fee_params);
 
 void wire_in_progress_swap(int64_t port_);
 
@@ -190,7 +190,9 @@ void wire_recommended_fees(int64_t port_);
 
 void wire_default_config(int64_t port_, int32_t config_type);
 
-void wire_buy_bitcoin(int64_t port_, int32_t provider);
+void wire_buy_bitcoin(int64_t port_,
+                      int32_t provider,
+                      struct wire_OpeningFeeParams *opening_fee_params);
 
 struct wire_Config *new_box_autoadd_config_0(void);
 

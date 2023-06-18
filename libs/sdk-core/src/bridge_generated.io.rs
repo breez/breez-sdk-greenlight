@@ -148,8 +148,8 @@ pub extern "C" fn wire_sweep(
 }
 
 #[no_mangle]
-pub extern "C" fn wire_receive_onchain(port_: i64) {
-    wire_receive_onchain_impl(port_)
+pub extern "C" fn wire_receive_onchain(port_: i64, opening_fee_params: *mut wire_OpeningFeeParams) {
+    wire_receive_onchain_impl(port_, opening_fee_params)
 }
 
 #[no_mangle]
@@ -260,8 +260,12 @@ pub extern "C" fn wire_default_config(port_: i64, config_type: i32) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_buy_bitcoin(port_: i64, provider: i32) {
-    wire_buy_bitcoin_impl(port_, provider)
+pub extern "C" fn wire_buy_bitcoin(
+    port_: i64,
+    provider: i32,
+    opening_fee_params: *mut wire_OpeningFeeParams,
+) {
+    wire_buy_bitcoin_impl(port_, provider, opening_fee_params)
 }
 
 // Section: allocate functions

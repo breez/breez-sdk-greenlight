@@ -370,14 +370,20 @@ fn wire_sweep_impl(
         },
     )
 }
-fn wire_receive_onchain_impl(port_: MessagePort) {
+fn wire_receive_onchain_impl(
+    port_: MessagePort,
+    opening_fee_params: impl Wire2Api<Option<OpeningFeeParams>> + UnwindSafe,
+) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
             debug_name: "receive_onchain",
             port: Some(port_),
             mode: FfiCallMode::Normal,
         },
-        move || move |task_callback| receive_onchain(),
+        move || {
+            let api_opening_fee_params = opening_fee_params.wire2api();
+            move |task_callback| receive_onchain(api_opening_fee_params)
+        },
     )
 }
 fn wire_in_progress_swap_impl(port_: MessagePort) {
@@ -616,6 +622,7 @@ fn wire_default_config_impl(
 fn wire_buy_bitcoin_impl(
     port_: MessagePort,
     provider: impl Wire2Api<BuyBitcoinProvider> + UnwindSafe,
+    opening_fee_params: impl Wire2Api<Option<OpeningFeeParams>> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -625,7 +632,8 @@ fn wire_buy_bitcoin_impl(
         },
         move || {
             let api_provider = provider.wire2api();
-            move |task_callback| buy_bitcoin(api_provider)
+            let api_opening_fee_params = opening_fee_params.wire2api();
+            move |task_callback| buy_bitcoin(api_provider, api_opening_fee_params)
         },
     )
 }
@@ -1263,6 +1271,12 @@ impl support::IntoDart for SwapInfo {
             self.min_allowed_deposit.into_dart(),
             self.max_allowed_deposit.into_dart(),
             self.last_redeem_error.into_dart(),
+            self.min_msat.into_dart(),
+            self.proportional.into_dart(),
+            self.valid_until.into_dart(),
+            self.max_idle_time.into_dart(),
+            self.max_client_to_self_delay.into_dart(),
+            self.promise.into_dart(),
         ]
         .into_dart()
     }

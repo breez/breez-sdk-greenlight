@@ -319,6 +319,12 @@ dictionary SwapInfo {
     i64 min_allowed_deposit;
     i64 max_allowed_deposit;
     string? last_redeem_error;
+    u64? min_msat;
+    u32? proportional;
+    string? valid_until;
+    u32? max_idle_time;
+    u32? max_client_to_self_delay;
+    string? promise;
 };
 
 dictionary ReverseSwapPairInfo {
@@ -477,7 +483,7 @@ interface BlockingBreezServices {
    void close_lsp_channels();
 
    [Throws=SDKError]
-   SwapInfo receive_onchain();
+   SwapInfo receive_onchain(OpeningFeeParams? opening_fee_params);
 
    [Throws=SDKError]
    SwapInfo? in_progress_swap();
@@ -507,7 +513,7 @@ interface BlockingBreezServices {
    RecommendedFees recommended_fees();
 
    [Throws=SDKError]
-   string buy_bitcoin(BuyBitcoinProvider provider);
+   string buy_bitcoin(BuyBitcoinProvider provider, OpeningFeeParams? opening_fee_params);
 };
 
 namespace breez_sdk { 
