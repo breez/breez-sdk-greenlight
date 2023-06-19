@@ -456,9 +456,9 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun sendOnchain(amountSat: ULong, onchainRecipientAddress: String, pairHash: String, satPerVbyte: ULong, promise: Promise) {
+    fun sendOnchain(amountSat: Double, onchainRecipientAddress: String, pairHash: String, satPerVbyte: Double, promise: Promise) {
         try {
-            var response = getBreezServices().sendOnchain(amountSat, onchainRecipientAddress, pairHash, satPerVbyte)
+            var response = getBreezServices().sendOnchain(amountSat.toULong(), onchainRecipientAddress, pairHash, satPerVbyte.toULong())
             promise.resolve(readableMapOf(response))
         } catch (e: SdkException) {
             e.printStackTrace()
