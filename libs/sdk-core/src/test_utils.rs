@@ -7,9 +7,7 @@ use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::Network;
 use gl_client::pb::amount::Unit;
-use gl_client::pb::{
-    Amount, CloseChannelResponse, CloseChannelType, Invoice, Peer, WithdrawResponse,
-};
+use gl_client::pb::{Amount, Invoice, Peer, WithdrawResponse};
 use lightning::ln::PaymentSecret;
 use lightning_invoice::{Currency, InvoiceBuilder, RawInvoice};
 use rand::distributions::{Alphanumeric, DistString, Standard};
@@ -17,6 +15,7 @@ use rand::rngs::OsRng;
 use rand::{random, Rng};
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
+use std::vec;
 use tokio::sync::{mpsc, Mutex};
 use tokio::time::sleep;
 use tonic::Streaming;
@@ -329,12 +328,8 @@ impl NodeAPI for MockNodeAPI {
         Ok(sign_invoice(invoice))
     }
 
-    async fn close_peer_channels(&self, _node_id: String) -> Result<CloseChannelResponse> {
-        Ok(CloseChannelResponse {
-            txid: Vec::new(),
-            tx: Vec::new(),
-            close_type: CloseChannelType::Mutual.into(),
-        })
+    async fn close_peer_channels(&self, _node_id: String) -> Result<Vec<String>> {
+        Ok(vec![])
     }
     async fn stream_incoming_payments(&self) -> Result<Streaming<gl_client::pb::IncomingPayment>> {
         Err(anyhow!("Not implemented"))
