@@ -463,6 +463,45 @@ class RNBreezSDK: RCTEventEmitter {
             reject(RNBreezSDK.TAG, "Error calling refund", err)
         }
     }
+
+    @objc(fetchReverseSwapFees:rejecter:)
+    func fetchReverseSwapFees(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        do {
+            let fees = try getBreezServices().fetchReverseSwapFees()
+            resolve(fees)
+        } catch SdkError.Error(let message) {
+            reject(RNBreezSDK.TAG, message, nil)
+        } catch let err {
+            reject(RNBreezSDK.TAG, "Error calling fetchReverseSwapFees", err)
+        }
+    }
+
+    @objc(inProgressReverseSwaps:rejecter:)
+    func inProgressReverseSwaps(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        do {
+            if let swaps = try getBreezServices().inProgressReverseSwaps() {
+                resolve(BreezSDKMapper.arrayOf(swaps: swaps))
+            } else {
+                reject(RNBreezSDK.TAG, "No available in progress swaps", nil)
+            }
+        } catch SdkError.Error(let message) {
+            reject(RNBreezSDK.TAG, message, nil)
+        } catch let err {
+            reject(RNBreezSDK.TAG, "Error calling inProgressReverseSwaps", err)
+        }
+    }
+
+    @objc(sendOnchain:rejecter:)
+    func sendOnchain(_ amountSat:UInt64, onchainRecipientAddress:String, pairHash:String, satPerVbyte:UInt64, resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        do {
+            let swapInfo = try getBreezServices().sendOnchain(amountSat: amountSat, onchainRecipientAddress: onchainRecipientAddress, pairHash: pairHash, satPerVbyte: satPerVbyte)
+            resolve(BreezSDKMapper.dictionaryOf(swapInfo: swapInfo))
+        } catch SdkError.Error(let message) {
+            reject(RNBreezSDK.TAG, message, nil)
+        } catch let err {
+            reject(RNBreezSDK.TAG, "Error calling sendOnchain", err)
+        }
+    }
     
     @objc(executeDevCommand:resolver:rejecter:)
     func executeDevCommand(_ command:String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {

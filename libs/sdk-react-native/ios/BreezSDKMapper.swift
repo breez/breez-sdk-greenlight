@@ -572,10 +572,10 @@ class BreezSDKMapper {
     static func valueOf(reverseSwapStatus: ReverseSwapStatus) -> String {
         switch(reverseSwapStatus) {
         case .initial: return "initial"
-        case .inprogress: return "inprogress"
+        case .inprogress: return "in_progress"
         case .cancelled: return "cancelled"
-        case .completedseen: return "completedseen"
-        case .completedconfirmed: return "completedconfirmed"
+        case .completedseen: return "completed_seen"
+        case .completedconfirmed: return "completed_confirmed"
         }
     }
 }

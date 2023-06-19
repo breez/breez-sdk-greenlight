@@ -206,10 +206,10 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
-    sendOnchain: (NSInteger*)amountSat
+    sendOnchain: (NSUInteger*)amountSat
     onchainRecipientAddress: (NSString*)onchainRecipientAddress
     pairHash: (NSString*)pairHash
-    satPerVbyte: (NSInteger*)satPerVbyte
+    satPerVbyte: (NSUInteger*)satPerVbyte
     rejecter: (RCTPromiseRejectBlock)reject
 )
 
