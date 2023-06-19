@@ -1,4 +1,5 @@
 import Foundation
+import BreezSDK
 
 class BreezSDKMapper {
     static func arrayOf(fiatCurrencies: [FiatCurrency]) -> [Any] {

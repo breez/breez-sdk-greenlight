@@ -3,12 +3,10 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 52;
+	objectVersion = 46;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		6F9258292A1636D9001A6F5C /* breez_sdkFFI.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F9258242A1636D9001A6F5C /* breez_sdkFFI.xcframework */; };
-		6F92582A2A1636D9001A6F5C /* BreezSDK.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F9258282A1636D9001A6F5C /* BreezSDK.swift */; };
 		7355F8D529998CCE0094712A /* BreezSDKMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7355F8D429998CCE0094712A /* BreezSDKMapper.swift */; };
 		7355F8D7299A3FC40094712A /* BreezSDKLogStream.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7355F8D6299A3FC40094712A /* BreezSDKLogStream.swift */; };
 		73A00D9C298E9DCD00BC1BDA /* BreezSDKListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A00D9B298E9DCD00BC1BDA /* BreezSDKListener.swift */; };
@@ -29,9 +27,6 @@
 
 /* Begin PBXFileReference section */
 		6F92581A2A162080001A6F5C /* libBreezBridge.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libBreezBridge.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		6F9258242A1636D9001A6F5C /* breez_sdkFFI.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = breez_sdkFFI.xcframework; sourceTree = "<group>"; };
-		6F9258252A1636D9001A6F5C /* .gitignore */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
-		6F9258282A1636D9001A6F5C /* BreezSDK.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BreezSDK.swift; sourceTree = "<group>"; };
 		7355F8D429998CCE0094712A /* BreezSDKMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BreezSDKMapper.swift; sourceTree = "<group>"; };
 		7355F8D6299A3FC40094712A /* BreezSDKLogStream.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BreezSDKLogStream.swift; sourceTree = "<group>"; };
 		73A00D9B298E9DCD00BC1BDA /* BreezSDKListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BreezSDKListener.swift; sourceTree = "<group>"; };
@@ -45,7 +40,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6F9258292A1636D9001A6F5C /* breez_sdkFFI.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -55,7 +49,6 @@
 		58B511D21A9E6C8500147676 = {
 			isa = PBXGroup;
 			children = (
-				6F9258232A1636D9001A6F5C /* bindings-swift */,
 				6F92581B2A16286E001A6F5C /* Packages */,
 				7355F8D429998CCE0094712A /* BreezSDKMapper.swift */,
 				73A00D9B298E9DCD00BC1BDA /* BreezSDKListener.swift */,
@@ -73,32 +66,6 @@
 			children = (
 			);
 			name = Packages;
-			sourceTree = "<group>";
-		};
-		6F9258232A1636D9001A6F5C /* bindings-swift */ = {
-			isa = PBXGroup;
-			children = (
-				6F9258242A1636D9001A6F5C /* breez_sdkFFI.xcframework */,
-				6F9258252A1636D9001A6F5C /* .gitignore */,
-				6F9258262A1636D9001A6F5C /* Sources */,
-			);
-			path = "bindings-swift";
-			sourceTree = "<group>";
-		};
-		6F9258262A1636D9001A6F5C /* Sources */ = {
-			isa = PBXGroup;
-			children = (
-				6F9258272A1636D9001A6F5C /* BreezSDK */,
-			);
-			path = Sources;
-			sourceTree = "<group>";
-		};
-		6F9258272A1636D9001A6F5C /* BreezSDK */ = {
-			isa = PBXGroup;
-			children = (
-				6F9258282A1636D9001A6F5C /* BreezSDK.swift */,
-			);
-			path = BreezSDK;
 			sourceTree = "<group>";
 		};
 		73A00D8C298D633000BC1BDA /* Frameworks */ = {
@@ -169,7 +136,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6F92582A2A1636D9001A6F5C /* BreezSDK.swift in Sources */,
 				F4FF95D7245B92E800C19C63 /* RNBreezSDK.swift in Sources */,
 				7355F8D529998CCE0094712A /* BreezSDKMapper.swift in Sources */,
 				73A00D9C298E9DCD00BC1BDA /* BreezSDKListener.swift in Sources */,

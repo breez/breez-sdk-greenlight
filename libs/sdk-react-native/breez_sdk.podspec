@@ -16,5 +16,5 @@ Pod::Spec.new do |s|
   s.source_files = "ios/**/*.{h,m,mm,swift}"  
 
   s.dependency "React-Core"
-  s.vendored_frameworks = "ios/bindings-swift/breez_sdkFFI.xcframework"
+  s.dependency "BreezSDK", package["version"]
 end
