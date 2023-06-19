@@ -479,11 +479,8 @@ class RNBreezSDK: RCTEventEmitter {
     @objc(inProgressReverseSwaps:rejecter:)
     func inProgressReverseSwaps(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         do {
-            if let swaps = try getBreezServices().inProgressReverseSwaps() {
-                resolve(BreezSDKMapper.arrayOf(swaps: swaps))
-            } else {
-                reject(RNBreezSDK.TAG, "No available in progress swaps", nil)
-            }
+            let swaps = try getBreezServices().inProgressReverseSwaps()
+            resolve(BreezSDKMapper.arrayOf(reverseSwapInfos: swaps))            
         } catch SdkError.Error(let message) {
             reject(RNBreezSDK.TAG, message, nil)
         } catch let err {
@@ -491,11 +488,11 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
-    @objc(sendOnchain:rejecter:)
+    @objc(sendOnchain:onchainRecipientAddress:pairHash:satPerVbyte:resolver:rejecter:)
     func sendOnchain(_ amountSat:UInt64, onchainRecipientAddress:String, pairHash:String, satPerVbyte:UInt64, resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         do {
             let swapInfo = try getBreezServices().sendOnchain(amountSat: amountSat, onchainRecipientAddress: onchainRecipientAddress, pairHash: pairHash, satPerVbyte: satPerVbyte)
-            resolve(BreezSDKMapper.dictionaryOf(swapInfo: swapInfo))
+            resolve(BreezSDKMapper.dictionaryOf(reverseSwapInfo: swapInfo))
         } catch SdkError.Error(let message) {
             reject(RNBreezSDK.TAG, message, nil)
         } catch let err {

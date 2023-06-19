@@ -264,6 +264,12 @@ fun readableMapOf(invoicePaidDetails: InvoicePaidDetails): ReadableMap {
     )
 }
 
+fun readableMapOf(backupFailedDetails: BackupFailedData): ReadableMap {
+    return readableMapOf(
+            "error" to backupFailedDetails.error            
+    )
+}
+
 fun readableMapOf(paymentFailedData: PaymentFailedData): ReadableMap {
     return readableMapOf(
             "error" to paymentFailedData.error,
@@ -571,4 +577,3 @@ fun readableMapOf(vararg values: Pair<String, *>): ReadableMap {
     }
     return map
 }
-

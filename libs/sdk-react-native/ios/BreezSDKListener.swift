@@ -40,6 +40,22 @@ class BreezSDKListener: NSObject, EventListener {
                                    body: [
                                     "type": "synced"
                                    ])
+      case .backupStarted:
+            self.emitter.sendEvent(withName: BreezSDKListener.emitterName,
+                                   body: [
+                                    "type": "backupStarted"
+                                   ])
+      case .backupSucceeded:
+            self.emitter.sendEvent(withName: BreezSDKListener.emitterName,
+                                   body: [
+                                    "type": "backupSucceeded"
+                                   ])
+      case let .backupFailed(details): 
+            self.emitter.sendEvent(withName: BreezSDKListener.emitterName,
+                                   body: [
+                                    "type": "backupFailed",
+                                    "data": BreezSDKMapper.dictionaryOf(backupFailedData: details)
+                                   ])      
         }
     }
 }

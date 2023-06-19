@@ -44,6 +44,10 @@ class BreezSDKMapper {
     static func arrayOf(swapInfos: [SwapInfo]) -> [Any] {
         return swapInfos.map { (swapInfo) -> [String: Any?] in return dictionaryOf(swapInfo: swapInfo) }
     }
+
+    static func arrayOf(reverseSwapInfos: [ReverseSwapInfo]) -> [Any] {
+        return reverseSwapInfos.map { (swapInfo) -> [String: Any?] in return dictionaryOf(reverseSwapInfo: swapInfo) }
+    }
     
     static func arrayOf(unspentTransactionOutputs: [UnspentTransactionOutput]) -> [Any] {
         return unspentTransactionOutputs.map { (unspentTransactionOutput) -> [String: Any] in return dictionaryOf(unspentTransactionOutput: unspentTransactionOutput) }
@@ -72,7 +76,7 @@ class BreezSDKMapper {
            let paymentTimeoutSec = config["paymentTimeoutSec"] as? UInt32,
            let maxfeePercent = config["maxfeePercent"] as? Double {
             let defaultLspId = config["defaultLspId"] as? String
-            let apiKey = config["apiKey"] as? String            
+            let apiKey = config["apiKey"] as? String
             do {
                 var network = try asNetwork(network: networkStr)
                 return Config(breezserver: breezserver, mempoolspaceUrl: mempoolspaceUrl, workingDir: workingDir, network: network, paymentTimeoutSec: paymentTimeoutSec, defaultLspId: defaultLspId, apiKey: apiKey, maxfeePercent: maxfeePercent)
@@ -411,6 +415,12 @@ class BreezSDKMapper {
             "details": dictionaryOf(paymentDetails: payment.details),
         ]
     }
+
+    static func dictionaryOf(backupFailedData: BackupFailedData) -> [String: Any?] {
+        return [
+            "error": backupFailedData.error            
+        ]
+    }
     
     static func dictionaryOf(paymentDetails: PaymentDetails) -> [String: Any?] {
         switch(paymentDetails) {
@@ -572,10 +582,10 @@ class BreezSDKMapper {
     static func valueOf(reverseSwapStatus: ReverseSwapStatus) -> String {
         switch(reverseSwapStatus) {
         case .initial: return "initial"
-        case .inprogress: return "in_progress"
+        case .inProgress: return "in_progress"
         case .cancelled: return "cancelled"
-        case .completedseen: return "completed_seen"
-        case .completedconfirmed: return "completed_confirmed"
+        case .completedSeen: return "completed_seen"
+        case .completedConfirmed: return "completed_confirmed"
         }
     }
 }
