@@ -34,6 +34,7 @@ rusqlite = { version = "0.28.0", features = [
     "bundled",
     "load_extension",
     "backup",
+    "hooks",
 ] }
 rusqlite_migration = "*"
 reqwest = { version = "0.11", features = ["json"] }
@@ -41,6 +42,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tonic = { version = "^0.8", features = [
     "tls",
+    "transport",
     "tls-roots",
     "tls-webpki-roots",
 ] }
@@ -54,6 +56,7 @@ strum = "0.24.1"
 strum_macros = "0.24.1"
 tempfile = "3"
 const_format = "*"
+miniz_oxide = "0.7.1"
 
 [dev-dependencies]
 futures = "0.3.28"

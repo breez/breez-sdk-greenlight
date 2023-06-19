@@ -148,6 +148,7 @@ mod bridge_generated; /* AUTO INJECTED BY flutter_rust_bridge. This line may not
 #[macro_use]
 extern crate log;
 
+mod backup;
 pub mod binding;
 mod boltzswap;
 mod breez_services;
@@ -169,8 +170,8 @@ mod swap;
 mod test_utils;
 
 pub use breez_services::{
-    mnemonic_to_seed, BreezEvent, BreezServices, EventListener, InvoicePaidDetails,
-    PaymentFailedData,
+    mnemonic_to_seed, BackupFailedData, BreezEvent, BreezServices, EventListener,
+    InvoicePaidDetails, PaymentFailedData,
 };
 pub use chain::RecommendedFees;
 pub use fiat::{CurrencyInfo, FiatCurrency, LocaleOverrides, LocalizedName, Rate, Symbol};

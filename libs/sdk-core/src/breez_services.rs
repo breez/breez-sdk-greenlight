@@ -1,7 +1,8 @@
+use crate::backup::{BackupTransport, BackupWatcher};
 use crate::boltzswap::BoltzApi;
 use crate::chain::{ChainService, MempoolSpace, RecommendedFees};
 use crate::fiat::{FiatCurrency, Rate};
-use crate::greenlight::Greenlight;
+use crate::greenlight::{GLBackupTransport, Greenlight};
 use crate::grpc::channel_opener_client::ChannelOpenerClient;
 use crate::grpc::fund_manager_client::FundManagerClient;
 use crate::grpc::information_client::InformationClient;
@@ -33,6 +34,7 @@ use crate::{BuyBitcoinProvider, LnUrlAuthRequestData, LnUrlWithdrawRequestData, 
 use anyhow::{anyhow, Result};
 use bip39::*;
 use bitcoin::hashes::{sha256, Hash};
+use bitcoin::util::bip32::ChildNumber;
 use std::cmp::max;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -53,7 +55,7 @@ pub trait EventListener: Send + Sync {
 
 /// Event emitted by the SDK. To listen for and react to these events, use an [EventListener] when
 /// initializing the [BreezServices].
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 #[allow(clippy::large_enum_variant)]
 pub enum BreezEvent {
     /// Indicates that a new block has just been found
@@ -66,9 +68,20 @@ pub enum BreezEvent {
     PaymentSucceed { details: Payment },
     /// Indicates that an outgoing payment has been failed to complete
     PaymentFailed { details: PaymentFailedData },
+    /// Indicates that the backup process has just started
+    BackupStarted,
+    /// Indicates that the backup process has just finished successfully
+    BackupSucceeded,
+    /// Indicates that the backup process has just failed
+    BackupFailed { details: BackupFailedData },
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
+pub struct BackupFailedData {
+    pub error: String,
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub struct PaymentFailedData {
     pub error: String,
     pub node_id: String,
@@ -76,7 +89,7 @@ pub struct PaymentFailedData {
 }
 
 /// Details of an invoice that has been paid, included as payload in an emitted [BreezEvent]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct InvoicePaidDetails {
     pub payment_hash: String,
     pub bolt11: String,
@@ -99,8 +112,15 @@ async fn start_threads(
             .await;
     });
 
-    // sync with remote state
     let breez_cloned = breez_services.clone();
+
+    //restore backup state
+    if breez_cloned.persister.get_last_sync_version()?.is_none() {
+        debug!("No last sync version found, starting initial backup");
+        breez_cloned.start_backup()?;
+    }
+
+    // sync with remote node state
     breez_cloned.sync().await?;
 
     // create a shutdown channel (sender and receiver)
@@ -108,10 +128,10 @@ async fn start_threads(
 
     // poll sdk events
     rt.spawn(async move {
+        // start the backup watcher
         let current_block: u32 = 0;
         loop {
             tokio::select! {
-
               poll_result = poll_events(breez_services.clone(), current_block) => {
                match poll_result {
                 Ok(()) => {
@@ -147,6 +167,8 @@ pub struct BreezServices {
     btc_receive_swapper: Arc<BTCReceiveSwap>,
     btc_send_swapper: Arc<BTCSendSwap>,
     event_listener: Option<Box<dyn EventListener>>,
+    //backup_watcher: BackupWatcher,
+    backup_transport: Arc<dyn BackupTransport>,
     shutdown_sender: Mutex<Option<mpsc::Sender<()>>>,
 }
 
@@ -192,6 +214,7 @@ impl BreezServices {
             return Err(anyhow!("start can only be called once"));
         }
         let shutdown_handler = start_threads(runtime, breez_services.clone()).await?;
+
         *start_lock = Some(shutdown_handler);
         Ok(())
     }
@@ -362,6 +385,21 @@ impl BreezServices {
         self.persister.get_node_state()
     }
 
+    /// Retrieve the node up to date BackupStatus
+    pub fn backup_status(&self) -> Result<BackupStatus> {
+        let backup_time = self.persister.get_last_backup_time()?;
+        let sync_request = self.persister.get_last_sync_request()?;
+        Ok(BackupStatus {
+            last_backup_time: backup_time,
+            backed_up: sync_request.is_none(),
+        })
+    }
+
+    /// Starts a backup process in the background
+    pub fn start_backup(&self) -> Result<()> {
+        self.persister.add_sync_request()
+    }
+
     /// List payments matching the given filters, as retrieved from persistent storage
     pub async fn list_payments(
         &self,
@@ -448,7 +486,8 @@ impl BreezServices {
               )));
         }
 
-        self.btc_receive_swapper.create_swap_address().await
+        let swap_info = self.btc_receive_swapper.create_swap_address().await?;
+        Ok(swap_info)
     }
 
     /// Returns an optional in-progress [SwapInfo].
@@ -681,9 +720,30 @@ async fn poll_events(breez_services: Arc<BreezServices>, mut current_block: u32)
     let mut invoice_stream = breez_services.node_api.stream_incoming_payments().await?;
     let mut log_stream = breez_services.node_api.stream_log_messages().await?;
 
+    // create the backup encryption key
+    let backup_encryption_key = breez_services.node_api.derive_bip32_key(vec![
+        ChildNumber::from_hardened_idx(139)?,
+        ChildNumber::from(0),
+    ])?;
+
+    let backup_watcher = BackupWatcher::start(
+        breez_services.backup_transport.clone(),
+        breez_services.persister.clone(),
+        backup_encryption_key.to_priv().to_bytes(),
+    );
+    let mut backup_events_stream = backup_watcher.subscribe_events();
+
     loop {
         tokio::select! {
-
+         backup_event = backup_events_stream.recv() => {
+          if let Ok(e) = backup_event {
+           if let Err(err) = breez_services.notify_event_listeners(e).await {
+               error!("error handling backup event: {:?}", err);
+           }
+          }
+          let backup_status = breez_services.backup_status();
+          info!("backup status: {:?}", backup_status);
+         },
          // handle chain events
          _ = interval.tick() => {
           let tip_res = breez_services.chain_service.current_tip().await;
@@ -775,6 +835,7 @@ fn closed_channel_to_transaction(channel: crate::models::Channel) -> Result<Paym
 struct BreezServicesBuilder {
     config: Config,
     node_api: Option<Arc<dyn NodeAPI>>,
+    backup_transport: Option<Arc<dyn BackupTransport>>,
     creds: Option<GreenlightCredentials>,
     seed: Option<Vec<u8>>,
     lsp_api: Option<Arc<dyn LspAPI>>,
@@ -799,6 +860,7 @@ impl BreezServicesBuilder {
             swapper_api: None,
             reverse_swapper_api: None,
             moonpay_api: None,
+            backup_transport: None,
         }
     }
 
@@ -840,6 +902,11 @@ impl BreezServicesBuilder {
         self
     }
 
+    pub fn backup_transport(&mut self, backup_transport: Arc<dyn BackupTransport>) -> &mut Self {
+        self.backup_transport = Some(backup_transport.clone());
+        self
+    }
+
     pub fn greenlight_credentials(
         &mut self,
         creds: GreenlightCredentials,
@@ -860,7 +927,15 @@ impl BreezServicesBuilder {
             ));
         }
 
+        // The storage is implemented via sqlite.
+        let persister = self
+            .persister
+            .clone()
+            .unwrap_or_else(|| Arc::new(SqliteStorage::new(self.config.working_dir.clone())));
+        persister.init().unwrap();
+
         let mut node_api = self.node_api.clone();
+        let mut backup_transport = self.backup_transport.clone();
         if node_api.is_none() {
             if self.creds.is_none() || self.seed.is_none() {
                 return Err(anyhow!(
@@ -873,9 +948,18 @@ impl BreezServicesBuilder {
                 self.creds.clone().unwrap(),
             )
             .await?;
-            node_api = Some(Arc::new(greenlight));
+            let gl_arc = Arc::new(greenlight);
+            node_api = Some(gl_arc.clone());
+            if backup_transport.is_none() {
+                backup_transport = Some(Arc::new(GLBackupTransport { inner: gl_arc }));
+            }
         }
+        if backup_transport.is_none() {
+            return Err(anyhow!("state synchronizer should be provided"));
+        }
+
         let unwrapped_node_api = node_api.unwrap();
+        let unwrapped_backup_transport = backup_transport.unwrap();
 
         // breez_server provides both FiatAPI & LspAPI implementations
         let breez_server = Arc::new(BreezServer::new(
@@ -888,13 +972,6 @@ impl BreezServicesBuilder {
             self.config.mempoolspace_url.clone(),
         ));
 
-        // The storage is implemented via sqlite.
-        let persister = self
-            .persister
-            .clone()
-            .unwrap_or_else(|| Arc::new(SqliteStorage::new(self.config.working_dir.clone())));
-
-        persister.init().unwrap();
         let current_lsp_id = persister.get_lsp_id()?;
         if current_lsp_id.is_none() && self.config.default_lsp_id.is_some() {
             persister.set_lsp_id(self.config.default_lsp_id.clone().unwrap())?;
@@ -939,11 +1016,12 @@ impl BreezServicesBuilder {
                 .clone()
                 .unwrap_or_else(|| breez_server.clone()),
             chain_service,
-            persister,
+            persister: persister.clone(),
             btc_receive_swapper,
             btc_send_swapper,
             payment_receiver,
             event_listener: listener,
+            backup_transport: unwrapped_backup_transport.clone(),
             shutdown_sender: Mutex::new(None),
         });
 
@@ -1315,6 +1393,7 @@ pub(crate) mod tests {
             .fiat_api(Arc::new(MockBreezServer {}))
             .node_api(node_api)
             .persister(persister)
+            .backup_transport(Arc::new(MockBackupTransport::new()))
             .build(None)
             .await?;
 
@@ -1468,6 +1547,7 @@ pub(crate) mod tests {
             .moonpay_api(Arc::new(MockBreezServer {}))
             .persister(persister)
             .node_api(node_api)
+            .backup_transport(Arc::new(MockBackupTransport::new()))
             .build(None)
             .await
             .unwrap();

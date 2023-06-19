@@ -5,6 +5,7 @@ pub(crate) mod migrations;
 pub(crate) mod reverseswap;
 pub(crate) mod settings;
 pub(crate) mod swap;
+pub(crate) mod sync;
 pub(crate) mod transactions;
 
 #[cfg(test)]

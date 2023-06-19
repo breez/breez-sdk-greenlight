@@ -19,6 +19,7 @@ use std::sync::Arc;
 
 // Section: imports
 
+use crate::breez_services::BackupFailedData;
 use crate::breez_services::BreezEvent;
 use crate::breez_services::InvoicePaidDetails;
 use crate::breez_services::PaymentFailedData;
@@ -737,6 +738,13 @@ impl support::IntoDart for AesSuccessActionDataDecrypted {
 }
 impl support::IntoDartExceptPrimitive for AesSuccessActionDataDecrypted {}
 
+impl support::IntoDart for BackupFailedData {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.error.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for BackupFailedData {}
+
 impl support::IntoDart for BitcoinAddressData {
     fn into_dart(self) -> support::DartAbi {
         vec![
@@ -759,6 +767,9 @@ impl support::IntoDart for BreezEvent {
             Self::Synced => vec![2.into_dart()],
             Self::PaymentSucceed { details } => vec![3.into_dart(), details.into_dart()],
             Self::PaymentFailed { details } => vec![4.into_dart(), details.into_dart()],
+            Self::BackupStarted => vec![5.into_dart()],
+            Self::BackupSucceeded => vec![6.into_dart()],
+            Self::BackupFailed { details } => vec![7.into_dart(), details.into_dart()],
         }
         .into_dart()
     }

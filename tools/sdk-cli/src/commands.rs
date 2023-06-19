@@ -46,6 +46,9 @@ pub(crate) enum Commands {
     /// Sync local data with remote node
     Sync {},
 
+    /// Triggers a backup of the local data
+    Backup {},
+
     /// Parse a generic string to get its type and relevant metadata
     Parse {
         /// Generic input (URL, LNURL, BIP-21 BTC Address, LN invoice, etc)

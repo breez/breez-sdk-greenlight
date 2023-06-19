@@ -259,6 +259,14 @@ class AesSuccessActionDataDecrypted {
   });
 }
 
+class BackupFailedData {
+  final String error;
+
+  const BackupFailedData({
+    required this.error,
+  });
+}
+
 /// Wrapped in a [BitcoinAddress], this is the result of [parse] when given a plain or BIP-21 BTC address.
 class BitcoinAddressData {
   final String address;
@@ -300,6 +308,17 @@ class BreezEvent with _$BreezEvent {
   const factory BreezEvent.paymentFailed({
     required PaymentFailedData details,
   }) = BreezEvent_PaymentFailed;
+
+  /// Indicates that the backup process has just started
+  const factory BreezEvent.backupStarted() = BreezEvent_BackupStarted;
+
+  /// Indicates that the backup process has just finished successfully
+  const factory BreezEvent.backupSucceeded() = BreezEvent_BackupSucceeded;
+
+  /// Indicates that the backup process has just failed
+  const factory BreezEvent.backupFailed({
+    required BackupFailedData details,
+  }) = BreezEvent_BackupFailed;
 }
 
 /// Different providers will demand different behaviours when the user is trying to buy bitcoin.
@@ -1780,6 +1799,14 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     );
   }
 
+  BackupFailedData _wire2api_backup_failed_data(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
+    return BackupFailedData(
+      error: _wire2api_String(arr[0]),
+    );
+  }
+
   BitcoinAddressData _wire2api_bitcoin_address_data(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 5) throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
@@ -1798,6 +1825,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   AesSuccessActionDataDecrypted _wire2api_box_autoadd_aes_success_action_data_decrypted(dynamic raw) {
     return _wire2api_aes_success_action_data_decrypted(raw);
+  }
+
+  BackupFailedData _wire2api_box_autoadd_backup_failed_data(dynamic raw) {
+    return _wire2api_backup_failed_data(raw);
   }
 
   BitcoinAddressData _wire2api_box_autoadd_bitcoin_address_data(dynamic raw) {
@@ -1903,6 +1934,14 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       case 4:
         return BreezEvent_PaymentFailed(
           details: _wire2api_box_autoadd_payment_failed_data(raw[1]),
+        );
+      case 5:
+        return BreezEvent_BackupStarted();
+      case 6:
+        return BreezEvent_BackupSucceeded();
+      case 7:
+        return BreezEvent_BackupFailed(
+          details: _wire2api_box_autoadd_backup_failed_data(raw[1]),
         );
       default:
         throw Exception("unreachable");
