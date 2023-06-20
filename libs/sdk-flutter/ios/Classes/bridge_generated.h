@@ -127,7 +127,7 @@ void wire_close_lsp_channels(int64_t port_);
 
 void wire_sweep(int64_t port_,
                 struct wire_uint_8_list *to_address,
-                uint64_t fee_rate_sats_per_byte);
+                uint64_t fee_rate_sats_per_vbyte);
 
 void wire_receive_onchain(int64_t port_);
 
@@ -141,6 +141,14 @@ void wire_refund(int64_t port_,
                  uint32_t sat_per_vbyte);
 
 void wire_fetch_reverse_swap_fees(int64_t port_);
+
+void wire_in_progress_reverse_swaps(int64_t port_);
+
+void wire_send_onchain(int64_t port_,
+                       uint64_t amount_sat,
+                       struct wire_uint_8_list *onchain_recipient_address,
+                       struct wire_uint_8_list *pair_hash,
+                       uint64_t sat_per_vbyte);
 
 void wire_execute_command(int64_t port_, struct wire_uint_8_list *command);
 
@@ -167,6 +175,8 @@ void wire_mnemonic_to_seed(int64_t port_, struct wire_uint_8_list *phrase);
 void wire_recommended_fees(int64_t port_);
 
 void wire_default_config(int64_t port_, int32_t config_type);
+
+void wire_buy_bitcoin(int64_t port_, int32_t provider);
 
 struct wire_Config *new_box_autoadd_config_0(void);
 
@@ -214,6 +224,8 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_list_refundables);
     dummy_var ^= ((int64_t) (void*) wire_refund);
     dummy_var ^= ((int64_t) (void*) wire_fetch_reverse_swap_fees);
+    dummy_var ^= ((int64_t) (void*) wire_in_progress_reverse_swaps);
+    dummy_var ^= ((int64_t) (void*) wire_send_onchain);
     dummy_var ^= ((int64_t) (void*) wire_execute_command);
     dummy_var ^= ((int64_t) (void*) wire_sync_node);
     dummy_var ^= ((int64_t) (void*) wire_parse_invoice);
@@ -224,6 +236,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_mnemonic_to_seed);
     dummy_var ^= ((int64_t) (void*) wire_recommended_fees);
     dummy_var ^= ((int64_t) (void*) wire_default_config);
+    dummy_var ^= ((int64_t) (void*) wire_buy_bitcoin);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_config_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_greenlight_credentials_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_i64_0);

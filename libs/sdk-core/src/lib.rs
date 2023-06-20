@@ -20,8 +20,9 @@
 //! ```ignore
 //! let mnemonic = Mnemonic::new(Words12, English);
 //! let seed = Seed::new(&mnemonic, "");
+//! let invite_code = Some("...")
 //!
-//! let creds = BreezServices::register_node(Network::Bitcoin, seed.as_bytes().to_vec()).await?;
+//! let creds = BreezServices::register_node(Network::Bitcoin, seed.as_bytes().to_vec(), None, invite_code).await?;
 //! let sdk = BreezServices::init_services(
 //!         BreezServices::default_config(EnvironmentType::Production),
 //!         seed.to_vec(),
@@ -147,6 +148,7 @@ mod bridge_generated; /* AUTO INJECTED BY flutter_rust_bridge. This line may not
 #[macro_use]
 extern crate log;
 
+mod backup;
 pub mod binding;
 mod boltzswap;
 mod breez_services;
@@ -168,8 +170,8 @@ mod swap;
 mod test_utils;
 
 pub use breez_services::{
-    mnemonic_to_seed, BreezEvent, BreezServices, EventListener, InvoicePaidDetails,
-    PaymentFailedData,
+    mnemonic_to_seed, BackupFailedData, BreezEvent, BreezServices, EventListener,
+    InvoicePaidDetails, PaymentFailedData,
 };
 pub use chain::RecommendedFees;
 pub use fiat::{CurrencyInfo, FiatCurrency, LocaleOverrides, LocalizedName, Rate, Symbol};

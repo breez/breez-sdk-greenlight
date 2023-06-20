@@ -142,7 +142,7 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kCloseLspChannelsConstMeta;
 
   /// See [BreezServices::sweep]
-  Future<void> sweep({required String toAddress, required int feeRateSatsPerByte, dynamic hint});
+  Future<void> sweep({required String toAddress, required int feeRateSatsPerVbyte, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kSweepConstMeta;
 
@@ -171,6 +171,21 @@ abstract class BreezSdkCore {
   Future<ReverseSwapPairInfo> fetchReverseSwapFees({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kFetchReverseSwapFeesConstMeta;
+
+  /// See [BreezServices::in_progress_reverse_swaps]
+  Future<List<ReverseSwapInfo>> inProgressReverseSwaps({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kInProgressReverseSwapsConstMeta;
+
+  /// See [BreezServices::send_onchain]
+  Future<ReverseSwapInfo> sendOnchain(
+      {required int amountSat,
+      required String onchainRecipientAddress,
+      required String pairHash,
+      required int satPerVbyte,
+      dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kSendOnchainConstMeta;
 
   /// See [BreezServices::execute_dev_command]
   Future<String> executeCommand({required String command, dynamic hint});
@@ -223,6 +238,11 @@ abstract class BreezSdkCore {
   Future<Config> defaultConfig({required EnvironmentType configType, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kDefaultConfigConstMeta;
+
+  /// See [BreezServices::buy_bitcoin]
+  Future<String> buyBitcoin({required BuyBitcoinProvider provider, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kBuyBitcoinConstMeta;
 }
 
 /// Wrapper for the decrypted [AesSuccessActionData] payload
@@ -236,6 +256,14 @@ class AesSuccessActionDataDecrypted {
   const AesSuccessActionDataDecrypted({
     required this.description,
     required this.plaintext,
+  });
+}
+
+class BackupFailedData {
+  final String error;
+
+  const BackupFailedData({
+    required this.error,
   });
 }
 
@@ -280,6 +308,22 @@ class BreezEvent with _$BreezEvent {
   const factory BreezEvent.paymentFailed({
     required PaymentFailedData details,
   }) = BreezEvent_PaymentFailed;
+
+  /// Indicates that the backup process has just started
+  const factory BreezEvent.backupStarted() = BreezEvent_BackupStarted;
+
+  /// Indicates that the backup process has just finished successfully
+  const factory BreezEvent.backupSucceeded() = BreezEvent_BackupSucceeded;
+
+  /// Indicates that the backup process has just failed
+  const factory BreezEvent.backupFailed({
+    required BackupFailedData details,
+  }) = BreezEvent_BackupFailed;
+}
+
+/// Different providers will demand different behaviours when the user is trying to buy bitcoin.
+enum BuyBitcoinProvider {
+  Moonpay,
 }
 
 /// State of a Lightning channel
@@ -838,6 +882,21 @@ class RecommendedFees {
   });
 }
 
+/// Simplified version of [FullReverseSwapInfo], containing only the user-relevant fields
+class ReverseSwapInfo {
+  final String id;
+  final String claimPubkey;
+  final int onchainAmountSat;
+  final ReverseSwapStatus status;
+
+  const ReverseSwapInfo({
+    required this.id,
+    required this.claimPubkey,
+    required this.onchainAmountSat,
+    required this.status,
+  });
+}
+
 /// Details about the BTC/BTC reverse swap pair, at this point in time
 ///
 /// Maps the result of https://docs.boltz.exchange/en/latest/api/#getting-pairs for the BTC/BTC pair
@@ -868,6 +927,28 @@ class ReverseSwapPairInfo {
     required this.feesLockup,
     required this.feesClaim,
   });
+}
+
+/// The possible statuses of a reverse swap, from the Breez SDK perspective.
+///
+/// See [BoltzApiReverseSwapStatus] for the reverse swap status from the Breez endpoint point of view.
+enum ReverseSwapStatus {
+  /// HODL invoice payment is not completed yet
+  Initial,
+
+  /// HODL invoice payment was successfully triggered and confirmed by Boltz, but the reverse swap
+  /// is not yet complete
+  InProgress,
+
+  /// An explicit error occurs (validation error, failure reported by Boltz, expiration, etc) and
+  /// the initial invoice funds are returned to the sender (invoice is cancelled or payment failed)
+  Cancelled,
+
+  /// Successfully completed (claim tx has been seen in the mempool)
+  CompletedSeen,
+
+  /// Successfully completed (claim tx has at least one confirmation)
+  CompletedConfirmed,
 }
 
 /// A route hint for a LN payment
@@ -1378,21 +1459,21 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: [],
       );
 
-  Future<void> sweep({required String toAddress, required int feeRateSatsPerByte, dynamic hint}) {
+  Future<void> sweep({required String toAddress, required int feeRateSatsPerVbyte, dynamic hint}) {
     var arg0 = _platform.api2wire_String(toAddress);
-    var arg1 = _platform.api2wire_u64(feeRateSatsPerByte);
+    var arg1 = _platform.api2wire_u64(feeRateSatsPerVbyte);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_sweep(port_, arg0, arg1),
       parseSuccessData: _wire2api_unit,
       constMeta: kSweepConstMeta,
-      argValues: [toAddress, feeRateSatsPerByte],
+      argValues: [toAddress, feeRateSatsPerVbyte],
       hint: hint,
     ));
   }
 
   FlutterRustBridgeTaskConstMeta get kSweepConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "sweep",
-        argNames: ["toAddress", "feeRateSatsPerByte"],
+        argNames: ["toAddress", "feeRateSatsPerVbyte"],
       );
 
   Future<SwapInfo> receiveOnchain({dynamic hint}) {
@@ -1472,6 +1553,45 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kFetchReverseSwapFeesConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "fetch_reverse_swap_fees",
         argNames: [],
+      );
+
+  Future<List<ReverseSwapInfo>> inProgressReverseSwaps({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_in_progress_reverse_swaps(port_),
+      parseSuccessData: _wire2api_list_reverse_swap_info,
+      constMeta: kInProgressReverseSwapsConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kInProgressReverseSwapsConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "in_progress_reverse_swaps",
+        argNames: [],
+      );
+
+  Future<ReverseSwapInfo> sendOnchain(
+      {required int amountSat,
+      required String onchainRecipientAddress,
+      required String pairHash,
+      required int satPerVbyte,
+      dynamic hint}) {
+    var arg0 = _platform.api2wire_u64(amountSat);
+    var arg1 = _platform.api2wire_String(onchainRecipientAddress);
+    var arg2 = _platform.api2wire_String(pairHash);
+    var arg3 = _platform.api2wire_u64(satPerVbyte);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_send_onchain(port_, arg0, arg1, arg2, arg3),
+      parseSuccessData: _wire2api_reverse_swap_info,
+      constMeta: kSendOnchainConstMeta,
+      argValues: [amountSat, onchainRecipientAddress, pairHash, satPerVbyte],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kSendOnchainConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "send_onchain",
+        argNames: ["amountSat", "onchainRecipientAddress", "pairHash", "satPerVbyte"],
       );
 
   Future<String> executeCommand({required String command, dynamic hint}) {
@@ -1641,6 +1761,22 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["configType"],
       );
 
+  Future<String> buyBitcoin({required BuyBitcoinProvider provider, dynamic hint}) {
+    var arg0 = api2wire_buy_bitcoin_provider(provider);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_buy_bitcoin(port_, arg0),
+      parseSuccessData: _wire2api_String,
+      constMeta: kBuyBitcoinConstMeta,
+      argValues: [provider],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kBuyBitcoinConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "buy_bitcoin",
+        argNames: ["provider"],
+      );
+
   void dispose() {
     _platform.dispose();
   }
@@ -1663,6 +1799,14 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     );
   }
 
+  BackupFailedData _wire2api_backup_failed_data(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
+    return BackupFailedData(
+      error: _wire2api_String(arr[0]),
+    );
+  }
+
   BitcoinAddressData _wire2api_bitcoin_address_data(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 5) throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
@@ -1681,6 +1825,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   AesSuccessActionDataDecrypted _wire2api_box_autoadd_aes_success_action_data_decrypted(dynamic raw) {
     return _wire2api_aes_success_action_data_decrypted(raw);
+  }
+
+  BackupFailedData _wire2api_box_autoadd_backup_failed_data(dynamic raw) {
+    return _wire2api_backup_failed_data(raw);
   }
 
   BitcoinAddressData _wire2api_box_autoadd_bitcoin_address_data(dynamic raw) {
@@ -1786,6 +1934,14 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       case 4:
         return BreezEvent_PaymentFailed(
           details: _wire2api_box_autoadd_payment_failed_data(raw[1]),
+        );
+      case 5:
+        return BreezEvent_BackupStarted();
+      case 6:
+        return BreezEvent_BackupSucceeded();
+      case 7:
+        return BreezEvent_BackupFailed(
+          details: _wire2api_box_autoadd_backup_failed_data(raw[1]),
         );
       default:
         throw Exception("unreachable");
@@ -1935,6 +2091,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   List<Rate> _wire2api_list_rate(dynamic raw) {
     return (raw as List<dynamic>).map(_wire2api_rate).toList();
+  }
+
+  List<ReverseSwapInfo> _wire2api_list_reverse_swap_info(dynamic raw) {
+    return (raw as List<dynamic>).map(_wire2api_reverse_swap_info).toList();
   }
 
   List<RouteHint> _wire2api_list_route_hint(dynamic raw) {
@@ -2252,6 +2412,17 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     );
   }
 
+  ReverseSwapInfo _wire2api_reverse_swap_info(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4) throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return ReverseSwapInfo(
+      id: _wire2api_String(arr[0]),
+      claimPubkey: _wire2api_String(arr[1]),
+      onchainAmountSat: _wire2api_u64(arr[2]),
+      status: _wire2api_reverse_swap_status(arr[3]),
+    );
+  }
+
   ReverseSwapPairInfo _wire2api_reverse_swap_pair_info(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 6) throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
@@ -2263,6 +2434,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       feesLockup: _wire2api_u64(arr[4]),
       feesClaim: _wire2api_u64(arr[5]),
     );
+  }
+
+  ReverseSwapStatus _wire2api_reverse_swap_status(dynamic raw) {
+    return ReverseSwapStatus.values[raw as int];
   }
 
   RouteHint _wire2api_route_hint(dynamic raw) {
@@ -2396,6 +2571,11 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 }
 
 // Section: api2wire
+
+@protected
+int api2wire_buy_bitcoin_provider(BuyBitcoinProvider raw) {
+  return api2wire_i32(raw.index);
+}
 
 @protected
 int api2wire_environment_type(EnvironmentType raw) {
@@ -3006,12 +3186,12 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   void wire_sweep(
     int port_,
     ffi.Pointer<wire_uint_8_list> to_address,
-    int fee_rate_sats_per_byte,
+    int fee_rate_sats_per_vbyte,
   ) {
     return _wire_sweep(
       port_,
       to_address,
-      fee_rate_sats_per_byte,
+      fee_rate_sats_per_vbyte,
     );
   }
 
@@ -3090,6 +3270,42 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_fetch_reverse_swap_fees');
   late final _wire_fetch_reverse_swap_fees =
       _wire_fetch_reverse_swap_feesPtr.asFunction<void Function(int)>();
+
+  void wire_in_progress_reverse_swaps(
+    int port_,
+  ) {
+    return _wire_in_progress_reverse_swaps(
+      port_,
+    );
+  }
+
+  late final _wire_in_progress_reverse_swapsPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_in_progress_reverse_swaps');
+  late final _wire_in_progress_reverse_swaps =
+      _wire_in_progress_reverse_swapsPtr.asFunction<void Function(int)>();
+
+  void wire_send_onchain(
+    int port_,
+    int amount_sat,
+    ffi.Pointer<wire_uint_8_list> onchain_recipient_address,
+    ffi.Pointer<wire_uint_8_list> pair_hash,
+    int sat_per_vbyte,
+  ) {
+    return _wire_send_onchain(
+      port_,
+      amount_sat,
+      onchain_recipient_address,
+      pair_hash,
+      sat_per_vbyte,
+    );
+  }
+
+  late final _wire_send_onchainPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Int64, ffi.Uint64, ffi.Pointer<wire_uint_8_list>,
+              ffi.Pointer<wire_uint_8_list>, ffi.Uint64)>>('wire_send_onchain');
+  late final _wire_send_onchain = _wire_send_onchainPtr.asFunction<
+      void Function(int, int, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_uint_8_list>, int)>();
 
   void wire_execute_command(
     int port_,
@@ -3247,6 +3463,20 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_default_configPtr =
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Int32)>>('wire_default_config');
   late final _wire_default_config = _wire_default_configPtr.asFunction<void Function(int, int)>();
+
+  void wire_buy_bitcoin(
+    int port_,
+    int provider,
+  ) {
+    return _wire_buy_bitcoin(
+      port_,
+      provider,
+    );
+  }
+
+  late final _wire_buy_bitcoinPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Int32)>>('wire_buy_bitcoin');
+  late final _wire_buy_bitcoin = _wire_buy_bitcoinPtr.asFunction<void Function(int, int)>();
 
   ffi.Pointer<wire_Config> new_box_autoadd_config_0() {
     return _new_box_autoadd_config_0();

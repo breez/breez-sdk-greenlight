@@ -146,9 +146,9 @@ pub extern "C" fn wire_close_lsp_channels(port_: i64) {
 pub extern "C" fn wire_sweep(
     port_: i64,
     to_address: *mut wire_uint_8_list,
-    fee_rate_sats_per_byte: u64,
+    fee_rate_sats_per_vbyte: u64,
 ) {
-    wire_sweep_impl(port_, to_address, fee_rate_sats_per_byte)
+    wire_sweep_impl(port_, to_address, fee_rate_sats_per_vbyte)
 }
 
 #[no_mangle]
@@ -179,6 +179,28 @@ pub extern "C" fn wire_refund(
 #[no_mangle]
 pub extern "C" fn wire_fetch_reverse_swap_fees(port_: i64) {
     wire_fetch_reverse_swap_fees_impl(port_)
+}
+
+#[no_mangle]
+pub extern "C" fn wire_in_progress_reverse_swaps(port_: i64) {
+    wire_in_progress_reverse_swaps_impl(port_)
+}
+
+#[no_mangle]
+pub extern "C" fn wire_send_onchain(
+    port_: i64,
+    amount_sat: u64,
+    onchain_recipient_address: *mut wire_uint_8_list,
+    pair_hash: *mut wire_uint_8_list,
+    sat_per_vbyte: u64,
+) {
+    wire_send_onchain_impl(
+        port_,
+        amount_sat,
+        onchain_recipient_address,
+        pair_hash,
+        sat_per_vbyte,
+    )
 }
 
 #[no_mangle]
@@ -239,6 +261,11 @@ pub extern "C" fn wire_recommended_fees(port_: i64) {
 #[no_mangle]
 pub extern "C" fn wire_default_config(port_: i64, config_type: i32) {
     wire_default_config_impl(port_, config_type)
+}
+
+#[no_mangle]
+pub extern "C" fn wire_buy_bitcoin(port_: i64, provider: i32) {
+    wire_buy_bitcoin_impl(port_, provider)
 }
 
 // Section: allocate functions
@@ -338,6 +365,7 @@ impl Wire2Api<u64> for *mut u64 {
         unsafe { *support::box_from_leak_ptr(self) }
     }
 }
+
 impl Wire2Api<Config> for wire_Config {
     fn wire2api(self) -> Config {
         Config {

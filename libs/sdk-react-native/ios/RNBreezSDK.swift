@@ -310,10 +310,10 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
     
-    @objc(sweep:feeRateSatsPerByte:resolver:rejecter:)
-    func sweep(_ toAddress:String, feeRateSatsPerByte:UInt64, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+    @objc(sweep:feeRateSatsPerVbyte:resolver:rejecter:)
+    func sweep(_ toAddress:String, feeRateSatsPerVbyte:UInt64, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         do {
-            try getBreezServices().sweep(toAddress: toAddress, feeRateSatsPerByte: feeRateSatsPerByte)
+            try getBreezServices().sweep(toAddress: toAddress, feeRateSatsPerVbyte: feeRateSatsPerVbyte)
             resolve(["status": "ok"])
         } catch SdkError.Error(let message) {
             reject(RNBreezSDK.TAG, message, nil)
@@ -463,6 +463,42 @@ class RNBreezSDK: RCTEventEmitter {
             reject(RNBreezSDK.TAG, "Error calling refund", err)
         }
     }
+
+    @objc(fetchReverseSwapFees:rejecter:)
+    func fetchReverseSwapFees(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        do {
+            let fees = try getBreezServices().fetchReverseSwapFees()
+            resolve(fees)
+        } catch SdkError.Error(let message) {
+            reject(RNBreezSDK.TAG, message, nil)
+        } catch let err {
+            reject(RNBreezSDK.TAG, "Error calling fetchReverseSwapFees", err)
+        }
+    }
+
+    @objc(inProgressReverseSwaps:rejecter:)
+    func inProgressReverseSwaps(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        do {
+            let swaps = try getBreezServices().inProgressReverseSwaps()
+            resolve(BreezSDKMapper.arrayOf(reverseSwapInfos: swaps))            
+        } catch SdkError.Error(let message) {
+            reject(RNBreezSDK.TAG, message, nil)
+        } catch let err {
+            reject(RNBreezSDK.TAG, "Error calling inProgressReverseSwaps", err)
+        }
+    }
+
+    @objc(sendOnchain:onchainRecipientAddress:pairHash:satPerVbyte:resolver:rejecter:)
+    func sendOnchain(_ amountSat:UInt64, onchainRecipientAddress:String, pairHash:String, satPerVbyte:UInt64, resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        do {
+            let swapInfo = try getBreezServices().sendOnchain(amountSat: amountSat, onchainRecipientAddress: onchainRecipientAddress, pairHash: pairHash, satPerVbyte: satPerVbyte)
+            resolve(BreezSDKMapper.dictionaryOf(reverseSwapInfo: swapInfo))
+        } catch SdkError.Error(let message) {
+            reject(RNBreezSDK.TAG, message, nil)
+        } catch let err {
+            reject(RNBreezSDK.TAG, "Error calling sendOnchain", err)
+        }
+    }
     
     @objc(executeDevCommand:resolver:rejecter:)
     func executeDevCommand(_ command:String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
@@ -485,6 +521,43 @@ class RNBreezSDK: RCTEventEmitter {
             reject(RNBreezSDK.TAG, message, nil)
         } catch let err {
             reject(RNBreezSDK.TAG, "Error calling recommendedFees", err)
+        }
+    }
+
+    @objc(buyBitcoin:resolver:rejecter:)
+    func buyBitcoin(_ provider: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        do {
+            let buyBitcoinProvider = try BreezSDKMapper.asBitcoinProvider(provider: provider)
+            let result = try getBreezServices().buyBitcoin(provider: buyBitcoinProvider)
+            resolve(result)
+        } catch SdkError.Error(let message) {
+            reject(RNBreezSDK.TAG, message, nil)
+        } catch let err {
+            reject(RNBreezSDK.TAG, "Error calling buyBitcoin", err)
+        }
+    }
+    
+    @objc(startBackup:rejecter:)
+    func startBackup(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        do {
+            try getBreezServices().startBackup()
+            resolve(["status": "ok"])
+        } catch SdkError.Error(let message) {
+            reject(RNBreezSDK.TAG, message, nil)
+        } catch let err {
+            reject(RNBreezSDK.TAG, "Error calling startBackup", err)
+        }
+    }
+    
+    @objc(backupStatus:rejecter:)
+    func backupStatus(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        do {
+            let status = try getBreezServices().backupStatus()
+            resolve(BreezSDKMapper.dictionaryOf(backupStatus: status))
+        } catch SdkError.Error(let message) {
+            reject(RNBreezSDK.TAG, message, nil)
+        } catch let err {
+            reject(RNBreezSDK.TAG, "Error calling backupStatus", err)
         }
     }
 }

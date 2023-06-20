@@ -19,6 +19,7 @@ use std::sync::Arc;
 
 // Section: imports
 
+use crate::breez_services::BackupFailedData;
 use crate::breez_services::BreezEvent;
 use crate::breez_services::InvoicePaidDetails;
 use crate::breez_services::PaymentFailedData;
@@ -44,6 +45,7 @@ use crate::lnurl::pay::model::MessageSuccessActionData;
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lnurl::pay::model::UrlSuccessActionData;
 use crate::lsp::LspInformation;
+use crate::models::BuyBitcoinProvider;
 use crate::models::ChannelState;
 use crate::models::ClosedChannelPaymentDetails;
 use crate::models::Config;
@@ -58,7 +60,9 @@ use crate::models::Payment;
 use crate::models::PaymentDetails;
 use crate::models::PaymentType;
 use crate::models::PaymentTypeFilter;
+use crate::models::ReverseSwapInfo;
 use crate::models::ReverseSwapPairInfo;
+use crate::models::ReverseSwapStatus;
 use crate::models::SwapInfo;
 use crate::models::SwapStatus;
 use crate::models::UnspentTransactionOutput;
@@ -350,7 +354,7 @@ fn wire_close_lsp_channels_impl(port_: MessagePort) {
 fn wire_sweep_impl(
     port_: MessagePort,
     to_address: impl Wire2Api<String> + UnwindSafe,
-    fee_rate_sats_per_byte: impl Wire2Api<u64> + UnwindSafe,
+    fee_rate_sats_per_vbyte: impl Wire2Api<u64> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -360,8 +364,8 @@ fn wire_sweep_impl(
         },
         move || {
             let api_to_address = to_address.wire2api();
-            let api_fee_rate_sats_per_byte = fee_rate_sats_per_byte.wire2api();
-            move |task_callback| sweep(api_to_address, api_fee_rate_sats_per_byte)
+            let api_fee_rate_sats_per_vbyte = fee_rate_sats_per_vbyte.wire2api();
+            move |task_callback| sweep(api_to_address, api_fee_rate_sats_per_vbyte)
         },
     )
 }
@@ -423,6 +427,45 @@ fn wire_fetch_reverse_swap_fees_impl(port_: MessagePort) {
             mode: FfiCallMode::Normal,
         },
         move || move |task_callback| fetch_reverse_swap_fees(),
+    )
+}
+fn wire_in_progress_reverse_swaps_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "in_progress_reverse_swaps",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || move |task_callback| in_progress_reverse_swaps(),
+    )
+}
+fn wire_send_onchain_impl(
+    port_: MessagePort,
+    amount_sat: impl Wire2Api<u64> + UnwindSafe,
+    onchain_recipient_address: impl Wire2Api<String> + UnwindSafe,
+    pair_hash: impl Wire2Api<String> + UnwindSafe,
+    sat_per_vbyte: impl Wire2Api<u64> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "send_onchain",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_amount_sat = amount_sat.wire2api();
+            let api_onchain_recipient_address = onchain_recipient_address.wire2api();
+            let api_pair_hash = pair_hash.wire2api();
+            let api_sat_per_vbyte = sat_per_vbyte.wire2api();
+            move |task_callback| {
+                send_onchain(
+                    api_amount_sat,
+                    api_onchain_recipient_address,
+                    api_pair_hash,
+                    api_sat_per_vbyte,
+                )
+            }
+        },
     )
 }
 fn wire_execute_command_impl(port_: MessagePort, command: impl Wire2Api<String> + UnwindSafe) {
@@ -569,6 +612,22 @@ fn wire_default_config_impl(
         },
     )
 }
+fn wire_buy_bitcoin_impl(
+    port_: MessagePort,
+    provider: impl Wire2Api<BuyBitcoinProvider> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "buy_bitcoin",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_provider = provider.wire2api();
+            move |task_callback| buy_bitcoin(api_provider)
+        },
+    )
+}
 // Section: wrapper structs
 
 // Section: static checks
@@ -589,6 +648,15 @@ where
 {
     fn wire2api(self) -> Option<T> {
         (!self.is_null()).then(|| self.wire2api())
+    }
+}
+
+impl Wire2Api<BuyBitcoinProvider> for i32 {
+    fn wire2api(self) -> BuyBitcoinProvider {
+        match self {
+            0 => BuyBitcoinProvider::Moonpay,
+            _ => unreachable!("Invalid variant for BuyBitcoinProvider: {}", self),
+        }
     }
 }
 
@@ -670,6 +738,13 @@ impl support::IntoDart for AesSuccessActionDataDecrypted {
 }
 impl support::IntoDartExceptPrimitive for AesSuccessActionDataDecrypted {}
 
+impl support::IntoDart for BackupFailedData {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.error.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for BackupFailedData {}
+
 impl support::IntoDart for BitcoinAddressData {
     fn into_dart(self) -> support::DartAbi {
         vec![
@@ -692,6 +767,9 @@ impl support::IntoDart for BreezEvent {
             Self::Synced => vec![2.into_dart()],
             Self::PaymentSucceed { details } => vec![3.into_dart(), details.into_dart()],
             Self::PaymentFailed { details } => vec![4.into_dart(), details.into_dart()],
+            Self::BackupStarted => vec![5.into_dart()],
+            Self::BackupSucceeded => vec![6.into_dart()],
+            Self::BackupFailed { details } => vec![7.into_dart(), details.into_dart()],
         }
         .into_dart()
     }
@@ -1058,6 +1136,19 @@ impl support::IntoDart for RecommendedFees {
 }
 impl support::IntoDartExceptPrimitive for RecommendedFees {}
 
+impl support::IntoDart for ReverseSwapInfo {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.id.into_dart(),
+            self.claim_pubkey.into_dart(),
+            self.onchain_amount_sat.into_dart(),
+            self.status.into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for ReverseSwapInfo {}
+
 impl support::IntoDart for ReverseSwapPairInfo {
     fn into_dart(self) -> support::DartAbi {
         vec![
@@ -1073,6 +1164,19 @@ impl support::IntoDart for ReverseSwapPairInfo {
 }
 impl support::IntoDartExceptPrimitive for ReverseSwapPairInfo {}
 
+impl support::IntoDart for ReverseSwapStatus {
+    fn into_dart(self) -> support::DartAbi {
+        match self {
+            Self::Initial => 0,
+            Self::InProgress => 1,
+            Self::Cancelled => 2,
+            Self::CompletedSeen => 3,
+            Self::CompletedConfirmed => 4,
+        }
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for ReverseSwapStatus {}
 impl support::IntoDart for RouteHint {
     fn into_dart(self) -> support::DartAbi {
         vec![self.hops.into_dart()].into_dart()

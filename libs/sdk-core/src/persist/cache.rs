@@ -41,6 +41,19 @@ impl SqliteStorage {
             None => None,
         })
     }
+
+    pub fn set_last_backup_time(&self, t: u64) -> Result<()> {
+        self.update_cached_item("last_backup_time".to_string(), t.to_string())?;
+        Ok(())
+    }
+
+    pub fn get_last_backup_time(&self) -> Result<Option<u64>> {
+        let state_str = self.get_cached_item("last_backup_time".to_string())?;
+        Ok(match state_str {
+            Some(str) => str.as_str().parse::<u64>().ok(),
+            None => None,
+        })
+    }
 }
 
 #[test]

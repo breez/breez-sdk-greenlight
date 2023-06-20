@@ -1,30 +1,29 @@
 //! Bindings for the Dart integration
 
+use std::future::Future;
+use std::sync::Arc;
+
+use crate::breez_services::BreezServices;
 use crate::breez_services::{self, BreezEvent, EventListener};
 use crate::chain::RecommendedFees;
 use crate::fiat::{FiatCurrency, Rate};
+use crate::input_parser::InputType;
 use crate::input_parser::{LnUrlAuthRequestData, LnUrlPayRequestData, LnUrlWithdrawRequestData};
+use crate::invoice::LNInvoice;
+use crate::invoice::{self};
+use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::lsp::LspInformation;
 use crate::models::LogEntry;
-use crate::{LnUrlCallbackStatus, ReverseSwapPairInfo};
-use anyhow::{anyhow, Result};
-use flutter_rust_bridge::StreamSink;
-use log::{Level, LevelFilter, Metadata, Record};
-use once_cell::sync::{Lazy, OnceCell};
-use std::future::Future;
-use std::sync::Arc;
-use tokio::sync::mpsc;
-
-use crate::breez_services::BreezServices;
-use crate::invoice::LNInvoice;
 use crate::models::{
     Config, EnvironmentType, GreenlightCredentials, Network, NodeState, Payment, PaymentTypeFilter,
     SwapInfo,
 };
-
-use crate::input_parser::InputType;
-use crate::invoice::{self};
-use crate::lnurl::pay::model::LnUrlPayResult;
+use crate::{BuyBitcoinProvider, LnUrlCallbackStatus, ReverseSwapInfo, ReverseSwapPairInfo};
+use anyhow::{anyhow, Result};
+use flutter_rust_bridge::StreamSink;
+use log::{Level, LevelFilter, Metadata, Record};
+use once_cell::sync::{Lazy, OnceCell};
+use tokio::sync::mpsc;
 
 static BREEZ_SERVICES_INSTANCE: OnceCell<Arc<BreezServices>> = OnceCell::new();
 static BREEZ_SERVICES_SHUTDOWN: OnceCell<mpsc::Sender<()>> = OnceCell::new();
@@ -258,10 +257,10 @@ pub fn close_lsp_channels() -> Result<()> {
 }
 
 /// See [BreezServices::sweep]
-pub fn sweep(to_address: String, fee_rate_sats_per_byte: u64) -> Result<()> {
+pub fn sweep(to_address: String, fee_rate_sats_per_vbyte: u64) -> Result<()> {
     block_on(async {
         get_breez_services()?
-            .sweep(to_address, fee_rate_sats_per_byte)
+            .sweep(to_address, fee_rate_sats_per_vbyte)
             .await
     })
 }
@@ -270,6 +269,7 @@ pub fn sweep(to_address: String, fee_rate_sats_per_byte: u64) -> Result<()> {
 pub fn receive_onchain() -> Result<SwapInfo> {
     block_on(async { get_breez_services()?.receive_onchain().await })
 }
+
 /// See [BreezServices::in_progress_swap]
 pub fn in_progress_swap() -> Result<Option<SwapInfo>> {
     block_on(async { get_breez_services()?.in_progress_swap().await })
@@ -292,6 +292,30 @@ pub fn refund(swap_address: String, to_address: String, sat_per_vbyte: u32) -> R
 /// See [BreezServices::fetch_reverse_swap_fees]
 pub fn fetch_reverse_swap_fees() -> Result<ReverseSwapPairInfo> {
     block_on(async { get_breez_services()?.fetch_reverse_swap_fees().await })
+}
+
+/// See [BreezServices::in_progress_reverse_swaps]
+pub fn in_progress_reverse_swaps() -> Result<Vec<ReverseSwapInfo>> {
+    block_on(async { get_breez_services()?.in_progress_reverse_swaps().await })
+}
+
+/// See [BreezServices::send_onchain]
+pub fn send_onchain(
+    amount_sat: u64,
+    onchain_recipient_address: String,
+    pair_hash: String,
+    sat_per_vbyte: u64,
+) -> Result<ReverseSwapInfo> {
+    block_on(async {
+        get_breez_services()?
+            .send_onchain(
+                amount_sat,
+                onchain_recipient_address,
+                pair_hash,
+                sat_per_vbyte,
+            )
+            .await
+    })
 }
 
 /// See [BreezServices::execute_dev_command]
@@ -373,4 +397,9 @@ pub fn recommended_fees() -> Result<RecommendedFees> {
 /// See [BreezServices::default_config]
 pub fn default_config(config_type: EnvironmentType) -> Config {
     BreezServices::default_config(config_type)
+}
+
+/// See [BreezServices::buy_bitcoin]
+pub fn buy_bitcoin(provider: BuyBitcoinProvider) -> Result<String> {
+    block_on(async { get_breez_services()?.buy_bitcoin(provider).await })
 }

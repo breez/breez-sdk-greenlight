@@ -4,15 +4,17 @@ use anyhow::Result;
 
 use breez_sdk_core::{
     mnemonic_to_seed as sdk_mnemonic_to_seed, parse as sdk_parse_input,
-    parse_invoice as sdk_parse_invoice, AesSuccessActionDataDecrypted, BitcoinAddressData,
-    BreezEvent, BreezServices, ChannelState, ClosedChannelPaymentDetails, Config, CurrencyInfo,
-    EnvironmentType, EventListener, FeeratePreset, FiatCurrency, GreenlightCredentials, InputType,
-    InvoicePaidDetails, LNInvoice, LnPaymentDetails, LnUrlAuthRequestData, LnUrlCallbackStatus,
-    LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult, LnUrlWithdrawRequestData, LocaleOverrides,
-    LocalizedName, LogEntry, LspInformation, MessageSuccessActionData, MetadataItem, Network,
-    NodeState, Payment, PaymentDetails, PaymentFailedData, PaymentType, PaymentTypeFilter, Rate,
-    RecommendedFees, ReverseSwapPairInfo, RouteHint, RouteHintHop, SuccessActionProcessed,
-    SwapInfo, SwapStatus, Symbol, UnspentTransactionOutput, UrlSuccessActionData,
+    parse_invoice as sdk_parse_invoice, AesSuccessActionDataDecrypted, BackupFailedData,
+    BackupStatus, BitcoinAddressData, BreezEvent, BreezServices, BuyBitcoinProvider, ChannelState,
+    ClosedChannelPaymentDetails, Config, CurrencyInfo, EnvironmentType, EventListener,
+    FeeratePreset, FiatCurrency, GreenlightCredentials, InputType, InvoicePaidDetails, LNInvoice,
+    LnPaymentDetails, LnUrlAuthRequestData, LnUrlCallbackStatus, LnUrlErrorData,
+    LnUrlPayRequestData, LnUrlPayResult, LnUrlWithdrawRequestData, LocaleOverrides, LocalizedName,
+    LogEntry, LspInformation, MessageSuccessActionData, MetadataItem, Network, NodeState, Payment,
+    PaymentDetails, PaymentFailedData, PaymentType, PaymentTypeFilter, Rate, RecommendedFees,
+    ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop,
+    SuccessActionProcessed, SwapInfo, SwapStatus, Symbol, UnspentTransactionOutput,
+    UrlSuccessActionData,
 };
 use log::LevelFilter;
 use log::Metadata;
@@ -180,6 +182,14 @@ impl BlockingBreezServices {
         self.breez_services.node_info().map_err(|e| e.into())
     }
 
+    pub fn backup_status(&self) -> Result<BackupStatus, SDKError> {
+        self.breez_services.backup_status().map_err(|e| e.into())
+    }
+
+    pub fn start_backup(&self) -> Result<(), SDKError> {
+        self.breez_services.start_backup().map_err(|e| e.into())
+    }
+
     pub fn list_payments(
         &self,
         filter: PaymentTypeFilter,
@@ -227,10 +237,10 @@ impl BlockingBreezServices {
             .map_err(|e| e.into())
     }
 
-    pub fn sweep(&self, to_address: String, fee_rate_sats_per_byte: u64) -> Result<(), SDKError> {
+    pub fn sweep(&self, to_address: String, fee_rate_sats_per_vbyte: u64) -> Result<(), SDKError> {
         rt().block_on(
             self.breez_services
-                .sweep(to_address, fee_rate_sats_per_byte),
+                .sweep(to_address, fee_rate_sats_per_vbyte),
         )
         .map_err(|e| e.into())
     }
@@ -308,6 +318,27 @@ impl BlockingBreezServices {
             .map_err(|e| e.into())
     }
 
+    pub fn in_progress_reverse_swaps(&self) -> Result<Vec<ReverseSwapInfo>, SDKError> {
+        rt().block_on(self.breez_services.in_progress_reverse_swaps())
+            .map_err(|e| e.into())
+    }
+
+    pub fn send_onchain(
+        &self,
+        amount_sat: u64,
+        onchain_recipient_address: String,
+        pair_hash: String,
+        sat_per_vbyte: u64,
+    ) -> Result<ReverseSwapInfo, SDKError> {
+        rt().block_on(self.breez_services.send_onchain(
+            amount_sat,
+            onchain_recipient_address,
+            pair_hash,
+            sat_per_vbyte,
+        ))
+        .map_err(|e| e.into())
+    }
+
     pub fn execute_dev_command(&self, command: String) -> Result<String> {
         rt().block_on(self.breez_services.execute_dev_command(command))
     }
@@ -319,6 +350,11 @@ impl BlockingBreezServices {
 
     pub fn recommended_fees(&self) -> Result<RecommendedFees, SDKError> {
         rt().block_on(self.breez_services.recommended_fees())
+            .map_err(|e| e.into())
+    }
+
+    pub fn buy_bitcoin(&self, provider: BuyBitcoinProvider) -> Result<String, SDKError> {
+        rt().block_on(self.breez_services.buy_bitcoin(provider))
             .map_err(|e| e.into())
     }
 }
