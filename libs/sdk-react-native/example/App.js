@@ -15,7 +15,9 @@ import {
     defaultConfig,
     EnvironmentType,
     fetchFiatRates,
+    fetchReverseSwapFees,
     initServices,
+    inProgressReverseSwaps,
     listFiatCurrencies,
     mnemonicToSeed,
     Network,
@@ -67,7 +69,7 @@ const App = () => {
             let seed = null
             let mnemonic = await getSecureItem(MNEMONIC_STORE)
 
-            if (!mnemonic) {
+            if (mnemonic == null) {
                 mnemonic = generateMnemonic(256)
                 setSecureItem(MNEMONIC_STORE, mnemonic)
 
@@ -115,6 +117,12 @@ const App = () => {
 
                 const fiatRates = await fetchFiatRates()
                 addLine("fetchFiatRates", JSON.stringify(fiatRates))
+
+                const revSwapFees = await fetchReverseSwapFees()
+                addLine("revSwapFees", JSON.stringify(revSwapFees))
+
+                const inProgressRevSwaps = await inProgressReverseSwaps()
+                addLine("inProgressRevSwaps", JSON.stringify(inProgressRevSwaps))
 
                 const buyBitcoinResult = await buyBitcoin(BuyBitcoinProvider.MOONPAY)
                 addLine("buyBitcoin", JSON.stringify(buyBitcoinResult))

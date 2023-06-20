@@ -434,6 +434,39 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
+    fun fetchReverseSwapFees(promise: Promise) {
+        try {
+            var reverseSwapFees = getBreezServices().fetchReverseSwapFees()
+            promise.resolve(readableMapOf(reverseSwapFees))
+        } catch (e: SdkException) {
+            e.printStackTrace()
+            promise.reject(TAG, e.message ?: "Error calling fetchReverseSwapFees", e)
+        }
+    }
+
+    @ReactMethod
+    fun inProgressReverseSwaps(promise: Promise) {
+        try {
+            var inProgressReverseSwaps = getBreezServices().inProgressReverseSwaps()
+            promise.resolve(readableArrayOf(inProgressReverseSwaps))
+        } catch (e: SdkException) {
+            e.printStackTrace()
+            promise.reject(TAG, e.message ?: "Error calling inProgressReverseSwaps", e)
+        }
+    }
+
+    @ReactMethod
+    fun sendOnchain(amountSat: Double, onchainRecipientAddress: String, pairHash: String, satPerVbyte: Double, promise: Promise) {
+        try {
+            var response = getBreezServices().sendOnchain(amountSat.toULong(), onchainRecipientAddress, pairHash, satPerVbyte.toULong())
+            promise.resolve(readableMapOf(response))
+        } catch (e: SdkException) {
+            e.printStackTrace()
+            promise.reject(TAG, e.message ?: "Error calling sendOnchain", e)
+        }
+    }
+
+    @ReactMethod
     fun executeDevCommand(command: String, promise: Promise) {
         try {
             var result = getBreezServices().executeDevCommand(command)

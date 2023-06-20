@@ -87,6 +87,14 @@ export enum BuyBitcoinProvider {
     MOONPAY = "moonpay"
 }
 
+export enum ReverseSwapStatus {
+    INITIAL = "initial",
+    IN_PROGRESS = "in_progress",
+    CANCELLED = "cancelled",
+    COMPLETED_SEEN = "completed_seen",
+    COMPLETED_CONFIRMED = "completed_confirmed"
+}
+
 export type AesSuccessActionDataDecrypted = {
     type: string
     description: string
@@ -340,6 +348,22 @@ export type SwapInfo = {
     lastRedeemError?: string
 }
 
+export type ReverseSwapPairInfo = {
+    min: number
+    max: number
+    feesHash: string
+    feesPercentage: number
+    feesLockup: number
+    feesClaim: number
+}
+
+export type ReverseSwapInfo = {
+    id: string
+    claimPubkey: string
+    onchainAmountSat: number
+    status: ReverseSwapStatus
+}
+
 export type Symbol = {
     grapheme?: string
     template?: string
@@ -577,6 +601,21 @@ export const listRefundables = async (): Promise<SwapInfo[]> => {
 export const refund = async (swapAddress: string, toAddress: string, satPerVbyte: number): Promise<string> => {
     const response = await BreezSDK.refund(swapAddress, toAddress, satPerVbyte)
     return response
+}
+
+export const fetchReverseSwapFees = async (): Promise<ReverseSwapPairInfo> => {
+    const response = await BreezSDK.fetchReverseSwapFees()
+    return response as ReverseSwapPairInfo
+}
+
+export const inProgressReverseSwaps = async (): Promise<ReverseSwapInfo[]> => {
+    const response = await BreezSDK.inProgressReverseSwaps()
+    return response as ReverseSwapInfo[]
+}
+
+export const sendOnchain = async (amountSat: number, onchainRecipientAddress: string, pairHash: string, satPerVbyte: number): Promise<ReverseSwapInfo> => {
+    const response = await BreezSDK.sendOnchain(amountSat, onchainRecipientAddress, pairHash, satPerVbyte)
+    return response as ReverseSwapInfo
 }
 
 export const executeDevCommand = async (command: string): Promise<string> => {
