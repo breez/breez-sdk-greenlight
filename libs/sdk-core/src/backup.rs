@@ -73,14 +73,14 @@ impl BackupWatcher {
                             Ok(HookEvent::Insert{table}) => {
                              if table == "sync_requests"{
                               if let Err(e) = cloned_worker.sync().await {
-                               println!("Sync worker returned with error {}", e);
+                               error!("Sync worker returned with error {e}");
                               }
                              }
                             }
                             // If we are lagging we want to trigger sync
                             Err(RecvError::Lagged(_)) => {
                              if let Err(e) = cloned_worker.sync().await {
-                              println!("Sync worker returned with error {}", e);
+                              error!("Sync worker returned with error {e}");
                              }
                             }
                             // If the channel is closed we exit
