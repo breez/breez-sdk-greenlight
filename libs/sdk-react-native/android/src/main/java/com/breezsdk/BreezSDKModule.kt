@@ -499,4 +499,26 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.reject(TAG, e.message ?: "Error calling buyBitcoin", e)
         }
     }
+
+    @ReactMethod
+    fun startBackup(promise: Promise) {
+        try {
+            getBreezServices().startBackup()
+            promise.resolve(readableMapOf("status" to "ok"))
+        } catch (e: SdkException) {
+            e.printStackTrace()
+            promise.reject(TAG, e.message ?: "Error calling startBackup", e)
+        }
+    }
+
+    @ReactMethod
+    fun backupStatus(promise: Promise) {
+        try {
+            var status = getBreezServices().backupStatus()
+            promise.resolve(readableMapOf(status))
+        } catch (e: SdkException) {
+            e.printStackTrace()
+            promise.reject(TAG, e.message ?: "Error calling backupStatus", e)
+        }
+    }
 }

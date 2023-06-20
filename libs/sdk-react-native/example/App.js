@@ -24,7 +24,9 @@ import {
     recoverNode,
     registerNode,
     buyBitcoin,
-    start
+    start,
+    startBackup,
+    backupStatus
 } from "@breeztech/react-native-breez-sdk"
 import BuildConfig from "react-native-build-config"
 import { generateMnemonic } from "@dreson4/react-native-quick-bip39"
@@ -54,7 +56,9 @@ const App = () => {
     }
 
     const logHandler = (l) => {
+      if (l.level != "TRACE") {
         console.log(`[${l.level}]: ${l.line}`)
+      }
     }
 
     const eventHandler = (type, data) => {
@@ -126,6 +130,9 @@ const App = () => {
 
                 const buyBitcoinResult = await buyBitcoin(BuyBitcoinProvider.MOONPAY)
                 addLine("buyBitcoin", JSON.stringify(buyBitcoinResult))
+                                                
+                await startBackup();
+                addLine("backupStatus", JSON.stringify( await backupStatus()));                
             }
         }
         asyncFn()

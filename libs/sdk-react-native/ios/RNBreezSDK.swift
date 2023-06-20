@@ -536,4 +536,28 @@ class RNBreezSDK: RCTEventEmitter {
             reject(RNBreezSDK.TAG, "Error calling buyBitcoin", err)
         }
     }
+    
+    @objc(startBackup:rejecter:)
+    func startBackup(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        do {
+            try getBreezServices().startBackup()
+            resolve(["status": "ok"])
+        } catch SdkError.Error(let message) {
+            reject(RNBreezSDK.TAG, message, nil)
+        } catch let err {
+            reject(RNBreezSDK.TAG, "Error calling startBackup", err)
+        }
+    }
+    
+    @objc(backupStatus:rejecter:)
+    func backupStatus(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        do {
+            let status = try getBreezServices().backupStatus()
+            resolve(BreezSDKMapper.dictionaryOf(backupStatus: status))
+        } catch SdkError.Error(let message) {
+            reject(RNBreezSDK.TAG, message, nil)
+        } catch let err {
+            reject(RNBreezSDK.TAG, "Error calling backupStatus", err)
+        }
+    }
 }
