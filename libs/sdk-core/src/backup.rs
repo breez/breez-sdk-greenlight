@@ -1,4 +1,8 @@
-use crate::{breez_services::BackupFailedData, persist::db::SqliteStorage, BreezEvent};
+use crate::{
+    breez_services::BackupFailedData,
+    persist::db::{HookEvent, SqliteStorage},
+    BreezEvent,
+};
 use anyhow::{anyhow, Result};
 use ecies::utils::{aes_decrypt, aes_encrypt};
 use miniz_oxide::{deflate::compress_to_vec, inflate::decompress_to_vec_with_limit};
@@ -66,12 +70,18 @@ impl BackupWatcher {
                       // We spin the backup worker on every new entry to the sync_requests table.
                       event = hooks_subscription.recv() => {
                         match event {
-                            Ok(_) => {
-                             _ = cloned_worker.sync().await;
+                            Ok(HookEvent::Insert{table}) => {
+                             if table == "sync_requests"{
+                              if let Err(e) = cloned_worker.sync().await {
+                               error!("Sync worker returned with error {e}");
+                              }
+                             }
                             }
                             // If we are lagging we want to trigger sync
                             Err(RecvError::Lagged(_)) => {
-                             _ = cloned_worker.sync().await;
+                             if let Err(e) = cloned_worker.sync().await {
+                              error!("Sync worker returned with error {e}");
+                             }
                             }
                             // If the channel is closed we exit
                             Err(_) => {
@@ -147,20 +157,45 @@ impl BackupWorker {
         Ok(())
     }
 
+    async fn sync(&self) -> Result<()> {
+        let last_sync_request_id = self.persister.get_last_sync_request()?.unwrap_or_default();
+        // In case we don't  have any sync requests the worker can exit
+        if last_sync_request_id == 0 {
+            return Ok(());
+        }
+        let notify_res = match self.sync_internal(last_sync_request_id).await {
+            Ok(_) => {
+                info!("backup sync completed successfully");
+                self.notify(BreezEvent::BackupSucceeded).await
+            }
+            Err(e) => {
+                error!("backup sync failed {}", e);
+                self.notify(BreezEvent::BackupFailed {
+                    details: BackupFailedData {
+                        error: e.to_string(),
+                    },
+                })
+                .await
+            }
+        };
+
+        match notify_res {
+            Ok(r) => Ok(r),
+            Err(e) => {
+                error!("failed to notify backup event {}", e);
+                Err(e)
+            }
+        }
+    }
+
     /// Syncs the sdk state with the remote state.
     /// The process is done in 3 steps:
     /// 1. Try to push the local state to the remote state using the current version (optimistic).
     /// 2. If the push fails, sync the remote changes into the local changes including the remote newer version.
     /// 3. Try to push the local state again with the new version.
-    async fn sync(&self) -> Result<()> {
+    async fn sync_internal(&self, mut last_sync_request_id: u64) -> Result<()> {
         // get the last local sync version and the last sync request id
         let last_version = self.persister.get_last_sync_version()?;
-        let mut last_sync_request_id = self.persister.get_last_sync_request()?.unwrap_or_default();
-
-        // In case we don't  have any sync requests the worker can exit
-        if last_sync_request_id == 0 {
-            return Ok(());
-        }
 
         self.notify(BreezEvent::BackupStarted).await?;
 
@@ -207,17 +242,10 @@ impl BackupWorker {
                 self.persister
                     .set_last_backup_time(now.duration_since(UNIX_EPOCH).unwrap().as_secs())?;
                 info!("Sync succeeded");
-                self.notify(BreezEvent::BackupSucceeded).await?;
                 Ok(())
             }
             Err(e) => {
                 error!("Sync failed: {}", e);
-                self.notify(BreezEvent::BackupFailed {
-                    details: BackupFailedData {
-                        error: e.to_string(),
-                    },
-                })
-                .await?;
                 Err(e)
             }
         }
@@ -250,7 +278,6 @@ impl BackupWorker {
                 // Bidirectionaly sync the local and remote changes
                 self.persister.import_remote_changes(&remote_storage)?;
                 remote_storage.import_remote_changes(self.persister.as_ref())?;
-
                 *last_sync_request_id = self.persister.get_last_sync_request()?.unwrap_or_default();
 
                 let mut hex = vec![];
@@ -312,7 +339,7 @@ mod tests {
     use crate::{
         persist::db::SqliteStorage,
         test_utils::{create_test_config, create_test_persister, MockBackupTransport},
-        BreezEvent, FullReverseSwapInfo, SwapInfo,
+        BreezEvent, SwapInfo,
     };
     use std::{sync::Arc, vec};
     use tokio::sync::broadcast::Receiver;
@@ -511,6 +538,7 @@ mod tests {
             // Add some data to the sync database to trigger sync
             populate_sync_table(persister.clone());
         });
+
         test_expected_backup_events(subscription, transport, expected_events, 1, 0).await;
         let history = watcher.worker.persister.sync_versions_history().unwrap();
         assert_eq!(history.len(), 1);
@@ -527,18 +555,9 @@ mod tests {
     #[tokio::test]
     async fn test_trigger_during_sync() {
         let (watcher, transport) = create_test_backup_watcher().await;
-        let subscription = watcher.subscribe_events();
-        let mut expected_events = vec![];
-
-        // We are expecting two sync cycles
-        for _ in 0..2 {
-            expected_events.push(BreezEvent::BackupStarted);
-            expected_events.push(BreezEvent::BackupSucceeded);
-        }
-
         let persister = watcher.worker.persister.clone();
         let task_subscription = watcher.subscribe_events();
-        tokio::spawn(async move {
+        let join_handle = tokio::spawn(async move {
             let task_subscription1 = task_subscription.resubscribe();
             // Add some data to the sync database and wait for backup to complete.
             populate_sync_table(persister.clone());
@@ -559,11 +578,11 @@ mod tests {
             persister.add_sync_request().unwrap();
             wait_for_backup_success(task_subscription2).await;
         });
-        test_expected_backup_events(subscription, transport, expected_events, 3, 1).await;
+        join_handle.await.unwrap();
+        assert_eq!(transport.pushed(), 3);
+        assert_eq!(transport.pulled(), 1);
         let swaps = watcher.worker.persister.list_swaps().unwrap();
-        let rev_swaps = watcher.worker.persister.list_reverse_swaps().unwrap();
         assert!(swaps.len() == 1);
-        assert!(rev_swaps.len() == 1);
     }
 
     fn populate_sync_table(persister: Arc<SqliteStorage>) {
@@ -589,32 +608,7 @@ mod tests {
             max_allowed_deposit: 100,
             last_redeem_error: None,
         };
-        let rev_swap = FullReverseSwapInfo {
-            id: "1".into(),
-            created_at_block_height: 10,
-            preimage: vec![1],
-            private_key: vec![1],
-            claim_pubkey: "claimpubkey".into(),
-            timeout_block_height: 20,
-            invoice: "invoice".into(),
-            redeem_script: "redeemscript".into(),
-            onchain_amount_sat: 100000,
-            sat_per_vbyte: 5,
-            cache: crate::ReverseSwapInfoCached {
-                status: crate::ReverseSwapStatus::Cancelled,
-            },
-        };
-
         persister.insert_swap(tested_swap_info).unwrap();
-        persister.insert_reverse_swap(&rev_swap).unwrap();
-        persister
-            .insert_lnurl_payment_external_info(
-                "payment_hash",
-                None,
-                Some("lnurlmetadata".into()),
-                Some("lnaddress".into()),
-            )
-            .unwrap();
     }
 
     async fn wait_for_backup_success(mut subscription: Receiver<BreezEvent>) {

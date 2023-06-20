@@ -382,7 +382,7 @@ dependencies = [
 [[package]]
 name = "bolt-derive"
 version = "0.1.0"
-source = "git+https://gitlab.com/cdecker/vls?branch=snapshot-20230616#0d787c07a7c7049624761498af9364c46ba137b4"
+source = "git+https://gitlab.com/cdecker/vls?tag=snapshot-20230620#3a016a06ca61edbaa7fc1350d5bde2ba0b9417d6"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1088,7 +1088,7 @@ checksum = "ad0a93d233ebf96623465aad4046a8d3aa4da22d4f4beba5388838c8a434bbb4"
 [[package]]
 name = "gl-client"
 version = "0.1.8"
-source = "git+https://github.com/Blockstream/greenlight.git?rev=0b1ffd9#0b1ffd98907eabb5e6dc6ce142b22f9728f60e68"
+source = "git+https://github.com/Blockstream/greenlight.git?rev=bd08d4c#bd08d4cc2f1e86c0563309d271b1ecafa2d56ca3"
 dependencies = [
  "anyhow",
  "base64 0.21.2",
@@ -3108,8 +3108,8 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 
 [[package]]
 name = "vls-core"
-version = "0.9.0"
-source = "git+https://gitlab.com/cdecker/vls?branch=snapshot-20230616#0d787c07a7c7049624761498af9364c46ba137b4"
+version = "0.9.1-rc.2"
+source = "git+https://gitlab.com/cdecker/vls?tag=snapshot-20230620#3a016a06ca61edbaa7fc1350d5bde2ba0b9417d6"
 dependencies = [
  "anyhow",
  "backtrace",
@@ -3132,8 +3132,8 @@ dependencies = [
 
 [[package]]
 name = "vls-persist"
-version = "0.9.0"
-source = "git+https://gitlab.com/cdecker/vls?branch=snapshot-20230616#0d787c07a7c7049624761498af9364c46ba137b4"
+version = "0.9.1-rc.2"
+source = "git+https://gitlab.com/cdecker/vls?tag=snapshot-20230620#3a016a06ca61edbaa7fc1350d5bde2ba0b9417d6"
 dependencies = [
  "hex",
  "log",
@@ -3145,8 +3145,8 @@ dependencies = [
 
 [[package]]
 name = "vls-protocol"
-version = "0.9.0"
-source = "git+https://gitlab.com/cdecker/vls?branch=snapshot-20230616#0d787c07a7c7049624761498af9364c46ba137b4"
+version = "0.9.1-rc.2"
+source = "git+https://gitlab.com/cdecker/vls?tag=snapshot-20230620#3a016a06ca61edbaa7fc1350d5bde2ba0b9417d6"
 dependencies = [
  "as-any",
  "bolt-derive",
@@ -3159,8 +3159,8 @@ dependencies = [
 
 [[package]]
 name = "vls-protocol-signer"
-version = "0.9.0"
-source = "git+https://gitlab.com/cdecker/vls?branch=snapshot-20230616#0d787c07a7c7049624761498af9364c46ba137b4"
+version = "0.9.1-rc.2"
+source = "git+https://gitlab.com/cdecker/vls?tag=snapshot-20230620#3a016a06ca61edbaa7fc1350d5bde2ba0b9417d6"
 dependencies = [
  "bit-vec",
  "log",

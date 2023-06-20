@@ -416,5 +416,13 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
          INSERT INTO sync_requests(changed_table) VALUES('payments_external_info');
         END;
         ",       
+        "
+        DROP TABLE sync_versions;
+        CREATE TABLE IF NOT EXISTS sync_versions (
+         last_version INTEGER NOT NULL,
+         data BLOB NOT NULL,
+         created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        ) STRICT;
+       ",
     ]
 }
