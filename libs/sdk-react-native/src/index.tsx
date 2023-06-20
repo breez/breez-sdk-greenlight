@@ -29,7 +29,10 @@ export enum EventType {
     NEW_BLOCK = "newBlock",
     PAYMENT_SUCCEED = "paymentSucceed",
     PAYMENT_FAILED = "paymentFailed",
-    SYNCED = "synced"
+    SYNCED = "synced",
+    BACKUP_STARTED = "backupStarted",
+    BACKUP_SUCCEEDED = "backupSucceeded",
+    BACKUP_FAILED = "backupFailed"    
 }
 
 export enum InputType {
@@ -136,7 +139,7 @@ export type CurrencyInfo = {
     localeOverrides?: LocaleOverrides[]
 }
 
-export type EventData = InvoicePaidDetails | Payment | number | PaymentFailedData
+export type EventData = InvoicePaidDetails | Payment | number | PaymentFailedData | BackupFailedData
 
 export type EventFn = (type: EventType, data?: EventData) => void
 
@@ -164,6 +167,10 @@ export type PaymentFailedData = {
     error: string
     invoice?: LnInvoice
     nodeId: string
+}
+
+export type BackupFailedData = {
+    error: string
 }
 
 export type LnInvoice = {
@@ -388,6 +395,11 @@ export type UnspentTransactionOutput = {
     reservedToBlock: number
 }
 
+export type BackupStatus = {
+    backedUp: boolean
+    lastBackupTime: number   
+}
+
 const processEvent = (eventFn: EventFn) => {
     return (event: any) => {
         switch (event.type) {
@@ -413,6 +425,12 @@ const processEvent = (eventFn: EventFn) => {
                 return eventFn(EventType.PAYMENT_SUCCEED, payment)
             case EventType.SYNCED:
                 return eventFn(EventType.SYNCED)
+            case EventType.BACKUP_STARTED:
+                return eventFn(EventType.BACKUP_STARTED)
+            case EventType.BACKUP_SUCCEEDED:
+                return eventFn(EventType.BACKUP_SUCCEEDED)
+            case EventType.BACKUP_FAILED:
+                return eventFn(EventType.BACKUP_FAILED, event.data as BackupFailedData)
         }
     }
 }
@@ -631,4 +649,13 @@ export const recommendedFees = async (): Promise<RecommendedFees> => {
 export const buyBitcoin = async (provider: BuyBitcoinProvider): Promise<string> => {
     const response = await BreezSDK.buyBitcoin(provider)
     return response
+}
+
+export const startBackup = async (): Promise<void> => {
+ await BreezSDK.startBackup() 
+}
+
+export const backupStatus = async (): Promise<BackupStatus> => {
+ const response = await BreezSDK.backupStatus()
+ return response
 }

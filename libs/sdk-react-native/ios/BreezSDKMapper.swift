@@ -152,6 +152,13 @@ class BreezSDKMapper {
         }
     }
     
+    static func dictionaryOf(backupStatus: BackupStatus) -> [String: Any] {
+        return [
+            "backedUp": backupStatus.backedUp,
+            "lastBackupTime": backupStatus.lastBackupTime,
+        ]
+    }
+    
     static func dictionaryOf(aesSuccessActionDataDecrypted: AesSuccessActionDataDecrypted) -> [String: Any] {
         return [
             "type": "aes",

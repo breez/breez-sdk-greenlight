@@ -264,9 +264,16 @@ fun readableMapOf(invoicePaidDetails: InvoicePaidDetails): ReadableMap {
     )
 }
 
-fun readableMapOf(backupFailedDetails: BackupFailedData): ReadableMap {
+fun readableMapOf(backupStatus: BackupStatus): ReadableMap {
     return readableMapOf(
-            "error" to backupFailedDetails.error            
+            "backedUp" to backupStatus.backedUp,
+            "lastBackupTime" to backupStatus.lastBackupTime
+    )
+}
+
+fun readableMapOf(backupFailedData: BackupFailedData): ReadableMap {
+    return readableMapOf(
+            "error" to backupFailedData.error
     )
 }
 
