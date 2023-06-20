@@ -397,7 +397,7 @@ export type UnspentTransactionOutput = {
 
 export type BackupStatus = {
     backedUp: boolean
-    lastBackupTime: number   
+    lastBackupTime?: number   
 }
 
 const processEvent = (eventFn: EventFn) => {

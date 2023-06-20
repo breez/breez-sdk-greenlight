@@ -152,7 +152,7 @@ class BreezSDKMapper {
         }
     }
     
-    static func dictionaryOf(backupStatus: BackupStatus) -> [String: Any] {
+    static func dictionaryOf(backupStatus: BackupStatus) -> [String: Any?] {
         return [
             "backedUp": backupStatus.backedUp,
             "lastBackupTime": backupStatus.lastBackupTime,
