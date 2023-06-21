@@ -55,7 +55,6 @@ impl SqliteStorage {
         let con = Connection::open(self.main_db_file.clone()).map_err(anyhow::Error::msg)?;
         let sql = "ATTACH DATABASE ? AS sync;";
         con.execute(sql, [self.sync_db_file.clone()])?;
-
         // We want to notify any subscribers with hook events.
         let events_publisher = self.events_publisher.clone();
         con.update_hook(Some(move |action, db: &str, t: &str, _| {
