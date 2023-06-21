@@ -43,8 +43,7 @@ jobs:
       - name: Fix file permissions
         shell: sh
         run: |
-          pwd
-          chmod -c -R +rX "./libs/target/doc" |
+          chmod -v -R +rX "./libs/target/doc" |
           while read line; do
               echo "::warning title=Invalid file permissions automatically fixed::$line"
           done
