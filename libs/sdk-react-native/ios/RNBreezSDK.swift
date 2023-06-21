@@ -1,5 +1,34 @@
 import Foundation
+#if canImport(BreezSDK)
 import BreezSDK
+#else
+enum BreezSDK {
+    static func `mnemonicToSeed`(`phrase`: String) throws -> [UInt8] {
+        return try breez_sdk.mnemonicToSeed(phrase: phrase)
+    }
+    static func `parseInput`(`s`: String) throws -> InputType {
+        return try breez_sdk.parseInput(s: s)
+    }
+    static func `parseInvoice`(`invoice`: String) throws -> LnInvoice {
+        return try breez_sdk.parseInvoice(invoice: invoice)
+    }
+    static func `registerNode`(`network`: Network, `seed`: [UInt8], `registerCredentials`: GreenlightCredentials?, `inviteCode`: String?) throws -> GreenlightCredentials {
+        return try breez_sdk.registerNode(network: network, seed: seed, registerCredentials: registerCredentials, inviteCode: inviteCode)
+    }
+    static func `recoverNode`(`network`: Network, `seed`: [UInt8]) throws -> GreenlightCredentials {
+        return try breez_sdk.recoverNode(network: network, seed: seed)
+    }
+    static func `setLogStream`(`logStream`: LogStream) throws {
+        try breez_sdk.setLogStream(logStream: logStream)
+    }
+    static func `defaultConfig`(`envType`: EnvironmentType) -> Config {
+        return breez_sdk.defaultConfig(envType: envType)
+    }
+    static func `initServices`(`config`: Config, `seed`: [UInt8], `creds`: GreenlightCredentials, `listener`: EventListener) throws -> BlockingBreezServices {
+        return try breez_sdk.initServices(config: config, seed: seed, creds: creds, listener: listener)
+    }
+}
+#endif
 
 @objc(RNBreezSDK)
 class RNBreezSDK: RCTEventEmitter {
