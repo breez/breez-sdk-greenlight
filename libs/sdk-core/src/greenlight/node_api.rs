@@ -3,12 +3,14 @@ use crate::models::{
     Config, GreenlightCredentials, LnPaymentDetails, Network, NodeAPI, NodeState, PaymentDetails,
     PaymentType, SyncResponse, UnspentTransactionOutput,
 };
+use crate::{Channel, ChannelState};
 
 use anyhow::{anyhow, Result};
 use bitcoin::bech32::{u5, ToBase32};
 use bitcoin::secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
 use gl_client::pb::amount::Unit;
 
+use gl_client::pb::cln::{ListclosedchannelsClosedchannels, ListclosedchannelsRequest};
 use gl_client::pb::{
     Amount, CloseChannelRequest, CloseChannelResponse, Invoice, InvoiceRequest, InvoiceStatus,
     OffChainPayment, PayStatus, WithdrawResponse,
@@ -210,6 +212,7 @@ impl NodeAPI for Greenlight {
     async fn pull_changed(&self, since_timestamp: i64) -> Result<SyncResponse> {
         info!("pull changed since {}", since_timestamp);
         let mut client = self.get_client().await?;
+        let mut node_client = self.get_node_client().await?;
 
         // list all peers
         let peers = client
@@ -252,6 +255,28 @@ impl NodeAPI for Greenlight {
             .iter()
             .filter(|c| c.state == *"CHANNELD_NORMAL")
             .collect();
+
+        // Fetch closed channels from greenlight
+        let closed_channels = node_client
+            .list_closed_channels(ListclosedchannelsRequest { id: None })
+            .await?
+            .into_inner();
+
+        let forgotten_closed_channels: Result<Vec<Channel>> = closed_channels
+            .closedchannels
+            .into_iter()
+            .filter(|c| {
+                let hex_txid = hex::encode(c.funding_txid.clone());
+                all_channels.iter().all(|c| c.funding_txid != hex_txid)
+            })
+            .map(TryInto::try_into)
+            .collect();
+
+        info!("forgotten_closed_channels {:?}", forgotten_closed_channels);
+
+        let mut all_channel_models: Vec<Channel> =
+            all_channels.clone().into_iter().map(|c| c.into()).collect();
+        all_channel_models.extend(forgotten_closed_channels?);
 
         // calculate channels balance only from opened channels
         let channels_balance = offchain_funds.iter().fold(0, |a, b| {
@@ -321,10 +346,11 @@ impl NodeAPI for Greenlight {
             connected_peers,
             inbound_liquidity_msats: max_receivable_single_channel,
         };
+
         Ok(SyncResponse {
             node_state,
             payments: pull_transactions(since_timestamp, client.clone()).await?,
-            channels: all_channels.clone().into_iter().map(|c| c.into()).collect(),
+            channels: all_channel_models,
         })
     }
 
@@ -771,6 +797,27 @@ impl From<pb::Channel> for crate::models::Channel {
             receivable_msat: amount_to_msat(&parse_amount(c.receivable).unwrap_or_default()),
             closed_at: None,
         }
+    }
+}
+
+impl TryFrom<ListclosedchannelsClosedchannels> for crate::models::Channel {
+    type Error = anyhow::Error;
+
+    fn try_from(c: ListclosedchannelsClosedchannels) -> std::result::Result<Self, Self::Error> {
+        let to_us = c
+            .final_to_us_msat
+            .ok_or(anyhow!("final_to_us_msat is missing"))?
+            .msat;
+        Ok(crate::models::Channel {
+            short_channel_id: c
+                .short_channel_id
+                .ok_or(anyhow!("short_channel_id is missing"))?,
+            state: ChannelState::Closed,
+            funding_txid: hex::encode(c.funding_txid),
+            spendable_msat: to_us,
+            receivable_msat: 0,
+            closed_at: None,
+        })
     }
 }
 
