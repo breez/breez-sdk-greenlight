@@ -8,7 +8,6 @@ import java.io.File
 class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
     private var breezServices: BlockingBreezServices? = null
 
-
     companion object {
         var TAG = "RNBreezSDK"
     }
@@ -294,9 +293,9 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun sweep(toAddress: String, feeRateSatsPerByte: Double, promise: Promise) {
+    fun sweep(toAddress: String, feeRateSatsPerVbyte: Double, promise: Promise) {
         try {
-            getBreezServices().sweep(toAddress, feeRateSatsPerByte.toULong())
+            getBreezServices().sweep(toAddress, feeRateSatsPerVbyte.toULong())
             promise.resolve(readableMapOf("status" to "ok"))
         } catch (e: SdkException) {
             e.printStackTrace()
@@ -435,6 +434,39 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
+    fun fetchReverseSwapFees(promise: Promise) {
+        try {
+            var reverseSwapFees = getBreezServices().fetchReverseSwapFees()
+            promise.resolve(readableMapOf(reverseSwapFees))
+        } catch (e: SdkException) {
+            e.printStackTrace()
+            promise.reject(TAG, e.message ?: "Error calling fetchReverseSwapFees", e)
+        }
+    }
+
+    @ReactMethod
+    fun inProgressReverseSwaps(promise: Promise) {
+        try {
+            var inProgressReverseSwaps = getBreezServices().inProgressReverseSwaps()
+            promise.resolve(readableArrayOf(inProgressReverseSwaps))
+        } catch (e: SdkException) {
+            e.printStackTrace()
+            promise.reject(TAG, e.message ?: "Error calling inProgressReverseSwaps", e)
+        }
+    }
+
+    @ReactMethod
+    fun sendOnchain(amountSat: Double, onchainRecipientAddress: String, pairHash: String, satPerVbyte: Double, promise: Promise) {
+        try {
+            var response = getBreezServices().sendOnchain(amountSat.toULong(), onchainRecipientAddress, pairHash, satPerVbyte.toULong())
+            promise.resolve(readableMapOf(response))
+        } catch (e: SdkException) {
+            e.printStackTrace()
+            promise.reject(TAG, e.message ?: "Error calling sendOnchain", e)
+        }
+    }
+
+    @ReactMethod
     fun executeDevCommand(command: String, promise: Promise) {
         try {
             var result = getBreezServices().executeDevCommand(command)
@@ -453,6 +485,40 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
         } catch (e: SdkException) {
             e.printStackTrace()
             promise.reject(TAG, e.message ?: "Error calling recommendedFees", e)
+        }
+    }
+
+    @ReactMethod
+    fun buyBitcoin(provider: String, promise: Promise) {
+        try {
+            var buyBitcoinProvider = asBuyBitcoinProvider(provider)
+            var result = getBreezServices().buyBitcoin(buyBitcoinProvider)
+            promise.resolve(result)
+        } catch (e: SdkException) {
+            e.printStackTrace()
+            promise.reject(TAG, e.message ?: "Error calling buyBitcoin", e)
+        }
+    }
+
+    @ReactMethod
+    fun startBackup(promise: Promise) {
+        try {
+            getBreezServices().startBackup()
+            promise.resolve(readableMapOf("status" to "ok"))
+        } catch (e: SdkException) {
+            e.printStackTrace()
+            promise.reject(TAG, e.message ?: "Error calling startBackup", e)
+        }
+    }
+
+    @ReactMethod
+    fun backupStatus(promise: Promise) {
+        try {
+            var status = getBreezServices().backupStatus()
+            promise.resolve(readableMapOf(status))
+        } catch (e: SdkException) {
+            e.printStackTrace()
+            promise.reject(TAG, e.message ?: "Error calling backupStatus", e)
         }
     }
 }

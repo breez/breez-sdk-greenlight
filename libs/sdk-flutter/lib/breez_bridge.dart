@@ -240,11 +240,11 @@ class BreezBridge {
   /// Withdraw on-chain funds in the wallet to an external btc address
   Future sweep({
     required String toAddress,
-    required int feeRateSatsPerByte,
+    required int feeRateSatsPerVbyte,
   }) async {
     await _lnToolkit.sweep(
       toAddress: toAddress,
-      feeRateSatsPerByte: feeRateSatsPerByte,
+      feeRateSatsPerVbyte: feeRateSatsPerVbyte,
     );
     await listPayments();
   }
@@ -365,6 +365,9 @@ class BreezBridge {
     await getNodeState();
     await listPayments();
   }
+
+  /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency
+  Future<String> buyBitcoin(BuyBitcoinProvider provider) => _lnToolkit.buyBitcoin(provider: provider);
 }
 
 extension SDKConfig on Config {

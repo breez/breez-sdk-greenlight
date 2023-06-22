@@ -43,20 +43,14 @@ jobs:
           make init      
           brew install protobuf          
 
-      - name: run lib tests
-        env:
-          SSH_PRIVATE_KEY: ${{secrets.REPO_SSH_KEY}}
-        run: |          
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          sudo chmod 600 ~/.ssh/id_rsa
-          ssh-add ~/.ssh/id_rsa
+      - name: run lib tests        
+        run: |                    
           curl -o jna-5.12.1.jar https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.12.1/jna-5.12.1.jar
           export CLASSPATH=$(pwd)/jna-5.12.1.jar;
           cd libs/sdk-bindings
           make csharp-darwin golang-darwin
           cd ..          
-          cargo test  
+          cargo test
       
       - name: run tools tests        
         run: |

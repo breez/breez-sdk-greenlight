@@ -11,16 +11,22 @@ import { SafeAreaView, ScrollView, StatusBar, Text, TouchableOpacity, View } fro
 import {
     addEventListener,
     addLogListener,
+    BuyBitcoinProvider,
     defaultConfig,
     EnvironmentType,
     fetchFiatRates,
+    fetchReverseSwapFees,
     initServices,
+    inProgressReverseSwaps,
     listFiatCurrencies,
     mnemonicToSeed,
     Network,
     recoverNode,
     registerNode,
-    start
+    buyBitcoin,
+    start,
+    startBackup,
+    backupStatus
 } from "@breeztech/react-native-breez-sdk"
 import BuildConfig from "react-native-build-config"
 import { generateMnemonic } from "@dreson4/react-native-quick-bip39"
@@ -50,7 +56,9 @@ const App = () => {
     }
 
     const logHandler = (l) => {
+      if (l.level != "TRACE") {
         console.log(`[${l.level}]: ${l.line}`)
+      }
     }
 
     const eventHandler = (type, data) => {
@@ -65,7 +73,7 @@ const App = () => {
             let seed = null
             let mnemonic = await getSecureItem(MNEMONIC_STORE)
 
-            if (!mnemonic) {
+            if (mnemonic == null) {
                 mnemonic = generateMnemonic(256)
                 setSecureItem(MNEMONIC_STORE, mnemonic)
 
@@ -85,10 +93,10 @@ const App = () => {
             let deviceKey = await getSecureItem(GREENLIGHT_DEVICE_KEY_STORE)
             let deviceCert = await getSecureItem(GREENLIGHT_DEVICE_CERT_STORE)
 
-            if (!deviceKey) {
+            if (deviceKey == null) {
                 const greenlightCredentials = await recoverNode(Network.BITCOIN, seed)
 
-                addLine("recoverNode", null)
+                addLine("recoverNode", null)                
                 setSecureItem(GREENLIGHT_DEVICE_KEY_STORE, greenlightCredentials.deviceKey)
                 setSecureItem(GREENLIGHT_DEVICE_CERT_STORE, greenlightCredentials.deviceCert)
                 deviceKey = greenlightCredentials.deviceKey
@@ -113,6 +121,18 @@ const App = () => {
 
                 const fiatRates = await fetchFiatRates()
                 addLine("fetchFiatRates", JSON.stringify(fiatRates))
+
+                const revSwapFees = await fetchReverseSwapFees()
+                addLine("revSwapFees", JSON.stringify(revSwapFees))
+
+                const inProgressRevSwaps = await inProgressReverseSwaps()
+                addLine("inProgressRevSwaps", JSON.stringify(inProgressRevSwaps))
+
+                const buyBitcoinResult = await buyBitcoin(BuyBitcoinProvider.MOONPAY)
+                addLine("buyBitcoin", JSON.stringify(buyBitcoinResult))
+                                                
+                await startBackup();
+                addLine("backupStatus", JSON.stringify( await backupStatus()));                
             }
         }
         asyncFn()

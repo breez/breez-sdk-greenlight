@@ -9,9 +9,9 @@ use bitcoin::hashes::Hash;
 use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::{Address, Script};
+use gl_client::pb::Invoice;
 use gl_client::pb::Peer;
 use gl_client::pb::WithdrawResponse;
-use gl_client::pb::{CloseChannelResponse, Invoice};
 use lightning_invoice::RawInvoice;
 use ripemd::Digest;
 use ripemd::Ripemd160;
@@ -61,13 +61,13 @@ pub trait NodeAPI: Send + Sync {
     async fn sweep(
         &self,
         to_address: String,
-        fee_rate_sats_per_byte: u64,
+        fee_rate_sats_per_vbyte: u64,
     ) -> Result<WithdrawResponse>;
     async fn start_signer(&self, shutdown: mpsc::Receiver<()>);
     async fn list_peers(&self) -> Result<Vec<Peer>>;
     async fn connect_peer(&self, node_id: String, addr: String) -> Result<()>;
     fn sign_invoice(&self, invoice: RawInvoice) -> Result<String>;
-    async fn close_peer_channels(&self, node_id: String) -> Result<CloseChannelResponse>;
+    async fn close_peer_channels(&self, node_id: String) -> Result<Vec<String>>;
     async fn stream_incoming_payments(&self) -> Result<Streaming<gl_client::pb::IncomingPayment>>;
     async fn stream_log_messages(&self) -> Result<Streaming<gl_client::pb::LogEntry>>;
     async fn execute_command(&self, command: String) -> Result<String>;
@@ -143,7 +143,7 @@ pub struct ReverseSwapPairInfo {
 
 /// Details of past or ongoing reverse swaps, as stored in the Breez local DB
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-pub struct ReverseSwapInfo {
+pub struct FullReverseSwapInfo {
     /// The reverse swap ID, as reported by the Boltz API in case of a successful creation
     pub id: String,
 
@@ -181,7 +181,7 @@ pub struct ReverseSwapInfoCached {
     pub status: ReverseSwapStatus,
 }
 
-impl ReverseSwapInfo {
+impl FullReverseSwapInfo {
     /// Builds the expected redeem script
     fn build_expected_reverse_swap_script(
         preimage_hash: Vec<u8>,
@@ -300,17 +300,17 @@ impl ReverseSwapInfo {
     }
 }
 
-/// Simplified version of [ReverseSwapInfo], containing only the user-relevant fields
+/// Simplified version of [FullReverseSwapInfo], containing only the user-relevant fields
 #[derive(Serialize)]
-pub struct SimpleReverseSwapInfo {
+pub struct ReverseSwapInfo {
     pub id: String,
     pub claim_pubkey: String,
     pub onchain_amount_sat: u64,
     pub status: ReverseSwapStatus,
 }
 
-impl From<ReverseSwapInfo> for SimpleReverseSwapInfo {
-    fn from(rsi: ReverseSwapInfo) -> Self {
+impl From<FullReverseSwapInfo> for ReverseSwapInfo {
+    fn from(rsi: FullReverseSwapInfo) -> Self {
         Self {
             id: rsi.id,
             claim_pubkey: rsi.claim_pubkey,
@@ -529,6 +529,12 @@ impl TryFrom<i32> for FeeratePreset {
             _ => Err(anyhow!("Unexpected feerate enum value")),
         }
     }
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
+pub struct BackupStatus {
+    pub backed_up: bool,
+    pub last_backup_time: Option<u64>,
 }
 
 /// The node state of a Greenlight LN node running in the cloud
@@ -782,7 +788,7 @@ pub enum LnUrlCallbackStatus {
 #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
 #[serde(tag = "buy_bitcoin_provider")]
 pub enum BuyBitcoinProvider {
-    MoonPay,
+    Moonpay,
 }
 
 impl FromStr for BuyBitcoinProvider {
@@ -790,7 +796,7 @@ impl FromStr for BuyBitcoinProvider {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "moonpay" => Ok(BuyBitcoinProvider::MoonPay),
+            "moonpay" => Ok(BuyBitcoinProvider::Moonpay),
             _ => Err(anyhow!("unknown buy bitcoin provider")),
         }
     }

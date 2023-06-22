@@ -23,6 +23,9 @@ mixin _$BreezEvent {
     required TResult Function() synced,
     required TResult Function(Payment details) paymentSucceed,
     required TResult Function(PaymentFailedData details) paymentFailed,
+    required TResult Function() backupStarted,
+    required TResult Function() backupSucceeded,
+    required TResult Function(BackupFailedData details) backupFailed,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -32,6 +35,9 @@ mixin _$BreezEvent {
     TResult? Function()? synced,
     TResult? Function(Payment details)? paymentSucceed,
     TResult? Function(PaymentFailedData details)? paymentFailed,
+    TResult? Function()? backupStarted,
+    TResult? Function()? backupSucceeded,
+    TResult? Function(BackupFailedData details)? backupFailed,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -41,6 +47,9 @@ mixin _$BreezEvent {
     TResult Function()? synced,
     TResult Function(Payment details)? paymentSucceed,
     TResult Function(PaymentFailedData details)? paymentFailed,
+    TResult Function()? backupStarted,
+    TResult Function()? backupSucceeded,
+    TResult Function(BackupFailedData details)? backupFailed,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -51,6 +60,9 @@ mixin _$BreezEvent {
     required TResult Function(BreezEvent_Synced value) synced,
     required TResult Function(BreezEvent_PaymentSucceed value) paymentSucceed,
     required TResult Function(BreezEvent_PaymentFailed value) paymentFailed,
+    required TResult Function(BreezEvent_BackupStarted value) backupStarted,
+    required TResult Function(BreezEvent_BackupSucceeded value) backupSucceeded,
+    required TResult Function(BreezEvent_BackupFailed value) backupFailed,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -60,6 +72,9 @@ mixin _$BreezEvent {
     TResult? Function(BreezEvent_Synced value)? synced,
     TResult? Function(BreezEvent_PaymentSucceed value)? paymentSucceed,
     TResult? Function(BreezEvent_PaymentFailed value)? paymentFailed,
+    TResult? Function(BreezEvent_BackupStarted value)? backupStarted,
+    TResult? Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
+    TResult? Function(BreezEvent_BackupFailed value)? backupFailed,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -69,6 +84,9 @@ mixin _$BreezEvent {
     TResult Function(BreezEvent_Synced value)? synced,
     TResult Function(BreezEvent_PaymentSucceed value)? paymentSucceed,
     TResult Function(BreezEvent_PaymentFailed value)? paymentFailed,
+    TResult Function(BreezEvent_BackupStarted value)? backupStarted,
+    TResult Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
+    TResult Function(BreezEvent_BackupFailed value)? backupFailed,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -158,6 +176,9 @@ class _$BreezEvent_NewBlock implements BreezEvent_NewBlock {
     required TResult Function() synced,
     required TResult Function(Payment details) paymentSucceed,
     required TResult Function(PaymentFailedData details) paymentFailed,
+    required TResult Function() backupStarted,
+    required TResult Function() backupSucceeded,
+    required TResult Function(BackupFailedData details) backupFailed,
   }) {
     return newBlock(block);
   }
@@ -170,6 +191,9 @@ class _$BreezEvent_NewBlock implements BreezEvent_NewBlock {
     TResult? Function()? synced,
     TResult? Function(Payment details)? paymentSucceed,
     TResult? Function(PaymentFailedData details)? paymentFailed,
+    TResult? Function()? backupStarted,
+    TResult? Function()? backupSucceeded,
+    TResult? Function(BackupFailedData details)? backupFailed,
   }) {
     return newBlock?.call(block);
   }
@@ -182,6 +206,9 @@ class _$BreezEvent_NewBlock implements BreezEvent_NewBlock {
     TResult Function()? synced,
     TResult Function(Payment details)? paymentSucceed,
     TResult Function(PaymentFailedData details)? paymentFailed,
+    TResult Function()? backupStarted,
+    TResult Function()? backupSucceeded,
+    TResult Function(BackupFailedData details)? backupFailed,
     required TResult orElse(),
   }) {
     if (newBlock != null) {
@@ -198,6 +225,9 @@ class _$BreezEvent_NewBlock implements BreezEvent_NewBlock {
     required TResult Function(BreezEvent_Synced value) synced,
     required TResult Function(BreezEvent_PaymentSucceed value) paymentSucceed,
     required TResult Function(BreezEvent_PaymentFailed value) paymentFailed,
+    required TResult Function(BreezEvent_BackupStarted value) backupStarted,
+    required TResult Function(BreezEvent_BackupSucceeded value) backupSucceeded,
+    required TResult Function(BreezEvent_BackupFailed value) backupFailed,
   }) {
     return newBlock(this);
   }
@@ -210,6 +240,9 @@ class _$BreezEvent_NewBlock implements BreezEvent_NewBlock {
     TResult? Function(BreezEvent_Synced value)? synced,
     TResult? Function(BreezEvent_PaymentSucceed value)? paymentSucceed,
     TResult? Function(BreezEvent_PaymentFailed value)? paymentFailed,
+    TResult? Function(BreezEvent_BackupStarted value)? backupStarted,
+    TResult? Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
+    TResult? Function(BreezEvent_BackupFailed value)? backupFailed,
   }) {
     return newBlock?.call(this);
   }
@@ -222,6 +255,9 @@ class _$BreezEvent_NewBlock implements BreezEvent_NewBlock {
     TResult Function(BreezEvent_Synced value)? synced,
     TResult Function(BreezEvent_PaymentSucceed value)? paymentSucceed,
     TResult Function(BreezEvent_PaymentFailed value)? paymentFailed,
+    TResult Function(BreezEvent_BackupStarted value)? backupStarted,
+    TResult Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
+    TResult Function(BreezEvent_BackupFailed value)? backupFailed,
     required TResult orElse(),
   }) {
     if (newBlock != null) {
@@ -308,6 +344,9 @@ class _$BreezEvent_InvoicePaid implements BreezEvent_InvoicePaid {
     required TResult Function() synced,
     required TResult Function(Payment details) paymentSucceed,
     required TResult Function(PaymentFailedData details) paymentFailed,
+    required TResult Function() backupStarted,
+    required TResult Function() backupSucceeded,
+    required TResult Function(BackupFailedData details) backupFailed,
   }) {
     return invoicePaid(details);
   }
@@ -320,6 +359,9 @@ class _$BreezEvent_InvoicePaid implements BreezEvent_InvoicePaid {
     TResult? Function()? synced,
     TResult? Function(Payment details)? paymentSucceed,
     TResult? Function(PaymentFailedData details)? paymentFailed,
+    TResult? Function()? backupStarted,
+    TResult? Function()? backupSucceeded,
+    TResult? Function(BackupFailedData details)? backupFailed,
   }) {
     return invoicePaid?.call(details);
   }
@@ -332,6 +374,9 @@ class _$BreezEvent_InvoicePaid implements BreezEvent_InvoicePaid {
     TResult Function()? synced,
     TResult Function(Payment details)? paymentSucceed,
     TResult Function(PaymentFailedData details)? paymentFailed,
+    TResult Function()? backupStarted,
+    TResult Function()? backupSucceeded,
+    TResult Function(BackupFailedData details)? backupFailed,
     required TResult orElse(),
   }) {
     if (invoicePaid != null) {
@@ -348,6 +393,9 @@ class _$BreezEvent_InvoicePaid implements BreezEvent_InvoicePaid {
     required TResult Function(BreezEvent_Synced value) synced,
     required TResult Function(BreezEvent_PaymentSucceed value) paymentSucceed,
     required TResult Function(BreezEvent_PaymentFailed value) paymentFailed,
+    required TResult Function(BreezEvent_BackupStarted value) backupStarted,
+    required TResult Function(BreezEvent_BackupSucceeded value) backupSucceeded,
+    required TResult Function(BreezEvent_BackupFailed value) backupFailed,
   }) {
     return invoicePaid(this);
   }
@@ -360,6 +408,9 @@ class _$BreezEvent_InvoicePaid implements BreezEvent_InvoicePaid {
     TResult? Function(BreezEvent_Synced value)? synced,
     TResult? Function(BreezEvent_PaymentSucceed value)? paymentSucceed,
     TResult? Function(BreezEvent_PaymentFailed value)? paymentFailed,
+    TResult? Function(BreezEvent_BackupStarted value)? backupStarted,
+    TResult? Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
+    TResult? Function(BreezEvent_BackupFailed value)? backupFailed,
   }) {
     return invoicePaid?.call(this);
   }
@@ -372,6 +423,9 @@ class _$BreezEvent_InvoicePaid implements BreezEvent_InvoicePaid {
     TResult Function(BreezEvent_Synced value)? synced,
     TResult Function(BreezEvent_PaymentSucceed value)? paymentSucceed,
     TResult Function(BreezEvent_PaymentFailed value)? paymentFailed,
+    TResult Function(BreezEvent_BackupStarted value)? backupStarted,
+    TResult Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
+    TResult Function(BreezEvent_BackupFailed value)? backupFailed,
     required TResult orElse(),
   }) {
     if (invoicePaid != null) {
@@ -430,6 +484,9 @@ class _$BreezEvent_Synced implements BreezEvent_Synced {
     required TResult Function() synced,
     required TResult Function(Payment details) paymentSucceed,
     required TResult Function(PaymentFailedData details) paymentFailed,
+    required TResult Function() backupStarted,
+    required TResult Function() backupSucceeded,
+    required TResult Function(BackupFailedData details) backupFailed,
   }) {
     return synced();
   }
@@ -442,6 +499,9 @@ class _$BreezEvent_Synced implements BreezEvent_Synced {
     TResult? Function()? synced,
     TResult? Function(Payment details)? paymentSucceed,
     TResult? Function(PaymentFailedData details)? paymentFailed,
+    TResult? Function()? backupStarted,
+    TResult? Function()? backupSucceeded,
+    TResult? Function(BackupFailedData details)? backupFailed,
   }) {
     return synced?.call();
   }
@@ -454,6 +514,9 @@ class _$BreezEvent_Synced implements BreezEvent_Synced {
     TResult Function()? synced,
     TResult Function(Payment details)? paymentSucceed,
     TResult Function(PaymentFailedData details)? paymentFailed,
+    TResult Function()? backupStarted,
+    TResult Function()? backupSucceeded,
+    TResult Function(BackupFailedData details)? backupFailed,
     required TResult orElse(),
   }) {
     if (synced != null) {
@@ -470,6 +533,9 @@ class _$BreezEvent_Synced implements BreezEvent_Synced {
     required TResult Function(BreezEvent_Synced value) synced,
     required TResult Function(BreezEvent_PaymentSucceed value) paymentSucceed,
     required TResult Function(BreezEvent_PaymentFailed value) paymentFailed,
+    required TResult Function(BreezEvent_BackupStarted value) backupStarted,
+    required TResult Function(BreezEvent_BackupSucceeded value) backupSucceeded,
+    required TResult Function(BreezEvent_BackupFailed value) backupFailed,
   }) {
     return synced(this);
   }
@@ -482,6 +548,9 @@ class _$BreezEvent_Synced implements BreezEvent_Synced {
     TResult? Function(BreezEvent_Synced value)? synced,
     TResult? Function(BreezEvent_PaymentSucceed value)? paymentSucceed,
     TResult? Function(BreezEvent_PaymentFailed value)? paymentFailed,
+    TResult? Function(BreezEvent_BackupStarted value)? backupStarted,
+    TResult? Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
+    TResult? Function(BreezEvent_BackupFailed value)? backupFailed,
   }) {
     return synced?.call(this);
   }
@@ -494,6 +563,9 @@ class _$BreezEvent_Synced implements BreezEvent_Synced {
     TResult Function(BreezEvent_Synced value)? synced,
     TResult Function(BreezEvent_PaymentSucceed value)? paymentSucceed,
     TResult Function(BreezEvent_PaymentFailed value)? paymentFailed,
+    TResult Function(BreezEvent_BackupStarted value)? backupStarted,
+    TResult Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
+    TResult Function(BreezEvent_BackupFailed value)? backupFailed,
     required TResult orElse(),
   }) {
     if (synced != null) {
@@ -576,6 +648,9 @@ class _$BreezEvent_PaymentSucceed implements BreezEvent_PaymentSucceed {
     required TResult Function() synced,
     required TResult Function(Payment details) paymentSucceed,
     required TResult Function(PaymentFailedData details) paymentFailed,
+    required TResult Function() backupStarted,
+    required TResult Function() backupSucceeded,
+    required TResult Function(BackupFailedData details) backupFailed,
   }) {
     return paymentSucceed(details);
   }
@@ -588,6 +663,9 @@ class _$BreezEvent_PaymentSucceed implements BreezEvent_PaymentSucceed {
     TResult? Function()? synced,
     TResult? Function(Payment details)? paymentSucceed,
     TResult? Function(PaymentFailedData details)? paymentFailed,
+    TResult? Function()? backupStarted,
+    TResult? Function()? backupSucceeded,
+    TResult? Function(BackupFailedData details)? backupFailed,
   }) {
     return paymentSucceed?.call(details);
   }
@@ -600,6 +678,9 @@ class _$BreezEvent_PaymentSucceed implements BreezEvent_PaymentSucceed {
     TResult Function()? synced,
     TResult Function(Payment details)? paymentSucceed,
     TResult Function(PaymentFailedData details)? paymentFailed,
+    TResult Function()? backupStarted,
+    TResult Function()? backupSucceeded,
+    TResult Function(BackupFailedData details)? backupFailed,
     required TResult orElse(),
   }) {
     if (paymentSucceed != null) {
@@ -616,6 +697,9 @@ class _$BreezEvent_PaymentSucceed implements BreezEvent_PaymentSucceed {
     required TResult Function(BreezEvent_Synced value) synced,
     required TResult Function(BreezEvent_PaymentSucceed value) paymentSucceed,
     required TResult Function(BreezEvent_PaymentFailed value) paymentFailed,
+    required TResult Function(BreezEvent_BackupStarted value) backupStarted,
+    required TResult Function(BreezEvent_BackupSucceeded value) backupSucceeded,
+    required TResult Function(BreezEvent_BackupFailed value) backupFailed,
   }) {
     return paymentSucceed(this);
   }
@@ -628,6 +712,9 @@ class _$BreezEvent_PaymentSucceed implements BreezEvent_PaymentSucceed {
     TResult? Function(BreezEvent_Synced value)? synced,
     TResult? Function(BreezEvent_PaymentSucceed value)? paymentSucceed,
     TResult? Function(BreezEvent_PaymentFailed value)? paymentFailed,
+    TResult? Function(BreezEvent_BackupStarted value)? backupStarted,
+    TResult? Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
+    TResult? Function(BreezEvent_BackupFailed value)? backupFailed,
   }) {
     return paymentSucceed?.call(this);
   }
@@ -640,6 +727,9 @@ class _$BreezEvent_PaymentSucceed implements BreezEvent_PaymentSucceed {
     TResult Function(BreezEvent_Synced value)? synced,
     TResult Function(BreezEvent_PaymentSucceed value)? paymentSucceed,
     TResult Function(BreezEvent_PaymentFailed value)? paymentFailed,
+    TResult Function(BreezEvent_BackupStarted value)? backupStarted,
+    TResult Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
+    TResult Function(BreezEvent_BackupFailed value)? backupFailed,
     required TResult orElse(),
   }) {
     if (paymentSucceed != null) {
@@ -727,6 +817,9 @@ class _$BreezEvent_PaymentFailed implements BreezEvent_PaymentFailed {
     required TResult Function() synced,
     required TResult Function(Payment details) paymentSucceed,
     required TResult Function(PaymentFailedData details) paymentFailed,
+    required TResult Function() backupStarted,
+    required TResult Function() backupSucceeded,
+    required TResult Function(BackupFailedData details) backupFailed,
   }) {
     return paymentFailed(details);
   }
@@ -739,6 +832,9 @@ class _$BreezEvent_PaymentFailed implements BreezEvent_PaymentFailed {
     TResult? Function()? synced,
     TResult? Function(Payment details)? paymentSucceed,
     TResult? Function(PaymentFailedData details)? paymentFailed,
+    TResult? Function()? backupStarted,
+    TResult? Function()? backupSucceeded,
+    TResult? Function(BackupFailedData details)? backupFailed,
   }) {
     return paymentFailed?.call(details);
   }
@@ -751,6 +847,9 @@ class _$BreezEvent_PaymentFailed implements BreezEvent_PaymentFailed {
     TResult Function()? synced,
     TResult Function(Payment details)? paymentSucceed,
     TResult Function(PaymentFailedData details)? paymentFailed,
+    TResult Function()? backupStarted,
+    TResult Function()? backupSucceeded,
+    TResult Function(BackupFailedData details)? backupFailed,
     required TResult orElse(),
   }) {
     if (paymentFailed != null) {
@@ -767,6 +866,9 @@ class _$BreezEvent_PaymentFailed implements BreezEvent_PaymentFailed {
     required TResult Function(BreezEvent_Synced value) synced,
     required TResult Function(BreezEvent_PaymentSucceed value) paymentSucceed,
     required TResult Function(BreezEvent_PaymentFailed value) paymentFailed,
+    required TResult Function(BreezEvent_BackupStarted value) backupStarted,
+    required TResult Function(BreezEvent_BackupSucceeded value) backupSucceeded,
+    required TResult Function(BreezEvent_BackupFailed value) backupFailed,
   }) {
     return paymentFailed(this);
   }
@@ -779,6 +881,9 @@ class _$BreezEvent_PaymentFailed implements BreezEvent_PaymentFailed {
     TResult? Function(BreezEvent_Synced value)? synced,
     TResult? Function(BreezEvent_PaymentSucceed value)? paymentSucceed,
     TResult? Function(BreezEvent_PaymentFailed value)? paymentFailed,
+    TResult? Function(BreezEvent_BackupStarted value)? backupStarted,
+    TResult? Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
+    TResult? Function(BreezEvent_BackupFailed value)? backupFailed,
   }) {
     return paymentFailed?.call(this);
   }
@@ -791,6 +896,9 @@ class _$BreezEvent_PaymentFailed implements BreezEvent_PaymentFailed {
     TResult Function(BreezEvent_Synced value)? synced,
     TResult Function(BreezEvent_PaymentSucceed value)? paymentSucceed,
     TResult Function(BreezEvent_PaymentFailed value)? paymentFailed,
+    TResult Function(BreezEvent_BackupStarted value)? backupStarted,
+    TResult Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
+    TResult Function(BreezEvent_BackupFailed value)? backupFailed,
     required TResult orElse(),
   }) {
     if (paymentFailed != null) {
@@ -807,6 +915,452 @@ abstract class BreezEvent_PaymentFailed implements BreezEvent {
   PaymentFailedData get details;
   @JsonKey(ignore: true)
   _$$BreezEvent_PaymentFailedCopyWith<_$BreezEvent_PaymentFailed> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$BreezEvent_BackupStartedCopyWith<$Res> {
+  factory _$$BreezEvent_BackupStartedCopyWith(
+          _$BreezEvent_BackupStarted value, $Res Function(_$BreezEvent_BackupStarted) then) =
+      __$$BreezEvent_BackupStartedCopyWithImpl<$Res>;
+}
+
+/// @nodoc
+class __$$BreezEvent_BackupStartedCopyWithImpl<$Res>
+    extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_BackupStarted>
+    implements _$$BreezEvent_BackupStartedCopyWith<$Res> {
+  __$$BreezEvent_BackupStartedCopyWithImpl(
+      _$BreezEvent_BackupStarted _value, $Res Function(_$BreezEvent_BackupStarted) _then)
+      : super(_value, _then);
+}
+
+/// @nodoc
+
+class _$BreezEvent_BackupStarted implements BreezEvent_BackupStarted {
+  const _$BreezEvent_BackupStarted();
+
+  @override
+  String toString() {
+    return 'BreezEvent.backupStarted()';
+  }
+
+  @override
+  bool operator ==(dynamic other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType && other is _$BreezEvent_BackupStarted);
+  }
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(int block) newBlock,
+    required TResult Function(InvoicePaidDetails details) invoicePaid,
+    required TResult Function() synced,
+    required TResult Function(Payment details) paymentSucceed,
+    required TResult Function(PaymentFailedData details) paymentFailed,
+    required TResult Function() backupStarted,
+    required TResult Function() backupSucceeded,
+    required TResult Function(BackupFailedData details) backupFailed,
+  }) {
+    return backupStarted();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(int block)? newBlock,
+    TResult? Function(InvoicePaidDetails details)? invoicePaid,
+    TResult? Function()? synced,
+    TResult? Function(Payment details)? paymentSucceed,
+    TResult? Function(PaymentFailedData details)? paymentFailed,
+    TResult? Function()? backupStarted,
+    TResult? Function()? backupSucceeded,
+    TResult? Function(BackupFailedData details)? backupFailed,
+  }) {
+    return backupStarted?.call();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(int block)? newBlock,
+    TResult Function(InvoicePaidDetails details)? invoicePaid,
+    TResult Function()? synced,
+    TResult Function(Payment details)? paymentSucceed,
+    TResult Function(PaymentFailedData details)? paymentFailed,
+    TResult Function()? backupStarted,
+    TResult Function()? backupSucceeded,
+    TResult Function(BackupFailedData details)? backupFailed,
+    required TResult orElse(),
+  }) {
+    if (backupStarted != null) {
+      return backupStarted();
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(BreezEvent_NewBlock value) newBlock,
+    required TResult Function(BreezEvent_InvoicePaid value) invoicePaid,
+    required TResult Function(BreezEvent_Synced value) synced,
+    required TResult Function(BreezEvent_PaymentSucceed value) paymentSucceed,
+    required TResult Function(BreezEvent_PaymentFailed value) paymentFailed,
+    required TResult Function(BreezEvent_BackupStarted value) backupStarted,
+    required TResult Function(BreezEvent_BackupSucceeded value) backupSucceeded,
+    required TResult Function(BreezEvent_BackupFailed value) backupFailed,
+  }) {
+    return backupStarted(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(BreezEvent_NewBlock value)? newBlock,
+    TResult? Function(BreezEvent_InvoicePaid value)? invoicePaid,
+    TResult? Function(BreezEvent_Synced value)? synced,
+    TResult? Function(BreezEvent_PaymentSucceed value)? paymentSucceed,
+    TResult? Function(BreezEvent_PaymentFailed value)? paymentFailed,
+    TResult? Function(BreezEvent_BackupStarted value)? backupStarted,
+    TResult? Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
+    TResult? Function(BreezEvent_BackupFailed value)? backupFailed,
+  }) {
+    return backupStarted?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(BreezEvent_NewBlock value)? newBlock,
+    TResult Function(BreezEvent_InvoicePaid value)? invoicePaid,
+    TResult Function(BreezEvent_Synced value)? synced,
+    TResult Function(BreezEvent_PaymentSucceed value)? paymentSucceed,
+    TResult Function(BreezEvent_PaymentFailed value)? paymentFailed,
+    TResult Function(BreezEvent_BackupStarted value)? backupStarted,
+    TResult Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
+    TResult Function(BreezEvent_BackupFailed value)? backupFailed,
+    required TResult orElse(),
+  }) {
+    if (backupStarted != null) {
+      return backupStarted(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class BreezEvent_BackupStarted implements BreezEvent {
+  const factory BreezEvent_BackupStarted() = _$BreezEvent_BackupStarted;
+}
+
+/// @nodoc
+abstract class _$$BreezEvent_BackupSucceededCopyWith<$Res> {
+  factory _$$BreezEvent_BackupSucceededCopyWith(
+          _$BreezEvent_BackupSucceeded value, $Res Function(_$BreezEvent_BackupSucceeded) then) =
+      __$$BreezEvent_BackupSucceededCopyWithImpl<$Res>;
+}
+
+/// @nodoc
+class __$$BreezEvent_BackupSucceededCopyWithImpl<$Res>
+    extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_BackupSucceeded>
+    implements _$$BreezEvent_BackupSucceededCopyWith<$Res> {
+  __$$BreezEvent_BackupSucceededCopyWithImpl(
+      _$BreezEvent_BackupSucceeded _value, $Res Function(_$BreezEvent_BackupSucceeded) _then)
+      : super(_value, _then);
+}
+
+/// @nodoc
+
+class _$BreezEvent_BackupSucceeded implements BreezEvent_BackupSucceeded {
+  const _$BreezEvent_BackupSucceeded();
+
+  @override
+  String toString() {
+    return 'BreezEvent.backupSucceeded()';
+  }
+
+  @override
+  bool operator ==(dynamic other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType && other is _$BreezEvent_BackupSucceeded);
+  }
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(int block) newBlock,
+    required TResult Function(InvoicePaidDetails details) invoicePaid,
+    required TResult Function() synced,
+    required TResult Function(Payment details) paymentSucceed,
+    required TResult Function(PaymentFailedData details) paymentFailed,
+    required TResult Function() backupStarted,
+    required TResult Function() backupSucceeded,
+    required TResult Function(BackupFailedData details) backupFailed,
+  }) {
+    return backupSucceeded();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(int block)? newBlock,
+    TResult? Function(InvoicePaidDetails details)? invoicePaid,
+    TResult? Function()? synced,
+    TResult? Function(Payment details)? paymentSucceed,
+    TResult? Function(PaymentFailedData details)? paymentFailed,
+    TResult? Function()? backupStarted,
+    TResult? Function()? backupSucceeded,
+    TResult? Function(BackupFailedData details)? backupFailed,
+  }) {
+    return backupSucceeded?.call();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(int block)? newBlock,
+    TResult Function(InvoicePaidDetails details)? invoicePaid,
+    TResult Function()? synced,
+    TResult Function(Payment details)? paymentSucceed,
+    TResult Function(PaymentFailedData details)? paymentFailed,
+    TResult Function()? backupStarted,
+    TResult Function()? backupSucceeded,
+    TResult Function(BackupFailedData details)? backupFailed,
+    required TResult orElse(),
+  }) {
+    if (backupSucceeded != null) {
+      return backupSucceeded();
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(BreezEvent_NewBlock value) newBlock,
+    required TResult Function(BreezEvent_InvoicePaid value) invoicePaid,
+    required TResult Function(BreezEvent_Synced value) synced,
+    required TResult Function(BreezEvent_PaymentSucceed value) paymentSucceed,
+    required TResult Function(BreezEvent_PaymentFailed value) paymentFailed,
+    required TResult Function(BreezEvent_BackupStarted value) backupStarted,
+    required TResult Function(BreezEvent_BackupSucceeded value) backupSucceeded,
+    required TResult Function(BreezEvent_BackupFailed value) backupFailed,
+  }) {
+    return backupSucceeded(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(BreezEvent_NewBlock value)? newBlock,
+    TResult? Function(BreezEvent_InvoicePaid value)? invoicePaid,
+    TResult? Function(BreezEvent_Synced value)? synced,
+    TResult? Function(BreezEvent_PaymentSucceed value)? paymentSucceed,
+    TResult? Function(BreezEvent_PaymentFailed value)? paymentFailed,
+    TResult? Function(BreezEvent_BackupStarted value)? backupStarted,
+    TResult? Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
+    TResult? Function(BreezEvent_BackupFailed value)? backupFailed,
+  }) {
+    return backupSucceeded?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(BreezEvent_NewBlock value)? newBlock,
+    TResult Function(BreezEvent_InvoicePaid value)? invoicePaid,
+    TResult Function(BreezEvent_Synced value)? synced,
+    TResult Function(BreezEvent_PaymentSucceed value)? paymentSucceed,
+    TResult Function(BreezEvent_PaymentFailed value)? paymentFailed,
+    TResult Function(BreezEvent_BackupStarted value)? backupStarted,
+    TResult Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
+    TResult Function(BreezEvent_BackupFailed value)? backupFailed,
+    required TResult orElse(),
+  }) {
+    if (backupSucceeded != null) {
+      return backupSucceeded(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class BreezEvent_BackupSucceeded implements BreezEvent {
+  const factory BreezEvent_BackupSucceeded() = _$BreezEvent_BackupSucceeded;
+}
+
+/// @nodoc
+abstract class _$$BreezEvent_BackupFailedCopyWith<$Res> {
+  factory _$$BreezEvent_BackupFailedCopyWith(
+          _$BreezEvent_BackupFailed value, $Res Function(_$BreezEvent_BackupFailed) then) =
+      __$$BreezEvent_BackupFailedCopyWithImpl<$Res>;
+  @useResult
+  $Res call({BackupFailedData details});
+}
+
+/// @nodoc
+class __$$BreezEvent_BackupFailedCopyWithImpl<$Res>
+    extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_BackupFailed>
+    implements _$$BreezEvent_BackupFailedCopyWith<$Res> {
+  __$$BreezEvent_BackupFailedCopyWithImpl(
+      _$BreezEvent_BackupFailed _value, $Res Function(_$BreezEvent_BackupFailed) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? details = null,
+  }) {
+    return _then(_$BreezEvent_BackupFailed(
+      details: null == details
+          ? _value.details
+          : details // ignore: cast_nullable_to_non_nullable
+              as BackupFailedData,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$BreezEvent_BackupFailed implements BreezEvent_BackupFailed {
+  const _$BreezEvent_BackupFailed({required this.details});
+
+  @override
+  final BackupFailedData details;
+
+  @override
+  String toString() {
+    return 'BreezEvent.backupFailed(details: $details)';
+  }
+
+  @override
+  bool operator ==(dynamic other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$BreezEvent_BackupFailed &&
+            (identical(other.details, details) || other.details == details));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, details);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$BreezEvent_BackupFailedCopyWith<_$BreezEvent_BackupFailed> get copyWith =>
+      __$$BreezEvent_BackupFailedCopyWithImpl<_$BreezEvent_BackupFailed>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(int block) newBlock,
+    required TResult Function(InvoicePaidDetails details) invoicePaid,
+    required TResult Function() synced,
+    required TResult Function(Payment details) paymentSucceed,
+    required TResult Function(PaymentFailedData details) paymentFailed,
+    required TResult Function() backupStarted,
+    required TResult Function() backupSucceeded,
+    required TResult Function(BackupFailedData details) backupFailed,
+  }) {
+    return backupFailed(details);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(int block)? newBlock,
+    TResult? Function(InvoicePaidDetails details)? invoicePaid,
+    TResult? Function()? synced,
+    TResult? Function(Payment details)? paymentSucceed,
+    TResult? Function(PaymentFailedData details)? paymentFailed,
+    TResult? Function()? backupStarted,
+    TResult? Function()? backupSucceeded,
+    TResult? Function(BackupFailedData details)? backupFailed,
+  }) {
+    return backupFailed?.call(details);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(int block)? newBlock,
+    TResult Function(InvoicePaidDetails details)? invoicePaid,
+    TResult Function()? synced,
+    TResult Function(Payment details)? paymentSucceed,
+    TResult Function(PaymentFailedData details)? paymentFailed,
+    TResult Function()? backupStarted,
+    TResult Function()? backupSucceeded,
+    TResult Function(BackupFailedData details)? backupFailed,
+    required TResult orElse(),
+  }) {
+    if (backupFailed != null) {
+      return backupFailed(details);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(BreezEvent_NewBlock value) newBlock,
+    required TResult Function(BreezEvent_InvoicePaid value) invoicePaid,
+    required TResult Function(BreezEvent_Synced value) synced,
+    required TResult Function(BreezEvent_PaymentSucceed value) paymentSucceed,
+    required TResult Function(BreezEvent_PaymentFailed value) paymentFailed,
+    required TResult Function(BreezEvent_BackupStarted value) backupStarted,
+    required TResult Function(BreezEvent_BackupSucceeded value) backupSucceeded,
+    required TResult Function(BreezEvent_BackupFailed value) backupFailed,
+  }) {
+    return backupFailed(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(BreezEvent_NewBlock value)? newBlock,
+    TResult? Function(BreezEvent_InvoicePaid value)? invoicePaid,
+    TResult? Function(BreezEvent_Synced value)? synced,
+    TResult? Function(BreezEvent_PaymentSucceed value)? paymentSucceed,
+    TResult? Function(BreezEvent_PaymentFailed value)? paymentFailed,
+    TResult? Function(BreezEvent_BackupStarted value)? backupStarted,
+    TResult? Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
+    TResult? Function(BreezEvent_BackupFailed value)? backupFailed,
+  }) {
+    return backupFailed?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(BreezEvent_NewBlock value)? newBlock,
+    TResult Function(BreezEvent_InvoicePaid value)? invoicePaid,
+    TResult Function(BreezEvent_Synced value)? synced,
+    TResult Function(BreezEvent_PaymentSucceed value)? paymentSucceed,
+    TResult Function(BreezEvent_PaymentFailed value)? paymentFailed,
+    TResult Function(BreezEvent_BackupStarted value)? backupStarted,
+    TResult Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
+    TResult Function(BreezEvent_BackupFailed value)? backupFailed,
+    required TResult orElse(),
+  }) {
+    if (backupFailed != null) {
+      return backupFailed(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class BreezEvent_BackupFailed implements BreezEvent {
+  const factory BreezEvent_BackupFailed({required final BackupFailedData details}) =
+      _$BreezEvent_BackupFailed;
+
+  BackupFailedData get details;
+  @JsonKey(ignore: true)
+  _$$BreezEvent_BackupFailedCopyWith<_$BreezEvent_BackupFailed> get copyWith =>
       throw _privateConstructorUsedError;
 }
 

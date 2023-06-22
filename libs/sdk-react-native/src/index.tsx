@@ -29,7 +29,10 @@ export enum EventType {
     NEW_BLOCK = "newBlock",
     PAYMENT_SUCCEED = "paymentSucceed",
     PAYMENT_FAILED = "paymentFailed",
-    SYNCED = "synced"
+    SYNCED = "synced",
+    BACKUP_STARTED = "backupStarted",
+    BACKUP_SUCCEEDED = "backupSucceeded",
+    BACKUP_FAILED = "backupFailed"    
 }
 
 export enum InputType {
@@ -83,6 +86,18 @@ export enum SwapStatus {
     EXPIRED = "expired"
 }
 
+export enum BuyBitcoinProvider {
+    MOONPAY = "moonpay"
+}
+
+export enum ReverseSwapStatus {
+    INITIAL = "initial",
+    IN_PROGRESS = "in_progress",
+    CANCELLED = "cancelled",
+    COMPLETED_SEEN = "completed_seen",
+    COMPLETED_CONFIRMED = "completed_confirmed"
+}
+
 export type AesSuccessActionDataDecrypted = {
     type: string
     description: string
@@ -124,7 +139,7 @@ export type CurrencyInfo = {
     localeOverrides?: LocaleOverrides[]
 }
 
-export type EventData = InvoicePaidDetails | Payment | number | PaymentFailedData
+export type EventData = InvoicePaidDetails | Payment | number | PaymentFailedData | BackupFailedData
 
 export type EventFn = (type: EventType, data?: EventData) => void
 
@@ -152,6 +167,10 @@ export type PaymentFailedData = {
     error: string
     invoice?: LnInvoice
     nodeId: string
+}
+
+export type BackupFailedData = {
+    error: string
 }
 
 export type LnInvoice = {
@@ -336,6 +355,22 @@ export type SwapInfo = {
     lastRedeemError?: string
 }
 
+export type ReverseSwapPairInfo = {
+    min: number
+    max: number
+    feesHash: string
+    feesPercentage: number
+    feesLockup: number
+    feesClaim: number
+}
+
+export type ReverseSwapInfo = {
+    id: string
+    claimPubkey: string
+    onchainAmountSat: number
+    status: ReverseSwapStatus
+}
+
 export type Symbol = {
     grapheme?: string
     template?: string
@@ -358,6 +393,11 @@ export type UnspentTransactionOutput = {
     address: string
     reserved: boolean
     reservedToBlock: number
+}
+
+export type BackupStatus = {
+    backedUp: boolean
+    lastBackupTime?: number   
 }
 
 const processEvent = (eventFn: EventFn) => {
@@ -385,6 +425,12 @@ const processEvent = (eventFn: EventFn) => {
                 return eventFn(EventType.PAYMENT_SUCCEED, payment)
             case EventType.SYNCED:
                 return eventFn(EventType.SYNCED)
+            case EventType.BACKUP_STARTED:
+                return eventFn(EventType.BACKUP_STARTED)
+            case EventType.BACKUP_SUCCEEDED:
+                return eventFn(EventType.BACKUP_SUCCEEDED)
+            case EventType.BACKUP_FAILED:
+                return eventFn(EventType.BACKUP_FAILED, event.data as BackupFailedData)
         }
     }
 }
@@ -434,10 +480,17 @@ export const registerNode = async (
     registerCreds?: GreenlightCredentials,
     inviteCode: string = ""
 ): Promise<GreenlightCredentials> => {
-    const response = await BreezSDK.registerNode(network, seed, registerCreds ? {
-        deviceCert: Array.from(registerCreds.deviceCert),
-        deviceKey: Array.from(registerCreds.deviceKey),
-    } : {}, inviteCode)
+    const response = await BreezSDK.registerNode(
+        network,
+        seed,
+        registerCreds
+            ? {
+                  deviceCert: Array.from(registerCreds.deviceCert),
+                  deviceKey: Array.from(registerCreds.deviceKey)
+              }
+            : {},
+        inviteCode
+    )
     return response as GreenlightCredentials
 }
 
@@ -511,8 +564,8 @@ export const listPayments = async (filter: PaymentTypeFilter, fromTimestamp: num
     return response as Payment[]
 }
 
-export const sweep = async (toAddress: string, feeRateSatsPerByte: number): Promise<void> => {
-    await BreezSDK.sweep(toAddress, feeRateSatsPerByte)
+export const sweep = async (toAddress: string, feeRateSatsPerVbyte: number): Promise<void> => {
+    await BreezSDK.sweep(toAddress, feeRateSatsPerVbyte)
 }
 
 export const fetchFiatRates = async (): Promise<Rate[]> => {
@@ -568,6 +621,21 @@ export const refund = async (swapAddress: string, toAddress: string, satPerVbyte
     return response
 }
 
+export const fetchReverseSwapFees = async (): Promise<ReverseSwapPairInfo> => {
+    const response = await BreezSDK.fetchReverseSwapFees()
+    return response as ReverseSwapPairInfo
+}
+
+export const inProgressReverseSwaps = async (): Promise<ReverseSwapInfo[]> => {
+    const response = await BreezSDK.inProgressReverseSwaps()
+    return response as ReverseSwapInfo[]
+}
+
+export const sendOnchain = async (amountSat: number, onchainRecipientAddress: string, pairHash: string, satPerVbyte: number): Promise<ReverseSwapInfo> => {
+    const response = await BreezSDK.sendOnchain(amountSat, onchainRecipientAddress, pairHash, satPerVbyte)
+    return response as ReverseSwapInfo
+}
+
 export const executeDevCommand = async (command: string): Promise<string> => {
     const response = await BreezSDK.executeDevCommand(command)
     return response
@@ -576,4 +644,18 @@ export const executeDevCommand = async (command: string): Promise<string> => {
 export const recommendedFees = async (): Promise<RecommendedFees> => {
     const response = await BreezSDK.recommendedFees()
     return response as RecommendedFees
+}
+
+export const buyBitcoin = async (provider: BuyBitcoinProvider): Promise<string> => {
+    const response = await BreezSDK.buyBitcoin(provider)
+    return response
+}
+
+export const startBackup = async (): Promise<void> => {
+ await BreezSDK.startBackup() 
+}
+
+export const backupStatus = async (): Promise<BackupStatus> => {
+ const response = await BreezSDK.backupStatus()
+ return response
 }

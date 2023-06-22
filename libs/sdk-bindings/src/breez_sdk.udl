@@ -216,6 +216,10 @@ dictionary PaymentFailedData {
     LNInvoice? invoice;
 };
 
+dictionary BackupFailedData {
+    string error;    
+};
+
 [Enum]
 interface BreezEvent {
     NewBlock(u32 block);
@@ -223,6 +227,14 @@ interface BreezEvent {
     Synced();
     PaymentSucceed(Payment details);
     PaymentFailed(PaymentFailedData details);
+    BackupStarted();
+    BackupSucceeded(); 
+    BackupFailed(BackupFailedData details);
+};
+
+dictionary BackupStatus {
+    boolean backed_up;
+    u64? last_backup_time;
 };
 
 callback interface LogStream {
@@ -253,7 +265,15 @@ dictionary LspInformation {
 
 enum SwapStatus {
     "Initial",
-    "Expired",    
+    "Expired",
+};
+
+enum ReverseSwapStatus {
+    "Initial",
+    "InProgress",
+    "Cancelled",
+    "CompletedSeen",
+    "CompletedConfirmed",
 };
 
 dictionary SwapInfo {
@@ -286,6 +306,13 @@ dictionary ReverseSwapPairInfo {
     f64 fees_percentage;
     u64 fees_lockup;
     u64 fees_claim;
+};
+
+dictionary ReverseSwapInfo {
+    string id;
+    string claim_pubkey;
+    u64 onchain_amount_sat;
+    ReverseSwapStatus status;
 };
 
 dictionary BitcoinAddressData {
@@ -362,6 +389,10 @@ interface InputType {
     LnUrlError(LnUrlErrorData data);
 };
 
+enum BuyBitcoinProvider {
+    "Moonpay",
+};
+
 interface BlockingBreezServices {
    [Throws=SDKError]
    void start();
@@ -391,10 +422,16 @@ interface BlockingBreezServices {
    NodeState? node_info();
 
    [Throws=SDKError]
+   BackupStatus backup_status();
+
+   [Throws=SDKError]
+   void start_backup();
+
+   [Throws=SDKError]
    sequence<Payment> list_payments(PaymentTypeFilter filter, i64? from_timestamp, i64? to_timestamp);
 
    [Throws=SDKError]
-   void sweep(string to_address, u64 fee_rate_sats_per_byte);
+   void sweep(string to_address, u64 fee_rate_sats_per_vbyte);
 
    [Throws=SDKError]
    sequence<Rate> fetch_fiat_rates();
@@ -433,6 +470,12 @@ interface BlockingBreezServices {
    ReverseSwapPairInfo fetch_reverse_swap_fees();
 
    [Throws=SDKError]
+   sequence<ReverseSwapInfo> in_progress_reverse_swaps();
+
+   [Throws=SDKError]
+   ReverseSwapInfo send_onchain(u64 amount_sat, string onchain_recipient_address, string pair_hash, u64 sat_per_vbyte);
+
+   [Throws=SDKError]
    string execute_dev_command(string command);
 
    [Throws=SDKError]
@@ -440,6 +483,9 @@ interface BlockingBreezServices {
 
    [Throws=SDKError]
    RecommendedFees recommended_fees();
+
+   [Throws=SDKError]
+   string buy_bitcoin(BuyBitcoinProvider provider);
 };
 
 namespace breez_sdk { 

@@ -221,8 +221,8 @@ pub(crate) async fn handle_command(
             serde_json::to_string_pretty(&sdk()?.fetch_fiat_rates().await?).map_err(|e| e.into())
         }
         Commands::CloseLSPChannels {} => {
-            sdk()?.close_lsp_channels().await?;
-            Ok("LSP channels were closed succesfully".to_string())
+            let tx_ids = sdk()?.close_lsp_channels().await?;
+            Ok(format!("Closing transaction ids:\n{:?}", tx_ids))
         }
         Commands::StopNode {} => {
             sdk()?.stop().await?;
@@ -325,6 +325,10 @@ pub(crate) async fn handle_command(
         Commands::BuyBitcoin { provider } => {
             let res = sdk()?.buy_bitcoin(provider.clone()).await?;
             Ok(format!("Here your {:?} url: {}", provider, res))
+        }
+        Commands::Backup {} => {
+            sdk()?.start_backup()?;
+            Ok("Backup started".into())
         }
     }
 }

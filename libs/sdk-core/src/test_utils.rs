@@ -5,10 +5,9 @@ use bitcoin::secp256k1::ecdsa::RecoverableSignature;
 use bitcoin::secp256k1::{KeyPair, Message};
 use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
+use bitcoin::Network;
 use gl_client::pb::amount::Unit;
-use gl_client::pb::{
-    Amount, CloseChannelResponse, CloseChannelType, Invoice, Peer, WithdrawResponse,
-};
+use gl_client::pb::{Amount, Invoice, Peer, WithdrawResponse};
 use lightning::ln::PaymentSecret;
 use lightning_invoice::{Currency, InvoiceBuilder, RawInvoice};
 use rand::distributions::{Alphanumeric, DistString, Standard};
@@ -16,9 +15,12 @@ use rand::rngs::OsRng;
 use rand::{random, Rng};
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
+use std::vec;
 use tokio::sync::{mpsc, Mutex};
+use tokio::time::sleep;
 use tonic::Streaming;
 
+use crate::backup::{BackupState, BackupTransport};
 use crate::breez_services::Receiver;
 use crate::chain::{ChainService, OnchainTx, RecommendedFees};
 use crate::fiat::{FiatCurrency, Rate};
@@ -29,6 +31,64 @@ use crate::moonpay::MoonPayApi;
 use crate::swap::create_submarine_swap_script;
 use crate::SwapInfo;
 use crate::{parse_invoice, Config, LNInvoice, PaymentResponse, RouteHint};
+
+pub struct MockBackupTransport {
+    pub num_pushed: std::sync::Mutex<u32>,
+    pub num_pulled: std::sync::Mutex<u32>,
+    pub remote_version: std::sync::Mutex<Option<u64>>,
+    pub state: std::sync::Mutex<Option<BackupState>>,
+}
+
+impl MockBackupTransport {
+    pub fn new() -> Self {
+        MockBackupTransport {
+            num_pushed: std::sync::Mutex::new(0),
+            num_pulled: std::sync::Mutex::new(0),
+            remote_version: std::sync::Mutex::new(None),
+            state: std::sync::Mutex::new(None),
+        }
+    }
+    pub fn pushed(&self) -> u32 {
+        *self.num_pushed.lock().unwrap()
+    }
+    pub fn pulled(&self) -> u32 {
+        *self.num_pulled.lock().unwrap()
+    }
+}
+
+#[tonic::async_trait]
+impl BackupTransport for MockBackupTransport {
+    async fn pull(&self) -> Result<Option<BackupState>> {
+        sleep(Duration::from_millis(10)).await;
+        *self.num_pulled.lock().unwrap() += 1;
+        let current_state = self.state.lock().unwrap();
+
+        match current_state.clone() {
+            Some(state) => Ok(Some(state)),
+            None => Ok(None),
+        }
+    }
+    async fn push(&self, version: Option<u64>, data: Vec<u8>) -> Result<u64> {
+        sleep(Duration::from_millis(10)).await;
+        let mut remote_version = self.remote_version.lock().unwrap();
+        let mut numpushed = self.num_pushed.lock().unwrap();
+        *numpushed += 1;
+
+        if !remote_version.is_none() && *remote_version != version {
+            return Err(anyhow!("version mismatch"));
+        }
+        let next_version = match version {
+            Some(v) => v + 1,
+            None => 1,
+        };
+        *remote_version = Some(next_version);
+        *self.state.lock().unwrap() = Some(BackupState {
+            generation: next_version,
+            data,
+        });
+        Ok(next_version)
+    }
+}
 
 pub struct MockSwapperAPI {}
 
@@ -246,7 +306,7 @@ impl NodeAPI for MockNodeAPI {
     async fn sweep(
         &self,
         _to_address: String,
-        _fee_rate_sats_per_byte: u64,
+        _fee_rate_sats_per_vbyte: u64,
     ) -> Result<WithdrawResponse> {
         Ok(WithdrawResponse {
             tx: rand_vec_u8(32),
@@ -268,12 +328,8 @@ impl NodeAPI for MockNodeAPI {
         Ok(sign_invoice(invoice))
     }
 
-    async fn close_peer_channels(&self, _node_id: String) -> Result<CloseChannelResponse> {
-        Ok(CloseChannelResponse {
-            txid: Vec::new(),
-            tx: Vec::new(),
-            close_type: CloseChannelType::Mutual.into(),
-        })
+    async fn close_peer_channels(&self, _node_id: String) -> Result<Vec<String>> {
+        Ok(vec![])
     }
     async fn stream_incoming_payments(&self) -> Result<Streaming<gl_client::pb::IncomingPayment>> {
         Err(anyhow!("Not implemented"))
@@ -288,7 +344,7 @@ impl NodeAPI for MockNodeAPI {
     }
 
     fn derive_bip32_key(&self, _path: Vec<ChildNumber>) -> Result<ExtendedPrivKey> {
-        Err(anyhow!("Not implemented"))
+        Ok(ExtendedPrivKey::new_master(Network::Bitcoin, &[])?)
     }
 }
 
@@ -517,7 +573,10 @@ pub fn create_test_config() -> crate::models::Config {
     conf
 }
 
-pub fn create_test_persister(config: crate::models::Config) -> crate::persist::db::SqliteStorage {
+pub(crate) fn create_test_persister(
+    config: crate::models::Config,
+) -> crate::persist::db::SqliteStorage {
+    println!("create_test_persister {}", config.working_dir);
     crate::persist::db::SqliteStorage::new(config.working_dir)
 }
 
