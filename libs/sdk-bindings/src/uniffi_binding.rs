@@ -277,8 +277,11 @@ impl BlockingBreezServices {
     }
 
     pub fn close_lsp_channels(&self) -> Result<(), SDKError> {
-        rt().block_on(self.breez_services.close_lsp_channels())
-            .map_err(|e| e.into())
+        rt().block_on(async {
+            _ = self.breez_services.close_lsp_channels().await?;
+            Ok(())
+        })
+        .map_err(|e: anyhow::Error| e.into())
     }
 
     /// Onchain receive swap API

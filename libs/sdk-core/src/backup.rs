@@ -55,7 +55,7 @@ impl BackupWatcher {
         persister: Arc<SqliteStorage>,
         encryption_key: Vec<u8>,
     ) -> Self {
-        let (notifier, _) = broadcast::channel::<BreezEvent>(1);
+        let (notifier, _) = broadcast::channel::<BreezEvent>(100);
         let worker = BackupWorker::new(inner, persister, encryption_key, notifier);
 
         let (quit_sender, mut quit_receiver) = watch::channel::<()>(());
@@ -72,6 +72,8 @@ impl BackupWatcher {
                         match event {
                             Ok(HookEvent::Insert{table}) => {
                              if table == "sync_requests"{
+                              // we do want to wait a bit to allow for multiple sync requests to be inserted
+                              tokio::time::sleep(std::time::Duration::from_millis(100)).await;
                               if let Err(e) = cloned_worker.sync().await {
                                error!("Sync worker returned with error {e}");
                               }
@@ -343,7 +345,10 @@ mod tests {
     };
     use std::{sync::Arc, vec};
     use tokio::sync::broadcast::Receiver;
-    use tokio::time::{sleep, Duration, Instant};
+    use tokio::{
+        spawn,
+        time::{Duration, Instant},
+    };
 
     use super::BackupWatcher;
 
@@ -353,7 +358,6 @@ mod tests {
         persister.init().unwrap();
         let transport = Arc::new(MockBackupTransport::new());
         let watcher = BackupWatcher::start(transport.clone(), persister, vec![0; 32]);
-        sleep(Duration::from_millis(100)).await;
         (watcher, transport)
     }
 
@@ -534,7 +538,7 @@ mod tests {
         }
 
         let persister = watcher.worker.persister.clone();
-        tokio::spawn(async move {
+        spawn(async move {
             // Add some data to the sync database to trigger sync
             populate_sync_table(persister.clone());
         });
@@ -556,12 +560,23 @@ mod tests {
     async fn test_trigger_during_sync() {
         let (watcher, transport) = create_test_backup_watcher().await;
         let persister = watcher.worker.persister.clone();
+
+        let mut expected_events = vec![];
+        for _ in 0..2 {
+            expected_events.push(BreezEvent::BackupStarted);
+            expected_events.push(BreezEvent::BackupSucceeded);
+        }
+
+        let main_subscription = watcher.subscribe_events();
         let task_subscription = watcher.subscribe_events();
-        let join_handle = tokio::spawn(async move {
-            let task_subscription1 = task_subscription.resubscribe();
+        let task_subscription1 = task_subscription.resubscribe();
+        tokio::spawn(async move {
             // Add some data to the sync database and wait for backup to complete.
             populate_sync_table(persister.clone());
             wait_for_backup_success(task_subscription1).await;
+            // Add sync request - that should trigger sync that handle a conflict.
+            let task_subscription2 = task_subscription.resubscribe();
+
             persister.set_last_sync_version(10, &vec![]).unwrap();
             // Remove the data frmo the sql database and change the sync version to cause conflict.
             persister
@@ -572,15 +587,10 @@ mod tests {
                         [],
                     )
                     .unwrap();
-
-            // Add sync request - that should trigger sync that handle a conflict.
-            let task_subscription2 = task_subscription.resubscribe();
             persister.add_sync_request().unwrap();
             wait_for_backup_success(task_subscription2).await;
         });
-        join_handle.await.unwrap();
-        assert_eq!(transport.pushed(), 3);
-        assert_eq!(transport.pulled(), 1);
+        test_expected_backup_events(main_subscription, transport, expected_events, 3, 1).await;
         let swaps = watcher.worker.persister.list_swaps().unwrap();
         assert!(swaps.len() == 1);
     }

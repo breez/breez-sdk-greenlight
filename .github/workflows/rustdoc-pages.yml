@@ -39,6 +39,15 @@ jobs:
           cd libs/sdk-core
           cargo doc --no-deps
 
+      # Set the right file permissions, based on https://github.com/actions/upload-pages-artifact#file-permissions
+      - name: Fix file permissions
+        shell: sh
+        run: |
+          chmod -v -R +rX "./libs/target/doc" |
+          while read line; do
+              echo "::warning title=Invalid file permissions automatically fixed::$line"
+          done
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
