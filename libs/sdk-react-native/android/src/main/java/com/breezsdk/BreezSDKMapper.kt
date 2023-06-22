@@ -1,23 +1,19 @@
 package com.breezsdk
 
 import breez_sdk.*
-import com.facebook.react.bridge.Arguments
-import com.facebook.react.bridge.ReadableArray
-import com.facebook.react.bridge.ReadableMap
-import com.facebook.react.bridge.WritableArray
-import com.facebook.react.bridge.WritableMap
+import com.facebook.react.bridge.*
 
 fun asConfig(config: ReadableMap): Config? {
-    var breezserver = config.getString("breezserver")
-    var mempoolspaceUrl = config.getString("mempoolspaceUrl")
-    var workingDir = config.getString("workingDir")
-    var network = config.getString("network")
+    val breezserver = config.getString("breezserver")
+    val mempoolspaceUrl = config.getString("mempoolspaceUrl")
+    val workingDir = config.getString("workingDir")
+    val network = config.getString("network")
 
     if (breezserver != null && mempoolspaceUrl != null && workingDir != null && network != null && hasNonNullKey(config, "paymentTimeoutSec") && hasNonNullKey(config, "maxfeePercent")) {
-        var paymentTimeoutSec = config.getInt("paymentTimeoutSec")
-        var defaultLspId = config.getString("defaultLspId")
-        var apiKey = config.getString("apiKey")        
-        var maxfeePercent = config.getDouble("maxfeePercent")
+        val paymentTimeoutSec = config.getInt("paymentTimeoutSec")
+        val defaultLspId = config.getString("defaultLspId")
+        val apiKey = config.getString("apiKey")
+        val maxfeePercent = config.getDouble("maxfeePercent")
 
         return Config(breezserver, mempoolspaceUrl, workingDir, asNetwork(network), paymentTimeoutSec.toUInt(), defaultLspId, apiKey, maxfeePercent)
     }
@@ -34,10 +30,10 @@ fun asBuyBitcoinProvider(envType: String): BuyBitcoinProvider {
 }
 
 fun asLnUrlAuthRequestData(reqData: ReadableMap): LnUrlAuthRequestData? {
-    var k1 = reqData.getString("k1")
-    var action = reqData.getString("action")
-    var domain = reqData.getString("domain")
-    var url = reqData.getString("url")
+    val k1 = reqData.getString("k1")
+    val action = reqData.getString("action")
+    val domain = reqData.getString("domain")
+    val url = reqData.getString("url")
 
     if (k1 != null && domain != null && url != null) {
         return LnUrlAuthRequestData(k1, action, domain, url)
@@ -47,15 +43,15 @@ fun asLnUrlAuthRequestData(reqData: ReadableMap): LnUrlAuthRequestData? {
 }
 
 fun asLnUrlPayRequestData(reqData: ReadableMap): LnUrlPayRequestData? {
-    var callback = reqData.getString("callback")
-    var metadataStr = reqData.getString("metadataStr")
-    var domain = reqData.getString("domain")
-    var lnAddress = reqData.getString("lnAddress")
+    val callback = reqData.getString("callback")
+    val metadataStr = reqData.getString("metadataStr")
+    val domain = reqData.getString("domain")
+    val lnAddress = reqData.getString("lnAddress")
 
     if (callback != null && metadataStr != null && domain != null && hasNonNullKey(reqData, "minSendable") && hasNonNullKey(reqData, "minSendable") && hasNonNullKey(reqData, "commentAllowed")) {
-        var minSendable = reqData.getDouble("minSendable")
-        var maxSendable = reqData.getDouble("maxSendable")
-        var commentAllowed = reqData.getInt("commentAllowed")
+        val minSendable = reqData.getDouble("minSendable")
+        val maxSendable = reqData.getDouble("maxSendable")
+        val commentAllowed = reqData.getInt("commentAllowed")
 
         return LnUrlPayRequestData(callback, minSendable.toULong(), maxSendable.toULong(), metadataStr, commentAllowed.toUShort(), domain, lnAddress)
     }
@@ -64,13 +60,13 @@ fun asLnUrlPayRequestData(reqData: ReadableMap): LnUrlPayRequestData? {
 }
 
 fun asLnUrlWithdrawRequestData(reqData: ReadableMap): LnUrlWithdrawRequestData? {
-    var callback = reqData.getString("callback")
-    var k1 = reqData.getString("k1")
-    var defaultDescription = reqData.getString("defaultDescription")
+    val callback = reqData.getString("callback")
+    val k1 = reqData.getString("k1")
+    val defaultDescription = reqData.getString("defaultDescription")
 
     if (callback != null && k1 != null && defaultDescription != null && hasNonNullKey(reqData, "minWithdrawable") && hasNonNullKey(reqData, "maxWithdrawable")) {
-        var minWithdrawable = reqData.getDouble("minWithdrawable")
-        var maxWithdrawable = reqData.getDouble("maxWithdrawable")
+        val minWithdrawable = reqData.getDouble("minWithdrawable")
+        val maxWithdrawable = reqData.getDouble("maxWithdrawable")
 
         return LnUrlWithdrawRequestData(callback, k1, defaultDescription, minWithdrawable.toULong(), maxWithdrawable.toULong())
     }
@@ -88,8 +84,8 @@ fun asNetwork(network: String): Network {
 
 fun asGreenlightCredentials(creds: ReadableMap) : GreenlightCredentials? {
     if (hasNonNullKey(creds, "deviceKey") && hasNonNullKey(creds, "deviceCert")) {
-         var deviceKeyArray = creds.getArray("deviceKey")
-         var deviceCertArray = creds.getArray("deviceCert")
+         val deviceKeyArray = creds.getArray("deviceKey")
+         val deviceCertArray = creds.getArray("deviceCert")
          return GreenlightCredentials(asUByteList(deviceKeyArray!!), asUByteList(deviceCertArray!!))
     }
 
@@ -97,7 +93,7 @@ fun asGreenlightCredentials(creds: ReadableMap) : GreenlightCredentials? {
 }
 
 fun asUByteList(arr: ReadableArray): List<UByte> {
-    var list = ArrayList<UByte>()
+    val list = ArrayList<UByte>()
     for (value in arr.toArrayList()) {
         when (value) {
             is Double -> list.add(value.toInt().toUByte())
@@ -126,6 +122,8 @@ fun pushToArray(array: WritableArray, value: Any?) {
         is LspInformation -> array.pushMap(readableMapOf(value))
         is Payment -> array.pushMap(readableMapOf(value))
         is Rate -> array.pushMap(readableMapOf(value))
+        is ReadableArray -> array.pushArray(value)
+        is ReadableMap -> array.pushMap(value)
         is ReverseSwapInfo -> array.pushMap(readableMapOf(value))
         is ReverseSwapPairInfo -> array.pushMap(readableMapOf(value))
         is RouteHint -> array.pushMap(readableMapOf(value))
@@ -137,8 +135,6 @@ fun pushToArray(array: WritableArray, value: Any?) {
         is UShort -> array.pushInt(value.toInt())
         is ULong -> array.pushDouble(value.toDouble())
         is UnspentTransactionOutput -> array.pushMap(readableMapOf(value))
-        is WritableArray -> array.pushArray(value)
-        is WritableMap -> array.pushMap(value)
         is Array<*> -> array.pushArray(readableArrayOf(value.asIterable()))
         is List<*> -> array.pushArray(readableArrayOf(value))
         else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
@@ -153,29 +149,28 @@ fun pushToMap(map: WritableMap, key: String, value: Any?) {
         is Double -> map.putDouble(key, value)
         is Int -> map.putInt(key, value)
         is Long -> map.putDouble(key, value.toDouble())
+        is ReadableArray -> map.putArray(key, value)
+        is ReadableMap -> map.putMap(key, value)
         is String -> map.putString(key, value)
         is UByte -> map.putInt(key, value.toInt())
         is UInt -> map.putInt(key, value.toInt())
         is UShort -> map.putInt(key, value.toInt())
         is ULong -> map.putDouble(key, value.toDouble())
-        is WritableMap -> map.putMap(key, value)
-        is WritableArray -> map.putArray(key, value)
         is Array<*> -> map.putArray(key, readableArrayOf(value.asIterable()))
         is List<*> -> map.putArray(key, readableArrayOf(value))
         else -> throw IllegalArgumentException("Unsupported value type ${value::class.java.name} for key [$key]")
     }
 }
 
-fun readableArrayOf(values: Iterable<*>?): ReadableArray? {
+fun readableArrayOf(values: Iterable<*>?): ReadableArray {
+    val array = Arguments.createArray()
     if (values != null) {
-        val array = Arguments.createArray()
         for (value in values) {
             pushToArray(array, value)
         }
-        return array
     }
 
-    return null
+    return array
 }
 
 fun readableMapOf(aesSuccessActionDataDecrypted: AesSuccessActionDataDecrypted): ReadableMap {
@@ -332,7 +327,7 @@ fun readableMapOf(lnUrlCallbackStatus: LnUrlCallbackStatus): ReadableMap {
     return when (lnUrlCallbackStatus) {
         is LnUrlCallbackStatus.Ok -> readableMapOf("status" to "ok")
         is LnUrlCallbackStatus.ErrorStatus -> {
-            var response = Arguments.createMap()
+            val response = Arguments.createMap()
             response.putString("status", "error")
             response.merge(readableMapOf(lnUrlCallbackStatus.data))
             response
@@ -355,13 +350,13 @@ fun readableMapOf(lnUrlPayRequestData: LnUrlPayRequestData): ReadableMap {
 fun readableMapOf(lnUrlPayResult: LnUrlPayResult): ReadableMap {
     return when (lnUrlPayResult) {
         is LnUrlPayResult.EndpointSuccess -> {
-            return readableMapOf(
+            readableMapOf(
                     "type" to "endpointSuccess",
                     "data" to readableMapOf(lnUrlPayResult.data)
             )
         }
         is LnUrlPayResult.EndpointError -> {
-            return readableMapOf(
+            readableMapOf(
                     "type" to "endpointError",
                     "data" to readableMapOf(lnUrlPayResult.data)
             )

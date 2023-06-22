@@ -21,6 +21,7 @@ import {
     listFiatCurrencies,
     mnemonicToSeed,
     Network,
+    nodeInfo,
     recoverNode,
     registerNode,
     buyBitcoin,
@@ -115,6 +116,9 @@ const App = () => {
 
                 await start()
                 addLine("start", null)
+
+                const nodeState = await nodeInfo()
+                addLine("nodeInfo", JSON.stringify(nodeState))
 
                 const fiatCurrencies = await listFiatCurrencies()
                 addLine("listFiatCurrencies", JSON.stringify(fiatCurrencies))
