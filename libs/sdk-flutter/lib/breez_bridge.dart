@@ -33,6 +33,13 @@ class BreezBridge {
 
   Stream<Payment> get paymentResultStream => _paymentResultStream.stream;
 
+  // Listen to backup results
+  final StreamController<BackupState?> _backupStreamController = BehaviorSubject<BackupState?>();
+
+  Stream<BackupState?> get backupStream => _backupStreamController.stream;
+
+  final BackupState backupState = BackupState();
+
   void initialize() {
     /// Listen to BreezEvent's(new block, invoice paid, synced)
     _lnToolkit.breezEventsStream().listen((event) async {
@@ -49,6 +56,17 @@ class BreezBridge {
       }
       if (event is BreezEvent_PaymentFailed) {
         _paymentResultStream.addError(Exception(event.details.error));
+      }
+      if (event is BreezEvent_BackupSucceeded) {
+        backupState.inProgress = false;
+        await getBackupState();
+      }
+      if (event is BreezEvent_BackupStarted) {
+        backupState.inProgress = true;
+        _backupStreamController.add(backupState);
+      }
+      if (event is BreezEvent_BackupFailed) {
+        _backupStreamController.addError(Exception(event.details.error));
       }
     });
 
@@ -190,6 +208,13 @@ class BreezBridge {
     return nodeState;
   }
 
+  /// get the backup state
+  Future<BackupState> getBackupState() async {
+    backupState.status = await _lnToolkit.backupStatus();
+    _backupStreamController.add(backupState);
+    return backupState;
+  }
+
   Future<Config> defaultConfig(EnvironmentType envType) {
     return _lnToolkit.defaultConfig(configType: envType);
   }
@@ -326,6 +351,12 @@ class BreezBridge {
   /// Fetches the current recommended fees
   Future<RecommendedFees> recommendedFees() => _lnToolkit.recommendedFees();
 
+  /// Start the backup process
+  Future<void> backup() => _lnToolkit.backup();
+
+  /// Returns the state of the backup process
+  Future<BackupStatus> backupStatus() => _lnToolkit.backupStatus();
+
   /* Helper Methods */
   /// Validate if given address is a valid BTC address
   Future<bool> isValidBitcoinAddress(
@@ -364,6 +395,7 @@ class BreezBridge {
   Future fetchNodeData() async {
     await getNodeState();
     await listPayments();
+    await getBackupState();
   }
 
   /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency
@@ -392,4 +424,11 @@ extension SDKConfig on Config {
       maxfeePercent: maxfeePercent ?? this.maxfeePercent,
     );
   }
+}
+
+class BackupState {
+  bool? inProgress;
+  BackupStatus? status;
+
+  BackupState({this.inProgress, this.status});
 }

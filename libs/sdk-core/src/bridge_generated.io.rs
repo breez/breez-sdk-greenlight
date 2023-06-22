@@ -268,6 +268,16 @@ pub extern "C" fn wire_buy_bitcoin(port_: i64, provider: i32) {
     wire_buy_bitcoin_impl(port_, provider)
 }
 
+#[no_mangle]
+pub extern "C" fn wire_backup(port_: i64) {
+    wire_backup_impl(port_)
+}
+
+#[no_mangle]
+pub extern "C" fn wire_backup_status(port_: i64) {
+    wire_backup_status_impl(port_)
+}
+
 // Section: allocate functions
 
 #[no_mangle]

@@ -243,6 +243,16 @@ abstract class BreezSdkCore {
   Future<String> buyBitcoin({required BuyBitcoinProvider provider, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kBuyBitcoinConstMeta;
+
+  /// See [BreezServices::backup]
+  Future<void> backup({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kBackupConstMeta;
+
+  /// See [BreezServices::backup_status]
+  Future<BackupStatus> backupStatus({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kBackupStatusConstMeta;
 }
 
 /// Wrapper for the decrypted [AesSuccessActionData] payload
@@ -264,6 +274,16 @@ class BackupFailedData {
 
   const BackupFailedData({
     required this.error,
+  });
+}
+
+class BackupStatus {
+  final bool backedUp;
+  final int? lastBackupTime;
+
+  const BackupStatus({
+    required this.backedUp,
+    this.lastBackupTime,
   });
 }
 
@@ -1777,6 +1797,36 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["provider"],
       );
 
+  Future<void> backup({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_backup(port_),
+      parseSuccessData: _wire2api_unit,
+      constMeta: kBackupConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kBackupConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "backup",
+        argNames: [],
+      );
+
+  Future<BackupStatus> backupStatus({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_backup_status(port_),
+      parseSuccessData: _wire2api_backup_status,
+      constMeta: kBackupStatusConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kBackupStatusConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "backup_status",
+        argNames: [],
+      );
+
   void dispose() {
     _platform.dispose();
   }
@@ -1804,6 +1854,15 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
     return BackupFailedData(
       error: _wire2api_String(arr[0]),
+    );
+  }
+
+  BackupStatus _wire2api_backup_status(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return BackupStatus(
+      backedUp: _wire2api_bool(arr[0]),
+      lastBackupTime: _wire2api_opt_box_autoadd_u64(arr[1]),
     );
   }
 
@@ -3477,6 +3536,29 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_buy_bitcoinPtr =
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Int32)>>('wire_buy_bitcoin');
   late final _wire_buy_bitcoin = _wire_buy_bitcoinPtr.asFunction<void Function(int, int)>();
+
+  void wire_backup(
+    int port_,
+  ) {
+    return _wire_backup(
+      port_,
+    );
+  }
+
+  late final _wire_backupPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_backup');
+  late final _wire_backup = _wire_backupPtr.asFunction<void Function(int)>();
+
+  void wire_backup_status(
+    int port_,
+  ) {
+    return _wire_backup_status(
+      port_,
+    );
+  }
+
+  late final _wire_backup_statusPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_backup_status');
+  late final _wire_backup_status = _wire_backup_statusPtr.asFunction<void Function(int)>();
 
   ffi.Pointer<wire_Config> new_box_autoadd_config_0() {
     return _new_box_autoadd_config_0();
