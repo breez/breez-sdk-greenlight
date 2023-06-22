@@ -197,12 +197,7 @@ fn test_sync() {
         min_allowed_deposit: 0,
         max_allowed_deposit: 100,
         last_redeem_error: None,
-        min_msat: todo!(),
-        proportional: todo!(),
-        valid_until: todo!(),
-        max_idle_time: todo!(),
-        max_client_to_self_delay: todo!(),
-        promise: todo!(),
+        channel_opening_fees: None,
     };
     local_storage.insert_swap(local_swap_info.clone()).unwrap();
 
