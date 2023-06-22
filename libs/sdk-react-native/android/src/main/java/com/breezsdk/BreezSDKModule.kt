@@ -16,15 +16,8 @@ import java.util.concurrent.Executors
 class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
     private lateinit var executor: ExecutorService
     private var breezServices: BlockingBreezServices? = null
-    private val requests = HashMap<Int, Promise>()
 
     companion object {
-        const val MSG_RESPONSE = 1
-        const val MSG_ERROR = 2
-        
-        const val MAP_CHAR: Char = '{'
-        const val ARRAY_CHAR: Char = '['
-
         const val TAG = "RNBreezSDK"
     }
 
@@ -32,48 +25,6 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
         super.initialize()
 
         executor = Executors.newFixedThreadPool(3)
-    }
-
-    private val responseHandler: Handler = object : Handler(Looper.getMainLooper()) {
-        override fun handleMessage(response: Message) {
-            val responseData = response.data
-
-            when (response.what) {
-                MSG_RESPONSE -> {
-                    val promise = requests.remove(response.arg1)
-
-                    if (promise != null) {
-                        val data = responseData.getString("data")
-
-                        if (data != null && data.length > 1) {
-                            if (data[0] == MAP_CHAR) {
-                                return promise.resolve(deserializeMap(data))
-                            } else if (data[0] == ARRAY_CHAR) {
-                                return promise.resolve(deserializeArray(data))
-                            }
-                        }
-
-                        return promise.resolve(data)
-                    }
-                }
-                MSG_ERROR -> {
-                    val promise = requests.remove(response.arg1)
-                    val error = responseData.getString("error")
-
-                    if (promise != null && error != null) {
-                        promise.reject(TAG, error)
-                    }
-                }
-                else -> super.handleMessage(response)
-            }
-        }
-    }
-
-    private fun getRequestId(promise: Promise): Int {
-        val requestId: Int = Random().nextInt()
-        requests[requestId] = promise
-
-        return requestId
     }
 
     override fun getName(): String {
@@ -97,23 +48,13 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
     @ReactMethod
     fun mnemonicToSeed(mnemonic: String, promise: Promise) {
-        val requestId = getRequestId(promise)
-
         executor.execute {
-            val message = Message.obtain(null, MSG_RESPONSE, requestId, 0)
-            val data = Bundle()
-
             try {
                 val seed = mnemonicToSeed(mnemonic)
-                data.putString("data", serialize(readableArrayOf(seed)))
+                promise.resolve(readableArrayOf(seed))
             } catch (e: SdkException) {
-                e.printStackTrace()
-                message.what = MSG_ERROR
-                data.putString("error", e.message ?: "Error calling mnemonicToSeed")
+                promise.reject(TAG, e.message ?: "Error calling mnemonicToSeed", e)
             }
-
-            message.data = data
-            responseHandler.sendMessage(message)
         }
     }
 
@@ -154,23 +95,14 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
     @ReactMethod
     fun recoverNode(network: String, seed: ReadableArray, promise: Promise) {
-        val requestId = getRequestId(promise)
-
         executor.execute {
-            val message = Message.obtain(null, MSG_RESPONSE, requestId, 0)
-            val data = Bundle()
-
             try {
                 val creds = recoverNode(asNetwork(network), asUByteList(seed))
-                data.putString("data", serialize(readableMapOf(creds)))
+                promise.resolve(readableMapOf(creds))
             } catch (e: SdkException) {
                 e.printStackTrace()
-                message.what = MSG_ERROR
-                data.putString("error", e.message ?: "Error calling recoverNode")
+                promise.reject(TAG, e.message ?: "Error calling recoverNode", e)
             }
-
-            message.data = data
-            responseHandler.sendMessage(message)
         }
     }
 
@@ -233,23 +165,14 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
     @ReactMethod
     fun start(promise: Promise) {
-        val requestId = getRequestId(promise)
-
         executor.execute {
-            val message = Message.obtain(null, MSG_RESPONSE, requestId, 0)
-            val data = Bundle()
-
             try {
                 getBreezServices().start()
-                data.putString("data", serialize(readableMapOf("status" to "ok")))
+                promise.resolve(readableMapOf("status" to "ok"))
             } catch (e: SdkException) {
                 e.printStackTrace()
-                message.what = MSG_ERROR
-                data.putString("error", e.message ?: "Error calling start")
+                promise.reject(TAG, e.message ?: "Error calling initServices", e)
             }
-
-            message.data = data
-            responseHandler.sendMessage(message)
         }
     }
 
@@ -364,28 +287,17 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
     @ReactMethod
     fun nodeInfo(promise: Promise) {
-        val requestId = getRequestId(promise)
-
         executor.execute {
-            val message = Message.obtain(null, MSG_RESPONSE, requestId, 0)
-            val data = Bundle()
-
             try {
-                val nodeState = getBreezServices().nodeInfo()
-
-                if (nodeState != null) {
-                    data.putString("data", serialize(readableMapOf(nodeState)))
-                } else {
-                    data.putString("error", "No available node info")
+                getBreezServices().nodeInfo()?.let {nodeState->
+                    promise.resolve(readableMapOf(nodeState))
+                } ?: run {
+                    promise.reject(TAG, "No available node info")
                 }
             } catch (e: SdkException) {
                 e.printStackTrace()
-                message.what = MSG_ERROR
-                data.putString("error", e.message ?: "Error calling nodeInfo")
+                promise.reject(TAG, e.message ?: "Error calling nodeInfo", e)
             }
-
-            message.data = data
-            responseHandler.sendMessage(message)
         }
     }
 

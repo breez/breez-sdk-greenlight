@@ -64,7 +64,6 @@ dependencies {
     //noinspection GradleDynamicVersion
     implementation "com.facebook.react:react-native:+"  // From node_modules
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.21"
-    implementation "org.json:json:20230227"
     implementation("net.java.dev.jna:jna:5.6.0@aar")
 
 }
