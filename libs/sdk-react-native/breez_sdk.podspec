@@ -19,9 +19,9 @@ Pod::Spec.new do |s|
 
   # will use BreezSDK from CocoaPods trunk
   # remove this for local development but don't commit its removal.
-  # s.dependency "BreezSDK", package["version"]
+  s.dependency "BreezSDK", package["version"]
 
   # will use local BreezSDK build for easy and fast development
   # add this for local development but don't commit it.
-  s.vendored_frameworks = "ios/bindings-swift/breez_sdkFFI.xcframework"
+  # s.vendored_frameworks = "ios/bindings-swift/breez_sdkFFI.xcframework"
 end
