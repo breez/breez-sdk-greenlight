@@ -253,7 +253,10 @@ pub fn list_fiat_currencies() -> Result<Vec<FiatCurrency>> {
 
 /// See [BreezServices::close_lsp_channels]
 pub fn close_lsp_channels() -> Result<()> {
-    block_on(async { get_breez_services()?.close_lsp_channels().await })
+    block_on(async {
+        _ = get_breez_services()?.close_lsp_channels().await;
+        Ok(())
+    })
 }
 
 /// See [BreezServices::sweep]
