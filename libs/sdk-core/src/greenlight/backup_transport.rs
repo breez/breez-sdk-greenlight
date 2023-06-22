@@ -20,7 +20,7 @@ impl GLBackupTransport {
 impl BackupTransport for GLBackupTransport {
     async fn pull(&self) -> Result<Option<BackupState>> {
         let key = self.gl_key();
-        let mut c: node::ClnClient = self.inner.get_node_client().await?;
+        let mut c: node::ClnClient = self.inner.get_node_client();
         let response: pb::cln::ListdatastoreResponse = c
             .list_datastore(pb::cln::ListdatastoreRequest { key })
             .await?
@@ -39,7 +39,7 @@ impl BackupTransport for GLBackupTransport {
     async fn push(&self, version: Option<u64>, hex: Vec<u8>) -> Result<u64> {
         let key = self.gl_key();
         info!("set_value key = {:?} data length={:?}", key, hex.len());
-        let mut c: node::ClnClient = self.inner.get_node_client().await?;
+        let mut c: node::ClnClient = self.inner.get_node_client();
         let mut mode = pb::cln::datastore_request::DatastoreMode::MustCreate;
         if version.is_some() {
             mode = pb::cln::datastore_request::DatastoreMode::MustReplace;
