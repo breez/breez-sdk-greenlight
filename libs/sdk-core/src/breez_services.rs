@@ -459,14 +459,12 @@ impl BreezServices {
     /// Close all channels with the current LSP.
     ///
     /// Should be called  when the user wants to close all the channels.
-    pub async fn close_lsp_channels(&self) -> Result<()> {
+    pub async fn close_lsp_channels(&self) -> Result<Vec<String>> {
         self.start_node().await?;
         let lsp = self.lsp_info().await?;
-        self.node_api
-            .close_peer_channels(lsp.pubkey)
-            .await
-            .map(|_| ())?;
-        self.sync().await
+        let tx_ids = self.node_api.close_peer_channels(lsp.pubkey).await?;
+        self.sync().await?;
+        Ok(tx_ids)
     }
 
     /// Onchain receive swap API

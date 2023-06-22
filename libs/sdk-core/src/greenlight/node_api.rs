@@ -9,9 +9,9 @@ use bitcoin::bech32::{u5, ToBase32};
 use bitcoin::secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
 use gl_client::pb::amount::Unit;
 
+use gl_client::pb::cln::{ChannelState, CloseRequest, ListpeerchannelsRequest};
 use gl_client::pb::{
-    Amount, CloseChannelRequest, CloseChannelResponse, Invoice, InvoiceRequest, InvoiceStatus,
-    OffChainPayment, PayStatus, WithdrawResponse,
+    Amount, Invoice, InvoiceRequest, InvoiceStatus, OffChainPayment, PayStatus, WithdrawResponse,
 };
 use gl_client::scheduler::Scheduler;
 use gl_client::signer::Signer;
@@ -413,15 +413,59 @@ impl NodeAPI for Greenlight {
         client.key_send(request).await?.into_inner().try_into()
     }
 
-    async fn close_peer_channels(&self, node_id: String) -> Result<CloseChannelResponse> {
-        let mut client = self.get_client().await?;
+    async fn close_peer_channels(&self, node_id: String) -> Result<Vec<String>> {
+        let mut client = self.get_node_client().await?;
+        let closed_channels = client
+            .list_peer_channels(ListpeerchannelsRequest {
+                id: Some(hex::decode(node_id)?),
+            })
+            .await?
+            .into_inner();
+        let mut tx_ids = vec![];
+        for channel in closed_channels.channels {
+            let mut should_close = false;
+            if let Some(state) = channel.state {
+                match ChannelState::from_i32(state) {
+                    Some(ChannelState::Openingd) => should_close = true,
+                    Some(ChannelState::ChanneldAwaitingLockin) => should_close = true,
+                    Some(ChannelState::ChanneldNormal) => should_close = true,
+                    Some(ChannelState::ChanneldShuttingDown) => should_close = true,
+                    Some(ChannelState::FundingSpendSeen) => should_close = true,
+                    Some(ChannelState::DualopendOpenInit) => should_close = true,
+                    Some(ChannelState::DualopendAwaitingLockin) => should_close = true,
+                    Some(_) => should_close = false,
+                    None => should_close = false,
+                }
+            }
 
-        let request = CloseChannelRequest {
-            node_id: hex::decode(node_id)?,
-            destination: None,
-            unilateraltimeout: None,
-        };
-        Ok(client.close_channel(request).await?.into_inner())
+            if should_close {
+                let chan_id = channel.channel_id.ok_or(anyhow!("empty channel id"))?;
+                let response = client
+                    .close(CloseRequest {
+                        id: hex::encode(chan_id),
+                        unilateraltimeout: None,
+                        destination: None,
+                        fee_negotiation_step: None,
+                        wrong_funding: None,
+                        force_lease_closed: None,
+                        feerange: vec![],
+                    })
+                    .await;
+                match response {
+                    Ok(res) => {
+                        tx_ids.push(hex::encode(
+                            res.into_inner()
+                                .txid
+                                .ok_or(anyhow!("empty txid in close response"))?,
+                        ));
+                    }
+                    Err(e) => {
+                        error!("error closing channel: {}", e);
+                    }
+                };
+            }
+        }
+        Ok(tx_ids)
     }
 
     async fn sweep(
