@@ -131,7 +131,7 @@ impl BTCReceiveSwap {
     /// See [SwapInfo] for details.
     pub(crate) async fn create_swap_address(
         &self,
-        opening_fee_params: Option<OpeningFeeParams>,
+        channel_opening_fees: Option<OpeningFeeParams>,
     ) -> Result<SwapInfo> {
         let node_state = self.persister.get_node_state()?;
         if node_state.is_none() {
@@ -193,14 +193,7 @@ impl BTCReceiveSwap {
             min_allowed_deposit: swap_reply.min_allowed_deposit,
             max_allowed_deposit: swap_reply.max_allowed_deposit,
             last_redeem_error: None,
-            min_msat: opening_fee_params.clone().map(|o| o.min_msat),
-            proportional: opening_fee_params.clone().map(|o| o.proportional),
-            valid_until: opening_fee_params.clone().map(|o| o.valid_until),
-            max_idle_time: opening_fee_params.clone().map(|o| o.max_idle_time),
-            max_client_to_self_delay: opening_fee_params
-                .clone()
-                .map(|o| o.max_client_to_self_delay),
-            promise: opening_fee_params.clone().map(|o| o.promise),
+            channel_opening_fees,
         };
 
         // persist the address

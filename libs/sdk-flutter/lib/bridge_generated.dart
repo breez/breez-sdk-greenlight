@@ -1086,12 +1086,7 @@ class SwapInfo {
   final int minAllowedDeposit;
   final int maxAllowedDeposit;
   final String? lastRedeemError;
-  final int? minMsat;
-  final int? proportional;
-  final String? validUntil;
-  final int? maxIdleTime;
-  final int? maxClientToSelfDelay;
-  final String? promise;
+  final OpeningFeeParams? channelOpeningFees;
 
   const SwapInfo({
     required this.bitcoinAddress,
@@ -1114,12 +1109,7 @@ class SwapInfo {
     required this.minAllowedDeposit,
     required this.maxAllowedDeposit,
     this.lastRedeemError,
-    this.minMsat,
-    this.proportional,
-    this.validUntil,
-    this.maxIdleTime,
-    this.maxClientToSelfDelay,
-    this.promise,
+    this.channelOpeningFees,
   });
 }
 
@@ -2579,7 +2569,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   SwapInfo _wire2api_swap_info(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 26) throw Exception('unexpected arr length: expect 26 but see ${arr.length}');
+    if (arr.length != 21) throw Exception('unexpected arr length: expect 21 but see ${arr.length}');
     return SwapInfo(
       bitcoinAddress: _wire2api_String(arr[0]),
       createdAt: _wire2api_i64(arr[1]),
@@ -2601,12 +2591,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       minAllowedDeposit: _wire2api_i64(arr[17]),
       maxAllowedDeposit: _wire2api_i64(arr[18]),
       lastRedeemError: _wire2api_opt_String(arr[19]),
-      minMsat: _wire2api_opt_box_autoadd_u64(arr[20]),
-      proportional: _wire2api_opt_box_autoadd_u32(arr[21]),
-      validUntil: _wire2api_opt_String(arr[22]),
-      maxIdleTime: _wire2api_opt_box_autoadd_u32(arr[23]),
-      maxClientToSelfDelay: _wire2api_opt_box_autoadd_u32(arr[24]),
-      promise: _wire2api_opt_String(arr[25]),
+      channelOpeningFees: _wire2api_opt_box_autoadd_opening_fee_params(arr[20]),
     );
   }
 

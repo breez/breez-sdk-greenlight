@@ -1167,7 +1167,7 @@ impl Receiver for PaymentReceiver {
             if let Some(ofp) = &cheapest_opening_fee_params {
                 let channel_fees_msat_calculated =
                     amount_msats * ofp.proportional as u64 / 1_000_000 / 1_000_000;
-                let channel_fees_msat = max(channel_fees_msat_calculated, ofp.min_msat as u64);
+                let channel_fees_msat = max(channel_fees_msat_calculated, ofp.min_msat);
 
                 info!("zero-conf fee calculation option: lsp fee rate (proportional): {}:  (minimum {}), total fees for channel: {}",
                 ofp.proportional, ofp.min_msat, channel_fees_msat);
@@ -1339,12 +1339,10 @@ fn get_cheapest_opening_fee_params(
     opening_fee_params_menu: Vec<models::OpeningFeeParams>,
 ) -> Option<models::OpeningFeeParams> {
     match validate_opening_fee_params_menu(&opening_fee_params_menu) {
-        Ok(()) => {
-            return Some(opening_fee_params_menu[0].clone());
-        }
+        Ok(()) => Some(opening_fee_params_menu[0].clone()),
         Err(e) => {
             error!("failed to validate opening_fee_params_menu{}", e);
-            return None;
+            None
         }
     }
 }
@@ -1362,11 +1360,11 @@ fn get_longest_valid_opening_fee_params(
                     DateTime::parse_from_str(&b.valid_until, "%Y %b %d %H:%M:%S%.3f %z").unwrap();
                 dt2.cmp(&dt1)
             });
-            return Some(opening_fee_params_menu[0].clone());
+            Some(opening_fee_params_menu[0].clone())
         }
         Err(e) => {
-            error!("failed to validate opening_fee_params_menu{}", e);
-            return None;
+            error!("failed to validate opening_fee_params_menu: {e}");
+            None
         }
     }
 }
