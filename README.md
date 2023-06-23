@@ -73,8 +73,8 @@ Remark: in order to build the Breez SDK you need to have access to the Greenligh
 - [x] Receive via on-chain address
 - [x] React Native bindings
 - [x] LNURL-Auth
-- [ ] Send to an on-chain address
-- [ ] MoonPay fiat on-ramp
+- [x] Send to an on-chain address
+- [x] MoonPay fiat on-ramp
 - [ ] Spend all funds
 - [ ] Webhook for receiving payments
 - [ ] Mobile Notifications
