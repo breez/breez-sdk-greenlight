@@ -1271,12 +1271,7 @@ impl support::IntoDart for SwapInfo {
             self.min_allowed_deposit.into_dart(),
             self.max_allowed_deposit.into_dart(),
             self.last_redeem_error.into_dart(),
-            self.min_msat.into_dart(),
-            self.proportional.into_dart(),
-            self.valid_until.into_dart(),
-            self.max_idle_time.into_dart(),
-            self.max_client_to_self_delay.into_dart(),
-            self.promise.into_dart(),
+            self.channel_opening_fees.into_dart(),
         ]
         .into_dart()
     }

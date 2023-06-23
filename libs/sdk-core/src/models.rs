@@ -15,6 +15,8 @@ use gl_client::pb::{CloseChannelResponse, Invoice};
 use lightning_invoice::RawInvoice;
 use ripemd::Digest;
 use ripemd::Ripemd160;
+use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef};
+use rusqlite::ToSql;
 use serde::{Deserialize, Serialize};
 use strum_macros::Display;
 use strum_macros::EnumString;
@@ -644,7 +646,7 @@ pub struct ReceivePaymentResponse {
     pub opening_fee_params: Option<OpeningFeeParams>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub struct OpeningFeeParams {
     pub min_msat: u64,
     pub proportional: u32,
@@ -664,6 +666,20 @@ impl From<OpeningFeeParams> for grpc::OpeningFeeParams {
             max_client_to_self_delay: ofp.max_client_to_self_delay,
             promise: ofp.promise,
         }
+    }
+}
+
+impl FromSql for OpeningFeeParams {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        serde_json::from_str(value.as_str()?).map_err(|_| FromSqlError::InvalidType)
+    }
+}
+
+impl ToSql for OpeningFeeParams {
+    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
+        Ok(ToSqlOutput::from(
+            serde_json::to_string(&self).map_err(|_| FromSqlError::InvalidType)?,
+        ))
     }
 }
 
@@ -744,15 +760,7 @@ pub struct SwapInfo {
     pub min_allowed_deposit: i64,
     pub max_allowed_deposit: i64,
     pub last_redeem_error: Option<String>,
-
-    // Todo: use Option<OpeningFeeParams> instead, requires implementing FromSql for OpeningFeeParams
-    // dynamic fee data
-    pub min_msat: Option<u64>,
-    pub proportional: Option<u32>,
-    pub valid_until: Option<String>,
-    pub max_idle_time: Option<u32>,
-    pub max_client_to_self_delay: Option<u32>,
-    pub promise: Option<String>,
+    pub channel_opening_fees: Option<OpeningFeeParams>,
 }
 
 impl SwapInfo {

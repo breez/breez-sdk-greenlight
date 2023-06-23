@@ -582,7 +582,7 @@ mod tests {
         assert_eq!(transport.pushed(), 3);
         assert_eq!(transport.pulled(), 1);
         let swaps = watcher.worker.persister.list_swaps().unwrap();
-        assert!(swaps.len() == 1);
+        assert_eq!(swaps.len(), 1);
     }
 
     fn populate_sync_table(persister: Arc<SqliteStorage>) {
@@ -607,12 +607,7 @@ mod tests {
             min_allowed_deposit: 0,
             max_allowed_deposit: 100,
             last_redeem_error: None,
-            min_msat: None,
-            proportional: None,
-            valid_until: None,
-            max_idle_time: None,
-            max_client_to_self_delay: None,
-            promise: None,
+            channel_opening_fees: None,
         };
         persister.insert_swap(tested_swap_info).unwrap();
     }

@@ -319,12 +319,7 @@ dictionary SwapInfo {
     i64 min_allowed_deposit;
     i64 max_allowed_deposit;
     string? last_redeem_error;
-    u64? min_msat;
-    u32? proportional;
-    string? valid_until;
-    u32? max_idle_time;
-    u32? max_client_to_self_delay;
-    string? promise;
+    OpeningFeeParams? channel_opening_fees;
 };
 
 dictionary ReverseSwapPairInfo {
