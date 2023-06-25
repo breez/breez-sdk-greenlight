@@ -259,13 +259,18 @@ impl NodeAPI for Greenlight {
             .collect();
 
         // Fetch closed channels from greenlight
-        let closed_channels = node_client
+        let closed_channels = match node_client
             .list_closed_channels(ListclosedchannelsRequest { id: None })
-            .await?
-            .into_inner();
+            .await
+        {
+            Ok(c) => c.into_inner().closedchannels,
+            Err(e) => {
+                error!("list closed channels error {:?}", e);
+                vec![]
+            }
+        };
 
         let forgotten_closed_channels: Result<Vec<Channel>> = closed_channels
-            .closedchannels
             .into_iter()
             .filter(|c| {
                 let hex_txid = hex::encode(c.funding_txid.clone());

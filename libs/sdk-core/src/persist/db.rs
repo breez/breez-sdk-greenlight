@@ -1,4 +1,4 @@
-use super::migrations::current_migrations;
+use super::migrations::{current_migrations, current_sync_migrations};
 use anyhow::Result;
 use rusqlite::{
     hooks::Action,
@@ -43,6 +43,22 @@ impl SqliteStorage {
     }
 
     pub(crate) fn init(&self) -> Result<()> {
+        Self::migrate_sync_db(self.sync_db_file.clone())?;
+        self.migrate_main_db()?;
+        Ok(())
+    }
+
+    pub(crate) fn migrate_sync_db(sync_db_path: String) -> Result<()> {
+        let mut sync_con = Connection::open(sync_db_path).map_err(anyhow::Error::msg)?;
+        let sync_migrations =
+            Migrations::new(current_sync_migrations().into_iter().map(M::up).collect());
+        sync_migrations
+            .to_latest(&mut sync_con)
+            .map_err(anyhow::Error::msg)?;
+        Ok(())
+    }
+
+    fn migrate_main_db(&self) -> Result<()> {
         let migrations = Migrations::new(current_migrations().into_iter().map(M::up).collect());
         let mut conn = self.get_connection()?;
         migrations
