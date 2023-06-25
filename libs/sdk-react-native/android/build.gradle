@@ -56,14 +56,17 @@ repositories {
 
 allprojects {
     repositories {
+        maven {
+            url "https://mvn.breez.technology/releases"
+        }
         google()
     }
 }
 
 dependencies {
     //noinspection GradleDynamicVersion
+    implementation "breez_sdk:bindings-android:0.1.0"
     implementation "com.facebook.react:react-native:+"  // From node_modules
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.21"
     implementation("net.java.dev.jna:jna:5.6.0@aar")
-
 }
