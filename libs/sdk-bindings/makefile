@@ -59,6 +59,16 @@ golang-linux: $(SOURCES)
 	cp ../target/$(TARGET)/release/libbreez_sdk_bindings.so ffi/golang
 	cp -r ffi/golang/breez/breez_sdk tests/bindings/golang/
 
+TARGET ?= aarch64-unknown-linux-gnu
+python-linux: $(SOURCES)	
+	cargo build --release --target $(TARGET)
+	cargo run --features=uniffi/cli --bin uniffi-bindgen generate src/breez_sdk.udl --language python -o ffi/python
+	cp ../target/$(TARGET)/release/libbreez_sdk_bindings.so ffi/python
+
+python-darwin: darwin-universal	
+	cargo run --features=uniffi/cli --bin uniffi-bindgen generate src/breez_sdk.udl --language python -o ffi/python
+	cp ../target/darwin-universal/release/libbreez_sdk_bindings.dylib ffi/python
+
 swift-ios: ios-universal
 	cargo run --features=uniffi/cli --bin uniffi-bindgen generate src/breez_sdk.udl -l swift -o ffi/swift-ios
 	cp ../target/ios-universal/release/libbreez_sdk_bindings.a ffi/swift-ios
