@@ -1,7 +1,5 @@
 import Foundation
-#if canImport(BreezSDK)
 import BreezSDK
-#endif
 
 class BreezSDKListener: NSObject, EventListener {
     var emitter: RCTEventEmitter

@@ -1,42 +1,5 @@
 import Foundation
-#if canImport(BreezSDK)
 import BreezSDK
-#else
-enum BreezSDK {
-    // In production, we're accessing the Breez SDK via the `BreezSDK` CocoaPod.
-    // But while developing the RN plugin, we're using a locally built version of the Breez SDK instad of the CocoaPod.
-    // That means we cannot just import `BreezSDK`.
-    // In that case we need to access the freestanding functions in `BreezSDK.swift` via the module name of our own
-    // module rather than via the module name of the CocoaPod.
-    // To not have to change any code when using a local build of the Breez SDK, we're faking the `BreezSDK` namespace.
-    // Note that this is only defined and used in a development setting.
-    // In a production setting, we'll use the BreezSDK CocoaPod and will never enter the else branch.
-    static func `mnemonicToSeed`(`phrase`: String) throws -> [UInt8] {
-        return try breez_sdk.mnemonicToSeed(phrase: phrase)
-    }
-    static func `parseInput`(`s`: String) throws -> InputType {
-        return try breez_sdk.parseInput(s: s)
-    }
-    static func `parseInvoice`(`invoice`: String) throws -> LnInvoice {
-        return try breez_sdk.parseInvoice(invoice: invoice)
-    }
-    static func `registerNode`(`network`: Network, `seed`: [UInt8], `registerCredentials`: GreenlightCredentials?, `inviteCode`: String?) throws -> GreenlightCredentials {
-        return try breez_sdk.registerNode(network: network, seed: seed, registerCredentials: registerCredentials, inviteCode: inviteCode)
-    }
-    static func `recoverNode`(`network`: Network, `seed`: [UInt8]) throws -> GreenlightCredentials {
-        return try breez_sdk.recoverNode(network: network, seed: seed)
-    }
-    static func `setLogStream`(`logStream`: LogStream) throws {
-        try breez_sdk.setLogStream(logStream: logStream)
-    }
-    static func `defaultConfig`(`envType`: EnvironmentType) -> Config {
-        return breez_sdk.defaultConfig(envType: envType)
-    }
-    static func `initServices`(`config`: Config, `seed`: [UInt8], `creds`: GreenlightCredentials, `listener`: EventListener) throws -> BlockingBreezServices {
-        return try breez_sdk.initServices(config: config, seed: seed, creds: creds, listener: listener)
-    }
-}
-#endif
 
 @objc(RNBreezSDK)
 class RNBreezSDK: RCTEventEmitter {
