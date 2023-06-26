@@ -9,6 +9,7 @@ use bitcoin::hashes::Hash;
 use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::{Address, Script};
+use chrono::{DateTime, Utc};
 use gl_client::pb::Peer;
 use gl_client::pb::WithdrawResponse;
 use gl_client::pb::{CloseChannelResponse, Invoice};
@@ -650,7 +651,8 @@ pub struct ReceivePaymentResponse {
 pub struct OpeningFeeParams {
     pub min_msat: u64,
     pub proportional: u32,
-    pub valid_until: String,
+    #[serde(with = "opening_fee_params_datetime_format")]
+    pub valid_until: DateTime<Utc>,
     pub max_idle_time: u32,
     pub max_client_to_self_delay: u32,
     pub promise: String,
@@ -661,11 +663,26 @@ impl From<OpeningFeeParams> for grpc::OpeningFeeParams {
         Self {
             min_msat: ofp.min_msat,
             proportional: ofp.proportional,
-            valid_until: ofp.valid_until,
+            valid_until: ofp.valid_until.to_string(),
             max_idle_time: ofp.max_idle_time,
             max_client_to_self_delay: ofp.max_client_to_self_delay,
             promise: ofp.promise,
         }
+    }
+}
+
+impl TryFrom<grpc::OpeningFeeParams> for OpeningFeeParams {
+    type Error = anyhow::Error;
+
+    fn try_from(gofp: grpc::OpeningFeeParams) -> std::result::Result<Self, Self::Error> {
+        Ok(Self {
+            min_msat: gofp.min_msat,
+            proportional: gofp.proportional,
+            valid_until: serde_json::from_str(&gofp.valid_until).map_err(|e| anyhow!(e))?,
+            max_idle_time: gofp.max_idle_time,
+            max_client_to_self_delay: gofp.max_client_to_self_delay,
+            promise: gofp.promise,
+        })
     }
 }
 
@@ -680,6 +697,30 @@ impl ToSql for OpeningFeeParams {
         Ok(ToSqlOutput::from(
             serde_json::to_string(&self).map_err(|_| FromSqlError::InvalidType)?,
         ))
+    }
+}
+
+mod opening_fee_params_datetime_format {
+    use chrono::{DateTime, TimeZone, Utc};
+    use serde::{self, Deserialize, Deserializer, Serializer};
+
+    pub const FORMAT: &str = "%Y %b %d %H:%M:%S%.3f %z";
+
+    pub fn serialize<S>(date: &DateTime<Utc>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let s = format!("{}", date.format(FORMAT));
+        serializer.serialize_str(&s)
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Utc.datetime_from_str(&s, FORMAT)
+            .map_err(serde::de::Error::custom)
     }
 }
 
@@ -860,11 +901,40 @@ impl FromStr for BuyBitcoinProvider {
 
 #[cfg(test)]
 mod tests {
+    use crate::{grpc, models};
+    use anyhow::Result;
+    use chrono::Utc;
     use prost::Message;
     use rand::random;
 
     use crate::grpc::PaymentInformation;
+    use crate::models::opening_fee_params_datetime_format;
     use crate::test_utils::rand_vec_u8;
+
+    #[test]
+    fn test_fee_params_ser_de() -> Result<()> {
+        let now = Utc::now();
+        let model_ofp = models::OpeningFeeParams {
+            min_msat: 0,
+            proportional: 0,
+            valid_until: now,
+            max_idle_time: 0,
+            max_client_to_self_delay: 0,
+            promise: "".to_string(),
+        };
+        let converted_grpc_ofp: grpc::OpeningFeeParams = model_ofp.try_into()?;
+
+        // Focus on the DateTime, since this is the one using custom serde functions
+        // Check if the serialized datetime has the custom format expected
+        assert_eq!(
+            converted_grpc_ofp.valid_until,
+            format!("{}", now.format(opening_fee_params_datetime_format::FORMAT))
+        );
+        // Check if the to_string() uses the custom serde function
+        assert_eq!(converted_grpc_ofp.valid_until, now.to_string());
+
+        Ok(())
+    }
 
     #[test]
     fn test_payment_information_ser_de() -> Result<(), Box<dyn std::error::Error>> {

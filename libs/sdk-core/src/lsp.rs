@@ -33,8 +33,8 @@ pub struct LspInformation {
     pub opening_fee_params_menu: Vec<OpeningFeeParams>,
 }
 
-fn convert_to_lsp_info(lsp_id: String, lsp_info: grpc::LspInformation) -> LspInformation {
-    LspInformation {
+fn convert_to_lsp_info(lsp_id: String, lsp_info: grpc::LspInformation) -> Result<LspInformation> {
+    Ok(LspInformation {
         id: lsp_id,
         name: lsp_info.name,
         widget_url: lsp_info.widget_url,
@@ -53,16 +53,9 @@ fn convert_to_lsp_info(lsp_id: String, lsp_info: grpc::LspInformation) -> LspInf
         opening_fee_params_menu: lsp_info
             .opening_fee_params_menu
             .into_iter()
-            .map(|ofp| OpeningFeeParams {
-                min_msat: ofp.min_msat,
-                proportional: ofp.proportional,
-                valid_until: ofp.valid_until,
-                max_idle_time: ofp.max_idle_time,
-                max_client_to_self_delay: ofp.max_client_to_self_delay,
-                promise: ofp.promise,
-            })
+            .flat_map(|ofp| ofp.try_into().ok())
             .collect::<Vec<OpeningFeeParams>>(),
-    }
+    })
 }
 
 #[tonic::async_trait]
@@ -74,7 +67,7 @@ impl LspAPI for BreezServer {
         let response = client.lsp_list(request).await?;
         let mut lsp_list: Vec<LspInformation> = Vec::new();
         for (key, value) in response.into_inner().lsps.into_iter() {
-            lsp_list.push(convert_to_lsp_info(key, value));
+            lsp_list.push(convert_to_lsp_info(key, value)?);
         }
         lsp_list.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
         Ok(lsp_list)

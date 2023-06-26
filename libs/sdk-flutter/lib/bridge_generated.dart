@@ -801,7 +801,7 @@ class NodeState {
 class OpeningFeeParams {
   final int minMsat;
   final int proportional;
-  final String validUntil;
+  final DateTime validUntil;
   final int maxIdleTime;
   final int maxClientToSelfDelay;
   final String promise;
@@ -1833,6 +1833,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   }
 // Section: wire2api
 
+  DateTime _wire2api_Chrono_Utc(dynamic raw) {
+    return wire2apiTimestamp(ts: _wire2api_i64(raw), isUtc: true);
+  }
+
   String _wire2api_String(dynamic raw) {
     return raw as String;
   }
@@ -2365,7 +2369,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return OpeningFeeParams(
       minMsat: _wire2api_u64(arr[0]),
       proportional: _wire2api_u32(arr[1]),
-      validUntil: _wire2api_String(arr[2]),
+      validUntil: _wire2api_Chrono_Utc(arr[2]),
       maxIdleTime: _wire2api_u32(arr[3]),
       maxClientToSelfDelay: _wire2api_u32(arr[4]),
       promise: _wire2api_String(arr[5]),
@@ -2712,6 +2716,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
 // Section: api2wire
 
   @protected
+  int api2wire_Chrono_Utc(DateTime raw) {
+    return api2wire_i64(raw.microsecondsSinceEpoch);
+  }
+
+  @protected
   ffi.Pointer<wire_uint_8_list> api2wire_String(String raw) {
     return api2wire_uint_8_list(utf8.encoder.convert(raw));
   }
@@ -2913,7 +2922,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   void _api_fill_to_wire_opening_fee_params(OpeningFeeParams apiObj, wire_OpeningFeeParams wireObj) {
     wireObj.min_msat = api2wire_u64(apiObj.minMsat);
     wireObj.proportional = api2wire_u32(apiObj.proportional);
-    wireObj.valid_until = api2wire_String(apiObj.validUntil);
+    wireObj.valid_until = api2wire_Chrono_Utc(apiObj.validUntil);
     wireObj.max_idle_time = api2wire_u32(apiObj.maxIdleTime);
     wireObj.max_client_to_self_delay = api2wire_u32(apiObj.maxClientToSelfDelay);
     wireObj.promise = api2wire_String(apiObj.promise);
@@ -3794,7 +3803,8 @@ class wire_OpeningFeeParams extends ffi.Struct {
   @ffi.Uint32()
   external int proportional;
 
-  external ffi.Pointer<wire_uint_8_list> valid_until;
+  @ffi.Int64()
+  external int valid_until;
 
   @ffi.Uint32()
   external int max_idle_time;

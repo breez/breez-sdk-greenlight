@@ -35,7 +35,7 @@ use anyhow::{anyhow, Result};
 use bip39::*;
 use bitcoin::hashes::{sha256, Hash};
 use bitcoin::util::bip32::ChildNumber;
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use std::cmp::max;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -483,23 +483,22 @@ impl BreezServices {
     /// See [SwapInfo] for details.
     pub async fn receive_onchain(
         &self,
-        _opening_fee_params: Option<OpeningFeeParams>,
+        opening_fee_params: Option<OpeningFeeParams>,
     ) -> Result<SwapInfo> {
-        let in_progress = self.in_progress_swap().await?;
-        if in_progress.is_some() {
+        if let Some(in_progress) = self.in_progress_swap().await? {
             return Err(anyhow!(format!(
                   "Swap in progress was detected for address {}.Use in_progress_swap method to get the current swap state",
-                  in_progress.unwrap().bitcoin_address
+                  in_progress.bitcoin_address
               )));
         }
         // TODO: Validate given opening_fee_params and use it if possible
         // We pick our own if None is supplied:
-        let longest_valid_opening_fee_params = get_longest_valid_opening_fee_params(
-            &mut self.lsp_info().await?.opening_fee_params_menu,
-        );
+        let channel_opening_fees = opening_fee_params.or(get_longest_valid_opening_fee_params(
+            &self.lsp_info().await?.opening_fee_params_menu,
+        )?);
         let swap_info = self
             .btc_receive_swapper
-            .create_swap_address(longest_valid_opening_fee_params)
+            .create_swap_address(channel_opening_fees)
             .await?;
         Ok(swap_info)
     }
@@ -1306,9 +1305,7 @@ impl Receiver for PaymentReceiver {
     }
 }
 
-fn validate_opening_fee_params_menu(
-    opening_fee_params_menu: &Vec<models::OpeningFeeParams>,
-) -> Result<()> {
+fn validate_opening_fee_params_menu(opening_fee_params_menu: &Vec<OpeningFeeParams>) -> Result<()> {
     match !opening_fee_params_menu.is_empty() {
         true => {
             // opening_fee_params_menu fees must be in ascending order
@@ -1316,17 +1313,12 @@ fn validate_opening_fee_params_menu(
                 ofp[0].min_msat < ofp[1].min_msat || ofp[0].proportional < ofp[1].proportional
             });
             // `valid_until` must not be a past datetime
-            let is_expired =
-                opening_fee_params_menu.iter().all(|ofp| {
-                    match DateTime::parse_from_str(&ofp.valid_until, "%Y %b %d %H:%M:%S%.3f %z") {
-                        Ok(v_u_dt) => Utc::now().timestamp() > v_u_dt.timestamp(),
-                        Err(_) => false,
-                    }
-                });
-            if is_ordered && !is_expired {
-                Ok(())
-            } else {
-                Err(anyhow!("Failed to validate opening_fee_params_menu"))
+            let is_expired = opening_fee_params_menu
+                .iter()
+                .all(|ofp| Utc::now() > ofp.valid_until);
+            match is_ordered && !is_expired {
+                true => Ok(()),
+                false => Err(anyhow!("Failed to validate opening_fee_params_menu")),
             }
         }
         false => Err(anyhow!(
@@ -1336,8 +1328,8 @@ fn validate_opening_fee_params_menu(
 }
 
 fn get_cheapest_opening_fee_params(
-    opening_fee_params_menu: Vec<models::OpeningFeeParams>,
-) -> Option<models::OpeningFeeParams> {
+    opening_fee_params_menu: Vec<OpeningFeeParams>,
+) -> Option<OpeningFeeParams> {
     match validate_opening_fee_params_menu(&opening_fee_params_menu) {
         Ok(()) => Some(opening_fee_params_menu[0].clone()),
         Err(e) => {
@@ -1348,25 +1340,22 @@ fn get_cheapest_opening_fee_params(
 }
 
 fn get_longest_valid_opening_fee_params(
-    opening_fee_params_menu: &mut Vec<models::OpeningFeeParams>,
-) -> Option<models::OpeningFeeParams> {
-    match validate_opening_fee_params_menu(opening_fee_params_menu) {
-        Ok(()) => {
-            // TODO: We need to pick cheapest opening fee params that's valid for at least 48 hours
-            opening_fee_params_menu.sort_by(|a, b| {
-                let dt1 =
-                    DateTime::parse_from_str(&a.valid_until, "%Y %b %d %H:%M:%S%.3f %z").unwrap();
-                let dt2 =
-                    DateTime::parse_from_str(&b.valid_until, "%Y %b %d %H:%M:%S%.3f %z").unwrap();
-                dt2.cmp(&dt1)
-            });
-            Some(opening_fee_params_menu[0].clone())
-        }
-        Err(e) => {
-            error!("failed to validate opening_fee_params_menu: {e}");
-            None
-        }
-    }
+    opening_fee_params_menu: &Vec<OpeningFeeParams>,
+) -> Result<Option<OpeningFeeParams>> {
+    validate_opening_fee_params_menu(opening_fee_params_menu)?;
+
+    // Find the fee params that are valid for at least 48h
+    let now = Utc::now();
+    let duration_48h = chrono::Duration::hours(48);
+    let mut valid_min_48h: Vec<OpeningFeeParams> = opening_fee_params_menu
+        .iter()
+        .filter(|f| f.valid_until - now > duration_48h)
+        .cloned()
+        .collect();
+
+    // Of those, return the cheapest
+    valid_min_48h.sort_by_key(|f| f.min_msat);
+    Ok(valid_min_48h.first().cloned())
 }
 
 /// Convenience method to look up LSP info based on current LSP ID

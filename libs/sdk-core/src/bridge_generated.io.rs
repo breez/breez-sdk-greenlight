@@ -538,7 +538,7 @@ pub struct wire_LnUrlWithdrawRequestData {
 pub struct wire_OpeningFeeParams {
     min_msat: u64,
     proportional: u32,
-    valid_until: *mut wire_uint_8_list,
+    valid_until: i64,
     max_idle_time: u32,
     max_client_to_self_delay: u32,
     promise: *mut wire_uint_8_list,
@@ -668,7 +668,7 @@ impl NewWithNullPtr for wire_OpeningFeeParams {
         Self {
             min_msat: Default::default(),
             proportional: Default::default(),
-            valid_until: core::ptr::null_mut(),
+            valid_until: Default::default(),
             max_idle_time: Default::default(),
             max_client_to_self_delay: Default::default(),
             promise: core::ptr::null_mut(),
