@@ -90,8 +90,8 @@ impl SqliteStorage {
         Ok(())
     }
 
-    /// Inserts payer amount for invoices that requries openning a channel.
-    pub fn insert_open_cannel_payment_info(
+    /// Inserts payer amount for invoices that require opening a channel.
+    pub fn insert_open_channel_payment_info(
         &self,
         payment_hash: &str,
         payer_amount_msat: u64,
