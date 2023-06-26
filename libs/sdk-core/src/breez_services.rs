@@ -781,7 +781,6 @@ async fn poll_events(
 
     let mut backup_events_stream = backup_watcher.subscribe_events();
     loop {
-        error!("polling events");
         tokio::select! {
          backup_event = backup_events_stream.recv() => {
           if let Ok(e) = backup_event {
