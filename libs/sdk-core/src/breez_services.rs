@@ -425,8 +425,21 @@ impl BreezServices {
         })
     }
 
+    /// Force running backup
     pub async fn backup(&self) -> Result<()> {
-        self.start_backup(true, true).await
+        let (on_complete, mut on_complete_receiver) = mpsc::channel::<Result<()>>(1);
+        let request = BackupRequest::with(on_complete, true);
+        self.background_controller()
+            .await?
+            .backup_request_handler
+            .send(request)
+            .await
+            .map_err(|e| anyhow!("failed to send backup request {e}"))?;
+
+        match on_complete_receiver.recv().await {
+            Some(res) => res,
+            None => Err(anyhow!("backup process failed to complete")),
+        }
     }
 
     /// List payments matching the given filters, as retrieved from persistent storage
@@ -739,26 +752,6 @@ impl BreezServices {
             }
         };
         Ok(url)
-    }
-
-    /// Starts a backup process in the background
-    async fn start_backup(&self, blocking: bool, force: bool) -> Result<()> {
-        let (on_complete, mut on_complete_receiver) = mpsc::channel::<Result<()>>(1);
-        let request = BackupRequest::with(on_complete, force);
-        self.background_controller()
-            .await?
-            .backup_request_handler
-            .send(request)
-            .await
-            .map_err(|e| anyhow!("failed to send backup request {e}"))?;
-
-        match blocking {
-            true => match on_complete_receiver.recv().await {
-                Some(res) => res,
-                None => Err(anyhow!("backup process failed to complete")),
-            },
-            false => Ok(()),
-        }
     }
 
     async fn background_controller(&self) -> Result<SDKBackgroundController> {
