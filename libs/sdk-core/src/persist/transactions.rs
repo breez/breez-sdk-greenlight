@@ -235,7 +235,7 @@ impl SqliteStorage {
             data.ln_address = row.get(10)?;
         }
 
-        // In cae we have a record of the open channel fee, let's use it.
+        // In case we have a record of the open channel fee, let's use it.
         let payer_amount_msat: Option<u64> = row.get(11)?;
         if let Some(payer_amount) = payer_amount_msat {
             payment.fee_msat = payer_amount - amount_msat;
