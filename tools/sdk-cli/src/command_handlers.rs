@@ -327,8 +327,8 @@ pub(crate) async fn handle_command(
             Ok(format!("Here your {:?} url: {}", provider, res))
         }
         Commands::Backup {} => {
-            sdk()?.start_backup()?;
-            Ok("Backup started".into())
+            sdk().unwrap().backup().await?;
+            Ok("Backup completed succesfully".into())
         }
     }
 }

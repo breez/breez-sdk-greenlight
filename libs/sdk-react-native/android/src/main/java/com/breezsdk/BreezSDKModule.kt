@@ -583,14 +583,14 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun startBackup(promise: Promise) {
+    fun backup(promise: Promise) {
         executor.execute {
             try {
-                getBreezServices().startBackup()
+                getBreezServices().backup()
                 promise.resolve(readableMapOf("status" to "ok"))
             } catch (e: SdkException) {
                 e.printStackTrace()
-                promise.reject(TAG, e.message ?: "Error calling startBackup", e)
+                promise.reject(TAG, e.message ?: "Error calling backup", e)
             }
         }
     }

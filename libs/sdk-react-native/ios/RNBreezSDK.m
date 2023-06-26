@@ -231,7 +231,7 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
-        startBackup: (RCTPromiseResolveBlock)resolve
+        backup: (RCTPromiseResolveBlock)resolve
         rejecter: (RCTPromiseRejectBlock)reject
 )
 

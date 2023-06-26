@@ -537,15 +537,15 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
     
-    @objc(startBackup:rejecter:)
-    func startBackup(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+    @objc(backup:rejecter:)
+    func backup(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         do {
-            try getBreezServices().startBackup()
+            try getBreezServices().backup()
             resolve(["status": "ok"])
         } catch SdkError.Error(let message) {
             reject(RNBreezSDK.TAG, message, nil)
         } catch let err {
-            reject(RNBreezSDK.TAG, "Error calling startBackup", err)
+            reject(RNBreezSDK.TAG, "Error calling backup", err)
         }
     }
     

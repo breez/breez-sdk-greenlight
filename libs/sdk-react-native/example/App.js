@@ -26,7 +26,7 @@ import {
     registerNode,
     buyBitcoin,
     start,
-    startBackup,
+    backup,
     backupStatus
 } from "@breeztech/react-native-breez-sdk"
 import BuildConfig from "react-native-build-config"
@@ -135,7 +135,7 @@ const App = () => {
                 const buyBitcoinResult = await buyBitcoin(BuyBitcoinProvider.MOONPAY)
                 addLine("buyBitcoin", JSON.stringify(buyBitcoinResult))
                                                 
-                await startBackup();
+                await backup();
                 addLine("backupStatus", JSON.stringify( await backupStatus()));                
             }
         }
