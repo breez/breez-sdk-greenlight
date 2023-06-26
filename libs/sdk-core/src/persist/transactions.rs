@@ -91,7 +91,7 @@ impl SqliteStorage {
     }
 
     /// Inserts payer amount for invoices that requries openning a channel.
-    pub fn insert_open_cannel_payment_info(
+    pub fn insert_open_channel_payment_info(
         &self,
         payment_hash: &str,
         payer_amount_msat: u64,
@@ -410,7 +410,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(retrieve_txs.len(), 2);
     assert_eq!(retrieve_txs, txs);
 
-    storage.insert_open_cannel_payment_info("123", 150)?;
+    storage.insert_open_channel_payment_info("123", 150)?;
     let retrieve_txs = storage.list_payments(PaymentTypeFilter::All, None, None)?;
     assert_eq!(retrieve_txs[0].fee_msat, 50);
 

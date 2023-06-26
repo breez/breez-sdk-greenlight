@@ -1254,7 +1254,7 @@ impl Receiver for PaymentReceiver {
 
         // Make sure we save the large amount so we can deduce the fees later.
         self.persister
-            .insert_open_cannel_payment_info(&parsed_invoice.payment_hash, amount_sats * 1000)?;
+            .insert_open_channel_payment_info(&parsed_invoice.payment_hash, amount_sats * 1000)?;
         // return the signed, converted invoice with hints
         Ok(parsed_invoice)
     }

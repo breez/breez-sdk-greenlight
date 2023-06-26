@@ -232,7 +232,7 @@ fn test_sync() {
     remote_storage.insert_swap(remote_swap_info).unwrap();
 
     remote_storage
-        .insert_open_cannel_payment_info("123", 100000)
+        .insert_open_channel_payment_info("123", 100000)
         .unwrap();
 
     remote_storage
