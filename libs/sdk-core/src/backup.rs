@@ -1,14 +1,14 @@
 use crate::{
     breez_services::BackupFailedData,
     persist::db::{HookEvent, SqliteStorage},
-    BreezEvent,
+    BreezEvent, Config,
 };
+
 use anyhow::{anyhow, Result};
 use ecies::utils::{aes_decrypt, aes_encrypt};
 use miniz_oxide::{deflate::compress_to_vec, inflate::decompress_to_vec_with_limit};
 use std::{
-    env::temp_dir,
-    fs::File,
+    fs::{self, File},
     io::{Read, Write},
     path::Path,
     sync::Arc,
@@ -75,12 +75,19 @@ pub(crate) struct BackupWatcher {
 /// watches for sync requests and syncs the sdk state when a request is detected.
 impl BackupWatcher {
     pub(crate) fn start(
+        config: Config,
         inner: Arc<dyn BackupTransport>,
         persister: Arc<SqliteStorage>,
         encryption_key: Vec<u8>,
     ) -> Self {
         let (notifier, _) = broadcast::channel::<BreezEvent>(100);
-        let worker = BackupWorker::new(inner, persister, encryption_key, notifier);
+        let worker = BackupWorker::new(
+            config.working_dir,
+            inner,
+            persister,
+            encryption_key,
+            notifier,
+        );
 
         let (trigger_backup, mut trigger_backup_receiver) = mpsc::channel::<BackupRequest>(100);
 
@@ -187,6 +194,7 @@ impl Drop for BackupWatcher {
 /// BackupWorker is a worker that bidirectionaly syncs the sdk state.
 #[derive(Clone)]
 struct BackupWorker {
+    working_dir_path: String,
     inner: Arc<dyn BackupTransport>,
     persister: Arc<SqliteStorage>,
     encryption_key: Vec<u8>,
@@ -195,12 +203,14 @@ struct BackupWorker {
 
 impl BackupWorker {
     pub(crate) fn new(
+        working_dir_path: String,
         inner: Arc<dyn BackupTransport>,
         persister: Arc<SqliteStorage>,
         encryption_key: Vec<u8>,
         events_notifier: broadcast::Sender<BreezEvent>,
     ) -> Self {
         Self {
+            working_dir_path,
             inner,
             persister,
             encryption_key,
@@ -221,7 +231,11 @@ impl BackupWorker {
         if !force && last_sync_request_id == 0 {
             return Ok(());
         }
-        let notify_res = match self.sync_internal(last_sync_request_id).await {
+        let sync_dir = self.sync_dir()?;
+        let notify_res = match self
+            .sync_internal(sync_dir.clone(), last_sync_request_id)
+            .await
+        {
             Ok(_) => {
                 info!("backup sync completed successfully");
                 self.notify(BreezEvent::BackupSucceeded).await
@@ -236,6 +250,7 @@ impl BackupWorker {
                 .await
             }
         };
+        fs::remove_dir_all(Path::new(sync_dir.as_str()))?;
 
         match notify_res {
             Ok(r) => Ok(r),
@@ -251,14 +266,14 @@ impl BackupWorker {
     /// 1. Try to push the local state to the remote state using the current version (optimistic).
     /// 2. If the push fails, sync the remote changes into the local changes including the remote newer version.
     /// 3. Try to push the local state again with the new version.
-    async fn sync_internal(&self, mut last_sync_request_id: u64) -> Result<()> {
+    async fn sync_internal(&self, sync_dir: String, mut last_sync_request_id: u64) -> Result<()> {
         // get the last local sync version and the last sync request id
         let last_version = self.persister.get_last_sync_version()?;
 
         self.notify(BreezEvent::BackupStarted).await?;
 
         // Backup the local sdk state
-        let local_storage_file = tempfile::NamedTempFile::new()?;
+        let local_storage_file = tempfile::NamedTempFile::new_in(sync_dir.clone())?;
         self.persister.backup(local_storage_file.path())?;
         debug!(
             "syncing storge, last_version = {:?}, file = {:?}",
@@ -282,7 +297,7 @@ impl BackupWorker {
             Err(e) => {
                 debug!("Optimistic sync failed, trying to sync remote changes {e}");
                 // We need to sync remote changes and then retry the push
-                self.sync_remote_and_push(data, &mut last_sync_request_id)
+                self.sync_remote_and_push(sync_dir, data, &mut last_sync_request_id)
                     .await
             }
         };
@@ -312,11 +327,12 @@ impl BackupWorker {
     /// Syncs the remote changes into the local changes and then tries to push the local changes again.    
     async fn sync_remote_and_push(
         &self,
+        sync_dir: String,
         local_data: Vec<u8>,
         last_sync_request_id: &mut u64,
     ) -> Result<(u64, Vec<u8>)> {
         let remote_state = self.pull().await?;
-        let tmp_dir = tempdir_in(temp_dir())?;
+        let tmp_dir = tempdir_in(sync_dir)?;
         let remote_storage_path = tmp_dir.path();
         let mut remote_storage_file = File::create(remote_storage_path.join("sync_storage.sql"))?;
         info!("remote_storage_path = {remote_storage_path:?}");
@@ -390,6 +406,22 @@ impl BackupWorker {
         let version = self.inner.push(version, encrypted_data.clone()).await?;
         Ok((version, encrypted_data))
     }
+
+    fn sync_dir(&self) -> Result<String> {
+        let working_dir = Path::new(self.working_dir_path.as_str());
+        let buf = working_dir.join("sync");
+        let sync_path = buf.to_str();
+        let path_str = match sync_path {
+            Some(sync_path) => {
+                if !Path::new(sync_path).exists() {
+                    fs::create_dir_all(sync_path)?;
+                }
+                Ok(sync_path)
+            }
+            None => Err(anyhow!("Failed to create sync directory")),
+        }?;
+        Ok(path_str.into())
+    }
 }
 
 #[cfg(test)]
@@ -412,10 +444,11 @@ mod tests {
 
     async fn create_test_backup_watcher() -> (BackupWatcher, Arc<MockBackupTransport>) {
         let config = create_test_config();
-        let persister = Arc::new(create_test_persister(config));
+        let persister = Arc::new(create_test_persister(config.clone()));
         persister.init().unwrap();
         let transport = Arc::new(MockBackupTransport::new());
-        let watcher = BackupWatcher::start(transport.clone(), persister, vec![0; 32]);
+        let watcher =
+            BackupWatcher::start(config.clone(), transport.clone(), persister, vec![0; 32]);
         (watcher, transport)
     }
 
