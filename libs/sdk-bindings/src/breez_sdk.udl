@@ -425,7 +425,7 @@ interface BlockingBreezServices {
    BackupStatus backup_status();
 
    [Throws=SDKError]
-   void start_backup();
+   void backup();
 
    [Throws=SDKError]
    sequence<Payment> list_payments(PaymentTypeFilter filter, i64? from_timestamp, i64? to_timestamp);

@@ -1,4 +1,4 @@
-use crate::backup::{BackupTransport, BackupWatcher};
+use crate::backup::{BackupRequest, BackupTransport, BackupWatcher};
 use crate::boltzswap::BoltzApi;
 use crate::chain::{ChainService, MempoolSpace, RecommendedFees};
 use crate::fiat::{FiatCurrency, Rate};
@@ -95,13 +95,19 @@ pub struct InvoicePaidDetails {
     pub bolt11: String,
 }
 
+#[derive(Clone, Debug)]
+struct SDKBackgroundController {
+    shutdown_handler: mpsc::Sender<()>,
+    backup_request_handler: mpsc::Sender<BackupRequest>,
+}
+
 /// Starts the BreezServices background threads.
 ///
 /// Internal method. Should only be used as part of [BreezServices::start]
 async fn start_threads(
     rt: &Runtime,
     breez_services: Arc<BreezServices>,
-) -> Result<mpsc::Sender<()>> {
+) -> Result<SDKBackgroundController> {
     // start the signer
     let (shutdown_signer_sender, signer_signer_receiver) = mpsc::channel(1);
     let signer_api = breez_services.clone();
@@ -114,17 +120,32 @@ async fn start_threads(
 
     let breez_cloned = breez_services.clone();
 
-    //restore backup state
-    if breez_cloned.persister.get_last_sync_version()?.is_none() {
-        debug!("No last sync version found, starting initial backup");
-        breez_cloned.start_backup()?;
-    }
-
     // sync with remote node state
     breez_cloned.sync().await?;
 
+    // create the backup encryption key
+    let backup_encryption_key = breez_services.node_api.derive_bip32_key(vec![
+        ChildNumber::from_hardened_idx(139)?,
+        ChildNumber::from(0),
+    ])?;
+
+    let backup_watcher = BackupWatcher::start(
+        breez_cloned.config.clone(),
+        breez_services.backup_transport.clone(),
+        breez_services.persister.clone(),
+        backup_encryption_key.to_priv().to_bytes(),
+    );
+
+    // Restore backup state and request backup on start if needed
+    let force_backup = breez_cloned.persister.get_last_sync_version()?.is_none();
+    let backup_request_handler = backup_watcher.request_handler();
+    backup_request_handler
+        .send(BackupRequest::new(force_backup))
+        .await
+        .map_err(|e| anyhow!("failed to send backup request {e}"))?;
+
     // create a shutdown channel (sender and receiver)
-    let (stop_sender, mut stop_receiver) = mpsc::channel(1);
+    let (shutdown_handler, mut shutdown_receiver) = mpsc::channel::<()>(1);
 
     // poll sdk events
     rt.spawn(async move {
@@ -132,7 +153,7 @@ async fn start_threads(
         let current_block: u32 = 0;
         loop {
             tokio::select! {
-              poll_result = poll_events(breez_services.clone(), current_block) => {
+              poll_result = poll_events(breez_services.clone(),&backup_watcher, current_block) => {
                match poll_result {
                 Ok(()) => {
                  return;
@@ -144,19 +165,24 @@ async fn start_threads(
                 }
                }
               },
-              _ = stop_receiver.recv() => {
+              _ = shutdown_receiver.recv() => {
                _ = shutdown_signer_sender.send(()).await;
                debug!("Received the signal to exit event polling loop");
                return;
-             }
             }
         }
+       }
     });
-    Ok(stop_sender)
+
+    Ok(SDKBackgroundController {
+        shutdown_handler,
+        backup_request_handler,
+    })
 }
 
 /// BreezServices is a facade and the single entry point for the SDK.
 pub struct BreezServices {
+    config: Config,
     node_api: Arc<dyn NodeAPI>,
     lsp_api: Arc<dyn LspAPI>,
     fiat_api: Arc<dyn FiatAPI>,
@@ -169,7 +195,7 @@ pub struct BreezServices {
     event_listener: Option<Box<dyn EventListener>>,
     //backup_watcher: BackupWatcher,
     backup_transport: Arc<dyn BackupTransport>,
-    shutdown_sender: Mutex<Option<mpsc::Sender<()>>>,
+    background_handler: Mutex<Option<SDKBackgroundController>>,
 }
 
 impl BreezServices {
@@ -209,24 +235,28 @@ impl BreezServices {
     /// It should be called only once when the app is started, regardless whether the app is sent to
     /// background and back.
     pub async fn start(runtime: &Runtime, breez_services: &Arc<BreezServices>) -> Result<()> {
-        let mut start_lock = breez_services.shutdown_sender.lock().await;
-        if start_lock.is_some() {
+        let mut handler_lock = breez_services.background_handler.lock().await;
+        if handler_lock.is_some() {
             return Err(anyhow!("start can only be called once"));
         }
-        let shutdown_handler = start_threads(runtime, breez_services.clone()).await?;
+        let background_handler = start_threads(runtime, breez_services.clone()).await?;
 
-        *start_lock = Some(shutdown_handler);
+        *handler_lock = Some(background_handler);
         Ok(())
     }
 
     /// Trigger the stopping of BreezServices background threads for this instance.
     pub async fn stop(&self) -> Result<()> {
-        let unlocked = self.shutdown_sender.lock().await;
-        if unlocked.is_none() {
+        let handler_lock = self.background_handler.lock().await;
+        if handler_lock.is_none() {
             return Err(anyhow!("node has not been started"));
         }
-        let sender = unlocked.as_ref().unwrap();
-        sender.send(()).await.map_err(anyhow::Error::msg)
+        let background_handler = handler_lock.as_ref().unwrap();
+        background_handler
+            .shutdown_handler
+            .send(())
+            .await
+            .map_err(anyhow::Error::msg)
     }
 
     /// Pay a bolt11 invoice
@@ -395,9 +425,21 @@ impl BreezServices {
         })
     }
 
-    /// Starts a backup process in the background
-    pub fn start_backup(&self) -> Result<()> {
-        self.persister.add_sync_request()
+    /// Force running backup
+    pub async fn backup(&self) -> Result<()> {
+        let (on_complete, mut on_complete_receiver) = mpsc::channel::<Result<()>>(1);
+        let request = BackupRequest::with(on_complete, true);
+        self.background_controller()
+            .await?
+            .backup_request_handler
+            .send(request)
+            .await
+            .map_err(|e| anyhow!("failed to send backup request {e}"))?;
+
+        match on_complete_receiver.recv().await {
+            Some(res) => res,
+            None => Err(anyhow!("backup process failed to complete")),
+        }
     }
 
     /// List payments matching the given filters, as retrieved from persistent storage
@@ -711,26 +753,26 @@ impl BreezServices {
         };
         Ok(url)
     }
+
+    async fn background_controller(&self) -> Result<SDKBackgroundController> {
+        let handler_lock = self.background_handler.lock().await;
+        if handler_lock.is_none() {
+            return Err(anyhow!("node has not been started"));
+        }
+        Ok(handler_lock.clone().unwrap())
+    }
 }
 
-async fn poll_events(breez_services: Arc<BreezServices>, mut current_block: u32) -> Result<()> {
+async fn poll_events(
+    breez_services: Arc<BreezServices>,
+    backup_watcher: &BackupWatcher,
+    mut current_block: u32,
+) -> Result<()> {
     let mut interval = tokio::time::interval(Duration::from_secs(30));
     let mut invoice_stream = breez_services.node_api.stream_incoming_payments().await?;
     let mut log_stream = breez_services.node_api.stream_log_messages().await?;
 
-    // create the backup encryption key
-    let backup_encryption_key = breez_services.node_api.derive_bip32_key(vec![
-        ChildNumber::from_hardened_idx(139)?,
-        ChildNumber::from(0),
-    ])?;
-
-    let backup_watcher = BackupWatcher::start(
-        breez_services.backup_transport.clone(),
-        breez_services.persister.clone(),
-        backup_encryption_key.to_priv().to_bytes(),
-    );
     let mut backup_events_stream = backup_watcher.subscribe_events();
-
     loop {
         tokio::select! {
          backup_event = backup_events_stream.recv() => {
@@ -1003,6 +1045,7 @@ impl BreezServicesBuilder {
 
         // Create the node services and it them statically
         let breez_services = Arc::new(BreezServices {
+            config: self.config.clone(),
             node_api: unwrapped_node_api.clone(),
             lsp_api: self.lsp_api.clone().unwrap_or_else(|| breez_server.clone()),
             fiat_api: self
@@ -1020,7 +1063,7 @@ impl BreezServicesBuilder {
             payment_receiver,
             event_listener: listener,
             backup_transport: unwrapped_backup_transport.clone(),
-            shutdown_sender: Mutex::new(None),
+            background_handler: Mutex::new(None),
         });
 
         Ok(breez_services)

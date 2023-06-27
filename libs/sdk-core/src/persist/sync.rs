@@ -81,14 +81,6 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub(crate) fn add_sync_request(&self) -> Result<()> {
-        self.get_connection()?.execute(
-            " INSERT INTO sync_requests(changed_table) VALUES('user')",
-            [],
-        )?;
-        Ok(())
-    }
-
     pub(crate) fn import_remote_changes(&self, remote_storage: &SqliteStorage) -> Result<()> {
         let sync_data_file = remote_storage.sync_db_path();
         match SqliteStorage::migrate_sync_db(sync_data_file.clone()) {

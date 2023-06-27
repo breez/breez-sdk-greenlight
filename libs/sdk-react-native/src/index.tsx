@@ -651,8 +651,8 @@ export const buyBitcoin = async (provider: BuyBitcoinProvider): Promise<string> 
     return response
 }
 
-export const startBackup = async (): Promise<void> => {
- await BreezSDK.startBackup() 
+export const backup = async (): Promise<void> => {
+ await BreezSDK.backup() 
 }
 
 export const backupStatus = async (): Promise<BackupStatus> => {
