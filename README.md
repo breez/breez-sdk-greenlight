@@ -19,6 +19,10 @@ https://user-images.githubusercontent.com/31890660/208511040-989ff42c-ceb8-4a34-
 
 For a higher resolution video, click [here](https://youtu.be/PRVWB4K52Es).
 
+## Features
+
+![sdk](https://github.com/breez/breez-sdk/assets/31890660/29a9f854-4aba-40bc-9cef-2204b066bfe1)
+
 ## Using the SDK
 To get started with the Breez SDK, follow [these examples](https://sdk-doc.breez.technology/).
 
@@ -55,7 +59,7 @@ See the instructions in each sub project readme on how to build, test and run.
 
 Remark: in order to build the Breez SDK you need to have access to the Greenlight repository. Greenlight will eventually be open-sourced (with an MIT license), but is not yet public. To access Greenlight, please email us at contact@breez.technology.
 
-## Features
+## TODOs
 - [x] ‘On-the-fly’ channel creation
 - [x] Send/receive bolt11
 - [x] LNURL-Pay
