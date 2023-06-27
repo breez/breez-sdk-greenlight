@@ -447,8 +447,7 @@ mod tests {
         let persister = Arc::new(create_test_persister(config.clone()));
         persister.init().unwrap();
         let transport = Arc::new(MockBackupTransport::new());
-        let watcher =
-            BackupWatcher::start(config.clone(), transport.clone(), persister, vec![0; 32]);
+        let watcher = BackupWatcher::start(config, transport.clone(), persister, vec![0; 32]);
         (watcher, transport)
     }
 
