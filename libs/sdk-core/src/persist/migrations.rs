@@ -423,6 +423,18 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
          data BLOB NOT NULL,
          created_at TEXT DEFAULT CURRENT_TIMESTAMP
         ) STRICT;
+       "       
+    ]
+}
+
+pub(crate) fn current_sync_migrations() -> Vec<&'static str> {
+    vec![
+        "
+        CREATE TABLE IF NOT EXISTS open_channel_payment_info (
+         payment_hash TEXT PRIMARY KEY NOT NULL,
+         payer_amount_msat INTEGER NOT NULL
+        ) STRICT;
+
        ",
     ]
 }

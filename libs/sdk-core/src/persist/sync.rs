@@ -91,6 +91,12 @@ impl SqliteStorage {
 
     pub(crate) fn import_remote_changes(&self, remote_storage: &SqliteStorage) -> Result<()> {
         let sync_data_file = remote_storage.sync_db_path();
+        match SqliteStorage::migrate_sync_db(sync_data_file.clone()) {
+            Ok(_) => {}
+            Err(e) => {
+                log::error!("Failed to migrate sync db, probably local db is older than remote, skipping migration: {}", e);
+            }
+        }
 
         let mut con = self.get_connection()?;
         let tx = con.transaction()?;
@@ -163,6 +169,18 @@ impl SqliteStorage {
             [],
         )?;
 
+        // sync remote swap_refunds table
+        tx.execute(
+            "
+        INSERT INTO sync.open_channel_payment_info
+         SELECT
+          payment_hash,
+          payer_amount_msat
+         FROM remote_sync.open_channel_payment_info
+         WHERE payment_hash NOT IN (SELECT payment_hash FROM sync.open_channel_payment_info);",
+            [],
+        )?;
+
         tx.commit()?;
         con.execute("DETACH DATABASE remote_sync", [])?;
 
@@ -212,6 +230,11 @@ fn test_sync() {
     let remote_storage = SqliteStorage::new(test_utils::create_test_sql_dir());
     remote_storage.init().unwrap();
     remote_storage.insert_swap(remote_swap_info).unwrap();
+
+    remote_storage
+        .insert_open_channel_payment_info("123", 100000)
+        .unwrap();
+
     remote_storage
         .import_remote_changes(&local_storage)
         .unwrap();
