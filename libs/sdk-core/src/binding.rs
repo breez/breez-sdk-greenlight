@@ -221,6 +221,11 @@ pub fn list_payments(
     })
 }
 
+/// See [BreezServices::list_payments]
+pub fn payment_by_hash(hash: String) -> Result<Option<Payment>> {
+    block_on(async { get_breez_services()?.payment_by_hash(hash).await })
+}
+
 /// See [BreezServices::list_lsps]
 pub fn list_lsps() -> Result<Vec<LspInformation>> {
     block_on(async { get_breez_services()?.list_lsps().await })

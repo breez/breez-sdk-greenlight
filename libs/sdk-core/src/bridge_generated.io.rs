@@ -108,6 +108,11 @@ pub extern "C" fn wire_list_payments(
 }
 
 #[no_mangle]
+pub extern "C" fn wire_payment_by_hash(port_: i64, hash: *mut wire_uint_8_list) {
+    wire_payment_by_hash_impl(port_, hash)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_list_lsps(port_: i64) {
     wire_list_lsps_impl(port_)
 }

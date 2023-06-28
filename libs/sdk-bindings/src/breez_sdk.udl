@@ -428,6 +428,9 @@ interface BlockingBreezServices {
    void backup();
 
    [Throws=SDKError]
+   Payment? payment_by_hash(string hash);
+
+   [Throws=SDKError]
    sequence<Payment> list_payments(PaymentTypeFilter filter, i64? from_timestamp, i64? to_timestamp);
 
    [Throws=SDKError]

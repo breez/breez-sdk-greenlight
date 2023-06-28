@@ -275,6 +275,19 @@ fn wire_list_payments_impl(
         },
     )
 }
+fn wire_payment_by_hash_impl(port_: MessagePort, hash: impl Wire2Api<String> + UnwindSafe) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "payment_by_hash",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_hash = hash.wire2api();
+            move |task_callback| payment_by_hash(api_hash)
+        },
+    )
+}
 fn wire_list_lsps_impl(port_: MessagePort) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {

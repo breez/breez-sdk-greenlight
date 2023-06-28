@@ -195,6 +195,10 @@ pub(crate) async fn handle_command(
                 .await?;
             serde_json::to_string_pretty(&payments).map_err(|e| e.into())
         }
+        Commands::PaymentByHash { hash } => {
+            let payment = sdk()?.payment_by_hash(hash).await?;
+            serde_json::to_string_pretty(&payment).map_err(|e| e.into())
+        }
         Commands::Sweep {
             to_address,
             sat_per_byte,

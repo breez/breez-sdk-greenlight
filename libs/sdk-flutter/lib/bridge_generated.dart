@@ -106,6 +106,11 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kListPaymentsConstMeta;
 
+  /// See [BreezServices::list_payments]
+  Future<Payment?> paymentByHash({required String hash, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kPaymentByHashConstMeta;
+
   /// See [BreezServices::list_lsps]
   Future<List<LspInformation>> listLsps({dynamic hint});
 
@@ -1352,6 +1357,22 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["filter", "fromTimestamp", "toTimestamp"],
       );
 
+  Future<Payment?> paymentByHash({required String hash, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(hash);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_payment_by_hash(port_, arg0),
+      parseSuccessData: _wire2api_opt_box_autoadd_payment,
+      constMeta: kPaymentByHashConstMeta,
+      argValues: [hash],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kPaymentByHashConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "payment_by_hash",
+        argNames: ["hash"],
+      );
+
   Future<List<LspInformation>> listLsps({dynamic hint}) {
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_list_lsps(port_),
@@ -2319,6 +2340,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return raw == null ? null : _wire2api_box_autoadd_node_state(raw);
   }
 
+  Payment? _wire2api_opt_box_autoadd_payment(dynamic raw) {
+    return raw == null ? null : _wire2api_box_autoadd_payment(raw);
+  }
+
   SuccessActionProcessed? _wire2api_opt_box_autoadd_success_action_processed(dynamic raw) {
     return raw == null ? null : _wire2api_box_autoadd_success_action_processed(raw);
   }
@@ -3092,6 +3117,22 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
               ffi.Int64, ffi.Int32, ffi.Pointer<ffi.Int64>, ffi.Pointer<ffi.Int64>)>>('wire_list_payments');
   late final _wire_list_payments = _wire_list_paymentsPtr
       .asFunction<void Function(int, int, ffi.Pointer<ffi.Int64>, ffi.Pointer<ffi.Int64>)>();
+
+  void wire_payment_by_hash(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> hash,
+  ) {
+    return _wire_payment_by_hash(
+      port_,
+      hash,
+    );
+  }
+
+  late final _wire_payment_by_hashPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>(
+          'wire_payment_by_hash');
+  late final _wire_payment_by_hash =
+      _wire_payment_by_hashPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
   void wire_list_lsps(
     int port_,

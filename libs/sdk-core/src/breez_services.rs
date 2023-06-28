@@ -454,6 +454,13 @@ impl BreezServices {
             .map_err(|err| anyhow!(err))
     }
 
+    /// Fetch a specific payment by its hash.
+    pub async fn payment_by_hash(&self, hash: String) -> Result<Option<Payment>> {
+        self.persister
+            .get_payment_by_hash(&hash)
+            .map_err(|err| anyhow!(err))
+    }
+
     /// Sweep on-chain funds to the specified on-chain address, with the given feerate
     pub async fn sweep(&self, to_address: String, fee_rate_sats_per_vbyte: u64) -> Result<()> {
         self.start_node().await?;
