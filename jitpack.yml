@@ -1,4 +1,4 @@
 jdk:
   - openjdk11
 install:
-  - ./libs/sdk-react-native/build-jitpack.sh
+  - ./libs/sdk-bindings/bindings-android/buildForJitpack.sh
