@@ -1,6 +1,4 @@
 jdk:
   - openjdk11
 install:
-  - echo "JitPack custom command building version $VERSION."
-  - cd libs/sdk-bindings/bindings-android
-  - ./gradlew publishToMavenLocal -PlibraryVersion=$VERSION
+  - ./libs/sdk-react-native/build-jitpack.sh
