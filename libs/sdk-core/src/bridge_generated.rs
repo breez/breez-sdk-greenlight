@@ -659,16 +659,6 @@ where
         (!self.is_null()).then(|| self.wire2api())
     }
 }
-impl Wire2Api<chrono::DateTime<chrono::Utc>> for i64 {
-    fn wire2api(self) -> chrono::DateTime<chrono::Utc> {
-        let Timestamp { s, ns } = wire2api_timestamp(self);
-        chrono::DateTime::<chrono::Utc>::from_utc(
-            chrono::NaiveDateTime::from_timestamp_opt(s, ns)
-                .expect("invalid or out-of-range datetime"),
-            chrono::Utc,
-        )
-    }
-}
 
 impl Wire2Api<BuyBitcoinProvider> for i32 {
     fn wire2api(self) -> BuyBitcoinProvider {

@@ -491,11 +491,10 @@ impl BreezServices {
                   in_progress.bitcoin_address
               )));
         }
-        // TODO: Validate given opening_fee_params and use it if possible
-        // We pick our own if None is supplied:
-        let channel_opening_fees = opening_fee_params.or(get_longest_valid_opening_fee_params(
-            &self.lsp_info().await?.opening_fee_params_menu,
-        )?);
+        let channel_opening_fees = self
+            .lsp_info()
+            .await?
+            .choose_channel_opening_fees(opening_fee_params, false)?;
         let swap_info = self
             .btc_receive_swapper
             .create_swap_address(channel_opening_fees)
@@ -1153,10 +1152,8 @@ impl Receiver for PaymentReceiver {
         let mut short_channel_id = parse_short_channel_id("1x0x0")?;
         let mut destination_invoice_amount_sats = amount_sats;
 
-        // TODO: Validate opening_fee_params in ReceivePaymentRequestData, req_data.opening_fee_params and use it if possible
-        // We pick our own if None is supplied:
         let cheapest_opening_fee_params =
-            get_cheapest_opening_fee_params(lsp_info.opening_fee_params_menu);
+            lsp_info.choose_channel_opening_fees(req_data.opening_fee_params, true)?;
         // check if we need to open channel
         let open_channel_needed = node_state.inbound_liquidity_msats < amount_msats;
         if open_channel_needed {
@@ -1305,57 +1302,71 @@ impl Receiver for PaymentReceiver {
     }
 }
 
-fn validate_opening_fee_params_menu(opening_fee_params_menu: &Vec<OpeningFeeParams>) -> Result<()> {
-    match !opening_fee_params_menu.is_empty() {
-        true => {
-            // opening_fee_params_menu fees must be in ascending order
-            let is_ordered = opening_fee_params_menu.windows(2).all(|ofp| {
-                ofp[0].min_msat < ofp[1].min_msat || ofp[0].proportional < ofp[1].proportional
-            });
-            // `valid_until` must not be a past datetime
-            let is_expired = opening_fee_params_menu
-                .iter()
-                .all(|ofp| Utc::now() > ofp.valid_until);
-            match is_ordered && !is_expired {
-                true => Ok(()),
-                false => Err(anyhow!("Failed to validate opening_fee_params_menu")),
+pub(crate) struct OpeningFeeParamsMenu {
+    vals: Vec<OpeningFeeParams>,
+}
+
+impl OpeningFeeParamsMenu {
+    /// Initializes and validates itself.
+    ///
+    /// This struct should not be persisted as such, because validation happens dynamically based on
+    /// the current time. At a later point in time, any previously-validated [OpeningFeeParamsMenu]
+    /// could be invalid. Therefore, the [OpeningFeeParamsMenu] should always be initialized on-the-fly.
+    pub(crate) fn try_from(vals: Vec<OpeningFeeParams>) -> Result<Self> {
+        let temp = Self { vals };
+        temp.validate().map(|_| temp)
+    }
+
+    fn validate(&self) -> Result<()> {
+        match !self.vals.is_empty() {
+            true => {
+                // opening_fee_params_menu fees must be in ascending order
+                let is_ordered = self.vals.windows(2).all(|ofp| {
+                    ofp[0].min_msat < ofp[1].min_msat || ofp[0].proportional < ofp[1].proportional
+                });
+                // `valid_until` must not be a past datetime
+                let is_expired = self.vals.iter().all(|ofp| match ofp.valid_until_date() {
+                    Ok(valid_until) => Utc::now() > valid_until,
+                    Err(_) => {
+                        warn!("Failed to parse valid_until for OpeningFeeParams: {ofp:?}");
+                        false
+                    }
+                });
+                match is_ordered && !is_expired {
+                    true => Ok(()),
+                    false => Err(anyhow!("Failed to validate opening_fee_params_menu")),
+                }
             }
-        }
-        false => Err(anyhow!(
-            "No channel opening params are available in lsp info"
-        )),
-    }
-}
-
-fn get_cheapest_opening_fee_params(
-    opening_fee_params_menu: Vec<OpeningFeeParams>,
-) -> Option<OpeningFeeParams> {
-    match validate_opening_fee_params_menu(&opening_fee_params_menu) {
-        Ok(()) => Some(opening_fee_params_menu[0].clone()),
-        Err(e) => {
-            error!("failed to validate opening_fee_params_menu{}", e);
-            None
+            false => Err(anyhow!(
+                "No channel opening params are available in lsp info"
+            )),
         }
     }
-}
 
-fn get_longest_valid_opening_fee_params(
-    opening_fee_params_menu: &Vec<OpeningFeeParams>,
-) -> Result<Option<OpeningFeeParams>> {
-    validate_opening_fee_params_menu(opening_fee_params_menu)?;
+    pub(crate) fn get_cheapest_opening_fee_params(&self) -> Option<OpeningFeeParams> {
+        self.vals.get(0).cloned()
+    }
 
-    // Find the fee params that are valid for at least 48h
-    let now = Utc::now();
-    let duration_48h = chrono::Duration::hours(48);
-    let mut valid_min_48h: Vec<OpeningFeeParams> = opening_fee_params_menu
-        .iter()
-        .filter(|f| f.valid_until - now > duration_48h)
-        .cloned()
-        .collect();
+    pub(crate) fn get_longest_valid_opening_fee_params(self) -> Result<Option<OpeningFeeParams>> {
+        // Find the fee params that are valid for at least 48h
+        let now = Utc::now();
+        let duration_48h = chrono::Duration::hours(48);
+        let mut valid_min_48h: Vec<OpeningFeeParams> = self
+            .vals
+            .into_iter()
+            .filter(|ofp| match ofp.valid_until_date() {
+                Ok(valid_until) => valid_until - now > duration_48h,
+                Err(_) => {
+                    warn!("Failed to parse valid_until for OpeningFeeParams: {ofp:?}");
+                    false
+                }
+            })
+            .collect();
 
-    // Of those, return the cheapest
-    valid_min_48h.sort_by_key(|f| f.min_msat);
-    Ok(valid_min_48h.first().cloned())
+        // Of those, return the cheapest
+        valid_min_48h.sort_by_key(|f| f.min_msat);
+        Ok(valid_min_48h.first().cloned())
+    }
 }
 
 /// Convenience method to look up LSP info based on current LSP ID

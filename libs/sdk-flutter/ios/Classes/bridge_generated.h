@@ -33,7 +33,7 @@ typedef struct wire_GreenlightCredentials {
 typedef struct wire_OpeningFeeParams {
   uint64_t min_msat;
   uint32_t proportional;
-  int64_t valid_until;
+  struct wire_uint_8_list *valid_until;
   uint32_t max_idle_time;
   uint32_t max_client_to_self_delay;
   struct wire_uint_8_list *promise;
