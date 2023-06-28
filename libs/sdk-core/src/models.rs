@@ -657,6 +657,8 @@ pub struct OpeningFeeParams {
     pub promise: String,
 }
 
+const OPENING_FEE_PARAMS_DATETIME_FORMAT: &str = "%Y %b %d %H:%M:%S%.3f %z";
+
 impl OpeningFeeParams {
     /// Simple validation: checks if `valid_until` is a valid date
     pub(crate) fn validate(&self) -> Result<()> {
@@ -664,7 +666,7 @@ impl OpeningFeeParams {
     }
 
     pub(crate) fn valid_until_date(&self) -> Result<DateTime<Utc>> {
-        Utc.datetime_from_str(&self.valid_until, "%Y %b %d %H:%M:%S%.3f %z")
+        Utc.datetime_from_str(&self.valid_until, OPENING_FEE_PARAMS_DATETIME_FORMAT)
             .map_err(|e| anyhow!(e))
     }
 }
@@ -886,15 +888,103 @@ impl FromStr for BuyBitcoinProvider {
 
 #[cfg(test)]
 mod tests {
+    use crate::breez_services::OpeningFeeParamsMenu;
     use anyhow::Result;
+    use chrono::Utc;
     use prost::Message;
     use rand::random;
 
     use crate::grpc::PaymentInformation;
+    use crate::models::OPENING_FEE_PARAMS_DATETIME_FORMAT;
     use crate::test_utils::rand_vec_u8;
+    use crate::OpeningFeeParams;
+
+    fn get_test_ofp(min_msat: u64, proportional: u32, future_or_past: bool) -> OpeningFeeParams {
+        let now = Utc::now();
+        let one_min = chrono::Duration::seconds(60);
+        let date_time = match future_or_past {
+            true => now.checked_add_signed(one_min).unwrap(),
+            false => now.checked_sub_signed(one_min).unwrap(),
+        };
+        let formatted = format!("{}", date_time.format(OPENING_FEE_PARAMS_DATETIME_FORMAT));
+
+        OpeningFeeParams {
+            min_msat,
+            proportional,
+            valid_until: formatted,
+            max_idle_time: 0,
+            max_client_to_self_delay: 0,
+            promise: "".to_string(),
+        }
+    }
 
     #[test]
-    fn test_payment_information_ser_de() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_ofp_menu_validation() -> Result<()> {
+        // Empty menu is invalid
+        assert!(OpeningFeeParamsMenu::try_from(vec![]).is_err());
+
+        // Menu with one entry is valid
+        OpeningFeeParamsMenu::try_from(vec![get_test_ofp(10, 12, true)])?;
+
+        // Identical entries (same min_msat, same proportional) is valid
+        OpeningFeeParamsMenu::try_from(vec![
+            get_test_ofp(10, 12, true),
+            get_test_ofp(10, 12, true),
+        ])?;
+
+        // Sorted entries (sorted min_msat, varying proportional)
+        // sorted min_msat, sorted proportional is valid
+        OpeningFeeParamsMenu::try_from(vec![
+            get_test_ofp(10, 12, true),
+            get_test_ofp(12, 14, true),
+        ])?;
+        // sorted min_msat, same proportional is valid
+        OpeningFeeParamsMenu::try_from(vec![
+            get_test_ofp(10, 12, true),
+            get_test_ofp(12, 12, true),
+        ])?;
+        // sorted min_msat, reverse-sorted proportional is valid
+        OpeningFeeParamsMenu::try_from(vec![
+            get_test_ofp(10, 12, true),
+            get_test_ofp(12, 10, true),
+        ])?;
+
+        // Sorted entries (varying min_msat, sorted proportional)
+        // sorted min_msat, sorted proportional is valid
+        OpeningFeeParamsMenu::try_from(vec![
+            get_test_ofp(10, 10, true),
+            get_test_ofp(12, 12, true),
+        ])?;
+        // same min_msat, sorted proportional is valid
+        OpeningFeeParamsMenu::try_from(vec![
+            get_test_ofp(10, 10, true),
+            get_test_ofp(10, 12, true),
+        ])?;
+        // reverse-sorted min_msat, sorted proportional is invalid
+        assert!(OpeningFeeParamsMenu::try_from(vec![
+            get_test_ofp(12, 10, true),
+            get_test_ofp(10, 12, true),
+        ])
+        .is_err());
+
+        // Sorted, but with one expired entry, is valid
+        OpeningFeeParamsMenu::try_from(vec![
+            get_test_ofp(10, 10, true),
+            get_test_ofp(12, 12, false),
+        ])?;
+
+        // Sorted, but with all expired entries, is invalid (because it results in an empty list)
+        assert!(OpeningFeeParamsMenu::try_from(vec![
+            get_test_ofp(10, 10, false),
+            get_test_ofp(12, 12, false),
+        ])
+        .is_err());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_payment_information_ser_de() -> Result<()> {
         let dummy_payment_info = PaymentInformation {
             payment_hash: rand_vec_u8(10),
             payment_secret: rand_vec_u8(10),

@@ -31,7 +31,7 @@ use crate::swap::BTCReceiveSwap;
 use crate::BuyBitcoinProvider::Moonpay;
 use crate::*;
 use crate::{BuyBitcoinProvider, LnUrlAuthRequestData, LnUrlWithdrawRequestData, PaymentResponse};
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, ensure, Result};
 use bip39::*;
 use bitcoin::hashes::{sha256, Hash};
 use bitcoin::util::bip32::ChildNumber;
@@ -1302,6 +1302,7 @@ impl Receiver for PaymentReceiver {
     }
 }
 
+/// See [OpeningFeeParamsMenu::try_from]
 pub(crate) struct OpeningFeeParamsMenu {
     vals: Vec<OpeningFeeParams>,
 }
@@ -1318,29 +1319,27 @@ impl OpeningFeeParamsMenu {
     }
 
     fn validate(&self) -> Result<()> {
-        match !self.vals.is_empty() {
-            true => {
-                // opening_fee_params_menu fees must be in ascending order
-                let is_ordered = self.vals.windows(2).all(|ofp| {
-                    ofp[0].min_msat < ofp[1].min_msat || ofp[0].proportional < ofp[1].proportional
-                });
-                // `valid_until` must not be a past datetime
-                let is_expired = self.vals.iter().all(|ofp| match ofp.valid_until_date() {
-                    Ok(valid_until) => Utc::now() > valid_until,
-                    Err(_) => {
-                        warn!("Failed to parse valid_until for OpeningFeeParams: {ofp:?}");
-                        false
-                    }
-                });
-                match is_ordered && !is_expired {
-                    true => Ok(()),
-                    false => Err(anyhow!("Failed to validate opening_fee_params_menu")),
-                }
+        let is_empty = self.vals.is_empty();
+        ensure!(!is_empty, "Validation failed: no fee params provided");
+
+        // opening_fee_params_menu fees must be in ascending order
+        // Sort by key "tuple (min_msat, proportional)", which is (primary sorting key, secondary sorting key)
+        let is_ordered = self.vals.windows(2).all(|ofp| {
+            (ofp[0].min_msat, ofp[0].proportional) <= (ofp[1].min_msat, ofp[1].proportional)
+        });
+        ensure!(is_ordered, "Validation failed: fee params are not ordered");
+
+        // `valid_until` must not be a past datetime
+        let is_expired = self.vals.iter().all(|ofp| match ofp.valid_until_date() {
+            Ok(valid_until) => Utc::now() > valid_until,
+            Err(_) => {
+                warn!("Failed to parse valid_until for OpeningFeeParams: {ofp:?}");
+                false
             }
-            false => Err(anyhow!(
-                "No channel opening params are available in lsp info"
-            )),
-        }
+        });
+        ensure!(!is_expired, "Validation failed: expired fee params found");
+
+        Ok(())
     }
 
     pub(crate) fn get_cheapest_opening_fee_params(&self) -> Option<OpeningFeeParams> {
@@ -1351,7 +1350,7 @@ impl OpeningFeeParamsMenu {
         // Find the fee params that are valid for at least 48h
         let now = Utc::now();
         let duration_48h = chrono::Duration::hours(48);
-        let mut valid_min_48h: Vec<OpeningFeeParams> = self
+        let valid_min_48h: Vec<OpeningFeeParams> = self
             .vals
             .into_iter()
             .filter(|ofp| match ofp.valid_until_date() {
@@ -1363,8 +1362,8 @@ impl OpeningFeeParamsMenu {
             })
             .collect();
 
-        // Of those, return the cheapest
-        valid_min_48h.sort_by_key(|f| f.min_msat);
+        // Of those, return the first, which is the cheapest
+        // (sorting order of fee params list was checked when the menu was initialized)
         Ok(valid_min_48h.first().cloned())
     }
 }
