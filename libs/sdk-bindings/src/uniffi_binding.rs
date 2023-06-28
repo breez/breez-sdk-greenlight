@@ -204,6 +204,11 @@ impl BlockingBreezServices {
         .map_err(|e| e.into())
     }
 
+    pub fn payment_by_hash(&self, hash: String) -> Result<Option<Payment>, SDKError> {
+        rt().block_on(self.breez_services.payment_by_hash(hash))
+            .map_err(|e| e.into())
+    }
+
     pub fn pay_lnurl(
         &self,
         req_data: LnUrlPayRequestData,

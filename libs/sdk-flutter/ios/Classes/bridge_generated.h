@@ -111,6 +111,8 @@ void wire_list_payments(int64_t port_,
                         int64_t *from_timestamp,
                         int64_t *to_timestamp);
 
+void wire_payment_by_hash(int64_t port_, struct wire_uint_8_list *hash);
+
 void wire_list_lsps(int64_t port_);
 
 void wire_connect_lsp(int64_t port_, struct wire_uint_8_list *lsp_id);
@@ -215,6 +217,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_receive_payment);
     dummy_var ^= ((int64_t) (void*) wire_node_info);
     dummy_var ^= ((int64_t) (void*) wire_list_payments);
+    dummy_var ^= ((int64_t) (void*) wire_payment_by_hash);
     dummy_var ^= ((int64_t) (void*) wire_list_lsps);
     dummy_var ^= ((int64_t) (void*) wire_connect_lsp);
     dummy_var ^= ((int64_t) (void*) wire_fetch_lsp_info);
