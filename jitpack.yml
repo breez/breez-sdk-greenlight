@@ -1,0 +1,5 @@
+jdk:
+  - openjdk11
+install:
+  - ./libs/sdk-bindings/bindings-android/buildForJitpack.sh
+
