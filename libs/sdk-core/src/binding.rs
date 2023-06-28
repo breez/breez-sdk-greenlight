@@ -18,7 +18,9 @@ use crate::models::{
     Config, EnvironmentType, GreenlightCredentials, Network, NodeState, Payment, PaymentTypeFilter,
     SwapInfo,
 };
-use crate::{BuyBitcoinProvider, LnUrlCallbackStatus, ReverseSwapInfo, ReverseSwapPairInfo};
+use crate::{
+    BackupStatus, BuyBitcoinProvider, LnUrlCallbackStatus, ReverseSwapInfo, ReverseSwapPairInfo,
+};
 use anyhow::{anyhow, Result};
 use flutter_rust_bridge::StreamSink;
 use log::{Level, LevelFilter, Metadata, Record};
@@ -405,4 +407,14 @@ pub fn default_config(config_type: EnvironmentType) -> Config {
 /// See [BreezServices::buy_bitcoin]
 pub fn buy_bitcoin(provider: BuyBitcoinProvider) -> Result<String> {
     block_on(async { get_breez_services()?.buy_bitcoin(provider).await })
+}
+
+/// See [BreezServices::backup]
+pub fn backup() -> Result<()> {
+    block_on(async { get_breez_services()?.backup().await })
+}
+
+/// See [BreezServices::backup_status]
+pub fn backup_status() -> Result<BackupStatus> {
+    get_breez_services()?.backup_status()
 }

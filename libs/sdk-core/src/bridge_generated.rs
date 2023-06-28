@@ -45,6 +45,7 @@ use crate::lnurl::pay::model::MessageSuccessActionData;
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lnurl::pay::model::UrlSuccessActionData;
 use crate::lsp::LspInformation;
+use crate::models::BackupStatus;
 use crate::models::BuyBitcoinProvider;
 use crate::models::ChannelState;
 use crate::models::ClosedChannelPaymentDetails;
@@ -628,6 +629,26 @@ fn wire_buy_bitcoin_impl(
         },
     )
 }
+fn wire_backup_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "backup",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || move |task_callback| backup(),
+    )
+}
+fn wire_backup_status_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "backup_status",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || move |task_callback| backup_status(),
+    )
+}
 // Section: wrapper structs
 
 // Section: static checks
@@ -744,6 +765,17 @@ impl support::IntoDart for BackupFailedData {
     }
 }
 impl support::IntoDartExceptPrimitive for BackupFailedData {}
+
+impl support::IntoDart for BackupStatus {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.backed_up.into_dart(),
+            self.last_backup_time.into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for BackupStatus {}
 
 impl support::IntoDart for BitcoinAddressData {
     fn into_dart(self) -> support::DartAbi {

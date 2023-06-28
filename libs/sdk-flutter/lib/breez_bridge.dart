@@ -33,6 +33,11 @@ class BreezBridge {
 
   Stream<Payment> get paymentResultStream => _paymentResultStream.stream;
 
+  // Listen to backup results
+  final StreamController<BreezEvent?> _backupStreamController = BehaviorSubject<BreezEvent?>();
+
+  Stream<BreezEvent?> get backupStream => _backupStreamController.stream;
+
   void initialize() {
     /// Listen to BreezEvent's(new block, invoice paid, synced)
     _lnToolkit.breezEventsStream().listen((event) async {
@@ -49,6 +54,15 @@ class BreezBridge {
       }
       if (event is BreezEvent_PaymentFailed) {
         _paymentResultStream.addError(Exception(event.details.error));
+      }
+      if (event is BreezEvent_BackupSucceeded) {
+        _backupStreamController.add(event);
+      }
+      if (event is BreezEvent_BackupStarted) {
+        _backupStreamController.add(event);
+      }
+      if (event is BreezEvent_BackupFailed) {
+        _backupStreamController.addError(Exception(event.details.error));
       }
     });
 
@@ -325,6 +339,12 @@ class BreezBridge {
 
   /// Fetches the current recommended fees
   Future<RecommendedFees> recommendedFees() => _lnToolkit.recommendedFees();
+
+  /// Start the backup process
+  Future<void> backup() => _lnToolkit.backup();
+
+  /// Returns the state of the backup process
+  Future<BackupStatus> backupStatus() => _lnToolkit.backupStatus();
 
   /* Helper Methods */
   /// Validate if given address is a valid BTC address
