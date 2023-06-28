@@ -1,4 +1,6 @@
 jdk:
   - openjdk11
-before_install:
+install:
+  - echo "JitPack custom command building version $VERSION."
   - cd libs/sdk-bindings/bindings-android
+  - ./gradlew publishToMavenLocal -PlibraryVersion=$VERSION
