@@ -34,11 +34,9 @@ class BreezBridge {
   Stream<Payment> get paymentResultStream => _paymentResultStream.stream;
 
   // Listen to backup results
-  final StreamController<BackupState?> _backupStreamController = BehaviorSubject<BackupState?>();
+  final StreamController<BreezEvent?> _backupStreamController = BehaviorSubject<BreezEvent?>();
 
-  Stream<BackupState?> get backupStream => _backupStreamController.stream;
-
-  final BackupState backupState = BackupState();
+  Stream<BreezEvent?> get backupStream => _backupStreamController.stream;
 
   void initialize() {
     /// Listen to BreezEvent's(new block, invoice paid, synced)
@@ -58,20 +56,12 @@ class BreezBridge {
         _paymentResultStream.addError(Exception(event.details.error));
       }
       if (event is BreezEvent_BackupSucceeded) {
-        final backupState = await getBackupState();
-        backupState.inProgress = false;
-        backupState.event = event;
-        _backupStreamController.add(backupState);
+        _backupStreamController.add(event);
       }
       if (event is BreezEvent_BackupStarted) {
-        final backupState = await getBackupState();
-        backupState.inProgress = true;
-        backupState.event = event;
-        _backupStreamController.add(backupState);
+        _backupStreamController.add(event);
       }
       if (event is BreezEvent_BackupFailed) {
-        backupState.event = event;
-        backupState.inProgress = false;
         _backupStreamController.addError(Exception(event.details.error));
       }
     });
@@ -212,12 +202,6 @@ class BreezBridge {
     final nodeState = await _lnToolkit.nodeInfo();
     nodeStateController.add(nodeState);
     return nodeState;
-  }
-
-  /// get the backup state
-  Future<BackupState> getBackupState() async {
-    backupState.status = await _lnToolkit.backupStatus();
-    return backupState;
   }
 
   Future<Config> defaultConfig(EnvironmentType envType) {
@@ -400,7 +384,6 @@ class BreezBridge {
   Future fetchNodeData() async {
     await getNodeState();
     await listPayments();
-    await getBackupState();
   }
 
   /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency
@@ -429,12 +412,4 @@ extension SDKConfig on Config {
       maxfeePercent: maxfeePercent ?? this.maxfeePercent,
     );
   }
-}
-
-class BackupState {
-  bool? inProgress;
-  BackupStatus? status;
-  BreezEvent? event;
-
-  BackupState({this.inProgress, this.status});
 }
