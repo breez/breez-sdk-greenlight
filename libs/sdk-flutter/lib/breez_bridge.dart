@@ -58,14 +58,20 @@ class BreezBridge {
         _paymentResultStream.addError(Exception(event.details.error));
       }
       if (event is BreezEvent_BackupSucceeded) {
+        final backupState = await getBackupState();
         backupState.inProgress = false;
-        await getBackupState();
+        backupState.event = event;
+        _backupStreamController.add(backupState);
       }
       if (event is BreezEvent_BackupStarted) {
+        final backupState = await getBackupState();
         backupState.inProgress = true;
+        backupState.event = event;
         _backupStreamController.add(backupState);
       }
       if (event is BreezEvent_BackupFailed) {
+        backupState.event = event;
+        backupState.inProgress = false;
         _backupStreamController.addError(Exception(event.details.error));
       }
     });
@@ -211,7 +217,6 @@ class BreezBridge {
   /// get the backup state
   Future<BackupState> getBackupState() async {
     backupState.status = await _lnToolkit.backupStatus();
-    _backupStreamController.add(backupState);
     return backupState;
   }
 
@@ -429,6 +434,7 @@ extension SDKConfig on Config {
 class BackupState {
   bool? inProgress;
   BackupStatus? status;
+  BreezEvent? event;
 
   BackupState({this.inProgress, this.status});
 }
