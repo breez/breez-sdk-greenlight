@@ -1,2 +1,4 @@
+before_install:
+  - yes | sdkmanager --uninstall "ndk-bundle" | sdkmanager --install "ndk;23.1.7779620"
 install:
   - ./libs/sdk-bindings/bindings-android/buildForJitpack.sh
