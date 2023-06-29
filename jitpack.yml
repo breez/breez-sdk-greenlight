@@ -1,7 +1,2 @@
-# before_install:
-#   - apt-get -y update
-#   - apt-get -y install build-essential
-#   - apt-get y install protobuf-compiler
-  # - yes | sdkmanager --uninstall "ndk-bundle" | sdkmanager --install "ndk;23.1.7779620"
 install:
   - ./libs/sdk-bindings/bindings-android/buildForJitpack.sh
