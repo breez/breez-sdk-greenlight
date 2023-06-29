@@ -17,3 +17,5 @@ curl https://mvn.breez.technology/releases/breez_sdk/bindings-android/0.1.0/bind
 mvn install:install-file -Dfile=bindings-android-0.1.0.aar -DpomFile=bindings-android-0.1.0.pom
 mvn install:install-file -Dfile=bindings-android-0.1.0.module -DpomFile=bindings-android-0.1.0.pom
 mvn install:install-file -Dfile=bindings-android-0.1.0-sources.jar -DpomFile=bindings-android-0.1.0.pom
+
+ls /home/jitpack/.m2/repository/breez_sdk/bindings-android/0.1.0/
