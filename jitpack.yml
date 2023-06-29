@@ -1,6 +1,6 @@
 before_install:
-  - sudo apt-get update
-  - sudo apt install build-essential
+  - sudo apt-get -y update
+  - sudo apt -y install build-essential
   - yes | sdkmanager --uninstall "ndk-bundle" | sdkmanager --install "ndk;23.1.7779620"
 install:
   - ./libs/sdk-bindings/bindings-android/buildForJitpack.sh
