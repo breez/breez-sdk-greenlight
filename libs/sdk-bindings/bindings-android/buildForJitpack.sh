@@ -18,7 +18,7 @@ echo "---"
 
 # ls ~/.m2/repository
 
-mvn install:install-file -Dfile=bindings-android-0.1.0.aar -DpomFile=indings-android-0.1.0.pom
+mvn install:install-file -Dfile=bindings-android-0.1.0.aar -DpomFile=bindings-android-0.1.0.pom
 
 # ls ~/.m2/repository
 
