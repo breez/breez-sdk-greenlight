@@ -9,13 +9,13 @@ fi
 echo "JitPack building version $VERSION."
 cd $(dirname $0)
 
-curl https://mvn.breez.technology/releases/breez_sdk/bindings-android/0.1.0/bindings-android-0.1.0.aar --insecure --output bindings-android-0.1.0.aar
-curl https://mvn.breez.technology/releases/breez_sdk/bindings-android/0.1.0/bindings-android-0.1.0.module --insecure --output bindings-android-0.1.0.module
-curl https://mvn.breez.technology/releases/breez_sdk/bindings-android/0.1.0/bindings-android-0.1.0-sources.jar --insecure --output bindings-android-0.1.0-sources.jar
-curl https://mvn.breez.technology/releases/breez_sdk/bindings-android/0.1.0/bindings-android-0.1.0.pom --insecure --output bindings-android-0.1.0.pom
+curl https://mvn.breez.technology/releases/breez_sdk/bindings-android/$VERSION/bindings-android-$VERSION.aar --insecure --output bindings-android-$VERSION.aar
+curl https://mvn.breez.technology/releases/breez_sdk/bindings-android/$VERSION/bindings-android-$VERSION.module --insecure --output bindings-android-$VERSION.module
+curl https://mvn.breez.technology/releases/breez_sdk/bindings-android/$VERSION/bindings-android-$VERSION-sources.jar --insecure --output bindings-android-$VERSION-sources.jar
+curl https://mvn.breez.technology/releases/breez_sdk/bindings-android/$VERSION/bindings-android-$VERSION.pom --insecure --output bindings-android-$VERSION.pom
 
-mvn org.apache.maven.plugins:maven-install-plugin:3.1.1:install-file -Dfile=bindings-android-0.1.0.aar -DpomFile=bindings-android-0.1.0.pom
-mvn org.apache.maven.plugins:maven-install-plugin:3.1.1:install-file -Dfile=bindings-android-0.1.0.module -DpomFile=bindings-android-0.1.0.pom
-mvn org.apache.maven.plugins:maven-install-plugin:3.1.1:install-file -Dfile=bindings-android-0.1.0-sources.jar -DpomFile=bindings-android-0.1.0.pom -Dclassifier=sources
+mvn org.apache.maven.plugins:maven-install-plugin:3.1.1:install-file -Dfile=bindings-android-$VERSION.aar -DpomFile=bindings-android-$VERSION.pom
+mvn org.apache.maven.plugins:maven-install-plugin:3.1.1:install-file -Dfile=bindings-android-$VERSION.module -DpomFile=bindings-android-$VERSION.pom
+mvn org.apache.maven.plugins:maven-install-plugin:3.1.1:install-file -Dfile=bindings-android-$VERSION-sources.jar -DpomFile=bindings-android-$VERSION.pom -Dclassifier=sources
 
-ls /home/jitpack/.m2/repository/breez_sdk/bindings-android/0.1.0/
+ls /home/jitpack/.m2/repository/breez_sdk/bindings-android/$VERSION/
