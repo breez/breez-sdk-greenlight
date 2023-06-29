@@ -657,7 +657,7 @@ pub struct OpeningFeeParams {
     pub promise: String,
 }
 
-const OPENING_FEE_PARAMS_DATETIME_FORMAT: &str = "%Y %b %d %H:%M:%S%.3f %z";
+pub(crate) const OPENING_FEE_PARAMS_DATETIME_FORMAT: &str = "%Y %b %d %H:%M:%S%.3f %z";
 
 impl OpeningFeeParams {
     /// Simple validation: checks if `valid_until` is a valid date
@@ -890,33 +890,11 @@ impl FromStr for BuyBitcoinProvider {
 mod tests {
     use crate::breez_services::OpeningFeeParamsMenu;
     use anyhow::Result;
-    use chrono::Utc;
     use prost::Message;
     use rand::random;
 
     use crate::grpc::PaymentInformation;
-    use crate::models::OPENING_FEE_PARAMS_DATETIME_FORMAT;
-    use crate::test_utils::rand_vec_u8;
-    use crate::OpeningFeeParams;
-
-    fn get_test_ofp(min_msat: u64, proportional: u32, future_or_past: bool) -> OpeningFeeParams {
-        let now = Utc::now();
-        let one_min = chrono::Duration::seconds(60);
-        let date_time = match future_or_past {
-            true => now.checked_add_signed(one_min).unwrap(),
-            false => now.checked_sub_signed(one_min).unwrap(),
-        };
-        let formatted = format!("{}", date_time.format(OPENING_FEE_PARAMS_DATETIME_FORMAT));
-
-        OpeningFeeParams {
-            min_msat,
-            proportional,
-            valid_until: formatted,
-            max_idle_time: 0,
-            max_client_to_self_delay: 0,
-            promise: "".to_string(),
-        }
-    }
+    use crate::test_utils::{get_test_ofp, rand_vec_u8};
 
     #[test]
     fn test_ofp_menu_validation() -> Result<()> {
@@ -926,44 +904,48 @@ mod tests {
         // Menu with one entry is valid
         OpeningFeeParamsMenu::try_from(vec![get_test_ofp(10, 12, true)])?;
 
-        // Identical entries (same min_msat, same proportional) is valid
+        // Menu with identical entries (same min_msat, same proportional) is invalid
+        assert!(OpeningFeeParamsMenu::try_from(vec![
+            get_test_ofp(10, 12, true),
+            get_test_ofp(10, 12, true),
+        ])
+        .is_err());
+
+        // Menu where 2nd item has larger min_fee_msat, same proportional is valid
         OpeningFeeParamsMenu::try_from(vec![
             get_test_ofp(10, 12, true),
-            get_test_ofp(10, 12, true),
+            get_test_ofp(12, 12, true),
         ])?;
 
-        // Sorted entries (sorted min_msat, varying proportional)
-        // sorted min_msat, sorted proportional is valid
+        // Menu where 2nd item has same min_fee_msat, larger proportional is valid
+        OpeningFeeParamsMenu::try_from(vec![
+            get_test_ofp(10, 12, true),
+            get_test_ofp(10, 14, true),
+        ])?;
+
+        // Menu where 2nd item has larger min_fee_msat, larger proportional is valid
         OpeningFeeParamsMenu::try_from(vec![
             get_test_ofp(10, 12, true),
             get_test_ofp(12, 14, true),
         ])?;
-        // sorted min_msat, same proportional is valid
-        OpeningFeeParamsMenu::try_from(vec![
-            get_test_ofp(10, 12, true),
-            get_test_ofp(12, 12, true),
-        ])?;
-        // sorted min_msat, reverse-sorted proportional is valid
-        OpeningFeeParamsMenu::try_from(vec![
-            get_test_ofp(10, 12, true),
-            get_test_ofp(12, 10, true),
-        ])?;
 
-        // Sorted entries (varying min_msat, sorted proportional)
-        // sorted min_msat, sorted proportional is valid
-        OpeningFeeParamsMenu::try_from(vec![
-            get_test_ofp(10, 10, true),
-            get_test_ofp(12, 12, true),
-        ])?;
-        // same min_msat, sorted proportional is valid
-        OpeningFeeParamsMenu::try_from(vec![
-            get_test_ofp(10, 10, true),
+        // All other combinations of min_fee_msat / proportional are invalid
+        // same min_msat, same proportional
+        assert!(OpeningFeeParamsMenu::try_from(vec![
             get_test_ofp(10, 12, true),
-        ])?;
-        // reverse-sorted min_msat, sorted proportional is invalid
+            get_test_ofp(10, 12, true),
+        ])
+        .is_err());
+        // same min_msat, reverse-sorted proportional
+        assert!(OpeningFeeParamsMenu::try_from(vec![
+            get_test_ofp(10, 12, true),
+            get_test_ofp(10, 10, true),
+        ])
+        .is_err());
+        // reverse-sorted min_msat, same proportional
         assert!(OpeningFeeParamsMenu::try_from(vec![
             get_test_ofp(12, 10, true),
-            get_test_ofp(10, 12, true),
+            get_test_ofp(10, 10, true),
         ])
         .is_err());
 

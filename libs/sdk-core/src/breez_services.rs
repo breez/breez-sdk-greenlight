@@ -1323,9 +1323,16 @@ impl OpeningFeeParamsMenu {
         ensure!(!is_empty, "Validation failed: no fee params provided");
 
         // opening_fee_params_menu fees must be in ascending order
-        // Sort by key "tuple (min_msat, proportional)", which is (primary sorting key, secondary sorting key)
         let is_ordered = self.vals.windows(2).all(|ofp| {
-            (ofp[0].min_msat, ofp[0].proportional) <= (ofp[1].min_msat, ofp[1].proportional)
+            let larger_min_msat_fee = ofp[0].min_msat < ofp[1].min_msat;
+            let equal_min_msat_fee = ofp[0].min_msat == ofp[1].min_msat;
+
+            let larger_proportional = ofp[0].proportional < ofp[1].proportional;
+            let equal_proportional = ofp[0].proportional == ofp[1].proportional;
+
+            (larger_min_msat_fee && equal_proportional)
+                || (equal_min_msat_fee && larger_proportional)
+                || (larger_min_msat_fee && larger_proportional)
         });
         ensure!(is_ordered, "Validation failed: fee params are not ordered");
 

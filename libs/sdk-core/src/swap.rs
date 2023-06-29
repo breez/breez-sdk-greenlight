@@ -644,6 +644,7 @@ mod tests {
     };
 
     use crate::chain::{AddressUtxos, Utxo};
+    use crate::test_utils::get_test_ofp;
     use crate::{
         breez_services::tests::get_dummy_node_state,
         chain::{ChainService, OnchainTx},
@@ -736,7 +737,9 @@ mod tests {
     async fn test_expired_swap() -> Result<()> {
         let chain_service = Arc::new(MockChainService::default());
         let (mut swapper, _) = create_swapper(chain_service.clone())?;
-        let swap_info = swapper.create_swap_address(None).await?;
+        let swap_info = swapper
+            .create_swap_address(get_test_ofp(10, 10, true))
+            .await?;
 
         // We test the case that a confirmed transaction was detected on chain that
         // sent funds to this address but the lock timeout has expired.
@@ -792,7 +795,9 @@ mod tests {
     async fn test_redeem_swap() -> Result<()> {
         let chain_service = Arc::new(MockChainService::default());
         let (mut swapper, persister) = create_swapper(chain_service.clone())?;
-        let swap_info = swapper.create_swap_address(None).await?;
+        let swap_info = swapper
+            .create_swap_address(get_test_ofp(10, 10, true))
+            .await?;
 
         // add a payment with the same hash and test that the swapper updates the paid_amount for
         // the swap.
@@ -872,7 +877,9 @@ mod tests {
     async fn test_spent_swap() -> Result<()> {
         let chain_service = Arc::new(MockChainService::default());
         let (mut swapper, _) = create_swapper(chain_service.clone())?;
-        let swap_info = swapper.create_swap_address(None).await?;
+        let swap_info = swapper
+            .create_swap_address(get_test_ofp(10, 10, true))
+            .await?;
 
         // Once swap is spent on-chain the confirmed_sats would be set to zero again.
         swapper.chain_service = chain_service_after_spent(swap_info.clone().bitcoin_address);
