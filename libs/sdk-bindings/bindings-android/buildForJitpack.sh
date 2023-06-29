@@ -8,4 +8,8 @@ fi
 
 echo "JitPack building version $VERSION."
 cd $(dirname $0)
+cd ..
+make init
+make bindings-android
+cd bindings-android
 ./gradlew publishToMavenLocal -PlibraryVersion=$VERSION
