@@ -25,7 +25,7 @@ fn test_golang() {
     let output = Command::new("go")
         .env(
             "CGO_LDFLAGS",
-            "-lbreez_sdk_bindings -L../../../ffi/golang -lm -ldl",
+            "-lbreez_sdk_bindings -L../../../ffi/golang -Wl,-rpath,../../../ffi/golang",
         )
         .env("CGO_ENABLED", "1")
         .current_dir("tests/bindings/golang/")
