@@ -18,10 +18,10 @@ echo "---"
 # echo "ls ANDROID_HOME/ndk"
 # ls $ANDROID_HOME/ndk
 # echo "---"
-echo "ls ANDROID_HOME/ndk-bundle"
+echo "ls ANDROID_HOME/ndk"
 ls $ANDROID_HOME/ndk-bundle
 echo "---"
-export ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle
+export ANDROID_NDK_HOME=$ANDROID_HOME/ndk/23.1.7779620
 make init
 make bindings-android
 cd bindings-android
