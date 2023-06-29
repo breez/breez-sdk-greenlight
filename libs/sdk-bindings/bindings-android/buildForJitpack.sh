@@ -10,6 +10,10 @@ echo "JitPack building version $VERSION."
 cd $(dirname $0)
 
 curl https://mvn.breez.technology/releases/breez_sdk/bindings-android/0.1.0/bindings-android-0.1.0.aar --insecure --output bindings-android-0.1.0.aar
+curl https://mvn.breez.technology/releases/breez_sdk/bindings-android/0.1.0/bindings-android-0.1.0.module --insecure --output bindings-android-0.1.0.module
+curl https://mvn.breez.technology/releases/breez_sdk/bindings-android/0.1.0/bindings-android-0.1.0-sources.jar --insecure --output bindings-android-0.1.0-sources.jar
 curl https://mvn.breez.technology/releases/breez_sdk/bindings-android/0.1.0/bindings-android-0.1.0.pom --insecure --output bindings-android-0.1.0.pom
 
 mvn install:install-file -Dfile=bindings-android-0.1.0.aar -DpomFile=bindings-android-0.1.0.pom
+mvn install:install-file -Dfile=bindings-android-0.1.0.module -DpomFile=bindings-android-0.1.0.pom
+mvn install:install-file -Dfile=bindings-android-0.1.0-sources.jar -DpomFile=bindings-android-0.1.0.pom
