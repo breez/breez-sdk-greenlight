@@ -9,6 +9,7 @@ fi
 echo "JitPack building version $VERSION."
 cd $(dirname $0)
 cd ..
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 make init
 make bindings-android
 cd bindings-android
