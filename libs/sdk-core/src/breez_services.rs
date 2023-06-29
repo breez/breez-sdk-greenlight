@@ -31,7 +31,7 @@ use crate::swap::BTCReceiveSwap;
 use crate::BuyBitcoinProvider::Moonpay;
 use crate::*;
 use crate::{BuyBitcoinProvider, LnUrlAuthRequestData, LnUrlWithdrawRequestData, PaymentResponse};
-use anyhow::{anyhow, ensure, Result};
+use anyhow::{anyhow, ensure, Context, Result};
 use bip39::*;
 use bitcoin::hashes::{sha256, Hash};
 use bitcoin::util::bip32::ChildNumber;
@@ -497,7 +497,7 @@ impl BreezServices {
             .choose_channel_opening_fees(opening_fee_params, false)?;
         let swap_info = self
             .btc_receive_swapper
-            .create_swap_address(channel_opening_fees)
+            .create_swap_address(channel_opening_fees.context("No channel opening fees provided")?)
             .await?;
         Ok(swap_info)
     }
