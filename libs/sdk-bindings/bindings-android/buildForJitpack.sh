@@ -19,7 +19,7 @@ echo "---"
 # ls $ANDROID_HOME/ndk
 # echo "---"
 echo "ls ANDROID_HOME/ndk"
-ls $ANDROID_HOME/ndk-bundle
+ls $ANDROID_HOME/ndk
 echo "---"
 export ANDROID_NDK_HOME=$ANDROID_HOME/ndk/23.1.7779620
 make init
