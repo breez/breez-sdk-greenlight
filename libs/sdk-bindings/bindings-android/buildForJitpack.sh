@@ -10,8 +10,8 @@ echo "JitPack building version $VERSION."
 cd $(dirname $0)
 
 ls
-curl https://mvn.breez.technology/releases/breez_sdk/bindings-android/0.1.0/bindings-android-0.1.0.aar --output bindings-android-0.1.0.aar
-curl https://mvn.breez.technology/releases/breez_sdk/bindings-android/0.1.0/bindings-android-0.1.0.pom --output bindings-android-0.1.0.pom
+curl https://mvn.breez.technology/releases/breez_sdk/bindings-android/0.1.0/bindings-android-0.1.0.aar --insecure --output bindings-android-0.1.0.aar
+curl https://mvn.breez.technology/releases/breez_sdk/bindings-android/0.1.0/bindings-android-0.1.0.pom --insecure --output bindings-android-0.1.0.pom
 ls
 
 echo "---"
