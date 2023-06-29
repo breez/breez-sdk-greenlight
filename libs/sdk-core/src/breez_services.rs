@@ -1152,50 +1152,33 @@ impl Receiver for PaymentReceiver {
         let mut short_channel_id = parse_short_channel_id("1x0x0")?;
         let mut destination_invoice_amount_sats = amount_sats;
 
-        let cheapest_opening_fee_params =
-            lsp_info.choose_channel_opening_fees(req_data.opening_fee_params, true)?;
+        // Ensure opening fees params is set (either from the user, or from the LSP)
+        let cheapest_opening_fee_params = lsp_info
+            .choose_channel_opening_fees(req_data.opening_fee_params, true)?
+            .context("The provider is currently not opening channels")?;
+
         // check if we need to open channel
         let open_channel_needed = node_state.inbound_liquidity_msats < amount_msats;
         if open_channel_needed {
             info!("We need to open a channel");
 
             // we need to open channel so we are calculating the fees for the LSP
-            if let Some(ofp) = &cheapest_opening_fee_params {
-                let channel_fees_msat_calculated =
-                    amount_msats * ofp.proportional as u64 / 1_000_000 / 1_000_000;
-                let channel_fees_msat = max(channel_fees_msat_calculated, ofp.min_msat);
+            let ofp = &cheapest_opening_fee_params;
+            let channel_fees_msat_calculated =
+                amount_msats * ofp.proportional as u64 / 1_000_000 / 1_000_000;
+            let channel_fees_msat = max(channel_fees_msat_calculated, ofp.min_msat);
 
-                info!("zero-conf fee calculation option: lsp fee rate (proportional): {}:  (minimum {}), total fees for channel: {}",
+            info!("zero-conf fee calculation option: lsp fee rate (proportional): {}:  (minimum {}), total fees for channel: {}",
                 ofp.proportional, ofp.min_msat, channel_fees_msat);
 
-                if amount_msats < channel_fees_msat + 1000 {
-                    return Err(anyhow!(
-                        "requestPayment: Amount should be more than the minimum fees {} sats",
-                        ofp.min_msat / 1000
-                    ));
-                }
-                // remove the fees from the amount to get the small amount on the current node invoice.
-                destination_invoice_amount_sats = amount_sats - channel_fees_msat / 1000;
-            } else {
-                // TODO: This branch only exists because there may be existing swaps
-                // that use the old fee rate mechanism. Remove this after those
-                // swaps have expired.
-                let channel_fees_msat_calculated =
-                    amount_msats * lsp_info.channel_fee_permyriad as u64 / 10_000 / 1_000_000;
-                let channel_fees_msat = max(
-                    channel_fees_msat_calculated,
-                    lsp_info.channel_minimum_fee_msat as u64,
-                );
-
-                if amount_msats < channel_fees_msat + 1000 {
-                    return Err(anyhow!(
-                        "requestPayment: Amount should be more than the minimum fees {} sats",
-                        lsp_info.channel_minimum_fee_msat / 1000
-                    ));
-                }
-                // remove the fees from the amount to get the small amount on the current node invoice.
-                destination_invoice_amount_sats = amount_sats - channel_fees_msat / 1000;
+            if amount_msats < channel_fees_msat + 1000 {
+                return Err(anyhow!(
+                    "requestPayment: Amount should be more than the minimum fees {} sats",
+                    ofp.min_msat / 1000
+                ));
             }
+            // remove the fees from the amount to get the small amount on the current node invoice.
+            destination_invoice_amount_sats = amount_sats - channel_fees_msat / 1000;
         } else {
             // not opening a channel so we need to get the real channel id into the routing hints
             info!("Finding channel ID for routing hint");
@@ -1287,7 +1270,7 @@ impl Receiver for PaymentReceiver {
                         destination: hex::decode(parsed_invoice.payee_pubkey.clone())?,
                         incoming_amount_msat: amount_msats as i64,
                         outgoing_amount_msat: (destination_invoice_amount_sats * 1000) as i64,
-                        opening_fee_params: cheapest_opening_fee_params.clone().map(Into::into),
+                        opening_fee_params: Some(cheapest_opening_fee_params.clone().into()),
                     },
                 )
                 .await?;
@@ -1297,7 +1280,7 @@ impl Receiver for PaymentReceiver {
         // return the signed, converted invoice with hints
         Ok(ReceivePaymentResponse {
             ln_invoice: parsed_invoice,
-            opening_fee_params: cheapest_opening_fee_params,
+            opening_fee_params: Some(cheapest_opening_fee_params),
         })
     }
 }
