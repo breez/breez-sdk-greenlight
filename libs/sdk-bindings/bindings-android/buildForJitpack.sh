@@ -16,11 +16,11 @@ ls
 
 echo "---"
 
-ls ~/.m2/repository
+# ls ~/.m2/repository
 
 mvn install:install-file -Dfile=bindings-android-0.1.0.aar -DpomFile=indings-android-0.1.0.pom
 
-ls ~/.m2/repository
+# ls ~/.m2/repository
 
 # cd ..
 # curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
