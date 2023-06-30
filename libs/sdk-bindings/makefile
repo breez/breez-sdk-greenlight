@@ -9,6 +9,7 @@ init:
 	rustup target add aarch64-apple-ios-sim
 	#rustup target add armv7-apple-ios armv7s-apple-ios i386-apple-ios ## deprecated
 	rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+	rustup target add aarch64-unknown-linux-gnu x86_64-unknown-linux-gnu
 	@if [ $$(uname) == "Darwin" ] ; then cargo install cargo-lipo ; fi
 	cargo install cbindgen
 	cargo install cargo-ndk
