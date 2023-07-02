@@ -9,6 +9,9 @@ fi
 echo "JitPack building version $VERSION."
 cd $(dirname $0)
 
+#todo remove
+VERSION=0.1.0
+
 curl https://mvn.breez.technology/releases/breez_sdk/bindings-android/$VERSION/bindings-android-$VERSION.aar --insecure --output bindings-android-$VERSION.aar
 curl https://mvn.breez.technology/releases/breez_sdk/bindings-android/$VERSION/bindings-android-$VERSION.module --insecure --output bindings-android-$VERSION.module
 curl https://mvn.breez.technology/releases/breez_sdk/bindings-android/$VERSION/bindings-android-$VERSION-sources.jar --insecure --output bindings-android-$VERSION-sources.jar
