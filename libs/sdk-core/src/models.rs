@@ -898,9 +898,6 @@ mod tests {
 
     #[test]
     fn test_ofp_menu_validation() -> Result<()> {
-        // Empty menu is invalid
-        assert!(OpeningFeeParamsMenu::try_from(vec![]).is_err());
-
         // Menu with one entry is valid
         OpeningFeeParamsMenu::try_from(vec![get_test_ofp(10, 12, true)])?;
 

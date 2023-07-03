@@ -31,7 +31,7 @@ use crate::swap::BTCReceiveSwap;
 use crate::BuyBitcoinProvider::Moonpay;
 use crate::*;
 use crate::{BuyBitcoinProvider, LnUrlAuthRequestData, LnUrlWithdrawRequestData, PaymentResponse};
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{anyhow, ensure, Result};
 use bip39::*;
 use bitcoin::hashes::{sha256, Hash};
 use bitcoin::util::bip32::ChildNumber;
@@ -544,7 +544,7 @@ impl BreezServices {
             .choose_channel_opening_fees(opening_fee_params, false)?;
         let swap_info = self
             .btc_receive_swapper
-            .create_swap_address(channel_opening_fees.context("No channel opening fees provided")?)
+            .create_swap_address(channel_opening_fees)
             .await?;
         Ok(swap_info)
     }
@@ -1201,9 +1201,8 @@ impl Receiver for PaymentReceiver {
         let mut destination_invoice_amount_sats = amount_sats;
 
         // Ensure opening fees params is set (either from the user, or from the LSP)
-        let cheapest_opening_fee_params = lsp_info
-            .choose_channel_opening_fees(req_data.opening_fee_params, true)?
-            .context("The provider is currently not opening channels")?;
+        let cheapest_opening_fee_params =
+            lsp_info.choose_channel_opening_fees(req_data.opening_fee_params, true)?;
 
         // check if we need to open channel
         let open_channel_needed = node_state.inbound_liquidity_msats < amount_msats;
@@ -1353,9 +1352,6 @@ impl OpeningFeeParamsMenu {
     }
 
     fn validate(&self) -> Result<()> {
-        let is_empty = self.vals.is_empty();
-        ensure!(!is_empty, "Validation failed: no fee params provided");
-
         // opening_fee_params_menu fees must be in ascending order
         let is_ordered = self.vals.windows(2).all(|ofp| {
             let larger_min_msat_fee = ofp[0].min_msat < ofp[1].min_msat;
@@ -1383,11 +1379,13 @@ impl OpeningFeeParamsMenu {
         Ok(())
     }
 
-    pub(crate) fn get_cheapest_opening_fee_params(&self) -> Option<OpeningFeeParams> {
-        self.vals.get(0).cloned()
+    pub(crate) fn get_cheapest_opening_fee_params(&self) -> Result<OpeningFeeParams> {
+        self.vals.first().cloned().ok_or(anyhow!(
+            "The LSP doesn't support opening new channels: Dynamic fees menu contains no values"
+        ))
     }
 
-    pub(crate) fn get_longest_valid_opening_fee_params(self) -> Result<Option<OpeningFeeParams>> {
+    pub(crate) fn get_longest_valid_opening_fee_params(self) -> Result<OpeningFeeParams> {
         // Find the fee params that are valid for at least 48h
         let now = Utc::now();
         let duration_48h = chrono::Duration::hours(48);
@@ -1405,7 +1403,9 @@ impl OpeningFeeParamsMenu {
 
         // Of those, return the first, which is the cheapest
         // (sorting order of fee params list was checked when the menu was initialized)
-        Ok(valid_min_48h.first().cloned())
+        valid_min_48h.first().cloned().ok_or(anyhow!(
+            "The LSP doesn't support opening new channels: Dynamic fees menu contains no values"
+        ))
     }
 }
 
