@@ -195,6 +195,10 @@ pub(crate) async fn handle_command(
                 .await?;
             serde_json::to_string_pretty(&payments).map_err(|e| e.into())
         }
+        Commands::PaymentByHash { hash } => {
+            let payment = sdk()?.payment_by_hash(hash).await?;
+            serde_json::to_string_pretty(&payment).map_err(|e| e.into())
+        }
         Commands::Sweep {
             to_address,
             sat_per_byte,
@@ -221,8 +225,8 @@ pub(crate) async fn handle_command(
             serde_json::to_string_pretty(&sdk()?.fetch_fiat_rates().await?).map_err(|e| e.into())
         }
         Commands::CloseLSPChannels {} => {
-            sdk()?.close_lsp_channels().await?;
-            Ok("LSP channels were closed succesfully".to_string())
+            let tx_ids = sdk()?.close_lsp_channels().await?;
+            Ok(format!("Closing transaction ids:\n{:?}", tx_ids))
         }
         Commands::StopNode {} => {
             sdk()?.stop().await?;
@@ -327,8 +331,8 @@ pub(crate) async fn handle_command(
             Ok(format!("Here your {:?} url: {}", provider, res))
         }
         Commands::Backup {} => {
-            sdk()?.start_backup()?;
-            Ok("Backup started".into())
+            sdk().unwrap().backup().await?;
+            Ok("Backup completed succesfully".into())
         }
     }
 }

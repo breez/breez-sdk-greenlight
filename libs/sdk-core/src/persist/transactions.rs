@@ -90,6 +90,28 @@ impl SqliteStorage {
         Ok(())
     }
 
+    /// Inserts payer amount for invoices that require opening a channel.
+    pub fn insert_open_channel_payment_info(
+        &self,
+        payment_hash: &str,
+        payer_amount_msat: u64,
+    ) -> Result<()> {
+        let con = self.get_connection()?;
+        let mut prep_statement = con.prepare(
+            "
+        INSERT INTO sync.open_channel_payment_info (
+          payment_hash,
+          payer_amount_msat
+        )
+        VALUES (?1,?2)
+       ",
+        )?;
+
+        _ = prep_statement.execute((payment_hash, payer_amount_msat))?;
+
+        Ok(())
+    }
+
     pub fn last_payment_timestamp(&self) -> Result<i64> {
         self.get_connection()?
             .query_row("SELECT max(payment_time) FROM payments", [], |row| {
@@ -124,11 +146,15 @@ impl SqliteStorage {
              p.details,
              e.lnurl_success_action,
              e.lnurl_metadata,
-             e.ln_address
+             e.ln_address,
+             o.payer_amount_msat
             FROM payments p
             LEFT JOIN sync.payments_external_info e
             ON
              p.id = e.payment_id
+            LEFT JOIN sync.open_channel_payment_info o
+             ON
+              p.id = o.payment_hash
             {where_clause} ORDER BY payment_time DESC
           "
             )
@@ -163,11 +189,15 @@ impl SqliteStorage {
                  p.details,
                  e.lnurl_success_action,
                  e.lnurl_metadata,
-                 e.ln_address
+                 e.ln_address,
+                 o.payer_amount_msat
                 FROM payments p
                 LEFT JOIN sync.payments_external_info e
                 ON
                  p.id = e.payment_id
+                LEFT JOIN sync.open_channel_payment_info o
+                 ON
+                  p.id = o.payment_hash
                 WHERE
                  id = ?1",
                 [hash],
@@ -187,11 +217,12 @@ impl SqliteStorage {
 
     fn sql_row_to_payment(&self, row: &Row) -> Result<Payment, rusqlite::Error> {
         let payment_type_str: String = row.get(1)?;
+        let amount_msat = row.get(3)?;
         let mut payment = Payment {
             id: row.get(0)?,
             payment_type: PaymentType::from_str(payment_type_str.as_str()).unwrap(),
             payment_time: row.get(2)?,
-            amount_msat: row.get(3)?,
+            amount_msat,
             fee_msat: row.get(4)?,
             pending: row.get(5)?,
             description: row.get(6)?,
@@ -202,6 +233,12 @@ impl SqliteStorage {
             data.lnurl_success_action = row.get(8)?;
             data.lnurl_metadata = row.get(9)?;
             data.ln_address = row.get(10)?;
+        }
+
+        // In case we have a record of the open channel fee, let's use it.
+        let payer_amount_msat: Option<u64> = row.get(11)?;
+        if let Some(payer_amount) = payer_amount_msat {
+            payment.fee_msat = payer_amount - amount_msat;
         }
 
         Ok(payment)
@@ -372,6 +409,10 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
     let retrieve_txs = storage.list_payments(PaymentTypeFilter::All, None, None)?;
     assert_eq!(retrieve_txs.len(), 2);
     assert_eq!(retrieve_txs, txs);
+
+    storage.insert_open_channel_payment_info("123", 150)?;
+    let retrieve_txs = storage.list_payments(PaymentTypeFilter::All, None, None)?;
+    assert_eq!(retrieve_txs[0].fee_msat, 50);
 
     Ok(())
 }

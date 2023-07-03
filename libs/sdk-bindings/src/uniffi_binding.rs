@@ -181,8 +181,9 @@ impl BlockingBreezServices {
         self.breez_services.backup_status().map_err(|e| e.into())
     }
 
-    pub fn start_backup(&self) -> Result<(), SDKError> {
-        self.breez_services.start_backup().map_err(|e| e.into())
+    pub fn backup(&self) -> Result<(), SDKError> {
+        rt().block_on(self.breez_services.backup())
+            .map_err(|e| e.into())
     }
 
     pub fn list_payments(
@@ -196,6 +197,11 @@ impl BlockingBreezServices {
                 .list_payments(filter, from_timestamp, to_timestamp),
         )
         .map_err(|e| e.into())
+    }
+
+    pub fn payment_by_hash(&self, hash: String) -> Result<Option<Payment>, SDKError> {
+        rt().block_on(self.breez_services.payment_by_hash(hash))
+            .map_err(|e| e.into())
     }
 
     pub fn pay_lnurl(
@@ -272,8 +278,11 @@ impl BlockingBreezServices {
     }
 
     pub fn close_lsp_channels(&self) -> Result<(), SDKError> {
-        rt().block_on(self.breez_services.close_lsp_channels())
-            .map_err(|e| e.into())
+        rt().block_on(async {
+            _ = self.breez_services.close_lsp_channels().await?;
+            Ok(())
+        })
+        .map_err(|e: anyhow::Error| e.into())
     }
 
     /// Onchain receive swap API

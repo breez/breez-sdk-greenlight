@@ -5,6 +5,10 @@ cdylib_name = "breez_sdk_bindings"
 package_name = "breez_sdk"
 cdylib_name = "breez_sdk_bindings"
 
+[bindings.python]
+package_name = "breez_sdk"
+cdylib_name = "breez_sdk_bindings"
+
 [bindings.csharp]
 package_name = "breez"
 cdylib_name = "breez_sdk_bindings"

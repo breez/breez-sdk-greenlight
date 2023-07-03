@@ -106,6 +106,11 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kListPaymentsConstMeta;
 
+  /// See [BreezServices::list_payments]
+  Future<Payment?> paymentByHash({required String hash, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kPaymentByHashConstMeta;
+
   /// See [BreezServices::list_lsps]
   Future<List<LspInformation>> listLsps({dynamic hint});
 
@@ -244,6 +249,16 @@ abstract class BreezSdkCore {
       {required BuyBitcoinProvider provider, OpeningFeeParams? openingFeeParams, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kBuyBitcoinConstMeta;
+
+  /// See [BreezServices::backup]
+  Future<void> backup({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kBackupConstMeta;
+
+  /// See [BreezServices::backup_status]
+  Future<BackupStatus> backupStatus({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kBackupStatusConstMeta;
 }
 
 /// Wrapper for the decrypted [AesSuccessActionData] payload
@@ -265,6 +280,16 @@ class BackupFailedData {
 
   const BackupFailedData({
     required this.error,
+  });
+}
+
+class BackupStatus {
+  final bool backedUp;
+  final int? lastBackupTime;
+
+  const BackupStatus({
+    required this.backedUp,
+    this.lastBackupTime,
   });
 }
 
@@ -1400,6 +1425,22 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["filter", "fromTimestamp", "toTimestamp"],
       );
 
+  Future<Payment?> paymentByHash({required String hash, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(hash);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_payment_by_hash(port_, arg0),
+      parseSuccessData: _wire2api_opt_box_autoadd_payment,
+      constMeta: kPaymentByHashConstMeta,
+      argValues: [hash],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kPaymentByHashConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "payment_by_hash",
+        argNames: ["hash"],
+      );
+
   Future<List<LspInformation>> listLsps({dynamic hint}) {
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_list_lsps(port_),
@@ -1828,6 +1869,36 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["provider", "openingFeeParams"],
       );
 
+  Future<void> backup({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_backup(port_),
+      parseSuccessData: _wire2api_unit,
+      constMeta: kBackupConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kBackupConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "backup",
+        argNames: [],
+      );
+
+  Future<BackupStatus> backupStatus({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_backup_status(port_),
+      parseSuccessData: _wire2api_backup_status,
+      constMeta: kBackupStatusConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kBackupStatusConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "backup_status",
+        argNames: [],
+      );
+
   void dispose() {
     _platform.dispose();
   }
@@ -1855,6 +1926,15 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
     return BackupFailedData(
       error: _wire2api_String(arr[0]),
+    );
+  }
+
+  BackupStatus _wire2api_backup_status(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return BackupStatus(
+      backedUp: _wire2api_bool(arr[0]),
+      lastBackupTime: _wire2api_opt_box_autoadd_u64(arr[1]),
     );
   }
 
@@ -2394,6 +2474,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   OpeningFeeParams? _wire2api_opt_box_autoadd_opening_fee_params(dynamic raw) {
     return raw == null ? null : _wire2api_box_autoadd_opening_fee_params(raw);
+  }
+
+  Payment? _wire2api_opt_box_autoadd_payment(dynamic raw) {
+    return raw == null ? null : _wire2api_box_autoadd_payment(raw);
   }
 
   SuccessActionProcessed? _wire2api_opt_box_autoadd_success_action_processed(dynamic raw) {
@@ -3235,6 +3319,22 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_list_payments = _wire_list_paymentsPtr
       .asFunction<void Function(int, int, ffi.Pointer<ffi.Int64>, ffi.Pointer<ffi.Int64>)>();
 
+  void wire_payment_by_hash(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> hash,
+  ) {
+    return _wire_payment_by_hash(
+      port_,
+      hash,
+    );
+  }
+
+  late final _wire_payment_by_hashPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>(
+          'wire_payment_by_hash');
+  late final _wire_payment_by_hash =
+      _wire_payment_by_hashPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
   void wire_list_lsps(
     int port_,
   ) {
@@ -3627,6 +3727,29 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
       'wire_buy_bitcoin');
   late final _wire_buy_bitcoin =
       _wire_buy_bitcoinPtr.asFunction<void Function(int, int, ffi.Pointer<wire_OpeningFeeParams>)>();
+
+  void wire_backup(
+    int port_,
+  ) {
+    return _wire_backup(
+      port_,
+    );
+  }
+
+  late final _wire_backupPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_backup');
+  late final _wire_backup = _wire_backupPtr.asFunction<void Function(int)>();
+
+  void wire_backup_status(
+    int port_,
+  ) {
+    return _wire_backup_status(
+      port_,
+    );
+  }
+
+  late final _wire_backup_statusPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_backup_status');
+  late final _wire_backup_status = _wire_backup_statusPtr.asFunction<void Function(int)>();
 
   ffi.Pointer<wire_Config> new_box_autoadd_config_0() {
     return _new_box_autoadd_config_0();

@@ -95,6 +95,9 @@ pub(crate) enum Commands {
     /// List all payments
     ListPayments {},
 
+    /// Retrieve a payment by its hash
+    PaymentByHash { hash: String },
+
     /// Send on-chain funds to an external address
     Sweep {
         /// The sweep destination address

@@ -104,6 +104,11 @@ pub extern "C" fn wire_list_payments(
 }
 
 #[no_mangle]
+pub extern "C" fn wire_payment_by_hash(port_: i64, hash: *mut wire_uint_8_list) {
+    wire_payment_by_hash_impl(port_, hash)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_list_lsps(port_: i64) {
     wire_list_lsps_impl(port_)
 }
@@ -266,6 +271,16 @@ pub extern "C" fn wire_buy_bitcoin(
     opening_fee_params: *mut wire_OpeningFeeParams,
 ) {
     wire_buy_bitcoin_impl(port_, provider, opening_fee_params)
+}
+
+#[no_mangle]
+pub extern "C" fn wire_backup(port_: i64) {
+    wire_backup_impl(port_)
+}
+
+#[no_mangle]
+pub extern "C" fn wire_backup_status(port_: i64) {
+    wire_backup_status_impl(port_)
 }
 
 // Section: allocate functions

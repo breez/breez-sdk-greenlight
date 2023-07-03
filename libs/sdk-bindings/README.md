@@ -129,6 +129,18 @@ make golang-darwin
 
 This will generate the artifacts in the `ffi/golang` folder.
 
+### Python
+
+```
+# For linux
+make python-linux
+
+# Alternatively, for mac:
+make python-darwin
+```
+
+This will generate the artifacts in the `ffi/python` folder.
+
 ## Test
 
 In the tests directory there are some small scripts with some examples on how to use the sdk.
@@ -136,6 +148,7 @@ In the tests directory there are some small scripts with some examples on how to
   * Swift `tests/bindings/test_breez-sdk.swift`  
   * C# `tests/bindings/test_breez_sdk.cs`
   * Go `tests/bindings/golang/test_breez_sdk.go`
+  * Python `tests/bindings/golang/test_breez_sdk.py`
 
 If you want to try them out, you will need:
 

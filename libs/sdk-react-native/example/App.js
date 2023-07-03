@@ -21,11 +21,12 @@ import {
     listFiatCurrencies,
     mnemonicToSeed,
     Network,
+    nodeInfo,
     recoverNode,
     registerNode,
     buyBitcoin,
     start,
-    startBackup,
+    backup,
     backupStatus
 } from "@breeztech/react-native-breez-sdk"
 import BuildConfig from "react-native-build-config"
@@ -116,6 +117,9 @@ const App = () => {
                 await start()
                 addLine("start", null)
 
+                const nodeState = await nodeInfo()
+                addLine("nodeInfo", JSON.stringify(nodeState))
+
                 const fiatCurrencies = await listFiatCurrencies()
                 addLine("listFiatCurrencies", JSON.stringify(fiatCurrencies))
 
@@ -131,7 +135,7 @@ const App = () => {
                 const buyBitcoinResult = await buyBitcoin(BuyBitcoinProvider.MOONPAY)
                 addLine("buyBitcoin", JSON.stringify(buyBitcoinResult))
                                                 
-                await startBackup();
+                await backup();
                 addLine("backupStatus", JSON.stringify( await backupStatus()));                
             }
         }

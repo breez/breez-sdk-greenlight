@@ -19,6 +19,10 @@ https://user-images.githubusercontent.com/31890660/208511040-989ff42c-ceb8-4a34-
 
 For a higher resolution video, click [here](https://youtu.be/PRVWB4K52Es).
 
+## Features
+
+![Screenshot_2023-06-27-20-18-57-35_e2d5b3f32b79de1d45acd1fad96fbb0f](https://github.com/breez/breez-sdk/assets/31890660/e54cf75a-b9e4-43c7-a448-34da4022c59f)
+
 ## Using the SDK
 To get started with the Breez SDK, follow [these examples](https://sdk-doc.breez.technology/).
 
@@ -46,7 +50,7 @@ This module provides the interface of interacting with one or more LSPs.
 ## Build & Test
 The libs folder contains three sub folders and is a structured as a cargo workspace:
 * **sdk-core**: the core SDK rust library. 
-* **sdk-bindings**: ffi bindings for Kotlin, Swift, C# and Go. 
+* **sdk-bindings**: ffi bindings for Kotlin, Python, Swift, C# and Go. 
 * **sdk-flutter**: a flutter plugin (includes ffi bindings for dart).
 * **sdk-react-native**: a react-native plugin.
 
@@ -55,7 +59,7 @@ See the instructions in each sub project readme on how to build, test and run.
 
 Remark: in order to build the Breez SDK you need to have access to the Greenlight repository. Greenlight will eventually be open-sourced (with an MIT license), but is not yet public. To access Greenlight, please email us at contact@breez.technology.
 
-## Features
+## TODOs
 - [x] ‘On-the-fly’ channel creation
 - [x] Send/receive bolt11
 - [x] LNURL-Pay
@@ -73,8 +77,10 @@ Remark: in order to build the Breez SDK you need to have access to the Greenligh
 - [x] Receive via on-chain address
 - [x] React Native bindings
 - [x] LNURL-Auth
-- [ ] Send to an on-chain address
-- [ ] MoonPay fiat on-ramp
+- [x] Send to an on-chain address
+- [x] MoonPay fiat on-ramp
+- [x] C# bindings 
+- [x] Python bindings 
 - [ ] Spend all funds
 - [ ] Webhook for receiving payments
 - [ ] Mobile Notifications

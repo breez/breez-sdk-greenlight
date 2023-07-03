@@ -21,6 +21,9 @@ use crate::{
     BuyBitcoinProvider, LnUrlCallbackStatus, OpeningFeeParams, ReceivePaymentRequestData,
     ReverseSwapInfo, ReverseSwapPairInfo,
 };
+use crate::{
+    BackupStatus, BuyBitcoinProvider, LnUrlCallbackStatus, ReverseSwapInfo, ReverseSwapPairInfo,
+};
 use anyhow::{anyhow, Result};
 use flutter_rust_bridge::StreamSink;
 use log::{Level, LevelFilter, Metadata, Record};
@@ -219,6 +222,11 @@ pub fn list_payments(
     })
 }
 
+/// See [BreezServices::list_payments]
+pub fn payment_by_hash(hash: String) -> Result<Option<Payment>> {
+    block_on(async { get_breez_services()?.payment_by_hash(hash).await })
+}
+
 /// See [BreezServices::list_lsps]
 pub fn list_lsps() -> Result<Vec<LspInformation>> {
     block_on(async { get_breez_services()?.list_lsps().await })
@@ -251,7 +259,10 @@ pub fn list_fiat_currencies() -> Result<Vec<FiatCurrency>> {
 
 /// See [BreezServices::close_lsp_channels]
 pub fn close_lsp_channels() -> Result<()> {
-    block_on(async { get_breez_services()?.close_lsp_channels().await })
+    block_on(async {
+        _ = get_breez_services()?.close_lsp_channels().await;
+        Ok(())
+    })
 }
 
 /// See [BreezServices::sweep]
@@ -411,4 +422,14 @@ pub fn buy_bitcoin(
             .buy_bitcoin(provider, opening_fee_params)
             .await
     })
+}
+
+/// See [BreezServices::backup]
+pub fn backup() -> Result<()> {
+    block_on(async { get_breez_services()?.backup().await })
+}
+
+/// See [BreezServices::backup_status]
+pub fn backup_status() -> Result<BackupStatus> {
+    get_breez_services()?.backup_status()
 }

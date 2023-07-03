@@ -20,7 +20,7 @@ bitcoin = "0.29.2"
 # If so, see https://techexpertise.medium.com/storing-git-credentials-with-git-credential-helper-33d22a6b5ce7
 gl-client = { git = "https://github.com/Blockstream/greenlight.git", features = [
     "permissive",
-], rev = "bd08d4c" }
+], rev = "0980176" }
 base64 = "0.13.0"
 ecies = { version = "0.2", default-features = false, features = ["pure"] }
 ripemd = "*"

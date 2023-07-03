@@ -2,7 +2,8 @@ use std::process::Command;
 
 uniffi::build_foreign_language_testcases!(
     "tests/bindings/test_breez_sdk.swift",
-    "tests/bindings/test_breez_sdk.kts"
+    "tests/bindings/test_breez_sdk.kts",
+    "tests/bindings/test_breez_sdk.py"
 );
 
 #[test]
@@ -24,7 +25,7 @@ fn test_golang() {
     let output = Command::new("go")
         .env(
             "CGO_LDFLAGS",
-            "-lbreez_sdk_bindings -L../../../ffi/golang -lm -ldl",
+            "-lbreez_sdk_bindings -L../../../ffi/golang -Wl,-rpath,../../../ffi/golang",
         )
         .env("CGO_ENABLED", "1")
         .current_dir("tests/bindings/golang/")
