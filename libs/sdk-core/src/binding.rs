@@ -15,14 +15,11 @@ use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::lsp::LspInformation;
 use crate::models::{
     Config, EnvironmentType, GreenlightCredentials, LogEntry, Network, NodeState, Payment,
-    PaymentTypeFilter, ReceivePaymentResponse, SwapInfo,
+    PaymentTypeFilter, ReceivePaymentRequestData, ReceivePaymentResponse, SwapInfo,
 };
 use crate::{
-    BuyBitcoinProvider, LnUrlCallbackStatus, OpeningFeeParams, ReceivePaymentRequestData,
-    ReverseSwapInfo, ReverseSwapPairInfo,
-};
-use crate::{
-    BackupStatus, BuyBitcoinProvider, LnUrlCallbackStatus, ReverseSwapInfo, ReverseSwapPairInfo,
+    BackupStatus, BuyBitcoinProvider, LnUrlCallbackStatus, OpeningFeeParams, ReverseSwapInfo,
+    ReverseSwapPairInfo,
 };
 use anyhow::{anyhow, Result};
 use flutter_rust_bridge::StreamSink;
