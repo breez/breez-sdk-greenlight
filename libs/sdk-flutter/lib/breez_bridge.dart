@@ -262,9 +262,9 @@ class BreezBridge {
   }
 
   /// Onchain receive swap API
-  Future<SwapInfo> receiveOnchain(
-    OpeningFeeParams openingFeeParams,
-  ) async =>
+  Future<SwapInfo> receiveOnchain({
+    OpeningFeeParams? openingFeeParams,
+  }) async =>
       await _lnToolkit.receiveOnchain(
         openingFeeParams: openingFeeParams,
       );
@@ -391,9 +391,9 @@ class BreezBridge {
 
   /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency
   Future<String> buyBitcoin(
-    BuyBitcoinProvider provider,
-    OpeningFeeParams openingFeeParams,
-  ) =>
+    BuyBitcoinProvider provider, {
+    OpeningFeeParams? openingFeeParams,
+  }) =>
       _lnToolkit.buyBitcoin(
         provider: provider,
         openingFeeParams: openingFeeParams,
