@@ -476,6 +476,12 @@ impl BreezServices {
         Ok(SweepResponse { txid })
     }
 
+    pub async fn prepare_sweep(&self, req: PrepareSweepRequest) -> Result<PrepareSweepResponse> {
+        self.start_node().await?;
+        let response = self.node_api.prepare_sweep(req).await?;
+        Ok(response)
+    }
+
     /// Fetch live rates of fiat currencies
     pub async fn fetch_fiat_rates(&self) -> Result<Vec<Rate>> {
         self.fiat_api.fetch_fiat_rates().await
@@ -1430,6 +1436,11 @@ impl BreezServicesBuilder {
             .unwrap_or_else(|| Arc::new(SqliteStorage::new(self.config.working_dir.clone())));
         persister.init()?;
 
+        // mempool space is used to monitor the chain
+        let chain_service = Arc::new(MempoolSpace::from_base_url(
+            self.config.mempoolspace_url.clone(),
+        ));
+
         let mut node_api = self.node_api.clone();
         let mut backup_transport = self.backup_transport.clone();
         if node_api.is_none() {
@@ -1498,11 +1509,6 @@ impl BreezServicesBuilder {
         let breez_server = Arc::new(BreezServer::new(
             self.config.breezserver.clone(),
             self.config.api_key.clone(),
-        ));
-
-        // mempool space is used to monitor the chain
-        let chain_service = Arc::new(MempoolSpace::from_base_url(
-            self.config.mempoolspace_url.clone(),
         ));
 
         let current_lsp_id = persister.get_lsp_id()?;

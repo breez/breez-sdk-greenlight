@@ -286,6 +286,16 @@ export type PaymentFailedData = {
     invoice?: LnInvoice
 }
 
+export type PrepareSweepRequest = {
+    toAddress: string
+    satsPerVbyte: number
+}
+
+export type PrepareSweepResponse = {
+    sweepTxWeight: number
+    sweepTxFeeSat: number
+}
+
 export type Rate = {
     coin: string
     value: number
@@ -880,5 +890,10 @@ export const recommendedFees = async (): Promise<RecommendedFees> => {
 
 export const buyBitcoin = async (req: BuyBitcoinRequest): Promise<BuyBitcoinResponse> => {
     const response = await BreezSDK.buyBitcoin(req)
+    return response
+}
+
+export const prepareSweep = async (req: PrepareSweepRequest): Promise<PrepareSweepResponse> => {
+    const response = await BreezSDK.prepareSweep(req)
     return response
 }

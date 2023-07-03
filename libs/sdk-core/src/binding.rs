@@ -32,11 +32,12 @@ use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
     EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus, LnUrlPayRequest,
     LnUrlWithdrawRequest, LnUrlWithdrawResult, NodeConfig, OpenChannelFeeRequest,
-    OpenChannelFeeResponse, ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse,
-    RefundRequest, RefundResponse, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
-    SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
-    SendSpontaneousPaymentRequest, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
-    StaticBackupResponse, SweepRequest, SweepResponse,
+    OpenChannelFeeResponse, PrepareSweepRequest, PrepareSweepResponse, ReceiveOnchainRequest,
+    ReceivePaymentRequest, ReceivePaymentResponse, RefundRequest, RefundResponse,
+    ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo, SendOnchainRequest,
+    SendOnchainResponse, SendPaymentRequest, SendPaymentResponse, SendSpontaneousPaymentRequest,
+    SignMessageRequest, SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
+    SweepRequest, SweepResponse,
 };
 
 /*
@@ -299,6 +300,11 @@ pub fn buy_bitcoin(req: BuyBitcoinRequest) -> Result<BuyBitcoinResponse> {
 /// See [BreezServices::sweep]
 pub fn sweep(req: SweepRequest) -> Result<SweepResponse> {
     block_on(async { get_breez_services().await?.sweep(req).await })
+}
+
+/// See [BreezServices::prepare_sweep]
+pub fn prepare_sweep(req: PrepareSweepRequest) -> Result<PrepareSweepResponse> {
+    block_on(async { get_breez_services().await?.prepare_sweep(req).await })
 }
 
 /*  Refundables API's */

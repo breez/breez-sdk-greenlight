@@ -83,7 +83,7 @@ dictionary UnspentTransactionOutput {
     u32 outnum;
     u64 amount_millisatoshi;
     string address;
-    boolean reserved;  
+    boolean reserved;
 };
 
 dictionary NodeState {
@@ -536,6 +536,16 @@ enum BuyBitcoinProvider {
     "Moonpay",
 };
 
+dictionary PrepareSweepRequest {
+    string to_address;
+    u64 sats_per_vbyte;
+};
+
+dictionary PrepareSweepResponse {
+    u64 sweep_tx_weight;
+    u64 sweep_tx_fee_sat;
+};
+
 dictionary SweepRequest {
     string to_address;
     u32 fee_rate_sats_per_vbyte;
@@ -580,7 +590,7 @@ dictionary RefundResponse {
     string refund_tx_id;
 };
 
-interface BlockingBreezServices {   
+interface BlockingBreezServices {
 
    [Throws=SdkError]
    void disconnect();
@@ -686,6 +696,9 @@ interface BlockingBreezServices {
 
    [Throws=SdkError]
    BuyBitcoinResponse buy_bitcoin(BuyBitcoinRequest req);
+
+   [Throws=SdkError]
+   PrepareSweepResponse prepare_sweep(PrepareSweepRequest req);
 };
 
 namespace breez_sdk {  

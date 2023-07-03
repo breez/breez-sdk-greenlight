@@ -348,6 +348,17 @@ class BreezSDK {
   /// Fetches the current recommended fees
   Future<RecommendedFees> recommendedFees() async => await _lnToolkit.recommendedFees();
 
+  Future<PrepareSweepResponse> prepareSweep({
+    required String address,
+    required int satsPerVbyte,
+  }) async =>
+      _lnToolkit.prepareSweep(
+        req: PrepareSweepRequest(
+          toAddress: address,
+          satsPerVbyte: satsPerVbyte,
+        ),
+      );
+
   /* CLI API's */
 
   /// Execute a command directly on the NodeAPI interface.

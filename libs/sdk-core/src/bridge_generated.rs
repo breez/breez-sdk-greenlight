@@ -79,6 +79,8 @@ use crate::models::PaymentDetails;
 use crate::models::PaymentStatus;
 use crate::models::PaymentType;
 use crate::models::PaymentTypeFilter;
+use crate::models::PrepareSweepRequest;
+use crate::models::PrepareSweepResponse;
 use crate::models::ReceiveOnchainRequest;
 use crate::models::ReceivePaymentRequest;
 use crate::models::ReceivePaymentResponse;
@@ -562,6 +564,22 @@ fn wire_sweep_impl(port_: MessagePort, req: impl Wire2Api<SweepRequest> + Unwind
         move || {
             let api_req = req.wire2api();
             move |task_callback| sweep(api_req)
+        },
+    )
+}
+fn wire_prepare_sweep_impl(
+    port_: MessagePort,
+    req: impl Wire2Api<PrepareSweepRequest> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "prepare_sweep",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_req = req.wire2api();
+            move |task_callback| prepare_sweep(api_req)
         },
     )
 }
@@ -1261,6 +1279,17 @@ impl support::IntoDart for PaymentType {
     }
 }
 impl support::IntoDartExceptPrimitive for PaymentType {}
+impl support::IntoDart for PrepareSweepResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.sweep_tx_weight.into_dart(),
+            self.sweep_tx_fee_sat.into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for PrepareSweepResponse {}
+
 impl support::IntoDart for Rate {
     fn into_dart(self) -> support::DartAbi {
         vec![self.coin.into_dart(), self.value.into_dart()].into_dart()
