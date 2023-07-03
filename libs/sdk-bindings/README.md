@@ -37,7 +37,7 @@ make swift-darwin
 #### Swift Package
 
 This command will produce a fully configured local Swift Package in `bindings-swift/`.
-See [Adding package dependencies to your app](https://developer.apple.com/documentation/xcode/adding-package-dependencies-to-your-app) in Apple's docs for more information on how to integrate such a package into your project. Note that for most users, we recommend using our official Swift package / CocoaPod. See [breez/breez-sdk-swift](https://github.com/breez/breez-sdk-swift) for mor e information.
+See [Adding package dependencies to your app](https://developer.apple.com/documentation/xcode/adding-package-dependencies-to-your-app) in Apple's docs for more information on how to integrate such a package into your project. Note that for most users, we recommend using our official Swift package / CocoaPod. See [breez/breez-sdk-swift](https://github.com/breez/breez-sdk-swift) for more information.
 
 ```
 make bindings-swift
