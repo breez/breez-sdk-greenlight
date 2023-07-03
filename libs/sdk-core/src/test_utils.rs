@@ -6,6 +6,7 @@ use bitcoin::secp256k1::{KeyPair, Message};
 use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::Network;
+use chrono::Utc;
 use gl_client::pb::amount::Unit;
 use gl_client::pb::{
     Amount, CloseChannelResponse, CloseChannelType, Invoice, Peer, WithdrawResponse,
@@ -30,8 +31,11 @@ use crate::lsp::LspInformation;
 use crate::models::{FiatAPI, LspAPI, NodeAPI, NodeState, Payment, Swap, SwapperAPI, SyncResponse};
 use crate::moonpay::MoonPayApi;
 use crate::swap::create_submarine_swap_script;
+use crate::OpeningFeeParams;
 use crate::{parse_invoice, Config, LNInvoice, PaymentResponse, RouteHint};
 use crate::{ReceivePaymentRequestData, SwapInfo};
+
+use crate::models::OPENING_FEE_PARAMS_DATETIME_FORMAT;
 
 pub struct MockBackupTransport {
     pub num_pushed: std::sync::Mutex<u32>,
@@ -631,4 +635,27 @@ fn sign_invoice(invoice: RawInvoice) -> String {
         })
         .unwrap()
         .to_string()
+}
+
+pub(crate) fn get_test_ofp(
+    min_msat: u64,
+    proportional: u32,
+    future_or_past: bool,
+) -> OpeningFeeParams {
+    let now = Utc::now();
+    let one_min = chrono::Duration::seconds(60);
+    let date_time = match future_or_past {
+        true => now.checked_add_signed(one_min).unwrap(),
+        false => now.checked_sub_signed(one_min).unwrap(),
+    };
+    let formatted = format!("{}", date_time.format(OPENING_FEE_PARAMS_DATETIME_FORMAT));
+
+    OpeningFeeParams {
+        min_msat,
+        proportional,
+        valid_until: formatted,
+        max_idle_time: 0,
+        max_client_to_self_delay: 0,
+        promise: "".to_string(),
+    }
 }
