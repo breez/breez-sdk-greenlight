@@ -70,3 +70,4 @@ android/src/main/java/com/breezsdk/breez_sdk.kt
 android/src/main/jniLibs/*
 ios/include/*
 ios/libs/*
+ios/bindings-swift/**

@@ -1,4 +1,5 @@
 import Foundation
+import BreezSDK
 
 @objc(RNBreezSDK)
 class RNBreezSDK: RCTEventEmitter {
@@ -43,7 +44,7 @@ class RNBreezSDK: RCTEventEmitter {
     @objc(mnemonicToSeed:resolver:rejecter:)
     func mnemonicToSeed(_ phrase: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         do {
-            let seed = try breez_sdk.mnemonicToSeed(phrase: phrase)
+            let seed = try BreezSDK.mnemonicToSeed(phrase: phrase)
             
             resolve(seed)
         } catch SdkError.Error(let message) {
@@ -56,7 +57,7 @@ class RNBreezSDK: RCTEventEmitter {
     @objc(parseInput:resolver:rejecter:)
     func parseInput(_ input: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         do {
-            let inputType = try breez_sdk.parseInput(s: input)
+            let inputType = try BreezSDK.parseInput(s: input)
             
             resolve(BreezSDKMapper.dictionaryOf(inputType: inputType))
         } catch SdkError.Error(let message) {
@@ -69,7 +70,7 @@ class RNBreezSDK: RCTEventEmitter {
     @objc(parseInvoice:resolver:rejecter:)
     func parseInvoice(_ invoice: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         do {
-            let lnInvoice = try breez_sdk.parseInvoice(invoice: invoice)
+            let lnInvoice = try BreezSDK.parseInvoice(invoice: invoice)
             
             resolve(BreezSDKMapper.dictionaryOf(lnInvoice: lnInvoice))
         } catch SdkError.Error(let message) {
@@ -84,7 +85,7 @@ class RNBreezSDK: RCTEventEmitter {
         do {
             let registerCreds = BreezSDKMapper.asGreenlightCredentials(reqData: registerCredentials)
             let optionalInviteCode = inviteCode.count == 0 ? nil : inviteCode
-            let greenlightCredentials = try breez_sdk.registerNode(network: BreezSDKMapper.asNetwork(network: network), seed: seed, registerCredentials: registerCreds, inviteCode: optionalInviteCode)
+            let greenlightCredentials = try BreezSDK.registerNode(network: BreezSDKMapper.asNetwork(network: network), seed: seed, registerCredentials: registerCreds, inviteCode: optionalInviteCode)
             
             resolve(BreezSDKMapper.dictionaryOf(greenlightCredentials: greenlightCredentials))
         } catch SdkError.Error(let message) {
@@ -97,7 +98,7 @@ class RNBreezSDK: RCTEventEmitter {
     @objc(recoverNode:seed:resolver:rejecter:)
     func recoverNode(_ network:String, seed:[UInt8], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         do {
-            let greenlightCredentials = try breez_sdk.recoverNode(network: BreezSDKMapper.asNetwork(network: network), seed: seed)
+            let greenlightCredentials = try BreezSDK.recoverNode(network: BreezSDKMapper.asNetwork(network: network), seed: seed)
             
             resolve(BreezSDKMapper.dictionaryOf(greenlightCredentials: greenlightCredentials))
         } catch SdkError.Error(let message) {
@@ -110,7 +111,7 @@ class RNBreezSDK: RCTEventEmitter {
     @objc(startLogStream:rejecter:)
     func startLogStream(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         do {
-            try breez_sdk.setLogStream(logStream: BreezSDKLogStream(emitter: self))
+            try BreezSDK.setLogStream(logStream: BreezSDKLogStream(emitter: self))
             
             resolve(["status": "ok"])
         } catch SdkError.Error(let message) {
@@ -123,7 +124,7 @@ class RNBreezSDK: RCTEventEmitter {
     @objc(defaultConfig:resolver:rejecter:)
     func defaultConfig(_ envType: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         do {
-            var config = try breez_sdk.defaultConfig(envType: BreezSDKMapper.asEnvironmentType(envType: envType))
+            var config = try BreezSDK.defaultConfig(envType: BreezSDKMapper.asEnvironmentType(envType: envType))
             config.workingDir = RNBreezSDK.breezSdkDirectory.absoluteString
 
             resolve(BreezSDKMapper.dictionaryOf(config: config))
@@ -142,7 +143,7 @@ class RNBreezSDK: RCTEventEmitter {
             let greenlightCredentials = GreenlightCredentials(deviceKey: deviceKey, deviceCert: deviceCert)
             
             do {
-                self.breezServices = try breez_sdk.initServices(config: config, seed: seed, creds: greenlightCredentials, listener: BreezSDKListener(emitter: self))
+                self.breezServices = try BreezSDK.initServices(config: config, seed: seed, creds: greenlightCredentials, listener: BreezSDKListener(emitter: self))
                 
                 resolve(["status": "ok"])
             } catch SdkError.Error(let message) {
