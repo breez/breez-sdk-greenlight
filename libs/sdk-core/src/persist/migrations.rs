@@ -436,7 +436,6 @@ pub(crate) fn current_sync_migrations() -> Vec<&'static str> {
         ) STRICT;
 
        ",
-
         // Add dynamic fee params used when opening the swap channel, stored as JSON
         "
         ALTER TABLE swaps_info ADD COLUMN channel_opening_fees TEXT;

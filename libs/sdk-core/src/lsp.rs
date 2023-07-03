@@ -34,9 +34,10 @@ pub struct LspInformation {
 }
 
 impl LspInformation {
-    fn from(lsp_id: String, lsp_info: grpc::LspInformation) -> Self {
-        LspInformation {
-            id: lsp_id,
+    /// Validation may fail if [LspInformation.opening_fee_params_menu] has invalid entries
+    fn try_from(lsp_id: &str, lsp_info: grpc::LspInformation) -> Result<Self> {
+        let info = LspInformation {
+            id: lsp_id.to_string(),
             name: lsp_info.name,
             widget_url: lsp_info.widget_url,
             pubkey: lsp_info.pubkey,
@@ -56,7 +57,10 @@ impl LspInformation {
                 .into_iter()
                 .map(|ofp| ofp.into())
                 .collect::<Vec<OpeningFeeParams>>(),
-        }
+        };
+
+        OpeningFeeParamsMenu::try_from(info.opening_fee_params_menu.clone())?;
+        Ok(info)
     }
 
     pub(crate) fn choose_channel_opening_fees(
@@ -91,7 +95,10 @@ impl LspAPI for BreezServer {
         let response = client.lsp_list(request).await?;
         let mut lsp_list: Vec<LspInformation> = Vec::new();
         for (lsp_id, lsp_info) in response.into_inner().lsps.into_iter() {
-            lsp_list.push(LspInformation::from(lsp_id, lsp_info));
+            match LspInformation::try_from(&lsp_id, lsp_info) {
+                Ok(lsp) => lsp_list.push(lsp),
+                Err(e) => error!("LSP Information validation failed for LSP {lsp_id}: {e}"),
+            }
         }
         lsp_list.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
         Ok(lsp_list)
