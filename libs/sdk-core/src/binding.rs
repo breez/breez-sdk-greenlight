@@ -142,13 +142,11 @@ pub fn init_services(config: Config, seed: Vec<u8>, creds: GreenlightCredentials
 /// See [BreezServices::start]
 pub fn start_node() -> Result<()> {
     block_on(async {
-        BreezServices::start(
-            rt(),
-            BREEZ_SERVICES_INSTANCE
-                .get()
-                .ok_or_else(|| anyhow!("breez services instance was not initialized"))?,
-        )
-        .await
+        BREEZ_SERVICES_INSTANCE
+            .get()
+            .ok_or_else(|| anyhow!("breez services instance was not initialized"))?
+            .start()
+            .await
     })
 }
 

@@ -138,7 +138,7 @@ pub struct BlockingBreezServices {
 
 impl BlockingBreezServices {
     pub fn start(&self) -> Result<()> {
-        rt().block_on(async move { BreezServices::start(rt(), &self.breez_services).await })
+        rt().block_on(async move { self.breez_services.start().await })
     }
 
     pub fn stop(&self) -> Result<()> {
