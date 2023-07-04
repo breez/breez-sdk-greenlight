@@ -63,22 +63,26 @@ impl LspInformation {
         Ok(info)
     }
 
+    /// Returns the channel opening fees, either the ones provided by the user (if any), or the ones from LSP.
+    ///
+    /// If the LSP fees are needed, the LSP is expected to have at least one dynamic fee entry in its menu,
+    /// otherwise this will result in an error.
     pub(crate) fn choose_channel_opening_fees(
         &self,
         maybe_user_supplied_fee_params: Option<OpeningFeeParams>,
         cheapest_or_longest: bool,
-    ) -> Result<Option<OpeningFeeParams>> {
+    ) -> Result<OpeningFeeParams> {
         match maybe_user_supplied_fee_params {
             // Validate given opening_fee_params and use it if possible
             Some(user_supplied_fees) => {
                 user_supplied_fees.validate()?;
-                Ok(Some(user_supplied_fees))
+                Ok(user_supplied_fees)
             }
             // We pick our own if None is supplied
             None => {
                 let menu = OpeningFeeParamsMenu::try_from(self.opening_fee_params_menu.clone())?;
                 match cheapest_or_longest {
-                    true => Ok(menu.get_cheapest_opening_fee_params()),
+                    true => menu.get_cheapest_opening_fee_params(),
                     false => menu.get_longest_valid_opening_fee_params(),
                 }
             }
