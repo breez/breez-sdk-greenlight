@@ -30,7 +30,7 @@ use crate::lsp::LspInformation;
 use crate::models::{FiatAPI, LspAPI, NodeAPI, NodeState, Payment, Swap, SwapperAPI, SyncResponse};
 use crate::moonpay::MoonPayApi;
 use crate::swap::create_submarine_swap_script;
-use crate::OpeningFeeParams;
+use crate::{OpeningFeeParams, OpeningFeeParamsMenu};
 use crate::{parse_invoice, Config, LNInvoice, PaymentResponse, RouteHint};
 use crate::{ReceivePaymentRequestData, SwapInfo};
 
@@ -490,7 +490,7 @@ impl LspAPI for MockBreezServer {
             lsp_pubkey: hex::decode(self.lsp_pub_key()).unwrap(),
             max_inactive_duration: 3600,
             channel_minimum_fee_msat: 1,
-            opening_fee_params_menu: vec![],
+            opening_fee_params_menu: OpeningFeeParamsMenu::try_from(vec![])?,
         }])
     }
 

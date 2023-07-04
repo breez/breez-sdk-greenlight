@@ -1,9 +1,9 @@
-use crate::breez_services::{BreezServer, OpeningFeeParamsMenu};
+use crate::breez_services::BreezServer;
 use crate::crypt::encrypt;
 use crate::grpc::{
     self, LspListRequest, PaymentInformation, RegisterPaymentReply, RegisterPaymentRequest,
 };
-use crate::models::{LspAPI, OpeningFeeParams};
+use crate::models::{LspAPI, OpeningFeeParams, OpeningFeeParamsMenu};
 use anyhow::Result;
 use prost::Message;
 use serde::{Deserialize, Serialize};
@@ -30,7 +30,7 @@ pub struct LspInformation {
     pub max_inactive_duration: i64,
     #[deprecated]
     pub channel_minimum_fee_msat: i64,
-    pub opening_fee_params_menu: Vec<OpeningFeeParams>,
+    pub opening_fee_params_menu: OpeningFeeParamsMenu,
 }
 
 impl LspInformation {
@@ -52,14 +52,15 @@ impl LspInformation {
             lsp_pubkey: lsp_info.lsp_pubkey,
             max_inactive_duration: lsp_info.max_inactive_duration,
             channel_minimum_fee_msat: lsp_info.channel_minimum_fee_msat,
-            opening_fee_params_menu: lsp_info
-                .opening_fee_params_menu
-                .into_iter()
-                .map(|ofp| ofp.into())
-                .collect::<Vec<OpeningFeeParams>>(),
+            opening_fee_params_menu: OpeningFeeParamsMenu::try_from(
+                lsp_info
+                    .opening_fee_params_menu
+                    .into_iter()
+                    .map(|ofp| ofp.into())
+                    .collect::<Vec<OpeningFeeParams>>(),
+            )?,
         };
 
-        OpeningFeeParamsMenu::try_from(info.opening_fee_params_menu.clone())?;
         Ok(info)
     }
 
@@ -79,13 +80,14 @@ impl LspInformation {
                 Ok(user_supplied_fees)
             }
             // We pick our own if None is supplied
-            None => {
-                let menu = OpeningFeeParamsMenu::try_from(self.opening_fee_params_menu.clone())?;
-                match cheapest_or_longest {
-                    true => menu.get_cheapest_opening_fee_params(),
-                    false => menu.get_longest_valid_opening_fee_params(),
-                }
-            }
+            None => match cheapest_or_longest {
+                true => self
+                    .opening_fee_params_menu
+                    .get_cheapest_opening_fee_params(),
+                false => self
+                    .opening_fee_params_menu
+                    .get_longest_valid_opening_fee_params(),
+            },
         }
     }
 }

@@ -58,6 +58,7 @@ use crate::models::LogEntry;
 use crate::models::Network;
 use crate::models::NodeState;
 use crate::models::OpeningFeeParams;
+use crate::models::OpeningFeeParamsMenu;
 use crate::models::Payment;
 use crate::models::PaymentDetails;
 use crate::models::PaymentType;
@@ -1135,6 +1136,13 @@ impl support::IntoDart for OpeningFeeParams {
     }
 }
 impl support::IntoDartExceptPrimitive for OpeningFeeParams {}
+
+impl support::IntoDart for OpeningFeeParamsMenu {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.vals.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for OpeningFeeParamsMenu {}
 
 impl support::IntoDart for Payment {
     fn into_dart(self) -> support::DartAbi {
