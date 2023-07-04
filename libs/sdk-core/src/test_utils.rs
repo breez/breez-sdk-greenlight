@@ -490,7 +490,9 @@ impl LspAPI for MockBreezServer {
             lsp_pubkey: hex::decode(self.lsp_pub_key()).unwrap(),
             max_inactive_duration: 3600,
             channel_minimum_fee_msat: 1,
-            opening_fee_params_menu: OpeningFeeParamsMenu::try_from(vec![])?,
+            opening_fee_params_menu: OpeningFeeParamsMenu::try_from(vec![get_test_ofp(
+                10, 12, true,
+            )])?,
         }])
     }
 

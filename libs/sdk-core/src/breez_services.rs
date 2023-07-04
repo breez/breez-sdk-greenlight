@@ -31,11 +31,10 @@ use crate::swap::BTCReceiveSwap;
 use crate::BuyBitcoinProvider::Moonpay;
 use crate::*;
 use crate::{BuyBitcoinProvider, LnUrlAuthRequestData, LnUrlWithdrawRequestData, PaymentResponse};
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, ensure, Result};
 use bip39::*;
 use bitcoin::hashes::{sha256, Hash};
 use bitcoin::util::bip32::ChildNumber;
-use std::cmp::max;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -1199,30 +1198,23 @@ impl Receiver for PaymentReceiver {
         let mut short_channel_id = parse_short_channel_id("1x0x0")?;
         let mut destination_invoice_amount_sats = amount_sats;
 
-        // Ensure opening fees params is set (either from the user, or from the LSP)
-        let cheapest_opening_fee_params =
-            lsp_info.choose_channel_opening_fees(req_data.opening_fee_params, true)?;
+        let mut channel_opening_fee_params = None;
 
         // check if we need to open channel
         let open_channel_needed = node_state.inbound_liquidity_msats < amount_msats;
         if open_channel_needed {
             info!("We need to open a channel");
 
-            // we need to open channel so we are calculating the fees for the LSP
-            let ofp = &cheapest_opening_fee_params;
-            let channel_fees_msat_calculated =
-                amount_msats * ofp.proportional as u64 / 1_000_000 / 1_000_000;
-            let channel_fees_msat = max(channel_fees_msat_calculated, ofp.min_msat);
+            // we need to open channel so we are calculating the fees for the LSP (coming either from the user, or from the LSP)
+            let ofp = lsp_info.choose_channel_opening_fees(req_data.opening_fee_params, true)?;
+            channel_opening_fee_params = Some(ofp.clone());
+            let channel_fees_msat = ofp.get_channel_fees_msat_for(amount_msats);
 
             info!("zero-conf fee calculation option: lsp fee rate (proportional): {}:  (minimum {}), total fees for channel: {}",
                 ofp.proportional, ofp.min_msat, channel_fees_msat);
 
-            if amount_msats < channel_fees_msat + 1000 {
-                return Err(anyhow!(
-                    "requestPayment: Amount should be more than the minimum fees {} sats",
-                    ofp.min_msat / 1000
-                ));
-            }
+            ensure!(amount_msats > channel_fees_msat, "requestPayment: Amount should be more than the minimum fees {channel_fees_msat} msat, but is {amount_msats} msat");
+
             // remove the fees from the amount to get the small amount on the current node invoice.
             destination_invoice_amount_sats = amount_sats - channel_fees_msat / 1000;
         } else {
@@ -1242,10 +1234,7 @@ impl Receiver for PaymentReceiver {
                     };
 
                     short_channel_id = parse_short_channel_id(&hint)?;
-                    info!(
-                        "Found channel ID: {} {:?}",
-                        short_channel_id, active_channel
-                    );
+                    info!("Found channel ID: {short_channel_id} {active_channel:?}");
                     break;
                 }
             }
@@ -1316,7 +1305,7 @@ impl Receiver for PaymentReceiver {
                         destination: hex::decode(parsed_invoice.payee_pubkey.clone())?,
                         incoming_amount_msat: amount_msats as i64,
                         outgoing_amount_msat: (destination_invoice_amount_sats * 1000) as i64,
-                        opening_fee_params: Some(cheapest_opening_fee_params.clone().into()),
+                        opening_fee_params: channel_opening_fee_params.clone().map(Into::into),
                     },
                 )
                 .await?;
@@ -1329,7 +1318,7 @@ impl Receiver for PaymentReceiver {
         // return the signed, converted invoice with hints
         Ok(ReceivePaymentResponse {
             ln_invoice: parsed_invoice,
-            opening_fee_params: Some(cheapest_opening_fee_params),
+            opening_fee_params: channel_opening_fee_params,
         })
     }
 }

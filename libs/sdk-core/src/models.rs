@@ -19,6 +19,7 @@ use ripemd::Ripemd160;
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef};
 use rusqlite::ToSql;
 use serde::{Deserialize, Serialize};
+use std::cmp::max;
 use strum_macros::Display;
 use strum_macros::EnumString;
 use tokio::sync::mpsc;
@@ -669,6 +670,13 @@ impl OpeningFeeParams {
         Utc.datetime_from_str(&self.valid_until, OPENING_FEE_PARAMS_DATETIME_FORMAT)
             .map_err(|e| anyhow!(e))
     }
+
+    pub(crate) fn get_channel_fees_msat_for(&self, amount_msats: u64) -> u64 {
+        max(
+            amount_msats * self.proportional as u64 / 1_000_000 / 1_000_000,
+            self.min_msat,
+        )
+    }
 }
 
 impl From<OpeningFeeParams> for grpc::OpeningFeeParams {
@@ -748,8 +756,8 @@ impl OpeningFeeParamsMenu {
         });
         ensure!(is_ordered, "Validation failed: fee params are not ordered");
 
-        // `valid_until` must not be a past datetime
-        let is_expired = self.vals.iter().all(|ofp| match ofp.valid_until_date() {
+        // Menu must not contain any item with `valid_until` in the past
+        let is_expired = self.vals.iter().any(|ofp| match ofp.valid_until_date() {
             Ok(valid_until) => Utc::now() > valid_until,
             Err(_) => {
                 warn!("Failed to parse valid_until for OpeningFeeParams: {ofp:?}");
@@ -1027,11 +1035,12 @@ mod tests {
         ])
         .is_err());
 
-        // Sorted, but with one expired entry, is valid
-        OpeningFeeParamsMenu::try_from(vec![
+        // Sorted, but with one expired entry, is invalid
+        assert!(OpeningFeeParamsMenu::try_from(vec![
             get_test_ofp(10, 10, true),
             get_test_ofp(12, 12, false),
-        ])?;
+        ])
+        .is_err());
 
         // Sorted, but with all expired entries, is invalid (because it results in an empty list)
         assert!(OpeningFeeParamsMenu::try_from(vec![
