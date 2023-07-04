@@ -30,8 +30,8 @@ use crate::lsp::LspInformation;
 use crate::models::{FiatAPI, LspAPI, NodeAPI, NodeState, Payment, Swap, SwapperAPI, SyncResponse};
 use crate::moonpay::MoonPayApi;
 use crate::swap::create_submarine_swap_script;
-use crate::{OpeningFeeParams, OpeningFeeParamsMenu};
 use crate::{parse_invoice, Config, LNInvoice, PaymentResponse, RouteHint};
+use crate::{OpeningFeeParams, OpeningFeeParamsMenu};
 use crate::{ReceivePaymentRequestData, SwapInfo};
 
 use crate::models::OPENING_FEE_PARAMS_DATETIME_FORMAT;
@@ -636,7 +636,7 @@ pub(crate) fn get_test_ofp(
     min_msat: u64,
     proportional: u32,
     future_or_past: bool,
-) -> OpeningFeeParams {
+) -> crate::grpc::OpeningFeeParams {
     let now = Utc::now();
     let one_min = chrono::Duration::seconds(60);
     let date_time = match future_or_past {
@@ -653,4 +653,5 @@ pub(crate) fn get_test_ofp(
         max_client_to_self_delay: 0,
         promise: "".to_string(),
     }
+    .into()
 }

@@ -723,8 +723,13 @@ impl OpeningFeeParamsMenu {
     /// This struct should not be persisted as such, because validation happens dynamically based on
     /// the current time. At a later point in time, any previously-validated [OpeningFeeParamsMenu]
     /// could be invalid. Therefore, the [OpeningFeeParamsMenu] should always be initialized on-the-fly.
-    pub fn try_from(vals: Vec<OpeningFeeParams>) -> Result<Self> {
-        let temp = Self { vals };
+    pub fn try_from(vals: Vec<grpc::OpeningFeeParams>) -> Result<Self> {
+        let temp = Self {
+            vals: vals
+                .into_iter()
+                .map(|ofp| ofp.into())
+                .collect::<Vec<OpeningFeeParams>>(),
+        };
         temp.validate().map(|_| temp)
     }
 

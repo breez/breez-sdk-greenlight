@@ -53,11 +53,7 @@ impl LspInformation {
             max_inactive_duration: lsp_info.max_inactive_duration,
             channel_minimum_fee_msat: lsp_info.channel_minimum_fee_msat,
             opening_fee_params_menu: OpeningFeeParamsMenu::try_from(
-                lsp_info
-                    .opening_fee_params_menu
-                    .into_iter()
-                    .map(|ofp| ofp.into())
-                    .collect::<Vec<OpeningFeeParams>>(),
+                lsp_info.opening_fee_params_menu,
             )?,
         };
 
