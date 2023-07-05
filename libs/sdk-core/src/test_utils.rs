@@ -232,6 +232,7 @@ impl Receiver for MockReceiver {
         Ok(crate::ReceivePaymentResponse {
             ln_invoice: parse_invoice(&self.bolt11)?,
             opening_fee_params: _req_data.opening_fee_params,
+            setup_fees_msat: None,
         })
     }
 }

@@ -275,6 +275,7 @@ dictionary ReceivePaymentRequestData {
 dictionary ReceivePaymentResponse {
     LNInvoice ln_invoice;
     OpeningFeeParams? opening_fee_params;
+    u64? setup_fees_msat;
 };
 
 dictionary OpeningFeeParamsMenu {

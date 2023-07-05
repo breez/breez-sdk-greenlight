@@ -920,10 +920,12 @@ class ReceivePaymentRequestData {
 class ReceivePaymentResponse {
   final LNInvoice lnInvoice;
   final OpeningFeeParams? openingFeeParams;
+  final int? setupFeesMsat;
 
   const ReceivePaymentResponse({
     required this.lnInvoice,
     this.openingFeeParams,
+    this.setupFeesMsat,
   });
 }
 
@@ -2535,10 +2537,11 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   ReceivePaymentResponse _wire2api_receive_payment_response(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    if (arr.length != 3) throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
     return ReceivePaymentResponse(
       lnInvoice: _wire2api_ln_invoice(arr[0]),
       openingFeeParams: _wire2api_opt_box_autoadd_opening_fee_params(arr[1]),
+      setupFeesMsat: _wire2api_opt_box_autoadd_u64(arr[2]),
     );
   }
 

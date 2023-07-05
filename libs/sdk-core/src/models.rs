@@ -659,6 +659,7 @@ pub struct ReceivePaymentRequestData {
 pub struct ReceivePaymentResponse {
     pub ln_invoice: LNInvoice,
     pub opening_fee_params: Option<OpeningFeeParams>,
+    pub setup_fees_msat: Option<u64>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]

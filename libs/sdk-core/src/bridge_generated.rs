@@ -1166,6 +1166,7 @@ impl support::IntoDart for ReceivePaymentResponse {
         vec![
             self.ln_invoice.into_dart(),
             self.opening_fee_params.into_dart(),
+            self.setup_fees_msat.into_dart(),
         ]
         .into_dart()
     }
