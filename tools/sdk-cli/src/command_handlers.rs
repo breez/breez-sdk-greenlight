@@ -35,7 +35,7 @@ impl EventListener for CliEventListener {
     }
 }
 
-async fn init_sdk(config: Config, seed: &[u8], creds: &GreenlightCredentials) -> Result<()> {   
+async fn init_sdk(config: Config, seed: &[u8], creds: &GreenlightCredentials) -> Result<()> {
     let service = BreezServices::init_services(
         config,
         seed.to_vec(),
