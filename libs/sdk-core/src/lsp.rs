@@ -23,13 +23,7 @@ pub struct LspInformation {
     pub fee_rate: f64,
     pub time_lock_delta: u32,
     pub min_htlc_msat: i64,
-    #[deprecated]
-    pub channel_fee_permyriad: i64,
     pub lsp_pubkey: Vec<u8>,
-    #[deprecated]
-    pub max_inactive_duration: i64,
-    #[deprecated]
-    pub channel_minimum_fee_msat: i64,
     pub opening_fee_params_menu: OpeningFeeParamsMenu,
 }
 
@@ -48,10 +42,7 @@ impl LspInformation {
             fee_rate: lsp_info.fee_rate,
             time_lock_delta: lsp_info.time_lock_delta,
             min_htlc_msat: lsp_info.min_htlc_msat,
-            channel_fee_permyriad: lsp_info.channel_fee_permyriad,
             lsp_pubkey: lsp_info.lsp_pubkey,
-            max_inactive_duration: lsp_info.max_inactive_duration,
-            channel_minimum_fee_msat: lsp_info.channel_minimum_fee_msat,
             opening_fee_params_menu: OpeningFeeParamsMenu::try_from(
                 lsp_info.opening_fee_params_menu,
             )?,

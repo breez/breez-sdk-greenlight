@@ -3,12 +3,12 @@ use std::sync::Arc;
 
 use anyhow::Error;
 use anyhow::{anyhow, Result};
-use breez_sdk_core::{Config, ReceivePaymentRequestData};
 use breez_sdk_core::InputType::{LnUrlAuth, LnUrlWithdraw};
 use breez_sdk_core::{
     parse, BreezEvent, BreezServices, EventListener, GreenlightCredentials, InputType::LnUrlPay,
     PaymentTypeFilter,
 };
+use breez_sdk_core::{Config, ReceivePaymentRequestData};
 use once_cell::sync::{Lazy, OnceCell};
 use qrcode_rs::render::unicode;
 use qrcode_rs::{EcLevel, QrCode};
@@ -139,12 +139,14 @@ pub(crate) async fn handle_command(
             amount: amount_sats,
             description,
         } => {
-            let invoice = sdk()?.receive_payment(ReceivePaymentRequestData {
-                amount_sats,
-                description,
-                preimage: None,
-                opening_fee_params: None,
-            }).await?;
+            let invoice = sdk()?
+                .receive_payment(ReceivePaymentRequestData {
+                    amount_sats,
+                    description,
+                    preimage: None,
+                    opening_fee_params: None,
+                })
+                .await?;
             let mut result = serde_json::to_string(&invoice)?;
             result.push('\n');
             result.push_str(&build_qr_text(&invoice.ln_invoice.bolt11));

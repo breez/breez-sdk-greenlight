@@ -486,10 +486,7 @@ impl LspAPI for MockBreezServer {
             fee_rate: 1.0,
             time_lock_delta: 32,
             min_htlc_msat: 1000,
-            channel_fee_permyriad: 1000,
             lsp_pubkey: hex::decode(self.lsp_pub_key()).unwrap(),
-            max_inactive_duration: 3600,
-            channel_minimum_fee_msat: 1,
             // Initialize menu with one Fee Param that is valid for >48h
             // This way, it can be used in both kinds of tests (those that need the cheapest fee,
             // as well as those with the longest valid fee)
