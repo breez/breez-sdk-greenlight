@@ -164,7 +164,7 @@ impl BreezServices {
 
         *runtime_lock = Some(runtime);
         let start_duration = start.elapsed();
-        println!("SDK initialized in: {:?}", start_duration);
+        info!("SDK initialized in: {:?}", start_duration);
         Ok(())
     }
 
