@@ -125,7 +125,7 @@ class RNBreezSDK: RCTEventEmitter {
     func defaultConfig(_ envType: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         do {
             var config = try BreezSDK.defaultConfig(envType: BreezSDKMapper.asEnvironmentType(envType: envType))
-            config.workingDir = RNBreezSDK.breezSdkDirectory.absoluteString
+            config.workingDir = RNBreezSDK.breezSdkDirectory.path
 
             resolve(BreezSDKMapper.dictionaryOf(config: config))
         } catch SdkError.Error(let message) {
