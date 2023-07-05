@@ -1247,6 +1247,7 @@ impl Receiver for PaymentReceiver {
         let mut destination_invoice_amount_sats = amount_sats;
 
         let mut channel_opening_fee_params = None;
+        let mut channel_fees_msat = None;
 
         // check if we need to open channel
         let open_channel_needed = node_state.inbound_liquidity_msats < amount_msats;
@@ -1259,15 +1260,19 @@ impl Receiver for PaymentReceiver {
                 DynamicFeeType::Cheapest,
             )?;
             channel_opening_fee_params = Some(ofp.clone());
-            let channel_fees_msat = ofp.get_channel_fees_msat_for(amount_msats);
-
-            info!("zero-conf fee calculation option: lsp fee rate (proportional): {}:  (minimum {}), total fees for channel: {}",
+            channel_fees_msat = Some(ofp.get_channel_fees_msat_for(amount_msats));
+            match channel_fees_msat {
+                Some(channel_fees_msat) => {
+                    info!("zero-conf fee calculation option: lsp fee rate (proportional): {}:  (minimum {}), total fees for channel: {}",
                 ofp.proportional, ofp.min_msat, channel_fees_msat);
 
-            ensure!(amount_msats > channel_fees_msat, "requestPayment: Amount should be more than the minimum fees {channel_fees_msat} msat, but is {amount_msats} msat");
+                    ensure!(amount_msats > channel_fees_msat, "requestPayment: Amount should be more than the minimum fees {channel_fees_msat} msat, but is {amount_msats} msat");
 
-            // remove the fees from the amount to get the small amount on the current node invoice.
-            destination_invoice_amount_sats = amount_sats - channel_fees_msat / 1000;
+                    // remove the fees from the amount to get the small amount on the current node invoice.
+                    destination_invoice_amount_sats = amount_sats - channel_fees_msat / 1000;
+                }
+                _ => {}
+            }
         } else {
             // not opening a channel so we need to get the real channel id into the routing hints
             info!("Finding channel ID for routing hint");
@@ -1370,6 +1375,7 @@ impl Receiver for PaymentReceiver {
         Ok(ReceivePaymentResponse {
             ln_invoice: parsed_invoice,
             opening_fee_params: channel_opening_fee_params,
+            setup_fees_msat: channel_fees_msat,
         })
     }
 }
