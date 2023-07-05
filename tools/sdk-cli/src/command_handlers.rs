@@ -9,7 +9,7 @@ use breez_sdk_core::{
     parse, BreezEvent, BreezServices, EventListener, GreenlightCredentials, InputType::LnUrlPay,
     PaymentTypeFilter,
 };
-use once_cell::sync::{Lazy, OnceCell};
+use once_cell::sync::OnceCell;
 use qrcode_rs::render::unicode;
 use qrcode_rs::{EcLevel, QrCode};
 use rustyline::Editor;
@@ -18,7 +18,6 @@ use crate::persist::CliPersistence;
 use crate::Commands;
 
 static BREEZ_SERVICES: OnceCell<Arc<BreezServices>> = OnceCell::new();
-static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
 
 fn sdk() -> Result<Arc<BreezServices>> {
     BREEZ_SERVICES
@@ -26,10 +25,6 @@ fn sdk() -> Result<Arc<BreezServices>> {
         .ok_or("Breez Services not initialized")
         .map_err(|err| anyhow!(err))
         .cloned()
-}
-
-fn rt() -> &'static tokio::runtime::Runtime {
-    &RT
 }
 
 struct CliEventListener {}
@@ -50,10 +45,10 @@ async fn init_sdk(config: Config, seed: &[u8], creds: &GreenlightCredentials) ->
     .await?;
 
     BREEZ_SERVICES
-        .set(service)
+        .set(service.clone())
         .map_err(|_| anyhow!("Failed to set Breez Service"))?;
 
-    BreezServices::start(rt(), &sdk()?).await
+    service.start().await
 }
 
 pub(crate) async fn handle_command(

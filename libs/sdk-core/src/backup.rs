@@ -12,7 +12,6 @@ use std::{
     io::{Read, Write},
     path::Path,
     sync::Arc,
-    thread::JoinHandle,
     time::{SystemTime, UNIX_EPOCH},
 };
 use tempfile::tempdir_in;
@@ -21,7 +20,7 @@ use tokio::{
     sync::{
         broadcast::{self, error::RecvError},
         mpsc::{self, Sender},
-        watch,
+        watch, Mutex,
     },
 };
 
@@ -30,6 +29,9 @@ pub(crate) struct BackupRequest {
     force: bool,
     on_complete: Option<mpsc::Sender<Result<()>>>,
 }
+
+unsafe impl Send for BackupRequest {}
+unsafe impl Sync for BackupRequest {}
 
 impl BackupRequest {
     pub(crate) fn new(force: bool) -> Self {
@@ -66,46 +68,64 @@ pub trait BackupTransport: Send + Sync {
 }
 
 pub(crate) struct BackupWatcher {
-    worker: BackupWorker,
-    thread_handle: Option<JoinHandle<()>>,
-    quit_sender: watch::Sender<()>,
-    trigger_backup: mpsc::Sender<BackupRequest>,
+    config: Config,
+    backup_request_sender: Mutex<Option<mpsc::Sender<BackupRequest>>>,
+    inner: Arc<dyn BackupTransport>,
+    persister: Arc<SqliteStorage>,
+    encryption_key: Vec<u8>,
+    events_notifier: broadcast::Sender<BreezEvent>,
 }
 
 /// watches for sync requests and syncs the sdk state when a request is detected.
 impl BackupWatcher {
-    pub(crate) fn start(
+    pub(crate) fn new(
         config: Config,
         inner: Arc<dyn BackupTransport>,
         persister: Arc<SqliteStorage>,
         encryption_key: Vec<u8>,
     ) -> Self {
-        let (notifier, _) = broadcast::channel::<BreezEvent>(100);
-        let worker = BackupWorker::new(
-            config.working_dir,
+        let (events_notifier, _) = broadcast::channel::<BreezEvent>(100);
+
+        Self {
+            config,
+            backup_request_sender: Mutex::new(None),
             inner,
             persister,
             encryption_key,
-            notifier,
+            events_notifier,
+        }
+    }
+
+    async fn set_request_sender(&self, sender: mpsc::Sender<BackupRequest>) {
+        let mut backup_request_sender = self.backup_request_sender.lock().await;
+        *backup_request_sender = Some(sender);
+    }
+
+    pub(crate) async fn start(&self, mut quit_receiver: watch::Receiver<()>) -> Result<()> {
+        let worker = BackupWorker::new(
+            self.config.working_dir.clone(),
+            self.inner.clone(),
+            self.persister.clone(),
+            self.encryption_key.clone(),
+            self.events_notifier.clone(),
         );
 
-        let (trigger_backup, mut trigger_backup_receiver) = mpsc::channel::<BackupRequest>(100);
+        let mut hooks_subscription = self.persister.subscribe_hooks();
+        let (backup_request_sender, mut backup_request_receiver) =
+            mpsc::channel::<BackupRequest>(100);
+        self.set_request_sender(backup_request_sender.clone()).await;
 
-        let (quit_sender, mut quit_receiver) = watch::channel::<()>(());
-        let mut hooks_subscription = worker.persister.subscribe_hooks();
-
-        let cloned_worker = worker.clone();
         let rt = Builder::new_current_thread().enable_all().build().unwrap();
-        let thread_handle = std::thread::spawn(move || {
+        std::thread::spawn(move || {
             rt.block_on(async move {
                 loop {
                     tokio::select! {
 
                      // We listen to manual backup requests from the user
-                     request = trigger_backup_receiver.recv() => {
+                     request = backup_request_receiver.recv() => {
                       match request {
                        Some(request) => {
-                        match cloned_worker.sync(request.force).await {
+                        match worker.sync(request.force).await {
                          Ok(_) => {
                           if let Some(callback) = request.on_complete {
                            _ = callback.send(Ok(())).await;
@@ -132,14 +152,14 @@ impl BackupWatcher {
                              if table == "sync_requests"{
                               // we do want to wait a bit to allow for multiple sync requests to be inserted
                               tokio::time::sleep(std::time::Duration::from_millis(100)).await;
-                              if let Err(e) = cloned_worker.sync(false).await {
+                              if let Err(e) = worker.sync(false).await {
                                error!("Sync worker returned with error {e}");
                               }
                              }
                             }
                             // If we are lagging we want to trigger sync
                             Err(RecvError::Lagged(_)) => {
-                             if let Err(e) = cloned_worker.sync(false).await {
+                             if let Err(e) = worker.sync(false).await {
                               error!("Sync worker returned with error {e}");
                              }
                             }
@@ -158,36 +178,21 @@ impl BackupWatcher {
             });
         });
 
-        Self {
-            worker,
-            thread_handle: Some(thread_handle),
-            quit_sender,
-            trigger_backup,
-        }
+        Ok(())
     }
 
     pub(crate) fn subscribe_events(&self) -> broadcast::Receiver<BreezEvent> {
-        self.worker.events_notifier.subscribe()
+        self.events_notifier.subscribe()
     }
 
-    pub(crate) fn request_handler(&self) -> Sender<BackupRequest> {
-        self.trigger_backup.clone()
-    }
-
-    fn stop(&mut self) -> Result<()> {
-        self.quit_sender.send(())?;
-        match self.thread_handle.take() {
-            Some(handle) => handle
-                .join()
-                .map_err(|_| anyhow::Error::msg("failed to join backup thread")),
-            None => Ok(()),
-        }
-    }
-}
-
-impl Drop for BackupWatcher {
-    fn drop(&mut self) {
-        self.stop().unwrap();
+    pub(crate) async fn request_backup(&self, request: BackupRequest) -> Result<()> {
+        let request_handler = self.backup_request_sender.lock().await;
+        let h = request_handler.clone();
+        h.unwrap()
+            .send(request)
+            .await
+            .map_err(|_| anyhow::Error::msg("test"))?;
+        Ok(())
     }
 }
 
@@ -432,9 +437,8 @@ mod tests {
         test_utils::{create_test_config, create_test_persister, MockBackupTransport},
         BreezEvent, SwapInfo,
     };
-    use anyhow::anyhow;
     use std::{sync::Arc, vec};
-    use tokio::sync::{broadcast::Receiver, mpsc::Sender};
+    use tokio::sync::{broadcast::Receiver, watch};
     use tokio::{
         spawn,
         time::{Duration, Instant},
@@ -442,22 +446,17 @@ mod tests {
 
     use super::BackupWatcher;
 
-    async fn create_test_backup_watcher() -> (BackupWatcher, Arc<MockBackupTransport>) {
+    async fn create_test_backup_watcher(
+    ) -> (watch::Sender<()>, BackupWatcher, Arc<MockBackupTransport>) {
         let config = create_test_config();
         let persister = Arc::new(create_test_persister(config.clone()));
         persister.init().unwrap();
         let transport = Arc::new(MockBackupTransport::new());
-        let watcher = BackupWatcher::start(config, transport.clone(), persister, vec![0; 32]);
-        (watcher, transport)
-    }
-
-    async fn request_backup(sender: Sender<BackupRequest>) {
-        let request = BackupRequest::new(true);
-        sender
-            .send(request)
-            .await
-            .map_err(|e| anyhow!("Failed to send backup request: {e}"))
-            .unwrap();
+        let watcher = BackupWatcher::new(config, transport.clone(), persister, vec![0; 32]);
+        let (quit_sender, receiver) = watch::channel(());
+        watcher.start(receiver).await.unwrap();
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        (quit_sender, watcher, transport)
     }
 
     async fn test_expected_backup_events(
@@ -467,7 +466,7 @@ mod tests {
         expected_pushed: u32,
         expected_pulls: u32,
     ) {
-        let start = Instant::now() + Duration::from_millis(100000);
+        let start = Instant::now() + Duration::from_millis(20000);
         let mut interval = tokio::time::interval_at(start, Duration::from_secs(3));
         let mut events = vec![];
         loop {
@@ -498,14 +497,15 @@ mod tests {
     // Test start and drop
     #[tokio::test]
     async fn test_start() {
-        let watcher = create_test_backup_watcher();
-        drop(watcher);
+        let (quit_sender, _, _) = create_test_backup_watcher().await;
+        quit_sender.send(()).unwrap();
+        quit_sender.closed().await;
     }
 
     // Test two optimistic backups in a row
     #[tokio::test]
     async fn test_optimistic() {
-        let (watcher, transport) = create_test_backup_watcher().await;
+        let (quit_sender, watcher, transport) = create_test_backup_watcher().await;
         let subscription = watcher.subscribe_events();
         let expected_events = vec![
             BreezEvent::BackupStarted,
@@ -515,19 +515,28 @@ mod tests {
         ];
 
         let task_subscription = watcher.subscribe_events();
-        let request_handler = watcher.request_handler();
+        //let cloned_watcher = watcher.clone();
+        //let request_handler = watcher.request_handler().unwrap();
         tokio::spawn(async move {
-            request_backup(request_handler.clone()).await;
+            watcher
+                .request_backup(BackupRequest::new(true))
+                .await
+                .unwrap();
             wait_for_backup_success(task_subscription).await;
-            request_backup(request_handler).await;
+            watcher
+                .request_backup(BackupRequest::new(true))
+                .await
+                .unwrap();
         });
         test_expected_backup_events(subscription, transport, expected_events, 2, 0).await;
+        _ = quit_sender.send(());
+        quit_sender.closed().await;
     }
 
     // Test case when remote backup is not available and we only push the local backup.
     #[tokio::test]
     async fn test_remote_not_exist() {
-        let (watcher, transport) = create_test_backup_watcher().await;
+        let (quit_sender, watcher, transport) = create_test_backup_watcher().await;
         let subscription = watcher.subscribe_events();
         let expected_events = vec![
             BreezEvent::BackupStarted,
@@ -536,23 +545,30 @@ mod tests {
             BreezEvent::BackupSucceeded,
         ];
 
-        let persister = watcher.worker.persister.clone();
-        let request_handler = watcher.request_handler();
+        let persister = watcher.persister.clone();
         let task_subscription = watcher.subscribe_events();
         tokio::spawn(async move {
             let subscription = task_subscription.resubscribe();
-            request_backup(request_handler.clone()).await;
+            watcher
+                .request_backup(BackupRequest::new(true))
+                .await
+                .unwrap();
             wait_for_backup_success(subscription).await;
             persister.set_last_sync_version(10, &vec![]).unwrap();
-            request_backup(request_handler.clone()).await;
+            watcher
+                .request_backup(BackupRequest::new(true))
+                .await
+                .unwrap();
         });
         test_expected_backup_events(subscription, transport, expected_events, 3, 1).await;
+        _ = quit_sender.send(());
+        quit_sender.closed().await;
     }
 
     // Test case when remote backup is older than local backup so we need to pull it first.
     #[tokio::test]
     async fn test_local_newer_than_remote() {
-        let (watcher, transport) = create_test_backup_watcher().await;
+        let (quit_sender, watcher, transport) = create_test_backup_watcher().await;
         let subscription = watcher.subscribe_events();
         let expected_events = vec![
             BreezEvent::BackupStarted,
@@ -561,23 +577,30 @@ mod tests {
             BreezEvent::BackupSucceeded,
         ];
 
-        let persister = watcher.worker.persister.clone();
+        let persister = watcher.persister.clone();
         let task_subscription = watcher.subscribe_events();
-        let request_handler = watcher.request_handler();
         tokio::spawn(async move {
             let subscription = task_subscription.resubscribe();
-            request_backup(request_handler.clone()).await;
+            watcher
+                .request_backup(BackupRequest::new(true))
+                .await
+                .unwrap();
             wait_for_backup_success(subscription).await;
             persister.set_last_sync_version(10, &vec![]).unwrap();
-            request_backup(request_handler.clone()).await;
+            watcher
+                .request_backup(BackupRequest::new(true))
+                .await
+                .unwrap();
         });
         test_expected_backup_events(subscription, transport, expected_events, 3, 1).await;
+        quit_sender.send(()).unwrap();
+        quit_sender.closed().await;
     }
 
     // Test versions history table is pupulated correctly
     #[tokio::test]
     async fn test_versions_history() {
-        let (watcher, transport) = create_test_backup_watcher().await;
+        let (quit_sender, watcher, transport) = create_test_backup_watcher().await;
         let subscription = watcher.subscribe_events();
         let expected_events = vec![
             BreezEvent::BackupStarted,
@@ -589,23 +612,28 @@ mod tests {
         ];
 
         let task_subscription = watcher.subscribe_events();
-        let request_handler = watcher.request_handler();
+        let persister = watcher.persister.clone();
         tokio::spawn(async move {
             for _ in 0..3 {
                 let subscription = task_subscription.resubscribe();
-                request_backup(request_handler.clone()).await;
+                watcher
+                    .request_backup(BackupRequest::new(true))
+                    .await
+                    .unwrap();
                 wait_for_backup_success(subscription).await;
             }
         });
         test_expected_backup_events(subscription, transport, expected_events, 3, 0).await;
-        let history = watcher.worker.persister.sync_versions_history().unwrap();
+        let history = persister.sync_versions_history().unwrap();
         assert_eq!(history.len(), 3);
+        _ = quit_sender.send(());
+        quit_sender.closed().await;
     }
 
     // Test versions history table is not bypassing the limit
     #[tokio::test]
     async fn test_limit_versions_history() {
-        let (watcher, transport) = create_test_backup_watcher().await;
+        let (quit_sender, watcher, transport) = create_test_backup_watcher().await;
         let subscription = watcher.subscribe_events();
         let mut expected_events = vec![];
         for _ in 0..30 {
@@ -614,23 +642,28 @@ mod tests {
         }
 
         let task_subscription = watcher.subscribe_events();
-        let request_handler = watcher.request_handler();
+        let persister = watcher.persister.clone();
         tokio::spawn(async move {
             for _ in 0..30 {
                 let subscription = task_subscription.resubscribe();
-                request_backup(request_handler.clone()).await;
+                watcher
+                    .request_backup(BackupRequest::new(true))
+                    .await
+                    .unwrap();
                 wait_for_backup_success(subscription).await;
             }
         });
         test_expected_backup_events(subscription, transport, expected_events, 30, 0).await;
-        let history = watcher.worker.persister.sync_versions_history().unwrap();
+        let history = persister.sync_versions_history().unwrap();
         assert_eq!(history.len(), 20);
+        _ = quit_sender.send(());
+        quit_sender.closed().await;
     }
 
     // Test that the actualy triggers cause sync and we only sync once
     #[tokio::test]
     async fn test_sync_triggers() {
-        let (watcher, transport) = create_test_backup_watcher().await;
+        let (quit_sender, watcher, transport) = create_test_backup_watcher().await;
         let subscription = watcher.subscribe_events();
 
         let mut expected_events = vec![];
@@ -639,15 +672,17 @@ mod tests {
             expected_events.push(BreezEvent::BackupSucceeded);
         }
 
-        let persister = watcher.worker.persister.clone();
+        let persister = watcher.persister.clone();
         spawn(async move {
             // Add some data to the sync database to trigger sync
             populate_sync_table(persister.clone());
         });
 
         test_expected_backup_events(subscription, transport, expected_events, 1, 0).await;
-        let history = watcher.worker.persister.sync_versions_history().unwrap();
+        let history = watcher.persister.sync_versions_history().unwrap();
         assert_eq!(history.len(), 1);
+        _ = quit_sender.send(());
+        quit_sender.closed().await;
     }
 
     // Test that we only sync once if we have multiple sync requests
@@ -660,8 +695,8 @@ mod tests {
     // 5. Check that remote changes were populated locally and we synced exactly twice.
     #[tokio::test]
     async fn test_trigger_during_sync() {
-        let (watcher, transport) = create_test_backup_watcher().await;
-        let persister = watcher.worker.persister.clone();
+        let (quit_sender, watcher, transport) = create_test_backup_watcher().await;
+        let persister = watcher.persister.clone();
 
         let mut expected_events = vec![];
         for _ in 0..2 {
@@ -672,7 +707,7 @@ mod tests {
         let main_subscription = watcher.subscribe_events();
         let task_subscription = watcher.subscribe_events();
         let task_subscription1 = task_subscription.resubscribe();
-        let request_handler = watcher.request_handler();
+        let cloned_persister = watcher.persister.clone();
         tokio::spawn(async move {
             // Add some data to the sync database and wait for backup to complete.
             populate_sync_table(persister.clone());
@@ -690,12 +725,17 @@ mod tests {
                         [],
                     )
                     .unwrap();
-            request_backup(request_handler).await;
+            watcher
+                .request_backup(BackupRequest::new(true))
+                .await
+                .unwrap();
             wait_for_backup_success(task_subscription2).await;
         });
         test_expected_backup_events(main_subscription, transport, expected_events, 3, 1).await;
-        let swaps = watcher.worker.persister.list_swaps().unwrap();
+        let swaps = cloned_persister.list_swaps().unwrap();
         assert!(swaps.len() == 1);
+        _ = quit_sender.send(());
+        quit_sender.closed().await;
     }
 
     fn populate_sync_table(persister: Arc<SqliteStorage>) {

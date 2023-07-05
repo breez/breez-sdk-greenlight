@@ -31,7 +31,7 @@
 //!     )
 //!     .await?;
 //!
-//! BreezServices::start(rt(), &sdk).await?;
+//! sdk.start().await?;
 //! ```
 //!
 //! On initializing the SDK, the caller gets its [GreenlightCredentials]. These are used to interact

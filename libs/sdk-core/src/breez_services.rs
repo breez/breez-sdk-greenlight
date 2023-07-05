@@ -38,9 +38,9 @@ use bitcoin::util::bip32::ChildNumber;
 use std::cmp::max;
 use std::str::FromStr;
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use tokio::runtime::Runtime;
-use tokio::sync::{mpsc, Mutex};
+use tokio::sync::{mpsc, watch, RwLock};
 use tokio::time::{sleep, Duration};
 use tonic::codegen::InterceptedService;
 use tonic::metadata::{Ascii, MetadataValue};
@@ -95,94 +95,9 @@ pub struct InvoicePaidDetails {
     pub bolt11: String,
 }
 
-#[derive(Clone, Debug)]
-struct SDKBackgroundController {
-    shutdown_handler: mpsc::Sender<()>,
-    backup_request_handler: mpsc::Sender<BackupRequest>,
-}
-
-/// Starts the BreezServices background threads.
-///
-/// Internal method. Should only be used as part of [BreezServices::start]
-async fn start_threads(
-    rt: &Runtime,
-    breez_services: Arc<BreezServices>,
-) -> Result<SDKBackgroundController> {
-    // start the signer
-    let (shutdown_signer_sender, signer_signer_receiver) = mpsc::channel(1);
-    let signer_api = breez_services.clone();
-    rt.spawn(async move {
-        signer_api
-            .node_api
-            .start_signer(signer_signer_receiver)
-            .await;
-    });
-
-    let breez_cloned = breez_services.clone();
-
-    // sync with remote node state
-    breez_cloned.sync().await?;
-
-    // create the backup encryption key
-    let backup_encryption_key = breez_services.node_api.derive_bip32_key(vec![
-        ChildNumber::from_hardened_idx(139)?,
-        ChildNumber::from(0),
-    ])?;
-
-    let backup_watcher = BackupWatcher::start(
-        breez_cloned.config.clone(),
-        breez_services.backup_transport.clone(),
-        breez_services.persister.clone(),
-        backup_encryption_key.to_priv().to_bytes(),
-    );
-
-    // Restore backup state and request backup on start if needed
-    let force_backup = breez_cloned.persister.get_last_sync_version()?.is_none();
-    let backup_request_handler = backup_watcher.request_handler();
-    backup_request_handler
-        .send(BackupRequest::new(force_backup))
-        .await
-        .map_err(|e| anyhow!("failed to send backup request {e}"))?;
-
-    // create a shutdown channel (sender and receiver)
-    let (shutdown_handler, mut shutdown_receiver) = mpsc::channel::<()>(1);
-
-    // poll sdk events
-    rt.spawn(async move {
-        // start the backup watcher
-        let current_block: u32 = 0;
-        loop {
-            tokio::select! {
-              poll_result = poll_events(breez_services.clone(),&backup_watcher, current_block) => {
-               match poll_result {
-                Ok(()) => {
-                 return;
-                },
-                Err(err) => {
-                 debug!("poll_events returned with error: {:?} waiting...", err);
-                 sleep(Duration::from_secs(1)).await;
-                 continue
-                }
-               }
-              },
-              _ = shutdown_receiver.recv() => {
-               _ = shutdown_signer_sender.send(()).await;
-               debug!("Received the signal to exit event polling loop");
-               return;
-            }
-        }
-       }
-    });
-
-    Ok(SDKBackgroundController {
-        shutdown_handler,
-        backup_request_handler,
-    })
-}
-
 /// BreezServices is a facade and the single entry point for the SDK.
 pub struct BreezServices {
-    config: Config,
+    runtime: Arc<RwLock<Option<tokio::runtime::Runtime>>>,
     node_api: Arc<dyn NodeAPI>,
     lsp_api: Arc<dyn LspAPI>,
     fiat_api: Arc<dyn FiatAPI>,
@@ -193,9 +108,9 @@ pub struct BreezServices {
     btc_receive_swapper: Arc<BTCReceiveSwap>,
     btc_send_swapper: Arc<BTCSendSwap>,
     event_listener: Option<Box<dyn EventListener>>,
-    //backup_watcher: BackupWatcher,
-    backup_transport: Arc<dyn BackupTransport>,
-    background_handler: Mutex<Option<SDKBackgroundController>>,
+    backup_watcher: Arc<BackupWatcher>,
+    shutdown_sender: watch::Sender<()>,
+    shutdown_receiver: watch::Receiver<()>,
 }
 
 impl BreezServices {
@@ -227,36 +142,47 @@ impl BreezServices {
             .await
     }
 
-    /// Starts the BreezServices background threads for this instance.
+    /// Starts the BreezServices background tasks for this instance.
     ///
     /// It should be called once right after creating [BreezServices], since it is essential for the
     /// communicating with the node.
     ///
     /// It should be called only once when the app is started, regardless whether the app is sent to
     /// background and back.
-    pub async fn start(runtime: &Runtime, breez_services: &Arc<BreezServices>) -> Result<()> {
-        let mut handler_lock = breez_services.background_handler.lock().await;
-        if handler_lock.is_some() {
-            return Err(anyhow!("start can only be called once"));
+    pub async fn start(self: &Arc<BreezServices>) -> Result<()> {
+        let start = Instant::now();
+        let mut runtime_lock = self.runtime.write().await;
+        if runtime_lock.is_some() {
+            return Err(anyhow!("SDK already connected "));
         }
-        let background_handler = start_threads(runtime, breez_services.clone()).await?;
+        let runtime = tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()
+            .unwrap();
 
-        *handler_lock = Some(background_handler);
+        self.start_background_tasks(&runtime).await?;
+
+        *runtime_lock = Some(runtime);
+        let start_duration = start.elapsed();
+        info!("SDK initialized in: {:?}", start_duration);
         Ok(())
     }
 
     /// Trigger the stopping of BreezServices background threads for this instance.
     pub async fn stop(&self) -> Result<()> {
-        let handler_lock = self.background_handler.lock().await;
-        if handler_lock.is_none() {
-            return Err(anyhow!("node has not been started"));
-        }
-        let background_handler = handler_lock.as_ref().unwrap();
-        background_handler
-            .shutdown_handler
-            .send(())
+        let runtime = self
+            .runtime
+            .write()
             .await
-            .map_err(anyhow::Error::msg)
+            .take()
+            .ok_or(anyhow!("SDK is not connected"))?;
+
+        // Stop the runtime.
+        self.shutdown_sender.send(()).map_err(anyhow::Error::msg)?;
+        tokio::task::spawn_blocking(move || runtime.shutdown_timeout(Duration::from_secs(5)))
+            .await
+            .unwrap();
+        Ok(())
     }
 
     /// Pay a bolt11 invoice
@@ -429,12 +355,7 @@ impl BreezServices {
     pub async fn backup(&self) -> Result<()> {
         let (on_complete, mut on_complete_receiver) = mpsc::channel::<Result<()>>(1);
         let request = BackupRequest::with(on_complete, true);
-        self.background_controller()
-            .await?
-            .backup_request_handler
-            .send(request)
-            .await
-            .map_err(|e| anyhow!("failed to send backup request {e}"))?;
+        self.backup_watcher.request_backup(request).await?;
 
         match on_complete_receiver.recv().await {
             Some(res) => res,
@@ -761,98 +682,234 @@ impl BreezServices {
         Ok(url)
     }
 
-    async fn background_controller(&self) -> Result<SDKBackgroundController> {
-        let handler_lock = self.background_handler.lock().await;
-        if handler_lock.is_none() {
-            return Err(anyhow!("node has not been started"));
+    /// Starts the BreezServices background threads.
+    ///
+    /// Internal method. Should only be used as part of [BreezServices::start]
+    async fn start_background_tasks(self: &Arc<BreezServices>, rt: &Runtime) -> Result<()> {
+        // start the signer
+        let (shutdown_signer_sender, signer_signer_receiver) = mpsc::channel(1);
+        self.start_signer(rt, signer_signer_receiver).await;
+
+        // start backup watcher
+        self.start_backup_watcher().await?;
+
+        //track backup events
+        self.track_backup_events(rt).await;
+
+        // track paid invoices
+        self.track_invoices(rt).await;
+
+        // track new blocks
+        self.track_new_blocks(rt).await;
+
+        // track logs
+        self.track_logs(rt).await;
+
+        // Stop signer on shutdown
+        let mut shutdown_receiver = self.shutdown_receiver.clone();
+        rt.spawn(async move {
+            // start the backup watcher
+            _ = shutdown_receiver.changed().await;
+            _ = shutdown_signer_sender.send(()).await;
+            debug!("Received the signal to exit event polling loop");
+        });
+
+        // Sync node state
+        let sync_breez_services = self.clone();
+        match sync_breez_services.node_info()? {
+            Some(_) => {
+                // In case it is not a first run we sync in background to start quickly.
+                rt.spawn(async move {
+                    // sync with remote node state
+                    _ = sync_breez_services.sync().await;
+                });
+            }
+            None => {
+                // In case it is a first run we sync in foreground to get the node state.
+                _ = sync_breez_services.sync().await;
+            }
         }
-        Ok(handler_lock.clone().unwrap())
+
+        Ok(())
     }
-}
 
-async fn poll_events(
-    breez_services: Arc<BreezServices>,
-    backup_watcher: &BackupWatcher,
-    mut current_block: u32,
-) -> Result<()> {
-    let mut interval = tokio::time::interval(Duration::from_secs(30));
-    let mut invoice_stream = breez_services.node_api.stream_incoming_payments().await?;
-    let mut log_stream = breez_services.node_api.stream_log_messages().await?;
+    async fn start_signer(
+        self: &Arc<BreezServices>,
+        rt: &Runtime,
+        shutdown_receiver: mpsc::Receiver<()>,
+    ) {
+        let signer_api = self.clone();
+        rt.spawn(async move {
+            signer_api.node_api.start_signer(shutdown_receiver).await;
+        });
+    }
 
-    let mut backup_events_stream = backup_watcher.subscribe_events();
-    loop {
-        tokio::select! {
-         backup_event = backup_events_stream.recv() => {
-          if let Ok(e) = backup_event {
-           if let Err(err) = breez_services.notify_event_listeners(e).await {
-               error!("error handling backup event: {:?}", err);
-           }
-          }
-          let backup_status = breez_services.backup_status();
-          info!("backup status: {:?}", backup_status);
-         },
-         // handle chain events
-         _ = interval.tick() => {
-          let tip_res = breez_services.chain_service.current_tip().await;
-          match tip_res {
-           Ok(next_block) => {
-            debug!("got tip {:?}", next_block);
-            if next_block > current_block {
-             _ = breez_services.sync().await;
-             _  = breez_services.on_event(BreezEvent::NewBlock{block: next_block}).await;
+    async fn start_backup_watcher(self: &Arc<BreezServices>) -> Result<()> {
+        self.backup_watcher
+            .start(self.shutdown_receiver.clone())
+            .await?;
+
+        // Restore backup state and request backup on start if needed
+        let force_backup = self.persister.get_last_sync_version()?.is_none();
+        self.backup_watcher
+            .request_backup(BackupRequest::new(force_backup))
+            .await?;
+
+        Ok(())
+    }
+
+    async fn track_backup_events(self: &Arc<BreezServices>, rt: &Runtime) {
+        let cloned = self.clone();
+        rt.spawn(async move {
+            let mut events_stream = cloned.backup_watcher.subscribe_events();
+            let mut shutdown_receiver = cloned.shutdown_receiver.clone();
+            loop {
+                tokio::select! {
+                  backup_event = events_stream.recv() => {
+                   if let Ok(e) = backup_event {
+                    if let Err(err) = cloned.notify_event_listeners(e).await {
+                        error!("error handling backup event: {:?}", err);
+                    }
+                   }
+                   let backup_status = cloned.backup_status();
+                   info!("backup status: {:?}", backup_status);
+                  },
+                  _ = shutdown_receiver.changed() => {
+                   debug!("Backup watcher task completed");
+                   break;
+                 }
+                }
             }
-            current_block = next_block
-           },
-           Err(e) => {
-            error!("failed to fetch next block {}", e)
-           }
-          };
-         },
-         paid_invoice_res = invoice_stream.message() => {
-          match paid_invoice_res {
-           Ok(Some(i)) => {
-            debug!("invoice stream got new invoice");
-            if let Some(gl_client::pb::incoming_payment::Details::Offchain(p)) = i.details {
-             let payment: Option<crate::models::Payment> = p.clone().try_into().ok();
-             if payment.is_some() {
-              let res = breez_services.persister.insert_or_update_payments(&vec![payment.unwrap()]);
-              debug!("paid invoice was added to payments list {:?}", res);
+        });
+    }
+
+    async fn track_invoices(self: &Arc<BreezServices>, rt: &Runtime) {
+        let cloned = self.clone();
+        rt.spawn(async move {
+        let mut shutdown_receiver = cloned.shutdown_receiver.clone();
+        loop {
+            if shutdown_receiver.has_changed().map_or(true, |c| c) {
+                return;
+            }
+            let invoice_stream_res = cloned.node_api.stream_incoming_payments().await;
+            if let Ok(mut invoice_stream) = invoice_stream_res {
+                loop {
+                    tokio::select! {
+                            paid_invoice_res = invoice_stream.message() => {
+                                  match paid_invoice_res {
+                                      Ok(Some(i)) => {
+                                          debug!("invoice stream got new invoice");
+                                          if let Some(gl_client::pb::incoming_payment::Details::Offchain(p)) = i.details {
+                                              let payment: Option<crate::models::Payment> = p.clone().try_into().ok();
+                                              if payment.is_some() {
+                                                  let res = cloned
+                                                      .persister
+                                                      .insert_or_update_payments(&vec![payment.unwrap()]);
+                                                  debug!("paid invoice was added to payments list {:?}", res);
+                                              }
+                                              _ = cloned.on_event(BreezEvent::InvoicePaid {
+                                                  details: InvoicePaidDetails {
+                                                      payment_hash: hex::encode(p.payment_hash),
+                                                      bolt11: p.bolt11,
+                                                  },
+                                              }).await;
+                                          }
+                                      }
+                                      Ok(None) => {
+                                          debug!("invoice stream got None");
+                                          break;
+                                      }
+                                      Err(err) => {
+                                          debug!("invoice stream got error: {:?}", err);
+                                          break;
+                                      }
+                                  }
+                         }
+
+                         _ = shutdown_receiver.changed() => {
+                          debug!("Invoice tracking task has completed");
+                          return;
+                         }
+                    }
+                }
              }
-             _  = breez_services.on_event(BreezEvent::InvoicePaid{details: InvoicePaidDetails {
-                 payment_hash: hex::encode(p.payment_hash),
-                 bolt11: p.bolt11,
-             }}).await;
-             _ = breez_services.sync().await;
-            }
-           }
-           // stream is closed, renew it
-           Ok(None) => {
-            debug!("invoice stream closed, renewing");
-            invoice_stream = breez_services.node_api.stream_incoming_payments().await?;
-           }
-           Err(err) => {
-            debug!("failed to process incoming payment {:?}", err);
-            invoice_stream = breez_services.node_api.stream_incoming_payments().await?;
-           }
-          };
-        },
-         log_message_res = log_stream.message() => {
-          match log_message_res {
-           Ok(Some(l)) => {
-            debug!("node-logs: {}", l.line);
-           },
-           // stream is closed, renew it
-           Ok(None) => {
-            //debug!("log stream closed, renewing");
-            log_stream = breez_services.node_api.stream_log_messages().await?;
-           }
-           Err(err) => {
-            debug!("failed to process log entry {:?}", err);
-            log_stream = breez_services.node_api.stream_log_messages().await?;
-           }
-          };
-         }
+         sleep(Duration::from_secs(1)).await;
         }
+     });
+    }
+
+    async fn track_logs(self: &Arc<BreezServices>, rt: &Runtime) {
+        let cloned = self.clone();
+        rt.spawn(async move {
+            let mut shutdown_receiver = cloned.shutdown_receiver.clone();
+            loop {
+                if shutdown_receiver.has_changed().map_or(true, |c| c) {
+                    return;
+                }
+                let log_stream_res = cloned.node_api.stream_log_messages().await;
+                if let Ok(mut log_stream) = log_stream_res {
+                    loop {
+                        tokio::select! {
+                         log_message_res = log_stream.message() => {
+                          match log_message_res {
+                           Ok(Some(l)) => {
+                            debug!("node-logs: {}", l.line);
+                           },
+                           // stream is closed, renew it
+                           Ok(None) => {
+                            break;
+                           }
+                           Err(err) => {
+                            debug!("failed to process log entry {:?}", err);
+                            break;
+                           }
+                          };
+                         }
+
+                         _ = shutdown_receiver.changed() => {
+                          debug!("Track logs task has completed");
+                          return;
+                         }
+                        }
+                    }
+                }
+                sleep(Duration::from_secs(1)).await;
+            }
+        });
+    }
+
+    async fn track_new_blocks(self: &Arc<BreezServices>, rt: &Runtime) {
+        let cloned = self.clone();
+        rt.spawn(async move {
+            let mut current_block: u32 = 0;
+            let mut shutdown_receiver = cloned.shutdown_receiver.clone();
+            let mut interval = tokio::time::interval(Duration::from_secs(30));
+            loop {
+                tokio::select! {
+                 _ = interval.tick() => {
+                  let tip_res = cloned.chain_service.current_tip().await;
+                  match tip_res {
+                   Ok(next_block) => {
+                    debug!("got tip {:?}", next_block);
+                    if next_block > current_block {
+                     _ = cloned.sync().await;
+                     _  = cloned.on_event(BreezEvent::NewBlock{block: next_block}).await;
+                    }
+                    current_block = next_block
+                   },
+                   Err(e) => {
+                    error!("failed to fetch next block {}", e)
+                   }
+                  };
+                 }
+
+                 _ = shutdown_receiver.changed() => {
+                  debug!("New blocks task has completed");
+                  return;
+                 }
+                }
+            }
+        });
     }
 }
 
@@ -1001,12 +1058,25 @@ impl BreezServicesBuilder {
                 backup_transport = Some(Arc::new(GLBackupTransport { inner: gl_arc }));
             }
         }
+
         if backup_transport.is_none() {
             return Err(anyhow!("state synchronizer should be provided"));
         }
 
         let unwrapped_node_api = node_api.unwrap();
         let unwrapped_backup_transport = backup_transport.unwrap();
+
+        // create the backup encryption key and then the backup watcher
+        let backup_encryption_key = unwrapped_node_api.derive_bip32_key(vec![
+            ChildNumber::from_hardened_idx(139)?,
+            ChildNumber::from(0),
+        ])?;
+        let backup_watcher = BackupWatcher::new(
+            self.config.clone(),
+            unwrapped_backup_transport.clone(),
+            persister.clone(),
+            backup_encryption_key.to_priv().to_bytes(),
+        );
 
         // breez_server provides both FiatAPI & LspAPI implementations
         let breez_server = Arc::new(BreezServer::new(
@@ -1050,9 +1120,12 @@ impl BreezServicesBuilder {
             unwrapped_node_api.clone(),
         ));
 
+        // create a shutdown channel (sender and receiver)
+        let (shutdown_sender, shutdown_receiver) = watch::channel::<()>(());
+
         // Create the node services and it them statically
         let breez_services = Arc::new(BreezServices {
-            config: self.config.clone(),
+            runtime: Arc::new(RwLock::new(None)),
             node_api: unwrapped_node_api.clone(),
             lsp_api: self.lsp_api.clone().unwrap_or_else(|| breez_server.clone()),
             fiat_api: self
@@ -1069,8 +1142,9 @@ impl BreezServicesBuilder {
             btc_send_swapper,
             payment_receiver,
             event_listener: listener,
-            backup_transport: unwrapped_backup_transport.clone(),
-            background_handler: Mutex::new(None),
+            backup_watcher: Arc::new(backup_watcher),
+            shutdown_sender,
+            shutdown_receiver,
         });
 
         Ok(breez_services)
