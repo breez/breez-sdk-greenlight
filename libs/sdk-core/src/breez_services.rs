@@ -1293,7 +1293,7 @@ impl Receiver for PaymentReceiver {
         parsed_invoice = parse_invoice(&signed_invoice_with_hint)?;
 
         // register the payment at the lsp if needed
-        if destination_invoice_amount_sats < amount_sats {
+        if open_channel_needed {
             info!("Registering payment with LSP");
             self.lsp
                 .register_payment(
