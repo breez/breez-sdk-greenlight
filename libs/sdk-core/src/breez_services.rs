@@ -1574,7 +1574,6 @@ pub(crate) mod tests {
     async fn test_buy_bitcoin_with_moonpay() -> Result<(), Box<dyn std::error::Error>> {
         let breez_services = breez_services().await?;
         breez_services.sync().await?;
-        // TODO: Pick default opening_fee_params from LSPInformation
         let moonpay_url = breez_services
             .buy_bitcoin(BuyBitcoinProvider::Moonpay, None)
             .await?;
@@ -1610,6 +1609,7 @@ pub(crate) mod tests {
         let persister = Arc::new(create_test_persister(test_config.clone()));
         persister.init()?;
         persister.insert_or_update_payments(&known_payments)?;
+        persister.set_lsp_id(MockBreezServer {}.lsp_id())?;
 
         let mut builder = BreezServicesBuilder::new(test_config.clone());
         let breez_services = builder

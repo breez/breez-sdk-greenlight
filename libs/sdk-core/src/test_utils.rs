@@ -475,7 +475,7 @@ impl MockBreezServer {
 impl LspAPI for MockBreezServer {
     async fn list_lsps(&self, _node_pubkey: String) -> Result<Vec<LspInformation>> {
         Ok(vec![LspInformation {
-            id: "1".to_string(),
+            id: self.lsp_id(),
             name: "test lsp".to_string(),
             widget_url: "".to_string(),
             pubkey: self.lsp_pub_key(),
@@ -490,8 +490,11 @@ impl LspAPI for MockBreezServer {
             lsp_pubkey: hex::decode(self.lsp_pub_key()).unwrap(),
             max_inactive_duration: 3600,
             channel_minimum_fee_msat: 1,
-            opening_fee_params_menu: OpeningFeeParamsMenu::try_from(vec![get_test_ofp(
-                10, 12, true,
+            // Initialize menu with one Fee Param that is valid for >48h
+            // This way, it can be used in both kinds of tests (those that need the cheapest fee,
+            // as well as those with the longest valid fee)
+            opening_fee_params_menu: OpeningFeeParamsMenu::try_from(vec![get_test_ofp_48h(
+                10, 12,
             )])?,
         }])
     }
@@ -634,16 +637,35 @@ fn sign_invoice(invoice: RawInvoice) -> String {
         .to_string()
 }
 
+/// [OpeningFeeParams] that are valid for more than 48h
+pub(crate) fn get_test_ofp_48h(min_msat: u64, proportional: u32) -> crate::grpc::OpeningFeeParams {
+    get_test_ofp_generic(min_msat, proportional, true, chrono::Duration::days(3))
+}
+
+/// [OpeningFeeParams] with 1 minute in the future or the past
 pub(crate) fn get_test_ofp(
     min_msat: u64,
     proportional: u32,
     future_or_past: bool,
 ) -> crate::grpc::OpeningFeeParams {
+    get_test_ofp_generic(
+        min_msat,
+        proportional,
+        future_or_past,
+        chrono::Duration::seconds(60),
+    )
+}
+
+pub(crate) fn get_test_ofp_generic(
+    min_msat: u64,
+    proportional: u32,
+    future_or_past: bool,
+    duration: chrono::Duration,
+) -> crate::grpc::OpeningFeeParams {
     let now = Utc::now();
-    let one_min = chrono::Duration::seconds(60);
     let date_time = match future_or_past {
-        true => now.checked_add_signed(one_min).unwrap(),
-        false => now.checked_sub_signed(one_min).unwrap(),
+        true => now.checked_add_signed(duration).unwrap(),
+        false => now.checked_sub_signed(duration).unwrap(),
     };
     let formatted = format!("{}", date_time.format(OPENING_FEE_PARAMS_DATETIME_FORMAT));
 
