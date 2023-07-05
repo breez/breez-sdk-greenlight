@@ -148,7 +148,7 @@ In the tests directory there are some small scripts with some examples on how to
   * Swift `tests/bindings/test_breez-sdk.swift`  
   * C# `tests/bindings/test_breez_sdk.cs`
   * Go `tests/bindings/golang/test_breez_sdk.go`
-  * Python `tests/bindings/golang/test_breez_sdk.py`
+  * Python `tests/bindings/test_breez_sdk.py`
 
 If you want to try them out, you will need:
 
