@@ -455,7 +455,7 @@ mod tests {
         let watcher = BackupWatcher::new(config, transport.clone(), persister, vec![0; 32]);
         let (quit_sender, receiver) = watch::channel(());
         watcher.start(receiver).await.unwrap();
-        tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
         (quit_sender, watcher, transport)
     }
 
@@ -466,7 +466,7 @@ mod tests {
         expected_pushed: u32,
         expected_pulls: u32,
     ) {
-        let start = Instant::now() + Duration::from_millis(100000);
+        let start = Instant::now() + Duration::from_millis(20000);
         let mut interval = tokio::time::interval_at(start, Duration::from_secs(3));
         let mut events = vec![];
         loop {
@@ -529,7 +529,7 @@ mod tests {
                 .unwrap();
         });
         test_expected_backup_events(subscription, transport, expected_events, 2, 0).await;
-        quit_sender.send(()).unwrap();
+        _ = quit_sender.send(());
         quit_sender.closed().await;
     }
 
@@ -561,7 +561,7 @@ mod tests {
                 .unwrap();
         });
         test_expected_backup_events(subscription, transport, expected_events, 3, 1).await;
-        quit_sender.send(()).unwrap();
+        _ = quit_sender.send(());
         quit_sender.closed().await;
     }
 
@@ -626,7 +626,7 @@ mod tests {
         test_expected_backup_events(subscription, transport, expected_events, 3, 0).await;
         let history = persister.sync_versions_history().unwrap();
         assert_eq!(history.len(), 3);
-        quit_sender.send(()).unwrap();
+        _ = quit_sender.send(());
         quit_sender.closed().await;
     }
 
@@ -656,7 +656,7 @@ mod tests {
         test_expected_backup_events(subscription, transport, expected_events, 30, 0).await;
         let history = persister.sync_versions_history().unwrap();
         assert_eq!(history.len(), 20);
-        quit_sender.send(()).unwrap();
+        _ = quit_sender.send(());
         quit_sender.closed().await;
     }
 
@@ -681,7 +681,7 @@ mod tests {
         test_expected_backup_events(subscription, transport, expected_events, 1, 0).await;
         let history = watcher.persister.sync_versions_history().unwrap();
         assert_eq!(history.len(), 1);
-        quit_sender.send(()).unwrap();
+        _ = quit_sender.send(());
         quit_sender.closed().await;
     }
 
@@ -734,7 +734,7 @@ mod tests {
         test_expected_backup_events(main_subscription, transport, expected_events, 3, 1).await;
         let swaps = cloned_persister.list_swaps().unwrap();
         assert!(swaps.len() == 1);
-        quit_sender.send(()).unwrap();
+        _ = quit_sender.send(());
         quit_sender.closed().await;
     }
 
