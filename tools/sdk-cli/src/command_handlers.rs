@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use anyhow::Error;
 use anyhow::{anyhow, Result};
-use breez_sdk_core::Config;
+use breez_sdk_core::{Config, ReceivePaymentRequestData};
 use breez_sdk_core::InputType::{LnUrlAuth, LnUrlWithdraw};
 use breez_sdk_core::{
     parse, BreezEvent, BreezServices, EventListener, GreenlightCredentials, InputType::LnUrlPay,
@@ -136,13 +136,18 @@ pub(crate) async fn handle_command(
             .map(|res| serde_json::to_string_pretty(&res))?
             .map_err(|e| e.into()),
         Commands::ReceivePayment {
-            amount,
+            amount: amount_sats,
             description,
         } => {
-            let invoice = sdk()?.receive_payment(amount, description).await?;
+            let invoice = sdk()?.receive_payment(ReceivePaymentRequestData {
+                amount_sats,
+                description,
+                preimage: None,
+                opening_fee_params: None,
+            }).await?;
             let mut result = serde_json::to_string(&invoice)?;
             result.push('\n');
-            result.push_str(&build_qr_text(&invoice.bolt11));
+            result.push_str(&build_qr_text(&invoice.ln_invoice.bolt11));
             Ok(result)
         }
         Commands::SendOnchain {
@@ -236,7 +241,7 @@ pub(crate) async fn handle_command(
             serde_json::to_string_pretty(&sdk()?.recommended_fees().await?).map_err(|e| e.into())
         }
         Commands::ReceiveOnchain {} => {
-            serde_json::to_string_pretty(&sdk()?.receive_onchain().await?).map_err(|e| e.into())
+            serde_json::to_string_pretty(&sdk()?.receive_onchain(None).await?).map_err(|e| e.into())
         }
         Commands::InProgressSwap {} => {
             serde_json::to_string_pretty(&sdk()?.in_progress_swap().await?).map_err(|e| e.into())
@@ -327,7 +332,7 @@ pub(crate) async fn handle_command(
                 .map_err(|e| e.into())
         }
         Commands::BuyBitcoin { provider } => {
-            let res = sdk()?.buy_bitcoin(provider.clone()).await?;
+            let res = sdk()?.buy_bitcoin(provider.clone(), None).await?;
             Ok(format!("Here your {:?} url: {}", provider, res))
         }
         Commands::Backup {} => {
