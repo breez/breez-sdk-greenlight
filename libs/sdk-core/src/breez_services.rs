@@ -790,7 +790,7 @@ impl BreezServices {
         loop {
             if shutdown_receiver.has_changed().map_or(true, |c| c) {
                 return;
-            }
+            }            
             let invoice_stream_res = cloned.node_api.stream_incoming_payments().await;
             if let Ok(mut invoice_stream) = invoice_stream_res {
                 loop {
