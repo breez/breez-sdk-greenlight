@@ -1189,8 +1189,8 @@ checksum = "ad0a93d233ebf96623465aad4046a8d3aa4da22d4f4beba5388838c8a434bbb4"
 
 [[package]]
 name = "gl-client"
-version = "0.1.8"
-source = "git+https://github.com/Blockstream/greenlight.git?rev=0980176#09801760b3ebc61ef477473dc3949cb455f1ca88"
+version = "0.1.9"
+source = "git+https://github.com/Blockstream/greenlight.git?rev=2eabad561ef8d0c42b3bf190a94c9fd9ae303eb6#2eabad561ef8d0c42b3bf190a94c9fd9ae303eb6"
 dependencies = [
  "anyhow",
  "base64 0.21.2",
