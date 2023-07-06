@@ -170,11 +170,20 @@ pub async fn parse(input: &str) -> Result<InputType> {
         return Ok(Bolt11 { invoice });
     }
 
+    // Public key serialized in compressed form (66 hex chars)
     if let Ok(_node_id) = bitcoin::secp256k1::PublicKey::from_str(input) {
-        // Public key serialized in compressed form
         return Ok(NodeId {
             node_id: input.into(),
         });
+    }
+
+    // Possible Node URI (check for separator symbol, try to parse pubkey, ignore rest)
+    if let Some('@') = input.chars().nth(66) {
+        if let Ok(_node_id) = bitcoin::secp256k1::PublicKey::from_str(&input[..66]) {
+            return Ok(NodeId {
+                node_id: input.into(),
+            });
+        }
     }
 
     if let Ok(url) = reqwest::Url::parse(input) {
@@ -780,6 +789,46 @@ mod tests {
         );
         assert!(parse("0123456789").await.is_err());
         assert!(parse("abcdefghij").await.is_err());
+
+        // Plain Node ID
+        assert!(
+            parse("03864ef025fde8fb587d989186ce6a4a186895ee44a926bfc370e2c366597a3f8f")
+                .await
+                .is_ok()
+        );
+        // Plain Node ID (66 hex chars) with @ separator and any string afterwards
+        assert!(
+            parse("03864ef025fde8fb587d989186ce6a4a186895ee44a926bfc370e2c366597a3f8f@")
+                .await
+                .is_ok()
+        );
+        assert!(parse(
+            "03864ef025fde8fb587d989186ce6a4a186895ee44a926bfc370e2c366597a3f8f@sdfsffs"
+        )
+        .await
+        .is_ok());
+        assert!(parse(
+            "03864ef025fde8fb587d989186ce6a4a186895ee44a926bfc370e2c366597a3f8f@1.2.3.4:1234"
+        )
+        .await
+        .is_ok());
+
+        // Invalid Node ID (66 chars ending in non-hex-chars) with @ separator and any string afterwards -> invalid
+        assert!(
+            parse("03864ef025fde8fb587d989186ce6a4a186895ee44a926bfc370e2c366597a3zzz@")
+                .await
+                .is_err()
+        );
+        assert!(parse(
+            "03864ef025fde8fb587d989186ce6a4a186895ee44a926bfc370e2c366597a3zzz@sdfsffs"
+        )
+        .await
+        .is_err());
+        assert!(parse(
+            "03864ef025fde8fb587d989186ce6a4a186895ee44a926bfc370e2c366597a3zzz@1.2.3.4:1234"
+        )
+        .await
+        .is_err());
 
         Ok(())
     }
