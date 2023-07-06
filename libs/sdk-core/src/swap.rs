@@ -126,12 +126,27 @@ impl BTCReceiveSwap {
         Ok(())
     }
 
-    /// Create a [SwapInfo] that represents the details of an on-going swap.
-    ///
-    /// See [SwapInfo] for details.
+    /// Create a [SwapInfo] that represents the details of an on-going swap
     pub(crate) async fn create_swap_address(
         &self,
         channel_opening_fees: OpeningFeeParams,
+    ) -> Result<SwapInfo> {
+        self.create_swap_address_common(Some(channel_opening_fees))
+            .await
+    }
+
+    /// Create a [SwapInfo] with no dynamic fees.
+    ///
+    /// Only used internally to test backward compatibility with swaps created before dynamic fees were introduced.
+    async fn create_swap_address_backwards_compatibility(&self) -> Result<SwapInfo> {
+        self.create_swap_address_common(None).await
+    }
+
+    /// Generic variant of the method, that allows creating swaps without dynamic fees (for backward
+    /// compatibility tests), and with dynamic fees
+    async fn create_swap_address_common(
+        &self,
+        channel_opening_fees: Option<OpeningFeeParams>,
     ) -> Result<SwapInfo> {
         let node_state = self.persister.get_node_state()?;
         if node_state.is_none() {
@@ -193,14 +208,12 @@ impl BTCReceiveSwap {
             min_allowed_deposit: swap_reply.min_allowed_deposit,
             max_allowed_deposit: swap_reply.max_allowed_deposit,
             last_redeem_error: None,
-            channel_opening_fees: Some(channel_opening_fees),
+            channel_opening_fees,
         };
 
         // persist the address
         self.persister.insert_swap(swap_info.clone())?;
         Ok(swap_info)
-
-        // return swap.bitcoinAddress;
     }
 
     fn list_unused(&self) -> Result<Vec<SwapInfo>> {
@@ -395,7 +408,7 @@ impl BTCReceiveSwap {
                     amount_sats: swap_info.confirmed_sats,
                     description: String::from("Bitcoin Transfer"),
                     preimage: Some(swap_info.preimage),
-                    opening_fee_params: None,
+                    opening_fee_params: swap_info.channel_opening_fees,
                 })
                 .await?
                 .ln_invoice;
@@ -636,7 +649,7 @@ fn create_refund_tx(
 mod tests {
     use std::{sync::Arc, vec};
 
-    use anyhow::Result;
+    use anyhow::{anyhow, Result};
     use bitcoin::hashes::{hex::FromHex, sha256};
     use bitcoin::{
         secp256k1::{Message, PublicKey, Secp256k1, SecretKey},
@@ -788,24 +801,52 @@ mod tests {
         Ok(())
     }
 
+    // Generic test, from which we run parametrized tests to cover all 4 possible combinations of the args
+    // - create_swap_with_fee_params: if None, simulates a swap created before introducing the dynamic fees; otherwise sets dynamic fees
+    // - require_new_channel: flag that decides whether or not a scenario is tested where the swap payment requires a new channel
+    //
+    // Steps:
     // 1. User sent funds to swap address
     // 2. Funds are redeemed in lightning transaction
     // Swap paid amount is updated and no longer redeemable.
-    #[tokio::test]
-    async fn test_redeem_swap() -> Result<()> {
+    async fn test_redeem_swap_common(
+        create_swap_with_fee_params: Option<OpeningFeeParams>,
+        require_new_channel: bool,
+    ) -> Result<()> {
+        let get_test_amount =
+            |persister: Arc<SqliteStorage>, should_require_new_channel: bool| -> Result<u64> {
+                match should_require_new_channel {
+                    true => {
+                        let node_state = persister
+                            .get_node_state()?
+                            .ok_or("Failed to retrieve node state")
+                            .map_err(|err| anyhow!(err))?;
+
+                        Ok(node_state.inbound_liquidity_msats + 5000)
+                    }
+                    false => Ok(5000),
+                }
+            };
+
         let chain_service = Arc::new(MockChainService::default());
         let (mut swapper, persister) = create_swapper(chain_service.clone())?;
-        let swap_info = swapper
-            .create_swap_address(get_test_ofp(10, 10, true).into())
-            .await?;
+        let swap_info = match create_swap_with_fee_params {
+            Some(ofp) => swapper.create_swap_address(ofp).await?,
+            None => {
+                swapper
+                    .create_swap_address_backwards_compatibility()
+                    .await?
+            }
+        };
 
         // add a payment with the same hash and test that the swapper updates the paid_amount for
         // the swap.
+        let payment_amount_msat = get_test_amount(persister.clone(), require_new_channel)?;
         let payment = Payment {
             id: hex::encode(swap_info.payment_hash.clone()),
             payment_type: PaymentType::Received,
             payment_time: 0,
-            amount_msat: 5000,
+            amount_msat: payment_amount_msat,
             fee_msat: 0,
             pending: false,
             description: Some("desc".to_string()),
@@ -844,7 +885,7 @@ mod tests {
         );
 
         assert_eq!(swap.confirmed_sats, 50000);
-        assert_eq!(swap.paid_sats, 5000);
+        assert_eq!(swap.paid_sats, payment_amount_msat);
 
         assert_eq!(swapper.list_redeemables().unwrap().len(), 0);
         assert_eq!(swapper.list_refundables().unwrap().len(), 0);
@@ -866,6 +907,23 @@ mod tests {
             .get_swap_info(swap_info.clone().bitcoin_address)?
             .unwrap();
         assert_eq!(swap.paid_sats, 2000);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_redeem_swap_parametrized() -> Result<()> {
+        // Create swaps with dynamic fees
+        dbg!("Testing swap created with dynamic fees, needing a new channel");
+        test_redeem_swap_common(Some(get_test_ofp(10, 10, true).into()), true).await?;
+        dbg!("Testing swap created with dynamic fees, not needing a new channel");
+        test_redeem_swap_common(Some(get_test_ofp(10, 10, true).into()), false).await?;
+
+        // Backward compatibility: redeem a swap created without dynamic fees
+        dbg!("Testing swap created without dynamic fees, needing a new channel");
+        test_redeem_swap_common(None, true).await?;
+        dbg!("Testing swap created without dynamic fees, not needing a new channel");
+        test_redeem_swap_common(None, false).await?;
 
         Ok(())
     }
