@@ -7,47 +7,8 @@ pub extern "C" fn wire_initialized(port_: i64) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_register_node(
-    port_: i64,
-    network: i32,
-    seed: *mut wire_uint_8_list,
-    config: *mut wire_Config,
-    register_credentials: *mut wire_GreenlightCredentials,
-    invite_code: *mut wire_uint_8_list,
-) {
-    wire_register_node_impl(
-        port_,
-        network,
-        seed,
-        config,
-        register_credentials,
-        invite_code,
-    )
-}
-
-#[no_mangle]
-pub extern "C" fn wire_recover_node(
-    port_: i64,
-    network: i32,
-    seed: *mut wire_uint_8_list,
-    config: *mut wire_Config,
-) {
-    wire_recover_node_impl(port_, network, seed, config)
-}
-
-#[no_mangle]
-pub extern "C" fn wire_init_services(
-    port_: i64,
-    config: *mut wire_Config,
-    seed: *mut wire_uint_8_list,
-    creds: *mut wire_GreenlightCredentials,
-) {
-    wire_init_services_impl(port_, config, seed, creds)
-}
-
-#[no_mangle]
-pub extern "C" fn wire_start_node(port_: i64) {
-    wire_start_node_impl(port_)
+pub extern "C" fn wire_connect(port_: i64, config: *mut wire_Config, seed: *mut wire_uint_8_list) {
+    wire_connect_impl(port_, config, seed)
 }
 
 #[no_mangle]
@@ -264,8 +225,13 @@ pub extern "C" fn wire_recommended_fees(port_: i64) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_default_config(port_: i64, config_type: i32) {
-    wire_default_config_impl(port_, config_type)
+pub extern "C" fn wire_default_config(
+    port_: i64,
+    env_type: i32,
+    api_key: *mut wire_uint_8_list,
+    node_config: *mut wire_NodeConfig,
+) {
+    wire_default_config_impl(port_, env_type, api_key, node_config)
 }
 
 #[no_mangle]
@@ -296,6 +262,11 @@ pub extern "C" fn new_box_autoadd_greenlight_credentials_0() -> *mut wire_Greenl
 }
 
 #[no_mangle]
+pub extern "C" fn new_box_autoadd_greenlight_node_config_0() -> *mut wire_GreenlightNodeConfig {
+    support::new_leak_box_ptr(wire_GreenlightNodeConfig::new_with_null_ptr())
+}
+
+#[no_mangle]
 pub extern "C" fn new_box_autoadd_i64_0(value: i64) -> *mut i64 {
     support::new_leak_box_ptr(value)
 }
@@ -314,6 +285,11 @@ pub extern "C" fn new_box_autoadd_ln_url_pay_request_data_0() -> *mut wire_LnUrl
 pub extern "C" fn new_box_autoadd_ln_url_withdraw_request_data_0(
 ) -> *mut wire_LnUrlWithdrawRequestData {
     support::new_leak_box_ptr(wire_LnUrlWithdrawRequestData::new_with_null_ptr())
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_autoadd_node_config_0() -> *mut wire_NodeConfig {
+    support::new_leak_box_ptr(wire_NodeConfig::new_with_null_ptr())
 }
 
 #[no_mangle]
@@ -352,6 +328,12 @@ impl Wire2Api<GreenlightCredentials> for *mut wire_GreenlightCredentials {
         Wire2Api::<GreenlightCredentials>::wire2api(*wrap).into()
     }
 }
+impl Wire2Api<GreenlightNodeConfig> for *mut wire_GreenlightNodeConfig {
+    fn wire2api(self) -> GreenlightNodeConfig {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<GreenlightNodeConfig>::wire2api(*wrap).into()
+    }
+}
 impl Wire2Api<i64> for *mut i64 {
     fn wire2api(self) -> i64 {
         unsafe { *support::box_from_leak_ptr(self) }
@@ -375,6 +357,12 @@ impl Wire2Api<LnUrlWithdrawRequestData> for *mut wire_LnUrlWithdrawRequestData {
         Wire2Api::<LnUrlWithdrawRequestData>::wire2api(*wrap).into()
     }
 }
+impl Wire2Api<NodeConfig> for *mut wire_NodeConfig {
+    fn wire2api(self) -> NodeConfig {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<NodeConfig>::wire2api(*wrap).into()
+    }
+}
 impl Wire2Api<u64> for *mut u64 {
     fn wire2api(self) -> u64 {
         unsafe { *support::box_from_leak_ptr(self) }
@@ -392,6 +380,7 @@ impl Wire2Api<Config> for wire_Config {
             default_lsp_id: self.default_lsp_id.wire2api(),
             api_key: self.api_key.wire2api(),
             maxfee_percent: self.maxfee_percent.wire2api(),
+            node_config: self.node_config.wire2api(),
         }
     }
 }
@@ -401,6 +390,14 @@ impl Wire2Api<GreenlightCredentials> for wire_GreenlightCredentials {
         GreenlightCredentials {
             device_key: self.device_key.wire2api(),
             device_cert: self.device_cert.wire2api(),
+        }
+    }
+}
+impl Wire2Api<GreenlightNodeConfig> for wire_GreenlightNodeConfig {
+    fn wire2api(self) -> GreenlightNodeConfig {
+        GreenlightNodeConfig {
+            partner_credentials: self.partner_credentials.wire2api(),
+            invite_code: self.invite_code.wire2api(),
         }
     }
 }
@@ -440,6 +437,21 @@ impl Wire2Api<LnUrlWithdrawRequestData> for wire_LnUrlWithdrawRequestData {
     }
 }
 
+impl Wire2Api<NodeConfig> for wire_NodeConfig {
+    fn wire2api(self) -> NodeConfig {
+        match self.tag {
+            0 => unsafe {
+                let ans = support::box_from_leak_ptr(self.kind);
+                let ans = support::box_from_leak_ptr(ans.Greenlight);
+                NodeConfig::Greenlight {
+                    config: ans.config.wire2api(),
+                }
+            },
+            _ => unreachable!(),
+        }
+    }
+}
+
 impl Wire2Api<Vec<u8>> for *mut wire_uint_8_list {
     fn wire2api(self) -> Vec<u8> {
         unsafe {
@@ -461,6 +473,7 @@ pub struct wire_Config {
     default_lsp_id: *mut wire_uint_8_list,
     api_key: *mut wire_uint_8_list,
     maxfee_percent: f64,
+    node_config: wire_NodeConfig,
 }
 
 #[repr(C)]
@@ -468,6 +481,13 @@ pub struct wire_Config {
 pub struct wire_GreenlightCredentials {
     device_key: *mut wire_uint_8_list,
     device_cert: *mut wire_uint_8_list,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_GreenlightNodeConfig {
+    partner_credentials: *mut wire_GreenlightCredentials,
+    invite_code: *mut wire_uint_8_list,
 }
 
 #[repr(C)]
@@ -508,6 +528,24 @@ pub struct wire_uint_8_list {
     len: i32,
 }
 
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_NodeConfig {
+    tag: i32,
+    kind: *mut NodeConfigKind,
+}
+
+#[repr(C)]
+pub union NodeConfigKind {
+    Greenlight: *mut wire_NodeConfig_Greenlight,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_NodeConfig_Greenlight {
+    config: *mut wire_GreenlightNodeConfig,
+}
+
 // Section: impl NewWithNullPtr
 
 pub trait NewWithNullPtr {
@@ -531,6 +569,7 @@ impl NewWithNullPtr for wire_Config {
             default_lsp_id: core::ptr::null_mut(),
             api_key: core::ptr::null_mut(),
             maxfee_percent: Default::default(),
+            node_config: Default::default(),
         }
     }
 }
@@ -551,6 +590,21 @@ impl NewWithNullPtr for wire_GreenlightCredentials {
 }
 
 impl Default for wire_GreenlightCredentials {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_GreenlightNodeConfig {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            partner_credentials: core::ptr::null_mut(),
+            invite_code: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_GreenlightNodeConfig {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }
@@ -609,6 +663,30 @@ impl Default for wire_LnUrlWithdrawRequestData {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }
+}
+
+impl Default for wire_NodeConfig {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_NodeConfig {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            tag: -1,
+            kind: core::ptr::null_mut(),
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn inflate_NodeConfig_Greenlight() -> *mut NodeConfigKind {
+    support::new_leak_box_ptr(NodeConfigKind {
+        Greenlight: support::new_leak_box_ptr(wire_NodeConfig_Greenlight {
+            config: core::ptr::null_mut(),
+        }),
+    })
 }
 
 // Section: sync execution mode utility

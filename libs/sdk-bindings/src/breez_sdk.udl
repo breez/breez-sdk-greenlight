@@ -30,6 +30,16 @@ dictionary GreenlightCredentials {
     sequence<u8> device_cert;
 };
 
+dictionary GreenlightNodeConfig {
+    GreenlightCredentials? partner_credentials;
+    string? invite_code;
+};
+
+[Enum]
+interface NodeConfig {
+ Greenlight(GreenlightNodeConfig config);
+};
+
 dictionary Config {
     string breezserver;
     string mempoolspace_url;
@@ -39,6 +49,7 @@ dictionary Config {
     string? default_lsp_id;
     string? api_key;
     f64 maxfee_percent;
+    NodeConfig node_config;
 };
 
 dictionary RouteHint {
@@ -393,12 +404,10 @@ enum BuyBitcoinProvider {
     "Moonpay",
 };
 
-interface BlockingBreezServices {
-   [Throws=SDKError]
-   void start();
+interface BlockingBreezServices {   
 
    [Throws=SDKError]
-   void stop();
+   void disconnect();
 
    [Throws=SDKError]
    Payment send_payment(string bolt11, u64? amount_sats);
@@ -491,16 +500,10 @@ interface BlockingBreezServices {
    string buy_bitcoin(BuyBitcoinProvider provider);
 };
 
-namespace breez_sdk { 
- 
- [Throws=SDKError]
- GreenlightCredentials register_node(Network network, sequence<u8> seed, GreenlightCredentials? register_credentials, string? invite_code);
+namespace breez_sdk {  
 
  [Throws=SDKError]
- GreenlightCredentials recover_node(Network network, sequence<u8> seed);
-
- [Throws=SDKError]
- BlockingBreezServices init_services(Config config, sequence<u8> seed, GreenlightCredentials creds, EventListener listener);
+ BlockingBreezServices connect(Config config, sequence<u8> seed, EventListener listener);
 
  [Throws=SDKError]
  void set_log_stream(LogStream log_stream);
@@ -514,5 +517,5 @@ namespace breez_sdk {
  [Throws=SDKError]
  sequence<u8> mnemonic_to_seed(string phrase);
 
- Config default_config(EnvironmentType env_type);
+ Config default_config(EnvironmentType env_type, string api_key, NodeConfig node_config);
 };

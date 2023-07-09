@@ -3,11 +3,13 @@ use crate::models::{
     Config, GreenlightCredentials, LnPaymentDetails, Network, NodeAPI, NodeState, PaymentDetails,
     PaymentType, SyncResponse, UnspentTransactionOutput,
 };
-use crate::{Channel, ChannelState};
+use crate::persist::db::SqliteStorage;
+use crate::{Channel, ChannelState, NodeConfig};
 
 use anyhow::{anyhow, Result};
 use bitcoin::bech32::{u5, ToBase32};
 use bitcoin::secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
+use ecies::utils::{aes_decrypt, aes_encrypt};
 use gl_client::pb::amount::Unit;
 
 use gl_client::pb::cln::{
@@ -29,6 +31,7 @@ use lightning_invoice::{RawInvoice, SignedRawInvoice};
 use serde::{Deserialize, Serialize};
 use std::cmp::{max, min};
 use std::str::FromStr;
+use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use strum_macros::{Display, EnumString};
 use tokio::sync::{mpsc, Mutex};
@@ -45,13 +48,104 @@ pub(crate) struct Greenlight {
 }
 
 impl Greenlight {
-    pub(crate) async fn new(
+    /// Connects to a live node using the provided seed and config.
+    /// If the node is not registered, it will try to recover it using the seed.
+    /// If the node is not created, it will register it using the provided partner credentials
+    /// or invite code
+    /// If the node is already registered and an existing credentials were found, it will try to
+    /// connect to the node using these credentials.    
+    pub async fn connect(
+        config: Config,
+        seed: Vec<u8>,
+        persister: Arc<SqliteStorage>,
+    ) -> Result<Self> {
+        // Derive the encryption key from the seed
+        let signer = Signer::new(seed.clone(), config.network.into(), TlsConfig::new()?)?;
+        let encryption_key = Self::derive_bip32_key(
+            config.network,
+            &signer,
+            vec![ChildNumber::from_hardened_idx(140)?, ChildNumber::from(0)],
+        )?
+        .to_priv()
+        .to_bytes();
+        let encryption_key_slice = encryption_key.as_slice();
+
+        let register_credentials = match config.node_config.clone() {
+            NodeConfig::Greenlight { config } => config,
+        };
+
+        // query for the existing credentials
+        let credentials = persister.get_gl_credentials()?;
+        let parsed_credentials: Result<GreenlightCredentials> = match credentials {
+            // In case we found existing credentials, try to decrypt them and connect to the node
+            Some(creds) => {
+                let decrypted_credentials = aes_decrypt(encryption_key_slice, creds.as_slice());
+                match decrypted_credentials {
+                    Some(creds) => {
+                        let built_credentials: GreenlightCredentials =
+                            serde_json::from_slice(creds.as_slice())?;
+                        info!("Initializing greenligihth from existing credentials");
+                        Ok(built_credentials)
+                    }
+                    None => {
+                        return Err(anyhow!(
+                            "Failed to decrypt credentials, seed doesn't match existing node"
+                        ));
+                    }
+                }
+            }
+            // In case no credentials were found, try to recover the node
+            None => {
+                info!("No credentials found, trying to recover existing node");
+                let recovered = Self::recover(config.network, seed.clone()).await;
+                match recovered {
+                    Ok(creds) => Ok(creds),
+                    Err(_) => {
+                        // If we got here it means we failed to recover so we need to register a new node
+                        info!("Failed to recover node, registering new one");
+                        let credentials = Self::register(
+                            config.clone().network,
+                            seed.clone(),
+                            register_credentials.partner_credentials,
+                            register_credentials.invite_code,
+                        )
+                        .await?;
+                        Ok(credentials)
+                    }
+                }
+            }
+        };
+
+        // Persist the connection credentials for future use and return the node instance
+        let res = match parsed_credentials {
+            Ok(creds) => {
+                let json_creds = serde_json::to_string(&creds)?.as_bytes().to_vec();
+                let encryptd_creds = aes_encrypt(encryption_key_slice, json_creds.as_slice());
+                match encryptd_creds {
+                    Some(c) => {
+                        persister.set_gl_credentials(c)?;
+                        Greenlight::new(config, seed, creds).await
+                    }
+                    None => {
+                        return Err(anyhow!("Failed to encrypt credentials"));
+                    }
+                }
+            }
+            Err(_) => Err(anyhow!("Failed to get gl credentials")),
+        };
+        res
+    }
+
+    async fn new(
         sdk_config: Config,
         seed: Vec<u8>,
-        creds: GreenlightCredentials,
+        connection_credentials: GreenlightCredentials,
     ) -> Result<Greenlight> {
         let greenlight_network = sdk_config.network.into();
-        let tls_config = TlsConfig::new()?.identity(creds.device_cert, creds.device_key);
+        let tls_config = TlsConfig::new()?.identity(
+            connection_credentials.device_cert,
+            connection_credentials.device_key,
+        );
         let signer = Signer::new(seed, greenlight_network, tls_config.clone())?;
         Ok(Greenlight {
             sdk_config,
@@ -61,7 +155,17 @@ impl Greenlight {
         })
     }
 
-    pub(crate) async fn register(
+    fn derive_bip32_key(
+        network: Network,
+        signer: &Signer,
+        path: Vec<ChildNumber>,
+    ) -> Result<ExtendedPrivKey> {
+        ExtendedPrivKey::new_master(network.into(), &signer.bip32_ext_key())?
+            .derive_priv(&Secp256k1::new(), &path)
+            .map_err(|e| anyhow!(e))
+    }
+
+    async fn register(
         network: Network,
         seed: Vec<u8>,
         register_credentials: Option<GreenlightCredentials>,
@@ -96,7 +200,7 @@ impl Greenlight {
         })
     }
 
-    pub(crate) async fn recover(network: Network, seed: Vec<u8>) -> Result<GreenlightCredentials> {
+    async fn recover(network: Network, seed: Vec<u8>) -> Result<GreenlightCredentials> {
         let greenlight_network = network.into();
         let tls_config = TlsConfig::new()?;
         let signer = Signer::new(seed, greenlight_network, tls_config.clone())?;
@@ -580,9 +684,7 @@ impl NodeAPI for Greenlight {
     }
 
     fn derive_bip32_key(&self, path: Vec<ChildNumber>) -> Result<ExtendedPrivKey> {
-        ExtendedPrivKey::new_master(self.sdk_config.network.into(), &self.signer.bip32_ext_key())?
-            .derive_priv(&Secp256k1::new(), &path)
-            .map_err(|e| anyhow!(e))
+        Self::derive_bip32_key(self.sdk_config.network, &self.signer, path)
     }
 }
 

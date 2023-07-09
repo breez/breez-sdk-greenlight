@@ -20,9 +20,8 @@ use crate::lnurl::withdraw::validate_lnurl_withdraw;
 use crate::lsp::LspInformation;
 use crate::models::{
     parse_short_channel_id, ChannelState, ClosedChannelPaymentDetails, Config, EnvironmentType,
-    FiatAPI, GreenlightCredentials, LnUrlCallbackStatus, LspAPI, Network, NodeAPI, NodeState,
-    Payment, PaymentDetails, PaymentType, PaymentTypeFilter, ReverseSwapPairInfo,
-    ReverseSwapperAPI, SwapInfo, SwapperAPI,
+    FiatAPI, LnUrlCallbackStatus, LspAPI, NodeAPI, NodeState, Payment, PaymentDetails, PaymentType,
+    PaymentTypeFilter, ReverseSwapPairInfo, ReverseSwapperAPI, SwapInfo, SwapperAPI,
 };
 use crate::moonpay::MoonPayApi;
 use crate::persist::db::SqliteStorage;
@@ -113,33 +112,27 @@ pub struct BreezServices {
     shutdown_receiver: watch::Receiver<()>,
 }
 
-impl BreezServices {
-    /// Create a new node for the given network, from the given seed
-    pub async fn register_node(
-        network: Network,
-        seed: Vec<u8>,
-        register_credentials: Option<GreenlightCredentials>,
-        invite_code: Option<String>,
-    ) -> Result<GreenlightCredentials> {
-        Greenlight::register(network, seed.clone(), register_credentials, invite_code).await
-    }
-
-    /// Try to recover a previously created node
-    pub async fn recover_node(network: Network, seed: Vec<u8>) -> Result<GreenlightCredentials> {
-        Greenlight::recover(network, seed.clone()).await
-    }
-
-    /// Create and initialize the node services instance
-    pub async fn init_services(
+impl BreezServices { 
+    /// connect initialized the SDK services, schedule the node to run in the cloud and
+    /// run the signer. This must be called in order to start communicating with the node
+    ///
+    /// # Arguments
+    ///
+    /// * `config` - The sdk configuration
+    /// * `seed` - The node private key
+    /// * `event_listener` - Listener to SDK events
+    ///
+    pub async fn connect(
         config: Config,
         seed: Vec<u8>,
-        creds: GreenlightCredentials,
         event_listener: Box<dyn EventListener>,
     ) -> Result<Arc<BreezServices>> {
-        BreezServicesBuilder::new(config)
-            .greenlight_credentials(creds, seed)
+        let services = BreezServicesBuilder::new(config)
+            .seed(seed)
             .build(Some(event_listener))
-            .await
+            .await?;
+        services.start().await?;
+        Ok(services)
     }
 
     /// Starts the BreezServices background tasks for this instance.
@@ -149,7 +142,7 @@ impl BreezServices {
     ///
     /// It should be called only once when the app is started, regardless whether the app is sent to
     /// background and back.
-    pub async fn start(self: &Arc<BreezServices>) -> Result<()> {
+    async fn start(self: &Arc<BreezServices>) -> Result<()> {
         let start = Instant::now();
         let mut runtime_lock = self.runtime.write().await;
         if runtime_lock.is_some() {
@@ -169,7 +162,7 @@ impl BreezServices {
     }
 
     /// Trigger the stopping of BreezServices background threads for this instance.
-    pub async fn stop(&self) -> Result<()> {
+    pub async fn disconnect(&self) -> Result<()> {
         let runtime = self
             .runtime
             .write()
@@ -663,10 +656,14 @@ impl BreezServices {
     }
 
     /// Get the full default config for a specific environment type
-    pub fn default_config(env_type: EnvironmentType) -> Config {
+    pub fn default_config(
+        env_type: EnvironmentType,
+        api_key: String,
+        node_config: NodeConfig,
+    ) -> Config {
         match env_type {
-            EnvironmentType::Production => Config::production(),
-            EnvironmentType::Staging => Config::staging(),
+            EnvironmentType::Production => Config::production(api_key, node_config),
+            EnvironmentType::Staging => Config::staging(api_key, node_config),
         }
     }
 
@@ -940,7 +937,6 @@ struct BreezServicesBuilder {
     config: Config,
     node_api: Option<Arc<dyn NodeAPI>>,
     backup_transport: Option<Arc<dyn BackupTransport>>,
-    creds: Option<GreenlightCredentials>,
     seed: Option<Vec<u8>>,
     lsp_api: Option<Arc<dyn LspAPI>>,
     fiat_api: Option<Arc<dyn FiatAPI>>,
@@ -956,7 +952,6 @@ impl BreezServicesBuilder {
         BreezServicesBuilder {
             config,
             node_api: None,
-            creds: None,
             seed: None,
             lsp_api: None,
             fiat_api: None,
@@ -1011,12 +1006,7 @@ impl BreezServicesBuilder {
         self
     }
 
-    pub fn greenlight_credentials(
-        &mut self,
-        creds: GreenlightCredentials,
-        seed: Vec<u8>,
-    ) -> &mut Self {
-        self.creds = Some(creds);
+    pub fn seed(&mut self, seed: Vec<u8>) -> &mut Self {
         self.seed = Some(seed);
         self
     }
@@ -1025,10 +1015,8 @@ impl BreezServicesBuilder {
         &self,
         listener: Option<Box<dyn EventListener>>,
     ) -> Result<Arc<BreezServices>> {
-        if self.node_api.is_none() && (self.creds.is_none() || self.seed.is_none()) {
-            return Err(anyhow!(
-                "Either node_api or both credentials and seed should be provided"
-            ));
+        if self.node_api.is_none() && self.seed.is_none() {
+            return Err(anyhow!("Either node_api or seed should be provided"));
         }
 
         // The storage is implemented via sqlite.
@@ -1041,15 +1029,10 @@ impl BreezServicesBuilder {
         let mut node_api = self.node_api.clone();
         let mut backup_transport = self.backup_transport.clone();
         if node_api.is_none() {
-            if self.creds.is_none() || self.seed.is_none() {
-                return Err(anyhow!(
-                    "Either node_api or both credentials and seed should be provided"
-                ));
-            }
-            let greenlight = Greenlight::new(
+            let greenlight = Greenlight::connect(
                 self.config.clone(),
                 self.seed.clone().unwrap(),
-                self.creds.clone().unwrap(),
+                persister.clone(),
             )
             .await?;
             let gl_arc = Arc::new(greenlight);

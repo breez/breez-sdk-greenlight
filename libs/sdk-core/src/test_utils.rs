@@ -567,7 +567,15 @@ pub fn rand_vec_u8(len: usize) -> Vec<u8> {
 
 pub fn create_test_config() -> crate::models::Config {
     let mut conf = Config {
-        ..Config::staging()
+        ..Config::staging(
+            "".into(),
+            crate::NodeConfig::Greenlight {
+                config: crate::GreenlightNodeConfig {
+                    partner_credentials: None,
+                    invite_code: None,
+                },
+            },
+        )
     };
     conf.working_dir = get_test_working_dir();
     conf
