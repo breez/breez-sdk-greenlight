@@ -7,14 +7,14 @@ use breez_sdk_core::{
     parse_invoice as sdk_parse_invoice, AesSuccessActionDataDecrypted, BackupFailedData,
     BackupStatus, BitcoinAddressData, BreezEvent, BreezServices, BuyBitcoinProvider, ChannelState,
     ClosedChannelPaymentDetails, Config, CurrencyInfo, EnvironmentType, EventListener,
-    FeeratePreset, FiatCurrency, GreenlightCredentials, InputType, InvoicePaidDetails, LNInvoice,
-    LnPaymentDetails, LnUrlAuthRequestData, LnUrlCallbackStatus, LnUrlErrorData,
-    LnUrlPayRequestData, LnUrlPayResult, LnUrlWithdrawRequestData, LocaleOverrides, LocalizedName,
-    LogEntry, LspInformation, MessageSuccessActionData, MetadataItem, Network, NodeState, Payment,
-    PaymentDetails, PaymentFailedData, PaymentType, PaymentTypeFilter, Rate, RecommendedFees,
-    ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop,
-    SuccessActionProcessed, SwapInfo, SwapStatus, Symbol, UnspentTransactionOutput,
-    UrlSuccessActionData,NodeConfig, GreenlightNodeConfig
+    FeeratePreset, FiatCurrency, GreenlightCredentials, GreenlightNodeConfig, InputType,
+    InvoicePaidDetails, LNInvoice, LnPaymentDetails, LnUrlAuthRequestData, LnUrlCallbackStatus,
+    LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult, LnUrlWithdrawRequestData, LocaleOverrides,
+    LocalizedName, LogEntry, LspInformation, MessageSuccessActionData, MetadataItem, Network,
+    NodeConfig, NodeState, Payment, PaymentDetails, PaymentFailedData, PaymentType,
+    PaymentTypeFilter, Rate, RecommendedFees, ReverseSwapInfo, ReverseSwapPairInfo,
+    ReverseSwapStatus, RouteHint, RouteHintHop, SuccessActionProcessed, SwapInfo, SwapStatus,
+    Symbol, UnspentTransactionOutput, UrlSuccessActionData,
 };
 use log::LevelFilter;
 use log::Metadata;
@@ -71,8 +71,11 @@ impl From<anyhow::Error> for SDKError {
 }
 
 /// Create a new SDK config with default values
-pub fn default_config(env_type: EnvironmentType, api_key: String,
- node_config: NodeConfig) -> Config {
+pub fn default_config(
+    env_type: EnvironmentType,
+    api_key: String,
+    node_config: NodeConfig,
+) -> Config {
     BreezServices::default_config(env_type, api_key, node_config)
 }
 
@@ -106,7 +109,6 @@ pub struct BlockingBreezServices {
 }
 
 impl BlockingBreezServices {
-
     pub fn disconnect(&self) -> Result<()> {
         rt().block_on(self.breez_services.disconnect())
     }
