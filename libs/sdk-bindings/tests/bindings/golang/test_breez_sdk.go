@@ -1,8 +1,9 @@
 package main
 
 import (
-	"example.org/golang/breez_sdk"
 	"log"
+
+	"example.org/golang/breez_sdk"
 )
 
 type BreezListener struct{}
@@ -26,20 +27,12 @@ func main() {
 		log.Fatalf("MnemonicToSeed failed: %#v", err)
 	}
 
-	credentials, err := breez_sdk.RecoverNode(breez_sdk.NetworkBitcoin, seed)
-
-	if err != nil {
-		log.Fatalf("RecoverNode failed: %#v", err)
-	}
-
-	sdkServices, err := breez_sdk.InitServices(breez_sdk.DefaultConfig(breez_sdk.EnvironmentTypeStaging), seed, credentials, breezListener)
+	inviteCode := ""
+	config := breez_sdk.DefaultConfig(breez_sdk.EnvironmentTypeStaging, "", breez_sdk.NodeConfigGreenlight{Config: breez_sdk.GreenlightNodeConfig{PartnerCredentials: nil, InviteCode: &inviteCode}})
+	sdkServices, err := breez_sdk.Connect(config, seed, breezListener)
 
 	if err != nil {
 		log.Fatalf("InitServices failed: %#v", err)
-	}
-
-	if err := sdkServices.Start(); err != nil {
-		log.Fatalf("Start failed: %#v", err)
 	}
 
 	nodeInfo, err := sdkServices.NodeInfo()
