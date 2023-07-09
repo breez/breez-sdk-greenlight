@@ -1,8 +1,9 @@
 use std::process::Command;
 
 uniffi::build_foreign_language_testcases!(
-    // "tests/bindings/test_breez_sdk.swift",
-    "tests/bindings/test_breez_sdk.kts" // "tests/bindings/test_breez_sdk.py"
+    "tests/bindings/test_breez_sdk.swift",
+    "tests/bindings/test_breez_sdk.kts",
+    "tests/bindings/test_breez_sdk.py"
 );
 
 #[test]

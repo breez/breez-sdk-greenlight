@@ -27,7 +27,7 @@ func main() {
 		log.Fatalf("MnemonicToSeed failed: %#v", err)
 	}
 
-	inviteCode := ""
+	inviteCode := "code"
 	config := breez_sdk.DefaultConfig(breez_sdk.EnvironmentTypeStaging, "", breez_sdk.NodeConfigGreenlight{Config: breez_sdk.GreenlightNodeConfig{PartnerCredentials: nil, InviteCode: &inviteCode}})
 	sdkServices, err := breez_sdk.Connect(config, seed, breezListener)
 
