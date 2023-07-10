@@ -270,7 +270,7 @@ impl BlockingBreezServices {
             .map_err(|e| e.into())
     }
 
-    /// list non-completed expired swaps that should be refunded bu calling [BreezServices::refund]
+    /// list non-completed expired swaps that should be refunded by calling [BreezServices::refund]
     pub fn list_refundables(&self) -> Result<Vec<SwapInfo>, SDKError> {
         rt().block_on(self.breez_services.list_refundables())
             .map_err(|e| e.into())

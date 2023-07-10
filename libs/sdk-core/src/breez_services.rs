@@ -491,7 +491,7 @@ impl BreezServices {
             .map(|x| x.into_iter().map(Into::into).collect())
     }
 
-    /// list non-completed expired swaps that should be refunded bu calling [BreezServices::refund]
+    /// list non-completed expired swaps that should be refunded by calling [BreezServices::refund]
     pub async fn list_refundables(&self) -> Result<Vec<SwapInfo>> {
         self.btc_receive_swapper.list_refundables()
     }

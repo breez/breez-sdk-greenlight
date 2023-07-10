@@ -10,11 +10,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  fimber: ^0.6.6
+  fimber: ^0.7.0
   ### flutter_rust_bridge_codegen dependencies
   ffi: ^2.0.2
   flutter_rust_bridge: 1.75.2
-  freezed: ^2.3.3
+  freezed: ^2.3.5
   freezed_annotation: ^2.2.0
   ###
   rxdart: ^0.27.7
@@ -22,11 +22,11 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.1
+  flutter_lints: ^2.0.2
   # The following dependencies are required by flutter_rust_bridge_codegen to
   # be defined under dev_dependencies to generate Dart files
-  build_runner: ^2.3.3
-  ffigen: ^7.2.11
+  build_runner: <2.4.0 # Requires Flutter 3.10
+  ffigen: <8.0.0-dev.0 # Requires Flutter 3.10
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
