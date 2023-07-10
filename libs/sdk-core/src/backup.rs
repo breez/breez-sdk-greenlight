@@ -593,7 +593,7 @@ mod tests {
                 .unwrap();
         });
         test_expected_backup_events(subscription, transport, expected_events, 3, 1).await;
-        quit_sender.send(()).unwrap();
+        _ = quit_sender.send(());
         quit_sender.closed().await;
     }
 

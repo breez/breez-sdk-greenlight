@@ -7,14 +7,14 @@ use breez_sdk_core::{
     parse_invoice as sdk_parse_invoice, AesSuccessActionDataDecrypted, BackupFailedData,
     BackupStatus, BitcoinAddressData, BreezEvent, BreezServices, BuyBitcoinProvider, ChannelState,
     ClosedChannelPaymentDetails, Config, CurrencyInfo, EnvironmentType, EventListener,
-    FeeratePreset, FiatCurrency, GreenlightCredentials, InputType, InvoicePaidDetails, LNInvoice,
-    LnPaymentDetails, LnUrlAuthRequestData, LnUrlCallbackStatus, LnUrlErrorData,
-    LnUrlPayRequestData, LnUrlPayResult, LnUrlWithdrawRequestData, LocaleOverrides, LocalizedName,
-    LogEntry, LspInformation, MessageSuccessActionData, MetadataItem, Network, NodeState, Payment,
-    PaymentDetails, PaymentFailedData, PaymentType, PaymentTypeFilter, Rate, RecommendedFees,
-    ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop,
-    SuccessActionProcessed, SwapInfo, SwapStatus, Symbol, UnspentTransactionOutput,
-    UrlSuccessActionData,
+    FeeratePreset, FiatCurrency, GreenlightCredentials, GreenlightNodeConfig, InputType,
+    InvoicePaidDetails, LNInvoice, LnPaymentDetails, LnUrlAuthRequestData, LnUrlCallbackStatus,
+    LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult, LnUrlWithdrawRequestData, LocaleOverrides,
+    LocalizedName, LogEntry, LspInformation, MessageSuccessActionData, MetadataItem, Network,
+    NodeConfig, NodeState, Payment, PaymentDetails, PaymentFailedData, PaymentType,
+    PaymentTypeFilter, Rate, RecommendedFees, ReverseSwapInfo, ReverseSwapPairInfo,
+    ReverseSwapStatus, RouteHint, RouteHintHop, SuccessActionProcessed, SwapInfo, SwapStatus,
+    Symbol, UnspentTransactionOutput, UrlSuccessActionData,
 };
 use log::LevelFilter;
 use log::Metadata;
@@ -70,59 +70,31 @@ impl From<anyhow::Error> for SDKError {
     }
 }
 
-/// Register a new node in the cloud and return credentials to interact with it
-///
-/// # Arguments
-///
-/// * `network` - The network type which is one of (Bitcoin, Testnet, Signet, Regtest)
-/// * `seed` - The node private key
-pub fn register_node(
-    network: Network,
-    seed: Vec<u8>,
-    register_credentials: Option<GreenlightCredentials>,
-    invite_code: Option<String>,
-) -> Result<GreenlightCredentials> {
-    let creds = rt().block_on(BreezServices::register_node(
-        network,
-        seed,
-        register_credentials,
-        invite_code,
-    ))?;
-    Ok(creds)
+/// Create a new SDK config with default values
+pub fn default_config(
+    env_type: EnvironmentType,
+    api_key: String,
+    node_config: NodeConfig,
+) -> Config {
+    BreezServices::default_config(env_type, api_key, node_config)
 }
 
-/// Recover an existing node from the cloud and return credentials to interact with it
-///
-/// # Arguments
-///
-/// * `network` - The network type which is one of (Bitcoin, Testnet, Signet, Regtest)
-/// * `seed` - The node private key
-pub fn recover_node(network: Network, seed: Vec<u8>) -> Result<GreenlightCredentials> {
-    let creds = rt().block_on(BreezServices::recover_node(network, seed))?;
-    Ok(creds)
-}
-
-pub fn default_config(env_type: EnvironmentType) -> Config {
-    BreezServices::default_config(env_type)
-}
-
-/// init_services initialized the global NodeService, schedule the node to run in the cloud and
-/// run the signer. This must be called in order to start comunicate with the node
+/// connect initializes the SDK services, schedule the node to run in the cloud and
+/// run the signer. This must be called in order to start communicating with the node
 ///
 /// # Arguments
 ///
 /// * `config` - The sdk configuration
 /// * `seed` - The node private key
-/// * `creds` - The greenlight credentials
+/// * `event_listener` - Listener to SDK events
 ///
-pub fn init_services(
+pub fn connect(
     config: Config,
     seed: Vec<u8>,
-    creds: GreenlightCredentials,
-    listener: Box<dyn EventListener>,
+    event_listener: Box<dyn EventListener>,
 ) -> Result<Arc<BlockingBreezServices>> {
     rt().block_on(async move {
-        let breez_services = BreezServices::init_services(config, seed, creds, listener).await?;
+        let breez_services = BreezServices::connect(config, seed, event_listener).await?;
         Ok(Arc::new(BlockingBreezServices { breez_services }))
     })
 }
@@ -137,12 +109,8 @@ pub struct BlockingBreezServices {
 }
 
 impl BlockingBreezServices {
-    pub fn start(&self) -> Result<()> {
-        rt().block_on(async move { self.breez_services.start().await })
-    }
-
-    pub fn stop(&self) -> Result<()> {
-        rt().block_on(self.breez_services.stop())
+    pub fn disconnect(&self) -> Result<()> {
+        rt().block_on(self.breez_services.disconnect())
     }
 
     pub fn send_payment(
@@ -302,7 +270,7 @@ impl BlockingBreezServices {
             .map_err(|e| e.into())
     }
 
-    /// list non-completed expired swaps that should be refunded bu calling [BreezServices::refund]
+    /// list non-completed expired swaps that should be refunded by calling [BreezServices::refund]
     pub fn list_refundables(&self) -> Result<Vec<SwapInfo>, SDKError> {
         rt().block_on(self.breez_services.list_refundables())
             .map_err(|e| e.into())

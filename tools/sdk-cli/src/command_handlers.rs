@@ -3,12 +3,12 @@ use std::sync::Arc;
 
 use anyhow::Error;
 use anyhow::{anyhow, Result};
-use breez_sdk_core::Config;
 use breez_sdk_core::InputType::{LnUrlAuth, LnUrlWithdraw};
 use breez_sdk_core::{
     parse, BreezEvent, BreezServices, EventListener, GreenlightCredentials, InputType::LnUrlPay,
     PaymentTypeFilter,
 };
+use breez_sdk_core::{Config, GreenlightNodeConfig, NodeConfig};
 use once_cell::sync::OnceCell;
 use qrcode_rs::render::unicode;
 use qrcode_rs::{EcLevel, QrCode};
@@ -35,20 +35,15 @@ impl EventListener for CliEventListener {
     }
 }
 
-async fn init_sdk(config: Config, seed: &[u8], creds: &GreenlightCredentials) -> Result<()> {
-    let service = BreezServices::init_services(
-        config,
-        seed.to_vec(),
-        creds.clone(),
-        Box::new(CliEventListener {}),
-    )
-    .await?;
+async fn connect(config: Config, seed: &[u8]) -> Result<()> {
+    let service =
+        BreezServices::connect(config, seed.to_vec(), Box::new(CliEventListener {})).await?;
 
     BREEZ_SERVICES
-        .set(service.clone())
+        .set(service)
         .map_err(|_| anyhow!("Failed to set Breez Service"))?;
 
-    service.start().await
+    Ok(())
 }
 
 pub(crate) async fn handle_command(
@@ -69,59 +64,34 @@ pub(crate) async fn handle_command(
             persistence.save_config(config)?;
             Ok(format!("Environment was set to {:?}", env))
         }
-        Commands::RegisterNode {
+        Commands::Connect {
             device_cert,
             device_key,
             invite_code,
         } => {
-            let config = persistence
+            let mut config = persistence
                 .get_or_create_config()?
                 .to_sdk_config(&persistence.data_dir);
-            let mut register_credentials: Option<GreenlightCredentials> = None;
+            let mut partner_credentials: Option<GreenlightCredentials> = None;
             if device_cert.is_some() && device_key.is_some() {
                 let cert = fs::read(device_cert.unwrap())?;
                 let key = fs::read(device_key.unwrap())?;
-                register_credentials = Some(GreenlightCredentials {
+                partner_credentials = Some(GreenlightCredentials {
                     device_cert: cert,
                     device_key: key,
                 })
             }
-            let creds = BreezServices::register_node(
-                config.network,
-                persistence.get_or_create_seed().to_vec(),
-                register_credentials,
-                invite_code,
-            )
-            .await?;
 
-            init_sdk(config, &persistence.get_or_create_seed(), &creds).await?;
-            persistence.save_credentials(creds)?;
+            config.node_config = NodeConfig::Greenlight {
+                config: GreenlightNodeConfig {
+                    partner_credentials,
+                    invite_code,
+                },
+            };
+
+            connect(config, &persistence.get_or_create_seed()).await?;
             Ok("Node was registered succesfully".to_string())
         }
-        Commands::RecoverNode {} => {
-            let config = persistence
-                .get_or_create_config()?
-                .to_sdk_config(&persistence.data_dir);
-            let creds = BreezServices::recover_node(
-                config.network,
-                persistence.get_or_create_seed().to_vec(),
-            )
-            .await?;
-
-            init_sdk(config, &persistence.get_or_create_seed(), &creds).await?;
-            persistence.save_credentials(creds)?;
-            Ok("Node was recovered succesfully".to_string())
-        }
-        Commands::Init {} => match persistence.credentials() {
-            Some(creds) => {
-                let config = persistence
-                    .get_or_create_config()?
-                    .to_sdk_config(&persistence.data_dir);
-                init_sdk(config, &persistence.get_or_create_seed(), &creds).await?;
-                Ok("Node was initialized succesfully".to_string())
-            }
-            None => Err(anyhow!("Credentials not found")),
-        },
         Commands::Sync {} => {
             sdk()?.sync().await?;
             Ok("Sync finished succesfully".to_string())
@@ -223,9 +193,9 @@ pub(crate) async fn handle_command(
             let tx_ids = sdk()?.close_lsp_channels().await?;
             Ok(format!("Closing transaction ids:\n{:?}", tx_ids))
         }
-        Commands::StopNode {} => {
-            sdk()?.stop().await?;
-            Ok("Node was stopped succesfully".to_string())
+        Commands::Disconnect {} => {
+            sdk()?.disconnect().await?;
+            Ok("Node was stopped successfully".to_string())
         }
         Commands::RecommendedFees {} => {
             serde_json::to_string_pretty(&sdk()?.recommended_fees().await?).map_err(|e| e.into())

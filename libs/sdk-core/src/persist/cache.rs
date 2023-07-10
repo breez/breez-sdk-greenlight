@@ -54,6 +54,17 @@ impl SqliteStorage {
             None => None,
         })
     }
+    pub fn set_gl_credentials(&self, creds: Vec<u8>) -> Result<()> {
+        self.update_cached_item("gl_credentials".to_string(), hex::encode(creds))?;
+        Ok(())
+    }
+
+    pub fn get_gl_credentials(&self) -> Result<Option<Vec<u8>>> {
+        match self.get_cached_item("gl_credentials".to_string())? {
+            Some(str) => Ok(Some(hex::decode(str)?)),
+            None => Ok(None),
+        }
+    }
 }
 
 #[test]

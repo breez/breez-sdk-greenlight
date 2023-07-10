@@ -52,10 +52,12 @@ use crate::models::ClosedChannelPaymentDetails;
 use crate::models::Config;
 use crate::models::EnvironmentType;
 use crate::models::GreenlightCredentials;
+use crate::models::GreenlightNodeConfig;
 use crate::models::LnPaymentDetails;
 use crate::models::LnUrlCallbackStatus;
 use crate::models::LogEntry;
 use crate::models::Network;
+use crate::models::NodeConfig;
 use crate::models::NodeState;
 use crate::models::Payment;
 use crate::models::PaymentDetails;
@@ -80,86 +82,22 @@ fn wire_initialized_impl(port_: MessagePort) {
         move || move |task_callback| Ok(initialized()),
     )
 }
-fn wire_register_node_impl(
-    port_: MessagePort,
-    network: impl Wire2Api<Network> + UnwindSafe,
-    seed: impl Wire2Api<Vec<u8>> + UnwindSafe,
-    config: impl Wire2Api<Config> + UnwindSafe,
-    register_credentials: impl Wire2Api<Option<GreenlightCredentials>> + UnwindSafe,
-    invite_code: impl Wire2Api<Option<String>> + UnwindSafe,
-) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
-        WrapInfo {
-            debug_name: "register_node",
-            port: Some(port_),
-            mode: FfiCallMode::Normal,
-        },
-        move || {
-            let api_network = network.wire2api();
-            let api_seed = seed.wire2api();
-            let api_config = config.wire2api();
-            let api_register_credentials = register_credentials.wire2api();
-            let api_invite_code = invite_code.wire2api();
-            move |task_callback| {
-                register_node(
-                    api_network,
-                    api_seed,
-                    api_config,
-                    api_register_credentials,
-                    api_invite_code,
-                )
-            }
-        },
-    )
-}
-fn wire_recover_node_impl(
-    port_: MessagePort,
-    network: impl Wire2Api<Network> + UnwindSafe,
-    seed: impl Wire2Api<Vec<u8>> + UnwindSafe,
-    config: impl Wire2Api<Config> + UnwindSafe,
-) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
-        WrapInfo {
-            debug_name: "recover_node",
-            port: Some(port_),
-            mode: FfiCallMode::Normal,
-        },
-        move || {
-            let api_network = network.wire2api();
-            let api_seed = seed.wire2api();
-            let api_config = config.wire2api();
-            move |task_callback| recover_node(api_network, api_seed, api_config)
-        },
-    )
-}
-fn wire_init_services_impl(
+fn wire_connect_impl(
     port_: MessagePort,
     config: impl Wire2Api<Config> + UnwindSafe,
     seed: impl Wire2Api<Vec<u8>> + UnwindSafe,
-    creds: impl Wire2Api<GreenlightCredentials> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
-            debug_name: "init_services",
+            debug_name: "connect",
             port: Some(port_),
             mode: FfiCallMode::Normal,
         },
         move || {
             let api_config = config.wire2api();
             let api_seed = seed.wire2api();
-            let api_creds = creds.wire2api();
-            move |task_callback| init_services(api_config, api_seed, api_creds)
+            move |task_callback| connect(api_config, api_seed)
         },
-    )
-}
-fn wire_start_node_impl(port_: MessagePort) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
-        WrapInfo {
-            debug_name: "start_node",
-            port: Some(port_),
-            mode: FfiCallMode::Normal,
-        },
-        move || move |task_callback| start_node(),
     )
 }
 fn wire_breez_events_stream_impl(port_: MessagePort) {
@@ -612,7 +550,9 @@ fn wire_recommended_fees_impl(port_: MessagePort) {
 }
 fn wire_default_config_impl(
     port_: MessagePort,
-    config_type: impl Wire2Api<EnvironmentType> + UnwindSafe,
+    env_type: impl Wire2Api<EnvironmentType> + UnwindSafe,
+    api_key: impl Wire2Api<String> + UnwindSafe,
+    node_config: impl Wire2Api<NodeConfig> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -621,8 +561,10 @@ fn wire_default_config_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_config_type = config_type.wire2api();
-            move |task_callback| Ok(default_config(api_config_type))
+            let api_env_type = env_type.wire2api();
+            let api_api_key = api_key.wire2api();
+            let api_node_config = node_config.wire2api();
+            move |task_callback| Ok(default_config(api_env_type, api_api_key, api_node_config))
         },
     )
 }
@@ -855,6 +797,7 @@ impl support::IntoDart for Config {
             self.default_lsp_id.into_dart(),
             self.api_key.into_dart(),
             self.maxfee_percent.into_dart(),
+            self.node_config.into_dart(),
         ]
         .into_dart()
     }
@@ -890,6 +833,17 @@ impl support::IntoDart for GreenlightCredentials {
     }
 }
 impl support::IntoDartExceptPrimitive for GreenlightCredentials {}
+
+impl support::IntoDart for GreenlightNodeConfig {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.partner_credentials.into_dart(),
+            self.invite_code.into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for GreenlightNodeConfig {}
 
 impl support::IntoDart for InputType {
     fn into_dart(self) -> support::DartAbi {
@@ -1090,6 +1044,15 @@ impl support::IntoDart for Network {
     }
 }
 impl support::IntoDartExceptPrimitive for Network {}
+impl support::IntoDart for NodeConfig {
+    fn into_dart(self) -> support::DartAbi {
+        match self {
+            Self::Greenlight { config } => vec![0.into_dart(), config.into_dart()],
+        }
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for NodeConfig {}
 impl support::IntoDart for NodeState {
     fn into_dart(self) -> support::DartAbi {
         vec![

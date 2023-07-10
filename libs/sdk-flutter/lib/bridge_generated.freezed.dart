@@ -3432,6 +3432,207 @@ abstract class LnUrlPayResult_EndpointError implements LnUrlPayResult {
 }
 
 /// @nodoc
+mixin _$NodeConfig {
+  GreenlightNodeConfig get config => throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(GreenlightNodeConfig config) greenlight,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(GreenlightNodeConfig config)? greenlight,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(GreenlightNodeConfig config)? greenlight,
+    required TResult orElse(),
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(NodeConfig_Greenlight value) greenlight,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(NodeConfig_Greenlight value)? greenlight,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(NodeConfig_Greenlight value)? greenlight,
+    required TResult orElse(),
+  }) =>
+      throw _privateConstructorUsedError;
+
+  @JsonKey(ignore: true)
+  $NodeConfigCopyWith<NodeConfig> get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $NodeConfigCopyWith<$Res> {
+  factory $NodeConfigCopyWith(NodeConfig value, $Res Function(NodeConfig) then) =
+      _$NodeConfigCopyWithImpl<$Res, NodeConfig>;
+  @useResult
+  $Res call({GreenlightNodeConfig config});
+}
+
+/// @nodoc
+class _$NodeConfigCopyWithImpl<$Res, $Val extends NodeConfig> implements $NodeConfigCopyWith<$Res> {
+  _$NodeConfigCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? config = null,
+  }) {
+    return _then(_value.copyWith(
+      config: null == config
+          ? _value.config
+          : config // ignore: cast_nullable_to_non_nullable
+              as GreenlightNodeConfig,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$NodeConfig_GreenlightCopyWith<$Res> implements $NodeConfigCopyWith<$Res> {
+  factory _$$NodeConfig_GreenlightCopyWith(
+          _$NodeConfig_Greenlight value, $Res Function(_$NodeConfig_Greenlight) then) =
+      __$$NodeConfig_GreenlightCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({GreenlightNodeConfig config});
+}
+
+/// @nodoc
+class __$$NodeConfig_GreenlightCopyWithImpl<$Res>
+    extends _$NodeConfigCopyWithImpl<$Res, _$NodeConfig_Greenlight>
+    implements _$$NodeConfig_GreenlightCopyWith<$Res> {
+  __$$NodeConfig_GreenlightCopyWithImpl(
+      _$NodeConfig_Greenlight _value, $Res Function(_$NodeConfig_Greenlight) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? config = null,
+  }) {
+    return _then(_$NodeConfig_Greenlight(
+      config: null == config
+          ? _value.config
+          : config // ignore: cast_nullable_to_non_nullable
+              as GreenlightNodeConfig,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$NodeConfig_Greenlight implements NodeConfig_Greenlight {
+  const _$NodeConfig_Greenlight({required this.config});
+
+  @override
+  final GreenlightNodeConfig config;
+
+  @override
+  String toString() {
+    return 'NodeConfig.greenlight(config: $config)';
+  }
+
+  @override
+  bool operator ==(dynamic other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$NodeConfig_Greenlight &&
+            (identical(other.config, config) || other.config == config));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, config);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$NodeConfig_GreenlightCopyWith<_$NodeConfig_Greenlight> get copyWith =>
+      __$$NodeConfig_GreenlightCopyWithImpl<_$NodeConfig_Greenlight>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(GreenlightNodeConfig config) greenlight,
+  }) {
+    return greenlight(config);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(GreenlightNodeConfig config)? greenlight,
+  }) {
+    return greenlight?.call(config);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(GreenlightNodeConfig config)? greenlight,
+    required TResult orElse(),
+  }) {
+    if (greenlight != null) {
+      return greenlight(config);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(NodeConfig_Greenlight value) greenlight,
+  }) {
+    return greenlight(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(NodeConfig_Greenlight value)? greenlight,
+  }) {
+    return greenlight?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(NodeConfig_Greenlight value)? greenlight,
+    required TResult orElse(),
+  }) {
+    if (greenlight != null) {
+      return greenlight(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class NodeConfig_Greenlight implements NodeConfig {
+  const factory NodeConfig_Greenlight({required final GreenlightNodeConfig config}) = _$NodeConfig_Greenlight;
+
+  @override
+  GreenlightNodeConfig get config;
+  @override
+  @JsonKey(ignore: true)
+  _$$NodeConfig_GreenlightCopyWith<_$NodeConfig_Greenlight> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
 mixin _$PaymentDetails {
   Object get data => throw _privateConstructorUsedError;
   @optionalTypeArgs

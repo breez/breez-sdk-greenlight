@@ -425,10 +425,11 @@ pub struct Config {
     pub default_lsp_id: Option<String>,
     pub api_key: Option<String>,
     pub maxfee_percent: f64,
+    pub node_config: NodeConfig,
 }
 
 impl Config {
-    pub fn production() -> Self {
+    pub fn production(api_key: String, node_config: NodeConfig) -> Self {
         Config {
             breezserver: "https://bs1.breez.technology:443".to_string(),
             mempoolspace_url: "https://mempool.space".to_string(),
@@ -436,13 +437,13 @@ impl Config {
             network: Bitcoin,
             payment_timeout_sec: 60,
             default_lsp_id: Some(String::from("03cea51f-b654-4fb0-8e82-eca137f236a0")),
-            api_key: None,
+            api_key: Some(api_key),
             maxfee_percent: 0.5,
+            node_config,
         }
     }
 
-    pub fn staging() -> Self {
-        // TODO Update with staging values
+    pub fn staging(api_key: String, node_config: NodeConfig) -> Self {
         Config {
             breezserver: "https://bs1-st.breez.technology:443".to_string(),
             mempoolspace_url: "https://mempool.space".to_string(),
@@ -450,10 +451,22 @@ impl Config {
             network: Bitcoin,
             payment_timeout_sec: 60,
             default_lsp_id: Some(String::from("ea51d025-042d-456c-8325-63e430797481")),
-            api_key: None,
+            api_key: Some(api_key),
             maxfee_percent: 0.5,
+            node_config,
         }
     }
+}
+
+#[derive(Clone)]
+pub enum NodeConfig {
+    Greenlight { config: GreenlightNodeConfig },
+}
+
+#[derive(Clone)]
+pub struct GreenlightNodeConfig {
+    pub partner_credentials: Option<GreenlightCredentials>,
+    pub invite_code: Option<String>,
 }
 
 /// Indicates the different kinds of supported environments for [crate::BreezServices].

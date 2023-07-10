@@ -14,6 +14,29 @@ typedef struct wire_uint_8_list {
   int32_t len;
 } wire_uint_8_list;
 
+typedef struct wire_GreenlightCredentials {
+  struct wire_uint_8_list *device_key;
+  struct wire_uint_8_list *device_cert;
+} wire_GreenlightCredentials;
+
+typedef struct wire_GreenlightNodeConfig {
+  struct wire_GreenlightCredentials *partner_credentials;
+  struct wire_uint_8_list *invite_code;
+} wire_GreenlightNodeConfig;
+
+typedef struct wire_NodeConfig_Greenlight {
+  struct wire_GreenlightNodeConfig *config;
+} wire_NodeConfig_Greenlight;
+
+typedef union NodeConfigKind {
+  struct wire_NodeConfig_Greenlight *Greenlight;
+} NodeConfigKind;
+
+typedef struct wire_NodeConfig {
+  int32_t tag;
+  union NodeConfigKind *kind;
+} wire_NodeConfig;
+
 typedef struct wire_Config {
   struct wire_uint_8_list *breezserver;
   struct wire_uint_8_list *mempoolspace_url;
@@ -23,12 +46,8 @@ typedef struct wire_Config {
   struct wire_uint_8_list *default_lsp_id;
   struct wire_uint_8_list *api_key;
   double maxfee_percent;
+  struct wire_NodeConfig node_config;
 } wire_Config;
-
-typedef struct wire_GreenlightCredentials {
-  struct wire_uint_8_list *device_key;
-  struct wire_uint_8_list *device_cert;
-} wire_GreenlightCredentials;
 
 typedef struct wire_LnUrlPayRequestData {
   struct wire_uint_8_list *callback;
@@ -69,24 +88,7 @@ intptr_t init_frb_dart_api_dl(void *obj);
 
 void wire_initialized(int64_t port_);
 
-void wire_register_node(int64_t port_,
-                        int32_t network,
-                        struct wire_uint_8_list *seed,
-                        struct wire_Config *config,
-                        struct wire_GreenlightCredentials *register_credentials,
-                        struct wire_uint_8_list *invite_code);
-
-void wire_recover_node(int64_t port_,
-                       int32_t network,
-                       struct wire_uint_8_list *seed,
-                       struct wire_Config *config);
-
-void wire_init_services(int64_t port_,
-                        struct wire_Config *config,
-                        struct wire_uint_8_list *seed,
-                        struct wire_GreenlightCredentials *creds);
-
-void wire_start_node(int64_t port_);
+void wire_connect(int64_t port_, struct wire_Config *config, struct wire_uint_8_list *seed);
 
 void wire_breez_events_stream(int64_t port_);
 
@@ -176,7 +178,10 @@ void wire_mnemonic_to_seed(int64_t port_, struct wire_uint_8_list *phrase);
 
 void wire_recommended_fees(int64_t port_);
 
-void wire_default_config(int64_t port_, int32_t config_type);
+void wire_default_config(int64_t port_,
+                         int32_t env_type,
+                         struct wire_uint_8_list *api_key,
+                         struct wire_NodeConfig *node_config);
 
 void wire_buy_bitcoin(int64_t port_, int32_t provider);
 
@@ -188,6 +193,8 @@ struct wire_Config *new_box_autoadd_config_0(void);
 
 struct wire_GreenlightCredentials *new_box_autoadd_greenlight_credentials_0(void);
 
+struct wire_GreenlightNodeConfig *new_box_autoadd_greenlight_node_config_0(void);
+
 int64_t *new_box_autoadd_i64_0(int64_t value);
 
 struct wire_LnUrlAuthRequestData *new_box_autoadd_ln_url_auth_request_data_0(void);
@@ -196,19 +203,20 @@ struct wire_LnUrlPayRequestData *new_box_autoadd_ln_url_pay_request_data_0(void)
 
 struct wire_LnUrlWithdrawRequestData *new_box_autoadd_ln_url_withdraw_request_data_0(void);
 
+struct wire_NodeConfig *new_box_autoadd_node_config_0(void);
+
 uint64_t *new_box_autoadd_u64_0(uint64_t value);
 
 struct wire_uint_8_list *new_uint_8_list_0(int32_t len);
+
+union NodeConfigKind *inflate_NodeConfig_Greenlight(void);
 
 void free_WireSyncReturn(WireSyncReturn ptr);
 
 static int64_t dummy_method_to_enforce_bundling(void) {
     int64_t dummy_var = 0;
     dummy_var ^= ((int64_t) (void*) wire_initialized);
-    dummy_var ^= ((int64_t) (void*) wire_register_node);
-    dummy_var ^= ((int64_t) (void*) wire_recover_node);
-    dummy_var ^= ((int64_t) (void*) wire_init_services);
-    dummy_var ^= ((int64_t) (void*) wire_start_node);
+    dummy_var ^= ((int64_t) (void*) wire_connect);
     dummy_var ^= ((int64_t) (void*) wire_breez_events_stream);
     dummy_var ^= ((int64_t) (void*) wire_breez_log_stream);
     dummy_var ^= ((int64_t) (void*) wire_stop_node);
@@ -248,12 +256,15 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_backup_status);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_config_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_greenlight_credentials_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_greenlight_node_config_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_i64_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_auth_request_data_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_pay_request_data_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_withdraw_request_data_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_node_config_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_u64_0);
     dummy_var ^= ((int64_t) (void*) new_uint_8_list_0);
+    dummy_var ^= ((int64_t) (void*) inflate_NodeConfig_Greenlight);
     dummy_var ^= ((int64_t) (void*) free_WireSyncReturn);
     dummy_var ^= ((int64_t) (void*) store_dart_post_cobject);
     dummy_var ^= ((int64_t) (void*) get_dart_object);

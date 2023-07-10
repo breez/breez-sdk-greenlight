@@ -20,9 +20,8 @@ use crate::lnurl::withdraw::validate_lnurl_withdraw;
 use crate::lsp::LspInformation;
 use crate::models::{
     parse_short_channel_id, ChannelState, ClosedChannelPaymentDetails, Config, EnvironmentType,
-    FiatAPI, GreenlightCredentials, LnUrlCallbackStatus, LspAPI, Network, NodeAPI, NodeState,
-    Payment, PaymentDetails, PaymentType, PaymentTypeFilter, ReverseSwapPairInfo,
-    ReverseSwapperAPI, SwapInfo, SwapperAPI,
+    FiatAPI, LnUrlCallbackStatus, LspAPI, NodeAPI, NodeState, Payment, PaymentDetails, PaymentType,
+    PaymentTypeFilter, ReverseSwapPairInfo, ReverseSwapperAPI, SwapInfo, SwapperAPI,
 };
 use crate::moonpay::MoonPayApi;
 use crate::persist::db::SqliteStorage;
@@ -39,8 +38,7 @@ use std::cmp::max;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
-use tokio::runtime::Runtime;
-use tokio::sync::{mpsc, watch, RwLock};
+use tokio::sync::{mpsc, watch, Mutex};
 use tokio::time::{sleep, Duration};
 use tonic::codegen::InterceptedService;
 use tonic::metadata::{Ascii, MetadataValue};
@@ -97,7 +95,7 @@ pub struct InvoicePaidDetails {
 
 /// BreezServices is a facade and the single entry point for the SDK.
 pub struct BreezServices {
-    runtime: Arc<RwLock<Option<tokio::runtime::Runtime>>>,
+    started: Mutex<bool>,
     node_api: Arc<dyn NodeAPI>,
     lsp_api: Arc<dyn LspAPI>,
     fiat_api: Arc<dyn FiatAPI>,
@@ -114,32 +112,26 @@ pub struct BreezServices {
 }
 
 impl BreezServices {
-    /// Create a new node for the given network, from the given seed
-    pub async fn register_node(
-        network: Network,
-        seed: Vec<u8>,
-        register_credentials: Option<GreenlightCredentials>,
-        invite_code: Option<String>,
-    ) -> Result<GreenlightCredentials> {
-        Greenlight::register(network, seed.clone(), register_credentials, invite_code).await
-    }
-
-    /// Try to recover a previously created node
-    pub async fn recover_node(network: Network, seed: Vec<u8>) -> Result<GreenlightCredentials> {
-        Greenlight::recover(network, seed.clone()).await
-    }
-
-    /// Create and initialize the node services instance
-    pub async fn init_services(
+    /// connect initializes the SDK services, schedule the node to run in the cloud and
+    /// run the signer. This must be called in order to start communicating with the node
+    ///
+    /// # Arguments
+    ///
+    /// * `config` - The sdk configuration
+    /// * `seed` - The node private key
+    /// * `event_listener` - Listener to SDK events
+    ///
+    pub async fn connect(
         config: Config,
         seed: Vec<u8>,
-        creds: GreenlightCredentials,
         event_listener: Box<dyn EventListener>,
     ) -> Result<Arc<BreezServices>> {
-        BreezServicesBuilder::new(config)
-            .greenlight_credentials(creds, seed)
+        let services = BreezServicesBuilder::new(config)
+            .seed(seed)
             .build(Some(event_listener))
-            .await
+            .await?;
+        services.start().await?;
+        Ok(services)
     }
 
     /// Starts the BreezServices background tasks for this instance.
@@ -149,39 +141,27 @@ impl BreezServices {
     ///
     /// It should be called only once when the app is started, regardless whether the app is sent to
     /// background and back.
-    pub async fn start(self: &Arc<BreezServices>) -> Result<()> {
-        let start = Instant::now();
-        let mut runtime_lock = self.runtime.write().await;
-        if runtime_lock.is_some() {
-            return Err(anyhow!("SDK already connected "));
+    async fn start(self: &Arc<BreezServices>) -> Result<()> {
+        let mut started = self.started.lock().await;
+        if *started {
+            return Err(anyhow::Error::msg("BreezServices already started"));
         }
-        let runtime = tokio::runtime::Builder::new_multi_thread()
-            .enable_all()
-            .build()
-            .unwrap();
-
-        self.start_background_tasks(&runtime).await?;
-
-        *runtime_lock = Some(runtime);
+        let start = Instant::now();
+        self.start_background_tasks().await?;
         let start_duration = start.elapsed();
         info!("SDK initialized in: {:?}", start_duration);
+        *started = true;
         Ok(())
     }
 
     /// Trigger the stopping of BreezServices background threads for this instance.
-    pub async fn stop(&self) -> Result<()> {
-        let runtime = self
-            .runtime
-            .write()
-            .await
-            .take()
-            .ok_or(anyhow!("SDK is not connected"))?;
-
-        // Stop the runtime.
+    pub async fn disconnect(&self) -> Result<()> {
+        let mut started = self.started.lock().await;
+        if !*started {
+            return Err(anyhow::Error::msg("BreezServices is not running"));
+        }
         self.shutdown_sender.send(()).map_err(anyhow::Error::msg)?;
-        tokio::task::spawn_blocking(move || runtime.shutdown_timeout(Duration::from_secs(5)))
-            .await
-            .unwrap();
+        *started = false;
         Ok(())
     }
 
@@ -511,7 +491,7 @@ impl BreezServices {
             .map(|x| x.into_iter().map(Into::into).collect())
     }
 
-    /// list non-completed expired swaps that should be refunded bu calling [BreezServices::refund]
+    /// list non-completed expired swaps that should be refunded by calling [BreezServices::refund]
     pub async fn list_refundables(&self) -> Result<Vec<SwapInfo>> {
         self.btc_receive_swapper.list_refundables()
     }
@@ -540,6 +520,7 @@ impl BreezServices {
     /// * channels - The list of channels and their status
     /// * payments - The incoming/outgoing payments
     pub async fn sync(&self) -> Result<()> {
+        let start = Instant::now();
         self.start_node().await?;
         self.connect_lsp_peer().await?;
 
@@ -569,6 +550,10 @@ impl BreezServices {
         let mut payments = closed_channel_payments_res?;
         payments.extend(new_data.payments.clone());
         self.persister.insert_or_update_payments(&payments)?;
+
+        let duration = start.elapsed();
+        info!("Sync duration: {:?}", duration);
+
         self.notify_event_listeners(BreezEvent::Synced).await?;
         Ok(())
     }
@@ -663,10 +648,14 @@ impl BreezServices {
     }
 
     /// Get the full default config for a specific environment type
-    pub fn default_config(env_type: EnvironmentType) -> Config {
+    pub fn default_config(
+        env_type: EnvironmentType,
+        api_key: String,
+        node_config: NodeConfig,
+    ) -> Config {
         match env_type {
-            EnvironmentType::Production => Config::production(),
-            EnvironmentType::Staging => Config::staging(),
+            EnvironmentType::Production => Config::production(api_key, node_config),
+            EnvironmentType::Staging => Config::staging(api_key, node_config),
         }
     }
 
@@ -685,29 +674,29 @@ impl BreezServices {
     /// Starts the BreezServices background threads.
     ///
     /// Internal method. Should only be used as part of [BreezServices::start]
-    async fn start_background_tasks(self: &Arc<BreezServices>, rt: &Runtime) -> Result<()> {
+    async fn start_background_tasks(self: &Arc<BreezServices>) -> Result<()> {
         // start the signer
         let (shutdown_signer_sender, signer_signer_receiver) = mpsc::channel(1);
-        self.start_signer(rt, signer_signer_receiver).await;
+        self.start_signer(signer_signer_receiver).await;
 
         // start backup watcher
         self.start_backup_watcher().await?;
 
         //track backup events
-        self.track_backup_events(rt).await;
+        self.track_backup_events().await;
 
         // track paid invoices
-        self.track_invoices(rt).await;
+        self.track_invoices().await;
 
         // track new blocks
-        self.track_new_blocks(rt).await;
+        self.track_new_blocks().await;
 
         // track logs
-        self.track_logs(rt).await;
+        self.track_logs().await;
 
         // Stop signer on shutdown
         let mut shutdown_receiver = self.shutdown_receiver.clone();
-        rt.spawn(async move {
+        tokio::spawn(async move {
             // start the backup watcher
             _ = shutdown_receiver.changed().await;
             _ = shutdown_signer_sender.send(()).await;
@@ -719,7 +708,7 @@ impl BreezServices {
         match sync_breez_services.node_info()? {
             Some(_) => {
                 // In case it is not a first run we sync in background to start quickly.
-                rt.spawn(async move {
+                tokio::spawn(async move {
                     // sync with remote node state
                     _ = sync_breez_services.sync().await;
                 });
@@ -733,13 +722,9 @@ impl BreezServices {
         Ok(())
     }
 
-    async fn start_signer(
-        self: &Arc<BreezServices>,
-        rt: &Runtime,
-        shutdown_receiver: mpsc::Receiver<()>,
-    ) {
+    async fn start_signer(self: &Arc<BreezServices>, shutdown_receiver: mpsc::Receiver<()>) {
         let signer_api = self.clone();
-        rt.spawn(async move {
+        tokio::spawn(async move {
             signer_api.node_api.start_signer(shutdown_receiver).await;
         });
     }
@@ -758,9 +743,9 @@ impl BreezServices {
         Ok(())
     }
 
-    async fn track_backup_events(self: &Arc<BreezServices>, rt: &Runtime) {
+    async fn track_backup_events(self: &Arc<BreezServices>) {
         let cloned = self.clone();
-        rt.spawn(async move {
+        tokio::spawn(async move {
             let mut events_stream = cloned.backup_watcher.subscribe_events();
             let mut shutdown_receiver = cloned.shutdown_receiver.clone();
             loop {
@@ -783,64 +768,64 @@ impl BreezServices {
         });
     }
 
-    async fn track_invoices(self: &Arc<BreezServices>, rt: &Runtime) {
+    async fn track_invoices(self: &Arc<BreezServices>) {
         let cloned = self.clone();
-        rt.spawn(async move {
-        let mut shutdown_receiver = cloned.shutdown_receiver.clone();
-        loop {
-            if shutdown_receiver.has_changed().map_or(true, |c| c) {
-                return;
-            }
-            let invoice_stream_res = cloned.node_api.stream_incoming_payments().await;
-            if let Ok(mut invoice_stream) = invoice_stream_res {
-                loop {
-                    tokio::select! {
-                            paid_invoice_res = invoice_stream.message() => {
-                                  match paid_invoice_res {
-                                      Ok(Some(i)) => {
-                                          debug!("invoice stream got new invoice");
-                                          if let Some(gl_client::pb::incoming_payment::Details::Offchain(p)) = i.details {
-                                              let payment: Option<crate::models::Payment> = p.clone().try_into().ok();
-                                              if payment.is_some() {
-                                                  let res = cloned
-                                                      .persister
-                                                      .insert_or_update_payments(&vec![payment.unwrap()]);
-                                                  debug!("paid invoice was added to payments list {:?}", res);
+        tokio::spawn(async move {
+            let mut shutdown_receiver = cloned.shutdown_receiver.clone();
+            loop {
+                if shutdown_receiver.has_changed().map_or(true, |c| c) {
+                    return;
+                }
+                let invoice_stream_res = cloned.node_api.stream_incoming_payments().await;
+                if let Ok(mut invoice_stream) = invoice_stream_res {
+                    loop {
+                        tokio::select! {
+                                paid_invoice_res = invoice_stream.message() => {
+                                      match paid_invoice_res {
+                                          Ok(Some(i)) => {
+                                              debug!("invoice stream got new invoice");
+                                              if let Some(gl_client::pb::incoming_payment::Details::Offchain(p)) = i.details {
+                                                  let payment: Option<crate::models::Payment> = p.clone().try_into().ok();
+                                                  if payment.is_some() {
+                                                      let res = cloned
+                                                          .persister
+                                                          .insert_or_update_payments(&vec![payment.unwrap()]);
+                                                      debug!("paid invoice was added to payments list {:?}", res);
+                                                  }
+                                                  _ = cloned.on_event(BreezEvent::InvoicePaid {
+                                                      details: InvoicePaidDetails {
+                                                          payment_hash: hex::encode(p.payment_hash),
+                                                          bolt11: p.bolt11,
+                                                      },
+                                                  }).await;
                                               }
-                                              _ = cloned.on_event(BreezEvent::InvoicePaid {
-                                                  details: InvoicePaidDetails {
-                                                      payment_hash: hex::encode(p.payment_hash),
-                                                      bolt11: p.bolt11,
-                                                  },
-                                              }).await;
+                                          }
+                                          Ok(None) => {
+                                              debug!("invoice stream got None");
+                                              break;
+                                          }
+                                          Err(err) => {
+                                              debug!("invoice stream got error: {:?}", err);
+                                              break;
                                           }
                                       }
-                                      Ok(None) => {
-                                          debug!("invoice stream got None");
-                                          break;
-                                      }
-                                      Err(err) => {
-                                          debug!("invoice stream got error: {:?}", err);
-                                          break;
-                                      }
-                                  }
-                         }
+                             }
 
-                         _ = shutdown_receiver.changed() => {
-                          debug!("Invoice tracking task has completed");
-                          return;
-                         }
+                             _ = shutdown_receiver.changed() => {
+                              debug!("Invoice tracking task has completed");
+                              return;
+                             }
+                        }
                     }
                 }
-             }
-         sleep(Duration::from_secs(1)).await;
-        }
-     });
+                sleep(Duration::from_secs(1)).await;
+            }
+        });
     }
 
-    async fn track_logs(self: &Arc<BreezServices>, rt: &Runtime) {
+    async fn track_logs(self: &Arc<BreezServices>) {
         let cloned = self.clone();
-        rt.spawn(async move {
+        tokio::spawn(async move {
             let mut shutdown_receiver = cloned.shutdown_receiver.clone();
             loop {
                 if shutdown_receiver.has_changed().map_or(true, |c| c) {
@@ -878,9 +863,9 @@ impl BreezServices {
         });
     }
 
-    async fn track_new_blocks(self: &Arc<BreezServices>, rt: &Runtime) {
+    async fn track_new_blocks(self: &Arc<BreezServices>) {
         let cloned = self.clone();
-        rt.spawn(async move {
+        tokio::spawn(async move {
             let mut current_block: u32 = 0;
             let mut shutdown_receiver = cloned.shutdown_receiver.clone();
             let mut interval = tokio::time::interval(Duration::from_secs(30));
@@ -940,7 +925,6 @@ struct BreezServicesBuilder {
     config: Config,
     node_api: Option<Arc<dyn NodeAPI>>,
     backup_transport: Option<Arc<dyn BackupTransport>>,
-    creds: Option<GreenlightCredentials>,
     seed: Option<Vec<u8>>,
     lsp_api: Option<Arc<dyn LspAPI>>,
     fiat_api: Option<Arc<dyn FiatAPI>>,
@@ -956,7 +940,6 @@ impl BreezServicesBuilder {
         BreezServicesBuilder {
             config,
             node_api: None,
-            creds: None,
             seed: None,
             lsp_api: None,
             fiat_api: None,
@@ -1011,12 +994,7 @@ impl BreezServicesBuilder {
         self
     }
 
-    pub fn greenlight_credentials(
-        &mut self,
-        creds: GreenlightCredentials,
-        seed: Vec<u8>,
-    ) -> &mut Self {
-        self.creds = Some(creds);
+    pub fn seed(&mut self, seed: Vec<u8>) -> &mut Self {
         self.seed = Some(seed);
         self
     }
@@ -1025,10 +1003,8 @@ impl BreezServicesBuilder {
         &self,
         listener: Option<Box<dyn EventListener>>,
     ) -> Result<Arc<BreezServices>> {
-        if self.node_api.is_none() && (self.creds.is_none() || self.seed.is_none()) {
-            return Err(anyhow!(
-                "Either node_api or both credentials and seed should be provided"
-            ));
+        if self.node_api.is_none() && self.seed.is_none() {
+            return Err(anyhow!("Either node_api or seed should be provided"));
         }
 
         // The storage is implemented via sqlite.
@@ -1041,15 +1017,10 @@ impl BreezServicesBuilder {
         let mut node_api = self.node_api.clone();
         let mut backup_transport = self.backup_transport.clone();
         if node_api.is_none() {
-            if self.creds.is_none() || self.seed.is_none() {
-                return Err(anyhow!(
-                    "Either node_api or both credentials and seed should be provided"
-                ));
-            }
-            let greenlight = Greenlight::new(
+            let greenlight = Greenlight::connect(
                 self.config.clone(),
                 self.seed.clone().unwrap(),
-                self.creds.clone().unwrap(),
+                persister.clone(),
             )
             .await?;
             let gl_arc = Arc::new(greenlight);
@@ -1125,7 +1096,7 @@ impl BreezServicesBuilder {
 
         // Create the node services and it them statically
         let breez_services = Arc::new(BreezServices {
-            runtime: Arc::new(RwLock::new(None)),
+            started: Mutex::new(false),
             node_api: unwrapped_node_api.clone(),
             lsp_api: self.lsp_api.clone().unwrap_or_else(|| breez_server.clone()),
             fiat_api: self

@@ -19,53 +19,17 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kInitializedConstMeta;
 
-  /// Register a new node in the cloud and return credentials to interact with it
-  ///
-  /// # Arguments
-  ///
-  /// * `network` - The network type which is one of (Bitcoin, Testnet, Signet, Regtest)
-  /// * `seed` - The node private key
-  /// * `config` - The sdk configuration
-  Future<GreenlightCredentials> registerNode(
-      {required Network network,
-      required Uint8List seed,
-      required Config config,
-      GreenlightCredentials? registerCredentials,
-      String? inviteCode,
-      dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kRegisterNodeConstMeta;
-
-  /// Recover an existing node from the cloud and return credentials to interact with it
-  ///
-  /// # Arguments
-  ///
-  /// * `network` - The network type which is one of (Bitcoin, Testnet, Signet, Regtest)
-  /// * `seed` - The node private key
-  /// * `config` - The sdk configuration
-  Future<GreenlightCredentials> recoverNode(
-      {required Network network, required Uint8List seed, required Config config, dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kRecoverNodeConstMeta;
-
-  /// init_services initialized the global NodeService, schedule the node to run in the cloud and
+  /// connect initializes the global NodeService, schedule the node to run in the cloud and
   /// run the signer. This must be called in order to start communicate with the node
   ///
   /// # Arguments
   ///
   /// * `config` - The sdk configuration
   /// * `seed` - The node private key
-  /// * `creds` - The greenlight credentials
   ///
-  Future<void> initServices(
-      {required Config config, required Uint8List seed, required GreenlightCredentials creds, dynamic hint});
+  Future<void> connect({required Config config, required Uint8List seed, dynamic hint});
 
-  FlutterRustBridgeTaskConstMeta get kInitServicesConstMeta;
-
-  /// See [BreezServices::start]
-  Future<void> startNode({dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kStartNodeConstMeta;
+  FlutterRustBridgeTaskConstMeta get kConnectConstMeta;
 
   Stream<BreezEvent> breezEventsStream({dynamic hint});
 
@@ -240,7 +204,11 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kRecommendedFeesConstMeta;
 
   /// See [BreezServices::default_config]
-  Future<Config> defaultConfig({required EnvironmentType configType, dynamic hint});
+  Future<Config> defaultConfig(
+      {required EnvironmentType envType,
+      required String apiKey,
+      required NodeConfig nodeConfig,
+      dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kDefaultConfigConstMeta;
 
@@ -385,6 +353,7 @@ class Config {
   final String? defaultLspId;
   final String? apiKey;
   final double maxfeePercent;
+  final NodeConfig nodeConfig;
 
   const Config({
     required this.breezserver,
@@ -395,6 +364,7 @@ class Config {
     this.defaultLspId,
     this.apiKey,
     required this.maxfeePercent,
+    required this.nodeConfig,
   });
 }
 
@@ -444,6 +414,16 @@ class GreenlightCredentials {
   const GreenlightCredentials({
     required this.deviceKey,
     required this.deviceCert,
+  });
+}
+
+class GreenlightNodeConfig {
+  final GreenlightCredentials? partnerCredentials;
+  final String? inviteCode;
+
+  const GreenlightNodeConfig({
+    this.partnerCredentials,
+    this.inviteCode,
   });
 }
 
@@ -789,6 +769,13 @@ enum Network {
   Testnet,
   Signet,
   Regtest,
+}
+
+@freezed
+class NodeConfig with _$NodeConfig {
+  const factory NodeConfig.greenlight({
+    required GreenlightNodeConfig config,
+  }) = NodeConfig_Greenlight;
 }
 
 /// The node state of a Greenlight LN node running in the cloud
@@ -1168,83 +1155,21 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: [],
       );
 
-  Future<GreenlightCredentials> registerNode(
-      {required Network network,
-      required Uint8List seed,
-      required Config config,
-      GreenlightCredentials? registerCredentials,
-      String? inviteCode,
-      dynamic hint}) {
-    var arg0 = api2wire_network(network);
-    var arg1 = _platform.api2wire_uint_8_list(seed);
-    var arg2 = _platform.api2wire_box_autoadd_config(config);
-    var arg3 = _platform.api2wire_opt_box_autoadd_greenlight_credentials(registerCredentials);
-    var arg4 = _platform.api2wire_opt_String(inviteCode);
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_register_node(port_, arg0, arg1, arg2, arg3, arg4),
-      parseSuccessData: _wire2api_greenlight_credentials,
-      constMeta: kRegisterNodeConstMeta,
-      argValues: [network, seed, config, registerCredentials, inviteCode],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kRegisterNodeConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "register_node",
-        argNames: ["network", "seed", "config", "registerCredentials", "inviteCode"],
-      );
-
-  Future<GreenlightCredentials> recoverNode(
-      {required Network network, required Uint8List seed, required Config config, dynamic hint}) {
-    var arg0 = api2wire_network(network);
-    var arg1 = _platform.api2wire_uint_8_list(seed);
-    var arg2 = _platform.api2wire_box_autoadd_config(config);
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_recover_node(port_, arg0, arg1, arg2),
-      parseSuccessData: _wire2api_greenlight_credentials,
-      constMeta: kRecoverNodeConstMeta,
-      argValues: [network, seed, config],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kRecoverNodeConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "recover_node",
-        argNames: ["network", "seed", "config"],
-      );
-
-  Future<void> initServices(
-      {required Config config, required Uint8List seed, required GreenlightCredentials creds, dynamic hint}) {
+  Future<void> connect({required Config config, required Uint8List seed, dynamic hint}) {
     var arg0 = _platform.api2wire_box_autoadd_config(config);
     var arg1 = _platform.api2wire_uint_8_list(seed);
-    var arg2 = _platform.api2wire_box_autoadd_greenlight_credentials(creds);
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_init_services(port_, arg0, arg1, arg2),
+      callFfi: (port_) => _platform.inner.wire_connect(port_, arg0, arg1),
       parseSuccessData: _wire2api_unit,
-      constMeta: kInitServicesConstMeta,
-      argValues: [config, seed, creds],
+      constMeta: kConnectConstMeta,
+      argValues: [config, seed],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kInitServicesConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "init_services",
-        argNames: ["config", "seed", "creds"],
-      );
-
-  Future<void> startNode({dynamic hint}) {
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_start_node(port_),
-      parseSuccessData: _wire2api_unit,
-      constMeta: kStartNodeConstMeta,
-      argValues: [],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kStartNodeConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "start_node",
-        argNames: [],
+  FlutterRustBridgeTaskConstMeta get kConnectConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "connect",
+        argNames: ["config", "seed"],
       );
 
   Stream<BreezEvent> breezEventsStream({dynamic hint}) {
@@ -1786,20 +1711,26 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: [],
       );
 
-  Future<Config> defaultConfig({required EnvironmentType configType, dynamic hint}) {
-    var arg0 = api2wire_environment_type(configType);
+  Future<Config> defaultConfig(
+      {required EnvironmentType envType,
+      required String apiKey,
+      required NodeConfig nodeConfig,
+      dynamic hint}) {
+    var arg0 = api2wire_environment_type(envType);
+    var arg1 = _platform.api2wire_String(apiKey);
+    var arg2 = _platform.api2wire_box_autoadd_node_config(nodeConfig);
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_default_config(port_, arg0),
+      callFfi: (port_) => _platform.inner.wire_default_config(port_, arg0, arg1, arg2),
       parseSuccessData: _wire2api_config,
       constMeta: kDefaultConfigConstMeta,
-      argValues: [configType],
+      argValues: [envType, apiKey, nodeConfig],
       hint: hint,
     ));
   }
 
   FlutterRustBridgeTaskConstMeta get kDefaultConfigConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "default_config",
-        argNames: ["configType"],
+        argNames: ["envType", "apiKey", "nodeConfig"],
       );
 
   Future<String> buyBitcoin({required BuyBitcoinProvider provider, dynamic hint}) {
@@ -1923,6 +1854,14 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return _wire2api_closed_channel_payment_details(raw);
   }
 
+  GreenlightCredentials _wire2api_box_autoadd_greenlight_credentials(dynamic raw) {
+    return _wire2api_greenlight_credentials(raw);
+  }
+
+  GreenlightNodeConfig _wire2api_box_autoadd_greenlight_node_config(dynamic raw) {
+    return _wire2api_greenlight_node_config(raw);
+  }
+
   InvoicePaidDetails _wire2api_box_autoadd_invoice_paid_details(dynamic raw) {
     return _wire2api_invoice_paid_details(raw);
   }
@@ -2044,7 +1983,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   Config _wire2api_config(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 8) throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    if (arr.length != 9) throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
     return Config(
       breezserver: _wire2api_String(arr[0]),
       mempoolspaceUrl: _wire2api_String(arr[1]),
@@ -2054,6 +1993,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       defaultLspId: _wire2api_opt_String(arr[5]),
       apiKey: _wire2api_opt_String(arr[6]),
       maxfeePercent: _wire2api_f64(arr[7]),
+      nodeConfig: _wire2api_node_config(arr[8]),
     );
   }
 
@@ -2090,6 +2030,15 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return GreenlightCredentials(
       deviceKey: _wire2api_uint_8_list(arr[0]),
       deviceCert: _wire2api_uint_8_list(arr[1]),
+    );
+  }
+
+  GreenlightNodeConfig _wire2api_greenlight_node_config(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return GreenlightNodeConfig(
+      partnerCredentials: _wire2api_opt_box_autoadd_greenlight_credentials(arr[0]),
+      inviteCode: _wire2api_opt_String(arr[1]),
     );
   }
 
@@ -2361,6 +2310,17 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return Network.values[raw as int];
   }
 
+  NodeConfig _wire2api_node_config(dynamic raw) {
+    switch (raw[0]) {
+      case 0:
+        return NodeConfig_Greenlight(
+          config: _wire2api_box_autoadd_greenlight_node_config(raw[1]),
+        );
+      default:
+        throw Exception("unreachable");
+    }
+  }
+
   NodeState _wire2api_node_state(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 11) throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
@@ -2385,6 +2345,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   bool? _wire2api_opt_box_autoadd_bool(dynamic raw) {
     return raw == null ? null : _wire2api_box_autoadd_bool(raw);
+  }
+
+  GreenlightCredentials? _wire2api_opt_box_autoadd_greenlight_credentials(dynamic raw) {
+    return raw == null ? null : _wire2api_box_autoadd_greenlight_credentials(raw);
   }
 
   LNInvoice? _wire2api_opt_box_autoadd_ln_invoice(dynamic raw) {
@@ -2729,6 +2693,14 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<wire_GreenlightNodeConfig> api2wire_box_autoadd_greenlight_node_config(
+      GreenlightNodeConfig raw) {
+    final ptr = inner.new_box_autoadd_greenlight_node_config_0();
+    _api_fill_to_wire_greenlight_node_config(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
   ffi.Pointer<ffi.Int64> api2wire_box_autoadd_i64(int raw) {
     return inner.new_box_autoadd_i64_0(api2wire_i64(raw));
   }
@@ -2754,6 +2726,13 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
       LnUrlWithdrawRequestData raw) {
     final ptr = inner.new_box_autoadd_ln_url_withdraw_request_data_0();
     _api_fill_to_wire_ln_url_withdraw_request_data(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
+  ffi.Pointer<wire_NodeConfig> api2wire_box_autoadd_node_config(NodeConfig raw) {
+    final ptr = inner.new_box_autoadd_node_config_0();
+    _api_fill_to_wire_node_config(raw, ptr.ref);
     return ptr;
   }
 
@@ -2812,6 +2791,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     _api_fill_to_wire_greenlight_credentials(apiObj, wireObj.ref);
   }
 
+  void _api_fill_to_wire_box_autoadd_greenlight_node_config(
+      GreenlightNodeConfig apiObj, ffi.Pointer<wire_GreenlightNodeConfig> wireObj) {
+    _api_fill_to_wire_greenlight_node_config(apiObj, wireObj.ref);
+  }
+
   void _api_fill_to_wire_box_autoadd_ln_url_auth_request_data(
       LnUrlAuthRequestData apiObj, ffi.Pointer<wire_LnUrlAuthRequestData> wireObj) {
     _api_fill_to_wire_ln_url_auth_request_data(apiObj, wireObj.ref);
@@ -2827,6 +2811,10 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     _api_fill_to_wire_ln_url_withdraw_request_data(apiObj, wireObj.ref);
   }
 
+  void _api_fill_to_wire_box_autoadd_node_config(NodeConfig apiObj, ffi.Pointer<wire_NodeConfig> wireObj) {
+    _api_fill_to_wire_node_config(apiObj, wireObj.ref);
+  }
+
   void _api_fill_to_wire_config(Config apiObj, wire_Config wireObj) {
     wireObj.breezserver = api2wire_String(apiObj.breezserver);
     wireObj.mempoolspace_url = api2wire_String(apiObj.mempoolspaceUrl);
@@ -2836,12 +2824,19 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.default_lsp_id = api2wire_opt_String(apiObj.defaultLspId);
     wireObj.api_key = api2wire_opt_String(apiObj.apiKey);
     wireObj.maxfee_percent = api2wire_f64(apiObj.maxfeePercent);
+    _api_fill_to_wire_node_config(apiObj.nodeConfig, wireObj.node_config);
   }
 
   void _api_fill_to_wire_greenlight_credentials(
       GreenlightCredentials apiObj, wire_GreenlightCredentials wireObj) {
     wireObj.device_key = api2wire_uint_8_list(apiObj.deviceKey);
     wireObj.device_cert = api2wire_uint_8_list(apiObj.deviceCert);
+  }
+
+  void _api_fill_to_wire_greenlight_node_config(
+      GreenlightNodeConfig apiObj, wire_GreenlightNodeConfig wireObj) {
+    wireObj.partner_credentials = api2wire_opt_box_autoadd_greenlight_credentials(apiObj.partnerCredentials);
+    wireObj.invite_code = api2wire_opt_String(apiObj.inviteCode);
   }
 
   void _api_fill_to_wire_ln_url_auth_request_data(
@@ -2870,6 +2865,16 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.default_description = api2wire_String(apiObj.defaultDescription);
     wireObj.min_withdrawable = api2wire_u64(apiObj.minWithdrawable);
     wireObj.max_withdrawable = api2wire_u64(apiObj.maxWithdrawable);
+  }
+
+  void _api_fill_to_wire_node_config(NodeConfig apiObj, wire_NodeConfig wireObj) {
+    if (apiObj is NodeConfig_Greenlight) {
+      var pre_config = api2wire_box_autoadd_greenlight_node_config(apiObj.config);
+      wireObj.tag = 0;
+      wireObj.kind = inner.inflate_NodeConfig_Greenlight();
+      wireObj.kind.ref.Greenlight.ref.config = pre_config;
+      return;
+    }
   }
 
   void _api_fill_to_wire_opt_box_autoadd_greenlight_credentials(
@@ -2974,86 +2979,24 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_initialized');
   late final _wire_initialized = _wire_initializedPtr.asFunction<void Function(int)>();
 
-  void wire_register_node(
-    int port_,
-    int network,
-    ffi.Pointer<wire_uint_8_list> seed,
-    ffi.Pointer<wire_Config> config,
-    ffi.Pointer<wire_GreenlightCredentials> register_credentials,
-    ffi.Pointer<wire_uint_8_list> invite_code,
-  ) {
-    return _wire_register_node(
-      port_,
-      network,
-      seed,
-      config,
-      register_credentials,
-      invite_code,
-    );
-  }
-
-  late final _wire_register_nodePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Int64, ffi.Int32, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_Config>,
-              ffi.Pointer<wire_GreenlightCredentials>, ffi.Pointer<wire_uint_8_list>)>>('wire_register_node');
-  late final _wire_register_node = _wire_register_nodePtr.asFunction<
-      void Function(int, int, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_Config>,
-          ffi.Pointer<wire_GreenlightCredentials>, ffi.Pointer<wire_uint_8_list>)>();
-
-  void wire_recover_node(
-    int port_,
-    int network,
-    ffi.Pointer<wire_uint_8_list> seed,
-    ffi.Pointer<wire_Config> config,
-  ) {
-    return _wire_recover_node(
-      port_,
-      network,
-      seed,
-      config,
-    );
-  }
-
-  late final _wire_recover_nodePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Int64, ffi.Int32, ffi.Pointer<wire_uint_8_list>,
-              ffi.Pointer<wire_Config>)>>('wire_recover_node');
-  late final _wire_recover_node = _wire_recover_nodePtr
-      .asFunction<void Function(int, int, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_Config>)>();
-
-  void wire_init_services(
+  void wire_connect(
     int port_,
     ffi.Pointer<wire_Config> config,
     ffi.Pointer<wire_uint_8_list> seed,
-    ffi.Pointer<wire_GreenlightCredentials> creds,
   ) {
-    return _wire_init_services(
+    return _wire_connect(
       port_,
       config,
       seed,
-      creds,
     );
   }
 
-  late final _wire_init_servicesPtr = _lookup<
+  late final _wire_connectPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(ffi.Int64, ffi.Pointer<wire_Config>, ffi.Pointer<wire_uint_8_list>,
-              ffi.Pointer<wire_GreenlightCredentials>)>>('wire_init_services');
-  late final _wire_init_services = _wire_init_servicesPtr.asFunction<
-      void Function(int, ffi.Pointer<wire_Config>, ffi.Pointer<wire_uint_8_list>,
-          ffi.Pointer<wire_GreenlightCredentials>)>();
-
-  void wire_start_node(
-    int port_,
-  ) {
-    return _wire_start_node(
-      port_,
-    );
-  }
-
-  late final _wire_start_nodePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_start_node');
-  late final _wire_start_node = _wire_start_nodePtr.asFunction<void Function(int)>();
+          ffi.Void Function(
+              ffi.Int64, ffi.Pointer<wire_Config>, ffi.Pointer<wire_uint_8_list>)>>('wire_connect');
+  late final _wire_connect = _wire_connectPtr
+      .asFunction<void Function(int, ffi.Pointer<wire_Config>, ffi.Pointer<wire_uint_8_list>)>();
 
   void wire_breez_events_stream(
     int port_,
@@ -3552,17 +3495,24 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
 
   void wire_default_config(
     int port_,
-    int config_type,
+    int env_type,
+    ffi.Pointer<wire_uint_8_list> api_key,
+    ffi.Pointer<wire_NodeConfig> node_config,
   ) {
     return _wire_default_config(
       port_,
-      config_type,
+      env_type,
+      api_key,
+      node_config,
     );
   }
 
-  late final _wire_default_configPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Int32)>>('wire_default_config');
-  late final _wire_default_config = _wire_default_configPtr.asFunction<void Function(int, int)>();
+  late final _wire_default_configPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Int64, ffi.Int32, ffi.Pointer<wire_uint_8_list>,
+              ffi.Pointer<wire_NodeConfig>)>>('wire_default_config');
+  late final _wire_default_config = _wire_default_configPtr
+      .asFunction<void Function(int, int, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_NodeConfig>)>();
 
   void wire_buy_bitcoin(
     int port_,
@@ -3620,6 +3570,16 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _new_box_autoadd_greenlight_credentials_0 = _new_box_autoadd_greenlight_credentials_0Ptr
       .asFunction<ffi.Pointer<wire_GreenlightCredentials> Function()>();
 
+  ffi.Pointer<wire_GreenlightNodeConfig> new_box_autoadd_greenlight_node_config_0() {
+    return _new_box_autoadd_greenlight_node_config_0();
+  }
+
+  late final _new_box_autoadd_greenlight_node_config_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_GreenlightNodeConfig> Function()>>(
+          'new_box_autoadd_greenlight_node_config_0');
+  late final _new_box_autoadd_greenlight_node_config_0 = _new_box_autoadd_greenlight_node_config_0Ptr
+      .asFunction<ffi.Pointer<wire_GreenlightNodeConfig> Function()>();
+
   ffi.Pointer<ffi.Int64> new_box_autoadd_i64_0(
     int value,
   ) {
@@ -3664,6 +3624,15 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
       _new_box_autoadd_ln_url_withdraw_request_data_0Ptr
           .asFunction<ffi.Pointer<wire_LnUrlWithdrawRequestData> Function()>();
 
+  ffi.Pointer<wire_NodeConfig> new_box_autoadd_node_config_0() {
+    return _new_box_autoadd_node_config_0();
+  }
+
+  late final _new_box_autoadd_node_config_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_NodeConfig> Function()>>('new_box_autoadd_node_config_0');
+  late final _new_box_autoadd_node_config_0 =
+      _new_box_autoadd_node_config_0Ptr.asFunction<ffi.Pointer<wire_NodeConfig> Function()>();
+
   ffi.Pointer<ffi.Uint64> new_box_autoadd_u64_0(
     int value,
   ) {
@@ -3690,6 +3659,15 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _new_uint_8_list_0 =
       _new_uint_8_list_0Ptr.asFunction<ffi.Pointer<wire_uint_8_list> Function(int)>();
 
+  ffi.Pointer<NodeConfigKind> inflate_NodeConfig_Greenlight() {
+    return _inflate_NodeConfig_Greenlight();
+  }
+
+  late final _inflate_NodeConfig_GreenlightPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<NodeConfigKind> Function()>>('inflate_NodeConfig_Greenlight');
+  late final _inflate_NodeConfig_Greenlight =
+      _inflate_NodeConfig_GreenlightPtr.asFunction<ffi.Pointer<NodeConfigKind> Function()>();
+
   void free_WireSyncReturn(
     WireSyncReturn ptr,
   ) {
@@ -3712,6 +3690,33 @@ class wire_uint_8_list extends ffi.Struct {
   external int len;
 }
 
+class wire_GreenlightCredentials extends ffi.Struct {
+  external ffi.Pointer<wire_uint_8_list> device_key;
+
+  external ffi.Pointer<wire_uint_8_list> device_cert;
+}
+
+class wire_GreenlightNodeConfig extends ffi.Struct {
+  external ffi.Pointer<wire_GreenlightCredentials> partner_credentials;
+
+  external ffi.Pointer<wire_uint_8_list> invite_code;
+}
+
+class wire_NodeConfig_Greenlight extends ffi.Struct {
+  external ffi.Pointer<wire_GreenlightNodeConfig> config;
+}
+
+class NodeConfigKind extends ffi.Union {
+  external ffi.Pointer<wire_NodeConfig_Greenlight> Greenlight;
+}
+
+class wire_NodeConfig extends ffi.Struct {
+  @ffi.Int32()
+  external int tag;
+
+  external ffi.Pointer<NodeConfigKind> kind;
+}
+
 class wire_Config extends ffi.Struct {
   external ffi.Pointer<wire_uint_8_list> breezserver;
 
@@ -3731,12 +3736,8 @@ class wire_Config extends ffi.Struct {
 
   @ffi.Double()
   external double maxfee_percent;
-}
 
-class wire_GreenlightCredentials extends ffi.Struct {
-  external ffi.Pointer<wire_uint_8_list> device_key;
-
-  external ffi.Pointer<wire_uint_8_list> device_cert;
+  external wire_NodeConfig node_config;
 }
 
 class wire_LnUrlPayRequestData extends ffi.Struct {

@@ -1,12 +1,10 @@
 use anyhow::Result;
 use bip39::{Language, Mnemonic, MnemonicType, Seed};
-use breez_sdk_core::GreenlightCredentials;
 use std::{fs, io, path::Path};
 
 use crate::config::CliConfig;
 
 const CONFIG_FILE_NAME: &str = "config.json";
-const CREDENTIALS_FILE_NAME: &str = "creds";
 const PHRASE_FILE_NAME: &str = "phrase";
 const HISTORY_FILE_NAME: &str = "history.txt";
 
@@ -33,29 +31,6 @@ impl CliPersistence {
         };
         let seed = Seed::new(&mnemonic, "");
         seed.as_bytes().to_vec()
-    }
-
-    pub(crate) fn save_credentials(&self, creds: GreenlightCredentials) -> Result<()> {
-        let filename = Path::new(&self.data_dir).join(CREDENTIALS_FILE_NAME);
-        fs::write(filename, serde_json::to_vec(&creds)?)?;
-        Ok(())
-    }
-
-    pub(crate) fn credentials(&self) -> Option<GreenlightCredentials> {
-        let filename = Path::new(&self.data_dir).join(CREDENTIALS_FILE_NAME);
-        let creds: Option<GreenlightCredentials> = match fs::read(filename.clone()) {
-            Ok(raw) => Some(serde_json::from_slice(raw.as_slice()).unwrap()),
-            Err(e) => {
-                if e.kind() != io::ErrorKind::NotFound {
-                    panic!(
-                        "Can't read from file: {}, err {e}",
-                        filename.to_str().unwrap()
-                    );
-                }
-                None
-            }
-        };
-        creds
     }
 
     pub(crate) fn get_or_create_config(&self) -> Result<CliConfig> {

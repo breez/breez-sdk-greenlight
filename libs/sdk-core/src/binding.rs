@@ -14,12 +14,10 @@ use crate::invoice::{self};
 use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::lsp::LspInformation;
 use crate::models::LogEntry;
-use crate::models::{
-    Config, EnvironmentType, GreenlightCredentials, Network, NodeState, Payment, PaymentTypeFilter,
-    SwapInfo,
-};
+use crate::models::{Config, NodeState, Payment, PaymentTypeFilter, SwapInfo};
 use crate::{
-    BackupStatus, BuyBitcoinProvider, LnUrlCallbackStatus, ReverseSwapInfo, ReverseSwapPairInfo,
+    BackupStatus, BuyBitcoinProvider, EnvironmentType, LnUrlCallbackStatus, NodeConfig,
+    ReverseSwapInfo, ReverseSwapPairInfo,
 };
 use anyhow::{anyhow, Result};
 use flutter_rust_bridge::StreamSink;
@@ -75,78 +73,23 @@ pub fn initialized() -> bool {
     block_on(async { get_breez_services().is_ok() })
 }
 
-/// Register a new node in the cloud and return credentials to interact with it
-///
-/// # Arguments
-///
-/// * `network` - The network type which is one of (Bitcoin, Testnet, Signet, Regtest)
-/// * `seed` - The node private key
-/// * `config` - The sdk configuration
-pub fn register_node(
-    network: Network,
-    seed: Vec<u8>,
-    config: Config,
-    register_credentials: Option<GreenlightCredentials>,
-    invite_code: Option<String>,
-) -> Result<GreenlightCredentials> {
-    let creds = block_on(BreezServices::register_node(
-        network,
-        seed.clone(),
-        register_credentials,
-        invite_code,
-    ))?;
-    init_services(config, seed, creds.clone())?;
-    Ok(creds)
-}
-
-/// Recover an existing node from the cloud and return credentials to interact with it
-///
-/// # Arguments
-///
-/// * `network` - The network type which is one of (Bitcoin, Testnet, Signet, Regtest)
-/// * `seed` - The node private key
-/// * `config` - The sdk configuration
-pub fn recover_node(
-    network: Network,
-    seed: Vec<u8>,
-    config: Config,
-) -> Result<GreenlightCredentials> {
-    let creds = block_on(BreezServices::recover_node(network, seed.clone()))?;
-    init_services(config, seed, creds.clone())?;
-
-    Ok(creds)
-}
-
-/// init_services initialized the global NodeService, schedule the node to run in the cloud and
+/// connect initializes the global NodeService, schedule the node to run in the cloud and
 /// run the signer. This must be called in order to start communicate with the node
 ///
 /// # Arguments
 ///
 /// * `config` - The sdk configuration
 /// * `seed` - The node private key
-/// * `creds` - The greenlight credentials
 ///
-pub fn init_services(config: Config, seed: Vec<u8>, creds: GreenlightCredentials) -> Result<()> {
+pub fn connect(config: Config, seed: Vec<u8>) -> Result<()> {
     block_on(async move {
         let breez_services =
-            BreezServices::init_services(config, seed, creds, Box::new(BindingEventListener {}))
-                .await?;
+            BreezServices::connect(config, seed, Box::new(BindingEventListener {})).await?;
         BREEZ_SERVICES_INSTANCE
             .set(breez_services)
             .map_err(|_| anyhow!("static node services already set"))?;
 
         Ok(())
-    })
-}
-
-/// See [BreezServices::start]
-pub fn start_node() -> Result<()> {
-    block_on(async {
-        BREEZ_SERVICES_INSTANCE
-            .get()
-            .ok_or_else(|| anyhow!("breez services instance was not initialized"))?
-            .start()
-            .await
     })
 }
 
@@ -403,8 +346,12 @@ pub fn recommended_fees() -> Result<RecommendedFees> {
 }
 
 /// See [BreezServices::default_config]
-pub fn default_config(config_type: EnvironmentType) -> Config {
-    BreezServices::default_config(config_type)
+pub fn default_config(
+    env_type: EnvironmentType,
+    api_key: String,
+    node_config: NodeConfig,
+) -> Config {
+    BreezServices::default_config(env_type, api_key, node_config)
 }
 
 /// See [BreezServices::buy_bitcoin]

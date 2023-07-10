@@ -5,11 +5,10 @@ try
 {
  var seed = BreezSdkMethods.MnemonicToSeed("cruise clever syrup coil cute execute laundry general cover prevent law sheriff");
  BreezSdkMethods.SetLogStream(new LogStreamListener());
- var credentials = BreezSdkMethods.RecoverNode(Network.BITCOIN, seed);
- BlockingBreezServices sdkServices = BreezSdkMethods.InitServices(BreezSdkMethods.DefaultConfig(EnvironmentType.STAGING), seed, credentials, new SDKListener());
- sdkServices.Start();
+ var config = BreezSdkMethods.DefaultConfig(EnvironmentType.STAGING, "code", new NodeConfig.Greenlight(new GreenlightNodeConfig(null, "")));
+ BlockingBreezServices sdkServices = BreezSdkMethods.Connect(config, seed, new SDKListener());
  NodeState? nodeInfo = sdkServices.NodeInfo();
- Console.WriteLine(nodeInfo.id);
+ Console.WriteLine(nodeInfo!.id);
 }
 catch (Exception e)
 {
