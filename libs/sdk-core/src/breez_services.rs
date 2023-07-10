@@ -112,7 +112,7 @@ pub struct BreezServices {
 }
 
 impl BreezServices {
-    /// connect initialized the SDK services, schedule the node to run in the cloud and
+    /// connect initializes the SDK services, schedule the node to run in the cloud and
     /// run the signer. This must be called in order to start communicating with the node
     ///
     /// # Arguments

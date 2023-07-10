@@ -78,7 +78,7 @@ class BreezBridge {
   /// Check whether node service is initialized or not
   Future<bool> isInitialized() async => await _lnToolkit.initialized();
 
-  /// connect initialized the global NodeService, schedule the node to run in the cloud and
+  /// connect initializes the global NodeService, schedule the node to run in the cloud and
   /// run the signer. This must be called in order to start communicate with the node
   ///
   /// # Arguments
