@@ -9,13 +9,13 @@ const LINKING_ERROR =
 const BreezSDK = NativeModules.RNBreezSDK
     ? NativeModules.RNBreezSDK
     : new Proxy(
-        {},
-        {
-            get() {
-                throw new Error(LINKING_ERROR)
-            }
-        }
-    )
+          {},
+          {
+              get() {
+                  throw new Error(LINKING_ERROR)
+              }
+          }
+      )
 
 const BreezSDKEmitter = new NativeEventEmitter(BreezSDK)
 
@@ -113,17 +113,17 @@ export type BitcoinAddressData = {
 }
 
 export enum NodeConfigType {
-    GREENLIGHT = "greenlight",
+    GREENLIGHT = "greenlight"
 }
 
 export type GreenlightNodeConfig = {
-    partnerCredentials?: GreenlightCredentials,
-    inviteCode?: string,
+    partnerCredentials?: GreenlightCredentials
+    inviteCode?: string
 }
 
 export type NodeConfig = {
-    type: NodeConfigType,
-    config: GreenlightNodeConfig,
+    type: NodeConfigType
+    config: GreenlightNodeConfig
 }
 
 export type Config = {
@@ -134,8 +134,8 @@ export type Config = {
     paymentTimeoutSec: number
     defaultLspId?: string
     apiKey?: string
-    maxfeePercent: number,
-    nodeConfig: NodeConfig,
+    maxfeePercent: number
+    nodeConfig: NodeConfig
 }
 
 export type ClosedChannelPaymentDetails = {
@@ -159,8 +159,8 @@ export type EventData = InvoicePaidDetails | Payment | number | PaymentFailedDat
 export type EventFn = (type: EventType, data?: EventData) => void
 
 export type GreenlightCredentials = {
-    deviceKey: Uint8Array
-    deviceCert: Uint8Array
+    deviceKey: Uint8Array | number[]
+    deviceCert: Uint8Array | number[]
 }
 
 export type FiatCurrency = {
@@ -463,6 +463,22 @@ const processSuccessActionProcessed = (data: any): AesSuccessActionDataDecrypted
     return
 }
 
+const prepareNodeConfig = (nodeConfig: NodeConfig): NodeConfig => {
+    switch (nodeConfig.type) {
+        case NodeConfigType.GREENLIGHT:
+            const partnerCredentials = nodeConfig.config.partnerCredentials
+
+            if (partnerCredentials) {
+                nodeConfig.config.partnerCredentials = {
+                    deviceCert: Array.from(partnerCredentials.deviceCert),
+                    deviceKey: Array.from(partnerCredentials.deviceKey)
+                }
+            }
+    }
+
+    return nodeConfig
+}
+
 export const addEventListener = (eventFn: EventFn): EmitterSubscription => {
     return BreezSDKEmitter.addListener("breezSdkEvent", processEvent(eventFn))
 }
@@ -489,13 +505,13 @@ export const parseInvoice = async (invoice: string): Promise<LnInvoice> => {
     return response as LnInvoice
 }
 
-
 export const defaultConfig = async (envType: EnvironmentType, apiKey: string, nodeConfig: NodeConfig): Promise<Config> => {
-    const response = await BreezSDK.defaultConfig(envType, apiKey, nodeConfig)
+    const response = await BreezSDK.defaultConfig(envType, apiKey, prepareNodeConfig(nodeConfig))
     return response as Config
 }
 
 export const connect = async (config: Config, seed: Uint8Array): Promise<void> => {
+    config.nodeConfig = prepareNodeConfig(config.nodeConfig)
     await BreezSDK.connect(config, seed)
 }
 
@@ -618,7 +634,12 @@ export const inProgressReverseSwaps = async (): Promise<ReverseSwapInfo[]> => {
     return response as ReverseSwapInfo[]
 }
 
-export const sendOnchain = async (amountSat: number, onchainRecipientAddress: string, pairHash: string, satPerVbyte: number): Promise<ReverseSwapInfo> => {
+export const sendOnchain = async (
+    amountSat: number,
+    onchainRecipientAddress: string,
+    pairHash: string,
+    satPerVbyte: number
+): Promise<ReverseSwapInfo> => {
     const response = await BreezSDK.sendOnchain(amountSat, onchainRecipientAddress, pairHash, satPerVbyte)
     return response as ReverseSwapInfo
 }
