@@ -142,7 +142,7 @@ class RNBreezSDK: RCTEventEmitter {
         }
    }
     
-    @objc(stop:rejecter:)
+    @objc(disconnect:rejecter:)
     func disconnect(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         do {
             try getBreezServices().disconnect()

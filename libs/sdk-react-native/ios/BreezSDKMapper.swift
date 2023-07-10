@@ -80,8 +80,7 @@ class BreezSDKMapper {
         if let innerConfig = nodeConfig["config"] as?  [String: Any],
            let configType = nodeConfig["type"] as? String {
             switch (configType) {
-            case "greenlight":
-                return asGreenlightNodeConfig(config: innerConfig)
+            case "greenlight": return asGreenlightNodeConfig(config: innerConfig)
             default: return nil
             }
         }
@@ -213,11 +212,11 @@ class BreezSDKMapper {
     }
     
     static func dictionaryOf(greenlightNodeConfig: GreenlightNodeConfig) -> [String: Any?] {
-        let optinalCredentials = (greenlightNodeConfig.partnerCredentials == nil ? nil : dictionaryOf(greenlightCredentials: greenlightNodeConfig.partnerCredentials!))
-        return ["partnerCredentials": optinalCredentials, "inviteCode": greenlightNodeConfig.inviteCode]
+        let optionalCredentials = (greenlightNodeConfig.partnerCredentials == nil ? nil : dictionaryOf(greenlightCredentials: greenlightNodeConfig.partnerCredentials!))
+        return ["partnerCredentials": optionalCredentials, "inviteCode": greenlightNodeConfig.inviteCode]
     }
     
-    static func dictionaryOf(nodeConfig: NodeConfig) -> [String: Any?] {
+    static func dictionaryOf(nodeConfig: NodeConfig) -> [String: Any] {
         switch(nodeConfig) {
         case let .greenlight(config):
             return ["type": "greenlight", "config": dictionaryOf(greenlightNodeConfig: config)]

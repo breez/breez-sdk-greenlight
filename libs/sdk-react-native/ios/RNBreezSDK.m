@@ -42,17 +42,12 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
-    start: (RCTPromiseResolveBlock)resolve
-    rejecter: (RCTPromiseRejectBlock)reject
-)
-
-RCT_EXTERN_METHOD(
     sync: (RCTPromiseResolveBlock)resolve
     rejecter: (RCTPromiseRejectBlock)reject
 )
 
 RCT_EXTERN_METHOD(
-    stop: (RCTPromiseResolveBlock)resolve
+    disconnect: (RCTPromiseResolveBlock)resolve
     rejecter: (RCTPromiseRejectBlock)reject
 )
 
