@@ -64,9 +64,28 @@ class BreezSDKMapper {
 
     static func asBitcoinProvider(provider: String) throws -> BuyBitcoinProvider {
         switch(provider) {
-        case "moonpay": return BuyBitcoinProvider.moonpay        
+        case "moonpay": return BuyBitcoinProvider.moonpay
         default: throw SdkError.Error(message: "Invalid Bitcoin provider")
         }
+    }
+    
+    static func asGreenlightNodeConfig(config: [String: Any?]) -> NodeConfig? {
+        let inviteCode = config["inviteCode"] as? String
+        let credentialsMap = config["partnerCredentials"] as? [String: Any]
+        let partnerCredentials = (credentialsMap == nil ? nil : asGreenlightCredentials(reqData: credentialsMap!))
+        return NodeConfig.greenlight(config: GreenlightNodeConfig(partnerCredentials: partnerCredentials, inviteCode: inviteCode))
+    }
+    
+    static func asNodeConfig(nodeConfig: [String: Any?]) -> NodeConfig? {
+        if let innerConfig = nodeConfig["config"] as?  [String: Any],
+           let configType = nodeConfig["type"] as? String {
+            switch (configType) {
+            case "greenlight":
+                return asGreenlightNodeConfig(config: innerConfig)
+            default: return nil
+            }
+        }
+        return nil
     }
     
     static func asConfig(config: [String: Any?]) -> Config? {
@@ -78,10 +97,16 @@ class BreezSDKMapper {
            let maxfeePercent = config["maxfeePercent"] as? Double {
             let defaultLspId = config["defaultLspId"] as? String
             let apiKey = config["apiKey"] as? String
-            do {
-                var network = try asNetwork(network: networkStr)
-                return Config(breezserver: breezserver, mempoolspaceUrl: mempoolspaceUrl, workingDir: workingDir, network: network, paymentTimeoutSec: paymentTimeoutSec, defaultLspId: defaultLspId, apiKey: apiKey, maxfeePercent: maxfeePercent)
-            } catch {}
+            if let nodeConfigObj = config["nodeConfig"] as? [String: Any?] {
+                let nodeConfig = asNodeConfig(nodeConfig: nodeConfigObj)
+                if nodeConfig == nil {
+                    return nil
+                }
+                do {
+                    var network = try asNetwork(network: networkStr)
+                    return Config(breezserver: breezserver, mempoolspaceUrl: mempoolspaceUrl, workingDir: workingDir, network: network, paymentTimeoutSec: paymentTimeoutSec, defaultLspId: defaultLspId, apiKey: apiKey, maxfeePercent: maxfeePercent, nodeConfig: nodeConfig!)
+                } catch {}
+            }
         }
         
         return nil
@@ -122,7 +147,7 @@ class BreezSDKMapper {
         }
         
         return nil
-    }    
+    }
 
     static func asGreenlightCredentials(reqData: [String: Any]) -> GreenlightCredentials? {
         if let deviceKey = reqData["deviceKey"] as? [UInt8],
@@ -131,7 +156,7 @@ class BreezSDKMapper {
         }
         
         return nil
-    } 
+    }
 
     
     static func asPaymentTypeFilter(filter: String) throws -> PaymentTypeFilter {
@@ -187,6 +212,18 @@ class BreezSDKMapper {
         ]
     }
     
+    static func dictionaryOf(greenlightNodeConfig: GreenlightNodeConfig) -> [String: Any?] {
+        let optinalCredentials = (greenlightNodeConfig.partnerCredentials == nil ? nil : dictionaryOf(greenlightCredentials: greenlightNodeConfig.partnerCredentials!))
+        return ["partnerCredentials": optinalCredentials, "inviteCode": greenlightNodeConfig.inviteCode]
+    }
+    
+    static func dictionaryOf(nodeConfig: NodeConfig) -> [String: Any?] {
+        switch(nodeConfig) {
+        case let .greenlight(config):
+            return ["type": "greenlight", "config": dictionaryOf(greenlightNodeConfig: config)]
+        }
+    }
+    
     static func dictionaryOf(config: Config) -> [String: Any?] {
         return [
             "breezserver": config.breezserver,
@@ -195,8 +232,9 @@ class BreezSDKMapper {
             "network": valueOf(network: config.network),
             "paymentTimeoutSec": config.paymentTimeoutSec,
             "defaultLspId": config.defaultLspId,
-            "apiKey": config.apiKey,            
-            "maxfeePercent": config.maxfeePercent
+            "apiKey": config.apiKey,
+            "maxfeePercent": config.maxfeePercent,
+            "nodeConfig": dictionaryOf(nodeConfig: config.nodeConfig)
         ]
     }
     
@@ -426,7 +464,7 @@ class BreezSDKMapper {
 
     static func dictionaryOf(backupFailedData: BackupFailedData) -> [String: Any?] {
         return [
-            "error": backupFailedData.error            
+            "error": backupFailedData.error
         ]
     }
     
