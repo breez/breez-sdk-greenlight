@@ -22,43 +22,22 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
-    registerNode: (NSString*)network
-    seed: (NSArray*)seed
-    registerCredentials: (NSDictionary*)registerCredentials
-    inviteCode: (NSString*)inviteCode
-    resolver: (RCTPromiseResolveBlock)resolve
-    rejecter: (RCTPromiseRejectBlock)reject
-)
-
-RCT_EXTERN_METHOD(
-    recoverNode: (NSString*)network
-    seed: (NSArray*)seed
-    resolver: (RCTPromiseResolveBlock)resolve
-    rejecter: (RCTPromiseRejectBlock)reject
-)
-
-RCT_EXTERN_METHOD(
     startLogStream: (RCTPromiseResolveBlock)resolve
     rejecter: (RCTPromiseRejectBlock)reject
 )
 
 RCT_EXTERN_METHOD(
     defaultConfig: (NSString*)envType
+    apiKey:(NSString*)apiKey
+    nodeConfigMap: (NSDictionary*)nodeConfigMap
     resolver: (RCTPromiseResolveBlock)resolve
     rejecter: (RCTPromiseRejectBlock)reject
 )
 
 RCT_EXTERN_METHOD(
-    initServices: (NSDictionary*)config
-    deviceKey: (NSArray*)deviceKey
-    deviceCert: (NSArray*)deviceCert
+    connect: (NSDictionary*)config
     seed: (NSArray*)seed
     resolver: (RCTPromiseResolveBlock)resolve
-    rejecter: (RCTPromiseRejectBlock)reject
-)
-
-RCT_EXTERN_METHOD(
-    start: (RCTPromiseResolveBlock)resolve
     rejecter: (RCTPromiseRejectBlock)reject
 )
 
@@ -68,7 +47,7 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
-    stop: (RCTPromiseResolveBlock)resolve
+    disconnect: (RCTPromiseResolveBlock)resolve
     rejecter: (RCTPromiseRejectBlock)reject
 )
 

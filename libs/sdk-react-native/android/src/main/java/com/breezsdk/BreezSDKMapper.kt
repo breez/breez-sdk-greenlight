@@ -8,14 +8,15 @@ fun asConfig(config: ReadableMap): Config? {
     val mempoolspaceUrl = config.getString("mempoolspaceUrl")
     val workingDir = config.getString("workingDir")
     val network = config.getString("network")
+    val nodeConfig = config.getMap("nodeConfig")?.let { asNodeConfig(it) }
 
-    if (breezserver != null && mempoolspaceUrl != null && workingDir != null && network != null && hasNonNullKey(config, "paymentTimeoutSec") && hasNonNullKey(config, "maxfeePercent")) {
+    if (breezserver != null && mempoolspaceUrl != null && workingDir != null && network != null && nodeConfig != null && hasNonNullKey(config, "paymentTimeoutSec") && hasNonNullKey(config, "maxfeePercent")) {
         val paymentTimeoutSec = config.getInt("paymentTimeoutSec")
         val defaultLspId = config.getString("defaultLspId")
         val apiKey = config.getString("apiKey")
         val maxfeePercent = config.getDouble("maxfeePercent")
 
-        return Config(breezserver, mempoolspaceUrl, workingDir, asNetwork(network), paymentTimeoutSec.toUInt(), defaultLspId, apiKey, maxfeePercent)
+        return Config(breezserver, mempoolspaceUrl, workingDir, asNetwork(network), paymentTimeoutSec.toUInt(), defaultLspId, apiKey, maxfeePercent, nodeConfig)
     }
 
     return null
@@ -27,6 +28,13 @@ fun asEnvironmentType(envType: String): EnvironmentType {
 
 fun asBuyBitcoinProvider(envType: String): BuyBitcoinProvider {
     return BuyBitcoinProvider.valueOf(envType.uppercase())
+}
+
+fun asGreenlightNodeConfig(greenlightNodeConfig: ReadableMap): NodeConfig {
+    val partnerCredentials = greenlightNodeConfig.getMap("partnerCredentials")?.let { asGreenlightCredentials(it) }
+    val inviteCode = greenlightNodeConfig.getString("inviteCode")
+
+    return NodeConfig.Greenlight(GreenlightNodeConfig(partnerCredentials, inviteCode))
 }
 
 fun asLnUrlAuthRequestData(reqData: ReadableMap): LnUrlAuthRequestData? {
@@ -82,11 +90,23 @@ fun asNetwork(network: String): Network {
     return Network.valueOf(network.uppercase())
 }
 
+fun asNodeConfig(nodeConfig: ReadableMap): NodeConfig? {
+    val type = nodeConfig.getString("type")
+
+    if (type != null && hasNonNullKey(nodeConfig, "config")) {
+        return when (type) {
+            "greenlight" -> nodeConfig.getMap("config")?.let{ asGreenlightNodeConfig(it) }
+            else -> null
+        }
+    }
+
+    return null
+}
 fun asGreenlightCredentials(creds: ReadableMap) : GreenlightCredentials? {
     if (hasNonNullKey(creds, "deviceKey") && hasNonNullKey(creds, "deviceCert")) {
-         val deviceKeyArray = creds.getArray("deviceKey")
-         val deviceCertArray = creds.getArray("deviceCert")
-         return GreenlightCredentials(asUByteList(deviceKeyArray!!), asUByteList(deviceCertArray!!))
+        val deviceKeyArray = creds.getArray("deviceKey")
+        val deviceCertArray = creds.getArray("deviceCert")
+        return GreenlightCredentials(asUByteList(deviceKeyArray!!), asUByteList(deviceCertArray!!))
     }
 
     return null
@@ -208,8 +228,9 @@ fun readableMapOf(config: Config): ReadableMap {
             "network" to config.network.name.lowercase(),
             "paymentTimeoutSec" to config.paymentTimeoutSec,
             "defaultLspId" to config.defaultLspId,
-            "apiKey" to config.apiKey,            
-            "maxfeePercent" to config.maxfeePercent
+            "apiKey" to config.apiKey,
+            "maxfeePercent" to config.maxfeePercent,
+            "nodeConfig" to readableMapOf(config.nodeConfig)
     )
 }
 
@@ -236,6 +257,13 @@ fun readableMapOf(greenlightCredentials: GreenlightCredentials): ReadableMap {
     return readableMapOf(
             "deviceKey" to readableArrayOf(greenlightCredentials.deviceKey),
             "deviceCert" to readableArrayOf(greenlightCredentials.deviceCert)
+    )
+}
+
+fun readableMapOf(greenlightNodeConfig: GreenlightNodeConfig): ReadableMap {
+    return readableMapOf(
+            "partnerCredentials" to if (greenlightNodeConfig.partnerCredentials == null) null else readableMapOf(greenlightNodeConfig.partnerCredentials!!),
+            "inviteCode" to greenlightNodeConfig.inviteCode,
     )
 }
 
@@ -414,6 +442,12 @@ fun readableMapOf(messageSuccessActionData: MessageSuccessActionData): ReadableM
             "type" to "message",
             "message" to messageSuccessActionData.message
     )
+}
+
+fun readableMapOf(nodeConfig: NodeConfig): ReadableMap {
+    return when (nodeConfig) {
+        is NodeConfig.Greenlight -> readableMapOf("type" to "greenlight", "config" to readableMapOf(nodeConfig.config))
+    }
 }
 
 fun readableMapOf(nodeState: NodeState): ReadableMap {
