@@ -490,17 +490,13 @@ export const parseInvoice = async (invoice: string): Promise<LnInvoice> => {
 }
 
 
-export const defaultConfig = async (envType: EnvironmentType, api_key: string, node_config: NodeConfig): Promise<Config> => {
-    const response = await BreezSDK.defaultConfig(envType, api_key, node_config)
+export const defaultConfig = async (envType: EnvironmentType, apiKey: string, nodeConfig: NodeConfig): Promise<Config> => {
+    const response = await BreezSDK.defaultConfig(envType, apiKey, nodeConfig)
     return response as Config
 }
 
 export const connect = async (config: Config, seed: Uint8Array): Promise<void> => {
     await BreezSDK.connect(config, seed)
-}
-
-export const start = async (): Promise<void> => {
-    await BreezSDK.start()
 }
 
 export const sync = async (): Promise<void> => {
