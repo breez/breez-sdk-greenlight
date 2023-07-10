@@ -229,77 +229,27 @@ impl Greenlight {
 
 #[tonic::async_trait]
 impl NodeAPI for Greenlight {
-    async fn start(&self) -> Result<()> {
-        self.node_client
-            .clone()
-            .getinfo(pb::cln::GetinfoRequest {})
-            .await?;
-        Ok(())
-    }
-
-    async fn start_signer(&self, shutdown: mpsc::Receiver<()>) {
-        _ = self.signer.run_forever(shutdown).await;
-        error!("signer exited");
-    }
-
-    async fn stream_incoming_payments(&self) -> Result<Streaming<gl_client::pb::IncomingPayment>> {
+    async fn create_invoice(
+        &self,
+        amount_sats: u64,
+        description: String,
+        preimage: Option<Vec<u8>>,
+    ) -> Result<Invoice> {
         let mut client = self.get_client();
-        let stream = client
-            .stream_incoming(gl_client::pb::StreamIncomingFilter {})
-            .await?
-            .into_inner();
-        Ok(stream)
-    }
 
-    async fn stream_log_messages(&self) -> Result<Streaming<gl_client::pb::LogEntry>> {
-        let mut client = self.get_client();
-        let stream = client
-            .stream_log(gl_client::pb::StreamLogRequest {})
-            .await?
-            .into_inner();
-        Ok(stream)
-    }
+        let request = InvoiceRequest {
+            amount: Some(Amount {
+                unit: Some(Unit::Satoshi(amount_sats)),
+            }),
+            label: format!(
+                "breez-{}",
+                SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis()
+            ),
+            description,
+            preimage: preimage.unwrap_or_default(),
+        };
 
-    fn sign_invoice(&self, invoice: RawInvoice) -> Result<String> {
-        let hrp_bytes = invoice.hrp.to_string().as_bytes().to_vec();
-        let data_bytes = invoice.data.to_base32();
-
-        // create the message for the signer
-        let msg_type: u16 = 8;
-        let data_len: u16 = data_bytes.len().try_into()?;
-        let mut data_len_bytes = data_len.to_be_bytes().to_vec();
-        let mut data_buf = data_bytes.iter().copied().map(u5::to_u8).collect();
-
-        let hrp_len: u16 = hrp_bytes.len().try_into()?;
-        let mut hrp_len_bytes = hrp_len.to_be_bytes().to_vec();
-        let mut hrp_buf = hrp_bytes.to_vec();
-
-        let mut buf = msg_type.to_be_bytes().to_vec();
-        buf.append(&mut data_len_bytes);
-        buf.append(&mut data_buf);
-        buf.append(&mut hrp_len_bytes);
-        buf.append(&mut hrp_buf);
-        // Sign the invoice using the signer
-        let raw_result = self.signer.sign_invoice(buf)?;
-        info!(
-            "recover id: {:?} raw = {:?}",
-            raw_result, raw_result[64] as i32
-        );
-        // contruct the RecoveryId
-        let rid = RecoveryId::from_i32(raw_result[64] as i32).expect("recovery ID");
-        let sig = &raw_result[0..64];
-        let recoverable_sig =
-            RecoverableSignature::from_compact(sig, rid).map_err(|e| anyhow!(e))?;
-
-        let signed_invoice: Result<SignedRawInvoice> = invoice.sign(|_| Ok(recoverable_sig));
-        Ok(signed_invoice?.to_string())
-    }
-
-    async fn connect_peer(&self, node_id: String, addr: String) -> Result<()> {
-        let mut client = self.get_client();
-        let connect_req = pb::ConnectRequest { node_id, addr };
-        client.connect_peer(connect_req).await?;
-        Ok(())
+        Ok(client.create_invoice(request).await?.into_inner())
     }
 
     // implemenet pull changes from greenlight
@@ -453,38 +403,6 @@ impl NodeAPI for Greenlight {
         })
     }
 
-    async fn list_peers(&self) -> Result<Vec<Peer>> {
-        let mut client = self.get_client();
-        Ok(client
-            .list_peers(pb::ListPeersRequest::default())
-            .await?
-            .into_inner()
-            .peers)
-    }
-
-    async fn create_invoice(
-        &self,
-        amount_sats: u64,
-        description: String,
-        preimage: Option<Vec<u8>>,
-    ) -> Result<Invoice> {
-        let mut client = self.get_client();
-
-        let request = InvoiceRequest {
-            amount: Some(Amount {
-                unit: Some(Unit::Satoshi(amount_sats)),
-            }),
-            label: format!(
-                "breez-{}",
-                SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis()
-            ),
-            description,
-            preimage: preimage.unwrap_or_default(),
-        };
-
-        Ok(client.create_invoice(request).await?.into_inner())
-    }
-
     async fn send_payment(
         &self,
         bolt11: String,
@@ -536,6 +454,92 @@ impl NodeAPI for Greenlight {
             maxdelay: None,
         };
         client.key_send(request).await?.into_inner().try_into()
+    }
+
+    async fn start(&self) -> Result<()> {
+        self.node_client
+            .clone()
+            .getinfo(pb::cln::GetinfoRequest {})
+            .await?;
+        Ok(())
+    }
+
+    async fn sweep(
+        &self,
+        to_address: String,
+        fee_rate_sats_per_vbyte: u64,
+    ) -> Result<WithdrawResponse> {
+        let mut client = self.get_client();
+
+        let request = pb::WithdrawRequest {
+            feerate: Some(pb::Feerate {
+                value: Some(pb::feerate::Value::Perkw(fee_rate_sats_per_vbyte * 250)),
+            }),
+            amount: Some(Amount {
+                unit: Some(Unit::All(true)),
+            }),
+            destination: to_address,
+            minconf: None,
+            utxos: vec![],
+        };
+
+        Ok(client.withdraw(request).await?.into_inner())
+    }
+
+    async fn start_signer(&self, shutdown: mpsc::Receiver<()>) {
+        _ = self.signer.run_forever(shutdown).await;
+        error!("signer exited");
+    }
+
+    async fn list_peers(&self) -> Result<Vec<Peer>> {
+        let mut client = self.get_client();
+        Ok(client
+            .list_peers(pb::ListPeersRequest::default())
+            .await?
+            .into_inner()
+            .peers)
+    }
+
+    async fn connect_peer(&self, node_id: String, addr: String) -> Result<()> {
+        let mut client = self.get_client();
+        let connect_req = pb::ConnectRequest { node_id, addr };
+        client.connect_peer(connect_req).await?;
+        Ok(())
+    }
+
+    fn sign_invoice(&self, invoice: RawInvoice) -> Result<String> {
+        let hrp_bytes = invoice.hrp.to_string().as_bytes().to_vec();
+        let data_bytes = invoice.data.to_base32();
+
+        // create the message for the signer
+        let msg_type: u16 = 8;
+        let data_len: u16 = data_bytes.len().try_into()?;
+        let mut data_len_bytes = data_len.to_be_bytes().to_vec();
+        let mut data_buf = data_bytes.iter().copied().map(u5::to_u8).collect();
+
+        let hrp_len: u16 = hrp_bytes.len().try_into()?;
+        let mut hrp_len_bytes = hrp_len.to_be_bytes().to_vec();
+        let mut hrp_buf = hrp_bytes.to_vec();
+
+        let mut buf = msg_type.to_be_bytes().to_vec();
+        buf.append(&mut data_len_bytes);
+        buf.append(&mut data_buf);
+        buf.append(&mut hrp_len_bytes);
+        buf.append(&mut hrp_buf);
+        // Sign the invoice using the signer
+        let raw_result = self.signer.sign_invoice(buf)?;
+        info!(
+            "recover id: {:?} raw = {:?}",
+            raw_result, raw_result[64] as i32
+        );
+        // contruct the RecoveryId
+        let rid = RecoveryId::from_i32(raw_result[64] as i32).expect("recovery ID");
+        let sig = &raw_result[0..64];
+        let recoverable_sig =
+            RecoverableSignature::from_compact(sig, rid).map_err(|e| anyhow!(e))?;
+
+        let signed_invoice: Result<SignedRawInvoice> = invoice.sign(|_| Ok(recoverable_sig));
+        Ok(signed_invoice?.to_string())
     }
 
     async fn close_peer_channels(&self, node_id: String) -> Result<Vec<String>> {
@@ -593,26 +597,22 @@ impl NodeAPI for Greenlight {
         Ok(tx_ids)
     }
 
-    async fn sweep(
-        &self,
-        to_address: String,
-        fee_rate_sats_per_vbyte: u64,
-    ) -> Result<WithdrawResponse> {
+    async fn stream_incoming_payments(&self) -> Result<Streaming<gl_client::pb::IncomingPayment>> {
         let mut client = self.get_client();
+        let stream = client
+            .stream_incoming(gl_client::pb::StreamIncomingFilter {})
+            .await?
+            .into_inner();
+        Ok(stream)
+    }
 
-        let request = pb::WithdrawRequest {
-            feerate: Some(pb::Feerate {
-                value: Some(pb::feerate::Value::Perkw(fee_rate_sats_per_vbyte * 250)),
-            }),
-            amount: Some(Amount {
-                unit: Some(Unit::All(true)),
-            }),
-            destination: to_address,
-            minconf: None,
-            utxos: vec![],
-        };
-
-        Ok(client.withdraw(request).await?.into_inner())
+    async fn stream_log_messages(&self) -> Result<Streaming<gl_client::pb::LogEntry>> {
+        let mut client = self.get_client();
+        let stream = client
+            .stream_log(gl_client::pb::StreamLogRequest {})
+            .await?
+            .into_inner();
+        Ok(stream)
     }
 
     async fn execute_command(&self, command: String) -> Result<String> {
