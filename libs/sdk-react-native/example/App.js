@@ -78,12 +78,7 @@ const App = () => {
 
                 const nodeConfig = {
                     type: "greenlight",
-                    config: {
-                        partnerCredentials: {
-                            deviceKey: null,
-                            deviceCert: null
-                        }
-                    }
+                    config: {}
                 }
 
                 const config = await defaultConfig(EnvironmentType.PRODUCTION, BuildConfig.BREEZ_API_KEY, nodeConfig)
