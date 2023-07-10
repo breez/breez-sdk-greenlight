@@ -195,7 +195,7 @@ pub(crate) async fn handle_command(
         }
         Commands::Disconnect {} => {
             sdk()?.disconnect().await?;
-            Ok("Node was stopped succesfully".to_string())
+            Ok("Node was stopped successfully".to_string())
         }
         Commands::RecommendedFees {} => {
             serde_json::to_string_pretty(&sdk()?.recommended_fees().await?).map_err(|e| e.into())

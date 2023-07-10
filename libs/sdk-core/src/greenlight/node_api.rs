@@ -84,7 +84,7 @@ impl Greenlight {
                     Some(creds) => {
                         let built_credentials: GreenlightCredentials =
                             serde_json::from_slice(creds.as_slice())?;
-                        info!("Initializing greenligihth from existing credentials");
+                        info!("Initializing greenlight from existing credentials");
                         Ok(built_credentials)
                     }
                     None => {

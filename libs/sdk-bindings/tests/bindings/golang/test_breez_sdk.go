@@ -32,7 +32,7 @@ func main() {
 	sdkServices, err := breez_sdk.Connect(config, seed, breezListener)
 
 	if err != nil {
-		log.Fatalf("InitServices failed: %#v", err)
+		log.Fatalf("Connect failed: %#v", err)
 	}
 
 	nodeInfo, err := sdkServices.NodeInfo()
