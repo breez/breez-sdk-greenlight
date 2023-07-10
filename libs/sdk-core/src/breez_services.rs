@@ -112,7 +112,7 @@ pub struct BreezServices {
 }
 
 impl BreezServices {
-    /// connect initialized the SDK services, schedule the node to run in the cloud and
+    /// connect initializes the SDK services, schedule the node to run in the cloud and
     /// run the signer. This must be called in order to start communicating with the node
     ///
     /// # Arguments
@@ -491,7 +491,7 @@ impl BreezServices {
             .map(|x| x.into_iter().map(Into::into).collect())
     }
 
-    /// list non-completed expired swaps that should be refunded bu calling [BreezServices::refund]
+    /// list non-completed expired swaps that should be refunded by calling [BreezServices::refund]
     pub async fn list_refundables(&self) -> Result<Vec<SwapInfo>> {
         self.btc_receive_swapper.list_refundables()
     }

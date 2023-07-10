@@ -79,7 +79,7 @@ pub fn default_config(
     BreezServices::default_config(env_type, api_key, node_config)
 }
 
-/// connect initialized the SDK services, schedule the node to run in the cloud and
+/// connect initializes the SDK services, schedule the node to run in the cloud and
 /// run the signer. This must be called in order to start communicating with the node
 ///
 /// # Arguments
@@ -270,7 +270,7 @@ impl BlockingBreezServices {
             .map_err(|e| e.into())
     }
 
-    /// list non-completed expired swaps that should be refunded bu calling [BreezServices::refund]
+    /// list non-completed expired swaps that should be refunded by calling [BreezServices::refund]
     pub fn list_refundables(&self) -> Result<Vec<SwapInfo>, SDKError> {
         rt().block_on(self.breez_services.list_refundables())
             .map_err(|e| e.into())
