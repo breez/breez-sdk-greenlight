@@ -73,7 +73,7 @@ pub fn initialized() -> bool {
     block_on(async { get_breez_services().is_ok() })
 }
 
-/// connect initialized the global NodeService, schedule the node to run in the cloud and
+/// connect initializes the global NodeService, schedule the node to run in the cloud and
 /// run the signer. This must be called in order to start communicate with the node
 ///
 /// # Arguments

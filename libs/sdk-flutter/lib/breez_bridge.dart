@@ -14,27 +14,32 @@ class BreezBridge {
 
   /* Streams */
   /// Listen to node state
-  final StreamController<NodeState?> nodeStateController = BehaviorSubject<NodeState?>();
+  final StreamController<NodeState?> nodeStateController =
+      BehaviorSubject<NodeState?>();
 
   Stream<NodeState?> get nodeStateStream => nodeStateController.stream;
 
   /// Listen to payment list
-  final StreamController<List<Payment>> paymentsController = BehaviorSubject<List<Payment>>();
+  final StreamController<List<Payment>> paymentsController =
+      BehaviorSubject<List<Payment>>();
 
   Stream<List<Payment>> get paymentsStream => paymentsController.stream;
 
   /// Listen to paid Invoice events
-  final StreamController<InvoicePaidDetails> _invoicePaidStream = BehaviorSubject<InvoicePaidDetails>();
+  final StreamController<InvoicePaidDetails> _invoicePaidStream =
+      BehaviorSubject<InvoicePaidDetails>();
 
   Stream<InvoicePaidDetails> get invoicePaidStream => _invoicePaidStream.stream;
 
   /// Listen to payment results
-  final StreamController<Payment> _paymentResultStream = BehaviorSubject<Payment>();
+  final StreamController<Payment> _paymentResultStream =
+      BehaviorSubject<Payment>();
 
   Stream<Payment> get paymentResultStream => _paymentResultStream.stream;
 
   // Listen to backup results
-  final StreamController<BreezEvent?> _backupStreamController = BehaviorSubject<BreezEvent?>();
+  final StreamController<BreezEvent?> _backupStreamController =
+      BehaviorSubject<BreezEvent?>();
 
   Stream<BreezEvent?> get backupStream => _backupStreamController.stream;
 
@@ -73,78 +78,32 @@ class BreezBridge {
   /// Check whether node service is initialized or not
   Future<bool> isInitialized() async => await _lnToolkit.initialized();
 
-  /// Register a new node in the cloud and return credentials to interact with it
-  ///
-  /// # Arguments
-  ///
-  /// * `network` - The network type which is one of (Bitcoin, Testnet, Signet, Regtest)
-  /// * `seed` - The node private key
-  /// * `config` - The sdk configuration
-  Future<GreenlightCredentials> registerNode({
-    required Config config,
-    required Network network,
-    required Uint8List seed,
-    String? inviteCode,
-    GreenlightCredentials? registerCredentials,
-  }) async {
-    var creds = await _lnToolkit.registerNode(
-      config: config,
-      network: network,
-      seed: seed,
-      inviteCode: inviteCode,
-      registerCredentials: registerCredentials,
-    );
-    await fetchNodeData();
-    return creds;
-  }
-
-  /// Recover an existing node from the cloud and return credentials to interact with it
-  ///
-  /// # Arguments
-  ///
-  /// * `network` - The network type which is one of (Bitcoin, Testnet, Signet, Regtest)
-  /// * `seed` - The node private key
-  /// * `config` - The sdk configuration
-  Future<GreenlightCredentials> recoverNode({
-    required Config config,
-    required Network network,
-    required Uint8List seed,
-  }) async {
-    var creds = await _lnToolkit.recoverNode(
-      config: config,
-      network: network,
-      seed: seed,
-    );
-    await fetchNodeData();
-    return creds;
-  }
-
-  /// init_services initialized the global NodeService, schedule the node to run in the cloud and
-  /// run the signer. This must be called in order to start comunicate with the node
+  /// connect initializes the global NodeService, schedule the node to run in the cloud and
+  /// run the signer. This must be called in order to start communicate with the node
   ///
   /// # Arguments
   ///
   /// * `config` - The sdk configuration
   /// * `seed` - The node private key
-  /// * `creds` - The greenlight credentials
-  Future initServices({
+  Future connect({
     required Config config,
     required Uint8List seed,
-    required GreenlightCredentials creds,
   }) async {
-    await _lnToolkit.initServices(
+    await _lnToolkit.connect(
       config: config,
       seed: seed,
-      creds: creds,
     );
     await fetchNodeData();
   }
-
-  Future<void> startNode() async => await _lnToolkit.startNode();
 
   /// Cleanup node resources and stop the signer.
   Future<void> stopNode() async => await _lnToolkit.stopNode();
 
+  /// This method sync the local state with the remote node state.
+  /// The synced items are as follows:
+  /// * node state - General information about the node and its liquidity status
+  /// * channels - The list of channels and their status
+  /// * payments - The incoming/outgoing payments
   Future<void> syncNode() async => await _lnToolkit.syncNode();
 
   /// pay a bolt11 invoice
@@ -204,8 +163,17 @@ class BreezBridge {
     return nodeState;
   }
 
-  Future<Config> defaultConfig(EnvironmentType envType) {
-    return _lnToolkit.defaultConfig(configType: envType);
+  /// Get the full default config for a specific environment type
+  Future<Config> defaultConfig({
+    required EnvironmentType envType,
+    required String apiKey,
+    required NodeConfig nodeConfig,
+  }) {
+    return _lnToolkit.defaultConfig(
+      envType: envType,
+      apiKey: apiKey,
+      nodeConfig: nodeConfig,
+    );
   }
 
   /// list payments (incoming/outgoing payments) from the persistent storage
@@ -223,6 +191,14 @@ class BreezBridge {
     return paymentsList;
   }
 
+  /// Fetch a specific payment by its hash.
+  Future<Payment?> paymentByHash({
+    required String hash,
+  }) async =>
+      await _lnToolkit.paymentByHash(
+        hash: hash,
+      );
+
   /// List available lsps that can be selected by the user
   Future<List<LspInformation>> listLsps() async => await _lnToolkit.listLsps();
 
@@ -232,8 +208,10 @@ class BreezBridge {
   }
 
   /// Convenience method to look up LSP info
-  Future<LspInformation?> fetchLspInfo(String lspId) async => await _lnToolkit.fetchLspInfo(id: lspId);
+  Future<LspInformation?> fetchLspInfo(String lspId) async =>
+      await _lnToolkit.fetchLspInfo(id: lspId);
 
+  /// Get the current LSP's ID
   Future<String?> getLspId() async => await _lnToolkit.lspId();
 
   /// Fetch live rates of fiat currencies
@@ -246,7 +224,8 @@ class BreezBridge {
   }
 
   /// List all available fiat currencies
-  Future<List<FiatCurrency>> listFiatCurrencies() async => await _lnToolkit.listFiatCurrencies();
+  Future<List<FiatCurrency>> listFiatCurrencies() async =>
+      await _lnToolkit.listFiatCurrencies();
 
   /// close all channels with the current lsp
   Future closeLspChannels() async => await _lnToolkit.closeLspChannels();
@@ -266,10 +245,14 @@ class BreezBridge {
   /// Onchain receive swap API
   Future<SwapInfo> receiveOnchain() async => await _lnToolkit.receiveOnchain();
 
+  /// Returns the blocking [ReverseSwapInfo]s that are in progress
   Future<SwapInfo?> inProgressSwap() async => await _lnToolkit.inProgressSwap();
 
-  Future<List<SwapInfo>> listRefundables() async => await _lnToolkit.listRefundables();
+  /// list non-completed expired swaps that should be refunded by calling refund()
+  Future<List<SwapInfo>> listRefundables() async =>
+      await _lnToolkit.listRefundables();
 
+  /// Construct and broadcast a refund transaction for a failed/expired swap
   Future<String> refund({
     required String swapAddress,
     required String toAddress,
@@ -281,11 +264,40 @@ class BreezBridge {
         satPerVbyte: satPerVbyte,
       );
 
-  Future<String> executeCommand({required String command}) => _lnToolkit.executeCommand(command: command);
+  /// Lookup the most recent reverse swap pair info using the Boltz API
+  Future<ReverseSwapPairInfo> fetchReverseSwapFees() async =>
+      _lnToolkit.fetchReverseSwapFees();
 
-  Future<LNInvoice> parseInvoice(String invoice) async => await _lnToolkit.parseInvoice(invoice: invoice);
+  /// Returns the blocking [ReverseSwapInfo]s that are in progress
+  Future<List<ReverseSwapInfo>> inProgressReverseSwaps() async =>
+      _lnToolkit.inProgressReverseSwaps();
 
-  Future<InputType> parseInput({required String input}) async => await _lnToolkit.parse(s: input);
+  /// Creates a reverse swap and attempts to pay the HODL invoice
+  Future<ReverseSwapInfo> sendOnchain({
+    required int amountSat,
+    required String onchainRecipientAddress,
+    required String pairHash,
+    required int satPerVbyte,
+  }) async =>
+      _lnToolkit.sendOnchain(
+        amountSat: amountSat,
+        onchainRecipientAddress: onchainRecipientAddress,
+        pairHash: pairHash,
+        satPerVbyte: satPerVbyte,
+      );
+
+  /// Execute a command directly on the NodeAPI interface.
+  /// Mainly used to debugging.
+  Future<String> executeCommand({required String command}) async =>
+      _lnToolkit.executeCommand(command: command);
+
+  /// Parse a BOLT11 payment request and return a structure contains the parsed fields.
+  Future<LNInvoice> parseInvoice(String invoice) async =>
+      await _lnToolkit.parseInvoice(invoice: invoice);
+
+  /// Parses generic user input, typically pasted from clipboard or scanned from a QR.
+  Future<InputType> parseInput({required String input}) async =>
+      await _lnToolkit.parse(s: input);
 
   /// Second step of LNURL-pay. The first step is `parse()`, which also validates the LNURL destination
   /// and generates the `LnUrlPayRequestData` payload needed here.
@@ -335,7 +347,8 @@ class BreezBridge {
   /// Attempts to convert the phrase to a mnemonic, then to a seed.
   ///
   /// If the phrase is not a valid mnemonic, an error is returned.
-  Future<Uint8List> mnemonicToSeed(String phrase) async => await _lnToolkit.mnemonicToSeed(phrase: phrase);
+  Future<Uint8List> mnemonicToSeed(String phrase) async =>
+      await _lnToolkit.mnemonicToSeed(phrase: phrase);
 
   /// Fetches the current recommended fees
   Future<RecommendedFees> recommendedFees() => _lnToolkit.recommendedFees();
@@ -387,7 +400,8 @@ class BreezBridge {
   }
 
   /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency
-  Future<String> buyBitcoin(BuyBitcoinProvider provider) => _lnToolkit.buyBitcoin(provider: provider);
+  Future<String> buyBitcoin(BuyBitcoinProvider provider) =>
+      _lnToolkit.buyBitcoin(provider: provider);
 }
 
 extension SDKConfig on Config {
@@ -400,6 +414,7 @@ extension SDKConfig on Config {
     String? defaultLspId,
     String? apiKey,
     double? maxfeePercent,
+    NodeConfig? nodeConfig,
   }) {
     return Config(
       breezserver: breezserver ?? this.breezserver,
@@ -410,6 +425,7 @@ extension SDKConfig on Config {
       defaultLspId: defaultLspId ?? this.defaultLspId,
       apiKey: apiKey ?? this.apiKey,
       maxfeePercent: maxfeePercent ?? this.maxfeePercent,
+      nodeConfig: nodeConfig ?? this.nodeConfig,
     );
   }
 }
