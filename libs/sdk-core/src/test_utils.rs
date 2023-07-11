@@ -1,9 +1,12 @@
+use std::collections::HashMap;
+use std::time::{Duration, SystemTime};
+use std::vec;
+
 use anyhow::{anyhow, Result};
 use bitcoin::hashes::hex::ToHex;
 use bitcoin::hashes::{sha256, Hash};
 use bitcoin::secp256k1::ecdsa::RecoverableSignature;
-use bitcoin::secp256k1::{KeyPair, Message};
-use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
+use bitcoin::secp256k1::{KeyPair, Message, PublicKey, Secp256k1, SecretKey};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::Network;
 use gl_client::pb::amount::Unit;
@@ -13,9 +16,6 @@ use lightning_invoice::{Currency, InvoiceBuilder, RawInvoice};
 use rand::distributions::{Alphanumeric, DistString, Standard};
 use rand::rngs::OsRng;
 use rand::{random, Rng};
-use std::collections::HashMap;
-use std::time::{Duration, SystemTime};
-use std::vec;
 use tokio::sync::{mpsc, Mutex};
 use tokio::time::sleep;
 use tonic::Streaming;
@@ -129,6 +129,7 @@ impl SwapperAPI for MockSwapperAPI {
         Ok(())
     }
 }
+
 #[derive(Clone)]
 pub struct MockChainService {
     pub tip: u32,
@@ -215,7 +216,7 @@ pub struct MockReceiver {
 
 impl Default for MockReceiver {
     fn default() -> Self {
-        MockReceiver{bolt11: "lnbc500u1p3eerl2dq8w3jhxaqpp5w3w4z63erts5usxtkvpwdy356l29xfd43mnzlq6x2d69kqhjtepsxqyjw5qsp5an4vlkhp8cgahvamrdkn2uzmmcd5neq7yq3j6a8v0sc0q9rlde5s9qrsgqcqpxrzjqwk7573qcyfskzw33jnvs0shq9tzy28sd86naqlgkdga9p8z74fsyzancsqqvpsqqqqqqqlgqqqqqzsqygrzjqwk7573qcyfskzw33jnvs0shq9tzy28sd86naqlgkdga9p8z74fsyqqqqyqqqqqqqqqqqqlgqqqqqzsqjqacpq7rd5rf7ssza0lps93ehylrwtjhdlk44g0llwp039f8uqxsck52ccr69djxs59mmwqkvvglylpg0cdzaqusg9m9cyju92t7kjpfsqma2lmf".to_string()}
+        MockReceiver { bolt11: "lnbc500u1p3eerl2dq8w3jhxaqpp5w3w4z63erts5usxtkvpwdy356l29xfd43mnzlq6x2d69kqhjtepsxqyjw5qsp5an4vlkhp8cgahvamrdkn2uzmmcd5neq7yq3j6a8v0sc0q9rlde5s9qrsgqcqpxrzjqwk7573qcyfskzw33jnvs0shq9tzy28sd86naqlgkdga9p8z74fsyzancsqqvpsqqqqqqqlgqqqqqzsqygrzjqwk7573qcyfskzw33jnvs0shq9tzy28sd86naqlgkdga9p8z74fsyqqqqyqqqqqqqqqqqqlgqqqqqzsqjqacpq7rd5rf7ssza0lps93ehylrwtjhdlk44g0llwp039f8uqxsck52ccr69djxs59mmwqkvvglylpg0cdzaqusg9m9cyju92t7kjpfsqma2lmf".to_string() }
     }
 }
 

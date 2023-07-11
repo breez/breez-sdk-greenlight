@@ -1,6 +1,8 @@
 use std::sync::Arc;
 
 use anyhow::Result;
+use log::{LevelFilter, Metadata, Record};
+use once_cell::sync::Lazy;
 
 use breez_sdk_core::{
     mnemonic_to_seed as sdk_mnemonic_to_seed, parse as sdk_parse_input,
@@ -16,10 +18,6 @@ use breez_sdk_core::{
     ReverseSwapStatus, RouteHint, RouteHintHop, SuccessActionProcessed, SwapInfo, SwapStatus,
     Symbol, UnspentTransactionOutput, UrlSuccessActionData,
 };
-use log::LevelFilter;
-use log::Metadata;
-use log::Record;
-use once_cell::sync::Lazy;
 
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
 
