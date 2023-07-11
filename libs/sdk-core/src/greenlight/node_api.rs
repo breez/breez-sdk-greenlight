@@ -153,7 +153,7 @@ impl Greenlight {
         Ok(Greenlight {
             sdk_config,
             signer,
-            tls_config: tls_config.clone(),
+            tls_config,
             gl_client: Mutex::new(None),
             node_client: Mutex::new(None),
         })
