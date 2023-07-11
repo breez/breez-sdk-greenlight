@@ -35,7 +35,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use strum_macros::{Display, EnumString};
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, Mutex};
 use tonic::Streaming;
 
 const MAX_PAYMENT_AMOUNT_MSAT: u64 = 4294967000;
@@ -44,8 +44,9 @@ const MAX_INBOUND_LIQUIDITY_MSAT: u64 = 4000000000;
 pub(crate) struct Greenlight {
     sdk_config: Config,
     signer: Signer,
-    gl_client: node::Client,
-    node_client: ClnClient,
+    tls_config: TlsConfig,
+    gl_client: Mutex<Option<node::Client>>,
+    node_client: Mutex<Option<ClnClient>>,
 }
 
 impl Greenlight {
@@ -148,15 +149,13 @@ impl Greenlight {
             connection_credentials.device_key,
         );
         let signer = Signer::new(seed, greenlight_network, tls_config.clone())?;
-        let scheduler = Scheduler::new(signer.node_id(), sdk_config.network.into()).await?;
-        let node_client: ClnClient = scheduler.schedule(tls_config.clone()).await?;
-        let gl_client: node::Client = scheduler.schedule(tls_config.clone()).await?;
 
         Ok(Greenlight {
             sdk_config,
             signer,
-            gl_client,
-            node_client,
+            tls_config: tls_config.clone(),
+            gl_client: Mutex::new(None),
+            node_client: Mutex::new(None),
         })
     }
 
@@ -218,12 +217,24 @@ impl Greenlight {
         })
     }
 
-    fn get_client(&self) -> node::Client {
-        self.gl_client.clone()
+    async fn get_client(&self) -> Result<node::Client> {
+        let mut gl_client = self.gl_client.lock().await;
+        if gl_client.is_none() {
+            let scheduler =
+                Scheduler::new(self.signer.node_id(), self.sdk_config.network.into()).await?;
+            *gl_client = Some(scheduler.schedule(self.tls_config.clone()).await?);
+        }
+        Ok(gl_client.clone().unwrap())
     }
 
-    pub(crate) fn get_node_client(&self) -> node::ClnClient {
-        self.node_client.clone()
+    pub(crate) async fn get_node_client(&self) -> Result<node::ClnClient> {
+        let mut node_client = self.node_client.lock().await;
+        if node_client.is_none() {
+            let scheduler =
+                Scheduler::new(self.signer.node_id(), self.sdk_config.network.into()).await?;
+            *node_client = Some(scheduler.schedule(self.tls_config.clone()).await?);
+        }
+        Ok(node_client.clone().unwrap())
     }
 }
 
@@ -235,7 +246,7 @@ impl NodeAPI for Greenlight {
         description: String,
         preimage: Option<Vec<u8>>,
     ) -> Result<Invoice> {
-        let mut client = self.get_client();
+        let mut client = self.get_client().await?;
 
         let request = InvoiceRequest {
             amount: Some(Amount {
@@ -255,8 +266,8 @@ impl NodeAPI for Greenlight {
     // implemenet pull changes from greenlight
     async fn pull_changed(&self, since_timestamp: i64) -> Result<SyncResponse> {
         info!("pull changed since {}", since_timestamp);
-        let mut client = self.get_client();
-        let mut node_client = self.get_node_client();
+        let mut client = self.get_client().await?;
+        let mut node_client = self.get_node_client().await?;
 
         // list all peers
         let peers = client
@@ -413,7 +424,7 @@ impl NodeAPI for Greenlight {
             description = parse_invoice(&bolt11)?.description;
         }
 
-        let mut client: node::ClnClient = self.get_node_client();
+        let mut client: node::ClnClient = self.get_node_client().await?;
         let request = pb::cln::PayRequest {
             bolt11,
             amount_msat: amount_sats.map(|amt| gl_client::pb::cln::Amount { msat: amt * 1000 }),
@@ -436,7 +447,7 @@ impl NodeAPI for Greenlight {
         node_id: String,
         amount_sats: u64,
     ) -> Result<crate::models::PaymentResponse> {
-        let mut client: node::ClnClient = self.get_node_client();
+        let mut client: node::ClnClient = self.get_node_client().await?;
         let request = pb::cln::KeysendRequest {
             destination: hex::decode(node_id)?,
             amount_msat: Some(gl_client::pb::cln::Amount {
@@ -457,8 +468,8 @@ impl NodeAPI for Greenlight {
     }
 
     async fn start(&self) -> Result<()> {
-        self.node_client
-            .clone()
+        self.get_node_client()
+            .await?
             .getinfo(pb::cln::GetinfoRequest {})
             .await?;
         Ok(())
@@ -469,7 +480,7 @@ impl NodeAPI for Greenlight {
         to_address: String,
         fee_rate_sats_per_vbyte: u64,
     ) -> Result<WithdrawResponse> {
-        let mut client = self.get_client();
+        let mut client = self.get_client().await?;
 
         let request = pb::WithdrawRequest {
             feerate: Some(pb::Feerate {
@@ -492,7 +503,7 @@ impl NodeAPI for Greenlight {
     }
 
     async fn list_peers(&self) -> Result<Vec<Peer>> {
-        let mut client = self.get_client();
+        let mut client = self.get_client().await?;
         Ok(client
             .list_peers(pb::ListPeersRequest::default())
             .await?
@@ -501,7 +512,7 @@ impl NodeAPI for Greenlight {
     }
 
     async fn connect_peer(&self, node_id: String, addr: String) -> Result<()> {
-        let mut client = self.get_client();
+        let mut client = self.get_client().await?;
         let connect_req = pb::ConnectRequest { node_id, addr };
         client.connect_peer(connect_req).await?;
         Ok(())
@@ -543,7 +554,7 @@ impl NodeAPI for Greenlight {
     }
 
     async fn close_peer_channels(&self, node_id: String) -> Result<Vec<String>> {
-        let mut client = self.get_node_client();
+        let mut client = self.get_node_client().await?;
         let closed_channels = client
             .list_peer_channels(ListpeerchannelsRequest {
                 id: Some(hex::decode(node_id)?),
@@ -598,7 +609,7 @@ impl NodeAPI for Greenlight {
     }
 
     async fn stream_incoming_payments(&self) -> Result<Streaming<gl_client::pb::IncomingPayment>> {
-        let mut client = self.get_client();
+        let mut client = self.get_client().await?;
         let stream = client
             .stream_incoming(gl_client::pb::StreamIncomingFilter {})
             .await?
@@ -607,7 +618,7 @@ impl NodeAPI for Greenlight {
     }
 
     async fn stream_log_messages(&self) -> Result<Streaming<gl_client::pb::LogEntry>> {
-        let mut client = self.get_client();
+        let mut client = self.get_client().await?;
         let stream = client
             .stream_log(gl_client::pb::StreamLogRequest {})
             .await?
@@ -622,6 +633,7 @@ impl NodeAPI for Greenlight {
             NodeCommand::ListPeers => {
                 let resp = self
                     .get_client()
+                    .await?
                     .list_peers(pb::ListPeersRequest::default())
                     .await?
                     .into_inner();
@@ -630,6 +642,7 @@ impl NodeAPI for Greenlight {
             NodeCommand::ListFunds => {
                 let resp = self
                     .get_client()
+                    .await?
                     .list_funds(pb::ListFundsRequest::default())
                     .await?
                     .into_inner();
@@ -638,6 +651,7 @@ impl NodeAPI for Greenlight {
             NodeCommand::ListPayments => {
                 let resp = self
                     .get_client()
+                    .await?
                     .list_payments(pb::ListPaymentsRequest::default())
                     .await?
                     .into_inner();
@@ -646,6 +660,7 @@ impl NodeAPI for Greenlight {
             NodeCommand::ListInvoices => {
                 let resp = self
                     .get_client()
+                    .await?
                     .list_invoices(pb::ListInvoicesRequest::default())
                     .await?
                     .into_inner();
@@ -654,6 +669,7 @@ impl NodeAPI for Greenlight {
             NodeCommand::CloseAllChannels => {
                 let peers_res = self
                     .get_client()
+                    .await?
                     .list_peers(pb::ListPeersRequest::default())
                     .await?
                     .into_inner();
