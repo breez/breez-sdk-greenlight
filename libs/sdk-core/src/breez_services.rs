@@ -126,11 +126,14 @@ impl BreezServices {
         seed: Vec<u8>,
         event_listener: Box<dyn EventListener>,
     ) -> Result<Arc<BreezServices>> {
+        let start = Instant::now();
         let services = BreezServicesBuilder::new(config)
             .seed(seed)
             .build(Some(event_listener))
             .await?;
         services.start().await?;
+        let connect_duration = start.elapsed();
+        info!("SDK connected in: {:?}", connect_duration);
         Ok(services)
     }
 
