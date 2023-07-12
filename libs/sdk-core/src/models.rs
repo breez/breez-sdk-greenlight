@@ -438,7 +438,7 @@ impl Config {
             payment_timeout_sec: 60,
             default_lsp_id: Some(String::from("03cea51f-b654-4fb0-8e82-eca137f236a0")),
             api_key: Some(api_key),
-            maxfee_percent: 0.5,
+            maxfee_percent: 1.0,
             node_config,
         }
     }

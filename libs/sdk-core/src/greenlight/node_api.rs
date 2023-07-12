@@ -437,7 +437,7 @@ impl NodeAPI for Greenlight {
             exclude: vec![],
             maxfee: None,
             description,
-            exemptfee: None,
+            exemptfee: Some(gl_client::pb::cln::Amount { msat: 20000 }),
         };
         client.pay(request).await?.into_inner().try_into()
     }
