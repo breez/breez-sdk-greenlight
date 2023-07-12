@@ -6,6 +6,7 @@ use std::sync::Arc;
 use crate::breez_services::BreezServices;
 use crate::breez_services::{self, BreezEvent, EventListener};
 use crate::chain::RecommendedFees;
+use crate::error::NewSdkError;
 use crate::fiat::{FiatCurrency, Rate};
 use crate::input_parser::InputType;
 use crate::input_parser::{LnUrlAuthRequestData, LnUrlPayRequestData, LnUrlWithdrawRequestData};
@@ -87,10 +88,11 @@ pub fn connect(config: Config, seed: Vec<u8>) -> Result<()> {
             BreezServices::connect(config, seed, Box::new(BindingEventListener {})).await?;
         BREEZ_SERVICES_INSTANCE
             .set(breez_services)
-            .map_err(|_| anyhow!("static node services already set"))?;
+            .map_err(|_| NewSdkError::SdkServicesAlreadySet)?;
 
-        Ok(())
+        anyhow::Ok(())
     })
+    .map_err(Into::into)
 }
 
 pub fn breez_events_stream(s: StreamSink<BreezEvent>) -> Result<()> {
@@ -140,15 +142,17 @@ pub fn send_spontaneous_payment(node_id: String, amount_sats: u64) -> Result<Pay
 /// See [BreezServices::receive_payment]
 pub fn receive_payment(amount_sats: u64, description: String) -> Result<LNInvoice> {
     block_on(async {
-        get_breez_services()?
+        get_breez_services()
+            .map_err(|_| NewSdkError::SdkServicesWasNotInitialized)?
             .receive_payment(amount_sats, description.to_string())
             .await
     })
+    .map_err(Into::into)
 }
 
 /// See [BreezServices::node_info]
 pub fn node_info() -> Result<Option<NodeState>> {
-    block_on(async { get_breez_services()?.node_info() })
+    block_on(async { get_breez_services()?.node_info().map_err(Into::into) })
 }
 
 /// See [BreezServices::list_payments]
@@ -158,10 +162,12 @@ pub fn list_payments(
     to_timestamp: Option<i64>,
 ) -> Result<Vec<Payment>> {
     block_on(async {
-        get_breez_services()?
+        get_breez_services()
+            .map_err(|_| NewSdkError::SdkServicesWasNotInitialized)?
             .list_payments(filter, from_timestamp, to_timestamp)
             .await
     })
+    .map_err(Into::into)
 }
 
 /// See [BreezServices::list_payments]
@@ -171,7 +177,13 @@ pub fn payment_by_hash(hash: String) -> Result<Option<Payment>> {
 
 /// See [BreezServices::list_lsps]
 pub fn list_lsps() -> Result<Vec<LspInformation>> {
-    block_on(async { get_breez_services()?.list_lsps().await })
+    block_on(async {
+        get_breez_services()
+            .map_err(|_| NewSdkError::SdkServicesWasNotInitialized)?
+            .list_lsps()
+            .await
+    })
+    .map_err(Into::into)
 }
 
 /// See [BreezServices::connect_lsp]

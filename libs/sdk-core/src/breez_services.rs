@@ -1,6 +1,7 @@
 use crate::backup::{BackupRequest, BackupTransport, BackupWatcher};
 use crate::boltzswap::BoltzApi;
 use crate::chain::{ChainService, MempoolSpace, RecommendedFees};
+use crate::error::{NewSdkError, SdkResult};
 use crate::fiat::{FiatCurrency, Rate};
 use crate::greenlight::{GLBackupTransport, Greenlight};
 use crate::grpc::channel_opener_client::ChannelOpenerClient;
@@ -125,7 +126,7 @@ impl BreezServices {
         config: Config,
         seed: Vec<u8>,
         event_listener: Box<dyn EventListener>,
-    ) -> Result<Arc<BreezServices>> {
+    ) -> SdkResult<Arc<BreezServices>> {
         let start = Instant::now();
         let services = BreezServicesBuilder::new(config)
             .seed(seed)
@@ -144,10 +145,10 @@ impl BreezServices {
     ///
     /// It should be called only once when the app is started, regardless whether the app is sent to
     /// background and back.
-    async fn start(self: &Arc<BreezServices>) -> Result<()> {
+    async fn start(self: &Arc<BreezServices>) -> SdkResult<()> {
         let mut started = self.started.lock().await;
         if *started {
-            return Err(anyhow::Error::msg("BreezServices already started"));
+            return Err(NewSdkError::SdkServicesAlreadyStarted);
         }
         let start = Instant::now();
         self.start_background_tasks().await?;
@@ -287,7 +288,8 @@ impl BreezServices {
     ) -> Result<LnUrlCallbackStatus> {
         let invoice = self
             .receive_payment(amount_sats, description.unwrap_or_default())
-            .await?;
+            .await
+            .map_err(|_| anyhow!("Failed to receive payment"))?; // TODO Temp conversion
         validate_lnurl_withdraw(req_data, invoice).await
     }
 
@@ -313,15 +315,18 @@ impl BreezServices {
         &self,
         amount_sats: u64,
         description: String,
-    ) -> Result<LNInvoice> {
+    ) -> SdkResult<LNInvoice> {
         self.payment_receiver
             .receive_payment(amount_sats, description, None)
             .await
+            .map_err(|_| NewSdkError::SdkFailedToReceivePayment)
     }
 
     /// Retrieve the node state from the persistent storage
-    pub fn node_info(&self) -> Result<Option<NodeState>> {
-        self.persister.get_node_state()
+    pub fn node_info(&self) -> SdkResult<Option<NodeState>> {
+        self.persister
+            .get_node_state()
+            .map_err(|_| NewSdkError::SdkCannotRetrievePersistedNodeState)
     }
 
     /// Retrieve the node up to date BackupStatus
@@ -352,10 +357,10 @@ impl BreezServices {
         filter: PaymentTypeFilter,
         from_timestamp: Option<i64>,
         to_timestamp: Option<i64>,
-    ) -> Result<Vec<Payment>> {
+    ) -> SdkResult<Vec<Payment>> {
         self.persister
             .list_payments(filter, from_timestamp, to_timestamp)
-            .map_err(|err| anyhow!(err))
+            .map_err(|_| NewSdkError::SdkFailedToListPayments)
     }
 
     /// Fetch a specific payment by its hash.
@@ -386,10 +391,15 @@ impl BreezServices {
     }
 
     /// List available LSPs that can be selected by the user
-    pub async fn list_lsps(&self) -> Result<Vec<LspInformation>> {
+    pub async fn list_lsps(&self) -> SdkResult<Vec<LspInformation>> {
         self.lsp_api
-            .list_lsps(self.node_info()?.ok_or_else(|| anyhow!("err"))?.id)
+            .list_lsps(
+                self.node_info()?
+                    .ok_or(NewSdkError::SdkNoNodeStateFound)?
+                    .id,
+            )
             .await
+            .map_err(|_| NewSdkError::SdkFailedToRetrieveLsps)
     }
 
     /// Select the LSP to be used and provide inbound liquidity
@@ -677,7 +687,7 @@ impl BreezServices {
     /// Starts the BreezServices background threads.
     ///
     /// Internal method. Should only be used as part of [BreezServices::start]
-    async fn start_background_tasks(self: &Arc<BreezServices>) -> Result<()> {
+    async fn start_background_tasks(self: &Arc<BreezServices>) -> SdkResult<()> {
         // start the signer
         let (shutdown_signer_sender, signer_signer_receiver) = mpsc::channel(1);
         self.start_signer(signer_signer_receiver).await;
@@ -732,18 +742,22 @@ impl BreezServices {
         });
     }
 
-    async fn start_backup_watcher(self: &Arc<BreezServices>) -> Result<()> {
+    async fn start_backup_watcher(self: &Arc<BreezServices>) -> SdkResult<()> {
         self.backup_watcher
             .start(self.shutdown_receiver.clone())
-            .await?;
+            .await
+            .map_err(|_| NewSdkError::SdkFailedToStartBackupWatcher)?;
 
         // Restore backup state and request backup on start if needed
-        let force_backup = self.persister.get_last_sync_version()?.is_none();
+        let force_backup = self
+            .persister
+            .get_last_sync_version()
+            .map_err(|_| NewSdkError::SdkCannotRetrievePersistedLastSyncVersion)?
+            .is_none();
         self.backup_watcher
             .request_backup(BackupRequest::new(force_backup))
-            .await?;
-
-        Ok(())
+            .await
+            .map_err(|_| NewSdkError::SdkFailedToRequestBackup)
     }
 
     async fn track_backup_events(self: &Arc<BreezServices>) {
@@ -1005,9 +1019,9 @@ impl BreezServicesBuilder {
     pub async fn build(
         &self,
         listener: Option<Box<dyn EventListener>>,
-    ) -> Result<Arc<BreezServices>> {
+    ) -> SdkResult<Arc<BreezServices>> {
         if self.node_api.is_none() && self.seed.is_none() {
-            return Err(anyhow!("Either node_api or seed should be provided"));
+            return Err(NewSdkError::SdkInitFailedNoNodeApiOrSeedFound);
         }
 
         // The storage is implemented via sqlite.
@@ -1015,7 +1029,9 @@ impl BreezServicesBuilder {
             .persister
             .clone()
             .unwrap_or_else(|| Arc::new(SqliteStorage::new(self.config.working_dir.clone())));
-        persister.init().unwrap();
+        persister
+            .init()
+            .map_err(|_| NewSdkError::SdkFailedToInitPersister)?;
 
         let mut node_api = self.node_api.clone();
         let mut backup_transport = self.backup_transport.clone();
@@ -1025,7 +1041,8 @@ impl BreezServicesBuilder {
                 self.seed.clone().unwrap(),
                 persister.clone(),
             )
-            .await?;
+            .await
+            .map_err(|_| NewSdkError::SdkFailedToConnectToGreenlight)?;
             let gl_arc = Arc::new(greenlight);
             node_api = Some(gl_arc.clone());
             if backup_transport.is_none() {
@@ -1034,17 +1051,20 @@ impl BreezServicesBuilder {
         }
 
         if backup_transport.is_none() {
-            return Err(anyhow!("state synchronizer should be provided"));
+            return Err(NewSdkError::SdkNoStateSynchronizerFound);
         }
 
         let unwrapped_node_api = node_api.unwrap();
         let unwrapped_backup_transport = backup_transport.unwrap();
 
         // create the backup encryption key and then the backup watcher
-        let backup_encryption_key = unwrapped_node_api.derive_bip32_key(vec![
-            ChildNumber::from_hardened_idx(139)?,
-            ChildNumber::from(0),
-        ])?;
+        let backup_encryption_key = unwrapped_node_api
+            .derive_bip32_key(vec![
+                ChildNumber::from_hardened_idx(139)
+                    .map_err(|_| NewSdkError::SdkBip32ErrorIndexOutOfBounds)?,
+                ChildNumber::from(0),
+            ])
+            .map_err(|_| NewSdkError::SdkBip32ErrorFailedToDeriveKey)?;
         let backup_watcher = BackupWatcher::new(
             self.config.clone(),
             unwrapped_backup_transport.clone(),
@@ -1063,9 +1083,13 @@ impl BreezServicesBuilder {
             self.config.mempoolspace_url.clone(),
         ));
 
-        let current_lsp_id = persister.get_lsp_id()?;
+        let current_lsp_id = persister
+            .get_lsp_id()
+            .map_err(|_| NewSdkError::SdkFailedToGetLspId)?;
         if current_lsp_id.is_none() && self.config.default_lsp_id.is_some() {
-            persister.set_lsp_id(self.config.default_lsp_id.clone().unwrap())?;
+            persister
+                .set_lsp_id(self.config.default_lsp_id.clone().unwrap())
+                .map_err(|_| NewSdkError::SdkFailedToSetLspId)?;
         }
 
         let payment_receiver = Arc::new(PaymentReceiver {
@@ -1400,6 +1424,7 @@ pub(crate) mod tests {
     use regex::Regex;
 
     use crate::breez_services::{BreezServices, BreezServicesBuilder};
+    use crate::error::{NewSdkError, SdkResult};
     use crate::fiat::Rate;
     use crate::lnurl::pay::model::MessageSuccessActionData;
     use crate::lnurl::pay::model::SuccessActionProcessed;
@@ -1412,7 +1437,7 @@ pub(crate) mod tests {
     use super::{PaymentReceiver, Receiver};
 
     #[tokio::test]
-    async fn test_node_state() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_node_state() -> SdkResult<()> {
         // let storage_path = format!("{}/storage.sql", get_test_working_dir());
         // std::fs::remove_file(storage_path).ok();
 
@@ -1477,14 +1502,20 @@ pub(crate) mod tests {
 
         let test_config = create_test_config();
         let persister = Arc::new(create_test_persister(test_config.clone()));
-        persister.init()?;
-        persister.insert_or_update_payments(&dummy_transactions)?;
-        persister.insert_lnurl_payment_external_info(
-            payment_hash_with_lnurl_success_action,
-            Some(&sa),
-            Some(lnurl_metadata.to_string()),
-            Some(test_ln_address.to_string()),
-        )?;
+        persister
+            .init()
+            .map_err(|_| NewSdkError::SdkFailedToInitPersister)?;
+        persister
+            .insert_or_update_payments(&dummy_transactions)
+            .map_err(|_| NewSdkError::SdkFailedToInsertOrUpdatePayments)?;
+        persister
+            .insert_lnurl_payment_external_info(
+                payment_hash_with_lnurl_success_action,
+                Some(&sa),
+                Some(lnurl_metadata.to_string()),
+                Some(test_ln_address.to_string()),
+            )
+            .map_err(|_| NewSdkError::SdkFailedToInsertLnurlExternalPaymentInfo)?;
 
         let mut builder = BreezServicesBuilder::new(test_config.clone());
         let breez_services = builder
@@ -1496,11 +1527,13 @@ pub(crate) mod tests {
             .build(None)
             .await?;
 
-        breez_services.sync().await?;
+        breez_services
+            .sync()
+            .await
+            .map_err(|_| NewSdkError::SdkFailedToSync)?;
         let fetched_state = breez_services
             .node_info()?
-            .ok_or("No NodeState found")
-            .map_err(|err| anyhow!(err))?;
+            .ok_or_else(|| NewSdkError::SdkNoNodeStateFound)?;
         assert_eq!(fetched_state, dummy_node_state);
 
         let all = breez_services
@@ -1530,7 +1563,7 @@ pub(crate) mod tests {
     }
 
     #[tokio::test]
-    async fn test_receive_with_open_channel() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_receive_with_open_channel() -> SdkResult<()> {
         let config = create_test_config();
         let persister = Arc::new(create_test_persister(config.clone()));
         persister.init().unwrap();
@@ -1550,7 +1583,8 @@ pub(crate) mod tests {
         });
         let ln_invoice = receiver
             .receive_payment(3000, "should populate lsp hints".to_string(), None)
-            .await?;
+            .await
+            .map_err(|_| NewSdkError::SdkFailedToReceivePayment)?;
         assert_eq!(ln_invoice.routing_hints[0].hops.len(), 1);
         let lsp_hop = &ln_invoice.routing_hints[0].hops[0];
         assert_eq!(lsp_hop.src_node_id, breez_server.clone().lsp_pub_key());
@@ -1562,19 +1596,27 @@ pub(crate) mod tests {
     }
 
     #[tokio::test]
-    async fn test_list_lsps() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_list_lsps() -> SdkResult<()> {
         let storage_path = format!("{}/storage.sql", get_test_working_dir());
         std::fs::remove_file(storage_path).ok();
 
-        let breez_services = breez_services().await?;
-        breez_services.sync().await?;
+        let breez_services = breez_services()
+            .await
+            .map_err(|_| NewSdkError::SdkServicesFailedToInit)?;
+        breez_services
+            .sync()
+            .await
+            .map_err(|_| NewSdkError::SdkFailedToSync)?;
 
         let node_pubkey = breez_services
             .node_info()?
-            .ok_or("No NodeState found")
-            .map_err(|err| anyhow!(err))?
+            .ok_or(NewSdkError::SdkNoNodeStateFound)?
             .id;
-        let lsps = breez_services.lsp_api.list_lsps(node_pubkey).await?;
+        let lsps = breez_services
+            .lsp_api
+            .list_lsps(node_pubkey)
+            .await
+            .map_err(|_| NewSdkError::SdkFailedToRetrieveLsps)?;
         assert_eq!(lsps.len(), 1);
 
         Ok(())

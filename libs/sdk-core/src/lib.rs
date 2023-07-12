@@ -155,6 +155,7 @@ mod boltzswap;
 mod breez_services;
 mod chain;
 mod crypt;
+pub mod error;
 mod fiat;
 mod greenlight;
 mod grpc;

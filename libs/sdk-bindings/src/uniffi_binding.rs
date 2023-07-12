@@ -3,7 +3,7 @@ use std::sync::Arc;
 use anyhow::Result;
 
 use breez_sdk_core::{
-    mnemonic_to_seed as sdk_mnemonic_to_seed, parse as sdk_parse_input,
+    error::*, mnemonic_to_seed as sdk_mnemonic_to_seed, parse as sdk_parse_input,
     parse_invoice as sdk_parse_invoice, AesSuccessActionDataDecrypted, BackupFailedData,
     BackupStatus, BitcoinAddressData, BreezEvent, BreezServices, BuyBitcoinProvider, ChannelState,
     ClosedChannelPaymentDetails, Config, CurrencyInfo, EnvironmentType, EventListener,
@@ -70,6 +70,14 @@ impl From<anyhow::Error> for SDKError {
     }
 }
 
+impl From<NewSdkError> for SDKError {
+    fn from(err: NewSdkError) -> Self {
+        SDKError::Error {
+            err: err.to_string(),
+        }
+    }
+}
+
 /// Create a new SDK config with default values
 pub fn default_config(
     env_type: EnvironmentType,
@@ -92,7 +100,7 @@ pub fn connect(
     config: Config,
     seed: Vec<u8>,
     event_listener: Box<dyn EventListener>,
-) -> Result<Arc<BlockingBreezServices>> {
+) -> SdkResult<Arc<BlockingBreezServices>> {
     rt().block_on(async move {
         let breez_services = BreezServices::connect(config, seed, event_listener).await?;
         Ok(Arc::new(BlockingBreezServices { breez_services }))
@@ -134,20 +142,15 @@ impl BlockingBreezServices {
         .map_err(|e| e.into())
     }
 
-    pub fn receive_payment(
-        &self,
-        amount_sats: u64,
-        description: String,
-    ) -> Result<LNInvoice, SDKError> {
+    pub fn receive_payment(&self, amount_sats: u64, description: String) -> SdkResult<LNInvoice> {
         rt().block_on(
             self.breez_services
                 .receive_payment(amount_sats, description),
         )
-        .map_err(|e| e.into())
     }
 
-    pub fn node_info(&self) -> Result<Option<NodeState>, SDKError> {
-        self.breez_services.node_info().map_err(|e| e.into())
+    pub fn node_info(&self) -> SdkResult<Option<NodeState>> {
+        self.breez_services.node_info()
     }
 
     pub fn backup_status(&self) -> Result<BackupStatus, SDKError> {
@@ -164,12 +167,11 @@ impl BlockingBreezServices {
         filter: PaymentTypeFilter,
         from_timestamp: Option<i64>,
         to_timestamp: Option<i64>,
-    ) -> Result<Vec<Payment>, SDKError> {
+    ) -> SdkResult<Vec<Payment>> {
         rt().block_on(
             self.breez_services
                 .list_payments(filter, from_timestamp, to_timestamp),
         )
-        .map_err(|e| e.into())
     }
 
     pub fn payment_by_hash(&self, hash: String) -> Result<Option<Payment>, SDKError> {
@@ -229,9 +231,8 @@ impl BlockingBreezServices {
             .map_err(|e| e.into())
     }
 
-    pub fn list_lsps(&self) -> Result<Vec<LspInformation>, SDKError> {
+    pub fn list_lsps(&self) -> SdkResult<Vec<LspInformation>> {
         rt().block_on(self.breez_services.list_lsps())
-            .map_err(|e| e.into())
     }
 
     pub fn connect_lsp(&self, lsp_id: String) -> Result<(), SDKError> {

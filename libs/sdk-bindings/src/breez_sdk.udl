@@ -13,6 +13,33 @@ enum SDKError {
   "Error",
 };
 
+[Error]
+enum NewSdkError {
+    "SdkFailedToRequestBackup",
+    "SdkFailedToStartBackupWatcher",
+    "SdkFailedToInitPersister",
+    "SdkFailedToConnectToGreenlight",
+    "SdkNoStateSynchronizerFound",
+    "SdkInitFailedNoNodeApiOrSeedFound",
+    "SdkCannotRetrievePersistedLastSyncVersion",
+    "SdkBip32ErrorIndexOutOfBounds",
+    "SdkBip32ErrorFailedToDeriveKey",
+    "SdkFailedToInsertOrUpdatePayments",
+    "SdkFailedToInsertLnurlExternalPaymentInfo",
+    "SdkFailedToReceivePayment",
+    "SdkFailedToListPayments",
+    "SdkFailedToSync",
+    "SdkCannotRetrievePersistedNodeState",
+    "SdkNoNodeStateFound",
+    "SdkFailedToRetrieveLsps",
+    "SdkFailedToGetLspId",
+    "SdkFailedToSetLspId",
+    "SdkServicesAlreadySet",
+    "SdkServicesAlreadyStarted",
+    "SdkServicesFailedToInit",
+    "SdkServicesWasNotInitialized",
+};
+
 enum EnvironmentType {
     "Production",
     "Staging",
@@ -406,7 +433,7 @@ enum BuyBitcoinProvider {
 
 interface BlockingBreezServices {   
 
-   [Throws=SDKError]
+   [Throws=NewSdkError]
    void disconnect();
 
    [Throws=SDKError]
@@ -415,7 +442,7 @@ interface BlockingBreezServices {
    [Throws=SDKError]
    Payment send_spontaneous_payment(string node_id, u64 amount_sats);
 
-   [Throws=SDKError]
+   [Throws=NewSdkError]
    LNInvoice receive_payment(u64 amount_sats, string description);
 
    [Throws=SDKError]
@@ -427,7 +454,7 @@ interface BlockingBreezServices {
    [Throws=SDKError]
    LnUrlCallbackStatus lnurl_auth(LnUrlAuthRequestData req_data);
 
-   [Throws=SDKError]
+   [Throws=NewSdkError]
    NodeState? node_info();
 
    [Throws=SDKError]
@@ -439,7 +466,7 @@ interface BlockingBreezServices {
    [Throws=SDKError]
    Payment? payment_by_hash(string hash);
 
-   [Throws=SDKError]
+   [Throws=NewSdkError]
    sequence<Payment> list_payments(PaymentTypeFilter filter, i64? from_timestamp, i64? to_timestamp);
 
    [Throws=SDKError]
@@ -451,7 +478,7 @@ interface BlockingBreezServices {
    [Throws=SDKError]
    sequence<FiatCurrency> list_fiat_currencies();
 
-   [Throws=SDKError]
+   [Throws=NewSdkError]
    sequence<LspInformation> list_lsps();
 
    [Throws=SDKError]
