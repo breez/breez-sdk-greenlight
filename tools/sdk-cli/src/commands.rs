@@ -22,8 +22,8 @@ pub(crate) enum Commands {
         /// The environment to use (staging|production)        
         env: EnvironmentType,
     },
-    /// Register a new greenlight node
-    RegisterNode {
+    /// Connect to the sdk services, make it operational
+    Connect {
         /// The optional greenlight device certifiate
         #[clap(name = "device_cert", short = 'c', long = "device_cert")]
         device_cert: Option<std::path::PathBuf>,
@@ -36,12 +36,6 @@ pub(crate) enum Commands {
         #[clap(name = "invite_code", short = 'i', long = "invite_code")]
         invite_code: Option<String>,
     },
-
-    /// Recover a node using the seed only
-    RecoverNode {},
-
-    /// Initialize the sdk for an existing node based on the node credentials
-    Init {},
 
     /// Sync local data with remote node
     Sync {},
@@ -128,8 +122,8 @@ pub(crate) enum Commands {
     /// Close all LSP channels
     CloseLSPChannels {},
 
-    /// Stop the node
-    StopNode {},
+    /// Stop the node and disconnect from the sdk services
+    Disconnect {},
 
     /// List recommended fees based on the mempool
     RecommendedFees {},

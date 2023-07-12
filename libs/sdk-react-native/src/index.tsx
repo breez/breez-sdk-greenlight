@@ -32,7 +32,7 @@ export enum EventType {
     SYNCED = "synced",
     BACKUP_STARTED = "backupStarted",
     BACKUP_SUCCEEDED = "backupSucceeded",
-    BACKUP_FAILED = "backupFailed"    
+    BACKUP_FAILED = "backupFailed"
 }
 
 export enum InputType {
@@ -112,6 +112,20 @@ export type BitcoinAddressData = {
     message?: string
 }
 
+export enum NodeConfigType {
+    GREENLIGHT = "greenlight"
+}
+
+export type GreenlightNodeConfig = {
+    partnerCredentials?: GreenlightCredentials
+    inviteCode?: string
+}
+
+export type NodeConfig = {
+    type: NodeConfigType
+    config: GreenlightNodeConfig
+}
+
 export type Config = {
     breezserver: string
     mempoolspaceUrl: string
@@ -121,6 +135,7 @@ export type Config = {
     defaultLspId?: string
     apiKey?: string
     maxfeePercent: number
+    nodeConfig: NodeConfig
 }
 
 export type ClosedChannelPaymentDetails = {
@@ -144,8 +159,8 @@ export type EventData = InvoicePaidDetails | Payment | number | PaymentFailedDat
 export type EventFn = (type: EventType, data?: EventData) => void
 
 export type GreenlightCredentials = {
-    deviceKey: Uint8Array
-    deviceCert: Uint8Array
+    deviceKey: Uint8Array | number[]
+    deviceCert: Uint8Array | number[]
 }
 
 export type FiatCurrency = {
@@ -397,7 +412,7 @@ export type UnspentTransactionOutput = {
 
 export type BackupStatus = {
     backedUp: boolean
-    lastBackupTime?: number   
+    lastBackupTime?: number
 }
 
 const processEvent = (eventFn: EventFn) => {
@@ -448,6 +463,22 @@ const processSuccessActionProcessed = (data: any): AesSuccessActionDataDecrypted
     return
 }
 
+const prepareNodeConfig = (nodeConfig: NodeConfig): NodeConfig => {
+    switch (nodeConfig.type) {
+        case NodeConfigType.GREENLIGHT:
+            const partnerCredentials = nodeConfig.config.partnerCredentials
+
+            if (partnerCredentials) {
+                nodeConfig.config.partnerCredentials = {
+                    deviceCert: Array.from(partnerCredentials.deviceCert),
+                    deviceKey: Array.from(partnerCredentials.deviceKey)
+                }
+            }
+    }
+
+    return nodeConfig
+}
+
 export const addEventListener = (eventFn: EventFn): EmitterSubscription => {
     return BreezSDKEmitter.addListener("breezSdkEvent", processEvent(eventFn))
 }
@@ -474,50 +505,22 @@ export const parseInvoice = async (invoice: string): Promise<LnInvoice> => {
     return response as LnInvoice
 }
 
-export const registerNode = async (
-    network: Network,
-    seed: Uint8Array,
-    registerCreds?: GreenlightCredentials,
-    inviteCode: string = ""
-): Promise<GreenlightCredentials> => {
-    const response = await BreezSDK.registerNode(
-        network,
-        seed,
-        registerCreds
-            ? {
-                  deviceCert: Array.from(registerCreds.deviceCert),
-                  deviceKey: Array.from(registerCreds.deviceKey)
-              }
-            : {},
-        inviteCode
-    )
-    return response as GreenlightCredentials
-}
-
-export const recoverNode = async (network: Network, seed: Uint8Array): Promise<GreenlightCredentials> => {
-    const response = await BreezSDK.recoverNode(network, seed)
-    return response as GreenlightCredentials
-}
-
-export const defaultConfig = async (envType: EnvironmentType): Promise<Config> => {
-    const response = await BreezSDK.defaultConfig(envType)
+export const defaultConfig = async (envType: EnvironmentType, apiKey: string, nodeConfig: NodeConfig): Promise<Config> => {
+    const response = await BreezSDK.defaultConfig(envType, apiKey, prepareNodeConfig(nodeConfig))
     return response as Config
 }
 
-export const initServices = async (config: Config, deviceKey: Uint8Array, deviceCert: Uint8Array, seed: Uint8Array): Promise<void> => {
-    await BreezSDK.initServices(config, deviceKey, deviceCert, seed)
-}
-
-export const start = async (): Promise<void> => {
-    await BreezSDK.start()
+export const connect = async (config: Config, seed: Uint8Array): Promise<void> => {
+    config.nodeConfig = prepareNodeConfig(config.nodeConfig)
+    await BreezSDK.connect(config, seed)
 }
 
 export const sync = async (): Promise<void> => {
     await BreezSDK.sync()
 }
 
-export const stop = async (): Promise<void> => {
-    await BreezSDK.stop()
+export const disconnect = async (): Promise<void> => {
+    await BreezSDK.disconnect()
 }
 
 export const sendPayment = async (bolt11: string, amountSats: number = 0): Promise<Payment> => {
@@ -631,7 +634,12 @@ export const inProgressReverseSwaps = async (): Promise<ReverseSwapInfo[]> => {
     return response as ReverseSwapInfo[]
 }
 
-export const sendOnchain = async (amountSat: number, onchainRecipientAddress: string, pairHash: string, satPerVbyte: number): Promise<ReverseSwapInfo> => {
+export const sendOnchain = async (
+    amountSat: number,
+    onchainRecipientAddress: string,
+    pairHash: string,
+    satPerVbyte: number
+): Promise<ReverseSwapInfo> => {
     const response = await BreezSDK.sendOnchain(amountSat, onchainRecipientAddress, pairHash, satPerVbyte)
     return response as ReverseSwapInfo
 }
@@ -652,10 +660,10 @@ export const buyBitcoin = async (provider: BuyBitcoinProvider): Promise<string> 
 }
 
 export const backup = async (): Promise<void> => {
- await BreezSDK.backup() 
+    await BreezSDK.backup()
 }
 
 export const backupStatus = async (): Promise<BackupStatus> => {
- const response = await BreezSDK.backupStatus()
- return response
+    const response = await BreezSDK.backupStatus()
+    return response
 }

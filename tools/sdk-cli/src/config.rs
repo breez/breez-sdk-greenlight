@@ -1,4 +1,4 @@
-use breez_sdk_core::{BreezServices, Config, EnvironmentType};
+use breez_sdk_core::{BreezServices, Config, EnvironmentType, GreenlightNodeConfig};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -18,8 +18,16 @@ impl Default for CliConfig {
 
 impl CliConfig {
     pub(crate) fn to_sdk_config(&self, data_dir: &str) -> Config {
-        let mut config = BreezServices::default_config(self.env.clone());
-        config.api_key = self.api_key.clone();
+        let mut config = BreezServices::default_config(
+            self.env.clone(),
+            self.api_key.clone().unwrap_or_default(),
+            breez_sdk_core::NodeConfig::Greenlight {
+                config: GreenlightNodeConfig {
+                    partner_credentials: None,
+                    invite_code: None,
+                },
+            },
+        );
         config.working_dir = data_dir.to_string();
         config
     }

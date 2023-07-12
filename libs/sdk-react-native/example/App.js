@@ -16,16 +16,12 @@ import {
     EnvironmentType,
     fetchFiatRates,
     fetchReverseSwapFees,
-    initServices,
     inProgressReverseSwaps,
     listFiatCurrencies,
     mnemonicToSeed,
-    Network,
     nodeInfo,
-    recoverNode,
-    registerNode,
+    connect,
     buyBitcoin,
-    start,
     backup,
     backupStatus
 } from "@breeztech/react-native-breez-sdk"
@@ -35,8 +31,6 @@ import { obfuscateString } from "./utils/security"
 import { getSecureItem, setSecureItem } from "./utils/storage"
 
 const MNEMONIC_STORE = "MNEMONIC_SECURE_STORE"
-const GREENLIGHT_DEVICE_KEY_STORE = "GREENLIGHT_DEVICE_KEY_SECURE_STORE"
-const GREENLIGHT_DEVICE_CERT_STORE = "GREENLIGHT_DEVICE_CERT_SECURE_STORE"
 
 const DebugLine = ({ title, text }) => {
     return (
@@ -57,9 +51,9 @@ const App = () => {
     }
 
     const logHandler = (l) => {
-      if (l.level != "TRACE") {
-        console.log(`[${l.level}]: ${l.line}`)
-      }
+        if (l.level != "TRACE") {
+            console.log(`[${l.level}]: ${l.line}`)
+        }
     }
 
     const eventHandler = (type, data) => {
@@ -68,54 +62,30 @@ const App = () => {
 
     React.useEffect(() => {
         const asyncFn = async () => {
-            await addLogListener(logHandler)
-            addEventListener(eventHandler)
+            try {
+                await addLogListener(logHandler)
+                addEventListener(eventHandler)
 
-            let seed = null
-            let mnemonic = await getSecureItem(MNEMONIC_STORE)
+                let mnemonic = await getSecureItem(MNEMONIC_STORE)
 
-            if (mnemonic == null) {
-                mnemonic = generateMnemonic(256)
-                setSecureItem(MNEMONIC_STORE, mnemonic)
+                if (mnemonic == null) {
+                    mnemonic = generateMnemonic(256)
+                    setSecureItem(MNEMONIC_STORE, mnemonic)
+                }
 
-                seed = await mnemonicToSeed(mnemonic)
+                let seed = await mnemonicToSeed(mnemonic)
                 addLine("mnemonicToSeed", obfuscateString(JSON.stringify(seed)))
 
-                const greenlightCredentials = await registerNode(Network.BITCOIN, seed)
+                const nodeConfig = {
+                    type: "greenlight",
+                    config: {}
+                }
 
-                addLine("registerNode", null)
-                setSecureItem(GREENLIGHT_DEVICE_KEY_STORE, greenlightCredentials.deviceKey)
-                setSecureItem(GREENLIGHT_DEVICE_CERT_STORE, greenlightCredentials.deviceCert)
-            } else {
-                seed = await mnemonicToSeed(mnemonic)
-                addLine("mnemonicToSeed", obfuscateString(JSON.stringify(seed)))
-            }
-
-            let deviceKey = await getSecureItem(GREENLIGHT_DEVICE_KEY_STORE)
-            let deviceCert = await getSecureItem(GREENLIGHT_DEVICE_CERT_STORE)
-
-            if (deviceKey == null) {
-                const greenlightCredentials = await recoverNode(Network.BITCOIN, seed)
-
-                addLine("recoverNode", null)                
-                setSecureItem(GREENLIGHT_DEVICE_KEY_STORE, greenlightCredentials.deviceKey)
-                setSecureItem(GREENLIGHT_DEVICE_CERT_STORE, greenlightCredentials.deviceCert)
-                deviceKey = greenlightCredentials.deviceKey
-                deviceCert = greenlightCredentials.deviceCert
-            }
-
-            if (deviceKey && deviceCert) {
-                addLine("greenlight deviceKey", obfuscateString(JSON.stringify(deviceKey)))
-
-                const config = await defaultConfig(EnvironmentType.PRODUCTION)
+                const config = await defaultConfig(EnvironmentType.PRODUCTION, BuildConfig.BREEZ_API_KEY, nodeConfig)
                 addLine("defaultConfig", JSON.stringify(config))
-                config.apiKey = BuildConfig.BREEZ_API_KEY
 
-                await initServices(config, deviceKey, deviceCert, seed)
-                addLine("initServices", null)
-
-                await start()
-                addLine("start", null)
+                await connect(config, seed)
+                addLine("connect", null)
 
                 const nodeState = await nodeInfo()
                 addLine("nodeInfo", JSON.stringify(nodeState))
@@ -134,9 +104,11 @@ const App = () => {
 
                 const buyBitcoinResult = await buyBitcoin(BuyBitcoinProvider.MOONPAY)
                 addLine("buyBitcoin", JSON.stringify(buyBitcoinResult))
-                                                
-                await backup();
-                addLine("backupStatus", JSON.stringify( await backupStatus()));                
+
+                await backup()
+                addLine("backupStatus", JSON.stringify(await backupStatus()))
+            } catch (e) {
+                addLine("error", e.toString())
             }
         }
         asyncFn()
