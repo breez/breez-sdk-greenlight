@@ -3,7 +3,7 @@ require "json"
 package = JSON.parse(File.read(File.join(__dir__, "package.json")))
 
 Pod::Spec.new do |s|
-  s.name         = "breez_sdk"
+  s.name         = "BreezSDK"
   s.version      = package["version"]
   s.summary      = package["description"]
   s.homepage     = package["homepage"]
@@ -13,6 +13,8 @@ Pod::Spec.new do |s|
   s.platforms    = { :ios => "11.0" }
   s.source       = { :git => "https://github.com/breez-sdk/breez-sdk.git", :tag => "#{s.version}" }
 
+  s.source_files = "ios/**/*.{h,m,mm,swift}"  
+
   s.dependency "React-Core"
-  s.dependency "BreezSDK", package["version"]
+  s.vendored_frameworks = "ios/bindings-swift/breez_sdkFFI.xcframework"
 end

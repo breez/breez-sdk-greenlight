@@ -85,34 +85,6 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun registerNode(network: String, seed: ReadableArray, registerCredentials: ReadableMap, inviteCode: String, promise: Promise) {
-        executor.execute {
-            try {
-                val registerCreds = asGreenlightCredentials(registerCredentials)
-                val optionalInviteCode = inviteCode.takeUnless { it.isEmpty() }
-                val creds = registerNode(asNetwork(network), asUByteList(seed), registerCreds, optionalInviteCode)
-                promise.resolve(readableMapOf(creds))
-            } catch (e: SdkException) {
-                e.printStackTrace()
-                promise.reject(TAG, e.message ?: "Error calling registerNode", e)
-            }
-        }
-    }
-
-    @ReactMethod
-    fun recoverNode(network: String, seed: ReadableArray, promise: Promise) {
-        executor.execute {
-            try {
-                val creds = recoverNode(asNetwork(network), asUByteList(seed))
-                promise.resolve(readableMapOf(creds))
-            } catch (e: SdkException) {
-                e.printStackTrace()
-                promise.reject(TAG, e.message ?: "Error calling recoverNode", e)
-            }
-        }
-    }
-
-    @ReactMethod
     fun startLogStream(promise: Promise) {
         try {
             val emitter = reactApplicationContext
@@ -127,18 +99,24 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun defaultConfig(envType: String, promise: Promise) {
+    fun defaultConfig(envType: String, apiKey: String, nodeConfigMap: ReadableMap, promise: Promise) {
         try {
-            val workingDir = File(reactApplicationContext.filesDir.toString() + "/breezSdk")
+            val nodeConfig = asNodeConfig(nodeConfigMap)
 
-            if (!workingDir.exists()) {
-                workingDir.mkdirs()
+            if (nodeConfig == null) {
+                promise.reject(TAG, "Invalid nodeConfig")
+            } else {
+                val workingDir = File(reactApplicationContext.filesDir.toString() + "/breezSdk")
+
+                if (!workingDir.exists()) {
+                    workingDir.mkdirs()
+                }
+
+                val config = defaultConfig(asEnvironmentType(envType), apiKey, nodeConfig)
+                config.workingDir = workingDir.absolutePath
+
+                promise.resolve(readableMapOf(config))
             }
-
-            val config = defaultConfig(asEnvironmentType(envType))
-            config.workingDir = workingDir.absolutePath
-
-            promise.resolve(readableMapOf(config))
         } catch (e: SdkException) {
             e.printStackTrace()
             promise.reject(TAG, e.message ?: "Error calling defaultConfig", e)
@@ -146,7 +124,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun initServices(config: ReadableMap, deviceKey: ReadableArray, deviceCert: ReadableArray, seed: ReadableArray, promise: Promise) {
+    fun connect(config: ReadableMap, seed: ReadableArray, promise: Promise) {
         if (breezServices != null) {
             promise.reject(TAG, "BreezServices already initialized")
         }
@@ -157,27 +135,13 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             promise.reject(TAG, "Invalid config")
         } else {
             val emitter = reactApplicationContext.getJSModule(RCTDeviceEventEmitter::class.java)
-            val creds = GreenlightCredentials(asUByteList(deviceKey), asUByteList(deviceCert))
 
             try {
-                breezServices = initServices(configData, asUByteList(seed), creds, BreezSDKListener(emitter))
+                breezServices = connect(configData, asUByteList(seed), BreezSDKListener(emitter))
                 promise.resolve(readableMapOf("status" to "ok"))
             } catch (e: SdkException) {
                 e.printStackTrace()
-                promise.reject(TAG, e.message ?: "Error calling initServices", e)
-            }
-        }
-    }
-
-    @ReactMethod
-    fun start(promise: Promise) {
-        executor.execute {
-            try {
-                getBreezServices().start()
-                promise.resolve(readableMapOf("status" to "ok"))
-            } catch (e: SdkException) {
-                e.printStackTrace()
-                promise.reject(TAG, e.message ?: "Error calling initServices", e)
+                promise.reject(TAG, e.message ?: "Error calling connect", e)
             }
         }
     }
@@ -196,14 +160,14 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun stop(promise: Promise) {
+    fun disconnect(promise: Promise) {
         executor.execute {
             try {
-                getBreezServices().stop()
+                getBreezServices().disconnect()
                 promise.resolve(readableMapOf("status" to "ok"))
             } catch (e: SdkException) {
                 e.printStackTrace()
-                promise.reject(TAG, e.message ?: "Error calling stop", e)
+                promise.reject(TAG, e.message ?: "Error calling disconnect", e)
             }
         }
     }

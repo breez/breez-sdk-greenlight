@@ -26,10 +26,9 @@ Please contact [support@breez.technology](mailto:support@breez.technology?subjec
 import React, { useEffect } from "react"
 import { 
     defaultConfig,
-    EnvironmentType,
-    initServices,
+    EnvironmentType,    
     sendPayment,
-    start 
+    connect 
 } from "@breeztech/react-native-breez-sdk";
 import BuildConfig from "react-native-build-config"
 
@@ -43,14 +42,23 @@ const App = () => (
 
     useEffect(() => {
         const asyncFn = async () => {
-            // Get default config
-            const config = await defaultConfig(EnvironmentType.PRODUCTION)
-            // Set the apiKey from the gradle or xcode build
-            config.apiKey = BuildConfig.BREEZ_API_KEY
+            
+            // create the specific node configuration
+            const nodeConfig = {
+                type: "greenlight",
+                config: {
+                    partnerCredentials: {
+                        deviceKey: null,
+                        deviceCert: null
+                    }
+                }
+            }
+            
+            // Construct the sdk default config
+            const config = await defaultConfig(EnvironmentType.PRODUCTION, BuildConfig.BREEZ_API_KEY, nodeConfig)            
 
-             // Initialize Breez SDK
-            await initServices(config, deviceKey, deviceCert, seed)
-            await start()
+             // Connect to the Breez SDK make it ready to use
+            await connect(config, seed)            
         }
 
         asyncFn()

@@ -3,11 +3,14 @@ use crate::models::{
     Config, GreenlightCredentials, LnPaymentDetails, Network, NodeAPI, NodeState, PaymentDetails,
     PaymentType, SyncResponse, UnspentTransactionOutput,
 };
-use crate::{Channel, ChannelState};
+use crate::persist::db::SqliteStorage;
+use crate::{Channel, ChannelState, NodeConfig};
 
 use anyhow::{anyhow, Result};
 use bitcoin::bech32::{u5, ToBase32};
 use bitcoin::secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
+use ecies::utils::{aes_decrypt, aes_encrypt};
+use gl_client::node::ClnClient;
 use gl_client::pb::amount::Unit;
 
 use gl_client::pb::cln::{
@@ -29,6 +32,7 @@ use lightning_invoice::{RawInvoice, SignedRawInvoice};
 use serde::{Deserialize, Serialize};
 use std::cmp::{max, min};
 use std::str::FromStr;
+use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use strum_macros::{Display, EnumString};
 use tokio::sync::{mpsc, Mutex};
@@ -39,29 +43,133 @@ const MAX_INBOUND_LIQUIDITY_MSAT: u64 = 4000000000;
 
 pub(crate) struct Greenlight {
     sdk_config: Config,
-    tls_config: TlsConfig,
     signer: Signer,
-    scheduler: Mutex<Option<Scheduler>>,
+    tls_config: TlsConfig,
+    gl_client: Mutex<Option<node::Client>>,
+    node_client: Mutex<Option<ClnClient>>,
 }
 
 impl Greenlight {
-    pub(crate) async fn new(
+    /// Connects to a live node using the provided seed and config.
+    /// If the node is not registered, it will try to recover it using the seed.
+    /// If the node is not created, it will register it using the provided partner credentials
+    /// or invite code
+    /// If the node is already registered and an existing credentials were found, it will try to
+    /// connect to the node using these credentials.    
+    pub async fn connect(
+        config: Config,
+        seed: Vec<u8>,
+        persister: Arc<SqliteStorage>,
+    ) -> Result<Self> {
+        // Derive the encryption key from the seed
+        let signer = Signer::new(seed.clone(), config.network.into(), TlsConfig::new()?)?;
+        let encryption_key = Self::derive_bip32_key(
+            config.network,
+            &signer,
+            vec![ChildNumber::from_hardened_idx(140)?, ChildNumber::from(0)],
+        )?
+        .to_priv()
+        .to_bytes();
+        let encryption_key_slice = encryption_key.as_slice();
+
+        let register_credentials = match config.node_config.clone() {
+            NodeConfig::Greenlight { config } => config,
+        };
+
+        // query for the existing credentials
+        let credentials = persister.get_gl_credentials()?;
+        let parsed_credentials: Result<GreenlightCredentials> = match credentials {
+            // In case we found existing credentials, try to decrypt them and connect to the node
+            Some(creds) => {
+                let decrypted_credentials = aes_decrypt(encryption_key_slice, creds.as_slice());
+                match decrypted_credentials {
+                    Some(creds) => {
+                        let built_credentials: GreenlightCredentials =
+                            serde_json::from_slice(creds.as_slice())?;
+                        info!("Initializing greenlight from existing credentials");
+                        Ok(built_credentials)
+                    }
+                    None => {
+                        return Err(anyhow!(
+                            "Failed to decrypt credentials, seed doesn't match existing node"
+                        ));
+                    }
+                }
+            }
+            // In case no credentials were found, try to recover the node
+            None => {
+                info!("No credentials found, trying to recover existing node");
+                let recovered = Self::recover(config.network, seed.clone()).await;
+                match recovered {
+                    Ok(creds) => Ok(creds),
+                    Err(_) => {
+                        // If we got here it means we failed to recover so we need to register a new node
+                        info!("Failed to recover node, registering new one");
+                        let credentials = Self::register(
+                            config.clone().network,
+                            seed.clone(),
+                            register_credentials.partner_credentials,
+                            register_credentials.invite_code,
+                        )
+                        .await?;
+                        Ok(credentials)
+                    }
+                }
+            }
+        };
+
+        // Persist the connection credentials for future use and return the node instance
+        let res = match parsed_credentials {
+            Ok(creds) => {
+                let json_creds = serde_json::to_string(&creds)?.as_bytes().to_vec();
+                let encryptd_creds = aes_encrypt(encryption_key_slice, json_creds.as_slice());
+                match encryptd_creds {
+                    Some(c) => {
+                        persister.set_gl_credentials(c)?;
+                        Greenlight::new(config, seed, creds).await
+                    }
+                    None => {
+                        return Err(anyhow!("Failed to encrypt credentials"));
+                    }
+                }
+            }
+            Err(_) => Err(anyhow!("Failed to get gl credentials")),
+        };
+        res
+    }
+
+    async fn new(
         sdk_config: Config,
         seed: Vec<u8>,
-        creds: GreenlightCredentials,
+        connection_credentials: GreenlightCredentials,
     ) -> Result<Greenlight> {
         let greenlight_network = sdk_config.network.into();
-        let tls_config = TlsConfig::new()?.identity(creds.device_cert, creds.device_key);
+        let tls_config = TlsConfig::new()?.identity(
+            connection_credentials.device_cert,
+            connection_credentials.device_key,
+        );
         let signer = Signer::new(seed, greenlight_network, tls_config.clone())?;
+
         Ok(Greenlight {
             sdk_config,
-            tls_config,
             signer,
-            scheduler: Mutex::new(None),
+            tls_config,
+            gl_client: Mutex::new(None),
+            node_client: Mutex::new(None),
         })
     }
 
-    pub(crate) async fn register(
+    fn derive_bip32_key(
+        network: Network,
+        signer: &Signer,
+        path: Vec<ChildNumber>,
+    ) -> Result<ExtendedPrivKey> {
+        ExtendedPrivKey::new_master(network.into(), &signer.bip32_ext_key())?
+            .derive_priv(&Secp256k1::new(), &path)
+            .map_err(|e| anyhow!(e))
+    }
+
+    async fn register(
         network: Network,
         seed: Vec<u8>,
         register_credentials: Option<GreenlightCredentials>,
@@ -96,7 +204,7 @@ impl Greenlight {
         })
     }
 
-    pub(crate) async fn recover(network: Network, seed: Vec<u8>) -> Result<GreenlightCredentials> {
+    async fn recover(network: Network, seed: Vec<u8>) -> Result<GreenlightCredentials> {
         let greenlight_network = network.into();
         let tls_config = TlsConfig::new()?;
         let signer = Signer::new(seed, greenlight_network, tls_config.clone())?;
@@ -110,104 +218,49 @@ impl Greenlight {
     }
 
     async fn get_client(&self) -> Result<node::Client> {
-        let client: node::Client = self
-            .scheduler()
-            .await?
-            .schedule(self.tls_config.clone())
-            .await?;
-        Ok(client)
+        let mut gl_client = self.gl_client.lock().await;
+        if gl_client.is_none() {
+            let scheduler =
+                Scheduler::new(self.signer.node_id(), self.sdk_config.network.into()).await?;
+            *gl_client = Some(scheduler.schedule(self.tls_config.clone()).await?);
+        }
+        Ok(gl_client.clone().unwrap())
     }
 
     pub(crate) async fn get_node_client(&self) -> Result<node::ClnClient> {
-        let client: node::ClnClient = self
-            .scheduler()
-            .await?
-            .schedule(self.tls_config.clone())
-            .await?;
-        Ok(client)
-    }
-
-    async fn scheduler(&self) -> Result<Scheduler> {
-        let mut existing = self.scheduler.lock().await;
-        if existing.is_none() {
+        let mut node_client = self.node_client.lock().await;
+        if node_client.is_none() {
             let scheduler =
                 Scheduler::new(self.signer.node_id(), self.sdk_config.network.into()).await?;
-            *existing = Some(scheduler);
+            *node_client = Some(scheduler.schedule(self.tls_config.clone()).await?);
         }
-        Ok(existing.as_ref().unwrap().clone())
+        Ok(node_client.clone().unwrap())
     }
 }
 
 #[tonic::async_trait]
 impl NodeAPI for Greenlight {
-    async fn start(&self) -> Result<()> {
-        self.get_client().await?;
-        Ok(())
-    }
-
-    async fn start_signer(&self, shutdown: mpsc::Receiver<()>) {
-        _ = self.signer.run_forever(shutdown).await;
-        error!("signer exited");
-    }
-
-    async fn stream_incoming_payments(&self) -> Result<Streaming<gl_client::pb::IncomingPayment>> {
+    async fn create_invoice(
+        &self,
+        amount_sats: u64,
+        description: String,
+        preimage: Option<Vec<u8>>,
+    ) -> Result<Invoice> {
         let mut client = self.get_client().await?;
-        let stream = client
-            .stream_incoming(gl_client::pb::StreamIncomingFilter {})
-            .await?
-            .into_inner();
-        Ok(stream)
-    }
 
-    async fn stream_log_messages(&self) -> Result<Streaming<gl_client::pb::LogEntry>> {
-        let mut client = self.get_client().await?;
-        let stream = client
-            .stream_log(gl_client::pb::StreamLogRequest {})
-            .await?
-            .into_inner();
-        Ok(stream)
-    }
+        let request = InvoiceRequest {
+            amount: Some(Amount {
+                unit: Some(Unit::Satoshi(amount_sats)),
+            }),
+            label: format!(
+                "breez-{}",
+                SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis()
+            ),
+            description,
+            preimage: preimage.unwrap_or_default(),
+        };
 
-    fn sign_invoice(&self, invoice: RawInvoice) -> Result<String> {
-        let hrp_bytes = invoice.hrp.to_string().as_bytes().to_vec();
-        let data_bytes = invoice.data.to_base32();
-
-        // create the message for the signer
-        let msg_type: u16 = 8;
-        let data_len: u16 = data_bytes.len().try_into()?;
-        let mut data_len_bytes = data_len.to_be_bytes().to_vec();
-        let mut data_buf = data_bytes.iter().copied().map(u5::to_u8).collect();
-
-        let hrp_len: u16 = hrp_bytes.len().try_into()?;
-        let mut hrp_len_bytes = hrp_len.to_be_bytes().to_vec();
-        let mut hrp_buf = hrp_bytes.to_vec();
-
-        let mut buf = msg_type.to_be_bytes().to_vec();
-        buf.append(&mut data_len_bytes);
-        buf.append(&mut data_buf);
-        buf.append(&mut hrp_len_bytes);
-        buf.append(&mut hrp_buf);
-        // Sign the invoice using the signer
-        let raw_result = self.signer.sign_invoice(buf)?;
-        info!(
-            "recover id: {:?} raw = {:?}",
-            raw_result, raw_result[64] as i32
-        );
-        // contruct the RecoveryId
-        let rid = RecoveryId::from_i32(raw_result[64] as i32).expect("recovery ID");
-        let sig = &raw_result[0..64];
-        let recoverable_sig =
-            RecoverableSignature::from_compact(sig, rid).map_err(|e| anyhow!(e))?;
-
-        let signed_invoice: Result<SignedRawInvoice> = invoice.sign(|_| Ok(recoverable_sig));
-        Ok(signed_invoice?.to_string())
-    }
-
-    async fn connect_peer(&self, node_id: String, addr: String) -> Result<()> {
-        let mut client = self.get_client().await?;
-        let connect_req = pb::ConnectRequest { node_id, addr };
-        client.connect_peer(connect_req).await?;
-        Ok(())
+        Ok(client.create_invoice(request).await?.into_inner())
     }
 
     // implemenet pull changes from greenlight
@@ -361,38 +414,6 @@ impl NodeAPI for Greenlight {
         })
     }
 
-    async fn list_peers(&self) -> Result<Vec<Peer>> {
-        let mut client = self.get_client().await?;
-        Ok(client
-            .list_peers(pb::ListPeersRequest::default())
-            .await?
-            .into_inner()
-            .peers)
-    }
-
-    async fn create_invoice(
-        &self,
-        amount_sats: u64,
-        description: String,
-        preimage: Option<Vec<u8>>,
-    ) -> Result<Invoice> {
-        let mut client = self.get_client().await?;
-
-        let request = InvoiceRequest {
-            amount: Some(Amount {
-                unit: Some(Unit::Satoshi(amount_sats)),
-            }),
-            label: format!(
-                "breez-{}",
-                SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis()
-            ),
-            description,
-            preimage: preimage.unwrap_or_default(),
-        };
-
-        Ok(client.create_invoice(request).await?.into_inner())
-    }
-
     async fn send_payment(
         &self,
         bolt11: String,
@@ -416,7 +437,7 @@ impl NodeAPI for Greenlight {
             exclude: vec![],
             maxfee: None,
             description,
-            exemptfee: None,
+            exemptfee: Some(gl_client::pb::cln::Amount { msat: 20000 }),
         };
         client.pay(request).await?.into_inner().try_into()
     }
@@ -444,6 +465,92 @@ impl NodeAPI for Greenlight {
             maxdelay: None,
         };
         client.key_send(request).await?.into_inner().try_into()
+    }
+
+    async fn start(&self) -> Result<()> {
+        self.get_node_client()
+            .await?
+            .getinfo(pb::cln::GetinfoRequest {})
+            .await?;
+        Ok(())
+    }
+
+    async fn sweep(
+        &self,
+        to_address: String,
+        fee_rate_sats_per_vbyte: u64,
+    ) -> Result<WithdrawResponse> {
+        let mut client = self.get_client().await?;
+
+        let request = pb::WithdrawRequest {
+            feerate: Some(pb::Feerate {
+                value: Some(pb::feerate::Value::Perkw(fee_rate_sats_per_vbyte * 250)),
+            }),
+            amount: Some(Amount {
+                unit: Some(Unit::All(true)),
+            }),
+            destination: to_address,
+            minconf: None,
+            utxos: vec![],
+        };
+
+        Ok(client.withdraw(request).await?.into_inner())
+    }
+
+    async fn start_signer(&self, shutdown: mpsc::Receiver<()>) {
+        _ = self.signer.run_forever(shutdown).await;
+        error!("signer exited");
+    }
+
+    async fn list_peers(&self) -> Result<Vec<Peer>> {
+        let mut client = self.get_client().await?;
+        Ok(client
+            .list_peers(pb::ListPeersRequest::default())
+            .await?
+            .into_inner()
+            .peers)
+    }
+
+    async fn connect_peer(&self, node_id: String, addr: String) -> Result<()> {
+        let mut client = self.get_client().await?;
+        let connect_req = pb::ConnectRequest { node_id, addr };
+        client.connect_peer(connect_req).await?;
+        Ok(())
+    }
+
+    fn sign_invoice(&self, invoice: RawInvoice) -> Result<String> {
+        let hrp_bytes = invoice.hrp.to_string().as_bytes().to_vec();
+        let data_bytes = invoice.data.to_base32();
+
+        // create the message for the signer
+        let msg_type: u16 = 8;
+        let data_len: u16 = data_bytes.len().try_into()?;
+        let mut data_len_bytes = data_len.to_be_bytes().to_vec();
+        let mut data_buf = data_bytes.iter().copied().map(u5::to_u8).collect();
+
+        let hrp_len: u16 = hrp_bytes.len().try_into()?;
+        let mut hrp_len_bytes = hrp_len.to_be_bytes().to_vec();
+        let mut hrp_buf = hrp_bytes.to_vec();
+
+        let mut buf = msg_type.to_be_bytes().to_vec();
+        buf.append(&mut data_len_bytes);
+        buf.append(&mut data_buf);
+        buf.append(&mut hrp_len_bytes);
+        buf.append(&mut hrp_buf);
+        // Sign the invoice using the signer
+        let raw_result = self.signer.sign_invoice(buf)?;
+        info!(
+            "recover id: {:?} raw = {:?}",
+            raw_result, raw_result[64] as i32
+        );
+        // contruct the RecoveryId
+        let rid = RecoveryId::from_i32(raw_result[64] as i32).expect("recovery ID");
+        let sig = &raw_result[0..64];
+        let recoverable_sig =
+            RecoverableSignature::from_compact(sig, rid).map_err(|e| anyhow!(e))?;
+
+        let signed_invoice: Result<SignedRawInvoice> = invoice.sign(|_| Ok(recoverable_sig));
+        Ok(signed_invoice?.to_string())
     }
 
     async fn close_peer_channels(&self, node_id: String) -> Result<Vec<String>> {
@@ -501,26 +608,22 @@ impl NodeAPI for Greenlight {
         Ok(tx_ids)
     }
 
-    async fn sweep(
-        &self,
-        to_address: String,
-        fee_rate_sats_per_vbyte: u64,
-    ) -> Result<WithdrawResponse> {
+    async fn stream_incoming_payments(&self) -> Result<Streaming<gl_client::pb::IncomingPayment>> {
         let mut client = self.get_client().await?;
+        let stream = client
+            .stream_incoming(gl_client::pb::StreamIncomingFilter {})
+            .await?
+            .into_inner();
+        Ok(stream)
+    }
 
-        let request = pb::WithdrawRequest {
-            feerate: Some(pb::Feerate {
-                value: Some(pb::feerate::Value::Perkw(fee_rate_sats_per_vbyte * 250)),
-            }),
-            amount: Some(Amount {
-                unit: Some(Unit::All(true)),
-            }),
-            destination: to_address,
-            minconf: None,
-            utxos: vec![],
-        };
-
-        Ok(client.withdraw(request).await?.into_inner())
+    async fn stream_log_messages(&self) -> Result<Streaming<gl_client::pb::LogEntry>> {
+        let mut client = self.get_client().await?;
+        let stream = client
+            .stream_log(gl_client::pb::StreamLogRequest {})
+            .await?
+            .into_inner();
+        Ok(stream)
     }
 
     async fn execute_command(&self, command: String) -> Result<String> {
@@ -580,9 +683,7 @@ impl NodeAPI for Greenlight {
     }
 
     fn derive_bip32_key(&self, path: Vec<ChildNumber>) -> Result<ExtendedPrivKey> {
-        ExtendedPrivKey::new_master(self.sdk_config.network.into(), &self.signer.bip32_ext_key())?
-            .derive_priv(&Secp256k1::new(), &path)
-            .map_err(|e| anyhow!(e))
+        Self::derive_bip32_key(self.sdk_config.network, &self.signer, path)
     }
 }
 
