@@ -4,6 +4,7 @@ use crate::grpc::{
     self, LspListRequest, PaymentInformation, RegisterPaymentReply, RegisterPaymentRequest,
 };
 use crate::models::{LspAPI, OpeningFeeParams, OpeningFeeParamsMenu};
+use crate::DynamicFeeType;
 use anyhow::Result;
 use prost::Message;
 use serde::{Deserialize, Serialize};
@@ -58,7 +59,7 @@ impl LspInformation {
     pub(crate) fn choose_channel_opening_fees(
         &self,
         maybe_user_supplied_fee_params: Option<OpeningFeeParams>,
-        cheapest_or_longest: bool,
+        fee_type: DynamicFeeType,
     ) -> Result<OpeningFeeParams> {
         match maybe_user_supplied_fee_params {
             // Validate given opening_fee_params and use it if possible
@@ -67,11 +68,11 @@ impl LspInformation {
                 Ok(user_supplied_fees)
             }
             // We pick our own if None is supplied
-            None => match cheapest_or_longest {
-                true => self
+            None => match fee_type {
+                DynamicFeeType::Cheapest => self
                     .opening_fee_params_menu
                     .get_cheapest_opening_fee_params(),
-                false => self
+                DynamicFeeType::Longest => self
                     .opening_fee_params_menu
                     .get_longest_valid_opening_fee_params(),
             },

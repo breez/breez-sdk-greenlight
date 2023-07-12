@@ -719,6 +719,11 @@ impl ToSql for OpeningFeeParams {
     }
 }
 
+pub enum DynamicFeeType {
+    Cheapest,
+    Longest,
+}
+
 /// See [OpeningFeeParamsMenu::try_from]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OpeningFeeParamsMenu {

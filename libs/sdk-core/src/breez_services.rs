@@ -539,7 +539,7 @@ impl BreezServices {
         let channel_opening_fees = self
             .lsp_info()
             .await?
-            .choose_channel_opening_fees(opening_fee_params, false)?;
+            .choose_channel_opening_fees(opening_fee_params, DynamicFeeType::Longest)?;
         let swap_info = self
             .btc_receive_swapper
             .create_swap_address(channel_opening_fees)
@@ -1206,7 +1206,10 @@ impl Receiver for PaymentReceiver {
             info!("We need to open a channel");
 
             // we need to open channel so we are calculating the fees for the LSP (coming either from the user, or from the LSP)
-            let ofp = lsp_info.choose_channel_opening_fees(req_data.opening_fee_params, true)?;
+            let ofp = lsp_info.choose_channel_opening_fees(
+                req_data.opening_fee_params,
+                DynamicFeeType::Cheapest,
+            )?;
             channel_opening_fee_params = Some(ofp.clone());
             let channel_fees_msat = ofp.get_channel_fees_msat_for(amount_msats);
 
