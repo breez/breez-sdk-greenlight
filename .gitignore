@@ -4,3 +4,8 @@ libs/sdk-bindings/storage.sql
 
 tools/sdk-cli/config.json
 libs/sdk-react-native/ios/breez_sdk.swift
+libs/sdk-react-native/ios/bindings-swift/**
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
