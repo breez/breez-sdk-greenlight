@@ -1240,9 +1240,10 @@ impl Receiver for PaymentReceiver {
         if open_channel_needed {
             info!("We need to open a channel");
 
-            // we need to open channel so we are calculating the fees for the LSP
+            // We need to open channel so we are calculating the fees for the LSP
+            // We multiply and dividing by 1000 as a mean to round to satoshis.
             let channel_fees_msat_calculated =
-                amount_msats * lsp_info.channel_fee_permyriad as u64 / 10_000 / 1_000_000;
+                amount_msats * lsp_info.channel_fee_permyriad as u64 / 10_000 / 1_000 * 1_000;
             let channel_fees_msat = max(
                 channel_fees_msat_calculated,
                 lsp_info.channel_minimum_fee_msat as u64,
