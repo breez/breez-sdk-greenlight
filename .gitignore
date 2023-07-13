@@ -9,3 +9,4 @@ libs/sdk-react-native/ios/bindings-swift/**
 # Visual Studio Code
 .vscode/*
 !.vscode/settings.json
+!.vscode/extensions.json
