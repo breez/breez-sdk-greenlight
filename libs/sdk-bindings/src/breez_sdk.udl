@@ -1,16 +1,16 @@
-dictionary RouteHintHop {
-    string src_node_id;
-    u64 short_channel_id;
-    u32 fees_base_msat;
-    u32 fees_proportional_millionths;
-    u64 cltv_expiry_delta;
-    u64? htlc_minimum_msat;
-    u64? htlc_maximum_msat;
+dictionary RouteHintHop {    
+     string src_node_id;
+     u64 short_channel_id;
+     u32 fees_base_msat;
+     u32 fees_proportional_millionths;   
+     u64 cltv_expiry_delta;    
+     u64? htlc_minimum_msat;    
+     u64? htlc_maximum_msat;
  };
 
 [Error]
 enum SDKError {
-    "Error",
+  "Error",
 };
 
 enum EnvironmentType {
@@ -37,7 +37,7 @@ dictionary GreenlightNodeConfig {
 
 [Enum]
 interface NodeConfig {
-    Greenlight(GreenlightNodeConfig config);
+ Greenlight(GreenlightNodeConfig config);
 };
 
 dictionary Config {
@@ -89,7 +89,7 @@ dictionary NodeState {
     u64 max_single_payment_amount_msat;
     u64 max_chan_reserve_msats;
     sequence<string> connected_peers;
-    u64 inbound_liquidity_msats;
+    u64 inbound_liquidity_msats;    
 };
 
 enum PaymentTypeFilter {
@@ -101,13 +101,13 @@ enum PaymentTypeFilter {
 enum PaymentType {
     "Sent",
     "Received",
-    "ClosedChannel",
+    "ClosedChannel"
 };
 
 dictionary Payment {
     string id;
-    PaymentType payment_type;
-    i64 payment_time;
+    PaymentType payment_type;    
+    i64 payment_time;    
     u64 amount_msat;
     u64 fee_msat;
     boolean pending;
@@ -228,7 +228,7 @@ dictionary PaymentFailedData {
 };
 
 dictionary BackupFailedData {
-    string error;
+    string error;    
 };
 
 [Enum]
@@ -239,7 +239,7 @@ interface BreezEvent {
     PaymentSucceed(Payment details);
     PaymentFailed(PaymentFailedData details);
     BackupStarted();
-    BackupSucceeded();
+    BackupSucceeded(); 
     BackupFailed(BackupFailedData details);
 };
 
@@ -252,7 +252,7 @@ callback interface LogStream {
     void log(LogEntry l);
 };
 
-callback interface EventListener {
+callback interface EventListener {    
     void on_event(BreezEvent e);
 };
 
@@ -404,118 +404,118 @@ enum BuyBitcoinProvider {
     "Moonpay",
 };
 
-interface BlockingBreezServices {
+interface BlockingBreezServices {   
 
-    [Throws=SDKError]
-    void disconnect();
+   [Throws=SDKError]
+   void disconnect();
 
-    [Throws=SDKError]
-    Payment send_payment(string bolt11, u64? amount_sats);
+   [Throws=SDKError]
+   Payment send_payment(string bolt11, u64? amount_sats);
 
-    [Throws=SDKError]
-    Payment send_spontaneous_payment(string node_id, u64 amount_sats);
+   [Throws=SDKError]
+   Payment send_spontaneous_payment(string node_id, u64 amount_sats);
 
-    [Throws=SDKError]
-    LNInvoice receive_payment(u64 amount_sats, string description);
+   [Throws=SDKError]
+   LNInvoice receive_payment(u64 amount_sats, string description);
 
-    [Throws=SDKError]
-    LnUrlPayResult pay_lnurl(LnUrlPayRequestData req_data, u64 amount_sats, string? comment);
+   [Throws=SDKError]
+   LnUrlPayResult pay_lnurl(LnUrlPayRequestData req_data, u64 amount_sats, string? comment);
 
-    [Throws=SDKError]
-    LnUrlCallbackStatus withdraw_lnurl(LnUrlWithdrawRequestData req_data, u64 amount_sats, string? description);
+   [Throws=SDKError]
+   LnUrlCallbackStatus withdraw_lnurl(LnUrlWithdrawRequestData req_data, u64 amount_sats, string? description);
 
-    [Throws=SDKError]
-    LnUrlCallbackStatus lnurl_auth(LnUrlAuthRequestData req_data);
+   [Throws=SDKError]
+   LnUrlCallbackStatus lnurl_auth(LnUrlAuthRequestData req_data);
 
-    [Throws=SDKError]
-    NodeState? node_info();
+   [Throws=SDKError]
+   NodeState? node_info();
 
-    [Throws=SDKError]
-    BackupStatus backup_status();
+   [Throws=SDKError]
+   BackupStatus backup_status();
 
-    [Throws=SDKError]
-    void backup();
+   [Throws=SDKError]
+   void backup();
 
-    [Throws=SDKError]
-    Payment? payment_by_hash(string hash);
+   [Throws=SDKError]
+   Payment? payment_by_hash(string hash);
 
-    [Throws=SDKError]
-    sequence<Payment> list_payments(PaymentTypeFilter filter, i64? from_timestamp, i64? to_timestamp);
+   [Throws=SDKError]
+   sequence<Payment> list_payments(PaymentTypeFilter filter, i64? from_timestamp, i64? to_timestamp);
 
-    [Throws=SDKError]
-    void sweep(string to_address, u64 fee_rate_sats_per_vbyte);
+   [Throws=SDKError]
+   void sweep(string to_address, u64 fee_rate_sats_per_vbyte);
 
-    [Throws=SDKError]
-    sequence<Rate> fetch_fiat_rates();
+   [Throws=SDKError]
+   sequence<Rate> fetch_fiat_rates();
 
-    [Throws=SDKError]
-    sequence<FiatCurrency> list_fiat_currencies();
+   [Throws=SDKError]
+   sequence<FiatCurrency> list_fiat_currencies();
 
-    [Throws=SDKError]
-    sequence<LspInformation> list_lsps();
+   [Throws=SDKError]
+   sequence<LspInformation> list_lsps();
 
-    [Throws=SDKError]
-    void connect_lsp(string lsp_id);
+   [Throws=SDKError]
+   void connect_lsp(string lsp_id);
 
-    [Throws=SDKError]
-    LspInformation? fetch_lsp_info(string lsp_id);
+   [Throws=SDKError]
+   LspInformation? fetch_lsp_info(string lsp_id);
 
-    [Throws=SDKError]
-    string? lsp_id();
+   [Throws=SDKError]
+   string? lsp_id();
 
-    [Throws=SDKError]
-    void close_lsp_channels();
+   [Throws=SDKError]
+   void close_lsp_channels();
 
-    [Throws=SDKError]
-    SwapInfo receive_onchain();
+   [Throws=SDKError]
+   SwapInfo receive_onchain();
 
-    [Throws=SDKError]
-    SwapInfo? in_progress_swap();
+   [Throws=SDKError]
+   SwapInfo? in_progress_swap();
 
-    [Throws=SDKError]
-    sequence<SwapInfo> list_refundables();
+   [Throws=SDKError]
+   sequence<SwapInfo> list_refundables();
 
-    [Throws=SDKError]
-    string refund(string swap_address, string to_address, u32 sat_per_vbyte);
+   [Throws=SDKError]
+   string refund(string swap_address, string to_address, u32 sat_per_vbyte);
 
-    [Throws=SDKError]
-    ReverseSwapPairInfo fetch_reverse_swap_fees();
+   [Throws=SDKError]
+   ReverseSwapPairInfo fetch_reverse_swap_fees();
 
-    [Throws=SDKError]
-    sequence<ReverseSwapInfo> in_progress_reverse_swaps();
+   [Throws=SDKError]
+   sequence<ReverseSwapInfo> in_progress_reverse_swaps();
 
-    [Throws=SDKError]
-    ReverseSwapInfo send_onchain(u64 amount_sat, string onchain_recipient_address, string pair_hash, u64 sat_per_vbyte);
+   [Throws=SDKError]
+   ReverseSwapInfo send_onchain(u64 amount_sat, string onchain_recipient_address, string pair_hash, u64 sat_per_vbyte);
 
-    [Throws=SDKError]
-    string execute_dev_command(string command);
+   [Throws=SDKError]
+   string execute_dev_command(string command);
 
-    [Throws=SDKError]
-    void sync();
+   [Throws=SDKError]
+   void sync();
 
-    [Throws=SDKError]
-    RecommendedFees recommended_fees();
+   [Throws=SDKError]
+   RecommendedFees recommended_fees();
 
-    [Throws=SDKError]
-    string buy_bitcoin(BuyBitcoinProvider provider);
+   [Throws=SDKError]
+   string buy_bitcoin(BuyBitcoinProvider provider);
 };
 
-namespace breez_sdk {
+namespace breez_sdk {  
 
-    [Throws=SDKError]
-    BlockingBreezServices connect(Config config, sequence<u8> seed, EventListener listener);
+ [Throws=SDKError]
+ BlockingBreezServices connect(Config config, sequence<u8> seed, EventListener listener);
 
-    [Throws=SDKError]
-    void set_log_stream(LogStream log_stream);
+ [Throws=SDKError]
+ void set_log_stream(LogStream log_stream);
 
-    [Throws=SDKError]
-    LNInvoice parse_invoice(string invoice);
+ [Throws=SDKError]
+ LNInvoice parse_invoice(string invoice);
 
-    [Throws=SDKError]
-    InputType parse_input(string s);
+ [Throws=SDKError]
+ InputType parse_input(string s);
 
-    [Throws=SDKError]
-    sequence<u8> mnemonic_to_seed(string phrase);
+ [Throws=SDKError]
+ sequence<u8> mnemonic_to_seed(string phrase);
 
-    Config default_config(EnvironmentType env_type, string api_key, NodeConfig node_config);
+ Config default_config(EnvironmentType env_type, string api_key, NodeConfig node_config);
 };
