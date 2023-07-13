@@ -1083,6 +1083,7 @@ impl BreezServicesBuilder {
         }
 
         let payment_receiver = Arc::new(PaymentReceiver {
+            config: self.config.clone(),
             node_api: unwrapped_node_api.clone(),
             lsp: breez_server.clone(),
             persister: persister.clone(),
@@ -1221,6 +1222,7 @@ pub trait Receiver: Send + Sync {
 }
 
 pub(crate) struct PaymentReceiver {
+    config: Config,
     node_api: Arc<dyn NodeAPI>,
     lsp: Arc<dyn LspAPI>,
     persister: Arc<SqliteStorage>,
@@ -1361,6 +1363,7 @@ impl Receiver for PaymentReceiver {
                         destination: hex::decode(parsed_invoice.payee_pubkey.clone())?,
                         incoming_amount_msat: amount_msats as i64,
                         outgoing_amount_msat: (destination_invoice_amount_sats * 1000) as i64,
+                        tag: self.config.api_key.clone().unwrap_or_default(),
                         opening_fee_params: channel_opening_fee_params.clone().map(Into::into),
                     },
                 )
@@ -1567,6 +1570,7 @@ pub(crate) mod tests {
         persister.set_node_state(&dummy_node_state).unwrap();
 
         let receiver: Arc<dyn Receiver> = Arc::new(PaymentReceiver {
+            config,
             node_api,
             persister,
             lsp: breez_server.clone(),

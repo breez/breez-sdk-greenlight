@@ -417,5 +417,6 @@ message PaymentInformation {
   bytes destination = 3;
   int64 incoming_amount_msat = 4;
   int64 outgoing_amount_msat = 5;
-  OpeningFeeParams opening_fee_params = 6;
+  string tag = 6;
+  OpeningFeeParams opening_fee_params = 7;
 }
