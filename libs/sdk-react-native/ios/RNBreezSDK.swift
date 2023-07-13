@@ -259,6 +259,21 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
     
+    @objc(paymentByHash:resolver:rejecter:)
+    func paymentByHash(_ hash:String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        do {
+            if let payment = try getBreezServices().paymentByHash(hash: hash) {
+                resolve(BreezSDKMapper.dictionaryOf(payment: payment))
+            } else {
+                reject(RNBreezSDK.TAG, "No available payment", nil)
+            }
+        } catch SdkError.Error(let message) {
+            reject(RNBreezSDK.TAG, message, nil)
+        } catch let err {
+            reject(RNBreezSDK.TAG, "Error calling paymentByHash", err)
+        }
+    }
+
     @objc(listPayments:fromTimestamp:toTimestamp:resolver:rejecter:)
     func listPayments(_ filter:String, fromTimestamp:Int64, toTimestamp:Int64, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         do {

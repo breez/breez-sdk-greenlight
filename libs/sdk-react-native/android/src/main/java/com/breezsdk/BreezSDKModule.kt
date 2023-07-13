@@ -288,6 +288,22 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
+    fun paymentByHash(hash: String, promise: Promise) {
+        executor.execute {
+            try {
+                getBreezServices().paymentByHash(hash)?.let {payment->
+                    promise.resolve(readableMapOf(payment))
+                } ?: run {
+                    promise.reject(TAG, "No available payment")
+                }
+            } catch (e: SdkException) {
+                e.printStackTrace()
+                promise.reject(TAG, e.message ?: "Error calling paymentByHash", e)
+            }
+        }
+    }
+
+    @ReactMethod
     fun listPayments(filter: String, fromTimestamp: Double, toTimestamp: Double, promise: Promise) {
         executor.execute {
             try {
