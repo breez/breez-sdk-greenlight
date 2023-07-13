@@ -32,8 +32,10 @@ use crate::*;
 use crate::{BuyBitcoinProvider, LnUrlAuthRequestData, LnUrlWithdrawRequestData, PaymentResponse};
 use anyhow::{anyhow, ensure, Result};
 use bip39::*;
+use bitcoin::hashes::hex::ToHex;
 use bitcoin::hashes::{sha256, Hash};
 use bitcoin::util::bip32::ChildNumber;
+use serde_json::json;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
@@ -1083,6 +1085,7 @@ impl BreezServicesBuilder {
         }
 
         let payment_receiver = Arc::new(PaymentReceiver {
+            config: self.config.clone(),
             node_api: unwrapped_node_api.clone(),
             lsp: breez_server.clone(),
             persister: persister.clone(),
@@ -1221,6 +1224,7 @@ pub trait Receiver: Send + Sync {
 }
 
 pub(crate) struct PaymentReceiver {
+    config: Config,
     node_api: Arc<dyn NodeAPI>,
     lsp: Arc<dyn LspAPI>,
     persister: Arc<SqliteStorage>,
@@ -1351,6 +1355,10 @@ impl Receiver for PaymentReceiver {
         // register the payment at the lsp if needed
         if open_channel_needed {
             info!("Registering payment with LSP");
+
+            let api_key = self.config.api_key.clone().unwrap_or_default();
+            let api_key_hash = sha256::Hash::hash(api_key.as_bytes()).to_hex();
+
             self.lsp
                 .register_payment(
                     lsp_info.id.clone(),
@@ -1361,6 +1369,7 @@ impl Receiver for PaymentReceiver {
                         destination: hex::decode(parsed_invoice.payee_pubkey.clone())?,
                         incoming_amount_msat: amount_msats as i64,
                         outgoing_amount_msat: (destination_invoice_amount_sats * 1000) as i64,
+                        tag: json!({ "apiKeyHash": api_key_hash }).to_string(),
                         opening_fee_params: channel_opening_fee_params.clone().map(Into::into),
                     },
                 )
@@ -1567,6 +1576,7 @@ pub(crate) mod tests {
         persister.set_node_state(&dummy_node_state).unwrap();
 
         let receiver: Arc<dyn Receiver> = Arc::new(PaymentReceiver {
+            config,
             node_api,
             persister,
             lsp: breez_server.clone(),

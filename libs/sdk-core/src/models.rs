@@ -1079,6 +1079,7 @@ mod tests {
             destination: rand_vec_u8(10),
             incoming_amount_msat: random(),
             outgoing_amount_msat: random(),
+            tag: "".to_string(),
             opening_fee_params: None,
         };
 
