@@ -731,11 +731,8 @@ class LspInformation {
   final double feeRate;
   final int timeLockDelta;
   final int minHtlcMsat;
-  final int channelFeePermyriad;
   final Uint8List lspPubkey;
-  final int maxInactiveDuration;
-  final int channelMinimumFeeMsat;
-  final List<OpeningFeeParams> openingFeeParamsMenu;
+  final OpeningFeeParamsMenu openingFeeParamsMenu;
 
   const LspInformation({
     required this.id,
@@ -749,10 +746,7 @@ class LspInformation {
     required this.feeRate,
     required this.timeLockDelta,
     required this.minHtlcMsat,
-    required this.channelFeePermyriad,
     required this.lspPubkey,
-    required this.maxInactiveDuration,
-    required this.channelMinimumFeeMsat,
     required this.openingFeeParamsMenu,
   });
 }
@@ -825,6 +819,15 @@ class OpeningFeeParams {
     required this.maxIdleTime,
     required this.maxClientToSelfDelay,
     required this.promise,
+  });
+}
+
+/// See [OpeningFeeParamsMenu::try_from]
+class OpeningFeeParamsMenu {
+  final List<OpeningFeeParams> vals;
+
+  const OpeningFeeParamsMenu({
+    required this.vals,
   });
 }
 
@@ -2337,7 +2340,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   LspInformation _wire2api_lsp_information(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 16) throw Exception('unexpected arr length: expect 16 but see ${arr.length}');
+    if (arr.length != 13) throw Exception('unexpected arr length: expect 13 but see ${arr.length}');
     return LspInformation(
       id: _wire2api_String(arr[0]),
       name: _wire2api_String(arr[1]),
@@ -2350,11 +2353,8 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       feeRate: _wire2api_f64(arr[8]),
       timeLockDelta: _wire2api_u32(arr[9]),
       minHtlcMsat: _wire2api_i64(arr[10]),
-      channelFeePermyriad: _wire2api_i64(arr[11]),
-      lspPubkey: _wire2api_uint_8_list(arr[12]),
-      maxInactiveDuration: _wire2api_i64(arr[13]),
-      channelMinimumFeeMsat: _wire2api_i64(arr[14]),
-      openingFeeParamsMenu: _wire2api_list_opening_fee_params(arr[15]),
+      lspPubkey: _wire2api_uint_8_list(arr[11]),
+      openingFeeParamsMenu: _wire2api_opening_fee_params_menu(arr[12]),
     );
   }
 
@@ -2409,6 +2409,14 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       maxIdleTime: _wire2api_u32(arr[3]),
       maxClientToSelfDelay: _wire2api_u32(arr[4]),
       promise: _wire2api_String(arr[5]),
+    );
+  }
+
+  OpeningFeeParamsMenu _wire2api_opening_fee_params_menu(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
+    return OpeningFeeParamsMenu(
+      vals: _wire2api_list_opening_fee_params(arr[0]),
     );
   }
 

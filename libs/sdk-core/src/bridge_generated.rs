@@ -60,6 +60,7 @@ use crate::models::Network;
 use crate::models::NodeConfig;
 use crate::models::NodeState;
 use crate::models::OpeningFeeParams;
+use crate::models::OpeningFeeParamsMenu;
 use crate::models::Payment;
 use crate::models::PaymentDetails;
 use crate::models::PaymentType;
@@ -1025,10 +1026,7 @@ impl support::IntoDart for LspInformation {
             self.fee_rate.into_dart(),
             self.time_lock_delta.into_dart(),
             self.min_htlc_msat.into_dart(),
-            self.channel_fee_permyriad.into_dart(),
             self.lsp_pubkey.into_dart(),
-            self.max_inactive_duration.into_dart(),
-            self.channel_minimum_fee_msat.into_dart(),
             self.opening_fee_params_menu.into_dart(),
         ]
         .into_dart()
@@ -1098,6 +1096,13 @@ impl support::IntoDart for OpeningFeeParams {
     }
 }
 impl support::IntoDartExceptPrimitive for OpeningFeeParams {}
+
+impl support::IntoDart for OpeningFeeParamsMenu {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.vals.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for OpeningFeeParamsMenu {}
 
 impl support::IntoDart for Payment {
     fn into_dart(self) -> support::DartAbi {

@@ -30,12 +30,10 @@ use crate::swap::BTCReceiveSwap;
 use crate::BuyBitcoinProvider::Moonpay;
 use crate::*;
 use crate::{BuyBitcoinProvider, LnUrlAuthRequestData, LnUrlWithdrawRequestData, PaymentResponse};
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{anyhow, ensure, Result};
 use bip39::*;
 use bitcoin::hashes::{sha256, Hash};
 use bitcoin::util::bip32::ChildNumber;
-use chrono::Utc;
-use std::cmp::max;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
@@ -445,10 +443,10 @@ impl BreezServices {
         let channel_opening_fees = self
             .lsp_info()
             .await?
-            .choose_channel_opening_fees(opening_fee_params, false)?;
+            .choose_channel_opening_fees(opening_fee_params, DynamicFeeType::Longest)?;
         let swap_info = self
             .btc_receive_swapper
-            .create_swap_address(channel_opening_fees.context("No channel opening fees provided")?)
+            .create_swap_address(channel_opening_fees)
             .await?;
         Ok(swap_info)
     }
@@ -1248,31 +1246,26 @@ impl Receiver for PaymentReceiver {
         let mut short_channel_id = parse_short_channel_id("1x0x0")?;
         let mut destination_invoice_amount_sats = amount_sats;
 
-        // Ensure opening fees params is set (either from the user, or from the LSP)
-        let cheapest_opening_fee_params = lsp_info
-            .choose_channel_opening_fees(req_data.opening_fee_params, true)?
-            .context("The provider is currently not opening channels")?;
+        let mut channel_opening_fee_params = None;
 
         // check if we need to open channel
         let open_channel_needed = node_state.inbound_liquidity_msats < amount_msats;
         if open_channel_needed {
             info!("We need to open a channel");
 
-            // we need to open channel so we are calculating the fees for the LSP
-            let ofp = &cheapest_opening_fee_params;
-            let channel_fees_msat_calculated =
-                amount_msats * ofp.proportional as u64 / 1_000_000 / 1_000_000;
-            let channel_fees_msat = max(channel_fees_msat_calculated, ofp.min_msat);
+            // we need to open channel so we are calculating the fees for the LSP (coming either from the user, or from the LSP)
+            let ofp = lsp_info.choose_channel_opening_fees(
+                req_data.opening_fee_params,
+                DynamicFeeType::Cheapest,
+            )?;
+            channel_opening_fee_params = Some(ofp.clone());
+            let channel_fees_msat = ofp.get_channel_fees_msat_for(amount_msats);
 
             info!("zero-conf fee calculation option: lsp fee rate (proportional): {}:  (minimum {}), total fees for channel: {}",
                 ofp.proportional, ofp.min_msat, channel_fees_msat);
 
-            if amount_msats < channel_fees_msat + 1000 {
-                return Err(anyhow!(
-                    "requestPayment: Amount should be more than the minimum fees {} sats",
-                    ofp.min_msat / 1000
-                ));
-            }
+            ensure!(amount_msats > channel_fees_msat, "requestPayment: Amount should be more than the minimum fees {channel_fees_msat} msat, but is {amount_msats} msat");
+
             // remove the fees from the amount to get the small amount on the current node invoice.
             destination_invoice_amount_sats = amount_sats - channel_fees_msat / 1000;
         } else {
@@ -1292,10 +1285,7 @@ impl Receiver for PaymentReceiver {
                     };
 
                     short_channel_id = parse_short_channel_id(&hint)?;
-                    info!(
-                        "Found channel ID: {} {:?}",
-                        short_channel_id, active_channel
-                    );
+                    info!("Found channel ID: {short_channel_id} {active_channel:?}");
                     break;
                 }
             }
@@ -1354,7 +1344,7 @@ impl Receiver for PaymentReceiver {
         parsed_invoice = parse_invoice(&signed_invoice_with_hint)?;
 
         // register the payment at the lsp if needed
-        if destination_invoice_amount_sats < amount_sats {
+        if open_channel_needed {
             info!("Registering payment with LSP");
             self.lsp
                 .register_payment(
@@ -1366,7 +1356,7 @@ impl Receiver for PaymentReceiver {
                         destination: hex::decode(parsed_invoice.payee_pubkey.clone())?,
                         incoming_amount_msat: amount_msats as i64,
                         outgoing_amount_msat: (destination_invoice_amount_sats * 1000) as i64,
-                        opening_fee_params: Some(cheapest_opening_fee_params.clone().into()),
+                        opening_fee_params: channel_opening_fee_params.clone().map(Into::into),
                     },
                 )
                 .await?;
@@ -1379,81 +1369,8 @@ impl Receiver for PaymentReceiver {
         // return the signed, converted invoice with hints
         Ok(ReceivePaymentResponse {
             ln_invoice: parsed_invoice,
-            opening_fee_params: Some(cheapest_opening_fee_params),
+            opening_fee_params: channel_opening_fee_params,
         })
-    }
-}
-
-/// See [OpeningFeeParamsMenu::try_from]
-pub(crate) struct OpeningFeeParamsMenu {
-    vals: Vec<OpeningFeeParams>,
-}
-
-impl OpeningFeeParamsMenu {
-    /// Initializes and validates itself.
-    ///
-    /// This struct should not be persisted as such, because validation happens dynamically based on
-    /// the current time. At a later point in time, any previously-validated [OpeningFeeParamsMenu]
-    /// could be invalid. Therefore, the [OpeningFeeParamsMenu] should always be initialized on-the-fly.
-    pub(crate) fn try_from(vals: Vec<OpeningFeeParams>) -> Result<Self> {
-        let temp = Self { vals };
-        temp.validate().map(|_| temp)
-    }
-
-    fn validate(&self) -> Result<()> {
-        let is_empty = self.vals.is_empty();
-        ensure!(!is_empty, "Validation failed: no fee params provided");
-
-        // opening_fee_params_menu fees must be in ascending order
-        let is_ordered = self.vals.windows(2).all(|ofp| {
-            let larger_min_msat_fee = ofp[0].min_msat < ofp[1].min_msat;
-            let equal_min_msat_fee = ofp[0].min_msat == ofp[1].min_msat;
-
-            let larger_proportional = ofp[0].proportional < ofp[1].proportional;
-            let equal_proportional = ofp[0].proportional == ofp[1].proportional;
-
-            (larger_min_msat_fee && equal_proportional)
-                || (equal_min_msat_fee && larger_proportional)
-                || (larger_min_msat_fee && larger_proportional)
-        });
-        ensure!(is_ordered, "Validation failed: fee params are not ordered");
-
-        // `valid_until` must not be a past datetime
-        let is_expired = self.vals.iter().all(|ofp| match ofp.valid_until_date() {
-            Ok(valid_until) => Utc::now() > valid_until,
-            Err(_) => {
-                warn!("Failed to parse valid_until for OpeningFeeParams: {ofp:?}");
-                false
-            }
-        });
-        ensure!(!is_expired, "Validation failed: expired fee params found");
-
-        Ok(())
-    }
-
-    pub(crate) fn get_cheapest_opening_fee_params(&self) -> Option<OpeningFeeParams> {
-        self.vals.get(0).cloned()
-    }
-
-    pub(crate) fn get_longest_valid_opening_fee_params(self) -> Result<Option<OpeningFeeParams>> {
-        // Find the fee params that are valid for at least 48h
-        let now = Utc::now();
-        let duration_48h = chrono::Duration::hours(48);
-        let valid_min_48h: Vec<OpeningFeeParams> = self
-            .vals
-            .into_iter()
-            .filter(|ofp| match ofp.valid_until_date() {
-                Ok(valid_until) => valid_until - now > duration_48h,
-                Err(_) => {
-                    warn!("Failed to parse valid_until for OpeningFeeParams: {ofp:?}");
-                    false
-                }
-            })
-            .collect();
-
-        // Of those, return the first, which is the cheapest
-        // (sorting order of fee params list was checked when the menu was initialized)
-        Ok(valid_min_48h.first().cloned())
     }
 }
 
@@ -1708,7 +1625,6 @@ pub(crate) mod tests {
     async fn test_buy_bitcoin_with_moonpay() -> Result<(), Box<dyn std::error::Error>> {
         let breez_services = breez_services().await?;
         breez_services.sync().await?;
-        // TODO: Pick default opening_fee_params from LSPInformation
         let moonpay_url = breez_services
             .buy_bitcoin(BuyBitcoinProvider::Moonpay, None)
             .await?;
@@ -1744,6 +1660,7 @@ pub(crate) mod tests {
         let persister = Arc::new(create_test_persister(test_config.clone()));
         persister.init()?;
         persister.insert_or_update_payments(&known_payments)?;
+        persister.set_lsp_id(MockBreezServer {}.lsp_id())?;
 
         let mut builder = BreezServicesBuilder::new(test_config.clone());
         let breez_services = builder

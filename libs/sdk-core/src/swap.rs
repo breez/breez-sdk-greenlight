@@ -738,7 +738,7 @@ mod tests {
         let chain_service = Arc::new(MockChainService::default());
         let (mut swapper, _) = create_swapper(chain_service.clone())?;
         let swap_info = swapper
-            .create_swap_address(get_test_ofp(10, 10, true))
+            .create_swap_address(get_test_ofp(10, 10, true).into())
             .await?;
 
         // We test the case that a confirmed transaction was detected on chain that
@@ -796,7 +796,7 @@ mod tests {
         let chain_service = Arc::new(MockChainService::default());
         let (mut swapper, persister) = create_swapper(chain_service.clone())?;
         let swap_info = swapper
-            .create_swap_address(get_test_ofp(10, 10, true))
+            .create_swap_address(get_test_ofp(10, 10, true).into())
             .await?;
 
         // add a payment with the same hash and test that the swapper updates the paid_amount for
@@ -878,7 +878,7 @@ mod tests {
         let chain_service = Arc::new(MockChainService::default());
         let (mut swapper, _) = create_swapper(chain_service.clone())?;
         let swap_info = swapper
-            .create_swap_address(get_test_ofp(10, 10, true))
+            .create_swap_address(get_test_ofp(10, 10, true).into())
             .await?;
 
         // Once swap is spent on-chain the confirmed_sats would be set to zero again.

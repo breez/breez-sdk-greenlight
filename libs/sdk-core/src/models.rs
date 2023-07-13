@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use crate::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, ensure, Result};
 use bitcoin::blockdata::opcodes;
 use bitcoin::blockdata::script::Builder;
 use bitcoin::hashes::hex::{FromHex, ToHex};
@@ -19,6 +19,7 @@ use ripemd::Ripemd160;
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef};
 use rusqlite::ToSql;
 use serde::{Deserialize, Serialize};
+use std::cmp::max;
 use strum_macros::Display;
 use strum_macros::EnumString;
 use tokio::sync::mpsc;
@@ -682,6 +683,13 @@ impl OpeningFeeParams {
         Utc.datetime_from_str(&self.valid_until, OPENING_FEE_PARAMS_DATETIME_FORMAT)
             .map_err(|e| anyhow!(e))
     }
+
+    pub(crate) fn get_channel_fees_msat_for(&self, amount_msats: u64) -> u64 {
+        max(
+            amount_msats * self.proportional as u64 / 1_000_000 / 1_000_000,
+            self.min_msat,
+        )
+    }
 }
 
 impl From<OpeningFeeParams> for grpc::OpeningFeeParams {
@@ -720,6 +728,92 @@ impl ToSql for OpeningFeeParams {
     fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
         Ok(ToSqlOutput::from(
             serde_json::to_string(&self).map_err(|_| FromSqlError::InvalidType)?,
+        ))
+    }
+}
+
+pub enum DynamicFeeType {
+    Cheapest,
+    Longest,
+}
+
+/// See [OpeningFeeParamsMenu::try_from]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OpeningFeeParamsMenu {
+    pub vals: Vec<OpeningFeeParams>,
+}
+
+impl OpeningFeeParamsMenu {
+    /// Initializes and validates itself.
+    ///
+    /// This struct should not be persisted as such, because validation happens dynamically based on
+    /// the current time. At a later point in time, any previously-validated [OpeningFeeParamsMenu]
+    /// could be invalid. Therefore, the [OpeningFeeParamsMenu] should always be initialized on-the-fly.
+    pub fn try_from(vals: Vec<grpc::OpeningFeeParams>) -> Result<Self> {
+        let temp = Self {
+            vals: vals
+                .into_iter()
+                .map(|ofp| ofp.into())
+                .collect::<Vec<OpeningFeeParams>>(),
+        };
+        temp.validate().map(|_| temp)
+    }
+
+    fn validate(&self) -> Result<()> {
+        // opening_fee_params_menu fees must be in ascending order
+        let is_ordered = self.vals.windows(2).all(|ofp| {
+            let larger_min_msat_fee = ofp[0].min_msat < ofp[1].min_msat;
+            let equal_min_msat_fee = ofp[0].min_msat == ofp[1].min_msat;
+
+            let larger_proportional = ofp[0].proportional < ofp[1].proportional;
+            let equal_proportional = ofp[0].proportional == ofp[1].proportional;
+
+            (larger_min_msat_fee && equal_proportional)
+                || (equal_min_msat_fee && larger_proportional)
+                || (larger_min_msat_fee && larger_proportional)
+        });
+        ensure!(is_ordered, "Validation failed: fee params are not ordered");
+
+        // Menu must not contain any item with `valid_until` in the past
+        let is_expired = self.vals.iter().any(|ofp| match ofp.valid_until_date() {
+            Ok(valid_until) => Utc::now() > valid_until,
+            Err(_) => {
+                warn!("Failed to parse valid_until for OpeningFeeParams: {ofp:?}");
+                false
+            }
+        });
+        ensure!(!is_expired, "Validation failed: expired fee params found");
+
+        Ok(())
+    }
+
+    pub(crate) fn get_cheapest_opening_fee_params(&self) -> Result<OpeningFeeParams> {
+        self.vals.first().cloned().ok_or(anyhow!(
+            "The LSP doesn't support opening new channels: Dynamic fees menu contains no values"
+        ))
+    }
+
+    pub(crate) fn get_longest_valid_opening_fee_params(&self) -> Result<OpeningFeeParams> {
+        // Find the fee params that are valid for at least 48h
+        let now = Utc::now();
+        let duration_48h = chrono::Duration::hours(48);
+        let valid_min_48h: Vec<OpeningFeeParams> = self
+            .vals
+            .iter()
+            .filter(|ofp| match ofp.valid_until_date() {
+                Ok(valid_until) => valid_until - now > duration_48h,
+                Err(_) => {
+                    warn!("Failed to parse valid_until for OpeningFeeParams: {ofp:?}");
+                    false
+                }
+            })
+            .cloned()
+            .collect();
+
+        // Of those, return the first, which is the cheapest
+        // (sorting order of fee params list was checked when the menu was initialized)
+        valid_min_48h.first().cloned().ok_or(anyhow!(
+            "The LSP doesn't support opening new channels: Dynamic fees menu contains no values"
         ))
     }
 }
@@ -901,7 +995,7 @@ impl FromStr for BuyBitcoinProvider {
 
 #[cfg(test)]
 mod tests {
-    use crate::breez_services::OpeningFeeParamsMenu;
+    use super::OpeningFeeParamsMenu;
     use anyhow::Result;
     use prost::Message;
     use rand::random;
@@ -911,9 +1005,6 @@ mod tests {
 
     #[test]
     fn test_ofp_menu_validation() -> Result<()> {
-        // Empty menu is invalid
-        assert!(OpeningFeeParamsMenu::try_from(vec![]).is_err());
-
         // Menu with one entry is valid
         OpeningFeeParamsMenu::try_from(vec![get_test_ofp(10, 12, true)])?;
 
@@ -962,11 +1053,12 @@ mod tests {
         ])
         .is_err());
 
-        // Sorted, but with one expired entry, is valid
-        OpeningFeeParamsMenu::try_from(vec![
+        // Sorted, but with one expired entry, is invalid
+        assert!(OpeningFeeParamsMenu::try_from(vec![
             get_test_ofp(10, 10, true),
             get_test_ofp(12, 12, false),
-        ])?;
+        ])
+        .is_err());
 
         // Sorted, but with all expired entries, is invalid (because it results in an empty list)
         assert!(OpeningFeeParamsMenu::try_from(vec![

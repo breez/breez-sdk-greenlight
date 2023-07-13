@@ -10,11 +10,11 @@ use breez_sdk_core::{
     InvoicePaidDetails, LNInvoice, LnPaymentDetails, LnUrlAuthRequestData, LnUrlCallbackStatus,
     LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult, LnUrlWithdrawRequestData, LocaleOverrides,
     LocalizedName, LogEntry, LspInformation, MessageSuccessActionData, MetadataItem, Network,
-    NodeConfig, NodeState, OpeningFeeParams, Payment, PaymentDetails, PaymentFailedData,
-    PaymentType, PaymentTypeFilter, Rate, ReceivePaymentRequestData, ReceivePaymentResponse,
-    RecommendedFees, ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint,
-    RouteHintHop, SuccessActionProcessed, SwapInfo, SwapStatus, Symbol, UnspentTransactionOutput,
-    UrlSuccessActionData,
+    NodeConfig, NodeState, OpeningFeeParams, OpeningFeeParamsMenu, Payment, PaymentDetails,
+    PaymentFailedData, PaymentType, PaymentTypeFilter, Rate, ReceivePaymentRequestData,
+    ReceivePaymentResponse, RecommendedFees, ReverseSwapInfo, ReverseSwapPairInfo,
+    ReverseSwapStatus, RouteHint, RouteHintHop, SuccessActionProcessed, SwapInfo, SwapStatus,
+    Symbol, UnspentTransactionOutput, UrlSuccessActionData,
 };
 use log::LevelFilter;
 use log::Metadata;

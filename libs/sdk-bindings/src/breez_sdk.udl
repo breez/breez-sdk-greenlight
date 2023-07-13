@@ -277,6 +277,10 @@ dictionary ReceivePaymentResponse {
     OpeningFeeParams? opening_fee_params;
 };
 
+dictionary OpeningFeeParamsMenu {
+    sequence<OpeningFeeParams> vals;
+};
+
 dictionary LspInformation {
     string id;
     string name;
@@ -289,11 +293,8 @@ dictionary LspInformation {
     f64 fee_rate;
     u32 time_lock_delta;
     i64 min_htlc_msat;
-    i64 channel_fee_permyriad;
     sequence<u8> lsp_pubkey;
-    i64 max_inactive_duration;
-    i64 channel_minimum_fee_msat;
-    sequence<OpeningFeeParams> opening_fee_params_menu;
+    OpeningFeeParamsMenu opening_fee_params_menu;
 };
 
 enum SwapStatus {
