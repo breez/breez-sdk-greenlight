@@ -1265,17 +1265,14 @@ impl Receiver for PaymentReceiver {
             )?;
             channel_opening_fee_params = Some(ofp.clone());
             channel_fees_msat = Some(ofp.get_channel_fees_msat_for(amount_msats));
-            match channel_fees_msat {
-                Some(channel_fees_msat) => {
-                    info!("zero-conf fee calculation option: lsp fee rate (proportional): {}:  (minimum {}), total fees for channel: {}",
-                ofp.proportional, ofp.min_msat, channel_fees_msat);
+            if let Some(channel_fees_msat) = channel_fees_msat {
+                info!("zero-conf fee calculation option: lsp fee rate (proportional): {}:  (minimum {}), total fees for channel: {}",
+                    ofp.proportional, ofp.min_msat, channel_fees_msat);
 
-                    ensure!(amount_msats > channel_fees_msat, "requestPayment: Amount should be more than the minimum fees {channel_fees_msat} msat, but is {amount_msats} msat");
+                ensure!(amount_msats > channel_fees_msat, "requestPayment: Amount should be more than the minimum fees {channel_fees_msat} msat, but is {amount_msats} msat");
 
-                    // remove the fees from the amount to get the small amount on the current node invoice.
-                    destination_invoice_amount_sats = amount_sats - channel_fees_msat / 1000;
-                }
-                _ => {}
+                // remove the fees from the amount to get the small amount on the current node invoice.
+                destination_invoice_amount_sats = amount_sats - channel_fees_msat / 1000;
             }
         } else {
             // not opening a channel so we need to get the real channel id into the routing hints
