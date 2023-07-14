@@ -1,64 +1,30 @@
-use anyhow::Error;
-use std::fmt;
+use thiserror::Error;
 
-pub type SdkResult<T, E = NewSdkError> = Result<T, E>;
+pub type SdkResult<T, E = SdkError> = Result<T, E>;
 
 /// Type of error returned by the SDK
-#[derive(Debug)]
-pub enum NewSdkError {
-    SdkFailedToRequestBackup,
+#[derive(Debug, Error)]
+pub enum SdkError {
+    #[error("Failed to connect to required services")]
+    ConnectFailed,
 
-    SdkFailedToStartBackupWatcher,
+    /// Generic error, that doesn't fit any of the other types
+    #[error("Breez SDK error: {err}")]
+    Generic { err: String },
 
-    SdkFailedToInitPersister,
-    SdkFailedToConnectToGreenlight,
+    #[error("Failed to initialize the SDK")]
+    InitFailed,
 
-    SdkNoStateSynchronizerFound,
+    #[error("Failed to use the local DB for persistence")]
+    PersistenceFailure,
 
-    SdkInitFailedNoNodeApiOrSeedFound,
-
-    SdkCannotRetrievePersistedLastSyncVersion,
-
-    SdkBip32ErrorIndexOutOfBounds,
-    SdkBip32ErrorFailedToDeriveKey,
-
-    SdkFailedToInsertOrUpdatePayments,
-    SdkFailedToInsertLnurlExternalPaymentInfo,
-    SdkFailedToReceivePayment,
-
-    SdkFailedToListPayments,
-
-    SdkFailedToSync,
-
-    // NodeState
-    SdkCannotRetrievePersistedNodeState,
-    SdkNoNodeStateFound,
-
-    // LSPs
-    SdkFailedToRetrieveLsps,
-    SdkFailedToGetLspId,
-    SdkFailedToSetLspId,
-
-    SdkServicesAlreadySet,
-    SdkServicesAlreadyStarted,
-    SdkServicesFailedToInit,
-    SdkServicesWasNotInitialized,
+    #[error("Failed to receive payment")]
+    ReceivePaymentFailure,
 }
 
-impl From<NewSdkError> for anyhow::Error {
-    fn from(value: NewSdkError) -> Self {
-        anyhow::Error::msg(value.to_string())
-    }
-}
-
-impl fmt::Display for NewSdkError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Debug::fmt(self, f)
-    }
-}
-
-impl From<anyhow::Error> for NewSdkError {
-    fn from(_value: Error) -> Self {
-        Self::SdkServicesFailedToInit // TODO This conversion may not be possible (but is needed for uniffi?)
+// TODO This won't be necessary when all service methods return SdkResult
+impl From<anyhow::Error> for SdkError {
+    fn from(_value: anyhow::Error) -> Self {
+        Self::InitFailed
     }
 }

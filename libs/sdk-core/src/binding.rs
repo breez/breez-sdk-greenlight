@@ -6,7 +6,7 @@ use std::sync::Arc;
 use crate::breez_services::BreezServices;
 use crate::breez_services::{self, BreezEvent, EventListener};
 use crate::chain::RecommendedFees;
-use crate::error::NewSdkError;
+use crate::error::SdkError;
 use crate::fiat::{FiatCurrency, Rate};
 use crate::input_parser::InputType;
 use crate::input_parser::{LnUrlAuthRequestData, LnUrlPayRequestData, LnUrlWithdrawRequestData};
@@ -88,7 +88,7 @@ pub fn connect(config: Config, seed: Vec<u8>) -> Result<()> {
             BreezServices::connect(config, seed, Box::new(BindingEventListener {})).await?;
         BREEZ_SERVICES_INSTANCE
             .set(breez_services)
-            .map_err(|_| NewSdkError::SdkServicesAlreadySet)?;
+            .map_err(|_| SdkError::InitFailed)?;
 
         anyhow::Ok(())
     })
@@ -143,7 +143,7 @@ pub fn send_spontaneous_payment(node_id: String, amount_sats: u64) -> Result<Pay
 pub fn receive_payment(amount_sats: u64, description: String) -> Result<LNInvoice> {
     block_on(async {
         get_breez_services()
-            .map_err(|_| NewSdkError::SdkServicesWasNotInitialized)?
+            .map_err(|_| SdkError::InitFailed)?
             .receive_payment(amount_sats, description.to_string())
             .await
     })
@@ -163,7 +163,7 @@ pub fn list_payments(
 ) -> Result<Vec<Payment>> {
     block_on(async {
         get_breez_services()
-            .map_err(|_| NewSdkError::SdkServicesWasNotInitialized)?
+            .map_err(|_| SdkError::InitFailed)?
             .list_payments(filter, from_timestamp, to_timestamp)
             .await
     })
@@ -179,7 +179,7 @@ pub fn payment_by_hash(hash: String) -> Result<Option<Payment>> {
 pub fn list_lsps() -> Result<Vec<LspInformation>> {
     block_on(async {
         get_breez_services()
-            .map_err(|_| NewSdkError::SdkServicesWasNotInitialized)?
+            .map_err(|_| SdkError::InitFailed)?
             .list_lsps()
             .await
     })
