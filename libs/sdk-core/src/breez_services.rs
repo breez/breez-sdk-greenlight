@@ -32,8 +32,10 @@ use crate::*;
 use crate::{BuyBitcoinProvider, LnUrlAuthRequestData, LnUrlWithdrawRequestData, PaymentResponse};
 use anyhow::{anyhow, ensure, Result};
 use bip39::*;
+use bitcoin::hashes::hex::ToHex;
 use bitcoin::hashes::{sha256, Hash};
 use bitcoin::util::bip32::ChildNumber;
+use serde_json::json;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
@@ -1083,6 +1085,7 @@ impl BreezServicesBuilder {
         }
 
         let payment_receiver = Arc::new(PaymentReceiver {
+            config: self.config.clone(),
             node_api: unwrapped_node_api.clone(),
             lsp: breez_server.clone(),
             persister: persister.clone(),
@@ -1221,6 +1224,7 @@ pub trait Receiver: Send + Sync {
 }
 
 pub(crate) struct PaymentReceiver {
+    config: Config,
     node_api: Arc<dyn NodeAPI>,
     lsp: Arc<dyn LspAPI>,
     persister: Arc<SqliteStorage>,
@@ -1261,17 +1265,14 @@ impl Receiver for PaymentReceiver {
             )?;
             channel_opening_fee_params = Some(ofp.clone());
             channel_fees_msat = Some(ofp.get_channel_fees_msat_for(amount_msats));
-            match channel_fees_msat {
-                Some(channel_fees_msat) => {
-                    info!("zero-conf fee calculation option: lsp fee rate (proportional): {}:  (minimum {}), total fees for channel: {}",
-                ofp.proportional, ofp.min_msat, channel_fees_msat);
+            if let Some(channel_fees_msat) = channel_fees_msat {
+                info!("zero-conf fee calculation option: lsp fee rate (proportional): {}:  (minimum {}), total fees for channel: {}",
+                    ofp.proportional, ofp.min_msat, channel_fees_msat);
 
-                    ensure!(amount_msats > channel_fees_msat, "requestPayment: Amount should be more than the minimum fees {channel_fees_msat} msat, but is {amount_msats} msat");
+                ensure!(amount_msats > channel_fees_msat, "requestPayment: Amount should be more than the minimum fees {channel_fees_msat} msat, but is {amount_msats} msat");
 
-                    // remove the fees from the amount to get the small amount on the current node invoice.
-                    destination_invoice_amount_sats = amount_sats - channel_fees_msat / 1000;
-                }
-                _ => {}
+                // remove the fees from the amount to get the small amount on the current node invoice.
+                destination_invoice_amount_sats = amount_sats - channel_fees_msat / 1000;
             }
         } else {
             // not opening a channel so we need to get the real channel id into the routing hints
@@ -1351,6 +1352,10 @@ impl Receiver for PaymentReceiver {
         // register the payment at the lsp if needed
         if open_channel_needed {
             info!("Registering payment with LSP");
+
+            let api_key = self.config.api_key.clone().unwrap_or_default();
+            let api_key_hash = sha256::Hash::hash(api_key.as_bytes()).to_hex();
+
             self.lsp
                 .register_payment(
                     lsp_info.id.clone(),
@@ -1361,6 +1366,7 @@ impl Receiver for PaymentReceiver {
                         destination: hex::decode(parsed_invoice.payee_pubkey.clone())?,
                         incoming_amount_msat: amount_msats as i64,
                         outgoing_amount_msat: (destination_invoice_amount_sats * 1000) as i64,
+                        tag: json!({ "apiKeyHash": api_key_hash }).to_string(),
                         opening_fee_params: channel_opening_fee_params.clone().map(Into::into),
                     },
                 )
@@ -1567,6 +1573,7 @@ pub(crate) mod tests {
         persister.set_node_state(&dummy_node_state).unwrap();
 
         let receiver: Arc<dyn Receiver> = Arc::new(PaymentReceiver {
+            config,
             node_api,
             persister,
             lsp: breez_server.clone(),
