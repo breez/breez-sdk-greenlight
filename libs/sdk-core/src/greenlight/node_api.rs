@@ -1,3 +1,34 @@
+use std::cmp::{max, min};
+use std::str::FromStr;
+use std::sync::Arc;
+use std::time::{SystemTime, UNIX_EPOCH};
+
+use anyhow::{anyhow, Result};
+use bitcoin::bech32::{u5, ToBase32};
+use bitcoin::secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
+use bitcoin::secp256k1::Secp256k1;
+use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
+use ecies::utils::{aes_decrypt, aes_encrypt};
+use gl_client::node::ClnClient;
+use gl_client::pb::amount::Unit;
+use gl_client::pb::cln::{
+    self, CloseRequest, ListclosedchannelsClosedchannels, ListclosedchannelsRequest,
+    ListpeerchannelsRequest,
+};
+use gl_client::pb::{
+    Amount, Invoice, InvoiceRequest, InvoiceStatus, OffChainPayment, PayStatus, Peer,
+    WithdrawResponse,
+};
+use gl_client::scheduler::Scheduler;
+use gl_client::signer::Signer;
+use gl_client::tls::TlsConfig;
+use gl_client::{node, pb, utils};
+use lightning_invoice::{RawInvoice, SignedRawInvoice};
+use serde::{Deserialize, Serialize};
+use strum_macros::{Display, EnumString};
+use tokio::sync::{mpsc, Mutex};
+use tonic::Streaming;
+
 use crate::invoice::parse_invoice;
 use crate::models::{
     Config, GreenlightCredentials, LnPaymentDetails, Network, NodeAPI, NodeState, PaymentDetails,
@@ -5,38 +36,6 @@ use crate::models::{
 };
 use crate::persist::db::SqliteStorage;
 use crate::{Channel, ChannelState, NodeConfig};
-
-use anyhow::{anyhow, Result};
-use bitcoin::bech32::{u5, ToBase32};
-use bitcoin::secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
-use ecies::utils::{aes_decrypt, aes_encrypt};
-use gl_client::node::ClnClient;
-use gl_client::pb::amount::Unit;
-
-use gl_client::pb::cln::{
-    self, CloseRequest, ListclosedchannelsClosedchannels, ListclosedchannelsRequest,
-    ListpeerchannelsRequest,
-};
-use gl_client::pb::{
-    Amount, Invoice, InvoiceRequest, InvoiceStatus, OffChainPayment, PayStatus, WithdrawResponse,
-};
-use gl_client::scheduler::Scheduler;
-use gl_client::signer::Signer;
-use gl_client::tls::TlsConfig;
-use gl_client::{node, pb, utils};
-
-use bitcoin::secp256k1::Secp256k1;
-use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
-use gl_client::pb::Peer;
-use lightning_invoice::{RawInvoice, SignedRawInvoice};
-use serde::{Deserialize, Serialize};
-use std::cmp::{max, min};
-use std::str::FromStr;
-use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
-use strum_macros::{Display, EnumString};
-use tokio::sync::{mpsc, Mutex};
-use tonic::Streaming;
 
 const MAX_PAYMENT_AMOUNT_MSAT: u64 = 4294967000;
 const MAX_INBOUND_LIQUIDITY_MSAT: u64 = 4000000000;
@@ -975,9 +974,10 @@ impl TryFrom<ListclosedchannelsClosedchannels> for crate::models::Channel {
 
 #[cfg(test)]
 mod tests {
-    use crate::models;
     use anyhow::Result;
     use gl_client::pb;
+
+    use crate::models;
 
     #[test]
     fn test_channel_states() -> Result<()> {

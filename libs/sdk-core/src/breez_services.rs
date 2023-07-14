@@ -1,3 +1,20 @@
+use std::cmp::max;
+use std::str::FromStr;
+use std::sync::Arc;
+use std::time::{Instant, SystemTime, UNIX_EPOCH};
+
+use anyhow::{anyhow, Result};
+use bip39::*;
+use bitcoin::hashes::{sha256, Hash};
+use bitcoin::util::bip32::ChildNumber;
+use tokio::sync::{mpsc, watch, Mutex};
+use tokio::time::{sleep, Duration};
+use tonic::codegen::InterceptedService;
+use tonic::metadata::{Ascii, MetadataValue};
+use tonic::service::Interceptor;
+use tonic::transport::{Channel, Uri};
+use tonic::{Request, Status};
+
 use crate::backup::{BackupRequest, BackupTransport, BackupWatcher};
 use crate::boltzswap::BoltzApi;
 use crate::chain::{ChainService, MempoolSpace, RecommendedFees};
@@ -30,21 +47,6 @@ use crate::swap::BTCReceiveSwap;
 use crate::BuyBitcoinProvider::Moonpay;
 use crate::*;
 use crate::{BuyBitcoinProvider, LnUrlAuthRequestData, LnUrlWithdrawRequestData, PaymentResponse};
-use anyhow::{anyhow, Result};
-use bip39::*;
-use bitcoin::hashes::{sha256, Hash};
-use bitcoin::util::bip32::ChildNumber;
-use std::cmp::max;
-use std::str::FromStr;
-use std::sync::Arc;
-use std::time::{Instant, SystemTime, UNIX_EPOCH};
-use tokio::sync::{mpsc, watch, Mutex};
-use tokio::time::{sleep, Duration};
-use tonic::codegen::InterceptedService;
-use tonic::metadata::{Ascii, MetadataValue};
-use tonic::service::Interceptor;
-use tonic::transport::{Channel, Uri};
-use tonic::{Request, Status};
 
 /// Trait that can be used to react to various [BreezEvent]s emitted by the SDK.
 pub trait EventListener: Send + Sync {
@@ -474,11 +476,11 @@ impl BreezServices {
                         onchain_recipient_address,
                         pair_hash,
                         self.lsp_info().await?.pubkey,
-                        sat_per_vbyte
+                        sat_per_vbyte,
                     )
                     .await
                     .map(Into::into)
-            },
+            }
             false => Err(anyhow!(
                 "There already is at least one Reverse Swap in progress. You can only start a new one after after the ongoing ones finish. \
                 Use the in_progress_reverse_swaps method to get an overview of currently ongoing reverse swaps."
@@ -1396,9 +1398,8 @@ pub(crate) mod tests {
     use std::sync::Arc;
 
     use anyhow::{anyhow, Result};
-    use reqwest::Url;
-
     use regex::Regex;
+    use reqwest::Url;
 
     use crate::breez_services::{BreezServices, BreezServicesBuilder};
     use crate::fiat::Rate;
@@ -1592,7 +1593,7 @@ pub(crate) mod tests {
             rates[0],
             Rate {
                 coin: "USD".to_string(),
-                value: 20_000.00
+                value: 20_000.00,
             }
         );
 

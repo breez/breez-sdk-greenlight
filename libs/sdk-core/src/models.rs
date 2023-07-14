@@ -1,6 +1,5 @@
 use std::str::FromStr;
 
-use crate::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use anyhow::{anyhow, Result};
 use bitcoin::blockdata::opcodes;
 use bitcoin::blockdata::script::Builder;
@@ -9,18 +8,15 @@ use bitcoin::hashes::Hash;
 use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::{Address, Script};
-use gl_client::pb::Invoice;
-use gl_client::pb::Peer;
-use gl_client::pb::WithdrawResponse;
+use gl_client::pb::{Invoice, Peer, WithdrawResponse};
 use lightning_invoice::RawInvoice;
-use ripemd::Digest;
-use ripemd::Ripemd160;
+use ripemd::{Digest, Ripemd160};
 use serde::{Deserialize, Serialize};
-use strum_macros::Display;
-use strum_macros::EnumString;
+use strum_macros::{Display, EnumString};
 use tokio::sync::mpsc;
 use tonic::Streaming;
 
+use crate::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::fiat::{FiatCurrency, Rate};
 use crate::grpc::{PaymentInformation, RegisterPaymentReply};
 use crate::lnurl::pay::model::SuccessActionProcessed;

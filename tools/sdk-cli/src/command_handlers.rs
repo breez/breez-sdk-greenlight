@@ -1,12 +1,10 @@
 use std::fs;
 use std::sync::Arc;
 
-use anyhow::Error;
-use anyhow::{anyhow, Result};
-use breez_sdk_core::InputType::{LnUrlAuth, LnUrlWithdraw};
+use anyhow::{anyhow, Error, Result};
+use breez_sdk_core::InputType::{LnUrlAuth, LnUrlPay, LnUrlWithdraw};
 use breez_sdk_core::{
-    parse, BreezEvent, BreezServices, EventListener, GreenlightCredentials, InputType::LnUrlPay,
-    PaymentTypeFilter,
+    parse, BreezEvent, BreezServices, EventListener, GreenlightCredentials, PaymentTypeFilter,
 };
 use breez_sdk_core::{Config, GreenlightNodeConfig, NodeConfig};
 use once_cell::sync::OnceCell;
