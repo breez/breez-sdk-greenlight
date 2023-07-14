@@ -15,7 +15,7 @@
 //!
 //! ## Getting Started
 //!
-//! The first step is to initialize the SDK and start the node:
+//! The following code initialize the SDK and make it ready to be used:
 //!
 //! ```ignore
 //! let mnemonic = Mnemonic::new(Words12, English);
@@ -29,17 +29,17 @@
 //!     },
 //! );
 //!
-//! //Customize the config object according to your needs
+//! // Customize the config object according to your needs
 //! config.working_dir = "path to an existing directory".into();
 //!
-//! Connect to the Breez SDK make it ready for use
+//! // Connect to the Breez SDK make it ready for use
 //! let sdk = BreezServices::connect(
 //!    config,
 //!    seed.to_vec(),        
 //!    Box::new(AppEventListener {}),
 //! )
 //! .await?;
-//! }
+//!
 //! ```
 //!
 //! We can now receive payments
