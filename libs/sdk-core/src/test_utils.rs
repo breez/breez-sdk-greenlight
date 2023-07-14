@@ -23,7 +23,6 @@ use tonic::Streaming;
 use crate::backup::{BackupState, BackupTransport};
 use crate::breez_services::Receiver;
 use crate::chain::{ChainService, OnchainTx, RecommendedFees};
-use crate::error::{NewSdkErrorDetailed, SdkResultDetailed};
 use crate::fiat::{FiatCurrency, Rate};
 use crate::grpc::{PaymentInformation, RegisterPaymentReply};
 use crate::lsp::LspInformation;
@@ -344,7 +343,7 @@ impl NodeAPI for MockNodeAPI {
         Err(anyhow!("Not implemented"))
     }
 
-    fn derive_bip32_key(&self, _path: Vec<ChildNumber>) -> SdkResultDetailed<ExtendedPrivKey> {
+    fn derive_bip32_key(&self, _path: Vec<ChildNumber>) -> Result<ExtendedPrivKey> {
         Ok(ExtendedPrivKey::new_master(Network::Bitcoin, &[])?)
     }
 }

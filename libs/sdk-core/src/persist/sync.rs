@@ -1,5 +1,5 @@
 use super::db::SqliteStorage;
-use crate::error::SdkResultDetailed;
+use anyhow::Result;
 use rusqlite::Row;
 use std::path::Path;
 
@@ -11,26 +11,22 @@ pub(crate) struct SyncVersion {
 }
 
 impl SqliteStorage {
-    pub(crate) fn backup<P: AsRef<Path>>(&self, dst_path: P) -> SdkResultDetailed<()> {
+    pub(crate) fn backup<P: AsRef<Path>>(&self, dst_path: P) -> Result<()> {
         self.get_connection()?
             .backup(rusqlite::DatabaseName::Attached("sync"), dst_path, None)
-            .map_err(Into::into)
+            .map_err(anyhow::Error::msg)
     }
 
-    pub(crate) fn get_last_sync_version(&self) -> SdkResultDetailed<Option<u64>> {
+    pub(crate) fn get_last_sync_version(&self) -> Result<Option<u64>> {
         let res: rusqlite::Result<Option<u64>> = self.get_connection()?.query_row(
             "SELECT max(last_version) FROM sync_versions",
             [],
             |row| row.get::<usize, Option<u64>>(0),
         );
-        res.map_err(Into::into)
+        res.map_err(anyhow::Error::msg)
     }
 
-    pub(crate) fn set_last_sync_version(
-        &self,
-        last_version: u64,
-        data: &Vec<u8>,
-    ) -> SdkResultDetailed<()> {
+    pub(crate) fn set_last_sync_version(&self, last_version: u64, data: &Vec<u8>) -> Result<()> {
         let con = self.get_connection()?;
 
         // make sure we have no more than 20 history entries
@@ -44,7 +40,7 @@ impl SqliteStorage {
     }
 
     #[allow(dead_code)]
-    pub(crate) fn sync_versions_history(&self) -> SdkResultDetailed<Vec<SyncVersion>> {
+    pub(crate) fn sync_versions_history(&self) -> Result<Vec<SyncVersion>> {
         let con = self.get_connection()?;
         let mut stmt = con.prepare(
             "SELECT created_at, last_version, data FROM sync_versions ORDER BY created_at DESC;",
@@ -68,16 +64,16 @@ impl SqliteStorage {
         Ok(version)
     }
 
-    pub fn get_last_sync_request(&self) -> SdkResultDetailed<Option<u64>> {
+    pub fn get_last_sync_request(&self) -> Result<Option<u64>> {
         let res: rusqlite::Result<Option<u64>> =
             self.get_connection()?
                 .query_row("SELECT max(id) FROM sync.sync_requests", [], |row| {
                     row.get::<usize, Option<u64>>(0)
                 });
-        res.map_err(Into::into)
+        res.map_err(anyhow::Error::msg)
     }
 
-    pub(crate) fn delete_sync_requests_up_to(&self, request_id: u64) -> SdkResultDetailed<()> {
+    pub(crate) fn delete_sync_requests_up_to(&self, request_id: u64) -> Result<()> {
         self.get_connection()?.execute(
             "DELETE FROM sync.sync_requests where id <= ?1",
             [request_id],
@@ -85,10 +81,7 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub(crate) fn import_remote_changes(
-        &self,
-        remote_storage: &SqliteStorage,
-    ) -> SdkResultDetailed<()> {
+    pub(crate) fn import_remote_changes(&self, remote_storage: &SqliteStorage) -> Result<()> {
         let sync_data_file = remote_storage.sync_db_path();
         match SqliteStorage::migrate_sync_db(sync_data_file.clone()) {
             Ok(_) => {}

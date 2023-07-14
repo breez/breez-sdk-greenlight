@@ -496,7 +496,6 @@ dependencies = [
  "strum",
  "strum_macros",
  "tempfile",
- "thiserror",
  "tiny-bip39",
  "tokio",
  "tonic",

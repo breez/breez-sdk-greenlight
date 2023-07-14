@@ -21,7 +21,6 @@ use strum_macros::EnumString;
 use tokio::sync::mpsc;
 use tonic::Streaming;
 
-use crate::error::SdkResultDetailed;
 use crate::fiat::{FiatCurrency, Rate};
 use crate::grpc::{PaymentInformation, RegisterPaymentReply};
 use crate::lnurl::pay::model::SuccessActionProcessed;
@@ -74,7 +73,7 @@ pub trait NodeAPI: Send + Sync {
     async fn execute_command(&self, command: String) -> Result<String>;
 
     /// Gets the private key at the path specified
-    fn derive_bip32_key(&self, path: Vec<ChildNumber>) -> SdkResultDetailed<ExtendedPrivKey>;
+    fn derive_bip32_key(&self, path: Vec<ChildNumber>) -> Result<ExtendedPrivKey>;
 }
 
 /// Trait covering LSP-related functionality

@@ -55,7 +55,6 @@ openssl = { version = "0.10.42", features = ["vendored"] }
 strum = "0.24.1"
 strum_macros = "0.24.1"
 tempfile = "3"
-thiserror = "*"
 const_format = "*"
 miniz_oxide = "0.7.1"
 

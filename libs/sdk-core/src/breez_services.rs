@@ -1,7 +1,7 @@
 use crate::backup::{BackupRequest, BackupTransport, BackupWatcher};
 use crate::boltzswap::BoltzApi;
 use crate::chain::{ChainService, MempoolSpace, RecommendedFees};
-use crate::error::{NewSdkError, NewSdkErrorDetailed, SdkResult, SdkResultDetailed};
+use crate::error::{NewSdkError, SdkResult};
 use crate::fiat::{FiatCurrency, Rate};
 use crate::greenlight::{GLBackupTransport, Greenlight};
 use crate::grpc::channel_opener_client::ChannelOpenerClient;
@@ -324,7 +324,9 @@ impl BreezServices {
 
     /// Retrieve the node state from the persistent storage
     pub fn node_info(&self) -> SdkResult<Option<NodeState>> {
-        self.persister.get_node_state().map_err(Into::into)
+        self.persister
+            .get_node_state()
+            .map_err(|_| NewSdkError::SdkCannotRetrievePersistedNodeState)
     }
 
     /// Retrieve the node up to date BackupStatus
@@ -358,7 +360,7 @@ impl BreezServices {
     ) -> SdkResult<Vec<Payment>> {
         self.persister
             .list_payments(filter, from_timestamp, to_timestamp)
-            .map_err(Into::into)
+            .map_err(|_| NewSdkError::SdkFailedToListPayments)
     }
 
     /// Fetch a specific payment by its hash.
@@ -408,8 +410,8 @@ impl BreezServices {
     }
 
     /// Get the current LSP's ID
-    pub async fn lsp_id(&self) -> SdkResult<Option<String>> {
-        self.persister.get_lsp_id().map_err(Into::into)
+    pub async fn lsp_id(&self) -> Result<Option<String>> {
+        self.persister.get_lsp_id()
     }
 
     /// Convenience method to look up [LspInformation] for a given LSP ID
@@ -744,7 +746,7 @@ impl BreezServices {
         self.backup_watcher
             .start(self.shutdown_receiver.clone())
             .await
-            .map_err(|_| NewSdkErrorDetailed::ConnectFailedFailedToStartBackupWatcher)?;
+            .map_err(|_| NewSdkError::SdkFailedToStartBackupWatcher)?;
 
         // Restore backup state and request backup on start if needed
         let force_backup = self
@@ -1017,9 +1019,9 @@ impl BreezServicesBuilder {
     pub async fn build(
         &self,
         listener: Option<Box<dyn EventListener>>,
-    ) -> SdkResultDetailed<Arc<BreezServices>> {
+    ) -> SdkResult<Arc<BreezServices>> {
         if self.node_api.is_none() && self.seed.is_none() {
-            return Err(NewSdkErrorDetailed::ConnectFailedInitFailedNoNodeApiOrSeedFound);
+            return Err(NewSdkError::SdkInitFailedNoNodeApiOrSeedFound);
         }
 
         // The storage is implemented via sqlite.
@@ -1027,7 +1029,9 @@ impl BreezServicesBuilder {
             .persister
             .clone()
             .unwrap_or_else(|| Arc::new(SqliteStorage::new(self.config.working_dir.clone())));
-        persister.init()?;
+        persister
+            .init()
+            .map_err(|_| NewSdkError::SdkFailedToInitPersister)?;
 
         let mut node_api = self.node_api.clone();
         let mut backup_transport = self.backup_transport.clone();
@@ -1037,7 +1041,8 @@ impl BreezServicesBuilder {
                 self.seed.clone().unwrap(),
                 persister.clone(),
             )
-            .await?;
+            .await
+            .map_err(|_| NewSdkError::SdkFailedToConnectToGreenlight)?;
             let gl_arc = Arc::new(greenlight);
             node_api = Some(gl_arc.clone());
             if backup_transport.is_none() {
@@ -1046,18 +1051,20 @@ impl BreezServicesBuilder {
         }
 
         if backup_transport.is_none() {
-            return Err(NewSdkErrorDetailed::ConnectFailedNoStateSynchronizerFound);
+            return Err(NewSdkError::SdkNoStateSynchronizerFound);
         }
 
         let unwrapped_node_api = node_api.unwrap();
         let unwrapped_backup_transport = backup_transport.unwrap();
 
         // create the backup encryption key and then the backup watcher
-        let backup_encryption_key = unwrapped_node_api.derive_bip32_key(vec![
-            ChildNumber::from_hardened_idx(139)?,
-            ChildNumber::from(0),
-        ])?;
-
+        let backup_encryption_key = unwrapped_node_api
+            .derive_bip32_key(vec![
+                ChildNumber::from_hardened_idx(139)
+                    .map_err(|_| NewSdkError::SdkBip32ErrorIndexOutOfBounds)?,
+                ChildNumber::from(0),
+            ])
+            .map_err(|_| NewSdkError::SdkBip32ErrorFailedToDeriveKey)?;
         let backup_watcher = BackupWatcher::new(
             self.config.clone(),
             unwrapped_backup_transport.clone(),
@@ -1076,9 +1083,13 @@ impl BreezServicesBuilder {
             self.config.mempoolspace_url.clone(),
         ));
 
-        let current_lsp_id = persister.get_lsp_id()?;
+        let current_lsp_id = persister
+            .get_lsp_id()
+            .map_err(|_| NewSdkError::SdkFailedToGetLspId)?;
         if current_lsp_id.is_none() && self.config.default_lsp_id.is_some() {
-            persister.set_lsp_id(self.config.default_lsp_id.clone().unwrap())?;
+            persister
+                .set_lsp_id(self.config.default_lsp_id.clone().unwrap())
+                .map_err(|_| NewSdkError::SdkFailedToSetLspId)?;
         }
 
         let payment_receiver = Arc::new(PaymentReceiver {
@@ -1491,8 +1502,12 @@ pub(crate) mod tests {
 
         let test_config = create_test_config();
         let persister = Arc::new(create_test_persister(test_config.clone()));
-        persister.init()?;
-        persister.insert_or_update_payments(&dummy_transactions)?;
+        persister
+            .init()
+            .map_err(|_| NewSdkError::SdkFailedToInitPersister)?;
+        persister
+            .insert_or_update_payments(&dummy_transactions)
+            .map_err(|_| NewSdkError::SdkFailedToInsertOrUpdatePayments)?;
         persister
             .insert_lnurl_payment_external_info(
                 payment_hash_with_lnurl_success_action,
