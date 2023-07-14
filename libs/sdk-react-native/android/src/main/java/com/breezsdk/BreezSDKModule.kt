@@ -12,7 +12,6 @@ import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-
 class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
     private lateinit var executor: ExecutorService
     private var breezServices: BlockingBreezServices? = null
@@ -146,6 +145,44 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             }
         }
     }
+
+    @ReactMethod
+    fun signMessage(reqData: ReadableMap, promise: Promise) {
+        executor.execute {
+            val signMessageRequest = asSignMessageRequest(reqData)
+            if (signMessageRequest == null) {
+                 promise.reject(TAG, "Invalid reqData")
+            } else {
+                try {
+                    val response = getBreezServices().signMessage(signMessageRequest)
+                    promise.resolve(readableMapOf(response))
+                } catch (e: SdkException) {
+                    e.printStackTrace()
+                    promise.reject(e.javaClass.simpleName, e.message, e)
+                }
+            }
+        }
+    }
+
+    @ReactMethod
+    fun checkMessage(reqData: ReadableMap, promise: Promise) {
+        executor.execute {
+            val checkMessageRequest = asCheckMessageRequest(reqData)
+            if (checkMessageRequest == null) {
+                 promise.reject(TAG, "Invalid reqData")
+            } else {
+                try {
+                    val response = getBreezServices().checkMessage(checkMessageRequest)
+                    promise.resolve(readableMapOf(response))
+                } catch (e: SdkException) {
+                    e.printStackTrace()
+                    promise.reject(e.javaClass.simpleName, e.message, e)
+                }
+            }
+        }
+    }
+
+
 
     @ReactMethod
     fun sync(promise: Promise) {

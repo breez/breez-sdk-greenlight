@@ -21,8 +21,12 @@ use std::sync::Arc;
 
 use crate::breez_services::BackupFailedData;
 use crate::breez_services::BreezEvent;
+use crate::breez_services::CheckMessageRequest;
+use crate::breez_services::CheckMessageResponse;
 use crate::breez_services::InvoicePaidDetails;
 use crate::breez_services::PaymentFailedData;
+use crate::breez_services::SignMessageRequest;
+use crate::breez_services::SignMessageResponse;
 use crate::chain::RecommendedFees;
 use crate::fiat::CurrencyInfo;
 use crate::fiat::FiatCurrency;
@@ -128,6 +132,38 @@ fn wire_disconnect_impl(port_: MessagePort) {
             mode: FfiCallMode::Normal,
         },
         move || move |task_callback| disconnect(),
+    )
+}
+fn wire_sign_message_impl(
+    port_: MessagePort,
+    request: impl Wire2Api<SignMessageRequest> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "sign_message",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_request = request.wire2api();
+            move |task_callback| sign_message(api_request)
+        },
+    )
+}
+fn wire_check_message_impl(
+    port_: MessagePort,
+    request: impl Wire2Api<CheckMessageRequest> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "check_message",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_request = request.wire2api();
+            move |task_callback| check_message(api_request)
+        },
     )
 }
 fn wire_mnemonic_to_seed_impl(port_: MessagePort, phrase: impl Wire2Api<String> + UnwindSafe) {
@@ -684,6 +720,7 @@ impl Wire2Api<PaymentTypeFilter> for i32 {
         }
     }
 }
+
 impl Wire2Api<u16> for u16 {
     fn wire2api(self) -> u16 {
         self
@@ -774,6 +811,13 @@ impl support::IntoDart for ChannelState {
     }
 }
 impl support::IntoDartExceptPrimitive for ChannelState {}
+impl support::IntoDart for CheckMessageResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.is_valid.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for CheckMessageResponse {}
+
 impl support::IntoDart for ClosedChannelPaymentDetails {
     fn into_dart(self) -> support::DartAbi {
         vec![
@@ -1207,6 +1251,13 @@ impl support::IntoDart for RouteHintHop {
     }
 }
 impl support::IntoDartExceptPrimitive for RouteHintHop {}
+
+impl support::IntoDart for SignMessageResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.signature.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for SignMessageResponse {}
 
 impl support::IntoDart for SuccessActionProcessed {
     fn into_dart(self) -> support::DartAbi {

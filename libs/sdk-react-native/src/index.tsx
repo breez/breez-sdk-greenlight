@@ -415,6 +415,24 @@ export type BackupStatus = {
     lastBackupTime?: number
 }
 
+export type SignMessageRequest = {
+    message: string
+}
+
+export type SignMessageResponse = {
+    signature: string
+}
+
+export type CheckMessageRequest = {
+    message: string
+    pubkey: string
+    signature: string
+}
+
+export type CheckMessageResponse = {
+    isValid: boolean
+}
+
 const processEvent = (eventFn: EventFn) => {
     return (event: any) => {
         switch (event.type) {
@@ -513,6 +531,14 @@ export const defaultConfig = async (envType: EnvironmentType, apiKey: string, no
 export const connect = async (config: Config, seed: Uint8Array): Promise<void> => {
     config.nodeConfig = prepareNodeConfig(config.nodeConfig)
     await BreezSDK.connect(config, seed)
+}
+
+export const signMessage = async (request: SignMessageRequest): Promise<SignMessageResponse> => {
+    return await BreezSDK.signMessage(request)
+}
+
+export const checkMessage = async (request: CheckMessageRequest): Promise<CheckMessageResponse> => {
+    return await BreezSDK.checkMessage(request)
 }
 
 export const sync = async (): Promise<void> => {

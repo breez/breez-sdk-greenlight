@@ -39,6 +39,16 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kDisconnectConstMeta;
 
+  /// See [BreezServices::sign_message]
+  Future<SignMessageResponse> signMessage({required SignMessageRequest request, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kSignMessageConstMeta;
+
+  /// See [BreezServices::check_message]
+  Future<CheckMessageResponse> checkMessage({required CheckMessageRequest request, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kCheckMessageConstMeta;
+
   /// See [breez_services::mnemonic_to_seed]
   Future<Uint8List> mnemonicToSeed({required String phrase, dynamic hint});
 
@@ -319,6 +329,35 @@ enum ChannelState {
   Opened,
   PendingClose,
   Closed,
+}
+
+/// Request to check a message was signed by a specific node id.
+class CheckMessageRequest {
+  /// The message that was signed.
+  final String message;
+
+  /// The public key of the node that signed the message.
+  final String pubkey;
+
+  /// The zbase encoded signature to verify.
+  final String signature;
+
+  const CheckMessageRequest({
+    required this.message,
+    required this.pubkey,
+    required this.signature,
+  });
+}
+
+/// Response to a [CheckMessageRequest]
+class CheckMessageResponse {
+  /// Boolean value indicating whether the signature covers the message and
+  /// was signed by the given pubkey.
+  final bool isValid;
+
+  const CheckMessageResponse({
+    required this.isValid,
+  });
 }
 
 /// Represents the funds that were on the user side of the channel at the time it was closed.
@@ -998,6 +1037,27 @@ class RouteHintHop {
   });
 }
 
+/// Request to sign a message with the node's private key.
+class SignMessageRequest {
+  /// The message to be signed by the node's private key.
+  final String message;
+
+  const SignMessageRequest({
+    required this.message,
+  });
+}
+
+/// Response to a [SignMessageRequest].
+class SignMessageResponse {
+  /// The signature that covers the message of SignMessageRequest. Zbase
+  /// encoded.
+  final String signature;
+
+  const SignMessageResponse({
+    required this.signature,
+  });
+}
+
 @freezed
 class SuccessActionProcessed with _$SuccessActionProcessed {
   /// See [SuccessAction::Aes] for received payload
@@ -1209,6 +1269,38 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kDisconnectConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "disconnect",
         argNames: [],
+      );
+
+  Future<SignMessageResponse> signMessage({required SignMessageRequest request, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_sign_message_request(request);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_sign_message(port_, arg0),
+      parseSuccessData: _wire2api_sign_message_response,
+      constMeta: kSignMessageConstMeta,
+      argValues: [request],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kSignMessageConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "sign_message",
+        argNames: ["request"],
+      );
+
+  Future<CheckMessageResponse> checkMessage({required CheckMessageRequest request, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_check_message_request(request);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_check_message(port_, arg0),
+      parseSuccessData: _wire2api_check_message_response,
+      constMeta: kCheckMessageConstMeta,
+      argValues: [request],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kCheckMessageConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "check_message",
+        argNames: ["request"],
       );
 
   Future<Uint8List> mnemonicToSeed({required String phrase, dynamic hint}) {
@@ -1961,6 +2053,14 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return ChannelState.values[raw as int];
   }
 
+  CheckMessageResponse _wire2api_check_message_response(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
+    return CheckMessageResponse(
+      isValid: _wire2api_bool(arr[0]),
+    );
+  }
+
   ClosedChannelPaymentDetails _wire2api_closed_channel_payment_details(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 3) throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
@@ -2496,6 +2596,14 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     );
   }
 
+  SignMessageResponse _wire2api_sign_message_response(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
+    return SignMessageResponse(
+      signature: _wire2api_String(arr[0]),
+    );
+  }
+
   SuccessActionProcessed _wire2api_success_action_processed(dynamic raw) {
     switch (raw[0]) {
       case 0:
@@ -2664,6 +2772,13 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<wire_CheckMessageRequest> api2wire_box_autoadd_check_message_request(CheckMessageRequest raw) {
+    final ptr = inner.new_box_autoadd_check_message_request_0();
+    _api_fill_to_wire_check_message_request(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
   ffi.Pointer<wire_Config> api2wire_box_autoadd_config(Config raw) {
     final ptr = inner.new_box_autoadd_config_0();
     _api_fill_to_wire_config(raw, ptr.ref);
@@ -2723,6 +2838,13 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<wire_SignMessageRequest> api2wire_box_autoadd_sign_message_request(SignMessageRequest raw) {
+    final ptr = inner.new_box_autoadd_sign_message_request_0();
+    _api_fill_to_wire_sign_message_request(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
   ffi.Pointer<ffi.Uint64> api2wire_box_autoadd_u64(int raw) {
     return inner.new_box_autoadd_u64_0(api2wire_u64(raw));
   }
@@ -2768,6 +2890,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
 
 // Section: api_fill_to_wire
 
+  void _api_fill_to_wire_box_autoadd_check_message_request(
+      CheckMessageRequest apiObj, ffi.Pointer<wire_CheckMessageRequest> wireObj) {
+    _api_fill_to_wire_check_message_request(apiObj, wireObj.ref);
+  }
+
   void _api_fill_to_wire_box_autoadd_config(Config apiObj, ffi.Pointer<wire_Config> wireObj) {
     _api_fill_to_wire_config(apiObj, wireObj.ref);
   }
@@ -2799,6 +2926,17 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
 
   void _api_fill_to_wire_box_autoadd_node_config(NodeConfig apiObj, ffi.Pointer<wire_NodeConfig> wireObj) {
     _api_fill_to_wire_node_config(apiObj, wireObj.ref);
+  }
+
+  void _api_fill_to_wire_box_autoadd_sign_message_request(
+      SignMessageRequest apiObj, ffi.Pointer<wire_SignMessageRequest> wireObj) {
+    _api_fill_to_wire_sign_message_request(apiObj, wireObj.ref);
+  }
+
+  void _api_fill_to_wire_check_message_request(CheckMessageRequest apiObj, wire_CheckMessageRequest wireObj) {
+    wireObj.message = api2wire_String(apiObj.message);
+    wireObj.pubkey = api2wire_String(apiObj.pubkey);
+    wireObj.signature = api2wire_String(apiObj.signature);
   }
 
   void _api_fill_to_wire_config(Config apiObj, wire_Config wireObj) {
@@ -2866,6 +3004,10 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   void _api_fill_to_wire_opt_box_autoadd_greenlight_credentials(
       GreenlightCredentials? apiObj, ffi.Pointer<wire_GreenlightCredentials> wireObj) {
     if (apiObj != null) _api_fill_to_wire_box_autoadd_greenlight_credentials(apiObj, wireObj);
+  }
+
+  void _api_fill_to_wire_sign_message_request(SignMessageRequest apiObj, wire_SignMessageRequest wireObj) {
+    wireObj.message = api2wire_String(apiObj.message);
   }
 }
 
@@ -3017,6 +3159,38 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_disconnectPtr =
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_disconnect');
   late final _wire_disconnect = _wire_disconnectPtr.asFunction<void Function(int)>();
+
+  void wire_sign_message(
+    int port_,
+    ffi.Pointer<wire_SignMessageRequest> request,
+  ) {
+    return _wire_sign_message(
+      port_,
+      request,
+    );
+  }
+
+  late final _wire_sign_messagePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_SignMessageRequest>)>>(
+          'wire_sign_message');
+  late final _wire_sign_message =
+      _wire_sign_messagePtr.asFunction<void Function(int, ffi.Pointer<wire_SignMessageRequest>)>();
+
+  void wire_check_message(
+    int port_,
+    ffi.Pointer<wire_CheckMessageRequest> request,
+  ) {
+    return _wire_check_message(
+      port_,
+      request,
+    );
+  }
+
+  late final _wire_check_messagePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_CheckMessageRequest>)>>(
+          'wire_check_message');
+  late final _wire_check_message =
+      _wire_check_messagePtr.asFunction<void Function(int, ffi.Pointer<wire_CheckMessageRequest>)>();
 
   void wire_mnemonic_to_seed(
     int port_,
@@ -3540,6 +3714,16 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_execute_command =
       _wire_execute_commandPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
+  ffi.Pointer<wire_CheckMessageRequest> new_box_autoadd_check_message_request_0() {
+    return _new_box_autoadd_check_message_request_0();
+  }
+
+  late final _new_box_autoadd_check_message_request_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_CheckMessageRequest> Function()>>(
+          'new_box_autoadd_check_message_request_0');
+  late final _new_box_autoadd_check_message_request_0 = _new_box_autoadd_check_message_request_0Ptr
+      .asFunction<ffi.Pointer<wire_CheckMessageRequest> Function()>();
+
   ffi.Pointer<wire_Config> new_box_autoadd_config_0() {
     return _new_box_autoadd_config_0();
   }
@@ -3621,6 +3805,16 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
       _lookup<ffi.NativeFunction<ffi.Pointer<wire_NodeConfig> Function()>>('new_box_autoadd_node_config_0');
   late final _new_box_autoadd_node_config_0 =
       _new_box_autoadd_node_config_0Ptr.asFunction<ffi.Pointer<wire_NodeConfig> Function()>();
+
+  ffi.Pointer<wire_SignMessageRequest> new_box_autoadd_sign_message_request_0() {
+    return _new_box_autoadd_sign_message_request_0();
+  }
+
+  late final _new_box_autoadd_sign_message_request_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_SignMessageRequest> Function()>>(
+          'new_box_autoadd_sign_message_request_0');
+  late final _new_box_autoadd_sign_message_request_0 = _new_box_autoadd_sign_message_request_0Ptr
+      .asFunction<ffi.Pointer<wire_SignMessageRequest> Function()>();
 
   ffi.Pointer<ffi.Uint64> new_box_autoadd_u64_0(
     int value,
@@ -3727,6 +3921,18 @@ class wire_Config extends ffi.Struct {
   external double maxfee_percent;
 
   external wire_NodeConfig node_config;
+}
+
+class wire_SignMessageRequest extends ffi.Struct {
+  external ffi.Pointer<wire_uint_8_list> message;
+}
+
+class wire_CheckMessageRequest extends ffi.Struct {
+  external ffi.Pointer<wire_uint_8_list> message;
+
+  external ffi.Pointer<wire_uint_8_list> pubkey;
+
+  external ffi.Pointer<wire_uint_8_list> signature;
 }
 
 class wire_LnUrlPayRequestData extends ffi.Struct {

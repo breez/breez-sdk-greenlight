@@ -110,6 +110,24 @@ class BreezSDKMapper {
         
         return nil
     }
+
+    static func asCheckMessageRequest(reqData: [String: Any?]) -> CheckMessageRequest? {
+        if let message = reqData["message"] as? String,
+           let signature = reqData["signature"] as? String,
+           let pubkey = reqData["pubkey"] as? String {
+            return CheckMessageRequest(message: message, pubkey: pubkey, signature: signature)
+        }
+
+        return nil
+    }
+
+     static func asSignMessageRequest(reqData: [String: Any?]) -> SignMessageRequest? {
+        if let message = reqData["message"] as? String {
+            return SignMessageRequest(message: message)
+        }
+
+        return nil
+    }
     
     static func asLnUrlAuthRequestData(reqData: [String: Any]) -> LnUrlAuthRequestData? {
         if let k1 = reqData["k1"] as? String,
@@ -199,6 +217,12 @@ class BreezSDKMapper {
             "amountSat": bitcoinAddressData.amountSat,
             "label": bitcoinAddressData.label,
             "message": bitcoinAddressData.message,
+        ]
+    }
+
+    static func dictionaryOf(checkMessageResponse: CheckMessageResponse) -> [String: Any] {
+        return [
+            "isValid": checkMessageResponse.isValid,
         ]
     }
     
@@ -506,6 +530,12 @@ class BreezSDKMapper {
             "cltvExpiryDelta": routeHintHop.cltvExpiryDelta,
             "htlcMinimumMsat": routeHintHop.htlcMinimumMsat,
             "htlcMaximumMsat": routeHintHop.htlcMaximumMsat
+        ]
+    }
+
+    static func dictionaryOf(signMessageResponse: SignMessageResponse) -> [String: Any] {
+        return [
+            "signature": signMessageResponse.signature,
         ]
     }
     

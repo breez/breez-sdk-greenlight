@@ -27,6 +27,16 @@ pub extern "C" fn wire_disconnect(port_: i64) {
 }
 
 #[no_mangle]
+pub extern "C" fn wire_sign_message(port_: i64, request: *mut wire_SignMessageRequest) {
+    wire_sign_message_impl(port_, request)
+}
+
+#[no_mangle]
+pub extern "C" fn wire_check_message(port_: i64, request: *mut wire_CheckMessageRequest) {
+    wire_check_message_impl(port_, request)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_mnemonic_to_seed(port_: i64, phrase: *mut wire_uint_8_list) {
     wire_mnemonic_to_seed_impl(port_, phrase)
 }
@@ -252,6 +262,11 @@ pub extern "C" fn wire_execute_command(port_: i64, command: *mut wire_uint_8_lis
 // Section: allocate functions
 
 #[no_mangle]
+pub extern "C" fn new_box_autoadd_check_message_request_0() -> *mut wire_CheckMessageRequest {
+    support::new_leak_box_ptr(wire_CheckMessageRequest::new_with_null_ptr())
+}
+
+#[no_mangle]
 pub extern "C" fn new_box_autoadd_config_0() -> *mut wire_Config {
     support::new_leak_box_ptr(wire_Config::new_with_null_ptr())
 }
@@ -293,6 +308,11 @@ pub extern "C" fn new_box_autoadd_node_config_0() -> *mut wire_NodeConfig {
 }
 
 #[no_mangle]
+pub extern "C" fn new_box_autoadd_sign_message_request_0() -> *mut wire_SignMessageRequest {
+    support::new_leak_box_ptr(wire_SignMessageRequest::new_with_null_ptr())
+}
+
+#[no_mangle]
 pub extern "C" fn new_box_autoadd_u64_0(value: u64) -> *mut u64 {
     support::new_leak_box_ptr(value)
 }
@@ -314,6 +334,12 @@ impl Wire2Api<String> for *mut wire_uint_8_list {
     fn wire2api(self) -> String {
         let vec: Vec<u8> = self.wire2api();
         String::from_utf8_lossy(&vec).into_owned()
+    }
+}
+impl Wire2Api<CheckMessageRequest> for *mut wire_CheckMessageRequest {
+    fn wire2api(self) -> CheckMessageRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<CheckMessageRequest>::wire2api(*wrap).into()
     }
 }
 impl Wire2Api<Config> for *mut wire_Config {
@@ -363,12 +389,27 @@ impl Wire2Api<NodeConfig> for *mut wire_NodeConfig {
         Wire2Api::<NodeConfig>::wire2api(*wrap).into()
     }
 }
+impl Wire2Api<SignMessageRequest> for *mut wire_SignMessageRequest {
+    fn wire2api(self) -> SignMessageRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<SignMessageRequest>::wire2api(*wrap).into()
+    }
+}
 impl Wire2Api<u64> for *mut u64 {
     fn wire2api(self) -> u64 {
         unsafe { *support::box_from_leak_ptr(self) }
     }
 }
 
+impl Wire2Api<CheckMessageRequest> for wire_CheckMessageRequest {
+    fn wire2api(self) -> CheckMessageRequest {
+        CheckMessageRequest {
+            message: self.message.wire2api(),
+            pubkey: self.pubkey.wire2api(),
+            signature: self.signature.wire2api(),
+        }
+    }
+}
 impl Wire2Api<Config> for wire_Config {
     fn wire2api(self) -> Config {
         Config {
@@ -452,6 +493,14 @@ impl Wire2Api<NodeConfig> for wire_NodeConfig {
     }
 }
 
+impl Wire2Api<SignMessageRequest> for wire_SignMessageRequest {
+    fn wire2api(self) -> SignMessageRequest {
+        SignMessageRequest {
+            message: self.message.wire2api(),
+        }
+    }
+}
+
 impl Wire2Api<Vec<u8>> for *mut wire_uint_8_list {
     fn wire2api(self) -> Vec<u8> {
         unsafe {
@@ -461,6 +510,14 @@ impl Wire2Api<Vec<u8>> for *mut wire_uint_8_list {
     }
 }
 // Section: wire structs
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_CheckMessageRequest {
+    message: *mut wire_uint_8_list,
+    pubkey: *mut wire_uint_8_list,
+    signature: *mut wire_uint_8_list,
+}
 
 #[repr(C)]
 #[derive(Clone)]
@@ -523,6 +580,12 @@ pub struct wire_LnUrlWithdrawRequestData {
 
 #[repr(C)]
 #[derive(Clone)]
+pub struct wire_SignMessageRequest {
+    message: *mut wire_uint_8_list,
+}
+
+#[repr(C)]
+#[derive(Clone)]
 pub struct wire_uint_8_list {
     ptr: *mut u8,
     len: i32,
@@ -555,6 +618,22 @@ pub trait NewWithNullPtr {
 impl<T> NewWithNullPtr for *mut T {
     fn new_with_null_ptr() -> Self {
         std::ptr::null_mut()
+    }
+}
+
+impl NewWithNullPtr for wire_CheckMessageRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            message: core::ptr::null_mut(),
+            pubkey: core::ptr::null_mut(),
+            signature: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_CheckMessageRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
     }
 }
 
@@ -687,6 +766,20 @@ pub extern "C" fn inflate_NodeConfig_Greenlight() -> *mut NodeConfigKind {
             config: core::ptr::null_mut(),
         }),
     })
+}
+
+impl NewWithNullPtr for wire_SignMessageRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            message: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_SignMessageRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
 }
 
 // Section: sync execution mode utility

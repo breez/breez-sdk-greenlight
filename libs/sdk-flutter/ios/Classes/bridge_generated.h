@@ -49,6 +49,16 @@ typedef struct wire_Config {
   struct wire_NodeConfig node_config;
 } wire_Config;
 
+typedef struct wire_SignMessageRequest {
+  struct wire_uint_8_list *message;
+} wire_SignMessageRequest;
+
+typedef struct wire_CheckMessageRequest {
+  struct wire_uint_8_list *message;
+  struct wire_uint_8_list *pubkey;
+  struct wire_uint_8_list *signature;
+} wire_CheckMessageRequest;
+
 typedef struct wire_LnUrlPayRequestData {
   struct wire_uint_8_list *callback;
   uint64_t min_sendable;
@@ -95,6 +105,10 @@ void wire_sync(int64_t port_);
 void wire_node_info(int64_t port_);
 
 void wire_disconnect(int64_t port_);
+
+void wire_sign_message(int64_t port_, struct wire_SignMessageRequest *request);
+
+void wire_check_message(int64_t port_, struct wire_CheckMessageRequest *request);
 
 void wire_mnemonic_to_seed(int64_t port_, struct wire_uint_8_list *phrase);
 
@@ -189,6 +203,8 @@ void wire_recommended_fees(int64_t port_);
 
 void wire_execute_command(int64_t port_, struct wire_uint_8_list *command);
 
+struct wire_CheckMessageRequest *new_box_autoadd_check_message_request_0(void);
+
 struct wire_Config *new_box_autoadd_config_0(void);
 
 struct wire_GreenlightCredentials *new_box_autoadd_greenlight_credentials_0(void);
@@ -205,6 +221,8 @@ struct wire_LnUrlWithdrawRequestData *new_box_autoadd_ln_url_withdraw_request_da
 
 struct wire_NodeConfig *new_box_autoadd_node_config_0(void);
 
+struct wire_SignMessageRequest *new_box_autoadd_sign_message_request_0(void);
+
 uint64_t *new_box_autoadd_u64_0(uint64_t value);
 
 struct wire_uint_8_list *new_uint_8_list_0(int32_t len);
@@ -220,6 +238,8 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_sync);
     dummy_var ^= ((int64_t) (void*) wire_node_info);
     dummy_var ^= ((int64_t) (void*) wire_disconnect);
+    dummy_var ^= ((int64_t) (void*) wire_sign_message);
+    dummy_var ^= ((int64_t) (void*) wire_check_message);
     dummy_var ^= ((int64_t) (void*) wire_mnemonic_to_seed);
     dummy_var ^= ((int64_t) (void*) wire_default_config);
     dummy_var ^= ((int64_t) (void*) wire_breez_events_stream);
@@ -254,6 +274,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_fetch_reverse_swap_fees);
     dummy_var ^= ((int64_t) (void*) wire_recommended_fees);
     dummy_var ^= ((int64_t) (void*) wire_execute_command);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_check_message_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_config_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_greenlight_credentials_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_greenlight_node_config_0);
@@ -262,6 +283,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_pay_request_data_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_withdraw_request_data_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_node_config_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_sign_message_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_u64_0);
     dummy_var ^= ((int64_t) (void*) new_uint_8_list_0);
     dummy_var ^= ((int64_t) (void*) inflate_NodeConfig_Greenlight);

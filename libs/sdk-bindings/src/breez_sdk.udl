@@ -96,6 +96,24 @@ dictionary NodeState {
     u64 inbound_liquidity_msats;    
 };
 
+dictionary SignMessageRequest {
+    string message;
+};
+
+dictionary SignMessageResponse {
+    string signature;
+};
+
+dictionary CheckMessageRequest {
+    string message;
+    string pubkey;
+    string signature;
+};
+
+dictionary CheckMessageResponse {
+    boolean is_valid;
+};
+
 enum PaymentTypeFilter {
     "Sent",
     "Received",
@@ -433,6 +451,12 @@ interface BlockingBreezServices {
 
    [Throws=SdkError]
    NodeState node_info();
+
+   [Throws=SdkError]
+   SignMessageResponse sign_message(SignMessageRequest request);
+
+   [Throws=SdkError]
+   CheckMessageResponse check_message(CheckMessageRequest request);
 
    [Throws=SdkError]
    BackupStatus backup_status();

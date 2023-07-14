@@ -67,6 +67,8 @@ pub trait NodeAPI: Send + Sync {
     async fn stream_incoming_payments(&self) -> Result<Streaming<gl_client::pb::IncomingPayment>>;
     async fn stream_log_messages(&self) -> Result<Streaming<gl_client::pb::LogEntry>>;
     async fn execute_command(&self, command: String) -> Result<String>;
+    async fn sign_message(&self, message: &str) -> Result<String>;
+    async fn check_message(&self, message: &str, pubkey: &str, signature: &str) -> Result<bool>;
 
     /// Gets the private key at the path specified
     fn derive_bip32_key(&self, path: Vec<ChildNumber>) -> Result<ExtendedPrivKey>;

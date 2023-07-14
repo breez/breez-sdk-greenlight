@@ -14,12 +14,14 @@ class BreezSDK {
 
   /* Streams */
   /// Listen to paid Invoice events
-  final StreamController<InvoicePaidDetails> _invoicePaidStream = BehaviorSubject<InvoicePaidDetails>();
+  final StreamController<InvoicePaidDetails> _invoicePaidStream =
+      BehaviorSubject<InvoicePaidDetails>();
 
   Stream<InvoicePaidDetails> get invoicePaidStream => _invoicePaidStream.stream;
 
   /// Listen to payment results
-  final StreamController<Payment> _paymentResultStream = BehaviorSubject<Payment>();
+  final StreamController<Payment> _paymentResultStream =
+      BehaviorSubject<Payment>();
 
   Stream<Payment> get paymentResultStream => _paymentResultStream.stream;
 
@@ -58,7 +60,8 @@ class BreezSDK {
   /* Breez Services API's & Streams*/
 
   /// Listen to node state
-  final StreamController<NodeState?> nodeStateController = BehaviorSubject<NodeState?>();
+  final StreamController<NodeState?> nodeStateController =
+      BehaviorSubject<NodeState?>();
 
   Stream<NodeState?> get nodeStateStream => nodeStateController.stream;
 
@@ -105,7 +108,8 @@ class BreezSDK {
   /// Attempts to convert the phrase to a mnemonic, then to a seed.
   ///
   /// If the phrase is not a valid mnemonic, an error is returned.
-  Future<Uint8List> mnemonicToSeed(String phrase) async => await _lnToolkit.mnemonicToSeed(phrase: phrase);
+  Future<Uint8List> mnemonicToSeed(String phrase) async =>
+      await _lnToolkit.mnemonicToSeed(phrase: phrase);
 
   /// Get the full default config for a specific environment type
   Future<Config> defaultConfig({
@@ -118,6 +122,22 @@ class BreezSDK {
       apiKey: apiKey,
       nodeConfig: nodeConfig,
     );
+  }
+
+  /// Sign given message with the private key of the node id. Returns a zbase
+  /// encoded signature.
+  Future<SignMessageResponse> signMessage({
+    required SignMessageRequest request,
+  }) {
+    return _lnToolkit.signMessage(request: request);
+  }
+
+  /// Check whether given message was signed by the private key or the given
+  /// pubkey and the signature (zbase encoded) is valid.
+  Future<CheckMessageResponse> checkMessage({
+    required CheckMessageRequest request,
+  }) {
+    return _lnToolkit.checkMessage(request: request);
   }
 
   /* LSP API's */
@@ -134,7 +154,8 @@ class BreezSDK {
   Future<String?> lspId() async => await _lnToolkit.lspId();
 
   /// Convenience method to look up LSP info
-  Future<LspInformation?> fetchLspInfo(String lspId) async => await _lnToolkit.fetchLspInfo(id: lspId);
+  Future<LspInformation?> fetchLspInfo(String lspId) async =>
+      await _lnToolkit.fetchLspInfo(id: lspId);
 
   /// close all channels with the current lsp
   Future closeLspChannels() async => await _lnToolkit.closeLspChannels();
@@ -142,7 +163,8 @@ class BreezSDK {
   /* Backup API's & Streams*/
 
   // Listen to backup results
-  final StreamController<BreezEvent?> _backupStreamController = BehaviorSubject<BreezEvent?>();
+  final StreamController<BreezEvent?> _backupStreamController =
+      BehaviorSubject<BreezEvent?>();
 
   Stream<BreezEvent?> get backupStream => _backupStreamController.stream;
 
@@ -155,15 +177,18 @@ class BreezSDK {
   /* Parse API's */
 
   /// Parse a BOLT11 payment request and return a structure contains the parsed fields.
-  Future<LNInvoice> parseInvoice(String invoice) async => await _lnToolkit.parseInvoice(invoice: invoice);
+  Future<LNInvoice> parseInvoice(String invoice) async =>
+      await _lnToolkit.parseInvoice(invoice: invoice);
 
   /// Parses generic user input, typically pasted from clipboard or scanned from a QR.
-  Future<InputType> parseInput({required String input}) async => await _lnToolkit.parseInput(input: input);
+  Future<InputType> parseInput({required String input}) async =>
+      await _lnToolkit.parseInput(input: input);
 
   /* Payment API's & Streams*/
 
   /// Listen to payment list
-  final StreamController<List<Payment>> paymentsController = BehaviorSubject<List<Payment>>();
+  final StreamController<List<Payment>> paymentsController =
+      BehaviorSubject<List<Payment>>();
 
   Stream<List<Payment>> get paymentsStream => paymentsController.stream;
 
@@ -301,7 +326,8 @@ class BreezSDK {
   }
 
   /// List all available fiat currencies
-  Future<List<FiatCurrency>> listFiatCurrencies() async => await _lnToolkit.listFiatCurrencies();
+  Future<List<FiatCurrency>> listFiatCurrencies() async =>
+      await _lnToolkit.listFiatCurrencies();
 
   /* On-Chain Swap API's */
 
@@ -323,7 +349,8 @@ class BreezSDK {
   Future<SwapInfo> receiveOnchain() async => await _lnToolkit.receiveOnchain();
 
   /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency
-  Future<String> buyBitcoin(BuyBitcoinProvider provider) => _lnToolkit.buyBitcoin(provider: provider);
+  Future<String> buyBitcoin(BuyBitcoinProvider provider) =>
+      _lnToolkit.buyBitcoin(provider: provider);
 
   /// Withdraw on-chain funds in the wallet to an external btc address
   Future sweep({
@@ -340,7 +367,8 @@ class BreezSDK {
   /* Refundables API's */
 
   /// list non-completed expired swaps that should be refunded by calling refund()
-  Future<List<SwapInfo>> listRefundables() async => await _lnToolkit.listRefundables();
+  Future<List<SwapInfo>> listRefundables() async =>
+      await _lnToolkit.listRefundables();
 
   /// Construct and broadcast a refund transaction for a failed/expired swap
   Future<String> refund({
@@ -360,12 +388,14 @@ class BreezSDK {
   Future<SwapInfo?> inProgressSwap() async => await _lnToolkit.inProgressSwap();
 
   /// Returns the blocking [ReverseSwapInfo]s that are in progress
-  Future<List<ReverseSwapInfo>> inProgressReverseSwaps() async => _lnToolkit.inProgressReverseSwaps();
+  Future<List<ReverseSwapInfo>> inProgressReverseSwaps() async =>
+      _lnToolkit.inProgressReverseSwaps();
 
   /* Swap Fee API's */
 
   /// Lookup the most recent reverse swap pair info using the Boltz API
-  Future<ReverseSwapPairInfo> fetchReverseSwapFees() async => _lnToolkit.fetchReverseSwapFees();
+  Future<ReverseSwapPairInfo> fetchReverseSwapFees() async =>
+      _lnToolkit.fetchReverseSwapFees();
 
   /// Fetches the current recommended fees
   Future<RecommendedFees> recommendedFees() => _lnToolkit.recommendedFees();
