@@ -1,6 +1,7 @@
 CURRENT_DIR := $(shell pwd)
 SOURCES=$(sort $(wildcard ./src/*.rs ./src/**/*.rs))
 SHELL := /bin/bash
+OS_NAME=$(shell uname | tr '[:upper:]' '[:lower:]')
 
 .PHONY: init
 init:
@@ -100,15 +101,19 @@ android: aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64
 
 aarch64-linux-android: $(SOURCES) ndk-home
 	cargo ndk -t aarch64-linux-android -o ffi/kotlin/jniLibs build --release	
+	cp -a $(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/$(OS_NAME)-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so ffi/kotlin/jniLibs/arm64-v8a/
 
 armv7-linux-androideabi: $(SOURCES) ndk-home
-	cargo ndk -t armv7-linux-androideabi -o ffi/kotlin/jniLibs build --release	
+	cargo ndk -t armv7-linux-androideabi -o ffi/kotlin/jniLibs build --release
+	cp -a $(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/$(OS_NAME)-x86_64/sysroot/usr/lib/arm-linux-androideabi/libc++_shared.so ffi/kotlin/jniLibs/armeabi-v7a/
 
 i686-linux-android: $(SOURCES) ndk-home
-	cargo ndk -t i686-linux-android -o ffi/kotlin/jniLibs build --release	
+	cargo ndk -t i686-linux-android -o ffi/kotlin/jniLibs build --release
+	cp -a $(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/$(OS_NAME)-x86_64/sysroot/usr/lib/i686-linux-android/libc++_shared.so ffi/kotlin/jniLibs/x86/
 
 x86_64-linux-android: $(SOURCES) ndk-home
 	cargo ndk -t x86_64-linux-android -o ffi/kotlin/jniLibs build --release
+	cp -a $(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/$(OS_NAME)-x86_64/sysroot/usr/lib/x86_64-linux-android/libc++_shared.so ffi/kotlin/jniLibs/x86_64/
 
 bindings-android: kotlin
 	cp -r ffi/kotlin/jniLibs bindings-android/lib/src/main
