@@ -1,4 +1,5 @@
 use super::migrations::{current_migrations, current_sync_migrations};
+use crate::error::SdkResult;
 use anyhow::Result;
 use rusqlite::{
     hooks::Action,
@@ -42,7 +43,7 @@ impl SqliteStorage {
         self.events_publisher.subscribe()
     }
 
-    pub(crate) fn init(&self) -> Result<()> {
+    pub(crate) fn init(&self) -> SdkResult<()> {
         Self::migrate_sync_db(self.sync_db_file.clone())?;
         self.migrate_main_db()?;
         Ok(())
@@ -67,8 +68,8 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub(crate) fn get_connection(&self) -> Result<Connection> {
-        let con = Connection::open(self.main_db_file.clone()).map_err(anyhow::Error::msg)?;
+    pub(crate) fn get_connection(&self) -> SdkResult<Connection> {
+        let con = Connection::open(self.main_db_file.clone())?;
         let sql = "ATTACH DATABASE ? AS sync;";
         con.execute(sql, [self.sync_db_file.clone()])?;
         // We want to notify any subscribers with hook events.

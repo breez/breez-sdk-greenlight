@@ -88,7 +88,9 @@ pub fn connect(config: Config, seed: Vec<u8>) -> Result<()> {
             BreezServices::connect(config, seed, Box::new(BindingEventListener {})).await?;
         BREEZ_SERVICES_INSTANCE
             .set(breez_services)
-            .map_err(|_| SdkError::InitFailed)?;
+            .map_err(|_| SdkError::InitFailed {
+                err: "static node services already set".into(),
+            })?;
 
         anyhow::Ok(())
     })
@@ -142,8 +144,7 @@ pub fn send_spontaneous_payment(node_id: String, amount_sats: u64) -> Result<Pay
 /// See [BreezServices::receive_payment]
 pub fn receive_payment(amount_sats: u64, description: String) -> Result<LNInvoice> {
     block_on(async {
-        get_breez_services()
-            .map_err(|_| SdkError::InitFailed)?
+        get_breez_services()?
             .receive_payment(amount_sats, description.to_string())
             .await
     })
@@ -162,8 +163,7 @@ pub fn list_payments(
     to_timestamp: Option<i64>,
 ) -> Result<Vec<Payment>> {
     block_on(async {
-        get_breez_services()
-            .map_err(|_| SdkError::InitFailed)?
+        get_breez_services()?
             .list_payments(filter, from_timestamp, to_timestamp)
             .await
     })
@@ -177,13 +177,7 @@ pub fn payment_by_hash(hash: String) -> Result<Option<Payment>> {
 
 /// See [BreezServices::list_lsps]
 pub fn list_lsps() -> Result<Vec<LspInformation>> {
-    block_on(async {
-        get_breez_services()
-            .map_err(|_| SdkError::InitFailed)?
-            .list_lsps()
-            .await
-    })
-    .map_err(Into::into)
+    block_on(async { get_breez_services()?.list_lsps().await }).map_err(Into::into)
 }
 
 /// See [BreezServices::connect_lsp]
@@ -198,7 +192,7 @@ pub fn fetch_lsp_info(id: String) -> Result<Option<LspInformation>> {
 
 /// See [BreezServices::lsp_id]
 pub fn lsp_id() -> Result<Option<String>> {
-    block_on(async { get_breez_services()?.lsp_id().await })
+    block_on(async { get_breez_services()?.lsp_id().await }).map_err(Into::into)
 }
 
 /// See [BreezServices::fetch_fiat_rates]

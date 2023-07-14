@@ -10,11 +10,11 @@ dictionary RouteHintHop {
 
 [Error]
 enum SdkError {
-    "ConnectFailed",
     "Generic",
     "InitFailed",
+    "LspConnectFailed",
     "PersistenceFailure",
-    "ReceivePaymentFailure",
+    "ReceivePaymentFailed",
 };
 
 enum EnvironmentType {

@@ -219,7 +219,6 @@ impl BlockingBreezServices {
 
     pub fn lsp_id(&self) -> SdkResult<Option<String>> {
         rt().block_on(self.breez_services.lsp_id())
-            .map_err(|e| e.into())
     }
 
     pub fn close_lsp_channels(&self) -> SdkResult<()> {
