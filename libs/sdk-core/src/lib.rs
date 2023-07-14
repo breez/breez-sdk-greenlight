@@ -22,22 +22,25 @@
 //! let seed = Seed::new(&mnemonic, "");
 //! let invite_code = Some("...")
 //!
-//! let creds = BreezServices::register_node(Network::Bitcoin, seed.as_bytes().to_vec(), None, invite_code).await?;
-//! let sdk = BreezServices::init_services(
-//!         BreezServices::default_config(EnvironmentType::Production),
-//!         seed.to_vec(),
-//!         creds.clone(),
-//!         Box::new(AppEventListener {}),
-//!     )
-//!     .await?;
+//! let config = BreezServices::default_config(
+//!     EnvironmentType::Production,"your API key".into(),
+//!     breez_sdk_core::NodeConfig::Greenlight {
+//!         config: GreenlightNodeConfig { partner_credentials: None, invite_code: invite_code, },
+//!     },
+//! );
 //!
-//! sdk.start().await?;
+//! //Customize the config object according to your needs
+//! config.working_dir = "path to an existing directory".into();
+//!
+//! Connect to the Breez SDK make it ready for use
+//! let sdk = BreezServices::connect(
+//!    config,
+//!    seed.to_vec(),        
+//!    Box::new(AppEventListener {}),
+//! )
+//! .await?;
+//! }
 //! ```
-//!
-//! On initializing the SDK, the caller gets its [GreenlightCredentials]. These are used to interact
-//! with the Greenlight LN node running in the cloud. Together with the BIP39 mnemonic, these can be used to
-//! restore access to the same cloud node, either in the same app (backup / restore) or in another app
-//! using the SDK.
 //!
 //! We can now receive payments
 //!
@@ -68,21 +71,18 @@
 //!
 //! ### A. Initializing the SDK
 //!
-//! There are two steps necessary to initialize the SDK:
+//! There are two simple steps necessary to initialize the SDK:
 //!
-//! 1. [BreezServices::init_services] to setup the Breez SDK services
-//! 2. [BreezServices::start] to start the Greenlight node and all needed Breez SDK services
+//! 1. [BreezServices::default_config] to construct the sdk configuration
+//! 2. [BreezServices::connect] to connect to your node and start all required Breez SDK services
 //!
-//! The first step takes the [GreenlightCredentials] as an argument. There are three ways to get them:
-//!
-//! * by loading the credentials from local storage, or with
-//! * [BreezServices::register_node] to register a new Greenlight node, or with
-//! * [BreezServices::recover_node] to recover an existing Greenlight node
-//!
-//! The first step also takes an implementation of [EventListener] as an argument, which is used to
+//! The first step takes the [EnvironmentType] and [NodeConfig] as arguments. Although you can create
+//! your own config from scratch it is recommended to use the [BreezServices::default_config] method and
+//! customize it according to your needs.
+//! Once the [NodeConfig] is created it is passed to the [BreezServices::connect] method along with the seed and and implementation of [EventListener] which is used to
 //! notify the caller of SDK events.
 //!
-//! After initializing the Breez SDK services and starting them, the SDK is ready to be used.
+//! Now your SDK is ready to be used.
 //!
 //! ### B. Sending and receiving Lightning payments
 //!
