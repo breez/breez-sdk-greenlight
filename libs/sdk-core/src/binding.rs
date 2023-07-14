@@ -3,28 +3,27 @@
 use std::future::Future;
 use std::sync::Arc;
 
-use crate::breez_services::BreezServices;
-use crate::breez_services::{self, BreezEvent, EventListener};
-use crate::chain::RecommendedFees;
-use crate::error::SdkError;
-use crate::fiat::{FiatCurrency, Rate};
-use crate::input_parser::InputType;
-use crate::input_parser::{LnUrlAuthRequestData, LnUrlPayRequestData, LnUrlWithdrawRequestData};
-use crate::invoice::LNInvoice;
-use crate::invoice::{self};
-use crate::lnurl::pay::model::LnUrlPayResult;
-use crate::lsp::LspInformation;
-use crate::models::LogEntry;
-use crate::models::{Config, NodeState, Payment, PaymentTypeFilter, SwapInfo};
-use crate::{
-    BackupStatus, BuyBitcoinProvider, EnvironmentType, LnUrlCallbackStatus, NodeConfig,
-    ReverseSwapInfo, ReverseSwapPairInfo,
-};
 use anyhow::{anyhow, Result};
 use flutter_rust_bridge::StreamSink;
 use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
 use tokio::sync::mpsc;
+
+use crate::breez_services::{self, BreezEvent, BreezServices, EventListener};
+use crate::chain::RecommendedFees;
+use crate::error::SdkError;
+use crate::fiat::{FiatCurrency, Rate};
+use crate::input_parser::{
+    InputType, LnUrlAuthRequestData, LnUrlPayRequestData, LnUrlWithdrawRequestData,
+};
+use crate::invoice::{self, LNInvoice};
+use crate::lnurl::pay::model::LnUrlPayResult;
+use crate::lsp::LspInformation;
+use crate::models::{Config, LogEntry, NodeState, Payment, PaymentTypeFilter, SwapInfo};
+use crate::{
+    BackupStatus, BuyBitcoinProvider, EnvironmentType, LnUrlCallbackStatus, NodeConfig,
+    ReverseSwapInfo, ReverseSwapPairInfo,
+};
 
 static BREEZ_SERVICES_INSTANCE: OnceCell<Arc<BreezServices>> = OnceCell::new();
 static BREEZ_SERVICES_SHUTDOWN: OnceCell<mpsc::Sender<()>> = OnceCell::new();
