@@ -1418,7 +1418,7 @@ pub(crate) mod tests {
     use std::collections::HashMap;
     use std::sync::Arc;
 
-    use anyhow::{anyhow, Result};
+    use anyhow::Result;
     use reqwest::Url;
 
     use regex::Regex;
@@ -1533,7 +1533,7 @@ pub(crate) mod tests {
             .map_err(|_| NewSdkError::SdkFailedToSync)?;
         let fetched_state = breez_services
             .node_info()?
-            .ok_or_else(|| NewSdkError::SdkNoNodeStateFound)?;
+            .ok_or(NewSdkError::SdkNoNodeStateFound)?;
         assert_eq!(fetched_state, dummy_node_state);
 
         let all = breez_services
