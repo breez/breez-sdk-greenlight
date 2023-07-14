@@ -100,6 +100,12 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
+    paymentByHash: (NSString*)hash
+    resolver: (RCTPromiseResolveBlock)resolve
+    rejecter: (RCTPromiseRejectBlock)reject
+)
+
+RCT_EXTERN_METHOD(
     listPayments: (NSString*)filter
     fromTimestamp: (NSInteger*)fromTimestamp
     toTimestamp: (NSInteger*)toTimestamp
