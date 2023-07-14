@@ -15,25 +15,15 @@ enum SDKError {
 
 [Error]
 enum NewSdkError {
+    "ConnectFailed",
+    "PersistenceFailure",
     "SdkFailedToRequestBackup",
-    "SdkFailedToStartBackupWatcher",
-    "SdkFailedToInitPersister",
-    "SdkFailedToConnectToGreenlight",
-    "SdkNoStateSynchronizerFound",
-    "SdkInitFailedNoNodeApiOrSeedFound",
     "SdkCannotRetrievePersistedLastSyncVersion",
-    "SdkBip32ErrorIndexOutOfBounds",
-    "SdkBip32ErrorFailedToDeriveKey",
-    "SdkFailedToInsertOrUpdatePayments",
     "SdkFailedToInsertLnurlExternalPaymentInfo",
     "SdkFailedToReceivePayment",
-    "SdkFailedToListPayments",
     "SdkFailedToSync",
-    "SdkCannotRetrievePersistedNodeState",
     "SdkNoNodeStateFound",
     "SdkFailedToRetrieveLsps",
-    "SdkFailedToGetLspId",
-    "SdkFailedToSetLspId",
     "SdkServicesAlreadySet",
     "SdkServicesAlreadyStarted",
     "SdkServicesFailedToInit",
@@ -529,7 +519,7 @@ interface BlockingBreezServices {
 
 namespace breez_sdk {  
 
- [Throws=SDKError]
+ [Throws=NewSdkError]
  BlockingBreezServices connect(Config config, sequence<u8> seed, EventListener listener);
 
  [Throws=SDKError]

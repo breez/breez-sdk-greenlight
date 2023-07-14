@@ -1,7 +1,7 @@
 use super::db::SqliteStorage;
+use crate::error::SdkResultDetailed;
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::models::*;
-use anyhow::{anyhow, Result};
 use rusqlite::types::{FromSql, FromSqlError, ToSql, ToSqlOutput};
 use rusqlite::OptionalExtension;
 use rusqlite::Row;
@@ -14,7 +14,7 @@ impl SqliteStorage {
     /// Note that, if a payment has details of type [LnPaymentDetails] which contain a [SuccessActionProcessed],
     /// then the [LnPaymentDetails] will NOT be persisted. In that case, the [SuccessActionProcessed]
     /// can be inserted separately via [SqliteStorage::insert_lnurl_payment_external_info].
-    pub fn insert_or_update_payments(&self, transactions: &[Payment]) -> Result<()> {
+    pub fn insert_or_update_payments(&self, transactions: &[Payment]) -> SdkResultDetailed<()> {
         let deleted = self.delete_pending_lightning_payments()?;
         debug!("Deleted {deleted} pending payments");
 
@@ -50,13 +50,13 @@ impl SqliteStorage {
         Ok(())
     }
 
-    fn delete_pending_lightning_payments(&self) -> Result<usize> {
+    fn delete_pending_lightning_payments(&self) -> SdkResultDetailed<usize> {
         self.get_connection()?
             .execute(
                 "DELETE FROM payments WHERE payment_type = ?1 AND pending = true",
                 [PaymentType::Sent.to_string()],
             )
-            .map_err(|e| anyhow!(e))
+            .map_err(Into::into)
     }
 
     /// Inserts LNURL-related metadata associated with this payment
@@ -66,7 +66,7 @@ impl SqliteStorage {
         lnurl_pay_success_action: Option<&SuccessActionProcessed>,
         lnurl_metadata: Option<String>,
         ln_address: Option<String>,
-    ) -> Result<()> {
+    ) -> SdkResultDetailed<()> {
         let con = self.get_connection()?;
         let mut prep_statement = con.prepare(
             "
@@ -95,7 +95,7 @@ impl SqliteStorage {
         &self,
         payment_hash: &str,
         payer_amount_msat: u64,
-    ) -> Result<()> {
+    ) -> SdkResultDetailed<()> {
         let con = self.get_connection()?;
         let mut prep_statement = con.prepare(
             "
@@ -112,12 +112,12 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub fn last_payment_timestamp(&self) -> Result<i64> {
+    pub fn last_payment_timestamp(&self) -> SdkResultDetailed<i64> {
         self.get_connection()?
             .query_row("SELECT max(payment_time) FROM payments", [], |row| {
                 row.get(0)
             })
-            .map_err(anyhow::Error::msg)
+            .map_err(Into::into)
     }
 
     /// Constructs [Payment] by joining data in the `payment` and `payments_external_info` tables
@@ -129,7 +129,7 @@ impl SqliteStorage {
         type_filter: PaymentTypeFilter,
         from_timestamp: Option<i64>,
         to_timestamp: Option<i64>,
-    ) -> Result<Vec<Payment>> {
+    ) -> SdkResultDetailed<Vec<Payment>> {
         let where_clause = filter_to_where_clause(type_filter, from_timestamp, to_timestamp);
         let con = self.get_connection()?;
         let mut stmt = con.prepare(
@@ -174,7 +174,7 @@ impl SqliteStorage {
     /// To lookup a completed payment by hash, use [Self::get_completed_payment_by_hash]
     ///
     /// To query all payments, see [Self::list_payments]
-    pub(crate) fn get_payment_by_hash(&self, hash: &String) -> Result<Option<Payment>> {
+    pub(crate) fn get_payment_by_hash(&self, hash: &String) -> SdkResultDetailed<Option<Payment>> {
         self.get_connection()?
             .query_row(
                 "
@@ -204,13 +204,16 @@ impl SqliteStorage {
                 |row| self.sql_row_to_payment(row),
             )
             .optional()
-            .map_err(|e| anyhow!(e))
+            .map_err(Into::into)
     }
 
     /// Looks up a completed payment by hash.
     ///
     /// To include pending payments in the lookup as well, use [Self::get_payment_by_hash]
-    pub(crate) fn get_completed_payment_by_hash(&self, hash: &String) -> Result<Option<Payment>> {
+    pub(crate) fn get_completed_payment_by_hash(
+        &self,
+        hash: &String,
+    ) -> SdkResultDetailed<Option<Payment>> {
         let res = self.get_payment_by_hash(hash)?.filter(|p| !p.pending);
         Ok(res)
     }
@@ -310,7 +313,7 @@ impl ToSql for SuccessActionProcessed {
 }
 
 #[test]
-fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
+fn test_ln_transactions() -> SdkResultDetailed<()> {
     use crate::lnurl::pay::model::MessageSuccessActionData;
     use crate::lnurl::pay::model::SuccessActionProcessed;
     use crate::models::{LnPaymentDetails, Payment, PaymentDetails};

@@ -25,6 +25,7 @@ use gl_client::signer::Signer;
 use gl_client::tls::TlsConfig;
 use gl_client::{node, pb, utils};
 
+use crate::error::{NewSdkErrorDetailed, SdkResultDetailed};
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use gl_client::pb::Peer;
@@ -60,9 +61,18 @@ impl Greenlight {
         config: Config,
         seed: Vec<u8>,
         persister: Arc<SqliteStorage>,
-    ) -> Result<Self> {
+    ) -> SdkResultDetailed<Self> {
         // Derive the encryption key from the seed
-        let signer = Signer::new(seed.clone(), config.network.into(), TlsConfig::new()?)?;
+        let signer = Signer::new(
+            seed.clone(),
+            config.network.into(),
+            TlsConfig::new().map_err(|e| {
+                NewSdkErrorDetailed::ConnectFailedFailedToConnectToGreenlight(e.to_string())
+            })?,
+        )
+        .map_err(|e| {
+            NewSdkErrorDetailed::ConnectFailedFailedToConnectToGreenlight(e.to_string())
+        })?;
         let encryption_key = Self::derive_bip32_key(
             config.network,
             &signer,
@@ -90,9 +100,12 @@ impl Greenlight {
                         Ok(built_credentials)
                     }
                     None => {
-                        return Err(anyhow!(
-                            "Failed to decrypt credentials, seed doesn't match existing node"
-                        ));
+                        return Err(
+                            NewSdkErrorDetailed::ConnectFailedFailedToConnectToGreenlight(
+                                "Failed to decrypt credentials, seed doesn't match existing node"
+                                    .into(),
+                            ),
+                        );
                     }
                 }
             }
@@ -111,7 +124,12 @@ impl Greenlight {
                             register_credentials.partner_credentials,
                             register_credentials.invite_code,
                         )
-                        .await?;
+                        .await
+                        .map_err(|e| {
+                            NewSdkErrorDetailed::ConnectFailedFailedToConnectToGreenlight(format!(
+                                "Error when looking up Greenlight credentials: {e}"
+                            ))
+                        })?;
                         Ok(credentials)
                     }
                 }
@@ -126,14 +144,26 @@ impl Greenlight {
                 match encryptd_creds {
                     Some(c) => {
                         persister.set_gl_credentials(c)?;
-                        Greenlight::new(config, seed, creds).await
+                        Greenlight::new(config, seed, creds).await.map_err(|e| {
+                            NewSdkErrorDetailed::ConnectFailedFailedToConnectToGreenlight(format!(
+                                "Error when creating Greenlight client: {e}"
+                            ))
+                        })
                     }
                     None => {
-                        return Err(anyhow!("Failed to encrypt credentials"));
+                        return Err(
+                            NewSdkErrorDetailed::ConnectFailedFailedToConnectToGreenlight(
+                                "Failed to encrypt credentials".into(),
+                            ),
+                        );
                     }
                 }
             }
-            Err(_) => Err(anyhow!("Failed to get gl credentials")),
+            Err(_) => Err(
+                NewSdkErrorDetailed::ConnectFailedFailedToConnectToGreenlight(
+                    "Failed to get gl credentials".into(),
+                ),
+            ),
         };
         res
     }
@@ -163,10 +193,10 @@ impl Greenlight {
         network: Network,
         signer: &Signer,
         path: Vec<ChildNumber>,
-    ) -> Result<ExtendedPrivKey> {
+    ) -> SdkResultDetailed<ExtendedPrivKey> {
         ExtendedPrivKey::new_master(network.into(), &signer.bip32_ext_key())?
             .derive_priv(&Secp256k1::new(), &path)
-            .map_err(|e| anyhow!(e))
+            .map_err(Into::into)
     }
 
     async fn register(
@@ -682,7 +712,7 @@ impl NodeAPI for Greenlight {
         }
     }
 
-    fn derive_bip32_key(&self, path: Vec<ChildNumber>) -> Result<ExtendedPrivKey> {
+    fn derive_bip32_key(&self, path: Vec<ChildNumber>) -> SdkResultDetailed<ExtendedPrivKey> {
         Self::derive_bip32_key(self.sdk_config.network, &self.signer, path)
     }
 }

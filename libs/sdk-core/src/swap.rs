@@ -19,6 +19,7 @@ use rand::Rng;
 use ripemd::{Digest, Ripemd160};
 
 use crate::breez_services::{BreezEvent, BreezServer, PaymentReceiver, Receiver};
+use crate::error::SdkResultDetailed;
 use crate::models::{Swap, SwapInfo, SwapStatus, SwapperAPI};
 
 #[tonic::async_trait]
@@ -245,7 +246,7 @@ impl BTCReceiveSwap {
     }
 
     #[allow(dead_code)]
-    pub(crate) fn get_swap_info(&self, address: String) -> Result<Option<SwapInfo>> {
+    pub(crate) fn get_swap_info(&self, address: String) -> SdkResultDetailed<Option<SwapInfo>> {
         self.persister.get_swap_info_by_address(address)
     }
 
@@ -363,14 +364,16 @@ impl BTCReceiveSwap {
             )?;
         }
 
-        self.persister.update_swap_chain_info(
-            bitcoin_address,
-            utxos.unconfirmed_sats(),
-            utxos.unconfirmed_tx_ids(),
-            utxos.confirmed_sats(),
-            utxos.confirmed_tx_ids(),
-            swap_status,
-        )
+        self.persister
+            .update_swap_chain_info(
+                bitcoin_address,
+                utxos.unconfirmed_sats(),
+                utxos.unconfirmed_tx_ids(),
+                utxos.confirmed_sats(),
+                utxos.confirmed_tx_ids(),
+                swap_status,
+            )
+            .map_err(Into::into)
     }
 
     /// redeem_swap executes the final step of receiving lightning payment

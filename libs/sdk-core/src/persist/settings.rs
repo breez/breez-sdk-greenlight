@@ -1,4 +1,5 @@
 use super::db::SqliteStorage;
+use crate::error::SdkResultDetailed;
 use anyhow::Result;
 
 #[allow(dead_code)]
@@ -8,7 +9,7 @@ pub struct SettingItem {
 }
 
 impl SqliteStorage {
-    pub fn update_setting(&self, key: String, value: String) -> Result<()> {
+    pub fn update_setting(&self, key: String, value: String) -> SdkResultDetailed<()> {
         self.get_connection()?.execute(
             "INSERT OR REPLACE INTO settings (key, value) VALUES (?1,?2)",
             (key, value),
@@ -16,7 +17,7 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub fn get_setting(&self, key: String) -> Result<Option<String>> {
+    pub fn get_setting(&self, key: String) -> SdkResultDetailed<Option<String>> {
         let res = self.get_connection()?.query_row(
             "SELECT value FROM settings WHERE key = ?1",
             [key],
@@ -49,11 +50,11 @@ impl SqliteStorage {
         Ok(vec)
     }
 
-    pub fn set_lsp_id(&self, lsp_id: String) -> Result<()> {
+    pub fn set_lsp_id(&self, lsp_id: String) -> SdkResultDetailed<()> {
         self.update_setting("lsp".to_string(), lsp_id)
     }
 
-    pub fn get_lsp_id(&self) -> Result<Option<String>> {
+    pub fn get_lsp_id(&self) -> SdkResultDetailed<Option<String>> {
         self.get_setting("lsp".to_string())
     }
 }

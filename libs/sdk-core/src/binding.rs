@@ -198,7 +198,7 @@ pub fn fetch_lsp_info(id: String) -> Result<Option<LspInformation>> {
 
 /// See [BreezServices::lsp_id]
 pub fn lsp_id() -> Result<Option<String>> {
-    block_on(async { get_breez_services()?.lsp_id().await })
+    block_on(async { get_breez_services()?.lsp_id().await }).map_err(Into::into)
 }
 
 /// See [BreezServices::fetch_fiat_rates]

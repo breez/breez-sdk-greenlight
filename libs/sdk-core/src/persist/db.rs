@@ -1,5 +1,5 @@
 use super::migrations::{current_migrations, current_sync_migrations};
-use anyhow::Result;
+use crate::error::SdkResultDetailed;
 use rusqlite::{
     hooks::Action,
     types::{FromSql, FromSqlError, ToSqlOutput},
@@ -42,33 +42,29 @@ impl SqliteStorage {
         self.events_publisher.subscribe()
     }
 
-    pub(crate) fn init(&self) -> Result<()> {
+    pub(crate) fn init(&self) -> SdkResultDetailed<()> {
         Self::migrate_sync_db(self.sync_db_file.clone())?;
         self.migrate_main_db()?;
         Ok(())
     }
 
-    pub(crate) fn migrate_sync_db(sync_db_path: String) -> Result<()> {
-        let mut sync_con = Connection::open(sync_db_path).map_err(anyhow::Error::msg)?;
+    pub(crate) fn migrate_sync_db(sync_db_path: String) -> SdkResultDetailed<()> {
+        let mut sync_con = Connection::open(sync_db_path)?;
         let sync_migrations =
             Migrations::new(current_sync_migrations().into_iter().map(M::up).collect());
-        sync_migrations
-            .to_latest(&mut sync_con)
-            .map_err(anyhow::Error::msg)?;
+        sync_migrations.to_latest(&mut sync_con)?;
         Ok(())
     }
 
-    fn migrate_main_db(&self) -> Result<()> {
+    fn migrate_main_db(&self) -> SdkResultDetailed<()> {
         let migrations = Migrations::new(current_migrations().into_iter().map(M::up).collect());
         let mut conn = self.get_connection()?;
-        migrations
-            .to_latest(&mut conn)
-            .map_err(anyhow::Error::msg)?;
+        migrations.to_latest(&mut conn)?;
         Ok(())
     }
 
-    pub(crate) fn get_connection(&self) -> Result<Connection> {
-        let con = Connection::open(self.main_db_file.clone()).map_err(anyhow::Error::msg)?;
+    pub(crate) fn get_connection(&self) -> SdkResultDetailed<Connection> {
+        let con = Connection::open(self.main_db_file.clone())?;
         let sql = "ATTACH DATABASE ? AS sync;";
         con.execute(sql, [self.sync_db_file.clone()])?;
         // We want to notify any subscribers with hook events.
