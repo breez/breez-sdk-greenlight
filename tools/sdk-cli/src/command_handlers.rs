@@ -4,7 +4,8 @@ use std::sync::Arc;
 use anyhow::{anyhow, Error, Result};
 use breez_sdk_core::InputType::{LnUrlAuth, LnUrlPay, LnUrlWithdraw};
 use breez_sdk_core::{
-    parse, BreezEvent, BreezServices, EventListener, GreenlightCredentials, PaymentTypeFilter,
+    parse, BreezEvent, BreezServices, CheckMessageRequest, EventListener, GreenlightCredentials,
+    PaymentTypeFilter, SignMessageRequest,
 };
 use breez_sdk_core::{Config, GreenlightNodeConfig, NodeConfig};
 use once_cell::sync::OnceCell;
@@ -216,6 +217,24 @@ pub(crate) async fn handle_command(
                 .refund(swap_address, to_address, sat_per_vbyte)
                 .await?;
             Ok(format!("Refund tx: {}", res))
+        }
+        Commands::SignMessage { message } => {
+            let req = SignMessageRequest { message };
+            let res = sdk()?.sign_message(req).await?;
+            Ok(format!("Message signature: {}", res.signed_message))
+        }
+        Commands::CheckMessage {
+            message,
+            pubkey,
+            signature,
+        } => {
+            let req = CheckMessageRequest {
+                message,
+                pubkey,
+                signature,
+            };
+            let res = sdk()?.check_message(req).await?;
+            Ok(format!("Message was signed by node: {}", res.is_valid))
         }
         Commands::LnurlPay { lnurl } => match parse(&lnurl).await? {
             LnUrlPay { data: pd } => {

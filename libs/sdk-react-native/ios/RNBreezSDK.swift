@@ -1,6 +1,24 @@
 import Foundation
 import BreezSDK
 
+struct SignMessageRequest {
+    var message: String
+}
+
+struct SignMessageResponse {
+    var signedMessage: String
+}
+
+struct CheckMessageRequest {
+    var message: String
+    var pubkey: String
+    var signature: String
+}
+
+struct CheckMessageResponse {
+    var isValid: Bool
+}
+
 @objc(RNBreezSDK)
 class RNBreezSDK: RCTEventEmitter {
     static let TAG: String = "BreezSDK"
@@ -109,6 +127,26 @@ class RNBreezSDK: RCTEventEmitter {
             }
         } else {
             reject(RNBreezSDK.TAG, "Invalid config", nil)
+        }
+    }
+
+    @objc(signMessage:resolver:rejecter:)
+    func signMessage(_ request: SignMessageRequest, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> SignMessageResponse {
+        do {
+            let response = try BreezSDK.sign_message(message)
+            resolve(response)
+        } catch let error {
+            reject(RNBreezSDK.TAG, "Error calling signMessage", error)
+        }
+    }
+
+    @objc(checkMessage:pubkey:signature:resolver:rejecter:)
+    func checkMessage(_ request: CheckMessageRequest, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> CheckMessageResponse {
+        do {
+            let response = try BreezSDK.check_message(request)
+            resolve(response)
+        } catch let error {
+            reject(RNBreezSDK.TAG, "Error calling checkMessage", error)
         }
     }
     

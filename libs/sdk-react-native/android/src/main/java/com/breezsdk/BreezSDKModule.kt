@@ -13,6 +13,24 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 
+data class SignMessageRequest(
+    val message: String
+)
+
+data class SignMessageResponse(
+    val signed_message: String
+)
+
+data class CheckMessageRequest(
+    val message: String,
+    val pubkey: String,
+    val signature: String
+)
+
+data class CheckMessageResponse(
+    val is_valid: Boolean
+)
+
 class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
     private lateinit var executor: ExecutorService
     private var breezServices: BlockingBreezServices? = null
@@ -145,6 +163,46 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             }
         }
     }
+
+    @ReactMethod
+    fun signMessage(reqData: ReadableMap, message: String, promise: Promise) {
+        executor.execute {
+            val signMessageRequest = asSignMessageRequest(reqData)
+            if signMessageRequest == null {
+                 promise.reject(TAG, "Invalid reqData")
+            } else {
+                try {
+                    val response = getBreezServices().sign_message(signMessageRequest)
+                    val signedMessage = response.signed_message
+                    promise.resolve(signedMessage)
+                } catch (e: SdkException) {
+                    e.printStackTrace()
+                    promise.reject(TAG, e.message ?: "Error calling signMessage", e)
+                }
+            }
+        }
+    }
+
+    @ReactMethod
+    fun checkMessage(reqData: ReadableMap, message: String, signature: String, pubkey: String, promise: Promise) {
+        executor.execute {
+            val checkMessageRequest = asCheckMessageRequest(reqData)
+            if checkMessageRequest == null {
+                 promise.reject(TAG, "Invalid reqData")
+            } else {
+                try {
+                    val response = getBreezServices().check_message(checkMessageRequest)
+                    val signedMessage = response.signed_message
+                    promise.resolve(signedMessage)
+                } catch (e: SdkException) {
+                    e.printStackTrace()
+                    promise.reject(TAG, e.message ?: "Error calling signMessage", e)
+                }
+            }
+        }
+    }
+
+
 
     @ReactMethod
     fun sync(promise: Promise) {

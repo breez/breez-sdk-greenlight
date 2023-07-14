@@ -7,6 +7,7 @@ use anyhow::{anyhow, Result};
 use bitcoin::bech32::{u5, ToBase32};
 use bitcoin::secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
 use bitcoin::secp256k1::Secp256k1;
+use bitcoin::secp256k1::PublicKey;
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use ecies::utils::{aes_decrypt, aes_encrypt};
 use gl_client::node::ClnClient;
@@ -23,6 +24,7 @@ use gl_client::scheduler::Scheduler;
 use gl_client::signer::Signer;
 use gl_client::tls::TlsConfig;
 use gl_client::{node, pb, utils};
+use lightning::util::message_signing::verify;
 use lightning_invoice::{RawInvoice, SignedRawInvoice};
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
@@ -513,6 +515,18 @@ impl NodeAPI for Greenlight {
         let connect_req = pb::ConnectRequest { node_id, addr };
         client.connect_peer(connect_req).await?;
         Ok(())
+    }
+
+    async fn sign_message(&self, message: &str) -> Result<String> {
+        let (sig, recovery_id) = self.signer.sign_message(message.as_bytes().to_vec())?;
+        let mut complete_signature = vec![31 + recovery_id];
+        complete_signature.extend_from_slice(&sig);
+        Ok(zbase32::encode_full_bytes(&complete_signature))
+    }
+
+    async fn check_message(&self, message: &str, pubkey: &str, signature: &str) -> Result<bool> {
+        let pk = PublicKey::from_str(pubkey)?;
+        Ok(verify(message.as_bytes(), signature, &pk))
     }
 
     fn sign_invoice(&self, invoice: RawInvoice) -> Result<String> {

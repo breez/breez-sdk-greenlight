@@ -82,6 +82,30 @@ fun asLnUrlWithdrawRequestData(reqData: ReadableMap): LnUrlWithdrawRequestData? 
     return null
 }
 
+fun asCheckMessageRequest(reqData: ReadableMap): CheckMessageRequest? {
+    val callback = reqData.getString("callback")
+    val message = reqData.getString("message")
+    val signature = reqData.getString("signature")
+    val pubkey = reqData.getString("pubkey")
+
+    if (callback != null && message != null && signature != null && pubkey != null) {
+        return CheckMessageRequest(message, signature, pubkey)
+    }
+
+    return null
+}
+
+fun asSignMessageRequest(reqData: ReadableMap): SignMessageRequest? {
+    val callback = reqData.getString("callback")
+    val message = reqData.getString("message")
+
+    if (callback != null && message != null) {
+        return SignMessageRequest(message)
+    }
+
+    return null
+}
+
 fun asPaymentTypeFilter(filter: String): PaymentTypeFilter {
     return PaymentTypeFilter.valueOf(filter.uppercase())
 }

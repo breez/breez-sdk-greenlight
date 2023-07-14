@@ -172,8 +172,9 @@ mod swap;
 mod test_utils;
 
 pub use breez_services::{
-    mnemonic_to_seed, BackupFailedData, BreezEvent, BreezServices, EventListener,
-    InvoicePaidDetails, PaymentFailedData,
+    mnemonic_to_seed, BackupFailedData, BreezEvent, BreezServices, CheckMessageRequest,
+    CheckMessageResponse, EventListener, InvoicePaidDetails, PaymentFailedData, SignMessageRequest,
+    SignMessageResponse,
 };
 pub use chain::RecommendedFees;
 pub use fiat::{CurrencyInfo, FiatCurrency, LocaleOverrides, LocalizedName, Rate, Symbol};

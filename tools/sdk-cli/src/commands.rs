@@ -49,16 +49,25 @@ pub(crate) enum Commands {
     },
 
     /// Generate a bolt11 invoice
-    ReceivePayment { amount: u64, description: String },
+    ReceivePayment {
+        amount: u64,
+        description: String,
+    },
 
     /// Pay using lnurl pay
-    LnurlPay { lnurl: String },
+    LnurlPay {
+        lnurl: String,
+    },
 
     /// Withdraw using lnurl withdraw
-    LnurlWithdraw { lnurl: String },
+    LnurlWithdraw {
+        lnurl: String,
+    },
 
     /// Authenticate using lnurl auth
-    LnurlAuth { lnurl: String },
+    LnurlAuth {
+        lnurl: String,
+    },
 
     /// Send on-chain using a reverse swap
     SendOnchain {
@@ -83,13 +92,28 @@ pub(crate) enum Commands {
     },
 
     /// Send a spontaneous (keysend) payment
-    SendSpontaneousPayment { node_id: String, amount: u64 },
+    SendSpontaneousPayment {
+        node_id: String,
+        amount: u64,
+    },
+
+    SignMessage {
+        message: String,
+    },
+
+    CheckMessage {
+        message: String,
+        pubkey: String,
+        signature: String,
+    },
 
     /// List all payments
     ListPayments {},
 
     /// Retrieve a payment by its hash
-    PaymentByHash { hash: String },
+    PaymentByHash {
+        hash: String,
+    },
 
     /// Send on-chain funds to an external address
     Sweep {
@@ -144,8 +168,12 @@ pub(crate) enum Commands {
     },
 
     /// Execute a low level node command (used for debugging)
-    ExecuteDevCommand { command: String },
+    ExecuteDevCommand {
+        command: String,
+    },
 
     /// Generates an URL to buy bitcoin from a 3rd party provider
-    BuyBitcoin { provider: BuyBitcoinProvider },
+    BuyBitcoin {
+        provider: BuyBitcoinProvider,
+    },
 }

@@ -96,6 +96,34 @@ pub struct InvoicePaidDetails {
     pub bolt11: String,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct SignMessageRequest {
+    /// The message to be signed
+    pub message: String,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct SignMessageResponse {
+    /// The signed message
+    pub signed_message: String,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct CheckMessageRequest {
+    /// The message to be checked
+    pub message: String,
+    /// The public key
+    pub pubkey: String,
+    /// The signature
+    pub signature: String,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct CheckMessageResponse {
+    /// Boolean value indicating if the message is valid or not
+    pub is_valid: bool,
+}
+
 /// BreezServices is a facade and the single entry point for the SDK.
 pub struct BreezServices {
     started: Mutex<bool>,
@@ -334,6 +362,24 @@ impl BreezServices {
             .ok_or(SdkError::PersistenceFailure {
                 err: "No node info found".into(),
             })
+    }
+
+    /// Sign given message with privkey
+    pub async fn sign_message(&self, request: SignMessageRequest) -> Result<SignMessageResponse> {
+        let signed_message = self.node_api.sign_message(&request.message).await?;
+        Ok(SignMessageResponse { signed_message })
+    }
+
+    /// Check given message for pubkey with signature (zbase)
+    pub async fn check_message(
+        &self,
+        request: CheckMessageRequest,
+    ) -> Result<CheckMessageResponse> {
+        let is_valid = self
+            .node_api
+            .check_message(&request.message, &request.pubkey, &request.signature)
+            .await?;
+        Ok(CheckMessageResponse { is_valid })
     }
 
     /// Retrieve the node up to date BackupStatus
