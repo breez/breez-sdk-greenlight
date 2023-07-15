@@ -18,7 +18,7 @@
     <PackageTags>bitcoin lightning breez sdk non-custodial</PackageTags>
     <Copyright>2023 Breez</Copyright>
   </PropertyGroup>
-`
+
   <ItemGroup>
     <None Include="../../../README.md" Pack="true" PackagePath="\"/>
     <None Include="../../../LICENSE" Pack="true" PackagePath="\"/>
