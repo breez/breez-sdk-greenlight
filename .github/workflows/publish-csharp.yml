@@ -53,11 +53,11 @@ jobs:
           cp build/libs/sdk-bindings/ffi/csharp/breez_sdk.cs dist/libs/sdk-bindings/bindings-csharp
       - name: Copy libraries
         run: |
-          mkdir -p dist/libs/sdk-bindings/bindings-csharpruntimes/osx-arm64/native && cp build/libs/target/aarch64-apple-darwin/release/libbreez_sdk_bindings.dylib "$_"
-          mkdir -p dist/libs/sdk-bindings/bindings-csharpruntimes/osx-x64/native && cp build/libs/target/x86_64-apple-darwin/release/libbreez_sdk_bindings.dylib "$_"
-          mkdir -p dist/libs/sdk-bindings/bindings-csharpruntimes/linux-arm64/native && cp build/libs/target/aarch64-unknown-linux-gnu/release/libbreez_sdk_bindings.so "$_"
-          mkdir -p dist/libs/sdk-bindings/bindings-csharpruntimes/linux-x64/native && cp build/libs/target/x86_64-unknown-linux-gnu/release/libbreez_sdk_bindings.so "$_"
-          mkdir -p dist/libs/sdk-bindings/bindings-csharpruntimes/win-x64/native && cp build/libs/target/x86_64-pc-windows-gnu/release/breez_sdk_bindings.dll "$_"
+          mkdir -p dist/libs/sdk-bindings/bindings-csharp/runtimes/osx-arm64/native && cp build/libs/target/aarch64-apple-darwin/release/libbreez_sdk_bindings.dylib "$_"
+          mkdir -p dist/libs/sdk-bindings/bindings-csharp/runtimes/osx-x64/native && cp build/libs/target/x86_64-apple-darwin/release/libbreez_sdk_bindings.dylib "$_"
+          mkdir -p dist/libs/sdk-bindings/bindings-csharp/runtimes/linux-arm64/native && cp build/libs/target/aarch64-unknown-linux-gnu/release/libbreez_sdk_bindings.so "$_"
+          mkdir -p dist/libs/sdk-bindings/bindings-csharp/runtimes/linux-x64/native && cp build/libs/target/x86_64-unknown-linux-gnu/release/libbreez_sdk_bindings.so "$_"
+          mkdir -p dist/libs/sdk-bindings/bindings-csharp/runtimes/win-x64/native && cp build/libs/target/x86_64-pc-windows-gnu/release/breez_sdk_bindings.dll "$_"
       - name: Update package version
         working-directory: dist/libs/sdk-bindings/bindings-csharp
         run: sed -i.bak -e 's/<Version>.*<\/Version>/<Version>${{ inputs.version }}<\/Version>/' Breez.Sdk.csproj
