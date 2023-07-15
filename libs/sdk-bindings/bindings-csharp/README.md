@@ -1,38 +1,15 @@
 # SDK bindings for C#.Net
 
-## Publish a package
-### Prerequisites
-- Access to the [breeztech](https://www.nuget.org/profiles/breeztech) nuget organization.
-- The signing certificate for nuget packages from breez.
-- Timestamper server url.
-
-### Process
-
-#### Build dependencies
-
-Make sure sdk-core is freshly built for all platforms.
-
-#### Bump version
-
-The `<Version>` element in `Breez.Sdk.csproj`
-
-#### Build the project
-
-from the `bindings-csharp` directory run the following command.
-
+## Usage
 ```
-dotnet pack
+dotnet add package Breez.Sdk
 ```
 
-This creates a file `./bin/Debug/Breez.Sdk.{version}.nupkg`
+## Create a package
+Run the GitHub workflow 'Publish C# Bindings' when creating a new release of Breez SDK.
+It will create an artifact containing a zip file with the nuget package in it.
 
-#### Sign package
-
-```
-dotnet nuget sign ./bin/Debug/Breez.Sdk.{version}.nupkg --certificate-path /path/to/signing/certificate.pfx --certificate-password "the password" --timestamper http://timestamping-url
-```
-
-#### Publish package
+## Publish package
 
 - Manually upload the package to the breeztech nuget organization, or
 - `dotnet nuget push ./bin/Debug/Breez.Sdk.{version}.nupkg --api-key PUT-API-KEY-HERE --source https://api.nuget.org/v3/index.json`

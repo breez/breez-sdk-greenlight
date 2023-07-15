@@ -1,0 +1,70 @@
+name: Publish C# Bindings
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'breez-sdk repo release (MAJOR.MINOR.PATCH)'
+        required: true
+        type: string
+
+jobs:
+  build-tag-release:
+    name: Build, tag, and release the Breez SDK C# bindings
+    runs-on: macOS-latest
+    steps:
+      - name: Install required dependencies
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
+        run: |
+          brew tap messense/macos-cross-toolchains
+          brew install protobuf
+          brew install mingw-w64
+          brew install aarch64-unknown-linux-gnu
+          brew install x86_64-unknown-linux-gnu
+          cargo install --version 0.22.0 uniffi_bindgen
+      - name: Checkout breez-sdk repo
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.version }}
+      - name: Build C# bindings
+        working-directory: libs/sdk-bindings
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+          CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER: x86_64-linux-gnu-gcc
+        run: |
+          make init
+          rustup target add x86_64-pc-windows-gnu
+          cargo build --release --target aarch64-unknown-linux-gnu
+          cargo build --release --target x86_64-unknown-linux-gnu
+          cargo build --release --target x86_64-pc-windows-gnu
+          make csharp-darwin
+      - name: Copy binding
+        working-directory: libs/sdk-bindings
+        run: |
+          cp ffi/csharp/breez_sdk.cs bindings-csharp
+      - name: Copy libraries
+        working-directory: libs/sdk-bindings/bindings-csharp
+        run: |
+          mkdir -p runtimes/osx-arm64/native && cp ../../target/aarch64-apple-darwin/release/libbreez_sdk_bindings.dylib "$_"
+          mkdir -p runtimes/osx-x64/native && cp ../../target/x86_64-apple-darwin/release/libbreez_sdk_bindings.dylib "$_"
+          mkdir -p runtimes/linux-arm64/native && cp ../../target/aarch64-unknown-linux-gnu/release/libbreez_sdk_bindings.so "$_"
+          mkdir -p runtimes/linux-x64/native && cp ../../target/x86_64-unknown-linux-gnu/release/libbreez_sdk_bindings.so "$_"
+          mkdir -p runtimes/win-x64/native && cp ../../target/x86_64-pc-windows-gnu/release/breez_sdk_bindings.dll "$_"
+      - name: Update package version
+        working-directory: libs/sdk-bindings/bindings-csharp
+        run: sed -i.bak -e 's/<Version>.*<\/Version>/<Version>${{ inputs.version }}<\/Version>/' Breez.Sdk.csproj
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '6.0.x'
+      - name: Build the project
+        working-directory: libs/sdk-bindings/bindings-csharp
+        run: dotnet build Breez.Sdk.csproj
+      - name: Create the package
+        working-directory: libs/sdk-bindings/bindings-csharp
+        run: dotnet pack --configuration Release Breez.Sdk.csproj
+      - name: Archive the package
+        uses: actions/upload-artifact@v2
+        with:
+          name: Breez.Sdk.${{ inputs.version }}.nupkg
+          path: libs/sdk-bindings/bindings-csharp/bin/Release/Breez.Sdk.${{ inputs.version }}.nupkg

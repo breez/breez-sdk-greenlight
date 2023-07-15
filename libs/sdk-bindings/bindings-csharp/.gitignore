@@ -475,3 +475,7 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+# Files generated for the build
+runtimes/*
+breez_sdk.cs
