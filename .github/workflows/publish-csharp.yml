@@ -6,6 +6,10 @@ on:
         description: 'breez-sdk repo release (MAJOR.MINOR.PATCH)'
         required: true
         type: string
+      cs-project-ref:
+        description: 'commit/tag to use for the csharp project. Can be different from `version`'
+        required: true
+        type: string
 
 jobs:
   build-tag-release:
@@ -27,6 +31,11 @@ jobs:
         with:
           path: build
           ref: ${{ inputs.version }}
+      - name: Checkout breez-sdk repo for C# project
+        uses: actions/checkout@v3
+        with:
+          path: dist
+          ref: ${{ inputs.cs-project-ref }}
       - name: Build C# bindings
         working-directory: build/libs/sdk-bindings
         env:
@@ -40,32 +49,31 @@ jobs:
           cargo build --release --target x86_64-pc-windows-gnu
           make csharp-darwin
       - name: Copy binding
-        working-directory: build/libs/sdk-bindings
         run: |
-          cp ffi/csharp/breez_sdk.cs bindings-csharp
+          cp build/libs/sdk-bindings/ffi/csharp/breez_sdk.cs dist/libs/sdk-bindings/bindings-csharp
       - name: Copy libraries
         working-directory: build/libs/sdk-bindings/bindings-csharp
         run: |
-          mkdir -p runtimes/osx-arm64/native && cp ../../target/aarch64-apple-darwin/release/libbreez_sdk_bindings.dylib "$_"
-          mkdir -p runtimes/osx-x64/native && cp ../../target/x86_64-apple-darwin/release/libbreez_sdk_bindings.dylib "$_"
-          mkdir -p runtimes/linux-arm64/native && cp ../../target/aarch64-unknown-linux-gnu/release/libbreez_sdk_bindings.so "$_"
-          mkdir -p runtimes/linux-x64/native && cp ../../target/x86_64-unknown-linux-gnu/release/libbreez_sdk_bindings.so "$_"
-          mkdir -p runtimes/win-x64/native && cp ../../target/x86_64-pc-windows-gnu/release/breez_sdk_bindings.dll "$_"
+          mkdir -p dist/libs/sdk-bindings/bindings-csharpruntimes/osx-arm64/native && cp build/libs/target/aarch64-apple-darwin/release/libbreez_sdk_bindings.dylib "$_"
+          mkdir -p dist/libs/sdk-bindings/bindings-csharpruntimes/osx-x64/native && cp build/libs/target/x86_64-apple-darwin/release/libbreez_sdk_bindings.dylib "$_"
+          mkdir -p dist/libs/sdk-bindings/bindings-csharpruntimes/linux-arm64/native && cp build/libs/target/aarch64-unknown-linux-gnu/release/libbreez_sdk_bindings.so "$_"
+          mkdir -p dist/libs/sdk-bindings/bindings-csharpruntimes/linux-x64/native && cp build/libs/target/x86_64-unknown-linux-gnu/release/libbreez_sdk_bindings.so "$_"
+          mkdir -p dist/libs/sdk-bindings/bindings-csharpruntimes/win-x64/native && cp build/libs/target/x86_64-pc-windows-gnu/release/breez_sdk_bindings.dll "$_"
       - name: Update package version
-        working-directory: build/libs/sdk-bindings/bindings-csharp
+        working-directory: dist/libs/sdk-bindings/bindings-csharp
         run: sed -i.bak -e 's/<Version>.*<\/Version>/<Version>${{ inputs.version }}<\/Version>/' Breez.Sdk.csproj
       - name: Setup dotnet
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '6.0.x'
       - name: Build the project
-        working-directory: build/libs/sdk-bindings/bindings-csharp
+        working-directory: dist/libs/sdk-bindings/bindings-csharp
         run: dotnet build Breez.Sdk.csproj
       - name: Create the package
-        working-directory: build/libs/sdk-bindings/bindings-csharp
+        working-directory: dist/libs/sdk-bindings/bindings-csharp
         run: dotnet pack --configuration Release Breez.Sdk.csproj
       - name: Archive the package
         uses: actions/upload-artifact@v2
         with:
           name: Breez.Sdk.${{ inputs.version }}.nupkg
-          path: build/libs/sdk-bindings/bindings-csharp/bin/Release/Breez.Sdk.${{ inputs.version }}.nupkg
+          path: dist/libs/sdk-bindings/bindings-csharp/bin/Release/Breez.Sdk.${{ inputs.version }}.nupkg
