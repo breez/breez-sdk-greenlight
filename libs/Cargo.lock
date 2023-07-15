@@ -510,6 +510,7 @@ version = "0.1.4"
 dependencies = [
  "anyhow",
  "breez-sdk-core",
+ "camino",
  "flutter_rust_bridge",
  "lightning-invoice",
  "log",
@@ -519,6 +520,7 @@ dependencies = [
  "tokio",
  "tonic",
  "uniffi",
+ "uniffi-kotlin-multiplatform",
  "uniffi_bindgen",
  "uniffi_build",
  "uniffi_macros",
@@ -1496,6 +1498,25 @@ checksum = "7d20d6b07bfbc108882d88ed8e37d39636dcc260e15e30c45e6ba089610b917c"
 dependencies = [
  "unicode-bidi",
  "unicode-normalization",
+]
+
+[[package]]
+name = "include_dir"
+version = "0.7.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "18762faeff7122e89e0857b02f7ce6fcc0d101d5e9ad2ad7846cc01d61b7f19e"
+dependencies = [
+ "include_dir_macros",
+]
+
+[[package]]
+name = "include_dir_macros"
+version = "0.7.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b139284b5cf57ecfa712bcc66950bb635b31aff41c188e8a4cfc758eca374a3f"
+dependencies = [
+ "proc-macro2",
+ "quote",
 ]
 
 [[package]]
@@ -3190,6 +3211,22 @@ dependencies = [
  "uniffi_bindgen",
  "uniffi_core",
  "uniffi_macros",
+]
+
+[[package]]
+name = "uniffi-kotlin-multiplatform"
+version = "0.1.0"
+source = "git+https://gitlab.com/trixnity/uniffi-kotlin-multiplatform-bindings?rev=f33adbf1e97b3554eb815d5873308e0efc199f63#f33adbf1e97b3554eb815d5873308e0efc199f63"
+dependencies = [
+ "anyhow",
+ "askama",
+ "camino",
+ "heck",
+ "include_dir",
+ "paste",
+ "serde",
+ "toml",
+ "uniffi_bindgen",
 ]
 
 [[package]]
