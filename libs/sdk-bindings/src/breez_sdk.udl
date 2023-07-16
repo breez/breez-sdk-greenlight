@@ -432,7 +432,10 @@ interface BlockingBreezServices {
    LnUrlCallbackStatus lnurl_auth(LnUrlAuthRequestData req_data);
 
    [Throws=SdkError]
-   NodeState? node_info();
+   NodeState? node_info_persisted();
+
+   [Throws=SdkError]
+   NodeState node_info();
 
    [Throws=SdkError]
    BackupStatus backup_status();

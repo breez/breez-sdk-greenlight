@@ -59,8 +59,13 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kReceivePaymentConstMeta;
 
+  /// See [BreezServices::node_info_persisted]
+  Future<NodeState?> nodeInfoPersisted({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kNodeInfoPersistedConstMeta;
+
   /// See [BreezServices::node_info]
-  Future<NodeState?> nodeInfo({dynamic hint});
+  Future<NodeState> nodeInfo({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kNodeInfoConstMeta;
 
@@ -1268,10 +1273,25 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["amountSats", "description"],
       );
 
-  Future<NodeState?> nodeInfo({dynamic hint}) {
+  Future<NodeState?> nodeInfoPersisted({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_node_info_persisted(port_),
+      parseSuccessData: _wire2api_opt_box_autoadd_node_state,
+      constMeta: kNodeInfoPersistedConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kNodeInfoPersistedConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "node_info_persisted",
+        argNames: [],
+      );
+
+  Future<NodeState> nodeInfo({dynamic hint}) {
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_node_info(port_),
-      parseSuccessData: _wire2api_opt_box_autoadd_node_state,
+      parseSuccessData: _wire2api_node_state,
       constMeta: kNodeInfoConstMeta,
       argValues: [],
       hint: hint,
@@ -3087,6 +3107,18 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
           'wire_receive_payment');
   late final _wire_receive_payment =
       _wire_receive_paymentPtr.asFunction<void Function(int, int, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_node_info_persisted(
+    int port_,
+  ) {
+    return _wire_node_info_persisted(
+      port_,
+    );
+  }
+
+  late final _wire_node_info_persistedPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_node_info_persisted');
+  late final _wire_node_info_persisted = _wire_node_info_persistedPtr.asFunction<void Function(int)>();
 
   void wire_node_info(
     int port_,

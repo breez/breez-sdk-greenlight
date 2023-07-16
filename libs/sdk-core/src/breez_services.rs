@@ -326,8 +326,18 @@ impl BreezServices {
     }
 
     /// Retrieve the node state from the persistent storage
-    pub fn node_info(&self) -> SdkResult<Option<NodeState>> {
+    pub fn node_info_persisted(&self) -> SdkResult<Option<NodeState>> {
         self.persister.get_node_state()
+    }
+
+    /// Retrieve the node state from the persistent storage.
+    ///
+    /// Fail if it could not be retrieved or if `None` was found.
+    pub fn node_info(&self) -> SdkResult<NodeState> {
+        self.node_info_persisted()?
+            .ok_or(SdkError::PersistenceFailure {
+                err: "No node info found".into(),
+            })
     }
 
     /// Retrieve the node up to date BackupStatus
@@ -393,13 +403,7 @@ impl BreezServices {
     /// List available LSPs that can be selected by the user
     pub async fn list_lsps(&self) -> SdkResult<Vec<LspInformation>> {
         self.lsp_api
-            .list_lsps(
-                self.node_info()?
-                    .ok_or(SdkError::PersistenceFailure {
-                        err: "No node info found".into(),
-                    })?
-                    .id,
-            )
+            .list_lsps(self.node_info()?.id)
             .await
             .map_err(|e| SdkError::LspConnectFailed { err: e.to_string() })
     }
@@ -720,7 +724,7 @@ impl BreezServices {
 
         // Sync node state
         let sync_breez_services = self.clone();
-        match sync_breez_services.node_info()? {
+        match sync_breez_services.node_info_persisted()? {
             Some(_) => {
                 // In case it is not a first run we sync in background to start quickly.
                 tokio::spawn(async move {
@@ -1545,11 +1549,7 @@ pub(crate) mod tests {
             .await?;
 
         breez_services.sync().await?;
-        let fetched_state = breez_services
-            .node_info()?
-            .ok_or(SdkError::PersistenceFailure {
-                err: "No node info found".into(),
-            })?;
+        let fetched_state = breez_services.node_info()?;
         assert_eq!(fetched_state, dummy_node_state);
 
         let all = breez_services
@@ -1620,12 +1620,7 @@ pub(crate) mod tests {
         })?;
         breez_services.sync().await?;
 
-        let node_pubkey = breez_services
-            .node_info()?
-            .ok_or(SdkError::PersistenceFailure {
-                err: "No node info found".into(),
-            })?
-            .id;
+        let node_pubkey = breez_services.node_info()?.id;
         let lsps = breez_services.lsp_api.list_lsps(node_pubkey).await?;
         assert_eq!(lsps.len(), 1);
 

@@ -106,6 +106,8 @@ void wire_receive_payment(int64_t port_,
                           uint64_t amount_sats,
                           struct wire_uint_8_list *description);
 
+void wire_node_info_persisted(int64_t port_);
+
 void wire_node_info(int64_t port_);
 
 void wire_list_payments(int64_t port_,
@@ -223,6 +225,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_send_payment);
     dummy_var ^= ((int64_t) (void*) wire_send_spontaneous_payment);
     dummy_var ^= ((int64_t) (void*) wire_receive_payment);
+    dummy_var ^= ((int64_t) (void*) wire_node_info_persisted);
     dummy_var ^= ((int64_t) (void*) wire_node_info);
     dummy_var ^= ((int64_t) (void*) wire_list_payments);
     dummy_var ^= ((int64_t) (void*) wire_payment_by_hash);
