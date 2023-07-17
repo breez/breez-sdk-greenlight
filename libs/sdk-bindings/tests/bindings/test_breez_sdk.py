@@ -4,6 +4,7 @@ import breez_sdk
 class SDKListener(breez_sdk.EventListener):
    def on_event(self, event):
       #print(event)
+      pass
 
 
 def test():        
