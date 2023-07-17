@@ -285,7 +285,6 @@ impl NodeAPI for Greenlight {
             .list_funds(pb::ListFundsRequest::default())
             .await?
             .into_inner();
-        let offchain_funds = funds.channels;
         let onchain_funds = funds.outputs;
 
         // filter only connected peers
@@ -338,13 +337,12 @@ impl NodeAPI for Greenlight {
         all_channel_models.extend(forgotten_closed_channels?);
 
         // calculate channels balance only from opened channels
-        let channels_balance = offchain_funds.iter().fold(0, |a, b| {
-            let hex_txid = hex::encode(b.funding_txid.clone());
-            if opened_channels.iter().any(|c| c.funding_txid == hex_txid) {
-                return a + b.our_amount_msat;
-            }
-            a
-        });
+        let channels_balance = opened_channels
+            .iter()
+            .map(|c: &&pb::Channel| {
+                amount_to_msat(&parse_amount(c.spendable.clone()).unwrap_or_default())
+            })
+            .sum::<u64>();
 
         // calculate onchain balance
         let onchain_balance = onchain_funds.iter().fold(0, |a, b| {
