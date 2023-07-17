@@ -19,7 +19,7 @@ class SDKListener : EventListener
 {
  public void OnEvent(BreezEvent e)
  {
-  Console.WriteLine("received event " + e);
+  //Console.WriteLine("received event " + e);
  }
 }
 

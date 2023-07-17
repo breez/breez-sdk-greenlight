@@ -13,7 +13,7 @@ func (BreezListener) Log(l breez_sdk.LogEntry) {
 }
 
 func (BreezListener) OnEvent(e breez_sdk.BreezEvent) {
-	log.Printf("%#v", e)
+	//log.Printf("%#v", e)
 }
 
 func main() {

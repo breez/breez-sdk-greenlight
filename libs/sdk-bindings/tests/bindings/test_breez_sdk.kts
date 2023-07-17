@@ -3,7 +3,7 @@ import breez_sdk.BreezEvent
 
 class SDKListener: breez_sdk.EventListener {
     override fun onEvent(e: BreezEvent) {
-        println(e.toString());
+        //println(e.toString());
     }
 }
 

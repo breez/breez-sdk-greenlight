@@ -9,7 +9,7 @@ class SDKListener: EventListener {
 
 class LogStreamListener: LogStream {
     func log(l: LogEntry){
-      print(l.line);
+      //print(l.line);
     }
 }
 
