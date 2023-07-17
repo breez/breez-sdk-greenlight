@@ -49,7 +49,8 @@ jobs:
         continue-on-error: false
         with:
           path: |           
-            ~/.cargo/               
+            ~/.cargo/             
+            libs/target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
       - name: run lib tests        
@@ -59,7 +60,7 @@ jobs:
           cd libs/sdk-bindings
           make csharp-darwin golang-darwin
           cd ..          
-          cargo test
+          cargo test -- --test-threads=1
       
       - name: run tools tests        
         run: |

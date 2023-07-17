@@ -3,13 +3,13 @@ import breez_sdk.BreezEvent
 
 class SDKListener: breez_sdk.EventListener {
     override fun onEvent(e: BreezEvent) {
-        //println(e.toString());
+        println(e.toString());
     }
 }
 
 class LogStreamListener: breez_sdk.LogStream { 
     override fun log(l: breez_sdk.LogEntry) {
-        println(l.line);
+        //println(l.line);
     }
 }
 
