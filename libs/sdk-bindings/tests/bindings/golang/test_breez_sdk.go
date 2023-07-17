@@ -9,11 +9,11 @@ import (
 type BreezListener struct{}
 
 func (BreezListener) Log(l breez_sdk.LogEntry) {
-	log.Print(l.Line)
+	//log.Print(l.Line)
 }
 
 func (BreezListener) OnEvent(e breez_sdk.BreezEvent) {
-	//log.Printf("%#v", e)
+	log.Printf("%#v", e)
 }
 
 func main() {
@@ -28,11 +28,12 @@ func main() {
 	}
 
 	inviteCode := "code"
-	config := breez_sdk.DefaultConfig(breez_sdk.EnvironmentTypeStaging, "", breez_sdk.NodeConfigGreenlight{Config: breez_sdk.GreenlightNodeConfig{PartnerCredentials: nil, InviteCode: &inviteCode}})
+	config := breez_sdk.DefaultConfig(breez_sdk.EnvironmentTypeStaging, "aa", breez_sdk.NodeConfigGreenlight{Config: breez_sdk.GreenlightNodeConfig{PartnerCredentials: nil, InviteCode: &inviteCode}})
 	sdkServices, err := breez_sdk.Connect(config, seed, breezListener)
 
 	if err != nil {
-		log.Fatalf("Connect failed: %#v", err)
+		t := err.(*breez_sdk.SdkError).Error()
+		log.Fatalf("Connect failed: %#v", t)
 	}
 
 	nodeInfo, err := sdkServices.NodeInfo()
