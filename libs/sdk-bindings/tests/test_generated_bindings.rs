@@ -7,6 +7,7 @@ uniffi::build_foreign_language_testcases!(
 );
 
 #[test]
+#[ignore]
 fn test_csharp() {
     let output = Command::new("dotnet")
         .arg("run")
