@@ -42,8 +42,16 @@ jobs:
         run: |
           cd libs/sdk-bindings
           make init      
-          brew install protobuf          
+          brew install protobuf     
 
+      - name: Set up cargo cache
+        uses: actions/cache@v3
+        continue-on-error: false
+        with:
+          path: |           
+            ~/.cargo/               
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
       - name: run lib tests        
         run: |                    
           curl -o jna-5.12.1.jar https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.12.1/jna-5.12.1.jar
