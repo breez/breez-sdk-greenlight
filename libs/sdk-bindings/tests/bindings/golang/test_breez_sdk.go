@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"example.org/golang/breez_sdk"
@@ -9,11 +10,13 @@ import (
 type BreezListener struct{}
 
 func (BreezListener) Log(l breez_sdk.LogEntry) {
-	log.Print(l.Line)
+	if l.Level != "TRACE" {
+		fmt.Printf("%v\n", l.Line)
+	}
 }
 
 func (BreezListener) OnEvent(e breez_sdk.BreezEvent) {
-	log.Printf("%#v", e)
+	fmt.Printf("%#v", e)
 }
 
 func main() {

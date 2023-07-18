@@ -9,7 +9,9 @@ class SDKListener: EventListener {
 
 class LogStreamListener: LogStream {
     func log(l: LogEntry){
-      print(l.line);
+        if l.level != "TRACE" {
+            print(l.line);
+        }
     }
 }
 

@@ -9,7 +9,9 @@ class SDKListener: breez_sdk.EventListener {
 
 class LogStreamListener: breez_sdk.LogStream { 
     override fun log(l: breez_sdk.LogEntry) {
-        println(l.line);
+        if l.level != "TRACE" {
+            println(l.line);
+        }
     }
 }
 
