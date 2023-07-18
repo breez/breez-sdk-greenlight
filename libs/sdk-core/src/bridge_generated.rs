@@ -184,16 +184,6 @@ fn wire_receive_payment_impl(
         },
     )
 }
-fn wire_node_info_persisted_impl(port_: MessagePort) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
-        WrapInfo {
-            debug_name: "node_info_persisted",
-            port: Some(port_),
-            mode: FfiCallMode::Normal,
-        },
-        move || move |task_callback| node_info_persisted(),
-    )
-}
 fn wire_node_info_impl(port_: MessagePort) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {

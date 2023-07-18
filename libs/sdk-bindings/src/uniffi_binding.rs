@@ -121,10 +121,6 @@ impl BlockingBreezServices {
         )
     }
 
-    pub fn node_info_persisted(&self) -> SdkResult<Option<NodeState>> {
-        self.breez_services.node_info_persisted()
-    }
-
     pub fn node_info(&self) -> SdkResult<NodeState> {
         self.breez_services.node_info()
     }

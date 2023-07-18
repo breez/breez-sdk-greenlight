@@ -160,15 +160,6 @@ pub fn receive_payment(amount_sats: u64, description: String) -> Result<LNInvoic
     .map_err(anyhow::Error::new)
 }
 
-/// See [BreezServices::node_info_persisted]
-pub fn node_info_persisted() -> Result<Option<NodeState>> {
-    block_on(async {
-        get_breez_services()?
-            .node_info_persisted()
-            .map_err(anyhow::Error::new)
-    })
-}
-
 /// See [BreezServices::node_info]
 pub fn node_info() -> Result<NodeState> {
     block_on(async {

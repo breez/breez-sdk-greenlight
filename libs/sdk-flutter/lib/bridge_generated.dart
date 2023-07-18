@@ -59,11 +59,6 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kReceivePaymentConstMeta;
 
-  /// See [BreezServices::node_info_persisted]
-  Future<NodeState?> nodeInfoPersisted({dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kNodeInfoPersistedConstMeta;
-
   /// See [BreezServices::node_info]
   Future<NodeState> nodeInfo({dynamic hint});
 
@@ -1273,21 +1268,6 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["amountSats", "description"],
       );
 
-  Future<NodeState?> nodeInfoPersisted({dynamic hint}) {
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_node_info_persisted(port_),
-      parseSuccessData: _wire2api_opt_box_autoadd_node_state,
-      constMeta: kNodeInfoPersistedConstMeta,
-      argValues: [],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kNodeInfoPersistedConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "node_info_persisted",
-        argNames: [],
-      );
-
   Future<NodeState> nodeInfo({dynamic hint}) {
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_node_info(port_),
@@ -1918,10 +1898,6 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return _wire2api_message_success_action_data(raw);
   }
 
-  NodeState _wire2api_box_autoadd_node_state(dynamic raw) {
-    return _wire2api_node_state(raw);
-  }
-
   Payment _wire2api_box_autoadd_payment(dynamic raw) {
     return _wire2api_payment(raw);
   }
@@ -2377,10 +2353,6 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   LspInformation? _wire2api_opt_box_autoadd_lsp_information(dynamic raw) {
     return raw == null ? null : _wire2api_box_autoadd_lsp_information(raw);
-  }
-
-  NodeState? _wire2api_opt_box_autoadd_node_state(dynamic raw) {
-    return raw == null ? null : _wire2api_box_autoadd_node_state(raw);
   }
 
   Payment? _wire2api_opt_box_autoadd_payment(dynamic raw) {
@@ -3107,18 +3079,6 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
           'wire_receive_payment');
   late final _wire_receive_payment =
       _wire_receive_paymentPtr.asFunction<void Function(int, int, ffi.Pointer<wire_uint_8_list>)>();
-
-  void wire_node_info_persisted(
-    int port_,
-  ) {
-    return _wire_node_info_persisted(
-      port_,
-    );
-  }
-
-  late final _wire_node_info_persistedPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_node_info_persisted');
-  late final _wire_node_info_persisted = _wire_node_info_persistedPtr.asFunction<void Function(int)>();
 
   void wire_node_info(
     int port_,

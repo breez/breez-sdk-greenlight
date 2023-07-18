@@ -325,16 +325,12 @@ impl BreezServices {
             .await
     }
 
-    /// Retrieve the node state from the persistent storage
-    pub fn node_info_persisted(&self) -> SdkResult<Option<NodeState>> {
-        self.persister.get_node_state()
-    }
-
     /// Retrieve the node state from the persistent storage.
     ///
     /// Fail if it could not be retrieved or if `None` was found.
     pub fn node_info(&self) -> SdkResult<NodeState> {
-        self.node_info_persisted()?
+        self.persister
+            .get_node_state()?
             .ok_or(SdkError::PersistenceFailure {
                 err: "No node info found".into(),
             })
@@ -696,7 +692,7 @@ impl BreezServices {
     async fn start_background_tasks(self: &Arc<BreezServices>) -> Result<()> {
         // Sync node state
         let sync_breez_services = self.clone();
-        match sync_breez_services.node_info_persisted()? {
+        match sync_breez_services.persister.get_node_state()? {
             Some(node) => {
                 info!("Starting existing node {}", node.id)
             }
