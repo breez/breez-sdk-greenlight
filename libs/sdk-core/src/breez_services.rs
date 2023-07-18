@@ -360,8 +360,8 @@ impl BreezServices {
             .map_err(|err| anyhow!(err))
     }
 
-    /// Fetch a specific payment by its hash.
-    pub async fn payment_by_hash(&self, hash: String) -> Result<Option<Payment>> {
+    /// Get a specific payment by its hash.
+    pub async fn get_payment_by_hash(&self, hash: String) -> Result<Option<Payment>> {
         self.persister
             .get_payment_by_hash(&hash)
             .map_err(|err| anyhow!(err))
@@ -402,7 +402,7 @@ impl BreezServices {
     }
 
     /// Get the current LSP's ID
-    pub async fn lsp_id(&self) -> Result<Option<String>> {
+    pub async fn get_lsp_id(&self) -> Result<Option<String>> {
         self.persister.get_lsp_id()
     }
 

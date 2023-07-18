@@ -171,7 +171,7 @@ impl BlockingBreezServices {
     }
 
     pub fn payment_by_hash(&self, hash: String) -> Result<Option<Payment>, SDKError> {
-        rt().block_on(self.breez_services.payment_by_hash(hash))
+        rt().block_on(self.breez_services.get_payment_by_hash(hash))
             .map_err(|e| e.into())
     }
 
@@ -244,7 +244,7 @@ impl BlockingBreezServices {
     }
 
     pub fn lsp_id(&self) -> Result<Option<String>, SDKError> {
-        rt().block_on(self.breez_services.lsp_id())
+        rt().block_on(self.breez_services.get_lsp_id())
             .map_err(|e| e.into())
     }
 

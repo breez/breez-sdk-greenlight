@@ -10,7 +10,7 @@ class UnsupportedPlatform implements Exception {
   UnsupportedPlatform(String s);
 }
 
-BreezSdkCore getNativeToolkit() {
+BreezSdkCore getBreezSdk() {
   if (_breezSDK == null) {
     if (Platform.isAndroid || Platform.isLinux) {
       // On Linux the lib needs to be in LD_LIBRARY_PATH or working directory

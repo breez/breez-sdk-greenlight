@@ -14,22 +14,44 @@ import 'dart:ffi' as ffi;
 part 'bridge_generated.freezed.dart';
 
 abstract class BreezSdkCore {
-  /// Check whether node service is initialized or not
-  Future<bool> initialized({dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kInitializedConstMeta;
-
-  /// connect initializes the global NodeService, schedule the node to run in the cloud and
-  /// run the signer. This must be called in order to start communicate with the node
-  ///
-  /// # Arguments
-  ///
-  /// * `config` - The sdk configuration
-  /// * `seed` - The node private key
-  ///
+  /// See [BreezServices::connect]
   Future<void> connect({required Config config, required Uint8List seed, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kConnectConstMeta;
+
+  /// Check whether node service is initialized or not
+  Future<bool> checkInitialized({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kCheckInitializedConstMeta;
+
+  /// See [BreezServices::sync]
+  Future<void> syncNode({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kSyncNodeConstMeta;
+
+  /// See [BreezServices::node_info]
+  Future<NodeState?> getNodeState({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kGetNodeStateConstMeta;
+
+  /// Cleanup node resources and stop the signer.
+  Future<void> stopNode({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kStopNodeConstMeta;
+
+  /// See [breez_services::mnemonic_to_seed]
+  Future<Uint8List> convertMnemonicToSeed({required String phrase, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kConvertMnemonicToSeedConstMeta;
+
+  /// See [BreezServices::default_config]
+  Future<Config> getDefaultConfig(
+      {required EnvironmentType envType,
+      required String apiKey,
+      required NodeConfig nodeConfig,
+      dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kGetDefaultConfigConstMeta;
 
   Stream<BreezEvent> breezEventsStream({dynamic hint});
 
@@ -39,10 +61,61 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kBreezLogStreamConstMeta;
 
-  /// Cleanup node resources and stop the signer.
-  Future<void> stopNode({dynamic hint});
+  /// See [BreezServices::list_lsps]
+  Future<List<LspInformation>> listLsps({dynamic hint});
 
-  FlutterRustBridgeTaskConstMeta get kStopNodeConstMeta;
+  FlutterRustBridgeTaskConstMeta get kListLspsConstMeta;
+
+  /// See [BreezServices::connect_lsp]
+  Future<void> connectLsp({required String lspId, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kConnectLspConstMeta;
+
+  /// See [BreezServices::get_lsp_id]
+  Future<String?> getLspId({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kGetLspIdConstMeta;
+
+  /// See [BreezServices::fetch_lsp_info]
+  Future<LspInformation?> fetchLspInfo({required String id, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kFetchLspInfoConstMeta;
+
+  /// See [BreezServices::close_lsp_channels]
+  Future<void> closeLspChannels({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kCloseLspChannelsConstMeta;
+
+  /// See [BreezServices::backup]
+  Future<void> backup({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kBackupConstMeta;
+
+  /// See [BreezServices::backup_status]
+  Future<BackupStatus> getBackupStatus({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kGetBackupStatusConstMeta;
+
+  /// See [invoice::parse_invoice]
+  Future<LNInvoice> parseInvoice({required String invoice, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kParseInvoiceConstMeta;
+
+  /// See [input_parser::parse]
+  Future<InputType> parseInput({required String s, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kParseInputConstMeta;
+
+  /// See [BreezServices::list_payments]
+  Future<List<Payment>> listPayments(
+      {required PaymentTypeFilter filter, int? fromTimestamp, int? toTimestamp, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kListPaymentsConstMeta;
+
+  /// See [BreezServices::get_payment_by_hash]
+  Future<Payment?> getPaymentByHash({required String hash, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kGetPaymentByHashConstMeta;
 
   /// See [BreezServices::send_payment]
   Future<Payment> sendPayment({required String bolt11, int? amountSats, dynamic hint});
@@ -58,120 +131,6 @@ abstract class BreezSdkCore {
   Future<LNInvoice> receivePayment({required int amountSats, required String description, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kReceivePaymentConstMeta;
-
-  /// See [BreezServices::node_info]
-  Future<NodeState?> nodeInfo({dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kNodeInfoConstMeta;
-
-  /// See [BreezServices::list_payments]
-  Future<List<Payment>> listPayments(
-      {required PaymentTypeFilter filter, int? fromTimestamp, int? toTimestamp, dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kListPaymentsConstMeta;
-
-  /// See [BreezServices::list_payments]
-  Future<Payment?> paymentByHash({required String hash, dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kPaymentByHashConstMeta;
-
-  /// See [BreezServices::list_lsps]
-  Future<List<LspInformation>> listLsps({dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kListLspsConstMeta;
-
-  /// See [BreezServices::connect_lsp]
-  Future<void> connectLsp({required String lspId, dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kConnectLspConstMeta;
-
-  /// See [BreezServices::fetch_lsp_info]
-  Future<LspInformation?> fetchLspInfo({required String id, dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kFetchLspInfoConstMeta;
-
-  /// See [BreezServices::lsp_id]
-  Future<String?> lspId({dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kLspIdConstMeta;
-
-  /// See [BreezServices::fetch_fiat_rates]
-  Future<List<Rate>> fetchFiatRates({dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kFetchFiatRatesConstMeta;
-
-  /// See [BreezServices::list_fiat_currencies]
-  Future<List<FiatCurrency>> listFiatCurrencies({dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kListFiatCurrenciesConstMeta;
-
-  /// See [BreezServices::close_lsp_channels]
-  Future<void> closeLspChannels({dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kCloseLspChannelsConstMeta;
-
-  /// See [BreezServices::sweep]
-  Future<void> sweep({required String toAddress, required int feeRateSatsPerVbyte, dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kSweepConstMeta;
-
-  /// See [BreezServices::receive_onchain]
-  Future<SwapInfo> receiveOnchain({dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kReceiveOnchainConstMeta;
-
-  /// See [BreezServices::in_progress_swap]
-  Future<SwapInfo?> inProgressSwap({dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kInProgressSwapConstMeta;
-
-  /// See [BreezServices::list_refundables]
-  Future<List<SwapInfo>> listRefundables({dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kListRefundablesConstMeta;
-
-  /// See [BreezServices::refund]
-  Future<String> refund(
-      {required String swapAddress, required String toAddress, required int satPerVbyte, dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kRefundConstMeta;
-
-  /// See [BreezServices::fetch_reverse_swap_fees]
-  Future<ReverseSwapPairInfo> fetchReverseSwapFees({dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kFetchReverseSwapFeesConstMeta;
-
-  /// See [BreezServices::in_progress_reverse_swaps]
-  Future<List<ReverseSwapInfo>> inProgressReverseSwaps({dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kInProgressReverseSwapsConstMeta;
-
-  /// See [BreezServices::send_onchain]
-  Future<ReverseSwapInfo> sendOnchain(
-      {required int amountSat,
-      required String onchainRecipientAddress,
-      required String pairHash,
-      required int satPerVbyte,
-      dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kSendOnchainConstMeta;
-
-  /// See [BreezServices::execute_dev_command]
-  Future<String> executeCommand({required String command, dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kExecuteCommandConstMeta;
-
-  Future<void> syncNode({dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kSyncNodeConstMeta;
-
-  Future<LNInvoice> parseInvoice({required String invoice, dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kParseInvoiceConstMeta;
-
-  Future<InputType> parse({required String s, dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kParseConstMeta;
 
   /// See [BreezServices::lnurl_pay]
   Future<LnUrlPayResult> lnurlPay(
@@ -193,39 +152,76 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kLnurlAuthConstMeta;
 
-  /// See [breez_services::mnemonic_to_seed]
-  Future<Uint8List> mnemonicToSeed({required String phrase, dynamic hint});
+  /// See [BreezServices::fetch_fiat_rates]
+  Future<List<Rate>> fetchFiatRates({dynamic hint});
 
-  FlutterRustBridgeTaskConstMeta get kMnemonicToSeedConstMeta;
+  FlutterRustBridgeTaskConstMeta get kFetchFiatRatesConstMeta;
 
-  /// See [BreezServices::recommended_fees]
-  Future<RecommendedFees> recommendedFees({dynamic hint});
+  /// See [BreezServices::list_fiat_currencies]
+  Future<List<FiatCurrency>> listFiatCurrencies({dynamic hint});
 
-  FlutterRustBridgeTaskConstMeta get kRecommendedFeesConstMeta;
+  FlutterRustBridgeTaskConstMeta get kListFiatCurrenciesConstMeta;
 
-  /// See [BreezServices::default_config]
-  Future<Config> defaultConfig(
-      {required EnvironmentType envType,
-      required String apiKey,
-      required NodeConfig nodeConfig,
+  /// See [BreezServices::send_onchain]
+  Future<ReverseSwapInfo> sendOnchain(
+      {required int amountSat,
+      required String onchainRecipientAddress,
+      required String pairHash,
+      required int satPerVbyte,
       dynamic hint});
 
-  FlutterRustBridgeTaskConstMeta get kDefaultConfigConstMeta;
+  FlutterRustBridgeTaskConstMeta get kSendOnchainConstMeta;
+
+  /// See [BreezServices::receive_onchain]
+  Future<SwapInfo> receiveOnchain({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kReceiveOnchainConstMeta;
 
   /// See [BreezServices::buy_bitcoin]
   Future<String> buyBitcoin({required BuyBitcoinProvider provider, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kBuyBitcoinConstMeta;
 
-  /// See [BreezServices::backup]
-  Future<void> backup({dynamic hint});
+  /// See [BreezServices::sweep]
+  Future<void> sweep({required String toAddress, required int feeRateSatsPerVbyte, dynamic hint});
 
-  FlutterRustBridgeTaskConstMeta get kBackupConstMeta;
+  FlutterRustBridgeTaskConstMeta get kSweepConstMeta;
 
-  /// See [BreezServices::backup_status]
-  Future<BackupStatus> backupStatus({dynamic hint});
+  /// See [BreezServices::list_refundables]
+  Future<List<SwapInfo>> listRefundableSwaps({dynamic hint});
 
-  FlutterRustBridgeTaskConstMeta get kBackupStatusConstMeta;
+  FlutterRustBridgeTaskConstMeta get kListRefundableSwapsConstMeta;
+
+  /// See [BreezServices::refund]
+  Future<String> refundSwap(
+      {required String swapAddress, required String toAddress, required int satPerVbyte, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kRefundSwapConstMeta;
+
+  /// See [BreezServices::in_progress_swap]
+  Future<SwapInfo?> getInProgressSwap({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kGetInProgressSwapConstMeta;
+
+  /// See [BreezServices::in_progress_reverse_swaps]
+  Future<List<ReverseSwapInfo>> listInProgressReverseSwaps({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kListInProgressReverseSwapsConstMeta;
+
+  /// See [BreezServices::fetch_reverse_swap_fees]
+  Future<ReverseSwapPairInfo> fetchReverseSwapFees({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kFetchReverseSwapFeesConstMeta;
+
+  /// See [BreezServices::recommended_fees]
+  Future<RecommendedFees> fetchRecommendedFees({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kFetchRecommendedFeesConstMeta;
+
+  /// See [BreezServices::execute_dev_command]
+  Future<String> executeCommand({required String command, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kExecuteCommandConstMeta;
 }
 
 /// Wrapper for the decrypted [AesSuccessActionData] payload
@@ -1140,21 +1136,6 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   /// Only valid on web/WASM platforms.
   factory BreezSdkCoreImpl.wasm(FutureOr<WasmModule> module) => BreezSdkCoreImpl(module as ExternalLibrary);
   BreezSdkCoreImpl.raw(this._platform);
-  Future<bool> initialized({dynamic hint}) {
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_initialized(port_),
-      parseSuccessData: _wire2api_bool,
-      constMeta: kInitializedConstMeta,
-      argValues: [],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kInitializedConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "initialized",
-        argNames: [],
-      );
-
   Future<void> connect({required Config config, required Uint8List seed, dynamic hint}) {
     var arg0 = _platform.api2wire_box_autoadd_config(config);
     var arg1 = _platform.api2wire_uint_8_list(seed);
@@ -1170,6 +1151,104 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kConnectConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "connect",
         argNames: ["config", "seed"],
+      );
+
+  Future<bool> checkInitialized({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_check_initialized(port_),
+      parseSuccessData: _wire2api_bool,
+      constMeta: kCheckInitializedConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kCheckInitializedConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "check_initialized",
+        argNames: [],
+      );
+
+  Future<void> syncNode({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_sync_node(port_),
+      parseSuccessData: _wire2api_unit,
+      constMeta: kSyncNodeConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kSyncNodeConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "sync_node",
+        argNames: [],
+      );
+
+  Future<NodeState?> getNodeState({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_get_node_state(port_),
+      parseSuccessData: _wire2api_opt_box_autoadd_node_state,
+      constMeta: kGetNodeStateConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kGetNodeStateConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "get_node_state",
+        argNames: [],
+      );
+
+  Future<void> stopNode({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_stop_node(port_),
+      parseSuccessData: _wire2api_unit,
+      constMeta: kStopNodeConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kStopNodeConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "stop_node",
+        argNames: [],
+      );
+
+  Future<Uint8List> convertMnemonicToSeed({required String phrase, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(phrase);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_convert_mnemonic_to_seed(port_, arg0),
+      parseSuccessData: _wire2api_uint_8_list,
+      constMeta: kConvertMnemonicToSeedConstMeta,
+      argValues: [phrase],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kConvertMnemonicToSeedConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "convert_mnemonic_to_seed",
+        argNames: ["phrase"],
+      );
+
+  Future<Config> getDefaultConfig(
+      {required EnvironmentType envType,
+      required String apiKey,
+      required NodeConfig nodeConfig,
+      dynamic hint}) {
+    var arg0 = api2wire_environment_type(envType);
+    var arg1 = _platform.api2wire_String(apiKey);
+    var arg2 = _platform.api2wire_box_autoadd_node_config(nodeConfig);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_get_default_config(port_, arg0, arg1, arg2),
+      parseSuccessData: _wire2api_config,
+      constMeta: kGetDefaultConfigConstMeta,
+      argValues: [envType, apiKey, nodeConfig],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kGetDefaultConfigConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "get_default_config",
+        argNames: ["envType", "apiKey", "nodeConfig"],
       );
 
   Stream<BreezEvent> breezEventsStream({dynamic hint}) {
@@ -1202,19 +1281,178 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: [],
       );
 
-  Future<void> stopNode({dynamic hint}) {
+  Future<List<LspInformation>> listLsps({dynamic hint}) {
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_stop_node(port_),
-      parseSuccessData: _wire2api_unit,
-      constMeta: kStopNodeConstMeta,
+      callFfi: (port_) => _platform.inner.wire_list_lsps(port_),
+      parseSuccessData: _wire2api_list_lsp_information,
+      constMeta: kListLspsConstMeta,
       argValues: [],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kStopNodeConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "stop_node",
+  FlutterRustBridgeTaskConstMeta get kListLspsConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "list_lsps",
         argNames: [],
+      );
+
+  Future<void> connectLsp({required String lspId, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(lspId);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_connect_lsp(port_, arg0),
+      parseSuccessData: _wire2api_unit,
+      constMeta: kConnectLspConstMeta,
+      argValues: [lspId],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kConnectLspConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "connect_lsp",
+        argNames: ["lspId"],
+      );
+
+  Future<String?> getLspId({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_get_lsp_id(port_),
+      parseSuccessData: _wire2api_opt_String,
+      constMeta: kGetLspIdConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kGetLspIdConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "get_lsp_id",
+        argNames: [],
+      );
+
+  Future<LspInformation?> fetchLspInfo({required String id, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(id);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_fetch_lsp_info(port_, arg0),
+      parseSuccessData: _wire2api_opt_box_autoadd_lsp_information,
+      constMeta: kFetchLspInfoConstMeta,
+      argValues: [id],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kFetchLspInfoConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "fetch_lsp_info",
+        argNames: ["id"],
+      );
+
+  Future<void> closeLspChannels({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_close_lsp_channels(port_),
+      parseSuccessData: _wire2api_unit,
+      constMeta: kCloseLspChannelsConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kCloseLspChannelsConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "close_lsp_channels",
+        argNames: [],
+      );
+
+  Future<void> backup({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_backup(port_),
+      parseSuccessData: _wire2api_unit,
+      constMeta: kBackupConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kBackupConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "backup",
+        argNames: [],
+      );
+
+  Future<BackupStatus> getBackupStatus({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_get_backup_status(port_),
+      parseSuccessData: _wire2api_backup_status,
+      constMeta: kGetBackupStatusConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kGetBackupStatusConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "get_backup_status",
+        argNames: [],
+      );
+
+  Future<LNInvoice> parseInvoice({required String invoice, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(invoice);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_parse_invoice(port_, arg0),
+      parseSuccessData: _wire2api_ln_invoice,
+      constMeta: kParseInvoiceConstMeta,
+      argValues: [invoice],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kParseInvoiceConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "parse_invoice",
+        argNames: ["invoice"],
+      );
+
+  Future<InputType> parseInput({required String s, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(s);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_parse_input(port_, arg0),
+      parseSuccessData: _wire2api_input_type,
+      constMeta: kParseInputConstMeta,
+      argValues: [s],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kParseInputConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "parse_input",
+        argNames: ["s"],
+      );
+
+  Future<List<Payment>> listPayments(
+      {required PaymentTypeFilter filter, int? fromTimestamp, int? toTimestamp, dynamic hint}) {
+    var arg0 = api2wire_payment_type_filter(filter);
+    var arg1 = _platform.api2wire_opt_box_autoadd_i64(fromTimestamp);
+    var arg2 = _platform.api2wire_opt_box_autoadd_i64(toTimestamp);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_list_payments(port_, arg0, arg1, arg2),
+      parseSuccessData: _wire2api_list_payment,
+      constMeta: kListPaymentsConstMeta,
+      argValues: [filter, fromTimestamp, toTimestamp],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kListPaymentsConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "list_payments",
+        argNames: ["filter", "fromTimestamp", "toTimestamp"],
+      );
+
+  Future<Payment?> getPaymentByHash({required String hash, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(hash);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_get_payment_by_hash(port_, arg0),
+      parseSuccessData: _wire2api_opt_box_autoadd_payment,
+      constMeta: kGetPaymentByHashConstMeta,
+      argValues: [hash],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kGetPaymentByHashConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "get_payment_by_hash",
+        argNames: ["hash"],
       );
 
   Future<Payment> sendPayment({required String bolt11, int? amountSats, dynamic hint}) {
@@ -1266,361 +1504,6 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kReceivePaymentConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "receive_payment",
         argNames: ["amountSats", "description"],
-      );
-
-  Future<NodeState?> nodeInfo({dynamic hint}) {
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_node_info(port_),
-      parseSuccessData: _wire2api_opt_box_autoadd_node_state,
-      constMeta: kNodeInfoConstMeta,
-      argValues: [],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kNodeInfoConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "node_info",
-        argNames: [],
-      );
-
-  Future<List<Payment>> listPayments(
-      {required PaymentTypeFilter filter, int? fromTimestamp, int? toTimestamp, dynamic hint}) {
-    var arg0 = api2wire_payment_type_filter(filter);
-    var arg1 = _platform.api2wire_opt_box_autoadd_i64(fromTimestamp);
-    var arg2 = _platform.api2wire_opt_box_autoadd_i64(toTimestamp);
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_list_payments(port_, arg0, arg1, arg2),
-      parseSuccessData: _wire2api_list_payment,
-      constMeta: kListPaymentsConstMeta,
-      argValues: [filter, fromTimestamp, toTimestamp],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kListPaymentsConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "list_payments",
-        argNames: ["filter", "fromTimestamp", "toTimestamp"],
-      );
-
-  Future<Payment?> paymentByHash({required String hash, dynamic hint}) {
-    var arg0 = _platform.api2wire_String(hash);
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_payment_by_hash(port_, arg0),
-      parseSuccessData: _wire2api_opt_box_autoadd_payment,
-      constMeta: kPaymentByHashConstMeta,
-      argValues: [hash],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kPaymentByHashConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "payment_by_hash",
-        argNames: ["hash"],
-      );
-
-  Future<List<LspInformation>> listLsps({dynamic hint}) {
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_list_lsps(port_),
-      parseSuccessData: _wire2api_list_lsp_information,
-      constMeta: kListLspsConstMeta,
-      argValues: [],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kListLspsConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "list_lsps",
-        argNames: [],
-      );
-
-  Future<void> connectLsp({required String lspId, dynamic hint}) {
-    var arg0 = _platform.api2wire_String(lspId);
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_connect_lsp(port_, arg0),
-      parseSuccessData: _wire2api_unit,
-      constMeta: kConnectLspConstMeta,
-      argValues: [lspId],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kConnectLspConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "connect_lsp",
-        argNames: ["lspId"],
-      );
-
-  Future<LspInformation?> fetchLspInfo({required String id, dynamic hint}) {
-    var arg0 = _platform.api2wire_String(id);
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_fetch_lsp_info(port_, arg0),
-      parseSuccessData: _wire2api_opt_box_autoadd_lsp_information,
-      constMeta: kFetchLspInfoConstMeta,
-      argValues: [id],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kFetchLspInfoConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "fetch_lsp_info",
-        argNames: ["id"],
-      );
-
-  Future<String?> lspId({dynamic hint}) {
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_lsp_id(port_),
-      parseSuccessData: _wire2api_opt_String,
-      constMeta: kLspIdConstMeta,
-      argValues: [],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kLspIdConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "lsp_id",
-        argNames: [],
-      );
-
-  Future<List<Rate>> fetchFiatRates({dynamic hint}) {
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_fetch_fiat_rates(port_),
-      parseSuccessData: _wire2api_list_rate,
-      constMeta: kFetchFiatRatesConstMeta,
-      argValues: [],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kFetchFiatRatesConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "fetch_fiat_rates",
-        argNames: [],
-      );
-
-  Future<List<FiatCurrency>> listFiatCurrencies({dynamic hint}) {
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_list_fiat_currencies(port_),
-      parseSuccessData: _wire2api_list_fiat_currency,
-      constMeta: kListFiatCurrenciesConstMeta,
-      argValues: [],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kListFiatCurrenciesConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "list_fiat_currencies",
-        argNames: [],
-      );
-
-  Future<void> closeLspChannels({dynamic hint}) {
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_close_lsp_channels(port_),
-      parseSuccessData: _wire2api_unit,
-      constMeta: kCloseLspChannelsConstMeta,
-      argValues: [],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kCloseLspChannelsConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "close_lsp_channels",
-        argNames: [],
-      );
-
-  Future<void> sweep({required String toAddress, required int feeRateSatsPerVbyte, dynamic hint}) {
-    var arg0 = _platform.api2wire_String(toAddress);
-    var arg1 = _platform.api2wire_u64(feeRateSatsPerVbyte);
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_sweep(port_, arg0, arg1),
-      parseSuccessData: _wire2api_unit,
-      constMeta: kSweepConstMeta,
-      argValues: [toAddress, feeRateSatsPerVbyte],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kSweepConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "sweep",
-        argNames: ["toAddress", "feeRateSatsPerVbyte"],
-      );
-
-  Future<SwapInfo> receiveOnchain({dynamic hint}) {
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_receive_onchain(port_),
-      parseSuccessData: _wire2api_swap_info,
-      constMeta: kReceiveOnchainConstMeta,
-      argValues: [],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kReceiveOnchainConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "receive_onchain",
-        argNames: [],
-      );
-
-  Future<SwapInfo?> inProgressSwap({dynamic hint}) {
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_in_progress_swap(port_),
-      parseSuccessData: _wire2api_opt_box_autoadd_swap_info,
-      constMeta: kInProgressSwapConstMeta,
-      argValues: [],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kInProgressSwapConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "in_progress_swap",
-        argNames: [],
-      );
-
-  Future<List<SwapInfo>> listRefundables({dynamic hint}) {
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_list_refundables(port_),
-      parseSuccessData: _wire2api_list_swap_info,
-      constMeta: kListRefundablesConstMeta,
-      argValues: [],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kListRefundablesConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "list_refundables",
-        argNames: [],
-      );
-
-  Future<String> refund(
-      {required String swapAddress, required String toAddress, required int satPerVbyte, dynamic hint}) {
-    var arg0 = _platform.api2wire_String(swapAddress);
-    var arg1 = _platform.api2wire_String(toAddress);
-    var arg2 = api2wire_u32(satPerVbyte);
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_refund(port_, arg0, arg1, arg2),
-      parseSuccessData: _wire2api_String,
-      constMeta: kRefundConstMeta,
-      argValues: [swapAddress, toAddress, satPerVbyte],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kRefundConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "refund",
-        argNames: ["swapAddress", "toAddress", "satPerVbyte"],
-      );
-
-  Future<ReverseSwapPairInfo> fetchReverseSwapFees({dynamic hint}) {
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_fetch_reverse_swap_fees(port_),
-      parseSuccessData: _wire2api_reverse_swap_pair_info,
-      constMeta: kFetchReverseSwapFeesConstMeta,
-      argValues: [],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kFetchReverseSwapFeesConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "fetch_reverse_swap_fees",
-        argNames: [],
-      );
-
-  Future<List<ReverseSwapInfo>> inProgressReverseSwaps({dynamic hint}) {
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_in_progress_reverse_swaps(port_),
-      parseSuccessData: _wire2api_list_reverse_swap_info,
-      constMeta: kInProgressReverseSwapsConstMeta,
-      argValues: [],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kInProgressReverseSwapsConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "in_progress_reverse_swaps",
-        argNames: [],
-      );
-
-  Future<ReverseSwapInfo> sendOnchain(
-      {required int amountSat,
-      required String onchainRecipientAddress,
-      required String pairHash,
-      required int satPerVbyte,
-      dynamic hint}) {
-    var arg0 = _platform.api2wire_u64(amountSat);
-    var arg1 = _platform.api2wire_String(onchainRecipientAddress);
-    var arg2 = _platform.api2wire_String(pairHash);
-    var arg3 = _platform.api2wire_u64(satPerVbyte);
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_send_onchain(port_, arg0, arg1, arg2, arg3),
-      parseSuccessData: _wire2api_reverse_swap_info,
-      constMeta: kSendOnchainConstMeta,
-      argValues: [amountSat, onchainRecipientAddress, pairHash, satPerVbyte],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kSendOnchainConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "send_onchain",
-        argNames: ["amountSat", "onchainRecipientAddress", "pairHash", "satPerVbyte"],
-      );
-
-  Future<String> executeCommand({required String command, dynamic hint}) {
-    var arg0 = _platform.api2wire_String(command);
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_execute_command(port_, arg0),
-      parseSuccessData: _wire2api_String,
-      constMeta: kExecuteCommandConstMeta,
-      argValues: [command],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kExecuteCommandConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "execute_command",
-        argNames: ["command"],
-      );
-
-  Future<void> syncNode({dynamic hint}) {
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_sync_node(port_),
-      parseSuccessData: _wire2api_unit,
-      constMeta: kSyncNodeConstMeta,
-      argValues: [],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kSyncNodeConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "sync_node",
-        argNames: [],
-      );
-
-  Future<LNInvoice> parseInvoice({required String invoice, dynamic hint}) {
-    var arg0 = _platform.api2wire_String(invoice);
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_parse_invoice(port_, arg0),
-      parseSuccessData: _wire2api_ln_invoice,
-      constMeta: kParseInvoiceConstMeta,
-      argValues: [invoice],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kParseInvoiceConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "parse_invoice",
-        argNames: ["invoice"],
-      );
-
-  Future<InputType> parse({required String s, dynamic hint}) {
-    var arg0 = _platform.api2wire_String(s);
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_parse(port_, arg0),
-      parseSuccessData: _wire2api_input_type,
-      constMeta: kParseConstMeta,
-      argValues: [s],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kParseConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "parse",
-        argNames: ["s"],
       );
 
   Future<LnUrlPayResult> lnurlPay(
@@ -1680,57 +1563,73 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["reqData"],
       );
 
-  Future<Uint8List> mnemonicToSeed({required String phrase, dynamic hint}) {
-    var arg0 = _platform.api2wire_String(phrase);
+  Future<List<Rate>> fetchFiatRates({dynamic hint}) {
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_mnemonic_to_seed(port_, arg0),
-      parseSuccessData: _wire2api_uint_8_list,
-      constMeta: kMnemonicToSeedConstMeta,
-      argValues: [phrase],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kMnemonicToSeedConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "mnemonic_to_seed",
-        argNames: ["phrase"],
-      );
-
-  Future<RecommendedFees> recommendedFees({dynamic hint}) {
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_recommended_fees(port_),
-      parseSuccessData: _wire2api_recommended_fees,
-      constMeta: kRecommendedFeesConstMeta,
+      callFfi: (port_) => _platform.inner.wire_fetch_fiat_rates(port_),
+      parseSuccessData: _wire2api_list_rate,
+      constMeta: kFetchFiatRatesConstMeta,
       argValues: [],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kRecommendedFeesConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "recommended_fees",
+  FlutterRustBridgeTaskConstMeta get kFetchFiatRatesConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "fetch_fiat_rates",
         argNames: [],
       );
 
-  Future<Config> defaultConfig(
-      {required EnvironmentType envType,
-      required String apiKey,
-      required NodeConfig nodeConfig,
-      dynamic hint}) {
-    var arg0 = api2wire_environment_type(envType);
-    var arg1 = _platform.api2wire_String(apiKey);
-    var arg2 = _platform.api2wire_box_autoadd_node_config(nodeConfig);
+  Future<List<FiatCurrency>> listFiatCurrencies({dynamic hint}) {
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_default_config(port_, arg0, arg1, arg2),
-      parseSuccessData: _wire2api_config,
-      constMeta: kDefaultConfigConstMeta,
-      argValues: [envType, apiKey, nodeConfig],
+      callFfi: (port_) => _platform.inner.wire_list_fiat_currencies(port_),
+      parseSuccessData: _wire2api_list_fiat_currency,
+      constMeta: kListFiatCurrenciesConstMeta,
+      argValues: [],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kDefaultConfigConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "default_config",
-        argNames: ["envType", "apiKey", "nodeConfig"],
+  FlutterRustBridgeTaskConstMeta get kListFiatCurrenciesConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "list_fiat_currencies",
+        argNames: [],
+      );
+
+  Future<ReverseSwapInfo> sendOnchain(
+      {required int amountSat,
+      required String onchainRecipientAddress,
+      required String pairHash,
+      required int satPerVbyte,
+      dynamic hint}) {
+    var arg0 = _platform.api2wire_u64(amountSat);
+    var arg1 = _platform.api2wire_String(onchainRecipientAddress);
+    var arg2 = _platform.api2wire_String(pairHash);
+    var arg3 = _platform.api2wire_u64(satPerVbyte);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_send_onchain(port_, arg0, arg1, arg2, arg3),
+      parseSuccessData: _wire2api_reverse_swap_info,
+      constMeta: kSendOnchainConstMeta,
+      argValues: [amountSat, onchainRecipientAddress, pairHash, satPerVbyte],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kSendOnchainConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "send_onchain",
+        argNames: ["amountSat", "onchainRecipientAddress", "pairHash", "satPerVbyte"],
+      );
+
+  Future<SwapInfo> receiveOnchain({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_receive_onchain(port_),
+      parseSuccessData: _wire2api_swap_info,
+      constMeta: kReceiveOnchainConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kReceiveOnchainConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "receive_onchain",
+        argNames: [],
       );
 
   Future<String> buyBitcoin({required BuyBitcoinProvider provider, dynamic hint}) {
@@ -1749,34 +1648,132 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["provider"],
       );
 
-  Future<void> backup({dynamic hint}) {
+  Future<void> sweep({required String toAddress, required int feeRateSatsPerVbyte, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(toAddress);
+    var arg1 = _platform.api2wire_u64(feeRateSatsPerVbyte);
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_backup(port_),
+      callFfi: (port_) => _platform.inner.wire_sweep(port_, arg0, arg1),
       parseSuccessData: _wire2api_unit,
-      constMeta: kBackupConstMeta,
+      constMeta: kSweepConstMeta,
+      argValues: [toAddress, feeRateSatsPerVbyte],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kSweepConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "sweep",
+        argNames: ["toAddress", "feeRateSatsPerVbyte"],
+      );
+
+  Future<List<SwapInfo>> listRefundableSwaps({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_list_refundable_swaps(port_),
+      parseSuccessData: _wire2api_list_swap_info,
+      constMeta: kListRefundableSwapsConstMeta,
       argValues: [],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kBackupConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "backup",
+  FlutterRustBridgeTaskConstMeta get kListRefundableSwapsConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "list_refundable_swaps",
         argNames: [],
       );
 
-  Future<BackupStatus> backupStatus({dynamic hint}) {
+  Future<String> refundSwap(
+      {required String swapAddress, required String toAddress, required int satPerVbyte, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(swapAddress);
+    var arg1 = _platform.api2wire_String(toAddress);
+    var arg2 = api2wire_u32(satPerVbyte);
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_backup_status(port_),
-      parseSuccessData: _wire2api_backup_status,
-      constMeta: kBackupStatusConstMeta,
+      callFfi: (port_) => _platform.inner.wire_refund_swap(port_, arg0, arg1, arg2),
+      parseSuccessData: _wire2api_String,
+      constMeta: kRefundSwapConstMeta,
+      argValues: [swapAddress, toAddress, satPerVbyte],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kRefundSwapConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "refund_swap",
+        argNames: ["swapAddress", "toAddress", "satPerVbyte"],
+      );
+
+  Future<SwapInfo?> getInProgressSwap({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_get_in_progress_swap(port_),
+      parseSuccessData: _wire2api_opt_box_autoadd_swap_info,
+      constMeta: kGetInProgressSwapConstMeta,
       argValues: [],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kBackupStatusConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "backup_status",
+  FlutterRustBridgeTaskConstMeta get kGetInProgressSwapConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "get_in_progress_swap",
         argNames: [],
+      );
+
+  Future<List<ReverseSwapInfo>> listInProgressReverseSwaps({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_list_in_progress_reverse_swaps(port_),
+      parseSuccessData: _wire2api_list_reverse_swap_info,
+      constMeta: kListInProgressReverseSwapsConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kListInProgressReverseSwapsConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "list_in_progress_reverse_swaps",
+        argNames: [],
+      );
+
+  Future<ReverseSwapPairInfo> fetchReverseSwapFees({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_fetch_reverse_swap_fees(port_),
+      parseSuccessData: _wire2api_reverse_swap_pair_info,
+      constMeta: kFetchReverseSwapFeesConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kFetchReverseSwapFeesConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "fetch_reverse_swap_fees",
+        argNames: [],
+      );
+
+  Future<RecommendedFees> fetchRecommendedFees({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_fetch_recommended_fees(port_),
+      parseSuccessData: _wire2api_recommended_fees,
+      constMeta: kFetchRecommendedFeesConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kFetchRecommendedFeesConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "fetch_recommended_fees",
+        argNames: [],
+      );
+
+  Future<String> executeCommand({required String command, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(command);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_execute_command(port_, arg0),
+      parseSuccessData: _wire2api_String,
+      constMeta: kExecuteCommandConstMeta,
+      argValues: [command],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kExecuteCommandConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "execute_command",
+        argNames: ["command"],
       );
 
   void dispose() {
@@ -2967,18 +2964,6 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _init_frb_dart_api_dl =
       _init_frb_dart_api_dlPtr.asFunction<int Function(ffi.Pointer<ffi.Void>)>();
 
-  void wire_initialized(
-    int port_,
-  ) {
-    return _wire_initialized(
-      port_,
-    );
-  }
-
-  late final _wire_initializedPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_initialized');
-  late final _wire_initialized = _wire_initializedPtr.asFunction<void Function(int)>();
-
   void wire_connect(
     int port_,
     ffi.Pointer<wire_Config> config,
@@ -2997,6 +2982,89 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
               ffi.Int64, ffi.Pointer<wire_Config>, ffi.Pointer<wire_uint_8_list>)>>('wire_connect');
   late final _wire_connect = _wire_connectPtr
       .asFunction<void Function(int, ffi.Pointer<wire_Config>, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_check_initialized(
+    int port_,
+  ) {
+    return _wire_check_initialized(
+      port_,
+    );
+  }
+
+  late final _wire_check_initializedPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_check_initialized');
+  late final _wire_check_initialized = _wire_check_initializedPtr.asFunction<void Function(int)>();
+
+  void wire_sync_node(
+    int port_,
+  ) {
+    return _wire_sync_node(
+      port_,
+    );
+  }
+
+  late final _wire_sync_nodePtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_sync_node');
+  late final _wire_sync_node = _wire_sync_nodePtr.asFunction<void Function(int)>();
+
+  void wire_get_node_state(
+    int port_,
+  ) {
+    return _wire_get_node_state(
+      port_,
+    );
+  }
+
+  late final _wire_get_node_statePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_get_node_state');
+  late final _wire_get_node_state = _wire_get_node_statePtr.asFunction<void Function(int)>();
+
+  void wire_stop_node(
+    int port_,
+  ) {
+    return _wire_stop_node(
+      port_,
+    );
+  }
+
+  late final _wire_stop_nodePtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_stop_node');
+  late final _wire_stop_node = _wire_stop_nodePtr.asFunction<void Function(int)>();
+
+  void wire_convert_mnemonic_to_seed(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> phrase,
+  ) {
+    return _wire_convert_mnemonic_to_seed(
+      port_,
+      phrase,
+    );
+  }
+
+  late final _wire_convert_mnemonic_to_seedPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>(
+          'wire_convert_mnemonic_to_seed');
+  late final _wire_convert_mnemonic_to_seed =
+      _wire_convert_mnemonic_to_seedPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_get_default_config(
+    int port_,
+    int env_type,
+    ffi.Pointer<wire_uint_8_list> api_key,
+    ffi.Pointer<wire_NodeConfig> node_config,
+  ) {
+    return _wire_get_default_config(
+      port_,
+      env_type,
+      api_key,
+      node_config,
+    );
+  }
+
+  late final _wire_get_default_configPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Int64, ffi.Int32, ffi.Pointer<wire_uint_8_list>,
+              ffi.Pointer<wire_NodeConfig>)>>('wire_get_default_config');
+  late final _wire_get_default_config = _wire_get_default_configPtr
+      .asFunction<void Function(int, int, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_NodeConfig>)>();
 
   void wire_breez_events_stream(
     int port_,
@@ -3022,16 +3090,164 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_breez_log_stream');
   late final _wire_breez_log_stream = _wire_breez_log_streamPtr.asFunction<void Function(int)>();
 
-  void wire_stop_node(
+  void wire_list_lsps(
     int port_,
   ) {
-    return _wire_stop_node(
+    return _wire_list_lsps(
       port_,
     );
   }
 
-  late final _wire_stop_nodePtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_stop_node');
-  late final _wire_stop_node = _wire_stop_nodePtr.asFunction<void Function(int)>();
+  late final _wire_list_lspsPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_list_lsps');
+  late final _wire_list_lsps = _wire_list_lspsPtr.asFunction<void Function(int)>();
+
+  void wire_connect_lsp(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> lsp_id,
+  ) {
+    return _wire_connect_lsp(
+      port_,
+      lsp_id,
+    );
+  }
+
+  late final _wire_connect_lspPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>(
+          'wire_connect_lsp');
+  late final _wire_connect_lsp =
+      _wire_connect_lspPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_get_lsp_id(
+    int port_,
+  ) {
+    return _wire_get_lsp_id(
+      port_,
+    );
+  }
+
+  late final _wire_get_lsp_idPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_get_lsp_id');
+  late final _wire_get_lsp_id = _wire_get_lsp_idPtr.asFunction<void Function(int)>();
+
+  void wire_fetch_lsp_info(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> id,
+  ) {
+    return _wire_fetch_lsp_info(
+      port_,
+      id,
+    );
+  }
+
+  late final _wire_fetch_lsp_infoPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>(
+          'wire_fetch_lsp_info');
+  late final _wire_fetch_lsp_info =
+      _wire_fetch_lsp_infoPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_close_lsp_channels(
+    int port_,
+  ) {
+    return _wire_close_lsp_channels(
+      port_,
+    );
+  }
+
+  late final _wire_close_lsp_channelsPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_close_lsp_channels');
+  late final _wire_close_lsp_channels = _wire_close_lsp_channelsPtr.asFunction<void Function(int)>();
+
+  void wire_backup(
+    int port_,
+  ) {
+    return _wire_backup(
+      port_,
+    );
+  }
+
+  late final _wire_backupPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_backup');
+  late final _wire_backup = _wire_backupPtr.asFunction<void Function(int)>();
+
+  void wire_get_backup_status(
+    int port_,
+  ) {
+    return _wire_get_backup_status(
+      port_,
+    );
+  }
+
+  late final _wire_get_backup_statusPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_get_backup_status');
+  late final _wire_get_backup_status = _wire_get_backup_statusPtr.asFunction<void Function(int)>();
+
+  void wire_parse_invoice(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> invoice,
+  ) {
+    return _wire_parse_invoice(
+      port_,
+      invoice,
+    );
+  }
+
+  late final _wire_parse_invoicePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>(
+          'wire_parse_invoice');
+  late final _wire_parse_invoice =
+      _wire_parse_invoicePtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_parse_input(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> s,
+  ) {
+    return _wire_parse_input(
+      port_,
+      s,
+    );
+  }
+
+  late final _wire_parse_inputPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>(
+          'wire_parse_input');
+  late final _wire_parse_input =
+      _wire_parse_inputPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_list_payments(
+    int port_,
+    int filter,
+    ffi.Pointer<ffi.Int64> from_timestamp,
+    ffi.Pointer<ffi.Int64> to_timestamp,
+  ) {
+    return _wire_list_payments(
+      port_,
+      filter,
+      from_timestamp,
+      to_timestamp,
+    );
+  }
+
+  late final _wire_list_paymentsPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Int64, ffi.Int32, ffi.Pointer<ffi.Int64>, ffi.Pointer<ffi.Int64>)>>('wire_list_payments');
+  late final _wire_list_payments = _wire_list_paymentsPtr
+      .asFunction<void Function(int, int, ffi.Pointer<ffi.Int64>, ffi.Pointer<ffi.Int64>)>();
+
+  void wire_get_payment_by_hash(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> hash,
+  ) {
+    return _wire_get_payment_by_hash(
+      port_,
+      hash,
+    );
+  }
+
+  late final _wire_get_payment_by_hashPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>(
+          'wire_get_payment_by_hash');
+  late final _wire_get_payment_by_hash =
+      _wire_get_payment_by_hashPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
   void wire_send_payment(
     int port_,
@@ -3087,325 +3303,6 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
           'wire_receive_payment');
   late final _wire_receive_payment =
       _wire_receive_paymentPtr.asFunction<void Function(int, int, ffi.Pointer<wire_uint_8_list>)>();
-
-  void wire_node_info(
-    int port_,
-  ) {
-    return _wire_node_info(
-      port_,
-    );
-  }
-
-  late final _wire_node_infoPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_node_info');
-  late final _wire_node_info = _wire_node_infoPtr.asFunction<void Function(int)>();
-
-  void wire_list_payments(
-    int port_,
-    int filter,
-    ffi.Pointer<ffi.Int64> from_timestamp,
-    ffi.Pointer<ffi.Int64> to_timestamp,
-  ) {
-    return _wire_list_payments(
-      port_,
-      filter,
-      from_timestamp,
-      to_timestamp,
-    );
-  }
-
-  late final _wire_list_paymentsPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Int64, ffi.Int32, ffi.Pointer<ffi.Int64>, ffi.Pointer<ffi.Int64>)>>('wire_list_payments');
-  late final _wire_list_payments = _wire_list_paymentsPtr
-      .asFunction<void Function(int, int, ffi.Pointer<ffi.Int64>, ffi.Pointer<ffi.Int64>)>();
-
-  void wire_payment_by_hash(
-    int port_,
-    ffi.Pointer<wire_uint_8_list> hash,
-  ) {
-    return _wire_payment_by_hash(
-      port_,
-      hash,
-    );
-  }
-
-  late final _wire_payment_by_hashPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>(
-          'wire_payment_by_hash');
-  late final _wire_payment_by_hash =
-      _wire_payment_by_hashPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
-
-  void wire_list_lsps(
-    int port_,
-  ) {
-    return _wire_list_lsps(
-      port_,
-    );
-  }
-
-  late final _wire_list_lspsPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_list_lsps');
-  late final _wire_list_lsps = _wire_list_lspsPtr.asFunction<void Function(int)>();
-
-  void wire_connect_lsp(
-    int port_,
-    ffi.Pointer<wire_uint_8_list> lsp_id,
-  ) {
-    return _wire_connect_lsp(
-      port_,
-      lsp_id,
-    );
-  }
-
-  late final _wire_connect_lspPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>(
-          'wire_connect_lsp');
-  late final _wire_connect_lsp =
-      _wire_connect_lspPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
-
-  void wire_fetch_lsp_info(
-    int port_,
-    ffi.Pointer<wire_uint_8_list> id,
-  ) {
-    return _wire_fetch_lsp_info(
-      port_,
-      id,
-    );
-  }
-
-  late final _wire_fetch_lsp_infoPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>(
-          'wire_fetch_lsp_info');
-  late final _wire_fetch_lsp_info =
-      _wire_fetch_lsp_infoPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
-
-  void wire_lsp_id(
-    int port_,
-  ) {
-    return _wire_lsp_id(
-      port_,
-    );
-  }
-
-  late final _wire_lsp_idPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_lsp_id');
-  late final _wire_lsp_id = _wire_lsp_idPtr.asFunction<void Function(int)>();
-
-  void wire_fetch_fiat_rates(
-    int port_,
-  ) {
-    return _wire_fetch_fiat_rates(
-      port_,
-    );
-  }
-
-  late final _wire_fetch_fiat_ratesPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_fetch_fiat_rates');
-  late final _wire_fetch_fiat_rates = _wire_fetch_fiat_ratesPtr.asFunction<void Function(int)>();
-
-  void wire_list_fiat_currencies(
-    int port_,
-  ) {
-    return _wire_list_fiat_currencies(
-      port_,
-    );
-  }
-
-  late final _wire_list_fiat_currenciesPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_list_fiat_currencies');
-  late final _wire_list_fiat_currencies = _wire_list_fiat_currenciesPtr.asFunction<void Function(int)>();
-
-  void wire_close_lsp_channels(
-    int port_,
-  ) {
-    return _wire_close_lsp_channels(
-      port_,
-    );
-  }
-
-  late final _wire_close_lsp_channelsPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_close_lsp_channels');
-  late final _wire_close_lsp_channels = _wire_close_lsp_channelsPtr.asFunction<void Function(int)>();
-
-  void wire_sweep(
-    int port_,
-    ffi.Pointer<wire_uint_8_list> to_address,
-    int fee_rate_sats_per_vbyte,
-  ) {
-    return _wire_sweep(
-      port_,
-      to_address,
-      fee_rate_sats_per_vbyte,
-    );
-  }
-
-  late final _wire_sweepPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>, ffi.Uint64)>>(
-          'wire_sweep');
-  late final _wire_sweep =
-      _wire_sweepPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>, int)>();
-
-  void wire_receive_onchain(
-    int port_,
-  ) {
-    return _wire_receive_onchain(
-      port_,
-    );
-  }
-
-  late final _wire_receive_onchainPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_receive_onchain');
-  late final _wire_receive_onchain = _wire_receive_onchainPtr.asFunction<void Function(int)>();
-
-  void wire_in_progress_swap(
-    int port_,
-  ) {
-    return _wire_in_progress_swap(
-      port_,
-    );
-  }
-
-  late final _wire_in_progress_swapPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_in_progress_swap');
-  late final _wire_in_progress_swap = _wire_in_progress_swapPtr.asFunction<void Function(int)>();
-
-  void wire_list_refundables(
-    int port_,
-  ) {
-    return _wire_list_refundables(
-      port_,
-    );
-  }
-
-  late final _wire_list_refundablesPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_list_refundables');
-  late final _wire_list_refundables = _wire_list_refundablesPtr.asFunction<void Function(int)>();
-
-  void wire_refund(
-    int port_,
-    ffi.Pointer<wire_uint_8_list> swap_address,
-    ffi.Pointer<wire_uint_8_list> to_address,
-    int sat_per_vbyte,
-  ) {
-    return _wire_refund(
-      port_,
-      swap_address,
-      to_address,
-      sat_per_vbyte,
-    );
-  }
-
-  late final _wire_refundPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_uint_8_list>,
-              ffi.Uint32)>>('wire_refund');
-  late final _wire_refund = _wire_refundPtr
-      .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_uint_8_list>, int)>();
-
-  void wire_fetch_reverse_swap_fees(
-    int port_,
-  ) {
-    return _wire_fetch_reverse_swap_fees(
-      port_,
-    );
-  }
-
-  late final _wire_fetch_reverse_swap_feesPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_fetch_reverse_swap_fees');
-  late final _wire_fetch_reverse_swap_fees =
-      _wire_fetch_reverse_swap_feesPtr.asFunction<void Function(int)>();
-
-  void wire_in_progress_reverse_swaps(
-    int port_,
-  ) {
-    return _wire_in_progress_reverse_swaps(
-      port_,
-    );
-  }
-
-  late final _wire_in_progress_reverse_swapsPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_in_progress_reverse_swaps');
-  late final _wire_in_progress_reverse_swaps =
-      _wire_in_progress_reverse_swapsPtr.asFunction<void Function(int)>();
-
-  void wire_send_onchain(
-    int port_,
-    int amount_sat,
-    ffi.Pointer<wire_uint_8_list> onchain_recipient_address,
-    ffi.Pointer<wire_uint_8_list> pair_hash,
-    int sat_per_vbyte,
-  ) {
-    return _wire_send_onchain(
-      port_,
-      amount_sat,
-      onchain_recipient_address,
-      pair_hash,
-      sat_per_vbyte,
-    );
-  }
-
-  late final _wire_send_onchainPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Int64, ffi.Uint64, ffi.Pointer<wire_uint_8_list>,
-              ffi.Pointer<wire_uint_8_list>, ffi.Uint64)>>('wire_send_onchain');
-  late final _wire_send_onchain = _wire_send_onchainPtr.asFunction<
-      void Function(int, int, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_uint_8_list>, int)>();
-
-  void wire_execute_command(
-    int port_,
-    ffi.Pointer<wire_uint_8_list> command,
-  ) {
-    return _wire_execute_command(
-      port_,
-      command,
-    );
-  }
-
-  late final _wire_execute_commandPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>(
-          'wire_execute_command');
-  late final _wire_execute_command =
-      _wire_execute_commandPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
-
-  void wire_sync_node(
-    int port_,
-  ) {
-    return _wire_sync_node(
-      port_,
-    );
-  }
-
-  late final _wire_sync_nodePtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_sync_node');
-  late final _wire_sync_node = _wire_sync_nodePtr.asFunction<void Function(int)>();
-
-  void wire_parse_invoice(
-    int port_,
-    ffi.Pointer<wire_uint_8_list> invoice,
-  ) {
-    return _wire_parse_invoice(
-      port_,
-      invoice,
-    );
-  }
-
-  late final _wire_parse_invoicePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>(
-          'wire_parse_invoice');
-  late final _wire_parse_invoice =
-      _wire_parse_invoicePtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
-
-  void wire_parse(
-    int port_,
-    ffi.Pointer<wire_uint_8_list> s,
-  ) {
-    return _wire_parse(
-      port_,
-      s,
-    );
-  }
-
-  late final _wire_parsePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>('wire_parse');
-  late final _wire_parse = _wire_parsePtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
   void wire_lnurl_pay(
     int port_,
@@ -3465,54 +3362,64 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_lnurl_auth =
       _wire_lnurl_authPtr.asFunction<void Function(int, ffi.Pointer<wire_LnUrlAuthRequestData>)>();
 
-  void wire_mnemonic_to_seed(
-    int port_,
-    ffi.Pointer<wire_uint_8_list> phrase,
-  ) {
-    return _wire_mnemonic_to_seed(
-      port_,
-      phrase,
-    );
-  }
-
-  late final _wire_mnemonic_to_seedPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>(
-          'wire_mnemonic_to_seed');
-  late final _wire_mnemonic_to_seed =
-      _wire_mnemonic_to_seedPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
-
-  void wire_recommended_fees(
+  void wire_fetch_fiat_rates(
     int port_,
   ) {
-    return _wire_recommended_fees(
+    return _wire_fetch_fiat_rates(
       port_,
     );
   }
 
-  late final _wire_recommended_feesPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_recommended_fees');
-  late final _wire_recommended_fees = _wire_recommended_feesPtr.asFunction<void Function(int)>();
+  late final _wire_fetch_fiat_ratesPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_fetch_fiat_rates');
+  late final _wire_fetch_fiat_rates = _wire_fetch_fiat_ratesPtr.asFunction<void Function(int)>();
 
-  void wire_default_config(
+  void wire_list_fiat_currencies(
     int port_,
-    int env_type,
-    ffi.Pointer<wire_uint_8_list> api_key,
-    ffi.Pointer<wire_NodeConfig> node_config,
   ) {
-    return _wire_default_config(
+    return _wire_list_fiat_currencies(
       port_,
-      env_type,
-      api_key,
-      node_config,
     );
   }
 
-  late final _wire_default_configPtr = _lookup<
+  late final _wire_list_fiat_currenciesPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_list_fiat_currencies');
+  late final _wire_list_fiat_currencies = _wire_list_fiat_currenciesPtr.asFunction<void Function(int)>();
+
+  void wire_send_onchain(
+    int port_,
+    int amount_sat,
+    ffi.Pointer<wire_uint_8_list> onchain_recipient_address,
+    ffi.Pointer<wire_uint_8_list> pair_hash,
+    int sat_per_vbyte,
+  ) {
+    return _wire_send_onchain(
+      port_,
+      amount_sat,
+      onchain_recipient_address,
+      pair_hash,
+      sat_per_vbyte,
+    );
+  }
+
+  late final _wire_send_onchainPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(ffi.Int64, ffi.Int32, ffi.Pointer<wire_uint_8_list>,
-              ffi.Pointer<wire_NodeConfig>)>>('wire_default_config');
-  late final _wire_default_config = _wire_default_configPtr
-      .asFunction<void Function(int, int, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_NodeConfig>)>();
+          ffi.Void Function(ffi.Int64, ffi.Uint64, ffi.Pointer<wire_uint_8_list>,
+              ffi.Pointer<wire_uint_8_list>, ffi.Uint64)>>('wire_send_onchain');
+  late final _wire_send_onchain = _wire_send_onchainPtr.asFunction<
+      void Function(int, int, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_uint_8_list>, int)>();
+
+  void wire_receive_onchain(
+    int port_,
+  ) {
+    return _wire_receive_onchain(
+      port_,
+    );
+  }
+
+  late final _wire_receive_onchainPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_receive_onchain');
+  late final _wire_receive_onchain = _wire_receive_onchainPtr.asFunction<void Function(int)>();
 
   void wire_buy_bitcoin(
     int port_,
@@ -3528,28 +3435,122 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Int32)>>('wire_buy_bitcoin');
   late final _wire_buy_bitcoin = _wire_buy_bitcoinPtr.asFunction<void Function(int, int)>();
 
-  void wire_backup(
+  void wire_sweep(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> to_address,
+    int fee_rate_sats_per_vbyte,
+  ) {
+    return _wire_sweep(
+      port_,
+      to_address,
+      fee_rate_sats_per_vbyte,
+    );
+  }
+
+  late final _wire_sweepPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>, ffi.Uint64)>>(
+          'wire_sweep');
+  late final _wire_sweep =
+      _wire_sweepPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>, int)>();
+
+  void wire_list_refundable_swaps(
     int port_,
   ) {
-    return _wire_backup(
+    return _wire_list_refundable_swaps(
       port_,
     );
   }
 
-  late final _wire_backupPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_backup');
-  late final _wire_backup = _wire_backupPtr.asFunction<void Function(int)>();
+  late final _wire_list_refundable_swapsPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_list_refundable_swaps');
+  late final _wire_list_refundable_swaps = _wire_list_refundable_swapsPtr.asFunction<void Function(int)>();
 
-  void wire_backup_status(
+  void wire_refund_swap(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> swap_address,
+    ffi.Pointer<wire_uint_8_list> to_address,
+    int sat_per_vbyte,
+  ) {
+    return _wire_refund_swap(
+      port_,
+      swap_address,
+      to_address,
+      sat_per_vbyte,
+    );
+  }
+
+  late final _wire_refund_swapPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_uint_8_list>,
+              ffi.Uint32)>>('wire_refund_swap');
+  late final _wire_refund_swap = _wire_refund_swapPtr
+      .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_uint_8_list>, int)>();
+
+  void wire_get_in_progress_swap(
     int port_,
   ) {
-    return _wire_backup_status(
+    return _wire_get_in_progress_swap(
       port_,
     );
   }
 
-  late final _wire_backup_statusPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_backup_status');
-  late final _wire_backup_status = _wire_backup_statusPtr.asFunction<void Function(int)>();
+  late final _wire_get_in_progress_swapPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_get_in_progress_swap');
+  late final _wire_get_in_progress_swap = _wire_get_in_progress_swapPtr.asFunction<void Function(int)>();
+
+  void wire_list_in_progress_reverse_swaps(
+    int port_,
+  ) {
+    return _wire_list_in_progress_reverse_swaps(
+      port_,
+    );
+  }
+
+  late final _wire_list_in_progress_reverse_swapsPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_list_in_progress_reverse_swaps');
+  late final _wire_list_in_progress_reverse_swaps =
+      _wire_list_in_progress_reverse_swapsPtr.asFunction<void Function(int)>();
+
+  void wire_fetch_reverse_swap_fees(
+    int port_,
+  ) {
+    return _wire_fetch_reverse_swap_fees(
+      port_,
+    );
+  }
+
+  late final _wire_fetch_reverse_swap_feesPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_fetch_reverse_swap_fees');
+  late final _wire_fetch_reverse_swap_fees =
+      _wire_fetch_reverse_swap_feesPtr.asFunction<void Function(int)>();
+
+  void wire_fetch_recommended_fees(
+    int port_,
+  ) {
+    return _wire_fetch_recommended_fees(
+      port_,
+    );
+  }
+
+  late final _wire_fetch_recommended_feesPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_fetch_recommended_fees');
+  late final _wire_fetch_recommended_fees = _wire_fetch_recommended_feesPtr.asFunction<void Function(int)>();
+
+  void wire_execute_command(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> command,
+  ) {
+    return _wire_execute_command(
+      port_,
+      command,
+    );
+  }
+
+  late final _wire_execute_commandPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>(
+          'wire_execute_command');
+  late final _wire_execute_command =
+      _wire_execute_commandPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
   ffi.Pointer<wire_Config> new_box_autoadd_config_0() {
     return _new_box_autoadd_config_0();
