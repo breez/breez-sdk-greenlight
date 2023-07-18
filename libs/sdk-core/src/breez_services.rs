@@ -680,6 +680,20 @@ impl BreezServices {
     ///
     /// Internal method. Should only be used as part of [BreezServices::start]
     async fn start_background_tasks(self: &Arc<BreezServices>) -> Result<()> {
+        // Sync node state
+        let sync_breez_services = self.clone();
+        match sync_breez_services.node_info()? {
+            Some(node) => {
+                info!("Starting existing node {}", node.id)
+            }
+            None => {
+                // In case it is a first run we sync in foreground to get the node state.
+                info!("First run, syncing in foreground");
+                sync_breez_services.sync().await?;
+                info!("First run, finished running syncing in foreground");
+            }
+        }
+
         // start the signer
         let (shutdown_signer_sender, signer_signer_receiver) = mpsc::channel(1);
         self.start_signer(signer_signer_receiver).await;
@@ -707,22 +721,6 @@ impl BreezServices {
             _ = shutdown_signer_sender.send(()).await;
             debug!("Received the signal to exit event polling loop");
         });
-
-        // Sync node state
-        let sync_breez_services = self.clone();
-        match sync_breez_services.node_info()? {
-            Some(_) => {
-                // In case it is not a first run we sync in background to start quickly.
-                tokio::spawn(async move {
-                    // sync with remote node state
-                    _ = sync_breez_services.sync().await;
-                });
-            }
-            None => {
-                // In case it is a first run we sync in foreground to get the node state.
-                _ = sync_breez_services.sync().await;
-            }
-        }
 
         Ok(())
     }
