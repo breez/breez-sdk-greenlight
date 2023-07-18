@@ -49,22 +49,18 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub(crate) fn migrate_sync_db(sync_db_path: String) -> Result<()> {
-        let mut sync_con = Connection::open(sync_db_path).map_err(anyhow::Error::msg)?;
+    pub(crate) fn migrate_sync_db(sync_db_path: String) -> SdkResult<()> {
+        let mut sync_con = Connection::open(sync_db_path)?;
         let sync_migrations =
             Migrations::new(current_sync_migrations().into_iter().map(M::up).collect());
-        sync_migrations
-            .to_latest(&mut sync_con)
-            .map_err(anyhow::Error::msg)?;
+        sync_migrations.to_latest(&mut sync_con)?;
         Ok(())
     }
 
-    fn migrate_main_db(&self) -> Result<()> {
+    fn migrate_main_db(&self) -> SdkResult<()> {
         let migrations = Migrations::new(current_migrations().into_iter().map(M::up).collect());
         let mut conn = self.get_connection()?;
-        migrations
-            .to_latest(&mut conn)
-            .map_err(anyhow::Error::msg)?;
+        migrations.to_latest(&mut conn)?;
         Ok(())
     }
 

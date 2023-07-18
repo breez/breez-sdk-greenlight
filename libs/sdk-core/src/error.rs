@@ -30,6 +30,14 @@ impl From<rusqlite::Error> for SdkError {
     }
 }
 
+impl From<rusqlite_migration::Error> for SdkError {
+    fn from(value: rusqlite_migration::Error) -> Self {
+        Self::PersistenceFailure {
+            err: value.to_string(),
+        }
+    }
+}
+
 // TODO This won't be necessary when all service methods return SdkResult
 impl From<anyhow::Error> for SdkError {
     fn from(value: anyhow::Error) -> Self {
