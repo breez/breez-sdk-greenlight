@@ -23,6 +23,6 @@ final class BreezSDKTests: XCTestCase {
         try sdkServices.start()
         let nodeInfo = try sdkServices.nodeInfo()
         
-        XCTAssertEqual(nodeInfo?.id, "0352a918bdba7d7a69893a7d52a449f3e6df8e15a0edcc7fe59060be70d6f416f0")
+        XCTAssertEqual(nodeInfo.id, "0352a918bdba7d7a69893a7d52a449f3e6df8e15a0edcc7fe59060be70d6f416f0")
     }
 }

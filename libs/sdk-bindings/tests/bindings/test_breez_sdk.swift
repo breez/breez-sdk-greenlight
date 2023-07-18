@@ -19,7 +19,7 @@ do {
     let config = breez_sdk.defaultConfig(envType: EnvironmentType.staging, apiKey: "", nodeConfig: NodeConfig.greenlight(config: GreenlightNodeConfig(partnerCredentials: nil,inviteCode:  "code")));
     let sdkServices = try connect(config: config, seed: seed, listener: SDKListener());    
     let nodeInfo = try sdkServices.nodeInfo();
-    assert(nodeInfo?.id == "0352a918bdba7d7a69893a7d52a449f3e6df8e15a0edcc7fe59060be70d6f416f0", "nodeInfo.id");
+    assert(nodeInfo.id == "0352a918bdba7d7a69893a7d52a449f3e6df8e15a0edcc7fe59060be70d6f416f0", "nodeInfo.id");
 }catch {
  fatalError("Should have not thrown!")
 }
