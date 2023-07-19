@@ -1,6 +1,7 @@
 use crate::models::NodeState;
 
 use super::db::SqliteStorage;
+use crate::error::{SdkError, SdkResult};
 use anyhow::Result;
 
 impl SqliteStorage {
@@ -34,10 +35,14 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub fn get_node_state(&self) -> Result<Option<NodeState>> {
+    pub fn get_node_state(&self) -> SdkResult<Option<NodeState>> {
         let state_str = self.get_cached_item("node_state".to_string())?;
         Ok(match state_str {
-            Some(str) => serde_json::from_str(str.as_str())?,
+            Some(str) => {
+                serde_json::from_str(str.as_str()).map_err(|e| SdkError::PersistenceFailure {
+                    err: format!("Failed to deserialize node state: {e}"),
+                })?
+            }
             None => None,
         })
     }

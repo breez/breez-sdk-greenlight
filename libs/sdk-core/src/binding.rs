@@ -1,4 +1,14 @@
 //! Bindings for the Dart integration
+//!
+//! ### Error handling
+//!
+//! Since the integration requires the methods to return `anyhow::Result`, but the SDK service methods
+//! are being converted to return `SdkResult`, we have two ways to handle errors:
+//! - by using `Into::into`, which converts the `SdkError` enum to a generic `anyhow::Error`
+//! - by wrapping the `SdkError` in an `anyhow::Error`
+//!
+//! The first option loses the `SdkError` type. The second option keeps the type, which we can retrieve
+//! with `anyhow::Error::downcast_ref` (or equivalent Dart method). We therefore use the second approach.
 
 use std::future::Future;
 use std::sync::Arc;
@@ -11,6 +21,7 @@ use tokio::sync::mpsc;
 
 use crate::breez_services::{self, BreezEvent, BreezServices, EventListener};
 use crate::chain::RecommendedFees;
+use crate::error::SdkError;
 use crate::fiat::{FiatCurrency, Rate};
 use crate::input_parser::{
     InputType, LnUrlAuthRequestData, LnUrlPayRequestData, LnUrlWithdrawRequestData,
@@ -86,10 +97,13 @@ pub fn connect(config: Config, seed: Vec<u8>) -> Result<()> {
             BreezServices::connect(config, seed, Box::new(BindingEventListener {})).await?;
         BREEZ_SERVICES_INSTANCE
             .set(breez_services)
-            .map_err(|_| anyhow!("static node services already set"))?;
+            .map_err(|_| SdkError::InitFailed {
+                err: "static node services already set".into(),
+            })?;
 
         Ok(())
     })
+    .map_err(anyhow::Error::new::<SdkError>)
 }
 
 pub fn breez_events_stream(s: StreamSink<BreezEvent>) -> Result<()> {
@@ -143,11 +157,16 @@ pub fn receive_payment(amount_sats: u64, description: String) -> Result<LNInvoic
             .receive_payment(amount_sats, description.to_string())
             .await
     })
+    .map_err(anyhow::Error::new)
 }
 
 /// See [BreezServices::node_info]
-pub fn node_info() -> Result<Option<NodeState>> {
-    block_on(async { get_breez_services()?.node_info() })
+pub fn node_info() -> Result<NodeState> {
+    block_on(async {
+        get_breez_services()?
+            .node_info()
+            .map_err(anyhow::Error::new)
+    })
 }
 
 /// See [BreezServices::list_payments]
@@ -161,6 +180,7 @@ pub fn list_payments(
             .list_payments(filter, from_timestamp, to_timestamp)
             .await
     })
+    .map_err(anyhow::Error::new)
 }
 
 /// See [BreezServices::list_payments]
@@ -170,7 +190,7 @@ pub fn payment_by_hash(hash: String) -> Result<Option<Payment>> {
 
 /// See [BreezServices::list_lsps]
 pub fn list_lsps() -> Result<Vec<LspInformation>> {
-    block_on(async { get_breez_services()?.list_lsps().await })
+    block_on(async { get_breez_services()?.list_lsps().await }).map_err(anyhow::Error::new)
 }
 
 /// See [BreezServices::connect_lsp]
@@ -185,7 +205,7 @@ pub fn fetch_lsp_info(id: String) -> Result<Option<LspInformation>> {
 
 /// See [BreezServices::lsp_id]
 pub fn lsp_id() -> Result<Option<String>> {
-    block_on(async { get_breez_services()?.lsp_id().await })
+    block_on(async { get_breez_services()?.lsp_id().await }).map_err(anyhow::Error::new)
 }
 
 /// See [BreezServices::fetch_fiat_rates]
