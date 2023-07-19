@@ -6,7 +6,7 @@ if [[ -z "$JITPACK" ]]; then
     exit 1
 fi
 
-VERSION=0.0.0
+VERSION=0.1.3
 
 echo "JitPack building version $VERSION."
 cd $(dirname $0)
@@ -24,3 +24,4 @@ mvn org.apache.maven.plugins:maven-install-plugin:3.1.1:install-file -Dfile=bind
 ls /home/jitpack/.m2/repository/breez_sdk/bindings-android
 echo "---"
 ls /home/jitpack/.m2/repository/breez_sdk/bindings-android/$VERSION/
+cat /home/jitpack/.m2/repository/breez_sdk/bindings-android/$VERSION/bindings-android-$VERSION.pom
