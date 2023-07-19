@@ -355,8 +355,9 @@ impl BackupWorker {
                 );
 
                 // Bidirectionaly sync the local and remote changes
-                self.persister.import_remote_changes(&remote_storage)?;
-                remote_storage.import_remote_changes(self.persister.as_ref())?;
+                self.persister
+                    .import_remote_changes(&remote_storage, true)?;
+                remote_storage.import_remote_changes(self.persister.as_ref(), false)?;
                 *last_sync_request_id = self.persister.get_last_sync_request()?.unwrap_or_default();
 
                 let mut hex = vec![];
