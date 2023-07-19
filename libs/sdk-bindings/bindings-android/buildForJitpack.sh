@@ -24,4 +24,4 @@ mvn org.apache.maven.plugins:maven-install-plugin:3.1.1:install-file -Dfile=bind
 ls /home/jitpack/.m2/repository/breez_sdk/bindings-android
 echo "---"
 ls /home/jitpack/.m2/repository/breez_sdk/bindings-android/$VERSION/
-cat /home/jitpack/.m2/repository/breez_sdk/bindings-android/$VERSION/bindings-android-$VERSION.pom
+cat /home/jitpack/.m2/repository/breez_sdk/bindings-android/$VERSION/bindings-android-$VERSION.module
