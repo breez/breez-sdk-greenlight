@@ -1,6 +1,5 @@
 use std::str::FromStr;
 
-use crate::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use anyhow::{anyhow, ensure, Result};
 use bitcoin::blockdata::opcodes;
 use bitcoin::blockdata::script::Builder;
@@ -10,9 +9,7 @@ use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::{Address, Script};
 use chrono::{DateTime, TimeZone, Utc};
-use gl_client::pb::Invoice;
-use gl_client::pb::Peer;
-use gl_client::pb::WithdrawResponse;
+use gl_client::pb::{Invoice, WithdrawResponse};
 use lightning_invoice::RawInvoice;
 use ripemd::Digest;
 use ripemd::Ripemd160;
@@ -20,17 +17,20 @@ use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRe
 use rusqlite::ToSql;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
-use strum_macros::Display;
-use strum_macros::EnumString;
 use tokio::sync::mpsc;
 use tonic::Streaming;
 
+use gl_client::signer::model::greenlight::Peer;
+
+use crate::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::fiat::{FiatCurrency, Rate};
 use crate::grpc::{self, PaymentInformation, RegisterPaymentReply};
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lsp::LspInformation;
 use crate::models::Network::*;
 use crate::{LNInvoice, LnUrlErrorData};
+
+use strum_macros::{Display, EnumString};
 
 /// Different types of supported payments
 #[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]

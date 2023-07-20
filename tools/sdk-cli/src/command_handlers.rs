@@ -1,13 +1,10 @@
 use std::fs;
 use std::sync::Arc;
 
-use anyhow::Error;
-use anyhow::{anyhow, Result};
-use breez_sdk_core::InputType::{LnUrlAuth, LnUrlWithdraw};
+use anyhow::{anyhow, Error, Result};
+use breez_sdk_core::InputType::{LnUrlAuth, LnUrlPay, LnUrlWithdraw};
 use breez_sdk_core::{
-    parse, BreezEvent, BreezServices, Config, EventListener, GreenlightCredentials,
-    GreenlightNodeConfig, InputType::LnUrlPay, NodeConfig, PaymentTypeFilter,
-    ReceivePaymentRequestData,
+    parse, BreezEvent, BreezServices, EventListener, GreenlightCredentials, PaymentTypeFilter,
 };
 use once_cell::sync::OnceCell;
 use qrcode_rs::render::unicode;

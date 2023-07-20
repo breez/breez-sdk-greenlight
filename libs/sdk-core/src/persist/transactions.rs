@@ -1,10 +1,12 @@
 use super::db::SqliteStorage;
+use crate::error::SdkResult;
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::models::*;
 use anyhow::{anyhow, Result};
 use rusqlite::types::{FromSql, FromSqlError, ToSql, ToSqlOutput};
 use rusqlite::OptionalExtension;
 use rusqlite::Row;
+
 use std::str::FromStr;
 
 impl SqliteStorage {
@@ -14,7 +16,7 @@ impl SqliteStorage {
     /// Note that, if a payment has details of type [LnPaymentDetails] which contain a [SuccessActionProcessed],
     /// then the [LnPaymentDetails] will NOT be persisted. In that case, the [SuccessActionProcessed]
     /// can be inserted separately via [SqliteStorage::insert_lnurl_payment_external_info].
-    pub fn insert_or_update_payments(&self, transactions: &[Payment]) -> Result<()> {
+    pub fn insert_or_update_payments(&self, transactions: &[Payment]) -> SdkResult<()> {
         let deleted = self.delete_pending_lightning_payments()?;
         debug!("Deleted {deleted} pending payments");
 
@@ -66,7 +68,7 @@ impl SqliteStorage {
         lnurl_pay_success_action: Option<&SuccessActionProcessed>,
         lnurl_metadata: Option<String>,
         ln_address: Option<String>,
-    ) -> Result<()> {
+    ) -> SdkResult<()> {
         let con = self.get_connection()?;
         let mut prep_statement = con.prepare(
             "
@@ -129,7 +131,7 @@ impl SqliteStorage {
         type_filter: PaymentTypeFilter,
         from_timestamp: Option<i64>,
         to_timestamp: Option<i64>,
-    ) -> Result<Vec<Payment>> {
+    ) -> SdkResult<Vec<Payment>> {
         let where_clause = filter_to_where_clause(type_filter, from_timestamp, to_timestamp);
         let con = self.get_connection()?;
         let mut stmt = con.prepare(

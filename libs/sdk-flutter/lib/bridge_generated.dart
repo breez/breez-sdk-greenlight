@@ -60,7 +60,7 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kReceivePaymentConstMeta;
 
   /// See [BreezServices::node_info]
-  Future<NodeState?> nodeInfo({dynamic hint});
+  Future<NodeState> nodeInfo({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kNodeInfoConstMeta;
 
@@ -1321,10 +1321,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["reqData"],
       );
 
-  Future<NodeState?> nodeInfo({dynamic hint}) {
+  Future<NodeState> nodeInfo({dynamic hint}) {
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_node_info(port_),
-      parseSuccessData: _wire2api_opt_box_autoadd_node_state,
+      parseSuccessData: _wire2api_node_state,
       constMeta: kNodeInfoConstMeta,
       argValues: [],
       hint: hint,
@@ -1954,10 +1954,6 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return _wire2api_message_success_action_data(raw);
   }
 
-  NodeState _wire2api_box_autoadd_node_state(dynamic raw) {
-    return _wire2api_node_state(raw);
-  }
-
   OpeningFeeParams _wire2api_box_autoadd_opening_fee_params(dynamic raw) {
     return _wire2api_opening_fee_params(raw);
   }
@@ -2440,10 +2436,6 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   LspInformation? _wire2api_opt_box_autoadd_lsp_information(dynamic raw) {
     return raw == null ? null : _wire2api_box_autoadd_lsp_information(raw);
-  }
-
-  NodeState? _wire2api_opt_box_autoadd_node_state(dynamic raw) {
-    return raw == null ? null : _wire2api_box_autoadd_node_state(raw);
   }
 
   OpeningFeeParams? _wire2api_opt_box_autoadd_opening_fee_params(dynamic raw) {

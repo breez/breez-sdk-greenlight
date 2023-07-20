@@ -1,6 +1,7 @@
 use crate::backup::{BackupRequest, BackupTransport, BackupWatcher};
 use crate::boltzswap::BoltzApi;
 use crate::chain::{ChainService, MempoolSpace, RecommendedFees};
+use crate::error::{SdkError, SdkResult};
 use crate::fiat::{FiatCurrency, Rate};
 use crate::greenlight::{GLBackupTransport, Greenlight};
 use crate::grpc::channel_opener_client::ChannelOpenerClient;
@@ -30,7 +31,7 @@ use crate::swap::BTCReceiveSwap;
 use crate::BuyBitcoinProvider::Moonpay;
 use crate::*;
 use crate::{BuyBitcoinProvider, LnUrlAuthRequestData, LnUrlWithdrawRequestData, PaymentResponse};
-use anyhow::{anyhow, ensure, Result};
+use anyhow::{anyhow, Result};
 use bip39::*;
 use bitcoin::hashes::hex::ToHex;
 use bitcoin::hashes::{sha256, Hash};
@@ -126,7 +127,7 @@ impl BreezServices {
         config: Config,
         seed: Vec<u8>,
         event_listener: Box<dyn EventListener>,
-    ) -> Result<Arc<BreezServices>> {
+    ) -> SdkResult<Arc<BreezServices>> {
         let start = Instant::now();
         let services = BreezServicesBuilder::new(config)
             .seed(seed)
@@ -145,10 +146,12 @@ impl BreezServices {
     ///
     /// It should be called only once when the app is started, regardless whether the app is sent to
     /// background and back.
-    async fn start(self: &Arc<BreezServices>) -> Result<()> {
+    async fn start(self: &Arc<BreezServices>) -> SdkResult<()> {
         let mut started = self.started.lock().await;
         if *started {
-            return Err(anyhow::Error::msg("BreezServices already started"));
+            return Err(SdkError::InitFailed {
+                err: "BreezServices already started".into(),
+            });
         }
         let start = Instant::now();
         self.start_background_tasks().await?;
@@ -293,7 +296,8 @@ impl BreezServices {
                 preimage: None,
                 opening_fee_params: None,
             })
-            .await?
+            .await
+            .map_err(|_| anyhow!("Failed to receive payment"))?
             .ln_invoice;
         validate_lnurl_withdraw(req_data, invoice).await
     }
@@ -319,13 +323,19 @@ impl BreezServices {
     pub async fn receive_payment(
         &self,
         req_data: ReceivePaymentRequestData,
-    ) -> Result<ReceivePaymentResponse> {
+    ) -> SdkResult<ReceivePaymentResponse> {
         self.payment_receiver.receive_payment(req_data).await
     }
 
-    /// Retrieve the node state from the persistent storage
-    pub fn node_info(&self) -> Result<Option<NodeState>> {
-        self.persister.get_node_state()
+    /// Retrieve the node state from the persistent storage.
+    ///
+    /// Fail if it could not be retrieved or if `None` was found.
+    pub fn node_info(&self) -> SdkResult<NodeState> {
+        self.persister
+            .get_node_state()?
+            .ok_or(SdkError::PersistenceFailure {
+                err: "No node info found".into(),
+            })
     }
 
     /// Retrieve the node up to date BackupStatus
@@ -356,10 +366,9 @@ impl BreezServices {
         filter: PaymentTypeFilter,
         from_timestamp: Option<i64>,
         to_timestamp: Option<i64>,
-    ) -> Result<Vec<Payment>> {
+    ) -> SdkResult<Vec<Payment>> {
         self.persister
             .list_payments(filter, from_timestamp, to_timestamp)
-            .map_err(|err| anyhow!(err))
     }
 
     /// Fetch a specific payment by its hash.
@@ -390,10 +399,11 @@ impl BreezServices {
     }
 
     /// List available LSPs that can be selected by the user
-    pub async fn list_lsps(&self) -> Result<Vec<LspInformation>> {
+    pub async fn list_lsps(&self) -> SdkResult<Vec<LspInformation>> {
         self.lsp_api
-            .list_lsps(self.node_info()?.ok_or_else(|| anyhow!("err"))?.id)
+            .list_lsps(self.node_info()?.id)
             .await
+            .map_err(|e| SdkError::LspConnectFailed { err: e.to_string() })
     }
 
     /// Select the LSP to be used and provide inbound liquidity
@@ -404,7 +414,7 @@ impl BreezServices {
     }
 
     /// Get the current LSP's ID
-    pub async fn lsp_id(&self) -> Result<Option<String>> {
+    pub async fn lsp_id(&self) -> SdkResult<Option<String>> {
         self.persister.get_lsp_id()
     }
 
@@ -486,11 +496,11 @@ impl BreezServices {
                         onchain_recipient_address,
                         pair_hash,
                         self.lsp_info().await?.pubkey,
-                        sat_per_vbyte
+                        sat_per_vbyte,
                     )
                     .await
                     .map(Into::into)
-            },
+            }
             false => Err(anyhow!(
                 "There already is at least one Reverse Swap in progress. You can only start a new one after after the ongoing ones finish. \
                 Use the in_progress_reverse_swaps method to get an overview of currently ongoing reverse swaps."
@@ -694,6 +704,20 @@ impl BreezServices {
     ///
     /// Internal method. Should only be used as part of [BreezServices::start]
     async fn start_background_tasks(self: &Arc<BreezServices>) -> Result<()> {
+        // Sync node state
+        let sync_breez_services = self.clone();
+        match sync_breez_services.persister.get_node_state()? {
+            Some(node) => {
+                info!("Starting existing node {}", node.id)
+            }
+            None => {
+                // In case it is a first run we sync in foreground to get the node state.
+                info!("First run, syncing in foreground");
+                sync_breez_services.sync().await?;
+                info!("First run, finished running syncing in foreground");
+            }
+        }
+
         // start the signer
         let (shutdown_signer_sender, signer_signer_receiver) = mpsc::channel(1);
         self.start_signer(signer_signer_receiver).await;
@@ -722,22 +746,6 @@ impl BreezServices {
             debug!("Received the signal to exit event polling loop");
         });
 
-        // Sync node state
-        let sync_breez_services = self.clone();
-        match sync_breez_services.node_info()? {
-            Some(_) => {
-                // In case it is not a first run we sync in background to start quickly.
-                tokio::spawn(async move {
-                    // sync with remote node state
-                    _ = sync_breez_services.sync().await;
-                });
-            }
-            None => {
-                // In case it is a first run we sync in foreground to get the node state.
-                _ = sync_breez_services.sync().await;
-            }
-        }
-
         Ok(())
     }
 
@@ -748,18 +756,28 @@ impl BreezServices {
         });
     }
 
-    async fn start_backup_watcher(self: &Arc<BreezServices>) -> Result<()> {
+    async fn start_backup_watcher(self: &Arc<BreezServices>) -> SdkResult<()> {
         self.backup_watcher
             .start(self.shutdown_receiver.clone())
-            .await?;
+            .await
+            .map_err(|e| SdkError::InitFailed {
+                err: format!("Failed to start backup watcher: {e}"),
+            })?;
 
         // Restore backup state and request backup on start if needed
-        let force_backup = self.persister.get_last_sync_version()?.is_none();
+        let force_backup = self
+            .persister
+            .get_last_sync_version()
+            .map_err(|e| SdkError::InitFailed {
+                err: format!("Failed to read last sync version: {e}"),
+            })?
+            .is_none();
         self.backup_watcher
             .request_backup(BackupRequest::new(force_backup))
-            .await?;
-
-        Ok(())
+            .await
+            .map_err(|e| SdkError::InitFailed {
+                err: format!("Failed to request backup: {e}"),
+            })
     }
 
     async fn track_backup_events(self: &Arc<BreezServices>) {
@@ -1021,9 +1039,11 @@ impl BreezServicesBuilder {
     pub async fn build(
         &self,
         listener: Option<Box<dyn EventListener>>,
-    ) -> Result<Arc<BreezServices>> {
+    ) -> SdkResult<Arc<BreezServices>> {
         if self.node_api.is_none() && self.seed.is_none() {
-            return Err(anyhow!("Either node_api or seed should be provided"));
+            return Err(SdkError::InitFailed {
+                err: "Either node_api or both credentials and seed should be provided".into(),
+            });
         }
 
         // The storage is implemented via sqlite.
@@ -1031,7 +1051,7 @@ impl BreezServicesBuilder {
             .persister
             .clone()
             .unwrap_or_else(|| Arc::new(SqliteStorage::new(self.config.working_dir.clone())));
-        persister.init().unwrap();
+        persister.init()?;
 
         let mut node_api = self.node_api.clone();
         let mut backup_transport = self.backup_transport.clone();
@@ -1041,7 +1061,10 @@ impl BreezServicesBuilder {
                 self.seed.clone().unwrap(),
                 persister.clone(),
             )
-            .await?;
+            .await
+            .map_err(|e| SdkError::InitFailed {
+                err: format!("Failed to connect to Greenlight: {e}"),
+            })?;
             let gl_arc = Arc::new(greenlight);
             node_api = Some(gl_arc.clone());
             if backup_transport.is_none() {
@@ -1050,17 +1073,27 @@ impl BreezServicesBuilder {
         }
 
         if backup_transport.is_none() {
-            return Err(anyhow!("state synchronizer should be provided"));
+            return Err(SdkError::InitFailed {
+                err: "State synchronizer should be provided".into(),
+            });
         }
 
         let unwrapped_node_api = node_api.unwrap();
         let unwrapped_backup_transport = backup_transport.unwrap();
 
         // create the backup encryption key and then the backup watcher
-        let backup_encryption_key = unwrapped_node_api.derive_bip32_key(vec![
-            ChildNumber::from_hardened_idx(139)?,
-            ChildNumber::from(0),
-        ])?;
+        let backup_encryption_key = unwrapped_node_api
+            .derive_bip32_key(vec![
+                ChildNumber::from_hardened_idx(139).map_err(|e| SdkError::InitFailed {
+                    err: format!(
+                        "Failed to get necessary child number to derive backup encryption key: {e}"
+                    ),
+                })?,
+                ChildNumber::from(0),
+            ])
+            .map_err(|e| SdkError::InitFailed {
+                err: format!("Failed to derive backup encryption key: {e}"),
+            })?;
         let backup_watcher = BackupWatcher::new(
             self.config.clone(),
             unwrapped_backup_transport.clone(),
@@ -1220,7 +1253,7 @@ pub trait Receiver: Send + Sync {
     async fn receive_payment(
         &self,
         req_data: ReceivePaymentRequestData,
-    ) -> Result<ReceivePaymentResponse>;
+    ) -> SdkResult<ReceivePaymentResponse>;
 }
 
 pub(crate) struct PaymentReceiver {
@@ -1235,7 +1268,7 @@ impl Receiver for PaymentReceiver {
     async fn receive_payment(
         &self,
         req_data: ReceivePaymentRequestData,
-    ) -> Result<ReceivePaymentResponse> {
+    ) -> SdkResult<ReceivePaymentResponse> {
         self.node_api.start().await?;
         let lsp_info = get_lsp(self.persister.clone(), self.lsp.clone()).await?;
         let node_state = self
@@ -1269,8 +1302,13 @@ impl Receiver for PaymentReceiver {
                 info!("zero-conf fee calculation option: lsp fee rate (proportional): {}:  (minimum {}), total fees for channel: {}",
                     ofp.proportional, ofp.min_msat, channel_fees_msat);
 
-                ensure!(amount_msats > channel_fees_msat, "requestPayment: Amount should be more than the minimum fees {channel_fees_msat} msat, but is {amount_msats} msat");
-
+                if amount_msats < channel_fees_msat + 1000 {
+                    return Err(SdkError::ReceivePaymentFailed {
+                        err: format!(
+                            "requestPayment: Amount should be more than the minimum fees {channel_fees_msat} msat, but is {amount_msats} msat"
+                        ),
+                    });
+                }
                 // remove the fees from the amount to get the small amount on the current node invoice.
                 destination_invoice_amount_sats = amount_sats - channel_fees_msat / 1000;
             }
@@ -1361,9 +1399,17 @@ impl Receiver for PaymentReceiver {
                     lsp_info.id.clone(),
                     lsp_info.lsp_pubkey.clone(),
                     PaymentInformation {
-                        payment_hash: hex::decode(parsed_invoice.payment_hash.clone())?,
+                        payment_hash: hex::decode(parsed_invoice.payment_hash.clone()).map_err(
+                            |e| SdkError::ReceivePaymentFailed {
+                                err: format!("Failed to decode hex payment hash: {e}"),
+                            },
+                        )?,
                         payment_secret: parsed_invoice.payment_secret.clone(),
-                        destination: hex::decode(parsed_invoice.payee_pubkey.clone())?,
+                        destination: hex::decode(parsed_invoice.payee_pubkey.clone()).map_err(
+                            |e| SdkError::ReceivePaymentFailed {
+                                err: format!("Failed to decode hex payee pubkey: {e}"),
+                            },
+                        )?,
                         incoming_amount_msat: amount_msats as i64,
                         outgoing_amount_msat: (destination_invoice_amount_sats * 1000) as i64,
                         tag: json!({ "apiKeyHash": api_key_hash }).to_string(),
@@ -1422,12 +1468,12 @@ pub(crate) mod tests {
     use std::collections::HashMap;
     use std::sync::Arc;
 
-    use anyhow::{anyhow, Result};
+    use anyhow::Result;
+    use regex::Regex;
     use reqwest::Url;
 
-    use regex::Regex;
-
     use crate::breez_services::{BreezServices, BreezServicesBuilder};
+    use crate::error::{SdkError, SdkResult};
     use crate::fiat::Rate;
     use crate::lnurl::pay::model::MessageSuccessActionData;
     use crate::lnurl::pay::model::SuccessActionProcessed;
@@ -1441,7 +1487,7 @@ pub(crate) mod tests {
     use super::{PaymentReceiver, Receiver};
 
     #[tokio::test]
-    async fn test_node_state() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_node_state() -> SdkResult<()> {
         // let storage_path = format!("{}/storage.sql", get_test_working_dir());
         // std::fs::remove_file(storage_path).ok();
 
@@ -1526,10 +1572,7 @@ pub(crate) mod tests {
             .await?;
 
         breez_services.sync().await?;
-        let fetched_state = breez_services
-            .node_info()?
-            .ok_or("No NodeState found")
-            .map_err(|err| anyhow!(err))?;
+        let fetched_state = breez_services.node_info()?;
         assert_eq!(fetched_state, dummy_node_state);
 
         let all = breez_services
@@ -1559,7 +1602,7 @@ pub(crate) mod tests {
     }
 
     #[tokio::test]
-    async fn test_receive_with_open_channel() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_receive_with_open_channel() -> SdkResult<()> {
         let config = create_test_config();
         let persister = Arc::new(create_test_persister(config.clone()));
         persister.init().unwrap();
@@ -1598,18 +1641,16 @@ pub(crate) mod tests {
     }
 
     #[tokio::test]
-    async fn test_list_lsps() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_list_lsps() -> SdkResult<()> {
         let storage_path = format!("{}/storage.sql", get_test_working_dir());
         std::fs::remove_file(storage_path).ok();
 
-        let breez_services = breez_services().await?;
+        let breez_services = breez_services().await.map_err(|e| SdkError::InitFailed {
+            err: format!("Failed to get the BreezServices: {e}"),
+        })?;
         breez_services.sync().await?;
 
-        let node_pubkey = breez_services
-            .node_info()?
-            .ok_or("No NodeState found")
-            .map_err(|err| anyhow!(err))?
-            .id;
+        let node_pubkey = breez_services.node_info()?.id;
         let lsps = breez_services.lsp_api.list_lsps(node_pubkey).await?;
         assert_eq!(lsps.len(), 1);
 
@@ -1627,7 +1668,7 @@ pub(crate) mod tests {
             rates[0],
             Rate {
                 coin: "USD".to_string(),
-                value: 20_000.00
+                value: 20_000.00,
             }
         );
 

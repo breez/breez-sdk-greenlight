@@ -27,6 +27,8 @@ class LogStreamListener : LogStream
 {
  public void Log(LogEntry l)
  {
-  Console.WriteLine(l.line);
+  if (l.level != "TRACE") {
+   Console.WriteLine(l.line);
+  }
  }
 }

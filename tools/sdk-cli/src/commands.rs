@@ -1,5 +1,4 @@
-use breez_sdk_core::BuyBitcoinProvider;
-use breez_sdk_core::EnvironmentType;
+use breez_sdk_core::{BuyBitcoinProvider, EnvironmentType};
 use clap::Parser;
 
 #[derive(Parser, Debug)]

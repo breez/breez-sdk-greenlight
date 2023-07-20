@@ -461,7 +461,7 @@ dependencies = [
 
 [[package]]
 name = "breez-sdk-core"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "aes",
  "anyhow",
@@ -497,6 +497,7 @@ dependencies = [
  "strum",
  "strum_macros",
  "tempfile",
+ "thiserror",
  "tiny-bip39",
  "tokio",
  "tonic",
@@ -506,7 +507,7 @@ dependencies = [
 
 [[package]]
 name = "breez_sdk"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "breez-sdk-core",

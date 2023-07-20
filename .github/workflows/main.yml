@@ -38,6 +38,12 @@ jobs:
           go-version: '1.19.9'                      
       - uses: actions/setup-python@v4      
       
+      - run: rustup toolchain install stable --profile minimal
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "./libs -> target\n./tools/sdk-cli -> target"
+
       - name: install dependencies
         run: |
           cd libs/sdk-bindings

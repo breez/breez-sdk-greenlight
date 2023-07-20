@@ -562,6 +562,11 @@ export const nodeInfo = async (): Promise<NodeState> => {
     return response as NodeState
 }
 
+export const paymentByHash = async (hash: string): Promise<Payment> => {
+    const response = await BreezSDK.paymentByHash(hash)
+    return response as Payment
+}
+
 export const listPayments = async (filter: PaymentTypeFilter, fromTimestamp: number = 0, toTimestamp: number = 0): Promise<Payment[]> => {
     const response = await BreezSDK.listPayments(filter, fromTimestamp, toTimestamp)
     return response as Payment[]
