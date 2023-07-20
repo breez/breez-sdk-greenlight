@@ -31,9 +31,9 @@ use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, PaymentTypeFilter, SwapInfo};
 use crate::{
-    BackupStatus, BuyBitcoinProvider, EnvironmentType, LnUrlCallbackStatus, NodeConfig,
-    OpeningFeeParams, ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse,
-    ReverseSwapInfo, ReverseSwapPairInfo,
+    BackupStatus, BuyBitcoinRequest, EnvironmentType, LnUrlCallbackStatus, NodeConfig,
+    ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse, ReverseSwapInfo,
+    ReverseSwapPairInfo,
 };
 
 static BREEZ_SERVICES_INSTANCE: OnceCell<Arc<BreezServices>> = OnceCell::new();
@@ -371,15 +371,8 @@ pub fn default_config(
 }
 
 /// See [BreezServices::buy_bitcoin]
-pub fn buy_bitcoin(
-    provider: BuyBitcoinProvider,
-    opening_fee_params: Option<OpeningFeeParams>,
-) -> Result<String> {
-    block_on(async {
-        get_breez_services()?
-            .buy_bitcoin(provider, opening_fee_params)
-            .await
-    })
+pub fn buy_bitcoin(req: BuyBitcoinRequest) -> Result<String> {
+    block_on(async { get_breez_services()?.buy_bitcoin(req).await })
 }
 
 /// See [BreezServices::backup]

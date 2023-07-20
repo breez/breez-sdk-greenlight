@@ -667,6 +667,12 @@ pub struct ReceiveOnchainRequest {
     pub opening_fee_params: Option<OpeningFeeParams>,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct BuyBitcoinRequest {
+    pub provider: BuyBitcoinProvider,
+    pub opening_fee_params: Option<OpeningFeeParams>,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub struct OpeningFeeParams {
     pub min_msat: u64,

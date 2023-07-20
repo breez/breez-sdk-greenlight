@@ -94,6 +94,11 @@ typedef struct wire_LnUrlAuthRequestData {
   struct wire_uint_8_list *url;
 } wire_LnUrlAuthRequestData;
 
+typedef struct wire_BuyBitcoinRequest {
+  int32_t provider;
+  struct wire_OpeningFeeParams *opening_fee_params;
+} wire_BuyBitcoinRequest;
+
 typedef struct DartCObject *WireSyncReturn;
 
 void store_dart_post_cobject(DartPostCObjectFnType ptr);
@@ -201,13 +206,13 @@ void wire_default_config(int64_t port_,
                          struct wire_uint_8_list *api_key,
                          struct wire_NodeConfig *node_config);
 
-void wire_buy_bitcoin(int64_t port_,
-                      int32_t provider,
-                      struct wire_OpeningFeeParams *opening_fee_params);
+void wire_buy_bitcoin(int64_t port_, struct wire_BuyBitcoinRequest *req);
 
 void wire_backup(int64_t port_);
 
 void wire_backup_status(int64_t port_);
+
+struct wire_BuyBitcoinRequest *new_box_autoadd_buy_bitcoin_request_0(void);
 
 struct wire_Config *new_box_autoadd_config_0(void);
 
@@ -280,6 +285,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_buy_bitcoin);
     dummy_var ^= ((int64_t) (void*) wire_backup);
     dummy_var ^= ((int64_t) (void*) wire_backup_status);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_buy_bitcoin_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_config_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_greenlight_credentials_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_greenlight_node_config_0);

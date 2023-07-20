@@ -213,8 +213,7 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kDefaultConfigConstMeta;
 
   /// See [BreezServices::buy_bitcoin]
-  Future<String> buyBitcoin(
-      {required BuyBitcoinProvider provider, OpeningFeeParams? openingFeeParams, dynamic hint});
+  Future<String> buyBitcoin({required BuyBitcoinRequest req, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kBuyBitcoinConstMeta;
 
@@ -318,6 +317,16 @@ class BreezEvent with _$BreezEvent {
 /// Different providers will demand different behaviours when the user is trying to buy bitcoin.
 enum BuyBitcoinProvider {
   Moonpay,
+}
+
+class BuyBitcoinRequest {
+  final BuyBitcoinProvider provider;
+  final OpeningFeeParams? openingFeeParams;
+
+  const BuyBitcoinRequest({
+    required this.provider,
+    this.openingFeeParams,
+  });
 }
 
 /// State of a Lightning channel
@@ -1795,22 +1804,20 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["envType", "apiKey", "nodeConfig"],
       );
 
-  Future<String> buyBitcoin(
-      {required BuyBitcoinProvider provider, OpeningFeeParams? openingFeeParams, dynamic hint}) {
-    var arg0 = api2wire_buy_bitcoin_provider(provider);
-    var arg1 = _platform.api2wire_opt_box_autoadd_opening_fee_params(openingFeeParams);
+  Future<String> buyBitcoin({required BuyBitcoinRequest req, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_buy_bitcoin_request(req);
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_buy_bitcoin(port_, arg0, arg1),
+      callFfi: (port_) => _platform.inner.wire_buy_bitcoin(port_, arg0),
       parseSuccessData: _wire2api_String,
       constMeta: kBuyBitcoinConstMeta,
-      argValues: [provider, openingFeeParams],
+      argValues: [req],
       hint: hint,
     ));
   }
 
   FlutterRustBridgeTaskConstMeta get kBuyBitcoinConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "buy_bitcoin",
-        argNames: ["provider", "openingFeeParams"],
+        argNames: ["req"],
       );
 
   Future<void> backup({dynamic hint}) {
@@ -2776,6 +2783,13 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<wire_BuyBitcoinRequest> api2wire_box_autoadd_buy_bitcoin_request(BuyBitcoinRequest raw) {
+    final ptr = inner.new_box_autoadd_buy_bitcoin_request_0();
+    _api_fill_to_wire_buy_bitcoin_request(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
   ffi.Pointer<wire_Config> api2wire_box_autoadd_config(Config raw) {
     final ptr = inner.new_box_autoadd_config_0();
     _api_fill_to_wire_config(raw, ptr.ref);
@@ -2913,6 +2927,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
 
 // Section: api_fill_to_wire
 
+  void _api_fill_to_wire_box_autoadd_buy_bitcoin_request(
+      BuyBitcoinRequest apiObj, ffi.Pointer<wire_BuyBitcoinRequest> wireObj) {
+    _api_fill_to_wire_buy_bitcoin_request(apiObj, wireObj.ref);
+  }
+
   void _api_fill_to_wire_box_autoadd_config(Config apiObj, ffi.Pointer<wire_Config> wireObj) {
     _api_fill_to_wire_config(apiObj, wireObj.ref);
   }
@@ -2959,6 +2978,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   void _api_fill_to_wire_box_autoadd_receive_payment_request(
       ReceivePaymentRequest apiObj, ffi.Pointer<wire_ReceivePaymentRequest> wireObj) {
     _api_fill_to_wire_receive_payment_request(apiObj, wireObj.ref);
+  }
+
+  void _api_fill_to_wire_buy_bitcoin_request(BuyBitcoinRequest apiObj, wire_BuyBitcoinRequest wireObj) {
+    wireObj.provider = api2wire_buy_bitcoin_provider(apiObj.provider);
+    wireObj.opening_fee_params = api2wire_opt_box_autoadd_opening_fee_params(apiObj.openingFeeParams);
   }
 
   void _api_fill_to_wire_config(Config apiObj, wire_Config wireObj) {
@@ -3691,21 +3715,19 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
 
   void wire_buy_bitcoin(
     int port_,
-    int provider,
-    ffi.Pointer<wire_OpeningFeeParams> opening_fee_params,
+    ffi.Pointer<wire_BuyBitcoinRequest> req,
   ) {
     return _wire_buy_bitcoin(
       port_,
-      provider,
-      opening_fee_params,
+      req,
     );
   }
 
-  late final _wire_buy_bitcoinPtr = _lookup<
-          ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Int32, ffi.Pointer<wire_OpeningFeeParams>)>>(
-      'wire_buy_bitcoin');
+  late final _wire_buy_bitcoinPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_BuyBitcoinRequest>)>>(
+          'wire_buy_bitcoin');
   late final _wire_buy_bitcoin =
-      _wire_buy_bitcoinPtr.asFunction<void Function(int, int, ffi.Pointer<wire_OpeningFeeParams>)>();
+      _wire_buy_bitcoinPtr.asFunction<void Function(int, ffi.Pointer<wire_BuyBitcoinRequest>)>();
 
   void wire_backup(
     int port_,
@@ -3729,6 +3751,16 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_backup_statusPtr =
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_backup_status');
   late final _wire_backup_status = _wire_backup_statusPtr.asFunction<void Function(int)>();
+
+  ffi.Pointer<wire_BuyBitcoinRequest> new_box_autoadd_buy_bitcoin_request_0() {
+    return _new_box_autoadd_buy_bitcoin_request_0();
+  }
+
+  late final _new_box_autoadd_buy_bitcoin_request_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_BuyBitcoinRequest> Function()>>(
+          'new_box_autoadd_buy_bitcoin_request_0');
+  late final _new_box_autoadd_buy_bitcoin_request_0 =
+      _new_box_autoadd_buy_bitcoin_request_0Ptr.asFunction<ffi.Pointer<wire_BuyBitcoinRequest> Function()>();
 
   ffi.Pointer<wire_Config> new_box_autoadd_config_0() {
     return _new_box_autoadd_config_0();
@@ -4023,6 +4055,13 @@ class wire_LnUrlAuthRequestData extends ffi.Struct {
   external ffi.Pointer<wire_uint_8_list> domain;
 
   external ffi.Pointer<wire_uint_8_list> url;
+}
+
+class wire_BuyBitcoinRequest extends ffi.Struct {
+  @ffi.Int32()
+  external int provider;
+
+  external ffi.Pointer<wire_OpeningFeeParams> opening_fee_params;
 }
 
 typedef DartPostCObjectFnType

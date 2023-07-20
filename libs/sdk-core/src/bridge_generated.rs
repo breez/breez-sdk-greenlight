@@ -47,6 +47,7 @@ use crate::lnurl::pay::model::UrlSuccessActionData;
 use crate::lsp::LspInformation;
 use crate::models::BackupStatus;
 use crate::models::BuyBitcoinProvider;
+use crate::models::BuyBitcoinRequest;
 use crate::models::ChannelState;
 use crate::models::ClosedChannelPaymentDetails;
 use crate::models::Config;
@@ -577,11 +578,7 @@ fn wire_default_config_impl(
         },
     )
 }
-fn wire_buy_bitcoin_impl(
-    port_: MessagePort,
-    provider: impl Wire2Api<BuyBitcoinProvider> + UnwindSafe,
-    opening_fee_params: impl Wire2Api<Option<OpeningFeeParams>> + UnwindSafe,
-) {
+fn wire_buy_bitcoin_impl(port_: MessagePort, req: impl Wire2Api<BuyBitcoinRequest> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
             debug_name: "buy_bitcoin",
@@ -589,9 +586,8 @@ fn wire_buy_bitcoin_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_provider = provider.wire2api();
-            let api_opening_fee_params = opening_fee_params.wire2api();
-            move |task_callback| buy_bitcoin(api_provider, api_opening_fee_params)
+            let api_req = req.wire2api();
+            move |task_callback| buy_bitcoin(api_req)
         },
     )
 }

@@ -286,6 +286,11 @@ dictionary ReceiveOnchainRequest {
     OpeningFeeParams? opening_fee_params;
 };
 
+dictionary BuyBitcoinRequest {
+    BuyBitcoinProvider provider;
+    OpeningFeeParams? opening_fee_params;
+};
+
 dictionary OpeningFeeParamsMenu {
     sequence<OpeningFeeParams> vals;
 };
@@ -530,7 +535,7 @@ interface BlockingBreezServices {
    RecommendedFees recommended_fees();
 
    [Throws=SdkError]
-   string buy_bitcoin(BuyBitcoinProvider provider, OpeningFeeParams? opening_fee_params);
+   string buy_bitcoin(BuyBitcoinRequest req);
 };
 
 namespace breez_sdk {  

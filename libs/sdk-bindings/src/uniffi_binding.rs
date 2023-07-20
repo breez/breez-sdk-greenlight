@@ -7,17 +7,18 @@ use once_cell::sync::Lazy;
 use breez_sdk_core::{
     error::*, mnemonic_to_seed as sdk_mnemonic_to_seed, parse as sdk_parse_input,
     parse_invoice as sdk_parse_invoice, AesSuccessActionDataDecrypted, BackupFailedData,
-    BackupStatus, BitcoinAddressData, BreezEvent, BreezServices, BuyBitcoinProvider, ChannelState,
-    ClosedChannelPaymentDetails, Config, CurrencyInfo, EnvironmentType, EventListener,
-    FeeratePreset, FiatCurrency, GreenlightCredentials, GreenlightNodeConfig, InputType,
-    InvoicePaidDetails, LNInvoice, LnPaymentDetails, LnUrlAuthRequestData, LnUrlCallbackStatus,
-    LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult, LnUrlWithdrawRequestData, LocaleOverrides,
-    LocalizedName, LogEntry, LspInformation, MessageSuccessActionData, MetadataItem, Network,
-    NodeConfig, NodeState, OpeningFeeParams, OpeningFeeParamsMenu, Payment, PaymentDetails,
-    PaymentFailedData, PaymentType, PaymentTypeFilter, Rate, ReceiveOnchainRequest,
-    ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees, ReverseSwapInfo,
-    ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop, SuccessActionProcessed,
-    SwapInfo, SwapStatus, Symbol, UnspentTransactionOutput, UrlSuccessActionData,
+    BackupStatus, BitcoinAddressData, BreezEvent, BreezServices, BuyBitcoinProvider,
+    BuyBitcoinRequest, ChannelState, ClosedChannelPaymentDetails, Config, CurrencyInfo,
+    EnvironmentType, EventListener, FeeratePreset, FiatCurrency, GreenlightCredentials,
+    GreenlightNodeConfig, InputType, InvoicePaidDetails, LNInvoice, LnPaymentDetails,
+    LnUrlAuthRequestData, LnUrlCallbackStatus, LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult,
+    LnUrlWithdrawRequestData, LocaleOverrides, LocalizedName, LogEntry, LspInformation,
+    MessageSuccessActionData, MetadataItem, Network, NodeConfig, NodeState, OpeningFeeParams,
+    OpeningFeeParamsMenu, Payment, PaymentDetails, PaymentFailedData, PaymentType,
+    PaymentTypeFilter, Rate, ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse,
+    RecommendedFees, ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint,
+    RouteHintHop, SuccessActionProcessed, SwapInfo, SwapStatus, Symbol, UnspentTransactionOutput,
+    UrlSuccessActionData,
 };
 
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
@@ -300,16 +301,9 @@ impl BlockingBreezServices {
             .map_err(|e| e.into())
     }
 
-    pub fn buy_bitcoin(
-        &self,
-        provider: BuyBitcoinProvider,
-        opening_fee_params: Option<OpeningFeeParams>,
-    ) -> SdkResult<String> {
-        rt().block_on(
-            self.breez_services
-                .buy_bitcoin(provider, opening_fee_params),
-        )
-        .map_err(|e| e.into())
+    pub fn buy_bitcoin(&self, req: BuyBitcoinRequest) -> SdkResult<String> {
+        rt().block_on(self.breez_services.buy_bitcoin(req))
+            .map_err(|e| e.into())
     }
 }
 

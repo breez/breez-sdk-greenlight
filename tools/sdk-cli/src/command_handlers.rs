@@ -202,9 +202,14 @@ pub(crate) async fn handle_command(
         Commands::RecommendedFees {} => {
             serde_json::to_string_pretty(&sdk()?.recommended_fees().await?).map_err(|e| e.into())
         }
-        Commands::ReceiveOnchain {} => {
-            serde_json::to_string_pretty(&sdk()?.receive_onchain(None).await?).map_err(|e| e.into())
-        }
+        Commands::ReceiveOnchain {} => serde_json::to_string_pretty(
+            &sdk()?
+                .receive_onchain(ReceiveOnchainRequest {
+                    opening_fee_params: None,
+                })
+                .await?,
+        )
+        .map_err(|e| e.into()),
         Commands::InProgressSwap {} => {
             serde_json::to_string_pretty(&sdk()?.in_progress_swap().await?).map_err(|e| e.into())
         }
@@ -294,12 +299,17 @@ pub(crate) async fn handle_command(
                 .map_err(|e| e.into())
         }
         Commands::BuyBitcoin { provider } => {
-            let res = sdk()?.buy_bitcoin(provider.clone(), None).await?;
+            let res = sdk()?
+                .buy_bitcoin(BuyBitcoinRequest {
+                    provider: provider.clone(),
+                    opening_fee_params: None,
+                })
+                .await?;
             Ok(format!("Here your {:?} url: {}", provider, res))
         }
         Commands::Backup {} => {
             sdk().unwrap().backup().await?;
-            Ok("Backup completed succesfully".into())
+            Ok("Backup completed successfully".into())
         }
     }
 }

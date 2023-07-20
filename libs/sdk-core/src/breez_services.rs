@@ -30,7 +30,7 @@ use crate::reverseswap::BTCSendSwap;
 use crate::swap::BTCReceiveSwap;
 use crate::BuyBitcoinProvider::Moonpay;
 use crate::*;
-use crate::{BuyBitcoinProvider, LnUrlAuthRequestData, LnUrlWithdrawRequestData, PaymentResponse};
+use crate::{LnUrlAuthRequestData, LnUrlWithdrawRequestData, PaymentResponse};
 use anyhow::{anyhow, Result};
 use bip39::*;
 use bitcoin::hashes::hex::ToHex;
@@ -682,17 +682,15 @@ impl BreezServices {
     }
 
     /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency
-    pub async fn buy_bitcoin(
-        &self,
-        provider: BuyBitcoinProvider,
-        opening_fee_params: Option<OpeningFeeParams>,
-    ) -> Result<String> {
-        let url = match provider {
+    pub async fn buy_bitcoin(&self, req: BuyBitcoinRequest) -> Result<String> {
+        let url = match req.provider {
             Moonpay => {
                 self.moonpay_api
                     .buy_bitcoin_url(
                         &self
-                            .receive_onchain(ReceiveOnchainRequest { opening_fee_params })
+                            .receive_onchain(ReceiveOnchainRequest {
+                                opening_fee_params: req.opening_fee_params,
+                            })
                             .await?,
                     )
                     .await?
@@ -1480,8 +1478,8 @@ pub(crate) mod tests {
     use crate::lnurl::pay::model::SuccessActionProcessed;
     use crate::models::{LnPaymentDetails, NodeState, Payment, PaymentDetails, PaymentTypeFilter};
     use crate::{
-        input_parser, parse_short_channel_id, test_utils::*, BuyBitcoinProvider, InputType,
-        ReceivePaymentRequest,
+        input_parser, parse_short_channel_id, test_utils::*, BuyBitcoinProvider, BuyBitcoinRequest,
+        InputType, ReceivePaymentRequest,
     };
     use crate::{NodeAPI, PaymentType};
 
@@ -1681,7 +1679,10 @@ pub(crate) mod tests {
         let breez_services = breez_services().await?;
         breez_services.sync().await?;
         let moonpay_url = breez_services
-            .buy_bitcoin(BuyBitcoinProvider::Moonpay, None)
+            .buy_bitcoin(BuyBitcoinRequest {
+                provider: BuyBitcoinProvider::Moonpay,
+                opening_fee_params: None,
+            })
             .await?;
         let parsed = Url::parse(&moonpay_url)?;
         let query_pairs = parsed.query_pairs().into_owned().collect::<HashMap<_, _>>();

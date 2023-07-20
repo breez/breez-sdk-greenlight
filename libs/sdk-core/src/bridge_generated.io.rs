@@ -231,12 +231,8 @@ pub extern "C" fn wire_default_config(
 }
 
 #[no_mangle]
-pub extern "C" fn wire_buy_bitcoin(
-    port_: i64,
-    provider: i32,
-    opening_fee_params: *mut wire_OpeningFeeParams,
-) {
-    wire_buy_bitcoin_impl(port_, provider, opening_fee_params)
+pub extern "C" fn wire_buy_bitcoin(port_: i64, req: *mut wire_BuyBitcoinRequest) {
+    wire_buy_bitcoin_impl(port_, req)
 }
 
 #[no_mangle]
@@ -250,6 +246,11 @@ pub extern "C" fn wire_backup_status(port_: i64) {
 }
 
 // Section: allocate functions
+
+#[no_mangle]
+pub extern "C" fn new_box_autoadd_buy_bitcoin_request_0() -> *mut wire_BuyBitcoinRequest {
+    support::new_leak_box_ptr(wire_BuyBitcoinRequest::new_with_null_ptr())
+}
 
 #[no_mangle]
 pub extern "C" fn new_box_autoadd_config_0() -> *mut wire_Config {
@@ -331,6 +332,12 @@ impl Wire2Api<String> for *mut wire_uint_8_list {
         String::from_utf8_lossy(&vec).into_owned()
     }
 }
+impl Wire2Api<BuyBitcoinRequest> for *mut wire_BuyBitcoinRequest {
+    fn wire2api(self) -> BuyBitcoinRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<BuyBitcoinRequest>::wire2api(*wrap).into()
+    }
+}
 impl Wire2Api<Config> for *mut wire_Config {
     fn wire2api(self) -> Config {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
@@ -402,6 +409,14 @@ impl Wire2Api<u64> for *mut u64 {
     }
 }
 
+impl Wire2Api<BuyBitcoinRequest> for wire_BuyBitcoinRequest {
+    fn wire2api(self) -> BuyBitcoinRequest {
+        BuyBitcoinRequest {
+            provider: self.provider.wire2api(),
+            opening_fee_params: self.opening_fee_params.wire2api(),
+        }
+    }
+}
 impl Wire2Api<Config> for wire_Config {
     fn wire2api(self) -> Config {
         Config {
@@ -527,6 +542,13 @@ impl Wire2Api<Vec<u8>> for *mut wire_uint_8_list {
 
 #[repr(C)]
 #[derive(Clone)]
+pub struct wire_BuyBitcoinRequest {
+    provider: i32,
+    opening_fee_params: *mut wire_OpeningFeeParams,
+}
+
+#[repr(C)]
+#[derive(Clone)]
 pub struct wire_Config {
     breezserver: *mut wire_uint_8_list,
     mempoolspace_url: *mut wire_uint_8_list,
@@ -644,6 +666,21 @@ pub trait NewWithNullPtr {
 impl<T> NewWithNullPtr for *mut T {
     fn new_with_null_ptr() -> Self {
         std::ptr::null_mut()
+    }
+}
+
+impl NewWithNullPtr for wire_BuyBitcoinRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            provider: Default::default(),
+            opening_fee_params: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_BuyBitcoinRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
     }
 }
 
