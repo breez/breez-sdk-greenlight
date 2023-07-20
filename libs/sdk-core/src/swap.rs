@@ -141,7 +141,14 @@ impl BTCReceiveSwap {
         // check first that we don't have any swap in progress waiting for redeem.
         let unused_swaps = self.list_unused()?;
         if !unused_swaps.is_empty() {
-            return Ok(unused_swaps[0].clone());
+            info!("Found unused swap when trying to create new swap address");
+
+            let in_progress_swap = unused_swaps[0].clone();
+            self.persister.update_swap_fees(
+                in_progress_swap.bitcoin_address.clone(),
+                Some(channel_opening_fees),
+            )?;
+            return Ok(in_progress_swap);
         }
 
         let node_id = node_state.unwrap().id;

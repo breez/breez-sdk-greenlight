@@ -1,6 +1,7 @@
 use crate::models::{SwapInfo, SwapStatus};
 
 use super::db::{SqliteStorage, StringArray};
+use crate::OpeningFeeParams;
 use anyhow::{anyhow, Result};
 use rusqlite::{named_params, OptionalExtension, Params, Row};
 
@@ -105,6 +106,22 @@ impl SqliteStorage {
             "UPDATE swaps_info SET bolt11=:bolt11 where bitcoin_address=:bitcoin_address",
             named_params! {
              ":bolt11": bolt11,
+             ":bitcoin_address": bitcoin_address,
+            },
+        )?;
+
+        Ok(())
+    }
+
+    pub(crate) fn update_swap_fees(
+        &self,
+        bitcoin_address: String,
+        channel_opening_fees: Option<OpeningFeeParams>,
+    ) -> Result<()> {
+        self.get_connection()?.execute(
+            "UPDATE swaps_info SET channel_opening_fees=:channel_opening_fees where bitcoin_address=:bitcoin_address",
+            named_params! {
+             ":channel_opening_fees": channel_opening_fees,
              ":bitcoin_address": bitcoin_address,
             },
         )?;
