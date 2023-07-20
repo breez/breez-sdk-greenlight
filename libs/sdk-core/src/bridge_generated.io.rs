@@ -114,8 +114,8 @@ pub extern "C" fn wire_sweep(
 }
 
 #[no_mangle]
-pub extern "C" fn wire_receive_onchain(port_: i64, opening_fee_params: *mut wire_OpeningFeeParams) {
-    wire_receive_onchain_impl(port_, opening_fee_params)
+pub extern "C" fn wire_receive_onchain(port_: i64, req: *mut wire_ReceiveOnchainRequest) {
+    wire_receive_onchain_impl(port_, req)
 }
 
 #[no_mangle]
@@ -298,6 +298,11 @@ pub extern "C" fn new_box_autoadd_opening_fee_params_0() -> *mut wire_OpeningFee
 }
 
 #[no_mangle]
+pub extern "C" fn new_box_autoadd_receive_onchain_request_0() -> *mut wire_ReceiveOnchainRequest {
+    support::new_leak_box_ptr(wire_ReceiveOnchainRequest::new_with_null_ptr())
+}
+
+#[no_mangle]
 pub extern "C" fn new_box_autoadd_receive_payment_request_0() -> *mut wire_ReceivePaymentRequest {
     support::new_leak_box_ptr(wire_ReceivePaymentRequest::new_with_null_ptr())
 }
@@ -377,6 +382,12 @@ impl Wire2Api<OpeningFeeParams> for *mut wire_OpeningFeeParams {
     fn wire2api(self) -> OpeningFeeParams {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
         Wire2Api::<OpeningFeeParams>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<ReceiveOnchainRequest> for *mut wire_ReceiveOnchainRequest {
+    fn wire2api(self) -> ReceiveOnchainRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<ReceiveOnchainRequest>::wire2api(*wrap).into()
     }
 }
 impl Wire2Api<ReceivePaymentRequest> for *mut wire_ReceivePaymentRequest {
@@ -486,6 +497,13 @@ impl Wire2Api<OpeningFeeParams> for wire_OpeningFeeParams {
     }
 }
 
+impl Wire2Api<ReceiveOnchainRequest> for wire_ReceiveOnchainRequest {
+    fn wire2api(self) -> ReceiveOnchainRequest {
+        ReceiveOnchainRequest {
+            opening_fee_params: self.opening_fee_params.wire2api(),
+        }
+    }
+}
 impl Wire2Api<ReceivePaymentRequest> for wire_ReceivePaymentRequest {
     fn wire2api(self) -> ReceivePaymentRequest {
         ReceivePaymentRequest {
@@ -575,6 +593,12 @@ pub struct wire_OpeningFeeParams {
     max_idle_time: u32,
     max_client_to_self_delay: u32,
     promise: *mut wire_uint_8_list,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_ReceiveOnchainRequest {
+    opening_fee_params: *mut wire_OpeningFeeParams,
 }
 
 #[repr(C)]
@@ -768,6 +792,20 @@ impl NewWithNullPtr for wire_OpeningFeeParams {
 }
 
 impl Default for wire_OpeningFeeParams {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_ReceiveOnchainRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            opening_fee_params: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_ReceiveOnchainRequest {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }

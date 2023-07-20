@@ -65,6 +65,7 @@ use crate::models::Payment;
 use crate::models::PaymentDetails;
 use crate::models::PaymentType;
 use crate::models::PaymentTypeFilter;
+use crate::models::ReceiveOnchainRequest;
 use crate::models::ReceivePaymentRequest;
 use crate::models::ReceivePaymentResponse;
 use crate::models::ReverseSwapInfo;
@@ -325,7 +326,7 @@ fn wire_sweep_impl(
 }
 fn wire_receive_onchain_impl(
     port_: MessagePort,
-    opening_fee_params: impl Wire2Api<Option<OpeningFeeParams>> + UnwindSafe,
+    req: impl Wire2Api<ReceiveOnchainRequest> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -334,8 +335,8 @@ fn wire_receive_onchain_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_opening_fee_params = opening_fee_params.wire2api();
-            move |task_callback| receive_onchain(api_opening_fee_params)
+            let api_req = req.wire2api();
+            move |task_callback| receive_onchain(api_req)
         },
     )
 }

@@ -437,15 +437,12 @@ impl BreezServices {
     /// Onchain receive swap API
     ///
     /// Create a [SwapInfo] that represents the details required to start a swap.
-    /// Since we only allow one in-progress swap this method will return error if there is currenly
+    /// Since we only allow one in-progress swap this method will return error if there is currently
     /// a swap waiting for confirmation to be redeemed and by that complete the swap.
     /// In such case the [BreezServices::in_progress_swap] can be used to query the live swap status.
     ///
     /// See [SwapInfo] for details.
-    pub async fn receive_onchain(
-        &self,
-        opening_fee_params: Option<OpeningFeeParams>,
-    ) -> Result<SwapInfo> {
+    pub async fn receive_onchain(&self, req: ReceiveOnchainRequest) -> Result<SwapInfo> {
         if let Some(in_progress) = self.in_progress_swap().await? {
             return Err(anyhow!(format!(
                   "Swap in progress was detected for address {}.Use in_progress_swap method to get the current swap state",
@@ -455,7 +452,7 @@ impl BreezServices {
         let channel_opening_fees = self
             .lsp_info()
             .await?
-            .choose_channel_opening_fees(opening_fee_params, DynamicFeeType::Longest)?;
+            .choose_channel_opening_fees(req.opening_fee_params, DynamicFeeType::Longest)?;
         let swap_info = self
             .btc_receive_swapper
             .create_swap_address(channel_opening_fees)
@@ -693,7 +690,11 @@ impl BreezServices {
         let url = match provider {
             Moonpay => {
                 self.moonpay_api
-                    .buy_bitcoin_url(&self.receive_onchain(opening_fee_params).await?)
+                    .buy_bitcoin_url(
+                        &self
+                            .receive_onchain(ReceiveOnchainRequest { opening_fee_params })
+                            .await?,
+                    )
                     .await?
             }
         };

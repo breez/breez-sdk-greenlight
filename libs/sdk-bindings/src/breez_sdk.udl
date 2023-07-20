@@ -282,6 +282,10 @@ dictionary ReceivePaymentResponse {
     u64? setup_fees_msat;
 };
 
+dictionary ReceiveOnchainRequest {
+    OpeningFeeParams? opening_fee_params;
+};
+
 dictionary OpeningFeeParamsMenu {
     sequence<OpeningFeeParams> vals;
 };
@@ -496,7 +500,7 @@ interface BlockingBreezServices {
    void close_lsp_channels();
 
    [Throws=SdkError]
-   SwapInfo receive_onchain(OpeningFeeParams? opening_fee_params);
+   SwapInfo receive_onchain(ReceiveOnchainRequest req);
 
    [Throws=SdkError]
    SwapInfo? in_progress_swap();

@@ -116,7 +116,7 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kSweepConstMeta;
 
   /// See [BreezServices::receive_onchain]
-  Future<SwapInfo> receiveOnchain({OpeningFeeParams? openingFeeParams, dynamic hint});
+  Future<SwapInfo> receiveOnchain({required ReceiveOnchainRequest req, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kReceiveOnchainConstMeta;
 
@@ -901,6 +901,14 @@ class Rate {
   });
 }
 
+class ReceiveOnchainRequest {
+  final OpeningFeeParams? openingFeeParams;
+
+  const ReceiveOnchainRequest({
+    this.openingFeeParams,
+  });
+}
+
 /// Represents a receive payment request.
 class ReceivePaymentRequest {
   final int amountSats;
@@ -1495,20 +1503,20 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["toAddress", "feeRateSatsPerVbyte"],
       );
 
-  Future<SwapInfo> receiveOnchain({OpeningFeeParams? openingFeeParams, dynamic hint}) {
-    var arg0 = _platform.api2wire_opt_box_autoadd_opening_fee_params(openingFeeParams);
+  Future<SwapInfo> receiveOnchain({required ReceiveOnchainRequest req, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_receive_onchain_request(req);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_receive_onchain(port_, arg0),
       parseSuccessData: _wire2api_swap_info,
       constMeta: kReceiveOnchainConstMeta,
-      argValues: [openingFeeParams],
+      argValues: [req],
       hint: hint,
     ));
   }
 
   FlutterRustBridgeTaskConstMeta get kReceiveOnchainConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "receive_onchain",
-        argNames: ["openingFeeParams"],
+        argNames: ["req"],
       );
 
   Future<SwapInfo?> inProgressSwap({dynamic hint}) {
@@ -2834,6 +2842,14 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<wire_ReceiveOnchainRequest> api2wire_box_autoadd_receive_onchain_request(
+      ReceiveOnchainRequest raw) {
+    final ptr = inner.new_box_autoadd_receive_onchain_request_0();
+    _api_fill_to_wire_receive_onchain_request(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
   ffi.Pointer<wire_ReceivePaymentRequest> api2wire_box_autoadd_receive_payment_request(
       ReceivePaymentRequest raw) {
     final ptr = inner.new_box_autoadd_receive_payment_request_0();
@@ -2935,6 +2951,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     _api_fill_to_wire_opening_fee_params(apiObj, wireObj.ref);
   }
 
+  void _api_fill_to_wire_box_autoadd_receive_onchain_request(
+      ReceiveOnchainRequest apiObj, ffi.Pointer<wire_ReceiveOnchainRequest> wireObj) {
+    _api_fill_to_wire_receive_onchain_request(apiObj, wireObj.ref);
+  }
+
   void _api_fill_to_wire_box_autoadd_receive_payment_request(
       ReceivePaymentRequest apiObj, ffi.Pointer<wire_ReceivePaymentRequest> wireObj) {
     _api_fill_to_wire_receive_payment_request(apiObj, wireObj.ref);
@@ -3019,6 +3040,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   void _api_fill_to_wire_opt_box_autoadd_opening_fee_params(
       OpeningFeeParams? apiObj, ffi.Pointer<wire_OpeningFeeParams> wireObj) {
     if (apiObj != null) _api_fill_to_wire_box_autoadd_opening_fee_params(apiObj, wireObj);
+  }
+
+  void _api_fill_to_wire_receive_onchain_request(
+      ReceiveOnchainRequest apiObj, wire_ReceiveOnchainRequest wireObj) {
+    wireObj.opening_fee_params = api2wire_opt_box_autoadd_opening_fee_params(apiObj.openingFeeParams);
   }
 
   void _api_fill_to_wire_receive_payment_request(
@@ -3391,19 +3417,19 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
 
   void wire_receive_onchain(
     int port_,
-    ffi.Pointer<wire_OpeningFeeParams> opening_fee_params,
+    ffi.Pointer<wire_ReceiveOnchainRequest> req,
   ) {
     return _wire_receive_onchain(
       port_,
-      opening_fee_params,
+      req,
     );
   }
 
   late final _wire_receive_onchainPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_OpeningFeeParams>)>>(
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_ReceiveOnchainRequest>)>>(
           'wire_receive_onchain');
   late final _wire_receive_onchain =
-      _wire_receive_onchainPtr.asFunction<void Function(int, ffi.Pointer<wire_OpeningFeeParams>)>();
+      _wire_receive_onchainPtr.asFunction<void Function(int, ffi.Pointer<wire_ReceiveOnchainRequest>)>();
 
   void wire_in_progress_swap(
     int port_,
@@ -3796,6 +3822,16 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _new_box_autoadd_opening_fee_params_0 =
       _new_box_autoadd_opening_fee_params_0Ptr.asFunction<ffi.Pointer<wire_OpeningFeeParams> Function()>();
 
+  ffi.Pointer<wire_ReceiveOnchainRequest> new_box_autoadd_receive_onchain_request_0() {
+    return _new_box_autoadd_receive_onchain_request_0();
+  }
+
+  late final _new_box_autoadd_receive_onchain_request_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_ReceiveOnchainRequest> Function()>>(
+          'new_box_autoadd_receive_onchain_request_0');
+  late final _new_box_autoadd_receive_onchain_request_0 = _new_box_autoadd_receive_onchain_request_0Ptr
+      .asFunction<ffi.Pointer<wire_ReceiveOnchainRequest> Function()>();
+
   ffi.Pointer<wire_ReceivePaymentRequest> new_box_autoadd_receive_payment_request_0() {
     return _new_box_autoadd_receive_payment_request_0();
   }
@@ -3939,6 +3975,10 @@ class wire_ReceivePaymentRequest extends ffi.Struct {
 
   external ffi.Pointer<wire_uint_8_list> preimage;
 
+  external ffi.Pointer<wire_OpeningFeeParams> opening_fee_params;
+}
+
+class wire_ReceiveOnchainRequest extends ffi.Struct {
   external ffi.Pointer<wire_OpeningFeeParams> opening_fee_params;
 }
 

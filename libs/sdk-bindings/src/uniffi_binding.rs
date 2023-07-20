@@ -14,10 +14,10 @@ use breez_sdk_core::{
     LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult, LnUrlWithdrawRequestData, LocaleOverrides,
     LocalizedName, LogEntry, LspInformation, MessageSuccessActionData, MetadataItem, Network,
     NodeConfig, NodeState, OpeningFeeParams, OpeningFeeParamsMenu, Payment, PaymentDetails,
-    PaymentFailedData, PaymentType, PaymentTypeFilter, Rate, ReceivePaymentRequest,
-    ReceivePaymentResponse, RecommendedFees, ReverseSwapInfo, ReverseSwapPairInfo,
-    ReverseSwapStatus, RouteHint, RouteHintHop, SuccessActionProcessed, SwapInfo, SwapStatus,
-    Symbol, UnspentTransactionOutput, UrlSuccessActionData,
+    PaymentFailedData, PaymentType, PaymentTypeFilter, Rate, ReceiveOnchainRequest,
+    ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees, ReverseSwapInfo,
+    ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop, SuccessActionProcessed,
+    SwapInfo, SwapStatus, Symbol, UnspentTransactionOutput, UrlSuccessActionData,
 };
 
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
@@ -229,11 +229,8 @@ impl BlockingBreezServices {
     }
 
     /// Onchain receive swap API
-    pub fn receive_onchain(
-        &self,
-        opening_fee_params: Option<OpeningFeeParams>,
-    ) -> SdkResult<SwapInfo> {
-        rt().block_on(self.breez_services.receive_onchain(opening_fee_params))
+    pub fn receive_onchain(&self, req: ReceiveOnchainRequest) -> SdkResult<SwapInfo> {
+        rt().block_on(self.breez_services.receive_onchain(req))
             .map_err(|e| e.into())
     }
 

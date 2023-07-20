@@ -65,6 +65,10 @@ typedef struct wire_ReceivePaymentRequest {
   struct wire_OpeningFeeParams *opening_fee_params;
 } wire_ReceivePaymentRequest;
 
+typedef struct wire_ReceiveOnchainRequest {
+  struct wire_OpeningFeeParams *opening_fee_params;
+} wire_ReceiveOnchainRequest;
+
 typedef struct wire_LnUrlPayRequestData {
   struct wire_uint_8_list *callback;
   uint64_t min_sendable;
@@ -147,7 +151,7 @@ void wire_sweep(int64_t port_,
                 struct wire_uint_8_list *to_address,
                 uint64_t fee_rate_sats_per_vbyte);
 
-void wire_receive_onchain(int64_t port_, struct wire_OpeningFeeParams *opening_fee_params);
+void wire_receive_onchain(int64_t port_, struct wire_ReceiveOnchainRequest *req);
 
 void wire_in_progress_swap(int64_t port_);
 
@@ -223,6 +227,8 @@ struct wire_NodeConfig *new_box_autoadd_node_config_0(void);
 
 struct wire_OpeningFeeParams *new_box_autoadd_opening_fee_params_0(void);
 
+struct wire_ReceiveOnchainRequest *new_box_autoadd_receive_onchain_request_0(void);
+
 struct wire_ReceivePaymentRequest *new_box_autoadd_receive_payment_request_0(void);
 
 uint64_t *new_box_autoadd_u64_0(uint64_t value);
@@ -283,6 +289,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_withdraw_request_data_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_node_config_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_opening_fee_params_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_receive_onchain_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_receive_payment_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_u64_0);
     dummy_var ^= ((int64_t) (void*) new_uint_8_list_0);

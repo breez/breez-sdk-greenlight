@@ -32,8 +32,8 @@ use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, PaymentTypeFilter, SwapInfo};
 use crate::{
     BackupStatus, BuyBitcoinProvider, EnvironmentType, LnUrlCallbackStatus, NodeConfig,
-    OpeningFeeParams, ReceivePaymentRequest, ReceivePaymentResponse, ReverseSwapInfo,
-    ReverseSwapPairInfo,
+    OpeningFeeParams, ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse,
+    ReverseSwapInfo, ReverseSwapPairInfo,
 };
 
 static BREEZ_SERVICES_INSTANCE: OnceCell<Arc<BreezServices>> = OnceCell::new();
@@ -233,12 +233,8 @@ pub fn sweep(to_address: String, fee_rate_sats_per_vbyte: u64) -> Result<()> {
 }
 
 /// See [BreezServices::receive_onchain]
-pub fn receive_onchain(opening_fee_params: Option<OpeningFeeParams>) -> Result<SwapInfo> {
-    block_on(async {
-        get_breez_services()?
-            .receive_onchain(opening_fee_params)
-            .await
-    })
+pub fn receive_onchain(req: ReceiveOnchainRequest) -> Result<SwapInfo> {
+    block_on(async { get_breez_services()?.receive_onchain(req).await })
 }
 
 /// See [BreezServices::in_progress_swap]

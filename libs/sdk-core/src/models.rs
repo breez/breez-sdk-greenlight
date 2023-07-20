@@ -662,6 +662,11 @@ pub struct ReceivePaymentResponse {
     pub setup_fees_msat: Option<u64>,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ReceiveOnchainRequest {
+    pub opening_fee_params: Option<OpeningFeeParams>,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub struct OpeningFeeParams {
     pub min_msat: u64,
