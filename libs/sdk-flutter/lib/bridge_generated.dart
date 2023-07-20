@@ -55,7 +55,7 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kSendSpontaneousPaymentConstMeta;
 
   /// See [BreezServices::receive_payment]
-  Future<ReceivePaymentResponse> receivePayment({required ReceivePaymentRequestData reqData, dynamic hint});
+  Future<ReceivePaymentResponse> receivePayment({required ReceivePaymentRequest reqData, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kReceivePaymentConstMeta;
 
@@ -902,13 +902,13 @@ class Rate {
 }
 
 /// Represents a receive payment request.
-class ReceivePaymentRequestData {
+class ReceivePaymentRequest {
   final int amountSats;
   final String description;
   final Uint8List? preimage;
   final OpeningFeeParams? openingFeeParams;
 
-  const ReceivePaymentRequestData({
+  const ReceivePaymentRequest({
     required this.amountSats,
     required this.description,
     this.preimage,
@@ -1305,8 +1305,8 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["nodeId", "amountSats"],
       );
 
-  Future<ReceivePaymentResponse> receivePayment({required ReceivePaymentRequestData reqData, dynamic hint}) {
-    var arg0 = _platform.api2wire_box_autoadd_receive_payment_request_data(reqData);
+  Future<ReceivePaymentResponse> receivePayment({required ReceivePaymentRequest reqData, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_receive_payment_request(reqData);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_receive_payment(port_, arg0),
       parseSuccessData: _wire2api_receive_payment_response,
@@ -2834,10 +2834,10 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
-  ffi.Pointer<wire_ReceivePaymentRequestData> api2wire_box_autoadd_receive_payment_request_data(
-      ReceivePaymentRequestData raw) {
-    final ptr = inner.new_box_autoadd_receive_payment_request_data_0();
-    _api_fill_to_wire_receive_payment_request_data(raw, ptr.ref);
+  ffi.Pointer<wire_ReceivePaymentRequest> api2wire_box_autoadd_receive_payment_request(
+      ReceivePaymentRequest raw) {
+    final ptr = inner.new_box_autoadd_receive_payment_request_0();
+    _api_fill_to_wire_receive_payment_request(raw, ptr.ref);
     return ptr;
   }
 
@@ -2935,9 +2935,9 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     _api_fill_to_wire_opening_fee_params(apiObj, wireObj.ref);
   }
 
-  void _api_fill_to_wire_box_autoadd_receive_payment_request_data(
-      ReceivePaymentRequestData apiObj, ffi.Pointer<wire_ReceivePaymentRequestData> wireObj) {
-    _api_fill_to_wire_receive_payment_request_data(apiObj, wireObj.ref);
+  void _api_fill_to_wire_box_autoadd_receive_payment_request(
+      ReceivePaymentRequest apiObj, ffi.Pointer<wire_ReceivePaymentRequest> wireObj) {
+    _api_fill_to_wire_receive_payment_request(apiObj, wireObj.ref);
   }
 
   void _api_fill_to_wire_config(Config apiObj, wire_Config wireObj) {
@@ -3021,8 +3021,8 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     if (apiObj != null) _api_fill_to_wire_box_autoadd_opening_fee_params(apiObj, wireObj);
   }
 
-  void _api_fill_to_wire_receive_payment_request_data(
-      ReceivePaymentRequestData apiObj, wire_ReceivePaymentRequestData wireObj) {
+  void _api_fill_to_wire_receive_payment_request(
+      ReceivePaymentRequest apiObj, wire_ReceivePaymentRequest wireObj) {
     wireObj.amount_sats = api2wire_u64(apiObj.amountSats);
     wireObj.description = api2wire_String(apiObj.description);
     wireObj.preimage = api2wire_opt_uint_8_list(apiObj.preimage);
@@ -3219,7 +3219,7 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
 
   void wire_receive_payment(
     int port_,
-    ffi.Pointer<wire_ReceivePaymentRequestData> req_data,
+    ffi.Pointer<wire_ReceivePaymentRequest> req_data,
   ) {
     return _wire_receive_payment(
       port_,
@@ -3228,10 +3228,10 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   }
 
   late final _wire_receive_paymentPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_ReceivePaymentRequestData>)>>(
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_ReceivePaymentRequest>)>>(
           'wire_receive_payment');
   late final _wire_receive_payment =
-      _wire_receive_paymentPtr.asFunction<void Function(int, ffi.Pointer<wire_ReceivePaymentRequestData>)>();
+      _wire_receive_paymentPtr.asFunction<void Function(int, ffi.Pointer<wire_ReceivePaymentRequest>)>();
 
   void wire_node_info(
     int port_,
@@ -3796,16 +3796,15 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _new_box_autoadd_opening_fee_params_0 =
       _new_box_autoadd_opening_fee_params_0Ptr.asFunction<ffi.Pointer<wire_OpeningFeeParams> Function()>();
 
-  ffi.Pointer<wire_ReceivePaymentRequestData> new_box_autoadd_receive_payment_request_data_0() {
-    return _new_box_autoadd_receive_payment_request_data_0();
+  ffi.Pointer<wire_ReceivePaymentRequest> new_box_autoadd_receive_payment_request_0() {
+    return _new_box_autoadd_receive_payment_request_0();
   }
 
-  late final _new_box_autoadd_receive_payment_request_data_0Ptr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<wire_ReceivePaymentRequestData> Function()>>(
-          'new_box_autoadd_receive_payment_request_data_0');
-  late final _new_box_autoadd_receive_payment_request_data_0 =
-      _new_box_autoadd_receive_payment_request_data_0Ptr
-          .asFunction<ffi.Pointer<wire_ReceivePaymentRequestData> Function()>();
+  late final _new_box_autoadd_receive_payment_request_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_ReceivePaymentRequest> Function()>>(
+          'new_box_autoadd_receive_payment_request_0');
+  late final _new_box_autoadd_receive_payment_request_0 = _new_box_autoadd_receive_payment_request_0Ptr
+      .asFunction<ffi.Pointer<wire_ReceivePaymentRequest> Function()>();
 
   ffi.Pointer<ffi.Uint64> new_box_autoadd_u64_0(
     int value,
@@ -3932,7 +3931,7 @@ class wire_OpeningFeeParams extends ffi.Struct {
   external ffi.Pointer<wire_uint_8_list> promise;
 }
 
-class wire_ReceivePaymentRequestData extends ffi.Struct {
+class wire_ReceivePaymentRequest extends ffi.Struct {
   @ffi.Uint64()
   external int amount_sats;
 

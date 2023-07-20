@@ -32,7 +32,7 @@ use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, PaymentTypeFilter, SwapInfo};
 use crate::{
     BackupStatus, BuyBitcoinProvider, EnvironmentType, LnUrlCallbackStatus, NodeConfig,
-    OpeningFeeParams, ReceivePaymentRequestData, ReceivePaymentResponse, ReverseSwapInfo,
+    OpeningFeeParams, ReceivePaymentRequest, ReceivePaymentResponse, ReverseSwapInfo,
     ReverseSwapPairInfo,
 };
 
@@ -152,7 +152,7 @@ pub fn send_spontaneous_payment(node_id: String, amount_sats: u64) -> Result<Pay
 }
 
 /// See [BreezServices::receive_payment]
-pub fn receive_payment(req_data: ReceivePaymentRequestData) -> Result<ReceivePaymentResponse> {
+pub fn receive_payment(req_data: ReceivePaymentRequest) -> Result<ReceivePaymentResponse> {
     block_on(async { get_breez_services()?.receive_payment(req_data).await })
         .map_err(anyhow::Error::new)
 }

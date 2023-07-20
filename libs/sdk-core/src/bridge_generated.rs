@@ -65,7 +65,7 @@ use crate::models::Payment;
 use crate::models::PaymentDetails;
 use crate::models::PaymentType;
 use crate::models::PaymentTypeFilter;
-use crate::models::ReceivePaymentRequestData;
+use crate::models::ReceivePaymentRequest;
 use crate::models::ReceivePaymentResponse;
 use crate::models::ReverseSwapInfo;
 use crate::models::ReverseSwapPairInfo;
@@ -172,7 +172,7 @@ fn wire_send_spontaneous_payment_impl(
 }
 fn wire_receive_payment_impl(
     port_: MessagePort,
-    req_data: impl Wire2Api<ReceivePaymentRequestData> + UnwindSafe,
+    req_data: impl Wire2Api<ReceivePaymentRequest> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {

@@ -14,7 +14,7 @@ use breez_sdk_core::{
     LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult, LnUrlWithdrawRequestData, LocaleOverrides,
     LocalizedName, LogEntry, LspInformation, MessageSuccessActionData, MetadataItem, Network,
     NodeConfig, NodeState, OpeningFeeParams, OpeningFeeParamsMenu, Payment, PaymentDetails,
-    PaymentFailedData, PaymentType, PaymentTypeFilter, Rate, ReceivePaymentRequestData,
+    PaymentFailedData, PaymentType, PaymentTypeFilter, Rate, ReceivePaymentRequest,
     ReceivePaymentResponse, RecommendedFees, ReverseSwapInfo, ReverseSwapPairInfo,
     ReverseSwapStatus, RouteHint, RouteHintHop, SuccessActionProcessed, SwapInfo, SwapStatus,
     Symbol, UnspentTransactionOutput, UrlSuccessActionData,
@@ -117,7 +117,7 @@ impl BlockingBreezServices {
 
     pub fn receive_payment(
         &self,
-        req_data: ReceivePaymentRequestData,
+        req_data: ReceivePaymentRequest,
     ) -> SdkResult<ReceivePaymentResponse> {
         rt().block_on(self.breez_services.receive_payment(req_data))
     }

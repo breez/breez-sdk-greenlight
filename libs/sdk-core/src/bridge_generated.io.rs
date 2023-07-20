@@ -45,7 +45,7 @@ pub extern "C" fn wire_send_spontaneous_payment(
 }
 
 #[no_mangle]
-pub extern "C" fn wire_receive_payment(port_: i64, req_data: *mut wire_ReceivePaymentRequestData) {
+pub extern "C" fn wire_receive_payment(port_: i64, req_data: *mut wire_ReceivePaymentRequest) {
     wire_receive_payment_impl(port_, req_data)
 }
 
@@ -298,9 +298,8 @@ pub extern "C" fn new_box_autoadd_opening_fee_params_0() -> *mut wire_OpeningFee
 }
 
 #[no_mangle]
-pub extern "C" fn new_box_autoadd_receive_payment_request_data_0(
-) -> *mut wire_ReceivePaymentRequestData {
-    support::new_leak_box_ptr(wire_ReceivePaymentRequestData::new_with_null_ptr())
+pub extern "C" fn new_box_autoadd_receive_payment_request_0() -> *mut wire_ReceivePaymentRequest {
+    support::new_leak_box_ptr(wire_ReceivePaymentRequest::new_with_null_ptr())
 }
 
 #[no_mangle]
@@ -380,10 +379,10 @@ impl Wire2Api<OpeningFeeParams> for *mut wire_OpeningFeeParams {
         Wire2Api::<OpeningFeeParams>::wire2api(*wrap).into()
     }
 }
-impl Wire2Api<ReceivePaymentRequestData> for *mut wire_ReceivePaymentRequestData {
-    fn wire2api(self) -> ReceivePaymentRequestData {
+impl Wire2Api<ReceivePaymentRequest> for *mut wire_ReceivePaymentRequest {
+    fn wire2api(self) -> ReceivePaymentRequest {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
-        Wire2Api::<ReceivePaymentRequestData>::wire2api(*wrap).into()
+        Wire2Api::<ReceivePaymentRequest>::wire2api(*wrap).into()
     }
 }
 impl Wire2Api<u64> for *mut u64 {
@@ -487,9 +486,9 @@ impl Wire2Api<OpeningFeeParams> for wire_OpeningFeeParams {
     }
 }
 
-impl Wire2Api<ReceivePaymentRequestData> for wire_ReceivePaymentRequestData {
-    fn wire2api(self) -> ReceivePaymentRequestData {
-        ReceivePaymentRequestData {
+impl Wire2Api<ReceivePaymentRequest> for wire_ReceivePaymentRequest {
+    fn wire2api(self) -> ReceivePaymentRequest {
+        ReceivePaymentRequest {
             amount_sats: self.amount_sats.wire2api(),
             description: self.description.wire2api(),
             preimage: self.preimage.wire2api(),
@@ -580,7 +579,7 @@ pub struct wire_OpeningFeeParams {
 
 #[repr(C)]
 #[derive(Clone)]
-pub struct wire_ReceivePaymentRequestData {
+pub struct wire_ReceivePaymentRequest {
     amount_sats: u64,
     description: *mut wire_uint_8_list,
     preimage: *mut wire_uint_8_list,
@@ -774,7 +773,7 @@ impl Default for wire_OpeningFeeParams {
     }
 }
 
-impl NewWithNullPtr for wire_ReceivePaymentRequestData {
+impl NewWithNullPtr for wire_ReceivePaymentRequest {
     fn new_with_null_ptr() -> Self {
         Self {
             amount_sats: Default::default(),
@@ -785,7 +784,7 @@ impl NewWithNullPtr for wire_ReceivePaymentRequestData {
     }
 }
 
-impl Default for wire_ReceivePaymentRequestData {
+impl Default for wire_ReceivePaymentRequest {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }

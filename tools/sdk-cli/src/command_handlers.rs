@@ -3,9 +3,7 @@ use std::sync::Arc;
 
 use anyhow::{anyhow, Error, Result};
 use breez_sdk_core::InputType::{LnUrlAuth, LnUrlPay, LnUrlWithdraw};
-use breez_sdk_core::{
-    parse, BreezEvent, BreezServices, EventListener, GreenlightCredentials, PaymentTypeFilter,
-};
+use breez_sdk_core::*;
 use once_cell::sync::OnceCell;
 use qrcode_rs::render::unicode;
 use qrcode_rs::{EcLevel, QrCode};
@@ -102,7 +100,7 @@ pub(crate) async fn handle_command(
             description,
         } => {
             let invoice = sdk()?
-                .receive_payment(ReceivePaymentRequestData {
+                .receive_payment(ReceivePaymentRequest {
                     amount_sats,
                     description,
                     preimage: None,

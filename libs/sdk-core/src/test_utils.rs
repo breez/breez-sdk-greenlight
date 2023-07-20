@@ -33,7 +33,7 @@ use crate::moonpay::MoonPayApi;
 use crate::swap::create_submarine_swap_script;
 use crate::{parse_invoice, Config, LNInvoice, PaymentResponse, RouteHint};
 use crate::{OpeningFeeParams, OpeningFeeParamsMenu};
-use crate::{ReceivePaymentRequestData, SwapInfo};
+use crate::{ReceivePaymentRequest, SwapInfo};
 
 use crate::models::OPENING_FEE_PARAMS_DATETIME_FORMAT;
 
@@ -229,7 +229,7 @@ impl Default for MockReceiver {
 impl Receiver for MockReceiver {
     async fn receive_payment(
         &self,
-        _req_data: ReceivePaymentRequestData,
+        _req_data: ReceivePaymentRequest,
     ) -> SdkResult<crate::ReceivePaymentResponse> {
         Ok(crate::ReceivePaymentResponse {
             ln_invoice: parse_invoice(&self.bolt11)?,

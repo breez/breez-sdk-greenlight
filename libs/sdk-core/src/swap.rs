@@ -4,7 +4,7 @@ use std::sync::Arc;
 use crate::binding::parse_invoice;
 use crate::chain::{get_utxos, AddressUtxos, ChainService, MempoolSpace, OnchainTx};
 use crate::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
-use crate::{OpeningFeeParams, ReceivePaymentRequestData};
+use crate::{OpeningFeeParams, ReceivePaymentRequest};
 use anyhow::{anyhow, Result};
 use bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
 use bitcoin::blockdata::opcodes;
@@ -391,7 +391,7 @@ impl BTCReceiveSwap {
         if swap_info.bolt11.is_none() {
             let invoice = self
                 .payment_receiver
-                .receive_payment(ReceivePaymentRequestData {
+                .receive_payment(ReceivePaymentRequest {
                     amount_sats: swap_info.confirmed_sats,
                     description: String::from("Bitcoin Transfer"),
                     preimage: Some(swap_info.preimage),

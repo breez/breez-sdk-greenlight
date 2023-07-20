@@ -647,7 +647,7 @@ pub struct ClosedChannelPaymentDetails {
 
 /// Represents a receive payment request.
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct ReceivePaymentRequestData {
+pub struct ReceivePaymentRequest {
     pub amount_sats: u64,
     pub description: String,
     pub preimage: Option<Vec<u8>>,

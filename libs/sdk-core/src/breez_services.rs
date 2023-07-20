@@ -290,7 +290,7 @@ impl BreezServices {
         description: Option<String>,
     ) -> Result<LnUrlCallbackStatus> {
         let invoice = self
-            .receive_payment(ReceivePaymentRequestData {
+            .receive_payment(ReceivePaymentRequest {
                 amount_sats,
                 description: description.unwrap_or_default(),
                 preimage: None,
@@ -322,7 +322,7 @@ impl BreezServices {
     /// * `amount_sats` - The amount to receive in satoshis
     pub async fn receive_payment(
         &self,
-        req_data: ReceivePaymentRequestData,
+        req_data: ReceivePaymentRequest,
     ) -> SdkResult<ReceivePaymentResponse> {
         self.payment_receiver.receive_payment(req_data).await
     }
@@ -1252,7 +1252,7 @@ pub fn mnemonic_to_seed(phrase: String) -> Result<Vec<u8>> {
 pub trait Receiver: Send + Sync {
     async fn receive_payment(
         &self,
-        req_data: ReceivePaymentRequestData,
+        req_data: ReceivePaymentRequest,
     ) -> SdkResult<ReceivePaymentResponse>;
 }
 
@@ -1267,7 +1267,7 @@ pub(crate) struct PaymentReceiver {
 impl Receiver for PaymentReceiver {
     async fn receive_payment(
         &self,
-        req_data: ReceivePaymentRequestData,
+        req_data: ReceivePaymentRequest,
     ) -> SdkResult<ReceivePaymentResponse> {
         self.node_api.start().await?;
         let lsp_info = get_lsp(self.persister.clone(), self.lsp.clone()).await?;
@@ -1480,7 +1480,7 @@ pub(crate) mod tests {
     use crate::models::{LnPaymentDetails, NodeState, Payment, PaymentDetails, PaymentTypeFilter};
     use crate::{
         input_parser, parse_short_channel_id, test_utils::*, BuyBitcoinProvider, InputType,
-        ReceivePaymentRequestData,
+        ReceivePaymentRequest,
     };
     use crate::{NodeAPI, PaymentType};
 
@@ -1622,7 +1622,7 @@ pub(crate) mod tests {
             lsp: breez_server.clone(),
         });
         let ln_invoice = receiver
-            .receive_payment(ReceivePaymentRequestData {
+            .receive_payment(ReceivePaymentRequest {
                 amount_sats: 3000,
                 description: "should populate lsp hints".to_string(),
                 preimage: None,
