@@ -122,7 +122,7 @@ pub fn breez_log_stream(s: StreamSink<LogEntry>) -> Result<()> {
 }
 
 /// Cleanup node resources and stop the signer.
-pub fn stop_node() -> Result<()> {
+pub fn disconnect() -> Result<()> {
     block_on(async {
         let shutdown_handler = BREEZ_SERVICES_SHUTDOWN.get();
         match shutdown_handler {
@@ -294,7 +294,7 @@ pub fn execute_command(command: String) -> Result<String> {
     block_on(async { get_breez_services()?.execute_dev_command(command).await })
 }
 
-pub fn sync_node() -> Result<()> {
+pub fn sync() -> Result<()> {
     block_on(async { get_breez_services()?.sync().await })
 }
 
@@ -320,8 +320,8 @@ pub fn parse_invoice(invoice: String) -> Result<LNInvoice> {
     invoice::parse_invoice(&invoice)
 }
 
-pub fn parse(s: String) -> Result<InputType> {
-    block_on(async { crate::input_parser::parse(&s).await })
+pub fn parse_input(input: String) -> Result<InputType> {
+    block_on(async { crate::input_parser::parse(&input).await })
 }
 
 /// See [BreezServices::lnurl_pay]

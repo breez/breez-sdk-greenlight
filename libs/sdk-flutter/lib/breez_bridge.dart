@@ -92,14 +92,14 @@ class BreezBridge {
   }
 
   /// Cleanup node resources and stop the signer.
-  Future<void> stopNode() async => await _lnToolkit.stopNode();
+  Future<void> disconnect() async => await _lnToolkit.disconnect();
 
   /// This method sync the local state with the remote node state.
   /// The synced items are as follows:
   /// * node state - General information about the node and its liquidity status
   /// * channels - The list of channels and their status
   /// * payments - The incoming/outgoing payments
-  Future<void> syncNode() async => await _lnToolkit.syncNode();
+  Future<void> sync() async => await _lnToolkit.sync();
 
   /// pay a bolt11 invoice
   ///
@@ -152,7 +152,7 @@ class BreezBridge {
       );
 
   /// get the node state from the persistent storage
-  Future<NodeState?> getNodeState() async {
+  Future<NodeState?> nodeInfo() async {
     final nodeState = await _lnToolkit.nodeInfo();
     nodeStateController.add(nodeState);
     return nodeState;
@@ -285,7 +285,7 @@ class BreezBridge {
   Future<LNInvoice> parseInvoice(String invoice) async => await _lnToolkit.parseInvoice(invoice: invoice);
 
   /// Parses generic user input, typically pasted from clipboard or scanned from a QR.
-  Future<InputType> parseInput({required String input}) async => await _lnToolkit.parse(s: input);
+  Future<InputType> parseInput({required String input}) async => await _lnToolkit.parseInput(input: input);
 
   /// Second step of LNURL-pay. The first step is `parse()`, which also validates the LNURL destination
   /// and generates the `LnUrlPayRequestData` payload needed here.
@@ -352,7 +352,7 @@ class BreezBridge {
     String address,
   ) async {
     try {
-      final inputType = await _lnToolkit.parse(s: address);
+      final inputType = await _lnToolkit.parseInput(input: address);
       return inputType is InputType_BitcoinAddress;
     } catch (e) {
       return false;
@@ -382,7 +382,7 @@ class BreezBridge {
 
   /// Fetch node state & payment list
   Future fetchNodeData() async {
-    await getNodeState();
+    await nodeInfo();
     await listPayments();
   }
 

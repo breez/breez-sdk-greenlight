@@ -94,7 +94,7 @@ void wire_breez_events_stream(int64_t port_);
 
 void wire_breez_log_stream(int64_t port_);
 
-void wire_stop_node(int64_t port_);
+void wire_disconnect(int64_t port_);
 
 void wire_send_payment(int64_t port_, struct wire_uint_8_list *bolt11, uint64_t *amount_sats);
 
@@ -156,11 +156,11 @@ void wire_send_onchain(int64_t port_,
 
 void wire_execute_command(int64_t port_, struct wire_uint_8_list *command);
 
-void wire_sync_node(int64_t port_);
+void wire_sync(int64_t port_);
 
 void wire_parse_invoice(int64_t port_, struct wire_uint_8_list *invoice);
 
-void wire_parse(int64_t port_, struct wire_uint_8_list *s);
+void wire_parse_input(int64_t port_, struct wire_uint_8_list *input);
 
 void wire_lnurl_pay(int64_t port_,
                     uint64_t user_amount_sat,
@@ -219,7 +219,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_connect);
     dummy_var ^= ((int64_t) (void*) wire_breez_events_stream);
     dummy_var ^= ((int64_t) (void*) wire_breez_log_stream);
-    dummy_var ^= ((int64_t) (void*) wire_stop_node);
+    dummy_var ^= ((int64_t) (void*) wire_disconnect);
     dummy_var ^= ((int64_t) (void*) wire_send_payment);
     dummy_var ^= ((int64_t) (void*) wire_send_spontaneous_payment);
     dummy_var ^= ((int64_t) (void*) wire_receive_payment);
@@ -242,9 +242,9 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_in_progress_reverse_swaps);
     dummy_var ^= ((int64_t) (void*) wire_send_onchain);
     dummy_var ^= ((int64_t) (void*) wire_execute_command);
-    dummy_var ^= ((int64_t) (void*) wire_sync_node);
+    dummy_var ^= ((int64_t) (void*) wire_sync);
     dummy_var ^= ((int64_t) (void*) wire_parse_invoice);
-    dummy_var ^= ((int64_t) (void*) wire_parse);
+    dummy_var ^= ((int64_t) (void*) wire_parse_input);
     dummy_var ^= ((int64_t) (void*) wire_lnurl_pay);
     dummy_var ^= ((int64_t) (void*) wire_lnurl_withdraw);
     dummy_var ^= ((int64_t) (void*) wire_lnurl_auth);
