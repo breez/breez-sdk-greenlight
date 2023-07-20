@@ -815,6 +815,9 @@ impl BreezServices {
                                                           .insert_or_update_payments(&vec![payment.unwrap()]);
                                                       debug!("paid invoice was added to payments list {:?}", res);
                                                   }
+                                                  if let Err(e) = cloned.sync().await {
+                                                        error!("failed to sync after paid invoice: {:?}", e);
+                                                  }
                                                   _ = cloned.on_event(BreezEvent::InvoicePaid {
                                                       details: InvoicePaidDetails {
                                                           payment_hash: hex::encode(p.payment_hash),
