@@ -6,7 +6,7 @@ if [[ -z "$JITPACK" ]]; then
     exit 1
 fi
 
-VERSION=0.0.0
+VERSION=0.0.1
 
 echo "JitPack building version $VERSION."
 cd $(dirname $0)
