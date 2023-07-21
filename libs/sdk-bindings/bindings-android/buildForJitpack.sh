@@ -17,6 +17,9 @@ curl "https://github-registry-files.githubusercontent.com/579645777/7dc95b80-281
 curl "https://github-registry-files.githubusercontent.com/579645777/80c44c00-2810-11ee-975f-e30458ec4ed1?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIWNJYAX4CSVEH53A%2F20230721%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20230721T195338Z&X-Amz-Expires=300&X-Amz-Signature=09d4de0a47dec3d770ee68c5fae7fbd784b71348864d764df0e0982919a56dca&X-Amz-SignedHeaders=host&actor_id=0&key_id=0&repo_id=579645777&response-content-disposition=filename%3Dbindings-android-0.0.1-sources.jar&response-content-type=application%2Foctet-stream" --insecure --output bindings-android-$VERSION-sources.jar
 curl "https://github-registry-files.githubusercontent.com/579645777/7b670180-2810-11ee-99ae-01ef7a8d2f85?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIWNJYAX4CSVEH53A%2F20230721%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20230721T195338Z&X-Amz-Expires=300&X-Amz-Signature=6ba3385ebf04c01c0781a8bde5f59af1e15de0984912eaac395bbb1a85a0e8fa&X-Amz-SignedHeaders=host&actor_id=0&key_id=0&repo_id=579645777&response-content-disposition=filename%3Dbindings-android-0.0.1.pom&response-content-type=application%2Foctet-stream" --insecure --output bindings-android-$VERSION.pom
 
+cat /home/jitpack/build/libs/sdk-bindings/bindings-android/bindings-android-$VERSION.pom
+
+
 mvn org.apache.maven.plugins:maven-install-plugin:3.1.1:install-file -Dfile=bindings-android-$VERSION.aar -DpomFile=bindings-android-$VERSION.pom
 mvn org.apache.maven.plugins:maven-install-plugin:3.1.1:install-file -Dfile=bindings-android-$VERSION.module -DpomFile=bindings-android-$VERSION.pom
 mvn org.apache.maven.plugins:maven-install-plugin:3.1.1:install-file -Dfile=bindings-android-$VERSION-sources.jar -DpomFile=bindings-android-$VERSION.pom -Dclassifier=sources
