@@ -18,7 +18,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          ref: ${{ inputs.version }}
+          ref: 0.1.3
       - name: Setup SSH key
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
