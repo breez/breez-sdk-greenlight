@@ -45,7 +45,7 @@ publishing {
     repositories {
         maven {
             name = "breezReposilite"
-            url = uri("https://mvn.breez.technology/releases")
+            url = uri("https://mvn.breez.technology/snapshots")
             credentials(PasswordCredentials::class)
             authentication {
                 create<BasicAuthentication>("basic")
