@@ -44,11 +44,11 @@ val libraryVersion: String by project
 publishing {
     repositories {
         maven {
-            name = "breezReposilite"
-            url = uri("https://mvn.breez.technology/releases")
-            credentials(PasswordCredentials::class)
-            authentication {
-                create<BasicAuthentication>("basic")
+            name = "breezGitHubPackages"
+            url = uri("https://maven.pkg.github.com/breez/breez-sdk")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
             }
         }
     }
