@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 anyhow = { version = "1.0.57", features = ["backtrace"] }
 breez-sdk-core = { path = "../../libs/sdk-core"}
+chrono = "*"
 env_logger = "*"
 hex = "*"
 log = "*"
