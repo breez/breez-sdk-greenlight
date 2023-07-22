@@ -116,6 +116,16 @@ x86_64-linux-android: $(SOURCES) ndk-home
 	cp -a $(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/$(OS_NAME)-x86_64/sysroot/usr/lib/x86_64-linux-android/libc++_shared.so ffi/kotlin/jniLibs/x86_64/
 
 bindings-android: kotlin
+	# Manually add JNA native library (jnidispatch) to the packaged libraries.
+	# Due to an issue with Jitpack (https://github.com/jitpack/jitpack.io/issues/5752),
+	# the Android platform versions of jnidispatch is not included when installing the Breez SDK via Jitpack.
+	# This is because Jitpack seems to force the jar version of JNA which doesn't include the Android platform versions of the lib.
+	# We actually want the AAR version which does include them.
+	# Therefore we manually download and add the Android platform versions to the packaged native libraries.
+	# Make sure the downloaded JNA version matches the JNA dependency declared in: bindings-android/lib/build.gradke.kts
+	# When installing the Breez SDK from other package repositories this is not an issue since those allow for using the AAR version of JNA.
+	# Manually adding jnidispatch doesn't break those builds though since: "JNA falls back to extraction if the native library is not already installed"
+	# See https://github.com/java-native-access/jna/blob/master/www/GettingStarted.md#getting-started-with-jna
 	mkdir -p ffi/kotlin/jna
 	curl https://github.com/java-native-access/jna/archive/refs/tags/5.8.0.zip --location --output ffi/kotlin/jna/jna-5.8.0.zip
 	unzip ffi/kotlin/jna/jna-5.8.0.zip -d ffi/kotlin/jna/
@@ -123,6 +133,7 @@ bindings-android: kotlin
 	unzip -j ffi/kotlin/jna/jna-5.8.0/dist/android-armv7.jar libjnidispatch.so -d ffi/kotlin/jniLibs/armeabi-v7a
 	unzip -j ffi/kotlin/jna/jna-5.8.0/dist/android-x86-64.jar libjnidispatch.so -d ffi/kotlin/jniLibs/x86_64
 	unzip -j ffi/kotlin/jna/jna-5.8.0/dist/android-x86.jar libjnidispatch.so -d ffi/kotlin/jniLibs/x86
+	# End of JNA native library Jitpack fix.
 	cp -r ffi/kotlin/jniLibs bindings-android/lib/src/main
 	cp -r ffi/kotlin/breez_sdk bindings-android/lib/src/main/kotlin/
 	cd bindings-android && ./gradlew assemble
