@@ -343,25 +343,9 @@ pub fn fetch_reverse_swap_fees() -> Result<ReverseSwapPairInfo> {
     block_on(async { get_breez_services()?.fetch_reverse_swap_fees().await })
 }
 
-/*  On-Chain Swap API's */
-
-/// See [BreezServices::send_onchain]
-pub fn send_onchain(
-    amount_sat: u64,
-    onchain_recipient_address: String,
-    pair_hash: String,
-    sat_per_vbyte: u64,
-) -> Result<ReverseSwapInfo> {
-    block_on(async {
-        get_breez_services()?
-            .send_onchain(
-                amount_sat,
-                onchain_recipient_address,
-                pair_hash,
-                sat_per_vbyte,
-            )
-            .await
-    })
+/// See [BreezServices::recommended_fees]
+pub fn recommended_fees() -> Result<RecommendedFees> {
+    block_on(async { get_breez_services()?.recommended_fees().await })
 }
 
 /*  CLI API's */

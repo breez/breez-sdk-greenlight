@@ -233,13 +233,11 @@ class BreezSDK {
   ///
   /// * `amountSats` - The amount to receive in satoshis
   /// * `description` - The bolt11 payment request description
-  Future<LNInvoice> receivePayment({
-    required int amountSats,
-    required String description,
+  Future<ReceivePaymentResponse> receivePayment({
+    required ReceivePaymentRequest reqData,
   }) async =>
       await _lnToolkit.receivePayment(
-        amountSats: amountSats,
-        description: description,
+        reqData: reqData,
       );
 
   /* LNURL API's */
@@ -320,10 +318,16 @@ class BreezSDK {
       );
 
   /// Onchain receive swap API
-  Future<SwapInfo> receiveOnchain() async => await _lnToolkit.receiveOnchain();
+  Future<SwapInfo> receiveOnchain({
+    required ReceiveOnchainRequest reqData,
+  }) async =>
+      await _lnToolkit.receiveOnchain(reqData: reqData);
 
   /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency
-  Future<String> buyBitcoin(BuyBitcoinProvider provider) => _lnToolkit.buyBitcoin(provider: provider);
+  Future<String> buyBitcoin({
+    required BuyBitcoinRequest reqData,
+  }) =>
+      _lnToolkit.buyBitcoin(reqData: reqData);
 
   /// Withdraw on-chain funds in the wallet to an external btc address
   Future sweep({
