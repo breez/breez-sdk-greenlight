@@ -22,8 +22,8 @@ pub extern "C" fn wire_breez_log_stream(port_: i64) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_stop_node(port_: i64) {
-    wire_stop_node_impl(port_)
+pub extern "C" fn wire_disconnect(port_: i64) {
+    wire_disconnect_impl(port_)
 }
 
 #[no_mangle]
@@ -175,8 +175,8 @@ pub extern "C" fn wire_execute_command(port_: i64, command: *mut wire_uint_8_lis
 }
 
 #[no_mangle]
-pub extern "C" fn wire_sync_node(port_: i64) {
-    wire_sync_node_impl(port_)
+pub extern "C" fn wire_sync(port_: i64) {
+    wire_sync_impl(port_)
 }
 
 #[no_mangle]
@@ -185,8 +185,8 @@ pub extern "C" fn wire_parse_invoice(port_: i64, invoice: *mut wire_uint_8_list)
 }
 
 #[no_mangle]
-pub extern "C" fn wire_parse(port_: i64, s: *mut wire_uint_8_list) {
-    wire_parse_impl(port_, s)
+pub extern "C" fn wire_parse_input(port_: i64, input: *mut wire_uint_8_list) {
+    wire_parse_input_impl(port_, input)
 }
 
 #[no_mangle]

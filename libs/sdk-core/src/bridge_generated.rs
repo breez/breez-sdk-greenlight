@@ -120,14 +120,14 @@ fn wire_breez_log_stream_impl(port_: MessagePort) {
         move || move |task_callback| breez_log_stream(task_callback.stream_sink()),
     )
 }
-fn wire_stop_node_impl(port_: MessagePort) {
+fn wire_disconnect_impl(port_: MessagePort) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
-            debug_name: "stop_node",
+            debug_name: "disconnect",
             port: Some(port_),
             mode: FfiCallMode::Normal,
         },
-        move || move |task_callback| stop_node(),
+        move || move |task_callback| disconnect(),
     )
 }
 fn wire_send_payment_impl(
@@ -433,14 +433,14 @@ fn wire_execute_command_impl(port_: MessagePort, command: impl Wire2Api<String> 
         },
     )
 }
-fn wire_sync_node_impl(port_: MessagePort) {
+fn wire_sync_impl(port_: MessagePort) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
-            debug_name: "sync_node",
+            debug_name: "sync",
             port: Some(port_),
             mode: FfiCallMode::Normal,
         },
-        move || move |task_callback| sync_node(),
+        move || move |task_callback| sync(),
     )
 }
 fn wire_parse_invoice_impl(port_: MessagePort, invoice: impl Wire2Api<String> + UnwindSafe) {
@@ -456,16 +456,16 @@ fn wire_parse_invoice_impl(port_: MessagePort, invoice: impl Wire2Api<String> + 
         },
     )
 }
-fn wire_parse_impl(port_: MessagePort, s: impl Wire2Api<String> + UnwindSafe) {
+fn wire_parse_input_impl(port_: MessagePort, input: impl Wire2Api<String> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
-            debug_name: "parse",
+            debug_name: "parse_input",
             port: Some(port_),
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_s = s.wire2api();
-            move |task_callback| parse(api_s)
+            let api_input = input.wire2api();
+            move |task_callback| parse_input(api_input)
         },
     )
 }

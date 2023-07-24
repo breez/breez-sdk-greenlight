@@ -40,9 +40,9 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kBreezLogStreamConstMeta;
 
   /// Cleanup node resources and stop the signer.
-  Future<void> stopNode({dynamic hint});
+  Future<void> disconnect({dynamic hint});
 
-  FlutterRustBridgeTaskConstMeta get kStopNodeConstMeta;
+  FlutterRustBridgeTaskConstMeta get kDisconnectConstMeta;
 
   /// See [BreezServices::send_payment]
   Future<Payment> sendPayment({required String bolt11, int? amountSats, dynamic hint});
@@ -161,17 +161,17 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kExecuteCommandConstMeta;
 
-  Future<void> syncNode({dynamic hint});
+  Future<void> sync({dynamic hint});
 
-  FlutterRustBridgeTaskConstMeta get kSyncNodeConstMeta;
+  FlutterRustBridgeTaskConstMeta get kSyncConstMeta;
 
   Future<LNInvoice> parseInvoice({required String invoice, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kParseInvoiceConstMeta;
 
-  Future<InputType> parse({required String s, dynamic hint});
+  Future<InputType> parseInput({required String input, dynamic hint});
 
-  FlutterRustBridgeTaskConstMeta get kParseConstMeta;
+  FlutterRustBridgeTaskConstMeta get kParseInputConstMeta;
 
   /// See [BreezServices::lnurl_pay]
   Future<LnUrlPayResult> lnurlPay(
@@ -1202,18 +1202,18 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: [],
       );
 
-  Future<void> stopNode({dynamic hint}) {
+  Future<void> disconnect({dynamic hint}) {
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_stop_node(port_),
+      callFfi: (port_) => _platform.inner.wire_disconnect(port_),
       parseSuccessData: _wire2api_unit,
-      constMeta: kStopNodeConstMeta,
+      constMeta: kDisconnectConstMeta,
       argValues: [],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kStopNodeConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "stop_node",
+  FlutterRustBridgeTaskConstMeta get kDisconnectConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "disconnect",
         argNames: [],
       );
 
@@ -1576,18 +1576,18 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["command"],
       );
 
-  Future<void> syncNode({dynamic hint}) {
+  Future<void> sync({dynamic hint}) {
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_sync_node(port_),
+      callFfi: (port_) => _platform.inner.wire_sync(port_),
       parseSuccessData: _wire2api_unit,
-      constMeta: kSyncNodeConstMeta,
+      constMeta: kSyncConstMeta,
       argValues: [],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kSyncNodeConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "sync_node",
+  FlutterRustBridgeTaskConstMeta get kSyncConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "sync",
         argNames: [],
       );
 
@@ -1607,20 +1607,20 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["invoice"],
       );
 
-  Future<InputType> parse({required String s, dynamic hint}) {
-    var arg0 = _platform.api2wire_String(s);
+  Future<InputType> parseInput({required String input, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(input);
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_parse(port_, arg0),
+      callFfi: (port_) => _platform.inner.wire_parse_input(port_, arg0),
       parseSuccessData: _wire2api_input_type,
-      constMeta: kParseConstMeta,
-      argValues: [s],
+      constMeta: kParseInputConstMeta,
+      argValues: [input],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kParseConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "parse",
-        argNames: ["s"],
+  FlutterRustBridgeTaskConstMeta get kParseInputConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "parse_input",
+        argNames: ["input"],
       );
 
   Future<LnUrlPayResult> lnurlPay(
@@ -3014,16 +3014,17 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_breez_log_stream');
   late final _wire_breez_log_stream = _wire_breez_log_streamPtr.asFunction<void Function(int)>();
 
-  void wire_stop_node(
+  void wire_disconnect(
     int port_,
   ) {
-    return _wire_stop_node(
+    return _wire_disconnect(
       port_,
     );
   }
 
-  late final _wire_stop_nodePtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_stop_node');
-  late final _wire_stop_node = _wire_stop_nodePtr.asFunction<void Function(int)>();
+  late final _wire_disconnectPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_disconnect');
+  late final _wire_disconnect = _wire_disconnectPtr.asFunction<void Function(int)>();
 
   void wire_send_payment(
     int port_,
@@ -3358,16 +3359,16 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_execute_command =
       _wire_execute_commandPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
-  void wire_sync_node(
+  void wire_sync(
     int port_,
   ) {
-    return _wire_sync_node(
+    return _wire_sync(
       port_,
     );
   }
 
-  late final _wire_sync_nodePtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_sync_node');
-  late final _wire_sync_node = _wire_sync_nodePtr.asFunction<void Function(int)>();
+  late final _wire_syncPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_sync');
+  late final _wire_sync = _wire_syncPtr.asFunction<void Function(int)>();
 
   void wire_parse_invoice(
     int port_,
@@ -3385,19 +3386,21 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_parse_invoice =
       _wire_parse_invoicePtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
-  void wire_parse(
+  void wire_parse_input(
     int port_,
-    ffi.Pointer<wire_uint_8_list> s,
+    ffi.Pointer<wire_uint_8_list> input,
   ) {
-    return _wire_parse(
+    return _wire_parse_input(
       port_,
-      s,
+      input,
     );
   }
 
-  late final _wire_parsePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>('wire_parse');
-  late final _wire_parse = _wire_parsePtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+  late final _wire_parse_inputPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>(
+          'wire_parse_input');
+  late final _wire_parse_input =
+      _wire_parse_inputPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
   void wire_lnurl_pay(
     int port_,
