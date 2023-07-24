@@ -454,11 +454,14 @@ class RNBreezSDK: RCTEventEmitter {
     
     func rejectErr(err: Error, reject: @escaping RCTPromiseRejectBlock) {
         var errorCode = "Generic"
+        var message = "\(err)"
         if let sdkErr = err as? SdkError {
-            let mirror = Mirror(reflecting: sdkErr)
-            errorCode = mirror.children.first!.label!
+            if let sdkErrAssociated = Mirror(reflecting: sdkErr).children.first {
+                if let associatedMessage = Mirror(reflecting: sdkErrAssociated.value).children.first {
+                    message = associatedMessage.value as! String
+                }
+            }
         }
-        reject(errorCode, "\(err)", err)
-        
+        reject(errorCode, message, err)
     }
 }
