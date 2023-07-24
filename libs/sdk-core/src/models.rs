@@ -697,10 +697,10 @@ impl OpeningFeeParams {
     }
 
     pub(crate) fn get_channel_fees_msat_for(&self, amount_msats: u64) -> u64 {
-        max(
-            amount_msats * self.proportional as u64 / 1_000_000 / 1000 * 1000,
-            self.min_msat,
-        )
+        let lsp_fee_msat = amount_msats * self.proportional as u64 / 1_000_000;
+        let lsp_fee_msat_rounded_to_sat = lsp_fee_msat / 1000 * 1000;
+
+        max(lsp_fee_msat_rounded_to_sat, self.min_msat)
     }
 }
 
