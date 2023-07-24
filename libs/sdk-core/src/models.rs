@@ -659,7 +659,7 @@ pub struct ReceivePaymentRequest {
 pub struct ReceivePaymentResponse {
     pub ln_invoice: LNInvoice,
     pub opening_fee_params: Option<OpeningFeeParams>,
-    pub setup_fees_msat: Option<u64>,
+    pub opening_fee_msat: Option<u64>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -697,10 +697,10 @@ impl OpeningFeeParams {
     }
 
     pub(crate) fn get_channel_fees_msat_for(&self, amount_msats: u64) -> u64 {
-        max(
-            amount_msats * self.proportional as u64 / 1_000_000 / 1_000_000,
-            self.min_msat,
-        )
+        let lsp_fee_msat = amount_msats * self.proportional as u64 / 1_000_000;
+        let lsp_fee_msat_rounded_to_sat = lsp_fee_msat / 1000 * 1000;
+
+        max(lsp_fee_msat_rounded_to_sat, self.min_msat)
     }
 }
 
@@ -752,7 +752,7 @@ pub enum DynamicFeeType {
 /// See [OpeningFeeParamsMenu::try_from]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OpeningFeeParamsMenu {
-    pub vals: Vec<OpeningFeeParams>,
+    pub values: Vec<OpeningFeeParams>,
 }
 
 impl OpeningFeeParamsMenu {
@@ -761,9 +761,9 @@ impl OpeningFeeParamsMenu {
     /// This struct should not be persisted as such, because validation happens dynamically based on
     /// the current time. At a later point in time, any previously-validated [OpeningFeeParamsMenu]
     /// could be invalid. Therefore, the [OpeningFeeParamsMenu] should always be initialized on-the-fly.
-    pub fn try_from(vals: Vec<grpc::OpeningFeeParams>) -> Result<Self> {
+    pub fn try_from(values: Vec<grpc::OpeningFeeParams>) -> Result<Self> {
         let temp = Self {
-            vals: vals
+            values: values
                 .into_iter()
                 .map(|ofp| ofp.into())
                 .collect::<Vec<OpeningFeeParams>>(),
@@ -773,7 +773,7 @@ impl OpeningFeeParamsMenu {
 
     fn validate(&self) -> Result<()> {
         // opening_fee_params_menu fees must be in ascending order
-        let is_ordered = self.vals.windows(2).all(|ofp| {
+        let is_ordered = self.values.windows(2).all(|ofp| {
             let larger_min_msat_fee = ofp[0].min_msat < ofp[1].min_msat;
             let equal_min_msat_fee = ofp[0].min_msat == ofp[1].min_msat;
 
@@ -787,7 +787,7 @@ impl OpeningFeeParamsMenu {
         ensure!(is_ordered, "Validation failed: fee params are not ordered");
 
         // Menu must not contain any item with `valid_until` in the past
-        let is_expired = self.vals.iter().any(|ofp| match ofp.valid_until_date() {
+        let is_expired = self.values.iter().any(|ofp| match ofp.valid_until_date() {
             Ok(valid_until) => Utc::now() > valid_until,
             Err(_) => {
                 warn!("Failed to parse valid_until for OpeningFeeParams: {ofp:?}");
@@ -800,17 +800,17 @@ impl OpeningFeeParamsMenu {
     }
 
     pub(crate) fn get_cheapest_opening_fee_params(&self) -> Result<OpeningFeeParams> {
-        self.vals.first().cloned().ok_or(anyhow!(
+        self.values.first().cloned().ok_or(anyhow!(
             "The LSP doesn't support opening new channels: Dynamic fees menu contains no values"
         ))
     }
 
-    pub(crate) fn get_longest_valid_opening_fee_params(&self) -> Result<OpeningFeeParams> {
+    pub(crate) fn get_48h_opening_fee_params(&self) -> Result<OpeningFeeParams> {
         // Find the fee params that are valid for at least 48h
         let now = Utc::now();
         let duration_48h = chrono::Duration::hours(48);
         let valid_min_48h: Vec<OpeningFeeParams> = self
-            .vals
+            .values
             .iter()
             .filter(|ofp| match ofp.valid_until_date() {
                 Ok(valid_until) => valid_until - now > duration_48h,

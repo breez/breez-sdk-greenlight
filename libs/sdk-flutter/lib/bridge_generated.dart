@@ -827,10 +827,10 @@ class OpeningFeeParams {
 
 /// See [OpeningFeeParamsMenu::try_from]
 class OpeningFeeParamsMenu {
-  final List<OpeningFeeParams> vals;
+  final List<OpeningFeeParams> values;
 
   const OpeningFeeParamsMenu({
-    required this.vals,
+    required this.values,
   });
 }
 
@@ -931,12 +931,12 @@ class ReceivePaymentRequest {
 class ReceivePaymentResponse {
   final LNInvoice lnInvoice;
   final OpeningFeeParams? openingFeeParams;
-  final int? setupFeesMsat;
+  final int? openingFeeMsat;
 
   const ReceivePaymentResponse({
     required this.lnInvoice,
     this.openingFeeParams,
-    this.setupFeesMsat,
+    this.openingFeeMsat,
   });
 }
 
@@ -2423,7 +2423,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     final arr = raw as List<dynamic>;
     if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
     return OpeningFeeParamsMenu(
-      vals: _wire2api_list_opening_fee_params(arr[0]),
+      values: _wire2api_list_opening_fee_params(arr[0]),
     );
   }
 
@@ -2542,7 +2542,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return ReceivePaymentResponse(
       lnInvoice: _wire2api_ln_invoice(arr[0]),
       openingFeeParams: _wire2api_opt_box_autoadd_opening_fee_params(arr[1]),
-      setupFeesMsat: _wire2api_opt_box_autoadd_u64(arr[2]),
+      openingFeeMsat: _wire2api_opt_box_autoadd_u64(arr[2]),
     );
   }
 

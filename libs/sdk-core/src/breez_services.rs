@@ -1436,7 +1436,7 @@ impl Receiver for PaymentReceiver {
         Ok(ReceivePaymentResponse {
             ln_invoice: parsed_invoice,
             opening_fee_params: channel_opening_fee_params,
-            setup_fees_msat: channel_fees_msat,
+            opening_fee_msat: channel_fees_msat,
         })
     }
 }

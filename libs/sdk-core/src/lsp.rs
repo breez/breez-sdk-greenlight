@@ -72,9 +72,9 @@ impl LspInformation {
                 DynamicFeeType::Cheapest => self
                     .opening_fee_params_menu
                     .get_cheapest_opening_fee_params(),
-                DynamicFeeType::Longest => self
-                    .opening_fee_params_menu
-                    .get_longest_valid_opening_fee_params(),
+                DynamicFeeType::Longest => {
+                    self.opening_fee_params_menu.get_48h_opening_fee_params()
+                }
             },
         }
     }
