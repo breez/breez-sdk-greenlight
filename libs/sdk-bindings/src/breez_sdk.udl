@@ -279,7 +279,7 @@ dictionary ReceivePaymentRequest {
 dictionary ReceivePaymentResponse {
     LNInvoice ln_invoice;
     OpeningFeeParams? opening_fee_params;
-    u64? setup_fees_msat;
+    u64? opening_fee_msat;
 };
 
 dictionary ReceiveOnchainRequest {
@@ -292,7 +292,7 @@ dictionary BuyBitcoinRequest {
 };
 
 dictionary OpeningFeeParamsMenu {
-    sequence<OpeningFeeParams> vals;
+    sequence<OpeningFeeParams> values;
 };
 
 dictionary LspInformation {

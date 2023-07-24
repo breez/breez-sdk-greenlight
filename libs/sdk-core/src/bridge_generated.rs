@@ -1099,7 +1099,7 @@ impl support::IntoDartExceptPrimitive for OpeningFeeParams {}
 
 impl support::IntoDart for OpeningFeeParamsMenu {
     fn into_dart(self) -> support::DartAbi {
-        vec![self.vals.into_dart()].into_dart()
+        vec![self.values.into_dart()].into_dart()
     }
 }
 impl support::IntoDartExceptPrimitive for OpeningFeeParamsMenu {}
@@ -1166,7 +1166,7 @@ impl support::IntoDart for ReceivePaymentResponse {
         vec![
             self.ln_invoice.into_dart(),
             self.opening_fee_params.into_dart(),
-            self.setup_fees_msat.into_dart(),
+            self.opening_fee_msat.into_dart(),
         ]
         .into_dart()
     }
