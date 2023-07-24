@@ -99,7 +99,7 @@ pub(crate) async fn handle_command(
             amount: amount_sats,
             description,
         } => {
-            let invoice = sdk()?
+            let recv_payment_response = sdk()?
                 .receive_payment(ReceivePaymentRequest {
                     amount_sats,
                     description,
@@ -107,9 +107,9 @@ pub(crate) async fn handle_command(
                     opening_fee_params: None,
                 })
                 .await?;
-            let mut result = serde_json::to_string(&invoice)?;
+            let mut result = serde_json::to_string(&recv_payment_response)?;
             result.push('\n');
-            result.push_str(&build_qr_text(&invoice.ln_invoice.bolt11));
+            result.push_str(&build_qr_text(&recv_payment_response.ln_invoice.bolt11));
             Ok(result)
         }
         Commands::SendOnchain {
