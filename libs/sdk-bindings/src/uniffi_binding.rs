@@ -206,7 +206,6 @@ impl BlockingBreezServices {
 
     pub fn connect_lsp(&self, lsp_id: String) -> SdkResult<()> {
         rt().block_on(self.breez_services.connect_lsp(lsp_id))
-            .map_err(|e| e.into())
     }
 
     /// Convenience method to look up LSP info based on current LSP ID
