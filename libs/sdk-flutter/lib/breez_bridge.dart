@@ -6,23 +6,13 @@ import 'package:breez_sdk/native_toolkit.dart';
 import 'package:fimber/fimber.dart';
 import 'package:rxdart/rxdart.dart';
 
-class BreezBridge {
+class BreezSDK {
   final _lnToolkit = getNativeToolkit();
-  final _log = FimberLog("BreezBridge");
+  final _log = FimberLog("BreezSDK");
 
-  BreezBridge();
+  BreezSDK();
 
   /* Streams */
-  /// Listen to node state
-  final StreamController<NodeState?> nodeStateController = BehaviorSubject<NodeState?>();
-
-  Stream<NodeState?> get nodeStateStream => nodeStateController.stream;
-
-  /// Listen to payment list
-  final StreamController<List<Payment>> paymentsController = BehaviorSubject<List<Payment>>();
-
-  Stream<List<Payment>> get paymentsStream => paymentsController.stream;
-
   /// Listen to paid Invoice events
   final StreamController<InvoicePaidDetails> _invoicePaidStream = BehaviorSubject<InvoicePaidDetails>();
 
@@ -32,11 +22,6 @@ class BreezBridge {
   final StreamController<Payment> _paymentResultStream = BehaviorSubject<Payment>();
 
   Stream<Payment> get paymentResultStream => _paymentResultStream.stream;
-
-  // Listen to backup results
-  final StreamController<BreezEvent?> _backupStreamController = BehaviorSubject<BreezEvent?>();
-
-  Stream<BreezEvent?> get backupStream => _backupStreamController.stream;
 
   void initialize() {
     /// Listen to BreezEvent's(new block, invoice paid, synced)
@@ -70,8 +55,12 @@ class BreezBridge {
     _lnToolkit.breezLogStream().listen(_registerToolkitLog);
   }
 
-  /// Check whether node service is initialized or not
-  Future<bool> isInitialized() async => await _lnToolkit.initialized();
+  /* Breez Services API's & Streams*/
+
+  /// Listen to node state
+  final StreamController<NodeState?> nodeStateController = BehaviorSubject<NodeState?>();
+
+  Stream<NodeState?> get nodeStateStream => nodeStateController.stream;
 
   /// connect initializes the global NodeService, schedule the node to run in the cloud and
   /// run the signer. This must be called in order to start communicate with the node
@@ -91,15 +80,117 @@ class BreezBridge {
     await fetchNodeData();
   }
 
-  /// Cleanup node resources and stop the signer.
-  Future<void> stopNode() async => await _lnToolkit.stopNode();
+  /// Check whether node service is initialized or not
+  Future<bool> isInitialized() async => await _lnToolkit.isInitialized();
 
   /// This method sync the local state with the remote node state.
   /// The synced items are as follows:
   /// * node state - General information about the node and its liquidity status
   /// * channels - The list of channels and their status
   /// * payments - The incoming/outgoing payments
-  Future<void> syncNode() async => await _lnToolkit.syncNode();
+  Future<void> sync() async => await _lnToolkit.sync();
+
+  /// get the node state from the persistent storage
+  Future<NodeState?> nodeInfo() async {
+    final nodeState = await _lnToolkit.nodeInfo();
+    nodeStateController.add(nodeState);
+    return nodeState;
+  }
+
+  /// Cleanup node resources and stop the signer.
+  Future<void> disconnect() async => await _lnToolkit.disconnect();
+
+  /* Breez Services Helper API's */
+
+  /// Attempts to convert the phrase to a mnemonic, then to a seed.
+  ///
+  /// If the phrase is not a valid mnemonic, an error is returned.
+  Future<Uint8List> mnemonicToSeed(String phrase) async => await _lnToolkit.mnemonicToSeed(phrase: phrase);
+
+  /// Get the full default config for a specific environment type
+  Future<Config> defaultConfig({
+    required EnvironmentType envType,
+    required String apiKey,
+    required NodeConfig nodeConfig,
+  }) {
+    return _lnToolkit.defaultConfig(
+      envType: envType,
+      apiKey: apiKey,
+      nodeConfig: nodeConfig,
+    );
+  }
+
+  /* LSP API's */
+
+  /// List available lsps that can be selected by the user
+  Future<List<LspInformation>> listLsps() async => await _lnToolkit.listLsps();
+
+  /// Select the lsp to be used and provide inbound liquidity
+  Future connectLSP(String lspId) async {
+    await _lnToolkit.connectLsp(lspId: lspId);
+  }
+
+  /// Get the current LSP's ID
+  Future<String?> lspId() async => await _lnToolkit.lspId();
+
+  /// Convenience method to look up LSP info
+  Future<LspInformation?> fetchLspInfo(String lspId) async => await _lnToolkit.fetchLspInfo(id: lspId);
+
+  /// close all channels with the current lsp
+  Future closeLspChannels() async => await _lnToolkit.closeLspChannels();
+
+  /* Backup API's & Streams*/
+
+  // Listen to backup results
+  final StreamController<BreezEvent?> _backupStreamController = BehaviorSubject<BreezEvent?>();
+
+  Stream<BreezEvent?> get backupStream => _backupStreamController.stream;
+
+  /// Start the backup process
+  Future<void> backup() => _lnToolkit.backup();
+
+  /// Returns the state of the backup process
+  Future<BackupStatus> backupStatus() => _lnToolkit.backupStatus();
+
+  /* Parse API's */
+
+  /// Parse a BOLT11 payment request and return a structure contains the parsed fields.
+  Future<LNInvoice> parseInvoice(String invoice) async => await _lnToolkit.parseInvoice(invoice: invoice);
+
+  /// Parses generic user input, typically pasted from clipboard or scanned from a QR.
+  Future<InputType> parseInput({required String input}) async => await _lnToolkit.parseInput(input: input);
+
+  /* Payment API's & Streams*/
+
+  /// Listen to payment list
+  final StreamController<List<Payment>> paymentsController = BehaviorSubject<List<Payment>>();
+
+  Stream<List<Payment>> get paymentsStream => paymentsController.stream;
+
+  /// list payments (incoming/outgoing payments) from the persistent storage
+  Future<List<Payment>> listPayments({
+    PaymentTypeFilter filter = PaymentTypeFilter.All,
+    int? fromTimestamp,
+    int? toTimestamp,
+  }) async {
+    var paymentsList = await _lnToolkit.listPayments(
+      filter: filter,
+      fromTimestamp: fromTimestamp,
+      toTimestamp: toTimestamp,
+    );
+    paymentsController.add(paymentsList);
+    return paymentsList;
+  }
+
+  /// Fetch a specific payment by its hash.
+  Future<Payment?> paymentByHash({
+    required String hash,
+  }) async =>
+      await _lnToolkit.paymentByHash(
+        hash: hash,
+      );
+
+  /* Lightning Payment API's */
 
   /// pay a bolt11 invoice
   ///
@@ -151,141 +242,7 @@ class BreezBridge {
         description: description,
       );
 
-  /// get the node state from the persistent storage
-  Future<NodeState?> getNodeState() async {
-    final nodeState = await _lnToolkit.nodeInfo();
-    nodeStateController.add(nodeState);
-    return nodeState;
-  }
-
-  /// Get the full default config for a specific environment type
-  Future<Config> defaultConfig({
-    required EnvironmentType envType,
-    required String apiKey,
-    required NodeConfig nodeConfig,
-  }) {
-    return _lnToolkit.defaultConfig(
-      envType: envType,
-      apiKey: apiKey,
-      nodeConfig: nodeConfig,
-    );
-  }
-
-  /// list payments (incoming/outgoing payments) from the persistent storage
-  Future<List<Payment>> listPayments({
-    PaymentTypeFilter filter = PaymentTypeFilter.All,
-    int? fromTimestamp,
-    int? toTimestamp,
-  }) async {
-    var paymentsList = await _lnToolkit.listPayments(
-      filter: filter,
-      fromTimestamp: fromTimestamp,
-      toTimestamp: toTimestamp,
-    );
-    paymentsController.add(paymentsList);
-    return paymentsList;
-  }
-
-  /// Fetch a specific payment by its hash.
-  Future<Payment?> paymentByHash({
-    required String hash,
-  }) async =>
-      await _lnToolkit.paymentByHash(
-        hash: hash,
-      );
-
-  /// List available lsps that can be selected by the user
-  Future<List<LspInformation>> listLsps() async => await _lnToolkit.listLsps();
-
-  /// Select the lsp to be used and provide inbound liquidity
-  Future connectLSP(String lspId) async {
-    await _lnToolkit.connectLsp(lspId: lspId);
-  }
-
-  /// Convenience method to look up LSP info
-  Future<LspInformation?> fetchLspInfo(String lspId) async => await _lnToolkit.fetchLspInfo(id: lspId);
-
-  /// Get the current LSP's ID
-  Future<String?> getLspId() async => await _lnToolkit.lspId();
-
-  /// Fetch live rates of fiat currencies
-  Future<Map<String, Rate>> fetchFiatRates() async {
-    final List<Rate> rates = await _lnToolkit.fetchFiatRates();
-    return rates.fold<Map<String, Rate>>({}, (map, rate) {
-      map[rate.coin] = rate;
-      return map;
-    });
-  }
-
-  /// List all available fiat currencies
-  Future<List<FiatCurrency>> listFiatCurrencies() async => await _lnToolkit.listFiatCurrencies();
-
-  /// close all channels with the current lsp
-  Future closeLspChannels() async => await _lnToolkit.closeLspChannels();
-
-  /// Withdraw on-chain funds in the wallet to an external btc address
-  Future sweep({
-    required String toAddress,
-    required int feeRateSatsPerVbyte,
-  }) async {
-    await _lnToolkit.sweep(
-      toAddress: toAddress,
-      feeRateSatsPerVbyte: feeRateSatsPerVbyte,
-    );
-    await listPayments();
-  }
-
-  /// Onchain receive swap API
-  Future<SwapInfo> receiveOnchain() async => await _lnToolkit.receiveOnchain();
-
-  /// Returns the blocking [ReverseSwapInfo]s that are in progress
-  Future<SwapInfo?> inProgressSwap() async => await _lnToolkit.inProgressSwap();
-
-  /// list non-completed expired swaps that should be refunded by calling refund()
-  Future<List<SwapInfo>> listRefundables() async => await _lnToolkit.listRefundables();
-
-  /// Construct and broadcast a refund transaction for a failed/expired swap
-  Future<String> refund({
-    required String swapAddress,
-    required String toAddress,
-    required int satPerVbyte,
-  }) async =>
-      await _lnToolkit.refund(
-        swapAddress: swapAddress,
-        toAddress: toAddress,
-        satPerVbyte: satPerVbyte,
-      );
-
-  /// Lookup the most recent reverse swap pair info using the Boltz API
-  Future<ReverseSwapPairInfo> fetchReverseSwapFees() async => _lnToolkit.fetchReverseSwapFees();
-
-  /// Returns the blocking [ReverseSwapInfo]s that are in progress
-  Future<List<ReverseSwapInfo>> inProgressReverseSwaps() async => _lnToolkit.inProgressReverseSwaps();
-
-  /// Creates a reverse swap and attempts to pay the HODL invoice
-  Future<ReverseSwapInfo> sendOnchain({
-    required int amountSat,
-    required String onchainRecipientAddress,
-    required String pairHash,
-    required int satPerVbyte,
-  }) async =>
-      _lnToolkit.sendOnchain(
-        amountSat: amountSat,
-        onchainRecipientAddress: onchainRecipientAddress,
-        pairHash: pairHash,
-        satPerVbyte: satPerVbyte,
-      );
-
-  /// Execute a command directly on the NodeAPI interface.
-  /// Mainly used to debugging.
-  Future<String> executeCommand({required String command}) async =>
-      _lnToolkit.executeCommand(command: command);
-
-  /// Parse a BOLT11 payment request and return a structure contains the parsed fields.
-  Future<LNInvoice> parseInvoice(String invoice) async => await _lnToolkit.parseInvoice(invoice: invoice);
-
-  /// Parses generic user input, typically pasted from clipboard or scanned from a QR.
-  Future<InputType> parseInput({required String input}) async => await _lnToolkit.parse(s: input);
+  /* LNURL API's */
 
   /// Second step of LNURL-pay. The first step is `parse()`, which also validates the LNURL destination
   /// and generates the `LnUrlPayRequestData` payload needed here.
@@ -332,31 +289,112 @@ class BreezBridge {
     );
   }
 
-  /// Attempts to convert the phrase to a mnemonic, then to a seed.
-  ///
-  /// If the phrase is not a valid mnemonic, an error is returned.
-  Future<Uint8List> mnemonicToSeed(String phrase) async => await _lnToolkit.mnemonicToSeed(phrase: phrase);
+  /* Fiat Currency API's */
+
+  /// Fetch live rates of fiat currencies
+  Future<Map<String, Rate>> fetchFiatRates() async {
+    final List<Rate> rates = await _lnToolkit.fetchFiatRates();
+    return rates.fold<Map<String, Rate>>({}, (map, rate) {
+      map[rate.coin] = rate;
+      return map;
+    });
+  }
+
+  /// List all available fiat currencies
+  Future<List<FiatCurrency>> listFiatCurrencies() async => await _lnToolkit.listFiatCurrencies();
+
+  /* On-Chain Swap API's */
+
+  /// Creates a reverse swap and attempts to pay the HODL invoice
+  Future<ReverseSwapInfo> sendOnchain({
+    required int amountSat,
+    required String onchainRecipientAddress,
+    required String pairHash,
+    required int satPerVbyte,
+  }) async =>
+      _lnToolkit.sendOnchain(
+        amountSat: amountSat,
+        onchainRecipientAddress: onchainRecipientAddress,
+        pairHash: pairHash,
+        satPerVbyte: satPerVbyte,
+      );
+
+  /// Onchain receive swap API
+  Future<SwapInfo> receiveOnchain() async => await _lnToolkit.receiveOnchain();
+
+  /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency
+  Future<String> buyBitcoin(BuyBitcoinProvider provider) => _lnToolkit.buyBitcoin(provider: provider);
+
+  /// Withdraw on-chain funds in the wallet to an external btc address
+  Future sweep({
+    required String toAddress,
+    required int feeRateSatsPerVbyte,
+  }) async {
+    await _lnToolkit.sweep(
+      toAddress: toAddress,
+      feeRateSatsPerVbyte: feeRateSatsPerVbyte,
+    );
+    await listPayments();
+  }
+
+  /* Refundables API's */
+
+  /// list non-completed expired swaps that should be refunded by calling refund()
+  Future<List<SwapInfo>> listRefundables() async => await _lnToolkit.listRefundables();
+
+  /// Construct and broadcast a refund transaction for a failed/expired swap
+  Future<String> refund({
+    required String swapAddress,
+    required String toAddress,
+    required int satPerVbyte,
+  }) async =>
+      await _lnToolkit.refund(
+        swapAddress: swapAddress,
+        toAddress: toAddress,
+        satPerVbyte: satPerVbyte,
+      );
+
+  /* In Progress Swap API's */
+
+  /// Returns the blocking [ReverseSwapInfo]s that are in progress
+  Future<SwapInfo?> inProgressSwap() async => await _lnToolkit.inProgressSwap();
+
+  /// Returns the blocking [ReverseSwapInfo]s that are in progress
+  Future<List<ReverseSwapInfo>> inProgressReverseSwaps() async => _lnToolkit.inProgressReverseSwaps();
+
+  /* Swap Fee API's */
+
+  /// Lookup the most recent reverse swap pair info using the Boltz API
+  Future<ReverseSwapPairInfo> fetchReverseSwapFees() async => _lnToolkit.fetchReverseSwapFees();
 
   /// Fetches the current recommended fees
   Future<RecommendedFees> recommendedFees() => _lnToolkit.recommendedFees();
 
-  /// Start the backup process
-  Future<void> backup() => _lnToolkit.backup();
+  /* CLI API's */
 
-  /// Returns the state of the backup process
-  Future<BackupStatus> backupStatus() => _lnToolkit.backupStatus();
+  /// Execute a command directly on the NodeAPI interface.
+  /// Mainly used to debugging.
+  Future<String> executeCommand({required String command}) async =>
+      _lnToolkit.executeCommand(command: command);
 
   /* Helper Methods */
+
   /// Validate if given address is a valid BTC address
   Future<bool> isValidBitcoinAddress(
     String address,
   ) async {
     try {
-      final inputType = await _lnToolkit.parse(s: address);
+      final inputType = await _lnToolkit.parseInput(input: address);
       return inputType is InputType_BitcoinAddress;
     } catch (e) {
       return false;
     }
+  }
+
+  /// Fetch node state & payment list
+  Future fetchNodeData() async {
+    await nodeInfo();
+    await listPayments();
   }
 
   /// Log entries according to their severity
@@ -379,15 +417,6 @@ class BreezBridge {
         break;
     }
   }
-
-  /// Fetch node state & payment list
-  Future fetchNodeData() async {
-    await getNodeState();
-    await listPayments();
-  }
-
-  /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency
-  Future<String> buyBitcoin(BuyBitcoinProvider provider) => _lnToolkit.buyBitcoin(provider: provider);
 }
 
 extension SDKConfig on Config {
