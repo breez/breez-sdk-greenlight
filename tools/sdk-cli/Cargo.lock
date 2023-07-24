@@ -391,12 +391,12 @@ dependencies = [
 
 [[package]]
 name = "breez-sdk-cli"
-version = "0.1.0"
+version = "0.1.4"
 dependencies = [
  "anyhow",
  "breez-sdk-core",
  "clap",
- "env_logger 0.10.0",
+ "env_logger",
  "hex",
  "log",
  "once_cell",
@@ -410,7 +410,7 @@ dependencies = [
 
 [[package]]
 name = "breez-sdk-core"
-version = "0.1.2"
+version = "0.1.4"
 dependencies = [
  "aes",
  "anyhow",
@@ -861,19 +861,6 @@ checksum = "a12e6657c4c97ebab115a42dcee77225f7f482cdd841cf7088c657a42e9e00e7"
 dependencies = [
  "atty",
  "humantime",
- "log",
- "regex",
- "termcolor",
-]
-
-[[package]]
-name = "env_logger"
-version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "85cdab6a89accf66733ad5a1693a4dcced6aeff64602b634530dd73c1f3ee9f0"
-dependencies = [
- "humantime",
- "is-terminal",
  "log",
  "regex",
  "termcolor",
@@ -1424,18 +1411,6 @@ name = "ipnet"
 version = "2.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "12b6ee2129af8d4fb011108c73d99a1b83a85977f23b82460c0ae2e25bb4b57f"
-
-[[package]]
-name = "is-terminal"
-version = "0.4.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "adcf93614601c8129ddf72e2d5633df827ba6551541c6d8c59520a371475be1f"
-dependencies = [
- "hermit-abi 0.3.1",
- "io-lifetimes",
- "rustix",
- "windows-sys 0.48.0",
-]
 
 [[package]]
 name = "itertools"
@@ -3117,7 +3092,7 @@ dependencies = [
  "backtrace",
  "bitcoin",
  "bolt-derive",
- "env_logger 0.9.3",
+ "env_logger",
  "hashbrown 0.8.2",
  "hex",
  "itertools",

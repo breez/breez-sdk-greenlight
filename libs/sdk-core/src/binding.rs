@@ -193,6 +193,7 @@ pub fn list_lsps() -> Result<Vec<LspInformation>> {
 /// See [BreezServices::connect_lsp]
 pub fn connect_lsp(lsp_id: String) -> Result<()> {
     block_on(async { get_breez_services()?.connect_lsp(lsp_id).await })
+        .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// See [BreezServices::fetch_lsp_info]

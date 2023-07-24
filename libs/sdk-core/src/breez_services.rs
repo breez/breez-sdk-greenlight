@@ -407,10 +407,17 @@ impl BreezServices {
     }
 
     /// Select the LSP to be used and provide inbound liquidity
-    pub async fn connect_lsp(&self, lsp_id: String) -> Result<()> {
-        self.persister.set_lsp_id(lsp_id)?;
-        self.sync().await?;
-        Ok(())
+    pub async fn connect_lsp(&self, lsp_id: String) -> SdkResult<()> {
+        match self.list_lsps().await?.iter().any(|lsp| lsp.id == lsp_id) {
+            true => {
+                self.persister.set_lsp_id(lsp_id)?;
+                self.sync().await?;
+                Ok(())
+            }
+            false => Err(SdkError::LspConnectFailed {
+                err: format!("Unknown LSP: {lsp_id}"),
+            }),
+        }
     }
 
     /// Get the current LSP's ID
@@ -827,6 +834,9 @@ impl BreezServices {
                                                           .persister
                                                           .insert_or_update_payments(&vec![payment.unwrap()]);
                                                       debug!("paid invoice was added to payments list {:?}", res);
+                                                  }
+                                                  if let Err(e) = cloned.sync().await {
+                                                        error!("failed to sync after paid invoice: {:?}", e);
                                                   }
                                                   _ = cloned.on_event(BreezEvent::InvoicePaid {
                                                       details: InvoicePaidDetails {

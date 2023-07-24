@@ -1,6 +1,8 @@
+use crate::ReverseSwapStatus;
+
 use super::db::SqliteStorage;
 use anyhow::Result;
-use rusqlite::Row;
+use rusqlite::{named_params, Row};
 use std::path::Path;
 
 #[allow(dead_code)]
@@ -81,7 +83,11 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub(crate) fn import_remote_changes(&self, remote_storage: &SqliteStorage) -> Result<()> {
+    pub(crate) fn import_remote_changes(
+        &self,
+        remote_storage: &SqliteStorage,
+        to_local: bool,
+    ) -> Result<()> {
         let sync_data_file = remote_storage.sync_db_path();
         match SqliteStorage::migrate_sync_db(sync_data_file.clone()) {
             Ok(_) => {}
@@ -93,6 +99,28 @@ impl SqliteStorage {
         let mut con = self.get_connection()?;
         let tx = con.transaction()?;
         tx.execute("ATTACH DATABASE ? AS remote_sync;", [sync_data_file])?;
+
+        if to_local {
+            tx.execute(
+                "
+            INSERT OR IGNORE INTO swaps_info (bitcoin_address, unconfirmed_tx_ids, confirmed_tx_ids)
+                SELECT
+                    bitcoin_address, '[]', '[]'
+                FROM remote_sync.swaps;",
+                [],
+            )?;
+
+            tx.execute(
+                "
+            INSERT OR IGNORE INTO reverse_swaps_info (id, status)
+                SELECT
+                    id, :status
+                FROM remote_sync.reverse_swaps;",
+                named_params! {
+                    ":status": serde_json::to_value(ReverseSwapStatus::Initial)?
+                },
+            )?;
+        }
 
         // sync remote swaps table
         tx.execute(
@@ -229,10 +257,10 @@ fn test_sync() {
         .unwrap();
 
     remote_storage
-        .import_remote_changes(&local_storage)
+        .import_remote_changes(&local_storage, false)
         .unwrap();
     local_storage
-        .import_remote_changes(&remote_storage)
+        .import_remote_changes(&remote_storage, true)
         .unwrap();
 
     let mut local_swaps = local_storage.list_swaps().unwrap();
