@@ -118,8 +118,8 @@ x86_64-linux-android: $(SOURCES) ndk-home
 bindings-android: kotlin
 	# Manually add JNA native library (jnidispatch) to the packaged libraries.
 	# Due to an issue with Jitpack (https://github.com/jitpack/jitpack.io/issues/5752),
-	# the Android platform versions of jnidispatch is not included when installing the Breez SDK via Jitpack.
-	# This is because Jitpack seems to force the jar version of JNA which doesn't include the Android platform versions of the lib.
+	# the Android platform versions of jnidispatch are not included when installing the Breez SDK via Jitpack.
+	# This is because Jitpack seems to force the JAR version of JNA which doesn't include the Android platform versions of the lib.
 	# We actually want the AAR version which does include them.
 	# Therefore we manually download and add the Android platform versions to the packaged native libraries.
 	# Make sure the downloaded JNA version matches the JNA dependency declared in: bindings-android/lib/build.gradke.kts
