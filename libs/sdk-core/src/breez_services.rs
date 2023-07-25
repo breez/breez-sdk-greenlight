@@ -1330,8 +1330,9 @@ impl Receiver for PaymentReceiver {
                         .channels
                         .iter()
                         .find(|&c| c.state == "CHANNELD_NORMAL")
-                        .ok_or("No open channel found")
-                        .map_err(|err| anyhow!(err))?;
+                        .ok_or_else(|| SdkError::ReceivePaymentFailed {
+                            err: "No open channel found".into(),
+                        })?;
                     let hint = match active_channel.clone().alias {
                         Some(aliases) => aliases.remote,
                         _ => active_channel.clone().short_channel_id,
@@ -1399,6 +1400,13 @@ impl Receiver for PaymentReceiver {
         // register the payment at the lsp if needed
         if open_channel_needed {
             info!("Registering payment with LSP");
+
+            if channel_opening_fee_params.is_none() {
+                return Err(SdkError::ReceivePaymentFailed {
+                    err: "We need to open a channel, but no channel opening fee params found"
+                        .into(),
+                });
+            }
 
             let api_key = self.config.api_key.clone().unwrap_or_default();
             let api_key_hash = sha256::Hash::hash(api_key.as_bytes()).to_hex();
