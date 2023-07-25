@@ -324,7 +324,7 @@ class BreezSDK {
       await _lnToolkit.receiveOnchain(reqData: reqData);
 
   /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency
-  Future<String> buyBitcoin({
+  Future<BuyBitcoinResponse> buyBitcoin({
     required BuyBitcoinRequest reqData,
   }) =>
       _lnToolkit.buyBitcoin(reqData: reqData);
