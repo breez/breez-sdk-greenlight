@@ -115,7 +115,7 @@ impl BackupWatcher {
             mpsc::channel::<BackupRequest>(100);
         self.set_request_sender(backup_request_sender.clone()).await;
 
-        let rt = Builder::new_current_thread().enable_all().build().unwrap();
+        let rt = Builder::new_current_thread().enable_all().build()?;
         std::thread::spawn(move || {
             rt.block_on(async move {
                 loop {
@@ -188,15 +188,14 @@ impl BackupWatcher {
     pub(crate) async fn request_backup(&self, request: BackupRequest) -> Result<()> {
         let request_handler = self.backup_request_sender.lock().await;
         let h = request_handler.clone();
-        h.unwrap()
+        h.ok_or_else(|| anyhow!("No backup request handler found"))?
             .send(request)
             .await
-            .map_err(|_| anyhow::Error::msg("test"))?;
-        Ok(())
+            .map_err(|_| anyhow!("Failed to send backup request, the channel is likely closed"))
     }
 }
 
-/// BackupWorker is a worker that bidirectionaly syncs the sdk state.
+/// BackupWorker is a worker that bidirectionally syncs the sdk state.
 #[derive(Clone)]
 struct BackupWorker {
     working_dir_path: String,
@@ -355,8 +354,9 @@ impl BackupWorker {
                 );
 
                 // Bidirectionaly sync the local and remote changes
-                self.persister.import_remote_changes(&remote_storage)?;
-                remote_storage.import_remote_changes(self.persister.as_ref())?;
+                self.persister
+                    .import_remote_changes(&remote_storage, true)?;
+                remote_storage.import_remote_changes(self.persister.as_ref(), false)?;
                 *last_sync_request_id = self.persister.get_last_sync_request()?.unwrap_or_default();
 
                 let mut hex = vec![];

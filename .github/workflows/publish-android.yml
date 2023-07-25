@@ -10,6 +10,9 @@ on:
 jobs:
   publish-android:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Install dependencies
         run: |
@@ -37,6 +40,8 @@ jobs:
           make init
           make bindings-android
       - name: Publish artifacts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd libs/sdk-bindings/bindings-android
           ./gradlew publish -PlibraryVersion=${{ inputs.version }} -PbreezReposiliteUsername=${{ secrets.BREEZ_MVN_USERNAME }} -PbreezReposilitePassword=${{ secrets.BREEZ_MVN_PASSWORD }}

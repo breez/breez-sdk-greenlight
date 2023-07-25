@@ -9,8 +9,12 @@ dictionary RouteHintHop {
  };
 
 [Error]
-enum SDKError {
-  "Error",
+enum SdkError {
+    "Generic",
+    "InitFailed",
+    "LspConnectFailed",
+    "PersistenceFailure",
+    "ReceivePaymentFailed",
 };
 
 enum EnvironmentType {
@@ -406,115 +410,115 @@ enum BuyBitcoinProvider {
 
 interface BlockingBreezServices {   
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    void disconnect();
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    Payment send_payment(string bolt11, u64? amount_sats);
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    Payment send_spontaneous_payment(string node_id, u64 amount_sats);
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    LNInvoice receive_payment(u64 amount_sats, string description);
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    LnUrlPayResult pay_lnurl(LnUrlPayRequestData req_data, u64 amount_sats, string? comment);
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    LnUrlCallbackStatus withdraw_lnurl(LnUrlWithdrawRequestData req_data, u64 amount_sats, string? description);
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    LnUrlCallbackStatus lnurl_auth(LnUrlAuthRequestData req_data);
 
-   [Throws=SDKError]
-   NodeState? node_info();
+   [Throws=SdkError]
+   NodeState node_info();
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    BackupStatus backup_status();
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    void backup();
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    Payment? payment_by_hash(string hash);
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    sequence<Payment> list_payments(PaymentTypeFilter filter, i64? from_timestamp, i64? to_timestamp);
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    void sweep(string to_address, u64 fee_rate_sats_per_vbyte);
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    sequence<Rate> fetch_fiat_rates();
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    sequence<FiatCurrency> list_fiat_currencies();
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    sequence<LspInformation> list_lsps();
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    void connect_lsp(string lsp_id);
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    LspInformation? fetch_lsp_info(string lsp_id);
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    string? lsp_id();
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    void close_lsp_channels();
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    SwapInfo receive_onchain();
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    SwapInfo? in_progress_swap();
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    sequence<SwapInfo> list_refundables();
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    string refund(string swap_address, string to_address, u32 sat_per_vbyte);
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    ReverseSwapPairInfo fetch_reverse_swap_fees();
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    sequence<ReverseSwapInfo> in_progress_reverse_swaps();
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    ReverseSwapInfo send_onchain(u64 amount_sat, string onchain_recipient_address, string pair_hash, u64 sat_per_vbyte);
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    string execute_dev_command(string command);
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    void sync();
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    RecommendedFees recommended_fees();
 
-   [Throws=SDKError]
+   [Throws=SdkError]
    string buy_bitcoin(BuyBitcoinProvider provider);
 };
 
 namespace breez_sdk {  
 
- [Throws=SDKError]
+ [Throws=SdkError]
  BlockingBreezServices connect(Config config, sequence<u8> seed, EventListener listener);
 
- [Throws=SDKError]
+ [Throws=SdkError]
  void set_log_stream(LogStream log_stream);
 
- [Throws=SDKError]
+ [Throws=SdkError]
  LNInvoice parse_invoice(string invoice);
 
- [Throws=SDKError]
+ [Throws=SdkError]
  InputType parse_input(string s);
 
- [Throws=SDKError]
+ [Throws=SdkError]
  sequence<u8> mnemonic_to_seed(string phrase);
 
  Config default_config(EnvironmentType env_type, string api_key, NodeConfig node_config);

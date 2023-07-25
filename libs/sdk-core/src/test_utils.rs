@@ -23,6 +23,7 @@ use tonic::Streaming;
 use crate::backup::{BackupState, BackupTransport};
 use crate::breez_services::Receiver;
 use crate::chain::{ChainService, OnchainTx, RecommendedFees};
+use crate::error::SdkResult;
 use crate::fiat::{FiatCurrency, Rate};
 use crate::grpc::{PaymentInformation, RegisterPaymentReply};
 use crate::lsp::LspInformation;
@@ -227,7 +228,7 @@ impl Receiver for MockReceiver {
         _amount_sats: u64,
         _description: String,
         _preimage: Option<Vec<u8>>,
-    ) -> Result<crate::LNInvoice> {
+    ) -> SdkResult<crate::LNInvoice> {
         Ok(parse_invoice(&self.bolt11)?)
     }
 }

@@ -58,14 +58,14 @@ class BreezSDKMapper {
         switch(envType) {
         case "production": return EnvironmentType.production
         case "staging": return EnvironmentType.staging
-        default: throw SdkError.Error(message: "Invalid environment type")
+        default: throw SdkError.Generic(message: "Invalid environment type")
         }
     }
 
     static func asBitcoinProvider(provider: String) throws -> BuyBitcoinProvider {
         switch(provider) {
         case "moonpay": return BuyBitcoinProvider.moonpay
-        default: throw SdkError.Error(message: "Invalid Bitcoin provider")
+        default: throw SdkError.Generic(message: "Invalid Bitcoin provider")
         }
     }
     
@@ -163,7 +163,7 @@ class BreezSDKMapper {
         case "sent": return PaymentTypeFilter.sent
         case "received": return PaymentTypeFilter.received
         case "all": return PaymentTypeFilter.all
-        default: throw SdkError.Error(message: "Invalid filter")
+        default: throw SdkError.Generic(message: "Invalid filter")
         }
     }
     
@@ -173,7 +173,7 @@ class BreezSDKMapper {
         case "regtest": return Network.regtest
         case "signet": return Network.signet
         case "testnet": return Network.testnet
-        default: throw SdkError.Error(message: "Invalid network")
+        default: throw SdkError.Generic(message: "Invalid network")
         }
     }
     
