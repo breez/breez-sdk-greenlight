@@ -825,7 +825,7 @@ impl OpeningFeeParamsMenu {
         // Of those, return the first, which is the cheapest
         // (sorting order of fee params list was checked when the menu was initialized)
         valid_min_48h.first().cloned().ok_or(anyhow!(
-            "The LSP doesn't support opening new channels: Dynamic fees menu contains no values"
+            "The LSP doesn't support opening fees with a validity > 48 hours"
         ))
     }
 }
