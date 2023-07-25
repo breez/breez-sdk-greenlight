@@ -48,6 +48,7 @@ use crate::lsp::LspInformation;
 use crate::models::BackupStatus;
 use crate::models::BuyBitcoinProvider;
 use crate::models::BuyBitcoinRequest;
+use crate::models::BuyBitcoinResponse;
 use crate::models::ChannelState;
 use crate::models::ClosedChannelPaymentDetails;
 use crate::models::Config;
@@ -773,6 +774,13 @@ impl support::IntoDart for BreezEvent {
     }
 }
 impl support::IntoDartExceptPrimitive for BreezEvent {}
+impl support::IntoDart for BuyBitcoinResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.url.into_dart(), self.opening_fee_params.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for BuyBitcoinResponse {}
+
 impl support::IntoDart for ChannelState {
     fn into_dart(self) -> support::DartAbi {
         match self {

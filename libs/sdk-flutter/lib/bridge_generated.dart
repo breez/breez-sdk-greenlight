@@ -176,7 +176,7 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kReceiveOnchainConstMeta;
 
   /// See [BreezServices::buy_bitcoin]
-  Future<String> buyBitcoin({required BuyBitcoinRequest reqData, dynamic hint});
+  Future<BuyBitcoinResponse> buyBitcoin({required BuyBitcoinRequest reqData, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kBuyBitcoinConstMeta;
 
@@ -319,6 +319,16 @@ class BuyBitcoinRequest {
 
   const BuyBitcoinRequest({
     required this.provider,
+    this.openingFeeParams,
+  });
+}
+
+class BuyBitcoinResponse {
+  final String url;
+  final OpeningFeeParams? openingFeeParams;
+
+  const BuyBitcoinResponse({
+    required this.url,
     this.openingFeeParams,
   });
 }
@@ -1701,11 +1711,11 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["reqData"],
       );
 
-  Future<String> buyBitcoin({required BuyBitcoinRequest reqData, dynamic hint}) {
+  Future<BuyBitcoinResponse> buyBitcoin({required BuyBitcoinRequest reqData, dynamic hint}) {
     var arg0 = _platform.api2wire_box_autoadd_buy_bitcoin_request(reqData);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_buy_bitcoin(port_, arg0),
-      parseSuccessData: _wire2api_String,
+      parseSuccessData: _wire2api_buy_bitcoin_response,
       constMeta: kBuyBitcoinConstMeta,
       argValues: [reqData],
       hint: hint,
@@ -2030,6 +2040,15 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       default:
         throw Exception("unreachable");
     }
+  }
+
+  BuyBitcoinResponse _wire2api_buy_bitcoin_response(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return BuyBitcoinResponse(
+      url: _wire2api_String(arr[0]),
+      openingFeeParams: _wire2api_opt_box_autoadd_opening_fee_params(arr[1]),
+    );
   }
 
   ChannelState _wire2api_channel_state(dynamic raw) {
