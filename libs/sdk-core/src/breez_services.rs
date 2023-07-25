@@ -690,27 +690,18 @@ impl BreezServices {
 
     /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency
     pub async fn buy_bitcoin(&self, req: BuyBitcoinRequest) -> SdkResult<BuyBitcoinResponse> {
-        let ofp = req.opening_fee_params;
+        let swap_info = self
+            .receive_onchain(ReceiveOnchainRequest {
+                opening_fee_params: req.opening_fee_params,
+            })
+            .await?;
         let url = match req.provider {
-            Moonpay => {
-                self.moonpay_api
-                    .buy_bitcoin_url(
-                        &self
-                            .receive_onchain(ReceiveOnchainRequest {
-                                opening_fee_params: ofp.clone(),
-                            })
-                            .await?,
-                    )
-                    .await?
-            }
+            Moonpay => self.moonpay_api.buy_bitcoin_url(&swap_info).await?,
         };
 
-        let lsp_info = get_lsp(self.persister.clone(), self.lsp_api.clone()).await?;
         Ok(BuyBitcoinResponse {
             url,
-            opening_fee_params: Some(
-                lsp_info.choose_channel_opening_fees(ofp, DynamicFeeType::Cheapest)?,
-            ),
+            opening_fee_params: swap_info.channel_opening_fees,
         })
     }
 
