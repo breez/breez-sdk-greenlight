@@ -2,7 +2,7 @@ use crate::ReverseSwapStatus;
 
 use super::db::SqliteStorage;
 use anyhow::Result;
-use rusqlite::{named_params, Row};
+use rusqlite::{named_params, Row, Transaction};
 use std::path::Path;
 
 #[allow(dead_code)]
@@ -201,8 +201,49 @@ impl SqliteStorage {
             [],
         )?;
 
+        // Sync remote swaps_fees table, which contains dynamic fees used in swaps
+        // created_at is used to settle conflicts, since we assume small variations in the client local times
+        Self::sync_swaps_fees_local(&tx)?;
+        Self::sync_swaps_fees_remote(&tx)?;
+
         tx.commit()?;
         con.execute("DETACH DATABASE remote_sync", [])?;
+
+        Ok(())
+    }
+
+    /// Insert or update to local db all rows that have created_at larger than in the local
+    fn sync_swaps_fees_local(tx: &Transaction) -> Result<()> {
+        tx.execute(
+            "
+        INSERT OR REPLACE INTO sync.swaps_fees
+         (SELECT bitcoin_address, created_at, channel_opening_fees FROM remote_sync.swaps_fees
+          WHERE
+           bitcoin_address NOT IN (SELECT bitcoin_address from sync.swaps)
+           OR
+           created_at > (SELECT created_at FROM sync.swaps_fees WHERE bitcoin_address = remote_sync.bitcoin_address)
+         );
+           ",
+            [],
+        )?;
+
+        Ok(())
+    }
+
+    /// Insert or update to remote db all rows that have created_at larger than in remote.
+    fn sync_swaps_fees_remote(tx: &Transaction) -> Result<()> {
+        tx.execute(
+            "
+        INSERT OR REPLACE INTO remote_sync.swaps_fees
+         (SELECT bitcoin_address, created_at, channel_opening_fees FROM sync.swaps_fees
+          WHERE
+           bitcoin_address NOT IN (SELECT bitcoin_address from remote_sync.swaps)
+           OR
+           created_at > (SELECT created_at FROM remote_sync.swaps_fees WHERE bitcoin_address = sync.bitcoin_address)
+         );
+           ",
+            [],
+        )?;
 
         Ok(())
     }

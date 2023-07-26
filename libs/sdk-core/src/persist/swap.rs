@@ -3,7 +3,7 @@ use crate::models::{SwapInfo, SwapStatus};
 use super::db::{SqliteStorage, StringArray};
 use crate::OpeningFeeParams;
 use anyhow::{anyhow, Result};
-use rusqlite::{named_params, OptionalExtension, Params, Row};
+use rusqlite::{named_params, OptionalExtension, Params, Row, Transaction};
 
 impl SqliteStorage {
     pub(crate) fn insert_swap(&self, swap_info: SwapInfo) -> Result<()> {
@@ -65,6 +65,13 @@ impl SqliteStorage {
                ":channel_opening_fees": swap_info.channel_opening_fees
             },
         )?;
+
+        Self::insert_swaps_fees(
+            &tx,
+            swap_info.bitcoin_address,
+            swap_info.channel_opening_fees,
+        )?;
+
         tx.commit()?;
         Ok(())
     }
@@ -113,12 +120,32 @@ impl SqliteStorage {
         Ok(())
     }
 
+    fn insert_swaps_fees(
+        tx: &Transaction,
+        bitcoin_address: String,
+        channel_opening_fees: Option<OpeningFeeParams>,
+    ) -> Result<()> {
+        tx.execute(
+            "INSERT OR REPLACE INTO sync.swaps_fees (bitcoin_address, channel_opening_fees) VALUES(:bitcoin_address, :channel_opening_fees)",
+            named_params! {
+             ":bitcoin_address": bitcoin_address,
+             ":channel_opening_fees": channel_opening_fees,
+            },
+        )?;
+
+        Ok(())
+    }
+
+    /// Update the dynamic fees associated with a swap
     pub(crate) fn update_swap_fees(
         &self,
         bitcoin_address: String,
         channel_opening_fees: Option<OpeningFeeParams>,
     ) -> Result<()> {
-        self.get_connection()?.execute(
+        let mut con = self.get_connection()?;
+        let tx = con.transaction()?;
+
+        tx.execute(
             "UPDATE swaps_info SET channel_opening_fees=:channel_opening_fees where bitcoin_address=:bitcoin_address",
             named_params! {
              ":channel_opening_fees": channel_opening_fees,
@@ -126,6 +153,9 @@ impl SqliteStorage {
             },
         )?;
 
+        Self::insert_swaps_fees(&tx, bitcoin_address, channel_opening_fees)?;
+
+        tx.commit()?;
         Ok(())
     }
 
