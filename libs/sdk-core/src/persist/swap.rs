@@ -146,7 +146,7 @@ impl SqliteStorage {
         let tx = con.transaction()?;
 
         tx.execute(
-            "UPDATE swaps_info SET channel_opening_fees=:channel_opening_fees where bitcoin_address=:bitcoin_address",
+            "UPDATE swaps_info SET channel_opening_fees=:channel_opening_fees, created_at=CURRENT_TIMESTAMP where bitcoin_address=:bitcoin_address",
             named_params! {
              ":channel_opening_fees": channel_opening_fees,
              ":bitcoin_address": bitcoin_address,
