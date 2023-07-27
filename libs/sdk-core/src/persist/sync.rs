@@ -217,13 +217,12 @@ impl SqliteStorage {
         tx.execute(
             "
         INSERT OR REPLACE INTO sync.swaps_fees
-         (SELECT bitcoin_address, created_at, channel_opening_fees FROM remote_sync.swaps_fees
+         SELECT bitcoin_address as remote_sync_bitcoin_address, created_at, channel_opening_fees FROM remote_sync.swaps_fees
           WHERE
-           bitcoin_address NOT IN (SELECT bitcoin_address from sync.swaps)
+           remote_sync_bitcoin_address NOT IN (SELECT bitcoin_address FROM sync.swaps)
            OR
-           created_at > (SELECT created_at FROM sync.swaps_fees WHERE bitcoin_address = remote_sync.bitcoin_address)
-         );
-           ",
+           created_at > (SELECT created_at FROM sync.swaps_fees WHERE bitcoin_address = remote_sync_bitcoin_address)
+         ;",
             [],
         )?;
 
@@ -235,13 +234,12 @@ impl SqliteStorage {
         tx.execute(
             "
         INSERT OR REPLACE INTO remote_sync.swaps_fees
-         (SELECT bitcoin_address, created_at, channel_opening_fees FROM sync.swaps_fees
+         SELECT bitcoin_address as sync_bitcoin_address, created_at, channel_opening_fees FROM sync.swaps_fees
           WHERE
-           bitcoin_address NOT IN (SELECT bitcoin_address from remote_sync.swaps)
+           sync_bitcoin_address NOT IN (SELECT bitcoin_address FROM remote_sync.swaps)
            OR
-           created_at > (SELECT created_at FROM remote_sync.swaps_fees WHERE bitcoin_address = sync.bitcoin_address)
-         );
-           ",
+           created_at > (SELECT created_at FROM remote_sync.swaps_fees WHERE bitcoin_address = sync_bitcoin_address)
+         ;",
             [],
         )?;
 
@@ -249,71 +247,77 @@ impl SqliteStorage {
     }
 }
 
-#[test]
-fn test_sync() {
-    use crate::persist::test_utils;
-    let local_storage = SqliteStorage::new(test_utils::create_test_sql_dir());
-    local_storage.init().unwrap();
+#[cfg(test)]
+mod tests {
+    use crate::persist::db::SqliteStorage;
+    use crate::test_utils::get_test_ofp_48h;
 
-    let local_swap_info = crate::SwapInfo {
-        bitcoin_address: String::from("1"),
-        created_at: 0,
-        lock_height: 100,
-        payment_hash: vec![1],
-        preimage: vec![2],
-        private_key: vec![3],
-        public_key: vec![4],
-        swapper_public_key: vec![5],
-        script: vec![5],
-        bolt11: None,
-        paid_sats: 0,
-        unconfirmed_sats: 0,
-        confirmed_sats: 0,
-        status: crate::models::SwapStatus::Initial,
-        refund_tx_ids: Vec::new(),
-        unconfirmed_tx_ids: Vec::new(),
-        confirmed_tx_ids: Vec::new(),
-        min_allowed_deposit: 0,
-        max_allowed_deposit: 100,
-        last_redeem_error: None,
-        channel_opening_fees: None,
-    };
-    local_storage.insert_swap(local_swap_info.clone()).unwrap();
+    #[test]
+    fn test_sync() {
+        use crate::persist::test_utils;
+        let local_storage = SqliteStorage::new(test_utils::create_test_sql_dir());
+        local_storage.init().unwrap();
 
-    let mut remote_swap_info = local_swap_info;
-    remote_swap_info.bitcoin_address = "2".into();
-    remote_swap_info.script = vec![6];
-    remote_swap_info.swapper_public_key = vec![6];
-    remote_swap_info.public_key = vec![6];
-    remote_swap_info.preimage = vec![6];
-    remote_swap_info.payment_hash = vec![6];
-    remote_swap_info.private_key = vec![6];
+        let local_swap_info = crate::SwapInfo {
+            bitcoin_address: String::from("1"),
+            created_at: 10,
+            lock_height: 100,
+            payment_hash: vec![1],
+            preimage: vec![2],
+            private_key: vec![3],
+            public_key: vec![4],
+            swapper_public_key: vec![5],
+            script: vec![5],
+            bolt11: None,
+            paid_sats: 0,
+            unconfirmed_sats: 0,
+            confirmed_sats: 0,
+            status: crate::models::SwapStatus::Initial,
+            refund_tx_ids: Vec::new(),
+            unconfirmed_tx_ids: Vec::new(),
+            confirmed_tx_ids: Vec::new(),
+            min_allowed_deposit: 0,
+            max_allowed_deposit: 100,
+            last_redeem_error: None,
+            channel_opening_fees: Some(get_test_ofp_48h(1, 1).into()),
+        };
+        local_storage.insert_swap(local_swap_info.clone()).unwrap();
 
-    let remote_storage = SqliteStorage::new(test_utils::create_test_sql_dir());
-    remote_storage.init().unwrap();
-    remote_storage.insert_swap(remote_swap_info).unwrap();
+        let mut remote_swap_info = local_swap_info;
+        remote_swap_info.bitcoin_address = "2".into();
+        remote_swap_info.script = vec![6];
+        remote_swap_info.swapper_public_key = vec![6];
+        remote_swap_info.public_key = vec![6];
+        remote_swap_info.preimage = vec![6];
+        remote_swap_info.payment_hash = vec![6];
+        remote_swap_info.private_key = vec![6];
 
-    remote_storage
-        .insert_open_channel_payment_info("123", 100000)
-        .unwrap();
+        let remote_storage = SqliteStorage::new(test_utils::create_test_sql_dir());
+        remote_storage.init().unwrap();
+        remote_storage.insert_swap(remote_swap_info).unwrap();
 
-    remote_storage
-        .import_remote_changes(&local_storage, false)
-        .unwrap();
-    local_storage
-        .import_remote_changes(&remote_storage, true)
-        .unwrap();
+        remote_storage
+            .insert_open_channel_payment_info("123", 100000)
+            .unwrap();
 
-    let mut local_swaps = local_storage.list_swaps().unwrap();
-    local_swaps.sort_by(|s1, s2| s1.bitcoin_address.cmp(&s2.bitcoin_address));
+        remote_storage
+            .import_remote_changes(&local_storage, false)
+            .unwrap();
+        local_storage
+            .import_remote_changes(&remote_storage, true)
+            .unwrap();
 
-    let mut remote_swaps = local_storage.list_swaps().unwrap();
-    remote_swaps.sort_by(|s1, s2| s1.bitcoin_address.cmp(&s2.bitcoin_address));
+        let mut local_swaps = local_storage.list_swaps().unwrap();
+        local_swaps.sort_by(|s1, s2| s1.bitcoin_address.cmp(&s2.bitcoin_address));
 
-    assert_eq!(local_swaps, remote_swaps);
-    assert_eq!(local_swaps.len(), 2);
+        let mut remote_swaps = local_storage.list_swaps().unwrap();
+        remote_swaps.sort_by(|s1, s2| s1.bitcoin_address.cmp(&s2.bitcoin_address));
 
-    local_storage.set_last_sync_version(10, &vec![]).unwrap();
-    let version = local_storage.get_last_sync_version().unwrap().unwrap();
-    assert_eq!(version, 10);
+        assert_eq!(local_swaps, remote_swaps);
+        assert_eq!(local_swaps.len(), 2);
+
+        local_storage.set_last_sync_version(10, &vec![]).unwrap();
+        let version = local_storage.get_last_sync_version().unwrap().unwrap();
+        assert_eq!(version, 10);
+    }
 }

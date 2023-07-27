@@ -432,7 +432,7 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
         "
         CREATE TABLE IF NOT EXISTS sync.swaps_fees (
          bitcoin_address TEXT PRIMARY KEY NOT NULL,
-         created_at INTEGER DEFAULT CURRENT_TIMESTAMP NOT NULL,
+         created_at TEXT DEFAULT CURRENT_TIMESTAMP NOT NULL,
          channel_opening_fees TEXT NOT NULL
         ) STRICT;
         "

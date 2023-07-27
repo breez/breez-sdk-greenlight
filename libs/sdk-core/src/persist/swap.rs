@@ -69,7 +69,9 @@ impl SqliteStorage {
         Self::insert_swaps_fees(
             &tx,
             swap_info.bitcoin_address,
-            swap_info.channel_opening_fees,
+            swap_info
+                .channel_opening_fees
+                .ok_or_else(|| anyhow!("Dynamic fees must be set when creating a new swap"))?,
         )?;
 
         tx.commit()?;
@@ -123,7 +125,7 @@ impl SqliteStorage {
     fn insert_swaps_fees(
         tx: &Transaction,
         bitcoin_address: String,
-        channel_opening_fees: Option<OpeningFeeParams>,
+        channel_opening_fees: OpeningFeeParams,
     ) -> Result<()> {
         tx.execute(
             "INSERT OR REPLACE INTO sync.swaps_fees (bitcoin_address, channel_opening_fees) VALUES(:bitcoin_address, :channel_opening_fees)",
@@ -140,7 +142,7 @@ impl SqliteStorage {
     pub(crate) fn update_swap_fees(
         &self,
         bitcoin_address: String,
-        channel_opening_fees: Option<OpeningFeeParams>,
+        channel_opening_fees: OpeningFeeParams,
     ) -> Result<()> {
         let mut con = self.get_connection()?;
         let tx = con.transaction()?;
@@ -329,6 +331,7 @@ impl SqliteStorage {
 #[cfg(test)]
 mod tests {
     use crate::persist::db::SqliteStorage;
+    use crate::test_utils::get_test_ofp_48h;
     use crate::{OpeningFeeParams, SwapInfo, SwapStatus};
     use anyhow::Result;
     use rusqlite::{named_params, Connection};
@@ -368,7 +371,7 @@ mod tests {
             min_allowed_deposit: 0,
             max_allowed_deposit: 100,
             last_redeem_error: None,
-            channel_opening_fees: None,
+            channel_opening_fees: Some(get_test_ofp_48h(1, 1).into()),
         };
         storage.insert_swap(tested_swap_info.clone())?;
         let item_value = storage.get_swap_info_by_address("1".to_string())?.unwrap();
