@@ -4,6 +4,5 @@ target
 ffigen/*
 sdk-flutter/.dart_tool
 sdk-bindings/ffi
-sdk-bindings/kmm
 sdk-bindings/tests/bindings/golang/breez_sdk/
 sdk-bindings/tests/bindings/golang/*.sql

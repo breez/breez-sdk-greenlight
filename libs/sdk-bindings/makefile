@@ -123,8 +123,9 @@ bindings-android: kotlin
 	cp bindings-android/lib/build/outputs/aar/lib-release.aar ffi/android
 
 bindings-kotlin-multiplatform: ios-universal kotlin
+	mkdir -p bindings-kotlin-multiplatform/breez-sdk-kmp/src/androidMain
 	cp -r ffi/kotlin/jniLibs/ bindings-kotlin-multiplatform/breez-sdk-kmp/src/androidMain/jniLibs/
-	cp -r kmm/* bindings-kotlin-multiplatform/breez-sdk-kmp/src/
+	cp -r ffi/kmm/* bindings-kotlin-multiplatform/breez-sdk-kmp/src/
 
 	cp -r bindings-kotlin-multiplatform/breez-sdk-kmp/src/jvmMain/kotlin bindings-kotlin-multiplatform/breez-sdk-kmp/src/androidMain/
 

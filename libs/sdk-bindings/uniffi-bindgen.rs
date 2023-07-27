@@ -5,7 +5,7 @@ fn main() {
     uniffi::uniffi_bindgen_main();
 
     let udl_file = "./src/breez_sdk.udl";
-    let out_dir = Utf8Path::new("kmm");
+    let out_dir = Utf8Path::new("ffi/kmm");
     let config = Utf8Path::new("uniffi.toml");
     uniffi_bindgen::generate_external_bindings(
         KotlinBindingGenerator {},
