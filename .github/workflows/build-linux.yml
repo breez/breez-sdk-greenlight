@@ -1,0 +1,64 @@
+name: Build Linux
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'commit/tag/branch reference'
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      ref:
+        description: 'commit/tag/branch reference'
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: build ${{ matrix.target }}
+    strategy:
+      matrix:
+        target: [
+          aarch64-unknown-linux-gnu,
+          x86_64-unknown-linux-gnu,
+        ]
+    steps:
+    - name: checkout
+      uses: actions/checkout@v3
+      with: 
+        ref: ${{ inputs.ref }}
+
+    - name: Install rust toolchain
+      run: |
+        rustup set auto-self-update disable
+        rustup toolchain install stable --profile minimal
+        rustup target add ${{ matrix.target }}
+
+    - name: Install protobuf compiler
+      run: sudo apt-get install -y protobuf-compiler
+
+    - name: Install gcc-aarch64-linux-gnu
+      if: matrix.target == 'aarch64-unknown-linux-gnu'
+      run: sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu 
+
+    - name: Install gcc-x86-64-linux-gnu
+      if: matrix.target == 'x86_64-unknown-linux-gnu'
+      run: sudo apt-get install -y gcc-x86-64-linux-gnu g++-x86-64-linux-gnu 
+
+    - uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: libs
+
+    - name: Build Breez
+      working-directory: libs/sdk-bindings
+      env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: /usr/bin/aarch64-linux-gnu-gcc
+          CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER: /usr/bin/x86_64-linux-gnu-gcc
+      run: cargo build --release --target ${{ matrix.target }}
+    
+    - name: Archive release
+      uses: actions/upload-artifact@v3
+      with:
+        name: sdk-bindings-${{ matrix.target }}
+        path: libs/target/${{ matrix.target }}/release/libbreez_sdk_bindings.so

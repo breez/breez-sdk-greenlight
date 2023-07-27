@@ -1,0 +1,87 @@
+name: Build Darwin
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'commit/tag/branch reference'
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      ref:
+        description: 'commit/tag/branch reference'
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: macOS-latest
+    name: build ${{ matrix.target }}
+    strategy:
+      matrix:
+        target: [
+          aarch64-apple-darwin,
+          x86_64-apple-darwin,
+        ]
+    steps:
+    - name: checkout
+      uses: actions/checkout@v3
+      with: 
+        ref: ${{ inputs.ref }}
+
+    - name: Install rust toolchain
+      run: |
+        rustup set auto-self-update disable
+        rustup toolchain install stable --profile minimal
+        rustup target add ${{ matrix.target }}
+        cargo install cargo-lipo
+
+    - name: Install protobuf compiler
+      env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
+      run: brew install protobuf
+
+    - uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: libs
+
+    - name: Build Breez 
+      working-directory: libs/sdk-bindings
+      run: cargo lipo --release --targets ${{ matrix.target }}
+    
+    - name: Archive release
+      uses: actions/upload-artifact@v3
+      with:
+        name: sdk-bindings-${{ matrix.target }}
+        path: |
+          libs/target/${{ matrix.target }}/release/libbreez_sdk_bindings.dylib
+          libs/target/${{ matrix.target }}/release/libbreez_sdk_bindings.a
+  
+  merge:
+    runs-on: macOS-latest
+    needs: build
+    name: build darwin-universal
+    steps:
+    - uses: actions/download-artifact@v3
+      with:
+        name: sdk-bindings-aarch64-apple-darwin
+        path: aarch64-apple-darwin
+
+    - uses: actions/download-artifact@v3
+      with:
+        name: sdk-bindings-x86_64-apple-darwin
+        path: x86_64-apple-darwin
+
+    - name: Build Darwin universal
+      run: |
+        mkdir -p darwin-universal
+        lipo -create -output darwin-universal/libbreez_sdk_bindings.dylib aarch64-apple-darwin/libbreez_sdk_bindings.dylib x86_64-apple-darwin/libbreez_sdk_bindings.dylib
+        lipo -create -output darwin-universal/libbreez_sdk_bindings.a aarch64-apple-darwin/libbreez_sdk_bindings.a x86_64-apple-darwin/libbreez_sdk_bindings.a
+
+    - name: Archive release
+      uses: actions/upload-artifact@v3
+      with:
+        name: sdk-bindings-darwin-universal
+        path: |
+          darwin-universal/libbreez_sdk_bindings.dylib
+          darwin-universal/libbreez_sdk_bindings.a
