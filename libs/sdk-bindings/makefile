@@ -121,7 +121,23 @@ bindings-android: kotlin
 	cd bindings-android && ./gradlew assemble
 	mkdir -p ffi/android
 	cp bindings-android/lib/build/outputs/aar/lib-release.aar ffi/android
-		
+
+bindings-kotlin-multiplatform: ios-universal kotlin
+	cp -r ffi/kotlin/jniLibs/ bindings-kotlin-multiplatform/breez-sdk-kmp/src/androidMain/jniLibs/
+	cp -r kmm/* bindings-kotlin-multiplatform/breez-sdk-kmp/src/
+
+	cp -r bindings-kotlin-multiplatform/breez-sdk-kmp/src/jvmMain/kotlin bindings-kotlin-multiplatform/breez-sdk-kmp/src/androidMain/
+
+	mkdir -p bindings-kotlin-multiplatform/breez-sdk-kmp/src/libs/ios-arm64/
+	mkdir -p bindings-kotlin-multiplatform/breez-sdk-kmp/src/libs/ios-simulator-arm64/
+	mkdir -p bindings-kotlin-multiplatform/breez-sdk-kmp/src/libs/ios-simulator-x64/
+
+	cp ../target/aarch64-apple-ios/release/libbreez_sdk_bindings.a bindings-kotlin-multiplatform/breez-sdk-kmp/src/libs/ios-arm64/
+	cp ../target/aarch64-apple-ios-sim/release/libbreez_sdk_bindings.a bindings-kotlin-multiplatform/breez-sdk-kmp/src/libs/ios-simulator-arm64/
+	cp ../target/x86_64-apple-ios/release/libbreez_sdk_bindings.a bindings-kotlin-multiplatform/breez-sdk-kmp/src/libs/ios-simulator-x64/
+	cd bindings-kotlin-multiplatform && ./gradlew :breez-sdk-kmp:assemble
+
+
 .PHONY: ndk-home
 ndk-home:
 	@if [ ! -d "${ANDROID_NDK_HOME}" ] ; then \
@@ -134,6 +150,7 @@ ndk-home:
 clean:
 	cargo clean
 	rm -rf ffi
+	rm -rf kmm
 ## test:
 .PHONY: test
 test:

@@ -1,0 +1,54 @@
+# Created by https://www.toptal.com/developers/gitignore/api/android
+# Edit at https://www.toptal.com/developers/gitignore?templates=android
+
+### Android ###
+# Gradle files
+.gradle/
+build/
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Log/OS Files
+*.log
+
+# Android Studio generated files and folders
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+output.json
+
+# IntelliJ
+*.iml
+.idea/
+misc.xml
+deploymentTargetDropDown.xml
+render.experimental.xml
+
+# Keystore files
+*.jks
+*.keystore
+
+# Google Services (e.g. APIs or Firebase)
+google-services.json
+
+# Android Profiling
+*.hprof
+
+### Android Patch ###
+gen-external-apklibs
+
+# Replacement of .externalNativeBuild directories introduced
+# with Android Studio 3.5.
+
+# End of https://www.toptal.com/developers/gitignore/api/android
+
+breez-sdk-kmp/src/androiddMain/jniLibs/
+breez-sdk-kmp/src/jvmMain/jniLibs/
+
+breez-sdk-kmp/src/commonMain/kotlin/breez_sdk
+breez-sdk-kmp/src/jvmMain/kotlin/breez_sdk
+breez-sdk-kmp/src/androidMain/kotlin/breez_sdk
+breez-sdk-kmp/src/nativeMain/kotlin/breez_sdk
+breez-sdk-kmp/src/nativeInterop/cinterop/headers/breez_sdk

@@ -43,21 +43,32 @@ See [Adding package dependencies to your app](https://developer.apple.com/docume
 make bindings-swift
 ```
 
-### Kotlin
+### Kotlin + Multiplatform
 
 For most users, we recommend integrating the Breez SDK as Gradle dependency from [our Maven repository](https://mvn.breez.technology/releases).
 
 To do so, add the following to your Gradle dependencies:
 
+Set **Breez** maven repository
 ``` groovy
 repositories {
   maven {
       url("https://mvn.breez.technology/releases")
   }
 }
-
+```
+**Android dependency**
+``` groovy
 dependencies {
   implementation("breez_sdk:bindings-android:<version>")
+}
+```
+**Kotlin Multiplatform dependency**
+``` kotlin
+val commonMain by getting {
+  dependencies {
+    implementation("technology.breez:breez-sdk-kmp:<version>")
+  }
 }
 ```
 
