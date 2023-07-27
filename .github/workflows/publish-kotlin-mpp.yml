@@ -1,0 +1,47 @@
+name: Publish Android Bindings
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'breez-sdk repo release (MAJOR.MINOR.PATCH)'
+        required: true
+        type: string
+
+jobs:
+  publish-android:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get install -y protobuf-compiler
+          cargo install --version 0.22.0 uniffi_bindgen
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.version }}
+      - name: Setup SSH key
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        run: |
+          mkdir -p /home/runner/.ssh
+          echo "${{ secrets.REPO_SSH_KEY }}" > /home/runner/.ssh/github_actions
+          chmod 600 /home/runner/.ssh/github_actions
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add /home/runner/.ssh/github_actions
+      - name: Build Android project
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          ORG_GRADLE_PROJECT_libraryVersion: ${{ inputs.version }}
+        run: |
+          cd libs/sdk-bindings
+          make init
+          make bindings-kotlin-multiplatform
+      - name: Publish artifacts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd libs/sdk-bindings/bindings-kotlin-multiplatform
+          ./gradlew publish -PlibraryVersion=${{ inputs.version }} -PbreezReposiliteUsername=${{ secrets.BREEZ_MVN_USERNAME }} -PbreezReposilitePassword=${{ secrets.BREEZ_MVN_PASSWORD }}
