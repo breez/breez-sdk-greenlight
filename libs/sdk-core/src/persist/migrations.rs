@@ -435,7 +435,11 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
          created_at TEXT DEFAULT CURRENT_TIMESTAMP NOT NULL,
          channel_opening_fees TEXT NOT NULL
         ) STRICT;
+        ",
+        // Remove dynamic fee from swaps_info (fees already stored in swaps_fees)
         "
+        ALTER TABLE swaps_info DROP COLUMN channel_opening_fees;
+       ",
     ]
 }
 

@@ -50,9 +50,8 @@ impl SqliteStorage {
           unconfirmed_sats, 
           unconfirmed_tx_ids, 
           confirmed_sats,
-          confirmed_tx_ids,
-          channel_opening_fees
-        ) VALUES (:bitcoin_address, :status, :bolt11, :paid_sats, :unconfirmed_sats, :unconfirmed_tx_ids, :confirmed_sats, :confirmed_tx_ids, :channel_opening_fees)",
+          confirmed_tx_ids
+        ) VALUES (:bitcoin_address, :status, :bolt11, :paid_sats, :unconfirmed_sats, :unconfirmed_tx_ids, :confirmed_sats, :confirmed_tx_ids)",
             named_params! {
                ":bitcoin_address": swap_info.bitcoin_address,
                ":status": swap_info.status as i32,
@@ -62,7 +61,6 @@ impl SqliteStorage {
                ":unconfirmed_tx_ids": StringArray(swap_info.unconfirmed_tx_ids),
                ":confirmed_sats": swap_info.confirmed_sats,
                ":confirmed_tx_ids": StringArray(swap_info.confirmed_tx_ids),
-               ":channel_opening_fees": swap_info.channel_opening_fees
             },
         )?;
 
@@ -128,7 +126,7 @@ impl SqliteStorage {
         channel_opening_fees: OpeningFeeParams,
     ) -> Result<()> {
         tx.execute(
-            "INSERT OR REPLACE INTO sync.swaps_fees (bitcoin_address, channel_opening_fees) VALUES(:bitcoin_address, :channel_opening_fees)",
+            "INSERT OR REPLACE INTO sync.swaps_fees (bitcoin_address, created_at, channel_opening_fees) VALUES(:bitcoin_address, CURRENT_TIMESTAMP, :channel_opening_fees)",
             named_params! {
              ":bitcoin_address": bitcoin_address,
              ":channel_opening_fees": channel_opening_fees,
@@ -146,14 +144,6 @@ impl SqliteStorage {
     ) -> Result<()> {
         let mut con = self.get_connection()?;
         let tx = con.transaction()?;
-
-        tx.execute(
-            "UPDATE swaps_info SET channel_opening_fees=:channel_opening_fees, created_at=CURRENT_TIMESTAMP where bitcoin_address=:bitcoin_address",
-            named_params! {
-             ":channel_opening_fees": channel_opening_fees,
-             ":bitcoin_address": bitcoin_address,
-            },
-        )?;
 
         Self::insert_swaps_fees(&tx, bitcoin_address, channel_opening_fees)?;
 
@@ -205,7 +195,7 @@ impl SqliteStorage {
             "
             SELECT
              swaps.bitcoin_address as bitcoin_address,
-             created_at as created_at,
+             swaps.created_at as created_at,
              lock_height as lock_height,
              payment_hash as payment_hash,
              preimage as preimage,
@@ -224,9 +214,10 @@ impl SqliteStorage {
              unconfirmed_tx_ids as unconfirmed_tx_ids,
              confirmed_tx_ids as confirmed_tx_ids,
              last_redeem_error as last_redeem_error,
-             channel_opening_fees as channel_opening_fees
+             swaps_fees.channel_opening_fees as channel_opening_fees
             FROM sync.swaps as swaps
              LEFT JOIN swaps_info ON swaps.bitcoin_address = swaps_info.bitcoin_address
+             LEFT JOIN sync.swaps_fees as swaps_fees ON swaps.bitcoin_address = swaps_fees.bitcoin_address
              LEFT JOIN sync.swap_refunds as swap_refunds ON swaps.bitcoin_address = swap_refunds.bitcoin_address
             WHERE {}
             ",
