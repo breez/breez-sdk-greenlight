@@ -1,7 +1,7 @@
 name: Publish Go Bindings
 on:
   workflow_call:
-   inputs:
+    inputs:
       ref:
         description: 'commit/tag/branch reference'
         required: true
@@ -10,6 +10,10 @@ on:
         description: 'version for the golang package (MAJOR.MINOR.BUILD) (no v prefix)'
         required: true
         type: string
+    secrets:
+      REPO_SSH_KEY:
+        description: 'ssh key to commit to the breez-sdk-go repository'
+        required: true
 
 jobs:
   build-golang-binding:
@@ -46,6 +50,7 @@ jobs:
         with:
           repository: breez/breez-sdk-go
           ssh-key: ${{ secrets.REPO_SSH_KEY }}
+          fetch-depth: 0
 
       - uses: actions/download-artifact@v3
         with:
@@ -87,16 +92,17 @@ jobs:
           ls -la breez_sdk/lib/linux-amd64
           ls -la breez_sdk/lib/windows-amd64
 
-      # Comment the actual publish for now, to be safe.
-      # - name: Tag the Go bindings
-      #   run: |
-      #     git add breez_sdk/breez_sdk.go
-      #     git add breez_sdk/lib/darwin-aarch64/libbreez_sdk_bindings.dylib
-      #     git add breez_sdk/lib/darwin-amd64/libbreez_sdk_bindings.dylib
-      #     git add breez_sdk/lib/linux-aarch64/libbreez_sdk_bindings.so
-      #     git add breez_sdk/lib/linux-amd64/libbreez_sdk_bindings.so
-      #     git add breez_sdk/lib/windows-amd64/breez_sdk_bindings.dll
-      #     git commit -m "Update Breez SDK Go bindings to version v${{ inputs.package-version }}"
-      #     git push
-      #     git tag v${{ inputs.package-version }} -m "v${{ inputs.package-version }}"
-      #     git push --tags
+      - name: Tag the Go bindings
+        run: |
+          git config --global user.email github-actions@github.com
+          git config --global user.name github-actions
+          git add breez_sdk/breez_sdk.go
+          git add breez_sdk/lib/darwin-aarch64/libbreez_sdk_bindings.dylib
+          git add breez_sdk/lib/darwin-amd64/libbreez_sdk_bindings.dylib
+          git add breez_sdk/lib/linux-aarch64/libbreez_sdk_bindings.so
+          git add breez_sdk/lib/linux-amd64/libbreez_sdk_bindings.so
+          git add breez_sdk/lib/windows-amd64/breez_sdk_bindings.dll
+          git commit -m "Update Breez SDK Go bindings to version v${{ inputs.package-version }}"
+          git push
+          git tag v${{ inputs.package-version }} -m "v${{ inputs.package-version }}"
+          git push --tags

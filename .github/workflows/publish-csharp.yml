@@ -10,6 +10,10 @@ on:
         description: 'version for the nuget package (MAJOR.MINOR.BUILD)'
         required: true
         type: string
+    secrets:
+      NUGET_API_KEY:
+        description: 'api key to authenticate the nuget publisher to nuget.org'
+        required: true
 
 jobs:
   build-package:
@@ -109,3 +113,18 @@ jobs:
       - name: test package
         working-directory: libs/sdk-bindings/bindings-csharp/test
         run: dotnet run
+      
+  publish-package:
+    needs: test-package
+    if: ${{ inputs.package-version }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download archived package
+        uses: actions/download-artifact@v3
+        with:
+          name: Breez.Sdk.${{ inputs.package-version }}.nupkg
+
+      - name: Publish to nuget.org
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: dotnet nuget push Breez.Sdk.${{ inputs.package-version }}.nupkg --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json

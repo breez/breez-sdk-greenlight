@@ -27,7 +27,9 @@ jobs:
     uses: ./.github/workflows/publish-csharp.yml
     with:
       ref: ${{ inputs.ref || github.sha }}
-      package-version: ${{ inputs.csharp-package-version || '0.0.1' }}
+      package-version: ${{ inputs.csharp-package-version || '0.0.2' }}
+    secrets:
+      NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
 
   publish-golang:
     needs: build-all-platforms
@@ -35,4 +37,6 @@ jobs:
     uses: ./.github/workflows/publish-golang.yml
     with:
       ref: ${{ inputs.ref || github.sha }}
-      package-version: ${{ inputs.golang-package-version || '0.0.1' }}
+      package-version: ${{ inputs.golang-package-version || '0.0.2' }}
+    secrets:
+      REPO_SSH_KEY: ${{ secrets.REPO_SSH_KEY }}
