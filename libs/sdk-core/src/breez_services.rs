@@ -448,6 +448,8 @@ impl BreezServices {
     /// a swap waiting for confirmation to be redeemed and by that complete the swap.
     /// In such case the [BreezServices::in_progress_swap] can be used to query the live swap status.
     ///
+    /// The channel opening fees are available at [SwapInfo::channel_opening_fees].
+    ///
     /// See [SwapInfo] for details.
     pub async fn receive_onchain(&self, req: ReceiveOnchainRequest) -> Result<SwapInfo> {
         if let Some(in_progress) = self.in_progress_swap().await? {
