@@ -1,0 +1,55 @@
+name: Publish Swift Bindings
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'breez-sdk repo release (MAJOR.MINOR.PATCH)'
+        required: true
+        type: string
+
+jobs:
+  build-tag-release:
+    name: Build, tag, and release the Breez SDK React Native package
+    runs-on: macos-13
+    steps:
+      - name: Install required dependencies
+        run: |
+          brew install protobuf
+          cargo install --version 0.22.0 uniffi_bindgen
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.version }}
+      - name: Checkout sdk-react-native repo
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ github.repository_owner }}/breez-sdk-react-native
+          path: dist
+      - name: Build Swift bindings
+        working-directory: libs/sdk-react-native
+        env:
+          SSH_PRIVATE_KEY: ${{secrets.REPO_SSH_KEY}}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          sudo chmod 600 ~/.ssh/id_rsa
+          ssh-add ~/.ssh/id_rsa
+          make init
+          make all      
+      - name: Update Swift Package definition
+        working-directory: build/libs/sdk-bindings/sdk-react-native
+        run: |          
+          cp -r android ../../../../dist
+          cp -r ios ../../../../dist
+          cp -r scripts ../../../../dist
+          cp -r src ../../../../dist
+          cp -r package.json ../../../../dist
+          cp -r yarn.lock ../../../../dist
+          cp -r BreezSDK.podspec.dev ../../../../dist/BreezSDK.podspec      
+      - name: Tag the Swift bindings
+        working-directory: dist
+        run: |
+          git checkout -b test-ci origin/test-ci
+          git add -A          
+          git commit -m "Update Breez SDK React Native to version ${{ inputs.version }}"
+          git push          
