@@ -673,6 +673,12 @@ pub struct BuyBitcoinRequest {
     pub opening_fee_params: Option<OpeningFeeParams>,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct BuyBitcoinResponse {
+    pub url: String,
+    pub opening_fee_params: Option<OpeningFeeParams>,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub struct OpeningFeeParams {
     pub min_msat: u64,

@@ -448,6 +448,8 @@ impl BreezServices {
     /// a swap waiting for confirmation to be redeemed and by that complete the swap.
     /// In such case the [BreezServices::in_progress_swap] can be used to query the live swap status.
     ///
+    /// The channel opening fees are available at [SwapInfo::channel_opening_fees].
+    ///
     /// See [SwapInfo] for details.
     pub async fn receive_onchain(&self, req: ReceiveOnchainRequest) -> Result<SwapInfo> {
         if let Some(in_progress) = self.in_progress_swap().await? {
@@ -689,21 +691,20 @@ impl BreezServices {
     }
 
     /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency
-    pub async fn buy_bitcoin(&self, req: BuyBitcoinRequest) -> Result<String> {
+    pub async fn buy_bitcoin(&self, req: BuyBitcoinRequest) -> SdkResult<BuyBitcoinResponse> {
+        let swap_info = self
+            .receive_onchain(ReceiveOnchainRequest {
+                opening_fee_params: req.opening_fee_params,
+            })
+            .await?;
         let url = match req.provider {
-            Moonpay => {
-                self.moonpay_api
-                    .buy_bitcoin_url(
-                        &self
-                            .receive_onchain(ReceiveOnchainRequest {
-                                opening_fee_params: req.opening_fee_params,
-                            })
-                            .await?,
-                    )
-                    .await?
-            }
+            Moonpay => self.moonpay_api.buy_bitcoin_url(&swap_info).await?,
         };
-        Ok(url)
+
+        Ok(BuyBitcoinResponse {
+            url,
+            opening_fee_params: swap_info.channel_opening_fees,
+        })
     }
 
     /// Starts the BreezServices background threads.
@@ -1701,7 +1702,8 @@ pub(crate) mod tests {
                 provider: BuyBitcoinProvider::Moonpay,
                 opening_fee_params: None,
             })
-            .await?;
+            .await?
+            .url;
         let parsed = Url::parse(&moonpay_url)?;
         let query_pairs = parsed.query_pairs().into_owned().collect::<HashMap<_, _>>();
 

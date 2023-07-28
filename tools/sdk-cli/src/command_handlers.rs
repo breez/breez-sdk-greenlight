@@ -305,7 +305,7 @@ pub(crate) async fn handle_command(
                     opening_fee_params: None,
                 })
                 .await?;
-            Ok(format!("Here your {:?} url: {}", provider, res))
+            Ok(format!("Here your {:?} url: {}", provider, res.url))
         }
         Commands::Backup {} => {
             sdk().unwrap().backup().await?;
