@@ -10,6 +10,10 @@ on:
         description: 'version for the C# nuget package (MAJOR.MINOR.BUILD)'
         required: false
         type: string
+      csharp-ref:
+        description: 'optional commit/tag/branch reference for the C# project. Defaults to ref.'
+        required: false
+        type: string
       golang-package-version:
         description: 'version for the golang package (MAJOR.MINOR.BUILD) (no v prefix)'
         required: false
@@ -26,7 +30,7 @@ jobs:
     if: ${{ inputs.csharp-package-version }}
     uses: ./.github/workflows/publish-csharp.yml
     with:
-      ref: ${{ inputs.ref || github.sha }}
+      ref: ${{ inputs.csharp-ref || inputs.ref || github.sha }}
       package-version: ${{ inputs.csharp-package-version || '0.0.2' }}
     secrets:
       NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
