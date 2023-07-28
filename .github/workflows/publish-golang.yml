@@ -1,0 +1,102 @@
+name: Publish Go Bindings
+on:
+  workflow_call:
+   inputs:
+      ref:
+        description: 'commit/tag/branch reference'
+        required: true
+        type: string
+      package-version:
+        description: 'version for the golang package (MAJOR.MINOR.BUILD) (no v prefix)'
+        required: true
+        type: string
+
+jobs:
+  build-golang-binding:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout breez-sdk repo
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+ 
+      - name: Install rust
+        run: |
+          rustup set auto-self-update disable
+          rustup toolchain install stable --profile minimal
+          cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go
+
+      - name: Build golang binding
+        working-directory: libs/sdk-bindings
+        run: |
+          uniffi-bindgen-go src/breez_sdk.udl -o ffi/golang -c ./uniffi.toml
+
+      - name: Archive golang binding
+        uses: actions/upload-artifact@v3
+        with:
+          name: breez_sdk.go
+          path: libs/sdk-bindings/ffi/golang/breez/breez_sdk/breez_sdk.go
+
+  build-tag-release:
+    needs: build-golang-binding
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout breez-sdk-go repo
+        uses: actions/checkout@v3
+        with:
+          repository: breez/breez-sdk-go
+          ssh-key: ${{ secrets.REPO_SSH_KEY }}
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: breez_sdk.go
+          path: breez_sdk
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-aarch64-apple-darwin
+          path: breez_sdk/lib/darwin-aarch64
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-x86_64-apple-darwin
+          path: breez_sdk/lib/darwin-amd64
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-aarch64-unknown-linux-gnu
+          path: breez_sdk/lib/linux-aarch64
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-x86_64-unknown-linux-gnu
+          path: breez_sdk/lib/linux-amd64
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-x86_64-pc-windows-msvc
+          path: breez_sdk/lib/windows-amd64
+
+      - name: Sanity check
+        run: |
+          ls -la
+          ls -la breez_sdk
+          ls -la breez_sdk/lib/darwin-aarch64
+          ls -la breez_sdk/lib/darwin-amd64
+          ls -la breez_sdk/lib/linux-aarch64
+          ls -la breez_sdk/lib/linux-amd64
+          ls -la breez_sdk/lib/windows-amd64
+
+      # Comment the actual publish for now, to be safe.
+      # - name: Tag the Go bindings
+      #   run: |
+      #     git add breez_sdk/breez_sdk.go
+      #     git add breez_sdk/lib/darwin-aarch64/libbreez_sdk_bindings.dylib
+      #     git add breez_sdk/lib/darwin-amd64/libbreez_sdk_bindings.dylib
+      #     git add breez_sdk/lib/linux-aarch64/libbreez_sdk_bindings.so
+      #     git add breez_sdk/lib/linux-amd64/libbreez_sdk_bindings.so
+      #     git add breez_sdk/lib/windows-amd64/breez_sdk_bindings.dll
+      #     git commit -m "Update Breez SDK Go bindings to version v${{ inputs.package-version }}"
+      #     git push
+      #     git tag v${{ inputs.package-version }} -m "v${{ inputs.package-version }}"
+      #     git push --tags

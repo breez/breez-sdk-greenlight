@@ -1,6 +1,6 @@
 name: Publish C# Bindings
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       ref:
         description: 'commit/tag/branch reference'
@@ -12,14 +12,7 @@ on:
         type: string
 
 jobs:
-  build-all-platforms:
-    name: Build all platforms
-    uses: ./.github/workflows/build-all-platforms.yml
-    with:
-      ref: ${{ inputs.ref || github.sha }}
-  
   build-package:
-    needs: build-all-platforms
     runs-on: ubuntu-latest
     steps:
       - name: Checkout breez-sdk repo

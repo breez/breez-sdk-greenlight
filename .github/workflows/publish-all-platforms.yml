@@ -1,0 +1,38 @@
+name: Publish all packages
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'commit/tag/branch reference'
+        required: true
+        type: string
+      csharp-package-version:
+        description: 'version for the C# nuget package (MAJOR.MINOR.BUILD)'
+        required: false
+        type: string
+      golang-package-version:
+        description: 'version for the golang package (MAJOR.MINOR.BUILD) (no v prefix)'
+        required: false
+        type: string
+
+jobs:
+  build-all-platforms:
+    uses: ./.github/workflows/build-all-platforms.yml
+    with:
+      ref: ${{ inputs.ref || github.sha }}
+
+  publish-csharp:
+    needs: build-all-platforms
+    if: ${{ inputs.csharp-package-version }}
+    uses: ./.github/workflows/publish-csharp.yml
+    with:
+      ref: ${{ inputs.ref || github.sha }}
+      package-version: ${{ inputs.csharp-package-version || '0.0.1' }}
+
+  publish-golang:
+    needs: build-all-platforms
+    if: ${{ inputs.golang-package-version }}
+    uses: ./.github/workflows/publish-golang.yml
+    with:
+      ref: ${{ inputs.ref || github.sha }}
+      package-version: ${{ inputs.golang-package-version || '0.0.1' }}
