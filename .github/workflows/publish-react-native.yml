@@ -40,16 +40,16 @@ jobs:
           make init
           make all      
       - name: Update Swift Package definition
-        working-directory: libs/sdk-bindings/sdk-react-native
+        working-directory: libs/sdk-react-native
         run: |          
-          cp -r android ../../../../dist
-          cp -r ios ../../../../dist
-          cp -r scripts ../../../../dist
-          cp -r src ../../../../dist
-          cp -r package.json ../../../../dist
-          cp -r yarn.lock ../../../../dist
-          cp -r BreezSDK.podspec.dev ../../../../dist/BreezSDK.podspec      
-      - name: Tag the Swift bindings
+          cp -r android ../../../dist
+          cp -r ios ../../../dist
+          cp -r scripts ../../../dist
+          cp -r src ../../../dist
+          cp -r package.json ../../../dist
+          cp -r yarn.lock ../../../dist
+          cp -r BreezSDK.podspec.dev ../../../dist/BreezSDK.podspec      
+      - name: Tag the React Native package
         working-directory: dist
         run: |
           git checkout -b test-ci origin/test-ci
