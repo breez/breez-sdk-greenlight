@@ -52,7 +52,7 @@ jobs:
       - name: Tag the React Native package
         working-directory: dist
         run: |
-          git checkout -b test-ci origin/test-ci
+          git checkout -b test-ci
           git add -A          
           git commit -m "Update Breez SDK React Native to version ${{ inputs.version }}"
-          git push          
+          git push --set-upstream origin test-ci    
