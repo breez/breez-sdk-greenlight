@@ -424,10 +424,6 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
          created_at TEXT DEFAULT CURRENT_TIMESTAMP
         ) STRICT;
        ",
-        // Add dynamic fee params used when opening the swap channel, stored as JSON
-        "
-        ALTER TABLE swaps_info ADD COLUMN channel_opening_fees TEXT;
-       ",
         // Swaps synchronization: Add sync table that stores the fees used in swaps
         "
         CREATE TABLE IF NOT EXISTS sync.swaps_fees (
@@ -436,10 +432,6 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
          channel_opening_fees TEXT NOT NULL
         ) STRICT;
         ",
-        // Remove dynamic fee from swaps_info (fees already stored in swaps_fees)
-        "
-        ALTER TABLE swaps_info DROP COLUMN channel_opening_fees;
-       ",
     ]
 }
 
