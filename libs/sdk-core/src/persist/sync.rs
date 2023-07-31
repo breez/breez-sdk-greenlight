@@ -213,7 +213,11 @@ impl SqliteStorage {
 
     /// Insert or update to local db all rows that have created_at larger than in the local
     fn sync_swaps_fees_local(tx: &Transaction) -> Result<()> {
-        // Both DBs have a swaps_fees row for the same swap address
+        // The WHERE clause covers both possible scenarios for the swaps_fees table:
+        // - Local DB doesn't have a row matching a remote DB row with the same swap address
+        //   - checked via `sync.swaps_fees.created_at IS NULL`
+        //   - `created_at` is NOT NULL in the schema, so matching this means finding an address for which no local DB row exists
+        // - Local and remote DBs have a row for the same swap address and remote crated_at > local created_at
         tx.execute(
             "
         INSERT OR REPLACE INTO sync.swaps_fees
@@ -224,18 +228,7 @@ impl SqliteStorage {
          FROM remote_sync.swaps_fees
           LEFT JOIN sync.swaps_fees ON sync.swaps_fees.bitcoin_address = remote_sync.swaps_fees.bitcoin_address
          WHERE
-          remote_sync.swaps_fees.created_at > sync.swaps_fees.created_at
-         ;",
-            [],
-        )?;
-
-        // The local DB doesn't have a swaps_fees row matching one or more entries in the remote
-        tx.execute(
-            "
-        INSERT OR REPLACE INTO sync.swaps_fees
-         SELECT bitcoin_address, created_at, channel_opening_fees FROM remote_sync.swaps_fees
-          WHERE
-           bitcoin_address NOT IN (SELECT bitcoin_address FROM sync.swaps_fees)
+          sync.swaps_fees.created_at IS NULL OR remote_sync.swaps_fees.created_at > sync.swaps_fees.created_at
          ;",
             [],
         )?;
