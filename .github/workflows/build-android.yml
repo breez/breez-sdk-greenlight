@@ -1,0 +1,73 @@
+name: Build Android
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'commit/tag/branch reference'
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      ref:
+        description: 'commit/tag/branch reference'
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: build ${{ matrix.target }}
+    strategy:
+      matrix:
+        target: [
+          aarch64-linux-android,
+          armv7-linux-androideabi,
+          i686-linux-android,
+          x86_64-linux-android,
+        ]
+    steps:
+    - name: checkout
+      uses: actions/checkout@v3
+      with: 
+        ref: ${{ inputs.ref }}
+
+    - name: Install rust toolchain
+      run: |
+        rustup set auto-self-update disable
+        rustup toolchain install stable --profile minimal
+        rustup target add ${{ matrix.target }}
+        cargo install cargo-ndk
+
+    - name: Install Protoc
+      uses: arduino/setup-protoc@v2
+      with:
+        version: "23.4"
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: libs
+
+    - name: Build Breez
+      working-directory: libs/sdk-bindings
+      run: |
+        cargo ndk -t ${{ matrix.target }} build --release
+
+    - name: Copy build output
+      run: |
+        mkdir -p dist
+        cp libs/target/${{ matrix.target }}/release/libbreez_sdk_bindings.so dist
+
+    - name: Copy libc++_shared
+      if: ${{ matrix.target == 'armv7-linux-androideabi'}}
+      run: cp $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/arm-linux-androideabi/libc++_shared.so dist
+
+    - name: Copy libc++_shared
+      if: ${{ matrix.target != 'armv7-linux-androideabi'}}
+      run: cp $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/${{ matrix.target }}/libc++_shared.so dist
+
+    - name: Archive release
+      uses: actions/upload-artifact@v3
+      with:
+        name: sdk-bindings-${{ matrix.target }}
+        path: dist/*
