@@ -71,3 +71,34 @@ jobs:
       with:
         name: sdk-bindings-${{ matrix.target }}
         path: dist/*
+  
+  jnilibs:
+    needs: build
+    runs-on: ubuntu-latest
+    name: build jniLibs
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-aarch64-linux-android
+          path: arm64-v8a
+      
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-armv7-linux-androideabi
+          path: armeabi-v7a
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-i686-linux-android
+          path: x86
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-x86_64-linux-android
+          path: x86_64
+      
+      - name: Archive jniLibs
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-jniLibs
+          path: ./*

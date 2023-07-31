@@ -43,3 +43,9 @@ jobs:
         with:
           name: breez_sdk.kt
           path: libs/sdk-bindings/ffi/kotlin/breez_sdk/breez_sdk.kt
+
+      - name: Archive KMM bindings
+        uses: actions/upload-artifact@v3
+        with:
+          name: kmm
+          path: libs/sdk-bindings/ffi/kmm/*

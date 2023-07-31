@@ -1,15 +1,5 @@
 name: Publish Android Bindings
 on:
-  workflow_dispatch:
-    inputs:
-      ref:
-        description: 'commit/tag/branch reference'
-        required: true
-        type: string
-      package-version:
-        description: 'version for the gradle library (MAJOR.MINOR.BUILD)'
-        required: true
-        type: string
   workflow_call:
     inputs:
       ref:
@@ -39,23 +29,8 @@ jobs:
 
       - uses: actions/download-artifact@v3
         with:
-          name: sdk-bindings-aarch64-linux-android
-          path: libs/sdk-bindings/bindings-android/lib/src/main/arm64-v8a
-      
-      - uses: actions/download-artifact@v3
-        with:
-          name: sdk-bindings-armv7-linux-androideabi
-          path: libs/sdk-bindings/bindings-android/lib/src/main/armeabi-v7a
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: sdk-bindings-i686-linux-android
-          path: libs/sdk-bindings/bindings-android/lib/src/main/x86
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: sdk-bindings-x86_64-linux-android
-          path: libs/sdk-bindings/bindings-android/lib/src/main/x86_64
+          name: android-jniLibs
+          path: libs/sdk-bindings/bindings-android/lib/src/main
 
       - uses: actions/download-artifact@v3
         with:

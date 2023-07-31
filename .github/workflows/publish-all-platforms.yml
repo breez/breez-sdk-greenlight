@@ -22,6 +22,10 @@ on:
         description: 'version for the android package (MAJOR.MINOR.BUILD)'
         required: false
         type: string
+      kotlin-mpp-package-version:
+        description: 'version for the kotlin multiplatform package (MAJOR.MINOR.BUILD)'
+        required: false
+        type: string
 
 jobs:
   build-windows:
@@ -38,6 +42,10 @@ jobs:
       ref: ${{ inputs.ref || github.sha }}
   build-android:
     uses: ./.github/workflows/build-android.yml
+    with:
+      ref: ${{ inputs.ref || github.sha }}
+  build-ios:
+    uses: ./.github/workflows/build-ios.yml
     with:
       ref: ${{ inputs.ref || github.sha }}
   build-kotlin-binding:
@@ -75,11 +83,25 @@ jobs:
     needs: 
       - build-android
       - build-kotlin-binding
-    # if: ${{ inputs.maven-package-version }}
+    if: ${{ inputs.maven-package-version }}
     uses: ./.github/workflows/publish-android.yml
     with:
       ref: ${{ inputs.ref || github.sha }}
       package-version: ${{ inputs.maven-package-version || '0.0.2' }}
+    secrets:
+      BREEZ_MVN_USERNAME: ${{ secrets.BREEZ_MVN_USERNAME }}
+      BREEZ_MVN_PASSWORD: ${{ secrets.BREEZ_MVN_PASSWORD }}
+  
+  publish-kotlin-mpp:
+    needs: 
+      - build-android
+      - build-ios
+      - build-kotlin-binding
+    if: ${{ inputs.kotlin-mpp-package-version }}
+    uses: ./.github/workflows/publish-kotlin-mpp.yml
+    with:
+      ref: ${{ inputs.ref || github.sha }}
+      package-version: ${{ inputs.kotlin-mpp-package-version || '0.0.2' }}
     secrets:
       BREEZ_MVN_USERNAME: ${{ secrets.BREEZ_MVN_USERNAME }}
       BREEZ_MVN_PASSWORD: ${{ secrets.BREEZ_MVN_PASSWORD }}
