@@ -51,11 +51,12 @@ jobs:
           cp -r src ../../dist
           cp -r package.json ../../dist
           cp -r yarn.lock ../../dist
-          cp -r BreezSDK.podspec.dev ../../dist/BreezSDK.podspec      
+          cp -r BreezSDK.podspec.dev ../../dist/BreezSDK.podspec
+          rm -f ../../dist/ios/bindings-swift/.gitignore
       - name: Tag the React Native package
         working-directory: dist
         run: |
-          git checkout -b test-ci
+          git checkout test-ci
           git add -A          
           git commit -m "Update Breez SDK React Native to version ${{ inputs.version }}"
           git push --set-upstream origin test-ci    
