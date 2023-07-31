@@ -9,7 +9,9 @@ on:
         description: 'breez-sdk repo release (MAJOR.MINOR.PATCH)'
         required: true
         type: string
-
+permissions:
+  pull-requests: write  
+  repository-projects: write
 jobs:
   build-tag-release:
     name: Build, tag, and release the Breez SDK React Native package
@@ -26,7 +28,8 @@ jobs:
       - name: Checkout sdk-react-native repo
         uses: actions/checkout@v3
         with:
-          repository: ${{ github.repository_owner }}/breez-sdk-react-native
+          repository: breez/breez-sdk-react-native
+          ssh-key: ${{ secrets.REPO_SSH_KEY }}
           path: dist
       - name: Build React Native package
         working-directory: libs/sdk-react-native
