@@ -17,52 +17,151 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3      
-      - run: |
+      - name: Run Format
+        run: |
           cd libs
           cargo fmt -- --check
           cd ../tools/sdk-cli
           cargo fmt -- --check
 
-  build:
-
-    runs-on: macOS-latest
-
+  build-core:
+    name: Test sdk-core
+    runs-on: ubuntu-latest
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
-      - uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '6.0.x'
-      - uses: actions/setup-go@v4
-        with:
-          go-version: '1.19.9'                      
-      - uses: actions/setup-python@v4      
-      
-      - run: rustup toolchain install stable --profile minimal
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install rust
+        run: |
+          rustup set auto-self-update disable
+          rustup toolchain install stable --profile minimal
 
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: "./libs -> target\n./tools/sdk-cli -> target"
+          workspaces: libs/sdk-core -> ../target
 
-      - name: install dependencies
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v2
+        with:
+          version: "23.4"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run sdk-core tests
+        working-directory: libs/sdk-core
+        run: cargo test
+  
+  build-bindings:
+    name: Test sdk-bindings
+    runs-on: macOS-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install rust
         run: |
-          cd libs/sdk-bindings
-          make init      
-          brew install protobuf          
+          rustup set auto-self-update disable
+          rustup toolchain install stable --profile minimal
 
-      - name: run lib tests        
-        run: |                    
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: libs/sdk-bindings -> ../target
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v2
+        with:
+          version: "23.4"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build sdk-bindings
+        working-directory: libs/sdk-bindings
+        run: cargo build
+
+      - name: Build C# bindings
+        working-directory: libs/sdk-bindings       
+        run: |
+          cargo install uniffi-bindgen-cs --git https://github.com/breez/uniffi-bindgen-cs --branch namespace
+          uniffi-bindgen-cs src/breez_sdk.udl -o ffi/csharp -c ./uniffi.toml
+          cp ../target/debug/libbreez_sdk_bindings.dylib ffi/csharp
+
+      - name: Build golang bindings
+        working-directory: libs/sdk-bindings       
+        run: |
+          cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go
+          uniffi-bindgen-go src/breez_sdk.udl -o ffi/golang -c ./uniffi.toml
+          cp ../target/debug/libbreez_sdk_bindings.dylib ffi/golang
+          cp -r ffi/golang/breez/breez_sdk tests/bindings/golang/
+      
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '6.0.x'
+  
+      - name: Setup go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.19.9'
+
+      - name: Setup python
+        uses: actions/setup-python@v4 
+        with:
+          python-version: '3.11'
+
+      - name: Run sdk-bindings tests
+        run: |
           curl -o jna-5.12.1.jar https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.12.1/jna-5.12.1.jar
           export CLASSPATH=$(pwd)/jna-5.12.1.jar;
           cd libs/sdk-bindings
-          make csharp-darwin golang-darwin
-          cd ..          
           cargo test
-      
-      - name: run tools tests        
+          
+  build-cli:
+    name: Test sdk-cli
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install rust
         run: |
-          cd tools/sdk-cli
-          cargo test
+          rustup set auto-self-update disable
+          rustup toolchain install stable --profile minimal
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tools/sdk-cli -> target
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v2
+        with:
+          version: "23.4"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run tools tests
+        working-directory: tools/sdk-cli    
+        run: cargo test
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install rust
+        run: |
+          rustup set auto-self-update disable
+          rustup toolchain install stable --profile minimal
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            libs -> target
+            tools/sdk-cli -> target
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v2
+        with:
+          version: "23.4"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: clippy
         run: |
