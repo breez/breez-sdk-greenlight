@@ -44,7 +44,8 @@ jobs:
           make all      
       - name: Update Swift Package definition
         working-directory: libs/sdk-react-native
-        run: |          
+        run: |
+          git checkout -b test-ci origin/test-ci          
           cp -r android ../../dist
           cp -r ios ../../dist
           cp -r scripts ../../dist
@@ -55,9 +56,7 @@ jobs:
           rm -f ../../dist/ios/bindings-swift/.gitignore
       - name: Tag the React Native package
         working-directory: dist
-        run: |
-          git fetch
-          git checkout -b test-ci origin/test-ci
+        run: |          
           git add -A          
           git commit -m "Update Breez SDK React Native to version ${{ inputs.version }}"
           git push    
