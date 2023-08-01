@@ -3,7 +3,7 @@ use crate::models::{SwapInfo, SwapStatus};
 use super::db::{SqliteStorage, StringArray};
 use crate::OpeningFeeParams;
 use anyhow::{anyhow, Result};
-use rusqlite::{named_params, OptionalExtension, Params, Row};
+use rusqlite::{named_params, OptionalExtension, Params, Row, Transaction};
 
 impl SqliteStorage {
     pub(crate) fn insert_swap(&self, swap_info: SwapInfo) -> Result<()> {
@@ -50,9 +50,8 @@ impl SqliteStorage {
           unconfirmed_sats, 
           unconfirmed_tx_ids, 
           confirmed_sats,
-          confirmed_tx_ids,
-          channel_opening_fees
-        ) VALUES (:bitcoin_address, :status, :bolt11, :paid_sats, :unconfirmed_sats, :unconfirmed_tx_ids, :confirmed_sats, :confirmed_tx_ids, :channel_opening_fees)",
+          confirmed_tx_ids
+        ) VALUES (:bitcoin_address, :status, :bolt11, :paid_sats, :unconfirmed_sats, :unconfirmed_tx_ids, :confirmed_sats, :confirmed_tx_ids)",
             named_params! {
                ":bitcoin_address": swap_info.bitcoin_address,
                ":status": swap_info.status as i32,
@@ -62,9 +61,17 @@ impl SqliteStorage {
                ":unconfirmed_tx_ids": StringArray(swap_info.unconfirmed_tx_ids),
                ":confirmed_sats": swap_info.confirmed_sats,
                ":confirmed_tx_ids": StringArray(swap_info.confirmed_tx_ids),
-               ":channel_opening_fees": swap_info.channel_opening_fees
             },
         )?;
+
+        Self::insert_swaps_fees(
+            &tx,
+            swap_info.bitcoin_address,
+            swap_info
+                .channel_opening_fees
+                .ok_or_else(|| anyhow!("Dynamic fees must be set when creating a new swap"))?,
+        )?;
+
         tx.commit()?;
         Ok(())
     }
@@ -113,19 +120,34 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub(crate) fn update_swap_fees(
-        &self,
+    fn insert_swaps_fees(
+        tx: &Transaction,
         bitcoin_address: String,
-        channel_opening_fees: Option<OpeningFeeParams>,
+        channel_opening_fees: OpeningFeeParams,
     ) -> Result<()> {
-        self.get_connection()?.execute(
-            "UPDATE swaps_info SET channel_opening_fees=:channel_opening_fees where bitcoin_address=:bitcoin_address",
+        tx.execute(
+            "INSERT OR REPLACE INTO sync.swaps_fees (bitcoin_address, created_at, channel_opening_fees) VALUES(:bitcoin_address, CURRENT_TIMESTAMP, :channel_opening_fees)",
             named_params! {
-             ":channel_opening_fees": channel_opening_fees,
              ":bitcoin_address": bitcoin_address,
+             ":channel_opening_fees": channel_opening_fees,
             },
         )?;
 
+        Ok(())
+    }
+
+    /// Update the dynamic fees associated with a swap
+    pub(crate) fn update_swap_fees(
+        &self,
+        bitcoin_address: String,
+        channel_opening_fees: OpeningFeeParams,
+    ) -> Result<()> {
+        let mut con = self.get_connection()?;
+        let tx = con.transaction()?;
+
+        Self::insert_swaps_fees(&tx, bitcoin_address, channel_opening_fees)?;
+
+        tx.commit()?;
         Ok(())
     }
 
@@ -173,7 +195,7 @@ impl SqliteStorage {
             "
             SELECT
              swaps.bitcoin_address as bitcoin_address,
-             created_at as created_at,
+             swaps.created_at as created_at,
              lock_height as lock_height,
              payment_hash as payment_hash,
              preimage as preimage,
@@ -192,9 +214,10 @@ impl SqliteStorage {
              unconfirmed_tx_ids as unconfirmed_tx_ids,
              confirmed_tx_ids as confirmed_tx_ids,
              last_redeem_error as last_redeem_error,
-             channel_opening_fees as channel_opening_fees
+             swaps_fees.channel_opening_fees as channel_opening_fees
             FROM sync.swaps as swaps
              LEFT JOIN swaps_info ON swaps.bitcoin_address = swaps_info.bitcoin_address
+             LEFT JOIN sync.swaps_fees as swaps_fees ON swaps.bitcoin_address = swaps_fees.bitcoin_address
              LEFT JOIN sync.swap_refunds as swap_refunds ON swaps.bitcoin_address = swap_refunds.bitcoin_address
             WHERE {}
             ",
@@ -299,6 +322,7 @@ impl SqliteStorage {
 #[cfg(test)]
 mod tests {
     use crate::persist::db::SqliteStorage;
+    use crate::test_utils::get_test_ofp_48h;
     use crate::{OpeningFeeParams, SwapInfo, SwapStatus};
     use anyhow::Result;
     use rusqlite::{named_params, Connection};
@@ -338,7 +362,7 @@ mod tests {
             min_allowed_deposit: 0,
             max_allowed_deposit: 100,
             last_redeem_error: None,
-            channel_opening_fees: None,
+            channel_opening_fees: Some(get_test_ofp_48h(1, 1).into()),
         };
         storage.insert_swap(tested_swap_info.clone())?;
         let item_value = storage.get_swap_info_by_address("1".to_string())?.unwrap();

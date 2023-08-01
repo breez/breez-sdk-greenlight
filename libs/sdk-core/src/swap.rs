@@ -144,7 +144,7 @@ impl BTCReceiveSwap {
 
             self.persister.update_swap_fees(
                 in_progress_swap.bitcoin_address.clone(),
-                Some(channel_opening_fees),
+                channel_opening_fees,
             )?;
             return Ok(in_progress_swap);
         }
