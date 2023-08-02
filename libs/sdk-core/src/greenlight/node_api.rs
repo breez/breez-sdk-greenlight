@@ -934,7 +934,7 @@ impl From<pb::Channel> for crate::models::Channel {
         let state = match c.state.as_str() {
             "OPENINGD" | "CHANNELD_AWAITING_LOCKIN" => crate::models::ChannelState::PendingOpen,
             "CHANNELD_NORMAL" => crate::models::ChannelState::Opened,
-            "CLOSED" => crate::models::ChannelState::Closed,
+            "ONCHAIN" | "CLOSED" => crate::models::ChannelState::Closed,
             _ => crate::models::ChannelState::PendingClose,
         };
 
@@ -994,18 +994,20 @@ mod tests {
             "CLOSINGD_COMPLETE",
             "AWAITING_UNILATERAL",
             "FUNDING_SPEND_SEEN",
-            "ONCHAIN",
         ] {
             let c: models::Channel = gl_channel(s).into();
             assert_eq!(c.state, models::ChannelState::PendingClose);
         }
 
-        let s = &"CLOSED";
-        let c: models::Channel = gl_channel(s).into();
-        assert_eq!(c.state, models::ChannelState::Closed);
+        for s in &[
+            "ONCHAIN",
+            "CLOSED",
+        ] {
+            let c: models::Channel = gl_channel(s).into();
+            assert_eq!(c.state, models::ChannelState::Closed);
+        }
 
         Ok(())
-        //let c =
     }
 
     fn gl_channel(state: &str) -> pb::Channel {
