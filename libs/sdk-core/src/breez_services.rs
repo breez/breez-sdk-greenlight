@@ -1,4 +1,6 @@
 use std::cmp::max;
+use std::fs::OpenOptions;
+use std::io::Write;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
@@ -7,6 +9,7 @@ use anyhow::{anyhow, Result};
 use bip39::*;
 use bitcoin::hashes::{sha256, Hash};
 use bitcoin::util::bip32::ChildNumber;
+use chrono::Local;
 use tokio::sync::{mpsc, watch, Mutex};
 use tokio::time::{sleep, Duration};
 use tonic::codegen::InterceptedService;
@@ -130,6 +133,7 @@ impl BreezServices {
         event_listener: Box<dyn EventListener>,
     ) -> SdkResult<Arc<BreezServices>> {
         let start = Instant::now();
+        Self::init_logging(&config.working_dir)?;
         let services = BreezServicesBuilder::new(config)
             .seed(seed)
             .build(Some(event_listener))
@@ -928,6 +932,47 @@ impl BreezServices {
                 }
             }
         });
+    }
+
+    fn init_logging(working_dir: &str) -> SdkResult<()> {
+        let target = Box::new(
+            OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(format!("{working_dir}/sdk.log"))
+                .map_err(|_| SdkError::InitFailed {
+                    err: "Can't create log file".into(),
+                })?,
+        );
+        env_logger::Builder::new()
+            .target(env_logger::Target::Pipe(target))
+            .parse_filters(
+                r#"
+                info,
+                gl_client=warn,
+                h2=warn,
+                hyper=warn,
+                lightning_signer=warn,
+                reqwest=warn,
+                rustls=warn,
+                rustyline=warn,
+                vls_protocol_signer=warn
+            "#,
+            )
+            .format(|buf, record| {
+                writeln!(
+                    buf,
+                    "[{} {} {}:{}] {}",
+                    Local::now().format("%Y-%m-%d %H:%M:%S%.3f"),
+                    record.level(),
+                    record.module_path().unwrap_or("unknown"),
+                    record.line().unwrap_or(0),
+                    record.args()
+                )
+            })
+            .init();
+
+        Ok(())
     }
 }
 

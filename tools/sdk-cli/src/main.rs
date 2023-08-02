@@ -6,21 +6,16 @@ mod config;
 mod persist;
 
 use anyhow::{anyhow, Result};
-use chrono::Local;
 use clap::Parser;
 use command_handlers::handle_command;
 use commands::{Commands, SdkCli};
 use persist::CliPersistence;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
-use std::fs::OpenOptions;
-use std::io::Write;
 use std::path::Path;
 
 #[tokio::main]
 async fn main() {
-    init_logging();
-
     let cli = SdkCli::parse();
     let data_dir = cli.data_dir.clone().unwrap_or(".".to_string());
     let data_dir_path = Path::new(&data_dir);
@@ -79,41 +74,4 @@ fn show_results(res: Result<String>) {
         }
         Err(err) => error!("Error: {}", err),
     }
-}
-
-fn init_logging() {
-    let target = Box::new(
-        OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open("cli.log")
-            .expect("Can't create log file"),
-    );
-    env_logger::Builder::new()
-        .target(env_logger::Target::Pipe(target))
-        .parse_filters(
-            r#"
-            info,
-            gl_client=warn,
-            h2=warn,
-            hyper=warn,
-            lightning_signer=warn,
-            reqwest=warn,
-            rustls=warn,
-            rustyline=warn,
-            vls_protocol_signer=warn
-        "#,
-        )
-        .format(|buf, record| {
-            writeln!(
-                buf,
-                "[{} {} {}:{}] {}",
-                Local::now().format("%Y-%m-%d %H:%M:%S%.3f"),
-                record.level(),
-                record.module_path().unwrap_or("unknown"),
-                record.line().unwrap_or(0),
-                record.args()
-            )
-        })
-        .init();
 }
