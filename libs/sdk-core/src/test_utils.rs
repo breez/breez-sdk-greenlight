@@ -9,7 +9,7 @@ use bitcoin::secp256k1::ecdsa::RecoverableSignature;
 use bitcoin::secp256k1::{KeyPair, Message, PublicKey, Secp256k1, SecretKey};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::Network;
-use chrono::Utc;
+use chrono::{SecondsFormat, Utc};
 use gl_client::pb::amount::Unit;
 use gl_client::pb::{Amount, Invoice, Peer, WithdrawResponse};
 use lightning::ln::PaymentSecret;
@@ -34,8 +34,6 @@ use crate::swap::create_submarine_swap_script;
 use crate::{parse_invoice, Config, LNInvoice, PaymentResponse, RouteHint};
 use crate::{OpeningFeeParams, OpeningFeeParamsMenu};
 use crate::{ReceivePaymentRequest, SwapInfo};
-
-use crate::models::OPENING_FEE_PARAMS_DATETIME_FORMAT;
 
 pub struct MockBackupTransport {
     pub num_pushed: std::sync::Mutex<u32>,
@@ -675,7 +673,7 @@ pub(crate) fn get_test_ofp_generic(
         true => now.checked_add_signed(duration).unwrap(),
         false => now.checked_sub_signed(duration).unwrap(),
     };
-    let formatted = format!("{}", date_time.format(OPENING_FEE_PARAMS_DATETIME_FORMAT));
+    let formatted = date_time.to_rfc3339_opts(SecondsFormat::Millis, true);
 
     OpeningFeeParams {
         min_msat,

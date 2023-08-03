@@ -8,7 +8,7 @@ use bitcoin::hashes::Hash;
 use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::{Address, Script};
-use chrono::{DateTime, TimeZone, Utc};
+use chrono::{DateTime, Utc};
 use gl_client::pb::{Invoice, WithdrawResponse};
 use lightning_invoice::RawInvoice;
 use ripemd::Digest;
@@ -689,8 +689,6 @@ pub struct OpeningFeeParams {
     pub promise: String,
 }
 
-pub(crate) const OPENING_FEE_PARAMS_DATETIME_FORMAT: &str = "%Y %b %d %H:%M:%S%.3f %z";
-
 impl OpeningFeeParams {
     /// Simple validation: checks if `valid_until` is a valid date
     pub(crate) fn validate(&self) -> Result<()> {
@@ -698,8 +696,9 @@ impl OpeningFeeParams {
     }
 
     pub(crate) fn valid_until_date(&self) -> Result<DateTime<Utc>> {
-        Utc.datetime_from_str(&self.valid_until, OPENING_FEE_PARAMS_DATETIME_FORMAT)
+        DateTime::parse_from_rfc3339(&self.valid_until)
             .map_err(|e| anyhow!(e))
+            .map(|d| d.with_timezone(&Utc))
     }
 
     pub(crate) fn get_channel_fees_msat_for(&self, amount_msats: u64) -> u64 {
@@ -1020,6 +1019,7 @@ mod tests {
 
     use crate::grpc::PaymentInformation;
     use crate::test_utils::{get_test_ofp, rand_vec_u8};
+    use crate::OpeningFeeParams;
 
     #[test]
     fn test_ofp_menu_validation() -> Result<()> {
@@ -1109,5 +1109,12 @@ mod tests {
         assert_eq!(dummy_payment_info, decoded_payment_info);
 
         Ok(())
+    }
+
+    #[test]
+    fn test_dynamic_fee_valid_until_format() -> Result<()> {
+        let mut ofp: OpeningFeeParams = get_test_ofp(1, 1, true).into();
+        ofp.valid_until = "2023-08-03T00:30:35.117Z".to_string();
+        ofp.validate()
     }
 }
