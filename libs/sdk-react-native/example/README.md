@@ -46,3 +46,14 @@ yarn
 yarn pods
 yarn ios
 ```
+
+## Development
+
+To develop locally along with the SDK, you need to switch the podspec from the cocoapods dependencies to the local dependencies.
+```
+yarn install
+mv node_modules/@breeztech/react-native-breez-sdk/breez_sdk.podspec node_modules/@breeztech/react-native-breez-sdk/breez_sdk.podspec.prod
+mv node_modules/@breeztech/react-native-breez-sdk/BreezSDK.podspec.dev node_modules/@breeztech/react-native-breez-sdk/BreezSDK.podspec
+yarn pods
+yarn ios
+```
