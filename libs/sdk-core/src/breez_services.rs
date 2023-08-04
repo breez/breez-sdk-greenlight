@@ -133,7 +133,7 @@ impl BreezServices {
         event_listener: Box<dyn EventListener>,
     ) -> SdkResult<Arc<BreezServices>> {
         let start = Instant::now();
-        Self::init_logging(&config.working_dir)?;
+        Self::try_init_logging(&config.working_dir)?;
         let services = BreezServicesBuilder::new(config)
             .seed(seed)
             .build(Some(event_listener))
@@ -934,7 +934,15 @@ impl BreezServices {
         });
     }
 
-    fn init_logging(working_dir: &str) -> SdkResult<()> {
+    /// Tries to initialize the SDK global logger, which logs SDK statements to file.
+    ///
+    /// If the SDK is used via the uniffi interface, the uniffi log stream takes precedence
+    /// and this logger is not initialized.
+    ///
+    /// ### Errors
+    ///
+    /// An error is thrown if the log file cannot be created in the working directory.
+    fn try_init_logging(working_dir: &str) -> SdkResult<()> {
         let target = Box::new(
             OpenOptions::new()
                 .create(true)
@@ -944,7 +952,7 @@ impl BreezServices {
                     err: "Can't create log file".into(),
                 })?,
         );
-        env_logger::Builder::new()
+        let res = env_logger::Builder::new()
             .target(env_logger::Target::Pipe(target))
             .parse_filters(
                 r#"
@@ -970,7 +978,12 @@ impl BreezServices {
                     record.args()
                 )
             })
-            .init();
+            .try_init();
+
+        if res.is_err() {
+            // When used via the uniffi_binding, the log stream initialized there takes precedence
+            warn!("Global logger already configured, skipping env_logger config");
+        }
 
         Ok(())
     }
