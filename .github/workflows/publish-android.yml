@@ -10,6 +10,11 @@ on:
         description: 'version for the gradle library (MAJOR.MINOR.BUILD)'
         required: true
         type: string
+      publish:
+        description: 'value indicating whether to publish to maven.'
+        required: true
+        type: boolean
+        default: false
     secrets:
       BREEZ_MVN_USERNAME:
         description: 'username for gradlew publish'
@@ -34,7 +39,7 @@ jobs:
 
       - uses: actions/download-artifact@v3
         with:
-          name: breez_sdk.kt
+          name: bindings-kotlin
           path: libs/sdk-bindings/bindings-android/lib/src/main/kotlin
 
       - name: Build Android project
@@ -50,7 +55,7 @@ jobs:
           path: libs/sdk-bindings/bindings-android/lib/build/outputs/aar/lib-release.aar
         
       - name: Publish artifacts
-        if: ${{ inputs.package-version }}
+        if: ${{ inputs.publish }}
         working-directory: libs/sdk-bindings/bindings-android
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

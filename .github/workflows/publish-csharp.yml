@@ -10,6 +10,11 @@ on:
         description: 'version for the nuget package (MAJOR.MINOR.BUILD)'
         required: true
         type: string
+      publish:
+        description: 'value indicating whether to publish to nuget.'
+        required: true
+        type: boolean
+        default: false
     secrets:
       NUGET_API_KEY:
         description: 'api key to authenticate the nuget publisher to nuget.org'
@@ -24,16 +29,10 @@ jobs:
         with:
           ref: ${{ inputs.ref || github.sha }}
  
-      - name: Install rust
-        run: |
-          rustup set auto-self-update disable
-          rustup toolchain install stable --profile minimal
-          cargo install uniffi-bindgen-cs --git https://github.com/breez/uniffi-bindgen-cs --branch namespace
-
-      - name: Build C# binding
-        working-directory: libs/sdk-bindings
-        run: |
-          uniffi-bindgen-cs src/breez_sdk.udl -o bindings-csharp/src -c ./uniffi.toml
+      - uses: actions/download-artifact@v3
+        with:
+          name: bindings-csharp
+          path: libs/sdk-bindings/bindings-csharp/src
 
       - uses: actions/download-artifact@v3
         with:
@@ -117,7 +116,7 @@ jobs:
       
   publish-package:
     needs: test-package
-    if: ${{ inputs.package-version }}
+    if: ${{ inputs.publish }}
     runs-on: ubuntu-latest
     steps:
       - name: Download archived package

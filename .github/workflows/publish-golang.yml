@@ -10,39 +10,18 @@ on:
         description: 'version for the golang package (MAJOR.MINOR.BUILD) (no v prefix)'
         required: true
         type: string
+      publish:
+        description: 'value indicating whether to commit/tag a release.'
+        required: true
+        type: boolean
+        default: false
     secrets:
       REPO_SSH_KEY:
         description: 'ssh key to commit to the breez-sdk-go repository'
         required: true
 
 jobs:
-  build-golang-binding:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout breez-sdk repo
-        uses: actions/checkout@v3
-        with:
-          ref: ${{ inputs.ref || github.sha }}
- 
-      - name: Install rust
-        run: |
-          rustup set auto-self-update disable
-          rustup toolchain install stable --profile minimal
-          cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go
-
-      - name: Build golang binding
-        working-directory: libs/sdk-bindings
-        run: |
-          uniffi-bindgen-go src/breez_sdk.udl -o ffi/golang -c ./uniffi.toml
-
-      - name: Archive golang binding
-        uses: actions/upload-artifact@v3
-        with:
-          name: breez_sdk.go
-          path: libs/sdk-bindings/ffi/golang/breez/breez_sdk/breez_sdk.go
-
   build-tag-release:
-    needs: build-golang-binding
     runs-on: ubuntu-latest
     steps:
       - name: Checkout breez-sdk-go repo
@@ -54,7 +33,7 @@ jobs:
 
       - uses: actions/download-artifact@v3
         with:
-          name: breez_sdk.go
+          name: bindings-golang
           path: breez_sdk
 
       - uses: actions/download-artifact@v3
@@ -82,17 +61,8 @@ jobs:
           name: sdk-bindings-x86_64-pc-windows-msvc
           path: breez_sdk/lib/windows-amd64
 
-      - name: Sanity check
-        run: |
-          ls -la
-          ls -la breez_sdk
-          ls -la breez_sdk/lib/darwin-aarch64
-          ls -la breez_sdk/lib/darwin-amd64
-          ls -la breez_sdk/lib/linux-aarch64
-          ls -la breez_sdk/lib/linux-amd64
-          ls -la breez_sdk/lib/windows-amd64
-
       - name: Tag the Go bindings
+        if: ${{ inputs.publish }}
         run: |
           git config --global user.email github-actions@github.com
           git config --global user.name github-actions
