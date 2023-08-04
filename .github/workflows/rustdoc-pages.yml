@@ -12,40 +12,32 @@ env:
 jobs:
   build:
     name: Build Docs
-
-    # Run on macOS because this auto-starts the ssh-agent, needed later for ssh-add
-    runs-on: macOS-latest
-
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install dependencies
+      - name: Install rust
         run: |
-          echo $ANDROID_NDK_HOME
-          cd libs/sdk-bindings
-          make init   
-          brew install protobuf     
+          rustup set auto-self-update disable
+          rustup toolchain install stable --profile minimal
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v2
+        with:
+          version: "23.4"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Docs
-        env:
-          SSH_PRIVATE_KEY: ${{secrets.REPO_SSH_KEY}}
-        # Import the SSH key for the gl-client, then generate the docs
-        run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          sudo chmod 600 ~/.ssh/id_rsa
-          ssh-add ~/.ssh/id_rsa
-          cd libs/sdk-core
-          cargo doc --no-deps
+        working-directory: libs/sdk-core
+        run: cargo doc --no-deps
 
       # Set the right file permissions, based on https://github.com/actions/upload-pages-artifact#file-permissions
       - name: Fix file permissions
         shell: sh
         run: |
-          chmod -v -R +rX "./libs/target/doc" |
-          while read line; do
-              echo "::warning title=Invalid file permissions automatically fixed::$line"
+          chmod -c -R +rX "./libs/target/doc/" | while read line; do
+            echo "::warning title=Invalid file permissions automatically fixed::$line"
           done
 
       - name: Upload artifact
