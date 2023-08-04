@@ -115,13 +115,15 @@ pub struct BreezServices {
 }
 
 impl BreezServices {
-    /// connect initializes the SDK services, schedule the node to run in the cloud and
-    /// run the signer. This must be called in order to start communicating with the node
+    /// `connect` initializes the SDK services, schedules the node to run in the cloud and
+    /// runs the signer. This must be called in order to start communicating with the node.
     ///
     /// # Arguments
     ///
     /// * `config` - The sdk configuration
-    /// * `seed` - The node private key
+    /// * `seed` - The node private key, typically derived from the mnemonic.
+    /// When using a new `invite_code`, the seed should be derived from a new random mnemonic.
+    /// When re-using an `invite_code`, the same mnemonic should be used as when the `invite_code` was first used.
     /// * `event_listener` - Listener to SDK events
     ///
     pub async fn connect(
@@ -140,7 +142,7 @@ impl BreezServices {
         Ok(services)
     }
 
-    /// Starts the BreezServices background tasks for this instance.
+    /// Internal utility method that starts the BreezServices background tasks for this instance.
     ///
     /// It should be called once right after creating [BreezServices], since it is essential for the
     /// communicating with the node.
