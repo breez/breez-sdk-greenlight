@@ -341,6 +341,9 @@ class ClosedChannelPaymentDetails {
 class Config {
   final String breezserver;
   final String mempoolspaceUrl;
+
+  /// Directory in which all SDK files (DB, log) are stored. Defaults to ".", otherwise if it's customized,
+  /// the folder should exist before starting the SDK.
   final String workingDir;
   final Network network;
   final int paymentTimeoutSec;

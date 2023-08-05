@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use anyhow::Result;
-use log::{LevelFilter, Metadata, Record};
 use once_cell::sync::Lazy;
 
 use breez_sdk_core::{
@@ -12,47 +11,14 @@ use breez_sdk_core::{
     FeeratePreset, FiatCurrency, GreenlightCredentials, GreenlightNodeConfig, InputType,
     InvoicePaidDetails, LNInvoice, LnPaymentDetails, LnUrlAuthRequestData, LnUrlCallbackStatus,
     LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult, LnUrlWithdrawRequestData, LocaleOverrides,
-    LocalizedName, LogEntry, LspInformation, MessageSuccessActionData, MetadataItem, Network,
-    NodeConfig, NodeState, Payment, PaymentDetails, PaymentFailedData, PaymentType,
+    LocalizedName, LogEntry, LogStream, LspInformation, MessageSuccessActionData, MetadataItem,
+    Network, NodeConfig, NodeState, Payment, PaymentDetails, PaymentFailedData, PaymentType,
     PaymentTypeFilter, Rate, RecommendedFees, ReverseSwapInfo, ReverseSwapPairInfo,
     ReverseSwapStatus, RouteHint, RouteHintHop, SuccessActionProcessed, SwapInfo, SwapStatus,
     Symbol, UnspentTransactionOutput, UrlSuccessActionData,
 };
 
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
-
-pub trait LogStream: Send + Sync {
-    fn log(&self, l: LogEntry);
-}
-
-struct BindingLogger {
-    log_stream: Box<dyn LogStream>,
-}
-
-impl BindingLogger {
-    fn init(log_stream: Box<dyn LogStream>) {
-        let binding_logger = BindingLogger { log_stream };
-        log::set_boxed_logger(Box::new(binding_logger)).unwrap();
-        log::set_max_level(LevelFilter::Trace);
-    }
-}
-
-impl log::Log for BindingLogger {
-    fn enabled(&self, m: &Metadata) -> bool {
-        // ignroe the internal uniffi log to prevent infinite loop.
-        return *m.target() != *"breez_sdk_bindings::uniffi_binding";
-    }
-
-    fn log(&self, record: &Record) {
-        if self.enabled(record.metadata()) {
-            self.log_stream.log(LogEntry {
-                line: record.args().to_string(),
-                level: record.level().as_str().to_string(),
-            });
-        }
-    }
-    fn flush(&self) {}
-}
 
 /// Create a new SDK config with default values
 pub fn default_config(
@@ -76,16 +42,13 @@ pub fn connect(
     config: Config,
     seed: Vec<u8>,
     event_listener: Box<dyn EventListener>,
+    log_listener: Option<Box<dyn LogStream>>,
 ) -> SdkResult<Arc<BlockingBreezServices>> {
     rt().block_on(async move {
-        let breez_services = BreezServices::connect(config, seed, event_listener).await?;
+        let breez_services =
+            BreezServices::connect(config, seed, event_listener, log_listener).await?;
         Ok(Arc::new(BlockingBreezServices { breez_services }))
     })
-}
-
-pub fn set_log_stream(log_stream: Box<dyn LogStream>) -> Result<()> {
-    BindingLogger::init(log_stream);
-    Ok(())
 }
 
 pub struct BlockingBreezServices {

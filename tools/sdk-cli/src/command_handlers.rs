@@ -35,7 +35,7 @@ impl EventListener for CliEventListener {
 
 async fn connect(config: Config, seed: &[u8]) -> Result<()> {
     let service =
-        BreezServices::connect(config, seed.to_vec(), Box::new(CliEventListener {})).await?;
+        BreezServices::connect(config, seed.to_vec(), Box::new(CliEventListener {}), None).await?;
 
     BREEZ_SERVICES
         .set(service)

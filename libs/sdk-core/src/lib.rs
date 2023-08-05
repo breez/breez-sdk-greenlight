@@ -173,7 +173,7 @@ mod test_utils;
 
 pub use breez_services::{
     mnemonic_to_seed, BackupFailedData, BreezEvent, BreezServices, EventListener,
-    InvoicePaidDetails, PaymentFailedData,
+    InvoicePaidDetails, LogStream, PaymentFailedData,
 };
 pub use chain::RecommendedFees;
 pub use fiat::{CurrencyInfo, FiatCurrency, LocaleOverrides, LocalizedName, Rate, Symbol};

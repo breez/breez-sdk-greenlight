@@ -15,7 +15,6 @@ use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
 use flutter_rust_bridge::StreamSink;
-use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
 use tokio::sync::mpsc;
 
@@ -31,7 +30,7 @@ use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, PaymentTypeFilter, SwapInfo};
 use crate::{
-    BackupStatus, BuyBitcoinProvider, EnvironmentType, LnUrlCallbackStatus, NodeConfig,
+    BackupStatus, BuyBitcoinProvider, EnvironmentType, LnUrlCallbackStatus, LogStream, NodeConfig,
     ReverseSwapInfo, ReverseSwapPairInfo,
 };
 
@@ -46,8 +45,13 @@ static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime:
 /// See [BreezServices::connect]
 pub fn connect(config: Config, seed: Vec<u8>) -> Result<()> {
     block_on(async move {
-        let breez_services =
-            BreezServices::connect(config, seed, Box::new(BindingEventListener {})).await?;
+        let breez_services = BreezServices::connect(
+            config,
+            seed,
+            Box::new(BindingEventListener {}),
+            Some(Box::new(BindingLogStreamEventListener {})),
+        )
+        .await?;
         BREEZ_SERVICES_INSTANCE
             .set(breez_services)
             .map_err(|_| SdkError::InitFailed {
@@ -118,7 +122,6 @@ pub fn breez_log_stream(s: StreamSink<LogEntry>) -> Result<()> {
     LOG_STREAM
         .set(s)
         .map_err(|_| anyhow!("log stream already created"))?;
-    BindingLogger::init();
     Ok(())
 }
 
@@ -360,39 +363,22 @@ pub fn execute_command(command: String) -> Result<String> {
 
 /*  Binding Related Logic */
 
-struct BindingLogger;
-
-impl BindingLogger {
-    fn init() {
-        log::set_boxed_logger(Box::new(BindingLogger {})).unwrap();
-        log::set_max_level(LevelFilter::Trace)
-    }
-}
-
-impl log::Log for BindingLogger {
-    fn enabled(&self, m: &Metadata) -> bool {
-        m.level() <= Level::Debug
-    }
-
-    fn log(&self, record: &Record) {
-        if self.enabled(record.metadata()) {
-            if let Some(s) = LOG_STREAM.get() {
-                s.add(LogEntry {
-                    line: record.args().to_string(),
-                    level: record.level().as_str().to_string(),
-                });
-            }
-        };
-    }
-    fn flush(&self) {}
-}
-
 struct BindingEventListener;
 
 impl EventListener for BindingEventListener {
     fn on_event(&self, e: BreezEvent) {
         if let Some(stream) = NOTIFICATION_STREAM.get() {
             stream.add(e);
+        }
+    }
+}
+
+struct BindingLogStreamEventListener;
+
+impl LogStream for BindingLogStreamEventListener {
+    fn log(&self, e: LogEntry) {
+        if let Some(s) = LOG_STREAM.get() {
+            s.add(e);
         }
     }
 }
