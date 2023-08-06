@@ -15,6 +15,7 @@ use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
 use flutter_rust_bridge::StreamSink;
+use log::{Level, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
 use tokio::sync::mpsc;
 
@@ -30,7 +31,7 @@ use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, PaymentTypeFilter, SwapInfo};
 use crate::{
-    BackupStatus, BuyBitcoinProvider, EnvironmentType, LnUrlCallbackStatus, LogStream, NodeConfig,
+    BackupStatus, BuyBitcoinProvider, EnvironmentType, LnUrlCallbackStatus, NodeConfig,
     ReverseSwapInfo, ReverseSwapPairInfo,
 };
 
@@ -111,6 +112,7 @@ pub fn default_config(
 
 /*  Stream API's */
 
+/// If used, this must be called before `connect`
 pub fn breez_events_stream(s: StreamSink<BreezEvent>) -> Result<()> {
     NOTIFICATION_STREAM
         .set(s)
@@ -118,6 +120,7 @@ pub fn breez_events_stream(s: StreamSink<BreezEvent>) -> Result<()> {
     Ok(())
 }
 
+/// If used, this must be called before `connect`
 pub fn breez_log_stream(s: StreamSink<LogEntry>) -> Result<()> {
     LOG_STREAM
         .set(s)
@@ -375,12 +378,22 @@ impl EventListener for BindingEventListener {
 
 struct BindingLogStreamEventListener;
 
-impl LogStream for BindingLogStreamEventListener {
-    fn log(&self, e: LogEntry) {
-        if let Some(s) = LOG_STREAM.get() {
-            s.add(e);
-        }
+impl log::Log for BindingLogStreamEventListener {
+    fn enabled(&self, m: &Metadata) -> bool {
+        m.level() <= Level::Debug
     }
+
+    fn log(&self, record: &Record) {
+        if self.enabled(record.metadata()) {
+            if let Some(s) = LOG_STREAM.get() {
+                s.add(LogEntry {
+                    line: record.args().to_string(),
+                    level: record.level().as_str().to_string(),
+                });
+            }
+        };
+    }
+    fn flush(&self) {}
 }
 
 fn get_breez_services() -> Result<&'static BreezServices> {

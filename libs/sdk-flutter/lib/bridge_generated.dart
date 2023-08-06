@@ -53,10 +53,12 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kDefaultConfigConstMeta;
 
+  /// If used, this must be called before `connect`
   Stream<BreezEvent> breezEventsStream({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kBreezEventsStreamConstMeta;
 
+  /// If used, this must be called before `connect`
   Stream<LogEntry> breezLogStream({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kBreezLogStreamConstMeta;

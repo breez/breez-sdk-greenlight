@@ -117,7 +117,7 @@ pub struct BreezServices {
     btc_receive_swapper: Arc<BTCReceiveSwap>,
     btc_send_swapper: Arc<BTCSendSwap>,
     event_listener: Option<Box<dyn EventListener>>,
-    log_listener: Arc<Option<Box<dyn LogStream>>>,
+    log_listener: Arc<Option<Box<dyn log::Log>>>,
     backup_watcher: Arc<BackupWatcher>,
     shutdown_sender: watch::Sender<()>,
     shutdown_receiver: watch::Receiver<()>,
@@ -137,7 +137,7 @@ impl BreezServices {
         config: Config,
         seed: Vec<u8>,
         event_listener: Box<dyn EventListener>,
-        log_listener: Option<Box<dyn LogStream>>,
+        log_listener: Option<Box<dyn log::Log>>,
     ) -> SdkResult<Arc<BreezServices>> {
         let start = Instant::now();
         let services = BreezServicesBuilder::new(config)
@@ -1013,15 +1013,11 @@ struct GlobalSdkLogger {
     /// SDK internal logger, which logs to file
     logger: env_logger::Logger,
     /// Optional external log listener, that can receive a stream of log statements
-    log_listener: Arc<Option<Box<dyn LogStream>>>,
+    log_listener: Arc<Option<Box<dyn log::Log>>>,
 }
 impl log::Log for GlobalSdkLogger {
     fn enabled(&self, metadata: &Metadata) -> bool {
-        // uniffi special handling: ignore the internal uniffi log to prevent infinite loop
-        let is_target_ok = *metadata.target() != *"breez_sdk_bindings::uniffi_binding";
-        let is_level_ok = metadata.level() <= log::Level::Debug;
-
-        is_target_ok && is_level_ok
+        metadata.level() <= log::Level::Debug
     }
 
     fn log(&self, record: &Record) {
@@ -1029,10 +1025,9 @@ impl log::Log for GlobalSdkLogger {
             self.logger.log(record);
 
             if let Some(s) = &self.log_listener.as_ref() {
-                s.log(LogEntry {
-                    line: record.args().to_string(),
-                    level: record.level().as_str().to_string(),
-                });
+                if s.enabled(record.metadata()) {
+                    s.log(record);
+                }
             }
         }
     }
@@ -1144,7 +1139,7 @@ impl BreezServicesBuilder {
     pub async fn build(
         &self,
         event_listener: Option<Box<dyn EventListener>>,
-        log_listener: Option<Box<dyn LogStream>>,
+        log_listener: Option<Box<dyn log::Log>>,
     ) -> SdkResult<Arc<BreezServices>> {
         if self.node_api.is_none() && self.seed.is_none() {
             return Err(SdkError::InitFailed {

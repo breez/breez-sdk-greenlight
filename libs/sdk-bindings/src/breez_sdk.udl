@@ -507,7 +507,10 @@ interface BlockingBreezServices {
 namespace breez_sdk {  
 
  [Throws=SdkError]
- BlockingBreezServices connect(Config config, sequence<u8> seed, EventListener listener, LogStream? log_listener);
+ BlockingBreezServices connect(Config config, sequence<u8> seed, EventListener listener);
+
+ [Throws=SdkError]
+ void set_log_stream(LogStream log_stream);
 
  [Throws=SdkError]
  LNInvoice parse_invoice(string invoice);
