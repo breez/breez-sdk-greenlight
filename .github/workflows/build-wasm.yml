@@ -1,4 +1,4 @@
-name: Build Wasm binding
+name: Build Wasm
 on:
   push:
   workflow_dispatch:
@@ -34,9 +34,9 @@ jobs:
           version: "23.4"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: libs
+      #- uses: Swatinem/rust-cache@v2
+      #  with:
+      #    workspaces: libs
 
       - name: Build Wasm binding
         working-directory: libs/sdk-bindings
