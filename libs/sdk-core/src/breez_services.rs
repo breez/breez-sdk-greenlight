@@ -95,6 +95,40 @@ pub struct InvoicePaidDetails {
     pub bolt11: String,
 }
 
+/// Request to sign a message with the node's private key.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SignMessageRequest {
+    /// The message to be signed by the node's private key.
+    pub message: String,
+}
+
+/// Response to a [SignMessageRequest].
+#[derive(Clone, Debug, PartialEq)]
+pub struct SignMessageResponse {
+    /// The signature that covers the message of SignMessageRequest. Zbase
+    /// encoded.
+    pub signature: String,
+}
+
+/// Request to check a message was signed by a specific node id.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CheckMessageRequest {
+    /// The message that was signed.
+    pub message: String,
+    /// The public key of the node that signed the message.
+    pub pubkey: String,
+    /// The zbase encoded signature to verify.
+    pub signature: String,
+}
+
+/// Response to a [CheckMessageRequest]
+#[derive(Clone, Debug, PartialEq)]
+pub struct CheckMessageResponse {
+    /// Boolean value indicating whether the signature covers the message and
+    /// was signed by the given pubkey.
+    pub is_valid: bool,
+}
+
 /// BreezServices is a facade and the single entry point for the SDK.
 pub struct BreezServices {
     started: Mutex<bool>,
@@ -114,13 +148,15 @@ pub struct BreezServices {
 }
 
 impl BreezServices {
-    /// connect initializes the SDK services, schedule the node to run in the cloud and
-    /// run the signer. This must be called in order to start communicating with the node
+    /// `connect` initializes the SDK services, schedules the node to run in the cloud and
+    /// runs the signer. This must be called in order to start communicating with the node.
     ///
     /// # Arguments
     ///
     /// * `config` - The sdk configuration
-    /// * `seed` - The node private key
+    /// * `seed` - The node private key, typically derived from the mnemonic.
+    /// When using a new `invite_code`, the seed should be derived from a new random mnemonic.
+    /// When re-using an `invite_code`, the same mnemonic should be used as when the `invite_code` was first used.
     /// * `event_listener` - Listener to SDK events
     ///
     pub async fn connect(
@@ -139,7 +175,7 @@ impl BreezServices {
         Ok(services)
     }
 
-    /// Starts the BreezServices background tasks for this instance.
+    /// Internal utility method that starts the BreezServices background tasks for this instance.
     ///
     /// It should be called once right after creating [BreezServices], since it is essential for the
     /// communicating with the node.
@@ -336,6 +372,26 @@ impl BreezServices {
             .ok_or(SdkError::PersistenceFailure {
                 err: "No node info found".into(),
             })
+    }
+
+    /// Sign given message with the private key of the node id. Returns a zbase
+    /// encoded signature.
+    pub async fn sign_message(&self, request: SignMessageRequest) -> Result<SignMessageResponse> {
+        let signature = self.node_api.sign_message(&request.message).await?;
+        Ok(SignMessageResponse { signature })
+    }
+
+    /// Check whether given message was signed by the private key or the given
+    /// pubkey and the signature (zbase encoded) is valid.
+    pub async fn check_message(
+        &self,
+        request: CheckMessageRequest,
+    ) -> Result<CheckMessageResponse> {
+        let is_valid = self
+            .node_api
+            .check_message(&request.message, &request.pubkey, &request.signature)
+            .await?;
+        Ok(CheckMessageResponse { is_valid })
     }
 
     /// Retrieve the node up to date BackupStatus

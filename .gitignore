@@ -1,10 +1,13 @@
-libs/sdk-bindings/storage.sql
+libs/sdk-bindings/*.sql
 .DS_Store
 .idea/
 
 tools/sdk-cli/config.json
 libs/sdk-react-native/ios/breez_sdk.swift
 libs/sdk-react-native/ios/bindings-swift/**
+
+.envrc
+*.jar
 
 # Visual Studio Code
 .vscode/*

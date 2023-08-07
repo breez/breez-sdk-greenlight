@@ -85,6 +85,16 @@ pub(crate) enum Commands {
     /// Send a spontaneous (keysend) payment
     SendSpontaneousPayment { node_id: String, amount: u64 },
 
+    /// Sign a message with the node's private key
+    SignMessage { message: String },
+
+    /// Verify a message with a node's public key
+    CheckMessage {
+        message: String,
+        pubkey: String,
+        signature: String,
+    },
+
     /// List all payments
     ListPayments {},
 

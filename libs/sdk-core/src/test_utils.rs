@@ -330,6 +330,14 @@ impl NodeAPI for MockNodeAPI {
         Ok(())
     }
 
+    async fn sign_message(&self, _message: &str) -> Result<String> {
+        Ok("".to_string())
+    }
+
+    async fn check_message(&self, _message: &str, _pubkey: &str, _signature: &str) -> Result<bool> {
+        Ok(true)
+    }
+
     fn sign_invoice(&self, invoice: RawInvoice) -> Result<String> {
         Ok(sign_invoice(invoice))
     }

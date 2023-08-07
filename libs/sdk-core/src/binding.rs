@@ -31,9 +31,10 @@ use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, PaymentTypeFilter, SwapInfo};
 use crate::{
-    BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, EnvironmentType, LnUrlCallbackStatus,
-    NodeConfig, ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse,
-    ReverseSwapInfo, ReverseSwapPairInfo,
+    BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
+    EnvironmentType, LnUrlCallbackStatus, NodeConfig, ReceiveOnchainRequest, ReceivePaymentRequest,
+    ReceivePaymentResponse, ReverseSwapInfo, ReverseSwapPairInfo, SignMessageRequest,
+    SignMessageResponse,
 };
 
 static BREEZ_SERVICES_INSTANCE: OnceCell<Arc<BreezServices>> = OnceCell::new();
@@ -88,6 +89,16 @@ pub fn disconnect() -> Result<()> {
             Some(s) => s.send(()).await.map_err(anyhow::Error::msg),
         }
     })
+}
+
+/// See [BreezServices::sign_message]
+pub fn sign_message(request: SignMessageRequest) -> Result<SignMessageResponse> {
+    block_on(async { get_breez_services()?.sign_message(request).await })
+}
+
+/// See [BreezServices::check_message]
+pub fn check_message(request: CheckMessageRequest) -> Result<CheckMessageResponse> {
+    block_on(async { get_breez_services()?.check_message(request).await })
 }
 
 /*  Breez Services Helper API's */

@@ -1,0 +1,90 @@
+name: Publish Kotlin multiplatform Bindings
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: 'commit/tag/branch reference'
+        required: true
+        type: string
+      package-version:
+        description: 'version for the gradle library (MAJOR.MINOR.BUILD)'
+        required: true
+        type: string
+      publish:
+        description: 'value indicating whether to publish to maven.'
+        required: true
+        type: boolean
+        default: false
+    secrets:
+      BREEZ_MVN_USERNAME:
+        description: 'username for gradlew publish'
+        required: true
+      BREEZ_MVN_PASSWORD:
+        description: 'password for gradlew publish'
+        required: true
+
+jobs:
+  build-package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout breez-sdk repo
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: android-jniLibs
+          path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/src/androidMain/jniLibs
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: bindings-kmm
+          path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/src
+
+      - name: Copy jvmMain
+        working-directory: libs/sdk-bindings
+        run: |
+          cp -r bindings-kotlin-multiplatform/breez-sdk-kmp/src/jvmMain/kotlin bindings-kotlin-multiplatform/breez-sdk-kmp/src/androidMain/
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-aarch64-apple-ios
+          path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/src/libs/ios-arm64
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-aarch64-apple-ios-sim
+          path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/src/libs/ios-simulator-arm64
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-x86_64-apple-ios
+          path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/src/libs/ios-simulator-x64
+
+      - name: Build Kotlin Multiplatform project
+        working-directory: libs/sdk-bindings/bindings-kotlin-multiplatform
+        env:
+          ORG_GRADLE_PROJECT_libraryVersion: ${{ inputs.package-version || '0.0.1' }}
+        run: ./gradlew :breez-sdk-kmp:assemble
+
+      - name: Archive aar
+        uses: actions/upload-artifact@v3
+        with:
+          name: kotlin-multiplatform-release.aar
+          path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/build/outputs/aar/breez-sdk-kmp-release.aar
+        
+      - name: Publish artifacts
+        if: ${{ inputs.publish }}
+        working-directory: libs/sdk-bindings/bindings-kotlin-multiplatform
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BREEZ_MVN_USERNAME: ${{ secrets.BREEZ_MVN_USERNAME }}
+          BREEZ_MVN_PASSWORD: ${{ secrets.BREEZ_MVN_PASSWORD }}
+        run: |
+          ./gradlew publish -PlibraryVersion=${{ inputs.package-version }} -PbreezReposiliteUsername="$BREEZ_MVN_USERNAME" -PbreezReposilitePassword="$BREEZ_MVN_PASSWORD"

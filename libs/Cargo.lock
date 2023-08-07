@@ -503,6 +503,7 @@ dependencies = [
  "tonic",
  "tonic-build",
  "tower",
+ "zbase32",
 ]
 
 [[package]]
@@ -511,6 +512,7 @@ version = "0.1.4"
 dependencies = [
  "anyhow",
  "breez-sdk-core",
+ "camino",
  "flutter_rust_bridge",
  "lightning-invoice",
  "log",
@@ -520,6 +522,7 @@ dependencies = [
  "tokio",
  "tonic",
  "uniffi",
+ "uniffi-kotlin-multiplatform",
  "uniffi_bindgen",
  "uniffi_build",
  "uniffi_macros",
@@ -914,7 +917,7 @@ dependencies = [
  "hkdf",
  "libsecp256k1",
  "rand",
- "sha2 0.10.6",
+ "sha2 0.10.7",
  "typenum",
 ]
 
@@ -1192,7 +1195,7 @@ checksum = "ad0a93d233ebf96623465aad4046a8d3aa4da22d4f4beba5388838c8a434bbb4"
 [[package]]
 name = "gl-client"
 version = "0.1.9"
-source = "git+https://github.com/Blockstream/greenlight.git?rev=2eabad561ef8d0c42b3bf190a94c9fd9ae303eb6#2eabad561ef8d0c42b3bf190a94c9fd9ae303eb6"
+source = "git+https://github.com/Blockstream/greenlight.git?rev=113cc28c938d4ed607a6e3fc4ab044a000d7e5e1#113cc28c938d4ed607a6e3fc4ab044a000d7e5e1"
 dependencies = [
  "anyhow",
  "base64 0.21.2",
@@ -1497,6 +1500,25 @@ checksum = "7d20d6b07bfbc108882d88ed8e37d39636dcc260e15e30c45e6ba089610b917c"
 dependencies = [
  "unicode-bidi",
  "unicode-normalization",
+]
+
+[[package]]
+name = "include_dir"
+version = "0.7.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "18762faeff7122e89e0857b02f7ce6fcc0d101d5e9ad2ad7846cc01d61b7f19e"
+dependencies = [
+ "include_dir_macros",
+]
+
+[[package]]
+name = "include_dir_macros"
+version = "0.7.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b139284b5cf57ecfa712bcc66950bb635b31aff41c188e8a4cfc758eca374a3f"
+dependencies = [
+ "proc-macro2",
+ "quote",
 ]
 
 [[package]]
@@ -2633,9 +2655,9 @@ dependencies = [
 
 [[package]]
 name = "sha2"
-version = "0.10.6"
+version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "82e6b795fe2e3b1e845bafcb27aa35405c4d47cdfc92af5fc8d3002f76cebdc0"
+checksum = "479fb9d862239e610720565ca91403019f2f00410f1864c5aa7479b950a76ed8"
 dependencies = [
  "cfg-if",
  "cpufeatures",
@@ -2879,7 +2901,7 @@ dependencies = [
  "pbkdf2",
  "rand",
  "rustc-hash",
- "sha2 0.10.6",
+ "sha2 0.10.7",
  "thiserror",
  "unicode-normalization",
  "wasm-bindgen",
@@ -3191,6 +3213,22 @@ dependencies = [
  "uniffi_bindgen",
  "uniffi_core",
  "uniffi_macros",
+]
+
+[[package]]
+name = "uniffi-kotlin-multiplatform"
+version = "0.1.0"
+source = "git+https://gitlab.com/trixnity/uniffi-kotlin-multiplatform-bindings?rev=f33adbf1e97b3554eb815d5873308e0efc199f63#f33adbf1e97b3554eb815d5873308e0efc199f63"
+dependencies = [
+ "anyhow",
+ "askama",
+ "camino",
+ "heck",
+ "include_dir",
+ "paste",
+ "serde",
+ "toml",
+ "uniffi_bindgen",
 ]
 
 [[package]]
@@ -3737,6 +3775,12 @@ checksum = "e17bb3549cc1321ae1296b9cdc2698e2b6cb1992adfa19a8c72e5b7a738f44cd"
 dependencies = [
  "time 0.3.22",
 ]
+
+[[package]]
+name = "zbase32"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0f9079049688da5871a7558ddacb7f04958862c703e68258594cb7a862b5e33f"
 
 [[package]]
 name = "zeroize"

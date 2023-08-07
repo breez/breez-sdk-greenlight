@@ -23,7 +23,9 @@ import {
     connect,
     buyBitcoin,
     backup,
-    backupStatus
+    backupStatus,
+    signMessage,
+    checkMessage
 } from "@breeztech/react-native-breez-sdk"
 import BuildConfig from "react-native-build-config"
 import { generateMnemonic } from "@dreson4/react-native-quick-bip39"
@@ -104,6 +106,16 @@ const App = () => {
 
                 const buyBitcoinResult = await buyBitcoin(BuyBitcoinProvider.MOONPAY)
                 addLine("buyBitcoin", JSON.stringify(buyBitcoinResult))
+
+                const signMessageResult = await signMessage({ message: "Hello world"})
+                addLine("signMessage: Hello World", JSON.stringify(signMessageResult))
+
+                const verifyMessageResult = await checkMessage({
+                    message: "Hello world",
+                    pubkey: nodeState.id,
+                    signature: signMessageResult.signature
+                })
+                addLine("verifyMessage:", JSON.stringify(verifyMessageResult))
 
                 await backup()
                 addLine("backupStatus", JSON.stringify(await backupStatus()))

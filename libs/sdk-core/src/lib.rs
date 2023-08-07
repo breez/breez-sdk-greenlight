@@ -18,14 +18,15 @@
 //! The following code initialize the SDK and make it ready to be used:
 //!
 //! ```ignore
-//! let mnemonic = Mnemonic::new(Words12, English);
-//! let seed = Seed::new(&mnemonic, "");
-//! let invite_code = Some("...")
+//! let mnemonic = Mnemonic::generate_in(Language::English, 12)?;
+//! let seed = mnemonic.to_seed("");
+//! let invite_code = Some("...".into());
 //!
-//! let config = BreezServices::default_config(
-//!     EnvironmentType::Production,"your API key".into(),
+//! let mut config = BreezServices::default_config(
+//!     EnvironmentType::Production,
+//!     "your API key".into(),
 //!     breez_sdk_core::NodeConfig::Greenlight {
-//!         config: GreenlightNodeConfig { partner_credentials: None, invite_code: invite_code, },
+//!         config: GreenlightNodeConfig { partner_credentials: None, invite_code },
 //!     },
 //! );
 //!
@@ -172,8 +173,9 @@ mod swap;
 mod test_utils;
 
 pub use breez_services::{
-    mnemonic_to_seed, BackupFailedData, BreezEvent, BreezServices, EventListener,
-    InvoicePaidDetails, PaymentFailedData,
+    mnemonic_to_seed, BackupFailedData, BreezEvent, BreezServices, CheckMessageRequest,
+    CheckMessageResponse, EventListener, InvoicePaidDetails, PaymentFailedData, SignMessageRequest,
+    SignMessageResponse,
 };
 pub use chain::RecommendedFees;
 pub use fiat::{CurrencyInfo, FiatCurrency, LocaleOverrides, LocalizedName, Rate, Symbol};

@@ -82,6 +82,28 @@ fun asLnUrlWithdrawRequestData(reqData: ReadableMap): LnUrlWithdrawRequestData? 
     return null
 }
 
+fun asCheckMessageRequest(reqData: ReadableMap): CheckMessageRequest? {
+    val message = reqData.getString("message")
+    val signature = reqData.getString("signature")
+    val pubkey = reqData.getString("pubkey")
+
+    if (message != null && signature != null && pubkey != null) {
+        return CheckMessageRequest(message, pubkey, signature)
+    }
+
+    return null
+}
+
+fun asSignMessageRequest(reqData: ReadableMap): SignMessageRequest? {
+    val message = reqData.getString("message")
+
+    if (message != null) {
+        return SignMessageRequest(message)
+    }
+
+    return null
+}
+
 fun asPaymentTypeFilter(filter: String): PaymentTypeFilter {
     return PaymentTypeFilter.valueOf(filter.uppercase())
 }
@@ -612,4 +634,16 @@ fun readableMapOf(vararg values: Pair<String, *>): ReadableMap {
         pushToMap(map, key, value)
     }
     return map
+}
+
+fun readableMapOf(signMessageResponse: SignMessageResponse): ReadableMap {
+    return readableMapOf(
+            "signature" to signMessageResponse.signature
+    )
+}
+
+fun readableMapOf(checkMessageResponse: CheckMessageResponse): ReadableMap {
+    return readableMapOf(
+            "isValid" to checkMessageResponse.isValid
+    )
 }

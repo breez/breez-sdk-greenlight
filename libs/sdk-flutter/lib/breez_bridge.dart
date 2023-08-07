@@ -120,6 +120,22 @@ class BreezSDK {
     );
   }
 
+  /// Sign given message with the private key of the node id. Returns a zbase
+  /// encoded signature.
+  Future<SignMessageResponse> signMessage({
+    required SignMessageRequest request,
+  }) {
+    return _lnToolkit.signMessage(request: request);
+  }
+
+  /// Check whether given message was signed by the private key or the given
+  /// pubkey and the signature (zbase encoded) is valid.
+  Future<CheckMessageResponse> checkMessage({
+    required CheckMessageRequest request,
+  }) {
+    return _lnToolkit.checkMessage(request: request);
+  }
+
   /* LSP API's */
 
   /// List available lsps that can be selected by the user

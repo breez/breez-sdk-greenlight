@@ -1,78 +1,130 @@
 name: Publish C# Bindings
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
-      version:
-        description: 'breez-sdk repo release (MAJOR.MINOR.PATCH)'
+      ref:
+        description: 'commit/tag/branch reference'
         required: true
         type: string
-      cs-project-ref:
-        description: 'commit/tag to use for the csharp project. Can be different from `version`'
+      package-version:
+        description: 'version for the nuget package (MAJOR.MINOR.BUILD)'
         required: true
         type: string
+      publish:
+        description: 'value indicating whether to publish to nuget.'
+        required: true
+        type: boolean
+        default: false
+    secrets:
+      NUGET_API_KEY:
+        description: 'api key to authenticate the nuget publisher to nuget.org'
+        required: true
 
 jobs:
-  build-tag-release:
-    name: Build, tag, and release the Breez SDK C# bindings
-    runs-on: macOS-latest
+  build-package:
+    runs-on: ubuntu-latest
     steps:
-      - name: Install required dependencies
-        env:
-          HOMEBREW_NO_AUTO_UPDATE: 1
-        run: |
-          brew tap messense/macos-cross-toolchains
-          brew install protobuf
-          brew install mingw-w64
-          brew install aarch64-unknown-linux-gnu
-          brew install x86_64-unknown-linux-gnu
-          cargo install --version 0.22.0 uniffi_bindgen
       - name: Checkout breez-sdk repo
         uses: actions/checkout@v3
         with:
-          path: build
-          ref: ${{ inputs.version }}
-      - name: Checkout breez-sdk repo for C# project
-        uses: actions/checkout@v3
+          ref: ${{ inputs.ref || github.sha }}
+ 
+      - uses: actions/download-artifact@v3
         with:
-          path: dist
-          ref: ${{ inputs.cs-project-ref }}
-      - name: Build C# bindings
-        working-directory: build/libs/sdk-bindings
-        env:
-          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
-          CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER: x86_64-linux-gnu-gcc
-        run: |
-          make init
-          rustup target add x86_64-pc-windows-gnu
-          cargo build --release --target aarch64-unknown-linux-gnu
-          cargo build --release --target x86_64-unknown-linux-gnu
-          cargo build --release --target x86_64-pc-windows-gnu
-          make csharp-darwin
-      - name: Copy binding
-        run: |
-          cp build/libs/sdk-bindings/ffi/csharp/breez_sdk.cs dist/libs/sdk-bindings/bindings-csharp
-      - name: Copy libraries
-        run: |
-          mkdir -p dist/libs/sdk-bindings/bindings-csharp/runtimes/osx-arm64/native && cp build/libs/target/aarch64-apple-darwin/release/libbreez_sdk_bindings.dylib "$_"
-          mkdir -p dist/libs/sdk-bindings/bindings-csharp/runtimes/osx-x64/native && cp build/libs/target/x86_64-apple-darwin/release/libbreez_sdk_bindings.dylib "$_"
-          mkdir -p dist/libs/sdk-bindings/bindings-csharp/runtimes/linux-arm64/native && cp build/libs/target/aarch64-unknown-linux-gnu/release/libbreez_sdk_bindings.so "$_"
-          mkdir -p dist/libs/sdk-bindings/bindings-csharp/runtimes/linux-x64/native && cp build/libs/target/x86_64-unknown-linux-gnu/release/libbreez_sdk_bindings.so "$_"
-          mkdir -p dist/libs/sdk-bindings/bindings-csharp/runtimes/win-x64/native && cp build/libs/target/x86_64-pc-windows-gnu/release/breez_sdk_bindings.dll "$_"
+          name: bindings-csharp
+          path: libs/sdk-bindings/bindings-csharp/src
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-aarch64-apple-darwin
+          path: libs/sdk-bindings/bindings-csharp/src/runtimes/osx-arm64/native
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-x86_64-apple-darwin
+          path: libs/sdk-bindings/bindings-csharp/src/runtimes/osx-x64/native
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-aarch64-unknown-linux-gnu
+          path: libs/sdk-bindings/bindings-csharp/src/runtimes/linux-arm64/native
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-x86_64-unknown-linux-gnu
+          path: libs/sdk-bindings/bindings-csharp/src/runtimes/linux-x64/native
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-x86_64-pc-windows-msvc
+          path: libs/sdk-bindings/bindings-csharp/src/runtimes/win-x64/native
+
       - name: Update package version
-        working-directory: dist/libs/sdk-bindings/bindings-csharp
-        run: sed -i.bak -e 's/<Version>.*<\/Version>/<Version>${{ inputs.version }}<\/Version>/' Breez.Sdk.csproj
+        if: ${{ inputs.package-version }}
+        working-directory: libs/sdk-bindings/bindings-csharp/src
+        run: sed -i.bak -e 's/<Version>.*<\/Version>/<Version>${{ inputs.package-version }}<\/Version>/' Breez.Sdk.csproj
+
       - name: Setup dotnet
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '6.0.x'
+
       - name: Build the project
-        working-directory: dist/libs/sdk-bindings/bindings-csharp
+        working-directory: libs/sdk-bindings/bindings-csharp/src
         run: dotnet build Breez.Sdk.csproj
+
       - name: Create the package
-        working-directory: dist/libs/sdk-bindings/bindings-csharp
+        working-directory: libs/sdk-bindings/bindings-csharp/src
         run: dotnet pack --configuration Release Breez.Sdk.csproj
+
       - name: Archive the package
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
-          name: Breez.Sdk.${{ inputs.version }}.nupkg
-          path: dist/libs/sdk-bindings/bindings-csharp/bin/Release/Breez.Sdk.${{ inputs.version }}.nupkg
+          name: Breez.Sdk.${{ inputs.package-version || '0.0.1' }}.nupkg
+          path: libs/sdk-bindings/bindings-csharp/src/bin/Release/Breez.Sdk.*.nupkg
+
+  test-package:
+    needs: build-package
+    runs-on: ${{ matrix.target }}
+    strategy:
+      matrix:
+        target: [
+          windows-latest,
+          ubuntu-latest,
+          ubuntu-20.04,
+          macOS-latest,
+        ]
+    steps:
+      - name: Checkout breez-sdk repo
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+      
+      - uses: actions/download-artifact@v3
+        with:
+          name: Breez.Sdk.${{ inputs.package-version || '0.0.1' }}.nupkg
+          path: libs/sdk-bindings/bindings-csharp/src/bin/Release
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '7.0.x'
+      
+      - name: test package
+        working-directory: libs/sdk-bindings/bindings-csharp/test
+        run: dotnet run
+      
+  publish-package:
+    needs: test-package
+    if: ${{ inputs.publish }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download archived package
+        uses: actions/download-artifact@v3
+        with:
+          name: Breez.Sdk.${{ inputs.package-version }}.nupkg
+
+      - name: Publish to nuget.org
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: dotnet nuget push Breez.Sdk.${{ inputs.package-version }}.nupkg --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json

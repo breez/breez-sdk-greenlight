@@ -16,11 +16,10 @@ hex = "*"
 # v0.3 requires bitcoin 0.30, but lightning v0.115 needs bitcoin 0.29, so we keep this at v0.2 which also uses bitcoin 0.29
 bip21 = "0.2"
 bitcoin = "0.29.2"
-# Note: private repo, might need git credentials helper to be setup
-# If so, see https://techexpertise.medium.com/storing-git-credentials-with-git-credential-helper-33d22a6b5ce7
 gl-client = { git = "https://github.com/Blockstream/greenlight.git", features = [
     "permissive",
-], rev = "2eabad561ef8d0c42b3bf190a94c9fd9ae303eb6" }
+], rev = "113cc28c938d4ed607a6e3fc4ab044a000d7e5e1" }
+zbase32 = "0.1.2"
 base64 = "0.13.0"
 ecies = { version = "0.2", default-features = false, features = ["pure"] }
 ripemd = "*"
