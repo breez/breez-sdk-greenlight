@@ -69,9 +69,7 @@ async fn main() {
 
 fn show_results(res: Result<String>) {
     match res {
-        Ok(inner) => {
-            println!("{}", inner);
-        }
-        Err(err) => error!("Error: {}", err),
+        Ok(inner) => println!("{inner}"),
+        Err(err) => eprintln!("Error: {err}"),
     }
 }
