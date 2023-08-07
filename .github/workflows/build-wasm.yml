@@ -1,5 +1,6 @@
 name: Build Wasm binding
 on:
+  push:
   workflow_dispatch:
     inputs:
       ref:
