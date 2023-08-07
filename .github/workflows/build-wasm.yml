@@ -1,0 +1,51 @@
+name: Build Wasm binding
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'commit/tag/branch reference'
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      ref:
+        description: 'commit/tag/branch reference'
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout breez-sdk repo
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.ref }}
+  
+      - name: Install rust
+        run: |
+          rustup set auto-self-update disable
+          rustup toolchain install stable --profile minimal
+  
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v2
+        with:
+          version: "23.4"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: libs
+
+      - name: Build Wasm binding
+        working-directory: libs/sdk-bindings
+        run: |
+          cargo install cargo-wasi
+          cargo wasi build --release
+  
+      - name: Archive Wasm binding
+        uses: actions/upload-artifact@v3
+        with:
+          name: breez_sdk_bindings.wasm
+          path: libs/target/wasm32-wasi/release/breez_sdk_bindings.wasm
+
