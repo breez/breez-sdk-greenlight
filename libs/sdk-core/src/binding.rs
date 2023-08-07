@@ -46,13 +46,13 @@ static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime:
 /// See [BreezServices::connect]
 pub fn connect(config: Config, seed: Vec<u8>) -> Result<()> {
     block_on(async move {
-        let breez_services = BreezServices::connect(
-            config,
-            seed,
-            Box::new(BindingEventListener {}),
-            Some(Box::new(BindingLogStreamEventListener {})),
-        )
-        .await?;
+        let breez_services =
+            BreezServices::connect(config, seed, Box::new(BindingEventListener {})).await?;
+
+        breez_services
+            .init_logging(Some(Box::new(BindingLogStreamEventListener {})))
+            .map_err(anyhow::Error::new)?;
+
         BREEZ_SERVICES_INSTANCE
             .set(breez_services)
             .map_err(|_| SdkError::InitFailed {
@@ -112,7 +112,7 @@ pub fn default_config(
 
 /*  Stream API's */
 
-/// If used, this must be called before `connect`
+/// If used, this must be called before `connect`. It can only be called once.
 pub fn breez_events_stream(s: StreamSink<BreezEvent>) -> Result<()> {
     NOTIFICATION_STREAM
         .set(s)
@@ -120,12 +120,11 @@ pub fn breez_events_stream(s: StreamSink<BreezEvent>) -> Result<()> {
     Ok(())
 }
 
-/// If used, this must be called before `connect`
+/// If used, this must be called before `connect`. It can only be called once.
 pub fn breez_log_stream(s: StreamSink<LogEntry>) -> Result<()> {
     LOG_STREAM
         .set(s)
-        .map_err(|_| anyhow!("log stream already created"))?;
-    Ok(())
+        .map_err(|_| anyhow!("log stream already created"))
 }
 
 /*  LSP API's */

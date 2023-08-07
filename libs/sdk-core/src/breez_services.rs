@@ -117,7 +117,6 @@ pub struct BreezServices {
     btc_receive_swapper: Arc<BTCReceiveSwap>,
     btc_send_swapper: Arc<BTCSendSwap>,
     event_listener: Option<Box<dyn EventListener>>,
-    log_listener: Arc<Option<Box<dyn log::Log>>>,
     backup_watcher: Arc<BackupWatcher>,
     shutdown_sender: watch::Sender<()>,
     shutdown_receiver: watch::Receiver<()>,
@@ -137,12 +136,11 @@ impl BreezServices {
         config: Config,
         seed: Vec<u8>,
         event_listener: Box<dyn EventListener>,
-        log_listener: Option<Box<dyn log::Log>>,
     ) -> SdkResult<Arc<BreezServices>> {
         let start = Instant::now();
         let services = BreezServicesBuilder::new(config)
             .seed(seed)
-            .build(Some(event_listener), log_listener)
+            .build(Some(event_listener))
             .await?;
         services.start().await?;
         let connect_duration = start.elapsed();
@@ -941,12 +939,21 @@ impl BreezServices {
     }
 
     /// Configures a global SDK logger that will log to file and will forward log events to
-    /// registered log stream listener.
+    /// an optional application-specific logger.
+    ///
+    /// If the application already uses a globally-registered logger, this method shouldn't be called.
+    ///
+    /// If the application is to use it's own logger, but would also like the SDK to log SDK-specific
+    /// log output to a file in the configured `working_dir` (see [Config]), then do not register the
+    /// app-specific logger as a global logger and instead call this method with the app logger as an arg.
     ///
     /// ### Errors
     ///
     /// An error is thrown if the log file cannot be created in the working directory.
-    fn init_logging(&self, working_dir: &str) -> SdkResult<()> {
+    ///
+    /// An error is thrown if a global logger is already configured.
+    pub fn init_logging(&self, app_logger: Option<Box<dyn log::Log>>) -> SdkResult<()> {
+        let working_dir = &self.backup_watcher.config.working_dir;
         let target_log_file = Box::new(
             OpenOptions::new()
                 .create(true)
@@ -986,26 +993,15 @@ impl BreezServices {
 
         let global_logger = GlobalSdkLogger {
             logger,
-            log_listener: self.log_listener.clone(),
+            log_listener: app_logger,
         };
 
-        match log::set_boxed_logger(Box::new(global_logger)) {
-            Ok(_) => {
-                log::set_max_level(LevelFilter::Trace);
-                Ok(())
-            }
-            Err(_e) => {
-                // Setting the global logging is expected to fail for tests
-                // because several tokio tests attempt to set it, which leads to them failing
-                #[cfg(test)]
-                return Ok(());
+        log::set_boxed_logger(Box::new(global_logger)).map_err(|e| SdkError::InitFailed {
+            err: format!("Failed to set global logger: {e}"),
+        })?;
+        log::set_max_level(LevelFilter::Trace);
 
-                #[cfg(not(test))]
-                return Err(SdkError::InitFailed {
-                    err: _e.to_string(),
-                });
-            }
-        }
+        Ok(())
     }
 }
 
@@ -1013,7 +1009,7 @@ struct GlobalSdkLogger {
     /// SDK internal logger, which logs to file
     logger: env_logger::Logger,
     /// Optional external log listener, that can receive a stream of log statements
-    log_listener: Arc<Option<Box<dyn log::Log>>>,
+    log_listener: Option<Box<dyn log::Log>>,
 }
 impl log::Log for GlobalSdkLogger {
     fn enabled(&self, metadata: &Metadata) -> bool {
@@ -1139,7 +1135,6 @@ impl BreezServicesBuilder {
     pub async fn build(
         &self,
         event_listener: Option<Box<dyn EventListener>>,
-        log_listener: Option<Box<dyn log::Log>>,
     ) -> SdkResult<Arc<BreezServices>> {
         if self.node_api.is_none() && self.seed.is_none() {
             return Err(SdkError::InitFailed {
@@ -1266,13 +1261,10 @@ impl BreezServicesBuilder {
             btc_send_swapper,
             payment_receiver,
             event_listener,
-            log_listener: Arc::new(log_listener),
             backup_watcher: Arc::new(backup_watcher),
             shutdown_sender,
             shutdown_receiver,
         });
-
-        breez_services.init_logging(&self.config.working_dir)?;
 
         Ok(breez_services)
     }
@@ -1657,7 +1649,7 @@ pub(crate) mod tests {
             .node_api(node_api)
             .persister(persister)
             .backup_transport(Arc::new(MockBackupTransport::new()))
-            .build(None, None)
+            .build(None)
             .await?;
 
         breez_services.sync().await?;
@@ -1806,7 +1798,7 @@ pub(crate) mod tests {
             .persister(persister)
             .node_api(node_api)
             .backup_transport(Arc::new(MockBackupTransport::new()))
-            .build(None, None)
+            .build(None)
             .await?;
 
         Ok(breez_services)

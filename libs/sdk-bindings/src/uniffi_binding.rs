@@ -67,14 +67,14 @@ pub fn connect(
     event_listener: Box<dyn EventListener>,
 ) -> SdkResult<Arc<BlockingBreezServices>> {
     rt().block_on(async move {
-        // let log_listener = LOG_STREAM.get().cloned();
-        let log_listener: Option<Box<dyn log::Log>> = match LOG_STREAM.get() {
+        let breez_services = BreezServices::connect(config, seed, event_listener).await?;
+
+        let uniffi_logger: Option<Box<dyn log::Log>> = match LOG_STREAM.get() {
             None => None,
             Some(_) => Some(Box::new(BindingLogger {})),
         };
+        breez_services.init_logging(uniffi_logger)?;
 
-        let breez_services =
-            BreezServices::connect(config, seed, event_listener, log_listener).await?;
         Ok(Arc::new(BlockingBreezServices { breez_services }))
     })
 }
