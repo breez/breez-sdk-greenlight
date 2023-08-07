@@ -1,0 +1,74 @@
+<resources>
+    <string name="app_name">Breez SDK sample</string>
+    <string name="loading">Loading…</string>
+
+    <string name="error_unknown">Unknown error</string>
+    <string name="error_fetch_node_info">Failed to fetch node info</string>
+    <string name="error_receive_payment">Failed to receive payment</string>
+    <string name="error_send_payment">Failed to send payment</string>
+    <string name="error_send_spontaneous_payment">Failed to send spontaneous payment</string>
+    <string name="error_receive_on_chain">Failed to receive the on chain transaction</string>
+    <string name="error_send_on_chain">Failed to send the on chain transaction</string>
+    <string name="error_send_on_chain_fee">Failed to fetch the on chain fees</string>
+    <string name="error_fetch_lsp_info">Failed to fetch lsp info</string>
+    <string name="error_pay_ln_url">Failed to pay the LnUrl</string>
+    <string name="error_pay_ln_url_end_point">End point error paying the LnUrl</string>
+    <string name="error_pay_ln_withdraw">Failed to withdraw the LnUrl</string>
+    <string name="error_pay_ln_withdraw_status">Error on status while withdrawing the LnUrl</string>
+    <string name="error_pay_ln_auth">Failed to auth with the LnUrl</string>
+    <string name="error_pay_ln_auth_status">Error on status while authing with the LnUrl</string>
+
+    <string name="section_receiving_lightning_payments">Receiving Lightning Payments</string>
+    <string name="section_sending_lightning_payments">Sending Lightning Payments</string>
+    <string name="section_sending_spontaneous_payments">Sending Spontaneous Lightning Payments</string>
+    <string name="section_receive_on_chain">Receiving an on-chain transaction (swap-in)</string>
+    <string name="section_send_on_chain">Sending an on-chain transaction (swap-out)</string>
+    <string name="section_send_on_chain_in_progress">In-progress swap-out transactions</string>
+    <string name="section_lsp_info">Connecting to an LSP</string>
+    <string name="section_ln_url_pay">LNURL-Pay</string>
+    <string name="section_ln_url_withdraw">LNURL-Withdraw</string>
+    <string name="section_ln_url_auth">LNURL-Auth</string>
+    <string name="section_fiat_currencies">Fiat currencies</string>
+
+    <string name="onchain_balance">Onchain balance: %d</string>
+    <string name="lightning_balance">Lightning balance: %d</string>
+
+    <string name="receiving_lightning_payment">Receiving Lightning Payment</string>
+    <string name="receiving_lightning_payment_amount">Amount:</string>
+    <string name="receiving_lightning_payment_description">Description:</string>
+    <string name="receiving_lightning_payment_open_channel">Fee to open channel: %d</string>
+
+    <string name="send_payment">Sending Lightning Payments</string>
+    <string name="send_payment_bolt11">Bolt11:</string>
+    <string name="send_payment_amount">Amount:</string>
+
+    <string name="send_spontaneous_payment">Sending Spontaneous Lightning Payments</string>
+    <string name="send_spontaneous_payment_node_id">Node ID:</string>
+    <string name="send_spontaneous_payment_amount">Amount:</string>
+
+    <string name="receive_on_chain">Receive On-chain</string>
+    <string name="receive_on_chain_range">Min: %d Max: %d</string>
+
+    <string name="send_on_chain">Send On-chain</string>
+    <string name="send_on_chain_amount">Amount:</string>
+    <string name="send_on_chain_address">Address:</string>
+
+    <string name="lsp_info">LSP Info</string>
+
+    <string name="ln_url_pay">LNURL-Pay</string>
+    <string name="ln_url_withdraw">LNURL-Withdraw</string>
+    <string name="ln_url_auth">LNURL-Auth</string>
+    <string name="ln_url_amount">Amount:</string>
+    <string name="ln_url_description">Description:</string>
+    <string name="ln_url_pay_ln_url">Pay LNURL:</string>
+    <string name="ln_url_withdraw_ln_url">Withdraw LNURL:</string>
+    <string name="ln_url_auth_ln_url">Auth LNURL:</string>
+    <string name="ln_url_pay_no_result">No result</string>
+    <string name="ln_url_pay_aes">AES description: %s plaintext: %s</string>
+    <string name="ln_url_pay_message">Message: %s</string>
+    <string name="ln_url_pay_url">Url: %s description %s</string>
+    <string name="ln_url_withdraw_success">Withdraw complete</string>
+    <string name="ln_url_auth_success">Auth complete</string>
+
+    <string name="fiat_currency_value">%.2f</string>
+</resources>
