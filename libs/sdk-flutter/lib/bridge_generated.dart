@@ -136,7 +136,7 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kSendSpontaneousPaymentConstMeta;
 
   /// See [BreezServices::receive_payment]
-  Future<LNInvoice> receivePayment({required int amountSats, required String description, dynamic hint});
+  Future<ReceivePaymentResponse> receivePayment({required ReceivePaymentRequest reqData, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kReceivePaymentConstMeta;
 
@@ -181,12 +181,12 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kSendOnchainConstMeta;
 
   /// See [BreezServices::receive_onchain]
-  Future<SwapInfo> receiveOnchain({dynamic hint});
+  Future<SwapInfo> receiveOnchain({required ReceiveOnchainRequest reqData, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kReceiveOnchainConstMeta;
 
   /// See [BreezServices::buy_bitcoin]
-  Future<String> buyBitcoin({required BuyBitcoinProvider provider, dynamic hint});
+  Future<BuyBitcoinResponse> buyBitcoin({required BuyBitcoinRequest reqData, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kBuyBitcoinConstMeta;
 
@@ -321,6 +321,26 @@ class BreezEvent with _$BreezEvent {
 /// Different providers will demand different behaviours when the user is trying to buy bitcoin.
 enum BuyBitcoinProvider {
   Moonpay,
+}
+
+class BuyBitcoinRequest {
+  final BuyBitcoinProvider provider;
+  final OpeningFeeParams? openingFeeParams;
+
+  const BuyBitcoinRequest({
+    required this.provider,
+    this.openingFeeParams,
+  });
+}
+
+class BuyBitcoinResponse {
+  final String url;
+  final OpeningFeeParams? openingFeeParams;
+
+  const BuyBitcoinResponse({
+    required this.url,
+    this.openingFeeParams,
+  });
 }
 
 /// State of a Lightning channel
@@ -763,10 +783,8 @@ class LspInformation {
   final double feeRate;
   final int timeLockDelta;
   final int minHtlcMsat;
-  final int channelFeePermyriad;
   final Uint8List lspPubkey;
-  final int maxInactiveDuration;
-  final int channelMinimumFeeMsat;
+  final OpeningFeeParamsMenu openingFeeParamsList;
 
   const LspInformation({
     required this.id,
@@ -780,10 +798,8 @@ class LspInformation {
     required this.feeRate,
     required this.timeLockDelta,
     required this.minHtlcMsat,
-    required this.channelFeePermyriad,
     required this.lspPubkey,
-    required this.maxInactiveDuration,
-    required this.channelMinimumFeeMsat,
+    required this.openingFeeParamsList,
   });
 }
 
@@ -837,6 +853,33 @@ class NodeState {
     required this.maxChanReserveMsats,
     required this.connectedPeers,
     required this.inboundLiquidityMsats,
+  });
+}
+
+class OpeningFeeParams {
+  final int minMsat;
+  final int proportional;
+  final String validUntil;
+  final int maxIdleTime;
+  final int maxClientToSelfDelay;
+  final String promise;
+
+  const OpeningFeeParams({
+    required this.minMsat,
+    required this.proportional,
+    required this.validUntil,
+    required this.maxIdleTime,
+    required this.maxClientToSelfDelay,
+    required this.promise,
+  });
+}
+
+/// See [OpeningFeeParamsMenu::try_from]
+class OpeningFeeParamsMenu {
+  final List<OpeningFeeParams> values;
+
+  const OpeningFeeParamsMenu({
+    required this.values,
   });
 }
 
@@ -907,6 +950,42 @@ class Rate {
   const Rate({
     required this.coin,
     required this.value,
+  });
+}
+
+class ReceiveOnchainRequest {
+  final OpeningFeeParams? openingFeeParams;
+
+  const ReceiveOnchainRequest({
+    this.openingFeeParams,
+  });
+}
+
+/// Represents a receive payment request.
+class ReceivePaymentRequest {
+  final int amountSats;
+  final String description;
+  final Uint8List? preimage;
+  final OpeningFeeParams? openingFeeParams;
+
+  const ReceivePaymentRequest({
+    required this.amountSats,
+    required this.description,
+    this.preimage,
+    this.openingFeeParams,
+  });
+}
+
+/// Represents a receive payment response.
+class ReceivePaymentResponse {
+  final LNInvoice lnInvoice;
+  final OpeningFeeParams? openingFeeParams;
+  final int? openingFeeMsat;
+
+  const ReceivePaymentResponse({
+    required this.lnInvoice,
+    this.openingFeeParams,
+    this.openingFeeMsat,
   });
 }
 
@@ -1105,6 +1184,7 @@ class SwapInfo {
   final int minAllowedDeposit;
   final int maxAllowedDeposit;
   final String? lastRedeemError;
+  final OpeningFeeParams? channelOpeningFees;
 
   const SwapInfo({
     required this.bitcoinAddress,
@@ -1127,6 +1207,7 @@ class SwapInfo {
     required this.minAllowedDeposit,
     required this.maxAllowedDeposit,
     this.lastRedeemError,
+    this.channelOpeningFees,
   });
 }
 
@@ -1579,21 +1660,20 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["nodeId", "amountSats"],
       );
 
-  Future<LNInvoice> receivePayment({required int amountSats, required String description, dynamic hint}) {
-    var arg0 = _platform.api2wire_u64(amountSats);
-    var arg1 = _platform.api2wire_String(description);
+  Future<ReceivePaymentResponse> receivePayment({required ReceivePaymentRequest reqData, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_receive_payment_request(reqData);
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_receive_payment(port_, arg0, arg1),
-      parseSuccessData: _wire2api_ln_invoice,
+      callFfi: (port_) => _platform.inner.wire_receive_payment(port_, arg0),
+      parseSuccessData: _wire2api_receive_payment_response,
       constMeta: kReceivePaymentConstMeta,
-      argValues: [amountSats, description],
+      argValues: [reqData],
       hint: hint,
     ));
   }
 
   FlutterRustBridgeTaskConstMeta get kReceivePaymentConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "receive_payment",
-        argNames: ["amountSats", "description"],
+        argNames: ["reqData"],
       );
 
   Future<LnUrlPayResult> lnurlPay(
@@ -1707,35 +1787,36 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["amountSat", "onchainRecipientAddress", "pairHash", "satPerVbyte"],
       );
 
-  Future<SwapInfo> receiveOnchain({dynamic hint}) {
+  Future<SwapInfo> receiveOnchain({required ReceiveOnchainRequest reqData, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_receive_onchain_request(reqData);
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_receive_onchain(port_),
+      callFfi: (port_) => _platform.inner.wire_receive_onchain(port_, arg0),
       parseSuccessData: _wire2api_swap_info,
       constMeta: kReceiveOnchainConstMeta,
-      argValues: [],
+      argValues: [reqData],
       hint: hint,
     ));
   }
 
   FlutterRustBridgeTaskConstMeta get kReceiveOnchainConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "receive_onchain",
-        argNames: [],
+        argNames: ["reqData"],
       );
 
-  Future<String> buyBitcoin({required BuyBitcoinProvider provider, dynamic hint}) {
-    var arg0 = api2wire_buy_bitcoin_provider(provider);
+  Future<BuyBitcoinResponse> buyBitcoin({required BuyBitcoinRequest reqData, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_buy_bitcoin_request(reqData);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_buy_bitcoin(port_, arg0),
-      parseSuccessData: _wire2api_String,
+      parseSuccessData: _wire2api_buy_bitcoin_response,
       constMeta: kBuyBitcoinConstMeta,
-      argValues: [provider],
+      argValues: [reqData],
       hint: hint,
     ));
   }
 
   FlutterRustBridgeTaskConstMeta get kBuyBitcoinConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "buy_bitcoin",
-        argNames: ["provider"],
+        argNames: ["reqData"],
       );
 
   Future<void> sweep({required String toAddress, required int feeRateSatsPerVbyte, dynamic hint}) {
@@ -1984,6 +2065,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return _wire2api_message_success_action_data(raw);
   }
 
+  OpeningFeeParams _wire2api_box_autoadd_opening_fee_params(dynamic raw) {
+    return _wire2api_opening_fee_params(raw);
+  }
+
   Payment _wire2api_box_autoadd_payment(dynamic raw) {
     return _wire2api_payment(raw);
   }
@@ -2047,6 +2132,15 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       default:
         throw Exception("unreachable");
     }
+  }
+
+  BuyBitcoinResponse _wire2api_buy_bitcoin_response(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return BuyBitcoinResponse(
+      url: _wire2api_String(arr[0]),
+      openingFeeParams: _wire2api_opt_box_autoadd_opening_fee_params(arr[1]),
+    );
   }
 
   ChannelState _wire2api_channel_state(dynamic raw) {
@@ -2202,6 +2296,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   List<LspInformation> _wire2api_list_lsp_information(dynamic raw) {
     return (raw as List<dynamic>).map(_wire2api_lsp_information).toList();
+  }
+
+  List<OpeningFeeParams> _wire2api_list_opening_fee_params(dynamic raw) {
+    return (raw as List<dynamic>).map(_wire2api_opening_fee_params).toList();
   }
 
   List<Payment> _wire2api_list_payment(dynamic raw) {
@@ -2368,7 +2466,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   LspInformation _wire2api_lsp_information(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 15) throw Exception('unexpected arr length: expect 15 but see ${arr.length}');
+    if (arr.length != 13) throw Exception('unexpected arr length: expect 13 but see ${arr.length}');
     return LspInformation(
       id: _wire2api_String(arr[0]),
       name: _wire2api_String(arr[1]),
@@ -2381,10 +2479,8 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       feeRate: _wire2api_f64(arr[8]),
       timeLockDelta: _wire2api_u32(arr[9]),
       minHtlcMsat: _wire2api_i64(arr[10]),
-      channelFeePermyriad: _wire2api_i64(arr[11]),
-      lspPubkey: _wire2api_uint_8_list(arr[12]),
-      maxInactiveDuration: _wire2api_i64(arr[13]),
-      channelMinimumFeeMsat: _wire2api_i64(arr[14]),
+      lspPubkey: _wire2api_uint_8_list(arr[11]),
+      openingFeeParamsList: _wire2api_opening_fee_params_menu(arr[12]),
     );
   }
 
@@ -2429,6 +2525,27 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     );
   }
 
+  OpeningFeeParams _wire2api_opening_fee_params(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6) throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return OpeningFeeParams(
+      minMsat: _wire2api_u64(arr[0]),
+      proportional: _wire2api_u32(arr[1]),
+      validUntil: _wire2api_String(arr[2]),
+      maxIdleTime: _wire2api_u32(arr[3]),
+      maxClientToSelfDelay: _wire2api_u32(arr[4]),
+      promise: _wire2api_String(arr[5]),
+    );
+  }
+
+  OpeningFeeParamsMenu _wire2api_opening_fee_params_menu(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
+    return OpeningFeeParamsMenu(
+      values: _wire2api_list_opening_fee_params(arr[0]),
+    );
+  }
+
   String? _wire2api_opt_String(dynamic raw) {
     return raw == null ? null : _wire2api_String(raw);
   }
@@ -2447,6 +2564,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   LspInformation? _wire2api_opt_box_autoadd_lsp_information(dynamic raw) {
     return raw == null ? null : _wire2api_box_autoadd_lsp_information(raw);
+  }
+
+  OpeningFeeParams? _wire2api_opt_box_autoadd_opening_fee_params(dynamic raw) {
+    return raw == null ? null : _wire2api_box_autoadd_opening_fee_params(raw);
   }
 
   Payment? _wire2api_opt_box_autoadd_payment(dynamic raw) {
@@ -2531,6 +2652,16 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return Rate(
       coin: _wire2api_String(arr[0]),
       value: _wire2api_f64(arr[1]),
+    );
+  }
+
+  ReceivePaymentResponse _wire2api_receive_payment_response(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3) throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return ReceivePaymentResponse(
+      lnInvoice: _wire2api_ln_invoice(arr[0]),
+      openingFeeParams: _wire2api_opt_box_autoadd_opening_fee_params(arr[1]),
+      openingFeeMsat: _wire2api_opt_box_autoadd_u64(arr[2]),
     );
   }
 
@@ -2625,7 +2756,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   SwapInfo _wire2api_swap_info(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 20) throw Exception('unexpected arr length: expect 20 but see ${arr.length}');
+    if (arr.length != 21) throw Exception('unexpected arr length: expect 21 but see ${arr.length}');
     return SwapInfo(
       bitcoinAddress: _wire2api_String(arr[0]),
       createdAt: _wire2api_i64(arr[1]),
@@ -2647,6 +2778,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       minAllowedDeposit: _wire2api_i64(arr[17]),
       maxAllowedDeposit: _wire2api_i64(arr[18]),
       lastRedeemError: _wire2api_opt_String(arr[19]),
+      channelOpeningFees: _wire2api_opt_box_autoadd_opening_fee_params(arr[20]),
     );
   }
 
@@ -2772,6 +2904,13 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<wire_BuyBitcoinRequest> api2wire_box_autoadd_buy_bitcoin_request(BuyBitcoinRequest raw) {
+    final ptr = inner.new_box_autoadd_buy_bitcoin_request_0();
+    _api_fill_to_wire_buy_bitcoin_request(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
   ffi.Pointer<wire_CheckMessageRequest> api2wire_box_autoadd_check_message_request(CheckMessageRequest raw) {
     final ptr = inner.new_box_autoadd_check_message_request_0();
     _api_fill_to_wire_check_message_request(raw, ptr.ref);
@@ -2838,6 +2977,29 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<wire_OpeningFeeParams> api2wire_box_autoadd_opening_fee_params(OpeningFeeParams raw) {
+    final ptr = inner.new_box_autoadd_opening_fee_params_0();
+    _api_fill_to_wire_opening_fee_params(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
+  ffi.Pointer<wire_ReceiveOnchainRequest> api2wire_box_autoadd_receive_onchain_request(
+      ReceiveOnchainRequest raw) {
+    final ptr = inner.new_box_autoadd_receive_onchain_request_0();
+    _api_fill_to_wire_receive_onchain_request(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
+  ffi.Pointer<wire_ReceivePaymentRequest> api2wire_box_autoadd_receive_payment_request(
+      ReceivePaymentRequest raw) {
+    final ptr = inner.new_box_autoadd_receive_payment_request_0();
+    _api_fill_to_wire_receive_payment_request(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
   ffi.Pointer<wire_SignMessageRequest> api2wire_box_autoadd_sign_message_request(SignMessageRequest raw) {
     final ptr = inner.new_box_autoadd_sign_message_request_0();
     _api_fill_to_wire_sign_message_request(raw, ptr.ref);
@@ -2871,8 +3033,18 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<wire_OpeningFeeParams> api2wire_opt_box_autoadd_opening_fee_params(OpeningFeeParams? raw) {
+    return raw == null ? ffi.nullptr : api2wire_box_autoadd_opening_fee_params(raw);
+  }
+
+  @protected
   ffi.Pointer<ffi.Uint64> api2wire_opt_box_autoadd_u64(int? raw) {
     return raw == null ? ffi.nullptr : api2wire_box_autoadd_u64(raw);
+  }
+
+  @protected
+  ffi.Pointer<wire_uint_8_list> api2wire_opt_uint_8_list(Uint8List? raw) {
+    return raw == null ? ffi.nullptr : api2wire_uint_8_list(raw);
   }
 
   @protected
@@ -2889,6 +3061,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
 // Section: finalizer
 
 // Section: api_fill_to_wire
+
+  void _api_fill_to_wire_box_autoadd_buy_bitcoin_request(
+      BuyBitcoinRequest apiObj, ffi.Pointer<wire_BuyBitcoinRequest> wireObj) {
+    _api_fill_to_wire_buy_bitcoin_request(apiObj, wireObj.ref);
+  }
 
   void _api_fill_to_wire_box_autoadd_check_message_request(
       CheckMessageRequest apiObj, ffi.Pointer<wire_CheckMessageRequest> wireObj) {
@@ -2928,9 +3105,29 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     _api_fill_to_wire_node_config(apiObj, wireObj.ref);
   }
 
+  void _api_fill_to_wire_box_autoadd_opening_fee_params(
+      OpeningFeeParams apiObj, ffi.Pointer<wire_OpeningFeeParams> wireObj) {
+    _api_fill_to_wire_opening_fee_params(apiObj, wireObj.ref);
+  }
+
+  void _api_fill_to_wire_box_autoadd_receive_onchain_request(
+      ReceiveOnchainRequest apiObj, ffi.Pointer<wire_ReceiveOnchainRequest> wireObj) {
+    _api_fill_to_wire_receive_onchain_request(apiObj, wireObj.ref);
+  }
+
+  void _api_fill_to_wire_box_autoadd_receive_payment_request(
+      ReceivePaymentRequest apiObj, ffi.Pointer<wire_ReceivePaymentRequest> wireObj) {
+    _api_fill_to_wire_receive_payment_request(apiObj, wireObj.ref);
+  }
+
   void _api_fill_to_wire_box_autoadd_sign_message_request(
       SignMessageRequest apiObj, ffi.Pointer<wire_SignMessageRequest> wireObj) {
     _api_fill_to_wire_sign_message_request(apiObj, wireObj.ref);
+  }
+
+  void _api_fill_to_wire_buy_bitcoin_request(BuyBitcoinRequest apiObj, wire_BuyBitcoinRequest wireObj) {
+    wireObj.provider = api2wire_buy_bitcoin_provider(apiObj.provider);
+    wireObj.opening_fee_params = api2wire_opt_box_autoadd_opening_fee_params(apiObj.openingFeeParams);
   }
 
   void _api_fill_to_wire_check_message_request(CheckMessageRequest apiObj, wire_CheckMessageRequest wireObj) {
@@ -3001,9 +3198,36 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     }
   }
 
+  void _api_fill_to_wire_opening_fee_params(OpeningFeeParams apiObj, wire_OpeningFeeParams wireObj) {
+    wireObj.min_msat = api2wire_u64(apiObj.minMsat);
+    wireObj.proportional = api2wire_u32(apiObj.proportional);
+    wireObj.valid_until = api2wire_String(apiObj.validUntil);
+    wireObj.max_idle_time = api2wire_u32(apiObj.maxIdleTime);
+    wireObj.max_client_to_self_delay = api2wire_u32(apiObj.maxClientToSelfDelay);
+    wireObj.promise = api2wire_String(apiObj.promise);
+  }
+
   void _api_fill_to_wire_opt_box_autoadd_greenlight_credentials(
       GreenlightCredentials? apiObj, ffi.Pointer<wire_GreenlightCredentials> wireObj) {
     if (apiObj != null) _api_fill_to_wire_box_autoadd_greenlight_credentials(apiObj, wireObj);
+  }
+
+  void _api_fill_to_wire_opt_box_autoadd_opening_fee_params(
+      OpeningFeeParams? apiObj, ffi.Pointer<wire_OpeningFeeParams> wireObj) {
+    if (apiObj != null) _api_fill_to_wire_box_autoadd_opening_fee_params(apiObj, wireObj);
+  }
+
+  void _api_fill_to_wire_receive_onchain_request(
+      ReceiveOnchainRequest apiObj, wire_ReceiveOnchainRequest wireObj) {
+    wireObj.opening_fee_params = api2wire_opt_box_autoadd_opening_fee_params(apiObj.openingFeeParams);
+  }
+
+  void _api_fill_to_wire_receive_payment_request(
+      ReceivePaymentRequest apiObj, wire_ReceivePaymentRequest wireObj) {
+    wireObj.amount_sats = api2wire_u64(apiObj.amountSats);
+    wireObj.description = api2wire_String(apiObj.description);
+    wireObj.preimage = api2wire_opt_uint_8_list(apiObj.preimage);
+    wireObj.opening_fee_params = api2wire_opt_box_autoadd_opening_fee_params(apiObj.openingFeeParams);
   }
 
   void _api_fill_to_wire_sign_message_request(SignMessageRequest apiObj, wire_SignMessageRequest wireObj) {
@@ -3450,21 +3674,19 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
 
   void wire_receive_payment(
     int port_,
-    int amount_sats,
-    ffi.Pointer<wire_uint_8_list> description,
+    ffi.Pointer<wire_ReceivePaymentRequest> req_data,
   ) {
     return _wire_receive_payment(
       port_,
-      amount_sats,
-      description,
+      req_data,
     );
   }
 
   late final _wire_receive_paymentPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Uint64, ffi.Pointer<wire_uint_8_list>)>>(
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_ReceivePaymentRequest>)>>(
           'wire_receive_payment');
   late final _wire_receive_payment =
-      _wire_receive_paymentPtr.asFunction<void Function(int, int, ffi.Pointer<wire_uint_8_list>)>();
+      _wire_receive_paymentPtr.asFunction<void Function(int, ffi.Pointer<wire_ReceivePaymentRequest>)>();
 
   void wire_lnurl_pay(
     int port_,
@@ -3573,29 +3795,35 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
 
   void wire_receive_onchain(
     int port_,
+    ffi.Pointer<wire_ReceiveOnchainRequest> req_data,
   ) {
     return _wire_receive_onchain(
       port_,
+      req_data,
     );
   }
 
   late final _wire_receive_onchainPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_receive_onchain');
-  late final _wire_receive_onchain = _wire_receive_onchainPtr.asFunction<void Function(int)>();
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_ReceiveOnchainRequest>)>>(
+          'wire_receive_onchain');
+  late final _wire_receive_onchain =
+      _wire_receive_onchainPtr.asFunction<void Function(int, ffi.Pointer<wire_ReceiveOnchainRequest>)>();
 
   void wire_buy_bitcoin(
     int port_,
-    int provider,
+    ffi.Pointer<wire_BuyBitcoinRequest> req_data,
   ) {
     return _wire_buy_bitcoin(
       port_,
-      provider,
+      req_data,
     );
   }
 
   late final _wire_buy_bitcoinPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Int32)>>('wire_buy_bitcoin');
-  late final _wire_buy_bitcoin = _wire_buy_bitcoinPtr.asFunction<void Function(int, int)>();
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_BuyBitcoinRequest>)>>(
+          'wire_buy_bitcoin');
+  late final _wire_buy_bitcoin =
+      _wire_buy_bitcoinPtr.asFunction<void Function(int, ffi.Pointer<wire_BuyBitcoinRequest>)>();
 
   void wire_sweep(
     int port_,
@@ -3714,6 +3942,16 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_execute_command =
       _wire_execute_commandPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
+  ffi.Pointer<wire_BuyBitcoinRequest> new_box_autoadd_buy_bitcoin_request_0() {
+    return _new_box_autoadd_buy_bitcoin_request_0();
+  }
+
+  late final _new_box_autoadd_buy_bitcoin_request_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_BuyBitcoinRequest> Function()>>(
+          'new_box_autoadd_buy_bitcoin_request_0');
+  late final _new_box_autoadd_buy_bitcoin_request_0 =
+      _new_box_autoadd_buy_bitcoin_request_0Ptr.asFunction<ffi.Pointer<wire_BuyBitcoinRequest> Function()>();
+
   ffi.Pointer<wire_CheckMessageRequest> new_box_autoadd_check_message_request_0() {
     return _new_box_autoadd_check_message_request_0();
   }
@@ -3805,6 +4043,36 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
       _lookup<ffi.NativeFunction<ffi.Pointer<wire_NodeConfig> Function()>>('new_box_autoadd_node_config_0');
   late final _new_box_autoadd_node_config_0 =
       _new_box_autoadd_node_config_0Ptr.asFunction<ffi.Pointer<wire_NodeConfig> Function()>();
+
+  ffi.Pointer<wire_OpeningFeeParams> new_box_autoadd_opening_fee_params_0() {
+    return _new_box_autoadd_opening_fee_params_0();
+  }
+
+  late final _new_box_autoadd_opening_fee_params_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_OpeningFeeParams> Function()>>(
+          'new_box_autoadd_opening_fee_params_0');
+  late final _new_box_autoadd_opening_fee_params_0 =
+      _new_box_autoadd_opening_fee_params_0Ptr.asFunction<ffi.Pointer<wire_OpeningFeeParams> Function()>();
+
+  ffi.Pointer<wire_ReceiveOnchainRequest> new_box_autoadd_receive_onchain_request_0() {
+    return _new_box_autoadd_receive_onchain_request_0();
+  }
+
+  late final _new_box_autoadd_receive_onchain_request_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_ReceiveOnchainRequest> Function()>>(
+          'new_box_autoadd_receive_onchain_request_0');
+  late final _new_box_autoadd_receive_onchain_request_0 = _new_box_autoadd_receive_onchain_request_0Ptr
+      .asFunction<ffi.Pointer<wire_ReceiveOnchainRequest> Function()>();
+
+  ffi.Pointer<wire_ReceivePaymentRequest> new_box_autoadd_receive_payment_request_0() {
+    return _new_box_autoadd_receive_payment_request_0();
+  }
+
+  late final _new_box_autoadd_receive_payment_request_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_ReceivePaymentRequest> Function()>>(
+          'new_box_autoadd_receive_payment_request_0');
+  late final _new_box_autoadd_receive_payment_request_0 = _new_box_autoadd_receive_payment_request_0Ptr
+      .asFunction<ffi.Pointer<wire_ReceivePaymentRequest> Function()>();
 
   ffi.Pointer<wire_SignMessageRequest> new_box_autoadd_sign_message_request_0() {
     return _new_box_autoadd_sign_message_request_0();
@@ -3935,6 +4203,35 @@ class wire_CheckMessageRequest extends ffi.Struct {
   external ffi.Pointer<wire_uint_8_list> signature;
 }
 
+class wire_OpeningFeeParams extends ffi.Struct {
+  @ffi.Uint64()
+  external int min_msat;
+
+  @ffi.Uint32()
+  external int proportional;
+
+  external ffi.Pointer<wire_uint_8_list> valid_until;
+
+  @ffi.Uint32()
+  external int max_idle_time;
+
+  @ffi.Uint32()
+  external int max_client_to_self_delay;
+
+  external ffi.Pointer<wire_uint_8_list> promise;
+}
+
+class wire_ReceivePaymentRequest extends ffi.Struct {
+  @ffi.Uint64()
+  external int amount_sats;
+
+  external ffi.Pointer<wire_uint_8_list> description;
+
+  external ffi.Pointer<wire_uint_8_list> preimage;
+
+  external ffi.Pointer<wire_OpeningFeeParams> opening_fee_params;
+}
+
 class wire_LnUrlPayRequestData extends ffi.Struct {
   external ffi.Pointer<wire_uint_8_list> callback;
 
@@ -3976,6 +4273,17 @@ class wire_LnUrlAuthRequestData extends ffi.Struct {
   external ffi.Pointer<wire_uint_8_list> domain;
 
   external ffi.Pointer<wire_uint_8_list> url;
+}
+
+class wire_ReceiveOnchainRequest extends ffi.Struct {
+  external ffi.Pointer<wire_OpeningFeeParams> opening_fee_params;
+}
+
+class wire_BuyBitcoinRequest extends ffi.Struct {
+  @ffi.Int32()
+  external int provider;
+
+  external ffi.Pointer<wire_OpeningFeeParams> opening_fee_params;
 }
 
 typedef DartPostCObjectFnType

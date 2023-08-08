@@ -9,6 +9,7 @@ use bitcoin::secp256k1::ecdsa::RecoverableSignature;
 use bitcoin::secp256k1::{KeyPair, Message, PublicKey, Secp256k1, SecretKey};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::Network;
+use chrono::{SecondsFormat, Utc};
 use gl_client::pb::amount::Unit;
 use gl_client::pb::{Amount, Invoice, Peer, WithdrawResponse};
 use lightning::ln::PaymentSecret;
@@ -30,8 +31,9 @@ use crate::lsp::LspInformation;
 use crate::models::{FiatAPI, LspAPI, NodeAPI, NodeState, Payment, Swap, SwapperAPI, SyncResponse};
 use crate::moonpay::MoonPayApi;
 use crate::swap::create_submarine_swap_script;
-use crate::SwapInfo;
 use crate::{parse_invoice, Config, LNInvoice, PaymentResponse, RouteHint};
+use crate::{OpeningFeeParams, OpeningFeeParamsMenu};
+use crate::{ReceivePaymentRequest, SwapInfo};
 
 pub struct MockBackupTransport {
     pub num_pushed: std::sync::Mutex<u32>,
@@ -225,11 +227,13 @@ impl Default for MockReceiver {
 impl Receiver for MockReceiver {
     async fn receive_payment(
         &self,
-        _amount_sats: u64,
-        _description: String,
-        _preimage: Option<Vec<u8>>,
-    ) -> SdkResult<crate::LNInvoice> {
-        Ok(parse_invoice(&self.bolt11)?)
+        _req_data: ReceivePaymentRequest,
+    ) -> SdkResult<crate::ReceivePaymentResponse> {
+        Ok(crate::ReceivePaymentResponse {
+            ln_invoice: parse_invoice(&self.bolt11)?,
+            opening_fee_params: _req_data.opening_fee_params,
+            opening_fee_msat: None,
+        })
     }
 }
 
@@ -480,7 +484,7 @@ impl MockBreezServer {
 impl LspAPI for MockBreezServer {
     async fn list_lsps(&self, _node_pubkey: String) -> Result<Vec<LspInformation>> {
         Ok(vec![LspInformation {
-            id: "1".to_string(),
+            id: self.lsp_id(),
             name: "test lsp".to_string(),
             widget_url: "".to_string(),
             pubkey: self.lsp_pub_key(),
@@ -491,10 +495,13 @@ impl LspAPI for MockBreezServer {
             fee_rate: 1.0,
             time_lock_delta: 32,
             min_htlc_msat: 1000,
-            channel_fee_permyriad: 1000,
             lsp_pubkey: hex::decode(self.lsp_pub_key()).unwrap(),
-            max_inactive_duration: 3600,
-            channel_minimum_fee_msat: 1,
+            // Initialize menu with one Fee Param that is valid for >48h
+            // This way, it can be used in both kinds of tests (those that need the cheapest fee,
+            // as well as those with the longest valid fee)
+            opening_fee_params_list: OpeningFeeParamsMenu::try_from(vec![get_test_ofp_48h(
+                10, 12,
+            )])?,
         }])
     }
 
@@ -642,4 +649,47 @@ fn sign_invoice(invoice: RawInvoice) -> String {
         })
         .unwrap()
         .to_string()
+}
+
+/// [OpeningFeeParams] that are valid for more than 48h
+pub(crate) fn get_test_ofp_48h(min_msat: u64, proportional: u32) -> crate::grpc::OpeningFeeParams {
+    get_test_ofp_generic(min_msat, proportional, true, chrono::Duration::days(3))
+}
+
+/// [OpeningFeeParams] with 1 minute in the future or the past
+pub(crate) fn get_test_ofp(
+    min_msat: u64,
+    proportional: u32,
+    future_or_past: bool,
+) -> crate::grpc::OpeningFeeParams {
+    get_test_ofp_generic(
+        min_msat,
+        proportional,
+        future_or_past,
+        chrono::Duration::seconds(60),
+    )
+}
+
+pub(crate) fn get_test_ofp_generic(
+    min_msat: u64,
+    proportional: u32,
+    future_or_past: bool,
+    duration: chrono::Duration,
+) -> crate::grpc::OpeningFeeParams {
+    let now = Utc::now();
+    let date_time = match future_or_past {
+        true => now.checked_add_signed(duration).unwrap(),
+        false => now.checked_sub_signed(duration).unwrap(),
+    };
+    let formatted = date_time.to_rfc3339_opts(SecondsFormat::Millis, true);
+
+    OpeningFeeParams {
+        min_msat,
+        proportional,
+        valid_until: formatted,
+        max_idle_time: 0,
+        max_client_to_self_delay: 0,
+        promise: "".to_string(),
+    }
+    .into()
 }

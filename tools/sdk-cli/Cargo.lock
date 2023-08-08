@@ -418,6 +418,7 @@ dependencies = [
  "bip21",
  "bitcoin",
  "cbc",
+ "chrono",
  "const_format",
  "ecies",
  "flutter_rust_bridge",

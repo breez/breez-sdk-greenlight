@@ -1,20 +1,3 @@
-use std::cmp::max;
-use std::str::FromStr;
-use std::sync::Arc;
-use std::time::{Instant, SystemTime, UNIX_EPOCH};
-
-use anyhow::{anyhow, Result};
-use bip39::*;
-use bitcoin::hashes::{sha256, Hash};
-use bitcoin::util::bip32::ChildNumber;
-use tokio::sync::{mpsc, watch, Mutex};
-use tokio::time::{sleep, Duration};
-use tonic::codegen::InterceptedService;
-use tonic::metadata::{Ascii, MetadataValue};
-use tonic::service::Interceptor;
-use tonic::transport::{Channel, Uri};
-use tonic::{Request, Status};
-
 use crate::backup::{BackupRequest, BackupTransport, BackupWatcher};
 use crate::boltzswap::BoltzApi;
 use crate::chain::{ChainService, MempoolSpace, RecommendedFees};
@@ -47,7 +30,23 @@ use crate::reverseswap::BTCSendSwap;
 use crate::swap::BTCReceiveSwap;
 use crate::BuyBitcoinProvider::Moonpay;
 use crate::*;
-use crate::{BuyBitcoinProvider, LnUrlAuthRequestData, LnUrlWithdrawRequestData, PaymentResponse};
+use crate::{LnUrlAuthRequestData, LnUrlWithdrawRequestData, PaymentResponse};
+use anyhow::{anyhow, Result};
+use bip39::*;
+use bitcoin::hashes::hex::ToHex;
+use bitcoin::hashes::{sha256, Hash};
+use bitcoin::util::bip32::ChildNumber;
+use serde_json::json;
+use std::str::FromStr;
+use std::sync::Arc;
+use std::time::{Instant, SystemTime, UNIX_EPOCH};
+use tokio::sync::{mpsc, watch, Mutex};
+use tokio::time::{sleep, Duration};
+use tonic::codegen::InterceptedService;
+use tonic::metadata::{Ascii, MetadataValue};
+use tonic::service::Interceptor;
+use tonic::transport::{Channel, Uri};
+use tonic::{Request, Status};
 
 /// Trait that can be used to react to various [BreezEvent]s emitted by the SDK.
 pub trait EventListener: Send + Sync {
@@ -327,9 +326,15 @@ impl BreezServices {
         description: Option<String>,
     ) -> Result<LnUrlCallbackStatus> {
         let invoice = self
-            .receive_payment(amount_sats, description.unwrap_or_default())
+            .receive_payment(ReceivePaymentRequest {
+                amount_sats,
+                description: description.unwrap_or_default(),
+                preimage: None,
+                opening_fee_params: None,
+            })
             .await
-            .map_err(|_| anyhow!("Failed to receive payment"))?; // TODO Temp conversion
+            .map_err(|_| anyhow!("Failed to receive payment"))?
+            .ln_invoice;
         validate_lnurl_withdraw(req_data, invoice).await
     }
 
@@ -353,12 +358,9 @@ impl BreezServices {
     /// * `amount_sats` - The amount to receive in satoshis
     pub async fn receive_payment(
         &self,
-        amount_sats: u64,
-        description: String,
-    ) -> SdkResult<LNInvoice> {
-        self.payment_receiver
-            .receive_payment(amount_sats, description, None)
-            .await
+        req_data: ReceivePaymentRequest,
+    ) -> SdkResult<ReceivePaymentResponse> {
+        self.payment_receiver.receive_payment(req_data).await
     }
 
     /// Retrieve the node state from the persistent storage.
@@ -498,21 +500,28 @@ impl BreezServices {
     /// Onchain receive swap API
     ///
     /// Create a [SwapInfo] that represents the details required to start a swap.
-    /// Since we only allow one in-progress swap this method will return error if there is currenly
+    /// Since we only allow one in-progress swap this method will return error if there is currently
     /// a swap waiting for confirmation to be redeemed and by that complete the swap.
     /// In such case the [BreezServices::in_progress_swap] can be used to query the live swap status.
     ///
+    /// The channel opening fees are available at [SwapInfo::channel_opening_fees].
+    ///
     /// See [SwapInfo] for details.
-    pub async fn receive_onchain(&self) -> Result<SwapInfo> {
-        let in_progress = self.in_progress_swap().await?;
-        if in_progress.is_some() {
+    pub async fn receive_onchain(&self, req: ReceiveOnchainRequest) -> Result<SwapInfo> {
+        if let Some(in_progress) = self.in_progress_swap().await? {
             return Err(anyhow!(format!(
                   "Swap in progress was detected for address {}.Use in_progress_swap method to get the current swap state",
-                  in_progress.unwrap().bitcoin_address
+                  in_progress.bitcoin_address
               )));
         }
-
-        let swap_info = self.btc_receive_swapper.create_swap_address().await?;
+        let channel_opening_fees = self
+            .lsp_info()
+            .await?
+            .choose_channel_opening_fees(req.opening_fee_params, DynamicFeeType::Longest)?;
+        let swap_info = self
+            .btc_receive_swapper
+            .create_swap_address(channel_opening_fees)
+            .await?;
         Ok(swap_info)
     }
 
@@ -738,15 +747,20 @@ impl BreezServices {
     }
 
     /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency
-    pub async fn buy_bitcoin(&self, provider: BuyBitcoinProvider) -> Result<String> {
-        let url = match provider {
-            Moonpay => {
-                self.moonpay_api
-                    .buy_bitcoin_url(&self.receive_onchain().await?)
-                    .await?
-            }
+    pub async fn buy_bitcoin(&self, req: BuyBitcoinRequest) -> SdkResult<BuyBitcoinResponse> {
+        let swap_info = self
+            .receive_onchain(ReceiveOnchainRequest {
+                opening_fee_params: req.opening_fee_params,
+            })
+            .await?;
+        let url = match req.provider {
+            Moonpay => self.moonpay_api.buy_bitcoin_url(&swap_info).await?,
         };
-        Ok(url)
+
+        Ok(BuyBitcoinResponse {
+            url,
+            opening_fee_params: swap_info.channel_opening_fees,
+        })
     }
 
     /// Starts the BreezServices background threads.
@@ -1170,6 +1184,7 @@ impl BreezServicesBuilder {
         }
 
         let payment_receiver = Arc::new(PaymentReceiver {
+            config: self.config.clone(),
             node_api: unwrapped_node_api.clone(),
             lsp: breez_server.clone(),
             persister: persister.clone(),
@@ -1303,13 +1318,12 @@ pub fn mnemonic_to_seed(phrase: String) -> Result<Vec<u8>> {
 pub trait Receiver: Send + Sync {
     async fn receive_payment(
         &self,
-        amount_sats: u64,
-        description: String,
-        preimage: Option<Vec<u8>>,
-    ) -> SdkResult<LNInvoice>;
+        req_data: ReceivePaymentRequest,
+    ) -> SdkResult<ReceivePaymentResponse>;
 }
 
 pub(crate) struct PaymentReceiver {
+    config: Config,
     node_api: Arc<dyn NodeAPI>,
     lsp: Arc<dyn LspAPI>,
     persister: Arc<SqliteStorage>,
@@ -1319,10 +1333,8 @@ pub(crate) struct PaymentReceiver {
 impl Receiver for PaymentReceiver {
     async fn receive_payment(
         &self,
-        amount_sats: u64,
-        description: String,
-        preimage: Option<Vec<u8>>,
-    ) -> SdkResult<LNInvoice> {
+        req_data: ReceivePaymentRequest,
+    ) -> SdkResult<ReceivePaymentResponse> {
         self.node_api.start().await?;
         let lsp_info = get_lsp(self.persister.clone(), self.lsp.clone()).await?;
         let node_state = self
@@ -1331,36 +1343,41 @@ impl Receiver for PaymentReceiver {
             .ok_or("Failed to retrieve node state")
             .map_err(|err| anyhow!(err))?;
 
+        let amount_sats = req_data.amount_sats;
         let amount_msats = amount_sats * 1000;
 
         let mut short_channel_id = parse_short_channel_id("1x0x0")?;
         let mut destination_invoice_amount_sats = amount_sats;
+
+        let mut channel_opening_fee_params = None;
+        let mut channel_fees_msat = None;
 
         // check if we need to open channel
         let open_channel_needed = node_state.inbound_liquidity_msats < amount_msats;
         if open_channel_needed {
             info!("We need to open a channel");
 
-            // We need to open channel so we are calculating the fees for the LSP
-            // We multiply and dividing by 1000 as a mean to round to satoshis.
-            let channel_fees_msat_calculated =
-                amount_msats * lsp_info.channel_fee_permyriad as u64 / 10_000 / 1_000 * 1_000;
-            let channel_fees_msat = max(
-                channel_fees_msat_calculated,
-                lsp_info.channel_minimum_fee_msat as u64,
-            );
+            // we need to open channel so we are calculating the fees for the LSP (coming either from the user, or from the LSP)
+            let ofp = lsp_info.choose_channel_opening_fees(
+                req_data.opening_fee_params,
+                DynamicFeeType::Cheapest,
+            )?;
+            channel_opening_fee_params = Some(ofp.clone());
+            channel_fees_msat = Some(ofp.get_channel_fees_msat_for(amount_msats));
+            if let Some(channel_fees_msat) = channel_fees_msat {
+                info!("zero-conf fee calculation option: lsp fee rate (proportional): {}:  (minimum {}), total fees for channel: {}",
+                    ofp.proportional, ofp.min_msat, channel_fees_msat);
 
-            if amount_msats < channel_fees_msat + 1000 {
-                return Err(SdkError::ReceivePaymentFailed {
-                    err: format!(
-                        "requestPayment: Amount should be more than the minimum fees {} sats",
-                        lsp_info.channel_minimum_fee_msat / 1000
-                    ),
-                });
+                if amount_msats < channel_fees_msat + 1000 {
+                    return Err(SdkError::ReceivePaymentFailed {
+                        err: format!(
+                            "requestPayment: Amount should be more than the minimum fees {channel_fees_msat} msat, but is {amount_msats} msat"
+                        ),
+                    });
+                }
+                // remove the fees from the amount to get the small amount on the current node invoice.
+                destination_invoice_amount_sats = amount_sats - channel_fees_msat / 1000;
             }
-
-            // remove the fees from the amount to get the small amount on the current node invoice.
-            destination_invoice_amount_sats = amount_sats - channel_fees_msat / 1000;
         } else {
             // not opening a channel so we need to get the real channel id into the routing hints
             info!("Finding channel ID for routing hint");
@@ -1370,18 +1387,16 @@ impl Receiver for PaymentReceiver {
                         .channels
                         .iter()
                         .find(|&c| c.state == "CHANNELD_NORMAL")
-                        .ok_or("No open channel found")
-                        .map_err(|err| anyhow!(err))?;
+                        .ok_or_else(|| SdkError::ReceivePaymentFailed {
+                            err: "No open channel found".into(),
+                        })?;
                     let hint = match active_channel.clone().alias {
                         Some(aliases) => aliases.remote,
                         _ => active_channel.clone().short_channel_id,
                     };
 
                     short_channel_id = parse_short_channel_id(&hint)?;
-                    info!(
-                        "Found channel ID: {} {:?}",
-                        short_channel_id, active_channel
-                    );
+                    info!("Found channel ID: {short_channel_id} {active_channel:?}");
                     break;
                 }
             }
@@ -1390,7 +1405,11 @@ impl Receiver for PaymentReceiver {
         info!("Creating invoice on NodeAPI");
         let invoice = &self
             .node_api
-            .create_invoice(destination_invoice_amount_sats, description, preimage)
+            .create_invoice(
+                destination_invoice_amount_sats,
+                req_data.description,
+                req_data.preimage,
+            )
             .await?;
         info!("Invoice created {}", invoice.bolt11);
 
@@ -1436,8 +1455,19 @@ impl Receiver for PaymentReceiver {
         parsed_invoice = parse_invoice(&signed_invoice_with_hint)?;
 
         // register the payment at the lsp if needed
-        if destination_invoice_amount_sats < amount_sats {
+        if open_channel_needed {
             info!("Registering payment with LSP");
+
+            if channel_opening_fee_params.is_none() {
+                return Err(SdkError::ReceivePaymentFailed {
+                    err: "We need to open a channel, but no channel opening fee params found"
+                        .into(),
+                });
+            }
+
+            let api_key = self.config.api_key.clone().unwrap_or_default();
+            let api_key_hash = sha256::Hash::hash(api_key.as_bytes()).to_hex();
+
             self.lsp
                 .register_payment(
                     lsp_info.id.clone(),
@@ -1456,6 +1486,8 @@ impl Receiver for PaymentReceiver {
                         )?,
                         incoming_amount_msat: amount_msats as i64,
                         outgoing_amount_msat: (destination_invoice_amount_sats * 1000) as i64,
+                        tag: json!({ "apiKeyHash": api_key_hash }).to_string(),
+                        opening_fee_params: channel_opening_fee_params.clone().map(Into::into),
                     },
                 )
                 .await?;
@@ -1466,7 +1498,11 @@ impl Receiver for PaymentReceiver {
         self.persister
             .insert_open_channel_payment_info(&parsed_invoice.payment_hash, amount_sats * 1000)?;
         // return the signed, converted invoice with hints
-        Ok(parsed_invoice)
+        Ok(ReceivePaymentResponse {
+            ln_invoice: parsed_invoice,
+            opening_fee_params: channel_opening_fee_params,
+            opening_fee_msat: channel_fees_msat,
+        })
     }
 }
 
@@ -1517,7 +1553,8 @@ pub(crate) mod tests {
     use crate::lnurl::pay::model::SuccessActionProcessed;
     use crate::models::{LnPaymentDetails, NodeState, Payment, PaymentDetails, PaymentTypeFilter};
     use crate::{
-        input_parser, parse_short_channel_id, test_utils::*, BuyBitcoinProvider, InputType,
+        input_parser, parse_short_channel_id, test_utils::*, BuyBitcoinProvider, BuyBitcoinRequest,
+        InputType, ReceivePaymentRequest,
     };
     use crate::{NodeAPI, PaymentType};
 
@@ -1653,13 +1690,20 @@ pub(crate) mod tests {
         persister.set_node_state(&dummy_node_state).unwrap();
 
         let receiver: Arc<dyn Receiver> = Arc::new(PaymentReceiver {
+            config,
             node_api,
             persister,
             lsp: breez_server.clone(),
         });
         let ln_invoice = receiver
-            .receive_payment(3000, "should populate lsp hints".to_string(), None)
-            .await?;
+            .receive_payment(ReceivePaymentRequest {
+                amount_sats: 3000,
+                description: "should populate lsp hints".to_string(),
+                preimage: None,
+                opening_fee_params: None,
+            })
+            .await?
+            .ln_invoice;
         assert_eq!(ln_invoice.routing_hints[0].hops.len(), 1);
         let lsp_hop = &ln_invoice.routing_hints[0].hops[0];
         assert_eq!(lsp_hop.src_node_id, breez_server.clone().lsp_pub_key());
@@ -1709,10 +1753,13 @@ pub(crate) mod tests {
     async fn test_buy_bitcoin_with_moonpay() -> Result<(), Box<dyn std::error::Error>> {
         let breez_services = breez_services().await?;
         breez_services.sync().await?;
-
         let moonpay_url = breez_services
-            .buy_bitcoin(BuyBitcoinProvider::Moonpay)
-            .await?;
+            .buy_bitcoin(BuyBitcoinRequest {
+                provider: BuyBitcoinProvider::Moonpay,
+                opening_fee_params: None,
+            })
+            .await?
+            .url;
         let parsed = Url::parse(&moonpay_url)?;
         let query_pairs = parsed.query_pairs().into_owned().collect::<HashMap<_, _>>();
 
@@ -1745,6 +1792,7 @@ pub(crate) mod tests {
         let persister = Arc::new(create_test_persister(test_config.clone()));
         persister.init()?;
         persister.insert_or_update_payments(&known_payments)?;
+        persister.set_lsp_id(MockBreezServer {}.lsp_id())?;
 
         let mut builder = BreezServicesBuilder::new(test_config.clone());
         let breez_services = builder

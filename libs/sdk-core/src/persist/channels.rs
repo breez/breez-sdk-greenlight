@@ -1,12 +1,10 @@
-use std::{
-    str::FromStr,
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::models::*;
 
 use super::db::SqliteStorage;
 use anyhow::Result;
+use std::str::FromStr;
 
 impl SqliteStorage {
     pub(crate) fn update_channels(&self, channels: &[Channel]) -> Result<()> {

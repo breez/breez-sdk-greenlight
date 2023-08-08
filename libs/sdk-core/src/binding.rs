@@ -31,8 +31,9 @@ use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, PaymentTypeFilter, SwapInfo};
 use crate::{
-    BackupStatus, BuyBitcoinProvider, CheckMessageRequest, CheckMessageResponse, EnvironmentType,
-    LnUrlCallbackStatus, NodeConfig, ReverseSwapInfo, ReverseSwapPairInfo, SignMessageRequest,
+    BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
+    EnvironmentType, LnUrlCallbackStatus, NodeConfig, ReceiveOnchainRequest, ReceivePaymentRequest,
+    ReceivePaymentResponse, ReverseSwapInfo, ReverseSwapPairInfo, SignMessageRequest,
     SignMessageResponse,
 };
 
@@ -228,13 +229,9 @@ pub fn send_spontaneous_payment(node_id: String, amount_sats: u64) -> Result<Pay
 }
 
 /// See [BreezServices::receive_payment]
-pub fn receive_payment(amount_sats: u64, description: String) -> Result<LNInvoice> {
-    block_on(async {
-        get_breez_services()?
-            .receive_payment(amount_sats, description.to_string())
-            .await
-    })
-    .map_err(anyhow::Error::new)
+pub fn receive_payment(req_data: ReceivePaymentRequest) -> Result<ReceivePaymentResponse> {
+    block_on(async { get_breez_services()?.receive_payment(req_data).await })
+        .map_err(anyhow::Error::new)
 }
 
 /*  LNURL API's */
@@ -304,13 +301,14 @@ pub fn send_onchain(
 }
 
 /// See [BreezServices::receive_onchain]
-pub fn receive_onchain() -> Result<SwapInfo> {
-    block_on(async { get_breez_services()?.receive_onchain().await })
+pub fn receive_onchain(req_data: ReceiveOnchainRequest) -> Result<SwapInfo> {
+    block_on(async { get_breez_services()?.receive_onchain(req_data).await })
 }
 
 /// See [BreezServices::buy_bitcoin]
-pub fn buy_bitcoin(provider: BuyBitcoinProvider) -> Result<String> {
-    block_on(async { get_breez_services()?.buy_bitcoin(provider).await })
+pub fn buy_bitcoin(req_data: BuyBitcoinRequest) -> Result<BuyBitcoinResponse> {
+    block_on(async { get_breez_services()?.buy_bitcoin(req_data).await })
+        .map_err(anyhow::Error::new)
 }
 
 /// See [BreezServices::sweep]

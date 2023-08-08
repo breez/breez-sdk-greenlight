@@ -6,6 +6,7 @@ use anyhow::{anyhow, Result};
 use rusqlite::types::{FromSql, FromSqlError, ToSql, ToSqlOutput};
 use rusqlite::OptionalExtension;
 use rusqlite::Row;
+
 use std::str::FromStr;
 
 impl SqliteStorage {

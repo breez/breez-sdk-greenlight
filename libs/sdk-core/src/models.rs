@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, ensure, Result};
 use bitcoin::blockdata::opcodes;
 use bitcoin::blockdata::script::Builder;
 use bitcoin::hashes::hex::{FromHex, ToHex};
@@ -8,21 +8,29 @@ use bitcoin::hashes::Hash;
 use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::{Address, Script};
-use gl_client::pb::{Invoice, Peer, WithdrawResponse};
+use chrono::{DateTime, Utc};
+use gl_client::pb::{Invoice, WithdrawResponse};
 use lightning_invoice::RawInvoice;
-use ripemd::{Digest, Ripemd160};
+use ripemd::Digest;
+use ripemd::Ripemd160;
+use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef};
+use rusqlite::ToSql;
 use serde::{Deserialize, Serialize};
-use strum_macros::{Display, EnumString};
+use std::cmp::max;
 use tokio::sync::mpsc;
 use tonic::Streaming;
 
+use gl_client::signer::model::greenlight::Peer;
+
 use crate::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::fiat::{FiatCurrency, Rate};
-use crate::grpc::{PaymentInformation, RegisterPaymentReply};
+use crate::grpc::{self, PaymentInformation, RegisterPaymentReply};
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lsp::LspInformation;
 use crate::models::Network::*;
-use crate::LnUrlErrorData;
+use crate::{LNInvoice, LnUrlErrorData};
+
+use strum_macros::{Display, EnumString};
 
 /// Different types of supported payments
 #[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
@@ -639,6 +647,196 @@ pub struct ClosedChannelPaymentDetails {
     pub funding_txid: String,
 }
 
+/// Represents a receive payment request.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ReceivePaymentRequest {
+    pub amount_sats: u64,
+    pub description: String,
+    pub preimage: Option<Vec<u8>>,
+    pub opening_fee_params: Option<OpeningFeeParams>,
+}
+
+/// Represents a receive payment response.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ReceivePaymentResponse {
+    pub ln_invoice: LNInvoice,
+    pub opening_fee_params: Option<OpeningFeeParams>,
+    pub opening_fee_msat: Option<u64>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ReceiveOnchainRequest {
+    pub opening_fee_params: Option<OpeningFeeParams>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct BuyBitcoinRequest {
+    pub provider: BuyBitcoinProvider,
+    pub opening_fee_params: Option<OpeningFeeParams>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct BuyBitcoinResponse {
+    pub url: String,
+    pub opening_fee_params: Option<OpeningFeeParams>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
+pub struct OpeningFeeParams {
+    pub min_msat: u64,
+    pub proportional: u32,
+    pub valid_until: String,
+    pub max_idle_time: u32,
+    pub max_client_to_self_delay: u32,
+    pub promise: String,
+}
+
+impl OpeningFeeParams {
+    /// Simple validation: checks if `valid_until` is a valid date
+    pub(crate) fn validate(&self) -> Result<()> {
+        self.valid_until_date().map(|_| ())
+    }
+
+    pub(crate) fn valid_until_date(&self) -> Result<DateTime<Utc>> {
+        DateTime::parse_from_rfc3339(&self.valid_until)
+            .map_err(|e| anyhow!(e))
+            .map(|d| d.with_timezone(&Utc))
+    }
+
+    pub(crate) fn get_channel_fees_msat_for(&self, amount_msats: u64) -> u64 {
+        let lsp_fee_msat = amount_msats * self.proportional as u64 / 1_000_000;
+        let lsp_fee_msat_rounded_to_sat = lsp_fee_msat / 1000 * 1000;
+
+        max(lsp_fee_msat_rounded_to_sat, self.min_msat)
+    }
+}
+
+impl From<OpeningFeeParams> for grpc::OpeningFeeParams {
+    fn from(ofp: OpeningFeeParams) -> Self {
+        Self {
+            min_msat: ofp.min_msat,
+            proportional: ofp.proportional,
+            valid_until: ofp.valid_until,
+            max_idle_time: ofp.max_idle_time,
+            max_client_to_self_delay: ofp.max_client_to_self_delay,
+            promise: ofp.promise,
+        }
+    }
+}
+
+impl From<grpc::OpeningFeeParams> for OpeningFeeParams {
+    fn from(gofp: grpc::OpeningFeeParams) -> Self {
+        Self {
+            min_msat: gofp.min_msat,
+            proportional: gofp.proportional,
+            valid_until: gofp.valid_until,
+            max_idle_time: gofp.max_idle_time,
+            max_client_to_self_delay: gofp.max_client_to_self_delay,
+            promise: gofp.promise,
+        }
+    }
+}
+
+impl FromSql for OpeningFeeParams {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        serde_json::from_str(value.as_str()?).map_err(|_| FromSqlError::InvalidType)
+    }
+}
+
+impl ToSql for OpeningFeeParams {
+    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
+        Ok(ToSqlOutput::from(
+            serde_json::to_string(&self).map_err(|_| FromSqlError::InvalidType)?,
+        ))
+    }
+}
+
+pub enum DynamicFeeType {
+    Cheapest,
+    Longest,
+}
+
+/// See [OpeningFeeParamsMenu::try_from]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OpeningFeeParamsMenu {
+    pub values: Vec<OpeningFeeParams>,
+}
+
+impl OpeningFeeParamsMenu {
+    /// Initializes and validates itself.
+    ///
+    /// This struct should not be persisted as such, because validation happens dynamically based on
+    /// the current time. At a later point in time, any previously-validated [OpeningFeeParamsMenu]
+    /// could be invalid. Therefore, the [OpeningFeeParamsMenu] should always be initialized on-the-fly.
+    pub fn try_from(values: Vec<grpc::OpeningFeeParams>) -> Result<Self> {
+        let temp = Self {
+            values: values
+                .into_iter()
+                .map(|ofp| ofp.into())
+                .collect::<Vec<OpeningFeeParams>>(),
+        };
+        temp.validate().map(|_| temp)
+    }
+
+    fn validate(&self) -> Result<()> {
+        // values must be in ascending order
+        let is_ordered = self.values.windows(2).all(|ofp| {
+            let larger_min_msat_fee = ofp[0].min_msat < ofp[1].min_msat;
+            let equal_min_msat_fee = ofp[0].min_msat == ofp[1].min_msat;
+
+            let larger_proportional = ofp[0].proportional < ofp[1].proportional;
+            let equal_proportional = ofp[0].proportional == ofp[1].proportional;
+
+            (larger_min_msat_fee && equal_proportional)
+                || (equal_min_msat_fee && larger_proportional)
+                || (larger_min_msat_fee && larger_proportional)
+        });
+        ensure!(is_ordered, "Validation failed: fee params are not ordered");
+
+        // Menu must not contain any item with `valid_until` in the past
+        let is_expired = self.values.iter().any(|ofp| match ofp.valid_until_date() {
+            Ok(valid_until) => Utc::now() > valid_until,
+            Err(_) => {
+                warn!("Failed to parse valid_until for OpeningFeeParams: {ofp:?}");
+                false
+            }
+        });
+        ensure!(!is_expired, "Validation failed: expired fee params found");
+
+        Ok(())
+    }
+
+    pub(crate) fn get_cheapest_opening_fee_params(&self) -> Result<OpeningFeeParams> {
+        self.values.first().cloned().ok_or(anyhow!(
+            "The LSP doesn't support opening new channels: Dynamic fees menu contains no values"
+        ))
+    }
+
+    pub(crate) fn get_48h_opening_fee_params(&self) -> Result<OpeningFeeParams> {
+        // Find the fee params that are valid for at least 48h
+        let now = Utc::now();
+        let duration_48h = chrono::Duration::hours(48);
+        let valid_min_48h: Vec<OpeningFeeParams> = self
+            .values
+            .iter()
+            .filter(|ofp| match ofp.valid_until_date() {
+                Ok(valid_until) => valid_until - now > duration_48h,
+                Err(_) => {
+                    warn!("Failed to parse valid_until for OpeningFeeParams: {ofp:?}");
+                    false
+                }
+            })
+            .cloned()
+            .collect();
+
+        // Of those, return the first, which is the cheapest
+        // (sorting order of fee params list was checked when the menu was initialized)
+        valid_min_48h.first().cloned().ok_or(anyhow!(
+            "The LSP doesn't support opening fees with a validity > 48 hours"
+        ))
+    }
+}
+
 /// Lightning channel
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Channel {
@@ -716,6 +914,7 @@ pub struct SwapInfo {
     pub min_allowed_deposit: i64,
     pub max_allowed_deposit: i64,
     pub last_redeem_error: Option<String>,
+    pub channel_opening_fees: Option<OpeningFeeParams>,
 }
 
 impl SwapInfo {
@@ -815,20 +1014,92 @@ impl FromStr for BuyBitcoinProvider {
 
 #[cfg(test)]
 mod tests {
+    use super::OpeningFeeParamsMenu;
+    use anyhow::Result;
     use prost::Message;
     use rand::random;
 
     use crate::grpc::PaymentInformation;
-    use crate::test_utils::rand_vec_u8;
+    use crate::test_utils::{get_test_ofp, rand_vec_u8};
+    use crate::OpeningFeeParams;
 
     #[test]
-    fn test_payment_information_ser_de() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_ofp_menu_validation() -> Result<()> {
+        // Menu with one entry is valid
+        OpeningFeeParamsMenu::try_from(vec![get_test_ofp(10, 12, true)])?;
+
+        // Menu with identical entries (same min_msat, same proportional) is invalid
+        assert!(OpeningFeeParamsMenu::try_from(vec![
+            get_test_ofp(10, 12, true),
+            get_test_ofp(10, 12, true),
+        ])
+        .is_err());
+
+        // Menu where 2nd item has larger min_fee_msat, same proportional is valid
+        OpeningFeeParamsMenu::try_from(vec![
+            get_test_ofp(10, 12, true),
+            get_test_ofp(12, 12, true),
+        ])?;
+
+        // Menu where 2nd item has same min_fee_msat, larger proportional is valid
+        OpeningFeeParamsMenu::try_from(vec![
+            get_test_ofp(10, 12, true),
+            get_test_ofp(10, 14, true),
+        ])?;
+
+        // Menu where 2nd item has larger min_fee_msat, larger proportional is valid
+        OpeningFeeParamsMenu::try_from(vec![
+            get_test_ofp(10, 12, true),
+            get_test_ofp(12, 14, true),
+        ])?;
+
+        // All other combinations of min_fee_msat / proportional are invalid
+        // same min_msat, same proportional
+        assert!(OpeningFeeParamsMenu::try_from(vec![
+            get_test_ofp(10, 12, true),
+            get_test_ofp(10, 12, true),
+        ])
+        .is_err());
+        // same min_msat, reverse-sorted proportional
+        assert!(OpeningFeeParamsMenu::try_from(vec![
+            get_test_ofp(10, 12, true),
+            get_test_ofp(10, 10, true),
+        ])
+        .is_err());
+        // reverse-sorted min_msat, same proportional
+        assert!(OpeningFeeParamsMenu::try_from(vec![
+            get_test_ofp(12, 10, true),
+            get_test_ofp(10, 10, true),
+        ])
+        .is_err());
+
+        // Sorted, but with one expired entry, is invalid
+        assert!(OpeningFeeParamsMenu::try_from(vec![
+            get_test_ofp(10, 10, true),
+            get_test_ofp(12, 12, false),
+        ])
+        .is_err());
+
+        // Sorted, but with all expired entries, is invalid (because it results in an empty list)
+        assert!(OpeningFeeParamsMenu::try_from(vec![
+            get_test_ofp(10, 10, false),
+            get_test_ofp(12, 12, false),
+        ])
+        .is_err());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_payment_information_ser_de() -> Result<()> {
         let dummy_payment_info = PaymentInformation {
             payment_hash: rand_vec_u8(10),
             payment_secret: rand_vec_u8(10),
             destination: rand_vec_u8(10),
             incoming_amount_msat: random(),
             outgoing_amount_msat: random(),
+            tag: "".to_string(),
+            opening_fee_params: None,
         };
 
         let mut buf = Vec::new();
@@ -840,5 +1111,12 @@ mod tests {
         assert_eq!(dummy_payment_info, decoded_payment_info);
 
         Ok(())
+    }
+
+    #[test]
+    fn test_dynamic_fee_valid_until_format() -> Result<()> {
+        let mut ofp: OpeningFeeParams = get_test_ofp(1, 1, true).into();
+        ofp.valid_until = "2023-08-03T00:30:35.117Z".to_string();
+        ofp.validate()
     }
 }
