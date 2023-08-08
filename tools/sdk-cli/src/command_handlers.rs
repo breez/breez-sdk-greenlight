@@ -4,7 +4,9 @@ use std::sync::Arc;
 use anyhow::{anyhow, Error, Result};
 use breez_sdk_core::InputType::{LnUrlAuth, LnUrlPay, LnUrlWithdraw};
 use breez_sdk_core::{
-    parse, BreezEvent, BreezServices, EventListener, GreenlightCredentials, PaymentTypeFilter,
+    parse, BreezEvent, BreezServices, BuyBitcoinRequest, CheckMessageRequest, EventListener,
+    GreenlightCredentials, PaymentTypeFilter, ReceiveOnchainRequest, ReceivePaymentRequest,
+    SignMessageRequest,
 };
 use breez_sdk_core::{Config, GreenlightNodeConfig, NodeConfig};
 use once_cell::sync::OnceCell;
@@ -101,13 +103,20 @@ pub(crate) async fn handle_command(
             .map(|res| serde_json::to_string_pretty(&res))?
             .map_err(|e| e.into()),
         Commands::ReceivePayment {
-            amount,
+            amount: amount_sats,
             description,
         } => {
-            let invoice = sdk()?.receive_payment(amount, description).await?;
-            let mut result = serde_json::to_string(&invoice)?;
+            let recv_payment_response = sdk()?
+                .receive_payment(ReceivePaymentRequest {
+                    amount_sats,
+                    description,
+                    preimage: None,
+                    opening_fee_params: None,
+                })
+                .await?;
+            let mut result = serde_json::to_string(&recv_payment_response)?;
             result.push('\n');
-            result.push_str(&build_qr_text(&invoice.bolt11));
+            result.push_str(&build_qr_text(&recv_payment_response.ln_invoice.bolt11));
             Ok(result)
         }
         Commands::SendOnchain {
@@ -200,9 +209,14 @@ pub(crate) async fn handle_command(
         Commands::RecommendedFees {} => {
             serde_json::to_string_pretty(&sdk()?.recommended_fees().await?).map_err(|e| e.into())
         }
-        Commands::ReceiveOnchain {} => {
-            serde_json::to_string_pretty(&sdk()?.receive_onchain().await?).map_err(|e| e.into())
-        }
+        Commands::ReceiveOnchain {} => serde_json::to_string_pretty(
+            &sdk()?
+                .receive_onchain(ReceiveOnchainRequest {
+                    opening_fee_params: None,
+                })
+                .await?,
+        )
+        .map_err(|e| e.into()),
         Commands::InProgressSwap {} => {
             serde_json::to_string_pretty(&sdk()?.in_progress_swap().await?).map_err(|e| e.into())
         }
@@ -218,6 +232,24 @@ pub(crate) async fn handle_command(
                 .refund(swap_address, to_address, sat_per_vbyte)
                 .await?;
             Ok(format!("Refund tx: {}", res))
+        }
+        Commands::SignMessage { message } => {
+            let req = SignMessageRequest { message };
+            let res = sdk()?.sign_message(req).await?;
+            Ok(format!("Message signature: {}", res.signature))
+        }
+        Commands::CheckMessage {
+            message,
+            pubkey,
+            signature,
+        } => {
+            let req = CheckMessageRequest {
+                message,
+                pubkey,
+                signature,
+            };
+            let res = sdk()?.check_message(req).await?;
+            Ok(format!("Message was signed by node: {}", res.is_valid))
         }
         Commands::LnurlPay { lnurl } => match parse(&lnurl).await? {
             LnUrlPay { data: pd } => {
@@ -292,12 +324,17 @@ pub(crate) async fn handle_command(
                 .map_err(|e| e.into())
         }
         Commands::BuyBitcoin { provider } => {
-            let res = sdk()?.buy_bitcoin(provider.clone()).await?;
-            Ok(format!("Here your {:?} url: {}", provider, res))
+            let res = sdk()?
+                .buy_bitcoin(BuyBitcoinRequest {
+                    provider: provider.clone(),
+                    opening_fee_params: None,
+                })
+                .await?;
+            Ok(format!("Here your {:?} url: {}", provider, res.url))
         }
         Commands::Backup {} => {
             sdk().unwrap().backup().await?;
-            Ok("Backup completed succesfully".into())
+            Ok("Backup completed successfully".into())
         }
     }
 }

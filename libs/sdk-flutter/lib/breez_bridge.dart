@@ -120,6 +120,22 @@ class BreezSDK {
     );
   }
 
+  /// Sign given message with the private key of the node id. Returns a zbase
+  /// encoded signature.
+  Future<SignMessageResponse> signMessage({
+    required SignMessageRequest request,
+  }) {
+    return _lnToolkit.signMessage(request: request);
+  }
+
+  /// Check whether given message was signed by the private key or the given
+  /// pubkey and the signature (zbase encoded) is valid.
+  Future<CheckMessageResponse> checkMessage({
+    required CheckMessageRequest request,
+  }) {
+    return _lnToolkit.checkMessage(request: request);
+  }
+
   /* LSP API's */
 
   /// List available lsps that can be selected by the user
@@ -233,13 +249,11 @@ class BreezSDK {
   ///
   /// * `amountSats` - The amount to receive in satoshis
   /// * `description` - The bolt11 payment request description
-  Future<LNInvoice> receivePayment({
-    required int amountSats,
-    required String description,
+  Future<ReceivePaymentResponse> receivePayment({
+    required ReceivePaymentRequest reqData,
   }) async =>
       await _lnToolkit.receivePayment(
-        amountSats: amountSats,
-        description: description,
+        reqData: reqData,
       );
 
   /* LNURL API's */
@@ -320,10 +334,16 @@ class BreezSDK {
       );
 
   /// Onchain receive swap API
-  Future<SwapInfo> receiveOnchain() async => await _lnToolkit.receiveOnchain();
+  Future<SwapInfo> receiveOnchain({
+    required ReceiveOnchainRequest reqData,
+  }) async =>
+      await _lnToolkit.receiveOnchain(reqData: reqData);
 
   /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency
-  Future<String> buyBitcoin(BuyBitcoinProvider provider) => _lnToolkit.buyBitcoin(provider: provider);
+  Future<BuyBitcoinResponse> buyBitcoin({
+    required BuyBitcoinRequest reqData,
+  }) =>
+      _lnToolkit.buyBitcoin(reqData: reqData);
 
   /// Withdraw on-chain funds in the wallet to an external btc address
   Future sweep({

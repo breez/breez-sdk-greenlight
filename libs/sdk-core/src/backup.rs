@@ -431,6 +431,7 @@ impl BackupWorker {
 
 #[cfg(test)]
 mod tests {
+    use crate::test_utils::get_test_ofp_48h;
     use crate::{
         backup::BackupRequest,
         persist::db::SqliteStorage,
@@ -760,6 +761,7 @@ mod tests {
             min_allowed_deposit: 0,
             max_allowed_deposit: 100,
             last_redeem_error: None,
+            channel_opening_fees: Some(get_test_ofp_48h(1, 1).into()),
         };
         persister.insert_swap(tested_swap_info).unwrap();
     }

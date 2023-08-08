@@ -111,6 +111,34 @@ class RNBreezSDK: RCTEventEmitter {
             rejectErr(err: SdkError.Generic(message:"Invalid config"), reject: reject)            
         }
     }
+
+    @objc(signMessage:resolver:rejecter:)
+    func signMessage(_ reqData:[String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        if let signMessageRequest = BreezSDKMapper.asSignMessageRequest(reqData: reqData) {
+            do {
+                let signMessageResponse = try getBreezServices().signMessage(request: signMessageRequest)                
+                resolve(BreezSDKMapper.dictionaryOf(signMessageResponse: signMessageResponse))
+            } catch let err {
+                rejectErr(err: err, reject: reject)      
+            }
+        } else {            
+            rejectErr(err: SdkError.Generic(message:"Invalid reqData"), reject: reject)
+        }
+    }
+
+    @objc(checkMessage:resolver:rejecter:)
+    func checkMessage(_ reqData:[String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        if let checkMessageRequest = BreezSDKMapper.asCheckMessageRequest(reqData: reqData) {
+            do {
+                let checkMessageResponse = try getBreezServices().checkMessage(request: checkMessageRequest)                
+                resolve(BreezSDKMapper.dictionaryOf(checkMessageResponse: checkMessageResponse))
+            } catch let err {
+                rejectErr(err: err, reject: reject)      
+            }
+        } else {            
+            rejectErr(err: SdkError.Generic(message:"Invalid reqData"), reject: reject)
+        }
+    }
     
     @objc(sync:rejecter:)
     func sync(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {

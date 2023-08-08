@@ -423,7 +423,15 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
          data BLOB NOT NULL,
          created_at TEXT DEFAULT CURRENT_TIMESTAMP
         ) STRICT;
-       "       
+       ",
+        // Swaps synchronization: Add sync table that stores the fees used in swaps
+        "
+        CREATE TABLE IF NOT EXISTS sync.swaps_fees (
+         bitcoin_address TEXT PRIMARY KEY NOT NULL,
+         created_at TEXT DEFAULT CURRENT_TIMESTAMP NOT NULL,
+         channel_opening_fees TEXT NOT NULL
+        ) STRICT;
+        ",
     ]
 }
 

@@ -7,16 +7,19 @@ use once_cell::sync::{Lazy, OnceCell};
 use breez_sdk_core::{
     error::*, mnemonic_to_seed as sdk_mnemonic_to_seed, parse as sdk_parse_input,
     parse_invoice as sdk_parse_invoice, AesSuccessActionDataDecrypted, BackupFailedData,
-    BackupStatus, BitcoinAddressData, BreezEvent, BreezServices, BuyBitcoinProvider, ChannelState,
+    BackupStatus, BitcoinAddressData, BreezEvent, BreezServices, BuyBitcoinProvider,
+    BuyBitcoinRequest, BuyBitcoinResponse, ChannelState, CheckMessageRequest, CheckMessageResponse,
     ClosedChannelPaymentDetails, Config, CurrencyInfo, EnvironmentType, EventListener,
     FeeratePreset, FiatCurrency, GreenlightCredentials, GreenlightNodeConfig, InputType,
     InvoicePaidDetails, LNInvoice, LnPaymentDetails, LnUrlAuthRequestData, LnUrlCallbackStatus,
     LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult, LnUrlWithdrawRequestData, LocaleOverrides,
     LocalizedName, LogEntry, LogStream, LspInformation, MessageSuccessActionData, MetadataItem,
-    Network, NodeConfig, NodeState, Payment, PaymentDetails, PaymentFailedData, PaymentType,
-    PaymentTypeFilter, Rate, RecommendedFees, ReverseSwapInfo, ReverseSwapPairInfo,
-    ReverseSwapStatus, RouteHint, RouteHintHop, SuccessActionProcessed, SwapInfo, SwapStatus,
-    Symbol, UnspentTransactionOutput, UrlSuccessActionData,
+    Network, NodeConfig, NodeState, OpeningFeeParams, OpeningFeeParamsMenu, Payment,
+    PaymentDetails, PaymentFailedData, PaymentType, PaymentTypeFilter, Rate, ReceiveOnchainRequest,
+    ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees, ReverseSwapInfo,
+    ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop, SignMessageRequest,
+    SignMessageResponse, SuccessActionProcessed, SwapInfo, SwapStatus, Symbol,
+    UnspentTransactionOutput, UrlSuccessActionData,
 };
 
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
@@ -113,15 +116,25 @@ impl BlockingBreezServices {
         .map_err(|e| e.into())
     }
 
-    pub fn receive_payment(&self, amount_sats: u64, description: String) -> SdkResult<LNInvoice> {
-        rt().block_on(
-            self.breez_services
-                .receive_payment(amount_sats, description),
-        )
+    pub fn receive_payment(
+        &self,
+        req_data: ReceivePaymentRequest,
+    ) -> SdkResult<ReceivePaymentResponse> {
+        rt().block_on(self.breez_services.receive_payment(req_data))
     }
 
     pub fn node_info(&self) -> SdkResult<NodeState> {
         self.breez_services.node_info()
+    }
+
+    pub fn sign_message(&self, request: SignMessageRequest) -> SdkResult<SignMessageResponse> {
+        rt().block_on(self.breez_services.sign_message(request))
+            .map_err(|e| e.into())
+    }
+
+    pub fn check_message(&self, request: CheckMessageRequest) -> SdkResult<CheckMessageResponse> {
+        rt().block_on(self.breez_services.check_message(request))
+            .map_err(|e| e.into())
     }
 
     pub fn backup_status(&self) -> SdkResult<BackupStatus> {
@@ -226,8 +239,8 @@ impl BlockingBreezServices {
     }
 
     /// Onchain receive swap API
-    pub fn receive_onchain(&self) -> SdkResult<SwapInfo> {
-        rt().block_on(self.breez_services.receive_onchain())
+    pub fn receive_onchain(&self, req: ReceiveOnchainRequest) -> SdkResult<SwapInfo> {
+        rt().block_on(self.breez_services.receive_onchain(req))
             .map_err(|e| e.into())
     }
 
@@ -297,9 +310,8 @@ impl BlockingBreezServices {
             .map_err(|e| e.into())
     }
 
-    pub fn buy_bitcoin(&self, provider: BuyBitcoinProvider) -> SdkResult<String> {
-        rt().block_on(self.breez_services.buy_bitcoin(provider))
-            .map_err(|e| e.into())
+    pub fn buy_bitcoin(&self, req: BuyBitcoinRequest) -> SdkResult<BuyBitcoinResponse> {
+        rt().block_on(self.breez_services.buy_bitcoin(req))
     }
 }
 

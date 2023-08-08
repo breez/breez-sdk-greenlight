@@ -96,6 +96,24 @@ dictionary NodeState {
     u64 inbound_liquidity_msats;    
 };
 
+dictionary SignMessageRequest {
+    string message;
+};
+
+dictionary SignMessageResponse {
+    string signature;
+};
+
+dictionary CheckMessageRequest {
+    string message;
+    string pubkey;
+    string signature;
+};
+
+dictionary CheckMessageResponse {
+    boolean is_valid;
+};
+
 enum PaymentTypeFilter {
     "Sent",
     "Received",
@@ -260,6 +278,46 @@ callback interface EventListener {
     void on_event(BreezEvent e);
 };
 
+dictionary OpeningFeeParams {
+    u64 min_msat;
+    u32 proportional;
+    string valid_until;
+    u32 max_idle_time;
+    u32 max_client_to_self_delay;
+    string promise;
+};
+
+dictionary ReceivePaymentRequest {
+    u64 amount_sats;
+    string description;
+    sequence<u8>? preimage;
+    OpeningFeeParams? opening_fee_params;
+};
+
+dictionary ReceivePaymentResponse {
+    LNInvoice ln_invoice;
+    OpeningFeeParams? opening_fee_params;
+    u64? opening_fee_msat;
+};
+
+dictionary ReceiveOnchainRequest {
+    OpeningFeeParams? opening_fee_params;
+};
+
+dictionary BuyBitcoinRequest {
+    BuyBitcoinProvider provider;
+    OpeningFeeParams? opening_fee_params;
+};
+
+dictionary BuyBitcoinResponse {
+    string url;
+    OpeningFeeParams? opening_fee_params;
+};
+
+dictionary OpeningFeeParamsMenu {
+    sequence<OpeningFeeParams> values;
+};
+
 dictionary LspInformation {
     string id;
     string name;
@@ -272,10 +330,8 @@ dictionary LspInformation {
     f64 fee_rate;
     u32 time_lock_delta;
     i64 min_htlc_msat;
-    i64 channel_fee_permyriad;
     sequence<u8> lsp_pubkey;
-    i64 max_inactive_duration;
-    i64 channel_minimum_fee_msat;
+    OpeningFeeParamsMenu opening_fee_params_list;
 };
 
 enum SwapStatus {
@@ -312,6 +368,7 @@ dictionary SwapInfo {
     i64 min_allowed_deposit;
     i64 max_allowed_deposit;
     string? last_redeem_error;
+    OpeningFeeParams? channel_opening_fees;
 };
 
 dictionary ReverseSwapPairInfo {
@@ -420,7 +477,7 @@ interface BlockingBreezServices {
    Payment send_spontaneous_payment(string node_id, u64 amount_sats);
 
    [Throws=SdkError]
-   LNInvoice receive_payment(u64 amount_sats, string description);
+   ReceivePaymentResponse receive_payment(ReceivePaymentRequest req_data);
 
    [Throws=SdkError]
    LnUrlPayResult pay_lnurl(LnUrlPayRequestData req_data, u64 amount_sats, string? comment);
@@ -433,6 +490,12 @@ interface BlockingBreezServices {
 
    [Throws=SdkError]
    NodeState node_info();
+
+   [Throws=SdkError]
+   SignMessageResponse sign_message(SignMessageRequest request);
+
+   [Throws=SdkError]
+   CheckMessageResponse check_message(CheckMessageRequest request);
 
    [Throws=SdkError]
    BackupStatus backup_status();
@@ -471,7 +534,7 @@ interface BlockingBreezServices {
    void close_lsp_channels();
 
    [Throws=SdkError]
-   SwapInfo receive_onchain();
+   SwapInfo receive_onchain(ReceiveOnchainRequest req);
 
    [Throws=SdkError]
    SwapInfo? in_progress_swap();
@@ -501,7 +564,7 @@ interface BlockingBreezServices {
    RecommendedFees recommended_fees();
 
    [Throws=SdkError]
-   string buy_bitcoin(BuyBitcoinProvider provider);
+   BuyBitcoinResponse buy_bitcoin(BuyBitcoinRequest req);
 };
 
 namespace breez_sdk {  

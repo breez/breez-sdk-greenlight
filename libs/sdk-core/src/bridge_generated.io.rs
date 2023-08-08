@@ -27,6 +27,16 @@ pub extern "C" fn wire_disconnect(port_: i64) {
 }
 
 #[no_mangle]
+pub extern "C" fn wire_sign_message(port_: i64, request: *mut wire_SignMessageRequest) {
+    wire_sign_message_impl(port_, request)
+}
+
+#[no_mangle]
+pub extern "C" fn wire_check_message(port_: i64, request: *mut wire_CheckMessageRequest) {
+    wire_check_message_impl(port_, request)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_mnemonic_to_seed(port_: i64, phrase: *mut wire_uint_8_list) {
     wire_mnemonic_to_seed_impl(port_, phrase)
 }
@@ -130,12 +140,8 @@ pub extern "C" fn wire_send_spontaneous_payment(
 }
 
 #[no_mangle]
-pub extern "C" fn wire_receive_payment(
-    port_: i64,
-    amount_sats: u64,
-    description: *mut wire_uint_8_list,
-) {
-    wire_receive_payment_impl(port_, amount_sats, description)
+pub extern "C" fn wire_receive_payment(port_: i64, req_data: *mut wire_ReceivePaymentRequest) {
+    wire_receive_payment_impl(port_, req_data)
 }
 
 #[no_mangle]
@@ -191,13 +197,13 @@ pub extern "C" fn wire_send_onchain(
 }
 
 #[no_mangle]
-pub extern "C" fn wire_receive_onchain(port_: i64) {
-    wire_receive_onchain_impl(port_)
+pub extern "C" fn wire_receive_onchain(port_: i64, req_data: *mut wire_ReceiveOnchainRequest) {
+    wire_receive_onchain_impl(port_, req_data)
 }
 
 #[no_mangle]
-pub extern "C" fn wire_buy_bitcoin(port_: i64, provider: i32) {
-    wire_buy_bitcoin_impl(port_, provider)
+pub extern "C" fn wire_buy_bitcoin(port_: i64, req_data: *mut wire_BuyBitcoinRequest) {
+    wire_buy_bitcoin_impl(port_, req_data)
 }
 
 #[no_mangle]
@@ -252,6 +258,16 @@ pub extern "C" fn wire_execute_command(port_: i64, command: *mut wire_uint_8_lis
 // Section: allocate functions
 
 #[no_mangle]
+pub extern "C" fn new_box_autoadd_buy_bitcoin_request_0() -> *mut wire_BuyBitcoinRequest {
+    support::new_leak_box_ptr(wire_BuyBitcoinRequest::new_with_null_ptr())
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_autoadd_check_message_request_0() -> *mut wire_CheckMessageRequest {
+    support::new_leak_box_ptr(wire_CheckMessageRequest::new_with_null_ptr())
+}
+
+#[no_mangle]
 pub extern "C" fn new_box_autoadd_config_0() -> *mut wire_Config {
     support::new_leak_box_ptr(wire_Config::new_with_null_ptr())
 }
@@ -293,6 +309,26 @@ pub extern "C" fn new_box_autoadd_node_config_0() -> *mut wire_NodeConfig {
 }
 
 #[no_mangle]
+pub extern "C" fn new_box_autoadd_opening_fee_params_0() -> *mut wire_OpeningFeeParams {
+    support::new_leak_box_ptr(wire_OpeningFeeParams::new_with_null_ptr())
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_autoadd_receive_onchain_request_0() -> *mut wire_ReceiveOnchainRequest {
+    support::new_leak_box_ptr(wire_ReceiveOnchainRequest::new_with_null_ptr())
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_autoadd_receive_payment_request_0() -> *mut wire_ReceivePaymentRequest {
+    support::new_leak_box_ptr(wire_ReceivePaymentRequest::new_with_null_ptr())
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_autoadd_sign_message_request_0() -> *mut wire_SignMessageRequest {
+    support::new_leak_box_ptr(wire_SignMessageRequest::new_with_null_ptr())
+}
+
+#[no_mangle]
 pub extern "C" fn new_box_autoadd_u64_0(value: u64) -> *mut u64 {
     support::new_leak_box_ptr(value)
 }
@@ -314,6 +350,18 @@ impl Wire2Api<String> for *mut wire_uint_8_list {
     fn wire2api(self) -> String {
         let vec: Vec<u8> = self.wire2api();
         String::from_utf8_lossy(&vec).into_owned()
+    }
+}
+impl Wire2Api<BuyBitcoinRequest> for *mut wire_BuyBitcoinRequest {
+    fn wire2api(self) -> BuyBitcoinRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<BuyBitcoinRequest>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<CheckMessageRequest> for *mut wire_CheckMessageRequest {
+    fn wire2api(self) -> CheckMessageRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<CheckMessageRequest>::wire2api(*wrap).into()
     }
 }
 impl Wire2Api<Config> for *mut wire_Config {
@@ -363,12 +411,53 @@ impl Wire2Api<NodeConfig> for *mut wire_NodeConfig {
         Wire2Api::<NodeConfig>::wire2api(*wrap).into()
     }
 }
+impl Wire2Api<OpeningFeeParams> for *mut wire_OpeningFeeParams {
+    fn wire2api(self) -> OpeningFeeParams {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<OpeningFeeParams>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<ReceiveOnchainRequest> for *mut wire_ReceiveOnchainRequest {
+    fn wire2api(self) -> ReceiveOnchainRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<ReceiveOnchainRequest>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<ReceivePaymentRequest> for *mut wire_ReceivePaymentRequest {
+    fn wire2api(self) -> ReceivePaymentRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<ReceivePaymentRequest>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<SignMessageRequest> for *mut wire_SignMessageRequest {
+    fn wire2api(self) -> SignMessageRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<SignMessageRequest>::wire2api(*wrap).into()
+    }
+}
 impl Wire2Api<u64> for *mut u64 {
     fn wire2api(self) -> u64 {
         unsafe { *support::box_from_leak_ptr(self) }
     }
 }
 
+impl Wire2Api<BuyBitcoinRequest> for wire_BuyBitcoinRequest {
+    fn wire2api(self) -> BuyBitcoinRequest {
+        BuyBitcoinRequest {
+            provider: self.provider.wire2api(),
+            opening_fee_params: self.opening_fee_params.wire2api(),
+        }
+    }
+}
+impl Wire2Api<CheckMessageRequest> for wire_CheckMessageRequest {
+    fn wire2api(self) -> CheckMessageRequest {
+        CheckMessageRequest {
+            message: self.message.wire2api(),
+            pubkey: self.pubkey.wire2api(),
+            signature: self.signature.wire2api(),
+        }
+    }
+}
 impl Wire2Api<Config> for wire_Config {
     fn wire2api(self) -> Config {
         Config {
@@ -451,6 +540,43 @@ impl Wire2Api<NodeConfig> for wire_NodeConfig {
         }
     }
 }
+impl Wire2Api<OpeningFeeParams> for wire_OpeningFeeParams {
+    fn wire2api(self) -> OpeningFeeParams {
+        OpeningFeeParams {
+            min_msat: self.min_msat.wire2api(),
+            proportional: self.proportional.wire2api(),
+            valid_until: self.valid_until.wire2api(),
+            max_idle_time: self.max_idle_time.wire2api(),
+            max_client_to_self_delay: self.max_client_to_self_delay.wire2api(),
+            promise: self.promise.wire2api(),
+        }
+    }
+}
+
+impl Wire2Api<ReceiveOnchainRequest> for wire_ReceiveOnchainRequest {
+    fn wire2api(self) -> ReceiveOnchainRequest {
+        ReceiveOnchainRequest {
+            opening_fee_params: self.opening_fee_params.wire2api(),
+        }
+    }
+}
+impl Wire2Api<ReceivePaymentRequest> for wire_ReceivePaymentRequest {
+    fn wire2api(self) -> ReceivePaymentRequest {
+        ReceivePaymentRequest {
+            amount_sats: self.amount_sats.wire2api(),
+            description: self.description.wire2api(),
+            preimage: self.preimage.wire2api(),
+            opening_fee_params: self.opening_fee_params.wire2api(),
+        }
+    }
+}
+impl Wire2Api<SignMessageRequest> for wire_SignMessageRequest {
+    fn wire2api(self) -> SignMessageRequest {
+        SignMessageRequest {
+            message: self.message.wire2api(),
+        }
+    }
+}
 
 impl Wire2Api<Vec<u8>> for *mut wire_uint_8_list {
     fn wire2api(self) -> Vec<u8> {
@@ -461,6 +587,21 @@ impl Wire2Api<Vec<u8>> for *mut wire_uint_8_list {
     }
 }
 // Section: wire structs
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_BuyBitcoinRequest {
+    provider: i32,
+    opening_fee_params: *mut wire_OpeningFeeParams,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_CheckMessageRequest {
+    message: *mut wire_uint_8_list,
+    pubkey: *mut wire_uint_8_list,
+    signature: *mut wire_uint_8_list,
+}
 
 #[repr(C)]
 #[derive(Clone)]
@@ -523,6 +664,38 @@ pub struct wire_LnUrlWithdrawRequestData {
 
 #[repr(C)]
 #[derive(Clone)]
+pub struct wire_OpeningFeeParams {
+    min_msat: u64,
+    proportional: u32,
+    valid_until: *mut wire_uint_8_list,
+    max_idle_time: u32,
+    max_client_to_self_delay: u32,
+    promise: *mut wire_uint_8_list,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_ReceiveOnchainRequest {
+    opening_fee_params: *mut wire_OpeningFeeParams,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_ReceivePaymentRequest {
+    amount_sats: u64,
+    description: *mut wire_uint_8_list,
+    preimage: *mut wire_uint_8_list,
+    opening_fee_params: *mut wire_OpeningFeeParams,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_SignMessageRequest {
+    message: *mut wire_uint_8_list,
+}
+
+#[repr(C)]
+#[derive(Clone)]
 pub struct wire_uint_8_list {
     ptr: *mut u8,
     len: i32,
@@ -555,6 +728,37 @@ pub trait NewWithNullPtr {
 impl<T> NewWithNullPtr for *mut T {
     fn new_with_null_ptr() -> Self {
         std::ptr::null_mut()
+    }
+}
+
+impl NewWithNullPtr for wire_BuyBitcoinRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            provider: Default::default(),
+            opening_fee_params: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_BuyBitcoinRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_CheckMessageRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            message: core::ptr::null_mut(),
+            pubkey: core::ptr::null_mut(),
+            signature: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_CheckMessageRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
     }
 }
 
@@ -687,6 +891,70 @@ pub extern "C" fn inflate_NodeConfig_Greenlight() -> *mut NodeConfigKind {
             config: core::ptr::null_mut(),
         }),
     })
+}
+
+impl NewWithNullPtr for wire_OpeningFeeParams {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            min_msat: Default::default(),
+            proportional: Default::default(),
+            valid_until: core::ptr::null_mut(),
+            max_idle_time: Default::default(),
+            max_client_to_self_delay: Default::default(),
+            promise: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_OpeningFeeParams {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_ReceiveOnchainRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            opening_fee_params: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_ReceiveOnchainRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_ReceivePaymentRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            amount_sats: Default::default(),
+            description: core::ptr::null_mut(),
+            preimage: core::ptr::null_mut(),
+            opening_fee_params: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_ReceivePaymentRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_SignMessageRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            message: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_SignMessageRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
 }
 
 // Section: sync execution mode utility

@@ -6,6 +6,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use anyhow::{anyhow, Result};
 use bitcoin::bech32::{u5, ToBase32};
 use bitcoin::secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
+use bitcoin::secp256k1::PublicKey;
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use ecies::utils::{aes_decrypt, aes_encrypt};
@@ -23,6 +24,7 @@ use gl_client::scheduler::Scheduler;
 use gl_client::signer::Signer;
 use gl_client::tls::TlsConfig;
 use gl_client::{node, pb, utils};
+use lightning::util::message_signing::verify;
 use lightning_invoice::{RawInvoice, SignedRawInvoice};
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
@@ -30,10 +32,7 @@ use tokio::sync::{mpsc, Mutex};
 use tonic::Streaming;
 
 use crate::invoice::parse_invoice;
-use crate::models::{
-    Config, GreenlightCredentials, LnPaymentDetails, Network, NodeAPI, NodeState, PaymentDetails,
-    PaymentType, SyncResponse, UnspentTransactionOutput,
-};
+use crate::models::*;
 use crate::persist::db::SqliteStorage;
 use crate::{Channel, ChannelState, NodeConfig};
 
@@ -415,7 +414,7 @@ impl NodeAPI for Greenlight {
         &self,
         bolt11: String,
         amount_sats: Option<u64>,
-    ) -> Result<crate::models::PaymentResponse> {
+    ) -> Result<PaymentResponse> {
         let mut description = None;
         if !bolt11.is_empty() {
             description = parse_invoice(&bolt11)?.description;
@@ -443,7 +442,7 @@ impl NodeAPI for Greenlight {
         &self,
         node_id: String,
         amount_sats: u64,
-    ) -> Result<crate::models::PaymentResponse> {
+    ) -> Result<PaymentResponse> {
         let mut client: node::ClnClient = self.get_node_client().await?;
         let request = pb::cln::KeysendRequest {
             destination: hex::decode(node_id)?,
@@ -513,6 +512,18 @@ impl NodeAPI for Greenlight {
         let connect_req = pb::ConnectRequest { node_id, addr };
         client.connect_peer(connect_req).await?;
         Ok(())
+    }
+
+    async fn sign_message(&self, message: &str) -> Result<String> {
+        let (sig, recovery_id) = self.signer.sign_message(message.as_bytes().to_vec())?;
+        let mut complete_signature = vec![31 + recovery_id];
+        complete_signature.extend_from_slice(&sig);
+        Ok(zbase32::encode_full_bytes(&complete_signature))
+    }
+
+    async fn check_message(&self, message: &str, pubkey: &str, signature: &str) -> Result<bool> {
+        let pk = PublicKey::from_str(pubkey)?;
+        Ok(verify(message.as_bytes(), signature, &pk))
     }
 
     fn sign_invoice(&self, invoice: RawInvoice) -> Result<String> {
@@ -704,10 +715,7 @@ enum NodeCommand {
 
 // pulls transactions from greenlight based on last sync timestamp.
 // greenlight gives us the payments via API and for received payments we are looking for settled invoices.
-async fn pull_transactions(
-    since_timestamp: i64,
-    client: node::Client,
-) -> Result<Vec<crate::models::Payment>> {
+async fn pull_transactions(since_timestamp: i64, client: node::Client) -> Result<Vec<Payment>> {
     let mut c = client.clone();
 
     // list invoices
@@ -717,7 +725,7 @@ async fn pull_transactions(
         .into_inner();
 
     // construct the received transactions by filtering the invoices to those paid and beyond the filter timestamp
-    let received_transactions: Result<Vec<crate::models::Payment>> = invoices
+    let received_transactions: Result<Vec<Payment>> = invoices
         .invoices
         .into_iter()
         .filter(|i| {
@@ -735,7 +743,7 @@ async fn pull_transactions(
         .into_inner();
     debug!("list payments: {:?}", payments);
     // construct the payment transactions (pending and complete)
-    let outbound_transactions: Result<Vec<crate::models::Payment>> = payments
+    let outbound_transactions: Result<Vec<Payment>> = payments
         .payments
         .into_iter()
         .filter(|p| {
@@ -745,7 +753,7 @@ async fn pull_transactions(
         .map(TryInto::try_into)
         .collect();
 
-    let mut transactions: Vec<crate::models::Payment> = Vec::new();
+    let mut transactions: Vec<Payment> = Vec::new();
     transactions.extend(received_transactions?);
     transactions.extend(outbound_transactions?);
 
@@ -753,12 +761,12 @@ async fn pull_transactions(
 }
 
 //pub(crate) fn offchain_payment_to_transaction
-impl TryFrom<OffChainPayment> for crate::models::Payment {
+impl TryFrom<OffChainPayment> for Payment {
     type Error = anyhow::Error;
 
     fn try_from(p: OffChainPayment) -> std::result::Result<Self, Self::Error> {
         let ln_invoice = parse_invoice(&p.bolt11)?;
-        Ok(crate::models::Payment {
+        Ok(Payment {
             id: hex::encode(p.payment_hash.clone()),
             payment_type: PaymentType::Received,
             payment_time: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64,
@@ -787,12 +795,12 @@ impl TryFrom<OffChainPayment> for crate::models::Payment {
 }
 
 /// Construct a lightning transaction from an invoice
-impl TryFrom<pb::Invoice> for crate::models::Payment {
+impl TryFrom<pb::Invoice> for Payment {
     type Error = anyhow::Error;
 
     fn try_from(invoice: pb::Invoice) -> std::result::Result<Self, Self::Error> {
         let ln_invoice = parse_invoice(&invoice.bolt11)?;
-        Ok(crate::models::Payment {
+        Ok(Payment {
             id: hex::encode(invoice.payment_hash.clone()),
             payment_type: PaymentType::Received,
             payment_time: invoice.payment_time as i64,
@@ -817,7 +825,7 @@ impl TryFrom<pb::Invoice> for crate::models::Payment {
     }
 }
 
-impl TryFrom<pb::Payment> for crate::models::Payment {
+impl TryFrom<pb::Payment> for Payment {
     type Error = anyhow::Error;
 
     fn try_from(payment: pb::Payment) -> std::result::Result<Self, Self::Error> {
@@ -829,7 +837,7 @@ impl TryFrom<pb::Payment> for crate::models::Payment {
         let payment_amount = amount_to_msat(&payment.amount.unwrap_or_default());
         let payment_amount_sent = amount_to_msat(&payment.amount_sent.unwrap_or_default());
 
-        Ok(crate::models::Payment {
+        Ok(Payment {
             id: hex::encode(payment.payment_hash.clone()),
             payment_type: PaymentType::Sent,
             payment_time: payment.created_at as i64,
@@ -854,14 +862,14 @@ impl TryFrom<pb::Payment> for crate::models::Payment {
     }
 }
 
-impl TryFrom<pb::cln::PayResponse> for crate::models::PaymentResponse {
+impl TryFrom<pb::cln::PayResponse> for PaymentResponse {
     type Error = anyhow::Error;
 
     fn try_from(payment: pb::cln::PayResponse) -> std::result::Result<Self, Self::Error> {
         let payment_amount = payment.amount_msat.unwrap_or_default().msat;
         let payment_amount_sent = payment.amount_sent_msat.unwrap_or_default().msat;
 
-        Ok(crate::models::PaymentResponse {
+        Ok(PaymentResponse {
             payment_time: payment.created_at as i64,
             amount_msat: payment_amount,
             fee_msat: payment_amount_sent - payment_amount,
@@ -871,14 +879,14 @@ impl TryFrom<pb::cln::PayResponse> for crate::models::PaymentResponse {
     }
 }
 
-impl TryFrom<pb::cln::KeysendResponse> for crate::models::PaymentResponse {
+impl TryFrom<pb::cln::KeysendResponse> for PaymentResponse {
     type Error = anyhow::Error;
 
     fn try_from(payment: pb::cln::KeysendResponse) -> std::result::Result<Self, Self::Error> {
         let payment_amount = payment.amount_msat.unwrap_or_default().msat;
         let payment_amount_sent = payment.amount_sent_msat.unwrap_or_default().msat;
 
-        Ok(crate::models::PaymentResponse {
+        Ok(PaymentResponse {
             payment_time: payment.created_at as i64,
             amount_msat: payment_amount,
             fee_msat: payment_amount_sent - payment_amount,
@@ -929,16 +937,16 @@ fn parse_amount(amount_str: String) -> Result<pb::Amount> {
     Ok(pb::Amount { unit: Some(unit) })
 }
 
-impl From<pb::Channel> for crate::models::Channel {
+impl From<pb::Channel> for Channel {
     fn from(c: pb::Channel) -> Self {
         let state = match c.state.as_str() {
-            "OPENINGD" | "CHANNELD_AWAITING_LOCKIN" => crate::models::ChannelState::PendingOpen,
-            "CHANNELD_NORMAL" => crate::models::ChannelState::Opened,
-            "CLOSED" => crate::models::ChannelState::Closed,
-            _ => crate::models::ChannelState::PendingClose,
+            "OPENINGD" | "CHANNELD_AWAITING_LOCKIN" => ChannelState::PendingOpen,
+            "CHANNELD_NORMAL" => ChannelState::Opened,
+            "ONCHAIN" | "CLOSED" => ChannelState::Closed,
+            _ => ChannelState::PendingClose,
         };
 
-        crate::models::Channel {
+        Channel {
             short_channel_id: c.short_channel_id,
             state,
             funding_txid: c.funding_txid,
@@ -949,7 +957,7 @@ impl From<pb::Channel> for crate::models::Channel {
     }
 }
 
-impl TryFrom<ListclosedchannelsClosedchannels> for crate::models::Channel {
+impl TryFrom<ListclosedchannelsClosedchannels> for Channel {
     type Error = anyhow::Error;
 
     fn try_from(c: ListclosedchannelsClosedchannels) -> std::result::Result<Self, Self::Error> {
@@ -957,7 +965,7 @@ impl TryFrom<ListclosedchannelsClosedchannels> for crate::models::Channel {
             .final_to_us_msat
             .ok_or(anyhow!("final_to_us_msat is missing"))?
             .msat;
-        Ok(crate::models::Channel {
+        Ok(Channel {
             short_channel_id: c
                 .short_channel_id
                 .ok_or(anyhow!("short_channel_id is missing"))?,
@@ -994,18 +1002,17 @@ mod tests {
             "CLOSINGD_COMPLETE",
             "AWAITING_UNILATERAL",
             "FUNDING_SPEND_SEEN",
-            "ONCHAIN",
         ] {
             let c: models::Channel = gl_channel(s).into();
             assert_eq!(c.state, models::ChannelState::PendingClose);
         }
 
-        let s = &"CLOSED";
-        let c: models::Channel = gl_channel(s).into();
-        assert_eq!(c.state, models::ChannelState::Closed);
+        for s in &["ONCHAIN", "CLOSED"] {
+            let c: models::Channel = gl_channel(s).into();
+            assert_eq!(c.state, models::ChannelState::Closed);
+        }
 
         Ok(())
-        //let c =
     }
 
     fn gl_channel(state: &str) -> pb::Channel {

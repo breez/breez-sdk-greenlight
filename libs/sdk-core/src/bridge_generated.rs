@@ -21,8 +21,12 @@ use std::sync::Arc;
 
 use crate::breez_services::BackupFailedData;
 use crate::breez_services::BreezEvent;
+use crate::breez_services::CheckMessageRequest;
+use crate::breez_services::CheckMessageResponse;
 use crate::breez_services::InvoicePaidDetails;
 use crate::breez_services::PaymentFailedData;
+use crate::breez_services::SignMessageRequest;
+use crate::breez_services::SignMessageResponse;
 use crate::chain::RecommendedFees;
 use crate::fiat::CurrencyInfo;
 use crate::fiat::FiatCurrency;
@@ -47,6 +51,8 @@ use crate::lnurl::pay::model::UrlSuccessActionData;
 use crate::lsp::LspInformation;
 use crate::models::BackupStatus;
 use crate::models::BuyBitcoinProvider;
+use crate::models::BuyBitcoinRequest;
+use crate::models::BuyBitcoinResponse;
 use crate::models::ChannelState;
 use crate::models::ClosedChannelPaymentDetails;
 use crate::models::Config;
@@ -59,10 +65,15 @@ use crate::models::LogEntry;
 use crate::models::Network;
 use crate::models::NodeConfig;
 use crate::models::NodeState;
+use crate::models::OpeningFeeParams;
+use crate::models::OpeningFeeParamsMenu;
 use crate::models::Payment;
 use crate::models::PaymentDetails;
 use crate::models::PaymentType;
 use crate::models::PaymentTypeFilter;
+use crate::models::ReceiveOnchainRequest;
+use crate::models::ReceivePaymentRequest;
+use crate::models::ReceivePaymentResponse;
 use crate::models::ReverseSwapInfo;
 use crate::models::ReverseSwapPairInfo;
 use crate::models::ReverseSwapStatus;
@@ -128,6 +139,38 @@ fn wire_disconnect_impl(port_: MessagePort) {
             mode: FfiCallMode::Normal,
         },
         move || move |task_callback| disconnect(),
+    )
+}
+fn wire_sign_message_impl(
+    port_: MessagePort,
+    request: impl Wire2Api<SignMessageRequest> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "sign_message",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_request = request.wire2api();
+            move |task_callback| sign_message(api_request)
+        },
+    )
+}
+fn wire_check_message_impl(
+    port_: MessagePort,
+    request: impl Wire2Api<CheckMessageRequest> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "check_message",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_request = request.wire2api();
+            move |task_callback| check_message(api_request)
+        },
     )
 }
 fn wire_mnemonic_to_seed_impl(port_: MessagePort, phrase: impl Wire2Api<String> + UnwindSafe) {
@@ -356,8 +399,7 @@ fn wire_send_spontaneous_payment_impl(
 }
 fn wire_receive_payment_impl(
     port_: MessagePort,
-    amount_sats: impl Wire2Api<u64> + UnwindSafe,
-    description: impl Wire2Api<String> + UnwindSafe,
+    req_data: impl Wire2Api<ReceivePaymentRequest> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -366,9 +408,8 @@ fn wire_receive_payment_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_amount_sats = amount_sats.wire2api();
-            let api_description = description.wire2api();
-            move |task_callback| receive_payment(api_amount_sats, api_description)
+            let api_req_data = req_data.wire2api();
+            move |task_callback| receive_payment(api_req_data)
         },
     )
 }
@@ -477,19 +518,25 @@ fn wire_send_onchain_impl(
         },
     )
 }
-fn wire_receive_onchain_impl(port_: MessagePort) {
+fn wire_receive_onchain_impl(
+    port_: MessagePort,
+    req_data: impl Wire2Api<ReceiveOnchainRequest> + UnwindSafe,
+) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
             debug_name: "receive_onchain",
             port: Some(port_),
             mode: FfiCallMode::Normal,
         },
-        move || move |task_callback| receive_onchain(),
+        move || {
+            let api_req_data = req_data.wire2api();
+            move |task_callback| receive_onchain(api_req_data)
+        },
     )
 }
 fn wire_buy_bitcoin_impl(
     port_: MessagePort,
-    provider: impl Wire2Api<BuyBitcoinProvider> + UnwindSafe,
+    req_data: impl Wire2Api<BuyBitcoinRequest> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -498,8 +545,8 @@ fn wire_buy_bitcoin_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_provider = provider.wire2api();
-            move |task_callback| buy_bitcoin(api_provider)
+            let api_req_data = req_data.wire2api();
+            move |task_callback| buy_bitcoin(api_req_data)
         },
     )
 }
@@ -684,6 +731,7 @@ impl Wire2Api<PaymentTypeFilter> for i32 {
         }
     }
 }
+
 impl Wire2Api<u16> for u16 {
     fn wire2api(self) -> u16 {
         self
@@ -762,6 +810,13 @@ impl support::IntoDart for BreezEvent {
     }
 }
 impl support::IntoDartExceptPrimitive for BreezEvent {}
+impl support::IntoDart for BuyBitcoinResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.url.into_dart(), self.opening_fee_params.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for BuyBitcoinResponse {}
+
 impl support::IntoDart for ChannelState {
     fn into_dart(self) -> support::DartAbi {
         match self {
@@ -774,6 +829,13 @@ impl support::IntoDart for ChannelState {
     }
 }
 impl support::IntoDartExceptPrimitive for ChannelState {}
+impl support::IntoDart for CheckMessageResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.is_valid.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for CheckMessageResponse {}
+
 impl support::IntoDart for ClosedChannelPaymentDetails {
     fn into_dart(self) -> support::DartAbi {
         vec![
@@ -1015,10 +1077,8 @@ impl support::IntoDart for LspInformation {
             self.fee_rate.into_dart(),
             self.time_lock_delta.into_dart(),
             self.min_htlc_msat.into_dart(),
-            self.channel_fee_permyriad.into_dart(),
             self.lsp_pubkey.into_dart(),
-            self.max_inactive_duration.into_dart(),
-            self.channel_minimum_fee_msat.into_dart(),
+            self.opening_fee_params_list.into_dart(),
         ]
         .into_dart()
     }
@@ -1072,6 +1132,28 @@ impl support::IntoDart for NodeState {
     }
 }
 impl support::IntoDartExceptPrimitive for NodeState {}
+
+impl support::IntoDart for OpeningFeeParams {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.min_msat.into_dart(),
+            self.proportional.into_dart(),
+            self.valid_until.into_dart(),
+            self.max_idle_time.into_dart(),
+            self.max_client_to_self_delay.into_dart(),
+            self.promise.into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for OpeningFeeParams {}
+
+impl support::IntoDart for OpeningFeeParamsMenu {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.values.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for OpeningFeeParamsMenu {}
 
 impl support::IntoDart for Payment {
     fn into_dart(self) -> support::DartAbi {
@@ -1129,6 +1211,18 @@ impl support::IntoDart for Rate {
     }
 }
 impl support::IntoDartExceptPrimitive for Rate {}
+
+impl support::IntoDart for ReceivePaymentResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.ln_invoice.into_dart(),
+            self.opening_fee_params.into_dart(),
+            self.opening_fee_msat.into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for ReceivePaymentResponse {}
 
 impl support::IntoDart for RecommendedFees {
     fn into_dart(self) -> support::DartAbi {
@@ -1208,6 +1302,13 @@ impl support::IntoDart for RouteHintHop {
 }
 impl support::IntoDartExceptPrimitive for RouteHintHop {}
 
+impl support::IntoDart for SignMessageResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.signature.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for SignMessageResponse {}
+
 impl support::IntoDart for SuccessActionProcessed {
     fn into_dart(self) -> support::DartAbi {
         match self {
@@ -1242,6 +1343,7 @@ impl support::IntoDart for SwapInfo {
             self.min_allowed_deposit.into_dart(),
             self.max_allowed_deposit.into_dart(),
             self.last_redeem_error.into_dart(),
+            self.channel_opening_fees.into_dart(),
         ]
         .into_dart()
     }

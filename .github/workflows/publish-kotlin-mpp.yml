@@ -10,6 +10,11 @@ on:
         description: 'version for the gradle library (MAJOR.MINOR.BUILD)'
         required: true
         type: string
+      publish:
+        description: 'value indicating whether to publish to maven.'
+        required: true
+        type: boolean
+        default: false
     secrets:
       BREEZ_MVN_USERNAME:
         description: 'username for gradlew publish'
@@ -39,7 +44,7 @@ jobs:
 
       - uses: actions/download-artifact@v3
         with:
-          name: kmm
+          name: bindings-kmm
           path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/src
 
       - name: Copy jvmMain
@@ -75,7 +80,7 @@ jobs:
           path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/build/outputs/aar/breez-sdk-kmp-release.aar
         
       - name: Publish artifacts
-        if: ${{ inputs.package-version }}
+        if: ${{ inputs.publish }}
         working-directory: libs/sdk-bindings/bindings-kotlin-multiplatform
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
