@@ -158,7 +158,7 @@ message LSPInformation {
 
   int64 channel_minimum_fee_msat = 14 [deprecated = true];
 
-  repeated OpeningFeeParams opening_fee_params_menu = 15;
+  repeated OpeningFeeParams opening_fee_params_list = 15;
 }
 message OpeningFeeParams {
   /// The minimum value in millisatoshi we will require for incoming HTLCs on the channel.

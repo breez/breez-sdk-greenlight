@@ -779,7 +779,7 @@ impl OpeningFeeParamsMenu {
     }
 
     fn validate(&self) -> Result<()> {
-        // opening_fee_params_menu fees must be in ascending order
+        // values must be in ascending order
         let is_ordered = self.values.windows(2).all(|ofp| {
             let larger_min_msat_fee = ofp[0].min_msat < ofp[1].min_msat;
             let equal_min_msat_fee = ofp[0].min_msat == ofp[1].min_msat;

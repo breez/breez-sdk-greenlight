@@ -25,11 +25,11 @@ pub struct LspInformation {
     pub time_lock_delta: u32,
     pub min_htlc_msat: i64,
     pub lsp_pubkey: Vec<u8>,
-    pub opening_fee_params_menu: OpeningFeeParamsMenu,
+    pub opening_fee_params_list: OpeningFeeParamsMenu,
 }
 
 impl LspInformation {
-    /// Validation may fail if [LspInformation.opening_fee_params_menu] has invalid entries
+    /// Validation may fail if [LspInformation.opening_fee_params_list] has invalid entries
     fn try_from(lsp_id: &str, lsp_info: grpc::LspInformation) -> Result<Self> {
         let info = LspInformation {
             id: lsp_id.to_string(),
@@ -44,8 +44,8 @@ impl LspInformation {
             time_lock_delta: lsp_info.time_lock_delta,
             min_htlc_msat: lsp_info.min_htlc_msat,
             lsp_pubkey: lsp_info.lsp_pubkey,
-            opening_fee_params_menu: OpeningFeeParamsMenu::try_from(
-                lsp_info.opening_fee_params_menu,
+            opening_fee_params_list: OpeningFeeParamsMenu::try_from(
+                lsp_info.opening_fee_params_list,
             )?,
         };
 
@@ -70,10 +70,10 @@ impl LspInformation {
             // We pick our own if None is supplied
             None => match fee_type {
                 DynamicFeeType::Cheapest => self
-                    .opening_fee_params_menu
+                    .opening_fee_params_list
                     .get_cheapest_opening_fee_params(),
                 DynamicFeeType::Longest => {
-                    self.opening_fee_params_menu.get_48h_opening_fee_params()
+                    self.opening_fee_params_list.get_48h_opening_fee_params()
                 }
             },
         }

@@ -499,7 +499,7 @@ impl LspAPI for MockBreezServer {
             // Initialize menu with one Fee Param that is valid for >48h
             // This way, it can be used in both kinds of tests (those that need the cheapest fee,
             // as well as those with the longest valid fee)
-            opening_fee_params_menu: OpeningFeeParamsMenu::try_from(vec![get_test_ofp_48h(
+            opening_fee_params_list: OpeningFeeParamsMenu::try_from(vec![get_test_ofp_48h(
                 10, 12,
             )])?,
         }])

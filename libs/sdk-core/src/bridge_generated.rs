@@ -1078,7 +1078,7 @@ impl support::IntoDart for LspInformation {
             self.time_lock_delta.into_dart(),
             self.min_htlc_msat.into_dart(),
             self.lsp_pubkey.into_dart(),
-            self.opening_fee_params_menu.into_dart(),
+            self.opening_fee_params_list.into_dart(),
         ]
         .into_dart()
     }

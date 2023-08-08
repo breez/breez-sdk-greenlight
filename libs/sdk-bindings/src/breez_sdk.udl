@@ -331,7 +331,7 @@ dictionary LspInformation {
     u32 time_lock_delta;
     i64 min_htlc_msat;
     sequence<u8> lsp_pubkey;
-    OpeningFeeParamsMenu opening_fee_params_menu;
+    OpeningFeeParamsMenu opening_fee_params_list;
 };
 
 enum SwapStatus {

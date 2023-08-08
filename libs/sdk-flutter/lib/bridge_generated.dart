@@ -784,7 +784,7 @@ class LspInformation {
   final int timeLockDelta;
   final int minHtlcMsat;
   final Uint8List lspPubkey;
-  final OpeningFeeParamsMenu openingFeeParamsMenu;
+  final OpeningFeeParamsMenu openingFeeParamsList;
 
   const LspInformation({
     required this.id,
@@ -799,7 +799,7 @@ class LspInformation {
     required this.timeLockDelta,
     required this.minHtlcMsat,
     required this.lspPubkey,
-    required this.openingFeeParamsMenu,
+    required this.openingFeeParamsList,
   });
 }
 
@@ -2480,7 +2480,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       timeLockDelta: _wire2api_u32(arr[9]),
       minHtlcMsat: _wire2api_i64(arr[10]),
       lspPubkey: _wire2api_uint_8_list(arr[11]),
-      openingFeeParamsMenu: _wire2api_opening_fee_params_menu(arr[12]),
+      openingFeeParamsList: _wire2api_opening_fee_params_menu(arr[12]),
     );
   }
 
