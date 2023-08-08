@@ -941,6 +941,8 @@ impl BreezServices {
     /// Configures a global SDK logger that will log to file and will forward log events to
     /// an optional application-specific logger.
     ///
+    /// If called, it should be called before any SDK methods (for example, before `connect`).
+    ///
     /// If the application already uses a globally-registered logger, this method shouldn't be called.
     ///
     /// If the application is to use it's own logger, but would also like the SDK to log SDK-specific
@@ -952,8 +954,8 @@ impl BreezServices {
     /// An error is thrown if the log file cannot be created in the working directory.
     ///
     /// An error is thrown if a global logger is already configured.
-    pub fn init_logging(&self, app_logger: Option<Box<dyn log::Log>>) -> SdkResult<()> {
-        let working_dir = &self.backup_watcher.config.working_dir;
+    pub fn init_logging(config: &Config, app_logger: Option<Box<dyn log::Log>>) -> SdkResult<()> {
+        let working_dir = &config.working_dir;
         let target_log_file = Box::new(
             OpenOptions::new()
                 .create(true)
