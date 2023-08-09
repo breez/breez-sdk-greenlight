@@ -4,7 +4,7 @@
 #
 Pod::Spec.new do |s|
     s.name             = 'breez_sdk'
-    s.version          = '0.1.3'
+    s.version          = '0.1.9'
     s.summary          = 'BreezSDK flutter plugin.'
     s.description      = <<-DESC
     BreezSDK flutter plugin.
@@ -21,10 +21,6 @@ Pod::Spec.new do |s|
     # Flutter.framework does not contain a i386 slice.
     s.pod_target_xcconfig = {'STRIP_STYLE' => 'non-global', 'DEFINES_MODULE' => 'YES', 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386' }
     s.swift_version = '5.0'  
-    s.dependency 'breez_sdkFFI'    
-
-    s.subspec 'breez_sdkFFI' do |ss|
-        ss.vendored_frameworks = "../sdk-bindings/bindings-swift/breez_sdkFFI.xcframework"
-    end    
+    s.vendored_frameworks = "bindings-swift/breez_sdkFFI.xcframework"
   end
   

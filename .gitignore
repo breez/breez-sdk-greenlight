@@ -13,3 +13,4 @@ libs/sdk-react-native/ios/bindings-swift/**
 .vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
+libs/sdk-flutter/ios/bindings-swift/

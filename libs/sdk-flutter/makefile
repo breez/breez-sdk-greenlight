@@ -17,6 +17,12 @@ flutter_rust_bridge:
 ios: $(SOURCES) flutter_rust_bridge
 	make -C ../sdk-bindings bindings-swift
 
+ios-dev: ios
+	rm -rf ios/bindings-swift
+	cp -r ../sdk-bindings/bindings-swift ios/bindings-swift
+	rm -rf ios/bindings-swift/Tests
+	rm -f ios/bindings-swift/Package.swift
+
 ## android: Compile the android targets (arm64, armv7 and i686)
 .PHONY: android
 android: $(SOURCES) flutter_rust_bridge
