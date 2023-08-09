@@ -95,7 +95,8 @@
 //!
 //! ### C. Receiving an on-chain transaction (swap-in)
 //!
-//! * [BreezServices::receive_onchain]
+//! * [BreezServices::receive_onchain] accepting an optional user-selected [OpeningFeeParams] for
+//! the case when the operation requires a new channel with the LSP
 //! * [BreezServices::in_progress_swap]
 //! * [BreezServices::list_refundables] to get a list of swaps
 //! * [BreezServices::refund] to broadcast a transaction for failed or expired swaps
@@ -159,7 +160,8 @@ mod crypt;
 pub mod error;
 mod fiat;
 mod greenlight;
-mod grpc;
+// We expose grpc as pub to be able to reference and re-use its internal field and struct docs
+pub mod grpc;
 pub mod input_parser;
 mod invoice;
 mod lnurl;

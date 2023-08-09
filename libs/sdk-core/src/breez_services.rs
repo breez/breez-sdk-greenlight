@@ -499,14 +499,15 @@ impl BreezServices {
 
     /// Onchain receive swap API
     ///
-    /// Create a [SwapInfo] that represents the details required to start a swap.
+    /// Create and start a new swap. A user-selected [OpeningFeeParams] can be optionally set in the argument.
+    /// If set, and the operation requires a new channel, the SDK will try to use the given fee params.
+    ///
     /// Since we only allow one in-progress swap this method will return error if there is currently
     /// a swap waiting for confirmation to be redeemed and by that complete the swap.
     /// In such case the [BreezServices::in_progress_swap] can be used to query the live swap status.
     ///
-    /// The channel opening fees are available at [SwapInfo::channel_opening_fees].
-    ///
-    /// See [SwapInfo] for details.
+    /// The returned [SwapInfo] contains the created swap details. The channel opening fees are
+    /// available at [SwapInfo::channel_opening_fees].
     pub async fn receive_onchain(&self, req: ReceiveOnchainRequest) -> Result<SwapInfo> {
         if let Some(in_progress) = self.in_progress_swap().await? {
             return Err(anyhow!(format!(
@@ -746,7 +747,10 @@ impl BreezServices {
         }
     }
 
-    /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency
+    /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency.
+    ///
+    /// A user-selected [OpeningFeeParams] can be optionally set in the argument. If set, and the
+    /// operation requires a new channel, the SDK will try to use the given fee params.
     pub async fn buy_bitcoin(&self, req: BuyBitcoinRequest) -> SdkResult<BuyBitcoinResponse> {
         let swap_info = self
             .receive_onchain(ReceiveOnchainRequest {

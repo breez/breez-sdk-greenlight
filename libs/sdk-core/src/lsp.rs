@@ -10,7 +10,7 @@ use prost::Message;
 use serde::{Deserialize, Serialize};
 use tonic::Request;
 
-/// Details of supported LSP
+/// Details of supported LSP, see [grpc::LspInformation] for field descriptions
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct LspInformation {
     pub id: String,

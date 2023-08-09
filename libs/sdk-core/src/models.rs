@@ -681,6 +681,9 @@ pub struct BuyBitcoinResponse {
     pub opening_fee_params: Option<OpeningFeeParams>,
 }
 
+/// Dynamic fee parameters offered by the LSP for opening a new channel.
+///
+/// See [grpc::OpeningFeeParams] for more details.
 #[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub struct OpeningFeeParams {
     pub min_msat: u64,
@@ -914,6 +917,7 @@ pub struct SwapInfo {
     pub min_allowed_deposit: i64,
     pub max_allowed_deposit: i64,
     pub last_redeem_error: Option<String>,
+    /// The dynamic fees that may have been used when the swap was created
     pub channel_opening_fees: Option<OpeningFeeParams>,
 }
 
