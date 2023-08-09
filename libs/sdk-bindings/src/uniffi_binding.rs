@@ -221,7 +221,6 @@ impl BlockingBreezServices {
         rt().block_on(self.breez_services.connect_lsp(lsp_id))
     }
 
-    /// Convenience method to look up LSP info based on current LSP ID
     pub fn fetch_lsp_info(&self, lsp_id: String) -> SdkResult<Option<LspInformation>> {
         rt().block_on(self.breez_services.fetch_lsp_info(lsp_id))
             .map_err(|e| e.into())
@@ -229,6 +228,11 @@ impl BlockingBreezServices {
 
     pub fn lsp_id(&self) -> SdkResult<Option<String>> {
         rt().block_on(self.breez_services.lsp_id())
+    }
+
+    pub fn lsp_info(&self) -> SdkResult<LspInformation> {
+        rt().block_on(self.breez_services.lsp_info())
+            .map_err(|e: anyhow::Error| e.into())
     }
 
     pub fn close_lsp_channels(&self) -> SdkResult<()> {

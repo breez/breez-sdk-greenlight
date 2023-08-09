@@ -157,6 +157,11 @@ pub fn fetch_lsp_info(id: String) -> Result<Option<LspInformation>> {
     block_on(async { get_breez_services()?.fetch_lsp_info(id).await })
 }
 
+/// See [BreezServices::lsp_info]
+pub fn lsp_info() -> Result<LspInformation> {
+    block_on(async { get_breez_services()?.lsp_info().await })
+}
+
 /// See [BreezServices::close_lsp_channels]
 pub fn close_lsp_channels() -> Result<()> {
     block_on(async {

@@ -82,6 +82,11 @@ pub extern "C" fn wire_fetch_lsp_info(port_: i64, id: *mut wire_uint_8_list) {
 }
 
 #[no_mangle]
+pub extern "C" fn wire_lsp_info(port_: i64) {
+    wire_lsp_info_impl(port_)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_close_lsp_channels(port_: i64) {
     wire_close_lsp_channels_impl(port_)
 }
