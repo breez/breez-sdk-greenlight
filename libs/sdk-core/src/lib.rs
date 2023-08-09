@@ -15,6 +15,8 @@
 //!
 //! ## Getting Started
 //!
+//! First, make sure you have your API Key and Invite Code ready (see [API Key and Invite Code](#api-key-and-invite-code) section below).
+//!
 //! The following code initialize the SDK and make it ready to be used:
 //!
 //! ```ignore
@@ -142,9 +144,11 @@
 //! * Swift
 //!
 //!
-//! ## API Key
+//! ## API Key and Invite Code
 //!
-//! To get an API key in order to use the SDK, please contact Breez: <https://breez.technology/#contact-us-form>
+//! You will need an API Key to use the SDK, as well as an Invite Code when you create a new node.
+//!
+//! To get both of them, please contact Breez via email at <contact@breez.technology> or at <https://breez.technology/#contact-us-form>
 
 mod bridge_generated; /* AUTO INJECTED BY flutter_rust_bridge. This line may not be accurate, and you can change it according to your needs. */
 #[macro_use]
