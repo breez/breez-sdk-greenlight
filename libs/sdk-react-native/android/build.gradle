@@ -64,6 +64,10 @@ dependencies {
     //noinspection GradleDynamicVersion
     implementation "com.facebook.react:react-native:+"  // From node_modules
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.21"
-    implementation("net.java.dev.jna:jna:5.6.0@aar")
-
+    // Due to an issue with Jitpack (https://github.com/jitpack/jitpack.io/issues/5752)
+    // the Android platform versions of JNA (specifically libjnadispatch.so) are missing when downloading the Breez SDK from Jitpack.
+    // Thereforew we ignore the version of JNA that comes with the Breez SDK from Jitpack
+    // and manually add one that does include the necessary Android platoform binaries.
+    implementation("com.github.breez:breez-sdk:0.1.4") { exclude group:"net.java.dev.jna" } // remove for using locally built bindings during development
+    implementation("net.java.dev.jna:jna:5.8.0@aar")
 }
