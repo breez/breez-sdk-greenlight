@@ -181,11 +181,11 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
     
-    @objc(receivePayment:description:resolver:rejecter:)
-    func receivePayment(_ amountSats:UInt64, description:String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+    @objc(receivePayment:resolver:rejecter:)
+    func receivePayment(_ reqData:[String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         do {
-            let lnInvoice = try getBreezServices().receivePayment(amountSats: amountSats, description: description)
-            resolve(BreezSDKMapper.dictionaryOf(lnInvoice: lnInvoice))        
+            let response = try getBreezServices().receivePayment(reqData: reqData)
+            resolve(BreezSDKMapper.dictionaryOf(receivePaymentResponse: response))
         } catch let err {
             rejectErr(err: err, reject: reject)
         }
@@ -356,10 +356,10 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
     
-    @objc(receiveOnchain:rejecter:)
-    func receiveOnchain(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+    @objc(receiveOnchain:resolver:rejecter:)
+    func receiveOnchain(_ req:[String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         do {
-            let swapInfo = try getBreezServices().receiveOnchain()
+            let swapInfo = try getBreezServices().receiveOnchain(req: req)
             resolve(BreezSDKMapper.dictionaryOf(swapInfo: swapInfo))        
         } catch let err {
             rejectErr(err: err, reject: reject)
@@ -450,10 +450,9 @@ class RNBreezSDK: RCTEventEmitter {
     }
 
     @objc(buyBitcoin:resolver:rejecter:)
-    func buyBitcoin(_ provider: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+    func buyBitcoin(_ req:[String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         do {
-            let buyBitcoinProvider = try BreezSDKMapper.asBitcoinProvider(provider: provider)
-            let result = try getBreezServices().buyBitcoin(provider: buyBitcoinProvider)
+            let result = try getBreezServices().buyBitcoin(req: req)
             resolve(result)        
         } catch let err {
             rejectErr(err: err, reject: reject)

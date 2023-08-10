@@ -66,8 +66,7 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
-    receivePayment: (NSUInteger*)amountSats
-    description: (NSString*)description
+    receivePayment: (NSDictionary*)reqData
     resolver: (RCTPromiseResolveBlock)resolve
     rejecter: (RCTPromiseRejectBlock)reject
 )
@@ -158,7 +157,8 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
-    receiveOnchain: (RCTPromiseResolveBlock)resolve
+    receiveOnchain: (NSDictionary*)req
+    resolver: (RCTPromiseResolveBlock)resolve
     rejecter: (RCTPromiseRejectBlock)reject
 )
 
@@ -210,9 +210,9 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
-        buyBitcoin: (NSString*)provider
-        resolver: (RCTPromiseResolveBlock)resolve
-        rejecter: (RCTPromiseRejectBlock)reject
+    buyBitcoin: (NSDictionary*)req
+    resolver: (RCTPromiseResolveBlock)resolve
+    rejecter: (RCTPromiseRejectBlock)reject
 )
 
 RCT_EXTERN_METHOD(

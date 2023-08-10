@@ -442,10 +442,25 @@ class BreezSDKMapper {
             "feeRate": lspInformation.feeRate,
             "timeLockDelta": lspInformation.timeLockDelta,
             "minHtlcMsat": lspInformation.minHtlcMsat,
-            "channelFeePermyriad": lspInformation.channelFeePermyriad,
             "lspPubkey": lspInformation.lspPubkey,
-            "maxInactiveDuration": lspInformation.maxInactiveDuration,
-            "channelMinimumFeeMsat": lspInformation.channelMinimumFeeMsat
+            "openingFeeParamsList": dictionaryOf(openingFeeParamsMenu: lspInformation.openingFeeParamsList)
+        ]
+    }
+
+    static func dictionaryOf(openingFeeParams: OpeningFeeParams) -> [String: Any?] {
+        return [
+            "minMsat": openingFeeParams.minMsat,
+            "proportional": openingFeeParams.proportional,
+            "validUntil": openingFeeParams.validUntil,
+            "maxIdleTime": openingFeeParams.maxIdleTime,
+            "maxClientToSelfDelay": openingFeeParams.maxClientToSelfDelay,
+            "promise": openingFeeParams.promise
+        ]
+    }
+
+    static func dictionaryOf(openingFeeParamsMenu: OpeningFeeParamsMenu) -> [String: Any] {
+        return [
+            "values": arrayOf(openingFeeParamsValues: openingFeeParamsMenu.values)
         ]
     }
     
@@ -455,7 +470,44 @@ class BreezSDKMapper {
             "message": messageSuccessActionData.message
         ]
     }
-    
+
+    static func dictionaryOf(receivePaymentRequest: ReceivePaymentRequest) -> [String: Any] {
+        return [
+            "amountSats": receivePaymentRequest.amountSats,
+            "description": receivePaymentRequest.description,
+            "preimage": arrayOf(preimageBytes: receivePaymentRequest.preimage),
+            "openingFeeParams": dictionaryOf(params: receivePaymentRequest.openingFeeParams)
+        ]
+    }
+
+    static func dictionaryOf(receivePaymentResponse: ReceivePaymentResponse) -> [String: Any] {
+        return [
+            "lnInvoice": dictionaryOf(lnInvoice: receivePaymentResponse.lnInvoice),
+            "openingFeeParams": dictionaryOf(params: receivePaymentResponse.openingFeeParams),
+            "openingFeeMsat": receivePaymentResponse.openingFeeMsat
+        ]
+    }
+
+    static func dictionaryOf(receiveOnchainRequest: ReceiveOnchainRequest) -> [String: Any] {
+        return [
+            "openingFeeParams": dictionaryOf(params: receiveOnchainRequest.openingFeeParams)
+        ]
+    }
+
+    static func dictionaryOf(buyBitcoinRequest: BuyBitcoinRequest) -> [String: Any] {
+        return [
+            "provider": asBitcoinProvider(provider: buyBitcoinRequest.provider),
+            "openingFeeParams": dictionaryOf(params: buyBitcoinRequest.openingFeeParams)
+        ]
+    }
+
+    static func dictionaryOf(buyBitcoinResponse: BuyBitcoinResponse) -> [String: Any] {
+        return [
+            "url": buyBitcoinResponse.url,
+            "openingFeeParams": dictionaryOf(params: buyBitcoinResponse.openingFeeParams)
+        ]
+    }
+
     static func dictionaryOf(nodeState: NodeState) -> [String: Any] {
         return [
             "id": nodeState.id,
@@ -586,7 +638,8 @@ class BreezSDKMapper {
             "confirmedTxIds": swapInfo.confirmedTxIds,
             "minAllowedDeposit": swapInfo.minAllowedDeposit,
             "maxAllowedDeposit": swapInfo.maxAllowedDeposit,
-            "lastRedeemError": swapInfo.lastRedeemError
+            "lastRedeemError": swapInfo.lastRedeemError,
+            "channelOpeningFees": dictionaryOf(openingFeeParams: swapInfo.channelOpeningFees)
         ]
     }
 

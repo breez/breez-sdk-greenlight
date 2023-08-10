@@ -156,16 +156,23 @@ fun pushToArray(array: WritableArray, value: Any?) {
     when (value) {
         null -> array.pushNull()
         is Boolean -> array.pushBoolean(value)
+        is BuyBitcoinRequest -> array.pushMap(readableMapOf(value))
+        is BuyBitcoinResponse -> array.pushMap(readableMapOf(value))
         is Double -> array.pushDouble(value)
         is FiatCurrency -> array.pushMap(readableMapOf(value))
         is Int -> array.pushInt(value)
         is LocaleOverrides -> array.pushMap(readableMapOf(value))
         is LocalizedName -> array.pushMap(readableMapOf(value))
         is LspInformation -> array.pushMap(readableMapOf(value))
+        is OpeningFeeParams -> array.pushMap(readableMapOf(value))
+        is OpeningFeeParamsMenu -> array.pushMap(readableMapOf(value))
         is Payment -> array.pushMap(readableMapOf(value))
         is Rate -> array.pushMap(readableMapOf(value))
         is ReadableArray -> array.pushArray(value)
         is ReadableMap -> array.pushMap(value)
+        is ReceiveOnchainRequest -> array.pushMap(readableMapOf(value))
+        is ReceivePaymentRequest -> array.pushMap(readableMapOf(value))
+        is ReceivePaymentResponse -> array.pushMap(readableMapOf(value))
         is ReverseSwapInfo -> array.pushMap(readableMapOf(value))
         is ReverseSwapPairInfo -> array.pushMap(readableMapOf(value))
         is RouteHint -> array.pushMap(readableMapOf(value))
@@ -452,10 +459,65 @@ fun readableMapOf(lspInformation: LspInformation): ReadableMap {
             "feeRate" to lspInformation.feeRate,
             "timeLockDelta" to lspInformation.timeLockDelta,
             "minHtlcMsat" to lspInformation.minHtlcMsat,
-            "channelFeePermyriad" to lspInformation.channelFeePermyriad,
             "lspPubkey" to lspInformation.lspPubkey,
-            "maxInactiveDuration" to lspInformation.maxInactiveDuration,
-            "channelMinimumFeeMsat" to lspInformation.channelMinimumFeeMsat
+            "openingFeeParamsList" to readableMapOf(lspInformation.openingFeeParamsList)
+    )
+}
+
+fun readableMapOf(openingFeeParams: OpeningFeeParams?): ReadableMap? {
+    if (openingFeeParams != null) {
+        return readableMapOf(
+                "minMsat" to openingFeeParams.minMsat,
+                "proportional" to openingFeeParams.proportional,
+                "validUntil" to openingFeeParams.validUntil,
+                "maxIdleTime" to openingFeeParams.maxIdleTime,
+                "maxClientToSelfDelay" to openingFeeParams.maxClientToSelfDelay,
+                "promise" to openingFeeParams.promise
+        )
+    }
+    return null
+}
+
+fun readableMapOf(openingFeeParamsMenu: OpeningFeeParamsMenu): ReadableMap {
+    return readableMapOf(
+            "values" to readableArrayOf(openingFeeParamsMenu.values)
+    )
+}
+
+fun readableMapOf(receiveOnchainRequest: ReceiveOnchainRequest): ReadableMap {
+    return readableMapOf(
+            "openingFeeParams" to readableMapOf(receivePaymentRequest.openingFeeParams)
+    )
+}
+
+fun readableMapOf(receivePaymentRequest: ReceivePaymentRequest): ReadableMap {
+    return readableMapOf(
+            "amountSats" to receivePaymentRequest.amountSats,
+            "description" to receivePaymentRequest.description,
+            "preimage" to receivePaymentRequest.preimage,
+            "openingFeeParams" to readableMapOf(receivePaymentRequest.openingFeeParams)
+    )
+}
+
+fun readableMapOf(receivePaymentResponse: ReceivePaymentResponse): ReadableMap {
+    return readableMapOf(
+            "lnInvoice" to readableMapOf(receivePaymentResponse.lnInvoice),
+            "openingFeeParams" to readableMapOf(receivePaymentRequest.openingFeeParams),
+            "openingFeeMsat" to receivePaymentRequest.openingFeeMsat
+    )
+}
+
+fun readableMapOf(buyBitcoinRequest: BuyBitcoinRequest): ReadableMap {
+    return readableMapOf(
+            "provider" to asBuyBitcoinProvider(buyBitcoinRequest.provider),
+            "openingFeeParams" to readableMapOf(buyBitcoinRequest.openingFeeParams)
+    )
+}
+
+fun readableMapOf(buyBitcoinResponse: BuyBitcoinResponse): ReadableMap {
+    return readableMapOf(
+            "url" to buyBitcoinResponse.url,
+            "openingFeeParams" to readableMapOf(buyBitcoinResponse.openingFeeParams)
     )
 }
 
@@ -585,7 +647,8 @@ fun readableMapOf(swapInfo: SwapInfo): ReadableMap {
             "confirmedTxIds" to swapInfo.confirmedTxIds,
             "minAllowedDeposit" to swapInfo.minAllowedDeposit,
             "maxAllowedDeposit" to swapInfo.maxAllowedDeposit,
-            "lastRedeemError" to swapInfo.lastRedeemError
+            "lastRedeemError" to swapInfo.lastRedeemError,
+            "channelOpeningFees" to readableMapOf(swapInfo.channelOpeningFees)
     )
 }
 

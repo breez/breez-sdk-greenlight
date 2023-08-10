@@ -238,11 +238,11 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun receivePayment(amountSats: Double, description: String, promise: Promise) {
+    fun receivePayment(reqData: ReceivePaymentRequest, promise: Promise) {
         executor.execute {
             try {
-                val payment = getBreezServices().receivePayment(amountSats.toULong(), description)
-                promise.resolve(readableMapOf(payment))
+                val response = getBreezServices().receivePayment(reqData)
+                promise.resolve(readableMapOf(response))
             } catch (e: SdkException) {
                 e.printStackTrace()
                 promise.reject(e.javaClass.simpleName, e.message, e)
@@ -464,10 +464,10 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun receiveOnchain(promise: Promise) {
+    fun receiveOnchain(req: ReceiveOnchainRequest, promise: Promise) {
         executor.execute {
             try {
-                val swapInfo = getBreezServices().receiveOnchain()
+                val swapInfo = getBreezServices().receiveOnchain(req)
                 promise.resolve(readableMapOf(swapInfo))
             } catch (e: SdkException) {
                 e.printStackTrace()
@@ -584,11 +584,10 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun buyBitcoin(provider: String, promise: Promise) {
+    fun buyBitcoin(req: BuyBitcoinRequest, promise: Promise) {
         executor.execute {
             try {
-                val buyBitcoinProvider = asBuyBitcoinProvider(provider)
-                val result = getBreezServices().buyBitcoin(buyBitcoinProvider)
+                val result = getBreezServices().buyBitcoin(req)
                 promise.resolve(result)
             } catch (e: SdkException) {
                 e.printStackTrace()

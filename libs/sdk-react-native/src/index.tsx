@@ -90,6 +90,46 @@ export enum BuyBitcoinProvider {
     MOONPAY = "moonpay"
 }
 
+export type OpeningFeeParams = {
+    minMsat: number
+    proportional: number
+    validUntil: string
+    maxIdleTime: number
+    maxClientToSelfDelay: number
+    promise: string
+}
+
+export type OpeningFeeParamsMenu = {
+    values: OpeningFeeParams[]
+}
+
+export type ReceivePaymentRequest = {
+    amountSats: number
+    description: string
+    preimage?: Uint8Array
+    openingFeeParams?: OpeningFeeParams
+}
+
+export type ReceivePaymentResponse = {
+    lnInvoice: LnInvoice
+    openingFeeParams?: OpeningFeeParams
+    openingFeeMsat?: number
+}
+
+export type ReceiveOnchainRequest = {
+    openingFeeParams?: OpeningFeeParams
+}
+
+export type BuyBitcoinRequest = {
+    provider: BuyBitcoinProvider
+    openingFeeParams?: OpeningFeeParams
+}
+
+export type BuyBitcoinResponse = {
+    url: string
+    openingFeeParams?: OpeningFeeParams
+}
+
 export enum ReverseSwapStatus {
     INITIAL = "initial",
     IN_PROGRESS = "in_progress",
@@ -282,10 +322,8 @@ export type LspInformation = {
     feeRate: number
     timeLockDelta: number
     minHtlcMsat: number
-    channelFeePermyriad: number
     lspPubkey: Uint8Array
-    maxInactiveDuration: number
-    channelMinimumFeeMsat: number
+    openingFeeParamsList: OpeningFeeParamsMenu
 }
 
 export type MessageSuccessActionData = {
@@ -368,6 +406,7 @@ export type SwapInfo = {
     minAllowedDeposit: number
     maxAllowedDeposit: number
     lastRedeemError?: string
+    channelOpeningFees?: OpeningFeeParams
 }
 
 export type ReverseSwapPairInfo = {
@@ -559,9 +598,8 @@ export const sendSpontaneousPayment = async (nodeId: string, amountSats: number)
     return response as Payment
 }
 
-export const receivePayment = async (amountSats: number, description: string): Promise<LnInvoice> => {
-    const response = await BreezSDK.receivePayment(amountSats, description)
-    return response as LnInvoice
+export const receivePayment = async (reqData: ReceivePaymentRequest): Promise<ReceivePaymentResponse> => {
+    return await BreezSDK.receivePayment(reqData)
 }
 
 export const lnurlAuth = async (reqData: LnUrlAuthRequestData): Promise<LnUrlCallbackStatus> => {
@@ -635,9 +673,8 @@ export const closeLspChannels = async (): Promise<void> => {
     await BreezSDK.closeLspChannels()
 }
 
-export const receiveOnchain = async (): Promise<SwapInfo> => {
-    const response = await BreezSDK.receiveOnchain()
-    return response as SwapInfo
+export const receiveOnchain = async (req: ReceiveOnchainRequest): Promise<SwapInfo> => {
+    return await BreezSDK.receiveOnchain(req)
 }
 
 export const inProgressSwap = async (): Promise<SwapInfo> => {
@@ -685,9 +722,8 @@ export const recommendedFees = async (): Promise<RecommendedFees> => {
     return response as RecommendedFees
 }
 
-export const buyBitcoin = async (provider: BuyBitcoinProvider): Promise<string> => {
-    const response = await BreezSDK.buyBitcoin(provider)
-    return response
+export const buyBitcoin = async (req: BuyBitcoinRequest): Promise<BuyBitcoinResponse> => {
+    return await BreezSDK.buyBitcoin(req)
 }
 
 export const backup = async (): Promise<void> => {
