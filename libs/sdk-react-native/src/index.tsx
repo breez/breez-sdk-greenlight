@@ -631,6 +631,11 @@ export const lspId = async (): Promise<string> => {
     return response
 }
 
+export const lspInfo = async (): Promise<LspInformation> => {
+    const response = await BreezSDK.lspInfo()
+    return response
+}
+
 export const closeLspChannels = async (): Promise<void> => {
     await BreezSDK.closeLspChannels()
 }

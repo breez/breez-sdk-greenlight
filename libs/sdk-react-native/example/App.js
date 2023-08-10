@@ -17,6 +17,7 @@ import {
     fetchFiatRates,
     fetchReverseSwapFees,
     inProgressReverseSwaps,
+    lspInfo,
     listFiatCurrencies,
     mnemonicToSeed,
     nodeInfo,
@@ -91,6 +92,9 @@ const App = () => {
 
                 const nodeState = await nodeInfo()
                 addLine("nodeInfo", JSON.stringify(nodeState))
+
+                const lspInfo = await lspInfo()
+                addLine("lspInfo", JSON.stringify(lspInfo))
 
                 const fiatCurrencies = await listFiatCurrencies()
                 addLine("listFiatCurrencies", JSON.stringify(fiatCurrencies))
