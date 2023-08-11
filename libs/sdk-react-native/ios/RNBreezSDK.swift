@@ -362,15 +362,12 @@ class RNBreezSDK: RCTEventEmitter {
     
     @objc(receiveOnchain:resolver:rejecter:)
     func receiveOnchain(_ req:[String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        if let receiveOnchainRequest = BreezSDKMapper.asReceiveOnchainRequest(reqData: req) {
-            do {
-                let swapInfo = try getBreezServices().receiveOnchain(req: receiveOnchainRequest)
-                resolve(BreezSDKMapper.dictionaryOf(swapInfo: swapInfo))
-            } catch let err {
-                reject(RNBreezSDK.TAG, "Error calling receiveOnchain \(err)", err)
-            }
-        } else {
-            rejectErr(err: SdkError.Generic(message:"Invalid reqData"), reject: reject)
+        do {
+            let receiveOnchainRequest = BreezSDKMapper.asReceiveOnchainRequest(reqData: req)
+            let swapInfo = try getBreezServices().receiveOnchain(req: receiveOnchainRequest)
+            resolve(BreezSDKMapper.dictionaryOf(swapInfo: swapInfo))
+        } catch let err {
+            reject(RNBreezSDK.TAG, "Error calling receiveOnchain \(err)", err)
         }
     }
     

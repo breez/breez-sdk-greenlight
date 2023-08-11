@@ -472,7 +472,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     @ReactMethod
     fun receiveOnchain(req: ReadableMap, promise: Promise) {
         executor.execute {
-            val receiveOnchainRequest = asReceiveOnchainRequest(reqData)
+            val receiveOnchainRequest = asReceiveOnchainRequest(req)
 
             if (receiveOnchainRequest == null) {
                 promise.reject(GENERIC_CODE, "Invalid req")

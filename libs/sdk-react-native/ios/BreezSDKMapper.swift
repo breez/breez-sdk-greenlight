@@ -26,6 +26,10 @@ class BreezSDKMapper {
         return lsps.map { (lspInformation) -> [String: Any?] in return dictionaryOf(lspInformation: lspInformation) }
     }
     
+    static func arrayOf(openingFeeParamsValues: [OpeningFeeParams]) -> [Any] {
+        return openingFeeParamsValues.map { (openingFeeParams) -> [String: Any]? in return dictionaryOf(openingFeeParams: openingFeeParams) }
+    }
+    
     static func arrayOf(payments: [Payment]) -> [Any] {
         return payments.map { (payment) -> [String: Any?] in return dictionaryOf(payment: payment) }
     }
@@ -33,7 +37,7 @@ class BreezSDKMapper {
     static func arrayOf(rates: [Rate]) -> [Any] {
         return rates.map { (rate) -> [String: Any] in return dictionaryOf(rate: rate) }
     }
-    
+
     static func arrayOf(routeHints: [RouteHint]) -> [Any] {
         return routeHints.map { (routeHint) -> [String: Any] in return dictionaryOf(routeHint: routeHint) }
     }
@@ -201,7 +205,7 @@ class BreezSDKMapper {
            let validUntil = reqData["validUntil"] as? String,
            let maxIdleTime = reqData["maxIdleTime"] as? UInt32,
            let maxClientToSelfDelay = reqData["maxClientToSelfDelay"] as? UInt32,
-           let promise = reqData["promise"] as? String,{
+           let promise = reqData["promise"] as? String {
             return OpeningFeeParams(minMsat: minMsat, proportional: proportional, validUntil: validUntil, maxIdleTime: maxIdleTime, maxClientToSelfDelay: maxClientToSelfDelay, promise: promise)
         }
         
@@ -213,7 +217,8 @@ class BreezSDKMapper {
            let description = reqData["description"] as? String
         {
             let preimage = reqData["preimage"] as? [UInt8]
-            let openingFeeParams = asOpeningFeeParams(reqData: reqData["openingFeeParams"])
+            let openingFeeParamsMap = reqData["openingFeeParams"] as? [String: Any]
+            let openingFeeParams = (openingFeeParamsMap == nil ? nil : asOpeningFeeParams(reqData: openingFeeParamsMap!))
             return ReceivePaymentRequest(amountSats: amountSats, description: description, preimage: preimage, openingFeeParams: openingFeeParams)
         }
         
@@ -221,17 +226,20 @@ class BreezSDKMapper {
     }
     
     static func asReceiveOnchainRequest(reqData: [String: Any?]) -> ReceiveOnchainRequest {
-        let openingFeeParams = asOpeningFeeParams(reqData: reqData["openingFeeParams"])
+        let openingFeeParamsMap = reqData["openingFeeParams"] as? [String: Any]
+        let openingFeeParams = (openingFeeParamsMap == nil ? nil : asOpeningFeeParams(reqData: openingFeeParamsMap!))
         return ReceiveOnchainRequest(openingFeeParams: openingFeeParams)
-        
     }
     
     static func asBuyBitcoinRequest(reqData: [String: Any?]) -> BuyBitcoinRequest? {
-        if let provider = reqData["provider"] as? String {
-            let buyBitcoinProvider = asBitcoinProvider(provider: provider)
-            let openingFeeParams = asOpeningFeeParams(reqData: reqData["openingFeeParams"])
-            return BuyBitcoinRequest(provider: buyBitcoinProvider, openingFeeParams: openingFeeParams)
-        }
+        do {
+            if let provider = reqData["provider"] as? String {
+                let buyBitcoinProvider = try asBitcoinProvider(provider: provider)
+                let openingFeeParamsMap = reqData["openingFeeParams"] as? [String: Any]
+                let openingFeeParams = (openingFeeParamsMap == nil ? nil : asOpeningFeeParams(reqData: openingFeeParamsMap!))
+                return BuyBitcoinRequest(provider: buyBitcoinProvider, openingFeeParams: openingFeeParams)
+            }
+        } catch {}
 
         return nil
     }
@@ -491,12 +499,12 @@ class BreezSDKMapper {
     static func dictionaryOf(openingFeeParams: OpeningFeeParams?) -> [String: Any]? {
         if openingFeeParams != nil {
             return [
-                "minMsat": openingFeeParams?.minMsat,
-                "proportional": openingFeeParams?.proportional,
-                "validUntil": openingFeeParams?.validUntil,
-                "maxIdleTime": openingFeeParams?.maxIdleTime,
-                "maxClientToSelfDelay": openingFeeParams?.maxClientToSelfDelay,
-                "promise": openingFeeParams?.promise
+                "minMsat": openingFeeParams!.minMsat,
+                "proportional": openingFeeParams!.proportional,
+                "validUntil": openingFeeParams!.validUntil,
+                "maxIdleTime": openingFeeParams!.maxIdleTime,
+                "maxClientToSelfDelay": openingFeeParams!.maxClientToSelfDelay,
+                "promise": openingFeeParams!.promise
             ]
         }
 
@@ -519,7 +527,7 @@ class BreezSDKMapper {
     static func dictionaryOf(receivePaymentResponse: ReceivePaymentResponse) -> [String: Any?] {
         return [
             "lnInvoice": dictionaryOf(lnInvoice: receivePaymentResponse.lnInvoice),
-            "openingFeeParams": dictionaryOf(params: receivePaymentResponse.openingFeeParams),
+            "openingFeeParams": dictionaryOf(openingFeeParams: receivePaymentResponse.openingFeeParams),
             "openingFeeMsat": receivePaymentResponse.openingFeeMsat
         ]
     }
@@ -527,7 +535,7 @@ class BreezSDKMapper {
     static func dictionaryOf(buyBitcoinResponse: BuyBitcoinResponse) -> [String: Any?] {
         return [
             "url": buyBitcoinResponse.url,
-            "openingFeeParams": dictionaryOf(params: buyBitcoinResponse.openingFeeParams)
+            "openingFeeParams": dictionaryOf(openingFeeParams: buyBitcoinResponse.openingFeeParams)
         ]
     }
 
