@@ -94,6 +94,41 @@ fun asCheckMessageRequest(reqData: ReadableMap): CheckMessageRequest? {
     return null
 }
 
+fun asReceivePaymentRequest(reqData: ReadableMap): ReceivePaymentRequest? {
+    val amountSats = reqData.getString("amountSats")
+    val description = reqData.getString("description")
+    val preimage = reqData.getString("preimage")
+    val openingFeeParams = reqData.getString("openingFeeParams")
+
+    if (amountSats != null && description != null && preimage != null && openingFeeParams != null) {
+        return ReceivePaymentRequest(amountSats, description, preimage, openingFeeParams)
+    }
+
+    return null
+}
+
+fun asReceiveOnchainRequest(reqData: ReadableMap): ReceiveOnchainRequest? {
+    val openingFeeParams = reqData.getString("openingFeeParams")
+
+    if (openingFeeParams != null) {
+        return ReceiveOnchainRequest(openingFeeParams)
+    }
+
+    return null
+}
+
+
+fun asBuyBitcoinRequest(reqData: ReadableMap): BuyBitcoinRequest? {
+    val provider = reqData.getString("provider")
+    val openingFeeParams = reqData.getString("openingFeeParams")
+
+    if (provider != null && openingFeeParams != null) {
+        return BuyBitcoinRequest(provider, openingFeeParams)
+    }
+
+    return null
+}
+
 fun asSignMessageRequest(reqData: ReadableMap): SignMessageRequest? {
     val message = reqData.getString("message")
 
@@ -156,8 +191,6 @@ fun pushToArray(array: WritableArray, value: Any?) {
     when (value) {
         null -> array.pushNull()
         is Boolean -> array.pushBoolean(value)
-        is BuyBitcoinRequest -> array.pushMap(readableMapOf(value))
-        is BuyBitcoinResponse -> array.pushMap(readableMapOf(value))
         is Double -> array.pushDouble(value)
         is FiatCurrency -> array.pushMap(readableMapOf(value))
         is Int -> array.pushInt(value)
@@ -165,14 +198,10 @@ fun pushToArray(array: WritableArray, value: Any?) {
         is LocalizedName -> array.pushMap(readableMapOf(value))
         is LspInformation -> array.pushMap(readableMapOf(value))
         is OpeningFeeParams -> array.pushMap(readableMapOf(value))
-        is OpeningFeeParamsMenu -> array.pushMap(readableMapOf(value))
         is Payment -> array.pushMap(readableMapOf(value))
         is Rate -> array.pushMap(readableMapOf(value))
         is ReadableArray -> array.pushArray(value)
         is ReadableMap -> array.pushMap(value)
-        is ReceiveOnchainRequest -> array.pushMap(readableMapOf(value))
-        is ReceivePaymentRequest -> array.pushMap(readableMapOf(value))
-        is ReceivePaymentResponse -> array.pushMap(readableMapOf(value))
         is ReverseSwapInfo -> array.pushMap(readableMapOf(value))
         is ReverseSwapPairInfo -> array.pushMap(readableMapOf(value))
         is RouteHint -> array.pushMap(readableMapOf(value))
@@ -484,33 +513,11 @@ fun readableMapOf(openingFeeParamsMenu: OpeningFeeParamsMenu): ReadableMap {
     )
 }
 
-fun readableMapOf(receiveOnchainRequest: ReceiveOnchainRequest): ReadableMap {
-    return readableMapOf(
-            "openingFeeParams" to readableMapOf(receivePaymentRequest.openingFeeParams)
-    )
-}
-
-fun readableMapOf(receivePaymentRequest: ReceivePaymentRequest): ReadableMap {
-    return readableMapOf(
-            "amountSats" to receivePaymentRequest.amountSats,
-            "description" to receivePaymentRequest.description,
-            "preimage" to receivePaymentRequest.preimage,
-            "openingFeeParams" to readableMapOf(receivePaymentRequest.openingFeeParams)
-    )
-}
-
 fun readableMapOf(receivePaymentResponse: ReceivePaymentResponse): ReadableMap {
     return readableMapOf(
             "lnInvoice" to readableMapOf(receivePaymentResponse.lnInvoice),
-            "openingFeeParams" to readableMapOf(receivePaymentRequest.openingFeeParams),
-            "openingFeeMsat" to receivePaymentRequest.openingFeeMsat
-    )
-}
-
-fun readableMapOf(buyBitcoinRequest: BuyBitcoinRequest): ReadableMap {
-    return readableMapOf(
-            "provider" to asBuyBitcoinProvider(buyBitcoinRequest.provider),
-            "openingFeeParams" to readableMapOf(buyBitcoinRequest.openingFeeParams)
+            "openingFeeParams" to readableMapOf(receivePaymentResponse.openingFeeParams),
+            "openingFeeMsat" to receivePaymentResponse.openingFeeMsat
     )
 }
 

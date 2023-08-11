@@ -238,14 +238,20 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun receivePayment(reqData: ReceivePaymentRequest, promise: Promise) {
+    fun receivePayment(reqData: ReadableMap, promise: Promise) {
         executor.execute {
-            try {
-                val response = getBreezServices().receivePayment(reqData)
-                promise.resolve(readableMapOf(response))
-            } catch (e: SdkException) {
-                e.printStackTrace()
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            val receivePaymentRequest = asReceivePaymentRequest(reqData)
+
+            if (receivePaymentRequest == null) {
+                promise.reject(GENERIC_CODE, "Invalid reqData")
+            } else {
+                try {
+                    val response = getBreezServices().receivePayment(receivePaymentRequest)
+                    promise.resolve(readableMapOf(response))
+                } catch (e: SdkException) {
+                    e.printStackTrace()
+                    promise.reject(e.javaClass.simpleName, e.message, e)
+                }
             }
         }
     }
@@ -464,14 +470,20 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun receiveOnchain(req: ReceiveOnchainRequest, promise: Promise) {
+    fun receiveOnchain(req: ReadableMap, promise: Promise) {
         executor.execute {
-            try {
-                val swapInfo = getBreezServices().receiveOnchain(req)
-                promise.resolve(readableMapOf(swapInfo))
-            } catch (e: SdkException) {
-                e.printStackTrace()
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            val receiveOnchainRequest = asReceiveOnchainRequest(reqData)
+
+            if (receiveOnchainRequest == null) {
+                promise.reject(GENERIC_CODE, "Invalid req")
+            } else {
+                try {
+                    val swapInfo = getBreezServices().receiveOnchain(receiveOnchainRequest)
+                    promise.resolve(readableMapOf(swapInfo))
+                } catch (e: SdkException) {
+                    e.printStackTrace()
+                    promise.reject(e.javaClass.simpleName, e.message, e)
+                }
             }
         }
     }
@@ -584,14 +596,20 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun buyBitcoin(req: BuyBitcoinRequest, promise: Promise) {
+    fun buyBitcoin(req: ReadableMap, promise: Promise) {
         executor.execute {
-            try {
-                val result = getBreezServices().buyBitcoin(req)
-                promise.resolve(result)
-            } catch (e: SdkException) {
-                e.printStackTrace()
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            val buyBitcoinRequest = asBuyBitcoinRequest(req)
+
+            if (buyBitcoinRequest == null) {
+                promise.reject(GENERIC_CODE, "Invalid req")
+            } else {
+                try {
+                    val result = getBreezServices().buyBitcoin(buyBitcoinRequest)
+                    promise.resolve(readableMapOf(result))
+                } catch (e: SdkException) {
+                    e.printStackTrace()
+                    promise.reject(e.javaClass.simpleName, e.message, e)
+                }
             }
         }
     }
