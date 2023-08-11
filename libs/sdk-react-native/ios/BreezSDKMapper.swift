@@ -227,12 +227,12 @@ class BreezSDKMapper {
     }
     
     static func asBuyBitcoinRequest(reqData: [String: Any?]) -> BuyBitcoinRequest? {
-        if let buyBitcoinProvider = asBitcoinProvider(reqData"buyBitcoinProvider"),
-        {
+        if let provider = reqData["provider"] as? String {
+            let buyBitcoinProvider = asBitcoinProvider(provider: provider)
             let openingFeeParams = asOpeningFeeParams(reqData: reqData["openingFeeParams"])
-            return BuyBitcoinRequest(buyBitcoinProvider: buyBitcoinProvider, openingFeeParams: openingFeeParams)
+            return BuyBitcoinRequest(provider: buyBitcoinProvider, openingFeeParams: openingFeeParams)
         }
-        
+
         return nil
     }
     
@@ -488,7 +488,7 @@ class BreezSDKMapper {
         ]
     }
 
-    static func dictionaryOf(openingFeeParams: OpeningFeeParams) -> [String: Any] {
+    static func dictionaryOf(openingFeeParams: OpeningFeeParams) -> [String: Any?] {
         return [
             "minMsat": openingFeeParams.minMsat,
             "proportional": openingFeeParams.proportional,

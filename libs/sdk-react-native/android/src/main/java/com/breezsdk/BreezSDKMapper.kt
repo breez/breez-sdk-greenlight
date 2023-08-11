@@ -95,34 +95,48 @@ fun asCheckMessageRequest(reqData: ReadableMap): CheckMessageRequest? {
 }
 
 fun asReceivePaymentRequest(reqData: ReadableMap): ReceivePaymentRequest? {
-    val amountSats = reqData.getString("amountSats")
+    val amountSats = reqData.getDouble("amountSats")
     val description = reqData.getString("description")
-    val preimage = reqData.getString("preimage")
-    val openingFeeParams = reqData.getString("openingFeeParams")
 
-    if (amountSats != null && description != null && preimage != null && openingFeeParams != null) {
-        return ReceivePaymentRequest(amountSats, description, preimage, openingFeeParams)
+    if (description != null) {
+        val preimage = reqData.getArray("preimage")?.let { asUByteList(it) }
+        val openingFeeParams = reqData.getMap("openingFeeParams")?.let{ asOpeningFeeParams(it) }
+
+        return ReceivePaymentRequest(amountSats.toULong(), description, preimage, openingFeeParams)
+    }
+
+    return null
+}
+
+fun asOpeningFeeParams(params: ReadableMap): OpeningFeeParams? {
+    if (hasNonNullKey(params, "minMsat") && hasNonNullKey(params, "proportional") &&
+            hasNonNullKey(params, "maxIdleTime") && hasNonNullKey(params, "maxClientToSelfDelay")) {
+        val minMsat = params.getDouble("minMsat")
+        val proportional = params.getInt("proportional")
+        val validUntil = params.getString("validUntil")
+        val maxIdleTime = params.getInt("maxIdleTime")
+        val maxClientToSelfDelay = params.getInt("maxClientToSelfDelay")
+        val promise = params.getString("promise")
+
+        if (validUntil != null && promise != null) {
+            return OpeningFeeParams(minMsat.toULong(), proportional.toUInt(), validUntil, maxIdleTime.toUInt(), maxClientToSelfDelay.toUInt(), promise)
+        }
     }
 
     return null
 }
 
 fun asReceiveOnchainRequest(reqData: ReadableMap): ReceiveOnchainRequest? {
-    val openingFeeParams = reqData.getString("openingFeeParams")
-
-    if (openingFeeParams != null) {
-        return ReceiveOnchainRequest(openingFeeParams)
-    }
-
-    return null
+    val openingFeeParams = reqData.getMap("openingFeeParams")?.let{ asOpeningFeeParams(it) }
+    return ReceiveOnchainRequest(openingFeeParams)
 }
 
 
 fun asBuyBitcoinRequest(reqData: ReadableMap): BuyBitcoinRequest? {
-    val provider = reqData.getString("provider")
-    val openingFeeParams = reqData.getString("openingFeeParams")
+    val provider = reqData.getString("provider")?.let { asBuyBitcoinProvider(it) }
+    val openingFeeParams = reqData.getMap("openingFeeParams")?.let{ asOpeningFeeParams(it) }
 
-    if (provider != null && openingFeeParams != null) {
+    if (provider != null) {
         return BuyBitcoinRequest(provider, openingFeeParams)
     }
 
