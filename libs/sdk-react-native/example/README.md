@@ -49,22 +49,4 @@ yarn ios
 
 ## Development
 
-To develop locally along with the SDK and test using the example app, you need to make the following changes.
-
-### Android
-
-In `libs/sdk-react-native/android/build.gradle` comment out the line:
-```
-    implementation("com.github.breez:breez-sdk:0.1.4") { exclude group:"net.java.dev.jna" }
-```
-
-### iOS
-
-Switch the podspec from the cocoapods dependencies to the local dependencies:
-```
-yarn install
-mv node_modules/@breeztech/react-native-breez-sdk/breez_sdk.podspec node_modules/@breeztech/react-native-breez-sdk/breez_sdk.podspec.prod
-mv node_modules/@breeztech/react-native-breez-sdk/BreezSDK.podspec.dev node_modules/@breeztech/react-native-breez-sdk/BreezSDK.podspec
-yarn pods
-yarn ios
-```
+To develop the Breez SDK alongside the React Native module and example app, please read [DEVELOPING.md](../DEVELOPING.md) for details on how to setup your development environment.
