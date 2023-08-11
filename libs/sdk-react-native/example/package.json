@@ -9,7 +9,7 @@
     "start": "react-native start",
     "test": "jest",
     "lint": "eslint .",
-    "pods": "cd ios && pod install",
+    "pods": "cd ios && pod install --repo-update",
     "rebuild": "rm -rf node_modules && yarn && yarn pods"
   },
   "dependencies": {
