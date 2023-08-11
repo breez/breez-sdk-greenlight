@@ -345,6 +345,16 @@ class RNBreezSDK: RCTEventEmitter {
             rejectErr(err: err, reject: reject)
         }
     }
+
+    @objc(lspInfo:rejecter:)
+    func lspInfo(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        do {
+            let lspInformation = try getBreezServices().lspInfo()
+            resolve(BreezSDKMapper.dictionaryOf(lspInformation: lspInformation))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
     
     @objc(closeLspChannels:rejecter:)
     func closeLspChannels(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {

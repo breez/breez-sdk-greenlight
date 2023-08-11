@@ -451,6 +451,19 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
+    fun lspInfo(promise: Promise) {
+        executor.execute {
+            try {
+                val lspInformation = getBreezServices().lspInfo()
+                promise.resolve(readableMapOf(lspInformation))
+            } catch (e: SdkException) {
+                e.printStackTrace()
+                promise.reject(e.javaClass.simpleName, e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
     fun closeLspChannels(promise: Promise) {
         executor.execute {
             try {

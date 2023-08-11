@@ -91,6 +91,11 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kFetchLspInfoConstMeta;
 
+  /// See [BreezServices::lsp_info]
+  Future<LspInformation> lspInfo({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kLspInfoConstMeta;
+
   /// See [BreezServices::close_lsp_channels]
   Future<void> closeLspChannels({dynamic hint});
 
@@ -1512,6 +1517,21 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kFetchLspInfoConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "fetch_lsp_info",
         argNames: ["id"],
+      );
+
+  Future<LspInformation> lspInfo({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_lsp_info(port_),
+      parseSuccessData: _wire2api_lsp_information,
+      constMeta: kLspInfoConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kLspInfoConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "lsp_info",
+        argNames: [],
       );
 
   Future<void> closeLspChannels({dynamic hint}) {
@@ -3530,6 +3550,17 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
           'wire_fetch_lsp_info');
   late final _wire_fetch_lsp_info =
       _wire_fetch_lsp_infoPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_lsp_info(
+    int port_,
+  ) {
+    return _wire_lsp_info(
+      port_,
+    );
+  }
+
+  late final _wire_lsp_infoPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_lsp_info');
+  late final _wire_lsp_info = _wire_lsp_infoPtr.asFunction<void Function(int)>();
 
   void wire_close_lsp_channels(
     int port_,

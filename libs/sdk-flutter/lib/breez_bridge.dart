@@ -149,7 +149,10 @@ class BreezSDK {
   /// Get the current LSP's ID
   Future<String?> lspId() async => await _lnToolkit.lspId();
 
-  /// Convenience method to look up LSP info
+  /// Convenience method to look up LSP info based on current LSP ID
+  Future<LspInformation?> lspInfo() async => await _lnToolkit.lspInfo();
+
+  /// Convenience method to look up [LspInformation] for a given LSP ID
   Future<LspInformation?> fetchLspInfo(String lspId) async => await _lnToolkit.fetchLspInfo(id: lspId);
 
   /// close all channels with the current lsp

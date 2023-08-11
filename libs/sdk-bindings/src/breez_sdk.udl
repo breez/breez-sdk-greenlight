@@ -531,6 +531,9 @@ interface BlockingBreezServices {
    string? lsp_id();
 
    [Throws=SdkError]
+   LspInformation lsp_info();
+
+   [Throws=SdkError]
    void close_lsp_channels();
 
    [Throws=SdkError]
