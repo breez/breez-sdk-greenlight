@@ -195,6 +195,47 @@ class BreezSDKMapper {
         }
     }
     
+    static func asOpeningFeeParams(reqData: [String: Any]) -> OpeningFeeParams? {
+        if let minMsat = reqData["minMsat"] as? UInt64,
+           let proportional = reqData["proportional"] as? UInt32,
+           let validUntil = reqData["validUntil"] as? String,
+           let maxIdleTime = reqData["maxIdleTime"] as? UInt32,
+           let maxClientToSelfDelay = reqData["maxClientToSelfDelay"] as? UInt32,
+           let promise = reqData["promise"] as? String,{
+            return OpeningFeeParams(minMsat: minMsat, proportional: proportional, validUntil: validUntil, maxIdleTime: maxIdleTime, maxClientToSelfDelay: maxClientToSelfDelay, promise: promise)
+        }
+        
+        return nil
+    }
+    
+    static func asReceivePaymentRequest(reqData: [String: Any?]) -> ReceivePaymentRequest? {
+        if let amountSats = reqData["amountSats"] as? UInt64,
+           let description = reqData["description"] as? String
+        {
+            let preimage = reqData["preimage"] as? [UInt8]
+            let openingFeeParams = asOpeningFeeParams(reqData: reqData["openingFeeParams"])
+            return ReceivePaymentRequest(amountSats: amountSats, description: description, preimage: preimage, openingFeeParams: openingFeeParams)
+        }
+        
+        return nil
+    }
+    
+    static func asReceiveOnchainRequest(reqData: [String: Any?]) -> ReceiveOnchainRequest {
+        let openingFeeParams = asOpeningFeeParams(reqData: reqData["openingFeeParams"])
+        return ReceiveOnchainRequest(openingFeeParams: openingFeeParams)
+        
+    }
+    
+    static func asBuyBitcoinRequest(reqData: [String: Any?]) -> BuyBitcoinRequest? {
+        if let buyBitcoinProvider = asBitcoinProvider(reqData"buyBitcoinProvider"),
+        {
+            let openingFeeParams = asOpeningFeeParams(reqData: reqData["openingFeeParams"])
+            return BuyBitcoinRequest(buyBitcoinProvider: buyBitcoinProvider, openingFeeParams: openingFeeParams)
+        }
+        
+        return nil
+    }
+    
     static func dictionaryOf(backupStatus: BackupStatus) -> [String: Any?] {
         return [
             "backedUp": backupStatus.backedUp,
@@ -471,33 +512,11 @@ class BreezSDKMapper {
         ]
     }
 
-    static func dictionaryOf(receivePaymentRequest: ReceivePaymentRequest) -> [String: Any] {
-        return [
-            "amountSats": receivePaymentRequest.amountSats,
-            "description": receivePaymentRequest.description,
-            "preimage": arrayOf(preimageBytes: receivePaymentRequest.preimage),
-            "openingFeeParams": dictionaryOf(params: receivePaymentRequest.openingFeeParams)
-        ]
-    }
-
     static func dictionaryOf(receivePaymentResponse: ReceivePaymentResponse) -> [String: Any?] {
         return [
             "lnInvoice": dictionaryOf(lnInvoice: receivePaymentResponse.lnInvoice),
             "openingFeeParams": dictionaryOf(params: receivePaymentResponse.openingFeeParams),
             "openingFeeMsat": receivePaymentResponse.openingFeeMsat
-        ]
-    }
-
-    static func dictionaryOf(receiveOnchainRequest: ReceiveOnchainRequest) -> [String: Any] {
-        return [
-            "openingFeeParams": dictionaryOf(params: receiveOnchainRequest.openingFeeParams)
-        ]
-    }
-
-    static func dictionaryOf(buyBitcoinRequest: BuyBitcoinRequest) -> [String: Any] {
-        return [
-            "provider": asBitcoinProvider(provider: buyBitcoinRequest.provider),
-            "openingFeeParams": dictionaryOf(params: buyBitcoinRequest.openingFeeParams)
         ]
     }
 
