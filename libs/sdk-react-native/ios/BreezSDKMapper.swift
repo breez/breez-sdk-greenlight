@@ -488,15 +488,19 @@ class BreezSDKMapper {
         ]
     }
 
-    static func dictionaryOf(openingFeeParams: OpeningFeeParams) -> [String: Any?] {
-        return [
-            "minMsat": openingFeeParams.minMsat,
-            "proportional": openingFeeParams.proportional,
-            "validUntil": openingFeeParams.validUntil,
-            "maxIdleTime": openingFeeParams.maxIdleTime,
-            "maxClientToSelfDelay": openingFeeParams.maxClientToSelfDelay,
-            "promise": openingFeeParams.promise
-        ]
+    static func dictionaryOf(openingFeeParams: OpeningFeeParams?) -> [String: Any]? {
+        if openingFeeParams != nil {
+            return [
+                "minMsat": openingFeeParams?.minMsat,
+                "proportional": openingFeeParams?.proportional,
+                "validUntil": openingFeeParams?.validUntil,
+                "maxIdleTime": openingFeeParams?.maxIdleTime,
+                "maxClientToSelfDelay": openingFeeParams?.maxClientToSelfDelay,
+                "promise": openingFeeParams?.promise
+            ]
+        }
+
+        return nil
     }
 
     static func dictionaryOf(openingFeeParamsMenu: OpeningFeeParamsMenu) -> [String: Any] {
