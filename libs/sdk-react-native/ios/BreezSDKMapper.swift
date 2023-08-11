@@ -447,7 +447,7 @@ class BreezSDKMapper {
         ]
     }
 
-    static func dictionaryOf(openingFeeParams: OpeningFeeParams) -> [String: Any?] {
+    static func dictionaryOf(openingFeeParams: OpeningFeeParams) -> [String: Any] {
         return [
             "minMsat": openingFeeParams.minMsat,
             "proportional": openingFeeParams.proportional,
@@ -480,7 +480,7 @@ class BreezSDKMapper {
         ]
     }
 
-    static func dictionaryOf(receivePaymentResponse: ReceivePaymentResponse) -> [String: Any] {
+    static func dictionaryOf(receivePaymentResponse: ReceivePaymentResponse) -> [String: Any?] {
         return [
             "lnInvoice": dictionaryOf(lnInvoice: receivePaymentResponse.lnInvoice),
             "openingFeeParams": dictionaryOf(params: receivePaymentResponse.openingFeeParams),
@@ -501,7 +501,7 @@ class BreezSDKMapper {
         ]
     }
 
-    static func dictionaryOf(buyBitcoinResponse: BuyBitcoinResponse) -> [String: Any] {
+    static func dictionaryOf(buyBitcoinResponse: BuyBitcoinResponse) -> [String: Any?] {
         return [
             "url": buyBitcoinResponse.url,
             "openingFeeParams": dictionaryOf(params: buyBitcoinResponse.openingFeeParams)
