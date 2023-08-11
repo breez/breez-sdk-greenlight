@@ -106,7 +106,7 @@ export type OpeningFeeParamsMenu = {
 export type ReceivePaymentRequest = {
     amountSats: number
     description: string
-    preimage?: Uint8Array
+    preimage?: Uint8Array | number[]
     openingFeeParams?: OpeningFeeParams
 }
 
@@ -599,7 +599,10 @@ export const sendSpontaneousPayment = async (nodeId: string, amountSats: number)
 }
 
 export const receivePayment = async (reqData: ReceivePaymentRequest): Promise<ReceivePaymentResponse> => {
-    return await BreezSDK.receivePayment(reqData)
+    return await BreezSDK.receivePayment({
+        ...reqData,
+        preimage: reqData.preimage && Array.from(reqData.preimage)
+    })
 }
 
 export const lnurlAuth = async (reqData: LnUrlAuthRequestData): Promise<LnUrlCallbackStatus> => {
