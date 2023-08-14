@@ -26,6 +26,10 @@ class BreezSDKMapper {
         return lsps.map { (lspInformation) -> [String: Any?] in return dictionaryOf(lspInformation: lspInformation) }
     }
     
+    static func arrayOf(openingFeeParamsValues: [OpeningFeeParams]) -> [Any] {
+        return openingFeeParamsValues.map { (openingFeeParams) -> [String: Any]? in return dictionaryOf(openingFeeParams: openingFeeParams) }
+    }
+    
     static func arrayOf(payments: [Payment]) -> [Any] {
         return payments.map { (payment) -> [String: Any?] in return dictionaryOf(payment: payment) }
     }
@@ -33,7 +37,7 @@ class BreezSDKMapper {
     static func arrayOf(rates: [Rate]) -> [Any] {
         return rates.map { (rate) -> [String: Any] in return dictionaryOf(rate: rate) }
     }
-    
+
     static func arrayOf(routeHints: [RouteHint]) -> [Any] {
         return routeHints.map { (routeHint) -> [String: Any] in return dictionaryOf(routeHint: routeHint) }
     }
@@ -193,6 +197,51 @@ class BreezSDKMapper {
         case "testnet": return Network.testnet
         default: throw SdkError.Generic(message: "Invalid network")
         }
+    }
+    
+    static func asOpeningFeeParams(reqData: [String: Any]) -> OpeningFeeParams? {
+        if let minMsat = reqData["minMsat"] as? UInt64,
+           let proportional = reqData["proportional"] as? UInt32,
+           let validUntil = reqData["validUntil"] as? String,
+           let maxIdleTime = reqData["maxIdleTime"] as? UInt32,
+           let maxClientToSelfDelay = reqData["maxClientToSelfDelay"] as? UInt32,
+           let promise = reqData["promise"] as? String {
+            return OpeningFeeParams(minMsat: minMsat, proportional: proportional, validUntil: validUntil, maxIdleTime: maxIdleTime, maxClientToSelfDelay: maxClientToSelfDelay, promise: promise)
+        }
+        
+        return nil
+    }
+    
+    static func asReceivePaymentRequest(reqData: [String: Any?]) -> ReceivePaymentRequest? {
+        if let amountSats = reqData["amountSats"] as? UInt64,
+           let description = reqData["description"] as? String
+        {
+            let preimage = reqData["preimage"] as? [UInt8]
+            let openingFeeParamsMap = reqData["openingFeeParams"] as? [String: Any]
+            let openingFeeParams = (openingFeeParamsMap == nil ? nil : asOpeningFeeParams(reqData: openingFeeParamsMap!))
+            return ReceivePaymentRequest(amountSats: amountSats, description: description, preimage: preimage, openingFeeParams: openingFeeParams)
+        }
+        
+        return nil
+    }
+    
+    static func asReceiveOnchainRequest(reqData: [String: Any?]) -> ReceiveOnchainRequest {
+        let openingFeeParamsMap = reqData["openingFeeParams"] as? [String: Any]
+        let openingFeeParams = (openingFeeParamsMap == nil ? nil : asOpeningFeeParams(reqData: openingFeeParamsMap!))
+        return ReceiveOnchainRequest(openingFeeParams: openingFeeParams)
+    }
+    
+    static func asBuyBitcoinRequest(reqData: [String: Any?]) -> BuyBitcoinRequest? {
+        do {
+            if let provider = reqData["provider"] as? String {
+                let buyBitcoinProvider = try asBitcoinProvider(provider: provider)
+                let openingFeeParamsMap = reqData["openingFeeParams"] as? [String: Any]
+                let openingFeeParams = (openingFeeParamsMap == nil ? nil : asOpeningFeeParams(reqData: openingFeeParamsMap!))
+                return BuyBitcoinRequest(provider: buyBitcoinProvider, openingFeeParams: openingFeeParams)
+            }
+        } catch {}
+
+        return nil
     }
     
     static func dictionaryOf(backupStatus: BackupStatus) -> [String: Any?] {
@@ -442,10 +491,29 @@ class BreezSDKMapper {
             "feeRate": lspInformation.feeRate,
             "timeLockDelta": lspInformation.timeLockDelta,
             "minHtlcMsat": lspInformation.minHtlcMsat,
-            "channelFeePermyriad": lspInformation.channelFeePermyriad,
             "lspPubkey": lspInformation.lspPubkey,
-            "maxInactiveDuration": lspInformation.maxInactiveDuration,
-            "channelMinimumFeeMsat": lspInformation.channelMinimumFeeMsat
+            "openingFeeParamsList": dictionaryOf(openingFeeParamsMenu: lspInformation.openingFeeParamsList)
+        ]
+    }
+
+    static func dictionaryOf(openingFeeParams: OpeningFeeParams?) -> [String: Any]? {
+        if openingFeeParams != nil {
+            return [
+                "minMsat": openingFeeParams!.minMsat,
+                "proportional": openingFeeParams!.proportional,
+                "validUntil": openingFeeParams!.validUntil,
+                "maxIdleTime": openingFeeParams!.maxIdleTime,
+                "maxClientToSelfDelay": openingFeeParams!.maxClientToSelfDelay,
+                "promise": openingFeeParams!.promise
+            ]
+        }
+
+        return nil
+    }
+
+    static func dictionaryOf(openingFeeParamsMenu: OpeningFeeParamsMenu) -> [String: Any] {
+        return [
+            "values": arrayOf(openingFeeParamsValues: openingFeeParamsMenu.values)
         ]
     }
     
@@ -455,7 +523,22 @@ class BreezSDKMapper {
             "message": messageSuccessActionData.message
         ]
     }
-    
+
+    static func dictionaryOf(receivePaymentResponse: ReceivePaymentResponse) -> [String: Any?] {
+        return [
+            "lnInvoice": dictionaryOf(lnInvoice: receivePaymentResponse.lnInvoice),
+            "openingFeeParams": dictionaryOf(openingFeeParams: receivePaymentResponse.openingFeeParams),
+            "openingFeeMsat": receivePaymentResponse.openingFeeMsat
+        ]
+    }
+
+    static func dictionaryOf(buyBitcoinResponse: BuyBitcoinResponse) -> [String: Any?] {
+        return [
+            "url": buyBitcoinResponse.url,
+            "openingFeeParams": dictionaryOf(openingFeeParams: buyBitcoinResponse.openingFeeParams)
+        ]
+    }
+
     static func dictionaryOf(nodeState: NodeState) -> [String: Any] {
         return [
             "id": nodeState.id,
@@ -586,7 +669,8 @@ class BreezSDKMapper {
             "confirmedTxIds": swapInfo.confirmedTxIds,
             "minAllowedDeposit": swapInfo.minAllowedDeposit,
             "maxAllowedDeposit": swapInfo.maxAllowedDeposit,
-            "lastRedeemError": swapInfo.lastRedeemError
+            "lastRedeemError": swapInfo.lastRedeemError,
+            "channelOpeningFees": dictionaryOf(openingFeeParams: swapInfo.channelOpeningFees)
         ]
     }
 

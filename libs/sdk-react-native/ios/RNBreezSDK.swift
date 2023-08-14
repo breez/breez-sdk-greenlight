@@ -181,13 +181,17 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
     
-    @objc(receivePayment:description:resolver:rejecter:)
-    func receivePayment(_ amountSats:UInt64, description:String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        do {
-            let lnInvoice = try getBreezServices().receivePayment(amountSats: amountSats, description: description)
-            resolve(BreezSDKMapper.dictionaryOf(lnInvoice: lnInvoice))        
-        } catch let err {
-            rejectErr(err: err, reject: reject)
+    @objc(receivePayment:resolver:rejecter:)
+    func receivePayment(_ reqData:[String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        if let receivePaymentRequest = BreezSDKMapper.asReceivePaymentRequest(reqData: reqData) {
+            do {
+                let response = try getBreezServices().receivePayment(reqData: receivePaymentRequest)
+                resolve(BreezSDKMapper.dictionaryOf(receivePaymentResponse: response))
+            } catch let err {
+                reject(RNBreezSDK.TAG, "Error calling receivePayment \(err)", err)
+            }
+        } else {
+            rejectErr(err: SdkError.Generic(message:"Invalid reqData"), reject: reject)
         }
     }
     
@@ -366,13 +370,14 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
     
-    @objc(receiveOnchain:rejecter:)
-    func receiveOnchain(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+    @objc(receiveOnchain:resolver:rejecter:)
+    func receiveOnchain(_ req:[String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         do {
-            let swapInfo = try getBreezServices().receiveOnchain()
-            resolve(BreezSDKMapper.dictionaryOf(swapInfo: swapInfo))        
+            let receiveOnchainRequest = BreezSDKMapper.asReceiveOnchainRequest(reqData: req)
+            let swapInfo = try getBreezServices().receiveOnchain(req: receiveOnchainRequest)
+            resolve(BreezSDKMapper.dictionaryOf(swapInfo: swapInfo))
         } catch let err {
-            rejectErr(err: err, reject: reject)
+            reject(RNBreezSDK.TAG, "Error calling receiveOnchain \(err)", err)
         }
     }
     
@@ -460,13 +465,16 @@ class RNBreezSDK: RCTEventEmitter {
     }
 
     @objc(buyBitcoin:resolver:rejecter:)
-    func buyBitcoin(_ provider: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        do {
-            let buyBitcoinProvider = try BreezSDKMapper.asBitcoinProvider(provider: provider)
-            let result = try getBreezServices().buyBitcoin(provider: buyBitcoinProvider)
-            resolve(result)        
-        } catch let err {
-            rejectErr(err: err, reject: reject)
+    func buyBitcoin(_ req:[String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        if let buyBitcoinRequest = BreezSDKMapper.asBuyBitcoinRequest(reqData: req) {
+            do {
+                let response = try getBreezServices().buyBitcoin(req: buyBitcoinRequest)
+                resolve(BreezSDKMapper.dictionaryOf(buyBitcoinResponse: response))
+            } catch let err {
+                reject(RNBreezSDK.TAG, "Error calling buyBitcoin \(err)", err)
+            }
+        } else {
+            rejectErr(err: SdkError.Generic(message:"Invalid reqData"), reject: reject)
         }
     }
     

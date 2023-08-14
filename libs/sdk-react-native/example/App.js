@@ -108,7 +108,10 @@ const App = () => {
                 const inProgressRevSwaps = await inProgressReverseSwaps()
                 addLine("inProgressRevSwaps", JSON.stringify(inProgressRevSwaps))
 
-                const buyBitcoinResult = await buyBitcoin(BuyBitcoinProvider.MOONPAY)
+                const buyBitcoinResult = await buyBitcoin({
+                    provider: BuyBitcoinProvider.MOONPAY,
+                    openingFeeParams: null
+                })
                 addLine("buyBitcoin", JSON.stringify(buyBitcoinResult))
 
                 const signMessageResult = await signMessage({ message: "Hello world"})

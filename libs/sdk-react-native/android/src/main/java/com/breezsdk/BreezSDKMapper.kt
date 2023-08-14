@@ -94,6 +94,55 @@ fun asCheckMessageRequest(reqData: ReadableMap): CheckMessageRequest? {
     return null
 }
 
+fun asReceivePaymentRequest(reqData: ReadableMap): ReceivePaymentRequest? {
+    val amountSats = reqData.getDouble("amountSats")
+    val description = reqData.getString("description")
+
+    if (description != null) {
+        val preimage = reqData.getArray("preimage")?.let { asUByteList(it) }
+        val openingFeeParams = reqData.getMap("openingFeeParams")?.let{ asOpeningFeeParams(it) }
+
+        return ReceivePaymentRequest(amountSats.toULong(), description, preimage, openingFeeParams)
+    }
+
+    return null
+}
+
+fun asOpeningFeeParams(params: ReadableMap): OpeningFeeParams? {
+    if (hasNonNullKey(params, "minMsat") && hasNonNullKey(params, "proportional") &&
+            hasNonNullKey(params, "maxIdleTime") && hasNonNullKey(params, "maxClientToSelfDelay")) {
+        val minMsat = params.getDouble("minMsat")
+        val proportional = params.getInt("proportional")
+        val validUntil = params.getString("validUntil")
+        val maxIdleTime = params.getInt("maxIdleTime")
+        val maxClientToSelfDelay = params.getInt("maxClientToSelfDelay")
+        val promise = params.getString("promise")
+
+        if (validUntil != null && promise != null) {
+            return OpeningFeeParams(minMsat.toULong(), proportional.toUInt(), validUntil, maxIdleTime.toUInt(), maxClientToSelfDelay.toUInt(), promise)
+        }
+    }
+
+    return null
+}
+
+fun asReceiveOnchainRequest(reqData: ReadableMap): ReceiveOnchainRequest? {
+    val openingFeeParams = reqData.getMap("openingFeeParams")?.let{ asOpeningFeeParams(it) }
+    return ReceiveOnchainRequest(openingFeeParams)
+}
+
+
+fun asBuyBitcoinRequest(reqData: ReadableMap): BuyBitcoinRequest? {
+    val provider = reqData.getString("provider")?.let { asBuyBitcoinProvider(it) }
+    val openingFeeParams = reqData.getMap("openingFeeParams")?.let{ asOpeningFeeParams(it) }
+
+    if (provider != null) {
+        return BuyBitcoinRequest(provider, openingFeeParams)
+    }
+
+    return null
+}
+
 fun asSignMessageRequest(reqData: ReadableMap): SignMessageRequest? {
     val message = reqData.getString("message")
 
@@ -162,6 +211,7 @@ fun pushToArray(array: WritableArray, value: Any?) {
         is LocaleOverrides -> array.pushMap(readableMapOf(value))
         is LocalizedName -> array.pushMap(readableMapOf(value))
         is LspInformation -> array.pushMap(readableMapOf(value))
+        is OpeningFeeParams -> array.pushMap(readableMapOf(value))
         is Payment -> array.pushMap(readableMapOf(value))
         is Rate -> array.pushMap(readableMapOf(value))
         is ReadableArray -> array.pushArray(value)
@@ -452,10 +502,43 @@ fun readableMapOf(lspInformation: LspInformation): ReadableMap {
             "feeRate" to lspInformation.feeRate,
             "timeLockDelta" to lspInformation.timeLockDelta,
             "minHtlcMsat" to lspInformation.minHtlcMsat,
-            "channelFeePermyriad" to lspInformation.channelFeePermyriad,
             "lspPubkey" to lspInformation.lspPubkey,
-            "maxInactiveDuration" to lspInformation.maxInactiveDuration,
-            "channelMinimumFeeMsat" to lspInformation.channelMinimumFeeMsat
+            "openingFeeParamsList" to readableMapOf(lspInformation.openingFeeParamsList)
+    )
+}
+
+fun readableMapOf(openingFeeParams: OpeningFeeParams?): ReadableMap? {
+    if (openingFeeParams != null) {
+        return readableMapOf(
+                "minMsat" to openingFeeParams.minMsat,
+                "proportional" to openingFeeParams.proportional,
+                "validUntil" to openingFeeParams.validUntil,
+                "maxIdleTime" to openingFeeParams.maxIdleTime,
+                "maxClientToSelfDelay" to openingFeeParams.maxClientToSelfDelay,
+                "promise" to openingFeeParams.promise
+        )
+    }
+    return null
+}
+
+fun readableMapOf(openingFeeParamsMenu: OpeningFeeParamsMenu): ReadableMap {
+    return readableMapOf(
+            "values" to readableArrayOf(openingFeeParamsMenu.values)
+    )
+}
+
+fun readableMapOf(receivePaymentResponse: ReceivePaymentResponse): ReadableMap {
+    return readableMapOf(
+            "lnInvoice" to readableMapOf(receivePaymentResponse.lnInvoice),
+            "openingFeeParams" to readableMapOf(receivePaymentResponse.openingFeeParams),
+            "openingFeeMsat" to receivePaymentResponse.openingFeeMsat
+    )
+}
+
+fun readableMapOf(buyBitcoinResponse: BuyBitcoinResponse): ReadableMap {
+    return readableMapOf(
+            "url" to buyBitcoinResponse.url,
+            "openingFeeParams" to readableMapOf(buyBitcoinResponse.openingFeeParams)
     )
 }
 
@@ -585,7 +668,8 @@ fun readableMapOf(swapInfo: SwapInfo): ReadableMap {
             "confirmedTxIds" to swapInfo.confirmedTxIds,
             "minAllowedDeposit" to swapInfo.minAllowedDeposit,
             "maxAllowedDeposit" to swapInfo.maxAllowedDeposit,
-            "lastRedeemError" to swapInfo.lastRedeemError
+            "lastRedeemError" to swapInfo.lastRedeemError,
+            "channelOpeningFees" to readableMapOf(swapInfo.channelOpeningFees)
     )
 }
 
