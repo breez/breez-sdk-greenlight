@@ -56,7 +56,10 @@ pub fn default_config(
 }
 
 /// connect initializes the SDK services, schedule the node to run in the cloud and
-/// run the signer. This must be called in order to start communicating with the node
+/// run the signer. This must be called in order to start communicating with the node.
+///
+/// In addition, it also initializes SDK logging. If the log stream was already set using [`set_log_stream`]
+/// when this is called, log statements are sent to the log stream.
 ///
 /// # Arguments
 ///
@@ -74,7 +77,7 @@ pub fn connect(
             None => None,
             Some(_) => Some(Box::new(BindingLogger {})),
         };
-        BreezServices::init_logging(&config, uniffi_logger)?;
+        BreezServices::init_logging(&config.working_dir, uniffi_logger)?;
 
         let breez_services = BreezServices::connect(config, seed, event_listener).await?;
 

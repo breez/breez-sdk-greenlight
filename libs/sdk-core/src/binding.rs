@@ -45,11 +45,14 @@ static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime:
 
 /*  Breez Services API's */
 
-/// See [BreezServices::connect]
+/// Wrapper around [BreezServices::connect] which also initializes SDK logging
 pub fn connect(config: Config, seed: Vec<u8>) -> Result<()> {
     block_on(async move {
-        BreezServices::init_logging(&config, Some(Box::new(BindingLogStreamEventListener {})))
-            .map_err(anyhow::Error::new)?;
+        BreezServices::init_logging(
+            &config.working_dir,
+            Some(Box::new(BindingLogStreamEventListener {})),
+        )
+        .map_err(anyhow::Error::new)?;
 
         let breez_services =
             BreezServices::connect(config, seed, Box::new(BindingEventListener {})).await?;

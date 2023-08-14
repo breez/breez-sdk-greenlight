@@ -6,6 +6,7 @@ mod config;
 mod persist;
 
 use anyhow::{anyhow, Result};
+use breez_sdk_core::BreezServices;
 use clap::Parser;
 use command_handlers::handle_command;
 use commands::{Commands, SdkCli};
@@ -23,6 +24,8 @@ async fn main() {
         println!("Error: data directory doesn't exist");
         return;
     }
+
+    BreezServices::init_logging(&data_dir, None).expect("Failed to init logging");
 
     let persistence = CliPersistence { data_dir };
     let history_file = &persistence.history_file();

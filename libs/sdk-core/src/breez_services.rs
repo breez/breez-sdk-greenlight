@@ -1014,10 +1014,17 @@ impl BreezServices {
     ///
     /// If called, it should be called before any SDK methods (for example, before `connect`).
     ///
-    /// If the application already uses a globally-registered logger, this method shouldn't be called.
+    /// It must be called only once in the application lifecycle. Alternatively, If the application
+    /// already uses a globally-registered logger, this method shouldn't be called at all.
+    ///
+    /// ### Arguments
+    ///
+    /// - `log_dir`: Location where the the SDK log file will be created. The directory must already exist.
+    ///
+    /// - `app_logger`: Optional application logger.
     ///
     /// If the application is to use it's own logger, but would also like the SDK to log SDK-specific
-    /// log output to a file in the configured `working_dir` (see [Config]), then do not register the
+    /// log output to a file in the configured `log_dir`, then do not register the
     /// app-specific logger as a global logger and instead call this method with the app logger as an arg.
     ///
     /// ### Errors
@@ -1025,13 +1032,12 @@ impl BreezServices {
     /// An error is thrown if the log file cannot be created in the working directory.
     ///
     /// An error is thrown if a global logger is already configured.
-    pub fn init_logging(config: &Config, app_logger: Option<Box<dyn log::Log>>) -> SdkResult<()> {
-        let working_dir = &config.working_dir;
+    pub fn init_logging(log_dir: &str, app_logger: Option<Box<dyn log::Log>>) -> SdkResult<()> {
         let target_log_file = Box::new(
             OpenOptions::new()
                 .create(true)
                 .append(true)
-                .open(format!("{working_dir}/sdk.log"))
+                .open(format!("{log_dir}/sdk.log"))
                 .map_err(|_| SdkError::InitFailed {
                     err: "Can't create log file".into(),
                 })?,
