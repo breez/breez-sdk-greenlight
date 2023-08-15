@@ -30,6 +30,7 @@ use crate::lsp::LspInformation;
 use crate::models::Network::*;
 use crate::{LNInvoice, LnUrlErrorData};
 
+use crate::error::{SdkError, SdkResult};
 use strum_macros::{Display, EnumString};
 
 /// Different types of supported payments
@@ -808,13 +809,20 @@ impl OpeningFeeParamsMenu {
         Ok(())
     }
 
-    pub(crate) fn get_cheapest_opening_fee_params(&self) -> Result<OpeningFeeParams> {
-        self.values.first().cloned().ok_or(anyhow!(
-            "The LSP doesn't support opening new channels: Dynamic fees menu contains no values"
-        ))
+    pub fn get_cheapest_opening_fee_params(&self) -> SdkResult<OpeningFeeParams> {
+        self.values
+            .first()
+            .cloned()
+            .ok_or_else(|| {
+                SdkError::LspOpenChannelNotSupported {
+            err:
+                "The LSP doesn't support opening new channels: Dynamic fees menu contains no values"
+                    .into(),
+        }
+            })
     }
 
-    pub(crate) fn get_48h_opening_fee_params(&self) -> Result<OpeningFeeParams> {
+    pub fn get_48h_opening_fee_params(&self) -> SdkResult<OpeningFeeParams> {
         // Find the fee params that are valid for at least 48h
         let now = Utc::now();
         let duration_48h = chrono::Duration::hours(48);
@@ -833,9 +841,13 @@ impl OpeningFeeParamsMenu {
 
         // Of those, return the first, which is the cheapest
         // (sorting order of fee params list was checked when the menu was initialized)
-        valid_min_48h.first().cloned().ok_or(anyhow!(
-            "The LSP doesn't support opening fees with a validity > 48 hours"
-        ))
+        valid_min_48h
+            .first()
+            .cloned()
+            .ok_or_else(|| SdkError::LspOpenChannelNotSupported {
+                err: "The LSP doesn't support opening fees that are valid for at least 48 hours"
+                    .into(),
+            })
     }
 }
 

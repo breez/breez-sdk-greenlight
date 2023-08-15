@@ -1,5 +1,6 @@
 use crate::breez_services::BreezServer;
 use crate::crypt::encrypt;
+use crate::error::SdkResult;
 use crate::grpc::{
     self, LspListRequest, PaymentInformation, RegisterPaymentReply, RegisterPaymentRequest,
 };
@@ -60,7 +61,7 @@ impl LspInformation {
         &self,
         maybe_user_supplied_fee_params: Option<OpeningFeeParams>,
         fee_type: DynamicFeeType,
-    ) -> Result<OpeningFeeParams> {
+    ) -> SdkResult<OpeningFeeParams> {
         match maybe_user_supplied_fee_params {
             // Validate given opening_fee_params and use it if possible
             Some(user_supplied_fees) => {
