@@ -15,7 +15,7 @@ use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
 use flutter_rust_bridge::StreamSink;
-use log::{Level, LevelFilter, Metadata, Record};
+use log::{Level, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
 use tokio::sync::mpsc;
 
@@ -45,11 +45,18 @@ static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime:
 
 /*  Breez Services API's */
 
-/// See [BreezServices::connect]
+/// Wrapper around [BreezServices::connect] which also initializes SDK logging
 pub fn connect(config: Config, seed: Vec<u8>) -> Result<()> {
     block_on(async move {
+        BreezServices::init_logging(
+            &config.working_dir,
+            Some(Box::new(BindingLogStreamEventListener {})),
+        )
+        .map_err(anyhow::Error::new)?;
+
         let breez_services =
             BreezServices::connect(config, seed, Box::new(BindingEventListener {})).await?;
+
         BREEZ_SERVICES_INSTANCE
             .set(breez_services)
             .map_err(|_| SdkError::InitFailed {
@@ -119,6 +126,7 @@ pub fn default_config(
 
 /*  Stream API's */
 
+/// If used, this must be called before `connect`. It can only be called once.
 pub fn breez_events_stream(s: StreamSink<BreezEvent>) -> Result<()> {
     NOTIFICATION_STREAM
         .set(s)
@@ -126,12 +134,11 @@ pub fn breez_events_stream(s: StreamSink<BreezEvent>) -> Result<()> {
     Ok(())
 }
 
+/// If used, this must be called before `connect`. It can only be called once.
 pub fn breez_log_stream(s: StreamSink<LogEntry>) -> Result<()> {
     LOG_STREAM
         .set(s)
-        .map_err(|_| anyhow!("log stream already created"))?;
-    BindingLogger::init();
-    Ok(())
+        .map_err(|_| anyhow!("log stream already created"))
 }
 
 /*  LSP API's */
@@ -374,16 +381,19 @@ pub fn execute_command(command: String) -> Result<String> {
 
 /*  Binding Related Logic */
 
-struct BindingLogger;
+struct BindingEventListener;
 
-impl BindingLogger {
-    fn init() {
-        log::set_boxed_logger(Box::new(BindingLogger {})).unwrap();
-        log::set_max_level(LevelFilter::Trace)
+impl EventListener for BindingEventListener {
+    fn on_event(&self, e: BreezEvent) {
+        if let Some(stream) = NOTIFICATION_STREAM.get() {
+            stream.add(e);
+        }
     }
 }
 
-impl log::Log for BindingLogger {
+struct BindingLogStreamEventListener;
+
+impl log::Log for BindingLogStreamEventListener {
     fn enabled(&self, m: &Metadata) -> bool {
         m.level() <= Level::Debug
     }
@@ -399,16 +409,6 @@ impl log::Log for BindingLogger {
         };
     }
     fn flush(&self) {}
-}
-
-struct BindingEventListener;
-
-impl EventListener for BindingEventListener {
-    fn on_event(&self, e: BreezEvent) {
-        if let Some(stream) = NOTIFICATION_STREAM.get() {
-            stream.add(e);
-        }
-    }
 }
 
 fn get_breez_services() -> Result<&'static BreezServices> {

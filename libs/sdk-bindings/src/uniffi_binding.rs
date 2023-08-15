@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
-use anyhow::Result;
-use log::{LevelFilter, Metadata, Record};
-use once_cell::sync::Lazy;
+use anyhow::{anyhow, Result};
+use log::{Metadata, Record};
+use once_cell::sync::{Lazy, OnceCell};
 
 use breez_sdk_core::{
     error::*, mnemonic_to_seed as sdk_mnemonic_to_seed, parse as sdk_parse_input,
@@ -13,9 +13,9 @@ use breez_sdk_core::{
     FeeratePreset, FiatCurrency, GreenlightCredentials, GreenlightNodeConfig, InputType,
     InvoicePaidDetails, LNInvoice, LnPaymentDetails, LnUrlAuthRequestData, LnUrlCallbackStatus,
     LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult, LnUrlWithdrawRequestData, LocaleOverrides,
-    LocalizedName, LogEntry, LspInformation, MessageSuccessActionData, MetadataItem, Network,
-    NodeConfig, NodeState, OpeningFeeParams, OpeningFeeParamsMenu, Payment, PaymentDetails,
-    PaymentFailedData, PaymentType, PaymentTypeFilter, Rate, ReceiveOnchainRequest,
+    LocalizedName, LogEntry, LogStream, LspInformation, MessageSuccessActionData, MetadataItem,
+    Network, NodeConfig, NodeState, OpeningFeeParams, OpeningFeeParamsMenu, Payment,
+    PaymentDetails, PaymentFailedData, PaymentType, PaymentTypeFilter, Rate, ReceiveOnchainRequest,
     ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees, ReverseSwapInfo,
     ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop, SignMessageRequest,
     SignMessageResponse, SuccessActionProcessed, SwapInfo, SwapStatus, Symbol,
@@ -23,35 +23,24 @@ use breez_sdk_core::{
 };
 
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
+static LOG_STREAM: OnceCell<Box<dyn LogStream>> = OnceCell::new();
 
-pub trait LogStream: Send + Sync {
-    fn log(&self, l: LogEntry);
-}
-
-struct BindingLogger {
-    log_stream: Box<dyn LogStream>,
-}
-
-impl BindingLogger {
-    fn init(log_stream: Box<dyn LogStream>) {
-        let binding_logger = BindingLogger { log_stream };
-        log::set_boxed_logger(Box::new(binding_logger)).unwrap();
-        log::set_max_level(LevelFilter::Trace);
-    }
-}
+struct BindingLogger {}
 
 impl log::Log for BindingLogger {
     fn enabled(&self, m: &Metadata) -> bool {
-        // ignroe the internal uniffi log to prevent infinite loop.
+        // ignore the internal uniffi log to prevent infinite loop.
         return *m.target() != *"breez_sdk_bindings::uniffi_binding";
     }
 
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
-            self.log_stream.log(LogEntry {
-                line: record.args().to_string(),
-                level: record.level().as_str().to_string(),
-            });
+            if let Some(s) = LOG_STREAM.get() {
+                s.log(LogEntry {
+                    line: record.args().to_string(),
+                    level: record.level().as_str().to_string(),
+                });
+            }
         }
     }
     fn flush(&self) {}
@@ -67,7 +56,10 @@ pub fn default_config(
 }
 
 /// connect initializes the SDK services, schedule the node to run in the cloud and
-/// run the signer. This must be called in order to start communicating with the node
+/// run the signer. This must be called in order to start communicating with the node.
+///
+/// In addition, it also initializes SDK logging. If the log stream was already set using [`set_log_stream`]
+/// when this is called, log statements are sent to the log stream.
 ///
 /// # Arguments
 ///
@@ -81,13 +73,23 @@ pub fn connect(
     event_listener: Box<dyn EventListener>,
 ) -> SdkResult<Arc<BlockingBreezServices>> {
     rt().block_on(async move {
+        let uniffi_logger: Option<Box<dyn log::Log>> = match LOG_STREAM.get() {
+            None => None,
+            Some(_) => Some(Box::new(BindingLogger {})),
+        };
+        BreezServices::init_logging(&config.working_dir, uniffi_logger)?;
+
         let breez_services = BreezServices::connect(config, seed, event_listener).await?;
+
         Ok(Arc::new(BlockingBreezServices { breez_services }))
     })
 }
 
+/// If used, this must be called before `connect`
 pub fn set_log_stream(log_stream: Box<dyn LogStream>) -> Result<()> {
-    BindingLogger::init(log_stream);
+    LOG_STREAM
+        .set(log_stream)
+        .map_err(|_| anyhow!("log stream already created"))?;
     Ok(())
 }
 

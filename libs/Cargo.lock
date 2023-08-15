@@ -472,6 +472,7 @@ dependencies = [
  "chrono",
  "const_format",
  "ecies",
+ "env_logger",
  "flutter_rust_bridge",
  "futures",
  "gl-client",

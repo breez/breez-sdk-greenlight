@@ -68,7 +68,7 @@ pub trait BackupTransport: Send + Sync {
 }
 
 pub(crate) struct BackupWatcher {
-    config: Config,
+    pub(crate) config: Config,
     backup_request_sender: Mutex<Option<mpsc::Sender<BackupRequest>>>,
     inner: Arc<dyn BackupTransport>,
     persister: Arc<SqliteStorage>,

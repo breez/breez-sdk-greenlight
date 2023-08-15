@@ -4,3 +4,5 @@ phrase
 storage.sql
 sync_storage.sql
 creds
+
+*.log

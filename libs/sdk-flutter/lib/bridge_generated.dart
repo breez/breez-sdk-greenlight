@@ -63,10 +63,12 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kDefaultConfigConstMeta;
 
+  /// If used, this must be called before `connect`. It can only be called once.
   Stream<BreezEvent> breezEventsStream({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kBreezEventsStreamConstMeta;
 
+  /// If used, this must be called before `connect`. It can only be called once.
   Stream<LogEntry> breezLogStream({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kBreezLogStreamConstMeta;
@@ -405,6 +407,9 @@ class ClosedChannelPaymentDetails {
 class Config {
   final String breezserver;
   final String mempoolspaceUrl;
+
+  /// Directory in which all SDK files (DB, log) are stored. Defaults to ".", otherwise if it's customized,
+  /// the folder should exist before starting the SDK.
   final String workingDir;
   final Network network;
   final int paymentTimeoutSec;

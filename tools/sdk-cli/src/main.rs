@@ -6,10 +6,10 @@ mod config;
 mod persist;
 
 use anyhow::{anyhow, Result};
+use breez_sdk_core::BreezServices;
 use clap::Parser;
 use command_handlers::handle_command;
 use commands::{Commands, SdkCli};
-use env_logger::Env;
 use persist::CliPersistence;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
@@ -17,12 +17,6 @@ use std::path::Path;
 
 #[tokio::main]
 async fn main() {
-    env_logger::Builder::from_env(
-        Env::default()
-            .default_filter_or("debug,rustyline=warn,hyper=warn,reqwest=warn,rustls=warn,h2=warn"),
-    )
-    .init();
-
     let cli = SdkCli::parse();
     let data_dir = cli.data_dir.clone().unwrap_or(".".to_string());
     let data_dir_path = Path::new(&data_dir);
@@ -30,6 +24,8 @@ async fn main() {
         println!("Error: data directory doesn't exist");
         return;
     }
+
+    BreezServices::init_logging(&data_dir, None).expect("Failed to init logging");
 
     let persistence = CliPersistence { data_dir };
     let history_file = &persistence.history_file();
@@ -76,9 +72,7 @@ async fn main() {
 
 fn show_results(res: Result<String>) {
     match res {
-        Ok(inner) => {
-            println!("{}", inner);
-        }
-        Err(err) => error!("Error: {}", err),
+        Ok(inner) => println!("{inner}"),
+        Err(err) => eprintln!("Error: {err}"),
     }
 }

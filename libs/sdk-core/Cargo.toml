@@ -21,7 +21,9 @@ gl-client = { git = "https://github.com/Blockstream/greenlight.git", features = 
 ], rev = "113cc28c938d4ed607a6e3fc4ab044a000d7e5e1" }
 zbase32 = "0.1.2"
 base64 = "0.13.0"
+chrono = "*"
 ecies = { version = "0.2", default-features = false, features = ["pure"] }
+env_logger = "*"
 ripemd = "*"
 rand = "*"
 tiny-bip39 = "*"
@@ -57,7 +59,6 @@ tempfile = "3"
 thiserror = "*"
 const_format = "*"
 miniz_oxide = "0.7.1"
-chrono = "0.4.26"
 
 [dev-dependencies]
 futures = "0.3.28"

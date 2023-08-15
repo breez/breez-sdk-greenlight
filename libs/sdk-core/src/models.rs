@@ -425,6 +425,8 @@ pub struct LogEntry {
 pub struct Config {
     pub breezserver: String,
     pub mempoolspace_url: String,
+    /// Directory in which all SDK files (DB, log) are stored. Defaults to ".", otherwise if it's customized,
+    /// the folder should exist before starting the SDK.
     pub working_dir: String,
     pub network: Network,
     pub payment_timeout_sec: u32,
