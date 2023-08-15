@@ -493,9 +493,12 @@ impl NodeAPI for Greenlight {
         Ok(client.withdraw(request).await?.into_inner())
     }
 
+    /// Starts the signer that listens in a loop until the shutdown signal is received
     async fn start_signer(&self, shutdown: mpsc::Receiver<()>) {
-        _ = self.signer.run_forever(shutdown).await;
-        error!("signer exited");
+        match self.signer.run_forever(shutdown).await {
+            Ok(_) => info!("signer exited gracefully"),
+            Err(e) => error!("signer exited with error: {e}"),
+        }
     }
 
     async fn list_peers(&self) -> Result<Vec<Peer>> {
