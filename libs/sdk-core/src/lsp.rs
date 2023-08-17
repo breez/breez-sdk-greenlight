@@ -10,19 +10,39 @@ use prost::Message;
 use serde::{Deserialize, Serialize};
 use tonic::Request;
 
-/// Details of supported LSP, see [grpc::LspInformation] for field descriptions
+/// Details of supported LSP
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct LspInformation {
     pub id: String,
+
+    /// The name of of LSP
     pub name: String,
+
+    /// The URL of the LSP
     pub widget_url: String,
+
+    /// The identity pubkey of the Lightning node
     pub pubkey: String,
+
+    /// The network location of the lightning node, e.g. `12.34.56.78:9012` or `localhost:10011`
     pub host: String,
+
+    /// The channel capacity in satoshis
     pub channel_capacity: i64,
+
+    /// The target number of blocks that the funding transaction should be confirmed by
     pub target_conf: i32,
+
+    /// The base fee charged regardless of the number of milli-satoshis sent
     pub base_fee_msat: i64,
+
+    /// The effective fee rate in milli-satoshis. The precision of this value goes up to 6 decimal places, so 1e-6.
     pub fee_rate: f64,
+
+    /// The required timelock delta for HTLCs forwarded over the channel
     pub time_lock_delta: u32,
+
+    /// The minimum value in millisatoshi we will require for incoming HTLCs on the channel
     pub min_htlc_msat: i64,
     pub lsp_pubkey: Vec<u8>,
     pub opening_fee_params_list: OpeningFeeParamsMenu,

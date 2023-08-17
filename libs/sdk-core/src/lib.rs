@@ -160,8 +160,10 @@ mod crypt;
 pub mod error;
 mod fiat;
 mod greenlight;
-// We expose grpc as pub to be able to reference and re-use its internal field and struct docs
-pub mod grpc;
+// GRPC structs are documented as follows:
+// - if they are mirrored in Rust model structs, documented in the model structs
+// - if there is no corresponding model struct, documented in breez.proto
+mod grpc;
 pub mod input_parser;
 mod invoice;
 mod lnurl;

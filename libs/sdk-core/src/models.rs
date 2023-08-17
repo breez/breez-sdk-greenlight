@@ -683,12 +683,17 @@ pub struct BuyBitcoinResponse {
 
 /// Dynamic fee parameters offered by the LSP for opening a new channel.
 ///
-/// See [grpc::OpeningFeeParams] for more details.
+/// After they are received, the client shouldn't change them when calling LSP methods,
+/// otherwise the LSP may reject the call.
 #[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub struct OpeningFeeParams {
+    /// The minimum value in millisatoshi we will require for incoming HTLCs on the channel
     pub min_msat: u64,
+    /// The fee in ppm charged over liquidity when buying a channel
     pub proportional: u32,
+    /// The date and time this opening fee params promise expires, in RFC 3339 / ISO 8601 format
     pub valid_until: String,
+    /// The channel can be closed if not used within this duration in blocks
     pub max_idle_time: u32,
     pub max_client_to_self_delay: u32,
     pub promise: String,
