@@ -1027,6 +1027,11 @@ impl BreezServices {
     /// log output to a file in the configured `log_dir`, then do not register the
     /// app-specific logger as a global logger and instead call this method with the app logger as an arg.
     ///
+    /// ### Logging Configuration
+    ///
+    /// Setting `breez_sdk_core::input_parser=debug` will include in the logs the raw payloads received
+    /// when interacting with JSON endpoints, for example those used during all LNURL workflows.
+    ///
     /// ### Errors
     ///
     /// An error is thrown if the log file cannot be created in the working directory.
@@ -1047,6 +1052,7 @@ impl BreezServices {
             .parse_filters(
                 r#"
                 info,
+                breez_sdk_core::input_parser=warn,
                 gl_client=warn,
                 h2=warn,
                 hyper=warn,

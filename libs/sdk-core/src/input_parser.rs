@@ -204,7 +204,7 @@ pub async fn parse(input: &str) -> Result<InputType> {
         }
 
         lnurl_endpoint = maybe_replace_host_with_mockito_test_host(lnurl_endpoint)?;
-        let lnurl_data: LnUrlRequestData = reqwest::get(lnurl_endpoint).await?.json().await?;
+        let lnurl_data: LnUrlRequestData = get_parse_and_log_response(&lnurl_endpoint).await?;
         let temp = lnurl_data.into();
         let temp = match temp {
             // Modify the LnUrlPay payload by adding the domain of the LNURL endpoint
@@ -225,6 +225,28 @@ pub async fn parse(input: &str) -> Result<InputType> {
     }
 
     Err(anyhow!("Unrecognized input type"))
+}
+
+/// Makes a GET request to the specified `url` and logs on DEBUG:
+/// - the URL
+/// - the raw response body
+pub(crate) async fn get_and_log_response(url: &str) -> Result<String> {
+    debug!("Making GET request to: {url}");
+
+    let raw_body = reqwest::get(url).await?.text().await?;
+    debug!("Received raw response body: {raw_body}");
+
+    Ok(raw_body)
+}
+
+/// Wrapper around [get_and_log_response] that, in addition, parses the payload into an expected type
+pub(crate) async fn get_parse_and_log_response<T>(url: &str) -> Result<T>
+where
+    for<'a> T: serde::de::Deserialize<'a>,
+{
+    let raw_body = get_and_log_response(url).await?;
+
+    serde_json::from_str(&raw_body).map_err(|e| anyhow!("Failed to parse json: {e}"))
 }
 
 /// Prepends the given prefix to the input, if the input doesn't already start with it

@@ -1,3 +1,4 @@
+use crate::input_parser::get_parse_and_log_response;
 use anyhow::Result;
 use bitcoin::hashes::hex::FromHex;
 use bitcoin::{OutPoint, Txid};
@@ -196,31 +197,15 @@ impl MempoolSpace {
 #[tonic::async_trait]
 impl ChainService for MempoolSpace {
     async fn recommended_fees(&self) -> Result<RecommendedFees> {
-        Ok(
-            reqwest::get(format!("{}/api/v1/fees/recommended", self.base_url))
-                .await?
-                .json()
-                .await?,
-        )
+        get_parse_and_log_response(&format!("{}/api/v1/fees/recommended", self.base_url)).await
     }
 
     async fn address_transactions(&self, address: String) -> Result<Vec<OnchainTx>> {
-        Ok(
-            reqwest::get(format!("{}/api/address/{}/txs", self.base_url, address))
-                .await?
-                .json()
-                .await?,
-        )
+        get_parse_and_log_response(&format!("{}/api/address/{address}/txs", self.base_url)).await
     }
 
     async fn current_tip(&self) -> Result<u32> {
-        Ok(
-            reqwest::get(format!("{}/api/blocks/tip/height", self.base_url))
-                .await?
-                .text()
-                .await?
-                .parse()?,
-        )
+        get_parse_and_log_response(&format!("{}/api/blocks/tip/height", self.base_url)).await
     }
 
     async fn broadcast_transaction(&self, tx: Vec<u8>) -> Result<String> {

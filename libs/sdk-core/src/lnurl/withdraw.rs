@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use crate::input_parser::get_parse_and_log_response;
 use crate::{lnurl::*, LnUrlCallbackStatus};
 use crate::{LNInvoice, LnUrlWithdrawRequestData};
 use anyhow::{anyhow, Result};
@@ -29,9 +30,7 @@ pub(crate) async fn validate_lnurl_withdraw(
         )),
         _ => {
             let callback_url = build_withdraw_callback_url(&req_data, &invoice)?;
-            let callback_resp_text = reqwest::get(&callback_url).await?.text().await?;
-
-            serde_json::from_str::<LnUrlCallbackStatus>(&callback_resp_text).map_err(|e| anyhow!(e))
+            get_parse_and_log_response(&callback_url).await
         }
     }
 }

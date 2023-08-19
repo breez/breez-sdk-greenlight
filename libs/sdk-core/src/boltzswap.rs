@@ -11,6 +11,7 @@ use const_format::concatcp;
 use reqwest::header::CONTENT_TYPE;
 use reqwest::{Body, Client};
 
+use crate::input_parser::get_parse_and_log_response;
 use crate::models::ReverseSwapPairInfo;
 use crate::reverseswap::CreateReverseSwapResponse;
 use crate::ReverseSwapperAPI;
@@ -232,10 +233,7 @@ impl ReverseSwapperAPI for BoltzApi {
 }
 
 pub async fn reverse_swap_pair_info() -> Result<ReverseSwapPairInfo> {
-    let pairs = reqwest::get(GET_PAIRS_ENDPOINT)
-        .await?
-        .json::<Pairs>()
-        .await?;
+    let pairs: Pairs = get_parse_and_log_response(GET_PAIRS_ENDPOINT).await?;
     match pairs.pairs.get("BTC/BTC") {
         None => Err(anyhow!("BTC pair not found")),
         Some(btc_pair) => {
