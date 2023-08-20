@@ -21,6 +21,10 @@ use bitcoin::{
 use serde::{Deserialize, Serialize};
 use tokio::time::{sleep, Duration};
 
+// Estimates based on https://github.com/BoltzExchange/boltz-backend/blob/master/lib/rates/FeeProvider.ts#L31-L42
+pub const ESTIMATED_CLAIM_TX_VSIZE: u64 = 138;
+pub const ESTIMATED_LOCKUP_TX_VSIZE: u64 = 153;
+
 #[derive(Clone, Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateReverseSwapResponse {

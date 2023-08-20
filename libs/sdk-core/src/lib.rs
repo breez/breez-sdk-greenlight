@@ -105,6 +105,8 @@
 //! ### D. Sending to an on-chain address (swap-out)
 //!
 //! * [BreezServices::fetch_reverse_swap_fees] to get the current swap-out fees
+//!   * Based on the amount to send, [ReverseSwapPairInfo::estimate_amount_sat_received] can estimate the net amount received
+//!   * Based on the amount to receive, [ReverseSwapPairInfo::estimate_amount_sat_to_send] can estimate what amount to send
 //! * [BreezServices::send_onchain] to start the swap-out
 //! * [BreezServices::in_progress_reverse_swaps] to see any in-progress swaps
 //!
@@ -192,3 +194,4 @@ pub use invoice::{parse_invoice, LNInvoice, RouteHint, RouteHintHop};
 pub use lnurl::pay::model::*;
 pub use lsp::LspInformation;
 pub use models::*;
+pub use reverseswap::{ESTIMATED_CLAIM_TX_VSIZE, ESTIMATED_LOCKUP_TX_VSIZE};

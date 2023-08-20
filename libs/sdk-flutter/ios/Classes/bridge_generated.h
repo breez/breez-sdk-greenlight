@@ -3,6 +3,10 @@
 #include <stdlib.h>
 typedef struct _Dart_Handle* Dart_Handle;
 
+#define ESTIMATED_CLAIM_TX_VSIZE 138
+
+#define ESTIMATED_LOCKUP_TX_VSIZE 153
+
 typedef struct DartCObject DartCObject;
 
 typedef int64_t DartPort;

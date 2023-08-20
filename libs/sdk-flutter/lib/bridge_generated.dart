@@ -14,7 +14,7 @@ import 'dart:ffi' as ffi;
 part 'bridge_generated.freezed.dart';
 
 abstract class BreezSdkCore {
-  /// See [BreezServices::connect]
+  /// Wrapper around [BreezServices::connect] which also initializes SDK logging
   Future<void> connect({required Config config, required Uint8List seed, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kConnectConstMeta;
@@ -1047,10 +1047,12 @@ class ReverseSwapPairInfo {
   /// Percentage fee for the reverse swap service
   final double feesPercentage;
 
-  /// Estimated miner fees in sats for locking up funds
+  /// Estimated miner fees in sats for locking up funds, assuming a transaction virtual size of
+  /// [`crate::ESTIMATED_LOCKUP_TX_VSIZE`] vbytes and [ReverseSwapPairInfo::feerate]
   final int feesLockup;
 
-  /// Estimated miner fees in sats for claiming funds
+  /// Estimated miner fees in sats for claiming funds, assuming a transaction virtual size of
+  /// [`crate::ESTIMATED_CLAIM_TX_VSIZE`] vbytes and [ReverseSwapPairInfo::feerate]
   final int feesClaim;
 
   const ReverseSwapPairInfo({
@@ -4325,3 +4327,7 @@ class wire_BuyBitcoinRequest extends ffi.Struct {
 typedef DartPostCObjectFnType
     = ffi.Pointer<ffi.NativeFunction<ffi.Bool Function(DartPort port_id, ffi.Pointer<ffi.Void> message)>>;
 typedef DartPort = ffi.Int64;
+
+const int ESTIMATED_CLAIM_TX_VSIZE = 138;
+
+const int ESTIMATED_LOCKUP_TX_VSIZE = 153;
