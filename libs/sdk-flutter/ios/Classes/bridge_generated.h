@@ -113,6 +113,10 @@ typedef struct wire_BuyBitcoinRequest {
   struct wire_OpeningFeeParams *opening_fee_params;
 } wire_BuyBitcoinRequest;
 
+typedef struct wire_ReverseSwapFeesRequest {
+  uint64_t *send_amount_sat;
+} wire_ReverseSwapFeesRequest;
+
 typedef struct DartCObject *WireSyncReturn;
 
 void store_dart_post_cobject(DartPostCObjectFnType ptr);
@@ -226,7 +230,7 @@ void wire_in_progress_swap(int64_t port_);
 
 void wire_in_progress_reverse_swaps(int64_t port_);
 
-void wire_fetch_reverse_swap_fees(int64_t port_, uint64_t *send_amount_sat);
+void wire_fetch_reverse_swap_fees(int64_t port_, struct wire_ReverseSwapFeesRequest *req);
 
 void wire_recommended_fees(int64_t port_);
 
@@ -257,6 +261,8 @@ struct wire_OpeningFeeParams *new_box_autoadd_opening_fee_params_0(void);
 struct wire_ReceiveOnchainRequest *new_box_autoadd_receive_onchain_request_0(void);
 
 struct wire_ReceivePaymentRequest *new_box_autoadd_receive_payment_request_0(void);
+
+struct wire_ReverseSwapFeesRequest *new_box_autoadd_reverse_swap_fees_request_0(void);
 
 struct wire_SignMessageRequest *new_box_autoadd_sign_message_request_0(void);
 
@@ -325,6 +331,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_opening_fee_params_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_receive_onchain_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_receive_payment_request_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_reverse_swap_fees_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_sign_message_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_u64_0);
     dummy_var ^= ((int64_t) (void*) new_uint_8_list_0);

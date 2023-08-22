@@ -224,7 +224,7 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kInProgressReverseSwapsConstMeta;
 
   /// See [BreezServices::fetch_reverse_swap_fees]
-  Future<ReverseSwapPairInfo> fetchReverseSwapFees({int? sendAmountSat, dynamic hint});
+  Future<ReverseSwapPairInfo> fetchReverseSwapFees({required ReverseSwapFeesRequest req, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kFetchReverseSwapFeesConstMeta;
 
@@ -1013,6 +1013,14 @@ class RecommendedFees {
     required this.hourFee,
     required this.economyFee,
     required this.minimumFee,
+  });
+}
+
+class ReverseSwapFeesRequest {
+  final int? sendAmountSat;
+
+  const ReverseSwapFeesRequest({
+    this.sendAmountSat,
   });
 }
 
@@ -1931,20 +1939,20 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: [],
       );
 
-  Future<ReverseSwapPairInfo> fetchReverseSwapFees({int? sendAmountSat, dynamic hint}) {
-    var arg0 = _platform.api2wire_opt_box_autoadd_u64(sendAmountSat);
+  Future<ReverseSwapPairInfo> fetchReverseSwapFees({required ReverseSwapFeesRequest req, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_reverse_swap_fees_request(req);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_fetch_reverse_swap_fees(port_, arg0),
       parseSuccessData: _wire2api_reverse_swap_pair_info,
       constMeta: kFetchReverseSwapFeesConstMeta,
-      argValues: [sendAmountSat],
+      argValues: [req],
       hint: hint,
     ));
   }
 
   FlutterRustBridgeTaskConstMeta get kFetchReverseSwapFeesConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "fetch_reverse_swap_fees",
-        argNames: ["sendAmountSat"],
+        argNames: ["req"],
       );
 
   Future<RecommendedFees> recommendedFees({dynamic hint}) {
@@ -3033,6 +3041,14 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<wire_ReverseSwapFeesRequest> api2wire_box_autoadd_reverse_swap_fees_request(
+      ReverseSwapFeesRequest raw) {
+    final ptr = inner.new_box_autoadd_reverse_swap_fees_request_0();
+    _api_fill_to_wire_reverse_swap_fees_request(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
   ffi.Pointer<wire_SignMessageRequest> api2wire_box_autoadd_sign_message_request(SignMessageRequest raw) {
     final ptr = inner.new_box_autoadd_sign_message_request_0();
     _api_fill_to_wire_sign_message_request(raw, ptr.ref);
@@ -3153,6 +3169,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     _api_fill_to_wire_receive_payment_request(apiObj, wireObj.ref);
   }
 
+  void _api_fill_to_wire_box_autoadd_reverse_swap_fees_request(
+      ReverseSwapFeesRequest apiObj, ffi.Pointer<wire_ReverseSwapFeesRequest> wireObj) {
+    _api_fill_to_wire_reverse_swap_fees_request(apiObj, wireObj.ref);
+  }
+
   void _api_fill_to_wire_box_autoadd_sign_message_request(
       SignMessageRequest apiObj, ffi.Pointer<wire_SignMessageRequest> wireObj) {
     _api_fill_to_wire_sign_message_request(apiObj, wireObj.ref);
@@ -3261,6 +3282,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.description = api2wire_String(apiObj.description);
     wireObj.preimage = api2wire_opt_uint_8_list(apiObj.preimage);
     wireObj.opening_fee_params = api2wire_opt_box_autoadd_opening_fee_params(apiObj.openingFeeParams);
+  }
+
+  void _api_fill_to_wire_reverse_swap_fees_request(
+      ReverseSwapFeesRequest apiObj, wire_ReverseSwapFeesRequest wireObj) {
+    wireObj.send_amount_sat = api2wire_opt_box_autoadd_u64(apiObj.sendAmountSat);
   }
 
   void _api_fill_to_wire_sign_message_request(SignMessageRequest apiObj, wire_SignMessageRequest wireObj) {
@@ -3947,19 +3973,19 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
 
   void wire_fetch_reverse_swap_fees(
     int port_,
-    ffi.Pointer<ffi.Uint64> send_amount_sat,
+    ffi.Pointer<wire_ReverseSwapFeesRequest> req,
   ) {
     return _wire_fetch_reverse_swap_fees(
       port_,
-      send_amount_sat,
+      req,
     );
   }
 
   late final _wire_fetch_reverse_swap_feesPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<ffi.Uint64>)>>(
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_ReverseSwapFeesRequest>)>>(
           'wire_fetch_reverse_swap_fees');
-  late final _wire_fetch_reverse_swap_fees =
-      _wire_fetch_reverse_swap_feesPtr.asFunction<void Function(int, ffi.Pointer<ffi.Uint64>)>();
+  late final _wire_fetch_reverse_swap_fees = _wire_fetch_reverse_swap_feesPtr
+      .asFunction<void Function(int, ffi.Pointer<wire_ReverseSwapFeesRequest>)>();
 
   void wire_recommended_fees(
     int port_,
@@ -4120,6 +4146,16 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
           'new_box_autoadd_receive_payment_request_0');
   late final _new_box_autoadd_receive_payment_request_0 = _new_box_autoadd_receive_payment_request_0Ptr
       .asFunction<ffi.Pointer<wire_ReceivePaymentRequest> Function()>();
+
+  ffi.Pointer<wire_ReverseSwapFeesRequest> new_box_autoadd_reverse_swap_fees_request_0() {
+    return _new_box_autoadd_reverse_swap_fees_request_0();
+  }
+
+  late final _new_box_autoadd_reverse_swap_fees_request_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_ReverseSwapFeesRequest> Function()>>(
+          'new_box_autoadd_reverse_swap_fees_request_0');
+  late final _new_box_autoadd_reverse_swap_fees_request_0 = _new_box_autoadd_reverse_swap_fees_request_0Ptr
+      .asFunction<ffi.Pointer<wire_ReverseSwapFeesRequest> Function()>();
 
   ffi.Pointer<wire_SignMessageRequest> new_box_autoadd_sign_message_request_0() {
     return _new_box_autoadd_sign_message_request_0();
@@ -4331,6 +4367,10 @@ class wire_BuyBitcoinRequest extends ffi.Struct {
   external int provider;
 
   external ffi.Pointer<wire_OpeningFeeParams> opening_fee_params;
+}
+
+class wire_ReverseSwapFeesRequest extends ffi.Struct {
+  external ffi.Pointer<ffi.Uint64> send_amount_sat;
 }
 
 typedef DartPostCObjectFnType

@@ -288,6 +288,10 @@ dictionary OpeningFeeParams {
     string promise;
 };
 
+dictionary ReverseSwapFeesRequest {
+    u64? send_amount_sat;
+};
+
 dictionary ReceivePaymentRequest {
     u64 amount_sats;
     string description;
@@ -551,7 +555,7 @@ interface BlockingBreezServices {
    string refund(string swap_address, string to_address, u32 sat_per_vbyte);
 
    [Throws=SdkError]
-   ReverseSwapPairInfo fetch_reverse_swap_fees(u64? send_amount_sat);
+   ReverseSwapPairInfo fetch_reverse_swap_fees(ReverseSwapFeesRequest req);
 
    [Throws=SdkError]
    sequence<ReverseSwapInfo> in_progress_reverse_swaps();

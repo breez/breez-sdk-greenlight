@@ -655,6 +655,11 @@ pub struct ClosedChannelPaymentDetails {
     pub funding_txid: String,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ReverseSwapFeesRequest {
+    pub send_amount_sat: Option<u64>,
+}
+
 /// Represents a receive payment request.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReceivePaymentRequest {

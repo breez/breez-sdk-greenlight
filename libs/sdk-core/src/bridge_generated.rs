@@ -74,6 +74,7 @@ use crate::models::PaymentTypeFilter;
 use crate::models::ReceiveOnchainRequest;
 use crate::models::ReceivePaymentRequest;
 use crate::models::ReceivePaymentResponse;
+use crate::models::ReverseSwapFeesRequest;
 use crate::models::ReverseSwapInfo;
 use crate::models::ReverseSwapPairInfo;
 use crate::models::ReverseSwapStatus;
@@ -630,7 +631,7 @@ fn wire_in_progress_reverse_swaps_impl(port_: MessagePort) {
 }
 fn wire_fetch_reverse_swap_fees_impl(
     port_: MessagePort,
-    send_amount_sat: impl Wire2Api<Option<u64>> + UnwindSafe,
+    req: impl Wire2Api<ReverseSwapFeesRequest> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -639,8 +640,8 @@ fn wire_fetch_reverse_swap_fees_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_send_amount_sat = send_amount_sat.wire2api();
-            move |task_callback| fetch_reverse_swap_fees(api_send_amount_sat)
+            let api_req = req.wire2api();
+            move |task_callback| fetch_reverse_swap_fees(api_req)
         },
     )
 }

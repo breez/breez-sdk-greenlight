@@ -414,13 +414,17 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
-    @objc(fetchReverseSwapFees:rejecter:)
-    func fetchReverseSwapFees(_ sendAmountSats:UInt64, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        do {
-            let fees = try getBreezServices().fetchReverseSwapFees(sendAmountSats: sendAmountSats)
-            resolve(fees)        
-        } catch let err {
-            rejectErr(err: err, reject: reject)
+    @objc(fetchReverseSwapFees:resolver:rejecter:)
+    func fetchReverseSwapFees(_ reqData:[String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        if let reverseSwapFeesRequest = BreezSDKMapper.asReverseSwapFeesRequest(reqData: reqData) {
+            do {
+                let fees = try getBreezServices().fetchReverseSwapFees(reqData: reverseSwapFeesRequest)
+                resolve(fees)
+            } catch let err {
+                rejectErr(err: err, reject: reject)
+            }
+        } else {
+            rejectErr(err: SdkError.Generic(message:"Invalid reqData"), reject: reject)
         }
     }
 

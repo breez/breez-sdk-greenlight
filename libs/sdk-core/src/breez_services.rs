@@ -554,16 +554,16 @@ impl BreezServices {
     ///
     /// ### Errors
     ///
-    /// If a `send_amount_sat` is specified, but is outside the `min` and `max`, this will result in
-    /// an error. If you are not sure what are the `min` and `max`, please call this with `send_amount_sat`
-    /// as `None` first, then repeat the call with the desired amount.
+    /// If a `send_amount_sat` is specified in the request, but is outside the `min` and `max`,
+    /// this will result in an error. If you are not sure what are the `min` and `max`, please call
+    /// this with `send_amount_sat` as `None` first, then repeat the call with the desired amount.
     pub async fn fetch_reverse_swap_fees(
         &self,
-        send_amount_sat: Option<u64>,
+        req: ReverseSwapFeesRequest,
     ) -> Result<ReverseSwapPairInfo> {
         let mut res = self.btc_send_swapper.fetch_reverse_swap_fees().await?;
 
-        if let Some(send_amount_sat) = send_amount_sat {
+        if let Some(send_amount_sat) = req.send_amount_sat {
             ensure!(send_amount_sat <= res.max, "Send amount is too high");
             ensure!(send_amount_sat >= res.min, "Send amount is too low");
 
