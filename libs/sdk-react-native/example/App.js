@@ -102,7 +102,7 @@ const App = () => {
                 const fiatRates = await fetchFiatRates()
                 addLine("fetchFiatRates", JSON.stringify(fiatRates))
 
-                const revSwapFees = await fetchReverseSwapFees()
+                const revSwapFees = await fetchReverseSwapFees(null)
                 addLine("revSwapFees", JSON.stringify(revSwapFees))
 
                 const inProgressRevSwaps = await inProgressReverseSwaps()

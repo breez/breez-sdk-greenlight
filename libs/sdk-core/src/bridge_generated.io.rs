@@ -246,8 +246,8 @@ pub extern "C" fn wire_in_progress_reverse_swaps(port_: i64) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_fetch_reverse_swap_fees(port_: i64) {
-    wire_fetch_reverse_swap_fees_impl(port_)
+pub extern "C" fn wire_fetch_reverse_swap_fees(port_: i64, send_amount_sat: *mut u64) {
+    wire_fetch_reverse_swap_fees_impl(port_, send_amount_sat)
 }
 
 #[no_mangle]

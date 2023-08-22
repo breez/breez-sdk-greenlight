@@ -379,6 +379,7 @@ dictionary ReverseSwapPairInfo {
     f64 fees_percentage;
     u64 fees_lockup;
     u64 fees_claim;
+    u64? fees_total_estimated;
 };
 
 dictionary ReverseSwapInfo {
@@ -550,7 +551,7 @@ interface BlockingBreezServices {
    string refund(string swap_address, string to_address, u32 sat_per_vbyte);
 
    [Throws=SdkError]
-   ReverseSwapPairInfo fetch_reverse_swap_fees();
+   ReverseSwapPairInfo fetch_reverse_swap_fees(u64? send_amount_sat);
 
    [Throws=SdkError]
    sequence<ReverseSwapInfo> in_progress_reverse_swaps();

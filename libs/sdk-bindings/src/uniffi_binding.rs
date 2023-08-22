@@ -277,8 +277,11 @@ impl BlockingBreezServices {
         .map_err(|e| e.into())
     }
 
-    pub fn fetch_reverse_swap_fees(&self) -> SdkResult<ReverseSwapPairInfo> {
-        rt().block_on(self.breez_services.fetch_reverse_swap_fees())
+    pub fn fetch_reverse_swap_fees(
+        &self,
+        send_amount_sat: Option<u64>,
+    ) -> SdkResult<ReverseSwapPairInfo> {
+        rt().block_on(self.breez_services.fetch_reverse_swap_fees(send_amount_sat))
             .map_err(|e| e.into())
     }
 

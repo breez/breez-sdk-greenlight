@@ -628,14 +628,20 @@ fn wire_in_progress_reverse_swaps_impl(port_: MessagePort) {
         move || move |task_callback| in_progress_reverse_swaps(),
     )
 }
-fn wire_fetch_reverse_swap_fees_impl(port_: MessagePort) {
+fn wire_fetch_reverse_swap_fees_impl(
+    port_: MessagePort,
+    send_amount_sat: impl Wire2Api<Option<u64>> + UnwindSafe,
+) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
             debug_name: "fetch_reverse_swap_fees",
             port: Some(port_),
             mode: FfiCallMode::Normal,
         },
-        move || move |task_callback| fetch_reverse_swap_fees(),
+        move || {
+            let api_send_amount_sat = send_amount_sat.wire2api();
+            move |task_callback| fetch_reverse_swap_fees(api_send_amount_sat)
+        },
     )
 }
 fn wire_recommended_fees_impl(port_: MessagePort) {
@@ -1270,6 +1276,7 @@ impl support::IntoDart for ReverseSwapPairInfo {
             self.fees_percentage.into_dart(),
             self.fees_lockup.into_dart(),
             self.fees_claim.into_dart(),
+            self.fees_total_estimated.into_dart(),
         ]
         .into_dart()
     }

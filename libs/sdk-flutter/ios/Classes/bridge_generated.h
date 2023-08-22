@@ -226,7 +226,7 @@ void wire_in_progress_swap(int64_t port_);
 
 void wire_in_progress_reverse_swaps(int64_t port_);
 
-void wire_fetch_reverse_swap_fees(int64_t port_);
+void wire_fetch_reverse_swap_fees(int64_t port_, uint64_t *send_amount_sat);
 
 void wire_recommended_fees(int64_t port_);
 

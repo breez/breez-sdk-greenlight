@@ -28,7 +28,7 @@ use crate::grpc::{self, PaymentInformation, RegisterPaymentReply};
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lsp::LspInformation;
 use crate::models::Network::*;
-use crate::{LNInvoice, LnUrlErrorData, ESTIMATED_CLAIM_TX_VSIZE};
+use crate::{LNInvoice, LnUrlErrorData};
 
 use crate::error::{SdkError, SdkResult};
 use strum_macros::{Display, EnumString};
@@ -143,35 +143,13 @@ pub struct ReverseSwapPairInfo {
     /// Percentage fee for the reverse swap service
     pub fees_percentage: f64,
     /// Estimated miner fees in sats for locking up funds, assuming a transaction virtual size of
-    /// [`crate::ESTIMATED_LOCKUP_TX_VSIZE`] vbytes and [ReverseSwapPairInfo::feerate]
+    /// [`crate::ESTIMATED_LOCKUP_TX_VSIZE`] vbytes
     pub fees_lockup: u64,
     /// Estimated miner fees in sats for claiming funds, assuming a transaction virtual size of
-    /// [`crate::ESTIMATED_CLAIM_TX_VSIZE`] vbytes and [ReverseSwapPairInfo::feerate]
+    /// [`crate::ESTIMATED_CLAIM_TX_VSIZE`] vbytes
     pub fees_claim: u64,
-}
-
-impl ReverseSwapPairInfo {
-    /// Estimates the net amount received at the destination onchain address, for these fees and a given
-    /// `send_amount_sat`
-    pub fn estimate_amount_sat_received(&self, send_amount_sat: u64) -> Result<u64> {
-        ensure!(send_amount_sat <= self.max, "Send amount is too high");
-        ensure!(send_amount_sat >= self.min, "Send amount is too low");
-
-        let service_fee_sat = ((send_amount_sat as f64) * self.fees_percentage / 100.0) as u64;
-        Ok(send_amount_sat - service_fee_sat - self.fees_lockup - self.fees_claim)
-    }
-
-    /// Given a desired amount to receive (`recv_amount_sat`) and these fees, it estimates the
-    /// amount in sat that has to be sent
-    pub fn estimate_amount_sat_to_send(&self, recv_amount_sat: u64) -> u64 {
-        let estimate_amount_sat_send = recv_amount_sat + self.fees_lockup + self.fees_claim;
-        (estimate_amount_sat_send as f64 * 100.0 / (100.0 - self.fees_percentage)) as u64
-    }
-
-    /// Get the onchain feerate used for the [self::fees_lockup] and [self::fees_claim] estimations
-    pub fn feerate(&self) -> f64 {
-        (self.fees_claim / ESTIMATED_CLAIM_TX_VSIZE) as f64
-    }
+    /// Estimated total fees in sats, based on the given send amount. Only set when the send amount is known.
+    pub fees_total_estimated: Option<u64>,
 }
 
 /// Details of past or ongoing reverse swaps, as stored in the Breez local DB
@@ -412,7 +390,8 @@ impl TryFrom<i32> for ReverseSwapStatus {
 /// Trait covering functionality involving swaps
 #[tonic::async_trait]
 pub(crate) trait ReverseSwapperAPI: Send + Sync {
-    /// Lookup the most recent reverse swap pair info using the Boltz API
+    /// Lookup the most recent reverse swap pair info using the Boltz API. The fees are only valid
+    /// for a set amount of time.
     async fn fetch_reverse_swap_fees(&self) -> Result<ReverseSwapPairInfo>;
 
     /// Creates a reverse submarine swap on the remote service (Boltz).

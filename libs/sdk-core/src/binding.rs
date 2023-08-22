@@ -363,8 +363,12 @@ pub fn in_progress_reverse_swaps() -> Result<Vec<ReverseSwapInfo>> {
 /*  Swap Fee API's */
 
 /// See [BreezServices::fetch_reverse_swap_fees]
-pub fn fetch_reverse_swap_fees() -> Result<ReverseSwapPairInfo> {
-    block_on(async { get_breez_services()?.fetch_reverse_swap_fees().await })
+pub fn fetch_reverse_swap_fees(send_amount_sat: Option<u64>) -> Result<ReverseSwapPairInfo> {
+    block_on(async {
+        get_breez_services()?
+            .fetch_reverse_swap_fees(send_amount_sat)
+            .await
+    })
 }
 
 /// See [BreezServices::recommended_fees]
