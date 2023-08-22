@@ -11,7 +11,7 @@ The Breez SDK provides the following services:
 
 Download our one pager [here](https://drive.google.com/file/d/1MBINTyEXX9tFLVXd3QoTUKLNWgjgWN2I/view?usp=drivesdk). 
 
-Browse the Breez SDK Rustdoc [here](https://breez.github.io/breez-sdk/breez_sdk_core/).
+To get started with the Breez SDK, follow [these examples](https://sdk-doc.breez.technology/).
 
 ## Demo
 
