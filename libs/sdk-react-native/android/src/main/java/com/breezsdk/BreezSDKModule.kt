@@ -548,16 +548,12 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
         executor.execute {
             val reverseSwapFeesRequest = asReverseSwapFeesRequest(reqData)
 
-            if (reverseSwapFeesRequest == null) {
-                promise.reject(GENERIC_CODE, "Invalid reqData")
-            } else {
-                try {
-                    val reverseSwapFees = getBreezServices().fetchReverseSwapFees(reverseSwapFeesRequest)
-                    promise.resolve(readableMapOf(reverseSwapFees))
-                } catch (e: SdkException) {
-                    e.printStackTrace()
-                    promise.reject(e.javaClass.simpleName, e.message, e)
-                }
+            try {
+                val reverseSwapFees = getBreezServices().fetchReverseSwapFees(reverseSwapFeesRequest)
+                promise.resolve(readableMapOf(reverseSwapFees))
+            } catch (e: SdkException) {
+                e.printStackTrace()
+                promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
     }

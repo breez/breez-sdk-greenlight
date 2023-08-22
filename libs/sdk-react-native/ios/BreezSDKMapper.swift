@@ -212,13 +212,9 @@ class BreezSDKMapper {
         return nil
     }
 
-    static func asReverseSwapFeesRequest(reqData: [String: Any?]) -> ReverseSwapFeesRequest? {
-        if let sendAmountSat = reqData["sendAmountSat"] as? UInt64
-        {
-            return ReverseSwapFeesRequest(sendAmountSat: sendAmountSat)
-        }
-
-        return nil
+    static func asReverseSwapFeesRequest(reqData: [String: Any?]) -> ReverseSwapFeesRequest {
+        let sendAmountSat = reqData["sendAmountSat"] as? UInt64
+        return ReverseSwapFeesRequest(sendAmountSat: sendAmountSat)
     }
     
     static func asReceivePaymentRequest(reqData: [String: Any?]) -> ReceivePaymentRequest? {

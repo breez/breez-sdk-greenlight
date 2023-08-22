@@ -94,8 +94,8 @@ fun asCheckMessageRequest(reqData: ReadableMap): CheckMessageRequest? {
     return null
 }
 
-fun asReverseSwapFeesRequest(reqData: ReadableMap): ReverseSwapFeesRequest? {
-    val sendAmountSats = reqData.getDouble("sendAmountSats")
+fun asReverseSwapFeesRequest(reqData: ReadableMap): ReverseSwapFeesRequest {
+    val sendAmountSats = if (hasNonNullKey(reqData, "sendAmountSats")) reqData.getDouble("sendAmountSats") else null
     return ReverseSwapFeesRequest(sendAmountSats)
 }
 
