@@ -13,6 +13,8 @@ Download our one pager [here](https://drive.google.com/file/d/1MBINTyEXX9tFLVXd3
 
 To get started with the Breez SDK, follow [these examples](https://sdk-doc.breez.technology/).
 
+Note: in order to use the Breez SDK you need an API key from Breez, please email us at contact@breez.technology for more information.
+
 ## Demo
 
 https://user-images.githubusercontent.com/31890660/208511040-989ff42c-ceb8-4a34-b2cb-a17a0a8c0150.mp4
@@ -34,19 +36,6 @@ This diagram is a high-level description of the Breez SDK:
 
 ![SDK Architecture](https://user-images.githubusercontent.com/31890660/208512955-6e648b86-4c8a-457a-b844-3dda8b2aa8ec.png)
 
-### Signer
-This module handles everything related to the signing of lightning messages. It is initialized with the user’s seed.
-### InputParser
-This module parses user input that is related to sending and receiving of payments. It identifies the protocol (lightning, lnurl-pay, lightning address, lnurl-withdraw, btc address, etc.) and the related data. Apps should use this parser to interpret users input, display the details to users and then execute the specific action (pay or receive).
-### LightningNode
-This is an interface that defines how the SDK interacts with the user’s Lightning node. The interface defines methods to create a new node, connect to an existing node, pay or create invoices. It also provides access to the node’s low-level functionality such as: listing peers, graph information, etc. Currently we only have one provider (Greenlight), but we can add more providers in the future.
-### BTCSwapper
-This module provides the ability to send or receive on-chain payments via submarine swaps. Send to a BTC address is done by a reverse submarine swap and receive by a regular submarine swap. It includes refund functionality as well.
-### FiatCurrencies
-This module provides fiat currencies conversion services and fiat on-ramp service (via MoonPay).
-### LSP
-This module provides the interface of interacting with one or more LSPs.
-
 ## Build & Test
 The libs folder contains three sub folders and is a structured as a cargo workspace:
 * **sdk-core**: the core SDK rust library. 
@@ -56,8 +45,6 @@ The libs folder contains three sub folders and is a structured as a cargo worksp
 
 The tools folder contains a simple command line interface (sdk-cli) to the SDK.
 See the instructions in each sub project readme on how to build, test and run.
-
-Remark: in order to build the Breez SDK you need to have access to the Greenlight repository. Greenlight will eventually be open-sourced (with an MIT license), but is not yet public. To access Greenlight, please email us at contact@breez.technology.
 
 ## TODOs
 - [x] ‘On-the-fly’ channel creation
