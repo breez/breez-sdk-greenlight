@@ -1165,7 +1165,7 @@ struct BreezServicesBuilder {
     persister: Option<Arc<SqliteStorage>>,
     swapper_api: Option<Arc<dyn SwapperAPI>>,
     /// Reverse swap functionality on the Breez Server
-    reverse_swapper_api: Option<Arc<dyn ReverseSwapperAPI>>,
+    reverse_swapper_api: Option<Arc<dyn ReverseSwapperRoutingAPI>>,
     /// Reverse swap functionality on the 3rd party reverse swap service
     reverse_swap_service_api: Option<Arc<dyn ReverseSwapServiceAPI>>,
     moonpay_api: Option<Arc<dyn MoonPayApi>>,
@@ -1221,7 +1221,7 @@ impl BreezServicesBuilder {
 
     pub fn reverse_swapper_api(
         &mut self,
-        reverse_swapper_api: Arc<dyn ReverseSwapperAPI>,
+        reverse_swapper_api: Arc<dyn ReverseSwapperRoutingAPI>,
     ) -> &mut Self {
         self.reverse_swapper_api = Some(reverse_swapper_api.clone());
         self

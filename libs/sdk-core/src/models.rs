@@ -390,12 +390,12 @@ impl TryFrom<i32> for ReverseSwapStatus {
 
 /// Trait covering Breez Server reverse swap functionality
 #[tonic::async_trait]
-pub(crate) trait ReverseSwapperAPI: Send + Sync {
+pub(crate) trait ReverseSwapperRoutingAPI: Send + Sync {
     async fn fetch_reverse_routing_node(&self) -> Result<Vec<u8>>;
 }
 
 #[tonic::async_trait]
-impl ReverseSwapperAPI for BreezServer {
+impl ReverseSwapperRoutingAPI for BreezServer {
     async fn fetch_reverse_routing_node(&self) -> Result<Vec<u8>> {
         self.get_swapper_client()
             .await?

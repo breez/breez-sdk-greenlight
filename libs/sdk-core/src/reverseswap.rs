@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use crate::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus::*};
 use crate::chain::{get_utxos, ChainService, MempoolSpace};
-use crate::models::{ReverseSwapServiceAPI, ReverseSwapperAPI};
+use crate::models::{ReverseSwapServiceAPI, ReverseSwapperRoutingAPI};
 use crate::ReverseSwapStatus::*;
 use crate::{
     BreezEvent, Config, FullReverseSwapInfo, NodeAPI, ReverseSwapInfoCached, ReverseSwapPairInfo,
@@ -57,7 +57,7 @@ enum TxStatus {
 /// It uses internally an implementation of [ReverseSwapServiceAPI] that represents Boltz reverse swapper service.
 pub(crate) struct BTCSendSwap {
     config: Config,
-    pub(crate) reverse_swapper_api: Arc<dyn ReverseSwapperAPI>,
+    pub(crate) reverse_swapper_api: Arc<dyn ReverseSwapperRoutingAPI>,
     pub(crate) reverse_swap_service_api: Arc<dyn ReverseSwapServiceAPI>,
     persister: Arc<crate::persist::db::SqliteStorage>,
     chain_service: Arc<dyn ChainService>,
@@ -67,7 +67,7 @@ pub(crate) struct BTCSendSwap {
 impl BTCSendSwap {
     pub(crate) fn new(
         config: Config,
-        reverse_swapper_api: Arc<dyn ReverseSwapperAPI>,
+        reverse_swapper_api: Arc<dyn ReverseSwapperRoutingAPI>,
         reverse_swap_service_api: Arc<dyn ReverseSwapServiceAPI>,
         persister: Arc<crate::persist::db::SqliteStorage>,
         chain_service: Arc<MempoolSpace>,
