@@ -415,10 +415,10 @@ class RNBreezSDK: RCTEventEmitter {
     }
 
     @objc(fetchReverseSwapFees:resolver:rejecter:)
-    func fetchReverseSwapFees(_ reqData:[String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+    func fetchReverseSwapFees(_ req:[String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         do {
-            let reverseSwapFeesRequest = BreezSDKMapper.asReverseSwapFeesRequest(reqData: reqData)
-            let fees = try getBreezServices().fetchReverseSwapFees(reqData: reverseSwapFeesRequest)
+            let reverseSwapFeesRequest = BreezSDKMapper.asReverseSwapFeesRequest(reqData: req)
+            let fees = try getBreezServices().fetchReverseSwapFees(req: reverseSwapFeesRequest)
             resolve(fees)
         } catch let err {
             rejectErr(err: err, reject: reject)
