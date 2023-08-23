@@ -1277,7 +1277,7 @@ impl support::IntoDart for ReverseSwapPairInfo {
             self.fees_percentage.into_dart(),
             self.fees_lockup.into_dart(),
             self.fees_claim.into_dart(),
-            self.fees_total_estimated.into_dart(),
+            self.total_estimated_fees.into_dart(),
         ]
         .into_dart()
     }

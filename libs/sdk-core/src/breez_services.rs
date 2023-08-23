@@ -550,7 +550,7 @@ impl BreezServices {
     ///
     /// To get the total estimated fees for a specific amount, specify the amount to be sent in
     /// `send_amount_sat`. The result will then contain the total estimated fees in
-    /// [`ReverseSwapPairInfo::fees_total_estimated`].
+    /// [`ReverseSwapPairInfo::total_estimated_fees`].
     ///
     /// ### Errors
     ///
@@ -568,7 +568,7 @@ impl BreezServices {
             ensure!(send_amount_sat >= res.min, "Send amount is too low");
 
             let service_fee_sat = ((send_amount_sat as f64) * res.fees_percentage / 100.0) as u64;
-            res.fees_total_estimated = Some(service_fee_sat + res.fees_lockup + res.fees_claim);
+            res.total_estimated_fees = Some(service_fee_sat + res.fees_lockup + res.fees_claim);
         }
 
         Ok(res)

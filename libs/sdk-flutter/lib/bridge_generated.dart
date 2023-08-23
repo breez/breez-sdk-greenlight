@@ -1064,7 +1064,7 @@ class ReverseSwapPairInfo {
   final int feesClaim;
 
   /// Estimated total fees in sats, based on the given send amount. Only set when the send amount is known.
-  final int? feesTotalEstimated;
+  final int? totalEstimatedFees;
 
   const ReverseSwapPairInfo({
     required this.min,
@@ -1073,7 +1073,7 @@ class ReverseSwapPairInfo {
     required this.feesPercentage,
     required this.feesLockup,
     required this.feesClaim,
-    this.feesTotalEstimated,
+    this.totalEstimatedFees,
   });
 }
 
@@ -2738,7 +2738,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       feesPercentage: _wire2api_f64(arr[3]),
       feesLockup: _wire2api_u64(arr[4]),
       feesClaim: _wire2api_u64(arr[5]),
-      feesTotalEstimated: _wire2api_opt_box_autoadd_u64(arr[6]),
+      totalEstimatedFees: _wire2api_opt_box_autoadd_u64(arr[6]),
     );
   }
 

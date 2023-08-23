@@ -149,7 +149,7 @@ pub struct ReverseSwapPairInfo {
     /// [`crate::ESTIMATED_CLAIM_TX_VSIZE`] vbytes
     pub fees_claim: u64,
     /// Estimated total fees in sats, based on the given send amount. Only set when the send amount is known.
-    pub fees_total_estimated: Option<u64>,
+    pub total_estimated_fees: Option<u64>,
 }
 
 /// Details of past or ongoing reverse swaps, as stored in the Breez local DB
