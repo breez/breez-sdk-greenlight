@@ -1553,15 +1553,18 @@ impl Receiver for PaymentReceiver {
             });
         }
 
-        // create the large amount invoice
-        let raw_invoice_with_hint =
-            add_lsp_routing_hints(invoice.bolt11.clone(), lsp_hint, amount_sats * 1000)?;
+        // We only create a new invoice if we need to add the lsp hint or change the amount
+        if lsp_hint.is_some() || amount_sats != destination_invoice_amount_sats {
+            // create the large amount invoice
+            let raw_invoice_with_hint =
+                add_lsp_routing_hints(invoice.bolt11.clone(), lsp_hint, amount_sats * 1000)?;
 
-        info!("Routing hint added");
-        let signed_invoice_with_hint = self.node_api.sign_invoice(raw_invoice_with_hint)?;
-        info!("Signed invoice with hint = {}", signed_invoice_with_hint);
+            info!("Routing hint added");
+            let signed_invoice_with_hint = self.node_api.sign_invoice(raw_invoice_with_hint)?;
+            info!("Signed invoice with hint = {}", signed_invoice_with_hint);
 
-        parsed_invoice = parse_invoice(&signed_invoice_with_hint)?;
+            parsed_invoice = parse_invoice(&signed_invoice_with_hint)?;
+        }
 
         // register the payment at the lsp if needed
         if open_channel_needed {
