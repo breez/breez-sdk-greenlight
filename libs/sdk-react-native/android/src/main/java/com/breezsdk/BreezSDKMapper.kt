@@ -690,7 +690,7 @@ fun readableMapOf(reverseSwapPairInfo: ReverseSwapPairInfo): ReadableMap {
             "feesPercentage" to reverseSwapPairInfo.feesPercentage,
             "feesLockup" to reverseSwapPairInfo.feesLockup,
             "feesClaim" to reverseSwapPairInfo.feesClaim,
-            "feesTotalEstimated" to reverseSwapPairInfo.feesTotalEstimated
+            "totalEstimatedFees" to reverseSwapPairInfo.totalEstimatedFees
     )
 }
 

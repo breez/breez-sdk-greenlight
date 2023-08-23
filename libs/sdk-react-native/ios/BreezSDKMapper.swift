@@ -687,7 +687,7 @@ class BreezSDKMapper {
             "feesPercentage": reverseSwapPairInfo.feesPercentage,
             "feesLockup": reverseSwapPairInfo.feesLockup,
             "feesClaim": reverseSwapPairInfo.feesClaim,
-            "feesTotalEstimated": reverseSwapPairInfo.feesTotalEstimated
+            "totalEstimatedFees": reverseSwapPairInfo.totalEstimatedFees
         ]
     }
 

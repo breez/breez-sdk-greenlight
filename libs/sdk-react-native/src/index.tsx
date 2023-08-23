@@ -420,7 +420,7 @@ export type ReverseSwapPairInfo = {
     feesPercentage: number
     feesLockup: number
     feesClaim: number
-    feesTotalEstimated?: number
+    totalEstimatedFees?: number
 }
 
 export type ReverseSwapInfo = {
