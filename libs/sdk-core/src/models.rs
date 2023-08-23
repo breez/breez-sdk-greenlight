@@ -24,12 +24,13 @@ use gl_client::signer::model::greenlight::Peer;
 
 use crate::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::fiat::{FiatCurrency, Rate};
-use crate::grpc::{self, PaymentInformation, RegisterPaymentReply};
+use crate::grpc::{self, GetReverseRoutingNodeRequest, PaymentInformation, RegisterPaymentReply};
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lsp::LspInformation;
 use crate::models::Network::*;
 use crate::{LNInvoice, LnUrlErrorData};
 
+use crate::breez_services::BreezServer;
 use crate::error::{SdkError, SdkResult};
 use strum_macros::{Display, EnumString};
 
@@ -387,9 +388,27 @@ impl TryFrom<i32> for ReverseSwapStatus {
     }
 }
 
-/// Trait covering functionality involving swaps
+/// Trait covering Breez Server reverse swap functionality
 #[tonic::async_trait]
 pub(crate) trait ReverseSwapperAPI: Send + Sync {
+    async fn fetch_reverse_routing_node(&self) -> Result<Vec<u8>>;
+}
+
+#[tonic::async_trait]
+impl ReverseSwapperAPI for BreezServer {
+    async fn fetch_reverse_routing_node(&self) -> Result<Vec<u8>> {
+        self.get_swapper_client()
+            .await?
+            .get_reverse_routing_node(GetReverseRoutingNodeRequest::default())
+            .await
+            .map(|reply| reply.into_inner().node_id)
+            .map_err(anyhow::Error::new)
+    }
+}
+
+/// Trait covering reverse swap functionality on the external service
+#[tonic::async_trait]
+pub(crate) trait ReverseSwapServiceAPI: Send + Sync {
     /// Lookup the most recent reverse swap pair info using the Boltz API. The fees are only valid
     /// for a set amount of time.
     async fn fetch_reverse_swap_fees(&self) -> Result<ReverseSwapPairInfo>;
