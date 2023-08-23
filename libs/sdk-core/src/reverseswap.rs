@@ -97,17 +97,20 @@ impl BTCSendSwap {
         amount_sat: u64,
         claim_pubkey: String,
         pair_hash: String,
-        routing_node: String,
         sat_per_vbyte: u64,
     ) -> Result<FullReverseSwapInfo> {
         Self::validate_rev_swap_args(&claim_pubkey)?;
 
+        let reverse_routing_node = self
+            .reverse_swapper_api
+            .fetch_reverse_routing_node()
+            .await?;
         let created_rsi = self
             .create_and_validate_rev_swap_on_remote(
                 amount_sat,
                 claim_pubkey,
                 pair_hash,
-                routing_node,
+                hex::encode(reverse_routing_node),
                 sat_per_vbyte,
             )
             .await?;

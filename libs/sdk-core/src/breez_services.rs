@@ -584,19 +584,15 @@ impl BreezServices {
         sat_per_vbyte: u64,
     ) -> Result<ReverseSwapInfo> {
         match self.in_progress_reverse_swaps().await?.is_empty() {
-            true => {
-                let reverse_routing_node = self.btc_send_swapper.reverse_swapper_api.fetch_reverse_routing_node().await?;
-                self.btc_send_swapper
-                    .create_reverse_swap(
-                        amount_sat,
-                        onchain_recipient_address,
-                        pair_hash,
-                        hex::encode(reverse_routing_node),
-                        sat_per_vbyte,
-                    )
-                    .await
-                    .map(Into::into)
-            }
+            true => self.btc_send_swapper
+                .create_reverse_swap(
+                    amount_sat,
+                    onchain_recipient_address,
+                    pair_hash,
+                    sat_per_vbyte,
+                )
+                .await
+                .map(Into::into),
             false => Err(anyhow!(
                 "There already is at least one Reverse Swap in progress. You can only start a new one after after the ongoing ones finish. \
                 Use the in_progress_reverse_swaps method to get an overview of currently ongoing reverse swaps."
@@ -1072,14 +1068,15 @@ impl BreezServices {
             .parse_filters(
                 r#"
                 info,
-                gl_client=warn,
+                gl_client=info,
                 h2=warn,
                 hyper=warn,
-                lightning_signer=warn,
+                breez_sdk_core::reverseswap=info,
+                lightning_signer=info,
                 reqwest=warn,
                 rustls=warn,
                 rustyline=warn,
-                vls_protocol_signer=warn
+                vls_protocol_signer=info
             "#,
             )
             .format(|buf, record| {
