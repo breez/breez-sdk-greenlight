@@ -419,7 +419,7 @@ class RNBreezSDK: RCTEventEmitter {
         do {
             let reverseSwapFeesRequest = BreezSDKMapper.asReverseSwapFeesRequest(reqData: req)
             let fees = try getBreezServices().fetchReverseSwapFees(req: reverseSwapFeesRequest)
-            resolve(fees)
+            resolve(BreezSDKMapper.dictionaryOf(reverseSwapPairInfo: fees))
         } catch let err {
             rejectErr(err: err, reject: reject)
         }
