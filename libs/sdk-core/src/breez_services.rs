@@ -32,7 +32,7 @@ use crate::grpc::information_client::InformationClient;
 use crate::grpc::signer_client::SignerClient;
 use crate::grpc::PaymentInformation;
 use crate::input_parser::LnUrlPayRequestData;
-use crate::invoice::{add_lsp_routing_hints, parse_invoice, LNInvoice, RouteHint, RouteHintHop};
+use crate::invoice::{parse_invoice, update_bot11_invoice, LNInvoice, RouteHint, RouteHintHop};
 use crate::lnurl::auth::perform_lnurl_auth;
 use crate::lnurl::pay::model::SuccessAction::Aes;
 use crate::lnurl::pay::model::{
@@ -339,7 +339,9 @@ impl BreezServices {
                 amount_sats,
                 description: description.unwrap_or_default(),
                 preimage: None,
+                description_hash: None,
                 opening_fee_params: None,
+                expiry: None,
             })
             .await
             .map_err(|_| anyhow!("Failed to receive payment"))?
@@ -1467,6 +1469,19 @@ impl Receiver for PaymentReceiver {
         &self,
         req_data: ReceivePaymentRequest,
     ) -> SdkResult<ReceivePaymentResponse> {
+        if let Some(description_hash) = req_data.description_hash.clone() {
+            if description_hash.len() != 32 {
+                return Err(SdkError::ReceivePaymentFailed {
+                    err: "description_hash should be 32 bytes".into(),
+                });
+            }
+            if req_data.description.len() > 0 {
+                return Err(SdkError::ReceivePaymentFailed {
+                    err: "description_hash and description are mutually exclusive".into(),
+                });
+            }
+        }
+
         self.node_api.start().await?;
         let lsp_info = get_lsp(self.persister.clone(), self.lsp.clone()).await?;
         let node_state = self
@@ -1535,17 +1550,18 @@ impl Receiver for PaymentReceiver {
         }
 
         info!("Creating invoice on NodeAPI");
-        let invoice = &self
+        let bolt11 = &self
             .node_api
             .create_invoice(
                 destination_invoice_amount_sats,
                 req_data.description,
                 req_data.preimage,
+                req_data.expiry,
             )
             .await?;
-        info!("Invoice created {}", invoice.bolt11);
+        info!("Invoice created {}", bolt11);
 
-        let mut parsed_invoice = parse_invoice(&invoice.bolt11)?;
+        let mut parsed_invoice = parse_invoice(&bolt11)?;
 
         // check if the lsp hint already exists
         info!("Existing routing hints {:?}", parsed_invoice.routing_hints);
@@ -1577,10 +1593,23 @@ impl Receiver for PaymentReceiver {
         }
 
         // We only create a new invoice if we need to add the lsp hint or change the amount
-        if lsp_hint.is_some() || amount_sats != destination_invoice_amount_sats {
+        if req_data.description_hash.is_some()
+            || lsp_hint.is_some()
+            || amount_sats != destination_invoice_amount_sats
+        {
+            let description_hash = req_data.description_hash.unwrap();
+            let hash_bytes: &[u8; 32] = description_hash.as_slice().try_into().map_err(|_| {
+                SdkError::ReceivePaymentFailed {
+                    err: "description_hash should be 32 bytes".into(),
+                }
+            })?;
             // create the large amount invoice
-            let raw_invoice_with_hint =
-                add_lsp_routing_hints(invoice.bolt11.clone(), lsp_hint, amount_sats * 1000)?;
+            let raw_invoice_with_hint = update_bot11_invoice(
+                bolt11.clone(),
+                lsp_hint,
+                amount_sats * 1000,
+                Some(hash_bytes),
+            )?;
 
             info!("Routing hint added");
             let signed_invoice_with_hint = self.node_api.sign_invoice(raw_invoice_with_hint)?;
@@ -1835,7 +1864,9 @@ pub(crate) mod tests {
                 amount_sats: 3000,
                 description: "should populate lsp hints".to_string(),
                 preimage: None,
+                description_hash: None,
                 opening_fee_params: None,
+                expiry: None,
             })
             .await?
             .ln_invoice;

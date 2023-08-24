@@ -103,13 +103,25 @@ pub(crate) async fn handle_command(
         Commands::ReceivePayment {
             amount: amount_sats,
             description,
+            description_hash,
+            expiry,
         } => {
+            let mut optional_hash: Option<Vec<u8>> = None;
+            if let Some(hash_str) = description_hash.clone() {
+                optional_hash = Some(
+                    hex::decode(hash_str.clone())
+                        .map_err(|_| anyhow!("Invalid description hash: {hash_str}",))?,
+                );
+            }
+
             let recv_payment_response = sdk()?
                 .receive_payment(ReceivePaymentRequest {
                     amount_sats,
-                    description,
+                    description: description.unwrap_or_default(),
                     preimage: None,
                     opening_fee_params: None,
+                    description_hash: optional_hash,
+                    expiry,
                 })
                 .await?;
             let mut result = serde_json::to_string(&recv_payment_response)?;

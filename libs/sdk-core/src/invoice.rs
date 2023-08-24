@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Result};
+use bitcoin::hashes::sha256::Hash;
 use bitcoin::secp256k1::PublicKey;
 use hex::ToHex;
 use lightning::routing::gossip::RoutingFees;
@@ -90,20 +91,33 @@ impl RouteHint {
     }
 }
 
-pub fn add_lsp_routing_hints(
+pub fn update_bot11_invoice(
     invoice: String,
     lsp_hint: Option<RouteHint>,
     new_amount_msats: u64,
+    new_description_hash: Option<&[u8; 32]>,
 ) -> Result<RawInvoice> {
     let signed = invoice.parse::<SignedRawInvoice>()?;
     let invoice = Invoice::from_signed(signed)?;
-    let description = match invoice.description() {
-        InvoiceDescription::Direct(msg) => msg.to_string(),
-        InvoiceDescription::Hash(_) => String::from(""),
+    let mut description = String::from("");
+    let mut description_hash: Option<Hash> = None;
+
+    match invoice.description() {
+        InvoiceDescription::Direct(msg) => description = msg.to_string(),
+        InvoiceDescription::Hash(h) => description_hash = Some(h.0),
     };
 
-    let mut invoice_builder = InvoiceBuilder::new(invoice.currency())
-        .description(description)
+    // override the hash if required
+    if let Some(hash) = new_description_hash {
+        description_hash = Some(Hash::from_str(hex::encode(hash).as_str())?);
+    }
+
+    let invoice_builder = match description_hash {
+        Some(hash) => InvoiceBuilder::new(invoice.currency()).description_hash(hash),
+        None => InvoiceBuilder::new(invoice.currency()).description(description),
+    };
+
+    let mut invoice_builder = invoice_builder
         .payment_hash(*invoice.payment_hash())
         .timestamp(invoice.timestamp())
         .amount_milli_satoshis(new_amount_msats)
@@ -198,18 +212,15 @@ pub fn parse_invoice(bolt11: &str) -> Result<LNInvoice> {
 
 #[cfg(test)]
 mod tests {
+
     use crate::invoice::*;
+    use bitcoin::hashes::Hash;
 
     #[test]
     fn test_parse_invoice() {
         let payreq = String::from("lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz");
         let res = parse_invoice(&payreq).unwrap();
 
-        let private_key_vec =
-            hex::decode("3e171115f50b2c355836dc026a6d54d525cf0d796eb50b3460a205d25c9d38fd")
-                .unwrap();
-        let mut private_key: [u8; 32] = Default::default();
-        private_key.copy_from_slice(&private_key_vec[0..32]);
         let hint_hop = RouteHintHop {
             src_node_id: res.payee_pubkey,
             short_channel_id: 1234,
@@ -223,7 +234,16 @@ mod tests {
             hops: vec![hint_hop],
         };
 
-        let encoded = add_lsp_routing_hints(payreq, Some(route_hint), 100).unwrap();
-        print!("{encoded:?}");
+        let encoded = update_bot11_invoice(payreq.clone(), Some(route_hint), 100, None).unwrap();
+        assert_eq!(encoded.amount_pico_btc().unwrap(), 1000);
+        assert_eq!(encoded.description().unwrap().to_string(), "".to_string());
+        assert_eq!(encoded.description_hash(), None);
+
+        let hash: [u8; 32] = [1; 32];
+        let encoded = update_bot11_invoice(payreq, None, 100, Some(&hash)).unwrap();
+        assert_eq!(encoded.amount_pico_btc().unwrap(), 1000);
+        assert_eq!(encoded.description(), None);
+        let updated_hash = encoded.description_hash().unwrap().0.into_inner();
+        assert_eq!(updated_hash, hash);
     }
 }

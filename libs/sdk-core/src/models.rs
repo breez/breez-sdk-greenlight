@@ -9,7 +9,7 @@ use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::{Address, Script};
 use chrono::{DateTime, Utc};
-use gl_client::pb::{Invoice, WithdrawResponse};
+use gl_client::pb::WithdrawResponse;
 use lightning_invoice::RawInvoice;
 use ripemd::Digest;
 use ripemd::Ripemd160;
@@ -49,7 +49,8 @@ pub trait NodeAPI: Send + Sync {
         amount_sats: u64,
         description: String,
         preimage: Option<Vec<u8>>,
-    ) -> Result<Invoice>;
+        expiry: Option<u64>,
+    ) -> Result<String>;
     async fn pull_changed(&self, since_timestamp: i64) -> Result<SyncResponse>;
     /// As per the `pb::PayRequest` docs, `amount_sats` is only needed when the invoice doesn't specify an amount
     async fn send_payment(
@@ -665,7 +666,9 @@ pub struct ReverseSwapFeesRequest {
 pub struct ReceivePaymentRequest {
     pub amount_sats: u64,
     pub description: String,
+    pub description_hash: Option<Vec<u8>>,
     pub preimage: Option<Vec<u8>>,
+    pub expiry: Option<u64>,
     pub opening_fee_params: Option<OpeningFeeParams>,
 }
 

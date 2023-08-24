@@ -582,7 +582,9 @@ impl Wire2Api<ReceivePaymentRequest> for wire_ReceivePaymentRequest {
         ReceivePaymentRequest {
             amount_sats: self.amount_sats.wire2api(),
             description: self.description.wire2api(),
+            description_hash: self.description_hash.wire2api(),
             preimage: self.preimage.wire2api(),
+            expiry: self.expiry.wire2api(),
             opening_fee_params: self.opening_fee_params.wire2api(),
         }
     }
@@ -708,7 +710,9 @@ pub struct wire_ReceiveOnchainRequest {
 pub struct wire_ReceivePaymentRequest {
     amount_sats: u64,
     description: *mut wire_uint_8_list,
+    description_hash: *mut wire_uint_8_list,
     preimage: *mut wire_uint_8_list,
+    expiry: *mut u64,
     opening_fee_params: *mut wire_OpeningFeeParams,
 }
 
@@ -961,7 +965,9 @@ impl NewWithNullPtr for wire_ReceivePaymentRequest {
         Self {
             amount_sats: Default::default(),
             description: core::ptr::null_mut(),
+            description_hash: core::ptr::null_mut(),
             preimage: core::ptr::null_mut(),
+            expiry: core::ptr::null_mut(),
             opening_fee_params: core::ptr::null_mut(),
         }
     }

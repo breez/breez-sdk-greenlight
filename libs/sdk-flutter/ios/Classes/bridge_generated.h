@@ -75,7 +75,9 @@ typedef struct wire_OpeningFeeParams {
 typedef struct wire_ReceivePaymentRequest {
   uint64_t amount_sats;
   struct wire_uint_8_list *description;
+  struct wire_uint_8_list *description_hash;
   struct wire_uint_8_list *preimage;
+  uint64_t *expiry;
   struct wire_OpeningFeeParams *opening_fee_params;
 } wire_ReceivePaymentRequest;
 
