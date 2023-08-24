@@ -974,7 +974,7 @@ class ReceiveOnchainRequest {
 /// Represents a receive payment request.
 class ReceivePaymentRequest {
   final int amountSats;
-  final String description;
+  final String? description;
   final Uint8List? descriptionHash;
   final Uint8List? preimage;
   final int? expiry;
@@ -982,7 +982,7 @@ class ReceivePaymentRequest {
 
   const ReceivePaymentRequest({
     required this.amountSats,
-    required this.description,
+    this.description,
     this.descriptionHash,
     this.preimage,
     this.expiry,
@@ -3283,7 +3283,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   void _api_fill_to_wire_receive_payment_request(
       ReceivePaymentRequest apiObj, wire_ReceivePaymentRequest wireObj) {
     wireObj.amount_sats = api2wire_u64(apiObj.amountSats);
-    wireObj.description = api2wire_String(apiObj.description);
+    wireObj.description = api2wire_opt_String(apiObj.description);
     wireObj.description_hash = api2wire_opt_uint_8_list(apiObj.descriptionHash);
     wireObj.preimage = api2wire_opt_uint_8_list(apiObj.preimage);
     wireObj.expiry = api2wire_opt_box_autoadd_u64(apiObj.expiry);

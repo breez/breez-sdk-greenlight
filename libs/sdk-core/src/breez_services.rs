@@ -337,7 +337,7 @@ impl BreezServices {
         let invoice = self
             .receive_payment(ReceivePaymentRequest {
                 amount_sats,
-                description: description.unwrap_or_default(),
+                description: Some(description.unwrap_or_default()),
                 preimage: None,
                 description_hash: None,
                 opening_fee_params: None,
@@ -1469,18 +1469,29 @@ impl Receiver for PaymentReceiver {
         &self,
         req_data: ReceivePaymentRequest,
     ) -> SdkResult<ReceivePaymentResponse> {
-        if let Some(description_hash) = req_data.description_hash.clone() {
-            if description_hash.len() != 32 {
-                return Err(SdkError::ReceivePaymentFailed {
-                    err: "description_hash should be 32 bytes".into(),
-                });
-            }
-            if req_data.description.len() > 0 {
-                return Err(SdkError::ReceivePaymentFailed {
-                    err: "description_hash and description are mutually exclusive".into(),
-                });
-            }
+        if req_data.description.is_none() && req_data.description.is_none() {
+            return Err(SdkError::ReceivePaymentFailed {
+                err: "Either description or description_hash should be provided".into(),
+            });
         }
+        let description = req_data.description.unwrap_or_default();
+        let description_hash = match req_data.description_hash {
+            Some(hash) => {
+                if description.len() > 0 {
+                    return Err(SdkError::ReceivePaymentFailed {
+                        err: "description_hash and description are mutually exclusive".into(),
+                    });
+                }
+                let slice: [u8; 32] =
+                    hash.as_slice()
+                        .try_into()
+                        .map_err(|_| SdkError::ReceivePaymentFailed {
+                            err: "description_hash should be 32 bytes".into(),
+                        })?;
+                Some(slice)
+            }
+            None => None,
+        };
 
         self.node_api.start().await?;
         let lsp_info = get_lsp(self.persister.clone(), self.lsp.clone()).await?;
@@ -1554,7 +1565,7 @@ impl Receiver for PaymentReceiver {
             .node_api
             .create_invoice(
                 destination_invoice_amount_sats,
-                req_data.description,
+                description,
                 req_data.preimage,
                 req_data.expiry,
             )
@@ -1593,22 +1604,16 @@ impl Receiver for PaymentReceiver {
         }
 
         // We only create a new invoice if we need to add the lsp hint or change the amount
-        if req_data.description_hash.is_some()
+        if description_hash.is_some()
             || lsp_hint.is_some()
             || amount_sats != destination_invoice_amount_sats
         {
-            let description_hash = req_data.description_hash.unwrap();
-            let hash_bytes: &[u8; 32] = description_hash.as_slice().try_into().map_err(|_| {
-                SdkError::ReceivePaymentFailed {
-                    err: "description_hash should be 32 bytes".into(),
-                }
-            })?;
             // create the large amount invoice
             let raw_invoice_with_hint = update_bot11_invoice(
                 bolt11.clone(),
                 lsp_hint,
                 amount_sats * 1000,
-                Some(hash_bytes),
+                description_hash,
             )?;
 
             info!("Routing hint added");
@@ -1862,7 +1867,7 @@ pub(crate) mod tests {
         let ln_invoice = receiver
             .receive_payment(ReceivePaymentRequest {
                 amount_sats: 3000,
-                description: "should populate lsp hints".to_string(),
+                description: Some("should populate lsp hints".to_string()),
                 preimage: None,
                 description_hash: None,
                 opening_fee_params: None,

@@ -665,7 +665,7 @@ pub struct ReverseSwapFeesRequest {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReceivePaymentRequest {
     pub amount_sats: u64,
-    pub description: String,
+    pub description: Option<String>,
     pub description_hash: Option<Vec<u8>>,
     pub preimage: Option<Vec<u8>>,
     pub expiry: Option<u64>,

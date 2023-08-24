@@ -398,7 +398,7 @@ impl BTCReceiveSwap {
                 .payment_receiver
                 .receive_payment(ReceivePaymentRequest {
                     amount_sats: swap_info.confirmed_sats,
-                    description: String::from("Bitcoin Transfer"),
+                    description: Some(String::from("Bitcoin Transfer")),
                     description_hash: None,
                     preimage: Some(swap_info.preimage),
                     opening_fee_params: None,

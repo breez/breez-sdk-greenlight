@@ -95,7 +95,7 @@ pub fn update_bot11_invoice(
     invoice: String,
     lsp_hint: Option<RouteHint>,
     new_amount_msats: u64,
-    new_description_hash: Option<&[u8; 32]>,
+    new_description_hash: Option<[u8; 32]>,
 ) -> Result<RawInvoice> {
     let signed = invoice.parse::<SignedRawInvoice>()?;
     let invoice = Invoice::from_signed(signed)?;
@@ -240,7 +240,7 @@ mod tests {
         assert_eq!(encoded.description_hash(), None);
 
         let hash: [u8; 32] = [1; 32];
-        let encoded = update_bot11_invoice(payreq, None, 100, Some(&hash)).unwrap();
+        let encoded = update_bot11_invoice(payreq, None, 100, Some(hash)).unwrap();
         assert_eq!(encoded.amount_pico_btc().unwrap(), 1000);
         assert_eq!(encoded.description(), None);
         let updated_hash = encoded.description_hash().unwrap().0.into_inner();
