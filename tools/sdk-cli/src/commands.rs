@@ -69,7 +69,10 @@ pub(crate) enum Commands {
     },
 
     /// Get the current fees for a potential new reverse swap
-    FetchOnchainFees {},
+    FetchOnchainFees {
+        #[clap(name = "amount", short = 'a', long = "amt")]
+        send_amount_sat: Option<u64>,
+    },
 
     /// Get the current blocking in-progress reverse swaps, if any exist
     InProgressReverseSwaps {},

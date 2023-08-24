@@ -142,10 +142,14 @@ pub struct ReverseSwapPairInfo {
     pub fees_hash: String,
     /// Percentage fee for the reverse swap service
     pub fees_percentage: f64,
-    /// Estimated miner fees in sats for locking up funds
+    /// Estimated miner fees in sats for locking up funds, assuming a transaction virtual size of
+    /// [`crate::ESTIMATED_LOCKUP_TX_VSIZE`] vbytes
     pub fees_lockup: u64,
-    /// Estimated miner fees in sats for claiming funds
+    /// Estimated miner fees in sats for claiming funds, assuming a transaction virtual size of
+    /// [`crate::ESTIMATED_CLAIM_TX_VSIZE`] vbytes
     pub fees_claim: u64,
+    /// Estimated total fees in sats, based on the given send amount. Only set when the send amount is known.
+    pub total_estimated_fees: Option<u64>,
 }
 
 /// Details of past or ongoing reverse swaps, as stored in the Breez local DB
@@ -386,7 +390,8 @@ impl TryFrom<i32> for ReverseSwapStatus {
 /// Trait covering functionality involving swaps
 #[tonic::async_trait]
 pub(crate) trait ReverseSwapperAPI: Send + Sync {
-    /// Lookup the most recent reverse swap pair info using the Boltz API
+    /// Lookup the most recent reverse swap pair info using the Boltz API. The fees are only valid
+    /// for a set amount of time.
     async fn fetch_reverse_swap_fees(&self) -> Result<ReverseSwapPairInfo>;
 
     /// Creates a reverse submarine swap on the remote service (Boltz).
@@ -648,6 +653,11 @@ pub struct ClosedChannelPaymentDetails {
     pub short_channel_id: String,
     pub state: ChannelState,
     pub funding_txid: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ReverseSwapFeesRequest {
+    pub send_amount_sat: Option<u64>,
 }
 
 /// Represents a receive payment request.

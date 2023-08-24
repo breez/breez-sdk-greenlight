@@ -186,7 +186,8 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
-    fetchReverseSwapFees: (RCTPromiseResolveBlock)resolve
+    fetchReverseSwapFees: (NSDictionary*)reqData
+    resolver: (RCTPromiseResolveBlock)resolve
     rejecter: (RCTPromiseRejectBlock)reject
 )
 

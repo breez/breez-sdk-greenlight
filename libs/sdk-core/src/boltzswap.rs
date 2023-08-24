@@ -251,6 +251,7 @@ pub async fn reverse_swap_pair_info() -> Result<ReverseSwapPairInfo> {
                 fees_percentage: btc_pair.fees.percentage,
                 fees_lockup: btc_pair.fees.miner_fees.base_asset.reverse.lockup,
                 fees_claim: btc_pair.fees.miner_fees.base_asset.reverse.claim,
+                total_estimated_fees: None,
             })
         }
     }

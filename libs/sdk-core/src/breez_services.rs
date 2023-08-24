@@ -4,7 +4,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, ensure, Result};
 use bip39::*;
 use bitcoin::hashes::hex::ToHex;
 use bitcoin::hashes::{sha256, Hash};
@@ -546,9 +546,32 @@ impl BreezServices {
         Ok(None)
     }
 
-    /// See [ReverseSwapperAPI::fetch_reverse_swap_fees]
-    pub async fn fetch_reverse_swap_fees(&self) -> Result<ReverseSwapPairInfo> {
-        self.btc_send_swapper.fetch_reverse_swap_fees().await
+    /// Lookup the reverse swap fees (see [ReverseSwapperAPI::fetch_reverse_swap_fees]).
+    ///
+    /// To get the total estimated fees for a specific amount, specify the amount to be sent in
+    /// `send_amount_sat`. The result will then contain the total estimated fees in
+    /// [`ReverseSwapPairInfo::total_estimated_fees`].
+    ///
+    /// ### Errors
+    ///
+    /// If a `send_amount_sat` is specified in the request, but is outside the `min` and `max`,
+    /// this will result in an error. If you are not sure what are the `min` and `max`, please call
+    /// this with `send_amount_sat` as `None` first, then repeat the call with the desired amount.
+    pub async fn fetch_reverse_swap_fees(
+        &self,
+        req: ReverseSwapFeesRequest,
+    ) -> Result<ReverseSwapPairInfo> {
+        let mut res = self.btc_send_swapper.fetch_reverse_swap_fees().await?;
+
+        if let Some(send_amount_sat) = req.send_amount_sat {
+            ensure!(send_amount_sat <= res.max, "Send amount is too high");
+            ensure!(send_amount_sat >= res.min, "Send amount is too low");
+
+            let service_fee_sat = ((send_amount_sat as f64) * res.fees_percentage / 100.0) as u64;
+            res.total_estimated_fees = Some(service_fee_sat + res.fees_lockup + res.fees_claim);
+        }
+
+        Ok(res)
     }
 
     /// Creates a reverse swap and attempts to pay the HODL invoice

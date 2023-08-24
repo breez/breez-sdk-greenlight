@@ -94,6 +94,15 @@ fun asCheckMessageRequest(reqData: ReadableMap): CheckMessageRequest? {
     return null
 }
 
+fun asReverseSwapFeesRequest(reqData: ReadableMap): ReverseSwapFeesRequest {
+    if (hasNonNullKey(reqData, "sendAmountSats")) {
+        val sendAmountSats = reqData.getDouble("sendAmountSats")
+        return ReverseSwapFeesRequest(sendAmountSats.toULong())
+    }
+
+    return ReverseSwapFeesRequest(null)
+}
+
 fun asReceivePaymentRequest(reqData: ReadableMap): ReceivePaymentRequest? {
     val amountSats = reqData.getDouble("amountSats")
     val description = reqData.getString("description")
@@ -680,7 +689,8 @@ fun readableMapOf(reverseSwapPairInfo: ReverseSwapPairInfo): ReadableMap {
             "feesHash" to reverseSwapPairInfo.feesHash,
             "feesPercentage" to reverseSwapPairInfo.feesPercentage,
             "feesLockup" to reverseSwapPairInfo.feesLockup,
-            "feesClaim" to reverseSwapPairInfo.feesClaim
+            "feesClaim" to reverseSwapPairInfo.feesClaim,
+            "totalEstimatedFees" to reverseSwapPairInfo.totalEstimatedFees
     )
 }
 

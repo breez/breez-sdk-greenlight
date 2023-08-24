@@ -211,6 +211,11 @@ class BreezSDKMapper {
         
         return nil
     }
+
+    static func asReverseSwapFeesRequest(reqData: [String: Any?]) -> ReverseSwapFeesRequest {
+        let sendAmountSat = reqData["sendAmountSat"] as? UInt64
+        return ReverseSwapFeesRequest(sendAmountSat: sendAmountSat)
+    }
     
     static func asReceivePaymentRequest(reqData: [String: Any?]) -> ReceivePaymentRequest? {
         if let amountSats = reqData["amountSats"] as? UInt64,
@@ -681,7 +686,8 @@ class BreezSDKMapper {
             "feesHash": reverseSwapPairInfo.feesHash,
             "feesPercentage": reverseSwapPairInfo.feesPercentage,
             "feesLockup": reverseSwapPairInfo.feesLockup,
-            "feesClaim": reverseSwapPairInfo.feesClaim
+            "feesClaim": reverseSwapPairInfo.feesClaim,
+            "totalEstimatedFees": reverseSwapPairInfo.totalEstimatedFees
         ]
     }
 

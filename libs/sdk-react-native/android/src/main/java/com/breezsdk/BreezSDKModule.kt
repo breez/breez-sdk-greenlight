@@ -544,10 +544,12 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun fetchReverseSwapFees(promise: Promise) {
+    fun fetchReverseSwapFees(reqData: ReadableMap, promise: Promise) {
         executor.execute {
+            val reverseSwapFeesRequest = asReverseSwapFeesRequest(reqData)
+
             try {
-                val reverseSwapFees = getBreezServices().fetchReverseSwapFees()
+                val reverseSwapFees = getBreezServices().fetchReverseSwapFees(reverseSwapFeesRequest)
                 promise.resolve(readableMapOf(reverseSwapFees))
             } catch (e: SdkException) {
                 e.printStackTrace()

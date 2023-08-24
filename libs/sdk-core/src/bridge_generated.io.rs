@@ -246,8 +246,8 @@ pub extern "C" fn wire_in_progress_reverse_swaps(port_: i64) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_fetch_reverse_swap_fees(port_: i64) {
-    wire_fetch_reverse_swap_fees_impl(port_)
+pub extern "C" fn wire_fetch_reverse_swap_fees(port_: i64, req: *mut wire_ReverseSwapFeesRequest) {
+    wire_fetch_reverse_swap_fees_impl(port_, req)
 }
 
 #[no_mangle]
@@ -326,6 +326,12 @@ pub extern "C" fn new_box_autoadd_receive_onchain_request_0() -> *mut wire_Recei
 #[no_mangle]
 pub extern "C" fn new_box_autoadd_receive_payment_request_0() -> *mut wire_ReceivePaymentRequest {
     support::new_leak_box_ptr(wire_ReceivePaymentRequest::new_with_null_ptr())
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_autoadd_reverse_swap_fees_request_0() -> *mut wire_ReverseSwapFeesRequest
+{
+    support::new_leak_box_ptr(wire_ReverseSwapFeesRequest::new_with_null_ptr())
 }
 
 #[no_mangle]
@@ -432,6 +438,12 @@ impl Wire2Api<ReceivePaymentRequest> for *mut wire_ReceivePaymentRequest {
     fn wire2api(self) -> ReceivePaymentRequest {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
         Wire2Api::<ReceivePaymentRequest>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<ReverseSwapFeesRequest> for *mut wire_ReverseSwapFeesRequest {
+    fn wire2api(self) -> ReverseSwapFeesRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<ReverseSwapFeesRequest>::wire2api(*wrap).into()
     }
 }
 impl Wire2Api<SignMessageRequest> for *mut wire_SignMessageRequest {
@@ -575,6 +587,13 @@ impl Wire2Api<ReceivePaymentRequest> for wire_ReceivePaymentRequest {
         }
     }
 }
+impl Wire2Api<ReverseSwapFeesRequest> for wire_ReverseSwapFeesRequest {
+    fn wire2api(self) -> ReverseSwapFeesRequest {
+        ReverseSwapFeesRequest {
+            send_amount_sat: self.send_amount_sat.wire2api(),
+        }
+    }
+}
 impl Wire2Api<SignMessageRequest> for wire_SignMessageRequest {
     fn wire2api(self) -> SignMessageRequest {
         SignMessageRequest {
@@ -691,6 +710,12 @@ pub struct wire_ReceivePaymentRequest {
     description: *mut wire_uint_8_list,
     preimage: *mut wire_uint_8_list,
     opening_fee_params: *mut wire_OpeningFeeParams,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_ReverseSwapFeesRequest {
+    send_amount_sat: *mut u64,
 }
 
 #[repr(C)]
@@ -943,6 +968,20 @@ impl NewWithNullPtr for wire_ReceivePaymentRequest {
 }
 
 impl Default for wire_ReceivePaymentRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_ReverseSwapFeesRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            send_amount_sat: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_ReverseSwapFeesRequest {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }

@@ -33,8 +33,8 @@ use crate::models::{Config, LogEntry, NodeState, Payment, PaymentTypeFilter, Swa
 use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
     EnvironmentType, LnUrlCallbackStatus, NodeConfig, ReceiveOnchainRequest, ReceivePaymentRequest,
-    ReceivePaymentResponse, ReverseSwapInfo, ReverseSwapPairInfo, SignMessageRequest,
-    SignMessageResponse,
+    ReceivePaymentResponse, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
+    SignMessageRequest, SignMessageResponse,
 };
 
 static BREEZ_SERVICES_INSTANCE: OnceCell<Arc<BreezServices>> = OnceCell::new();
@@ -363,8 +363,8 @@ pub fn in_progress_reverse_swaps() -> Result<Vec<ReverseSwapInfo>> {
 /*  Swap Fee API's */
 
 /// See [BreezServices::fetch_reverse_swap_fees]
-pub fn fetch_reverse_swap_fees() -> Result<ReverseSwapPairInfo> {
-    block_on(async { get_breez_services()?.fetch_reverse_swap_fees().await })
+pub fn fetch_reverse_swap_fees(req: ReverseSwapFeesRequest) -> Result<ReverseSwapPairInfo> {
+    block_on(async { get_breez_services()?.fetch_reverse_swap_fees(req).await })
 }
 
 /// See [BreezServices::recommended_fees]

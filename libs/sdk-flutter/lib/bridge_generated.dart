@@ -14,7 +14,7 @@ import 'dart:ffi' as ffi;
 part 'bridge_generated.freezed.dart';
 
 abstract class BreezSdkCore {
-  /// See [BreezServices::connect]
+  /// Wrapper around [BreezServices::connect] which also initializes SDK logging
   Future<void> connect({required Config config, required Uint8List seed, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kConnectConstMeta;
@@ -224,7 +224,7 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kInProgressReverseSwapsConstMeta;
 
   /// See [BreezServices::fetch_reverse_swap_fees]
-  Future<ReverseSwapPairInfo> fetchReverseSwapFees({dynamic hint});
+  Future<ReverseSwapPairInfo> fetchReverseSwapFees({required ReverseSwapFeesRequest req, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kFetchReverseSwapFeesConstMeta;
 
@@ -1016,6 +1016,14 @@ class RecommendedFees {
   });
 }
 
+class ReverseSwapFeesRequest {
+  final int? sendAmountSat;
+
+  const ReverseSwapFeesRequest({
+    this.sendAmountSat,
+  });
+}
+
 /// Simplified version of [FullReverseSwapInfo], containing only the user-relevant fields
 class ReverseSwapInfo {
   final String id;
@@ -1047,11 +1055,16 @@ class ReverseSwapPairInfo {
   /// Percentage fee for the reverse swap service
   final double feesPercentage;
 
-  /// Estimated miner fees in sats for locking up funds
+  /// Estimated miner fees in sats for locking up funds, assuming a transaction virtual size of
+  /// [`crate::ESTIMATED_LOCKUP_TX_VSIZE`] vbytes
   final int feesLockup;
 
-  /// Estimated miner fees in sats for claiming funds
+  /// Estimated miner fees in sats for claiming funds, assuming a transaction virtual size of
+  /// [`crate::ESTIMATED_CLAIM_TX_VSIZE`] vbytes
   final int feesClaim;
+
+  /// Estimated total fees in sats, based on the given send amount. Only set when the send amount is known.
+  final int? totalEstimatedFees;
 
   const ReverseSwapPairInfo({
     required this.min,
@@ -1060,6 +1073,7 @@ class ReverseSwapPairInfo {
     required this.feesPercentage,
     required this.feesLockup,
     required this.feesClaim,
+    this.totalEstimatedFees,
   });
 }
 
@@ -1925,19 +1939,20 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: [],
       );
 
-  Future<ReverseSwapPairInfo> fetchReverseSwapFees({dynamic hint}) {
+  Future<ReverseSwapPairInfo> fetchReverseSwapFees({required ReverseSwapFeesRequest req, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_reverse_swap_fees_request(req);
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_fetch_reverse_swap_fees(port_),
+      callFfi: (port_) => _platform.inner.wire_fetch_reverse_swap_fees(port_, arg0),
       parseSuccessData: _wire2api_reverse_swap_pair_info,
       constMeta: kFetchReverseSwapFeesConstMeta,
-      argValues: [],
+      argValues: [req],
       hint: hint,
     ));
   }
 
   FlutterRustBridgeTaskConstMeta get kFetchReverseSwapFeesConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "fetch_reverse_swap_fees",
-        argNames: [],
+        argNames: ["req"],
       );
 
   Future<RecommendedFees> recommendedFees({dynamic hint}) {
@@ -2715,7 +2730,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   ReverseSwapPairInfo _wire2api_reverse_swap_pair_info(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 6) throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    if (arr.length != 7) throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
     return ReverseSwapPairInfo(
       min: _wire2api_u64(arr[0]),
       max: _wire2api_u64(arr[1]),
@@ -2723,6 +2738,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       feesPercentage: _wire2api_f64(arr[3]),
       feesLockup: _wire2api_u64(arr[4]),
       feesClaim: _wire2api_u64(arr[5]),
+      totalEstimatedFees: _wire2api_opt_box_autoadd_u64(arr[6]),
     );
   }
 
@@ -3025,6 +3041,14 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<wire_ReverseSwapFeesRequest> api2wire_box_autoadd_reverse_swap_fees_request(
+      ReverseSwapFeesRequest raw) {
+    final ptr = inner.new_box_autoadd_reverse_swap_fees_request_0();
+    _api_fill_to_wire_reverse_swap_fees_request(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
   ffi.Pointer<wire_SignMessageRequest> api2wire_box_autoadd_sign_message_request(SignMessageRequest raw) {
     final ptr = inner.new_box_autoadd_sign_message_request_0();
     _api_fill_to_wire_sign_message_request(raw, ptr.ref);
@@ -3145,6 +3169,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     _api_fill_to_wire_receive_payment_request(apiObj, wireObj.ref);
   }
 
+  void _api_fill_to_wire_box_autoadd_reverse_swap_fees_request(
+      ReverseSwapFeesRequest apiObj, ffi.Pointer<wire_ReverseSwapFeesRequest> wireObj) {
+    _api_fill_to_wire_reverse_swap_fees_request(apiObj, wireObj.ref);
+  }
+
   void _api_fill_to_wire_box_autoadd_sign_message_request(
       SignMessageRequest apiObj, ffi.Pointer<wire_SignMessageRequest> wireObj) {
     _api_fill_to_wire_sign_message_request(apiObj, wireObj.ref);
@@ -3253,6 +3282,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.description = api2wire_String(apiObj.description);
     wireObj.preimage = api2wire_opt_uint_8_list(apiObj.preimage);
     wireObj.opening_fee_params = api2wire_opt_box_autoadd_opening_fee_params(apiObj.openingFeeParams);
+  }
+
+  void _api_fill_to_wire_reverse_swap_fees_request(
+      ReverseSwapFeesRequest apiObj, wire_ReverseSwapFeesRequest wireObj) {
+    wireObj.send_amount_sat = api2wire_opt_box_autoadd_u64(apiObj.sendAmountSat);
   }
 
   void _api_fill_to_wire_sign_message_request(SignMessageRequest apiObj, wire_SignMessageRequest wireObj) {
@@ -3939,16 +3973,19 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
 
   void wire_fetch_reverse_swap_fees(
     int port_,
+    ffi.Pointer<wire_ReverseSwapFeesRequest> req,
   ) {
     return _wire_fetch_reverse_swap_fees(
       port_,
+      req,
     );
   }
 
   late final _wire_fetch_reverse_swap_feesPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_fetch_reverse_swap_fees');
-  late final _wire_fetch_reverse_swap_fees =
-      _wire_fetch_reverse_swap_feesPtr.asFunction<void Function(int)>();
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_ReverseSwapFeesRequest>)>>(
+          'wire_fetch_reverse_swap_fees');
+  late final _wire_fetch_reverse_swap_fees = _wire_fetch_reverse_swap_feesPtr
+      .asFunction<void Function(int, ffi.Pointer<wire_ReverseSwapFeesRequest>)>();
 
   void wire_recommended_fees(
     int port_,
@@ -4109,6 +4146,16 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
           'new_box_autoadd_receive_payment_request_0');
   late final _new_box_autoadd_receive_payment_request_0 = _new_box_autoadd_receive_payment_request_0Ptr
       .asFunction<ffi.Pointer<wire_ReceivePaymentRequest> Function()>();
+
+  ffi.Pointer<wire_ReverseSwapFeesRequest> new_box_autoadd_reverse_swap_fees_request_0() {
+    return _new_box_autoadd_reverse_swap_fees_request_0();
+  }
+
+  late final _new_box_autoadd_reverse_swap_fees_request_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_ReverseSwapFeesRequest> Function()>>(
+          'new_box_autoadd_reverse_swap_fees_request_0');
+  late final _new_box_autoadd_reverse_swap_fees_request_0 = _new_box_autoadd_reverse_swap_fees_request_0Ptr
+      .asFunction<ffi.Pointer<wire_ReverseSwapFeesRequest> Function()>();
 
   ffi.Pointer<wire_SignMessageRequest> new_box_autoadd_sign_message_request_0() {
     return _new_box_autoadd_sign_message_request_0();
@@ -4322,6 +4369,14 @@ class wire_BuyBitcoinRequest extends ffi.Struct {
   external ffi.Pointer<wire_OpeningFeeParams> opening_fee_params;
 }
 
+class wire_ReverseSwapFeesRequest extends ffi.Struct {
+  external ffi.Pointer<ffi.Uint64> send_amount_sat;
+}
+
 typedef DartPostCObjectFnType
     = ffi.Pointer<ffi.NativeFunction<ffi.Bool Function(DartPort port_id, ffi.Pointer<ffi.Void> message)>>;
 typedef DartPort = ffi.Int64;
+
+const int ESTIMATED_CLAIM_TX_VSIZE = 138;
+
+const int ESTIMATED_LOCKUP_TX_VSIZE = 153;

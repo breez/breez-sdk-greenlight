@@ -74,6 +74,7 @@ use crate::models::PaymentTypeFilter;
 use crate::models::ReceiveOnchainRequest;
 use crate::models::ReceivePaymentRequest;
 use crate::models::ReceivePaymentResponse;
+use crate::models::ReverseSwapFeesRequest;
 use crate::models::ReverseSwapInfo;
 use crate::models::ReverseSwapPairInfo;
 use crate::models::ReverseSwapStatus;
@@ -628,14 +629,20 @@ fn wire_in_progress_reverse_swaps_impl(port_: MessagePort) {
         move || move |task_callback| in_progress_reverse_swaps(),
     )
 }
-fn wire_fetch_reverse_swap_fees_impl(port_: MessagePort) {
+fn wire_fetch_reverse_swap_fees_impl(
+    port_: MessagePort,
+    req: impl Wire2Api<ReverseSwapFeesRequest> + UnwindSafe,
+) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
             debug_name: "fetch_reverse_swap_fees",
             port: Some(port_),
             mode: FfiCallMode::Normal,
         },
-        move || move |task_callback| fetch_reverse_swap_fees(),
+        move || {
+            let api_req = req.wire2api();
+            move |task_callback| fetch_reverse_swap_fees(api_req)
+        },
     )
 }
 fn wire_recommended_fees_impl(port_: MessagePort) {
@@ -1270,6 +1277,7 @@ impl support::IntoDart for ReverseSwapPairInfo {
             self.fees_percentage.into_dart(),
             self.fees_lockup.into_dart(),
             self.fees_claim.into_dart(),
+            self.total_estimated_fees.into_dart(),
         ]
         .into_dart()
     }

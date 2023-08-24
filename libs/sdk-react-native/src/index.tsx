@@ -103,6 +103,10 @@ export type OpeningFeeParamsMenu = {
     values: OpeningFeeParams[]
 }
 
+export type ReverseSwapFeesRequest = {
+    sendAmountSat?: number
+}
+
 export type ReceivePaymentRequest = {
     amountSats: number
     description: string
@@ -416,6 +420,7 @@ export type ReverseSwapPairInfo = {
     feesPercentage: number
     feesLockup: number
     feesClaim: number
+    totalEstimatedFees?: number
 }
 
 export type ReverseSwapInfo = {
@@ -700,8 +705,8 @@ export const refund = async (swapAddress: string, toAddress: string, satPerVbyte
     return response
 }
 
-export const fetchReverseSwapFees = async (): Promise<ReverseSwapPairInfo> => {
-    const response = await BreezSDK.fetchReverseSwapFees()
+export const fetchReverseSwapFees = async (req: ReverseSwapFeesRequest): Promise<ReverseSwapPairInfo> => {
+    const response = await BreezSDK.fetchReverseSwapFees(req)
     return response as ReverseSwapPairInfo
 }
 

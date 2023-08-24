@@ -16,9 +16,9 @@ use breez_sdk_core::{
     LocalizedName, LogEntry, LogStream, LspInformation, MessageSuccessActionData, MetadataItem,
     Network, NodeConfig, NodeState, OpeningFeeParams, OpeningFeeParamsMenu, Payment,
     PaymentDetails, PaymentFailedData, PaymentType, PaymentTypeFilter, Rate, ReceiveOnchainRequest,
-    ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees, ReverseSwapInfo,
-    ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop, SignMessageRequest,
-    SignMessageResponse, SuccessActionProcessed, SwapInfo, SwapStatus, Symbol,
+    ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees, ReverseSwapFeesRequest,
+    ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop,
+    SignMessageRequest, SignMessageResponse, SuccessActionProcessed, SwapInfo, SwapStatus, Symbol,
     UnspentTransactionOutput, UrlSuccessActionData,
 };
 
@@ -277,8 +277,11 @@ impl BlockingBreezServices {
         .map_err(|e| e.into())
     }
 
-    pub fn fetch_reverse_swap_fees(&self) -> SdkResult<ReverseSwapPairInfo> {
-        rt().block_on(self.breez_services.fetch_reverse_swap_fees())
+    pub fn fetch_reverse_swap_fees(
+        &self,
+        req: ReverseSwapFeesRequest,
+    ) -> SdkResult<ReverseSwapPairInfo> {
+        rt().block_on(self.breez_services.fetch_reverse_swap_fees(req))
             .map_err(|e| e.into())
     }
 
