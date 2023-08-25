@@ -1068,15 +1068,15 @@ impl BreezServices {
             .parse_filters(
                 r#"
                 info,
-                gl_client=info,
+                gl_client=warn,
                 h2=warn,
                 hyper=warn,
                 breez_sdk_core::reverseswap=info,
-                lightning_signer=info,
+                lightning_signer=warn,
                 reqwest=warn,
                 rustls=warn,
                 rustyline=warn,
-                vls_protocol_signer=info
+                vls_protocol_signer=warn
             "#,
             )
             .format(|buf, record| {
