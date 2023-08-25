@@ -414,10 +414,12 @@ impl BTCSendSwap {
             .into_iter()
             .find(|tx| {
                 // Lockup tx is identified by having a vout matching the expected rev swap amount
-                trace!("Evaluating tx {tx:#?}");
-                tx.vout
-                    .iter()
-                    .any(|vout| vout.value == rsi.onchain_amount_sat)
+                // going to the lockup address (P2WSH)
+                trace!("Checking potential lock tx {tx:#?}");
+                tx.vout.iter().any(|vout| {
+                    vout.value == rsi.onchain_amount_sat
+                        && vout.scriptpubkey_address == lockup_addr.to_string()
+                })
             });
 
         let tx_status = match maybe_lockup_tx {
