@@ -13,7 +13,7 @@ use reqwest::{Body, Client};
 
 use crate::models::ReverseSwapPairInfo;
 use crate::reverseswap::CreateReverseSwapResponse;
-use crate::ReverseSwapperAPI;
+use crate::ReverseSwapServiceAPI;
 
 const BOLTZ_API_URL: &str = "https://boltz.exchange/api/";
 const GET_PAIRS_ENDPOINT: &str = concatcp!(BOLTZ_API_URL, "getpairs");
@@ -160,7 +160,7 @@ pub enum BoltzApiReverseSwapStatus {
 pub struct BoltzApi {}
 
 #[tonic::async_trait]
-impl ReverseSwapperAPI for BoltzApi {
+impl ReverseSwapServiceAPI for BoltzApi {
     async fn fetch_reverse_swap_fees(&self) -> Result<ReverseSwapPairInfo> {
         reverse_swap_pair_info().await
     }

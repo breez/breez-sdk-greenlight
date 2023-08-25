@@ -30,6 +30,7 @@ use crate::grpc::channel_opener_client::ChannelOpenerClient;
 use crate::grpc::fund_manager_client::FundManagerClient;
 use crate::grpc::information_client::InformationClient;
 use crate::grpc::signer_client::SignerClient;
+use crate::grpc::swapper_client::SwapperClient;
 use crate::grpc::PaymentInformation;
 use crate::input_parser::LnUrlPayRequestData;
 use crate::invoice::{add_lsp_routing_hints, parse_invoice, LNInvoice, RouteHint, RouteHintHop};
@@ -44,7 +45,7 @@ use crate::lsp::LspInformation;
 use crate::models::{
     parse_short_channel_id, ChannelState, ClosedChannelPaymentDetails, Config, EnvironmentType,
     FiatAPI, LnUrlCallbackStatus, LspAPI, NodeAPI, NodeState, Payment, PaymentDetails, PaymentType,
-    PaymentTypeFilter, ReverseSwapPairInfo, ReverseSwapperAPI, SwapInfo, SwapperAPI,
+    PaymentTypeFilter, ReverseSwapPairInfo, ReverseSwapServiceAPI, SwapInfo, SwapperAPI,
 };
 use crate::moonpay::MoonPayApi;
 use crate::persist::db::SqliteStorage;
@@ -546,7 +547,7 @@ impl BreezServices {
         Ok(None)
     }
 
-    /// Lookup the reverse swap fees (see [ReverseSwapperAPI::fetch_reverse_swap_fees]).
+    /// Lookup the reverse swap fees (see [ReverseSwapServiceAPI::fetch_reverse_swap_fees]).
     ///
     /// To get the total estimated fees for a specific amount, specify the amount to be sent in
     /// `send_amount_sat`. The result will then contain the total estimated fees in
@@ -583,18 +584,15 @@ impl BreezServices {
         sat_per_vbyte: u64,
     ) -> Result<ReverseSwapInfo> {
         match self.in_progress_reverse_swaps().await?.is_empty() {
-            true => {
-                self.btc_send_swapper
-                    .create_reverse_swap(
-                        amount_sat,
-                        onchain_recipient_address,
-                        pair_hash,
-                        self.lsp_info().await?.pubkey,
-                        sat_per_vbyte,
-                    )
-                    .await
-                    .map(Into::into)
-            }
+            true => self.btc_send_swapper
+                .create_reverse_swap(
+                    amount_sat,
+                    onchain_recipient_address,
+                    pair_hash,
+                    sat_per_vbyte,
+                )
+                .await
+                .map(Into::into),
             false => Err(anyhow!(
                 "There already is at least one Reverse Swap in progress. You can only start a new one after after the ongoing ones finish. \
                 Use the in_progress_reverse_swaps method to get an overview of currently ongoing reverse swaps."
@@ -1073,6 +1071,7 @@ impl BreezServices {
                 gl_client=warn,
                 h2=warn,
                 hyper=warn,
+                breez_sdk_core::reverseswap=info,
                 lightning_signer=warn,
                 reqwest=warn,
                 rustls=warn,
@@ -1165,7 +1164,10 @@ struct BreezServicesBuilder {
     fiat_api: Option<Arc<dyn FiatAPI>>,
     persister: Option<Arc<SqliteStorage>>,
     swapper_api: Option<Arc<dyn SwapperAPI>>,
-    reverse_swapper_api: Option<Arc<dyn ReverseSwapperAPI>>,
+    /// Reverse swap functionality on the Breez Server
+    reverse_swapper_api: Option<Arc<dyn ReverseSwapperRoutingAPI>>,
+    /// Reverse swap functionality on the 3rd party reverse swap service
+    reverse_swap_service_api: Option<Arc<dyn ReverseSwapServiceAPI>>,
     moonpay_api: Option<Arc<dyn MoonPayApi>>,
 }
 
@@ -1181,6 +1183,7 @@ impl BreezServicesBuilder {
             persister: None,
             swapper_api: None,
             reverse_swapper_api: None,
+            reverse_swap_service_api: None,
             moonpay_api: None,
             backup_transport: None,
         }
@@ -1218,9 +1221,17 @@ impl BreezServicesBuilder {
 
     pub fn reverse_swapper_api(
         &mut self,
-        reverse_swapper_api: Arc<dyn ReverseSwapperAPI>,
+        reverse_swapper_api: Arc<dyn ReverseSwapperRoutingAPI>,
     ) -> &mut Self {
         self.reverse_swapper_api = Some(reverse_swapper_api.clone());
+        self
+    }
+
+    pub fn reverse_swap_service_api(
+        &mut self,
+        reverse_swap_service_api: Arc<dyn ReverseSwapServiceAPI>,
+    ) -> &mut Self {
+        self.reverse_swap_service_api = Some(reverse_swap_service_api.clone());
         self
     }
 
@@ -1336,6 +1347,9 @@ impl BreezServicesBuilder {
             self.config.clone(),
             self.reverse_swapper_api
                 .clone()
+                .unwrap_or_else(|| breez_server.clone()),
+            self.reverse_swap_service_api
+                .clone()
                 .unwrap_or_else(|| Arc::new(BoltzApi {})),
             persister.clone(),
             chain_service.clone(),
@@ -1416,6 +1430,14 @@ impl BreezServer {
 
     pub(crate) async fn get_signer_client(&self) -> Result<SignerClient<Channel>> {
         Ok(SignerClient::new(
+            tonic::transport::Endpoint::new(Uri::from_str(&self.server_url)?)?
+                .connect()
+                .await?,
+        ))
+    }
+
+    pub(crate) async fn get_swapper_client(&self) -> Result<SwapperClient<Channel>> {
+        Ok(SwapperClient::new(
             tonic::transport::Endpoint::new(Uri::from_str(&self.server_url)?)?
                 .connect()
                 .await?,

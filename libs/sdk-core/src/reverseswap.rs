@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use crate::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus::*};
 use crate::chain::{get_utxos, ChainService, MempoolSpace};
-use crate::models::ReverseSwapperAPI;
+use crate::models::{ReverseSwapServiceAPI, ReverseSwapperRoutingAPI};
 use crate::ReverseSwapStatus::*;
 use crate::{
     BreezEvent, Config, FullReverseSwapInfo, NodeAPI, ReverseSwapInfoCached, ReverseSwapPairInfo,
@@ -54,10 +54,11 @@ enum TxStatus {
 }
 
 /// This struct is responsible for sending to an onchain address using lightning payments.
-/// It uses internally an implementation of [ReverseSwapperAPI] that represents Boltz reverse swapper service.
+/// It uses internally an implementation of [ReverseSwapServiceAPI] that represents Boltz reverse swapper service.
 pub(crate) struct BTCSendSwap {
     config: Config,
-    pub(crate) reverse_swapper_api: Arc<dyn ReverseSwapperAPI>,
+    pub(crate) reverse_swapper_api: Arc<dyn ReverseSwapperRoutingAPI>,
+    pub(crate) reverse_swap_service_api: Arc<dyn ReverseSwapServiceAPI>,
     persister: Arc<crate::persist::db::SqliteStorage>,
     chain_service: Arc<dyn ChainService>,
     node_api: Arc<dyn NodeAPI>,
@@ -66,7 +67,8 @@ pub(crate) struct BTCSendSwap {
 impl BTCSendSwap {
     pub(crate) fn new(
         config: Config,
-        reverse_swapper_api: Arc<dyn ReverseSwapperAPI>,
+        reverse_swapper_api: Arc<dyn ReverseSwapperRoutingAPI>,
+        reverse_swap_service_api: Arc<dyn ReverseSwapServiceAPI>,
         persister: Arc<crate::persist::db::SqliteStorage>,
         chain_service: Arc<MempoolSpace>,
         node_api: Arc<dyn NodeAPI>,
@@ -74,6 +76,7 @@ impl BTCSendSwap {
         Self {
             config,
             reverse_swapper_api,
+            reverse_swap_service_api,
             persister,
             chain_service,
             node_api,
@@ -94,17 +97,20 @@ impl BTCSendSwap {
         amount_sat: u64,
         claim_pubkey: String,
         pair_hash: String,
-        routing_node: String,
         sat_per_vbyte: u64,
     ) -> Result<FullReverseSwapInfo> {
         Self::validate_rev_swap_args(&claim_pubkey)?;
 
+        let reverse_routing_node = self
+            .reverse_swapper_api
+            .fetch_reverse_routing_node()
+            .await?;
         let created_rsi = self
             .create_and_validate_rev_swap_on_remote(
                 amount_sat,
                 claim_pubkey,
                 pair_hash,
-                routing_node,
+                hex::encode(reverse_routing_node),
                 sat_per_vbyte,
             )
             .await?;
@@ -153,8 +159,10 @@ impl BTCSendSwap {
             sleep(Duration::from_secs(5)).await;
 
             info!("Checking reverse swap status, attempt {i}");
-            let reverse_swap_boltz_status =
-                self.reverse_swapper_api.get_boltz_status(id.into()).await?;
+            let reverse_swap_boltz_status = self
+                .reverse_swap_service_api
+                .get_boltz_status(id.into())
+                .await?;
             if let LockTxMempool { transaction: _ } = reverse_swap_boltz_status {
                 return Ok(());
             }
@@ -175,7 +183,7 @@ impl BTCSendSwap {
         let reverse_swap_keys = crate::swap::create_swap_keys()?;
 
         let boltz_response = self
-            .reverse_swapper_api
+            .reverse_swap_service_api
             .create_reverse_swap_on_remote(
                 amount_sat,
                 reverse_swap_keys.preimage_hash_bytes().to_hex(),
@@ -403,7 +411,7 @@ impl BTCSendSwap {
             {
                 Some(_) => Some(InProgress),
                 None => match self
-                    .reverse_swapper_api
+                    .reverse_swap_service_api
                     .get_boltz_status(rsi.id.clone())
                     .await?
                 {
@@ -470,8 +478,10 @@ impl BTCSendSwap {
         Ok(matching_reverse_swaps)
     }
 
-    /// See [ReverseSwapperAPI::fetch_reverse_swap_fees]
+    /// See [ReverseSwapServiceAPI::fetch_reverse_swap_fees]
     pub(crate) async fn fetch_reverse_swap_fees(&self) -> Result<ReverseSwapPairInfo> {
-        self.reverse_swapper_api.fetch_reverse_swap_fees().await
+        self.reverse_swap_service_api
+            .fetch_reverse_swap_fees()
+            .await
     }
 }

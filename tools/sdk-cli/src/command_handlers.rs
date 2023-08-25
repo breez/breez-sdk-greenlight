@@ -120,7 +120,7 @@ pub(crate) async fn handle_command(
         Commands::SendOnchain {
             amount_sat,
             onchain_recipient_address,
-            sat_per_byte,
+            sat_per_vbyte: sat_per_byte,
         } => {
             let pair_info = sdk()?
                 .fetch_reverse_swap_fees(ReverseSwapFeesRequest {
@@ -175,7 +175,7 @@ pub(crate) async fn handle_command(
         }
         Commands::Sweep {
             to_address,
-            sat_per_byte,
+            sat_per_vbyte: sat_per_byte,
         } => {
             sdk()?.sweep(to_address, sat_per_byte).await?;
             Ok("Onchain funds were swept succesfully".to_string())

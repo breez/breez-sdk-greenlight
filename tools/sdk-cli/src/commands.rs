@@ -65,7 +65,7 @@ pub(crate) enum Commands {
         amount_sat: u64,
         onchain_recipient_address: String,
         /// The fee rate for the claim transaction
-        sat_per_byte: u64,
+        sat_per_vbyte: u64,
     },
 
     /// Get the current fees for a potential new reverse swap
@@ -110,7 +110,7 @@ pub(crate) enum Commands {
         to_address: String,
 
         /// The fee rate for the sweep transaction
-        sat_per_byte: u64,
+        sat_per_vbyte: u64,
     },
 
     /// List available LSPs
