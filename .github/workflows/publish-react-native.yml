@@ -1,0 +1,52 @@
+name: Publish React Native Plugin
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: 'commit/tag/branch reference'
+        required: true
+        type: string
+      package-version:
+        description: 'version for the npm package (MAJOR.MINOR.BUILD)'
+        required: true
+        type: string
+      publish:
+        description: 'value indicating whether to publish to npm.'
+        required: true
+        type: boolean
+        default: false
+    secrets:
+      NPM_TOKEN:
+        description: 'access token for npm publish'
+        required: true
+
+jobs:
+  build-package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout breez-sdk repo
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+          registry-url: 'https://registry.npmjs.org'
+          scope: '@breeztech'
+
+      - name: Make sure we publish the version as specified
+        working-directory: libs/sdk-react-native
+        run: npm --no-git-tag-version --allow-same-version version ${{ inputs.package-version }}
+
+      - name: Install dependencies
+        working-directory: libs/sdk-react-native
+        run: yarn
+
+      - name: Publish package to npm
+        if: ${{ inputs.publish }}
+        working-directory: libs/sdk-react-native
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: yarn publish
