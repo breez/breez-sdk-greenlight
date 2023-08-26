@@ -14,10 +14,6 @@ pub trait ChainService: Send + Sync {
     ///
     /// See <https://mempool.space/docs/api/rest#get-address-transactions-chain>
     async fn address_transactions_chain(&self, address: String) -> Result<Vec<OnchainTx>>;
-    /// Gets up to 50 mempool transactions associated with this address.
-    ///
-    /// See <https://mempool.space/docs/api/rest#get-address-transactions-mempool>
-    async fn address_transactions_mempool(&self, address: String) -> Result<Vec<OnchainTx>>;
     async fn current_tip(&self) -> Result<u32>;
     async fn broadcast_transaction(&self, tx: Vec<u8>) -> Result<String>;
 }
@@ -226,16 +222,6 @@ impl ChainService for MempoolSpace {
     async fn address_transactions_chain(&self, address: String) -> Result<Vec<OnchainTx>> {
         Ok(reqwest::get(format!(
             "{}/api/address/{}/txs/chain",
-            self.base_url, address
-        ))
-        .await?
-        .json()
-        .await?)
-    }
-
-    async fn address_transactions_mempool(&self, address: String) -> Result<Vec<OnchainTx>> {
-        Ok(reqwest::get(format!(
-            "{}/api/address/{}/txs/mempool",
             self.base_url, address
         ))
         .await?

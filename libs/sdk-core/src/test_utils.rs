@@ -185,10 +185,6 @@ impl ChainService for MockChainService {
         Ok(vec![])
     }
 
-    async fn address_transactions_mempool(&self, _address: String) -> Result<Vec<OnchainTx>> {
-        Ok(vec![])
-    }
-
     async fn current_tip(&self) -> Result<u32> {
         Ok(self.tip)
     }
