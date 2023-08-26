@@ -11,7 +11,7 @@ use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::Network;
 use chrono::{SecondsFormat, Utc};
 use gl_client::pb::amount::Unit;
-use gl_client::pb::{Amount, Invoice, Peer, WithdrawResponse};
+use gl_client::pb::{Amount, Peer, WithdrawResponse};
 use lightning::ln::PaymentSecret;
 use lightning_invoice::{Currency, InvoiceBuilder, RawInvoice};
 use rand::distributions::{Alphanumeric, DistString, Standard};
@@ -254,11 +254,11 @@ impl NodeAPI for MockNodeAPI {
         amount_sats: u64,
         description: String,
         preimage: Option<Vec<u8>>,
-        use_description_hash: Option<bool>,
-        expiry: Option<u64>,
-        cltv: Option<u32>,
+        _use_description_hash: Option<bool>,
+        _expiry: Option<u64>,
+        _cltv: Option<u32>,
     ) -> Result<String> {
-        let invoice = create_invoice(description.clone(), amount_sats * 1000, vec![], preimage);
+        let invoice = create_invoice(description, amount_sats * 1000, vec![], preimage);
         Ok(invoice.bolt11)
     }
 

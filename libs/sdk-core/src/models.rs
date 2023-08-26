@@ -9,7 +9,7 @@ use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::{Address, Script};
 use chrono::{DateTime, Utc};
-use gl_client::pb::{Invoice, WithdrawResponse};
+use gl_client::pb::WithdrawResponse;
 use lightning_invoice::RawInvoice;
 use ripemd::Digest;
 use ripemd::Ripemd160;
