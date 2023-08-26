@@ -49,7 +49,16 @@ pub(crate) enum Commands {
     },
 
     /// Generate a bolt11 invoice
-    ReceivePayment { amount: u64, description: String },
+    ReceivePayment {
+        amount: u64,
+        description: String,
+        #[clap(name = "use_description_hash", short = 's', long = "desc_hash")]
+        use_description_hash: Option<bool>,
+        #[clap(name = "expiry", short = 'e', long = "expiry")]
+        expiry: Option<u64>,
+        #[clap(name = "cltv", short = 'c', long = "cltv")]
+        cltv: Option<u32>,
+    },
 
     /// Pay using lnurl pay
     LnurlPay { lnurl: String },

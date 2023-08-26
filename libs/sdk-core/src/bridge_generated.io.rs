@@ -263,6 +263,11 @@ pub extern "C" fn wire_execute_command(port_: i64, command: *mut wire_uint_8_lis
 // Section: allocate functions
 
 #[no_mangle]
+pub extern "C" fn new_box_autoadd_bool_0(value: bool) -> *mut bool {
+    support::new_leak_box_ptr(value)
+}
+
+#[no_mangle]
 pub extern "C" fn new_box_autoadd_buy_bitcoin_request_0() -> *mut wire_BuyBitcoinRequest {
     support::new_leak_box_ptr(wire_BuyBitcoinRequest::new_with_null_ptr())
 }
@@ -340,6 +345,11 @@ pub extern "C" fn new_box_autoadd_sign_message_request_0() -> *mut wire_SignMess
 }
 
 #[no_mangle]
+pub extern "C" fn new_box_autoadd_u32_0(value: u32) -> *mut u32 {
+    support::new_leak_box_ptr(value)
+}
+
+#[no_mangle]
 pub extern "C" fn new_box_autoadd_u64_0(value: u64) -> *mut u64 {
     support::new_leak_box_ptr(value)
 }
@@ -361,6 +371,12 @@ impl Wire2Api<String> for *mut wire_uint_8_list {
     fn wire2api(self) -> String {
         let vec: Vec<u8> = self.wire2api();
         String::from_utf8_lossy(&vec).into_owned()
+    }
+}
+
+impl Wire2Api<bool> for *mut bool {
+    fn wire2api(self) -> bool {
+        unsafe { *support::box_from_leak_ptr(self) }
     }
 }
 impl Wire2Api<BuyBitcoinRequest> for *mut wire_BuyBitcoinRequest {
@@ -450,6 +466,11 @@ impl Wire2Api<SignMessageRequest> for *mut wire_SignMessageRequest {
     fn wire2api(self) -> SignMessageRequest {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
         Wire2Api::<SignMessageRequest>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<u32> for *mut u32 {
+    fn wire2api(self) -> u32 {
+        unsafe { *support::box_from_leak_ptr(self) }
     }
 }
 impl Wire2Api<u64> for *mut u64 {
@@ -584,6 +605,9 @@ impl Wire2Api<ReceivePaymentRequest> for wire_ReceivePaymentRequest {
             description: self.description.wire2api(),
             preimage: self.preimage.wire2api(),
             opening_fee_params: self.opening_fee_params.wire2api(),
+            use_description_hash: self.use_description_hash.wire2api(),
+            expiry: self.expiry.wire2api(),
+            cltv: self.cltv.wire2api(),
         }
     }
 }
@@ -710,6 +734,9 @@ pub struct wire_ReceivePaymentRequest {
     description: *mut wire_uint_8_list,
     preimage: *mut wire_uint_8_list,
     opening_fee_params: *mut wire_OpeningFeeParams,
+    use_description_hash: *mut bool,
+    expiry: *mut u64,
+    cltv: *mut u32,
 }
 
 #[repr(C)]
@@ -963,6 +990,9 @@ impl NewWithNullPtr for wire_ReceivePaymentRequest {
             description: core::ptr::null_mut(),
             preimage: core::ptr::null_mut(),
             opening_fee_params: core::ptr::null_mut(),
+            use_description_hash: core::ptr::null_mut(),
+            expiry: core::ptr::null_mut(),
+            cltv: core::ptr::null_mut(),
         }
     }
 }

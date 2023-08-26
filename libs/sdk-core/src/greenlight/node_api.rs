@@ -16,10 +16,9 @@ use gl_client::pb::cln::{
     self, CloseRequest, ListclosedchannelsClosedchannels, ListclosedchannelsRequest,
     ListpeerchannelsRequest,
 };
-use gl_client::pb::{
-    Amount, Invoice, InvoiceRequest, InvoiceStatus, OffChainPayment, PayStatus, Peer,
-    WithdrawResponse,
-};
+use gl_client::pb::cln::{AmountOrAny, InvoiceRequest};
+use gl_client::pb::{Amount, InvoiceStatus, OffChainPayment, PayStatus, Peer, WithdrawResponse};
+
 use gl_client::scheduler::Scheduler;
 use gl_client::signer::Signer;
 use gl_client::tls::TlsConfig;
@@ -243,22 +242,33 @@ impl NodeAPI for Greenlight {
         amount_sats: u64,
         description: String,
         preimage: Option<Vec<u8>>,
-    ) -> Result<Invoice> {
-        let mut client = self.get_client().await?;
-
+        use_description_hash: Option<bool>,
+        expiry: Option<u64>,
+        cltv: Option<u32>,
+    ) -> Result<String> {
+        let mut client = self.get_node_client().await?;
         let request = InvoiceRequest {
-            amount: Some(Amount {
-                unit: Some(Unit::Satoshi(amount_sats)),
+            amount_msat: Some(AmountOrAny {
+                value: Some(gl_client::pb::cln::amount_or_any::Value::Amount(
+                    gl_client::pb::cln::Amount {
+                        msat: amount_sats * 1000,
+                    },
+                )),
             }),
             label: format!(
                 "breez-{}",
                 SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis()
             ),
             description,
-            preimage: preimage.unwrap_or_default(),
+            preimage,
+            deschashonly: use_description_hash,
+            expiry,
+            fallbacks: vec![],
+            cltv,
         };
 
-        Ok(client.create_invoice(request).await?.into_inner())
+        let res = client.invoice(request).await?.into_inner();
+        Ok(res.bolt11)
     }
 
     // implemenet pull changes from greenlight

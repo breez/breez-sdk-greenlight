@@ -49,7 +49,10 @@ pub trait NodeAPI: Send + Sync {
         amount_sats: u64,
         description: String,
         preimage: Option<Vec<u8>>,
-    ) -> Result<Invoice>;
+        use_description_hash: Option<bool>,
+        expiry: Option<u64>,
+        cltv: Option<u32>,
+    ) -> Result<String>;
     async fn pull_changed(&self, since_timestamp: i64) -> Result<SyncResponse>;
     /// As per the `pb::PayRequest` docs, `amount_sats` is only needed when the invoice doesn't specify an amount
     async fn send_payment(
@@ -667,6 +670,9 @@ pub struct ReceivePaymentRequest {
     pub description: String,
     pub preimage: Option<Vec<u8>>,
     pub opening_fee_params: Option<OpeningFeeParams>,
+    pub use_description_hash: Option<bool>,
+    pub expiry: Option<u64>,
+    pub cltv: Option<u32>,
 }
 
 /// Represents a receive payment response.

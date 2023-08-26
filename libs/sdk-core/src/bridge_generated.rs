@@ -691,6 +691,12 @@ where
     }
 }
 
+impl Wire2Api<bool> for bool {
+    fn wire2api(self) -> bool {
+        self
+    }
+}
+
 impl Wire2Api<BuyBitcoinProvider> for i32 {
     fn wire2api(self) -> BuyBitcoinProvider {
         match self {

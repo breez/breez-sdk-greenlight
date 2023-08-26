@@ -401,6 +401,9 @@ impl BTCReceiveSwap {
                     description: String::from("Bitcoin Transfer"),
                     preimage: Some(swap_info.preimage),
                     opening_fee_params: None,
+                    use_description_hash: Some(false),
+                    expiry: None,
+                    cltv: None,
                 })
                 .await?
                 .ln_invoice;

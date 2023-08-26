@@ -103,6 +103,9 @@ pub(crate) async fn handle_command(
         Commands::ReceivePayment {
             amount: amount_sats,
             description,
+            use_description_hash,
+            expiry,
+            cltv,
         } => {
             let recv_payment_response = sdk()?
                 .receive_payment(ReceivePaymentRequest {
@@ -110,6 +113,9 @@ pub(crate) async fn handle_command(
                     description,
                     preimage: None,
                     opening_fee_params: None,
+                    use_description_hash,
+                    expiry,
+                    cltv,
                 })
                 .await?;
             let mut result = serde_json::to_string(&recv_payment_response)?;
