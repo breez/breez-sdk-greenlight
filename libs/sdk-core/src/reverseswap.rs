@@ -270,12 +270,15 @@ impl BTCSendSwap {
                 //
                 // If the claim tx is confirmed, we would not try to re-broadcast it, so the race
                 // condition only exists when a re-broadcast is tried and the claim tx is unconfirmed.
-                let txs = self
+                let confirmed_txs = self
                     .chain_service
-                    .address_transactions_chain(lockup_addr.to_string())
-                    .await?;
-                debug!("Found confirmed txs for lockup address {lockup_addr}: {txs:?}");
-                let utxos = get_utxos(lockup_addr.to_string(), txs)?;
+                    .address_transactions(lockup_addr.to_string())
+                    .await?
+                    .into_iter()
+                    .filter(|tx| tx.status.confirmed)
+                    .collect();
+                debug!("Found confirmed txs for lockup address {lockup_addr}: {confirmed_txs:?}");
+                let utxos = get_utxos(lockup_addr.to_string(), confirmed_txs)?;
 
                 let confirmed_amount: u64 = utxos
                     .confirmed

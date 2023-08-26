@@ -181,10 +181,6 @@ impl ChainService for MockChainService {
             .clone())
     }
 
-    async fn address_transactions_chain(&self, _address: String) -> Result<Vec<OnchainTx>> {
-        Ok(vec![])
-    }
-
     async fn current_tip(&self) -> Result<u32> {
         Ok(self.tip)
     }
