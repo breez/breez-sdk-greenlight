@@ -14,7 +14,7 @@ final class BreezSDKTests: XCTestCase {
         let credentials = try recoverNode(network: Network.bitcoin, seed: seedForTesting)
         
         let sdkServices = try initServices(
-            config: BreezSDK.defaultConfig(envType: EnvironmentType.staging),
+            config: BreezSDK.defaultConfig(envType: EnvironmentType.production),
             seed: seedForTesting,
             creds: credentials,
             listener: SDKListener()
