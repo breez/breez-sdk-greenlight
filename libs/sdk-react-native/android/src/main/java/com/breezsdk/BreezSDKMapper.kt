@@ -111,8 +111,8 @@ fun asReceivePaymentRequest(reqData: ReadableMap): ReceivePaymentRequest? {
         val preimage = reqData.getArray("preimage")?.let { asUByteList(it) }
         val openingFeeParams = reqData.getMap("openingFeeParams")?.let{ asOpeningFeeParams(it) }
         val useDescriptionHash : Boolean? = if (hasNonNullKey(reqData, "useDescriptionHash")) reqData.getBoolean("useDescriptionHash") else null;
-        val expiry : ULong? = if (hasNonNullKey(reqData, "expiry")) reqData.getInt("expiry").toULong() else null;
-        val cltv : UInt? = if (hasNonNullKey(reqData, "cltv")) reqData.getInt("cltv").toUInt() else null;        
+        val expiry : ULong? = if (hasNonNullKey(reqData, "expiry")) reqData.getDouble("expiry").toULong() else null;
+        val cltv : UInt? = if (hasNonNullKey(reqData, "cltv")) reqData.getInt("cltv").toUInt() else null;     
         return ReceivePaymentRequest(amountSats.toULong(), description, preimage, openingFeeParams, useDescriptionHash, expiry, cltv)
     }
 
