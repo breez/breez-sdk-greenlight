@@ -588,7 +588,7 @@ pub fn rand_vec_u8(len: usize) -> Vec<u8> {
 
 pub fn create_test_config() -> crate::models::Config {
     let mut conf = Config {
-        ..Config::staging(
+        ..Config::production(
             "".into(),
             crate::NodeConfig::Greenlight {
                 config: crate::GreenlightNodeConfig {
