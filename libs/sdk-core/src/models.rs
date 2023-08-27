@@ -51,7 +51,11 @@ pub trait NodeAPI: Send + Sync {
         description: String,
         preimage: Option<Vec<u8>>,
     ) -> Result<Invoice>;
-    async fn pull_changed(&self, since_timestamp: i64) -> Result<SyncResponse>;
+    async fn pull_changed(
+        &self,
+        since_timestamp: i64,
+        balance_changed: bool,
+    ) -> Result<SyncResponse>;
     /// As per the `pb::PayRequest` docs, `amount_sats` is only needed when the invoice doesn't specify an amount
     async fn send_payment(
         &self,

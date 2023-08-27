@@ -638,13 +638,20 @@ impl BreezServices {
     /// * channels - The list of channels and their status
     /// * payments - The incoming/outgoing payments
     pub async fn sync(&self) -> Result<()> {
+        self.do_sync(false).await
+    }
+
+    async fn do_sync(&self, balance_changed: bool) -> Result<()> {
         let start = Instant::now();
         self.start_node().await?;
         self.connect_lsp_peer().await?;
 
         // First query the changes since last sync time.
         let since_timestamp = self.persister.last_payment_timestamp().unwrap_or(0);
-        let new_data = &self.node_api.pull_changed(since_timestamp).await?;
+        let new_data = &self
+            .node_api
+            .pull_changed(since_timestamp, balance_changed)
+            .await?;
 
         debug!(
             "pull changed time={:?} {:?}",
@@ -711,12 +718,9 @@ impl BreezServices {
             return Err(payment_res.err().unwrap());
         }
         let payment = payment_res.unwrap();
-        self.sync().await?;
+        self.do_sync(true).await?;
 
-        match self
-            .persister
-            .get_completed_payment_by_hash(&payment.payment_hash)?
-        {
+        match self.persister.get_payment_by_hash(&payment.payment_hash)? {
             Some(p) => {
                 self.notify_event_listeners(BreezEvent::PaymentSucceed { details: p.clone() })
                     .await?;
@@ -926,7 +930,7 @@ impl BreezServices {
                                                           .insert_or_update_payments(&vec![payment.unwrap()]);
                                                       debug!("paid invoice was added to payments list {:?}", res);
                                                   }
-                                                  if let Err(e) = cloned.sync().await {
+                                                  if let Err(e) = cloned.do_sync(true).await {
                                                         error!("failed to sync after paid invoice: {:?}", e);
                                                   }
                                                   _ = cloned.on_event(BreezEvent::InvoicePaid {

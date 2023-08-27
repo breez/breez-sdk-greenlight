@@ -272,7 +272,11 @@ impl NodeAPI for MockNodeAPI {
         })
     }
 
-    async fn pull_changed(&self, _since_timestamp: i64) -> Result<SyncResponse> {
+    async fn pull_changed(
+        &self,
+        _since_timestamp: i64,
+        _balance_changed: bool,
+    ) -> Result<SyncResponse> {
         Ok(SyncResponse {
             node_state: self.node_state.clone(),
             payments: self

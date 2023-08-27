@@ -45,6 +45,7 @@ pub(crate) struct Greenlight {
     tls_config: TlsConfig,
     gl_client: Mutex<Option<node::Client>>,
     node_client: Mutex<Option<ClnClient>>,
+    persister: Arc<SqliteStorage>,
 }
 
 impl Greenlight {
@@ -124,7 +125,7 @@ impl Greenlight {
                 match encryptd_creds {
                     Some(c) => {
                         persister.set_gl_credentials(c)?;
-                        Greenlight::new(config, seed, creds).await
+                        Greenlight::new(config, seed, creds, persister).await
                     }
                     None => {
                         return Err(anyhow!("Failed to encrypt credentials"));
@@ -140,6 +141,7 @@ impl Greenlight {
         sdk_config: Config,
         seed: Vec<u8>,
         connection_credentials: GreenlightCredentials,
+        persister: Arc<SqliteStorage>,
     ) -> Result<Greenlight> {
         let greenlight_network = sdk_config.network.into();
         let tls_config = TlsConfig::new()?.identity(
@@ -154,6 +156,7 @@ impl Greenlight {
             tls_config,
             gl_client: Mutex::new(None),
             node_client: Mutex::new(None),
+            persister: persister.clone(),
         })
     }
 
@@ -234,6 +237,53 @@ impl Greenlight {
         }
         Ok(node_client.clone().unwrap())
     }
+
+    async fn fetch_channels_and_balance(
+        &self,
+    ) -> Result<(Vec<pb::Channel>, Vec<pb::Channel>, Vec<String>, u64)> {
+        let mut client = self.get_client().await?;
+        // list all peers
+        let peers = client
+            .list_peers(pb::ListPeersRequest::default())
+            .await?
+            .into_inner();
+
+        // filter only connected peers
+        let connected_peers: Vec<String> = peers
+            .peers
+            .clone()
+            .iter()
+            .filter(|p| p.connected)
+            .map(|p| hex::encode(p.id.clone()))
+            .collect();
+        let mut all_channels: Vec<pb::Channel> = vec![];
+        peers.peers.clone().iter().for_each(|p| {
+            let peer_channels = &mut p.channels.clone();
+            all_channels.append(peer_channels);
+        });
+
+        // filter only opened channels
+        let opened_channels: Vec<pb::Channel> = all_channels
+            .iter()
+            .cloned()
+            .filter(|c| c.state == *"CHANNELD_NORMAL")
+            .collect();
+
+        // calculate channels balance only from opened channels
+        let channels_balance = opened_channels
+            .clone()
+            .iter()
+            .map(|c: &pb::Channel| {
+                amount_to_msat(&parse_amount(c.spendable.clone()).unwrap_or_default())
+            })
+            .sum::<u64>();
+        Ok((
+            all_channels,
+            opened_channels,
+            connected_peers,
+            channels_balance,
+        ))
+    }
 }
 
 #[tonic::async_trait]
@@ -262,16 +312,14 @@ impl NodeAPI for Greenlight {
     }
 
     // implemenet pull changes from greenlight
-    async fn pull_changed(&self, since_timestamp: i64) -> Result<SyncResponse> {
+    async fn pull_changed(
+        &self,
+        since_timestamp: i64,
+        balance_changed: bool,
+    ) -> Result<SyncResponse> {
         info!("pull changed since {}", since_timestamp);
         let mut client = self.get_client().await?;
         let mut node_client = self.get_node_client().await?;
-
-        // list all peers
-        let peers = client
-            .list_peers(pb::ListPeersRequest::default())
-            .await?
-            .into_inner();
 
         // get node info
         let node_info = client
@@ -286,28 +334,6 @@ impl NodeAPI for Greenlight {
             .into_inner();
         let onchain_funds = funds.outputs;
 
-        // filter only connected peers
-        let connected_peers: Vec<String> = peers
-            .peers
-            .clone()
-            .iter()
-            .filter(|p| p.connected)
-            .map(|p| hex::encode(p.id.clone()))
-            .collect();
-
-        // make a vector of all channels by searching in peers
-        let all_channels: &mut Vec<pb::Channel> = &mut Vec::new();
-        peers.peers.clone().iter().for_each(|p| {
-            let peer_channels = &mut p.channels.clone();
-            all_channels.append(peer_channels);
-        });
-
-        // filter only opened channels
-        let opened_channels: &mut Vec<&pb::Channel> = &mut all_channels
-            .iter()
-            .filter(|c| c.state == *"CHANNELD_NORMAL")
-            .collect();
-
         // Fetch closed channels from greenlight
         let closed_channels = match node_client
             .list_closed_channels(ListclosedchannelsRequest { id: None })
@@ -319,6 +345,27 @@ impl NodeAPI for Greenlight {
                 vec![]
             }
         };
+
+        // calculate the node new balance and in case the caller signals balance has changed
+        // keep pooling until the balance is updated
+        let (mut all_channels, mut opened_channels, mut connected_peers, mut channels_balance) =
+            self.fetch_channels_and_balance().await?;
+        if balance_changed {
+            let node_state = self.persister.get_node_state()?;
+            if let Some(state) = node_state {
+                let mut retry_count = 0;
+                while state.channels_balance_msat == channels_balance && retry_count < 3 {
+                    warn!("balance update was required but was not updated, retrying...");
+                    (
+                        all_channels,
+                        opened_channels,
+                        connected_peers,
+                        channels_balance,
+                    ) = self.fetch_channels_and_balance().await?;
+                    retry_count += 1;
+                }
+            }
+        }
 
         let forgotten_closed_channels: Result<Vec<Channel>> = closed_channels
             .into_iter()
@@ -334,14 +381,6 @@ impl NodeAPI for Greenlight {
         let mut all_channel_models: Vec<Channel> =
             all_channels.clone().into_iter().map(|c| c.into()).collect();
         all_channel_models.extend(forgotten_closed_channels?);
-
-        // calculate channels balance only from opened channels
-        let channels_balance = opened_channels
-            .iter()
-            .map(|c: &&pb::Channel| {
-                amount_to_msat(&parse_amount(c.spendable.clone()).unwrap_or_default())
-            })
-            .sum::<u64>();
 
         // calculate onchain balance
         let onchain_balance = onchain_funds.iter().fold(0, |a, b| {
