@@ -783,15 +783,35 @@ class LogEntry {
 /// Details of supported LSP
 class LspInformation {
   final String id;
+
+  /// The name of of LSP
   final String name;
+
+  /// The URL of the LSP
   final String widgetUrl;
+
+  /// The identity pubkey of the Lightning node
   final String pubkey;
+
+  /// The network location of the lightning node, e.g. `12.34.56.78:9012` or `localhost:10011`
   final String host;
+
+  /// The channel capacity in satoshis
   final int channelCapacity;
+
+  /// The target number of blocks that the funding transaction should be confirmed by
   final int targetConf;
+
+  /// The base fee charged regardless of the number of milli-satoshis sent
   final int baseFeeMsat;
+
+  /// The effective fee rate in milli-satoshis. The precision of this value goes up to 6 decimal places, so 1e-6.
   final double feeRate;
+
+  /// The required timelock delta for HTLCs forwarded over the channel
   final int timeLockDelta;
+
+  /// The minimum value in millisatoshi we will require for incoming HTLCs on the channel
   final int minHtlcMsat;
   final Uint8List lspPubkey;
   final OpeningFeeParamsMenu openingFeeParamsList;
@@ -866,10 +886,21 @@ class NodeState {
   });
 }
 
+/// Dynamic fee parameters offered by the LSP for opening a new channel.
+///
+/// After they are received, the client shouldn't change them when calling LSP methods,
+/// otherwise the LSP may reject the call.
 class OpeningFeeParams {
+  /// The minimum value in millisatoshi we will require for incoming HTLCs on the channel
   final int minMsat;
+
+  /// The fee in ppm charged over liquidity when buying a channel
   final int proportional;
+
+  /// The date and time this opening fee params promise expires, in RFC 3339 / ISO 8601 format
   final String validUntil;
+
+  /// The channel can be closed if not used within this duration in blocks
   final int maxIdleTime;
   final int maxClientToSelfDelay;
   final String promise;
@@ -1208,6 +1239,8 @@ class SwapInfo {
   final int minAllowedDeposit;
   final int maxAllowedDeposit;
   final String? lastRedeemError;
+
+  /// The dynamic fees that may have been used when the swap was created
   final OpeningFeeParams? channelOpeningFees;
 
   const SwapInfo({
