@@ -347,7 +347,7 @@ impl NodeAPI for Greenlight {
         };
 
         // calculate the node new balance and in case the caller signals balance has changed
-        // keep pooling until the balance is updated
+        // keep poling until the balance is updated
         let (mut all_channels, mut opened_channels, mut connected_peers, mut channels_balance) =
             self.fetch_channels_and_balance().await?;
         if balance_changed {
