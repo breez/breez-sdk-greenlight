@@ -13,6 +13,7 @@ use anyhow::{anyhow, ensure, Result};
 use bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
 use bitcoin::consensus::serialize;
 use bitcoin::hashes::hex::{FromHex, ToHex};
+use bitcoin::psbt::serialize::Serialize as PsbtSerialize;
 use bitcoin::secp256k1::{Message, Secp256k1, SecretKey};
 use bitcoin::util::sighash::SighashCache;
 use bitcoin::{
@@ -47,6 +48,7 @@ pub struct CreateReverseSwapResponse {
     lockup_address: String,
 }
 
+#[derive(Debug)]
 enum TxStatus {
     Unknown,
     Mempool,
@@ -144,26 +146,43 @@ impl BTCSendSwap {
             }
         };
 
-        if res.is_err() {
-            // Failed payment results in a cancelled state
-            self.persister
-                .update_reverse_swap_status(&created_rsi.id, &Cancelled)?;
+        // The result of the creation call can succeed or fail
+        // We update the rev swap status accordingly, which would otherwise have needed a fully fledged sync() call
+        match res {
+            Ok(_) => self
+                .persister
+                .update_reverse_swap_status(&created_rsi.id, &InProgress)?,
+            Err(_) => self
+                .persister
+                .update_reverse_swap_status(&created_rsi.id, &Cancelled)?,
         }
 
         res
     }
 
+    /// Endless loop that periodically polls whether the reverse swap transitioned away from the
+    /// initial status.
+    ///
+    /// The loop returns as soon as the lock tx is seen by Boltz. In other words, it returns as soon as
+    /// the reverse swap status, as reported by Boltz, is [BoltzApiReverseSwapStatus::LockTxMempool]
+    /// or [BoltzApiReverseSwapStatus::LockTxConfirmed]
     async fn poll_initial_boltz_status_transition(&self, id: &str) -> Result<()> {
         let mut i = 0;
         loop {
             sleep(Duration::from_secs(5)).await;
 
-            info!("Checking reverse swap status, attempt {i}");
+            info!("Checking Boltz status for reverse swap {id}, attempt {i}");
             let reverse_swap_boltz_status = self
                 .reverse_swap_service_api
                 .get_boltz_status(id.into())
                 .await?;
-            if let LockTxMempool { transaction: _ } = reverse_swap_boltz_status {
+            info!("Got Boltz status {reverse_swap_boltz_status:?}");
+
+            // Return when lock tx is seen in the mempool or onchain
+            // Typically we first detect when the lock tx is in the mempool
+            // However, if the tx is broadcast and the block is mined between the iterations of this loop,
+            // we might not see the LockTxMempool state and instead directly get the LockTxConfirmed
+            if let LockTxMempool { .. } | LockTxConfirmed { .. } = reverse_swap_boltz_status {
                 return Ok(());
             }
             i += 1;
@@ -239,11 +258,27 @@ impl BTCSendSwap {
 
         match lockup_addr.address_type() {
             Some(AddressType::P2wsh) => {
-                let txs = self
+                // We explicitly only get the confirmed onchain transactions
+                //
+                // Otherwise, if we had gotten all txs, we risk a race condition when we try
+                // to re-broadcast the claim tx. On re-broadcast, the claim tx is already in the
+                // mempool, so it would be returned in the list below. This however would mark
+                // the utxos as spent, so this address would have a confirmed amount of 0. When
+                // building the claim tx below and trying to subtract fees from the confirmed amount,
+                // this would lead to creating a tx with a negative amount. This doesn't happen
+                // if we restrict this to confirmed txs, because then the mempool claim tx is not returned.
+                //
+                // If the claim tx is confirmed, we would not try to re-broadcast it, so the race
+                // condition only exists when a re-broadcast is tried and the claim tx is unconfirmed.
+                let confirmed_txs = self
                     .chain_service
                     .address_transactions(lockup_addr.to_string())
-                    .await?;
-                let utxos = get_utxos(lockup_addr.to_string(), txs)?;
+                    .await?
+                    .into_iter()
+                    .filter(|tx| tx.status.confirmed)
+                    .collect();
+                debug!("Found confirmed txs for lockup address {lockup_addr}: {confirmed_txs:?}");
+                let utxos = get_utxos(lockup_addr.to_string(), confirmed_txs)?;
 
                 let confirmed_amount: u64 = utxos
                     .confirmed
@@ -274,13 +309,15 @@ impl BTCSendSwap {
                     output: tx_out,
                 };
 
-                let claim_script_bytes = serialize(&redeem_script);
+                let claim_script_bytes = PsbtSerialize::serialize(&redeem_script);
 
                 // Based on https://github.com/breez/boltz/blob/master/boltz.go#L31
                 let claim_witness_input_size: u32 = 1 + 1 + 8 + 73 + 1 + 32 + 1 + 100;
                 let tx_weight = tx.strippedsize() as u32 * WITNESS_SCALE_FACTOR as u32
                     + claim_witness_input_size * txins.len() as u32;
                 let fees: u64 = tx_weight as u64 * rs.sat_per_vbyte / WITNESS_SCALE_FACTOR as u64;
+                debug!("Locked confirmed amount: {confirmed_amount}");
+                debug!("Claim tx fees: {fees}");
                 tx.output[0].value = confirmed_amount - fees;
 
                 let scpt = Secp256k1::signing_only();
@@ -338,7 +375,10 @@ impl BTCSendSwap {
                     .chain_service
                     .broadcast_transaction(serialize(&claim_tx))
                     .await;
-                info!("Broadcast claim tx result: {claim_tx_broadcast_res:?}");
+                match claim_tx_broadcast_res {
+                    Ok(txid) => info!("Claim tx was broadcast with txid {txid}"),
+                    Err(e) => error!("Claim tx failed to broadcast: {e}"),
+                }
             }
         }
 
@@ -368,7 +408,6 @@ impl BTCSendSwap {
         }
     }
 
-    /// The lockup tx is seen when it has an incoming tx of the expected amount
     async fn get_lockup_tx_status(&self, rsi: &FullReverseSwapInfo) -> Result<TxStatus> {
         let lockup_addr = rsi.get_lockup_address(self.config.network)?;
         let maybe_lockup_tx = self
@@ -377,18 +416,24 @@ impl BTCSendSwap {
             .await?
             .into_iter()
             .find(|tx| {
-                tx.vin
-                    .iter()
-                    .any(|vin| vin.prevout.value == rsi.onchain_amount_sat)
+                // Lockup tx is identified by having a vout matching the expected rev swap amount
+                // going to the lockup address (P2WSH)
+                trace!("Checking potential lock tx {tx:#?}");
+                tx.vout.iter().any(|vout| {
+                    vout.value == rsi.onchain_amount_sat
+                        && vout.scriptpubkey_address == lockup_addr.to_string()
+                })
             });
 
-        match maybe_lockup_tx {
-            None => Ok(TxStatus::Unknown),
+        let tx_status = match maybe_lockup_tx {
+            None => TxStatus::Unknown,
             Some(tx) => match tx.status.block_height {
-                Some(_) => Ok(TxStatus::Confirmed),
-                None => Ok(TxStatus::Mempool),
+                Some(_) => TxStatus::Confirmed,
+                None => TxStatus::Mempool,
             },
-        }
+        };
+        debug!("Lockup tx status is {tx_status:?} for lockup address {lockup_addr}");
+        Ok(tx_status)
     }
 
     /// Determine the new active status of a monitored reverse swap.

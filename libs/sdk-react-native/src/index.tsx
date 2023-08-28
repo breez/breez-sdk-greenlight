@@ -112,6 +112,9 @@ export type ReceivePaymentRequest = {
     description: string
     preimage?: Uint8Array | number[]
     openingFeeParams?: OpeningFeeParams
+    useDescriptionHash?: boolean
+    expiry?: number
+    cltv?: number
 }
 
 export type ReceivePaymentResponse = {
