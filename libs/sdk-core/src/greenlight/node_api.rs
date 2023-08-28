@@ -157,7 +157,7 @@ impl Greenlight {
             tls_config,
             gl_client: Mutex::new(None),
             node_client: Mutex::new(None),
-            persister: persister.clone(),
+            persister,
         })
     }
 
@@ -252,13 +252,12 @@ impl Greenlight {
         // filter only connected peers
         let connected_peers: Vec<String> = peers
             .peers
-            .clone()
             .iter()
             .filter(|p| p.connected)
             .map(|p| hex::encode(p.id.clone()))
             .collect();
         let mut all_channels: Vec<pb::Channel> = vec![];
-        peers.peers.clone().iter().for_each(|p| {
+        peers.peers.iter().for_each(|p| {
             let peer_channels = &mut p.channels.clone();
             all_channels.append(peer_channels);
         });
@@ -272,7 +271,6 @@ impl Greenlight {
 
         // calculate channels balance only from opened channels
         let channels_balance = opened_channels
-            .clone()
             .iter()
             .map(|c: &pb::Channel| {
                 amount_to_msat(&parse_amount(c.spendable.clone()).unwrap_or_default())
