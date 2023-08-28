@@ -1,7 +1,7 @@
 use std::cmp::{max, min};
 use std::str::FromStr;
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use anyhow::{anyhow, Result};
 use bitcoin::bech32::{u5, ToBase32};
@@ -29,6 +29,7 @@ use lightning_invoice::{RawInvoice, SignedRawInvoice};
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 use tokio::sync::{mpsc, Mutex};
+use tokio::time::sleep;
 use tonic::Streaming;
 
 use crate::invoice::parse_invoice;
@@ -347,7 +348,7 @@ impl NodeAPI for Greenlight {
         };
 
         // calculate the node new balance and in case the caller signals balance has changed
-        // keep poling until the balance is updated
+        // keep polling until the balance is updated
         let (mut all_channels, mut opened_channels, mut connected_peers, mut channels_balance) =
             self.fetch_channels_and_balance().await?;
         if balance_changed {
@@ -363,6 +364,7 @@ impl NodeAPI for Greenlight {
                         channels_balance,
                     ) = self.fetch_channels_and_balance().await?;
                     retry_count += 1;
+                    sleep(Duration::from_millis(100)).await;
                 }
             }
         }
