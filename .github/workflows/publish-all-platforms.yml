@@ -125,6 +125,7 @@ jobs:
   publish-golang:
     needs: 
       - setup
+      - build-android
       - build-windows
       - build-darwin
       - build-linux

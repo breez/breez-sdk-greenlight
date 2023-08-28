@@ -38,6 +38,26 @@ jobs:
 
       - uses: actions/download-artifact@v3
         with:
+          name: sdk-bindings-i686-linux-android
+          path: breez_sdk/lib/android-386
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-armv7-linux-androideabi
+          path: breez_sdk/lib/android-aarch
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-aarch64-linux-android
+          path: breez_sdk/lib/android-aarch64
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-x86_64-linux-android
+          path: breez_sdk/lib/android-amd64
+
+      - uses: actions/download-artifact@v3
+        with:
           name: sdk-bindings-aarch64-apple-darwin
           path: breez_sdk/lib/darwin-aarch64
 
@@ -67,6 +87,10 @@ jobs:
           git config --global user.email github-actions@github.com
           git config --global user.name github-actions
           git add breez_sdk/breez_sdk.go
+          git add breez_sdk/lib/android-386/libbreez_sdk_bindings.so
+          git add breez_sdk/lib/android-aarch/libbreez_sdk_bindings.so
+          git add breez_sdk/lib/android-aarch64/libbreez_sdk_bindings.so
+          git add breez_sdk/lib/android-amd64/libbreez_sdk_bindings.so
           git add breez_sdk/lib/darwin-aarch64/libbreez_sdk_bindings.dylib
           git add breez_sdk/lib/darwin-amd64/libbreez_sdk_bindings.dylib
           git add breez_sdk/lib/linux-aarch64/libbreez_sdk_bindings.so
