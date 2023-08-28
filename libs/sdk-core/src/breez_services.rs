@@ -341,6 +341,9 @@ impl BreezServices {
                 description: description.unwrap_or_default(),
                 preimage: None,
                 opening_fee_params: None,
+                use_description_hash: Some(false),
+                expiry: None,
+                cltv: None,
             })
             .await
             .map_err(|_| anyhow!("Failed to receive payment"))?
@@ -1567,11 +1570,14 @@ impl Receiver for PaymentReceiver {
                 destination_invoice_amount_sats,
                 req_data.description,
                 req_data.preimage,
+                req_data.use_description_hash,
+                req_data.expiry,
+                req_data.cltv,
             )
             .await?;
-        info!("Invoice created {}", invoice.bolt11);
+        info!("Invoice created {}", invoice);
 
-        let mut parsed_invoice = parse_invoice(&invoice.bolt11)?;
+        let mut parsed_invoice = parse_invoice(invoice)?;
 
         // check if the lsp hint already exists
         info!("Existing routing hints {:?}", parsed_invoice.routing_hints);
@@ -1606,7 +1612,7 @@ impl Receiver for PaymentReceiver {
         if lsp_hint.is_some() || amount_sats != destination_invoice_amount_sats {
             // create the large amount invoice
             let raw_invoice_with_hint =
-                add_lsp_routing_hints(invoice.bolt11.clone(), lsp_hint, amount_sats * 1000)?;
+                add_lsp_routing_hints(invoice.clone(), lsp_hint, amount_sats * 1000)?;
 
             info!("Routing hint added");
             let signed_invoice_with_hint = self.node_api.sign_invoice(raw_invoice_with_hint)?;
@@ -1862,6 +1868,9 @@ pub(crate) mod tests {
                 description: "should populate lsp hints".to_string(),
                 preimage: None,
                 opening_fee_params: None,
+                use_description_hash: Some(false),
+                expiry: None,
+                cltv: None,
             })
             .await?
             .ln_invoice;

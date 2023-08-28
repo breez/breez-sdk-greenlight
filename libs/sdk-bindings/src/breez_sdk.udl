@@ -295,8 +295,11 @@ dictionary ReverseSwapFeesRequest {
 dictionary ReceivePaymentRequest {
     u64 amount_sats;
     string description;
-    sequence<u8>? preimage;
-    OpeningFeeParams? opening_fee_params;
+    sequence<u8>? preimage = null;
+    OpeningFeeParams? opening_fee_params = null;
+    boolean? use_description_hash = null;
+    u64? expiry = null;
+    u32? cltv = null;
 };
 
 dictionary ReceivePaymentResponse {

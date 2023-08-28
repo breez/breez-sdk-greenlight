@@ -77,6 +77,9 @@ typedef struct wire_ReceivePaymentRequest {
   struct wire_uint_8_list *description;
   struct wire_uint_8_list *preimage;
   struct wire_OpeningFeeParams *opening_fee_params;
+  bool *use_description_hash;
+  uint64_t *expiry;
+  uint32_t *cltv;
 } wire_ReceivePaymentRequest;
 
 typedef struct wire_LnUrlPayRequestData {
@@ -236,6 +239,8 @@ void wire_recommended_fees(int64_t port_);
 
 void wire_execute_command(int64_t port_, struct wire_uint_8_list *command);
 
+bool *new_box_autoadd_bool_0(bool value);
+
 struct wire_BuyBitcoinRequest *new_box_autoadd_buy_bitcoin_request_0(void);
 
 struct wire_CheckMessageRequest *new_box_autoadd_check_message_request_0(void);
@@ -265,6 +270,8 @@ struct wire_ReceivePaymentRequest *new_box_autoadd_receive_payment_request_0(voi
 struct wire_ReverseSwapFeesRequest *new_box_autoadd_reverse_swap_fees_request_0(void);
 
 struct wire_SignMessageRequest *new_box_autoadd_sign_message_request_0(void);
+
+uint32_t *new_box_autoadd_u32_0(uint32_t value);
 
 uint64_t *new_box_autoadd_u64_0(uint64_t value);
 
@@ -318,6 +325,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_fetch_reverse_swap_fees);
     dummy_var ^= ((int64_t) (void*) wire_recommended_fees);
     dummy_var ^= ((int64_t) (void*) wire_execute_command);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_bool_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_buy_bitcoin_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_check_message_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_config_0);
@@ -333,6 +341,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_receive_payment_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_reverse_swap_fees_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_sign_message_request_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_u32_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_u64_0);
     dummy_var ^= ((int64_t) (void*) new_uint_8_list_0);
     dummy_var ^= ((int64_t) (void*) inflate_NodeConfig_Greenlight);

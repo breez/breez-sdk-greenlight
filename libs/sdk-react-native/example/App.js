@@ -26,7 +26,8 @@ import {
     backup,
     backupStatus,
     signMessage,
-    checkMessage
+    checkMessage,
+    receivePayment,
 } from "@breeztech/react-native-breez-sdk"
 import BuildConfig from "react-native-build-config"
 import { generateMnemonic } from "@dreson4/react-native-quick-bip39"
@@ -93,8 +94,8 @@ const App = () => {
                 const nodeState = await nodeInfo()
                 addLine("nodeInfo", JSON.stringify(nodeState))
 
-                const lspInfo = await lspInfo()
-                addLine("lspInfo", JSON.stringify(lspInfo))
+                const lsp = await lspInfo()
+                addLine("lspInfo", JSON.stringify(lsp))
 
                 const fiatCurrencies = await listFiatCurrencies()
                 addLine("listFiatCurrencies", JSON.stringify(fiatCurrencies))
@@ -102,7 +103,7 @@ const App = () => {
                 const fiatRates = await fetchFiatRates()
                 addLine("fetchFiatRates", JSON.stringify(fiatRates))
 
-                const revSwapFees = await fetchReverseSwapFees( { sendAmountSat: null } )
+                const revSwapFees = await fetchReverseSwapFees({ sendAmountSat: null })
                 addLine("revSwapFees", JSON.stringify(revSwapFees))
 
                 const inProgressRevSwaps = await inProgressReverseSwaps()
@@ -114,7 +115,7 @@ const App = () => {
                 })
                 addLine("buyBitcoin", JSON.stringify(buyBitcoinResult))
 
-                const signMessageResult = await signMessage({ message: "Hello world"})
+                const signMessageResult = await signMessage({ message: "Hello world" })
                 addLine("signMessage: Hello World", JSON.stringify(signMessageResult))
 
                 const verifyMessageResult = await checkMessage({
@@ -123,6 +124,15 @@ const App = () => {
                     signature: signMessageResult.signature
                 })
                 addLine("verifyMessage:", JSON.stringify(verifyMessageResult))
+
+                const receivePaymentResult = await receivePayment({
+                    amountSats: 100000,
+                    description: "Hello world",
+                    expiry: 3600,
+                    cltv: 144,
+                    useDescriptionHash: true
+                })
+                addLine("receivePayment", JSON.stringify(receivePaymentResult))
 
                 await backup()
                 addLine("backupStatus", JSON.stringify(await backupStatus()))

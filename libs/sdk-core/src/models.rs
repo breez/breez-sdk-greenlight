@@ -9,7 +9,7 @@ use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::{Address, Script};
 use chrono::{DateTime, Utc};
-use gl_client::pb::{Invoice, WithdrawResponse};
+use gl_client::pb::WithdrawResponse;
 use lightning_invoice::RawInvoice;
 use ripemd::Digest;
 use ripemd::Ripemd160;
@@ -50,7 +50,10 @@ pub trait NodeAPI: Send + Sync {
         amount_sats: u64,
         description: String,
         preimage: Option<Vec<u8>>,
-    ) -> Result<Invoice>;
+        use_description_hash: Option<bool>,
+        expiry: Option<u64>,
+        cltv: Option<u32>,
+    ) -> Result<String>;
     async fn pull_changed(&self, since_timestamp: i64) -> Result<SyncResponse>;
     /// As per the `pb::PayRequest` docs, `amount_sats` is only needed when the invoice doesn't specify an amount
     async fn send_payment(
@@ -682,10 +685,22 @@ pub struct ReverseSwapFeesRequest {
 /// Represents a receive payment request.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReceivePaymentRequest {
+    /// The amount in satoshis for this payment request
     pub amount_sats: u64,
+    /// The description for this payment request.
     pub description: String,
+    /// Optional preimage for this payment request.
+    /// If specified, it will be used instead of generating a new one.
     pub preimage: Option<Vec<u8>>,
+    /// If set and valid, these fess options are used when a new channels is needed.
+    /// Otherwise the default fee options will be used.
     pub opening_fee_params: Option<OpeningFeeParams>,
+    /// If set to true, then the bolt11 invoice returned includes the description hash.
+    pub use_description_hash: Option<bool>,
+    /// if specified, set the time the invoice is valid for, in seconds.
+    pub expiry: Option<u64>,
+    /// if specified, sets the min_final_cltv_expiry for the invoice
+    pub cltv: Option<u32>,
 }
 
 /// Represents a receive payment response.

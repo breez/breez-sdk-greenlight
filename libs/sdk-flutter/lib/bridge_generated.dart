@@ -1008,12 +1008,18 @@ class ReceivePaymentRequest {
   final String description;
   final Uint8List? preimage;
   final OpeningFeeParams? openingFeeParams;
+  final bool? useDescriptionHash;
+  final int? expiry;
+  final int? cltv;
 
   const ReceivePaymentRequest({
     required this.amountSats,
     required this.description,
     this.preimage,
     this.openingFeeParams,
+    this.useDescriptionHash,
+    this.expiry,
+    this.cltv,
   });
 }
 
@@ -2921,6 +2927,11 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 // Section: api2wire
 
 @protected
+bool api2wire_bool(bool raw) {
+  return raw;
+}
+
+@protected
 int api2wire_buy_bitcoin_provider(BuyBitcoinProvider raw) {
   return api2wire_i32(raw.index);
 }
@@ -2975,6 +2986,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   @protected
   ffi.Pointer<wire_uint_8_list> api2wire_String(String raw) {
     return api2wire_uint_8_list(utf8.encoder.convert(raw));
+  }
+
+  @protected
+  ffi.Pointer<ffi.Bool> api2wire_box_autoadd_bool(bool raw) {
+    return inner.new_box_autoadd_bool_0(api2wire_bool(raw));
   }
 
   @protected
@@ -3089,6 +3105,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<ffi.Uint32> api2wire_box_autoadd_u32(int raw) {
+    return inner.new_box_autoadd_u32_0(api2wire_u32(raw));
+  }
+
+  @protected
   ffi.Pointer<ffi.Uint64> api2wire_box_autoadd_u64(int raw) {
     return inner.new_box_autoadd_u64_0(api2wire_u64(raw));
   }
@@ -3101,6 +3122,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   @protected
   ffi.Pointer<wire_uint_8_list> api2wire_opt_String(String? raw) {
     return raw == null ? ffi.nullptr : api2wire_String(raw);
+  }
+
+  @protected
+  ffi.Pointer<ffi.Bool> api2wire_opt_box_autoadd_bool(bool? raw) {
+    return raw == null ? ffi.nullptr : api2wire_box_autoadd_bool(raw);
   }
 
   @protected
@@ -3117,6 +3143,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   @protected
   ffi.Pointer<wire_OpeningFeeParams> api2wire_opt_box_autoadd_opening_fee_params(OpeningFeeParams? raw) {
     return raw == null ? ffi.nullptr : api2wire_box_autoadd_opening_fee_params(raw);
+  }
+
+  @protected
+  ffi.Pointer<ffi.Uint32> api2wire_opt_box_autoadd_u32(int? raw) {
+    return raw == null ? ffi.nullptr : api2wire_box_autoadd_u32(raw);
   }
 
   @protected
@@ -3315,6 +3346,9 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.description = api2wire_String(apiObj.description);
     wireObj.preimage = api2wire_opt_uint_8_list(apiObj.preimage);
     wireObj.opening_fee_params = api2wire_opt_box_autoadd_opening_fee_params(apiObj.openingFeeParams);
+    wireObj.use_description_hash = api2wire_opt_box_autoadd_bool(apiObj.useDescriptionHash);
+    wireObj.expiry = api2wire_opt_box_autoadd_u64(apiObj.expiry);
+    wireObj.cltv = api2wire_opt_box_autoadd_u32(apiObj.cltv);
   }
 
   void _api_fill_to_wire_reverse_swap_fees_request(
@@ -4048,6 +4082,19 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_execute_command =
       _wire_execute_commandPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
+  ffi.Pointer<ffi.Bool> new_box_autoadd_bool_0(
+    bool value,
+  ) {
+    return _new_box_autoadd_bool_0(
+      value,
+    );
+  }
+
+  late final _new_box_autoadd_bool_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Bool> Function(ffi.Bool)>>('new_box_autoadd_bool_0');
+  late final _new_box_autoadd_bool_0 =
+      _new_box_autoadd_bool_0Ptr.asFunction<ffi.Pointer<ffi.Bool> Function(bool)>();
+
   ffi.Pointer<wire_BuyBitcoinRequest> new_box_autoadd_buy_bitcoin_request_0() {
     return _new_box_autoadd_buy_bitcoin_request_0();
   }
@@ -4200,6 +4247,19 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _new_box_autoadd_sign_message_request_0 = _new_box_autoadd_sign_message_request_0Ptr
       .asFunction<ffi.Pointer<wire_SignMessageRequest> Function()>();
 
+  ffi.Pointer<ffi.Uint32> new_box_autoadd_u32_0(
+    int value,
+  ) {
+    return _new_box_autoadd_u32_0(
+      value,
+    );
+  }
+
+  late final _new_box_autoadd_u32_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Uint32> Function(ffi.Uint32)>>('new_box_autoadd_u32_0');
+  late final _new_box_autoadd_u32_0 =
+      _new_box_autoadd_u32_0Ptr.asFunction<ffi.Pointer<ffi.Uint32> Function(int)>();
+
   ffi.Pointer<ffi.Uint64> new_box_autoadd_u64_0(
     int value,
   ) {
@@ -4346,6 +4406,12 @@ class wire_ReceivePaymentRequest extends ffi.Struct {
   external ffi.Pointer<wire_uint_8_list> preimage;
 
   external ffi.Pointer<wire_OpeningFeeParams> opening_fee_params;
+
+  external ffi.Pointer<ffi.Bool> use_description_hash;
+
+  external ffi.Pointer<ffi.Uint64> expiry;
+
+  external ffi.Pointer<ffi.Uint32> cltv;
 }
 
 class wire_LnUrlPayRequestData extends ffi.Struct {

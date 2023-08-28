@@ -224,7 +224,11 @@ class BreezSDKMapper {
             let preimage = reqData["preimage"] as? [UInt8]
             let openingFeeParamsMap = reqData["openingFeeParams"] as? [String: Any]
             let openingFeeParams = (openingFeeParamsMap == nil ? nil : asOpeningFeeParams(reqData: openingFeeParamsMap!))
-            return ReceivePaymentRequest(amountSats: amountSats, description: description, preimage: preimage, openingFeeParams: openingFeeParams)
+            let useDescriptionHash = reqData["useDescriptionHash"] as? Bool;
+            let expiry = reqData["expiry"] as? UInt64;
+            let cltv = reqData["cltv"] as? UInt32;
+
+            return ReceivePaymentRequest(amountSats: amountSats, description: description, preimage: preimage, openingFeeParams: openingFeeParams, useDescriptionHash: useDescriptionHash, expiry: expiry, cltv: cltv)
         }
         
         return nil
