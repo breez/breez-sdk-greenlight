@@ -398,6 +398,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "bitcoin-consensus-derive"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d56036c7fe1f5c0b097b7bb69da9bcc60cce90589cbf2cc907670a420033a55d"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "bitcoin-push-decoder"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d533f86c679e4388a80f0c11524ae690dc1850315007757dced23ecd53526bbe"
+dependencies = [
+ "bitcoin",
+ "log",
+]
+
+[[package]]
 name = "bitcoin_hashes"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -451,8 +472,8 @@ dependencies = [
 
 [[package]]
 name = "bolt-derive"
-version = "0.1.0"
-source = "git+https://gitlab.com/cdecker/vls?tag=snapshot-20230620#3a016a06ca61edbaa7fc1350d5bde2ba0b9417d6"
+version = "0.2.0"
+source = "git+https://gitlab.com/cdecker/vls?tag=snapshot-20230817-01#2df276c7a62ba831db4537867ad589abfe95821a"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1196,7 +1217,7 @@ checksum = "ad0a93d233ebf96623465aad4046a8d3aa4da22d4f4beba5388838c8a434bbb4"
 [[package]]
 name = "gl-client"
 version = "0.1.9"
-source = "git+https://github.com/Blockstream/greenlight.git?rev=113cc28c938d4ed607a6e3fc4ab044a000d7e5e1#113cc28c938d4ed607a6e3fc4ab044a000d7e5e1"
+source = "git+https://github.com/Blockstream/greenlight.git?rev=cf4d7f6a771f5fa5b7a142f462092386e0e86c4d#cf4d7f6a771f5fa5b7a142f462092386e0e86c4d"
 dependencies = [
  "anyhow",
  "base64 0.21.2",
@@ -1215,7 +1236,7 @@ dependencies = [
  "rustls-pemfile",
  "secp256k1 0.26.0",
  "serde",
- "serde_bolt",
+ "serde_bolt 0.2.4",
  "serde_json",
  "tempfile",
  "thiserror",
@@ -2581,6 +2602,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_bolt"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ca3ddb862d94a73280b5b6faa3c9bc37db242f6a495d49f0ffb85f040dbb9bca"
+dependencies = [
+ "bitcoin",
+ "bitcoin-consensus-derive",
+ "hex",
+]
+
+[[package]]
 name = "serde_derive"
 version = "1.0.164"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3151,9 +3183,9 @@ checksum = "3528ecfd12c466c6f163363caf2d02a71161dd5e1cc6ae7b34207ea2d42d81ed"
 
 [[package]]
 name = "txoo"
-version = "0.4.3"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d8d7e67ea44d2f4df67df6c91e4c2d4e199b4f4950074ccc5cb141a3be60e01"
+checksum = "8b35482e5bf458fa43996535afbca884b2562ab6419e20686340bb19f5305b30"
 dependencies = [
  "bitcoin",
  "log",
@@ -3379,12 +3411,14 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 
 [[package]]
 name = "vls-core"
-version = "0.9.1-rc.2"
-source = "git+https://gitlab.com/cdecker/vls?tag=snapshot-20230620#3a016a06ca61edbaa7fc1350d5bde2ba0b9417d6"
+version = "0.10.0-rc.1"
+source = "git+https://gitlab.com/cdecker/vls?tag=snapshot-20230817-01#2df276c7a62ba831db4537867ad589abfe95821a"
 dependencies = [
  "anyhow",
  "backtrace",
  "bitcoin",
+ "bitcoin-consensus-derive",
+ "bitcoin-push-decoder",
  "bolt-derive",
  "env_logger",
  "hashbrown 0.8.2",
@@ -3395,7 +3429,7 @@ dependencies = [
  "log",
  "scopeguard",
  "serde",
- "serde_bolt",
+ "serde_bolt 0.3.1",
  "serde_derive",
  "serde_with",
  "txoo",
@@ -3403,8 +3437,8 @@ dependencies = [
 
 [[package]]
 name = "vls-persist"
-version = "0.9.1-rc.2"
-source = "git+https://gitlab.com/cdecker/vls?tag=snapshot-20230620#3a016a06ca61edbaa7fc1350d5bde2ba0b9417d6"
+version = "0.10.0-rc.1"
+source = "git+https://gitlab.com/cdecker/vls?tag=snapshot-20230817-01#2df276c7a62ba831db4537867ad589abfe95821a"
 dependencies = [
  "hex",
  "log",
@@ -3416,26 +3450,24 @@ dependencies = [
 
 [[package]]
 name = "vls-protocol"
-version = "0.9.1-rc.2"
-source = "git+https://gitlab.com/cdecker/vls?tag=snapshot-20230620#3a016a06ca61edbaa7fc1350d5bde2ba0b9417d6"
+version = "0.10.0-rc.1"
+source = "git+https://gitlab.com/cdecker/vls?tag=snapshot-20230817-01#2df276c7a62ba831db4537867ad589abfe95821a"
 dependencies = [
  "as-any",
+ "bitcoin-consensus-derive",
  "bolt-derive",
  "hex",
  "log",
- "serde",
- "serde_bolt",
- "serde_derive",
+ "serde_bolt 0.3.1",
 ]
 
 [[package]]
 name = "vls-protocol-signer"
-version = "0.9.1-rc.2"
-source = "git+https://gitlab.com/cdecker/vls?tag=snapshot-20230620#3a016a06ca61edbaa7fc1350d5bde2ba0b9417d6"
+version = "0.10.0-rc.1"
+source = "git+https://gitlab.com/cdecker/vls?tag=snapshot-20230817-01#2df276c7a62ba831db4537867ad589abfe95821a"
 dependencies = [
  "bit-vec",
  "log",
- "serde",
  "vls-core",
  "vls-protocol",
 ]

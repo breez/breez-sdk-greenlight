@@ -62,6 +62,8 @@ impl Greenlight {
     ) -> Result<Self> {
         // Derive the encryption key from the seed
         let signer = Signer::new(seed.clone(), config.network.into(), TlsConfig::new()?)?;
+        let b = hex::encode(signer.bip32_ext_key());
+        info!("{b}");
         let encryption_key = Self::derive_bip32_key(
             config.network,
             &signer,
