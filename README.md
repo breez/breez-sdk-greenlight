@@ -31,6 +31,9 @@ To get started with the Breez SDK, follow [these examples](https://sdk-doc.breez
 ## API
 API documentation is [here](https://breez.github.io/breez-sdk-rustdoc/doc/breez_sdk_core/). 
 
+## Support
+Join [this telegram group](https://t.me/breezsdk).
+
 ## Architecture
 This diagram is a high-level description of the Breez SDK:
 
