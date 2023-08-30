@@ -26,6 +26,10 @@ on:
         description: 'version for the kotlin multiplatform package (MAJOR.MINOR.BUILD)'
         required: false
         type: string
+      flutter-package-version:
+        description: 'version for the flutter package (MAJOR.MINOR.BUILD) (no v prefix)'
+        required: false
+        type: string
       publish:
         description: 'boolean indicating whether packages should be published. true to publish. false to build only. Default = false.'
         required: false
@@ -45,7 +49,7 @@ jobs:
       windows: ${{ !!inputs.csharp-package-version || !!inputs.golang-package-version }}
       darwin: ${{ !!inputs.csharp-package-version || !!inputs.golang-package-version }}
       linux: ${{ !!inputs.csharp-package-version || !!inputs.golang-package-version }}
-      android: ${{ !!inputs.kotlin-mpp-package-version || !!inputs.maven-package-version }}
+      android: ${{ !!inputs.kotlin-mpp-package-version || !!inputs.maven-package-version || !!inputs.flutter-package-version }}
       ios: ${{ !!inputs.kotlin-mpp-package-version || !!inputs.maven-package-version }}
       kotlin: ${{ !!inputs.kotlin-mpp-package-version || !!inputs.maven-package-version }}
       swift: false
@@ -54,12 +58,14 @@ jobs:
       golang: ${{ !!inputs.golang-package-version }}
       maven: ${{ !!inputs.maven-package-version }}
       kotlin-mpp: ${{ !!inputs.kotlin-mpp-package-version }}
+      flutter: ${{ !!inputs.flutter-package-version }}
       ref: ${{ inputs.ref || github.sha }}
       csharp-package-version: ${{ inputs.csharp-package-version || '0.0.2' }}
       csharp-ref: ${{ inputs.csharp-ref || inputs.ref || github.sha }}
       golang-package-version: ${{ inputs.golang-package-version || '0.0.2' }}
       maven-package-version: ${{ inputs.maven-package-version || '0.0.2' }}
       kotlin-mpp-package-version: ${{ inputs.kotlin-mpp-package-version || '0.0.2' }}
+      flutter-package-version: ${{ inputs.flutter-package-version || '0.0.2' }}
       publish: ${{ inputs.publish }}
     steps:
       - run: echo "set output variables"
@@ -168,3 +174,16 @@ jobs:
     secrets:
       BREEZ_MVN_USERNAME: ${{ secrets.BREEZ_MVN_USERNAME }}
       BREEZ_MVN_PASSWORD: ${{ secrets.BREEZ_MVN_PASSWORD }}
+  
+  publish-flutter:
+    needs: 
+      - setup
+      - build-android      
+    if: ${{ needs.setup.outputs.flutter == 'true' }}
+    uses: ./.github/workflows/publish-flutter.yml
+    with:
+      ref: ${{ needs.setup.outputs.ref }}
+      package-version: ${{ needs.setup.outputs.flutter-package-version }}
+      publish: ${{ needs.setup.outputs.publish == 'true' }}
+    secrets:
+      REPO_SSH_KEY: ${{ secrets.REPO_SSH_KEY }}
