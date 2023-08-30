@@ -175,11 +175,11 @@ jobs:
       BREEZ_MVN_USERNAME: ${{ secrets.BREEZ_MVN_USERNAME }}
       BREEZ_MVN_PASSWORD: ${{ secrets.BREEZ_MVN_PASSWORD }}
 
+  # react native version x.y.z will at runtime require
+  # ios and android packages x.y.z being published already.
   publish-react-native:
     needs:
       - setup
-      - publish-maven
-      # todo: - publish-cocoapods
     if: ${{ needs.setup.outputs.react-native == 'true' }}
     uses: ./.github/workflows/publish-react-native.yml
     with:
