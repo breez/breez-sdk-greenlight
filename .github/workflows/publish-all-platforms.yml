@@ -65,7 +65,7 @@ jobs:
       golang-package-version: ${{ inputs.golang-package-version || '0.0.2' }}
       maven-package-version: ${{ inputs.maven-package-version || '0.0.2' }}
       kotlin-mpp-package-version: ${{ inputs.kotlin-mpp-package-version || '0.0.2' }}
-      react-native-package-version: ${{ inputs.react-native-package-version }}
+      react-native-package-version: ${{ inputs.react-native-package-version || '0.0.2' }}
       publish: ${{ inputs.publish }}
     steps:
       - run: echo "set output variables"
