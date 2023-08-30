@@ -1004,12 +1004,27 @@ class ReceiveOnchainRequest {
 
 /// Represents a receive payment request.
 class ReceivePaymentRequest {
+  /// The amount in satoshis for this payment request
   final int amountSats;
+
+  /// The description for this payment request.
   final String description;
+
+  /// Optional preimage for this payment request.
+  /// If specified, it will be used instead of generating a new one.
   final Uint8List? preimage;
+
+  /// If set and valid, these fess options are used when a new channels is needed.
+  /// Otherwise the default fee options will be used.
   final OpeningFeeParams? openingFeeParams;
+
+  /// If set to true, then the bolt11 invoice returned includes the description hash.
   final bool? useDescriptionHash;
+
+  /// if specified, set the time the invoice is valid for, in seconds.
   final int? expiry;
+
+  /// if specified, sets the min_final_cltv_expiry for the invoice
   final int? cltv;
 
   const ReceivePaymentRequest({
