@@ -88,9 +88,13 @@ jobs:
           git config --global user.name github-actions
           git add breez_sdk/breez_sdk.go
           git add breez_sdk/lib/android-386/libbreez_sdk_bindings.so
+          git add breez_sdk/lib/android-386/libc++_shared.so
           git add breez_sdk/lib/android-aarch/libbreez_sdk_bindings.so
+          git add breez_sdk/lib/android-aarch/libc++_shared.so
           git add breez_sdk/lib/android-aarch64/libbreez_sdk_bindings.so
+          git add breez_sdk/lib/android-aarch64/libc++_shared.so
           git add breez_sdk/lib/android-amd64/libbreez_sdk_bindings.so
+          git add breez_sdk/lib/android-amd64/libc++_shared.so
           git add breez_sdk/lib/darwin-aarch64/libbreez_sdk_bindings.dylib
           git add breez_sdk/lib/darwin-amd64/libbreez_sdk_bindings.dylib
           git add breez_sdk/lib/linux-aarch64/libbreez_sdk_bindings.so
