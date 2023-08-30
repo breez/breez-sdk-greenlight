@@ -38,7 +38,7 @@ jobs:
 
       - name: Make sure we publish the version as specified
         working-directory: libs/sdk-react-native
-        run: npm --no-git-tag-version --allow-same-version version ${{ inputs.package-version }}
+        run: npm --no-git-tag-version --allow-same-version version ${{ inputs.package-version || '0.0.2' }}
 
       - name: Install dependencies
         working-directory: libs/sdk-react-native
