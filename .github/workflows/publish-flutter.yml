@@ -1,0 +1,74 @@
+name: Publish Flutter Package
+on:   
+  workflow_call:
+    inputs:
+      ref:
+        description: 'commit/tag/branch reference'
+        required: true
+        type: string        
+      package-version:
+        description: 'version for the flutter package (MAJOR.MINOR.BUILD) (no v prefix)'
+        required: true
+        type: string        
+      publish:
+        description: 'value indicating whether to commit/tag a release.'
+        required: true
+        type: boolean
+        default: true
+    secrets:
+      REPO_SSH_KEY:
+        description: 'ssh key to commit to the breez-sdk-flutter repository'
+        required: true
+
+jobs:
+  build-tag-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout breez-sdk-flutter repo
+        uses: actions/checkout@v3
+        with:
+          repository: breez/breez-sdk-flutter          
+          ssh-key: ${{ secrets.REPO_SSH_KEY }}
+          fetch-depth: 0
+          path: flutter
+
+      - name: Checkout breez-sdk repo
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+          path: breez-sdk
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: android-jniLibs
+          path: flutter/sdk-flutter/android/src/main
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.7.12'
+          channel: 'stable'                      
+
+      - name: Copy packge files        
+        working-directory: flutter
+        run: |
+          rm -f ../breez-sdk/libs/sdk-flutter/ios/breez_sdk.podspec.dev
+          mv ../breez-sdk/libs/sdk-flutter/ios/breez_sdk.podspec.production ../breez-sdk/libs/sdk-flutter/ios/breez_sdk.podspec
+          cp -r ../breez-sdk/libs/sdk-flutter/ios .
+          cp -r ../breez-sdk/libs/sdk-flutter/android .
+          cp -r ../breez-sdk/libs/sdk-flutter/lib .
+          cp ../breez-sdk/libs/sdk-flutter/pubspec.yaml .
+          cp ../breez-sdk/libs/sdk-flutter/pubspec.lock .          
+           
+      - name: Tag the Flutter package        
+        working-directory: flutter
+        if: ${{ inputs.publish }}
+        run: |
+          git config --global user.email github-actions@github.com
+          git config --global user.name github-actions
+          flutter pub global activate pubspec_version     
+          pubver set ${{ inputs.package-version }}    
+          git add .          
+          git commit -m "Update Breez SDK Flutter package to version v${{ inputs.package-version }}"
+          git push
+          git tag v${{ inputs.package-version }} -m "v${{ inputs.package-version }}"
+          git push --tags
