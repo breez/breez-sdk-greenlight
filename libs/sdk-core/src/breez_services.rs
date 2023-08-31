@@ -54,6 +54,9 @@ use crate::swap::BTCReceiveSwap;
 use crate::BuyBitcoinProvider::Moonpay;
 use crate::*;
 
+const SWAP_PAYMENT_FEE_EXPIRY: u64 = 60 * 60 * 24 * 7; // 1 week
+const INVOICE_PAYMENT_FEE_EXPIRY: u64 = 60 * 60; // 1 hours
+
 /// Trait that can be used to react to various [BreezEvent]s emitted by the SDK.
 pub trait EventListener: Send + Sync {
     fn on_event(&self, e: BreezEvent);
@@ -499,6 +502,35 @@ impl BreezServices {
         get_lsp_by_id(self.persister.clone(), self.lsp_api.clone(), id.as_str()).await
     }
 
+    pub async fn open_channel_fee(
+        &self,
+        req: OpenChannelFeeRequest,
+    ) -> SdkResult<OpenChannelFeeResponse> {
+        let lsp_info = self.lsp_info().await?;
+        let used_fee_params =
+            lsp_info.cheapest_open_channel_fee(req.expiry.unwrap_or(INVOICE_PAYMENT_FEE_EXPIRY))?;
+
+        // get the node state to fetch the current inbound liquidity.
+        let node_state = self.persister.get_node_state()?.ok_or(SdkError::NotReady {
+            err: "Failed to read node state".to_string(),
+        })?;
+
+        // In case we have enough inbound liquidity we return zero fee.
+        if node_state.inbound_liquidity_msats >= req.amount_msat {
+            return Ok(OpenChannelFeeResponse {
+                fee_msat: 0,
+                used_fee_params: used_fee_params.clone(),
+            });
+        }
+
+        let fee_msat = used_fee_params.get_channel_fees_msat_for(req.amount_msat);
+
+        Ok(OpenChannelFeeResponse {
+            fee_msat,
+            used_fee_params: used_fee_params.clone(),
+        })
+    }
+
     /// Close all channels with the current LSP.
     ///
     /// Should be called  when the user wants to close all the channels.
@@ -528,10 +560,15 @@ impl BreezServices {
                   in_progress.bitcoin_address
               )));
         }
-        let channel_opening_fees = self
-            .lsp_info()
-            .await?
-            .choose_channel_opening_fees(req.opening_fee_params, DynamicFeeType::Longest)?;
+        let channel_opening_fees = match req.opening_fee_params {
+            Some(fee_params) => fee_params,
+            None => self
+                .lsp_info()
+                .await?
+                .cheapest_open_channel_fee(SWAP_PAYMENT_FEE_EXPIRY)?
+                .clone(),
+        };
+
         let swap_info = self
             .btc_receive_swapper
             .create_swap_address(channel_opening_fees)
@@ -1507,6 +1544,7 @@ impl Receiver for PaymentReceiver {
             .get_node_state()?
             .ok_or("Failed to retrieve node state")
             .map_err(|err| anyhow!(err))?;
+        let expiry = req_data.expiry.unwrap_or(INVOICE_PAYMENT_FEE_EXPIRY);
 
         let amount_sats = req_data.amount_sats;
         let amount_msats = amount_sats * 1000;
@@ -1523,10 +1561,11 @@ impl Receiver for PaymentReceiver {
             info!("We need to open a channel");
 
             // we need to open channel so we are calculating the fees for the LSP (coming either from the user, or from the LSP)
-            let ofp = lsp_info.choose_channel_opening_fees(
-                req_data.opening_fee_params,
-                DynamicFeeType::Cheapest,
-            )?;
+            let ofp = match req_data.opening_fee_params {
+                Some(fee_params) => fee_params,
+                None => lsp_info.cheapest_open_channel_fee(expiry)?.clone(),
+            };
+
             channel_opening_fee_params = Some(ofp.clone());
             channel_fees_msat = Some(ofp.get_channel_fees_msat_for(amount_msats));
             if let Some(channel_fees_msat) = channel_fees_msat {
@@ -1575,7 +1614,7 @@ impl Receiver for PaymentReceiver {
                 req_data.description,
                 req_data.preimage,
                 req_data.use_description_hash,
-                req_data.expiry,
+                Some(expiry),
                 req_data.cltv,
             )
             .await?;

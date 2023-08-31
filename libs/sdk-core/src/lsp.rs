@@ -1,12 +1,14 @@
+use std::ops::Add;
+
 use crate::breez_services::BreezServer;
 use crate::crypt::encrypt;
-use crate::error::SdkResult;
+use crate::error::{SdkError, SdkResult};
 use crate::grpc::{
     self, LspListRequest, PaymentInformation, RegisterPaymentReply, RegisterPaymentRequest,
 };
 use crate::models::{LspAPI, OpeningFeeParams, OpeningFeeParamsMenu};
-use crate::DynamicFeeType;
 use anyhow::Result;
+use chrono::{Duration, Utc};
 use prost::Message;
 use serde::{Deserialize, Serialize};
 use tonic::Request;
@@ -73,31 +75,26 @@ impl LspInformation {
         Ok(info)
     }
 
-    /// Returns the channel opening fees, either the ones provided by the user (if any), or the ones from LSP.
+    /// Returns the cheapeset opening channel fees from LSP that within the expiry range.
     ///
     /// If the LSP fees are needed, the LSP is expected to have at least one dynamic fee entry in its menu,
     /// otherwise this will result in an error.
-    pub(crate) fn choose_channel_opening_fees(
-        &self,
-        maybe_user_supplied_fee_params: Option<OpeningFeeParams>,
-        fee_type: DynamicFeeType,
-    ) -> SdkResult<OpeningFeeParams> {
-        match maybe_user_supplied_fee_params {
-            // Validate given opening_fee_params and use it if possible
-            Some(user_supplied_fees) => {
-                user_supplied_fees.validate()?;
-                Ok(user_supplied_fees)
-            }
-            // We pick our own if None is supplied
-            None => match fee_type {
-                DynamicFeeType::Cheapest => self
-                    .opening_fee_params_list
-                    .get_cheapest_opening_fee_params(),
-                DynamicFeeType::Longest => {
-                    self.opening_fee_params_list.get_48h_opening_fee_params()
+    pub(crate) fn cheapest_open_channel_fee(&self, expiry: u64) -> SdkResult<&OpeningFeeParams> {
+        for fee in &self.opening_fee_params_list.values {
+            match fee.valid_until_date() {
+                Ok(valid_until) => {
+                    if valid_until > Utc::now().add(Duration::seconds(expiry as i64)) {
+                        return Ok(fee);
+                    }
                 }
-            },
+                Err(e) => {
+                    return Err(SdkError::CalculateOpenChannelFeesFailed { err: e.to_string() })
+                }
+            }
         }
+        Err(SdkError::CalculateOpenChannelFeesFailed {
+            err: "No matching opening channel fee found".to_string(),
+        })
     }
 }
 

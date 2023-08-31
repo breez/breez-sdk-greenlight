@@ -715,6 +715,17 @@ pub struct ReceivePaymentResponse {
     pub opening_fee_msat: Option<u64>,
 }
 
+pub struct OpenChannelFeeRequest {
+    pub amount_msat: u64,
+    pub expiry: Option<u64>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct OpenChannelFeeResponse {
+    pub fee_msat: u64,
+    pub used_fee_params: OpeningFeeParams,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReceiveOnchainRequest {
     pub opening_fee_params: Option<OpeningFeeParams>,
@@ -751,11 +762,6 @@ pub struct OpeningFeeParams {
 }
 
 impl OpeningFeeParams {
-    /// Simple validation: checks if `valid_until` is a valid date
-    pub(crate) fn validate(&self) -> Result<()> {
-        self.valid_until_date().map(|_| ())
-    }
-
     pub(crate) fn valid_until_date(&self) -> Result<DateTime<Utc>> {
         DateTime::parse_from_rfc3339(&self.valid_until)
             .map_err(|e| anyhow!(e))

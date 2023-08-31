@@ -131,6 +131,14 @@ pub(crate) enum Commands {
         lsp_id: String,
     },
 
+    OpenChannelFee {
+        /// The received amount
+        amount_msat: u64,
+
+        /// The expiration of the fee returned
+        expiry: Option<u64>,
+    },
+
     /// The up to date node information
     NodeInfo {},
 

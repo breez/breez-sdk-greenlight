@@ -14,11 +14,12 @@ use breez_sdk_core::{
     InvoicePaidDetails, LNInvoice, LnPaymentDetails, LnUrlAuthRequestData, LnUrlCallbackStatus,
     LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult, LnUrlWithdrawRequestData, LocaleOverrides,
     LocalizedName, LogEntry, LogStream, LspInformation, MessageSuccessActionData, MetadataItem,
-    Network, NodeConfig, NodeState, OpeningFeeParams, OpeningFeeParamsMenu, Payment,
-    PaymentDetails, PaymentFailedData, PaymentType, PaymentTypeFilter, Rate, ReceiveOnchainRequest,
-    ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees, ReverseSwapFeesRequest,
-    ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop,
-    SignMessageRequest, SignMessageResponse, SuccessActionProcessed, SwapInfo, SwapStatus, Symbol,
+    Network, NodeConfig, NodeState, OpenChannelFeeRequest, OpenChannelFeeResponse,
+    OpeningFeeParams, OpeningFeeParamsMenu, Payment, PaymentDetails, PaymentFailedData,
+    PaymentType, PaymentTypeFilter, Rate, ReceiveOnchainRequest, ReceivePaymentRequest,
+    ReceivePaymentResponse, RecommendedFees, ReverseSwapFeesRequest, ReverseSwapInfo,
+    ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop, SignMessageRequest,
+    SignMessageResponse, SuccessActionProcessed, SwapInfo, SwapStatus, Symbol,
     UnspentTransactionOutput, UrlSuccessActionData,
 };
 
@@ -235,6 +236,13 @@ impl BlockingBreezServices {
     pub fn lsp_info(&self) -> SdkResult<LspInformation> {
         rt().block_on(self.breez_services.lsp_info())
             .map_err(|e: anyhow::Error| e.into())
+    }
+
+    pub fn open_channel_fee(
+        &self,
+        req: OpenChannelFeeRequest,
+    ) -> SdkResult<OpenChannelFeeResponse> {
+        rt().block_on(self.breez_services.open_channel_fee(req))
     }
 
     pub fn close_lsp_channels(&self) -> SdkResult<()> {

@@ -12,10 +12,12 @@ dictionary RouteHintHop {
 enum SdkError {
     "Generic",
     "InitFailed",
+    "NotReady",
     "LspConnectFailed",
     "LspOpenChannelNotSupported",
     "PersistenceFailure",
     "ReceivePaymentFailed",
+    "CalculateOpenChannelFeesFailed",
 };
 
 enum EnvironmentType {
@@ -342,6 +344,16 @@ dictionary LspInformation {
     OpeningFeeParamsMenu opening_fee_params_list;
 };
 
+dictionary OpenChannelFeeRequest {
+    u64 amount_msat;
+    u64? expiry;
+};
+
+dictionary OpenChannelFeeResponse {
+    u64 fee_msat;
+    OpeningFeeParams used_fee_params;
+};
+
 enum SwapStatus {
     "Initial",
     "Expired",
@@ -535,6 +547,9 @@ interface BlockingBreezServices {
 
    [Throws=SdkError]
    LspInformation? fetch_lsp_info(string lsp_id);
+
+   [Throws=SdkError]
+   OpenChannelFeeResponse open_channel_fee(OpenChannelFeeRequest req);
 
    [Throws=SdkError]
    string? lsp_id();
