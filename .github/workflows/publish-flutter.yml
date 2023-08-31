@@ -61,6 +61,7 @@ jobs:
            
       - name: Tag the Flutter package        
         working-directory: flutter
+        if: ${{ inputs.publish }}
         run: |
           git config --global user.email github-actions@github.com
           git config --global user.name github-actions
