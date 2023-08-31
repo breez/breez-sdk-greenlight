@@ -53,7 +53,7 @@ jobs:
       windows: ${{ !!inputs.csharp-package-version || !!inputs.golang-package-version }}
       darwin: ${{ !!inputs.csharp-package-version || !!inputs.golang-package-version }}
       linux: ${{ !!inputs.csharp-package-version || !!inputs.golang-package-version }}
-      android: ${{ !!inputs.kotlin-mpp-package-version || !!inputs.maven-package-version || !!inputs.flutter-package-version }} || !!inputs.golang-package-version }}
+      android: ${{ !!inputs.kotlin-mpp-package-version || !!inputs.maven-package-version || !!inputs.flutter-package-version || !!inputs.golang-package-version }}
       ios: ${{ !!inputs.kotlin-mpp-package-version || !!inputs.maven-package-version }}
       kotlin: ${{ !!inputs.kotlin-mpp-package-version || !!inputs.maven-package-version }}
       swift: false
