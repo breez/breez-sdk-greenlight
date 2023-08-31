@@ -74,5 +74,5 @@ jobs:
           # We're sleeping for 30s before triggering the Jitpack build to give our Maven repo
           # some time to process the just uploaded files (the Jitpack build is dependent upon them being available).
           # If anything fails here, we'll still finish sucessfully as this is an optional optimization.
-          sleep 30s
+          sleep 60s
           curl -s -m 30 https://jitpack.io/api/builds/com.github.breez/breez-sdk/${{ inputs.package-version }} || true
