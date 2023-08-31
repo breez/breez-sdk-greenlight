@@ -35,7 +35,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: android-jniLibs
-          path: libs/sdk-bindings/bindings-android/lib/src/main
+          path: libs/sdk-bindings/bindings-android/lib/src/main/jniLibs
 
       - uses: actions/download-artifact@v3
         with:
