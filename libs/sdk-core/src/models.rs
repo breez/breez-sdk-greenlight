@@ -1194,6 +1194,6 @@ mod tests {
     fn test_dynamic_fee_valid_until_format() -> Result<()> {
         let mut ofp: OpeningFeeParams = get_test_ofp(1, 1, true).into();
         ofp.valid_until = "2023-08-03T00:30:35.117Z".to_string();
-        ofp.validate()
+        ofp.valid_until_date().map(|_| ())
     }
 }
