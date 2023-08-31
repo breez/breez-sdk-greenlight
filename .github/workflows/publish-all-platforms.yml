@@ -26,6 +26,10 @@ on:
         description: 'version for the kotlin multiplatform package (MAJOR.MINOR.BUILD)'
         required: false
         type: string
+      react-native-package-version:
+        description: 'version for the react native package (MAJOR.MINOR.BUILD)'
+        required: false
+        type: string
       publish:
         description: 'boolean indicating whether packages should be published. true to publish. false to build only. Default = false.'
         required: false
@@ -54,12 +58,14 @@ jobs:
       golang: ${{ !!inputs.golang-package-version }}
       maven: ${{ !!inputs.maven-package-version }}
       kotlin-mpp: ${{ !!inputs.kotlin-mpp-package-version }}
+      react-native: ${{ !!inputs.react-native-package-version }}
       ref: ${{ inputs.ref || github.sha }}
       csharp-package-version: ${{ inputs.csharp-package-version || '0.0.2' }}
       csharp-ref: ${{ inputs.csharp-ref || inputs.ref || github.sha }}
       golang-package-version: ${{ inputs.golang-package-version || '0.0.2' }}
       maven-package-version: ${{ inputs.maven-package-version || '0.0.2' }}
       kotlin-mpp-package-version: ${{ inputs.kotlin-mpp-package-version || '0.0.2' }}
+      react-native-package-version: ${{ inputs.react-native-package-version || '0.0.2' }}
       publish: ${{ inputs.publish }}
     steps:
       - run: echo "set output variables"
@@ -168,3 +174,17 @@ jobs:
     secrets:
       BREEZ_MVN_USERNAME: ${{ secrets.BREEZ_MVN_USERNAME }}
       BREEZ_MVN_PASSWORD: ${{ secrets.BREEZ_MVN_PASSWORD }}
+
+  # react native version x.y.z will at runtime require
+  # ios and android packages x.y.z being published already.
+  publish-react-native:
+    needs:
+      - setup
+    if: ${{ needs.setup.outputs.react-native == 'true' }}
+    uses: ./.github/workflows/publish-react-native.yml
+    with:
+      ref: ${{ needs.setup.outputs.ref }}
+      package-version: ${{ needs.setup.outputs.react-native-package-version }}
+      publish: ${{ needs.setup.outputs.publish == 'true' }}
+    secrets:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
