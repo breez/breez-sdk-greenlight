@@ -30,6 +30,10 @@ on:
         description: 'version for the flutter package (MAJOR.MINOR.BUILD) (no v prefix)'
         required: false
         type: string
+      react-native-package-version:
+        description: 'version for the react native package (MAJOR.MINOR.BUILD)'
+        required: false
+        type: string
       publish:
         description: 'boolean indicating whether packages should be published. true to publish. false to build only. Default = false.'
         required: false
@@ -49,7 +53,7 @@ jobs:
       windows: ${{ !!inputs.csharp-package-version || !!inputs.golang-package-version }}
       darwin: ${{ !!inputs.csharp-package-version || !!inputs.golang-package-version }}
       linux: ${{ !!inputs.csharp-package-version || !!inputs.golang-package-version }}
-      android: ${{ !!inputs.kotlin-mpp-package-version || !!inputs.maven-package-version || !!inputs.flutter-package-version }}
+      android: ${{ !!inputs.kotlin-mpp-package-version || !!inputs.maven-package-version || !!inputs.flutter-package-version }} || !!inputs.golang-package-version }}
       ios: ${{ !!inputs.kotlin-mpp-package-version || !!inputs.maven-package-version }}
       kotlin: ${{ !!inputs.kotlin-mpp-package-version || !!inputs.maven-package-version }}
       swift: false
@@ -59,6 +63,7 @@ jobs:
       maven: ${{ !!inputs.maven-package-version }}
       kotlin-mpp: ${{ !!inputs.kotlin-mpp-package-version }}
       flutter: ${{ !!inputs.flutter-package-version }}
+      react-native: ${{ !!inputs.react-native-package-version }}
       ref: ${{ inputs.ref || github.sha }}
       csharp-package-version: ${{ inputs.csharp-package-version || '0.0.2' }}
       csharp-ref: ${{ inputs.csharp-ref || inputs.ref || github.sha }}
@@ -66,6 +71,7 @@ jobs:
       maven-package-version: ${{ inputs.maven-package-version || '0.0.2' }}
       kotlin-mpp-package-version: ${{ inputs.kotlin-mpp-package-version || '0.0.2' }}
       flutter-package-version: ${{ inputs.flutter-package-version || '0.0.2' }}
+      react-native-package-version: ${{ inputs.react-native-package-version || '0.0.2' }}
       publish: ${{ inputs.publish }}
     steps:
       - run: echo "set output variables"
@@ -131,6 +137,7 @@ jobs:
   publish-golang:
     needs: 
       - setup
+      - build-android
       - build-windows
       - build-darwin
       - build-linux
@@ -187,3 +194,17 @@ jobs:
       publish: ${{ needs.setup.outputs.publish == 'true' }}
     secrets:
       REPO_SSH_KEY: ${{ secrets.REPO_SSH_KEY }}
+
+  # react native version x.y.z will at runtime require
+  # ios and android packages x.y.z being published already.
+  publish-react-native:
+    needs:
+      - setup
+    if: ${{ needs.setup.outputs.react-native == 'true' }}
+    uses: ./.github/workflows/publish-react-native.yml
+    with:
+      ref: ${{ needs.setup.outputs.ref }}
+      package-version: ${{ needs.setup.outputs.react-native-package-version }}
+      publish: ${{ needs.setup.outputs.publish == 'true' }}
+    secrets:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
