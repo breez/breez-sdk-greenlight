@@ -128,7 +128,8 @@ const App = () => {
                 addLine("verifyMessage:", JSON.stringify(verifyMessageResult))
 
                 const openChannelFeeResult = await openChannelFee({
-                    amountMsat: 100000000
+                    amountMsat: 100000000,
+                    expiry: 3600
                 })
                 addLine("openChannelFee", JSON.stringify(openChannelFeeResult))
 
