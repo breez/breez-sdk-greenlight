@@ -97,13 +97,9 @@ pub fn add_lsp_routing_hints(
 ) -> Result<RawInvoice> {
     let signed = invoice.parse::<SignedRawInvoice>()?;
     let invoice = Invoice::from_signed(signed)?;
-    let description = match invoice.description() {
-        InvoiceDescription::Direct(msg) => msg.to_string(),
-        InvoiceDescription::Hash(_) => String::from(""),
-    };
 
     let mut invoice_builder = InvoiceBuilder::new(invoice.currency())
-        .description(description)
+        .invoice_description(invoice.description())
         .payment_hash(*invoice.payment_hash())
         .timestamp(invoice.timestamp())
         .amount_milli_satoshis(new_amount_msats)
