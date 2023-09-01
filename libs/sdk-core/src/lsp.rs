@@ -79,7 +79,7 @@ impl LspInformation {
     ///
     /// If the LSP fees are needed, the LSP is expected to have at least one dynamic fee entry in its menu,
     /// otherwise this will result in an error.
-    pub(crate) fn cheapest_open_channel_fee(&self, expiry: u64) -> SdkResult<&OpeningFeeParams> {
+    pub(crate) fn cheapest_open_channel_fee(&self, expiry: u32) -> SdkResult<&OpeningFeeParams> {
         for fee in &self.opening_fee_params_list.values {
             match fee.valid_until_date() {
                 Ok(valid_until) => {
@@ -95,9 +95,11 @@ impl LspInformation {
         self.opening_fee_params_list
             .values
             .last()
-            .ok_or(SdkError::CalculateOpenChannelFeesFailed {
-                err: "No matching opening channel fee found".to_string(),
-            })
+            .ok_or(SdkError::LspOpenChannelNotSupported {
+            err:
+                "The LSP doesn't support opening new channels: Dynamic fees menu contains no values"
+                    .to_string(),
+        })
     }
 }
 

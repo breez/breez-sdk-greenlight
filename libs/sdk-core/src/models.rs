@@ -34,8 +34,8 @@ use crate::breez_services::BreezServer;
 use crate::error::{SdkError, SdkResult};
 use strum_macros::{Display, EnumString};
 
-pub const SWAP_PAYMENT_FEE_EXPIRY: u64 = 60 * 60 * 24 * 7; // 1 week
-pub const INVOICE_PAYMENT_FEE_EXPIRY: u64 = 60 * 60; // 1 hours
+pub const SWAP_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60 * 24 * 7; // 1 week
+pub const INVOICE_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60; // 1 hours
 
 /// Different types of supported payments
 #[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
@@ -54,7 +54,7 @@ pub trait NodeAPI: Send + Sync {
         description: String,
         preimage: Option<Vec<u8>>,
         use_description_hash: Option<bool>,
-        expiry: Option<u64>,
+        expiry: Option<u32>,
         cltv: Option<u32>,
     ) -> Result<String>;
     async fn pull_changed(
@@ -705,7 +705,7 @@ pub struct ReceivePaymentRequest {
     /// If set to true, then the bolt11 invoice returned includes the description hash.
     pub use_description_hash: Option<bool>,
     /// if specified, set the time the invoice is valid for, in seconds.
-    pub expiry: Option<u64>,
+    pub expiry: Option<u32>,
     /// if specified, sets the min_final_cltv_expiry for the invoice
     pub cltv: Option<u32>,
 }
@@ -720,7 +720,7 @@ pub struct ReceivePaymentResponse {
 
 pub struct OpenChannelFeeRequest {
     pub amount_msat: u64,
-    pub expiry: Option<u64>,
+    pub expiry: Option<u32>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
