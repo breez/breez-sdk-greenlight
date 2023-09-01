@@ -361,7 +361,7 @@ export type OpenChannelFeeRequest = {
 
 export type OpenChannelFeeResponse = {
     feeMsat: number
-    usedFeeParams: OpeningFeeParams
+    usedFeeParams?: OpeningFeeParams
 }
 
 export type Payment = {

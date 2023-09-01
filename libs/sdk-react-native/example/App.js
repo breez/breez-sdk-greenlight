@@ -53,6 +53,7 @@ const App = () => {
 
     const addLine = (title, text) => {
         setLines((lines) => [{ at: new Date().getTime(), title, text }, ...lines])
+        console.log(`${title}${text && text.length > 0 ? ": " + text : ""}`)
     }
 
     const logHandler = (l) => {

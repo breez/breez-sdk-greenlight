@@ -514,7 +514,7 @@ class BreezSDKMapper {
         ]
     }
 
-    static func dictionaryOf(openChannelFeeResponse: OpenChannelFeeResponse) -> [String: Any] {
+    static func dictionaryOf(openChannelFeeResponse: OpenChannelFeeResponse) -> [String: Any?] {
         return [
             "feeMsat": openChannelFeeResponse.feeMsat,
             "usedFeeParams": dictionaryOf(openingFeeParams: openChannelFeeResponse.usedFeeParams)
