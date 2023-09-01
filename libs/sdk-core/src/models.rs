@@ -727,7 +727,7 @@ pub struct OpenChannelFeeRequest {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct OpenChannelFeeResponse {
     pub fee_msat: u64,
-    pub used_fee_params: OpeningFeeParams,
+    pub used_fee_params: Option<OpeningFeeParams>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
