@@ -1,3 +1,4 @@
+use std::ops::Add;
 use std::str::FromStr;
 
 use anyhow::{anyhow, ensure, Result};
@@ -8,7 +9,7 @@ use bitcoin::hashes::Hash;
 use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::{Address, Script};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, Utc};
 use gl_client::pb::WithdrawResponse;
 use lightning_invoice::RawInvoice;
 use ripemd::Digest;
@@ -34,8 +35,8 @@ use crate::breez_services::BreezServer;
 use crate::error::{SdkError, SdkResult};
 use strum_macros::{Display, EnumString};
 
-pub const SWAP_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60 * 24 * 7; // 1 week
-pub const INVOICE_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60; // 1 hours
+pub const SWAP_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60 * 24 * 2; // 2 days
+pub const INVOICE_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60; // 1 hour
 
 /// Different types of supported payments
 #[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
@@ -726,7 +727,7 @@ pub struct OpenChannelFeeRequest {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct OpenChannelFeeResponse {
     pub fee_msat: u64,
-    pub used_fee_params: OpeningFeeParams,
+    pub used_fee_params: Option<OpeningFeeParams>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -769,6 +770,10 @@ impl OpeningFeeParams {
         DateTime::parse_from_rfc3339(&self.valid_until)
             .map_err(|e| anyhow!(e))
             .map(|d| d.with_timezone(&Utc))
+    }
+
+    pub(crate) fn valid_for(&self, expiry: u32) -> Result<bool> {
+        Ok(self.valid_until_date()? > Utc::now().add(Duration::seconds(expiry as i64)))
     }
 
     pub(crate) fn get_channel_fees_msat_for(&self, amount_msats: u64) -> u64 {
