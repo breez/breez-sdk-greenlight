@@ -104,16 +104,15 @@ fun asReverseSwapFeesRequest(reqData: ReadableMap): ReverseSwapFeesRequest {
 }
 
 fun asReceivePaymentRequest(reqData: ReadableMap): ReceivePaymentRequest? {
-    val amountSats = reqData.getDouble("amountSats")
-    val description = reqData.getString("description")
-
-    if (description != null) {
+    if (hasNonNullKey(reqData, "amountSats") && hasNonNullKey(reqData, "description")) {
+        val amountSats = reqData.getDouble("amountSats")
+        val description = reqData.getString("description")
         val preimage = reqData.getArray("preimage")?.let { asUByteList(it) }
         val openingFeeParams = reqData.getMap("openingFeeParams")?.let{ asOpeningFeeParams(it) }
-        val useDescriptionHash : Boolean? = if (hasNonNullKey(reqData, "useDescriptionHash")) reqData.getBoolean("useDescriptionHash") else null;
-        val expiry : ULong? = if (hasNonNullKey(reqData, "expiry")) reqData.getDouble("expiry").toULong() else null;
-        val cltv : UInt? = if (hasNonNullKey(reqData, "cltv")) reqData.getInt("cltv").toUInt() else null;     
-        return ReceivePaymentRequest(amountSats.toULong(), description, preimage, openingFeeParams, useDescriptionHash, expiry, cltv)
+        val useDescriptionHash = if (hasNonNullKey(reqData, "useDescriptionHash")) reqData.getBoolean("useDescriptionHash") else null
+        val expiry = if (hasNonNullKey(reqData, "expiry")) reqData.getDouble("expiry").toULong() else null
+        val cltv = if (hasNonNullKey(reqData, "cltv")) reqData.getInt("cltv").toUInt() else null
+        return ReceivePaymentRequest(amountSats.toULong(), description!!, preimage, openingFeeParams, useDescriptionHash, expiry, cltv)
     }
 
     return null
