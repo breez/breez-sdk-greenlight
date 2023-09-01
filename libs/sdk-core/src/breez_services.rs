@@ -46,7 +46,7 @@ use crate::models::{
     parse_short_channel_id, ChannelState, ClosedChannelPaymentDetails, Config, EnvironmentType,
     FiatAPI, LnUrlCallbackStatus, LspAPI, NodeAPI, NodeState, Payment, PaymentDetails, PaymentType,
     PaymentTypeFilter, ReverseSwapPairInfo, ReverseSwapServiceAPI, SwapInfo, SwapperAPI,
-    INVOICE_PAYMENT_FEE_EXPIRY,
+    INVOICE_PAYMENT_FEE_EXPIRY_SECONDS,
 };
 use crate::moonpay::MoonPayApi;
 use crate::persist::db::SqliteStorage;
@@ -505,8 +505,8 @@ impl BreezServices {
         req: OpenChannelFeeRequest,
     ) -> SdkResult<OpenChannelFeeResponse> {
         let lsp_info = self.lsp_info().await?;
-        let used_fee_params =
-            lsp_info.cheapest_open_channel_fee(req.expiry.unwrap_or(INVOICE_PAYMENT_FEE_EXPIRY))?;
+        let used_fee_params = lsp_info
+            .cheapest_open_channel_fee(req.expiry.unwrap_or(INVOICE_PAYMENT_FEE_EXPIRY_SECONDS))?;
 
         // get the node state to fetch the current inbound liquidity.
         let node_state = self.persister.get_node_state()?.ok_or(SdkError::NotReady {
@@ -563,7 +563,7 @@ impl BreezServices {
             None => self
                 .lsp_info()
                 .await?
-                .cheapest_open_channel_fee(SWAP_PAYMENT_FEE_EXPIRY)?
+                .cheapest_open_channel_fee(SWAP_PAYMENT_FEE_EXPIRY_SECONDS)?
                 .clone(),
         };
 
@@ -1542,7 +1542,9 @@ impl Receiver for PaymentReceiver {
             .get_node_state()?
             .ok_or("Failed to retrieve node state")
             .map_err(|err| anyhow!(err))?;
-        let expiry = req_data.expiry.unwrap_or(INVOICE_PAYMENT_FEE_EXPIRY);
+        let expiry = req_data
+            .expiry
+            .unwrap_or(INVOICE_PAYMENT_FEE_EXPIRY_SECONDS);
 
         let amount_sats = req_data.amount_sats;
         let amount_msats = amount_sats * 1000;
