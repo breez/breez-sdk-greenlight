@@ -34,6 +34,9 @@ use crate::breez_services::BreezServer;
 use crate::error::{SdkError, SdkResult};
 use strum_macros::{Display, EnumString};
 
+pub const SWAP_PAYMENT_FEE_EXPIRY: u64 = 60 * 60 * 24 * 7; // 1 week
+pub const INVOICE_PAYMENT_FEE_EXPIRY: u64 = 60 * 60; // 1 hours
+
 /// Different types of supported payments
 #[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
 pub enum PaymentType {

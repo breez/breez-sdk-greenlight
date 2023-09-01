@@ -46,6 +46,7 @@ use crate::models::{
     parse_short_channel_id, ChannelState, ClosedChannelPaymentDetails, Config, EnvironmentType,
     FiatAPI, LnUrlCallbackStatus, LspAPI, NodeAPI, NodeState, Payment, PaymentDetails, PaymentType,
     PaymentTypeFilter, ReverseSwapPairInfo, ReverseSwapServiceAPI, SwapInfo, SwapperAPI,
+    INVOICE_PAYMENT_FEE_EXPIRY,
 };
 use crate::moonpay::MoonPayApi;
 use crate::persist::db::SqliteStorage;
@@ -53,9 +54,6 @@ use crate::reverseswap::BTCSendSwap;
 use crate::swap::BTCReceiveSwap;
 use crate::BuyBitcoinProvider::Moonpay;
 use crate::*;
-
-const SWAP_PAYMENT_FEE_EXPIRY: u64 = 60 * 60 * 24 * 7; // 1 week
-const INVOICE_PAYMENT_FEE_EXPIRY: u64 = 60 * 60; // 1 hours
 
 /// Trait that can be used to react to various [BreezEvent]s emitted by the SDK.
 pub trait EventListener: Send + Sync {
