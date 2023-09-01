@@ -1,19 +1,20 @@
 use std::fs::OpenOptions;
 use std::io::Write;
+use std::ops::Add;
 use std::str::FromStr;
 use std::sync::Arc;
-use std::time::{Instant, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use anyhow::{anyhow, ensure, Result};
 use bip39::*;
 use bitcoin::hashes::hex::ToHex;
 use bitcoin::hashes::{sha256, Hash};
 use bitcoin::util::bip32::ChildNumber;
-use chrono::Local;
+use chrono::{Local, Utc};
 use log::{LevelFilter, Metadata, Record};
 use serde_json::json;
 use tokio::sync::{mpsc, watch, Mutex};
-use tokio::time::{sleep, Duration};
+use tokio::time::sleep;
 use tonic::codegen::InterceptedService;
 use tonic::metadata::{Ascii, MetadataValue};
 use tonic::service::Interceptor;
@@ -1545,6 +1546,20 @@ impl Receiver for PaymentReceiver {
         let expiry = req_data
             .expiry
             .unwrap_or(INVOICE_PAYMENT_FEE_EXPIRY_SECONDS);
+
+        // Validate opening_fee_params in case were given as input
+        if let Some(fee_params) = req_data.opening_fee_params.clone() {
+            let invoice_expiration = Utc::now().add(chrono::Duration::seconds(expiry as i64));
+            if !fee_params.valid_for(expiry)? {
+                return Err(SdkError::ReceivePaymentFailed {
+                    err: format!(
+                        "The given open channel fee expires at ({}) which is before invoice expiry: {}",
+                        fee_params.valid_until_date()?,
+                        invoice_expiration.to_rfc3339(),
+                    ),
+                });
+            }
+        }
 
         let amount_sats = req_data.amount_sats;
         let amount_msats = amount_sats * 1000;

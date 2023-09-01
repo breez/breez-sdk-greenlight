@@ -1,5 +1,3 @@
-use std::ops::Add;
-
 use crate::breez_services::BreezServer;
 use crate::crypt::encrypt;
 use crate::error::{SdkError, SdkResult};
@@ -8,7 +6,6 @@ use crate::grpc::{
 };
 use crate::models::{LspAPI, OpeningFeeParams, OpeningFeeParamsMenu};
 use anyhow::Result;
-use chrono::{Duration, Utc};
 use prost::Message;
 use serde::{Deserialize, Serialize};
 use tonic::Request;
@@ -86,9 +83,9 @@ impl LspInformation {
             });
         }
         for fee in &self.opening_fee_params_list.values {
-            match fee.valid_until_date() {
-                Ok(valid_until) => {
-                    if valid_until > Utc::now().add(Duration::seconds(expiry as i64)) {
+            match fee.valid_for(expiry) {
+                Ok(valid) => {
+                    if valid {
                         return Ok(fee);
                     }
                 }
@@ -156,7 +153,7 @@ mod tests {
     #[test]
     fn test_cheapest_open_channel_fee() -> Result<()> {
         let mut tested_fees: Vec<OpeningFeeParams> = vec![];
-        for i in 0..3 {
+        for i in 1..3 {
             tested_fees.push(OpeningFeeParams {
                 min_msat: i,
                 proportional: i as u32,
