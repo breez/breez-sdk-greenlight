@@ -119,6 +119,17 @@ fun asReceivePaymentRequest(reqData: ReadableMap): ReceivePaymentRequest? {
     return null
 }
 
+fun asOpenChannelFeeRequest(reqData: ReadableMap): OpenChannelFeeRequest? {
+    if (hasNonNullKey(reqData, "amountMsat")) {
+        val amountMsat = reqData.getDouble("amountMsat")
+        val expiry = if (hasNonNullKey(reqData, "expiry")) reqData.getDouble("expiry").takeUnless { it == 0.0 } else null;
+
+        return OpenChannelFeeRequest(amountMsat.toULong(), expiry?.toULong())
+    }
+
+    return null
+}
+
 fun asOpeningFeeParams(params: ReadableMap): OpeningFeeParams? {
     if (hasNonNullKey(params, "minMsat") && hasNonNullKey(params, "proportional") &&
             hasNonNullKey(params, "maxIdleTime") && hasNonNullKey(params, "maxClientToSelfDelay")) {
@@ -515,6 +526,13 @@ fun readableMapOf(lspInformation: LspInformation): ReadableMap {
             "minHtlcMsat" to lspInformation.minHtlcMsat,
             "lspPubkey" to lspInformation.lspPubkey,
             "openingFeeParamsList" to readableMapOf(lspInformation.openingFeeParamsList)
+    )
+}
+
+fun readableMapOf(openChannelFeeResponse: OpenChannelFeeResponse): ReadableMap {
+    return readableMapOf(
+            "feeMsat" to openChannelFeeResponse.feeMsat,
+            "usedFeeParams" to readableMapOf(openChannelFeeResponse.usedFeeParams)
     )
 }
 

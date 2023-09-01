@@ -531,6 +531,25 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
+    fun openChannelFee(reqData: ReadableMap, promise: Promise) {
+        executor.execute {
+            val openChannelFeeRequest = asOpenChannelFeeRequest(reqData)
+
+            if (openChannelFeeRequest == null) {
+                promise.reject(GENERIC_CODE, "Invalid reqData")
+            } else {
+                try {
+                    val result = getBreezServices().openChannelFee(openChannelFeeRequest)
+                    promise.resolve(readableMapOf(result))
+                } catch (e: SdkException) {
+                    e.printStackTrace()
+                    promise.reject(e.javaClass.simpleName, e.message, e)
+                }
+            }
+        }
+    }
+
+    @ReactMethod
     fun refund(swapAddress: String, toAddress: String, satPerVbyte: Double, promise: Promise) {
         executor.execute {
             try {

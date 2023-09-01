@@ -199,6 +199,15 @@ class BreezSDKMapper {
         }
     }
     
+    static func asOpenChannelFeeRequest(reqData: [String: Any]) -> OpenChannelFeeRequest? {
+        if let amountMsat = reqData["amountMsat"] as? UInt64 {
+            let expiry = reqData["expiry"] as? UInt64
+            return OpenChannelFeeRequest(amountMsat: amountMsat, expiry: expiry)
+        }
+        
+        return nil
+    }
+
     static func asOpeningFeeParams(reqData: [String: Any]) -> OpeningFeeParams? {
         if let minMsat = reqData["minMsat"] as? UInt64,
            let proportional = reqData["proportional"] as? UInt32,
@@ -224,9 +233,9 @@ class BreezSDKMapper {
             let preimage = reqData["preimage"] as? [UInt8]
             let openingFeeParamsMap = reqData["openingFeeParams"] as? [String: Any]
             let openingFeeParams = (openingFeeParamsMap == nil ? nil : asOpeningFeeParams(reqData: openingFeeParamsMap!))
-            let useDescriptionHash = reqData["useDescriptionHash"] as? Bool;
-            let expiry = reqData["expiry"] as? UInt64;
-            let cltv = reqData["cltv"] as? UInt32;
+            let useDescriptionHash = reqData["useDescriptionHash"] as? Bool
+            let expiry = reqData["expiry"] as? UInt64
+            let cltv = reqData["cltv"] as? UInt32
 
             return ReceivePaymentRequest(amountSats: amountSats, description: description, preimage: preimage, openingFeeParams: openingFeeParams, useDescriptionHash: useDescriptionHash, expiry: expiry, cltv: cltv)
         }
@@ -502,6 +511,13 @@ class BreezSDKMapper {
             "minHtlcMsat": lspInformation.minHtlcMsat,
             "lspPubkey": lspInformation.lspPubkey,
             "openingFeeParamsList": dictionaryOf(openingFeeParamsMenu: lspInformation.openingFeeParamsList)
+        ]
+    }
+
+    static func dictionaryOf(openChannelFeeResponse: OpenChannelFeeResponse) -> [String: Any] {
+        return [
+            "feeMsat": openChannelFeeResponse.feeMsat,
+            "usedFeeParams": dictionaryOf(openingFeeParams: openChannelFeeResponse.usedFeeParams)
         ]
     }
 
