@@ -92,9 +92,12 @@ impl LspInformation {
                 }
             }
         }
-        Err(SdkError::CalculateOpenChannelFeesFailed {
-            err: "No matching opening channel fee found".to_string(),
-        })
+        self.opening_fee_params_list
+            .values
+            .last()
+            .ok_or(SdkError::CalculateOpenChannelFeesFailed {
+                err: "No matching opening channel fee found".to_string(),
+            })
     }
 }
 
