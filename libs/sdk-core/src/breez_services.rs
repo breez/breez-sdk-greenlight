@@ -1578,7 +1578,7 @@ impl Receiver for PaymentReceiver {
                     });
                 }
                 // remove the fees from the amount to get the small amount on the current node invoice.
-                destination_invoice_amount_sats = amount_sats - channel_fees_msat / 1000;
+                destination_invoice_amount_sats = (amount_msats - channel_fees_msat) / 1000;
             }
         } else {
             // not opening a channel so we need to get the real channel id into the routing hints
