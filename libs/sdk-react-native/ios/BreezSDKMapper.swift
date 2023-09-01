@@ -234,7 +234,7 @@ class BreezSDKMapper {
             let openingFeeParamsMap = reqData["openingFeeParams"] as? [String: Any]
             let openingFeeParams = (openingFeeParamsMap == nil ? nil : asOpeningFeeParams(reqData: openingFeeParamsMap!))
             let useDescriptionHash = reqData["useDescriptionHash"] as? Bool
-            let expiry = reqData["expiry"] as? UInt64
+            let expiry = reqData["expiry"] as? UInt32
             let cltv = reqData["cltv"] as? UInt32
 
             return ReceivePaymentRequest(amountSats: amountSats, description: description, preimage: preimage, openingFeeParams: openingFeeParams, useDescriptionHash: useDescriptionHash, expiry: expiry, cltv: cltv)
