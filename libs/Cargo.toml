@@ -12,7 +12,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.4"
+version = "0.2.3"
 
 [workspace.dependencies]
 uniffi = "0.23.0"
