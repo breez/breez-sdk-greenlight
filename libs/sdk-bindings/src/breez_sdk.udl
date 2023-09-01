@@ -346,7 +346,7 @@ dictionary LspInformation {
 
 dictionary OpenChannelFeeRequest {
     u64 amount_msat;
-    u64? expiry;
+    u32? expiry;
 };
 
 dictionary OpenChannelFeeResponse {

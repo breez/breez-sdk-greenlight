@@ -255,7 +255,7 @@ impl NodeAPI for MockNodeAPI {
         description: String,
         preimage: Option<Vec<u8>>,
         _use_description_hash: Option<bool>,
-        _expiry: Option<u64>,
+        _expiry: Option<u32>,
         _cltv: Option<u32>,
     ) -> Result<String> {
         let invoice = create_invoice(description, amount_sats * 1000, vec![], preimage);

@@ -79,7 +79,7 @@ impl LspInformation {
     ///
     /// If the LSP fees are needed, the LSP is expected to have at least one dynamic fee entry in its menu,
     /// otherwise this will result in an error.
-    pub(crate) fn cheapest_open_channel_fee(&self, expiry: u64) -> SdkResult<&OpeningFeeParams> {
+    pub(crate) fn cheapest_open_channel_fee(&self, expiry: u32) -> SdkResult<&OpeningFeeParams> {
         for fee in &self.opening_fee_params_list.values {
             match fee.valid_until_date() {
                 Ok(valid_until) => {

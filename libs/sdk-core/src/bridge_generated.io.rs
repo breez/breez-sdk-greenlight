@@ -735,7 +735,7 @@ pub struct wire_ReceivePaymentRequest {
     preimage: *mut wire_uint_8_list,
     opening_fee_params: *mut wire_OpeningFeeParams,
     use_description_hash: *mut bool,
-    expiry: *mut u64,
+    expiry: *mut u32,
     cltv: *mut u32,
 }
 
