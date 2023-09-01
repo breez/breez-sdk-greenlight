@@ -201,7 +201,7 @@ class BreezSDKMapper {
     
     static func asOpenChannelFeeRequest(reqData: [String: Any]) -> OpenChannelFeeRequest? {
         if let amountMsat = reqData["amountMsat"] as? UInt64 {
-            let expiry = reqData["expiry"] as? UInt64
+            let expiry = reqData["expiry"] as? UInt32
             return OpenChannelFeeRequest(amountMsat: amountMsat, expiry: expiry)
         }
         

@@ -121,9 +121,9 @@ fun asReceivePaymentRequest(reqData: ReadableMap): ReceivePaymentRequest? {
 fun asOpenChannelFeeRequest(reqData: ReadableMap): OpenChannelFeeRequest? {
     if (hasNonNullKey(reqData, "amountMsat")) {
         val amountMsat = reqData.getDouble("amountMsat")
-        val expiry = if (hasNonNullKey(reqData, "expiry")) reqData.getDouble("expiry").takeUnless { it == 0.0 } else null;
+        val expiry = if (hasNonNullKey(reqData, "expiry")) reqData.getInt("expiry") else null;
 
-        return OpenChannelFeeRequest(amountMsat.toULong(), expiry?.toULong())
+        return OpenChannelFeeRequest(amountMsat.toULong(), expiry?.toUInt())
     }
 
     return null
