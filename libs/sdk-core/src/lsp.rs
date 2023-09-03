@@ -77,11 +77,6 @@ impl LspInformation {
     /// If the LSP fees are needed, the LSP is expected to have at least one dynamic fee entry in its menu,
     /// otherwise this will result in an error.
     pub(crate) fn cheapest_open_channel_fee(&self, expiry: u32) -> SdkResult<&OpeningFeeParams> {
-        if self.opening_fee_params_list.values.is_empty() {
-            return Err(SdkError::LspOpenChannelNotSupported {
-                err: "Dynamic fees menu contains no values".to_string(),
-            });
-        }
         for fee in &self.opening_fee_params_list.values {
             match fee.valid_for(expiry) {
                 Ok(valid) => {
@@ -94,9 +89,10 @@ impl LspInformation {
                 }
             }
         }
-
-        Err(SdkError::CalculateOpenChannelFeesFailed {
-            err: format!("There is no fee option that is valid for {expiry} seconds"),
+        self.opening_fee_params_list.values.last().ok_or_else(|| {
+            SdkError::LspOpenChannelNotSupported {
+                err: "Dynamic fees menu contains no values".to_string(),
+            }
         })
     }
 }
@@ -190,17 +186,9 @@ mod tests {
             assert_eq!(fee.min_msat, expiry as u64);
         }
 
-        // Test that the fee is not valid after the expiry
-        if let SdkError::CalculateOpenChannelFeesFailed { err } =
-            lsp_info.cheapest_open_channel_fee(4 * 3600).err().unwrap()
-        {
-            assert_eq!(
-                err,
-                "There is no fee option that is valid for 14400 seconds"
-            );
-        } else {
-            panic!("Expected CalculateOpenChannelFeesFailed error");
-        }
+        // Test that the fee is returned even after the expiry
+        let fee = lsp_info.cheapest_open_channel_fee(4 * 3600 - 1000).unwrap();
+        assert_eq!(fee.min_msat, 2);
 
         // Test the correct error when there are no fees in the menu
         lsp_info.opening_fee_params_list = OpeningFeeParamsMenu { values: vec![] };
