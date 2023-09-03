@@ -188,7 +188,7 @@ mod tests {
 
         // Test that the fee is returned even after the expiry
         let fee = lsp_info.cheapest_open_channel_fee(4 * 3600 - 1000).unwrap();
-        assert_eq!(fee.min_msat, 2 as u64);
+        assert_eq!(fee.min_msat, 2);
 
         // Test the correct error when there are no fees in the menu
         lsp_info.opening_fee_params_list = OpeningFeeParamsMenu { values: vec![] };
