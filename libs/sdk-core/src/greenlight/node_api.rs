@@ -292,7 +292,7 @@ impl NodeAPI for Greenlight {
         description: String,
         preimage: Option<Vec<u8>>,
         use_description_hash: Option<bool>,
-        expiry: Option<u64>,
+        expiry: Option<u32>,
         cltv: Option<u32>,
     ) -> Result<String> {
         let mut client = self.get_node_client().await?;
@@ -311,7 +311,7 @@ impl NodeAPI for Greenlight {
             description,
             preimage,
             deschashonly: use_description_hash,
-            expiry,
+            expiry: expiry.map(|e| e as u64),
             fallbacks: vec![],
             cltv,
         };

@@ -194,6 +194,18 @@ pub(crate) async fn handle_command(
             sdk()?.connect_lsp(lsp_id).await?;
             Ok("LSP connected succesfully".to_string())
         }
+        Commands::OpenChannelFee {
+            amount_msat,
+            expiry,
+        } => {
+            let res = sdk()?
+                .open_channel_fee(breez_sdk_core::OpenChannelFeeRequest {
+                    amount_msat,
+                    expiry,
+                })
+                .await?;
+            serde_json::to_string_pretty(&res).map_err(|e| e.into())
+        }
         Commands::NodeInfo {} => {
             serde_json::to_string_pretty(&sdk()?.node_info()?).map_err(|e| e.into())
         }

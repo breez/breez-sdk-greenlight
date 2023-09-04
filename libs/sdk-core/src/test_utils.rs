@@ -255,7 +255,7 @@ impl NodeAPI for MockNodeAPI {
         description: String,
         preimage: Option<Vec<u8>>,
         _use_description_hash: Option<bool>,
-        _expiry: Option<u64>,
+        _expiry: Option<u32>,
         _cltv: Option<u32>,
     ) -> Result<String> {
         let invoice = create_invoice(description, amount_sats * 1000, vec![], preimage);
@@ -647,7 +647,7 @@ fn sign_invoice(invoice: RawInvoice) -> String {
 
 /// [OpeningFeeParams] that are valid for more than 48h
 pub(crate) fn get_test_ofp_48h(min_msat: u64, proportional: u32) -> crate::grpc::OpeningFeeParams {
-    get_test_ofp_generic(min_msat, proportional, true, chrono::Duration::days(3))
+    get_test_ofp_generic(min_msat, proportional, true, chrono::Duration::days(10))
 }
 
 /// [OpeningFeeParams] with 1 minute in the future or the past

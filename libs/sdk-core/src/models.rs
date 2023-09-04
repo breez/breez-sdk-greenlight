@@ -1,3 +1,4 @@
+use std::ops::Add;
 use std::str::FromStr;
 
 use anyhow::{anyhow, ensure, Result};
@@ -8,7 +9,7 @@ use bitcoin::hashes::Hash;
 use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::{Address, Script};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, Utc};
 use gl_client::pb::WithdrawResponse;
 use lightning_invoice::RawInvoice;
 use ripemd::Digest;
@@ -34,6 +35,9 @@ use crate::breez_services::BreezServer;
 use crate::error::{SdkError, SdkResult};
 use strum_macros::{Display, EnumString};
 
+pub const SWAP_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60 * 24 * 2; // 2 days
+pub const INVOICE_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60; // 60 minutes
+
 /// Different types of supported payments
 #[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
 pub enum PaymentType {
@@ -51,7 +55,7 @@ pub trait NodeAPI: Send + Sync {
         description: String,
         preimage: Option<Vec<u8>>,
         use_description_hash: Option<bool>,
-        expiry: Option<u64>,
+        expiry: Option<u32>,
         cltv: Option<u32>,
     ) -> Result<String>;
     async fn pull_changed(
@@ -702,7 +706,7 @@ pub struct ReceivePaymentRequest {
     /// If set to true, then the bolt11 invoice returned includes the description hash.
     pub use_description_hash: Option<bool>,
     /// if specified, set the time the invoice is valid for, in seconds.
-    pub expiry: Option<u64>,
+    pub expiry: Option<u32>,
     /// if specified, sets the min_final_cltv_expiry for the invoice
     pub cltv: Option<u32>,
 }
@@ -713,6 +717,17 @@ pub struct ReceivePaymentResponse {
     pub ln_invoice: LNInvoice,
     pub opening_fee_params: Option<OpeningFeeParams>,
     pub opening_fee_msat: Option<u64>,
+}
+
+pub struct OpenChannelFeeRequest {
+    pub amount_msat: u64,
+    pub expiry: Option<u32>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct OpenChannelFeeResponse {
+    pub fee_msat: u64,
+    pub used_fee_params: Option<OpeningFeeParams>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -751,15 +766,14 @@ pub struct OpeningFeeParams {
 }
 
 impl OpeningFeeParams {
-    /// Simple validation: checks if `valid_until` is a valid date
-    pub(crate) fn validate(&self) -> Result<()> {
-        self.valid_until_date().map(|_| ())
-    }
-
     pub(crate) fn valid_until_date(&self) -> Result<DateTime<Utc>> {
         DateTime::parse_from_rfc3339(&self.valid_until)
             .map_err(|e| anyhow!(e))
             .map(|d| d.with_timezone(&Utc))
+    }
+
+    pub(crate) fn valid_for(&self, expiry: u32) -> Result<bool> {
+        Ok(self.valid_until_date()? > Utc::now().add(Duration::seconds(expiry as i64)))
     }
 
     pub(crate) fn get_channel_fees_msat_for(&self, amount_msats: u64) -> u64 {
@@ -1188,6 +1202,6 @@ mod tests {
     fn test_dynamic_fee_valid_until_format() -> Result<()> {
         let mut ofp: OpeningFeeParams = get_test_ofp(1, 1, true).into();
         ofp.valid_until = "2023-08-03T00:30:35.117Z".to_string();
-        ofp.validate()
+        ofp.valid_until_date().map(|_| ())
     }
 }

@@ -3,6 +3,10 @@
 #include <stdlib.h>
 typedef struct _Dart_Handle* Dart_Handle;
 
+#define SWAP_PAYMENT_FEE_EXPIRY_SECONDS (((60 * 60) * 24) * 7)
+
+#define INVOICE_PAYMENT_FEE_EXPIRY_SECONDS (60 * 60)
+
 #define ESTIMATED_CLAIM_TX_VSIZE 138
 
 #define ESTIMATED_LOCKUP_TX_VSIZE 153
@@ -78,7 +82,7 @@ typedef struct wire_ReceivePaymentRequest {
   struct wire_uint_8_list *preimage;
   struct wire_OpeningFeeParams *opening_fee_params;
   bool *use_description_hash;
-  uint64_t *expiry;
+  uint32_t *expiry;
   uint32_t *cltv;
 } wire_ReceivePaymentRequest;
 

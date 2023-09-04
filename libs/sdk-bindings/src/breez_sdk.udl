@@ -12,10 +12,12 @@ dictionary RouteHintHop {
 enum SdkError {
     "Generic",
     "InitFailed",
+    "NotReady",
     "LspConnectFailed",
     "LspOpenChannelNotSupported",
     "PersistenceFailure",
     "ReceivePaymentFailed",
+    "CalculateOpenChannelFeesFailed",
 };
 
 enum EnvironmentType {
@@ -289,7 +291,7 @@ dictionary OpeningFeeParams {
 };
 
 dictionary ReverseSwapFeesRequest {
-    u64? send_amount_sat;
+    u64? send_amount_sat = null;
 };
 
 dictionary ReceivePaymentRequest {
@@ -298,7 +300,7 @@ dictionary ReceivePaymentRequest {
     sequence<u8>? preimage = null;
     OpeningFeeParams? opening_fee_params = null;
     boolean? use_description_hash = null;
-    u64? expiry = null;
+    u32? expiry = null;
     u32? cltv = null;
 };
 
@@ -309,12 +311,12 @@ dictionary ReceivePaymentResponse {
 };
 
 dictionary ReceiveOnchainRequest {
-    OpeningFeeParams? opening_fee_params;
+    OpeningFeeParams? opening_fee_params=null;
 };
 
 dictionary BuyBitcoinRequest {
     BuyBitcoinProvider provider;
-    OpeningFeeParams? opening_fee_params;
+    OpeningFeeParams? opening_fee_params=null;
 };
 
 dictionary BuyBitcoinResponse {
@@ -340,6 +342,16 @@ dictionary LspInformation {
     i64 min_htlc_msat;
     sequence<u8> lsp_pubkey;
     OpeningFeeParamsMenu opening_fee_params_list;
+};
+
+dictionary OpenChannelFeeRequest {
+    u64 amount_msat;
+    u32? expiry = null;
+};
+
+dictionary OpenChannelFeeResponse {
+    u64 fee_msat;
+    OpeningFeeParams? used_fee_params;
 };
 
 enum SwapStatus {
@@ -535,6 +547,9 @@ interface BlockingBreezServices {
 
    [Throws=SdkError]
    LspInformation? fetch_lsp_info(string lsp_id);
+
+   [Throws=SdkError]
+   OpenChannelFeeResponse open_channel_fee(OpenChannelFeeRequest req);
 
    [Throws=SdkError]
    string? lsp_id();

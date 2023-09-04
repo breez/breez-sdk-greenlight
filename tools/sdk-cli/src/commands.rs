@@ -55,7 +55,7 @@ pub(crate) enum Commands {
         #[clap(name = "use_description_hash", short = 's', long = "desc_hash")]
         use_description_hash: Option<bool>,
         #[clap(name = "expiry", short = 'e', long = "expiry")]
-        expiry: Option<u64>,
+        expiry: Option<u32>,
         #[clap(name = "cltv", short = 'c', long = "cltv")]
         cltv: Option<u32>,
     },
@@ -129,6 +129,14 @@ pub(crate) enum Commands {
     ConnectLSP {
         /// The lsp id the sdk should connect to
         lsp_id: String,
+    },
+
+    OpenChannelFee {
+        /// The received amount
+        amount_msat: u64,
+
+        /// The expiration of the fee returned
+        expiry: Option<u32>,
     },
 
     /// The up to date node information

@@ -3362,7 +3362,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.preimage = api2wire_opt_uint_8_list(apiObj.preimage);
     wireObj.opening_fee_params = api2wire_opt_box_autoadd_opening_fee_params(apiObj.openingFeeParams);
     wireObj.use_description_hash = api2wire_opt_box_autoadd_bool(apiObj.useDescriptionHash);
-    wireObj.expiry = api2wire_opt_box_autoadd_u64(apiObj.expiry);
+    wireObj.expiry = api2wire_opt_box_autoadd_u32(apiObj.expiry);
     wireObj.cltv = api2wire_opt_box_autoadd_u32(apiObj.cltv);
   }
 
@@ -4424,7 +4424,7 @@ class wire_ReceivePaymentRequest extends ffi.Struct {
 
   external ffi.Pointer<ffi.Bool> use_description_hash;
 
-  external ffi.Pointer<ffi.Uint64> expiry;
+  external ffi.Pointer<ffi.Uint32> expiry;
 
   external ffi.Pointer<ffi.Uint32> cltv;
 }
@@ -4490,6 +4490,10 @@ class wire_ReverseSwapFeesRequest extends ffi.Struct {
 typedef DartPostCObjectFnType
     = ffi.Pointer<ffi.NativeFunction<ffi.Bool Function(DartPort port_id, ffi.Pointer<ffi.Void> message)>>;
 typedef DartPort = ffi.Int64;
+
+const int SWAP_PAYMENT_FEE_EXPIRY_SECONDS = 604800;
+
+const int INVOICE_PAYMENT_FEE_EXPIRY_SECONDS = 3600;
 
 const int ESTIMATED_CLAIM_TX_VSIZE = 138;
 
