@@ -1073,15 +1073,35 @@ impl BreezServices {
         });
     }
 
+    /// Configures a log listener that will receive all SDK log output.
+    /// It allows applications redirect logs to the app log file.
+    ///    
+    /// ### Arguments    
+    ///
+    /// - `log_listener`: Log listener that receives log records.
+    ///    
+    /// ### Errors        
+    ///
+    /// An error is thrown if the there was a failure in initializing the underline logger.
     pub fn set_log_listener(log_listener: Box<dyn LogStream>) -> SdkResult<()> {
         let mut sdk_logger = SDK_LOGGER.get_or_try_init(init_logger)?.write().unwrap();
         sdk_logger.log_listener = Some(log_listener);
         Ok(())
     }
 
-    pub fn set_log_directory(log_dir: String) -> SdkResult<()> {
+    /// Configures a global SDK logger that will log to file.
+    ///
+    /// ### Arguments
+    ///
+    /// - `log_directory`: Location where the the SDK log file will be created. The directory must already exist.       
+    ///
+    /// ### Errors
+    ///
+    /// An error is thrown if the log file cannot be created in the working directory.
+    ///    
+    pub fn set_log_directory(log_directory: String) -> SdkResult<()> {
         let mut sdk_logger = SDK_LOGGER.get_or_try_init(init_logger)?.write().unwrap();
-        let file_logger = build_env_logger(log_dir.as_str())?;
+        let file_logger = build_env_logger(log_directory.as_str())?;
         sdk_logger.file_logger = Some(file_logger);
         Ok(())
     }

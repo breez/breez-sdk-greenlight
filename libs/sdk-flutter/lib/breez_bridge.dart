@@ -52,7 +52,7 @@ class BreezSDK {
     });
 
     /// Listen to SDK logs and log them accordingly to their severity
-    _lnToolkit.breezLogStream().listen(_registerToolkitLog);
+    _lnToolkit.setLogListener().listen(_registerToolkitLog);
   }
 
   /* Breez Services API's & Streams*/

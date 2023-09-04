@@ -69,29 +69,6 @@ pub(crate) fn init_logger() -> Result<RwLock<GlobalSdkLogger>> {
     Ok(RwLock::new(logger))
 }
 
-/// Configures a global SDK logger that will log to file and will forward log events to
-/// an optional application-specific logger.
-///
-/// If called, it should be called before any SDK methods (for example, before `connect`).
-///
-/// It must be called only once in the application lifecycle. Alternatively, If the application
-/// already uses a globally-registered logger, this method shouldn't be called at all.
-///
-/// ### Arguments
-///
-/// - `log_dir`: Location where the the SDK log file will be created. The directory must already exist.
-///
-/// - `app_logger`: Optional application logger.
-///
-/// If the application is to use it's own logger, but would also like the SDK to log SDK-specific
-/// log output to a file in the configured `log_dir`, then do not register the
-/// app-specific logger as a global logger and instead call this method with the app logger as an arg.
-///
-/// ### Errors
-///
-/// An error is thrown if the log file cannot be created in the working directory.
-///
-/// An error is thrown if a global logger is already configured.
 pub(crate) fn build_env_logger(log_dir: &str) -> SdkResult<Logger> {
     let target_log_file = Box::new(
         OpenOptions::new()

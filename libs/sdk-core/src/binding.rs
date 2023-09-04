@@ -131,7 +131,7 @@ pub fn set_log_directory(log_dir: String) -> Result<()> {
 }
 
 /// If used, this must be called before `connect`. It can only be called once.
-pub fn breez_log_stream(sink: StreamSink<LogEntry>) -> Result<()> {
+pub fn set_log_listener(sink: StreamSink<LogEntry>) -> Result<()> {
     BreezServices::set_log_listener(Box::new(StreamSinkWrapper { sink }))?;
     Ok(())
 }

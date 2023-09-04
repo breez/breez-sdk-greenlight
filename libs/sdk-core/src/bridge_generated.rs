@@ -217,14 +217,27 @@ fn wire_breez_events_stream_impl(port_: MessagePort) {
         move || move |task_callback| breez_events_stream(task_callback.stream_sink()),
     )
 }
-fn wire_breez_log_stream_impl(port_: MessagePort) {
+fn wire_set_log_directory_impl(port_: MessagePort, log_dir: impl Wire2Api<String> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
-            debug_name: "breez_log_stream",
+            debug_name: "set_log_directory",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_log_dir = log_dir.wire2api();
+            move |task_callback| set_log_directory(api_log_dir)
+        },
+    )
+}
+fn wire_set_log_listener_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "set_log_listener",
             port: Some(port_),
             mode: FfiCallMode::Stream,
         },
-        move || move |task_callback| breez_log_stream(task_callback.stream_sink()),
+        move || move |task_callback| set_log_listener(task_callback.stream_sink()),
     )
 }
 fn wire_list_lsps_impl(port_: MessagePort) {

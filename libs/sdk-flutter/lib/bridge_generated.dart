@@ -68,10 +68,14 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kBreezEventsStreamConstMeta;
 
-  /// If used, this must be called before `connect`. It can only be called once.
-  Stream<LogEntry> breezLogStream({dynamic hint});
+  Future<void> setLogDirectory({required String logDir, dynamic hint});
 
-  FlutterRustBridgeTaskConstMeta get kBreezLogStreamConstMeta;
+  FlutterRustBridgeTaskConstMeta get kSetLogDirectoryConstMeta;
+
+  /// If used, this must be called before `connect`. It can only be called once.
+  Stream<LogEntry> setLogListener({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kSetLogListenerConstMeta;
 
   /// See [BreezServices::list_lsps]
   Future<List<LspInformation>> listLsps({dynamic hint});
@@ -1515,18 +1519,34 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: [],
       );
 
-  Stream<LogEntry> breezLogStream({dynamic hint}) {
+  Future<void> setLogDirectory({required String logDir, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(logDir);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_set_log_directory(port_, arg0),
+      parseSuccessData: _wire2api_unit,
+      constMeta: kSetLogDirectoryConstMeta,
+      argValues: [logDir],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kSetLogDirectoryConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "set_log_directory",
+        argNames: ["logDir"],
+      );
+
+  Stream<LogEntry> setLogListener({dynamic hint}) {
     return _platform.executeStream(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_breez_log_stream(port_),
+      callFfi: (port_) => _platform.inner.wire_set_log_listener(port_),
       parseSuccessData: _wire2api_log_entry,
-      constMeta: kBreezLogStreamConstMeta,
+      constMeta: kSetLogListenerConstMeta,
       argValues: [],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kBreezLogStreamConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "breez_log_stream",
+  FlutterRustBridgeTaskConstMeta get kSetLogListenerConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "set_log_listener",
         argNames: [],
       );
 
@@ -3606,17 +3626,33 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_breez_events_stream');
   late final _wire_breez_events_stream = _wire_breez_events_streamPtr.asFunction<void Function(int)>();
 
-  void wire_breez_log_stream(
+  void wire_set_log_directory(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> log_dir,
+  ) {
+    return _wire_set_log_directory(
+      port_,
+      log_dir,
+    );
+  }
+
+  late final _wire_set_log_directoryPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>(
+          'wire_set_log_directory');
+  late final _wire_set_log_directory =
+      _wire_set_log_directoryPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_set_log_listener(
     int port_,
   ) {
-    return _wire_breez_log_stream(
+    return _wire_set_log_listener(
       port_,
     );
   }
 
-  late final _wire_breez_log_streamPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_breez_log_stream');
-  late final _wire_breez_log_stream = _wire_breez_log_streamPtr.asFunction<void Function(int)>();
+  late final _wire_set_log_listenerPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_set_log_listener');
+  late final _wire_set_log_listener = _wire_set_log_listenerPtr.asFunction<void Function(int)>();
 
   void wire_list_lsps(
     int port_,
