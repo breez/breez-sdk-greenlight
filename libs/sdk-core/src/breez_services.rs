@@ -500,6 +500,10 @@ impl BreezServices {
         get_lsp_by_id(self.persister.clone(), self.lsp_api.clone(), id.as_str()).await
     }
 
+    /// Gets the fees required to open a channel for a given amount.
+    /// If there is no channel needed, returns 0.
+    /// If there is a channel needed, returns the required open channel fees, with a fee params object
+    /// to pass to methods that require a channel open, like receive_payment, or receive_onchain.
     pub async fn open_channel_fee(
         &self,
         req: OpenChannelFeeRequest,
