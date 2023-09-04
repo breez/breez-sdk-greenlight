@@ -175,6 +175,7 @@ mod grpc;
 pub mod input_parser;
 mod invoice;
 mod lnurl;
+mod logging;
 mod lsp;
 mod models;
 mod moonpay;
@@ -186,8 +187,8 @@ mod test_utils;
 
 pub use breez_services::{
     mnemonic_to_seed, BackupFailedData, BreezEvent, BreezServices, CheckMessageRequest,
-    CheckMessageResponse, EventListener, InvoicePaidDetails, LogStream, PaymentFailedData,
-    SignMessageRequest, SignMessageResponse,
+    CheckMessageResponse, EventListener, InvoicePaidDetails, PaymentFailedData, SignMessageRequest,
+    SignMessageResponse,
 };
 pub use chain::RecommendedFees;
 pub use fiat::{CurrencyInfo, FiatCurrency, LocaleOverrides, LocalizedName, Rate, Symbol};

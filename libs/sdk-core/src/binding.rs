@@ -15,7 +15,6 @@ use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
 use flutter_rust_bridge::StreamSink;
-use log::{Level, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
 use tokio::sync::mpsc;
 
@@ -32,15 +31,14 @@ use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, PaymentTypeFilter, SwapInfo};
 use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
-    EnvironmentType, LnUrlCallbackStatus, NodeConfig, ReceiveOnchainRequest, ReceivePaymentRequest,
-    ReceivePaymentResponse, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
-    SignMessageRequest, SignMessageResponse,
+    EnvironmentType, LnUrlCallbackStatus, LogStream, NodeConfig, ReceiveOnchainRequest,
+    ReceivePaymentRequest, ReceivePaymentResponse, ReverseSwapFeesRequest, ReverseSwapInfo,
+    ReverseSwapPairInfo, SignMessageRequest, SignMessageResponse,
 };
 
 static BREEZ_SERVICES_INSTANCE: OnceCell<Arc<BreezServices>> = OnceCell::new();
 static BREEZ_SERVICES_SHUTDOWN: OnceCell<mpsc::Sender<()>> = OnceCell::new();
 static NOTIFICATION_STREAM: OnceCell<StreamSink<BreezEvent>> = OnceCell::new();
-static LOG_STREAM: OnceCell<StreamSink<LogEntry>> = OnceCell::new();
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
 
 /*  Breez Services API's */
@@ -48,12 +46,6 @@ static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime:
 /// Wrapper around [BreezServices::connect] which also initializes SDK logging
 pub fn connect(config: Config, seed: Vec<u8>) -> Result<()> {
     block_on(async move {
-        BreezServices::init_logging(
-            &config.working_dir,
-            Some(Box::new(BindingLogStreamEventListener {})),
-        )
-        .map_err(anyhow::Error::new)?;
-
         let breez_services =
             BreezServices::connect(config, seed, Box::new(BindingEventListener {})).await?;
 
@@ -134,11 +126,14 @@ pub fn breez_events_stream(s: StreamSink<BreezEvent>) -> Result<()> {
     Ok(())
 }
 
+pub fn set_log_directory(log_dir: String) -> Result<()> {
+    BreezServices::set_log_directory(log_dir).map_err(anyhow::Error::new)
+}
+
 /// If used, this must be called before `connect`. It can only be called once.
-pub fn breez_log_stream(s: StreamSink<LogEntry>) -> Result<()> {
-    LOG_STREAM
-        .set(s)
-        .map_err(|_| anyhow!("log stream already created"))
+pub fn breez_log_stream(sink: StreamSink<LogEntry>) -> Result<()> {
+    BreezServices::set_log_listener(Box::new(StreamSinkWrapper { sink }))?;
+    Ok(())
 }
 
 /*  LSP API's */
@@ -391,24 +386,17 @@ impl EventListener for BindingEventListener {
     }
 }
 
-struct BindingLogStreamEventListener;
+struct StreamSinkWrapper {
+    sink: StreamSink<LogEntry>,
+}
 
-impl log::Log for BindingLogStreamEventListener {
-    fn enabled(&self, m: &Metadata) -> bool {
-        m.level() <= Level::Debug
+impl LogStream for StreamSinkWrapper {
+    fn log(&self, record: LogEntry) {
+        self.sink.add(LogEntry {
+            line: record.line,
+            level: record.level,
+        });
     }
-
-    fn log(&self, record: &Record) {
-        if self.enabled(record.metadata()) {
-            if let Some(s) = LOG_STREAM.get() {
-                s.add(LogEntry {
-                    line: record.args().to_string(),
-                    level: record.level().as_str().to_string(),
-                });
-            }
-        };
-    }
-    fn flush(&self) {}
 }
 
 fn get_breez_services() -> Result<&'static BreezServices> {

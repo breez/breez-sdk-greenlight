@@ -600,7 +600,10 @@ namespace breez_sdk {
  BlockingBreezServices connect(Config config, sequence<u8> seed, EventListener listener);
 
  [Throws=SdkError]
- void set_log_stream(LogStream log_stream);
+ void set_log_listener(LogStream log_stream);
+
+ [Throws=SdkError]
+ void set_log_directory(string log_directory);
 
  [Throws=SdkError]
  LNInvoice parse_invoice(string invoice);

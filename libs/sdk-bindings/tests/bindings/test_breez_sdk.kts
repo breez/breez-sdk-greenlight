@@ -16,7 +16,7 @@ class LogStreamListener: breez_sdk.LogStream {
 }
 
 try {
-    breez_sdk.setLogStream(LogStreamListener());
+    breez_sdk.setLogListener(LogStreamListener());
     var seed = breez_sdk.mnemonicToSeed("cruise clever syrup coil cute execute laundry general cover prevent law sheriff");
     var config = breez_sdk.defaultConfig(breez_sdk.EnvironmentType.STAGING, "code", breez_sdk.NodeConfig.Greenlight(breez_sdk.GreenlightNodeConfig(null, "")))
     var sdkServices = breez_sdk.connect(config, seed, SDKListener());    

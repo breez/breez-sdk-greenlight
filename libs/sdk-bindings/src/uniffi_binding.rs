@@ -1,8 +1,7 @@
 use std::sync::Arc;
 
-use anyhow::{anyhow, Result};
-use log::{Metadata, Record};
-use once_cell::sync::{Lazy, OnceCell};
+use anyhow::Result;
+use once_cell::sync::Lazy;
 
 use breez_sdk_core::{
     error::*, mnemonic_to_seed as sdk_mnemonic_to_seed, parse as sdk_parse_input,
@@ -24,28 +23,6 @@ use breez_sdk_core::{
 };
 
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
-static LOG_STREAM: OnceCell<Box<dyn LogStream>> = OnceCell::new();
-
-struct BindingLogger {}
-
-impl log::Log for BindingLogger {
-    fn enabled(&self, m: &Metadata) -> bool {
-        // ignore the internal uniffi log to prevent infinite loop.
-        return *m.target() != *"breez_sdk_bindings::uniffi_binding";
-    }
-
-    fn log(&self, record: &Record) {
-        if self.enabled(record.metadata()) {
-            if let Some(s) = LOG_STREAM.get() {
-                s.log(LogEntry {
-                    line: record.args().to_string(),
-                    level: record.level().as_str().to_string(),
-                });
-            }
-        }
-    }
-    fn flush(&self) {}
-}
 
 /// Create a new SDK config with default values
 pub fn default_config(
@@ -74,24 +51,18 @@ pub fn connect(
     event_listener: Box<dyn EventListener>,
 ) -> SdkResult<Arc<BlockingBreezServices>> {
     rt().block_on(async move {
-        let uniffi_logger: Option<Box<dyn log::Log>> = match LOG_STREAM.get() {
-            None => None,
-            Some(_) => Some(Box::new(BindingLogger {})),
-        };
-        BreezServices::init_logging(&config.working_dir, uniffi_logger)?;
-
         let breez_services = BreezServices::connect(config, seed, event_listener).await?;
 
         Ok(Arc::new(BlockingBreezServices { breez_services }))
     })
 }
 
-/// If used, this must be called before `connect`
-pub fn set_log_stream(log_stream: Box<dyn LogStream>) -> Result<()> {
-    LOG_STREAM
-        .set(log_stream)
-        .map_err(|_| anyhow!("log stream already created"))?;
-    Ok(())
+pub fn set_log_directory(log_dir: String) -> SdkResult<()> {
+    BreezServices::set_log_directory(log_dir)
+}
+
+pub fn set_log_listener(log_listener: Box<dyn LogStream>) -> SdkResult<()> {
+    BreezServices::set_log_listener(log_listener)
 }
 
 pub struct BlockingBreezServices {

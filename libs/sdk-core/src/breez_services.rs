@@ -1,5 +1,3 @@
-use std::fs::OpenOptions;
-use std::io::Write;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
@@ -9,8 +7,6 @@ use bip39::*;
 use bitcoin::hashes::hex::ToHex;
 use bitcoin::hashes::{sha256, Hash};
 use bitcoin::util::bip32::ChildNumber;
-use chrono::Local;
-use log::{LevelFilter, Metadata, Record};
 use serde_json::json;
 use tokio::sync::{mpsc, watch, Mutex};
 use tokio::time::sleep;
@@ -41,6 +37,7 @@ use crate::lnurl::pay::model::{
 };
 use crate::lnurl::pay::validate_lnurl_pay;
 use crate::lnurl::withdraw::validate_lnurl_withdraw;
+use crate::logging::*;
 use crate::lsp::LspInformation;
 use crate::models::{
     parse_short_channel_id, ChannelState, ClosedChannelPaymentDetails, Config, EnvironmentType,
@@ -100,10 +97,6 @@ pub struct PaymentFailedData {
 pub struct InvoicePaidDetails {
     pub payment_hash: String,
     pub bolt11: String,
-}
-
-pub trait LogStream: Send + Sync {
-    fn log(&self, l: LogEntry);
 }
 
 /// Request to sign a message with the node's private key.
@@ -1080,106 +1073,18 @@ impl BreezServices {
         });
     }
 
-    /// Configures a global SDK logger that will log to file and will forward log events to
-    /// an optional application-specific logger.
-    ///
-    /// If called, it should be called before any SDK methods (for example, before `connect`).
-    ///
-    /// It must be called only once in the application lifecycle. Alternatively, If the application
-    /// already uses a globally-registered logger, this method shouldn't be called at all.
-    ///
-    /// ### Arguments
-    ///
-    /// - `log_dir`: Location where the the SDK log file will be created. The directory must already exist.
-    ///
-    /// - `app_logger`: Optional application logger.
-    ///
-    /// If the application is to use it's own logger, but would also like the SDK to log SDK-specific
-    /// log output to a file in the configured `log_dir`, then do not register the
-    /// app-specific logger as a global logger and instead call this method with the app logger as an arg.
-    ///
-    /// ### Errors
-    ///
-    /// An error is thrown if the log file cannot be created in the working directory.
-    ///
-    /// An error is thrown if a global logger is already configured.
-    pub fn init_logging(log_dir: &str, app_logger: Option<Box<dyn log::Log>>) -> SdkResult<()> {
-        let target_log_file = Box::new(
-            OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(format!("{log_dir}/sdk.log"))
-                .map_err(|_| SdkError::InitFailed {
-                    err: "Can't create log file".into(),
-                })?,
-        );
-        let logger = env_logger::Builder::new()
-            .target(env_logger::Target::Pipe(target_log_file))
-            .parse_filters(
-                r#"
-                info,
-                gl_client=warn,
-                h2=warn,
-                hyper=warn,
-                breez_sdk_core::reverseswap=info,
-                lightning_signer=warn,
-                reqwest=warn,
-                rustls=warn,
-                rustyline=warn,
-                vls_protocol_signer=warn
-            "#,
-            )
-            .format(|buf, record| {
-                writeln!(
-                    buf,
-                    "[{} {} {}:{}] {}",
-                    Local::now().format("%Y-%m-%d %H:%M:%S%.3f"),
-                    record.level(),
-                    record.module_path().unwrap_or("unknown"),
-                    record.line().unwrap_or(0),
-                    record.args()
-                )
-            })
-            .build();
-
-        let global_logger = GlobalSdkLogger {
-            logger,
-            log_listener: app_logger,
-        };
-
-        log::set_boxed_logger(Box::new(global_logger)).map_err(|e| SdkError::InitFailed {
-            err: format!("Failed to set global logger: {e}"),
-        })?;
-        log::set_max_level(LevelFilter::Trace);
-
+    pub fn set_log_listener(log_listener: Box<dyn LogStream>) -> SdkResult<()> {
+        let mut sdk_logger = SDK_LOGGER.get_or_try_init(init_logger)?.write().unwrap();
+        sdk_logger.log_listener = Some(log_listener);
         Ok(())
     }
-}
 
-struct GlobalSdkLogger {
-    /// SDK internal logger, which logs to file
-    logger: env_logger::Logger,
-    /// Optional external log listener, that can receive a stream of log statements
-    log_listener: Option<Box<dyn log::Log>>,
-}
-impl log::Log for GlobalSdkLogger {
-    fn enabled(&self, metadata: &Metadata) -> bool {
-        metadata.level() <= log::Level::Debug
+    pub fn set_log_directory(log_dir: String) -> SdkResult<()> {
+        let mut sdk_logger = SDK_LOGGER.get_or_try_init(init_logger)?.write().unwrap();
+        let file_logger = build_env_logger(log_dir.as_str())?;
+        sdk_logger.file_logger = Some(file_logger);
+        Ok(())
     }
-
-    fn log(&self, record: &Record) {
-        if self.enabled(record.metadata()) {
-            self.logger.log(record);
-
-            if let Some(s) = &self.log_listener.as_ref() {
-                if s.enabled(record.metadata()) {
-                    s.log(record);
-                }
-            }
-        }
-    }
-
-    fn flush(&self) {}
 }
 
 fn closed_channel_to_transaction(channel: crate::models::Channel) -> Result<Payment> {
