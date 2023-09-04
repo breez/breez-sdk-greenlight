@@ -25,8 +25,7 @@ async fn main() {
         return;
     }
 
-    BreezServices::set_log_directory("/Users/roeierez/test/sdk-logs".to_string())
-        .expect("Failed to init logging");
+    BreezServices::set_log_directory(data_dir.clone()).expect("Failed to init logging");
 
     let persistence = CliPersistence { data_dir };
     let history_file = &persistence.history_file();
