@@ -69,9 +69,9 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kBreezEventsStreamConstMeta;
 
   /// If used, this must be called before `connect`. It can only be called once.
-  Stream<LogEntry> breezLogStream({dynamic hint});
+  Stream<LogEntry> initLogging({String? logDirectory, dynamic hint});
 
-  FlutterRustBridgeTaskConstMeta get kBreezLogStreamConstMeta;
+  FlutterRustBridgeTaskConstMeta get kInitLoggingConstMeta;
 
   /// See [BreezServices::list_lsps]
   Future<List<LspInformation>> listLsps({dynamic hint});
@@ -1515,19 +1515,20 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: [],
       );
 
-  Stream<LogEntry> breezLogStream({dynamic hint}) {
+  Stream<LogEntry> initLogging({String? logDirectory, dynamic hint}) {
+    var arg0 = _platform.api2wire_opt_String(logDirectory);
     return _platform.executeStream(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_breez_log_stream(port_),
+      callFfi: (port_) => _platform.inner.wire_init_logging(port_, arg0),
       parseSuccessData: _wire2api_log_entry,
-      constMeta: kBreezLogStreamConstMeta,
-      argValues: [],
+      constMeta: kInitLoggingConstMeta,
+      argValues: [logDirectory],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kBreezLogStreamConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "breez_log_stream",
-        argNames: [],
+  FlutterRustBridgeTaskConstMeta get kInitLoggingConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "init_logging",
+        argNames: ["logDirectory"],
       );
 
   Future<List<LspInformation>> listLsps({dynamic hint}) {
@@ -3606,17 +3607,21 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_breez_events_stream');
   late final _wire_breez_events_stream = _wire_breez_events_streamPtr.asFunction<void Function(int)>();
 
-  void wire_breez_log_stream(
+  void wire_init_logging(
     int port_,
+    ffi.Pointer<wire_uint_8_list> log_directory,
   ) {
-    return _wire_breez_log_stream(
+    return _wire_init_logging(
       port_,
+      log_directory,
     );
   }
 
-  late final _wire_breez_log_streamPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_breez_log_stream');
-  late final _wire_breez_log_stream = _wire_breez_log_streamPtr.asFunction<void Function(int)>();
+  late final _wire_init_loggingPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>(
+          'wire_init_logging');
+  late final _wire_init_logging =
+      _wire_init_loggingPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
   void wire_list_lsps(
     int port_,

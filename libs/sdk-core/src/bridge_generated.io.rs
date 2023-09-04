@@ -57,8 +57,8 @@ pub extern "C" fn wire_breez_events_stream(port_: i64) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_breez_log_stream(port_: i64) {
-    wire_breez_log_stream_impl(port_)
+pub extern "C" fn wire_init_logging(port_: i64, log_directory: *mut wire_uint_8_list) {
+    wire_init_logging_impl(port_, log_directory)
 }
 
 #[no_mangle]

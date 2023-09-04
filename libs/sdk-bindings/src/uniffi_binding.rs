@@ -73,12 +73,6 @@ pub fn connect(
     event_listener: Box<dyn EventListener>,
 ) -> SdkResult<Arc<BlockingBreezServices>> {
     rt().block_on(async move {
-        let uniffi_logger: Option<Box<dyn log::Log>> = match LOG_STREAM.get() {
-            None => None,
-            Some(_) => Some(Box::new(BindingLogger {})),
-        };
-        BreezServices::init_logging(&config.working_dir, uniffi_logger)?;
-
         let breez_services = BreezServices::connect(config, seed, event_listener).await?;
 
         Ok(Arc::new(BlockingBreezServices { breez_services }))
@@ -86,10 +80,20 @@ pub fn connect(
 }
 
 /// If used, this must be called before `connect`
-pub fn set_log_stream(log_stream: Box<dyn LogStream>) -> Result<()> {
-    LOG_STREAM
-        .set(log_stream)
-        .map_err(|_| anyhow!("log stream already created"))?;
+pub fn init_logging(
+    log_directory: Option<String>,
+    log_stream: Option<Box<dyn LogStream>>,
+) -> Result<()> {
+    if let Some(log) = log_stream {
+        LOG_STREAM
+            .set(log)
+            .map_err(|_| anyhow!("log stream already created"))?;
+    }
+    let uniffi_logger: Option<Box<dyn log::Log>> = match LOG_STREAM.get() {
+        None => None,
+        Some(_) => Some(Box::new(BindingLogger {})),
+    };
+    BreezServices::init_logging(log_directory, uniffi_logger)?;
     Ok(())
 }
 

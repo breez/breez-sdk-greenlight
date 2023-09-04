@@ -155,7 +155,7 @@ void wire_default_config(int64_t port_,
 
 void wire_breez_events_stream(int64_t port_);
 
-void wire_breez_log_stream(int64_t port_);
+void wire_init_logging(int64_t port_, struct wire_uint_8_list *log_directory);
 
 void wire_list_lsps(int64_t port_);
 
@@ -293,7 +293,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_mnemonic_to_seed);
     dummy_var ^= ((int64_t) (void*) wire_default_config);
     dummy_var ^= ((int64_t) (void*) wire_breez_events_stream);
-    dummy_var ^= ((int64_t) (void*) wire_breez_log_stream);
+    dummy_var ^= ((int64_t) (void*) wire_init_logging);
     dummy_var ^= ((int64_t) (void*) wire_list_lsps);
     dummy_var ^= ((int64_t) (void*) wire_connect_lsp);
     dummy_var ^= ((int64_t) (void*) wire_lsp_id);

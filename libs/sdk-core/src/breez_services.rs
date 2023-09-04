@@ -1064,20 +1064,26 @@ impl BreezServices {
     /// An error is thrown if the log file cannot be created in the working directory.
     ///
     /// An error is thrown if a global logger is already configured.
-    pub fn init_logging(log_dir: &str, app_logger: Option<Box<dyn log::Log>>) -> SdkResult<()> {
-        let target_log_file = Box::new(
-            OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(format!("{log_dir}/sdk.log"))
-                .map_err(|_| SdkError::InitFailed {
-                    err: "Can't create log file".into(),
-                })?,
-        );
-        let logger = env_logger::Builder::new()
-            .target(env_logger::Target::Pipe(target_log_file))
-            .parse_filters(
-                r#"
+    pub fn init_logging(
+        log_dir: Option<String>,
+        app_logger: Option<Box<dyn log::Log>>,
+    ) -> SdkResult<()> {
+        let mut loggers: Vec<Box<dyn log::Log>> = vec![];
+
+        if let Some(dir) = log_dir {
+            let target_log_file = Box::new(
+                OpenOptions::new()
+                    .create(true)
+                    .append(true)
+                    .open(format!("{dir}/sdk.log"))
+                    .map_err(|_| SdkError::InitFailed {
+                        err: "Can't create log file".into(),
+                    })?,
+            );
+            let logger = env_logger::Builder::new()
+                .target(env_logger::Target::Pipe(target_log_file))
+                .parse_filters(
+                    r#"
                 info,
                 gl_client=warn,
                 h2=warn,
@@ -1089,24 +1095,26 @@ impl BreezServices {
                 rustyline=warn,
                 vls_protocol_signer=warn
             "#,
-            )
-            .format(|buf, record| {
-                writeln!(
-                    buf,
-                    "[{} {} {}:{}] {}",
-                    Local::now().format("%Y-%m-%d %H:%M:%S%.3f"),
-                    record.level(),
-                    record.module_path().unwrap_or("unknown"),
-                    record.line().unwrap_or(0),
-                    record.args()
                 )
-            })
-            .build();
+                .format(|buf, record| {
+                    writeln!(
+                        buf,
+                        "[{} {} {}:{}] {}",
+                        Local::now().format("%Y-%m-%d %H:%M:%S%.3f"),
+                        record.level(),
+                        record.module_path().unwrap_or("unknown"),
+                        record.line().unwrap_or(0),
+                        record.args()
+                    )
+                })
+                .build();
 
-        let global_logger = GlobalSdkLogger {
-            logger,
-            log_listener: app_logger,
-        };
+            loggers.push(Box::new(logger));
+        }
+        if let Some(l) = app_logger {
+            loggers.push(l);
+        }
+        let global_logger = GlobalSdkLogger { loggers };
 
         log::set_boxed_logger(Box::new(global_logger)).map_err(|e| SdkError::InitFailed {
             err: format!("Failed to set global logger: {e}"),
@@ -1118,10 +1126,8 @@ impl BreezServices {
 }
 
 struct GlobalSdkLogger {
-    /// SDK internal logger, which logs to file
-    logger: env_logger::Logger,
-    /// Optional external log listener, that can receive a stream of log statements
-    log_listener: Option<Box<dyn log::Log>>,
+    /// A list of loggers
+    loggers: Vec<Box<dyn log::Log>>,
 }
 impl log::Log for GlobalSdkLogger {
     fn enabled(&self, metadata: &Metadata) -> bool {
@@ -1130,11 +1136,9 @@ impl log::Log for GlobalSdkLogger {
 
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
-            self.logger.log(record);
-
-            if let Some(s) = &self.log_listener.as_ref() {
-                if s.enabled(record.metadata()) {
-                    s.log(record);
+            for l in &self.loggers {
+                if l.enabled(record.metadata()) {
+                    l.log(record);
                 }
             }
         }

@@ -48,12 +48,6 @@ static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime:
 /// Wrapper around [BreezServices::connect] which also initializes SDK logging
 pub fn connect(config: Config, seed: Vec<u8>) -> Result<()> {
     block_on(async move {
-        BreezServices::init_logging(
-            &config.working_dir,
-            Some(Box::new(BindingLogStreamEventListener {})),
-        )
-        .map_err(anyhow::Error::new)?;
-
         let breez_services =
             BreezServices::connect(config, seed, Box::new(BindingEventListener {})).await?;
 
@@ -135,10 +129,18 @@ pub fn breez_events_stream(s: StreamSink<BreezEvent>) -> Result<()> {
 }
 
 /// If used, this must be called before `connect`. It can only be called once.
-pub fn breez_log_stream(s: StreamSink<LogEntry>) -> Result<()> {
+pub fn init_logging(log_directory: Option<String>, s: StreamSink<LogEntry>) -> Result<()> {
     LOG_STREAM
         .set(s)
-        .map_err(|_| anyhow!("log stream already created"))
+        .map_err(|_| anyhow!("log stream already created"))?;
+
+    let uniffi_logger: Option<Box<dyn log::Log>> = match LOG_STREAM.get() {
+        None => None,
+        Some(_) => Some(Box::new(BindingLogStreamEventListener {})),
+    };
+
+    BreezServices::init_logging(log_directory, uniffi_logger).map_err(anyhow::Error::new)?;
+    Ok(())
 }
 
 /*  LSP API's */
