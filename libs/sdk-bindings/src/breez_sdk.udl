@@ -291,7 +291,7 @@ dictionary OpeningFeeParams {
 };
 
 dictionary ReverseSwapFeesRequest {
-    u64? send_amount_sat;
+    u64? send_amount_sat = null;
 };
 
 dictionary ReceivePaymentRequest {
