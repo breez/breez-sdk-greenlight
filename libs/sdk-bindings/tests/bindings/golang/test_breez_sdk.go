@@ -20,7 +20,7 @@ func (BreezListener) OnEvent(e breez_sdk.BreezEvent) {
 }
 
 func main() {
-	breezListener := BreezListener{}
+	breezListener := &BreezListener{}
 
 	breez_sdk.InitLogging(nil, &breezListener)
 
