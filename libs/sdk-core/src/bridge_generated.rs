@@ -207,16 +207,6 @@ fn wire_default_config_impl(
         },
     )
 }
-fn wire_breez_events_stream_impl(port_: MessagePort) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
-        WrapInfo {
-            debug_name: "breez_events_stream",
-            port: Some(port_),
-            mode: FfiCallMode::Stream,
-        },
-        move || move |task_callback| breez_events_stream(task_callback.stream_sink()),
-    )
-}
 fn wire_set_log_directory_impl(port_: MessagePort, log_dir: impl Wire2Api<String> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -228,6 +218,16 @@ fn wire_set_log_directory_impl(port_: MessagePort, log_dir: impl Wire2Api<String
             let api_log_dir = log_dir.wire2api();
             move |task_callback| set_log_directory(api_log_dir)
         },
+    )
+}
+fn wire_breez_events_stream_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "breez_events_stream",
+            port: Some(port_),
+            mode: FfiCallMode::Stream,
+        },
+        move || move |task_callback| breez_events_stream(task_callback.stream_sink()),
     )
 }
 fn wire_set_log_listener_impl(port_: MessagePort) {

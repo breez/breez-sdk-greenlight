@@ -116,18 +116,16 @@ pub fn default_config(
     BreezServices::default_config(env_type, api_key, node_config)
 }
 
-/*  Stream API's */
+pub fn set_log_directory(log_dir: String) -> Result<()> {
+    BreezServices::set_log_directory(log_dir).map_err(anyhow::Error::new)
+}
 
-/// If used, this must be called before `connect`. It can only be called once.
+/*  Stream API's */
 pub fn breez_events_stream(s: StreamSink<BreezEvent>) -> Result<()> {
     NOTIFICATION_STREAM
         .set(s)
         .map_err(|_| anyhow!("events stream already created"))?;
     Ok(())
-}
-
-pub fn set_log_directory(log_dir: String) -> Result<()> {
-    BreezServices::set_log_directory(log_dir).map_err(anyhow::Error::new)
 }
 
 /// If used, this must be called before `connect`. It can only be called once.

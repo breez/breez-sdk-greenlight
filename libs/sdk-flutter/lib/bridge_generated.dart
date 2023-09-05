@@ -63,14 +63,13 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kDefaultConfigConstMeta;
 
-  /// If used, this must be called before `connect`. It can only be called once.
-  Stream<BreezEvent> breezEventsStream({dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kBreezEventsStreamConstMeta;
-
   Future<void> setLogDirectory({required String logDir, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kSetLogDirectoryConstMeta;
+
+  Stream<BreezEvent> breezEventsStream({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kBreezEventsStreamConstMeta;
 
   /// If used, this must be called before `connect`. It can only be called once.
   Stream<LogEntry> setLogListener({dynamic hint});
@@ -1504,21 +1503,6 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["envType", "apiKey", "nodeConfig"],
       );
 
-  Stream<BreezEvent> breezEventsStream({dynamic hint}) {
-    return _platform.executeStream(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_breez_events_stream(port_),
-      parseSuccessData: _wire2api_breez_event,
-      constMeta: kBreezEventsStreamConstMeta,
-      argValues: [],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kBreezEventsStreamConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "breez_events_stream",
-        argNames: [],
-      );
-
   Future<void> setLogDirectory({required String logDir, dynamic hint}) {
     var arg0 = _platform.api2wire_String(logDir);
     return _platform.executeNormal(FlutterRustBridgeTask(
@@ -1533,6 +1517,21 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kSetLogDirectoryConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "set_log_directory",
         argNames: ["logDir"],
+      );
+
+  Stream<BreezEvent> breezEventsStream({dynamic hint}) {
+    return _platform.executeStream(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_breez_events_stream(port_),
+      parseSuccessData: _wire2api_breez_event,
+      constMeta: kBreezEventsStreamConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kBreezEventsStreamConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "breez_events_stream",
+        argNames: [],
       );
 
   Stream<LogEntry> setLogListener({dynamic hint}) {
@@ -3614,18 +3613,6 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_default_config = _wire_default_configPtr
       .asFunction<void Function(int, int, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_NodeConfig>)>();
 
-  void wire_breez_events_stream(
-    int port_,
-  ) {
-    return _wire_breez_events_stream(
-      port_,
-    );
-  }
-
-  late final _wire_breez_events_streamPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_breez_events_stream');
-  late final _wire_breez_events_stream = _wire_breez_events_streamPtr.asFunction<void Function(int)>();
-
   void wire_set_log_directory(
     int port_,
     ffi.Pointer<wire_uint_8_list> log_dir,
@@ -3641,6 +3628,18 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
           'wire_set_log_directory');
   late final _wire_set_log_directory =
       _wire_set_log_directoryPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_breez_events_stream(
+    int port_,
+  ) {
+    return _wire_breez_events_stream(
+      port_,
+    );
+  }
+
+  late final _wire_breez_events_streamPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_breez_events_stream');
+  late final _wire_breez_events_stream = _wire_breez_events_streamPtr.asFunction<void Function(int)>();
 
   void wire_set_log_listener(
     int port_,
@@ -4527,7 +4526,7 @@ typedef DartPostCObjectFnType
     = ffi.Pointer<ffi.NativeFunction<ffi.Bool Function(DartPort port_id, ffi.Pointer<ffi.Void> message)>>;
 typedef DartPort = ffi.Int64;
 
-const int SWAP_PAYMENT_FEE_EXPIRY_SECONDS = 604800;
+const int SWAP_PAYMENT_FEE_EXPIRY_SECONDS = 172800;
 
 const int INVOICE_PAYMENT_FEE_EXPIRY_SECONDS = 3600;
 

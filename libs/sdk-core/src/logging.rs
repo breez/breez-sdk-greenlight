@@ -5,13 +5,14 @@ use crate::{
 use anyhow::Result;
 use chrono::Local;
 use env_logger::Logger;
-use log::{Metadata, Record};
+use log::{Log, Metadata, Record};
 use once_cell::sync::OnceCell;
 use std::io::Write;
 use std::{fs::OpenOptions, sync::RwLock};
 
 pub(crate) static SDK_LOGGER: OnceCell<RwLock<GlobalSdkLogger>> = OnceCell::new();
 
+/// Wrapper that redirects all incoming log statements to the [GlobalSdkLogger]
 struct RustLogger {}
 
 impl log::Log for RustLogger {
@@ -37,26 +38,18 @@ pub(crate) struct GlobalSdkLogger {
     pub(crate) log_listener: Option<Box<dyn LogStream>>,
 }
 
-impl log::Log for GlobalSdkLogger {
-    fn enabled(&self, metadata: &Metadata) -> bool {
-        metadata.level() <= log::Level::Debug
-    }
-
+impl GlobalSdkLogger {
     fn log(&self, record: &Record) {
-        if self.enabled(record.metadata()) {
-            if let Some(logger) = &self.log_listener {
-                logger.log(LogEntry {
-                    line: record.args().to_string(),
-                    level: record.level().as_str().to_string(),
-                });
-            }
-            if let Some(logger) = &self.file_logger {
-                logger.log(record);
-            }
+        if let Some(logger) = &self.log_listener {
+            logger.log(LogEntry {
+                line: record.args().to_string(),
+                level: record.level().as_str().to_string(),
+            });
+        }
+        if let Some(logger) = &self.file_logger {
+            logger.log(record);
         }
     }
-
-    fn flush(&self) {}
 }
 
 pub(crate) fn init_logger() -> Result<RwLock<GlobalSdkLogger>> {

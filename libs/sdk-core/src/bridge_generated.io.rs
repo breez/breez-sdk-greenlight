@@ -52,13 +52,13 @@ pub extern "C" fn wire_default_config(
 }
 
 #[no_mangle]
-pub extern "C" fn wire_breez_events_stream(port_: i64) {
-    wire_breez_events_stream_impl(port_)
+pub extern "C" fn wire_set_log_directory(port_: i64, log_dir: *mut wire_uint_8_list) {
+    wire_set_log_directory_impl(port_, log_dir)
 }
 
 #[no_mangle]
-pub extern "C" fn wire_set_log_directory(port_: i64, log_dir: *mut wire_uint_8_list) {
-    wire_set_log_directory_impl(port_, log_dir)
+pub extern "C" fn wire_breez_events_stream(port_: i64) {
+    wire_breez_events_stream_impl(port_)
 }
 
 #[no_mangle]
