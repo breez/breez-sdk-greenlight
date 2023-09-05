@@ -14,7 +14,7 @@ import 'dart:ffi' as ffi;
 part 'bridge_generated.freezed.dart';
 
 abstract class BreezSdkCore {
-  /// Wrapper around [BreezServices::connect] which also initializes SDK logging
+  /// Wrapper around [BreezServices::connect]
   Future<void> connect({required Config config, required Uint8List seed, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kConnectConstMeta;

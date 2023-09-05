@@ -43,7 +43,7 @@ static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime:
 
 /*  Breez Services API's */
 
-/// Wrapper around [BreezServices::connect] which also initializes SDK logging
+/// Wrapper around [BreezServices::connect]
 pub fn connect(config: Config, seed: Vec<u8>) -> Result<()> {
     block_on(async move {
         let breez_services =
