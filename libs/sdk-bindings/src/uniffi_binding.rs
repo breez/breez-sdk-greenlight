@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
-use log::{Metadata, Record};
+use log::{LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
 
 use breez_sdk_core::{
@@ -23,9 +23,19 @@ use breez_sdk_core::{
 };
 
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
-static LOG_STREAM: OnceCell<Box<dyn LogStream>> = OnceCell::new();
+static LOG_INIT: OnceCell<bool> = OnceCell::new();
 
-struct BindingLogger {}
+struct BindingLogger {
+    log_stream: Box<dyn LogStream>,
+}
+
+impl BindingLogger {
+    fn init(log_stream: Box<dyn LogStream>) {
+        let binding_logger = BindingLogger { log_stream };
+        log::set_boxed_logger(Box::new(binding_logger)).unwrap();
+        log::set_max_level(LevelFilter::Trace);
+    }
+}
 
 impl log::Log for BindingLogger {
     fn enabled(&self, m: &Metadata) -> bool {
@@ -34,14 +44,10 @@ impl log::Log for BindingLogger {
     }
 
     fn log(&self, record: &Record) {
-        if self.enabled(record.metadata()) {
-            if let Some(s) = LOG_STREAM.get() {
-                s.log(LogEntry {
-                    line: record.args().to_string(),
-                    level: record.level().as_str().to_string(),
-                });
-            }
-        }
+        self.log_stream.log(LogEntry {
+            line: record.args().to_string(),
+            level: record.level().as_str().to_string(),
+        });
     }
     fn flush(&self) {}
 }
@@ -73,12 +79,6 @@ pub fn connect(
     event_listener: Box<dyn EventListener>,
 ) -> SdkResult<Arc<BlockingBreezServices>> {
     rt().block_on(async move {
-        let uniffi_logger: Option<Box<dyn log::Log>> = match LOG_STREAM.get() {
-            None => None,
-            Some(_) => Some(Box::new(BindingLogger {})),
-        };
-        BreezServices::init_logging(&config.working_dir, uniffi_logger)?;
-
         let breez_services = BreezServices::connect(config, seed, event_listener).await?;
 
         Ok(Arc::new(BlockingBreezServices { breez_services }))
@@ -87,9 +87,10 @@ pub fn connect(
 
 /// If used, this must be called before `connect`
 pub fn set_log_stream(log_stream: Box<dyn LogStream>) -> Result<()> {
-    LOG_STREAM
-        .set(log_stream)
+    LOG_INIT
+        .set(true)
         .map_err(|_| anyhow!("log stream already created"))?;
+    BindingLogger::init(log_stream);
     Ok(())
 }
 

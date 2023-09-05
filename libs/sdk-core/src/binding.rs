@@ -15,7 +15,7 @@ use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
 use flutter_rust_bridge::StreamSink;
-use log::{Level, Metadata, Record};
+use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
 use tokio::sync::mpsc;
 
@@ -40,20 +40,14 @@ use crate::{
 static BREEZ_SERVICES_INSTANCE: OnceCell<Arc<BreezServices>> = OnceCell::new();
 static BREEZ_SERVICES_SHUTDOWN: OnceCell<mpsc::Sender<()>> = OnceCell::new();
 static NOTIFICATION_STREAM: OnceCell<StreamSink<BreezEvent>> = OnceCell::new();
-static LOG_STREAM: OnceCell<StreamSink<LogEntry>> = OnceCell::new();
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
+static LOG_INIT: OnceCell<bool> = OnceCell::new();
 
 /*  Breez Services API's */
 
 /// Wrapper around [BreezServices::connect] which also initializes SDK logging
 pub fn connect(config: Config, seed: Vec<u8>) -> Result<()> {
     block_on(async move {
-        BreezServices::init_logging(
-            &config.working_dir,
-            Some(Box::new(BindingLogStreamEventListener {})),
-        )
-        .map_err(anyhow::Error::new)?;
-
         let breez_services =
             BreezServices::connect(config, seed, Box::new(BindingEventListener {})).await?;
 
@@ -136,9 +130,11 @@ pub fn breez_events_stream(s: StreamSink<BreezEvent>) -> Result<()> {
 
 /// If used, this must be called before `connect`. It can only be called once.
 pub fn breez_log_stream(s: StreamSink<LogEntry>) -> Result<()> {
-    LOG_STREAM
-        .set(s)
-        .map_err(|_| anyhow!("log stream already created"))
+    LOG_INIT
+        .set(true)
+        .map_err(|_| anyhow!("log stream already created"))?;
+    BindingLogger::init(s);
+    Ok(())
 }
 
 /*  LSP API's */
@@ -391,22 +387,30 @@ impl EventListener for BindingEventListener {
     }
 }
 
-struct BindingLogStreamEventListener;
+struct BindingLogger {
+    log_stream: StreamSink<LogEntry>,
+}
 
-impl log::Log for BindingLogStreamEventListener {
+impl BindingLogger {
+    fn init(log_stream: StreamSink<LogEntry>) {
+        let binding_logger = BindingLogger { log_stream };
+        log::set_boxed_logger(Box::new(binding_logger)).unwrap();
+        log::set_max_level(LevelFilter::Trace);
+    }
+}
+
+impl log::Log for BindingLogger {
     fn enabled(&self, m: &Metadata) -> bool {
         m.level() <= Level::Debug
     }
 
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
-            if let Some(s) = LOG_STREAM.get() {
-                s.add(LogEntry {
-                    line: record.args().to_string(),
-                    level: record.level().as_str().to_string(),
-                });
-            }
-        };
+            self.log_stream.add(LogEntry {
+                line: record.args().to_string(),
+                level: record.level().as_str().to_string(),
+            });
+        }
     }
     fn flush(&self) {}
 }
