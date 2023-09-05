@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
-use log::{LevelFilter, Metadata, Record};
+use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
 
 use breez_sdk_core::{
@@ -40,7 +40,7 @@ impl BindingLogger {
 impl log::Log for BindingLogger {
     fn enabled(&self, m: &Metadata) -> bool {
         // ignore the internal uniffi log to prevent infinite loop.
-        return *m.target() != *"breez_sdk_bindings::uniffi_binding";
+        return m.level() <= Level::Debug && *m.target() != *"breez_sdk_bindings::uniffi_binding";
     }
 
     fn log(&self, record: &Record) {
