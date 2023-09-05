@@ -354,6 +354,16 @@ export type NodeState = {
     inboundLiquidityMsats: number
 }
 
+export type OpenChannelFeeRequest = {
+    amountMsat: number
+    expiry?: number
+}
+
+export type OpenChannelFeeResponse = {
+    feeMsat: number
+    usedFeeParams?: OpeningFeeParams
+}
+
 export type Payment = {
     id: string
     paymentType: PaymentType
@@ -701,6 +711,11 @@ export const inProgressSwap = async (): Promise<SwapInfo> => {
 export const listRefundables = async (): Promise<SwapInfo[]> => {
     const response = await BreezSDK.listRefundables()
     return response as SwapInfo[]
+}
+
+export const openChannelFee = async (req: OpenChannelFeeRequest): Promise<OpenChannelFeeResponse> => {
+    const response = await BreezSDK.openChannelFee(req)
+    return response
 }
 
 export const refund = async (swapAddress: string, toAddress: string, satPerVbyte: number): Promise<string> => {

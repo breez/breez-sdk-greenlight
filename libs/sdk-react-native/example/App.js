@@ -11,7 +11,12 @@ import { SafeAreaView, ScrollView, StatusBar, Text, TouchableOpacity, View } fro
 import {
     addEventListener,
     addLogListener,
+    backup,
+    backupStatus,
+    buyBitcoin,
     BuyBitcoinProvider,
+    checkMessage,
+    connect,
     defaultConfig,
     EnvironmentType,
     fetchFiatRates,
@@ -21,13 +26,9 @@ import {
     listFiatCurrencies,
     mnemonicToSeed,
     nodeInfo,
-    connect,
-    buyBitcoin,
-    backup,
-    backupStatus,
-    signMessage,
-    checkMessage,
+    openChannelFee,
     receivePayment,
+    signMessage
 } from "@breeztech/react-native-breez-sdk"
 import BuildConfig from "react-native-build-config"
 import { generateMnemonic } from "@dreson4/react-native-quick-bip39"
@@ -52,6 +53,7 @@ const App = () => {
 
     const addLine = (title, text) => {
         setLines((lines) => [{ at: new Date().getTime(), title, text }, ...lines])
+        console.log(`${title}${text && text.length > 0 ? ": " + text : ""}`)
     }
 
     const logHandler = (l) => {
@@ -125,12 +127,19 @@ const App = () => {
                 })
                 addLine("verifyMessage:", JSON.stringify(verifyMessageResult))
 
+                const openChannelFeeResult = await openChannelFee({
+                    amountMsat: 100000000,
+                    expiry: 3600
+                })
+                addLine("openChannelFee", JSON.stringify(openChannelFeeResult))
+
                 const receivePaymentResult = await receivePayment({
                     amountSats: 100000,
                     description: "Hello world",
                     expiry: 3600,
                     cltv: 144,
-                    useDescriptionHash: true
+                    useDescriptionHash: true,
+                    openingFeeParams: openChannelFeeResult.usedFeeParams
                 })
                 addLine("receivePayment", JSON.stringify(receivePaymentResult))
 

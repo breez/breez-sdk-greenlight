@@ -52,7 +52,7 @@ To use the locally built bindings instead of integrating them remotely:
 	- Rename `BreezSDK.podspec.dev` to `BreezSDK.podspec`
 - For Android:
 	- Remove the following line from the dependencies section in `android/build.gradle`:
-		- `implementation("com.github.breez:breez-sdk:0.1.4") { exclude group:"net.java.dev.jna" }`
+		- `implementation("com.github.breez:breez-sdk:${getVersionFromNpmPackage()}") { exclude group:"net.java.dev.jna" }`
 
 Reinstall the dependencies in the example project and run it.
 It will now use the locally built bindings.

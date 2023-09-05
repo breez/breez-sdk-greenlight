@@ -181,6 +181,20 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
     
+    @objc(openChannelFee:resolver:rejecter:)
+    func openChannelFee(_ reqData:[String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+        if let openChannelFeeRequest = BreezSDKMapper.asOpenChannelFeeRequest(reqData: reqData) {
+            do {
+                let response = try getBreezServices().openChannelFee(req: openChannelFeeRequest)
+                resolve(BreezSDKMapper.dictionaryOf(openChannelFeeResponse: response))
+            } catch let err {
+                reject(RNBreezSDK.TAG, "Error calling openChannelFee \(err)", err)
+            }
+        } else {
+            rejectErr(err: SdkError.Generic(message:"Invalid reqData"), reject: reject)
+        }
+    }
+
     @objc(receivePayment:resolver:rejecter:)
     func receivePayment(_ reqData:[String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         if let receivePaymentRequest = BreezSDKMapper.asReceivePaymentRequest(reqData: reqData) {

@@ -66,6 +66,12 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
+    openChannelFee: (NSDictionary*)reqData
+    resolver: (RCTPromiseResolveBlock)resolve
+    rejecter: (RCTPromiseRejectBlock)reject
+)
+
+RCT_EXTERN_METHOD(
     receivePayment: (NSDictionary*)reqData
     resolver: (RCTPromiseResolveBlock)resolve
     rejecter: (RCTPromiseRejectBlock)reject
@@ -222,13 +228,13 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
-        backup: (RCTPromiseResolveBlock)resolve
-        rejecter: (RCTPromiseRejectBlock)reject
+    backup: (RCTPromiseResolveBlock)resolve
+    rejecter: (RCTPromiseRejectBlock)reject
 )
 
 RCT_EXTERN_METHOD(
-        backupStatus: (RCTPromiseResolveBlock)resolve
-        rejecter: (RCTPromiseRejectBlock)reject
+    backupStatus: (RCTPromiseResolveBlock)resolve
+    rejecter: (RCTPromiseRejectBlock)reject
 )
 
 RCT_EXTERN_METHOD(
