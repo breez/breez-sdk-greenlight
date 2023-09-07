@@ -41,7 +41,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: android-jniLibs
-          path: flutter/sdk-flutter/android/src/main/jniLibs
+          path: flutter/android/src/main/jniLibs
 
       - uses: subosito/flutter-action@v2
         with:
