@@ -388,7 +388,8 @@ class BreezSDK {
   /* Swap Fee API's */
 
   /// Lookup the most recent reverse swap pair info using the Boltz API
-  Future<ReverseSwapPairInfo> fetchReverseSwapFees({int? sendAmountSat}) async => _lnToolkit.fetchReverseSwapFees(req: ReverseSwapFeesRequest(sendAmountSat: sendAmountSat));
+  Future<ReverseSwapPairInfo> fetchReverseSwapFees({int? sendAmountSat}) async =>
+      _lnToolkit.fetchReverseSwapFees(req: ReverseSwapFeesRequest(sendAmountSat: sendAmountSat));
 
   /// Fetches the current recommended fees
   Future<RecommendedFees> recommendedFees() => _lnToolkit.recommendedFees();

@@ -416,6 +416,7 @@ class Config {
   final String? defaultLspId;
   final String? apiKey;
   final double maxfeePercent;
+  final int exemptfeeMsat;
   final NodeConfig nodeConfig;
 
   const Config({
@@ -427,6 +428,7 @@ class Config {
     this.defaultLspId,
     this.apiKey,
     required this.maxfeePercent,
+    required this.exemptfeeMsat,
     required this.nodeConfig,
   });
 }
@@ -2261,7 +2263,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   Config _wire2api_config(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 9) throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
+    if (arr.length != 10) throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
     return Config(
       breezserver: _wire2api_String(arr[0]),
       mempoolspaceUrl: _wire2api_String(arr[1]),
@@ -2271,7 +2273,8 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       defaultLspId: _wire2api_opt_String(arr[5]),
       apiKey: _wire2api_opt_String(arr[6]),
       maxfeePercent: _wire2api_f64(arr[7]),
-      nodeConfig: _wire2api_node_config(arr[8]),
+      exemptfeeMsat: _wire2api_u64(arr[8]),
+      nodeConfig: _wire2api_node_config(arr[9]),
     );
   }
 
@@ -3278,6 +3281,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.default_lsp_id = api2wire_opt_String(apiObj.defaultLspId);
     wireObj.api_key = api2wire_opt_String(apiObj.apiKey);
     wireObj.maxfee_percent = api2wire_f64(apiObj.maxfeePercent);
+    wireObj.exemptfee_msat = api2wire_u64(apiObj.exemptfeeMsat);
     _api_fill_to_wire_node_config(apiObj.nodeConfig, wireObj.node_config);
   }
 
@@ -4379,6 +4383,9 @@ class wire_Config extends ffi.Struct {
   @ffi.Double()
   external double maxfee_percent;
 
+  @ffi.Uint64()
+  external int exemptfee_msat;
+
   external wire_NodeConfig node_config;
 }
 
@@ -4491,7 +4498,7 @@ typedef DartPostCObjectFnType
     = ffi.Pointer<ffi.NativeFunction<ffi.Bool Function(DartPort port_id, ffi.Pointer<ffi.Void> message)>>;
 typedef DartPort = ffi.Int64;
 
-const int SWAP_PAYMENT_FEE_EXPIRY_SECONDS = 604800;
+const int SWAP_PAYMENT_FEE_EXPIRY_SECONDS = 172800;
 
 const int INVOICE_PAYMENT_FEE_EXPIRY_SECONDS = 3600;
 

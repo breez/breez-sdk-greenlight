@@ -507,6 +507,7 @@ impl Wire2Api<Config> for wire_Config {
             default_lsp_id: self.default_lsp_id.wire2api(),
             api_key: self.api_key.wire2api(),
             maxfee_percent: self.maxfee_percent.wire2api(),
+            exemptfee_msat: self.exemptfee_msat.wire2api(),
             node_config: self.node_config.wire2api(),
         }
     }
@@ -662,6 +663,7 @@ pub struct wire_Config {
     default_lsp_id: *mut wire_uint_8_list,
     api_key: *mut wire_uint_8_list,
     maxfee_percent: f64,
+    exemptfee_msat: u64,
     node_config: wire_NodeConfig,
 }
 
@@ -830,6 +832,7 @@ impl NewWithNullPtr for wire_Config {
             default_lsp_id: core::ptr::null_mut(),
             api_key: core::ptr::null_mut(),
             maxfee_percent: Default::default(),
+            exemptfee_msat: Default::default(),
             node_config: Default::default(),
         }
     }
