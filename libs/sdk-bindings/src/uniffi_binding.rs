@@ -184,7 +184,7 @@ impl BlockingBreezServices {
         req_data: LnUrlWithdrawRequestData,
         amount_sats: u64,
         description: Option<String>,
-    ) -> SdkResult<LnUrlCallbackStatus> {
+    ) -> SdkResult<LnUrlWithdrawCallbackStatus> {
         rt().block_on(
             self.breez_services
                 .lnurl_withdraw(req_data, amount_sats, description),

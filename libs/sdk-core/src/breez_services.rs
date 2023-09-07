@@ -350,7 +350,7 @@ impl BreezServices {
         req_data: LnUrlWithdrawRequestData,
         amount_sats: u64,
         description: Option<String>,
-    ) -> Result<LnUrlCallbackStatus> {
+    ) -> Result<LnUrlWithdrawCallbackStatus> {
         let invoice = self
             .receive_payment(ReceivePaymentRequest {
                 amount_sats,

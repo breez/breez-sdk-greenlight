@@ -473,6 +473,16 @@ interface LnUrlCallbackStatus {
     ErrorStatus(LnUrlErrorData data);
 };
 
+[Enum]
+interface LnUrlWithdrawCallbackStatus {
+    Ok(LnUrlWithdrawOkData data);
+    ErrorStatus(LnUrlErrorData data);
+};
+
+dictionary LnUrlWithdrawOkData {
+    LNInvoice invoice;
+};
+
 dictionary LnUrlAuthRequestData {
     string k1;
     string? action;
@@ -527,7 +537,7 @@ interface BlockingBreezServices {
    LnUrlPayResult pay_lnurl(LnUrlPayRequestData req_data, u64 amount_sats, string? comment);
 
    [Throws=SdkError]
-   LnUrlCallbackStatus withdraw_lnurl(LnUrlWithdrawRequestData req_data, u64 amount_sats, string? description);
+   LnUrlWithdrawCallbackStatus withdraw_lnurl(LnUrlWithdrawRequestData req_data, u64 amount_sats, string? description);
 
    [Throws=SdkError]
    LnUrlCallbackStatus lnurl_auth(LnUrlAuthRequestData req_data);

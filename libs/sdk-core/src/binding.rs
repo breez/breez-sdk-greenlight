@@ -274,7 +274,7 @@ pub fn lnurl_withdraw(
     req_data: LnUrlWithdrawRequestData,
     amount_sats: u64,
     description: Option<String>,
-) -> Result<LnUrlCallbackStatus> {
+) -> Result<LnUrlWithdrawCallbackStatus> {
     block_on(async {
         get_breez_services()
             .await?

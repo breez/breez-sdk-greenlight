@@ -62,6 +62,8 @@ use crate::models::GreenlightNodeConfig;
 use crate::models::ListPaymentsRequest;
 use crate::models::LnPaymentDetails;
 use crate::models::LnUrlCallbackStatus;
+use crate::models::LnUrlWithdrawCallbackStatus;
+use crate::models::LnUrlWithdrawOkData;
 use crate::models::LogEntry;
 use crate::models::Network;
 use crate::models::NodeConfig;
@@ -1081,6 +1083,23 @@ impl support::IntoDart for LnUrlPayResult {
     }
 }
 impl support::IntoDartExceptPrimitive for LnUrlPayResult {}
+impl support::IntoDart for LnUrlWithdrawCallbackStatus {
+    fn into_dart(self) -> support::DartAbi {
+        match self {
+            Self::Ok { data } => vec![0.into_dart(), data.into_dart()],
+            Self::ErrorStatus { data } => vec![1.into_dart(), data.into_dart()],
+        }
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for LnUrlWithdrawCallbackStatus {}
+impl support::IntoDart for LnUrlWithdrawOkData {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.invoice.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for LnUrlWithdrawOkData {}
+
 impl support::IntoDart for LnUrlWithdrawRequestData {
     fn into_dart(self) -> support::DartAbi {
         vec![
