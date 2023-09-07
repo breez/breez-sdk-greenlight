@@ -48,13 +48,14 @@ jobs:
       # Careful, a boolean input is not a boolean output. A boolean input is
       # actually a boolean, but these outputs are strings. All the boolean
       # checks in this file have the format `boolean == 'true'`. So feel free
-      # to set these variables here to `true` or `false` (e.g. windows: true)
-      # if you want to test something.
-      windows: ${{ !!inputs.csharp-package-version || !!inputs.golang-package-version }}
-      darwin: ${{ !!inputs.csharp-package-version || !!inputs.golang-package-version }}
-      linux: ${{ !!inputs.csharp-package-version || !!inputs.golang-package-version }}
-      android: ${{ !!inputs.kotlin-mpp-package-version || !!inputs.maven-package-version || !!inputs.flutter-package-version || !!inputs.golang-package-version }}
-      ios: ${{ !!inputs.kotlin-mpp-package-version || !!inputs.maven-package-version }}
+      # to set these variables here to `true` or `false` 
+      # (e.g. bindings-windows: true) if you want to test something.
+      bindings-windows: ${{ !!inputs.csharp-package-version || !!inputs.golang-package-version }}
+      bindings-darwin: ${{ !!inputs.csharp-package-version || !!inputs.golang-package-version }}
+      bindings-linux: ${{ !!inputs.csharp-package-version || !!inputs.golang-package-version }}
+      bindings-android: ${{ !!inputs.kotlin-mpp-package-version || !!inputs.maven-package-version || !!inputs.golang-package-version }}
+      bindings-ios: ${{ !!inputs.kotlin-mpp-package-version || !!inputs.maven-package-version }}
+      core-android: ${{ !!inputs.flutter-package-version }}
       kotlin: ${{ !!inputs.kotlin-mpp-package-version || !!inputs.maven-package-version }}
       swift: false
       python: false
@@ -76,34 +77,40 @@ jobs:
     steps:
       - run: echo "set output variables"
 
-  build-windows:
+  build-bindings-windows:
     needs: setup
-    if: ${{ needs.setup.outputs.windows == 'true' }}
-    uses: ./.github/workflows/build-windows.yml
+    if: ${{ needs.setup.outputs.bindings-windows == 'true' }}
+    uses: ./.github/workflows/build-bindings-windows.yml
     with:
       ref: ${{ needs.setup.outputs.ref }}
-  build-darwin:
+  build-bindings-darwin:
     needs: setup
-    if: ${{ needs.setup.outputs.darwin == 'true' }}
-    uses: ./.github/workflows/build-darwin.yml
+    if: ${{ needs.setup.outputs.bindings-darwin == 'true' }}
+    uses: ./.github/workflows/build-bindings-darwin.yml
     with:
       ref: ${{ needs.setup.outputs.ref }}
-  build-linux:
+  build-bindings-linux:
     needs: setup
-    if: ${{ needs.setup.outputs.linux == 'true' }}
-    uses: ./.github/workflows/build-linux.yml
+    if: ${{ needs.setup.outputs.bindings-linux == 'true' }}
+    uses: ./.github/workflows/build-bindings-linux.yml
     with:
       ref: ${{ needs.setup.outputs.ref }}
-  build-android:
+  build-bindings-android:
     needs: setup
-    if: ${{ needs.setup.outputs.android == 'true' }}
-    uses: ./.github/workflows/build-android.yml
+    if: ${{ needs.setup.outputs.bindings-android == 'true' }}
+    uses: ./.github/workflows/build-bindings-android.yml
     with:
       ref: ${{ needs.setup.outputs.ref }}
-  build-ios:
+  build-bindings-ios:
     needs: setup
-    if: ${{ needs.setup.outputs.ios == 'true' }}
-    uses: ./.github/workflows/build-ios.yml
+    if: ${{ needs.setup.outputs.bindings-ios == 'true' }}
+    uses: ./.github/workflows/build-bindings-ios.yml
+    with:
+      ref: ${{ needs.setup.outputs.ref }}
+  build-core-android:
+    needs: setup
+    if: ${{ needs.setup.outputs.core-android == 'true' }}
+    uses: ./.github/workflows/build-core-android.yml
     with:
       ref: ${{ needs.setup.outputs.ref }}
 
@@ -121,9 +128,9 @@ jobs:
   publish-csharp:
     needs: 
       - setup
-      - build-windows
-      - build-darwin
-      - build-linux
+      - build-bindings-windows
+      - build-bindings-darwin
+      - build-bindings-linux
       - build-language-bindings
     if: ${{ needs.setup.outputs.csharp == 'true' }}
     uses: ./.github/workflows/publish-csharp.yml
@@ -137,10 +144,10 @@ jobs:
   publish-golang:
     needs: 
       - setup
-      - build-android
-      - build-windows
-      - build-darwin
-      - build-linux
+      - build-bindings-android
+      - build-bindings-windows
+      - build-bindings-darwin
+      - build-bindings-linux
       - build-language-bindings
     if: ${{ needs.setup.outputs.golang == 'true' }}
     uses: ./.github/workflows/publish-golang.yml
@@ -154,7 +161,7 @@ jobs:
   publish-maven:
     needs: 
       - setup
-      - build-android
+      - build-bindings-android
       - build-language-bindings
     if: ${{ needs.setup.outputs.maven == 'true' }}
     uses: ./.github/workflows/publish-android.yml
@@ -169,8 +176,8 @@ jobs:
   publish-kotlin-mpp:
     needs: 
       - setup
-      - build-android
-      - build-ios
+      - build-bindings-android
+      - build-bindings-ios
       - build-language-bindings
     if: ${{ needs.setup.outputs.kotlin-mpp == 'true' }}
     uses: ./.github/workflows/publish-kotlin-mpp.yml
@@ -185,7 +192,7 @@ jobs:
   publish-flutter:
     needs: 
       - setup
-      - build-android      
+      - build-core-android      
     if: ${{ needs.setup.outputs.flutter == 'true' }}
     uses: ./.github/workflows/publish-flutter.yml
     with:

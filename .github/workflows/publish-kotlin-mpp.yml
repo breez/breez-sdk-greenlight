@@ -39,7 +39,7 @@ jobs:
 
       - uses: actions/download-artifact@v3
         with:
-          name: android-jniLibs
+          name: sdk-bindings-android-jniLibs
           path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/src/androidMain/jniLibs
 
       - uses: actions/download-artifact@v3

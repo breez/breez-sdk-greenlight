@@ -1,4 +1,4 @@
-name: Build iOS
+name: Build sdk-bindings for Windows
 on:
   workflow_dispatch:
     inputs:
@@ -15,14 +15,13 @@ on:
 
 jobs:
   build:
-    runs-on: macOS-latest
+    runs-on: windows-latest
     name: build ${{ matrix.target }}
     strategy:
       matrix:
         target: [
-          aarch64-apple-ios,
-          x86_64-apple-ios,
-          aarch64-apple-ios-sim,
+          x86_64-pc-windows-msvc,
+          i686-pc-windows-msvc,
         ]
     steps:
     - name: checkout
@@ -46,12 +45,7 @@ jobs:
       with:
         workspaces: libs
 
-    - name: Install xcode
-      uses: maxim-lobanov/setup-xcode@v1
-      with:
-        xcode-version: latest-stable
-
-    - name: Build Breez
+    - name: Build sdk-bindings
       working-directory: libs/sdk-bindings
       run: cargo build --release --target ${{ matrix.target }}
     
@@ -59,4 +53,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: sdk-bindings-${{ matrix.target }}
-        path: libs/target/${{ matrix.target }}/release/libbreez_sdk_bindings.a
+        path: libs/target/${{ matrix.target }}/release/breez_sdk_bindings.dll
