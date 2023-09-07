@@ -9,7 +9,8 @@ use anyhow::Result;
 pub(crate) fn maybe_replace_host_with_mockito_test_host(lnurl_endpoint: String) -> Result<String> {
     // During tests, the mockito test URL chooses a free port. This cannot be known in advance,
     // so the URL has to be adjusted dynamically.
-    let mockito_endpoint_url = reqwest::Url::parse(&mockito::server_url())?;
+    let server = crate::input_parser::tests::MOCK_HTTP_SERVER.lock().unwrap();
+    let mockito_endpoint_url = reqwest::Url::parse(&server.url())?;
     let mut parsed_lnurl_endpoint = reqwest::Url::parse(&lnurl_endpoint)?;
 
     parsed_lnurl_endpoint.set_host(mockito_endpoint_url.host_str())?;

@@ -334,13 +334,14 @@ pub(crate) mod model {
 mod tests {
     use std::sync::Arc;
 
+    use crate::input_parser::tests::MOCK_HTTP_SERVER;
     use crate::lnurl::pay::*;
     use crate::{breez_services::tests::get_dummy_node_state, lnurl::pay::model::*};
 
     use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
     use anyhow::{anyhow, Result};
     use mockito::Mock;
-    use rand::Rng;
+    use rand::random;
 
     use crate::test_utils::*;
 
@@ -370,7 +371,10 @@ mod tests {
                 ["{\"status\": \"ERROR\", \"reason\": \"", &err_reason, "\"}"].join("")
             }
         };
-        Ok(mockito::mock("GET", mockito_path)
+
+        let mut server = MOCK_HTTP_SERVER.lock().unwrap();
+        Ok(server
+            .mock("GET", mockito_path)
             .with_body(response_body)
             .create())
     }
@@ -402,7 +406,10 @@ mod tests {
                 ["{\"status\": \"ERROR\", \"reason\": \"", &err_reason, "\"}"].join("")
             }
         };
-        Ok(mockito::mock("GET", mockito_path)
+
+        let mut server = MOCK_HTTP_SERVER.lock().unwrap();
+        Ok(server
+            .mock("GET", mockito_path)
             .with_body(response_body)
             .create())
     }
@@ -437,7 +444,10 @@ mod tests {
                 ["{\"status\": \"ERROR\", \"reason\": \"", &err_reason, "\"}"].join("")
             }
         };
-        Ok(mockito::mock("GET", mockito_path)
+
+        let mut server = MOCK_HTTP_SERVER.lock().unwrap();
+        Ok(server
+            .mock("GET", mockito_path)
             .with_body(response_body)
             .create())
     }
@@ -473,7 +483,10 @@ mod tests {
                 ["{\"status\": \"ERROR\", \"reason\": \"", &err_reason, "\"}"].join("")
             }
         };
-        Ok(mockito::mock("GET", mockito_path)
+
+        let mut server = MOCK_HTTP_SERVER.lock().unwrap();
+        Ok(server
+            .mock("GET", mockito_path)
             .with_body(response_body)
             .create())
     }
@@ -519,7 +532,10 @@ mod tests {
                 ["{\"status\": \"ERROR\", \"reason\": \"", &err_reason, "\"}"].join("")
             }
         };
-        Ok(mockito::mock("GET", mockito_path)
+
+        let mut server = MOCK_HTTP_SERVER.lock().unwrap();
+        Ok(server
+            .mock("GET", mockito_path)
             .with_body(response_body)
             .create())
     }
@@ -922,7 +938,7 @@ mod tests {
             None,
             bolt11.clone(),
             sa_data.clone(),
-            rand::thread_rng().gen::<[u8; 16]>(),
+            random::<[u8; 16]>(),
             preimage.into_inner(),
         )?;
 
