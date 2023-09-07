@@ -41,14 +41,14 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: android-jniLibs
-          path: flutter/sdk-flutter/android/src/main
+          path: flutter/sdk-flutter/android/src/main/jniLibs
 
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.7.12'
           channel: 'stable'                      
 
-      - name: Copy packge files        
+      - name: Copy package files        
         working-directory: flutter
         run: |
           rm -f ../breez-sdk/libs/sdk-flutter/ios/breez_sdk.podspec.dev
