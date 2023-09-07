@@ -44,10 +44,6 @@ jobs:
         version: "23.4"
         repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-    - uses: Swatinem/rust-cache@v2
-      with:
-        workspaces: libs
-
     - name: Build sdk-core
       working-directory: libs/sdk-core
       run: |
