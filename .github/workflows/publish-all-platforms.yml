@@ -41,8 +41,30 @@ on:
         default: false
 
 jobs:
+  pre-setup:
+    name: Pre-setup
+    runs-on: ubuntu-latest
+    outputs:
+      # These outputs mimic the inputs for the workflow.
+      # Their only purpose is to be able to test this workflow if you make 
+      # changes that you won't want to commit to main yet.
+      # You can set these values manually, to test how the CI behaves with 
+      # certain inputs.
+      ref: ${{ inputs.ref || github.sha }}
+      csharp-package-version: ${{ inputs.csharp-package-version }}
+      csharp-ref: ${{ inputs.csharp-ref || inputs.ref || github.sha }}
+      golang-package-version: ${{ inputs.golang-package-version }}
+      maven-package-version: ${{ inputs.maven-package-version }}
+      kotlin-mpp-package-version: ${{ inputs.kotlin-mpp-package-version }}
+      flutter-package-version: ${{ inputs.flutter-package-version }}
+      react-native-package-version: ${{ inputs.react-native-package-version }}
+      publish: ${{ inputs.publish }}
+    steps:
+      - run: echo "set pre-setup output variables"
+
   setup:
     name: Setup
+    needs: pre-setup
     runs-on: ubuntu-latest
     outputs: 
       # Careful, a boolean input is not a boolean output. A boolean input is
@@ -50,32 +72,32 @@ jobs:
       # checks in this file have the format `boolean == 'true'`. So feel free
       # to set these variables here to `true` or `false` 
       # (e.g. bindings-windows: true) if you want to test something.
-      bindings-windows: ${{ !!inputs.csharp-package-version || !!inputs.golang-package-version }}
-      bindings-darwin: ${{ !!inputs.csharp-package-version || !!inputs.golang-package-version }}
-      bindings-linux: ${{ !!inputs.csharp-package-version || !!inputs.golang-package-version }}
-      bindings-android: ${{ !!inputs.kotlin-mpp-package-version || !!inputs.maven-package-version || !!inputs.golang-package-version }}
-      bindings-ios: ${{ !!inputs.kotlin-mpp-package-version || !!inputs.maven-package-version }}
-      core-android: ${{ !!inputs.flutter-package-version }}
-      kotlin: ${{ !!inputs.kotlin-mpp-package-version || !!inputs.maven-package-version }}
+      bindings-windows: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version }}
+      bindings-darwin: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version }}
+      bindings-linux: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version }}
+      bindings-android: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version || !!needs.pre-setup.outputs.golang-package-version }}
+      bindings-ios: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version }}
+      core-android: ${{ !!needs.pre-setup.outputs.flutter-package-version }}
+      kotlin: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version }}
       swift: false
       python: false
-      csharp: ${{ !!inputs.csharp-package-version }}
-      golang: ${{ !!inputs.golang-package-version }}
-      maven: ${{ !!inputs.maven-package-version }}
-      kotlin-mpp: ${{ !!inputs.kotlin-mpp-package-version }}
-      flutter: ${{ !!inputs.flutter-package-version }}
-      react-native: ${{ !!inputs.react-native-package-version }}
-      ref: ${{ inputs.ref || github.sha }}
-      csharp-package-version: ${{ inputs.csharp-package-version || '0.0.2' }}
-      csharp-ref: ${{ inputs.csharp-ref || inputs.ref || github.sha }}
-      golang-package-version: ${{ inputs.golang-package-version || '0.0.2' }}
-      maven-package-version: ${{ inputs.maven-package-version || '0.0.2' }}
-      kotlin-mpp-package-version: ${{ inputs.kotlin-mpp-package-version || '0.0.2' }}
-      flutter-package-version: ${{ inputs.flutter-package-version || '0.0.2' }}
-      react-native-package-version: ${{ inputs.react-native-package-version || '0.0.2' }}
-      publish: ${{ inputs.publish }}
+      csharp: ${{ !!needs.pre-setup.outputs.csharp-package-version }}
+      golang: ${{ !!needs.pre-setup.outputs.golang-package-version }}
+      maven: ${{ !!needs.pre-setup.outputs.maven-package-version }}
+      kotlin-mpp: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version }}
+      flutter: ${{ !!needs.pre-setup.outputs.flutter-package-version }}
+      react-native: ${{ !!needs.pre-setup.outputs.react-native-package-version }}
+      ref: ${{ needs.pre-setup.outputs.ref }}
+      csharp-package-version: ${{ needs.pre-setup.outputs.csharp-package-version || '0.0.2' }}
+      csharp-ref: ${{ needs.pre-setup.outputs.csharp-ref }}
+      golang-package-version: ${{ needs.pre-setup.outputs.golang-package-version || '0.0.2' }}
+      maven-package-version: ${{ needs.pre-setup.outputs.maven-package-version || '0.0.2' }}
+      kotlin-mpp-package-version: ${{ needs.pre-setup.outputs.kotlin-mpp-package-version || '0.0.2' }}
+      flutter-package-version: ${{ needs.pre-setup.outputs.flutter-package-version || '0.0.2' }}
+      react-native-package-version: ${{ needs.pre-setup.outputs.react-native-package-version || '0.0.2' }}
+      publish: ${{ needs.pre-setup.outputs.publish }}
     steps:
-      - run: echo "set output variables"
+      - run: echo "set setup output variables"
 
   build-bindings-windows:
     needs: setup
