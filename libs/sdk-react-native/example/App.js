@@ -55,14 +55,14 @@ const App = () => {
         console.log(`${title}${text && text.length > 0 ? ": " + text : ""}`)
     }
 
-    const logHandler = (l) => {
-        if (l.level != "TRACE") {
-            console.log(`[${l.level}]: ${l.line}`)
+    const logHandler = (logEntry) => {
+        if (logEntry.level != "TRACE") {
+            console.log(`[${logEntry.level}]: ${logEntry.line}`)
         }
     }
 
-    const eventHandler = ({type, data}) => {
-        addLine("event", `${type}${data ? " : " + JSON.stringify(data) : ""}`)
+    const eventHandler = (breezEvent) => {
+        addLine("event", JSON.stringify(breezEvent))
     }
 
     React.useEffect(() => {

@@ -11,52 +11,7 @@ class BreezSDKListener: NSObject, EventListener {
     }
     
     func onEvent(e: BreezEvent) {
-        switch(e) {
-        case let .invoicePaid(details):
-            self.emitter.sendEvent(withName: BreezSDKListener.emitterName,
-                                   body: [
-                                    "type": "invoicePaid",
-                                    "data": BreezSDKMapper.dictionaryOf(invoicePaidDetails: details)
-                                   ])
-        case let .newBlock(block):
-            self.emitter.sendEvent(withName: BreezSDKListener.emitterName,
-                                   body: [
-                                    "type": "newBlock",
-                                    "data": block
-                                   ])
-        case let .paymentFailed(details):
-            self.emitter.sendEvent(withName: BreezSDKListener.emitterName,
-                                   body: [
-                                    "type": "paymentFailed",
-                                    "data": BreezSDKMapper.dictionaryOf(paymentFailedData: details)
-                                   ])
-        case let .paymentSucceed(details):
-            self.emitter.sendEvent(withName: BreezSDKListener.emitterName,
-                                   body: [
-                                    "type": "paymentSucceed",
-                                    "data": BreezSDKMapper.dictionaryOf(payment: details)
-                                   ])
-       case .synced:
-            self.emitter.sendEvent(withName: BreezSDKListener.emitterName,
-                                   body: [
-                                    "type": "synced"
-                                   ])
-      case .backupStarted:
-            self.emitter.sendEvent(withName: BreezSDKListener.emitterName,
-                                   body: [
-                                    "type": "backupStarted"
-                                   ])
-      case .backupSucceeded:
-            self.emitter.sendEvent(withName: BreezSDKListener.emitterName,
-                                   body: [
-                                    "type": "backupSucceeded"
-                                   ])
-      case let .backupFailed(details): 
-            self.emitter.sendEvent(withName: BreezSDKListener.emitterName,
-                                   body: [
-                                    "type": "backupFailed",
-                                    "data": BreezSDKMapper.dictionaryOf(backupFailedData: details)
-                                   ])      
-        }
+        self.emitter.sendEvent(withName: BreezSDKListener.emitterName, 
+                               body: BreezSDKMapper.dictionaryOf(breezEvent: e))
     }
 }
