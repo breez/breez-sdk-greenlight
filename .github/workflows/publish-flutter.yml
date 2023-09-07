@@ -58,15 +58,25 @@ jobs:
           cp -r ../breez-sdk/libs/sdk-flutter/lib .
           cp ../breez-sdk/libs/sdk-flutter/pubspec.yaml .
           cp ../breez-sdk/libs/sdk-flutter/pubspec.lock .          
-           
+      
+      - name: Set package version
+        working-directory: flutter
+        run: |
+          flutter pub global activate pubspec_version
+          pubver set ${{ inputs.package-version }}
+
+      - name: Archive flutter release
+        uses: actions/upload-artifact@v3
+        with:
+          name: breez-sdk-flutter-${{ inputs.package-version || github.sha }}
+          path: flutter/*
+
       - name: Tag the Flutter package        
         working-directory: flutter
         if: ${{ inputs.publish }}
         run: |
           git config --global user.email github-actions@github.com
           git config --global user.name github-actions
-          flutter pub global activate pubspec_version     
-          pubver set ${{ inputs.package-version }}    
           git add .          
           git commit -m "Update Breez SDK Flutter package to version v${{ inputs.package-version }}"
           git push
