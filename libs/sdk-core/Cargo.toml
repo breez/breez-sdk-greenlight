@@ -10,7 +10,7 @@ crate-type = ["staticlib", "cdylib", "lib"]
 [dependencies]
 flutter_rust_bridge = "1.75.2"
 aes = "0.8"
-anyhow = { version = "1.0.57", features = ["backtrace"] }
+anyhow = { version = "1.0", features = ["backtrace"] }
 cbc = { version = "0.1", features = ["std"] }
 hex = "*"
 # v0.3 requires bitcoin 0.30, but lightning v0.115 needs bitcoin 0.29, so we keep this at v0.2 which also uses bitcoin 0.29
