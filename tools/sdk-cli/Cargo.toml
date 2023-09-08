@@ -12,7 +12,7 @@ hex = "*"
 log = "*"
 once_cell = "*"
 qrcode-rs = { version = "0.1", default-features = false }
-rustyline = "10.0.0"
+rustyline = { version = "12", features = ["derive"]}
 serde_json = "1.0"
 tiny-bip39 = "*"
 tokio = { version = "1", features = ["rt-multi-thread"] }
