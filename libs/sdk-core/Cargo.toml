@@ -61,10 +61,8 @@ const_format = "*"
 miniz_oxide = "0.7.1"
 
 [dev-dependencies]
-futures = "0.3.28"
 mockito = "1"
 regex = "1.8.1"
-tower = "0.4.13"
 
 [build-dependencies]
 tonic-build = "^0.8"
