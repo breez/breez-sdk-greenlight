@@ -52,7 +52,7 @@ lightning = "*"
 lightning-invoice = "*"
 log = "*"
 once_cell = "*"
-openssl = { version = "0.10.42", features = ["vendored"] }
+openssl = { version = "0.10", features = ["vendored"] }
 strum = "0.25"
 strum_macros = "0.25"
 tempfile = "3"
