@@ -374,6 +374,7 @@ impl BreezServices {
         &self,
         req_data: ReceivePaymentRequest,
     ) -> SdkResult<ReceivePaymentResponse> {
+        info!("receive payment started1");
         self.payment_receiver.receive_payment(req_data).await
     }
 
@@ -1117,7 +1118,7 @@ impl BreezServices {
             .target(env_logger::Target::Pipe(target_log_file))
             .parse_filters(
                 r#"
-                info,
+                debug,
                 gl_client=warn,
                 h2=warn,
                 hyper=warn,
@@ -1353,11 +1354,27 @@ impl BreezServicesBuilder {
             .map_err(|e| SdkError::InitFailed {
                 err: format!("Failed to derive backup encryption key: {e}"),
             })?;
+
+        // We calculate the legacy key as a fallback for the case where the backup is still
+        // encrypted with the old key.
+        let legacy_backup_encryption_key = unwrapped_node_api
+            .legacy_derive_bip32_key(vec![
+                ChildNumber::from_hardened_idx(139).map_err(|e| SdkError::InitFailed {
+                    err: format!(
+                        "Failed to get necessary child number to derive backup encryption key: {e}"
+                    ),
+                })?,
+                ChildNumber::from(0),
+            ])
+            .map_err(|e| SdkError::InitFailed {
+                err: format!("Failed to derive backup encryption key: {e}"),
+            })?;
         let backup_watcher = BackupWatcher::new(
             self.config.clone(),
             unwrapped_backup_transport.clone(),
             persister.clone(),
             backup_encryption_key.to_priv().to_bytes(),
+            legacy_backup_encryption_key.to_priv().to_bytes(),
         );
 
         // breez_server provides both FiatAPI & LspAPI implementations
@@ -1539,7 +1556,9 @@ impl Receiver for PaymentReceiver {
         &self,
         req_data: ReceivePaymentRequest,
     ) -> SdkResult<ReceivePaymentResponse> {
+        info!("receive_paymen started");
         self.node_api.start().await?;
+        info!("receive_paymen after start");
         let lsp_info = get_lsp(self.persister.clone(), self.lsp.clone()).await?;
         let node_state = self
             .persister
