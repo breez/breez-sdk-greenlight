@@ -42,6 +42,9 @@ pub(crate) enum Commands {
     /// Triggers a backup of the local data
     Backup {},
 
+    /// Fetch the static backup data
+    StaticBackup {},
+
     /// Parse a generic string to get its type and relevant metadata
     Parse {
         /// Generic input (URL, LNURL, BIP-21 BTC Address, LN invoice, etc)

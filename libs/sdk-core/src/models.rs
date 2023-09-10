@@ -87,6 +87,7 @@ pub trait NodeAPI: Send + Sync {
     async fn close_peer_channels(&self, node_id: String) -> Result<Vec<String>>;
     async fn stream_incoming_payments(&self) -> Result<Streaming<gl_client::pb::IncomingPayment>>;
     async fn stream_log_messages(&self) -> Result<Streaming<gl_client::pb::LogEntry>>;
+    async fn static_backup(&self) -> Result<Vec<String>>;
     async fn execute_command(&self, command: String) -> Result<String>;
     async fn sign_message(&self, message: &str) -> Result<String>;
     async fn check_message(&self, message: &str, pubkey: &str, signature: &str) -> Result<bool>;
@@ -723,6 +724,16 @@ pub struct ReceivePaymentResponse {
     pub ln_invoice: LNInvoice,
     pub opening_fee_params: Option<OpeningFeeParams>,
     pub opening_fee_msat: Option<u64>,
+}
+
+#[derive(Clone)]
+pub struct StaticBackupRequest {
+    pub working_dir: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct StaticBackupResponse {
+    pub backup: Option<Vec<String>>,
 }
 
 pub struct OpenChannelFeeRequest {

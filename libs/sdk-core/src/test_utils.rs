@@ -347,6 +347,10 @@ impl NodeAPI for MockNodeAPI {
         Err(anyhow!("Not implemented"))
     }
 
+    async fn static_backup(&self) -> Result<Vec<String>> {
+        Ok(Vec::new())
+    }
+
     async fn execute_command(&self, _command: String) -> Result<String> {
         Err(anyhow!("Not implemented"))
     }
