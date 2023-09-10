@@ -468,7 +468,10 @@ pub struct Config {
     pub payment_timeout_sec: u32,
     pub default_lsp_id: Option<String>,
     pub api_key: Option<String>,
+    /// Maps to the CLN `maxfeepercent` config when paying invoices (`lightning-pay`)
     pub maxfee_percent: f64,
+    /// Maps to the CLN `exemptfee` config when paying invoices (`lightning-pay`)
+    pub exemptfee_msat: u64,
     pub node_config: NodeConfig,
 }
 
@@ -483,6 +486,7 @@ impl Config {
             default_lsp_id: Some(String::from("03cea51f-b654-4fb0-8e82-eca137f236a0")),
             api_key: Some(api_key),
             maxfee_percent: 1.0,
+            exemptfee_msat: 20000,
             node_config,
         }
     }
@@ -497,6 +501,7 @@ impl Config {
             default_lsp_id: Some(String::from("ea51d025-042d-456c-8325-63e430797481")),
             api_key: Some(api_key),
             maxfee_percent: 0.5,
+            exemptfee_msat: 20000,
             node_config,
         }
     }

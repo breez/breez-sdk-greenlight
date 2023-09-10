@@ -882,6 +882,7 @@ impl support::IntoDart for Config {
             self.default_lsp_id.into_dart(),
             self.api_key.into_dart(),
             self.maxfee_percent.into_dart(),
+            self.exemptfee_msat.into_dart(),
             self.node_config.into_dart(),
         ]
         .into_dart()

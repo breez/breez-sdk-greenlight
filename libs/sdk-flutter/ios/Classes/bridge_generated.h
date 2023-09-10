@@ -3,7 +3,7 @@
 #include <stdlib.h>
 typedef struct _Dart_Handle* Dart_Handle;
 
-#define SWAP_PAYMENT_FEE_EXPIRY_SECONDS (((60 * 60) * 24) * 7)
+#define SWAP_PAYMENT_FEE_EXPIRY_SECONDS (((60 * 60) * 24) * 2)
 
 #define INVOICE_PAYMENT_FEE_EXPIRY_SECONDS (60 * 60)
 
@@ -54,6 +54,7 @@ typedef struct wire_Config {
   struct wire_uint_8_list *default_lsp_id;
   struct wire_uint_8_list *api_key;
   double maxfee_percent;
+  uint64_t exemptfee_msat;
   struct wire_NodeConfig node_config;
 } wire_Config;
 

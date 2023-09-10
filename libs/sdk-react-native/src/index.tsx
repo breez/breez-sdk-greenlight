@@ -182,6 +182,7 @@ export type Config = {
     defaultLspId?: string
     apiKey?: string
     maxfeePercent: number
+    exemptfeeMsat: number
     nodeConfig: NodeConfig
 }
 
