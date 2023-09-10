@@ -97,7 +97,8 @@ class BreezSDKMapper {
            let workingDir = config["workingDir"] as? String,
            let networkStr = config["network"] as? String,
            let paymentTimeoutSec = config["paymentTimeoutSec"] as? UInt32,
-           let maxfeePercent = config["maxfeePercent"] as? Double {
+           let maxfeePercent = config["maxfeePercent"] as? Double,
+           let exemptfeeMsat = config["exemptfeeMsat"] as? Double {
             let defaultLspId = config["defaultLspId"] as? String
             let apiKey = config["apiKey"] as? String
             if let nodeConfigObj = config["nodeConfig"] as? [String: Any?] {
@@ -107,7 +108,7 @@ class BreezSDKMapper {
                 }
                 do {
                     var network = try asNetwork(network: networkStr)
-                    return Config(breezserver: breezserver, mempoolspaceUrl: mempoolspaceUrl, workingDir: workingDir, network: network, paymentTimeoutSec: paymentTimeoutSec, defaultLspId: defaultLspId, apiKey: apiKey, maxfeePercent: maxfeePercent, nodeConfig: nodeConfig!)
+                    return Config(breezserver: breezserver, mempoolspaceUrl: mempoolspaceUrl, workingDir: workingDir, network: network, paymentTimeoutSec: paymentTimeoutSec, defaultLspId: defaultLspId, apiKey: apiKey, maxfeePercent: maxfeePercent, exemptfeeMsat: exemptfeeMsat, nodeConfig: nodeConfig!)
                 } catch {}
             }
         }
@@ -324,6 +325,7 @@ class BreezSDKMapper {
             "defaultLspId": config.defaultLspId,
             "apiKey": config.apiKey,
             "maxfeePercent": config.maxfeePercent,
+            "exemptfeeMsat": config.exemptfeeMsat,
             "nodeConfig": dictionaryOf(nodeConfig: config.nodeConfig)
         ]
     }

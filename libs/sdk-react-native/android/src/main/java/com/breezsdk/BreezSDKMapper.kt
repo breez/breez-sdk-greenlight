@@ -15,8 +15,9 @@ fun asConfig(config: ReadableMap): Config? {
         val defaultLspId = config.getString("defaultLspId")
         val apiKey = config.getString("apiKey")
         val maxfeePercent = config.getDouble("maxfeePercent")
+        val exemptfeeMsat = config.getDouble("exemptfeeMsat")
 
-        return Config(breezserver, mempoolspaceUrl, workingDir, asNetwork(network), paymentTimeoutSec.toUInt(), defaultLspId, apiKey, maxfeePercent, nodeConfig)
+        return Config(breezserver, mempoolspaceUrl, workingDir, asNetwork(network), paymentTimeoutSec.toUInt(), defaultLspId, apiKey, maxfeePercent, exemptfeeMsat, nodeConfig)
     }
 
     return null
@@ -323,6 +324,7 @@ fun readableMapOf(config: Config): ReadableMap {
             "defaultLspId" to config.defaultLspId,
             "apiKey" to config.apiKey,
             "maxfeePercent" to config.maxfeePercent,
+            "exemptfeeMsat" to config.exemptfeeMsat,
             "nodeConfig" to readableMapOf(config.nodeConfig)
     )
 }
