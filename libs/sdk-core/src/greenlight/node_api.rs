@@ -62,8 +62,6 @@ impl Greenlight {
     ) -> Result<Self> {
         // Derive the encryption key from the seed
         let signer = Signer::new(seed.clone(), config.network.into(), TlsConfig::new()?)?;
-        let b = hex::encode(signer.bip32_ext_key());
-        info!("{b}");
         let encryption_key = Self::derive_bip32_key(
             config.network,
             &signer,
@@ -255,14 +253,12 @@ impl Greenlight {
     }
 
     pub(crate) async fn get_node_client(&self) -> Result<node::ClnClient> {
-        info!("creating node client");
         let mut node_client = self.node_client.lock().await;
         if node_client.is_none() {
             let scheduler =
                 Scheduler::new(self.signer.node_id(), self.sdk_config.network.into()).await?;
             *node_client = Some(scheduler.schedule(self.tls_config.clone()).await?);
         }
-        info!("after creating node client");
         Ok(node_client.clone().unwrap())
     }
 

@@ -374,7 +374,6 @@ impl BreezServices {
         &self,
         req_data: ReceivePaymentRequest,
     ) -> SdkResult<ReceivePaymentResponse> {
-        info!("receive payment started1");
         self.payment_receiver.receive_payment(req_data).await
     }
 
@@ -1556,9 +1555,7 @@ impl Receiver for PaymentReceiver {
         &self,
         req_data: ReceivePaymentRequest,
     ) -> SdkResult<ReceivePaymentResponse> {
-        info!("receive_paymen started");
         self.node_api.start().await?;
-        info!("receive_paymen after start");
         let lsp_info = get_lsp(self.persister.clone(), self.lsp.clone()).await?;
         let node_state = self
             .persister
