@@ -17,7 +17,7 @@ fun asConfig(config: ReadableMap): Config? {
         val maxfeePercent = config.getDouble("maxfeePercent")
         val exemptfeeMsat = config.getDouble("exemptfeeMsat")
 
-        return Config(breezserver, mempoolspaceUrl, workingDir, asNetwork(network), paymentTimeoutSec.toUInt(), defaultLspId, apiKey, maxfeePercent, exemptfeeMsat, nodeConfig)
+        return Config(breezserver, mempoolspaceUrl, workingDir, asNetwork(network), paymentTimeoutSec.toUInt(), defaultLspId, apiKey, maxfeePercent, exemptfeeMsat.toULong(), nodeConfig)
     }
 
     return null

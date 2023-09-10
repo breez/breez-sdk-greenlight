@@ -98,7 +98,7 @@ class BreezSDKMapper {
            let networkStr = config["network"] as? String,
            let paymentTimeoutSec = config["paymentTimeoutSec"] as? UInt32,
            let maxfeePercent = config["maxfeePercent"] as? Double,
-           let exemptfeeMsat = config["exemptfeeMsat"] as? Double {
+           let exemptfeeMsat = config["exemptfeeMsat"] as? UInt64 {
             let defaultLspId = config["defaultLspId"] as? String
             let apiKey = config["apiKey"] as? String
             if let nodeConfigObj = config["nodeConfig"] as? [String: Any?] {
