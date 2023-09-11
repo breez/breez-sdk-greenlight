@@ -48,8 +48,8 @@ tonic = { version = "^0.8", features = [
     "tls-webpki-roots",
 ] }
 lazy_static = "^1.4.0"
-lightning = "*"
-lightning-invoice = "*"
+lightning = "0.0.115"
+lightning-invoice = "0.23.0"
 log = "*"
 once_cell = "*"
 openssl = { version = "0.10.42", features = ["vendored"] }
