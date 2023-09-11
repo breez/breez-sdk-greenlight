@@ -478,7 +478,7 @@ dependencies = [
  "chrono",
  "const_format",
  "ecies",
- "env_logger",
+ "env_logger 0.10.0",
  "flutter_rust_bridge",
  "gl-client",
  "hex",
@@ -961,6 +961,19 @@ checksum = "a12e6657c4c97ebab115a42dcee77225f7f482cdd841cf7088c657a42e9e00e7"
 dependencies = [
  "atty",
  "humantime",
+ "log",
+ "regex",
+ "termcolor",
+]
+
+[[package]]
+name = "env_logger"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "85cdab6a89accf66733ad5a1693a4dcced6aeff64602b634530dd73c1f3ee9f0"
+dependencies = [
+ "humantime",
+ "is-terminal",
  "log",
  "regex",
  "termcolor",
@@ -3605,7 +3618,7 @@ dependencies = [
  "backtrace",
  "bitcoin",
  "bolt-derive",
- "env_logger",
+ "env_logger 0.9.3",
  "hashbrown 0.8.2",
  "hex",
  "itertools",
