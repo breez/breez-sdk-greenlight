@@ -186,19 +186,17 @@ impl ChainService for MockChainService {
     }
 
     async fn transaction_outspends(&self, _txid: String) -> Result<Vec<Outspend>> {
-        Ok(vec![
-            Outspend {
-                spent: true,
-                txid: Some("test-tx-id".into()),
-                vin: 0,
-                status: TxStatus {
-                    confirmed: true,
-                    block_height: Some(123),
-                    block_hash: Some("test-hash".into()),
-                    block_time: Some(123),
-                },
-            }
-        ])
+        Ok(vec![Outspend {
+            spent: true,
+            txid: Some("test-tx-id".into()),
+            vin: 0,
+            status: TxStatus {
+                confirmed: true,
+                block_height: Some(123),
+                block_hash: Some("test-hash".into()),
+                block_time: Some(123),
+            },
+        }])
     }
 
     async fn broadcast_transaction(&self, _tx: Vec<u8>) -> Result<String> {
