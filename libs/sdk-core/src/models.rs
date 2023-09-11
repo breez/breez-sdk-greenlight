@@ -93,6 +93,7 @@ pub trait NodeAPI: Send + Sync {
 
     /// Gets the private key at the path specified
     fn derive_bip32_key(&self, path: Vec<ChildNumber>) -> Result<ExtendedPrivKey>;
+    fn legacy_derive_bip32_key(&self, path: Vec<ChildNumber>) -> Result<ExtendedPrivKey>;
 }
 
 /// Trait covering LSP-related functionality

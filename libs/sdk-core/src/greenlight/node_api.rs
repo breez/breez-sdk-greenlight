@@ -71,6 +71,15 @@ impl Greenlight {
         .to_bytes();
         let encryption_key_slice = encryption_key.as_slice();
 
+        let legacy_encryption_key = Self::legacy_derive_bip32_key(
+            config.network,
+            &signer,
+            vec![ChildNumber::from_hardened_idx(140)?, ChildNumber::from(0)],
+        )?
+        .to_priv()
+        .to_bytes();
+        let legacy_encryption_key_slice = legacy_encryption_key.as_slice();
+
         let register_credentials = match config.node_config.clone() {
             NodeConfig::Greenlight { config } => config,
         };
@@ -80,7 +89,12 @@ impl Greenlight {
         let parsed_credentials: Result<GreenlightCredentials> = match credentials {
             // In case we found existing credentials, try to decrypt them and connect to the node
             Some(creds) => {
-                let decrypted_credentials = aes_decrypt(encryption_key_slice, creds.as_slice());
+                let mut decrypted_credentials = aes_decrypt(encryption_key_slice, creds.as_slice());
+                if decrypted_credentials.is_none() {
+                    info!("Failed to decrypt credentials, trying legacy key");
+                    decrypted_credentials =
+                        aes_decrypt(legacy_encryption_key_slice, creds.as_slice());
+                }
                 match decrypted_credentials {
                     Some(creds) => {
                         let built_credentials: GreenlightCredentials =
@@ -166,6 +180,16 @@ impl Greenlight {
         path: Vec<ChildNumber>,
     ) -> Result<ExtendedPrivKey> {
         ExtendedPrivKey::new_master(network.into(), &signer.bip32_ext_key())?
+            .derive_priv(&Secp256k1::new(), &path)
+            .map_err(|e| anyhow!(e))
+    }
+
+    fn legacy_derive_bip32_key(
+        network: Network,
+        signer: &Signer,
+        path: Vec<ChildNumber>,
+    ) -> Result<ExtendedPrivKey> {
+        ExtendedPrivKey::new_master(network.into(), &signer.legacy_bip32_ext_key())?
             .derive_priv(&Secp256k1::new(), &path)
             .map_err(|e| anyhow!(e))
     }
@@ -363,7 +387,7 @@ impl NodeAPI for Greenlight {
             let node_state = self.persister.get_node_state()?;
             if let Some(state) = node_state {
                 let mut retry_count = 0;
-                while state.channels_balance_msat == channels_balance && retry_count < 3 {
+                while state.channels_balance_msat == channels_balance && retry_count < 10 {
                     warn!("balance update was required but was not updated, retrying in 100ms...");
                     sleep(Duration::from_millis(100)).await;
                     (
@@ -746,6 +770,10 @@ impl NodeAPI for Greenlight {
 
     fn derive_bip32_key(&self, path: Vec<ChildNumber>) -> Result<ExtendedPrivKey> {
         Self::derive_bip32_key(self.sdk_config.network, &self.signer, path)
+    }
+
+    fn legacy_derive_bip32_key(&self, path: Vec<ChildNumber>) -> Result<ExtendedPrivKey> {
+        Self::legacy_derive_bip32_key(self.sdk_config.network, &self.signer, path)
     }
 }
 

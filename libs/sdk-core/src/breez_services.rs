@@ -1353,11 +1353,27 @@ impl BreezServicesBuilder {
             .map_err(|e| SdkError::InitFailed {
                 err: format!("Failed to derive backup encryption key: {e}"),
             })?;
+
+        // We calculate the legacy key as a fallback for the case where the backup is still
+        // encrypted with the old key.
+        let legacy_backup_encryption_key = unwrapped_node_api
+            .legacy_derive_bip32_key(vec![
+                ChildNumber::from_hardened_idx(139).map_err(|e| SdkError::InitFailed {
+                    err: format!(
+                        "Failed to get necessary child number to derive backup encryption key: {e}"
+                    ),
+                })?,
+                ChildNumber::from(0),
+            ])
+            .map_err(|e| SdkError::InitFailed {
+                err: format!("Failed to derive backup encryption key: {e}"),
+            })?;
         let backup_watcher = BackupWatcher::new(
             self.config.clone(),
             unwrapped_backup_transport.clone(),
             persister.clone(),
             backup_encryption_key.to_priv().to_bytes(),
+            legacy_backup_encryption_key.to_priv().to_bytes(),
         );
 
         // breez_server provides both FiatAPI & LspAPI implementations

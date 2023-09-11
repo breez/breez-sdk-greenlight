@@ -354,6 +354,10 @@ impl NodeAPI for MockNodeAPI {
     fn derive_bip32_key(&self, _path: Vec<ChildNumber>) -> Result<ExtendedPrivKey> {
         Ok(ExtendedPrivKey::new_master(Network::Bitcoin, &[])?)
     }
+
+    fn legacy_derive_bip32_key(&self, _path: Vec<ChildNumber>) -> Result<ExtendedPrivKey> {
+        Ok(ExtendedPrivKey::new_master(Network::Bitcoin, &[])?)
+    }
 }
 
 impl MockNodeAPI {
