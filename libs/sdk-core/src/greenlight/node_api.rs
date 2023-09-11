@@ -725,6 +725,15 @@ impl NodeAPI for Greenlight {
                     .into_inner();
                 Ok(format!("{resp:?}"))
             }
+            NodeCommand::ListPeerChannels => {
+                let resp = self
+                    .get_node_client()
+                    .await?
+                    .list_peer_channels(pb::cln::ListpeerchannelsRequest::default())
+                    .await?
+                    .into_inner();
+                Ok(format!("{resp:?}"))
+            }
             NodeCommand::ListFunds => {
                 let resp = self
                     .get_client()
@@ -781,6 +790,9 @@ impl NodeAPI for Greenlight {
 enum NodeCommand {
     #[strum(serialize = "listpeers")]
     ListPeers,
+
+    #[strum(serialize = "listpeerchannels")]
+    ListPeerChannels,
 
     #[strum(serialize = "listfunds")]
     ListFunds,
