@@ -387,7 +387,7 @@ impl NodeAPI for Greenlight {
             let node_state = self.persister.get_node_state()?;
             if let Some(state) = node_state {
                 let mut retry_count = 0;
-                while state.channels_balance_msat == channels_balance && retry_count < 3 {
+                while state.channels_balance_msat == channels_balance && retry_count < 10 {
                     warn!("balance update was required but was not updated, retrying in 100ms...");
                     sleep(Duration::from_millis(100)).await;
                     (
