@@ -23,7 +23,7 @@ use tonic::Streaming;
 
 use crate::backup::{BackupState, BackupTransport};
 use crate::breez_services::Receiver;
-use crate::chain::{ChainService, OnchainTx, RecommendedFees};
+use crate::chain::{ChainService, OnchainTx, Outspend, RecommendedFees, TxStatus};
 use crate::error::SdkResult;
 use crate::fiat::{FiatCurrency, Rate};
 use crate::grpc::{PaymentInformation, RegisterPaymentReply};
@@ -184,6 +184,23 @@ impl ChainService for MockChainService {
     async fn current_tip(&self) -> Result<u32> {
         Ok(self.tip)
     }
+
+    async fn transaction_outspends(&self, _txid: String) -> Result<Vec<Outspend>> {
+        Ok(vec![
+            Outspend {
+                spent: true,
+                txid: Some("test-tx-id".into()),
+                vin: 0,
+                status: TxStatus {
+                    confirmed: true,
+                    block_height: Some(123),
+                    block_hash: Some("test-hash".into()),
+                    block_time: Some(123),
+                },
+            }
+        ])
+    }
+
     async fn broadcast_transaction(&self, _tx: Vec<u8>) -> Result<String> {
         let mut array = [0; 32];
         rand::thread_rng().fill(&mut array);
