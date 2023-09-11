@@ -1,5 +1,3 @@
-use std::time::{SystemTime, UNIX_EPOCH};
-
 use crate::models::*;
 
 use super::db::SqliteStorage;
@@ -105,7 +103,7 @@ impl SqliteStorage {
                 c.receivable_msat,
                 match c.state {
                     ChannelState::Opened | ChannelState::PendingOpen => None,
-                    _ => Some(SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs()),
+                    _ => c.closed_at,
                 },
             ),
         )?;
