@@ -391,6 +391,7 @@ impl BackupWorker {
                 let mut decrypted =
                     aes_decrypt(self.encryption_key.as_slice(), state.data.as_slice());
                 if decrypted.is_none() {
+                    warn!("Failed to decrypt backup with new key, trying legacy key");
                     decrypted =
                         aes_decrypt(self.legacy_encryption_key.as_slice(), state.data.as_slice());
                 }
