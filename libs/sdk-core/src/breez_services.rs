@@ -1117,7 +1117,7 @@ impl BreezServices {
             .target(env_logger::Target::Pipe(target_log_file))
             .parse_filters(
                 r#"
-                debug,
+                info,
                 gl_client=warn,
                 h2=warn,
                 hyper=warn,
