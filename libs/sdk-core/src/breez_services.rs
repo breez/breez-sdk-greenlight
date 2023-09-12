@@ -221,7 +221,7 @@ impl BreezServices {
 
     /// Pay a bolt11 invoice
     ///
-    /// Calling `send_payment` ensures that the payment is not already completed, if so it will result in an error. 
+    /// Calling `send_payment` ensures that the payment is not already completed, if so it will result in an error.
     /// If the invoice doesn't specify an amount, the amount is taken from the `amount_sats` arg.
     ///
     /// # Arguments
