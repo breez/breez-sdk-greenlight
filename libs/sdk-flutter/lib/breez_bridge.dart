@@ -453,6 +453,7 @@ extension SDKConfig on Config {
     String? defaultLspId,
     String? apiKey,
     double? maxfeePercent,
+    int? exemptfeeMsat,
     NodeConfig? nodeConfig,
   }) {
     return Config(
@@ -464,6 +465,7 @@ extension SDKConfig on Config {
       defaultLspId: defaultLspId ?? this.defaultLspId,
       apiKey: apiKey ?? this.apiKey,
       maxfeePercent: maxfeePercent ?? this.maxfeePercent,
+      exemptfeeMsat: exemptfeeMsat ?? this.exemptfeeMsat,
       nodeConfig: nodeConfig ?? this.nodeConfig,
     );
   }
