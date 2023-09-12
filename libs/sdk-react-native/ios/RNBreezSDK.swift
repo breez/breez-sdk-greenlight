@@ -1,518 +1,496 @@
-import Foundation
 import BreezSDK
+import Foundation
 
 @objc(RNBreezSDK)
 class RNBreezSDK: RCTEventEmitter {
     static let TAG: String = "BreezSDK"
-    
+
     private var breezServices: BlockingBreezServices!
-    
+
     static var breezSdkDirectory: URL {
-      let applicationDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-      let breezSdkDirectory = applicationDirectory.appendingPathComponent("breezSdk", isDirectory: true)
-      
-      if !FileManager.default.fileExists(atPath: breezSdkDirectory.path) {
-        try! FileManager.default.createDirectory(atPath: breezSdkDirectory.path, withIntermediateDirectories: true)
-      }
-      
-      return breezSdkDirectory
+        let applicationDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let breezSdkDirectory = applicationDirectory.appendingPathComponent("breezSdk", isDirectory: true)
+
+        if !FileManager.default.fileExists(atPath: breezSdkDirectory.path) {
+            try! FileManager.default.createDirectory(atPath: breezSdkDirectory.path, withIntermediateDirectories: true)
+        }
+
+        return breezSdkDirectory
     }
-    
+
     @objc
     override static func moduleName() -> String! {
         TAG
     }
-    
+
     override func supportedEvents() -> [String]! {
         return [BreezSDKListener.emitterName, BreezSDKLogStream.emitterName]
     }
-    
+
     @objc
     override static func requiresMainQueueSetup() -> Bool {
         return false
     }
-    
-    func getBreezServices() throws ->
-    BlockingBreezServices {
+
+    func getBreezServices() throws -> BlockingBreezServices {
         if breezServices != nil {
             return breezServices
         }
-        
+
         throw SdkError.Generic(message: "BreezServices not initialized")
     }
-    
-    @objc(mnemonicToSeed:resolver:rejecter:)
-    func mnemonicToSeed(_ phrase: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+
+    @objc(parseInvoice:resolve:reject:)
+    func parseInvoice(_ invoice: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let seed = try BreezSDK.mnemonicToSeed(phrase: phrase)        
-            resolve(seed)        
+            var res = try BreezSDK.parseInvoice(invoice: invoice)
+            resolve(BreezSDKMapper.dictionaryOf(lnInvoice: res))
         } catch let err {
             rejectErr(err: err, reject: reject)
         }
     }
-    
-    @objc(parseInput:resolver:rejecter:)
-    func parseInput(_ input: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+
+    @objc(parseInput:resolve:reject:)
+    func parseInput(_ s: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let inputType = try BreezSDK.parseInput(s: input)            
-            resolve(BreezSDKMapper.dictionaryOf(inputType: inputType))        
+            var res = try BreezSDK.parseInput(s: s)
+            resolve(BreezSDKMapper.dictionaryOf(inputType: res))
         } catch let err {
             rejectErr(err: err, reject: reject)
         }
     }
-    
-    @objc(parseInvoice:resolver:rejecter:)
-    func parseInvoice(_ invoice: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+
+    @objc(mnemonicToSeed:resolve:reject:)
+    func mnemonicToSeed(_ phrase: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let lnInvoice = try BreezSDK.parseInvoice(invoice: invoice)            
-            resolve(BreezSDKMapper.dictionaryOf(lnInvoice: lnInvoice))
+            var res = try BreezSDK.mnemonicToSeed(phrase: phrase)
+            resolve(res)
         } catch let err {
             rejectErr(err: err, reject: reject)
         }
     }
-    
-    @objc(startLogStream:rejecter:)
-    func startLogStream(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+
+    @objc(defaultConfig:apiKey:nodeConfig:resolve:reject:)
+    func defaultConfig(_ envType: String, apiKey: String, nodeConfig: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            try BreezSDK.setLogStream(logStream: BreezSDKLogStream(emitter: self))            
-            resolve(["status": "ok"])        
+            let envTypeTmp = try BreezSDKMapper.asEnvironmentType(type: envType)
+            let nodeConfigTmp = try BreezSDKMapper.asNodeConfig(data: nodeConfig)
+            var res = BreezSDK.defaultConfig(envType: envTypeTmp, apiKey: apiKey, nodeConfig: nodeConfigTmp)
+            res.workingDir = RNBreezSDK.breezSdkDirectory.path
+            resolve(BreezSDKMapper.dictionaryOf(config: res))
         } catch let err {
             rejectErr(err: err, reject: reject)
         }
     }
-    
-    @objc(defaultConfig:apiKey:nodeConfigMap:resolver:rejecter:)
-    func defaultConfig(_ envType: String, apiKey: String, nodeConfigMap: [String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+
+    @objc(setLogStream:reject:)
+    func setLogStream(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            if let nodeConfig = BreezSDKMapper.asNodeConfig(nodeConfig: nodeConfigMap) {
-                var config = try BreezSDK.defaultConfig(envType: BreezSDKMapper.asEnvironmentType(envType: envType), apiKey: apiKey, nodeConfig: nodeConfig)
-                config.workingDir = RNBreezSDK.breezSdkDirectory.path                
-                resolve(BreezSDKMapper.dictionaryOf(config: config))
-            } else {
-                reject(RNBreezSDK.TAG, "Invalid node config", nil)
-            }        
+            try BreezSDK.setLogStream(logStream: BreezSDKLogStream(emitter: self))
+            resolve(["status": "ok"])
         } catch let err {
             rejectErr(err: err, reject: reject)
         }
     }
-    
-    @objc(connect:seed:resolver:rejecter:)
-    func connect(_ config:[String: Any], seed:[UInt8], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        if self.breezServices != nil {
+
+    @objc(connect:seed:resolve:reject:)
+    func connect(_ config: [String: Any], seed: [UInt8], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        if breezServices != nil {
             reject(RNBreezSDK.TAG, "BreezServices already initialized", nil)
-        } else if let config = BreezSDKMapper.asConfig(config: config) {
-            do {
-                self.breezServices = try BreezSDK.connect(config: config, seed: seed, listener: BreezSDKListener(emitter: self))                
-                resolve(["status": "ok"])
-            } catch let err {
-                rejectErr(err: err, reject: reject)
-            }
-        } else {
-            rejectErr(err: SdkError.Generic(message:"Invalid config"), reject: reject)            
+            return
         }
-    }
 
-    @objc(signMessage:resolver:rejecter:)
-    func signMessage(_ reqData:[String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        if let signMessageRequest = BreezSDKMapper.asSignMessageRequest(reqData: reqData) {
-            do {
-                let signMessageResponse = try getBreezServices().signMessage(request: signMessageRequest)                
-                resolve(BreezSDKMapper.dictionaryOf(signMessageResponse: signMessageResponse))
-            } catch let err {
-                rejectErr(err: err, reject: reject)      
-            }
-        } else {            
-            rejectErr(err: SdkError.Generic(message:"Invalid reqData"), reject: reject)
-        }
-    }
-
-    @objc(checkMessage:resolver:rejecter:)
-    func checkMessage(_ reqData:[String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        if let checkMessageRequest = BreezSDKMapper.asCheckMessageRequest(reqData: reqData) {
-            do {
-                let checkMessageResponse = try getBreezServices().checkMessage(request: checkMessageRequest)                
-                resolve(BreezSDKMapper.dictionaryOf(checkMessageResponse: checkMessageResponse))
-            } catch let err {
-                rejectErr(err: err, reject: reject)      
-            }
-        } else {            
-            rejectErr(err: SdkError.Generic(message:"Invalid reqData"), reject: reject)
-        }
-    }
-    
-    @objc(sync:rejecter:)
-    func sync(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
         do {
-            try getBreezServices().sync()
-            resolve(["status": "ok"])        
+            let configTmp = try BreezSDKMapper.asConfig(data: config)
+            breezServices = try BreezSDK.connect(config: configTmp, seed: seed, listener: BreezSDKListener(emitter: self))
+            resolve(["status": "ok"])
         } catch let err {
             rejectErr(err: err, reject: reject)
         }
-   }
-    
-    @objc(disconnect:rejecter:)
-    func disconnect(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+    }
+
+    @objc(disconnect:reject:)
+    func disconnect(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
             try getBreezServices().disconnect()
-            resolve(["status": "ok"])        
-        } catch let err {
-            rejectErr(err: err, reject: reject)
-        }
-    }
-    
-    @objc(sendPayment:amountSats:resolver:rejecter:)
-    func sendPayment(_ bolt11:String, amountSats:UInt64, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        do {
-            let optionalAmountSats = amountSats == 0 ? nil : amountSats
-            let payment = try getBreezServices().sendPayment(bolt11: bolt11, amountSats: optionalAmountSats)
-            resolve(BreezSDKMapper.dictionaryOf(payment: payment))        
-        } catch let err {
-            rejectErr(err: err, reject: reject)
-        }
-    }
-    
-    @objc(sendSpontaneousPayment:amountSats:resolver:rejecter:)
-    func sendSpontaneousPayment(_ nodeId:String, amountSats:UInt64, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        do {
-            let payment = try getBreezServices().sendSpontaneousPayment(nodeId: nodeId, amountSats: amountSats)
-            resolve(BreezSDKMapper.dictionaryOf(payment: payment))        
-        } catch let err {
-            rejectErr(err: err, reject: reject)
-        }
-    }
-    
-    @objc(openChannelFee:resolver:rejecter:)
-    func openChannelFee(_ reqData:[String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        if let openChannelFeeRequest = BreezSDKMapper.asOpenChannelFeeRequest(reqData: reqData) {
-            do {
-                let response = try getBreezServices().openChannelFee(req: openChannelFeeRequest)
-                resolve(BreezSDKMapper.dictionaryOf(openChannelFeeResponse: response))
-            } catch let err {
-                reject(RNBreezSDK.TAG, "Error calling openChannelFee \(err)", err)
-            }
-        } else {
-            rejectErr(err: SdkError.Generic(message:"Invalid reqData"), reject: reject)
-        }
-    }
-
-    @objc(receivePayment:resolver:rejecter:)
-    func receivePayment(_ reqData:[String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        if let receivePaymentRequest = BreezSDKMapper.asReceivePaymentRequest(reqData: reqData) {
-            do {
-                let response = try getBreezServices().receivePayment(reqData: receivePaymentRequest)
-                resolve(BreezSDKMapper.dictionaryOf(receivePaymentResponse: response))
-            } catch let err {
-                reject(RNBreezSDK.TAG, "Error calling receivePayment \(err)", err)
-            }
-        } else {
-            rejectErr(err: SdkError.Generic(message:"Invalid reqData"), reject: reject)
-        }
-    }
-    
-    @objc(lnurlAuth:resolver:rejecter:)
-    func lnurlAuth(_ reqData:[String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        if let lnUrlAuthRequestData = BreezSDKMapper.asLnUrlAuthRequestData(reqData: reqData) {
-            do {
-                let lnUrlCallbackStatus = try getBreezServices().lnurlAuth(reqData: lnUrlAuthRequestData)                
-                resolve(BreezSDKMapper.dictionaryOf(lnUrlCallbackStatus: lnUrlCallbackStatus))
-            } catch let err {
-                reject(RNBreezSDK.TAG, "Error calling lnurlAuth \(err)", err)
-            }
-        } else {
-            rejectErr(err: SdkError.Generic(message:"Invalid reqData"), reject: reject)            
-        }
-    }
-    
-    @objc(payLnurl:amountSats:comment:resolver:rejecter:)
-    func payLnurl(_ reqData:[String: Any], amountSats:UInt64, comment:String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        if let lnUrlPayRequestData = BreezSDKMapper.asLnUrlPayRequestData(reqData: reqData) {
-            do {
-                let optionalComment = comment.count == 0 ? nil : comment
-                let lnUrlPayResult = try getBreezServices().payLnurl(reqData: lnUrlPayRequestData, amountSats: amountSats, comment: optionalComment)                
-                resolve(BreezSDKMapper.dictionaryOf(lnUrlPayResult: lnUrlPayResult))
-            } catch let err {
-                reject(RNBreezSDK.TAG, "Error calling payLnurl \(err)", err)
-            }
-        } else {
-            rejectErr(err: SdkError.Generic(message:"Invalid reqData"), reject: reject)                        
-        }
-    }
-    
-    @objc(withdrawLnurl:amountSats:description:resolver:rejecter:)
-    func withdrawLnurl(_ reqData:[String: Any], amountSats:UInt64, description:String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        if let lnUrlWithdrawRequestData = BreezSDKMapper.asLnUrlWithdrawRequestData(reqData: reqData) {
-            do {
-                let optionalDescription = description.count == 0 ? nil : description
-                let lnUrlCallbackStatus = try getBreezServices().withdrawLnurl(reqData: lnUrlWithdrawRequestData, amountSats: amountSats, description: optionalDescription)                
-                resolve(BreezSDKMapper.dictionaryOf(lnUrlCallbackStatus: lnUrlCallbackStatus))
-            } catch let err {
-                rejectErr(err: err, reject: reject)      
-            }
-        } else {            
-            rejectErr(err: SdkError.Generic(message:"Invalid reqData"), reject: reject)
-        }
-    }
-    
-    @objc(nodeInfo:rejecter:)
-    func nodeInfo(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        do {
-            let nodeState = try getBreezServices().nodeInfo()
-            resolve(BreezSDKMapper.dictionaryOf(nodeState: nodeState))                 
-        } catch let err {
-            rejectErr(err: err, reject: reject)
-        }
-    }
-    
-    @objc(paymentByHash:resolver:rejecter:)
-    func paymentByHash(_ hash:String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        do {
-            if let payment = try getBreezServices().paymentByHash(hash: hash) {
-                resolve(BreezSDKMapper.dictionaryOf(payment: payment))
-            } else {
-                rejectErr(err: SdkError.Generic(message: "No available payment"), reject: reject)
-            }        
+            resolve(["status": "ok"])
         } catch let err {
             rejectErr(err: err, reject: reject)
         }
     }
 
-    @objc(listPayments:fromTimestamp:toTimestamp:resolver:rejecter:)
-    func listPayments(_ filter:String, fromTimestamp:Int64, toTimestamp:Int64, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+    @objc(sendPayment:amountSats:resolve:reject:)
+    func sendPayment(_ bolt11: String, amountSats: UInt64, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let optionalFromTimestamp = fromTimestamp == 0 ? nil : fromTimestamp
-            let optionalToTimestamp = toTimestamp == 0 ? nil : toTimestamp
-            let payments = try getBreezServices().listPayments(filter: BreezSDKMapper.asPaymentTypeFilter(filter: filter), fromTimestamp: optionalFromTimestamp, toTimestamp: optionalToTimestamp)
-            resolve(BreezSDKMapper.arrayOf(payments: payments))        
-        } catch let err {
-            rejectErr(err: err, reject: reject)
-        }
-    }
-    
-    @objc(sweep:feeRateSatsPerVbyte:resolver:rejecter:)
-    func sweep(_ toAddress:String, feeRateSatsPerVbyte:UInt64, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        do {
-            try getBreezServices().sweep(toAddress: toAddress, feeRateSatsPerVbyte: feeRateSatsPerVbyte)
-            resolve(["status": "ok"])        
-        } catch let err {
-            rejectErr(err: err, reject: reject)
-        }
-    }
-    
-    @objc(fetchFiatRates:rejecter:)
-    func fetchFiatRates(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        do {
-            let rates = try getBreezServices().fetchFiatRates()
-            resolve(BreezSDKMapper.arrayOf(rates: rates))        
-        } catch let err {
-            rejectErr(err: err, reject: reject)
-        }
-    }
-    
-    @objc(listFiatCurrencies:rejecter:)
-    func listFiatCurrencies(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        do {
-            let fiatCurrencies = try getBreezServices().listFiatCurrencies()
-            resolve(BreezSDKMapper.arrayOf(fiatCurrencies: fiatCurrencies))        
-        } catch let err {
-            rejectErr(err: err, reject: reject)
-        }
-    }
-    
-    @objc(listLsps:rejecter:)
-    func listLsps(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        do {
-            let lsps = try getBreezServices().listLsps()
-            resolve(BreezSDKMapper.arrayOf(lsps: lsps))        
-        } catch let err {
-            rejectErr(err: err, reject: reject)
-        }
-    }
-    
-    @objc(connectLsp:resolver:rejecter:)
-    func connectLsp(_ lspId:String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        do {
-            try getBreezServices().connectLsp(lspId: lspId)
-            resolve(["status": "ok"])        
-        } catch let err {
-            rejectErr(err: err, reject: reject)
-        }
-    }
-    
-    @objc(fetchLspInfo:resolver:rejecter:)
-    func fetchLspInfo(_ lspId:String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        do {
-            if let lspInformation = try getBreezServices().fetchLspInfo(lspId: lspId) {
-                resolve(BreezSDKMapper.dictionaryOf(lspInformation: lspInformation))
-            } else {
-                rejectErr(err: SdkError.Generic(message: "No available lsp info"), reject: reject)
-            }        
-        } catch let err {
-            rejectErr(err: err, reject: reject)
-        }
-    }
-    
-    @objc(lspId:rejecter:)
-    func lspId(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        do {
-            if let lspId = try getBreezServices().lspId() {
-                resolve(lspId)
-            } else {
-                rejectErr(err: SdkError.Generic(message: "No available lsp id"), reject: reject)
-            }        
+            let amountSatsTmp = amountSats == 0 ? nil : amountSats
+            var res = try getBreezServices().sendPayment(bolt11: bolt11, amountSats: amountSatsTmp)
+            resolve(BreezSDKMapper.dictionaryOf(payment: res))
         } catch let err {
             rejectErr(err: err, reject: reject)
         }
     }
 
-    @objc(lspInfo:rejecter:)
-    func lspInfo(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+    @objc(sendSpontaneousPayment:amountSats:resolve:reject:)
+    func sendSpontaneousPayment(_ nodeId: String, amountSats: UInt64, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let lspInformation = try getBreezServices().lspInfo()
-            resolve(BreezSDKMapper.dictionaryOf(lspInformation: lspInformation))
-        } catch let err {
-            rejectErr(err: err, reject: reject)
-        }
-    }
-    
-    @objc(closeLspChannels:rejecter:)
-    func closeLspChannels(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        do {
-            try getBreezServices().closeLspChannels()
-            resolve(["status": "ok"])        
-        } catch let err {
-            rejectErr(err: err, reject: reject)
-        }
-    }
-    
-    @objc(receiveOnchain:resolver:rejecter:)
-    func receiveOnchain(_ req:[String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        do {
-            let receiveOnchainRequest = BreezSDKMapper.asReceiveOnchainRequest(reqData: req)
-            let swapInfo = try getBreezServices().receiveOnchain(req: receiveOnchainRequest)
-            resolve(BreezSDKMapper.dictionaryOf(swapInfo: swapInfo))
-        } catch let err {
-            reject(RNBreezSDK.TAG, "Error calling receiveOnchain \(err)", err)
-        }
-    }
-    
-    @objc(inProgressSwap:rejecter:)
-    func inProgressSwap(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        do {
-            if let swapInfo = try getBreezServices().inProgressSwap() {
-                resolve(BreezSDKMapper.dictionaryOf(swapInfo: swapInfo))
-            } else {
-                reject(RNBreezSDK.TAG, "No available in progress swap", nil)
-            }        
-        } catch let err {
-            rejectErr(err: err, reject: reject)
-        }
-    }
-    
-    @objc(listRefundables:rejecter:)
-    func listRefundables(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        do {
-            let swapInfos = try getBreezServices().listRefundables()
-            resolve(BreezSDKMapper.arrayOf(swapInfos: swapInfos))        
-        } catch let err {
-            rejectErr(err: err, reject: reject)
-        }
-    }
-    
-    @objc(refund:fromTimestamp:toTimestamp:resolver:rejecter:)
-    func refund(_ swapAddress:String, toAddress:String, satPerVbyte:UInt32, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        do {
-            let result = try getBreezServices().refund(swapAddress: swapAddress, toAddress: toAddress, satPerVbyte: satPerVbyte)
-            resolve(result)        
+            var res = try getBreezServices().sendSpontaneousPayment(nodeId: nodeId, amountSats: amountSats)
+            resolve(BreezSDKMapper.dictionaryOf(payment: res))
         } catch let err {
             rejectErr(err: err, reject: reject)
         }
     }
 
-    @objc(fetchReverseSwapFees:resolver:rejecter:)
-    func fetchReverseSwapFees(_ req:[String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+    @objc(receivePayment:resolve:reject:)
+    func receivePayment(_ reqData: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let reverseSwapFeesRequest = BreezSDKMapper.asReverseSwapFeesRequest(reqData: req)
-            let fees = try getBreezServices().fetchReverseSwapFees(req: reverseSwapFeesRequest)
-            resolve(BreezSDKMapper.dictionaryOf(reverseSwapPairInfo: fees))
+            let receivePaymentRequest = try BreezSDKMapper.asReceivePaymentRequest(data: reqData)
+            var res = try getBreezServices().receivePayment(reqData: receivePaymentRequest)
+            resolve(BreezSDKMapper.dictionaryOf(receivePaymentResponse: res))
         } catch let err {
             rejectErr(err: err, reject: reject)
         }
     }
 
-    @objc(inProgressReverseSwaps:rejecter:)
-    func inProgressReverseSwaps(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+    @objc(payLnurl:amountSats:comment:resolve:reject:)
+    func payLnurl(_ reqData: [String: Any], amountSats: UInt64, comment: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let swaps = try getBreezServices().inProgressReverseSwaps()
-            resolve(BreezSDKMapper.arrayOf(reverseSwapInfos: swaps))        
+            let lnUrlPayRequestData = try BreezSDKMapper.asLnUrlPayRequestData(data: reqData)
+            let commentTmp = comment.isEmpty ? nil : comment
+            var res = try getBreezServices().payLnurl(reqData: lnUrlPayRequestData, amountSats: amountSats, comment: commentTmp)
+            resolve(BreezSDKMapper.dictionaryOf(lnUrlPayResult: res))
         } catch let err {
             rejectErr(err: err, reject: reject)
         }
     }
 
-    @objc(sendOnchain:onchainRecipientAddress:pairHash:satPerVbyte:resolver:rejecter:)
-    func sendOnchain(_ amountSat:UInt64, onchainRecipientAddress:String, pairHash:String, satPerVbyte:UInt64, resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+    @objc(withdrawLnurl:amountSats:description:resolve:reject:)
+    func withdrawLnurl(_ reqData: [String: Any], amountSats: UInt64, description: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let swapInfo = try getBreezServices().sendOnchain(amountSat: amountSat, onchainRecipientAddress: onchainRecipientAddress, pairHash: pairHash, satPerVbyte: satPerVbyte)
-            resolve(BreezSDKMapper.dictionaryOf(reverseSwapInfo: swapInfo))        
-        } catch let err {
-            rejectErr(err: err, reject: reject)
-        }
-    }
-    
-    @objc(executeDevCommand:resolver:rejecter:)
-    func executeDevCommand(_ command:String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        do {
-            let result = try getBreezServices().executeDevCommand(command: command)
-            resolve(result)        
-        } catch let err {
-            rejectErr(err: err, reject: reject)
-        }
-    }
-    
-    @objc(recommendedFees:rejecter:)
-    func recommendedFees(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        do {
-            let fees = try getBreezServices().recommendedFees()
-            resolve(BreezSDKMapper.dictionaryOf(recommendedFees: fees))        
+            let lnUrlWithdrawRequestData = try BreezSDKMapper.asLnUrlWithdrawRequestData(data: reqData)
+            let descriptionTmp = description.isEmpty ? nil : description
+            var res = try getBreezServices().withdrawLnurl(reqData: lnUrlWithdrawRequestData, amountSats: amountSats, description: descriptionTmp)
+            resolve(BreezSDKMapper.dictionaryOf(lnUrlCallbackStatus: res))
         } catch let err {
             rejectErr(err: err, reject: reject)
         }
     }
 
-    @objc(buyBitcoin:resolver:rejecter:)
-    func buyBitcoin(_ req:[String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
-        if let buyBitcoinRequest = BreezSDKMapper.asBuyBitcoinRequest(reqData: req) {
-            do {
-                let response = try getBreezServices().buyBitcoin(req: buyBitcoinRequest)
-                resolve(BreezSDKMapper.dictionaryOf(buyBitcoinResponse: response))
-            } catch let err {
-                reject(RNBreezSDK.TAG, "Error calling buyBitcoin \(err)", err)
-            }
-        } else {
-            rejectErr(err: SdkError.Generic(message:"Invalid reqData"), reject: reject)
+    @objc(lnurlAuth:resolve:reject:)
+    func lnurlAuth(_ reqData: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            let lnUrlAuthRequestData = try BreezSDKMapper.asLnUrlAuthRequestData(data: reqData)
+            var res = try getBreezServices().lnurlAuth(reqData: lnUrlAuthRequestData)
+            resolve(BreezSDKMapper.dictionaryOf(lnUrlCallbackStatus: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
         }
     }
-    
-    @objc(backup:rejecter:)
-    func backup(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+
+    @objc(nodeInfo:reject:)
+    func nodeInfo(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            var res = try getBreezServices().nodeInfo()
+            resolve(BreezSDKMapper.dictionaryOf(nodeState: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(signMessage:resolve:reject:)
+    func signMessage(_ request: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            let signMessageRequest = try BreezSDKMapper.asSignMessageRequest(data: request)
+            var res = try getBreezServices().signMessage(request: signMessageRequest)
+            resolve(BreezSDKMapper.dictionaryOf(signMessageResponse: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(checkMessage:resolve:reject:)
+    func checkMessage(_ request: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            let checkMessageRequest = try BreezSDKMapper.asCheckMessageRequest(data: request)
+            var res = try getBreezServices().checkMessage(request: checkMessageRequest)
+            resolve(BreezSDKMapper.dictionaryOf(checkMessageResponse: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(backupStatus:reject:)
+    func backupStatus(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            var res = try getBreezServices().backupStatus()
+            resolve(BreezSDKMapper.dictionaryOf(backupStatus: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(backup:reject:)
+    func backup(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
             try getBreezServices().backup()
-            resolve(["status": "ok"])        
+            resolve(["status": "ok"])
         } catch let err {
             rejectErr(err: err, reject: reject)
         }
     }
-    
-    @objc(backupStatus:rejecter:)
-    func backupStatus(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void {
+
+    @objc(paymentByHash:resolve:reject:)
+    func paymentByHash(_ hash: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let status = try getBreezServices().backupStatus()
-            resolve(BreezSDKMapper.dictionaryOf(backupStatus: status))        
+            var res = try getBreezServices().paymentByHash(hash: hash)
+            if res != nil {
+                resolve(BreezSDKMapper.dictionaryOf(payment: res!))
+            } else {
+                resolve(nil)
+            }
         } catch let err {
             rejectErr(err: err, reject: reject)
         }
     }
-    
+
+    @objc(listPayments:fromTimestamp:toTimestamp:resolve:reject:)
+    func listPayments(_ filter: String, fromTimestamp: Int64, toTimestamp: Int64, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            let filterTmp = try BreezSDKMapper.asPaymentTypeFilter(type: filter)
+            let fromTimestampTmp = fromTimestamp == 0 ? nil : fromTimestamp
+            let toTimestampTmp = toTimestamp == 0 ? nil : toTimestamp
+            var res = try getBreezServices().listPayments(filter: filterTmp, fromTimestamp: fromTimestampTmp, toTimestamp: toTimestampTmp)
+            resolve(BreezSDKMapper.arrayOf(paymentList: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(sweep:feeRateSatsPerVbyte:resolve:reject:)
+    func sweep(_ toAddress: String, feeRateSatsPerVbyte: UInt64, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            try getBreezServices().sweep(toAddress: toAddress, feeRateSatsPerVbyte: feeRateSatsPerVbyte)
+            resolve(["status": "ok"])
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(fetchFiatRates:reject:)
+    func fetchFiatRates(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            var res = try getBreezServices().fetchFiatRates()
+            resolve(BreezSDKMapper.arrayOf(rateList: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(listFiatCurrencies:reject:)
+    func listFiatCurrencies(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            var res = try getBreezServices().listFiatCurrencies()
+            resolve(BreezSDKMapper.arrayOf(fiatCurrencyList: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(listLsps:reject:)
+    func listLsps(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            var res = try getBreezServices().listLsps()
+            resolve(BreezSDKMapper.arrayOf(lspInformationList: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(connectLsp:resolve:reject:)
+    func connectLsp(_ lspId: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            try getBreezServices().connectLsp(lspId: lspId)
+            resolve(["status": "ok"])
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(fetchLspInfo:resolve:reject:)
+    func fetchLspInfo(_ lspId: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            var res = try getBreezServices().fetchLspInfo(lspId: lspId)
+            if res != nil {
+                resolve(BreezSDKMapper.dictionaryOf(lspInformation: res!))
+            } else {
+                resolve(nil)
+            }
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(openChannelFee:resolve:reject:)
+    func openChannelFee(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            let openChannelFeeRequest = try BreezSDKMapper.asOpenChannelFeeRequest(data: req)
+            var res = try getBreezServices().openChannelFee(req: openChannelFeeRequest)
+            resolve(BreezSDKMapper.dictionaryOf(openChannelFeeResponse: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(lspId:reject:)
+    func lspId(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            var res = try getBreezServices().lspId()
+            if res != nil {
+                resolve(res!)
+            } else {
+                resolve(nil)
+            }
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(lspInfo:reject:)
+    func lspInfo(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            var res = try getBreezServices().lspInfo()
+            resolve(BreezSDKMapper.dictionaryOf(lspInformation: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(closeLspChannels:reject:)
+    func closeLspChannels(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            try getBreezServices().closeLspChannels()
+            resolve(["status": "ok"])
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(receiveOnchain:resolve:reject:)
+    func receiveOnchain(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            let receiveOnchainRequest = try BreezSDKMapper.asReceiveOnchainRequest(data: req)
+            var res = try getBreezServices().receiveOnchain(req: receiveOnchainRequest)
+            resolve(BreezSDKMapper.dictionaryOf(swapInfo: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(inProgressSwap:reject:)
+    func inProgressSwap(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            var res = try getBreezServices().inProgressSwap()
+            if res != nil {
+                resolve(BreezSDKMapper.dictionaryOf(swapInfo: res!))
+            } else {
+                resolve(nil)
+            }
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(listRefundables:reject:)
+    func listRefundables(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            var res = try getBreezServices().listRefundables()
+            resolve(BreezSDKMapper.arrayOf(swapInfoList: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(refund:toAddress:satPerVbyte:resolve:reject:)
+    func refund(_ swapAddress: String, toAddress: String, satPerVbyte: UInt32, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            var res = try getBreezServices().refund(swapAddress: swapAddress, toAddress: toAddress, satPerVbyte: satPerVbyte)
+            resolve(res)
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(fetchReverseSwapFees:resolve:reject:)
+    func fetchReverseSwapFees(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            let reverseSwapFeesRequest = try BreezSDKMapper.asReverseSwapFeesRequest(data: req)
+            var res = try getBreezServices().fetchReverseSwapFees(req: reverseSwapFeesRequest)
+            resolve(BreezSDKMapper.dictionaryOf(reverseSwapPairInfo: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(inProgressReverseSwaps:reject:)
+    func inProgressReverseSwaps(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            var res = try getBreezServices().inProgressReverseSwaps()
+            resolve(BreezSDKMapper.arrayOf(reverseSwapInfoList: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(sendOnchain:onchainRecipientAddress:pairHash:satPerVbyte:resolve:reject:)
+    func sendOnchain(_ amountSat: UInt64, onchainRecipientAddress: String, pairHash: String, satPerVbyte: UInt64, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            var res = try getBreezServices().sendOnchain(amountSat: amountSat, onchainRecipientAddress: onchainRecipientAddress, pairHash: pairHash, satPerVbyte: satPerVbyte)
+            resolve(BreezSDKMapper.dictionaryOf(reverseSwapInfo: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(executeDevCommand:resolve:reject:)
+    func executeDevCommand(_ command: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            var res = try getBreezServices().executeDevCommand(command: command)
+            resolve(res)
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(sync:reject:)
+    func sync(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            try getBreezServices().sync()
+            resolve(["status": "ok"])
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(recommendedFees:reject:)
+    func recommendedFees(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            var res = try getBreezServices().recommendedFees()
+            resolve(BreezSDKMapper.dictionaryOf(recommendedFees: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(buyBitcoin:resolve:reject:)
+    func buyBitcoin(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            let buyBitcoinRequest = try BreezSDKMapper.asBuyBitcoinRequest(data: req)
+            var res = try getBreezServices().buyBitcoin(req: buyBitcoinRequest)
+            resolve(BreezSDKMapper.dictionaryOf(buyBitcoinResponse: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
     func rejectErr(err: Error, reject: @escaping RCTPromiseRejectBlock) {
         var errorCode = "Generic"
         var message = "\(err)"

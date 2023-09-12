@@ -10,6 +10,6 @@ class BreezSDKLogStream(private val emitter: RCTDeviceEventEmitter): LogStream {
     }
 
     override fun log(l: LogEntry) {
-        emitter.emit(emitterName, readableMapOf("line" to l.line, "level" to l.level))
+        emitter.emit(emitterName, readableMapOf(l))
     }
 }

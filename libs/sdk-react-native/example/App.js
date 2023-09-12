@@ -9,8 +9,6 @@
 import React, { useState } from "react"
 import { SafeAreaView, ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native"
 import {
-    addEventListener,
-    addLogListener,
     backup,
     backupStatus,
     buyBitcoin,
@@ -28,6 +26,7 @@ import {
     nodeInfo,
     openChannelFee,
     receivePayment,
+    setLogStream,
     signMessage
 } from "@breeztech/react-native-breez-sdk"
 import BuildConfig from "react-native-build-config"
@@ -56,21 +55,20 @@ const App = () => {
         console.log(`${title}${text && text.length > 0 ? ": " + text : ""}`)
     }
 
-    const logHandler = (l) => {
-        if (l.level != "TRACE") {
-            console.log(`[${l.level}]: ${l.line}`)
+    const logHandler = (logEntry) => {
+        if (logEntry.level != "TRACE") {
+            console.log(`[${logEntry.level}]: ${logEntry.line}`)
         }
     }
 
-    const eventHandler = (type, data) => {
-        addLine("event", `${type}${data ? " : " + JSON.stringify(data) : ""}`)
+    const eventHandler = (breezEvent) => {
+        addLine("event", JSON.stringify(breezEvent))
     }
 
     React.useEffect(() => {
         const asyncFn = async () => {
             try {
-                await addLogListener(logHandler)
-                addEventListener(eventHandler)
+                await setLogStream(logHandler)
 
                 let mnemonic = await getSecureItem(MNEMONIC_STORE)
 
@@ -90,7 +88,7 @@ const App = () => {
                 const config = await defaultConfig(EnvironmentType.PRODUCTION, BuildConfig.BREEZ_API_KEY, nodeConfig)
                 addLine("defaultConfig", JSON.stringify(config))
 
-                await connect(config, seed)
+                await connect(config, seed, eventHandler)
                 addLine("connect", null)
 
                 const nodeState = await nodeInfo()
