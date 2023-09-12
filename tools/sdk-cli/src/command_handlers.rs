@@ -65,17 +65,17 @@ pub(crate) async fn handle_command(
             Ok(format!("Environment was set to {:?}", env))
         }
         Commands::Connect {
-            device_cert,
-            device_key,
+            partner_cert,
+            partner_key,
             invite_code,
         } => {
             let mut config = persistence
                 .get_or_create_config()?
                 .to_sdk_config(&persistence.data_dir);
             let mut partner_credentials: Option<GreenlightCredentials> = None;
-            if device_cert.is_some() && device_key.is_some() {
-                let cert = fs::read(device_cert.unwrap())?;
-                let key = fs::read(device_key.unwrap())?;
+            if partner_cert.is_some() && partner_key.is_some() {
+                let cert = fs::read(partner_cert.unwrap())?;
+                let key = fs::read(partner_key.unwrap())?;
                 partner_credentials = Some(GreenlightCredentials {
                     device_cert: cert,
                     device_key: key,

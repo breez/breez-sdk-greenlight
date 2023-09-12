@@ -23,13 +23,13 @@ pub(crate) enum Commands {
     },
     /// Connect to the sdk services, make it operational
     Connect {
-        /// The optional greenlight device certifiate
-        #[clap(name = "device_cert", short = 'c', long = "device_cert")]
-        device_cert: Option<std::path::PathBuf>,
+        /// The optional file location containing the greenlight partner certificate
+        #[clap(name = "partner_cert", short = 'c', long = "partner_cert")]
+        partner_cert: Option<std::path::PathBuf>,
 
-        /// The optional greenlight device key
-        #[clap(name = "device_key", short = 'k', long = "device_key")]
-        device_key: Option<std::path::PathBuf>,
+        /// The optional file location containing the greenlight partner key
+        #[clap(name = "partner_key", short = 'k', long = "partner_key")]
+        partner_key: Option<std::path::PathBuf>,
 
         /// The optional greenlight invite code
         #[clap(name = "invite_code", short = 'i', long = "invite_code")]
