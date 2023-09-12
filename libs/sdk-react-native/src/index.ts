@@ -19,112 +19,26 @@ const BreezSDK = NativeModules.RNBreezSDK
 
 const BreezSDKEmitter = new NativeEventEmitter(BreezSDK)
 
-export enum EnvironmentType {
-    PRODUCTION = "production",
-    STAGING = "staging"
-}
-
-export enum EventType {
-    INVOICE_PAID = "invoicePaid",
-    NEW_BLOCK = "newBlock",
-    PAYMENT_SUCCEED = "paymentSucceed",
-    PAYMENT_FAILED = "paymentFailed",
-    SYNCED = "synced",
-    BACKUP_STARTED = "backupStarted",
-    BACKUP_SUCCEEDED = "backupSucceeded",
-    BACKUP_FAILED = "backupFailed"
-}
-
-export enum InputType {
-    BITCOIN_ADDRESS = "bitcoinAddress",
-    BOLT11 = "bolt11",
-    LNURL_AUTH = "lnUrlAuth",
-    LNURL_ERROR = "lnUrlError",
-    LNURL_PAY = "lnUrlPay",
-    LNURL_WITHDRAW = "lnUrlWithdraw",
-    NODE_ID = "nodeId",
-    URL = "url"
-}
-
-export enum LnUrlPayResultType {
-    ENDPOINT_SUCCESS = "endpointSuccess",
-    ENDPOINT_ERROR = "endpointError"
-}
-
-export enum PaymentType {
-    SEND = "send",
-    RECEIVED = "received",
-    CLOSED_CHANNEL = "closed_channel"
-}
-
-export enum PaymentDetailType {
-    LN = "ln",
-    CLOSED_CHANNEL = "closed_channel"
-}
-
-export enum PaymentTypeFilter {
-    SENT = "sent",
-    RECEIVED = "received",
-    ALL = "all"
-}
-
-export enum Network {
-    BITCOIN = "bitcoin",
-    REGTEST = "regtest",
-    SIGNET = "signet",
-    TESTNET = "testnet"
-}
-
-export enum SuccessActionDataType {
-    AES = "aes",
-    MESSAGE = "message",
-    URL = "url"
-}
-
-export enum SwapStatus {
-    INITIAL = "initial",
-    EXPIRED = "expired"
-}
-
-export enum BuyBitcoinProvider {
-    MOONPAY = "moonpay"
-}
-
-export type OpeningFeeParams = {
-    minMsat: number
-    proportional: number
-    validUntil: string
-    maxIdleTime: number
-    maxClientToSelfDelay: number
-    promise: string
-}
-
-export type OpeningFeeParamsMenu = {
-    values: OpeningFeeParams[]
-}
-
-export type ReverseSwapFeesRequest = {
-    sendAmountSat?: number
-}
-
-export type ReceivePaymentRequest = {
-    amountSats: number
+export type AesSuccessActionDataDecrypted = {
     description: string
-    preimage?: Uint8Array | number[]
-    openingFeeParams?: OpeningFeeParams
-    useDescriptionHash?: boolean
-    expiry?: number
-    cltv?: number
+    plaintext: string
 }
 
-export type ReceivePaymentResponse = {
-    lnInvoice: LnInvoice
-    openingFeeParams?: OpeningFeeParams
-    openingFeeMsat?: number
+export type BackupFailedData = {
+    error: string
 }
 
-export type ReceiveOnchainRequest = {
-    openingFeeParams?: OpeningFeeParams
+export type BackupStatus = {
+    backedUp: boolean
+    lastBackupTime?: number
+}
+
+export type BitcoinAddressData = {
+    address: string
+    network: Network
+    amountSat?: number
+    label?: string
+    message?: string
 }
 
 export type BuyBitcoinRequest = {
@@ -137,40 +51,20 @@ export type BuyBitcoinResponse = {
     openingFeeParams?: OpeningFeeParams
 }
 
-export enum ReverseSwapStatus {
-    INITIAL = "initial",
-    IN_PROGRESS = "in_progress",
-    CANCELLED = "cancelled",
-    COMPLETED_SEEN = "completed_seen",
-    COMPLETED_CONFIRMED = "completed_confirmed"
+export type CheckMessageRequest = {
+    message: string
+    pubkey: string
+    signature: string
 }
 
-export type AesSuccessActionDataDecrypted = {
-    type: string
-    description: string
-    plaintext: string
+export type CheckMessageResponse = {
+    isValid: boolean
 }
 
-export type BitcoinAddressData = {
-    address: string
-    network: Network
-    amountSat?: number
-    label?: string
-    message?: string
-}
-
-export enum NodeConfigType {
-    GREENLIGHT = "greenlight"
-}
-
-export type GreenlightNodeConfig = {
-    partnerCredentials?: GreenlightCredentials
-    inviteCode?: string
-}
-
-export type NodeConfig = {
-    type: NodeConfigType
-    config: GreenlightNodeConfig
+export type ClosedChannelPaymentDetails = {
+    shortChannelId: string
+    state: ChannelState
+    fundingTxid: string
 }
 
 export type Config = {
@@ -186,29 +80,14 @@ export type Config = {
     nodeConfig: NodeConfig
 }
 
-export type ClosedChannelPaymentDetails = {
-    shortChannelId: string
-    state: string
-    fundingTxid: string
-}
-
 export type CurrencyInfo = {
     name: string
     fractionSize: number
-    spacing: number
-    symbol?: Symbol
-    uniqSymbol?: Symbol
+    spacing?: number
+    symbol?: SymbolType
+    uniqSymbol?: SymbolType
     localizedName?: LocalizedName[]
     localeOverrides?: LocaleOverrides[]
-}
-
-export type EventData = InvoicePaidDetails | Payment | number | PaymentFailedData | BackupFailedData
-
-export type EventFn = (type: EventType, data?: EventData) => void
-
-export type GreenlightCredentials = {
-    deviceKey: Uint8Array | number[]
-    deviceCert: Uint8Array | number[]
 }
 
 export type FiatCurrency = {
@@ -216,24 +95,19 @@ export type FiatCurrency = {
     info: CurrencyInfo
 }
 
-export type InputResponse = {
-    type: InputType
-    data: BitcoinAddressData | LnInvoice | LnUrlAuthRequestData | LnUrlErrorData | LnUrlPayRequestData | LnUrlWithdrawRequestData | NodeId | Url
+export type GreenlightCredentials = {
+    deviceKey: number[]
+    deviceCert: number[]
+}
+
+export type GreenlightNodeConfig = {
+    partnerCredentials?: GreenlightCredentials
+    inviteCode?: string
 }
 
 export type InvoicePaidDetails = {
     paymentHash: string
     bolt11: string
-}
-
-export type PaymentFailedData = {
-    error: string
-    invoice?: LnInvoice
-    nodeId: string
-}
-
-export type BackupFailedData = {
-    error: string
 }
 
 export type LnInvoice = {
@@ -246,15 +120,8 @@ export type LnInvoice = {
     timestamp: number
     expiry: number
     routingHints: RouteHint[]
-    paymentSecret?: Uint8Array
+    paymentSecret: number[]
 }
-
-export type LogEntry = {
-    line: string
-    level: string
-}
-
-export type LogEntryFn = (l: LogEntry) => void
 
 export type LnPaymentDetails = {
     paymentHash: string
@@ -263,7 +130,7 @@ export type LnPaymentDetails = {
     paymentPreimage: string
     keysend: boolean
     bolt11: string
-    lnurlSuccessAction?: AesSuccessActionDataDecrypted | MessageSuccessActionData | UrlSuccessActionData
+    lnurlSuccessAction?: SuccessActionProcessed
     lnurlMetadata?: string
     lnAddress?: string
 }
@@ -273,11 +140,6 @@ export type LnUrlAuthRequestData = {
     action?: string
     domain: string
     url: string
-}
-
-export type LnUrlCallbackStatus = {
-    status: string
-    reason?: string
 }
 
 export type LnUrlErrorData = {
@@ -294,11 +156,6 @@ export type LnUrlPayRequestData = {
     lnAddress?: string
 }
 
-export type LnUrlPayResult = {
-    type: LnUrlPayResultType
-    data?: AesSuccessActionDataDecrypted | LnUrlErrorData | MessageSuccessActionData | UrlSuccessActionData
-}
-
 export type LnUrlWithdrawRequestData = {
     callback: string
     k1: string
@@ -310,12 +167,17 @@ export type LnUrlWithdrawRequestData = {
 export type LocaleOverrides = {
     locale: string
     spacing?: number
-    symbol: Symbol
+    symbol: SymbolType
 }
 
 export type LocalizedName = {
     locale: string
     name: string
+}
+
+export type LogEntry = {
+    line: string
+    level: string
 }
 
 export type LspInformation = {
@@ -330,16 +192,18 @@ export type LspInformation = {
     feeRate: number
     timeLockDelta: number
     minHtlcMsat: number
-    lspPubkey: Uint8Array
+    lspPubkey: number[]
     openingFeeParamsList: OpeningFeeParamsMenu
 }
 
 export type MessageSuccessActionData = {
-    type: string
     message: string
 }
 
-export type NodeId = string
+export type MetadataItem = {
+    key: string
+    value: string
+}
 
 export type NodeState = {
     id: string
@@ -365,6 +229,19 @@ export type OpenChannelFeeResponse = {
     usedFeeParams?: OpeningFeeParams
 }
 
+export type OpeningFeeParams = {
+    minMsat: number
+    proportional: number
+    validUntil: string
+    maxIdleTime: number
+    maxClientToSelfDelay: number
+    promise: string
+}
+
+export type OpeningFeeParamsMenu = {
+    values: OpeningFeeParams[]
+}
+
 export type Payment = {
     id: string
     paymentType: PaymentType
@@ -373,12 +250,38 @@ export type Payment = {
     feeMsat: number
     pending: boolean
     description?: string
-    details: LnPaymentDetails | ClosedChannelPaymentDetails
+    details: PaymentDetails
+}
+
+export type PaymentFailedData = {
+    error: string
+    nodeId: string
+    invoice?: LnInvoice
 }
 
 export type Rate = {
     coin: string
     value: number
+}
+
+export type ReceiveOnchainRequest = {
+    openingFeeParams?: OpeningFeeParams
+}
+
+export type ReceivePaymentRequest = {
+    amountSats: number
+    description: string
+    preimage?: number[]
+    openingFeeParams?: OpeningFeeParams
+    useDescriptionHash?: boolean
+    expiry?: number
+    cltv?: number
+}
+
+export type ReceivePaymentResponse = {
+    lnInvoice: LnInvoice
+    openingFeeParams?: OpeningFeeParams
+    openingFeeMsat?: number
 }
 
 export type RecommendedFees = {
@@ -389,30 +292,59 @@ export type RecommendedFees = {
     minimumFee: number
 }
 
-export type RouteHint = {
-    hops: RouteHintHops[]
+export type ReverseSwapFeesRequest = {
+    sendAmountSat?: number
 }
 
-export type RouteHintHops = {
+export type ReverseSwapInfo = {
+    id: string
+    claimPubkey: string
+    onchainAmountSat: number
+    status: ReverseSwapStatus
+}
+
+export type ReverseSwapPairInfo = {
+    min: number
+    max: number
+    feesHash: string
+    feesPercentage: number
+    feesLockup: number
+    feesClaim: number
+    totalEstimatedFees?: number
+}
+
+export type RouteHint = {
+    hops: RouteHintHop[]
+}
+
+export type RouteHintHop = {
     srcNodeId: string
     shortChannelId: number
     feesBaseMsat: number
     feesProportionalMillionths: number
     cltvExpiryDelta: number
     htlcMinimumMsat?: number
-    htlcMaximumMsat: number
+    htlcMaximumMsat?: number
+}
+
+export type SignMessageRequest = {
+    message: string
+}
+
+export type SignMessageResponse = {
+    signature: string
 }
 
 export type SwapInfo = {
     bitcoinAddress: string
     createdAt: number
     lockHeight: number
-    paymentHash: Uint8Array
-    preimage: Uint8Array
-    privateKey: Uint8Array
-    publicKey: Uint8Array
-    swapperPublicKey: Uint8Array
-    script: Uint8Array
+    paymentHash: number[]
+    preimage: number[]
+    privateKey: number[]
+    publicKey: number[]
+    swapperPublicKey: number[]
+    script: number[]
     bolt11?: string
     paidSats: number
     unconfirmedSats: number
@@ -427,40 +359,15 @@ export type SwapInfo = {
     channelOpeningFees?: OpeningFeeParams
 }
 
-export type ReverseSwapPairInfo = {
-    min: number
-    max: number
-    feesHash: string
-    feesPercentage: number
-    feesLockup: number
-    feesClaim: number
-    totalEstimatedFees?: number
-}
-
-export type ReverseSwapInfo = {
-    id: string
-    claimPubkey: string
-    onchainAmountSat: number
-    status: ReverseSwapStatus
-}
-
-export type Symbol = {
+export type SymbolType = {
     grapheme?: string
     template?: string
     rtl?: boolean
     position?: number
 }
 
-export type Url = string
-
-export type UrlSuccessActionData = {
-    type: string
-    description: string
-    url: string
-}
-
 export type UnspentTransactionOutput = {
-    txid: Uint8Array
+    txid: number[]
     outnum: number
     amountMillisatoshi: number
     address: string
@@ -468,140 +375,239 @@ export type UnspentTransactionOutput = {
     reservedToBlock: number
 }
 
-export type BackupStatus = {
-    backedUp: boolean
-    lastBackupTime?: number
+export type UrlSuccessActionData = {
+    description: string
+    url: string
 }
 
-export type SignMessageRequest = {
-    message: string
+export enum BreezEventVariant {
+    NEW_BLOCK = "newBlock",
+    INVOICE_PAID = "invoicePaid",
+    SYNCED = "synced",
+    PAYMENT_SUCCEED = "paymentSucceed",
+    PAYMENT_FAILED = "paymentFailed",
+    BACKUP_STARTED = "backupStarted",
+    BACKUP_SUCCEEDED = "backupSucceeded",
+    BACKUP_FAILED = "backupFailed"
 }
 
-export type SignMessageResponse = {
-    signature: string
+export type BreezEvent = {
+    type: BreezEventVariant.NEW_BLOCK,
+    block: number
+} | {
+    type: BreezEventVariant.INVOICE_PAID,
+    details: InvoicePaidDetails
+} | {
+    type: BreezEventVariant.SYNCED
+} | {
+    type: BreezEventVariant.PAYMENT_SUCCEED,
+    details: Payment
+} | {
+    type: BreezEventVariant.PAYMENT_FAILED,
+    details: PaymentFailedData
+} | {
+    type: BreezEventVariant.BACKUP_STARTED
+} | {
+    type: BreezEventVariant.BACKUP_SUCCEEDED
+} | {
+    type: BreezEventVariant.BACKUP_FAILED,
+    details: BackupFailedData
 }
 
-export type CheckMessageRequest = {
-    message: string
-    pubkey: string
-    signature: string
+export enum BuyBitcoinProvider {
+    MOONPAY = "moonpay"
 }
 
-export type CheckMessageResponse = {
-    isValid: boolean
+export enum ChannelState {
+    PENDING_OPEN = "pendingOpen",
+    OPENED = "opened",
+    PENDING_CLOSE = "pendingClose",
+    CLOSED = "closed"
 }
 
-const processEvent = (eventFn: EventFn) => {
-    return (event: any) => {
-        switch (event.type) {
-            case EventType.INVOICE_PAID:
-                return eventFn(EventType.INVOICE_PAID, event.data as InvoicePaidDetails)
-            case EventType.NEW_BLOCK:
-                return eventFn(EventType.NEW_BLOCK, event.data)
-            case EventType.PAYMENT_FAILED:
-                return eventFn(EventType.PAYMENT_FAILED, event.data as PaymentFailedData)
-            case EventType.PAYMENT_SUCCEED:
-                const payment = event.data as Payment
-
-                switch (event.data.details.type) {
-                    case PaymentDetailType.CLOSED_CHANNEL:
-                        payment.details = event.data.details as ClosedChannelPaymentDetails
-                        break
-                    case PaymentDetailType.LN:
-                        payment.details = event.data.details as LnPaymentDetails
-                        payment.details.lnurlSuccessAction = processSuccessActionProcessed(event.data.details.lnurlSuccessAction)
-                        break
-                }
-
-                return eventFn(EventType.PAYMENT_SUCCEED, payment)
-            case EventType.SYNCED:
-                return eventFn(EventType.SYNCED)
-            case EventType.BACKUP_STARTED:
-                return eventFn(EventType.BACKUP_STARTED)
-            case EventType.BACKUP_SUCCEEDED:
-                return eventFn(EventType.BACKUP_SUCCEEDED)
-            case EventType.BACKUP_FAILED:
-                return eventFn(EventType.BACKUP_FAILED, event.data as BackupFailedData)
-        }
-    }
+export enum EnvironmentType {
+    PRODUCTION = "production",
+    STAGING = "staging"
 }
 
-const processSuccessActionProcessed = (data: any): AesSuccessActionDataDecrypted | MessageSuccessActionData | UrlSuccessActionData | undefined => {
-    switch (data.type) {
-        case SuccessActionDataType.AES:
-            return data as AesSuccessActionDataDecrypted
-        case SuccessActionDataType.MESSAGE:
-            return data as MessageSuccessActionData
-        case SuccessActionDataType.URL:
-            return data as UrlSuccessActionData
-    }
-
-    return
+export enum FeeratePreset {
+    REGULAR = "regular",
+    ECONOMY = "economy",
+    PRIORITY = "priority"
 }
 
-const prepareNodeConfig = (nodeConfig: NodeConfig): NodeConfig => {
-    switch (nodeConfig.type) {
-        case NodeConfigType.GREENLIGHT:
-            const partnerCredentials = nodeConfig.config.partnerCredentials
-
-            if (partnerCredentials) {
-                nodeConfig.config.partnerCredentials = {
-                    deviceCert: Array.from(partnerCredentials.deviceCert),
-                    deviceKey: Array.from(partnerCredentials.deviceKey)
-                }
-            }
-    }
-
-    return nodeConfig
+export enum InputTypeVariant {
+    BITCOIN_ADDRESS = "bitcoinAddress",
+    BOLT11 = "bolt11",
+    NODE_ID = "nodeId",
+    URL = "url",
+    LN_URL_PAY = "lnUrlPay",
+    LN_URL_WITHDRAW = "lnUrlWithdraw",
+    LN_URL_AUTH = "lnUrlAuth",
+    LN_URL_ERROR = "lnUrlError"
 }
 
-export const addEventListener = (eventFn: EventFn): EmitterSubscription => {
-    return BreezSDKEmitter.addListener("breezSdkEvent", processEvent(eventFn))
+export type InputType = {
+    type: InputTypeVariant.BITCOIN_ADDRESS,
+    address: BitcoinAddressData
+} | {
+    type: InputTypeVariant.BOLT11,
+    invoice: LnInvoice
+} | {
+    type: InputTypeVariant.NODE_ID,
+    nodeId: string
+} | {
+    type: InputTypeVariant.URL,
+    url: string
+} | {
+    type: InputTypeVariant.LN_URL_PAY,
+    data: LnUrlPayRequestData
+} | {
+    type: InputTypeVariant.LN_URL_WITHDRAW,
+    data: LnUrlWithdrawRequestData
+} | {
+    type: InputTypeVariant.LN_URL_AUTH,
+    data: LnUrlAuthRequestData
+} | {
+    type: InputTypeVariant.LN_URL_ERROR,
+    data: LnUrlErrorData
 }
 
-export const addLogListener = async (logEntryFn: LogEntryFn): Promise<EmitterSubscription> => {
-    const subscription = BreezSDKEmitter.addListener("breezSdkLog", logEntryFn)
+export enum LnUrlCallbackStatusVariant {
+    OK = "ok",
+    ERROR_STATUS = "errorStatus"
+}
 
-    await BreezSDK.startLogStream()
+export type LnUrlCallbackStatus = {
+    type: LnUrlCallbackStatusVariant.OK
+} | {
+    type: LnUrlCallbackStatusVariant.ERROR_STATUS,
+    data: LnUrlErrorData
+}
+
+export enum LnUrlPayResultVariant {
+    ENDPOINT_SUCCESS = "endpointSuccess",
+    ENDPOINT_ERROR = "endpointError"
+}
+
+export type LnUrlPayResult = {
+    type: LnUrlPayResultVariant.ENDPOINT_SUCCESS,
+    data?: SuccessActionProcessed
+} | {
+    type: LnUrlPayResultVariant.ENDPOINT_ERROR,
+    data: LnUrlErrorData
+}
+
+export enum Network {
+    BITCOIN = "bitcoin",
+    TESTNET = "testnet",
+    SIGNET = "signet",
+    REGTEST = "regtest"
+}
+
+export enum NodeConfigVariant {
+    GREENLIGHT = "greenlight"
+}
+
+export type NodeConfig = {
+    type: NodeConfigVariant.GREENLIGHT,
+    config: GreenlightNodeConfig
+}
+
+export enum PaymentDetailsVariant {
+    LN = "ln",
+    CLOSED_CHANNEL = "closedChannel"
+}
+
+export type PaymentDetails = {
+    type: PaymentDetailsVariant.LN,
+    data: LnPaymentDetails
+} | {
+    type: PaymentDetailsVariant.CLOSED_CHANNEL,
+    data: ClosedChannelPaymentDetails
+}
+
+export enum PaymentType {
+    SENT = "sent",
+    RECEIVED = "received",
+    CLOSED_CHANNEL = "closedChannel"
+}
+
+export enum PaymentTypeFilter {
+    SENT = "sent",
+    RECEIVED = "received",
+    ALL = "all"
+}
+
+export enum ReverseSwapStatus {
+    INITIAL = "initial",
+    IN_PROGRESS = "inProgress",
+    CANCELLED = "cancelled",
+    COMPLETED_SEEN = "completedSeen",
+    COMPLETED_CONFIRMED = "completedConfirmed"
+}
+
+export enum SuccessActionProcessedVariant {
+    AES = "aes",
+    MESSAGE = "message",
+    URL = "url"
+}
+
+export type SuccessActionProcessed = {
+    type: SuccessActionProcessedVariant.AES,
+    data: AesSuccessActionDataDecrypted
+} | {
+    type: SuccessActionProcessedVariant.MESSAGE,
+    data: MessageSuccessActionData
+} | {
+    type: SuccessActionProcessedVariant.URL,
+    data: UrlSuccessActionData
+}
+
+export enum SwapStatus {
+    INITIAL = "initial",
+    EXPIRED = "expired"
+}
+export type EventListener = (breezEvent: BreezEvent) => void
+
+export type LogStream = (logEntry: LogEntry) => void
+
+export const connect = async (config: Config, seed: number[], listener: EventListener): Promise<EmitterSubscription> => {
+    const subscription = BreezSDKEmitter.addListener("breezSdkEvent", listener)
+    
+    await BreezSDK.connect(config, seed)
 
     return subscription
 }
 
-export const mnemonicToSeed = async (phrase: string): Promise<Uint8Array> => {
-    return BreezSDK.mnemonicToSeed(phrase)
-}
+export const setLogStream = async (logStream: LogStream): Promise<EmitterSubscription> => {
+    const subscription = BreezSDKEmitter.addListener("breezSdkLog", logStream)
 
-export const parseInput = async (input: string): Promise<InputResponse> => {
-    const response = await BreezSDK.parseInput(input)
-    return response as InputResponse
+    await BreezSDK.setLogStream()
+
+    return subscription
 }
 
 export const parseInvoice = async (invoice: string): Promise<LnInvoice> => {
     const response = await BreezSDK.parseInvoice(invoice)
-    return response as LnInvoice
+    return response
+}
+
+export const parseInput = async (s: string): Promise<InputType> => {
+    const response = await BreezSDK.parseInput(s)
+    return response
+}
+
+export const mnemonicToSeed = async (phrase: string): Promise<number[]> => {
+    const response = await BreezSDK.mnemonicToSeed(phrase)
+    return response
 }
 
 export const defaultConfig = async (envType: EnvironmentType, apiKey: string, nodeConfig: NodeConfig): Promise<Config> => {
-    const response = await BreezSDK.defaultConfig(envType, apiKey, prepareNodeConfig(nodeConfig))
-    return response as Config
+    const response = await BreezSDK.defaultConfig(envType, apiKey, nodeConfig)
+    return response
 }
 
-export const connect = async (config: Config, seed: Uint8Array): Promise<void> => {
-    config.nodeConfig = prepareNodeConfig(config.nodeConfig)
-    await BreezSDK.connect(config, seed)
-}
-
-export const signMessage = async (request: SignMessageRequest): Promise<SignMessageResponse> => {
-    return await BreezSDK.signMessage(request)
-}
-
-export const checkMessage = async (request: CheckMessageRequest): Promise<CheckMessageResponse> => {
-    return await BreezSDK.checkMessage(request)
-}
-
-export const sync = async (): Promise<void> => {
-    await BreezSDK.sync()
-}
 
 export const disconnect = async (): Promise<void> => {
     await BreezSDK.disconnect()
@@ -609,53 +615,66 @@ export const disconnect = async (): Promise<void> => {
 
 export const sendPayment = async (bolt11: string, amountSats: number = 0): Promise<Payment> => {
     const response = await BreezSDK.sendPayment(bolt11, amountSats)
-    return response as Payment
+    return response
 }
 
 export const sendSpontaneousPayment = async (nodeId: string, amountSats: number): Promise<Payment> => {
     const response = await BreezSDK.sendSpontaneousPayment(nodeId, amountSats)
-    return response as Payment
+    return response
 }
 
 export const receivePayment = async (reqData: ReceivePaymentRequest): Promise<ReceivePaymentResponse> => {
-    return await BreezSDK.receivePayment({
-        ...reqData,
-        preimage: reqData.preimage && Array.from(reqData.preimage)
-    })
-}
-
-export const lnurlAuth = async (reqData: LnUrlAuthRequestData): Promise<LnUrlCallbackStatus> => {
-    const response = await BreezSDK.lnurlAuth(reqData)
-    return response as LnUrlCallbackStatus
+    const response = await BreezSDK.receivePayment(reqData)
+    return response
 }
 
 export const payLnurl = async (reqData: LnUrlPayRequestData, amountSats: number, comment: string = ""): Promise<LnUrlPayResult> => {
     const response = await BreezSDK.payLnurl(reqData, amountSats, comment)
-    return response as LnUrlPayResult
+    return response
 }
 
-export const withdrawLnurl = async (
-    reqData: LnUrlWithdrawRequestData,
-    amountSats: number,
-    description: string = ""
-): Promise<LnUrlCallbackStatus> => {
+export const withdrawLnurl = async (reqData: LnUrlWithdrawRequestData, amountSats: number, description: string = ""): Promise<LnUrlCallbackStatus> => {
     const response = await BreezSDK.withdrawLnurl(reqData, amountSats, description)
-    return response as LnUrlCallbackStatus
+    return response
+}
+
+export const lnurlAuth = async (reqData: LnUrlAuthRequestData): Promise<LnUrlCallbackStatus> => {
+    const response = await BreezSDK.lnurlAuth(reqData)
+    return response
 }
 
 export const nodeInfo = async (): Promise<NodeState> => {
     const response = await BreezSDK.nodeInfo()
-    return response as NodeState
+    return response
 }
 
-export const paymentByHash = async (hash: string): Promise<Payment> => {
+export const signMessage = async (request: SignMessageRequest): Promise<SignMessageResponse> => {
+    const response = await BreezSDK.signMessage(request)
+    return response
+}
+
+export const checkMessage = async (request: CheckMessageRequest): Promise<CheckMessageResponse> => {
+    const response = await BreezSDK.checkMessage(request)
+    return response
+}
+
+export const backupStatus = async (): Promise<BackupStatus> => {
+    const response = await BreezSDK.backupStatus()
+    return response
+}
+
+export const backup = async (): Promise<void> => {
+    await BreezSDK.backup()
+}
+
+export const paymentByHash = async (hash: string): Promise<Payment | null> => {
     const response = await BreezSDK.paymentByHash(hash)
-    return response as Payment
+    return response
 }
 
 export const listPayments = async (filter: PaymentTypeFilter, fromTimestamp: number = 0, toTimestamp: number = 0): Promise<Payment[]> => {
     const response = await BreezSDK.listPayments(filter, fromTimestamp, toTimestamp)
-    return response as Payment[]
+    return response
 }
 
 export const sweep = async (toAddress: string, feeRateSatsPerVbyte: number): Promise<void> => {
@@ -664,29 +683,34 @@ export const sweep = async (toAddress: string, feeRateSatsPerVbyte: number): Pro
 
 export const fetchFiatRates = async (): Promise<Rate[]> => {
     const response = await BreezSDK.fetchFiatRates()
-    return response as Rate[]
+    return response
 }
 
 export const listFiatCurrencies = async (): Promise<FiatCurrency[]> => {
     const response = await BreezSDK.listFiatCurrencies()
-    return response as FiatCurrency[]
+    return response
 }
 
 export const listLsps = async (): Promise<LspInformation[]> => {
     const response = await BreezSDK.listLsps()
-    return response as LspInformation[]
+    return response
 }
 
 export const connectLsp = async (lspId: string): Promise<void> => {
     await BreezSDK.connectLsp(lspId)
 }
 
-export const fetchLspInfo = async (lspId: string): Promise<LspInformation> => {
+export const fetchLspInfo = async (lspId: string): Promise<LspInformation | null> => {
     const response = await BreezSDK.fetchLspInfo(lspId)
-    return response as LspInformation
+    return response
 }
 
-export const lspId = async (): Promise<string> => {
+export const openChannelFee = async (req: OpenChannelFeeRequest): Promise<OpenChannelFeeResponse> => {
+    const response = await BreezSDK.openChannelFee(req)
+    return response
+}
+
+export const lspId = async (): Promise<string | null> => {
     const response = await BreezSDK.lspId()
     return response
 }
@@ -701,21 +725,17 @@ export const closeLspChannels = async (): Promise<void> => {
 }
 
 export const receiveOnchain = async (req: ReceiveOnchainRequest): Promise<SwapInfo> => {
-    return await BreezSDK.receiveOnchain(req)
+    const response = await BreezSDK.receiveOnchain(req)
+    return response
 }
 
-export const inProgressSwap = async (): Promise<SwapInfo> => {
+export const inProgressSwap = async (): Promise<SwapInfo | null> => {
     const response = await BreezSDK.inProgressSwap()
-    return response as SwapInfo
+    return response
 }
 
 export const listRefundables = async (): Promise<SwapInfo[]> => {
     const response = await BreezSDK.listRefundables()
-    return response as SwapInfo[]
-}
-
-export const openChannelFee = async (req: OpenChannelFeeRequest): Promise<OpenChannelFeeResponse> => {
-    const response = await BreezSDK.openChannelFee(req)
     return response
 }
 
@@ -726,22 +746,17 @@ export const refund = async (swapAddress: string, toAddress: string, satPerVbyte
 
 export const fetchReverseSwapFees = async (req: ReverseSwapFeesRequest): Promise<ReverseSwapPairInfo> => {
     const response = await BreezSDK.fetchReverseSwapFees(req)
-    return response as ReverseSwapPairInfo
+    return response
 }
 
 export const inProgressReverseSwaps = async (): Promise<ReverseSwapInfo[]> => {
     const response = await BreezSDK.inProgressReverseSwaps()
-    return response as ReverseSwapInfo[]
+    return response
 }
 
-export const sendOnchain = async (
-    amountSat: number,
-    onchainRecipientAddress: string,
-    pairHash: string,
-    satPerVbyte: number
-): Promise<ReverseSwapInfo> => {
+export const sendOnchain = async (amountSat: number, onchainRecipientAddress: string, pairHash: string, satPerVbyte: number): Promise<ReverseSwapInfo> => {
     const response = await BreezSDK.sendOnchain(amountSat, onchainRecipientAddress, pairHash, satPerVbyte)
-    return response as ReverseSwapInfo
+    return response
 }
 
 export const executeDevCommand = async (command: string): Promise<string> => {
@@ -749,20 +764,16 @@ export const executeDevCommand = async (command: string): Promise<string> => {
     return response
 }
 
+export const sync = async (): Promise<void> => {
+    await BreezSDK.sync()
+}
+
 export const recommendedFees = async (): Promise<RecommendedFees> => {
     const response = await BreezSDK.recommendedFees()
-    return response as RecommendedFees
+    return response
 }
 
 export const buyBitcoin = async (req: BuyBitcoinRequest): Promise<BuyBitcoinResponse> => {
-    return await BreezSDK.buyBitcoin(req)
-}
-
-export const backup = async (): Promise<void> => {
-    await BreezSDK.backup()
-}
-
-export const backupStatus = async (): Promise<BackupStatus> => {
-    const response = await BreezSDK.backupStatus()
+    const response = await BreezSDK.buyBitcoin(req)
     return response
 }
