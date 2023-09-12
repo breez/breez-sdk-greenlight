@@ -221,6 +221,7 @@ impl BreezServices {
 
     /// Pay a bolt11 invoice
     ///
+    /// Calling `send_payment` ensures that the payment is not already completed, if so it will result in an error. 
     /// If the invoice doesn't specify an amount, the amount is taken from the `amount_sats` arg.
     ///
     /// # Arguments
@@ -230,16 +231,24 @@ impl BreezServices {
     pub async fn send_payment(&self, bolt11: String, amount_sats: Option<u64>) -> Result<Payment> {
         self.start_node().await?;
         let parsed_invoice = parse_invoice(bolt11.as_str())?;
-        let payment_res = self
-            .node_api
-            .send_payment(bolt11.clone(), amount_sats)
-            .await;
-        self.on_payment_completed(
-            parsed_invoice.payee_pubkey.clone(),
-            Some(parsed_invoice),
-            payment_res,
-        )
-        .await
+        match self
+            .persister
+            .get_completed_payment_by_hash(&parsed_invoice.payment_hash)?
+        {
+            Some(_) => Err(anyhow!("Invoice already paid")),
+            None => {
+                let payment_res = self
+                    .node_api
+                    .send_payment(bolt11.clone(), amount_sats)
+                    .await;
+                self.on_payment_completed(
+                    parsed_invoice.payee_pubkey.clone(),
+                    Some(parsed_invoice),
+                    payment_res,
+                )
+                .await
+            }
+        }
     }
 
     /// Pay directly to a node id using keysend
