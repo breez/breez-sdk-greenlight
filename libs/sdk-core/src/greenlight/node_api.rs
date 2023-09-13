@@ -19,6 +19,7 @@ use gl_client::pb::cln::{
 use gl_client::pb::cln::{AmountOrAny, InvoiceRequest};
 use gl_client::pb::{Amount, InvoiceStatus, OffChainPayment, PayStatus, Peer, WithdrawResponse};
 
+use gl_client::pb::cln::listpeers_peers_channels::ListpeersPeersChannelsState::*;
 use gl_client::scheduler::Scheduler;
 use gl_client::signer::Signer;
 use gl_client::tls::TlsConfig;
@@ -264,11 +265,16 @@ impl Greenlight {
 
     async fn fetch_channels_and_balance(
         &self,
-    ) -> Result<(Vec<pb::Channel>, Vec<pb::Channel>, Vec<String>, u64)> {
-        let mut client = self.get_client().await?;
+    ) -> Result<(
+        Vec<cln::ListpeersPeersChannels>,
+        Vec<cln::ListpeersPeersChannels>,
+        Vec<String>,
+        u64,
+    )> {
+        let mut cln_client = self.get_node_client().await?;
         // list all peers
-        let peers = client
-            .list_peers(pb::ListPeersRequest::default())
+        let peers = cln_client
+            .list_peers(cln::ListpeersRequest::default())
             .await?
             .into_inner();
 
@@ -279,25 +285,24 @@ impl Greenlight {
             .filter(|p| p.connected)
             .map(|p| hex::encode(p.id.clone()))
             .collect();
-        let mut all_channels: Vec<pb::Channel> = vec![];
+        let mut all_channels: Vec<cln::ListpeersPeersChannels> = vec![];
         peers.peers.iter().for_each(|p| {
             let peer_channels = &mut p.channels.clone();
             all_channels.append(peer_channels);
         });
 
         // filter only opened channels
-        let opened_channels: Vec<pb::Channel> = all_channels
+        let opened_channels: Vec<cln::ListpeersPeersChannels> = all_channels
             .iter()
             .cloned()
-            .filter(|c| c.state == *"CHANNELD_NORMAL")
+            .filter(|c| c.state() == ChanneldNormal)
             .collect();
 
         // calculate channels balance only from opened channels
         let channels_balance = opened_channels
             .iter()
-            .map(|c: &pb::Channel| {
-                amount_to_msat(&parse_amount(c.spendable.clone()).unwrap_or_default())
-            })
+            .map(|c| Channel::from(c.clone()))
+            .map(|c| c.spendable_msat)
             .sum::<u64>();
         Ok((
             all_channels,
@@ -403,9 +408,10 @@ impl NodeAPI for Greenlight {
 
         let forgotten_closed_channels: Result<Vec<Channel>> = closed_channels
             .into_iter()
-            .filter(|c| {
-                let hex_txid = hex::encode(c.funding_txid.clone());
-                all_channels.iter().all(|c| c.funding_txid != hex_txid)
+            .filter(|cc| {
+                all_channels
+                    .iter()
+                    .all(|ac| ac.funding_txid != Some(cc.funding_txid.clone()))
             })
             .map(TryInto::try_into)
             .collect();
@@ -450,8 +456,16 @@ impl NodeAPI for Greenlight {
         let mut max_payable: u64 = 0;
         let mut max_receivable_single_channel: u64 = 0;
         opened_channels.iter().try_for_each(|c| -> Result<()> {
-            max_payable += amount_to_msat(&parse_amount(c.spendable.clone())?);
-            let receivable_amount = amount_to_msat(&parse_amount(c.receivable.clone())?);
+            max_payable += c
+                .spendable_msat
+                .as_ref()
+                .map(|a| a.msat)
+                .unwrap_or_default();
+            let receivable_amount = c
+                .receivable_msat
+                .as_ref()
+                .map(|a| a.msat)
+                .unwrap_or_default();
             if receivable_amount > max_receivable_single_channel {
                 max_receivable_single_channel = receivable_amount;
             }
@@ -1000,52 +1014,23 @@ fn amount_to_msat(amount: &pb::Amount) -> u64 {
     }
 }
 
-fn parse_amount(amount_str: String) -> Result<pb::Amount> {
-    let mut unit = pb::amount::Unit::Millisatoshi(0);
-    if amount_str.ends_with("msat") {
-        unit = pb::amount::Unit::Millisatoshi(
-            amount_str
-                .strip_suffix("msat")
-                .ok_or_else(|| anyhow!("wrong amount format {}", amount_str))?
-                .to_string()
-                .parse::<u64>()?,
-        );
-    } else if amount_str.ends_with("sat") {
-        unit = pb::amount::Unit::Satoshi(
-            amount_str
-                .strip_suffix("sat")
-                .ok_or_else(|| anyhow!("wrong amount format {}", amount_str))?
-                .to_string()
-                .parse::<u64>()?,
-        );
-    } else if amount_str.ends_with("bitcoin") {
-        unit = pb::amount::Unit::Bitcoin(
-            amount_str
-                .strip_suffix("bitcoin")
-                .ok_or_else(|| anyhow!("wrong amount format {}", amount_str))?
-                .to_string()
-                .parse::<u64>()?,
-        );
-    };
-
-    Ok(pb::Amount { unit: Some(unit) })
-}
-
-impl From<pb::Channel> for Channel {
-    fn from(c: pb::Channel) -> Self {
-        let state = match c.state.as_str() {
-            "OPENINGD" | "CHANNELD_AWAITING_LOCKIN" => ChannelState::PendingOpen,
-            "CHANNELD_NORMAL" => ChannelState::Opened,
-            "ONCHAIN" | "CLOSED" => ChannelState::Closed,
+impl From<cln::ListpeersPeersChannels> for Channel {
+    fn from(c: cln::ListpeersPeersChannels) -> Self {
+        let state = match c.state() {
+            Openingd | ChanneldAwaitingLockin | DualopendOpenInit | DualopendAwaitingLockin => {
+                ChannelState::PendingOpen
+            }
+            ChanneldNormal => ChannelState::Opened,
+            Onchain => ChannelState::Closed,
             _ => ChannelState::PendingClose,
         };
 
         Channel {
-            short_channel_id: c.short_channel_id,
+            short_channel_id: c.short_channel_id.unwrap_or_default(),
             state,
-            funding_txid: c.funding_txid,
-            spendable_msat: amount_to_msat(&parse_amount(c.spendable).unwrap_or_default()),
-            receivable_msat: amount_to_msat(&parse_amount(c.receivable).unwrap_or_default()),
+            funding_txid: c.funding_txid.map(hex::encode).unwrap_or_default(),
+            spendable_msat: c.spendable_msat.unwrap_or_default().msat,
+            receivable_msat: c.receivable_msat.unwrap_or_default().msat,
             closed_at: None,
         }
     }
@@ -1075,60 +1060,93 @@ impl TryFrom<ListclosedchannelsClosedchannels> for Channel {
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
-    use gl_client::pb;
+    use gl_client::pb::cln;
+    use gl_client::pb::cln::listpeers_peers_channels::{
+        ListpeersPeersChannelsState, ListpeersPeersChannelsState::*,
+    };
+    use gl_client::pb::cln::Amount;
 
     use crate::models;
 
     #[test]
     fn test_channel_states() -> Result<()> {
-        for s in &["OPENINGD", "CHANNELD_AWAITING_LOCKIN"] {
-            let c: models::Channel = gl_channel(s).into();
+        for s in &[Openingd, ChanneldAwaitingLockin] {
+            let c: models::Channel = cln_channel(s).into();
             assert_eq!(c.state, models::ChannelState::PendingOpen);
         }
 
-        let s = &"CHANNELD_NORMAL";
-        let c: models::Channel = gl_channel(s).into();
+        let s = ChanneldNormal;
+        let c: models::Channel = cln_channel(&s).into();
         assert_eq!(c.state, models::ChannelState::Opened);
 
         for s in &[
-            "CHANNELD_SHUTTING_DOWN",
-            "CLOSINGD_SIGEXCHANGE",
-            "CLOSINGD_COMPLETE",
-            "AWAITING_UNILATERAL",
-            "FUNDING_SPEND_SEEN",
+            ChanneldShuttingDown,
+            ClosingdSigexchange,
+            ClosingdComplete,
+            AwaitingUnilateral,
+            FundingSpendSeen,
         ] {
-            let c: models::Channel = gl_channel(s).into();
+            let c: models::Channel = cln_channel(s).into();
             assert_eq!(c.state, models::ChannelState::PendingClose);
         }
 
-        for s in &["ONCHAIN", "CLOSED"] {
-            let c: models::Channel = gl_channel(s).into();
-            assert_eq!(c.state, models::ChannelState::Closed);
-        }
+        let c: models::Channel = cln_channel(&Onchain).into();
+        assert_eq!(c.state, models::ChannelState::Closed);
 
         Ok(())
     }
 
-    fn gl_channel(state: &str) -> pb::Channel {
-        pb::Channel {
-            state: state.to_string(),
-            owner: "".to_string(),
-            short_channel_id: "".to_string(),
-            direction: 0,
-            channel_id: "".to_string(),
-            funding_txid: "".to_string(),
-            close_to_addr: "".to_string(),
-            close_to: "".to_string(),
-            private: true,
-            total: "1000msat".to_string(),
-            dust_limit: "10msat".to_string(),
-            spendable: "20msat".to_string(),
-            receivable: "960msat".to_string(),
-            their_to_self_delay: 144,
-            our_to_self_delay: 144,
-            status: vec![],
+    fn cln_channel(state: &ListpeersPeersChannelsState) -> cln::ListpeersPeersChannels {
+        cln::ListpeersPeersChannels {
+            state: (*state).into(),
+            scratch_txid: None,
+            feerate: None,
+            owner: None,
+            short_channel_id: None,
+            channel_id: None,
+            funding_txid: None,
+            funding_outnum: None,
+            initial_feerate: None,
+            last_feerate: None,
+            next_feerate: None,
+            next_fee_step: None,
+            inflight: vec![],
+            close_to: None,
+            private: Some(true),
+            opener: 0,
+            closer: None,
+            features: vec![],
+            funding: None,
+            to_us_msat: None,
+            min_to_us_msat: None,
+            max_to_us_msat: None,
+            total_msat: Some(Amount { msat: 1_000 }),
+            fee_base_msat: None,
+            fee_proportional_millionths: None,
+            dust_limit_msat: Some(Amount { msat: 10 }),
+            max_total_htlc_in_msat: None,
+            their_reserve_msat: None,
+            our_reserve_msat: None,
+            spendable_msat: Some(Amount { msat: 20_000 }),
+            receivable_msat: Some(Amount { msat: 960_000 }),
+            minimum_htlc_in_msat: None,
+            minimum_htlc_out_msat: None,
+            maximum_htlc_out_msat: None,
+            their_to_self_delay: Some(144),
+            our_to_self_delay: Some(144),
+            max_accepted_htlcs: None,
             alias: None,
+            status: vec![],
+            in_payments_offered: None,
+            in_offered_msat: None,
+            in_payments_fulfilled: None,
+            in_fulfilled_msat: None,
+            out_payments_offered: None,
+            out_offered_msat: None,
+            out_payments_fulfilled: None,
+            out_fulfilled_msat: None,
             htlcs: vec![],
+            close_to_addr: None,
         }
     }
 }
