@@ -106,7 +106,6 @@ impl BlockingBreezServices {
 
     pub fn send_payment(&self, bolt11: String, amount_sats: Option<u64>) -> SdkResult<Payment> {
         rt().block_on(self.breez_services.send_payment(bolt11, amount_sats))
-            .map_err(|e| e.into())
     }
 
     pub fn send_spontaneous_payment(
@@ -118,7 +117,6 @@ impl BlockingBreezServices {
             self.breez_services
                 .send_spontaneous_payment(node_id, amount_sats),
         )
-        .map_err(|e| e.into())
     }
 
     pub fn receive_payment(

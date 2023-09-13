@@ -339,6 +339,8 @@ mod tests {
 
     use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
     use anyhow::{anyhow, Result};
+    use gl_client::pb::PayStatus;
+
     use mockito::Mock;
     use rand::Rng;
 
@@ -928,7 +930,7 @@ mod tests {
 
         let mock_node_api = MockNodeAPI::new(get_dummy_node_state());
         let model_payment = mock_node_api
-            .add_dummy_payment_for(bolt11, Some(preimage))
+            .add_dummy_payment_for(bolt11, Some(preimage), Some(PayStatus::Pending))
             .await?;
 
         let known_payments: Vec<crate::models::Payment> = vec![model_payment];

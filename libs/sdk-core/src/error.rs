@@ -29,6 +29,9 @@ pub enum SdkError {
 
     #[error("Failed to receive payment: {err}")]
     ReceivePaymentFailed { err: String },
+
+    #[error("Failed to send payment: {err}")]
+    SendPaymentFailed { err: String },
 }
 
 impl From<rusqlite::Error> for SdkError {
