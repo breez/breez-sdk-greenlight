@@ -11,18 +11,29 @@ To do this, you first need to build the Breez SDK bindings locally and then poin
 ## Prerequisites
 
 Set the ANDROID_NDK_HOME env variable to your SDK home folder:
-
 ```
 export ANDROID_NDK_HOME=<your android ndk directory>
 ```
 
-## Building the bindings
+To lint the result of the code generation ktlint, swiftformat and tslint need to be installed:
+```bash
+brew install kotlin ktlint swiftformat
+yarn global add tslint typescript
+```
 
 On first usage you will need to run:
-
 ```
 make init
 ```
+
+## Generating the bridging code
+
+When there are changes to the UDL file in `libs/sdk-binding/src` the React Native bridging code needs to be regenerated:
+```bash
+make react-native-codegen
+```
+
+## Building the bindings
 
 Then to build and copy the Kotlin and Swift bindings into the React Native plugin:
 
