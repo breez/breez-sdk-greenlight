@@ -228,14 +228,20 @@ impl BreezServices {
     ///
     /// * `bolt11` - The bolt11 invoice
     /// * `amount_sats` - The amount to pay in satoshis
-    pub async fn send_payment(&self, bolt11: String, amount_sats: Option<u64>) -> Result<Payment> {
+    pub async fn send_payment(
+        &self,
+        bolt11: String,
+        amount_sats: Option<u64>,
+    ) -> SdkResult<Payment> {
         self.start_node().await?;
         let parsed_invoice = parse_invoice(bolt11.as_str())?;
         match self
             .persister
             .get_completed_payment_by_hash(&parsed_invoice.payment_hash)?
         {
-            Some(_) => Err(anyhow!("Invoice already paid")),
+            Some(_) => Err(SdkError::SendPaymentFailed {
+                err: "Invoice already paid".into(),
+            }),
             None => {
                 let payment_res = self
                     .node_api
@@ -261,7 +267,7 @@ impl BreezServices {
         &self,
         node_id: String,
         amount_sats: u64,
-    ) -> Result<Payment> {
+    ) -> SdkResult<Payment> {
         self.start_node().await?;
         let payment_res = self
             .node_api
@@ -756,7 +762,7 @@ impl BreezServices {
         node_id: String,
         invoice: Option<LNInvoice>,
         payment_res: Result<PaymentResponse>,
-    ) -> Result<Payment> {
+    ) -> SdkResult<Payment> {
         if payment_res.is_err() {
             self.notify_event_listeners(BreezEvent::PaymentFailed {
                 details: PaymentFailedData {
@@ -766,7 +772,9 @@ impl BreezServices {
                 },
             })
             .await?;
-            return Err(payment_res.err().unwrap());
+            return Err(SdkError::SendPaymentFailed {
+                err: payment_res.err().unwrap().to_string(),
+            });
         }
         let payment = payment_res.unwrap();
         self.do_sync(true).await?;
@@ -777,7 +785,9 @@ impl BreezServices {
                     .await?;
                 Ok(p)
             }
-            None => Err(anyhow!("payment not found")),
+            None => Err(SdkError::SendPaymentFailed {
+                err: "Payment not found".into(),
+            }),
         }
     }
 

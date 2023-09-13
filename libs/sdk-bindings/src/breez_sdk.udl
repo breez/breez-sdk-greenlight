@@ -17,6 +17,7 @@ enum SdkError {
     "LspOpenChannelNotSupported",
     "PersistenceFailure",
     "ReceivePaymentFailed",
+    "SendPaymentFailed",
     "CalculateOpenChannelFeesFailed",
 };
 

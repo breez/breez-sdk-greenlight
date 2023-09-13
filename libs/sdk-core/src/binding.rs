@@ -225,6 +225,7 @@ pub fn send_payment(bolt11: String, amount_sats: Option<u64>) -> Result<Payment>
             .send_payment(bolt11, amount_sats)
             .await
     })
+    .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// See [BreezServices::send_spontaneous_payment]
@@ -234,6 +235,7 @@ pub fn send_spontaneous_payment(node_id: String, amount_sats: u64) -> Result<Pay
             .send_spontaneous_payment(node_id, amount_sats)
             .await
     })
+    .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// See [BreezServices::receive_payment]
