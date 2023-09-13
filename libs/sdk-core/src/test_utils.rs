@@ -11,7 +11,7 @@ use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::Network;
 use chrono::{SecondsFormat, Utc};
 use gl_client::pb::amount::Unit;
-use gl_client::pb::{Amount, Peer, WithdrawResponse};
+use gl_client::pb::{Amount, PayStatus, Peer, WithdrawResponse};
 use lightning::ln::PaymentSecret;
 use lightning_invoice::{Currency, InvoiceBuilder, RawInvoice};
 use rand::distributions::{Alphanumeric, DistString, Standard};
@@ -286,7 +286,7 @@ impl NodeAPI for MockNodeAPI {
         bolt11: String,
         _amount_sats: Option<u64>,
     ) -> Result<PaymentResponse> {
-        let payment = self.add_dummy_payment_for(bolt11, None).await?;
+        let payment = self.add_dummy_payment_for(bolt11, None, None).await?;
         payment.try_into()
     }
 
@@ -376,9 +376,28 @@ impl MockNodeAPI {
         &self,
         bolt11: String,
         preimage: Option<sha256::Hash>,
+        status: Option<PayStatus>,
     ) -> Result<Payment> {
         let inv = bolt11.parse::<lightning_invoice::Invoice>()?;
 
+        self.add_dummy_payment(inv, preimage, status).await
+    }
+
+    /// Adds a dummy payment with random attributes.
+    pub(crate) async fn add_dummy_payment_rand(&self) -> Result<Payment> {
+        let preimage = sha256::Hash::hash(&rand_vec_u8(10));
+        let inv = rand_invoice_with_description_hash_and_preimage("test".into(), preimage)?;
+
+        self.add_dummy_payment(inv, Some(preimage), None).await
+    }
+
+    /// Adds a dummy payment.
+    pub(crate) async fn add_dummy_payment(
+        &self,
+        inv: lightning_invoice::Invoice,
+        preimage: Option<sha256::Hash>,
+        status: Option<PayStatus>,
+    ) -> Result<Payment> {
         let gl_payment = gl_client::pb::Payment {
             payment_hash: hex::decode(inv.payment_hash().to_hex())?,
             bolt11: inv.to_string(),
@@ -396,36 +415,7 @@ impl MockNodeAPI {
                 Some(preimage) => hex::decode(preimage.to_hex())?,
                 None => rand_vec_u8(32),
             },
-            status: 1,
-            created_at: random(),
-            destination: rand_vec_u8(32),
-            completed_at: random(),
-        };
-
-        self.save_payment_for_future_sync_updates(gl_payment.clone())
-            .await
-    }
-
-    /// Adds a dummy payment with random attributes.
-    pub(crate) async fn add_dummy_payment_rand(&self) -> Result<Payment> {
-        let preimage = sha256::Hash::hash(&rand_vec_u8(10));
-        let inv = rand_invoice_with_description_hash_and_preimage("test".into(), preimage)?;
-
-        let gl_payment = gl_client::pb::Payment {
-            payment_hash: hex::decode(inv.payment_hash().to_hex())?,
-            bolt11: inv.to_string(),
-            amount: inv
-                .amount_milli_satoshis()
-                .map(Unit::Millisatoshi)
-                .map(Some)
-                .map(|amt| Amount { unit: amt }),
-            amount_sent: inv
-                .amount_milli_satoshis()
-                .map(Unit::Millisatoshi)
-                .map(Some)
-                .map(|amt| Amount { unit: amt }),
-            payment_preimage: preimage.to_hex().into_bytes(),
-            status: 1,
+            status: status.unwrap_or(PayStatus::Complete).into(),
             created_at: random(),
             destination: rand_vec_u8(32),
             completed_at: random(),
