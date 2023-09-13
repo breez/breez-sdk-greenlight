@@ -415,7 +415,11 @@ class Config {
   final int paymentTimeoutSec;
   final String? defaultLspId;
   final String? apiKey;
+
+  /// Maps to the CLN `maxfeepercent` config when paying invoices (`lightning-pay`)
   final double maxfeePercent;
+
+  /// Maps to the CLN `exemptfee` config when paying invoices (`lightning-pay`)
   final int exemptfeeMsat;
   final NodeConfig nodeConfig;
 
