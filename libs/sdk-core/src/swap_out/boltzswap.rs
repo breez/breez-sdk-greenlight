@@ -14,14 +14,73 @@ use reqwest::{Body, Client};
 use crate::input_parser::get_parse_and_log_response;
 use crate::models::ReverseSwapPairInfo;
 use crate::swap_out::reverseswap::CreateReverseSwapResponse;
-use crate::ReverseSwapServiceAPI;
+use crate::{ReverseSwapServiceAPI, RouteHint, RouteHintHop};
 
 use super::error::{ReverseSwapError, ReverseSwapResult};
 
 const BOLTZ_API_URL: &str = "https://api.boltz.exchange/";
 const GET_PAIRS_ENDPOINT: &str = concatcp!(BOLTZ_API_URL, "getpairs");
 const GET_SWAP_STATUS_ENDPOINT: &str = concatcp!(BOLTZ_API_URL, "swapstatus");
+const GET_ROUTE_HINTS_ENDPIONT: &str = concatcp!(BOLTZ_API_URL, "routinghints");
 pub(crate) const CREATE_REVERSE_SWAP_ENDPOINT: &str = concatcp!(BOLTZ_API_URL, "createswap");
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct BoltzRouteHintHop {
+    node_id: String,
+    chan_id: String,
+    fee_base_msat: u32,
+    fee_proportional_millionths: u32,
+    cltv_expiry_delta: u64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct BoltzRoute {
+    hop_hints_list: Vec<BoltzRouteHintHop>,
+}
+
+impl From<BoltzRoute> for RouteHint {
+    fn from(value: BoltzRoute) -> Self {
+        RouteHint {
+            hops: value
+                .hop_hints_list
+                .into_iter()
+                .map(|hop| hop.into())
+                .collect(),
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct BoltzRouteHints {
+    routing_hints: Vec<BoltzRoute>,
+}
+
+impl From<BoltzRouteHintHop> for RouteHintHop {
+    fn from(value: BoltzRouteHintHop) -> Self {
+        RouteHintHop {
+            src_node_id: value.node_id,
+            short_channel_id: 0_u64,
+            fees_base_msat: value.fee_base_msat,
+            fees_proportional_millionths: value.fee_proportional_millionths,
+            cltv_expiry_delta: value.cltv_expiry_delta,
+            htlc_minimum_msat: None,
+            htlc_maximum_msat: None,
+        }
+    }
+}
+
+impl From<BoltzRouteHints> for Vec<RouteHint> {
+    fn from(value: BoltzRouteHints) -> Self {
+        value
+            .routing_hints
+            .into_iter()
+            .map(|hop| hop.into())
+            .collect()
+    }
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -245,6 +304,37 @@ impl ReverseSwapServiceAPI for BoltzApi {
                     ))
                 })
             })
+    }
+
+    async fn get_route_hints(&self, routing_node_id: String) -> ReverseSwapResult<Vec<RouteHint>> {
+        Client::new()
+            .post(GET_ROUTE_HINTS_ENDPIONT)
+            .header(CONTENT_TYPE, "application/json")
+            .body(Body::from(
+                json!({ "routingNode": routing_node_id, "symbol": "BTC" }).to_string(),
+            ))
+            .send()
+            .await?
+            .text()
+            .await
+            .map_err(|e| {
+                ReverseSwapError::ServiceConnectivity(anyhow!(
+                    "(Boltz {GET_ROUTE_HINTS_ENDPIONT}) Failed to get routing hints: {e}"
+                ))
+            })
+            .and_then(|res| {
+                trace!(
+                    "Boltz API routinghints raw response {}",
+                    to_string_pretty(&res)?
+                );
+                serde_json::from_str::<BoltzRouteHints>(&res)
+                .map_err(|e| {
+                    ReverseSwapError::ServiceConnectivity(anyhow!(
+                        "(Boltz {GET_ROUTE_HINTS_ENDPIONT}) Failed to parse get route hints response: {e}"
+                    ))
+                })
+            })
+            .map(Into::into)
     }
 }
 

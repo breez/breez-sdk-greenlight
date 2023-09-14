@@ -64,13 +64,19 @@ pub(crate) enum Commands {
     },
 
     /// Pay using lnurl pay
-    LnurlPay { lnurl: String },
+    LnurlPay {
+        lnurl: String,
+    },
 
     /// Withdraw using lnurl withdraw
-    LnurlWithdraw { lnurl: String },
+    LnurlWithdraw {
+        lnurl: String,
+    },
 
     /// Authenticate using lnurl auth
-    LnurlAuth { lnurl: String },
+    LnurlAuth {
+        lnurl: String,
+    },
 
     /// Send on-chain using a reverse swap
     SendOnchain {
@@ -79,6 +85,8 @@ pub(crate) enum Commands {
         /// The fee rate for the claim transaction
         sat_per_vbyte: u32,
     },
+
+    MaxOnchainPayment {},
 
     /// Get the current fees for a potential new reverse swap
     FetchOnchainFees {
@@ -98,10 +106,15 @@ pub(crate) enum Commands {
     },
 
     /// Send a spontaneous (keysend) payment
-    SendSpontaneousPayment { node_id: String, amount_msat: u64 },
+    SendSpontaneousPayment {
+        node_id: String,
+        amount_msat: u64,
+    },
 
     /// Sign a message with the node's private key
-    SignMessage { message: String },
+    SignMessage {
+        message: String,
+    },
 
     /// Verify a message with a node's public key
     CheckMessage {
@@ -134,7 +147,9 @@ pub(crate) enum Commands {
     },
 
     /// Retrieve a payment by its hash
-    PaymentByHash { hash: String },
+    PaymentByHash {
+        hash: String,
+    },
 
     /// Send on-chain funds to an external address
     Sweep {
@@ -213,8 +228,12 @@ pub(crate) enum Commands {
     },
 
     /// Execute a low level node command (used for debugging)
-    ExecuteDevCommand { command: String },
+    ExecuteDevCommand {
+        command: String,
+    },
 
     /// Generates an URL to buy bitcoin from a 3rd party provider
-    BuyBitcoin { provider: BuyBitcoinProvider },
+    BuyBitcoin {
+        provider: BuyBitcoinProvider,
+    },
 }

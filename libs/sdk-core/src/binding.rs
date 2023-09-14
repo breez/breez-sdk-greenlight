@@ -34,13 +34,13 @@ use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
 use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
     EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus, LnUrlPayRequest,
-    LnUrlWithdrawRequest, LnUrlWithdrawResult, NodeConfig, OpenChannelFeeRequest,
-    OpenChannelFeeResponse, PrepareRefundRequest, PrepareRefundResponse, PrepareSweepRequest,
-    PrepareSweepResponse, ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse,
-    RefundRequest, RefundResponse, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
-    SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
-    SendSpontaneousPaymentRequest, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
-    StaticBackupResponse, SweepRequest, SweepResponse,
+    LnUrlWithdrawRequest, LnUrlWithdrawResult, MaxReverseSwapAmountResponse, NodeConfig,
+    OpenChannelFeeRequest, OpenChannelFeeResponse, PrepareRefundRequest, PrepareRefundResponse,
+    PrepareSweepRequest, PrepareSweepResponse, ReceiveOnchainRequest, ReceivePaymentRequest,
+    ReceivePaymentResponse, RefundRequest, RefundResponse, ReverseSwapFeesRequest, ReverseSwapInfo,
+    ReverseSwapPairInfo, SendOnchainRequest, SendOnchainResponse, SendPaymentRequest,
+    SendPaymentResponse, SendSpontaneousPaymentRequest, SignMessageRequest, SignMessageResponse,
+    StaticBackupRequest, StaticBackupResponse, SweepRequest, SweepResponse,
 };
 
 /*
@@ -299,6 +299,11 @@ pub fn list_fiat_currencies() -> Result<Vec<FiatCurrency>> {
 }
 
 /*  On-Chain Swap API's */
+
+pub fn max_reverse_swap_amount() -> Result<MaxReverseSwapAmountResponse> {
+    block_on(async { get_breez_services().await?.max_reverse_swap_amount().await })
+        .map_err(anyhow::Error::new::<SdkError>)
+}
 
 /// See [BreezServices::send_onchain]
 pub fn send_onchain(req: SendOnchainRequest) -> Result<SendOnchainResponse> {

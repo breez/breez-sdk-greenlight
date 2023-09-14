@@ -307,7 +307,7 @@ impl BackupWorker {
                 Ok((new_version, data))
             }
             Err(e) => {
-                debug!("Optimistic sync failed, trying to sync remote changes {e}");
+                info!("Optimistic sync failed, trying to sync remote changes {e}");
                 // We need to sync remote changes and then retry the push
                 self.sync_remote_and_push(sync_dir, data, &mut last_sync_request_id)
                     .await

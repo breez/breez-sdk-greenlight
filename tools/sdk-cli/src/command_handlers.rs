@@ -47,7 +47,6 @@ impl EventListener for CliEventListener {
 async fn connect(config: Config, seed: &[u8]) -> Result<()> {
     let service =
         BreezServices::connect(config, seed.to_vec(), Box::new(CliEventListener {})).await?;
-
     BREEZ_SERVICES
         .set(service)
         .map_err(|_| anyhow!("Breez Services already initialized"))?;
@@ -162,6 +161,10 @@ pub(crate) async fn handle_command(
                 })
                 .await?;
             serde_json::to_string_pretty(&rev_swap_res.reverse_swap_info).map_err(|e| e.into())
+        }
+        Commands::MaxOnchainPayment {} => {
+            let response = sdk()?.max_reverse_swap_amount().await?;
+            serde_json::to_string_pretty(&response).map_err(|e| e.into())
         }
         Commands::FetchOnchainFees { send_amount_sat } => {
             let pair_info = sdk()?

@@ -143,6 +143,7 @@ dictionary LNInvoice {
     u64 expiry;
     sequence<RouteHint> routing_hints;
     sequence<u8> payment_secret;
+    u64 min_final_cltv_expiry_delta;
 };
 
 dictionary UnspentTransactionOutput {
@@ -647,6 +648,10 @@ dictionary SendPaymentResponse {
     Payment payment;
 };
 
+dictionary MaxReverseSwapAmountResponse {
+    u64 total_msat;
+};
+
 dictionary SendOnchainRequest {
     u64 amount_sat;
     string onchain_recipient_address;
@@ -773,6 +778,9 @@ interface BlockingBreezServices {
 
    [Throws=SdkError]
    sequence<ReverseSwapInfo> in_progress_reverse_swaps();
+   
+   [Throws=SdkError]
+   MaxReverseSwapAmountResponse max_reverse_swap_amount();
 
    [Throws=SendOnchainError]
    SendOnchainResponse send_onchain(SendOnchainRequest req);

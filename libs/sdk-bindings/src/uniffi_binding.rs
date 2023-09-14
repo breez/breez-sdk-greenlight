@@ -10,11 +10,11 @@ use breez_sdk_core::{
     LnUrlCallbackStatus, LnUrlErrorData, LnUrlPayErrorData, LnUrlPayRequest, LnUrlPayRequestData,
     LnUrlPayResult, LnUrlPaySuccessData, LnUrlWithdrawRequest, LnUrlWithdrawRequestData,
     LnUrlWithdrawResult, LnUrlWithdrawSuccessData, LocaleOverrides, LocalizedName, LogEntry,
-    LogStream, LspInformation, MessageSuccessActionData, MetadataItem, Network, NodeConfig,
-    NodeState, OpenChannelFeeRequest, OpenChannelFeeResponse, OpeningFeeParams,
-    OpeningFeeParamsMenu, Payment, PaymentDetails, PaymentFailedData, PaymentStatus, PaymentType,
-    PaymentTypeFilter, PrepareRefundRequest, PrepareRefundResponse, PrepareSweepRequest,
-    PrepareSweepResponse, Rate, ReceiveOnchainRequest, ReceivePaymentRequest,
+    LogStream, LspInformation, MaxReverseSwapAmountResponse, MessageSuccessActionData,
+    MetadataItem, Network, NodeConfig, NodeState, OpenChannelFeeRequest, OpenChannelFeeResponse,
+    OpeningFeeParams, OpeningFeeParamsMenu, Payment, PaymentDetails, PaymentFailedData,
+    PaymentStatus, PaymentType, PaymentTypeFilter, PrepareRefundRequest, PrepareRefundResponse,
+    PrepareSweepRequest, PrepareSweepResponse, Rate, ReceiveOnchainRequest, ReceivePaymentRequest,
     ReceivePaymentResponse, RecommendedFees, RefundRequest, RefundResponse, ReverseSwapFeesRequest,
     ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop,
     SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
@@ -265,6 +265,10 @@ impl BlockingBreezServices {
 
     pub fn in_progress_reverse_swaps(&self) -> SdkResult<Vec<ReverseSwapInfo>> {
         rt().block_on(self.breez_services.in_progress_reverse_swaps())
+    }
+
+    pub fn max_reverse_swap_amount(&self) -> SdkResult<MaxReverseSwapAmountResponse> {
+        rt().block_on(self.breez_services.max_reverse_swap_amount())
     }
 
     pub fn send_onchain(

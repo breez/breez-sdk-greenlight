@@ -69,6 +69,7 @@ pub struct LNInvoice {
     pub expiry: u64,
     pub routing_hints: Vec<RouteHint>,
     pub payment_secret: Vec<u8>,
+    pub min_final_cltv_expiry_delta: u64,
 }
 
 /// Details of a specific hop in a larger route hint
@@ -235,6 +236,7 @@ pub fn parse_invoice(bolt11: &str) -> InvoiceResult<LNInvoice> {
             InvoiceDescription::Direct(_) => None,
             InvoiceDescription::Hash(h) => Some(h.0.to_string()),
         },
+        min_final_cltv_expiry_delta: invoice.min_final_cltv_expiry_delta(),
     };
     Ok(ln_invoice)
 }
