@@ -83,6 +83,17 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
+    @objc(staticBackup:resolve:reject:)
+    func staticBackup(_ request: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            let staticBackupRequest = try BreezSDKMapper.asStaticBackupRequest(data: request)
+            var res = try BreezSDK.staticBackup(request: staticBackupRequest)
+            resolve(BreezSDKMapper.dictionaryOf(staticBackupResponse: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
     @objc(setLogStream:reject:)
     func setLogStream(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {

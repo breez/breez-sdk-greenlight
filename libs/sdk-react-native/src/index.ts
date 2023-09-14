@@ -335,6 +335,14 @@ export type SignMessageResponse = {
     signature: string
 }
 
+export type StaticBackupRequest = {
+    workingDir: string
+}
+
+export type StaticBackupResponse = {
+    backup?: string[]
+}
+
 export type SwapInfo = {
     bitcoinAddress: string
     createdAt: number
@@ -605,6 +613,11 @@ export const mnemonicToSeed = async (phrase: string): Promise<number[]> => {
 
 export const defaultConfig = async (envType: EnvironmentType, apiKey: string, nodeConfig: NodeConfig): Promise<Config> => {
     const response = await BreezSDK.defaultConfig(envType, apiKey, nodeConfig)
+    return response
+}
+
+export const staticBackup = async (request: StaticBackupRequest): Promise<StaticBackupResponse> => {
+    const response = await BreezSDK.staticBackup(request)
     return response
 }
 
