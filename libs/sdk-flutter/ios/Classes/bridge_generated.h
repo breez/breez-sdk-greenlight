@@ -68,6 +68,10 @@ typedef struct wire_CheckMessageRequest {
   struct wire_uint_8_list *signature;
 } wire_CheckMessageRequest;
 
+typedef struct wire_StaticBackupRequest {
+  struct wire_uint_8_list *working_dir;
+} wire_StaticBackupRequest;
+
 typedef struct wire_OpeningFeeParams {
   uint64_t min_msat;
   uint32_t proportional;
@@ -157,6 +161,8 @@ void wire_default_config(int64_t port_,
                          int32_t env_type,
                          struct wire_uint_8_list *api_key,
                          struct wire_NodeConfig *node_config);
+
+void wire_static_backup(int64_t port_, struct wire_StaticBackupRequest *request);
 
 void wire_breez_events_stream(int64_t port_);
 
@@ -276,6 +282,8 @@ struct wire_ReverseSwapFeesRequest *new_box_autoadd_reverse_swap_fees_request_0(
 
 struct wire_SignMessageRequest *new_box_autoadd_sign_message_request_0(void);
 
+struct wire_StaticBackupRequest *new_box_autoadd_static_backup_request_0(void);
+
 uint32_t *new_box_autoadd_u32_0(uint32_t value);
 
 uint64_t *new_box_autoadd_u64_0(uint64_t value);
@@ -297,6 +305,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_check_message);
     dummy_var ^= ((int64_t) (void*) wire_mnemonic_to_seed);
     dummy_var ^= ((int64_t) (void*) wire_default_config);
+    dummy_var ^= ((int64_t) (void*) wire_static_backup);
     dummy_var ^= ((int64_t) (void*) wire_breez_events_stream);
     dummy_var ^= ((int64_t) (void*) wire_breez_log_stream);
     dummy_var ^= ((int64_t) (void*) wire_list_lsps);
@@ -346,6 +355,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_receive_payment_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_reverse_swap_fees_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_sign_message_request_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_static_backup_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_u32_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_u64_0);
     dummy_var ^= ((int64_t) (void*) new_uint_8_list_0);

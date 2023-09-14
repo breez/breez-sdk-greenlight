@@ -179,6 +179,9 @@ class BreezSDK {
   /// Parses generic user input, typically pasted from clipboard or scanned from a QR.
   Future<InputType> parseInput({required String input}) async => await _lnToolkit.parseInput(input: input);
 
+  /// Get the static backup data.
+  Future<StaticBackupResponse> staticBackup({required StaticBackupRequest request}) => _lnToolkit.staticBackup(request: request);
+
   /* Payment API's & Streams*/
 
   /// Listen to payment list
