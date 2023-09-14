@@ -451,9 +451,11 @@ impl BreezServices {
         filter: PaymentTypeFilter,
         from_timestamp: Option<i64>,
         to_timestamp: Option<i64>,
+        offset: Option<u32>,
+        limit: Option<u32>,
     ) -> SdkResult<Vec<Payment>> {
         self.persister
-            .list_payments(filter, from_timestamp, to_timestamp)
+            .list_payments(filter, from_timestamp, to_timestamp, offset, limit)
     }
 
     /// Fetch a specific payment by its hash.
@@ -1960,7 +1962,7 @@ pub(crate) mod tests {
         assert_eq!(fetched_state, dummy_node_state);
 
         let all = breez_services
-            .list_payments(PaymentTypeFilter::All, None, None)
+            .list_payments(PaymentTypeFilter::All, None, None, None, None)
             .await?;
         let mut cloned = all.clone();
 
@@ -1969,12 +1971,12 @@ pub(crate) mod tests {
         assert_eq!(dummy_transactions, cloned);
 
         let received = breez_services
-            .list_payments(PaymentTypeFilter::Received, None, None)
+            .list_payments(PaymentTypeFilter::Received, None, None, None, None)
             .await?;
         assert_eq!(received, vec![cloned[0].clone()]);
 
         let sent = breez_services
-            .list_payments(PaymentTypeFilter::Sent, None, None)
+            .list_payments(PaymentTypeFilter::Sent, None, None, None, None)
             .await?;
         assert_eq!(sent, vec![cloned[1].clone()]);
         assert!(matches!(

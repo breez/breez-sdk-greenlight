@@ -373,7 +373,7 @@ fn wire_list_payments_impl(
             let api_filter = filter.wire2api();
             let api_from_timestamp = from_timestamp.wire2api();
             let api_to_timestamp = to_timestamp.wire2api();
-            move |task_callback| list_payments(api_filter, api_from_timestamp, api_to_timestamp)
+            move |task_callback| list_payments(api_filter, api_from_timestamp, api_to_timestamp, None, None) // todo: Last 2 values are dummy values. Properly generate the file
         },
     )
 }

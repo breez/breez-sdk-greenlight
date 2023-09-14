@@ -207,10 +207,12 @@ pub fn list_payments(
     filter: PaymentTypeFilter,
     from_timestamp: Option<i64>,
     to_timestamp: Option<i64>,
+    offset: Option<u32>,
+    limit: Option<u32>,
 ) -> Result<Vec<Payment>> {
     block_on(async {
         get_breez_services()?
-            .list_payments(filter, from_timestamp, to_timestamp)
+            .list_payments(filter, from_timestamp, to_timestamp, offset, limit)
             .await
     })
     .map_err(anyhow::Error::new)
