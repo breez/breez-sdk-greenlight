@@ -23,7 +23,8 @@ class BreezSDKMapper {
         var list = [AesSuccessActionDataDecrypted]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asAesSuccessActionDataDecrypted(data: val))
+                var aesSuccessActionDataDecrypted = try asAesSuccessActionDataDecrypted(data: val)
+                list.append(aesSuccessActionDataDecrypted)
             } else {
                 throw SdkError.Generic(message: "Invalid element type AesSuccessActionDataDecrypted")
             }
@@ -52,7 +53,8 @@ class BreezSDKMapper {
         var list = [BackupFailedData]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asBackupFailedData(data: val))
+                var backupFailedData = try asBackupFailedData(data: val)
+                list.append(backupFailedData)
             } else {
                 throw SdkError.Generic(message: "Invalid element type BackupFailedData")
             }
@@ -85,7 +87,8 @@ class BreezSDKMapper {
         var list = [BackupStatus]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asBackupStatus(data: val))
+                var backupStatus = try asBackupStatus(data: val)
+                list.append(backupStatus)
             } else {
                 throw SdkError.Generic(message: "Invalid element type BackupStatus")
             }
@@ -129,7 +132,8 @@ class BreezSDKMapper {
         var list = [BitcoinAddressData]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asBitcoinAddressData(data: val))
+                var bitcoinAddressData = try asBitcoinAddressData(data: val)
+                list.append(bitcoinAddressData)
             } else {
                 throw SdkError.Generic(message: "Invalid element type BitcoinAddressData")
             }
@@ -167,7 +171,8 @@ class BreezSDKMapper {
         var list = [BuyBitcoinRequest]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asBuyBitcoinRequest(data: val))
+                var buyBitcoinRequest = try asBuyBitcoinRequest(data: val)
+                list.append(buyBitcoinRequest)
             } else {
                 throw SdkError.Generic(message: "Invalid element type BuyBitcoinRequest")
             }
@@ -203,7 +208,8 @@ class BreezSDKMapper {
         var list = [BuyBitcoinResponse]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asBuyBitcoinResponse(data: val))
+                var buyBitcoinResponse = try asBuyBitcoinResponse(data: val)
+                list.append(buyBitcoinResponse)
             } else {
                 throw SdkError.Generic(message: "Invalid element type BuyBitcoinResponse")
             }
@@ -239,7 +245,8 @@ class BreezSDKMapper {
         var list = [CheckMessageRequest]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asCheckMessageRequest(data: val))
+                var checkMessageRequest = try asCheckMessageRequest(data: val)
+                list.append(checkMessageRequest)
             } else {
                 throw SdkError.Generic(message: "Invalid element type CheckMessageRequest")
             }
@@ -268,7 +275,8 @@ class BreezSDKMapper {
         var list = [CheckMessageResponse]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asCheckMessageResponse(data: val))
+                var checkMessageResponse = try asCheckMessageResponse(data: val)
+                list.append(checkMessageResponse)
             } else {
                 throw SdkError.Generic(message: "Invalid element type CheckMessageResponse")
             }
@@ -306,7 +314,8 @@ class BreezSDKMapper {
         var list = [ClosedChannelPaymentDetails]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asClosedChannelPaymentDetails(data: val))
+                var closedChannelPaymentDetails = try asClosedChannelPaymentDetails(data: val)
+                list.append(closedChannelPaymentDetails)
             } else {
                 throw SdkError.Generic(message: "Invalid element type ClosedChannelPaymentDetails")
             }
@@ -366,7 +375,8 @@ class BreezSDKMapper {
         var list = [Config]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asConfig(data: val))
+                var config = try asConfig(data: val)
+                list.append(config)
             } else {
                 throw SdkError.Generic(message: "Invalid element type Config")
             }
@@ -429,7 +439,8 @@ class BreezSDKMapper {
         var list = [CurrencyInfo]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asCurrencyInfo(data: val))
+                var currencyInfo = try asCurrencyInfo(data: val)
+                list.append(currencyInfo)
             } else {
                 throw SdkError.Generic(message: "Invalid element type CurrencyInfo")
             }
@@ -463,7 +474,8 @@ class BreezSDKMapper {
         var list = [FiatCurrency]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asFiatCurrency(data: val))
+                var fiatCurrency = try asFiatCurrency(data: val)
+                list.append(fiatCurrency)
             } else {
                 throw SdkError.Generic(message: "Invalid element type FiatCurrency")
             }
@@ -496,7 +508,8 @@ class BreezSDKMapper {
         var list = [GreenlightCredentials]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asGreenlightCredentials(data: val))
+                var greenlightCredentials = try asGreenlightCredentials(data: val)
+                list.append(greenlightCredentials)
             } else {
                 throw SdkError.Generic(message: "Invalid element type GreenlightCredentials")
             }
@@ -533,7 +546,8 @@ class BreezSDKMapper {
         var list = [GreenlightNodeConfig]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asGreenlightNodeConfig(data: val))
+                var greenlightNodeConfig = try asGreenlightNodeConfig(data: val)
+                list.append(greenlightNodeConfig)
             } else {
                 throw SdkError.Generic(message: "Invalid element type GreenlightNodeConfig")
             }
@@ -566,7 +580,8 @@ class BreezSDKMapper {
         var list = [InvoicePaidDetails]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asInvoicePaidDetails(data: val))
+                var invoicePaidDetails = try asInvoicePaidDetails(data: val)
+                list.append(invoicePaidDetails)
             } else {
                 throw SdkError.Generic(message: "Invalid element type InvoicePaidDetails")
             }
@@ -625,7 +640,8 @@ class BreezSDKMapper {
         var list = [LnInvoice]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asLnInvoice(data: val))
+                var lnInvoice = try asLnInvoice(data: val)
+                list.append(lnInvoice)
             } else {
                 throw SdkError.Generic(message: "Invalid element type LnInvoice")
             }
@@ -683,7 +699,8 @@ class BreezSDKMapper {
         var list = [LnPaymentDetails]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asLnPaymentDetails(data: val))
+                var lnPaymentDetails = try asLnPaymentDetails(data: val)
+                list.append(lnPaymentDetails)
             } else {
                 throw SdkError.Generic(message: "Invalid element type LnPaymentDetails")
             }
@@ -722,7 +739,8 @@ class BreezSDKMapper {
         var list = [LnUrlAuthRequestData]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asLnUrlAuthRequestData(data: val))
+                var lnUrlAuthRequestData = try asLnUrlAuthRequestData(data: val)
+                list.append(lnUrlAuthRequestData)
             } else {
                 throw SdkError.Generic(message: "Invalid element type LnUrlAuthRequestData")
             }
@@ -751,7 +769,8 @@ class BreezSDKMapper {
         var list = [LnUrlErrorData]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asLnUrlErrorData(data: val))
+                var lnUrlErrorData = try asLnUrlErrorData(data: val)
+                list.append(lnUrlErrorData)
             } else {
                 throw SdkError.Generic(message: "Invalid element type LnUrlErrorData")
             }
@@ -799,7 +818,8 @@ class BreezSDKMapper {
         var list = [LnUrlPayRequestData]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asLnUrlPayRequestData(data: val))
+                var lnUrlPayRequestData = try asLnUrlPayRequestData(data: val)
+                list.append(lnUrlPayRequestData)
             } else {
                 throw SdkError.Generic(message: "Invalid element type LnUrlPayRequestData")
             }
@@ -841,7 +861,8 @@ class BreezSDKMapper {
         var list = [LnUrlWithdrawRequestData]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asLnUrlWithdrawRequestData(data: val))
+                var lnUrlWithdrawRequestData = try asLnUrlWithdrawRequestData(data: val)
+                list.append(lnUrlWithdrawRequestData)
             } else {
                 throw SdkError.Generic(message: "Invalid element type LnUrlWithdrawRequestData")
             }
@@ -878,7 +899,8 @@ class BreezSDKMapper {
         var list = [LocaleOverrides]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asLocaleOverrides(data: val))
+                var localeOverrides = try asLocaleOverrides(data: val)
+                list.append(localeOverrides)
             } else {
                 throw SdkError.Generic(message: "Invalid element type LocaleOverrides")
             }
@@ -911,7 +933,8 @@ class BreezSDKMapper {
         var list = [LocalizedName]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asLocalizedName(data: val))
+                var localizedName = try asLocalizedName(data: val)
+                list.append(localizedName)
             } else {
                 throw SdkError.Generic(message: "Invalid element type LocalizedName")
             }
@@ -944,7 +967,8 @@ class BreezSDKMapper {
         var list = [LogEntry]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asLogEntry(data: val))
+                var logEntry = try asLogEntry(data: val)
+                list.append(logEntry)
             } else {
                 throw SdkError.Generic(message: "Invalid element type LogEntry")
             }
@@ -1011,7 +1035,8 @@ class BreezSDKMapper {
         var list = [LspInformation]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asLspInformation(data: val))
+                var lspInformation = try asLspInformation(data: val)
+                list.append(lspInformation)
             } else {
                 throw SdkError.Generic(message: "Invalid element type LspInformation")
             }
@@ -1040,7 +1065,8 @@ class BreezSDKMapper {
         var list = [MessageSuccessActionData]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asMessageSuccessActionData(data: val))
+                var messageSuccessActionData = try asMessageSuccessActionData(data: val)
+                list.append(messageSuccessActionData)
             } else {
                 throw SdkError.Generic(message: "Invalid element type MessageSuccessActionData")
             }
@@ -1073,7 +1099,8 @@ class BreezSDKMapper {
         var list = [MetadataItem]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asMetadataItem(data: val))
+                var metadataItem = try asMetadataItem(data: val)
+                list.append(metadataItem)
             } else {
                 throw SdkError.Generic(message: "Invalid element type MetadataItem")
             }
@@ -1135,7 +1162,8 @@ class BreezSDKMapper {
         var list = [NodeState]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asNodeState(data: val))
+                var nodeState = try asNodeState(data: val)
+                list.append(nodeState)
             } else {
                 throw SdkError.Generic(message: "Invalid element type NodeState")
             }
@@ -1168,7 +1196,8 @@ class BreezSDKMapper {
         var list = [OpenChannelFeeRequest]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asOpenChannelFeeRequest(data: val))
+                var openChannelFeeRequest = try asOpenChannelFeeRequest(data: val)
+                list.append(openChannelFeeRequest)
             } else {
                 throw SdkError.Generic(message: "Invalid element type OpenChannelFeeRequest")
             }
@@ -1204,7 +1233,8 @@ class BreezSDKMapper {
         var list = [OpenChannelFeeResponse]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asOpenChannelFeeResponse(data: val))
+                var openChannelFeeResponse = try asOpenChannelFeeResponse(data: val)
+                list.append(openChannelFeeResponse)
             } else {
                 throw SdkError.Generic(message: "Invalid element type OpenChannelFeeResponse")
             }
@@ -1249,7 +1279,8 @@ class BreezSDKMapper {
         var list = [OpeningFeeParams]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asOpeningFeeParams(data: val))
+                var openingFeeParams = try asOpeningFeeParams(data: val)
+                list.append(openingFeeParams)
             } else {
                 throw SdkError.Generic(message: "Invalid element type OpeningFeeParams")
             }
@@ -1279,7 +1310,8 @@ class BreezSDKMapper {
         var list = [OpeningFeeParamsMenu]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asOpeningFeeParamsMenu(data: val))
+                var openingFeeParamsMenu = try asOpeningFeeParamsMenu(data: val)
+                list.append(openingFeeParamsMenu)
             } else {
                 throw SdkError.Generic(message: "Invalid element type OpeningFeeParamsMenu")
             }
@@ -1333,7 +1365,8 @@ class BreezSDKMapper {
         var list = [Payment]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asPayment(data: val))
+                var payment = try asPayment(data: val)
+                list.append(payment)
             } else {
                 throw SdkError.Generic(message: "Invalid element type Payment")
             }
@@ -1372,7 +1405,8 @@ class BreezSDKMapper {
         var list = [PaymentFailedData]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asPaymentFailedData(data: val))
+                var paymentFailedData = try asPaymentFailedData(data: val)
+                list.append(paymentFailedData)
             } else {
                 throw SdkError.Generic(message: "Invalid element type PaymentFailedData")
             }
@@ -1405,7 +1439,8 @@ class BreezSDKMapper {
         var list = [Rate]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asRate(data: val))
+                var rate = try asRate(data: val)
+                list.append(rate)
             } else {
                 throw SdkError.Generic(message: "Invalid element type Rate")
             }
@@ -1437,7 +1472,8 @@ class BreezSDKMapper {
         var list = [ReceiveOnchainRequest]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asReceiveOnchainRequest(data: val))
+                var receiveOnchainRequest = try asReceiveOnchainRequest(data: val)
+                list.append(receiveOnchainRequest)
             } else {
                 throw SdkError.Generic(message: "Invalid element type ReceiveOnchainRequest")
             }
@@ -1489,7 +1525,8 @@ class BreezSDKMapper {
         var list = [ReceivePaymentRequest]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asReceivePaymentRequest(data: val))
+                var receivePaymentRequest = try asReceivePaymentRequest(data: val)
+                list.append(receivePaymentRequest)
             } else {
                 throw SdkError.Generic(message: "Invalid element type ReceivePaymentRequest")
             }
@@ -1531,7 +1568,8 @@ class BreezSDKMapper {
         var list = [ReceivePaymentResponse]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asReceivePaymentResponse(data: val))
+                var receivePaymentResponse = try asReceivePaymentResponse(data: val)
+                list.append(receivePaymentResponse)
             } else {
                 throw SdkError.Generic(message: "Invalid element type ReceivePaymentResponse")
             }
@@ -1573,7 +1611,8 @@ class BreezSDKMapper {
         var list = [RecommendedFees]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asRecommendedFees(data: val))
+                var recommendedFees = try asRecommendedFees(data: val)
+                list.append(recommendedFees)
             } else {
                 throw SdkError.Generic(message: "Invalid element type RecommendedFees")
             }
@@ -1602,7 +1641,8 @@ class BreezSDKMapper {
         var list = [ReverseSwapFeesRequest]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asReverseSwapFeesRequest(data: val))
+                var reverseSwapFeesRequest = try asReverseSwapFeesRequest(data: val)
+                list.append(reverseSwapFeesRequest)
             } else {
                 throw SdkError.Generic(message: "Invalid element type ReverseSwapFeesRequest")
             }
@@ -1642,7 +1682,8 @@ class BreezSDKMapper {
         var list = [ReverseSwapInfo]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asReverseSwapInfo(data: val))
+                var reverseSwapInfo = try asReverseSwapInfo(data: val)
+                list.append(reverseSwapInfo)
             } else {
                 throw SdkError.Generic(message: "Invalid element type ReverseSwapInfo")
             }
@@ -1690,7 +1731,8 @@ class BreezSDKMapper {
         var list = [ReverseSwapPairInfo]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asReverseSwapPairInfo(data: val))
+                var reverseSwapPairInfo = try asReverseSwapPairInfo(data: val)
+                list.append(reverseSwapPairInfo)
             } else {
                 throw SdkError.Generic(message: "Invalid element type ReverseSwapPairInfo")
             }
@@ -1720,7 +1762,8 @@ class BreezSDKMapper {
         var list = [RouteHint]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asRouteHint(data: val))
+                var routeHint = try asRouteHint(data: val)
+                list.append(routeHint)
             } else {
                 throw SdkError.Generic(message: "Invalid element type RouteHint")
             }
@@ -1768,7 +1811,8 @@ class BreezSDKMapper {
         var list = [RouteHintHop]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asRouteHintHop(data: val))
+                var routeHintHop = try asRouteHintHop(data: val)
+                list.append(routeHintHop)
             } else {
                 throw SdkError.Generic(message: "Invalid element type RouteHintHop")
             }
@@ -1797,7 +1841,8 @@ class BreezSDKMapper {
         var list = [SignMessageRequest]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asSignMessageRequest(data: val))
+                var signMessageRequest = try asSignMessageRequest(data: val)
+                list.append(signMessageRequest)
             } else {
                 throw SdkError.Generic(message: "Invalid element type SignMessageRequest")
             }
@@ -1826,7 +1871,8 @@ class BreezSDKMapper {
         var list = [SignMessageResponse]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asSignMessageResponse(data: val))
+                var signMessageResponse = try asSignMessageResponse(data: val)
+                list.append(signMessageResponse)
             } else {
                 throw SdkError.Generic(message: "Invalid element type SignMessageResponse")
             }
@@ -1855,7 +1901,8 @@ class BreezSDKMapper {
         var list = [StaticBackupRequest]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asStaticBackupRequest(data: val))
+                var staticBackupRequest = try asStaticBackupRequest(data: val)
+                list.append(staticBackupRequest)
             } else {
                 throw SdkError.Generic(message: "Invalid element type StaticBackupRequest")
             }
@@ -1884,7 +1931,8 @@ class BreezSDKMapper {
         var list = [StaticBackupResponse]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asStaticBackupResponse(data: val))
+                var staticBackupResponse = try asStaticBackupResponse(data: val)
+                list.append(staticBackupResponse)
             } else {
                 throw SdkError.Generic(message: "Invalid element type StaticBackupResponse")
             }
@@ -1979,7 +2027,8 @@ class BreezSDKMapper {
         var list = [SwapInfo]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asSwapInfo(data: val))
+                var swapInfo = try asSwapInfo(data: val)
+                list.append(swapInfo)
             } else {
                 throw SdkError.Generic(message: "Invalid element type SwapInfo")
             }
@@ -2018,7 +2067,8 @@ class BreezSDKMapper {
         var list = [Symbol]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asSymbol(data: val))
+                var symbol = try asSymbol(data: val)
+                list.append(symbol)
             } else {
                 throw SdkError.Generic(message: "Invalid element type Symbol")
             }
@@ -2063,7 +2113,8 @@ class BreezSDKMapper {
         var list = [UnspentTransactionOutput]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asUnspentTransactionOutput(data: val))
+                var unspentTransactionOutput = try asUnspentTransactionOutput(data: val)
+                list.append(unspentTransactionOutput)
             } else {
                 throw SdkError.Generic(message: "Invalid element type UnspentTransactionOutput")
             }
@@ -2096,7 +2147,8 @@ class BreezSDKMapper {
         var list = [UrlSuccessActionData]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                list.append(try asUrlSuccessActionData(data: val))
+                var urlSuccessActionData = try asUrlSuccessActionData(data: val)
+                list.append(urlSuccessActionData)
             } else {
                 throw SdkError.Generic(message: "Invalid element type UrlSuccessActionData")
             }
