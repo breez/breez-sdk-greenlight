@@ -1202,28 +1202,32 @@ impl BreezServices {
     ) -> Result<Payment> {
         let now_epoch_sec = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
 
-        // If closed_at is missing (older DB where field was not yet part of the schema),
-        // we get it from the channel closing tx
+        // If we don't have it, we look it up from the channel closing tx
         let channel_closed_at = channel.closed_at.unwrap_or(
-            {
-                // Lookup tx based on channel funding tx ID
-                let outspends = self
-                    .chain_service
-                    .transaction_outspends(channel.funding_txid.clone())
-                    .await?;
+            match channel.funding_outnum {
+                None => {
+                    warn!("No founding_outnum found for the closing tx, defaulting closed_at to epoch time");
+                    now_epoch_sec
+                }
+                Some(outnum) => {
+                    // Find the output tx that was used to fund the channel
 
-                // If outputs are spent, take the block time as the channel closing timestamp
-                match outspends.iter().find(|&out| out.spent) {
-                    None => {
-                        warn!("No confirmed outputs of funding tx for closed channel, defaulting closed_at to epoch time");
-                        now_epoch_sec
-                    }
-                    Some(out) => match out.status.block_time {
+                    let outspends = self
+                        .chain_service
+                        .transaction_outspends(channel.funding_txid.clone())
+                        .await?;
+                    match outspends.get(outnum as usize) {
                         None => {
-                            warn!("No blocktime found for confirmed tx output {out:#?}, defaulting closed_at to epoch time");
+                            warn!("No funding tx outspend found at outnum {outnum}, defaulting closed_at to epoch time");
                             now_epoch_sec
-                        },
-                        Some(block_time) => block_time
+                        }
+                        Some(outspend) => match outspend.status.block_time {
+                            None => {
+                                warn!("No blocktime found for funding_outnum {outnum}, defaulting closed_at to epoch time");
+                                now_epoch_sec
+                            },
+                            Some(block_time) => block_time
+                        }
                     }
                 }
             }

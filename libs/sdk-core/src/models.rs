@@ -947,6 +947,8 @@ pub struct Channel {
     pub spendable_msat: u64,
     pub receivable_msat: u64,
     pub closed_at: Option<u64>,
+    /// The output number of the funding tx which opened the channel
+    pub funding_outnum: Option<u32>,
 }
 
 /// State of a Lightning channel

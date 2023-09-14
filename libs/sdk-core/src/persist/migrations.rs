@@ -431,7 +431,10 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
         created_at TEXT DEFAULT CURRENT_TIMESTAMP NOT NULL,
         channel_opening_fees TEXT NOT NULL
        ) STRICT;
-       ",    
+       ",
+       "
+       ALTER TABLE channels ADD COLUMN funding_outnum INTEGER;
+       "
     ]
 }
 

@@ -46,7 +46,8 @@ impl SqliteStorage {
                 state, 
                 spendable_msat, 
                 receivable_msat,
-                closed_at
+                closed_at,
+                funding_outnum
                FROM channels             
              ",
         )?;
@@ -61,6 +62,7 @@ impl SqliteStorage {
                     spendable_msat: row.get(3)?,
                     receivable_msat: row.get(4)?,
                     closed_at: row.get(5)?,
+                    funding_outnum: row.get(6)?,
                 })
             })?
             .map(|i| i.unwrap())
@@ -77,15 +79,15 @@ impl SqliteStorage {
                    state,
                    spendable_msat, 
                    receivable_msat,
-                   closed_at
+                   closed_at,
+                   funding_outnum
                   )
-                  VALUES (?1,?2,?3,?4,?5,?6)
+                  VALUES (?1,?2,?3,?4,?5,?6,?7)
                   ON CONFLICT(funding_txid) DO UPDATE SET
                    short_channel_id=excluded.short_channel_id,
                    state=excluded.state,
                    spendable_msat=excluded.spendable_msat,
-                   receivable_msat=excluded.receivable_msat,
-                   closed_at = unixepoch()    
+                   receivable_msat=excluded.receivable_msat
                   WHERE closed_at IS NULL AND excluded.state IN ('PendingClose', 'Closed')
                   ON CONFLICT(funding_txid) DO UPDATE SET
                    short_channel_id=excluded.short_channel_id,
@@ -105,6 +107,7 @@ impl SqliteStorage {
                     ChannelState::Opened | ChannelState::PendingOpen => None,
                     _ => c.closed_at,
                 },
+                c.funding_outnum,
             ),
         )?;
         Ok(())
@@ -126,6 +129,7 @@ fn test_simple_sync_channels() {
             spendable_msat: 100,
             receivable_msat: 1000,
             closed_at: None,
+            funding_outnum: None,
         },
         Channel {
             funding_txid: "456".to_string(),
@@ -134,6 +138,7 @@ fn test_simple_sync_channels() {
             spendable_msat: 200,
             receivable_msat: 2000,
             closed_at: None,
+            funding_outnum: None,
         },
     ];
 
@@ -161,6 +166,7 @@ fn test_sync_closed_channels() {
             spendable_msat: 100,
             receivable_msat: 1000,
             closed_at: None,
+            funding_outnum: None,
         },
         Channel {
             funding_txid: "456".to_string(),
@@ -169,6 +175,7 @@ fn test_sync_closed_channels() {
             spendable_msat: 200,
             receivable_msat: 2000,
             closed_at: None,
+            funding_outnum: None,
         },
     ];
 
@@ -193,6 +200,7 @@ fn test_sync_closed_channels() {
             spendable_msat: 100,
             receivable_msat: 1000,
             closed_at: None,
+            funding_outnum: None,
         },
         Channel {
             funding_txid: "456".to_string(),
@@ -201,6 +209,7 @@ fn test_sync_closed_channels() {
             spendable_msat: 200,
             receivable_msat: 2000,
             closed_at: None,
+            funding_outnum: None,
         },
     ];
     assert_eq!(expected.len(), queried_channels.len());

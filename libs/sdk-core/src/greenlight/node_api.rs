@@ -1042,6 +1042,7 @@ impl From<cln::ListpeersPeersChannels> for Channel {
             spendable_msat: c.spendable_msat.unwrap_or_default().msat,
             receivable_msat: c.receivable_msat.unwrap_or_default().msat,
             closed_at: None,
+            funding_outnum: c.funding_outnum,
         }
     }
 }
@@ -1050,19 +1051,19 @@ impl TryFrom<ListclosedchannelsClosedchannels> for Channel {
     type Error = anyhow::Error;
 
     fn try_from(c: ListclosedchannelsClosedchannels) -> std::result::Result<Self, Self::Error> {
-        let to_us = c
-            .final_to_us_msat
-            .ok_or(anyhow!("final_to_us_msat is missing"))?
-            .msat;
         Ok(Channel {
             short_channel_id: c
                 .short_channel_id
                 .ok_or(anyhow!("short_channel_id is missing"))?,
             state: ChannelState::Closed,
             funding_txid: hex::encode(c.funding_txid),
-            spendable_msat: to_us,
+            spendable_msat: c
+                .final_to_us_msat
+                .ok_or(anyhow!("final_to_us_msat is missing"))?
+                .msat,
             receivable_msat: 0,
-            closed_at: None,
+            closed_at: None, // Don't fill at his time, because it involves a chain_service lookup
+            funding_outnum: Some(c.funding_outnum),
         })
     }
 }

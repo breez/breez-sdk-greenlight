@@ -11,6 +11,10 @@ pub trait ChainService: Send + Sync {
     /// See <https://mempool.space/docs/api/rest#get-address-transactions>
     async fn address_transactions(&self, address: String) -> Result<Vec<OnchainTx>>;
     async fn current_tip(&self) -> Result<u32>;
+    /// Gets a transaction.
+    ///
+    /// See <https://mempool.space/docs/api/rest#get-transaction>
+    async fn transaction(&self, txid: String) -> Result<OnchainTx>;
     /// Gets the spending status of all tx outputs for this tx.
     ///
     /// See <https://mempool.space/docs/api/rest#get-transaction-outspends>
@@ -237,6 +241,13 @@ impl ChainService for MempoolSpace {
                 .await?
                 .parse()?,
         )
+    }
+
+    async fn transaction(&self, txid: String) -> Result<OnchainTx> {
+        Ok(reqwest::get(format!("{}/api/tx/{txid}", self.base_url))
+            .await?
+            .json()
+            .await?)
     }
 
     async fn transaction_outspends(&self, txid: String) -> Result<Vec<Outspend>> {

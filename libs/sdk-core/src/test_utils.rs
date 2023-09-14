@@ -184,6 +184,24 @@ impl ChainService for MockChainService {
     async fn current_tip(&self) -> Result<u32> {
         Ok(self.tip)
     }
+    async fn transaction(&self, txid: String) -> Result<OnchainTx> {
+        Ok(OnchainTx {
+            txid,
+            version: 0,
+            locktime: 123,
+            vin: vec![],
+            vout: vec![],
+            size: 234,
+            weight: 345,
+            fee: 0,
+            status: TxStatus {
+                confirmed: false,
+                block_height: None,
+                block_hash: None,
+                block_time: None,
+            },
+        })
+    }
 
     async fn transaction_outspends(&self, _txid: String) -> Result<Vec<Outspend>> {
         Ok(vec![Outspend {
