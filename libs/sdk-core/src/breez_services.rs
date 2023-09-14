@@ -886,6 +886,10 @@ impl BreezServices {
     ///
     /// Internal method. Should only be used as part of [BreezServices::start]
     async fn start_background_tasks(self: &Arc<BreezServices>) -> Result<()> {
+        // start the signer
+        let (shutdown_signer_sender, signer_signer_receiver) = mpsc::channel(1);
+        self.start_signer(signer_signer_receiver).await;
+
         // Sync node state
         let sync_breez_services = self.clone();
         match sync_breez_services.persister.get_node_state()? {
@@ -899,10 +903,6 @@ impl BreezServices {
                 info!("First run, finished running syncing in foreground");
             }
         }
-
-        // start the signer
-        let (shutdown_signer_sender, signer_signer_receiver) = mpsc::channel(1);
-        self.start_signer(signer_signer_receiver).await;
 
         // start backup watcher
         self.start_backup_watcher().await?;
