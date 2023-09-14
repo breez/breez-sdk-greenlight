@@ -19,8 +19,8 @@ use breez_sdk_core::{
     PaymentType, PaymentTypeFilter, Rate, ReceiveOnchainRequest, ReceivePaymentRequest,
     ReceivePaymentResponse, RecommendedFees, ReverseSwapFeesRequest, ReverseSwapInfo,
     ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop, SignMessageRequest,
-    SignMessageResponse, SuccessActionProcessed, SwapInfo, SwapStatus, Symbol,
-    UnspentTransactionOutput, UrlSuccessActionData,
+    SignMessageResponse, StaticBackupRequest, StaticBackupResponse, SuccessActionProcessed,
+    SwapInfo, SwapStatus, Symbol, UnspentTransactionOutput, UrlSuccessActionData,
 };
 
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
@@ -60,6 +60,13 @@ pub fn default_config(
     node_config: NodeConfig,
 ) -> Config {
     BreezServices::default_config(env_type, api_key, node_config)
+}
+
+/// Get the static backup data from the peristent storage.
+/// This data enables the user to recover the node in an external core ligntning node.
+/// See here for instructions on how to recover using this data: https://docs.corelightning.org/docs/backup-and-recovery#backing-up-using-static-channel-backup
+pub fn static_backup(request: StaticBackupRequest) -> SdkResult<StaticBackupResponse> {
+    BreezServices::static_backup(request)
 }
 
 /// connect initializes the SDK services, schedule the node to run in the cloud and

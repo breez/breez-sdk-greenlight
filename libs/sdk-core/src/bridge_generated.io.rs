@@ -52,6 +52,11 @@ pub extern "C" fn wire_default_config(
 }
 
 #[no_mangle]
+pub extern "C" fn wire_static_backup(port_: i64, request: *mut wire_StaticBackupRequest) {
+    wire_static_backup_impl(port_, request)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_breez_events_stream(port_: i64) {
     wire_breez_events_stream_impl(port_)
 }
@@ -345,6 +350,11 @@ pub extern "C" fn new_box_autoadd_sign_message_request_0() -> *mut wire_SignMess
 }
 
 #[no_mangle]
+pub extern "C" fn new_box_autoadd_static_backup_request_0() -> *mut wire_StaticBackupRequest {
+    support::new_leak_box_ptr(wire_StaticBackupRequest::new_with_null_ptr())
+}
+
+#[no_mangle]
 pub extern "C" fn new_box_autoadd_u32_0(value: u32) -> *mut u32 {
     support::new_leak_box_ptr(value)
 }
@@ -466,6 +476,12 @@ impl Wire2Api<SignMessageRequest> for *mut wire_SignMessageRequest {
     fn wire2api(self) -> SignMessageRequest {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
         Wire2Api::<SignMessageRequest>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<StaticBackupRequest> for *mut wire_StaticBackupRequest {
+    fn wire2api(self) -> StaticBackupRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<StaticBackupRequest>::wire2api(*wrap).into()
     }
 }
 impl Wire2Api<u32> for *mut u32 {
@@ -626,6 +642,13 @@ impl Wire2Api<SignMessageRequest> for wire_SignMessageRequest {
         }
     }
 }
+impl Wire2Api<StaticBackupRequest> for wire_StaticBackupRequest {
+    fn wire2api(self) -> StaticBackupRequest {
+        StaticBackupRequest {
+            working_dir: self.working_dir.wire2api(),
+        }
+    }
+}
 
 impl Wire2Api<Vec<u8>> for *mut wire_uint_8_list {
     fn wire2api(self) -> Vec<u8> {
@@ -751,6 +774,12 @@ pub struct wire_ReverseSwapFeesRequest {
 #[derive(Clone)]
 pub struct wire_SignMessageRequest {
     message: *mut wire_uint_8_list,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_StaticBackupRequest {
+    working_dir: *mut wire_uint_8_list,
 }
 
 #[repr(C)]
@@ -1029,6 +1058,20 @@ impl NewWithNullPtr for wire_SignMessageRequest {
 }
 
 impl Default for wire_SignMessageRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_StaticBackupRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            working_dir: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_StaticBackupRequest {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }

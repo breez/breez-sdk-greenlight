@@ -6,7 +6,7 @@ use breez_sdk_core::InputType::{LnUrlAuth, LnUrlPay, LnUrlWithdraw};
 use breez_sdk_core::{
     parse, BreezEvent, BreezServices, BuyBitcoinRequest, CheckMessageRequest, EventListener,
     GreenlightCredentials, PaymentTypeFilter, ReceiveOnchainRequest, ReceivePaymentRequest,
-    ReverseSwapFeesRequest, SignMessageRequest,
+    ReverseSwapFeesRequest, SignMessageRequest, StaticBackupRequest,
 };
 use breez_sdk_core::{Config, GreenlightNodeConfig, NodeConfig};
 use once_cell::sync::OnceCell;
@@ -353,6 +353,21 @@ pub(crate) async fn handle_command(
         Commands::Backup {} => {
             sdk().unwrap().backup().await?;
             Ok("Backup completed successfully".into())
+        }
+        Commands::StaticBackup {} => {
+            let config = persistence
+                .get_or_create_config()?
+                .to_sdk_config(&persistence.data_dir);
+            let backup_data = BreezServices::static_backup(StaticBackupRequest {
+                working_dir: config.working_dir,
+            })?;
+            match backup_data.backup {
+                Some(backup) => {
+                    let backup_str = serde_json::to_string_pretty(&backup)?;
+                    Ok(format!("Static backup data:\n{}", backup_str))
+                }
+                None => Ok("No static backup data".into()),
+            }
         }
     }
 }

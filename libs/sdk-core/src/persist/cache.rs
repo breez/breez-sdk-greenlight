@@ -70,6 +70,24 @@ impl SqliteStorage {
             None => Ok(None),
         }
     }
+
+    pub fn set_static_backup(&self, backup: Vec<String>) -> Result<()> {
+        let serialized_state = serde_json::to_string(&backup)?;
+        self.update_cached_item("static_backup".to_string(), serialized_state)?;
+        Ok(())
+    }
+
+    pub fn get_static_backup(&self) -> Result<Option<Vec<String>>> {
+        let backup_str = self.get_cached_item("static_backup".to_string())?;
+        Ok(match backup_str {
+            Some(str) => {
+                serde_json::from_str(str.as_str()).map_err(|e| SdkError::PersistenceFailure {
+                    err: format!("Failed to deserialize static backup data: {e}"),
+                })?
+            }
+            None => None,
+        })
+    }
 }
 
 #[test]

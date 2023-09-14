@@ -78,6 +78,8 @@ use crate::models::ReverseSwapFeesRequest;
 use crate::models::ReverseSwapInfo;
 use crate::models::ReverseSwapPairInfo;
 use crate::models::ReverseSwapStatus;
+use crate::models::StaticBackupRequest;
+use crate::models::StaticBackupResponse;
 use crate::models::SwapInfo;
 use crate::models::SwapStatus;
 use crate::models::UnspentTransactionOutput;
@@ -204,6 +206,22 @@ fn wire_default_config_impl(
             let api_api_key = api_key.wire2api();
             let api_node_config = node_config.wire2api();
             move |task_callback| Ok(default_config(api_env_type, api_api_key, api_node_config))
+        },
+    )
+}
+fn wire_static_backup_impl(
+    port_: MessagePort,
+    request: impl Wire2Api<StaticBackupRequest> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "static_backup",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_request = request.wire2api();
+            move |task_callback| static_backup(api_request)
         },
     )
 }
@@ -1333,6 +1351,13 @@ impl support::IntoDart for SignMessageResponse {
     }
 }
 impl support::IntoDartExceptPrimitive for SignMessageResponse {}
+
+impl support::IntoDart for StaticBackupResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.backup.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for StaticBackupResponse {}
 
 impl support::IntoDart for SuccessActionProcessed {
     fn into_dart(self) -> support::DartAbi {

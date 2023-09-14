@@ -312,6 +312,14 @@ dictionary ReceivePaymentResponse {
     u64? opening_fee_msat;
 };
 
+dictionary StaticBackupRequest {
+    string working_dir;
+};
+
+dictionary StaticBackupResponse {
+    sequence<string>? backup;
+};
+
 dictionary ReceiveOnchainRequest {
     OpeningFeeParams? opening_fee_params=null;
 };
@@ -614,4 +622,7 @@ namespace breez_sdk {
  sequence<u8> mnemonic_to_seed(string phrase);
 
  Config default_config(EnvironmentType env_type, string api_key, NodeConfig node_config);
+
+ [Throws=SdkError]
+ StaticBackupResponse static_backup(StaticBackupRequest request);
 };

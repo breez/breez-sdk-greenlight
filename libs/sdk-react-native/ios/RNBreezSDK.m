@@ -28,6 +28,12 @@ RCT_EXTERN_METHOD(
     resolve: (RCTPromiseResolveBlock)resolve
     reject: (RCTPromiseRejectBlock)reject
 )
+
+RCT_EXTERN_METHOD(
+    staticBackup: (NSDictionary*)request
+    resolve: (RCTPromiseResolveBlock)resolve
+    reject: (RCTPromiseRejectBlock)reject
+)
   
 RCT_EXTERN_METHOD(
     setLogStream: (RCTPromiseResolveBlock)resolve

@@ -14,7 +14,7 @@ use gl_client::node::ClnClient;
 use gl_client::pb::amount::Unit;
 use gl_client::pb::cln::{
     self, CloseRequest, ListclosedchannelsClosedchannels, ListclosedchannelsRequest,
-    ListpeerchannelsRequest,
+    ListpeerchannelsRequest, StaticbackupRequest,
 };
 use gl_client::pb::cln::{AmountOrAny, InvoiceRequest};
 use gl_client::pb::{Amount, InvoiceStatus, OffChainPayment, PayStatus, Peer, WithdrawResponse};
@@ -724,6 +724,16 @@ impl NodeAPI for Greenlight {
             .await?
             .into_inner();
         Ok(stream)
+    }
+
+    async fn static_backup(&self) -> Result<Vec<String>> {
+        let mut client = self.get_node_client().await?;
+        let res = client
+            .static_backup(StaticbackupRequest {})
+            .await?
+            .into_inner();
+        let hex_vec: Vec<String> = res.scb.into_iter().map(hex::encode).collect();
+        Ok(hex_vec)
     }
 
     async fn execute_command(&self, command: String) -> Result<String> {

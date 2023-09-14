@@ -34,7 +34,7 @@ use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
     EnvironmentType, LnUrlCallbackStatus, NodeConfig, ReceiveOnchainRequest, ReceivePaymentRequest,
     ReceivePaymentResponse, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
-    SignMessageRequest, SignMessageResponse,
+    SignMessageRequest, SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
 };
 
 static BREEZ_SERVICES_INSTANCE: OnceCell<Arc<BreezServices>> = OnceCell::new();
@@ -116,6 +116,11 @@ pub fn default_config(
     node_config: NodeConfig,
 ) -> Config {
     BreezServices::default_config(env_type, api_key, node_config)
+}
+
+/// See [BreezServices::static_backup]
+pub fn static_backup(request: StaticBackupRequest) -> Result<StaticBackupResponse> {
+    BreezServices::static_backup(request).map_err(anyhow::Error::new)
 }
 
 /*  Stream API's */

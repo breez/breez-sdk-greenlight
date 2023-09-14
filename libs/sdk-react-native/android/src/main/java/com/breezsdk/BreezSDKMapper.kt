@@ -1948,6 +1948,64 @@ fun asSignMessageResponseList(arr: ReadableArray): List<SignMessageResponse> {
     }
     return list
 }
+fun asStaticBackupRequest(data: ReadableMap): StaticBackupRequest? {
+    if (!validateMandatoryFields(
+            data,
+            arrayOf(
+                "workingDir",
+            ),
+        )
+    ) {
+        return null
+    }
+    val workingDir = data.getString("workingDir")!!
+    return StaticBackupRequest(
+        workingDir,
+    )
+}
+
+fun readableMapOf(staticBackupRequest: StaticBackupRequest): ReadableMap {
+    return readableMapOf(
+        "workingDir" to staticBackupRequest.workingDir,
+    )
+}
+
+fun asStaticBackupRequestList(arr: ReadableArray): List<StaticBackupRequest> {
+    val list = ArrayList<StaticBackupRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asStaticBackupRequest(value)!!)
+            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+fun asStaticBackupResponse(data: ReadableMap): StaticBackupResponse? {
+    if (!validateMandatoryFields(data, arrayOf())) {
+        return null
+    }
+    val backup = if (hasNonNullKey(data, "backup")) data.getArray("backup")?.let { asStringList(it) } else null
+    return StaticBackupResponse(
+        backup,
+    )
+}
+
+fun readableMapOf(staticBackupResponse: StaticBackupResponse): ReadableMap {
+    return readableMapOf(
+        "backup" to staticBackupResponse.backup?.let { readableArrayOf(it) },
+    )
+}
+
+fun asStaticBackupResponseList(arr: ReadableArray): List<StaticBackupResponse> {
+    val list = ArrayList<StaticBackupResponse>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asStaticBackupResponse(value)!!)
+            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+        }
+    }
+    return list
+}
 fun asSwapInfo(data: ReadableMap): SwapInfo? {
     if (!validateMandatoryFields(
             data,
@@ -2484,8 +2542,7 @@ fun readableMapOf(successActionProcessed: SuccessActionProcessed): ReadableMap? 
 
 fun asSwapStatus(type: String): SwapStatus {
     return SwapStatus.valueOf(type.uppercase())
-}
-    fun readableMapOf(vararg values: Pair<String, *>): ReadableMap {
+} fun readableMapOf(vararg values: Pair<String, *>): ReadableMap {
     val map = Arguments.createMap()
     for ((key, value) in values) {
         pushToMap(map, key, value)

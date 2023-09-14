@@ -717,7 +717,17 @@ impl BreezServices {
 
         // update node state and channels state
         self.persister.set_node_state(&new_data.node_state)?;
+
+        let channels_before_update = self.persister.list_channels()?;
         self.persister.update_channels(&new_data.channels)?;
+        let channels_after_update = self.persister.list_channels()?;
+
+        // Fetch the static backup if needed and persist it
+        if channels_before_update.len() != channels_after_update.len() {
+            info!("fetching static backup file from node");
+            let backup = self.node_api.static_backup().await?;
+            self.persister.set_static_backup(backup)?;
+        }
 
         //fetch closed_channel and convert them to Payment items.
         let closed_channel_payments_res: Result<Vec<Payment>> = self
@@ -840,6 +850,16 @@ impl BreezServices {
             EnvironmentType::Production => Config::production(api_key, node_config),
             EnvironmentType::Staging => Config::staging(api_key, node_config),
         }
+    }
+
+    /// Get the static backup data from the peristent storage.
+    /// This data enables the user to recover the node in an external core ligntning node.
+    /// See here for instructions on how to recover using this data: https://docs.corelightning.org/docs/backup-and-recovery#backing-up-using-static-channel-backup
+    pub fn static_backup(request: StaticBackupRequest) -> SdkResult<StaticBackupResponse> {
+        let storage = SqliteStorage::new(request.working_dir);
+        Ok(StaticBackupResponse {
+            backup: storage.get_static_backup()?,
+        })
     }
 
     /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency.

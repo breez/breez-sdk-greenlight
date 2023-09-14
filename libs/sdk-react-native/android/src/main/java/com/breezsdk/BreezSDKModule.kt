@@ -100,6 +100,19 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
+    fun staticBackup(request: ReadableMap, promise: Promise) {
+        executor.execute {
+            try {
+                val staticBackupRequest = asStaticBackupRequest(request) ?: run { throw SdkException.Generic("Missing mandatory field request of type StaticBackupRequest") }
+                val res = staticBackup(staticBackupRequest)
+                promise.resolve(readableMapOf(res))
+            } catch (e: SdkException) {
+                promise.reject(e.javaClass.simpleName, e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
     fun setLogStream(promise: Promise) {
         try {
             val emitter = reactApplicationContext.getJSModule(RCTDeviceEventEmitter::class.java)

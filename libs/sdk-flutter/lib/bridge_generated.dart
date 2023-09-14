@@ -63,6 +63,11 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kDefaultConfigConstMeta;
 
+  /// See [BreezServices::static_backup]
+  Future<StaticBackupResponse> staticBackup({required StaticBackupRequest request, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kStaticBackupConstMeta;
+
   /// If used, this must be called before `connect`. It can only be called once.
   Stream<BreezEvent> breezEventsStream({dynamic hint});
 
@@ -1219,6 +1224,22 @@ class SignMessageResponse {
   });
 }
 
+class StaticBackupRequest {
+  final String workingDir;
+
+  const StaticBackupRequest({
+    required this.workingDir,
+  });
+}
+
+class StaticBackupResponse {
+  final List<String>? backup;
+
+  const StaticBackupResponse({
+    this.backup,
+  });
+}
+
 @freezed
 class SuccessActionProcessed with _$SuccessActionProcessed {
   /// See [SuccessAction::Aes] for received payload
@@ -1504,6 +1525,22 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kDefaultConfigConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "default_config",
         argNames: ["envType", "apiKey", "nodeConfig"],
+      );
+
+  Future<StaticBackupResponse> staticBackup({required StaticBackupRequest request, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_static_backup_request(request);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_static_backup(port_, arg0),
+      parseSuccessData: _wire2api_static_backup_response,
+      constMeta: kStaticBackupConstMeta,
+      argValues: [request],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kStaticBackupConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "static_backup",
+        argNames: ["request"],
       );
 
   Stream<BreezEvent> breezEventsStream({dynamic hint}) {
@@ -2651,6 +2688,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return raw == null ? null : _wire2api_String(raw);
   }
 
+  List<String>? _wire2api_opt_StringList(dynamic raw) {
+    return raw == null ? null : _wire2api_StringList(raw);
+  }
+
   bool? _wire2api_opt_box_autoadd_bool(dynamic raw) {
     return raw == null ? null : _wire2api_box_autoadd_bool(raw);
   }
@@ -2834,6 +2875,14 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
     return SignMessageResponse(
       signature: _wire2api_String(arr[0]),
+    );
+  }
+
+  StaticBackupResponse _wire2api_static_backup_response(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
+    return StaticBackupResponse(
+      backup: _wire2api_opt_StringList(arr[0]),
     );
   }
 
@@ -3127,6 +3176,13 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<wire_StaticBackupRequest> api2wire_box_autoadd_static_backup_request(StaticBackupRequest raw) {
+    final ptr = inner.new_box_autoadd_static_backup_request_0();
+    _api_fill_to_wire_static_backup_request(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
   ffi.Pointer<ffi.Uint32> api2wire_box_autoadd_u32(int raw) {
     return inner.new_box_autoadd_u32_0(api2wire_u32(raw));
   }
@@ -3265,6 +3321,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     _api_fill_to_wire_sign_message_request(apiObj, wireObj.ref);
   }
 
+  void _api_fill_to_wire_box_autoadd_static_backup_request(
+      StaticBackupRequest apiObj, ffi.Pointer<wire_StaticBackupRequest> wireObj) {
+    _api_fill_to_wire_static_backup_request(apiObj, wireObj.ref);
+  }
+
   void _api_fill_to_wire_buy_bitcoin_request(BuyBitcoinRequest apiObj, wire_BuyBitcoinRequest wireObj) {
     wireObj.provider = api2wire_buy_bitcoin_provider(apiObj.provider);
     wireObj.opening_fee_params = api2wire_opt_box_autoadd_opening_fee_params(apiObj.openingFeeParams);
@@ -3381,6 +3442,10 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
 
   void _api_fill_to_wire_sign_message_request(SignMessageRequest apiObj, wire_SignMessageRequest wireObj) {
     wireObj.message = api2wire_String(apiObj.message);
+  }
+
+  void _api_fill_to_wire_static_backup_request(StaticBackupRequest apiObj, wire_StaticBackupRequest wireObj) {
+    wireObj.working_dir = api2wire_String(apiObj.workingDir);
   }
 }
 
@@ -3601,6 +3666,22 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
               ffi.Pointer<wire_NodeConfig>)>>('wire_default_config');
   late final _wire_default_config = _wire_default_configPtr
       .asFunction<void Function(int, int, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_NodeConfig>)>();
+
+  void wire_static_backup(
+    int port_,
+    ffi.Pointer<wire_StaticBackupRequest> request,
+  ) {
+    return _wire_static_backup(
+      port_,
+      request,
+    );
+  }
+
+  late final _wire_static_backupPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_StaticBackupRequest>)>>(
+          'wire_static_backup');
+  late final _wire_static_backup =
+      _wire_static_backupPtr.asFunction<void Function(int, ffi.Pointer<wire_StaticBackupRequest>)>();
 
   void wire_breez_events_stream(
     int port_,
@@ -4270,6 +4351,16 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _new_box_autoadd_sign_message_request_0 = _new_box_autoadd_sign_message_request_0Ptr
       .asFunction<ffi.Pointer<wire_SignMessageRequest> Function()>();
 
+  ffi.Pointer<wire_StaticBackupRequest> new_box_autoadd_static_backup_request_0() {
+    return _new_box_autoadd_static_backup_request_0();
+  }
+
+  late final _new_box_autoadd_static_backup_request_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_StaticBackupRequest> Function()>>(
+          'new_box_autoadd_static_backup_request_0');
+  late final _new_box_autoadd_static_backup_request_0 = _new_box_autoadd_static_backup_request_0Ptr
+      .asFunction<ffi.Pointer<wire_StaticBackupRequest> Function()>();
+
   ffi.Pointer<ffi.Uint32> new_box_autoadd_u32_0(
     int value,
   ) {
@@ -4403,6 +4494,10 @@ class wire_CheckMessageRequest extends ffi.Struct {
   external ffi.Pointer<wire_uint_8_list> pubkey;
 
   external ffi.Pointer<wire_uint_8_list> signature;
+}
+
+class wire_StaticBackupRequest extends ffi.Struct {
+  external ffi.Pointer<wire_uint_8_list> working_dir;
 }
 
 class wire_OpeningFeeParams extends ffi.Struct {
