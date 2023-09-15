@@ -942,8 +942,9 @@ class Payment {
   final int paymentTime;
   final int amountMsat;
   final int feeMsat;
-  final bool pending;
+  final PaymentStatus status;
   final String? description;
+  final String? lastError;
   final PaymentDetails details;
 
   const Payment({
@@ -952,8 +953,9 @@ class Payment {
     required this.paymentTime,
     required this.amountMsat,
     required this.feeMsat,
-    required this.pending,
+    required this.status,
     this.description,
+    this.lastError,
     required this.details,
   });
 }
@@ -978,6 +980,13 @@ class PaymentFailedData {
     required this.nodeId,
     this.invoice,
   });
+}
+
+/// The status of a payment
+enum PaymentStatus {
+  Pending,
+  Complete,
+  Failed,
 }
 
 /// Different types of supported payments
@@ -2746,16 +2755,17 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   Payment _wire2api_payment(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 8) throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    if (arr.length != 9) throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
     return Payment(
       id: _wire2api_String(arr[0]),
       paymentType: _wire2api_payment_type(arr[1]),
       paymentTime: _wire2api_i64(arr[2]),
       amountMsat: _wire2api_u64(arr[3]),
       feeMsat: _wire2api_u64(arr[4]),
-      pending: _wire2api_bool(arr[5]),
+      status: _wire2api_payment_status(arr[5]),
       description: _wire2api_opt_String(arr[6]),
-      details: _wire2api_payment_details(arr[7]),
+      lastError: _wire2api_opt_String(arr[7]),
+      details: _wire2api_payment_details(arr[8]),
     );
   }
 
@@ -2782,6 +2792,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       nodeId: _wire2api_String(arr[1]),
       invoice: _wire2api_opt_box_autoadd_ln_invoice(arr[2]),
     );
+  }
+
+  PaymentStatus _wire2api_payment_status(dynamic raw) {
+    return PaymentStatus.values[raw as int];
   }
 
   PaymentType _wire2api_payment_type(dynamic raw) {

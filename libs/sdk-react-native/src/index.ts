@@ -248,8 +248,9 @@ export type Payment = {
     paymentTime: number
     amountMsat: number
     feeMsat: number
-    pending: boolean
+    status: PaymentStatus
     description?: string
+    lastError?: string
     details: PaymentDetails
 }
 
@@ -533,6 +534,12 @@ export type PaymentDetails = {
 } | {
     type: PaymentDetailsVariant.CLOSED_CHANNEL,
     data: ClosedChannelPaymentDetails
+}
+
+export enum PaymentStatus {
+    PENDING = "pending",
+    COMPLETE = "complete",
+    FAILED = "failed"
 }
 
 export enum PaymentType {

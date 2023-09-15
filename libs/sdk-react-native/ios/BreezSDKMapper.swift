@@ -1331,8 +1331,11 @@ class BreezSDKMapper {
         guard let paymentTime = data["paymentTime"] as? Int64 else { throw SdkError.Generic(message: "Missing mandatory field paymentTime for type Payment") }
         guard let amountMsat = data["amountMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field amountMsat for type Payment") }
         guard let feeMsat = data["feeMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field feeMsat for type Payment") }
-        guard let pending = data["pending"] as? Bool else { throw SdkError.Generic(message: "Missing mandatory field pending for type Payment") }
+        guard let statusTmp = data["status"] as? String else { throw SdkError.Generic(message: "Missing mandatory field status for type Payment") }
+        let status = try asPaymentStatus(type: statusTmp)
+
         let description = data["description"] as? String
+        let lastError = data["lastError"] as? String
         guard let detailsTmp = data["details"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field details for type Payment") }
         let details = try asPaymentDetails(data: detailsTmp)
 
@@ -1342,8 +1345,9 @@ class BreezSDKMapper {
             paymentTime: paymentTime,
             amountMsat: amountMsat,
             feeMsat: feeMsat,
-            pending: pending,
+            status: status,
             description: description,
+            lastError: lastError,
             details: details
         )
     }
@@ -1355,8 +1359,9 @@ class BreezSDKMapper {
             "paymentTime": payment.paymentTime,
             "amountMsat": payment.amountMsat,
             "feeMsat": payment.feeMsat,
-            "pending": payment.pending,
+            "status": valueOf(paymentStatus: payment.status),
             "description": payment.description == nil ? nil : payment.description,
+            "lastError": payment.lastError == nil ? nil : payment.lastError,
             "details": dictionaryOf(paymentDetails: payment.details),
         ]
     }
@@ -2645,6 +2650,34 @@ class BreezSDKMapper {
                 "type": "closedChannel",
                 "data": dictionaryOf(closedChannelPaymentDetails: data),
             ]
+        }
+    }
+
+    static func asPaymentStatus(type: String) throws -> PaymentStatus {
+        switch type {
+        case "pending":
+            return PaymentStatus.pending
+
+        case "complete":
+            return PaymentStatus.complete
+
+        case "failed":
+            return PaymentStatus.failed
+
+        default: throw SdkError.Generic(message: "Invalid variant \(type) for enum PaymentStatus")
+        }
+    }
+
+    static func valueOf(paymentStatus: PaymentStatus) -> String {
+        switch paymentStatus {
+        case .pending:
+            return "pending"
+
+        case .complete:
+            return "complete"
+
+        case .failed:
+            return "failed"
         }
     }
 

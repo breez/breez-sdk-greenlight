@@ -1385,7 +1385,7 @@ fun asPayment(data: ReadableMap): Payment? {
                 "paymentTime",
                 "amountMsat",
                 "feeMsat",
-                "pending",
+                "status",
                 "details",
             ),
         )
@@ -1397,8 +1397,9 @@ fun asPayment(data: ReadableMap): Payment? {
     val paymentTime = data.getDouble("paymentTime").toLong()
     val amountMsat = data.getDouble("amountMsat").toULong()
     val feeMsat = data.getDouble("feeMsat").toULong()
-    val pending = data.getBoolean("pending")
+    val status = data.getString("status")?.let { asPaymentStatus(it) }!!
     val description = if (hasNonNullKey(data, "description")) data.getString("description") else null
+    val lastError = if (hasNonNullKey(data, "lastError")) data.getString("lastError") else null
     val details = data.getMap("details")?.let { asPaymentDetails(it) }!!
     return Payment(
         id,
@@ -1406,8 +1407,9 @@ fun asPayment(data: ReadableMap): Payment? {
         paymentTime,
         amountMsat,
         feeMsat,
-        pending,
+        status,
         description,
+        lastError,
         details,
     )
 }
@@ -1419,8 +1421,9 @@ fun readableMapOf(payment: Payment): ReadableMap {
         "paymentTime" to payment.paymentTime,
         "amountMsat" to payment.amountMsat,
         "feeMsat" to payment.feeMsat,
-        "pending" to payment.pending,
+        "status" to payment.status.name.lowercase(),
         "description" to payment.description,
+        "lastError" to payment.lastError,
         "details" to readableMapOf(payment.details),
     )
 }
@@ -2494,6 +2497,10 @@ fun readableMapOf(paymentDetails: PaymentDetails): ReadableMap? {
     return map
 }
 
+fun asPaymentStatus(type: String): PaymentStatus {
+    return PaymentStatus.valueOf(type.uppercase())
+}
+
 fun asPaymentType(type: String): PaymentType {
     return PaymentType.valueOf(type.uppercase())
 }
@@ -2542,7 +2549,8 @@ fun readableMapOf(successActionProcessed: SuccessActionProcessed): ReadableMap? 
 
 fun asSwapStatus(type: String): SwapStatus {
     return SwapStatus.valueOf(type.uppercase())
-} fun readableMapOf(vararg values: Pair<String, *>): ReadableMap {
+}
+    fun readableMapOf(vararg values: Pair<String, *>): ReadableMap {
     val map = Arguments.createMap()
     for ((key, value) in values) {
         pushToMap(map, key, value)

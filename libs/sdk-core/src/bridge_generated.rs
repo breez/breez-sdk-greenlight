@@ -69,6 +69,7 @@ use crate::models::OpeningFeeParams;
 use crate::models::OpeningFeeParamsMenu;
 use crate::models::Payment;
 use crate::models::PaymentDetails;
+use crate::models::PaymentStatus;
 use crate::models::PaymentType;
 use crate::models::PaymentTypeFilter;
 use crate::models::ReceiveOnchainRequest;
@@ -1205,8 +1206,9 @@ impl support::IntoDart for Payment {
             self.payment_time.into_dart(),
             self.amount_msat.into_dart(),
             self.fee_msat.into_dart(),
-            self.pending.into_dart(),
+            self.status.into_dart(),
             self.description.into_dart(),
+            self.last_error.into_dart(),
             self.details.into_dart(),
         ]
         .into_dart()
@@ -1236,6 +1238,17 @@ impl support::IntoDart for PaymentFailedData {
 }
 impl support::IntoDartExceptPrimitive for PaymentFailedData {}
 
+impl support::IntoDart for PaymentStatus {
+    fn into_dart(self) -> support::DartAbi {
+        match self {
+            Self::Pending => 0,
+            Self::Complete => 1,
+            Self::Failed => 2,
+        }
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for PaymentStatus {}
 impl support::IntoDart for PaymentType {
     fn into_dart(self) -> support::DartAbi {
         match self {
