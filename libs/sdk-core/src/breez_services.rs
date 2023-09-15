@@ -1835,7 +1835,7 @@ pub(crate) mod tests {
     use crate::models::{LnPaymentDetails, NodeState, Payment, PaymentDetails, PaymentTypeFilter};
     use crate::{
         input_parser, parse_short_channel_id, test_utils::*, BuyBitcoinProvider, BuyBitcoinRequest,
-        InputType, ReceivePaymentRequest,
+        InputType, ReceivePaymentRequest, PaymentStatus,
     };
     use crate::{NodeAPI, PaymentType};
 

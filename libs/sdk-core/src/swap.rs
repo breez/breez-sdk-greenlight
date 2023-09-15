@@ -815,8 +815,9 @@ mod tests {
             payment_time: 0,
             amount_msat: 5000,
             fee_msat: 0,
-            pending: false,
+            status: PaymentStatus::Complete,
             description: Some("desc".to_string()),
+            last_error: None,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
                     payment_hash: hex::encode(swap_info.payment_hash.clone()),
