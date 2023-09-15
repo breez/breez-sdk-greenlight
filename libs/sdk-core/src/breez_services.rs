@@ -774,6 +774,14 @@ impl BreezServices {
         payment_res: Result<PaymentResponse>,
     ) -> SdkResult<Payment> {
         if payment_res.is_err() {
+            if invoice.is_some() {
+                let inv = invoice.as_ref().unwrap().clone();
+                let mut payment = Payment::try_from(inv)?;
+                payment.status = PaymentStatus::Failed;
+                payment.last_error = Some(payment_res.as_ref().err().unwrap().to_string());
+                self.persister.insert_or_update_payments(&vec![payment])?;
+            }
+
             self.notify_event_listeners(BreezEvent::PaymentFailed {
                 details: PaymentFailedData {
                     error: payment_res.as_ref().err().unwrap().to_string(),
@@ -1231,8 +1239,12 @@ fn closed_channel_to_transaction(channel: crate::models::Channel) -> Result<Paym
             .unwrap_or(now.duration_since(UNIX_EPOCH)?.as_secs()) as i64,
         amount_msat: channel.spendable_msat,
         fee_msat: 0,
-        pending: channel.state == ChannelState::PendingClose,
+        status: match channel.state {
+            ChannelState::PendingClose => PaymentStatus::Pending,
+            _ => PaymentStatus::Complete,
+        },
         description: Some("Closed Channel".to_string()),
+        last_error: None,
         details: PaymentDetails::ClosedChannel {
             data: ClosedChannelPaymentDetails {
                 short_channel_id: channel.short_channel_id,
@@ -1852,8 +1864,9 @@ pub(crate) mod tests {
                 payment_time: 100000,
                 amount_msat: 10,
                 fee_msat: 0,
-                pending: false,
+                status: PaymentStatus::Complete,
                 description: Some("test receive".to_string()),
+                last_error: None,
                 details: PaymentDetails::Ln {
                     data: LnPaymentDetails {
                         payment_hash: "1111".to_string(),
@@ -1874,8 +1887,9 @@ pub(crate) mod tests {
                 payment_time: 200000,
                 amount_msat: 8,
                 fee_msat: 2,
-                pending: false,
+                status: PaymentStatus::Complete,
                 description: Some("test payment".to_string()),
+                last_error: None,
                 details: PaymentDetails::Ln {
                     data: LnPaymentDetails {
                         payment_hash: payment_hash_with_lnurl_success_action.to_string(),

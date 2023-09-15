@@ -890,8 +890,9 @@ impl TryFrom<OffChainPayment> for Payment {
             payment_time: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64,
             amount_msat: amount_to_msat(&p.amount.unwrap_or_default()),
             fee_msat: 0,
-            pending: false,
+            status: PaymentStatus::Complete,
             description: ln_invoice.description,
+            last_error: None,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
                     payment_hash: hex::encode(p.payment_hash),
@@ -924,8 +925,9 @@ impl TryFrom<pb::Invoice> for Payment {
             payment_time: invoice.payment_time as i64,
             amount_msat: amount_to_msat(&invoice.amount.unwrap_or_default()),
             fee_msat: 0,
-            pending: false,
+            status: PaymentStatus::Complete,
             description: ln_invoice.description,
+            last_error: None,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
                     payment_hash: hex::encode(invoice.payment_hash),
@@ -954,6 +956,7 @@ impl TryFrom<pb::Payment> for Payment {
 
         let payment_amount = amount_to_msat(&payment.amount.unwrap_or_default());
         let payment_amount_sent = amount_to_msat(&payment.amount_sent.unwrap_or_default());
+        let status = payment.status.try_into()?;
 
         Ok(Payment {
             id: hex::encode(payment.payment_hash.clone()),
@@ -961,8 +964,9 @@ impl TryFrom<pb::Payment> for Payment {
             payment_time: payment.created_at as i64,
             amount_msat: payment_amount,
             fee_msat: payment_amount_sent - payment_amount,
-            pending: pb::PayStatus::from_i32(payment.status) == Some(pb::PayStatus::Pending),
+            status,
             description,
+            last_error: None,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
                     payment_hash: hex::encode(payment.payment_hash),

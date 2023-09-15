@@ -125,6 +125,12 @@ enum PaymentTypeFilter {
     "All",
 };
 
+enum PaymentStatus {
+    "Pending",
+    "Complete",
+    "Failed",
+};
+
 enum PaymentType {
     "Sent",
     "Received",
@@ -137,8 +143,9 @@ dictionary Payment {
     i64 payment_time;    
     u64 amount_msat;
     u64 fee_msat;
-    boolean pending;
+    PaymentStatus status;
     string? description;
+    string? last_error;
     PaymentDetails details;
 };
 

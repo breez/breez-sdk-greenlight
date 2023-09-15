@@ -3,14 +3,14 @@ use crate::error::SdkResult;
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::models::*;
 use anyhow::{anyhow, Result};
-use rusqlite::types::{FromSql, FromSqlError, ToSql, ToSqlOutput};
-use rusqlite::OptionalExtension;
+use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use rusqlite::Row;
+use rusqlite::{params, OptionalExtension};
 
 use std::str::FromStr;
 
 impl SqliteStorage {
-    /// Inserts payments into the payments table. Covers both pending and successful payments. Before
+    /// Inserts payments into the payments table. These can be pending, completed and failed payments. Before
     /// persisting, it automatically deletes previously pending payments
     ///
     /// Note that, if a payment has details of type [LnPaymentDetails] which contain a [SuccessActionProcessed],
@@ -29,11 +29,12 @@ impl SqliteStorage {
            payment_time,                                  
            amount_msat, 
            fee_msat,                 
-           pending,
+           status,
            description,
+           last_error,
            details
          )
-         VALUES (?1,?2,?3,?4,?5,?6,?7,?8)
+         VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9)
         ",
         )?;
 
@@ -44,8 +45,9 @@ impl SqliteStorage {
                 &ln_tx.payment_time,
                 &ln_tx.amount_msat,
                 &ln_tx.fee_msat,
-                &ln_tx.pending,
+                &ln_tx.status,
                 &ln_tx.description,
+                &ln_tx.last_error,
                 &ln_tx.details,
             ))?;
         }
@@ -55,8 +57,8 @@ impl SqliteStorage {
     fn delete_pending_lightning_payments(&self) -> Result<usize> {
         self.get_connection()?
             .execute(
-                "DELETE FROM payments WHERE payment_type = ?1 AND pending = true",
-                [PaymentType::Sent.to_string()],
+                "DELETE FROM payments WHERE payment_type = ?1 AND status = ?2",
+                params![PaymentType::Sent.to_string(), PaymentStatus::Pending],
             )
             .map_err(|e| anyhow!(e))
     }
@@ -143,8 +145,9 @@ impl SqliteStorage {
              p.payment_time,
              p.amount_msat,
              p.fee_msat,
-             p.pending,
+             p.status,
              p.description,
+             p.last_error,
              p.details,
              e.lnurl_success_action,
              e.lnurl_metadata,
@@ -171,7 +174,7 @@ impl SqliteStorage {
         Ok(vec)
     }
 
-    /// This queries a single payment by hash, which may be pending or completed.
+    /// This queries a single payment by hash, which may be pending, completed or failed.
     ///
     /// To lookup a completed payment by hash, use [Self::get_completed_payment_by_hash]
     ///
@@ -186,8 +189,9 @@ impl SqliteStorage {
                  p.payment_time,
                  p.amount_msat,
                  p.fee_msat,
-                 p.pending,
+                 p.status,
                  p.description,
+                 p.last_error,
                  p.details,
                  e.lnurl_success_action,
                  e.lnurl_metadata,
@@ -211,9 +215,11 @@ impl SqliteStorage {
 
     /// Looks up a completed payment by hash.
     ///
-    /// To include pending payments in the lookup as well, use [Self::get_payment_by_hash]
+    /// To include pending or failed payments in the lookup as well, use [Self::get_payment_by_hash]
     pub(crate) fn get_completed_payment_by_hash(&self, hash: &String) -> Result<Option<Payment>> {
-        let res = self.get_payment_by_hash(hash)?.filter(|p| !p.pending);
+        let res = self
+            .get_payment_by_hash(hash)?
+            .filter(|p| p.status == PaymentStatus::Complete);
         Ok(res)
     }
 
@@ -226,19 +232,20 @@ impl SqliteStorage {
             payment_time: row.get(2)?,
             amount_msat,
             fee_msat: row.get(4)?,
-            pending: row.get(5)?,
+            status: row.get(5)?,
             description: row.get(6)?,
-            details: row.get(7)?,
+            last_error: row.get(7)?,
+            details: row.get(8)?,
         };
 
         if let PaymentDetails::Ln { ref mut data } = payment.details {
-            data.lnurl_success_action = row.get(8)?;
-            data.lnurl_metadata = row.get(9)?;
-            data.ln_address = row.get(10)?;
+            data.lnurl_success_action = row.get(9)?;
+            data.lnurl_metadata = row.get(10)?;
+            data.ln_address = row.get(11)?;
         }
 
         // In case we have a record of the open channel fee, let's use it.
-        let payer_amount_msat: Option<u64> = row.get(11)?;
+        let payer_amount_msat: Option<u64> = row.get(12)?;
         if let Some(payer_amount) = payer_amount_msat {
             payment.fee_msat = payer_amount - amount_msat;
         }
@@ -297,6 +304,26 @@ impl ToSql for PaymentDetails {
     }
 }
 
+impl FromSql for PaymentStatus {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        match value {
+            ValueRef::Integer(i) => match i as u8 {
+                0 => Ok(PaymentStatus::Pending),
+                1 => Ok(PaymentStatus::Complete),
+                2 => Ok(PaymentStatus::Failed),
+                _ => Err(FromSqlError::OutOfRange(i)),
+            },
+            _ => Err(FromSqlError::InvalidType),
+        }
+    }
+}
+
+impl ToSql for PaymentStatus {
+    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
+        Ok(rusqlite::types::ToSqlOutput::from(*self as i64))
+    }
+}
+
 impl FromSql for SuccessActionProcessed {
     fn column_result(value: rusqlite::types::ValueRef<'_>) -> rusqlite::types::FromSqlResult<Self> {
         serde_json::from_str(value.as_str()?).map_err(|_| FromSqlError::InvalidType)
@@ -334,8 +361,9 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
             payment_time: 1001,
             amount_msat: 100,
             fee_msat: 20,
-            pending: false,
+            status: PaymentStatus::Complete,
             description: None,
+            last_error: None,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
                     payment_hash: payment_hash_with_lnurl_success_action.to_string(),
@@ -356,8 +384,9 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
             payment_time: 1000,
             amount_msat: 100,
             fee_msat: 20,
-            pending: false,
+            status: PaymentStatus::Complete,
             description: Some("desc".to_string()),
+            last_error: None,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
                     payment_hash: "124".to_string(),

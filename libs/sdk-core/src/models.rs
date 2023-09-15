@@ -626,6 +626,26 @@ pub struct SyncResponse {
     pub channels: Vec<crate::models::Channel>,
 }
 
+/// The status of a payment
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+pub enum PaymentStatus {
+    Pending = 0,
+    Complete = 1,
+    Failed = 2,
+}
+
+impl TryFrom<i32> for PaymentStatus {
+    type Error = anyhow::Error;
+    fn try_from(value: i32) -> std::result::Result<Self, Self::Error> {
+        match value {
+            0 => Ok(PaymentStatus::Pending),
+            1 => Ok(PaymentStatus::Complete),
+            2 => Ok(PaymentStatus::Failed),
+            _ => Err(anyhow!("illegal value")),
+        }
+    }
+}
+
 /// Represents a payment, including its [PaymentType] and [PaymentDetails].
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]
 pub struct Payment {
@@ -634,9 +654,40 @@ pub struct Payment {
     pub payment_time: i64,
     pub amount_msat: u64,
     pub fee_msat: u64,
-    pub pending: bool,
+    pub status: PaymentStatus,
     pub description: Option<String>,
+    pub last_error: Option<String>,
     pub details: PaymentDetails,
+}
+
+impl TryFrom<LNInvoice> for Payment {
+    type Error = anyhow::Error;
+
+    fn try_from(inv: LNInvoice) -> std::result::Result<Self, Self::Error> {
+        Ok(Payment {
+            id: inv.payment_hash.clone(),
+            payment_type: PaymentType::Sent,
+            payment_time: inv.timestamp as i64,
+            amount_msat: inv.amount_msat.unwrap_or(0),
+            fee_msat: 0,
+            status: PaymentStatus::Pending,
+            description: inv.description,
+            last_error: None,
+            details: PaymentDetails::Ln {
+                data: LnPaymentDetails {
+                    payment_hash: inv.payment_hash.clone(),
+                    label: "".to_string(),
+                    destination_pubkey: inv.payee_pubkey,
+                    payment_preimage: "".to_string(),
+                    keysend: false,
+                    bolt11: inv.bolt11,
+                    lnurl_success_action: None,
+                    lnurl_metadata: None,
+                    ln_address: None,
+                },
+            },
+        })
+    }
 }
 
 /// Represents a payment response.

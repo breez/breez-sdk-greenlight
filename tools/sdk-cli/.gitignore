@@ -3,6 +3,7 @@ history.txt
 phrase
 storage.sql
 sync_storage.sql
+config.json
 creds
 
 *.log
