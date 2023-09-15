@@ -32,10 +32,11 @@ use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
 use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
-    EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus, NodeConfig, OpenChannelFeeRequest,
-    OpenChannelFeeResponse, ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse,
-    ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo, SignMessageRequest,
-    SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
+    EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus, LnUrlWithdrawCallbackStatus,
+    NodeConfig, OpenChannelFeeRequest, OpenChannelFeeResponse, ReceiveOnchainRequest,
+    ReceivePaymentRequest, ReceivePaymentResponse, ReverseSwapFeesRequest, ReverseSwapInfo,
+    ReverseSwapPairInfo, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
+    StaticBackupResponse,
 };
 
 /*

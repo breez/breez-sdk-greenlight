@@ -180,7 +180,7 @@ class RNBreezSDK: RCTEventEmitter {
             let lnUrlWithdrawRequestData = try BreezSDKMapper.asLnUrlWithdrawRequestData(data: reqData)
             let descriptionTmp = description.isEmpty ? nil : description
             var res = try getBreezServices().withdrawLnurl(reqData: lnUrlWithdrawRequestData, amountSats: amountSats, description: descriptionTmp)
-            resolve(BreezSDKMapper.dictionaryOf(lnUrlCallbackStatus: res))
+            resolve(BreezSDKMapper.dictionaryOf(lnUrlWithdrawCallbackStatus: res))
         } catch let err {
             rejectErr(err: err, reject: reject)
         }
