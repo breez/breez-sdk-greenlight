@@ -11,6 +11,9 @@ init:
 ## all: Compile iOS, Android
 all: ios android
 
+## dev: Compile iOS, Android for Development environment
+dev: ios-dev android
+
 flutter_rust_bridge:
 	flutter_rust_bridge_codegen --dart-format-line-length 110 -r ../sdk-core/src/binding.rs -d lib/bridge_generated.dart -c ios/Classes/bridge_generated.h
 
