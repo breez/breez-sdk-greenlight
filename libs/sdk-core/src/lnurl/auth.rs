@@ -1,3 +1,4 @@
+use crate::input_parser::get_parse_and_log_response;
 use crate::{LnUrlAuthRequestData, LnUrlCallbackStatus, NodeAPI};
 use anyhow::{anyhow, Result};
 use bitcoin::hashes::{hex::ToHex, sha256, Hash, HashEngine, Hmac, HmacEngine};
@@ -29,10 +30,8 @@ pub(crate) async fn perform_lnurl_auth(
     callback_url
         .query_pairs_mut()
         .append_pair("key", &linking_keys.public_key().to_hex());
-    debug!("Trying to call {}", callback_url.to_string());
 
-    let callback_resp_text = reqwest::get(callback_url).await?.text().await?;
-    serde_json::from_str::<LnUrlCallbackStatus>(&callback_resp_text).map_err(|e| anyhow!(e))
+    get_parse_and_log_response(callback_url.as_ref()).await
 }
 
 pub(crate) fn validate_request(

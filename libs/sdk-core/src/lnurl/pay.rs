@@ -28,12 +28,12 @@ pub(crate) async fn validate_lnurl_pay(
     )?;
 
     let callback_url = build_pay_callback_url(user_amount_sat, &comment, &req_data)?;
-    let callback_resp_text = reqwest::get(&callback_url).await?.text().await?;
+    let callback_resp_text = get_and_log_response(&callback_url).await?;
 
     if let Ok(err) = serde_json::from_str::<LnUrlErrorData>(&callback_resp_text) {
         Ok(ValidatedCallbackResponse::EndpointError { data: err })
     } else {
-        let callback_resp: CallbackResponse = reqwest::get(&callback_url).await?.json().await?;
+        let callback_resp: CallbackResponse = serde_json::from_str(&callback_resp_text)?;
         if let Some(ref sa) = callback_resp.success_action {
             match sa {
                 SuccessAction::Aes(data) => data.validate()?,
