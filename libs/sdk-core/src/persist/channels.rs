@@ -174,7 +174,7 @@ fn test_sync_closed_channels() {
             state: ChannelState::Closed,
             spendable_msat: 200,
             receivable_msat: 2000,
-            closed_at: None,
+            closed_at: Some(1),
             funding_outnum: None,
         },
     ];
