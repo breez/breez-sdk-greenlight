@@ -817,7 +817,6 @@ mod tests {
             fee_msat: 0,
             status: PaymentStatus::Complete,
             description: Some("desc".to_string()),
-            last_error: None,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
                     payment_hash: hex::encode(swap_info.payment_hash.clone()),
@@ -831,6 +830,7 @@ mod tests {
                     ln_address: None,
                 },
             },
+            last_error: None,
         };
         persister.insert_or_update_payments(&vec![payment.clone()])?;
 

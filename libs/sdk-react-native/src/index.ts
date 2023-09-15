@@ -250,8 +250,8 @@ export type Payment = {
     feeMsat: number
     status: PaymentStatus
     description?: string
-    lastError?: string
     details: PaymentDetails
+    lastError?: string
 }
 
 export type PaymentFailedData = {

@@ -1399,8 +1399,8 @@ fun asPayment(data: ReadableMap): Payment? {
     val feeMsat = data.getDouble("feeMsat").toULong()
     val status = data.getString("status")?.let { asPaymentStatus(it) }!!
     val description = if (hasNonNullKey(data, "description")) data.getString("description") else null
-    val lastError = if (hasNonNullKey(data, "lastError")) data.getString("lastError") else null
     val details = data.getMap("details")?.let { asPaymentDetails(it) }!!
+    val lastError = if (hasNonNullKey(data, "lastError")) data.getString("lastError") else null
     return Payment(
         id,
         paymentType,
@@ -1409,8 +1409,8 @@ fun asPayment(data: ReadableMap): Payment? {
         feeMsat,
         status,
         description,
-        lastError,
         details,
+        lastError,
     )
 }
 
@@ -1423,8 +1423,8 @@ fun readableMapOf(payment: Payment): ReadableMap {
         "feeMsat" to payment.feeMsat,
         "status" to payment.status.name.lowercase(),
         "description" to payment.description,
-        "lastError" to payment.lastError,
         "details" to readableMapOf(payment.details),
+        "lastError" to payment.lastError,
     )
 }
 

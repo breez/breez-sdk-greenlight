@@ -773,39 +773,41 @@ impl BreezServices {
         invoice: Option<LNInvoice>,
         payment_res: Result<PaymentResponse>,
     ) -> SdkResult<Payment> {
-        if payment_res.is_err() {
-            if invoice.is_some() {
-                let inv = invoice.as_ref().unwrap().clone();
-                let mut payment = Payment::try_from(inv)?;
-                payment.status = PaymentStatus::Failed;
-                payment.last_error = Some(payment_res.as_ref().err().unwrap().to_string());
-                self.persister.insert_or_update_payments(&vec![payment])?;
-            }
+        match payment_res {
+            Ok(payment) => {
+                self.do_sync(true).await?;
 
-            self.notify_event_listeners(BreezEvent::PaymentFailed {
-                details: PaymentFailedData {
-                    error: payment_res.as_ref().err().unwrap().to_string(),
-                    node_id,
-                    invoice,
-                },
-            })
-            .await?;
-            return Err(SdkError::SendPaymentFailed {
-                err: payment_res.err().unwrap().to_string(),
-            });
-        }
-        let payment = payment_res.unwrap();
-        self.do_sync(true).await?;
-
-        match self.persister.get_payment_by_hash(&payment.payment_hash)? {
-            Some(p) => {
-                self.notify_event_listeners(BreezEvent::PaymentSucceed { details: p.clone() })
-                    .await?;
-                Ok(p)
+                match self.persister.get_payment_by_hash(&payment.payment_hash)? {
+                    Some(p) => {
+                        self.notify_event_listeners(BreezEvent::PaymentSucceed {
+                            details: p.clone(),
+                        })
+                        .await?;
+                        Ok(p)
+                    }
+                    None => Err(SdkError::SendPaymentFailed {
+                        err: "Payment not found".into(),
+                    }),
+                }
             }
-            None => Err(SdkError::SendPaymentFailed {
-                err: "Payment not found".into(),
-            }),
+            Err(e) => {
+                if let Some(inv) = invoice.clone() {
+                    let mut payment = Payment::try_from(inv)?;
+                    payment.status = PaymentStatus::Failed;
+                    payment.last_error = Some(e.to_string());
+                    self.persister.insert_or_update_payments(&vec![payment])?;
+                }
+
+                self.notify_event_listeners(BreezEvent::PaymentFailed {
+                    details: PaymentFailedData {
+                        error: e.to_string(),
+                        node_id,
+                        invoice,
+                    },
+                })
+                .await?;
+                Err(SdkError::SendPaymentFailed { err: e.to_string() })
+            }
         }
     }
 
@@ -1244,7 +1246,6 @@ fn closed_channel_to_transaction(channel: crate::models::Channel) -> Result<Paym
             _ => PaymentStatus::Complete,
         },
         description: Some("Closed Channel".to_string()),
-        last_error: None,
         details: PaymentDetails::ClosedChannel {
             data: ClosedChannelPaymentDetails {
                 short_channel_id: channel.short_channel_id,
@@ -1252,6 +1253,7 @@ fn closed_channel_to_transaction(channel: crate::models::Channel) -> Result<Paym
                 funding_txid: channel.funding_txid,
             },
         },
+        last_error: None,
     })
 }
 
@@ -1866,7 +1868,6 @@ pub(crate) mod tests {
                 fee_msat: 0,
                 status: PaymentStatus::Complete,
                 description: Some("test receive".to_string()),
-                last_error: None,
                 details: PaymentDetails::Ln {
                     data: LnPaymentDetails {
                         payment_hash: "1111".to_string(),
@@ -1880,6 +1881,7 @@ pub(crate) mod tests {
                         ln_address: None,
                     },
                 },
+                last_error: None,
             },
             Payment {
                 id: payment_hash_with_lnurl_success_action.to_string(),
@@ -1889,7 +1891,6 @@ pub(crate) mod tests {
                 fee_msat: 2,
                 status: PaymentStatus::Complete,
                 description: Some("test payment".to_string()),
-                last_error: None,
                 details: PaymentDetails::Ln {
                     data: LnPaymentDetails {
                         payment_hash: payment_hash_with_lnurl_success_action.to_string(),
@@ -1903,6 +1904,7 @@ pub(crate) mod tests {
                         ln_address: Some(test_ln_address.to_string()),
                     },
                 },
+                last_error: None,
             },
         ];
         let node_api = Arc::new(MockNodeAPI::new(dummy_node_state.clone()));

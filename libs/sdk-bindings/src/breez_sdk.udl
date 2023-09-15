@@ -145,8 +145,8 @@ dictionary Payment {
     u64 fee_msat;
     PaymentStatus status;
     string? description;
-    string? last_error;
     PaymentDetails details;
+    string? last_error;
 };
 
 [Enum]

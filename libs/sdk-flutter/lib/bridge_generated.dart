@@ -944,8 +944,8 @@ class Payment {
   final int feeMsat;
   final PaymentStatus status;
   final String? description;
-  final String? lastError;
   final PaymentDetails details;
+  final String? lastError;
 
   const Payment({
     required this.id,
@@ -955,8 +955,8 @@ class Payment {
     required this.feeMsat,
     required this.status,
     this.description,
-    this.lastError,
     required this.details,
+    this.lastError,
   });
 }
 
@@ -2764,8 +2764,8 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       feeMsat: _wire2api_u64(arr[4]),
       status: _wire2api_payment_status(arr[5]),
       description: _wire2api_opt_String(arr[6]),
-      lastError: _wire2api_opt_String(arr[7]),
-      details: _wire2api_payment_details(arr[8]),
+      details: _wire2api_payment_details(arr[7]),
+      lastError: _wire2api_opt_String(arr[8]),
     );
   }
 

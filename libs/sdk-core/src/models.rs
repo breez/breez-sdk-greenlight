@@ -656,8 +656,8 @@ pub struct Payment {
     pub fee_msat: u64,
     pub status: PaymentStatus,
     pub description: Option<String>,
-    pub last_error: Option<String>,
     pub details: PaymentDetails,
+    pub last_error: Option<String>,
 }
 
 impl TryFrom<LNInvoice> for Payment {
@@ -672,7 +672,6 @@ impl TryFrom<LNInvoice> for Payment {
             fee_msat: 0,
             status: PaymentStatus::Pending,
             description: inv.description,
-            last_error: None,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
                     payment_hash: inv.payment_hash.clone(),
@@ -686,6 +685,7 @@ impl TryFrom<LNInvoice> for Payment {
                     ln_address: None,
                 },
             },
+            last_error: None,
         })
     }
 }

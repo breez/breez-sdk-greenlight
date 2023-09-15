@@ -31,9 +31,9 @@ impl SqliteStorage {
            fee_msat,                 
            status,
            description,
-           last_error,
-           details
-         )
+           details,
+           last_error
+        )
          VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9)
         ",
         )?;
@@ -47,8 +47,8 @@ impl SqliteStorage {
                 &ln_tx.fee_msat,
                 &ln_tx.status,
                 &ln_tx.description,
-                &ln_tx.last_error,
                 &ln_tx.details,
+                &ln_tx.last_error,
             ))?;
         }
         Ok(())
@@ -147,8 +147,8 @@ impl SqliteStorage {
              p.fee_msat,
              p.status,
              p.description,
-             p.last_error,
              p.details,
+             p.last_error,
              e.lnurl_success_action,
              e.lnurl_metadata,
              e.ln_address,
@@ -191,8 +191,8 @@ impl SqliteStorage {
                  p.fee_msat,
                  p.status,
                  p.description,
-                 p.last_error,
                  p.details,
+                 p.last_error,
                  e.lnurl_success_action,
                  e.lnurl_metadata,
                  e.ln_address,
@@ -234,8 +234,8 @@ impl SqliteStorage {
             fee_msat: row.get(4)?,
             status: row.get(5)?,
             description: row.get(6)?,
-            last_error: row.get(7)?,
-            details: row.get(8)?,
+            details: row.get(7)?,
+            last_error: row.get(8)?,
         };
 
         if let PaymentDetails::Ln { ref mut data } = payment.details {
@@ -363,7 +363,6 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
             fee_msat: 20,
             status: PaymentStatus::Complete,
             description: None,
-            last_error: None,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
                     payment_hash: payment_hash_with_lnurl_success_action.to_string(),
@@ -377,6 +376,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
                     ln_address: Some(test_ln_address.to_string()),
                 },
             },
+            last_error: None,
         },
         Payment {
             id: "124".to_string(),
@@ -386,7 +386,6 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
             fee_msat: 20,
             status: PaymentStatus::Complete,
             description: Some("desc".to_string()),
-            last_error: None,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
                     payment_hash: "124".to_string(),
@@ -400,6 +399,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
                     ln_address: None,
                 },
             },
+            last_error: None,
         },
     ];
     let storage = SqliteStorage::new(test_utils::create_test_sql_dir());

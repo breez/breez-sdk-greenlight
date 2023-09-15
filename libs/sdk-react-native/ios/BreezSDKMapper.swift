@@ -1335,9 +1335,10 @@ class BreezSDKMapper {
         let status = try asPaymentStatus(type: statusTmp)
 
         let description = data["description"] as? String
-        let lastError = data["lastError"] as? String
         guard let detailsTmp = data["details"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field details for type Payment") }
         let details = try asPaymentDetails(data: detailsTmp)
+
+        let lastError = data["lastError"] as? String
 
         return Payment(
             id: id,
@@ -1347,8 +1348,8 @@ class BreezSDKMapper {
             feeMsat: feeMsat,
             status: status,
             description: description,
-            lastError: lastError,
-            details: details
+            details: details,
+            lastError: lastError
         )
     }
 
@@ -1361,8 +1362,8 @@ class BreezSDKMapper {
             "feeMsat": payment.feeMsat,
             "status": valueOf(paymentStatus: payment.status),
             "description": payment.description == nil ? nil : payment.description,
-            "lastError": payment.lastError == nil ? nil : payment.lastError,
             "details": dictionaryOf(paymentDetails: payment.details),
+            "lastError": payment.lastError == nil ? nil : payment.lastError,
         ]
     }
 

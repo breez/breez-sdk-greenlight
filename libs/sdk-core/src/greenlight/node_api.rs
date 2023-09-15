@@ -927,7 +927,6 @@ impl TryFrom<pb::Invoice> for Payment {
             fee_msat: 0,
             status: PaymentStatus::Complete,
             description: ln_invoice.description,
-            last_error: None,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
                     payment_hash: hex::encode(invoice.payment_hash),
@@ -941,6 +940,7 @@ impl TryFrom<pb::Invoice> for Payment {
                     ln_address: None,
                 },
             },
+            last_error: None,
         })
     }
 }
@@ -966,7 +966,6 @@ impl TryFrom<pb::Payment> for Payment {
             fee_msat: payment_amount_sent - payment_amount,
             status,
             description,
-            last_error: None,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
                     payment_hash: hex::encode(payment.payment_hash),
@@ -980,6 +979,7 @@ impl TryFrom<pb::Payment> for Payment {
                     ln_address: None,
                 },
             },
+            last_error: None,
         })
     }
 }
