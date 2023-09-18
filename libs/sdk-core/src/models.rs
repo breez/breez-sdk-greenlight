@@ -60,7 +60,7 @@ pub trait NodeAPI: Send + Sync {
     ) -> Result<String>;
     async fn pull_changed(
         &self,
-        since_timestamp: i64,
+        since_timestamp: u64,
         balance_changed: bool,
     ) -> Result<SyncResponse>;
     /// As per the `pb::PayRequest` docs, `amount_sats` is only needed when the invoice doesn't specify an amount
@@ -632,18 +632,6 @@ pub enum PaymentStatus {
     Pending = 0,
     Complete = 1,
     Failed = 2,
-}
-
-impl TryFrom<i32> for PaymentStatus {
-    type Error = anyhow::Error;
-    fn try_from(value: i32) -> std::result::Result<Self, Self::Error> {
-        match value {
-            0 => Ok(PaymentStatus::Pending),
-            1 => Ok(PaymentStatus::Complete),
-            2 => Ok(PaymentStatus::Failed),
-            _ => Err(anyhow!("illegal value")),
-        }
-    }
 }
 
 /// Represents a payment, including its [PaymentType] and [PaymentDetails].

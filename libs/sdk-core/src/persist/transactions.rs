@@ -116,7 +116,7 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub fn last_payment_timestamp(&self) -> Result<i64> {
+    pub fn last_payment_timestamp(&self) -> Result<u64> {
         self.get_connection()?
             .query_row(
                 "SELECT max(payment_time) FROM payments WHERE status != ?1",
