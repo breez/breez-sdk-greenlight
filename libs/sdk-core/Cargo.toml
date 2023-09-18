@@ -10,10 +10,10 @@ crate-type = ["staticlib", "cdylib", "lib"]
 [dependencies]
 flutter_rust_bridge = "1.75.2"
 aes = "0.8"
-anyhow = { version = "1.0.57", features = ["backtrace"] }
+anyhow = { version = "1.0", features = ["backtrace"] }
 cbc = { version = "0.1", features = ["std"] }
-hex = "*"
-# v0.3 requires bitcoin 0.30, but lightning v0.115 needs bitcoin 0.29, so we keep this at v0.2 which also uses bitcoin 0.29
+hex = "0.4"
+# v0.3 requires bitcoin 0.30, but gl-client uses bitcoin 0.29.2, so we keep this at v0.2 which also uses bitcoin 0.29
 bip21 = "0.2"
 bitcoin = "0.29.2"
 gl-client = { git = "https://github.com/Blockstream/greenlight.git", features = [
@@ -21,23 +21,23 @@ gl-client = { git = "https://github.com/Blockstream/greenlight.git", features = 
 ], rev = "8ee5de58699b9ce2c9c10b44bdaab7f39b6d28e0" }
 zbase32 = "0.1.2"
 base64 = "0.13.0"
-chrono = "*"
+chrono = "0.4"
 ecies = { version = "0.2", default-features = false, features = ["pure"] }
-env_logger = "*"
-ripemd = "*"
-rand = "*"
-tiny-bip39 = "*"
+env_logger = "0.10"
+ripemd = "0.1"
+rand = "0.8"
+tiny-bip39 = "1"
 tokio = { version = "1", features = ["full"] }
 prost = "^0.11"
-querystring = "*"
-rusqlite = { version = "0.28.0", features = [
+querystring = "1"
+rusqlite = { version = "0.29", features = [
     "serde_json",
     "bundled",
     "load_extension",
     "backup",
     "hooks",
 ] }
-rusqlite_migration = "*"
+rusqlite_migration = "1.0"
 reqwest = { version = "0.11", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -48,23 +48,22 @@ tonic = { version = "^0.8", features = [
     "tls-webpki-roots",
 ] }
 lazy_static = "^1.4.0"
-lightning = "*"
-lightning-invoice = "*"
-log = "*"
-once_cell = "*"
-openssl = { version = "0.10.42", features = ["vendored"] }
-strum = "0.24.1"
-strum_macros = "0.24.1"
+lightning = "0.0.115"
+# Keep in sync with version used in gl-client
+lightning-invoice = "0.23.0"
+log = "0.4"
+once_cell = "1"
+openssl = { version = "0.10", features = ["vendored"] }
+strum = "0.25"
+strum_macros = "0.25"
 tempfile = "3"
-thiserror = "*"
-const_format = "*"
+thiserror = "1"
+const_format = "0.2"
 miniz_oxide = "0.7.1"
 
 [dev-dependencies]
-futures = "0.3.28"
-mockito = "0.31.1"
+mockito = "1"
 regex = "1.8.1"
-tower = "0.4.13"
 
 [build-dependencies]
 tonic-build = "^0.8"

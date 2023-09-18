@@ -53,6 +53,7 @@ fn build_withdraw_callback_url(
 mod tests {
     use anyhow::Result;
 
+    use crate::input_parser::tests::MOCK_HTTP_SERVER;
     use crate::input_parser::LnUrlWithdrawRequestData;
     use crate::lnurl::withdraw::*;
     use crate::test_utils::rand_string;
@@ -79,7 +80,10 @@ mod tests {
                 ["{\"status\": \"ERROR\", \"reason\": \"", &err_reason, "\"}"].join("")
             }
         };
-        Ok(mockito::mock("GET", mockito_path)
+
+        let mut server = MOCK_HTTP_SERVER.lock().unwrap();
+        Ok(server
+            .mock("GET", mockito_path)
             .with_body(response_body)
             .create())
     }

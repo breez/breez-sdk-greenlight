@@ -607,16 +607,23 @@ impl From<Uri<'_>> for BitcoinAddressData {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
+    use std::sync::Mutex;
+
     use anyhow::anyhow;
     use anyhow::Result;
     use bitcoin::bech32;
     use bitcoin::bech32::{ToBase32, Variant};
     use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
-    use mockito::Mock;
+    use mockito::{Mock, Server, ServerGuard};
+    use once_cell::sync::Lazy;
 
     use crate::input_parser::*;
     use crate::models::Network;
+
+    /// Mock server used in tests
+    pub(crate) static MOCK_HTTP_SERVER: Lazy<Mutex<ServerGuard>> =
+        Lazy::new(|| Mutex::new(Server::new()));
 
     #[tokio::test]
     async fn test_generic_invalid_input() -> Result<(), Box<dyn std::error::Error>> {
@@ -935,7 +942,9 @@ mod tests {
                 ["{\"status\": \"ERROR\", \"reason\": \"", &err_reason, "\"}"].join("")
             }
         };
-        mockito::mock("GET", path).with_body(response_body).create()
+
+        let mut server = MOCK_HTTP_SERVER.lock().unwrap();
+        server.mock("GET", path).with_body(response_body).create()
     }
 
     #[tokio::test]
@@ -1077,7 +1086,9 @@ mod tests {
                 ["{\"status\": \"ERROR\", \"reason\": \"", &err_reason, "\"}"].join("")
             }
         };
-        mockito::mock("GET", path).with_body(response_body).create()
+
+        let mut server = MOCK_HTTP_SERVER.lock().unwrap();
+        server.mock("GET", path).with_body(response_body).create()
     }
 
     fn mock_lnurl_ln_address_endpoint(
@@ -1116,7 +1127,9 @@ mod tests {
                 ["{\"status\": \"ERROR\", \"reason\": \"", &err_reason, "\"}"].join("")
             }
         };
-        Ok(mockito::mock("GET", path).with_body(response_body).create())
+
+        let mut server = MOCK_HTTP_SERVER.lock().unwrap();
+        Ok(server.mock("GET", path).with_body(response_body).create())
     }
 
     #[tokio::test]
