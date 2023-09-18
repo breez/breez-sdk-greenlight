@@ -111,7 +111,19 @@ pub(crate) enum Commands {
     },
 
     /// List all payments
-    ListPayments {},
+    ListPayments {
+        /// The optional from unix timestamp
+        #[clap(name = "from_timestamp", short = 'f', long = "from")]
+        from_timestamp: Option<i64>,
+
+        /// The optional to unix timestamp
+        #[clap(name = "to_timestamp", short = 't', long = "to")]
+        to_timestamp: Option<i64>,
+
+        /// Include failed payments
+        #[clap(short = 'i', long = "include_failures")]
+        include_failures: bool,
+    },
 
     /// Retrieve a payment by its hash
     PaymentByHash { hash: String },

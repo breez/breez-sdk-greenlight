@@ -690,6 +690,14 @@ impl TryFrom<LNInvoice> for Payment {
     }
 }
 
+/// Represents a list payments request.
+pub struct ListPaymentsRequest {
+    pub filter: PaymentTypeFilter,
+    pub from_timestamp: Option<i64>,
+    pub to_timestamp: Option<i64>,
+    pub include_failures: Option<bool>,
+}
+
 /// Represents a payment response.
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]
 pub struct PaymentResponse {

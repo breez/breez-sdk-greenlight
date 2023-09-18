@@ -653,6 +653,48 @@ class BreezSDKMapper {
         return lnInvoiceList.map { v -> [String: Any?] in dictionaryOf(lnInvoice: v) }
     }
 
+    static func asListPaymentsRequest(data: [String: Any?]) throws -> ListPaymentsRequest {
+        guard let filterTmp = data["filter"] as? String else { throw SdkError.Generic(message: "Missing mandatory field filter for type ListPaymentsRequest") }
+        let filter = try asPaymentTypeFilter(type: filterTmp)
+
+        let fromTimestamp = data["fromTimestamp"] as? Int64
+        let toTimestamp = data["toTimestamp"] as? Int64
+        let includeFailures = data["includeFailures"] as? Bool
+
+        return ListPaymentsRequest(
+            filter: filter,
+            fromTimestamp: fromTimestamp,
+            toTimestamp: toTimestamp,
+            includeFailures: includeFailures
+        )
+    }
+
+    static func dictionaryOf(listPaymentsRequest: ListPaymentsRequest) -> [String: Any?] {
+        return [
+            "filter": valueOf(paymentTypeFilter: listPaymentsRequest.filter),
+            "fromTimestamp": listPaymentsRequest.fromTimestamp == nil ? nil : listPaymentsRequest.fromTimestamp,
+            "toTimestamp": listPaymentsRequest.toTimestamp == nil ? nil : listPaymentsRequest.toTimestamp,
+            "includeFailures": listPaymentsRequest.includeFailures == nil ? nil : listPaymentsRequest.includeFailures,
+        ]
+    }
+
+    static func asListPaymentsRequestList(arr: [Any]) throws -> [ListPaymentsRequest] {
+        var list = [ListPaymentsRequest]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var listPaymentsRequest = try asListPaymentsRequest(data: val)
+                list.append(listPaymentsRequest)
+            } else {
+                throw SdkError.Generic(message: "Invalid element type ListPaymentsRequest")
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(listPaymentsRequestList: [ListPaymentsRequest]) -> [Any] {
+        return listPaymentsRequestList.map { v -> [String: Any?] in dictionaryOf(listPaymentsRequest: v) }
+    }
+
     static func asLnPaymentDetails(data: [String: Any?]) throws -> LnPaymentDetails {
         guard let paymentHash = data["paymentHash"] as? String else { throw SdkError.Generic(message: "Missing mandatory field paymentHash for type LnPaymentDetails") }
         guard let label = data["label"] as? String else { throw SdkError.Generic(message: "Missing mandatory field label for type LnPaymentDetails") }

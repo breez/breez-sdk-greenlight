@@ -29,12 +29,13 @@ use crate::input_parser::{
 use crate::invoice::{self, LNInvoice};
 use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::lsp::LspInformation;
-use crate::models::{Config, LogEntry, NodeState, Payment, PaymentTypeFilter, SwapInfo};
+use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
 use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
-    EnvironmentType, LnUrlCallbackStatus, NodeConfig, ReceiveOnchainRequest, ReceivePaymentRequest,
-    ReceivePaymentResponse, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
-    SignMessageRequest, SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
+    EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus, NodeConfig, ReceiveOnchainRequest,
+    ReceivePaymentRequest, ReceivePaymentResponse, ReverseSwapFeesRequest, ReverseSwapInfo,
+    ReverseSwapPairInfo, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
+    StaticBackupResponse,
 };
 
 static BREEZ_SERVICES_INSTANCE: OnceCell<Arc<BreezServices>> = OnceCell::new();
@@ -203,17 +204,9 @@ pub fn parse_input(input: String) -> Result<InputType> {
 /*  Payment API's */
 
 /// See [BreezServices::list_payments]
-pub fn list_payments(
-    filter: PaymentTypeFilter,
-    from_timestamp: Option<i64>,
-    to_timestamp: Option<i64>,
-) -> Result<Vec<Payment>> {
-    block_on(async {
-        get_breez_services()?
-            .list_payments(filter, from_timestamp, to_timestamp)
-            .await
-    })
-    .map_err(anyhow::Error::new)
+pub fn list_payments(request: ListPaymentsRequest) -> Result<Vec<Payment>> {
+    block_on(async { get_breez_services()?.list_payments(request).await })
+        .map_err(anyhow::Error::new)
 }
 
 /// See [BreezServices::list_payments]

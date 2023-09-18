@@ -123,6 +123,13 @@ export type LnInvoice = {
     paymentSecret: number[]
 }
 
+export type ListPaymentsRequest = {
+    filter: PaymentTypeFilter
+    fromTimestamp?: number
+    toTimestamp?: number
+    includeFailures?: boolean
+}
+
 export type LnPaymentDetails = {
     paymentHash: string
     label: string
@@ -692,8 +699,8 @@ export const paymentByHash = async (hash: string): Promise<Payment | null> => {
     return response
 }
 
-export const listPayments = async (filter: PaymentTypeFilter, fromTimestamp: number = 0, toTimestamp: number = 0): Promise<Payment[]> => {
-    const response = await BreezSDK.listPayments(filter, fromTimestamp, toTimestamp)
+export const listPayments = async (request: ListPaymentsRequest): Promise<Payment[]> => {
+    const response = await BreezSDK.listPayments(request)
     return response
 }
 

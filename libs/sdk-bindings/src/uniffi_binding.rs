@@ -11,12 +11,12 @@ use breez_sdk_core::{
     BuyBitcoinRequest, BuyBitcoinResponse, ChannelState, CheckMessageRequest, CheckMessageResponse,
     ClosedChannelPaymentDetails, Config, CurrencyInfo, EnvironmentType, EventListener,
     FeeratePreset, FiatCurrency, GreenlightCredentials, GreenlightNodeConfig, InputType,
-    InvoicePaidDetails, LNInvoice, LnPaymentDetails, LnUrlAuthRequestData, LnUrlCallbackStatus,
-    LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult, LnUrlWithdrawRequestData, LocaleOverrides,
-    LocalizedName, LogEntry, LogStream, LspInformation, MessageSuccessActionData, MetadataItem,
-    Network, NodeConfig, NodeState, OpenChannelFeeRequest, OpenChannelFeeResponse,
-    OpeningFeeParams, OpeningFeeParamsMenu, Payment, PaymentDetails, PaymentFailedData,
-    PaymentStatus, PaymentType, PaymentTypeFilter, Rate, ReceiveOnchainRequest,
+    InvoicePaidDetails, LNInvoice, ListPaymentsRequest, LnPaymentDetails, LnUrlAuthRequestData,
+    LnUrlCallbackStatus, LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult,
+    LnUrlWithdrawRequestData, LocaleOverrides, LocalizedName, LogEntry, LogStream, LspInformation,
+    MessageSuccessActionData, MetadataItem, Network, NodeConfig, NodeState, OpenChannelFeeRequest,
+    OpenChannelFeeResponse, OpeningFeeParams, OpeningFeeParamsMenu, Payment, PaymentDetails,
+    PaymentFailedData, PaymentStatus, PaymentType, PaymentTypeFilter, Rate, ReceiveOnchainRequest,
     ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees, ReverseSwapFeesRequest,
     ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop,
     SignMessageRequest, SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
@@ -157,16 +157,8 @@ impl BlockingBreezServices {
             .map_err(|e| e.into())
     }
 
-    pub fn list_payments(
-        &self,
-        filter: PaymentTypeFilter,
-        from_timestamp: Option<i64>,
-        to_timestamp: Option<i64>,
-    ) -> SdkResult<Vec<Payment>> {
-        rt().block_on(
-            self.breez_services
-                .list_payments(filter, from_timestamp, to_timestamp),
-        )
+    pub fn list_payments(&self, request: ListPaymentsRequest) -> SdkResult<Vec<Payment>> {
+        rt().block_on(self.breez_services.list_payments(request))
     }
 
     pub fn payment_by_hash(&self, hash: String) -> SdkResult<Option<Payment>> {

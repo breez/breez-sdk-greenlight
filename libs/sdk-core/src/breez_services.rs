@@ -45,7 +45,7 @@ use crate::lsp::LspInformation;
 use crate::models::{
     parse_short_channel_id, ChannelState, ClosedChannelPaymentDetails, Config, EnvironmentType,
     FiatAPI, LnUrlCallbackStatus, LspAPI, NodeAPI, NodeState, Payment, PaymentDetails, PaymentType,
-    PaymentTypeFilter, ReverseSwapPairInfo, ReverseSwapServiceAPI, SwapInfo, SwapperAPI,
+    ReverseSwapPairInfo, ReverseSwapServiceAPI, SwapInfo, SwapperAPI,
     INVOICE_PAYMENT_FEE_EXPIRY_SECONDS,
 };
 use crate::moonpay::MoonPayApi;
@@ -446,14 +446,13 @@ impl BreezServices {
     }
 
     /// List payments matching the given filters, as retrieved from persistent storage
-    pub async fn list_payments(
-        &self,
-        filter: PaymentTypeFilter,
-        from_timestamp: Option<i64>,
-        to_timestamp: Option<i64>,
-    ) -> SdkResult<Vec<Payment>> {
-        self.persister
-            .list_payments(filter, from_timestamp, to_timestamp)
+    pub async fn list_payments(&self, request: ListPaymentsRequest) -> SdkResult<Vec<Payment>> {
+        self.persister.list_payments(
+            request.filter,
+            request.from_timestamp,
+            request.to_timestamp,
+            request.include_failures,
+        )
     }
 
     /// Fetch a specific payment by its hash.
@@ -1837,7 +1836,7 @@ pub(crate) mod tests {
     use crate::models::{LnPaymentDetails, NodeState, Payment, PaymentDetails, PaymentTypeFilter};
     use crate::{
         input_parser, parse_short_channel_id, test_utils::*, BuyBitcoinProvider, BuyBitcoinRequest,
-        InputType, PaymentStatus, ReceivePaymentRequest,
+        InputType, ListPaymentsRequest, PaymentStatus, ReceivePaymentRequest,
     };
     use crate::{NodeAPI, PaymentType};
 
@@ -1935,7 +1934,12 @@ pub(crate) mod tests {
         assert_eq!(fetched_state, dummy_node_state);
 
         let all = breez_services
-            .list_payments(PaymentTypeFilter::All, None, None)
+            .list_payments(ListPaymentsRequest {
+                filter: PaymentTypeFilter::All,
+                from_timestamp: None,
+                to_timestamp: None,
+                include_failures: None,
+            })
             .await?;
         let mut cloned = all.clone();
 
@@ -1944,12 +1948,22 @@ pub(crate) mod tests {
         assert_eq!(dummy_transactions, cloned);
 
         let received = breez_services
-            .list_payments(PaymentTypeFilter::Received, None, None)
+            .list_payments(ListPaymentsRequest {
+                filter: PaymentTypeFilter::Received,
+                from_timestamp: None,
+                to_timestamp: None,
+                include_failures: None,
+            })
             .await?;
         assert_eq!(received, vec![cloned[0].clone()]);
 
         let sent = breez_services
-            .list_payments(PaymentTypeFilter::Sent, None, None)
+            .list_payments(ListPaymentsRequest {
+                filter: PaymentTypeFilter::Sent,
+                from_timestamp: None,
+                to_timestamp: None,
+                include_failures: None,
+            })
             .await?;
         assert_eq!(sent, vec![cloned[1].clone()]);
         assert!(matches!(

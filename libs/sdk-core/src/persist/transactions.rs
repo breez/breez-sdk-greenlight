@@ -118,9 +118,11 @@ impl SqliteStorage {
 
     pub fn last_payment_timestamp(&self) -> Result<i64> {
         self.get_connection()?
-            .query_row("SELECT max(payment_time) FROM payments", [], |row| {
-                row.get(0)
-            })
+            .query_row(
+                "SELECT max(payment_time) FROM payments WHERE status != ?1",
+                [PaymentStatus::Failed],
+                |row| row.get(0),
+            )
             .map_err(anyhow::Error::msg)
     }
 
@@ -133,8 +135,10 @@ impl SqliteStorage {
         type_filter: PaymentTypeFilter,
         from_timestamp: Option<i64>,
         to_timestamp: Option<i64>,
+        include_failures: Option<bool>,
     ) -> SdkResult<Vec<Payment>> {
-        let where_clause = filter_to_where_clause(type_filter, from_timestamp, to_timestamp);
+        let where_clause =
+            filter_to_where_clause(type_filter, from_timestamp, to_timestamp, include_failures);
         let con = self.get_connection()?;
         let mut stmt = con.prepare(
             format!(
@@ -258,14 +262,19 @@ fn filter_to_where_clause(
     type_filter: PaymentTypeFilter,
     from_timestamp: Option<i64>,
     to_timestamp: Option<i64>,
+    include_failures: Option<bool>,
 ) -> String {
     let mut where_clause: Vec<String> = Vec::new();
+    let with_failures = include_failures.unwrap_or(false);
 
     if let Some(t) = from_timestamp {
         where_clause.push(format!("payment_time >= {t}"));
     };
     if let Some(t) = to_timestamp {
         where_clause.push(format!("payment_time <= {t}"));
+    };
+    if !with_failures {
+        where_clause.push(format!("status != {}", PaymentStatus::Failed as i64));
     };
 
     match type_filter {
@@ -402,9 +411,33 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
             last_error: None,
         },
     ];
+    let failed_txs = [Payment {
+        id: "125".to_string(),
+        payment_type: PaymentType::Sent,
+        payment_time: 2000,
+        amount_msat: 1000,
+        fee_msat: 0,
+        status: PaymentStatus::Failed,
+        description: Some("desc".to_string()),
+        details: PaymentDetails::Ln {
+            data: LnPaymentDetails {
+                payment_hash: "125".to_string(),
+                label: "label".to_string(),
+                destination_pubkey: "pubey".to_string(),
+                payment_preimage: "payment_preimage".to_string(),
+                keysend: true,
+                bolt11: "bolt11".to_string(),
+                lnurl_success_action: None,
+                lnurl_metadata: None,
+                ln_address: None,
+            },
+        },
+        last_error: None,
+    }];
     let storage = SqliteStorage::new(test_utils::create_test_sql_dir());
     storage.init()?;
     storage.insert_or_update_payments(&txs)?;
+    storage.insert_or_update_payments(&failed_txs)?;
     storage.insert_lnurl_payment_external_info(
         payment_hash_with_lnurl_success_action,
         Some(&sa),
@@ -413,12 +446,12 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     // retrieve all
-    let retrieve_txs = storage.list_payments(PaymentTypeFilter::All, None, None)?;
+    let retrieve_txs = storage.list_payments(PaymentTypeFilter::All, None, None, None)?;
     assert_eq!(retrieve_txs.len(), 2);
     assert_eq!(retrieve_txs, txs);
 
     //test only sent
-    let retrieve_txs = storage.list_payments(PaymentTypeFilter::Sent, None, None)?;
+    let retrieve_txs = storage.list_payments(PaymentTypeFilter::Sent, None, None, None)?;
     assert_eq!(retrieve_txs.len(), 1);
     assert_eq!(retrieve_txs[0], txs[0]);
     assert!(
@@ -429,7 +462,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     //test only received
-    let retrieve_txs = storage.list_payments(PaymentTypeFilter::Received, None, None)?;
+    let retrieve_txs = storage.list_payments(PaymentTypeFilter::Received, None, None, None)?;
     assert_eq!(retrieve_txs.len(), 1);
     assert_eq!(retrieve_txs[0], txs[1]);
 
@@ -437,13 +470,21 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(max_ts, 1001);
 
     storage.insert_or_update_payments(&txs)?;
-    let retrieve_txs = storage.list_payments(PaymentTypeFilter::All, None, None)?;
+    let retrieve_txs = storage.list_payments(PaymentTypeFilter::All, None, None, None)?;
     assert_eq!(retrieve_txs.len(), 2);
     assert_eq!(retrieve_txs, txs);
 
     storage.insert_open_channel_payment_info("123", 150)?;
-    let retrieve_txs = storage.list_payments(PaymentTypeFilter::All, None, None)?;
+    let retrieve_txs = storage.list_payments(PaymentTypeFilter::All, None, None, None)?;
     assert_eq!(retrieve_txs[0].fee_msat, 50);
+
+    // test all with failures
+    let retrieve_txs = storage.list_payments(PaymentTypeFilter::All, None, None, Some(true))?;
+    assert_eq!(retrieve_txs.len(), 3);
+
+    // test sent with failures
+    let retrieve_txs = storage.list_payments(PaymentTypeFilter::Sent, None, None, Some(true))?;
+    assert_eq!(retrieve_txs.len(), 2);
 
     Ok(())
 }

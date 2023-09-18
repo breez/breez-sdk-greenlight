@@ -149,6 +149,13 @@ dictionary Payment {
     string? last_error;
 };
 
+dictionary ListPaymentsRequest {
+    PaymentTypeFilter filter;
+    i64? from_timestamp = null;
+    i64? to_timestamp = null;
+    boolean? include_failures = null;
+};
+
 [Enum]
 interface PaymentDetails {
     Ln(LnPaymentDetails data);
@@ -545,7 +552,7 @@ interface BlockingBreezServices {
    Payment? payment_by_hash(string hash);
 
    [Throws=SdkError]
-   sequence<Payment> list_payments(PaymentTypeFilter filter, i64? from_timestamp, i64? to_timestamp);
+   sequence<Payment> list_payments(ListPaymentsRequest request);
 
    [Throws=SdkError]
    void sweep(string to_address, u64 fee_rate_sats_per_vbyte);

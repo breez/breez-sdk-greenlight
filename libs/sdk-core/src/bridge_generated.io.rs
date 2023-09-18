@@ -117,13 +117,8 @@ pub extern "C" fn wire_parse_input(port_: i64, input: *mut wire_uint_8_list) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_list_payments(
-    port_: i64,
-    filter: i32,
-    from_timestamp: *mut i64,
-    to_timestamp: *mut i64,
-) {
-    wire_list_payments_impl(port_, filter, from_timestamp, to_timestamp)
+pub extern "C" fn wire_list_payments(port_: i64, request: *mut wire_ListPaymentsRequest) {
+    wire_list_payments_impl(port_, request)
 }
 
 #[no_mangle]
@@ -303,6 +298,11 @@ pub extern "C" fn new_box_autoadd_i64_0(value: i64) -> *mut i64 {
 }
 
 #[no_mangle]
+pub extern "C" fn new_box_autoadd_list_payments_request_0() -> *mut wire_ListPaymentsRequest {
+    support::new_leak_box_ptr(wire_ListPaymentsRequest::new_with_null_ptr())
+}
+
+#[no_mangle]
 pub extern "C" fn new_box_autoadd_ln_url_auth_request_data_0() -> *mut wire_LnUrlAuthRequestData {
     support::new_leak_box_ptr(wire_LnUrlAuthRequestData::new_with_null_ptr())
 }
@@ -422,6 +422,12 @@ impl Wire2Api<GreenlightNodeConfig> for *mut wire_GreenlightNodeConfig {
 impl Wire2Api<i64> for *mut i64 {
     fn wire2api(self) -> i64 {
         unsafe { *support::box_from_leak_ptr(self) }
+    }
+}
+impl Wire2Api<ListPaymentsRequest> for *mut wire_ListPaymentsRequest {
+    fn wire2api(self) -> ListPaymentsRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<ListPaymentsRequest>::wire2api(*wrap).into()
     }
 }
 impl Wire2Api<LnUrlAuthRequestData> for *mut wire_LnUrlAuthRequestData {
@@ -546,6 +552,16 @@ impl Wire2Api<GreenlightNodeConfig> for wire_GreenlightNodeConfig {
     }
 }
 
+impl Wire2Api<ListPaymentsRequest> for wire_ListPaymentsRequest {
+    fn wire2api(self) -> ListPaymentsRequest {
+        ListPaymentsRequest {
+            filter: self.filter.wire2api(),
+            from_timestamp: self.from_timestamp.wire2api(),
+            to_timestamp: self.to_timestamp.wire2api(),
+            include_failures: self.include_failures.wire2api(),
+        }
+    }
+}
 impl Wire2Api<LnUrlAuthRequestData> for wire_LnUrlAuthRequestData {
     fn wire2api(self) -> LnUrlAuthRequestData {
         LnUrlAuthRequestData {
@@ -702,6 +718,15 @@ pub struct wire_GreenlightCredentials {
 pub struct wire_GreenlightNodeConfig {
     partner_credentials: *mut wire_GreenlightCredentials,
     invite_code: *mut wire_uint_8_list,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_ListPaymentsRequest {
+    filter: i32,
+    from_timestamp: *mut i64,
+    to_timestamp: *mut i64,
+    include_failures: *mut bool,
 }
 
 #[repr(C)]
@@ -898,6 +923,23 @@ impl NewWithNullPtr for wire_GreenlightNodeConfig {
 }
 
 impl Default for wire_GreenlightNodeConfig {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_ListPaymentsRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            filter: Default::default(),
+            from_timestamp: core::ptr::null_mut(),
+            to_timestamp: core::ptr::null_mut(),
+            include_failures: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_ListPaymentsRequest {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }
