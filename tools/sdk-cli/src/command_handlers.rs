@@ -12,10 +12,17 @@ use breez_sdk_core::{Config, GreenlightNodeConfig, NodeConfig};
 use once_cell::sync::OnceCell;
 use qrcode_rs::render::unicode;
 use qrcode_rs::{EcLevel, QrCode};
-use rustyline::Editor;
+use rustyline::history::DefaultHistory;
 
 use crate::persist::CliPersistence;
 use crate::Commands;
+
+use std::borrow::Cow::{self, Borrowed, Owned};
+
+use rustyline::highlight::Highlighter;
+use rustyline::hint::HistoryHinter;
+use rustyline::Editor;
+use rustyline::{Completer, Helper, Hinter, Validator};
 
 static BREEZ_SERVICES: OnceCell<Arc<BreezServices>> = OnceCell::new();
 
@@ -46,8 +53,33 @@ async fn connect(config: Config, seed: &[u8]) -> Result<()> {
     Ok(())
 }
 
+#[derive(Helper, Completer, Hinter, Validator)]
+pub(crate) struct CliHelper {
+    #[rustyline(Hinter)]
+    pub(crate) hinter: HistoryHinter,
+    pub(crate) colored_prompt: String,
+}
+
+impl Highlighter for CliHelper {
+    fn highlight_prompt<'b, 's: 'b, 'p: 'b>(
+        &'s self,
+        prompt: &'p str,
+        default: bool,
+    ) -> Cow<'b, str> {
+        if default {
+            Borrowed(&self.colored_prompt)
+        } else {
+            Borrowed(prompt)
+        }
+    }
+
+    fn highlight_hint<'h>(&self, hint: &'h str) -> Cow<'h, str> {
+        Owned("\x1b[1m".to_owned() + hint + "\x1b[m")
+    }
+}
+
 pub(crate) async fn handle_command(
-    rl: &mut Editor<()>,
+    rl: &mut Editor<CliHelper, DefaultHistory>,
     persistence: &CliPersistence,
     command: Commands,
 ) -> Result<String, Error> {

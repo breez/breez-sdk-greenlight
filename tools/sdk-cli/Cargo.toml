@@ -6,15 +6,14 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = { version = "1.0.57", features = ["backtrace"] }
+anyhow = { version = "1.0", features = ["backtrace"] }
 breez-sdk-core = { path = "../../libs/sdk-core"}
-hex = "*"
-log = "*"
-once_cell = "*"
+log = "0.4"
+once_cell = "1"
 qrcode-rs = { version = "0.1", default-features = false }
-rustyline = "10.0.0"
+rustyline = { version = "12", features = ["derive"]}
 serde_json = "1.0"
-tiny-bip39 = "*"
+tiny-bip39 = "1"
 tokio = { version = "1", features = ["rt-multi-thread"] }
 serde = { version = "1.0", features = ["derive"] }
-clap = { version = "3.2.22", features = ["derive"] }
+clap = { version = "4", features = ["derive"] }
