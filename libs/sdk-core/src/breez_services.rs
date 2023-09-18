@@ -730,16 +730,18 @@ impl BreezServices {
         }
 
         //fetch closed_channel and convert them to Payment items.
-        let closed_channel_payments_res: Result<Vec<Payment>> = self
-            .persister
-            .list_channels()?
-            .into_iter()
-            .filter(|c| c.state == ChannelState::Closed || c.state == ChannelState::PendingClose)
-            .map(closed_channel_to_transaction)
-            .collect();
+        let mut closed_channel_payments: Vec<Payment> = vec![];
+        for closed_channel in
+            self.persister.list_channels()?.into_iter().filter(|c| {
+                c.state == ChannelState::Closed || c.state == ChannelState::PendingClose
+            })
+        {
+            let closed_channel_tx = self.closed_channel_to_transaction(closed_channel).await?;
+            closed_channel_payments.push(closed_channel_tx);
+        }
 
         // update both closed channels and lightning transaction payments
-        let mut payments = closed_channel_payments_res?;
+        let mut payments = closed_channel_payments;
         payments.extend(new_data.payments.clone());
         self.persister.insert_or_update_payments(&payments)?;
 
@@ -1199,6 +1201,61 @@ impl BreezServices {
 
         Ok(())
     }
+
+    async fn closed_channel_to_transaction(
+        &self,
+        channel: crate::models::Channel,
+    ) -> Result<Payment> {
+        let now_epoch_sec = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
+
+        // If we don't have it, we look it up from the channel closing tx
+        let channel_closed_at = channel.closed_at.unwrap_or(
+            match channel.funding_outnum {
+                None => {
+                    warn!("No founding_outnum found for the closing tx, defaulting closed_at to epoch time");
+                    now_epoch_sec
+                }
+                Some(outnum) => {
+                    // Find the output tx that was used to fund the channel
+
+                    let outspends = self
+                        .chain_service
+                        .transaction_outspends(channel.funding_txid.clone())
+                        .await?;
+                    match outspends.get(outnum as usize) {
+                        None => {
+                            warn!("No funding tx outspend found at outnum {outnum}, defaulting closed_at to epoch time");
+                            now_epoch_sec
+                        }
+                        Some(outspend) => match outspend.status.block_time {
+                            None => {
+                                warn!("No blocktime found for funding_outnum {outnum}, defaulting closed_at to epoch time");
+                                now_epoch_sec
+                            },
+                            Some(block_time) => block_time
+                        }
+                    }
+                }
+            }
+        ) as i64;
+
+        Ok(Payment {
+            id: channel.funding_txid.clone(),
+            payment_type: PaymentType::ClosedChannel,
+            payment_time: channel_closed_at,
+            amount_msat: channel.spendable_msat,
+            fee_msat: 0,
+            pending: channel.state == ChannelState::PendingClose,
+            description: Some("Closed Channel".to_string()),
+            details: PaymentDetails::ClosedChannel {
+                data: ClosedChannelPaymentDetails {
+                    short_channel_id: channel.short_channel_id,
+                    state: channel.state,
+                    funding_txid: channel.funding_txid,
+                },
+            },
+        })
+    }
 }
 
 struct GlobalSdkLogger {
@@ -1225,28 +1282,6 @@ impl log::Log for GlobalSdkLogger {
     }
 
     fn flush(&self) {}
-}
-
-fn closed_channel_to_transaction(channel: crate::models::Channel) -> Result<Payment> {
-    let now = SystemTime::now();
-    Ok(Payment {
-        id: channel.funding_txid.clone(),
-        payment_type: PaymentType::ClosedChannel,
-        payment_time: channel
-            .closed_at
-            .unwrap_or(now.duration_since(UNIX_EPOCH)?.as_secs()) as i64,
-        amount_msat: channel.spendable_msat,
-        fee_msat: 0,
-        pending: channel.state == ChannelState::PendingClose,
-        description: Some("Closed Channel".to_string()),
-        details: PaymentDetails::ClosedChannel {
-            data: ClosedChannelPaymentDetails {
-                short_channel_id: channel.short_channel_id,
-                state: channel.state,
-                funding_txid: channel.funding_txid,
-            },
-        },
-    })
 }
 
 /// A helper struct to configure and build BreezServices
