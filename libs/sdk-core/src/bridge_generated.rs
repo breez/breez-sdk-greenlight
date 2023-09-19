@@ -69,6 +69,7 @@ use crate::models::OpeningFeeParams;
 use crate::models::OpeningFeeParamsMenu;
 use crate::models::Payment;
 use crate::models::PaymentDetails;
+use crate::models::PaymentFilter;
 use crate::models::PaymentType;
 use crate::models::PaymentTypeFilter;
 use crate::models::ReceiveOnchainRequest;
@@ -357,12 +358,7 @@ fn wire_parse_input_impl(port_: MessagePort, input: impl Wire2Api<String> + Unwi
         },
     )
 }
-fn wire_list_payments_impl(
-    port_: MessagePort,
-    filter: impl Wire2Api<PaymentTypeFilter> + UnwindSafe,
-    from_timestamp: impl Wire2Api<Option<i64>> + UnwindSafe,
-    to_timestamp: impl Wire2Api<Option<i64>> + UnwindSafe,
-) {
+fn wire_list_payments_impl(port_: MessagePort, filter: impl Wire2Api<PaymentFilter> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
             debug_name: "list_payments",
@@ -371,9 +367,7 @@ fn wire_list_payments_impl(
         },
         move || {
             let api_filter = filter.wire2api();
-            let api_from_timestamp = from_timestamp.wire2api();
-            let api_to_timestamp = to_timestamp.wire2api();
-            move |task_callback| list_payments(api_filter, api_from_timestamp, api_to_timestamp, None, None) // todo: Last 2 values are dummy values. Properly generate the file
+            move |task_callback| list_payments(api_filter)
         },
     )
 }

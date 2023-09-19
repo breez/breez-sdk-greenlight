@@ -29,7 +29,7 @@ use crate::input_parser::{
 use crate::invoice::{self, LNInvoice};
 use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::lsp::LspInformation;
-use crate::models::{Config, LogEntry, NodeState, Payment, PaymentTypeFilter, SwapInfo};
+use crate::models::{Config, LogEntry, NodeState, Payment, PaymentFilter, SwapInfo};
 use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
     EnvironmentType, LnUrlCallbackStatus, NodeConfig, ReceiveOnchainRequest, ReceivePaymentRequest,
@@ -203,19 +203,9 @@ pub fn parse_input(input: String) -> Result<InputType> {
 /*  Payment API's */
 
 /// See [BreezServices::list_payments]
-pub fn list_payments(
-    filter: PaymentTypeFilter,
-    from_timestamp: Option<i64>,
-    to_timestamp: Option<i64>,
-    offset: Option<u32>,
-    limit: Option<u32>,
-) -> Result<Vec<Payment>> {
-    block_on(async {
-        get_breez_services()?
-            .list_payments(filter, from_timestamp, to_timestamp, offset, limit)
-            .await
-    })
-    .map_err(anyhow::Error::new)
+pub fn list_payments(filter: PaymentFilter) -> Result<Vec<Payment>> {
+    block_on(async { get_breez_services()?.list_payments(filter).await })
+        .map_err(anyhow::Error::new)
 }
 
 /// See [BreezServices::list_payments]

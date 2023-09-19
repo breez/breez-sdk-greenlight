@@ -569,9 +569,21 @@ impl From<Network> for bitcoin::network::constants::Network {
 }
 
 /// Different types of supported filters which can be applied when retrieving the transaction list
+#[derive(Clone, Copy, Debug, Default)]
+pub struct PaymentFilter {
+    pub payment_type: PaymentTypeFilter,
+    pub from_timestamp: Option<i64>,
+    pub to_timestamp: Option<i64>,
+    pub offset: Option<u32>,
+    pub limit: Option<u32>,
+}
+
+/// Different categories of payments which can be filtered for when retrieving the transaction list
+#[derive(Clone, Copy, Debug, Default)]
 pub enum PaymentTypeFilter {
     Sent,
     Received,
+    #[default]
     All,
 }
 

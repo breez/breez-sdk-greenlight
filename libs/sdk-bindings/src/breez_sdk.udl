@@ -119,6 +119,14 @@ dictionary CheckMessageResponse {
     boolean is_valid;
 };
 
+dictionary PaymentFilter {
+    PaymentTypeFilter filter
+    i64? from_timestamp
+    i64? to_timestamp
+    u32? offset
+    u32? limit
+}
+
 enum PaymentTypeFilter {
     "Sent",
     "Received",
@@ -538,7 +546,7 @@ interface BlockingBreezServices {
    Payment? payment_by_hash(string hash);
 
    [Throws=SdkError]
-   sequence<Payment> list_payments(PaymentTypeFilter filter, i64? from_timestamp, i64? to_timestamp);
+   sequence<Payment> list_payments(PaymentFilter filter);
 
    [Throws=SdkError]
    void sweep(string to_address, u64 fee_rate_sats_per_vbyte);

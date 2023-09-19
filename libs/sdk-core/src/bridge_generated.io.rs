@@ -117,13 +117,8 @@ pub extern "C" fn wire_parse_input(port_: i64, input: *mut wire_uint_8_list) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_list_payments(
-    port_: i64,
-    filter: i32,
-    from_timestamp: *mut i64,
-    to_timestamp: *mut i64,
-) {
-    wire_list_payments_impl(port_, filter, from_timestamp, to_timestamp)
+pub extern "C" fn wire_list_payments(port_: i64, filter: *mut wire_PaymentFilter) {
+    wire_list_payments_impl(port_, filter)
 }
 
 #[no_mangle]
@@ -329,6 +324,11 @@ pub extern "C" fn new_box_autoadd_opening_fee_params_0() -> *mut wire_OpeningFee
 }
 
 #[no_mangle]
+pub extern "C" fn new_box_autoadd_payment_filter_0() -> *mut wire_PaymentFilter {
+    support::new_leak_box_ptr(wire_PaymentFilter::new_with_null_ptr())
+}
+
+#[no_mangle]
 pub extern "C" fn new_box_autoadd_receive_onchain_request_0() -> *mut wire_ReceiveOnchainRequest {
     support::new_leak_box_ptr(wire_ReceiveOnchainRequest::new_with_null_ptr())
 }
@@ -452,6 +452,12 @@ impl Wire2Api<OpeningFeeParams> for *mut wire_OpeningFeeParams {
     fn wire2api(self) -> OpeningFeeParams {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
         Wire2Api::<OpeningFeeParams>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<PaymentFilter> for *mut wire_PaymentFilter {
+    fn wire2api(self) -> PaymentFilter {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<PaymentFilter>::wire2api(*wrap).into()
     }
 }
 impl Wire2Api<ReceiveOnchainRequest> for *mut wire_ReceiveOnchainRequest {
@@ -608,6 +614,18 @@ impl Wire2Api<OpeningFeeParams> for wire_OpeningFeeParams {
     }
 }
 
+impl Wire2Api<PaymentFilter> for wire_PaymentFilter {
+    fn wire2api(self) -> PaymentFilter {
+        PaymentFilter {
+            payment_type: self.payment_type.wire2api(),
+            from_timestamp: self.from_timestamp.wire2api(),
+            to_timestamp: self.to_timestamp.wire2api(),
+            offset: self.offset.wire2api(),
+            limit: self.limit.wire2api(),
+        }
+    }
+}
+
 impl Wire2Api<ReceiveOnchainRequest> for wire_ReceiveOnchainRequest {
     fn wire2api(self) -> ReceiveOnchainRequest {
         ReceiveOnchainRequest {
@@ -744,6 +762,16 @@ pub struct wire_OpeningFeeParams {
     max_idle_time: u32,
     max_client_to_self_delay: u32,
     promise: *mut wire_uint_8_list,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_PaymentFilter {
+    payment_type: i32,
+    from_timestamp: *mut i64,
+    to_timestamp: *mut i64,
+    offset: *mut u32,
+    limit: *mut u32,
 }
 
 #[repr(C)]
@@ -996,6 +1024,24 @@ impl NewWithNullPtr for wire_OpeningFeeParams {
 }
 
 impl Default for wire_OpeningFeeParams {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_PaymentFilter {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            payment_type: Default::default(),
+            from_timestamp: core::ptr::null_mut(),
+            to_timestamp: core::ptr::null_mut(),
+            offset: core::ptr::null_mut(),
+            limit: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_PaymentFilter {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }
