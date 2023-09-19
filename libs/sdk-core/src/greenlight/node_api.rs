@@ -1063,7 +1063,12 @@ impl TryFrom<ListpaysPays> for Payment {
             id: hex::encode(payment.payment_hash.clone()),
             payment_type: PaymentType::Sent,
             payment_time: payment.created_at as i64,
-            amount_msat: payment_amount,
+            amount_msat: match status {
+                PaymentStatus::Failed => ln_invoice
+                    .as_ref()
+                    .map_or(0, |i| i.amount_msat.unwrap_or_default()),
+                _ => payment_amount,
+            },
             fee_msat: payment_amount_sent - payment_amount,
             status,
             description: ln_invoice.map(|i| i.description).unwrap_or_default(),
