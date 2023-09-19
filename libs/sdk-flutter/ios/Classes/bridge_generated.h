@@ -72,6 +72,13 @@ typedef struct wire_StaticBackupRequest {
   struct wire_uint_8_list *working_dir;
 } wire_StaticBackupRequest;
 
+typedef struct wire_ListPaymentsRequest {
+  int32_t filter;
+  int64_t *from_timestamp;
+  int64_t *to_timestamp;
+  bool *include_failures;
+} wire_ListPaymentsRequest;
+
 typedef struct wire_OpeningFeeParams {
   uint64_t min_msat;
   uint32_t proportional;
@@ -188,10 +195,7 @@ void wire_parse_invoice(int64_t port_, struct wire_uint_8_list *invoice);
 
 void wire_parse_input(int64_t port_, struct wire_uint_8_list *input);
 
-void wire_list_payments(int64_t port_,
-                        int32_t filter,
-                        int64_t *from_timestamp,
-                        int64_t *to_timestamp);
+void wire_list_payments(int64_t port_, struct wire_ListPaymentsRequest *request);
 
 void wire_payment_by_hash(int64_t port_, struct wire_uint_8_list *hash);
 
@@ -263,6 +267,8 @@ struct wire_GreenlightCredentials *new_box_autoadd_greenlight_credentials_0(void
 struct wire_GreenlightNodeConfig *new_box_autoadd_greenlight_node_config_0(void);
 
 int64_t *new_box_autoadd_i64_0(int64_t value);
+
+struct wire_ListPaymentsRequest *new_box_autoadd_list_payments_request_0(void);
 
 struct wire_LnUrlAuthRequestData *new_box_autoadd_ln_url_auth_request_data_0(void);
 
@@ -346,6 +352,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_greenlight_credentials_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_greenlight_node_config_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_i64_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_list_payments_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_auth_request_data_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_pay_request_data_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_withdraw_request_data_0);

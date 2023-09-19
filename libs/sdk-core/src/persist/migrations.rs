@@ -434,7 +434,11 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
        ",
        "
        ALTER TABLE channels ADD COLUMN funding_outnum INTEGER;
+       ",
        "
+       ALTER TABLE payments RENAME COLUMN pending TO status;
+       UPDATE payments SET status = CASE WHEN status = 1 THEN 0 ELSE 1 END;
+       ",
     ]
 }
 

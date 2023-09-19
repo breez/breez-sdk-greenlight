@@ -45,7 +45,7 @@ use crate::lsp::LspInformation;
 use crate::models::{
     parse_short_channel_id, ChannelState, ClosedChannelPaymentDetails, Config, EnvironmentType,
     FiatAPI, LnUrlCallbackStatus, LspAPI, NodeAPI, NodeState, Payment, PaymentDetails, PaymentType,
-    PaymentTypeFilter, ReverseSwapPairInfo, ReverseSwapServiceAPI, SwapInfo, SwapperAPI,
+    ReverseSwapPairInfo, ReverseSwapServiceAPI, SwapInfo, SwapperAPI,
     INVOICE_PAYMENT_FEE_EXPIRY_SECONDS,
 };
 use crate::moonpay::MoonPayApi;
@@ -446,14 +446,13 @@ impl BreezServices {
     }
 
     /// List payments matching the given filters, as retrieved from persistent storage
-    pub async fn list_payments(
-        &self,
-        filter: PaymentTypeFilter,
-        from_timestamp: Option<i64>,
-        to_timestamp: Option<i64>,
-    ) -> SdkResult<Vec<Payment>> {
-        self.persister
-            .list_payments(filter, from_timestamp, to_timestamp)
+    pub async fn list_payments(&self, request: ListPaymentsRequest) -> SdkResult<Vec<Payment>> {
+        self.persister.list_payments(
+            request.filter,
+            request.from_timestamp,
+            request.to_timestamp,
+            request.include_failures,
+        )
     }
 
     /// Fetch a specific payment by its hash.
@@ -775,31 +774,30 @@ impl BreezServices {
         invoice: Option<LNInvoice>,
         payment_res: Result<PaymentResponse>,
     ) -> SdkResult<Payment> {
-        if payment_res.is_err() {
-            self.notify_event_listeners(BreezEvent::PaymentFailed {
-                details: PaymentFailedData {
-                    error: payment_res.as_ref().err().unwrap().to_string(),
-                    node_id,
-                    invoice,
-                },
-            })
-            .await?;
-            return Err(SdkError::SendPaymentFailed {
-                err: payment_res.err().unwrap().to_string(),
-            });
-        }
-        let payment = payment_res.unwrap();
-        self.do_sync(true).await?;
+        self.do_sync(payment_res.is_ok()).await?;
 
-        match self.persister.get_payment_by_hash(&payment.payment_hash)? {
-            Some(p) => {
-                self.notify_event_listeners(BreezEvent::PaymentSucceed { details: p.clone() })
-                    .await?;
-                Ok(p)
+        match payment_res {
+            Ok(payment) => match self.persister.get_payment_by_hash(&payment.payment_hash)? {
+                Some(p) => {
+                    self.notify_event_listeners(BreezEvent::PaymentSucceed { details: p.clone() })
+                        .await?;
+                    Ok(p)
+                }
+                None => Err(SdkError::SendPaymentFailed {
+                    err: "Payment not found".into(),
+                }),
+            },
+            Err(e) => {
+                self.notify_event_listeners(BreezEvent::PaymentFailed {
+                    details: PaymentFailedData {
+                        error: e.to_string(),
+                        node_id,
+                        invoice,
+                    },
+                })
+                .await?;
+                Err(SdkError::SendPaymentFailed { err: e.to_string() })
             }
-            None => Err(SdkError::SendPaymentFailed {
-                err: "Payment not found".into(),
-            }),
         }
     }
 
@@ -1245,7 +1243,10 @@ impl BreezServices {
             payment_time: channel_closed_at,
             amount_msat: channel.spendable_msat,
             fee_msat: 0,
-            pending: channel.state == ChannelState::PendingClose,
+            status: match channel.state {
+                ChannelState::PendingClose => PaymentStatus::Pending,
+                _ => PaymentStatus::Complete,
+            },
             description: Some("Closed Channel".to_string()),
             details: PaymentDetails::ClosedChannel {
                 data: ClosedChannelPaymentDetails {
@@ -1864,7 +1865,7 @@ pub(crate) mod tests {
     use crate::models::{LnPaymentDetails, NodeState, Payment, PaymentDetails, PaymentTypeFilter};
     use crate::{
         input_parser, parse_short_channel_id, test_utils::*, BuyBitcoinProvider, BuyBitcoinRequest,
-        InputType, ReceivePaymentRequest,
+        InputType, ListPaymentsRequest, PaymentStatus, ReceivePaymentRequest,
     };
     use crate::{NodeAPI, PaymentType};
 
@@ -1893,7 +1894,7 @@ pub(crate) mod tests {
                 payment_time: 100000,
                 amount_msat: 10,
                 fee_msat: 0,
-                pending: false,
+                status: PaymentStatus::Complete,
                 description: Some("test receive".to_string()),
                 details: PaymentDetails::Ln {
                     data: LnPaymentDetails {
@@ -1915,7 +1916,7 @@ pub(crate) mod tests {
                 payment_time: 200000,
                 amount_msat: 8,
                 fee_msat: 2,
-                pending: false,
+                status: PaymentStatus::Complete,
                 description: Some("test payment".to_string()),
                 details: PaymentDetails::Ln {
                     data: LnPaymentDetails {
@@ -1960,7 +1961,12 @@ pub(crate) mod tests {
         assert_eq!(fetched_state, dummy_node_state);
 
         let all = breez_services
-            .list_payments(PaymentTypeFilter::All, None, None)
+            .list_payments(ListPaymentsRequest {
+                filter: PaymentTypeFilter::All,
+                from_timestamp: None,
+                to_timestamp: None,
+                include_failures: None,
+            })
             .await?;
         let mut cloned = all.clone();
 
@@ -1969,12 +1975,22 @@ pub(crate) mod tests {
         assert_eq!(dummy_transactions, cloned);
 
         let received = breez_services
-            .list_payments(PaymentTypeFilter::Received, None, None)
+            .list_payments(ListPaymentsRequest {
+                filter: PaymentTypeFilter::Received,
+                from_timestamp: None,
+                to_timestamp: None,
+                include_failures: None,
+            })
             .await?;
         assert_eq!(received, vec![cloned[0].clone()]);
 
         let sent = breez_services
-            .list_payments(PaymentTypeFilter::Sent, None, None)
+            .list_payments(ListPaymentsRequest {
+                filter: PaymentTypeFilter::Sent,
+                from_timestamp: None,
+                to_timestamp: None,
+                include_failures: None,
+            })
             .await?;
         assert_eq!(sent, vec![cloned[1].clone()]);
         assert!(matches!(

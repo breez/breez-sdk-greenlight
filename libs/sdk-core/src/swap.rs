@@ -815,7 +815,7 @@ mod tests {
             payment_time: 0,
             amount_msat: 5000,
             fee_msat: 0,
-            pending: false,
+            status: PaymentStatus::Complete,
             description: Some("desc".to_string()),
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {

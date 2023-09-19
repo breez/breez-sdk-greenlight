@@ -263,13 +263,11 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
-    @objc(listPayments:fromTimestamp:toTimestamp:resolve:reject:)
-    func listPayments(_ filter: String, fromTimestamp: Int64, toTimestamp: Int64, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    @objc(listPayments:resolve:reject:)
+    func listPayments(_ request: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let filterTmp = try BreezSDKMapper.asPaymentTypeFilter(type: filter)
-            let fromTimestampTmp = fromTimestamp == 0 ? nil : fromTimestamp
-            let toTimestampTmp = toTimestamp == 0 ? nil : toTimestamp
-            var res = try getBreezServices().listPayments(filter: filterTmp, fromTimestamp: fromTimestampTmp, toTimestamp: toTimestampTmp)
+            let listPaymentsRequest = try BreezSDKMapper.asListPaymentsRequest(data: request)
+            var res = try getBreezServices().listPayments(request: listPaymentsRequest)
             resolve(BreezSDKMapper.arrayOf(paymentList: res))
         } catch let err {
             rejectErr(err: err, reject: reject)

@@ -279,7 +279,7 @@ impl NodeAPI for MockNodeAPI {
 
     async fn pull_changed(
         &self,
-        _since_timestamp: i64,
+        _since_timestamp: u64,
         _balance_changed: bool,
     ) -> Result<SyncResponse> {
         Ok(SyncResponse {

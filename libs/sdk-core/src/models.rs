@@ -60,7 +60,7 @@ pub trait NodeAPI: Send + Sync {
     ) -> Result<String>;
     async fn pull_changed(
         &self,
-        since_timestamp: i64,
+        since_timestamp: u64,
         balance_changed: bool,
     ) -> Result<SyncResponse>;
     /// As per the `pb::PayRequest` docs, `amount_sats` is only needed when the invoice doesn't specify an amount
@@ -626,6 +626,14 @@ pub struct SyncResponse {
     pub channels: Vec<crate::models::Channel>,
 }
 
+/// The status of a payment
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+pub enum PaymentStatus {
+    Pending = 0,
+    Complete = 1,
+    Failed = 2,
+}
+
 /// Represents a payment, including its [PaymentType] and [PaymentDetails].
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]
 pub struct Payment {
@@ -634,9 +642,17 @@ pub struct Payment {
     pub payment_time: i64,
     pub amount_msat: u64,
     pub fee_msat: u64,
-    pub pending: bool,
+    pub status: PaymentStatus,
     pub description: Option<String>,
     pub details: PaymentDetails,
+}
+
+/// Represents a list payments request.
+pub struct ListPaymentsRequest {
+    pub filter: PaymentTypeFilter,
+    pub from_timestamp: Option<i64>,
+    pub to_timestamp: Option<i64>,
+    pub include_failures: Option<bool>,
 }
 
 /// Represents a payment response.

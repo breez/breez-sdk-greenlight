@@ -59,6 +59,7 @@ use crate::models::Config;
 use crate::models::EnvironmentType;
 use crate::models::GreenlightCredentials;
 use crate::models::GreenlightNodeConfig;
+use crate::models::ListPaymentsRequest;
 use crate::models::LnPaymentDetails;
 use crate::models::LnUrlCallbackStatus;
 use crate::models::LogEntry;
@@ -69,6 +70,7 @@ use crate::models::OpeningFeeParams;
 use crate::models::OpeningFeeParamsMenu;
 use crate::models::Payment;
 use crate::models::PaymentDetails;
+use crate::models::PaymentStatus;
 use crate::models::PaymentType;
 use crate::models::PaymentTypeFilter;
 use crate::models::ReceiveOnchainRequest;
@@ -359,9 +361,7 @@ fn wire_parse_input_impl(port_: MessagePort, input: impl Wire2Api<String> + Unwi
 }
 fn wire_list_payments_impl(
     port_: MessagePort,
-    filter: impl Wire2Api<PaymentTypeFilter> + UnwindSafe,
-    from_timestamp: impl Wire2Api<Option<i64>> + UnwindSafe,
-    to_timestamp: impl Wire2Api<Option<i64>> + UnwindSafe,
+    request: impl Wire2Api<ListPaymentsRequest> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -370,10 +370,8 @@ fn wire_list_payments_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_filter = filter.wire2api();
-            let api_from_timestamp = from_timestamp.wire2api();
-            let api_to_timestamp = to_timestamp.wire2api();
-            move |task_callback| list_payments(api_filter, api_from_timestamp, api_to_timestamp)
+            let api_request = request.wire2api();
+            move |task_callback| list_payments(api_request)
         },
     )
 }
@@ -1205,7 +1203,7 @@ impl support::IntoDart for Payment {
             self.payment_time.into_dart(),
             self.amount_msat.into_dart(),
             self.fee_msat.into_dart(),
-            self.pending.into_dart(),
+            self.status.into_dart(),
             self.description.into_dart(),
             self.details.into_dart(),
         ]
@@ -1236,6 +1234,17 @@ impl support::IntoDart for PaymentFailedData {
 }
 impl support::IntoDartExceptPrimitive for PaymentFailedData {}
 
+impl support::IntoDart for PaymentStatus {
+    fn into_dart(self) -> support::DartAbi {
+        match self {
+            Self::Pending => 0,
+            Self::Complete => 1,
+            Self::Failed => 2,
+        }
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for PaymentStatus {}
 impl support::IntoDart for PaymentType {
     fn into_dart(self) -> support::DartAbi {
         match self {

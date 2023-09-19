@@ -12,12 +12,14 @@ use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use ecies::utils::{aes_decrypt, aes_encrypt};
 use gl_client::node::ClnClient;
 use gl_client::pb::amount::Unit;
+use gl_client::pb::cln::listinvoices_invoices::ListinvoicesInvoicesStatus;
+use gl_client::pb::cln::listpays_pays::ListpaysPaysStatus;
 use gl_client::pb::cln::{
     self, CloseRequest, ListclosedchannelsClosedchannels, ListclosedchannelsRequest,
-    ListpeerchannelsRequest, StaticbackupRequest,
+    ListinvoicesInvoices, ListpaysPays, ListpeerchannelsRequest, StaticbackupRequest,
 };
 use gl_client::pb::cln::{AmountOrAny, InvoiceRequest};
-use gl_client::pb::{Amount, InvoiceStatus, OffChainPayment, PayStatus, Peer, WithdrawResponse};
+use gl_client::pb::{Amount, OffChainPayment, PayStatus, Peer, WithdrawResponse};
 
 use gl_client::pb::cln::listpeers_peers_channels::ListpeersPeersChannelsState::*;
 use gl_client::scheduler::Scheduler;
@@ -352,7 +354,7 @@ impl NodeAPI for Greenlight {
     // implemenet pull changes from greenlight
     async fn pull_changed(
         &self,
-        since_timestamp: i64,
+        since_timestamp: u64,
         balance_changed: bool,
     ) -> Result<SyncResponse> {
         info!("pull changed since {}", since_timestamp);
@@ -492,7 +494,7 @@ impl NodeAPI for Greenlight {
 
         Ok(SyncResponse {
             node_state,
-            payments: pull_transactions(since_timestamp, client.clone()).await?,
+            payments: pull_transactions(since_timestamp, node_client.clone()).await?,
             channels: all_channel_models,
         })
     }
@@ -833,12 +835,12 @@ enum NodeCommand {
 
 // pulls transactions from greenlight based on last sync timestamp.
 // greenlight gives us the payments via API and for received payments we are looking for settled invoices.
-async fn pull_transactions(since_timestamp: i64, client: node::Client) -> Result<Vec<Payment>> {
+async fn pull_transactions(since_timestamp: u64, client: node::ClnClient) -> Result<Vec<Payment>> {
     let mut c = client.clone();
 
     // list invoices
     let invoices = c
-        .list_invoices(pb::ListInvoicesRequest::default())
+        .list_invoices(pb::cln::ListinvoicesRequest::default())
         .await?
         .into_inner();
 
@@ -847,27 +849,23 @@ async fn pull_transactions(since_timestamp: i64, client: node::Client) -> Result
         .invoices
         .into_iter()
         .filter(|i| {
-            i.payment_time > 0
-                && i.status() == InvoiceStatus::Paid
-                && i.payment_time as i64 > since_timestamp
+            i.paid_at.unwrap_or_default() > since_timestamp
+                && i.status() == ListinvoicesInvoicesStatus::Paid
         })
         .map(TryInto::try_into)
         .collect();
 
     // fetch payments from greenlight
     let payments = c
-        .list_payments(pb::ListPaymentsRequest::default())
+        .list_pays(pb::cln::ListpaysRequest::default())
         .await?
         .into_inner();
     debug!("list payments: {:?}", payments);
     // construct the payment transactions (pending and complete)
     let outbound_transactions: Result<Vec<Payment>> = payments
-        .payments
+        .pays
         .into_iter()
-        .filter(|p| {
-            p.created_at as i64 > since_timestamp
-                && (p.status() == PayStatus::Pending || p.status() == PayStatus::Complete)
-        })
+        .filter(|p| p.created_at > since_timestamp)
         .map(TryInto::try_into)
         .collect();
 
@@ -890,7 +888,7 @@ impl TryFrom<OffChainPayment> for Payment {
             payment_time: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64,
             amount_msat: amount_to_msat(&p.amount.unwrap_or_default()),
             fee_msat: 0,
-            pending: false,
+            status: PaymentStatus::Complete,
             description: ln_invoice.description,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
@@ -924,7 +922,7 @@ impl TryFrom<pb::Invoice> for Payment {
             payment_time: invoice.payment_time as i64,
             amount_msat: amount_to_msat(&invoice.amount.unwrap_or_default()),
             fee_msat: 0,
-            pending: false,
+            status: PaymentStatus::Complete,
             description: ln_invoice.description,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
@@ -943,6 +941,17 @@ impl TryFrom<pb::Invoice> for Payment {
     }
 }
 
+impl From<PayStatus> for PaymentStatus {
+    fn from(value: PayStatus) -> Self {
+        match value {
+            PayStatus::Pending => PaymentStatus::Pending,
+            PayStatus::Complete => PaymentStatus::Complete,
+            PayStatus::Failed => PaymentStatus::Failed,
+        }
+    }
+}
+
+/// Construct a lightning transaction from an invoice
 impl TryFrom<pb::Payment> for Payment {
     type Error = anyhow::Error;
 
@@ -952,8 +961,9 @@ impl TryFrom<pb::Payment> for Payment {
             description = parse_invoice(&payment.bolt11)?.description;
         }
 
-        let payment_amount = amount_to_msat(&payment.amount.unwrap_or_default());
-        let payment_amount_sent = amount_to_msat(&payment.amount_sent.unwrap_or_default());
+        let payment_amount = amount_to_msat(&payment.amount.clone().unwrap_or_default());
+        let payment_amount_sent = amount_to_msat(&payment.amount_sent.clone().unwrap_or_default());
+        let status = payment.status().into();
 
         Ok(Payment {
             id: hex::encode(payment.payment_hash.clone()),
@@ -961,7 +971,7 @@ impl TryFrom<pb::Payment> for Payment {
             payment_time: payment.created_at as i64,
             amount_msat: payment_amount,
             fee_msat: payment_amount_sent - payment_amount,
-            pending: pb::PayStatus::from_i32(payment.status) == Some(pb::PayStatus::Pending),
+            status,
             description,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
@@ -971,6 +981,105 @@ impl TryFrom<pb::Payment> for Payment {
                     payment_preimage: hex::encode(payment.payment_preimage),
                     keysend: payment.bolt11.is_empty(),
                     bolt11: payment.bolt11,
+                    lnurl_success_action: None,
+                    lnurl_metadata: None,
+                    ln_address: None,
+                },
+            },
+        })
+    }
+}
+
+/// Construct a lightning transaction from an invoice
+impl TryFrom<ListinvoicesInvoices> for Payment {
+    type Error = anyhow::Error;
+
+    fn try_from(invoice: ListinvoicesInvoices) -> std::result::Result<Self, Self::Error> {
+        let ln_invoice = invoice
+            .bolt11
+            .as_ref()
+            .ok_or(anyhow!("No bolt11 invoice"))
+            .and_then(|b| parse_invoice(b))?;
+        Ok(Payment {
+            id: hex::encode(invoice.payment_hash.clone()),
+            payment_type: PaymentType::Received,
+            payment_time: invoice.paid_at.map(|i| i as i64).unwrap_or_default(),
+            amount_msat: invoice.amount_msat.map(|a| a.msat).unwrap_or_default(),
+            fee_msat: 0,
+            status: PaymentStatus::Complete,
+            description: ln_invoice.description,
+            details: PaymentDetails::Ln {
+                data: LnPaymentDetails {
+                    payment_hash: hex::encode(invoice.payment_hash),
+                    label: invoice.label,
+                    destination_pubkey: ln_invoice.payee_pubkey,
+                    payment_preimage: invoice
+                        .payment_preimage
+                        .map(hex::encode)
+                        .unwrap_or_default(),
+                    keysend: false,
+                    bolt11: invoice.bolt11.unwrap_or_default(),
+                    lnurl_success_action: None, // For received payments, this is None
+                    lnurl_metadata: None,       // For received payments, this is None
+                    ln_address: None,
+                },
+            },
+        })
+    }
+}
+
+impl From<ListpaysPaysStatus> for PaymentStatus {
+    fn from(value: ListpaysPaysStatus) -> Self {
+        match value {
+            ListpaysPaysStatus::Pending => PaymentStatus::Pending,
+            ListpaysPaysStatus::Complete => PaymentStatus::Complete,
+            ListpaysPaysStatus::Failed => PaymentStatus::Failed,
+        }
+    }
+}
+
+impl TryFrom<ListpaysPays> for Payment {
+    type Error = anyhow::Error;
+
+    fn try_from(payment: ListpaysPays) -> std::result::Result<Self, Self::Error> {
+        let ln_invoice = payment
+            .bolt11
+            .as_ref()
+            .ok_or(anyhow!("No bolt11 invoice"))
+            .and_then(|b| parse_invoice(b));
+        let payment_amount = payment
+            .amount_msat
+            .clone()
+            .map(|a| a.msat)
+            .unwrap_or_default();
+        let payment_amount_sent = payment
+            .amount_sent_msat
+            .clone()
+            .map(|a| a.msat)
+            .unwrap_or_default();
+        let status = payment.status().into();
+
+        Ok(Payment {
+            id: hex::encode(payment.payment_hash.clone()),
+            payment_type: PaymentType::Sent,
+            payment_time: payment.created_at as i64,
+            amount_msat: match status {
+                PaymentStatus::Failed => ln_invoice
+                    .as_ref()
+                    .map_or(0, |i| i.amount_msat.unwrap_or_default()),
+                _ => payment_amount,
+            },
+            fee_msat: payment_amount_sent - payment_amount,
+            status,
+            description: ln_invoice.map(|i| i.description).unwrap_or_default(),
+            details: PaymentDetails::Ln {
+                data: LnPaymentDetails {
+                    payment_hash: hex::encode(payment.payment_hash),
+                    label: "".to_string(),
+                    destination_pubkey: payment.destination.map(hex::encode).unwrap_or_default(),
+                    payment_preimage: payment.preimage.map(hex::encode).unwrap_or_default(),
+                    keysend: payment.bolt11.is_none(),
+                    bolt11: payment.bolt11.unwrap_or_default(),
                     lnurl_success_action: None,
                     lnurl_metadata: None,
                     ln_address: None,

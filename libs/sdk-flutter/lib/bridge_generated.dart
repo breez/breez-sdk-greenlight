@@ -127,8 +127,7 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kParseInputConstMeta;
 
   /// See [BreezServices::list_payments]
-  Future<List<Payment>> listPayments(
-      {required PaymentTypeFilter filter, int? fromTimestamp, int? toTimestamp, dynamic hint});
+  Future<List<Payment>> listPayments({required ListPaymentsRequest request, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kListPaymentsConstMeta;
 
@@ -571,6 +570,21 @@ class InvoicePaidDetails {
   });
 }
 
+/// Represents a list payments request.
+class ListPaymentsRequest {
+  final PaymentTypeFilter filter;
+  final int? fromTimestamp;
+  final int? toTimestamp;
+  final bool? includeFailures;
+
+  const ListPaymentsRequest({
+    required this.filter,
+    this.fromTimestamp,
+    this.toTimestamp,
+    this.includeFailures,
+  });
+}
+
 /// Wrapper for a BOLT11 LN invoice
 class LNInvoice {
   final String bolt11;
@@ -942,7 +956,7 @@ class Payment {
   final int paymentTime;
   final int amountMsat;
   final int feeMsat;
-  final bool pending;
+  final PaymentStatus status;
   final String? description;
   final PaymentDetails details;
 
@@ -952,7 +966,7 @@ class Payment {
     required this.paymentTime,
     required this.amountMsat,
     required this.feeMsat,
-    required this.pending,
+    required this.status,
     this.description,
     required this.details,
   });
@@ -978,6 +992,13 @@ class PaymentFailedData {
     required this.nodeId,
     this.invoice,
   });
+}
+
+/// The status of a payment
+enum PaymentStatus {
+  Pending,
+  Complete,
+  Failed,
 }
 
 /// Different types of supported payments
@@ -1727,23 +1748,20 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["input"],
       );
 
-  Future<List<Payment>> listPayments(
-      {required PaymentTypeFilter filter, int? fromTimestamp, int? toTimestamp, dynamic hint}) {
-    var arg0 = api2wire_payment_type_filter(filter);
-    var arg1 = _platform.api2wire_opt_box_autoadd_i64(fromTimestamp);
-    var arg2 = _platform.api2wire_opt_box_autoadd_i64(toTimestamp);
+  Future<List<Payment>> listPayments({required ListPaymentsRequest request, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_list_payments_request(request);
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_list_payments(port_, arg0, arg1, arg2),
+      callFfi: (port_) => _platform.inner.wire_list_payments(port_, arg0),
       parseSuccessData: _wire2api_list_payment,
       constMeta: kListPaymentsConstMeta,
-      argValues: [filter, fromTimestamp, toTimestamp],
+      argValues: [request],
       hint: hint,
     ));
   }
 
   FlutterRustBridgeTaskConstMeta get kListPaymentsConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "list_payments",
-        argNames: ["filter", "fromTimestamp", "toTimestamp"],
+        argNames: ["request"],
       );
 
   Future<Payment?> paymentByHash({required String hash, dynamic hint}) {
@@ -2753,7 +2771,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       paymentTime: _wire2api_i64(arr[2]),
       amountMsat: _wire2api_u64(arr[3]),
       feeMsat: _wire2api_u64(arr[4]),
-      pending: _wire2api_bool(arr[5]),
+      status: _wire2api_payment_status(arr[5]),
       description: _wire2api_opt_String(arr[6]),
       details: _wire2api_payment_details(arr[7]),
     );
@@ -2782,6 +2800,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       nodeId: _wire2api_String(arr[1]),
       invoice: _wire2api_opt_box_autoadd_ln_invoice(arr[2]),
     );
+  }
+
+  PaymentStatus _wire2api_payment_status(dynamic raw) {
+    return PaymentStatus.values[raw as int];
   }
 
   PaymentType _wire2api_payment_type(dynamic raw) {
@@ -3107,6 +3129,13 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<wire_ListPaymentsRequest> api2wire_box_autoadd_list_payments_request(ListPaymentsRequest raw) {
+    final ptr = inner.new_box_autoadd_list_payments_request_0();
+    _api_fill_to_wire_list_payments_request(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
   ffi.Pointer<wire_LnUrlAuthRequestData> api2wire_box_autoadd_ln_url_auth_request_data(
       LnUrlAuthRequestData raw) {
     final ptr = inner.new_box_autoadd_ln_url_auth_request_data_0();
@@ -3277,6 +3306,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     _api_fill_to_wire_greenlight_node_config(apiObj, wireObj.ref);
   }
 
+  void _api_fill_to_wire_box_autoadd_list_payments_request(
+      ListPaymentsRequest apiObj, ffi.Pointer<wire_ListPaymentsRequest> wireObj) {
+    _api_fill_to_wire_list_payments_request(apiObj, wireObj.ref);
+  }
+
   void _api_fill_to_wire_box_autoadd_ln_url_auth_request_data(
       LnUrlAuthRequestData apiObj, ffi.Pointer<wire_LnUrlAuthRequestData> wireObj) {
     _api_fill_to_wire_ln_url_auth_request_data(apiObj, wireObj.ref);
@@ -3360,6 +3394,13 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
       GreenlightNodeConfig apiObj, wire_GreenlightNodeConfig wireObj) {
     wireObj.partner_credentials = api2wire_opt_box_autoadd_greenlight_credentials(apiObj.partnerCredentials);
     wireObj.invite_code = api2wire_opt_String(apiObj.inviteCode);
+  }
+
+  void _api_fill_to_wire_list_payments_request(ListPaymentsRequest apiObj, wire_ListPaymentsRequest wireObj) {
+    wireObj.filter = api2wire_payment_type_filter(apiObj.filter);
+    wireObj.from_timestamp = api2wire_opt_box_autoadd_i64(apiObj.fromTimestamp);
+    wireObj.to_timestamp = api2wire_opt_box_autoadd_i64(apiObj.toTimestamp);
+    wireObj.include_failures = api2wire_opt_box_autoadd_bool(apiObj.includeFailures);
   }
 
   void _api_fill_to_wire_ln_url_auth_request_data(
@@ -3841,24 +3882,19 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
 
   void wire_list_payments(
     int port_,
-    int filter,
-    ffi.Pointer<ffi.Int64> from_timestamp,
-    ffi.Pointer<ffi.Int64> to_timestamp,
+    ffi.Pointer<wire_ListPaymentsRequest> request,
   ) {
     return _wire_list_payments(
       port_,
-      filter,
-      from_timestamp,
-      to_timestamp,
+      request,
     );
   }
 
-  late final _wire_list_paymentsPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Int64, ffi.Int32, ffi.Pointer<ffi.Int64>, ffi.Pointer<ffi.Int64>)>>('wire_list_payments');
-  late final _wire_list_payments = _wire_list_paymentsPtr
-      .asFunction<void Function(int, int, ffi.Pointer<ffi.Int64>, ffi.Pointer<ffi.Int64>)>();
+  late final _wire_list_paymentsPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_ListPaymentsRequest>)>>(
+          'wire_list_payments');
+  late final _wire_list_payments =
+      _wire_list_paymentsPtr.asFunction<void Function(int, ffi.Pointer<wire_ListPaymentsRequest>)>();
 
   void wire_payment_by_hash(
     int port_,
@@ -4261,6 +4297,16 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _new_box_autoadd_i64_0 =
       _new_box_autoadd_i64_0Ptr.asFunction<ffi.Pointer<ffi.Int64> Function(int)>();
 
+  ffi.Pointer<wire_ListPaymentsRequest> new_box_autoadd_list_payments_request_0() {
+    return _new_box_autoadd_list_payments_request_0();
+  }
+
+  late final _new_box_autoadd_list_payments_request_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_ListPaymentsRequest> Function()>>(
+          'new_box_autoadd_list_payments_request_0');
+  late final _new_box_autoadd_list_payments_request_0 = _new_box_autoadd_list_payments_request_0Ptr
+      .asFunction<ffi.Pointer<wire_ListPaymentsRequest> Function()>();
+
   ffi.Pointer<wire_LnUrlAuthRequestData> new_box_autoadd_ln_url_auth_request_data_0() {
     return _new_box_autoadd_ln_url_auth_request_data_0();
   }
@@ -4498,6 +4544,17 @@ class wire_CheckMessageRequest extends ffi.Struct {
 
 class wire_StaticBackupRequest extends ffi.Struct {
   external ffi.Pointer<wire_uint_8_list> working_dir;
+}
+
+class wire_ListPaymentsRequest extends ffi.Struct {
+  @ffi.Int32()
+  external int filter;
+
+  external ffi.Pointer<ffi.Int64> from_timestamp;
+
+  external ffi.Pointer<ffi.Int64> to_timestamp;
+
+  external ffi.Pointer<ffi.Bool> include_failures;
 }
 
 class wire_OpeningFeeParams extends ffi.Struct {

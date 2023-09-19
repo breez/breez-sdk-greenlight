@@ -5,8 +5,8 @@ use anyhow::{anyhow, Error, Result};
 use breez_sdk_core::InputType::{LnUrlAuth, LnUrlPay, LnUrlWithdraw};
 use breez_sdk_core::{
     parse, BreezEvent, BreezServices, BuyBitcoinRequest, CheckMessageRequest, EventListener,
-    GreenlightCredentials, PaymentTypeFilter, ReceiveOnchainRequest, ReceivePaymentRequest,
-    ReverseSwapFeesRequest, SignMessageRequest, StaticBackupRequest,
+    GreenlightCredentials, ListPaymentsRequest, PaymentTypeFilter, ReceiveOnchainRequest,
+    ReceivePaymentRequest, ReverseSwapFeesRequest, SignMessageRequest, StaticBackupRequest,
 };
 use breez_sdk_core::{Config, GreenlightNodeConfig, NodeConfig};
 use once_cell::sync::OnceCell;
@@ -201,9 +201,18 @@ pub(crate) async fn handle_command(
             let payment = sdk()?.send_spontaneous_payment(node_id, amount).await?;
             serde_json::to_string_pretty(&payment).map_err(|e| e.into())
         }
-        Commands::ListPayments {} => {
+        Commands::ListPayments {
+            from_timestamp,
+            to_timestamp,
+            include_failures,
+        } => {
             let payments = sdk()?
-                .list_payments(PaymentTypeFilter::All, None, None)
+                .list_payments(ListPaymentsRequest {
+                    filter: PaymentTypeFilter::All,
+                    from_timestamp,
+                    to_timestamp,
+                    include_failures: Some(include_failures),
+                })
                 .await?;
             serde_json::to_string_pretty(&payments).map_err(|e| e.into())
         }
