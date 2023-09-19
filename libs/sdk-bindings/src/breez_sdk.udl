@@ -146,7 +146,6 @@ dictionary Payment {
     PaymentStatus status;
     string? description;
     PaymentDetails details;
-    string? last_error;
 };
 
 dictionary ListPaymentsRequest {

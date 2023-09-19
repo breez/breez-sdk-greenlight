@@ -31,10 +31,9 @@ impl SqliteStorage {
            fee_msat,                 
            status,
            description,
-           details,
-           last_error
+           details
         )
-         VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9)
+         VALUES (?1,?2,?3,?4,?5,?6,?7,?8)
         ",
         )?;
 
@@ -48,7 +47,6 @@ impl SqliteStorage {
                 &ln_tx.status,
                 &ln_tx.description,
                 &ln_tx.details,
-                &ln_tx.last_error,
             ))?;
         }
         Ok(())
@@ -152,7 +150,6 @@ impl SqliteStorage {
              p.status,
              p.description,
              p.details,
-             p.last_error,
              e.lnurl_success_action,
              e.lnurl_metadata,
              e.ln_address,
@@ -196,7 +193,6 @@ impl SqliteStorage {
                  p.status,
                  p.description,
                  p.details,
-                 p.last_error,
                  e.lnurl_success_action,
                  e.lnurl_metadata,
                  e.ln_address,
@@ -239,17 +235,16 @@ impl SqliteStorage {
             status: row.get(5)?,
             description: row.get(6)?,
             details: row.get(7)?,
-            last_error: row.get(8)?,
         };
 
         if let PaymentDetails::Ln { ref mut data } = payment.details {
-            data.lnurl_success_action = row.get(9)?;
-            data.lnurl_metadata = row.get(10)?;
-            data.ln_address = row.get(11)?;
+            data.lnurl_success_action = row.get(8)?;
+            data.lnurl_metadata = row.get(9)?;
+            data.ln_address = row.get(10)?;
         }
 
         // In case we have a record of the open channel fee, let's use it.
-        let payer_amount_msat: Option<u64> = row.get(12)?;
+        let payer_amount_msat: Option<u64> = row.get(11)?;
         if let Some(payer_amount) = payer_amount_msat {
             payment.fee_msat = payer_amount - amount_msat;
         }
@@ -385,7 +380,6 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
                     ln_address: Some(test_ln_address.to_string()),
                 },
             },
-            last_error: None,
         },
         Payment {
             id: "124".to_string(),
@@ -408,7 +402,6 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
                     ln_address: None,
                 },
             },
-            last_error: None,
         },
     ];
     let failed_txs = [Payment {
@@ -432,7 +425,6 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
                 ln_address: None,
             },
         },
-        last_error: None,
     }];
     let storage = SqliteStorage::new(test_utils::create_test_sql_dir());
     storage.init()?;

@@ -890,7 +890,6 @@ impl TryFrom<OffChainPayment> for Payment {
             fee_msat: 0,
             status: PaymentStatus::Complete,
             description: ln_invoice.description,
-            last_error: None,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
                     payment_hash: hex::encode(p.payment_hash),
@@ -938,7 +937,6 @@ impl TryFrom<pb::Invoice> for Payment {
                     ln_address: None,
                 },
             },
-            last_error: None,
         })
     }
 }
@@ -988,7 +986,6 @@ impl TryFrom<pb::Payment> for Payment {
                     ln_address: None,
                 },
             },
-            last_error: None,
         })
     }
 }
@@ -1027,7 +1024,6 @@ impl TryFrom<ListinvoicesInvoices> for Payment {
                     ln_address: None,
                 },
             },
-            last_error: None,
         })
     }
 }
@@ -1084,7 +1080,6 @@ impl TryFrom<ListpaysPays> for Payment {
                     ln_address: None,
                 },
             },
-            last_error: payment.erroronion.map(hex::encode),
         })
     }
 }

@@ -258,7 +258,6 @@ export type Payment = {
     status: PaymentStatus
     description?: string
     details: PaymentDetails
-    lastError?: string
 }
 
 export type PaymentFailedData = {

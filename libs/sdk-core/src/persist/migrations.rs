@@ -437,7 +437,6 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
        ",
        "
        ALTER TABLE payments RENAME COLUMN pending TO status;
-       ALTER TABLE payments ADD COLUMN last_error TEXT;
        UPDATE payments SET status = CASE WHEN status = 1 THEN 0 ELSE 1 END;
        ",
     ]

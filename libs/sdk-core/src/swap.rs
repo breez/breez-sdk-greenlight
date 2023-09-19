@@ -830,7 +830,6 @@ mod tests {
                     ln_address: None,
                 },
             },
-            last_error: None,
         };
         persister.insert_or_update_payments(&vec![payment.clone()])?;
 

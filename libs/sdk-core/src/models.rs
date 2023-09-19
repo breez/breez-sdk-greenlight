@@ -645,7 +645,6 @@ pub struct Payment {
     pub status: PaymentStatus,
     pub description: Option<String>,
     pub details: PaymentDetails,
-    pub last_error: Option<String>,
 }
 
 impl TryFrom<LNInvoice> for Payment {
@@ -673,7 +672,6 @@ impl TryFrom<LNInvoice> for Payment {
                     ln_address: None,
                 },
             },
-            last_error: None,
         })
     }
 }

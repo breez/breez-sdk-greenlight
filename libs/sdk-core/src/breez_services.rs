@@ -795,7 +795,6 @@ impl BreezServices {
                 if let Some(inv) = invoice.clone() {
                     let mut payment = Payment::try_from(inv)?;
                     payment.status = PaymentStatus::Failed;
-                    payment.last_error = Some(e.to_string());
                     self.persister.insert_or_update_payments(&vec![payment])?;
                 }
 
@@ -1266,7 +1265,6 @@ impl BreezServices {
                     funding_txid: channel.funding_txid,
                 },
             },
-            last_error: None,
         })
     }
 }
@@ -1921,7 +1919,6 @@ pub(crate) mod tests {
                         ln_address: None,
                     },
                 },
-                last_error: None,
             },
             Payment {
                 id: payment_hash_with_lnurl_success_action.to_string(),
@@ -1944,7 +1941,6 @@ pub(crate) mod tests {
                         ln_address: Some(test_ln_address.to_string()),
                     },
                 },
-                last_error: None,
             },
         ];
         let node_api = Arc::new(MockNodeAPI::new(dummy_node_state.clone()));

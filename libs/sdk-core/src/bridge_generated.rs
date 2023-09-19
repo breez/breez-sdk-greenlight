@@ -1206,7 +1206,6 @@ impl support::IntoDart for Payment {
             self.status.into_dart(),
             self.description.into_dart(),
             self.details.into_dart(),
-            self.last_error.into_dart(),
         ]
         .into_dart()
     }

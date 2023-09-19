@@ -1513,7 +1513,6 @@ fun asPayment(data: ReadableMap): Payment? {
     val status = data.getString("status")?.let { asPaymentStatus(it) }!!
     val description = if (hasNonNullKey(data, "description")) data.getString("description") else null
     val details = data.getMap("details")?.let { asPaymentDetails(it) }!!
-    val lastError = if (hasNonNullKey(data, "lastError")) data.getString("lastError") else null
     return Payment(
         id,
         paymentType,
@@ -1523,7 +1522,6 @@ fun asPayment(data: ReadableMap): Payment? {
         status,
         description,
         details,
-        lastError,
     )
 }
 
@@ -1537,7 +1535,6 @@ fun readableMapOf(payment: Payment): ReadableMap {
         "status" to payment.status.name.lowercase(),
         "description" to payment.description,
         "details" to readableMapOf(payment.details),
-        "lastError" to payment.lastError,
     )
 }
 
