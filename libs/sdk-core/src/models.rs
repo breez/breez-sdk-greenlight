@@ -647,35 +647,6 @@ pub struct Payment {
     pub details: PaymentDetails,
 }
 
-impl TryFrom<LNInvoice> for Payment {
-    type Error = anyhow::Error;
-
-    fn try_from(inv: LNInvoice) -> std::result::Result<Self, Self::Error> {
-        Ok(Payment {
-            id: inv.payment_hash.clone(),
-            payment_type: PaymentType::Sent,
-            payment_time: inv.timestamp as i64,
-            amount_msat: inv.amount_msat.unwrap_or(0),
-            fee_msat: 0,
-            status: PaymentStatus::Pending,
-            description: inv.description,
-            details: PaymentDetails::Ln {
-                data: LnPaymentDetails {
-                    payment_hash: inv.payment_hash.clone(),
-                    label: "".to_string(),
-                    destination_pubkey: inv.payee_pubkey,
-                    payment_preimage: "".to_string(),
-                    keysend: false,
-                    bolt11: inv.bolt11,
-                    lnurl_success_action: None,
-                    lnurl_metadata: None,
-                    ln_address: None,
-                },
-            },
-        })
-    }
-}
-
 /// Represents a list payments request.
 pub struct ListPaymentsRequest {
     pub filter: PaymentTypeFilter,

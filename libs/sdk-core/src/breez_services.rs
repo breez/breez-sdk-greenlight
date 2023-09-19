@@ -774,30 +774,20 @@ impl BreezServices {
         invoice: Option<LNInvoice>,
         payment_res: Result<PaymentResponse>,
     ) -> SdkResult<Payment> {
+        self.do_sync(payment_res.is_ok()).await?;
+
         match payment_res {
-            Ok(payment) => {
-                self.do_sync(true).await?;
-
-                match self.persister.get_payment_by_hash(&payment.payment_hash)? {
-                    Some(p) => {
-                        self.notify_event_listeners(BreezEvent::PaymentSucceed {
-                            details: p.clone(),
-                        })
+            Ok(payment) => match self.persister.get_payment_by_hash(&payment.payment_hash)? {
+                Some(p) => {
+                    self.notify_event_listeners(BreezEvent::PaymentSucceed { details: p.clone() })
                         .await?;
-                        Ok(p)
-                    }
-                    None => Err(SdkError::SendPaymentFailed {
-                        err: "Payment not found".into(),
-                    }),
+                    Ok(p)
                 }
-            }
+                None => Err(SdkError::SendPaymentFailed {
+                    err: "Payment not found".into(),
+                }),
+            },
             Err(e) => {
-                if let Some(inv) = invoice.clone() {
-                    let mut payment = Payment::try_from(inv)?;
-                    payment.status = PaymentStatus::Failed;
-                    self.persister.insert_or_update_payments(&vec![payment])?;
-                }
-
                 self.notify_event_listeners(BreezEvent::PaymentFailed {
                     details: PaymentFailedData {
                         error: e.to_string(),

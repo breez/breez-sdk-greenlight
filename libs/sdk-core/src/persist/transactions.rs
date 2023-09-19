@@ -116,11 +116,9 @@ impl SqliteStorage {
 
     pub fn last_payment_timestamp(&self) -> Result<u64> {
         self.get_connection()?
-            .query_row(
-                "SELECT max(payment_time) FROM payments WHERE status != ?1",
-                [PaymentStatus::Failed],
-                |row| row.get(0),
-            )
+            .query_row("SELECT max(payment_time) FROM payments", [], |row| {
+                row.get(0)
+            })
             .map_err(anyhow::Error::msg)
     }
 
@@ -459,7 +457,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(retrieve_txs[0], txs[1]);
 
     let max_ts = storage.last_payment_timestamp()?;
-    assert_eq!(max_ts, 1001);
+    assert_eq!(max_ts, 2000);
 
     storage.insert_or_update_payments(&txs)?;
     let retrieve_txs = storage.list_payments(PaymentTypeFilter::All, None, None, None)?;
