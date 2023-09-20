@@ -163,7 +163,8 @@ impl SqliteStorage {
           payment_id,
           lnurl_success_action,
           ln_address,
-          lnurl_metadata
+          lnurl_metadata,
+          lnurl_withdraw_endpoint
          FROM remote_sync.payments_external_info
          WHERE payment_id NOT IN (SELECT payment_id FROM sync.payments_external_info);",
             [],

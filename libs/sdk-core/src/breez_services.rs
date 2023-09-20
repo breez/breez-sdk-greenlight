@@ -330,6 +330,7 @@ impl BreezServices {
                     maybe_sa_processed.as_ref(),
                     Some(req_data.metadata_str),
                     req_data.ln_address,
+                    None,
                 )?;
 
                 Ok(LnUrlPayResult::EndpointSuccess {
@@ -364,7 +365,22 @@ impl BreezServices {
             .await
             .map_err(|_| anyhow!("Failed to receive payment"))?
             .ln_invoice;
-        validate_lnurl_withdraw(req_data, invoice).await
+
+        let lnurl_w_endpoint = req_data.callback.clone();
+        let res = validate_lnurl_withdraw(req_data, invoice).await?;
+
+        if let LnUrlWithdrawCallbackStatus::Ok { ref data } = res {
+            // If endpoint was successfully called, store the LNURL-withdraw endpoint URL as metadata linked to the invoice
+            self.persister.insert_lnurl_payment_external_info(
+                &data.invoice.payment_hash,
+                None,
+                None,
+                None,
+                Some(lnurl_w_endpoint),
+            )?;
+        }
+
+        Ok(res)
     }
 
     /// Third and last step of LNURL-auth. The first step is `parse()`, which also validates the LNURL destination
@@ -1880,12 +1896,14 @@ pub(crate) mod tests {
 
         let lnurl_metadata = "{'key': 'sample-metadata-val'}";
         let test_ln_address = "test@ln-address.com";
+        let test_lnurl_withdraw_endpoint = "https://test.endpoint.lnurl-w";
         let sa = SuccessActionProcessed::Message {
             data: MessageSuccessActionData {
                 message: "test message".into(),
             },
         };
 
+        let payment_hash_lnurl_withdraw = "2222";
         let payment_hash_with_lnurl_success_action = "3333";
         let dummy_transactions = vec![
             Payment {
@@ -1907,6 +1925,30 @@ pub(crate) mod tests {
                         lnurl_success_action: None,
                         lnurl_metadata: None,
                         ln_address: None,
+                        lnurl_withdraw_endpoint: None,
+                    },
+                },
+            },
+            Payment {
+                id: payment_hash_lnurl_withdraw.to_string(),
+                payment_type: PaymentType::Received,
+                payment_time: 150000,
+                amount_msat: 10,
+                fee_msat: 0,
+                status: PaymentStatus::Complete,
+                description: Some("test lnurl-withdraw receive".to_string()),
+                details: PaymentDetails::Ln {
+                    data: LnPaymentDetails {
+                        payment_hash: payment_hash_lnurl_withdraw.to_string(),
+                        label: "".to_string(),
+                        destination_pubkey: "1111".to_string(),
+                        payment_preimage: "2222".to_string(),
+                        keysend: false,
+                        bolt11: "1111".to_string(),
+                        lnurl_success_action: None,
+                        lnurl_metadata: None,
+                        ln_address: None,
+                        lnurl_withdraw_endpoint: Some(test_lnurl_withdraw_endpoint.to_string()),
                     },
                 },
             },
@@ -1929,6 +1971,7 @@ pub(crate) mod tests {
                         lnurl_success_action: Some(sa.clone()),
                         lnurl_metadata: Some(lnurl_metadata.to_string()),
                         ln_address: Some(test_ln_address.to_string()),
+                        lnurl_withdraw_endpoint: None,
                     },
                 },
             },
@@ -1944,6 +1987,14 @@ pub(crate) mod tests {
             Some(&sa),
             Some(lnurl_metadata.to_string()),
             Some(test_ln_address.to_string()),
+            None,
+        )?;
+        persister.insert_lnurl_payment_external_info(
+            payment_hash_lnurl_withdraw,
+            None,
+            None,
+            None,
+            Some(test_lnurl_withdraw_endpoint.to_string()),
         )?;
 
         let mut builder = BreezServicesBuilder::new(test_config.clone());
@@ -1982,7 +2033,7 @@ pub(crate) mod tests {
                 include_failures: None,
             })
             .await?;
-        assert_eq!(received, vec![cloned[0].clone()]);
+        assert_eq!(received, vec![cloned[1].clone(), cloned[0].clone()]);
 
         let sent = breez_services
             .list_payments(ListPaymentsRequest {
@@ -1992,11 +2043,19 @@ pub(crate) mod tests {
                 include_failures: None,
             })
             .await?;
-        assert_eq!(sent, vec![cloned[1].clone()]);
+        assert_eq!(sent, vec![cloned[2].clone()]);
         assert!(matches!(
-                &sent[0].details, PaymentDetails::Ln {data: LnPaymentDetails {lnurl_success_action, ..}} if lnurl_success_action == &Some(sa)));
+                &sent[0].details,
+                PaymentDetails::Ln {data: LnPaymentDetails {lnurl_success_action, ..}}
+                if lnurl_success_action == &Some(sa)));
         assert!(matches!(
-                &sent[0].details, PaymentDetails::Ln {data: LnPaymentDetails {ln_address, ..}} if ln_address == &Some(test_ln_address.to_string())));
+                &sent[0].details,
+                PaymentDetails::Ln {data: LnPaymentDetails {ln_address, ..}}
+                if ln_address == &Some(test_ln_address.to_string())));
+        assert!(matches!(
+                &received[0].details,
+                PaymentDetails::Ln {data: LnPaymentDetails {lnurl_withdraw_endpoint, ..}}
+                if lnurl_withdraw_endpoint == &Some(test_lnurl_withdraw_endpoint.to_string())));
 
         Ok(())
     }

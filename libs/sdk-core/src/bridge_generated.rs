@@ -1021,6 +1021,7 @@ impl support::IntoDart for LnPaymentDetails {
             self.lnurl_success_action.into_dart(),
             self.ln_address.into_dart(),
             self.lnurl_metadata.into_dart(),
+            self.lnurl_withdraw_endpoint.into_dart(),
         ]
         .into_dart()
     }

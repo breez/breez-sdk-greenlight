@@ -698,6 +698,9 @@ pub struct LnPaymentDetails {
 
     /// Only set for [PaymentType::Sent] payments where the receiver endpoint returned LNURL metadata
     pub lnurl_metadata: Option<String>,
+
+    /// Only set for [PaymentType::Received] payments that were received as part of LNURL-withdraw
+    pub lnurl_withdraw_endpoint: Option<String>,
 }
 
 /// Represents the funds that were on the user side of the channel at the time it was closed.

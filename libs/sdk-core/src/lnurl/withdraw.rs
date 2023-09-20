@@ -31,6 +31,7 @@ pub(crate) async fn validate_lnurl_withdraw(
         "Amount is bigger than the maximum allowed by the LNURL-withdraw endpoint"
     );
 
+    // Send invoice to the LNURL-w endpoint via the callback
     let callback_url = build_withdraw_callback_url(&req_data, &invoice)?;
     let callback_res: LnUrlCallbackStatus = get_parse_and_log_response(&callback_url).await?;
     let withdraw_status = match callback_res {
