@@ -773,6 +773,7 @@ fun asLnPaymentDetails(data: ReadableMap): LnPaymentDetails? {
         }
     val lnurlMetadata = if (hasNonNullKey(data, "lnurlMetadata")) data.getString("lnurlMetadata") else null
     val lnAddress = if (hasNonNullKey(data, "lnAddress")) data.getString("lnAddress") else null
+    val lnurlWithdrawEndpoint = if (hasNonNullKey(data, "lnurlWithdrawEndpoint")) data.getString("lnurlWithdrawEndpoint") else null
     return LnPaymentDetails(
         paymentHash,
         label,
@@ -783,6 +784,7 @@ fun asLnPaymentDetails(data: ReadableMap): LnPaymentDetails? {
         lnurlSuccessAction,
         lnurlMetadata,
         lnAddress,
+        lnurlWithdrawEndpoint,
     )
 }
 
@@ -797,6 +799,7 @@ fun readableMapOf(lnPaymentDetails: LnPaymentDetails): ReadableMap {
         "lnurlSuccessAction" to lnPaymentDetails.lnurlSuccessAction?.let { readableMapOf(it) },
         "lnurlMetadata" to lnPaymentDetails.lnurlMetadata,
         "lnAddress" to lnPaymentDetails.lnAddress,
+        "lnurlWithdrawEndpoint" to lnPaymentDetails.lnurlWithdrawEndpoint,
     )
 }
 

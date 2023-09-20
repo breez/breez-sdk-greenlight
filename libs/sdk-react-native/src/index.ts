@@ -140,6 +140,7 @@ export type LnPaymentDetails = {
     lnurlSuccessAction?: SuccessActionProcessed
     lnurlMetadata?: string
     lnAddress?: string
+    lnurlWithdrawEndpoint?: string
 }
 
 export type LnUrlAuthRequestData = {

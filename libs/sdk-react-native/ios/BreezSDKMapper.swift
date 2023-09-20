@@ -709,6 +709,7 @@ class BreezSDKMapper {
 
         let lnurlMetadata = data["lnurlMetadata"] as? String
         let lnAddress = data["lnAddress"] as? String
+        let lnurlWithdrawEndpoint = data["lnurlWithdrawEndpoint"] as? String
 
         return LnPaymentDetails(
             paymentHash: paymentHash,
@@ -719,7 +720,8 @@ class BreezSDKMapper {
             bolt11: bolt11,
             lnurlSuccessAction: lnurlSuccessAction,
             lnurlMetadata: lnurlMetadata,
-            lnAddress: lnAddress
+            lnAddress: lnAddress,
+            lnurlWithdrawEndpoint: lnurlWithdrawEndpoint
         )
     }
 
@@ -734,6 +736,7 @@ class BreezSDKMapper {
             "lnurlSuccessAction": lnPaymentDetails.lnurlSuccessAction == nil ? nil : dictionaryOf(successActionProcessed: lnPaymentDetails.lnurlSuccessAction!),
             "lnurlMetadata": lnPaymentDetails.lnurlMetadata == nil ? nil : lnPaymentDetails.lnurlMetadata,
             "lnAddress": lnPaymentDetails.lnAddress == nil ? nil : lnPaymentDetails.lnAddress,
+            "lnurlWithdrawEndpoint": lnPaymentDetails.lnurlWithdrawEndpoint == nil ? nil : lnPaymentDetails.lnurlWithdrawEndpoint,
         ]
     }
 
