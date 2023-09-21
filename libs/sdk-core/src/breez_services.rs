@@ -1220,18 +1220,17 @@ impl BreezServices {
                         .chain_service
                         .transaction_outspends(channel.funding_txid.clone())
                         .await?;
-                    match outspends.get(outnum as usize) {
+
+                    let maybe_block_time = outspends.get(outnum as usize)
+                        .and_then(|outspend| outspend.status.as_ref())
+                        .and_then(|status| status.block_time);
+
+                    match maybe_block_time {
                         None => {
-                            warn!("No funding tx outspend found at outnum {outnum}, defaulting closed_at to epoch time");
+                            warn!("Blocktime could not be determined for funding_outnum {outnum}, defaulting closed_at to epoch time");
                             now_epoch_sec
                         }
-                        Some(outspend) => match outspend.status.block_time {
-                            None => {
-                                warn!("No blocktime found for funding_outnum {outnum}, defaulting closed_at to epoch time");
-                                now_epoch_sec
-                            },
-                            Some(block_time) => block_time
-                        }
+                        Some(block_time) => block_time
                     }
                 }
             }

@@ -187,13 +187,16 @@ pub struct Vin {
     pub sequence: u32,
 }
 
-/// Spending status of a transaction output
+/// Spending status of a transaction output.
+///
+/// If this is an outspend of a confirmed tx, `spent` is true and all other fields are set.
+/// If this is an outspend of an unconfirmed tx, `spent` is false and none of the other fields are set.
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Outspend {
     pub spent: bool,
     pub txid: Option<String>,
-    pub vin: u32,
-    pub status: TxStatus,
+    pub vin: Option<u32>,
+    pub status: Option<TxStatus>,
 }
 
 impl Default for MempoolSpace {

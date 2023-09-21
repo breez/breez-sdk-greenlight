@@ -189,13 +189,13 @@ impl ChainService for MockChainService {
         Ok(vec![Outspend {
             spent: true,
             txid: Some("test-tx-id".into()),
-            vin: 0,
-            status: TxStatus {
+            vin: Some(0),
+            status: Some(TxStatus {
                 confirmed: true,
                 block_height: Some(123),
                 block_hash: Some("test-hash".into()),
                 block_time: Some(123),
-            },
+            }),
         }])
     }
 
