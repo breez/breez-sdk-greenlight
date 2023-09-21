@@ -132,6 +132,11 @@ typedef struct wire_BuyBitcoinRequest {
   struct wire_OpeningFeeParams *opening_fee_params;
 } wire_BuyBitcoinRequest;
 
+typedef struct wire_OpenChannelFeeRequest {
+  uint64_t amount_msat;
+  uint32_t *expiry;
+} wire_OpenChannelFeeRequest;
+
 typedef struct wire_ReverseSwapFeesRequest {
   uint64_t *send_amount_sat;
 } wire_ReverseSwapFeesRequest;
@@ -248,6 +253,8 @@ void wire_in_progress_swap(int64_t port_);
 
 void wire_in_progress_reverse_swaps(int64_t port_);
 
+void wire_open_channel_fee(int64_t port_, struct wire_OpenChannelFeeRequest *req);
+
 void wire_fetch_reverse_swap_fees(int64_t port_, struct wire_ReverseSwapFeesRequest *req);
 
 void wire_recommended_fees(int64_t port_);
@@ -277,6 +284,8 @@ struct wire_LnUrlPayRequestData *new_box_autoadd_ln_url_pay_request_data_0(void)
 struct wire_LnUrlWithdrawRequestData *new_box_autoadd_ln_url_withdraw_request_data_0(void);
 
 struct wire_NodeConfig *new_box_autoadd_node_config_0(void);
+
+struct wire_OpenChannelFeeRequest *new_box_autoadd_open_channel_fee_request_0(void);
 
 struct wire_OpeningFeeParams *new_box_autoadd_opening_fee_params_0(void);
 
@@ -342,6 +351,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_refund);
     dummy_var ^= ((int64_t) (void*) wire_in_progress_swap);
     dummy_var ^= ((int64_t) (void*) wire_in_progress_reverse_swaps);
+    dummy_var ^= ((int64_t) (void*) wire_open_channel_fee);
     dummy_var ^= ((int64_t) (void*) wire_fetch_reverse_swap_fees);
     dummy_var ^= ((int64_t) (void*) wire_recommended_fees);
     dummy_var ^= ((int64_t) (void*) wire_execute_command);
@@ -357,6 +367,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_pay_request_data_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_withdraw_request_data_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_node_config_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_open_channel_fee_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_opening_fee_params_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_receive_onchain_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_receive_payment_request_0);

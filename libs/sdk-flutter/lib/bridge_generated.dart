@@ -227,6 +227,11 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kInProgressReverseSwapsConstMeta;
 
+  /// See [BreezServices::open_channel_fee]
+  Future<OpenChannelFeeResponse> openChannelFee({required OpenChannelFeeRequest req, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kOpenChannelFeeConstMeta;
+
   /// See [BreezServices::fetch_reverse_swap_fees]
   Future<ReverseSwapPairInfo> fetchReverseSwapFees({required ReverseSwapFeesRequest req, dynamic hint});
 
@@ -908,6 +913,26 @@ class NodeState {
     required this.maxChanReserveMsats,
     required this.connectedPeers,
     required this.inboundLiquidityMsats,
+  });
+}
+
+class OpenChannelFeeRequest {
+  final int amountMsat;
+  final int? expiry;
+
+  const OpenChannelFeeRequest({
+    required this.amountMsat,
+    this.expiry,
+  });
+}
+
+class OpenChannelFeeResponse {
+  final int feeMsat;
+  final OpeningFeeParams? usedFeeParams;
+
+  const OpenChannelFeeResponse({
+    required this.feeMsat,
+    this.usedFeeParams,
   });
 }
 
@@ -2054,6 +2079,22 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: [],
       );
 
+  Future<OpenChannelFeeResponse> openChannelFee({required OpenChannelFeeRequest req, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_open_channel_fee_request(req);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_open_channel_fee(port_, arg0),
+      parseSuccessData: _wire2api_open_channel_fee_response,
+      constMeta: kOpenChannelFeeConstMeta,
+      argValues: [req],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kOpenChannelFeeConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "open_channel_fee",
+        argNames: ["req"],
+      );
+
   Future<ReverseSwapPairInfo> fetchReverseSwapFees({required ReverseSwapFeesRequest req, dynamic hint}) {
     var arg0 = _platform.api2wire_box_autoadd_reverse_swap_fees_request(req);
     return _platform.executeNormal(FlutterRustBridgeTask(
@@ -2681,6 +2722,15 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     );
   }
 
+  OpenChannelFeeResponse _wire2api_open_channel_fee_response(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return OpenChannelFeeResponse(
+      feeMsat: _wire2api_u64(arr[0]),
+      usedFeeParams: _wire2api_opt_box_autoadd_opening_fee_params(arr[1]),
+    );
+  }
+
   OpeningFeeParams _wire2api_opening_fee_params(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 6) throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
@@ -3167,6 +3217,14 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<wire_OpenChannelFeeRequest> api2wire_box_autoadd_open_channel_fee_request(
+      OpenChannelFeeRequest raw) {
+    final ptr = inner.new_box_autoadd_open_channel_fee_request_0();
+    _api_fill_to_wire_open_channel_fee_request(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
   ffi.Pointer<wire_OpeningFeeParams> api2wire_box_autoadd_opening_fee_params(OpeningFeeParams raw) {
     final ptr = inner.new_box_autoadd_opening_fee_params_0();
     _api_fill_to_wire_opening_fee_params(raw, ptr.ref);
@@ -3330,6 +3388,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     _api_fill_to_wire_node_config(apiObj, wireObj.ref);
   }
 
+  void _api_fill_to_wire_box_autoadd_open_channel_fee_request(
+      OpenChannelFeeRequest apiObj, ffi.Pointer<wire_OpenChannelFeeRequest> wireObj) {
+    _api_fill_to_wire_open_channel_fee_request(apiObj, wireObj.ref);
+  }
+
   void _api_fill_to_wire_box_autoadd_opening_fee_params(
       OpeningFeeParams apiObj, ffi.Pointer<wire_OpeningFeeParams> wireObj) {
     _api_fill_to_wire_opening_fee_params(apiObj, wireObj.ref);
@@ -3439,6 +3502,12 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
       wireObj.kind.ref.Greenlight.ref.config = pre_config;
       return;
     }
+  }
+
+  void _api_fill_to_wire_open_channel_fee_request(
+      OpenChannelFeeRequest apiObj, wire_OpenChannelFeeRequest wireObj) {
+    wireObj.amount_msat = api2wire_u64(apiObj.amountMsat);
+    wireObj.expiry = api2wire_opt_box_autoadd_u32(apiObj.expiry);
   }
 
   void _api_fill_to_wire_opening_fee_params(OpeningFeeParams apiObj, wire_OpeningFeeParams wireObj) {
@@ -4178,6 +4247,22 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_in_progress_reverse_swaps =
       _wire_in_progress_reverse_swapsPtr.asFunction<void Function(int)>();
 
+  void wire_open_channel_fee(
+    int port_,
+    ffi.Pointer<wire_OpenChannelFeeRequest> req,
+  ) {
+    return _wire_open_channel_fee(
+      port_,
+      req,
+    );
+  }
+
+  late final _wire_open_channel_feePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_OpenChannelFeeRequest>)>>(
+          'wire_open_channel_fee');
+  late final _wire_open_channel_fee =
+      _wire_open_channel_feePtr.asFunction<void Function(int, ffi.Pointer<wire_OpenChannelFeeRequest>)>();
+
   void wire_fetch_reverse_swap_fees(
     int port_,
     ffi.Pointer<wire_ReverseSwapFeesRequest> req,
@@ -4346,6 +4431,16 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
       _lookup<ffi.NativeFunction<ffi.Pointer<wire_NodeConfig> Function()>>('new_box_autoadd_node_config_0');
   late final _new_box_autoadd_node_config_0 =
       _new_box_autoadd_node_config_0Ptr.asFunction<ffi.Pointer<wire_NodeConfig> Function()>();
+
+  ffi.Pointer<wire_OpenChannelFeeRequest> new_box_autoadd_open_channel_fee_request_0() {
+    return _new_box_autoadd_open_channel_fee_request_0();
+  }
+
+  late final _new_box_autoadd_open_channel_fee_request_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_OpenChannelFeeRequest> Function()>>(
+          'new_box_autoadd_open_channel_fee_request_0');
+  late final _new_box_autoadd_open_channel_fee_request_0 = _new_box_autoadd_open_channel_fee_request_0Ptr
+      .asFunction<ffi.Pointer<wire_OpenChannelFeeRequest> Function()>();
 
   ffi.Pointer<wire_OpeningFeeParams> new_box_autoadd_opening_fee_params_0() {
     return _new_box_autoadd_opening_fee_params_0();
@@ -4644,6 +4739,13 @@ class wire_BuyBitcoinRequest extends ffi.Struct {
   external int provider;
 
   external ffi.Pointer<wire_OpeningFeeParams> opening_fee_params;
+}
+
+class wire_OpenChannelFeeRequest extends ffi.Struct {
+  @ffi.Uint64()
+  external int amount_msat;
+
+  external ffi.Pointer<ffi.Uint32> expiry;
 }
 
 class wire_ReverseSwapFeesRequest extends ffi.Struct {

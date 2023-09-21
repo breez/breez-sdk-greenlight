@@ -246,6 +246,11 @@ pub extern "C" fn wire_in_progress_reverse_swaps(port_: i64) {
 }
 
 #[no_mangle]
+pub extern "C" fn wire_open_channel_fee(port_: i64, req: *mut wire_OpenChannelFeeRequest) {
+    wire_open_channel_fee_impl(port_, req)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_fetch_reverse_swap_fees(port_: i64, req: *mut wire_ReverseSwapFeesRequest) {
     wire_fetch_reverse_swap_fees_impl(port_, req)
 }
@@ -321,6 +326,11 @@ pub extern "C" fn new_box_autoadd_ln_url_withdraw_request_data_0(
 #[no_mangle]
 pub extern "C" fn new_box_autoadd_node_config_0() -> *mut wire_NodeConfig {
     support::new_leak_box_ptr(wire_NodeConfig::new_with_null_ptr())
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_autoadd_open_channel_fee_request_0() -> *mut wire_OpenChannelFeeRequest {
+    support::new_leak_box_ptr(wire_OpenChannelFeeRequest::new_with_null_ptr())
 }
 
 #[no_mangle]
@@ -452,6 +462,12 @@ impl Wire2Api<NodeConfig> for *mut wire_NodeConfig {
     fn wire2api(self) -> NodeConfig {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
         Wire2Api::<NodeConfig>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<OpenChannelFeeRequest> for *mut wire_OpenChannelFeeRequest {
+    fn wire2api(self) -> OpenChannelFeeRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<OpenChannelFeeRequest>::wire2api(*wrap).into()
     }
 }
 impl Wire2Api<OpeningFeeParams> for *mut wire_OpeningFeeParams {
@@ -611,6 +627,14 @@ impl Wire2Api<NodeConfig> for wire_NodeConfig {
         }
     }
 }
+impl Wire2Api<OpenChannelFeeRequest> for wire_OpenChannelFeeRequest {
+    fn wire2api(self) -> OpenChannelFeeRequest {
+        OpenChannelFeeRequest {
+            amount_msat: self.amount_msat.wire2api(),
+            expiry: self.expiry.wire2api(),
+        }
+    }
+}
 impl Wire2Api<OpeningFeeParams> for wire_OpeningFeeParams {
     fn wire2api(self) -> OpeningFeeParams {
         OpeningFeeParams {
@@ -758,6 +782,13 @@ pub struct wire_LnUrlWithdrawRequestData {
     default_description: *mut wire_uint_8_list,
     min_withdrawable: u64,
     max_withdrawable: u64,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_OpenChannelFeeRequest {
+    amount_msat: u64,
+    expiry: *mut u32,
 }
 
 #[repr(C)]
@@ -1022,6 +1053,21 @@ pub extern "C" fn inflate_NodeConfig_Greenlight() -> *mut NodeConfigKind {
             config: core::ptr::null_mut(),
         }),
     })
+}
+
+impl NewWithNullPtr for wire_OpenChannelFeeRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            amount_msat: Default::default(),
+            expiry: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_OpenChannelFeeRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
 }
 
 impl NewWithNullPtr for wire_OpeningFeeParams {

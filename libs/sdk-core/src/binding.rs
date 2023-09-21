@@ -32,10 +32,10 @@ use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
 use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
-    EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus, NodeConfig, ReceiveOnchainRequest,
-    ReceivePaymentRequest, ReceivePaymentResponse, ReverseSwapFeesRequest, ReverseSwapInfo,
-    ReverseSwapPairInfo, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
-    StaticBackupResponse,
+    EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus, NodeConfig, OpenChannelFeeRequest,
+    OpenChannelFeeResponse, ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse,
+    ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo, SignMessageRequest,
+    SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
 };
 
 /*
@@ -378,6 +378,12 @@ pub fn in_progress_reverse_swaps() -> Result<Vec<ReverseSwapInfo>> {
 }
 
 /*  Swap Fee API's */
+
+/// See [BreezServices::open_channel_fee]
+pub fn open_channel_fee(req: OpenChannelFeeRequest) -> Result<OpenChannelFeeResponse> {
+    block_on(async { get_breez_services().await?.open_channel_fee(req).await })
+        .map_err(anyhow::Error::new::<SdkError>)
+}
 
 /// See [BreezServices::fetch_reverse_swap_fees]
 pub fn fetch_reverse_swap_fees(req: ReverseSwapFeesRequest) -> Result<ReverseSwapPairInfo> {
