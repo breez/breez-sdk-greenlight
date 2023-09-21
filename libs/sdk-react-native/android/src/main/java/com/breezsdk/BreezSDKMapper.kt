@@ -947,39 +947,6 @@ fun asLnUrlPayRequestDataList(arr: ReadableArray): List<LnUrlPayRequestData> {
     return list
 }
 
-fun asLnUrlWithdrawOkData(data: ReadableMap): LnUrlWithdrawOkData? {
-    if (!validateMandatoryFields(
-            data,
-            arrayOf(
-                "invoice",
-            ),
-        )
-    ) {
-        return null
-    }
-    val invoice = data.getMap("invoice")?.let { asLnInvoice(it) }!!
-    return LnUrlWithdrawOkData(
-        invoice,
-    )
-}
-
-fun readableMapOf(lnUrlWithdrawOkData: LnUrlWithdrawOkData): ReadableMap {
-    return readableMapOf(
-        "invoice" to readableMapOf(lnUrlWithdrawOkData.invoice),
-    )
-}
-
-fun asLnUrlWithdrawOkDataList(arr: ReadableArray): List<LnUrlWithdrawOkData> {
-    val list = ArrayList<LnUrlWithdrawOkData>()
-    for (value in arr.toArrayList()) {
-        when (value) {
-            is ReadableMap -> list.add(asLnUrlWithdrawOkData(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
-        }
-    }
-    return list
-}
-
 fun asLnUrlWithdrawRequestData(data: ReadableMap): LnUrlWithdrawRequestData? {
     if (!validateMandatoryFields(
             data,
@@ -1023,6 +990,39 @@ fun asLnUrlWithdrawRequestDataList(arr: ReadableArray): List<LnUrlWithdrawReques
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asLnUrlWithdrawRequestData(value)!!)
+            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
+fun asLnUrlWithdrawSuccessData(data: ReadableMap): LnUrlWithdrawSuccessData? {
+    if (!validateMandatoryFields(
+            data,
+            arrayOf(
+                "invoice",
+            ),
+        )
+    ) {
+        return null
+    }
+    val invoice = data.getMap("invoice")?.let { asLnInvoice(it) }!!
+    return LnUrlWithdrawSuccessData(
+        invoice,
+    )
+}
+
+fun readableMapOf(lnUrlWithdrawSuccessData: LnUrlWithdrawSuccessData): ReadableMap {
+    return readableMapOf(
+        "invoice" to readableMapOf(lnUrlWithdrawSuccessData.invoice),
+    )
+}
+
+fun asLnUrlWithdrawSuccessDataList(arr: ReadableArray): List<LnUrlWithdrawSuccessData> {
+    val list = ArrayList<LnUrlWithdrawSuccessData>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asLnUrlWithdrawSuccessData(value)!!)
             else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
         }
     }
@@ -2657,28 +2657,28 @@ fun readableMapOf(lnUrlPayResult: LnUrlPayResult): ReadableMap? {
     return map
 }
 
-fun asLnUrlWithdrawCallbackStatus(data: ReadableMap): LnUrlWithdrawCallbackStatus? {
+fun asLnUrlWithdrawResult(data: ReadableMap): LnUrlWithdrawResult? {
     val type = data.getString("type")
 
     if (type == "ok") {
-        return LnUrlWithdrawCallbackStatus.Ok(data.getMap("data")?.let { asLnUrlWithdrawOkData(it) }!!)
+        return LnUrlWithdrawResult.Ok(data.getMap("data")?.let { asLnUrlWithdrawSuccessData(it) }!!)
     }
     if (type == "errorStatus") {
-        return LnUrlWithdrawCallbackStatus.ErrorStatus(data.getMap("data")?.let { asLnUrlErrorData(it) }!!)
+        return LnUrlWithdrawResult.ErrorStatus(data.getMap("data")?.let { asLnUrlErrorData(it) }!!)
     }
     return null
 }
 
-fun readableMapOf(lnUrlWithdrawCallbackStatus: LnUrlWithdrawCallbackStatus): ReadableMap? {
+fun readableMapOf(lnUrlWithdrawResult: LnUrlWithdrawResult): ReadableMap? {
     val map = Arguments.createMap()
-    when (lnUrlWithdrawCallbackStatus) {
-        is LnUrlWithdrawCallbackStatus.Ok -> {
+    when (lnUrlWithdrawResult) {
+        is LnUrlWithdrawResult.Ok -> {
             pushToMap(map, "type", "ok")
-            pushToMap(map, "data", readableMapOf(lnUrlWithdrawCallbackStatus.data))
+            pushToMap(map, "data", readableMapOf(lnUrlWithdrawResult.data))
         }
-        is LnUrlWithdrawCallbackStatus.ErrorStatus -> {
+        is LnUrlWithdrawResult.ErrorStatus -> {
             pushToMap(map, "type", "errorStatus")
-            pushToMap(map, "data", readableMapOf(lnUrlWithdrawCallbackStatus.data))
+            pushToMap(map, "data", readableMapOf(lnUrlWithdrawResult.data))
         }
     }
     return map

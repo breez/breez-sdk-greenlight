@@ -164,16 +164,16 @@ export type LnUrlPayRequestData = {
     lnAddress?: string
 }
 
-export type LnUrlWithdrawOkData = {
-    invoice: LnInvoice
-}
-
 export type LnUrlWithdrawRequestData = {
     callback: string
     k1: string
     defaultDescription: string
     minWithdrawable: number
     maxWithdrawable: number
+}
+
+export type LnUrlWithdrawSuccessData = {
+    invoice: LnInvoice
 }
 
 export type LocaleOverrides = {
@@ -518,16 +518,16 @@ export type LnUrlPayResult = {
     data: LnUrlErrorData
 }
 
-export enum LnUrlWithdrawCallbackStatusVariant {
+export enum LnUrlWithdrawResultVariant {
     OK = "ok",
     ERROR_STATUS = "errorStatus"
 }
 
-export type LnUrlWithdrawCallbackStatus = {
-    type: LnUrlWithdrawCallbackStatusVariant.OK,
-    data: LnUrlWithdrawOkData
+export type LnUrlWithdrawResult = {
+    type: LnUrlWithdrawResultVariant.OK,
+    data: LnUrlWithdrawSuccessData
 } | {
-    type: LnUrlWithdrawCallbackStatusVariant.ERROR_STATUS,
+    type: LnUrlWithdrawResultVariant.ERROR_STATUS,
     data: LnUrlErrorData
 }
 
@@ -677,7 +677,7 @@ export const payLnurl = async (reqData: LnUrlPayRequestData, amountSats: number,
     return response
 }
 
-export const withdrawLnurl = async (reqData: LnUrlWithdrawRequestData, amountSats: number, description: string = ""): Promise<LnUrlWithdrawCallbackStatus> => {
+export const withdrawLnurl = async (reqData: LnUrlWithdrawRequestData, amountSats: number, description: string = ""): Promise<LnUrlWithdrawResult> => {
     const response = await BreezSDK.withdrawLnurl(reqData, amountSats, description)
     return response
 }
