@@ -35,7 +35,6 @@ async fn main() -> Result<()> {
     let rl = &mut Editor::new()?;
     rl.set_helper(Some(CliHelper {
         hinter: HistoryHinter {},
-        colored_prompt: format!("\x1b[1;32m{}\x1b[0m", "sdk> "),
     }));
     if rl.load_history(history_file).is_err() {
         info!("No previous history.");
