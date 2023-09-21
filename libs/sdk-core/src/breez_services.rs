@@ -351,7 +351,7 @@ impl BreezServices {
         req_data: LnUrlWithdrawRequestData,
         amount_sats: u64,
         description: Option<String>,
-    ) -> Result<LnUrlWithdrawCallbackStatus> {
+    ) -> Result<LnUrlWithdrawResult> {
         let invoice = self
             .receive_payment(ReceivePaymentRequest {
                 amount_sats,
@@ -369,7 +369,7 @@ impl BreezServices {
         let lnurl_w_endpoint = req_data.callback.clone();
         let res = validate_lnurl_withdraw(req_data, invoice).await?;
 
-        if let LnUrlWithdrawCallbackStatus::Ok { ref data } = res {
+        if let LnUrlWithdrawResult::Ok { ref data } = res {
             // If endpoint was successfully called, store the LNURL-withdraw endpoint URL as metadata linked to the invoice
             self.persister.insert_lnurl_payment_external_info(
                 &data.invoice.payment_hash,

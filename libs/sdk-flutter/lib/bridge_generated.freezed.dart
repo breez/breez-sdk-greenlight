@@ -3432,7 +3432,7 @@ abstract class LnUrlPayResult_EndpointError implements LnUrlPayResult {
 }
 
 /// @nodoc
-mixin _$LnUrlWithdrawCallbackStatus {
+mixin _$LnUrlWithdrawResult {
   Object get data => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
@@ -3455,36 +3455,35 @@ mixin _$LnUrlWithdrawCallbackStatus {
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
-    required TResult Function(LnUrlWithdrawCallbackStatus_Ok value) ok,
-    required TResult Function(LnUrlWithdrawCallbackStatus_ErrorStatus value) errorStatus,
+    required TResult Function(LnUrlWithdrawResult_Ok value) ok,
+    required TResult Function(LnUrlWithdrawResult_ErrorStatus value) errorStatus,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
-    TResult? Function(LnUrlWithdrawCallbackStatus_Ok value)? ok,
-    TResult? Function(LnUrlWithdrawCallbackStatus_ErrorStatus value)? errorStatus,
+    TResult? Function(LnUrlWithdrawResult_Ok value)? ok,
+    TResult? Function(LnUrlWithdrawResult_ErrorStatus value)? errorStatus,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
-    TResult Function(LnUrlWithdrawCallbackStatus_Ok value)? ok,
-    TResult Function(LnUrlWithdrawCallbackStatus_ErrorStatus value)? errorStatus,
+    TResult Function(LnUrlWithdrawResult_Ok value)? ok,
+    TResult Function(LnUrlWithdrawResult_ErrorStatus value)? errorStatus,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $LnUrlWithdrawCallbackStatusCopyWith<$Res> {
-  factory $LnUrlWithdrawCallbackStatusCopyWith(
-          LnUrlWithdrawCallbackStatus value, $Res Function(LnUrlWithdrawCallbackStatus) then) =
-      _$LnUrlWithdrawCallbackStatusCopyWithImpl<$Res, LnUrlWithdrawCallbackStatus>;
+abstract class $LnUrlWithdrawResultCopyWith<$Res> {
+  factory $LnUrlWithdrawResultCopyWith(LnUrlWithdrawResult value, $Res Function(LnUrlWithdrawResult) then) =
+      _$LnUrlWithdrawResultCopyWithImpl<$Res, LnUrlWithdrawResult>;
 }
 
 /// @nodoc
-class _$LnUrlWithdrawCallbackStatusCopyWithImpl<$Res, $Val extends LnUrlWithdrawCallbackStatus>
-    implements $LnUrlWithdrawCallbackStatusCopyWith<$Res> {
-  _$LnUrlWithdrawCallbackStatusCopyWithImpl(this._value, this._then);
+class _$LnUrlWithdrawResultCopyWithImpl<$Res, $Val extends LnUrlWithdrawResult>
+    implements $LnUrlWithdrawResultCopyWith<$Res> {
+  _$LnUrlWithdrawResultCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
@@ -3493,20 +3492,20 @@ class _$LnUrlWithdrawCallbackStatusCopyWithImpl<$Res, $Val extends LnUrlWithdraw
 }
 
 /// @nodoc
-abstract class _$$LnUrlWithdrawCallbackStatus_OkCopyWith<$Res> {
-  factory _$$LnUrlWithdrawCallbackStatus_OkCopyWith(
-          _$LnUrlWithdrawCallbackStatus_Ok value, $Res Function(_$LnUrlWithdrawCallbackStatus_Ok) then) =
-      __$$LnUrlWithdrawCallbackStatus_OkCopyWithImpl<$Res>;
+abstract class _$$LnUrlWithdrawResult_OkCopyWith<$Res> {
+  factory _$$LnUrlWithdrawResult_OkCopyWith(
+          _$LnUrlWithdrawResult_Ok value, $Res Function(_$LnUrlWithdrawResult_Ok) then) =
+      __$$LnUrlWithdrawResult_OkCopyWithImpl<$Res>;
   @useResult
   $Res call({LnUrlWithdrawOkData data});
 }
 
 /// @nodoc
-class __$$LnUrlWithdrawCallbackStatus_OkCopyWithImpl<$Res>
-    extends _$LnUrlWithdrawCallbackStatusCopyWithImpl<$Res, _$LnUrlWithdrawCallbackStatus_Ok>
-    implements _$$LnUrlWithdrawCallbackStatus_OkCopyWith<$Res> {
-  __$$LnUrlWithdrawCallbackStatus_OkCopyWithImpl(
-      _$LnUrlWithdrawCallbackStatus_Ok _value, $Res Function(_$LnUrlWithdrawCallbackStatus_Ok) _then)
+class __$$LnUrlWithdrawResult_OkCopyWithImpl<$Res>
+    extends _$LnUrlWithdrawResultCopyWithImpl<$Res, _$LnUrlWithdrawResult_Ok>
+    implements _$$LnUrlWithdrawResult_OkCopyWith<$Res> {
+  __$$LnUrlWithdrawResult_OkCopyWithImpl(
+      _$LnUrlWithdrawResult_Ok _value, $Res Function(_$LnUrlWithdrawResult_Ok) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -3514,7 +3513,7 @@ class __$$LnUrlWithdrawCallbackStatus_OkCopyWithImpl<$Res>
   $Res call({
     Object? data = null,
   }) {
-    return _then(_$LnUrlWithdrawCallbackStatus_Ok(
+    return _then(_$LnUrlWithdrawResult_Ok(
       data: null == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
@@ -3525,22 +3524,22 @@ class __$$LnUrlWithdrawCallbackStatus_OkCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$LnUrlWithdrawCallbackStatus_Ok implements LnUrlWithdrawCallbackStatus_Ok {
-  const _$LnUrlWithdrawCallbackStatus_Ok({required this.data});
+class _$LnUrlWithdrawResult_Ok implements LnUrlWithdrawResult_Ok {
+  const _$LnUrlWithdrawResult_Ok({required this.data});
 
   @override
   final LnUrlWithdrawOkData data;
 
   @override
   String toString() {
-    return 'LnUrlWithdrawCallbackStatus.ok(data: $data)';
+    return 'LnUrlWithdrawResult.ok(data: $data)';
   }
 
   @override
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$LnUrlWithdrawCallbackStatus_Ok &&
+            other is _$LnUrlWithdrawResult_Ok &&
             (identical(other.data, data) || other.data == data));
   }
 
@@ -3550,8 +3549,8 @@ class _$LnUrlWithdrawCallbackStatus_Ok implements LnUrlWithdrawCallbackStatus_Ok
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$LnUrlWithdrawCallbackStatus_OkCopyWith<_$LnUrlWithdrawCallbackStatus_Ok> get copyWith =>
-      __$$LnUrlWithdrawCallbackStatus_OkCopyWithImpl<_$LnUrlWithdrawCallbackStatus_Ok>(this, _$identity);
+  _$$LnUrlWithdrawResult_OkCopyWith<_$LnUrlWithdrawResult_Ok> get copyWith =>
+      __$$LnUrlWithdrawResult_OkCopyWithImpl<_$LnUrlWithdrawResult_Ok>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -3587,8 +3586,8 @@ class _$LnUrlWithdrawCallbackStatus_Ok implements LnUrlWithdrawCallbackStatus_Ok
   @override
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
-    required TResult Function(LnUrlWithdrawCallbackStatus_Ok value) ok,
-    required TResult Function(LnUrlWithdrawCallbackStatus_ErrorStatus value) errorStatus,
+    required TResult Function(LnUrlWithdrawResult_Ok value) ok,
+    required TResult Function(LnUrlWithdrawResult_ErrorStatus value) errorStatus,
   }) {
     return ok(this);
   }
@@ -3596,8 +3595,8 @@ class _$LnUrlWithdrawCallbackStatus_Ok implements LnUrlWithdrawCallbackStatus_Ok
   @override
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
-    TResult? Function(LnUrlWithdrawCallbackStatus_Ok value)? ok,
-    TResult? Function(LnUrlWithdrawCallbackStatus_ErrorStatus value)? errorStatus,
+    TResult? Function(LnUrlWithdrawResult_Ok value)? ok,
+    TResult? Function(LnUrlWithdrawResult_ErrorStatus value)? errorStatus,
   }) {
     return ok?.call(this);
   }
@@ -3605,8 +3604,8 @@ class _$LnUrlWithdrawCallbackStatus_Ok implements LnUrlWithdrawCallbackStatus_Ok
   @override
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
-    TResult Function(LnUrlWithdrawCallbackStatus_Ok value)? ok,
-    TResult Function(LnUrlWithdrawCallbackStatus_ErrorStatus value)? errorStatus,
+    TResult Function(LnUrlWithdrawResult_Ok value)? ok,
+    TResult Function(LnUrlWithdrawResult_ErrorStatus value)? errorStatus,
     required TResult orElse(),
   }) {
     if (ok != null) {
@@ -3616,32 +3615,31 @@ class _$LnUrlWithdrawCallbackStatus_Ok implements LnUrlWithdrawCallbackStatus_Ok
   }
 }
 
-abstract class LnUrlWithdrawCallbackStatus_Ok implements LnUrlWithdrawCallbackStatus {
-  const factory LnUrlWithdrawCallbackStatus_Ok({required final LnUrlWithdrawOkData data}) =
-      _$LnUrlWithdrawCallbackStatus_Ok;
+abstract class LnUrlWithdrawResult_Ok implements LnUrlWithdrawResult {
+  const factory LnUrlWithdrawResult_Ok({required final LnUrlWithdrawOkData data}) = _$LnUrlWithdrawResult_Ok;
 
   @override
   LnUrlWithdrawOkData get data;
   @JsonKey(ignore: true)
-  _$$LnUrlWithdrawCallbackStatus_OkCopyWith<_$LnUrlWithdrawCallbackStatus_Ok> get copyWith =>
+  _$$LnUrlWithdrawResult_OkCopyWith<_$LnUrlWithdrawResult_Ok> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class _$$LnUrlWithdrawCallbackStatus_ErrorStatusCopyWith<$Res> {
-  factory _$$LnUrlWithdrawCallbackStatus_ErrorStatusCopyWith(_$LnUrlWithdrawCallbackStatus_ErrorStatus value,
-          $Res Function(_$LnUrlWithdrawCallbackStatus_ErrorStatus) then) =
-      __$$LnUrlWithdrawCallbackStatus_ErrorStatusCopyWithImpl<$Res>;
+abstract class _$$LnUrlWithdrawResult_ErrorStatusCopyWith<$Res> {
+  factory _$$LnUrlWithdrawResult_ErrorStatusCopyWith(
+          _$LnUrlWithdrawResult_ErrorStatus value, $Res Function(_$LnUrlWithdrawResult_ErrorStatus) then) =
+      __$$LnUrlWithdrawResult_ErrorStatusCopyWithImpl<$Res>;
   @useResult
   $Res call({LnUrlErrorData data});
 }
 
 /// @nodoc
-class __$$LnUrlWithdrawCallbackStatus_ErrorStatusCopyWithImpl<$Res>
-    extends _$LnUrlWithdrawCallbackStatusCopyWithImpl<$Res, _$LnUrlWithdrawCallbackStatus_ErrorStatus>
-    implements _$$LnUrlWithdrawCallbackStatus_ErrorStatusCopyWith<$Res> {
-  __$$LnUrlWithdrawCallbackStatus_ErrorStatusCopyWithImpl(_$LnUrlWithdrawCallbackStatus_ErrorStatus _value,
-      $Res Function(_$LnUrlWithdrawCallbackStatus_ErrorStatus) _then)
+class __$$LnUrlWithdrawResult_ErrorStatusCopyWithImpl<$Res>
+    extends _$LnUrlWithdrawResultCopyWithImpl<$Res, _$LnUrlWithdrawResult_ErrorStatus>
+    implements _$$LnUrlWithdrawResult_ErrorStatusCopyWith<$Res> {
+  __$$LnUrlWithdrawResult_ErrorStatusCopyWithImpl(
+      _$LnUrlWithdrawResult_ErrorStatus _value, $Res Function(_$LnUrlWithdrawResult_ErrorStatus) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -3649,7 +3647,7 @@ class __$$LnUrlWithdrawCallbackStatus_ErrorStatusCopyWithImpl<$Res>
   $Res call({
     Object? data = null,
   }) {
-    return _then(_$LnUrlWithdrawCallbackStatus_ErrorStatus(
+    return _then(_$LnUrlWithdrawResult_ErrorStatus(
       data: null == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
@@ -3660,22 +3658,22 @@ class __$$LnUrlWithdrawCallbackStatus_ErrorStatusCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$LnUrlWithdrawCallbackStatus_ErrorStatus implements LnUrlWithdrawCallbackStatus_ErrorStatus {
-  const _$LnUrlWithdrawCallbackStatus_ErrorStatus({required this.data});
+class _$LnUrlWithdrawResult_ErrorStatus implements LnUrlWithdrawResult_ErrorStatus {
+  const _$LnUrlWithdrawResult_ErrorStatus({required this.data});
 
   @override
   final LnUrlErrorData data;
 
   @override
   String toString() {
-    return 'LnUrlWithdrawCallbackStatus.errorStatus(data: $data)';
+    return 'LnUrlWithdrawResult.errorStatus(data: $data)';
   }
 
   @override
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$LnUrlWithdrawCallbackStatus_ErrorStatus &&
+            other is _$LnUrlWithdrawResult_ErrorStatus &&
             (identical(other.data, data) || other.data == data));
   }
 
@@ -3685,10 +3683,8 @@ class _$LnUrlWithdrawCallbackStatus_ErrorStatus implements LnUrlWithdrawCallback
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$LnUrlWithdrawCallbackStatus_ErrorStatusCopyWith<_$LnUrlWithdrawCallbackStatus_ErrorStatus>
-      get copyWith =>
-          __$$LnUrlWithdrawCallbackStatus_ErrorStatusCopyWithImpl<_$LnUrlWithdrawCallbackStatus_ErrorStatus>(
-              this, _$identity);
+  _$$LnUrlWithdrawResult_ErrorStatusCopyWith<_$LnUrlWithdrawResult_ErrorStatus> get copyWith =>
+      __$$LnUrlWithdrawResult_ErrorStatusCopyWithImpl<_$LnUrlWithdrawResult_ErrorStatus>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -3724,8 +3720,8 @@ class _$LnUrlWithdrawCallbackStatus_ErrorStatus implements LnUrlWithdrawCallback
   @override
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
-    required TResult Function(LnUrlWithdrawCallbackStatus_Ok value) ok,
-    required TResult Function(LnUrlWithdrawCallbackStatus_ErrorStatus value) errorStatus,
+    required TResult Function(LnUrlWithdrawResult_Ok value) ok,
+    required TResult Function(LnUrlWithdrawResult_ErrorStatus value) errorStatus,
   }) {
     return errorStatus(this);
   }
@@ -3733,8 +3729,8 @@ class _$LnUrlWithdrawCallbackStatus_ErrorStatus implements LnUrlWithdrawCallback
   @override
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
-    TResult? Function(LnUrlWithdrawCallbackStatus_Ok value)? ok,
-    TResult? Function(LnUrlWithdrawCallbackStatus_ErrorStatus value)? errorStatus,
+    TResult? Function(LnUrlWithdrawResult_Ok value)? ok,
+    TResult? Function(LnUrlWithdrawResult_ErrorStatus value)? errorStatus,
   }) {
     return errorStatus?.call(this);
   }
@@ -3742,8 +3738,8 @@ class _$LnUrlWithdrawCallbackStatus_ErrorStatus implements LnUrlWithdrawCallback
   @override
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
-    TResult Function(LnUrlWithdrawCallbackStatus_Ok value)? ok,
-    TResult Function(LnUrlWithdrawCallbackStatus_ErrorStatus value)? errorStatus,
+    TResult Function(LnUrlWithdrawResult_Ok value)? ok,
+    TResult Function(LnUrlWithdrawResult_ErrorStatus value)? errorStatus,
     required TResult orElse(),
   }) {
     if (errorStatus != null) {
@@ -3753,15 +3749,15 @@ class _$LnUrlWithdrawCallbackStatus_ErrorStatus implements LnUrlWithdrawCallback
   }
 }
 
-abstract class LnUrlWithdrawCallbackStatus_ErrorStatus implements LnUrlWithdrawCallbackStatus {
-  const factory LnUrlWithdrawCallbackStatus_ErrorStatus({required final LnUrlErrorData data}) =
-      _$LnUrlWithdrawCallbackStatus_ErrorStatus;
+abstract class LnUrlWithdrawResult_ErrorStatus implements LnUrlWithdrawResult {
+  const factory LnUrlWithdrawResult_ErrorStatus({required final LnUrlErrorData data}) =
+      _$LnUrlWithdrawResult_ErrorStatus;
 
   @override
   LnUrlErrorData get data;
   @JsonKey(ignore: true)
-  _$$LnUrlWithdrawCallbackStatus_ErrorStatusCopyWith<_$LnUrlWithdrawCallbackStatus_ErrorStatus>
-      get copyWith => throw _privateConstructorUsedError;
+  _$$LnUrlWithdrawResult_ErrorStatusCopyWith<_$LnUrlWithdrawResult_ErrorStatus> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc

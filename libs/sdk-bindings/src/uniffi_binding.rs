@@ -12,17 +12,16 @@ use breez_sdk_core::{
     ClosedChannelPaymentDetails, Config, CurrencyInfo, EnvironmentType, EventListener,
     FeeratePreset, FiatCurrency, GreenlightCredentials, GreenlightNodeConfig, InputType,
     InvoicePaidDetails, LNInvoice, ListPaymentsRequest, LnPaymentDetails, LnUrlAuthRequestData,
-    LnUrlCallbackStatus, LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult,
-    LnUrlWithdrawCallbackStatus, LnUrlWithdrawOkData, LnUrlWithdrawRequestData, LocaleOverrides,
-    LocalizedName, LogEntry, LogStream, LspInformation, MessageSuccessActionData, MetadataItem,
-    Network, NodeConfig, NodeState, OpenChannelFeeRequest, OpenChannelFeeResponse,
-    OpeningFeeParams, OpeningFeeParamsMenu, Payment, PaymentDetails, PaymentFailedData,
-    PaymentStatus, PaymentType, PaymentTypeFilter, Rate, ReceiveOnchainRequest,
-    ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees, ReverseSwapFeesRequest,
-    ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop,
-    SignMessageRequest, SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
-    SuccessActionProcessed, SwapInfo, SwapStatus, Symbol, UnspentTransactionOutput,
-    UrlSuccessActionData,
+    LnUrlCallbackStatus, LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult, LnUrlWithdrawOkData,
+    LnUrlWithdrawRequestData, LnUrlWithdrawResult, LocaleOverrides, LocalizedName, LogEntry,
+    LogStream, LspInformation, MessageSuccessActionData, MetadataItem, Network, NodeConfig,
+    NodeState, OpenChannelFeeRequest, OpenChannelFeeResponse, OpeningFeeParams,
+    OpeningFeeParamsMenu, Payment, PaymentDetails, PaymentFailedData, PaymentStatus, PaymentType,
+    PaymentTypeFilter, Rate, ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse,
+    RecommendedFees, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
+    ReverseSwapStatus, RouteHint, RouteHintHop, SignMessageRequest, SignMessageResponse,
+    StaticBackupRequest, StaticBackupResponse, SuccessActionProcessed, SwapInfo, SwapStatus,
+    Symbol, UnspentTransactionOutput, UrlSuccessActionData,
 };
 
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
@@ -185,7 +184,7 @@ impl BlockingBreezServices {
         req_data: LnUrlWithdrawRequestData,
         amount_sats: u64,
         description: Option<String>,
-    ) -> SdkResult<LnUrlWithdrawCallbackStatus> {
+    ) -> SdkResult<LnUrlWithdrawResult> {
         rt().block_on(
             self.breez_services
                 .lnurl_withdraw(req_data, amount_sats, description),

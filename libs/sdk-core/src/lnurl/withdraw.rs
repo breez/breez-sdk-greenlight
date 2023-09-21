@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use crate::input_parser::get_parse_and_log_response;
-use crate::{lnurl::*, LnUrlCallbackStatus, LnUrlWithdrawCallbackStatus, LnUrlWithdrawOkData};
+use crate::{lnurl::*, LnUrlCallbackStatus, LnUrlWithdrawOkData, LnUrlWithdrawResult};
 use crate::{LNInvoice, LnUrlWithdrawRequestData};
 use anyhow::{anyhow, ensure, Result};
 
@@ -16,7 +16,7 @@ use anyhow::{anyhow, ensure, Result};
 pub(crate) async fn validate_lnurl_withdraw(
     req_data: LnUrlWithdrawRequestData,
     invoice: LNInvoice,
-) -> Result<LnUrlWithdrawCallbackStatus> {
+) -> Result<LnUrlWithdrawResult> {
     let amount_msat = invoice
         .amount_msat
         .ok_or("Expected invoice amount, but found none")
@@ -35,12 +35,10 @@ pub(crate) async fn validate_lnurl_withdraw(
     let callback_url = build_withdraw_callback_url(&req_data, &invoice)?;
     let callback_res: LnUrlCallbackStatus = get_parse_and_log_response(&callback_url).await?;
     let withdraw_status = match callback_res {
-        LnUrlCallbackStatus::Ok => LnUrlWithdrawCallbackStatus::Ok {
+        LnUrlCallbackStatus::Ok => LnUrlWithdrawResult::Ok {
             data: LnUrlWithdrawOkData { invoice },
         },
-        LnUrlCallbackStatus::ErrorStatus { data } => {
-            LnUrlWithdrawCallbackStatus::ErrorStatus { data }
-        }
+        LnUrlCallbackStatus::ErrorStatus { data } => LnUrlWithdrawResult::ErrorStatus { data },
     };
 
     Ok(withdraw_status)
@@ -119,7 +117,7 @@ mod tests {
 
         assert!(matches!(
             validate_lnurl_withdraw(withdraw_req, req_invoice.clone()).await?,
-            LnUrlWithdrawCallbackStatus::Ok { data: LnUrlWithdrawOkData { invoice } } if invoice == req_invoice
+            LnUrlWithdrawResult::Ok { data: LnUrlWithdrawOkData { invoice } } if invoice == req_invoice
         ));
 
         Ok(())
@@ -150,7 +148,7 @@ mod tests {
 
         assert!(matches!(
             validate_lnurl_withdraw(withdraw_req, invoice).await?,
-            LnUrlWithdrawCallbackStatus::ErrorStatus { data: _ }
+            LnUrlWithdrawResult::ErrorStatus { data: _ }
         ));
 
         Ok(())
