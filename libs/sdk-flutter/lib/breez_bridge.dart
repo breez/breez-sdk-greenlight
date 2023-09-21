@@ -180,7 +180,8 @@ class BreezSDK {
   Future<InputType> parseInput({required String input}) async => await _lnToolkit.parseInput(input: input);
 
   /// Get the static backup data.
-  Future<StaticBackupResponse> staticBackup({required StaticBackupRequest request}) => _lnToolkit.staticBackup(request: request);
+  Future<StaticBackupResponse> staticBackup({required StaticBackupRequest request}) =>
+      _lnToolkit.staticBackup(request: request);
 
   /* Payment API's & Streams*/
 
@@ -389,6 +390,10 @@ class BreezSDK {
   Future<List<ReverseSwapInfo>> inProgressReverseSwaps() async => _lnToolkit.inProgressReverseSwaps();
 
   /* Swap Fee API's */
+
+  /// Gets the fees required to open a channel for a given amount.
+  Future<OpenChannelFeeResponse> openChannelFee({required int amountMsat, int? expiry}) =>
+      _lnToolkit.openChannelFee(req: OpenChannelFeeRequest(amountMsat: amountMsat, expiry: expiry));
 
   /// Lookup the most recent reverse swap pair info using the Boltz API
   Future<ReverseSwapPairInfo> fetchReverseSwapFees({int? sendAmountSat}) async =>

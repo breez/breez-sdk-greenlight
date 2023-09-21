@@ -66,6 +66,8 @@ use crate::models::LogEntry;
 use crate::models::Network;
 use crate::models::NodeConfig;
 use crate::models::NodeState;
+use crate::models::OpenChannelFeeRequest;
+use crate::models::OpenChannelFeeResponse;
 use crate::models::OpeningFeeParams;
 use crate::models::OpeningFeeParamsMenu;
 use crate::models::Payment;
@@ -645,6 +647,22 @@ fn wire_in_progress_reverse_swaps_impl(port_: MessagePort) {
         move || move |task_callback| in_progress_reverse_swaps(),
     )
 }
+fn wire_open_channel_fee_impl(
+    port_: MessagePort,
+    req: impl Wire2Api<OpenChannelFeeRequest> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "open_channel_fee",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_req = req.wire2api();
+            move |task_callback| open_channel_fee(api_req)
+        },
+    )
+}
 fn wire_fetch_reverse_swap_fees_impl(
     port_: MessagePort,
     req: impl Wire2Api<ReverseSwapFeesRequest> + UnwindSafe,
@@ -1172,6 +1190,13 @@ impl support::IntoDart for NodeState {
     }
 }
 impl support::IntoDartExceptPrimitive for NodeState {}
+
+impl support::IntoDart for OpenChannelFeeResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.fee_msat.into_dart(), self.used_fee_params.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for OpenChannelFeeResponse {}
 
 impl support::IntoDart for OpeningFeeParams {
     fn into_dart(self) -> support::DartAbi {
