@@ -195,11 +195,15 @@ class BreezSDK {
     PaymentTypeFilter filter = PaymentTypeFilter.All,
     int? fromTimestamp,
     int? toTimestamp,
+    bool? includeFailures,
   }) async {
     var paymentsList = await _lnToolkit.listPayments(
-      filter: filter,
-      fromTimestamp: fromTimestamp,
-      toTimestamp: toTimestamp,
+      request: ListPaymentsRequest(
+        filter: filter,
+        fromTimestamp: fromTimestamp,
+        toTimestamp: toTimestamp,
+        includeFailures: includeFailures,
+      ),
     );
     paymentsController.add(paymentsList);
     return paymentsList;
