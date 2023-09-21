@@ -289,7 +289,7 @@ class BreezSDK {
   /// This call will validate the given `amount_sats` against the parameters
   /// of the LNURL endpoint (`req_data`). If they match the endpoint requirements, the LNURL withdraw
   /// request is made. A successful result here means the endpoint started the payment.
-  Future<LnUrlCallbackStatus> lnurlWithdraw({
+  Future<LnUrlWithdrawCallbackStatus> lnurlWithdraw({
     required int amountSats,
     String? description,
     required LnUrlWithdrawRequestData reqData,
