@@ -1120,12 +1120,12 @@ pub enum LnUrlCallbackStatus {
 /// [LnUrlCallbackStatus] specific to LNURL-withdraw, where the success case contains the invoice.
 #[derive(Serialize)]
 pub enum LnUrlWithdrawResult {
-    Ok { data: LnUrlWithdrawOkData },
+    Ok { data: LnUrlWithdrawSuccessData },
     ErrorStatus { data: LnUrlErrorData },
 }
 
 #[derive(Deserialize, Debug, Serialize)]
-pub struct LnUrlWithdrawOkData {
+pub struct LnUrlWithdrawSuccessData {
     pub invoice: LNInvoice,
 }
 

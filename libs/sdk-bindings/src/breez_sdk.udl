@@ -476,11 +476,11 @@ interface LnUrlCallbackStatus {
 
 [Enum]
 interface LnUrlWithdrawResult {
-    Ok(LnUrlWithdrawOkData data);
+    Ok(LnUrlWithdrawSuccessData data);
     ErrorStatus(LnUrlErrorData data);
 };
 
-dictionary LnUrlWithdrawOkData {
+dictionary LnUrlWithdrawSuccessData {
     LNInvoice invoice;
 };
 

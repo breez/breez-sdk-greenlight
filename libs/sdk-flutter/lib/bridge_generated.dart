@@ -754,14 +754,6 @@ class LnUrlPayResult with _$LnUrlPayResult {
   }) = LnUrlPayResult_EndpointError;
 }
 
-class LnUrlWithdrawOkData {
-  final LNInvoice invoice;
-
-  const LnUrlWithdrawOkData({
-    required this.invoice,
-  });
-}
-
 /// Wrapped in a [LnUrlWithdraw], this is the result of [parse] when given a LNURL-withdraw endpoint.
 ///
 /// It represents the endpoint's parameters for the LNURL workflow.
@@ -790,11 +782,19 @@ class LnUrlWithdrawRequestData {
 @freezed
 class LnUrlWithdrawResult with _$LnUrlWithdrawResult {
   const factory LnUrlWithdrawResult.ok({
-    required LnUrlWithdrawOkData data,
+    required LnUrlWithdrawSuccessData data,
   }) = LnUrlWithdrawResult_Ok;
   const factory LnUrlWithdrawResult.errorStatus({
     required LnUrlErrorData data,
   }) = LnUrlWithdrawResult_ErrorStatus;
+}
+
+class LnUrlWithdrawSuccessData {
+  final LNInvoice invoice;
+
+  const LnUrlWithdrawSuccessData({
+    required this.invoice,
+  });
 }
 
 /// Locale-specific settings for the representation of a currency
@@ -2271,12 +2271,12 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return _wire2api_ln_url_pay_request_data(raw);
   }
 
-  LnUrlWithdrawOkData _wire2api_box_autoadd_ln_url_withdraw_ok_data(dynamic raw) {
-    return _wire2api_ln_url_withdraw_ok_data(raw);
-  }
-
   LnUrlWithdrawRequestData _wire2api_box_autoadd_ln_url_withdraw_request_data(dynamic raw) {
     return _wire2api_ln_url_withdraw_request_data(raw);
+  }
+
+  LnUrlWithdrawSuccessData _wire2api_box_autoadd_ln_url_withdraw_success_data(dynamic raw) {
+    return _wire2api_ln_url_withdraw_success_data(raw);
   }
 
   LspInformation _wire2api_box_autoadd_lsp_information(dynamic raw) {
@@ -2648,14 +2648,6 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     }
   }
 
-  LnUrlWithdrawOkData _wire2api_ln_url_withdraw_ok_data(dynamic raw) {
-    final arr = raw as List<dynamic>;
-    if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
-    return LnUrlWithdrawOkData(
-      invoice: _wire2api_ln_invoice(arr[0]),
-    );
-  }
-
   LnUrlWithdrawRequestData _wire2api_ln_url_withdraw_request_data(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 5) throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
@@ -2672,7 +2664,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     switch (raw[0]) {
       case 0:
         return LnUrlWithdrawResult_Ok(
-          data: _wire2api_box_autoadd_ln_url_withdraw_ok_data(raw[1]),
+          data: _wire2api_box_autoadd_ln_url_withdraw_success_data(raw[1]),
         );
       case 1:
         return LnUrlWithdrawResult_ErrorStatus(
@@ -2681,6 +2673,14 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       default:
         throw Exception("unreachable");
     }
+  }
+
+  LnUrlWithdrawSuccessData _wire2api_ln_url_withdraw_success_data(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
+    return LnUrlWithdrawSuccessData(
+      invoice: _wire2api_ln_invoice(arr[0]),
+    );
   }
 
   LocaleOverrides _wire2api_locale_overrides(dynamic raw) {

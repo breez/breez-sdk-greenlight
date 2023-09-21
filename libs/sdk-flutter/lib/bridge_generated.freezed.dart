@@ -3436,19 +3436,19 @@ mixin _$LnUrlWithdrawResult {
   Object get data => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function(LnUrlWithdrawOkData data) ok,
+    required TResult Function(LnUrlWithdrawSuccessData data) ok,
     required TResult Function(LnUrlErrorData data) errorStatus,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(LnUrlWithdrawOkData data)? ok,
+    TResult? Function(LnUrlWithdrawSuccessData data)? ok,
     TResult? Function(LnUrlErrorData data)? errorStatus,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(LnUrlWithdrawOkData data)? ok,
+    TResult Function(LnUrlWithdrawSuccessData data)? ok,
     TResult Function(LnUrlErrorData data)? errorStatus,
     required TResult orElse(),
   }) =>
@@ -3497,7 +3497,7 @@ abstract class _$$LnUrlWithdrawResult_OkCopyWith<$Res> {
           _$LnUrlWithdrawResult_Ok value, $Res Function(_$LnUrlWithdrawResult_Ok) then) =
       __$$LnUrlWithdrawResult_OkCopyWithImpl<$Res>;
   @useResult
-  $Res call({LnUrlWithdrawOkData data});
+  $Res call({LnUrlWithdrawSuccessData data});
 }
 
 /// @nodoc
@@ -3517,7 +3517,7 @@ class __$$LnUrlWithdrawResult_OkCopyWithImpl<$Res>
       data: null == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
-              as LnUrlWithdrawOkData,
+              as LnUrlWithdrawSuccessData,
     ));
   }
 }
@@ -3528,7 +3528,7 @@ class _$LnUrlWithdrawResult_Ok implements LnUrlWithdrawResult_Ok {
   const _$LnUrlWithdrawResult_Ok({required this.data});
 
   @override
-  final LnUrlWithdrawOkData data;
+  final LnUrlWithdrawSuccessData data;
 
   @override
   String toString() {
@@ -3555,7 +3555,7 @@ class _$LnUrlWithdrawResult_Ok implements LnUrlWithdrawResult_Ok {
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function(LnUrlWithdrawOkData data) ok,
+    required TResult Function(LnUrlWithdrawSuccessData data) ok,
     required TResult Function(LnUrlErrorData data) errorStatus,
   }) {
     return ok(data);
@@ -3564,7 +3564,7 @@ class _$LnUrlWithdrawResult_Ok implements LnUrlWithdrawResult_Ok {
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(LnUrlWithdrawOkData data)? ok,
+    TResult? Function(LnUrlWithdrawSuccessData data)? ok,
     TResult? Function(LnUrlErrorData data)? errorStatus,
   }) {
     return ok?.call(data);
@@ -3573,7 +3573,7 @@ class _$LnUrlWithdrawResult_Ok implements LnUrlWithdrawResult_Ok {
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(LnUrlWithdrawOkData data)? ok,
+    TResult Function(LnUrlWithdrawSuccessData data)? ok,
     TResult Function(LnUrlErrorData data)? errorStatus,
     required TResult orElse(),
   }) {
@@ -3616,10 +3616,11 @@ class _$LnUrlWithdrawResult_Ok implements LnUrlWithdrawResult_Ok {
 }
 
 abstract class LnUrlWithdrawResult_Ok implements LnUrlWithdrawResult {
-  const factory LnUrlWithdrawResult_Ok({required final LnUrlWithdrawOkData data}) = _$LnUrlWithdrawResult_Ok;
+  const factory LnUrlWithdrawResult_Ok({required final LnUrlWithdrawSuccessData data}) =
+      _$LnUrlWithdrawResult_Ok;
 
   @override
-  LnUrlWithdrawOkData get data;
+  LnUrlWithdrawSuccessData get data;
   @JsonKey(ignore: true)
   _$$LnUrlWithdrawResult_OkCopyWith<_$LnUrlWithdrawResult_Ok> get copyWith =>
       throw _privateConstructorUsedError;
@@ -3689,7 +3690,7 @@ class _$LnUrlWithdrawResult_ErrorStatus implements LnUrlWithdrawResult_ErrorStat
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function(LnUrlWithdrawOkData data) ok,
+    required TResult Function(LnUrlWithdrawSuccessData data) ok,
     required TResult Function(LnUrlErrorData data) errorStatus,
   }) {
     return errorStatus(data);
@@ -3698,7 +3699,7 @@ class _$LnUrlWithdrawResult_ErrorStatus implements LnUrlWithdrawResult_ErrorStat
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(LnUrlWithdrawOkData data)? ok,
+    TResult? Function(LnUrlWithdrawSuccessData data)? ok,
     TResult? Function(LnUrlErrorData data)? errorStatus,
   }) {
     return errorStatus?.call(data);
@@ -3707,7 +3708,7 @@ class _$LnUrlWithdrawResult_ErrorStatus implements LnUrlWithdrawResult_ErrorStat
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(LnUrlWithdrawOkData data)? ok,
+    TResult Function(LnUrlWithdrawSuccessData data)? ok,
     TResult Function(LnUrlErrorData data)? errorStatus,
     required TResult orElse(),
   }) {

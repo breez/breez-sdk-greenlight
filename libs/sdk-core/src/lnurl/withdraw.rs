@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use crate::input_parser::get_parse_and_log_response;
-use crate::{lnurl::*, LnUrlCallbackStatus, LnUrlWithdrawOkData, LnUrlWithdrawResult};
+use crate::{lnurl::*, LnUrlCallbackStatus, LnUrlWithdrawResult, LnUrlWithdrawSuccessData};
 use crate::{LNInvoice, LnUrlWithdrawRequestData};
 use anyhow::{anyhow, ensure, Result};
 
@@ -36,7 +36,7 @@ pub(crate) async fn validate_lnurl_withdraw(
     let callback_res: LnUrlCallbackStatus = get_parse_and_log_response(&callback_url).await?;
     let withdraw_status = match callback_res {
         LnUrlCallbackStatus::Ok => LnUrlWithdrawResult::Ok {
-            data: LnUrlWithdrawOkData { invoice },
+            data: LnUrlWithdrawSuccessData { invoice },
         },
         LnUrlCallbackStatus::ErrorStatus { data } => LnUrlWithdrawResult::ErrorStatus { data },
     };
@@ -117,7 +117,7 @@ mod tests {
 
         assert!(matches!(
             validate_lnurl_withdraw(withdraw_req, req_invoice.clone()).await?,
-            LnUrlWithdrawResult::Ok { data: LnUrlWithdrawOkData { invoice } } if invoice == req_invoice
+            LnUrlWithdrawResult::Ok { data: LnUrlWithdrawSuccessData { invoice } } if invoice == req_invoice
         ));
 
         Ok(())
