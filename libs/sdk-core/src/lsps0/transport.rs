@@ -222,7 +222,6 @@ impl Transport {
         }
     }
 
-    #[allow(dead_code)]
     pub async fn request_response<TRequest, TResponse>(
         &self,
         method: String,
@@ -271,7 +270,6 @@ impl Transport {
         }
     }
 
-    #[allow(dead_code)]
     pub async fn stream_notifications<TNotification>(
         &self,
         method: String,
