@@ -192,8 +192,8 @@ pub struct Vin {
 pub struct Outspend {
     pub spent: bool,
     pub txid: Option<String>,
-    pub vin: u32,
-    pub status: TxStatus,
+    pub vin: Option<u32>,
+    pub status: Option<TxStatus>,
 }
 
 impl Default for MempoolSpace {
