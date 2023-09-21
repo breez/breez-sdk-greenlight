@@ -60,6 +60,7 @@ tempfile = "3"
 thiserror = "1"
 const_format = "0.2"
 miniz_oxide = "0.7.1"
+tokio-stream = "0.1.14"
 
 [dev-dependencies]
 mockito = "1"

@@ -1,6 +1,7 @@
 use std::collections::HashMap;
+use std::pin::Pin;
 use std::time::{Duration, SystemTime};
-use std::vec;
+use std::{mem, vec};
 
 use anyhow::{anyhow, Result};
 use bitcoin::hashes::hex::ToHex;
@@ -19,6 +20,8 @@ use rand::rngs::OsRng;
 use rand::{random, Rng};
 use tokio::sync::{mpsc, Mutex};
 use tokio::time::sleep;
+use tokio_stream::Stream;
+use tokio_stream::StreamExt;
 use tonic::Streaming;
 
 use crate::backup::{BackupState, BackupTransport};
@@ -31,7 +34,7 @@ use crate::lsp::LspInformation;
 use crate::models::{FiatAPI, LspAPI, NodeAPI, NodeState, Payment, Swap, SwapperAPI, SyncResponse};
 use crate::moonpay::MoonPayApi;
 use crate::swap::create_submarine_swap_script;
-use crate::{parse_invoice, Config, LNInvoice, PaymentResponse, RouteHint};
+use crate::{parse_invoice, Config, CustomMessage, LNInvoice, PaymentResponse, RouteHint};
 use crate::{OpeningFeeParams, OpeningFeeParamsMenu};
 use crate::{ReceivePaymentRequest, SwapInfo};
 
@@ -260,6 +263,8 @@ pub struct MockNodeAPI {
     /// added test payments
     cloud_payments: Mutex<Vec<gl_client::pb::Payment>>,
     node_state: NodeState,
+    on_send_custom_message: Box<dyn Fn(CustomMessage) -> Result<()> + Sync + Send>,
+    on_stream_custom_messages: Mutex<mpsc::Receiver<CustomMessage>>,
 }
 
 #[tonic::async_trait]
@@ -377,6 +382,21 @@ impl NodeAPI for MockNodeAPI {
     fn legacy_derive_bip32_key(&self, _path: Vec<ChildNumber>) -> Result<ExtendedPrivKey> {
         Ok(ExtendedPrivKey::new_master(Network::Bitcoin, &[])?)
     }
+
+    async fn send_custom_message(&self, message: CustomMessage) -> Result<()> {
+        (self.on_send_custom_message)(message)
+    }
+
+    async fn stream_custom_messages(
+        &self,
+    ) -> Result<Pin<Box<dyn Stream<Item = Result<CustomMessage>> + Send>>> {
+        let (_, next_rx) = mpsc::channel(1);
+        let mut guard = self.on_stream_custom_messages.lock().await;
+        let rx = mem::replace(&mut *guard, next_rx);
+        Ok(Box::pin(
+            tokio_stream::wrappers::ReceiverStream::new(rx).map(Ok),
+        ))
+    }
 }
 
 impl MockNodeAPI {
@@ -384,6 +404,11 @@ impl MockNodeAPI {
         Self {
             cloud_payments: Mutex::new(vec![]),
             node_state,
+            on_send_custom_message: Box::new(|_| Ok(())),
+            on_stream_custom_messages: {
+                let (_, rx) = mpsc::channel(1);
+                Mutex::new(rx)
+            },
         }
     }
     /// Creates a (simulated) payment for the specified BOLT11 and adds it to a test-specific
@@ -473,6 +498,17 @@ impl MockNodeAPI {
         };
 
         gl_payment.try_into()
+    }
+
+    pub fn set_on_send_custom_message(
+        &mut self,
+        f: Box<dyn Fn(CustomMessage) -> Result<()> + Sync + Send>,
+    ) {
+        self.on_send_custom_message = f;
+    }
+
+    pub async fn set_on_stream_custom_messages(&mut self, f: mpsc::Receiver<CustomMessage>) {
+        *self.on_stream_custom_messages.lock().await = f;
     }
 }
 

@@ -527,6 +527,7 @@ dependencies = [
  "thiserror",
  "tiny-bip39",
  "tokio",
+ "tokio-stream",
  "tonic",
  "tonic-build",
  "zbase32",

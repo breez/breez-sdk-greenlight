@@ -1,4 +1,5 @@
 use std::cmp::{max, min};
+use std::pin::Pin;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -16,7 +17,8 @@ use gl_client::pb::cln::listinvoices_invoices::ListinvoicesInvoicesStatus;
 use gl_client::pb::cln::listpays_pays::ListpaysPaysStatus;
 use gl_client::pb::cln::{
     self, CloseRequest, ListclosedchannelsClosedchannels, ListclosedchannelsRequest,
-    ListinvoicesInvoices, ListpaysPays, ListpeerchannelsRequest, StaticbackupRequest,
+    ListinvoicesInvoices, ListpaysPays, ListpeerchannelsRequest, SendcustommsgRequest,
+    StaticbackupRequest,
 };
 use gl_client::pb::cln::{AmountOrAny, InvoiceRequest};
 use gl_client::pb::{Amount, OffChainPayment, PayStatus, Peer, WithdrawResponse};
@@ -32,12 +34,14 @@ use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 use tokio::sync::{mpsc, Mutex};
 use tokio::time::sleep;
+use tokio_stream::{Stream, StreamExt};
 use tonic::Streaming;
 
 use crate::invoice::parse_invoice;
 use crate::models::*;
 use crate::persist::db::SqliteStorage;
 use crate::{Channel, ChannelState, NodeConfig};
+use std::iter::Iterator;
 
 const MAX_PAYMENT_AMOUNT_MSAT: u64 = 4294967000;
 const MAX_INBOUND_LIQUIDITY_MSAT: u64 = 4000000000;
@@ -809,6 +813,65 @@ impl NodeAPI for Greenlight {
 
     fn legacy_derive_bip32_key(&self, path: Vec<ChildNumber>) -> Result<ExtendedPrivKey> {
         Self::legacy_derive_bip32_key(self.sdk_config.network, &self.signer, path)
+    }
+
+    async fn stream_custom_messages(
+        &self,
+    ) -> Result<Pin<Box<dyn Stream<Item = Result<CustomMessage>> + Send>>> {
+        let stream = {
+            let mut client = match self.get_client().await {
+                Ok(c) => Ok(c),
+                Err(e) => Err(anyhow!("{}", e)),
+            }?;
+
+            match client
+                .stream_custommsg(gl_client::pb::StreamCustommsgRequest {})
+                .await
+            {
+                Ok(s) => Ok(s),
+                Err(e) => Err(anyhow!("{}", e)),
+            }?
+            .into_inner()
+        };
+
+        Ok(Box::pin(stream.filter_map(|msg| {
+            let msg = match msg {
+                Ok(msg) => msg,
+                Err(e) => return Some(Err(anyhow!("failed to receive message: {}", e))),
+            };
+
+            if msg.payload.len() < 2 {
+                debug!(
+                    "received too short custom message payload: {:?}",
+                    &msg.payload
+                );
+                return None;
+            }
+
+            let msg_type = u16::from_be_bytes([msg.payload[0], msg.payload[1]]);
+
+            Some(Ok(CustomMessage {
+                peer_id: msg.peer_id,
+                message_type: msg_type,
+                payload: msg.payload[2..].to_vec(),
+            }))
+        })))
+    }
+
+    async fn send_custom_message(&self, message: CustomMessage) -> Result<()> {
+        let mut msg = message.message_type.to_be_bytes().to_vec();
+        msg.extend(message.payload);
+        let resp = self
+            .get_node_client()
+            .await?
+            .send_custom_msg(SendcustommsgRequest {
+                msg,
+                node_id: message.peer_id,
+            })
+            .await?
+            .into_inner();
+        debug!("send_custom_message returned status {:?}", resp.status);
+        Ok(())
     }
 }
 

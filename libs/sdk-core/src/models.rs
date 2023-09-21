@@ -1,4 +1,5 @@
 use std::ops::Add;
+use std::pin::Pin;
 use std::str::FromStr;
 
 use anyhow::{anyhow, ensure, Result};
@@ -19,6 +20,7 @@ use rusqlite::ToSql;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use tokio::sync::mpsc;
+use tokio_stream::Stream;
 use tonic::Streaming;
 
 use gl_client::signer::model::greenlight::Peer;
@@ -44,6 +46,13 @@ pub enum PaymentType {
     Sent,
     Received,
     ClosedChannel,
+}
+
+#[derive(Debug)]
+pub struct CustomMessage {
+    pub peer_id: Vec<u8>,
+    pub message_type: u16,
+    pub payload: Vec<u8>,
 }
 
 /// Trait covering functions affecting the LN node
@@ -91,6 +100,10 @@ pub trait NodeAPI: Send + Sync {
     async fn execute_command(&self, command: String) -> Result<String>;
     async fn sign_message(&self, message: &str) -> Result<String>;
     async fn check_message(&self, message: &str, pubkey: &str, signature: &str) -> Result<bool>;
+    async fn send_custom_message(&self, message: CustomMessage) -> Result<()>;
+    async fn stream_custom_messages(
+        &self,
+    ) -> Result<Pin<Box<dyn Stream<Item = Result<CustomMessage>> + Send>>>;
 
     /// Gets the private key at the path specified
     fn derive_bip32_key(&self, path: Vec<ChildNumber>) -> Result<ExtendedPrivKey>;
