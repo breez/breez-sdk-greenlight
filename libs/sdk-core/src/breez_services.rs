@@ -1267,7 +1267,7 @@ struct GlobalSdkLogger {
 }
 impl log::Log for GlobalSdkLogger {
     fn enabled(&self, metadata: &Metadata) -> bool {
-        metadata.level() <= log::Level::Debug
+        metadata.level() <= log::Level::Trace
     }
 
     fn log(&self, record: &Record) {
