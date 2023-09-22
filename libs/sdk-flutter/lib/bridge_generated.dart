@@ -202,7 +202,7 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kBuyBitcoinConstMeta;
 
   /// See [BreezServices::sweep]
-  Future<void> sweep({required String toAddress, required int feeRateSatsPerVbyte, dynamic hint});
+  Future<SweepResponse> sweep({required String toAddress, required int feeRateSatsPerVbyte, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kSweepConstMeta;
 
@@ -1397,6 +1397,14 @@ enum SwapStatus {
   Expired,
 }
 
+class SweepResponse {
+  final Uint8List txid;
+
+  const SweepResponse({
+    required this.txid,
+  });
+}
+
 /// Settings for the symbol representation of a currency
 class Symbol {
   final String? grapheme;
@@ -2020,12 +2028,12 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["reqData"],
       );
 
-  Future<void> sweep({required String toAddress, required int feeRateSatsPerVbyte, dynamic hint}) {
+  Future<SweepResponse> sweep({required String toAddress, required int feeRateSatsPerVbyte, dynamic hint}) {
     var arg0 = _platform.api2wire_String(toAddress);
     var arg1 = _platform.api2wire_u64(feeRateSatsPerVbyte);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_sweep(port_, arg0, arg1),
-      parseSuccessData: _wire2api_unit,
+      parseSuccessData: _wire2api_sweep_response,
       constMeta: kSweepConstMeta,
       argValues: [toAddress, feeRateSatsPerVbyte],
       hint: hint,
@@ -3057,6 +3065,14 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   SwapStatus _wire2api_swap_status(dynamic raw) {
     return SwapStatus.values[raw as int];
+  }
+
+  SweepResponse _wire2api_sweep_response(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
+    return SweepResponse(
+      txid: _wire2api_uint_8_list(arr[0]),
+    );
   }
 
   Symbol _wire2api_symbol(dynamic raw) {

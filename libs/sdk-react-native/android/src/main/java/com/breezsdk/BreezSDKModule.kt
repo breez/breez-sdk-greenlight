@@ -411,8 +411,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     ) {
         executor.execute {
             try {
-                getBreezServices().sweep(toAddress, feeRateSatsPerVbyte.toULong())
-                promise.resolve(readableMapOf("status" to "ok"))
+                val res = getBreezServices().sweep(toAddress, feeRateSatsPerVbyte.toULong())
+                promise.resolve(readableMapOf(res))
             } catch (e: SdkException) {
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }

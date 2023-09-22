@@ -520,6 +520,10 @@ enum BuyBitcoinProvider {
     "Moonpay",
 };
 
+dictionary SweepResponse {
+    sequence<u8> txid;
+};
+
 interface BlockingBreezServices {   
 
    [Throws=SdkError]
@@ -565,7 +569,7 @@ interface BlockingBreezServices {
    sequence<Payment> list_payments(ListPaymentsRequest request);
 
    [Throws=SdkError]
-   void sweep(string to_address, u64 fee_rate_sats_per_vbyte);
+   SweepResponse sweep(string to_address, u64 fee_rate_sats_per_vbyte);
 
    [Throws=SdkError]
    sequence<Rate> fetch_fiat_rates();

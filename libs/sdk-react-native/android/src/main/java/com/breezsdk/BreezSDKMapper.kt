@@ -2321,6 +2321,39 @@ fun asSwapInfoList(arr: ReadableArray): List<SwapInfo> {
     return list
 }
 
+fun asSweepResponse(data: ReadableMap): SweepResponse? {
+    if (!validateMandatoryFields(
+            data,
+            arrayOf(
+                "txid",
+            ),
+        )
+    ) {
+        return null
+    }
+    val txid = data.getArray("txid")?.let { asUByteList(it) }!!
+    return SweepResponse(
+        txid,
+    )
+}
+
+fun readableMapOf(sweepResponse: SweepResponse): ReadableMap {
+    return readableMapOf(
+        "txid" to readableArrayOf(sweepResponse.txid),
+    )
+}
+
+fun asSweepResponseList(arr: ReadableArray): List<SweepResponse> {
+    val list = ArrayList<SweepResponse>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asSweepResponse(value)!!)
+            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asSymbol(data: ReadableMap): Symbol? {
     if (!validateMandatoryFields(
             data,

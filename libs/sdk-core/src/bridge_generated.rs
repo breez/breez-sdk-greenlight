@@ -88,6 +88,7 @@ use crate::models::StaticBackupRequest;
 use crate::models::StaticBackupResponse;
 use crate::models::SwapInfo;
 use crate::models::SwapStatus;
+use crate::models::SweepResponse;
 use crate::models::UnspentTransactionOutput;
 
 // Section: wire functions
@@ -1464,6 +1465,13 @@ impl support::IntoDart for SwapStatus {
     }
 }
 impl support::IntoDartExceptPrimitive for SwapStatus {}
+impl support::IntoDart for SweepResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.txid.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for SweepResponse {}
+
 impl support::IntoDart for Symbol {
     fn into_dart(self) -> support::DartAbi {
         vec![

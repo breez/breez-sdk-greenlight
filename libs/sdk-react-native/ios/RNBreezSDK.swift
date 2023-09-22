@@ -277,8 +277,8 @@ class RNBreezSDK: RCTEventEmitter {
     @objc(sweep:feeRateSatsPerVbyte:resolve:reject:)
     func sweep(_ toAddress: String, feeRateSatsPerVbyte: UInt64, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            try getBreezServices().sweep(toAddress: toAddress, feeRateSatsPerVbyte: feeRateSatsPerVbyte)
-            resolve(["status": "ok"])
+            var res = try getBreezServices().sweep(toAddress: toAddress, feeRateSatsPerVbyte: feeRateSatsPerVbyte)
+            resolve(BreezSDKMapper.dictionaryOf(sweepResponse: res))
         } catch let err {
             rejectErr(err: err, reject: reject)
         }

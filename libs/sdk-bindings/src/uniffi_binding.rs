@@ -21,7 +21,7 @@ use breez_sdk_core::{
     ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees, ReverseSwapFeesRequest,
     ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop,
     SignMessageRequest, SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
-    SuccessActionProcessed, SwapInfo, SwapStatus, Symbol, UnspentTransactionOutput,
+    SuccessActionProcessed, SwapInfo, SwapStatus, SweepResponse, Symbol, UnspentTransactionOutput,
     UrlSuccessActionData,
 };
 
@@ -198,7 +198,11 @@ impl BlockingBreezServices {
             .map_err(|e| e.into())
     }
 
-    pub fn sweep(&self, to_address: String, fee_rate_sats_per_vbyte: u64) -> SdkResult<()> {
+    pub fn sweep(
+        &self,
+        to_address: String,
+        fee_rate_sats_per_vbyte: u64,
+    ) -> SdkResult<SweepResponse> {
         rt().block_on(
             self.breez_services
                 .sweep(to_address, fee_rate_sats_per_vbyte),

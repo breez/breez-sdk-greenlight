@@ -2118,6 +2118,36 @@ class BreezSDKMapper {
         return swapInfoList.map { v -> [String: Any?] in dictionaryOf(swapInfo: v) }
     }
 
+    static func asSweepResponse(data: [String: Any?]) throws -> SweepResponse {
+        guard let txid = data["txid"] as? [UInt8] else { throw SdkError.Generic(message: "Missing mandatory field txid for type SweepResponse") }
+
+        return SweepResponse(
+            txid: txid)
+    }
+
+    static func dictionaryOf(sweepResponse: SweepResponse) -> [String: Any?] {
+        return [
+            "txid": sweepResponse.txid,
+        ]
+    }
+
+    static func asSweepResponseList(arr: [Any]) throws -> [SweepResponse] {
+        var list = [SweepResponse]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var sweepResponse = try asSweepResponse(data: val)
+                list.append(sweepResponse)
+            } else {
+                throw SdkError.Generic(message: "Invalid element type SweepResponse")
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(sweepResponseList: [SweepResponse]) -> [Any] {
+        return sweepResponseList.map { v -> [String: Any?] in dictionaryOf(sweepResponse: v) }
+    }
+
     static func asSymbol(data: [String: Any?]) throws -> Symbol {
         let grapheme = data["grapheme"] as? String
         let template = data["template"] as? String
