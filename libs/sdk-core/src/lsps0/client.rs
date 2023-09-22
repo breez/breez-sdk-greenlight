@@ -28,7 +28,6 @@ impl Client {
         }
     }
 
-    #[allow(dead_code)]
     pub async fn call<TRequest, TResponse>(
         &self,
         method: String,

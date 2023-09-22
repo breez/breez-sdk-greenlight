@@ -177,6 +177,7 @@ mod invoice;
 mod lnurl;
 mod lsp;
 mod lsps0;
+mod lsps2;
 mod models;
 mod moonpay;
 mod persist;
