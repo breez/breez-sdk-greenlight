@@ -32,10 +32,10 @@ use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
 use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
-    EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus, NodeConfig, OpenChannelFeeRequest,
-    OpenChannelFeeResponse, ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse,
-    ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo, SignMessageRequest,
-    SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
+    EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus, LnUrlWithdrawResult, NodeConfig,
+    OpenChannelFeeRequest, OpenChannelFeeResponse, ReceiveOnchainRequest, ReceivePaymentRequest,
+    ReceivePaymentResponse, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
+    SignMessageRequest, SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
 };
 
 /*
@@ -274,7 +274,7 @@ pub fn lnurl_withdraw(
     req_data: LnUrlWithdrawRequestData,
     amount_sats: u64,
     description: Option<String>,
-) -> Result<LnUrlCallbackStatus> {
+) -> Result<LnUrlWithdrawResult> {
     block_on(async {
         get_breez_services()
             .await?

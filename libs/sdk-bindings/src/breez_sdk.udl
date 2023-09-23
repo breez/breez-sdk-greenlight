@@ -192,6 +192,7 @@ dictionary LnPaymentDetails {
     SuccessActionProcessed? lnurl_success_action;
     string? lnurl_metadata;
     string? ln_address;
+    string? lnurl_withdraw_endpoint;
 };
 
 dictionary ClosedChannelPaymentDetails {
@@ -473,6 +474,16 @@ interface LnUrlCallbackStatus {
     ErrorStatus(LnUrlErrorData data);
 };
 
+[Enum]
+interface LnUrlWithdrawResult {
+    Ok(LnUrlWithdrawSuccessData data);
+    ErrorStatus(LnUrlErrorData data);
+};
+
+dictionary LnUrlWithdrawSuccessData {
+    LNInvoice invoice;
+};
+
 dictionary LnUrlAuthRequestData {
     string k1;
     string? action;
@@ -527,7 +538,7 @@ interface BlockingBreezServices {
    LnUrlPayResult pay_lnurl(LnUrlPayRequestData req_data, u64 amount_sats, string? comment);
 
    [Throws=SdkError]
-   LnUrlCallbackStatus withdraw_lnurl(LnUrlWithdrawRequestData req_data, u64 amount_sats, string? description);
+   LnUrlWithdrawResult withdraw_lnurl(LnUrlWithdrawRequestData req_data, u64 amount_sats, string? description);
 
    [Throws=SdkError]
    LnUrlCallbackStatus lnurl_auth(LnUrlAuthRequestData req_data);

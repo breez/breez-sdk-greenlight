@@ -698,6 +698,9 @@ pub struct LnPaymentDetails {
 
     /// Only set for [PaymentType::Sent] payments where the receiver endpoint returned LNURL metadata
     pub lnurl_metadata: Option<String>,
+
+    /// Only set for [PaymentType::Received] payments that were received as part of LNURL-withdraw
+    pub lnurl_withdraw_endpoint: Option<String>,
 }
 
 /// Represents the funds that were on the user side of the channel at the time it was closed.
@@ -1092,7 +1095,7 @@ pub struct UnspentTransactionOutput {
     pub reserved_to_block: u32,
 }
 
-//// Contains the result of the entire LNURL interaction, as reported by the LNURL endpoint.
+/// Contains the result of the entire LNURL interaction, as reported by the LNURL endpoint.
 ///
 /// * `Ok` indicates the interaction with the endpoint was valid, and the endpoint
 ///  - started to pay the invoice asynchronously in the case of LNURL-withdraw,
@@ -1112,6 +1115,18 @@ pub enum LnUrlCallbackStatus {
         #[serde(flatten)]
         data: LnUrlErrorData,
     },
+}
+
+/// [LnUrlCallbackStatus] specific to LNURL-withdraw, where the success case contains the invoice.
+#[derive(Serialize)]
+pub enum LnUrlWithdrawResult {
+    Ok { data: LnUrlWithdrawSuccessData },
+    ErrorStatus { data: LnUrlErrorData },
+}
+
+#[derive(Deserialize, Debug, Serialize)]
+pub struct LnUrlWithdrawSuccessData {
+    pub invoice: LNInvoice,
 }
 
 /// Different providers will demand different behaviours when the user is trying to buy bitcoin.

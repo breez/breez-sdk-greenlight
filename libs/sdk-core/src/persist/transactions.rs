@@ -68,6 +68,7 @@ impl SqliteStorage {
         lnurl_pay_success_action: Option<&SuccessActionProcessed>,
         lnurl_metadata: Option<String>,
         ln_address: Option<String>,
+        lnurl_withdraw_endpoint: Option<String>,
     ) -> SdkResult<()> {
         let con = self.get_connection()?;
         let mut prep_statement = con.prepare(
@@ -76,9 +77,10 @@ impl SqliteStorage {
            payment_id,
            lnurl_success_action,
            lnurl_metadata,
-           ln_address
+           ln_address,
+           lnurl_withdraw_endpoint
          )
-         VALUES (?1,?2,?3,?4)
+         VALUES (?1,?2,?3,?4,?5)
         ",
         )?;
 
@@ -87,6 +89,7 @@ impl SqliteStorage {
             &lnurl_pay_success_action,
             lnurl_metadata,
             ln_address,
+            lnurl_withdraw_endpoint,
         ))?;
 
         Ok(())
@@ -151,6 +154,7 @@ impl SqliteStorage {
              e.lnurl_success_action,
              e.lnurl_metadata,
              e.ln_address,
+             e.lnurl_withdraw_endpoint,
              o.payer_amount_msat
             FROM payments p
             LEFT JOIN sync.payments_external_info e
@@ -194,6 +198,7 @@ impl SqliteStorage {
                  e.lnurl_success_action,
                  e.lnurl_metadata,
                  e.ln_address,
+                 e.lnurl_withdraw_endpoint,
                  o.payer_amount_msat
                 FROM payments p
                 LEFT JOIN sync.payments_external_info e
@@ -239,10 +244,11 @@ impl SqliteStorage {
             data.lnurl_success_action = row.get(8)?;
             data.lnurl_metadata = row.get(9)?;
             data.ln_address = row.get(10)?;
+            data.lnurl_withdraw_endpoint = row.get(11)?;
         }
 
         // In case we have a record of the open channel fee, let's use it.
-        let payer_amount_msat: Option<u64> = row.get(11)?;
+        let payer_amount_msat: Option<u64> = row.get(12)?;
         if let Some(payer_amount) = payer_amount_msat {
             payment.fee_msat = payer_amount - amount_msat;
         }
@@ -356,6 +362,8 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let payment_hash_with_lnurl_success_action = "123";
+    let payment_hash_with_lnurl_withdraw = "124";
+    let lnurl_withdraw_url = "https://test.lnurl.withdraw.link";
     let txs = [
         Payment {
             id: payment_hash_with_lnurl_success_action.to_string(),
@@ -376,11 +384,12 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
                     lnurl_success_action: Some(sa.clone()),
                     lnurl_metadata: Some(lnurl_metadata.to_string()),
                     ln_address: Some(test_ln_address.to_string()),
+                    lnurl_withdraw_endpoint: None,
                 },
             },
         },
         Payment {
-            id: "124".to_string(),
+            id: payment_hash_with_lnurl_withdraw.to_string(),
             payment_type: PaymentType::Received,
             payment_time: 1000,
             amount_msat: 100,
@@ -389,7 +398,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
             description: Some("desc".to_string()),
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
-                    payment_hash: "124".to_string(),
+                    payment_hash: payment_hash_with_lnurl_withdraw.to_string(),
                     label: "label".to_string(),
                     destination_pubkey: "pubey".to_string(),
                     payment_preimage: "payment_preimage".to_string(),
@@ -398,6 +407,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
                     lnurl_success_action: None,
                     lnurl_metadata: None,
                     ln_address: None,
+                    lnurl_withdraw_endpoint: Some(lnurl_withdraw_url.to_string()),
                 },
             },
         },
@@ -421,6 +431,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
                 lnurl_success_action: None,
                 lnurl_metadata: None,
                 ln_address: None,
+                lnurl_withdraw_endpoint: None,
             },
         },
     }];
@@ -433,6 +444,14 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
         Some(&sa),
         Some(lnurl_metadata.to_string()),
         Some(test_ln_address.to_string()),
+        None,
+    )?;
+    storage.insert_lnurl_payment_external_info(
+        payment_hash_with_lnurl_withdraw,
+        None,
+        None,
+        None,
+        Some(lnurl_withdraw_url.to_string()),
     )?;
 
     // retrieve all

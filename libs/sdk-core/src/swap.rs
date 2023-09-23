@@ -828,6 +828,7 @@ mod tests {
                     lnurl_success_action: None,
                     lnurl_metadata: None,
                     ln_address: None,
+                    lnurl_withdraw_endpoint: None,
                 },
             },
         };

@@ -13,10 +13,11 @@ use breez_sdk_core::{
     FeeratePreset, FiatCurrency, GreenlightCredentials, GreenlightNodeConfig, InputType,
     InvoicePaidDetails, LNInvoice, ListPaymentsRequest, LnPaymentDetails, LnUrlAuthRequestData,
     LnUrlCallbackStatus, LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult,
-    LnUrlWithdrawRequestData, LocaleOverrides, LocalizedName, LogEntry, LogStream, LspInformation,
-    MessageSuccessActionData, MetadataItem, Network, NodeConfig, NodeState, OpenChannelFeeRequest,
-    OpenChannelFeeResponse, OpeningFeeParams, OpeningFeeParamsMenu, Payment, PaymentDetails,
-    PaymentFailedData, PaymentStatus, PaymentType, PaymentTypeFilter, Rate, ReceiveOnchainRequest,
+    LnUrlWithdrawRequestData, LnUrlWithdrawResult, LnUrlWithdrawSuccessData, LocaleOverrides,
+    LocalizedName, LogEntry, LogStream, LspInformation, MessageSuccessActionData, MetadataItem,
+    Network, NodeConfig, NodeState, OpenChannelFeeRequest, OpenChannelFeeResponse,
+    OpeningFeeParams, OpeningFeeParamsMenu, Payment, PaymentDetails, PaymentFailedData,
+    PaymentStatus, PaymentType, PaymentTypeFilter, Rate, ReceiveOnchainRequest,
     ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees, ReverseSwapFeesRequest,
     ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop,
     SignMessageRequest, SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
@@ -184,7 +185,7 @@ impl BlockingBreezServices {
         req_data: LnUrlWithdrawRequestData,
         amount_sats: u64,
         description: Option<String>,
-    ) -> SdkResult<LnUrlCallbackStatus> {
+    ) -> SdkResult<LnUrlWithdrawResult> {
         rt().block_on(
             self.breez_services
                 .lnurl_withdraw(req_data, amount_sats, description),

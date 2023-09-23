@@ -62,6 +62,8 @@ use crate::models::GreenlightNodeConfig;
 use crate::models::ListPaymentsRequest;
 use crate::models::LnPaymentDetails;
 use crate::models::LnUrlCallbackStatus;
+use crate::models::LnUrlWithdrawResult;
+use crate::models::LnUrlWithdrawSuccessData;
 use crate::models::LogEntry;
 use crate::models::Network;
 use crate::models::NodeConfig;
@@ -1019,6 +1021,7 @@ impl support::IntoDart for LnPaymentDetails {
             self.lnurl_success_action.into_dart(),
             self.ln_address.into_dart(),
             self.lnurl_metadata.into_dart(),
+            self.lnurl_withdraw_endpoint.into_dart(),
         ]
         .into_dart()
     }
@@ -1094,6 +1097,23 @@ impl support::IntoDart for LnUrlWithdrawRequestData {
     }
 }
 impl support::IntoDartExceptPrimitive for LnUrlWithdrawRequestData {}
+
+impl support::IntoDart for LnUrlWithdrawResult {
+    fn into_dart(self) -> support::DartAbi {
+        match self {
+            Self::Ok { data } => vec![0.into_dart(), data.into_dart()],
+            Self::ErrorStatus { data } => vec![1.into_dart(), data.into_dart()],
+        }
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for LnUrlWithdrawResult {}
+impl support::IntoDart for LnUrlWithdrawSuccessData {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.invoice.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for LnUrlWithdrawSuccessData {}
 
 impl support::IntoDart for LocaleOverrides {
     fn into_dart(self) -> support::DartAbi {

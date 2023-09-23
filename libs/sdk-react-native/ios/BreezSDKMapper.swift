@@ -709,6 +709,7 @@ class BreezSDKMapper {
 
         let lnurlMetadata = data["lnurlMetadata"] as? String
         let lnAddress = data["lnAddress"] as? String
+        let lnurlWithdrawEndpoint = data["lnurlWithdrawEndpoint"] as? String
 
         return LnPaymentDetails(
             paymentHash: paymentHash,
@@ -719,7 +720,8 @@ class BreezSDKMapper {
             bolt11: bolt11,
             lnurlSuccessAction: lnurlSuccessAction,
             lnurlMetadata: lnurlMetadata,
-            lnAddress: lnAddress
+            lnAddress: lnAddress,
+            lnurlWithdrawEndpoint: lnurlWithdrawEndpoint
         )
     }
 
@@ -734,6 +736,7 @@ class BreezSDKMapper {
             "lnurlSuccessAction": lnPaymentDetails.lnurlSuccessAction == nil ? nil : dictionaryOf(successActionProcessed: lnPaymentDetails.lnurlSuccessAction!),
             "lnurlMetadata": lnPaymentDetails.lnurlMetadata == nil ? nil : lnPaymentDetails.lnurlMetadata,
             "lnAddress": lnPaymentDetails.lnAddress == nil ? nil : lnPaymentDetails.lnAddress,
+            "lnurlWithdrawEndpoint": lnPaymentDetails.lnurlWithdrawEndpoint == nil ? nil : lnPaymentDetails.lnurlWithdrawEndpoint,
         ]
     }
 
@@ -914,6 +917,37 @@ class BreezSDKMapper {
 
     static func arrayOf(lnUrlWithdrawRequestDataList: [LnUrlWithdrawRequestData]) -> [Any] {
         return lnUrlWithdrawRequestDataList.map { v -> [String: Any?] in dictionaryOf(lnUrlWithdrawRequestData: v) }
+    }
+
+    static func asLnUrlWithdrawSuccessData(data: [String: Any?]) throws -> LnUrlWithdrawSuccessData {
+        guard let invoiceTmp = data["invoice"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field invoice for type LnUrlWithdrawSuccessData") }
+        let invoice = try asLnInvoice(data: invoiceTmp)
+
+        return LnUrlWithdrawSuccessData(
+            invoice: invoice)
+    }
+
+    static func dictionaryOf(lnUrlWithdrawSuccessData: LnUrlWithdrawSuccessData) -> [String: Any?] {
+        return [
+            "invoice": dictionaryOf(lnInvoice: lnUrlWithdrawSuccessData.invoice),
+        ]
+    }
+
+    static func asLnUrlWithdrawSuccessDataList(arr: [Any]) throws -> [LnUrlWithdrawSuccessData] {
+        var list = [LnUrlWithdrawSuccessData]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var lnUrlWithdrawSuccessData = try asLnUrlWithdrawSuccessData(data: val)
+                list.append(lnUrlWithdrawSuccessData)
+            } else {
+                throw SdkError.Generic(message: "Invalid element type LnUrlWithdrawSuccessData")
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(lnUrlWithdrawSuccessDataList: [LnUrlWithdrawSuccessData]) -> [Any] {
+        return lnUrlWithdrawSuccessDataList.map { v -> [String: Any?] in dictionaryOf(lnUrlWithdrawSuccessData: v) }
     }
 
     static func asLocaleOverrides(data: [String: Any?]) throws -> LocaleOverrides {
@@ -2591,6 +2625,44 @@ class BreezSDKMapper {
         ):
             return [
                 "type": "endpointError",
+                "data": dictionaryOf(lnUrlErrorData: data),
+            ]
+        }
+    }
+
+    static func asLnUrlWithdrawResult(data: [String: Any?]) throws -> LnUrlWithdrawResult {
+        let type = data["type"] as! String
+        if type == "ok" {
+            guard let dataTmp = data["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type LnUrlWithdrawResult") }
+            let _data = try asLnUrlWithdrawSuccessData(data: dataTmp)
+
+            return LnUrlWithdrawResult.ok(data: _data)
+        }
+        if type == "errorStatus" {
+            guard let dataTmp = data["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type LnUrlWithdrawResult") }
+            let _data = try asLnUrlErrorData(data: dataTmp)
+
+            return LnUrlWithdrawResult.errorStatus(data: _data)
+        }
+
+        throw SdkError.Generic(message: "Invalid enum variant \(type) for enum LnUrlWithdrawResult")
+    }
+
+    static func dictionaryOf(lnUrlWithdrawResult: LnUrlWithdrawResult) -> [String: Any?] {
+        switch lnUrlWithdrawResult {
+        case let .ok(
+            data
+        ):
+            return [
+                "type": "ok",
+                "data": dictionaryOf(lnUrlWithdrawSuccessData: data),
+            ]
+
+        case let .errorStatus(
+            data
+        ):
+            return [
+                "type": "errorStatus",
                 "data": dictionaryOf(lnUrlErrorData: data),
             ]
         }

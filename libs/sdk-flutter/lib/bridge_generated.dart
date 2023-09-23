@@ -158,7 +158,7 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kLnurlPayConstMeta;
 
   /// See [BreezServices::lnurl_withdraw]
-  Future<LnUrlCallbackStatus> lnurlWithdraw(
+  Future<LnUrlWithdrawResult> lnurlWithdraw(
       {required LnUrlWithdrawRequestData reqData,
       required int amountSats,
       String? description,
@@ -636,6 +636,9 @@ class LnPaymentDetails {
   /// Only set for [PaymentType::Sent] payments where the receiver endpoint returned LNURL metadata
   final String? lnurlMetadata;
 
+  /// Only set for [PaymentType::Received] payments that were received as part of LNURL-withdraw
+  final String? lnurlWithdrawEndpoint;
+
   const LnPaymentDetails({
     required this.paymentHash,
     required this.label,
@@ -646,6 +649,7 @@ class LnPaymentDetails {
     this.lnurlSuccessAction,
     this.lnAddress,
     this.lnurlMetadata,
+    this.lnurlWithdrawEndpoint,
   });
 }
 
@@ -772,6 +776,24 @@ class LnUrlWithdrawRequestData {
     required this.defaultDescription,
     required this.minWithdrawable,
     required this.maxWithdrawable,
+  });
+}
+
+@freezed
+class LnUrlWithdrawResult with _$LnUrlWithdrawResult {
+  const factory LnUrlWithdrawResult.ok({
+    required LnUrlWithdrawSuccessData data,
+  }) = LnUrlWithdrawResult_Ok;
+  const factory LnUrlWithdrawResult.errorStatus({
+    required LnUrlErrorData data,
+  }) = LnUrlWithdrawResult_ErrorStatus;
+}
+
+class LnUrlWithdrawSuccessData {
+  final LNInvoice invoice;
+
+  const LnUrlWithdrawSuccessData({
+    required this.invoice,
   });
 }
 
@@ -1874,7 +1896,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["userAmountSat", "comment", "reqData"],
       );
 
-  Future<LnUrlCallbackStatus> lnurlWithdraw(
+  Future<LnUrlWithdrawResult> lnurlWithdraw(
       {required LnUrlWithdrawRequestData reqData,
       required int amountSats,
       String? description,
@@ -1884,7 +1906,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     var arg2 = _platform.api2wire_opt_String(description);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_lnurl_withdraw(port_, arg0, arg1, arg2),
-      parseSuccessData: _wire2api_ln_url_callback_status,
+      parseSuccessData: _wire2api_ln_url_withdraw_result,
       constMeta: kLnurlWithdrawConstMeta,
       argValues: [reqData, amountSats, description],
       hint: hint,
@@ -2253,6 +2275,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return _wire2api_ln_url_withdraw_request_data(raw);
   }
 
+  LnUrlWithdrawSuccessData _wire2api_box_autoadd_ln_url_withdraw_success_data(dynamic raw) {
+    return _wire2api_ln_url_withdraw_success_data(raw);
+  }
+
   LspInformation _wire2api_box_autoadd_lsp_information(dynamic raw) {
     return _wire2api_lsp_information(raw);
   }
@@ -2546,7 +2572,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   LnPaymentDetails _wire2api_ln_payment_details(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 9) throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
+    if (arr.length != 10) throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
     return LnPaymentDetails(
       paymentHash: _wire2api_String(arr[0]),
       label: _wire2api_String(arr[1]),
@@ -2557,6 +2583,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       lnurlSuccessAction: _wire2api_opt_box_autoadd_success_action_processed(arr[6]),
       lnAddress: _wire2api_opt_String(arr[7]),
       lnurlMetadata: _wire2api_opt_String(arr[8]),
+      lnurlWithdrawEndpoint: _wire2api_opt_String(arr[9]),
     );
   }
 
@@ -2630,6 +2657,29 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       defaultDescription: _wire2api_String(arr[2]),
       minWithdrawable: _wire2api_u64(arr[3]),
       maxWithdrawable: _wire2api_u64(arr[4]),
+    );
+  }
+
+  LnUrlWithdrawResult _wire2api_ln_url_withdraw_result(dynamic raw) {
+    switch (raw[0]) {
+      case 0:
+        return LnUrlWithdrawResult_Ok(
+          data: _wire2api_box_autoadd_ln_url_withdraw_success_data(raw[1]),
+        );
+      case 1:
+        return LnUrlWithdrawResult_ErrorStatus(
+          data: _wire2api_box_autoadd_ln_url_error_data(raw[1]),
+        );
+      default:
+        throw Exception("unreachable");
+    }
+  }
+
+  LnUrlWithdrawSuccessData _wire2api_ln_url_withdraw_success_data(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
+    return LnUrlWithdrawSuccessData(
+      invoice: _wire2api_ln_invoice(arr[0]),
     );
   }
 
