@@ -36,7 +36,7 @@ use crate::{
     OpenChannelFeeRequest, OpenChannelFeeResponse, ReceiveOnchainRequest, ReceivePaymentRequest,
     ReceivePaymentResponse, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
     SignMessageRequest, SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
-    SweepResponse,
+    SweepRequest, SweepResponse,
 };
 
 /*
@@ -335,13 +335,8 @@ pub fn buy_bitcoin(req_data: BuyBitcoinRequest) -> Result<BuyBitcoinResponse> {
 }
 
 /// See [BreezServices::sweep]
-pub fn sweep(to_address: String, fee_rate_sats_per_vbyte: u64) -> Result<SweepResponse> {
-    block_on(async {
-        get_breez_services()
-            .await?
-            .sweep(to_address, fee_rate_sats_per_vbyte)
-            .await
-    })
+pub fn sweep(request: SweepRequest) -> Result<SweepResponse> {
+    block_on(async { get_breez_services().await?.sweep(request).await })
 }
 
 /*  Refundables API's */

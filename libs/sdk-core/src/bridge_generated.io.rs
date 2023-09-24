@@ -212,12 +212,8 @@ pub extern "C" fn wire_buy_bitcoin(port_: i64, req_data: *mut wire_BuyBitcoinReq
 }
 
 #[no_mangle]
-pub extern "C" fn wire_sweep(
-    port_: i64,
-    to_address: *mut wire_uint_8_list,
-    fee_rate_sats_per_vbyte: u64,
-) {
-    wire_sweep_impl(port_, to_address, fee_rate_sats_per_vbyte)
+pub extern "C" fn wire_sweep(port_: i64, request: *mut wire_SweepRequest) {
+    wire_sweep_impl(port_, request)
 }
 
 #[no_mangle]
@@ -365,6 +361,11 @@ pub extern "C" fn new_box_autoadd_static_backup_request_0() -> *mut wire_StaticB
 }
 
 #[no_mangle]
+pub extern "C" fn new_box_autoadd_sweep_request_0() -> *mut wire_SweepRequest {
+    support::new_leak_box_ptr(wire_SweepRequest::new_with_null_ptr())
+}
+
+#[no_mangle]
 pub extern "C" fn new_box_autoadd_u32_0(value: u32) -> *mut u32 {
     support::new_leak_box_ptr(value)
 }
@@ -504,6 +505,12 @@ impl Wire2Api<StaticBackupRequest> for *mut wire_StaticBackupRequest {
     fn wire2api(self) -> StaticBackupRequest {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
         Wire2Api::<StaticBackupRequest>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<SweepRequest> for *mut wire_SweepRequest {
+    fn wire2api(self) -> SweepRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<SweepRequest>::wire2api(*wrap).into()
     }
 }
 impl Wire2Api<u32> for *mut u32 {
@@ -689,6 +696,14 @@ impl Wire2Api<StaticBackupRequest> for wire_StaticBackupRequest {
         }
     }
 }
+impl Wire2Api<SweepRequest> for wire_SweepRequest {
+    fn wire2api(self) -> SweepRequest {
+        SweepRequest {
+            to_address: self.to_address.wire2api(),
+            fee_rate_sats_per_vbyte: self.fee_rate_sats_per_vbyte.wire2api(),
+        }
+    }
+}
 
 impl Wire2Api<Vec<u8>> for *mut wire_uint_8_list {
     fn wire2api(self) -> Vec<u8> {
@@ -836,6 +851,13 @@ pub struct wire_SignMessageRequest {
 #[derive(Clone)]
 pub struct wire_StaticBackupRequest {
     working_dir: *mut wire_uint_8_list,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_SweepRequest {
+    to_address: *mut wire_uint_8_list,
+    fee_rate_sats_per_vbyte: u64,
 }
 
 #[repr(C)]
@@ -1160,6 +1182,21 @@ impl NewWithNullPtr for wire_StaticBackupRequest {
 }
 
 impl Default for wire_StaticBackupRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_SweepRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            to_address: core::ptr::null_mut(),
+            fee_rate_sats_per_vbyte: Default::default(),
+        }
+    }
+}
+
+impl Default for wire_SweepRequest {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }

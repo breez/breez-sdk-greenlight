@@ -202,7 +202,7 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kBuyBitcoinConstMeta;
 
   /// See [BreezServices::sweep]
-  Future<SweepResponse> sweep({required String toAddress, required int feeRateSatsPerVbyte, dynamic hint});
+  Future<SweepResponse> sweep({required SweepRequest request, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kSweepConstMeta;
 
@@ -1397,6 +1397,16 @@ enum SwapStatus {
   Expired,
 }
 
+class SweepRequest {
+  final String toAddress;
+  final int feeRateSatsPerVbyte;
+
+  const SweepRequest({
+    required this.toAddress,
+    required this.feeRateSatsPerVbyte,
+  });
+}
+
 class SweepResponse {
   final Uint8List txid;
 
@@ -2028,21 +2038,20 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["reqData"],
       );
 
-  Future<SweepResponse> sweep({required String toAddress, required int feeRateSatsPerVbyte, dynamic hint}) {
-    var arg0 = _platform.api2wire_String(toAddress);
-    var arg1 = _platform.api2wire_u64(feeRateSatsPerVbyte);
+  Future<SweepResponse> sweep({required SweepRequest request, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_sweep_request(request);
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_sweep(port_, arg0, arg1),
+      callFfi: (port_) => _platform.inner.wire_sweep(port_, arg0),
       parseSuccessData: _wire2api_sweep_response,
       constMeta: kSweepConstMeta,
-      argValues: [toAddress, feeRateSatsPerVbyte],
+      argValues: [request],
       hint: hint,
     ));
   }
 
   FlutterRustBridgeTaskConstMeta get kSweepConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "sweep",
-        argNames: ["toAddress", "feeRateSatsPerVbyte"],
+        argNames: ["request"],
       );
 
   Future<List<SwapInfo>> listRefundables({dynamic hint}) {
@@ -3336,6 +3345,13 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<wire_SweepRequest> api2wire_box_autoadd_sweep_request(SweepRequest raw) {
+    final ptr = inner.new_box_autoadd_sweep_request_0();
+    _api_fill_to_wire_sweep_request(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
   ffi.Pointer<ffi.Uint32> api2wire_box_autoadd_u32(int raw) {
     return inner.new_box_autoadd_u32_0(api2wire_u32(raw));
   }
@@ -3489,6 +3505,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     _api_fill_to_wire_static_backup_request(apiObj, wireObj.ref);
   }
 
+  void _api_fill_to_wire_box_autoadd_sweep_request(
+      SweepRequest apiObj, ffi.Pointer<wire_SweepRequest> wireObj) {
+    _api_fill_to_wire_sweep_request(apiObj, wireObj.ref);
+  }
+
   void _api_fill_to_wire_buy_bitcoin_request(BuyBitcoinRequest apiObj, wire_BuyBitcoinRequest wireObj) {
     wireObj.provider = api2wire_buy_bitcoin_provider(apiObj.provider);
     wireObj.opening_fee_params = api2wire_opt_box_autoadd_opening_fee_params(apiObj.openingFeeParams);
@@ -3622,6 +3643,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
 
   void _api_fill_to_wire_static_backup_request(StaticBackupRequest apiObj, wire_StaticBackupRequest wireObj) {
     wireObj.working_dir = api2wire_String(apiObj.workingDir);
+  }
+
+  void _api_fill_to_wire_sweep_request(SweepRequest apiObj, wire_SweepRequest wireObj) {
+    wireObj.to_address = api2wire_String(apiObj.toAddress);
+    wireObj.fee_rate_sats_per_vbyte = api2wire_u64(apiObj.feeRateSatsPerVbyte);
   }
 }
 
@@ -4239,21 +4265,17 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
 
   void wire_sweep(
     int port_,
-    ffi.Pointer<wire_uint_8_list> to_address,
-    int fee_rate_sats_per_vbyte,
+    ffi.Pointer<wire_SweepRequest> request,
   ) {
     return _wire_sweep(
       port_,
-      to_address,
-      fee_rate_sats_per_vbyte,
+      request,
     );
   }
 
   late final _wire_sweepPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>, ffi.Uint64)>>(
-          'wire_sweep');
-  late final _wire_sweep =
-      _wire_sweepPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>, int)>();
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_SweepRequest>)>>('wire_sweep');
+  late final _wire_sweep = _wire_sweepPtr.asFunction<void Function(int, ffi.Pointer<wire_SweepRequest>)>();
 
   void wire_list_refundables(
     int port_,
@@ -4568,6 +4590,16 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _new_box_autoadd_static_backup_request_0 = _new_box_autoadd_static_backup_request_0Ptr
       .asFunction<ffi.Pointer<wire_StaticBackupRequest> Function()>();
 
+  ffi.Pointer<wire_SweepRequest> new_box_autoadd_sweep_request_0() {
+    return _new_box_autoadd_sweep_request_0();
+  }
+
+  late final _new_box_autoadd_sweep_request_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_SweepRequest> Function()>>(
+          'new_box_autoadd_sweep_request_0');
+  late final _new_box_autoadd_sweep_request_0 =
+      _new_box_autoadd_sweep_request_0Ptr.asFunction<ffi.Pointer<wire_SweepRequest> Function()>();
+
   ffi.Pointer<ffi.Uint32> new_box_autoadd_u32_0(
     int value,
   ) {
@@ -4805,6 +4837,13 @@ class wire_BuyBitcoinRequest extends ffi.Struct {
   external int provider;
 
   external ffi.Pointer<wire_OpeningFeeParams> opening_fee_params;
+}
+
+class wire_SweepRequest extends ffi.Struct {
+  external ffi.Pointer<wire_uint_8_list> to_address;
+
+  @ffi.Uint64()
+  external int fee_rate_sats_per_vbyte;
 }
 
 class wire_OpenChannelFeeRequest extends ffi.Struct {

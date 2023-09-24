@@ -2321,6 +2321,43 @@ fun asSwapInfoList(arr: ReadableArray): List<SwapInfo> {
     return list
 }
 
+fun asSweepRequest(data: ReadableMap): SweepRequest? {
+    if (!validateMandatoryFields(
+            data,
+            arrayOf(
+                "toAddress",
+                "feeRateSatsPerVbyte",
+            ),
+        )
+    ) {
+        return null
+    }
+    val toAddress = data.getString("toAddress")!!
+    val feeRateSatsPerVbyte = data.getDouble("feeRateSatsPerVbyte").toULong()
+    return SweepRequest(
+        toAddress,
+        feeRateSatsPerVbyte,
+    )
+}
+
+fun readableMapOf(sweepRequest: SweepRequest): ReadableMap {
+    return readableMapOf(
+        "toAddress" to sweepRequest.toAddress,
+        "feeRateSatsPerVbyte" to sweepRequest.feeRateSatsPerVbyte,
+    )
+}
+
+fun asSweepRequestList(arr: ReadableArray): List<SweepRequest> {
+    val list = ArrayList<SweepRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asSweepRequest(value)!!)
+            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asSweepResponse(data: ReadableMap): SweepResponse? {
     if (!validateMandatoryFields(
             data,

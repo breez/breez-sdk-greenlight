@@ -21,10 +21,9 @@ use breez_sdk_core::{
     ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees, ReverseSwapFeesRequest,
     ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop,
     SignMessageRequest, SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
-    SuccessActionProcessed, SwapInfo, SwapStatus, SweepResponse, Symbol, UnspentTransactionOutput,
-    UrlSuccessActionData,
+    SuccessActionProcessed, SwapInfo, SwapStatus, SweepRequest, SweepResponse, Symbol,
+    UnspentTransactionOutput, UrlSuccessActionData,
 };
-
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
 static LOG_INIT: OnceCell<bool> = OnceCell::new();
 
@@ -198,16 +197,9 @@ impl BlockingBreezServices {
             .map_err(|e| e.into())
     }
 
-    pub fn sweep(
-        &self,
-        to_address: String,
-        fee_rate_sats_per_vbyte: u64,
-    ) -> SdkResult<SweepResponse> {
-        rt().block_on(
-            self.breez_services
-                .sweep(to_address, fee_rate_sats_per_vbyte),
-        )
-        .map_err(|e| e.into())
+    pub fn sweep(&self, request: SweepRequest) -> SdkResult<SweepResponse> {
+        rt().block_on(self.breez_services.sweep(request))
+            .map_err(|e| e.into())
     }
 
     pub fn fetch_fiat_rates(&self) -> SdkResult<Vec<Rate>> {

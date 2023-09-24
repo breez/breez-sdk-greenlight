@@ -132,6 +132,11 @@ typedef struct wire_BuyBitcoinRequest {
   struct wire_OpeningFeeParams *opening_fee_params;
 } wire_BuyBitcoinRequest;
 
+typedef struct wire_SweepRequest {
+  struct wire_uint_8_list *to_address;
+  uint64_t fee_rate_sats_per_vbyte;
+} wire_SweepRequest;
+
 typedef struct wire_OpenChannelFeeRequest {
   uint64_t amount_msat;
   uint32_t *expiry;
@@ -238,9 +243,7 @@ void wire_receive_onchain(int64_t port_, struct wire_ReceiveOnchainRequest *req_
 
 void wire_buy_bitcoin(int64_t port_, struct wire_BuyBitcoinRequest *req_data);
 
-void wire_sweep(int64_t port_,
-                struct wire_uint_8_list *to_address,
-                uint64_t fee_rate_sats_per_vbyte);
+void wire_sweep(int64_t port_, struct wire_SweepRequest *request);
 
 void wire_list_refundables(int64_t port_);
 
@@ -298,6 +301,8 @@ struct wire_ReverseSwapFeesRequest *new_box_autoadd_reverse_swap_fees_request_0(
 struct wire_SignMessageRequest *new_box_autoadd_sign_message_request_0(void);
 
 struct wire_StaticBackupRequest *new_box_autoadd_static_backup_request_0(void);
+
+struct wire_SweepRequest *new_box_autoadd_sweep_request_0(void);
 
 uint32_t *new_box_autoadd_u32_0(uint32_t value);
 
@@ -374,6 +379,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_reverse_swap_fees_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_sign_message_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_static_backup_request_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_sweep_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_u32_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_u64_0);
     dummy_var ^= ((int64_t) (void*) new_uint_8_list_0);

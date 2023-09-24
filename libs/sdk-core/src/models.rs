@@ -784,6 +784,12 @@ pub struct BuyBitcoinResponse {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SweepRequest {
+    pub to_address: String,
+    pub fee_rate_sats_per_vbyte: u64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SweepResponse {
     pub txid: Vec<u8>,
 }
