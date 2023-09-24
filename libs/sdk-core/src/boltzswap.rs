@@ -16,7 +16,7 @@ use crate::models::ReverseSwapPairInfo;
 use crate::reverseswap::CreateReverseSwapResponse;
 use crate::ReverseSwapServiceAPI;
 
-const BOLTZ_API_URL: &str = "https://boltz.exchange/api/";
+const BOLTZ_API_URL: &str = "https://api.boltz.exchange/";
 const GET_PAIRS_ENDPOINT: &str = concatcp!(BOLTZ_API_URL, "getpairs");
 const GET_SWAP_STATUS_ENDPOINT: &str = concatcp!(BOLTZ_API_URL, "swapstatus");
 pub(crate) const CREATE_REVERSE_SWAP_ENDPOINT: &str = concatcp!(BOLTZ_API_URL, "createswap");
