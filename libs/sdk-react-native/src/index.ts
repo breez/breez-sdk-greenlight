@@ -201,6 +201,14 @@ export type LogEntry = {
     level: string
 }
 
+export type LogMessage = {
+    level: LogLevel
+    message: string
+    modulePath: string
+    file: string
+    line: number
+}
+
 export type LspInformation = {
     id: string
     name: string
@@ -550,6 +558,14 @@ export type LnUrlWithdrawResult = {
     data: LnUrlErrorData
 }
 
+export enum LogLevel {
+    ERROR = "error",
+    WARN = "warn",
+    INFO = "info",
+    DEBUG = "debug",
+    TRACE = "trace"
+}
+
 export enum Network {
     BITCOIN = "bitcoin",
     TESTNET = "testnet",
@@ -630,10 +646,14 @@ export type EventListener = (breezEvent: BreezEvent) => void
 
 export type LogStream = (logEntry: LogEntry) => void
 
-export const connect = async (config: Config, seed: number[], listener: EventListener): Promise<EmitterSubscription> => {
+export type Logger = (logMessage: LogMessage) => void
+
+export const connect = async (config: Config, seed: number[], listener: EventListener, nodeLogger: Logger, logFilePath?: string ): Promise<EmitterSubscription> => {
     const subscription = BreezSDKEmitter.addListener("breezSdkEvent", listener)
     
-    await BreezSDK.connect(config, seed)
+    BreezSDKEmitter.addListener("breezSdkNodeLog", nodeLogger)
+
+    await BreezSDK.connect(config, seed, logFilePath)
 
     return subscription
 }

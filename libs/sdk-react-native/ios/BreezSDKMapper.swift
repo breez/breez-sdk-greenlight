@@ -1104,6 +1104,51 @@ class BreezSDKMapper {
         return logEntryList.map { v -> [String: Any?] in dictionaryOf(logEntry: v) }
     }
 
+    static func asLogMessage(data: [String: Any?]) throws -> LogMessage {
+        guard let levelTmp = data["level"] as? String else { throw SdkError.Generic(message: "Missing mandatory field level for type LogMessage") }
+        let level = try asLogLevel(type: levelTmp)
+
+        guard let message = data["message"] as? String else { throw SdkError.Generic(message: "Missing mandatory field message for type LogMessage") }
+        guard let modulePath = data["modulePath"] as? String else { throw SdkError.Generic(message: "Missing mandatory field modulePath for type LogMessage") }
+        guard let file = data["file"] as? String else { throw SdkError.Generic(message: "Missing mandatory field file for type LogMessage") }
+        guard let line = data["line"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field line for type LogMessage") }
+
+        return LogMessage(
+            level: level,
+            message: message,
+            modulePath: modulePath,
+            file: file,
+            line: line
+        )
+    }
+
+    static func dictionaryOf(logMessage: LogMessage) -> [String: Any?] {
+        return [
+            "level": valueOf(logLevel: logMessage.level),
+            "message": logMessage.message,
+            "modulePath": logMessage.modulePath,
+            "file": logMessage.file,
+            "line": logMessage.line,
+        ]
+    }
+
+    static func asLogMessageList(arr: [Any]) throws -> [LogMessage] {
+        var list = [LogMessage]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var logMessage = try asLogMessage(data: val)
+                list.append(logMessage)
+            } else {
+                throw SdkError.Generic(message: "Invalid element type LogMessage")
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(logMessageList: [LogMessage]) -> [Any] {
+        return logMessageList.map { v -> [String: Any?] in dictionaryOf(logMessage: v) }
+    }
+
     static func asLspInformation(data: [String: Any?]) throws -> LspInformation {
         guard let id = data["id"] as? String else { throw SdkError.Generic(message: "Missing mandatory field id for type LspInformation") }
         guard let name = data["name"] as? String else { throw SdkError.Generic(message: "Missing mandatory field name for type LspInformation") }
@@ -2780,6 +2825,46 @@ class BreezSDKMapper {
                 "type": "errorStatus",
                 "data": dictionaryOf(lnUrlErrorData: data),
             ]
+        }
+    }
+
+    static func asLogLevel(type: String) throws -> LogLevel {
+        switch type {
+        case "error":
+            return LogLevel.error
+
+        case "warn":
+            return LogLevel.warn
+
+        case "info":
+            return LogLevel.info
+
+        case "debug":
+            return LogLevel.debug
+
+        case "trace":
+            return LogLevel.trace
+
+        default: throw SdkError.Generic(message: "Invalid variant \(type) for enum LogLevel")
+        }
+    }
+
+    static func valueOf(logLevel: LogLevel) -> String {
+        switch logLevel {
+        case .error:
+            return "error"
+
+        case .warn:
+            return "warn"
+
+        case .info:
+            return "info"
+
+        case .debug:
+            return "debug"
+
+        case .trace:
+            return "trace"
         }
     }
 

@@ -1192,6 +1192,55 @@ fun asLogEntryList(arr: ReadableArray): List<LogEntry> {
     return list
 }
 
+fun asLogMessage(data: ReadableMap): LogMessage? {
+    if (!validateMandatoryFields(
+            data,
+            arrayOf(
+                "level",
+                "message",
+                "modulePath",
+                "file",
+                "line",
+            ),
+        )
+    ) {
+        return null
+    }
+    val level = data.getString("level")?.let { asLogLevel(it) }!!
+    val message = data.getString("message")!!
+    val modulePath = data.getString("modulePath")!!
+    val file = data.getString("file")!!
+    val line = data.getInt("line").toUInt()
+    return LogMessage(
+        level,
+        message,
+        modulePath,
+        file,
+        line,
+    )
+}
+
+fun readableMapOf(logMessage: LogMessage): ReadableMap {
+    return readableMapOf(
+        "level" to logMessage.level.name.lowercase(),
+        "message" to logMessage.message,
+        "modulePath" to logMessage.modulePath,
+        "file" to logMessage.file,
+        "line" to logMessage.line,
+    )
+}
+
+fun asLogMessageList(arr: ReadableArray): List<LogMessage> {
+    val list = ArrayList<LogMessage>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asLogMessage(value)!!)
+            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asLspInformation(data: ReadableMap): LspInformation? {
     if (!validateMandatoryFields(
             data,
@@ -2803,6 +2852,10 @@ fun readableMapOf(lnUrlWithdrawResult: LnUrlWithdrawResult): ReadableMap? {
         }
     }
     return map
+}
+
+fun asLogLevel(type: String): LogLevel {
+    return LogLevel.valueOf(type.uppercase())
 }
 
 fun asNetwork(type: String): Network {
