@@ -48,6 +48,8 @@ use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::lnurl::pay::model::MessageSuccessActionData;
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lnurl::pay::model::UrlSuccessActionData;
+use crate::logger::LogLevel;
+use crate::logger::LogMessage;
 use crate::lsp::LspInformation;
 use crate::models::BackupStatus;
 use crate::models::BuyBitcoinProvider;
@@ -99,6 +101,7 @@ fn wire_connect_impl(
     port_: MessagePort,
     config: impl Wire2Api<Config> + UnwindSafe,
     seed: impl Wire2Api<Vec<u8>> + UnwindSafe,
+    log_file_path: impl Wire2Api<Option<String>> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -109,7 +112,8 @@ fn wire_connect_impl(
         move || {
             let api_config = config.wire2api();
             let api_seed = seed.wire2api();
-            move |task_callback| connect(api_config, api_seed)
+            let api_log_file_path = log_file_path.wire2api();
+            move |task_callback| connect(api_config, api_seed, api_log_file_path)
         },
     )
 }
@@ -242,6 +246,16 @@ fn wire_breez_events_stream_impl(port_: MessagePort) {
             mode: FfiCallMode::Stream,
         },
         move || move |task_callback| breez_events_stream(task_callback.stream_sink()),
+    )
+}
+fn wire_breez_node_log_stream_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "breez_node_log_stream",
+            port: Some(port_),
+            mode: FfiCallMode::Stream,
+        },
+        move || move |task_callback| breez_node_log_stream(task_callback.stream_sink()),
     )
 }
 fn wire_breez_log_stream_impl(port_: MessagePort) {
@@ -1135,6 +1149,33 @@ impl support::IntoDart for LogEntry {
     }
 }
 impl support::IntoDartExceptPrimitive for LogEntry {}
+
+impl support::IntoDart for LogLevel {
+    fn into_dart(self) -> support::DartAbi {
+        match self {
+            Self::Error => 0,
+            Self::Warn => 1,
+            Self::Info => 2,
+            Self::Debug => 3,
+            Self::Trace => 4,
+        }
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for LogLevel {}
+impl support::IntoDart for LogMessage {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.level.into_dart(),
+            self.message.into_dart(),
+            self.module_path.into_dart(),
+            self.file.into_dart(),
+            self.line.into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for LogMessage {}
 
 impl support::IntoDart for LspInformation {
     fn into_dart(self) -> support::DartAbi {

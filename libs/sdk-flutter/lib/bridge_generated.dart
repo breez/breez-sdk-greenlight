@@ -15,7 +15,7 @@ part 'bridge_generated.freezed.dart';
 
 abstract class BreezSdkCore {
   /// Wrapper around [BreezServices::connect] which also initializes SDK logging
-  Future<void> connect({required Config config, required Uint8List seed, dynamic hint});
+  Future<void> connect({required Config config, required Uint8List seed, String? logFilePath, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kConnectConstMeta;
 
@@ -72,6 +72,11 @@ abstract class BreezSdkCore {
   Stream<BreezEvent> breezEventsStream({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kBreezEventsStreamConstMeta;
+
+  /// If used, this must be called before `connect`. It can only be called once.
+  Stream<LogMessage> breezNodeLogStream({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kBreezNodeLogStreamConstMeta;
 
   /// If used, this must be called before `connect`. It can only be called once.
   Stream<LogEntry> breezLogStream({dynamic hint});
@@ -857,6 +862,52 @@ class LogEntry {
   });
 }
 
+/// An enum representing the available verbosity levels of the logger.
+enum LogLevel {
+  /// Designates very serious errors
+  Error,
+
+  /// Designates hazardous situations
+  Warn,
+
+  /// Designates useful information
+  Info,
+
+  /// Designates lower priority information
+  Debug,
+
+  /// Designates very low priority, often extremely verbose, information
+  Trace,
+}
+
+/// A struct representing a log message.
+class LogMessage {
+  /// The verbosity level of the message.
+  final LogLevel level;
+
+  /// The log message. Since Uniffi does not support
+  /// Rust-specific types like fmt::Arguments, we should
+  /// use simpler types that can be serialized and deserialized.
+  final String message;
+
+  /// The module path of the message.
+  final String modulePath;
+
+  /// The source file containing the message.
+  final String file;
+
+  /// The line containing the message.
+  final int line;
+
+  const LogMessage({
+    required this.level,
+    required this.message,
+    required this.modulePath,
+    required this.file,
+    required this.line,
+  });
+}
+
 /// Details of supported LSP
 class LspInformation {
   final String id;
@@ -1499,21 +1550,22 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   /// Only valid on web/WASM platforms.
   factory BreezSdkCoreImpl.wasm(FutureOr<WasmModule> module) => BreezSdkCoreImpl(module as ExternalLibrary);
   BreezSdkCoreImpl.raw(this._platform);
-  Future<void> connect({required Config config, required Uint8List seed, dynamic hint}) {
+  Future<void> connect({required Config config, required Uint8List seed, String? logFilePath, dynamic hint}) {
     var arg0 = _platform.api2wire_box_autoadd_config(config);
     var arg1 = _platform.api2wire_uint_8_list(seed);
+    var arg2 = _platform.api2wire_opt_String(logFilePath);
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_connect(port_, arg0, arg1),
+      callFfi: (port_) => _platform.inner.wire_connect(port_, arg0, arg1, arg2),
       parseSuccessData: _wire2api_unit,
       constMeta: kConnectConstMeta,
-      argValues: [config, seed],
+      argValues: [config, seed, logFilePath],
       hint: hint,
     ));
   }
 
   FlutterRustBridgeTaskConstMeta get kConnectConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "connect",
-        argNames: ["config", "seed"],
+        argNames: ["config", "seed", "logFilePath"],
       );
 
   Future<bool> isInitialized({dynamic hint}) {
@@ -1674,6 +1726,21 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kBreezEventsStreamConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "breez_events_stream",
+        argNames: [],
+      );
+
+  Stream<LogMessage> breezNodeLogStream({dynamic hint}) {
+    return _platform.executeStream(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_breez_node_log_stream(port_),
+      parseSuccessData: _wire2api_log_message,
+      constMeta: kBreezNodeLogStreamConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kBreezNodeLogStreamConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "breez_node_log_stream",
         argNames: [],
       );
 
@@ -2756,6 +2823,22 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     );
   }
 
+  LogLevel _wire2api_log_level(dynamic raw) {
+    return LogLevel.values[raw as int];
+  }
+
+  LogMessage _wire2api_log_message(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5) throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return LogMessage(
+      level: _wire2api_log_level(arr[0]),
+      message: _wire2api_String(arr[1]),
+      modulePath: _wire2api_String(arr[2]),
+      file: _wire2api_String(arr[3]),
+      line: _wire2api_u32(arr[4]),
+    );
+  }
+
   LspInformation _wire2api_lsp_information(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 13) throw Exception('unexpected arr length: expect 13 but see ${arr.length}');
@@ -3777,20 +3860,23 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
     int port_,
     ffi.Pointer<wire_Config> config,
     ffi.Pointer<wire_uint_8_list> seed,
+    ffi.Pointer<wire_uint_8_list> log_file_path,
   ) {
     return _wire_connect(
       port_,
       config,
       seed,
+      log_file_path,
     );
   }
 
   late final _wire_connectPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Int64, ffi.Pointer<wire_Config>, ffi.Pointer<wire_uint_8_list>)>>('wire_connect');
-  late final _wire_connect = _wire_connectPtr
-      .asFunction<void Function(int, ffi.Pointer<wire_Config>, ffi.Pointer<wire_uint_8_list>)>();
+          ffi.Void Function(ffi.Int64, ffi.Pointer<wire_Config>, ffi.Pointer<wire_uint_8_list>,
+              ffi.Pointer<wire_uint_8_list>)>>('wire_connect');
+  late final _wire_connect = _wire_connectPtr.asFunction<
+      void Function(
+          int, ffi.Pointer<wire_Config>, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_uint_8_list>)>();
 
   void wire_is_initialized(
     int port_,
@@ -3934,6 +4020,18 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_breez_events_streamPtr =
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_breez_events_stream');
   late final _wire_breez_events_stream = _wire_breez_events_streamPtr.asFunction<void Function(int)>();
+
+  void wire_breez_node_log_stream(
+    int port_,
+  ) {
+    return _wire_breez_node_log_stream(
+      port_,
+    );
+  }
+
+  late final _wire_breez_node_log_streamPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_breez_node_log_stream');
+  late final _wire_breez_node_log_stream = _wire_breez_node_log_streamPtr.asFunction<void Function(int)>();
 
   void wire_breez_log_stream(
     int port_,

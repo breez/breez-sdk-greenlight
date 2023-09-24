@@ -29,12 +29,13 @@ use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
 use crate::{
-    BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
-    EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus, LnUrlWithdrawRequest,
-    LnUrlWithdrawResult, NodeConfig, NopLogger, OpenChannelFeeRequest, OpenChannelFeeResponse,
-    ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse, ReverseSwapFeesRequest,
-    ReverseSwapInfo, ReverseSwapPairInfo, SignMessageRequest, SignMessageResponse,
-    StaticBackupRequest, StaticBackupResponse, SweepRequest, SweepResponse,
+    logger, BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest,
+    CheckMessageResponse, EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus,
+    LnUrlWithdrawRequest, LnUrlWithdrawResult, LogLevel, LogMessage, NodeConfig,
+    OpenChannelFeeRequest, OpenChannelFeeResponse, ReceiveOnchainRequest, ReceivePaymentRequest,
+    ReceivePaymentResponse, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
+    SignMessageRequest, SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
+    SweepRequest, SweepResponse,
 };
 
 /*
@@ -44,25 +45,26 @@ meaning they can be set only once per instance, but calling disconnect() will un
 static BREEZ_SERVICES_INSTANCE: Lazy<Mutex<Option<Arc<BreezServices>>>> =
     Lazy::new(|| Mutex::new(None));
 static NOTIFICATION_STREAM: OnceCell<StreamSink<BreezEvent>> = OnceCell::new();
+static NODE_LOG_STREAM: OnceCell<StreamSink<LogMessage>> = OnceCell::new();
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
 static LOG_INIT: OnceCell<bool> = OnceCell::new();
 
 /*  Breez Services API's */
 
 /// Wrapper around [BreezServices::connect] which also initializes SDK logging
-pub fn connect(config: Config, seed: Vec<u8>) -> Result<()> {
+pub fn connect(config: Config, seed: Vec<u8>, log_file_path: Option<String>) -> Result<()> {
     block_on(async move {
         let mut locked = BREEZ_SERVICES_INSTANCE.lock().await;
         match *locked {
             None => {
-                let breez_services =
-                // TODO
-                    BreezServices::connect(
-                config, seed,
-                Box::new(BindingEventListener {}),
-                Box::new(NopLogger{}),
-                None,
-            ).await?;
+                let breez_services = BreezServices::connect(
+                    config,
+                    seed,
+                    Box::new(BindingEventListener {}),
+                    Box::new(BindingNodeLogger {}),
+                    log_file_path,
+                )
+                .await?;
 
                 *locked = Some(breez_services);
                 Ok(())
@@ -145,6 +147,14 @@ pub fn breez_events_stream(s: StreamSink<BreezEvent>) -> Result<()> {
     NOTIFICATION_STREAM
         .set(s)
         .map_err(|_| anyhow!("events stream already created"))?;
+    Ok(())
+}
+
+/// If used, this must be called before `connect`. It can only be called once.
+pub fn breez_node_log_stream(s: StreamSink<LogMessage>) -> Result<()> {
+    NODE_LOG_STREAM
+        .set(s)
+        .map_err(|_| anyhow!("node log stream already created"))?;
     Ok(())
 }
 
@@ -411,6 +421,18 @@ impl EventListener for BindingEventListener {
     fn on_event(&self, e: BreezEvent) {
         if let Some(stream) = NOTIFICATION_STREAM.get() {
             stream.add(e);
+        }
+    }
+}
+
+struct BindingNodeLogger {}
+
+impl logger::Logger for BindingNodeLogger {
+    fn log(&self, log_message: LogMessage) {
+        if let Some(stream) = NODE_LOG_STREAM.get() {
+            if log_message.level >= LogLevel::Trace {
+                stream.add(log_message);
+            }
         }
     }
 }

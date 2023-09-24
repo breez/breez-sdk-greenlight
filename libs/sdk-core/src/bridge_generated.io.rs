@@ -2,8 +2,13 @@ use super::*;
 // Section: wire functions
 
 #[no_mangle]
-pub extern "C" fn wire_connect(port_: i64, config: *mut wire_Config, seed: *mut wire_uint_8_list) {
-    wire_connect_impl(port_, config, seed)
+pub extern "C" fn wire_connect(
+    port_: i64,
+    config: *mut wire_Config,
+    seed: *mut wire_uint_8_list,
+    log_file_path: *mut wire_uint_8_list,
+) {
+    wire_connect_impl(port_, config, seed, log_file_path)
 }
 
 #[no_mangle]
@@ -59,6 +64,11 @@ pub extern "C" fn wire_static_backup(port_: i64, request: *mut wire_StaticBackup
 #[no_mangle]
 pub extern "C" fn wire_breez_events_stream(port_: i64) {
     wire_breez_events_stream_impl(port_)
+}
+
+#[no_mangle]
+pub extern "C" fn wire_breez_node_log_stream(port_: i64) {
+    wire_breez_node_log_stream_impl(port_)
 }
 
 #[no_mangle]

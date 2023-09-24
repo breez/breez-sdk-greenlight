@@ -166,7 +166,10 @@ uintptr_t new_dart_opaque(Dart_Handle handle);
 
 intptr_t init_frb_dart_api_dl(void *obj);
 
-void wire_connect(int64_t port_, struct wire_Config *config, struct wire_uint_8_list *seed);
+void wire_connect(int64_t port_,
+                  struct wire_Config *config,
+                  struct wire_uint_8_list *seed,
+                  struct wire_uint_8_list *log_file_path);
 
 void wire_is_initialized(int64_t port_);
 
@@ -190,6 +193,8 @@ void wire_default_config(int64_t port_,
 void wire_static_backup(int64_t port_, struct wire_StaticBackupRequest *request);
 
 void wire_breez_events_stream(int64_t port_);
+
+void wire_breez_node_log_stream(int64_t port_);
 
 void wire_breez_log_stream(int64_t port_);
 
@@ -332,6 +337,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_default_config);
     dummy_var ^= ((int64_t) (void*) wire_static_backup);
     dummy_var ^= ((int64_t) (void*) wire_breez_events_stream);
+    dummy_var ^= ((int64_t) (void*) wire_breez_node_log_stream);
     dummy_var ^= ((int64_t) (void*) wire_breez_log_stream);
     dummy_var ^= ((int64_t) (void*) wire_list_lsps);
     dummy_var ^= ((int64_t) (void*) wire_connect_lsp);
