@@ -4,7 +4,7 @@ import 'bridge_generated.dart';
 
 BreezSdkCore? _breezSDK;
 
-const _libName = "libbreez_sdk_core.so";
+const _libName = "libbreez_sdk_bindings.so";
 
 class UnsupportedPlatform implements Exception {
   UnsupportedPlatform(String s);
@@ -19,7 +19,8 @@ BreezSdkCore getNativeToolkit() {
       // iOS and macOS are statically linked
       _breezSDK = BreezSdkCoreImpl(DynamicLibrary.process());
     } else {
-      throw UnsupportedPlatform('${Platform.operatingSystem} is not yet supported!');
+      throw UnsupportedPlatform(
+          '${Platform.operatingSystem} is not yet supported!');
     }
   }
   return _breezSDK!;

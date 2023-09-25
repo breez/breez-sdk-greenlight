@@ -75,9 +75,8 @@ jobs:
       bindings-windows: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version }}
       bindings-darwin: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version }}
       bindings-linux: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version }}
-      bindings-android: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version || !!needs.pre-setup.outputs.golang-package-version }}
+      bindings-android: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version || !!needs.pre-setup.outputs.golang-package-version || !!needs.pre-setup.outputs.flutter-package-version }}
       bindings-ios: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version }}
-      core-android: ${{ !!needs.pre-setup.outputs.flutter-package-version }}
       kotlin: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version }}
       swift: false
       python: false
@@ -127,12 +126,6 @@ jobs:
     needs: setup
     if: ${{ needs.setup.outputs.bindings-ios == 'true' }}
     uses: ./.github/workflows/build-bindings-ios.yml
-    with:
-      ref: ${{ needs.setup.outputs.ref }}
-  build-core-android:
-    needs: setup
-    if: ${{ needs.setup.outputs.core-android == 'true' }}
-    uses: ./.github/workflows/build-core-android.yml
     with:
       ref: ${{ needs.setup.outputs.ref }}
 
@@ -214,7 +207,7 @@ jobs:
   publish-flutter:
     needs: 
       - setup
-      - build-core-android      
+      - build-bindings-android      
     if: ${{ needs.setup.outputs.flutter == 'true' }}
     uses: ./.github/workflows/publish-flutter.yml
     with:
