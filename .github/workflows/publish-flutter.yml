@@ -69,7 +69,9 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: breez-sdk-flutter-${{ inputs.package-version || github.sha }}
-          path: flutter/*
+          path: |
+            flutter/*
+            !flutter/.git
 
       - name: Tag the Flutter package        
         working-directory: flutter
