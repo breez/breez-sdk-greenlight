@@ -621,7 +621,10 @@ pub(crate) mod tests {
     use crate::input_parser::*;
     use crate::models::Network;
 
-    /// Mock server used in tests
+    /// Mock server used in tests. As the server is shared between tests,
+    /// we should not mock the same url twice with two different outputs,
+    /// one way to do so is to add a random string that will be a differentiator
+    /// in the URL.
     pub(crate) static MOCK_HTTP_SERVER: Lazy<Mutex<ServerGuard>> =
         Lazy::new(|| Mutex::new(Server::new()));
 
@@ -1231,7 +1234,7 @@ pub(crate) mod tests {
         // Covers cases in LUD-16: Paying to static internet identifiers (LN Address)
         // https://github.com/lnurl/luds/blob/luds/16.md
 
-        let ln_address = "user@domain.com";
+        let ln_address = "error@domain.com";
         let expected_err = "Error msg from LNURL endpoint found via LN Address";
         let _m = mock_lnurl_ln_address_endpoint(ln_address, Some(expected_err.to_string()))?;
 
@@ -1445,8 +1448,7 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn test_lnurl_pay_lud_17_error() -> Result<()> {
-        let pay_path =
-            "/lnurl-pay?session=db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7";
+        let pay_path = "/lnurl-pay?session=paylud17error";
         let expected_error_msg = "test pay error";
         let _m = mock_lnurl_pay_endpoint(pay_path, Some(expected_error_msg.to_string()));
 
@@ -1460,7 +1462,7 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn test_lnurl_withdraw_lud_17_error() -> Result<()> {
-        let withdraw_path = "/lnurl-withdraw?session=e464f841c44dbdd86cee4f09f4ccd3ced58d2e24f148730ec192748317b74538";
+        let withdraw_path = "/lnurl-withdraw?session=withdrawlud17error";
         let expected_error_msg = "test withdraw error";
         let _m = mock_lnurl_withdraw_endpoint(withdraw_path, Some(expected_error_msg.to_string()));
 
