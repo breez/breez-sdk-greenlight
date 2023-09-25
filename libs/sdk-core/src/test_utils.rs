@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::pin::Pin;
+use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 use std::{mem, vec};
 
@@ -35,6 +36,7 @@ use crate::models::{FiatAPI, LspAPI, NodeAPI, NodeState, Payment, Swap, SwapperA
 use crate::moonpay::MoonPayApi;
 use crate::swap::create_submarine_swap_script;
 use crate::{parse_invoice, Config, CustomMessage, LNInvoice, PaymentResponse, Peer, RouteHint};
+use crate::{LogLevel, LogMessage, Logger};
 use crate::{OpeningFeeParams, OpeningFeeParamsMenu};
 use crate::{ReceivePaymentRequest, SwapInfo};
 
@@ -728,4 +730,41 @@ pub(crate) fn get_test_ofp_generic(
         promise: "".to_string(),
     }
     .into()
+}
+
+/// A simple logger that implements our custom log trait for testing purposes.
+pub struct TestLogger {
+    /// Stores log data with log levels as keys and log messages as values.
+    log_data: Arc<std::sync::Mutex<HashMap<String, String>>>,
+
+    /// Specifies the minimum log level for recording log messages.
+    min_log_level: LogLevel,
+}
+
+impl TestLogger {
+    pub fn new(min_log_level: LogLevel) -> Self {
+        TestLogger {
+            log_data: Arc::new(std::sync::Mutex::new(HashMap::new())),
+            min_log_level,
+        }
+    }
+
+    pub fn get_log_data(&self) -> Arc<std::sync::Mutex<HashMap<String, String>>> {
+        Arc::clone(&self.log_data)
+    }
+}
+
+impl Logger for TestLogger {
+    fn log(&self, log_message: LogMessage) {
+        if log_message.level <= self.min_log_level {
+            let log_level = format!("{:?}", log_message.level);
+            let log_message = log_message.message.to_string();
+
+            if let Ok(mut log_data_guard) = self.log_data.lock() {
+                log_data_guard.insert(log_level, log_message);
+            } else {
+                eprintln!("Failed to lock the Mutex");
+            }
+        }
+    }
 }

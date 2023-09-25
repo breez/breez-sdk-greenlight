@@ -175,6 +175,7 @@ mod grpc;
 pub mod input_parser;
 mod invoice;
 mod lnurl;
+mod logger;
 mod lsp;
 mod lsps0;
 mod lsps2;
@@ -183,6 +184,7 @@ mod moonpay;
 mod persist;
 mod reverseswap;
 mod swap;
+
 #[cfg(test)]
 mod test_utils;
 
@@ -199,7 +201,11 @@ pub use input_parser::{
 };
 pub use invoice::{parse_invoice, LNInvoice, RouteHint, RouteHintHop};
 
+/// Logging macro utilities.
+#[macro_use]
+pub mod macro_logger;
 pub use lnurl::pay::model::*;
+pub use logger::*;
 pub use lsp::LspInformation;
 pub use models::*;
 pub use reverseswap::{ESTIMATED_CLAIM_TX_VSIZE, ESTIMATED_LOCKUP_TX_VSIZE};
