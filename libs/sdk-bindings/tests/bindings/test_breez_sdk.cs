@@ -6,7 +6,7 @@ try
  var seed = BreezSdkMethods.MnemonicToSeed("cruise clever syrup coil cute execute laundry general cover prevent law sheriff");
  BreezSdkMethods.SetLogStream(new LogStreamListener());
  var config = BreezSdkMethods.DefaultConfig(EnvironmentType.STAGING, "code", new NodeConfig.Greenlight(new GreenlightNodeConfig(null, "")));
- BlockingBreezServices sdkServices = BreezSdkMethods.Connect(config, seed, new SDKListener());
+ BlockingBreezServices sdkServices = BreezSdkMethods.Connect(config, seed, new SDKListener(), new SDKNodeLogger{}, null);
  NodeState? nodeInfo = sdkServices.NodeInfo();
  Console.WriteLine(nodeInfo!.id);
 }
@@ -23,12 +23,18 @@ class SDKListener : EventListener
  }
 }
 
+class SDKNodeLogger : Logger
+{
+ public void Log(LogMessage l)
+ {
+  Console.WriteLine(l.line);
+ }
+}
+
 class LogStreamListener : LogStream
 {
  public void Log(LogEntry l)
  {
-  if (l.level != "TRACE") {
-   Console.WriteLine(l.line);
-  }
+  Console.WriteLine(l.line);
  }
 }

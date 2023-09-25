@@ -19,8 +19,17 @@ func (BreezListener) OnEvent(e breez_sdk.BreezEvent) {
 	fmt.Printf("%#v", e)
 }
 
+type BreezNodeLogger struct{}
+
+func (BreezNodeLogger) Log(l breez_sdk.LogMessage) {
+	if l.Level != breez_sdk.LogLevelTrace {
+		fmt.Printf("%v\n", l.Line)
+	}
+}
+
 func main() {
 	breezListener := BreezListener{}
+	breezNodeLogger := BreezNodeLogger{}
 
 	breez_sdk.SetLogStream(breezListener)
 
@@ -32,7 +41,7 @@ func main() {
 
 	inviteCode := "code"
 	config := breez_sdk.DefaultConfig(breez_sdk.EnvironmentTypeStaging, "", breez_sdk.NodeConfigGreenlight{Config: breez_sdk.GreenlightNodeConfig{PartnerCredentials: nil, InviteCode: &inviteCode}})
-	sdkServices, err := breez_sdk.Connect(config, seed, breezListener)
+	sdkServices, err := breez_sdk.Connect(config, seed, breezListener, breezNodeLogger, nil)
 
 	if err != nil {
 		log.Fatalf("Connect failed: %#v", err)
