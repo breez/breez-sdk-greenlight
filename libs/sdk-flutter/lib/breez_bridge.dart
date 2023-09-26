@@ -362,8 +362,7 @@ class BreezSDK {
     required int feeRateSatsPerVbyte,
   }) async {
     await _lnToolkit.sweep(
-      toAddress: toAddress,
-      feeRateSatsPerVbyte: feeRateSatsPerVbyte,
+      request: SweepRequest(toAddress: toAddress, feeRateSatsPerVbyte: feeRateSatsPerVbyte),
     );
     await listPayments();
   }
