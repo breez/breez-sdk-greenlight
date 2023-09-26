@@ -2321,6 +2321,76 @@ fun asSwapInfoList(arr: ReadableArray): List<SwapInfo> {
     return list
 }
 
+fun asSweepRequest(data: ReadableMap): SweepRequest? {
+    if (!validateMandatoryFields(
+            data,
+            arrayOf(
+                "toAddress",
+                "feeRateSatsPerVbyte",
+            ),
+        )
+    ) {
+        return null
+    }
+    val toAddress = data.getString("toAddress")!!
+    val feeRateSatsPerVbyte = data.getDouble("feeRateSatsPerVbyte").toULong()
+    return SweepRequest(
+        toAddress,
+        feeRateSatsPerVbyte,
+    )
+}
+
+fun readableMapOf(sweepRequest: SweepRequest): ReadableMap {
+    return readableMapOf(
+        "toAddress" to sweepRequest.toAddress,
+        "feeRateSatsPerVbyte" to sweepRequest.feeRateSatsPerVbyte,
+    )
+}
+
+fun asSweepRequestList(arr: ReadableArray): List<SweepRequest> {
+    val list = ArrayList<SweepRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asSweepRequest(value)!!)
+            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
+fun asSweepResponse(data: ReadableMap): SweepResponse? {
+    if (!validateMandatoryFields(
+            data,
+            arrayOf(
+                "txid",
+            ),
+        )
+    ) {
+        return null
+    }
+    val txid = data.getArray("txid")?.let { asUByteList(it) }!!
+    return SweepResponse(
+        txid,
+    )
+}
+
+fun readableMapOf(sweepResponse: SweepResponse): ReadableMap {
+    return readableMapOf(
+        "txid" to readableArrayOf(sweepResponse.txid),
+    )
+}
+
+fun asSweepResponseList(arr: ReadableArray): List<SweepResponse> {
+    val list = ArrayList<SweepResponse>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asSweepResponse(value)!!)
+            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asSymbol(data: ReadableMap): Symbol? {
     if (!validateMandatoryFields(
             data,

@@ -783,6 +783,17 @@ pub struct BuyBitcoinResponse {
     pub opening_fee_params: Option<OpeningFeeParams>,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SweepRequest {
+    pub to_address: String,
+    pub fee_rate_sats_per_vbyte: u64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SweepResponse {
+    pub txid: Vec<u8>,
+}
+
 /// Dynamic fee parameters offered by the LSP for opening a new channel.
 ///
 /// After they are received, the client shouldn't change them when calling LSP methods,

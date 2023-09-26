@@ -479,13 +479,16 @@ impl BreezServices {
     }
 
     /// Sweep on-chain funds to the specified on-chain address, with the given feerate
-    pub async fn sweep(&self, to_address: String, fee_rate_sats_per_vbyte: u64) -> Result<()> {
+    pub async fn sweep(&self, request: SweepRequest) -> Result<SweepResponse> {
         self.start_node().await?;
-        self.node_api
-            .sweep(to_address, fee_rate_sats_per_vbyte)
+        let response = self
+            .node_api
+            .sweep(request.to_address, request.fee_rate_sats_per_vbyte)
             .await?;
         self.sync().await?;
-        Ok(())
+        Ok(SweepResponse {
+            txid: response.txid,
+        })
     }
 
     /// Fetch live rates of fiat currencies

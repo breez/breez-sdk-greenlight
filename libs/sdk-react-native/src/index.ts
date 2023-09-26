@@ -379,6 +379,15 @@ export type SwapInfo = {
     channelOpeningFees?: OpeningFeeParams
 }
 
+export type SweepRequest = {
+    toAddress: string
+    feeRateSatsPerVbyte: number
+}
+
+export type SweepResponse = {
+    txid: number[]
+}
+
 export type SymbolType = {
     grapheme?: string
     template?: string
@@ -721,8 +730,9 @@ export const listPayments = async (request: ListPaymentsRequest): Promise<Paymen
     return response
 }
 
-export const sweep = async (toAddress: string, feeRateSatsPerVbyte: number): Promise<void> => {
-    await BreezSDK.sweep(toAddress, feeRateSatsPerVbyte)
+export const sweep = async (request: SweepRequest): Promise<SweepResponse> => {
+    const response = await BreezSDK.sweep(request)
+    return response
 }
 
 export const fetchFiatRates = async (): Promise<Rate[]> => {

@@ -88,6 +88,8 @@ use crate::models::StaticBackupRequest;
 use crate::models::StaticBackupResponse;
 use crate::models::SwapInfo;
 use crate::models::SwapStatus;
+use crate::models::SweepRequest;
+use crate::models::SweepResponse;
 use crate::models::UnspentTransactionOutput;
 
 // Section: wire functions
@@ -581,11 +583,7 @@ fn wire_buy_bitcoin_impl(
         },
     )
 }
-fn wire_sweep_impl(
-    port_: MessagePort,
-    to_address: impl Wire2Api<String> + UnwindSafe,
-    fee_rate_sats_per_vbyte: impl Wire2Api<u64> + UnwindSafe,
-) {
+fn wire_sweep_impl(port_: MessagePort, request: impl Wire2Api<SweepRequest> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
             debug_name: "sweep",
@@ -593,9 +591,8 @@ fn wire_sweep_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_to_address = to_address.wire2api();
-            let api_fee_rate_sats_per_vbyte = fee_rate_sats_per_vbyte.wire2api();
-            move |task_callback| sweep(api_to_address, api_fee_rate_sats_per_vbyte)
+            let api_request = request.wire2api();
+            move |task_callback| sweep(api_request)
         },
     )
 }
@@ -1464,6 +1461,13 @@ impl support::IntoDart for SwapStatus {
     }
 }
 impl support::IntoDartExceptPrimitive for SwapStatus {}
+impl support::IntoDart for SweepResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.txid.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for SweepResponse {}
+
 impl support::IntoDart for Symbol {
     fn into_dart(self) -> support::DartAbi {
         vec![

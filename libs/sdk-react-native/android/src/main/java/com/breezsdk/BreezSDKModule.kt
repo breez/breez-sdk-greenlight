@@ -405,14 +405,14 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
     @ReactMethod
     fun sweep(
-        toAddress: String,
-        feeRateSatsPerVbyte: Double,
+        request: ReadableMap,
         promise: Promise,
     ) {
         executor.execute {
             try {
-                getBreezServices().sweep(toAddress, feeRateSatsPerVbyte.toULong())
-                promise.resolve(readableMapOf("status" to "ok"))
+                val sweepRequest = asSweepRequest(request) ?: run { throw SdkException.Generic("Missing mandatory field request of type SweepRequest") }
+                val res = getBreezServices().sweep(sweepRequest)
+                promise.resolve(readableMapOf(res))
             } catch (e: SdkException) {
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }

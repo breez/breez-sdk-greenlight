@@ -7,6 +7,7 @@ use breez_sdk_core::{
     parse, BreezEvent, BreezServices, BuyBitcoinRequest, CheckMessageRequest, EventListener,
     GreenlightCredentials, ListPaymentsRequest, PaymentTypeFilter, ReceiveOnchainRequest,
     ReceivePaymentRequest, ReverseSwapFeesRequest, SignMessageRequest, StaticBackupRequest,
+    SweepRequest,
 };
 use breez_sdk_core::{Config, GreenlightNodeConfig, NodeConfig};
 use once_cell::sync::OnceCell;
@@ -211,7 +212,12 @@ pub(crate) async fn handle_command(
             to_address,
             sat_per_vbyte: sat_per_byte,
         } => {
-            sdk()?.sweep(to_address, sat_per_byte).await?;
+            sdk()?
+                .sweep(SweepRequest {
+                    to_address,
+                    fee_rate_sats_per_vbyte: sat_per_byte,
+                })
+                .await?;
             Ok("Onchain funds were swept succesfully".to_string())
         }
         Commands::ListLsps {} => {
