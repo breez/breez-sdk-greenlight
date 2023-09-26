@@ -434,7 +434,7 @@ impl BindingLogger {
 
 impl log::Log for BindingLogger {
     fn enabled(&self, m: &Metadata) -> bool {
-        m.level() <= Level::Debug
+        m.level() <= Level::Trace
     }
 
     fn log(&self, record: &Record) {
