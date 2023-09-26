@@ -1,5 +1,5 @@
 use super::db::SqliteStorage;
-use crate::{FullReverseSwapInfo, ReverseSwapInfoCached, ReverseSwapStatus};
+use crate::{log_debug, FullReverseSwapInfo, ReverseSwapInfoCached, ReverseSwapStatus};
 use anyhow::Result;
 use rusqlite::{named_params, Row};
 
@@ -43,7 +43,10 @@ impl SqliteStorage {
         id: &str,
         status: &ReverseSwapStatus,
     ) -> Result<()> {
-        debug!("Persisting new status for reverse swap {id} to be {status:?}");
+        log_debug!(
+            self.logger,
+            "Persisting new status for reverse swap {id} to be {status:?}"
+        );
 
         self.get_connection()?.execute(
             "INSERT OR REPLACE INTO reverse_swaps_info VALUES(:id, :status)",

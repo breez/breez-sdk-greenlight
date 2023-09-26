@@ -1,7 +1,8 @@
 use std::str::FromStr;
+use std::sync::Arc;
 
 use crate::input_parser::get_parse_and_log_response;
-use crate::{lnurl::*, LnUrlCallbackStatus, LnUrlWithdrawResult, LnUrlWithdrawSuccessData};
+use crate::{lnurl::*, LnUrlCallbackStatus, LnUrlWithdrawResult, LnUrlWithdrawSuccessData, Logger};
 use crate::{LNInvoice, LnUrlWithdrawRequestData};
 use anyhow::{anyhow, ensure, Result};
 
@@ -16,6 +17,7 @@ use anyhow::{anyhow, ensure, Result};
 pub(crate) async fn validate_lnurl_withdraw(
     req_data: LnUrlWithdrawRequestData,
     invoice: LNInvoice,
+    logger: Arc<Box<dyn Logger>>,
 ) -> Result<LnUrlWithdrawResult> {
     let amount_msat = invoice
         .amount_msat
@@ -33,7 +35,8 @@ pub(crate) async fn validate_lnurl_withdraw(
 
     // Send invoice to the LNURL-w endpoint via the callback
     let callback_url = build_withdraw_callback_url(&req_data, &invoice)?;
-    let callback_res: LnUrlCallbackStatus = get_parse_and_log_response(&callback_url).await?;
+    let callback_res: LnUrlCallbackStatus =
+        get_parse_and_log_response(&callback_url, Some(logger.clone())).await?;
     let withdraw_status = match callback_res {
         LnUrlCallbackStatus::Ok => LnUrlWithdrawResult::Ok {
             data: LnUrlWithdrawSuccessData { invoice },
@@ -66,6 +69,7 @@ mod tests {
     use crate::input_parser::LnUrlWithdrawRequestData;
     use crate::lnurl::withdraw::*;
     use crate::test_utils::rand_string;
+    use crate::NopLogger;
     use mockito::Mock;
 
     /// Mock an LNURL-withdraw endpoint that responds with an OK to a withdraw attempt
@@ -116,7 +120,7 @@ mod tests {
         let _m = mock_lnurl_withdraw_callback(&withdraw_req, &req_invoice, None)?;
 
         assert!(matches!(
-            validate_lnurl_withdraw(withdraw_req, req_invoice.clone()).await?,
+            validate_lnurl_withdraw(withdraw_req, req_invoice.clone(), Arc::new(Box::new(NopLogger{}))).await?,
             LnUrlWithdrawResult::Ok { data: LnUrlWithdrawSuccessData { invoice } } if invoice == req_invoice
         ));
 
@@ -128,9 +132,9 @@ mod tests {
         let invoice_str = "lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz";
         let invoice = crate::invoice::parse_invoice(invoice_str)?;
         let withdraw_req = get_test_withdraw_req_data(0, 1);
-
+        let logger: Arc<Box<dyn Logger>> = Arc::new(Box::new(NopLogger {}));
         // Fail validation before even calling the endpoint (no mock needed)
-        assert!(validate_lnurl_withdraw(withdraw_req, invoice)
+        assert!(validate_lnurl_withdraw(withdraw_req, invoice, logger)
             .await
             .is_err());
 
@@ -142,12 +146,13 @@ mod tests {
         let invoice_str = "lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz";
         let invoice = crate::invoice::parse_invoice(invoice_str)?;
         let withdraw_req = get_test_withdraw_req_data(0, 100);
+        let logger: Arc<Box<dyn Logger>> = Arc::new(Box::new(NopLogger {}));
 
         // Generic error reported by endpoint
         let _m = mock_lnurl_withdraw_callback(&withdraw_req, &invoice, Some("error".parse()?))?;
 
         assert!(matches!(
-            validate_lnurl_withdraw(withdraw_req, invoice).await?,
+            validate_lnurl_withdraw(withdraw_req, invoice, logger).await?,
             LnUrlWithdrawResult::ErrorStatus { data: _ }
         ));
 

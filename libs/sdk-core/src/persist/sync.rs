@@ -1,4 +1,4 @@
-use crate::ReverseSwapStatus;
+use crate::{log_error, ReverseSwapStatus};
 
 use super::db::SqliteStorage;
 use anyhow::Result;
@@ -92,7 +92,7 @@ impl SqliteStorage {
         match SqliteStorage::migrate_sync_db(sync_data_file.clone()) {
             Ok(_) => {}
             Err(e) => {
-                log::error!("Failed to migrate sync db, probably local db is older than remote, skipping migration: {}", e);
+                log_error!(self.logger, "Failed to migrate sync db, probably local db is older than remote, skipping migration: {}", e);
             }
         }
 
@@ -242,16 +242,21 @@ impl SqliteStorage {
 mod tests {
     use anyhow::{anyhow, Result};
     use rand::random;
+    use std::sync::Arc;
     use std::time::Duration;
 
     use crate::persist::db::SqliteStorage;
     use crate::persist::test_utils;
     use crate::test_utils::{get_test_ofp_48h, rand_string, rand_vec_u8};
+    use crate::NopLogger;
     use crate::SwapInfo;
 
     #[test]
     fn test_sync() -> Result<()> {
-        let local_storage = SqliteStorage::new(test_utils::create_test_sql_dir());
+        let local_storage = SqliteStorage::new(
+            test_utils::create_test_sql_dir(),
+            Arc::new(Box::new(NopLogger {})),
+        );
         local_storage.init()?;
 
         let local_swap_info = create_test_swap_info();
@@ -266,7 +271,10 @@ mod tests {
         remote_swap_info.payment_hash = vec![6];
         remote_swap_info.private_key = vec![6];
 
-        let remote_storage = SqliteStorage::new(test_utils::create_test_sql_dir());
+        let remote_storage = SqliteStorage::new(
+            test_utils::create_test_sql_dir(),
+            Arc::new(Box::new(NopLogger {})),
+        );
         remote_storage.init()?;
         remote_storage.insert_swap(remote_swap_info)?;
 
@@ -293,7 +301,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_sync_swaps_update_swap_fees() -> Result<()> {
-        let local_storage = SqliteStorage::new(test_utils::create_test_sql_dir());
+        let local_storage = SqliteStorage::new(
+            test_utils::create_test_sql_dir(),
+            Arc::new(Box::new(NopLogger {})),
+        );
         local_storage.init()?;
 
         // Swap is created with initial dynamic fee
@@ -322,10 +333,16 @@ mod tests {
 
     #[tokio::test]
     async fn test_sync_swaps_fees_local_vs_remote() -> Result<()> {
-        let local_storage = SqliteStorage::new(test_utils::create_test_sql_dir());
+        let local_storage = SqliteStorage::new(
+            test_utils::create_test_sql_dir(),
+            Arc::new(Box::new(NopLogger {})),
+        );
         local_storage.init()?;
 
-        let remote_storage = SqliteStorage::new(test_utils::create_test_sql_dir());
+        let remote_storage = SqliteStorage::new(
+            test_utils::create_test_sql_dir(),
+            Arc::new(Box::new(NopLogger {})),
+        );
         remote_storage.init()?;
 
         // Created locally: Swaps L1, L2, L3

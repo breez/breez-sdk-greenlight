@@ -1,6 +1,7 @@
 use super::db::SqliteStorage;
 use crate::error::SdkResult;
 use crate::lnurl::pay::model::SuccessActionProcessed;
+use crate::log_debug;
 use crate::models::*;
 use anyhow::{anyhow, Result};
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
@@ -18,7 +19,7 @@ impl SqliteStorage {
     /// can be inserted separately via [SqliteStorage::insert_lnurl_payment_external_info].
     pub fn insert_or_update_payments(&self, transactions: &[Payment]) -> SdkResult<()> {
         let deleted = self.delete_pending_lightning_payments()?;
-        debug!("Deleted {deleted} pending payments");
+        log_debug!(self.logger, "Deleted {deleted} pending payments");
 
         let con = self.get_connection()?;
         let mut prep_statement = con.prepare(
@@ -354,8 +355,10 @@ impl ToSql for SuccessActionProcessed {
 fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
     use crate::lnurl::pay::model::MessageSuccessActionData;
     use crate::lnurl::pay::model::SuccessActionProcessed;
+    use crate::logger::NopLogger;
     use crate::models::{LnPaymentDetails, Payment, PaymentDetails};
     use crate::persist::test_utils;
+    use std::sync::Arc;
 
     let lnurl_metadata = "{'key': 'sample-metadata-val'}";
     let test_ln_address = "test@ln.adddress.com";
@@ -439,7 +442,10 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
             },
         },
     }];
-    let storage = SqliteStorage::new(test_utils::create_test_sql_dir());
+    let storage = SqliteStorage::new(
+        test_utils::create_test_sql_dir(),
+        Arc::new(Box::new(NopLogger {})),
+    );
     storage.init()?;
     storage.insert_or_update_payments(&txs)?;
     storage.insert_or_update_payments(&failed_txs)?;

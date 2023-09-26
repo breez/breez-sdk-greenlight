@@ -39,6 +39,7 @@ use tonic::Streaming;
 use crate::invoice::parse_invoice;
 use crate::models::*;
 use crate::persist::db::SqliteStorage;
+use crate::{log_debug, log_error, log_info, log_warn, Logger};
 use crate::{Channel, ChannelState, NodeConfig};
 use std::iter::Iterator;
 
@@ -52,6 +53,7 @@ pub(crate) struct Greenlight {
     gl_client: Mutex<Option<node::Client>>,
     node_client: Mutex<Option<ClnClient>>,
     persister: Arc<SqliteStorage>,
+    logger: Arc<Box<dyn Logger>>,
 }
 
 impl Greenlight {
@@ -60,11 +62,12 @@ impl Greenlight {
     /// If the node is not created, it will register it using the provided partner credentials
     /// or invite code
     /// If the node is already registered and an existing credentials were found, it will try to
-    /// connect to the node using these credentials.    
+    /// connect to the node using these credentials.
     pub async fn connect(
         config: Config,
         seed: Vec<u8>,
         persister: Arc<SqliteStorage>,
+        logger: Arc<Box<dyn Logger>>,
     ) -> Result<Self> {
         // Derive the encryption key from the seed
         let signer = Signer::new(seed.clone(), config.network.into(), TlsConfig::new()?)?;
@@ -97,7 +100,7 @@ impl Greenlight {
             Some(creds) => {
                 let mut decrypted_credentials = aes_decrypt(encryption_key_slice, creds.as_slice());
                 if decrypted_credentials.is_none() {
-                    info!("Failed to decrypt credentials, trying legacy key");
+                    log_info!(logger, "Failed to decrypt credentials, trying legacy key");
                     decrypted_credentials =
                         aes_decrypt(legacy_encryption_key_slice, creds.as_slice());
                 }
@@ -105,7 +108,7 @@ impl Greenlight {
                     Some(creds) => {
                         let built_credentials: GreenlightCredentials =
                             serde_json::from_slice(creds.as_slice())?;
-                        info!("Initializing greenlight from existing credentials");
+                        log_info!(logger, "Initializing greenlight from existing credentials");
                         Ok(built_credentials)
                     }
                     None => {
@@ -117,18 +120,22 @@ impl Greenlight {
             }
             // In case no credentials were found, try to recover the node
             None => {
-                info!("No credentials found, trying to recover existing node");
+                log_info!(
+                    logger,
+                    "No credentials found, trying to recover existing node"
+                );
                 let recovered = Self::recover(config.network, seed.clone()).await;
                 match recovered {
                     Ok(creds) => Ok(creds),
                     Err(_) => {
                         // If we got here it means we failed to recover so we need to register a new node
-                        info!("Failed to recover node, registering new one");
+                        log_info!(logger, "Failed to recover node, registering new one");
                         let credentials = Self::register(
                             config.clone().network,
                             seed.clone(),
                             register_credentials.partner_credentials,
                             register_credentials.invite_code,
+                            logger.clone(),
                         )
                         .await?;
                         Ok(credentials)
@@ -145,7 +152,7 @@ impl Greenlight {
                 match encryptd_creds {
                     Some(c) => {
                         persister.set_gl_credentials(c)?;
-                        Greenlight::new(config, seed, creds, persister).await
+                        Greenlight::new(config, seed, creds, persister, logger).await
                     }
                     None => {
                         return Err(anyhow!("Failed to encrypt credentials"));
@@ -162,6 +169,7 @@ impl Greenlight {
         seed: Vec<u8>,
         connection_credentials: GreenlightCredentials,
         persister: Arc<SqliteStorage>,
+        logger: Arc<Box<dyn Logger>>,
     ) -> Result<Greenlight> {
         let greenlight_network = sdk_config.network.into();
         let tls_config = TlsConfig::new()?.identity(
@@ -177,6 +185,7 @@ impl Greenlight {
             gl_client: Mutex::new(None),
             node_client: Mutex::new(None),
             persister,
+            logger,
         })
     }
 
@@ -205,6 +214,7 @@ impl Greenlight {
         seed: Vec<u8>,
         register_credentials: Option<GreenlightCredentials>,
         invite_code: Option<String>,
+        logger: Arc<Box<dyn Logger>>,
     ) -> Result<GreenlightCredentials> {
         if invite_code.is_some() && register_credentials.is_some() {
             return Err(anyhow!("Cannot specify both invite code and credentials"));
@@ -212,7 +222,7 @@ impl Greenlight {
         let greenlight_network = network.into();
         let tls_config = match register_credentials {
             Some(creds) => {
-                debug!("registering with credentials");
+                log_debug!(logger, "registering with credentials");
                 TlsConfig::new()?.identity(creds.device_cert, creds.device_key)
             }
             None => TlsConfig::new()?,
@@ -358,7 +368,7 @@ impl NodeAPI for Greenlight {
         since_timestamp: u64,
         balance_changed: bool,
     ) -> Result<SyncResponse> {
-        info!("pull changed since {}", since_timestamp);
+        log_info!(self.logger, "pull changed since {}", since_timestamp);
         let mut node_client = self.get_node_client().await?;
 
         // get node info
@@ -381,7 +391,7 @@ impl NodeAPI for Greenlight {
         {
             Ok(c) => c.into_inner().closedchannels,
             Err(e) => {
-                error!("list closed channels error {:?}", e);
+                log_error!(self.logger, "list closed channels error {:?}", e);
                 vec![]
             }
         };
@@ -395,7 +405,10 @@ impl NodeAPI for Greenlight {
             if let Some(state) = node_state {
                 let mut retry_count = 0;
                 while state.channels_balance_msat == channels_balance && retry_count < 10 {
-                    warn!("balance update was required but was not updated, retrying in 100ms...");
+                    log_warn!(
+                        self.logger,
+                        "balance update was required but was not updated, retrying in 100ms..."
+                    );
                     sleep(Duration::from_millis(100)).await;
                     (
                         all_channels,
@@ -418,7 +431,11 @@ impl NodeAPI for Greenlight {
             .map(TryInto::try_into)
             .collect();
 
-        info!("forgotten_closed_channels {:?}", forgotten_closed_channels);
+        log_info!(
+            self.logger,
+            "forgotten_closed_channels {:?}",
+            forgotten_closed_channels
+        );
 
         let mut all_channel_models: Vec<Channel> =
             all_channels.clone().into_iter().map(|c| c.into()).collect();
@@ -488,7 +505,8 @@ impl NodeAPI for Greenlight {
 
         Ok(SyncResponse {
             node_state,
-            payments: pull_transactions(since_timestamp, node_client.clone()).await?,
+            payments: pull_transactions(since_timestamp, node_client.clone(), self.logger.clone())
+                .await?,
             channels: all_channel_models,
         })
     }
@@ -579,8 +597,12 @@ impl NodeAPI for Greenlight {
     /// Starts the signer that listens in a loop until the shutdown signal is received
     async fn start_signer(&self, shutdown: mpsc::Receiver<()>) {
         match self.signer.run_forever(shutdown).await {
-            Ok(_) => info!("signer exited gracefully"),
-            Err(e) => error!("signer exited with error: {e}"),
+            Ok(_) => {
+                log_info!(self.logger, "signer exited gracefully");
+            }
+            Err(e) => {
+                log_error!(self.logger, "signer exited with error: {e}");
+            }
         }
     }
 
@@ -640,9 +662,11 @@ impl NodeAPI for Greenlight {
         buf.append(&mut hrp_buf);
         // Sign the invoice using the signer
         let raw_result = self.signer.sign_invoice(buf)?;
-        info!(
+        log_info!(
+            self.logger,
             "recover id: {:?} raw = {:?}",
-            raw_result, raw_result[64] as i32
+            raw_result,
+            raw_result[64] as i32
         );
         // contruct the RecoveryId
         let rid = RecoveryId::from_i32(raw_result[64] as i32).expect("recovery ID");
@@ -701,7 +725,7 @@ impl NodeAPI for Greenlight {
                         ));
                     }
                     Err(e) => {
-                        error!("error closing channel: {}", e);
+                        log_error!(self.logger, "error closing channel: {}", e);
                     }
                 };
             }
@@ -905,7 +929,11 @@ enum NodeCommand {
 
 // pulls transactions from greenlight based on last sync timestamp.
 // greenlight gives us the payments via API and for received payments we are looking for settled invoices.
-async fn pull_transactions(since_timestamp: u64, client: node::ClnClient) -> Result<Vec<Payment>> {
+async fn pull_transactions(
+    since_timestamp: u64,
+    client: node::ClnClient,
+    logger: Arc<Box<dyn Logger>>,
+) -> Result<Vec<Payment>> {
     let mut c = client.clone();
 
     // list invoices
@@ -930,7 +958,7 @@ async fn pull_transactions(since_timestamp: u64, client: node::ClnClient) -> Res
         .list_pays(pb::cln::ListpaysRequest::default())
         .await?
         .into_inner();
-    debug!("list payments: {:?}", payments);
+    log_debug!(logger, "list payments: {:?}", payments);
     // construct the payment transactions (pending and complete)
     let outbound_transactions: Result<Vec<Payment>> = payments
         .pays

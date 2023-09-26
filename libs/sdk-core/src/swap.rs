@@ -4,7 +4,10 @@ use std::sync::Arc;
 use crate::binding::parse_invoice;
 use crate::chain::{get_utxos, AddressUtxos, ChainService, MempoolSpace, OnchainTx};
 use crate::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
-use crate::{OpeningFeeParams, ReceivePaymentRequest, SWAP_PAYMENT_FEE_EXPIRY_SECONDS};
+use crate::{
+    log_debug, log_error, log_info, log_warn, Logger, OpeningFeeParams, ReceivePaymentRequest,
+    SWAP_PAYMENT_FEE_EXPIRY_SECONDS,
+};
 use anyhow::{anyhow, Result};
 use bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
 use bitcoin::blockdata::opcodes;
@@ -71,6 +74,7 @@ pub(crate) struct BTCReceiveSwap {
     persister: Arc<crate::persist::db::SqliteStorage>,
     chain_service: Arc<dyn ChainService>,
     payment_receiver: Arc<dyn Receiver>,
+    logger: Arc<Box<dyn Logger>>,
 }
 
 impl BTCReceiveSwap {
@@ -80,6 +84,7 @@ impl BTCReceiveSwap {
         persister: Arc<crate::persist::db::SqliteStorage>,
         chain_service: Arc<MempoolSpace>,
         payment_receiver: Arc<PaymentReceiver>,
+        logger: Arc<Box<dyn Logger>>,
     ) -> Self {
         Self {
             network,
@@ -87,6 +92,7 @@ impl BTCReceiveSwap {
             persister,
             chain_service,
             payment_receiver,
+            logger,
         }
     }
 
@@ -98,14 +104,14 @@ impl BTCReceiveSwap {
     pub(crate) async fn on_event(&self, e: BreezEvent) -> Result<()> {
         match e {
             BreezEvent::NewBlock { block: tip } => {
-                debug!("got chain event {:?}", e);
+                log_debug!(self.logger, "got chain event {:?}", e);
                 _ = self.execute_pending_swaps(tip).await;
             }
 
             // When invoice is paid we lookup for a swap that matches the same hash.
             // In case we find one, we update its paid amount.
             BreezEvent::InvoicePaid { details } => {
-                debug!("swap InvoicePaid event!");
+                log_debug!(self.logger, "swap InvoicePaid event!");
                 let hash_raw = hex::decode(details.payment_hash.clone())?;
                 let swap_info = self.persister.get_swap_info_by_hash(&hash_raw)?;
                 if swap_info.is_some() {
@@ -140,7 +146,10 @@ impl BTCReceiveSwap {
 
         // check first that we don't have any swap in progress waiting for redeem.
         if let Some(in_progress_swap) = self.list_unused()?.first().cloned() {
-            info!("Found unused swap when trying to create new swap address");
+            log_info!(
+                self.logger,
+                "Found unused swap when trying to create new swap address"
+            );
 
             self.persister.update_swap_fees(
                 in_progress_swap.bitcoin_address.clone(),
@@ -270,7 +279,8 @@ impl BTCReceiveSwap {
 
             if redeem_res.is_err() {
                 let err = redeem_res.as_ref().err().unwrap();
-                error!(
+                log_error!(
+                    self.logger,
                     "failed to redeem swap {:?}: {} {}",
                     err,
                     s.bitcoin_address,
@@ -279,11 +289,12 @@ impl BTCReceiveSwap {
                 self.persister
                     .update_swap_redeem_error(s.bitcoin_address, err.to_string())?;
             } else {
-                info!(
+                log_info!(
+                    self.logger,
                     "succeed to redeem swap {:?}: {}",
                     s.bitcoin_address,
                     s.bolt11.unwrap_or_default()
-                )
+                );
             }
         }
 
@@ -298,11 +309,12 @@ impl BTCReceiveSwap {
                 .refresh_swap_on_chain_status(address.clone(), tip)
                 .await;
             if result.is_err() {
-                error!(
+                log_error!(
+                    self.logger,
                     "failed to refresh swap status for address {} {}",
                     address.clone(),
                     result.err().unwrap()
-                )
+                );
             }
         }
         self.list_monitored()
@@ -353,7 +365,8 @@ impl BTCReceiveSwap {
             swap_status = SwapStatus::Expired
         }
 
-        debug!(
+        log_debug!(
+            self.logger,
             "updating swap on-chain info {:?}: confirmed_sats={:?} refund_tx_ids={:?}, confirmed_tx_ids={:?} swap_status={:?}",
             bitcoin_address.clone(), utxos.confirmed_sats(), swap_info.refund_tx_ids, utxos.confirmed_tx_ids(), swap_status
         );
@@ -362,7 +375,8 @@ impl BTCReceiveSwap {
             .persister
             .get_completed_payment_by_hash(&hex::encode(swap_info.payment_hash.clone()))?;
         if payment.is_some() {
-            debug!(
+            log_debug!(
+                self.logger,
                 "found payment for hash {:?}, {:?}",
                 &hex::encode(swap_info.payment_hash.clone()),
                 payment
@@ -418,9 +432,14 @@ impl BTCReceiveSwap {
         // Making sure the invoice amount matches the on-chain amount
         let payreq = swap_info.bolt11.unwrap();
         let ln_invoice = parse_invoice(payreq.clone())?;
-        debug!("swap info confirmed = {}", swap_info.confirmed_sats);
+        log_debug!(
+            self.logger,
+            "swap info confirmed = {}",
+            swap_info.confirmed_sats
+        );
         if ln_invoice.amount_msat.unwrap() != (swap_info.confirmed_sats * 1000) {
-            warn!(
+            log_warn!(
+                self.logger,
                 "invoice amount doesn't match confirmed sats {:?}",
                 ln_invoice.amount_msat.unwrap()
             );
@@ -462,8 +481,13 @@ impl BTCReceiveSwap {
             swap_info.lock_height as u32,
             &script,
             sat_per_vbyte,
+            self.logger.clone(),
         )?;
-        info!("broadcasting refund tx {:?}", hex::encode(&refund_tx));
+        log_info!(
+            self.logger,
+            "broadcasting refund tx {:?}",
+            hex::encode(&refund_tx)
+        );
         let txid = self.chain_service.broadcast_transaction(refund_tx).await?;
 
         self.persister.update_swap_chain_info(
@@ -550,12 +574,13 @@ fn create_refund_tx(
     lock_delay: u32,
     input_script: &Script,
     sat_per_vbyte: u32,
+    logger: Arc<Box<dyn Logger>>,
 ) -> Result<Vec<u8>> {
     if utxos.confirmed.is_empty() {
         return Err(anyhow!("must have at least one input"));
     }
 
-    info!("creating refund tx sat_per_vbyte {}", sat_per_vbyte);
+    log_info!(logger, "creating refund tx sat_per_vbyte {}", sat_per_vbyte);
 
     let lock_time = utxos.confirmed.iter().fold(0, |accum, item| {
         let confirmed_height = item.block_height.unwrap();
@@ -652,6 +677,8 @@ mod tests {
     };
 
     use crate::chain::{AddressUtxos, Utxo};
+    use crate::log_debug;
+    use crate::logger::{Logger, NopLogger};
     use crate::test_utils::get_test_ofp;
     use crate::{
         breez_services::tests::get_dummy_node_state,
@@ -744,7 +771,8 @@ mod tests {
     #[tokio::test]
     async fn test_expired_swap() -> Result<()> {
         let chain_service = Arc::new(MockChainService::default());
-        let (mut swapper, _) = create_swapper(chain_service.clone())?;
+        let (mut swapper, _) =
+            create_swapper(chain_service.clone(), Arc::new(Box::new(NopLogger {})))?;
         let swap_info = swapper
             .create_swap_address(get_test_ofp(10, 10, true).into())
             .await?;
@@ -802,7 +830,8 @@ mod tests {
     #[tokio::test]
     async fn test_redeem_swap() -> Result<()> {
         let chain_service = Arc::new(MockChainService::default());
-        let (mut swapper, persister) = create_swapper(chain_service.clone())?;
+        let (mut swapper, persister) =
+            create_swapper(chain_service.clone(), Arc::new(Box::new(NopLogger {})))?;
         let swap_info = swapper
             .create_swap_address(get_test_ofp(10, 10, true).into())
             .await?;
@@ -885,7 +914,8 @@ mod tests {
     #[tokio::test]
     async fn test_spent_swap() -> Result<()> {
         let chain_service = Arc::new(MockChainService::default());
-        let (mut swapper, _) = create_swapper(chain_service.clone())?;
+        let (mut swapper, _) =
+            create_swapper(chain_service.clone(), Arc::new(Box::new(NopLogger {})))?;
         let swap_info = swapper
             .create_swap_address(get_test_ofp(10, 10, true).into())
             .await?;
@@ -976,6 +1006,7 @@ mod tests {
             lock_time as u32,
             &script,
             0,
+            Arc::new(Box::new(NopLogger {})),
         )?;
 
         /*  We test that the refund transaction looks like this
@@ -1028,9 +1059,10 @@ mod tests {
 
     fn create_swapper(
         chain_service: Arc<dyn ChainService>,
+        logger: Arc<Box<dyn Logger>>,
     ) -> Result<(BTCReceiveSwap, Arc<SqliteStorage>)> {
         let config = create_test_config();
-        debug!("working = {}", config.working_dir);
+        log_debug!(logger, "working = {}", config.working_dir);
 
         let persister = Arc::new(create_test_persister(config));
         persister.init()?;
@@ -1044,6 +1076,7 @@ mod tests {
             persister: persister.clone(),
             chain_service: chain_service.clone(),
             payment_receiver: Arc::new(MockReceiver::default()),
+            logger,
         };
         Ok((swapper, persister))
     }

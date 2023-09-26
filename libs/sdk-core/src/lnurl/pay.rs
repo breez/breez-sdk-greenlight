@@ -1,11 +1,12 @@
-use crate::input_parser::*;
 use crate::invoice::parse_invoice;
 use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 use crate::lnurl::pay::model::{CallbackResponse, SuccessAction, ValidatedCallbackResponse};
 use crate::LnUrlErrorData;
+use crate::{input_parser::*, Logger};
 use anyhow::{anyhow, Result};
 use bitcoin::hashes::{sha256, Hash};
 use std::str::FromStr;
+use std::sync::Arc;
 
 type Aes256CbcEnc = cbc::Encryptor<aes::Aes256>;
 type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
@@ -18,6 +19,7 @@ pub(crate) async fn validate_lnurl_pay(
     user_amount_sat: u64,
     comment: Option<String>,
     req_data: LnUrlPayRequestData,
+    logger: Arc<Box<dyn Logger>>,
 ) -> Result<ValidatedCallbackResponse> {
     validate_user_input(
         user_amount_sat * 1000,
@@ -28,7 +30,7 @@ pub(crate) async fn validate_lnurl_pay(
     )?;
 
     let callback_url = build_pay_callback_url(user_amount_sat, &comment, &req_data)?;
-    let callback_resp_text = get_and_log_response(&callback_url).await?;
+    let callback_resp_text = get_and_log_response(&callback_url, Some(logger)).await?;
 
     if let Ok(err) = serde_json::from_str::<LnUrlErrorData>(&callback_resp_text) {
         Ok(ValidatedCallbackResponse::EndpointError { data: err })

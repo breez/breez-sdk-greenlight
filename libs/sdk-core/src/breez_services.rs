@@ -41,6 +41,7 @@ use crate::lnurl::pay::model::{
 };
 use crate::lnurl::pay::validate_lnurl_pay;
 use crate::lnurl::withdraw::validate_lnurl_withdraw;
+use crate::logger::Logger;
 use crate::lsp::LspInformation;
 use crate::models::{
     parse_short_channel_id, ChannelState, ClosedChannelPaymentDetails, Config, EnvironmentType,
@@ -153,6 +154,7 @@ pub struct BreezServices {
     btc_receive_swapper: Arc<BTCReceiveSwap>,
     btc_send_swapper: Arc<BTCSendSwap>,
     event_listener: Option<Box<dyn EventListener>>,
+    logger: Arc<Box<dyn Logger>>,
     backup_watcher: Arc<BackupWatcher>,
     shutdown_sender: watch::Sender<()>,
     shutdown_receiver: watch::Receiver<()>,
@@ -169,20 +171,24 @@ impl BreezServices {
     /// When using a new `invite_code`, the seed should be derived from a new random mnemonic.
     /// When re-using an `invite_code`, the same mnemonic should be used as when the `invite_code` was first used.
     /// * `event_listener` - Listener to SDK events
+    /// * `node_logger` - Local logger used by the node
+    /// * `log_file_path` - an optional file path to write node logs in
     ///
     pub async fn connect(
         config: Config,
         seed: Vec<u8>,
         event_listener: Box<dyn EventListener>,
+        node_logger: Box<dyn Logger>,
+        log_file_path: Option<String>,
     ) -> SdkResult<Arc<BreezServices>> {
         let start = Instant::now();
         let services = BreezServicesBuilder::new(config)
             .seed(seed)
-            .build(Some(event_listener))
+            .build(Some(event_listener), node_logger, log_file_path)
             .await?;
         services.start().await?;
         let connect_duration = start.elapsed();
-        info!("SDK connected in: {:?}", connect_duration);
+        log_info!(services.logger, "SDK connected in: {:?}", connect_duration);
         Ok(services)
     }
 
@@ -203,7 +209,7 @@ impl BreezServices {
         let start = Instant::now();
         self.start_background_tasks().await?;
         let start_duration = start.elapsed();
-        info!("SDK initialized in: {:?}", start_duration);
+        log_info!(self.logger, "SDK initialized in: {:?}", start_duration);
         *started = true;
         Ok(())
     }
@@ -307,7 +313,14 @@ impl BreezServices {
         comment: Option<String>,
         req_data: LnUrlPayRequestData,
     ) -> Result<LnUrlPayResult> {
-        match validate_lnurl_pay(user_amount_sat, comment, req_data.clone()).await? {
+        match validate_lnurl_pay(
+            user_amount_sat,
+            comment,
+            req_data.clone(),
+            self.logger.clone(),
+        )
+        .await?
+        {
             ValidatedCallbackResponse::EndpointError { data: e } => {
                 Ok(LnUrlPayResult::EndpointError { data: e })
             }
@@ -382,7 +395,7 @@ impl BreezServices {
             .ln_invoice;
 
         let lnurl_w_endpoint = request.data.callback.clone();
-        let res = validate_lnurl_withdraw(request.data, invoice).await?;
+        let res = validate_lnurl_withdraw(request.data, invoice, self.logger.clone()).await?;
 
         if let LnUrlWithdrawResult::Ok { ref data } = res {
             // If endpoint was successfully called, store the LNURL-withdraw endpoint URL as metadata linked to the invoice
@@ -404,7 +417,7 @@ impl BreezServices {
     /// This call will sign `k1` of the LNURL endpoint (`req_data`) on `secp256k1` using `linkingPrivKey` and DER-encodes the signature.
     /// If they match the endpoint requirements, the LNURL auth request is made. A successful result here means the client signature is verified.
     pub async fn lnurl_auth(&self, req_data: LnUrlAuthRequestData) -> Result<LnUrlCallbackStatus> {
-        perform_lnurl_auth(self.node_api.clone(), req_data).await
+        perform_lnurl_auth(self.node_api.clone(), req_data, self.logger.clone()).await
     }
 
     /// Creates an bolt11 payment request.
@@ -751,9 +764,11 @@ impl BreezServices {
             .pull_changed(since_timestamp, balance_changed)
             .await?;
 
-        debug!(
+        log_debug!(
+            self.logger,
             "pull changed time={:?} {:?}",
-            since_timestamp, new_data.payments
+            since_timestamp,
+            new_data.payments
         );
 
         // update node state and channels state
@@ -787,7 +802,7 @@ impl BreezServices {
         self.persister.insert_or_update_payments(&payments)?;
 
         let duration = start.elapsed();
-        info!("Sync duration: {:?}", duration);
+        log_info!(self.logger, "Sync duration: {:?}", duration);
 
         self.notify_event_listeners(BreezEvent::Synced).await?;
         Ok(())
@@ -798,12 +813,22 @@ impl BreezServices {
         if let Ok(lsp_info) = self.lsp_info().await {
             let node_id = lsp_info.pubkey;
             let address = lsp_info.host;
-            debug!("connecting to lsp {}@{}", node_id.clone(), address.clone());
+            log_debug!(
+                self.logger,
+                "connecting to lsp {}@{}",
+                node_id.clone(),
+                address.clone()
+            );
             self.node_api
                 .connect_peer(node_id.clone(), address.clone())
                 .await
                 .map_err(anyhow::Error::msg)?;
-            debug!("connected to lsp {}@{}", node_id.clone(), address.clone());
+            log_debug!(
+                self.logger,
+                "connected to lsp {}@{}",
+                node_id.clone(),
+                address.clone()
+            );
         }
         Ok(())
     }
@@ -842,22 +867,26 @@ impl BreezServices {
     }
 
     async fn on_event(&self, e: BreezEvent) -> Result<()> {
-        debug!("breez services got event {:?}", e);
+        log_debug!(self.logger, "breez services got event {:?}", e);
         self.notify_event_listeners(e.clone()).await
     }
 
     async fn notify_event_listeners(&self, e: BreezEvent) -> Result<()> {
         if let Err(err) = self.btc_receive_swapper.on_event(e.clone()).await {
-            debug!(
+            log_debug!(
+                self.logger,
                 "btc_receive_swapper failed to process event {:?}: {:?}",
-                e, err
-            )
+                e,
+                err
+            );
         };
         if let Err(err) = self.btc_send_swapper.on_event(e.clone()).await {
-            debug!(
+            log_debug!(
+                self.logger,
                 "btc_send_swapper failed to process event {:?}: {:?}",
-                e, err
-            )
+                e,
+                err
+            );
         };
 
         if self.event_listener.is_some() {
@@ -896,7 +925,7 @@ impl BreezServices {
     /// This data enables the user to recover the node in an external core ligntning node.
     /// See here for instructions on how to recover using this data: https://docs.corelightning.org/docs/backup-and-recovery#backing-up-using-static-channel-backup
     pub fn static_backup(request: StaticBackupRequest) -> SdkResult<StaticBackupResponse> {
-        let storage = SqliteStorage::new(request.working_dir);
+        let storage = SqliteStorage::new(request.working_dir, Arc::new(Box::new(ClassicLogger {})));
         Ok(StaticBackupResponse {
             backup: storage.get_static_backup()?,
         })
@@ -934,13 +963,16 @@ impl BreezServices {
         let sync_breez_services = self.clone();
         match sync_breez_services.persister.get_node_state()? {
             Some(node) => {
-                info!("Starting existing node {}", node.id)
+                log_info!(self.logger, "Starting existing node {}", node.id);
             }
             None => {
                 // In case it is a first run we sync in foreground to get the node state.
-                info!("First run, syncing in foreground");
+                log_info!(self.logger, "First run, syncing in foreground");
                 sync_breez_services.sync().await?;
-                info!("First run, finished running syncing in foreground");
+                log_info!(
+                    self.logger,
+                    "First run, finished running syncing in foreground"
+                );
             }
         }
 
@@ -961,11 +993,12 @@ impl BreezServices {
 
         // Stop signer on shutdown
         let mut shutdown_receiver = self.shutdown_receiver.clone();
+        let logger = self.logger.clone();
         tokio::spawn(async move {
             // start the backup watcher
             _ = shutdown_receiver.changed().await;
             _ = shutdown_signer_sender.send(()).await;
-            debug!("Received the signal to exit event polling loop");
+            log_debug!(logger, "Received the signal to exit event polling loop");
         });
 
         Ok(())
@@ -1012,14 +1045,14 @@ impl BreezServices {
                   backup_event = events_stream.recv() => {
                    if let Ok(e) = backup_event {
                     if let Err(err) = cloned.notify_event_listeners(e).await {
-                        error!("error handling backup event: {:?}", err);
+                        log_error!(cloned.logger, "error handling backup event: {:?}", err);
                     }
                    }
                    let backup_status = cloned.backup_status();
-                   info!("backup status: {:?}", backup_status);
+                   log_info!(cloned.logger, "backup status: {:?}", backup_status);
                   },
                   _ = shutdown_receiver.changed() => {
-                   debug!("Backup watcher task completed");
+                   log_error!(cloned.logger, "Backup watcher task completed");
                    break;
                  }
                 }
@@ -1042,17 +1075,17 @@ impl BreezServices {
                                 paid_invoice_res = invoice_stream.message() => {
                                       match paid_invoice_res {
                                           Ok(Some(i)) => {
-                                              debug!("invoice stream got new invoice");
+                                              log_debug!(cloned.logger ,"invoice stream got new invoice");
                                               if let Some(gl_client::pb::incoming_payment::Details::Offchain(p)) = i.details {
                                                   let payment: Option<crate::models::Payment> = p.clone().try_into().ok();
                                                   if payment.is_some() {
                                                       let res = cloned
                                                           .persister
                                                           .insert_or_update_payments(&vec![payment.unwrap()]);
-                                                      debug!("paid invoice was added to payments list {:?}", res);
+                                                        log_debug!(cloned.logger, "paid invoice was added to payments list {:?}", res);
                                                   }
                                                   if let Err(e) = cloned.do_sync(true).await {
-                                                        error!("failed to sync after paid invoice: {:?}", e);
+                                                    log_error!(cloned.logger, "failed to sync after paid invoice: {:?}", e);
                                                   }
                                                   _ = cloned.on_event(BreezEvent::InvoicePaid {
                                                       details: InvoicePaidDetails {
@@ -1063,18 +1096,18 @@ impl BreezServices {
                                               }
                                           }
                                           Ok(None) => {
-                                              debug!("invoice stream got None");
+                                              log_debug!(cloned.logger, "invoice stream got None");
                                               break;
                                           }
                                           Err(err) => {
-                                              debug!("invoice stream got error: {:?}", err);
+                                              log_debug!(cloned.logger, "invoice stream got error: {:?}", err);
                                               break;
                                           }
                                       }
                              }
 
                              _ = shutdown_receiver.changed() => {
-                              debug!("Invoice tracking task has completed");
+                              log_debug!(cloned.logger, "Invoice tracking task has completed");
                               return;
                              }
                         }
@@ -1100,21 +1133,21 @@ impl BreezServices {
                          log_message_res = log_stream.message() => {
                           match log_message_res {
                            Ok(Some(l)) => {
-                            debug!("node-logs: {}", l.line);
+                            log_debug!(cloned.logger, "node-logs: {}", l.line);
                            },
                            // stream is closed, renew it
                            Ok(None) => {
                             break;
                            }
                            Err(err) => {
-                            debug!("failed to process log entry {:?}", err);
+                            log_debug!(cloned.logger, "failed to process log entry {:?}", err);
                             break;
                            }
                           };
                          }
 
                          _ = shutdown_receiver.changed() => {
-                          debug!("Track logs task has completed");
+                          log_debug!(cloned.logger, "Track logs task has completed");
                           return;
                          }
                         }
@@ -1137,7 +1170,7 @@ impl BreezServices {
                   let tip_res = cloned.chain_service.current_tip().await;
                   match tip_res {
                    Ok(next_block) => {
-                    debug!("got tip {:?}", next_block);
+                    log_debug!(cloned.logger, "got tip {:?}", next_block);
                     if next_block > current_block {
                      _ = cloned.sync().await;
                      _  = cloned.on_event(BreezEvent::NewBlock{block: next_block}).await;
@@ -1145,13 +1178,13 @@ impl BreezServices {
                     current_block = next_block
                    },
                    Err(e) => {
-                    error!("failed to fetch next block {}", e)
+                    log_error!(cloned.logger, "failed to fetch next block {}", e);
                    }
                   };
                  }
 
                  _ = shutdown_receiver.changed() => {
-                  debug!("New blocks task has completed");
+                  log_debug!(cloned.logger, "New blocks task has completed");
                   return;
                  }
                 }
@@ -1452,18 +1485,40 @@ impl BreezServicesBuilder {
     pub async fn build(
         &self,
         event_listener: Option<Box<dyn EventListener>>,
+        node_logger: Box<dyn Logger>,
+        log_file_path: Option<String>,
     ) -> SdkResult<Arc<BreezServices>> {
         if self.node_api.is_none() && self.seed.is_none() {
             return Err(SdkError::InitFailed {
                 err: "Either node_api or both credentials and seed should be provided".into(),
             });
         }
+        // Create the logger that the node will use. It will be a multilogger containing
+        // an app_logger and a file logger is the user provided a file_path.
+        let mut loggers: Vec<Box<dyn Logger>> = vec![node_logger];
+
+        if let Some(file_path) = log_file_path.clone() {
+            let file_path_str: &str = &file_path;
+
+            match FileSystemLogger::new(file_path_str, LogLevel::Trace) {
+                Ok(file_logger) => loggers.push(Box::new(file_logger) as Box<dyn Logger>),
+                Err(err) => {
+                    return Err(SdkError::InitFailed {
+                        err: format!("Failed to create FileSystemLogger: {:?}", err),
+                    });
+                }
+            }
+        }
+
+        let logger: Arc<Box<dyn Logger>> = Arc::new(Box::new(MultiLogger::new(loggers)));
 
         // The storage is implemented via sqlite.
-        let persister = self
-            .persister
-            .clone()
-            .unwrap_or_else(|| Arc::new(SqliteStorage::new(self.config.working_dir.clone())));
+        let persister = self.persister.clone().unwrap_or_else(|| {
+            Arc::new(SqliteStorage::new(
+                self.config.working_dir.clone(),
+                logger.clone(),
+            ))
+        });
         persister.init()?;
 
         let mut node_api = self.node_api.clone();
@@ -1473,6 +1528,7 @@ impl BreezServicesBuilder {
                 self.config.clone(),
                 self.seed.clone().unwrap(),
                 persister.clone(),
+                logger.clone(),
             )
             .await
             .map_err(|e| SdkError::InitFailed {
@@ -1481,7 +1537,10 @@ impl BreezServicesBuilder {
             let gl_arc = Arc::new(greenlight);
             node_api = Some(gl_arc.clone());
             if backup_transport.is_none() {
-                backup_transport = Some(Arc::new(GLBackupTransport { inner: gl_arc }));
+                backup_transport = Some(Arc::new(GLBackupTransport {
+                    inner: gl_arc,
+                    logger: logger.clone(),
+                }))
             }
         }
 
@@ -1528,17 +1587,20 @@ impl BreezServicesBuilder {
             persister.clone(),
             backup_encryption_key.to_priv().to_bytes(),
             legacy_backup_encryption_key.to_priv().to_bytes(),
+            logger.clone(),
         );
 
         // breez_server provides both FiatAPI & LspAPI implementations
         let breez_server = Arc::new(BreezServer::new(
             self.config.breezserver.clone(),
             self.config.api_key.clone(),
+            logger.clone(),
         ));
 
         // mempool space is used to monitor the chain
         let chain_service = Arc::new(MempoolSpace::from_base_url(
             self.config.mempoolspace_url.clone(),
+            logger.clone(),
         ));
 
         let current_lsp_id = persister.get_lsp_id()?;
@@ -1551,6 +1613,7 @@ impl BreezServicesBuilder {
             node_api: unwrapped_node_api.clone(),
             lsp: breez_server.clone(),
             persister: persister.clone(),
+            logger: logger.clone(),
         });
 
         let btc_receive_swapper = Arc::new(BTCReceiveSwap::new(
@@ -1561,6 +1624,7 @@ impl BreezServicesBuilder {
             persister.clone(),
             chain_service.clone(),
             payment_receiver.clone(),
+            logger.clone(),
         ));
 
         let btc_send_swapper = Arc::new(BTCSendSwap::new(
@@ -1568,12 +1632,15 @@ impl BreezServicesBuilder {
             self.reverse_swapper_api
                 .clone()
                 .unwrap_or_else(|| breez_server.clone()),
-            self.reverse_swap_service_api
-                .clone()
-                .unwrap_or_else(|| Arc::new(BoltzApi {})),
+            self.reverse_swap_service_api.clone().unwrap_or_else(|| {
+                Arc::new(BoltzApi {
+                    logger: logger.clone(),
+                })
+            }),
             persister.clone(),
             chain_service.clone(),
             unwrapped_node_api.clone(),
+            logger.clone(),
         ));
 
         // create a shutdown channel (sender and receiver)
@@ -1598,6 +1665,7 @@ impl BreezServicesBuilder {
             btc_send_swapper,
             payment_receiver,
             event_listener,
+            logger: logger.clone(),
             backup_watcher: Arc::new(backup_watcher),
             shutdown_sender,
             shutdown_receiver,
@@ -1611,13 +1679,15 @@ impl BreezServicesBuilder {
 pub struct BreezServer {
     server_url: String,
     api_key: Option<String>,
+    pub logger: Arc<Box<dyn Logger>>,
 }
 
 impl BreezServer {
-    pub fn new(server_url: String, api_key: Option<String>) -> Self {
+    pub fn new(server_url: String, api_key: Option<String>, logger: Arc<Box<dyn Logger>>) -> Self {
         Self {
             server_url,
             api_key,
+            logger,
         }
     }
 
@@ -1701,6 +1771,7 @@ pub(crate) struct PaymentReceiver {
     node_api: Arc<dyn NodeAPI>,
     lsp: Arc<dyn LspAPI>,
     persister: Arc<SqliteStorage>,
+    logger: Arc<Box<dyn Logger>>,
 }
 
 #[tonic::async_trait]
@@ -1734,7 +1805,7 @@ impl Receiver for PaymentReceiver {
         // check if we need to open channel
         let open_channel_needed = node_state.inbound_liquidity_msats < request.amount_msat;
         if open_channel_needed {
-            info!("We need to open a channel");
+            log_info!(self.logger, "We need to open a channel");
 
             // we need to open channel so we are calculating the fees for the LSP (coming either from the user, or from the LSP)
             let ofp = match request.opening_fee_params {
@@ -1745,7 +1816,7 @@ impl Receiver for PaymentReceiver {
             channel_opening_fee_params = Some(ofp.clone());
             channel_fees_msat = Some(ofp.get_channel_fees_msat_for(request.amount_msat));
             if let Some(channel_fees_msat) = channel_fees_msat {
-                info!("zero-conf fee calculation option: lsp fee rate (proportional): {}:  (minimum {}), total fees for channel: {}",
+                log_info!(self.logger, "zero-conf fee calculation option: lsp fee rate (proportional): {}:  (minimum {}), total fees for channel: {}",
                     ofp.proportional, ofp.min_msat, channel_fees_msat);
 
                 if request.amount_msat < channel_fees_msat + 1000 {
@@ -1761,7 +1832,7 @@ impl Receiver for PaymentReceiver {
             }
         } else {
             // not opening a channel so we need to get the real channel id into the routing hints
-            info!("Finding channel ID for routing hint");
+            log_info!(self.logger, "Finding channel ID for routing hint");
             for peer in self.node_api.list_peers().await? {
                 if hex::encode(peer.id) == lsp_info.pubkey && !peer.channels.is_empty() {
                     let active_channel = peer
@@ -1777,13 +1848,16 @@ impl Receiver for PaymentReceiver {
                         .unwrap_or(active_channel.clone().short_channel_id);
 
                     short_channel_id = parse_short_channel_id(&hint)?;
-                    info!("Found channel ID: {short_channel_id} {active_channel:?}");
+                    log_info!(
+                        self.logger,
+                        "Found channel ID: {short_channel_id} {active_channel:?}"
+                    );
                     break;
                 }
             }
         }
 
-        info!("Creating invoice on NodeAPI");
+        log_info!(self.logger, "Creating invoice on NodeAPI");
         let invoice = &self
             .node_api
             .create_invoice(
@@ -1795,13 +1869,21 @@ impl Receiver for PaymentReceiver {
                 request.cltv,
             )
             .await?;
-        info!("Invoice created {}", invoice);
+        log_info!(self.logger, "Invoice created {}", invoice);
 
         let mut parsed_invoice = parse_invoice(invoice)?;
 
         // check if the lsp hint already exists
-        info!("Existing routing hints {:?}", parsed_invoice.routing_hints);
-        info!("lsp info pubkey = {:?}", lsp_info.pubkey.clone());
+        log_info!(
+            self.logger,
+            "Existing routing hints {:?}",
+            parsed_invoice.routing_hints
+        );
+        log_info!(
+            self.logger,
+            "lsp info pubkey = {:?}",
+            lsp_info.pubkey.clone()
+        );
         let has_lsp_hint = parsed_invoice.routing_hints.iter().any(|h| {
             h.hops
                 .iter()
@@ -1822,7 +1904,7 @@ impl Receiver for PaymentReceiver {
                 htlc_maximum_msat: None,
             };
 
-            info!("Adding LSP hop as routing hint: {:?}", lsp_hop);
+            log_info!(self.logger, "Adding LSP hop as routing hint: {:?}", lsp_hop);
             lsp_hint = Some(RouteHint {
                 hops: vec![lsp_hop],
             });
@@ -1834,16 +1916,20 @@ impl Receiver for PaymentReceiver {
             let raw_invoice_with_hint =
                 add_lsp_routing_hints(invoice.clone(), lsp_hint, request.amount_msat)?;
 
-            info!("Routing hint added");
+            log_info!(self.logger, "Routing hint added");
             let signed_invoice_with_hint = self.node_api.sign_invoice(raw_invoice_with_hint)?;
-            info!("Signed invoice with hint = {}", signed_invoice_with_hint);
+            log_info!(
+                self.logger,
+                "Signed invoice with hint = {}",
+                signed_invoice_with_hint
+            );
 
             parsed_invoice = parse_invoice(&signed_invoice_with_hint)?;
         }
 
         // register the payment at the lsp if needed
         if open_channel_needed {
-            info!("Registering payment with LSP");
+            log_info!(self.logger, "Registering payment with LSP");
 
             if channel_opening_fee_params.is_none() {
                 return Err(SdkError::ReceivePaymentFailed {
@@ -1878,7 +1964,7 @@ impl Receiver for PaymentReceiver {
                     },
                 )
                 .await?;
-            info!("Payment registered");
+            log_info!(self.logger, "Payment registered");
         }
 
         // Make sure we save the large amount so we can deduce the fees later.
@@ -1938,6 +2024,7 @@ pub(crate) mod tests {
     use crate::fiat::Rate;
     use crate::lnurl::pay::model::MessageSuccessActionData;
     use crate::lnurl::pay::model::SuccessActionProcessed;
+    use crate::logger::NopLogger;
     use crate::models::{LnPaymentDetails, NodeState, Payment, PaymentDetails, PaymentTypeFilter};
     use crate::{
         input_parser, parse_short_channel_id, test_utils::*, BuyBitcoinProvider, BuyBitcoinRequest,
@@ -2064,7 +2151,7 @@ pub(crate) mod tests {
             .node_api(node_api)
             .persister(persister)
             .backup_transport(Arc::new(MockBackupTransport::new()))
-            .build(None)
+            .build(None, Box::new(NopLogger {}), None)
             .await?;
 
         breez_services.sync().await?;
@@ -2145,6 +2232,7 @@ pub(crate) mod tests {
             node_api,
             persister,
             lsp: breez_server.clone(),
+            logger: Arc::new(Box::new(NopLogger {})),
         });
         let ln_invoice = receiver
             .receive_payment(ReceivePaymentRequest {
@@ -2256,7 +2344,7 @@ pub(crate) mod tests {
             .persister(persister)
             .node_api(node_api)
             .backup_transport(Arc::new(MockBackupTransport::new()))
-            .build(None)
+            .build(None, Box::new(NopLogger {}), None)
             .await?;
 
         Ok(breez_services)

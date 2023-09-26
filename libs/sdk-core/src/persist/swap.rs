@@ -321,8 +321,11 @@ impl SqliteStorage {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
     use crate::persist::db::SqliteStorage;
     use crate::test_utils::get_test_ofp_48h;
+    use crate::NopLogger;
     use crate::{OpeningFeeParams, SwapInfo, SwapStatus};
     use anyhow::Result;
     use rusqlite::{named_params, Connection};
@@ -338,7 +341,10 @@ mod tests {
                 .collect())
         }
 
-        let storage = SqliteStorage::new(test_utils::create_test_sql_dir());
+        let storage = SqliteStorage::new(
+            test_utils::create_test_sql_dir(),
+            Arc::new(Box::new(NopLogger {})),
+        );
 
         storage.init()?;
         let tested_swap_info = SwapInfo {

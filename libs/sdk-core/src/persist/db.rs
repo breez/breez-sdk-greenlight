@@ -1,5 +1,7 @@
+use std::sync::Arc;
+
 use super::migrations::{current_migrations, current_sync_migrations};
-use crate::error::SdkResult;
+use crate::{error::SdkResult, Logger};
 use anyhow::Result;
 use rusqlite::{
     hooks::Action,
@@ -24,10 +26,12 @@ pub(crate) struct SqliteStorage {
     sync_db_file: String,
     /// Dispatch DB hook events.
     events_publisher: broadcast::Sender<HookEvent>,
+    /// Logger to use for logging.
+    pub logger: Arc<Box<dyn Logger>>,
 }
 
 impl SqliteStorage {
-    pub fn new(working_dir: String) -> SqliteStorage {
+    pub fn new(working_dir: String, logger: Arc<Box<dyn Logger>>) -> SqliteStorage {
         let main_db_file = format!("{}/storage.sql", working_dir);
         let sync_db_file = format!("{}/sync_storage.sql", working_dir);
         let (events_publisher, _) = broadcast::channel::<HookEvent>(100);
@@ -36,6 +40,7 @@ impl SqliteStorage {
             main_db_file,
             sync_db_file,
             events_publisher,
+            logger,
         }
     }
 

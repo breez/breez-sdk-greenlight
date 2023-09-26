@@ -14,10 +14,10 @@ use breez_sdk_core::{
     InvoicePaidDetails, LNInvoice, ListPaymentsRequest, LnPaymentDetails, LnUrlAuthRequestData,
     LnUrlCallbackStatus, LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult, LnUrlWithdrawRequest,
     LnUrlWithdrawRequestData, LnUrlWithdrawResult, LnUrlWithdrawSuccessData, LocaleOverrides,
-    LocalizedName, LogEntry, LogStream, LspInformation, MessageSuccessActionData, MetadataItem,
-    Network, NodeConfig, NodeState, OpenChannelFeeRequest, OpenChannelFeeResponse,
-    OpeningFeeParams, OpeningFeeParamsMenu, Payment, PaymentDetails, PaymentFailedData,
-    PaymentStatus, PaymentType, PaymentTypeFilter, Rate, ReceiveOnchainRequest,
+    LocalizedName, LogEntry, LogLevel, LogMessage, LogStream, Logger, LspInformation,
+    MessageSuccessActionData, MetadataItem, Network, NodeConfig, NodeState, OpenChannelFeeRequest,
+    OpenChannelFeeResponse, OpeningFeeParams, OpeningFeeParamsMenu, Payment, PaymentDetails,
+    PaymentFailedData, PaymentStatus, PaymentType, PaymentTypeFilter, Rate, ReceiveOnchainRequest,
     ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees, ReverseSwapFeesRequest,
     ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop,
     SignMessageRequest, SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
@@ -81,14 +81,20 @@ pub fn static_backup(request: StaticBackupRequest) -> SdkResult<StaticBackupResp
 /// * `config` - The sdk configuration
 /// * `seed` - The node private key
 /// * `event_listener` - Listener to SDK events
+/// * `node_logger` - Local logger for the node
+/// * `log_file_path` - an optional file path in which to write node logs
 ///
 pub fn connect(
     config: Config,
     seed: Vec<u8>,
     event_listener: Box<dyn EventListener>,
+    node_logger: Box<dyn Logger>,
+    log_file_path: Option<String>,
 ) -> SdkResult<Arc<BlockingBreezServices>> {
     rt().block_on(async move {
-        let breez_services = BreezServices::connect(config, seed, event_listener).await?;
+        let breez_services =
+            BreezServices::connect(config, seed, event_listener, node_logger, log_file_path)
+                .await?;
 
         Ok(Arc::new(BlockingBreezServices { breez_services }))
     })

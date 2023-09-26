@@ -36,7 +36,7 @@ use crate::models::{FiatAPI, LspAPI, NodeAPI, NodeState, Payment, Swap, SwapperA
 use crate::moonpay::MoonPayApi;
 use crate::swap::create_submarine_swap_script;
 use crate::{parse_invoice, Config, CustomMessage, LNInvoice, PaymentResponse, Peer, RouteHint};
-use crate::{LogLevel, LogMessage, Logger};
+use crate::{LogLevel, LogMessage, Logger, NopLogger};
 use crate::{OpeningFeeParams, OpeningFeeParamsMenu};
 use crate::{ReceivePaymentRequest, SwapInfo};
 
@@ -640,7 +640,7 @@ pub(crate) fn create_test_persister(
     config: crate::models::Config,
 ) -> crate::persist::db::SqliteStorage {
     println!("create_test_persister {}", config.working_dir);
-    crate::persist::db::SqliteStorage::new(config.working_dir)
+    crate::persist::db::SqliteStorage::new(config.working_dir, Arc::new(Box::new(NopLogger {})))
 }
 
 pub fn get_test_working_dir() -> String {

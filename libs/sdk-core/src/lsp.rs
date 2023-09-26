@@ -4,6 +4,7 @@ use crate::error::{SdkError, SdkResult};
 use crate::grpc::{
     self, LspListRequest, PaymentInformation, RegisterPaymentReply, RegisterPaymentRequest,
 };
+use crate::log_error;
 use crate::models::{LspAPI, OpeningFeeParams, OpeningFeeParamsMenu};
 use anyhow::Result;
 use prost::Message;
@@ -108,7 +109,12 @@ impl LspAPI for BreezServer {
         for (lsp_id, lsp_info) in response.into_inner().lsps.into_iter() {
             match LspInformation::try_from(&lsp_id, lsp_info) {
                 Ok(lsp) => lsp_list.push(lsp),
-                Err(e) => error!("LSP Information validation failed for LSP {lsp_id}: {e}"),
+                Err(e) => {
+                    log_error!(
+                        self.logger,
+                        "LSP Information validation failed for LSP {lsp_id}: {e}"
+                    );
+                }
             }
         }
         lsp_list.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));

@@ -62,8 +62,13 @@ impl SqliteStorage {
 #[test]
 fn test_settings() {
     use crate::persist::test_utils;
+    use crate::NopLogger;
+    use std::sync::Arc;
 
-    let storage = SqliteStorage::new(test_utils::create_test_sql_dir());
+    let storage = SqliteStorage::new(
+        test_utils::create_test_sql_dir(),
+        Arc::new(Box::new(NopLogger {})),
+    );
     storage.init().unwrap();
     storage
         .update_setting("key1".to_string(), "val1".to_string())

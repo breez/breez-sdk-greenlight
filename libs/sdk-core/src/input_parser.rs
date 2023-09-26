@@ -1,4 +1,5 @@
 use std::str::FromStr;
+use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
 use bip21::Uri;
@@ -10,6 +11,9 @@ use serde::Serialize;
 use crate::input_parser::InputType::*;
 use crate::input_parser::LnUrlRequestData::*;
 use crate::invoice::{parse_invoice, LNInvoice};
+use crate::{LogLevel, Logger};
+
+use crate::log_or_debug_generic;
 
 use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 
@@ -204,7 +208,10 @@ pub async fn parse(input: &str) -> Result<InputType> {
         }
 
         lnurl_endpoint = maybe_replace_host_with_mockito_test_host(lnurl_endpoint)?;
-        let lnurl_data: LnUrlRequestData = get_parse_and_log_response(&lnurl_endpoint).await?;
+        // TODO: We don't want to inject a logger in Parse as it will be chaos?
+        // In the SDK, we use wrapper of Parse to fetch a LN url callback (except in tests)
+        let lnurl_data: LnUrlRequestData =
+            get_parse_and_log_response(&lnurl_endpoint, None).await?;
         let temp = lnurl_data.into();
         let temp = match temp {
             // Modify the LnUrlPay payload by adding the domain of the LNURL endpoint
@@ -230,21 +237,38 @@ pub async fn parse(input: &str) -> Result<InputType> {
 /// Makes a GET request to the specified `url` and logs on DEBUG:
 /// - the URL
 /// - the raw response body
-pub(crate) async fn get_and_log_response(url: &str) -> Result<String> {
-    debug!("Making GET request to: {url}");
+pub(crate) async fn get_and_log_response(
+    url: &str,
+    logger: Option<Arc<Box<dyn Logger>>>,
+) -> Result<String> {
+    log_or_debug_generic!(
+        logger.clone(),
+        LogLevel::Debug,
+        "Making GET request to: {}",
+        url
+    );
 
     let raw_body = reqwest::get(url).await?.text().await?;
-    debug!("Received raw response body: {raw_body}");
+
+    log_or_debug_generic!(
+        logger,
+        LogLevel::Debug,
+        "Received raw response body: {}",
+        raw_body
+    );
 
     Ok(raw_body)
 }
 
 /// Wrapper around [get_and_log_response] that, in addition, parses the payload into an expected type
-pub(crate) async fn get_parse_and_log_response<T>(url: &str) -> Result<T>
+pub(crate) async fn get_parse_and_log_response<T>(
+    url: &str,
+    logger: Option<Arc<Box<dyn Logger>>>,
+) -> Result<T>
 where
     for<'a> T: serde::de::Deserialize<'a>,
 {
-    let raw_body = get_and_log_response(url).await?;
+    let raw_body = get_and_log_response(url, logger).await?;
 
     serde_json::from_str(&raw_body).map_err(|e| anyhow!("Failed to parse json: {e}"))
 }

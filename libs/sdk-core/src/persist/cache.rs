@@ -92,9 +92,14 @@ impl SqliteStorage {
 
 #[test]
 fn test_cached_items() {
+    use crate::logger::NopLogger;
     use crate::persist::test_utils;
+    use std::sync::Arc;
 
-    let storage = SqliteStorage::new(test_utils::create_test_sql_dir());
+    let storage = SqliteStorage::new(
+        test_utils::create_test_sql_dir(),
+        Arc::new(Box::new(NopLogger {})),
+    );
 
     storage.init().unwrap();
     storage

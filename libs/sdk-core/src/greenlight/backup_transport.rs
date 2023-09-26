@@ -1,4 +1,5 @@
 use crate::backup::{BackupState, BackupTransport};
+use crate::{log_info, Logger};
 
 use super::node_api::Greenlight;
 use anyhow::{anyhow, Result};
@@ -9,6 +10,7 @@ const BREEZ_SDK_DATASTORE_PATH: [&str; 2] = ["breez-sdk", "backup"];
 
 pub(crate) struct GLBackupTransport {
     pub(crate) inner: Arc<Greenlight>,
+    pub(crate) logger: Arc<Box<dyn Logger>>,
 }
 
 impl GLBackupTransport {
@@ -38,7 +40,12 @@ impl BackupTransport for GLBackupTransport {
 
     async fn push(&self, version: Option<u64>, hex: Vec<u8>) -> Result<u64> {
         let key = self.gl_key();
-        info!("set_value key = {:?} data length={:?}", key, hex.len());
+        log_info!(
+            self.logger,
+            "set_value key = {:?} data length={:?}",
+            key,
+            hex.len()
+        );
         let mut c: node::ClnClient = self.inner.get_node_client().await?;
         let mut mode = pb::cln::datastore_request::DatastoreMode::MustCreate;
         if version.is_some() {

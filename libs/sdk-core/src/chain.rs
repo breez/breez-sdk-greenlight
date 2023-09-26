@@ -1,4 +1,7 @@
+use std::sync::Arc;
+
 use crate::input_parser::get_parse_and_log_response;
+use crate::{ClassicLogger, Logger};
 use anyhow::Result;
 use bitcoin::hashes::hex::FromHex;
 use bitcoin::{OutPoint, Txid};
@@ -124,6 +127,7 @@ pub(crate) fn get_utxos(address: String, transactions: Vec<OnchainTx>) -> Result
 #[derive(Clone)]
 pub(crate) struct MempoolSpace {
     pub(crate) base_url: String,
+    logger: Arc<Box<dyn Logger>>,
 }
 
 /// Wrapper containing the result of the recommended fees query, in sat/vByte, based on mempool.space data
@@ -203,28 +207,42 @@ impl Default for MempoolSpace {
     fn default() -> Self {
         MempoolSpace {
             base_url: "https://mempool.space".to_string(),
+            // By default, we will log using the global logger crate.
+            logger: Arc::new(Box::new(ClassicLogger {})),
         }
     }
 }
 
 impl MempoolSpace {
-    pub fn from_base_url(base_url: String) -> MempoolSpace {
-        MempoolSpace { base_url }
+    pub fn from_base_url(base_url: String, logger: Arc<Box<dyn Logger>>) -> MempoolSpace {
+        MempoolSpace { base_url, logger }
     }
 }
 
 #[tonic::async_trait]
 impl ChainService for MempoolSpace {
     async fn recommended_fees(&self) -> Result<RecommendedFees> {
-        get_parse_and_log_response(&format!("{}/api/v1/fees/recommended", self.base_url)).await
+        get_parse_and_log_response(
+            &format!("{}/api/v1/fees/recommended", self.base_url),
+            Some(self.logger.clone()),
+        )
+        .await
     }
 
     async fn address_transactions(&self, address: String) -> Result<Vec<OnchainTx>> {
-        get_parse_and_log_response(&format!("{}/api/address/{address}/txs", self.base_url)).await
+        get_parse_and_log_response(
+            &format!("{}/api/address/{address}/txs", self.base_url),
+            Some(self.logger.clone()),
+        )
+        .await
     }
 
     async fn current_tip(&self) -> Result<u32> {
-        get_parse_and_log_response(&format!("{}/api/blocks/tip/height", self.base_url)).await
+        get_parse_and_log_response(
+            &format!("{}/api/blocks/tip/height", self.base_url),
+            Some(self.logger.clone()),
+        )
+        .await
     }
 
     async fn transaction_outspends(&self, txid: String) -> Result<Vec<Outspend>> {
@@ -254,7 +272,11 @@ impl ChainService for MempoolSpace {
 }
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
     use crate::chain::{MempoolSpace, OnchainTx};
+    use crate::NopLogger;
+
     use anyhow::Result;
     use tokio::test;
 
@@ -264,6 +286,7 @@ mod tests {
     async fn test_recommended_fees() -> Result<()> {
         let ms = Box::new(MempoolSpace::from_base_url(
             "https://mempool.space".to_string(),
+            Arc::new(Box::new(NopLogger {})),
         ));
         let fees = ms.recommended_fees().await?;
         assert!(fees.economy_fee > 0);
@@ -277,7 +300,10 @@ mod tests {
 
     #[test]
     async fn test_address_transactions() -> Result<()> {
-        let ms = MempoolSpace::from_base_url("https://mempool.space".to_string());
+        let ms = MempoolSpace::from_base_url(
+            "https://mempool.space".to_string(),
+            Arc::new(Box::new(NopLogger {})),
+        );
         let txs = ms
             .address_transactions("bc1qvhykeqcpdzu0pdvy99xnh9ckhwzcfskct6h6l2".to_string())
             .await?;

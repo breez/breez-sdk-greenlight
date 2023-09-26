@@ -1,7 +1,8 @@
 use crate::{
     breez_services::BackupFailedData,
+    log_debug, log_error, log_info, log_warn,
     persist::db::{HookEvent, SqliteStorage},
-    BreezEvent, Config,
+    BreezEvent, Config, Logger,
 };
 
 use anyhow::{anyhow, Result};
@@ -75,6 +76,7 @@ pub(crate) struct BackupWatcher {
     encryption_key: Vec<u8>,
     legacy_encryption_key: Vec<u8>,
     events_notifier: broadcast::Sender<BreezEvent>,
+    logger: Arc<Box<dyn Logger>>,
 }
 
 /// watches for sync requests and syncs the sdk state when a request is detected.
@@ -85,6 +87,7 @@ impl BackupWatcher {
         persister: Arc<SqliteStorage>,
         encryption_key: Vec<u8>,
         legacy_encryption_key: Vec<u8>,
+        logger: Arc<Box<dyn Logger>>,
     ) -> Self {
         let (events_notifier, _) = broadcast::channel::<BreezEvent>(100);
 
@@ -96,6 +99,7 @@ impl BackupWatcher {
             encryption_key,
             legacy_encryption_key,
             events_notifier,
+            logger,
         }
     }
 
@@ -112,6 +116,7 @@ impl BackupWatcher {
             self.encryption_key.clone(),
             self.legacy_encryption_key.clone(),
             self.events_notifier.clone(),
+            self.logger.clone(),
         );
 
         let mut hooks_subscription = self.persister.subscribe_hooks();
@@ -120,6 +125,7 @@ impl BackupWatcher {
         self.set_request_sender(backup_request_sender.clone()).await;
 
         let rt = Builder::new_current_thread().enable_all().build()?;
+        let logger = self.logger.clone();
         std::thread::spawn(move || {
             rt.block_on(async move {
                 loop {
@@ -136,7 +142,7 @@ impl BackupWatcher {
                           }
                          }
                          Err(e) => {
-                          error!("Sync worker returned with error {e}");
+                          log_error!(logger, "Sync worker returned with error {e}");
                           if let Some(callback) = request.on_complete {
                            _ = callback.send(Err(e)).await;
                           }
@@ -157,14 +163,14 @@ impl BackupWatcher {
                               // we do want to wait a bit to allow for multiple sync requests to be inserted
                               tokio::time::sleep(std::time::Duration::from_millis(100)).await;
                               if let Err(e) = worker.sync(false).await {
-                               error!("Sync worker returned with error {e}");
+                                log_error!(logger, "Sync worker returned with error {e}");
                               }
                              }
                             }
                             // If we are lagging we want to trigger sync
                             Err(RecvError::Lagged(_)) => {
                              if let Err(e) = worker.sync(false).await {
-                              error!("Sync worker returned with error {e}");
+                               log_error!(logger, "Sync worker returned with error {e}");
                              }
                             }
                             // If the channel is closed we exit
@@ -208,6 +214,7 @@ struct BackupWorker {
     encryption_key: Vec<u8>,
     legacy_encryption_key: Vec<u8>,
     events_notifier: broadcast::Sender<BreezEvent>,
+    logger: Arc<Box<dyn Logger>>,
 }
 
 impl BackupWorker {
@@ -218,6 +225,7 @@ impl BackupWorker {
         encryption_key: Vec<u8>,
         legacy_encryption_key: Vec<u8>,
         events_notifier: broadcast::Sender<BreezEvent>,
+        logger: Arc<Box<dyn Logger>>,
     ) -> Self {
         Self {
             working_dir_path,
@@ -226,6 +234,7 @@ impl BackupWorker {
             encryption_key,
             legacy_encryption_key,
             events_notifier,
+            logger,
         }
     }
 
@@ -248,11 +257,11 @@ impl BackupWorker {
             .await
         {
             Ok(_) => {
-                info!("backup sync completed successfully");
+                log_info!(self.logger, "backup sync completed successfully");
                 self.notify(BreezEvent::BackupSucceeded).await
             }
             Err(e) => {
-                error!("backup sync failed {}", e);
+                log_error!(self.logger, "backup sync failed {}", e);
                 self.notify(BreezEvent::BackupFailed {
                     details: BackupFailedData {
                         error: e.to_string(),
@@ -266,7 +275,7 @@ impl BackupWorker {
         match notify_res {
             Ok(r) => Ok(r),
             Err(e) => {
-                error!("failed to notify backup event {}", e);
+                log_error!(self.logger, "failed to notify backup event {}", e);
                 Err(e)
             }
         }
@@ -286,7 +295,8 @@ impl BackupWorker {
         // Backup the local sdk state
         let local_storage_file = tempfile::NamedTempFile::new_in(sync_dir.clone())?;
         self.persister.backup(local_storage_file.path())?;
-        debug!(
+        log_debug!(
+            self.logger,
             "syncing storge, last_version = {:?}, file = {:?}",
             last_version,
             local_storage_file.path()
@@ -302,11 +312,17 @@ impl BackupWorker {
 
         let sync_result = match optimistic_sync {
             Ok((new_version, data)) => {
-                info!("Optimistic sync succeeded, new version = {new_version}");
+                log_info!(
+                    self.logger,
+                    "Optimistic sync succeeded, new version = {new_version}"
+                );
                 Ok((new_version, data))
             }
             Err(e) => {
-                debug!("Optimistic sync failed, trying to sync remote changes {e}");
+                log_debug!(
+                    self.logger,
+                    "Optimistic sync failed, trying to sync remote changes {e}"
+                );
                 // We need to sync remote changes and then retry the push
                 self.sync_remote_and_push(sync_dir, data, &mut last_sync_request_id)
                     .await
@@ -325,11 +341,11 @@ impl BackupWorker {
                     .delete_sync_requests_up_to(last_sync_request_id)?;
                 self.persister
                     .set_last_backup_time(now.duration_since(UNIX_EPOCH).unwrap().as_secs())?;
-                info!("Sync succeeded");
+                log_info!(self.logger, "Sync succeeded");
                 Ok(())
             }
             Err(e) => {
-                error!("Sync failed: {}", e);
+                log_error!(self.logger, "Sync failed: {}", e);
                 Err(e)
             }
         }
@@ -346,7 +362,7 @@ impl BackupWorker {
         let tmp_dir = tempdir_in(sync_dir)?;
         let remote_storage_path = tmp_dir.path();
         let mut remote_storage_file = File::create(remote_storage_path.join("sync_storage.sql"))?;
-        info!("remote_storage_path = {remote_storage_path:?}");
+        log_info!(self.logger, "remote_storage_path = {remote_storage_path:?}");
         match remote_state {
             Some(state) => {
                 // Write the remote state to a file
@@ -358,6 +374,7 @@ impl BackupWorker {
                         .to_str()
                         .unwrap()
                         .to_string(),
+                    self.logger.clone(),
                 );
 
                 // Bidirectionaly sync the local and remote changes
@@ -378,7 +395,7 @@ impl BackupWorker {
 
             // In case there is no remote state, we can just push the local changes
             None => {
-                debug!("No remote state, pushing local changes");
+                log_debug!(self.logger, "No remote state, pushing local changes");
                 self.push(None, local_data).await
             }
         }
@@ -391,7 +408,10 @@ impl BackupWorker {
                 let mut decrypted =
                     aes_decrypt(self.encryption_key.as_slice(), state.data.as_slice());
                 if decrypted.is_none() {
-                    warn!("Failed to decrypt backup with new key, trying legacy key");
+                    log_warn!(
+                        self.logger,
+                        "Failed to decrypt backup with new key, trying legacy key"
+                    );
                     decrypted =
                         aes_decrypt(self.legacy_encryption_key.as_slice(), state.data.as_slice());
                 }
@@ -402,7 +422,7 @@ impl BackupWorker {
                         data: decompressed,
                     })),
                     Err(e) => {
-                        error!("Failed to decompress backup: {e}");
+                        log_error!(self.logger, "Failed to decompress backup: {e}");
                         Ok(None)
                     }
                 }
@@ -413,7 +433,8 @@ impl BackupWorker {
 
     async fn push(&self, version: Option<u64>, data: Vec<u8>) -> Result<(u64, Vec<u8>)> {
         let compressed_data = compress_to_vec(&data, 10);
-        info!(
+        log_info!(
+            self.logger,
             "Pushing compressed data with size = {}",
             compressed_data.len()
         );
@@ -443,6 +464,7 @@ impl BackupWorker {
 
 #[cfg(test)]
 mod tests {
+    use crate::logger::NopLogger;
     use crate::test_utils::get_test_ofp_48h;
     use crate::{
         backup::BackupRequest,
@@ -471,6 +493,7 @@ mod tests {
             persister,
             vec![0; 32],
             vec![0; 32],
+            Arc::new(Box::new(NopLogger {})),
         );
         let (quit_sender, receiver) = watch::channel(());
         watcher.start(receiver).await.unwrap();

@@ -120,9 +120,14 @@ impl SqliteStorage {
 
 #[test]
 fn test_simple_sync_channels() {
+    use crate::logger::NopLogger;
     use crate::persist::test_utils;
+    use std::sync::Arc;
 
-    let storage = SqliteStorage::new(test_utils::create_test_sql_dir());
+    let storage = SqliteStorage::new(
+        test_utils::create_test_sql_dir(),
+        Arc::new(Box::new(NopLogger {})),
+    );
 
     storage.init().unwrap();
     let channels = vec![
@@ -163,9 +168,14 @@ fn test_simple_sync_channels() {
 
 #[test]
 fn test_sync_closed_channels() {
+    use crate::logger::NopLogger;
     use crate::persist::test_utils;
+    use std::sync::Arc;
 
-    let storage = SqliteStorage::new(test_utils::create_test_sql_dir());
+    let storage = SqliteStorage::new(
+        test_utils::create_test_sql_dir(),
+        Arc::new(Box::new(NopLogger {})),
+    );
 
     storage.init().unwrap();
     let channels = vec![

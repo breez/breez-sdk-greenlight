@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
 use serde_json::to_string_pretty;
@@ -14,7 +15,7 @@ use reqwest::{Body, Client};
 use crate::input_parser::get_parse_and_log_response;
 use crate::models::ReverseSwapPairInfo;
 use crate::reverseswap::CreateReverseSwapResponse;
-use crate::ReverseSwapServiceAPI;
+use crate::{log_debug, log_trace, Logger, ReverseSwapServiceAPI};
 
 const BOLTZ_API_URL: &str = "https://api.boltz.exchange/";
 const GET_PAIRS_ENDPOINT: &str = concatcp!(BOLTZ_API_URL, "getpairs");
@@ -158,12 +159,14 @@ pub enum BoltzApiReverseSwapStatus {
     InvoiceExpired,
 }
 
-pub struct BoltzApi {}
+pub struct BoltzApi {
+    pub logger: Arc<Box<dyn Logger>>,
+}
 
 #[tonic::async_trait]
 impl ReverseSwapServiceAPI for BoltzApi {
     async fn fetch_reverse_swap_fees(&self) -> Result<ReverseSwapPairInfo> {
-        reverse_swap_pair_info().await
+        reverse_swap_pair_info(self.logger.clone()).await
     }
 
     /// Call Boltz API and parse response as per https://docs.boltz.exchange/en/latest/api/#creating-reverse-swaps
@@ -199,7 +202,11 @@ impl ReverseSwapServiceAPI for BoltzApi {
             .await
             .map_err(|e| anyhow!("Failed to request creation of reverse swap: {e}"))
             .and_then(|res| {
-                trace!("Boltz API create raw response {}", to_string_pretty(&res)?);
+                log_trace!(
+                    self.logger,
+                    "Boltz API create raw response {}",
+                    to_string_pretty(&res)?
+                );
                 serde_json::from_str::<BoltzApiCreateReverseSwapResponse>(&res)
                     .map_err(|e| anyhow!("Failed to parse crate swap response: {e}"))
             })
@@ -225,19 +232,24 @@ impl ReverseSwapServiceAPI for BoltzApi {
             .await
             .map_err(|e| anyhow!("Failed to request swap status: {e}"))
             .and_then(|res| {
-                trace!("Boltz API status raw response {}", to_string_pretty(&res)?);
+                log_trace!(
+                    self.logger,
+                    "Boltz API status raw response {}",
+                    to_string_pretty(&res)?
+                );
                 serde_json::from_str::<BoltzApiReverseSwapStatus>(&res)
                     .map_err(|e| anyhow!("Failed to parse get status response: {e}"))
             })
     }
 }
 
-pub async fn reverse_swap_pair_info() -> Result<ReverseSwapPairInfo> {
-    let pairs: Pairs = get_parse_and_log_response(GET_PAIRS_ENDPOINT).await?;
+pub async fn reverse_swap_pair_info(logger: Arc<Box<dyn Logger>>) -> Result<ReverseSwapPairInfo> {
+    let pairs: Pairs = get_parse_and_log_response(GET_PAIRS_ENDPOINT, Some(logger.clone())).await?;
     match pairs.pairs.get("BTC/BTC") {
         None => Err(anyhow!("BTC pair not found")),
         Some(btc_pair) => {
-            debug!(
+            log_debug!(
+                logger,
                 "Boltz API pair: {}",
                 serde_json::to_string_pretty(&btc_pair)?
             );

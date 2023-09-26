@@ -6,8 +6,9 @@ use crate::chain::{get_utxos, ChainService, MempoolSpace, OnchainTx};
 use crate::models::{ReverseSwapServiceAPI, ReverseSwapperRoutingAPI};
 use crate::ReverseSwapStatus::*;
 use crate::{
-    BreezEvent, Config, FullReverseSwapInfo, NodeAPI, PaymentStatus, ReverseSwapInfo,
-    ReverseSwapInfoCached, ReverseSwapPairInfo, ReverseSwapStatus,
+    log_debug, log_error, log_info, log_trace, BreezEvent, Config, FullReverseSwapInfo, Logger,
+    NodeAPI, PaymentStatus, ReverseSwapInfo, ReverseSwapInfoCached, ReverseSwapPairInfo,
+    ReverseSwapStatus,
 };
 use anyhow::{anyhow, ensure, Result};
 use bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
@@ -64,6 +65,7 @@ pub(crate) struct BTCSendSwap {
     persister: Arc<crate::persist::db::SqliteStorage>,
     chain_service: Arc<dyn ChainService>,
     node_api: Arc<dyn NodeAPI>,
+    logger: Arc<Box<dyn Logger>>,
 }
 
 impl BTCSendSwap {
@@ -74,6 +76,7 @@ impl BTCSendSwap {
         persister: Arc<crate::persist::db::SqliteStorage>,
         chain_service: Arc<MempoolSpace>,
         node_api: Arc<dyn NodeAPI>,
+        logger: Arc<Box<dyn Logger>>,
     ) -> Self {
         Self {
             config,
@@ -82,6 +85,7 @@ impl BTCSendSwap {
             persister,
             chain_service,
             node_api,
+            logger,
         }
     }
 
@@ -117,7 +121,10 @@ impl BTCSendSwap {
             )
             .await?;
         self.persister.insert_reverse_swap(&created_rsi)?;
-        info!("Created and persisted reverse swap: {created_rsi:?}");
+        log_info!(
+            self.logger,
+            "Created and persisted reverse swap: {created_rsi:?}"
+        );
 
         // Wait until one of the following happens:
         // - trying to pay the HODL invoice explicitly fails from Greenlight
@@ -171,12 +178,18 @@ impl BTCSendSwap {
         loop {
             sleep(Duration::from_secs(5)).await;
 
-            info!("Checking Boltz status for reverse swap {id}, attempt {i}");
+            log_info!(
+                self.logger,
+                "Checking Boltz status for reverse swap {id}, attempt {i}"
+            );
             let reverse_swap_boltz_status = self
                 .reverse_swap_service_api
                 .get_boltz_status(id.into())
                 .await?;
-            info!("Got Boltz status {reverse_swap_boltz_status:?}");
+            log_info!(
+                self.logger,
+                "Got Boltz status {reverse_swap_boltz_status:?}"
+            );
 
             // Return when lock tx is seen in the mempool or onchain
             // Typically we first detect when the lock tx is in the mempool
@@ -228,7 +241,11 @@ impl BTCSendSwap {
                 };
 
                 res.validate_hodl_invoice(amount_sat * 1000)?;
-                res.validate_redeem_script(response.lockup_address, self.config.network)?;
+                res.validate_redeem_script(
+                    response.lockup_address,
+                    self.config.network,
+                    self.logger.clone(),
+                )?;
                 Ok(res)
             }
             BoltzApiCreateReverseSwapResponse::BoltzApiError { error } => Err(anyhow!(error)),
@@ -277,7 +294,10 @@ impl BTCSendSwap {
                     .into_iter()
                     .filter(|tx| tx.status.confirmed)
                     .collect();
-                debug!("Found confirmed txs for lockup address {lockup_addr}: {confirmed_txs:?}");
+                log_debug!(
+                    self.logger,
+                    "Found confirmed txs for lockup address {lockup_addr}: {confirmed_txs:?}"
+                );
                 let utxos = get_utxos(lockup_addr.to_string(), confirmed_txs)?;
 
                 // To decide the claim tx amount, we use the previously committed to amount
@@ -322,8 +342,8 @@ impl BTCSendSwap {
                 let tx_weight = tx.strippedsize() as u32 * WITNESS_SCALE_FACTOR as u32
                     + claim_witness_input_size * txins.len() as u32;
                 let fees: u64 = tx_weight as u64 * rs.sat_per_vbyte / WITNESS_SCALE_FACTOR as u64;
-                debug!("Claim tx amount: {claim_amount_sat}");
-                debug!("Claim tx fees: {fees}");
+                log_debug!(self.logger, "Claim tx amount: {claim_amount_sat}");
+                log_debug!(self.logger, "Claim tx fees: {fees}");
                 tx.output[0].value = claim_amount_sat - fees;
 
                 let scpt = Secp256k1::signing_only();
@@ -368,22 +388,30 @@ impl BTCSendSwap {
     /// via [Self::refresh_monitored_reverse_swaps]
     pub(crate) async fn execute_pending_reverse_swaps(&self) -> Result<()> {
         let monitored = self.list_monitored().await?;
-        debug!("Found {} monitored reverse swaps", monitored.len());
+        log_debug!(
+            self.logger,
+            "Found {} monitored reverse swaps",
+            monitored.len()
+        );
 
         // Depending on the new state, decide next steps and transition to the new state
         for rs in monitored {
-            debug!("Checking monitored reverse swap {rs:?}");
+            log_debug!(self.logger, "Checking monitored reverse swap {rs:?}");
             // (Re-)Broadcast the claim tx for monitored reverse swaps that have a confirmed lockup tx
             if matches!(self.get_lockup_tx_status(&rs).await?, TxStatus::Confirmed) {
-                info!("Lock tx is confirmed, preparing claim tx");
+                log_debug!(self.logger, "Lock tx is confirmed, preparing claim tx");
                 let claim_tx = self.create_claim_tx(&rs).await?;
                 let claim_tx_broadcast_res = self
                     .chain_service
                     .broadcast_transaction(serialize(&claim_tx))
                     .await;
                 match claim_tx_broadcast_res {
-                    Ok(txid) => info!("Claim tx was broadcast with txid {txid}"),
-                    Err(e) => error!("Claim tx failed to broadcast: {e}"),
+                    Ok(txid) => {
+                        log_info!(self.logger, "Claim tx was broadcast with txid {txid}");
+                    }
+                    Err(e) => {
+                        log_error!(self.logger, "Claim tx failed to broadcast: {e}");
+                    }
                 }
             }
         }
@@ -424,7 +452,7 @@ impl BTCSendSwap {
             .find(|tx| {
                 // Lockup tx is identified by having a vout matching the expected rev swap amount
                 // going to the lockup address (P2WSH)
-                trace!("Checking potential lock tx {tx:#?}");
+                log_trace!(self.logger, "Checking potential lock tx {tx:#?}");
                 tx.vout.iter().any(|vout| {
                     vout.value == rsi.onchain_amount_sat
                         && vout.scriptpubkey_address == lockup_addr.to_string()
@@ -443,7 +471,10 @@ impl BTCSendSwap {
                 None => TxStatus::Mempool,
             },
         };
-        debug!("Lockup tx status is {tx_status:?} for lockup address {lockup_addr}");
+        log_debug!(
+            self.logger,
+            "Lockup tx status is {tx_status:?} for lockup address {lockup_addr}"
+        );
         Ok(tx_status)
     }
 
@@ -533,7 +564,12 @@ impl BTCSendSwap {
     pub async fn list_blocking(&self) -> Result<Vec<FullReverseSwapInfo>> {
         let mut matching_reverse_swaps = vec![];
         for rs in self.persister.list_reverse_swaps()? {
-            debug!("Reverse swap {} has status {:?}", rs.id, rs.cache.status);
+            log_debug!(
+                self.logger,
+                "Reverse swap {} has status {:?}",
+                rs.id,
+                rs.cache.status
+            );
             if rs.cache.status.is_blocking_state() {
                 matching_reverse_swaps.push(rs);
             }

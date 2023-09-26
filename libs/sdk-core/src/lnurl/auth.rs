@@ -1,5 +1,5 @@
 use crate::input_parser::get_parse_and_log_response;
-use crate::{LnUrlAuthRequestData, LnUrlCallbackStatus, NodeAPI};
+use crate::{LnUrlAuthRequestData, LnUrlCallbackStatus, Logger, NodeAPI};
 use anyhow::{anyhow, Result};
 use bitcoin::hashes::{hex::ToHex, sha256, Hash, HashEngine, Hmac, HmacEngine};
 use bitcoin::secp256k1::{Message, Secp256k1};
@@ -16,6 +16,7 @@ use std::sync::Arc;
 pub(crate) async fn perform_lnurl_auth(
     node_api: Arc<dyn NodeAPI>,
     req_data: LnUrlAuthRequestData,
+    logger: Arc<Box<dyn Logger>>,
 ) -> Result<LnUrlCallbackStatus> {
     let linking_keys = derive_linking_keys(node_api, Url::from_str(&req_data.url)?)?;
 
@@ -31,7 +32,7 @@ pub(crate) async fn perform_lnurl_auth(
         .query_pairs_mut()
         .append_pair("key", &linking_keys.public_key().to_hex());
 
-    get_parse_and_log_response(callback_url.as_ref()).await
+    get_parse_and_log_response(callback_url.as_ref(), Some(logger)).await
 }
 
 pub(crate) fn validate_request(

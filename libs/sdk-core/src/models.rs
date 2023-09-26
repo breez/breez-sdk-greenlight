@@ -1,6 +1,7 @@
 use std::ops::Add;
 use std::pin::Pin;
 use std::str::FromStr;
+use std::sync::Arc;
 
 use anyhow::{anyhow, ensure, Result};
 use bitcoin::blockdata::opcodes;
@@ -28,7 +29,7 @@ use crate::grpc::{self, GetReverseRoutingNodeRequest, PaymentInformation, Regist
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lsp::LspInformation;
 use crate::models::Network::*;
-use crate::{LNInvoice, LnUrlErrorData, LnUrlWithdrawRequestData};
+use crate::{log_debug, LNInvoice, LnUrlErrorData, LnUrlWithdrawRequestData, Logger};
 
 use crate::breez_services::BreezServer;
 use crate::error::{SdkError, SdkResult};
@@ -265,10 +266,11 @@ impl FullReverseSwapInfo {
         &self,
         received_lockup_address: String,
         network: Network,
+        logger: Arc<Box<dyn Logger>>,
     ) -> Result<()> {
         let redeem_script_received = Script::from_hex(&self.redeem_script)?;
         let asm = redeem_script_received.asm();
-        debug!("received asm = {asm:?}");
+        log_debug!(logger, "received asm = {asm:?}");
 
         let sk = SecretKey::from_slice(&self.private_key)?;
         let pk = PublicKey::from_secret_key(&Secp256k1::new(), &sk);
@@ -284,7 +286,7 @@ impl FullReverseSwapInfo {
             refund_address_bytes,
             self.timeout_block_height,
         )?;
-        debug!("expected asm = {:?}", redeem_script_expected.asm());
+        log_debug!(logger, "expected asm = {:?}", redeem_script_expected.asm());
 
         match redeem_script_received.eq(&redeem_script_expected) {
             true => {
