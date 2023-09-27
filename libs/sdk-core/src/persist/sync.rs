@@ -90,7 +90,7 @@ impl SqliteStorage {
     ) -> Result<()> {
         let sync_data_file = remote_storage.sync_db_path();
         match SqliteStorage::migrate_sync_db(sync_data_file.clone()) {
-            Ok(_) => {}
+            Ok(_) => debug!("Migrated sync db successfully, to_local={to_local}"),
             Err(e) => {
                 log::error!("Failed to migrate sync db, probably local db is older than remote, skipping migration: {}", e);
             }
@@ -156,7 +156,7 @@ impl SqliteStorage {
         )?;
 
         // sync remote payments_external_info table
-        tx.execute(
+        let _ = tx.execute(
             "
          INSERT into sync.payments_external_info
          SELECT
@@ -168,7 +168,7 @@ impl SqliteStorage {
          FROM remote_sync.payments_external_info
          WHERE payment_id NOT IN (SELECT payment_id FROM sync.payments_external_info);",
             [],
-        )?;
+        );
 
         // sync remote reverse_swaps table
         tx.execute(
