@@ -460,6 +460,14 @@ pub(crate) fn current_sync_migrations() -> Vec<&'static str> {
         channel_opening_fees TEXT NOT NULL
        ) STRICT;
        ",
+        "
+        CREATE TABLE IF NOT EXISTS payments_external_info (
+         payment_id TEXT NOT NULL PRIMARY KEY,
+         lnurl_success_action TEXT,
+         ln_address TEXT,
+         lnurl_metadata TEXT
+         ) STRICT;
+        ",
         "ALTER TABLE payments_external_info ADD COLUMN lnurl_withdraw_endpoint TEXT;",
     ]
 }
