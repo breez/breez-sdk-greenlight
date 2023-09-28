@@ -30,8 +30,8 @@ ios-dev: ios
 .PHONY: android
 android: $(SOURCES) flutter_rust_bridge
 	cd ../sdk-bindings && make android
-	mkdir -p ./android/src/main
-	cp -r ../sdk-bindings/ffi/kotlin/jniLibs ./android/src/main/jniLibs
+	mkdir -p ./android/src/main/jniLibs
+	cp -r ../sdk-bindings/ffi/kotlin/jniLibs/* ./android/src/main/jniLibs
 
 ## desktop: compiles for x86_64-unknown-linux-gnu by default, other targets can be specified
 ## with the TARGET variable eg. make desktop TARGET=aarch64-unknown-linux-gnu
