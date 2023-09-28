@@ -385,37 +385,10 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
         ) STRICT;
         ",
 
-        //sync & backup
+        //sync & backup (moved to sync migration function below)
         "
-        CREATE TABLE IF NOT EXISTS sync.sync_requests (
-         id INTEGER PRIMARY KEY AUTOINCREMENT,
-         changed_table TEXT NOT NULL
-        ) STRICT;
-
-        CREATE TRIGGER sync.sync_requests_swaps 
-         AFTER INSERT ON swaps         
-        BEGIN
-         INSERT INTO sync_requests(changed_table) VALUES('swaps');
-        END;
-
-        CREATE TRIGGER sync.sync_requests_swap_refunds 
-         AFTER INSERT ON swap_refunds        
-        BEGIN
-         INSERT INTO sync_requests(changed_table) VALUES('swap_refunds');
-        END;
-
-        CREATE TRIGGER sync.sync_requests_reverse_swaps
-         AFTER INSERT ON reverse_swaps        
-        BEGIN
-         INSERT INTO sync_requests(changed_table) VALUES('reverse_swaps');
-        END;
-
-        CREATE TRIGGER sync.sync_requests_payments_external_info
-         AFTER INSERT ON payments_external_info
-        BEGIN
-         INSERT INTO sync_requests(changed_table) VALUES('payments_external_info');
-        END;
-        ",       
+        SELECT 1;
+        ",
         "
         DROP TABLE sync_versions;
         CREATE TABLE IF NOT EXISTS sync_versions (
