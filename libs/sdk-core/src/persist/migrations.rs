@@ -468,6 +468,28 @@ pub(crate) fn current_sync_migrations() -> Vec<&'static str> {
          lnurl_metadata TEXT
          ) STRICT;
         ",
-        "ALTER TABLE payments_external_info ADD COLUMN lnurl_withdraw_endpoint TEXT;",
+        "
+        ALTER TABLE payments_external_info RENAME TO payments_external_info_old;
+
+        CREATE TABLE payments_external_info (
+         payment_id TEXT NOT NULL PRIMARY KEY,
+         lnurl_success_action TEXT,
+         ln_address TEXT,
+         lnurl_metadata TEXT,
+         lnurl_withdraw_endpoint TEXT
+        ) STRICT;
+
+        INSERT INTO payments_external_info
+         (payment_id, lnurl_success_action, ln_address, lnurl_metadata, lnurl_withdraw_endpoint)
+         SELECT
+          payment_id,
+          lnurl_success_action,
+          ln_address,
+          lnurl_metadata,
+          NULL
+         FROM payments_external_info_old;
+
+        DROP TABLE payments_external_info_old;
+        ",
     ]
 }
