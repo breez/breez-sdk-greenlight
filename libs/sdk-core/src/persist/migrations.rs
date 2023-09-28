@@ -411,7 +411,7 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
         END;
 
         CREATE TRIGGER sync.sync_requests_payments_external_info
-         AFTER INSERT ON payments_external_info       
+         AFTER INSERT ON payments_external_info
         BEGIN
          INSERT INTO sync_requests(changed_table) VALUES('payments_external_info');
         END;
@@ -524,12 +524,6 @@ pub(crate) fn current_sync_migrations() -> Vec<&'static str> {
         BEGIN
          INSERT INTO sync_requests(changed_table) VALUES('reverse_swaps');
         END;
-
-        CREATE TRIGGER IF NOT EXISTS sync_requests_payments_external_info
-         AFTER INSERT ON payments_external_info
-        BEGIN
-         INSERT INTO sync_requests(changed_table) VALUES('payments_external_info');
-        END;
         ",
         "
         ALTER TABLE payments_external_info RENAME TO payments_external_info_old;
@@ -553,6 +547,12 @@ pub(crate) fn current_sync_migrations() -> Vec<&'static str> {
          FROM payments_external_info_old;
 
         DROP TABLE payments_external_info_old;
+
+        CREATE TRIGGER IF NOT EXISTS sync_requests_payments_external_info
+         AFTER INSERT ON payments_external_info
+        BEGIN
+         INSERT INTO sync_requests(changed_table) VALUES('payments_external_info');
+        END;
         ",
     ]
 }
