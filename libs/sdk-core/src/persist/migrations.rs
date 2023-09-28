@@ -460,13 +460,76 @@ pub(crate) fn current_sync_migrations() -> Vec<&'static str> {
         channel_opening_fees TEXT NOT NULL
        ) STRICT;
        ",
+        // Create all sync tables and triggers, if they don't already exist
         "
+        CREATE TABLE IF NOT EXISTS swaps (
+         bitcoin_address TEXT PRIMARY KEY NOT NULL,
+         created_at INTEGER DEFAULT CURRENT_TIMESTAMP,
+         lock_height INTEGER NOT NULL,
+         payment_hash BLOB NOT NULL UNIQUE,
+         preimage BLOB NOT NULL UNIQUE,
+         private_key BLOB NOT NULL UNIQUE,
+         public_key BLOB NOT NULL UNIQUE,
+         swapper_public_key BLOB NOT NULL UNIQUE,
+         script BLOB NOT NULL UNIQUE,
+         min_allowed_deposit INTEGER NOT NULL,
+         max_allowed_deposit INTEGER NOT NULL
+        ) STRICT;
+
+        CREATE TABLE IF NOT EXISTS swap_refunds (
+         bitcoin_address TEXT NOT NULL,
+         refund_tx_id TEXT NOT NULL,
+         PRIMARY KEY (bitcoin_address, refund_tx_id)
+        ) STRICT;
+
         CREATE TABLE IF NOT EXISTS payments_external_info (
          payment_id TEXT NOT NULL PRIMARY KEY,
          lnurl_success_action TEXT,
          ln_address TEXT,
          lnurl_metadata TEXT
-         ) STRICT;
+        ) STRICT;
+
+        CREATE TABLE IF NOT EXISTS reverse_swaps (
+         id TEXT PRIMARY KEY NOT NULL,
+         created_at_block_height INTEGER NOT NULL,
+         preimage BLOB NOT NULL UNIQUE,
+         private_key BLOB NOT NULL UNIQUE,
+         claim_pubkey TEXT NOT NULL,
+         timeout_block_height INTEGER NOT NULL,
+         invoice TEXT NOT NULL UNIQUE,
+         onchain_amount_sat INTEGER NOT NULL,
+         sat_per_vbyte INTEGER NOT NULL,
+         redeem_script TEXT NOT NULL
+        ) STRICT;
+
+        CREATE TABLE IF NOT EXISTS sync_requests (
+         id INTEGER PRIMARY KEY AUTOINCREMENT,
+         changed_table TEXT NOT NULL
+        ) STRICT;
+
+        CREATE TRIGGER IF NOT EXISTS sync_requests_swaps
+         AFTER INSERT ON swaps
+        BEGIN
+         INSERT INTO sync_requests(changed_table) VALUES('swaps');
+        END;
+
+        CREATE TRIGGER IF NOT EXISTS sync_requests_swap_refunds
+         AFTER INSERT ON swap_refunds
+        BEGIN
+         INSERT INTO sync_requests(changed_table) VALUES('swap_refunds');
+        END;
+
+        CREATE TRIGGER IF NOT EXISTS sync_requests_reverse_swaps
+         AFTER INSERT ON reverse_swaps
+        BEGIN
+         INSERT INTO sync_requests(changed_table) VALUES('reverse_swaps');
+        END;
+
+        CREATE TRIGGER IF NOT EXISTS sync_requests_payments_external_info
+         AFTER INSERT ON payments_external_info
+        BEGIN
+         INSERT INTO sync_requests(changed_table) VALUES('payments_external_info');
+        END;
         ",
         "
         ALTER TABLE payments_external_info RENAME TO payments_external_info_old;
