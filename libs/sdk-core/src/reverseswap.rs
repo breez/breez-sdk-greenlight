@@ -367,18 +367,31 @@ impl BTCSendSwap {
         // Depending on the new state, decide next steps and transition to the new state
         for rs in monitored {
             debug!("Checking monitored reverse swap {rs:?}");
-            // (Re-)Broadcast the claim tx for monitored reverse swaps that have a confirmed lockup tx
-            if matches!(self.get_lockup_tx_status(&rs).await?, TxStatus::Confirmed) {
-                info!("Lock tx is confirmed, preparing claim tx");
-                let claim_tx = self.create_claim_tx(&rs).await?;
-                let claim_tx_broadcast_res = self
-                    .chain_service
-                    .broadcast_transaction(serialize(&claim_tx))
-                    .await;
-                match claim_tx_broadcast_res {
-                    Ok(txid) => info!("Claim tx was broadcast with txid {txid}"),
-                    Err(e) => error!("Claim tx failed to broadcast: {e}"),
-                }
+
+            let lockup_tx_status = self.get_lockup_tx_status(&rs).await?;
+            let claim_tx_status = self.get_claim_tx_status(&rs).await?;
+
+            match claim_tx_status {
+                TxStatus::Confirmed => info!("Claim tx is already confirmed"),
+                _ => match lockup_tx_status {
+                    TxStatus::Confirmed => {
+                        // (Re-)Broadcast the claim tx for monitored reverse swaps which:
+                        // - have a confirmed lockup tx (only after that point, the claim tx matters)
+                        // - do NOT have a confirmed claim tx (no point in broadcasting it in that case)
+
+                        info!("Lock tx is confirmed and claim tx is not, preparing to broadcast claim tx");
+                        let claim_tx = self.create_claim_tx(&rs).await?;
+                        let claim_tx_broadcast_res = self
+                            .chain_service
+                            .broadcast_transaction(serialize(&claim_tx))
+                            .await;
+                        match claim_tx_broadcast_res {
+                            Ok(txid) => info!("Claim tx was broadcast with txid {txid}"),
+                            Err(e) => error!("Claim tx failed to broadcast: {e}"),
+                        }
+                    }
+                    _ => info!("Lockup tx is not yet confirmed"),
+                },
             }
         }
 
