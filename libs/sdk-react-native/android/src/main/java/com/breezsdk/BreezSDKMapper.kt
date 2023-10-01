@@ -2440,7 +2440,6 @@ fun asUnspentTransactionOutput(data: ReadableMap): UnspentTransactionOutput? {
                 "amountMillisatoshi",
                 "address",
                 "reserved",
-                "reservedToBlock",
             ),
         )
     ) {
@@ -2451,14 +2450,12 @@ fun asUnspentTransactionOutput(data: ReadableMap): UnspentTransactionOutput? {
     val amountMillisatoshi = data.getDouble("amountMillisatoshi").toULong()
     val address = data.getString("address")!!
     val reserved = data.getBoolean("reserved")
-    val reservedToBlock = data.getInt("reservedToBlock").toUInt()
     return UnspentTransactionOutput(
         txid,
         outnum,
         amountMillisatoshi,
         address,
         reserved,
-        reservedToBlock,
     )
 }
 
@@ -2469,7 +2466,6 @@ fun readableMapOf(unspentTransactionOutput: UnspentTransactionOutput): ReadableM
         "amountMillisatoshi" to unspentTransactionOutput.amountMillisatoshi,
         "address" to unspentTransactionOutput.address,
         "reserved" to unspentTransactionOutput.reserved,
-        "reservedToBlock" to unspentTransactionOutput.reservedToBlock,
     )
 }
 
