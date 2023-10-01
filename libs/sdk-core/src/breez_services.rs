@@ -481,14 +481,12 @@ impl BreezServices {
     /// Sweep on-chain funds to the specified on-chain address, with the given feerate
     pub async fn sweep(&self, request: SweepRequest) -> Result<SweepResponse> {
         self.start_node().await?;
-        let response = self
+        let txid = self
             .node_api
             .sweep(request.to_address, request.fee_rate_sats_per_vbyte)
             .await?;
         self.sync().await?;
-        Ok(SweepResponse {
-            txid: response.txid,
-        })
+        Ok(SweepResponse { txid })
     }
 
     /// Fetch live rates of fiat currencies
@@ -1234,18 +1232,16 @@ impl BreezServices {
                 }
                 Some(outnum) => {
                     // Find the output tx that was used to fund the channel
-
                     let outspends = self
                         .chain_service
                         .transaction_outspends(channel.funding_txid.clone())
-                        .await?;
-
+                        .await?;                    
                     let maybe_block_time = outspends.get(outnum as usize)
                         .and_then(|outspend| outspend.status.as_ref())
                         .and_then(|status| status.block_time);
 
                     match maybe_block_time {
-                        None => {
+                        None => {                            
                             warn!("Blocktime could not be determined for funding_outnum {outnum}, defaulting closed_at to epoch time");
                             now_epoch_sec
                         }
@@ -1709,14 +1705,14 @@ impl Receiver for PaymentReceiver {
                     let active_channel = peer
                         .channels
                         .iter()
-                        .find(|&c| c.state == "CHANNELD_NORMAL")
+                        .find(|&c| c.state == ChannelState::Opened)
                         .ok_or_else(|| SdkError::ReceivePaymentFailed {
                             err: "No open channel found".into(),
                         })?;
-                    let hint = match active_channel.clone().alias {
-                        Some(aliases) => aliases.remote,
-                        _ => active_channel.clone().short_channel_id,
-                    };
+                    let hint = active_channel
+                        .clone()
+                        .alias_remote
+                        .unwrap_or(active_channel.clone().short_channel_id);
 
                     short_channel_id = parse_short_channel_id(&hint)?;
                     info!("Found channel ID: {short_channel_id} {active_channel:?}");

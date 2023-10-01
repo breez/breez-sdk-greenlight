@@ -11,7 +11,6 @@ use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::{Address, Script};
 use chrono::{DateTime, Duration, Utc};
-use gl_client::pb::WithdrawResponse;
 use lightning_invoice::RawInvoice;
 use ripemd::Digest;
 use ripemd::Ripemd160;
@@ -22,8 +21,6 @@ use std::cmp::max;
 use tokio::sync::mpsc;
 use tokio_stream::Stream;
 use tonic::Streaming;
-
-use gl_client::signer::model::greenlight::Peer;
 
 use crate::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::fiat::{FiatCurrency, Rate};
@@ -55,6 +52,12 @@ pub struct CustomMessage {
     pub payload: Vec<u8>,
 }
 
+#[derive(Debug)]
+pub struct Peer {
+    pub id: Vec<u8>,
+    pub channels: Vec<Channel>,
+}
+
 /// Trait covering functions affecting the LN node
 #[tonic::async_trait]
 pub trait NodeAPI: Send + Sync {
@@ -84,11 +87,7 @@ pub trait NodeAPI: Send + Sync {
         amount_sats: u64,
     ) -> Result<crate::models::PaymentResponse>;
     async fn start(&self) -> Result<()>;
-    async fn sweep(
-        &self,
-        to_address: String,
-        fee_rate_sats_per_vbyte: u64,
-    ) -> Result<WithdrawResponse>;
+    async fn sweep(&self, to_address: String, fee_rate_sats_per_vbyte: u64) -> Result<Vec<u8>>;
     async fn start_signer(&self, shutdown: mpsc::Receiver<()>);
     async fn list_peers(&self) -> Result<Vec<Peer>>;
     async fn connect_peer(&self, node_id: String, addr: String) -> Result<()>;
@@ -992,6 +991,8 @@ pub struct Channel {
     pub closed_at: Option<u64>,
     /// The output number of the funding tx which opened the channel
     pub funding_outnum: Option<u32>,
+    pub alias_local: Option<String>,
+    pub alias_remote: Option<String>,
 }
 
 /// State of a Lightning channel
@@ -1115,8 +1116,6 @@ pub struct UnspentTransactionOutput {
     pub address: String,
     #[serde(default)]
     pub reserved: bool,
-    #[serde(default)]
-    pub reserved_to_block: u32,
 }
 
 /// Contains the result of the entire LNURL interaction, as reported by the LNURL endpoint.

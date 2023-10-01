@@ -83,8 +83,7 @@ dictionary UnspentTransactionOutput {
     u32 outnum;
     u64 amount_millisatoshi;
     string address;
-    boolean reserved;
-    u32 reserved_to_block;
+    boolean reserved;  
 };
 
 dictionary NodeState {

@@ -1437,7 +1437,6 @@ class UnspentTransactionOutput {
   final int amountMillisatoshi;
   final String address;
   final bool reserved;
-  final int reservedToBlock;
 
   const UnspentTransactionOutput({
     required this.txid,
@@ -1445,7 +1444,6 @@ class UnspentTransactionOutput {
     required this.amountMillisatoshi,
     required this.address,
     required this.reserved,
-    required this.reservedToBlock,
   });
 }
 
@@ -3121,14 +3119,13 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   UnspentTransactionOutput _wire2api_unspent_transaction_output(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 6) throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    if (arr.length != 5) throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
     return UnspentTransactionOutput(
       txid: _wire2api_uint_8_list(arr[0]),
       outnum: _wire2api_u32(arr[1]),
       amountMillisatoshi: _wire2api_u64(arr[2]),
       address: _wire2api_String(arr[3]),
       reserved: _wire2api_bool(arr[4]),
-      reservedToBlock: _wire2api_u32(arr[5]),
     );
   }
 
