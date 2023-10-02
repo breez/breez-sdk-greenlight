@@ -805,6 +805,27 @@ pub struct SweepResponse {
     pub txid: Vec<u8>,
 }
 
+pub struct SendOnchainRequest {
+    pub amount_sat: u64,
+    pub onchain_recipient_address: String,
+    pub pair_hash: String,
+    pub sat_per_vbyte: u64,
+}
+
+pub struct SendOnchainResponse {
+    pub reverse_swap_info: ReverseSwapInfo,
+}
+
+pub struct RefundRequest {
+    pub swap_address: String,
+    pub to_address: String,
+    pub sat_per_vbyte: u32,
+}
+
+pub struct RefundResponse {
+    pub refund_tx_id: String,
+}
+
 /// Dynamic fee parameters offered by the LSP for opening a new channel.
 ///
 /// After they are received, the client shouldn't change them when calling LSP methods,

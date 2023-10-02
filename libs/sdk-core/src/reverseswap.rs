@@ -4,11 +4,11 @@ use std::sync::Arc;
 use crate::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus::*};
 use crate::chain::{get_utxos, ChainService, MempoolSpace, OnchainTx};
 use crate::models::{ReverseSwapServiceAPI, ReverseSwapperRoutingAPI};
-use crate::ReverseSwapStatus::*;
 use crate::{
     BreezEvent, Config, FullReverseSwapInfo, NodeAPI, PaymentStatus, ReverseSwapInfo,
     ReverseSwapInfoCached, ReverseSwapPairInfo, ReverseSwapStatus,
 };
+use crate::{ReverseSwapStatus::*, SendOnchainRequest};
 use anyhow::{anyhow, ensure, Result};
 use bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
 use bitcoin::consensus::serialize;
@@ -96,25 +96,16 @@ impl BTCSendSwap {
     /// status persisted.
     pub(crate) async fn create_reverse_swap(
         &self,
-        amount_sat: u64,
-        claim_pubkey: String,
-        pair_hash: String,
-        sat_per_vbyte: u64,
+        request: SendOnchainRequest,
     ) -> Result<FullReverseSwapInfo> {
-        Self::validate_rev_swap_args(&claim_pubkey)?;
+        Self::validate_rev_swap_args(&request.onchain_recipient_address)?;
 
         let reverse_routing_node = self
             .reverse_swapper_api
             .fetch_reverse_routing_node()
             .await?;
         let created_rsi = self
-            .create_and_validate_rev_swap_on_remote(
-                amount_sat,
-                claim_pubkey,
-                pair_hash,
-                hex::encode(reverse_routing_node),
-                sat_per_vbyte,
-            )
+            .create_and_validate_rev_swap_on_remote(request, hex::encode(reverse_routing_node))
             .await?;
         self.persister.insert_reverse_swap(&created_rsi)?;
         info!("Created and persisted reverse swap: {created_rsi:?}");
@@ -193,21 +184,18 @@ impl BTCSendSwap {
     /// before returning it
     async fn create_and_validate_rev_swap_on_remote(
         &self,
-        amount_sat: u64,
-        claim_pubkey: String,
-        pair_hash: String,
+        request: SendOnchainRequest,
         routing_node: String,
-        sat_per_vbyte: u64,
     ) -> Result<FullReverseSwapInfo> {
         let reverse_swap_keys = crate::swap::create_swap_keys()?;
 
         let boltz_response = self
             .reverse_swap_service_api
             .create_reverse_swap_on_remote(
-                amount_sat,
+                request.amount_sat,
                 reverse_swap_keys.preimage_hash_bytes().to_hex(),
                 reverse_swap_keys.public_key()?.to_hex(),
-                pair_hash.clone(),
+                request.pair_hash.clone(),
                 routing_node,
             )
             .await?;
@@ -215,19 +203,19 @@ impl BTCSendSwap {
             BoltzApiCreateReverseSwapResponse::BoltzApiSuccess(response) => {
                 let res = FullReverseSwapInfo {
                     created_at_block_height: self.chain_service.current_tip().await?,
-                    claim_pubkey,
+                    claim_pubkey: request.onchain_recipient_address,
                     invoice: response.invoice,
                     preimage: reverse_swap_keys.preimage,
                     private_key: reverse_swap_keys.priv_key,
                     timeout_block_height: response.timeout_block_height,
                     id: response.id,
                     onchain_amount_sat: response.onchain_amount,
-                    sat_per_vbyte,
+                    sat_per_vbyte: request.sat_per_vbyte,
                     redeem_script: response.redeem_script,
                     cache: ReverseSwapInfoCached { status: Initial },
                 };
 
-                res.validate_hodl_invoice(amount_sat * 1000)?;
+                res.validate_hodl_invoice(request.amount_sat * 1000)?;
                 res.validate_redeem_script(response.lockup_address, self.config.network)?;
                 Ok(res)
             }

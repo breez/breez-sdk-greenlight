@@ -245,11 +245,11 @@ impl Default for MockReceiver {
 impl Receiver for MockReceiver {
     async fn receive_payment(
         &self,
-        _req_data: ReceivePaymentRequest,
+        _request: ReceivePaymentRequest,
     ) -> SdkResult<crate::ReceivePaymentResponse> {
         Ok(crate::ReceivePaymentResponse {
             ln_invoice: parse_invoice(&self.bolt11)?,
-            opening_fee_params: _req_data.opening_fee_params,
+            opening_fee_params: _request.opening_fee_params,
             opening_fee_msat: None,
         })
     }
