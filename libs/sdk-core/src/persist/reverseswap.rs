@@ -1,7 +1,6 @@
 use super::db::SqliteStorage;
 use crate::{FullReverseSwapInfo, ReverseSwapInfoCached, ReverseSwapStatus};
 use anyhow::Result;
-use rusqlite::types::FromSqlError;
 use rusqlite::{named_params, Row};
 
 impl SqliteStorage {
@@ -47,7 +46,7 @@ impl SqliteStorage {
         debug!("Persisting new status for reverse swap {id} to be {status:?}");
 
         self.get_connection()?.execute(
-            "UPDATE reverse_swaps_info SET status=:status where id=:id",
+            "INSERT OR REPLACE INTO reverse_swaps_info VALUES(:id, :status)",
             named_params! {
              ":status": serde_json::to_value(status)?,
              ":id": id,
@@ -82,8 +81,10 @@ impl SqliteStorage {
             sat_per_vbyte: row.get("sat_per_vbyte")?,
             redeem_script: row.get("redeem_script")?,
             cache: ReverseSwapInfoCached {
+                // The status is stored in the main DB, which is empty when the node is restored.
+                // We therefore default to the Initial state. This will be updated at the end of sync().
                 status: serde_json::from_value(row.get("status")?)
-                    .map_err(|_| FromSqlError::InvalidType)?,
+                    .unwrap_or(ReverseSwapStatus::Initial),
             },
         })
     }

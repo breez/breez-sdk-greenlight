@@ -6,8 +6,8 @@ use crate::chain::{get_utxos, ChainService, MempoolSpace};
 use crate::models::{ReverseSwapServiceAPI, ReverseSwapperRoutingAPI};
 use crate::ReverseSwapStatus::*;
 use crate::{
-    BreezEvent, Config, FullReverseSwapInfo, NodeAPI, ReverseSwapInfoCached, ReverseSwapPairInfo,
-    ReverseSwapStatus,
+    BreezEvent, Config, FullReverseSwapInfo, NodeAPI, PaymentStatus, ReverseSwapInfoCached,
+    ReverseSwapPairInfo, ReverseSwapStatus,
 };
 use anyhow::{anyhow, ensure, Result};
 use bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
@@ -449,11 +449,17 @@ impl BTCSendSwap {
             "Tried to get status for non-monitored reverse swap"
         );
 
+        let payment_hash_hex = &rsi.get_preimage_hash().to_hex();
+        let payment_status = self.persister.get_payment_by_hash(payment_hash_hex)?;
+        if let Some(ref payment) = payment_status {
+            if payment.status == PaymentStatus::Failed {
+                warn!("Payment failed for reverse swap {}", rsi.id);
+                return Ok(Some(Cancelled));
+            }
+        }
+
         let new_status = match &current_status {
-            Initial => match self
-                .persister
-                .get_payment_by_hash(&rsi.get_preimage_hash().to_hex())?
-            {
+            Initial => match payment_status {
                 Some(_) => Some(InProgress),
                 None => match self
                     .reverse_swap_service_api
@@ -469,10 +475,23 @@ impl BTCSendSwap {
                     _ => None,
                 },
             },
-            InProgress | CompletedSeen => match self.get_claim_tx_status(rsi).await? {
-                TxStatus::Unknown => None,
+            InProgress => match self.get_claim_tx_status(rsi).await? {
+                TxStatus::Unknown => {
+                    let block_height = self.chain_service.current_tip().await?;
+                    match block_height >= rsi.timeout_block_height {
+                        true => {
+                            warn!("Reverse swap {} crossed the timeout block height", rsi.id);
+                            Some(Cancelled)
+                        }
+                        false => None,
+                    }
+                }
                 TxStatus::Mempool => Some(CompletedSeen),
                 TxStatus::Confirmed => Some(CompletedConfirmed),
+            },
+            CompletedSeen => match self.get_claim_tx_status(rsi).await? {
+                TxStatus::Confirmed => Some(CompletedConfirmed),
+                _ => None,
             },
             _ => None,
         };
