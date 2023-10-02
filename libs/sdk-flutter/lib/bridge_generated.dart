@@ -3644,7 +3644,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
 
   void _api_fill_to_wire_sweep_request(SweepRequest apiObj, wire_SweepRequest wireObj) {
     wireObj.to_address = api2wire_String(apiObj.toAddress);
-    wireObj.fee_rate_sats_per_vbyte = api2wire_u64(apiObj.feeRateSatsPerVbyte);
+    wireObj.fee_rate_sats_per_vbyte = api2wire_u32(apiObj.feeRateSatsPerVbyte);
   }
 }
 
@@ -4839,7 +4839,7 @@ class wire_BuyBitcoinRequest extends ffi.Struct {
 class wire_SweepRequest extends ffi.Struct {
   external ffi.Pointer<wire_uint_8_list> to_address;
 
-  @ffi.Uint64()
+  @ffi.Uint32()
   external int fee_rate_sats_per_vbyte;
 }
 

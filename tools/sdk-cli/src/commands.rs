@@ -134,7 +134,7 @@ pub(crate) enum Commands {
         to_address: String,
 
         /// The fee rate for the sweep transaction
-        sat_per_vbyte: u64,
+        sat_per_vbyte: u32,
     },
 
     /// List available LSPs

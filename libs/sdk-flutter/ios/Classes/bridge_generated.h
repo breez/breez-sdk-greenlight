@@ -134,7 +134,7 @@ typedef struct wire_BuyBitcoinRequest {
 
 typedef struct wire_SweepRequest {
   struct wire_uint_8_list *to_address;
-  uint64_t fee_rate_sats_per_vbyte;
+  uint32_t fee_rate_sats_per_vbyte;
 } wire_SweepRequest;
 
 typedef struct wire_OpenChannelFeeRequest {

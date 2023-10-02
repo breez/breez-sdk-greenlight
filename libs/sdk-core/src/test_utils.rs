@@ -323,7 +323,7 @@ impl NodeAPI for MockNodeAPI {
         Ok(())
     }
 
-    async fn sweep(&self, _to_address: String, _fee_rate_sats_per_vbyte: u64) -> Result<Vec<u8>> {
+    async fn sweep(&self, _to_address: String, _fee_rate_sats_per_vbyte: u32) -> Result<Vec<u8>> {
         Ok(rand_vec_u8(32))
     }
 

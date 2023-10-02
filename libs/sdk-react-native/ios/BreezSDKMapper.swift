@@ -2120,7 +2120,7 @@ class BreezSDKMapper {
 
     static func asSweepRequest(data: [String: Any?]) throws -> SweepRequest {
         guard let toAddress = data["toAddress"] as? String else { throw SdkError.Generic(message: "Missing mandatory field toAddress for type SweepRequest") }
-        guard let feeRateSatsPerVbyte = data["feeRateSatsPerVbyte"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field feeRateSatsPerVbyte for type SweepRequest") }
+        guard let feeRateSatsPerVbyte = data["feeRateSatsPerVbyte"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field feeRateSatsPerVbyte for type SweepRequest") }
 
         return SweepRequest(
             toAddress: toAddress,

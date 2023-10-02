@@ -558,13 +558,13 @@ impl NodeAPI for Greenlight {
         Ok(())
     }
 
-    async fn sweep(&self, to_address: String, fee_rate_sats_per_vbyte: u64) -> Result<Vec<u8>> {
+    async fn sweep(&self, to_address: String, fee_rate_sats_per_vbyte: u32) -> Result<Vec<u8>> {
         let mut client = self.get_node_client().await?;
 
         let request = pb::cln::WithdrawRequest {
             feerate: Some(pb::cln::Feerate {
                 style: Some(pb::cln::feerate::Style::Perkw(
-                    fee_rate_sats_per_vbyte as u32 * 250,
+                    fee_rate_sats_per_vbyte * 250,
                 )),
             }),
             satoshi: Some(pb::cln::AmountOrAll {

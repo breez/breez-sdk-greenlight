@@ -87,7 +87,7 @@ pub trait NodeAPI: Send + Sync {
         amount_sats: u64,
     ) -> Result<crate::models::PaymentResponse>;
     async fn start(&self) -> Result<()>;
-    async fn sweep(&self, to_address: String, fee_rate_sats_per_vbyte: u64) -> Result<Vec<u8>>;
+    async fn sweep(&self, to_address: String, fee_rate_sats_per_vbyte: u32) -> Result<Vec<u8>>;
     async fn start_signer(&self, shutdown: mpsc::Receiver<()>);
     async fn list_peers(&self) -> Result<Vec<Peer>>;
     async fn connect_peer(&self, node_id: String, addr: String) -> Result<()>;
@@ -798,7 +798,7 @@ pub struct BuyBitcoinResponse {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SweepRequest {
     pub to_address: String,
-    pub fee_rate_sats_per_vbyte: u64,
+    pub fee_rate_sats_per_vbyte: u32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

@@ -2333,7 +2333,7 @@ fun asSweepRequest(data: ReadableMap): SweepRequest? {
         return null
     }
     val toAddress = data.getString("toAddress")!!
-    val feeRateSatsPerVbyte = data.getDouble("feeRateSatsPerVbyte").toULong()
+    val feeRateSatsPerVbyte = data.getInt("feeRateSatsPerVbyte").toUInt()
     return SweepRequest(
         toAddress,
         feeRateSatsPerVbyte,
