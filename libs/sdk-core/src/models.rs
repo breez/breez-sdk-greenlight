@@ -364,6 +364,8 @@ impl From<FullReverseSwapInfo> for ReverseSwapInfo {
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum ReverseSwapStatus {
     /// HODL invoice payment is not completed yet
+    ///
+    /// This is also the temporary status of a reverse swap when restoring a node, until `sync` finishes.
     Initial = 0,
 
     /// HODL invoice payment was successfully triggered and confirmed by Boltz, but the reverse swap

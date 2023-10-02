@@ -1182,10 +1182,12 @@ impl BreezServices {
                 r#"
                 info,
                 breez_sdk_core::input_parser=warn,
+                breez_sdk_core::backup=info,
+                breez_sdk_core::persist::reverseswap=info,
+                breez_sdk_core::reverseswap=info,
                 gl_client=warn,
                 h2=warn,
                 hyper=warn,
-                breez_sdk_core::reverseswap=info,
                 lightning_signer=warn,
                 reqwest=warn,
                 rustls=warn,
