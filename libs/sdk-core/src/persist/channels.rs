@@ -84,19 +84,17 @@ impl SqliteStorage {
                    spendable_msat, 
                    receivable_msat,
                    closed_at,
-                   funding_outnum,
-                   closed_at,
+                   funding_outnum,                   
                    alias_local,
                    alias_remote
                   )
-                  VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10)
+                  VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9)
                   ON CONFLICT(funding_txid) DO UPDATE SET
                    short_channel_id=excluded.short_channel_id,
                    state=excluded.state,
                    spendable_msat=excluded.spendable_msat,
                    receivable_msat=excluded.receivable_msat,
-                   funding_outnum=excluded.funding_outnum,
-                   closed_at=excluded.closed_at,
+                   funding_outnum=excluded.funding_outnum,                   
                    alias_local=excluded.alias_local,
                    alias_remote=excluded.alias_remote
                ",
@@ -111,7 +109,6 @@ impl SqliteStorage {
                     _ => c.closed_at,
                 },
                 c.funding_outnum,
-                c.closed_at,
                 c.alias_local,
                 c.alias_remote,
             ),
