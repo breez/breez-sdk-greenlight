@@ -401,7 +401,6 @@ export type UnspentTransactionOutput = {
     amountMillisatoshi: number
     address: string
     reserved: boolean
-    reservedToBlock: number
 }
 
 export type UrlSuccessActionData = {

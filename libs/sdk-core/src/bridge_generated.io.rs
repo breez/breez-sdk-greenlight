@@ -857,7 +857,7 @@ pub struct wire_StaticBackupRequest {
 #[derive(Clone)]
 pub struct wire_SweepRequest {
     to_address: *mut wire_uint_8_list,
-    fee_rate_sats_per_vbyte: u64,
+    fee_rate_sats_per_vbyte: u32,
 }
 
 #[repr(C)]

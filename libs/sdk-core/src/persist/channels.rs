@@ -47,7 +47,9 @@ impl SqliteStorage {
                 spendable_msat, 
                 receivable_msat,
                 closed_at,
-                funding_outnum
+                funding_outnum,
+                alias_local,
+                alias_remote
                FROM channels             
              ",
         )?;
@@ -63,6 +65,8 @@ impl SqliteStorage {
                     receivable_msat: row.get(4)?,
                     closed_at: row.get(5)?,
                     funding_outnum: row.get(6)?,
+                    alias_local: row.get(7)?,
+                    alias_remote: row.get(8)?,
                 })
             })?
             .map(|i| i.unwrap())
@@ -80,22 +84,19 @@ impl SqliteStorage {
                    spendable_msat, 
                    receivable_msat,
                    closed_at,
-                   funding_outnum
+                   funding_outnum,                   
+                   alias_local,
+                   alias_remote
                   )
-                  VALUES (?1,?2,?3,?4,?5,?6,?7)
+                  VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9)
                   ON CONFLICT(funding_txid) DO UPDATE SET
                    short_channel_id=excluded.short_channel_id,
                    state=excluded.state,
                    spendable_msat=excluded.spendable_msat,
-                   receivable_msat=excluded.receivable_msat
-                  WHERE closed_at IS NULL AND excluded.state IN ('PendingClose', 'Closed')
-                  ON CONFLICT(funding_txid) DO UPDATE SET
-                   short_channel_id=excluded.short_channel_id,
-                   state=excluded.state,
-                   spendable_msat=excluded.spendable_msat,
-                   receivable_msat=excluded.receivable_msat                            
-                  WHERE closed_at IS NOT NULL
-
+                   receivable_msat=excluded.receivable_msat,
+                   funding_outnum=excluded.funding_outnum,                   
+                   alias_local=excluded.alias_local,
+                   alias_remote=excluded.alias_remote
                ",
             (
                 c.funding_txid,
@@ -108,6 +109,8 @@ impl SqliteStorage {
                     _ => c.closed_at,
                 },
                 c.funding_outnum,
+                c.alias_local,
+                c.alias_remote,
             ),
         )?;
         Ok(())
@@ -130,6 +133,8 @@ fn test_simple_sync_channels() {
             receivable_msat: 1000,
             closed_at: None,
             funding_outnum: None,
+            alias_local: None,
+            alias_remote: None,
         },
         Channel {
             funding_txid: "456".to_string(),
@@ -139,6 +144,8 @@ fn test_simple_sync_channels() {
             receivable_msat: 2000,
             closed_at: None,
             funding_outnum: None,
+            alias_local: None,
+            alias_remote: None,
         },
     ];
 
@@ -167,6 +174,8 @@ fn test_sync_closed_channels() {
             receivable_msat: 1000,
             closed_at: None,
             funding_outnum: None,
+            alias_local: None,
+            alias_remote: None,
         },
         Channel {
             funding_txid: "456".to_string(),
@@ -176,6 +185,8 @@ fn test_sync_closed_channels() {
             receivable_msat: 2000,
             closed_at: Some(1),
             funding_outnum: None,
+            alias_local: None,
+            alias_remote: None,
         },
     ];
 
@@ -201,6 +212,8 @@ fn test_sync_closed_channels() {
             receivable_msat: 1000,
             closed_at: None,
             funding_outnum: None,
+            alias_local: None,
+            alias_remote: None,
         },
         Channel {
             funding_txid: "456".to_string(),
@@ -210,6 +223,8 @@ fn test_sync_closed_channels() {
             receivable_msat: 2000,
             closed_at: None,
             funding_outnum: None,
+            alias_local: None,
+            alias_remote: None,
         },
     ];
     assert_eq!(expected.len(), queried_channels.len());

@@ -413,6 +413,8 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
        UPDATE payments SET status = CASE WHEN status = 1 THEN 0 ELSE 1 END;
        ",
        "SELECT 1;", // Placeholder statement, to avoid that column is added twice (from sync fn below and here)
+       "ALTER TABLE channels ADD COLUMN alias_local TEXT;",
+       "ALTER TABLE channels ADD COLUMN alias_remote TEXT;"
     ]
 }
 

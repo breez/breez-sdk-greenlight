@@ -12,7 +12,7 @@ use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::Network;
 use chrono::{SecondsFormat, Utc};
 use gl_client::pb::amount::Unit;
-use gl_client::pb::{Amount, PayStatus, Peer, WithdrawResponse};
+use gl_client::pb::{Amount, PayStatus};
 use lightning::ln::PaymentSecret;
 use lightning_invoice::{Currency, InvoiceBuilder, RawInvoice};
 use rand::distributions::{Alphanumeric, DistString, Standard};
@@ -34,7 +34,7 @@ use crate::lsp::LspInformation;
 use crate::models::{FiatAPI, LspAPI, NodeAPI, NodeState, Payment, Swap, SwapperAPI, SyncResponse};
 use crate::moonpay::MoonPayApi;
 use crate::swap::create_submarine_swap_script;
-use crate::{parse_invoice, Config, CustomMessage, LNInvoice, PaymentResponse, RouteHint};
+use crate::{parse_invoice, Config, CustomMessage, LNInvoice, PaymentResponse, Peer, RouteHint};
 use crate::{OpeningFeeParams, OpeningFeeParamsMenu};
 use crate::{ReceivePaymentRequest, SwapInfo};
 
@@ -323,15 +323,8 @@ impl NodeAPI for MockNodeAPI {
         Ok(())
     }
 
-    async fn sweep(
-        &self,
-        _to_address: String,
-        _fee_rate_sats_per_vbyte: u64,
-    ) -> Result<WithdrawResponse> {
-        Ok(WithdrawResponse {
-            tx: rand_vec_u8(32),
-            txid: rand_vec_u8(32),
-        })
+    async fn sweep(&self, _to_address: String, _fee_rate_sats_per_vbyte: u32) -> Result<Vec<u8>> {
+        Ok(rand_vec_u8(32))
     }
 
     async fn start_signer(&self, _shutdown: mpsc::Receiver<()>) {}

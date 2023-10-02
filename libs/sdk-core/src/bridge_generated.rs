@@ -1489,7 +1489,6 @@ impl support::IntoDart for UnspentTransactionOutput {
             self.amount_millisatoshi.into_dart(),
             self.address.into_dart(),
             self.reserved.into_dart(),
-            self.reserved_to_block.into_dart(),
         ]
         .into_dart()
     }

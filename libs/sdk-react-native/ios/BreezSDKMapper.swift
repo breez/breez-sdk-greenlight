@@ -2120,7 +2120,7 @@ class BreezSDKMapper {
 
     static func asSweepRequest(data: [String: Any?]) throws -> SweepRequest {
         guard let toAddress = data["toAddress"] as? String else { throw SdkError.Generic(message: "Missing mandatory field toAddress for type SweepRequest") }
-        guard let feeRateSatsPerVbyte = data["feeRateSatsPerVbyte"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field feeRateSatsPerVbyte for type SweepRequest") }
+        guard let feeRateSatsPerVbyte = data["feeRateSatsPerVbyte"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field feeRateSatsPerVbyte for type SweepRequest") }
 
         return SweepRequest(
             toAddress: toAddress,
@@ -2228,15 +2228,13 @@ class BreezSDKMapper {
         guard let amountMillisatoshi = data["amountMillisatoshi"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field amountMillisatoshi for type UnspentTransactionOutput") }
         guard let address = data["address"] as? String else { throw SdkError.Generic(message: "Missing mandatory field address for type UnspentTransactionOutput") }
         guard let reserved = data["reserved"] as? Bool else { throw SdkError.Generic(message: "Missing mandatory field reserved for type UnspentTransactionOutput") }
-        guard let reservedToBlock = data["reservedToBlock"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field reservedToBlock for type UnspentTransactionOutput") }
 
         return UnspentTransactionOutput(
             txid: txid,
             outnum: outnum,
             amountMillisatoshi: amountMillisatoshi,
             address: address,
-            reserved: reserved,
-            reservedToBlock: reservedToBlock
+            reserved: reserved
         )
     }
 
@@ -2247,7 +2245,6 @@ class BreezSDKMapper {
             "amountMillisatoshi": unspentTransactionOutput.amountMillisatoshi,
             "address": unspentTransactionOutput.address,
             "reserved": unspentTransactionOutput.reserved,
-            "reservedToBlock": unspentTransactionOutput.reservedToBlock,
         ]
     }
 
