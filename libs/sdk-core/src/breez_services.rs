@@ -546,7 +546,7 @@ impl BreezServices {
     /// to pass to methods that require a channel open, like receive_payment, or receive_onchain.
     pub async fn open_channel_fee(
         &self,
-        req: OpenChannelFeeRequest,
+        request: OpenChannelFeeRequest,
     ) -> SdkResult<OpenChannelFeeResponse> {
         // get the node state to fetch the current inbound liquidity.
         let node_state = self.persister.get_node_state()?.ok_or(SdkError::NotReady {
@@ -554,7 +554,7 @@ impl BreezServices {
         })?;
 
         // In case we have enough inbound liquidity we return zero fee.
-        if node_state.inbound_liquidity_msats >= req.amount_msat {
+        if node_state.inbound_liquidity_msats >= request.amount_msat {
             return Ok(OpenChannelFeeResponse {
                 fee_msat: 0,
                 used_fee_params: None,
@@ -563,9 +563,10 @@ impl BreezServices {
 
         // Otherwise we need to calculate the fee for opening a new channel.
         let lsp_info = self.lsp_info().await?;
-        let used_fee_params = lsp_info
-            .cheapest_open_channel_fee(req.expiry.unwrap_or(INVOICE_PAYMENT_FEE_EXPIRY_SECONDS))?;
-        let fee_msat = used_fee_params.get_channel_fees_msat_for(req.amount_msat);
+        let used_fee_params = lsp_info.cheapest_open_channel_fee(
+            request.expiry.unwrap_or(INVOICE_PAYMENT_FEE_EXPIRY_SECONDS),
+        )?;
+        let fee_msat = used_fee_params.get_channel_fees_msat_for(request.amount_msat);
 
         Ok(OpenChannelFeeResponse {
             fee_msat,
@@ -595,14 +596,14 @@ impl BreezServices {
     ///
     /// The returned [SwapInfo] contains the created swap details. The channel opening fees are
     /// available at [SwapInfo::channel_opening_fees].
-    pub async fn receive_onchain(&self, req: ReceiveOnchainRequest) -> Result<SwapInfo> {
+    pub async fn receive_onchain(&self, request: ReceiveOnchainRequest) -> Result<SwapInfo> {
         if let Some(in_progress) = self.in_progress_swap().await? {
             return Err(anyhow!(format!(
                   "Swap in progress was detected for address {}.Use in_progress_swap method to get the current swap state",
                   in_progress.bitcoin_address
               )));
         }
-        let channel_opening_fees = match req.opening_fee_params {
+        let channel_opening_fees = match request.opening_fee_params {
             Some(fee_params) => fee_params,
             None => self
                 .lsp_info()
@@ -643,11 +644,11 @@ impl BreezServices {
     /// this with `send_amount_sat` as `None` first, then repeat the call with the desired amount.
     pub async fn fetch_reverse_swap_fees(
         &self,
-        req: ReverseSwapFeesRequest,
+        request: ReverseSwapFeesRequest,
     ) -> Result<ReverseSwapPairInfo> {
         let mut res = self.btc_send_swapper.fetch_reverse_swap_fees().await?;
 
-        if let Some(send_amount_sat) = req.send_amount_sat {
+        if let Some(send_amount_sat) = request.send_amount_sat {
             ensure!(send_amount_sat <= res.max, "Send amount is too high");
             ensure!(send_amount_sat >= res.min, "Send amount is too low");
 
@@ -659,34 +660,22 @@ impl BreezServices {
     }
 
     /// Creates a reverse swap and attempts to pay the HODL invoice
-    pub async fn send_onchain(
-        &self,
-        amount_sat: u64,
-        onchain_recipient_address: String,
-        pair_hash: String,
-        sat_per_vbyte: u64,
-    ) -> Result<ReverseSwapInfo> {
+    pub async fn send_onchain(&self, request: SendOnchainRequest) -> Result<SendOnchainResponse> {
         ensure!(self.in_progress_reverse_swaps().await?.is_empty(),
             "There already is at least one Reverse Swap in progress. You can only start a new one after after the ongoing ones finish. \
             Use the in_progress_reverse_swaps method to get an overview of currently ongoing reverse swaps."
         );
 
-        let full_rsi = self
-            .btc_send_swapper
-            .create_reverse_swap(
-                amount_sat,
-                onchain_recipient_address,
-                pair_hash,
-                sat_per_vbyte,
-            )
-            .await?;
+        let full_rsi = self.btc_send_swapper.create_reverse_swap(request).await?;
         let rsi = self
             .btc_send_swapper
             .convert_reverse_swap_info(full_rsi)
             .await?;
 
         self.do_sync(true).await?;
-        Ok(rsi)
+        Ok(SendOnchainResponse {
+            reverse_swap_info: rsi,
+        })
     }
 
     /// Returns the blocking [ReverseSwapInfo]s that are in progress
@@ -713,15 +702,8 @@ impl BreezServices {
     /// Construct and broadcast a refund transaction for a failed/expired swap
     ///
     /// Returns the txid of the refund transaction.
-    pub async fn refund(
-        &self,
-        swap_address: String,
-        to_address: String,
-        sat_per_vbyte: u32,
-    ) -> Result<String> {
-        self.btc_receive_swapper
-            .refund_swap(swap_address, to_address, sat_per_vbyte)
-            .await
+    pub async fn refund(&self, req: RefundRequest) -> Result<RefundResponse> {
+        self.btc_receive_swapper.refund_swap(req).await
     }
 
     /// Execute a command directly on the NodeAPI interface.
@@ -906,13 +888,13 @@ impl BreezServices {
     ///
     /// A user-selected [OpeningFeeParams] can be optionally set in the argument. If set, and the
     /// operation requires a new channel, the SDK will try to use the given fee params.
-    pub async fn buy_bitcoin(&self, req: BuyBitcoinRequest) -> SdkResult<BuyBitcoinResponse> {
+    pub async fn buy_bitcoin(&self, request: BuyBitcoinRequest) -> SdkResult<BuyBitcoinResponse> {
         let swap_info = self
             .receive_onchain(ReceiveOnchainRequest {
-                opening_fee_params: req.opening_fee_params,
+                opening_fee_params: request.opening_fee_params,
             })
             .await?;
-        let url = match req.provider {
+        let url = match request.provider {
             Moonpay => self.moonpay_api.buy_bitcoin_url(&swap_info).await?,
         };
 
@@ -1670,12 +1652,13 @@ pub(crate) struct ApiKeyInterceptor {
 }
 
 impl Interceptor for ApiKeyInterceptor {
-    fn call(&mut self, mut req: Request<()>) -> Result<Request<()>, Status> {
+    fn call(&mut self, mut request: Request<()>) -> Result<Request<()>, Status> {
         if self.api_key_metadata.clone().is_some() {
-            req.metadata_mut()
+            request
+                .metadata_mut()
                 .insert("authorization", self.api_key_metadata.clone().unwrap());
         }
-        Ok(req)
+        Ok(request)
     }
 }
 

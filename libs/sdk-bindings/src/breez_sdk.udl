@@ -539,6 +539,27 @@ dictionary SweepResponse {
     sequence<u8> txid;
 };
 
+dictionary SendOnchainRequest {
+    u64 amount_sat;
+    string onchain_recipient_address;
+    string pair_hash;
+    u64 sat_per_vbyte;
+};
+
+dictionary SendOnchainResponse {
+    ReverseSwapInfo reverse_swap_info;
+};
+
+dictionary RefundRequest {
+    string swap_address;
+    string to_address;
+    u32 sat_per_vbyte;
+};
+
+dictionary RefundResponse {
+    string refund_tx_id;
+};
+
 interface BlockingBreezServices {   
 
    [Throws=SdkError]
@@ -554,13 +575,13 @@ interface BlockingBreezServices {
    ReceivePaymentResponse receive_payment(ReceivePaymentRequest request);
 
    [Throws=SdkError]
-   LnUrlPayResult pay_lnurl(LnUrlPayRequestData req_data, u64 amount_sats, string? comment);
+   LnUrlPayResult pay_lnurl(u64 amount_sats, string? comment, LnUrlPayRequestData request_data);
 
    [Throws=SdkError]
    LnUrlWithdrawResult withdraw_lnurl(LnUrlWithdrawRequest request);
 
    [Throws=SdkError]
-   LnUrlCallbackStatus lnurl_auth(LnUrlAuthRequestData req_data);
+   LnUrlCallbackStatus lnurl_auth(LnUrlAuthRequestData request_data);
 
    [Throws=SdkError]
    NodeState node_info();
@@ -602,7 +623,7 @@ interface BlockingBreezServices {
    LspInformation? fetch_lsp_info(string lsp_id);
 
    [Throws=SdkError]
-   OpenChannelFeeResponse open_channel_fee(OpenChannelFeeRequest req);
+   OpenChannelFeeResponse open_channel_fee(OpenChannelFeeRequest request);
 
    [Throws=SdkError]
    string? lsp_id();
@@ -614,7 +635,7 @@ interface BlockingBreezServices {
    void close_lsp_channels();
 
    [Throws=SdkError]
-   SwapInfo receive_onchain(ReceiveOnchainRequest req);
+   SwapInfo receive_onchain(ReceiveOnchainRequest request);
 
    [Throws=SdkError]
    SwapInfo? in_progress_swap();
@@ -623,16 +644,16 @@ interface BlockingBreezServices {
    sequence<SwapInfo> list_refundables();
 
    [Throws=SdkError]
-   string refund(string swap_address, string to_address, u32 sat_per_vbyte);
+   RefundResponse refund(RefundRequest request);
 
    [Throws=SdkError]
-   ReverseSwapPairInfo fetch_reverse_swap_fees(ReverseSwapFeesRequest req);
+   ReverseSwapPairInfo fetch_reverse_swap_fees(ReverseSwapFeesRequest request);
 
    [Throws=SdkError]
    sequence<ReverseSwapInfo> in_progress_reverse_swaps();
 
    [Throws=SdkError]
-   ReverseSwapInfo send_onchain(u64 amount_sat, string onchain_recipient_address, string pair_hash, u64 sat_per_vbyte);
+   SendOnchainResponse send_onchain(SendOnchainRequest request);
 
    [Throws=SdkError]
    string execute_dev_command(string command);
@@ -644,7 +665,7 @@ interface BlockingBreezServices {
    RecommendedFees recommended_fees();
 
    [Throws=SdkError]
-   BuyBitcoinResponse buy_bitcoin(BuyBitcoinRequest req);
+   BuyBitcoinResponse buy_bitcoin(BuyBitcoinRequest request);
 };
 
 namespace breez_sdk {  

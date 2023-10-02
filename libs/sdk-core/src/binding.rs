@@ -34,7 +34,7 @@ use crate::{
     LnUrlWithdrawResult, NodeConfig, OpenChannelFeeRequest, OpenChannelFeeResponse,
     ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse, ReverseSwapFeesRequest,
     ReverseSwapInfo, ReverseSwapPairInfo, SignMessageRequest, SignMessageResponse,
-    StaticBackupRequest, StaticBackupResponse, SweepRequest, SweepResponse,
+    StaticBackupRequest, StaticBackupResponse, SweepRequest, SweepResponse, SendOnchainRequest, SendOnchainResponse, RefundRequest, RefundResponse,
 };
 
 /*
@@ -258,12 +258,12 @@ pub fn receive_payment(request: ReceivePaymentRequest) -> Result<ReceivePaymentR
 pub fn lnurl_pay(
     user_amount_sat: u64,
     comment: Option<String>,
-    req_data: LnUrlPayRequestData,
+    request_data: LnUrlPayRequestData,
 ) -> Result<LnUrlPayResult> {
     block_on(async {
         get_breez_services()
             .await?
-            .lnurl_pay(user_amount_sat, comment, req_data)
+            .lnurl_pay(user_amount_sat, comment, request_data)
             .await
     })
 }
@@ -274,8 +274,8 @@ pub fn lnurl_withdraw(request: LnUrlWithdrawRequest) -> Result<LnUrlWithdrawResu
 }
 
 /// See [BreezServices::lnurl_auth]
-pub fn lnurl_auth(req_data: LnUrlAuthRequestData) -> Result<LnUrlCallbackStatus> {
-    block_on(async { get_breez_services().await?.lnurl_auth(req_data).await })
+pub fn lnurl_auth(request_data: LnUrlAuthRequestData) -> Result<LnUrlCallbackStatus> {
+    block_on(async { get_breez_services().await?.lnurl_auth(request_data).await })
 }
 
 /*  Fiat Currency API's */
@@ -293,33 +293,18 @@ pub fn list_fiat_currencies() -> Result<Vec<FiatCurrency>> {
 /*  On-Chain Swap API's */
 
 /// See [BreezServices::send_onchain]
-pub fn send_onchain(
-    amount_sat: u64,
-    onchain_recipient_address: String,
-    pair_hash: String,
-    sat_per_vbyte: u64,
-) -> Result<ReverseSwapInfo> {
-    block_on(async {
-        get_breez_services()
-            .await?
-            .send_onchain(
-                amount_sat,
-                onchain_recipient_address,
-                pair_hash,
-                sat_per_vbyte,
-            )
-            .await
-    })
+pub fn send_onchain(request: SendOnchainRequest) -> Result<SendOnchainResponse> {
+    block_on(async { get_breez_services().await?.send_onchain(request).await })
 }
 
 /// See [BreezServices::receive_onchain]
-pub fn receive_onchain(req_data: ReceiveOnchainRequest) -> Result<SwapInfo> {
-    block_on(async { get_breez_services().await?.receive_onchain(req_data).await })
+pub fn receive_onchain(request: ReceiveOnchainRequest) -> Result<SwapInfo> {
+    block_on(async { get_breez_services().await?.receive_onchain(request).await })
 }
 
 /// See [BreezServices::buy_bitcoin]
-pub fn buy_bitcoin(req_data: BuyBitcoinRequest) -> Result<BuyBitcoinResponse> {
-    block_on(async { get_breez_services().await?.buy_bitcoin(req_data).await })
+pub fn buy_bitcoin(request: BuyBitcoinRequest) -> Result<BuyBitcoinResponse> {
+    block_on(async { get_breez_services().await?.buy_bitcoin(request).await })
         .map_err(anyhow::Error::new)
 }
 
@@ -336,13 +321,8 @@ pub fn list_refundables() -> Result<Vec<SwapInfo>> {
 }
 
 /// See [BreezServices::refund]
-pub fn refund(swap_address: String, to_address: String, sat_per_vbyte: u32) -> Result<String> {
-    block_on(async {
-        get_breez_services()
-            .await?
-            .refund(swap_address, to_address, sat_per_vbyte)
-            .await
-    })
+pub fn refund(request: RefundRequest) -> Result<RefundResponse> {
+    block_on(async { get_breez_services().await?.refund(request).await })
 }
 
 /*  In Progress Swap API's */
@@ -365,17 +345,17 @@ pub fn in_progress_reverse_swaps() -> Result<Vec<ReverseSwapInfo>> {
 /*  Swap Fee API's */
 
 /// See [BreezServices::open_channel_fee]
-pub fn open_channel_fee(req: OpenChannelFeeRequest) -> Result<OpenChannelFeeResponse> {
-    block_on(async { get_breez_services().await?.open_channel_fee(req).await })
+pub fn open_channel_fee(request: OpenChannelFeeRequest) -> Result<OpenChannelFeeResponse> {
+    block_on(async { get_breez_services().await?.open_channel_fee(request).await })
         .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// See [BreezServices::fetch_reverse_swap_fees]
-pub fn fetch_reverse_swap_fees(req: ReverseSwapFeesRequest) -> Result<ReverseSwapPairInfo> {
+pub fn fetch_reverse_swap_fees(request: ReverseSwapFeesRequest) -> Result<ReverseSwapPairInfo> {
     block_on(async {
         get_breez_services()
             .await?
-            .fetch_reverse_swap_fees(req)
+            .fetch_reverse_swap_fees(request)
             .await
     })
 }

@@ -263,7 +263,7 @@ class BreezSDK {
     String? comment,
   }) async {
     return await _lnToolkit.lnurlPay(
-      reqData: reqData,
+      requestData: reqData,
       userAmountSat: userAmountSat,
       comment: comment,
     );
@@ -288,7 +288,7 @@ class BreezSDK {
     required LnUrlAuthRequestData reqData,
   }) async {
     return await _lnToolkit.lnurlAuth(
-      reqData: reqData,
+      requestData: reqData,
     );
   }
 
@@ -309,34 +309,24 @@ class BreezSDK {
   /* On-Chain Swap API's */
 
   /// Creates a reverse swap and attempts to pay the HODL invoice
-  Future<ReverseSwapInfo> sendOnchain({
-    required int amountSat,
-    required String onchainRecipientAddress,
-    required String pairHash,
-    required int satPerVbyte,
+  Future<SendOnchainResponse> sendOnchain({
+    required SendOnchainRequest request,
   }) async {
-    final reverseSwapInfo = await _lnToolkit.sendOnchain(
-      amountSat: amountSat,
-      onchainRecipientAddress: onchainRecipientAddress,
-      pairHash: pairHash,
-      satPerVbyte: satPerVbyte,
-    );
-    await listPayments(request: const ListPaymentsRequest(filter: PaymentTypeFilter.All));
-    return reverseSwapInfo;
+    return await _lnToolkit.sendOnchain(request: request);
   }
 
   /// Onchain receive swap API
   Future<SwapInfo> receiveOnchain({
-    required ReceiveOnchainRequest reqData,
+    required ReceiveOnchainRequest request,
   }) async {
-    return await _lnToolkit.receiveOnchain(reqData: reqData);
+    return await _lnToolkit.receiveOnchain(request: request);
   }
 
   /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency
   Future<BuyBitcoinResponse> buyBitcoin({
-    required BuyBitcoinRequest reqData,
+    required BuyBitcoinRequest request,
   }) async {
-    return await _lnToolkit.buyBitcoin(reqData: reqData);
+    return await _lnToolkit.buyBitcoin(request: request);
   }
 
   /// Withdraw on-chain funds in the wallet to an external btc address
@@ -354,16 +344,10 @@ class BreezSDK {
   Future<List<SwapInfo>> listRefundables() async => await _lnToolkit.listRefundables();
 
   /// Construct and broadcast a refund transaction for a failed/expired swap
-  Future<String> refund({
-    required String swapAddress,
-    required String toAddress,
-    required int satPerVbyte,
+  Future<RefundResponse> refund({
+    required RefundRequest request,
   }) async {
-    return await _lnToolkit.refund(
-      swapAddress: swapAddress,
-      toAddress: toAddress,
-      satPerVbyte: satPerVbyte,
-    );
+    return await _lnToolkit.refund(request: request);
   }
 
   /* In Progress Swap API's */
@@ -379,16 +363,16 @@ class BreezSDK {
 
   /// Gets the fees required to open a channel for a given amount.
   Future<OpenChannelFeeResponse> openChannelFee({
-    required OpenChannelFeeRequest req,
-  }) async {
-    return await _lnToolkit.openChannelFee(req: req);
+    required OpenChannelFeeRequest request,
+  }) {
+    return _lnToolkit.openChannelFee(request: request);
   }
 
   /// Lookup the most recent reverse swap pair info using the Boltz API
-  Future<ReverseSwapPairInfo> fetchReverseSwapFees({
-    required ReverseSwapFeesRequest req,
-  }) async {
-    return await _lnToolkit.fetchReverseSwapFees(req: req);
+  Future<ReverseSwapPairInfo> fetchReverseSwapFees(
+    final ReverseSwapFeesRequest request,
+  ) async {
+    return _lnToolkit.fetchReverseSwapFees(request: request);
   }
 
   /// Fetches the current recommended fees
