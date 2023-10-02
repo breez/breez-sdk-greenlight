@@ -1235,13 +1235,13 @@ impl BreezServices {
                     let outspends = self
                         .chain_service
                         .transaction_outspends(channel.funding_txid.clone())
-                        .await?;                    
+                        .await?;
                     let maybe_block_time = outspends.get(outnum as usize)
                         .and_then(|outspend| outspend.status.as_ref())
                         .and_then(|status| status.block_time);
 
                     match maybe_block_time {
-                        None => {                            
+                        None => {
                             warn!("Blocktime could not be determined for funding_outnum {outnum}, defaulting closed_at to epoch time");
                             now_epoch_sec
                         }
