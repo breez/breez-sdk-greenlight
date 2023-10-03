@@ -192,19 +192,9 @@ class BreezSDK {
 
   /// list payments (incoming/outgoing payments) from the persistent storage
   Future<List<Payment>> listPayments({
-    PaymentTypeFilter filter = PaymentTypeFilter.All,
-    int? fromTimestamp,
-    int? toTimestamp,
-    bool? includeFailures,
+    required ListPaymentsRequest request,
   }) async {
-    var paymentsList = await _lnToolkit.listPayments(
-      request: ListPaymentsRequest(
-        filter: filter,
-        fromTimestamp: fromTimestamp,
-        toTimestamp: toTimestamp,
-        includeFailures: includeFailures,
-      ),
-    );
+    var paymentsList = await _lnToolkit.listPayments(request: request);
     paymentsController.add(paymentsList);
     return paymentsList;
   }
@@ -357,14 +347,12 @@ class BreezSDK {
       _lnToolkit.buyBitcoin(reqData: reqData);
 
   /// Withdraw on-chain funds in the wallet to an external btc address
-  Future sweep({
-    required String toAddress,
-    required int feeRateSatsPerVbyte,
+  Future<SweepResponse> sweep({
+    required SweepRequest request,
   }) async {
-    await _lnToolkit.sweep(
-      request: SweepRequest(toAddress: toAddress, feeRateSatsPerVbyte: feeRateSatsPerVbyte),
-    );
-    await listPayments();
+    final sweepResponse = await _lnToolkit.sweep(request: request);
+    await listPayments(request: const ListPaymentsRequest(filter: PaymentTypeFilter.All));
+    return sweepResponse;
   }
 
   /* Refundables API's */
@@ -386,7 +374,8 @@ class BreezSDK {
 
   /* In Progress Swap API's */
 
-  /// Returns the blocking [ReverseSwapInfo]s that are in progress
+  /// Returns an optional in-progress [SwapInfo].
+  /// A [SwapInfo] is in-progress if it is waiting for confirmation to be redeemed and complete the swap.
   Future<SwapInfo?> inProgressSwap() async => await _lnToolkit.inProgressSwap();
 
   /// Returns the blocking [ReverseSwapInfo]s that are in progress
@@ -429,7 +418,7 @@ class BreezSDK {
   /// Fetch node state & payment list
   Future fetchNodeData() async {
     await nodeInfo();
-    await listPayments();
+    await listPayments(request: const ListPaymentsRequest(filter: PaymentTypeFilter.All));
   }
 
   /// Log entries according to their severity
