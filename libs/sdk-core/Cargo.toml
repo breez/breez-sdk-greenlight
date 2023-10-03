@@ -18,7 +18,7 @@ bip21 = "0.2"
 bitcoin = "0.29.2"
 gl-client = { git = "https://github.com/Blockstream/greenlight.git", features = [
     "permissive",
-], rev = "efe8a7dcdfe282c6504744593c9ebebf5dfaf852" }
+], rev = "0178ab2b848ac8998865ee1d75a5974858a1bc69" }
 zbase32 = "0.1.2"
 base64 = "0.13.0"
 chrono = "0.4"

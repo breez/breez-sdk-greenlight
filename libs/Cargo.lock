@@ -504,8 +504,8 @@ dependencies = [
  "gl-client",
  "hex",
  "lazy_static",
- "lightning",
- "lightning-invoice",
+ "lightning 0.0.115",
+ "lightning-invoice 0.23.0",
  "log",
  "miniz_oxide 0.7.1",
  "mockito",
@@ -542,7 +542,7 @@ dependencies = [
  "breez-sdk-core",
  "camino",
  "flutter_rust_bridge",
- "lightning-invoice",
+ "lightning-invoice 0.23.0",
  "log",
  "once_cell",
  "thiserror",
@@ -1269,7 +1269,7 @@ checksum = "ad0a93d233ebf96623465aad4046a8d3aa4da22d4f4beba5388838c8a434bbb4"
 [[package]]
 name = "gl-client"
 version = "0.1.9"
-source = "git+https://github.com/Blockstream/greenlight.git?rev=efe8a7dcdfe282c6504744593c9ebebf5dfaf852#efe8a7dcdfe282c6504744593c9ebebf5dfaf852"
+source = "git+https://github.com/Blockstream/greenlight.git?rev=0178ab2b848ac8998865ee1d75a5974858a1bc69#0178ab2b848ac8998865ee1d75a5974858a1bc69"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1283,7 +1283,7 @@ dependencies = [
  "hex",
  "http",
  "http-body",
- "lightning-invoice",
+ "lightning-invoice 0.24.0",
  "log",
  "mockall",
  "pin-project",
@@ -1797,6 +1797,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "lightning"
+version = "0.0.116"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "90a0f2155316f1570446a0447c993480673f840748c8ed25bbc59dfc442ac770"
+dependencies = [
+ "bitcoin",
+]
+
+[[package]]
 name = "lightning-invoice"
 version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1805,7 +1814,21 @@ dependencies = [
  "bech32",
  "bitcoin",
  "bitcoin_hashes",
- "lightning",
+ "lightning 0.0.115",
+ "num-traits",
+ "secp256k1 0.24.3",
+]
+
+[[package]]
+name = "lightning-invoice"
+version = "0.24.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1788c0158526ec27a502043c2911ea6ea58fdc656bdf8749484942c07b790d23"
+dependencies = [
+ "bech32",
+ "bitcoin",
+ "bitcoin_hashes",
+ "lightning 0.0.116",
  "num-traits",
  "secp256k1 0.24.3",
 ]
@@ -3703,8 +3726,8 @@ dependencies = [
  "hashbrown 0.8.2",
  "hex",
  "itertools",
- "lightning",
- "lightning-invoice",
+ "lightning 0.0.115",
+ "lightning-invoice 0.23.0",
  "log",
  "scopeguard",
  "serde",
