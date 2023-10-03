@@ -280,10 +280,16 @@ impl BTCSendSwap {
                 debug!("Found confirmed txs for lockup address {lockup_addr}: {confirmed_txs:?}");
                 let utxos = get_utxos(lockup_addr.to_string(), confirmed_txs)?;
 
-                let confirmed_amount: u64 = utxos
-                    .confirmed
-                    .iter()
-                    .fold(0, |accum, item| accum + item.value);
+                // To decide the claim tx amount, we use the previously committed to amount
+                // We avoid trying to derive it from confirmed utxos on the lockup address, because
+                // in certain timeout scenarios (e.g. if the claim tx is not broadcast within the
+                // rev swap allocated time), then the service provider will claim the sats back
+                // and cancel the HODL invoice. Practically this results in a new utxo from the lockup
+                // address, of the same amount as was locked previously. In this scenario, relying
+                // on confirmed utxos to determine the claim tx amount will result in a panic (0 - fees < 0)
+                // Therefore we read the claim tx amount from the originally agreed upon onchain amount,
+                // confirmed by the service provider on rev swap creation.
+                let claim_amount_sat = rs.onchain_amount_sat;
 
                 let txins: Vec<TxIn> = utxos
                     .confirmed
@@ -297,7 +303,7 @@ impl BTCSendSwap {
                     .collect();
 
                 let tx_out: Vec<TxOut> = vec![TxOut {
-                    value: confirmed_amount,
+                    value: claim_amount_sat,
                     script_pubkey: claim_addr.script_pubkey(),
                 }];
 
@@ -316,9 +322,9 @@ impl BTCSendSwap {
                 let tx_weight = tx.strippedsize() as u32 * WITNESS_SCALE_FACTOR as u32
                     + claim_witness_input_size * txins.len() as u32;
                 let fees: u64 = tx_weight as u64 * rs.sat_per_vbyte / WITNESS_SCALE_FACTOR as u64;
-                debug!("Locked confirmed amount: {confirmed_amount}");
+                debug!("Claim tx amount: {claim_amount_sat}");
                 debug!("Claim tx fees: {fees}");
-                tx.output[0].value = confirmed_amount - fees;
+                tx.output[0].value = claim_amount_sat - fees;
 
                 let scpt = Secp256k1::signing_only();
 
