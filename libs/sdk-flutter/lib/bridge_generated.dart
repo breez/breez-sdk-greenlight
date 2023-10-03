@@ -1213,6 +1213,8 @@ class ReverseSwapPairInfo {
 /// See [BoltzApiReverseSwapStatus] for the reverse swap status from the Breez endpoint point of view.
 enum ReverseSwapStatus {
   /// HODL invoice payment is not completed yet
+  ///
+  /// This is also the temporary status of a reverse swap when restoring a node, until `sync` finishes.
   Initial,
 
   /// HODL invoice payment was successfully triggered and confirmed by Boltz, but the reverse swap
