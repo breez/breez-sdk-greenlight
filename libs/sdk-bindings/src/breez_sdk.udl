@@ -566,25 +566,25 @@ interface BlockingBreezServices {
    Payment send_spontaneous_payment(string node_id, u64 amount_sats);
 
    [Throws=SdkError]
-   ReceivePaymentResponse receive_payment(ReceivePaymentRequest request);
+   ReceivePaymentResponse receive_payment(ReceivePaymentRequest req);
 
    [Throws=SdkError]
-   LnUrlPayResult pay_lnurl(u64 amount_sats, string? comment, LnUrlPayRequestData request_data);
+   LnUrlPayResult pay_lnurl(LnUrlPayRequestData req_data, u64 amount_sats, string? comment);
 
    [Throws=SdkError]
-   LnUrlWithdrawResult withdraw_lnurl(u64 amount_sats, string? description, LnUrlWithdrawRequestData request_data);
+   LnUrlWithdrawResult withdraw_lnurl(LnUrlWithdrawRequestData req_data, u64 amount_sats, string? description);
 
    [Throws=SdkError]
-   LnUrlCallbackStatus lnurl_auth(LnUrlAuthRequestData request_data);
+   LnUrlCallbackStatus lnurl_auth(LnUrlAuthRequestData req_data);
 
    [Throws=SdkError]
    NodeState node_info();
 
    [Throws=SdkError]
-   SignMessageResponse sign_message(SignMessageRequest request);
+   SignMessageResponse sign_message(SignMessageRequest req);
 
    [Throws=SdkError]
-   CheckMessageResponse check_message(CheckMessageRequest request);
+   CheckMessageResponse check_message(CheckMessageRequest req);
 
    [Throws=SdkError]
    BackupStatus backup_status();
@@ -596,10 +596,10 @@ interface BlockingBreezServices {
    Payment? payment_by_hash(string hash);
 
    [Throws=SdkError]
-   sequence<Payment> list_payments(ListPaymentsRequest request);
+   sequence<Payment> list_payments(ListPaymentsRequest req);
 
    [Throws=SdkError]
-   SweepResponse sweep(SweepRequest request);
+   SweepResponse sweep(SweepRequest req);
 
    [Throws=SdkError]
    sequence<Rate> fetch_fiat_rates();
@@ -617,7 +617,7 @@ interface BlockingBreezServices {
    LspInformation? fetch_lsp_info(string lsp_id);
 
    [Throws=SdkError]
-   OpenChannelFeeResponse open_channel_fee(OpenChannelFeeRequest request);
+   OpenChannelFeeResponse open_channel_fee(OpenChannelFeeRequest req);
 
    [Throws=SdkError]
    string? lsp_id();
@@ -629,7 +629,7 @@ interface BlockingBreezServices {
    void close_lsp_channels();
 
    [Throws=SdkError]
-   SwapInfo receive_onchain(ReceiveOnchainRequest request);
+   SwapInfo receive_onchain(ReceiveOnchainRequest req);
 
    [Throws=SdkError]
    SwapInfo? in_progress_swap();
@@ -638,16 +638,16 @@ interface BlockingBreezServices {
    sequence<SwapInfo> list_refundables();
 
    [Throws=SdkError]
-   RefundResponse refund(RefundRequest request);
+   RefundResponse refund(RefundRequest req);
 
    [Throws=SdkError]
-   ReverseSwapPairInfo fetch_reverse_swap_fees(ReverseSwapFeesRequest request);
+   ReverseSwapPairInfo fetch_reverse_swap_fees(ReverseSwapFeesRequest req);
 
    [Throws=SdkError]
    sequence<ReverseSwapInfo> in_progress_reverse_swaps();
 
    [Throws=SdkError]
-   SendOnchainResponse send_onchain(SendOnchainRequest request);
+   SendOnchainResponse send_onchain(SendOnchainRequest req);
 
    [Throws=SdkError]
    string execute_dev_command(string command);
@@ -659,7 +659,7 @@ interface BlockingBreezServices {
    RecommendedFees recommended_fees();
 
    [Throws=SdkError]
-   BuyBitcoinResponse buy_bitcoin(BuyBitcoinRequest request);
+   BuyBitcoinResponse buy_bitcoin(BuyBitcoinRequest req);
 };
 
 namespace breez_sdk {  
@@ -682,5 +682,5 @@ namespace breez_sdk {
  Config default_config(EnvironmentType env_type, string api_key, NodeConfig node_config);
 
  [Throws=SdkError]
- StaticBackupResponse static_backup(StaticBackupRequest request);
+ StaticBackupResponse static_backup(StaticBackupRequest req);
 };

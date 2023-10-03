@@ -325,7 +325,7 @@ pub(crate) async fn handle_command(
 
                 let amount_sat = rl.readline(&prompt)?;
                 let pay_res = sdk()?
-                    .lnurl_pay(amount_sat.parse::<u64>()?, None, pd)
+                    .lnurl_pay(pd, amount_sat.parse::<u64>()?, None)
                     .await?;
                 //show_results(pay_res);
                 serde_json::to_string_pretty(&pay_res).map_err(|e| e.into())
@@ -363,7 +363,7 @@ pub(crate) async fn handle_command(
                     let description = "LNURL-withdraw";
 
                     let withdraw_res = sdk()?
-                        .lnurl_withdraw(amount_sats, Some(description.into()), wd)
+                        .lnurl_withdraw(wd, amount_sats, Some(description.into()))
                         .await?;
                     serde_json::to_string_pretty(&withdraw_res).map_err(|e| e.into())
                 }

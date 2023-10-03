@@ -156,10 +156,7 @@ fn wire_disconnect_impl(port_: MessagePort) {
         move || move |task_callback| disconnect(),
     )
 }
-fn wire_sign_message_impl(
-    port_: MessagePort,
-    request: impl Wire2Api<SignMessageRequest> + UnwindSafe,
-) {
+fn wire_sign_message_impl(port_: MessagePort, req: impl Wire2Api<SignMessageRequest> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
             debug_name: "sign_message",
@@ -167,14 +164,14 @@ fn wire_sign_message_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_request = request.wire2api();
-            move |task_callback| sign_message(api_request)
+            let api_req = req.wire2api();
+            move |task_callback| sign_message(api_req)
         },
     )
 }
 fn wire_check_message_impl(
     port_: MessagePort,
-    request: impl Wire2Api<CheckMessageRequest> + UnwindSafe,
+    req: impl Wire2Api<CheckMessageRequest> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -183,8 +180,8 @@ fn wire_check_message_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_request = request.wire2api();
-            move |task_callback| check_message(api_request)
+            let api_req = req.wire2api();
+            move |task_callback| check_message(api_req)
         },
     )
 }
@@ -223,7 +220,7 @@ fn wire_default_config_impl(
 }
 fn wire_static_backup_impl(
     port_: MessagePort,
-    request: impl Wire2Api<StaticBackupRequest> + UnwindSafe,
+    req: impl Wire2Api<StaticBackupRequest> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -232,8 +229,8 @@ fn wire_static_backup_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_request = request.wire2api();
-            move |task_callback| static_backup(api_request)
+            let api_req = req.wire2api();
+            move |task_callback| static_backup(api_req)
         },
     )
 }
@@ -371,7 +368,7 @@ fn wire_parse_input_impl(port_: MessagePort, input: impl Wire2Api<String> + Unwi
 }
 fn wire_list_payments_impl(
     port_: MessagePort,
-    request: impl Wire2Api<ListPaymentsRequest> + UnwindSafe,
+    req: impl Wire2Api<ListPaymentsRequest> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -380,8 +377,8 @@ fn wire_list_payments_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_request = request.wire2api();
-            move |task_callback| list_payments(api_request)
+            let api_req = req.wire2api();
+            move |task_callback| list_payments(api_req)
         },
     )
 }
@@ -436,7 +433,7 @@ fn wire_send_spontaneous_payment_impl(
 }
 fn wire_receive_payment_impl(
     port_: MessagePort,
-    request: impl Wire2Api<ReceivePaymentRequest> + UnwindSafe,
+    req: impl Wire2Api<ReceivePaymentRequest> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -445,16 +442,16 @@ fn wire_receive_payment_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_request = request.wire2api();
-            move |task_callback| receive_payment(api_request)
+            let api_req = req.wire2api();
+            move |task_callback| receive_payment(api_req)
         },
     )
 }
 fn wire_lnurl_pay_impl(
     port_: MessagePort,
+    req_data: impl Wire2Api<LnUrlPayRequestData> + UnwindSafe,
     user_amount_sat: impl Wire2Api<u64> + UnwindSafe,
     comment: impl Wire2Api<Option<String>> + UnwindSafe,
-    request_data: impl Wire2Api<LnUrlPayRequestData> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -463,18 +460,18 @@ fn wire_lnurl_pay_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
+            let api_req_data = req_data.wire2api();
             let api_user_amount_sat = user_amount_sat.wire2api();
             let api_comment = comment.wire2api();
-            let api_request_data = request_data.wire2api();
-            move |task_callback| lnurl_pay(api_user_amount_sat, api_comment, api_request_data)
+            move |task_callback| lnurl_pay(api_req_data, api_user_amount_sat, api_comment)
         },
     )
 }
 fn wire_lnurl_withdraw_impl(
     port_: MessagePort,
+    req_data: impl Wire2Api<LnUrlWithdrawRequestData> + UnwindSafe,
     amount_sats: impl Wire2Api<u64> + UnwindSafe,
     description: impl Wire2Api<Option<String>> + UnwindSafe,
-    request_data: impl Wire2Api<LnUrlWithdrawRequestData> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -483,16 +480,16 @@ fn wire_lnurl_withdraw_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
+            let api_req_data = req_data.wire2api();
             let api_amount_sats = amount_sats.wire2api();
             let api_description = description.wire2api();
-            let api_request_data = request_data.wire2api();
-            move |task_callback| lnurl_withdraw(api_amount_sats, api_description, api_request_data)
+            move |task_callback| lnurl_withdraw(api_req_data, api_amount_sats, api_description)
         },
     )
 }
 fn wire_lnurl_auth_impl(
     port_: MessagePort,
-    request_data: impl Wire2Api<LnUrlAuthRequestData> + UnwindSafe,
+    req_data: impl Wire2Api<LnUrlAuthRequestData> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -501,8 +498,8 @@ fn wire_lnurl_auth_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_request_data = request_data.wire2api();
-            move |task_callback| lnurl_auth(api_request_data)
+            let api_req_data = req_data.wire2api();
+            move |task_callback| lnurl_auth(api_req_data)
         },
     )
 }
@@ -526,10 +523,7 @@ fn wire_list_fiat_currencies_impl(port_: MessagePort) {
         move || move |task_callback| list_fiat_currencies(),
     )
 }
-fn wire_send_onchain_impl(
-    port_: MessagePort,
-    request: impl Wire2Api<SendOnchainRequest> + UnwindSafe,
-) {
+fn wire_send_onchain_impl(port_: MessagePort, req: impl Wire2Api<SendOnchainRequest> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
             debug_name: "send_onchain",
@@ -537,14 +531,14 @@ fn wire_send_onchain_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_request = request.wire2api();
-            move |task_callback| send_onchain(api_request)
+            let api_req = req.wire2api();
+            move |task_callback| send_onchain(api_req)
         },
     )
 }
 fn wire_receive_onchain_impl(
     port_: MessagePort,
-    request: impl Wire2Api<ReceiveOnchainRequest> + UnwindSafe,
+    req: impl Wire2Api<ReceiveOnchainRequest> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -553,15 +547,12 @@ fn wire_receive_onchain_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_request = request.wire2api();
-            move |task_callback| receive_onchain(api_request)
+            let api_req = req.wire2api();
+            move |task_callback| receive_onchain(api_req)
         },
     )
 }
-fn wire_buy_bitcoin_impl(
-    port_: MessagePort,
-    request: impl Wire2Api<BuyBitcoinRequest> + UnwindSafe,
-) {
+fn wire_buy_bitcoin_impl(port_: MessagePort, req: impl Wire2Api<BuyBitcoinRequest> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
             debug_name: "buy_bitcoin",
@@ -569,12 +560,12 @@ fn wire_buy_bitcoin_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_request = request.wire2api();
-            move |task_callback| buy_bitcoin(api_request)
+            let api_req = req.wire2api();
+            move |task_callback| buy_bitcoin(api_req)
         },
     )
 }
-fn wire_sweep_impl(port_: MessagePort, request: impl Wire2Api<SweepRequest> + UnwindSafe) {
+fn wire_sweep_impl(port_: MessagePort, req: impl Wire2Api<SweepRequest> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
             debug_name: "sweep",
@@ -582,8 +573,8 @@ fn wire_sweep_impl(port_: MessagePort, request: impl Wire2Api<SweepRequest> + Un
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_request = request.wire2api();
-            move |task_callback| sweep(api_request)
+            let api_req = req.wire2api();
+            move |task_callback| sweep(api_req)
         },
     )
 }
@@ -597,7 +588,7 @@ fn wire_list_refundables_impl(port_: MessagePort) {
         move || move |task_callback| list_refundables(),
     )
 }
-fn wire_refund_impl(port_: MessagePort, request: impl Wire2Api<RefundRequest> + UnwindSafe) {
+fn wire_refund_impl(port_: MessagePort, req: impl Wire2Api<RefundRequest> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
             debug_name: "refund",
@@ -605,8 +596,8 @@ fn wire_refund_impl(port_: MessagePort, request: impl Wire2Api<RefundRequest> + 
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_request = request.wire2api();
-            move |task_callback| refund(api_request)
+            let api_req = req.wire2api();
+            move |task_callback| refund(api_req)
         },
     )
 }
@@ -632,7 +623,7 @@ fn wire_in_progress_reverse_swaps_impl(port_: MessagePort) {
 }
 fn wire_open_channel_fee_impl(
     port_: MessagePort,
-    request: impl Wire2Api<OpenChannelFeeRequest> + UnwindSafe,
+    req: impl Wire2Api<OpenChannelFeeRequest> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -641,14 +632,14 @@ fn wire_open_channel_fee_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_request = request.wire2api();
-            move |task_callback| open_channel_fee(api_request)
+            let api_req = req.wire2api();
+            move |task_callback| open_channel_fee(api_req)
         },
     )
 }
 fn wire_fetch_reverse_swap_fees_impl(
     port_: MessagePort,
-    request: impl Wire2Api<ReverseSwapFeesRequest> + UnwindSafe,
+    req: impl Wire2Api<ReverseSwapFeesRequest> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -657,8 +648,8 @@ fn wire_fetch_reverse_swap_fees_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_request = request.wire2api();
-            move |task_callback| fetch_reverse_swap_fees(api_request)
+            let api_req = req.wire2api();
+            move |task_callback| fetch_reverse_swap_fees(api_req)
         },
     )
 }

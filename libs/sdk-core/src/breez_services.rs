@@ -303,9 +303,9 @@ impl BreezServices {
     /// This method will return an [anyhow::Error] when any validation check fails.
     pub async fn lnurl_pay(
         &self,
+        req_data: LnUrlPayRequestData,
         user_amount_sat: u64,
         comment: Option<String>,
-        req_data: LnUrlPayRequestData,
     ) -> Result<LnUrlPayResult> {
         match validate_lnurl_pay(user_amount_sat, comment, req_data.clone()).await? {
             ValidatedCallbackResponse::EndpointError { data: e } => {
@@ -365,9 +365,9 @@ impl BreezServices {
     /// request is made. A successful result here means the endpoint started the payment.
     pub async fn lnurl_withdraw(
         &self,
+        req_data: LnUrlWithdrawRequestData,
         amount_sats: u64,
         description: Option<String>,
-        req_data: LnUrlWithdrawRequestData,
     ) -> Result<LnUrlWithdrawResult> {
         let invoice = self
             .receive_payment(ReceivePaymentRequest {
