@@ -189,9 +189,9 @@ void wire_node_info(int64_t port_);
 
 void wire_disconnect(int64_t port_);
 
-void wire_sign_message(int64_t port_, struct wire_SignMessageRequest *request);
+void wire_sign_message(int64_t port_, struct wire_SignMessageRequest *req);
 
-void wire_check_message(int64_t port_, struct wire_CheckMessageRequest *request);
+void wire_check_message(int64_t port_, struct wire_CheckMessageRequest *req);
 
 void wire_mnemonic_to_seed(int64_t port_, struct wire_uint_8_list *phrase);
 
@@ -200,7 +200,7 @@ void wire_default_config(int64_t port_,
                          struct wire_uint_8_list *api_key,
                          struct wire_NodeConfig *node_config);
 
-void wire_static_backup(int64_t port_, struct wire_StaticBackupRequest *request);
+void wire_static_backup(int64_t port_, struct wire_StaticBackupRequest *req);
 
 void wire_breez_events_stream(int64_t port_);
 
@@ -226,7 +226,7 @@ void wire_parse_invoice(int64_t port_, struct wire_uint_8_list *invoice);
 
 void wire_parse_input(int64_t port_, struct wire_uint_8_list *input);
 
-void wire_list_payments(int64_t port_, struct wire_ListPaymentsRequest *request);
+void wire_list_payments(int64_t port_, struct wire_ListPaymentsRequest *req);
 
 void wire_payment_by_hash(int64_t port_, struct wire_uint_8_list *hash);
 
@@ -236,40 +236,40 @@ void wire_send_spontaneous_payment(int64_t port_,
                                    struct wire_uint_8_list *node_id,
                                    uint64_t amount_sats);
 
-void wire_receive_payment(int64_t port_, struct wire_ReceivePaymentRequest *request);
+void wire_receive_payment(int64_t port_, struct wire_ReceivePaymentRequest *req);
 
 void wire_lnurl_pay(int64_t port_,
+                    struct wire_LnUrlPayRequestData *req_data,
                     uint64_t user_amount_sat,
-                    struct wire_uint_8_list *comment,
-                    struct wire_LnUrlPayRequestData *request_data);
+                    struct wire_uint_8_list *comment);
 
 void wire_lnurl_withdraw(int64_t port_, struct wire_LnUrlWithdrawRequest *request);
 
-void wire_lnurl_auth(int64_t port_, struct wire_LnUrlAuthRequestData *request_data);
+void wire_lnurl_auth(int64_t port_, struct wire_LnUrlAuthRequestData *req_data);
 
 void wire_fetch_fiat_rates(int64_t port_);
 
 void wire_list_fiat_currencies(int64_t port_);
 
-void wire_send_onchain(int64_t port_, struct wire_SendOnchainRequest *request);
+void wire_send_onchain(int64_t port_, struct wire_SendOnchainRequest *req);
 
-void wire_receive_onchain(int64_t port_, struct wire_ReceiveOnchainRequest *request);
+void wire_receive_onchain(int64_t port_, struct wire_ReceiveOnchainRequest *req);
 
-void wire_buy_bitcoin(int64_t port_, struct wire_BuyBitcoinRequest *request);
+void wire_buy_bitcoin(int64_t port_, struct wire_BuyBitcoinRequest *req);
 
-void wire_sweep(int64_t port_, struct wire_SweepRequest *request);
+void wire_sweep(int64_t port_, struct wire_SweepRequest *req);
 
 void wire_list_refundables(int64_t port_);
 
-void wire_refund(int64_t port_, struct wire_RefundRequest *request);
+void wire_refund(int64_t port_, struct wire_RefundRequest *req);
 
 void wire_in_progress_swap(int64_t port_);
 
 void wire_in_progress_reverse_swaps(int64_t port_);
 
-void wire_open_channel_fee(int64_t port_, struct wire_OpenChannelFeeRequest *request);
+void wire_open_channel_fee(int64_t port_, struct wire_OpenChannelFeeRequest *req);
 
-void wire_fetch_reverse_swap_fees(int64_t port_, struct wire_ReverseSwapFeesRequest *request);
+void wire_fetch_reverse_swap_fees(int64_t port_, struct wire_ReverseSwapFeesRequest *req);
 
 void wire_recommended_fees(int64_t port_);
 

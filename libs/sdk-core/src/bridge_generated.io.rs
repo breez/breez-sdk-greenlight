@@ -27,13 +27,13 @@ pub extern "C" fn wire_disconnect(port_: i64) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_sign_message(port_: i64, request: *mut wire_SignMessageRequest) {
-    wire_sign_message_impl(port_, request)
+pub extern "C" fn wire_sign_message(port_: i64, req: *mut wire_SignMessageRequest) {
+    wire_sign_message_impl(port_, req)
 }
 
 #[no_mangle]
-pub extern "C" fn wire_check_message(port_: i64, request: *mut wire_CheckMessageRequest) {
-    wire_check_message_impl(port_, request)
+pub extern "C" fn wire_check_message(port_: i64, req: *mut wire_CheckMessageRequest) {
+    wire_check_message_impl(port_, req)
 }
 
 #[no_mangle]
@@ -52,8 +52,8 @@ pub extern "C" fn wire_default_config(
 }
 
 #[no_mangle]
-pub extern "C" fn wire_static_backup(port_: i64, request: *mut wire_StaticBackupRequest) {
-    wire_static_backup_impl(port_, request)
+pub extern "C" fn wire_static_backup(port_: i64, req: *mut wire_StaticBackupRequest) {
+    wire_static_backup_impl(port_, req)
 }
 
 #[no_mangle]
@@ -117,8 +117,8 @@ pub extern "C" fn wire_parse_input(port_: i64, input: *mut wire_uint_8_list) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_list_payments(port_: i64, request: *mut wire_ListPaymentsRequest) {
-    wire_list_payments_impl(port_, request)
+pub extern "C" fn wire_list_payments(port_: i64, req: *mut wire_ListPaymentsRequest) {
+    wire_list_payments_impl(port_, req)
 }
 
 #[no_mangle]
@@ -145,18 +145,18 @@ pub extern "C" fn wire_send_spontaneous_payment(
 }
 
 #[no_mangle]
-pub extern "C" fn wire_receive_payment(port_: i64, request: *mut wire_ReceivePaymentRequest) {
-    wire_receive_payment_impl(port_, request)
+pub extern "C" fn wire_receive_payment(port_: i64, req: *mut wire_ReceivePaymentRequest) {
+    wire_receive_payment_impl(port_, req)
 }
 
 #[no_mangle]
 pub extern "C" fn wire_lnurl_pay(
     port_: i64,
+    req_data: *mut wire_LnUrlPayRequestData,
     user_amount_sat: u64,
     comment: *mut wire_uint_8_list,
-    request_data: *mut wire_LnUrlPayRequestData,
 ) {
-    wire_lnurl_pay_impl(port_, user_amount_sat, comment, request_data)
+    wire_lnurl_pay_impl(port_, req_data, user_amount_sat, comment)
 }
 
 #[no_mangle]
@@ -165,8 +165,8 @@ pub extern "C" fn wire_lnurl_withdraw(port_: i64, request: *mut wire_LnUrlWithdr
 }
 
 #[no_mangle]
-pub extern "C" fn wire_lnurl_auth(port_: i64, request_data: *mut wire_LnUrlAuthRequestData) {
-    wire_lnurl_auth_impl(port_, request_data)
+pub extern "C" fn wire_lnurl_auth(port_: i64, req_data: *mut wire_LnUrlAuthRequestData) {
+    wire_lnurl_auth_impl(port_, req_data)
 }
 
 #[no_mangle]
@@ -180,23 +180,23 @@ pub extern "C" fn wire_list_fiat_currencies(port_: i64) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_send_onchain(port_: i64, request: *mut wire_SendOnchainRequest) {
-    wire_send_onchain_impl(port_, request)
+pub extern "C" fn wire_send_onchain(port_: i64, req: *mut wire_SendOnchainRequest) {
+    wire_send_onchain_impl(port_, req)
 }
 
 #[no_mangle]
-pub extern "C" fn wire_receive_onchain(port_: i64, request: *mut wire_ReceiveOnchainRequest) {
-    wire_receive_onchain_impl(port_, request)
+pub extern "C" fn wire_receive_onchain(port_: i64, req: *mut wire_ReceiveOnchainRequest) {
+    wire_receive_onchain_impl(port_, req)
 }
 
 #[no_mangle]
-pub extern "C" fn wire_buy_bitcoin(port_: i64, request: *mut wire_BuyBitcoinRequest) {
-    wire_buy_bitcoin_impl(port_, request)
+pub extern "C" fn wire_buy_bitcoin(port_: i64, req: *mut wire_BuyBitcoinRequest) {
+    wire_buy_bitcoin_impl(port_, req)
 }
 
 #[no_mangle]
-pub extern "C" fn wire_sweep(port_: i64, request: *mut wire_SweepRequest) {
-    wire_sweep_impl(port_, request)
+pub extern "C" fn wire_sweep(port_: i64, req: *mut wire_SweepRequest) {
+    wire_sweep_impl(port_, req)
 }
 
 #[no_mangle]
@@ -205,8 +205,8 @@ pub extern "C" fn wire_list_refundables(port_: i64) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_refund(port_: i64, request: *mut wire_RefundRequest) {
-    wire_refund_impl(port_, request)
+pub extern "C" fn wire_refund(port_: i64, req: *mut wire_RefundRequest) {
+    wire_refund_impl(port_, req)
 }
 
 #[no_mangle]
@@ -220,16 +220,13 @@ pub extern "C" fn wire_in_progress_reverse_swaps(port_: i64) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_open_channel_fee(port_: i64, request: *mut wire_OpenChannelFeeRequest) {
-    wire_open_channel_fee_impl(port_, request)
+pub extern "C" fn wire_open_channel_fee(port_: i64, req: *mut wire_OpenChannelFeeRequest) {
+    wire_open_channel_fee_impl(port_, req)
 }
 
 #[no_mangle]
-pub extern "C" fn wire_fetch_reverse_swap_fees(
-    port_: i64,
-    request: *mut wire_ReverseSwapFeesRequest,
-) {
-    wire_fetch_reverse_swap_fees_impl(port_, request)
+pub extern "C" fn wire_fetch_reverse_swap_fees(port_: i64, req: *mut wire_ReverseSwapFeesRequest) {
+    wire_fetch_reverse_swap_fees_impl(port_, req)
 }
 
 #[no_mangle]

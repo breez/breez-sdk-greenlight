@@ -119,17 +119,17 @@ class BreezSDK {
   /// Sign given message with the private key of the node id. Returns a zbase
   /// encoded signature.
   Future<SignMessageResponse> signMessage({
-    required SignMessageRequest request,
+    required SignMessageRequest req,
   }) async {
-    return await _lnToolkit.signMessage(request: request);
+    return await _lnToolkit.signMessage(req: req);
   }
 
   /// Check whether given message was signed by the private key or the given
   /// pubkey and the signature (zbase encoded) is valid.
   Future<CheckMessageResponse> checkMessage({
-    required CheckMessageRequest request,
+    required CheckMessageRequest req,
   }) async {
-    return await _lnToolkit.checkMessage(request: request);
+    return await _lnToolkit.checkMessage(req: req);
   }
 
   /* LSP API's */
@@ -177,9 +177,9 @@ class BreezSDK {
 
   /// Get the static backup data.
   Future<StaticBackupResponse> staticBackup({
-    required StaticBackupRequest request,
+    required StaticBackupRequest req,
   }) async {
-    return await _lnToolkit.staticBackup(request: request);
+    return await _lnToolkit.staticBackup(req: req);
   }
 
   /* Payment API's & Streams*/
@@ -191,9 +191,9 @@ class BreezSDK {
 
   /// list payments (incoming/outgoing payments) from the persistent storage
   Future<List<Payment>> listPayments({
-    required ListPaymentsRequest request,
+    required ListPaymentsRequest req,
   }) async {
-    final paymentsList = await _lnToolkit.listPayments(request: request);
+    final paymentsList = await _lnToolkit.listPayments(req: req);
     paymentsController.add(paymentsList);
     return paymentsList;
   }
@@ -248,9 +248,9 @@ class BreezSDK {
   ///
   /// * `request` - Request parameters for receiving a payment
   Future<ReceivePaymentResponse> receivePayment({
-    required ReceivePaymentRequest request,
+    required ReceivePaymentRequest req,
   }) async {
-    return await _lnToolkit.receivePayment(request: request);
+    return await _lnToolkit.receivePayment(req: req);
   }
 
   /* LNURL API's */
@@ -287,9 +287,7 @@ class BreezSDK {
   Future<LnUrlCallbackStatus> lnurlAuth({
     required LnUrlAuthRequestData reqData,
   }) async {
-    return await _lnToolkit.lnurlAuth(
-      requestData: reqData,
-    );
+    return await _lnToolkit.lnurlAuth(reqData: reqData);
   }
 
   /* Fiat Currency API's */
@@ -310,31 +308,31 @@ class BreezSDK {
 
   /// Creates a reverse swap and attempts to pay the HODL invoice
   Future<SendOnchainResponse> sendOnchain({
-    required SendOnchainRequest request,
+    required SendOnchainRequest req,
   }) async {
-    return await _lnToolkit.sendOnchain(request: request);
+    return await _lnToolkit.sendOnchain(req: req);
   }
 
   /// Onchain receive swap API
   Future<SwapInfo> receiveOnchain({
-    required ReceiveOnchainRequest request,
+    required ReceiveOnchainRequest req,
   }) async {
-    return await _lnToolkit.receiveOnchain(request: request);
+    return await _lnToolkit.receiveOnchain(req: req);
   }
 
   /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency
   Future<BuyBitcoinResponse> buyBitcoin({
-    required BuyBitcoinRequest request,
+    required BuyBitcoinRequest req,
   }) async {
-    return await _lnToolkit.buyBitcoin(request: request);
+    return await _lnToolkit.buyBitcoin(req: req);
   }
 
   /// Withdraw on-chain funds in the wallet to an external btc address
   Future<SweepResponse> sweep({
-    required SweepRequest request,
+    required SweepRequest req,
   }) async {
-    final sweepResponse = await _lnToolkit.sweep(request: request);
-    await listPayments(request: const ListPaymentsRequest(filter: PaymentTypeFilter.All));
+    final sweepResponse = await _lnToolkit.sweep(req: req);
+    await listPayments(req: const ListPaymentsRequest(filter: PaymentTypeFilter.All));
     return sweepResponse;
   }
 
@@ -345,9 +343,9 @@ class BreezSDK {
 
   /// Construct and broadcast a refund transaction for a failed/expired swap
   Future<RefundResponse> refund({
-    required RefundRequest request,
+    required RefundRequest req,
   }) async {
-    return await _lnToolkit.refund(request: request);
+    return await _lnToolkit.refund(req: req);
   }
 
   /* In Progress Swap API's */
@@ -363,16 +361,16 @@ class BreezSDK {
 
   /// Gets the fees required to open a channel for a given amount.
   Future<OpenChannelFeeResponse> openChannelFee({
-    required OpenChannelFeeRequest request,
-  }) {
-    return _lnToolkit.openChannelFee(request: request);
+    required OpenChannelFeeRequest req,
+  }) async {
+    return await _lnToolkit.openChannelFee(req: req);
   }
 
   /// Lookup the most recent reverse swap pair info using the Boltz API
   Future<ReverseSwapPairInfo> fetchReverseSwapFees(
-    final ReverseSwapFeesRequest request,
+    final ReverseSwapFeesRequest req,
   ) async {
-    return _lnToolkit.fetchReverseSwapFees(request: request);
+    return await _lnToolkit.fetchReverseSwapFees(req: req);
   }
 
   /// Fetches the current recommended fees
@@ -403,7 +401,7 @@ class BreezSDK {
   /// Fetch node state & payment list
   Future fetchNodeData() async {
     await nodeInfo();
-    await listPayments(request: const ListPaymentsRequest(filter: PaymentTypeFilter.All));
+    await listPayments(req: const ListPaymentsRequest(filter: PaymentTypeFilter.All));
   }
 }
 
