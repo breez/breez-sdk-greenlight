@@ -1258,7 +1258,7 @@ impl BreezServices {
                 // Persist closed_at, if we had to look it up
                 let mut updated_channel = channel.clone();
                 updated_channel.closed_at = Some(looked_up_channel_closed_at);
-                self.persister.update_channels(&[updated_channel])?;
+                self.persister.insert_or_update_channel(updated_channel)?;
 
                 looked_up_channel_closed_at
             }
