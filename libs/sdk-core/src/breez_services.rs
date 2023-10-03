@@ -1225,38 +1225,49 @@ impl BreezServices {
     ) -> Result<Payment> {
         let now_epoch_sec = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
 
-        // If we don't have it, we look it up from the channel closing tx
-        let channel_closed_at = channel.closed_at.unwrap_or(
-            match channel.funding_outnum {
-                None => {
-                    warn!("No founding_outnum found for the closing tx, defaulting closed_at to epoch time");
-                    now_epoch_sec
-                }
-                Some(outnum) => {
-                    // Find the output tx that was used to fund the channel
-                    let outspends = self
-                        .chain_service
-                        .transaction_outspends(channel.funding_txid.clone())
-                        .await?;
-                    let maybe_block_time = outspends.get(outnum as usize)
-                        .and_then(|outspend| outspend.status.as_ref())
-                        .and_then(|status| status.block_time);
-
-                    match maybe_block_time {
-                        None => {
-                            warn!("Blocktime could not be determined for funding_outnum {outnum}, defaulting closed_at to epoch time");
-                            now_epoch_sec
-                        }
-                        Some(block_time) => block_time
+        let channel_closed_at = match channel.closed_at {
+            Some(closed_at) => closed_at,
+            None => {
+                // If we don't have it, we look it up from the channel closing tx
+                let looked_up_channel_closed_at = match channel.funding_outnum {
+                    None => {
+                        warn!("No founding_outnum found for the closing tx, defaulting closed_at to epoch time");
+                        now_epoch_sec
                     }
-                }
+                    Some(outnum) => {
+                        // Find the output tx that was used to fund the channel
+                        let outspends = self
+                            .chain_service
+                            .transaction_outspends(channel.funding_txid.clone())
+                            .await?;
+                        let maybe_block_time = outspends
+                            .get(outnum as usize)
+                            .and_then(|outspend| outspend.status.as_ref())
+                            .and_then(|status| status.block_time);
+
+                        match maybe_block_time {
+                            None => {
+                                warn!("Blocktime could not be determined for funding_outnum {outnum}, defaulting closed_at to epoch time");
+                                now_epoch_sec
+                            }
+                            Some(block_time) => block_time,
+                        }
+                    }
+                };
+
+                // Persist closed_at, if we had to look it up
+                let mut updated_channel = channel.clone();
+                updated_channel.closed_at = Some(looked_up_channel_closed_at);
+                self.persister.insert_or_update_channel(updated_channel)?;
+
+                looked_up_channel_closed_at
             }
-        ) as i64;
+        };
 
         Ok(Payment {
             id: channel.funding_txid.clone(),
             payment_type: PaymentType::ClosedChannel,
-            payment_time: channel_closed_at,
+            payment_time: channel_closed_at as i64,
             amount_msat: channel.spendable_msat,
             fee_msat: 0,
             status: match channel.state {

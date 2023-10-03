@@ -75,9 +75,9 @@ impl SqliteStorage {
         Ok(channels)
     }
 
-    fn insert_or_update_channel(&self, c: Channel) -> Result<()> {
+    pub(crate) fn insert_or_update_channel(&self, c: Channel) -> Result<()> {
         self.get_connection()?.execute(
-            "INSERT INTO channels (
+            "INSERT OR REPLACE INTO channels (
                    funding_txid, 
                    short_channel_id,
                    state,
@@ -89,14 +89,6 @@ impl SqliteStorage {
                    alias_remote
                   )
                   VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9)
-                  ON CONFLICT(funding_txid) DO UPDATE SET
-                   short_channel_id=excluded.short_channel_id,
-                   state=excluded.state,
-                   spendable_msat=excluded.spendable_msat,
-                   receivable_msat=excluded.receivable_msat,
-                   funding_outnum=excluded.funding_outnum,                   
-                   alias_local=excluded.alias_local,
-                   alias_remote=excluded.alias_remote
                ",
             (
                 c.funding_txid,
