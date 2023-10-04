@@ -657,21 +657,24 @@ impl BreezServices {
         pair_hash: String,
         sat_per_vbyte: u64,
     ) -> Result<ReverseSwapInfo> {
-        match self.in_progress_reverse_swaps().await?.is_empty() {
-            true => self.btc_send_swapper
-                .create_reverse_swap(
-                    amount_sat,
-                    onchain_recipient_address,
-                    pair_hash,
-                    sat_per_vbyte,
-                )
-                .await
-                .map(Into::into),
-            false => Err(anyhow!(
-                "There already is at least one Reverse Swap in progress. You can only start a new one after after the ongoing ones finish. \
-                Use the in_progress_reverse_swaps method to get an overview of currently ongoing reverse swaps."
-            ))
-        }
+        ensure!(self.in_progress_reverse_swaps().await?.is_empty(),
+            "There already is at least one Reverse Swap in progress. You can only start a new one after after the ongoing ones finish. \
+            Use the in_progress_reverse_swaps method to get an overview of currently ongoing reverse swaps."
+        );
+
+        let rsi = self
+            .btc_send_swapper
+            .create_reverse_swap(
+                amount_sat,
+                onchain_recipient_address,
+                pair_hash,
+                sat_per_vbyte,
+            )
+            .await
+            .map(Into::into)?;
+
+        self.do_sync(true).await?;
+        Ok(rsi)
     }
 
     /// Returns the blocking [ReverseSwapInfo]s that are in progress
