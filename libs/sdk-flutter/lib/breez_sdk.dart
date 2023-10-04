@@ -112,8 +112,8 @@ class BreezSDK {
     required EnvironmentType envType,
     required String apiKey,
     required NodeConfig nodeConfig,
-  }) {
-    return _lnToolkit.defaultConfig(
+  }) async {
+    return await _lnToolkit.defaultConfig(
       envType: envType,
       apiKey: apiKey,
       nodeConfig: nodeConfig,
@@ -124,16 +124,16 @@ class BreezSDK {
   /// encoded signature.
   Future<SignMessageResponse> signMessage({
     required SignMessageRequest request,
-  }) {
-    return _lnToolkit.signMessage(request: request);
+  }) async {
+    return await _lnToolkit.signMessage(request: request);
   }
 
   /// Check whether given message was signed by the private key or the given
   /// pubkey and the signature (zbase encoded) is valid.
   Future<CheckMessageResponse> checkMessage({
     required CheckMessageRequest request,
-  }) {
-    return _lnToolkit.checkMessage(request: request);
+  }) async {
+    return await _lnToolkit.checkMessage(request: request);
   }
 
   /* LSP API's */
@@ -142,8 +142,8 @@ class BreezSDK {
   Future<List<LspInformation>> listLsps() async => await _lnToolkit.listLsps();
 
   /// Select the lsp to be used and provide inbound liquidity
-  Future connectLSP(String lspId) async {
-    await _lnToolkit.connectLsp(lspId: lspId);
+  Future<void> connectLSP(String lspId) async {
+    return await _lnToolkit.connectLsp(lspId: lspId);
   }
 
   /// Get the current LSP's ID
@@ -166,10 +166,10 @@ class BreezSDK {
   Stream<BreezEvent?> get backupStream => _backupStreamController.stream;
 
   /// Start the backup process
-  Future<void> backup() => _lnToolkit.backup();
+  Future<void> backup() async => await _lnToolkit.backup();
 
   /// Returns the state of the backup process
-  Future<BackupStatus> backupStatus() => _lnToolkit.backupStatus();
+  Future<BackupStatus> backupStatus() async => await _lnToolkit.backupStatus();
 
   /* Parse API's */
 
@@ -180,8 +180,11 @@ class BreezSDK {
   Future<InputType> parseInput({required String input}) async => await _lnToolkit.parseInput(input: input);
 
   /// Get the static backup data.
-  Future<StaticBackupResponse> staticBackup({required StaticBackupRequest request}) =>
-      _lnToolkit.staticBackup(request: request);
+  Future<StaticBackupResponse> staticBackup({
+    required StaticBackupRequest request,
+  }) async {
+    return await _lnToolkit.staticBackup(request: request);
+  }
 
   /* Payment API's & Streams*/
 
@@ -194,7 +197,7 @@ class BreezSDK {
   Future<List<Payment>> listPayments({
     required ListPaymentsRequest request,
   }) async {
-    var paymentsList = await _lnToolkit.listPayments(request: request);
+    final paymentsList = await _lnToolkit.listPayments(request: request);
     paymentsController.add(paymentsList);
     return paymentsList;
   }
@@ -202,10 +205,9 @@ class BreezSDK {
   /// Fetch a specific payment by its hash.
   Future<Payment?> paymentByHash({
     required String hash,
-  }) async =>
-      await _lnToolkit.paymentByHash(
-        hash: hash,
-      );
+  }) async {
+    return await _lnToolkit.paymentByHash(hash: hash);
+  }
 
   /* Lightning Payment API's */
 
@@ -252,24 +254,23 @@ class BreezSDK {
   /// * `description` - The bolt11 payment request description
   Future<ReceivePaymentResponse> receivePayment({
     required ReceivePaymentRequest reqData,
-  }) async =>
-      await _lnToolkit.receivePayment(
-        reqData: reqData,
-      );
+  }) async {
+    return await _lnToolkit.receivePayment(reqData: reqData);
+  }
 
   /* LNURL API's */
 
   /// Second step of LNURL-pay. The first step is `parse()`, which also validates the LNURL destination
   /// and generates the `LnUrlPayRequestData` payload needed here.
   Future<LnUrlPayResult> lnurlPay({
+    required LnUrlPayRequestData reqData,
     required int userAmountSat,
     String? comment,
-    required LnUrlPayRequestData reqData,
   }) async {
-    return _lnToolkit.lnurlPay(
+    return await _lnToolkit.lnurlPay(
+      reqData: reqData,
       userAmountSat: userAmountSat,
       comment: comment,
-      reqData: reqData,
     );
   }
 
@@ -280,13 +281,13 @@ class BreezSDK {
   /// of the LNURL endpoint (`req_data`). If they match the endpoint requirements, the LNURL withdraw
   /// request is made. A successful result here means the endpoint started the payment.
   Future<LnUrlWithdrawResult> lnurlWithdraw({
+    required LnUrlWithdrawRequestData reqData,
     required int amountSats,
     String? description,
-    required LnUrlWithdrawRequestData reqData,
   }) async {
-    return _lnToolkit.lnurlWithdraw(
-      amountSats: amountSats,
+    return await _lnToolkit.lnurlWithdraw(
       reqData: reqData,
+      amountSats: amountSats,
       description: description,
     );
   }
@@ -299,7 +300,7 @@ class BreezSDK {
   Future<LnUrlCallbackStatus> lnurlAuth({
     required LnUrlAuthRequestData reqData,
   }) async {
-    return _lnToolkit.lnurlAuth(
+    return await _lnToolkit.lnurlAuth(
       reqData: reqData,
     );
   }
@@ -326,25 +327,30 @@ class BreezSDK {
     required String onchainRecipientAddress,
     required String pairHash,
     required int satPerVbyte,
-  }) async =>
-      _lnToolkit.sendOnchain(
-        amountSat: amountSat,
-        onchainRecipientAddress: onchainRecipientAddress,
-        pairHash: pairHash,
-        satPerVbyte: satPerVbyte,
-      );
+  }) async {
+    final reverseSwapInfo = await _lnToolkit.sendOnchain(
+      amountSat: amountSat,
+      onchainRecipientAddress: onchainRecipientAddress,
+      pairHash: pairHash,
+      satPerVbyte: satPerVbyte,
+    );
+    await listPayments(request: const ListPaymentsRequest(filter: PaymentTypeFilter.All));
+    return reverseSwapInfo;
+  }
 
   /// Onchain receive swap API
   Future<SwapInfo> receiveOnchain({
     required ReceiveOnchainRequest reqData,
-  }) async =>
-      await _lnToolkit.receiveOnchain(reqData: reqData);
+  }) async {
+    return await _lnToolkit.receiveOnchain(reqData: reqData);
+  }
 
   /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency
   Future<BuyBitcoinResponse> buyBitcoin({
     required BuyBitcoinRequest reqData,
-  }) =>
-      _lnToolkit.buyBitcoin(reqData: reqData);
+  }) async {
+    return await _lnToolkit.buyBitcoin(reqData: reqData);
+  }
 
   /// Withdraw on-chain funds in the wallet to an external btc address
   Future<SweepResponse> sweep({
@@ -365,12 +371,13 @@ class BreezSDK {
     required String swapAddress,
     required String toAddress,
     required int satPerVbyte,
-  }) async =>
-      await _lnToolkit.refund(
-        swapAddress: swapAddress,
-        toAddress: toAddress,
-        satPerVbyte: satPerVbyte,
-      );
+  }) async {
+    return await _lnToolkit.refund(
+      swapAddress: swapAddress,
+      toAddress: toAddress,
+      satPerVbyte: satPerVbyte,
+    );
+  }
 
   /* In Progress Swap API's */
 
@@ -384,22 +391,29 @@ class BreezSDK {
   /* Swap Fee API's */
 
   /// Gets the fees required to open a channel for a given amount.
-  Future<OpenChannelFeeResponse> openChannelFee({required int amountMsat, int? expiry}) =>
-      _lnToolkit.openChannelFee(req: OpenChannelFeeRequest(amountMsat: amountMsat, expiry: expiry));
+  Future<OpenChannelFeeResponse> openChannelFee({
+    required OpenChannelFeeRequest req,
+  }) async {
+    return await _lnToolkit.openChannelFee(req: req);
+  }
 
   /// Lookup the most recent reverse swap pair info using the Boltz API
-  Future<ReverseSwapPairInfo> fetchReverseSwapFees({int? sendAmountSat}) async =>
-      _lnToolkit.fetchReverseSwapFees(req: ReverseSwapFeesRequest(sendAmountSat: sendAmountSat));
+  Future<ReverseSwapPairInfo> fetchReverseSwapFees({
+    required ReverseSwapFeesRequest req,
+  }) async {
+    return await _lnToolkit.fetchReverseSwapFees(req: req);
+  }
 
   /// Fetches the current recommended fees
-  Future<RecommendedFees> recommendedFees() => _lnToolkit.recommendedFees();
+  Future<RecommendedFees> recommendedFees() async => await _lnToolkit.recommendedFees();
 
   /* CLI API's */
 
   /// Execute a command directly on the NodeAPI interface.
   /// Mainly used to debugging.
-  Future<String> executeCommand({required String command}) async =>
-      _lnToolkit.executeCommand(command: command);
+  Future<String> executeCommand({required String command}) async {
+    return await _lnToolkit.executeCommand(command: command);
+  }
 
   /* Helper Methods */
 
