@@ -1126,7 +1126,7 @@ impl TryFrom<ListpaysPays> for Payment {
         Ok(Payment {
             id: hex::encode(payment.payment_hash.clone()),
             payment_type: PaymentType::Sent,
-            payment_time: payment.created_at as i64,
+            payment_time: payment.completed_at.unwrap_or(payment.created_at) as i64,
             amount_msat: match status {
                 PaymentStatus::Failed => ln_invoice
                     .as_ref()
