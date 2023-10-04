@@ -119,9 +119,11 @@ impl SqliteStorage {
 
     pub fn last_payment_timestamp(&self) -> Result<u64> {
         self.get_connection()?
-            .query_row("SELECT max(payment_time) FROM payments", [], |row| {
-                row.get(0)
-            })
+            .query_row(
+                "SELECT max(payment_time) FROM payments where status != ?1",
+                params![PaymentStatus::Pending],
+                |row| row.get(0),
+            )
             .map_err(anyhow::Error::msg)
     }
 
