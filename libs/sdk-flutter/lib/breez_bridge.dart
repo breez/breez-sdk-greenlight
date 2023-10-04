@@ -326,13 +326,16 @@ class BreezSDK {
     required String onchainRecipientAddress,
     required String pairHash,
     required int satPerVbyte,
-  }) async =>
-      _lnToolkit.sendOnchain(
-        amountSat: amountSat,
-        onchainRecipientAddress: onchainRecipientAddress,
-        pairHash: pairHash,
-        satPerVbyte: satPerVbyte,
-      );
+  }) async {
+    final reverseSwapInfo = await _lnToolkit.sendOnchain(
+      amountSat: amountSat,
+      onchainRecipientAddress: onchainRecipientAddress,
+      pairHash: pairHash,
+      satPerVbyte: satPerVbyte,
+    );
+    await listPayments(request: const ListPaymentsRequest(filter: PaymentTypeFilter.All));
+    return reverseSwapInfo;
+  }
 
   /// Onchain receive swap API
   Future<SwapInfo> receiveOnchain({
