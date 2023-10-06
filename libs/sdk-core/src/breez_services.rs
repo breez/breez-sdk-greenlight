@@ -773,9 +773,7 @@ impl BreezServices {
 
     /// Connects to the selected LSP, if any
     async fn connect_lsp_peer(&self) -> Result<()> {
-        let lsp = self.lsp_info().await.ok();
-        if lsp.is_some() {
-            let lsp_info = lsp.unwrap().clone();
+        if let Ok(lsp_info) = self.lsp_info().await {
             let node_id = lsp_info.pubkey;
             let address = lsp_info.host;
             debug!("connecting to lsp {}@{}", node_id.clone(), address.clone());
