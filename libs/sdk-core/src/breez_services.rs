@@ -1678,6 +1678,13 @@ impl Receiver for PaymentReceiver {
         let amount_sats = req_data.amount_sats;
         let amount_msats = amount_sats * 1000;
 
+        ensure_sdk!(
+            amount_sats > 0,
+            SdkError::ReceivePaymentFailed {
+                err: "Receive amount must be more than 0".into()
+            }
+        );
+
         let mut short_channel_id = parse_short_channel_id("1x0x0")?;
         let mut destination_invoice_amount_sats = amount_sats;
 
