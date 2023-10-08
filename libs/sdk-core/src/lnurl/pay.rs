@@ -391,7 +391,7 @@ mod tests {
         .replace('\n', "")
         .replace(
             "token-invoice",
-            &pr.clone().unwrap_or_else(|| "token-invoice".to_string()),
+            &pr.unwrap_or_else(|| "token-invoice".to_string()),
         );
 
         let response_body = match error {
@@ -478,7 +478,7 @@ mod tests {
         .replace('\n', "")
         .replace(
             "token-invoice",
-            &pr.clone().unwrap_or_else(|| "token-invoice".to_string()),
+            &pr.unwrap_or_else(|| "token-invoice".to_string()),
         );
 
         let response_body = match error {
@@ -525,7 +525,7 @@ mod tests {
         .replace('\n', "")
         .replace(
             "token-invoice",
-            &pr.clone().unwrap_or_else(|| "token-invoice".to_string()),
+            &pr.unwrap_or_else(|| "token-invoice".to_string()),
         );
 
         let response_body = match error {
@@ -581,7 +581,7 @@ mod tests {
         .replace("token-description", &sa_data.description)
         .replace(
             "token-invoice",
-            &pr.clone().unwrap_or_else(|| "token-invoice".to_string()),
+            &pr.unwrap_or_else(|| "token-invoice".to_string()),
         );
 
         let response_body = match error {
