@@ -3,12 +3,10 @@ import 'dart:typed_data';
 
 import 'package:breez_sdk/bridge_generated.dart';
 import 'package:breez_sdk/native_toolkit.dart';
-import 'package:fimber/fimber.dart';
 import 'package:rxdart/rxdart.dart';
 
 class BreezSDK {
   final _lnToolkit = getNativeToolkit();
-  final _log = FimberLog("BreezSDK");
 
   BreezSDK();
 
@@ -26,7 +24,6 @@ class BreezSDK {
   void initialize() {
     /// Listen to BreezEvent's(new block, invoice paid, synced)
     _lnToolkit.breezEventsStream().listen((event) async {
-      _log.v("Received breez event: $event");
       if (event is BreezEvent_InvoicePaid) {
         _invoicePaidStream.add(event.details);
         await fetchNodeData();
@@ -50,10 +47,9 @@ class BreezSDK {
         _backupStreamController.addError(Exception(event.details.error));
       }
     });
-
-    /// Listen to SDK logs and log them accordingly to their severity
-    _lnToolkit.breezLogStream().listen(_registerToolkitLog);
   }
+
+  Stream<LogEntry> get logStream => _lnToolkit.breezLogStream();
 
   /* Breez Services API's & Streams*/
 
@@ -433,27 +429,6 @@ class BreezSDK {
   Future fetchNodeData() async {
     await nodeInfo();
     await listPayments(request: const ListPaymentsRequest(filter: PaymentTypeFilter.All));
-  }
-
-  /// Log entries according to their severity
-  void _registerToolkitLog(LogEntry log) {
-    switch (log.level) {
-      case "ERROR":
-        _log.e(log.line);
-        break;
-      case "WARN":
-        _log.w(log.line);
-        break;
-      case "INFO":
-        _log.i(log.line);
-        break;
-      case "DEBUG":
-        _log.d(log.line);
-        break;
-      default:
-        _log.v(log.line);
-        break;
-    }
   }
 }
 
