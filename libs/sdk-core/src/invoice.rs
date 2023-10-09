@@ -147,10 +147,8 @@ pub fn add_lsp_routing_hints(
 
 /// Parse a BOLT11 payment request and return a structure contains the parsed fields.
 pub fn parse_invoice(bolt11: &str) -> Result<LNInvoice> {
-    let signed = bolt11
-        .strip_prefix("lightning:")
-        .unwrap_or(bolt11)
-        .parse::<SignedRawInvoice>()?;
+    let bolt11 = bolt11.strip_prefix("lightning:").unwrap_or(bolt11);
+    let signed = bolt11.parse::<SignedRawInvoice>()?;
     let invoice = Invoice::from_signed(signed)?;
 
     let since_the_epoch = invoice.timestamp().duration_since(UNIX_EPOCH)?;
@@ -172,7 +170,7 @@ pub fn parse_invoice(bolt11: &str) -> Result<LNInvoice> {
     let converted_hints = invoice_hints.iter().map(RouteHint::from_ldk_hint).collect();
     // return the parsed invoice
     let ln_invoice = LNInvoice {
-        bolt11: invoice.to_string(),
+        bolt11: bolt11.to_string(),
         payee_pubkey,
         expiry: invoice.expiry_time().as_secs(),
         amount_msat: invoice.amount_milli_satoshis(),
