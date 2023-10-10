@@ -342,19 +342,10 @@ impl FullReverseSwapInfo {
 pub struct ReverseSwapInfo {
     pub id: String,
     pub claim_pubkey: String,
+    /// The claim tx id, available from the moment the claim tx has been broadcast
+    pub claim_txid: Option<String>,
     pub onchain_amount_sat: u64,
     pub status: ReverseSwapStatus,
-}
-
-impl From<FullReverseSwapInfo> for ReverseSwapInfo {
-    fn from(rsi: FullReverseSwapInfo) -> Self {
-        Self {
-            id: rsi.id,
-            claim_pubkey: rsi.claim_pubkey,
-            onchain_amount_sat: rsi.onchain_amount_sat,
-            status: rsi.cache.status,
-        }
-    }
 }
 
 /// The possible statuses of a reverse swap, from the Breez SDK perspective.

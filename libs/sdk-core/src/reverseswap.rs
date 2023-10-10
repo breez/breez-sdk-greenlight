@@ -6,8 +6,8 @@ use crate::chain::{get_utxos, ChainService, MempoolSpace};
 use crate::models::{ReverseSwapServiceAPI, ReverseSwapperRoutingAPI};
 use crate::ReverseSwapStatus::*;
 use crate::{
-    BreezEvent, Config, FullReverseSwapInfo, NodeAPI, PaymentStatus, ReverseSwapInfoCached,
-    ReverseSwapPairInfo, ReverseSwapStatus,
+    BreezEvent, Config, FullReverseSwapInfo, NodeAPI, PaymentStatus, ReverseSwapInfo,
+    ReverseSwapInfoCached, ReverseSwapPairInfo, ReverseSwapStatus,
 };
 use anyhow::{anyhow, ensure, Result};
 use bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
@@ -553,5 +553,26 @@ impl BTCSendSwap {
         self.reverse_swap_service_api
             .fetch_reverse_swap_fees()
             .await
+    }
+
+    /// Converts the internal [FullReverseSwapInfo] into the user-facing [ReverseSwapInfo]
+    pub(crate) async fn convert_reverse_swap_info(
+        &self,
+        full_rsi: FullReverseSwapInfo,
+    ) -> Result<ReverseSwapInfo> {
+        Ok(ReverseSwapInfo {
+            id: full_rsi.id.clone(),
+            claim_pubkey: full_rsi.claim_pubkey.clone(),
+            claim_txid: match full_rsi.cache.status {
+                CompletedSeen | CompletedConfirmed => self
+                    .create_claim_tx(&full_rsi)
+                    .await
+                    .ok()
+                    .map(|claim_tx| claim_tx.txid().to_hex()),
+                _ => None,
+            },
+            onchain_amount_sat: full_rsi.onchain_amount_sat,
+            status: full_rsi.cache.status,
+        })
     }
 }
