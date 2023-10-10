@@ -801,6 +801,15 @@ impl NodeAPI for Greenlight {
 
                 Ok("All channels were closed".to_string())
             }
+            NodeCommand::GetInfo => {
+                let resp = self
+                    .get_node_client()
+                    .await?
+                    .getinfo(pb::cln::GetinfoRequest::default())
+                    .await?
+                    .into_inner();
+                Ok(format!("{resp:?}"))
+            }
         }
     }
 
@@ -876,6 +885,9 @@ impl NodeAPI for Greenlight {
 enum NodeCommand {
     #[strum(serialize = "closeallchannels")]
     CloseAllChannels,
+
+    #[strum(serialize = "getinfo")]
+    GetInfo,
 
     #[strum(serialize = "listfunds")]
     ListFunds,
