@@ -801,6 +801,15 @@ impl NodeAPI for Greenlight {
 
                 Ok("All channels were closed".to_string())
             }
+            NodeCommand::GetInfo => {
+                let resp = self
+                    .get_node_client()
+                    .await?
+                    .getinfo(pb::cln::GetinfoRequest::default())
+                    .await?
+                    .into_inner();
+                Ok(format!("{resp:?}"))
+            }
         }
     }
 
@@ -874,23 +883,26 @@ impl NodeAPI for Greenlight {
 
 #[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
 enum NodeCommand {
+    #[strum(serialize = "closeallchannels")]
+    CloseAllChannels,
+
+    #[strum(serialize = "getinfo")]
+    GetInfo,
+
+    #[strum(serialize = "listfunds")]
+    ListFunds,
+
+    #[strum(serialize = "listinvoices")]
+    ListInvoices,
+
+    #[strum(serialize = "listpayments")]
+    ListPayments,
+
     #[strum(serialize = "listpeers")]
     ListPeers,
 
     #[strum(serialize = "listpeerchannels")]
     ListPeerChannels,
-
-    #[strum(serialize = "listfunds")]
-    ListFunds,
-
-    #[strum(serialize = "listpayments")]
-    ListPayments,
-
-    #[strum(serialize = "listinvoices")]
-    ListInvoices,
-
-    #[strum(serialize = "closeallchannels")]
-    CloseAllChannels,
 }
 
 // pulls transactions from greenlight based on last sync timestamp.
