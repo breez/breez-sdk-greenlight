@@ -508,6 +508,7 @@ dependencies = [
  "prost",
  "querystring",
  "rand",
+ "regex",
  "reqwest",
  "ripemd",
  "rusqlite",

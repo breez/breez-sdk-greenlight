@@ -4,6 +4,7 @@ use hex::ToHex;
 use lightning::routing::gossip::RoutingFees;
 use lightning::routing::*;
 use lightning_invoice::*;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use std::time::UNIX_EPOCH;
@@ -147,7 +148,8 @@ pub fn add_lsp_routing_hints(
 
 /// Parse a BOLT11 payment request and return a structure contains the parsed fields.
 pub fn parse_invoice(bolt11: &str) -> Result<LNInvoice> {
-    let bolt11 = bolt11.strip_prefix("lightning:").unwrap_or(bolt11);
+    let re = Regex::new(r"(?i)^lightning:")?;
+    let bolt11 = re.replace_all(bolt11, "");
     let signed = bolt11.parse::<SignedRawInvoice>()?;
     let invoice = Invoice::from_signed(signed)?;
 
