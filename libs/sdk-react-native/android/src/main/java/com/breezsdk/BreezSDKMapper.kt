@@ -1900,11 +1900,13 @@ fun asReverseSwapInfo(data: ReadableMap): ReverseSwapInfo? {
     }
     val id = data.getString("id")!!
     val claimPubkey = data.getString("claimPubkey")!!
+    val claimTxid = if (hasNonNullKey(data, "claimTxid")) data.getString("claimTxid") else null
     val onchainAmountSat = data.getDouble("onchainAmountSat").toULong()
     val status = data.getString("status")?.let { asReverseSwapStatus(it) }!!
     return ReverseSwapInfo(
         id,
         claimPubkey,
+        claimTxid,
         onchainAmountSat,
         status,
     )
@@ -1914,6 +1916,7 @@ fun readableMapOf(reverseSwapInfo: ReverseSwapInfo): ReadableMap {
     return readableMapOf(
         "id" to reverseSwapInfo.id,
         "claimPubkey" to reverseSwapInfo.claimPubkey,
+        "claimTxid" to reverseSwapInfo.claimTxid,
         "onchainAmountSat" to reverseSwapInfo.onchainAmountSat,
         "status" to reverseSwapInfo.status.name.lowercase(),
     )

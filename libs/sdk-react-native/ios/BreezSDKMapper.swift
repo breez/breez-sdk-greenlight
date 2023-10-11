@@ -1735,6 +1735,7 @@ class BreezSDKMapper {
     static func asReverseSwapInfo(data: [String: Any?]) throws -> ReverseSwapInfo {
         guard let id = data["id"] as? String else { throw SdkError.Generic(message: "Missing mandatory field id for type ReverseSwapInfo") }
         guard let claimPubkey = data["claimPubkey"] as? String else { throw SdkError.Generic(message: "Missing mandatory field claimPubkey for type ReverseSwapInfo") }
+        let claimTxid = data["claimTxid"] as? String
         guard let onchainAmountSat = data["onchainAmountSat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field onchainAmountSat for type ReverseSwapInfo") }
         guard let statusTmp = data["status"] as? String else { throw SdkError.Generic(message: "Missing mandatory field status for type ReverseSwapInfo") }
         let status = try asReverseSwapStatus(type: statusTmp)
@@ -1742,6 +1743,7 @@ class BreezSDKMapper {
         return ReverseSwapInfo(
             id: id,
             claimPubkey: claimPubkey,
+            claimTxid: claimTxid,
             onchainAmountSat: onchainAmountSat,
             status: status
         )
@@ -1751,6 +1753,7 @@ class BreezSDKMapper {
         return [
             "id": reverseSwapInfo.id,
             "claimPubkey": reverseSwapInfo.claimPubkey,
+            "claimTxid": reverseSwapInfo.claimTxid == nil ? nil : reverseSwapInfo.claimTxid,
             "onchainAmountSat": reverseSwapInfo.onchainAmountSat,
             "status": valueOf(reverseSwapStatus: reverseSwapInfo.status),
         ]
