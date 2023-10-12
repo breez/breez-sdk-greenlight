@@ -581,12 +581,16 @@ class ListPaymentsRequest {
   final int? fromTimestamp;
   final int? toTimestamp;
   final bool? includeFailures;
+  final int? offset;
+  final int? limit;
 
   const ListPaymentsRequest({
     required this.filter,
     this.fromTimestamp,
     this.toTimestamp,
     this.includeFailures,
+    this.offset,
+    this.limit,
   });
 }
 
@@ -3550,6 +3554,8 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.from_timestamp = api2wire_opt_box_autoadd_i64(apiObj.fromTimestamp);
     wireObj.to_timestamp = api2wire_opt_box_autoadd_i64(apiObj.toTimestamp);
     wireObj.include_failures = api2wire_opt_box_autoadd_bool(apiObj.includeFailures);
+    wireObj.offset = api2wire_opt_box_autoadd_u32(apiObj.offset);
+    wireObj.limit = api2wire_opt_box_autoadd_u32(apiObj.limit);
   }
 
   void _api_fill_to_wire_ln_url_auth_request_data(
@@ -4747,6 +4753,10 @@ class wire_ListPaymentsRequest extends ffi.Struct {
   external ffi.Pointer<ffi.Int64> to_timestamp;
 
   external ffi.Pointer<ffi.Bool> include_failures;
+
+  external ffi.Pointer<ffi.Uint32> offset;
+
+  external ffi.Pointer<ffi.Uint32> limit;
 }
 
 class wire_OpeningFeeParams extends ffi.Struct {

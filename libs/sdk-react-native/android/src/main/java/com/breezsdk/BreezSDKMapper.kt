@@ -714,11 +714,15 @@ fun asListPaymentsRequest(data: ReadableMap): ListPaymentsRequest? {
     val fromTimestamp = if (hasNonNullKey(data, "fromTimestamp")) data.getDouble("fromTimestamp").toLong() else null
     val toTimestamp = if (hasNonNullKey(data, "toTimestamp")) data.getDouble("toTimestamp").toLong() else null
     val includeFailures = if (hasNonNullKey(data, "includeFailures")) data.getBoolean("includeFailures") else null
+    val offset = if (hasNonNullKey(data, "offset")) data.getInt("offset").toUInt() else null
+    val limit = if (hasNonNullKey(data, "limit")) data.getInt("limit").toUInt() else null
     return ListPaymentsRequest(
         filter,
         fromTimestamp,
         toTimestamp,
         includeFailures,
+        offset,
+        limit,
     )
 }
 
@@ -728,6 +732,8 @@ fun readableMapOf(listPaymentsRequest: ListPaymentsRequest): ReadableMap {
         "fromTimestamp" to listPaymentsRequest.fromTimestamp,
         "toTimestamp" to listPaymentsRequest.toTimestamp,
         "includeFailures" to listPaymentsRequest.includeFailures,
+        "offset" to listPaymentsRequest.offset,
+        "limit" to listPaymentsRequest.limit,
     )
 }
 

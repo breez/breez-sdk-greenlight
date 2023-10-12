@@ -667,6 +667,8 @@ pub struct ListPaymentsRequest {
     pub from_timestamp: Option<i64>,
     pub to_timestamp: Option<i64>,
     pub include_failures: Option<bool>,
+    pub offset: Option<u32>,
+    pub limit: Option<u32>,
 }
 
 /// Represents a payment response.

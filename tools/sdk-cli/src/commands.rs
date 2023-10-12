@@ -123,6 +123,14 @@ pub(crate) enum Commands {
         /// Include failed payments
         #[clap(short = 'i', long = "include_failures")]
         include_failures: bool,
+
+        /// Optional limit of listed payments
+        #[clap(short = 'l', long = "limit")]
+        limit: Option<u32>,
+
+        /// Optional offset in payments
+        #[clap(short = 'o', long = "offset")]
+        offset: Option<u32>,
     },
 
     /// Retrieve a payment by its hash

@@ -193,6 +193,8 @@ pub(crate) async fn handle_command(
             from_timestamp,
             to_timestamp,
             include_failures,
+            limit,
+            offset,
         } => {
             let payments = sdk()?
                 .list_payments(ListPaymentsRequest {
@@ -200,6 +202,8 @@ pub(crate) async fn handle_command(
                     from_timestamp,
                     to_timestamp,
                     include_failures: Some(include_failures),
+                    limit,
+                    offset,
                 })
                 .await?;
             serde_json::to_string_pretty(&payments).map_err(|e| e.into())

@@ -77,6 +77,8 @@ typedef struct wire_ListPaymentsRequest {
   int64_t *from_timestamp;
   int64_t *to_timestamp;
   bool *include_failures;
+  uint32_t *offset;
+  uint32_t *limit;
 } wire_ListPaymentsRequest;
 
 typedef struct wire_OpeningFeeParams {

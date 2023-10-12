@@ -582,6 +582,8 @@ impl Wire2Api<ListPaymentsRequest> for wire_ListPaymentsRequest {
             from_timestamp: self.from_timestamp.wire2api(),
             to_timestamp: self.to_timestamp.wire2api(),
             include_failures: self.include_failures.wire2api(),
+            offset: self.offset.wire2api(),
+            limit: self.limit.wire2api(),
         }
     }
 }
@@ -766,6 +768,8 @@ pub struct wire_ListPaymentsRequest {
     from_timestamp: *mut i64,
     to_timestamp: *mut i64,
     include_failures: *mut bool,
+    offset: *mut u32,
+    limit: *mut u32,
 }
 
 #[repr(C)]
@@ -988,6 +992,8 @@ impl NewWithNullPtr for wire_ListPaymentsRequest {
             from_timestamp: core::ptr::null_mut(),
             to_timestamp: core::ptr::null_mut(),
             include_failures: core::ptr::null_mut(),
+            offset: core::ptr::null_mut(),
+            limit: core::ptr::null_mut(),
         }
     }
 }

@@ -660,12 +660,16 @@ class BreezSDKMapper {
         let fromTimestamp = data["fromTimestamp"] as? Int64
         let toTimestamp = data["toTimestamp"] as? Int64
         let includeFailures = data["includeFailures"] as? Bool
+        let offset = data["offset"] as? UInt32
+        let limit = data["limit"] as? UInt32
 
         return ListPaymentsRequest(
             filter: filter,
             fromTimestamp: fromTimestamp,
             toTimestamp: toTimestamp,
-            includeFailures: includeFailures
+            includeFailures: includeFailures,
+            offset: offset,
+            limit: limit
         )
     }
 
@@ -675,6 +679,8 @@ class BreezSDKMapper {
             "fromTimestamp": listPaymentsRequest.fromTimestamp == nil ? nil : listPaymentsRequest.fromTimestamp,
             "toTimestamp": listPaymentsRequest.toTimestamp == nil ? nil : listPaymentsRequest.toTimestamp,
             "includeFailures": listPaymentsRequest.includeFailures == nil ? nil : listPaymentsRequest.includeFailures,
+            "offset": listPaymentsRequest.offset == nil ? nil : listPaymentsRequest.offset,
+            "limit": listPaymentsRequest.limit == nil ? nil : listPaymentsRequest.limit,
         ]
     }
 

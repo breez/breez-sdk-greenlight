@@ -463,12 +463,7 @@ impl BreezServices {
 
     /// List payments matching the given filters, as retrieved from persistent storage
     pub async fn list_payments(&self, request: ListPaymentsRequest) -> SdkResult<Vec<Payment>> {
-        self.persister.list_payments(
-            request.filter,
-            request.from_timestamp,
-            request.to_timestamp,
-            request.include_failures,
-        )
+        self.persister.list_payments(request)
     }
 
     /// Fetch a specific payment by its hash.
@@ -2036,6 +2031,8 @@ pub(crate) mod tests {
                 from_timestamp: None,
                 to_timestamp: None,
                 include_failures: None,
+                offset: None,
+                limit: None,
             })
             .await?;
         let mut cloned = all.clone();
@@ -2050,6 +2047,8 @@ pub(crate) mod tests {
                 from_timestamp: None,
                 to_timestamp: None,
                 include_failures: None,
+                offset: None,
+                limit: None,
             })
             .await?;
         assert_eq!(received, vec![cloned[1].clone(), cloned[0].clone()]);
@@ -2060,6 +2059,8 @@ pub(crate) mod tests {
                 from_timestamp: None,
                 to_timestamp: None,
                 include_failures: None,
+                offset: None,
+                limit: None,
             })
             .await?;
         assert_eq!(sent, vec![cloned[2].clone()]);
