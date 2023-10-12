@@ -152,6 +152,8 @@ dictionary ListPaymentsRequest {
     i64? from_timestamp = null;
     i64? to_timestamp = null;
     boolean? include_failures = null;
+    u32? offset = null;
+    u32? limit = null;
 };
 
 [Enum]

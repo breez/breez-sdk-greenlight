@@ -128,6 +128,8 @@ export type ListPaymentsRequest = {
     fromTimestamp?: number
     toTimestamp?: number
     includeFailures?: boolean
+    offset?: number
+    limit?: number
 }
 
 export type LnPaymentDetails = {

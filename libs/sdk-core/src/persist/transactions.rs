@@ -131,15 +131,15 @@ impl SqliteStorage {
     ///
     /// This queries all payments. To query a single payment, see [Self::get_payment_by_hash]
     /// or [Self::get_completed_payment_by_hash]
-    pub fn list_payments(
-        &self,
-        type_filter: PaymentTypeFilter,
-        from_timestamp: Option<i64>,
-        to_timestamp: Option<i64>,
-        include_failures: Option<bool>,
-    ) -> SdkResult<Vec<Payment>> {
-        let where_clause =
-            filter_to_where_clause(type_filter, from_timestamp, to_timestamp, include_failures);
+    pub fn list_payments(&self, request: ListPaymentsRequest) -> SdkResult<Vec<Payment>> {
+        let where_clause = filter_to_where_clause(
+            request.filter,
+            request.from_timestamp,
+            request.to_timestamp,
+            request.include_failures,
+        );
+        let offset = request.offset.unwrap_or(0u32);
+        let limit = request.limit.unwrap_or(u32::MAX);
         let con = self.get_connection()?;
         let mut stmt = con.prepare(
             format!(
@@ -166,6 +166,8 @@ impl SqliteStorage {
              ON
               p.id = o.payment_hash
             {where_clause} ORDER BY payment_time DESC
+            LIMIT {limit}
+            OFFSET {offset}
           "
             )
             .as_str(),
@@ -457,12 +459,26 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     // retrieve all
-    let retrieve_txs = storage.list_payments(PaymentTypeFilter::All, None, None, None)?;
+    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+        filter: PaymentTypeFilter::All,
+        from_timestamp: None,
+        to_timestamp: None,
+        include_failures: None,
+        offset: None,
+        limit: None,
+    })?;
     assert_eq!(retrieve_txs.len(), 2);
     assert_eq!(retrieve_txs, txs);
 
     //test only sent
-    let retrieve_txs = storage.list_payments(PaymentTypeFilter::Sent, None, None, None)?;
+    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+        filter: PaymentTypeFilter::Sent,
+        from_timestamp: None,
+        to_timestamp: None,
+        include_failures: None,
+        offset: None,
+        limit: None,
+    })?;
     assert_eq!(retrieve_txs.len(), 1);
     assert_eq!(retrieve_txs[0], txs[0]);
     assert!(
@@ -473,7 +489,14 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     //test only received
-    let retrieve_txs = storage.list_payments(PaymentTypeFilter::Received, None, None, None)?;
+    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+        filter: PaymentTypeFilter::Received,
+        from_timestamp: None,
+        to_timestamp: None,
+        include_failures: None,
+        offset: None,
+        limit: None,
+    })?;
     assert_eq!(retrieve_txs.len(), 1);
     assert_eq!(retrieve_txs[0], txs[1]);
 
@@ -481,21 +504,72 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(max_ts, 2000);
 
     storage.insert_or_update_payments(&txs)?;
-    let retrieve_txs = storage.list_payments(PaymentTypeFilter::All, None, None, None)?;
+    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+        filter: PaymentTypeFilter::All,
+        from_timestamp: None,
+        to_timestamp: None,
+        include_failures: None,
+        offset: None,
+        limit: None,
+    })?;
     assert_eq!(retrieve_txs.len(), 2);
     assert_eq!(retrieve_txs, txs);
 
     storage.insert_open_channel_payment_info("123", 150)?;
-    let retrieve_txs = storage.list_payments(PaymentTypeFilter::All, None, None, None)?;
+    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+        filter: PaymentTypeFilter::All,
+        from_timestamp: None,
+        to_timestamp: None,
+        include_failures: None,
+        offset: None,
+        limit: None,
+    })?;
     assert_eq!(retrieve_txs[0].fee_msat, 50);
 
     // test all with failures
-    let retrieve_txs = storage.list_payments(PaymentTypeFilter::All, None, None, Some(true))?;
+    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+        filter: PaymentTypeFilter::All,
+        from_timestamp: None,
+        to_timestamp: None,
+        include_failures: Some(true),
+        offset: None,
+        limit: None,
+    })?;
     assert_eq!(retrieve_txs.len(), 3);
 
     // test sent with failures
-    let retrieve_txs = storage.list_payments(PaymentTypeFilter::Sent, None, None, Some(true))?;
+    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+        filter: PaymentTypeFilter::Sent,
+        from_timestamp: None,
+        to_timestamp: None,
+        include_failures: Some(true),
+        offset: None,
+        limit: None,
+    })?;
     assert_eq!(retrieve_txs.len(), 2);
+
+    // test limit
+    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+        filter: PaymentTypeFilter::All,
+        from_timestamp: None,
+        to_timestamp: None,
+        include_failures: Some(false),
+        offset: None,
+        limit: Some(1),
+    })?;
+    assert_eq!(retrieve_txs.len(), 1);
+
+    // test offset
+    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+        filter: PaymentTypeFilter::All,
+        from_timestamp: None,
+        to_timestamp: None,
+        include_failures: Some(false),
+        offset: Some(1),
+        limit: Some(1),
+    })?;
+    assert_eq!(retrieve_txs.len(), 1);
+    assert_eq!(retrieve_txs[0].id, payment_hash_with_lnurl_withdraw);
 
     Ok(())
 }
