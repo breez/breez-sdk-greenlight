@@ -198,6 +198,7 @@ dictionary ClosedChannelPaymentDetails {
     string short_channel_id;
     ChannelState state;
     string funding_txid;
+    string closing_txid;
 };
 
 enum ChannelState {

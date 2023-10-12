@@ -414,7 +414,8 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
        ",
        "SELECT 1;", // Placeholder statement, to avoid that column is added twice (from sync fn below and here)
        "ALTER TABLE channels ADD COLUMN alias_local TEXT;",
-       "ALTER TABLE channels ADD COLUMN alias_remote TEXT;"
+       "ALTER TABLE channels ADD COLUMN alias_remote TEXT;",
+       "ALTER TABLE channels ADD COLUMN closing_txid TEXT;"
     ]
 }
 

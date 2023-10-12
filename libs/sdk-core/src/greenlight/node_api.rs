@@ -1219,6 +1219,7 @@ impl From<cln::ListpeersPeers> for Peer {
     }
 }
 
+/// Conversion for an open channel
 impl From<cln::ListpeersPeersChannels> for Channel {
     fn from(c: cln::ListpeersPeersChannels) -> Self {
         let state = match c.state() {
@@ -1245,10 +1246,12 @@ impl From<cln::ListpeersPeersChannels> for Channel {
             funding_outnum: c.funding_outnum,
             alias_remote,
             alias_local,
+            closing_txid: None,
         }
     }
 }
 
+/// Conversion for a closed channel
 impl TryFrom<ListclosedchannelsClosedchannels> for Channel {
     type Error = anyhow::Error;
 
@@ -1257,6 +1260,9 @@ impl TryFrom<ListclosedchannelsClosedchannels> for Channel {
             Some(a) => (a.remote, a.local),
             None => (None, None),
         };
+
+        // To keep the conversion simple and fast, some closing-related fields (closed_at, closing_txid)
+        // are left empty here in the conversion, but populated later (via chain service lookup, or DB lookup)
         Ok(Channel {
             short_channel_id: c
                 .short_channel_id
@@ -1268,10 +1274,11 @@ impl TryFrom<ListclosedchannelsClosedchannels> for Channel {
                 .ok_or(anyhow!("final_to_us_msat is missing"))?
                 .msat,
             receivable_msat: 0,
-            closed_at: None, // Don't fill at his time, because it involves a chain_service lookup
+            closed_at: None,
             funding_outnum: Some(c.funding_outnum),
             alias_remote,
             alias_local,
+            closing_txid: None,
         })
     }
 }

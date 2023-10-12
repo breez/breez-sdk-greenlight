@@ -5,6 +5,12 @@ use anyhow::Result;
 use std::str::FromStr;
 
 impl SqliteStorage {
+    /// Expects a full list of channels.
+    ///
+    /// Any known channel, but missing from the list, will be marked as closed. When doing so, the
+    /// closing-related fields `closed_at` and `closing_txid` are not set, because they would require
+    /// a chain service lookup. Instead, they will be set on first lookup in
+    /// [BreezServices::closed_channel_to_transaction]
     pub(crate) fn update_channels(&self, channels: &[Channel]) -> Result<()> {
         // insert all channels
         for c in channels.iter().cloned() {
@@ -49,7 +55,8 @@ impl SqliteStorage {
                 closed_at,
                 funding_outnum,
                 alias_local,
-                alias_remote
+                alias_remote,
+                closing_txid
                FROM channels             
              ",
         )?;
@@ -67,6 +74,7 @@ impl SqliteStorage {
                     funding_outnum: row.get(6)?,
                     alias_local: row.get(7)?,
                     alias_remote: row.get(8)?,
+                    closing_txid: row.get(9)?,
                 })
             })?
             .map(|i| i.unwrap())
@@ -86,9 +94,10 @@ impl SqliteStorage {
                    closed_at,
                    funding_outnum,                   
                    alias_local,
-                   alias_remote
+                   alias_remote,
+                   closing_txid
                   )
-                  VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9)
+                  VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10)
                ",
             (
                 c.funding_txid,
@@ -103,6 +112,7 @@ impl SqliteStorage {
                 c.funding_outnum,
                 c.alias_local,
                 c.alias_remote,
+                c.closing_txid,
             ),
         )?;
         Ok(())
@@ -127,6 +137,7 @@ fn test_simple_sync_channels() {
             funding_outnum: None,
             alias_local: None,
             alias_remote: None,
+            closing_txid: None,
         },
         Channel {
             funding_txid: "456".to_string(),
@@ -138,6 +149,7 @@ fn test_simple_sync_channels() {
             funding_outnum: None,
             alias_local: None,
             alias_remote: None,
+            closing_txid: None,
         },
     ];
 
@@ -168,6 +180,7 @@ fn test_sync_closed_channels() {
             funding_outnum: None,
             alias_local: None,
             alias_remote: None,
+            closing_txid: None,
         },
         Channel {
             funding_txid: "456".to_string(),
@@ -179,6 +192,7 @@ fn test_sync_closed_channels() {
             funding_outnum: None,
             alias_local: None,
             alias_remote: None,
+            closing_txid: None,
         },
     ];
 
@@ -206,6 +220,7 @@ fn test_sync_closed_channels() {
             funding_outnum: None,
             alias_local: None,
             alias_remote: None,
+            closing_txid: None,
         },
         Channel {
             funding_txid: "456".to_string(),
@@ -217,6 +232,7 @@ fn test_sync_closed_channels() {
             funding_outnum: None,
             alias_local: None,
             alias_remote: None,
+            closing_txid: None,
         },
     ];
     assert_eq!(expected.len(), queried_channels.len());
