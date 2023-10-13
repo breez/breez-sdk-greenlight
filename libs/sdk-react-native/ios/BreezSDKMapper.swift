@@ -657,8 +657,8 @@ class BreezSDKMapper {
     }
 
     static func asListPaymentsRequest(listPaymentsRequest: [String: Any?]) throws -> ListPaymentsRequest {
-        guard let filterTmp = listPaymentsRequest["filter"] as? String else { throw SdkError.Generic(message: "Missing mandatory field filter for type ListPaymentsRequest") }
-        let filter = try asPaymentTypeFilter(paymentTypeFilter: filterTmp)
+        guard let filtersTmp = listPaymentsRequest["filters"] as? [String] else { throw SdkError.Generic(message: "Missing mandatory field filters for type ListPaymentsRequest") }
+        let filters = filtersTmp
 
         let fromTimestamp = listPaymentsRequest["fromTimestamp"] as? Int64
         let toTimestamp = listPaymentsRequest["toTimestamp"] as? Int64
@@ -667,7 +667,7 @@ class BreezSDKMapper {
         let limit = listPaymentsRequest["limit"] as? UInt32
 
         return ListPaymentsRequest(
-            filter: filter,
+            filters: filters,
             fromTimestamp: fromTimestamp,
             toTimestamp: toTimestamp,
             includeFailures: includeFailures,
@@ -678,7 +678,7 @@ class BreezSDKMapper {
 
     static func dictionaryOf(listPaymentsRequest: ListPaymentsRequest) -> [String: Any?] {
         return [
-            "filter": valueOf(paymentTypeFilter: listPaymentsRequest.filter),
+            "filters": arrayOf(paymentTypeFilterList: listPaymentsRequest.filters),
             "fromTimestamp": listPaymentsRequest.fromTimestamp == nil ? nil : listPaymentsRequest.fromTimestamp,
             "toTimestamp": listPaymentsRequest.toTimestamp == nil ? nil : listPaymentsRequest.toTimestamp,
             "includeFailures": listPaymentsRequest.includeFailures == nil ? nil : listPaymentsRequest.includeFailures,
@@ -3219,6 +3219,9 @@ class BreezSDKMapper {
         case "received":
             return PaymentTypeFilter.received
 
+        case "closedChannels":
+            return PaymentTypeFilter.closedChannels
+
         case "all":
             return PaymentTypeFilter.all
 
@@ -3233,6 +3236,9 @@ class BreezSDKMapper {
 
         case .received:
             return "received"
+
+        case .closedChannels:
+            return "closedChannels"
 
         case .all:
             return "all"

@@ -72,8 +72,13 @@ typedef struct wire_StaticBackupRequest {
   struct wire_uint_8_list *working_dir;
 } wire_StaticBackupRequest;
 
+typedef struct wire_list_payment_type_filter {
+  int32_t *ptr;
+  int32_t len;
+} wire_list_payment_type_filter;
+
 typedef struct wire_ListPaymentsRequest {
-  int32_t filter;
+  struct wire_list_payment_type_filter *filters;
   int64_t *from_timestamp;
   int64_t *to_timestamp;
   bool *include_failures;
@@ -338,6 +343,8 @@ uint32_t *new_box_autoadd_u32_0(uint32_t value);
 
 uint64_t *new_box_autoadd_u64_0(uint64_t value);
 
+struct wire_list_payment_type_filter *new_list_payment_type_filter_0(int32_t len);
+
 struct wire_uint_8_list *new_uint_8_list_0(int32_t len);
 
 union NodeConfigKind *inflate_NodeConfig_Greenlight(void);
@@ -416,6 +423,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_sweep_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_u32_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_u64_0);
+    dummy_var ^= ((int64_t) (void*) new_list_payment_type_filter_0);
     dummy_var ^= ((int64_t) (void*) new_uint_8_list_0);
     dummy_var ^= ((int64_t) (void*) inflate_NodeConfig_Greenlight);
     dummy_var ^= ((int64_t) (void*) free_WireSyncReturn);

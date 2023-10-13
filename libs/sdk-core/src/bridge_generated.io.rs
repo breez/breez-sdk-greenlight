@@ -364,6 +364,15 @@ pub extern "C" fn new_box_autoadd_u64_0(value: u64) -> *mut u64 {
 }
 
 #[no_mangle]
+pub extern "C" fn new_list_payment_type_filter_0(len: i32) -> *mut wire_list_payment_type_filter {
+    let wrap = wire_list_payment_type_filter {
+        ptr: support::new_leak_vec_ptr(Default::default(), len),
+        len,
+    };
+    support::new_leak_box_ptr(wrap)
+}
+
+#[no_mangle]
 pub extern "C" fn new_uint_8_list_0(len: i32) -> *mut wire_uint_8_list {
     let ans = wire_uint_8_list {
         ptr: support::new_leak_vec_ptr(Default::default(), len),
@@ -587,10 +596,19 @@ impl Wire2Api<GreenlightNodeConfig> for wire_GreenlightNodeConfig {
     }
 }
 
+impl Wire2Api<Vec<PaymentTypeFilter>> for *mut wire_list_payment_type_filter {
+    fn wire2api(self) -> Vec<PaymentTypeFilter> {
+        let vec = unsafe {
+            let wrap = support::box_from_leak_ptr(self);
+            support::vec_from_leak_ptr(wrap.ptr, wrap.len)
+        };
+        vec.into_iter().map(Wire2Api::wire2api).collect()
+    }
+}
 impl Wire2Api<ListPaymentsRequest> for wire_ListPaymentsRequest {
     fn wire2api(self) -> ListPaymentsRequest {
         ListPaymentsRequest {
-            filter: self.filter.wire2api(),
+            filters: self.filters.wire2api(),
             from_timestamp: self.from_timestamp.wire2api(),
             to_timestamp: self.to_timestamp.wire2api(),
             include_failures: self.include_failures.wire2api(),
@@ -828,8 +846,15 @@ pub struct wire_GreenlightNodeConfig {
 
 #[repr(C)]
 #[derive(Clone)]
+pub struct wire_list_payment_type_filter {
+    ptr: *mut i32,
+    len: i32,
+}
+
+#[repr(C)]
+#[derive(Clone)]
 pub struct wire_ListPaymentsRequest {
-    filter: i32,
+    filters: *mut wire_list_payment_type_filter,
     from_timestamp: *mut i64,
     to_timestamp: *mut i64,
     include_failures: *mut bool,
@@ -1100,7 +1125,7 @@ impl Default for wire_GreenlightNodeConfig {
 impl NewWithNullPtr for wire_ListPaymentsRequest {
     fn new_with_null_ptr() -> Self {
         Self {
-            filter: Default::default(),
+            filters: core::ptr::null_mut(),
             from_timestamp: core::ptr::null_mut(),
             to_timestamp: core::ptr::null_mut(),
             include_failures: core::ptr::null_mut(),

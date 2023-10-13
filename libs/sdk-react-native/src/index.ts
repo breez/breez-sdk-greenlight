@@ -125,7 +125,7 @@ export type LnInvoice = {
 }
 
 export type ListPaymentsRequest = {
-    filter: PaymentTypeFilter
+    filters: PaymentTypeFilter[]
     fromTimestamp?: number
     toTimestamp?: number
     includeFailures?: boolean
@@ -635,6 +635,7 @@ export enum PaymentType {
 export enum PaymentTypeFilter {
     SENT = "sent",
     RECEIVED = "received",
+    CLOSED_CHANNELS = "closedChannels",
     ALL = "all"
 }
 

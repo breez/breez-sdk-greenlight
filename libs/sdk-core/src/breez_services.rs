@@ -2032,7 +2032,7 @@ pub(crate) mod tests {
 
         let all = breez_services
             .list_payments(ListPaymentsRequest {
-                filter: PaymentTypeFilter::All,
+                filters: vec![PaymentTypeFilter::All],
                 from_timestamp: None,
                 to_timestamp: None,
                 include_failures: None,
@@ -2048,7 +2048,7 @@ pub(crate) mod tests {
 
         let received = breez_services
             .list_payments(ListPaymentsRequest {
-                filter: PaymentTypeFilter::Received,
+                filters: vec![PaymentTypeFilter::Received],
                 from_timestamp: None,
                 to_timestamp: None,
                 include_failures: None,
@@ -2060,7 +2060,7 @@ pub(crate) mod tests {
 
         let sent = breez_services
             .list_payments(ListPaymentsRequest {
-                filter: PaymentTypeFilter::Sent,
+                filters: vec![PaymentTypeFilter::Sent, PaymentTypeFilter::ClosedChannels],
                 from_timestamp: None,
                 to_timestamp: None,
                 include_failures: None,
