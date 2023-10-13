@@ -1238,72 +1238,60 @@ impl BreezServices {
         }
     }
 
-    async fn lookup_chain_service_closed_at(&self, channel: crate::models::Channel) -> Result<u64> {
-        let closed_at = match self
-            .lookup_chain_service_closing_outspend(channel)
-            .await?
-            .and_then(|outspend| outspend.status)
-            .and_then(|s| s.block_time)
-        {
-            None => {
-                warn!("Blocktime could not be determined for from closing outspend, defaulting closed_at to epoch time");
-                SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs()
-            }
-            Some(block_time) => block_time,
-        };
-        Ok(closed_at)
-    }
-
-    async fn lookup_chain_service_closing_txid(
+    /// Chain service lookup of relevant channel closing fields (closed_at, closing_txid).
+    ///
+    /// Should be used sparingly because it involves a network lookup.
+    async fn lookup_channel_closing_data(
         &self,
-        channel: crate::models::Channel,
-    ) -> Result<Option<String>> {
-        let maybe_closing_txid = self
+        channel: &crate::models::Channel,
+    ) -> Result<(Option<u64>, Option<String>)> {
+        let maybe_outspend = self
             .lookup_chain_service_closing_outspend(channel.clone())
-            .await?
-            .and_then(|outspend| outspend.txid);
-        Ok(maybe_closing_txid)
+            .await?;
+
+        let maybe_closed_at = maybe_outspend
+            .clone()
+            .and_then(|outspend| outspend.status)
+            .and_then(|s| s.block_time);
+        let maybe_closing_txid = maybe_outspend.and_then(|outspend| outspend.txid);
+
+        Ok((maybe_closed_at, maybe_closing_txid))
     }
 
     async fn closed_channel_to_transaction(
         &self,
         channel: crate::models::Channel,
     ) -> Result<Payment> {
-        let mut persist_channel_updates = false;
+        let (payment_time, closing_txid) = match (channel.closed_at, channel.closing_txid.clone()) {
+            (Some(closed_at), Some(closing_txid)) => (closed_at as i64, closing_txid),
+            (_, _) => {
+                // If any of the two closing-related fields are empty, we look them up and persist them
+                let (maybe_closed_at, maybe_closing_txid) =
+                    self.lookup_channel_closing_data(&channel).await?;
 
-        let closed_at = match channel.closed_at {
-            Some(closed_at) => closed_at,
-            None => {
-                persist_channel_updates = true;
-                self.lookup_chain_service_closed_at(channel.clone()).await?
+                let processed_closed_at = match maybe_closed_at {
+                    None => {
+                        warn!("Blocktime could not be determined for from closing outspend, defaulting closed_at to epoch time");
+                        SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs()
+                    }
+                    Some(block_time) => block_time,
+                };
+                let processed_closing_txid = maybe_closing_txid.unwrap_or_default();
+
+                // We persist both, because both are derived from the same event (channel closing)
+                let mut updated_channel = channel.clone();
+                updated_channel.closed_at = Some(processed_closed_at);
+                updated_channel.closing_txid = Some(processed_closing_txid.clone());
+                self.persister.insert_or_update_channel(updated_channel)?;
+
+                (processed_closed_at as i64, processed_closing_txid)
             }
         };
-
-        let closing_txid = match channel.closing_txid.clone() {
-            Some(closing_txid) => closing_txid,
-            None => {
-                persist_channel_updates = true;
-                self.lookup_chain_service_closing_txid(channel.clone())
-                    .await?
-                    .unwrap_or_default()
-            }
-        };
-
-        // If any of the two closing-related fields had to be looked-up, we persist the changes
-        // We always persist both, because both depend on the same event (channel closing) and
-        // both have fallback values in case their specific value could not be determined
-        if persist_channel_updates {
-            let mut updated_channel = channel.clone();
-            updated_channel.closed_at = Some(closed_at);
-            updated_channel.closing_txid = Some(closing_txid.clone());
-
-            self.persister.insert_or_update_channel(updated_channel)?;
-        }
 
         Ok(Payment {
             id: channel.funding_txid.clone(),
             payment_type: PaymentType::ClosedChannel,
-            payment_time: closed_at as i64,
+            payment_time,
             amount_msat: channel.spendable_msat,
             fee_msat: 0,
             status: match channel.state {

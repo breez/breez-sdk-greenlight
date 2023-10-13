@@ -5,10 +5,10 @@ use anyhow::Result;
 use std::str::FromStr;
 
 impl SqliteStorage {
-    /// Expects a full list of channels.
+    /// Expects a full list of (non-closed) channels.
     ///
-    /// Any known channel, but missing from the list, will be marked as closed. When doing so, the
-    /// closing-related fields `closed_at` and `closing_txid` are not set, because they would require
+    /// Any known channel that is missing from the list, will be marked as closed. When doing so, the
+    /// closing-related fields `closed_at` and `closing_txid` are not set, because doing so would require
     /// a chain service lookup. Instead, they will be set on first lookup in
     /// [BreezServices::closed_channel_to_transaction]
     pub(crate) fn update_channels(&self, channels: &[Channel]) -> Result<()> {
@@ -23,14 +23,13 @@ impl SqliteStorage {
             .map(|c| format!("'{}'", c.funding_txid))
             .collect();
 
-        // close channels not in list
+        // Close channels not in the list provided
         self.get_connection()?.execute(
             format!(
                 "
                  UPDATE channels 
                  SET 
-                  state=?1, 
-                  closed_at = case when closed_at is null then unixepoch() else closed_at end 
+                  state=?1
                  where funding_txid not in ({})
                 ",
                 funding_txs.join(",")
@@ -182,6 +181,7 @@ fn test_sync_closed_channels() {
             alias_remote: None,
             closing_txid: None,
         },
+        // Simulate closed channel that was persisted with closed_at and closing_txid
         Channel {
             funding_txid: "456".to_string(),
             short_channel_id: "13x14x15".to_string(),
@@ -192,7 +192,7 @@ fn test_sync_closed_channels() {
             funding_outnum: None,
             alias_local: None,
             alias_remote: None,
-            closing_txid: None,
+            closing_txid: Some("a".into()),
         },
     ];
 
@@ -201,6 +201,7 @@ fn test_sync_closed_channels() {
     assert_eq!(2, queried_channels.len());
     assert_eq!(channels[0], queried_channels[0]);
     assert!(queried_channels[1].closed_at.is_some());
+    assert!(queried_channels[1].closing_txid.is_some());
 
     storage.update_channels(&channels).unwrap();
     let queried_channels = storage.list_channels().unwrap();
@@ -236,8 +237,14 @@ fn test_sync_closed_channels() {
         },
     ];
     assert_eq!(expected.len(), queried_channels.len());
-    assert!(queried_channels[0].closed_at.is_some());
+    // For channel inserted WITHOUT closed_at and closing_txid,
+    // the closing-related fields are empty on channel queried directly from DB
+    assert!(queried_channels[0].closed_at.is_none());
+    assert!(queried_channels[0].closing_txid.is_none());
+    // For channel inserted WITH closed_at and closing_txid (as for example after a chain service lookup),
+    // the closing-related fields are not empty on channel queried directly from DB
     assert!(queried_channels[1].closed_at.is_some());
+    assert!(queried_channels[1].closing_txid.is_some());
 
     // test dedup channels in db
     storage.update_channels(&channels).unwrap();
