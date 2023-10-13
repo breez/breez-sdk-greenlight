@@ -342,7 +342,9 @@ impl FullReverseSwapInfo {
 pub struct ReverseSwapInfo {
     pub id: String,
     pub claim_pubkey: String,
-    /// The claim tx id, available from the moment the claim tx has been broadcast
+    /// The lockup tx id, available from the moment the lockup tx is seen in the mempool by the SDK
+    pub lockup_txid: Option<String>,
+    /// The claim tx id, available from the moment the claim tx is broadcast by the SDK
     pub claim_txid: Option<String>,
     pub onchain_amount_sat: u64,
     pub status: ReverseSwapStatus,

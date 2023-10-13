@@ -427,6 +427,7 @@ dictionary ReverseSwapPairInfo {
 dictionary ReverseSwapInfo {
     string id;
     string claim_pubkey;
+    string? lockup_txid;
     string? claim_txid;
     u64 onchain_amount_sat;
     ReverseSwapStatus status;

@@ -2,7 +2,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use crate::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus::*};
-use crate::chain::{get_utxos, ChainService, MempoolSpace};
+use crate::chain::{get_utxos, ChainService, MempoolSpace, OnchainTx};
 use crate::models::{ReverseSwapServiceAPI, ReverseSwapperRoutingAPI};
 use crate::ReverseSwapStatus::*;
 use crate::{
@@ -414,7 +414,7 @@ impl BTCSendSwap {
         }
     }
 
-    async fn get_lockup_tx_status(&self, rsi: &FullReverseSwapInfo) -> Result<TxStatus> {
+    async fn get_lockup_tx(&self, rsi: &FullReverseSwapInfo) -> Result<Option<OnchainTx>> {
         let lockup_addr = rsi.get_lockup_address(self.config.network)?;
         let maybe_lockup_tx = self
             .chain_service
@@ -431,7 +431,12 @@ impl BTCSendSwap {
                 })
             });
 
-        let tx_status = match maybe_lockup_tx {
+        Ok(maybe_lockup_tx)
+    }
+
+    async fn get_lockup_tx_status(&self, rsi: &FullReverseSwapInfo) -> Result<TxStatus> {
+        let lockup_addr = rsi.get_lockup_address(self.config.network)?;
+        let tx_status = match self.get_lockup_tx(rsi).await? {
             None => TxStatus::Unknown,
             Some(tx) => match tx.status.block_height {
                 Some(_) => TxStatus::Confirmed,
@@ -563,6 +568,10 @@ impl BTCSendSwap {
         Ok(ReverseSwapInfo {
             id: full_rsi.id.clone(),
             claim_pubkey: full_rsi.claim_pubkey.clone(),
+            lockup_txid: self
+                .get_lockup_tx(&full_rsi)
+                .await?
+                .map(|lockup_tx| lockup_tx.txid),
             claim_txid: match full_rsi.cache.status {
                 CompletedSeen | CompletedConfirmed => self
                     .create_claim_tx(&full_rsi)
