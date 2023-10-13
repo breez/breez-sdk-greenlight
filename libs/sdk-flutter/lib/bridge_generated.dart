@@ -1160,7 +1160,10 @@ class ReverseSwapInfo {
   final String id;
   final String claimPubkey;
 
-  /// The claim tx id, available from the moment the claim tx has been broadcast
+  /// The lockup tx id, available from the moment the lockup tx is seen in the mempool by the SDK
+  final String? lockupTxid;
+
+  /// The claim tx id, available from the moment the claim tx is broadcast by the SDK
   final String? claimTxid;
   final int onchainAmountSat;
   final ReverseSwapStatus status;
@@ -1168,6 +1171,7 @@ class ReverseSwapInfo {
   const ReverseSwapInfo({
     required this.id,
     required this.claimPubkey,
+    this.lockupTxid,
     this.claimTxid,
     required this.onchainAmountSat,
     required this.status,
@@ -2964,13 +2968,14 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   ReverseSwapInfo _wire2api_reverse_swap_info(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 5) throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    if (arr.length != 6) throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
     return ReverseSwapInfo(
       id: _wire2api_String(arr[0]),
       claimPubkey: _wire2api_String(arr[1]),
-      claimTxid: _wire2api_opt_String(arr[2]),
-      onchainAmountSat: _wire2api_u64(arr[3]),
-      status: _wire2api_reverse_swap_status(arr[4]),
+      lockupTxid: _wire2api_opt_String(arr[2]),
+      claimTxid: _wire2api_opt_String(arr[3]),
+      onchainAmountSat: _wire2api_u64(arr[4]),
+      status: _wire2api_reverse_swap_status(arr[5]),
     );
   }
 
