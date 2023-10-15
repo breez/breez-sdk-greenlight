@@ -3544,7 +3544,7 @@ dependencies = [
 [[package]]
 name = "uniffi-kotlin-multiplatform"
 version = "0.1.0"
-source = "git+https://gitlab.com/trixnity/uniffi-kotlin-multiplatform-bindings?rev=f33adbf1e97b3554eb815d5873308e0efc199f63#f33adbf1e97b3554eb815d5873308e0efc199f63"
+source = "git+https://gitlab.com/trixnity/uniffi-kotlin-multiplatform-bindings?rev=bf48c5fcb153856e3055025a3cbfa56fbf213188#bf48c5fcb153856e3055025a3cbfa56fbf213188"
 dependencies = [
  "anyhow",
  "askama",
