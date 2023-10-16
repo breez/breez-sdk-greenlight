@@ -402,10 +402,14 @@ class ClosedChannelPaymentDetails {
   final ChannelState state;
   final String fundingTxid;
 
+  /// Can be empty for older closed channels.
+  final String? closingTxid;
+
   const ClosedChannelPaymentDetails({
     required this.shortChannelId,
     required this.state,
     required this.fundingTxid,
+    this.closingTxid,
   });
 }
 
@@ -2396,11 +2400,12 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   ClosedChannelPaymentDetails _wire2api_closed_channel_payment_details(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 3) throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    if (arr.length != 4) throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
     return ClosedChannelPaymentDetails(
       shortChannelId: _wire2api_String(arr[0]),
       state: _wire2api_channel_state(arr[1]),
       fundingTxid: _wire2api_String(arr[2]),
+      closingTxid: _wire2api_opt_String(arr[3]),
     );
   }
 

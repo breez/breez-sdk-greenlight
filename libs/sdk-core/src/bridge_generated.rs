@@ -898,6 +898,7 @@ impl support::IntoDart for ClosedChannelPaymentDetails {
             self.short_channel_id.into_dart(),
             self.state.into_dart(),
             self.funding_txid.into_dart(),
+            self.closing_txid.into_dart(),
         ]
         .into_dart()
     }

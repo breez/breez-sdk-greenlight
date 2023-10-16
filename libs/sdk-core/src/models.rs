@@ -724,7 +724,7 @@ pub struct ClosedChannelPaymentDetails {
     pub state: ChannelState,
     pub funding_txid: String,
     /// Can be empty for older closed channels.
-    pub closing_txid: String,
+    pub closing_txid: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

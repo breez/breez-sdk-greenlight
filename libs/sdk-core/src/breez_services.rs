@@ -1263,7 +1263,7 @@ impl BreezServices {
         channel: crate::models::Channel,
     ) -> Result<Payment> {
         let (payment_time, closing_txid) = match (channel.closed_at, channel.closing_txid.clone()) {
-            (Some(closed_at), Some(closing_txid)) => (closed_at as i64, closing_txid),
+            (Some(closed_at), Some(closing_txid)) => (closed_at as i64, Some(closing_txid)),
             (_, _) => {
                 // If any of the two closing-related fields are empty, we look them up and persist them
                 let (maybe_closed_at, maybe_closing_txid) =
@@ -1276,15 +1276,14 @@ impl BreezServices {
                     }
                     Some(block_time) => block_time,
                 };
-                let processed_closing_txid = maybe_closing_txid.unwrap_or_default();
 
-                // We persist both, because both are derived from the same event (channel closing)
                 let mut updated_channel = channel.clone();
                 updated_channel.closed_at = Some(processed_closed_at);
-                updated_channel.closing_txid = Some(processed_closing_txid.clone());
+                // If no closing txid found, we persist it as None, so it will be looked-up next time
+                updated_channel.closing_txid = maybe_closing_txid.clone();
                 self.persister.insert_or_update_channel(updated_channel)?;
 
-                (processed_closed_at as i64, processed_closing_txid)
+                (processed_closed_at as i64, maybe_closing_txid)
             }
         };
 
