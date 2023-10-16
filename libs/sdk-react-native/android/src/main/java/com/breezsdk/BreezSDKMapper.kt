@@ -330,10 +330,12 @@ fun asClosedChannelPaymentDetails(data: ReadableMap): ClosedChannelPaymentDetail
     val shortChannelId = data.getString("shortChannelId")!!
     val state = data.getString("state")?.let { asChannelState(it) }!!
     val fundingTxid = data.getString("fundingTxid")!!
+    val closingTxid = if (hasNonNullKey(data, "closingTxid")) data.getString("closingTxid") else null
     return ClosedChannelPaymentDetails(
         shortChannelId,
         state,
         fundingTxid,
+        closingTxid,
     )
 }
 
@@ -342,6 +344,7 @@ fun readableMapOf(closedChannelPaymentDetails: ClosedChannelPaymentDetails): Rea
         "shortChannelId" to closedChannelPaymentDetails.shortChannelId,
         "state" to closedChannelPaymentDetails.state.name.lowercase(),
         "fundingTxid" to closedChannelPaymentDetails.fundingTxid,
+        "closingTxid" to closedChannelPaymentDetails.closingTxid,
     )
 }
 

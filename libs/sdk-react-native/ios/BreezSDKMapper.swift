@@ -294,11 +294,13 @@ class BreezSDKMapper {
         let state = try asChannelState(type: stateTmp)
 
         guard let fundingTxid = data["fundingTxid"] as? String else { throw SdkError.Generic(message: "Missing mandatory field fundingTxid for type ClosedChannelPaymentDetails") }
+        let closingTxid = data["closingTxid"] as? String
 
         return ClosedChannelPaymentDetails(
             shortChannelId: shortChannelId,
             state: state,
-            fundingTxid: fundingTxid
+            fundingTxid: fundingTxid,
+            closingTxid: closingTxid
         )
     }
 
@@ -307,6 +309,7 @@ class BreezSDKMapper {
             "shortChannelId": closedChannelPaymentDetails.shortChannelId,
             "state": valueOf(channelState: closedChannelPaymentDetails.state),
             "fundingTxid": closedChannelPaymentDetails.fundingTxid,
+            "closingTxid": closedChannelPaymentDetails.closingTxid == nil ? nil : closedChannelPaymentDetails.closingTxid,
         ]
     }
 

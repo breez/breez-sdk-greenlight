@@ -22,7 +22,7 @@ use tonic::{Request, Status};
 
 use crate::backup::{BackupRequest, BackupTransport, BackupWatcher};
 use crate::boltzswap::BoltzApi;
-use crate::chain::{ChainService, MempoolSpace, RecommendedFees};
+use crate::chain::{ChainService, MempoolSpace, Outspend, RecommendedFees};
 use crate::error::{SdkError, SdkResult};
 use crate::fiat::{FiatCurrency, Rate};
 use crate::greenlight::{GLBackupTransport, Greenlight};
@@ -1226,55 +1226,77 @@ impl BreezServices {
         Ok(())
     }
 
+    async fn lookup_chain_service_closing_outspend(
+        &self,
+        channel: crate::models::Channel,
+    ) -> Result<Option<Outspend>> {
+        match channel.funding_outnum {
+            None => Ok(None),
+            Some(outnum) => {
+                // Find the output tx that was used to fund the channel
+                let outspends = self
+                    .chain_service
+                    .transaction_outspends(channel.funding_txid.clone())
+                    .await?;
+
+                Ok(outspends.get(outnum as usize).cloned())
+            }
+        }
+    }
+
+    /// Chain service lookup of relevant channel closing fields (closed_at, closing_txid).
+    ///
+    /// Should be used sparingly because it involves a network lookup.
+    async fn lookup_channel_closing_data(
+        &self,
+        channel: &crate::models::Channel,
+    ) -> Result<(Option<u64>, Option<String>)> {
+        let maybe_outspend = self
+            .lookup_chain_service_closing_outspend(channel.clone())
+            .await?;
+
+        let maybe_closed_at = maybe_outspend
+            .clone()
+            .and_then(|outspend| outspend.status)
+            .and_then(|s| s.block_time);
+        let maybe_closing_txid = maybe_outspend.and_then(|outspend| outspend.txid);
+
+        Ok((maybe_closed_at, maybe_closing_txid))
+    }
+
     async fn closed_channel_to_transaction(
         &self,
         channel: crate::models::Channel,
     ) -> Result<Payment> {
-        let now_epoch_sec = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
+        let (payment_time, closing_txid) = match (channel.closed_at, channel.closing_txid.clone()) {
+            (Some(closed_at), Some(closing_txid)) => (closed_at as i64, Some(closing_txid)),
+            (_, _) => {
+                // If any of the two closing-related fields are empty, we look them up and persist them
+                let (maybe_closed_at, maybe_closing_txid) =
+                    self.lookup_channel_closing_data(&channel).await?;
 
-        let channel_closed_at = match channel.closed_at {
-            Some(closed_at) => closed_at,
-            None => {
-                // If we don't have it, we look it up from the channel closing tx
-                let looked_up_channel_closed_at = match channel.funding_outnum {
+                let processed_closed_at = match maybe_closed_at {
                     None => {
-                        warn!("No founding_outnum found for the closing tx, defaulting closed_at to epoch time");
-                        now_epoch_sec
+                        warn!("Blocktime could not be determined for from closing outspend, defaulting closed_at to epoch time");
+                        SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs()
                     }
-                    Some(outnum) => {
-                        // Find the output tx that was used to fund the channel
-                        let outspends = self
-                            .chain_service
-                            .transaction_outspends(channel.funding_txid.clone())
-                            .await?;
-                        let maybe_block_time = outspends
-                            .get(outnum as usize)
-                            .and_then(|outspend| outspend.status.as_ref())
-                            .and_then(|status| status.block_time);
-
-                        match maybe_block_time {
-                            None => {
-                                warn!("Blocktime could not be determined for funding_outnum {outnum}, defaulting closed_at to epoch time");
-                                now_epoch_sec
-                            }
-                            Some(block_time) => block_time,
-                        }
-                    }
+                    Some(block_time) => block_time,
                 };
 
-                // Persist closed_at, if we had to look it up
                 let mut updated_channel = channel.clone();
-                updated_channel.closed_at = Some(looked_up_channel_closed_at);
+                updated_channel.closed_at = Some(processed_closed_at);
+                // If no closing txid found, we persist it as None, so it will be looked-up next time
+                updated_channel.closing_txid = maybe_closing_txid.clone();
                 self.persister.insert_or_update_channel(updated_channel)?;
 
-                looked_up_channel_closed_at
+                (processed_closed_at as i64, maybe_closing_txid)
             }
         };
 
         Ok(Payment {
             id: channel.funding_txid.clone(),
             payment_type: PaymentType::ClosedChannel,
-            payment_time: channel_closed_at as i64,
+            payment_time,
             amount_msat: channel.spendable_msat,
             fee_msat: 0,
             status: match channel.state {
@@ -1287,6 +1309,7 @@ impl BreezServices {
                     short_channel_id: channel.short_channel_id,
                     state: channel.state,
                     funding_txid: channel.funding_txid,
+                    closing_txid,
                 },
             },
         })

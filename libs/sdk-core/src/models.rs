@@ -718,6 +718,8 @@ pub struct ClosedChannelPaymentDetails {
     pub short_channel_id: String,
     pub state: ChannelState,
     pub funding_txid: String,
+    /// Can be empty for older closed channels.
+    pub closing_txid: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -990,6 +992,10 @@ pub struct Channel {
     pub funding_outnum: Option<u32>,
     pub alias_local: Option<String>,
     pub alias_remote: Option<String>,
+    /// Only set for closed channels.
+    ///
+    /// This may be empty for older closed channels, if it was not possible to retrieve the closing txid.
+    pub closing_txid: Option<String>,
 }
 
 /// State of a Lightning channel
