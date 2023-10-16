@@ -65,7 +65,7 @@ export type ClosedChannelPaymentDetails = {
     shortChannelId: string
     state: ChannelState
     fundingTxid: string
-    closingTxid: string
+    closingTxid?: string
 }
 
 export type Config = {
