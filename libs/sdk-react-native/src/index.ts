@@ -313,6 +313,8 @@ export type ReverseSwapFeesRequest = {
 export type ReverseSwapInfo = {
     id: string
     claimPubkey: string
+    lockupTxid?: string
+    claimTxid?: string
     onchainAmountSat: number
     status: ReverseSwapStatus
 }

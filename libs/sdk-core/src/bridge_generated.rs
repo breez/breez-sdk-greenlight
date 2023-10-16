@@ -1336,6 +1336,8 @@ impl support::IntoDart for ReverseSwapInfo {
         vec![
             self.id.into_dart(),
             self.claim_pubkey.into_dart(),
+            self.lockup_txid.into_dart(),
+            self.claim_txid.into_dart(),
             self.onchain_amount_sat.into_dart(),
             self.status.into_dart(),
         ]

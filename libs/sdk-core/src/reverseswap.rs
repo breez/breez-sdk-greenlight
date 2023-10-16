@@ -2,12 +2,12 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use crate::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus::*};
-use crate::chain::{get_utxos, ChainService, MempoolSpace};
+use crate::chain::{get_utxos, ChainService, MempoolSpace, OnchainTx};
 use crate::models::{ReverseSwapServiceAPI, ReverseSwapperRoutingAPI};
 use crate::ReverseSwapStatus::*;
 use crate::{
-    BreezEvent, Config, FullReverseSwapInfo, NodeAPI, PaymentStatus, ReverseSwapInfoCached,
-    ReverseSwapPairInfo, ReverseSwapStatus,
+    BreezEvent, Config, FullReverseSwapInfo, NodeAPI, PaymentStatus, ReverseSwapInfo,
+    ReverseSwapInfoCached, ReverseSwapPairInfo, ReverseSwapStatus,
 };
 use anyhow::{anyhow, ensure, Result};
 use bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
@@ -414,7 +414,7 @@ impl BTCSendSwap {
         }
     }
 
-    async fn get_lockup_tx_status(&self, rsi: &FullReverseSwapInfo) -> Result<TxStatus> {
+    async fn get_lockup_tx(&self, rsi: &FullReverseSwapInfo) -> Result<Option<OnchainTx>> {
         let lockup_addr = rsi.get_lockup_address(self.config.network)?;
         let maybe_lockup_tx = self
             .chain_service
@@ -431,7 +431,12 @@ impl BTCSendSwap {
                 })
             });
 
-        let tx_status = match maybe_lockup_tx {
+        Ok(maybe_lockup_tx)
+    }
+
+    async fn get_lockup_tx_status(&self, rsi: &FullReverseSwapInfo) -> Result<TxStatus> {
+        let lockup_addr = rsi.get_lockup_address(self.config.network)?;
+        let tx_status = match self.get_lockup_tx(rsi).await? {
             None => TxStatus::Unknown,
             Some(tx) => match tx.status.block_height {
                 Some(_) => TxStatus::Confirmed,
@@ -553,5 +558,30 @@ impl BTCSendSwap {
         self.reverse_swap_service_api
             .fetch_reverse_swap_fees()
             .await
+    }
+
+    /// Converts the internal [FullReverseSwapInfo] into the user-facing [ReverseSwapInfo]
+    pub(crate) async fn convert_reverse_swap_info(
+        &self,
+        full_rsi: FullReverseSwapInfo,
+    ) -> Result<ReverseSwapInfo> {
+        Ok(ReverseSwapInfo {
+            id: full_rsi.id.clone(),
+            claim_pubkey: full_rsi.claim_pubkey.clone(),
+            lockup_txid: self
+                .get_lockup_tx(&full_rsi)
+                .await?
+                .map(|lockup_tx| lockup_tx.txid),
+            claim_txid: match full_rsi.cache.status {
+                CompletedSeen | CompletedConfirmed => self
+                    .create_claim_tx(&full_rsi)
+                    .await
+                    .ok()
+                    .map(|claim_tx| claim_tx.txid().to_hex()),
+                _ => None,
+            },
+            onchain_amount_sat: full_rsi.onchain_amount_sat,
+            status: full_rsi.cache.status,
+        })
     }
 }

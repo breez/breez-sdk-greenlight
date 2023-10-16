@@ -657,7 +657,7 @@ impl BreezServices {
             Use the in_progress_reverse_swaps method to get an overview of currently ongoing reverse swaps."
         );
 
-        let rsi = self
+        let full_rsi = self
             .btc_send_swapper
             .create_reverse_swap(
                 amount_sat,
@@ -665,8 +665,11 @@ impl BreezServices {
                 pair_hash,
                 sat_per_vbyte,
             )
-            .await
-            .map(Into::into)?;
+            .await?;
+        let rsi = self
+            .btc_send_swapper
+            .convert_reverse_swap_info(full_rsi)
+            .await?;
 
         self.do_sync(true).await?;
         Ok(rsi)
@@ -674,10 +677,18 @@ impl BreezServices {
 
     /// Returns the blocking [ReverseSwapInfo]s that are in progress
     pub async fn in_progress_reverse_swaps(&self) -> Result<Vec<ReverseSwapInfo>> {
-        self.btc_send_swapper
-            .list_blocking()
-            .await
-            .map(|x| x.into_iter().map(Into::into).collect())
+        let full_rsis = self.btc_send_swapper.list_blocking().await?;
+
+        let mut rsis = vec![];
+        for full_rsi in full_rsis {
+            let rsi = self
+                .btc_send_swapper
+                .convert_reverse_swap_info(full_rsi)
+                .await?;
+            rsis.push(rsi);
+        }
+
+        Ok(rsis)
     }
 
     /// list non-completed expired swaps that should be refunded by calling [BreezServices::refund]
