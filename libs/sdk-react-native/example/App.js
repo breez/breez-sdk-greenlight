@@ -23,6 +23,7 @@ import {
     lspInfo,
     listFiatCurrencies,
     mnemonicToSeed,
+    NodeConfigVariant,
     nodeInfo,
     openChannelFee,
     receivePayment,
@@ -81,7 +82,7 @@ const App = () => {
                 addLine("mnemonicToSeed", obfuscateString(JSON.stringify(seed)))
 
                 const nodeConfig = {
-                    type: "greenlight",
+                    type: NodeConfigVariant.GREENLIGHT,
                     config: {}
                 }
 

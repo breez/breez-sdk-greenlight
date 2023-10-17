@@ -22,7 +22,7 @@ yarn global add tslint typescript
 ```
 
 On first usage you will need to run:
-```
+```bash
 make init
 ```
 
@@ -36,8 +36,7 @@ make react-native-codegen
 ## Building the bindings
 
 Then to build and copy the Kotlin and Swift bindings into the React Native plugin:
-
-```
+```bash
 make all
 ```
 
@@ -68,3 +67,24 @@ To use the locally built bindings instead of integrating them remotely:
 Reinstall the dependencies in the example project and run it.
 It will now use the locally built bindings.
 
+## Testing with the example app
+
+To test locally built bindings in the example app, the npm dependencies need to be updated to use the local package.
+In `example/package.json` replace the current version with `file:../`:
+```json
+    "@breeztech/react-native-breez-sdk": "file:../",
+```
+
+Run the npm/yarn install to download dependences for both the react-native-breez-sdk package and the example app:
+```bash
+yarn bootstrap
+```
+
+Finally in `example/` start either the iOS or Android app:
+```bash
+yarn android
+```
+or for iOS:
+```bash
+yarn ios
+```
