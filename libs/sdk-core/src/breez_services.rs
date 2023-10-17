@@ -235,6 +235,23 @@ impl BreezServices {
     ) -> SdkResult<Payment> {
         self.start_node().await?;
         let parsed_invoice = parse_invoice(bolt11.as_str())?;
+        let invoice_amount_msat = parsed_invoice.amount_msat.unwrap_or_default();
+        let provided_amount_msat = amount_sats.unwrap_or_default() * 1000;
+
+        // Ensure amount is provided for zero invoice
+        if provided_amount_msat == 0 && invoice_amount_msat == 0 {
+            return Err(SdkError::SendPaymentFailed {
+                err: "amount must be provided when paying a zero invoice".into(),
+            });
+        }
+
+        // Ensure amount is not provided for invoice that contains amount
+        if provided_amount_msat > 0 && invoice_amount_msat > 0 {
+            return Err(SdkError::SendPaymentFailed {
+                err: "amount should not be provided when paying a non zero invoice".into(),
+            });
+        }
+
         match self
             .persister
             .get_completed_payment_by_hash(&parsed_invoice.payment_hash)?
@@ -1185,12 +1202,12 @@ impl BreezServices {
             .target(env_logger::Target::Pipe(target_log_file))
             .parse_filters(
                 r#"
-                info,
+                debug,
                 breez_sdk_core::input_parser=warn,
                 breez_sdk_core::backup=info,
                 breez_sdk_core::persist::reverseswap=info,
                 breez_sdk_core::reverseswap=info,
-                gl_client=warn,
+                gl_client=debug,
                 h2=warn,
                 hyper=warn,
                 lightning_signer=warn,
