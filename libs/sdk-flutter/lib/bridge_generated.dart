@@ -137,7 +137,7 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kPaymentByHashConstMeta;
 
   /// See [BreezServices::send_payment]
-  Future<Payment> sendPayment({required String bolt11, int? amountSats, dynamic hint});
+  Future<Payment> sendPayment({required String bolt11, int? amountMsat, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kSendPaymentConstMeta;
 
@@ -1861,21 +1861,21 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["hash"],
       );
 
-  Future<Payment> sendPayment({required String bolt11, int? amountSats, dynamic hint}) {
+  Future<Payment> sendPayment({required String bolt11, int? amountMsat, dynamic hint}) {
     var arg0 = _platform.api2wire_String(bolt11);
-    var arg1 = _platform.api2wire_opt_box_autoadd_u64(amountSats);
+    var arg1 = _platform.api2wire_opt_box_autoadd_u64(amountMsat);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_send_payment(port_, arg0, arg1),
       parseSuccessData: _wire2api_payment,
       constMeta: kSendPaymentConstMeta,
-      argValues: [bolt11, amountSats],
+      argValues: [bolt11, amountMsat],
       hint: hint,
     ));
   }
 
   FlutterRustBridgeTaskConstMeta get kSendPaymentConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "send_payment",
-        argNames: ["bolt11", "amountSats"],
+        argNames: ["bolt11", "amountMsat"],
       );
 
   Future<Payment> sendSpontaneousPayment({required String nodeId, required int amountSats, dynamic hint}) {
@@ -4096,12 +4096,12 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   void wire_send_payment(
     int port_,
     ffi.Pointer<wire_uint_8_list> bolt11,
-    ffi.Pointer<ffi.Uint64> amount_sats,
+    ffi.Pointer<ffi.Uint64> amount_msat,
   ) {
     return _wire_send_payment(
       port_,
       bolt11,
-      amount_sats,
+      amount_msat,
     );
   }
 

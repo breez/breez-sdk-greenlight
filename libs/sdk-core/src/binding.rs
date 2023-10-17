@@ -227,11 +227,11 @@ pub fn payment_by_hash(hash: String) -> Result<Option<Payment>> {
 /*  Lightning Payment API's */
 
 /// See [BreezServices::send_payment]
-pub fn send_payment(bolt11: String, amount_sats: Option<u64>) -> Result<Payment> {
+pub fn send_payment(bolt11: String, amount_msat: Option<u64>) -> Result<Payment> {
     block_on(async {
         get_breez_services()
             .await?
-            .send_payment(bolt11, amount_sats)
+            .send_payment(bolt11, amount_msat)
             .await
     })
     .map_err(anyhow::Error::new::<SdkError>)

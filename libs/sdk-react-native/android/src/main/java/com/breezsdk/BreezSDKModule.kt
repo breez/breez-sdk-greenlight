@@ -183,13 +183,13 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     @ReactMethod
     fun sendPayment(
         bolt11: String,
-        amountSats: Double,
+        amountMsat: Double,
         promise: Promise,
     ) {
         executor.execute {
             try {
-                val amountSatsTmp = amountSats.toULong().takeUnless { it == 0UL }
-                val res = getBreezServices().sendPayment(bolt11, amountSatsTmp)
+                val amountMsatTmp = amountMsat.toULong().takeUnless { it == 0UL }
+                val res = getBreezServices().sendPayment(bolt11, amountMsatTmp)
                 promise.resolve(readableMapOf(res))
             } catch (e: SdkException) {
                 promise.reject(e.javaClass.simpleName, e.message, e)

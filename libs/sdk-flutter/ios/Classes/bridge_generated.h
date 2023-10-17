@@ -211,7 +211,7 @@ void wire_list_payments(int64_t port_, struct wire_ListPaymentsRequest *request)
 
 void wire_payment_by_hash(int64_t port_, struct wire_uint_8_list *hash);
 
-void wire_send_payment(int64_t port_, struct wire_uint_8_list *bolt11, uint64_t *amount_sats);
+void wire_send_payment(int64_t port_, struct wire_uint_8_list *bolt11, uint64_t *amount_msat);
 
 void wire_send_spontaneous_payment(int64_t port_,
                                    struct wire_uint_8_list *node_id,

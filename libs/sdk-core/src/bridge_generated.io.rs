@@ -130,9 +130,9 @@ pub extern "C" fn wire_payment_by_hash(port_: i64, hash: *mut wire_uint_8_list) 
 pub extern "C" fn wire_send_payment(
     port_: i64,
     bolt11: *mut wire_uint_8_list,
-    amount_sats: *mut u64,
+    amount_msat: *mut u64,
 ) {
-    wire_send_payment_impl(port_, bolt11, amount_sats)
+    wire_send_payment_impl(port_, bolt11, amount_msat)
 }
 
 #[no_mangle]

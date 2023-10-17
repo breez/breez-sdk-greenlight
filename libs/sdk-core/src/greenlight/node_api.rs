@@ -498,7 +498,7 @@ impl NodeAPI for Greenlight {
     async fn send_payment(
         &self,
         bolt11: String,
-        amount_sats: Option<u64>,
+        amount_msat: Option<u64>,
     ) -> Result<PaymentResponse> {
         let mut description = None;
         if !bolt11.is_empty() {
@@ -508,7 +508,7 @@ impl NodeAPI for Greenlight {
         let mut client: node::ClnClient = self.get_node_client().await?;
         let request = pb::cln::PayRequest {
             bolt11,
-            amount_msat: amount_sats.map(|amt| gl_client::pb::cln::Amount { msat: amt * 1000 }),
+            amount_msat: amount_msat.map(|amt| gl_client::pb::cln::Amount { msat: amt }),
             maxfeepercent: Some(self.sdk_config.maxfee_percent),
             retry_for: Some(self.sdk_config.payment_timeout_sec),
             label: None,

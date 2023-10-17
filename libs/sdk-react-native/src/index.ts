@@ -670,8 +670,8 @@ export const disconnect = async (): Promise<void> => {
     await BreezSDK.disconnect()
 }
 
-export const sendPayment = async (bolt11: string, amountSats: number = 0): Promise<Payment> => {
-    const response = await BreezSDK.sendPayment(bolt11, amountSats)
+export const sendPayment = async (bolt11: string, amountMsat: number = 0): Promise<Payment> => {
+    const response = await BreezSDK.sendPayment(bolt11, amountMsat)
     return response
 }
 
