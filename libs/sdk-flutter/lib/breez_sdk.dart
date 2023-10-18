@@ -215,11 +215,11 @@ class BreezSDK {
   /// * `amountSats` - The amount to pay in satoshis
   Future<Payment> sendPayment({
     required String bolt11,
-    int? amountSats,
+    int? amountMsat,
   }) async {
     return await _lnToolkit.sendPayment(
       bolt11: bolt11,
-      amountSats: amountSats,
+      amountMsat: amountMsat,
     );
   }
 
