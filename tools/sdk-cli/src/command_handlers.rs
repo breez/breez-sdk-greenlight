@@ -181,8 +181,11 @@ pub(crate) async fn handle_command(
             }
             serde_json::to_string_pretty(&res).map_err(|e| e.into())
         }
-        Commands::SendPayment { bolt11, amount } => {
-            let payment = sdk()?.send_payment(bolt11, amount).await?;
+        Commands::SendPayment {
+            bolt11,
+            amount_msat,
+        } => {
+            let payment = sdk()?.send_payment(bolt11, amount_msat).await?;
             serde_json::to_string_pretty(&payment).map_err(|e| e.into())
         }
         Commands::SendSpontaneousPayment { node_id, amount } => {

@@ -54,7 +54,7 @@ RCT_EXTERN_METHOD(
 
 RCT_EXTERN_METHOD(
     sendPayment: (NSString*)bolt11
-    amountSats: (NSUInteger*)amountSats
+    amountMsat: (NSUInteger*)amountMsat
     resolve: (RCTPromiseResolveBlock)resolve
     reject: (RCTPromiseRejectBlock)reject
 )

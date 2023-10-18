@@ -539,7 +539,7 @@ interface BlockingBreezServices {
    void disconnect();
 
    [Throws=SdkError]
-   Payment send_payment(string bolt11, u64? amount_sats);
+   Payment send_payment(string bolt11, u64? amount_msat);
 
    [Throws=SdkError]
    Payment send_spontaneous_payment(string node_id, u64 amount_sats);

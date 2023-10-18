@@ -93,8 +93,8 @@ pub(crate) enum Commands {
     SendPayment {
         bolt11: String,
 
-        #[clap(name = "amount", short = 'a', long = "amt")]
-        amount: Option<u64>,
+        #[clap(name = "amount_msat", short = 'a', long = "amt")]
+        amount_msat: Option<u64>,
     },
 
     /// Send a spontaneous (keysend) payment

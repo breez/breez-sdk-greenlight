@@ -130,11 +130,11 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
-    @objc(sendPayment:amountSats:resolve:reject:)
-    func sendPayment(_ bolt11: String, amountSats: UInt64, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    @objc(sendPayment:amountMsat:resolve:reject:)
+    func sendPayment(_ bolt11: String, amountMsat: UInt64, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let amountSatsTmp = amountSats == 0 ? nil : amountSats
-            var res = try getBreezServices().sendPayment(bolt11: bolt11, amountSats: amountSatsTmp)
+            let amountMsatTmp = amountMsat == 0 ? nil : amountMsat
+            var res = try getBreezServices().sendPayment(bolt11: bolt11, amountMsat: amountMsatTmp)
             resolve(BreezSDKMapper.dictionaryOf(payment: res))
         } catch let err {
             rejectErr(err: err, reject: reject)

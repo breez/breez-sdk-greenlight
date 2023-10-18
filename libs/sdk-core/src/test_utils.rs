@@ -304,7 +304,7 @@ impl NodeAPI for MockNodeAPI {
     async fn send_payment(
         &self,
         bolt11: String,
-        _amount_sats: Option<u64>,
+        _amount_msat: Option<u64>,
     ) -> Result<PaymentResponse> {
         let payment = self.add_dummy_payment_for(bolt11, None, None).await?;
         payment.try_into()

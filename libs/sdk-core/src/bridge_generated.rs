@@ -397,7 +397,7 @@ fn wire_payment_by_hash_impl(port_: MessagePort, hash: impl Wire2Api<String> + U
 fn wire_send_payment_impl(
     port_: MessagePort,
     bolt11: impl Wire2Api<String> + UnwindSafe,
-    amount_sats: impl Wire2Api<Option<u64>> + UnwindSafe,
+    amount_msat: impl Wire2Api<Option<u64>> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -407,8 +407,8 @@ fn wire_send_payment_impl(
         },
         move || {
             let api_bolt11 = bolt11.wire2api();
-            let api_amount_sats = amount_sats.wire2api();
-            move |task_callback| send_payment(api_bolt11, api_amount_sats)
+            let api_amount_msat = amount_msat.wire2api();
+            move |task_callback| send_payment(api_bolt11, api_amount_msat)
         },
     )
 }

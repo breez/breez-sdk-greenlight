@@ -79,7 +79,7 @@ pub trait NodeAPI: Send + Sync {
     async fn send_payment(
         &self,
         bolt11: String,
-        amount_sats: Option<u64>,
+        amount_msat: Option<u64>,
     ) -> Result<crate::models::PaymentResponse>;
     async fn send_spontaneous_payment(
         &self,

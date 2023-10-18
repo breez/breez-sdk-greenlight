@@ -222,19 +222,36 @@ impl BreezServices {
     /// Pay a bolt11 invoice
     ///
     /// Calling `send_payment` ensures that the payment is not already completed, if so it will result in an error.
-    /// If the invoice doesn't specify an amount, the amount is taken from the `amount_sats` arg.
+    /// If the invoice doesn't specify an amount, the amount is taken from the `amount_msat` arg.
     ///
     /// # Arguments
     ///
     /// * `bolt11` - The bolt11 invoice
-    /// * `amount_sats` - The amount to pay in satoshis
+    /// * `amount_msat` - The amount to pay in millisatoshis
     pub async fn send_payment(
         &self,
         bolt11: String,
-        amount_sats: Option<u64>,
+        amount_msat: Option<u64>,
     ) -> SdkResult<Payment> {
         self.start_node().await?;
         let parsed_invoice = parse_invoice(bolt11.as_str())?;
+        let invoice_amount_msat = parsed_invoice.amount_msat.unwrap_or_default();
+        let provided_amount_msat = amount_msat.unwrap_or_default();
+
+        // Ensure amount is provided for zero invoice
+        if provided_amount_msat == 0 && invoice_amount_msat == 0 {
+            return Err(SdkError::SendPaymentFailed {
+                err: "amount must be provided when paying a zero invoice".into(),
+            });
+        }
+
+        // Ensure amount is not provided for invoice that contains amount
+        if provided_amount_msat > 0 && invoice_amount_msat > 0 {
+            return Err(SdkError::SendPaymentFailed {
+                err: "amount should not be provided when paying a non zero invoice".into(),
+            });
+        }
+
         match self
             .persister
             .get_completed_payment_by_hash(&parsed_invoice.payment_hash)?
@@ -245,7 +262,7 @@ impl BreezServices {
             None => {
                 let payment_res = self
                     .node_api
-                    .send_payment(bolt11.clone(), amount_sats)
+                    .send_payment(bolt11.clone(), amount_msat)
                     .await;
                 self.on_payment_completed(
                     parsed_invoice.payee_pubkey.clone(),
@@ -1185,12 +1202,12 @@ impl BreezServices {
             .target(env_logger::Target::Pipe(target_log_file))
             .parse_filters(
                 r#"
-                info,
+                debug,
                 breez_sdk_core::input_parser=warn,
                 breez_sdk_core::backup=info,
                 breez_sdk_core::persist::reverseswap=info,
                 breez_sdk_core::reverseswap=info,
-                gl_client=warn,
+                gl_client=debug,
                 h2=warn,
                 hyper=warn,
                 lightning_signer=warn,
