@@ -526,14 +526,12 @@ impl NodeAPI for Greenlight {
     async fn send_spontaneous_payment(
         &self,
         node_id: String,
-        amount_sats: u64,
+        amount_msat: u64,
     ) -> Result<PaymentResponse> {
         let mut client: node::ClnClient = self.get_node_client().await?;
         let request = pb::cln::KeysendRequest {
             destination: hex::decode(node_id)?,
-            amount_msat: Some(gl_client::pb::cln::Amount {
-                msat: amount_sats * 1000,
-            }),
+            amount_msat: Some(gl_client::pb::cln::Amount { msat: amount_msat }),
             label: Some(format!(
                 "breez-{}",
                 SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis()

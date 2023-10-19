@@ -900,6 +900,46 @@ fun asLnUrlErrorDataList(arr: ReadableArray): List<LnUrlErrorData> {
     return list
 }
 
+fun asLnUrlPayRequest(data: ReadableMap): LnUrlPayRequest? {
+    if (!validateMandatoryFields(
+            data,
+            arrayOf(
+                "reqData",
+                "amountMsat",
+            ),
+        )
+    ) {
+        return null
+    }
+    val reqData = data.getMap("reqData")?.let { asLnUrlPayRequestData(it) }!!
+    val amountMsat = data.getDouble("amountMsat").toULong()
+    val comment = if (hasNonNullKey(data, "comment")) data.getString("comment") else null
+    return LnUrlPayRequest(
+        reqData,
+        amountMsat,
+        comment,
+    )
+}
+
+fun readableMapOf(lnUrlPayRequest: LnUrlPayRequest): ReadableMap {
+    return readableMapOf(
+        "reqData" to readableMapOf(lnUrlPayRequest.reqData),
+        "amountMsat" to lnUrlPayRequest.amountMsat,
+        "comment" to lnUrlPayRequest.comment,
+    )
+}
+
+fun asLnUrlPayRequestList(arr: ReadableArray): List<LnUrlPayRequest> {
+    val list = ArrayList<LnUrlPayRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asLnUrlPayRequest(value)!!)
+            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asLnUrlPayRequestData(data: ReadableMap): LnUrlPayRequestData? {
     if (!validateMandatoryFields(
             data,
@@ -1903,6 +1943,80 @@ fun asRecommendedFeesList(arr: ReadableArray): List<RecommendedFees> {
     return list
 }
 
+fun asRefundRequest(data: ReadableMap): RefundRequest? {
+    if (!validateMandatoryFields(
+            data,
+            arrayOf(
+                "swapAddress",
+                "toAddress",
+                "satPerVbyte",
+            ),
+        )
+    ) {
+        return null
+    }
+    val swapAddress = data.getString("swapAddress")!!
+    val toAddress = data.getString("toAddress")!!
+    val satPerVbyte = data.getInt("satPerVbyte").toUInt()
+    return RefundRequest(
+        swapAddress,
+        toAddress,
+        satPerVbyte,
+    )
+}
+
+fun readableMapOf(refundRequest: RefundRequest): ReadableMap {
+    return readableMapOf(
+        "swapAddress" to refundRequest.swapAddress,
+        "toAddress" to refundRequest.toAddress,
+        "satPerVbyte" to refundRequest.satPerVbyte,
+    )
+}
+
+fun asRefundRequestList(arr: ReadableArray): List<RefundRequest> {
+    val list = ArrayList<RefundRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asRefundRequest(value)!!)
+            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
+fun asRefundResponse(data: ReadableMap): RefundResponse? {
+    if (!validateMandatoryFields(
+            data,
+            arrayOf(
+                "refundTxId",
+            ),
+        )
+    ) {
+        return null
+    }
+    val refundTxId = data.getString("refundTxId")!!
+    return RefundResponse(
+        refundTxId,
+    )
+}
+
+fun readableMapOf(refundResponse: RefundResponse): ReadableMap {
+    return readableMapOf(
+        "refundTxId" to refundResponse.refundTxId,
+    )
+}
+
+fun asRefundResponseList(arr: ReadableArray): List<RefundResponse> {
+    val list = ArrayList<RefundResponse>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asRefundResponse(value)!!)
+            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asReverseSwapFeesRequest(data: ReadableMap): ReverseSwapFeesRequest? {
     if (!validateMandatoryFields(
             data,
@@ -2123,6 +2237,154 @@ fun asRouteHintHopList(arr: ReadableArray): List<RouteHintHop> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asRouteHintHop(value)!!)
+            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
+fun asSendOnchainRequest(data: ReadableMap): SendOnchainRequest? {
+    if (!validateMandatoryFields(
+            data,
+            arrayOf(
+                "amountSat",
+                "onchainRecipientAddress",
+                "pairHash",
+                "satPerVbyte",
+            ),
+        )
+    ) {
+        return null
+    }
+    val amountSat = data.getDouble("amountSat").toULong()
+    val onchainRecipientAddress = data.getString("onchainRecipientAddress")!!
+    val pairHash = data.getString("pairHash")!!
+    val satPerVbyte = data.getDouble("satPerVbyte").toULong()
+    return SendOnchainRequest(
+        amountSat,
+        onchainRecipientAddress,
+        pairHash,
+        satPerVbyte,
+    )
+}
+
+fun readableMapOf(sendOnchainRequest: SendOnchainRequest): ReadableMap {
+    return readableMapOf(
+        "amountSat" to sendOnchainRequest.amountSat,
+        "onchainRecipientAddress" to sendOnchainRequest.onchainRecipientAddress,
+        "pairHash" to sendOnchainRequest.pairHash,
+        "satPerVbyte" to sendOnchainRequest.satPerVbyte,
+    )
+}
+
+fun asSendOnchainRequestList(arr: ReadableArray): List<SendOnchainRequest> {
+    val list = ArrayList<SendOnchainRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asSendOnchainRequest(value)!!)
+            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
+fun asSendOnchainResponse(data: ReadableMap): SendOnchainResponse? {
+    if (!validateMandatoryFields(
+            data,
+            arrayOf(
+                "reverseSwapInfo",
+            ),
+        )
+    ) {
+        return null
+    }
+    val reverseSwapInfo = data.getMap("reverseSwapInfo")?.let { asReverseSwapInfo(it) }!!
+    return SendOnchainResponse(
+        reverseSwapInfo,
+    )
+}
+
+fun readableMapOf(sendOnchainResponse: SendOnchainResponse): ReadableMap {
+    return readableMapOf(
+        "reverseSwapInfo" to readableMapOf(sendOnchainResponse.reverseSwapInfo),
+    )
+}
+
+fun asSendOnchainResponseList(arr: ReadableArray): List<SendOnchainResponse> {
+    val list = ArrayList<SendOnchainResponse>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asSendOnchainResponse(value)!!)
+            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
+fun asSendPaymentResponse(data: ReadableMap): SendPaymentResponse? {
+    if (!validateMandatoryFields(
+            data,
+            arrayOf(
+                "payment",
+            ),
+        )
+    ) {
+        return null
+    }
+    val payment = data.getMap("payment")?.let { asPayment(it) }!!
+    return SendPaymentResponse(
+        payment,
+    )
+}
+
+fun readableMapOf(sendPaymentResponse: SendPaymentResponse): ReadableMap {
+    return readableMapOf(
+        "payment" to readableMapOf(sendPaymentResponse.payment),
+    )
+}
+
+fun asSendPaymentResponseList(arr: ReadableArray): List<SendPaymentResponse> {
+    val list = ArrayList<SendPaymentResponse>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asSendPaymentResponse(value)!!)
+            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
+fun asSendSpontaneousPaymentRequest(data: ReadableMap): SendSpontaneousPaymentRequest? {
+    if (!validateMandatoryFields(
+            data,
+            arrayOf(
+                "nodeId",
+                "amountMsat",
+            ),
+        )
+    ) {
+        return null
+    }
+    val nodeId = data.getString("nodeId")!!
+    val amountMsat = data.getDouble("amountMsat").toULong()
+    return SendSpontaneousPaymentRequest(
+        nodeId,
+        amountMsat,
+    )
+}
+
+fun readableMapOf(sendSpontaneousPaymentRequest: SendSpontaneousPaymentRequest): ReadableMap {
+    return readableMapOf(
+        "nodeId" to sendSpontaneousPaymentRequest.nodeId,
+        "amountMsat" to sendSpontaneousPaymentRequest.amountMsat,
+    )
+}
+
+fun asSendSpontaneousPaymentRequestList(arr: ReadableArray): List<SendSpontaneousPaymentRequest> {
+    val list = ArrayList<SendSpontaneousPaymentRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asSendSpontaneousPaymentRequest(value)!!)
             else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
         }
     }

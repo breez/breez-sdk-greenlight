@@ -63,6 +63,7 @@ use crate::models::ListPaymentsRequest;
 use crate::models::LnPaymentDetails;
 use crate::models::LnUrlCallbackStatus;
 use crate::models::LnUrlWithdrawRequest;
+use crate::models::LnUrlPayRequest;
 use crate::models::LnUrlWithdrawResult;
 use crate::models::LnUrlWithdrawSuccessData;
 use crate::models::LogEntry;
@@ -89,6 +90,8 @@ use crate::models::ReverseSwapPairInfo;
 use crate::models::ReverseSwapStatus;
 use crate::models::SendOnchainRequest;
 use crate::models::SendOnchainResponse;
+use crate::models::SendPaymentResponse;
+use crate::models::SendSpontaneousPaymentRequest;
 use crate::models::StaticBackupRequest;
 use crate::models::StaticBackupResponse;
 use crate::models::SwapInfo;
@@ -416,8 +419,7 @@ fn wire_send_payment_impl(
 }
 fn wire_send_spontaneous_payment_impl(
     port_: MessagePort,
-    node_id: impl Wire2Api<String> + UnwindSafe,
-    amount_sats: impl Wire2Api<u64> + UnwindSafe,
+    req: impl Wire2Api<SendSpontaneousPaymentRequest> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -426,9 +428,8 @@ fn wire_send_spontaneous_payment_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_node_id = node_id.wire2api();
-            let api_amount_sats = amount_sats.wire2api();
-            move |task_callback| send_spontaneous_payment(api_node_id, api_amount_sats)
+            let api_req = req.wire2api();
+            move |task_callback| send_spontaneous_payment(api_req)
         },
     )
 }
@@ -448,12 +449,7 @@ fn wire_receive_payment_impl(
         },
     )
 }
-fn wire_lnurl_pay_impl(
-    port_: MessagePort,
-    req_data: impl Wire2Api<LnUrlPayRequestData> + UnwindSafe,
-    user_amount_sat: impl Wire2Api<u64> + UnwindSafe,
-    comment: impl Wire2Api<Option<String>> + UnwindSafe,
-) {
+fn wire_lnurl_pay_impl(port_: MessagePort, req: impl Wire2Api<LnUrlPayRequest> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
             debug_name: "lnurl_pay",
@@ -461,10 +457,8 @@ fn wire_lnurl_pay_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_req_data = req_data.wire2api();
-            let api_user_amount_sat = user_amount_sat.wire2api();
-            let api_comment = comment.wire2api();
-            move |task_callback| lnurl_pay(api_req_data, api_user_amount_sat, api_comment)
+            let api_req = req.wire2api();
+            move |task_callback| lnurl_pay(api_req)
         },
     )
 }
@@ -1384,6 +1378,13 @@ impl support::IntoDart for SendOnchainResponse {
     }
 }
 impl support::IntoDartExceptPrimitive for SendOnchainResponse {}
+
+impl support::IntoDart for SendPaymentResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.payment.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for SendPaymentResponse {}
 
 impl support::IntoDart for SignMessageResponse {
     fn into_dart(self) -> support::DartAbi {

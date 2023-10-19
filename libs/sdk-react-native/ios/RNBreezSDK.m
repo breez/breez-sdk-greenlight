@@ -30,7 +30,7 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
-    staticBackup: (NSDictionary*)request
+    staticBackup: (NSDictionary*)req
     resolve: (RCTPromiseResolveBlock)resolve
     reject: (RCTPromiseRejectBlock)reject
 )
@@ -60,22 +60,19 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
-    sendSpontaneousPayment: (NSString*)nodeId
-    amountSats: (NSUInteger*)amountSats
+    sendSpontaneousPayment: (NSDictionary*)req
     resolve: (RCTPromiseResolveBlock)resolve
     reject: (RCTPromiseRejectBlock)reject
 )
 
 RCT_EXTERN_METHOD(
-    receivePayment: (NSDictionary*)request
+    receivePayment: (NSDictionary*)req
     resolve: (RCTPromiseResolveBlock)resolve
     reject: (RCTPromiseRejectBlock)reject
 )
 
 RCT_EXTERN_METHOD(
-    payLnurl: (NSDictionary*)reqData
-    amountSats: (NSUInteger*)amountSats
-    comment: (NSString*)comment
+    payLnurl: (NSDictionary*)req
     resolve: (RCTPromiseResolveBlock)resolve
     reject: (RCTPromiseRejectBlock)reject
 )
@@ -98,13 +95,13 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
-    signMessage: (NSDictionary*)request
+    signMessage: (NSDictionary*)req
     resolve: (RCTPromiseResolveBlock)resolve
     reject: (RCTPromiseRejectBlock)reject
 )
 
 RCT_EXTERN_METHOD(
-    checkMessage: (NSDictionary*)request
+    checkMessage: (NSDictionary*)req
     resolve: (RCTPromiseResolveBlock)resolve
     reject: (RCTPromiseRejectBlock)reject
 )
@@ -126,13 +123,13 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
-    listPayments: (NSDictionary*)request
+    listPayments: (NSDictionary*)req
     resolve: (RCTPromiseResolveBlock)resolve
     reject: (RCTPromiseRejectBlock)reject
 )
 
 RCT_EXTERN_METHOD(
-    sweep: (NSDictionary*)request
+    sweep: (NSDictionary*)req
     resolve: (RCTPromiseResolveBlock)resolve
     reject: (RCTPromiseRejectBlock)reject
 )
@@ -202,9 +199,7 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
-    refund: (NSString*)swapAddress
-    toAddress: (NSString*)toAddress
-    satPerVbyte: (NSUInteger*)satPerVbyte
+    refund: (NSDictionary*)req
     resolve: (RCTPromiseResolveBlock)resolve
     reject: (RCTPromiseRejectBlock)reject
 )
@@ -221,10 +216,7 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
-    sendOnchain: (NSUInteger*)amountSat
-    onchainRecipientAddress: (NSString*)onchainRecipientAddress
-    pairHash: (NSString*)pairHash
-    satPerVbyte: (NSUInteger*)satPerVbyte
+    sendOnchain: (NSDictionary*)req
     resolve: (RCTPromiseResolveBlock)resolve
     reject: (RCTPromiseRejectBlock)reject
 )

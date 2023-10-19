@@ -32,7 +32,6 @@ use crate::grpc::information_client::InformationClient;
 use crate::grpc::signer_client::SignerClient;
 use crate::grpc::swapper_client::SwapperClient;
 use crate::grpc::PaymentInformation;
-use crate::input_parser::LnUrlPayRequestData;
 use crate::invoice::{add_lsp_routing_hints, parse_invoice, LNInvoice, RouteHint, RouteHintHop};
 use crate::lnurl::auth::perform_lnurl_auth;
 use crate::lnurl::pay::model::SuccessAction::Aes;
@@ -278,36 +277,36 @@ impl BreezServices {
     ///
     /// # Arguments
     ///
-    /// * `node_id` - The destination node_id
-    /// * `amount_sats` - The amount to pay in satoshis
+    /// * `req` - Request parameters for sending a spontaneous payment
     pub async fn send_spontaneous_payment(
         &self,
-        node_id: String,
-        amount_sats: u64,
-    ) -> SdkResult<Payment> {
+        req: SendSpontaneousPaymentRequest,
+    ) -> SdkResult<SendPaymentResponse> {
         self.start_node().await?;
         let payment_res = self
             .node_api
-            .send_spontaneous_payment(node_id.clone(), amount_sats)
+            .send_spontaneous_payment(req.node_id.clone(), req.amount_msat)
             .await;
-        self.on_payment_completed(node_id, None, payment_res).await
+        let payment = self
+            .on_payment_completed(req.node_id, None, payment_res)
+            .await?;
+        Ok(SendPaymentResponse { payment })
     }
 
     /// Second step of LNURL-pay. The first step is `parse()`, which also validates the LNURL destination
     /// and generates the `LnUrlPayRequestData` payload needed here.
     ///
-    /// This call will validate the given `user_amount_sat` and `comment` against the parameters
+    /// This call will validate the `amount_msat` and `comment` parameters of `req` against the parameters
     /// of the LNURL endpoint (`req_data`). If they match the endpoint requirements, the LNURL payment
     /// is made.
     ///
     /// This method will return an [anyhow::Error] when any validation check fails.
-    pub async fn lnurl_pay(
-        &self,
-        req_data: LnUrlPayRequestData,
-        user_amount_sat: u64,
-        comment: Option<String>,
-    ) -> Result<LnUrlPayResult> {
-        match validate_lnurl_pay(user_amount_sat, comment, req_data.clone()).await? {
+    ///
+    /// # Arguments
+    ///
+    /// * `req` - The [LnUrlPayRequest] request parameters for sending a LNURL payment
+    pub async fn lnurl_pay(&self, req: LnUrlPayRequest) -> Result<LnUrlPayResult> {
+        match validate_lnurl_pay(req.amount_msat, req.comment, req.req_data.clone()).await? {
             ValidatedCallbackResponse::EndpointError { data: e } => {
                 Ok(LnUrlPayResult::EndpointError { data: e })
             }
@@ -345,8 +344,8 @@ impl BreezServices {
                 self.persister.insert_lnurl_payment_external_info(
                     &details.payment_hash,
                     maybe_sa_processed.as_ref(),
-                    Some(req_data.metadata_str),
-                    req_data.ln_address,
+                    Some(req.req_data.metadata_str),
+                    req.req_data.ln_address,
                     None,
                 )?;
 
