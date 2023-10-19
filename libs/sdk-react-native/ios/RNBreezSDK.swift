@@ -152,10 +152,10 @@ class RNBreezSDK: RCTEventEmitter {
     }
 
     @objc(receivePayment:resolve:reject:)
-    func receivePayment(_ reqData: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    func receivePayment(_ request: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let receivePaymentRequest = try BreezSDKMapper.asReceivePaymentRequest(data: reqData)
-            var res = try getBreezServices().receivePayment(reqData: receivePaymentRequest)
+            let receivePaymentRequest = try BreezSDKMapper.asReceivePaymentRequest(data: request)
+            var res = try getBreezServices().receivePayment(request: receivePaymentRequest)
             resolve(BreezSDKMapper.dictionaryOf(receivePaymentResponse: res))
         } catch let err {
             rejectErr(err: err, reject: reject)
@@ -174,12 +174,11 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
-    @objc(withdrawLnurl:amountSats:description:resolve:reject:)
-    func withdrawLnurl(_ reqData: [String: Any], amountSats: UInt64, description: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    @objc(withdrawLnurl:resolve:reject:)
+    func withdrawLnurl(_ request: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let lnUrlWithdrawRequestData = try BreezSDKMapper.asLnUrlWithdrawRequestData(data: reqData)
-            let descriptionTmp = description.isEmpty ? nil : description
-            var res = try getBreezServices().withdrawLnurl(reqData: lnUrlWithdrawRequestData, amountSats: amountSats, description: descriptionTmp)
+            let lnUrlWithdrawRequest = try BreezSDKMapper.asLnUrlWithdrawRequest(data: request)
+            var res = try getBreezServices().withdrawLnurl(request: lnUrlWithdrawRequest)
             resolve(BreezSDKMapper.dictionaryOf(lnUrlWithdrawResult: res))
         } catch let err {
             rejectErr(err: err, reject: reject)

@@ -360,19 +360,17 @@ impl BreezServices {
     /// Second step of LNURL-withdraw. The first step is `parse()`, which also validates the LNURL destination
     /// and generates the `LnUrlWithdrawRequestData` payload needed here.
     ///
-    /// This call will validate the given `amount_sats` against the parameters
-    /// of the LNURL endpoint (`req_data`). If they match the endpoint requirements, the LNURL withdraw
+    /// This call will validate the given `amount_msat` against the parameters
+    /// of the LNURL endpoint (`data`). If they match the endpoint requirements, the LNURL withdraw
     /// request is made. A successful result here means the endpoint started the payment.
     pub async fn lnurl_withdraw(
         &self,
-        req_data: LnUrlWithdrawRequestData,
-        amount_sats: u64,
-        description: Option<String>,
+        request: LnUrlWithdrawRequest,
     ) -> Result<LnUrlWithdrawResult> {
         let invoice = self
             .receive_payment(ReceivePaymentRequest {
-                amount_sats,
-                description: description.unwrap_or_default(),
+                amount_msat: request.amount_msat,
+                description: request.description.unwrap_or_default(),
                 preimage: None,
                 opening_fee_params: None,
                 use_description_hash: Some(false),
@@ -383,8 +381,8 @@ impl BreezServices {
             .map_err(|_| anyhow!("Failed to receive payment"))?
             .ln_invoice;
 
-        let lnurl_w_endpoint = req_data.callback.clone();
-        let res = validate_lnurl_withdraw(req_data, invoice).await?;
+        let lnurl_w_endpoint = request.data.callback.clone();
+        let res = validate_lnurl_withdraw(request.data, invoice).await?;
 
         if let LnUrlWithdrawResult::Ok { ref data } = res {
             // If endpoint was successfully called, store the LNURL-withdraw endpoint URL as metadata linked to the invoice
@@ -416,13 +414,12 @@ impl BreezServices {
     ///
     /// # Arguments
     ///
-    /// * `description` - The bolt11 payment request description
-    /// * `amount_sats` - The amount to receive in satoshis
+    /// * `request` - Request parameters for receiving a payment
     pub async fn receive_payment(
         &self,
-        req_data: ReceivePaymentRequest,
+        request: ReceivePaymentRequest,
     ) -> SdkResult<ReceivePaymentResponse> {
-        self.payment_receiver.receive_payment(req_data).await
+        self.payment_receiver.receive_payment(request).await
     }
 
     /// Retrieve the node state from the persistent storage.
@@ -1695,7 +1692,7 @@ pub fn mnemonic_to_seed(phrase: String) -> Result<Vec<u8>> {
 pub trait Receiver: Send + Sync {
     async fn receive_payment(
         &self,
-        req_data: ReceivePaymentRequest,
+        request: ReceivePaymentRequest,
     ) -> SdkResult<ReceivePaymentResponse>;
 }
 
@@ -1710,7 +1707,7 @@ pub(crate) struct PaymentReceiver {
 impl Receiver for PaymentReceiver {
     async fn receive_payment(
         &self,
-        req_data: ReceivePaymentRequest,
+        request: ReceivePaymentRequest,
     ) -> SdkResult<ReceivePaymentResponse> {
         self.node_api.start().await?;
         let lsp_info = get_lsp(self.persister.clone(), self.lsp.clone()).await?;
@@ -1719,52 +1716,48 @@ impl Receiver for PaymentReceiver {
             .get_node_state()?
             .ok_or("Failed to retrieve node state")
             .map_err(|err| anyhow!(err))?;
-        let expiry = req_data
-            .expiry
-            .unwrap_or(INVOICE_PAYMENT_FEE_EXPIRY_SECONDS);
-
-        let amount_sats = req_data.amount_sats;
-        let amount_msats = amount_sats * 1000;
+        let expiry = request.expiry.unwrap_or(INVOICE_PAYMENT_FEE_EXPIRY_SECONDS);
 
         ensure_sdk!(
-            amount_sats > 0,
+            request.amount_msat > 0,
             SdkError::ReceivePaymentFailed {
                 err: "Receive amount must be more than 0".into()
             }
         );
 
         let mut short_channel_id = parse_short_channel_id("1x0x0")?;
-        let mut destination_invoice_amount_sats = amount_sats;
+        let mut destination_invoice_amount_msat = request.amount_msat;
 
         let mut channel_opening_fee_params = None;
         let mut channel_fees_msat = None;
 
         // check if we need to open channel
-        let open_channel_needed = node_state.inbound_liquidity_msats < amount_msats;
+        let open_channel_needed = node_state.inbound_liquidity_msats < request.amount_msat;
         if open_channel_needed {
             info!("We need to open a channel");
 
             // we need to open channel so we are calculating the fees for the LSP (coming either from the user, or from the LSP)
-            let ofp = match req_data.opening_fee_params {
+            let ofp = match request.opening_fee_params {
                 Some(fee_params) => fee_params,
                 None => lsp_info.cheapest_open_channel_fee(expiry)?.clone(),
             };
 
             channel_opening_fee_params = Some(ofp.clone());
-            channel_fees_msat = Some(ofp.get_channel_fees_msat_for(amount_msats));
+            channel_fees_msat = Some(ofp.get_channel_fees_msat_for(request.amount_msat));
             if let Some(channel_fees_msat) = channel_fees_msat {
                 info!("zero-conf fee calculation option: lsp fee rate (proportional): {}:  (minimum {}), total fees for channel: {}",
                     ofp.proportional, ofp.min_msat, channel_fees_msat);
 
-                if amount_msats < channel_fees_msat + 1000 {
+                if request.amount_msat < channel_fees_msat + 1000 {
                     return Err(SdkError::ReceivePaymentFailed {
                         err: format!(
-                            "requestPayment: Amount should be more than the minimum fees {channel_fees_msat} msat, but is {amount_msats} msat"
+                            "requestPayment: Amount should be more than the minimum fees {channel_fees_msat} msat, but is {} msat",
+                            request.amount_msat
                         ),
                     });
                 }
                 // remove the fees from the amount to get the small amount on the current node invoice.
-                destination_invoice_amount_sats = (amount_msats - channel_fees_msat) / 1000;
+                destination_invoice_amount_msat = request.amount_msat - channel_fees_msat;
             }
         } else {
             // not opening a channel so we need to get the real channel id into the routing hints
@@ -1794,12 +1787,12 @@ impl Receiver for PaymentReceiver {
         let invoice = &self
             .node_api
             .create_invoice(
-                destination_invoice_amount_sats,
-                req_data.description,
-                req_data.preimage,
-                req_data.use_description_hash,
+                destination_invoice_amount_msat,
+                request.description,
+                request.preimage,
+                request.use_description_hash,
                 Some(expiry),
-                req_data.cltv,
+                request.cltv,
             )
             .await?;
         info!("Invoice created {}", invoice);
@@ -1836,10 +1829,10 @@ impl Receiver for PaymentReceiver {
         }
 
         // We only create a new invoice if we need to add the lsp hint or change the amount
-        if lsp_hint.is_some() || amount_sats != destination_invoice_amount_sats {
+        if lsp_hint.is_some() || request.amount_msat != destination_invoice_amount_msat {
             // create the large amount invoice
             let raw_invoice_with_hint =
-                add_lsp_routing_hints(invoice.clone(), lsp_hint, amount_sats * 1000)?;
+                add_lsp_routing_hints(invoice.clone(), lsp_hint, request.amount_msat)?;
 
             info!("Routing hint added");
             let signed_invoice_with_hint = self.node_api.sign_invoice(raw_invoice_with_hint)?;
@@ -1878,8 +1871,8 @@ impl Receiver for PaymentReceiver {
                                 err: format!("Failed to decode hex payee pubkey: {e}"),
                             },
                         )?,
-                        incoming_amount_msat: amount_msats as i64,
-                        outgoing_amount_msat: (destination_invoice_amount_sats * 1000) as i64,
+                        incoming_amount_msat: request.amount_msat as i64,
+                        outgoing_amount_msat: destination_invoice_amount_msat as i64,
                         tag: json!({ "apiKeyHash": api_key_hash }).to_string(),
                         opening_fee_params: channel_opening_fee_params.clone().map(Into::into),
                     },
@@ -1890,7 +1883,7 @@ impl Receiver for PaymentReceiver {
 
         // Make sure we save the large amount so we can deduce the fees later.
         self.persister
-            .insert_open_channel_payment_info(&parsed_invoice.payment_hash, amount_sats * 1000)?;
+            .insert_open_channel_payment_info(&parsed_invoice.payment_hash, request.amount_msat)?;
         // return the signed, converted invoice with hints
         Ok(ReceivePaymentResponse {
             ln_invoice: parsed_invoice,
@@ -2155,7 +2148,7 @@ pub(crate) mod tests {
         });
         let ln_invoice = receiver
             .receive_payment(ReceivePaymentRequest {
-                amount_sats: 3000,
+                amount_msat: 3_000_000,
                 description: "should populate lsp hints".to_string(),
                 preimage: None,
                 opening_fee_params: None,

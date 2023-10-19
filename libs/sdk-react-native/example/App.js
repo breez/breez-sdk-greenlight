@@ -133,7 +133,7 @@ const App = () => {
                 addLine("openChannelFee", JSON.stringify(openChannelFeeResult))
 
                 const receivePaymentResult = await receivePayment({
-                    amountSats: 100000,
+                    amountMsat: 100000000,
                     description: "Hello world",
                     expiry: 3600,
                     cltv: 144,

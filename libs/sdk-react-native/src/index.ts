@@ -167,6 +167,12 @@ export type LnUrlPayRequestData = {
     lnAddress?: string
 }
 
+export type LnUrlWithdrawRequest = {
+    data: LnUrlWithdrawRequestData
+    amountMsat: number
+    description?: string
+}
+
 export type LnUrlWithdrawRequestData = {
     callback: string
     k1: string
@@ -284,7 +290,7 @@ export type ReceiveOnchainRequest = {
 }
 
 export type ReceivePaymentRequest = {
-    amountSats: number
+    amountMsat: number
     description: string
     preimage?: number[]
     openingFeeParams?: OpeningFeeParams
@@ -680,8 +686,8 @@ export const sendSpontaneousPayment = async (nodeId: string, amountSats: number)
     return response
 }
 
-export const receivePayment = async (reqData: ReceivePaymentRequest): Promise<ReceivePaymentResponse> => {
-    const response = await BreezSDK.receivePayment(reqData)
+export const receivePayment = async (request: ReceivePaymentRequest): Promise<ReceivePaymentResponse> => {
+    const response = await BreezSDK.receivePayment(request)
     return response
 }
 
@@ -690,8 +696,8 @@ export const payLnurl = async (reqData: LnUrlPayRequestData, amountSats: number,
     return response
 }
 
-export const withdrawLnurl = async (reqData: LnUrlWithdrawRequestData, amountSats: number, description: string = ""): Promise<LnUrlWithdrawResult> => {
-    const response = await BreezSDK.withdrawLnurl(reqData, amountSats, description)
+export const withdrawLnurl = async (request: LnUrlWithdrawRequest): Promise<LnUrlWithdrawResult> => {
+    const response = await BreezSDK.withdrawLnurl(request)
     return response
 }
 

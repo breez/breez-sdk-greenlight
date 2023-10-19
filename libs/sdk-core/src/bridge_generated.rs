@@ -62,6 +62,7 @@ use crate::models::GreenlightNodeConfig;
 use crate::models::ListPaymentsRequest;
 use crate::models::LnPaymentDetails;
 use crate::models::LnUrlCallbackStatus;
+use crate::models::LnUrlWithdrawRequest;
 use crate::models::LnUrlWithdrawResult;
 use crate::models::LnUrlWithdrawSuccessData;
 use crate::models::LogEntry;
@@ -432,7 +433,7 @@ fn wire_send_spontaneous_payment_impl(
 }
 fn wire_receive_payment_impl(
     port_: MessagePort,
-    req_data: impl Wire2Api<ReceivePaymentRequest> + UnwindSafe,
+    request: impl Wire2Api<ReceivePaymentRequest> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -441,8 +442,8 @@ fn wire_receive_payment_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_req_data = req_data.wire2api();
-            move |task_callback| receive_payment(api_req_data)
+            let api_request = request.wire2api();
+            move |task_callback| receive_payment(api_request)
         },
     )
 }
@@ -468,9 +469,7 @@ fn wire_lnurl_pay_impl(
 }
 fn wire_lnurl_withdraw_impl(
     port_: MessagePort,
-    req_data: impl Wire2Api<LnUrlWithdrawRequestData> + UnwindSafe,
-    amount_sats: impl Wire2Api<u64> + UnwindSafe,
-    description: impl Wire2Api<Option<String>> + UnwindSafe,
+    request: impl Wire2Api<LnUrlWithdrawRequest> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -479,10 +478,8 @@ fn wire_lnurl_withdraw_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_req_data = req_data.wire2api();
-            let api_amount_sats = amount_sats.wire2api();
-            let api_description = description.wire2api();
-            move |task_callback| lnurl_withdraw(api_req_data, api_amount_sats, api_description)
+            let api_request = request.wire2api();
+            move |task_callback| lnurl_withdraw(api_request)
         },
     )
 }

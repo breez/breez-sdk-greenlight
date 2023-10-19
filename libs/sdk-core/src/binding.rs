@@ -23,20 +23,18 @@ use crate::breez_services::{self, BreezEvent, BreezServices, EventListener};
 use crate::chain::RecommendedFees;
 use crate::error::SdkError;
 use crate::fiat::{FiatCurrency, Rate};
-use crate::input_parser::{
-    self, InputType, LnUrlAuthRequestData, LnUrlPayRequestData, LnUrlWithdrawRequestData,
-};
+use crate::input_parser::{self, InputType, LnUrlAuthRequestData, LnUrlPayRequestData};
 use crate::invoice::{self, LNInvoice};
 use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
 use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
-    EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus, LnUrlWithdrawResult, NodeConfig,
-    OpenChannelFeeRequest, OpenChannelFeeResponse, ReceiveOnchainRequest, ReceivePaymentRequest,
-    ReceivePaymentResponse, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
-    SignMessageRequest, SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
-    SweepRequest, SweepResponse,
+    EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus, LnUrlWithdrawRequest,
+    LnUrlWithdrawResult, NodeConfig, OpenChannelFeeRequest, OpenChannelFeeResponse,
+    ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse, ReverseSwapFeesRequest,
+    ReverseSwapInfo, ReverseSwapPairInfo, SignMessageRequest, SignMessageResponse,
+    StaticBackupRequest, StaticBackupResponse, SweepRequest, SweepResponse,
 };
 
 /*
@@ -249,8 +247,8 @@ pub fn send_spontaneous_payment(node_id: String, amount_sats: u64) -> Result<Pay
 }
 
 /// See [BreezServices::receive_payment]
-pub fn receive_payment(req_data: ReceivePaymentRequest) -> Result<ReceivePaymentResponse> {
-    block_on(async { get_breez_services().await?.receive_payment(req_data).await })
+pub fn receive_payment(request: ReceivePaymentRequest) -> Result<ReceivePaymentResponse> {
+    block_on(async { get_breez_services().await?.receive_payment(request).await })
         .map_err(anyhow::Error::new)
 }
 
@@ -271,17 +269,8 @@ pub fn lnurl_pay(
 }
 
 /// See [BreezServices::lnurl_withdraw]
-pub fn lnurl_withdraw(
-    req_data: LnUrlWithdrawRequestData,
-    amount_sats: u64,
-    description: Option<String>,
-) -> Result<LnUrlWithdrawResult> {
-    block_on(async {
-        get_breez_services()
-            .await?
-            .lnurl_withdraw(req_data, amount_sats, description)
-            .await
-    })
+pub fn lnurl_withdraw(request: LnUrlWithdrawRequest) -> Result<LnUrlWithdrawResult> {
+    block_on(async { get_breez_services().await?.lnurl_withdraw(request).await })
 }
 
 /// See [BreezServices::lnurl_auth]

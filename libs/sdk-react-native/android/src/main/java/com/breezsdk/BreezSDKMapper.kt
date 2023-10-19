@@ -956,6 +956,46 @@ fun asLnUrlPayRequestDataList(arr: ReadableArray): List<LnUrlPayRequestData> {
     return list
 }
 
+fun asLnUrlWithdrawRequest(data: ReadableMap): LnUrlWithdrawRequest? {
+    if (!validateMandatoryFields(
+            data,
+            arrayOf(
+                "data",
+                "amountMsat",
+            ),
+        )
+    ) {
+        return null
+    }
+    val data = data.getMap("data")?.let { asLnUrlWithdrawRequestData(it) }!!
+    val amountMsat = data.getDouble("amountMsat").toULong()
+    val description = if (hasNonNullKey(data, "description")) data.getString("description") else null
+    return LnUrlWithdrawRequest(
+        data,
+        amountMsat,
+        description,
+    )
+}
+
+fun readableMapOf(lnUrlWithdrawRequest: LnUrlWithdrawRequest): ReadableMap {
+    return readableMapOf(
+        "data" to readableMapOf(lnUrlWithdrawRequest.data),
+        "amountMsat" to lnUrlWithdrawRequest.amountMsat,
+        "description" to lnUrlWithdrawRequest.description,
+    )
+}
+
+fun asLnUrlWithdrawRequestList(arr: ReadableArray): List<LnUrlWithdrawRequest> {
+    val list = ArrayList<LnUrlWithdrawRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asLnUrlWithdrawRequest(value)!!)
+            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asLnUrlWithdrawRequestData(data: ReadableMap): LnUrlWithdrawRequestData? {
     if (!validateMandatoryFields(
             data,
@@ -1713,14 +1753,14 @@ fun asReceivePaymentRequest(data: ReadableMap): ReceivePaymentRequest? {
     if (!validateMandatoryFields(
             data,
             arrayOf(
-                "amountSats",
+                "amountMsat",
                 "description",
             ),
         )
     ) {
         return null
     }
-    val amountSats = data.getDouble("amountSats").toULong()
+    val amountMsat = data.getDouble("amountMsat").toULong()
     val description = data.getString("description")!!
     val preimage = if (hasNonNullKey(data, "preimage")) data.getArray("preimage")?.let { asUByteList(it) } else null
     val openingFeeParams =
@@ -1735,7 +1775,7 @@ fun asReceivePaymentRequest(data: ReadableMap): ReceivePaymentRequest? {
     val expiry = if (hasNonNullKey(data, "expiry")) data.getInt("expiry").toUInt() else null
     val cltv = if (hasNonNullKey(data, "cltv")) data.getInt("cltv").toUInt() else null
     return ReceivePaymentRequest(
-        amountSats,
+        amountMsat,
         description,
         preimage,
         openingFeeParams,
@@ -1747,7 +1787,7 @@ fun asReceivePaymentRequest(data: ReadableMap): ReceivePaymentRequest? {
 
 fun readableMapOf(receivePaymentRequest: ReceivePaymentRequest): ReadableMap {
     return readableMapOf(
-        "amountSats" to receivePaymentRequest.amountSats,
+        "amountMsat" to receivePaymentRequest.amountMsat,
         "description" to receivePaymentRequest.description,
         "preimage" to receivePaymentRequest.preimage?.let { readableArrayOf(it) },
         "openingFeeParams" to receivePaymentRequest.openingFeeParams?.let { readableMapOf(it) },

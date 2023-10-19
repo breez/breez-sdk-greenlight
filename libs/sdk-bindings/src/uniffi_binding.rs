@@ -12,7 +12,7 @@ use breez_sdk_core::{
     ClosedChannelPaymentDetails, Config, CurrencyInfo, EnvironmentType, EventListener,
     FeeratePreset, FiatCurrency, GreenlightCredentials, GreenlightNodeConfig, InputType,
     InvoicePaidDetails, LNInvoice, ListPaymentsRequest, LnPaymentDetails, LnUrlAuthRequestData,
-    LnUrlCallbackStatus, LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult,
+    LnUrlCallbackStatus, LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult, LnUrlWithdrawRequest,
     LnUrlWithdrawRequestData, LnUrlWithdrawResult, LnUrlWithdrawSuccessData, LocaleOverrides,
     LocalizedName, LogEntry, LogStream, LspInformation, MessageSuccessActionData, MetadataItem,
     Network, NodeConfig, NodeState, OpenChannelFeeRequest, OpenChannelFeeResponse,
@@ -129,9 +129,9 @@ impl BlockingBreezServices {
 
     pub fn receive_payment(
         &self,
-        req_data: ReceivePaymentRequest,
+        request: ReceivePaymentRequest,
     ) -> SdkResult<ReceivePaymentResponse> {
-        rt().block_on(self.breez_services.receive_payment(req_data))
+        rt().block_on(self.breez_services.receive_payment(request))
     }
 
     pub fn node_info(&self) -> SdkResult<NodeState> {
@@ -179,17 +179,9 @@ impl BlockingBreezServices {
         .map_err(|e| e.into())
     }
 
-    pub fn withdraw_lnurl(
-        &self,
-        req_data: LnUrlWithdrawRequestData,
-        amount_sats: u64,
-        description: Option<String>,
-    ) -> SdkResult<LnUrlWithdrawResult> {
-        rt().block_on(
-            self.breez_services
-                .lnurl_withdraw(req_data, amount_sats, description),
-        )
-        .map_err(|e| e.into())
+    pub fn withdraw_lnurl(&self, request: LnUrlWithdrawRequest) -> SdkResult<LnUrlWithdrawResult> {
+        rt().block_on(self.breez_services.lnurl_withdraw(request))
+            .map_err(|e| e.into())
     }
 
     pub fn lnurl_auth(&self, req_data: LnUrlAuthRequestData) -> SdkResult<LnUrlCallbackStatus> {

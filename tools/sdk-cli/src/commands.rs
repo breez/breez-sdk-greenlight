@@ -53,7 +53,7 @@ pub(crate) enum Commands {
 
     /// Generate a bolt11 invoice
     ReceivePayment {
-        amount: u64,
+        amount_msat: u64,
         description: String,
         #[clap(name = "use_description_hash", short = 's', long = "desc_hash")]
         use_description_hash: Option<bool>,

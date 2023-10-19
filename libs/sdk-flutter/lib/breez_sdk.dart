@@ -246,12 +246,11 @@ class BreezSDK {
   ///
   /// # Arguments
   ///
-  /// * `amountSats` - The amount to receive in satoshis
-  /// * `description` - The bolt11 payment request description
+  /// * `request` - Request parameters for receiving a payment
   Future<ReceivePaymentResponse> receivePayment({
-    required ReceivePaymentRequest reqData,
+    required ReceivePaymentRequest request,
   }) async {
-    return await _lnToolkit.receivePayment(reqData: reqData);
+    return await _lnToolkit.receivePayment(request: request);
   }
 
   /* LNURL API's */
@@ -273,19 +272,11 @@ class BreezSDK {
   /// Second step of LNURL-withdraw. The first step is `parse()`, which also validates the LNURL destination
   /// and generates the `LnUrlWithdrawRequestData` payload needed here.
   ///
-  /// This call will validate the given `amount_sats` against the parameters
-  /// of the LNURL endpoint (`req_data`). If they match the endpoint requirements, the LNURL withdraw
+  /// This call will validate the given amount in the `request` against the parameters
+  /// of the LNURL endpoint data in the `request`. If they match the endpoint requirements, the LNURL withdraw
   /// request is made. A successful result here means the endpoint started the payment.
-  Future<LnUrlWithdrawResult> lnurlWithdraw({
-    required LnUrlWithdrawRequestData reqData,
-    required int amountSats,
-    String? description,
-  }) async {
-    return await _lnToolkit.lnurlWithdraw(
-      reqData: reqData,
-      amountSats: amountSats,
-      description: description,
-    );
+  Future<LnUrlWithdrawResult> lnurlWithdraw({required LnUrlWithdrawRequest request}) async {
+    return await _lnToolkit.lnurlWithdraw(request: request);
   }
 
   /// Third and last step of LNURL-auth. The first step is `parse()`, which also validates the LNURL destination

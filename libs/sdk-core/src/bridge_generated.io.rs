@@ -145,8 +145,8 @@ pub extern "C" fn wire_send_spontaneous_payment(
 }
 
 #[no_mangle]
-pub extern "C" fn wire_receive_payment(port_: i64, req_data: *mut wire_ReceivePaymentRequest) {
-    wire_receive_payment_impl(port_, req_data)
+pub extern "C" fn wire_receive_payment(port_: i64, request: *mut wire_ReceivePaymentRequest) {
+    wire_receive_payment_impl(port_, request)
 }
 
 #[no_mangle]
@@ -160,13 +160,8 @@ pub extern "C" fn wire_lnurl_pay(
 }
 
 #[no_mangle]
-pub extern "C" fn wire_lnurl_withdraw(
-    port_: i64,
-    req_data: *mut wire_LnUrlWithdrawRequestData,
-    amount_sats: u64,
-    description: *mut wire_uint_8_list,
-) {
-    wire_lnurl_withdraw_impl(port_, req_data, amount_sats, description)
+pub extern "C" fn wire_lnurl_withdraw(port_: i64, request: *mut wire_LnUrlWithdrawRequest) {
+    wire_lnurl_withdraw_impl(port_, request)
 }
 
 #[no_mangle]
@@ -314,9 +309,8 @@ pub extern "C" fn new_box_autoadd_ln_url_pay_request_data_0() -> *mut wire_LnUrl
 }
 
 #[no_mangle]
-pub extern "C" fn new_box_autoadd_ln_url_withdraw_request_data_0(
-) -> *mut wire_LnUrlWithdrawRequestData {
-    support::new_leak_box_ptr(wire_LnUrlWithdrawRequestData::new_with_null_ptr())
+pub extern "C" fn new_box_autoadd_ln_url_withdraw_request_0() -> *mut wire_LnUrlWithdrawRequest {
+    support::new_leak_box_ptr(wire_LnUrlWithdrawRequest::new_with_null_ptr())
 }
 
 #[no_mangle]
@@ -453,10 +447,10 @@ impl Wire2Api<LnUrlPayRequestData> for *mut wire_LnUrlPayRequestData {
         Wire2Api::<LnUrlPayRequestData>::wire2api(*wrap).into()
     }
 }
-impl Wire2Api<LnUrlWithdrawRequestData> for *mut wire_LnUrlWithdrawRequestData {
-    fn wire2api(self) -> LnUrlWithdrawRequestData {
+impl Wire2Api<LnUrlWithdrawRequest> for *mut wire_LnUrlWithdrawRequest {
+    fn wire2api(self) -> LnUrlWithdrawRequest {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
-        Wire2Api::<LnUrlWithdrawRequestData>::wire2api(*wrap).into()
+        Wire2Api::<LnUrlWithdrawRequest>::wire2api(*wrap).into()
     }
 }
 impl Wire2Api<NodeConfig> for *mut wire_NodeConfig {
@@ -610,6 +604,15 @@ impl Wire2Api<LnUrlPayRequestData> for wire_LnUrlPayRequestData {
         }
     }
 }
+impl Wire2Api<LnUrlWithdrawRequest> for wire_LnUrlWithdrawRequest {
+    fn wire2api(self) -> LnUrlWithdrawRequest {
+        LnUrlWithdrawRequest {
+            data: self.data.wire2api(),
+            amount_msat: self.amount_msat.wire2api(),
+            description: self.description.wire2api(),
+        }
+    }
+}
 impl Wire2Api<LnUrlWithdrawRequestData> for wire_LnUrlWithdrawRequestData {
     fn wire2api(self) -> LnUrlWithdrawRequestData {
         LnUrlWithdrawRequestData {
@@ -667,7 +670,7 @@ impl Wire2Api<ReceiveOnchainRequest> for wire_ReceiveOnchainRequest {
 impl Wire2Api<ReceivePaymentRequest> for wire_ReceivePaymentRequest {
     fn wire2api(self) -> ReceivePaymentRequest {
         ReceivePaymentRequest {
-            amount_sats: self.amount_sats.wire2api(),
+            amount_msat: self.amount_msat.wire2api(),
             description: self.description.wire2api(),
             preimage: self.preimage.wire2api(),
             opening_fee_params: self.opening_fee_params.wire2api(),
@@ -795,6 +798,14 @@ pub struct wire_LnUrlPayRequestData {
 
 #[repr(C)]
 #[derive(Clone)]
+pub struct wire_LnUrlWithdrawRequest {
+    data: wire_LnUrlWithdrawRequestData,
+    amount_msat: u64,
+    description: *mut wire_uint_8_list,
+}
+
+#[repr(C)]
+#[derive(Clone)]
 pub struct wire_LnUrlWithdrawRequestData {
     callback: *mut wire_uint_8_list,
     k1: *mut wire_uint_8_list,
@@ -830,7 +841,7 @@ pub struct wire_ReceiveOnchainRequest {
 #[repr(C)]
 #[derive(Clone)]
 pub struct wire_ReceivePaymentRequest {
-    amount_sats: u64,
+    amount_msat: u64,
     description: *mut wire_uint_8_list,
     preimage: *mut wire_uint_8_list,
     opening_fee_params: *mut wire_OpeningFeeParams,
@@ -1041,6 +1052,22 @@ impl Default for wire_LnUrlPayRequestData {
     }
 }
 
+impl NewWithNullPtr for wire_LnUrlWithdrawRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            data: Default::default(),
+            amount_msat: Default::default(),
+            description: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_LnUrlWithdrawRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
 impl NewWithNullPtr for wire_LnUrlWithdrawRequestData {
     fn new_with_null_ptr() -> Self {
         Self {
@@ -1134,7 +1161,7 @@ impl Default for wire_ReceiveOnchainRequest {
 impl NewWithNullPtr for wire_ReceivePaymentRequest {
     fn new_with_null_ptr() -> Self {
         Self {
-            amount_sats: Default::default(),
+            amount_msat: Default::default(),
             description: core::ptr::null_mut(),
             preimage: core::ptr::null_mut(),
             opening_fee_params: core::ptr::null_mut(),

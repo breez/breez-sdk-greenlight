@@ -28,7 +28,7 @@ use crate::grpc::{self, GetReverseRoutingNodeRequest, PaymentInformation, Regist
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lsp::LspInformation;
 use crate::models::Network::*;
-use crate::{LNInvoice, LnUrlErrorData};
+use crate::{LNInvoice, LnUrlErrorData, LnUrlWithdrawRequestData};
 
 use crate::breez_services::BreezServer;
 use crate::error::{SdkError, SdkResult};
@@ -63,7 +63,7 @@ pub struct Peer {
 pub trait NodeAPI: Send + Sync {
     async fn create_invoice(
         &self,
-        amount_sats: u64,
+        amount_msat: u64,
         description: String,
         preimage: Option<Vec<u8>>,
         use_description_hash: Option<bool>,
@@ -75,7 +75,7 @@ pub trait NodeAPI: Send + Sync {
         since_timestamp: u64,
         balance_changed: bool,
     ) -> Result<SyncResponse>;
-    /// As per the `pb::PayRequest` docs, `amount_sats` is only needed when the invoice doesn't specify an amount
+    /// As per the `pb::PayRequest` docs, `amount_msat` is only needed when the invoice doesn't specify an amount
     async fn send_payment(
         &self,
         bolt11: String,
@@ -731,7 +731,7 @@ pub struct ReverseSwapFeesRequest {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReceivePaymentRequest {
     /// The amount in satoshis for this payment request
-    pub amount_sats: u64,
+    pub amount_msat: u64,
     /// The description for this payment request.
     pub description: String,
     /// Optional preimage for this payment request.
@@ -1141,6 +1141,22 @@ pub enum LnUrlCallbackStatus {
         #[serde(flatten)]
         data: LnUrlErrorData,
     },
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LnUrlWithdrawRequest {
+    /// Request data containing information on how to call the lnurl withdraw
+    /// endpoint. Typically retrieved by calling `parse()` on a lnurl withdraw
+    /// input.
+    pub data: LnUrlWithdrawRequestData,
+
+    /// The amount to withdraw from the lnurl withdraw endpoint. Must be between
+    /// `min_withdrawable` and `max_withdrawable`.
+    pub amount_msat: u64,
+
+    /// Optional description that will be put in the payment request for the
+    /// lnurl withdraw endpoint.
+    pub description: Option<String>,
 }
 
 /// [LnUrlCallbackStatus] specific to LNURL-withdraw, where the success case contains the invoice.

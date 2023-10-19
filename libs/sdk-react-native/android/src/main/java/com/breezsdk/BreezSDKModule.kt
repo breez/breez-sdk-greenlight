@@ -215,14 +215,14 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
     @ReactMethod
     fun receivePayment(
-        reqData: ReadableMap,
+        request: ReadableMap,
         promise: Promise,
     ) {
         executor.execute {
             try {
                 val receivePaymentRequest =
-                    asReceivePaymentRequest(reqData) ?: run {
-                        throw SdkException.Generic("Missing mandatory field reqData of type ReceivePaymentRequest")
+                    asReceivePaymentRequest(request) ?: run {
+                        throw SdkException.Generic("Missing mandatory field request of type ReceivePaymentRequest")
                     }
                 val res = getBreezServices().receivePayment(receivePaymentRequest)
                 promise.resolve(readableMapOf(res))
@@ -256,19 +256,16 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
     @ReactMethod
     fun withdrawLnurl(
-        reqData: ReadableMap,
-        amountSats: Double,
-        description: String,
+        request: ReadableMap,
         promise: Promise,
     ) {
         executor.execute {
             try {
-                val lnUrlWithdrawRequestData =
-                    asLnUrlWithdrawRequestData(reqData) ?: run {
-                        throw SdkException.Generic("Missing mandatory field reqData of type LnUrlWithdrawRequestData")
+                val lnUrlWithdrawRequest =
+                    asLnUrlWithdrawRequest(request) ?: run {
+                        throw SdkException.Generic("Missing mandatory field request of type LnUrlWithdrawRequest")
                     }
-                val descriptionTmp = description.takeUnless { it.isEmpty() }
-                val res = getBreezServices().withdrawLnurl(lnUrlWithdrawRequestData, amountSats.toULong(), descriptionTmp)
+                val res = getBreezServices().withdrawLnurl(lnUrlWithdrawRequest)
                 promise.resolve(readableMapOf(res))
             } catch (e: SdkException) {
                 promise.reject(e.javaClass.simpleName, e.message, e)

@@ -313,7 +313,7 @@ dictionary ReverseSwapFeesRequest {
 };
 
 dictionary ReceivePaymentRequest {
-    u64 amount_sats;
+    u64 amount_msat;
     string description;
     sequence<u8>? preimage = null;
     OpeningFeeParams? opening_fee_params = null;
@@ -478,6 +478,12 @@ interface LnUrlCallbackStatus {
     ErrorStatus(LnUrlErrorData data);
 };
 
+dictionary LnUrlWithdrawRequest {
+    LnUrlWithdrawRequestData data;
+    u64 amount_msat;
+    string? description = null;
+};
+
 [Enum]
 interface LnUrlWithdrawResult {
     Ok(LnUrlWithdrawSuccessData data);
@@ -545,13 +551,13 @@ interface BlockingBreezServices {
    Payment send_spontaneous_payment(string node_id, u64 amount_sats);
 
    [Throws=SdkError]
-   ReceivePaymentResponse receive_payment(ReceivePaymentRequest req_data);
+   ReceivePaymentResponse receive_payment(ReceivePaymentRequest request);
 
    [Throws=SdkError]
    LnUrlPayResult pay_lnurl(LnUrlPayRequestData req_data, u64 amount_sats, string? comment);
 
    [Throws=SdkError]
-   LnUrlWithdrawResult withdraw_lnurl(LnUrlWithdrawRequestData req_data, u64 amount_sats, string? description);
+   LnUrlWithdrawResult withdraw_lnurl(LnUrlWithdrawRequest request);
 
    [Throws=SdkError]
    LnUrlCallbackStatus lnurl_auth(LnUrlAuthRequestData req_data);

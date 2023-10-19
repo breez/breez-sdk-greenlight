@@ -5,9 +5,9 @@ use anyhow::{anyhow, Error, Result};
 use breez_sdk_core::InputType::{LnUrlAuth, LnUrlPay, LnUrlWithdraw};
 use breez_sdk_core::{
     parse, BreezEvent, BreezServices, BuyBitcoinRequest, CheckMessageRequest, EventListener,
-    GreenlightCredentials, ListPaymentsRequest, PaymentTypeFilter, ReceiveOnchainRequest,
-    ReceivePaymentRequest, ReverseSwapFeesRequest, SignMessageRequest, StaticBackupRequest,
-    SweepRequest,
+    GreenlightCredentials, ListPaymentsRequest, LnUrlWithdrawRequest, PaymentTypeFilter,
+    ReceiveOnchainRequest, ReceivePaymentRequest, ReverseSwapFeesRequest, SignMessageRequest,
+    StaticBackupRequest, SweepRequest,
 };
 use breez_sdk_core::{Config, GreenlightNodeConfig, NodeConfig};
 use once_cell::sync::OnceCell;
@@ -121,7 +121,7 @@ pub(crate) async fn handle_command(
             .map(|res| serde_json::to_string_pretty(&res))?
             .map_err(|e| e.into()),
         Commands::ReceivePayment {
-            amount: amount_sats,
+            amount_msat,
             description,
             use_description_hash,
             expiry,
@@ -129,7 +129,7 @@ pub(crate) async fn handle_command(
         } => {
             let recv_payment_response = sdk()?
                 .receive_payment(ReceivePaymentRequest {
-                    amount_sats,
+                    amount_msat,
                     description,
                     preimage: None,
                     opening_fee_params: None,
@@ -336,29 +336,33 @@ pub(crate) async fn handle_command(
                     // max can receive = min(maxWithdrawable, local estimation of how much can be routed into wallet)
                     // min can receive = max(minWithdrawable, local minimal value allowed by wallet)
                     // However, for simplicity, we just use the LNURL-withdraw min/max bounds
-                    let user_input_max_sat = wd.max_withdrawable / 1000;
-                    let user_input_min_sat = 2001;
+                    let user_input_max_msat = wd.max_withdrawable;
+                    let user_input_min_msat = 2_001_000;
 
-                    if user_input_max_sat < user_input_min_sat {
-                        error!("The LNURLw endpoint needs to accept at least {} sats, but min / max withdrawable are {} sat / {} sat",
-                user_input_min_sat,
-                wd.min_withdrawable / 1000,
-                wd.max_withdrawable / 1000
-            );
+                    if user_input_max_msat < user_input_min_msat {
+                        error!("The LNURLw endpoint needs to accept at least {} msat, but min / max withdrawable are {} msat / {} msat",
+                            user_input_min_msat,
+                            wd.min_withdrawable,
+                            wd.max_withdrawable
+                        );
                         return Ok("".to_string());
                     }
 
                     let prompt = format!(
-                        "Amount to withdraw in sats (min {} sat, max {} sat: ",
-                        user_input_min_sat, user_input_max_sat,
+                        "Amount to withdraw in msat (min {} msat, max {} msat: ",
+                        user_input_min_msat, user_input_max_msat,
                     );
-                    let user_input_withdraw_amount_sat = rl.readline(&prompt)?;
+                    let user_input_withdraw_amount_msat = rl.readline(&prompt)?;
 
-                    let amount_sats: u64 = user_input_withdraw_amount_sat.parse()?;
+                    let amount_msat: u64 = user_input_withdraw_amount_msat.parse()?;
                     let description = "LNURL-withdraw";
 
                     let withdraw_res = sdk()?
-                        .lnurl_withdraw(wd, amount_sats, Some(description.into()))
+                        .lnurl_withdraw(LnUrlWithdrawRequest {
+                            data: wd,
+                            amount_msat,
+                            description: Some(description.into()),
+                        })
                         .await?;
                     serde_json::to_string_pretty(&withdraw_res).map_err(|e| e.into())
                 }

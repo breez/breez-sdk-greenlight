@@ -885,6 +885,45 @@ class BreezSDKMapper {
         return lnUrlPayRequestDataList.map { v -> [String: Any?] in dictionaryOf(lnUrlPayRequestData: v) }
     }
 
+    static func asLnUrlWithdrawRequest(data: [String: Any?]) throws -> LnUrlWithdrawRequest {
+        guard let dataTmp = data["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type LnUrlWithdrawRequest") }
+        let data = try asLnUrlWithdrawRequestData(data: dataTmp)
+
+        guard let amountMsat = data["amountMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field amountMsat for type LnUrlWithdrawRequest") }
+        let description = data["description"] as? String
+
+        return LnUrlWithdrawRequest(
+            data: data,
+            amountMsat: amountMsat,
+            description: description
+        )
+    }
+
+    static func dictionaryOf(lnUrlWithdrawRequest: LnUrlWithdrawRequest) -> [String: Any?] {
+        return [
+            "data": dictionaryOf(lnUrlWithdrawRequestData: lnUrlWithdrawRequest.data),
+            "amountMsat": lnUrlWithdrawRequest.amountMsat,
+            "description": lnUrlWithdrawRequest.description == nil ? nil : lnUrlWithdrawRequest.description,
+        ]
+    }
+
+    static func asLnUrlWithdrawRequestList(arr: [Any]) throws -> [LnUrlWithdrawRequest] {
+        var list = [LnUrlWithdrawRequest]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var lnUrlWithdrawRequest = try asLnUrlWithdrawRequest(data: val)
+                list.append(lnUrlWithdrawRequest)
+            } else {
+                throw SdkError.Generic(message: "Invalid element type LnUrlWithdrawRequest")
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(lnUrlWithdrawRequestList: [LnUrlWithdrawRequest]) -> [Any] {
+        return lnUrlWithdrawRequestList.map { v -> [String: Any?] in dictionaryOf(lnUrlWithdrawRequest: v) }
+    }
+
     static func asLnUrlWithdrawRequestData(data: [String: Any?]) throws -> LnUrlWithdrawRequestData {
         guard let callback = data["callback"] as? String else { throw SdkError.Generic(message: "Missing mandatory field callback for type LnUrlWithdrawRequestData") }
         guard let k1 = data["k1"] as? String else { throw SdkError.Generic(message: "Missing mandatory field k1 for type LnUrlWithdrawRequestData") }
@@ -1573,7 +1612,7 @@ class BreezSDKMapper {
     }
 
     static func asReceivePaymentRequest(data: [String: Any?]) throws -> ReceivePaymentRequest {
-        guard let amountSats = data["amountSats"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field amountSats for type ReceivePaymentRequest") }
+        guard let amountMsat = data["amountMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field amountMsat for type ReceivePaymentRequest") }
         guard let description = data["description"] as? String else { throw SdkError.Generic(message: "Missing mandatory field description for type ReceivePaymentRequest") }
         let preimage = data["preimage"] as? [UInt8]
         var openingFeeParams: OpeningFeeParams?
@@ -1586,7 +1625,7 @@ class BreezSDKMapper {
         let cltv = data["cltv"] as? UInt32
 
         return ReceivePaymentRequest(
-            amountSats: amountSats,
+            amountMsat: amountMsat,
             description: description,
             preimage: preimage,
             openingFeeParams: openingFeeParams,
@@ -1598,7 +1637,7 @@ class BreezSDKMapper {
 
     static func dictionaryOf(receivePaymentRequest: ReceivePaymentRequest) -> [String: Any?] {
         return [
-            "amountSats": receivePaymentRequest.amountSats,
+            "amountMsat": receivePaymentRequest.amountMsat,
             "description": receivePaymentRequest.description,
             "preimage": receivePaymentRequest.preimage == nil ? nil : receivePaymentRequest.preimage,
             "openingFeeParams": receivePaymentRequest.openingFeeParams == nil ? nil : dictionaryOf(openingFeeParams: receivePaymentRequest.openingFeeParams!),

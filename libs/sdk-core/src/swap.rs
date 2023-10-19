@@ -397,7 +397,7 @@ impl BTCReceiveSwap {
             let invoice = self
                 .payment_receiver
                 .receive_payment(ReceivePaymentRequest {
-                    amount_sats: swap_info.confirmed_sats,
+                    amount_msat: swap_info.confirmed_sats * 1000,
                     description: String::from("Bitcoin Transfer"),
                     preimage: Some(swap_info.preimage),
                     opening_fee_params: swap_info.channel_opening_fees,

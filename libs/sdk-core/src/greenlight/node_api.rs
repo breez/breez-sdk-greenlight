@@ -322,7 +322,7 @@ impl Greenlight {
 impl NodeAPI for Greenlight {
     async fn create_invoice(
         &self,
-        amount_sats: u64,
+        amount_msat: u64,
         description: String,
         preimage: Option<Vec<u8>>,
         use_description_hash: Option<bool>,
@@ -333,9 +333,7 @@ impl NodeAPI for Greenlight {
         let request = InvoiceRequest {
             amount_msat: Some(AmountOrAny {
                 value: Some(gl_client::pb::cln::amount_or_any::Value::Amount(
-                    gl_client::pb::cln::Amount {
-                        msat: amount_sats * 1000,
-                    },
+                    gl_client::pb::cln::Amount { msat: amount_msat },
                 )),
             }),
             label: format!(
