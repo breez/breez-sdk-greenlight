@@ -127,10 +127,7 @@ impl BlockingBreezServices {
         )
     }
 
-    pub fn receive_payment(
-        &self,
-        req: ReceivePaymentRequest,
-    ) -> SdkResult<ReceivePaymentResponse> {
+    pub fn receive_payment(&self, req: ReceivePaymentRequest) -> SdkResult<ReceivePaymentResponse> {
         rt().block_on(self.breez_services.receive_payment(req))
     }
 
