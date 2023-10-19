@@ -23,20 +23,20 @@ use crate::breez_services::{self, BreezEvent, BreezServices, EventListener};
 use crate::chain::RecommendedFees;
 use crate::error::SdkError;
 use crate::fiat::{FiatCurrency, Rate};
-use crate::input_parser::{
-    self, InputType, LnUrlAuthRequestData, LnUrlPayRequestData, LnUrlWithdrawRequestData,
-};
+use crate::input_parser::{self, InputType, LnUrlAuthRequestData, LnUrlWithdrawRequestData};
 use crate::invoice::{self, LNInvoice};
 use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
 use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
-    EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus, LnUrlWithdrawResult, NodeConfig,
-    OpenChannelFeeRequest, OpenChannelFeeResponse, ReceiveOnchainRequest, ReceivePaymentRequest,
-    ReceivePaymentResponse, RefundRequest, RefundResponse, ReverseSwapFeesRequest, ReverseSwapInfo,
-    ReverseSwapPairInfo, SendOnchainRequest, SendOnchainResponse, SignMessageRequest,
-    SignMessageResponse, StaticBackupRequest, StaticBackupResponse, SweepRequest, SweepResponse,
+    EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus, LnUrlPayRequest,
+    LnUrlWithdrawResult, NodeConfig, OpenChannelFeeRequest, OpenChannelFeeResponse,
+    ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse, RefundRequest,
+    RefundResponse, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
+    SendOnchainRequest, SendOnchainResponse, SendPaymentResponse, SendSpontaneousPaymentRequest,
+    SignMessageRequest, SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
+    SweepRequest, SweepResponse,
 };
 
 /*
@@ -238,11 +238,11 @@ pub fn send_payment(bolt11: String, amount_msat: Option<u64>) -> Result<Payment>
 }
 
 /// See [BreezServices::send_spontaneous_payment]
-pub fn send_spontaneous_payment(node_id: String, amount_sats: u64) -> Result<Payment> {
+pub fn send_spontaneous_payment(req: SendSpontaneousPaymentRequest) -> Result<SendPaymentResponse> {
     block_on(async {
         get_breez_services()
             .await?
-            .send_spontaneous_payment(node_id, amount_sats)
+            .send_spontaneous_payment(req)
             .await
     })
     .map_err(anyhow::Error::new::<SdkError>)
@@ -257,17 +257,8 @@ pub fn receive_payment(req: ReceivePaymentRequest) -> Result<ReceivePaymentRespo
 /*  LNURL API's */
 
 /// See [BreezServices::lnurl_pay]
-pub fn lnurl_pay(
-    req_data: LnUrlPayRequestData,
-    user_amount_sat: u64,
-    comment: Option<String>,
-) -> Result<LnUrlPayResult> {
-    block_on(async {
-        get_breez_services()
-            .await?
-            .lnurl_pay(req_data, user_amount_sat, comment)
-            .await
-    })
+pub fn lnurl_pay(req: LnUrlPayRequest) -> Result<LnUrlPayResult> {
+    block_on(async { get_breez_services().await?.lnurl_pay(req).await })
 }
 
 /// See [BreezServices::lnurl_withdraw]

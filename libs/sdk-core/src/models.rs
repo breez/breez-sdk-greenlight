@@ -28,7 +28,7 @@ use crate::grpc::{self, GetReverseRoutingNodeRequest, PaymentInformation, Regist
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lsp::LspInformation;
 use crate::models::Network::*;
-use crate::{LNInvoice, LnUrlErrorData};
+use crate::{LNInvoice, LnUrlErrorData, LnUrlPayRequestData};
 
 use crate::breez_services::BreezServer;
 use crate::error::{SdkError, SdkResult};
@@ -84,7 +84,7 @@ pub trait NodeAPI: Send + Sync {
     async fn send_spontaneous_payment(
         &self,
         node_id: String,
-        amount_sats: u64,
+        amount_msat: u64,
     ) -> Result<crate::models::PaymentResponse>;
     async fn start(&self) -> Result<()>;
     async fn sweep(&self, to_address: String, fee_rate_sats_per_vbyte: u32) -> Result<Vec<u8>>;
@@ -756,6 +756,21 @@ pub struct ReceivePaymentResponse {
     pub opening_fee_msat: Option<u64>,
 }
 
+/// Represents a send payment response.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SendPaymentResponse {
+    pub payment: Payment,
+}
+
+/// Represents a send spontaneous payment request.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SendSpontaneousPaymentRequest {
+    /// The node id to send this payment is
+    pub node_id: String,
+    /// The amount in millisatoshis for this payment
+    pub amount_msat: u64,
+}
+
 #[derive(Clone)]
 pub struct StaticBackupRequest {
     pub working_dir: String,
@@ -1162,6 +1177,17 @@ pub enum LnUrlCallbackStatus {
         #[serde(flatten)]
         data: LnUrlErrorData,
     },
+}
+
+/// Represents a LNURL-pay request.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct LnUrlPayRequest {
+    /// The [LnUrlPayRequestData] returned by [BreezServices::parse_input]
+    pub req_data: LnUrlPayRequestData,
+    /// The amount in millisatoshis for this payment
+    pub amount_msat: u64,
+    /// An optional comment for this payment
+    pub comment: Option<String>,
 }
 
 /// [LnUrlCallbackStatus] specific to LNURL-withdraw, where the success case contains the invoice.

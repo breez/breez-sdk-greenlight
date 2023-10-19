@@ -448,6 +448,12 @@ dictionary LnUrlErrorData {
     string reason;
 };
 
+dictionary LnUrlPayRequest {
+    LnUrlPayRequestData req_data;
+    u64 amount_msat;
+    string? comment;
+};
+
 dictionary LnUrlPayRequestData {
     string callback;
     u64 min_sendable;
@@ -533,6 +539,15 @@ dictionary SweepResponse {
     sequence<u8> txid;
 };
 
+dictionary SendPaymentResponse {
+    Payment payment;
+};
+
+dictionary SendSpontaneousPaymentRequest {
+    string node_id;
+    u64 amount_msat;
+};
+
 dictionary SendOnchainRequest {
     u64 amount_sat;
     string onchain_recipient_address;
@@ -563,13 +578,13 @@ interface BlockingBreezServices {
    Payment send_payment(string bolt11, u64? amount_msat);
 
    [Throws=SdkError]
-   Payment send_spontaneous_payment(string node_id, u64 amount_sats);
+   SendPaymentResponse send_spontaneous_payment(SendSpontaneousPaymentRequest req);
 
    [Throws=SdkError]
    ReceivePaymentResponse receive_payment(ReceivePaymentRequest req);
 
    [Throws=SdkError]
-   LnUrlPayResult pay_lnurl(LnUrlPayRequestData req_data, u64 amount_sats, string? comment);
+   LnUrlPayResult pay_lnurl(LnUrlPayRequest req);
 
    [Throws=SdkError]
    LnUrlWithdrawResult withdraw_lnurl(LnUrlWithdrawRequestData req_data, u64 amount_sats, string? description);

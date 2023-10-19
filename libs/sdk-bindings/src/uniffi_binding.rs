@@ -12,7 +12,7 @@ use breez_sdk_core::{
     ClosedChannelPaymentDetails, Config, CurrencyInfo, EnvironmentType, EventListener,
     FeeratePreset, FiatCurrency, GreenlightCredentials, GreenlightNodeConfig, InputType,
     InvoicePaidDetails, LNInvoice, ListPaymentsRequest, LnPaymentDetails, LnUrlAuthRequestData,
-    LnUrlCallbackStatus, LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult,
+    LnUrlCallbackStatus, LnUrlErrorData, LnUrlPayRequest, LnUrlPayRequestData, LnUrlPayResult,
     LnUrlWithdrawRequestData, LnUrlWithdrawResult, LnUrlWithdrawSuccessData, LocaleOverrides,
     LocalizedName, LogEntry, LogStream, LspInformation, MessageSuccessActionData, MetadataItem,
     Network, NodeConfig, NodeState, OpenChannelFeeRequest, OpenChannelFeeResponse,
@@ -20,9 +20,10 @@ use breez_sdk_core::{
     PaymentStatus, PaymentType, PaymentTypeFilter, Rate, ReceiveOnchainRequest,
     ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees, RefundRequest, RefundResponse,
     ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint,
-    RouteHintHop, SendOnchainRequest, SendOnchainResponse, SignMessageRequest, SignMessageResponse,
-    StaticBackupRequest, StaticBackupResponse, SuccessActionProcessed, SwapInfo, SwapStatus,
-    SweepRequest, SweepResponse, Symbol, UnspentTransactionOutput, UrlSuccessActionData,
+    RouteHintHop, SendOnchainRequest, SendOnchainResponse, SendPaymentResponse,
+    SendSpontaneousPaymentRequest, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
+    StaticBackupResponse, SuccessActionProcessed, SwapInfo, SwapStatus, SweepRequest,
+    SweepResponse, Symbol, UnspentTransactionOutput, UrlSuccessActionData,
 };
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
 static LOG_INIT: OnceCell<bool> = OnceCell::new();
@@ -118,13 +119,9 @@ impl BlockingBreezServices {
 
     pub fn send_spontaneous_payment(
         &self,
-        node_id: String,
-        amount_sats: u64,
-    ) -> SdkResult<Payment> {
-        rt().block_on(
-            self.breez_services
-                .send_spontaneous_payment(node_id, amount_sats),
-        )
+        req: SendSpontaneousPaymentRequest,
+    ) -> SdkResult<SendPaymentResponse> {
+        rt().block_on(self.breez_services.send_spontaneous_payment(req))
     }
 
     pub fn receive_payment(&self, req: ReceivePaymentRequest) -> SdkResult<ReceivePaymentResponse> {
@@ -163,17 +160,9 @@ impl BlockingBreezServices {
             .map_err(|e| e.into())
     }
 
-    pub fn pay_lnurl(
-        &self,
-        req_data: LnUrlPayRequestData,
-        amount_sats: u64,
-        comment: Option<String>,
-    ) -> SdkResult<LnUrlPayResult> {
-        rt().block_on(
-            self.breez_services
-                .lnurl_pay(req_data, amount_sats, comment),
-        )
-        .map_err(|e| e.into())
+    pub fn pay_lnurl(&self, req: LnUrlPayRequest) -> SdkResult<LnUrlPayResult> {
+        rt().block_on(self.breez_services.lnurl_pay(req))
+            .map_err(|e| e.into())
     }
 
     pub fn withdraw_lnurl(

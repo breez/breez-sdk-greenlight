@@ -227,16 +227,11 @@ class BreezSDK {
   ///
   /// # Arguments
   ///
-  /// * `nodeId` - The destination nodeId
-  /// * `amountSats` - The amount to pay in satoshis
-  Future<Payment> sendSpontaneousPayment({
-    required String nodeId,
-    required int amountSats,
+  /// * `req` - The send spontaneous payment request
+  Future<SendPaymentResponse> sendSpontaneousPayment({
+    required SendSpontaneousPaymentRequest req,
   }) async {
-    return await _lnToolkit.sendSpontaneousPayment(
-      nodeId: nodeId,
-      amountSats: amountSats,
-    );
+    return await _lnToolkit.sendSpontaneousPayment(req: req);
   }
 
   /// Creates an bolt11 payment request.
@@ -259,15 +254,9 @@ class BreezSDK {
   /// Second step of LNURL-pay. The first step is `parse()`, which also validates the LNURL destination
   /// and generates the `LnUrlPayRequestData` payload needed here.
   Future<LnUrlPayResult> lnurlPay({
-    required LnUrlPayRequestData reqData,
-    required int userAmountSat,
-    String? comment,
+    required LnUrlPayRequest req,
   }) async {
-    return await _lnToolkit.lnurlPay(
-      reqData: reqData,
-      userAmountSat: userAmountSat,
-      comment: comment,
-    );
+    return await _lnToolkit.lnurlPay(req: req);
   }
 
   /// Second step of LNURL-withdraw. The first step is `parse()`, which also validates the LNURL destination

@@ -7,7 +7,7 @@ use breez_sdk_core::{
     parse, BreezEvent, BreezServices, BuyBitcoinRequest, CheckMessageRequest, EventListener,
     GreenlightCredentials, ListPaymentsRequest, PaymentTypeFilter, ReceiveOnchainRequest,
     ReceivePaymentRequest, RefundRequest, ReverseSwapFeesRequest, SendOnchainRequest,
-    SignMessageRequest, StaticBackupRequest, SweepRequest,
+    SendSpontaneousPaymentRequest, SignMessageRequest, StaticBackupRequest, SweepRequest,
 };
 use breez_sdk_core::{Config, GreenlightNodeConfig, NodeConfig};
 use once_cell::sync::OnceCell;
@@ -189,9 +189,17 @@ pub(crate) async fn handle_command(
             let payment = sdk()?.send_payment(bolt11, amount_msat).await?;
             serde_json::to_string_pretty(&payment).map_err(|e| e.into())
         }
-        Commands::SendSpontaneousPayment { node_id, amount } => {
-            let payment = sdk()?.send_spontaneous_payment(node_id, amount).await?;
-            serde_json::to_string_pretty(&payment).map_err(|e| e.into())
+        Commands::SendSpontaneousPayment {
+            node_id,
+            amount_msat,
+        } => {
+            let response = sdk()?
+                .send_spontaneous_payment(SendSpontaneousPaymentRequest {
+                    node_id,
+                    amount_msat,
+                })
+                .await?;
+            serde_json::to_string_pretty(&response.payment).map_err(|e| e.into())
         }
         Commands::ListPayments {
             from_timestamp,
@@ -318,14 +326,17 @@ pub(crate) async fn handle_command(
         Commands::LnurlPay { lnurl } => match parse(&lnurl).await? {
             LnUrlPay { data: pd } => {
                 let prompt = format!(
-                    "Amount to pay in sats (min {} sat, max {} sat: ",
-                    pd.min_sendable / 1000,
-                    pd.max_sendable / 1000
+                    "Amount to pay in millisatoshi (min {} msat, max {} msat: ",
+                    pd.min_sendable, pd.max_sendable
                 );
 
-                let amount_sat = rl.readline(&prompt)?;
+                let amount_msat = rl.readline(&prompt)?;
                 let pay_res = sdk()?
-                    .lnurl_pay(pd, amount_sat.parse::<u64>()?, None)
+                    .lnurl_pay(breez_sdk_core::LnUrlPayRequest {
+                        req_data: pd,
+                        amount_msat: amount_msat.parse::<u64>()?,
+                        comment: None,
+                    })
                     .await?;
                 //show_results(pay_res);
                 serde_json::to_string_pretty(&pay_res).map_err(|e| e.into())

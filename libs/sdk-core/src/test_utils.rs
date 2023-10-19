@@ -313,7 +313,7 @@ impl NodeAPI for MockNodeAPI {
     async fn send_spontaneous_payment(
         &self,
         _node_id: String,
-        _amount_sats: u64,
+        _amount_msat: u64,
     ) -> Result<PaymentResponse> {
         let payment = self.add_dummy_payment_rand().await?;
         payment.try_into()

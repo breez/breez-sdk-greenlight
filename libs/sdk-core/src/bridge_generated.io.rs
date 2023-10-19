@@ -138,10 +138,9 @@ pub extern "C" fn wire_send_payment(
 #[no_mangle]
 pub extern "C" fn wire_send_spontaneous_payment(
     port_: i64,
-    node_id: *mut wire_uint_8_list,
-    amount_sats: u64,
+    req: *mut wire_SendSpontaneousPaymentRequest,
 ) {
-    wire_send_spontaneous_payment_impl(port_, node_id, amount_sats)
+    wire_send_spontaneous_payment_impl(port_, req)
 }
 
 #[no_mangle]
@@ -150,13 +149,8 @@ pub extern "C" fn wire_receive_payment(port_: i64, req: *mut wire_ReceivePayment
 }
 
 #[no_mangle]
-pub extern "C" fn wire_lnurl_pay(
-    port_: i64,
-    req_data: *mut wire_LnUrlPayRequestData,
-    user_amount_sat: u64,
-    comment: *mut wire_uint_8_list,
-) {
-    wire_lnurl_pay_impl(port_, req_data, user_amount_sat, comment)
+pub extern "C" fn wire_lnurl_pay(port_: i64, req: *mut wire_LnUrlPayRequest) {
+    wire_lnurl_pay_impl(port_, req)
 }
 
 #[no_mangle]
@@ -292,8 +286,8 @@ pub extern "C" fn new_box_autoadd_ln_url_auth_request_data_0() -> *mut wire_LnUr
 }
 
 #[no_mangle]
-pub extern "C" fn new_box_autoadd_ln_url_pay_request_data_0() -> *mut wire_LnUrlPayRequestData {
-    support::new_leak_box_ptr(wire_LnUrlPayRequestData::new_with_null_ptr())
+pub extern "C" fn new_box_autoadd_ln_url_pay_request_0() -> *mut wire_LnUrlPayRequest {
+    support::new_leak_box_ptr(wire_LnUrlPayRequest::new_with_null_ptr())
 }
 
 #[no_mangle]
@@ -341,6 +335,12 @@ pub extern "C" fn new_box_autoadd_reverse_swap_fees_request_0() -> *mut wire_Rev
 #[no_mangle]
 pub extern "C" fn new_box_autoadd_send_onchain_request_0() -> *mut wire_SendOnchainRequest {
     support::new_leak_box_ptr(wire_SendOnchainRequest::new_with_null_ptr())
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_autoadd_send_spontaneous_payment_request_0(
+) -> *mut wire_SendSpontaneousPaymentRequest {
+    support::new_leak_box_ptr(wire_SendSpontaneousPaymentRequest::new_with_null_ptr())
 }
 
 #[no_mangle]
@@ -440,10 +440,10 @@ impl Wire2Api<LnUrlAuthRequestData> for *mut wire_LnUrlAuthRequestData {
         Wire2Api::<LnUrlAuthRequestData>::wire2api(*wrap).into()
     }
 }
-impl Wire2Api<LnUrlPayRequestData> for *mut wire_LnUrlPayRequestData {
-    fn wire2api(self) -> LnUrlPayRequestData {
+impl Wire2Api<LnUrlPayRequest> for *mut wire_LnUrlPayRequest {
+    fn wire2api(self) -> LnUrlPayRequest {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
-        Wire2Api::<LnUrlPayRequestData>::wire2api(*wrap).into()
+        Wire2Api::<LnUrlPayRequest>::wire2api(*wrap).into()
     }
 }
 impl Wire2Api<LnUrlWithdrawRequestData> for *mut wire_LnUrlWithdrawRequestData {
@@ -498,6 +498,12 @@ impl Wire2Api<SendOnchainRequest> for *mut wire_SendOnchainRequest {
     fn wire2api(self) -> SendOnchainRequest {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
         Wire2Api::<SendOnchainRequest>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<SendSpontaneousPaymentRequest> for *mut wire_SendSpontaneousPaymentRequest {
+    fn wire2api(self) -> SendSpontaneousPaymentRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<SendSpontaneousPaymentRequest>::wire2api(*wrap).into()
     }
 }
 impl Wire2Api<SignMessageRequest> for *mut wire_SignMessageRequest {
@@ -599,6 +605,15 @@ impl Wire2Api<LnUrlAuthRequestData> for wire_LnUrlAuthRequestData {
             action: self.action.wire2api(),
             domain: self.domain.wire2api(),
             url: self.url.wire2api(),
+        }
+    }
+}
+impl Wire2Api<LnUrlPayRequest> for wire_LnUrlPayRequest {
+    fn wire2api(self) -> LnUrlPayRequest {
+        LnUrlPayRequest {
+            req_data: self.req_data.wire2api(),
+            amount_msat: self.amount_msat.wire2api(),
+            comment: self.comment.wire2api(),
         }
     }
 }
@@ -708,6 +723,14 @@ impl Wire2Api<SendOnchainRequest> for wire_SendOnchainRequest {
         }
     }
 }
+impl Wire2Api<SendSpontaneousPaymentRequest> for wire_SendSpontaneousPaymentRequest {
+    fn wire2api(self) -> SendSpontaneousPaymentRequest {
+        SendSpontaneousPaymentRequest {
+            node_id: self.node_id.wire2api(),
+            amount_msat: self.amount_msat.wire2api(),
+        }
+    }
+}
 impl Wire2Api<SignMessageRequest> for wire_SignMessageRequest {
     fn wire2api(self) -> SignMessageRequest {
         SignMessageRequest {
@@ -807,6 +830,14 @@ pub struct wire_LnUrlAuthRequestData {
 
 #[repr(C)]
 #[derive(Clone)]
+pub struct wire_LnUrlPayRequest {
+    req_data: wire_LnUrlPayRequestData,
+    amount_msat: u64,
+    comment: *mut wire_uint_8_list,
+}
+
+#[repr(C)]
+#[derive(Clone)]
 pub struct wire_LnUrlPayRequestData {
     callback: *mut wire_uint_8_list,
     min_sendable: u64,
@@ -884,6 +915,13 @@ pub struct wire_SendOnchainRequest {
     onchain_recipient_address: *mut wire_uint_8_list,
     pair_hash: *mut wire_uint_8_list,
     sat_per_vbyte: u64,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_SendSpontaneousPaymentRequest {
+    node_id: *mut wire_uint_8_list,
+    amount_msat: u64,
 }
 
 #[repr(C)]
@@ -1062,6 +1100,22 @@ impl Default for wire_LnUrlAuthRequestData {
     }
 }
 
+impl NewWithNullPtr for wire_LnUrlPayRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            req_data: Default::default(),
+            amount_msat: Default::default(),
+            comment: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_LnUrlPayRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
 impl NewWithNullPtr for wire_LnUrlPayRequestData {
     fn new_with_null_ptr() -> Self {
         Self {
@@ -1234,6 +1288,21 @@ impl NewWithNullPtr for wire_SendOnchainRequest {
 }
 
 impl Default for wire_SendOnchainRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_SendSpontaneousPaymentRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            node_id: core::ptr::null_mut(),
+            amount_msat: Default::default(),
+        }
+    }
+}
+
+impl Default for wire_SendSpontaneousPaymentRequest {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }

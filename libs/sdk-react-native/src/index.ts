@@ -157,6 +157,12 @@ export type LnUrlErrorData = {
     reason: string
 }
 
+export type LnUrlPayRequest = {
+    reqData: LnUrlPayRequestData
+    amountMsat: number
+    comment?: string
+}
+
 export type LnUrlPayRequestData = {
     callback: string
     minSendable: number
@@ -307,6 +313,16 @@ export type RecommendedFees = {
     minimumFee: number
 }
 
+export type RefundRequest = {
+    swapAddress: string
+    toAddress: string
+    satPerVbyte: number
+}
+
+export type RefundResponse = {
+    refundTxId: string
+}
+
 export type ReverseSwapFeesRequest = {
     sendAmountSat?: number
 }
@@ -342,6 +358,26 @@ export type RouteHintHop = {
     cltvExpiryDelta: number
     htlcMinimumMsat?: number
     htlcMaximumMsat?: number
+}
+
+export type SendOnchainRequest = {
+    amountSat: number
+    onchainRecipientAddress: string
+    pairHash: string
+    satPerVbyte: number
+}
+
+export type SendOnchainResponse = {
+    reverseSwapInfo: ReverseSwapInfo
+}
+
+export type SendPaymentResponse = {
+    payment: Payment
+}
+
+export type SendSpontaneousPaymentRequest = {
+    nodeId: string
+    amountMsat: number
 }
 
 export type SignMessageRequest = {
@@ -660,8 +696,8 @@ export const defaultConfig = async (envType: EnvironmentType, apiKey: string, no
     return response
 }
 
-export const staticBackup = async (request: StaticBackupRequest): Promise<StaticBackupResponse> => {
-    const response = await BreezSDK.staticBackup(request)
+export const staticBackup = async (req: StaticBackupRequest): Promise<StaticBackupResponse> => {
+    const response = await BreezSDK.staticBackup(req)
     return response
 }
 
@@ -675,18 +711,18 @@ export const sendPayment = async (bolt11: string, amountMsat: number = 0): Promi
     return response
 }
 
-export const sendSpontaneousPayment = async (nodeId: string, amountSats: number): Promise<Payment> => {
-    const response = await BreezSDK.sendSpontaneousPayment(nodeId, amountSats)
+export const sendSpontaneousPayment = async (req: SendSpontaneousPaymentRequest): Promise<SendPaymentResponse> => {
+    const response = await BreezSDK.sendSpontaneousPayment(req)
     return response
 }
 
-export const receivePayment = async (reqData: ReceivePaymentRequest): Promise<ReceivePaymentResponse> => {
-    const response = await BreezSDK.receivePayment(reqData)
+export const receivePayment = async (req: ReceivePaymentRequest): Promise<ReceivePaymentResponse> => {
+    const response = await BreezSDK.receivePayment(req)
     return response
 }
 
-export const payLnurl = async (reqData: LnUrlPayRequestData, amountSats: number, comment: string = ""): Promise<LnUrlPayResult> => {
-    const response = await BreezSDK.payLnurl(reqData, amountSats, comment)
+export const payLnurl = async (req: LnUrlPayRequest): Promise<LnUrlPayResult> => {
+    const response = await BreezSDK.payLnurl(req)
     return response
 }
 
@@ -705,13 +741,13 @@ export const nodeInfo = async (): Promise<NodeState> => {
     return response
 }
 
-export const signMessage = async (request: SignMessageRequest): Promise<SignMessageResponse> => {
-    const response = await BreezSDK.signMessage(request)
+export const signMessage = async (req: SignMessageRequest): Promise<SignMessageResponse> => {
+    const response = await BreezSDK.signMessage(req)
     return response
 }
 
-export const checkMessage = async (request: CheckMessageRequest): Promise<CheckMessageResponse> => {
-    const response = await BreezSDK.checkMessage(request)
+export const checkMessage = async (req: CheckMessageRequest): Promise<CheckMessageResponse> => {
+    const response = await BreezSDK.checkMessage(req)
     return response
 }
 
@@ -729,13 +765,13 @@ export const paymentByHash = async (hash: string): Promise<Payment | null> => {
     return response
 }
 
-export const listPayments = async (request: ListPaymentsRequest): Promise<Payment[]> => {
-    const response = await BreezSDK.listPayments(request)
+export const listPayments = async (req: ListPaymentsRequest): Promise<Payment[]> => {
+    const response = await BreezSDK.listPayments(req)
     return response
 }
 
-export const sweep = async (request: SweepRequest): Promise<SweepResponse> => {
-    const response = await BreezSDK.sweep(request)
+export const sweep = async (req: SweepRequest): Promise<SweepResponse> => {
+    const response = await BreezSDK.sweep(req)
     return response
 }
 
@@ -797,8 +833,8 @@ export const listRefundables = async (): Promise<SwapInfo[]> => {
     return response
 }
 
-export const refund = async (swapAddress: string, toAddress: string, satPerVbyte: number): Promise<string> => {
-    const response = await BreezSDK.refund(swapAddress, toAddress, satPerVbyte)
+export const refund = async (req: RefundRequest): Promise<RefundResponse> => {
+    const response = await BreezSDK.refund(req)
     return response
 }
 
@@ -812,8 +848,8 @@ export const inProgressReverseSwaps = async (): Promise<ReverseSwapInfo[]> => {
     return response
 }
 
-export const sendOnchain = async (amountSat: number, onchainRecipientAddress: string, pairHash: string, satPerVbyte: number): Promise<ReverseSwapInfo> => {
-    const response = await BreezSDK.sendOnchain(amountSat, onchainRecipientAddress, pairHash, satPerVbyte)
+export const sendOnchain = async (req: SendOnchainRequest): Promise<SendOnchainResponse> => {
+    const response = await BreezSDK.sendOnchain(req)
     return response
 }
 
