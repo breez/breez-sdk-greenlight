@@ -7,19 +7,22 @@ or replace `INSERT_YOUR_BREEZ_API_KEY` in the following files:
 * `android/app/gradle.properties`
 * `ios/Secrets.xconfig`
 
-## Build and Run
+## Build
+
+Run the npm/yarn install to download dependences:
+```bash
+yarn
+```
+or
+```bash
+npm i
+```
+
+## Run
 
 ### Android
 
 ```bash
-# In directory sdk-react-native
-make android
-yarn
-
-# In the example directory
-cd example
-rm -rf node_modules
-yarn
 yarn android
 ```
 
@@ -35,14 +38,6 @@ yarn android
 ### iOS
 
 ```bash
-# In directory sdk-react-native
-make ios
-yarn
-
-# In the example directory
-cd example
-rm -rf node_modules
-yarn
 yarn pods
 yarn ios
 ```
