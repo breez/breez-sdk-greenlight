@@ -714,6 +714,8 @@ impl BreezServices {
     }
 
     /// Construct and broadcast a refund transaction for a failed/expired swap
+    ///
+    /// Returns the txid of the refund transaction.
     pub async fn refund(
         &self,
         swap_address: String,
