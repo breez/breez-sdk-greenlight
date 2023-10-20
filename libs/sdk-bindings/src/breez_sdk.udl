@@ -545,13 +545,18 @@ dictionary SweepResponse {
     sequence<u8> txid;
 };
 
-dictionary SendPaymentResponse {
-    Payment payment;
+dictionary SendPaymentRequest {
+    string bolt11;
+    u64? amount_msat;
 };
 
 dictionary SendSpontaneousPaymentRequest {
     string node_id;
     u64 amount_msat;
+};
+
+dictionary SendPaymentResponse {
+    Payment payment;
 };
 
 dictionary SendOnchainRequest {
@@ -581,7 +586,7 @@ interface BlockingBreezServices {
    void disconnect();
 
    [Throws=SdkError]
-   Payment send_payment(string bolt11, u64? amount_msat);
+   SendPaymentResponse send_payment(SendPaymentRequest req);
 
    [Throws=SdkError]
    SendPaymentResponse send_spontaneous_payment(SendSpontaneousPaymentRequest req);
@@ -593,7 +598,7 @@ interface BlockingBreezServices {
    LnUrlPayResult pay_lnurl(LnUrlPayRequest req);
 
    [Throws=SdkError]
-   LnUrlWithdrawResult withdraw_lnurl(LnUrlWithdrawRequest req);
+   LnUrlWithdrawResult withdraw_lnurl(LnUrlWithdrawRequest request);
 
    [Throws=SdkError]
    LnUrlCallbackStatus lnurl_auth(LnUrlAuthRequestData req_data);

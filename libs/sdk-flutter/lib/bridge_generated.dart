@@ -137,7 +137,7 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kPaymentByHashConstMeta;
 
   /// See [BreezServices::send_payment]
-  Future<Payment> sendPayment({required String bolt11, int? amountMsat, dynamic hint});
+  Future<SendPaymentResponse> sendPayment({required SendPaymentRequest req, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kSendPaymentConstMeta;
 
@@ -1360,6 +1360,20 @@ class SendOnchainResponse {
   });
 }
 
+/// Represents a send payment request.
+class SendPaymentRequest {
+  /// The bolt11 invoice
+  final String bolt11;
+
+  /// The amount to pay in millisatoshis
+  final int? amountMsat;
+
+  const SendPaymentRequest({
+    required this.bolt11,
+    this.amountMsat,
+  });
+}
+
 /// Represents a send payment response.
 class SendPaymentResponse {
   final Payment payment;
@@ -1955,21 +1969,20 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["hash"],
       );
 
-  Future<Payment> sendPayment({required String bolt11, int? amountMsat, dynamic hint}) {
-    var arg0 = _platform.api2wire_String(bolt11);
-    var arg1 = _platform.api2wire_opt_box_autoadd_u64(amountMsat);
+  Future<SendPaymentResponse> sendPayment({required SendPaymentRequest req, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_send_payment_request(req);
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_send_payment(port_, arg0, arg1),
-      parseSuccessData: _wire2api_payment,
+      callFfi: (port_) => _platform.inner.wire_send_payment(port_, arg0),
+      parseSuccessData: _wire2api_send_payment_response,
       constMeta: kSendPaymentConstMeta,
-      argValues: [bolt11, amountMsat],
+      argValues: [req],
       hint: hint,
     ));
   }
 
   FlutterRustBridgeTaskConstMeta get kSendPaymentConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "send_payment",
-        argNames: ["bolt11", "amountMsat"],
+        argNames: ["req"],
       );
 
   Future<SendPaymentResponse> sendSpontaneousPayment(
@@ -3460,6 +3473,13 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<wire_SendPaymentRequest> api2wire_box_autoadd_send_payment_request(SendPaymentRequest raw) {
+    final ptr = inner.new_box_autoadd_send_payment_request_0();
+    _api_fill_to_wire_send_payment_request(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
   ffi.Pointer<wire_SendSpontaneousPaymentRequest> api2wire_box_autoadd_send_spontaneous_payment_request(
       SendSpontaneousPaymentRequest raw) {
     final ptr = inner.new_box_autoadd_send_spontaneous_payment_request_0();
@@ -3642,6 +3662,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     _api_fill_to_wire_send_onchain_request(apiObj, wireObj.ref);
   }
 
+  void _api_fill_to_wire_box_autoadd_send_payment_request(
+      SendPaymentRequest apiObj, ffi.Pointer<wire_SendPaymentRequest> wireObj) {
+    _api_fill_to_wire_send_payment_request(apiObj, wireObj.ref);
+  }
+
   void _api_fill_to_wire_box_autoadd_send_spontaneous_payment_request(
       SendSpontaneousPaymentRequest apiObj, ffi.Pointer<wire_SendSpontaneousPaymentRequest> wireObj) {
     _api_fill_to_wire_send_spontaneous_payment_request(apiObj, wireObj.ref);
@@ -3815,6 +3840,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.onchain_recipient_address = api2wire_String(apiObj.onchainRecipientAddress);
     wireObj.pair_hash = api2wire_String(apiObj.pairHash);
     wireObj.sat_per_vbyte = api2wire_u64(apiObj.satPerVbyte);
+  }
+
+  void _api_fill_to_wire_send_payment_request(SendPaymentRequest apiObj, wire_SendPaymentRequest wireObj) {
+    wireObj.bolt11 = api2wire_String(apiObj.bolt11);
+    wireObj.amount_msat = api2wire_opt_box_autoadd_u64(apiObj.amountMsat);
   }
 
   void _api_fill_to_wire_send_spontaneous_payment_request(
@@ -4261,22 +4291,19 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
 
   void wire_send_payment(
     int port_,
-    ffi.Pointer<wire_uint_8_list> bolt11,
-    ffi.Pointer<ffi.Uint64> amount_msat,
+    ffi.Pointer<wire_SendPaymentRequest> req,
   ) {
     return _wire_send_payment(
       port_,
-      bolt11,
-      amount_msat,
+      req,
     );
   }
 
-  late final _wire_send_paymentPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Int64, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<ffi.Uint64>)>>('wire_send_payment');
-  late final _wire_send_payment = _wire_send_paymentPtr
-      .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<ffi.Uint64>)>();
+  late final _wire_send_paymentPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_SendPaymentRequest>)>>(
+          'wire_send_payment');
+  late final _wire_send_payment =
+      _wire_send_paymentPtr.asFunction<void Function(int, ffi.Pointer<wire_SendPaymentRequest>)>();
 
   void wire_send_spontaneous_payment(
     int port_,
@@ -4750,6 +4777,16 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _new_box_autoadd_send_onchain_request_0 = _new_box_autoadd_send_onchain_request_0Ptr
       .asFunction<ffi.Pointer<wire_SendOnchainRequest> Function()>();
 
+  ffi.Pointer<wire_SendPaymentRequest> new_box_autoadd_send_payment_request_0() {
+    return _new_box_autoadd_send_payment_request_0();
+  }
+
+  late final _new_box_autoadd_send_payment_request_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_SendPaymentRequest> Function()>>(
+          'new_box_autoadd_send_payment_request_0');
+  late final _new_box_autoadd_send_payment_request_0 = _new_box_autoadd_send_payment_request_0Ptr
+      .asFunction<ffi.Pointer<wire_SendPaymentRequest> Function()>();
+
   ffi.Pointer<wire_SendSpontaneousPaymentRequest> new_box_autoadd_send_spontaneous_payment_request_0() {
     return _new_box_autoadd_send_spontaneous_payment_request_0();
   }
@@ -4943,6 +4980,12 @@ class wire_ListPaymentsRequest extends ffi.Struct {
   external ffi.Pointer<ffi.Uint32> offset;
 
   external ffi.Pointer<ffi.Uint32> limit;
+}
+
+class wire_SendPaymentRequest extends ffi.Struct {
+  external ffi.Pointer<wire_uint_8_list> bolt11;
+
+  external ffi.Pointer<ffi.Uint64> amount_msat;
 }
 
 class wire_SendSpontaneousPaymentRequest extends ffi.Struct {

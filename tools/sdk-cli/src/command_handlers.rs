@@ -5,9 +5,10 @@ use anyhow::{anyhow, Error, Result};
 use breez_sdk_core::InputType::{LnUrlAuth, LnUrlPay, LnUrlWithdraw};
 use breez_sdk_core::{
     parse, BreezEvent, BreezServices, BuyBitcoinRequest, CheckMessageRequest, EventListener,
-    GreenlightCredentials, ListPaymentsRequest, LnUrlWithdrawRequest, LnUrlPayRequest, PaymentTypeFilter, ReceiveOnchainRequest,
-    ReceivePaymentRequest, RefundRequest, ReverseSwapFeesRequest, SendOnchainRequest,
-    SendSpontaneousPaymentRequest, SignMessageRequest, StaticBackupRequest, SweepRequest,
+    GreenlightCredentials, ListPaymentsRequest, LnUrlPayRequest, LnUrlWithdrawRequest,
+    PaymentTypeFilter, ReceiveOnchainRequest, ReceivePaymentRequest, RefundRequest,
+    ReverseSwapFeesRequest, SendOnchainRequest, SendPaymentRequest, SendSpontaneousPaymentRequest,
+    SignMessageRequest, StaticBackupRequest, SweepRequest,
 };
 use breez_sdk_core::{Config, GreenlightNodeConfig, NodeConfig};
 use once_cell::sync::OnceCell;
@@ -186,7 +187,12 @@ pub(crate) async fn handle_command(
             bolt11,
             amount_msat,
         } => {
-            let payment = sdk()?.send_payment(bolt11, amount_msat).await?;
+            let payment = sdk()?
+                .send_payment(SendPaymentRequest {
+                    bolt11,
+                    amount_msat,
+                })
+                .await?;
             serde_json::to_string_pretty(&payment).map_err(|e| e.into())
         }
         Commands::SendSpontaneousPayment {

@@ -211,16 +211,11 @@ class BreezSDK {
   ///
   /// # Arguments
   ///
-  /// * `bolt11` - The bolt11 invoice
-  /// * `amountSats` - The amount to pay in satoshis
-  Future<Payment> sendPayment({
-    required String bolt11,
-    int? amountMsat,
+  /// * `req` - The send payment request
+  Future<SendPaymentResponse> sendPayment({
+    required SendPaymentRequest req,
   }) async {
-    return await _lnToolkit.sendPayment(
-      bolt11: bolt11,
-      amountMsat: amountMsat,
-    );
+    return await _lnToolkit.sendPayment(req: req);
   }
 
   /// pay directly to a node id using keysend

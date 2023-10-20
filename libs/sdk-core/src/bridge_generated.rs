@@ -90,6 +90,7 @@ use crate::models::ReverseSwapPairInfo;
 use crate::models::ReverseSwapStatus;
 use crate::models::SendOnchainRequest;
 use crate::models::SendOnchainResponse;
+use crate::models::SendPaymentRequest;
 use crate::models::SendPaymentResponse;
 use crate::models::SendSpontaneousPaymentRequest;
 use crate::models::StaticBackupRequest;
@@ -399,11 +400,7 @@ fn wire_payment_by_hash_impl(port_: MessagePort, hash: impl Wire2Api<String> + U
         },
     )
 }
-fn wire_send_payment_impl(
-    port_: MessagePort,
-    bolt11: impl Wire2Api<String> + UnwindSafe,
-    amount_msat: impl Wire2Api<Option<u64>> + UnwindSafe,
-) {
+fn wire_send_payment_impl(port_: MessagePort, req: impl Wire2Api<SendPaymentRequest> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
             debug_name: "send_payment",
@@ -411,9 +408,8 @@ fn wire_send_payment_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_bolt11 = bolt11.wire2api();
-            let api_amount_msat = amount_msat.wire2api();
-            move |task_callback| send_payment(api_bolt11, api_amount_msat)
+            let api_req = req.wire2api();
+            move |task_callback| send_payment(api_req)
         },
     )
 }

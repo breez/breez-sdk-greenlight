@@ -20,7 +20,7 @@ use breez_sdk_core::{
     PaymentStatus, PaymentType, PaymentTypeFilter, Rate, ReceiveOnchainRequest,
     ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees, RefundRequest, RefundResponse,
     ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint,
-    RouteHintHop, SendOnchainRequest, SendOnchainResponse, SendPaymentResponse,
+    RouteHintHop, SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
     SendSpontaneousPaymentRequest, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
     StaticBackupResponse, SuccessActionProcessed, SwapInfo, SwapStatus, SweepRequest,
     SweepResponse, Symbol, UnspentTransactionOutput, UrlSuccessActionData,
@@ -113,8 +113,8 @@ impl BlockingBreezServices {
         rt().block_on(self.breez_services.disconnect())
     }
 
-    pub fn send_payment(&self, bolt11: String, amount_msat: Option<u64>) -> SdkResult<Payment> {
-        rt().block_on(self.breez_services.send_payment(bolt11, amount_msat))
+    pub fn send_payment(&self, req: SendPaymentRequest) -> SdkResult<SendPaymentResponse> {
+        rt().block_on(self.breez_services.send_payment(req))
     }
 
     pub fn send_spontaneous_payment(

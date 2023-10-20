@@ -756,10 +756,13 @@ pub struct ReceivePaymentResponse {
     pub opening_fee_msat: Option<u64>,
 }
 
-/// Represents a send payment response.
+/// Represents a send payment request.
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SendPaymentResponse {
-    pub payment: Payment,
+pub struct SendPaymentRequest {
+    /// The bolt11 invoice
+    pub bolt11: String,
+    /// The amount to pay in millisatoshis
+    pub amount_msat: Option<u64>,
 }
 
 /// Represents a send spontaneous payment request.
@@ -769,6 +772,12 @@ pub struct SendSpontaneousPaymentRequest {
     pub node_id: String,
     /// The amount in millisatoshis for this payment
     pub amount_msat: u64,
+}
+
+/// Represents a send payment response.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SendPaymentResponse {
+    pub payment: Payment,
 }
 
 #[derive(Clone)]

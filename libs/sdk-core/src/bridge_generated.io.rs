@@ -127,12 +127,8 @@ pub extern "C" fn wire_payment_by_hash(port_: i64, hash: *mut wire_uint_8_list) 
 }
 
 #[no_mangle]
-pub extern "C" fn wire_send_payment(
-    port_: i64,
-    bolt11: *mut wire_uint_8_list,
-    amount_msat: *mut u64,
-) {
-    wire_send_payment_impl(port_, bolt11, amount_msat)
+pub extern "C" fn wire_send_payment(port_: i64, req: *mut wire_SendPaymentRequest) {
+    wire_send_payment_impl(port_, req)
 }
 
 #[no_mangle]
@@ -332,6 +328,11 @@ pub extern "C" fn new_box_autoadd_send_onchain_request_0() -> *mut wire_SendOnch
 }
 
 #[no_mangle]
+pub extern "C" fn new_box_autoadd_send_payment_request_0() -> *mut wire_SendPaymentRequest {
+    support::new_leak_box_ptr(wire_SendPaymentRequest::new_with_null_ptr())
+}
+
+#[no_mangle]
 pub extern "C" fn new_box_autoadd_send_spontaneous_payment_request_0(
 ) -> *mut wire_SendSpontaneousPaymentRequest {
     support::new_leak_box_ptr(wire_SendSpontaneousPaymentRequest::new_with_null_ptr())
@@ -492,6 +493,12 @@ impl Wire2Api<SendOnchainRequest> for *mut wire_SendOnchainRequest {
     fn wire2api(self) -> SendOnchainRequest {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
         Wire2Api::<SendOnchainRequest>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<SendPaymentRequest> for *mut wire_SendPaymentRequest {
+    fn wire2api(self) -> SendPaymentRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<SendPaymentRequest>::wire2api(*wrap).into()
     }
 }
 impl Wire2Api<SendSpontaneousPaymentRequest> for *mut wire_SendSpontaneousPaymentRequest {
@@ -726,6 +733,14 @@ impl Wire2Api<SendOnchainRequest> for wire_SendOnchainRequest {
         }
     }
 }
+impl Wire2Api<SendPaymentRequest> for wire_SendPaymentRequest {
+    fn wire2api(self) -> SendPaymentRequest {
+        SendPaymentRequest {
+            bolt11: self.bolt11.wire2api(),
+            amount_msat: self.amount_msat.wire2api(),
+        }
+    }
+}
 impl Wire2Api<SendSpontaneousPaymentRequest> for wire_SendSpontaneousPaymentRequest {
     fn wire2api(self) -> SendSpontaneousPaymentRequest {
         SendSpontaneousPaymentRequest {
@@ -926,6 +941,13 @@ pub struct wire_SendOnchainRequest {
     onchain_recipient_address: *mut wire_uint_8_list,
     pair_hash: *mut wire_uint_8_list,
     sat_per_vbyte: u64,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_SendPaymentRequest {
+    bolt11: *mut wire_uint_8_list,
+    amount_msat: *mut u64,
 }
 
 #[repr(C)]
@@ -1315,6 +1337,21 @@ impl NewWithNullPtr for wire_SendOnchainRequest {
 }
 
 impl Default for wire_SendOnchainRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_SendPaymentRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            bolt11: core::ptr::null_mut(),
+            amount_msat: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_SendPaymentRequest {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }

@@ -225,17 +225,12 @@ impl BreezServices {
     ///
     /// # Arguments
     ///
-    /// * `bolt11` - The bolt11 invoice
-    /// * `amount_msat` - The amount to pay in millisatoshis
-    pub async fn send_payment(
-        &self,
-        bolt11: String,
-        amount_msat: Option<u64>,
-    ) -> SdkResult<Payment> {
+    /// * `req` - Request parameters for sending a payment
+    pub async fn send_payment(&self, req: SendPaymentRequest) -> SdkResult<SendPaymentResponse> {
         self.start_node().await?;
-        let parsed_invoice = parse_invoice(bolt11.as_str())?;
+        let parsed_invoice = parse_invoice(req.bolt11.as_str())?;
         let invoice_amount_msat = parsed_invoice.amount_msat.unwrap_or_default();
-        let provided_amount_msat = amount_msat.unwrap_or_default();
+        let provided_amount_msat = req.amount_msat.unwrap_or_default();
 
         // Ensure amount is provided for zero invoice
         if provided_amount_msat == 0 && invoice_amount_msat == 0 {
@@ -261,14 +256,16 @@ impl BreezServices {
             None => {
                 let payment_res = self
                     .node_api
-                    .send_payment(bolt11.clone(), amount_msat)
+                    .send_payment(req.bolt11.clone(), req.amount_msat)
                     .await;
-                self.on_payment_completed(
-                    parsed_invoice.payee_pubkey.clone(),
-                    Some(parsed_invoice),
-                    payment_res,
-                )
-                .await
+                let payment = self
+                    .on_payment_completed(
+                        parsed_invoice.payee_pubkey.clone(),
+                        Some(parsed_invoice),
+                        payment_res,
+                    )
+                    .await?;
+                Ok(SendPaymentResponse { payment })
             }
         }
     }
@@ -311,7 +308,11 @@ impl BreezServices {
                 Ok(LnUrlPayResult::EndpointError { data: e })
             }
             ValidatedCallbackResponse::EndpointSuccess { data: cb } => {
-                let payment = self.send_payment(cb.pr, None).await?;
+                let pay_req = SendPaymentRequest {
+                    bolt11: cb.pr,
+                    amount_msat: None,
+                };
+                let payment = self.send_payment(pay_req).await?.payment;
                 let details = match &payment.details {
                     PaymentDetails::ClosedChannel { .. } => {
                         return Err(anyhow!("Payment lookup found unexpected payment type"));

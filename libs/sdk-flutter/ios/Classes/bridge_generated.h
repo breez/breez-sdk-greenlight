@@ -81,6 +81,11 @@ typedef struct wire_ListPaymentsRequest {
   uint32_t *limit;
 } wire_ListPaymentsRequest;
 
+typedef struct wire_SendPaymentRequest {
+  struct wire_uint_8_list *bolt11;
+  uint64_t *amount_msat;
+} wire_SendPaymentRequest;
+
 typedef struct wire_SendSpontaneousPaymentRequest {
   struct wire_uint_8_list *node_id;
   uint64_t amount_msat;
@@ -241,7 +246,7 @@ void wire_list_payments(int64_t port_, struct wire_ListPaymentsRequest *req);
 
 void wire_payment_by_hash(int64_t port_, struct wire_uint_8_list *hash);
 
-void wire_send_payment(int64_t port_, struct wire_uint_8_list *bolt11, uint64_t *amount_msat);
+void wire_send_payment(int64_t port_, struct wire_SendPaymentRequest *req);
 
 void wire_send_spontaneous_payment(int64_t port_, struct wire_SendSpontaneousPaymentRequest *req);
 
@@ -318,6 +323,8 @@ struct wire_RefundRequest *new_box_autoadd_refund_request_0(void);
 struct wire_ReverseSwapFeesRequest *new_box_autoadd_reverse_swap_fees_request_0(void);
 
 struct wire_SendOnchainRequest *new_box_autoadd_send_onchain_request_0(void);
+
+struct wire_SendPaymentRequest *new_box_autoadd_send_payment_request_0(void);
 
 struct wire_SendSpontaneousPaymentRequest *new_box_autoadd_send_spontaneous_payment_request_0(void);
 
@@ -402,6 +409,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_refund_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_reverse_swap_fees_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_send_onchain_request_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_send_payment_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_send_spontaneous_payment_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_sign_message_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_static_backup_request_0);
