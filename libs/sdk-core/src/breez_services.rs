@@ -1792,7 +1792,7 @@ impl Receiver for PaymentReceiver {
                 request.preimage,
                 request.use_description_hash,
                 Some(expiry),
-                request.cltv,
+                Some(request.cltv.unwrap_or(144)),
             )
             .await?;
         info!("Invoice created {}", invoice);
