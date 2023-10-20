@@ -151,7 +151,7 @@ typedef struct wire_SendOnchainRequest {
   uint64_t amount_sat;
   struct wire_uint_8_list *onchain_recipient_address;
   struct wire_uint_8_list *pair_hash;
-  uint64_t sat_per_vbyte;
+  uint32_t sat_per_vbyte;
 } wire_SendOnchainRequest;
 
 typedef struct wire_ReceiveOnchainRequest {

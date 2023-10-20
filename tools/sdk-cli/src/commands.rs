@@ -77,7 +77,7 @@ pub(crate) enum Commands {
         amount_sat: u64,
         onchain_recipient_address: String,
         /// The fee rate for the claim transaction
-        sat_per_vbyte: u64,
+        sat_per_vbyte: u32,
     },
 
     /// Get the current fees for a potential new reverse swap

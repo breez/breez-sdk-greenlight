@@ -940,7 +940,7 @@ pub struct wire_SendOnchainRequest {
     amount_sat: u64,
     onchain_recipient_address: *mut wire_uint_8_list,
     pair_hash: *mut wire_uint_8_list,
-    sat_per_vbyte: u64,
+    sat_per_vbyte: u32,
 }
 
 #[repr(C)]

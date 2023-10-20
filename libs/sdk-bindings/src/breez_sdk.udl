@@ -563,7 +563,7 @@ dictionary SendOnchainRequest {
     u64 amount_sat;
     string onchain_recipient_address;
     string pair_hash;
-    u64 sat_per_vbyte;
+    u32 sat_per_vbyte;
 };
 
 dictionary SendOnchainResponse {

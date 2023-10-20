@@ -309,7 +309,7 @@ impl BTCSendSwap {
                 let claim_witness_input_size: u32 = 1 + 1 + 8 + 73 + 1 + 32 + 1 + 100;
                 let tx_weight = tx.strippedsize() as u32 * WITNESS_SCALE_FACTOR as u32
                     + claim_witness_input_size * txins.len() as u32;
-                let fees: u64 = tx_weight as u64 * rs.sat_per_vbyte / WITNESS_SCALE_FACTOR as u64;
+                let fees: u64 = (tx_weight * rs.sat_per_vbyte / WITNESS_SCALE_FACTOR as u32) as u64;
                 debug!("Claim tx amount: {claim_amount_sat}");
                 debug!("Claim tx fees: {fees}");
                 tx.output[0].value = claim_amount_sat - fees;

@@ -208,7 +208,7 @@ pub struct FullReverseSwapInfo {
     pub onchain_amount_sat: u64,
 
     /// User-specified feerate for the claim tx
-    pub sat_per_vbyte: u64,
+    pub sat_per_vbyte: u32,
 
     pub cache: ReverseSwapInfoCached,
 }
@@ -833,7 +833,7 @@ pub struct SendOnchainRequest {
     pub amount_sat: u64,
     pub onchain_recipient_address: String,
     pub pair_hash: String,
-    pub sat_per_vbyte: u64,
+    pub sat_per_vbyte: u32,
 }
 
 pub struct SendOnchainResponse {

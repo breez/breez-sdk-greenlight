@@ -3839,7 +3839,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.amount_sat = api2wire_u64(apiObj.amountSat);
     wireObj.onchain_recipient_address = api2wire_String(apiObj.onchainRecipientAddress);
     wireObj.pair_hash = api2wire_String(apiObj.pairHash);
-    wireObj.sat_per_vbyte = api2wire_u64(apiObj.satPerVbyte);
+    wireObj.sat_per_vbyte = api2wire_u32(apiObj.satPerVbyte);
   }
 
   void _api_fill_to_wire_send_payment_request(SendPaymentRequest apiObj, wire_SendPaymentRequest wireObj) {
@@ -5099,7 +5099,7 @@ class wire_SendOnchainRequest extends ffi.Struct {
 
   external ffi.Pointer<wire_uint_8_list> pair_hash;
 
-  @ffi.Uint64()
+  @ffi.Uint32()
   external int sat_per_vbyte;
 }
 
