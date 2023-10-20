@@ -264,8 +264,8 @@ class BreezSDK {
   /// This call will validate the given amount in the `request` against the parameters
   /// of the LNURL endpoint data in the `request`. If they match the endpoint requirements, the LNURL withdraw
   /// request is made. A successful result here means the endpoint started the payment.
-  Future<LnUrlWithdrawResult> lnurlWithdraw({required LnUrlWithdrawRequest request}) async {
-    return await _lnToolkit.lnurlWithdraw(request: request);
+  Future<LnUrlWithdrawResult> lnurlWithdraw({required LnUrlWithdrawRequest req}) async {
+    return await _lnToolkit.lnurlWithdraw(req: req);
   }
 
   /// Third and last step of LNURL-auth. The first step is `parse()`, which also validates the LNURL destination

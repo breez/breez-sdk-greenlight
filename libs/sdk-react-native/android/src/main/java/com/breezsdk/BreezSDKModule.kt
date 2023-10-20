@@ -253,14 +253,14 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
     @ReactMethod
     fun withdrawLnurl(
-        request: ReadableMap,
+        req: ReadableMap,
         promise: Promise,
     ) {
         executor.execute {
             try {
                 val lnUrlWithdrawRequest =
-                    asLnUrlWithdrawRequest(request) ?: run {
-                        throw SdkException.Generic("Missing mandatory field request of type LnUrlWithdrawRequest")
+                    asLnUrlWithdrawRequest(req) ?: run {
+                        throw SdkException.Generic("Missing mandatory field req of type LnUrlWithdrawRequest")
                     }
                 val res = getBreezServices().withdrawLnurl(lnUrlWithdrawRequest)
                 promise.resolve(readableMapOf(res))

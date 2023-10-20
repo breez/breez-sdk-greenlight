@@ -165,8 +165,8 @@ impl BlockingBreezServices {
             .map_err(|e| e.into())
     }
 
-    pub fn withdraw_lnurl(&self, request: LnUrlWithdrawRequest) -> SdkResult<LnUrlWithdrawResult> {
-        rt().block_on(self.breez_services.lnurl_withdraw(request))
+    pub fn withdraw_lnurl(&self, req: LnUrlWithdrawRequest) -> SdkResult<LnUrlWithdrawResult> {
+        rt().block_on(self.breez_services.lnurl_withdraw(req))
             .map_err(|e| e.into())
     }
 

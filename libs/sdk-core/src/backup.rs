@@ -126,18 +126,18 @@ impl BackupWatcher {
                     tokio::select! {
 
                      // We listen to manual backup requests from the user
-                     request = backup_request_receiver.recv() => {
-                      match request {
-                       Some(request) => {
-                        match worker.sync(request.force).await {
+                     req = backup_request_receiver.recv() => {
+                      match req {
+                       Some(req) => {
+                        match worker.sync(req.force).await {
                          Ok(_) => {
-                          if let Some(callback) = request.on_complete {
+                          if let Some(callback) = req.on_complete {
                            _ = callback.send(Ok(())).await;
                           }
                          }
                          Err(e) => {
                           error!("Sync worker returned with error {e}");
-                          if let Some(callback) = request.on_complete {
+                          if let Some(callback) = req.on_complete {
                            _ = callback.send(Err(e)).await;
                           }
                          }
@@ -189,11 +189,11 @@ impl BackupWatcher {
         self.events_notifier.subscribe()
     }
 
-    pub(crate) async fn request_backup(&self, request: BackupRequest) -> Result<()> {
+    pub(crate) async fn request_backup(&self, req: BackupRequest) -> Result<()> {
         let request_handler = self.backup_request_sender.lock().await;
         let h = request_handler.clone();
         h.ok_or_else(|| anyhow!("No backup request handler found"))?
-            .send(request)
+            .send(req)
             .await
             .map_err(|_| anyhow!("Failed to send backup request, the channel is likely closed"))
     }

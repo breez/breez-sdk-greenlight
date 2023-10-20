@@ -333,7 +333,7 @@ pub(crate) async fn handle_command(
                 let amount_msat = rl.readline(&prompt)?;
                 let pay_res = sdk()?
                     .lnurl_pay(LnUrlPayRequest {
-                        req_data: pd,
+                        data: pd,
                         amount_msat: amount_msat.parse::<u64>()?,
                         comment: None,
                     })

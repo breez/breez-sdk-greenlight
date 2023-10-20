@@ -52,10 +52,10 @@ pub(crate) async fn validate_lnurl_pay(
 fn build_pay_callback_url(
     user_amount_msat: u64,
     user_comment: &Option<String>,
-    req_data: &LnUrlPayRequestData,
+    data: &LnUrlPayRequestData,
 ) -> Result<String> {
     let amount_msat = user_amount_msat.to_string();
-    let mut url = reqwest::Url::from_str(&req_data.callback)?;
+    let mut url = reqwest::Url::from_str(&data.callback)?;
 
     url.query_pairs_mut().append_pair("amount", &amount_msat);
     if let Some(comment) = user_comment {
@@ -93,18 +93,14 @@ fn validate_user_input(
     }
 }
 
-fn validate_invoice(
-    user_amount_msat: u64,
-    bolt11: &str,
-    req_data: &LnUrlPayRequestData,
-) -> Result<()> {
+fn validate_invoice(user_amount_msat: u64, bolt11: &str, data: &LnUrlPayRequestData) -> Result<()> {
     let invoice = parse_invoice(bolt11)?;
 
     match invoice.description_hash {
         None => return Err(anyhow!("Invoice is missing description hash")),
         Some(received_hash) => {
             // The hash is calculated from the exact metadata string, as received from the LNURL endpoint
-            let calculated_hash = sha256::Hash::hash(req_data.metadata_str.as_bytes());
+            let calculated_hash = sha256::Hash::hash(data.metadata_str.as_bytes());
             if received_hash != calculated_hash.to_string() {
                 return Err(anyhow!("Invoice has an invalid description hash"));
             }
@@ -301,7 +297,7 @@ pub(crate) mod model {
     }
 
     impl UrlSuccessActionData {
-        pub fn validate(&self, req_data: &LnUrlPayRequestData) -> Result<()> {
+        pub fn validate(&self, data: &LnUrlPayRequestData) -> Result<()> {
             match self.description.len() <= 144 {
                 true => Ok(()),
                 false => Err(anyhow!(
@@ -309,7 +305,7 @@ pub(crate) mod model {
                 )),
             }
             .and_then(|_| {
-                let req_url = reqwest::Url::parse(&req_data.callback)?;
+                let req_url = reqwest::Url::parse(&data.callback)?;
                 let req_domain = req_url
                     .domain()
                     .ok_or_else(|| anyhow!("Could not determine callback domain"))?;
@@ -819,7 +815,7 @@ mod tests {
         let mock_breez_services = crate::breez_services::tests::breez_services().await?;
         match mock_breez_services
             .lnurl_pay(LnUrlPayRequest {
-                req_data: pay_req,
+                data: pay_req,
                 amount_msat: user_amount_msat,
                 comment: Some(comment),
             })
@@ -852,7 +848,7 @@ mod tests {
         let mock_breez_services = crate::breez_services::tests::breez_services().await?;
         let r = mock_breez_services
             .lnurl_pay(LnUrlPayRequest {
-                req_data: pay_req,
+                data: pay_req,
                 amount_msat: user_amount_msat,
                 comment: Some(comment),
             })
@@ -881,7 +877,7 @@ mod tests {
         let mock_breez_services = crate::breez_services::tests::breez_services().await?;
         match mock_breez_services
             .lnurl_pay(LnUrlPayRequest {
-                req_data: pay_req,
+                data: pay_req,
                 amount_msat: user_amount_msat,
                 comment: Some(comment),
             })
@@ -918,7 +914,7 @@ mod tests {
         let mock_breez_services = crate::breez_services::tests::breez_services().await?;
         assert!(mock_breez_services
             .lnurl_pay(LnUrlPayRequest {
-                req_data: pay_req,
+                data: pay_req,
                 amount_msat: user_amount_msat,
                 comment: Some(comment)
             })
@@ -947,7 +943,7 @@ mod tests {
         let mock_breez_services = crate::breez_services::tests::breez_services().await?;
         let res = mock_breez_services
             .lnurl_pay(LnUrlPayRequest {
-                req_data: pay_req,
+                data: pay_req,
                 amount_msat: user_amount_msat,
                 comment: Some(comment),
             })
@@ -983,7 +979,7 @@ mod tests {
         let mock_breez_services = crate::breez_services::tests::breez_services().await?;
         match mock_breez_services
             .lnurl_pay(LnUrlPayRequest {
-                req_data: pay_req,
+                data: pay_req,
                 amount_msat: user_amount_msat,
                 comment: Some(comment),
             })
@@ -1055,7 +1051,7 @@ mod tests {
         .await?;
         match mock_breez_services
             .lnurl_pay(LnUrlPayRequest {
-                req_data: pay_req,
+                data: pay_req,
                 amount_msat: user_amount_msat,
                 comment: Some(comment),
             })

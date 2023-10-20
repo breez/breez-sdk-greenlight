@@ -175,10 +175,10 @@ class RNBreezSDK: RCTEventEmitter {
     }
 
     @objc(withdrawLnurl:resolve:reject:)
-    func withdrawLnurl(_ request: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    func withdrawLnurl(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let lnUrlWithdrawRequest = try BreezSDKMapper.asLnUrlWithdrawRequest(data: request)
-            var res = try getBreezServices().withdrawLnurl(request: lnUrlWithdrawRequest)
+            let lnUrlWithdrawRequest = try BreezSDKMapper.asLnUrlWithdrawRequest(data: req)
+            var res = try getBreezServices().withdrawLnurl(req: lnUrlWithdrawRequest)
             resolve(BreezSDKMapper.dictionaryOf(lnUrlWithdrawResult: res))
         } catch let err {
             rejectErr(err: err, reject: reject)

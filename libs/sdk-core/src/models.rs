@@ -28,7 +28,7 @@ use crate::grpc::{self, GetReverseRoutingNodeRequest, PaymentInformation, Regist
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lsp::LspInformation;
 use crate::models::Network::*;
-use crate::{LNInvoice, LnUrlErrorData, LnUrlWithdrawRequestData, LnUrlPayRequestData};
+use crate::{LNInvoice, LnUrlErrorData, LnUrlPayRequestData, LnUrlWithdrawRequestData};
 
 use crate::breez_services::BreezServer;
 use crate::error::{SdkError, SdkResult};
@@ -1199,7 +1199,7 @@ pub struct LnUrlWithdrawRequest {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct LnUrlPayRequest {
     /// The [LnUrlPayRequestData] returned by [BreezServices::parse_input]
-    pub req_data: LnUrlPayRequestData,
+    pub data: LnUrlPayRequestData,
     /// The amount in millisatoshis for this payment
     pub amount_msat: u64,
     /// An optional comment for this payment

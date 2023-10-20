@@ -158,7 +158,7 @@ export type LnUrlErrorData = {
 }
 
 export type LnUrlPayRequest = {
-    reqData: LnUrlPayRequestData
+    data: LnUrlPayRequestData
     amountMsat: number
     comment?: string
 }
@@ -732,8 +732,8 @@ export const payLnurl = async (req: LnUrlPayRequest): Promise<LnUrlPayResult> =>
     return response
 }
 
-export const withdrawLnurl = async (request: LnUrlWithdrawRequest): Promise<LnUrlWithdrawResult> => {
-    const response = await BreezSDK.withdrawLnurl(request)
+export const withdrawLnurl = async (req: LnUrlWithdrawRequest): Promise<LnUrlWithdrawResult> => {
+    const response = await BreezSDK.withdrawLnurl(req)
     return response
 }
 

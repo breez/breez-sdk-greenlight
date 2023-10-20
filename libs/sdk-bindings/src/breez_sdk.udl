@@ -449,7 +449,7 @@ dictionary LnUrlErrorData {
 };
 
 dictionary LnUrlPayRequest {
-    LnUrlPayRequestData req_data;
+    LnUrlPayRequestData data;
     u64 amount_msat;
     string? comment;
 };
@@ -593,7 +593,7 @@ interface BlockingBreezServices {
    LnUrlPayResult pay_lnurl(LnUrlPayRequest req);
 
    [Throws=SdkError]
-   LnUrlWithdrawResult withdraw_lnurl(LnUrlWithdrawRequest request);
+   LnUrlWithdrawResult withdraw_lnurl(LnUrlWithdrawRequest req);
 
    [Throws=SdkError]
    LnUrlCallbackStatus lnurl_auth(LnUrlAuthRequestData req_data);

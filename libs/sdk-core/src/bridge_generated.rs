@@ -62,8 +62,8 @@ use crate::models::GreenlightNodeConfig;
 use crate::models::ListPaymentsRequest;
 use crate::models::LnPaymentDetails;
 use crate::models::LnUrlCallbackStatus;
-use crate::models::LnUrlWithdrawRequest;
 use crate::models::LnUrlPayRequest;
+use crate::models::LnUrlWithdrawRequest;
 use crate::models::LnUrlWithdrawResult;
 use crate::models::LnUrlWithdrawSuccessData;
 use crate::models::LogEntry;
@@ -464,7 +464,7 @@ fn wire_lnurl_pay_impl(port_: MessagePort, req: impl Wire2Api<LnUrlPayRequest> +
 }
 fn wire_lnurl_withdraw_impl(
     port_: MessagePort,
-    request: impl Wire2Api<LnUrlWithdrawRequest> + UnwindSafe,
+    req: impl Wire2Api<LnUrlWithdrawRequest> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -473,8 +473,8 @@ fn wire_lnurl_withdraw_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_request = request.wire2api();
-            move |task_callback| lnurl_withdraw(api_request)
+            let api_req = req.wire2api();
+            move |task_callback| lnurl_withdraw(api_req)
         },
     )
 }

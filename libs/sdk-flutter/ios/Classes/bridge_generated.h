@@ -116,7 +116,7 @@ typedef struct wire_LnUrlPayRequestData {
 } wire_LnUrlPayRequestData;
 
 typedef struct wire_LnUrlPayRequest {
-  struct wire_LnUrlPayRequestData req_data;
+  struct wire_LnUrlPayRequestData data;
   uint64_t amount_msat;
   struct wire_uint_8_list *comment;
 } wire_LnUrlPayRequest;
@@ -249,7 +249,7 @@ void wire_receive_payment(int64_t port_, struct wire_ReceivePaymentRequest *req)
 
 void wire_lnurl_pay(int64_t port_, struct wire_LnUrlPayRequest *req);
 
-void wire_lnurl_withdraw(int64_t port_, struct wire_LnUrlWithdrawRequest *request);
+void wire_lnurl_withdraw(int64_t port_, struct wire_LnUrlWithdrawRequest *req);
 
 void wire_lnurl_auth(int64_t port_, struct wire_LnUrlAuthRequestData *req_data);
 
@@ -392,8 +392,8 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_i64_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_list_payments_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_auth_request_data_0);
-    dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_withdraw_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_pay_request_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_withdraw_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_node_config_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_open_channel_fee_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_opening_fee_params_0);

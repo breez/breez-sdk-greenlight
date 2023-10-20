@@ -30,12 +30,13 @@ use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
 use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
-    EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus, LnUrlWithdrawResult, NodeConfig,
-    OpenChannelFeeRequest, OpenChannelFeeResponse, ReceiveOnchainRequest, ReceivePaymentRequest,
-    ReceivePaymentResponse, RefundRequest, RefundResponse, ReverseSwapFeesRequest, ReverseSwapInfo,
-    ReverseSwapPairInfo, SendOnchainRequest, SendOnchainResponse, SendPaymentResponse,
-    SendSpontaneousPaymentRequest, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
-    StaticBackupResponse, SweepRequest, SweepResponse, LnUrlPayRequest, LnUrlWithdrawRequest,
+    EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus, LnUrlPayRequest,
+    LnUrlWithdrawRequest, LnUrlWithdrawResult, NodeConfig, OpenChannelFeeRequest,
+    OpenChannelFeeResponse, ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse,
+    RefundRequest, RefundResponse, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
+    SendOnchainRequest, SendOnchainResponse, SendPaymentResponse, SendSpontaneousPaymentRequest,
+    SignMessageRequest, SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
+    SweepRequest, SweepResponse,
 };
 
 /*
@@ -103,13 +104,13 @@ pub fn disconnect() -> Result<()> {
 }
 
 /// See [BreezServices::sign_message]
-pub fn sign_message(request: SignMessageRequest) -> Result<SignMessageResponse> {
-    block_on(async { get_breez_services().await?.sign_message(request).await })
+pub fn sign_message(req: SignMessageRequest) -> Result<SignMessageResponse> {
+    block_on(async { get_breez_services().await?.sign_message(req).await })
 }
 
 /// See [BreezServices::check_message]
-pub fn check_message(request: CheckMessageRequest) -> Result<CheckMessageResponse> {
-    block_on(async { get_breez_services().await?.check_message(request).await })
+pub fn check_message(req: CheckMessageRequest) -> Result<CheckMessageResponse> {
+    block_on(async { get_breez_services().await?.check_message(req).await })
 }
 
 /*  Breez Services Helper API's */
@@ -129,8 +130,8 @@ pub fn default_config(
 }
 
 /// See [BreezServices::static_backup]
-pub fn static_backup(request: StaticBackupRequest) -> Result<StaticBackupResponse> {
-    BreezServices::static_backup(request).map_err(anyhow::Error::new)
+pub fn static_backup(req: StaticBackupRequest) -> Result<StaticBackupResponse> {
+    BreezServices::static_backup(req).map_err(anyhow::Error::new)
 }
 
 /*  Stream API's */
@@ -213,8 +214,8 @@ pub fn parse_input(input: String) -> Result<InputType> {
 /*  Payment API's */
 
 /// See [BreezServices::list_payments]
-pub fn list_payments(request: ListPaymentsRequest) -> Result<Vec<Payment>> {
-    block_on(async { get_breez_services().await?.list_payments(request).await })
+pub fn list_payments(req: ListPaymentsRequest) -> Result<Vec<Payment>> {
+    block_on(async { get_breez_services().await?.list_payments(req).await })
         .map_err(anyhow::Error::new)
 }
 
@@ -248,33 +249,26 @@ pub fn send_spontaneous_payment(req: SendSpontaneousPaymentRequest) -> Result<Se
 }
 
 /// See [BreezServices::receive_payment]
-pub fn receive_payment(request: ReceivePaymentRequest) -> Result<ReceivePaymentResponse> {
-    block_on(async { get_breez_services().await?.receive_payment(request).await })
+pub fn receive_payment(req: ReceivePaymentRequest) -> Result<ReceivePaymentResponse> {
+    block_on(async { get_breez_services().await?.receive_payment(req).await })
         .map_err(anyhow::Error::new)
 }
 
 /*  LNURL API's */
 
 /// See [BreezServices::lnurl_pay]
-pub fn lnurl_pay(
-    req: LnUrlPayRequest,
-) -> Result<LnUrlPayResult> {
-    block_on(async {
-        get_breez_services()
-            .await?
-            .lnurl_pay(req)
-            .await
-    })
+pub fn lnurl_pay(req: LnUrlPayRequest) -> Result<LnUrlPayResult> {
+    block_on(async { get_breez_services().await?.lnurl_pay(req).await })
 }
 
 /// See [BreezServices::lnurl_withdraw]
-pub fn lnurl_withdraw(request: LnUrlWithdrawRequest) -> Result<LnUrlWithdrawResult> {
-    block_on(async { get_breez_services().await?.lnurl_withdraw(request).await })
+pub fn lnurl_withdraw(req: LnUrlWithdrawRequest) -> Result<LnUrlWithdrawResult> {
+    block_on(async { get_breez_services().await?.lnurl_withdraw(req).await })
 }
 
 /// See [BreezServices::lnurl_auth]
-pub fn lnurl_auth(request_data: LnUrlAuthRequestData) -> Result<LnUrlCallbackStatus> {
-    block_on(async { get_breez_services().await?.lnurl_auth(request_data).await })
+pub fn lnurl_auth(req_data: LnUrlAuthRequestData) -> Result<LnUrlCallbackStatus> {
+    block_on(async { get_breez_services().await?.lnurl_auth(req_data).await })
 }
 
 /*  Fiat Currency API's */
@@ -292,24 +286,24 @@ pub fn list_fiat_currencies() -> Result<Vec<FiatCurrency>> {
 /*  On-Chain Swap API's */
 
 /// See [BreezServices::send_onchain]
-pub fn send_onchain(request: SendOnchainRequest) -> Result<SendOnchainResponse> {
-    block_on(async { get_breez_services().await?.send_onchain(request).await })
+pub fn send_onchain(req: SendOnchainRequest) -> Result<SendOnchainResponse> {
+    block_on(async { get_breez_services().await?.send_onchain(req).await })
 }
 
 /// See [BreezServices::receive_onchain]
-pub fn receive_onchain(request: ReceiveOnchainRequest) -> Result<SwapInfo> {
-    block_on(async { get_breez_services().await?.receive_onchain(request).await })
+pub fn receive_onchain(req: ReceiveOnchainRequest) -> Result<SwapInfo> {
+    block_on(async { get_breez_services().await?.receive_onchain(req).await })
 }
 
 /// See [BreezServices::buy_bitcoin]
-pub fn buy_bitcoin(request: BuyBitcoinRequest) -> Result<BuyBitcoinResponse> {
-    block_on(async { get_breez_services().await?.buy_bitcoin(request).await })
+pub fn buy_bitcoin(req: BuyBitcoinRequest) -> Result<BuyBitcoinResponse> {
+    block_on(async { get_breez_services().await?.buy_bitcoin(req).await })
         .map_err(anyhow::Error::new)
 }
 
 /// See [BreezServices::sweep]
-pub fn sweep(request: SweepRequest) -> Result<SweepResponse> {
-    block_on(async { get_breez_services().await?.sweep(request).await })
+pub fn sweep(req: SweepRequest) -> Result<SweepResponse> {
+    block_on(async { get_breez_services().await?.sweep(req).await })
 }
 
 /*  Refundables API's */
@@ -320,8 +314,8 @@ pub fn list_refundables() -> Result<Vec<SwapInfo>> {
 }
 
 /// See [BreezServices::refund]
-pub fn refund(request: RefundRequest) -> Result<RefundResponse> {
-    block_on(async { get_breez_services().await?.refund(request).await })
+pub fn refund(req: RefundRequest) -> Result<RefundResponse> {
+    block_on(async { get_breez_services().await?.refund(req).await })
 }
 
 /*  In Progress Swap API's */
@@ -344,17 +338,17 @@ pub fn in_progress_reverse_swaps() -> Result<Vec<ReverseSwapInfo>> {
 /*  Swap Fee API's */
 
 /// See [BreezServices::open_channel_fee]
-pub fn open_channel_fee(request: OpenChannelFeeRequest) -> Result<OpenChannelFeeResponse> {
-    block_on(async { get_breez_services().await?.open_channel_fee(request).await })
+pub fn open_channel_fee(req: OpenChannelFeeRequest) -> Result<OpenChannelFeeResponse> {
+    block_on(async { get_breez_services().await?.open_channel_fee(req).await })
         .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// See [BreezServices::fetch_reverse_swap_fees]
-pub fn fetch_reverse_swap_fees(request: ReverseSwapFeesRequest) -> Result<ReverseSwapPairInfo> {
+pub fn fetch_reverse_swap_fees(req: ReverseSwapFeesRequest) -> Result<ReverseSwapPairInfo> {
     block_on(async {
         get_breez_services()
             .await?
-            .fetch_reverse_swap_fees(request)
+            .fetch_reverse_swap_fees(req)
             .await
     })
 }

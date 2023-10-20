@@ -154,8 +154,8 @@ pub extern "C" fn wire_lnurl_pay(port_: i64, req: *mut wire_LnUrlPayRequest) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_lnurl_withdraw(port_: i64, request: *mut wire_LnUrlWithdrawRequest) {
-    wire_lnurl_withdraw_impl(port_, request)
+pub extern "C" fn wire_lnurl_withdraw(port_: i64, req: *mut wire_LnUrlWithdrawRequest) {
+    wire_lnurl_withdraw_impl(port_, req)
 }
 
 #[no_mangle]
@@ -605,7 +605,7 @@ impl Wire2Api<LnUrlAuthRequestData> for wire_LnUrlAuthRequestData {
 impl Wire2Api<LnUrlPayRequest> for wire_LnUrlPayRequest {
     fn wire2api(self) -> LnUrlPayRequest {
         LnUrlPayRequest {
-            req_data: self.req_data.wire2api(),
+            data: self.data.wire2api(),
             amount_msat: self.amount_msat.wire2api(),
             comment: self.comment.wire2api(),
         }
@@ -834,7 +834,7 @@ pub struct wire_LnUrlAuthRequestData {
 #[repr(C)]
 #[derive(Clone)]
 pub struct wire_LnUrlPayRequest {
-    req_data: wire_LnUrlPayRequestData,
+    data: wire_LnUrlPayRequestData,
     amount_msat: u64,
     comment: *mut wire_uint_8_list,
 }
@@ -1114,7 +1114,7 @@ impl Default for wire_LnUrlAuthRequestData {
 impl NewWithNullPtr for wire_LnUrlPayRequest {
     fn new_with_null_ptr() -> Self {
         Self {
-            req_data: Default::default(),
+            data: Default::default(),
             amount_msat: Default::default(),
             comment: core::ptr::null_mut(),
         }

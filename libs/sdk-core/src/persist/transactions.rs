@@ -131,15 +131,15 @@ impl SqliteStorage {
     ///
     /// This queries all payments. To query a single payment, see [Self::get_payment_by_hash]
     /// or [Self::get_completed_payment_by_hash]
-    pub fn list_payments(&self, request: ListPaymentsRequest) -> SdkResult<Vec<Payment>> {
+    pub fn list_payments(&self, req: ListPaymentsRequest) -> SdkResult<Vec<Payment>> {
         let where_clause = filter_to_where_clause(
-            request.filter,
-            request.from_timestamp,
-            request.to_timestamp,
-            request.include_failures,
+            req.filter,
+            req.from_timestamp,
+            req.to_timestamp,
+            req.include_failures,
         );
-        let offset = request.offset.unwrap_or(0u32);
-        let limit = request.limit.unwrap_or(u32::MAX);
+        let offset = req.offset.unwrap_or(0u32);
+        let limit = req.limit.unwrap_or(u32::MAX);
         let con = self.get_connection()?;
         let mut stmt = con.prepare(
             format!(

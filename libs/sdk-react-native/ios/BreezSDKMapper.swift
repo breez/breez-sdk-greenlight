@@ -837,14 +837,14 @@ class BreezSDKMapper {
     }
 
     static func asLnUrlPayRequest(data: [String: Any?]) throws -> LnUrlPayRequest {
-        guard let reqDataTmp = data["reqData"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field reqData for type LnUrlPayRequest") }
-        let reqData = try asLnUrlPayRequestData(data: reqDataTmp)
+        guard let dataTmp = data["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type LnUrlPayRequest") }
+        let data = try asLnUrlPayRequestData(data: dataTmp)
 
         guard let amountMsat = data["amountMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field amountMsat for type LnUrlPayRequest") }
         let comment = data["comment"] as? String
 
         return LnUrlPayRequest(
-            reqData: reqData,
+            data: data,
             amountMsat: amountMsat,
             comment: comment
         )
@@ -852,7 +852,7 @@ class BreezSDKMapper {
 
     static func dictionaryOf(lnUrlPayRequest: LnUrlPayRequest) -> [String: Any?] {
         return [
-            "reqData": dictionaryOf(lnUrlPayRequestData: lnUrlPayRequest.reqData),
+            "data": dictionaryOf(lnUrlPayRequestData: lnUrlPayRequest.data),
             "amountMsat": lnUrlPayRequest.amountMsat,
             "comment": lnUrlPayRequest.comment == nil ? nil : lnUrlPayRequest.comment,
         ]

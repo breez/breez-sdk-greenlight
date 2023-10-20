@@ -109,20 +109,19 @@ class _$BreezEventCopyWithImpl<$Res, $Val extends BreezEvent> implements $BreezE
 }
 
 /// @nodoc
-abstract class _$$BreezEvent_NewBlockImplCopyWith<$Res> {
-  factory _$$BreezEvent_NewBlockImplCopyWith(
-          _$BreezEvent_NewBlockImpl value, $Res Function(_$BreezEvent_NewBlockImpl) then) =
-      __$$BreezEvent_NewBlockImplCopyWithImpl<$Res>;
+abstract class _$$BreezEvent_NewBlockCopyWith<$Res> {
+  factory _$$BreezEvent_NewBlockCopyWith(
+          _$BreezEvent_NewBlock value, $Res Function(_$BreezEvent_NewBlock) then) =
+      __$$BreezEvent_NewBlockCopyWithImpl<$Res>;
   @useResult
   $Res call({int block});
 }
 
 /// @nodoc
-class __$$BreezEvent_NewBlockImplCopyWithImpl<$Res>
-    extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_NewBlockImpl>
-    implements _$$BreezEvent_NewBlockImplCopyWith<$Res> {
-  __$$BreezEvent_NewBlockImplCopyWithImpl(
-      _$BreezEvent_NewBlockImpl _value, $Res Function(_$BreezEvent_NewBlockImpl) _then)
+class __$$BreezEvent_NewBlockCopyWithImpl<$Res> extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_NewBlock>
+    implements _$$BreezEvent_NewBlockCopyWith<$Res> {
+  __$$BreezEvent_NewBlockCopyWithImpl(
+      _$BreezEvent_NewBlock _value, $Res Function(_$BreezEvent_NewBlock) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -130,7 +129,7 @@ class __$$BreezEvent_NewBlockImplCopyWithImpl<$Res>
   $Res call({
     Object? block = null,
   }) {
-    return _then(_$BreezEvent_NewBlockImpl(
+    return _then(_$BreezEvent_NewBlock(
       block: null == block
           ? _value.block
           : block // ignore: cast_nullable_to_non_nullable
@@ -141,8 +140,8 @@ class __$$BreezEvent_NewBlockImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$BreezEvent_NewBlockImpl implements BreezEvent_NewBlock {
-  const _$BreezEvent_NewBlockImpl({required this.block});
+class _$BreezEvent_NewBlock implements BreezEvent_NewBlock {
+  const _$BreezEvent_NewBlock({required this.block});
 
   @override
   final int block;
@@ -156,7 +155,7 @@ class _$BreezEvent_NewBlockImpl implements BreezEvent_NewBlock {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$BreezEvent_NewBlockImpl &&
+            other is _$BreezEvent_NewBlock &&
             (identical(other.block, block) || other.block == block));
   }
 
@@ -166,8 +165,8 @@ class _$BreezEvent_NewBlockImpl implements BreezEvent_NewBlock {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$BreezEvent_NewBlockImplCopyWith<_$BreezEvent_NewBlockImpl> get copyWith =>
-      __$$BreezEvent_NewBlockImplCopyWithImpl<_$BreezEvent_NewBlockImpl>(this, _$identity);
+  _$$BreezEvent_NewBlockCopyWith<_$BreezEvent_NewBlock> get copyWith =>
+      __$$BreezEvent_NewBlockCopyWithImpl<_$BreezEvent_NewBlock>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -269,29 +268,28 @@ class _$BreezEvent_NewBlockImpl implements BreezEvent_NewBlock {
 }
 
 abstract class BreezEvent_NewBlock implements BreezEvent {
-  const factory BreezEvent_NewBlock({required final int block}) = _$BreezEvent_NewBlockImpl;
+  const factory BreezEvent_NewBlock({required final int block}) = _$BreezEvent_NewBlock;
 
   int get block;
   @JsonKey(ignore: true)
-  _$$BreezEvent_NewBlockImplCopyWith<_$BreezEvent_NewBlockImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$BreezEvent_NewBlockCopyWith<_$BreezEvent_NewBlock> get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class _$$BreezEvent_InvoicePaidImplCopyWith<$Res> {
-  factory _$$BreezEvent_InvoicePaidImplCopyWith(
-          _$BreezEvent_InvoicePaidImpl value, $Res Function(_$BreezEvent_InvoicePaidImpl) then) =
-      __$$BreezEvent_InvoicePaidImplCopyWithImpl<$Res>;
+abstract class _$$BreezEvent_InvoicePaidCopyWith<$Res> {
+  factory _$$BreezEvent_InvoicePaidCopyWith(
+          _$BreezEvent_InvoicePaid value, $Res Function(_$BreezEvent_InvoicePaid) then) =
+      __$$BreezEvent_InvoicePaidCopyWithImpl<$Res>;
   @useResult
   $Res call({InvoicePaidDetails details});
 }
 
 /// @nodoc
-class __$$BreezEvent_InvoicePaidImplCopyWithImpl<$Res>
-    extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_InvoicePaidImpl>
-    implements _$$BreezEvent_InvoicePaidImplCopyWith<$Res> {
-  __$$BreezEvent_InvoicePaidImplCopyWithImpl(
-      _$BreezEvent_InvoicePaidImpl _value, $Res Function(_$BreezEvent_InvoicePaidImpl) _then)
+class __$$BreezEvent_InvoicePaidCopyWithImpl<$Res>
+    extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_InvoicePaid>
+    implements _$$BreezEvent_InvoicePaidCopyWith<$Res> {
+  __$$BreezEvent_InvoicePaidCopyWithImpl(
+      _$BreezEvent_InvoicePaid _value, $Res Function(_$BreezEvent_InvoicePaid) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -299,7 +297,7 @@ class __$$BreezEvent_InvoicePaidImplCopyWithImpl<$Res>
   $Res call({
     Object? details = null,
   }) {
-    return _then(_$BreezEvent_InvoicePaidImpl(
+    return _then(_$BreezEvent_InvoicePaid(
       details: null == details
           ? _value.details
           : details // ignore: cast_nullable_to_non_nullable
@@ -310,8 +308,8 @@ class __$$BreezEvent_InvoicePaidImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$BreezEvent_InvoicePaidImpl implements BreezEvent_InvoicePaid {
-  const _$BreezEvent_InvoicePaidImpl({required this.details});
+class _$BreezEvent_InvoicePaid implements BreezEvent_InvoicePaid {
+  const _$BreezEvent_InvoicePaid({required this.details});
 
   @override
   final InvoicePaidDetails details;
@@ -325,7 +323,7 @@ class _$BreezEvent_InvoicePaidImpl implements BreezEvent_InvoicePaid {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$BreezEvent_InvoicePaidImpl &&
+            other is _$BreezEvent_InvoicePaid &&
             (identical(other.details, details) || other.details == details));
   }
 
@@ -335,8 +333,8 @@ class _$BreezEvent_InvoicePaidImpl implements BreezEvent_InvoicePaid {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$BreezEvent_InvoicePaidImplCopyWith<_$BreezEvent_InvoicePaidImpl> get copyWith =>
-      __$$BreezEvent_InvoicePaidImplCopyWithImpl<_$BreezEvent_InvoicePaidImpl>(this, _$identity);
+  _$$BreezEvent_InvoicePaidCopyWith<_$BreezEvent_InvoicePaid> get copyWith =>
+      __$$BreezEvent_InvoicePaidCopyWithImpl<_$BreezEvent_InvoicePaid>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -439,34 +437,31 @@ class _$BreezEvent_InvoicePaidImpl implements BreezEvent_InvoicePaid {
 
 abstract class BreezEvent_InvoicePaid implements BreezEvent {
   const factory BreezEvent_InvoicePaid({required final InvoicePaidDetails details}) =
-      _$BreezEvent_InvoicePaidImpl;
+      _$BreezEvent_InvoicePaid;
 
   InvoicePaidDetails get details;
   @JsonKey(ignore: true)
-  _$$BreezEvent_InvoicePaidImplCopyWith<_$BreezEvent_InvoicePaidImpl> get copyWith =>
+  _$$BreezEvent_InvoicePaidCopyWith<_$BreezEvent_InvoicePaid> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class _$$BreezEvent_SyncedImplCopyWith<$Res> {
-  factory _$$BreezEvent_SyncedImplCopyWith(
-          _$BreezEvent_SyncedImpl value, $Res Function(_$BreezEvent_SyncedImpl) then) =
-      __$$BreezEvent_SyncedImplCopyWithImpl<$Res>;
+abstract class _$$BreezEvent_SyncedCopyWith<$Res> {
+  factory _$$BreezEvent_SyncedCopyWith(_$BreezEvent_Synced value, $Res Function(_$BreezEvent_Synced) then) =
+      __$$BreezEvent_SyncedCopyWithImpl<$Res>;
 }
 
 /// @nodoc
-class __$$BreezEvent_SyncedImplCopyWithImpl<$Res>
-    extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_SyncedImpl>
-    implements _$$BreezEvent_SyncedImplCopyWith<$Res> {
-  __$$BreezEvent_SyncedImplCopyWithImpl(
-      _$BreezEvent_SyncedImpl _value, $Res Function(_$BreezEvent_SyncedImpl) _then)
+class __$$BreezEvent_SyncedCopyWithImpl<$Res> extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_Synced>
+    implements _$$BreezEvent_SyncedCopyWith<$Res> {
+  __$$BreezEvent_SyncedCopyWithImpl(_$BreezEvent_Synced _value, $Res Function(_$BreezEvent_Synced) _then)
       : super(_value, _then);
 }
 
 /// @nodoc
 
-class _$BreezEvent_SyncedImpl implements BreezEvent_Synced {
-  const _$BreezEvent_SyncedImpl();
+class _$BreezEvent_Synced implements BreezEvent_Synced {
+  const _$BreezEvent_Synced();
 
   @override
   String toString() {
@@ -475,7 +470,7 @@ class _$BreezEvent_SyncedImpl implements BreezEvent_Synced {
 
   @override
   bool operator ==(dynamic other) {
-    return identical(this, other) || (other.runtimeType == runtimeType && other is _$BreezEvent_SyncedImpl);
+    return identical(this, other) || (other.runtimeType == runtimeType && other is _$BreezEvent_Synced);
   }
 
   @override
@@ -581,24 +576,24 @@ class _$BreezEvent_SyncedImpl implements BreezEvent_Synced {
 }
 
 abstract class BreezEvent_Synced implements BreezEvent {
-  const factory BreezEvent_Synced() = _$BreezEvent_SyncedImpl;
+  const factory BreezEvent_Synced() = _$BreezEvent_Synced;
 }
 
 /// @nodoc
-abstract class _$$BreezEvent_PaymentSucceedImplCopyWith<$Res> {
-  factory _$$BreezEvent_PaymentSucceedImplCopyWith(
-          _$BreezEvent_PaymentSucceedImpl value, $Res Function(_$BreezEvent_PaymentSucceedImpl) then) =
-      __$$BreezEvent_PaymentSucceedImplCopyWithImpl<$Res>;
+abstract class _$$BreezEvent_PaymentSucceedCopyWith<$Res> {
+  factory _$$BreezEvent_PaymentSucceedCopyWith(
+          _$BreezEvent_PaymentSucceed value, $Res Function(_$BreezEvent_PaymentSucceed) then) =
+      __$$BreezEvent_PaymentSucceedCopyWithImpl<$Res>;
   @useResult
   $Res call({Payment details});
 }
 
 /// @nodoc
-class __$$BreezEvent_PaymentSucceedImplCopyWithImpl<$Res>
-    extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_PaymentSucceedImpl>
-    implements _$$BreezEvent_PaymentSucceedImplCopyWith<$Res> {
-  __$$BreezEvent_PaymentSucceedImplCopyWithImpl(
-      _$BreezEvent_PaymentSucceedImpl _value, $Res Function(_$BreezEvent_PaymentSucceedImpl) _then)
+class __$$BreezEvent_PaymentSucceedCopyWithImpl<$Res>
+    extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_PaymentSucceed>
+    implements _$$BreezEvent_PaymentSucceedCopyWith<$Res> {
+  __$$BreezEvent_PaymentSucceedCopyWithImpl(
+      _$BreezEvent_PaymentSucceed _value, $Res Function(_$BreezEvent_PaymentSucceed) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -606,7 +601,7 @@ class __$$BreezEvent_PaymentSucceedImplCopyWithImpl<$Res>
   $Res call({
     Object? details = null,
   }) {
-    return _then(_$BreezEvent_PaymentSucceedImpl(
+    return _then(_$BreezEvent_PaymentSucceed(
       details: null == details
           ? _value.details
           : details // ignore: cast_nullable_to_non_nullable
@@ -617,8 +612,8 @@ class __$$BreezEvent_PaymentSucceedImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$BreezEvent_PaymentSucceedImpl implements BreezEvent_PaymentSucceed {
-  const _$BreezEvent_PaymentSucceedImpl({required this.details});
+class _$BreezEvent_PaymentSucceed implements BreezEvent_PaymentSucceed {
+  const _$BreezEvent_PaymentSucceed({required this.details});
 
   @override
   final Payment details;
@@ -632,7 +627,7 @@ class _$BreezEvent_PaymentSucceedImpl implements BreezEvent_PaymentSucceed {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$BreezEvent_PaymentSucceedImpl &&
+            other is _$BreezEvent_PaymentSucceed &&
             (identical(other.details, details) || other.details == details));
   }
 
@@ -642,8 +637,8 @@ class _$BreezEvent_PaymentSucceedImpl implements BreezEvent_PaymentSucceed {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$BreezEvent_PaymentSucceedImplCopyWith<_$BreezEvent_PaymentSucceedImpl> get copyWith =>
-      __$$BreezEvent_PaymentSucceedImplCopyWithImpl<_$BreezEvent_PaymentSucceedImpl>(this, _$identity);
+  _$$BreezEvent_PaymentSucceedCopyWith<_$BreezEvent_PaymentSucceed> get copyWith =>
+      __$$BreezEvent_PaymentSucceedCopyWithImpl<_$BreezEvent_PaymentSucceed>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -745,29 +740,29 @@ class _$BreezEvent_PaymentSucceedImpl implements BreezEvent_PaymentSucceed {
 }
 
 abstract class BreezEvent_PaymentSucceed implements BreezEvent {
-  const factory BreezEvent_PaymentSucceed({required final Payment details}) = _$BreezEvent_PaymentSucceedImpl;
+  const factory BreezEvent_PaymentSucceed({required final Payment details}) = _$BreezEvent_PaymentSucceed;
 
   Payment get details;
   @JsonKey(ignore: true)
-  _$$BreezEvent_PaymentSucceedImplCopyWith<_$BreezEvent_PaymentSucceedImpl> get copyWith =>
+  _$$BreezEvent_PaymentSucceedCopyWith<_$BreezEvent_PaymentSucceed> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class _$$BreezEvent_PaymentFailedImplCopyWith<$Res> {
-  factory _$$BreezEvent_PaymentFailedImplCopyWith(
-          _$BreezEvent_PaymentFailedImpl value, $Res Function(_$BreezEvent_PaymentFailedImpl) then) =
-      __$$BreezEvent_PaymentFailedImplCopyWithImpl<$Res>;
+abstract class _$$BreezEvent_PaymentFailedCopyWith<$Res> {
+  factory _$$BreezEvent_PaymentFailedCopyWith(
+          _$BreezEvent_PaymentFailed value, $Res Function(_$BreezEvent_PaymentFailed) then) =
+      __$$BreezEvent_PaymentFailedCopyWithImpl<$Res>;
   @useResult
   $Res call({PaymentFailedData details});
 }
 
 /// @nodoc
-class __$$BreezEvent_PaymentFailedImplCopyWithImpl<$Res>
-    extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_PaymentFailedImpl>
-    implements _$$BreezEvent_PaymentFailedImplCopyWith<$Res> {
-  __$$BreezEvent_PaymentFailedImplCopyWithImpl(
-      _$BreezEvent_PaymentFailedImpl _value, $Res Function(_$BreezEvent_PaymentFailedImpl) _then)
+class __$$BreezEvent_PaymentFailedCopyWithImpl<$Res>
+    extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_PaymentFailed>
+    implements _$$BreezEvent_PaymentFailedCopyWith<$Res> {
+  __$$BreezEvent_PaymentFailedCopyWithImpl(
+      _$BreezEvent_PaymentFailed _value, $Res Function(_$BreezEvent_PaymentFailed) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -775,7 +770,7 @@ class __$$BreezEvent_PaymentFailedImplCopyWithImpl<$Res>
   $Res call({
     Object? details = null,
   }) {
-    return _then(_$BreezEvent_PaymentFailedImpl(
+    return _then(_$BreezEvent_PaymentFailed(
       details: null == details
           ? _value.details
           : details // ignore: cast_nullable_to_non_nullable
@@ -786,8 +781,8 @@ class __$$BreezEvent_PaymentFailedImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$BreezEvent_PaymentFailedImpl implements BreezEvent_PaymentFailed {
-  const _$BreezEvent_PaymentFailedImpl({required this.details});
+class _$BreezEvent_PaymentFailed implements BreezEvent_PaymentFailed {
+  const _$BreezEvent_PaymentFailed({required this.details});
 
   @override
   final PaymentFailedData details;
@@ -801,7 +796,7 @@ class _$BreezEvent_PaymentFailedImpl implements BreezEvent_PaymentFailed {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$BreezEvent_PaymentFailedImpl &&
+            other is _$BreezEvent_PaymentFailed &&
             (identical(other.details, details) || other.details == details));
   }
 
@@ -811,8 +806,8 @@ class _$BreezEvent_PaymentFailedImpl implements BreezEvent_PaymentFailed {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$BreezEvent_PaymentFailedImplCopyWith<_$BreezEvent_PaymentFailedImpl> get copyWith =>
-      __$$BreezEvent_PaymentFailedImplCopyWithImpl<_$BreezEvent_PaymentFailedImpl>(this, _$identity);
+  _$$BreezEvent_PaymentFailedCopyWith<_$BreezEvent_PaymentFailed> get copyWith =>
+      __$$BreezEvent_PaymentFailedCopyWithImpl<_$BreezEvent_PaymentFailed>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -915,34 +910,34 @@ class _$BreezEvent_PaymentFailedImpl implements BreezEvent_PaymentFailed {
 
 abstract class BreezEvent_PaymentFailed implements BreezEvent {
   const factory BreezEvent_PaymentFailed({required final PaymentFailedData details}) =
-      _$BreezEvent_PaymentFailedImpl;
+      _$BreezEvent_PaymentFailed;
 
   PaymentFailedData get details;
   @JsonKey(ignore: true)
-  _$$BreezEvent_PaymentFailedImplCopyWith<_$BreezEvent_PaymentFailedImpl> get copyWith =>
+  _$$BreezEvent_PaymentFailedCopyWith<_$BreezEvent_PaymentFailed> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class _$$BreezEvent_BackupStartedImplCopyWith<$Res> {
-  factory _$$BreezEvent_BackupStartedImplCopyWith(
-          _$BreezEvent_BackupStartedImpl value, $Res Function(_$BreezEvent_BackupStartedImpl) then) =
-      __$$BreezEvent_BackupStartedImplCopyWithImpl<$Res>;
+abstract class _$$BreezEvent_BackupStartedCopyWith<$Res> {
+  factory _$$BreezEvent_BackupStartedCopyWith(
+          _$BreezEvent_BackupStarted value, $Res Function(_$BreezEvent_BackupStarted) then) =
+      __$$BreezEvent_BackupStartedCopyWithImpl<$Res>;
 }
 
 /// @nodoc
-class __$$BreezEvent_BackupStartedImplCopyWithImpl<$Res>
-    extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_BackupStartedImpl>
-    implements _$$BreezEvent_BackupStartedImplCopyWith<$Res> {
-  __$$BreezEvent_BackupStartedImplCopyWithImpl(
-      _$BreezEvent_BackupStartedImpl _value, $Res Function(_$BreezEvent_BackupStartedImpl) _then)
+class __$$BreezEvent_BackupStartedCopyWithImpl<$Res>
+    extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_BackupStarted>
+    implements _$$BreezEvent_BackupStartedCopyWith<$Res> {
+  __$$BreezEvent_BackupStartedCopyWithImpl(
+      _$BreezEvent_BackupStarted _value, $Res Function(_$BreezEvent_BackupStarted) _then)
       : super(_value, _then);
 }
 
 /// @nodoc
 
-class _$BreezEvent_BackupStartedImpl implements BreezEvent_BackupStarted {
-  const _$BreezEvent_BackupStartedImpl();
+class _$BreezEvent_BackupStarted implements BreezEvent_BackupStarted {
+  const _$BreezEvent_BackupStarted();
 
   @override
   String toString() {
@@ -952,7 +947,7 @@ class _$BreezEvent_BackupStartedImpl implements BreezEvent_BackupStarted {
   @override
   bool operator ==(dynamic other) {
     return identical(this, other) ||
-        (other.runtimeType == runtimeType && other is _$BreezEvent_BackupStartedImpl);
+        (other.runtimeType == runtimeType && other is _$BreezEvent_BackupStarted);
   }
 
   @override
@@ -1058,29 +1053,29 @@ class _$BreezEvent_BackupStartedImpl implements BreezEvent_BackupStarted {
 }
 
 abstract class BreezEvent_BackupStarted implements BreezEvent {
-  const factory BreezEvent_BackupStarted() = _$BreezEvent_BackupStartedImpl;
+  const factory BreezEvent_BackupStarted() = _$BreezEvent_BackupStarted;
 }
 
 /// @nodoc
-abstract class _$$BreezEvent_BackupSucceededImplCopyWith<$Res> {
-  factory _$$BreezEvent_BackupSucceededImplCopyWith(
-          _$BreezEvent_BackupSucceededImpl value, $Res Function(_$BreezEvent_BackupSucceededImpl) then) =
-      __$$BreezEvent_BackupSucceededImplCopyWithImpl<$Res>;
+abstract class _$$BreezEvent_BackupSucceededCopyWith<$Res> {
+  factory _$$BreezEvent_BackupSucceededCopyWith(
+          _$BreezEvent_BackupSucceeded value, $Res Function(_$BreezEvent_BackupSucceeded) then) =
+      __$$BreezEvent_BackupSucceededCopyWithImpl<$Res>;
 }
 
 /// @nodoc
-class __$$BreezEvent_BackupSucceededImplCopyWithImpl<$Res>
-    extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_BackupSucceededImpl>
-    implements _$$BreezEvent_BackupSucceededImplCopyWith<$Res> {
-  __$$BreezEvent_BackupSucceededImplCopyWithImpl(
-      _$BreezEvent_BackupSucceededImpl _value, $Res Function(_$BreezEvent_BackupSucceededImpl) _then)
+class __$$BreezEvent_BackupSucceededCopyWithImpl<$Res>
+    extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_BackupSucceeded>
+    implements _$$BreezEvent_BackupSucceededCopyWith<$Res> {
+  __$$BreezEvent_BackupSucceededCopyWithImpl(
+      _$BreezEvent_BackupSucceeded _value, $Res Function(_$BreezEvent_BackupSucceeded) _then)
       : super(_value, _then);
 }
 
 /// @nodoc
 
-class _$BreezEvent_BackupSucceededImpl implements BreezEvent_BackupSucceeded {
-  const _$BreezEvent_BackupSucceededImpl();
+class _$BreezEvent_BackupSucceeded implements BreezEvent_BackupSucceeded {
+  const _$BreezEvent_BackupSucceeded();
 
   @override
   String toString() {
@@ -1090,7 +1085,7 @@ class _$BreezEvent_BackupSucceededImpl implements BreezEvent_BackupSucceeded {
   @override
   bool operator ==(dynamic other) {
     return identical(this, other) ||
-        (other.runtimeType == runtimeType && other is _$BreezEvent_BackupSucceededImpl);
+        (other.runtimeType == runtimeType && other is _$BreezEvent_BackupSucceeded);
   }
 
   @override
@@ -1196,24 +1191,24 @@ class _$BreezEvent_BackupSucceededImpl implements BreezEvent_BackupSucceeded {
 }
 
 abstract class BreezEvent_BackupSucceeded implements BreezEvent {
-  const factory BreezEvent_BackupSucceeded() = _$BreezEvent_BackupSucceededImpl;
+  const factory BreezEvent_BackupSucceeded() = _$BreezEvent_BackupSucceeded;
 }
 
 /// @nodoc
-abstract class _$$BreezEvent_BackupFailedImplCopyWith<$Res> {
-  factory _$$BreezEvent_BackupFailedImplCopyWith(
-          _$BreezEvent_BackupFailedImpl value, $Res Function(_$BreezEvent_BackupFailedImpl) then) =
-      __$$BreezEvent_BackupFailedImplCopyWithImpl<$Res>;
+abstract class _$$BreezEvent_BackupFailedCopyWith<$Res> {
+  factory _$$BreezEvent_BackupFailedCopyWith(
+          _$BreezEvent_BackupFailed value, $Res Function(_$BreezEvent_BackupFailed) then) =
+      __$$BreezEvent_BackupFailedCopyWithImpl<$Res>;
   @useResult
   $Res call({BackupFailedData details});
 }
 
 /// @nodoc
-class __$$BreezEvent_BackupFailedImplCopyWithImpl<$Res>
-    extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_BackupFailedImpl>
-    implements _$$BreezEvent_BackupFailedImplCopyWith<$Res> {
-  __$$BreezEvent_BackupFailedImplCopyWithImpl(
-      _$BreezEvent_BackupFailedImpl _value, $Res Function(_$BreezEvent_BackupFailedImpl) _then)
+class __$$BreezEvent_BackupFailedCopyWithImpl<$Res>
+    extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_BackupFailed>
+    implements _$$BreezEvent_BackupFailedCopyWith<$Res> {
+  __$$BreezEvent_BackupFailedCopyWithImpl(
+      _$BreezEvent_BackupFailed _value, $Res Function(_$BreezEvent_BackupFailed) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -1221,7 +1216,7 @@ class __$$BreezEvent_BackupFailedImplCopyWithImpl<$Res>
   $Res call({
     Object? details = null,
   }) {
-    return _then(_$BreezEvent_BackupFailedImpl(
+    return _then(_$BreezEvent_BackupFailed(
       details: null == details
           ? _value.details
           : details // ignore: cast_nullable_to_non_nullable
@@ -1232,8 +1227,8 @@ class __$$BreezEvent_BackupFailedImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$BreezEvent_BackupFailedImpl implements BreezEvent_BackupFailed {
-  const _$BreezEvent_BackupFailedImpl({required this.details});
+class _$BreezEvent_BackupFailed implements BreezEvent_BackupFailed {
+  const _$BreezEvent_BackupFailed({required this.details});
 
   @override
   final BackupFailedData details;
@@ -1247,7 +1242,7 @@ class _$BreezEvent_BackupFailedImpl implements BreezEvent_BackupFailed {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$BreezEvent_BackupFailedImpl &&
+            other is _$BreezEvent_BackupFailed &&
             (identical(other.details, details) || other.details == details));
   }
 
@@ -1257,8 +1252,8 @@ class _$BreezEvent_BackupFailedImpl implements BreezEvent_BackupFailed {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$BreezEvent_BackupFailedImplCopyWith<_$BreezEvent_BackupFailedImpl> get copyWith =>
-      __$$BreezEvent_BackupFailedImplCopyWithImpl<_$BreezEvent_BackupFailedImpl>(this, _$identity);
+  _$$BreezEvent_BackupFailedCopyWith<_$BreezEvent_BackupFailed> get copyWith =>
+      __$$BreezEvent_BackupFailedCopyWithImpl<_$BreezEvent_BackupFailed>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -1361,11 +1356,11 @@ class _$BreezEvent_BackupFailedImpl implements BreezEvent_BackupFailed {
 
 abstract class BreezEvent_BackupFailed implements BreezEvent {
   const factory BreezEvent_BackupFailed({required final BackupFailedData details}) =
-      _$BreezEvent_BackupFailedImpl;
+      _$BreezEvent_BackupFailed;
 
   BackupFailedData get details;
   @JsonKey(ignore: true)
-  _$$BreezEvent_BackupFailedImplCopyWith<_$BreezEvent_BackupFailedImpl> get copyWith =>
+  _$$BreezEvent_BackupFailedCopyWith<_$BreezEvent_BackupFailed> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -1464,20 +1459,20 @@ class _$InputTypeCopyWithImpl<$Res, $Val extends InputType> implements $InputTyp
 }
 
 /// @nodoc
-abstract class _$$InputType_BitcoinAddressImplCopyWith<$Res> {
-  factory _$$InputType_BitcoinAddressImplCopyWith(
-          _$InputType_BitcoinAddressImpl value, $Res Function(_$InputType_BitcoinAddressImpl) then) =
-      __$$InputType_BitcoinAddressImplCopyWithImpl<$Res>;
+abstract class _$$InputType_BitcoinAddressCopyWith<$Res> {
+  factory _$$InputType_BitcoinAddressCopyWith(
+          _$InputType_BitcoinAddress value, $Res Function(_$InputType_BitcoinAddress) then) =
+      __$$InputType_BitcoinAddressCopyWithImpl<$Res>;
   @useResult
   $Res call({BitcoinAddressData address});
 }
 
 /// @nodoc
-class __$$InputType_BitcoinAddressImplCopyWithImpl<$Res>
-    extends _$InputTypeCopyWithImpl<$Res, _$InputType_BitcoinAddressImpl>
-    implements _$$InputType_BitcoinAddressImplCopyWith<$Res> {
-  __$$InputType_BitcoinAddressImplCopyWithImpl(
-      _$InputType_BitcoinAddressImpl _value, $Res Function(_$InputType_BitcoinAddressImpl) _then)
+class __$$InputType_BitcoinAddressCopyWithImpl<$Res>
+    extends _$InputTypeCopyWithImpl<$Res, _$InputType_BitcoinAddress>
+    implements _$$InputType_BitcoinAddressCopyWith<$Res> {
+  __$$InputType_BitcoinAddressCopyWithImpl(
+      _$InputType_BitcoinAddress _value, $Res Function(_$InputType_BitcoinAddress) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -1485,7 +1480,7 @@ class __$$InputType_BitcoinAddressImplCopyWithImpl<$Res>
   $Res call({
     Object? address = null,
   }) {
-    return _then(_$InputType_BitcoinAddressImpl(
+    return _then(_$InputType_BitcoinAddress(
       address: null == address
           ? _value.address
           : address // ignore: cast_nullable_to_non_nullable
@@ -1496,8 +1491,8 @@ class __$$InputType_BitcoinAddressImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$InputType_BitcoinAddressImpl implements InputType_BitcoinAddress {
-  const _$InputType_BitcoinAddressImpl({required this.address});
+class _$InputType_BitcoinAddress implements InputType_BitcoinAddress {
+  const _$InputType_BitcoinAddress({required this.address});
 
   @override
   final BitcoinAddressData address;
@@ -1511,7 +1506,7 @@ class _$InputType_BitcoinAddressImpl implements InputType_BitcoinAddress {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$InputType_BitcoinAddressImpl &&
+            other is _$InputType_BitcoinAddress &&
             (identical(other.address, address) || other.address == address));
   }
 
@@ -1521,8 +1516,8 @@ class _$InputType_BitcoinAddressImpl implements InputType_BitcoinAddress {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$InputType_BitcoinAddressImplCopyWith<_$InputType_BitcoinAddressImpl> get copyWith =>
-      __$$InputType_BitcoinAddressImplCopyWithImpl<_$InputType_BitcoinAddressImpl>(this, _$identity);
+  _$$InputType_BitcoinAddressCopyWith<_$InputType_BitcoinAddress> get copyWith =>
+      __$$InputType_BitcoinAddressCopyWithImpl<_$InputType_BitcoinAddress>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -1625,28 +1620,26 @@ class _$InputType_BitcoinAddressImpl implements InputType_BitcoinAddress {
 
 abstract class InputType_BitcoinAddress implements InputType {
   const factory InputType_BitcoinAddress({required final BitcoinAddressData address}) =
-      _$InputType_BitcoinAddressImpl;
+      _$InputType_BitcoinAddress;
 
   BitcoinAddressData get address;
   @JsonKey(ignore: true)
-  _$$InputType_BitcoinAddressImplCopyWith<_$InputType_BitcoinAddressImpl> get copyWith =>
+  _$$InputType_BitcoinAddressCopyWith<_$InputType_BitcoinAddress> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class _$$InputType_Bolt11ImplCopyWith<$Res> {
-  factory _$$InputType_Bolt11ImplCopyWith(
-          _$InputType_Bolt11Impl value, $Res Function(_$InputType_Bolt11Impl) then) =
-      __$$InputType_Bolt11ImplCopyWithImpl<$Res>;
+abstract class _$$InputType_Bolt11CopyWith<$Res> {
+  factory _$$InputType_Bolt11CopyWith(_$InputType_Bolt11 value, $Res Function(_$InputType_Bolt11) then) =
+      __$$InputType_Bolt11CopyWithImpl<$Res>;
   @useResult
   $Res call({LNInvoice invoice});
 }
 
 /// @nodoc
-class __$$InputType_Bolt11ImplCopyWithImpl<$Res> extends _$InputTypeCopyWithImpl<$Res, _$InputType_Bolt11Impl>
-    implements _$$InputType_Bolt11ImplCopyWith<$Res> {
-  __$$InputType_Bolt11ImplCopyWithImpl(
-      _$InputType_Bolt11Impl _value, $Res Function(_$InputType_Bolt11Impl) _then)
+class __$$InputType_Bolt11CopyWithImpl<$Res> extends _$InputTypeCopyWithImpl<$Res, _$InputType_Bolt11>
+    implements _$$InputType_Bolt11CopyWith<$Res> {
+  __$$InputType_Bolt11CopyWithImpl(_$InputType_Bolt11 _value, $Res Function(_$InputType_Bolt11) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -1654,7 +1647,7 @@ class __$$InputType_Bolt11ImplCopyWithImpl<$Res> extends _$InputTypeCopyWithImpl
   $Res call({
     Object? invoice = null,
   }) {
-    return _then(_$InputType_Bolt11Impl(
+    return _then(_$InputType_Bolt11(
       invoice: null == invoice
           ? _value.invoice
           : invoice // ignore: cast_nullable_to_non_nullable
@@ -1665,8 +1658,8 @@ class __$$InputType_Bolt11ImplCopyWithImpl<$Res> extends _$InputTypeCopyWithImpl
 
 /// @nodoc
 
-class _$InputType_Bolt11Impl implements InputType_Bolt11 {
-  const _$InputType_Bolt11Impl({required this.invoice});
+class _$InputType_Bolt11 implements InputType_Bolt11 {
+  const _$InputType_Bolt11({required this.invoice});
 
   @override
   final LNInvoice invoice;
@@ -1680,7 +1673,7 @@ class _$InputType_Bolt11Impl implements InputType_Bolt11 {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$InputType_Bolt11Impl &&
+            other is _$InputType_Bolt11 &&
             (identical(other.invoice, invoice) || other.invoice == invoice));
   }
 
@@ -1690,8 +1683,8 @@ class _$InputType_Bolt11Impl implements InputType_Bolt11 {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$InputType_Bolt11ImplCopyWith<_$InputType_Bolt11Impl> get copyWith =>
-      __$$InputType_Bolt11ImplCopyWithImpl<_$InputType_Bolt11Impl>(this, _$identity);
+  _$$InputType_Bolt11CopyWith<_$InputType_Bolt11> get copyWith =>
+      __$$InputType_Bolt11CopyWithImpl<_$InputType_Bolt11>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -1793,27 +1786,25 @@ class _$InputType_Bolt11Impl implements InputType_Bolt11 {
 }
 
 abstract class InputType_Bolt11 implements InputType {
-  const factory InputType_Bolt11({required final LNInvoice invoice}) = _$InputType_Bolt11Impl;
+  const factory InputType_Bolt11({required final LNInvoice invoice}) = _$InputType_Bolt11;
 
   LNInvoice get invoice;
   @JsonKey(ignore: true)
-  _$$InputType_Bolt11ImplCopyWith<_$InputType_Bolt11Impl> get copyWith => throw _privateConstructorUsedError;
+  _$$InputType_Bolt11CopyWith<_$InputType_Bolt11> get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class _$$InputType_NodeIdImplCopyWith<$Res> {
-  factory _$$InputType_NodeIdImplCopyWith(
-          _$InputType_NodeIdImpl value, $Res Function(_$InputType_NodeIdImpl) then) =
-      __$$InputType_NodeIdImplCopyWithImpl<$Res>;
+abstract class _$$InputType_NodeIdCopyWith<$Res> {
+  factory _$$InputType_NodeIdCopyWith(_$InputType_NodeId value, $Res Function(_$InputType_NodeId) then) =
+      __$$InputType_NodeIdCopyWithImpl<$Res>;
   @useResult
   $Res call({String nodeId});
 }
 
 /// @nodoc
-class __$$InputType_NodeIdImplCopyWithImpl<$Res> extends _$InputTypeCopyWithImpl<$Res, _$InputType_NodeIdImpl>
-    implements _$$InputType_NodeIdImplCopyWith<$Res> {
-  __$$InputType_NodeIdImplCopyWithImpl(
-      _$InputType_NodeIdImpl _value, $Res Function(_$InputType_NodeIdImpl) _then)
+class __$$InputType_NodeIdCopyWithImpl<$Res> extends _$InputTypeCopyWithImpl<$Res, _$InputType_NodeId>
+    implements _$$InputType_NodeIdCopyWith<$Res> {
+  __$$InputType_NodeIdCopyWithImpl(_$InputType_NodeId _value, $Res Function(_$InputType_NodeId) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -1821,7 +1812,7 @@ class __$$InputType_NodeIdImplCopyWithImpl<$Res> extends _$InputTypeCopyWithImpl
   $Res call({
     Object? nodeId = null,
   }) {
-    return _then(_$InputType_NodeIdImpl(
+    return _then(_$InputType_NodeId(
       nodeId: null == nodeId
           ? _value.nodeId
           : nodeId // ignore: cast_nullable_to_non_nullable
@@ -1832,8 +1823,8 @@ class __$$InputType_NodeIdImplCopyWithImpl<$Res> extends _$InputTypeCopyWithImpl
 
 /// @nodoc
 
-class _$InputType_NodeIdImpl implements InputType_NodeId {
-  const _$InputType_NodeIdImpl({required this.nodeId});
+class _$InputType_NodeId implements InputType_NodeId {
+  const _$InputType_NodeId({required this.nodeId});
 
   @override
   final String nodeId;
@@ -1847,7 +1838,7 @@ class _$InputType_NodeIdImpl implements InputType_NodeId {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$InputType_NodeIdImpl &&
+            other is _$InputType_NodeId &&
             (identical(other.nodeId, nodeId) || other.nodeId == nodeId));
   }
 
@@ -1857,8 +1848,8 @@ class _$InputType_NodeIdImpl implements InputType_NodeId {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$InputType_NodeIdImplCopyWith<_$InputType_NodeIdImpl> get copyWith =>
-      __$$InputType_NodeIdImplCopyWithImpl<_$InputType_NodeIdImpl>(this, _$identity);
+  _$$InputType_NodeIdCopyWith<_$InputType_NodeId> get copyWith =>
+      __$$InputType_NodeIdCopyWithImpl<_$InputType_NodeId>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -1960,25 +1951,25 @@ class _$InputType_NodeIdImpl implements InputType_NodeId {
 }
 
 abstract class InputType_NodeId implements InputType {
-  const factory InputType_NodeId({required final String nodeId}) = _$InputType_NodeIdImpl;
+  const factory InputType_NodeId({required final String nodeId}) = _$InputType_NodeId;
 
   String get nodeId;
   @JsonKey(ignore: true)
-  _$$InputType_NodeIdImplCopyWith<_$InputType_NodeIdImpl> get copyWith => throw _privateConstructorUsedError;
+  _$$InputType_NodeIdCopyWith<_$InputType_NodeId> get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class _$$InputType_UrlImplCopyWith<$Res> {
-  factory _$$InputType_UrlImplCopyWith(_$InputType_UrlImpl value, $Res Function(_$InputType_UrlImpl) then) =
-      __$$InputType_UrlImplCopyWithImpl<$Res>;
+abstract class _$$InputType_UrlCopyWith<$Res> {
+  factory _$$InputType_UrlCopyWith(_$InputType_Url value, $Res Function(_$InputType_Url) then) =
+      __$$InputType_UrlCopyWithImpl<$Res>;
   @useResult
   $Res call({String url});
 }
 
 /// @nodoc
-class __$$InputType_UrlImplCopyWithImpl<$Res> extends _$InputTypeCopyWithImpl<$Res, _$InputType_UrlImpl>
-    implements _$$InputType_UrlImplCopyWith<$Res> {
-  __$$InputType_UrlImplCopyWithImpl(_$InputType_UrlImpl _value, $Res Function(_$InputType_UrlImpl) _then)
+class __$$InputType_UrlCopyWithImpl<$Res> extends _$InputTypeCopyWithImpl<$Res, _$InputType_Url>
+    implements _$$InputType_UrlCopyWith<$Res> {
+  __$$InputType_UrlCopyWithImpl(_$InputType_Url _value, $Res Function(_$InputType_Url) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -1986,7 +1977,7 @@ class __$$InputType_UrlImplCopyWithImpl<$Res> extends _$InputTypeCopyWithImpl<$R
   $Res call({
     Object? url = null,
   }) {
-    return _then(_$InputType_UrlImpl(
+    return _then(_$InputType_Url(
       url: null == url
           ? _value.url
           : url // ignore: cast_nullable_to_non_nullable
@@ -1997,8 +1988,8 @@ class __$$InputType_UrlImplCopyWithImpl<$Res> extends _$InputTypeCopyWithImpl<$R
 
 /// @nodoc
 
-class _$InputType_UrlImpl implements InputType_Url {
-  const _$InputType_UrlImpl({required this.url});
+class _$InputType_Url implements InputType_Url {
+  const _$InputType_Url({required this.url});
 
   @override
   final String url;
@@ -2012,7 +2003,7 @@ class _$InputType_UrlImpl implements InputType_Url {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$InputType_UrlImpl &&
+            other is _$InputType_Url &&
             (identical(other.url, url) || other.url == url));
   }
 
@@ -2022,8 +2013,8 @@ class _$InputType_UrlImpl implements InputType_Url {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$InputType_UrlImplCopyWith<_$InputType_UrlImpl> get copyWith =>
-      __$$InputType_UrlImplCopyWithImpl<_$InputType_UrlImpl>(this, _$identity);
+  _$$InputType_UrlCopyWith<_$InputType_Url> get copyWith =>
+      __$$InputType_UrlCopyWithImpl<_$InputType_Url>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -2125,28 +2116,26 @@ class _$InputType_UrlImpl implements InputType_Url {
 }
 
 abstract class InputType_Url implements InputType {
-  const factory InputType_Url({required final String url}) = _$InputType_UrlImpl;
+  const factory InputType_Url({required final String url}) = _$InputType_Url;
 
   String get url;
   @JsonKey(ignore: true)
-  _$$InputType_UrlImplCopyWith<_$InputType_UrlImpl> get copyWith => throw _privateConstructorUsedError;
+  _$$InputType_UrlCopyWith<_$InputType_Url> get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class _$$InputType_LnUrlPayImplCopyWith<$Res> {
-  factory _$$InputType_LnUrlPayImplCopyWith(
-          _$InputType_LnUrlPayImpl value, $Res Function(_$InputType_LnUrlPayImpl) then) =
-      __$$InputType_LnUrlPayImplCopyWithImpl<$Res>;
+abstract class _$$InputType_LnUrlPayCopyWith<$Res> {
+  factory _$$InputType_LnUrlPayCopyWith(
+          _$InputType_LnUrlPay value, $Res Function(_$InputType_LnUrlPay) then) =
+      __$$InputType_LnUrlPayCopyWithImpl<$Res>;
   @useResult
   $Res call({LnUrlPayRequestData data});
 }
 
 /// @nodoc
-class __$$InputType_LnUrlPayImplCopyWithImpl<$Res>
-    extends _$InputTypeCopyWithImpl<$Res, _$InputType_LnUrlPayImpl>
-    implements _$$InputType_LnUrlPayImplCopyWith<$Res> {
-  __$$InputType_LnUrlPayImplCopyWithImpl(
-      _$InputType_LnUrlPayImpl _value, $Res Function(_$InputType_LnUrlPayImpl) _then)
+class __$$InputType_LnUrlPayCopyWithImpl<$Res> extends _$InputTypeCopyWithImpl<$Res, _$InputType_LnUrlPay>
+    implements _$$InputType_LnUrlPayCopyWith<$Res> {
+  __$$InputType_LnUrlPayCopyWithImpl(_$InputType_LnUrlPay _value, $Res Function(_$InputType_LnUrlPay) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -2154,7 +2143,7 @@ class __$$InputType_LnUrlPayImplCopyWithImpl<$Res>
   $Res call({
     Object? data = null,
   }) {
-    return _then(_$InputType_LnUrlPayImpl(
+    return _then(_$InputType_LnUrlPay(
       data: null == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
@@ -2165,8 +2154,8 @@ class __$$InputType_LnUrlPayImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$InputType_LnUrlPayImpl implements InputType_LnUrlPay {
-  const _$InputType_LnUrlPayImpl({required this.data});
+class _$InputType_LnUrlPay implements InputType_LnUrlPay {
+  const _$InputType_LnUrlPay({required this.data});
 
   @override
   final LnUrlPayRequestData data;
@@ -2180,7 +2169,7 @@ class _$InputType_LnUrlPayImpl implements InputType_LnUrlPay {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$InputType_LnUrlPayImpl &&
+            other is _$InputType_LnUrlPay &&
             (identical(other.data, data) || other.data == data));
   }
 
@@ -2190,8 +2179,8 @@ class _$InputType_LnUrlPayImpl implements InputType_LnUrlPay {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$InputType_LnUrlPayImplCopyWith<_$InputType_LnUrlPayImpl> get copyWith =>
-      __$$InputType_LnUrlPayImplCopyWithImpl<_$InputType_LnUrlPayImpl>(this, _$identity);
+  _$$InputType_LnUrlPayCopyWith<_$InputType_LnUrlPay> get copyWith =>
+      __$$InputType_LnUrlPayCopyWithImpl<_$InputType_LnUrlPay>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -2293,29 +2282,28 @@ class _$InputType_LnUrlPayImpl implements InputType_LnUrlPay {
 }
 
 abstract class InputType_LnUrlPay implements InputType {
-  const factory InputType_LnUrlPay({required final LnUrlPayRequestData data}) = _$InputType_LnUrlPayImpl;
+  const factory InputType_LnUrlPay({required final LnUrlPayRequestData data}) = _$InputType_LnUrlPay;
 
   LnUrlPayRequestData get data;
   @JsonKey(ignore: true)
-  _$$InputType_LnUrlPayImplCopyWith<_$InputType_LnUrlPayImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$InputType_LnUrlPayCopyWith<_$InputType_LnUrlPay> get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class _$$InputType_LnUrlWithdrawImplCopyWith<$Res> {
-  factory _$$InputType_LnUrlWithdrawImplCopyWith(
-          _$InputType_LnUrlWithdrawImpl value, $Res Function(_$InputType_LnUrlWithdrawImpl) then) =
-      __$$InputType_LnUrlWithdrawImplCopyWithImpl<$Res>;
+abstract class _$$InputType_LnUrlWithdrawCopyWith<$Res> {
+  factory _$$InputType_LnUrlWithdrawCopyWith(
+          _$InputType_LnUrlWithdraw value, $Res Function(_$InputType_LnUrlWithdraw) then) =
+      __$$InputType_LnUrlWithdrawCopyWithImpl<$Res>;
   @useResult
   $Res call({LnUrlWithdrawRequestData data});
 }
 
 /// @nodoc
-class __$$InputType_LnUrlWithdrawImplCopyWithImpl<$Res>
-    extends _$InputTypeCopyWithImpl<$Res, _$InputType_LnUrlWithdrawImpl>
-    implements _$$InputType_LnUrlWithdrawImplCopyWith<$Res> {
-  __$$InputType_LnUrlWithdrawImplCopyWithImpl(
-      _$InputType_LnUrlWithdrawImpl _value, $Res Function(_$InputType_LnUrlWithdrawImpl) _then)
+class __$$InputType_LnUrlWithdrawCopyWithImpl<$Res>
+    extends _$InputTypeCopyWithImpl<$Res, _$InputType_LnUrlWithdraw>
+    implements _$$InputType_LnUrlWithdrawCopyWith<$Res> {
+  __$$InputType_LnUrlWithdrawCopyWithImpl(
+      _$InputType_LnUrlWithdraw _value, $Res Function(_$InputType_LnUrlWithdraw) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -2323,7 +2311,7 @@ class __$$InputType_LnUrlWithdrawImplCopyWithImpl<$Res>
   $Res call({
     Object? data = null,
   }) {
-    return _then(_$InputType_LnUrlWithdrawImpl(
+    return _then(_$InputType_LnUrlWithdraw(
       data: null == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
@@ -2334,8 +2322,8 @@ class __$$InputType_LnUrlWithdrawImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$InputType_LnUrlWithdrawImpl implements InputType_LnUrlWithdraw {
-  const _$InputType_LnUrlWithdrawImpl({required this.data});
+class _$InputType_LnUrlWithdraw implements InputType_LnUrlWithdraw {
+  const _$InputType_LnUrlWithdraw({required this.data});
 
   @override
   final LnUrlWithdrawRequestData data;
@@ -2349,7 +2337,7 @@ class _$InputType_LnUrlWithdrawImpl implements InputType_LnUrlWithdraw {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$InputType_LnUrlWithdrawImpl &&
+            other is _$InputType_LnUrlWithdraw &&
             (identical(other.data, data) || other.data == data));
   }
 
@@ -2359,8 +2347,8 @@ class _$InputType_LnUrlWithdrawImpl implements InputType_LnUrlWithdraw {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$InputType_LnUrlWithdrawImplCopyWith<_$InputType_LnUrlWithdrawImpl> get copyWith =>
-      __$$InputType_LnUrlWithdrawImplCopyWithImpl<_$InputType_LnUrlWithdrawImpl>(this, _$identity);
+  _$$InputType_LnUrlWithdrawCopyWith<_$InputType_LnUrlWithdraw> get copyWith =>
+      __$$InputType_LnUrlWithdrawCopyWithImpl<_$InputType_LnUrlWithdraw>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -2463,29 +2451,28 @@ class _$InputType_LnUrlWithdrawImpl implements InputType_LnUrlWithdraw {
 
 abstract class InputType_LnUrlWithdraw implements InputType {
   const factory InputType_LnUrlWithdraw({required final LnUrlWithdrawRequestData data}) =
-      _$InputType_LnUrlWithdrawImpl;
+      _$InputType_LnUrlWithdraw;
 
   LnUrlWithdrawRequestData get data;
   @JsonKey(ignore: true)
-  _$$InputType_LnUrlWithdrawImplCopyWith<_$InputType_LnUrlWithdrawImpl> get copyWith =>
+  _$$InputType_LnUrlWithdrawCopyWith<_$InputType_LnUrlWithdraw> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class _$$InputType_LnUrlAuthImplCopyWith<$Res> {
-  factory _$$InputType_LnUrlAuthImplCopyWith(
-          _$InputType_LnUrlAuthImpl value, $Res Function(_$InputType_LnUrlAuthImpl) then) =
-      __$$InputType_LnUrlAuthImplCopyWithImpl<$Res>;
+abstract class _$$InputType_LnUrlAuthCopyWith<$Res> {
+  factory _$$InputType_LnUrlAuthCopyWith(
+          _$InputType_LnUrlAuth value, $Res Function(_$InputType_LnUrlAuth) then) =
+      __$$InputType_LnUrlAuthCopyWithImpl<$Res>;
   @useResult
   $Res call({LnUrlAuthRequestData data});
 }
 
 /// @nodoc
-class __$$InputType_LnUrlAuthImplCopyWithImpl<$Res>
-    extends _$InputTypeCopyWithImpl<$Res, _$InputType_LnUrlAuthImpl>
-    implements _$$InputType_LnUrlAuthImplCopyWith<$Res> {
-  __$$InputType_LnUrlAuthImplCopyWithImpl(
-      _$InputType_LnUrlAuthImpl _value, $Res Function(_$InputType_LnUrlAuthImpl) _then)
+class __$$InputType_LnUrlAuthCopyWithImpl<$Res> extends _$InputTypeCopyWithImpl<$Res, _$InputType_LnUrlAuth>
+    implements _$$InputType_LnUrlAuthCopyWith<$Res> {
+  __$$InputType_LnUrlAuthCopyWithImpl(
+      _$InputType_LnUrlAuth _value, $Res Function(_$InputType_LnUrlAuth) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -2493,7 +2480,7 @@ class __$$InputType_LnUrlAuthImplCopyWithImpl<$Res>
   $Res call({
     Object? data = null,
   }) {
-    return _then(_$InputType_LnUrlAuthImpl(
+    return _then(_$InputType_LnUrlAuth(
       data: null == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
@@ -2504,8 +2491,8 @@ class __$$InputType_LnUrlAuthImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$InputType_LnUrlAuthImpl implements InputType_LnUrlAuth {
-  const _$InputType_LnUrlAuthImpl({required this.data});
+class _$InputType_LnUrlAuth implements InputType_LnUrlAuth {
+  const _$InputType_LnUrlAuth({required this.data});
 
   @override
   final LnUrlAuthRequestData data;
@@ -2519,7 +2506,7 @@ class _$InputType_LnUrlAuthImpl implements InputType_LnUrlAuth {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$InputType_LnUrlAuthImpl &&
+            other is _$InputType_LnUrlAuth &&
             (identical(other.data, data) || other.data == data));
   }
 
@@ -2529,8 +2516,8 @@ class _$InputType_LnUrlAuthImpl implements InputType_LnUrlAuth {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$InputType_LnUrlAuthImplCopyWith<_$InputType_LnUrlAuthImpl> get copyWith =>
-      __$$InputType_LnUrlAuthImplCopyWithImpl<_$InputType_LnUrlAuthImpl>(this, _$identity);
+  _$$InputType_LnUrlAuthCopyWith<_$InputType_LnUrlAuth> get copyWith =>
+      __$$InputType_LnUrlAuthCopyWithImpl<_$InputType_LnUrlAuth>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -2632,29 +2619,27 @@ class _$InputType_LnUrlAuthImpl implements InputType_LnUrlAuth {
 }
 
 abstract class InputType_LnUrlAuth implements InputType {
-  const factory InputType_LnUrlAuth({required final LnUrlAuthRequestData data}) = _$InputType_LnUrlAuthImpl;
+  const factory InputType_LnUrlAuth({required final LnUrlAuthRequestData data}) = _$InputType_LnUrlAuth;
 
   LnUrlAuthRequestData get data;
   @JsonKey(ignore: true)
-  _$$InputType_LnUrlAuthImplCopyWith<_$InputType_LnUrlAuthImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$InputType_LnUrlAuthCopyWith<_$InputType_LnUrlAuth> get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class _$$InputType_LnUrlErrorImplCopyWith<$Res> {
-  factory _$$InputType_LnUrlErrorImplCopyWith(
-          _$InputType_LnUrlErrorImpl value, $Res Function(_$InputType_LnUrlErrorImpl) then) =
-      __$$InputType_LnUrlErrorImplCopyWithImpl<$Res>;
+abstract class _$$InputType_LnUrlErrorCopyWith<$Res> {
+  factory _$$InputType_LnUrlErrorCopyWith(
+          _$InputType_LnUrlError value, $Res Function(_$InputType_LnUrlError) then) =
+      __$$InputType_LnUrlErrorCopyWithImpl<$Res>;
   @useResult
   $Res call({LnUrlErrorData data});
 }
 
 /// @nodoc
-class __$$InputType_LnUrlErrorImplCopyWithImpl<$Res>
-    extends _$InputTypeCopyWithImpl<$Res, _$InputType_LnUrlErrorImpl>
-    implements _$$InputType_LnUrlErrorImplCopyWith<$Res> {
-  __$$InputType_LnUrlErrorImplCopyWithImpl(
-      _$InputType_LnUrlErrorImpl _value, $Res Function(_$InputType_LnUrlErrorImpl) _then)
+class __$$InputType_LnUrlErrorCopyWithImpl<$Res> extends _$InputTypeCopyWithImpl<$Res, _$InputType_LnUrlError>
+    implements _$$InputType_LnUrlErrorCopyWith<$Res> {
+  __$$InputType_LnUrlErrorCopyWithImpl(
+      _$InputType_LnUrlError _value, $Res Function(_$InputType_LnUrlError) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -2662,7 +2647,7 @@ class __$$InputType_LnUrlErrorImplCopyWithImpl<$Res>
   $Res call({
     Object? data = null,
   }) {
-    return _then(_$InputType_LnUrlErrorImpl(
+    return _then(_$InputType_LnUrlError(
       data: null == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
@@ -2673,8 +2658,8 @@ class __$$InputType_LnUrlErrorImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$InputType_LnUrlErrorImpl implements InputType_LnUrlError {
-  const _$InputType_LnUrlErrorImpl({required this.data});
+class _$InputType_LnUrlError implements InputType_LnUrlError {
+  const _$InputType_LnUrlError({required this.data});
 
   @override
   final LnUrlErrorData data;
@@ -2688,7 +2673,7 @@ class _$InputType_LnUrlErrorImpl implements InputType_LnUrlError {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$InputType_LnUrlErrorImpl &&
+            other is _$InputType_LnUrlError &&
             (identical(other.data, data) || other.data == data));
   }
 
@@ -2698,8 +2683,8 @@ class _$InputType_LnUrlErrorImpl implements InputType_LnUrlError {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$InputType_LnUrlErrorImplCopyWith<_$InputType_LnUrlErrorImpl> get copyWith =>
-      __$$InputType_LnUrlErrorImplCopyWithImpl<_$InputType_LnUrlErrorImpl>(this, _$identity);
+  _$$InputType_LnUrlErrorCopyWith<_$InputType_LnUrlError> get copyWith =>
+      __$$InputType_LnUrlErrorCopyWithImpl<_$InputType_LnUrlError>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -2801,12 +2786,11 @@ class _$InputType_LnUrlErrorImpl implements InputType_LnUrlError {
 }
 
 abstract class InputType_LnUrlError implements InputType {
-  const factory InputType_LnUrlError({required final LnUrlErrorData data}) = _$InputType_LnUrlErrorImpl;
+  const factory InputType_LnUrlError({required final LnUrlErrorData data}) = _$InputType_LnUrlError;
 
   LnUrlErrorData get data;
   @JsonKey(ignore: true)
-  _$$InputType_LnUrlErrorImplCopyWith<_$InputType_LnUrlErrorImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$InputType_LnUrlErrorCopyWith<_$InputType_LnUrlError> get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
@@ -2869,25 +2853,25 @@ class _$LnUrlCallbackStatusCopyWithImpl<$Res, $Val extends LnUrlCallbackStatus>
 }
 
 /// @nodoc
-abstract class _$$LnUrlCallbackStatus_OkImplCopyWith<$Res> {
-  factory _$$LnUrlCallbackStatus_OkImplCopyWith(
-          _$LnUrlCallbackStatus_OkImpl value, $Res Function(_$LnUrlCallbackStatus_OkImpl) then) =
-      __$$LnUrlCallbackStatus_OkImplCopyWithImpl<$Res>;
+abstract class _$$LnUrlCallbackStatus_OkCopyWith<$Res> {
+  factory _$$LnUrlCallbackStatus_OkCopyWith(
+          _$LnUrlCallbackStatus_Ok value, $Res Function(_$LnUrlCallbackStatus_Ok) then) =
+      __$$LnUrlCallbackStatus_OkCopyWithImpl<$Res>;
 }
 
 /// @nodoc
-class __$$LnUrlCallbackStatus_OkImplCopyWithImpl<$Res>
-    extends _$LnUrlCallbackStatusCopyWithImpl<$Res, _$LnUrlCallbackStatus_OkImpl>
-    implements _$$LnUrlCallbackStatus_OkImplCopyWith<$Res> {
-  __$$LnUrlCallbackStatus_OkImplCopyWithImpl(
-      _$LnUrlCallbackStatus_OkImpl _value, $Res Function(_$LnUrlCallbackStatus_OkImpl) _then)
+class __$$LnUrlCallbackStatus_OkCopyWithImpl<$Res>
+    extends _$LnUrlCallbackStatusCopyWithImpl<$Res, _$LnUrlCallbackStatus_Ok>
+    implements _$$LnUrlCallbackStatus_OkCopyWith<$Res> {
+  __$$LnUrlCallbackStatus_OkCopyWithImpl(
+      _$LnUrlCallbackStatus_Ok _value, $Res Function(_$LnUrlCallbackStatus_Ok) _then)
       : super(_value, _then);
 }
 
 /// @nodoc
 
-class _$LnUrlCallbackStatus_OkImpl implements LnUrlCallbackStatus_Ok {
-  const _$LnUrlCallbackStatus_OkImpl();
+class _$LnUrlCallbackStatus_Ok implements LnUrlCallbackStatus_Ok {
+  const _$LnUrlCallbackStatus_Ok();
 
   @override
   String toString() {
@@ -2896,8 +2880,7 @@ class _$LnUrlCallbackStatus_OkImpl implements LnUrlCallbackStatus_Ok {
 
   @override
   bool operator ==(dynamic other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType && other is _$LnUrlCallbackStatus_OkImpl);
+    return identical(this, other) || (other.runtimeType == runtimeType && other is _$LnUrlCallbackStatus_Ok);
   }
 
   @override
@@ -2967,24 +2950,24 @@ class _$LnUrlCallbackStatus_OkImpl implements LnUrlCallbackStatus_Ok {
 }
 
 abstract class LnUrlCallbackStatus_Ok implements LnUrlCallbackStatus {
-  const factory LnUrlCallbackStatus_Ok() = _$LnUrlCallbackStatus_OkImpl;
+  const factory LnUrlCallbackStatus_Ok() = _$LnUrlCallbackStatus_Ok;
 }
 
 /// @nodoc
-abstract class _$$LnUrlCallbackStatus_ErrorStatusImplCopyWith<$Res> {
-  factory _$$LnUrlCallbackStatus_ErrorStatusImplCopyWith(_$LnUrlCallbackStatus_ErrorStatusImpl value,
-          $Res Function(_$LnUrlCallbackStatus_ErrorStatusImpl) then) =
-      __$$LnUrlCallbackStatus_ErrorStatusImplCopyWithImpl<$Res>;
+abstract class _$$LnUrlCallbackStatus_ErrorStatusCopyWith<$Res> {
+  factory _$$LnUrlCallbackStatus_ErrorStatusCopyWith(
+          _$LnUrlCallbackStatus_ErrorStatus value, $Res Function(_$LnUrlCallbackStatus_ErrorStatus) then) =
+      __$$LnUrlCallbackStatus_ErrorStatusCopyWithImpl<$Res>;
   @useResult
   $Res call({LnUrlErrorData data});
 }
 
 /// @nodoc
-class __$$LnUrlCallbackStatus_ErrorStatusImplCopyWithImpl<$Res>
-    extends _$LnUrlCallbackStatusCopyWithImpl<$Res, _$LnUrlCallbackStatus_ErrorStatusImpl>
-    implements _$$LnUrlCallbackStatus_ErrorStatusImplCopyWith<$Res> {
-  __$$LnUrlCallbackStatus_ErrorStatusImplCopyWithImpl(_$LnUrlCallbackStatus_ErrorStatusImpl _value,
-      $Res Function(_$LnUrlCallbackStatus_ErrorStatusImpl) _then)
+class __$$LnUrlCallbackStatus_ErrorStatusCopyWithImpl<$Res>
+    extends _$LnUrlCallbackStatusCopyWithImpl<$Res, _$LnUrlCallbackStatus_ErrorStatus>
+    implements _$$LnUrlCallbackStatus_ErrorStatusCopyWith<$Res> {
+  __$$LnUrlCallbackStatus_ErrorStatusCopyWithImpl(
+      _$LnUrlCallbackStatus_ErrorStatus _value, $Res Function(_$LnUrlCallbackStatus_ErrorStatus) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -2992,7 +2975,7 @@ class __$$LnUrlCallbackStatus_ErrorStatusImplCopyWithImpl<$Res>
   $Res call({
     Object? data = null,
   }) {
-    return _then(_$LnUrlCallbackStatus_ErrorStatusImpl(
+    return _then(_$LnUrlCallbackStatus_ErrorStatus(
       data: null == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
@@ -3003,8 +2986,8 @@ class __$$LnUrlCallbackStatus_ErrorStatusImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$LnUrlCallbackStatus_ErrorStatusImpl implements LnUrlCallbackStatus_ErrorStatus {
-  const _$LnUrlCallbackStatus_ErrorStatusImpl({required this.data});
+class _$LnUrlCallbackStatus_ErrorStatus implements LnUrlCallbackStatus_ErrorStatus {
+  const _$LnUrlCallbackStatus_ErrorStatus({required this.data});
 
   @override
   final LnUrlErrorData data;
@@ -3018,7 +3001,7 @@ class _$LnUrlCallbackStatus_ErrorStatusImpl implements LnUrlCallbackStatus_Error
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$LnUrlCallbackStatus_ErrorStatusImpl &&
+            other is _$LnUrlCallbackStatus_ErrorStatus &&
             (identical(other.data, data) || other.data == data));
   }
 
@@ -3028,9 +3011,8 @@ class _$LnUrlCallbackStatus_ErrorStatusImpl implements LnUrlCallbackStatus_Error
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$LnUrlCallbackStatus_ErrorStatusImplCopyWith<_$LnUrlCallbackStatus_ErrorStatusImpl> get copyWith =>
-      __$$LnUrlCallbackStatus_ErrorStatusImplCopyWithImpl<_$LnUrlCallbackStatus_ErrorStatusImpl>(
-          this, _$identity);
+  _$$LnUrlCallbackStatus_ErrorStatusCopyWith<_$LnUrlCallbackStatus_ErrorStatus> get copyWith =>
+      __$$LnUrlCallbackStatus_ErrorStatusCopyWithImpl<_$LnUrlCallbackStatus_ErrorStatus>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -3097,11 +3079,11 @@ class _$LnUrlCallbackStatus_ErrorStatusImpl implements LnUrlCallbackStatus_Error
 
 abstract class LnUrlCallbackStatus_ErrorStatus implements LnUrlCallbackStatus {
   const factory LnUrlCallbackStatus_ErrorStatus({required final LnUrlErrorData data}) =
-      _$LnUrlCallbackStatus_ErrorStatusImpl;
+      _$LnUrlCallbackStatus_ErrorStatus;
 
   LnUrlErrorData get data;
   @JsonKey(ignore: true)
-  _$$LnUrlCallbackStatus_ErrorStatusImplCopyWith<_$LnUrlCallbackStatus_ErrorStatusImpl> get copyWith =>
+  _$$LnUrlCallbackStatus_ErrorStatusCopyWith<_$LnUrlCallbackStatus_ErrorStatus> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -3166,10 +3148,10 @@ class _$LnUrlPayResultCopyWithImpl<$Res, $Val extends LnUrlPayResult>
 }
 
 /// @nodoc
-abstract class _$$LnUrlPayResult_EndpointSuccessImplCopyWith<$Res> {
-  factory _$$LnUrlPayResult_EndpointSuccessImplCopyWith(_$LnUrlPayResult_EndpointSuccessImpl value,
-          $Res Function(_$LnUrlPayResult_EndpointSuccessImpl) then) =
-      __$$LnUrlPayResult_EndpointSuccessImplCopyWithImpl<$Res>;
+abstract class _$$LnUrlPayResult_EndpointSuccessCopyWith<$Res> {
+  factory _$$LnUrlPayResult_EndpointSuccessCopyWith(
+          _$LnUrlPayResult_EndpointSuccess value, $Res Function(_$LnUrlPayResult_EndpointSuccess) then) =
+      __$$LnUrlPayResult_EndpointSuccessCopyWithImpl<$Res>;
   @useResult
   $Res call({SuccessActionProcessed? data});
 
@@ -3177,11 +3159,11 @@ abstract class _$$LnUrlPayResult_EndpointSuccessImplCopyWith<$Res> {
 }
 
 /// @nodoc
-class __$$LnUrlPayResult_EndpointSuccessImplCopyWithImpl<$Res>
-    extends _$LnUrlPayResultCopyWithImpl<$Res, _$LnUrlPayResult_EndpointSuccessImpl>
-    implements _$$LnUrlPayResult_EndpointSuccessImplCopyWith<$Res> {
-  __$$LnUrlPayResult_EndpointSuccessImplCopyWithImpl(
-      _$LnUrlPayResult_EndpointSuccessImpl _value, $Res Function(_$LnUrlPayResult_EndpointSuccessImpl) _then)
+class __$$LnUrlPayResult_EndpointSuccessCopyWithImpl<$Res>
+    extends _$LnUrlPayResultCopyWithImpl<$Res, _$LnUrlPayResult_EndpointSuccess>
+    implements _$$LnUrlPayResult_EndpointSuccessCopyWith<$Res> {
+  __$$LnUrlPayResult_EndpointSuccessCopyWithImpl(
+      _$LnUrlPayResult_EndpointSuccess _value, $Res Function(_$LnUrlPayResult_EndpointSuccess) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -3189,7 +3171,7 @@ class __$$LnUrlPayResult_EndpointSuccessImplCopyWithImpl<$Res>
   $Res call({
     Object? data = freezed,
   }) {
-    return _then(_$LnUrlPayResult_EndpointSuccessImpl(
+    return _then(_$LnUrlPayResult_EndpointSuccess(
       data: freezed == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
@@ -3212,8 +3194,8 @@ class __$$LnUrlPayResult_EndpointSuccessImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$LnUrlPayResult_EndpointSuccessImpl implements LnUrlPayResult_EndpointSuccess {
-  const _$LnUrlPayResult_EndpointSuccessImpl({this.data});
+class _$LnUrlPayResult_EndpointSuccess implements LnUrlPayResult_EndpointSuccess {
+  const _$LnUrlPayResult_EndpointSuccess({this.data});
 
   @override
   final SuccessActionProcessed? data;
@@ -3227,7 +3209,7 @@ class _$LnUrlPayResult_EndpointSuccessImpl implements LnUrlPayResult_EndpointSuc
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$LnUrlPayResult_EndpointSuccessImpl &&
+            other is _$LnUrlPayResult_EndpointSuccess &&
             (identical(other.data, data) || other.data == data));
   }
 
@@ -3237,9 +3219,8 @@ class _$LnUrlPayResult_EndpointSuccessImpl implements LnUrlPayResult_EndpointSuc
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$LnUrlPayResult_EndpointSuccessImplCopyWith<_$LnUrlPayResult_EndpointSuccessImpl> get copyWith =>
-      __$$LnUrlPayResult_EndpointSuccessImplCopyWithImpl<_$LnUrlPayResult_EndpointSuccessImpl>(
-          this, _$identity);
+  _$$LnUrlPayResult_EndpointSuccessCopyWith<_$LnUrlPayResult_EndpointSuccess> get copyWith =>
+      __$$LnUrlPayResult_EndpointSuccessCopyWithImpl<_$LnUrlPayResult_EndpointSuccess>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -3306,30 +3287,30 @@ class _$LnUrlPayResult_EndpointSuccessImpl implements LnUrlPayResult_EndpointSuc
 
 abstract class LnUrlPayResult_EndpointSuccess implements LnUrlPayResult {
   const factory LnUrlPayResult_EndpointSuccess({final SuccessActionProcessed? data}) =
-      _$LnUrlPayResult_EndpointSuccessImpl;
+      _$LnUrlPayResult_EndpointSuccess;
 
   @override
   SuccessActionProcessed? get data;
   @JsonKey(ignore: true)
-  _$$LnUrlPayResult_EndpointSuccessImplCopyWith<_$LnUrlPayResult_EndpointSuccessImpl> get copyWith =>
+  _$$LnUrlPayResult_EndpointSuccessCopyWith<_$LnUrlPayResult_EndpointSuccess> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class _$$LnUrlPayResult_EndpointErrorImplCopyWith<$Res> {
-  factory _$$LnUrlPayResult_EndpointErrorImplCopyWith(
-          _$LnUrlPayResult_EndpointErrorImpl value, $Res Function(_$LnUrlPayResult_EndpointErrorImpl) then) =
-      __$$LnUrlPayResult_EndpointErrorImplCopyWithImpl<$Res>;
+abstract class _$$LnUrlPayResult_EndpointErrorCopyWith<$Res> {
+  factory _$$LnUrlPayResult_EndpointErrorCopyWith(
+          _$LnUrlPayResult_EndpointError value, $Res Function(_$LnUrlPayResult_EndpointError) then) =
+      __$$LnUrlPayResult_EndpointErrorCopyWithImpl<$Res>;
   @useResult
   $Res call({LnUrlErrorData data});
 }
 
 /// @nodoc
-class __$$LnUrlPayResult_EndpointErrorImplCopyWithImpl<$Res>
-    extends _$LnUrlPayResultCopyWithImpl<$Res, _$LnUrlPayResult_EndpointErrorImpl>
-    implements _$$LnUrlPayResult_EndpointErrorImplCopyWith<$Res> {
-  __$$LnUrlPayResult_EndpointErrorImplCopyWithImpl(
-      _$LnUrlPayResult_EndpointErrorImpl _value, $Res Function(_$LnUrlPayResult_EndpointErrorImpl) _then)
+class __$$LnUrlPayResult_EndpointErrorCopyWithImpl<$Res>
+    extends _$LnUrlPayResultCopyWithImpl<$Res, _$LnUrlPayResult_EndpointError>
+    implements _$$LnUrlPayResult_EndpointErrorCopyWith<$Res> {
+  __$$LnUrlPayResult_EndpointErrorCopyWithImpl(
+      _$LnUrlPayResult_EndpointError _value, $Res Function(_$LnUrlPayResult_EndpointError) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -3337,7 +3318,7 @@ class __$$LnUrlPayResult_EndpointErrorImplCopyWithImpl<$Res>
   $Res call({
     Object? data = null,
   }) {
-    return _then(_$LnUrlPayResult_EndpointErrorImpl(
+    return _then(_$LnUrlPayResult_EndpointError(
       data: null == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
@@ -3348,8 +3329,8 @@ class __$$LnUrlPayResult_EndpointErrorImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$LnUrlPayResult_EndpointErrorImpl implements LnUrlPayResult_EndpointError {
-  const _$LnUrlPayResult_EndpointErrorImpl({required this.data});
+class _$LnUrlPayResult_EndpointError implements LnUrlPayResult_EndpointError {
+  const _$LnUrlPayResult_EndpointError({required this.data});
 
   @override
   final LnUrlErrorData data;
@@ -3363,7 +3344,7 @@ class _$LnUrlPayResult_EndpointErrorImpl implements LnUrlPayResult_EndpointError
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$LnUrlPayResult_EndpointErrorImpl &&
+            other is _$LnUrlPayResult_EndpointError &&
             (identical(other.data, data) || other.data == data));
   }
 
@@ -3373,8 +3354,8 @@ class _$LnUrlPayResult_EndpointErrorImpl implements LnUrlPayResult_EndpointError
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$LnUrlPayResult_EndpointErrorImplCopyWith<_$LnUrlPayResult_EndpointErrorImpl> get copyWith =>
-      __$$LnUrlPayResult_EndpointErrorImplCopyWithImpl<_$LnUrlPayResult_EndpointErrorImpl>(this, _$identity);
+  _$$LnUrlPayResult_EndpointErrorCopyWith<_$LnUrlPayResult_EndpointError> get copyWith =>
+      __$$LnUrlPayResult_EndpointErrorCopyWithImpl<_$LnUrlPayResult_EndpointError>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -3441,12 +3422,12 @@ class _$LnUrlPayResult_EndpointErrorImpl implements LnUrlPayResult_EndpointError
 
 abstract class LnUrlPayResult_EndpointError implements LnUrlPayResult {
   const factory LnUrlPayResult_EndpointError({required final LnUrlErrorData data}) =
-      _$LnUrlPayResult_EndpointErrorImpl;
+      _$LnUrlPayResult_EndpointError;
 
   @override
   LnUrlErrorData get data;
   @JsonKey(ignore: true)
-  _$$LnUrlPayResult_EndpointErrorImplCopyWith<_$LnUrlPayResult_EndpointErrorImpl> get copyWith =>
+  _$$LnUrlPayResult_EndpointErrorCopyWith<_$LnUrlPayResult_EndpointError> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -3511,20 +3492,20 @@ class _$LnUrlWithdrawResultCopyWithImpl<$Res, $Val extends LnUrlWithdrawResult>
 }
 
 /// @nodoc
-abstract class _$$LnUrlWithdrawResult_OkImplCopyWith<$Res> {
-  factory _$$LnUrlWithdrawResult_OkImplCopyWith(
-          _$LnUrlWithdrawResult_OkImpl value, $Res Function(_$LnUrlWithdrawResult_OkImpl) then) =
-      __$$LnUrlWithdrawResult_OkImplCopyWithImpl<$Res>;
+abstract class _$$LnUrlWithdrawResult_OkCopyWith<$Res> {
+  factory _$$LnUrlWithdrawResult_OkCopyWith(
+          _$LnUrlWithdrawResult_Ok value, $Res Function(_$LnUrlWithdrawResult_Ok) then) =
+      __$$LnUrlWithdrawResult_OkCopyWithImpl<$Res>;
   @useResult
   $Res call({LnUrlWithdrawSuccessData data});
 }
 
 /// @nodoc
-class __$$LnUrlWithdrawResult_OkImplCopyWithImpl<$Res>
-    extends _$LnUrlWithdrawResultCopyWithImpl<$Res, _$LnUrlWithdrawResult_OkImpl>
-    implements _$$LnUrlWithdrawResult_OkImplCopyWith<$Res> {
-  __$$LnUrlWithdrawResult_OkImplCopyWithImpl(
-      _$LnUrlWithdrawResult_OkImpl _value, $Res Function(_$LnUrlWithdrawResult_OkImpl) _then)
+class __$$LnUrlWithdrawResult_OkCopyWithImpl<$Res>
+    extends _$LnUrlWithdrawResultCopyWithImpl<$Res, _$LnUrlWithdrawResult_Ok>
+    implements _$$LnUrlWithdrawResult_OkCopyWith<$Res> {
+  __$$LnUrlWithdrawResult_OkCopyWithImpl(
+      _$LnUrlWithdrawResult_Ok _value, $Res Function(_$LnUrlWithdrawResult_Ok) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -3532,7 +3513,7 @@ class __$$LnUrlWithdrawResult_OkImplCopyWithImpl<$Res>
   $Res call({
     Object? data = null,
   }) {
-    return _then(_$LnUrlWithdrawResult_OkImpl(
+    return _then(_$LnUrlWithdrawResult_Ok(
       data: null == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
@@ -3543,8 +3524,8 @@ class __$$LnUrlWithdrawResult_OkImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$LnUrlWithdrawResult_OkImpl implements LnUrlWithdrawResult_Ok {
-  const _$LnUrlWithdrawResult_OkImpl({required this.data});
+class _$LnUrlWithdrawResult_Ok implements LnUrlWithdrawResult_Ok {
+  const _$LnUrlWithdrawResult_Ok({required this.data});
 
   @override
   final LnUrlWithdrawSuccessData data;
@@ -3558,7 +3539,7 @@ class _$LnUrlWithdrawResult_OkImpl implements LnUrlWithdrawResult_Ok {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$LnUrlWithdrawResult_OkImpl &&
+            other is _$LnUrlWithdrawResult_Ok &&
             (identical(other.data, data) || other.data == data));
   }
 
@@ -3568,8 +3549,8 @@ class _$LnUrlWithdrawResult_OkImpl implements LnUrlWithdrawResult_Ok {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$LnUrlWithdrawResult_OkImplCopyWith<_$LnUrlWithdrawResult_OkImpl> get copyWith =>
-      __$$LnUrlWithdrawResult_OkImplCopyWithImpl<_$LnUrlWithdrawResult_OkImpl>(this, _$identity);
+  _$$LnUrlWithdrawResult_OkCopyWith<_$LnUrlWithdrawResult_Ok> get copyWith =>
+      __$$LnUrlWithdrawResult_OkCopyWithImpl<_$LnUrlWithdrawResult_Ok>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -3636,30 +3617,30 @@ class _$LnUrlWithdrawResult_OkImpl implements LnUrlWithdrawResult_Ok {
 
 abstract class LnUrlWithdrawResult_Ok implements LnUrlWithdrawResult {
   const factory LnUrlWithdrawResult_Ok({required final LnUrlWithdrawSuccessData data}) =
-      _$LnUrlWithdrawResult_OkImpl;
+      _$LnUrlWithdrawResult_Ok;
 
   @override
   LnUrlWithdrawSuccessData get data;
   @JsonKey(ignore: true)
-  _$$LnUrlWithdrawResult_OkImplCopyWith<_$LnUrlWithdrawResult_OkImpl> get copyWith =>
+  _$$LnUrlWithdrawResult_OkCopyWith<_$LnUrlWithdrawResult_Ok> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class _$$LnUrlWithdrawResult_ErrorStatusImplCopyWith<$Res> {
-  factory _$$LnUrlWithdrawResult_ErrorStatusImplCopyWith(_$LnUrlWithdrawResult_ErrorStatusImpl value,
-          $Res Function(_$LnUrlWithdrawResult_ErrorStatusImpl) then) =
-      __$$LnUrlWithdrawResult_ErrorStatusImplCopyWithImpl<$Res>;
+abstract class _$$LnUrlWithdrawResult_ErrorStatusCopyWith<$Res> {
+  factory _$$LnUrlWithdrawResult_ErrorStatusCopyWith(
+          _$LnUrlWithdrawResult_ErrorStatus value, $Res Function(_$LnUrlWithdrawResult_ErrorStatus) then) =
+      __$$LnUrlWithdrawResult_ErrorStatusCopyWithImpl<$Res>;
   @useResult
   $Res call({LnUrlErrorData data});
 }
 
 /// @nodoc
-class __$$LnUrlWithdrawResult_ErrorStatusImplCopyWithImpl<$Res>
-    extends _$LnUrlWithdrawResultCopyWithImpl<$Res, _$LnUrlWithdrawResult_ErrorStatusImpl>
-    implements _$$LnUrlWithdrawResult_ErrorStatusImplCopyWith<$Res> {
-  __$$LnUrlWithdrawResult_ErrorStatusImplCopyWithImpl(_$LnUrlWithdrawResult_ErrorStatusImpl _value,
-      $Res Function(_$LnUrlWithdrawResult_ErrorStatusImpl) _then)
+class __$$LnUrlWithdrawResult_ErrorStatusCopyWithImpl<$Res>
+    extends _$LnUrlWithdrawResultCopyWithImpl<$Res, _$LnUrlWithdrawResult_ErrorStatus>
+    implements _$$LnUrlWithdrawResult_ErrorStatusCopyWith<$Res> {
+  __$$LnUrlWithdrawResult_ErrorStatusCopyWithImpl(
+      _$LnUrlWithdrawResult_ErrorStatus _value, $Res Function(_$LnUrlWithdrawResult_ErrorStatus) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -3667,7 +3648,7 @@ class __$$LnUrlWithdrawResult_ErrorStatusImplCopyWithImpl<$Res>
   $Res call({
     Object? data = null,
   }) {
-    return _then(_$LnUrlWithdrawResult_ErrorStatusImpl(
+    return _then(_$LnUrlWithdrawResult_ErrorStatus(
       data: null == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
@@ -3678,8 +3659,8 @@ class __$$LnUrlWithdrawResult_ErrorStatusImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$LnUrlWithdrawResult_ErrorStatusImpl implements LnUrlWithdrawResult_ErrorStatus {
-  const _$LnUrlWithdrawResult_ErrorStatusImpl({required this.data});
+class _$LnUrlWithdrawResult_ErrorStatus implements LnUrlWithdrawResult_ErrorStatus {
+  const _$LnUrlWithdrawResult_ErrorStatus({required this.data});
 
   @override
   final LnUrlErrorData data;
@@ -3693,7 +3674,7 @@ class _$LnUrlWithdrawResult_ErrorStatusImpl implements LnUrlWithdrawResult_Error
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$LnUrlWithdrawResult_ErrorStatusImpl &&
+            other is _$LnUrlWithdrawResult_ErrorStatus &&
             (identical(other.data, data) || other.data == data));
   }
 
@@ -3703,9 +3684,8 @@ class _$LnUrlWithdrawResult_ErrorStatusImpl implements LnUrlWithdrawResult_Error
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$LnUrlWithdrawResult_ErrorStatusImplCopyWith<_$LnUrlWithdrawResult_ErrorStatusImpl> get copyWith =>
-      __$$LnUrlWithdrawResult_ErrorStatusImplCopyWithImpl<_$LnUrlWithdrawResult_ErrorStatusImpl>(
-          this, _$identity);
+  _$$LnUrlWithdrawResult_ErrorStatusCopyWith<_$LnUrlWithdrawResult_ErrorStatus> get copyWith =>
+      __$$LnUrlWithdrawResult_ErrorStatusCopyWithImpl<_$LnUrlWithdrawResult_ErrorStatus>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -3772,12 +3752,12 @@ class _$LnUrlWithdrawResult_ErrorStatusImpl implements LnUrlWithdrawResult_Error
 
 abstract class LnUrlWithdrawResult_ErrorStatus implements LnUrlWithdrawResult {
   const factory LnUrlWithdrawResult_ErrorStatus({required final LnUrlErrorData data}) =
-      _$LnUrlWithdrawResult_ErrorStatusImpl;
+      _$LnUrlWithdrawResult_ErrorStatus;
 
   @override
   LnUrlErrorData get data;
   @JsonKey(ignore: true)
-  _$$LnUrlWithdrawResult_ErrorStatusImplCopyWith<_$LnUrlWithdrawResult_ErrorStatusImpl> get copyWith =>
+  _$$LnUrlWithdrawResult_ErrorStatusCopyWith<_$LnUrlWithdrawResult_ErrorStatus> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -3853,21 +3833,21 @@ class _$NodeConfigCopyWithImpl<$Res, $Val extends NodeConfig> implements $NodeCo
 }
 
 /// @nodoc
-abstract class _$$NodeConfig_GreenlightImplCopyWith<$Res> implements $NodeConfigCopyWith<$Res> {
-  factory _$$NodeConfig_GreenlightImplCopyWith(
-          _$NodeConfig_GreenlightImpl value, $Res Function(_$NodeConfig_GreenlightImpl) then) =
-      __$$NodeConfig_GreenlightImplCopyWithImpl<$Res>;
+abstract class _$$NodeConfig_GreenlightCopyWith<$Res> implements $NodeConfigCopyWith<$Res> {
+  factory _$$NodeConfig_GreenlightCopyWith(
+          _$NodeConfig_Greenlight value, $Res Function(_$NodeConfig_Greenlight) then) =
+      __$$NodeConfig_GreenlightCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({GreenlightNodeConfig config});
 }
 
 /// @nodoc
-class __$$NodeConfig_GreenlightImplCopyWithImpl<$Res>
-    extends _$NodeConfigCopyWithImpl<$Res, _$NodeConfig_GreenlightImpl>
-    implements _$$NodeConfig_GreenlightImplCopyWith<$Res> {
-  __$$NodeConfig_GreenlightImplCopyWithImpl(
-      _$NodeConfig_GreenlightImpl _value, $Res Function(_$NodeConfig_GreenlightImpl) _then)
+class __$$NodeConfig_GreenlightCopyWithImpl<$Res>
+    extends _$NodeConfigCopyWithImpl<$Res, _$NodeConfig_Greenlight>
+    implements _$$NodeConfig_GreenlightCopyWith<$Res> {
+  __$$NodeConfig_GreenlightCopyWithImpl(
+      _$NodeConfig_Greenlight _value, $Res Function(_$NodeConfig_Greenlight) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -3875,7 +3855,7 @@ class __$$NodeConfig_GreenlightImplCopyWithImpl<$Res>
   $Res call({
     Object? config = null,
   }) {
-    return _then(_$NodeConfig_GreenlightImpl(
+    return _then(_$NodeConfig_Greenlight(
       config: null == config
           ? _value.config
           : config // ignore: cast_nullable_to_non_nullable
@@ -3886,8 +3866,8 @@ class __$$NodeConfig_GreenlightImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$NodeConfig_GreenlightImpl implements NodeConfig_Greenlight {
-  const _$NodeConfig_GreenlightImpl({required this.config});
+class _$NodeConfig_Greenlight implements NodeConfig_Greenlight {
+  const _$NodeConfig_Greenlight({required this.config});
 
   @override
   final GreenlightNodeConfig config;
@@ -3901,7 +3881,7 @@ class _$NodeConfig_GreenlightImpl implements NodeConfig_Greenlight {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$NodeConfig_GreenlightImpl &&
+            other is _$NodeConfig_Greenlight &&
             (identical(other.config, config) || other.config == config));
   }
 
@@ -3911,8 +3891,8 @@ class _$NodeConfig_GreenlightImpl implements NodeConfig_Greenlight {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$NodeConfig_GreenlightImplCopyWith<_$NodeConfig_GreenlightImpl> get copyWith =>
-      __$$NodeConfig_GreenlightImplCopyWithImpl<_$NodeConfig_GreenlightImpl>(this, _$identity);
+  _$$NodeConfig_GreenlightCopyWith<_$NodeConfig_Greenlight> get copyWith =>
+      __$$NodeConfig_GreenlightCopyWithImpl<_$NodeConfig_Greenlight>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -3972,14 +3952,13 @@ class _$NodeConfig_GreenlightImpl implements NodeConfig_Greenlight {
 }
 
 abstract class NodeConfig_Greenlight implements NodeConfig {
-  const factory NodeConfig_Greenlight({required final GreenlightNodeConfig config}) =
-      _$NodeConfig_GreenlightImpl;
+  const factory NodeConfig_Greenlight({required final GreenlightNodeConfig config}) = _$NodeConfig_Greenlight;
 
   @override
   GreenlightNodeConfig get config;
   @override
   @JsonKey(ignore: true)
-  _$$NodeConfig_GreenlightImplCopyWith<_$NodeConfig_GreenlightImpl> get copyWith =>
+  _$$NodeConfig_GreenlightCopyWith<_$NodeConfig_Greenlight> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -4044,20 +4023,17 @@ class _$PaymentDetailsCopyWithImpl<$Res, $Val extends PaymentDetails>
 }
 
 /// @nodoc
-abstract class _$$PaymentDetails_LnImplCopyWith<$Res> {
-  factory _$$PaymentDetails_LnImplCopyWith(
-          _$PaymentDetails_LnImpl value, $Res Function(_$PaymentDetails_LnImpl) then) =
-      __$$PaymentDetails_LnImplCopyWithImpl<$Res>;
+abstract class _$$PaymentDetails_LnCopyWith<$Res> {
+  factory _$$PaymentDetails_LnCopyWith(_$PaymentDetails_Ln value, $Res Function(_$PaymentDetails_Ln) then) =
+      __$$PaymentDetails_LnCopyWithImpl<$Res>;
   @useResult
   $Res call({LnPaymentDetails data});
 }
 
 /// @nodoc
-class __$$PaymentDetails_LnImplCopyWithImpl<$Res>
-    extends _$PaymentDetailsCopyWithImpl<$Res, _$PaymentDetails_LnImpl>
-    implements _$$PaymentDetails_LnImplCopyWith<$Res> {
-  __$$PaymentDetails_LnImplCopyWithImpl(
-      _$PaymentDetails_LnImpl _value, $Res Function(_$PaymentDetails_LnImpl) _then)
+class __$$PaymentDetails_LnCopyWithImpl<$Res> extends _$PaymentDetailsCopyWithImpl<$Res, _$PaymentDetails_Ln>
+    implements _$$PaymentDetails_LnCopyWith<$Res> {
+  __$$PaymentDetails_LnCopyWithImpl(_$PaymentDetails_Ln _value, $Res Function(_$PaymentDetails_Ln) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -4065,7 +4041,7 @@ class __$$PaymentDetails_LnImplCopyWithImpl<$Res>
   $Res call({
     Object? data = null,
   }) {
-    return _then(_$PaymentDetails_LnImpl(
+    return _then(_$PaymentDetails_Ln(
       data: null == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
@@ -4076,8 +4052,8 @@ class __$$PaymentDetails_LnImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$PaymentDetails_LnImpl implements PaymentDetails_Ln {
-  const _$PaymentDetails_LnImpl({required this.data});
+class _$PaymentDetails_Ln implements PaymentDetails_Ln {
+  const _$PaymentDetails_Ln({required this.data});
 
   @override
   final LnPaymentDetails data;
@@ -4091,7 +4067,7 @@ class _$PaymentDetails_LnImpl implements PaymentDetails_Ln {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$PaymentDetails_LnImpl &&
+            other is _$PaymentDetails_Ln &&
             (identical(other.data, data) || other.data == data));
   }
 
@@ -4101,8 +4077,8 @@ class _$PaymentDetails_LnImpl implements PaymentDetails_Ln {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$PaymentDetails_LnImplCopyWith<_$PaymentDetails_LnImpl> get copyWith =>
-      __$$PaymentDetails_LnImplCopyWithImpl<_$PaymentDetails_LnImpl>(this, _$identity);
+  _$$PaymentDetails_LnCopyWith<_$PaymentDetails_Ln> get copyWith =>
+      __$$PaymentDetails_LnCopyWithImpl<_$PaymentDetails_Ln>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -4168,30 +4144,29 @@ class _$PaymentDetails_LnImpl implements PaymentDetails_Ln {
 }
 
 abstract class PaymentDetails_Ln implements PaymentDetails {
-  const factory PaymentDetails_Ln({required final LnPaymentDetails data}) = _$PaymentDetails_LnImpl;
+  const factory PaymentDetails_Ln({required final LnPaymentDetails data}) = _$PaymentDetails_Ln;
 
   @override
   LnPaymentDetails get data;
   @JsonKey(ignore: true)
-  _$$PaymentDetails_LnImplCopyWith<_$PaymentDetails_LnImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$PaymentDetails_LnCopyWith<_$PaymentDetails_Ln> get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class _$$PaymentDetails_ClosedChannelImplCopyWith<$Res> {
-  factory _$$PaymentDetails_ClosedChannelImplCopyWith(
-          _$PaymentDetails_ClosedChannelImpl value, $Res Function(_$PaymentDetails_ClosedChannelImpl) then) =
-      __$$PaymentDetails_ClosedChannelImplCopyWithImpl<$Res>;
+abstract class _$$PaymentDetails_ClosedChannelCopyWith<$Res> {
+  factory _$$PaymentDetails_ClosedChannelCopyWith(
+          _$PaymentDetails_ClosedChannel value, $Res Function(_$PaymentDetails_ClosedChannel) then) =
+      __$$PaymentDetails_ClosedChannelCopyWithImpl<$Res>;
   @useResult
   $Res call({ClosedChannelPaymentDetails data});
 }
 
 /// @nodoc
-class __$$PaymentDetails_ClosedChannelImplCopyWithImpl<$Res>
-    extends _$PaymentDetailsCopyWithImpl<$Res, _$PaymentDetails_ClosedChannelImpl>
-    implements _$$PaymentDetails_ClosedChannelImplCopyWith<$Res> {
-  __$$PaymentDetails_ClosedChannelImplCopyWithImpl(
-      _$PaymentDetails_ClosedChannelImpl _value, $Res Function(_$PaymentDetails_ClosedChannelImpl) _then)
+class __$$PaymentDetails_ClosedChannelCopyWithImpl<$Res>
+    extends _$PaymentDetailsCopyWithImpl<$Res, _$PaymentDetails_ClosedChannel>
+    implements _$$PaymentDetails_ClosedChannelCopyWith<$Res> {
+  __$$PaymentDetails_ClosedChannelCopyWithImpl(
+      _$PaymentDetails_ClosedChannel _value, $Res Function(_$PaymentDetails_ClosedChannel) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -4199,7 +4174,7 @@ class __$$PaymentDetails_ClosedChannelImplCopyWithImpl<$Res>
   $Res call({
     Object? data = null,
   }) {
-    return _then(_$PaymentDetails_ClosedChannelImpl(
+    return _then(_$PaymentDetails_ClosedChannel(
       data: null == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
@@ -4210,8 +4185,8 @@ class __$$PaymentDetails_ClosedChannelImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$PaymentDetails_ClosedChannelImpl implements PaymentDetails_ClosedChannel {
-  const _$PaymentDetails_ClosedChannelImpl({required this.data});
+class _$PaymentDetails_ClosedChannel implements PaymentDetails_ClosedChannel {
+  const _$PaymentDetails_ClosedChannel({required this.data});
 
   @override
   final ClosedChannelPaymentDetails data;
@@ -4225,7 +4200,7 @@ class _$PaymentDetails_ClosedChannelImpl implements PaymentDetails_ClosedChannel
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$PaymentDetails_ClosedChannelImpl &&
+            other is _$PaymentDetails_ClosedChannel &&
             (identical(other.data, data) || other.data == data));
   }
 
@@ -4235,8 +4210,8 @@ class _$PaymentDetails_ClosedChannelImpl implements PaymentDetails_ClosedChannel
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$PaymentDetails_ClosedChannelImplCopyWith<_$PaymentDetails_ClosedChannelImpl> get copyWith =>
-      __$$PaymentDetails_ClosedChannelImplCopyWithImpl<_$PaymentDetails_ClosedChannelImpl>(this, _$identity);
+  _$$PaymentDetails_ClosedChannelCopyWith<_$PaymentDetails_ClosedChannel> get copyWith =>
+      __$$PaymentDetails_ClosedChannelCopyWithImpl<_$PaymentDetails_ClosedChannel>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -4303,12 +4278,12 @@ class _$PaymentDetails_ClosedChannelImpl implements PaymentDetails_ClosedChannel
 
 abstract class PaymentDetails_ClosedChannel implements PaymentDetails {
   const factory PaymentDetails_ClosedChannel({required final ClosedChannelPaymentDetails data}) =
-      _$PaymentDetails_ClosedChannelImpl;
+      _$PaymentDetails_ClosedChannel;
 
   @override
   ClosedChannelPaymentDetails get data;
   @JsonKey(ignore: true)
-  _$$PaymentDetails_ClosedChannelImplCopyWith<_$PaymentDetails_ClosedChannelImpl> get copyWith =>
+  _$$PaymentDetails_ClosedChannelCopyWith<_$PaymentDetails_ClosedChannel> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -4380,20 +4355,20 @@ class _$SuccessActionProcessedCopyWithImpl<$Res, $Val extends SuccessActionProce
 }
 
 /// @nodoc
-abstract class _$$SuccessActionProcessed_AesImplCopyWith<$Res> {
-  factory _$$SuccessActionProcessed_AesImplCopyWith(
-          _$SuccessActionProcessed_AesImpl value, $Res Function(_$SuccessActionProcessed_AesImpl) then) =
-      __$$SuccessActionProcessed_AesImplCopyWithImpl<$Res>;
+abstract class _$$SuccessActionProcessed_AesCopyWith<$Res> {
+  factory _$$SuccessActionProcessed_AesCopyWith(
+          _$SuccessActionProcessed_Aes value, $Res Function(_$SuccessActionProcessed_Aes) then) =
+      __$$SuccessActionProcessed_AesCopyWithImpl<$Res>;
   @useResult
   $Res call({AesSuccessActionDataDecrypted data});
 }
 
 /// @nodoc
-class __$$SuccessActionProcessed_AesImplCopyWithImpl<$Res>
-    extends _$SuccessActionProcessedCopyWithImpl<$Res, _$SuccessActionProcessed_AesImpl>
-    implements _$$SuccessActionProcessed_AesImplCopyWith<$Res> {
-  __$$SuccessActionProcessed_AesImplCopyWithImpl(
-      _$SuccessActionProcessed_AesImpl _value, $Res Function(_$SuccessActionProcessed_AesImpl) _then)
+class __$$SuccessActionProcessed_AesCopyWithImpl<$Res>
+    extends _$SuccessActionProcessedCopyWithImpl<$Res, _$SuccessActionProcessed_Aes>
+    implements _$$SuccessActionProcessed_AesCopyWith<$Res> {
+  __$$SuccessActionProcessed_AesCopyWithImpl(
+      _$SuccessActionProcessed_Aes _value, $Res Function(_$SuccessActionProcessed_Aes) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -4401,7 +4376,7 @@ class __$$SuccessActionProcessed_AesImplCopyWithImpl<$Res>
   $Res call({
     Object? data = null,
   }) {
-    return _then(_$SuccessActionProcessed_AesImpl(
+    return _then(_$SuccessActionProcessed_Aes(
       data: null == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
@@ -4412,8 +4387,8 @@ class __$$SuccessActionProcessed_AesImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$SuccessActionProcessed_AesImpl implements SuccessActionProcessed_Aes {
-  const _$SuccessActionProcessed_AesImpl({required this.data});
+class _$SuccessActionProcessed_Aes implements SuccessActionProcessed_Aes {
+  const _$SuccessActionProcessed_Aes({required this.data});
 
   @override
   final AesSuccessActionDataDecrypted data;
@@ -4427,7 +4402,7 @@ class _$SuccessActionProcessed_AesImpl implements SuccessActionProcessed_Aes {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$SuccessActionProcessed_AesImpl &&
+            other is _$SuccessActionProcessed_Aes &&
             (identical(other.data, data) || other.data == data));
   }
 
@@ -4437,8 +4412,8 @@ class _$SuccessActionProcessed_AesImpl implements SuccessActionProcessed_Aes {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$SuccessActionProcessed_AesImplCopyWith<_$SuccessActionProcessed_AesImpl> get copyWith =>
-      __$$SuccessActionProcessed_AesImplCopyWithImpl<_$SuccessActionProcessed_AesImpl>(this, _$identity);
+  _$$SuccessActionProcessed_AesCopyWith<_$SuccessActionProcessed_Aes> get copyWith =>
+      __$$SuccessActionProcessed_AesCopyWithImpl<_$SuccessActionProcessed_Aes>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -4511,30 +4486,30 @@ class _$SuccessActionProcessed_AesImpl implements SuccessActionProcessed_Aes {
 
 abstract class SuccessActionProcessed_Aes implements SuccessActionProcessed {
   const factory SuccessActionProcessed_Aes({required final AesSuccessActionDataDecrypted data}) =
-      _$SuccessActionProcessed_AesImpl;
+      _$SuccessActionProcessed_Aes;
 
   @override
   AesSuccessActionDataDecrypted get data;
   @JsonKey(ignore: true)
-  _$$SuccessActionProcessed_AesImplCopyWith<_$SuccessActionProcessed_AesImpl> get copyWith =>
+  _$$SuccessActionProcessed_AesCopyWith<_$SuccessActionProcessed_Aes> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class _$$SuccessActionProcessed_MessageImplCopyWith<$Res> {
-  factory _$$SuccessActionProcessed_MessageImplCopyWith(_$SuccessActionProcessed_MessageImpl value,
-          $Res Function(_$SuccessActionProcessed_MessageImpl) then) =
-      __$$SuccessActionProcessed_MessageImplCopyWithImpl<$Res>;
+abstract class _$$SuccessActionProcessed_MessageCopyWith<$Res> {
+  factory _$$SuccessActionProcessed_MessageCopyWith(
+          _$SuccessActionProcessed_Message value, $Res Function(_$SuccessActionProcessed_Message) then) =
+      __$$SuccessActionProcessed_MessageCopyWithImpl<$Res>;
   @useResult
   $Res call({MessageSuccessActionData data});
 }
 
 /// @nodoc
-class __$$SuccessActionProcessed_MessageImplCopyWithImpl<$Res>
-    extends _$SuccessActionProcessedCopyWithImpl<$Res, _$SuccessActionProcessed_MessageImpl>
-    implements _$$SuccessActionProcessed_MessageImplCopyWith<$Res> {
-  __$$SuccessActionProcessed_MessageImplCopyWithImpl(
-      _$SuccessActionProcessed_MessageImpl _value, $Res Function(_$SuccessActionProcessed_MessageImpl) _then)
+class __$$SuccessActionProcessed_MessageCopyWithImpl<$Res>
+    extends _$SuccessActionProcessedCopyWithImpl<$Res, _$SuccessActionProcessed_Message>
+    implements _$$SuccessActionProcessed_MessageCopyWith<$Res> {
+  __$$SuccessActionProcessed_MessageCopyWithImpl(
+      _$SuccessActionProcessed_Message _value, $Res Function(_$SuccessActionProcessed_Message) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -4542,7 +4517,7 @@ class __$$SuccessActionProcessed_MessageImplCopyWithImpl<$Res>
   $Res call({
     Object? data = null,
   }) {
-    return _then(_$SuccessActionProcessed_MessageImpl(
+    return _then(_$SuccessActionProcessed_Message(
       data: null == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
@@ -4553,8 +4528,8 @@ class __$$SuccessActionProcessed_MessageImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$SuccessActionProcessed_MessageImpl implements SuccessActionProcessed_Message {
-  const _$SuccessActionProcessed_MessageImpl({required this.data});
+class _$SuccessActionProcessed_Message implements SuccessActionProcessed_Message {
+  const _$SuccessActionProcessed_Message({required this.data});
 
   @override
   final MessageSuccessActionData data;
@@ -4568,7 +4543,7 @@ class _$SuccessActionProcessed_MessageImpl implements SuccessActionProcessed_Mes
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$SuccessActionProcessed_MessageImpl &&
+            other is _$SuccessActionProcessed_Message &&
             (identical(other.data, data) || other.data == data));
   }
 
@@ -4578,9 +4553,8 @@ class _$SuccessActionProcessed_MessageImpl implements SuccessActionProcessed_Mes
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$SuccessActionProcessed_MessageImplCopyWith<_$SuccessActionProcessed_MessageImpl> get copyWith =>
-      __$$SuccessActionProcessed_MessageImplCopyWithImpl<_$SuccessActionProcessed_MessageImpl>(
-          this, _$identity);
+  _$$SuccessActionProcessed_MessageCopyWith<_$SuccessActionProcessed_Message> get copyWith =>
+      __$$SuccessActionProcessed_MessageCopyWithImpl<_$SuccessActionProcessed_Message>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -4653,30 +4627,30 @@ class _$SuccessActionProcessed_MessageImpl implements SuccessActionProcessed_Mes
 
 abstract class SuccessActionProcessed_Message implements SuccessActionProcessed {
   const factory SuccessActionProcessed_Message({required final MessageSuccessActionData data}) =
-      _$SuccessActionProcessed_MessageImpl;
+      _$SuccessActionProcessed_Message;
 
   @override
   MessageSuccessActionData get data;
   @JsonKey(ignore: true)
-  _$$SuccessActionProcessed_MessageImplCopyWith<_$SuccessActionProcessed_MessageImpl> get copyWith =>
+  _$$SuccessActionProcessed_MessageCopyWith<_$SuccessActionProcessed_Message> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class _$$SuccessActionProcessed_UrlImplCopyWith<$Res> {
-  factory _$$SuccessActionProcessed_UrlImplCopyWith(
-          _$SuccessActionProcessed_UrlImpl value, $Res Function(_$SuccessActionProcessed_UrlImpl) then) =
-      __$$SuccessActionProcessed_UrlImplCopyWithImpl<$Res>;
+abstract class _$$SuccessActionProcessed_UrlCopyWith<$Res> {
+  factory _$$SuccessActionProcessed_UrlCopyWith(
+          _$SuccessActionProcessed_Url value, $Res Function(_$SuccessActionProcessed_Url) then) =
+      __$$SuccessActionProcessed_UrlCopyWithImpl<$Res>;
   @useResult
   $Res call({UrlSuccessActionData data});
 }
 
 /// @nodoc
-class __$$SuccessActionProcessed_UrlImplCopyWithImpl<$Res>
-    extends _$SuccessActionProcessedCopyWithImpl<$Res, _$SuccessActionProcessed_UrlImpl>
-    implements _$$SuccessActionProcessed_UrlImplCopyWith<$Res> {
-  __$$SuccessActionProcessed_UrlImplCopyWithImpl(
-      _$SuccessActionProcessed_UrlImpl _value, $Res Function(_$SuccessActionProcessed_UrlImpl) _then)
+class __$$SuccessActionProcessed_UrlCopyWithImpl<$Res>
+    extends _$SuccessActionProcessedCopyWithImpl<$Res, _$SuccessActionProcessed_Url>
+    implements _$$SuccessActionProcessed_UrlCopyWith<$Res> {
+  __$$SuccessActionProcessed_UrlCopyWithImpl(
+      _$SuccessActionProcessed_Url _value, $Res Function(_$SuccessActionProcessed_Url) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -4684,7 +4658,7 @@ class __$$SuccessActionProcessed_UrlImplCopyWithImpl<$Res>
   $Res call({
     Object? data = null,
   }) {
-    return _then(_$SuccessActionProcessed_UrlImpl(
+    return _then(_$SuccessActionProcessed_Url(
       data: null == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
@@ -4695,8 +4669,8 @@ class __$$SuccessActionProcessed_UrlImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$SuccessActionProcessed_UrlImpl implements SuccessActionProcessed_Url {
-  const _$SuccessActionProcessed_UrlImpl({required this.data});
+class _$SuccessActionProcessed_Url implements SuccessActionProcessed_Url {
+  const _$SuccessActionProcessed_Url({required this.data});
 
   @override
   final UrlSuccessActionData data;
@@ -4710,7 +4684,7 @@ class _$SuccessActionProcessed_UrlImpl implements SuccessActionProcessed_Url {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$SuccessActionProcessed_UrlImpl &&
+            other is _$SuccessActionProcessed_Url &&
             (identical(other.data, data) || other.data == data));
   }
 
@@ -4720,8 +4694,8 @@ class _$SuccessActionProcessed_UrlImpl implements SuccessActionProcessed_Url {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$SuccessActionProcessed_UrlImplCopyWith<_$SuccessActionProcessed_UrlImpl> get copyWith =>
-      __$$SuccessActionProcessed_UrlImplCopyWithImpl<_$SuccessActionProcessed_UrlImpl>(this, _$identity);
+  _$$SuccessActionProcessed_UrlCopyWith<_$SuccessActionProcessed_Url> get copyWith =>
+      __$$SuccessActionProcessed_UrlCopyWithImpl<_$SuccessActionProcessed_Url>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -4794,11 +4768,11 @@ class _$SuccessActionProcessed_UrlImpl implements SuccessActionProcessed_Url {
 
 abstract class SuccessActionProcessed_Url implements SuccessActionProcessed {
   const factory SuccessActionProcessed_Url({required final UrlSuccessActionData data}) =
-      _$SuccessActionProcessed_UrlImpl;
+      _$SuccessActionProcessed_Url;
 
   @override
   UrlSuccessActionData get data;
   @JsonKey(ignore: true)
-  _$$SuccessActionProcessed_UrlImplCopyWith<_$SuccessActionProcessed_UrlImpl> get copyWith =>
+  _$$SuccessActionProcessed_UrlCopyWith<_$SuccessActionProcessed_Url> get copyWith =>
       throw _privateConstructorUsedError;
 }

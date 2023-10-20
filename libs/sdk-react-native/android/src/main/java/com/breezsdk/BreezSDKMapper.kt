@@ -904,18 +904,18 @@ fun asLnUrlPayRequest(data: ReadableMap): LnUrlPayRequest? {
     if (!validateMandatoryFields(
             data,
             arrayOf(
-                "reqData",
+                "data",
                 "amountMsat",
             ),
         )
     ) {
         return null
     }
-    val reqData = data.getMap("reqData")?.let { asLnUrlPayRequestData(it) }!!
+    val data = data.getMap("data")?.let { asLnUrlPayRequestData(it) }!!
     val amountMsat = data.getDouble("amountMsat").toULong()
     val comment = if (hasNonNullKey(data, "comment")) data.getString("comment") else null
     return LnUrlPayRequest(
-        reqData,
+        data,
         amountMsat,
         comment,
     )
@@ -923,7 +923,7 @@ fun asLnUrlPayRequest(data: ReadableMap): LnUrlPayRequest? {
 
 fun readableMapOf(lnUrlPayRequest: LnUrlPayRequest): ReadableMap {
     return readableMapOf(
-        "reqData" to readableMapOf(lnUrlPayRequest.reqData),
+        "data" to readableMapOf(lnUrlPayRequest.data),
         "amountMsat" to lnUrlPayRequest.amountMsat,
         "comment" to lnUrlPayRequest.comment,
     )
