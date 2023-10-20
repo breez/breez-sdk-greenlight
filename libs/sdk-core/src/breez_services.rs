@@ -222,10 +222,6 @@ impl BreezServices {
     ///
     /// Calling `send_payment` ensures that the payment is not already completed, if so it will result in an error.
     /// If the invoice doesn't specify an amount, the amount is taken from the `amount_msat` arg.
-    ///
-    /// # Arguments
-    ///
-    /// * `req` - Request parameters for sending a payment
     pub async fn send_payment(&self, req: SendPaymentRequest) -> SdkResult<SendPaymentResponse> {
         self.start_node().await?;
         let parsed_invoice = parse_invoice(req.bolt11.as_str())?;
@@ -271,10 +267,6 @@ impl BreezServices {
     }
 
     /// Pay directly to a node id using keysend
-    ///
-    /// # Arguments
-    ///
-    /// * `req` - Request parameters for sending a spontaneous payment
     pub async fn send_spontaneous_payment(
         &self,
         req: SendSpontaneousPaymentRequest,
@@ -298,10 +290,6 @@ impl BreezServices {
     /// is made.
     ///
     /// This method will return an [anyhow::Error] when any validation check fails.
-    ///
-    /// # Arguments
-    ///
-    /// * `req` - The [LnUrlPayRequest] request parameters for sending a LNURL payment
     pub async fn lnurl_pay(&self, req: LnUrlPayRequest) -> Result<LnUrlPayResult> {
         match validate_lnurl_pay(req.amount_msat, req.comment, req.data.clone()).await? {
             ValidatedCallbackResponse::EndpointError { data: e } => {
@@ -408,10 +396,6 @@ impl BreezServices {
     /// This also works when the node doesn't have any channels and need inbound liquidity.
     /// In such case when the invoice is paid a new zero-conf channel will be open by the LSP,
     /// providing inbound liquidity and the payment will be routed via this new channel.
-    ///
-    /// # Arguments
-    ///
-    /// * `req` - Request parameters for receiving a payment
     pub async fn receive_payment(
         &self,
         req: ReceivePaymentRequest,

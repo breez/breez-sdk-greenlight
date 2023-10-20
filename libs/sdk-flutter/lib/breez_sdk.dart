@@ -208,10 +208,6 @@ class BreezSDK {
   /* Lightning Payment API's */
 
   /// pay a bolt11 invoice
-  ///
-  /// # Arguments
-  ///
-  /// * `req` - The send payment request
   Future<SendPaymentResponse> sendPayment({
     required SendPaymentRequest req,
   }) async {
@@ -219,10 +215,6 @@ class BreezSDK {
   }
 
   /// pay directly to a node id using keysend
-  ///
-  /// # Arguments
-  ///
-  /// * `req` - The send spontaneous payment request
   Future<SendPaymentResponse> sendSpontaneousPayment({
     required SendSpontaneousPaymentRequest req,
   }) async {
@@ -233,10 +225,6 @@ class BreezSDK {
   /// This also works when the node doesn't have any channels and need inbound liquidity.
   /// In such case when the invoice is paid a new zero-conf channel will be open by the LSP,
   /// providing inbound liquidity and the payment will be routed via this new channel.
-  ///
-  /// # Arguments
-  ///
-  /// * `request` - Request parameters for receiving a payment
   Future<ReceivePaymentResponse> receivePayment({
     required ReceivePaymentRequest req,
   }) async {
