@@ -760,6 +760,8 @@ impl BreezServices {
 
         // update node state and channels state
         self.persister.set_node_state(&new_data.node_state)?;
+
+        // create a hash map of the channels before the update
         let channels_before_update = self
             .persister
             .list_channels()?
@@ -767,6 +769,7 @@ impl BreezServices {
             .map(|c| (c.funding_txid.clone(), c))
             .collect::<HashMap<_, _>>();
 
+        // merge the closed_at and closed_txid from the persisted channels into the fetched channels
         let new_channels: Vec<models::Channel> = new_data
             .channels
             .clone()
