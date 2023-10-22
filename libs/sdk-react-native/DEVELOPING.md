@@ -58,7 +58,7 @@ This will generate the following artifacts:
 To use the locally built bindings instead of integrating them remotely:
 
 - For iOS:
-	- Remove `breez_sdk.podspec`
+	- Rename `breez_sdk.podspec` to `breez_sdk.podspec.prod`
 	- Rename `BreezSDK.podspec.dev` to `BreezSDK.podspec`
 - For Android:
 	- Remove the following line from the dependencies section in `android/build.gradle`:
