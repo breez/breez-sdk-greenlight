@@ -73,8 +73,8 @@ class RNBreezSDK: RCTEventEmitter {
     @objc(defaultConfig:apiKey:nodeConfig:resolve:reject:)
     func defaultConfig(_ envType: String, apiKey: String, nodeConfig: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let envTypeTmp = try BreezSDKMapper.asEnvironmentType(type: envType)
-            let nodeConfigTmp = try BreezSDKMapper.asNodeConfig(data: nodeConfig)
+            let envTypeTmp = try BreezSDKMapper.asEnvironmentType(environmentType: envType)
+            let nodeConfigTmp = try BreezSDKMapper.asNodeConfig(nodeConfig: nodeConfig)
             var res = BreezSDK.defaultConfig(envType: envTypeTmp, apiKey: apiKey, nodeConfig: nodeConfigTmp)
             res.workingDir = RNBreezSDK.breezSdkDirectory.path
             resolve(BreezSDKMapper.dictionaryOf(config: res))
@@ -86,7 +86,7 @@ class RNBreezSDK: RCTEventEmitter {
     @objc(staticBackup:resolve:reject:)
     func staticBackup(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let staticBackupRequest = try BreezSDKMapper.asStaticBackupRequest(data: req)
+            let staticBackupRequest = try BreezSDKMapper.asStaticBackupRequest(staticBackupRequest: req)
             var res = try BreezSDK.staticBackup(req: staticBackupRequest)
             resolve(BreezSDKMapper.dictionaryOf(staticBackupResponse: res))
         } catch let err {
@@ -112,7 +112,7 @@ class RNBreezSDK: RCTEventEmitter {
         }
 
         do {
-            let configTmp = try BreezSDKMapper.asConfig(data: config)
+            let configTmp = try BreezSDKMapper.asConfig(config: config)
             breezServices = try BreezSDK.connect(config: configTmp, seed: seed, listener: BreezSDKListener(emitter: self))
             resolve(["status": "ok"])
         } catch let err {
@@ -130,12 +130,12 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
-    @objc(sendPayment:amountMsat:resolve:reject:)
-    func sendPayment(_ bolt11: String, amountMsat: UInt64, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    @objc(sendPayment:resolve:reject:)
+    func sendPayment(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let amountMsatTmp = amountMsat == 0 ? nil : amountMsat
-            var res = try getBreezServices().sendPayment(bolt11: bolt11, amountMsat: amountMsatTmp)
-            resolve(BreezSDKMapper.dictionaryOf(payment: res))
+            let sendPaymentRequest = try BreezSDKMapper.asSendPaymentRequest(sendPaymentRequest: req)
+            var res = try getBreezServices().sendPayment(req: sendPaymentRequest)
+            resolve(BreezSDKMapper.dictionaryOf(sendPaymentResponse: res))
         } catch let err {
             rejectErr(err: err, reject: reject)
         }
@@ -144,7 +144,7 @@ class RNBreezSDK: RCTEventEmitter {
     @objc(sendSpontaneousPayment:resolve:reject:)
     func sendSpontaneousPayment(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let sendSpontaneousPaymentRequest = try BreezSDKMapper.asSendSpontaneousPaymentRequest(data: req)
+            let sendSpontaneousPaymentRequest = try BreezSDKMapper.asSendSpontaneousPaymentRequest(sendSpontaneousPaymentRequest: req)
             var res = try getBreezServices().sendSpontaneousPayment(req: sendSpontaneousPaymentRequest)
             resolve(BreezSDKMapper.dictionaryOf(sendPaymentResponse: res))
         } catch let err {
@@ -155,7 +155,7 @@ class RNBreezSDK: RCTEventEmitter {
     @objc(receivePayment:resolve:reject:)
     func receivePayment(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let receivePaymentRequest = try BreezSDKMapper.asReceivePaymentRequest(data: req)
+            let receivePaymentRequest = try BreezSDKMapper.asReceivePaymentRequest(receivePaymentRequest: req)
             var res = try getBreezServices().receivePayment(req: receivePaymentRequest)
             resolve(BreezSDKMapper.dictionaryOf(receivePaymentResponse: res))
         } catch let err {
@@ -166,7 +166,7 @@ class RNBreezSDK: RCTEventEmitter {
     @objc(payLnurl:resolve:reject:)
     func payLnurl(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let lnUrlPayRequest = try BreezSDKMapper.asLnUrlPayRequest(data: req)
+            let lnUrlPayRequest = try BreezSDKMapper.asLnUrlPayRequest(lnUrlPayRequest: req)
             var res = try getBreezServices().payLnurl(req: lnUrlPayRequest)
             resolve(BreezSDKMapper.dictionaryOf(lnUrlPayResult: res))
         } catch let err {
@@ -175,10 +175,10 @@ class RNBreezSDK: RCTEventEmitter {
     }
 
     @objc(withdrawLnurl:resolve:reject:)
-    func withdrawLnurl(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    func withdrawLnurl(_ request: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let lnUrlWithdrawRequest = try BreezSDKMapper.asLnUrlWithdrawRequest(data: req)
-            var res = try getBreezServices().withdrawLnurl(req: lnUrlWithdrawRequest)
+            let lnUrlWithdrawRequest = try BreezSDKMapper.asLnUrlWithdrawRequest(lnUrlWithdrawRequest: request)
+            var res = try getBreezServices().withdrawLnurl(request: lnUrlWithdrawRequest)
             resolve(BreezSDKMapper.dictionaryOf(lnUrlWithdrawResult: res))
         } catch let err {
             rejectErr(err: err, reject: reject)
@@ -188,7 +188,7 @@ class RNBreezSDK: RCTEventEmitter {
     @objc(lnurlAuth:resolve:reject:)
     func lnurlAuth(_ reqData: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let lnUrlAuthRequestData = try BreezSDKMapper.asLnUrlAuthRequestData(data: reqData)
+            let lnUrlAuthRequestData = try BreezSDKMapper.asLnUrlAuthRequestData(lnUrlAuthRequestData: reqData)
             var res = try getBreezServices().lnurlAuth(reqData: lnUrlAuthRequestData)
             resolve(BreezSDKMapper.dictionaryOf(lnUrlCallbackStatus: res))
         } catch let err {
@@ -209,7 +209,7 @@ class RNBreezSDK: RCTEventEmitter {
     @objc(signMessage:resolve:reject:)
     func signMessage(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let signMessageRequest = try BreezSDKMapper.asSignMessageRequest(data: req)
+            let signMessageRequest = try BreezSDKMapper.asSignMessageRequest(signMessageRequest: req)
             var res = try getBreezServices().signMessage(req: signMessageRequest)
             resolve(BreezSDKMapper.dictionaryOf(signMessageResponse: res))
         } catch let err {
@@ -220,7 +220,7 @@ class RNBreezSDK: RCTEventEmitter {
     @objc(checkMessage:resolve:reject:)
     func checkMessage(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let checkMessageRequest = try BreezSDKMapper.asCheckMessageRequest(data: req)
+            let checkMessageRequest = try BreezSDKMapper.asCheckMessageRequest(checkMessageRequest: req)
             var res = try getBreezServices().checkMessage(req: checkMessageRequest)
             resolve(BreezSDKMapper.dictionaryOf(checkMessageResponse: res))
         } catch let err {
@@ -265,7 +265,7 @@ class RNBreezSDK: RCTEventEmitter {
     @objc(listPayments:resolve:reject:)
     func listPayments(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let listPaymentsRequest = try BreezSDKMapper.asListPaymentsRequest(data: req)
+            let listPaymentsRequest = try BreezSDKMapper.asListPaymentsRequest(listPaymentsRequest: req)
             var res = try getBreezServices().listPayments(req: listPaymentsRequest)
             resolve(BreezSDKMapper.arrayOf(paymentList: res))
         } catch let err {
@@ -276,7 +276,7 @@ class RNBreezSDK: RCTEventEmitter {
     @objc(sweep:resolve:reject:)
     func sweep(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let sweepRequest = try BreezSDKMapper.asSweepRequest(data: req)
+            let sweepRequest = try BreezSDKMapper.asSweepRequest(sweepRequest: req)
             var res = try getBreezServices().sweep(req: sweepRequest)
             resolve(BreezSDKMapper.dictionaryOf(sweepResponse: res))
         } catch let err {
@@ -341,7 +341,7 @@ class RNBreezSDK: RCTEventEmitter {
     @objc(openChannelFee:resolve:reject:)
     func openChannelFee(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let openChannelFeeRequest = try BreezSDKMapper.asOpenChannelFeeRequest(data: req)
+            let openChannelFeeRequest = try BreezSDKMapper.asOpenChannelFeeRequest(openChannelFeeRequest: req)
             var res = try getBreezServices().openChannelFee(req: openChannelFeeRequest)
             resolve(BreezSDKMapper.dictionaryOf(openChannelFeeResponse: res))
         } catch let err {
@@ -386,7 +386,7 @@ class RNBreezSDK: RCTEventEmitter {
     @objc(receiveOnchain:resolve:reject:)
     func receiveOnchain(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let receiveOnchainRequest = try BreezSDKMapper.asReceiveOnchainRequest(data: req)
+            let receiveOnchainRequest = try BreezSDKMapper.asReceiveOnchainRequest(receiveOnchainRequest: req)
             var res = try getBreezServices().receiveOnchain(req: receiveOnchainRequest)
             resolve(BreezSDKMapper.dictionaryOf(swapInfo: res))
         } catch let err {
@@ -421,7 +421,7 @@ class RNBreezSDK: RCTEventEmitter {
     @objc(refund:resolve:reject:)
     func refund(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let refundRequest = try BreezSDKMapper.asRefundRequest(data: req)
+            let refundRequest = try BreezSDKMapper.asRefundRequest(refundRequest: req)
             var res = try getBreezServices().refund(req: refundRequest)
             resolve(BreezSDKMapper.dictionaryOf(refundResponse: res))
         } catch let err {
@@ -432,7 +432,7 @@ class RNBreezSDK: RCTEventEmitter {
     @objc(fetchReverseSwapFees:resolve:reject:)
     func fetchReverseSwapFees(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let reverseSwapFeesRequest = try BreezSDKMapper.asReverseSwapFeesRequest(data: req)
+            let reverseSwapFeesRequest = try BreezSDKMapper.asReverseSwapFeesRequest(reverseSwapFeesRequest: req)
             var res = try getBreezServices().fetchReverseSwapFees(req: reverseSwapFeesRequest)
             resolve(BreezSDKMapper.dictionaryOf(reverseSwapPairInfo: res))
         } catch let err {
@@ -453,7 +453,7 @@ class RNBreezSDK: RCTEventEmitter {
     @objc(sendOnchain:resolve:reject:)
     func sendOnchain(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let sendOnchainRequest = try BreezSDKMapper.asSendOnchainRequest(data: req)
+            let sendOnchainRequest = try BreezSDKMapper.asSendOnchainRequest(sendOnchainRequest: req)
             var res = try getBreezServices().sendOnchain(req: sendOnchainRequest)
             resolve(BreezSDKMapper.dictionaryOf(sendOnchainResponse: res))
         } catch let err {
@@ -494,7 +494,7 @@ class RNBreezSDK: RCTEventEmitter {
     @objc(buyBitcoin:resolve:reject:)
     func buyBitcoin(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let buyBitcoinRequest = try BreezSDKMapper.asBuyBitcoinRequest(data: req)
+            let buyBitcoinRequest = try BreezSDKMapper.asBuyBitcoinRequest(buyBitcoinRequest: req)
             var res = try getBreezServices().buyBitcoin(req: buyBitcoinRequest)
             resolve(BreezSDKMapper.dictionaryOf(buyBitcoinResponse: res))
         } catch let err {

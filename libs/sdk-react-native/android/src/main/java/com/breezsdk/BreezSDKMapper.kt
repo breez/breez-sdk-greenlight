@@ -3,9 +3,9 @@ import breez_sdk.*
 import com.facebook.react.bridge.*
 import java.util.*
 
-fun asAesSuccessActionDataDecrypted(data: ReadableMap): AesSuccessActionDataDecrypted? {
+fun asAesSuccessActionDataDecrypted(aesSuccessActionDataDecrypted: ReadableMap): AesSuccessActionDataDecrypted? {
     if (!validateMandatoryFields(
-            data,
+            aesSuccessActionDataDecrypted,
             arrayOf(
                 "description",
                 "plaintext",
@@ -14,8 +14,8 @@ fun asAesSuccessActionDataDecrypted(data: ReadableMap): AesSuccessActionDataDecr
     ) {
         return null
     }
-    val description = data.getString("description")!!
-    val plaintext = data.getString("plaintext")!!
+    val description = aesSuccessActionDataDecrypted.getString("description")!!
+    val plaintext = aesSuccessActionDataDecrypted.getString("plaintext")!!
     return AesSuccessActionDataDecrypted(
         description,
         plaintext,
@@ -40,9 +40,9 @@ fun asAesSuccessActionDataDecryptedList(arr: ReadableArray): List<AesSuccessActi
     return list
 }
 
-fun asBackupFailedData(data: ReadableMap): BackupFailedData? {
+fun asBackupFailedData(backupFailedData: ReadableMap): BackupFailedData? {
     if (!validateMandatoryFields(
-            data,
+            backupFailedData,
             arrayOf(
                 "error",
             ),
@@ -50,7 +50,7 @@ fun asBackupFailedData(data: ReadableMap): BackupFailedData? {
     ) {
         return null
     }
-    val error = data.getString("error")!!
+    val error = backupFailedData.getString("error")!!
     return BackupFailedData(
         error,
     )
@@ -73,9 +73,9 @@ fun asBackupFailedDataList(arr: ReadableArray): List<BackupFailedData> {
     return list
 }
 
-fun asBackupStatus(data: ReadableMap): BackupStatus? {
+fun asBackupStatus(backupStatus: ReadableMap): BackupStatus? {
     if (!validateMandatoryFields(
-            data,
+            backupStatus,
             arrayOf(
                 "backedUp",
             ),
@@ -83,8 +83,8 @@ fun asBackupStatus(data: ReadableMap): BackupStatus? {
     ) {
         return null
     }
-    val backedUp = data.getBoolean("backedUp")
-    val lastBackupTime = if (hasNonNullKey(data, "lastBackupTime")) data.getDouble("lastBackupTime").toULong() else null
+    val backedUp = backupStatus.getBoolean("backedUp")
+    val lastBackupTime = if (hasNonNullKey(backupStatus, "lastBackupTime")) backupStatus.getDouble("lastBackupTime").toULong() else null
     return BackupStatus(
         backedUp,
         lastBackupTime,
@@ -109,9 +109,9 @@ fun asBackupStatusList(arr: ReadableArray): List<BackupStatus> {
     return list
 }
 
-fun asBitcoinAddressData(data: ReadableMap): BitcoinAddressData? {
+fun asBitcoinAddressData(bitcoinAddressData: ReadableMap): BitcoinAddressData? {
     if (!validateMandatoryFields(
-            data,
+            bitcoinAddressData,
             arrayOf(
                 "address",
                 "network",
@@ -120,11 +120,11 @@ fun asBitcoinAddressData(data: ReadableMap): BitcoinAddressData? {
     ) {
         return null
     }
-    val address = data.getString("address")!!
-    val network = data.getString("network")?.let { asNetwork(it) }!!
-    val amountSat = if (hasNonNullKey(data, "amountSat")) data.getDouble("amountSat").toULong() else null
-    val label = if (hasNonNullKey(data, "label")) data.getString("label") else null
-    val message = if (hasNonNullKey(data, "message")) data.getString("message") else null
+    val address = bitcoinAddressData.getString("address")!!
+    val network = bitcoinAddressData.getString("network")?.let { asNetwork(it) }!!
+    val amountSat = if (hasNonNullKey(bitcoinAddressData, "amountSat")) bitcoinAddressData.getDouble("amountSat").toULong() else null
+    val label = if (hasNonNullKey(bitcoinAddressData, "label")) bitcoinAddressData.getString("label") else null
+    val message = if (hasNonNullKey(bitcoinAddressData, "message")) bitcoinAddressData.getString("message") else null
     return BitcoinAddressData(
         address,
         network,
@@ -155,9 +155,9 @@ fun asBitcoinAddressDataList(arr: ReadableArray): List<BitcoinAddressData> {
     return list
 }
 
-fun asBuyBitcoinRequest(data: ReadableMap): BuyBitcoinRequest? {
+fun asBuyBitcoinRequest(buyBitcoinRequest: ReadableMap): BuyBitcoinRequest? {
     if (!validateMandatoryFields(
-            data,
+            buyBitcoinRequest,
             arrayOf(
                 "provider",
             ),
@@ -165,10 +165,10 @@ fun asBuyBitcoinRequest(data: ReadableMap): BuyBitcoinRequest? {
     ) {
         return null
     }
-    val provider = data.getString("provider")?.let { asBuyBitcoinProvider(it) }!!
+    val provider = buyBitcoinRequest.getString("provider")?.let { asBuyBitcoinProvider(it) }!!
     val openingFeeParams =
-        if (hasNonNullKey(data, "openingFeeParams")) {
-            data.getMap("openingFeeParams")?.let {
+        if (hasNonNullKey(buyBitcoinRequest, "openingFeeParams")) {
+            buyBitcoinRequest.getMap("openingFeeParams")?.let {
                 asOpeningFeeParams(it)
             }
         } else {
@@ -198,9 +198,9 @@ fun asBuyBitcoinRequestList(arr: ReadableArray): List<BuyBitcoinRequest> {
     return list
 }
 
-fun asBuyBitcoinResponse(data: ReadableMap): BuyBitcoinResponse? {
+fun asBuyBitcoinResponse(buyBitcoinResponse: ReadableMap): BuyBitcoinResponse? {
     if (!validateMandatoryFields(
-            data,
+            buyBitcoinResponse,
             arrayOf(
                 "url",
             ),
@@ -208,10 +208,10 @@ fun asBuyBitcoinResponse(data: ReadableMap): BuyBitcoinResponse? {
     ) {
         return null
     }
-    val url = data.getString("url")!!
+    val url = buyBitcoinResponse.getString("url")!!
     val openingFeeParams =
-        if (hasNonNullKey(data, "openingFeeParams")) {
-            data.getMap("openingFeeParams")?.let {
+        if (hasNonNullKey(buyBitcoinResponse, "openingFeeParams")) {
+            buyBitcoinResponse.getMap("openingFeeParams")?.let {
                 asOpeningFeeParams(it)
             }
         } else {
@@ -241,9 +241,9 @@ fun asBuyBitcoinResponseList(arr: ReadableArray): List<BuyBitcoinResponse> {
     return list
 }
 
-fun asCheckMessageRequest(data: ReadableMap): CheckMessageRequest? {
+fun asCheckMessageRequest(checkMessageRequest: ReadableMap): CheckMessageRequest? {
     if (!validateMandatoryFields(
-            data,
+            checkMessageRequest,
             arrayOf(
                 "message",
                 "pubkey",
@@ -253,9 +253,9 @@ fun asCheckMessageRequest(data: ReadableMap): CheckMessageRequest? {
     ) {
         return null
     }
-    val message = data.getString("message")!!
-    val pubkey = data.getString("pubkey")!!
-    val signature = data.getString("signature")!!
+    val message = checkMessageRequest.getString("message")!!
+    val pubkey = checkMessageRequest.getString("pubkey")!!
+    val signature = checkMessageRequest.getString("signature")!!
     return CheckMessageRequest(
         message,
         pubkey,
@@ -282,9 +282,9 @@ fun asCheckMessageRequestList(arr: ReadableArray): List<CheckMessageRequest> {
     return list
 }
 
-fun asCheckMessageResponse(data: ReadableMap): CheckMessageResponse? {
+fun asCheckMessageResponse(checkMessageResponse: ReadableMap): CheckMessageResponse? {
     if (!validateMandatoryFields(
-            data,
+            checkMessageResponse,
             arrayOf(
                 "isValid",
             ),
@@ -292,7 +292,7 @@ fun asCheckMessageResponse(data: ReadableMap): CheckMessageResponse? {
     ) {
         return null
     }
-    val isValid = data.getBoolean("isValid")
+    val isValid = checkMessageResponse.getBoolean("isValid")
     return CheckMessageResponse(
         isValid,
     )
@@ -315,9 +315,9 @@ fun asCheckMessageResponseList(arr: ReadableArray): List<CheckMessageResponse> {
     return list
 }
 
-fun asClosedChannelPaymentDetails(data: ReadableMap): ClosedChannelPaymentDetails? {
+fun asClosedChannelPaymentDetails(closedChannelPaymentDetails: ReadableMap): ClosedChannelPaymentDetails? {
     if (!validateMandatoryFields(
-            data,
+            closedChannelPaymentDetails,
             arrayOf(
                 "shortChannelId",
                 "state",
@@ -327,10 +327,19 @@ fun asClosedChannelPaymentDetails(data: ReadableMap): ClosedChannelPaymentDetail
     ) {
         return null
     }
-    val shortChannelId = data.getString("shortChannelId")!!
-    val state = data.getString("state")?.let { asChannelState(it) }!!
-    val fundingTxid = data.getString("fundingTxid")!!
-    val closingTxid = if (hasNonNullKey(data, "closingTxid")) data.getString("closingTxid") else null
+    val shortChannelId = closedChannelPaymentDetails.getString("shortChannelId")!!
+    val state = closedChannelPaymentDetails.getString("state")?.let { asChannelState(it) }!!
+    val fundingTxid = closedChannelPaymentDetails.getString("fundingTxid")!!
+    val closingTxid =
+        if (hasNonNullKey(
+                closedChannelPaymentDetails,
+                "closingTxid",
+            )
+        ) {
+            closedChannelPaymentDetails.getString("closingTxid")
+        } else {
+            null
+        }
     return ClosedChannelPaymentDetails(
         shortChannelId,
         state,
@@ -359,9 +368,9 @@ fun asClosedChannelPaymentDetailsList(arr: ReadableArray): List<ClosedChannelPay
     return list
 }
 
-fun asConfig(data: ReadableMap): Config? {
+fun asConfig(config: ReadableMap): Config? {
     if (!validateMandatoryFields(
-            data,
+            config,
             arrayOf(
                 "breezserver",
                 "mempoolspaceUrl",
@@ -376,16 +385,16 @@ fun asConfig(data: ReadableMap): Config? {
     ) {
         return null
     }
-    val breezserver = data.getString("breezserver")!!
-    val mempoolspaceUrl = data.getString("mempoolspaceUrl")!!
-    val workingDir = data.getString("workingDir")!!
-    val network = data.getString("network")?.let { asNetwork(it) }!!
-    val paymentTimeoutSec = data.getInt("paymentTimeoutSec").toUInt()
-    val defaultLspId = if (hasNonNullKey(data, "defaultLspId")) data.getString("defaultLspId") else null
-    val apiKey = if (hasNonNullKey(data, "apiKey")) data.getString("apiKey") else null
-    val maxfeePercent = data.getDouble("maxfeePercent")
-    val exemptfeeMsat = data.getDouble("exemptfeeMsat").toULong()
-    val nodeConfig = data.getMap("nodeConfig")?.let { asNodeConfig(it) }!!
+    val breezserver = config.getString("breezserver")!!
+    val mempoolspaceUrl = config.getString("mempoolspaceUrl")!!
+    val workingDir = config.getString("workingDir")!!
+    val network = config.getString("network")?.let { asNetwork(it) }!!
+    val paymentTimeoutSec = config.getInt("paymentTimeoutSec").toUInt()
+    val defaultLspId = if (hasNonNullKey(config, "defaultLspId")) config.getString("defaultLspId") else null
+    val apiKey = if (hasNonNullKey(config, "apiKey")) config.getString("apiKey") else null
+    val maxfeePercent = config.getDouble("maxfeePercent")
+    val exemptfeeMsat = config.getDouble("exemptfeeMsat").toULong()
+    val nodeConfig = config.getMap("nodeConfig")?.let { asNodeConfig(it) }!!
     return Config(
         breezserver,
         mempoolspaceUrl,
@@ -426,9 +435,9 @@ fun asConfigList(arr: ReadableArray): List<Config> {
     return list
 }
 
-fun asCurrencyInfo(data: ReadableMap): CurrencyInfo? {
+fun asCurrencyInfo(currencyInfo: ReadableMap): CurrencyInfo? {
     if (!validateMandatoryFields(
-            data,
+            currencyInfo,
             arrayOf(
                 "name",
                 "fractionSize",
@@ -437,15 +446,22 @@ fun asCurrencyInfo(data: ReadableMap): CurrencyInfo? {
     ) {
         return null
     }
-    val name = data.getString("name")!!
-    val fractionSize = data.getInt("fractionSize").toUInt()
-    val spacing = if (hasNonNullKey(data, "spacing")) data.getInt("spacing").toUInt() else null
-    val symbol = if (hasNonNullKey(data, "symbol")) data.getMap("symbol")?.let { asSymbol(it) } else null
-    val uniqSymbol = if (hasNonNullKey(data, "uniqSymbol")) data.getMap("uniqSymbol")?.let { asSymbol(it) } else null
-    val localizedName = if (hasNonNullKey(data, "localizedName")) data.getArray("localizedName")?.let { asLocalizedNameList(it) } else null
+    val name = currencyInfo.getString("name")!!
+    val fractionSize = currencyInfo.getInt("fractionSize").toUInt()
+    val spacing = if (hasNonNullKey(currencyInfo, "spacing")) currencyInfo.getInt("spacing").toUInt() else null
+    val symbol = if (hasNonNullKey(currencyInfo, "symbol")) currencyInfo.getMap("symbol")?.let { asSymbol(it) } else null
+    val uniqSymbol = if (hasNonNullKey(currencyInfo, "uniqSymbol")) currencyInfo.getMap("uniqSymbol")?.let { asSymbol(it) } else null
+    val localizedName =
+        if (hasNonNullKey(currencyInfo, "localizedName")) {
+            currencyInfo.getArray("localizedName")?.let {
+                asLocalizedNameList(it)
+            }
+        } else {
+            null
+        }
     val localeOverrides =
-        if (hasNonNullKey(data, "localeOverrides")) {
-            data.getArray("localeOverrides")?.let {
+        if (hasNonNullKey(currencyInfo, "localeOverrides")) {
+            currencyInfo.getArray("localeOverrides")?.let {
                 asLocaleOverridesList(it)
             }
         } else {
@@ -485,9 +501,9 @@ fun asCurrencyInfoList(arr: ReadableArray): List<CurrencyInfo> {
     return list
 }
 
-fun asFiatCurrency(data: ReadableMap): FiatCurrency? {
+fun asFiatCurrency(fiatCurrency: ReadableMap): FiatCurrency? {
     if (!validateMandatoryFields(
-            data,
+            fiatCurrency,
             arrayOf(
                 "id",
                 "info",
@@ -496,8 +512,8 @@ fun asFiatCurrency(data: ReadableMap): FiatCurrency? {
     ) {
         return null
     }
-    val id = data.getString("id")!!
-    val info = data.getMap("info")?.let { asCurrencyInfo(it) }!!
+    val id = fiatCurrency.getString("id")!!
+    val info = fiatCurrency.getMap("info")?.let { asCurrencyInfo(it) }!!
     return FiatCurrency(
         id,
         info,
@@ -522,9 +538,9 @@ fun asFiatCurrencyList(arr: ReadableArray): List<FiatCurrency> {
     return list
 }
 
-fun asGreenlightCredentials(data: ReadableMap): GreenlightCredentials? {
+fun asGreenlightCredentials(greenlightCredentials: ReadableMap): GreenlightCredentials? {
     if (!validateMandatoryFields(
-            data,
+            greenlightCredentials,
             arrayOf(
                 "deviceKey",
                 "deviceCert",
@@ -533,8 +549,8 @@ fun asGreenlightCredentials(data: ReadableMap): GreenlightCredentials? {
     ) {
         return null
     }
-    val deviceKey = data.getArray("deviceKey")?.let { asUByteList(it) }!!
-    val deviceCert = data.getArray("deviceCert")?.let { asUByteList(it) }!!
+    val deviceKey = greenlightCredentials.getArray("deviceKey")?.let { asUByteList(it) }!!
+    val deviceCert = greenlightCredentials.getArray("deviceCert")?.let { asUByteList(it) }!!
     return GreenlightCredentials(
         deviceKey,
         deviceCert,
@@ -559,23 +575,27 @@ fun asGreenlightCredentialsList(arr: ReadableArray): List<GreenlightCredentials>
     return list
 }
 
-fun asGreenlightNodeConfig(data: ReadableMap): GreenlightNodeConfig? {
+fun asGreenlightNodeConfig(greenlightNodeConfig: ReadableMap): GreenlightNodeConfig? {
     if (!validateMandatoryFields(
-            data,
+            greenlightNodeConfig,
             arrayOf(),
         )
     ) {
         return null
     }
     val partnerCredentials =
-        if (hasNonNullKey(data, "partnerCredentials")) {
-            data.getMap("partnerCredentials")?.let {
+        if (hasNonNullKey(
+                greenlightNodeConfig,
+                "partnerCredentials",
+            )
+        ) {
+            greenlightNodeConfig.getMap("partnerCredentials")?.let {
                 asGreenlightCredentials(it)
             }
         } else {
             null
         }
-    val inviteCode = if (hasNonNullKey(data, "inviteCode")) data.getString("inviteCode") else null
+    val inviteCode = if (hasNonNullKey(greenlightNodeConfig, "inviteCode")) greenlightNodeConfig.getString("inviteCode") else null
     return GreenlightNodeConfig(
         partnerCredentials,
         inviteCode,
@@ -600,9 +620,9 @@ fun asGreenlightNodeConfigList(arr: ReadableArray): List<GreenlightNodeConfig> {
     return list
 }
 
-fun asInvoicePaidDetails(data: ReadableMap): InvoicePaidDetails? {
+fun asInvoicePaidDetails(invoicePaidDetails: ReadableMap): InvoicePaidDetails? {
     if (!validateMandatoryFields(
-            data,
+            invoicePaidDetails,
             arrayOf(
                 "paymentHash",
                 "bolt11",
@@ -611,8 +631,8 @@ fun asInvoicePaidDetails(data: ReadableMap): InvoicePaidDetails? {
     ) {
         return null
     }
-    val paymentHash = data.getString("paymentHash")!!
-    val bolt11 = data.getString("bolt11")!!
+    val paymentHash = invoicePaidDetails.getString("paymentHash")!!
+    val bolt11 = invoicePaidDetails.getString("bolt11")!!
     return InvoicePaidDetails(
         paymentHash,
         bolt11,
@@ -637,9 +657,9 @@ fun asInvoicePaidDetailsList(arr: ReadableArray): List<InvoicePaidDetails> {
     return list
 }
 
-fun asLnInvoice(data: ReadableMap): LnInvoice? {
+fun asLnInvoice(lnInvoice: ReadableMap): LnInvoice? {
     if (!validateMandatoryFields(
-            data,
+            lnInvoice,
             arrayOf(
                 "bolt11",
                 "payeePubkey",
@@ -653,16 +673,16 @@ fun asLnInvoice(data: ReadableMap): LnInvoice? {
     ) {
         return null
     }
-    val bolt11 = data.getString("bolt11")!!
-    val payeePubkey = data.getString("payeePubkey")!!
-    val paymentHash = data.getString("paymentHash")!!
-    val description = if (hasNonNullKey(data, "description")) data.getString("description") else null
-    val descriptionHash = if (hasNonNullKey(data, "descriptionHash")) data.getString("descriptionHash") else null
-    val amountMsat = if (hasNonNullKey(data, "amountMsat")) data.getDouble("amountMsat").toULong() else null
-    val timestamp = data.getDouble("timestamp").toULong()
-    val expiry = data.getDouble("expiry").toULong()
-    val routingHints = data.getArray("routingHints")?.let { asRouteHintList(it) }!!
-    val paymentSecret = data.getArray("paymentSecret")?.let { asUByteList(it) }!!
+    val bolt11 = lnInvoice.getString("bolt11")!!
+    val payeePubkey = lnInvoice.getString("payeePubkey")!!
+    val paymentHash = lnInvoice.getString("paymentHash")!!
+    val description = if (hasNonNullKey(lnInvoice, "description")) lnInvoice.getString("description") else null
+    val descriptionHash = if (hasNonNullKey(lnInvoice, "descriptionHash")) lnInvoice.getString("descriptionHash") else null
+    val amountMsat = if (hasNonNullKey(lnInvoice, "amountMsat")) lnInvoice.getDouble("amountMsat").toULong() else null
+    val timestamp = lnInvoice.getDouble("timestamp").toULong()
+    val expiry = lnInvoice.getDouble("expiry").toULong()
+    val routingHints = lnInvoice.getArray("routingHints")?.let { asRouteHintList(it) }!!
+    val paymentSecret = lnInvoice.getArray("paymentSecret")?.let { asUByteList(it) }!!
     return LnInvoice(
         bolt11,
         payeePubkey,
@@ -703,9 +723,9 @@ fun asLnInvoiceList(arr: ReadableArray): List<LnInvoice> {
     return list
 }
 
-fun asListPaymentsRequest(data: ReadableMap): ListPaymentsRequest? {
+fun asListPaymentsRequest(listPaymentsRequest: ReadableMap): ListPaymentsRequest? {
     if (!validateMandatoryFields(
-            data,
+            listPaymentsRequest,
             arrayOf(
                 "filter",
             ),
@@ -713,12 +733,30 @@ fun asListPaymentsRequest(data: ReadableMap): ListPaymentsRequest? {
     ) {
         return null
     }
-    val filter = data.getString("filter")?.let { asPaymentTypeFilter(it) }!!
-    val fromTimestamp = if (hasNonNullKey(data, "fromTimestamp")) data.getDouble("fromTimestamp").toLong() else null
-    val toTimestamp = if (hasNonNullKey(data, "toTimestamp")) data.getDouble("toTimestamp").toLong() else null
-    val includeFailures = if (hasNonNullKey(data, "includeFailures")) data.getBoolean("includeFailures") else null
-    val offset = if (hasNonNullKey(data, "offset")) data.getInt("offset").toUInt() else null
-    val limit = if (hasNonNullKey(data, "limit")) data.getInt("limit").toUInt() else null
+    val filter = listPaymentsRequest.getString("filter")?.let { asPaymentTypeFilter(it) }!!
+    val fromTimestamp =
+        if (hasNonNullKey(
+                listPaymentsRequest,
+                "fromTimestamp",
+            )
+        ) {
+            listPaymentsRequest.getDouble("fromTimestamp").toLong()
+        } else {
+            null
+        }
+    val toTimestamp = if (hasNonNullKey(listPaymentsRequest, "toTimestamp")) listPaymentsRequest.getDouble("toTimestamp").toLong() else null
+    val includeFailures =
+        if (hasNonNullKey(
+                listPaymentsRequest,
+                "includeFailures",
+            )
+        ) {
+            listPaymentsRequest.getBoolean("includeFailures")
+        } else {
+            null
+        }
+    val offset = if (hasNonNullKey(listPaymentsRequest, "offset")) listPaymentsRequest.getInt("offset").toUInt() else null
+    val limit = if (hasNonNullKey(listPaymentsRequest, "limit")) listPaymentsRequest.getInt("limit").toUInt() else null
     return ListPaymentsRequest(
         filter,
         fromTimestamp,
@@ -751,9 +789,9 @@ fun asListPaymentsRequestList(arr: ReadableArray): List<ListPaymentsRequest> {
     return list
 }
 
-fun asLnPaymentDetails(data: ReadableMap): LnPaymentDetails? {
+fun asLnPaymentDetails(lnPaymentDetails: ReadableMap): LnPaymentDetails? {
     if (!validateMandatoryFields(
-            data,
+            lnPaymentDetails,
             arrayOf(
                 "paymentHash",
                 "label",
@@ -766,23 +804,32 @@ fun asLnPaymentDetails(data: ReadableMap): LnPaymentDetails? {
     ) {
         return null
     }
-    val paymentHash = data.getString("paymentHash")!!
-    val label = data.getString("label")!!
-    val destinationPubkey = data.getString("destinationPubkey")!!
-    val paymentPreimage = data.getString("paymentPreimage")!!
-    val keysend = data.getBoolean("keysend")
-    val bolt11 = data.getString("bolt11")!!
+    val paymentHash = lnPaymentDetails.getString("paymentHash")!!
+    val label = lnPaymentDetails.getString("label")!!
+    val destinationPubkey = lnPaymentDetails.getString("destinationPubkey")!!
+    val paymentPreimage = lnPaymentDetails.getString("paymentPreimage")!!
+    val keysend = lnPaymentDetails.getBoolean("keysend")
+    val bolt11 = lnPaymentDetails.getString("bolt11")!!
     val lnurlSuccessAction =
-        if (hasNonNullKey(data, "lnurlSuccessAction")) {
-            data.getMap("lnurlSuccessAction")?.let {
+        if (hasNonNullKey(lnPaymentDetails, "lnurlSuccessAction")) {
+            lnPaymentDetails.getMap("lnurlSuccessAction")?.let {
                 asSuccessActionProcessed(it)
             }
         } else {
             null
         }
-    val lnurlMetadata = if (hasNonNullKey(data, "lnurlMetadata")) data.getString("lnurlMetadata") else null
-    val lnAddress = if (hasNonNullKey(data, "lnAddress")) data.getString("lnAddress") else null
-    val lnurlWithdrawEndpoint = if (hasNonNullKey(data, "lnurlWithdrawEndpoint")) data.getString("lnurlWithdrawEndpoint") else null
+    val lnurlMetadata = if (hasNonNullKey(lnPaymentDetails, "lnurlMetadata")) lnPaymentDetails.getString("lnurlMetadata") else null
+    val lnAddress = if (hasNonNullKey(lnPaymentDetails, "lnAddress")) lnPaymentDetails.getString("lnAddress") else null
+    val lnurlWithdrawEndpoint =
+        if (hasNonNullKey(
+                lnPaymentDetails,
+                "lnurlWithdrawEndpoint",
+            )
+        ) {
+            lnPaymentDetails.getString("lnurlWithdrawEndpoint")
+        } else {
+            null
+        }
     return LnPaymentDetails(
         paymentHash,
         label,
@@ -823,9 +870,9 @@ fun asLnPaymentDetailsList(arr: ReadableArray): List<LnPaymentDetails> {
     return list
 }
 
-fun asLnUrlAuthRequestData(data: ReadableMap): LnUrlAuthRequestData? {
+fun asLnUrlAuthRequestData(lnUrlAuthRequestData: ReadableMap): LnUrlAuthRequestData? {
     if (!validateMandatoryFields(
-            data,
+            lnUrlAuthRequestData,
             arrayOf(
                 "k1",
                 "domain",
@@ -835,10 +882,10 @@ fun asLnUrlAuthRequestData(data: ReadableMap): LnUrlAuthRequestData? {
     ) {
         return null
     }
-    val k1 = data.getString("k1")!!
-    val action = if (hasNonNullKey(data, "action")) data.getString("action") else null
-    val domain = data.getString("domain")!!
-    val url = data.getString("url")!!
+    val k1 = lnUrlAuthRequestData.getString("k1")!!
+    val action = if (hasNonNullKey(lnUrlAuthRequestData, "action")) lnUrlAuthRequestData.getString("action") else null
+    val domain = lnUrlAuthRequestData.getString("domain")!!
+    val url = lnUrlAuthRequestData.getString("url")!!
     return LnUrlAuthRequestData(
         k1,
         action,
@@ -867,9 +914,9 @@ fun asLnUrlAuthRequestDataList(arr: ReadableArray): List<LnUrlAuthRequestData> {
     return list
 }
 
-fun asLnUrlErrorData(data: ReadableMap): LnUrlErrorData? {
+fun asLnUrlErrorData(lnUrlErrorData: ReadableMap): LnUrlErrorData? {
     if (!validateMandatoryFields(
-            data,
+            lnUrlErrorData,
             arrayOf(
                 "reason",
             ),
@@ -877,7 +924,7 @@ fun asLnUrlErrorData(data: ReadableMap): LnUrlErrorData? {
     ) {
         return null
     }
-    val reason = data.getString("reason")!!
+    val reason = lnUrlErrorData.getString("reason")!!
     return LnUrlErrorData(
         reason,
     )
@@ -900,9 +947,9 @@ fun asLnUrlErrorDataList(arr: ReadableArray): List<LnUrlErrorData> {
     return list
 }
 
-fun asLnUrlPayRequest(data: ReadableMap): LnUrlPayRequest? {
+fun asLnUrlPayRequest(lnUrlPayRequest: ReadableMap): LnUrlPayRequest? {
     if (!validateMandatoryFields(
-            data,
+            lnUrlPayRequest,
             arrayOf(
                 "data",
                 "amountMsat",
@@ -911,9 +958,9 @@ fun asLnUrlPayRequest(data: ReadableMap): LnUrlPayRequest? {
     ) {
         return null
     }
-    val data = data.getMap("data")?.let { asLnUrlPayRequestData(it) }!!
-    val amountMsat = data.getDouble("amountMsat").toULong()
-    val comment = if (hasNonNullKey(data, "comment")) data.getString("comment") else null
+    val data = lnUrlPayRequest.getMap("data")?.let { asLnUrlPayRequestData(it) }!!
+    val amountMsat = lnUrlPayRequest.getDouble("amountMsat").toULong()
+    val comment = if (hasNonNullKey(lnUrlPayRequest, "comment")) lnUrlPayRequest.getString("comment") else null
     return LnUrlPayRequest(
         data,
         amountMsat,
@@ -940,9 +987,9 @@ fun asLnUrlPayRequestList(arr: ReadableArray): List<LnUrlPayRequest> {
     return list
 }
 
-fun asLnUrlPayRequestData(data: ReadableMap): LnUrlPayRequestData? {
+fun asLnUrlPayRequestData(lnUrlPayRequestData: ReadableMap): LnUrlPayRequestData? {
     if (!validateMandatoryFields(
-            data,
+            lnUrlPayRequestData,
             arrayOf(
                 "callback",
                 "minSendable",
@@ -955,13 +1002,13 @@ fun asLnUrlPayRequestData(data: ReadableMap): LnUrlPayRequestData? {
     ) {
         return null
     }
-    val callback = data.getString("callback")!!
-    val minSendable = data.getDouble("minSendable").toULong()
-    val maxSendable = data.getDouble("maxSendable").toULong()
-    val metadataStr = data.getString("metadataStr")!!
-    val commentAllowed = data.getInt("commentAllowed").toUShort()
-    val domain = data.getString("domain")!!
-    val lnAddress = if (hasNonNullKey(data, "lnAddress")) data.getString("lnAddress") else null
+    val callback = lnUrlPayRequestData.getString("callback")!!
+    val minSendable = lnUrlPayRequestData.getDouble("minSendable").toULong()
+    val maxSendable = lnUrlPayRequestData.getDouble("maxSendable").toULong()
+    val metadataStr = lnUrlPayRequestData.getString("metadataStr")!!
+    val commentAllowed = lnUrlPayRequestData.getInt("commentAllowed").toUShort()
+    val domain = lnUrlPayRequestData.getString("domain")!!
+    val lnAddress = if (hasNonNullKey(lnUrlPayRequestData, "lnAddress")) lnUrlPayRequestData.getString("lnAddress") else null
     return LnUrlPayRequestData(
         callback,
         minSendable,
@@ -996,9 +1043,9 @@ fun asLnUrlPayRequestDataList(arr: ReadableArray): List<LnUrlPayRequestData> {
     return list
 }
 
-fun asLnUrlWithdrawRequest(data: ReadableMap): LnUrlWithdrawRequest? {
+fun asLnUrlWithdrawRequest(lnUrlWithdrawRequest: ReadableMap): LnUrlWithdrawRequest? {
     if (!validateMandatoryFields(
-            data,
+            lnUrlWithdrawRequest,
             arrayOf(
                 "data",
                 "amountMsat",
@@ -1007,9 +1054,9 @@ fun asLnUrlWithdrawRequest(data: ReadableMap): LnUrlWithdrawRequest? {
     ) {
         return null
     }
-    val data = data.getMap("data")?.let { asLnUrlWithdrawRequestData(it) }!!
-    val amountMsat = data.getDouble("amountMsat").toULong()
-    val description = if (hasNonNullKey(data, "description")) data.getString("description") else null
+    val data = lnUrlWithdrawRequest.getMap("data")?.let { asLnUrlWithdrawRequestData(it) }!!
+    val amountMsat = lnUrlWithdrawRequest.getDouble("amountMsat").toULong()
+    val description = if (hasNonNullKey(lnUrlWithdrawRequest, "description")) lnUrlWithdrawRequest.getString("description") else null
     return LnUrlWithdrawRequest(
         data,
         amountMsat,
@@ -1036,9 +1083,9 @@ fun asLnUrlWithdrawRequestList(arr: ReadableArray): List<LnUrlWithdrawRequest> {
     return list
 }
 
-fun asLnUrlWithdrawRequestData(data: ReadableMap): LnUrlWithdrawRequestData? {
+fun asLnUrlWithdrawRequestData(lnUrlWithdrawRequestData: ReadableMap): LnUrlWithdrawRequestData? {
     if (!validateMandatoryFields(
-            data,
+            lnUrlWithdrawRequestData,
             arrayOf(
                 "callback",
                 "k1",
@@ -1050,11 +1097,11 @@ fun asLnUrlWithdrawRequestData(data: ReadableMap): LnUrlWithdrawRequestData? {
     ) {
         return null
     }
-    val callback = data.getString("callback")!!
-    val k1 = data.getString("k1")!!
-    val defaultDescription = data.getString("defaultDescription")!!
-    val minWithdrawable = data.getDouble("minWithdrawable").toULong()
-    val maxWithdrawable = data.getDouble("maxWithdrawable").toULong()
+    val callback = lnUrlWithdrawRequestData.getString("callback")!!
+    val k1 = lnUrlWithdrawRequestData.getString("k1")!!
+    val defaultDescription = lnUrlWithdrawRequestData.getString("defaultDescription")!!
+    val minWithdrawable = lnUrlWithdrawRequestData.getDouble("minWithdrawable").toULong()
+    val maxWithdrawable = lnUrlWithdrawRequestData.getDouble("maxWithdrawable").toULong()
     return LnUrlWithdrawRequestData(
         callback,
         k1,
@@ -1085,9 +1132,9 @@ fun asLnUrlWithdrawRequestDataList(arr: ReadableArray): List<LnUrlWithdrawReques
     return list
 }
 
-fun asLnUrlWithdrawSuccessData(data: ReadableMap): LnUrlWithdrawSuccessData? {
+fun asLnUrlWithdrawSuccessData(lnUrlWithdrawSuccessData: ReadableMap): LnUrlWithdrawSuccessData? {
     if (!validateMandatoryFields(
-            data,
+            lnUrlWithdrawSuccessData,
             arrayOf(
                 "invoice",
             ),
@@ -1095,7 +1142,7 @@ fun asLnUrlWithdrawSuccessData(data: ReadableMap): LnUrlWithdrawSuccessData? {
     ) {
         return null
     }
-    val invoice = data.getMap("invoice")?.let { asLnInvoice(it) }!!
+    val invoice = lnUrlWithdrawSuccessData.getMap("invoice")?.let { asLnInvoice(it) }!!
     return LnUrlWithdrawSuccessData(
         invoice,
     )
@@ -1118,9 +1165,9 @@ fun asLnUrlWithdrawSuccessDataList(arr: ReadableArray): List<LnUrlWithdrawSucces
     return list
 }
 
-fun asLocaleOverrides(data: ReadableMap): LocaleOverrides? {
+fun asLocaleOverrides(localeOverrides: ReadableMap): LocaleOverrides? {
     if (!validateMandatoryFields(
-            data,
+            localeOverrides,
             arrayOf(
                 "locale",
                 "symbol",
@@ -1129,9 +1176,9 @@ fun asLocaleOverrides(data: ReadableMap): LocaleOverrides? {
     ) {
         return null
     }
-    val locale = data.getString("locale")!!
-    val spacing = if (hasNonNullKey(data, "spacing")) data.getInt("spacing").toUInt() else null
-    val symbol = data.getMap("symbol")?.let { asSymbol(it) }!!
+    val locale = localeOverrides.getString("locale")!!
+    val spacing = if (hasNonNullKey(localeOverrides, "spacing")) localeOverrides.getInt("spacing").toUInt() else null
+    val symbol = localeOverrides.getMap("symbol")?.let { asSymbol(it) }!!
     return LocaleOverrides(
         locale,
         spacing,
@@ -1158,9 +1205,9 @@ fun asLocaleOverridesList(arr: ReadableArray): List<LocaleOverrides> {
     return list
 }
 
-fun asLocalizedName(data: ReadableMap): LocalizedName? {
+fun asLocalizedName(localizedName: ReadableMap): LocalizedName? {
     if (!validateMandatoryFields(
-            data,
+            localizedName,
             arrayOf(
                 "locale",
                 "name",
@@ -1169,8 +1216,8 @@ fun asLocalizedName(data: ReadableMap): LocalizedName? {
     ) {
         return null
     }
-    val locale = data.getString("locale")!!
-    val name = data.getString("name")!!
+    val locale = localizedName.getString("locale")!!
+    val name = localizedName.getString("name")!!
     return LocalizedName(
         locale,
         name,
@@ -1195,9 +1242,9 @@ fun asLocalizedNameList(arr: ReadableArray): List<LocalizedName> {
     return list
 }
 
-fun asLogEntry(data: ReadableMap): LogEntry? {
+fun asLogEntry(logEntry: ReadableMap): LogEntry? {
     if (!validateMandatoryFields(
-            data,
+            logEntry,
             arrayOf(
                 "line",
                 "level",
@@ -1206,8 +1253,8 @@ fun asLogEntry(data: ReadableMap): LogEntry? {
     ) {
         return null
     }
-    val line = data.getString("line")!!
-    val level = data.getString("level")!!
+    val line = logEntry.getString("line")!!
+    val level = logEntry.getString("level")!!
     return LogEntry(
         line,
         level,
@@ -1232,9 +1279,9 @@ fun asLogEntryList(arr: ReadableArray): List<LogEntry> {
     return list
 }
 
-fun asLspInformation(data: ReadableMap): LspInformation? {
+fun asLspInformation(lspInformation: ReadableMap): LspInformation? {
     if (!validateMandatoryFields(
-            data,
+            lspInformation,
             arrayOf(
                 "id",
                 "name",
@@ -1254,19 +1301,19 @@ fun asLspInformation(data: ReadableMap): LspInformation? {
     ) {
         return null
     }
-    val id = data.getString("id")!!
-    val name = data.getString("name")!!
-    val widgetUrl = data.getString("widgetUrl")!!
-    val pubkey = data.getString("pubkey")!!
-    val host = data.getString("host")!!
-    val channelCapacity = data.getDouble("channelCapacity").toLong()
-    val targetConf = data.getInt("targetConf")
-    val baseFeeMsat = data.getDouble("baseFeeMsat").toLong()
-    val feeRate = data.getDouble("feeRate")
-    val timeLockDelta = data.getInt("timeLockDelta").toUInt()
-    val minHtlcMsat = data.getDouble("minHtlcMsat").toLong()
-    val lspPubkey = data.getArray("lspPubkey")?.let { asUByteList(it) }!!
-    val openingFeeParamsList = data.getMap("openingFeeParamsList")?.let { asOpeningFeeParamsMenu(it) }!!
+    val id = lspInformation.getString("id")!!
+    val name = lspInformation.getString("name")!!
+    val widgetUrl = lspInformation.getString("widgetUrl")!!
+    val pubkey = lspInformation.getString("pubkey")!!
+    val host = lspInformation.getString("host")!!
+    val channelCapacity = lspInformation.getDouble("channelCapacity").toLong()
+    val targetConf = lspInformation.getInt("targetConf")
+    val baseFeeMsat = lspInformation.getDouble("baseFeeMsat").toLong()
+    val feeRate = lspInformation.getDouble("feeRate")
+    val timeLockDelta = lspInformation.getInt("timeLockDelta").toUInt()
+    val minHtlcMsat = lspInformation.getDouble("minHtlcMsat").toLong()
+    val lspPubkey = lspInformation.getArray("lspPubkey")?.let { asUByteList(it) }!!
+    val openingFeeParamsList = lspInformation.getMap("openingFeeParamsList")?.let { asOpeningFeeParamsMenu(it) }!!
     return LspInformation(
         id,
         name,
@@ -1313,9 +1360,9 @@ fun asLspInformationList(arr: ReadableArray): List<LspInformation> {
     return list
 }
 
-fun asMessageSuccessActionData(data: ReadableMap): MessageSuccessActionData? {
+fun asMessageSuccessActionData(messageSuccessActionData: ReadableMap): MessageSuccessActionData? {
     if (!validateMandatoryFields(
-            data,
+            messageSuccessActionData,
             arrayOf(
                 "message",
             ),
@@ -1323,7 +1370,7 @@ fun asMessageSuccessActionData(data: ReadableMap): MessageSuccessActionData? {
     ) {
         return null
     }
-    val message = data.getString("message")!!
+    val message = messageSuccessActionData.getString("message")!!
     return MessageSuccessActionData(
         message,
     )
@@ -1346,9 +1393,9 @@ fun asMessageSuccessActionDataList(arr: ReadableArray): List<MessageSuccessActio
     return list
 }
 
-fun asMetadataItem(data: ReadableMap): MetadataItem? {
+fun asMetadataItem(metadataItem: ReadableMap): MetadataItem? {
     if (!validateMandatoryFields(
-            data,
+            metadataItem,
             arrayOf(
                 "key",
                 "value",
@@ -1357,8 +1404,8 @@ fun asMetadataItem(data: ReadableMap): MetadataItem? {
     ) {
         return null
     }
-    val key = data.getString("key")!!
-    val value = data.getString("value")!!
+    val key = metadataItem.getString("key")!!
+    val value = metadataItem.getString("value")!!
     return MetadataItem(
         key,
         value,
@@ -1383,9 +1430,9 @@ fun asMetadataItemList(arr: ReadableArray): List<MetadataItem> {
     return list
 }
 
-fun asNodeState(data: ReadableMap): NodeState? {
+fun asNodeState(nodeState: ReadableMap): NodeState? {
     if (!validateMandatoryFields(
-            data,
+            nodeState,
             arrayOf(
                 "id",
                 "blockHeight",
@@ -1403,17 +1450,17 @@ fun asNodeState(data: ReadableMap): NodeState? {
     ) {
         return null
     }
-    val id = data.getString("id")!!
-    val blockHeight = data.getInt("blockHeight").toUInt()
-    val channelsBalanceMsat = data.getDouble("channelsBalanceMsat").toULong()
-    val onchainBalanceMsat = data.getDouble("onchainBalanceMsat").toULong()
-    val utxos = data.getArray("utxos")?.let { asUnspentTransactionOutputList(it) }!!
-    val maxPayableMsat = data.getDouble("maxPayableMsat").toULong()
-    val maxReceivableMsat = data.getDouble("maxReceivableMsat").toULong()
-    val maxSinglePaymentAmountMsat = data.getDouble("maxSinglePaymentAmountMsat").toULong()
-    val maxChanReserveMsats = data.getDouble("maxChanReserveMsats").toULong()
-    val connectedPeers = data.getArray("connectedPeers")?.let { asStringList(it) }!!
-    val inboundLiquidityMsats = data.getDouble("inboundLiquidityMsats").toULong()
+    val id = nodeState.getString("id")!!
+    val blockHeight = nodeState.getInt("blockHeight").toUInt()
+    val channelsBalanceMsat = nodeState.getDouble("channelsBalanceMsat").toULong()
+    val onchainBalanceMsat = nodeState.getDouble("onchainBalanceMsat").toULong()
+    val utxos = nodeState.getArray("utxos")?.let { asUnspentTransactionOutputList(it) }!!
+    val maxPayableMsat = nodeState.getDouble("maxPayableMsat").toULong()
+    val maxReceivableMsat = nodeState.getDouble("maxReceivableMsat").toULong()
+    val maxSinglePaymentAmountMsat = nodeState.getDouble("maxSinglePaymentAmountMsat").toULong()
+    val maxChanReserveMsats = nodeState.getDouble("maxChanReserveMsats").toULong()
+    val connectedPeers = nodeState.getArray("connectedPeers")?.let { asStringList(it) }!!
+    val inboundLiquidityMsats = nodeState.getDouble("inboundLiquidityMsats").toULong()
     return NodeState(
         id,
         blockHeight,
@@ -1456,9 +1503,9 @@ fun asNodeStateList(arr: ReadableArray): List<NodeState> {
     return list
 }
 
-fun asOpenChannelFeeRequest(data: ReadableMap): OpenChannelFeeRequest? {
+fun asOpenChannelFeeRequest(openChannelFeeRequest: ReadableMap): OpenChannelFeeRequest? {
     if (!validateMandatoryFields(
-            data,
+            openChannelFeeRequest,
             arrayOf(
                 "amountMsat",
             ),
@@ -1466,8 +1513,8 @@ fun asOpenChannelFeeRequest(data: ReadableMap): OpenChannelFeeRequest? {
     ) {
         return null
     }
-    val amountMsat = data.getDouble("amountMsat").toULong()
-    val expiry = if (hasNonNullKey(data, "expiry")) data.getInt("expiry").toUInt() else null
+    val amountMsat = openChannelFeeRequest.getDouble("amountMsat").toULong()
+    val expiry = if (hasNonNullKey(openChannelFeeRequest, "expiry")) openChannelFeeRequest.getInt("expiry").toUInt() else null
     return OpenChannelFeeRequest(
         amountMsat,
         expiry,
@@ -1492,9 +1539,9 @@ fun asOpenChannelFeeRequestList(arr: ReadableArray): List<OpenChannelFeeRequest>
     return list
 }
 
-fun asOpenChannelFeeResponse(data: ReadableMap): OpenChannelFeeResponse? {
+fun asOpenChannelFeeResponse(openChannelFeeResponse: ReadableMap): OpenChannelFeeResponse? {
     if (!validateMandatoryFields(
-            data,
+            openChannelFeeResponse,
             arrayOf(
                 "feeMsat",
             ),
@@ -1502,8 +1549,15 @@ fun asOpenChannelFeeResponse(data: ReadableMap): OpenChannelFeeResponse? {
     ) {
         return null
     }
-    val feeMsat = data.getDouble("feeMsat").toULong()
-    val usedFeeParams = if (hasNonNullKey(data, "usedFeeParams")) data.getMap("usedFeeParams")?.let { asOpeningFeeParams(it) } else null
+    val feeMsat = openChannelFeeResponse.getDouble("feeMsat").toULong()
+    val usedFeeParams =
+        if (hasNonNullKey(openChannelFeeResponse, "usedFeeParams")) {
+            openChannelFeeResponse.getMap("usedFeeParams")?.let {
+                asOpeningFeeParams(it)
+            }
+        } else {
+            null
+        }
     return OpenChannelFeeResponse(
         feeMsat,
         usedFeeParams,
@@ -1528,9 +1582,9 @@ fun asOpenChannelFeeResponseList(arr: ReadableArray): List<OpenChannelFeeRespons
     return list
 }
 
-fun asOpeningFeeParams(data: ReadableMap): OpeningFeeParams? {
+fun asOpeningFeeParams(openingFeeParams: ReadableMap): OpeningFeeParams? {
     if (!validateMandatoryFields(
-            data,
+            openingFeeParams,
             arrayOf(
                 "minMsat",
                 "proportional",
@@ -1543,12 +1597,12 @@ fun asOpeningFeeParams(data: ReadableMap): OpeningFeeParams? {
     ) {
         return null
     }
-    val minMsat = data.getDouble("minMsat").toULong()
-    val proportional = data.getInt("proportional").toUInt()
-    val validUntil = data.getString("validUntil")!!
-    val maxIdleTime = data.getInt("maxIdleTime").toUInt()
-    val maxClientToSelfDelay = data.getInt("maxClientToSelfDelay").toUInt()
-    val promise = data.getString("promise")!!
+    val minMsat = openingFeeParams.getDouble("minMsat").toULong()
+    val proportional = openingFeeParams.getInt("proportional").toUInt()
+    val validUntil = openingFeeParams.getString("validUntil")!!
+    val maxIdleTime = openingFeeParams.getInt("maxIdleTime").toUInt()
+    val maxClientToSelfDelay = openingFeeParams.getInt("maxClientToSelfDelay").toUInt()
+    val promise = openingFeeParams.getString("promise")!!
     return OpeningFeeParams(
         minMsat,
         proportional,
@@ -1581,9 +1635,9 @@ fun asOpeningFeeParamsList(arr: ReadableArray): List<OpeningFeeParams> {
     return list
 }
 
-fun asOpeningFeeParamsMenu(data: ReadableMap): OpeningFeeParamsMenu? {
+fun asOpeningFeeParamsMenu(openingFeeParamsMenu: ReadableMap): OpeningFeeParamsMenu? {
     if (!validateMandatoryFields(
-            data,
+            openingFeeParamsMenu,
             arrayOf(
                 "values",
             ),
@@ -1591,7 +1645,7 @@ fun asOpeningFeeParamsMenu(data: ReadableMap): OpeningFeeParamsMenu? {
     ) {
         return null
     }
-    val values = data.getArray("values")?.let { asOpeningFeeParamsList(it) }!!
+    val values = openingFeeParamsMenu.getArray("values")?.let { asOpeningFeeParamsList(it) }!!
     return OpeningFeeParamsMenu(
         values,
     )
@@ -1614,9 +1668,9 @@ fun asOpeningFeeParamsMenuList(arr: ReadableArray): List<OpeningFeeParamsMenu> {
     return list
 }
 
-fun asPayment(data: ReadableMap): Payment? {
+fun asPayment(payment: ReadableMap): Payment? {
     if (!validateMandatoryFields(
-            data,
+            payment,
             arrayOf(
                 "id",
                 "paymentType",
@@ -1630,14 +1684,14 @@ fun asPayment(data: ReadableMap): Payment? {
     ) {
         return null
     }
-    val id = data.getString("id")!!
-    val paymentType = data.getString("paymentType")?.let { asPaymentType(it) }!!
-    val paymentTime = data.getDouble("paymentTime").toLong()
-    val amountMsat = data.getDouble("amountMsat").toULong()
-    val feeMsat = data.getDouble("feeMsat").toULong()
-    val status = data.getString("status")?.let { asPaymentStatus(it) }!!
-    val description = if (hasNonNullKey(data, "description")) data.getString("description") else null
-    val details = data.getMap("details")?.let { asPaymentDetails(it) }!!
+    val id = payment.getString("id")!!
+    val paymentType = payment.getString("paymentType")?.let { asPaymentType(it) }!!
+    val paymentTime = payment.getDouble("paymentTime").toLong()
+    val amountMsat = payment.getDouble("amountMsat").toULong()
+    val feeMsat = payment.getDouble("feeMsat").toULong()
+    val status = payment.getString("status")?.let { asPaymentStatus(it) }!!
+    val description = if (hasNonNullKey(payment, "description")) payment.getString("description") else null
+    val details = payment.getMap("details")?.let { asPaymentDetails(it) }!!
     return Payment(
         id,
         paymentType,
@@ -1674,9 +1728,9 @@ fun asPaymentList(arr: ReadableArray): List<Payment> {
     return list
 }
 
-fun asPaymentFailedData(data: ReadableMap): PaymentFailedData? {
+fun asPaymentFailedData(paymentFailedData: ReadableMap): PaymentFailedData? {
     if (!validateMandatoryFields(
-            data,
+            paymentFailedData,
             arrayOf(
                 "error",
                 "nodeId",
@@ -1685,9 +1739,9 @@ fun asPaymentFailedData(data: ReadableMap): PaymentFailedData? {
     ) {
         return null
     }
-    val error = data.getString("error")!!
-    val nodeId = data.getString("nodeId")!!
-    val invoice = if (hasNonNullKey(data, "invoice")) data.getMap("invoice")?.let { asLnInvoice(it) } else null
+    val error = paymentFailedData.getString("error")!!
+    val nodeId = paymentFailedData.getString("nodeId")!!
+    val invoice = if (hasNonNullKey(paymentFailedData, "invoice")) paymentFailedData.getMap("invoice")?.let { asLnInvoice(it) } else null
     return PaymentFailedData(
         error,
         nodeId,
@@ -1714,9 +1768,9 @@ fun asPaymentFailedDataList(arr: ReadableArray): List<PaymentFailedData> {
     return list
 }
 
-fun asRate(data: ReadableMap): Rate? {
+fun asRate(rate: ReadableMap): Rate? {
     if (!validateMandatoryFields(
-            data,
+            rate,
             arrayOf(
                 "coin",
                 "value",
@@ -1725,8 +1779,8 @@ fun asRate(data: ReadableMap): Rate? {
     ) {
         return null
     }
-    val coin = data.getString("coin")!!
-    val value = data.getDouble("value")
+    val coin = rate.getString("coin")!!
+    val value = rate.getDouble("value")
     return Rate(
         coin,
         value,
@@ -1751,17 +1805,21 @@ fun asRateList(arr: ReadableArray): List<Rate> {
     return list
 }
 
-fun asReceiveOnchainRequest(data: ReadableMap): ReceiveOnchainRequest? {
+fun asReceiveOnchainRequest(receiveOnchainRequest: ReadableMap): ReceiveOnchainRequest? {
     if (!validateMandatoryFields(
-            data,
+            receiveOnchainRequest,
             arrayOf(),
         )
     ) {
         return null
     }
     val openingFeeParams =
-        if (hasNonNullKey(data, "openingFeeParams")) {
-            data.getMap("openingFeeParams")?.let {
+        if (hasNonNullKey(
+                receiveOnchainRequest,
+                "openingFeeParams",
+            )
+        ) {
+            receiveOnchainRequest.getMap("openingFeeParams")?.let {
                 asOpeningFeeParams(it)
             }
         } else {
@@ -1789,9 +1847,9 @@ fun asReceiveOnchainRequestList(arr: ReadableArray): List<ReceiveOnchainRequest>
     return list
 }
 
-fun asReceivePaymentRequest(data: ReadableMap): ReceivePaymentRequest? {
+fun asReceivePaymentRequest(receivePaymentRequest: ReadableMap): ReceivePaymentRequest? {
     if (!validateMandatoryFields(
-            data,
+            receivePaymentRequest,
             arrayOf(
                 "amountMsat",
                 "description",
@@ -1800,20 +1858,40 @@ fun asReceivePaymentRequest(data: ReadableMap): ReceivePaymentRequest? {
     ) {
         return null
     }
-    val amountMsat = data.getDouble("amountMsat").toULong()
-    val description = data.getString("description")!!
-    val preimage = if (hasNonNullKey(data, "preimage")) data.getArray("preimage")?.let { asUByteList(it) } else null
+    val amountMsat = receivePaymentRequest.getDouble("amountMsat").toULong()
+    val description = receivePaymentRequest.getString("description")!!
+    val preimage =
+        if (hasNonNullKey(receivePaymentRequest, "preimage")) {
+            receivePaymentRequest.getArray("preimage")?.let {
+                asUByteList(it)
+            }
+        } else {
+            null
+        }
     val openingFeeParams =
-        if (hasNonNullKey(data, "openingFeeParams")) {
-            data.getMap("openingFeeParams")?.let {
+        if (hasNonNullKey(
+                receivePaymentRequest,
+                "openingFeeParams",
+            )
+        ) {
+            receivePaymentRequest.getMap("openingFeeParams")?.let {
                 asOpeningFeeParams(it)
             }
         } else {
             null
         }
-    val useDescriptionHash = if (hasNonNullKey(data, "useDescriptionHash")) data.getBoolean("useDescriptionHash") else null
-    val expiry = if (hasNonNullKey(data, "expiry")) data.getInt("expiry").toUInt() else null
-    val cltv = if (hasNonNullKey(data, "cltv")) data.getInt("cltv").toUInt() else null
+    val useDescriptionHash =
+        if (hasNonNullKey(
+                receivePaymentRequest,
+                "useDescriptionHash",
+            )
+        ) {
+            receivePaymentRequest.getBoolean("useDescriptionHash")
+        } else {
+            null
+        }
+    val expiry = if (hasNonNullKey(receivePaymentRequest, "expiry")) receivePaymentRequest.getInt("expiry").toUInt() else null
+    val cltv = if (hasNonNullKey(receivePaymentRequest, "cltv")) receivePaymentRequest.getInt("cltv").toUInt() else null
     return ReceivePaymentRequest(
         amountMsat,
         description,
@@ -1848,9 +1926,9 @@ fun asReceivePaymentRequestList(arr: ReadableArray): List<ReceivePaymentRequest>
     return list
 }
 
-fun asReceivePaymentResponse(data: ReadableMap): ReceivePaymentResponse? {
+fun asReceivePaymentResponse(receivePaymentResponse: ReadableMap): ReceivePaymentResponse? {
     if (!validateMandatoryFields(
-            data,
+            receivePaymentResponse,
             arrayOf(
                 "lnInvoice",
             ),
@@ -1858,16 +1936,29 @@ fun asReceivePaymentResponse(data: ReadableMap): ReceivePaymentResponse? {
     ) {
         return null
     }
-    val lnInvoice = data.getMap("lnInvoice")?.let { asLnInvoice(it) }!!
+    val lnInvoice = receivePaymentResponse.getMap("lnInvoice")?.let { asLnInvoice(it) }!!
     val openingFeeParams =
-        if (hasNonNullKey(data, "openingFeeParams")) {
-            data.getMap("openingFeeParams")?.let {
+        if (hasNonNullKey(
+                receivePaymentResponse,
+                "openingFeeParams",
+            )
+        ) {
+            receivePaymentResponse.getMap("openingFeeParams")?.let {
                 asOpeningFeeParams(it)
             }
         } else {
             null
         }
-    val openingFeeMsat = if (hasNonNullKey(data, "openingFeeMsat")) data.getDouble("openingFeeMsat").toULong() else null
+    val openingFeeMsat =
+        if (hasNonNullKey(
+                receivePaymentResponse,
+                "openingFeeMsat",
+            )
+        ) {
+            receivePaymentResponse.getDouble("openingFeeMsat").toULong()
+        } else {
+            null
+        }
     return ReceivePaymentResponse(
         lnInvoice,
         openingFeeParams,
@@ -1894,9 +1985,9 @@ fun asReceivePaymentResponseList(arr: ReadableArray): List<ReceivePaymentRespons
     return list
 }
 
-fun asRecommendedFees(data: ReadableMap): RecommendedFees? {
+fun asRecommendedFees(recommendedFees: ReadableMap): RecommendedFees? {
     if (!validateMandatoryFields(
-            data,
+            recommendedFees,
             arrayOf(
                 "fastestFee",
                 "halfHourFee",
@@ -1908,11 +1999,11 @@ fun asRecommendedFees(data: ReadableMap): RecommendedFees? {
     ) {
         return null
     }
-    val fastestFee = data.getDouble("fastestFee").toULong()
-    val halfHourFee = data.getDouble("halfHourFee").toULong()
-    val hourFee = data.getDouble("hourFee").toULong()
-    val economyFee = data.getDouble("economyFee").toULong()
-    val minimumFee = data.getDouble("minimumFee").toULong()
+    val fastestFee = recommendedFees.getDouble("fastestFee").toULong()
+    val halfHourFee = recommendedFees.getDouble("halfHourFee").toULong()
+    val hourFee = recommendedFees.getDouble("hourFee").toULong()
+    val economyFee = recommendedFees.getDouble("economyFee").toULong()
+    val minimumFee = recommendedFees.getDouble("minimumFee").toULong()
     return RecommendedFees(
         fastestFee,
         halfHourFee,
@@ -1943,9 +2034,9 @@ fun asRecommendedFeesList(arr: ReadableArray): List<RecommendedFees> {
     return list
 }
 
-fun asRefundRequest(data: ReadableMap): RefundRequest? {
+fun asRefundRequest(refundRequest: ReadableMap): RefundRequest? {
     if (!validateMandatoryFields(
-            data,
+            refundRequest,
             arrayOf(
                 "swapAddress",
                 "toAddress",
@@ -1955,9 +2046,9 @@ fun asRefundRequest(data: ReadableMap): RefundRequest? {
     ) {
         return null
     }
-    val swapAddress = data.getString("swapAddress")!!
-    val toAddress = data.getString("toAddress")!!
-    val satPerVbyte = data.getInt("satPerVbyte").toUInt()
+    val swapAddress = refundRequest.getString("swapAddress")!!
+    val toAddress = refundRequest.getString("toAddress")!!
+    val satPerVbyte = refundRequest.getInt("satPerVbyte").toUInt()
     return RefundRequest(
         swapAddress,
         toAddress,
@@ -1984,9 +2075,9 @@ fun asRefundRequestList(arr: ReadableArray): List<RefundRequest> {
     return list
 }
 
-fun asRefundResponse(data: ReadableMap): RefundResponse? {
+fun asRefundResponse(refundResponse: ReadableMap): RefundResponse? {
     if (!validateMandatoryFields(
-            data,
+            refundResponse,
             arrayOf(
                 "refundTxId",
             ),
@@ -1994,7 +2085,7 @@ fun asRefundResponse(data: ReadableMap): RefundResponse? {
     ) {
         return null
     }
-    val refundTxId = data.getString("refundTxId")!!
+    val refundTxId = refundResponse.getString("refundTxId")!!
     return RefundResponse(
         refundTxId,
     )
@@ -2017,15 +2108,24 @@ fun asRefundResponseList(arr: ReadableArray): List<RefundResponse> {
     return list
 }
 
-fun asReverseSwapFeesRequest(data: ReadableMap): ReverseSwapFeesRequest? {
+fun asReverseSwapFeesRequest(reverseSwapFeesRequest: ReadableMap): ReverseSwapFeesRequest? {
     if (!validateMandatoryFields(
-            data,
+            reverseSwapFeesRequest,
             arrayOf(),
         )
     ) {
         return null
     }
-    val sendAmountSat = if (hasNonNullKey(data, "sendAmountSat")) data.getDouble("sendAmountSat").toULong() else null
+    val sendAmountSat =
+        if (hasNonNullKey(
+                reverseSwapFeesRequest,
+                "sendAmountSat",
+            )
+        ) {
+            reverseSwapFeesRequest.getDouble("sendAmountSat").toULong()
+        } else {
+            null
+        }
     return ReverseSwapFeesRequest(
         sendAmountSat,
     )
@@ -2048,9 +2148,9 @@ fun asReverseSwapFeesRequestList(arr: ReadableArray): List<ReverseSwapFeesReques
     return list
 }
 
-fun asReverseSwapInfo(data: ReadableMap): ReverseSwapInfo? {
+fun asReverseSwapInfo(reverseSwapInfo: ReadableMap): ReverseSwapInfo? {
     if (!validateMandatoryFields(
-            data,
+            reverseSwapInfo,
             arrayOf(
                 "id",
                 "claimPubkey",
@@ -2061,12 +2161,12 @@ fun asReverseSwapInfo(data: ReadableMap): ReverseSwapInfo? {
     ) {
         return null
     }
-    val id = data.getString("id")!!
-    val claimPubkey = data.getString("claimPubkey")!!
-    val lockupTxid = if (hasNonNullKey(data, "lockupTxid")) data.getString("lockupTxid") else null
-    val claimTxid = if (hasNonNullKey(data, "claimTxid")) data.getString("claimTxid") else null
-    val onchainAmountSat = data.getDouble("onchainAmountSat").toULong()
-    val status = data.getString("status")?.let { asReverseSwapStatus(it) }!!
+    val id = reverseSwapInfo.getString("id")!!
+    val claimPubkey = reverseSwapInfo.getString("claimPubkey")!!
+    val lockupTxid = if (hasNonNullKey(reverseSwapInfo, "lockupTxid")) reverseSwapInfo.getString("lockupTxid") else null
+    val claimTxid = if (hasNonNullKey(reverseSwapInfo, "claimTxid")) reverseSwapInfo.getString("claimTxid") else null
+    val onchainAmountSat = reverseSwapInfo.getDouble("onchainAmountSat").toULong()
+    val status = reverseSwapInfo.getString("status")?.let { asReverseSwapStatus(it) }!!
     return ReverseSwapInfo(
         id,
         claimPubkey,
@@ -2099,9 +2199,9 @@ fun asReverseSwapInfoList(arr: ReadableArray): List<ReverseSwapInfo> {
     return list
 }
 
-fun asReverseSwapPairInfo(data: ReadableMap): ReverseSwapPairInfo? {
+fun asReverseSwapPairInfo(reverseSwapPairInfo: ReadableMap): ReverseSwapPairInfo? {
     if (!validateMandatoryFields(
-            data,
+            reverseSwapPairInfo,
             arrayOf(
                 "min",
                 "max",
@@ -2114,13 +2214,22 @@ fun asReverseSwapPairInfo(data: ReadableMap): ReverseSwapPairInfo? {
     ) {
         return null
     }
-    val min = data.getDouble("min").toULong()
-    val max = data.getDouble("max").toULong()
-    val feesHash = data.getString("feesHash")!!
-    val feesPercentage = data.getDouble("feesPercentage")
-    val feesLockup = data.getDouble("feesLockup").toULong()
-    val feesClaim = data.getDouble("feesClaim").toULong()
-    val totalEstimatedFees = if (hasNonNullKey(data, "totalEstimatedFees")) data.getDouble("totalEstimatedFees").toULong() else null
+    val min = reverseSwapPairInfo.getDouble("min").toULong()
+    val max = reverseSwapPairInfo.getDouble("max").toULong()
+    val feesHash = reverseSwapPairInfo.getString("feesHash")!!
+    val feesPercentage = reverseSwapPairInfo.getDouble("feesPercentage")
+    val feesLockup = reverseSwapPairInfo.getDouble("feesLockup").toULong()
+    val feesClaim = reverseSwapPairInfo.getDouble("feesClaim").toULong()
+    val totalEstimatedFees =
+        if (hasNonNullKey(
+                reverseSwapPairInfo,
+                "totalEstimatedFees",
+            )
+        ) {
+            reverseSwapPairInfo.getDouble("totalEstimatedFees").toULong()
+        } else {
+            null
+        }
     return ReverseSwapPairInfo(
         min,
         max,
@@ -2155,9 +2264,9 @@ fun asReverseSwapPairInfoList(arr: ReadableArray): List<ReverseSwapPairInfo> {
     return list
 }
 
-fun asRouteHint(data: ReadableMap): RouteHint? {
+fun asRouteHint(routeHint: ReadableMap): RouteHint? {
     if (!validateMandatoryFields(
-            data,
+            routeHint,
             arrayOf(
                 "hops",
             ),
@@ -2165,7 +2274,7 @@ fun asRouteHint(data: ReadableMap): RouteHint? {
     ) {
         return null
     }
-    val hops = data.getArray("hops")?.let { asRouteHintHopList(it) }!!
+    val hops = routeHint.getArray("hops")?.let { asRouteHintHopList(it) }!!
     return RouteHint(
         hops,
     )
@@ -2188,9 +2297,9 @@ fun asRouteHintList(arr: ReadableArray): List<RouteHint> {
     return list
 }
 
-fun asRouteHintHop(data: ReadableMap): RouteHintHop? {
+fun asRouteHintHop(routeHintHop: ReadableMap): RouteHintHop? {
     if (!validateMandatoryFields(
-            data,
+            routeHintHop,
             arrayOf(
                 "srcNodeId",
                 "shortChannelId",
@@ -2202,13 +2311,13 @@ fun asRouteHintHop(data: ReadableMap): RouteHintHop? {
     ) {
         return null
     }
-    val srcNodeId = data.getString("srcNodeId")!!
-    val shortChannelId = data.getDouble("shortChannelId").toULong()
-    val feesBaseMsat = data.getInt("feesBaseMsat").toUInt()
-    val feesProportionalMillionths = data.getInt("feesProportionalMillionths").toUInt()
-    val cltvExpiryDelta = data.getDouble("cltvExpiryDelta").toULong()
-    val htlcMinimumMsat = if (hasNonNullKey(data, "htlcMinimumMsat")) data.getDouble("htlcMinimumMsat").toULong() else null
-    val htlcMaximumMsat = if (hasNonNullKey(data, "htlcMaximumMsat")) data.getDouble("htlcMaximumMsat").toULong() else null
+    val srcNodeId = routeHintHop.getString("srcNodeId")!!
+    val shortChannelId = routeHintHop.getDouble("shortChannelId").toULong()
+    val feesBaseMsat = routeHintHop.getInt("feesBaseMsat").toUInt()
+    val feesProportionalMillionths = routeHintHop.getInt("feesProportionalMillionths").toUInt()
+    val cltvExpiryDelta = routeHintHop.getDouble("cltvExpiryDelta").toULong()
+    val htlcMinimumMsat = if (hasNonNullKey(routeHintHop, "htlcMinimumMsat")) routeHintHop.getDouble("htlcMinimumMsat").toULong() else null
+    val htlcMaximumMsat = if (hasNonNullKey(routeHintHop, "htlcMaximumMsat")) routeHintHop.getDouble("htlcMaximumMsat").toULong() else null
     return RouteHintHop(
         srcNodeId,
         shortChannelId,
@@ -2243,9 +2352,9 @@ fun asRouteHintHopList(arr: ReadableArray): List<RouteHintHop> {
     return list
 }
 
-fun asSendOnchainRequest(data: ReadableMap): SendOnchainRequest? {
+fun asSendOnchainRequest(sendOnchainRequest: ReadableMap): SendOnchainRequest? {
     if (!validateMandatoryFields(
-            data,
+            sendOnchainRequest,
             arrayOf(
                 "amountSat",
                 "onchainRecipientAddress",
@@ -2256,10 +2365,10 @@ fun asSendOnchainRequest(data: ReadableMap): SendOnchainRequest? {
     ) {
         return null
     }
-    val amountSat = data.getDouble("amountSat").toULong()
-    val onchainRecipientAddress = data.getString("onchainRecipientAddress")!!
-    val pairHash = data.getString("pairHash")!!
-    val satPerVbyte = data.getDouble("satPerVbyte").toULong()
+    val amountSat = sendOnchainRequest.getDouble("amountSat").toULong()
+    val onchainRecipientAddress = sendOnchainRequest.getString("onchainRecipientAddress")!!
+    val pairHash = sendOnchainRequest.getString("pairHash")!!
+    val satPerVbyte = sendOnchainRequest.getInt("satPerVbyte").toUInt()
     return SendOnchainRequest(
         amountSat,
         onchainRecipientAddress,
@@ -2288,9 +2397,9 @@ fun asSendOnchainRequestList(arr: ReadableArray): List<SendOnchainRequest> {
     return list
 }
 
-fun asSendOnchainResponse(data: ReadableMap): SendOnchainResponse? {
+fun asSendOnchainResponse(sendOnchainResponse: ReadableMap): SendOnchainResponse? {
     if (!validateMandatoryFields(
-            data,
+            sendOnchainResponse,
             arrayOf(
                 "reverseSwapInfo",
             ),
@@ -2298,7 +2407,7 @@ fun asSendOnchainResponse(data: ReadableMap): SendOnchainResponse? {
     ) {
         return null
     }
-    val reverseSwapInfo = data.getMap("reverseSwapInfo")?.let { asReverseSwapInfo(it) }!!
+    val reverseSwapInfo = sendOnchainResponse.getMap("reverseSwapInfo")?.let { asReverseSwapInfo(it) }!!
     return SendOnchainResponse(
         reverseSwapInfo,
     )
@@ -2321,9 +2430,45 @@ fun asSendOnchainResponseList(arr: ReadableArray): List<SendOnchainResponse> {
     return list
 }
 
-fun asSendPaymentResponse(data: ReadableMap): SendPaymentResponse? {
+fun asSendPaymentRequest(sendPaymentRequest: ReadableMap): SendPaymentRequest? {
     if (!validateMandatoryFields(
-            data,
+            sendPaymentRequest,
+            arrayOf(
+                "bolt11",
+            ),
+        )
+    ) {
+        return null
+    }
+    val bolt11 = sendPaymentRequest.getString("bolt11")!!
+    val amountMsat = if (hasNonNullKey(sendPaymentRequest, "amountMsat")) sendPaymentRequest.getDouble("amountMsat").toULong() else null
+    return SendPaymentRequest(
+        bolt11,
+        amountMsat,
+    )
+}
+
+fun readableMapOf(sendPaymentRequest: SendPaymentRequest): ReadableMap {
+    return readableMapOf(
+        "bolt11" to sendPaymentRequest.bolt11,
+        "amountMsat" to sendPaymentRequest.amountMsat,
+    )
+}
+
+fun asSendPaymentRequestList(arr: ReadableArray): List<SendPaymentRequest> {
+    val list = ArrayList<SendPaymentRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asSendPaymentRequest(value)!!)
+            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
+fun asSendPaymentResponse(sendPaymentResponse: ReadableMap): SendPaymentResponse? {
+    if (!validateMandatoryFields(
+            sendPaymentResponse,
             arrayOf(
                 "payment",
             ),
@@ -2331,7 +2476,7 @@ fun asSendPaymentResponse(data: ReadableMap): SendPaymentResponse? {
     ) {
         return null
     }
-    val payment = data.getMap("payment")?.let { asPayment(it) }!!
+    val payment = sendPaymentResponse.getMap("payment")?.let { asPayment(it) }!!
     return SendPaymentResponse(
         payment,
     )
@@ -2354,9 +2499,9 @@ fun asSendPaymentResponseList(arr: ReadableArray): List<SendPaymentResponse> {
     return list
 }
 
-fun asSendSpontaneousPaymentRequest(data: ReadableMap): SendSpontaneousPaymentRequest? {
+fun asSendSpontaneousPaymentRequest(sendSpontaneousPaymentRequest: ReadableMap): SendSpontaneousPaymentRequest? {
     if (!validateMandatoryFields(
-            data,
+            sendSpontaneousPaymentRequest,
             arrayOf(
                 "nodeId",
                 "amountMsat",
@@ -2365,8 +2510,8 @@ fun asSendSpontaneousPaymentRequest(data: ReadableMap): SendSpontaneousPaymentRe
     ) {
         return null
     }
-    val nodeId = data.getString("nodeId")!!
-    val amountMsat = data.getDouble("amountMsat").toULong()
+    val nodeId = sendSpontaneousPaymentRequest.getString("nodeId")!!
+    val amountMsat = sendSpontaneousPaymentRequest.getDouble("amountMsat").toULong()
     return SendSpontaneousPaymentRequest(
         nodeId,
         amountMsat,
@@ -2391,9 +2536,9 @@ fun asSendSpontaneousPaymentRequestList(arr: ReadableArray): List<SendSpontaneou
     return list
 }
 
-fun asSignMessageRequest(data: ReadableMap): SignMessageRequest? {
+fun asSignMessageRequest(signMessageRequest: ReadableMap): SignMessageRequest? {
     if (!validateMandatoryFields(
-            data,
+            signMessageRequest,
             arrayOf(
                 "message",
             ),
@@ -2401,7 +2546,7 @@ fun asSignMessageRequest(data: ReadableMap): SignMessageRequest? {
     ) {
         return null
     }
-    val message = data.getString("message")!!
+    val message = signMessageRequest.getString("message")!!
     return SignMessageRequest(
         message,
     )
@@ -2424,9 +2569,9 @@ fun asSignMessageRequestList(arr: ReadableArray): List<SignMessageRequest> {
     return list
 }
 
-fun asSignMessageResponse(data: ReadableMap): SignMessageResponse? {
+fun asSignMessageResponse(signMessageResponse: ReadableMap): SignMessageResponse? {
     if (!validateMandatoryFields(
-            data,
+            signMessageResponse,
             arrayOf(
                 "signature",
             ),
@@ -2434,7 +2579,7 @@ fun asSignMessageResponse(data: ReadableMap): SignMessageResponse? {
     ) {
         return null
     }
-    val signature = data.getString("signature")!!
+    val signature = signMessageResponse.getString("signature")!!
     return SignMessageResponse(
         signature,
     )
@@ -2457,9 +2602,9 @@ fun asSignMessageResponseList(arr: ReadableArray): List<SignMessageResponse> {
     return list
 }
 
-fun asStaticBackupRequest(data: ReadableMap): StaticBackupRequest? {
+fun asStaticBackupRequest(staticBackupRequest: ReadableMap): StaticBackupRequest? {
     if (!validateMandatoryFields(
-            data,
+            staticBackupRequest,
             arrayOf(
                 "workingDir",
             ),
@@ -2467,7 +2612,7 @@ fun asStaticBackupRequest(data: ReadableMap): StaticBackupRequest? {
     ) {
         return null
     }
-    val workingDir = data.getString("workingDir")!!
+    val workingDir = staticBackupRequest.getString("workingDir")!!
     return StaticBackupRequest(
         workingDir,
     )
@@ -2490,15 +2635,24 @@ fun asStaticBackupRequestList(arr: ReadableArray): List<StaticBackupRequest> {
     return list
 }
 
-fun asStaticBackupResponse(data: ReadableMap): StaticBackupResponse? {
+fun asStaticBackupResponse(staticBackupResponse: ReadableMap): StaticBackupResponse? {
     if (!validateMandatoryFields(
-            data,
+            staticBackupResponse,
             arrayOf(),
         )
     ) {
         return null
     }
-    val backup = if (hasNonNullKey(data, "backup")) data.getArray("backup")?.let { asStringList(it) } else null
+    val backup =
+        if (hasNonNullKey(
+                staticBackupResponse,
+                "backup",
+            )
+        ) {
+            staticBackupResponse.getArray("backup")?.let { asStringList(it) }
+        } else {
+            null
+        }
     return StaticBackupResponse(
         backup,
     )
@@ -2521,9 +2675,9 @@ fun asStaticBackupResponseList(arr: ReadableArray): List<StaticBackupResponse> {
     return list
 }
 
-fun asSwapInfo(data: ReadableMap): SwapInfo? {
+fun asSwapInfo(swapInfo: ReadableMap): SwapInfo? {
     if (!validateMandatoryFields(
-            data,
+            swapInfo,
             arrayOf(
                 "bitcoinAddress",
                 "createdAt",
@@ -2548,29 +2702,29 @@ fun asSwapInfo(data: ReadableMap): SwapInfo? {
     ) {
         return null
     }
-    val bitcoinAddress = data.getString("bitcoinAddress")!!
-    val createdAt = data.getDouble("createdAt").toLong()
-    val lockHeight = data.getDouble("lockHeight").toLong()
-    val paymentHash = data.getArray("paymentHash")?.let { asUByteList(it) }!!
-    val preimage = data.getArray("preimage")?.let { asUByteList(it) }!!
-    val privateKey = data.getArray("privateKey")?.let { asUByteList(it) }!!
-    val publicKey = data.getArray("publicKey")?.let { asUByteList(it) }!!
-    val swapperPublicKey = data.getArray("swapperPublicKey")?.let { asUByteList(it) }!!
-    val script = data.getArray("script")?.let { asUByteList(it) }!!
-    val bolt11 = if (hasNonNullKey(data, "bolt11")) data.getString("bolt11") else null
-    val paidSats = data.getDouble("paidSats").toULong()
-    val unconfirmedSats = data.getDouble("unconfirmedSats").toULong()
-    val confirmedSats = data.getDouble("confirmedSats").toULong()
-    val status = data.getString("status")?.let { asSwapStatus(it) }!!
-    val refundTxIds = data.getArray("refundTxIds")?.let { asStringList(it) }!!
-    val unconfirmedTxIds = data.getArray("unconfirmedTxIds")?.let { asStringList(it) }!!
-    val confirmedTxIds = data.getArray("confirmedTxIds")?.let { asStringList(it) }!!
-    val minAllowedDeposit = data.getDouble("minAllowedDeposit").toLong()
-    val maxAllowedDeposit = data.getDouble("maxAllowedDeposit").toLong()
-    val lastRedeemError = if (hasNonNullKey(data, "lastRedeemError")) data.getString("lastRedeemError") else null
+    val bitcoinAddress = swapInfo.getString("bitcoinAddress")!!
+    val createdAt = swapInfo.getDouble("createdAt").toLong()
+    val lockHeight = swapInfo.getDouble("lockHeight").toLong()
+    val paymentHash = swapInfo.getArray("paymentHash")?.let { asUByteList(it) }!!
+    val preimage = swapInfo.getArray("preimage")?.let { asUByteList(it) }!!
+    val privateKey = swapInfo.getArray("privateKey")?.let { asUByteList(it) }!!
+    val publicKey = swapInfo.getArray("publicKey")?.let { asUByteList(it) }!!
+    val swapperPublicKey = swapInfo.getArray("swapperPublicKey")?.let { asUByteList(it) }!!
+    val script = swapInfo.getArray("script")?.let { asUByteList(it) }!!
+    val bolt11 = if (hasNonNullKey(swapInfo, "bolt11")) swapInfo.getString("bolt11") else null
+    val paidSats = swapInfo.getDouble("paidSats").toULong()
+    val unconfirmedSats = swapInfo.getDouble("unconfirmedSats").toULong()
+    val confirmedSats = swapInfo.getDouble("confirmedSats").toULong()
+    val status = swapInfo.getString("status")?.let { asSwapStatus(it) }!!
+    val refundTxIds = swapInfo.getArray("refundTxIds")?.let { asStringList(it) }!!
+    val unconfirmedTxIds = swapInfo.getArray("unconfirmedTxIds")?.let { asStringList(it) }!!
+    val confirmedTxIds = swapInfo.getArray("confirmedTxIds")?.let { asStringList(it) }!!
+    val minAllowedDeposit = swapInfo.getDouble("minAllowedDeposit").toLong()
+    val maxAllowedDeposit = swapInfo.getDouble("maxAllowedDeposit").toLong()
+    val lastRedeemError = if (hasNonNullKey(swapInfo, "lastRedeemError")) swapInfo.getString("lastRedeemError") else null
     val channelOpeningFees =
-        if (hasNonNullKey(data, "channelOpeningFees")) {
-            data.getMap("channelOpeningFees")?.let {
+        if (hasNonNullKey(swapInfo, "channelOpeningFees")) {
+            swapInfo.getMap("channelOpeningFees")?.let {
                 asOpeningFeeParams(it)
             }
         } else {
@@ -2638,9 +2792,9 @@ fun asSwapInfoList(arr: ReadableArray): List<SwapInfo> {
     return list
 }
 
-fun asSweepRequest(data: ReadableMap): SweepRequest? {
+fun asSweepRequest(sweepRequest: ReadableMap): SweepRequest? {
     if (!validateMandatoryFields(
-            data,
+            sweepRequest,
             arrayOf(
                 "toAddress",
                 "feeRateSatsPerVbyte",
@@ -2649,8 +2803,8 @@ fun asSweepRequest(data: ReadableMap): SweepRequest? {
     ) {
         return null
     }
-    val toAddress = data.getString("toAddress")!!
-    val feeRateSatsPerVbyte = data.getInt("feeRateSatsPerVbyte").toUInt()
+    val toAddress = sweepRequest.getString("toAddress")!!
+    val feeRateSatsPerVbyte = sweepRequest.getInt("feeRateSatsPerVbyte").toUInt()
     return SweepRequest(
         toAddress,
         feeRateSatsPerVbyte,
@@ -2675,9 +2829,9 @@ fun asSweepRequestList(arr: ReadableArray): List<SweepRequest> {
     return list
 }
 
-fun asSweepResponse(data: ReadableMap): SweepResponse? {
+fun asSweepResponse(sweepResponse: ReadableMap): SweepResponse? {
     if (!validateMandatoryFields(
-            data,
+            sweepResponse,
             arrayOf(
                 "txid",
             ),
@@ -2685,7 +2839,7 @@ fun asSweepResponse(data: ReadableMap): SweepResponse? {
     ) {
         return null
     }
-    val txid = data.getArray("txid")?.let { asUByteList(it) }!!
+    val txid = sweepResponse.getArray("txid")?.let { asUByteList(it) }!!
     return SweepResponse(
         txid,
     )
@@ -2708,18 +2862,18 @@ fun asSweepResponseList(arr: ReadableArray): List<SweepResponse> {
     return list
 }
 
-fun asSymbol(data: ReadableMap): Symbol? {
+fun asSymbol(symbol: ReadableMap): Symbol? {
     if (!validateMandatoryFields(
-            data,
+            symbol,
             arrayOf(),
         )
     ) {
         return null
     }
-    val grapheme = if (hasNonNullKey(data, "grapheme")) data.getString("grapheme") else null
-    val template = if (hasNonNullKey(data, "template")) data.getString("template") else null
-    val rtl = if (hasNonNullKey(data, "rtl")) data.getBoolean("rtl") else null
-    val position = if (hasNonNullKey(data, "position")) data.getInt("position").toUInt() else null
+    val grapheme = if (hasNonNullKey(symbol, "grapheme")) symbol.getString("grapheme") else null
+    val template = if (hasNonNullKey(symbol, "template")) symbol.getString("template") else null
+    val rtl = if (hasNonNullKey(symbol, "rtl")) symbol.getBoolean("rtl") else null
+    val position = if (hasNonNullKey(symbol, "position")) symbol.getInt("position").toUInt() else null
     return Symbol(
         grapheme,
         template,
@@ -2748,9 +2902,9 @@ fun asSymbolList(arr: ReadableArray): List<Symbol> {
     return list
 }
 
-fun asUnspentTransactionOutput(data: ReadableMap): UnspentTransactionOutput? {
+fun asUnspentTransactionOutput(unspentTransactionOutput: ReadableMap): UnspentTransactionOutput? {
     if (!validateMandatoryFields(
-            data,
+            unspentTransactionOutput,
             arrayOf(
                 "txid",
                 "outnum",
@@ -2762,11 +2916,11 @@ fun asUnspentTransactionOutput(data: ReadableMap): UnspentTransactionOutput? {
     ) {
         return null
     }
-    val txid = data.getArray("txid")?.let { asUByteList(it) }!!
-    val outnum = data.getInt("outnum").toUInt()
-    val amountMillisatoshi = data.getDouble("amountMillisatoshi").toULong()
-    val address = data.getString("address")!!
-    val reserved = data.getBoolean("reserved")
+    val txid = unspentTransactionOutput.getArray("txid")?.let { asUByteList(it) }!!
+    val outnum = unspentTransactionOutput.getInt("outnum").toUInt()
+    val amountMillisatoshi = unspentTransactionOutput.getDouble("amountMillisatoshi").toULong()
+    val address = unspentTransactionOutput.getString("address")!!
+    val reserved = unspentTransactionOutput.getBoolean("reserved")
     return UnspentTransactionOutput(
         txid,
         outnum,
@@ -2797,9 +2951,9 @@ fun asUnspentTransactionOutputList(arr: ReadableArray): List<UnspentTransactionO
     return list
 }
 
-fun asUrlSuccessActionData(data: ReadableMap): UrlSuccessActionData? {
+fun asUrlSuccessActionData(urlSuccessActionData: ReadableMap): UrlSuccessActionData? {
     if (!validateMandatoryFields(
-            data,
+            urlSuccessActionData,
             arrayOf(
                 "description",
                 "url",
@@ -2808,8 +2962,8 @@ fun asUrlSuccessActionData(data: ReadableMap): UrlSuccessActionData? {
     ) {
         return null
     }
-    val description = data.getString("description")!!
-    val url = data.getString("url")!!
+    val description = urlSuccessActionData.getString("description")!!
+    val url = urlSuccessActionData.getString("url")!!
     return UrlSuccessActionData(
         description,
         url,
@@ -2834,23 +2988,23 @@ fun asUrlSuccessActionDataList(arr: ReadableArray): List<UrlSuccessActionData> {
     return list
 }
 
-fun asBreezEvent(data: ReadableMap): BreezEvent? {
-    val type = data.getString("type")
+fun asBreezEvent(breezEvent: ReadableMap): BreezEvent? {
+    val type = breezEvent.getString("type")
 
     if (type == "newBlock") {
-        return BreezEvent.NewBlock(data.getInt("block").toUInt())
+        return BreezEvent.NewBlock(breezEvent.getInt("block").toUInt())
     }
     if (type == "invoicePaid") {
-        return BreezEvent.InvoicePaid(data.getMap("details")?.let { asInvoicePaidDetails(it) }!!)
+        return BreezEvent.InvoicePaid(breezEvent.getMap("details")?.let { asInvoicePaidDetails(it) }!!)
     }
     if (type == "synced") {
         return BreezEvent.Synced
     }
     if (type == "paymentSucceed") {
-        return BreezEvent.PaymentSucceed(data.getMap("details")?.let { asPayment(it) }!!)
+        return BreezEvent.PaymentSucceed(breezEvent.getMap("details")?.let { asPayment(it) }!!)
     }
     if (type == "paymentFailed") {
-        return BreezEvent.PaymentFailed(data.getMap("details")?.let { asPaymentFailedData(it) }!!)
+        return BreezEvent.PaymentFailed(breezEvent.getMap("details")?.let { asPaymentFailedData(it) }!!)
     }
     if (type == "backupStarted") {
         return BreezEvent.BackupStarted
@@ -2859,7 +3013,7 @@ fun asBreezEvent(data: ReadableMap): BreezEvent? {
         return BreezEvent.BackupSucceeded
     }
     if (type == "backupFailed") {
-        return BreezEvent.BackupFailed(data.getMap("details")?.let { asBackupFailedData(it) }!!)
+        return BreezEvent.BackupFailed(breezEvent.getMap("details")?.let { asBackupFailedData(it) }!!)
     }
     return null
 }
@@ -2916,32 +3070,32 @@ fun asFeeratePreset(type: String): FeeratePreset {
     return FeeratePreset.valueOf(type.uppercase())
 }
 
-fun asInputType(data: ReadableMap): InputType? {
-    val type = data.getString("type")
+fun asInputType(inputType: ReadableMap): InputType? {
+    val type = inputType.getString("type")
 
     if (type == "bitcoinAddress") {
-        return InputType.BitcoinAddress(data.getMap("address")?.let { asBitcoinAddressData(it) }!!)
+        return InputType.BitcoinAddress(inputType.getMap("address")?.let { asBitcoinAddressData(it) }!!)
     }
     if (type == "bolt11") {
-        return InputType.Bolt11(data.getMap("invoice")?.let { asLnInvoice(it) }!!)
+        return InputType.Bolt11(inputType.getMap("invoice")?.let { asLnInvoice(it) }!!)
     }
     if (type == "nodeId") {
-        return InputType.NodeId(data.getString("nodeId")!!)
+        return InputType.NodeId(inputType.getString("nodeId")!!)
     }
     if (type == "url") {
-        return InputType.Url(data.getString("url")!!)
+        return InputType.Url(inputType.getString("url")!!)
     }
     if (type == "lnUrlPay") {
-        return InputType.LnUrlPay(data.getMap("data")?.let { asLnUrlPayRequestData(it) }!!)
+        return InputType.LnUrlPay(inputType.getMap("data")?.let { asLnUrlPayRequestData(it) }!!)
     }
     if (type == "lnUrlWithdraw") {
-        return InputType.LnUrlWithdraw(data.getMap("data")?.let { asLnUrlWithdrawRequestData(it) }!!)
+        return InputType.LnUrlWithdraw(inputType.getMap("data")?.let { asLnUrlWithdrawRequestData(it) }!!)
     }
     if (type == "lnUrlAuth") {
-        return InputType.LnUrlAuth(data.getMap("data")?.let { asLnUrlAuthRequestData(it) }!!)
+        return InputType.LnUrlAuth(inputType.getMap("data")?.let { asLnUrlAuthRequestData(it) }!!)
     }
     if (type == "lnUrlError") {
-        return InputType.LnUrlError(data.getMap("data")?.let { asLnUrlErrorData(it) }!!)
+        return InputType.LnUrlError(inputType.getMap("data")?.let { asLnUrlErrorData(it) }!!)
     }
     return null
 }
@@ -2985,14 +3139,14 @@ fun readableMapOf(inputType: InputType): ReadableMap? {
     return map
 }
 
-fun asLnUrlCallbackStatus(data: ReadableMap): LnUrlCallbackStatus? {
-    val type = data.getString("type")
+fun asLnUrlCallbackStatus(lnUrlCallbackStatus: ReadableMap): LnUrlCallbackStatus? {
+    val type = lnUrlCallbackStatus.getString("type")
 
     if (type == "ok") {
         return LnUrlCallbackStatus.Ok
     }
     if (type == "errorStatus") {
-        return LnUrlCallbackStatus.ErrorStatus(data.getMap("data")?.let { asLnUrlErrorData(it) }!!)
+        return LnUrlCallbackStatus.ErrorStatus(lnUrlCallbackStatus.getMap("data")?.let { asLnUrlErrorData(it) }!!)
     }
     return null
 }
@@ -3011,16 +3165,22 @@ fun readableMapOf(lnUrlCallbackStatus: LnUrlCallbackStatus): ReadableMap? {
     return map
 }
 
-fun asLnUrlPayResult(data: ReadableMap): LnUrlPayResult? {
-    val type = data.getString("type")
+fun asLnUrlPayResult(lnUrlPayResult: ReadableMap): LnUrlPayResult? {
+    val type = lnUrlPayResult.getString("type")
 
     if (type == "endpointSuccess") {
         return LnUrlPayResult.EndpointSuccess(
-            if (hasNonNullKey(data, "data")) data.getMap("data")?.let { asSuccessActionProcessed(it) } else null,
+            if (hasNonNullKey(lnUrlPayResult, "data")) {
+                lnUrlPayResult.getMap("data")?.let {
+                    asSuccessActionProcessed(it)
+                }
+            } else {
+                null
+            },
         )
     }
     if (type == "endpointError") {
-        return LnUrlPayResult.EndpointError(data.getMap("data")?.let { asLnUrlErrorData(it) }!!)
+        return LnUrlPayResult.EndpointError(lnUrlPayResult.getMap("data")?.let { asLnUrlErrorData(it) }!!)
     }
     return null
 }
@@ -3040,14 +3200,14 @@ fun readableMapOf(lnUrlPayResult: LnUrlPayResult): ReadableMap? {
     return map
 }
 
-fun asLnUrlWithdrawResult(data: ReadableMap): LnUrlWithdrawResult? {
-    val type = data.getString("type")
+fun asLnUrlWithdrawResult(lnUrlWithdrawResult: ReadableMap): LnUrlWithdrawResult? {
+    val type = lnUrlWithdrawResult.getString("type")
 
     if (type == "ok") {
-        return LnUrlWithdrawResult.Ok(data.getMap("data")?.let { asLnUrlWithdrawSuccessData(it) }!!)
+        return LnUrlWithdrawResult.Ok(lnUrlWithdrawResult.getMap("data")?.let { asLnUrlWithdrawSuccessData(it) }!!)
     }
     if (type == "errorStatus") {
-        return LnUrlWithdrawResult.ErrorStatus(data.getMap("data")?.let { asLnUrlErrorData(it) }!!)
+        return LnUrlWithdrawResult.ErrorStatus(lnUrlWithdrawResult.getMap("data")?.let { asLnUrlErrorData(it) }!!)
     }
     return null
 }
@@ -3071,11 +3231,11 @@ fun asNetwork(type: String): Network {
     return Network.valueOf(type.uppercase())
 }
 
-fun asNodeConfig(data: ReadableMap): NodeConfig? {
-    val type = data.getString("type")
+fun asNodeConfig(nodeConfig: ReadableMap): NodeConfig? {
+    val type = nodeConfig.getString("type")
 
     if (type == "greenlight") {
-        return NodeConfig.Greenlight(data.getMap("config")?.let { asGreenlightNodeConfig(it) }!!)
+        return NodeConfig.Greenlight(nodeConfig.getMap("config")?.let { asGreenlightNodeConfig(it) }!!)
     }
     return null
 }
@@ -3091,14 +3251,14 @@ fun readableMapOf(nodeConfig: NodeConfig): ReadableMap? {
     return map
 }
 
-fun asPaymentDetails(data: ReadableMap): PaymentDetails? {
-    val type = data.getString("type")
+fun asPaymentDetails(paymentDetails: ReadableMap): PaymentDetails? {
+    val type = paymentDetails.getString("type")
 
     if (type == "ln") {
-        return PaymentDetails.Ln(data.getMap("data")?.let { asLnPaymentDetails(it) }!!)
+        return PaymentDetails.Ln(paymentDetails.getMap("data")?.let { asLnPaymentDetails(it) }!!)
     }
     if (type == "closedChannel") {
-        return PaymentDetails.ClosedChannel(data.getMap("data")?.let { asClosedChannelPaymentDetails(it) }!!)
+        return PaymentDetails.ClosedChannel(paymentDetails.getMap("data")?.let { asClosedChannelPaymentDetails(it) }!!)
     }
     return null
 }
@@ -3134,17 +3294,17 @@ fun asReverseSwapStatus(type: String): ReverseSwapStatus {
     return ReverseSwapStatus.valueOf(type.uppercase())
 }
 
-fun asSuccessActionProcessed(data: ReadableMap): SuccessActionProcessed? {
-    val type = data.getString("type")
+fun asSuccessActionProcessed(successActionProcessed: ReadableMap): SuccessActionProcessed? {
+    val type = successActionProcessed.getString("type")
 
     if (type == "aes") {
-        return SuccessActionProcessed.Aes(data.getMap("data")?.let { asAesSuccessActionDataDecrypted(it) }!!)
+        return SuccessActionProcessed.Aes(successActionProcessed.getMap("data")?.let { asAesSuccessActionDataDecrypted(it) }!!)
     }
     if (type == "message") {
-        return SuccessActionProcessed.Message(data.getMap("data")?.let { asMessageSuccessActionData(it) }!!)
+        return SuccessActionProcessed.Message(successActionProcessed.getMap("data")?.let { asMessageSuccessActionData(it) }!!)
     }
     if (type == "url") {
-        return SuccessActionProcessed.Url(data.getMap("data")?.let { asUrlSuccessActionData(it) }!!)
+        return SuccessActionProcessed.Url(successActionProcessed.getMap("data")?.let { asUrlSuccessActionData(it) }!!)
     }
     return null
 }

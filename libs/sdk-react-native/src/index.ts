@@ -377,6 +377,11 @@ export type SendOnchainResponse = {
     reverseSwapInfo: ReverseSwapInfo
 }
 
+export type SendPaymentRequest = {
+    bolt11: string
+    amountMsat?: number
+}
+
 export type SendPaymentResponse = {
     payment: Payment
 }
@@ -712,8 +717,8 @@ export const disconnect = async (): Promise<void> => {
     await BreezSDK.disconnect()
 }
 
-export const sendPayment = async (bolt11: string, amountMsat: number = 0): Promise<Payment> => {
-    const response = await BreezSDK.sendPayment(bolt11, amountMsat)
+export const sendPayment = async (req: SendPaymentRequest): Promise<SendPaymentResponse> => {
+    const response = await BreezSDK.sendPayment(req)
     return response
 }
 
@@ -732,8 +737,8 @@ export const payLnurl = async (req: LnUrlPayRequest): Promise<LnUrlPayResult> =>
     return response
 }
 
-export const withdrawLnurl = async (req: LnUrlWithdrawRequest): Promise<LnUrlWithdrawResult> => {
-    const response = await BreezSDK.withdrawLnurl(req)
+export const withdrawLnurl = async (request: LnUrlWithdrawRequest): Promise<LnUrlWithdrawResult> => {
+    const response = await BreezSDK.withdrawLnurl(request)
     return response
 }
 
