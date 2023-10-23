@@ -2,9 +2,9 @@ import BreezSDK
 import Foundation
 
 class BreezSDKMapper {
-    static func asAesSuccessActionDataDecrypted(data: [String: Any?]) throws -> AesSuccessActionDataDecrypted {
-        guard let description = data["description"] as? String else { throw SdkError.Generic(message: "Missing mandatory field description for type AesSuccessActionDataDecrypted") }
-        guard let plaintext = data["plaintext"] as? String else { throw SdkError.Generic(message: "Missing mandatory field plaintext for type AesSuccessActionDataDecrypted") }
+    static func asAesSuccessActionDataDecrypted(aesSuccessActionDataDecrypted: [String: Any?]) throws -> AesSuccessActionDataDecrypted {
+        guard let description = aesSuccessActionDataDecrypted["description"] as? String else { throw SdkError.Generic(message: "Missing mandatory field description for type AesSuccessActionDataDecrypted") }
+        guard let plaintext = aesSuccessActionDataDecrypted["plaintext"] as? String else { throw SdkError.Generic(message: "Missing mandatory field plaintext for type AesSuccessActionDataDecrypted") }
 
         return AesSuccessActionDataDecrypted(
             description: description,
@@ -23,7 +23,7 @@ class BreezSDKMapper {
         var list = [AesSuccessActionDataDecrypted]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var aesSuccessActionDataDecrypted = try asAesSuccessActionDataDecrypted(data: val)
+                var aesSuccessActionDataDecrypted = try asAesSuccessActionDataDecrypted(aesSuccessActionDataDecrypted: val)
                 list.append(aesSuccessActionDataDecrypted)
             } else {
                 throw SdkError.Generic(message: "Invalid element type AesSuccessActionDataDecrypted")
@@ -36,8 +36,8 @@ class BreezSDKMapper {
         return aesSuccessActionDataDecryptedList.map { v -> [String: Any?] in dictionaryOf(aesSuccessActionDataDecrypted: v) }
     }
 
-    static func asBackupFailedData(data: [String: Any?]) throws -> BackupFailedData {
-        guard let error = data["error"] as? String else { throw SdkError.Generic(message: "Missing mandatory field error for type BackupFailedData") }
+    static func asBackupFailedData(backupFailedData: [String: Any?]) throws -> BackupFailedData {
+        guard let error = backupFailedData["error"] as? String else { throw SdkError.Generic(message: "Missing mandatory field error for type BackupFailedData") }
 
         return BackupFailedData(
             error: error)
@@ -53,7 +53,7 @@ class BreezSDKMapper {
         var list = [BackupFailedData]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var backupFailedData = try asBackupFailedData(data: val)
+                var backupFailedData = try asBackupFailedData(backupFailedData: val)
                 list.append(backupFailedData)
             } else {
                 throw SdkError.Generic(message: "Invalid element type BackupFailedData")
@@ -66,9 +66,9 @@ class BreezSDKMapper {
         return backupFailedDataList.map { v -> [String: Any?] in dictionaryOf(backupFailedData: v) }
     }
 
-    static func asBackupStatus(data: [String: Any?]) throws -> BackupStatus {
-        guard let backedUp = data["backedUp"] as? Bool else { throw SdkError.Generic(message: "Missing mandatory field backedUp for type BackupStatus") }
-        let lastBackupTime = data["lastBackupTime"] as? UInt64
+    static func asBackupStatus(backupStatus: [String: Any?]) throws -> BackupStatus {
+        guard let backedUp = backupStatus["backedUp"] as? Bool else { throw SdkError.Generic(message: "Missing mandatory field backedUp for type BackupStatus") }
+        let lastBackupTime = backupStatus["lastBackupTime"] as? UInt64
 
         return BackupStatus(
             backedUp: backedUp,
@@ -87,7 +87,7 @@ class BreezSDKMapper {
         var list = [BackupStatus]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var backupStatus = try asBackupStatus(data: val)
+                var backupStatus = try asBackupStatus(backupStatus: val)
                 list.append(backupStatus)
             } else {
                 throw SdkError.Generic(message: "Invalid element type BackupStatus")
@@ -100,14 +100,14 @@ class BreezSDKMapper {
         return backupStatusList.map { v -> [String: Any?] in dictionaryOf(backupStatus: v) }
     }
 
-    static func asBitcoinAddressData(data: [String: Any?]) throws -> BitcoinAddressData {
-        guard let address = data["address"] as? String else { throw SdkError.Generic(message: "Missing mandatory field address for type BitcoinAddressData") }
-        guard let networkTmp = data["network"] as? String else { throw SdkError.Generic(message: "Missing mandatory field network for type BitcoinAddressData") }
-        let network = try asNetwork(type: networkTmp)
+    static func asBitcoinAddressData(bitcoinAddressData: [String: Any?]) throws -> BitcoinAddressData {
+        guard let address = bitcoinAddressData["address"] as? String else { throw SdkError.Generic(message: "Missing mandatory field address for type BitcoinAddressData") }
+        guard let networkTmp = bitcoinAddressData["network"] as? String else { throw SdkError.Generic(message: "Missing mandatory field network for type BitcoinAddressData") }
+        let network = try asNetwork(network: networkTmp)
 
-        let amountSat = data["amountSat"] as? UInt64
-        let label = data["label"] as? String
-        let message = data["message"] as? String
+        let amountSat = bitcoinAddressData["amountSat"] as? UInt64
+        let label = bitcoinAddressData["label"] as? String
+        let message = bitcoinAddressData["message"] as? String
 
         return BitcoinAddressData(
             address: address,
@@ -132,7 +132,7 @@ class BreezSDKMapper {
         var list = [BitcoinAddressData]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var bitcoinAddressData = try asBitcoinAddressData(data: val)
+                var bitcoinAddressData = try asBitcoinAddressData(bitcoinAddressData: val)
                 list.append(bitcoinAddressData)
             } else {
                 throw SdkError.Generic(message: "Invalid element type BitcoinAddressData")
@@ -145,13 +145,13 @@ class BreezSDKMapper {
         return bitcoinAddressDataList.map { v -> [String: Any?] in dictionaryOf(bitcoinAddressData: v) }
     }
 
-    static func asBuyBitcoinRequest(data: [String: Any?]) throws -> BuyBitcoinRequest {
-        guard let providerTmp = data["provider"] as? String else { throw SdkError.Generic(message: "Missing mandatory field provider for type BuyBitcoinRequest") }
-        let provider = try asBuyBitcoinProvider(type: providerTmp)
+    static func asBuyBitcoinRequest(buyBitcoinRequest: [String: Any?]) throws -> BuyBitcoinRequest {
+        guard let providerTmp = buyBitcoinRequest["provider"] as? String else { throw SdkError.Generic(message: "Missing mandatory field provider for type BuyBitcoinRequest") }
+        let provider = try asBuyBitcoinProvider(buyBitcoinProvider: providerTmp)
 
         var openingFeeParams: OpeningFeeParams?
-        if let openingFeeParamsTmp = data["openingFeeParams"] as? [String: Any?] {
-            openingFeeParams = try asOpeningFeeParams(data: openingFeeParamsTmp)
+        if let openingFeeParamsTmp = buyBitcoinRequest["openingFeeParams"] as? [String: Any?] {
+            openingFeeParams = try asOpeningFeeParams(openingFeeParams: openingFeeParamsTmp)
         }
 
         return BuyBitcoinRequest(
@@ -171,7 +171,7 @@ class BreezSDKMapper {
         var list = [BuyBitcoinRequest]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var buyBitcoinRequest = try asBuyBitcoinRequest(data: val)
+                var buyBitcoinRequest = try asBuyBitcoinRequest(buyBitcoinRequest: val)
                 list.append(buyBitcoinRequest)
             } else {
                 throw SdkError.Generic(message: "Invalid element type BuyBitcoinRequest")
@@ -184,11 +184,11 @@ class BreezSDKMapper {
         return buyBitcoinRequestList.map { v -> [String: Any?] in dictionaryOf(buyBitcoinRequest: v) }
     }
 
-    static func asBuyBitcoinResponse(data: [String: Any?]) throws -> BuyBitcoinResponse {
-        guard let url = data["url"] as? String else { throw SdkError.Generic(message: "Missing mandatory field url for type BuyBitcoinResponse") }
+    static func asBuyBitcoinResponse(buyBitcoinResponse: [String: Any?]) throws -> BuyBitcoinResponse {
+        guard let url = buyBitcoinResponse["url"] as? String else { throw SdkError.Generic(message: "Missing mandatory field url for type BuyBitcoinResponse") }
         var openingFeeParams: OpeningFeeParams?
-        if let openingFeeParamsTmp = data["openingFeeParams"] as? [String: Any?] {
-            openingFeeParams = try asOpeningFeeParams(data: openingFeeParamsTmp)
+        if let openingFeeParamsTmp = buyBitcoinResponse["openingFeeParams"] as? [String: Any?] {
+            openingFeeParams = try asOpeningFeeParams(openingFeeParams: openingFeeParamsTmp)
         }
 
         return BuyBitcoinResponse(
@@ -208,7 +208,7 @@ class BreezSDKMapper {
         var list = [BuyBitcoinResponse]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var buyBitcoinResponse = try asBuyBitcoinResponse(data: val)
+                var buyBitcoinResponse = try asBuyBitcoinResponse(buyBitcoinResponse: val)
                 list.append(buyBitcoinResponse)
             } else {
                 throw SdkError.Generic(message: "Invalid element type BuyBitcoinResponse")
@@ -221,10 +221,10 @@ class BreezSDKMapper {
         return buyBitcoinResponseList.map { v -> [String: Any?] in dictionaryOf(buyBitcoinResponse: v) }
     }
 
-    static func asCheckMessageRequest(data: [String: Any?]) throws -> CheckMessageRequest {
-        guard let message = data["message"] as? String else { throw SdkError.Generic(message: "Missing mandatory field message for type CheckMessageRequest") }
-        guard let pubkey = data["pubkey"] as? String else { throw SdkError.Generic(message: "Missing mandatory field pubkey for type CheckMessageRequest") }
-        guard let signature = data["signature"] as? String else { throw SdkError.Generic(message: "Missing mandatory field signature for type CheckMessageRequest") }
+    static func asCheckMessageRequest(checkMessageRequest: [String: Any?]) throws -> CheckMessageRequest {
+        guard let message = checkMessageRequest["message"] as? String else { throw SdkError.Generic(message: "Missing mandatory field message for type CheckMessageRequest") }
+        guard let pubkey = checkMessageRequest["pubkey"] as? String else { throw SdkError.Generic(message: "Missing mandatory field pubkey for type CheckMessageRequest") }
+        guard let signature = checkMessageRequest["signature"] as? String else { throw SdkError.Generic(message: "Missing mandatory field signature for type CheckMessageRequest") }
 
         return CheckMessageRequest(
             message: message,
@@ -245,7 +245,7 @@ class BreezSDKMapper {
         var list = [CheckMessageRequest]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var checkMessageRequest = try asCheckMessageRequest(data: val)
+                var checkMessageRequest = try asCheckMessageRequest(checkMessageRequest: val)
                 list.append(checkMessageRequest)
             } else {
                 throw SdkError.Generic(message: "Invalid element type CheckMessageRequest")
@@ -258,8 +258,8 @@ class BreezSDKMapper {
         return checkMessageRequestList.map { v -> [String: Any?] in dictionaryOf(checkMessageRequest: v) }
     }
 
-    static func asCheckMessageResponse(data: [String: Any?]) throws -> CheckMessageResponse {
-        guard let isValid = data["isValid"] as? Bool else { throw SdkError.Generic(message: "Missing mandatory field isValid for type CheckMessageResponse") }
+    static func asCheckMessageResponse(checkMessageResponse: [String: Any?]) throws -> CheckMessageResponse {
+        guard let isValid = checkMessageResponse["isValid"] as? Bool else { throw SdkError.Generic(message: "Missing mandatory field isValid for type CheckMessageResponse") }
 
         return CheckMessageResponse(
             isValid: isValid)
@@ -275,7 +275,7 @@ class BreezSDKMapper {
         var list = [CheckMessageResponse]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var checkMessageResponse = try asCheckMessageResponse(data: val)
+                var checkMessageResponse = try asCheckMessageResponse(checkMessageResponse: val)
                 list.append(checkMessageResponse)
             } else {
                 throw SdkError.Generic(message: "Invalid element type CheckMessageResponse")
@@ -288,13 +288,13 @@ class BreezSDKMapper {
         return checkMessageResponseList.map { v -> [String: Any?] in dictionaryOf(checkMessageResponse: v) }
     }
 
-    static func asClosedChannelPaymentDetails(data: [String: Any?]) throws -> ClosedChannelPaymentDetails {
-        guard let shortChannelId = data["shortChannelId"] as? String else { throw SdkError.Generic(message: "Missing mandatory field shortChannelId for type ClosedChannelPaymentDetails") }
-        guard let stateTmp = data["state"] as? String else { throw SdkError.Generic(message: "Missing mandatory field state for type ClosedChannelPaymentDetails") }
-        let state = try asChannelState(type: stateTmp)
+    static func asClosedChannelPaymentDetails(closedChannelPaymentDetails: [String: Any?]) throws -> ClosedChannelPaymentDetails {
+        guard let shortChannelId = closedChannelPaymentDetails["shortChannelId"] as? String else { throw SdkError.Generic(message: "Missing mandatory field shortChannelId for type ClosedChannelPaymentDetails") }
+        guard let stateTmp = closedChannelPaymentDetails["state"] as? String else { throw SdkError.Generic(message: "Missing mandatory field state for type ClosedChannelPaymentDetails") }
+        let state = try asChannelState(channelState: stateTmp)
 
-        guard let fundingTxid = data["fundingTxid"] as? String else { throw SdkError.Generic(message: "Missing mandatory field fundingTxid for type ClosedChannelPaymentDetails") }
-        let closingTxid = data["closingTxid"] as? String
+        guard let fundingTxid = closedChannelPaymentDetails["fundingTxid"] as? String else { throw SdkError.Generic(message: "Missing mandatory field fundingTxid for type ClosedChannelPaymentDetails") }
+        let closingTxid = closedChannelPaymentDetails["closingTxid"] as? String
 
         return ClosedChannelPaymentDetails(
             shortChannelId: shortChannelId,
@@ -317,7 +317,7 @@ class BreezSDKMapper {
         var list = [ClosedChannelPaymentDetails]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var closedChannelPaymentDetails = try asClosedChannelPaymentDetails(data: val)
+                var closedChannelPaymentDetails = try asClosedChannelPaymentDetails(closedChannelPaymentDetails: val)
                 list.append(closedChannelPaymentDetails)
             } else {
                 throw SdkError.Generic(message: "Invalid element type ClosedChannelPaymentDetails")
@@ -330,20 +330,20 @@ class BreezSDKMapper {
         return closedChannelPaymentDetailsList.map { v -> [String: Any?] in dictionaryOf(closedChannelPaymentDetails: v) }
     }
 
-    static func asConfig(data: [String: Any?]) throws -> Config {
-        guard let breezserver = data["breezserver"] as? String else { throw SdkError.Generic(message: "Missing mandatory field breezserver for type Config") }
-        guard let mempoolspaceUrl = data["mempoolspaceUrl"] as? String else { throw SdkError.Generic(message: "Missing mandatory field mempoolspaceUrl for type Config") }
-        guard let workingDir = data["workingDir"] as? String else { throw SdkError.Generic(message: "Missing mandatory field workingDir for type Config") }
-        guard let networkTmp = data["network"] as? String else { throw SdkError.Generic(message: "Missing mandatory field network for type Config") }
-        let network = try asNetwork(type: networkTmp)
+    static func asConfig(config: [String: Any?]) throws -> Config {
+        guard let breezserver = config["breezserver"] as? String else { throw SdkError.Generic(message: "Missing mandatory field breezserver for type Config") }
+        guard let mempoolspaceUrl = config["mempoolspaceUrl"] as? String else { throw SdkError.Generic(message: "Missing mandatory field mempoolspaceUrl for type Config") }
+        guard let workingDir = config["workingDir"] as? String else { throw SdkError.Generic(message: "Missing mandatory field workingDir for type Config") }
+        guard let networkTmp = config["network"] as? String else { throw SdkError.Generic(message: "Missing mandatory field network for type Config") }
+        let network = try asNetwork(network: networkTmp)
 
-        guard let paymentTimeoutSec = data["paymentTimeoutSec"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field paymentTimeoutSec for type Config") }
-        let defaultLspId = data["defaultLspId"] as? String
-        let apiKey = data["apiKey"] as? String
-        guard let maxfeePercent = data["maxfeePercent"] as? Double else { throw SdkError.Generic(message: "Missing mandatory field maxfeePercent for type Config") }
-        guard let exemptfeeMsat = data["exemptfeeMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field exemptfeeMsat for type Config") }
-        guard let nodeConfigTmp = data["nodeConfig"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field nodeConfig for type Config") }
-        let nodeConfig = try asNodeConfig(data: nodeConfigTmp)
+        guard let paymentTimeoutSec = config["paymentTimeoutSec"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field paymentTimeoutSec for type Config") }
+        let defaultLspId = config["defaultLspId"] as? String
+        let apiKey = config["apiKey"] as? String
+        guard let maxfeePercent = config["maxfeePercent"] as? Double else { throw SdkError.Generic(message: "Missing mandatory field maxfeePercent for type Config") }
+        guard let exemptfeeMsat = config["exemptfeeMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field exemptfeeMsat for type Config") }
+        guard let nodeConfigTmp = config["nodeConfig"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field nodeConfig for type Config") }
+        let nodeConfig = try asNodeConfig(nodeConfig: nodeConfigTmp)
 
         return Config(
             breezserver: breezserver,
@@ -378,7 +378,7 @@ class BreezSDKMapper {
         var list = [Config]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var config = try asConfig(data: val)
+                var config = try asConfig(config: val)
                 list.append(config)
             } else {
                 throw SdkError.Generic(message: "Invalid element type Config")
@@ -391,27 +391,27 @@ class BreezSDKMapper {
         return configList.map { v -> [String: Any?] in dictionaryOf(config: v) }
     }
 
-    static func asCurrencyInfo(data: [String: Any?]) throws -> CurrencyInfo {
-        guard let name = data["name"] as? String else { throw SdkError.Generic(message: "Missing mandatory field name for type CurrencyInfo") }
-        guard let fractionSize = data["fractionSize"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field fractionSize for type CurrencyInfo") }
-        let spacing = data["spacing"] as? UInt32
+    static func asCurrencyInfo(currencyInfo: [String: Any?]) throws -> CurrencyInfo {
+        guard let name = currencyInfo["name"] as? String else { throw SdkError.Generic(message: "Missing mandatory field name for type CurrencyInfo") }
+        guard let fractionSize = currencyInfo["fractionSize"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field fractionSize for type CurrencyInfo") }
+        let spacing = currencyInfo["spacing"] as? UInt32
         var symbol: Symbol?
-        if let symbolTmp = data["symbol"] as? [String: Any?] {
-            symbol = try asSymbol(data: symbolTmp)
+        if let symbolTmp = currencyInfo["symbol"] as? [String: Any?] {
+            symbol = try asSymbol(symbol: symbolTmp)
         }
 
         var uniqSymbol: Symbol?
-        if let uniqSymbolTmp = data["uniqSymbol"] as? [String: Any?] {
-            uniqSymbol = try asSymbol(data: uniqSymbolTmp)
+        if let uniqSymbolTmp = currencyInfo["uniqSymbol"] as? [String: Any?] {
+            uniqSymbol = try asSymbol(symbol: uniqSymbolTmp)
         }
 
         var localizedName: [LocalizedName]?
-        if let localizedNameTmp = data["localizedName"] as? [[String: Any?]] {
+        if let localizedNameTmp = currencyInfo["localizedName"] as? [[String: Any?]] {
             localizedName = try asLocalizedNameList(arr: localizedNameTmp)
         }
 
         var localeOverrides: [LocaleOverrides]?
-        if let localeOverridesTmp = data["localeOverrides"] as? [[String: Any?]] {
+        if let localeOverridesTmp = currencyInfo["localeOverrides"] as? [[String: Any?]] {
             localeOverrides = try asLocaleOverridesList(arr: localeOverridesTmp)
         }
 
@@ -442,7 +442,7 @@ class BreezSDKMapper {
         var list = [CurrencyInfo]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var currencyInfo = try asCurrencyInfo(data: val)
+                var currencyInfo = try asCurrencyInfo(currencyInfo: val)
                 list.append(currencyInfo)
             } else {
                 throw SdkError.Generic(message: "Invalid element type CurrencyInfo")
@@ -455,10 +455,10 @@ class BreezSDKMapper {
         return currencyInfoList.map { v -> [String: Any?] in dictionaryOf(currencyInfo: v) }
     }
 
-    static func asFiatCurrency(data: [String: Any?]) throws -> FiatCurrency {
-        guard let id = data["id"] as? String else { throw SdkError.Generic(message: "Missing mandatory field id for type FiatCurrency") }
-        guard let infoTmp = data["info"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field info for type FiatCurrency") }
-        let info = try asCurrencyInfo(data: infoTmp)
+    static func asFiatCurrency(fiatCurrency: [String: Any?]) throws -> FiatCurrency {
+        guard let id = fiatCurrency["id"] as? String else { throw SdkError.Generic(message: "Missing mandatory field id for type FiatCurrency") }
+        guard let infoTmp = fiatCurrency["info"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field info for type FiatCurrency") }
+        let info = try asCurrencyInfo(currencyInfo: infoTmp)
 
         return FiatCurrency(
             id: id,
@@ -477,7 +477,7 @@ class BreezSDKMapper {
         var list = [FiatCurrency]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var fiatCurrency = try asFiatCurrency(data: val)
+                var fiatCurrency = try asFiatCurrency(fiatCurrency: val)
                 list.append(fiatCurrency)
             } else {
                 throw SdkError.Generic(message: "Invalid element type FiatCurrency")
@@ -490,9 +490,9 @@ class BreezSDKMapper {
         return fiatCurrencyList.map { v -> [String: Any?] in dictionaryOf(fiatCurrency: v) }
     }
 
-    static func asGreenlightCredentials(data: [String: Any?]) throws -> GreenlightCredentials {
-        guard let deviceKey = data["deviceKey"] as? [UInt8] else { throw SdkError.Generic(message: "Missing mandatory field deviceKey for type GreenlightCredentials") }
-        guard let deviceCert = data["deviceCert"] as? [UInt8] else { throw SdkError.Generic(message: "Missing mandatory field deviceCert for type GreenlightCredentials") }
+    static func asGreenlightCredentials(greenlightCredentials: [String: Any?]) throws -> GreenlightCredentials {
+        guard let deviceKey = greenlightCredentials["deviceKey"] as? [UInt8] else { throw SdkError.Generic(message: "Missing mandatory field deviceKey for type GreenlightCredentials") }
+        guard let deviceCert = greenlightCredentials["deviceCert"] as? [UInt8] else { throw SdkError.Generic(message: "Missing mandatory field deviceCert for type GreenlightCredentials") }
 
         return GreenlightCredentials(
             deviceKey: deviceKey,
@@ -511,7 +511,7 @@ class BreezSDKMapper {
         var list = [GreenlightCredentials]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var greenlightCredentials = try asGreenlightCredentials(data: val)
+                var greenlightCredentials = try asGreenlightCredentials(greenlightCredentials: val)
                 list.append(greenlightCredentials)
             } else {
                 throw SdkError.Generic(message: "Invalid element type GreenlightCredentials")
@@ -524,13 +524,13 @@ class BreezSDKMapper {
         return greenlightCredentialsList.map { v -> [String: Any?] in dictionaryOf(greenlightCredentials: v) }
     }
 
-    static func asGreenlightNodeConfig(data: [String: Any?]) throws -> GreenlightNodeConfig {
+    static func asGreenlightNodeConfig(greenlightNodeConfig: [String: Any?]) throws -> GreenlightNodeConfig {
         var partnerCredentials: GreenlightCredentials?
-        if let partnerCredentialsTmp = data["partnerCredentials"] as? [String: Any?] {
-            partnerCredentials = try asGreenlightCredentials(data: partnerCredentialsTmp)
+        if let partnerCredentialsTmp = greenlightNodeConfig["partnerCredentials"] as? [String: Any?] {
+            partnerCredentials = try asGreenlightCredentials(greenlightCredentials: partnerCredentialsTmp)
         }
 
-        let inviteCode = data["inviteCode"] as? String
+        let inviteCode = greenlightNodeConfig["inviteCode"] as? String
 
         return GreenlightNodeConfig(
             partnerCredentials: partnerCredentials,
@@ -549,7 +549,7 @@ class BreezSDKMapper {
         var list = [GreenlightNodeConfig]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var greenlightNodeConfig = try asGreenlightNodeConfig(data: val)
+                var greenlightNodeConfig = try asGreenlightNodeConfig(greenlightNodeConfig: val)
                 list.append(greenlightNodeConfig)
             } else {
                 throw SdkError.Generic(message: "Invalid element type GreenlightNodeConfig")
@@ -562,9 +562,9 @@ class BreezSDKMapper {
         return greenlightNodeConfigList.map { v -> [String: Any?] in dictionaryOf(greenlightNodeConfig: v) }
     }
 
-    static func asInvoicePaidDetails(data: [String: Any?]) throws -> InvoicePaidDetails {
-        guard let paymentHash = data["paymentHash"] as? String else { throw SdkError.Generic(message: "Missing mandatory field paymentHash for type InvoicePaidDetails") }
-        guard let bolt11 = data["bolt11"] as? String else { throw SdkError.Generic(message: "Missing mandatory field bolt11 for type InvoicePaidDetails") }
+    static func asInvoicePaidDetails(invoicePaidDetails: [String: Any?]) throws -> InvoicePaidDetails {
+        guard let paymentHash = invoicePaidDetails["paymentHash"] as? String else { throw SdkError.Generic(message: "Missing mandatory field paymentHash for type InvoicePaidDetails") }
+        guard let bolt11 = invoicePaidDetails["bolt11"] as? String else { throw SdkError.Generic(message: "Missing mandatory field bolt11 for type InvoicePaidDetails") }
 
         return InvoicePaidDetails(
             paymentHash: paymentHash,
@@ -583,7 +583,7 @@ class BreezSDKMapper {
         var list = [InvoicePaidDetails]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var invoicePaidDetails = try asInvoicePaidDetails(data: val)
+                var invoicePaidDetails = try asInvoicePaidDetails(invoicePaidDetails: val)
                 list.append(invoicePaidDetails)
             } else {
                 throw SdkError.Generic(message: "Invalid element type InvoicePaidDetails")
@@ -596,19 +596,19 @@ class BreezSDKMapper {
         return invoicePaidDetailsList.map { v -> [String: Any?] in dictionaryOf(invoicePaidDetails: v) }
     }
 
-    static func asLnInvoice(data: [String: Any?]) throws -> LnInvoice {
-        guard let bolt11 = data["bolt11"] as? String else { throw SdkError.Generic(message: "Missing mandatory field bolt11 for type LnInvoice") }
-        guard let payeePubkey = data["payeePubkey"] as? String else { throw SdkError.Generic(message: "Missing mandatory field payeePubkey for type LnInvoice") }
-        guard let paymentHash = data["paymentHash"] as? String else { throw SdkError.Generic(message: "Missing mandatory field paymentHash for type LnInvoice") }
-        let description = data["description"] as? String
-        let descriptionHash = data["descriptionHash"] as? String
-        let amountMsat = data["amountMsat"] as? UInt64
-        guard let timestamp = data["timestamp"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field timestamp for type LnInvoice") }
-        guard let expiry = data["expiry"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field expiry for type LnInvoice") }
-        guard let routingHintsTmp = data["routingHints"] as? [[String: Any?]] else { throw SdkError.Generic(message: "Missing mandatory field routingHints for type LnInvoice") }
+    static func asLnInvoice(lnInvoice: [String: Any?]) throws -> LnInvoice {
+        guard let bolt11 = lnInvoice["bolt11"] as? String else { throw SdkError.Generic(message: "Missing mandatory field bolt11 for type LnInvoice") }
+        guard let payeePubkey = lnInvoice["payeePubkey"] as? String else { throw SdkError.Generic(message: "Missing mandatory field payeePubkey for type LnInvoice") }
+        guard let paymentHash = lnInvoice["paymentHash"] as? String else { throw SdkError.Generic(message: "Missing mandatory field paymentHash for type LnInvoice") }
+        let description = lnInvoice["description"] as? String
+        let descriptionHash = lnInvoice["descriptionHash"] as? String
+        let amountMsat = lnInvoice["amountMsat"] as? UInt64
+        guard let timestamp = lnInvoice["timestamp"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field timestamp for type LnInvoice") }
+        guard let expiry = lnInvoice["expiry"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field expiry for type LnInvoice") }
+        guard let routingHintsTmp = lnInvoice["routingHints"] as? [[String: Any?]] else { throw SdkError.Generic(message: "Missing mandatory field routingHints for type LnInvoice") }
         let routingHints = try asRouteHintList(arr: routingHintsTmp)
 
-        guard let paymentSecret = data["paymentSecret"] as? [UInt8] else { throw SdkError.Generic(message: "Missing mandatory field paymentSecret for type LnInvoice") }
+        guard let paymentSecret = lnInvoice["paymentSecret"] as? [UInt8] else { throw SdkError.Generic(message: "Missing mandatory field paymentSecret for type LnInvoice") }
 
         return LnInvoice(
             bolt11: bolt11,
@@ -643,7 +643,7 @@ class BreezSDKMapper {
         var list = [LnInvoice]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var lnInvoice = try asLnInvoice(data: val)
+                var lnInvoice = try asLnInvoice(lnInvoice: val)
                 list.append(lnInvoice)
             } else {
                 throw SdkError.Generic(message: "Invalid element type LnInvoice")
@@ -656,15 +656,15 @@ class BreezSDKMapper {
         return lnInvoiceList.map { v -> [String: Any?] in dictionaryOf(lnInvoice: v) }
     }
 
-    static func asListPaymentsRequest(data: [String: Any?]) throws -> ListPaymentsRequest {
-        guard let filterTmp = data["filter"] as? String else { throw SdkError.Generic(message: "Missing mandatory field filter for type ListPaymentsRequest") }
-        let filter = try asPaymentTypeFilter(type: filterTmp)
+    static func asListPaymentsRequest(listPaymentsRequest: [String: Any?]) throws -> ListPaymentsRequest {
+        guard let filterTmp = listPaymentsRequest["filter"] as? String else { throw SdkError.Generic(message: "Missing mandatory field filter for type ListPaymentsRequest") }
+        let filter = try asPaymentTypeFilter(paymentTypeFilter: filterTmp)
 
-        let fromTimestamp = data["fromTimestamp"] as? Int64
-        let toTimestamp = data["toTimestamp"] as? Int64
-        let includeFailures = data["includeFailures"] as? Bool
-        let offset = data["offset"] as? UInt32
-        let limit = data["limit"] as? UInt32
+        let fromTimestamp = listPaymentsRequest["fromTimestamp"] as? Int64
+        let toTimestamp = listPaymentsRequest["toTimestamp"] as? Int64
+        let includeFailures = listPaymentsRequest["includeFailures"] as? Bool
+        let offset = listPaymentsRequest["offset"] as? UInt32
+        let limit = listPaymentsRequest["limit"] as? UInt32
 
         return ListPaymentsRequest(
             filter: filter,
@@ -691,7 +691,7 @@ class BreezSDKMapper {
         var list = [ListPaymentsRequest]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var listPaymentsRequest = try asListPaymentsRequest(data: val)
+                var listPaymentsRequest = try asListPaymentsRequest(listPaymentsRequest: val)
                 list.append(listPaymentsRequest)
             } else {
                 throw SdkError.Generic(message: "Invalid element type ListPaymentsRequest")
@@ -704,21 +704,21 @@ class BreezSDKMapper {
         return listPaymentsRequestList.map { v -> [String: Any?] in dictionaryOf(listPaymentsRequest: v) }
     }
 
-    static func asLnPaymentDetails(data: [String: Any?]) throws -> LnPaymentDetails {
-        guard let paymentHash = data["paymentHash"] as? String else { throw SdkError.Generic(message: "Missing mandatory field paymentHash for type LnPaymentDetails") }
-        guard let label = data["label"] as? String else { throw SdkError.Generic(message: "Missing mandatory field label for type LnPaymentDetails") }
-        guard let destinationPubkey = data["destinationPubkey"] as? String else { throw SdkError.Generic(message: "Missing mandatory field destinationPubkey for type LnPaymentDetails") }
-        guard let paymentPreimage = data["paymentPreimage"] as? String else { throw SdkError.Generic(message: "Missing mandatory field paymentPreimage for type LnPaymentDetails") }
-        guard let keysend = data["keysend"] as? Bool else { throw SdkError.Generic(message: "Missing mandatory field keysend for type LnPaymentDetails") }
-        guard let bolt11 = data["bolt11"] as? String else { throw SdkError.Generic(message: "Missing mandatory field bolt11 for type LnPaymentDetails") }
+    static func asLnPaymentDetails(lnPaymentDetails: [String: Any?]) throws -> LnPaymentDetails {
+        guard let paymentHash = lnPaymentDetails["paymentHash"] as? String else { throw SdkError.Generic(message: "Missing mandatory field paymentHash for type LnPaymentDetails") }
+        guard let label = lnPaymentDetails["label"] as? String else { throw SdkError.Generic(message: "Missing mandatory field label for type LnPaymentDetails") }
+        guard let destinationPubkey = lnPaymentDetails["destinationPubkey"] as? String else { throw SdkError.Generic(message: "Missing mandatory field destinationPubkey for type LnPaymentDetails") }
+        guard let paymentPreimage = lnPaymentDetails["paymentPreimage"] as? String else { throw SdkError.Generic(message: "Missing mandatory field paymentPreimage for type LnPaymentDetails") }
+        guard let keysend = lnPaymentDetails["keysend"] as? Bool else { throw SdkError.Generic(message: "Missing mandatory field keysend for type LnPaymentDetails") }
+        guard let bolt11 = lnPaymentDetails["bolt11"] as? String else { throw SdkError.Generic(message: "Missing mandatory field bolt11 for type LnPaymentDetails") }
         var lnurlSuccessAction: SuccessActionProcessed?
-        if let lnurlSuccessActionTmp = data["lnurlSuccessAction"] as? [String: Any?] {
-            lnurlSuccessAction = try asSuccessActionProcessed(data: lnurlSuccessActionTmp)
+        if let lnurlSuccessActionTmp = lnPaymentDetails["lnurlSuccessAction"] as? [String: Any?] {
+            lnurlSuccessAction = try asSuccessActionProcessed(successActionProcessed: lnurlSuccessActionTmp)
         }
 
-        let lnurlMetadata = data["lnurlMetadata"] as? String
-        let lnAddress = data["lnAddress"] as? String
-        let lnurlWithdrawEndpoint = data["lnurlWithdrawEndpoint"] as? String
+        let lnurlMetadata = lnPaymentDetails["lnurlMetadata"] as? String
+        let lnAddress = lnPaymentDetails["lnAddress"] as? String
+        let lnurlWithdrawEndpoint = lnPaymentDetails["lnurlWithdrawEndpoint"] as? String
 
         return LnPaymentDetails(
             paymentHash: paymentHash,
@@ -753,7 +753,7 @@ class BreezSDKMapper {
         var list = [LnPaymentDetails]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var lnPaymentDetails = try asLnPaymentDetails(data: val)
+                var lnPaymentDetails = try asLnPaymentDetails(lnPaymentDetails: val)
                 list.append(lnPaymentDetails)
             } else {
                 throw SdkError.Generic(message: "Invalid element type LnPaymentDetails")
@@ -766,11 +766,11 @@ class BreezSDKMapper {
         return lnPaymentDetailsList.map { v -> [String: Any?] in dictionaryOf(lnPaymentDetails: v) }
     }
 
-    static func asLnUrlAuthRequestData(data: [String: Any?]) throws -> LnUrlAuthRequestData {
-        guard let k1 = data["k1"] as? String else { throw SdkError.Generic(message: "Missing mandatory field k1 for type LnUrlAuthRequestData") }
-        let action = data["action"] as? String
-        guard let domain = data["domain"] as? String else { throw SdkError.Generic(message: "Missing mandatory field domain for type LnUrlAuthRequestData") }
-        guard let url = data["url"] as? String else { throw SdkError.Generic(message: "Missing mandatory field url for type LnUrlAuthRequestData") }
+    static func asLnUrlAuthRequestData(lnUrlAuthRequestData: [String: Any?]) throws -> LnUrlAuthRequestData {
+        guard let k1 = lnUrlAuthRequestData["k1"] as? String else { throw SdkError.Generic(message: "Missing mandatory field k1 for type LnUrlAuthRequestData") }
+        let action = lnUrlAuthRequestData["action"] as? String
+        guard let domain = lnUrlAuthRequestData["domain"] as? String else { throw SdkError.Generic(message: "Missing mandatory field domain for type LnUrlAuthRequestData") }
+        guard let url = lnUrlAuthRequestData["url"] as? String else { throw SdkError.Generic(message: "Missing mandatory field url for type LnUrlAuthRequestData") }
 
         return LnUrlAuthRequestData(
             k1: k1,
@@ -793,7 +793,7 @@ class BreezSDKMapper {
         var list = [LnUrlAuthRequestData]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var lnUrlAuthRequestData = try asLnUrlAuthRequestData(data: val)
+                var lnUrlAuthRequestData = try asLnUrlAuthRequestData(lnUrlAuthRequestData: val)
                 list.append(lnUrlAuthRequestData)
             } else {
                 throw SdkError.Generic(message: "Invalid element type LnUrlAuthRequestData")
@@ -806,8 +806,8 @@ class BreezSDKMapper {
         return lnUrlAuthRequestDataList.map { v -> [String: Any?] in dictionaryOf(lnUrlAuthRequestData: v) }
     }
 
-    static func asLnUrlErrorData(data: [String: Any?]) throws -> LnUrlErrorData {
-        guard let reason = data["reason"] as? String else { throw SdkError.Generic(message: "Missing mandatory field reason for type LnUrlErrorData") }
+    static func asLnUrlErrorData(lnUrlErrorData: [String: Any?]) throws -> LnUrlErrorData {
+        guard let reason = lnUrlErrorData["reason"] as? String else { throw SdkError.Generic(message: "Missing mandatory field reason for type LnUrlErrorData") }
 
         return LnUrlErrorData(
             reason: reason)
@@ -823,7 +823,7 @@ class BreezSDKMapper {
         var list = [LnUrlErrorData]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var lnUrlErrorData = try asLnUrlErrorData(data: val)
+                var lnUrlErrorData = try asLnUrlErrorData(lnUrlErrorData: val)
                 list.append(lnUrlErrorData)
             } else {
                 throw SdkError.Generic(message: "Invalid element type LnUrlErrorData")
@@ -836,12 +836,12 @@ class BreezSDKMapper {
         return lnUrlErrorDataList.map { v -> [String: Any?] in dictionaryOf(lnUrlErrorData: v) }
     }
 
-    static func asLnUrlPayRequest(data: [String: Any?]) throws -> LnUrlPayRequest {
-        guard let dataTmp = data["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type LnUrlPayRequest") }
-        let data = try asLnUrlPayRequestData(data: dataTmp)
+    static func asLnUrlPayRequest(lnUrlPayRequest: [String: Any?]) throws -> LnUrlPayRequest {
+        guard let dataTmp = lnUrlPayRequest["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type LnUrlPayRequest") }
+        let data = try asLnUrlPayRequestData(lnUrlPayRequestData: dataTmp)
 
-        guard let amountMsat = data["amountMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field amountMsat for type LnUrlPayRequest") }
-        let comment = data["comment"] as? String
+        guard let amountMsat = lnUrlPayRequest["amountMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field amountMsat for type LnUrlPayRequest") }
+        let comment = lnUrlPayRequest["comment"] as? String
 
         return LnUrlPayRequest(
             data: data,
@@ -862,7 +862,7 @@ class BreezSDKMapper {
         var list = [LnUrlPayRequest]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var lnUrlPayRequest = try asLnUrlPayRequest(data: val)
+                var lnUrlPayRequest = try asLnUrlPayRequest(lnUrlPayRequest: val)
                 list.append(lnUrlPayRequest)
             } else {
                 throw SdkError.Generic(message: "Invalid element type LnUrlPayRequest")
@@ -875,14 +875,14 @@ class BreezSDKMapper {
         return lnUrlPayRequestList.map { v -> [String: Any?] in dictionaryOf(lnUrlPayRequest: v) }
     }
 
-    static func asLnUrlPayRequestData(data: [String: Any?]) throws -> LnUrlPayRequestData {
-        guard let callback = data["callback"] as? String else { throw SdkError.Generic(message: "Missing mandatory field callback for type LnUrlPayRequestData") }
-        guard let minSendable = data["minSendable"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field minSendable for type LnUrlPayRequestData") }
-        guard let maxSendable = data["maxSendable"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field maxSendable for type LnUrlPayRequestData") }
-        guard let metadataStr = data["metadataStr"] as? String else { throw SdkError.Generic(message: "Missing mandatory field metadataStr for type LnUrlPayRequestData") }
-        guard let commentAllowed = data["commentAllowed"] as? UInt16 else { throw SdkError.Generic(message: "Missing mandatory field commentAllowed for type LnUrlPayRequestData") }
-        guard let domain = data["domain"] as? String else { throw SdkError.Generic(message: "Missing mandatory field domain for type LnUrlPayRequestData") }
-        let lnAddress = data["lnAddress"] as? String
+    static func asLnUrlPayRequestData(lnUrlPayRequestData: [String: Any?]) throws -> LnUrlPayRequestData {
+        guard let callback = lnUrlPayRequestData["callback"] as? String else { throw SdkError.Generic(message: "Missing mandatory field callback for type LnUrlPayRequestData") }
+        guard let minSendable = lnUrlPayRequestData["minSendable"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field minSendable for type LnUrlPayRequestData") }
+        guard let maxSendable = lnUrlPayRequestData["maxSendable"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field maxSendable for type LnUrlPayRequestData") }
+        guard let metadataStr = lnUrlPayRequestData["metadataStr"] as? String else { throw SdkError.Generic(message: "Missing mandatory field metadataStr for type LnUrlPayRequestData") }
+        guard let commentAllowed = lnUrlPayRequestData["commentAllowed"] as? UInt16 else { throw SdkError.Generic(message: "Missing mandatory field commentAllowed for type LnUrlPayRequestData") }
+        guard let domain = lnUrlPayRequestData["domain"] as? String else { throw SdkError.Generic(message: "Missing mandatory field domain for type LnUrlPayRequestData") }
+        let lnAddress = lnUrlPayRequestData["lnAddress"] as? String
 
         return LnUrlPayRequestData(
             callback: callback,
@@ -911,7 +911,7 @@ class BreezSDKMapper {
         var list = [LnUrlPayRequestData]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var lnUrlPayRequestData = try asLnUrlPayRequestData(data: val)
+                var lnUrlPayRequestData = try asLnUrlPayRequestData(lnUrlPayRequestData: val)
                 list.append(lnUrlPayRequestData)
             } else {
                 throw SdkError.Generic(message: "Invalid element type LnUrlPayRequestData")
@@ -924,12 +924,12 @@ class BreezSDKMapper {
         return lnUrlPayRequestDataList.map { v -> [String: Any?] in dictionaryOf(lnUrlPayRequestData: v) }
     }
 
-    static func asLnUrlWithdrawRequest(data: [String: Any?]) throws -> LnUrlWithdrawRequest {
-        guard let dataTmp = data["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type LnUrlWithdrawRequest") }
-        let data = try asLnUrlWithdrawRequestData(data: dataTmp)
+    static func asLnUrlWithdrawRequest(lnUrlWithdrawRequest: [String: Any?]) throws -> LnUrlWithdrawRequest {
+        guard let dataTmp = lnUrlWithdrawRequest["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type LnUrlWithdrawRequest") }
+        let data = try asLnUrlWithdrawRequestData(lnUrlWithdrawRequestData: dataTmp)
 
-        guard let amountMsat = data["amountMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field amountMsat for type LnUrlWithdrawRequest") }
-        let description = data["description"] as? String
+        guard let amountMsat = lnUrlWithdrawRequest["amountMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field amountMsat for type LnUrlWithdrawRequest") }
+        let description = lnUrlWithdrawRequest["description"] as? String
 
         return LnUrlWithdrawRequest(
             data: data,
@@ -950,7 +950,7 @@ class BreezSDKMapper {
         var list = [LnUrlWithdrawRequest]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var lnUrlWithdrawRequest = try asLnUrlWithdrawRequest(data: val)
+                var lnUrlWithdrawRequest = try asLnUrlWithdrawRequest(lnUrlWithdrawRequest: val)
                 list.append(lnUrlWithdrawRequest)
             } else {
                 throw SdkError.Generic(message: "Invalid element type LnUrlWithdrawRequest")
@@ -963,12 +963,12 @@ class BreezSDKMapper {
         return lnUrlWithdrawRequestList.map { v -> [String: Any?] in dictionaryOf(lnUrlWithdrawRequest: v) }
     }
 
-    static func asLnUrlWithdrawRequestData(data: [String: Any?]) throws -> LnUrlWithdrawRequestData {
-        guard let callback = data["callback"] as? String else { throw SdkError.Generic(message: "Missing mandatory field callback for type LnUrlWithdrawRequestData") }
-        guard let k1 = data["k1"] as? String else { throw SdkError.Generic(message: "Missing mandatory field k1 for type LnUrlWithdrawRequestData") }
-        guard let defaultDescription = data["defaultDescription"] as? String else { throw SdkError.Generic(message: "Missing mandatory field defaultDescription for type LnUrlWithdrawRequestData") }
-        guard let minWithdrawable = data["minWithdrawable"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field minWithdrawable for type LnUrlWithdrawRequestData") }
-        guard let maxWithdrawable = data["maxWithdrawable"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field maxWithdrawable for type LnUrlWithdrawRequestData") }
+    static func asLnUrlWithdrawRequestData(lnUrlWithdrawRequestData: [String: Any?]) throws -> LnUrlWithdrawRequestData {
+        guard let callback = lnUrlWithdrawRequestData["callback"] as? String else { throw SdkError.Generic(message: "Missing mandatory field callback for type LnUrlWithdrawRequestData") }
+        guard let k1 = lnUrlWithdrawRequestData["k1"] as? String else { throw SdkError.Generic(message: "Missing mandatory field k1 for type LnUrlWithdrawRequestData") }
+        guard let defaultDescription = lnUrlWithdrawRequestData["defaultDescription"] as? String else { throw SdkError.Generic(message: "Missing mandatory field defaultDescription for type LnUrlWithdrawRequestData") }
+        guard let minWithdrawable = lnUrlWithdrawRequestData["minWithdrawable"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field minWithdrawable for type LnUrlWithdrawRequestData") }
+        guard let maxWithdrawable = lnUrlWithdrawRequestData["maxWithdrawable"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field maxWithdrawable for type LnUrlWithdrawRequestData") }
 
         return LnUrlWithdrawRequestData(
             callback: callback,
@@ -993,7 +993,7 @@ class BreezSDKMapper {
         var list = [LnUrlWithdrawRequestData]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var lnUrlWithdrawRequestData = try asLnUrlWithdrawRequestData(data: val)
+                var lnUrlWithdrawRequestData = try asLnUrlWithdrawRequestData(lnUrlWithdrawRequestData: val)
                 list.append(lnUrlWithdrawRequestData)
             } else {
                 throw SdkError.Generic(message: "Invalid element type LnUrlWithdrawRequestData")
@@ -1006,9 +1006,9 @@ class BreezSDKMapper {
         return lnUrlWithdrawRequestDataList.map { v -> [String: Any?] in dictionaryOf(lnUrlWithdrawRequestData: v) }
     }
 
-    static func asLnUrlWithdrawSuccessData(data: [String: Any?]) throws -> LnUrlWithdrawSuccessData {
-        guard let invoiceTmp = data["invoice"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field invoice for type LnUrlWithdrawSuccessData") }
-        let invoice = try asLnInvoice(data: invoiceTmp)
+    static func asLnUrlWithdrawSuccessData(lnUrlWithdrawSuccessData: [String: Any?]) throws -> LnUrlWithdrawSuccessData {
+        guard let invoiceTmp = lnUrlWithdrawSuccessData["invoice"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field invoice for type LnUrlWithdrawSuccessData") }
+        let invoice = try asLnInvoice(lnInvoice: invoiceTmp)
 
         return LnUrlWithdrawSuccessData(
             invoice: invoice)
@@ -1024,7 +1024,7 @@ class BreezSDKMapper {
         var list = [LnUrlWithdrawSuccessData]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var lnUrlWithdrawSuccessData = try asLnUrlWithdrawSuccessData(data: val)
+                var lnUrlWithdrawSuccessData = try asLnUrlWithdrawSuccessData(lnUrlWithdrawSuccessData: val)
                 list.append(lnUrlWithdrawSuccessData)
             } else {
                 throw SdkError.Generic(message: "Invalid element type LnUrlWithdrawSuccessData")
@@ -1037,11 +1037,11 @@ class BreezSDKMapper {
         return lnUrlWithdrawSuccessDataList.map { v -> [String: Any?] in dictionaryOf(lnUrlWithdrawSuccessData: v) }
     }
 
-    static func asLocaleOverrides(data: [String: Any?]) throws -> LocaleOverrides {
-        guard let locale = data["locale"] as? String else { throw SdkError.Generic(message: "Missing mandatory field locale for type LocaleOverrides") }
-        let spacing = data["spacing"] as? UInt32
-        guard let symbolTmp = data["symbol"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field symbol for type LocaleOverrides") }
-        let symbol = try asSymbol(data: symbolTmp)
+    static func asLocaleOverrides(localeOverrides: [String: Any?]) throws -> LocaleOverrides {
+        guard let locale = localeOverrides["locale"] as? String else { throw SdkError.Generic(message: "Missing mandatory field locale for type LocaleOverrides") }
+        let spacing = localeOverrides["spacing"] as? UInt32
+        guard let symbolTmp = localeOverrides["symbol"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field symbol for type LocaleOverrides") }
+        let symbol = try asSymbol(symbol: symbolTmp)
 
         return LocaleOverrides(
             locale: locale,
@@ -1062,7 +1062,7 @@ class BreezSDKMapper {
         var list = [LocaleOverrides]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var localeOverrides = try asLocaleOverrides(data: val)
+                var localeOverrides = try asLocaleOverrides(localeOverrides: val)
                 list.append(localeOverrides)
             } else {
                 throw SdkError.Generic(message: "Invalid element type LocaleOverrides")
@@ -1075,9 +1075,9 @@ class BreezSDKMapper {
         return localeOverridesList.map { v -> [String: Any?] in dictionaryOf(localeOverrides: v) }
     }
 
-    static func asLocalizedName(data: [String: Any?]) throws -> LocalizedName {
-        guard let locale = data["locale"] as? String else { throw SdkError.Generic(message: "Missing mandatory field locale for type LocalizedName") }
-        guard let name = data["name"] as? String else { throw SdkError.Generic(message: "Missing mandatory field name for type LocalizedName") }
+    static func asLocalizedName(localizedName: [String: Any?]) throws -> LocalizedName {
+        guard let locale = localizedName["locale"] as? String else { throw SdkError.Generic(message: "Missing mandatory field locale for type LocalizedName") }
+        guard let name = localizedName["name"] as? String else { throw SdkError.Generic(message: "Missing mandatory field name for type LocalizedName") }
 
         return LocalizedName(
             locale: locale,
@@ -1096,7 +1096,7 @@ class BreezSDKMapper {
         var list = [LocalizedName]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var localizedName = try asLocalizedName(data: val)
+                var localizedName = try asLocalizedName(localizedName: val)
                 list.append(localizedName)
             } else {
                 throw SdkError.Generic(message: "Invalid element type LocalizedName")
@@ -1109,9 +1109,9 @@ class BreezSDKMapper {
         return localizedNameList.map { v -> [String: Any?] in dictionaryOf(localizedName: v) }
     }
 
-    static func asLogEntry(data: [String: Any?]) throws -> LogEntry {
-        guard let line = data["line"] as? String else { throw SdkError.Generic(message: "Missing mandatory field line for type LogEntry") }
-        guard let level = data["level"] as? String else { throw SdkError.Generic(message: "Missing mandatory field level for type LogEntry") }
+    static func asLogEntry(logEntry: [String: Any?]) throws -> LogEntry {
+        guard let line = logEntry["line"] as? String else { throw SdkError.Generic(message: "Missing mandatory field line for type LogEntry") }
+        guard let level = logEntry["level"] as? String else { throw SdkError.Generic(message: "Missing mandatory field level for type LogEntry") }
 
         return LogEntry(
             line: line,
@@ -1130,7 +1130,7 @@ class BreezSDKMapper {
         var list = [LogEntry]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var logEntry = try asLogEntry(data: val)
+                var logEntry = try asLogEntry(logEntry: val)
                 list.append(logEntry)
             } else {
                 throw SdkError.Generic(message: "Invalid element type LogEntry")
@@ -1143,21 +1143,21 @@ class BreezSDKMapper {
         return logEntryList.map { v -> [String: Any?] in dictionaryOf(logEntry: v) }
     }
 
-    static func asLspInformation(data: [String: Any?]) throws -> LspInformation {
-        guard let id = data["id"] as? String else { throw SdkError.Generic(message: "Missing mandatory field id for type LspInformation") }
-        guard let name = data["name"] as? String else { throw SdkError.Generic(message: "Missing mandatory field name for type LspInformation") }
-        guard let widgetUrl = data["widgetUrl"] as? String else { throw SdkError.Generic(message: "Missing mandatory field widgetUrl for type LspInformation") }
-        guard let pubkey = data["pubkey"] as? String else { throw SdkError.Generic(message: "Missing mandatory field pubkey for type LspInformation") }
-        guard let host = data["host"] as? String else { throw SdkError.Generic(message: "Missing mandatory field host for type LspInformation") }
-        guard let channelCapacity = data["channelCapacity"] as? Int64 else { throw SdkError.Generic(message: "Missing mandatory field channelCapacity for type LspInformation") }
-        guard let targetConf = data["targetConf"] as? Int32 else { throw SdkError.Generic(message: "Missing mandatory field targetConf for type LspInformation") }
-        guard let baseFeeMsat = data["baseFeeMsat"] as? Int64 else { throw SdkError.Generic(message: "Missing mandatory field baseFeeMsat for type LspInformation") }
-        guard let feeRate = data["feeRate"] as? Double else { throw SdkError.Generic(message: "Missing mandatory field feeRate for type LspInformation") }
-        guard let timeLockDelta = data["timeLockDelta"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field timeLockDelta for type LspInformation") }
-        guard let minHtlcMsat = data["minHtlcMsat"] as? Int64 else { throw SdkError.Generic(message: "Missing mandatory field minHtlcMsat for type LspInformation") }
-        guard let lspPubkey = data["lspPubkey"] as? [UInt8] else { throw SdkError.Generic(message: "Missing mandatory field lspPubkey for type LspInformation") }
-        guard let openingFeeParamsListTmp = data["openingFeeParamsList"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field openingFeeParamsList for type LspInformation") }
-        let openingFeeParamsList = try asOpeningFeeParamsMenu(data: openingFeeParamsListTmp)
+    static func asLspInformation(lspInformation: [String: Any?]) throws -> LspInformation {
+        guard let id = lspInformation["id"] as? String else { throw SdkError.Generic(message: "Missing mandatory field id for type LspInformation") }
+        guard let name = lspInformation["name"] as? String else { throw SdkError.Generic(message: "Missing mandatory field name for type LspInformation") }
+        guard let widgetUrl = lspInformation["widgetUrl"] as? String else { throw SdkError.Generic(message: "Missing mandatory field widgetUrl for type LspInformation") }
+        guard let pubkey = lspInformation["pubkey"] as? String else { throw SdkError.Generic(message: "Missing mandatory field pubkey for type LspInformation") }
+        guard let host = lspInformation["host"] as? String else { throw SdkError.Generic(message: "Missing mandatory field host for type LspInformation") }
+        guard let channelCapacity = lspInformation["channelCapacity"] as? Int64 else { throw SdkError.Generic(message: "Missing mandatory field channelCapacity for type LspInformation") }
+        guard let targetConf = lspInformation["targetConf"] as? Int32 else { throw SdkError.Generic(message: "Missing mandatory field targetConf for type LspInformation") }
+        guard let baseFeeMsat = lspInformation["baseFeeMsat"] as? Int64 else { throw SdkError.Generic(message: "Missing mandatory field baseFeeMsat for type LspInformation") }
+        guard let feeRate = lspInformation["feeRate"] as? Double else { throw SdkError.Generic(message: "Missing mandatory field feeRate for type LspInformation") }
+        guard let timeLockDelta = lspInformation["timeLockDelta"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field timeLockDelta for type LspInformation") }
+        guard let minHtlcMsat = lspInformation["minHtlcMsat"] as? Int64 else { throw SdkError.Generic(message: "Missing mandatory field minHtlcMsat for type LspInformation") }
+        guard let lspPubkey = lspInformation["lspPubkey"] as? [UInt8] else { throw SdkError.Generic(message: "Missing mandatory field lspPubkey for type LspInformation") }
+        guard let openingFeeParamsListTmp = lspInformation["openingFeeParamsList"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field openingFeeParamsList for type LspInformation") }
+        let openingFeeParamsList = try asOpeningFeeParamsMenu(openingFeeParamsMenu: openingFeeParamsListTmp)
 
         return LspInformation(
             id: id,
@@ -1198,7 +1198,7 @@ class BreezSDKMapper {
         var list = [LspInformation]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var lspInformation = try asLspInformation(data: val)
+                var lspInformation = try asLspInformation(lspInformation: val)
                 list.append(lspInformation)
             } else {
                 throw SdkError.Generic(message: "Invalid element type LspInformation")
@@ -1211,8 +1211,8 @@ class BreezSDKMapper {
         return lspInformationList.map { v -> [String: Any?] in dictionaryOf(lspInformation: v) }
     }
 
-    static func asMessageSuccessActionData(data: [String: Any?]) throws -> MessageSuccessActionData {
-        guard let message = data["message"] as? String else { throw SdkError.Generic(message: "Missing mandatory field message for type MessageSuccessActionData") }
+    static func asMessageSuccessActionData(messageSuccessActionData: [String: Any?]) throws -> MessageSuccessActionData {
+        guard let message = messageSuccessActionData["message"] as? String else { throw SdkError.Generic(message: "Missing mandatory field message for type MessageSuccessActionData") }
 
         return MessageSuccessActionData(
             message: message)
@@ -1228,7 +1228,7 @@ class BreezSDKMapper {
         var list = [MessageSuccessActionData]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var messageSuccessActionData = try asMessageSuccessActionData(data: val)
+                var messageSuccessActionData = try asMessageSuccessActionData(messageSuccessActionData: val)
                 list.append(messageSuccessActionData)
             } else {
                 throw SdkError.Generic(message: "Invalid element type MessageSuccessActionData")
@@ -1241,9 +1241,9 @@ class BreezSDKMapper {
         return messageSuccessActionDataList.map { v -> [String: Any?] in dictionaryOf(messageSuccessActionData: v) }
     }
 
-    static func asMetadataItem(data: [String: Any?]) throws -> MetadataItem {
-        guard let key = data["key"] as? String else { throw SdkError.Generic(message: "Missing mandatory field key for type MetadataItem") }
-        guard let value = data["value"] as? String else { throw SdkError.Generic(message: "Missing mandatory field value for type MetadataItem") }
+    static func asMetadataItem(metadataItem: [String: Any?]) throws -> MetadataItem {
+        guard let key = metadataItem["key"] as? String else { throw SdkError.Generic(message: "Missing mandatory field key for type MetadataItem") }
+        guard let value = metadataItem["value"] as? String else { throw SdkError.Generic(message: "Missing mandatory field value for type MetadataItem") }
 
         return MetadataItem(
             key: key,
@@ -1262,7 +1262,7 @@ class BreezSDKMapper {
         var list = [MetadataItem]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var metadataItem = try asMetadataItem(data: val)
+                var metadataItem = try asMetadataItem(metadataItem: val)
                 list.append(metadataItem)
             } else {
                 throw SdkError.Generic(message: "Invalid element type MetadataItem")
@@ -1275,20 +1275,20 @@ class BreezSDKMapper {
         return metadataItemList.map { v -> [String: Any?] in dictionaryOf(metadataItem: v) }
     }
 
-    static func asNodeState(data: [String: Any?]) throws -> NodeState {
-        guard let id = data["id"] as? String else { throw SdkError.Generic(message: "Missing mandatory field id for type NodeState") }
-        guard let blockHeight = data["blockHeight"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field blockHeight for type NodeState") }
-        guard let channelsBalanceMsat = data["channelsBalanceMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field channelsBalanceMsat for type NodeState") }
-        guard let onchainBalanceMsat = data["onchainBalanceMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field onchainBalanceMsat for type NodeState") }
-        guard let utxosTmp = data["utxos"] as? [[String: Any?]] else { throw SdkError.Generic(message: "Missing mandatory field utxos for type NodeState") }
+    static func asNodeState(nodeState: [String: Any?]) throws -> NodeState {
+        guard let id = nodeState["id"] as? String else { throw SdkError.Generic(message: "Missing mandatory field id for type NodeState") }
+        guard let blockHeight = nodeState["blockHeight"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field blockHeight for type NodeState") }
+        guard let channelsBalanceMsat = nodeState["channelsBalanceMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field channelsBalanceMsat for type NodeState") }
+        guard let onchainBalanceMsat = nodeState["onchainBalanceMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field onchainBalanceMsat for type NodeState") }
+        guard let utxosTmp = nodeState["utxos"] as? [[String: Any?]] else { throw SdkError.Generic(message: "Missing mandatory field utxos for type NodeState") }
         let utxos = try asUnspentTransactionOutputList(arr: utxosTmp)
 
-        guard let maxPayableMsat = data["maxPayableMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field maxPayableMsat for type NodeState") }
-        guard let maxReceivableMsat = data["maxReceivableMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field maxReceivableMsat for type NodeState") }
-        guard let maxSinglePaymentAmountMsat = data["maxSinglePaymentAmountMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field maxSinglePaymentAmountMsat for type NodeState") }
-        guard let maxChanReserveMsats = data["maxChanReserveMsats"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field maxChanReserveMsats for type NodeState") }
-        guard let connectedPeers = data["connectedPeers"] as? [String] else { throw SdkError.Generic(message: "Missing mandatory field connectedPeers for type NodeState") }
-        guard let inboundLiquidityMsats = data["inboundLiquidityMsats"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field inboundLiquidityMsats for type NodeState") }
+        guard let maxPayableMsat = nodeState["maxPayableMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field maxPayableMsat for type NodeState") }
+        guard let maxReceivableMsat = nodeState["maxReceivableMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field maxReceivableMsat for type NodeState") }
+        guard let maxSinglePaymentAmountMsat = nodeState["maxSinglePaymentAmountMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field maxSinglePaymentAmountMsat for type NodeState") }
+        guard let maxChanReserveMsats = nodeState["maxChanReserveMsats"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field maxChanReserveMsats for type NodeState") }
+        guard let connectedPeers = nodeState["connectedPeers"] as? [String] else { throw SdkError.Generic(message: "Missing mandatory field connectedPeers for type NodeState") }
+        guard let inboundLiquidityMsats = nodeState["inboundLiquidityMsats"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field inboundLiquidityMsats for type NodeState") }
 
         return NodeState(
             id: id,
@@ -1325,7 +1325,7 @@ class BreezSDKMapper {
         var list = [NodeState]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var nodeState = try asNodeState(data: val)
+                var nodeState = try asNodeState(nodeState: val)
                 list.append(nodeState)
             } else {
                 throw SdkError.Generic(message: "Invalid element type NodeState")
@@ -1338,9 +1338,9 @@ class BreezSDKMapper {
         return nodeStateList.map { v -> [String: Any?] in dictionaryOf(nodeState: v) }
     }
 
-    static func asOpenChannelFeeRequest(data: [String: Any?]) throws -> OpenChannelFeeRequest {
-        guard let amountMsat = data["amountMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field amountMsat for type OpenChannelFeeRequest") }
-        let expiry = data["expiry"] as? UInt32
+    static func asOpenChannelFeeRequest(openChannelFeeRequest: [String: Any?]) throws -> OpenChannelFeeRequest {
+        guard let amountMsat = openChannelFeeRequest["amountMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field amountMsat for type OpenChannelFeeRequest") }
+        let expiry = openChannelFeeRequest["expiry"] as? UInt32
 
         return OpenChannelFeeRequest(
             amountMsat: amountMsat,
@@ -1359,7 +1359,7 @@ class BreezSDKMapper {
         var list = [OpenChannelFeeRequest]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var openChannelFeeRequest = try asOpenChannelFeeRequest(data: val)
+                var openChannelFeeRequest = try asOpenChannelFeeRequest(openChannelFeeRequest: val)
                 list.append(openChannelFeeRequest)
             } else {
                 throw SdkError.Generic(message: "Invalid element type OpenChannelFeeRequest")
@@ -1372,11 +1372,11 @@ class BreezSDKMapper {
         return openChannelFeeRequestList.map { v -> [String: Any?] in dictionaryOf(openChannelFeeRequest: v) }
     }
 
-    static func asOpenChannelFeeResponse(data: [String: Any?]) throws -> OpenChannelFeeResponse {
-        guard let feeMsat = data["feeMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field feeMsat for type OpenChannelFeeResponse") }
+    static func asOpenChannelFeeResponse(openChannelFeeResponse: [String: Any?]) throws -> OpenChannelFeeResponse {
+        guard let feeMsat = openChannelFeeResponse["feeMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field feeMsat for type OpenChannelFeeResponse") }
         var usedFeeParams: OpeningFeeParams?
-        if let usedFeeParamsTmp = data["usedFeeParams"] as? [String: Any?] {
-            usedFeeParams = try asOpeningFeeParams(data: usedFeeParamsTmp)
+        if let usedFeeParamsTmp = openChannelFeeResponse["usedFeeParams"] as? [String: Any?] {
+            usedFeeParams = try asOpeningFeeParams(openingFeeParams: usedFeeParamsTmp)
         }
 
         return OpenChannelFeeResponse(
@@ -1396,7 +1396,7 @@ class BreezSDKMapper {
         var list = [OpenChannelFeeResponse]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var openChannelFeeResponse = try asOpenChannelFeeResponse(data: val)
+                var openChannelFeeResponse = try asOpenChannelFeeResponse(openChannelFeeResponse: val)
                 list.append(openChannelFeeResponse)
             } else {
                 throw SdkError.Generic(message: "Invalid element type OpenChannelFeeResponse")
@@ -1409,13 +1409,13 @@ class BreezSDKMapper {
         return openChannelFeeResponseList.map { v -> [String: Any?] in dictionaryOf(openChannelFeeResponse: v) }
     }
 
-    static func asOpeningFeeParams(data: [String: Any?]) throws -> OpeningFeeParams {
-        guard let minMsat = data["minMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field minMsat for type OpeningFeeParams") }
-        guard let proportional = data["proportional"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field proportional for type OpeningFeeParams") }
-        guard let validUntil = data["validUntil"] as? String else { throw SdkError.Generic(message: "Missing mandatory field validUntil for type OpeningFeeParams") }
-        guard let maxIdleTime = data["maxIdleTime"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field maxIdleTime for type OpeningFeeParams") }
-        guard let maxClientToSelfDelay = data["maxClientToSelfDelay"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field maxClientToSelfDelay for type OpeningFeeParams") }
-        guard let promise = data["promise"] as? String else { throw SdkError.Generic(message: "Missing mandatory field promise for type OpeningFeeParams") }
+    static func asOpeningFeeParams(openingFeeParams: [String: Any?]) throws -> OpeningFeeParams {
+        guard let minMsat = openingFeeParams["minMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field minMsat for type OpeningFeeParams") }
+        guard let proportional = openingFeeParams["proportional"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field proportional for type OpeningFeeParams") }
+        guard let validUntil = openingFeeParams["validUntil"] as? String else { throw SdkError.Generic(message: "Missing mandatory field validUntil for type OpeningFeeParams") }
+        guard let maxIdleTime = openingFeeParams["maxIdleTime"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field maxIdleTime for type OpeningFeeParams") }
+        guard let maxClientToSelfDelay = openingFeeParams["maxClientToSelfDelay"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field maxClientToSelfDelay for type OpeningFeeParams") }
+        guard let promise = openingFeeParams["promise"] as? String else { throw SdkError.Generic(message: "Missing mandatory field promise for type OpeningFeeParams") }
 
         return OpeningFeeParams(
             minMsat: minMsat,
@@ -1442,7 +1442,7 @@ class BreezSDKMapper {
         var list = [OpeningFeeParams]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var openingFeeParams = try asOpeningFeeParams(data: val)
+                var openingFeeParams = try asOpeningFeeParams(openingFeeParams: val)
                 list.append(openingFeeParams)
             } else {
                 throw SdkError.Generic(message: "Invalid element type OpeningFeeParams")
@@ -1455,8 +1455,8 @@ class BreezSDKMapper {
         return openingFeeParamsList.map { v -> [String: Any?] in dictionaryOf(openingFeeParams: v) }
     }
 
-    static func asOpeningFeeParamsMenu(data: [String: Any?]) throws -> OpeningFeeParamsMenu {
-        guard let valuesTmp = data["values"] as? [[String: Any?]] else { throw SdkError.Generic(message: "Missing mandatory field values for type OpeningFeeParamsMenu") }
+    static func asOpeningFeeParamsMenu(openingFeeParamsMenu: [String: Any?]) throws -> OpeningFeeParamsMenu {
+        guard let valuesTmp = openingFeeParamsMenu["values"] as? [[String: Any?]] else { throw SdkError.Generic(message: "Missing mandatory field values for type OpeningFeeParamsMenu") }
         let values = try asOpeningFeeParamsList(arr: valuesTmp)
 
         return OpeningFeeParamsMenu(
@@ -1473,7 +1473,7 @@ class BreezSDKMapper {
         var list = [OpeningFeeParamsMenu]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var openingFeeParamsMenu = try asOpeningFeeParamsMenu(data: val)
+                var openingFeeParamsMenu = try asOpeningFeeParamsMenu(openingFeeParamsMenu: val)
                 list.append(openingFeeParamsMenu)
             } else {
                 throw SdkError.Generic(message: "Invalid element type OpeningFeeParamsMenu")
@@ -1486,20 +1486,20 @@ class BreezSDKMapper {
         return openingFeeParamsMenuList.map { v -> [String: Any?] in dictionaryOf(openingFeeParamsMenu: v) }
     }
 
-    static func asPayment(data: [String: Any?]) throws -> Payment {
-        guard let id = data["id"] as? String else { throw SdkError.Generic(message: "Missing mandatory field id for type Payment") }
-        guard let paymentTypeTmp = data["paymentType"] as? String else { throw SdkError.Generic(message: "Missing mandatory field paymentType for type Payment") }
-        let paymentType = try asPaymentType(type: paymentTypeTmp)
+    static func asPayment(payment: [String: Any?]) throws -> Payment {
+        guard let id = payment["id"] as? String else { throw SdkError.Generic(message: "Missing mandatory field id for type Payment") }
+        guard let paymentTypeTmp = payment["paymentType"] as? String else { throw SdkError.Generic(message: "Missing mandatory field paymentType for type Payment") }
+        let paymentType = try asPaymentType(paymentType: paymentTypeTmp)
 
-        guard let paymentTime = data["paymentTime"] as? Int64 else { throw SdkError.Generic(message: "Missing mandatory field paymentTime for type Payment") }
-        guard let amountMsat = data["amountMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field amountMsat for type Payment") }
-        guard let feeMsat = data["feeMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field feeMsat for type Payment") }
-        guard let statusTmp = data["status"] as? String else { throw SdkError.Generic(message: "Missing mandatory field status for type Payment") }
-        let status = try asPaymentStatus(type: statusTmp)
+        guard let paymentTime = payment["paymentTime"] as? Int64 else { throw SdkError.Generic(message: "Missing mandatory field paymentTime for type Payment") }
+        guard let amountMsat = payment["amountMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field amountMsat for type Payment") }
+        guard let feeMsat = payment["feeMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field feeMsat for type Payment") }
+        guard let statusTmp = payment["status"] as? String else { throw SdkError.Generic(message: "Missing mandatory field status for type Payment") }
+        let status = try asPaymentStatus(paymentStatus: statusTmp)
 
-        let description = data["description"] as? String
-        guard let detailsTmp = data["details"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field details for type Payment") }
-        let details = try asPaymentDetails(data: detailsTmp)
+        let description = payment["description"] as? String
+        guard let detailsTmp = payment["details"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field details for type Payment") }
+        let details = try asPaymentDetails(paymentDetails: detailsTmp)
 
         return Payment(
             id: id,
@@ -1530,7 +1530,7 @@ class BreezSDKMapper {
         var list = [Payment]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var payment = try asPayment(data: val)
+                var payment = try asPayment(payment: val)
                 list.append(payment)
             } else {
                 throw SdkError.Generic(message: "Invalid element type Payment")
@@ -1543,12 +1543,12 @@ class BreezSDKMapper {
         return paymentList.map { v -> [String: Any?] in dictionaryOf(payment: v) }
     }
 
-    static func asPaymentFailedData(data: [String: Any?]) throws -> PaymentFailedData {
-        guard let error = data["error"] as? String else { throw SdkError.Generic(message: "Missing mandatory field error for type PaymentFailedData") }
-        guard let nodeId = data["nodeId"] as? String else { throw SdkError.Generic(message: "Missing mandatory field nodeId for type PaymentFailedData") }
+    static func asPaymentFailedData(paymentFailedData: [String: Any?]) throws -> PaymentFailedData {
+        guard let error = paymentFailedData["error"] as? String else { throw SdkError.Generic(message: "Missing mandatory field error for type PaymentFailedData") }
+        guard let nodeId = paymentFailedData["nodeId"] as? String else { throw SdkError.Generic(message: "Missing mandatory field nodeId for type PaymentFailedData") }
         var invoice: LnInvoice?
-        if let invoiceTmp = data["invoice"] as? [String: Any?] {
-            invoice = try asLnInvoice(data: invoiceTmp)
+        if let invoiceTmp = paymentFailedData["invoice"] as? [String: Any?] {
+            invoice = try asLnInvoice(lnInvoice: invoiceTmp)
         }
 
         return PaymentFailedData(
@@ -1570,7 +1570,7 @@ class BreezSDKMapper {
         var list = [PaymentFailedData]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var paymentFailedData = try asPaymentFailedData(data: val)
+                var paymentFailedData = try asPaymentFailedData(paymentFailedData: val)
                 list.append(paymentFailedData)
             } else {
                 throw SdkError.Generic(message: "Invalid element type PaymentFailedData")
@@ -1583,9 +1583,9 @@ class BreezSDKMapper {
         return paymentFailedDataList.map { v -> [String: Any?] in dictionaryOf(paymentFailedData: v) }
     }
 
-    static func asRate(data: [String: Any?]) throws -> Rate {
-        guard let coin = data["coin"] as? String else { throw SdkError.Generic(message: "Missing mandatory field coin for type Rate") }
-        guard let value = data["value"] as? Double else { throw SdkError.Generic(message: "Missing mandatory field value for type Rate") }
+    static func asRate(rate: [String: Any?]) throws -> Rate {
+        guard let coin = rate["coin"] as? String else { throw SdkError.Generic(message: "Missing mandatory field coin for type Rate") }
+        guard let value = rate["value"] as? Double else { throw SdkError.Generic(message: "Missing mandatory field value for type Rate") }
 
         return Rate(
             coin: coin,
@@ -1604,7 +1604,7 @@ class BreezSDKMapper {
         var list = [Rate]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var rate = try asRate(data: val)
+                var rate = try asRate(rate: val)
                 list.append(rate)
             } else {
                 throw SdkError.Generic(message: "Invalid element type Rate")
@@ -1617,10 +1617,10 @@ class BreezSDKMapper {
         return rateList.map { v -> [String: Any?] in dictionaryOf(rate: v) }
     }
 
-    static func asReceiveOnchainRequest(data: [String: Any?]) throws -> ReceiveOnchainRequest {
+    static func asReceiveOnchainRequest(receiveOnchainRequest: [String: Any?]) throws -> ReceiveOnchainRequest {
         var openingFeeParams: OpeningFeeParams?
-        if let openingFeeParamsTmp = data["openingFeeParams"] as? [String: Any?] {
-            openingFeeParams = try asOpeningFeeParams(data: openingFeeParamsTmp)
+        if let openingFeeParamsTmp = receiveOnchainRequest["openingFeeParams"] as? [String: Any?] {
+            openingFeeParams = try asOpeningFeeParams(openingFeeParams: openingFeeParamsTmp)
         }
 
         return ReceiveOnchainRequest(
@@ -1637,7 +1637,7 @@ class BreezSDKMapper {
         var list = [ReceiveOnchainRequest]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var receiveOnchainRequest = try asReceiveOnchainRequest(data: val)
+                var receiveOnchainRequest = try asReceiveOnchainRequest(receiveOnchainRequest: val)
                 list.append(receiveOnchainRequest)
             } else {
                 throw SdkError.Generic(message: "Invalid element type ReceiveOnchainRequest")
@@ -1650,18 +1650,18 @@ class BreezSDKMapper {
         return receiveOnchainRequestList.map { v -> [String: Any?] in dictionaryOf(receiveOnchainRequest: v) }
     }
 
-    static func asReceivePaymentRequest(data: [String: Any?]) throws -> ReceivePaymentRequest {
-        guard let amountMsat = data["amountMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field amountMsat for type ReceivePaymentRequest") }
-        guard let description = data["description"] as? String else { throw SdkError.Generic(message: "Missing mandatory field description for type ReceivePaymentRequest") }
-        let preimage = data["preimage"] as? [UInt8]
+    static func asReceivePaymentRequest(receivePaymentRequest: [String: Any?]) throws -> ReceivePaymentRequest {
+        guard let amountMsat = receivePaymentRequest["amountMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field amountMsat for type ReceivePaymentRequest") }
+        guard let description = receivePaymentRequest["description"] as? String else { throw SdkError.Generic(message: "Missing mandatory field description for type ReceivePaymentRequest") }
+        let preimage = receivePaymentRequest["preimage"] as? [UInt8]
         var openingFeeParams: OpeningFeeParams?
-        if let openingFeeParamsTmp = data["openingFeeParams"] as? [String: Any?] {
-            openingFeeParams = try asOpeningFeeParams(data: openingFeeParamsTmp)
+        if let openingFeeParamsTmp = receivePaymentRequest["openingFeeParams"] as? [String: Any?] {
+            openingFeeParams = try asOpeningFeeParams(openingFeeParams: openingFeeParamsTmp)
         }
 
-        let useDescriptionHash = data["useDescriptionHash"] as? Bool
-        let expiry = data["expiry"] as? UInt32
-        let cltv = data["cltv"] as? UInt32
+        let useDescriptionHash = receivePaymentRequest["useDescriptionHash"] as? Bool
+        let expiry = receivePaymentRequest["expiry"] as? UInt32
+        let cltv = receivePaymentRequest["cltv"] as? UInt32
 
         return ReceivePaymentRequest(
             amountMsat: amountMsat,
@@ -1690,7 +1690,7 @@ class BreezSDKMapper {
         var list = [ReceivePaymentRequest]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var receivePaymentRequest = try asReceivePaymentRequest(data: val)
+                var receivePaymentRequest = try asReceivePaymentRequest(receivePaymentRequest: val)
                 list.append(receivePaymentRequest)
             } else {
                 throw SdkError.Generic(message: "Invalid element type ReceivePaymentRequest")
@@ -1703,16 +1703,16 @@ class BreezSDKMapper {
         return receivePaymentRequestList.map { v -> [String: Any?] in dictionaryOf(receivePaymentRequest: v) }
     }
 
-    static func asReceivePaymentResponse(data: [String: Any?]) throws -> ReceivePaymentResponse {
-        guard let lnInvoiceTmp = data["lnInvoice"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field lnInvoice for type ReceivePaymentResponse") }
-        let lnInvoice = try asLnInvoice(data: lnInvoiceTmp)
+    static func asReceivePaymentResponse(receivePaymentResponse: [String: Any?]) throws -> ReceivePaymentResponse {
+        guard let lnInvoiceTmp = receivePaymentResponse["lnInvoice"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field lnInvoice for type ReceivePaymentResponse") }
+        let lnInvoice = try asLnInvoice(lnInvoice: lnInvoiceTmp)
 
         var openingFeeParams: OpeningFeeParams?
-        if let openingFeeParamsTmp = data["openingFeeParams"] as? [String: Any?] {
-            openingFeeParams = try asOpeningFeeParams(data: openingFeeParamsTmp)
+        if let openingFeeParamsTmp = receivePaymentResponse["openingFeeParams"] as? [String: Any?] {
+            openingFeeParams = try asOpeningFeeParams(openingFeeParams: openingFeeParamsTmp)
         }
 
-        let openingFeeMsat = data["openingFeeMsat"] as? UInt64
+        let openingFeeMsat = receivePaymentResponse["openingFeeMsat"] as? UInt64
 
         return ReceivePaymentResponse(
             lnInvoice: lnInvoice,
@@ -1733,7 +1733,7 @@ class BreezSDKMapper {
         var list = [ReceivePaymentResponse]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var receivePaymentResponse = try asReceivePaymentResponse(data: val)
+                var receivePaymentResponse = try asReceivePaymentResponse(receivePaymentResponse: val)
                 list.append(receivePaymentResponse)
             } else {
                 throw SdkError.Generic(message: "Invalid element type ReceivePaymentResponse")
@@ -1746,12 +1746,12 @@ class BreezSDKMapper {
         return receivePaymentResponseList.map { v -> [String: Any?] in dictionaryOf(receivePaymentResponse: v) }
     }
 
-    static func asRecommendedFees(data: [String: Any?]) throws -> RecommendedFees {
-        guard let fastestFee = data["fastestFee"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field fastestFee for type RecommendedFees") }
-        guard let halfHourFee = data["halfHourFee"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field halfHourFee for type RecommendedFees") }
-        guard let hourFee = data["hourFee"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field hourFee for type RecommendedFees") }
-        guard let economyFee = data["economyFee"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field economyFee for type RecommendedFees") }
-        guard let minimumFee = data["minimumFee"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field minimumFee for type RecommendedFees") }
+    static func asRecommendedFees(recommendedFees: [String: Any?]) throws -> RecommendedFees {
+        guard let fastestFee = recommendedFees["fastestFee"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field fastestFee for type RecommendedFees") }
+        guard let halfHourFee = recommendedFees["halfHourFee"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field halfHourFee for type RecommendedFees") }
+        guard let hourFee = recommendedFees["hourFee"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field hourFee for type RecommendedFees") }
+        guard let economyFee = recommendedFees["economyFee"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field economyFee for type RecommendedFees") }
+        guard let minimumFee = recommendedFees["minimumFee"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field minimumFee for type RecommendedFees") }
 
         return RecommendedFees(
             fastestFee: fastestFee,
@@ -1776,7 +1776,7 @@ class BreezSDKMapper {
         var list = [RecommendedFees]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var recommendedFees = try asRecommendedFees(data: val)
+                var recommendedFees = try asRecommendedFees(recommendedFees: val)
                 list.append(recommendedFees)
             } else {
                 throw SdkError.Generic(message: "Invalid element type RecommendedFees")
@@ -1789,10 +1789,10 @@ class BreezSDKMapper {
         return recommendedFeesList.map { v -> [String: Any?] in dictionaryOf(recommendedFees: v) }
     }
 
-    static func asRefundRequest(data: [String: Any?]) throws -> RefundRequest {
-        guard let swapAddress = data["swapAddress"] as? String else { throw SdkError.Generic(message: "Missing mandatory field swapAddress for type RefundRequest") }
-        guard let toAddress = data["toAddress"] as? String else { throw SdkError.Generic(message: "Missing mandatory field toAddress for type RefundRequest") }
-        guard let satPerVbyte = data["satPerVbyte"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field satPerVbyte for type RefundRequest") }
+    static func asRefundRequest(refundRequest: [String: Any?]) throws -> RefundRequest {
+        guard let swapAddress = refundRequest["swapAddress"] as? String else { throw SdkError.Generic(message: "Missing mandatory field swapAddress for type RefundRequest") }
+        guard let toAddress = refundRequest["toAddress"] as? String else { throw SdkError.Generic(message: "Missing mandatory field toAddress for type RefundRequest") }
+        guard let satPerVbyte = refundRequest["satPerVbyte"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field satPerVbyte for type RefundRequest") }
 
         return RefundRequest(
             swapAddress: swapAddress,
@@ -1813,7 +1813,7 @@ class BreezSDKMapper {
         var list = [RefundRequest]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var refundRequest = try asRefundRequest(data: val)
+                var refundRequest = try asRefundRequest(refundRequest: val)
                 list.append(refundRequest)
             } else {
                 throw SdkError.Generic(message: "Invalid element type RefundRequest")
@@ -1826,8 +1826,8 @@ class BreezSDKMapper {
         return refundRequestList.map { v -> [String: Any?] in dictionaryOf(refundRequest: v) }
     }
 
-    static func asRefundResponse(data: [String: Any?]) throws -> RefundResponse {
-        guard let refundTxId = data["refundTxId"] as? String else { throw SdkError.Generic(message: "Missing mandatory field refundTxId for type RefundResponse") }
+    static func asRefundResponse(refundResponse: [String: Any?]) throws -> RefundResponse {
+        guard let refundTxId = refundResponse["refundTxId"] as? String else { throw SdkError.Generic(message: "Missing mandatory field refundTxId for type RefundResponse") }
 
         return RefundResponse(
             refundTxId: refundTxId)
@@ -1843,7 +1843,7 @@ class BreezSDKMapper {
         var list = [RefundResponse]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var refundResponse = try asRefundResponse(data: val)
+                var refundResponse = try asRefundResponse(refundResponse: val)
                 list.append(refundResponse)
             } else {
                 throw SdkError.Generic(message: "Invalid element type RefundResponse")
@@ -1856,8 +1856,8 @@ class BreezSDKMapper {
         return refundResponseList.map { v -> [String: Any?] in dictionaryOf(refundResponse: v) }
     }
 
-    static func asReverseSwapFeesRequest(data: [String: Any?]) throws -> ReverseSwapFeesRequest {
-        let sendAmountSat = data["sendAmountSat"] as? UInt64
+    static func asReverseSwapFeesRequest(reverseSwapFeesRequest: [String: Any?]) throws -> ReverseSwapFeesRequest {
+        let sendAmountSat = reverseSwapFeesRequest["sendAmountSat"] as? UInt64
 
         return ReverseSwapFeesRequest(
             sendAmountSat: sendAmountSat)
@@ -1873,7 +1873,7 @@ class BreezSDKMapper {
         var list = [ReverseSwapFeesRequest]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var reverseSwapFeesRequest = try asReverseSwapFeesRequest(data: val)
+                var reverseSwapFeesRequest = try asReverseSwapFeesRequest(reverseSwapFeesRequest: val)
                 list.append(reverseSwapFeesRequest)
             } else {
                 throw SdkError.Generic(message: "Invalid element type ReverseSwapFeesRequest")
@@ -1886,14 +1886,14 @@ class BreezSDKMapper {
         return reverseSwapFeesRequestList.map { v -> [String: Any?] in dictionaryOf(reverseSwapFeesRequest: v) }
     }
 
-    static func asReverseSwapInfo(data: [String: Any?]) throws -> ReverseSwapInfo {
-        guard let id = data["id"] as? String else { throw SdkError.Generic(message: "Missing mandatory field id for type ReverseSwapInfo") }
-        guard let claimPubkey = data["claimPubkey"] as? String else { throw SdkError.Generic(message: "Missing mandatory field claimPubkey for type ReverseSwapInfo") }
-        let lockupTxid = data["lockupTxid"] as? String
-        let claimTxid = data["claimTxid"] as? String
-        guard let onchainAmountSat = data["onchainAmountSat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field onchainAmountSat for type ReverseSwapInfo") }
-        guard let statusTmp = data["status"] as? String else { throw SdkError.Generic(message: "Missing mandatory field status for type ReverseSwapInfo") }
-        let status = try asReverseSwapStatus(type: statusTmp)
+    static func asReverseSwapInfo(reverseSwapInfo: [String: Any?]) throws -> ReverseSwapInfo {
+        guard let id = reverseSwapInfo["id"] as? String else { throw SdkError.Generic(message: "Missing mandatory field id for type ReverseSwapInfo") }
+        guard let claimPubkey = reverseSwapInfo["claimPubkey"] as? String else { throw SdkError.Generic(message: "Missing mandatory field claimPubkey for type ReverseSwapInfo") }
+        let lockupTxid = reverseSwapInfo["lockupTxid"] as? String
+        let claimTxid = reverseSwapInfo["claimTxid"] as? String
+        guard let onchainAmountSat = reverseSwapInfo["onchainAmountSat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field onchainAmountSat for type ReverseSwapInfo") }
+        guard let statusTmp = reverseSwapInfo["status"] as? String else { throw SdkError.Generic(message: "Missing mandatory field status for type ReverseSwapInfo") }
+        let status = try asReverseSwapStatus(reverseSwapStatus: statusTmp)
 
         return ReverseSwapInfo(
             id: id,
@@ -1920,7 +1920,7 @@ class BreezSDKMapper {
         var list = [ReverseSwapInfo]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var reverseSwapInfo = try asReverseSwapInfo(data: val)
+                var reverseSwapInfo = try asReverseSwapInfo(reverseSwapInfo: val)
                 list.append(reverseSwapInfo)
             } else {
                 throw SdkError.Generic(message: "Invalid element type ReverseSwapInfo")
@@ -1933,14 +1933,14 @@ class BreezSDKMapper {
         return reverseSwapInfoList.map { v -> [String: Any?] in dictionaryOf(reverseSwapInfo: v) }
     }
 
-    static func asReverseSwapPairInfo(data: [String: Any?]) throws -> ReverseSwapPairInfo {
-        guard let min = data["min"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field min for type ReverseSwapPairInfo") }
-        guard let max = data["max"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field max for type ReverseSwapPairInfo") }
-        guard let feesHash = data["feesHash"] as? String else { throw SdkError.Generic(message: "Missing mandatory field feesHash for type ReverseSwapPairInfo") }
-        guard let feesPercentage = data["feesPercentage"] as? Double else { throw SdkError.Generic(message: "Missing mandatory field feesPercentage for type ReverseSwapPairInfo") }
-        guard let feesLockup = data["feesLockup"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field feesLockup for type ReverseSwapPairInfo") }
-        guard let feesClaim = data["feesClaim"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field feesClaim for type ReverseSwapPairInfo") }
-        let totalEstimatedFees = data["totalEstimatedFees"] as? UInt64
+    static func asReverseSwapPairInfo(reverseSwapPairInfo: [String: Any?]) throws -> ReverseSwapPairInfo {
+        guard let min = reverseSwapPairInfo["min"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field min for type ReverseSwapPairInfo") }
+        guard let max = reverseSwapPairInfo["max"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field max for type ReverseSwapPairInfo") }
+        guard let feesHash = reverseSwapPairInfo["feesHash"] as? String else { throw SdkError.Generic(message: "Missing mandatory field feesHash for type ReverseSwapPairInfo") }
+        guard let feesPercentage = reverseSwapPairInfo["feesPercentage"] as? Double else { throw SdkError.Generic(message: "Missing mandatory field feesPercentage for type ReverseSwapPairInfo") }
+        guard let feesLockup = reverseSwapPairInfo["feesLockup"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field feesLockup for type ReverseSwapPairInfo") }
+        guard let feesClaim = reverseSwapPairInfo["feesClaim"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field feesClaim for type ReverseSwapPairInfo") }
+        let totalEstimatedFees = reverseSwapPairInfo["totalEstimatedFees"] as? UInt64
 
         return ReverseSwapPairInfo(
             min: min,
@@ -1969,7 +1969,7 @@ class BreezSDKMapper {
         var list = [ReverseSwapPairInfo]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var reverseSwapPairInfo = try asReverseSwapPairInfo(data: val)
+                var reverseSwapPairInfo = try asReverseSwapPairInfo(reverseSwapPairInfo: val)
                 list.append(reverseSwapPairInfo)
             } else {
                 throw SdkError.Generic(message: "Invalid element type ReverseSwapPairInfo")
@@ -1982,8 +1982,8 @@ class BreezSDKMapper {
         return reverseSwapPairInfoList.map { v -> [String: Any?] in dictionaryOf(reverseSwapPairInfo: v) }
     }
 
-    static func asRouteHint(data: [String: Any?]) throws -> RouteHint {
-        guard let hopsTmp = data["hops"] as? [[String: Any?]] else { throw SdkError.Generic(message: "Missing mandatory field hops for type RouteHint") }
+    static func asRouteHint(routeHint: [String: Any?]) throws -> RouteHint {
+        guard let hopsTmp = routeHint["hops"] as? [[String: Any?]] else { throw SdkError.Generic(message: "Missing mandatory field hops for type RouteHint") }
         let hops = try asRouteHintHopList(arr: hopsTmp)
 
         return RouteHint(
@@ -2000,7 +2000,7 @@ class BreezSDKMapper {
         var list = [RouteHint]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var routeHint = try asRouteHint(data: val)
+                var routeHint = try asRouteHint(routeHint: val)
                 list.append(routeHint)
             } else {
                 throw SdkError.Generic(message: "Invalid element type RouteHint")
@@ -2013,14 +2013,14 @@ class BreezSDKMapper {
         return routeHintList.map { v -> [String: Any?] in dictionaryOf(routeHint: v) }
     }
 
-    static func asRouteHintHop(data: [String: Any?]) throws -> RouteHintHop {
-        guard let srcNodeId = data["srcNodeId"] as? String else { throw SdkError.Generic(message: "Missing mandatory field srcNodeId for type RouteHintHop") }
-        guard let shortChannelId = data["shortChannelId"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field shortChannelId for type RouteHintHop") }
-        guard let feesBaseMsat = data["feesBaseMsat"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field feesBaseMsat for type RouteHintHop") }
-        guard let feesProportionalMillionths = data["feesProportionalMillionths"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field feesProportionalMillionths for type RouteHintHop") }
-        guard let cltvExpiryDelta = data["cltvExpiryDelta"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field cltvExpiryDelta for type RouteHintHop") }
-        let htlcMinimumMsat = data["htlcMinimumMsat"] as? UInt64
-        let htlcMaximumMsat = data["htlcMaximumMsat"] as? UInt64
+    static func asRouteHintHop(routeHintHop: [String: Any?]) throws -> RouteHintHop {
+        guard let srcNodeId = routeHintHop["srcNodeId"] as? String else { throw SdkError.Generic(message: "Missing mandatory field srcNodeId for type RouteHintHop") }
+        guard let shortChannelId = routeHintHop["shortChannelId"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field shortChannelId for type RouteHintHop") }
+        guard let feesBaseMsat = routeHintHop["feesBaseMsat"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field feesBaseMsat for type RouteHintHop") }
+        guard let feesProportionalMillionths = routeHintHop["feesProportionalMillionths"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field feesProportionalMillionths for type RouteHintHop") }
+        guard let cltvExpiryDelta = routeHintHop["cltvExpiryDelta"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field cltvExpiryDelta for type RouteHintHop") }
+        let htlcMinimumMsat = routeHintHop["htlcMinimumMsat"] as? UInt64
+        let htlcMaximumMsat = routeHintHop["htlcMaximumMsat"] as? UInt64
 
         return RouteHintHop(
             srcNodeId: srcNodeId,
@@ -2049,7 +2049,7 @@ class BreezSDKMapper {
         var list = [RouteHintHop]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var routeHintHop = try asRouteHintHop(data: val)
+                var routeHintHop = try asRouteHintHop(routeHintHop: val)
                 list.append(routeHintHop)
             } else {
                 throw SdkError.Generic(message: "Invalid element type RouteHintHop")
@@ -2062,11 +2062,11 @@ class BreezSDKMapper {
         return routeHintHopList.map { v -> [String: Any?] in dictionaryOf(routeHintHop: v) }
     }
 
-    static func asSendOnchainRequest(data: [String: Any?]) throws -> SendOnchainRequest {
-        guard let amountSat = data["amountSat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field amountSat for type SendOnchainRequest") }
-        guard let onchainRecipientAddress = data["onchainRecipientAddress"] as? String else { throw SdkError.Generic(message: "Missing mandatory field onchainRecipientAddress for type SendOnchainRequest") }
-        guard let pairHash = data["pairHash"] as? String else { throw SdkError.Generic(message: "Missing mandatory field pairHash for type SendOnchainRequest") }
-        guard let satPerVbyte = data["satPerVbyte"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field satPerVbyte for type SendOnchainRequest") }
+    static func asSendOnchainRequest(sendOnchainRequest: [String: Any?]) throws -> SendOnchainRequest {
+        guard let amountSat = sendOnchainRequest["amountSat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field amountSat for type SendOnchainRequest") }
+        guard let onchainRecipientAddress = sendOnchainRequest["onchainRecipientAddress"] as? String else { throw SdkError.Generic(message: "Missing mandatory field onchainRecipientAddress for type SendOnchainRequest") }
+        guard let pairHash = sendOnchainRequest["pairHash"] as? String else { throw SdkError.Generic(message: "Missing mandatory field pairHash for type SendOnchainRequest") }
+        guard let satPerVbyte = sendOnchainRequest["satPerVbyte"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field satPerVbyte for type SendOnchainRequest") }
 
         return SendOnchainRequest(
             amountSat: amountSat,
@@ -2089,7 +2089,7 @@ class BreezSDKMapper {
         var list = [SendOnchainRequest]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var sendOnchainRequest = try asSendOnchainRequest(data: val)
+                var sendOnchainRequest = try asSendOnchainRequest(sendOnchainRequest: val)
                 list.append(sendOnchainRequest)
             } else {
                 throw SdkError.Generic(message: "Invalid element type SendOnchainRequest")
@@ -2102,9 +2102,9 @@ class BreezSDKMapper {
         return sendOnchainRequestList.map { v -> [String: Any?] in dictionaryOf(sendOnchainRequest: v) }
     }
 
-    static func asSendOnchainResponse(data: [String: Any?]) throws -> SendOnchainResponse {
-        guard let reverseSwapInfoTmp = data["reverseSwapInfo"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field reverseSwapInfo for type SendOnchainResponse") }
-        let reverseSwapInfo = try asReverseSwapInfo(data: reverseSwapInfoTmp)
+    static func asSendOnchainResponse(sendOnchainResponse: [String: Any?]) throws -> SendOnchainResponse {
+        guard let reverseSwapInfoTmp = sendOnchainResponse["reverseSwapInfo"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field reverseSwapInfo for type SendOnchainResponse") }
+        let reverseSwapInfo = try asReverseSwapInfo(reverseSwapInfo: reverseSwapInfoTmp)
 
         return SendOnchainResponse(
             reverseSwapInfo: reverseSwapInfo)
@@ -2120,7 +2120,7 @@ class BreezSDKMapper {
         var list = [SendOnchainResponse]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var sendOnchainResponse = try asSendOnchainResponse(data: val)
+                var sendOnchainResponse = try asSendOnchainResponse(sendOnchainResponse: val)
                 list.append(sendOnchainResponse)
             } else {
                 throw SdkError.Generic(message: "Invalid element type SendOnchainResponse")
@@ -2133,9 +2133,43 @@ class BreezSDKMapper {
         return sendOnchainResponseList.map { v -> [String: Any?] in dictionaryOf(sendOnchainResponse: v) }
     }
 
-    static func asSendPaymentResponse(data: [String: Any?]) throws -> SendPaymentResponse {
-        guard let paymentTmp = data["payment"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field payment for type SendPaymentResponse") }
-        let payment = try asPayment(data: paymentTmp)
+    static func asSendPaymentRequest(sendPaymentRequest: [String: Any?]) throws -> SendPaymentRequest {
+        guard let bolt11 = sendPaymentRequest["bolt11"] as? String else { throw SdkError.Generic(message: "Missing mandatory field bolt11 for type SendPaymentRequest") }
+        let amountMsat = sendPaymentRequest["amountMsat"] as? UInt64
+
+        return SendPaymentRequest(
+            bolt11: bolt11,
+            amountMsat: amountMsat
+        )
+    }
+
+    static func dictionaryOf(sendPaymentRequest: SendPaymentRequest) -> [String: Any?] {
+        return [
+            "bolt11": sendPaymentRequest.bolt11,
+            "amountMsat": sendPaymentRequest.amountMsat == nil ? nil : sendPaymentRequest.amountMsat,
+        ]
+    }
+
+    static func asSendPaymentRequestList(arr: [Any]) throws -> [SendPaymentRequest] {
+        var list = [SendPaymentRequest]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var sendPaymentRequest = try asSendPaymentRequest(sendPaymentRequest: val)
+                list.append(sendPaymentRequest)
+            } else {
+                throw SdkError.Generic(message: "Invalid element type SendPaymentRequest")
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(sendPaymentRequestList: [SendPaymentRequest]) -> [Any] {
+        return sendPaymentRequestList.map { v -> [String: Any?] in dictionaryOf(sendPaymentRequest: v) }
+    }
+
+    static func asSendPaymentResponse(sendPaymentResponse: [String: Any?]) throws -> SendPaymentResponse {
+        guard let paymentTmp = sendPaymentResponse["payment"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field payment for type SendPaymentResponse") }
+        let payment = try asPayment(payment: paymentTmp)
 
         return SendPaymentResponse(
             payment: payment)
@@ -2151,7 +2185,7 @@ class BreezSDKMapper {
         var list = [SendPaymentResponse]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var sendPaymentResponse = try asSendPaymentResponse(data: val)
+                var sendPaymentResponse = try asSendPaymentResponse(sendPaymentResponse: val)
                 list.append(sendPaymentResponse)
             } else {
                 throw SdkError.Generic(message: "Invalid element type SendPaymentResponse")
@@ -2164,9 +2198,9 @@ class BreezSDKMapper {
         return sendPaymentResponseList.map { v -> [String: Any?] in dictionaryOf(sendPaymentResponse: v) }
     }
 
-    static func asSendSpontaneousPaymentRequest(data: [String: Any?]) throws -> SendSpontaneousPaymentRequest {
-        guard let nodeId = data["nodeId"] as? String else { throw SdkError.Generic(message: "Missing mandatory field nodeId for type SendSpontaneousPaymentRequest") }
-        guard let amountMsat = data["amountMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field amountMsat for type SendSpontaneousPaymentRequest") }
+    static func asSendSpontaneousPaymentRequest(sendSpontaneousPaymentRequest: [String: Any?]) throws -> SendSpontaneousPaymentRequest {
+        guard let nodeId = sendSpontaneousPaymentRequest["nodeId"] as? String else { throw SdkError.Generic(message: "Missing mandatory field nodeId for type SendSpontaneousPaymentRequest") }
+        guard let amountMsat = sendSpontaneousPaymentRequest["amountMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field amountMsat for type SendSpontaneousPaymentRequest") }
 
         return SendSpontaneousPaymentRequest(
             nodeId: nodeId,
@@ -2185,7 +2219,7 @@ class BreezSDKMapper {
         var list = [SendSpontaneousPaymentRequest]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var sendSpontaneousPaymentRequest = try asSendSpontaneousPaymentRequest(data: val)
+                var sendSpontaneousPaymentRequest = try asSendSpontaneousPaymentRequest(sendSpontaneousPaymentRequest: val)
                 list.append(sendSpontaneousPaymentRequest)
             } else {
                 throw SdkError.Generic(message: "Invalid element type SendSpontaneousPaymentRequest")
@@ -2198,8 +2232,8 @@ class BreezSDKMapper {
         return sendSpontaneousPaymentRequestList.map { v -> [String: Any?] in dictionaryOf(sendSpontaneousPaymentRequest: v) }
     }
 
-    static func asSignMessageRequest(data: [String: Any?]) throws -> SignMessageRequest {
-        guard let message = data["message"] as? String else { throw SdkError.Generic(message: "Missing mandatory field message for type SignMessageRequest") }
+    static func asSignMessageRequest(signMessageRequest: [String: Any?]) throws -> SignMessageRequest {
+        guard let message = signMessageRequest["message"] as? String else { throw SdkError.Generic(message: "Missing mandatory field message for type SignMessageRequest") }
 
         return SignMessageRequest(
             message: message)
@@ -2215,7 +2249,7 @@ class BreezSDKMapper {
         var list = [SignMessageRequest]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var signMessageRequest = try asSignMessageRequest(data: val)
+                var signMessageRequest = try asSignMessageRequest(signMessageRequest: val)
                 list.append(signMessageRequest)
             } else {
                 throw SdkError.Generic(message: "Invalid element type SignMessageRequest")
@@ -2228,8 +2262,8 @@ class BreezSDKMapper {
         return signMessageRequestList.map { v -> [String: Any?] in dictionaryOf(signMessageRequest: v) }
     }
 
-    static func asSignMessageResponse(data: [String: Any?]) throws -> SignMessageResponse {
-        guard let signature = data["signature"] as? String else { throw SdkError.Generic(message: "Missing mandatory field signature for type SignMessageResponse") }
+    static func asSignMessageResponse(signMessageResponse: [String: Any?]) throws -> SignMessageResponse {
+        guard let signature = signMessageResponse["signature"] as? String else { throw SdkError.Generic(message: "Missing mandatory field signature for type SignMessageResponse") }
 
         return SignMessageResponse(
             signature: signature)
@@ -2245,7 +2279,7 @@ class BreezSDKMapper {
         var list = [SignMessageResponse]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var signMessageResponse = try asSignMessageResponse(data: val)
+                var signMessageResponse = try asSignMessageResponse(signMessageResponse: val)
                 list.append(signMessageResponse)
             } else {
                 throw SdkError.Generic(message: "Invalid element type SignMessageResponse")
@@ -2258,8 +2292,8 @@ class BreezSDKMapper {
         return signMessageResponseList.map { v -> [String: Any?] in dictionaryOf(signMessageResponse: v) }
     }
 
-    static func asStaticBackupRequest(data: [String: Any?]) throws -> StaticBackupRequest {
-        guard let workingDir = data["workingDir"] as? String else { throw SdkError.Generic(message: "Missing mandatory field workingDir for type StaticBackupRequest") }
+    static func asStaticBackupRequest(staticBackupRequest: [String: Any?]) throws -> StaticBackupRequest {
+        guard let workingDir = staticBackupRequest["workingDir"] as? String else { throw SdkError.Generic(message: "Missing mandatory field workingDir for type StaticBackupRequest") }
 
         return StaticBackupRequest(
             workingDir: workingDir)
@@ -2275,7 +2309,7 @@ class BreezSDKMapper {
         var list = [StaticBackupRequest]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var staticBackupRequest = try asStaticBackupRequest(data: val)
+                var staticBackupRequest = try asStaticBackupRequest(staticBackupRequest: val)
                 list.append(staticBackupRequest)
             } else {
                 throw SdkError.Generic(message: "Invalid element type StaticBackupRequest")
@@ -2288,8 +2322,8 @@ class BreezSDKMapper {
         return staticBackupRequestList.map { v -> [String: Any?] in dictionaryOf(staticBackupRequest: v) }
     }
 
-    static func asStaticBackupResponse(data: [String: Any?]) throws -> StaticBackupResponse {
-        let backup = data["backup"] as? [String]
+    static func asStaticBackupResponse(staticBackupResponse: [String: Any?]) throws -> StaticBackupResponse {
+        let backup = staticBackupResponse["backup"] as? [String]
 
         return StaticBackupResponse(
             backup: backup)
@@ -2305,7 +2339,7 @@ class BreezSDKMapper {
         var list = [StaticBackupResponse]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var staticBackupResponse = try asStaticBackupResponse(data: val)
+                var staticBackupResponse = try asStaticBackupResponse(staticBackupResponse: val)
                 list.append(staticBackupResponse)
             } else {
                 throw SdkError.Generic(message: "Invalid element type StaticBackupResponse")
@@ -2318,32 +2352,32 @@ class BreezSDKMapper {
         return staticBackupResponseList.map { v -> [String: Any?] in dictionaryOf(staticBackupResponse: v) }
     }
 
-    static func asSwapInfo(data: [String: Any?]) throws -> SwapInfo {
-        guard let bitcoinAddress = data["bitcoinAddress"] as? String else { throw SdkError.Generic(message: "Missing mandatory field bitcoinAddress for type SwapInfo") }
-        guard let createdAt = data["createdAt"] as? Int64 else { throw SdkError.Generic(message: "Missing mandatory field createdAt for type SwapInfo") }
-        guard let lockHeight = data["lockHeight"] as? Int64 else { throw SdkError.Generic(message: "Missing mandatory field lockHeight for type SwapInfo") }
-        guard let paymentHash = data["paymentHash"] as? [UInt8] else { throw SdkError.Generic(message: "Missing mandatory field paymentHash for type SwapInfo") }
-        guard let preimage = data["preimage"] as? [UInt8] else { throw SdkError.Generic(message: "Missing mandatory field preimage for type SwapInfo") }
-        guard let privateKey = data["privateKey"] as? [UInt8] else { throw SdkError.Generic(message: "Missing mandatory field privateKey for type SwapInfo") }
-        guard let publicKey = data["publicKey"] as? [UInt8] else { throw SdkError.Generic(message: "Missing mandatory field publicKey for type SwapInfo") }
-        guard let swapperPublicKey = data["swapperPublicKey"] as? [UInt8] else { throw SdkError.Generic(message: "Missing mandatory field swapperPublicKey for type SwapInfo") }
-        guard let script = data["script"] as? [UInt8] else { throw SdkError.Generic(message: "Missing mandatory field script for type SwapInfo") }
-        let bolt11 = data["bolt11"] as? String
-        guard let paidSats = data["paidSats"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field paidSats for type SwapInfo") }
-        guard let unconfirmedSats = data["unconfirmedSats"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field unconfirmedSats for type SwapInfo") }
-        guard let confirmedSats = data["confirmedSats"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field confirmedSats for type SwapInfo") }
-        guard let statusTmp = data["status"] as? String else { throw SdkError.Generic(message: "Missing mandatory field status for type SwapInfo") }
-        let status = try asSwapStatus(type: statusTmp)
+    static func asSwapInfo(swapInfo: [String: Any?]) throws -> SwapInfo {
+        guard let bitcoinAddress = swapInfo["bitcoinAddress"] as? String else { throw SdkError.Generic(message: "Missing mandatory field bitcoinAddress for type SwapInfo") }
+        guard let createdAt = swapInfo["createdAt"] as? Int64 else { throw SdkError.Generic(message: "Missing mandatory field createdAt for type SwapInfo") }
+        guard let lockHeight = swapInfo["lockHeight"] as? Int64 else { throw SdkError.Generic(message: "Missing mandatory field lockHeight for type SwapInfo") }
+        guard let paymentHash = swapInfo["paymentHash"] as? [UInt8] else { throw SdkError.Generic(message: "Missing mandatory field paymentHash for type SwapInfo") }
+        guard let preimage = swapInfo["preimage"] as? [UInt8] else { throw SdkError.Generic(message: "Missing mandatory field preimage for type SwapInfo") }
+        guard let privateKey = swapInfo["privateKey"] as? [UInt8] else { throw SdkError.Generic(message: "Missing mandatory field privateKey for type SwapInfo") }
+        guard let publicKey = swapInfo["publicKey"] as? [UInt8] else { throw SdkError.Generic(message: "Missing mandatory field publicKey for type SwapInfo") }
+        guard let swapperPublicKey = swapInfo["swapperPublicKey"] as? [UInt8] else { throw SdkError.Generic(message: "Missing mandatory field swapperPublicKey for type SwapInfo") }
+        guard let script = swapInfo["script"] as? [UInt8] else { throw SdkError.Generic(message: "Missing mandatory field script for type SwapInfo") }
+        let bolt11 = swapInfo["bolt11"] as? String
+        guard let paidSats = swapInfo["paidSats"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field paidSats for type SwapInfo") }
+        guard let unconfirmedSats = swapInfo["unconfirmedSats"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field unconfirmedSats for type SwapInfo") }
+        guard let confirmedSats = swapInfo["confirmedSats"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field confirmedSats for type SwapInfo") }
+        guard let statusTmp = swapInfo["status"] as? String else { throw SdkError.Generic(message: "Missing mandatory field status for type SwapInfo") }
+        let status = try asSwapStatus(swapStatus: statusTmp)
 
-        guard let refundTxIds = data["refundTxIds"] as? [String] else { throw SdkError.Generic(message: "Missing mandatory field refundTxIds for type SwapInfo") }
-        guard let unconfirmedTxIds = data["unconfirmedTxIds"] as? [String] else { throw SdkError.Generic(message: "Missing mandatory field unconfirmedTxIds for type SwapInfo") }
-        guard let confirmedTxIds = data["confirmedTxIds"] as? [String] else { throw SdkError.Generic(message: "Missing mandatory field confirmedTxIds for type SwapInfo") }
-        guard let minAllowedDeposit = data["minAllowedDeposit"] as? Int64 else { throw SdkError.Generic(message: "Missing mandatory field minAllowedDeposit for type SwapInfo") }
-        guard let maxAllowedDeposit = data["maxAllowedDeposit"] as? Int64 else { throw SdkError.Generic(message: "Missing mandatory field maxAllowedDeposit for type SwapInfo") }
-        let lastRedeemError = data["lastRedeemError"] as? String
+        guard let refundTxIds = swapInfo["refundTxIds"] as? [String] else { throw SdkError.Generic(message: "Missing mandatory field refundTxIds for type SwapInfo") }
+        guard let unconfirmedTxIds = swapInfo["unconfirmedTxIds"] as? [String] else { throw SdkError.Generic(message: "Missing mandatory field unconfirmedTxIds for type SwapInfo") }
+        guard let confirmedTxIds = swapInfo["confirmedTxIds"] as? [String] else { throw SdkError.Generic(message: "Missing mandatory field confirmedTxIds for type SwapInfo") }
+        guard let minAllowedDeposit = swapInfo["minAllowedDeposit"] as? Int64 else { throw SdkError.Generic(message: "Missing mandatory field minAllowedDeposit for type SwapInfo") }
+        guard let maxAllowedDeposit = swapInfo["maxAllowedDeposit"] as? Int64 else { throw SdkError.Generic(message: "Missing mandatory field maxAllowedDeposit for type SwapInfo") }
+        let lastRedeemError = swapInfo["lastRedeemError"] as? String
         var channelOpeningFees: OpeningFeeParams?
-        if let channelOpeningFeesTmp = data["channelOpeningFees"] as? [String: Any?] {
-            channelOpeningFees = try asOpeningFeeParams(data: channelOpeningFeesTmp)
+        if let channelOpeningFeesTmp = swapInfo["channelOpeningFees"] as? [String: Any?] {
+            channelOpeningFees = try asOpeningFeeParams(openingFeeParams: channelOpeningFeesTmp)
         }
 
         return SwapInfo(
@@ -2401,7 +2435,7 @@ class BreezSDKMapper {
         var list = [SwapInfo]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var swapInfo = try asSwapInfo(data: val)
+                var swapInfo = try asSwapInfo(swapInfo: val)
                 list.append(swapInfo)
             } else {
                 throw SdkError.Generic(message: "Invalid element type SwapInfo")
@@ -2414,9 +2448,9 @@ class BreezSDKMapper {
         return swapInfoList.map { v -> [String: Any?] in dictionaryOf(swapInfo: v) }
     }
 
-    static func asSweepRequest(data: [String: Any?]) throws -> SweepRequest {
-        guard let toAddress = data["toAddress"] as? String else { throw SdkError.Generic(message: "Missing mandatory field toAddress for type SweepRequest") }
-        guard let feeRateSatsPerVbyte = data["feeRateSatsPerVbyte"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field feeRateSatsPerVbyte for type SweepRequest") }
+    static func asSweepRequest(sweepRequest: [String: Any?]) throws -> SweepRequest {
+        guard let toAddress = sweepRequest["toAddress"] as? String else { throw SdkError.Generic(message: "Missing mandatory field toAddress for type SweepRequest") }
+        guard let feeRateSatsPerVbyte = sweepRequest["feeRateSatsPerVbyte"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field feeRateSatsPerVbyte for type SweepRequest") }
 
         return SweepRequest(
             toAddress: toAddress,
@@ -2435,7 +2469,7 @@ class BreezSDKMapper {
         var list = [SweepRequest]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var sweepRequest = try asSweepRequest(data: val)
+                var sweepRequest = try asSweepRequest(sweepRequest: val)
                 list.append(sweepRequest)
             } else {
                 throw SdkError.Generic(message: "Invalid element type SweepRequest")
@@ -2448,8 +2482,8 @@ class BreezSDKMapper {
         return sweepRequestList.map { v -> [String: Any?] in dictionaryOf(sweepRequest: v) }
     }
 
-    static func asSweepResponse(data: [String: Any?]) throws -> SweepResponse {
-        guard let txid = data["txid"] as? [UInt8] else { throw SdkError.Generic(message: "Missing mandatory field txid for type SweepResponse") }
+    static func asSweepResponse(sweepResponse: [String: Any?]) throws -> SweepResponse {
+        guard let txid = sweepResponse["txid"] as? [UInt8] else { throw SdkError.Generic(message: "Missing mandatory field txid for type SweepResponse") }
 
         return SweepResponse(
             txid: txid)
@@ -2465,7 +2499,7 @@ class BreezSDKMapper {
         var list = [SweepResponse]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var sweepResponse = try asSweepResponse(data: val)
+                var sweepResponse = try asSweepResponse(sweepResponse: val)
                 list.append(sweepResponse)
             } else {
                 throw SdkError.Generic(message: "Invalid element type SweepResponse")
@@ -2478,11 +2512,11 @@ class BreezSDKMapper {
         return sweepResponseList.map { v -> [String: Any?] in dictionaryOf(sweepResponse: v) }
     }
 
-    static func asSymbol(data: [String: Any?]) throws -> Symbol {
-        let grapheme = data["grapheme"] as? String
-        let template = data["template"] as? String
-        let rtl = data["rtl"] as? Bool
-        let position = data["position"] as? UInt32
+    static func asSymbol(symbol: [String: Any?]) throws -> Symbol {
+        let grapheme = symbol["grapheme"] as? String
+        let template = symbol["template"] as? String
+        let rtl = symbol["rtl"] as? Bool
+        let position = symbol["position"] as? UInt32
 
         return Symbol(
             grapheme: grapheme,
@@ -2505,7 +2539,7 @@ class BreezSDKMapper {
         var list = [Symbol]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var symbol = try asSymbol(data: val)
+                var symbol = try asSymbol(symbol: val)
                 list.append(symbol)
             } else {
                 throw SdkError.Generic(message: "Invalid element type Symbol")
@@ -2518,12 +2552,12 @@ class BreezSDKMapper {
         return symbolList.map { v -> [String: Any?] in dictionaryOf(symbol: v) }
     }
 
-    static func asUnspentTransactionOutput(data: [String: Any?]) throws -> UnspentTransactionOutput {
-        guard let txid = data["txid"] as? [UInt8] else { throw SdkError.Generic(message: "Missing mandatory field txid for type UnspentTransactionOutput") }
-        guard let outnum = data["outnum"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field outnum for type UnspentTransactionOutput") }
-        guard let amountMillisatoshi = data["amountMillisatoshi"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field amountMillisatoshi for type UnspentTransactionOutput") }
-        guard let address = data["address"] as? String else { throw SdkError.Generic(message: "Missing mandatory field address for type UnspentTransactionOutput") }
-        guard let reserved = data["reserved"] as? Bool else { throw SdkError.Generic(message: "Missing mandatory field reserved for type UnspentTransactionOutput") }
+    static func asUnspentTransactionOutput(unspentTransactionOutput: [String: Any?]) throws -> UnspentTransactionOutput {
+        guard let txid = unspentTransactionOutput["txid"] as? [UInt8] else { throw SdkError.Generic(message: "Missing mandatory field txid for type UnspentTransactionOutput") }
+        guard let outnum = unspentTransactionOutput["outnum"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field outnum for type UnspentTransactionOutput") }
+        guard let amountMillisatoshi = unspentTransactionOutput["amountMillisatoshi"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field amountMillisatoshi for type UnspentTransactionOutput") }
+        guard let address = unspentTransactionOutput["address"] as? String else { throw SdkError.Generic(message: "Missing mandatory field address for type UnspentTransactionOutput") }
+        guard let reserved = unspentTransactionOutput["reserved"] as? Bool else { throw SdkError.Generic(message: "Missing mandatory field reserved for type UnspentTransactionOutput") }
 
         return UnspentTransactionOutput(
             txid: txid,
@@ -2548,7 +2582,7 @@ class BreezSDKMapper {
         var list = [UnspentTransactionOutput]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var unspentTransactionOutput = try asUnspentTransactionOutput(data: val)
+                var unspentTransactionOutput = try asUnspentTransactionOutput(unspentTransactionOutput: val)
                 list.append(unspentTransactionOutput)
             } else {
                 throw SdkError.Generic(message: "Invalid element type UnspentTransactionOutput")
@@ -2561,9 +2595,9 @@ class BreezSDKMapper {
         return unspentTransactionOutputList.map { v -> [String: Any?] in dictionaryOf(unspentTransactionOutput: v) }
     }
 
-    static func asUrlSuccessActionData(data: [String: Any?]) throws -> UrlSuccessActionData {
-        guard let description = data["description"] as? String else { throw SdkError.Generic(message: "Missing mandatory field description for type UrlSuccessActionData") }
-        guard let url = data["url"] as? String else { throw SdkError.Generic(message: "Missing mandatory field url for type UrlSuccessActionData") }
+    static func asUrlSuccessActionData(urlSuccessActionData: [String: Any?]) throws -> UrlSuccessActionData {
+        guard let description = urlSuccessActionData["description"] as? String else { throw SdkError.Generic(message: "Missing mandatory field description for type UrlSuccessActionData") }
+        guard let url = urlSuccessActionData["url"] as? String else { throw SdkError.Generic(message: "Missing mandatory field url for type UrlSuccessActionData") }
 
         return UrlSuccessActionData(
             description: description,
@@ -2582,7 +2616,7 @@ class BreezSDKMapper {
         var list = [UrlSuccessActionData]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var urlSuccessActionData = try asUrlSuccessActionData(data: val)
+                var urlSuccessActionData = try asUrlSuccessActionData(urlSuccessActionData: val)
                 list.append(urlSuccessActionData)
             } else {
                 throw SdkError.Generic(message: "Invalid element type UrlSuccessActionData")
@@ -2595,15 +2629,15 @@ class BreezSDKMapper {
         return urlSuccessActionDataList.map { v -> [String: Any?] in dictionaryOf(urlSuccessActionData: v) }
     }
 
-    static func asBreezEvent(data: [String: Any?]) throws -> BreezEvent {
-        let type = data["type"] as! String
+    static func asBreezEvent(breezEvent: [String: Any?]) throws -> BreezEvent {
+        let type = breezEvent["type"] as! String
         if type == "newBlock" {
-            guard let _block = data["block"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field block for type BreezEvent") }
+            guard let _block = breezEvent["block"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field block for type BreezEvent") }
             return BreezEvent.newBlock(block: _block)
         }
         if type == "invoicePaid" {
-            guard let detailsTmp = data["details"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field details for type BreezEvent") }
-            let _details = try asInvoicePaidDetails(data: detailsTmp)
+            guard let detailsTmp = breezEvent["details"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field details for type BreezEvent") }
+            let _details = try asInvoicePaidDetails(invoicePaidDetails: detailsTmp)
 
             return BreezEvent.invoicePaid(details: _details)
         }
@@ -2611,14 +2645,14 @@ class BreezSDKMapper {
             return BreezEvent.synced
         }
         if type == "paymentSucceed" {
-            guard let detailsTmp = data["details"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field details for type BreezEvent") }
-            let _details = try asPayment(data: detailsTmp)
+            guard let detailsTmp = breezEvent["details"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field details for type BreezEvent") }
+            let _details = try asPayment(payment: detailsTmp)
 
             return BreezEvent.paymentSucceed(details: _details)
         }
         if type == "paymentFailed" {
-            guard let detailsTmp = data["details"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field details for type BreezEvent") }
-            let _details = try asPaymentFailedData(data: detailsTmp)
+            guard let detailsTmp = breezEvent["details"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field details for type BreezEvent") }
+            let _details = try asPaymentFailedData(paymentFailedData: detailsTmp)
 
             return BreezEvent.paymentFailed(details: _details)
         }
@@ -2629,8 +2663,8 @@ class BreezSDKMapper {
             return BreezEvent.backupSucceeded
         }
         if type == "backupFailed" {
-            guard let detailsTmp = data["details"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field details for type BreezEvent") }
-            let _details = try asBackupFailedData(data: detailsTmp)
+            guard let detailsTmp = breezEvent["details"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field details for type BreezEvent") }
+            let _details = try asBackupFailedData(backupFailedData: detailsTmp)
 
             return BreezEvent.backupFailed(details: _details)
         }
@@ -2697,12 +2731,12 @@ class BreezSDKMapper {
         }
     }
 
-    static func asBuyBitcoinProvider(type: String) throws -> BuyBitcoinProvider {
-        switch type {
+    static func asBuyBitcoinProvider(buyBitcoinProvider: String) throws -> BuyBitcoinProvider {
+        switch buyBitcoinProvider {
         case "moonpay":
             return BuyBitcoinProvider.moonpay
 
-        default: throw SdkError.Generic(message: "Invalid variant \(type) for enum BuyBitcoinProvider")
+        default: throw SdkError.Generic(message: "Invalid variant \(buyBitcoinProvider) for enum BuyBitcoinProvider")
         }
     }
 
@@ -2713,8 +2747,8 @@ class BreezSDKMapper {
         }
     }
 
-    static func asChannelState(type: String) throws -> ChannelState {
-        switch type {
+    static func asChannelState(channelState: String) throws -> ChannelState {
+        switch channelState {
         case "pendingOpen":
             return ChannelState.pendingOpen
 
@@ -2727,7 +2761,7 @@ class BreezSDKMapper {
         case "closed":
             return ChannelState.closed
 
-        default: throw SdkError.Generic(message: "Invalid variant \(type) for enum ChannelState")
+        default: throw SdkError.Generic(message: "Invalid variant \(channelState) for enum ChannelState")
         }
     }
 
@@ -2747,15 +2781,15 @@ class BreezSDKMapper {
         }
     }
 
-    static func asEnvironmentType(type: String) throws -> EnvironmentType {
-        switch type {
+    static func asEnvironmentType(environmentType: String) throws -> EnvironmentType {
+        switch environmentType {
         case "production":
             return EnvironmentType.production
 
         case "staging":
             return EnvironmentType.staging
 
-        default: throw SdkError.Generic(message: "Invalid variant \(type) for enum EnvironmentType")
+        default: throw SdkError.Generic(message: "Invalid variant \(environmentType) for enum EnvironmentType")
         }
     }
 
@@ -2769,8 +2803,8 @@ class BreezSDKMapper {
         }
     }
 
-    static func asFeeratePreset(type: String) throws -> FeeratePreset {
-        switch type {
+    static func asFeeratePreset(feeratePreset: String) throws -> FeeratePreset {
+        switch feeratePreset {
         case "regular":
             return FeeratePreset.regular
 
@@ -2780,7 +2814,7 @@ class BreezSDKMapper {
         case "priority":
             return FeeratePreset.priority
 
-        default: throw SdkError.Generic(message: "Invalid variant \(type) for enum FeeratePreset")
+        default: throw SdkError.Generic(message: "Invalid variant \(feeratePreset) for enum FeeratePreset")
         }
     }
 
@@ -2797,49 +2831,49 @@ class BreezSDKMapper {
         }
     }
 
-    static func asInputType(data: [String: Any?]) throws -> InputType {
-        let type = data["type"] as! String
+    static func asInputType(inputType: [String: Any?]) throws -> InputType {
+        let type = inputType["type"] as! String
         if type == "bitcoinAddress" {
-            guard let addressTmp = data["address"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field address for type InputType") }
-            let _address = try asBitcoinAddressData(data: addressTmp)
+            guard let addressTmp = inputType["address"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field address for type InputType") }
+            let _address = try asBitcoinAddressData(bitcoinAddressData: addressTmp)
 
             return InputType.bitcoinAddress(address: _address)
         }
         if type == "bolt11" {
-            guard let invoiceTmp = data["invoice"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field invoice for type InputType") }
-            let _invoice = try asLnInvoice(data: invoiceTmp)
+            guard let invoiceTmp = inputType["invoice"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field invoice for type InputType") }
+            let _invoice = try asLnInvoice(lnInvoice: invoiceTmp)
 
             return InputType.bolt11(invoice: _invoice)
         }
         if type == "nodeId" {
-            guard let _nodeId = data["nodeId"] as? String else { throw SdkError.Generic(message: "Missing mandatory field nodeId for type InputType") }
+            guard let _nodeId = inputType["nodeId"] as? String else { throw SdkError.Generic(message: "Missing mandatory field nodeId for type InputType") }
             return InputType.nodeId(nodeId: _nodeId)
         }
         if type == "url" {
-            guard let _url = data["url"] as? String else { throw SdkError.Generic(message: "Missing mandatory field url for type InputType") }
+            guard let _url = inputType["url"] as? String else { throw SdkError.Generic(message: "Missing mandatory field url for type InputType") }
             return InputType.url(url: _url)
         }
         if type == "lnUrlPay" {
-            guard let dataTmp = data["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type InputType") }
-            let _data = try asLnUrlPayRequestData(data: dataTmp)
+            guard let dataTmp = inputType["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type InputType") }
+            let _data = try asLnUrlPayRequestData(lnUrlPayRequestData: dataTmp)
 
             return InputType.lnUrlPay(data: _data)
         }
         if type == "lnUrlWithdraw" {
-            guard let dataTmp = data["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type InputType") }
-            let _data = try asLnUrlWithdrawRequestData(data: dataTmp)
+            guard let dataTmp = inputType["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type InputType") }
+            let _data = try asLnUrlWithdrawRequestData(lnUrlWithdrawRequestData: dataTmp)
 
             return InputType.lnUrlWithdraw(data: _data)
         }
         if type == "lnUrlAuth" {
-            guard let dataTmp = data["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type InputType") }
-            let _data = try asLnUrlAuthRequestData(data: dataTmp)
+            guard let dataTmp = inputType["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type InputType") }
+            let _data = try asLnUrlAuthRequestData(lnUrlAuthRequestData: dataTmp)
 
             return InputType.lnUrlAuth(data: _data)
         }
         if type == "lnUrlError" {
-            guard let dataTmp = data["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type InputType") }
-            let _data = try asLnUrlErrorData(data: dataTmp)
+            guard let dataTmp = inputType["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type InputType") }
+            let _data = try asLnUrlErrorData(lnUrlErrorData: dataTmp)
 
             return InputType.lnUrlError(data: _data)
         }
@@ -2915,14 +2949,14 @@ class BreezSDKMapper {
         }
     }
 
-    static func asLnUrlCallbackStatus(data: [String: Any?]) throws -> LnUrlCallbackStatus {
-        let type = data["type"] as! String
+    static func asLnUrlCallbackStatus(lnUrlCallbackStatus: [String: Any?]) throws -> LnUrlCallbackStatus {
+        let type = lnUrlCallbackStatus["type"] as! String
         if type == "ok" {
             return LnUrlCallbackStatus.ok
         }
         if type == "errorStatus" {
-            guard let dataTmp = data["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type LnUrlCallbackStatus") }
-            let _data = try asLnUrlErrorData(data: dataTmp)
+            guard let dataTmp = lnUrlCallbackStatus["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type LnUrlCallbackStatus") }
+            let _data = try asLnUrlErrorData(lnUrlErrorData: dataTmp)
 
             return LnUrlCallbackStatus.errorStatus(data: _data)
         }
@@ -2947,19 +2981,19 @@ class BreezSDKMapper {
         }
     }
 
-    static func asLnUrlPayResult(data: [String: Any?]) throws -> LnUrlPayResult {
-        let type = data["type"] as! String
+    static func asLnUrlPayResult(lnUrlPayResult: [String: Any?]) throws -> LnUrlPayResult {
+        let type = lnUrlPayResult["type"] as! String
         if type == "endpointSuccess" {
             var _data: SuccessActionProcessed?
-            if let dataTmp = data["data"] as? [String: Any?] {
-                _data = try asSuccessActionProcessed(data: dataTmp)
+            if let dataTmp = lnUrlPayResult["data"] as? [String: Any?] {
+                _data = try asSuccessActionProcessed(successActionProcessed: dataTmp)
             }
 
             return LnUrlPayResult.endpointSuccess(data: _data)
         }
         if type == "endpointError" {
-            guard let dataTmp = data["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type LnUrlPayResult") }
-            let _data = try asLnUrlErrorData(data: dataTmp)
+            guard let dataTmp = lnUrlPayResult["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type LnUrlPayResult") }
+            let _data = try asLnUrlErrorData(lnUrlErrorData: dataTmp)
 
             return LnUrlPayResult.endpointError(data: _data)
         }
@@ -2987,17 +3021,17 @@ class BreezSDKMapper {
         }
     }
 
-    static func asLnUrlWithdrawResult(data: [String: Any?]) throws -> LnUrlWithdrawResult {
-        let type = data["type"] as! String
+    static func asLnUrlWithdrawResult(lnUrlWithdrawResult: [String: Any?]) throws -> LnUrlWithdrawResult {
+        let type = lnUrlWithdrawResult["type"] as! String
         if type == "ok" {
-            guard let dataTmp = data["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type LnUrlWithdrawResult") }
-            let _data = try asLnUrlWithdrawSuccessData(data: dataTmp)
+            guard let dataTmp = lnUrlWithdrawResult["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type LnUrlWithdrawResult") }
+            let _data = try asLnUrlWithdrawSuccessData(lnUrlWithdrawSuccessData: dataTmp)
 
             return LnUrlWithdrawResult.ok(data: _data)
         }
         if type == "errorStatus" {
-            guard let dataTmp = data["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type LnUrlWithdrawResult") }
-            let _data = try asLnUrlErrorData(data: dataTmp)
+            guard let dataTmp = lnUrlWithdrawResult["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type LnUrlWithdrawResult") }
+            let _data = try asLnUrlErrorData(lnUrlErrorData: dataTmp)
 
             return LnUrlWithdrawResult.errorStatus(data: _data)
         }
@@ -3025,8 +3059,8 @@ class BreezSDKMapper {
         }
     }
 
-    static func asNetwork(type: String) throws -> Network {
-        switch type {
+    static func asNetwork(network: String) throws -> Network {
+        switch network {
         case "bitcoin":
             return Network.bitcoin
 
@@ -3039,7 +3073,7 @@ class BreezSDKMapper {
         case "regtest":
             return Network.regtest
 
-        default: throw SdkError.Generic(message: "Invalid variant \(type) for enum Network")
+        default: throw SdkError.Generic(message: "Invalid variant \(network) for enum Network")
         }
     }
 
@@ -3059,11 +3093,11 @@ class BreezSDKMapper {
         }
     }
 
-    static func asNodeConfig(data: [String: Any?]) throws -> NodeConfig {
-        let type = data["type"] as! String
+    static func asNodeConfig(nodeConfig: [String: Any?]) throws -> NodeConfig {
+        let type = nodeConfig["type"] as! String
         if type == "greenlight" {
-            guard let configTmp = data["config"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field config for type NodeConfig") }
-            let _config = try asGreenlightNodeConfig(data: configTmp)
+            guard let configTmp = nodeConfig["config"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field config for type NodeConfig") }
+            let _config = try asGreenlightNodeConfig(greenlightNodeConfig: configTmp)
 
             return NodeConfig.greenlight(config: _config)
         }
@@ -3083,17 +3117,17 @@ class BreezSDKMapper {
         }
     }
 
-    static func asPaymentDetails(data: [String: Any?]) throws -> PaymentDetails {
-        let type = data["type"] as! String
+    static func asPaymentDetails(paymentDetails: [String: Any?]) throws -> PaymentDetails {
+        let type = paymentDetails["type"] as! String
         if type == "ln" {
-            guard let dataTmp = data["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type PaymentDetails") }
-            let _data = try asLnPaymentDetails(data: dataTmp)
+            guard let dataTmp = paymentDetails["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type PaymentDetails") }
+            let _data = try asLnPaymentDetails(lnPaymentDetails: dataTmp)
 
             return PaymentDetails.ln(data: _data)
         }
         if type == "closedChannel" {
-            guard let dataTmp = data["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type PaymentDetails") }
-            let _data = try asClosedChannelPaymentDetails(data: dataTmp)
+            guard let dataTmp = paymentDetails["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type PaymentDetails") }
+            let _data = try asClosedChannelPaymentDetails(closedChannelPaymentDetails: dataTmp)
 
             return PaymentDetails.closedChannel(data: _data)
         }
@@ -3121,8 +3155,8 @@ class BreezSDKMapper {
         }
     }
 
-    static func asPaymentStatus(type: String) throws -> PaymentStatus {
-        switch type {
+    static func asPaymentStatus(paymentStatus: String) throws -> PaymentStatus {
+        switch paymentStatus {
         case "pending":
             return PaymentStatus.pending
 
@@ -3132,7 +3166,7 @@ class BreezSDKMapper {
         case "failed":
             return PaymentStatus.failed
 
-        default: throw SdkError.Generic(message: "Invalid variant \(type) for enum PaymentStatus")
+        default: throw SdkError.Generic(message: "Invalid variant \(paymentStatus) for enum PaymentStatus")
         }
     }
 
@@ -3149,8 +3183,8 @@ class BreezSDKMapper {
         }
     }
 
-    static func asPaymentType(type: String) throws -> PaymentType {
-        switch type {
+    static func asPaymentType(paymentType: String) throws -> PaymentType {
+        switch paymentType {
         case "sent":
             return PaymentType.sent
 
@@ -3160,7 +3194,7 @@ class BreezSDKMapper {
         case "closedChannel":
             return PaymentType.closedChannel
 
-        default: throw SdkError.Generic(message: "Invalid variant \(type) for enum PaymentType")
+        default: throw SdkError.Generic(message: "Invalid variant \(paymentType) for enum PaymentType")
         }
     }
 
@@ -3177,8 +3211,8 @@ class BreezSDKMapper {
         }
     }
 
-    static func asPaymentTypeFilter(type: String) throws -> PaymentTypeFilter {
-        switch type {
+    static func asPaymentTypeFilter(paymentTypeFilter: String) throws -> PaymentTypeFilter {
+        switch paymentTypeFilter {
         case "sent":
             return PaymentTypeFilter.sent
 
@@ -3188,7 +3222,7 @@ class BreezSDKMapper {
         case "all":
             return PaymentTypeFilter.all
 
-        default: throw SdkError.Generic(message: "Invalid variant \(type) for enum PaymentTypeFilter")
+        default: throw SdkError.Generic(message: "Invalid variant \(paymentTypeFilter) for enum PaymentTypeFilter")
         }
     }
 
@@ -3205,8 +3239,8 @@ class BreezSDKMapper {
         }
     }
 
-    static func asReverseSwapStatus(type: String) throws -> ReverseSwapStatus {
-        switch type {
+    static func asReverseSwapStatus(reverseSwapStatus: String) throws -> ReverseSwapStatus {
+        switch reverseSwapStatus {
         case "initial":
             return ReverseSwapStatus.initial
 
@@ -3222,7 +3256,7 @@ class BreezSDKMapper {
         case "completedConfirmed":
             return ReverseSwapStatus.completedConfirmed
 
-        default: throw SdkError.Generic(message: "Invalid variant \(type) for enum ReverseSwapStatus")
+        default: throw SdkError.Generic(message: "Invalid variant \(reverseSwapStatus) for enum ReverseSwapStatus")
         }
     }
 
@@ -3245,23 +3279,23 @@ class BreezSDKMapper {
         }
     }
 
-    static func asSuccessActionProcessed(data: [String: Any?]) throws -> SuccessActionProcessed {
-        let type = data["type"] as! String
+    static func asSuccessActionProcessed(successActionProcessed: [String: Any?]) throws -> SuccessActionProcessed {
+        let type = successActionProcessed["type"] as! String
         if type == "aes" {
-            guard let dataTmp = data["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type SuccessActionProcessed") }
-            let _data = try asAesSuccessActionDataDecrypted(data: dataTmp)
+            guard let dataTmp = successActionProcessed["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type SuccessActionProcessed") }
+            let _data = try asAesSuccessActionDataDecrypted(aesSuccessActionDataDecrypted: dataTmp)
 
             return SuccessActionProcessed.aes(data: _data)
         }
         if type == "message" {
-            guard let dataTmp = data["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type SuccessActionProcessed") }
-            let _data = try asMessageSuccessActionData(data: dataTmp)
+            guard let dataTmp = successActionProcessed["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type SuccessActionProcessed") }
+            let _data = try asMessageSuccessActionData(messageSuccessActionData: dataTmp)
 
             return SuccessActionProcessed.message(data: _data)
         }
         if type == "url" {
-            guard let dataTmp = data["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type SuccessActionProcessed") }
-            let _data = try asUrlSuccessActionData(data: dataTmp)
+            guard let dataTmp = successActionProcessed["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type SuccessActionProcessed") }
+            let _data = try asUrlSuccessActionData(urlSuccessActionData: dataTmp)
 
             return SuccessActionProcessed.url(data: _data)
         }
@@ -3297,15 +3331,15 @@ class BreezSDKMapper {
         }
     }
 
-    static func asSwapStatus(type: String) throws -> SwapStatus {
-        switch type {
+    static func asSwapStatus(swapStatus: String) throws -> SwapStatus {
+        switch swapStatus {
         case "initial":
             return SwapStatus.initial
 
         case "expired":
             return SwapStatus.expired
 
-        default: throw SdkError.Generic(message: "Invalid variant \(type) for enum SwapStatus")
+        default: throw SdkError.Generic(message: "Invalid variant \(swapStatus) for enum SwapStatus")
         }
     }
 

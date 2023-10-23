@@ -53,8 +53,7 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
-    sendPayment: (NSString*)bolt11
-    amountMsat: (NSUInteger*)amountMsat
+    sendPayment: (NSDictionary*)req
     resolve: (RCTPromiseResolveBlock)resolve
     reject: (RCTPromiseRejectBlock)reject
 )
@@ -78,7 +77,7 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
-    withdrawLnurl: (NSDictionary*)req
+    withdrawLnurl: (NSDictionary*)request
     resolve: (RCTPromiseResolveBlock)resolve
     reject: (RCTPromiseRejectBlock)reject
 )
