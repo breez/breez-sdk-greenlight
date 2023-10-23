@@ -1773,6 +1773,84 @@ fun asPaymentFailedDataList(arr: ReadableArray): List<PaymentFailedData> {
     return list
 }
 
+fun asPrepareRefundRequest(prepareRefundRequest: ReadableMap): PrepareRefundRequest? {
+    if (!validateMandatoryFields(
+            prepareRefundRequest,
+            arrayOf(
+                "swapAddress",
+                "toAddress",
+                "satPerVbyte",
+            ),
+        )
+    ) {
+        return null
+    }
+    val swapAddress = prepareRefundRequest.getString("swapAddress")!!
+    val toAddress = prepareRefundRequest.getString("toAddress")!!
+    val satPerVbyte = prepareRefundRequest.getInt("satPerVbyte").toUInt()
+    return PrepareRefundRequest(
+        swapAddress,
+        toAddress,
+        satPerVbyte,
+    )
+}
+
+fun readableMapOf(prepareRefundRequest: PrepareRefundRequest): ReadableMap {
+    return readableMapOf(
+        "swapAddress" to prepareRefundRequest.swapAddress,
+        "toAddress" to prepareRefundRequest.toAddress,
+        "satPerVbyte" to prepareRefundRequest.satPerVbyte,
+    )
+}
+
+fun asPrepareRefundRequestList(arr: ReadableArray): List<PrepareRefundRequest> {
+    val list = ArrayList<PrepareRefundRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asPrepareRefundRequest(value)!!)
+            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
+fun asPrepareRefundResponse(prepareRefundResponse: ReadableMap): PrepareRefundResponse? {
+    if (!validateMandatoryFields(
+            prepareRefundResponse,
+            arrayOf(
+                "refundTxWeight",
+                "refundTxFeeSat",
+            ),
+        )
+    ) {
+        return null
+    }
+    val refundTxWeight = prepareRefundResponse.getInt("refundTxWeight").toUInt()
+    val refundTxFeeSat = prepareRefundResponse.getDouble("refundTxFeeSat").toULong()
+    return PrepareRefundResponse(
+        refundTxWeight,
+        refundTxFeeSat,
+    )
+}
+
+fun readableMapOf(prepareRefundResponse: PrepareRefundResponse): ReadableMap {
+    return readableMapOf(
+        "refundTxWeight" to prepareRefundResponse.refundTxWeight,
+        "refundTxFeeSat" to prepareRefundResponse.refundTxFeeSat,
+    )
+}
+
+fun asPrepareRefundResponseList(arr: ReadableArray): List<PrepareRefundResponse> {
+    val list = ArrayList<PrepareRefundResponse>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asPrepareRefundResponse(value)!!)
+            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asPrepareSweepRequest(prepareSweepRequest: ReadableMap): PrepareSweepRequest? {
     if (!validateMandatoryFields(
             prepareSweepRequest,

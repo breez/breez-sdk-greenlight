@@ -12,14 +12,14 @@ use breez_sdk_core::{
     LocaleOverrides, LocalizedName, LogEntry, LogStream, LspInformation, MessageSuccessActionData,
     MetadataItem, Network, NodeConfig, NodeState, OpenChannelFeeRequest, OpenChannelFeeResponse,
     OpeningFeeParams, OpeningFeeParamsMenu, Payment, PaymentDetails, PaymentFailedData,
-    PaymentStatus, PaymentType, PaymentTypeFilter, PrepareSweepRequest, PrepareSweepResponse, Rate,
-    ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees,
-    RefundRequest, RefundResponse, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
-    ReverseSwapStatus, RouteHint, RouteHintHop, SendOnchainRequest, SendOnchainResponse,
-    SendPaymentRequest, SendPaymentResponse, SendSpontaneousPaymentRequest, SignMessageRequest,
-    SignMessageResponse, StaticBackupRequest, StaticBackupResponse, SuccessActionProcessed,
-    SwapInfo, SwapStatus, SweepRequest, SweepResponse, Symbol, UnspentTransactionOutput,
-    UrlSuccessActionData,
+    PaymentStatus, PaymentType, PaymentTypeFilter, PrepareRefundRequest, PrepareRefundResponse,
+    PrepareSweepRequest, PrepareSweepResponse, Rate, ReceiveOnchainRequest, ReceivePaymentRequest,
+    ReceivePaymentResponse, RecommendedFees, RefundRequest, RefundResponse, ReverseSwapFeesRequest,
+    ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop,
+    SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
+    SendSpontaneousPaymentRequest, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
+    StaticBackupResponse, SuccessActionProcessed, SwapInfo, SwapStatus, SweepRequest,
+    SweepResponse, Symbol, UnspentTransactionOutput, UrlSuccessActionData,
 };
 use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
@@ -242,6 +242,13 @@ impl BlockingBreezServices {
     /// list non-completed expired swaps that should be refunded by calling [BreezServices::refund]
     pub fn list_refundables(&self) -> SdkResult<Vec<SwapInfo>> {
         rt().block_on(self.breez_services.list_refundables())
+            .map_err(|e| e.into())
+    }
+
+    // prepare a refund transaction for a failed/expired swap
+    // optionally used to know fees before calling `refund()`
+    pub fn prepare_refund(&self, req: PrepareRefundRequest) -> SdkResult<PrepareRefundResponse> {
+        rt().block_on(self.breez_services.prepare_refund(req))
             .map_err(|e| e.into())
     }
 

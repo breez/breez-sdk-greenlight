@@ -200,6 +200,11 @@ pub extern "C" fn wire_list_refundables(port_: i64) {
 }
 
 #[no_mangle]
+pub extern "C" fn wire_prepare_refund(port_: i64, req: *mut wire_PrepareRefundRequest) {
+    wire_prepare_refund_impl(port_, req)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_refund(port_: i64, req: *mut wire_RefundRequest) {
     wire_refund_impl(port_, req)
 }
@@ -304,6 +309,11 @@ pub extern "C" fn new_box_autoadd_open_channel_fee_request_0() -> *mut wire_Open
 #[no_mangle]
 pub extern "C" fn new_box_autoadd_opening_fee_params_0() -> *mut wire_OpeningFeeParams {
     support::new_leak_box_ptr(wire_OpeningFeeParams::new_with_null_ptr())
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_autoadd_prepare_refund_request_0() -> *mut wire_PrepareRefundRequest {
+    support::new_leak_box_ptr(wire_PrepareRefundRequest::new_with_null_ptr())
 }
 
 #[no_mangle]
@@ -482,6 +492,12 @@ impl Wire2Api<OpeningFeeParams> for *mut wire_OpeningFeeParams {
     fn wire2api(self) -> OpeningFeeParams {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
         Wire2Api::<OpeningFeeParams>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<PrepareRefundRequest> for *mut wire_PrepareRefundRequest {
+    fn wire2api(self) -> PrepareRefundRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<PrepareRefundRequest>::wire2api(*wrap).into()
     }
 }
 impl Wire2Api<PrepareSweepRequest> for *mut wire_PrepareSweepRequest {
@@ -721,6 +737,15 @@ impl Wire2Api<OpeningFeeParams> for wire_OpeningFeeParams {
     }
 }
 
+impl Wire2Api<PrepareRefundRequest> for wire_PrepareRefundRequest {
+    fn wire2api(self) -> PrepareRefundRequest {
+        PrepareRefundRequest {
+            swap_address: self.swap_address.wire2api(),
+            to_address: self.to_address.wire2api(),
+            sat_per_vbyte: self.sat_per_vbyte.wire2api(),
+        }
+    }
+}
 impl Wire2Api<PrepareSweepRequest> for wire_PrepareSweepRequest {
     fn wire2api(self) -> PrepareSweepRequest {
         PrepareSweepRequest {
@@ -949,6 +974,14 @@ pub struct wire_OpeningFeeParams {
     max_idle_time: u32,
     max_client_to_self_delay: u32,
     promise: *mut wire_uint_8_list,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_PrepareRefundRequest {
+    swap_address: *mut wire_uint_8_list,
+    to_address: *mut wire_uint_8_list,
+    sat_per_vbyte: u32,
 }
 
 #[repr(C)]
@@ -1312,6 +1345,22 @@ impl NewWithNullPtr for wire_OpeningFeeParams {
 }
 
 impl Default for wire_OpeningFeeParams {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_PrepareRefundRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            swap_address: core::ptr::null_mut(),
+            to_address: core::ptr::null_mut(),
+            sat_per_vbyte: Default::default(),
+        }
+    }
+}
+
+impl Default for wire_PrepareRefundRequest {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }

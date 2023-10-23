@@ -207,6 +207,11 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kListRefundablesConstMeta;
 
+  /// See [BreezServices::prepare_refund]
+  Future<PrepareRefundResponse> prepareRefund({required PrepareRefundRequest req, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kPrepareRefundConstMeta;
+
   /// See [BreezServices::refund]
   Future<RefundResponse> refund({required RefundRequest req, dynamic hint});
 
@@ -1102,6 +1107,28 @@ enum PaymentTypeFilter {
   Sent,
   Received,
   ClosedChannels,
+}
+
+class PrepareRefundRequest {
+  final String swapAddress;
+  final String toAddress;
+  final int satPerVbyte;
+
+  const PrepareRefundRequest({
+    required this.swapAddress,
+    required this.toAddress,
+    required this.satPerVbyte,
+  });
+}
+
+class PrepareRefundResponse {
+  final int refundTxWeight;
+  final int refundTxFeeSat;
+
+  const PrepareRefundResponse({
+    required this.refundTxWeight,
+    required this.refundTxFeeSat,
+  });
 }
 
 /// We need to prepare a sweep transaction to know what fee will be charged in satoshis this
@@ -2221,6 +2248,22 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: [],
       );
 
+  Future<PrepareRefundResponse> prepareRefund({required PrepareRefundRequest req, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_prepare_refund_request(req);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_prepare_refund(port_, arg0),
+      parseSuccessData: _wire2api_prepare_refund_response,
+      constMeta: kPrepareRefundConstMeta,
+      argValues: [req],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kPrepareRefundConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "prepare_refund",
+        argNames: ["req"],
+      );
+
   Future<RefundResponse> refund({required RefundRequest req, dynamic hint}) {
     var arg0 = _platform.api2wire_box_autoadd_refund_request(req);
     return _platform.executeNormal(FlutterRustBridgeTask(
@@ -3077,6 +3120,15 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return PaymentType.values[raw as int];
   }
 
+  PrepareRefundResponse _wire2api_prepare_refund_response(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return PrepareRefundResponse(
+      refundTxWeight: _wire2api_u32(arr[0]),
+      refundTxFeeSat: _wire2api_u64(arr[1]),
+    );
+  }
+
   PrepareSweepResponse _wire2api_prepare_sweep_response(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
@@ -3490,6 +3542,14 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<wire_PrepareRefundRequest> api2wire_box_autoadd_prepare_refund_request(
+      PrepareRefundRequest raw) {
+    final ptr = inner.new_box_autoadd_prepare_refund_request_0();
+    _api_fill_to_wire_prepare_refund_request(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
   ffi.Pointer<wire_PrepareSweepRequest> api2wire_box_autoadd_prepare_sweep_request(PrepareSweepRequest raw) {
     final ptr = inner.new_box_autoadd_prepare_sweep_request_0();
     _api_fill_to_wire_prepare_sweep_request(raw, ptr.ref);
@@ -3714,6 +3774,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     _api_fill_to_wire_opening_fee_params(apiObj, wireObj.ref);
   }
 
+  void _api_fill_to_wire_box_autoadd_prepare_refund_request(
+      PrepareRefundRequest apiObj, ffi.Pointer<wire_PrepareRefundRequest> wireObj) {
+    _api_fill_to_wire_prepare_refund_request(apiObj, wireObj.ref);
+  }
+
   void _api_fill_to_wire_box_autoadd_prepare_sweep_request(
       PrepareSweepRequest apiObj, ffi.Pointer<wire_PrepareSweepRequest> wireObj) {
     _api_fill_to_wire_prepare_sweep_request(apiObj, wireObj.ref);
@@ -3888,6 +3953,13 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   void _api_fill_to_wire_opt_box_autoadd_opening_fee_params(
       OpeningFeeParams? apiObj, ffi.Pointer<wire_OpeningFeeParams> wireObj) {
     if (apiObj != null) _api_fill_to_wire_box_autoadd_opening_fee_params(apiObj, wireObj);
+  }
+
+  void _api_fill_to_wire_prepare_refund_request(
+      PrepareRefundRequest apiObj, wire_PrepareRefundRequest wireObj) {
+    wireObj.swap_address = api2wire_String(apiObj.swapAddress);
+    wireObj.to_address = api2wire_String(apiObj.toAddress);
+    wireObj.sat_per_vbyte = api2wire_u32(apiObj.satPerVbyte);
   }
 
   void _api_fill_to_wire_prepare_sweep_request(PrepareSweepRequest apiObj, wire_PrepareSweepRequest wireObj) {
@@ -4586,6 +4658,22 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_list_refundables');
   late final _wire_list_refundables = _wire_list_refundablesPtr.asFunction<void Function(int)>();
 
+  void wire_prepare_refund(
+    int port_,
+    ffi.Pointer<wire_PrepareRefundRequest> req,
+  ) {
+    return _wire_prepare_refund(
+      port_,
+      req,
+    );
+  }
+
+  late final _wire_prepare_refundPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_PrepareRefundRequest>)>>(
+          'wire_prepare_refund');
+  late final _wire_prepare_refund =
+      _wire_prepare_refundPtr.asFunction<void Function(int, ffi.Pointer<wire_PrepareRefundRequest>)>();
+
   void wire_refund(
     int port_,
     ffi.Pointer<wire_RefundRequest> req,
@@ -4829,6 +4917,16 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
           'new_box_autoadd_opening_fee_params_0');
   late final _new_box_autoadd_opening_fee_params_0 =
       _new_box_autoadd_opening_fee_params_0Ptr.asFunction<ffi.Pointer<wire_OpeningFeeParams> Function()>();
+
+  ffi.Pointer<wire_PrepareRefundRequest> new_box_autoadd_prepare_refund_request_0() {
+    return _new_box_autoadd_prepare_refund_request_0();
+  }
+
+  late final _new_box_autoadd_prepare_refund_request_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_PrepareRefundRequest> Function()>>(
+          'new_box_autoadd_prepare_refund_request_0');
+  late final _new_box_autoadd_prepare_refund_request_0 = _new_box_autoadd_prepare_refund_request_0Ptr
+      .asFunction<ffi.Pointer<wire_PrepareRefundRequest> Function()>();
 
   ffi.Pointer<wire_PrepareSweepRequest> new_box_autoadd_prepare_sweep_request_0() {
     return _new_box_autoadd_prepare_sweep_request_0();
@@ -5259,6 +5357,15 @@ class wire_PrepareSweepRequest extends ffi.Struct {
 
   @ffi.Uint64()
   external int sats_per_vbyte;
+}
+
+class wire_PrepareRefundRequest extends ffi.Struct {
+  external ffi.Pointer<wire_uint_8_list> swap_address;
+
+  external ffi.Pointer<wire_uint_8_list> to_address;
+
+  @ffi.Uint32()
+  external int sat_per_vbyte;
 }
 
 class wire_RefundRequest extends ffi.Struct {

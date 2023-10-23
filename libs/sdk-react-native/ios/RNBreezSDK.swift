@@ -418,6 +418,17 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
+    @objc(prepareRefund:resolve:reject:)
+    func prepareRefund(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            let prepareRefundRequest = try BreezSDKMapper.asPrepareRefundRequest(prepareRefundRequest: req)
+            var res = try getBreezServices().prepareRefund(req: prepareRefundRequest)
+            resolve(BreezSDKMapper.dictionaryOf(prepareRefundResponse: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
     @objc(refund:resolve:reject:)
     func refund(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {

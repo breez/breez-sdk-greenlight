@@ -79,6 +79,8 @@ use crate::models::PaymentDetails;
 use crate::models::PaymentStatus;
 use crate::models::PaymentType;
 use crate::models::PaymentTypeFilter;
+use crate::models::PrepareRefundRequest;
+use crate::models::PrepareRefundResponse;
 use crate::models::PrepareSweepRequest;
 use crate::models::PrepareSweepResponse;
 use crate::models::ReceiveOnchainRequest;
@@ -591,6 +593,22 @@ fn wire_list_refundables_impl(port_: MessagePort) {
             mode: FfiCallMode::Normal,
         },
         move || move |task_callback| list_refundables(),
+    )
+}
+fn wire_prepare_refund_impl(
+    port_: MessagePort,
+    req: impl Wire2Api<PrepareRefundRequest> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "prepare_refund",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_req = req.wire2api();
+            move |task_callback| prepare_refund(api_req)
+        },
     )
 }
 fn wire_refund_impl(port_: MessagePort, req: impl Wire2Api<RefundRequest> + UnwindSafe) {
@@ -1279,6 +1297,17 @@ impl support::IntoDart for PaymentType {
     }
 }
 impl support::IntoDartExceptPrimitive for PaymentType {}
+impl support::IntoDart for PrepareRefundResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.refund_tx_weight.into_dart(),
+            self.refund_tx_fee_sat.into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for PrepareRefundResponse {}
+
 impl support::IntoDart for PrepareSweepResponse {
     fn into_dart(self) -> support::DartAbi {
         vec![

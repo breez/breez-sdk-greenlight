@@ -6,9 +6,9 @@ use breez_sdk_core::InputType::{LnUrlAuth, LnUrlPay, LnUrlWithdraw};
 use breez_sdk_core::{
     parse, BreezEvent, BreezServices, BuyBitcoinRequest, CheckMessageRequest, EventListener,
     GreenlightCredentials, ListPaymentsRequest, LnUrlPayRequest, LnUrlWithdrawRequest,
-    ReceiveOnchainRequest, ReceivePaymentRequest, RefundRequest, ReverseSwapFeesRequest,
-    SendOnchainRequest, SendPaymentRequest, SendSpontaneousPaymentRequest, SignMessageRequest,
-    StaticBackupRequest, SweepRequest,
+    PrepareRefundRequest, ReceiveOnchainRequest, ReceivePaymentRequest, RefundRequest,
+    ReverseSwapFeesRequest, SendOnchainRequest, SendPaymentRequest, SendSpontaneousPaymentRequest,
+    SignMessageRequest, StaticBackupRequest, SweepRequest,
 };
 use breez_sdk_core::{Config, GreenlightNodeConfig, NodeConfig};
 use once_cell::sync::OnceCell;
@@ -308,6 +308,23 @@ pub(crate) async fn handle_command(
         }
         Commands::ListRefundables {} => {
             serde_json::to_string_pretty(&sdk()?.list_refundables().await?).map_err(|e| e.into())
+        }
+        Commands::PrepareRefund {
+            swap_address,
+            to_address,
+            sat_per_vbyte,
+        } => {
+            let res = sdk()?
+                .prepare_refund(PrepareRefundRequest {
+                    swap_address,
+                    to_address,
+                    sat_per_vbyte,
+                })
+                .await?;
+            Ok(format!(
+                "Prepared refund tx - weight: {} - fees: {} sat",
+                res.refund_tx_weight, res.refund_tx_fee_sat
+            ))
         }
         Commands::Refund {
             swap_address,

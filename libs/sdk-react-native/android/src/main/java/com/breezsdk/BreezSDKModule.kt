@@ -580,6 +580,25 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
+    fun prepareRefund(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
+        executor.execute {
+            try {
+                val prepareRefundRequest =
+                    asPrepareRefundRequest(req) ?: run {
+                        throw SdkException.Generic("Missing mandatory field req of type PrepareRefundRequest")
+                    }
+                val res = getBreezServices().prepareRefund(prepareRefundRequest)
+                promise.resolve(readableMapOf(res))
+            } catch (e: SdkException) {
+                promise.reject(e.javaClass.simpleName, e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
     fun refund(
         req: ReadableMap,
         promise: Promise,

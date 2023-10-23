@@ -5,8 +5,8 @@ use crate::binding::parse_invoice;
 use crate::chain::{get_utxos, AddressUtxos, ChainService, MempoolSpace, OnchainTx};
 use crate::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
 use crate::{
-    OpeningFeeParams, ReceivePaymentRequest, RefundRequest, RefundResponse,
-    SWAP_PAYMENT_FEE_EXPIRY_SECONDS,
+    OpeningFeeParams, PrepareRefundRequest, PrepareRefundResponse, ReceivePaymentRequest,
+    RefundRequest, RefundResponse, SWAP_PAYMENT_FEE_EXPIRY_SECONDS,
 };
 use anyhow::{anyhow, Result};
 use bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
@@ -434,6 +434,31 @@ impl BTCReceiveSwap {
         self.swapper_api.complete_swap(payreq.clone()).await
     }
 
+    pub(crate) async fn prepare_refund_swap(
+        &self,
+        req: PrepareRefundRequest,
+    ) -> Result<PrepareRefundResponse> {
+        let swap_info = self
+            .persister
+            .get_swap_info_by_address(req.swap_address.clone())?
+            .ok_or_else(|| anyhow!(format!("swap address {} was not found", req.swap_address)))?;
+
+        let transactions = self
+            .chain_service
+            .address_transactions(req.swap_address.clone())
+            .await?;
+        let utxos = get_utxos(req.swap_address, transactions)?;
+
+        let refund_tx = prepare_refund_tx(&utxos, req.to_address, swap_info.lock_height as u32)?;
+
+        let refund_tx_weight = compute_refund_tx_weight(&refund_tx);
+        let refund_tx_fee_sat = compute_tx_fee(refund_tx_weight, req.sat_per_vbyte);
+        Ok(PrepareRefundResponse {
+            refund_tx_weight,
+            refund_tx_fee_sat,
+        })
+    }
+
     // refund_swap is the user way to receive on-chain refund for failed swaps.
     pub(crate) async fn refund_swap(&self, req: RefundRequest) -> Result<RefundResponse> {
         let swap_info = self
@@ -541,21 +566,27 @@ pub(crate) fn create_submarine_swap_script(
         .into_script())
 }
 
-/// Creating the refund transaction that is to be used by the user in case where the swap has
-/// expired.
-fn create_refund_tx(
-    utxos: AddressUtxos,
-    private_key: Vec<u8>,
+fn compute_refund_tx_weight(tx: &Transaction) -> u32 {
+    #[allow(clippy::identity_op)] // Allow "+ 0" term in sum below for clarity
+    let refund_witness_input_size: u32 = 1 + 1 + 73 + 1 + 0 + 1 + 100;
+    tx.strippedsize() as u32 * WITNESS_SCALE_FACTOR as u32
+        + refund_witness_input_size * tx.input.len() as u32
+}
+
+fn compute_tx_fee(tx_weight: u32, sat_per_vbyte: u32) -> u64 {
+    (tx_weight * sat_per_vbyte / WITNESS_SCALE_FACTOR as u32) as u64
+}
+
+/// Prepare the refund transaction that is to be used by the user in case where the swap has
+/// expired
+fn prepare_refund_tx(
+    utxos: &AddressUtxos,
     to_address: String,
     lock_delay: u32,
-    input_script: &Script,
-    sat_per_vbyte: u32,
-) -> Result<Vec<u8>> {
+) -> Result<Transaction> {
     if utxos.confirmed.is_empty() {
         return Err(anyhow!("must have at least one input"));
     }
-
-    info!("creating refund tx sat_per_vbyte {}", sat_per_vbyte);
 
     let lock_time = utxos.confirmed.iter().fold(0, |accum, item| {
         let confirmed_height = item.block_height.unwrap();
@@ -591,22 +622,37 @@ fn create_refund_tx(
     }];
 
     // construct the transaction
-    let mut tx = Transaction {
+    let tx = Transaction {
         version: 2,
         lock_time: bitcoin::PackedLockTime(lock_time),
         input: txins.clone(),
         output: tx_out,
     };
 
-    #[allow(clippy::identity_op)] // Allow "+ 0" term in sum below for clarity
-    let refund_witness_input_size: u32 = 1 + 1 + 73 + 1 + 0 + 1 + 100;
-    let tx_weight = tx.strippedsize() as u32 * WITNESS_SCALE_FACTOR as u32
-        + refund_witness_input_size * txins.len() as u32;
-    let fees: u64 = (tx_weight * sat_per_vbyte / WITNESS_SCALE_FACTOR as u32) as u64;
-    if fees >= confirmed_amount {
+    Ok(tx)
+}
+
+/// Creating the refund transaction that is to be used by the user in case where the swap has
+/// expired.
+fn create_refund_tx(
+    utxos: AddressUtxos,
+    private_key: Vec<u8>,
+    to_address: String,
+    lock_delay: u32,
+    input_script: &Script,
+    sat_per_vbyte: u32,
+) -> Result<Vec<u8>> {
+    info!("creating refund tx sat_per_vbyte {}", sat_per_vbyte);
+
+    let mut tx = prepare_refund_tx(&utxos, to_address, lock_delay)?;
+
+    let tx_weight = compute_refund_tx_weight(&tx);
+    let fees = compute_tx_fee(tx_weight, sat_per_vbyte);
+
+    if fees >= tx.output[0].value {
         return Err(anyhow!("insufficient funds to pay fees"));
     }
-    tx.output[0].value = confirmed_amount - fees;
+    tx.output[0].value -= fees;
 
     let scpt = Secp256k1::signing_only();
 
@@ -645,13 +691,15 @@ mod tests {
     use std::{sync::Arc, vec};
 
     use anyhow::Result;
+    use bitcoin::consensus::deserialize;
     use bitcoin::hashes::{hex::FromHex, sha256};
     use bitcoin::{
         secp256k1::{Message, PublicKey, Secp256k1, SecretKey},
-        OutPoint, Txid,
+        OutPoint, Transaction, Txid,
     };
 
     use crate::chain::{AddressUtxos, Utxo};
+    use crate::swap::{compute_refund_tx_weight, compute_tx_fee, prepare_refund_tx};
     use crate::test_utils::get_test_ofp;
     use crate::{
         breez_services::tests::get_dummy_node_state,
@@ -923,6 +971,48 @@ mod tests {
         assert_eq!(swap.status, SwapStatus::Expired);
         assert_eq!(swapper.list_redeemables().unwrap().len(), 0);
         assert_eq!(swapper.list_refundables().unwrap().len(), 0);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_prepare_refund() -> Result<()> {
+        // test parameters
+        let to_address = String::from("bc1qvhykeqcpdzu0pdvy99xnh9ckhwzcfskct6h6l2");
+        let lock_time = 288;
+
+        let utxos = AddressUtxos {
+            confirmed: vec![Utxo {
+                out: OutPoint {
+                    txid: Txid::from_hex(
+                        "1ab3fe9f94ff1332d6f198484c3677832d1162781f86ce85f6d7587fa97f0330",
+                    )?,
+                    vout: 0,
+                },
+                value: 20000,
+                block_height: Some(700000),
+            }],
+            unconfirmed: vec![],
+        };
+
+        let prepared_refund_tx = prepare_refund_tx(&utxos, to_address, lock_time as u32)?;
+
+        // Get the same `Transaction` used in `test_refund()`
+        let raw_tx_bytes = hex::decode("0200000000010130037fa97f58d7f685ce861f7862112d8377364c4898f1d63213ff949ffeb31a00000000002001000001204e00000000000016001465c96c830168b8f0b584294d3b9716bb8584c2d80347304402203285efcf44640551a56c53bde677988964ef1b4d11182d5d6634096042c320120220227b625f7827993aca5b9d2f4690c5e5fae44d8d42fdd5f3778ba21df8ba7c7b010064a9148a486ff2e31d6158bf39e2608864d63fefd09d5b876321024d4b6cd1361032ca9bd2aeb9d900aa4d45d9ead80ac9423374c451a7254d076667022001b27521031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f68ac80af0a00").unwrap();
+        let tx: Transaction = deserialize(&raw_tx_bytes).unwrap();
+        let weight = Transaction::weight(&tx) as u64;
+
+        let refund_tx_weight = compute_refund_tx_weight(&prepared_refund_tx);
+        assert_eq!(refund_tx_weight, weight as u32);
+
+        let refund_tx_fee_sat = compute_tx_fee(refund_tx_weight, 0);
+        assert_eq!(refund_tx_fee_sat, 0);
+
+        let refund_tx_fee_sat = compute_tx_fee(refund_tx_weight, 1);
+        assert_eq!(refund_tx_fee_sat, weight / 4);
+
+        let refund_tx_fee_sat = compute_tx_fee(refund_tx_weight, 20);
+        assert_eq!(refund_tx_fee_sat, weight * 20 / 4);
 
         Ok(())
     }

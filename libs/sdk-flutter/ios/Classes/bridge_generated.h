@@ -178,6 +178,12 @@ typedef struct wire_PrepareSweepRequest {
   uint64_t sats_per_vbyte;
 } wire_PrepareSweepRequest;
 
+typedef struct wire_PrepareRefundRequest {
+  struct wire_uint_8_list *swap_address;
+  struct wire_uint_8_list *to_address;
+  uint32_t sat_per_vbyte;
+} wire_PrepareRefundRequest;
+
 typedef struct wire_RefundRequest {
   struct wire_uint_8_list *swap_address;
   struct wire_uint_8_list *to_address;
@@ -284,6 +290,8 @@ void wire_prepare_sweep(int64_t port_, struct wire_PrepareSweepRequest *req);
 
 void wire_list_refundables(int64_t port_);
 
+void wire_prepare_refund(int64_t port_, struct wire_PrepareRefundRequest *req);
+
 void wire_refund(int64_t port_, struct wire_RefundRequest *req);
 
 void wire_in_progress_swap(int64_t port_);
@@ -325,6 +333,8 @@ struct wire_NodeConfig *new_box_autoadd_node_config_0(void);
 struct wire_OpenChannelFeeRequest *new_box_autoadd_open_channel_fee_request_0(void);
 
 struct wire_OpeningFeeParams *new_box_autoadd_opening_fee_params_0(void);
+
+struct wire_PrepareRefundRequest *new_box_autoadd_prepare_refund_request_0(void);
 
 struct wire_PrepareSweepRequest *new_box_autoadd_prepare_sweep_request_0(void);
 
@@ -400,6 +410,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_sweep);
     dummy_var ^= ((int64_t) (void*) wire_prepare_sweep);
     dummy_var ^= ((int64_t) (void*) wire_list_refundables);
+    dummy_var ^= ((int64_t) (void*) wire_prepare_refund);
     dummy_var ^= ((int64_t) (void*) wire_refund);
     dummy_var ^= ((int64_t) (void*) wire_in_progress_swap);
     dummy_var ^= ((int64_t) (void*) wire_in_progress_reverse_swaps);
@@ -421,6 +432,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_node_config_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_open_channel_fee_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_opening_fee_params_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_prepare_refund_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_prepare_sweep_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_receive_onchain_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_receive_payment_request_0);
