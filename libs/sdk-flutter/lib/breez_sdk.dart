@@ -339,9 +339,9 @@ class BreezSDK {
   }
 
   /// Lookup the most recent reverse swap pair info using the Boltz API
-  Future<ReverseSwapPairInfo> fetchReverseSwapFees(
-    final ReverseSwapFeesRequest req,
-  ) async {
+  Future<ReverseSwapPairInfo> fetchReverseSwapFees({
+    required ReverseSwapFeesRequest req,
+  }) async {
     return await _lnToolkit.fetchReverseSwapFees(req: req);
   }
 
