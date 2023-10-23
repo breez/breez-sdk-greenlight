@@ -1,4 +1,5 @@
 use crate::models::*;
+use std::collections::HashMap;
 
 use super::db::SqliteStorage;
 use anyhow::Result;
@@ -11,13 +12,34 @@ impl SqliteStorage {
     /// closing-related fields `closed_at` and `closing_txid` are not set, because doing so would require
     /// a chain service lookup. Instead, they will be set on first lookup in
     /// [BreezServices::closed_channel_to_transaction]
-    pub(crate) fn update_channels(&self, channels: &[Channel]) -> Result<()> {
+    pub(crate) fn update_channels(&self, fetched_channels: &[Channel]) -> Result<()> {
+        // create a hash map of the channels before the update
+        let channels_before_update = self
+            .list_channels()?
+            .into_iter()
+            .map(|c| (c.funding_txid.clone(), c))
+            .collect::<HashMap<_, _>>();
+
+        // merge the closed_at and closed_txid from the persisted channels into the fetched channels
+        let new_channels: Vec<Channel> = fetched_channels
+            .iter()
+            .map(|c| {
+                let persisted_channel = channels_before_update.get(&c.funding_txid);
+                let mut cloned_channel = c.clone();
+                if let Some(unwrapped_channel) = persisted_channel {
+                    cloned_channel.closed_at = unwrapped_channel.closed_at;
+                    cloned_channel.closing_txid = unwrapped_channel.closing_txid.clone();
+                }
+                cloned_channel
+            })
+            .collect();
+
         // insert all channels
-        for c in channels.iter().cloned() {
+        for c in new_channels.iter().cloned() {
             self.insert_or_update_channel(c)?
         }
 
-        let funding_txs: Vec<String> = channels
+        let funding_txs: Vec<String> = new_channels
             .iter()
             .cloned()
             .map(|c| format!("'{}'", c.funding_txid))

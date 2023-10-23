@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::str::FromStr;
@@ -761,31 +760,8 @@ impl BreezServices {
         // update node state and channels state
         self.persister.set_node_state(&new_data.node_state)?;
 
-        // create a hash map of the channels before the update
-        let channels_before_update = self
-            .persister
-            .list_channels()?
-            .into_iter()
-            .map(|c| (c.funding_txid.clone(), c))
-            .collect::<HashMap<_, _>>();
-
-        // merge the closed_at and closed_txid from the persisted channels into the fetched channels
-        let new_channels: Vec<models::Channel> = new_data
-            .channels
-            .clone()
-            .into_iter()
-            .map(|c| {
-                let persisted_channel = channels_before_update.get(&c.funding_txid);
-                let mut cloned_channel = c.clone();
-                if let Some(unwrapped_channel) = persisted_channel {
-                    cloned_channel.closed_at = unwrapped_channel.closed_at;
-                    cloned_channel.closing_txid = unwrapped_channel.closing_txid.clone();
-                }
-                cloned_channel
-            })
-            .collect();
-
-        self.persister.update_channels(&new_channels)?;
+        let channels_before_update = self.persister.list_channels()?;
+        self.persister.update_channels(&new_data.channels)?;
         let channels_after_update = self.persister.list_channels()?;
 
         // Fetch the static backup if needed and persist it
