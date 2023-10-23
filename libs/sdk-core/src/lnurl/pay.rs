@@ -15,19 +15,19 @@ type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
 ///
 /// See the [parse] docs for more detail on the full workflow.
 pub(crate) async fn validate_lnurl_pay(
-    user_amount_sat: u64,
+    user_amount_msat: u64,
     comment: Option<String>,
     req_data: LnUrlPayRequestData,
 ) -> Result<ValidatedCallbackResponse> {
     validate_user_input(
-        user_amount_sat * 1000,
+        user_amount_msat,
         &comment,
         req_data.min_sendable,
         req_data.max_sendable,
         req_data.comment_allowed,
     )?;
 
-    let callback_url = build_pay_callback_url(user_amount_sat, &comment, &req_data)?;
+    let callback_url = build_pay_callback_url(user_amount_msat, &comment, &req_data)?;
     let callback_resp_text = get_and_log_response(&callback_url).await?;
 
     if let Ok(err) = serde_json::from_str::<LnUrlErrorData>(&callback_resp_text) {
@@ -42,7 +42,7 @@ pub(crate) async fn validate_lnurl_pay(
             }
         }
 
-        validate_invoice(user_amount_sat, &callback_resp.pr, &req_data)?;
+        validate_invoice(user_amount_msat, &callback_resp.pr, &req_data)?;
         Ok(ValidatedCallbackResponse::EndpointSuccess {
             data: callback_resp,
         })
@@ -50,12 +50,12 @@ pub(crate) async fn validate_lnurl_pay(
 }
 
 fn build_pay_callback_url(
-    user_amount_sat: u64,
+    user_amount_msat: u64,
     user_comment: &Option<String>,
-    req_data: &LnUrlPayRequestData,
+    data: &LnUrlPayRequestData,
 ) -> Result<String> {
-    let amount_msat = (user_amount_sat * 1000).to_string();
-    let mut url = reqwest::Url::from_str(&req_data.callback)?;
+    let amount_msat = user_amount_msat.to_string();
+    let mut url = reqwest::Url::from_str(&data.callback)?;
 
     url.query_pairs_mut().append_pair("amount", &amount_msat);
     if let Some(comment) = user_comment {
@@ -93,18 +93,14 @@ fn validate_user_input(
     }
 }
 
-fn validate_invoice(
-    user_amount_sat: u64,
-    bolt11: &str,
-    req_data: &LnUrlPayRequestData,
-) -> Result<()> {
+fn validate_invoice(user_amount_msat: u64, bolt11: &str, data: &LnUrlPayRequestData) -> Result<()> {
     let invoice = parse_invoice(bolt11)?;
 
     match invoice.description_hash {
         None => return Err(anyhow!("Invoice is missing description hash")),
         Some(received_hash) => {
             // The hash is calculated from the exact metadata string, as received from the LNURL endpoint
-            let calculated_hash = sha256::Hash::hash(req_data.metadata_str.as_bytes());
+            let calculated_hash = sha256::Hash::hash(data.metadata_str.as_bytes());
             if received_hash != calculated_hash.to_string() {
                 return Err(anyhow!("Invoice has an invalid description hash"));
             }
@@ -113,7 +109,7 @@ fn validate_invoice(
 
     match invoice.amount_msat {
         None => Err(anyhow!("Amount is bigger than the maximum allowed")),
-        Some(invoice_amount_msat) => match invoice_amount_msat == (user_amount_sat * 1000) {
+        Some(invoice_amount_msat) => match invoice_amount_msat == user_amount_msat {
             true => Ok(()),
             false => Err(anyhow!(
                 "Invoice amount is different than the user chosen amount"
@@ -301,7 +297,7 @@ pub(crate) mod model {
     }
 
     impl UrlSuccessActionData {
-        pub fn validate(&self, req_data: &LnUrlPayRequestData) -> Result<()> {
+        pub fn validate(&self, data: &LnUrlPayRequestData) -> Result<()> {
             match self.description.len() <= 144 {
                 true => Ok(()),
                 false => Err(anyhow!(
@@ -309,7 +305,7 @@ pub(crate) mod model {
                 )),
             }
             .and_then(|_| {
-                let req_url = reqwest::Url::parse(&req_data.callback)?;
+                let req_url = reqwest::Url::parse(&data.callback)?;
                 let req_domain = req_url
                     .domain()
                     .ok_or_else(|| anyhow!("Could not determine callback domain"))?;
@@ -345,11 +341,11 @@ mod tests {
     use mockito::Mock;
     use rand::random;
 
-    use crate::test_utils::*;
+    use crate::{test_utils::*, LnUrlPayRequest};
 
     struct LnurlPayCallbackParams<'a> {
         pay_req: &'a LnUrlPayRequestData,
-        user_amount_sat: u64,
+        user_amount_msat: u64,
         error: Option<String>,
         pr: Option<String>,
         comment: String,
@@ -357,7 +353,7 @@ mod tests {
 
     struct AesPayCallbackParams<'a> {
         pay_req: &'a LnUrlPayRequestData,
-        user_amount_sat: u64,
+        user_amount_msat: u64,
         error: Option<String>,
         pr: Option<String>,
         sa_data: AesSuccessActionDataDecrypted,
@@ -372,13 +368,13 @@ mod tests {
     ) -> Result<Mock> {
         let LnurlPayCallbackParams {
             pay_req,
-            user_amount_sat,
+            user_amount_msat,
             error,
             pr,
             comment,
         } = callback_params;
 
-        let callback_url = build_pay_callback_url(user_amount_sat, &Some(comment), pay_req)?;
+        let callback_url = build_pay_callback_url(user_amount_msat, &Some(comment), pay_req)?;
         let url = reqwest::Url::parse(&callback_url)?;
         let mockito_path: &str = &format!("{}?{}", url.path(), url.query().unwrap());
 
@@ -414,13 +410,13 @@ mod tests {
     ) -> Result<Mock> {
         let LnurlPayCallbackParams {
             pay_req,
-            user_amount_sat,
+            user_amount_msat,
             error,
             pr: _pr,
             comment,
         } = callback_params;
 
-        let callback_url = build_pay_callback_url(user_amount_sat, &Some(comment), pay_req)?;
+        let callback_url = build_pay_callback_url(user_amount_msat, &Some(comment), pay_req)?;
         let url = reqwest::Url::parse(&callback_url)?;
         let mockito_path: &str = &format!("{}?{}", url.path(), url.query().unwrap());
 
@@ -455,13 +451,13 @@ mod tests {
     ) -> Result<Mock> {
         let LnurlPayCallbackParams {
             pay_req,
-            user_amount_sat,
+            user_amount_msat,
             error,
             pr,
             comment,
         } = callback_params;
 
-        let callback_url = build_pay_callback_url(user_amount_sat, &Some(comment), pay_req)?;
+        let callback_url = build_pay_callback_url(user_amount_msat, &Some(comment), pay_req)?;
         let url = reqwest::Url::parse(&callback_url)?;
         let mockito_path: &str = &format!("{}?{}", url.path(), url.query().unwrap());
 
@@ -501,13 +497,13 @@ mod tests {
     ) -> Result<Mock> {
         let LnurlPayCallbackParams {
             pay_req,
-            user_amount_sat,
+            user_amount_msat,
             error,
             pr,
             comment,
         } = callback_params;
 
-        let callback_url = build_pay_callback_url(user_amount_sat, &Some(comment), pay_req)?;
+        let callback_url = build_pay_callback_url(user_amount_msat, &Some(comment), pay_req)?;
         let url = reqwest::Url::parse(&callback_url)?;
         let mockito_path: &str = &format!("{}?{}", url.path(), url.query().unwrap());
 
@@ -548,7 +544,7 @@ mod tests {
     ) -> Result<Mock> {
         let AesPayCallbackParams {
             pay_req,
-            user_amount_sat,
+            user_amount_msat,
             error,
             pr,
             sa_data,
@@ -557,7 +553,7 @@ mod tests {
             comment,
         } = aes_callback_params;
 
-        let callback_url = build_pay_callback_url(user_amount_sat, &Some(comment), pay_req)?;
+        let callback_url = build_pay_callback_url(user_amount_msat, &Some(comment), pay_req)?;
         let url = reqwest::Url::parse(&callback_url)?;
         let mockito_path: &str = &format!("{}?{}", url.path(), url.query().unwrap());
         let iv_base64 = base64::encode(iv_bytes);
@@ -598,10 +594,14 @@ mod tests {
             .create())
     }
 
-    fn get_test_pay_req_data(min_sat: u64, max_sat: u64, comment_len: u16) -> LnUrlPayRequestData {
+    fn get_test_pay_req_data(
+        min_sendable: u64,
+        max_sendable: u64,
+        comment_len: u16,
+    ) -> LnUrlPayRequestData {
         LnUrlPayRequestData {
-            min_sendable: min_sat * 1000,
-            max_sendable: max_sat * 1000,
+            min_sendable,
+            max_sendable,
             comment_allowed: comment_len,
             metadata_str: "".into(),
             callback: "https://localhost/callback".into(),
@@ -612,32 +612,27 @@ mod tests {
 
     #[test]
     fn test_lnurl_pay_validate_input() -> Result<()> {
-        assert!(validate_user_input(100, &None, 0, 100, 0).is_ok());
-        assert!(validate_user_input(100, &Some("test".into()), 0, 100, 5).is_ok());
+        assert!(validate_user_input(100_000, &None, 0, 100_000, 0).is_ok());
+        assert!(validate_user_input(100_000, &Some("test".into()), 0, 100_000, 5).is_ok());
 
-        assert!(validate_user_input(5, &None, 10, 100, 5).is_err());
-        assert!(validate_user_input(200, &None, 10, 100, 5).is_err());
-        assert!(validate_user_input(100, &Some("test".into()), 10, 100, 0).is_err());
+        assert!(validate_user_input(5000, &None, 10_000, 100_000, 5).is_err());
+        assert!(validate_user_input(200_000, &None, 10_000, 100_000, 5).is_err());
+        assert!(validate_user_input(100_000, &Some("test".into()), 10_000, 100_000, 0).is_err());
 
         Ok(())
     }
 
     #[test]
     fn test_lnurl_pay_validate_invoice() -> Result<()> {
-        let req = get_test_pay_req_data(0, 100, 0);
+        let req = get_test_pay_req_data(0, 100_000, 0);
         let temp_desc = req.metadata_str.clone();
         let inv = rand_invoice_with_description_hash(temp_desc.clone())?;
         let payreq: String = rand_invoice_with_description_hash(temp_desc)?.to_string();
 
+        assert!(validate_invoice(inv.amount_milli_satoshis().unwrap(), &payreq, &req).is_ok());
         assert!(
-            validate_invoice(inv.amount_milli_satoshis().unwrap() / 1000, &payreq, &req).is_ok()
+            validate_invoice(inv.amount_milli_satoshis().unwrap() + 1000, &payreq, &req).is_err()
         );
-        assert!(validate_invoice(
-            (inv.amount_milli_satoshis().unwrap() / 1000) + 1,
-            &payreq,
-            &req
-        )
-        .is_err());
 
         Ok(())
     }
@@ -773,7 +768,7 @@ mod tests {
 
     #[test]
     fn test_lnurl_pay_validate_success_url() -> Result<()> {
-        let pay_req_data = get_test_pay_req_data(0, 100, 100);
+        let pay_req_data = get_test_pay_req_data(0, 100_000, 100);
 
         assert!(UrlSuccessActionData {
             description: "short msg".into(),
@@ -804,14 +799,14 @@ mod tests {
     #[tokio::test]
     async fn test_lnurl_pay_no_success_action() -> Result<()> {
         let comment = rand_string(COMMENT_LENGHT as usize);
-        let pay_req = get_test_pay_req_data(0, 100, COMMENT_LENGHT);
+        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGHT);
         let temp_desc = pay_req.metadata_str.clone();
         let inv = rand_invoice_with_description_hash(temp_desc)?;
-        let user_amount_sat = inv.amount_milli_satoshis().unwrap() / 1000;
+        let user_amount_msat = inv.amount_milli_satoshis().unwrap();
 
         let _m = mock_lnurl_pay_callback_endpoint_no_success_action(LnurlPayCallbackParams {
             pay_req: &pay_req,
-            user_amount_sat,
+            user_amount_msat,
             error: None,
             pr: Some(inv.to_string()),
             comment: comment.clone(),
@@ -819,7 +814,11 @@ mod tests {
 
         let mock_breez_services = crate::breez_services::tests::breez_services().await?;
         match mock_breez_services
-            .lnurl_pay(user_amount_sat, Some(comment), pay_req)
+            .lnurl_pay(LnUrlPayRequest {
+                data: pay_req,
+                amount_msat: user_amount_msat,
+                comment: Some(comment),
+            })
             .await?
         {
             LnUrlPayResult::EndpointSuccess { data: None } => Ok(()),
@@ -834,13 +833,13 @@ mod tests {
 
     #[tokio::test]
     async fn test_lnurl_pay_unsupported_success_action() -> Result<()> {
-        let user_amount_sat = 11;
+        let user_amount_msat = 11000;
         let comment = rand_string(COMMENT_LENGHT as usize);
-        let pay_req = get_test_pay_req_data(0, 100, COMMENT_LENGHT);
+        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGHT);
         let _m =
             mock_lnurl_pay_callback_endpoint_unsupported_success_action(LnurlPayCallbackParams {
                 pay_req: &pay_req,
-                user_amount_sat,
+                user_amount_msat,
                 error: None,
                 pr: None,
                 comment: comment.clone(),
@@ -848,7 +847,11 @@ mod tests {
 
         let mock_breez_services = crate::breez_services::tests::breez_services().await?;
         let r = mock_breez_services
-            .lnurl_pay(user_amount_sat, Some(comment), pay_req)
+            .lnurl_pay(LnUrlPayRequest {
+                data: pay_req,
+                amount_msat: user_amount_msat,
+                comment: Some(comment),
+            })
             .await;
         // An unsupported Success Action results in an error
         assert!(r.is_err());
@@ -859,13 +862,13 @@ mod tests {
     #[tokio::test]
     async fn test_lnurl_pay_msg_success_action() -> Result<()> {
         let comment = rand_string(COMMENT_LENGHT as usize);
-        let pay_req = get_test_pay_req_data(0, 100, COMMENT_LENGHT);
+        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGHT);
         let temp_desc = pay_req.metadata_str.clone();
         let inv = rand_invoice_with_description_hash(temp_desc)?;
-        let user_amount_sat = inv.amount_milli_satoshis().unwrap() / 1000;
+        let user_amount_msat = inv.amount_milli_satoshis().unwrap();
         let _m = mock_lnurl_pay_callback_endpoint_msg_success_action(LnurlPayCallbackParams {
             pay_req: &pay_req,
-            user_amount_sat,
+            user_amount_msat,
             error: None,
             pr: Some(inv.to_string()),
             comment: comment.clone(),
@@ -873,7 +876,11 @@ mod tests {
 
         let mock_breez_services = crate::breez_services::tests::breez_services().await?;
         match mock_breez_services
-            .lnurl_pay(user_amount_sat, Some(comment), pay_req)
+            .lnurl_pay(LnUrlPayRequest {
+                data: pay_req,
+                amount_msat: user_amount_msat,
+                comment: Some(comment),
+            })
             .await?
         {
             LnUrlPayResult::EndpointSuccess { data: None } => Err(anyhow!(
@@ -892,13 +899,13 @@ mod tests {
     #[tokio::test]
     async fn test_lnurl_pay_msg_success_action_incorrect_amount() -> Result<()> {
         let comment = rand_string(COMMENT_LENGHT as usize);
-        let pay_req = get_test_pay_req_data(0, 100, COMMENT_LENGHT);
+        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGHT);
         let temp_desc = pay_req.metadata_str.clone();
         let inv = rand_invoice_with_description_hash(temp_desc)?;
-        let user_amount_sat = (inv.amount_milli_satoshis().unwrap() / 1000) + 1;
+        let user_amount_msat = inv.amount_milli_satoshis().unwrap() + 1000;
         let _m = mock_lnurl_pay_callback_endpoint_msg_success_action(LnurlPayCallbackParams {
             pay_req: &pay_req,
-            user_amount_sat,
+            user_amount_msat,
             error: None,
             pr: Some(inv.to_string()),
             comment: comment.clone(),
@@ -906,7 +913,11 @@ mod tests {
 
         let mock_breez_services = crate::breez_services::tests::breez_services().await?;
         assert!(mock_breez_services
-            .lnurl_pay(user_amount_sat, Some(comment), pay_req)
+            .lnurl_pay(LnUrlPayRequest {
+                data: pay_req,
+                amount_msat: user_amount_msat,
+                comment: Some(comment)
+            })
             .await
             .is_err());
 
@@ -916,14 +927,14 @@ mod tests {
     #[tokio::test]
     async fn test_lnurl_pay_msg_success_action_error_from_endpoint() -> Result<()> {
         let comment = rand_string(COMMENT_LENGHT as usize);
-        let pay_req = get_test_pay_req_data(0, 100, COMMENT_LENGHT);
+        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGHT);
         let temp_desc = pay_req.metadata_str.clone();
         let inv = rand_invoice_with_description_hash(temp_desc)?;
-        let user_amount_sat = inv.amount_milli_satoshis().unwrap() / 1000;
+        let user_amount_msat = inv.amount_milli_satoshis().unwrap();
         let expected_error_msg = "Error message from LNURL endpoint";
         let _m = mock_lnurl_pay_callback_endpoint_msg_success_action(LnurlPayCallbackParams {
             pay_req: &pay_req,
-            user_amount_sat,
+            user_amount_msat,
             error: Some(expected_error_msg.to_string()),
             pr: Some(inv.to_string()),
             comment: comment.clone(),
@@ -931,7 +942,11 @@ mod tests {
 
         let mock_breez_services = crate::breez_services::tests::breez_services().await?;
         let res = mock_breez_services
-            .lnurl_pay(user_amount_sat, Some(comment), pay_req)
+            .lnurl_pay(LnUrlPayRequest {
+                data: pay_req,
+                amount_msat: user_amount_msat,
+                comment: Some(comment),
+            })
             .await;
         assert!(matches!(res, Ok(LnUrlPayResult::EndpointError { data: _ })));
 
@@ -949,13 +964,13 @@ mod tests {
     #[tokio::test]
     async fn test_lnurl_pay_url_success_action() -> Result<()> {
         let comment = rand_string(COMMENT_LENGHT as usize);
-        let pay_req = get_test_pay_req_data(0, 100, COMMENT_LENGHT);
+        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGHT);
         let temp_desc = pay_req.metadata_str.clone();
         let inv = rand_invoice_with_description_hash(temp_desc)?;
-        let user_amount_sat = inv.amount_milli_satoshis().unwrap() / 1000;
+        let user_amount_msat = inv.amount_milli_satoshis().unwrap();
         let _m = mock_lnurl_pay_callback_endpoint_url_success_action(LnurlPayCallbackParams {
             pay_req: &pay_req,
-            user_amount_sat,
+            user_amount_msat,
             error: None,
             pr: Some(inv.to_string()),
             comment: comment.clone(),
@@ -963,7 +978,11 @@ mod tests {
 
         let mock_breez_services = crate::breez_services::tests::breez_services().await?;
         match mock_breez_services
-            .lnurl_pay(user_amount_sat, Some(comment), pay_req)
+            .lnurl_pay(LnUrlPayRequest {
+                data: pay_req,
+                amount_msat: user_amount_msat,
+                comment: Some(comment),
+            })
             .await?
         {
             LnUrlPayResult::EndpointSuccess {
@@ -1000,17 +1019,17 @@ mod tests {
         let preimage = sha256::Hash::hash(&rand_vec_u8(10));
 
         let comment = rand_string(COMMENT_LENGHT as usize);
-        let pay_req = get_test_pay_req_data(0, 100, COMMENT_LENGHT);
+        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGHT);
         let temp_desc = pay_req.metadata_str.clone();
 
         // The invoice (served by LNURL-pay endpoint, matching preimage and description hash)
         let inv = rand_invoice_with_description_hash_and_preimage(temp_desc, preimage)?;
 
-        let user_amount_sat = inv.amount_milli_satoshis().unwrap() / 1000;
+        let user_amount_msat = inv.amount_milli_satoshis().unwrap();
         let bolt11 = inv.to_string();
         let _m = mock_lnurl_pay_callback_endpoint_aes_success_action(AesPayCallbackParams {
             pay_req: &pay_req,
-            user_amount_sat,
+            user_amount_msat,
             error: None,
             pr: Some(bolt11.clone()),
             sa_data: sa_data.clone(),
@@ -1031,7 +1050,11 @@ mod tests {
         )
         .await?;
         match mock_breez_services
-            .lnurl_pay(user_amount_sat, Some(comment), pay_req)
+            .lnurl_pay(LnUrlPayRequest {
+                data: pay_req,
+                amount_msat: user_amount_msat,
+                comment: Some(comment),
+            })
             .await?
         {
             LnUrlPayResult::EndpointSuccess {
@@ -1051,19 +1074,19 @@ mod tests {
 
     #[test]
     fn test_lnurl_pay_build_pay_callback_url() -> Result<()> {
-        let pay_req = get_test_pay_req_data(0, 100, 0);
-        let user_amount_sat = 50;
+        let pay_req = get_test_pay_req_data(0, 100_000, 0);
+        let user_amount_msat = 50_000;
 
-        let amount_arg = format!("amount={}", user_amount_sat * 1000);
+        let amount_arg = format!("amount={}", user_amount_msat);
         let user_comment = "test comment".to_string();
         let comment_arg = format!("comment={user_comment}");
 
-        let url_amount_no_comment = build_pay_callback_url(user_amount_sat, &None, &pay_req)?;
+        let url_amount_no_comment = build_pay_callback_url(user_amount_msat, &None, &pay_req)?;
         assert!(url_amount_no_comment.contains(&amount_arg));
         assert!(!url_amount_no_comment.contains(&comment_arg));
 
         let url_amount_with_comment =
-            build_pay_callback_url(user_amount_sat, &Some(user_comment), &pay_req)?;
+            build_pay_callback_url(user_amount_msat, &Some(user_comment), &pay_req)?;
         assert!(url_amount_with_comment.contains(&amount_arg));
         assert!(url_amount_with_comment.contains("comment=test+comment"));
 

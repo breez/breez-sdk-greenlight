@@ -119,17 +119,17 @@ class BreezSDK {
   /// Sign given message with the private key of the node id. Returns a zbase
   /// encoded signature.
   Future<SignMessageResponse> signMessage({
-    required SignMessageRequest request,
+    required SignMessageRequest req,
   }) async {
-    return await _lnToolkit.signMessage(request: request);
+    return await _lnToolkit.signMessage(req: req);
   }
 
   /// Check whether given message was signed by the private key or the given
   /// pubkey and the signature (zbase encoded) is valid.
   Future<CheckMessageResponse> checkMessage({
-    required CheckMessageRequest request,
+    required CheckMessageRequest req,
   }) async {
-    return await _lnToolkit.checkMessage(request: request);
+    return await _lnToolkit.checkMessage(req: req);
   }
 
   /* LSP API's */
@@ -177,9 +177,9 @@ class BreezSDK {
 
   /// Get the static backup data.
   Future<StaticBackupResponse> staticBackup({
-    required StaticBackupRequest request,
+    required StaticBackupRequest req,
   }) async {
-    return await _lnToolkit.staticBackup(request: request);
+    return await _lnToolkit.staticBackup(req: req);
   }
 
   /* Payment API's & Streams*/
@@ -191,9 +191,9 @@ class BreezSDK {
 
   /// list payments (incoming/outgoing payments) from the persistent storage
   Future<List<Payment>> listPayments({
-    required ListPaymentsRequest request,
+    required ListPaymentsRequest req,
   }) async {
-    final paymentsList = await _lnToolkit.listPayments(request: request);
+    final paymentsList = await _lnToolkit.listPayments(req: req);
     paymentsController.add(paymentsList);
     return paymentsList;
   }
@@ -208,49 +208,27 @@ class BreezSDK {
   /* Lightning Payment API's */
 
   /// pay a bolt11 invoice
-  ///
-  /// # Arguments
-  ///
-  /// * `bolt11` - The bolt11 invoice
-  /// * `amountSats` - The amount to pay in satoshis
-  Future<Payment> sendPayment({
-    required String bolt11,
-    int? amountMsat,
+  Future<SendPaymentResponse> sendPayment({
+    required SendPaymentRequest req,
   }) async {
-    return await _lnToolkit.sendPayment(
-      bolt11: bolt11,
-      amountMsat: amountMsat,
-    );
+    return await _lnToolkit.sendPayment(req: req);
   }
 
   /// pay directly to a node id using keysend
-  ///
-  /// # Arguments
-  ///
-  /// * `nodeId` - The destination nodeId
-  /// * `amountSats` - The amount to pay in satoshis
-  Future<Payment> sendSpontaneousPayment({
-    required String nodeId,
-    required int amountSats,
+  Future<SendPaymentResponse> sendSpontaneousPayment({
+    required SendSpontaneousPaymentRequest req,
   }) async {
-    return await _lnToolkit.sendSpontaneousPayment(
-      nodeId: nodeId,
-      amountSats: amountSats,
-    );
+    return await _lnToolkit.sendSpontaneousPayment(req: req);
   }
 
   /// Creates an bolt11 payment request.
   /// This also works when the node doesn't have any channels and need inbound liquidity.
   /// In such case when the invoice is paid a new zero-conf channel will be open by the LSP,
   /// providing inbound liquidity and the payment will be routed via this new channel.
-  ///
-  /// # Arguments
-  ///
-  /// * `request` - Request parameters for receiving a payment
   Future<ReceivePaymentResponse> receivePayment({
-    required ReceivePaymentRequest request,
+    required ReceivePaymentRequest req,
   }) async {
-    return await _lnToolkit.receivePayment(request: request);
+    return await _lnToolkit.receivePayment(req: req);
   }
 
   /* LNURL API's */
@@ -258,15 +236,9 @@ class BreezSDK {
   /// Second step of LNURL-pay. The first step is `parse()`, which also validates the LNURL destination
   /// and generates the `LnUrlPayRequestData` payload needed here.
   Future<LnUrlPayResult> lnurlPay({
-    required LnUrlPayRequestData reqData,
-    required int userAmountSat,
-    String? comment,
+    required LnUrlPayRequest req,
   }) async {
-    return await _lnToolkit.lnurlPay(
-      reqData: reqData,
-      userAmountSat: userAmountSat,
-      comment: comment,
-    );
+    return await _lnToolkit.lnurlPay(req: req);
   }
 
   /// Second step of LNURL-withdraw. The first step is `parse()`, which also validates the LNURL destination
@@ -275,8 +247,8 @@ class BreezSDK {
   /// This call will validate the given amount in the `request` against the parameters
   /// of the LNURL endpoint data in the `request`. If they match the endpoint requirements, the LNURL withdraw
   /// request is made. A successful result here means the endpoint started the payment.
-  Future<LnUrlWithdrawResult> lnurlWithdraw({required LnUrlWithdrawRequest request}) async {
-    return await _lnToolkit.lnurlWithdraw(request: request);
+  Future<LnUrlWithdrawResult> lnurlWithdraw({required LnUrlWithdrawRequest req}) async {
+    return await _lnToolkit.lnurlWithdraw(req: req);
   }
 
   /// Third and last step of LNURL-auth. The first step is `parse()`, which also validates the LNURL destination
@@ -287,9 +259,7 @@ class BreezSDK {
   Future<LnUrlCallbackStatus> lnurlAuth({
     required LnUrlAuthRequestData reqData,
   }) async {
-    return await _lnToolkit.lnurlAuth(
-      reqData: reqData,
-    );
+    return await _lnToolkit.lnurlAuth(reqData: reqData);
   }
 
   /* Fiat Currency API's */
@@ -309,42 +279,32 @@ class BreezSDK {
   /* On-Chain Swap API's */
 
   /// Creates a reverse swap and attempts to pay the HODL invoice
-  Future<ReverseSwapInfo> sendOnchain({
-    required int amountSat,
-    required String onchainRecipientAddress,
-    required String pairHash,
-    required int satPerVbyte,
+  Future<SendOnchainResponse> sendOnchain({
+    required SendOnchainRequest req,
   }) async {
-    final reverseSwapInfo = await _lnToolkit.sendOnchain(
-      amountSat: amountSat,
-      onchainRecipientAddress: onchainRecipientAddress,
-      pairHash: pairHash,
-      satPerVbyte: satPerVbyte,
-    );
-    await listPayments(request: const ListPaymentsRequest(filter: PaymentTypeFilter.All));
-    return reverseSwapInfo;
+    return await _lnToolkit.sendOnchain(req: req);
   }
 
   /// Onchain receive swap API
   Future<SwapInfo> receiveOnchain({
-    required ReceiveOnchainRequest reqData,
+    required ReceiveOnchainRequest req,
   }) async {
-    return await _lnToolkit.receiveOnchain(reqData: reqData);
+    return await _lnToolkit.receiveOnchain(req: req);
   }
 
   /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency
   Future<BuyBitcoinResponse> buyBitcoin({
-    required BuyBitcoinRequest reqData,
+    required BuyBitcoinRequest req,
   }) async {
-    return await _lnToolkit.buyBitcoin(reqData: reqData);
+    return await _lnToolkit.buyBitcoin(req: req);
   }
 
   /// Withdraw on-chain funds in the wallet to an external btc address
   Future<SweepResponse> sweep({
-    required SweepRequest request,
+    required SweepRequest req,
   }) async {
-    final sweepResponse = await _lnToolkit.sweep(request: request);
-    await listPayments(request: const ListPaymentsRequest(filter: PaymentTypeFilter.All));
+    final sweepResponse = await _lnToolkit.sweep(req: req);
+    await listPayments(req: const ListPaymentsRequest(filter: PaymentTypeFilter.All));
     return sweepResponse;
   }
 
@@ -354,16 +314,10 @@ class BreezSDK {
   Future<List<SwapInfo>> listRefundables() async => await _lnToolkit.listRefundables();
 
   /// Construct and broadcast a refund transaction for a failed/expired swap
-  Future<String> refund({
-    required String swapAddress,
-    required String toAddress,
-    required int satPerVbyte,
+  Future<RefundResponse> refund({
+    required RefundRequest req,
   }) async {
-    return await _lnToolkit.refund(
-      swapAddress: swapAddress,
-      toAddress: toAddress,
-      satPerVbyte: satPerVbyte,
-    );
+    return await _lnToolkit.refund(req: req);
   }
 
   /* In Progress Swap API's */
@@ -419,7 +373,7 @@ class BreezSDK {
   /// Fetch node state & payment list
   Future fetchNodeData() async {
     await nodeInfo();
-    await listPayments(request: const ListPaymentsRequest(filter: PaymentTypeFilter.All));
+    await listPayments(req: const ListPaymentsRequest(filter: PaymentTypeFilter.All));
   }
 }
 

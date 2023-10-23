@@ -28,7 +28,7 @@ use crate::grpc::{self, GetReverseRoutingNodeRequest, PaymentInformation, Regist
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lsp::LspInformation;
 use crate::models::Network::*;
-use crate::{LNInvoice, LnUrlErrorData, LnUrlWithdrawRequestData};
+use crate::{LNInvoice, LnUrlErrorData, LnUrlPayRequestData, LnUrlWithdrawRequestData};
 
 use crate::breez_services::BreezServer;
 use crate::error::{SdkError, SdkResult};
@@ -84,7 +84,7 @@ pub trait NodeAPI: Send + Sync {
     async fn send_spontaneous_payment(
         &self,
         node_id: String,
-        amount_sats: u64,
+        amount_msat: u64,
     ) -> Result<crate::models::PaymentResponse>;
     async fn start(&self) -> Result<()>;
     async fn sweep(&self, to_address: String, fee_rate_sats_per_vbyte: u32) -> Result<Vec<u8>>;
@@ -208,7 +208,7 @@ pub struct FullReverseSwapInfo {
     pub onchain_amount_sat: u64,
 
     /// User-specified feerate for the claim tx
-    pub sat_per_vbyte: u64,
+    pub sat_per_vbyte: u32,
 
     pub cache: ReverseSwapInfoCached,
 }
@@ -756,6 +756,30 @@ pub struct ReceivePaymentResponse {
     pub opening_fee_msat: Option<u64>,
 }
 
+/// Represents a send payment request.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SendPaymentRequest {
+    /// The bolt11 invoice
+    pub bolt11: String,
+    /// The amount to pay in millisatoshis
+    pub amount_msat: Option<u64>,
+}
+
+/// Represents a send spontaneous payment request.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SendSpontaneousPaymentRequest {
+    /// The node id to send this payment is
+    pub node_id: String,
+    /// The amount in millisatoshis for this payment
+    pub amount_msat: u64,
+}
+
+/// Represents a send payment response.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SendPaymentResponse {
+    pub payment: Payment,
+}
+
 #[derive(Clone)]
 pub struct StaticBackupRequest {
     pub working_dir: String,
@@ -803,6 +827,27 @@ pub struct SweepRequest {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SweepResponse {
     pub txid: Vec<u8>,
+}
+
+pub struct SendOnchainRequest {
+    pub amount_sat: u64,
+    pub onchain_recipient_address: String,
+    pub pair_hash: String,
+    pub sat_per_vbyte: u32,
+}
+
+pub struct SendOnchainResponse {
+    pub reverse_swap_info: ReverseSwapInfo,
+}
+
+pub struct RefundRequest {
+    pub swap_address: String,
+    pub to_address: String,
+    pub sat_per_vbyte: u32,
+}
+
+pub struct RefundResponse {
+    pub refund_tx_id: String,
 }
 
 /// Dynamic fee parameters offered by the LSP for opening a new channel.
@@ -1157,6 +1202,17 @@ pub struct LnUrlWithdrawRequest {
     /// Optional description that will be put in the payment request for the
     /// lnurl withdraw endpoint.
     pub description: Option<String>,
+}
+
+/// Represents a LNURL-pay request.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct LnUrlPayRequest {
+    /// The [LnUrlPayRequestData] returned by [BreezServices::parse_input]
+    pub data: LnUrlPayRequestData,
+    /// The amount in millisatoshis for this payment
+    pub amount_msat: u64,
+    /// An optional comment for this payment
+    pub comment: Option<String>,
 }
 
 /// [LnUrlCallbackStatus] specific to LNURL-withdraw, where the success case contains the invoice.

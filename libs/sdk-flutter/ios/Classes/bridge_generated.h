@@ -81,6 +81,16 @@ typedef struct wire_ListPaymentsRequest {
   uint32_t *limit;
 } wire_ListPaymentsRequest;
 
+typedef struct wire_SendPaymentRequest {
+  struct wire_uint_8_list *bolt11;
+  uint64_t *amount_msat;
+} wire_SendPaymentRequest;
+
+typedef struct wire_SendSpontaneousPaymentRequest {
+  struct wire_uint_8_list *node_id;
+  uint64_t amount_msat;
+} wire_SendSpontaneousPaymentRequest;
+
 typedef struct wire_OpeningFeeParams {
   uint64_t min_msat;
   uint32_t proportional;
@@ -110,6 +120,12 @@ typedef struct wire_LnUrlPayRequestData {
   struct wire_uint_8_list *ln_address;
 } wire_LnUrlPayRequestData;
 
+typedef struct wire_LnUrlPayRequest {
+  struct wire_LnUrlPayRequestData data;
+  uint64_t amount_msat;
+  struct wire_uint_8_list *comment;
+} wire_LnUrlPayRequest;
+
 typedef struct wire_LnUrlWithdrawRequestData {
   struct wire_uint_8_list *callback;
   struct wire_uint_8_list *k1;
@@ -131,6 +147,13 @@ typedef struct wire_LnUrlAuthRequestData {
   struct wire_uint_8_list *url;
 } wire_LnUrlAuthRequestData;
 
+typedef struct wire_SendOnchainRequest {
+  uint64_t amount_sat;
+  struct wire_uint_8_list *onchain_recipient_address;
+  struct wire_uint_8_list *pair_hash;
+  uint32_t sat_per_vbyte;
+} wire_SendOnchainRequest;
+
 typedef struct wire_ReceiveOnchainRequest {
   struct wire_OpeningFeeParams *opening_fee_params;
 } wire_ReceiveOnchainRequest;
@@ -144,6 +167,12 @@ typedef struct wire_SweepRequest {
   struct wire_uint_8_list *to_address;
   uint32_t fee_rate_sats_per_vbyte;
 } wire_SweepRequest;
+
+typedef struct wire_RefundRequest {
+  struct wire_uint_8_list *swap_address;
+  struct wire_uint_8_list *to_address;
+  uint32_t sat_per_vbyte;
+} wire_RefundRequest;
 
 typedef struct wire_OpenChannelFeeRequest {
   uint64_t amount_msat;
@@ -176,9 +205,9 @@ void wire_node_info(int64_t port_);
 
 void wire_disconnect(int64_t port_);
 
-void wire_sign_message(int64_t port_, struct wire_SignMessageRequest *request);
+void wire_sign_message(int64_t port_, struct wire_SignMessageRequest *req);
 
-void wire_check_message(int64_t port_, struct wire_CheckMessageRequest *request);
+void wire_check_message(int64_t port_, struct wire_CheckMessageRequest *req);
 
 void wire_mnemonic_to_seed(int64_t port_, struct wire_uint_8_list *phrase);
 
@@ -187,7 +216,7 @@ void wire_default_config(int64_t port_,
                          struct wire_uint_8_list *api_key,
                          struct wire_NodeConfig *node_config);
 
-void wire_static_backup(int64_t port_, struct wire_StaticBackupRequest *request);
+void wire_static_backup(int64_t port_, struct wire_StaticBackupRequest *req);
 
 void wire_breez_events_stream(int64_t port_);
 
@@ -213,24 +242,19 @@ void wire_parse_invoice(int64_t port_, struct wire_uint_8_list *invoice);
 
 void wire_parse_input(int64_t port_, struct wire_uint_8_list *input);
 
-void wire_list_payments(int64_t port_, struct wire_ListPaymentsRequest *request);
+void wire_list_payments(int64_t port_, struct wire_ListPaymentsRequest *req);
 
 void wire_payment_by_hash(int64_t port_, struct wire_uint_8_list *hash);
 
-void wire_send_payment(int64_t port_, struct wire_uint_8_list *bolt11, uint64_t *amount_msat);
+void wire_send_payment(int64_t port_, struct wire_SendPaymentRequest *req);
 
-void wire_send_spontaneous_payment(int64_t port_,
-                                   struct wire_uint_8_list *node_id,
-                                   uint64_t amount_sats);
+void wire_send_spontaneous_payment(int64_t port_, struct wire_SendSpontaneousPaymentRequest *req);
 
-void wire_receive_payment(int64_t port_, struct wire_ReceivePaymentRequest *request);
+void wire_receive_payment(int64_t port_, struct wire_ReceivePaymentRequest *req);
 
-void wire_lnurl_pay(int64_t port_,
-                    uint64_t user_amount_sat,
-                    struct wire_uint_8_list *comment,
-                    struct wire_LnUrlPayRequestData *req_data);
+void wire_lnurl_pay(int64_t port_, struct wire_LnUrlPayRequest *req);
 
-void wire_lnurl_withdraw(int64_t port_, struct wire_LnUrlWithdrawRequest *request);
+void wire_lnurl_withdraw(int64_t port_, struct wire_LnUrlWithdrawRequest *req);
 
 void wire_lnurl_auth(int64_t port_, struct wire_LnUrlAuthRequestData *req_data);
 
@@ -238,24 +262,17 @@ void wire_fetch_fiat_rates(int64_t port_);
 
 void wire_list_fiat_currencies(int64_t port_);
 
-void wire_send_onchain(int64_t port_,
-                       uint64_t amount_sat,
-                       struct wire_uint_8_list *onchain_recipient_address,
-                       struct wire_uint_8_list *pair_hash,
-                       uint64_t sat_per_vbyte);
+void wire_send_onchain(int64_t port_, struct wire_SendOnchainRequest *req);
 
-void wire_receive_onchain(int64_t port_, struct wire_ReceiveOnchainRequest *req_data);
+void wire_receive_onchain(int64_t port_, struct wire_ReceiveOnchainRequest *req);
 
-void wire_buy_bitcoin(int64_t port_, struct wire_BuyBitcoinRequest *req_data);
+void wire_buy_bitcoin(int64_t port_, struct wire_BuyBitcoinRequest *req);
 
-void wire_sweep(int64_t port_, struct wire_SweepRequest *request);
+void wire_sweep(int64_t port_, struct wire_SweepRequest *req);
 
 void wire_list_refundables(int64_t port_);
 
-void wire_refund(int64_t port_,
-                 struct wire_uint_8_list *swap_address,
-                 struct wire_uint_8_list *to_address,
-                 uint32_t sat_per_vbyte);
+void wire_refund(int64_t port_, struct wire_RefundRequest *req);
 
 void wire_in_progress_swap(int64_t port_);
 
@@ -287,7 +304,7 @@ struct wire_ListPaymentsRequest *new_box_autoadd_list_payments_request_0(void);
 
 struct wire_LnUrlAuthRequestData *new_box_autoadd_ln_url_auth_request_data_0(void);
 
-struct wire_LnUrlPayRequestData *new_box_autoadd_ln_url_pay_request_data_0(void);
+struct wire_LnUrlPayRequest *new_box_autoadd_ln_url_pay_request_0(void);
 
 struct wire_LnUrlWithdrawRequest *new_box_autoadd_ln_url_withdraw_request_0(void);
 
@@ -301,7 +318,15 @@ struct wire_ReceiveOnchainRequest *new_box_autoadd_receive_onchain_request_0(voi
 
 struct wire_ReceivePaymentRequest *new_box_autoadd_receive_payment_request_0(void);
 
+struct wire_RefundRequest *new_box_autoadd_refund_request_0(void);
+
 struct wire_ReverseSwapFeesRequest *new_box_autoadd_reverse_swap_fees_request_0(void);
+
+struct wire_SendOnchainRequest *new_box_autoadd_send_onchain_request_0(void);
+
+struct wire_SendPaymentRequest *new_box_autoadd_send_payment_request_0(void);
+
+struct wire_SendSpontaneousPaymentRequest *new_box_autoadd_send_spontaneous_payment_request_0(void);
 
 struct wire_SignMessageRequest *new_box_autoadd_sign_message_request_0(void);
 
@@ -374,14 +399,18 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_i64_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_list_payments_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_auth_request_data_0);
-    dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_pay_request_data_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_pay_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_withdraw_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_node_config_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_open_channel_fee_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_opening_fee_params_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_receive_onchain_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_receive_payment_request_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_refund_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_reverse_swap_fees_request_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_send_onchain_request_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_send_payment_request_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_send_spontaneous_payment_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_sign_message_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_static_backup_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_sweep_request_0);

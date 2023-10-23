@@ -27,13 +27,13 @@ pub extern "C" fn wire_disconnect(port_: i64) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_sign_message(port_: i64, request: *mut wire_SignMessageRequest) {
-    wire_sign_message_impl(port_, request)
+pub extern "C" fn wire_sign_message(port_: i64, req: *mut wire_SignMessageRequest) {
+    wire_sign_message_impl(port_, req)
 }
 
 #[no_mangle]
-pub extern "C" fn wire_check_message(port_: i64, request: *mut wire_CheckMessageRequest) {
-    wire_check_message_impl(port_, request)
+pub extern "C" fn wire_check_message(port_: i64, req: *mut wire_CheckMessageRequest) {
+    wire_check_message_impl(port_, req)
 }
 
 #[no_mangle]
@@ -52,8 +52,8 @@ pub extern "C" fn wire_default_config(
 }
 
 #[no_mangle]
-pub extern "C" fn wire_static_backup(port_: i64, request: *mut wire_StaticBackupRequest) {
-    wire_static_backup_impl(port_, request)
+pub extern "C" fn wire_static_backup(port_: i64, req: *mut wire_StaticBackupRequest) {
+    wire_static_backup_impl(port_, req)
 }
 
 #[no_mangle]
@@ -117,8 +117,8 @@ pub extern "C" fn wire_parse_input(port_: i64, input: *mut wire_uint_8_list) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_list_payments(port_: i64, request: *mut wire_ListPaymentsRequest) {
-    wire_list_payments_impl(port_, request)
+pub extern "C" fn wire_list_payments(port_: i64, req: *mut wire_ListPaymentsRequest) {
+    wire_list_payments_impl(port_, req)
 }
 
 #[no_mangle]
@@ -127,41 +127,31 @@ pub extern "C" fn wire_payment_by_hash(port_: i64, hash: *mut wire_uint_8_list) 
 }
 
 #[no_mangle]
-pub extern "C" fn wire_send_payment(
-    port_: i64,
-    bolt11: *mut wire_uint_8_list,
-    amount_msat: *mut u64,
-) {
-    wire_send_payment_impl(port_, bolt11, amount_msat)
+pub extern "C" fn wire_send_payment(port_: i64, req: *mut wire_SendPaymentRequest) {
+    wire_send_payment_impl(port_, req)
 }
 
 #[no_mangle]
 pub extern "C" fn wire_send_spontaneous_payment(
     port_: i64,
-    node_id: *mut wire_uint_8_list,
-    amount_sats: u64,
+    req: *mut wire_SendSpontaneousPaymentRequest,
 ) {
-    wire_send_spontaneous_payment_impl(port_, node_id, amount_sats)
+    wire_send_spontaneous_payment_impl(port_, req)
 }
 
 #[no_mangle]
-pub extern "C" fn wire_receive_payment(port_: i64, request: *mut wire_ReceivePaymentRequest) {
-    wire_receive_payment_impl(port_, request)
+pub extern "C" fn wire_receive_payment(port_: i64, req: *mut wire_ReceivePaymentRequest) {
+    wire_receive_payment_impl(port_, req)
 }
 
 #[no_mangle]
-pub extern "C" fn wire_lnurl_pay(
-    port_: i64,
-    user_amount_sat: u64,
-    comment: *mut wire_uint_8_list,
-    req_data: *mut wire_LnUrlPayRequestData,
-) {
-    wire_lnurl_pay_impl(port_, user_amount_sat, comment, req_data)
+pub extern "C" fn wire_lnurl_pay(port_: i64, req: *mut wire_LnUrlPayRequest) {
+    wire_lnurl_pay_impl(port_, req)
 }
 
 #[no_mangle]
-pub extern "C" fn wire_lnurl_withdraw(port_: i64, request: *mut wire_LnUrlWithdrawRequest) {
-    wire_lnurl_withdraw_impl(port_, request)
+pub extern "C" fn wire_lnurl_withdraw(port_: i64, req: *mut wire_LnUrlWithdrawRequest) {
+    wire_lnurl_withdraw_impl(port_, req)
 }
 
 #[no_mangle]
@@ -180,35 +170,23 @@ pub extern "C" fn wire_list_fiat_currencies(port_: i64) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_send_onchain(
-    port_: i64,
-    amount_sat: u64,
-    onchain_recipient_address: *mut wire_uint_8_list,
-    pair_hash: *mut wire_uint_8_list,
-    sat_per_vbyte: u64,
-) {
-    wire_send_onchain_impl(
-        port_,
-        amount_sat,
-        onchain_recipient_address,
-        pair_hash,
-        sat_per_vbyte,
-    )
+pub extern "C" fn wire_send_onchain(port_: i64, req: *mut wire_SendOnchainRequest) {
+    wire_send_onchain_impl(port_, req)
 }
 
 #[no_mangle]
-pub extern "C" fn wire_receive_onchain(port_: i64, req_data: *mut wire_ReceiveOnchainRequest) {
-    wire_receive_onchain_impl(port_, req_data)
+pub extern "C" fn wire_receive_onchain(port_: i64, req: *mut wire_ReceiveOnchainRequest) {
+    wire_receive_onchain_impl(port_, req)
 }
 
 #[no_mangle]
-pub extern "C" fn wire_buy_bitcoin(port_: i64, req_data: *mut wire_BuyBitcoinRequest) {
-    wire_buy_bitcoin_impl(port_, req_data)
+pub extern "C" fn wire_buy_bitcoin(port_: i64, req: *mut wire_BuyBitcoinRequest) {
+    wire_buy_bitcoin_impl(port_, req)
 }
 
 #[no_mangle]
-pub extern "C" fn wire_sweep(port_: i64, request: *mut wire_SweepRequest) {
-    wire_sweep_impl(port_, request)
+pub extern "C" fn wire_sweep(port_: i64, req: *mut wire_SweepRequest) {
+    wire_sweep_impl(port_, req)
 }
 
 #[no_mangle]
@@ -217,13 +195,8 @@ pub extern "C" fn wire_list_refundables(port_: i64) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_refund(
-    port_: i64,
-    swap_address: *mut wire_uint_8_list,
-    to_address: *mut wire_uint_8_list,
-    sat_per_vbyte: u32,
-) {
-    wire_refund_impl(port_, swap_address, to_address, sat_per_vbyte)
+pub extern "C" fn wire_refund(port_: i64, req: *mut wire_RefundRequest) {
+    wire_refund_impl(port_, req)
 }
 
 #[no_mangle]
@@ -304,8 +277,8 @@ pub extern "C" fn new_box_autoadd_ln_url_auth_request_data_0() -> *mut wire_LnUr
 }
 
 #[no_mangle]
-pub extern "C" fn new_box_autoadd_ln_url_pay_request_data_0() -> *mut wire_LnUrlPayRequestData {
-    support::new_leak_box_ptr(wire_LnUrlPayRequestData::new_with_null_ptr())
+pub extern "C" fn new_box_autoadd_ln_url_pay_request_0() -> *mut wire_LnUrlPayRequest {
+    support::new_leak_box_ptr(wire_LnUrlPayRequest::new_with_null_ptr())
 }
 
 #[no_mangle]
@@ -339,9 +312,30 @@ pub extern "C" fn new_box_autoadd_receive_payment_request_0() -> *mut wire_Recei
 }
 
 #[no_mangle]
+pub extern "C" fn new_box_autoadd_refund_request_0() -> *mut wire_RefundRequest {
+    support::new_leak_box_ptr(wire_RefundRequest::new_with_null_ptr())
+}
+
+#[no_mangle]
 pub extern "C" fn new_box_autoadd_reverse_swap_fees_request_0() -> *mut wire_ReverseSwapFeesRequest
 {
     support::new_leak_box_ptr(wire_ReverseSwapFeesRequest::new_with_null_ptr())
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_autoadd_send_onchain_request_0() -> *mut wire_SendOnchainRequest {
+    support::new_leak_box_ptr(wire_SendOnchainRequest::new_with_null_ptr())
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_autoadd_send_payment_request_0() -> *mut wire_SendPaymentRequest {
+    support::new_leak_box_ptr(wire_SendPaymentRequest::new_with_null_ptr())
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_autoadd_send_spontaneous_payment_request_0(
+) -> *mut wire_SendSpontaneousPaymentRequest {
+    support::new_leak_box_ptr(wire_SendSpontaneousPaymentRequest::new_with_null_ptr())
 }
 
 #[no_mangle]
@@ -441,10 +435,10 @@ impl Wire2Api<LnUrlAuthRequestData> for *mut wire_LnUrlAuthRequestData {
         Wire2Api::<LnUrlAuthRequestData>::wire2api(*wrap).into()
     }
 }
-impl Wire2Api<LnUrlPayRequestData> for *mut wire_LnUrlPayRequestData {
-    fn wire2api(self) -> LnUrlPayRequestData {
+impl Wire2Api<LnUrlPayRequest> for *mut wire_LnUrlPayRequest {
+    fn wire2api(self) -> LnUrlPayRequest {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
-        Wire2Api::<LnUrlPayRequestData>::wire2api(*wrap).into()
+        Wire2Api::<LnUrlPayRequest>::wire2api(*wrap).into()
     }
 }
 impl Wire2Api<LnUrlWithdrawRequest> for *mut wire_LnUrlWithdrawRequest {
@@ -483,10 +477,34 @@ impl Wire2Api<ReceivePaymentRequest> for *mut wire_ReceivePaymentRequest {
         Wire2Api::<ReceivePaymentRequest>::wire2api(*wrap).into()
     }
 }
+impl Wire2Api<RefundRequest> for *mut wire_RefundRequest {
+    fn wire2api(self) -> RefundRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<RefundRequest>::wire2api(*wrap).into()
+    }
+}
 impl Wire2Api<ReverseSwapFeesRequest> for *mut wire_ReverseSwapFeesRequest {
     fn wire2api(self) -> ReverseSwapFeesRequest {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
         Wire2Api::<ReverseSwapFeesRequest>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<SendOnchainRequest> for *mut wire_SendOnchainRequest {
+    fn wire2api(self) -> SendOnchainRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<SendOnchainRequest>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<SendPaymentRequest> for *mut wire_SendPaymentRequest {
+    fn wire2api(self) -> SendPaymentRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<SendPaymentRequest>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<SendSpontaneousPaymentRequest> for *mut wire_SendSpontaneousPaymentRequest {
+    fn wire2api(self) -> SendSpontaneousPaymentRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<SendSpontaneousPaymentRequest>::wire2api(*wrap).into()
     }
 }
 impl Wire2Api<SignMessageRequest> for *mut wire_SignMessageRequest {
@@ -591,6 +609,15 @@ impl Wire2Api<LnUrlAuthRequestData> for wire_LnUrlAuthRequestData {
         }
     }
 }
+impl Wire2Api<LnUrlPayRequest> for wire_LnUrlPayRequest {
+    fn wire2api(self) -> LnUrlPayRequest {
+        LnUrlPayRequest {
+            data: self.data.wire2api(),
+            amount_msat: self.amount_msat.wire2api(),
+            comment: self.comment.wire2api(),
+        }
+    }
+}
 impl Wire2Api<LnUrlPayRequestData> for wire_LnUrlPayRequestData {
     fn wire2api(self) -> LnUrlPayRequestData {
         LnUrlPayRequestData {
@@ -680,10 +707,45 @@ impl Wire2Api<ReceivePaymentRequest> for wire_ReceivePaymentRequest {
         }
     }
 }
+impl Wire2Api<RefundRequest> for wire_RefundRequest {
+    fn wire2api(self) -> RefundRequest {
+        RefundRequest {
+            swap_address: self.swap_address.wire2api(),
+            to_address: self.to_address.wire2api(),
+            sat_per_vbyte: self.sat_per_vbyte.wire2api(),
+        }
+    }
+}
 impl Wire2Api<ReverseSwapFeesRequest> for wire_ReverseSwapFeesRequest {
     fn wire2api(self) -> ReverseSwapFeesRequest {
         ReverseSwapFeesRequest {
             send_amount_sat: self.send_amount_sat.wire2api(),
+        }
+    }
+}
+impl Wire2Api<SendOnchainRequest> for wire_SendOnchainRequest {
+    fn wire2api(self) -> SendOnchainRequest {
+        SendOnchainRequest {
+            amount_sat: self.amount_sat.wire2api(),
+            onchain_recipient_address: self.onchain_recipient_address.wire2api(),
+            pair_hash: self.pair_hash.wire2api(),
+            sat_per_vbyte: self.sat_per_vbyte.wire2api(),
+        }
+    }
+}
+impl Wire2Api<SendPaymentRequest> for wire_SendPaymentRequest {
+    fn wire2api(self) -> SendPaymentRequest {
+        SendPaymentRequest {
+            bolt11: self.bolt11.wire2api(),
+            amount_msat: self.amount_msat.wire2api(),
+        }
+    }
+}
+impl Wire2Api<SendSpontaneousPaymentRequest> for wire_SendSpontaneousPaymentRequest {
+    fn wire2api(self) -> SendSpontaneousPaymentRequest {
+        SendSpontaneousPaymentRequest {
+            node_id: self.node_id.wire2api(),
+            amount_msat: self.amount_msat.wire2api(),
         }
     }
 }
@@ -786,6 +848,14 @@ pub struct wire_LnUrlAuthRequestData {
 
 #[repr(C)]
 #[derive(Clone)]
+pub struct wire_LnUrlPayRequest {
+    data: wire_LnUrlPayRequestData,
+    amount_msat: u64,
+    comment: *mut wire_uint_8_list,
+}
+
+#[repr(C)]
+#[derive(Clone)]
 pub struct wire_LnUrlPayRequestData {
     callback: *mut wire_uint_8_list,
     min_sendable: u64,
@@ -852,8 +922,39 @@ pub struct wire_ReceivePaymentRequest {
 
 #[repr(C)]
 #[derive(Clone)]
+pub struct wire_RefundRequest {
+    swap_address: *mut wire_uint_8_list,
+    to_address: *mut wire_uint_8_list,
+    sat_per_vbyte: u32,
+}
+
+#[repr(C)]
+#[derive(Clone)]
 pub struct wire_ReverseSwapFeesRequest {
     send_amount_sat: *mut u64,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_SendOnchainRequest {
+    amount_sat: u64,
+    onchain_recipient_address: *mut wire_uint_8_list,
+    pair_hash: *mut wire_uint_8_list,
+    sat_per_vbyte: u32,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_SendPaymentRequest {
+    bolt11: *mut wire_uint_8_list,
+    amount_msat: *mut u64,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_SendSpontaneousPaymentRequest {
+    node_id: *mut wire_uint_8_list,
+    amount_msat: u64,
 }
 
 #[repr(C)]
@@ -1032,6 +1133,22 @@ impl Default for wire_LnUrlAuthRequestData {
     }
 }
 
+impl NewWithNullPtr for wire_LnUrlPayRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            data: Default::default(),
+            amount_msat: Default::default(),
+            comment: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_LnUrlPayRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
 impl NewWithNullPtr for wire_LnUrlPayRequestData {
     fn new_with_null_ptr() -> Self {
         Self {
@@ -1178,6 +1295,22 @@ impl Default for wire_ReceivePaymentRequest {
     }
 }
 
+impl NewWithNullPtr for wire_RefundRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            swap_address: core::ptr::null_mut(),
+            to_address: core::ptr::null_mut(),
+            sat_per_vbyte: Default::default(),
+        }
+    }
+}
+
+impl Default for wire_RefundRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
 impl NewWithNullPtr for wire_ReverseSwapFeesRequest {
     fn new_with_null_ptr() -> Self {
         Self {
@@ -1187,6 +1320,53 @@ impl NewWithNullPtr for wire_ReverseSwapFeesRequest {
 }
 
 impl Default for wire_ReverseSwapFeesRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_SendOnchainRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            amount_sat: Default::default(),
+            onchain_recipient_address: core::ptr::null_mut(),
+            pair_hash: core::ptr::null_mut(),
+            sat_per_vbyte: Default::default(),
+        }
+    }
+}
+
+impl Default for wire_SendOnchainRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_SendPaymentRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            bolt11: core::ptr::null_mut(),
+            amount_msat: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_SendPaymentRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_SendSpontaneousPaymentRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            node_id: core::ptr::null_mut(),
+            amount_msat: Default::default(),
+        }
+    }
+}
+
+impl Default for wire_SendSpontaneousPaymentRequest {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }

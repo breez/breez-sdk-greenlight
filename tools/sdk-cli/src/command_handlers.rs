@@ -5,9 +5,10 @@ use anyhow::{anyhow, Error, Result};
 use breez_sdk_core::InputType::{LnUrlAuth, LnUrlPay, LnUrlWithdraw};
 use breez_sdk_core::{
     parse, BreezEvent, BreezServices, BuyBitcoinRequest, CheckMessageRequest, EventListener,
-    GreenlightCredentials, ListPaymentsRequest, LnUrlWithdrawRequest, PaymentTypeFilter,
-    ReceiveOnchainRequest, ReceivePaymentRequest, ReverseSwapFeesRequest, SignMessageRequest,
-    StaticBackupRequest, SweepRequest,
+    GreenlightCredentials, ListPaymentsRequest, LnUrlPayRequest, LnUrlWithdrawRequest,
+    PaymentTypeFilter, ReceiveOnchainRequest, ReceivePaymentRequest, RefundRequest,
+    ReverseSwapFeesRequest, SendOnchainRequest, SendPaymentRequest, SendSpontaneousPaymentRequest,
+    SignMessageRequest, StaticBackupRequest, SweepRequest,
 };
 use breez_sdk_core::{Config, GreenlightNodeConfig, NodeConfig};
 use once_cell::sync::OnceCell;
@@ -146,7 +147,7 @@ pub(crate) async fn handle_command(
         Commands::SendOnchain {
             amount_sat,
             onchain_recipient_address,
-            sat_per_vbyte: sat_per_byte,
+            sat_per_vbyte,
         } => {
             let pair_info = sdk()?
                 .fetch_reverse_swap_fees(ReverseSwapFeesRequest {
@@ -154,15 +155,16 @@ pub(crate) async fn handle_command(
                 })
                 .await
                 .map_err(|e| anyhow!("Failed to fetch reverse swap fee infos: {e}"))?;
+
             let rev_swap_res = sdk()?
-                .send_onchain(
+                .send_onchain(SendOnchainRequest {
                     amount_sat,
                     onchain_recipient_address,
-                    pair_info.fees_hash,
-                    sat_per_byte,
-                )
+                    pair_hash: pair_info.fees_hash,
+                    sat_per_vbyte,
+                })
                 .await?;
-            serde_json::to_string_pretty(&rev_swap_res).map_err(|e| e.into())
+            serde_json::to_string_pretty(&rev_swap_res.reverse_swap_info).map_err(|e| e.into())
         }
         Commands::FetchOnchainFees { send_amount_sat } => {
             let pair_info = sdk()?
@@ -185,12 +187,25 @@ pub(crate) async fn handle_command(
             bolt11,
             amount_msat,
         } => {
-            let payment = sdk()?.send_payment(bolt11, amount_msat).await?;
+            let payment = sdk()?
+                .send_payment(SendPaymentRequest {
+                    bolt11,
+                    amount_msat,
+                })
+                .await?;
             serde_json::to_string_pretty(&payment).map_err(|e| e.into())
         }
-        Commands::SendSpontaneousPayment { node_id, amount } => {
-            let payment = sdk()?.send_spontaneous_payment(node_id, amount).await?;
-            serde_json::to_string_pretty(&payment).map_err(|e| e.into())
+        Commands::SendSpontaneousPayment {
+            node_id,
+            amount_msat,
+        } => {
+            let response = sdk()?
+                .send_spontaneous_payment(SendSpontaneousPaymentRequest {
+                    node_id,
+                    amount_msat,
+                })
+                .await?;
+            serde_json::to_string_pretty(&response.payment).map_err(|e| e.into())
         }
         Commands::ListPayments {
             from_timestamp,
@@ -288,9 +303,13 @@ pub(crate) async fn handle_command(
             sat_per_vbyte,
         } => {
             let res = sdk()?
-                .refund(swap_address, to_address, sat_per_vbyte)
+                .refund(RefundRequest {
+                    swap_address,
+                    to_address,
+                    sat_per_vbyte,
+                })
                 .await?;
-            Ok(format!("Refund tx: {}", res))
+            Ok(format!("Refund tx: {}", res.refund_tx_id))
         }
         Commands::SignMessage { message } => {
             let req = SignMessageRequest { message };
@@ -313,14 +332,17 @@ pub(crate) async fn handle_command(
         Commands::LnurlPay { lnurl } => match parse(&lnurl).await? {
             LnUrlPay { data: pd } => {
                 let prompt = format!(
-                    "Amount to pay in sats (min {} sat, max {} sat: ",
-                    pd.min_sendable / 1000,
-                    pd.max_sendable / 1000
+                    "Amount to pay in millisatoshi (min {} msat, max {} msat: ",
+                    pd.min_sendable, pd.max_sendable
                 );
 
-                let amount_sat = rl.readline(&prompt)?;
+                let amount_msat = rl.readline(&prompt)?;
                 let pay_res = sdk()?
-                    .lnurl_pay(amount_sat.parse::<u64>()?, None, pd)
+                    .lnurl_pay(LnUrlPayRequest {
+                        data: pd,
+                        amount_msat: amount_msat.parse::<u64>()?,
+                        comment: None,
+                    })
                     .await?;
                 //show_results(pay_res);
                 serde_json::to_string_pretty(&pay_res).map_err(|e| e.into())

@@ -115,14 +115,14 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
     @ReactMethod
     fun staticBackup(
-        request: ReadableMap,
+        req: ReadableMap,
         promise: Promise,
     ) {
         executor.execute {
             try {
                 val staticBackupRequest =
-                    asStaticBackupRequest(request) ?: run {
-                        throw SdkException.Generic("Missing mandatory field request of type StaticBackupRequest")
+                    asStaticBackupRequest(req) ?: run {
+                        throw SdkException.Generic("Missing mandatory field req of type StaticBackupRequest")
                     }
                 val res = staticBackup(staticBackupRequest)
                 promise.resolve(readableMapOf(res))
@@ -199,13 +199,16 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
     @ReactMethod
     fun sendSpontaneousPayment(
-        nodeId: String,
-        amountSats: Double,
+        req: ReadableMap,
         promise: Promise,
     ) {
         executor.execute {
             try {
-                val res = getBreezServices().sendSpontaneousPayment(nodeId, amountSats.toULong())
+                val sendSpontaneousPaymentRequest =
+                    asSendSpontaneousPaymentRequest(req) ?: run {
+                        throw SdkException.Generic("Missing mandatory field req of type SendSpontaneousPaymentRequest")
+                    }
+                val res = getBreezServices().sendSpontaneousPayment(sendSpontaneousPaymentRequest)
                 promise.resolve(readableMapOf(res))
             } catch (e: SdkException) {
                 promise.reject(e.javaClass.simpleName, e.message, e)
@@ -215,14 +218,14 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
     @ReactMethod
     fun receivePayment(
-        request: ReadableMap,
+        req: ReadableMap,
         promise: Promise,
     ) {
         executor.execute {
             try {
                 val receivePaymentRequest =
-                    asReceivePaymentRequest(request) ?: run {
-                        throw SdkException.Generic("Missing mandatory field request of type ReceivePaymentRequest")
+                    asReceivePaymentRequest(req) ?: run {
+                        throw SdkException.Generic("Missing mandatory field req of type ReceivePaymentRequest")
                     }
                 val res = getBreezServices().receivePayment(receivePaymentRequest)
                 promise.resolve(readableMapOf(res))
@@ -234,19 +237,13 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
     @ReactMethod
     fun payLnurl(
-        reqData: ReadableMap,
-        amountSats: Double,
-        comment: String,
+        req: ReadableMap,
         promise: Promise,
     ) {
         executor.execute {
             try {
-                val lnUrlPayRequestData =
-                    asLnUrlPayRequestData(reqData) ?: run {
-                        throw SdkException.Generic("Missing mandatory field reqData of type LnUrlPayRequestData")
-                    }
-                val commentTmp = comment.takeUnless { it.isEmpty() }
-                val res = getBreezServices().payLnurl(lnUrlPayRequestData, amountSats.toULong(), commentTmp)
+                val lnUrlPayRequest = asLnUrlPayRequest(req) ?: run { throw SdkException.Generic("Missing mandatory field req of type LnUrlPayRequest") }
+                val res = getBreezServices().payLnurl(lnUrlPayRequest)
                 promise.resolve(readableMapOf(res))
             } catch (e: SdkException) {
                 promise.reject(e.javaClass.simpleName, e.message, e)
@@ -256,14 +253,14 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
     @ReactMethod
     fun withdrawLnurl(
-        request: ReadableMap,
+        req: ReadableMap,
         promise: Promise,
     ) {
         executor.execute {
             try {
                 val lnUrlWithdrawRequest =
-                    asLnUrlWithdrawRequest(request) ?: run {
-                        throw SdkException.Generic("Missing mandatory field request of type LnUrlWithdrawRequest")
+                    asLnUrlWithdrawRequest(req) ?: run {
+                        throw SdkException.Generic("Missing mandatory field req of type LnUrlWithdrawRequest")
                     }
                 val res = getBreezServices().withdrawLnurl(lnUrlWithdrawRequest)
                 promise.resolve(readableMapOf(res))
@@ -306,14 +303,14 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
     @ReactMethod
     fun signMessage(
-        request: ReadableMap,
+        req: ReadableMap,
         promise: Promise,
     ) {
         executor.execute {
             try {
                 val signMessageRequest =
-                    asSignMessageRequest(request) ?: run {
-                        throw SdkException.Generic("Missing mandatory field request of type SignMessageRequest")
+                    asSignMessageRequest(req) ?: run {
+                        throw SdkException.Generic("Missing mandatory field req of type SignMessageRequest")
                     }
                 val res = getBreezServices().signMessage(signMessageRequest)
                 promise.resolve(readableMapOf(res))
@@ -325,14 +322,14 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
     @ReactMethod
     fun checkMessage(
-        request: ReadableMap,
+        req: ReadableMap,
         promise: Promise,
     ) {
         executor.execute {
             try {
                 val checkMessageRequest =
-                    asCheckMessageRequest(request) ?: run {
-                        throw SdkException.Generic("Missing mandatory field request of type CheckMessageRequest")
+                    asCheckMessageRequest(req) ?: run {
+                        throw SdkException.Generic("Missing mandatory field req of type CheckMessageRequest")
                     }
                 val res = getBreezServices().checkMessage(checkMessageRequest)
                 promise.resolve(readableMapOf(res))
@@ -383,14 +380,14 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
     @ReactMethod
     fun listPayments(
-        request: ReadableMap,
+        req: ReadableMap,
         promise: Promise,
     ) {
         executor.execute {
             try {
                 val listPaymentsRequest =
-                    asListPaymentsRequest(request) ?: run {
-                        throw SdkException.Generic("Missing mandatory field request of type ListPaymentsRequest")
+                    asListPaymentsRequest(req) ?: run {
+                        throw SdkException.Generic("Missing mandatory field req of type ListPaymentsRequest")
                     }
                 val res = getBreezServices().listPayments(listPaymentsRequest)
                 promise.resolve(readableArrayOf(res))
@@ -402,12 +399,12 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
     @ReactMethod
     fun sweep(
-        request: ReadableMap,
+        req: ReadableMap,
         promise: Promise,
     ) {
         executor.execute {
             try {
-                val sweepRequest = asSweepRequest(request) ?: run { throw SdkException.Generic("Missing mandatory field request of type SweepRequest") }
+                val sweepRequest = asSweepRequest(req) ?: run { throw SdkException.Generic("Missing mandatory field req of type SweepRequest") }
                 val res = getBreezServices().sweep(sweepRequest)
                 promise.resolve(readableMapOf(res))
             } catch (e: SdkException) {
@@ -582,15 +579,14 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
     @ReactMethod
     fun refund(
-        swapAddress: String,
-        toAddress: String,
-        satPerVbyte: Int,
+        req: ReadableMap,
         promise: Promise,
     ) {
         executor.execute {
             try {
-                val res = getBreezServices().refund(swapAddress, toAddress, satPerVbyte.toUInt())
-                promise.resolve(res)
+                val refundRequest = asRefundRequest(req) ?: run { throw SdkException.Generic("Missing mandatory field req of type RefundRequest") }
+                val res = getBreezServices().refund(refundRequest)
+                promise.resolve(readableMapOf(res))
             } catch (e: SdkException) {
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
@@ -630,15 +626,16 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
     @ReactMethod
     fun sendOnchain(
-        amountSat: Double,
-        onchainRecipientAddress: String,
-        pairHash: String,
-        satPerVbyte: Double,
+        req: ReadableMap,
         promise: Promise,
     ) {
         executor.execute {
             try {
-                val res = getBreezServices().sendOnchain(amountSat.toULong(), onchainRecipientAddress, pairHash, satPerVbyte.toULong())
+                val sendOnchainRequest =
+                    asSendOnchainRequest(req) ?: run {
+                        throw SdkException.Generic("Missing mandatory field req of type SendOnchainRequest")
+                    }
+                val res = getBreezServices().sendOnchain(sendOnchainRequest)
                 promise.resolve(readableMapOf(res))
             } catch (e: SdkException) {
                 promise.reject(e.javaClass.simpleName, e.message, e)

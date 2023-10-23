@@ -77,7 +77,7 @@ pub(crate) enum Commands {
         amount_sat: u64,
         onchain_recipient_address: String,
         /// The fee rate for the claim transaction
-        sat_per_vbyte: u64,
+        sat_per_vbyte: u32,
     },
 
     /// Get the current fees for a potential new reverse swap
@@ -98,7 +98,7 @@ pub(crate) enum Commands {
     },
 
     /// Send a spontaneous (keysend) payment
-    SendSpontaneousPayment { node_id: String, amount: u64 },
+    SendSpontaneousPayment { node_id: String, amount_msat: u64 },
 
     /// Sign a message with the node's private key
     SignMessage { message: String },

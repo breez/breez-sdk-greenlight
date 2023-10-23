@@ -32,7 +32,6 @@ use crate::grpc::information_client::InformationClient;
 use crate::grpc::signer_client::SignerClient;
 use crate::grpc::swapper_client::SwapperClient;
 use crate::grpc::PaymentInformation;
-use crate::input_parser::LnUrlPayRequestData;
 use crate::invoice::{add_lsp_routing_hints, parse_invoice, LNInvoice, RouteHint, RouteHintHop};
 use crate::lnurl::auth::perform_lnurl_auth;
 use crate::lnurl::pay::model::SuccessAction::Aes;
@@ -223,20 +222,11 @@ impl BreezServices {
     ///
     /// Calling `send_payment` ensures that the payment is not already completed, if so it will result in an error.
     /// If the invoice doesn't specify an amount, the amount is taken from the `amount_msat` arg.
-    ///
-    /// # Arguments
-    ///
-    /// * `bolt11` - The bolt11 invoice
-    /// * `amount_msat` - The amount to pay in millisatoshis
-    pub async fn send_payment(
-        &self,
-        bolt11: String,
-        amount_msat: Option<u64>,
-    ) -> SdkResult<Payment> {
+    pub async fn send_payment(&self, req: SendPaymentRequest) -> SdkResult<SendPaymentResponse> {
         self.start_node().await?;
-        let parsed_invoice = parse_invoice(bolt11.as_str())?;
+        let parsed_invoice = parse_invoice(req.bolt11.as_str())?;
         let invoice_amount_msat = parsed_invoice.amount_msat.unwrap_or_default();
-        let provided_amount_msat = amount_msat.unwrap_or_default();
+        let provided_amount_msat = req.amount_msat.unwrap_or_default();
 
         // Ensure amount is provided for zero invoice
         if provided_amount_msat == 0 && invoice_amount_msat == 0 {
@@ -262,57 +252,55 @@ impl BreezServices {
             None => {
                 let payment_res = self
                     .node_api
-                    .send_payment(bolt11.clone(), amount_msat)
+                    .send_payment(req.bolt11.clone(), req.amount_msat)
                     .await;
-                self.on_payment_completed(
-                    parsed_invoice.payee_pubkey.clone(),
-                    Some(parsed_invoice),
-                    payment_res,
-                )
-                .await
+                let payment = self
+                    .on_payment_completed(
+                        parsed_invoice.payee_pubkey.clone(),
+                        Some(parsed_invoice),
+                        payment_res,
+                    )
+                    .await?;
+                Ok(SendPaymentResponse { payment })
             }
         }
     }
 
     /// Pay directly to a node id using keysend
-    ///
-    /// # Arguments
-    ///
-    /// * `node_id` - The destination node_id
-    /// * `amount_sats` - The amount to pay in satoshis
     pub async fn send_spontaneous_payment(
         &self,
-        node_id: String,
-        amount_sats: u64,
-    ) -> SdkResult<Payment> {
+        req: SendSpontaneousPaymentRequest,
+    ) -> SdkResult<SendPaymentResponse> {
         self.start_node().await?;
         let payment_res = self
             .node_api
-            .send_spontaneous_payment(node_id.clone(), amount_sats)
+            .send_spontaneous_payment(req.node_id.clone(), req.amount_msat)
             .await;
-        self.on_payment_completed(node_id, None, payment_res).await
+        let payment = self
+            .on_payment_completed(req.node_id, None, payment_res)
+            .await?;
+        Ok(SendPaymentResponse { payment })
     }
 
     /// Second step of LNURL-pay. The first step is `parse()`, which also validates the LNURL destination
     /// and generates the `LnUrlPayRequestData` payload needed here.
     ///
-    /// This call will validate the given `user_amount_sat` and `comment` against the parameters
+    /// This call will validate the `amount_msat` and `comment` parameters of `req` against the parameters
     /// of the LNURL endpoint (`req_data`). If they match the endpoint requirements, the LNURL payment
     /// is made.
     ///
     /// This method will return an [anyhow::Error] when any validation check fails.
-    pub async fn lnurl_pay(
-        &self,
-        user_amount_sat: u64,
-        comment: Option<String>,
-        req_data: LnUrlPayRequestData,
-    ) -> Result<LnUrlPayResult> {
-        match validate_lnurl_pay(user_amount_sat, comment, req_data.clone()).await? {
+    pub async fn lnurl_pay(&self, req: LnUrlPayRequest) -> Result<LnUrlPayResult> {
+        match validate_lnurl_pay(req.amount_msat, req.comment, req.data.clone()).await? {
             ValidatedCallbackResponse::EndpointError { data: e } => {
                 Ok(LnUrlPayResult::EndpointError { data: e })
             }
             ValidatedCallbackResponse::EndpointSuccess { data: cb } => {
-                let payment = self.send_payment(cb.pr, None).await?;
+                let pay_req = SendPaymentRequest {
+                    bolt11: cb.pr,
+                    amount_msat: None,
+                };
+                let payment = self.send_payment(pay_req).await?.payment;
                 let details = match &payment.details {
                     PaymentDetails::ClosedChannel { .. } => {
                         return Err(anyhow!("Payment lookup found unexpected payment type"));
@@ -345,8 +333,8 @@ impl BreezServices {
                 self.persister.insert_lnurl_payment_external_info(
                     &details.payment_hash,
                     maybe_sa_processed.as_ref(),
-                    Some(req_data.metadata_str),
-                    req_data.ln_address,
+                    Some(req.data.metadata_str),
+                    req.data.ln_address,
                     None,
                 )?;
 
@@ -363,14 +351,11 @@ impl BreezServices {
     /// This call will validate the given `amount_msat` against the parameters
     /// of the LNURL endpoint (`data`). If they match the endpoint requirements, the LNURL withdraw
     /// request is made. A successful result here means the endpoint started the payment.
-    pub async fn lnurl_withdraw(
-        &self,
-        request: LnUrlWithdrawRequest,
-    ) -> Result<LnUrlWithdrawResult> {
+    pub async fn lnurl_withdraw(&self, req: LnUrlWithdrawRequest) -> Result<LnUrlWithdrawResult> {
         let invoice = self
             .receive_payment(ReceivePaymentRequest {
-                amount_msat: request.amount_msat,
-                description: request.description.unwrap_or_default(),
+                amount_msat: req.amount_msat,
+                description: req.description.unwrap_or_default(),
                 preimage: None,
                 opening_fee_params: None,
                 use_description_hash: Some(false),
@@ -381,8 +366,8 @@ impl BreezServices {
             .map_err(|_| anyhow!("Failed to receive payment"))?
             .ln_invoice;
 
-        let lnurl_w_endpoint = request.data.callback.clone();
-        let res = validate_lnurl_withdraw(request.data, invoice).await?;
+        let lnurl_w_endpoint = req.data.callback.clone();
+        let res = validate_lnurl_withdraw(req.data, invoice).await?;
 
         if let LnUrlWithdrawResult::Ok { ref data } = res {
             // If endpoint was successfully called, store the LNURL-withdraw endpoint URL as metadata linked to the invoice
@@ -411,15 +396,11 @@ impl BreezServices {
     /// This also works when the node doesn't have any channels and need inbound liquidity.
     /// In such case when the invoice is paid a new zero-conf channel will be open by the LSP,
     /// providing inbound liquidity and the payment will be routed via this new channel.
-    ///
-    /// # Arguments
-    ///
-    /// * `request` - Request parameters for receiving a payment
     pub async fn receive_payment(
         &self,
-        request: ReceivePaymentRequest,
+        req: ReceivePaymentRequest,
     ) -> SdkResult<ReceivePaymentResponse> {
-        self.payment_receiver.receive_payment(request).await
+        self.payment_receiver.receive_payment(req).await
     }
 
     /// Retrieve the node state from the persistent storage.
@@ -435,20 +416,17 @@ impl BreezServices {
 
     /// Sign given message with the private key of the node id. Returns a zbase
     /// encoded signature.
-    pub async fn sign_message(&self, request: SignMessageRequest) -> Result<SignMessageResponse> {
-        let signature = self.node_api.sign_message(&request.message).await?;
+    pub async fn sign_message(&self, req: SignMessageRequest) -> Result<SignMessageResponse> {
+        let signature = self.node_api.sign_message(&req.message).await?;
         Ok(SignMessageResponse { signature })
     }
 
     /// Check whether given message was signed by the private key or the given
     /// pubkey and the signature (zbase encoded) is valid.
-    pub async fn check_message(
-        &self,
-        request: CheckMessageRequest,
-    ) -> Result<CheckMessageResponse> {
+    pub async fn check_message(&self, req: CheckMessageRequest) -> Result<CheckMessageResponse> {
         let is_valid = self
             .node_api
-            .check_message(&request.message, &request.pubkey, &request.signature)
+            .check_message(&req.message, &req.pubkey, &req.signature)
             .await?;
         Ok(CheckMessageResponse { is_valid })
     }
@@ -466,8 +444,8 @@ impl BreezServices {
     /// Force running backup
     pub async fn backup(&self) -> Result<()> {
         let (on_complete, mut on_complete_receiver) = mpsc::channel::<Result<()>>(1);
-        let request = BackupRequest::with(on_complete, true);
-        self.backup_watcher.request_backup(request).await?;
+        let req = BackupRequest::with(on_complete, true);
+        self.backup_watcher.request_backup(req).await?;
 
         match on_complete_receiver.recv().await {
             Some(res) => res,
@@ -476,8 +454,8 @@ impl BreezServices {
     }
 
     /// List payments matching the given filters, as retrieved from persistent storage
-    pub async fn list_payments(&self, request: ListPaymentsRequest) -> SdkResult<Vec<Payment>> {
-        self.persister.list_payments(request)
+    pub async fn list_payments(&self, req: ListPaymentsRequest) -> SdkResult<Vec<Payment>> {
+        self.persister.list_payments(req)
     }
 
     /// Fetch a specific payment by its hash.
@@ -488,11 +466,11 @@ impl BreezServices {
     }
 
     /// Sweep on-chain funds to the specified on-chain address, with the given feerate
-    pub async fn sweep(&self, request: SweepRequest) -> Result<SweepResponse> {
+    pub async fn sweep(&self, req: SweepRequest) -> Result<SweepResponse> {
         self.start_node().await?;
         let txid = self
             .node_api
-            .sweep(request.to_address, request.fee_rate_sats_per_vbyte)
+            .sweep(req.to_address, req.fee_rate_sats_per_vbyte)
             .await?;
         self.sync().await?;
         Ok(SweepResponse { txid })
@@ -638,7 +616,7 @@ impl BreezServices {
     ///
     /// ### Errors
     ///
-    /// If a `send_amount_sat` is specified in the request, but is outside the `min` and `max`,
+    /// If a `send_amount_sat` is specified in the `req`, but is outside the `min` and `max`,
     /// this will result in an error. If you are not sure what are the `min` and `max`, please call
     /// this with `send_amount_sat` as `None` first, then repeat the call with the desired amount.
     pub async fn fetch_reverse_swap_fees(
@@ -659,34 +637,22 @@ impl BreezServices {
     }
 
     /// Creates a reverse swap and attempts to pay the HODL invoice
-    pub async fn send_onchain(
-        &self,
-        amount_sat: u64,
-        onchain_recipient_address: String,
-        pair_hash: String,
-        sat_per_vbyte: u64,
-    ) -> Result<ReverseSwapInfo> {
+    pub async fn send_onchain(&self, req: SendOnchainRequest) -> Result<SendOnchainResponse> {
         ensure!(self.in_progress_reverse_swaps().await?.is_empty(),
             "There already is at least one Reverse Swap in progress. You can only start a new one after after the ongoing ones finish. \
             Use the in_progress_reverse_swaps method to get an overview of currently ongoing reverse swaps."
         );
 
-        let full_rsi = self
-            .btc_send_swapper
-            .create_reverse_swap(
-                amount_sat,
-                onchain_recipient_address,
-                pair_hash,
-                sat_per_vbyte,
-            )
-            .await?;
+        let full_rsi = self.btc_send_swapper.create_reverse_swap(req).await?;
         let rsi = self
             .btc_send_swapper
             .convert_reverse_swap_info(full_rsi)
             .await?;
 
         self.do_sync(true).await?;
-        Ok(rsi)
+        Ok(SendOnchainResponse {
+            reverse_swap_info: rsi,
+        })
     }
 
     /// Returns the blocking [ReverseSwapInfo]s that are in progress
@@ -713,15 +679,8 @@ impl BreezServices {
     /// Construct and broadcast a refund transaction for a failed/expired swap
     ///
     /// Returns the txid of the refund transaction.
-    pub async fn refund(
-        &self,
-        swap_address: String,
-        to_address: String,
-        sat_per_vbyte: u32,
-    ) -> Result<String> {
-        self.btc_receive_swapper
-            .refund_swap(swap_address, to_address, sat_per_vbyte)
-            .await
+    pub async fn refund(&self, req: RefundRequest) -> Result<RefundResponse> {
+        self.btc_receive_swapper.refund_swap(req).await
     }
 
     /// Execute a command directly on the NodeAPI interface.
@@ -895,8 +854,8 @@ impl BreezServices {
     /// Get the static backup data from the peristent storage.
     /// This data enables the user to recover the node in an external core ligntning node.
     /// See here for instructions on how to recover using this data: https://docs.corelightning.org/docs/backup-and-recovery#backing-up-using-static-channel-backup
-    pub fn static_backup(request: StaticBackupRequest) -> SdkResult<StaticBackupResponse> {
-        let storage = SqliteStorage::new(request.working_dir);
+    pub fn static_backup(req: StaticBackupRequest) -> SdkResult<StaticBackupResponse> {
+        let storage = SqliteStorage::new(req.working_dir);
         Ok(StaticBackupResponse {
             backup: storage.get_static_backup()?,
         })
@@ -1692,7 +1651,7 @@ pub fn mnemonic_to_seed(phrase: String) -> Result<Vec<u8>> {
 pub trait Receiver: Send + Sync {
     async fn receive_payment(
         &self,
-        request: ReceivePaymentRequest,
+        req: ReceivePaymentRequest,
     ) -> SdkResult<ReceivePaymentResponse>;
 }
 
@@ -1707,7 +1666,7 @@ pub(crate) struct PaymentReceiver {
 impl Receiver for PaymentReceiver {
     async fn receive_payment(
         &self,
-        request: ReceivePaymentRequest,
+        req: ReceivePaymentRequest,
     ) -> SdkResult<ReceivePaymentResponse> {
         self.node_api.start().await?;
         let lsp_info = get_lsp(self.persister.clone(), self.lsp.clone()).await?;
@@ -1716,48 +1675,48 @@ impl Receiver for PaymentReceiver {
             .get_node_state()?
             .ok_or("Failed to retrieve node state")
             .map_err(|err| anyhow!(err))?;
-        let expiry = request.expiry.unwrap_or(INVOICE_PAYMENT_FEE_EXPIRY_SECONDS);
+        let expiry = req.expiry.unwrap_or(INVOICE_PAYMENT_FEE_EXPIRY_SECONDS);
 
         ensure_sdk!(
-            request.amount_msat > 0,
+            req.amount_msat > 0,
             SdkError::ReceivePaymentFailed {
                 err: "Receive amount must be more than 0".into()
             }
         );
 
         let mut short_channel_id = parse_short_channel_id("1x0x0")?;
-        let mut destination_invoice_amount_msat = request.amount_msat;
+        let mut destination_invoice_amount_msat = req.amount_msat;
 
         let mut channel_opening_fee_params = None;
         let mut channel_fees_msat = None;
 
         // check if we need to open channel
-        let open_channel_needed = node_state.inbound_liquidity_msats < request.amount_msat;
+        let open_channel_needed = node_state.inbound_liquidity_msats < req.amount_msat;
         if open_channel_needed {
             info!("We need to open a channel");
 
             // we need to open channel so we are calculating the fees for the LSP (coming either from the user, or from the LSP)
-            let ofp = match request.opening_fee_params {
+            let ofp = match req.opening_fee_params {
                 Some(fee_params) => fee_params,
                 None => lsp_info.cheapest_open_channel_fee(expiry)?.clone(),
             };
 
             channel_opening_fee_params = Some(ofp.clone());
-            channel_fees_msat = Some(ofp.get_channel_fees_msat_for(request.amount_msat));
+            channel_fees_msat = Some(ofp.get_channel_fees_msat_for(req.amount_msat));
             if let Some(channel_fees_msat) = channel_fees_msat {
                 info!("zero-conf fee calculation option: lsp fee rate (proportional): {}:  (minimum {}), total fees for channel: {}",
                     ofp.proportional, ofp.min_msat, channel_fees_msat);
 
-                if request.amount_msat < channel_fees_msat + 1000 {
+                if req.amount_msat < channel_fees_msat + 1000 {
                     return Err(SdkError::ReceivePaymentFailed {
                         err: format!(
                             "requestPayment: Amount should be more than the minimum fees {channel_fees_msat} msat, but is {} msat",
-                            request.amount_msat
+                            req.amount_msat
                         ),
                     });
                 }
                 // remove the fees from the amount to get the small amount on the current node invoice.
-                destination_invoice_amount_msat = request.amount_msat - channel_fees_msat;
+                destination_invoice_amount_msat = req.amount_msat - channel_fees_msat;
             }
         } else {
             // not opening a channel so we need to get the real channel id into the routing hints
@@ -1788,11 +1747,11 @@ impl Receiver for PaymentReceiver {
             .node_api
             .create_invoice(
                 destination_invoice_amount_msat,
-                request.description,
-                request.preimage,
-                request.use_description_hash,
+                req.description,
+                req.preimage,
+                req.use_description_hash,
                 Some(expiry),
-                Some(request.cltv.unwrap_or(144)),
+                Some(req.cltv.unwrap_or(144)),
             )
             .await?;
         info!("Invoice created {}", invoice);
@@ -1829,10 +1788,10 @@ impl Receiver for PaymentReceiver {
         }
 
         // We only create a new invoice if we need to add the lsp hint or change the amount
-        if lsp_hint.is_some() || request.amount_msat != destination_invoice_amount_msat {
+        if lsp_hint.is_some() || req.amount_msat != destination_invoice_amount_msat {
             // create the large amount invoice
             let raw_invoice_with_hint =
-                add_lsp_routing_hints(invoice.clone(), lsp_hint, request.amount_msat)?;
+                add_lsp_routing_hints(invoice.clone(), lsp_hint, req.amount_msat)?;
 
             info!("Routing hint added");
             let signed_invoice_with_hint = self.node_api.sign_invoice(raw_invoice_with_hint)?;
@@ -1871,7 +1830,7 @@ impl Receiver for PaymentReceiver {
                                 err: format!("Failed to decode hex payee pubkey: {e}"),
                             },
                         )?,
-                        incoming_amount_msat: request.amount_msat as i64,
+                        incoming_amount_msat: req.amount_msat as i64,
                         outgoing_amount_msat: destination_invoice_amount_msat as i64,
                         tag: json!({ "apiKeyHash": api_key_hash }).to_string(),
                         opening_fee_params: channel_opening_fee_params.clone().map(Into::into),
@@ -1883,7 +1842,7 @@ impl Receiver for PaymentReceiver {
 
         // Make sure we save the large amount so we can deduce the fees later.
         self.persister
-            .insert_open_channel_payment_info(&parsed_invoice.payment_hash, request.amount_msat)?;
+            .insert_open_channel_payment_info(&parsed_invoice.payment_hash, req.amount_msat)?;
         // return the signed, converted invoice with hints
         Ok(ReceivePaymentResponse {
             ln_invoice: parsed_invoice,

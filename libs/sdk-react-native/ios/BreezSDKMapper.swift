@@ -836,6 +836,45 @@ class BreezSDKMapper {
         return lnUrlErrorDataList.map { v -> [String: Any?] in dictionaryOf(lnUrlErrorData: v) }
     }
 
+    static func asLnUrlPayRequest(data: [String: Any?]) throws -> LnUrlPayRequest {
+        guard let dataTmp = data["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type LnUrlPayRequest") }
+        let data = try asLnUrlPayRequestData(data: dataTmp)
+
+        guard let amountMsat = data["amountMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field amountMsat for type LnUrlPayRequest") }
+        let comment = data["comment"] as? String
+
+        return LnUrlPayRequest(
+            data: data,
+            amountMsat: amountMsat,
+            comment: comment
+        )
+    }
+
+    static func dictionaryOf(lnUrlPayRequest: LnUrlPayRequest) -> [String: Any?] {
+        return [
+            "data": dictionaryOf(lnUrlPayRequestData: lnUrlPayRequest.data),
+            "amountMsat": lnUrlPayRequest.amountMsat,
+            "comment": lnUrlPayRequest.comment == nil ? nil : lnUrlPayRequest.comment,
+        ]
+    }
+
+    static func asLnUrlPayRequestList(arr: [Any]) throws -> [LnUrlPayRequest] {
+        var list = [LnUrlPayRequest]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var lnUrlPayRequest = try asLnUrlPayRequest(data: val)
+                list.append(lnUrlPayRequest)
+            } else {
+                throw SdkError.Generic(message: "Invalid element type LnUrlPayRequest")
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(lnUrlPayRequestList: [LnUrlPayRequest]) -> [Any] {
+        return lnUrlPayRequestList.map { v -> [String: Any?] in dictionaryOf(lnUrlPayRequest: v) }
+    }
+
     static func asLnUrlPayRequestData(data: [String: Any?]) throws -> LnUrlPayRequestData {
         guard let callback = data["callback"] as? String else { throw SdkError.Generic(message: "Missing mandatory field callback for type LnUrlPayRequestData") }
         guard let minSendable = data["minSendable"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field minSendable for type LnUrlPayRequestData") }
@@ -1750,6 +1789,73 @@ class BreezSDKMapper {
         return recommendedFeesList.map { v -> [String: Any?] in dictionaryOf(recommendedFees: v) }
     }
 
+    static func asRefundRequest(data: [String: Any?]) throws -> RefundRequest {
+        guard let swapAddress = data["swapAddress"] as? String else { throw SdkError.Generic(message: "Missing mandatory field swapAddress for type RefundRequest") }
+        guard let toAddress = data["toAddress"] as? String else { throw SdkError.Generic(message: "Missing mandatory field toAddress for type RefundRequest") }
+        guard let satPerVbyte = data["satPerVbyte"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field satPerVbyte for type RefundRequest") }
+
+        return RefundRequest(
+            swapAddress: swapAddress,
+            toAddress: toAddress,
+            satPerVbyte: satPerVbyte
+        )
+    }
+
+    static func dictionaryOf(refundRequest: RefundRequest) -> [String: Any?] {
+        return [
+            "swapAddress": refundRequest.swapAddress,
+            "toAddress": refundRequest.toAddress,
+            "satPerVbyte": refundRequest.satPerVbyte,
+        ]
+    }
+
+    static func asRefundRequestList(arr: [Any]) throws -> [RefundRequest] {
+        var list = [RefundRequest]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var refundRequest = try asRefundRequest(data: val)
+                list.append(refundRequest)
+            } else {
+                throw SdkError.Generic(message: "Invalid element type RefundRequest")
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(refundRequestList: [RefundRequest]) -> [Any] {
+        return refundRequestList.map { v -> [String: Any?] in dictionaryOf(refundRequest: v) }
+    }
+
+    static func asRefundResponse(data: [String: Any?]) throws -> RefundResponse {
+        guard let refundTxId = data["refundTxId"] as? String else { throw SdkError.Generic(message: "Missing mandatory field refundTxId for type RefundResponse") }
+
+        return RefundResponse(
+            refundTxId: refundTxId)
+    }
+
+    static func dictionaryOf(refundResponse: RefundResponse) -> [String: Any?] {
+        return [
+            "refundTxId": refundResponse.refundTxId,
+        ]
+    }
+
+    static func asRefundResponseList(arr: [Any]) throws -> [RefundResponse] {
+        var list = [RefundResponse]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var refundResponse = try asRefundResponse(data: val)
+                list.append(refundResponse)
+            } else {
+                throw SdkError.Generic(message: "Invalid element type RefundResponse")
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(refundResponseList: [RefundResponse]) -> [Any] {
+        return refundResponseList.map { v -> [String: Any?] in dictionaryOf(refundResponse: v) }
+    }
+
     static func asReverseSwapFeesRequest(data: [String: Any?]) throws -> ReverseSwapFeesRequest {
         let sendAmountSat = data["sendAmountSat"] as? UInt64
 
@@ -1954,6 +2060,142 @@ class BreezSDKMapper {
 
     static func arrayOf(routeHintHopList: [RouteHintHop]) -> [Any] {
         return routeHintHopList.map { v -> [String: Any?] in dictionaryOf(routeHintHop: v) }
+    }
+
+    static func asSendOnchainRequest(data: [String: Any?]) throws -> SendOnchainRequest {
+        guard let amountSat = data["amountSat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field amountSat for type SendOnchainRequest") }
+        guard let onchainRecipientAddress = data["onchainRecipientAddress"] as? String else { throw SdkError.Generic(message: "Missing mandatory field onchainRecipientAddress for type SendOnchainRequest") }
+        guard let pairHash = data["pairHash"] as? String else { throw SdkError.Generic(message: "Missing mandatory field pairHash for type SendOnchainRequest") }
+        guard let satPerVbyte = data["satPerVbyte"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field satPerVbyte for type SendOnchainRequest") }
+
+        return SendOnchainRequest(
+            amountSat: amountSat,
+            onchainRecipientAddress: onchainRecipientAddress,
+            pairHash: pairHash,
+            satPerVbyte: satPerVbyte
+        )
+    }
+
+    static func dictionaryOf(sendOnchainRequest: SendOnchainRequest) -> [String: Any?] {
+        return [
+            "amountSat": sendOnchainRequest.amountSat,
+            "onchainRecipientAddress": sendOnchainRequest.onchainRecipientAddress,
+            "pairHash": sendOnchainRequest.pairHash,
+            "satPerVbyte": sendOnchainRequest.satPerVbyte,
+        ]
+    }
+
+    static func asSendOnchainRequestList(arr: [Any]) throws -> [SendOnchainRequest] {
+        var list = [SendOnchainRequest]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var sendOnchainRequest = try asSendOnchainRequest(data: val)
+                list.append(sendOnchainRequest)
+            } else {
+                throw SdkError.Generic(message: "Invalid element type SendOnchainRequest")
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(sendOnchainRequestList: [SendOnchainRequest]) -> [Any] {
+        return sendOnchainRequestList.map { v -> [String: Any?] in dictionaryOf(sendOnchainRequest: v) }
+    }
+
+    static func asSendOnchainResponse(data: [String: Any?]) throws -> SendOnchainResponse {
+        guard let reverseSwapInfoTmp = data["reverseSwapInfo"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field reverseSwapInfo for type SendOnchainResponse") }
+        let reverseSwapInfo = try asReverseSwapInfo(data: reverseSwapInfoTmp)
+
+        return SendOnchainResponse(
+            reverseSwapInfo: reverseSwapInfo)
+    }
+
+    static func dictionaryOf(sendOnchainResponse: SendOnchainResponse) -> [String: Any?] {
+        return [
+            "reverseSwapInfo": dictionaryOf(reverseSwapInfo: sendOnchainResponse.reverseSwapInfo),
+        ]
+    }
+
+    static func asSendOnchainResponseList(arr: [Any]) throws -> [SendOnchainResponse] {
+        var list = [SendOnchainResponse]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var sendOnchainResponse = try asSendOnchainResponse(data: val)
+                list.append(sendOnchainResponse)
+            } else {
+                throw SdkError.Generic(message: "Invalid element type SendOnchainResponse")
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(sendOnchainResponseList: [SendOnchainResponse]) -> [Any] {
+        return sendOnchainResponseList.map { v -> [String: Any?] in dictionaryOf(sendOnchainResponse: v) }
+    }
+
+    static func asSendPaymentResponse(data: [String: Any?]) throws -> SendPaymentResponse {
+        guard let paymentTmp = data["payment"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field payment for type SendPaymentResponse") }
+        let payment = try asPayment(data: paymentTmp)
+
+        return SendPaymentResponse(
+            payment: payment)
+    }
+
+    static func dictionaryOf(sendPaymentResponse: SendPaymentResponse) -> [String: Any?] {
+        return [
+            "payment": dictionaryOf(payment: sendPaymentResponse.payment),
+        ]
+    }
+
+    static func asSendPaymentResponseList(arr: [Any]) throws -> [SendPaymentResponse] {
+        var list = [SendPaymentResponse]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var sendPaymentResponse = try asSendPaymentResponse(data: val)
+                list.append(sendPaymentResponse)
+            } else {
+                throw SdkError.Generic(message: "Invalid element type SendPaymentResponse")
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(sendPaymentResponseList: [SendPaymentResponse]) -> [Any] {
+        return sendPaymentResponseList.map { v -> [String: Any?] in dictionaryOf(sendPaymentResponse: v) }
+    }
+
+    static func asSendSpontaneousPaymentRequest(data: [String: Any?]) throws -> SendSpontaneousPaymentRequest {
+        guard let nodeId = data["nodeId"] as? String else { throw SdkError.Generic(message: "Missing mandatory field nodeId for type SendSpontaneousPaymentRequest") }
+        guard let amountMsat = data["amountMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field amountMsat for type SendSpontaneousPaymentRequest") }
+
+        return SendSpontaneousPaymentRequest(
+            nodeId: nodeId,
+            amountMsat: amountMsat
+        )
+    }
+
+    static func dictionaryOf(sendSpontaneousPaymentRequest: SendSpontaneousPaymentRequest) -> [String: Any?] {
+        return [
+            "nodeId": sendSpontaneousPaymentRequest.nodeId,
+            "amountMsat": sendSpontaneousPaymentRequest.amountMsat,
+        ]
+    }
+
+    static func asSendSpontaneousPaymentRequestList(arr: [Any]) throws -> [SendSpontaneousPaymentRequest] {
+        var list = [SendSpontaneousPaymentRequest]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var sendSpontaneousPaymentRequest = try asSendSpontaneousPaymentRequest(data: val)
+                list.append(sendSpontaneousPaymentRequest)
+            } else {
+                throw SdkError.Generic(message: "Invalid element type SendSpontaneousPaymentRequest")
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(sendSpontaneousPaymentRequestList: [SendSpontaneousPaymentRequest]) -> [Any] {
+        return sendSpontaneousPaymentRequestList.map { v -> [String: Any?] in dictionaryOf(sendSpontaneousPaymentRequest: v) }
     }
 
     static func asSignMessageRequest(data: [String: Any?]) throws -> SignMessageRequest {

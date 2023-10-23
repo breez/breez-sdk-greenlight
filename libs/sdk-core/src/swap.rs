@@ -4,7 +4,10 @@ use std::sync::Arc;
 use crate::binding::parse_invoice;
 use crate::chain::{get_utxos, AddressUtxos, ChainService, MempoolSpace, OnchainTx};
 use crate::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
-use crate::{OpeningFeeParams, ReceivePaymentRequest, SWAP_PAYMENT_FEE_EXPIRY_SECONDS};
+use crate::{
+    OpeningFeeParams, ReceivePaymentRequest, RefundRequest, RefundResponse,
+    SWAP_PAYMENT_FEE_EXPIRY_SECONDS,
+};
 use anyhow::{anyhow, Result};
 use bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
 use bitcoin::blockdata::opcodes;
@@ -31,14 +34,14 @@ impl SwapperAPI for BreezServer {
         node_id: String,
     ) -> Result<Swap> {
         let mut fund_client = self.get_fund_manager_client().await?;
-        let request = AddFundInitRequest {
+        let req = AddFundInitRequest {
             hash: hash.clone(),
             pubkey: payer_pubkey.clone(),
             node_id,
             notification_token: "".to_string(),
         };
 
-        let result = fund_client.add_fund_init(request).await?.into_inner();
+        let result = fund_client.add_fund_init(req).await?.into_inner();
         Ok(Swap {
             bitcoin_address: result.address,
             swapper_pubkey: result.pubkey,
@@ -51,12 +54,12 @@ impl SwapperAPI for BreezServer {
     }
 
     async fn complete_swap(&self, bolt11: String) -> Result<()> {
-        let request = GetSwapPaymentRequest {
+        let req = GetSwapPaymentRequest {
             payment_request: bolt11,
         };
         self.get_fund_manager_client()
             .await?
-            .get_swap_payment(request)
+            .get_swap_payment(req)
             .await?
             .into_inner();
         Ok(())
@@ -94,7 +97,7 @@ impl BTCReceiveSwap {
     /// * Refresh on-chain status of swap addresses.
     /// * Refresh lighting status of swap addresses, e.g lookup for corresponding lightning payment
     /// * Redeem funds related to swap addresses, e.g when on chain funds are discovered use the SwapperAPI to
-    ///   request payment by passing bolt11 invoice.
+    ///   req payment by passing bolt11 invoice.
     pub(crate) async fn on_event(&self, e: BreezEvent) -> Result<()> {
         match e {
             BreezEvent::NewBlock { block: tip } => {
@@ -432,22 +435,17 @@ impl BTCReceiveSwap {
     }
 
     // refund_swap is the user way to receive on-chain refund for failed swaps.
-    pub(crate) async fn refund_swap(
-        &self,
-        swap_address: String,
-        to_address: String,
-        sat_per_vbyte: u32,
-    ) -> Result<String> {
+    pub(crate) async fn refund_swap(&self, req: RefundRequest) -> Result<RefundResponse> {
         let swap_info = self
             .persister
-            .get_swap_info_by_address(swap_address.clone())?
-            .ok_or_else(|| anyhow!(format!("swap address {swap_address} was not found")))?;
+            .get_swap_info_by_address(req.swap_address.clone())?
+            .ok_or_else(|| anyhow!(format!("swap address {} was not found", req.swap_address)))?;
 
         let transactions = self
             .chain_service
-            .address_transactions(swap_address.clone())
+            .address_transactions(req.swap_address.clone())
             .await?;
-        let utxos = get_utxos(swap_address, transactions)?;
+        let utxos = get_utxos(req.swap_address, transactions)?;
 
         let script = create_submarine_swap_script(
             swap_info.payment_hash,
@@ -458,13 +456,13 @@ impl BTCReceiveSwap {
         let refund_tx = create_refund_tx(
             utxos.clone(),
             swap_info.private_key,
-            to_address,
+            req.to_address,
             swap_info.lock_height as u32,
             &script,
-            sat_per_vbyte,
+            req.sat_per_vbyte,
         )?;
         info!("broadcasting refund tx {:?}", hex::encode(&refund_tx));
-        let txid = self.chain_service.broadcast_transaction(refund_tx).await?;
+        let tx_id = self.chain_service.broadcast_transaction(refund_tx).await?;
 
         self.persister.update_swap_chain_info(
             swap_info.bitcoin_address.clone(),
@@ -475,9 +473,11 @@ impl BTCReceiveSwap {
             swap_info.status,
         )?;
         self.persister
-            .insert_swap_refund_tx_ids(swap_info.bitcoin_address, txid.clone())?;
+            .insert_swap_refund_tx_ids(swap_info.bitcoin_address, tx_id.clone())?;
 
-        Ok(txid)
+        Ok(RefundResponse {
+            refund_tx_id: tx_id,
+        })
     }
 }
 
@@ -774,13 +774,12 @@ mod tests {
         assert_eq!(swapper.list_refundables().unwrap().len(), 1);
 
         // broadcast refund transaction
-        let address = swapper
-            .refund_swap(
-                swap.bitcoin_address,
-                String::from("34RQERthXaruAXtW6q1bvrGTeUbqi2Sm1i"),
-                1,
-            )
-            .await?;
+        let req = RefundRequest {
+            swap_address: swap.bitcoin_address,
+            to_address: String::from("34RQERthXaruAXtW6q1bvrGTeUbqi2Sm1i"),
+            sat_per_vbyte: 1,
+        };
+        let refund_response = swapper.refund_swap(req).await?;
         let swap = swapper
             .get_swap_info(swap_info.clone().bitcoin_address)?
             .unwrap();
@@ -791,7 +790,10 @@ mod tests {
         let refundables = swapper.list_refundables()?;
         assert_eq!(refundables.len(), 1);
         assert_eq!(refundables[0].clone().refund_tx_ids.len(), 1);
-        assert_eq!(refundables[0].clone().refund_tx_ids[0], address);
+        assert_eq!(
+            refundables[0].clone().refund_tx_ids[0],
+            refund_response.refund_tx_id
+        );
 
         Ok(())
     }
