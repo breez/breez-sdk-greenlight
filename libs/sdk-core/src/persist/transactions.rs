@@ -281,7 +281,7 @@ fn filter_to_where_clause(
         where_clause.push(format!("status != {}", PaymentStatus::Failed as i64));
     };
 
-    if !type_filters.contains(&PaymentTypeFilter::All) {
+    if !type_filters.is_empty() {
         let mut type_filter_clause: HashSet<PaymentType> = HashSet::new();
         for type_filter in type_filters {
             match type_filter {
@@ -294,7 +294,6 @@ fn filter_to_where_clause(
                 PaymentTypeFilter::ClosedChannels => {
                     type_filter_clause.insert(PaymentType::ClosedChannel);
                 }
-                _ => {}
             }
         }
 
@@ -474,7 +473,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
 
     // retrieve all
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        filters: vec![PaymentTypeFilter::All],
+        filters: vec![],
         from_timestamp: None,
         to_timestamp: None,
         include_failures: None,
@@ -519,7 +518,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
 
     storage.insert_or_update_payments(&txs)?;
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        filters: vec![PaymentTypeFilter::All],
+        filters: vec![],
         from_timestamp: None,
         to_timestamp: None,
         include_failures: None,
@@ -531,7 +530,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
 
     storage.insert_open_channel_payment_info("123", 150)?;
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        filters: vec![PaymentTypeFilter::All],
+        filters: vec![],
         from_timestamp: None,
         to_timestamp: None,
         include_failures: None,
@@ -542,7 +541,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
 
     // test all with failures
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        filters: vec![PaymentTypeFilter::All],
+        filters: vec![],
         from_timestamp: None,
         to_timestamp: None,
         include_failures: Some(true),
@@ -564,7 +563,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
 
     // test limit
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        filters: vec![PaymentTypeFilter::All],
+        filters: vec![],
         from_timestamp: None,
         to_timestamp: None,
         include_failures: Some(false),
@@ -575,7 +574,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
 
     // test offset
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        filters: vec![PaymentTypeFilter::All],
+        filters: vec![],
         from_timestamp: None,
         to_timestamp: None,
         include_failures: Some(false),

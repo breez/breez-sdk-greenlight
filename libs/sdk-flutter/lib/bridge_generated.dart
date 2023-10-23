@@ -1097,7 +1097,6 @@ enum PaymentTypeFilter {
   Sent,
   Received,
   ClosedChannels,
-  All,
 }
 
 /// Denominator in an exchange rate

@@ -6,9 +6,9 @@ use breez_sdk_core::InputType::{LnUrlAuth, LnUrlPay, LnUrlWithdraw};
 use breez_sdk_core::{
     parse, BreezEvent, BreezServices, BuyBitcoinRequest, CheckMessageRequest, EventListener,
     GreenlightCredentials, ListPaymentsRequest, LnUrlPayRequest, LnUrlWithdrawRequest,
-    PaymentTypeFilter, ReceiveOnchainRequest, ReceivePaymentRequest, RefundRequest,
-    ReverseSwapFeesRequest, SendOnchainRequest, SendPaymentRequest, SendSpontaneousPaymentRequest,
-    SignMessageRequest, StaticBackupRequest, SweepRequest,
+    ReceiveOnchainRequest, ReceivePaymentRequest, RefundRequest, ReverseSwapFeesRequest,
+    SendOnchainRequest, SendPaymentRequest, SendSpontaneousPaymentRequest, SignMessageRequest,
+    StaticBackupRequest, SweepRequest,
 };
 use breez_sdk_core::{Config, GreenlightNodeConfig, NodeConfig};
 use once_cell::sync::OnceCell;
@@ -216,7 +216,7 @@ pub(crate) async fn handle_command(
         } => {
             let payments = sdk()?
                 .list_payments(ListPaymentsRequest {
-                    filters: vec![PaymentTypeFilter::All],
+                    filters: vec![],
                     from_timestamp,
                     to_timestamp,
                     include_failures: Some(include_failures),

@@ -3222,9 +3222,6 @@ class BreezSDKMapper {
         case "closedChannels":
             return PaymentTypeFilter.closedChannels
 
-        case "all":
-            return PaymentTypeFilter.all
-
         default: throw SdkError.Generic(message: "Invalid variant \(paymentTypeFilter) for enum PaymentTypeFilter")
         }
     }
@@ -3239,9 +3236,6 @@ class BreezSDKMapper {
 
         case .closedChannels:
             return "closedChannels"
-
-        case .all:
-            return "all"
         }
     }
 

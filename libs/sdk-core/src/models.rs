@@ -581,7 +581,6 @@ pub enum PaymentTypeFilter {
     Sent,
     Received,
     ClosedChannels,
-    All,
 }
 
 /// Different types of supported feerates

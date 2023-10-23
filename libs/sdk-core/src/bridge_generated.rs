@@ -745,7 +745,6 @@ impl Wire2Api<PaymentTypeFilter> for i32 {
             0 => PaymentTypeFilter::Sent,
             1 => PaymentTypeFilter::Received,
             2 => PaymentTypeFilter::ClosedChannels,
-            3 => PaymentTypeFilter::All,
             _ => unreachable!("Invalid variant for PaymentTypeFilter: {}", self),
         }
     }

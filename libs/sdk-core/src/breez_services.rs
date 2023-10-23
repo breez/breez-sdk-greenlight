@@ -2032,7 +2032,7 @@ pub(crate) mod tests {
 
         let all = breez_services
             .list_payments(ListPaymentsRequest {
-                filters: vec![PaymentTypeFilter::All],
+                filters: vec![],
                 from_timestamp: None,
                 to_timestamp: None,
                 include_failures: None,

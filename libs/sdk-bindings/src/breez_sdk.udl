@@ -122,7 +122,6 @@ enum PaymentTypeFilter {
     "Sent",
     "Received",
     "ClosedChannels",
-    "All",
 };
 
 enum PaymentStatus {
