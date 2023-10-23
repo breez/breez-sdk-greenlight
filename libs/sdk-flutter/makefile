@@ -5,7 +5,8 @@ OS_NAME=$(shell uname | tr '[:upper:]' '[:lower:]')
 .PHONY: init
 init:
 	cargo install cargo-ndk
-	cargo install flutter_rust_bridge_codegen --version 1.75.2
+	cargo install cargo-expand
+	cargo install flutter_rust_bridge_codegen --version 1.80.1
 	flutter pub get
 
 ## all: Compile iOS, Android

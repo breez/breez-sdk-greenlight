@@ -312,7 +312,7 @@ class BreezSDK {
     required SweepRequest req,
   }) async {
     final sweepResponse = await _lnToolkit.sweep(req: req);
-    await listPayments(req: const ListPaymentsRequest(filter: PaymentTypeFilter.All));
+    await listPayments(req: const ListPaymentsRequest());
     return sweepResponse;
   }
 
@@ -402,7 +402,7 @@ class BreezSDK {
   /// Fetch node state & payment list
   Future fetchNodeData() async {
     await nodeInfo();
-    await listPayments(req: const ListPaymentsRequest(filter: PaymentTypeFilter.All));
+    await listPayments(req: const ListPaymentsRequest());
   }
 }
 

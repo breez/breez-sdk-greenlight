@@ -5,15 +5,14 @@ void main() {
   const MethodChannel channel = MethodChannel('breez_sdk');
 
   TestWidgetsFlutterBinding.ensureInitialized();
+  final binding = TestDefaultBinaryMessengerBinding.instance;
 
   setUp(() {
-    channel.setMockMethodCallHandler((MethodCall methodCall) async {
-      return '42';
-    });
+    binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (message) async => '42');
   });
 
   tearDown(() {
-    channel.setMockMethodCallHandler(null);
+    binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (message) => null);
   });
 
   test('getPlatformVersion', () async {});
