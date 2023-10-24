@@ -757,11 +757,16 @@ impl BreezServices {
         if let Ok(lsp_info) = self.lsp_info().await {
             let node_id = lsp_info.pubkey;
             let address = lsp_info.host;
-            debug!("connecting to lsp {}@{}", node_id.clone(), address.clone());
-            self.node_api
-                .connect_peer(node_id.clone(), address.clone())
-                .await
-                .map_err(anyhow::Error::msg)?;
+            let lsp_connected = self
+                .node_info()
+                .map(|info| info.connected_peers.iter().any(|e| e == node_id.as_str()))?;
+            if !lsp_connected {
+                debug!("connecting to lsp {}@{}", node_id.clone(), address.clone());
+                self.node_api
+                    .connect_peer(node_id.clone(), address.clone())
+                    .await
+                    .map_err(anyhow::Error::msg)?;
+            }
             debug!("connected to lsp {}@{}", node_id.clone(), address.clone());
         }
         Ok(())
