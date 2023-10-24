@@ -518,7 +518,7 @@ dependencies = [
 
 [[package]]
 name = "breez-sdk-core"
-version = "0.2.3"
+version = "0.2.7"
 dependencies = [
  "aes",
  "anyhow",
@@ -566,13 +566,13 @@ dependencies = [
 
 [[package]]
 name = "breez_sdk"
-version = "0.2.3"
+version = "0.2.7"
 dependencies = [
  "anyhow",
  "breez-sdk-core",
  "camino",
  "flutter_rust_bridge",
- "lightning-invoice 0.24.0",
+ "lightning-invoice 0.23.0",
  "log",
  "once_cell",
  "thiserror",

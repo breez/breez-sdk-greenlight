@@ -1,6 +1,6 @@
 name: breez_sdk
 description: A new flutter plugin project.
-version: 0.2.5
+version: 0.2.7
 publish_to: none
 
 environment:
