@@ -257,9 +257,13 @@ impl BTCReceiveSwap {
             .collect())
     }
 
-    #[allow(dead_code)]
     pub(crate) fn get_swap_info(&self, address: String) -> Result<Option<SwapInfo>> {
         self.persister.get_swap_info_by_address(address)
+    }
+
+    fn get_swap_info_ok(&self, address: String) -> Result<SwapInfo> {
+        self.get_swap_info(address.clone())?
+            .ok_or_else(|| anyhow!(format!("swap address {} was not found", address)))
     }
 
     pub(crate) async fn execute_pending_swaps(&self, tip: u32) -> Result<()> {
@@ -438,16 +442,9 @@ impl BTCReceiveSwap {
         &self,
         req: PrepareRefundRequest,
     ) -> Result<PrepareRefundResponse> {
-        let swap_info = self
-            .persister
-            .get_swap_info_by_address(req.swap_address.clone())?
-            .ok_or_else(|| anyhow!(format!("swap address {} was not found", req.swap_address)))?;
+        let swap_info = self.get_swap_info_ok(req.swap_address.clone())?;
 
-        let transactions = self
-            .chain_service
-            .address_transactions(req.swap_address.clone())
-            .await?;
-        let utxos = get_utxos(req.swap_address, transactions)?;
+        let utxos = self.get_address_utxos(req.swap_address).await?;
 
         let refund_tx = prepare_refund_tx(&utxos, req.to_address, swap_info.lock_height as u32)?;
 
@@ -461,16 +458,9 @@ impl BTCReceiveSwap {
 
     // refund_swap is the user way to receive on-chain refund for failed swaps.
     pub(crate) async fn refund_swap(&self, req: RefundRequest) -> Result<RefundResponse> {
-        let swap_info = self
-            .persister
-            .get_swap_info_by_address(req.swap_address.clone())?
-            .ok_or_else(|| anyhow!(format!("swap address {} was not found", req.swap_address)))?;
+        let swap_info = self.get_swap_info_ok(req.swap_address.clone())?;
 
-        let transactions = self
-            .chain_service
-            .address_transactions(req.swap_address.clone())
-            .await?;
-        let utxos = get_utxos(req.swap_address, transactions)?;
+        let utxos = self.get_address_utxos(req.swap_address).await?;
 
         let script = create_submarine_swap_script(
             swap_info.payment_hash,
@@ -503,6 +493,14 @@ impl BTCReceiveSwap {
         Ok(RefundResponse {
             refund_tx_id: tx_id,
         })
+    }
+
+    async fn get_address_utxos(&self, address: String) -> Result<AddressUtxos> {
+        let transactions = self
+            .chain_service
+            .address_transactions(address.clone())
+            .await?;
+        get_utxos(address, transactions)
     }
 }
 
