@@ -263,7 +263,7 @@ impl SqliteStorage {
 }
 
 fn filter_to_where_clause(
-    type_filters: Vec<PaymentTypeFilter>,
+    type_filters: Option<Vec<PaymentTypeFilter>>,
     from_timestamp: Option<i64>,
     to_timestamp: Option<i64>,
     include_failures: Option<bool>,
@@ -281,30 +281,32 @@ fn filter_to_where_clause(
         where_clause.push(format!("status != {}", PaymentStatus::Failed as i64));
     };
 
-    if !type_filters.is_empty() {
-        let mut type_filter_clause: HashSet<PaymentType> = HashSet::new();
-        for type_filter in type_filters {
-            match type_filter {
-                PaymentTypeFilter::Sent => {
-                    type_filter_clause.insert(PaymentType::Sent);
-                }
-                PaymentTypeFilter::Received => {
-                    type_filter_clause.insert(PaymentType::Received);
-                }
-                PaymentTypeFilter::ClosedChannels => {
-                    type_filter_clause.insert(PaymentType::ClosedChannel);
+    if let Some(filters) = type_filters {
+        if !filters.is_empty() {
+            let mut type_filter_clause: HashSet<PaymentType> = HashSet::new();
+            for type_filter in filters {
+                match type_filter {
+                    PaymentTypeFilter::Sent => {
+                        type_filter_clause.insert(PaymentType::Sent);
+                    }
+                    PaymentTypeFilter::Received => {
+                        type_filter_clause.insert(PaymentType::Received);
+                    }
+                    PaymentTypeFilter::ClosedChannels => {
+                        type_filter_clause.insert(PaymentType::ClosedChannel);
+                    }
                 }
             }
-        }
 
-        where_clause.push(format!(
-            "payment_type in ({})",
-            type_filter_clause
-                .iter()
-                .map(|t| format!("'{}'", t))
-                .collect::<Vec<_>>()
-                .join(", ")
-        ));
+            where_clause.push(format!(
+                "payment_type in ({})",
+                type_filter_clause
+                    .iter()
+                    .map(|t| format!("'{}'", t))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ));
+        }
     }
 
     let mut where_clause_str = String::new();
@@ -473,7 +475,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
 
     // retrieve all
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        filters: vec![],
+        filters: None,
         from_timestamp: None,
         to_timestamp: None,
         include_failures: None,
@@ -485,7 +487,10 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
 
     //test only sent
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        filters: vec![PaymentTypeFilter::Sent, PaymentTypeFilter::ClosedChannels],
+        filters: Some(vec![
+            PaymentTypeFilter::Sent,
+            PaymentTypeFilter::ClosedChannels,
+        ]),
         from_timestamp: None,
         to_timestamp: None,
         include_failures: None,
@@ -503,7 +508,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
 
     //test only received
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        filters: vec![PaymentTypeFilter::Received],
+        filters: Some(vec![PaymentTypeFilter::Received]),
         from_timestamp: None,
         to_timestamp: None,
         include_failures: None,
@@ -518,7 +523,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
 
     storage.insert_or_update_payments(&txs)?;
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        filters: vec![],
+        filters: None,
         from_timestamp: None,
         to_timestamp: None,
         include_failures: None,
@@ -530,7 +535,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
 
     storage.insert_open_channel_payment_info("123", 150)?;
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        filters: vec![],
+        filters: None,
         from_timestamp: None,
         to_timestamp: None,
         include_failures: None,
@@ -541,7 +546,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
 
     // test all with failures
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        filters: vec![],
+        filters: None,
         from_timestamp: None,
         to_timestamp: None,
         include_failures: Some(true),
@@ -552,7 +557,10 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
 
     // test sent with failures
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        filters: vec![PaymentTypeFilter::Sent, PaymentTypeFilter::ClosedChannels],
+        filters: Some(vec![
+            PaymentTypeFilter::Sent,
+            PaymentTypeFilter::ClosedChannels,
+        ]),
         from_timestamp: None,
         to_timestamp: None,
         include_failures: Some(true),
@@ -563,7 +571,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
 
     // test limit
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        filters: vec![],
+        filters: None,
         from_timestamp: None,
         to_timestamp: None,
         include_failures: Some(false),
@@ -574,7 +582,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
 
     // test offset
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        filters: vec![],
+        filters: None,
         from_timestamp: None,
         to_timestamp: None,
         include_failures: Some(false),

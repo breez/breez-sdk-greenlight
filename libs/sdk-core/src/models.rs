@@ -657,7 +657,7 @@ pub struct Payment {
 
 /// Represents a list payments request.
 pub struct ListPaymentsRequest {
-    pub filters: Vec<PaymentTypeFilter>,
+    pub filters: Option<Vec<PaymentTypeFilter>>,
     pub from_timestamp: Option<i64>,
     pub to_timestamp: Option<i64>,
     pub include_failures: Option<bool>,

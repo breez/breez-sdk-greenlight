@@ -148,7 +148,7 @@ dictionary Payment {
 };
 
 dictionary ListPaymentsRequest {
-    sequence<PaymentTypeFilter> filters;
+    sequence<PaymentTypeFilter>? filters = null;
     i64? from_timestamp = null;
     i64? to_timestamp = null;
     boolean? include_failures = null;

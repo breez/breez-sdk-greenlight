@@ -657,8 +657,10 @@ class BreezSDKMapper {
     }
 
     static func asListPaymentsRequest(listPaymentsRequest: [String: Any?]) throws -> ListPaymentsRequest {
-        guard let filtersTmp = listPaymentsRequest["filters"] as? [String] else { throw SdkError.Generic(message: "Missing mandatory field filters for type ListPaymentsRequest") }
-        let filters = filtersTmp
+        var filters: [PaymentTypeFilter]?
+        if let filtersTmp = listPaymentsRequest["filters"] as? [String] {
+            filters = filtersTmp
+        }
 
         let fromTimestamp = listPaymentsRequest["fromTimestamp"] as? Int64
         let toTimestamp = listPaymentsRequest["toTimestamp"] as? Int64
@@ -678,7 +680,7 @@ class BreezSDKMapper {
 
     static func dictionaryOf(listPaymentsRequest: ListPaymentsRequest) -> [String: Any?] {
         return [
-            "filters": arrayOf(paymentTypeFilterList: listPaymentsRequest.filters),
+            "filters": listPaymentsRequest.filters == nil ? nil : arrayOf(paymentTypeFilterList: listPaymentsRequest.filters!),
             "fromTimestamp": listPaymentsRequest.fromTimestamp == nil ? nil : listPaymentsRequest.fromTimestamp,
             "toTimestamp": listPaymentsRequest.toTimestamp == nil ? nil : listPaymentsRequest.toTimestamp,
             "includeFailures": listPaymentsRequest.includeFailures == nil ? nil : listPaymentsRequest.includeFailures,

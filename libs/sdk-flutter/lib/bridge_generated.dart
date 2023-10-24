@@ -571,7 +571,7 @@ class InvoicePaidDetails {
 
 /// Represents a list payments request.
 class ListPaymentsRequest {
-  final List<PaymentTypeFilter> filters;
+  final List<PaymentTypeFilter>? filters;
   final int? fromTimestamp;
   final int? toTimestamp;
   final bool? includeFailures;
@@ -579,7 +579,7 @@ class ListPaymentsRequest {
   final int? limit;
 
   const ListPaymentsRequest({
-    required this.filters,
+    this.filters,
     this.fromTimestamp,
     this.toTimestamp,
     this.includeFailures,
@@ -3569,6 +3569,12 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<wire_list_payment_type_filter> api2wire_opt_list_payment_type_filter(
+      List<PaymentTypeFilter>? raw) {
+    return raw == null ? ffi.nullptr : api2wire_list_payment_type_filter(raw);
+  }
+
+  @protected
   ffi.Pointer<wire_uint_8_list> api2wire_opt_uint_8_list(Uint8List? raw) {
     return raw == null ? ffi.nullptr : api2wire_uint_8_list(raw);
   }
@@ -3733,7 +3739,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   void _api_fill_to_wire_list_payments_request(ListPaymentsRequest apiObj, wire_ListPaymentsRequest wireObj) {
-    wireObj.filters = api2wire_list_payment_type_filter(apiObj.filters);
+    wireObj.filters = api2wire_opt_list_payment_type_filter(apiObj.filters);
     wireObj.from_timestamp = api2wire_opt_box_autoadd_i64(apiObj.fromTimestamp);
     wireObj.to_timestamp = api2wire_opt_box_autoadd_i64(apiObj.toTimestamp);
     wireObj.include_failures = api2wire_opt_box_autoadd_bool(apiObj.includeFailures);

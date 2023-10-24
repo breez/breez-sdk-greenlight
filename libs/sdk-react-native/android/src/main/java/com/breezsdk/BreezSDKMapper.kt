@@ -726,14 +726,19 @@ fun asLnInvoiceList(arr: ReadableArray): List<LnInvoice> {
 fun asListPaymentsRequest(listPaymentsRequest: ReadableMap): ListPaymentsRequest? {
     if (!validateMandatoryFields(
             listPaymentsRequest,
-            arrayOf(
-                "filters",
-            ),
+            arrayOf(),
         )
     ) {
         return null
     }
-    val filters = listPaymentsRequest.getArray("filters")?.let { asPaymentTypeFilterList(it) }!!
+    val filters =
+        if (hasNonNullKey(listPaymentsRequest, "filters")) {
+            listPaymentsRequest.getArray("filters")?.let {
+                asPaymentTypeFilterList(it)
+            }
+        } else {
+            null
+        }
     val fromTimestamp =
         if (hasNonNullKey(
                 listPaymentsRequest,
@@ -769,7 +774,7 @@ fun asListPaymentsRequest(listPaymentsRequest: ReadableMap): ListPaymentsRequest
 
 fun readableMapOf(listPaymentsRequest: ListPaymentsRequest): ReadableMap {
     return readableMapOf(
-        "filters" to readableArrayOf(listPaymentsRequest.filters),
+        "filters" to listPaymentsRequest.filters?.let { readableArrayOf(it) },
         "fromTimestamp" to listPaymentsRequest.fromTimestamp,
         "toTimestamp" to listPaymentsRequest.toTimestamp,
         "includeFailures" to listPaymentsRequest.includeFailures,

@@ -125,7 +125,7 @@ export type LnInvoice = {
 }
 
 export type ListPaymentsRequest = {
-    filters: PaymentTypeFilter[]
+    filters?: PaymentTypeFilter[]
     fromTimestamp?: number
     toTimestamp?: number
     includeFailures?: boolean
