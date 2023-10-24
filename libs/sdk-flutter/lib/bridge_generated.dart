@@ -779,11 +779,16 @@ class LnUrlPayRequestData {
 @freezed
 sealed class LnUrlPayResult with _$LnUrlPayResult {
   const factory LnUrlPayResult.endpointSuccess({
+    required String paymentHash,
     SuccessActionProcessed? data,
   }) = LnUrlPayResult_EndpointSuccess;
   const factory LnUrlPayResult.endpointError({
     required LnUrlErrorData data,
   }) = LnUrlPayResult_EndpointError;
+  const factory LnUrlPayResult.payError({
+    required String paymentHash,
+    required String reason,
+  }) = LnUrlPayResult_PayError;
 }
 
 class LnUrlWithdrawRequest {
@@ -2855,11 +2860,17 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     switch (raw[0]) {
       case 0:
         return LnUrlPayResult_EndpointSuccess(
-          data: _wire2api_opt_box_autoadd_success_action_processed(raw[1]),
+          paymentHash: _wire2api_String(raw[1]),
+          data: _wire2api_opt_box_autoadd_success_action_processed(raw[2]),
         );
       case 1:
         return LnUrlPayResult_EndpointError(
           data: _wire2api_box_autoadd_ln_url_error_data(raw[1]),
+        );
+      case 2:
+        return LnUrlPayResult_PayError(
+          paymentHash: _wire2api_String(raw[1]),
+          reason: _wire2api_String(raw[2]),
         );
       default:
         throw Exception("unreachable");

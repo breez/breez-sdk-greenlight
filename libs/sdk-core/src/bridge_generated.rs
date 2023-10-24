@@ -1220,8 +1220,20 @@ impl rust2dart::IntoIntoDart<LnUrlPayRequestData> for LnUrlPayRequestData {
 impl support::IntoDart for LnUrlPayResult {
     fn into_dart(self) -> support::DartAbi {
         match self {
-            Self::EndpointSuccess { data } => vec![0.into_dart(), data.into_dart()],
+            Self::EndpointSuccess { payment_hash, data } => vec![
+                0.into_dart(),
+                payment_hash.into_into_dart().into_dart(),
+                data.into_dart(),
+            ],
             Self::EndpointError { data } => vec![1.into_dart(), data.into_into_dart().into_dart()],
+            Self::PayError {
+                payment_hash,
+                reason,
+            } => vec![
+                2.into_dart(),
+                payment_hash.into_into_dart().into_dart(),
+                reason.into_into_dart().into_dart(),
+            ],
         }
         .into_dart()
     }

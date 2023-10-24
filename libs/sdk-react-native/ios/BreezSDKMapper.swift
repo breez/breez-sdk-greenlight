@@ -3257,6 +3257,10 @@ class BreezSDKMapper {
 
             return LnUrlPayResult.endpointError(data: _data)
         }
+        if type == "payError" {
+            guard let _paymentHash = lnUrlPayResult["paymentHash"] as? String else { throw SdkError.Generic(message: "Missing mandatory field paymentHash for type LnUrlPayResult") }
+            return LnUrlPayResult.payError(paymentHash: _paymentHash)
+        }
 
         throw SdkError.Generic(message: "Unexpected type \(type) for enum LnUrlPayResult")
     }
@@ -3264,11 +3268,12 @@ class BreezSDKMapper {
     static func dictionaryOf(lnUrlPayResult: LnUrlPayResult) -> [String: Any?] {
         switch lnUrlPayResult {
         case let .endpointSuccess(
-            data
+            data, paymentHash
         ):
             return [
                 "type": "endpointSuccess",
                 "data": data == nil ? nil : dictionaryOf(successActionProcessed: data!),
+                "paymentHash": paymentHash,
             ]
 
         case let .endpointError(
@@ -3277,6 +3282,15 @@ class BreezSDKMapper {
             return [
                 "type": "endpointError",
                 "data": dictionaryOf(lnUrlErrorData: data),
+            ]
+
+        case let .payError(
+            paymentHash, reason
+        ):
+            return [
+                "type": "payError",
+                "paymentHash": paymentHash,
+                "reason": reason,
             ]
         }
     }

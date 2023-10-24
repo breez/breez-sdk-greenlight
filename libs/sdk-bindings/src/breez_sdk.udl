@@ -541,8 +541,15 @@ dictionary LnUrlWithdrawRequestData {
 
 [Enum]
 interface LnUrlPayResult {
-    EndpointSuccess(SuccessActionProcessed? data);
+    EndpointSuccess(
+        SuccessActionProcessed? data,
+        string payment_hash
+    );
     EndpointError(LnUrlErrorData data);
+    PayError(
+        string payment_hash,
+        string reason
+    );
 };
 
 [Enum]

@@ -162,10 +162,15 @@ pub(crate) mod model {
     #[derive(Debug, Serialize, Deserialize)]
     pub enum LnUrlPayResult {
         EndpointSuccess {
+            payment_hash: String,
             data: Option<SuccessActionProcessed>,
         },
         EndpointError {
             data: LnUrlErrorData,
+        },
+        PayError {
+            payment_hash: String,
+            reason: String,
         },
     }
 
@@ -363,12 +368,12 @@ mod tests {
 
     use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
     use anyhow::{anyhow, Result};
+    use bitcoin::hashes::hex::ToHex;
     use gl_client::signer::model::greenlight::PayStatus;
 
+    use crate::{test_utils::*, LnUrlPayRequest};
     use mockito::Mock;
     use rand::random;
-
-    use crate::{test_utils::*, LnUrlPayRequest};
 
     struct LnurlPayCallbackParams<'a> {
         pay_req: &'a LnUrlPayRequestData,
@@ -848,8 +853,8 @@ mod tests {
             })
             .await?
         {
-            LnUrlPayResult::EndpointSuccess { data: None } => Ok(()),
-            LnUrlPayResult::EndpointSuccess { data: Some(_) } => {
+            LnUrlPayResult::EndpointSuccess { data: None, .. } => Ok(()),
+            LnUrlPayResult::EndpointSuccess { data: Some(_), .. } => {
                 Err(anyhow!("Unexpected success action"))
             }
             _ => Err(anyhow!("Unexpected success action type")),
@@ -887,6 +892,41 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_lnurl_pay_success_payment_hash() -> Result<()> {
+        let comment = rand_string(COMMENT_LENGHT as usize);
+        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGHT);
+        let temp_desc = pay_req.metadata_str.clone();
+        let inv = rand_invoice_with_description_hash(temp_desc)?;
+        let user_amount_msat = inv.amount_milli_satoshis().unwrap();
+        let _m = mock_lnurl_pay_callback_endpoint_msg_success_action(LnurlPayCallbackParams {
+            pay_req: &pay_req,
+            user_amount_msat,
+            error: None,
+            pr: Some(inv.to_string()),
+            comment: comment.clone(),
+        })?;
+
+        let mock_breez_services = crate::breez_services::tests::breez_services().await?;
+        match mock_breez_services
+            .lnurl_pay(LnUrlPayRequest {
+                data: pay_req,
+                amount_msat: user_amount_msat,
+                comment: Some(comment),
+            })
+            .await?
+        {
+            LnUrlPayResult::EndpointSuccess {
+                data: _,
+                payment_hash,
+            } => match payment_hash {
+                s if s == inv.payment_hash().to_hex() => Ok(()),
+                _ => Err(anyhow!("Unexpected payment hash")),
+            },
+            _ => Err(anyhow!("Unexpected result")),
+        }
+    }
+
+    #[tokio::test]
     async fn test_lnurl_pay_msg_success_action() -> Result<()> {
         let comment = rand_string(COMMENT_LENGHT as usize);
         let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGHT);
@@ -910,11 +950,12 @@ mod tests {
             })
             .await?
         {
-            LnUrlPayResult::EndpointSuccess { data: None } => Err(anyhow!(
+            LnUrlPayResult::EndpointSuccess { data: None, .. } => Err(anyhow!(
                 "Expected success action in callback, but none provided"
             )),
             LnUrlPayResult::EndpointSuccess {
                 data: Some(SuccessActionProcessed::Message { data: msg }),
+                ..
             } => match msg.message {
                 s if s == "test msg" => Ok(()),
                 _ => Err(anyhow!("Unexpected success action message content")),
@@ -1014,6 +1055,7 @@ mod tests {
         {
             LnUrlPayResult::EndpointSuccess {
                 data: Some(SuccessActionProcessed::Url { data: url }),
+                ..
             } => {
                 if url.url == "https://localhost/test-url" && url.description == "test description"
                 {
@@ -1022,7 +1064,7 @@ mod tests {
                     Err(anyhow!("Unexpected success action content"))
                 }
             }
-            LnUrlPayResult::EndpointSuccess { data: None } => Err(anyhow!(
+            LnUrlPayResult::EndpointSuccess { data: None, .. } => Err(anyhow!(
                 "Expected success action in callback, but none provided"
             )),
             _ => Err(anyhow!("Unexpected success action type")),
@@ -1086,13 +1128,14 @@ mod tests {
         {
             LnUrlPayResult::EndpointSuccess {
                 data: Some(received_sa),
+                ..
             } => match received_sa == sa {
                 true => Ok(()),
                 false => Err(anyhow!(
                     "Decrypted payload and description doesn't match expected success action"
                 )),
             },
-            LnUrlPayResult::EndpointSuccess { data: None } => Err(anyhow!(
+            LnUrlPayResult::EndpointSuccess { data: None, .. } => Err(anyhow!(
                 "Expected success action in callback, but none provided"
             )),
             _ => Err(anyhow!("Unexpected success action type")),

@@ -588,15 +588,21 @@ export type LnUrlCallbackStatus = {
 
 export enum LnUrlPayResultVariant {
     ENDPOINT_SUCCESS = "endpointSuccess",
-    ENDPOINT_ERROR = "endpointError"
+    ENDPOINT_ERROR = "endpointError",
+    PAY_ERROR = "payError"
 }
 
 export type LnUrlPayResult = {
     type: LnUrlPayResultVariant.ENDPOINT_SUCCESS,
     data?: SuccessActionProcessed
+    paymentHash: string
 } | {
     type: LnUrlPayResultVariant.ENDPOINT_ERROR,
     data: LnUrlErrorData
+} | {
+    type: LnUrlPayResultVariant.PAY_ERROR,
+    paymentHash: string
+    reason: string
 }
 
 export enum LnUrlWithdrawResultVariant {

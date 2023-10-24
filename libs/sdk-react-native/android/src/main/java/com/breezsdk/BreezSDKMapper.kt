@@ -3416,6 +3416,9 @@ fun asLnUrlPayResult(lnUrlPayResult: ReadableMap): LnUrlPayResult? {
     if (type == "endpointError") {
         return LnUrlPayResult.EndpointError(lnUrlPayResult.getMap("data")?.let { asLnUrlErrorData(it) }!!)
     }
+    if (type == "payError") {
+        return LnUrlPayResult.PayError(lnUrlPayResult.getString("paymentHash")!!)
+    }
     return null
 }
 
@@ -3425,10 +3428,16 @@ fun readableMapOf(lnUrlPayResult: LnUrlPayResult): ReadableMap? {
         is LnUrlPayResult.EndpointSuccess -> {
             pushToMap(map, "type", "endpointSuccess")
             pushToMap(map, "data", lnUrlPayResult.data?.let { readableMapOf(it) })
+            pushToMap(map, "paymentHash", lnUrlPayResult.paymentHash)
         }
         is LnUrlPayResult.EndpointError -> {
             pushToMap(map, "type", "endpointError")
             pushToMap(map, "data", readableMapOf(lnUrlPayResult.data))
+        }
+        is LnUrlPayResult.PayError -> {
+            pushToMap(map, "type", "payError")
+            pushToMap(map, "paymentHash", lnUrlPayResult.paymentHash)
+            pushToMap(map, "reason", lnUrlPayResult.reason)
         }
     }
     return map
