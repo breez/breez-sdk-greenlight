@@ -47,9 +47,17 @@ class BreezSDK {
         _backupStreamController.addError(Exception(event.details.error));
       }
     });
+    _lnToolkit.breezLogStream().listen((logEntry) {
+      _logStreamController.add(logEntry);
+    }, onError: (e) {
+      _logStreamController.addError(e);
+    });
   }
 
-  Stream<LogEntry> get logStream => _lnToolkit.breezLogStream();
+  final _logStreamController = StreamController<LogEntry>.broadcast();
+
+  /// Listen to log events
+  Stream<LogEntry> get logStream => _logStreamController.stream;
 
   /* Breez Services API's & Streams*/
 
