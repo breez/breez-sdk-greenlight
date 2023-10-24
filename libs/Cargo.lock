@@ -1299,7 +1299,7 @@ checksum = "ad0a93d233ebf96623465aad4046a8d3aa4da22d4f4beba5388838c8a434bbb4"
 [[package]]
 name = "gl-client"
 version = "0.1.9"
-source = "git+https://github.com/Blockstream/greenlight.git?rev=f91390734fc8a3044812f05ff8d0e102660189bb#f91390734fc8a3044812f05ff8d0e102660189bb"
+source = "git+https://github.com/Blockstream/greenlight.git?rev=28f41bb835659cb3d2e60cd612548f5b22027bb1#28f41bb835659cb3d2e60cd612548f5b22027bb1"
 dependencies = [
  "anyhow",
  "async-trait",
