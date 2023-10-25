@@ -27,42 +27,42 @@ jobs:
   build-package:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout breez-sdk repo
-        uses: actions/checkout@v3
-        with:
-          ref: ${{ inputs.ref || github.sha }}
+      # - name: Checkout breez-sdk repo
+      #   uses: actions/checkout@v3
+      #   with:
+      #     ref: ${{ inputs.ref || github.sha }}
 
-      - uses: actions/download-artifact@v3
-        with:
-          name: sdk-bindings-android-jniLibs
-          path: libs/sdk-bindings/bindings-android/lib/src/main/jniLibs
+      # - uses: actions/download-artifact@v3
+      #   with:
+      #     name: sdk-bindings-android-jniLibs
+      #     path: libs/sdk-bindings/bindings-android/lib/src/main/jniLibs
 
-      - uses: actions/download-artifact@v3
-        with:
-          name: bindings-kotlin
-          path: libs/sdk-bindings/bindings-android/lib/src/main/kotlin
+      # - uses: actions/download-artifact@v3
+      #   with:
+      #     name: bindings-kotlin
+      #     path: libs/sdk-bindings/bindings-android/lib/src/main/kotlin
 
-      - name: Build Android project
-        working-directory: libs/sdk-bindings/bindings-android
-        env:
-          ORG_GRADLE_PROJECT_libraryVersion: ${{ inputs.package-version || '0.0.1' }}
-        run: ./gradlew assemble
+      # - name: Build Android project
+      #   working-directory: libs/sdk-bindings/bindings-android
+      #   env:
+      #     ORG_GRADLE_PROJECT_libraryVersion: ${{ inputs.package-version || '0.0.1' }}
+      #   run: ./gradlew assemble
 
-      - name: Archive aar
-        uses: actions/upload-artifact@v3
-        with:
-          name: android-release.aar
-          path: libs/sdk-bindings/bindings-android/lib/build/outputs/aar/lib-release.aar
+      # - name: Archive aar
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: android-release.aar
+      #     path: libs/sdk-bindings/bindings-android/lib/build/outputs/aar/lib-release.aar
         
-      - name: Publish artifacts
-        if: ${{ inputs.publish }}
-        working-directory: libs/sdk-bindings/bindings-android
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BREEZ_MVN_USERNAME: ${{ secrets.BREEZ_MVN_USERNAME }}
-          BREEZ_MVN_PASSWORD: ${{ secrets.BREEZ_MVN_PASSWORD }}
-        run: |
-          ./gradlew publish -PlibraryVersion=${{ inputs.package-version }} -PbreezReposiliteUsername="$BREEZ_MVN_USERNAME" -PbreezReposilitePassword="$BREEZ_MVN_PASSWORD"
+      # - name: Publish artifacts
+      #   if: ${{ inputs.publish }}
+      #   working-directory: libs/sdk-bindings/bindings-android
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     BREEZ_MVN_USERNAME: ${{ secrets.BREEZ_MVN_USERNAME }}
+      #     BREEZ_MVN_PASSWORD: ${{ secrets.BREEZ_MVN_PASSWORD }}
+      #   run: |
+      #     ./gradlew publish -PlibraryVersion=${{ inputs.package-version }} -PbreezReposiliteUsername="$BREEZ_MVN_USERNAME" -PbreezReposilitePassword="$BREEZ_MVN_PASSWORD"
 
       - name: Trigger Jitpack build
         if: ${{ inputs.publish }}

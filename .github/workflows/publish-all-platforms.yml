@@ -176,8 +176,8 @@ jobs:
   publish-maven:
     needs: 
       - setup
-      - build-bindings-android
-      - build-language-bindings
+      # - build-bindings-android
+      # - build-language-bindings
     if: ${{ needs.setup.outputs.maven == 'true' }}
     uses: ./.github/workflows/publish-android.yml
     with:
