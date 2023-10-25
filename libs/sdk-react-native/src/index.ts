@@ -178,7 +178,7 @@ export type LnUrlPayRequestData = {
     lnAddress?: string
 }
 
-export type LnUrlSuccessData = {
+export type LnUrlPaySuccessData = {
     successAction?: SuccessActionProcessed
     paymentHash: string
 }
@@ -604,7 +604,7 @@ export enum LnUrlPayResultVariant {
 
 export type LnUrlPayResult = {
     type: LnUrlPayResultVariant.ENDPOINT_SUCCESS,
-    data: LnUrlSuccessData
+    data: LnUrlPaySuccessData
 } | {
     type: LnUrlPayResultVariant.ENDPOINT_ERROR,
     data: LnUrlErrorData

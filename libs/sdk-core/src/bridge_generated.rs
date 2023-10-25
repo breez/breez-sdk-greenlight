@@ -47,7 +47,7 @@ use crate::invoice::RouteHintHop;
 use crate::lnurl::pay::model::AesSuccessActionDataDecrypted;
 use crate::lnurl::pay::model::LnUrlPayErrorData;
 use crate::lnurl::pay::model::LnUrlPayResult;
-use crate::lnurl::pay::model::LnUrlSuccessData;
+use crate::lnurl::pay::model::LnUrlPaySuccessData;
 use crate::lnurl::pay::model::MessageSuccessActionData;
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lnurl::pay::model::UrlSuccessActionData;
@@ -1254,7 +1254,7 @@ impl rust2dart::IntoIntoDart<LnUrlPayResult> for LnUrlPayResult {
     }
 }
 
-impl support::IntoDart for LnUrlSuccessData {
+impl support::IntoDart for LnUrlPaySuccessData {
     fn into_dart(self) -> support::DartAbi {
         vec![
             self.payment_hash.into_into_dart().into_dart(),
@@ -1263,8 +1263,8 @@ impl support::IntoDart for LnUrlSuccessData {
         .into_dart()
     }
 }
-impl support::IntoDartExceptPrimitive for LnUrlSuccessData {}
-impl rust2dart::IntoIntoDart<LnUrlSuccessData> for LnUrlSuccessData {
+impl support::IntoDartExceptPrimitive for LnUrlPaySuccessData {}
+impl rust2dart::IntoIntoDart<LnUrlPaySuccessData> for LnUrlPaySuccessData {
     fn into_into_dart(self) -> Self {
         self
     }

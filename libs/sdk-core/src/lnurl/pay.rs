@@ -164,7 +164,7 @@ pub(crate) mod model {
     /// This includes the payment hash of the failed invoice and the failure reason.
     #[derive(Debug, Serialize, Deserialize)]
     pub enum LnUrlPayResult {
-        EndpointSuccess { data: LnUrlSuccessData },
+        EndpointSuccess { data: LnUrlPaySuccessData },
         EndpointError { data: LnUrlErrorData },
         PayError { data: LnUrlPayErrorData },
     }
@@ -176,7 +176,7 @@ pub(crate) mod model {
     }
 
     #[derive(Serialize, Deserialize, Debug)]
-    pub struct LnUrlSuccessData {
+    pub struct LnUrlPaySuccessData {
         pub payment_hash: String,
         pub success_action: Option<SuccessActionProcessed>,
     }
@@ -862,14 +862,14 @@ mod tests {
         {
             LnUrlPayResult::EndpointSuccess {
                 data:
-                    LnUrlSuccessData {
+                    LnUrlPaySuccessData {
                         success_action: None,
                         ..
                     },
             } => Ok(()),
             LnUrlPayResult::EndpointSuccess {
                 data:
-                    LnUrlSuccessData {
+                    LnUrlPaySuccessData {
                         success_action: Some(_),
                         ..
                     },
@@ -966,7 +966,7 @@ mod tests {
         {
             LnUrlPayResult::EndpointSuccess {
                 data:
-                    LnUrlSuccessData {
+                    LnUrlPaySuccessData {
                         success_action: None,
                         ..
                     },
@@ -975,7 +975,7 @@ mod tests {
             )),
             LnUrlPayResult::EndpointSuccess {
                 data:
-                    LnUrlSuccessData {
+                    LnUrlPaySuccessData {
                         success_action: Some(SuccessActionProcessed::Message { data: msg }),
                         ..
                     },
@@ -1078,7 +1078,7 @@ mod tests {
         {
             LnUrlPayResult::EndpointSuccess {
                 data:
-                    LnUrlSuccessData {
+                    LnUrlPaySuccessData {
                         success_action: Some(SuccessActionProcessed::Url { data: url }),
                         ..
                     },
@@ -1092,7 +1092,7 @@ mod tests {
             }
             LnUrlPayResult::EndpointSuccess {
                 data:
-                    LnUrlSuccessData {
+                    LnUrlPaySuccessData {
                         success_action: None,
                         ..
                     },
@@ -1160,7 +1160,7 @@ mod tests {
         {
             LnUrlPayResult::EndpointSuccess {
                 data:
-                    LnUrlSuccessData {
+                    LnUrlPaySuccessData {
                         success_action: Some(received_sa),
                         ..
                     },
@@ -1172,7 +1172,7 @@ mod tests {
             },
             LnUrlPayResult::EndpointSuccess {
                 data:
-                    LnUrlSuccessData {
+                    LnUrlPaySuccessData {
                         success_action: None,
                         ..
                     },

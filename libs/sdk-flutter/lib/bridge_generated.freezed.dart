@@ -3110,21 +3110,21 @@ mixin _$LnUrlPayResult {
   Object get data => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function(LnUrlSuccessData data) endpointSuccess,
+    required TResult Function(LnUrlPaySuccessData data) endpointSuccess,
     required TResult Function(LnUrlErrorData data) endpointError,
     required TResult Function(LnUrlPayErrorData data) payError,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(LnUrlSuccessData data)? endpointSuccess,
+    TResult? Function(LnUrlPaySuccessData data)? endpointSuccess,
     TResult? Function(LnUrlErrorData data)? endpointError,
     TResult? Function(LnUrlPayErrorData data)? payError,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(LnUrlSuccessData data)? endpointSuccess,
+    TResult Function(LnUrlPaySuccessData data)? endpointSuccess,
     TResult Function(LnUrlErrorData data)? endpointError,
     TResult Function(LnUrlPayErrorData data)? payError,
     required TResult orElse(),
@@ -3177,7 +3177,7 @@ abstract class _$$LnUrlPayResult_EndpointSuccessImplCopyWith<$Res> {
           $Res Function(_$LnUrlPayResult_EndpointSuccessImpl) then) =
       __$$LnUrlPayResult_EndpointSuccessImplCopyWithImpl<$Res>;
   @useResult
-  $Res call({LnUrlSuccessData data});
+  $Res call({LnUrlPaySuccessData data});
 }
 
 /// @nodoc
@@ -3197,7 +3197,7 @@ class __$$LnUrlPayResult_EndpointSuccessImplCopyWithImpl<$Res>
       data: null == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
-              as LnUrlSuccessData,
+              as LnUrlPaySuccessData,
     ));
   }
 }
@@ -3208,7 +3208,7 @@ class _$LnUrlPayResult_EndpointSuccessImpl implements LnUrlPayResult_EndpointSuc
   const _$LnUrlPayResult_EndpointSuccessImpl({required this.data});
 
   @override
-  final LnUrlSuccessData data;
+  final LnUrlPaySuccessData data;
 
   @override
   String toString() {
@@ -3236,7 +3236,7 @@ class _$LnUrlPayResult_EndpointSuccessImpl implements LnUrlPayResult_EndpointSuc
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function(LnUrlSuccessData data) endpointSuccess,
+    required TResult Function(LnUrlPaySuccessData data) endpointSuccess,
     required TResult Function(LnUrlErrorData data) endpointError,
     required TResult Function(LnUrlPayErrorData data) payError,
   }) {
@@ -3246,7 +3246,7 @@ class _$LnUrlPayResult_EndpointSuccessImpl implements LnUrlPayResult_EndpointSuc
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(LnUrlSuccessData data)? endpointSuccess,
+    TResult? Function(LnUrlPaySuccessData data)? endpointSuccess,
     TResult? Function(LnUrlErrorData data)? endpointError,
     TResult? Function(LnUrlPayErrorData data)? payError,
   }) {
@@ -3256,7 +3256,7 @@ class _$LnUrlPayResult_EndpointSuccessImpl implements LnUrlPayResult_EndpointSuc
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(LnUrlSuccessData data)? endpointSuccess,
+    TResult Function(LnUrlPaySuccessData data)? endpointSuccess,
     TResult Function(LnUrlErrorData data)? endpointError,
     TResult Function(LnUrlPayErrorData data)? payError,
     required TResult orElse(),
@@ -3303,11 +3303,11 @@ class _$LnUrlPayResult_EndpointSuccessImpl implements LnUrlPayResult_EndpointSuc
 }
 
 abstract class LnUrlPayResult_EndpointSuccess implements LnUrlPayResult {
-  const factory LnUrlPayResult_EndpointSuccess({required final LnUrlSuccessData data}) =
+  const factory LnUrlPayResult_EndpointSuccess({required final LnUrlPaySuccessData data}) =
       _$LnUrlPayResult_EndpointSuccessImpl;
 
   @override
-  LnUrlSuccessData get data;
+  LnUrlPaySuccessData get data;
   @JsonKey(ignore: true)
   _$$LnUrlPayResult_EndpointSuccessImplCopyWith<_$LnUrlPayResult_EndpointSuccessImpl> get copyWith =>
       throw _privateConstructorUsedError;
@@ -3377,7 +3377,7 @@ class _$LnUrlPayResult_EndpointErrorImpl implements LnUrlPayResult_EndpointError
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function(LnUrlSuccessData data) endpointSuccess,
+    required TResult Function(LnUrlPaySuccessData data) endpointSuccess,
     required TResult Function(LnUrlErrorData data) endpointError,
     required TResult Function(LnUrlPayErrorData data) payError,
   }) {
@@ -3387,7 +3387,7 @@ class _$LnUrlPayResult_EndpointErrorImpl implements LnUrlPayResult_EndpointError
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(LnUrlSuccessData data)? endpointSuccess,
+    TResult? Function(LnUrlPaySuccessData data)? endpointSuccess,
     TResult? Function(LnUrlErrorData data)? endpointError,
     TResult? Function(LnUrlPayErrorData data)? payError,
   }) {
@@ -3397,7 +3397,7 @@ class _$LnUrlPayResult_EndpointErrorImpl implements LnUrlPayResult_EndpointError
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(LnUrlSuccessData data)? endpointSuccess,
+    TResult Function(LnUrlPaySuccessData data)? endpointSuccess,
     TResult Function(LnUrlErrorData data)? endpointError,
     TResult Function(LnUrlPayErrorData data)? payError,
     required TResult orElse(),
@@ -3518,7 +3518,7 @@ class _$LnUrlPayResult_PayErrorImpl implements LnUrlPayResult_PayError {
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function(LnUrlSuccessData data) endpointSuccess,
+    required TResult Function(LnUrlPaySuccessData data) endpointSuccess,
     required TResult Function(LnUrlErrorData data) endpointError,
     required TResult Function(LnUrlPayErrorData data) payError,
   }) {
@@ -3528,7 +3528,7 @@ class _$LnUrlPayResult_PayErrorImpl implements LnUrlPayResult_PayError {
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(LnUrlSuccessData data)? endpointSuccess,
+    TResult? Function(LnUrlPaySuccessData data)? endpointSuccess,
     TResult? Function(LnUrlErrorData data)? endpointError,
     TResult? Function(LnUrlPayErrorData data)? payError,
   }) {
@@ -3538,7 +3538,7 @@ class _$LnUrlPayResult_PayErrorImpl implements LnUrlPayResult_PayError {
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(LnUrlSuccessData data)? endpointSuccess,
+    TResult Function(LnUrlPaySuccessData data)? endpointSuccess,
     TResult Function(LnUrlErrorData data)? endpointError,
     TResult Function(LnUrlPayErrorData data)? payError,
     required TResult orElse(),

@@ -8,7 +8,7 @@ use breez_sdk_core::{
     FeeratePreset, FiatCurrency, GreenlightCredentials, GreenlightNodeConfig, InputType,
     InvoicePaidDetails, LNInvoice, ListPaymentsRequest, LnPaymentDetails, LnUrlAuthRequestData,
     LnUrlCallbackStatus, LnUrlErrorData, LnUrlPayErrorData, LnUrlPayRequest, LnUrlPayRequestData,
-    LnUrlPayResult, LnUrlSuccessData, LnUrlWithdrawRequest, LnUrlWithdrawRequestData,
+    LnUrlPayResult, LnUrlPaySuccessData, LnUrlWithdrawRequest, LnUrlWithdrawRequestData,
     LnUrlWithdrawResult, LnUrlWithdrawSuccessData, LocaleOverrides, LocalizedName, LogEntry,
     LogStream, LspInformation, MessageSuccessActionData, MetadataItem, Network, NodeConfig,
     NodeState, OpenChannelFeeRequest, OpenChannelFeeResponse, OpeningFeeParams,

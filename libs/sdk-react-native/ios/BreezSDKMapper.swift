@@ -960,42 +960,42 @@ class BreezSDKMapper {
         return lnUrlPayRequestDataList.map { v -> [String: Any?] in dictionaryOf(lnUrlPayRequestData: v) }
     }
 
-    static func asLnUrlSuccessData(lnUrlSuccessData: [String: Any?]) throws -> LnUrlSuccessData {
+    static func asLnUrlPaySuccessData(lnUrlPaySuccessData: [String: Any?]) throws -> LnUrlPaySuccessData {
         var successAction: SuccessActionProcessed?
-        if let successActionTmp = lnUrlSuccessData["successAction"] as? [String: Any?] {
+        if let successActionTmp = lnUrlPaySuccessData["successAction"] as? [String: Any?] {
             successAction = try asSuccessActionProcessed(successActionProcessed: successActionTmp)
         }
 
-        guard let paymentHash = lnUrlSuccessData["paymentHash"] as? String else { throw SdkError.Generic(message: "Missing mandatory field paymentHash for type LnUrlSuccessData") }
+        guard let paymentHash = lnUrlPaySuccessData["paymentHash"] as? String else { throw SdkError.Generic(message: "Missing mandatory field paymentHash for type LnUrlPaySuccessData") }
 
-        return LnUrlSuccessData(
+        return LnUrlPaySuccessData(
             successAction: successAction,
             paymentHash: paymentHash
         )
     }
 
-    static func dictionaryOf(lnUrlSuccessData: LnUrlSuccessData) -> [String: Any?] {
+    static func dictionaryOf(lnUrlPaySuccessData: LnUrlPaySuccessData) -> [String: Any?] {
         return [
-            "successAction": lnUrlSuccessData.successAction == nil ? nil : dictionaryOf(successActionProcessed: lnUrlSuccessData.successAction!),
-            "paymentHash": lnUrlSuccessData.paymentHash,
+            "successAction": lnUrlPaySuccessData.successAction == nil ? nil : dictionaryOf(successActionProcessed: lnUrlPaySuccessData.successAction!),
+            "paymentHash": lnUrlPaySuccessData.paymentHash,
         ]
     }
 
-    static func asLnUrlSuccessDataList(arr: [Any]) throws -> [LnUrlSuccessData] {
-        var list = [LnUrlSuccessData]()
+    static func asLnUrlPaySuccessDataList(arr: [Any]) throws -> [LnUrlPaySuccessData] {
+        var list = [LnUrlPaySuccessData]()
         for value in arr {
             if let val = value as? [String: Any?] {
-                var lnUrlSuccessData = try asLnUrlSuccessData(lnUrlSuccessData: val)
-                list.append(lnUrlSuccessData)
+                var lnUrlPaySuccessData = try asLnUrlPaySuccessData(lnUrlPaySuccessData: val)
+                list.append(lnUrlPaySuccessData)
             } else {
-                throw SdkError.Generic(message: "Unexpected type LnUrlSuccessData")
+                throw SdkError.Generic(message: "Unexpected type LnUrlPaySuccessData")
             }
         }
         return list
     }
 
-    static func arrayOf(lnUrlSuccessDataList: [LnUrlSuccessData]) -> [Any] {
-        return lnUrlSuccessDataList.map { v -> [String: Any?] in dictionaryOf(lnUrlSuccessData: v) }
+    static func arrayOf(lnUrlPaySuccessDataList: [LnUrlPaySuccessData]) -> [Any] {
+        return lnUrlPaySuccessDataList.map { v -> [String: Any?] in dictionaryOf(lnUrlPaySuccessData: v) }
     }
 
     static func asLnUrlWithdrawRequest(lnUrlWithdrawRequest: [String: Any?]) throws -> LnUrlWithdrawRequest {
@@ -3317,7 +3317,7 @@ class BreezSDKMapper {
         let type = lnUrlPayResult["type"] as! String
         if type == "endpointSuccess" {
             guard let dataTmp = lnUrlPayResult["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type LnUrlPayResult") }
-            let _data = try asLnUrlSuccessData(lnUrlSuccessData: dataTmp)
+            let _data = try asLnUrlPaySuccessData(lnUrlPaySuccessData: dataTmp)
 
             return LnUrlPayResult.endpointSuccess(data: _data)
         }
@@ -3344,7 +3344,7 @@ class BreezSDKMapper {
         ):
             return [
                 "type": "endpointSuccess",
-                "data": dictionaryOf(lnUrlSuccessData: data),
+                "data": dictionaryOf(lnUrlPaySuccessData: data),
             ]
 
         case let .endpointError(

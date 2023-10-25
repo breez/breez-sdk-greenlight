@@ -373,7 +373,7 @@ impl BreezServices {
                 )?;
 
                 Ok(LnUrlPayResult::EndpointSuccess {
-                    data: LnUrlSuccessData {
+                    data: LnUrlPaySuccessData {
                         payment_hash: details.payment_hash.clone(),
                         success_action: maybe_sa_processed,
                     },

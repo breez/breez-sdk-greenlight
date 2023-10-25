@@ -789,7 +789,7 @@ class LnUrlPayRequestData {
 @freezed
 sealed class LnUrlPayResult with _$LnUrlPayResult {
   const factory LnUrlPayResult.endpointSuccess({
-    required LnUrlSuccessData data,
+    required LnUrlPaySuccessData data,
   }) = LnUrlPayResult_EndpointSuccess;
   const factory LnUrlPayResult.endpointError({
     required LnUrlErrorData data,
@@ -799,11 +799,11 @@ sealed class LnUrlPayResult with _$LnUrlPayResult {
   }) = LnUrlPayResult_PayError;
 }
 
-class LnUrlSuccessData {
+class LnUrlPaySuccessData {
   final String paymentHash;
   final SuccessActionProcessed? successAction;
 
-  const LnUrlSuccessData({
+  const LnUrlPaySuccessData({
     required this.paymentHash,
     this.successAction,
   });
@@ -2515,8 +2515,8 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return _wire2api_ln_url_pay_request_data(raw);
   }
 
-  LnUrlSuccessData _wire2api_box_autoadd_ln_url_success_data(dynamic raw) {
-    return _wire2api_ln_url_success_data(raw);
+  LnUrlPaySuccessData _wire2api_box_autoadd_ln_url_pay_success_data(dynamic raw) {
+    return _wire2api_ln_url_pay_success_data(raw);
   }
 
   LnUrlWithdrawRequestData _wire2api_box_autoadd_ln_url_withdraw_request_data(dynamic raw) {
@@ -2895,7 +2895,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     switch (raw[0]) {
       case 0:
         return LnUrlPayResult_EndpointSuccess(
-          data: _wire2api_box_autoadd_ln_url_success_data(raw[1]),
+          data: _wire2api_box_autoadd_ln_url_pay_success_data(raw[1]),
         );
       case 1:
         return LnUrlPayResult_EndpointError(
@@ -2910,10 +2910,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     }
   }
 
-  LnUrlSuccessData _wire2api_ln_url_success_data(dynamic raw) {
+  LnUrlPaySuccessData _wire2api_ln_url_pay_success_data(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
-    return LnUrlSuccessData(
+    return LnUrlPaySuccessData(
       paymentHash: _wire2api_String(arr[0]),
       successAction: _wire2api_opt_box_autoadd_success_action_processed(arr[1]),
     );
