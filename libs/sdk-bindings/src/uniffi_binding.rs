@@ -1,9 +1,4 @@
-use std::sync::Arc;
-
 use anyhow::{anyhow, Result};
-use log::{Level, LevelFilter, Metadata, Record};
-use once_cell::sync::{Lazy, OnceCell};
-
 use breez_sdk_core::{
     error::*, mnemonic_to_seed as sdk_mnemonic_to_seed, parse as sdk_parse_input,
     parse_invoice as sdk_parse_invoice, AesSuccessActionDataDecrypted, BackupFailedData,
@@ -17,14 +12,19 @@ use breez_sdk_core::{
     LocaleOverrides, LocalizedName, LogEntry, LogStream, LspInformation, MessageSuccessActionData,
     MetadataItem, Network, NodeConfig, NodeState, OpenChannelFeeRequest, OpenChannelFeeResponse,
     OpeningFeeParams, OpeningFeeParamsMenu, Payment, PaymentDetails, PaymentFailedData,
-    PaymentStatus, PaymentType, PaymentTypeFilter, Rate, ReceiveOnchainRequest,
-    ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees, RefundRequest, RefundResponse,
-    ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint,
-    RouteHintHop, SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
-    SendSpontaneousPaymentRequest, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
-    StaticBackupResponse, SuccessActionProcessed, SwapInfo, SwapStatus, SweepRequest,
-    SweepResponse, Symbol, UnspentTransactionOutput, UrlSuccessActionData,
+    PaymentStatus, PaymentType, PaymentTypeFilter, PrepareSweepRequest, PrepareSweepResponse, Rate,
+    ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees,
+    RefundRequest, RefundResponse, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
+    ReverseSwapStatus, RouteHint, RouteHintHop, SendOnchainRequest, SendOnchainResponse,
+    SendPaymentRequest, SendPaymentResponse, SendSpontaneousPaymentRequest, SignMessageRequest,
+    SignMessageResponse, StaticBackupRequest, StaticBackupResponse, SuccessActionProcessed,
+    SwapInfo, SwapStatus, SweepRequest, SweepResponse, Symbol, UnspentTransactionOutput,
+    UrlSuccessActionData,
 };
+use log::{Level, LevelFilter, Metadata, Record};
+use once_cell::sync::{Lazy, OnceCell};
+use std::sync::Arc;
+
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
 static LOG_INIT: OnceCell<bool> = OnceCell::new();
 
@@ -285,6 +285,14 @@ impl BlockingBreezServices {
 
     pub fn buy_bitcoin(&self, req: BuyBitcoinRequest) -> SdkResult<BuyBitcoinResponse> {
         rt().block_on(self.breez_services.buy_bitcoin(req))
+    }
+
+    pub fn prepare_sweep(
+        &self,
+        req: PrepareSweepRequest,
+    ) -> Result<PrepareSweepResponse, SdkError> {
+        rt().block_on(self.breez_services.prepare_sweep(req))
+            .map_err(|e| e.into())
     }
 }
 

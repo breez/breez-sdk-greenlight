@@ -1,3 +1,4 @@
+use std::cmp::max;
 use std::ops::Add;
 use std::pin::Pin;
 use std::str::FromStr;
@@ -17,7 +18,7 @@ use ripemd::Ripemd160;
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef};
 use rusqlite::ToSql;
 use serde::{Deserialize, Serialize};
-use std::cmp::max;
+use strum_macros::{Display, EnumString};
 use tokio::sync::mpsc;
 use tokio_stream::Stream;
 use tonic::Streaming;
@@ -32,7 +33,6 @@ use crate::{LNInvoice, LnUrlErrorData, LnUrlPayRequestData, LnUrlWithdrawRequest
 
 use crate::breez_services::BreezServer;
 use crate::error::{SdkError, SdkResult};
-use strum_macros::{Display, EnumString};
 
 pub const SWAP_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60 * 24 * 2; // 2 days
 pub const INVOICE_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60; // 60 minutes
@@ -80,14 +80,15 @@ pub trait NodeAPI: Send + Sync {
         &self,
         bolt11: String,
         amount_msat: Option<u64>,
-    ) -> Result<crate::models::PaymentResponse>;
+    ) -> Result<PaymentResponse>;
     async fn send_spontaneous_payment(
         &self,
         node_id: String,
         amount_msat: u64,
-    ) -> Result<crate::models::PaymentResponse>;
+    ) -> Result<PaymentResponse>;
     async fn start(&self) -> Result<()>;
     async fn sweep(&self, to_address: String, fee_rate_sats_per_vbyte: u32) -> Result<Vec<u8>>;
+    async fn prepare_sweep(&self, req: PrepareSweepRequest) -> Result<PrepareSweepResponse>;
     async fn start_signer(&self, shutdown: mpsc::Receiver<()>);
     async fn list_peers(&self) -> Result<Vec<Peer>>;
     async fn connect_peer(&self, node_id: String, addr: String) -> Result<()>;
@@ -1235,6 +1236,23 @@ pub enum BuyBitcoinProvider {
     Moonpay,
 }
 
+/// We need to prepare a sweep transaction to know what fee will be charged in satoshis this
+/// model holds the request data which consists of the address to sweep to and the fee rate in
+/// satoshis per vbyte which will be converted to absolute satoshis.
+#[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
+pub struct PrepareSweepRequest {
+    pub to_address: String,
+    pub sats_per_vbyte: u64,
+}
+
+/// We need to prepare a sweep transaction to know what a fee it will be charged in satoshis
+/// this model holds the response data, which consists of the weight and the absolute fee in sats
+#[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
+pub struct PrepareSweepResponse {
+    pub sweep_tx_weight: u64,
+    pub sweep_tx_fee_sat: u64,
+}
+
 impl FromStr for BuyBitcoinProvider {
     type Err = anyhow::Error;
 
@@ -1248,7 +1266,6 @@ impl FromStr for BuyBitcoinProvider {
 
 #[cfg(test)]
 mod tests {
-    use super::OpeningFeeParamsMenu;
     use anyhow::Result;
     use prost::Message;
     use rand::random;
@@ -1256,6 +1273,8 @@ mod tests {
     use crate::grpc::PaymentInformation;
     use crate::test_utils::{get_test_ofp, rand_vec_u8};
     use crate::OpeningFeeParams;
+
+    use super::OpeningFeeParamsMenu;
 
     #[test]
     fn test_ofp_menu_validation() -> Result<()> {

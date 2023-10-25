@@ -6,18 +6,21 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use anyhow::{anyhow, Result};
 use bitcoin::bech32::{u5, ToBase32};
+use bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
+use bitcoin::hashes::Hash;
 use bitcoin::secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
 use bitcoin::secp256k1::PublicKey;
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
+use bitcoin::{Address, OutPoint, Script, Sequence, Transaction, TxIn, TxOut, Txid, Witness};
 use ecies::utils::{aes_decrypt, aes_encrypt};
 use gl_client::node::ClnClient;
 use gl_client::pb::cln::listinvoices_invoices::ListinvoicesInvoicesStatus;
 use gl_client::pb::cln::listpays_pays::ListpaysPaysStatus;
 use gl_client::pb::cln::{
     self, CloseRequest, ListclosedchannelsClosedchannels, ListclosedchannelsRequest,
-    ListinvoicesInvoices, ListpaysPays, ListpeerchannelsRequest, SendcustommsgRequest,
-    StaticbackupRequest,
+    ListfundsRequest, ListfundsResponse, ListinvoicesInvoices, ListpaysPays,
+    ListpeerchannelsRequest, SendcustommsgRequest, StaticbackupRequest,
 };
 use gl_client::pb::cln::{AmountOrAny, InvoiceRequest};
 use gl_client::pb::{OffChainPayment, PayStatus};
@@ -39,7 +42,7 @@ use tonic::Streaming;
 use crate::invoice::parse_invoice;
 use crate::models::*;
 use crate::persist::db::SqliteStorage;
-use crate::{Channel, ChannelState, NodeConfig};
+use crate::{Channel, ChannelState, NodeConfig, PrepareSweepRequest, PrepareSweepResponse};
 use std::iter::Iterator;
 
 const MAX_PAYMENT_AMOUNT_MSAT: u64 = 4294967000;
@@ -60,7 +63,7 @@ impl Greenlight {
     /// If the node is not created, it will register it using the provided partner credentials
     /// or invite code
     /// If the node is already registered and an existing credentials were found, it will try to
-    /// connect to the node using these credentials.    
+    /// connect to the node using these credentials.
     pub async fn connect(
         config: Config,
         seed: Vec<u8>,
@@ -352,6 +355,45 @@ impl Greenlight {
             channels_balance,
         ))
     }
+
+    async fn list_funds(&self) -> Result<ListfundsResponse> {
+        let mut client = self.get_node_client().await?;
+        let funds: ListfundsResponse = client
+            .list_funds(ListfundsRequest::default())
+            .await?
+            .into_inner();
+        Ok(funds)
+    }
+
+    async fn on_chain_balance(&self, funds: ListfundsResponse) -> Result<u64> {
+        let on_chain_balance = funds.outputs.iter().fold(0, |a, b| {
+            if b.reserved {
+                return a;
+            }
+            a + b.amount_msat.clone().unwrap_or_default().msat
+        });
+        Ok(on_chain_balance)
+    }
+
+    // Collect utxos from onchain funds
+    async fn utxos(&self, funds: ListfundsResponse) -> Result<Vec<UnspentTransactionOutput>> {
+        let utxos: Vec<UnspentTransactionOutput> = funds
+            .outputs
+            .iter()
+            .map(|output| UnspentTransactionOutput {
+                txid: output.txid.clone(),
+                outnum: output.output,
+                amount_millisatoshi: output
+                    .amount_msat
+                    .as_ref()
+                    .map(|a| a.msat)
+                    .unwrap_or_default(),
+                address: output.address.clone().unwrap_or_default(),
+                reserved: output.reserved,
+            })
+            .collect();
+        Ok(utxos)
+    }
 }
 
 #[tonic::async_trait]
@@ -388,7 +430,7 @@ impl NodeAPI for Greenlight {
         Ok(res.bolt11)
     }
 
-    // implemenet pull changes from greenlight
+    // implement pull changes from greenlight
     async fn pull_changed(
         &self,
         since_timestamp: u64,
@@ -402,8 +444,7 @@ impl NodeAPI for Greenlight {
         let node_info_future = node_info_client.getinfo(pb::cln::GetinfoRequest::default());
 
         // list both off chain funds and on chain fudns
-        let mut funds_client = node_client.clone();
-        let funds_future = funds_client.list_funds(pb::cln::ListfundsRequest::default());
+        let funds_future = self.list_funds();
 
         // Fetch closed channels from greenlight
         let mut closed_channels_client = node_client.clone();
@@ -426,7 +467,7 @@ impl NodeAPI for Greenlight {
         );
 
         let node_info = node_info_res?.into_inner();
-        let onchain_funds = funds_res?.into_inner().outputs;
+        let funds = funds_res?;
         let closed_channels = closed_channels_res?.into_inner().closedchannels;
         let (all_channels, opened_channels, connected_peers, channels_balance) = balance_res?;
 
@@ -447,28 +488,8 @@ impl NodeAPI for Greenlight {
         all_channel_models.extend(forgotten_closed_channels?);
 
         // calculate onchain balance
-        let onchain_balance = onchain_funds.iter().fold(0, |a, b| {
-            if b.reserved {
-                return a;
-            }
-            a + b.amount_msat.clone().unwrap_or_default().msat
-        });
-
-        // Collect utxos from onchain funds
-        let utxos = onchain_funds
-            .iter()
-            .map(|output| UnspentTransactionOutput {
-                txid: output.txid.clone(),
-                outnum: output.output,
-                amount_millisatoshi: output
-                    .amount_msat
-                    .as_ref()
-                    .map(|a| a.msat)
-                    .unwrap_or_default(),
-                address: output.address.clone().unwrap_or_default(),
-                reserved: output.reserved,
-            })
-            .collect();
+        let onchain_balance = self.on_chain_balance(funds.clone()).await?;
+        let utxos = self.utxos(funds).await?;
 
         // calculate payment limits and inbound liquidity
         let mut max_payable: u64 = 0;
@@ -594,6 +615,58 @@ impl NodeAPI for Greenlight {
         };
 
         Ok(client.withdraw(request).await?.into_inner().txid)
+    }
+
+    async fn prepare_sweep(&self, req: PrepareSweepRequest) -> Result<PrepareSweepResponse> {
+        let funds = self.list_funds().await?;
+        let utxos = self.utxos(funds).await?;
+
+        let mut amount: u64 = 0;
+        let txins: Vec<TxIn> = utxos
+            .iter()
+            .map(|utxo| {
+                amount += utxo.amount_millisatoshi;
+                TxIn {
+                    previous_output: OutPoint {
+                        txid: Txid::from_slice(&utxo.txid).unwrap(),
+                        vout: 0,
+                    },
+                    script_sig: Script::new(),
+                    sequence: Sequence(0),
+                    witness: Witness::default(),
+                }
+            })
+            .collect();
+
+        // remove millisats lower than 1 satoshi (1-999 msat)
+        amount /= 1000;
+        amount *= 1000;
+
+        let btc_address = Address::from_str(&req.to_address)?;
+        let tx_out: Vec<TxOut> = vec![TxOut {
+            value: amount,
+            script_pubkey: btc_address.payload.script_pubkey(),
+        }];
+        let mut tx = Transaction {
+            version: 2,
+            lock_time: bitcoin::PackedLockTime(0),
+            input: txins.clone(),
+            output: tx_out,
+        };
+
+        let witness_input_size: u64 = 110;
+        let tx_weight = tx.strippedsize() as u64 * WITNESS_SCALE_FACTOR as u64
+            + witness_input_size * txins.len() as u64;
+        let fee: u64 = tx_weight * req.sats_per_vbyte / WITNESS_SCALE_FACTOR as u64;
+        if fee >= amount {
+            return Err(anyhow!("insufficient funds to pay fees"));
+        }
+        tx.output[0].value = amount - fee;
+
+        return Ok(PrepareSweepResponse {
+            sweep_tx_weight: tx_weight,
+            sweep_tx_fee_sat: fee,
+        });
     }
 
     /// Starts the signer that listens in a loop until the shutdown signal is received
@@ -783,7 +856,7 @@ impl NodeAPI for Greenlight {
                 let resp = self
                     .get_node_client()
                     .await?
-                    .list_funds(pb::cln::ListfundsRequest::default())
+                    .list_funds(ListfundsRequest::default())
                     .await?
                     .into_inner();
                 Ok(format!("{resp:?}"))

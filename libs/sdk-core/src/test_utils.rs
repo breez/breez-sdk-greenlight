@@ -34,7 +34,10 @@ use crate::lsp::LspInformation;
 use crate::models::{FiatAPI, LspAPI, NodeAPI, NodeState, Payment, Swap, SwapperAPI, SyncResponse};
 use crate::moonpay::MoonPayApi;
 use crate::swap::create_submarine_swap_script;
-use crate::{parse_invoice, Config, CustomMessage, LNInvoice, PaymentResponse, Peer, RouteHint};
+use crate::{
+    parse_invoice, Config, CustomMessage, LNInvoice, PaymentResponse, Peer, PrepareSweepRequest,
+    PrepareSweepResponse, RouteHint,
+};
 use crate::{OpeningFeeParams, OpeningFeeParamsMenu};
 use crate::{ReceivePaymentRequest, SwapInfo};
 
@@ -325,6 +328,10 @@ impl NodeAPI for MockNodeAPI {
 
     async fn sweep(&self, _to_address: String, _fee_rate_sats_per_vbyte: u32) -> Result<Vec<u8>> {
         Ok(rand_vec_u8(32))
+    }
+
+    async fn prepare_sweep(&self, _req: PrepareSweepRequest) -> Result<PrepareSweepResponse> {
+        Err(anyhow!("Not implemented"))
     }
 
     async fn start_signer(&self, _shutdown: mpsc::Receiver<()>) {}

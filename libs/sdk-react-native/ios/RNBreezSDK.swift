@@ -502,6 +502,17 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
+    @objc(prepareSweep:resolve:reject:)
+    func prepareSweep(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            let prepareSweepRequest = try BreezSDKMapper.asPrepareSweepRequest(prepareSweepRequest: req)
+            var res = try getBreezServices().prepareSweep(req: prepareSweepRequest)
+            resolve(BreezSDKMapper.dictionaryOf(prepareSweepResponse: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
     func rejectErr(err: Error, reject: @escaping RCTPromiseRejectBlock) {
         var errorCode = "Generic"
         var message = "\(err)"

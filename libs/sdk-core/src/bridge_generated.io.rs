@@ -190,6 +190,11 @@ pub extern "C" fn wire_sweep(port_: i64, req: *mut wire_SweepRequest) {
 }
 
 #[no_mangle]
+pub extern "C" fn wire_prepare_sweep(port_: i64, req: *mut wire_PrepareSweepRequest) {
+    wire_prepare_sweep_impl(port_, req)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_list_refundables(port_: i64) {
     wire_list_refundables_impl(port_)
 }
@@ -299,6 +304,11 @@ pub extern "C" fn new_box_autoadd_open_channel_fee_request_0() -> *mut wire_Open
 #[no_mangle]
 pub extern "C" fn new_box_autoadd_opening_fee_params_0() -> *mut wire_OpeningFeeParams {
     support::new_leak_box_ptr(wire_OpeningFeeParams::new_with_null_ptr())
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_autoadd_prepare_sweep_request_0() -> *mut wire_PrepareSweepRequest {
+    support::new_leak_box_ptr(wire_PrepareSweepRequest::new_with_null_ptr())
 }
 
 #[no_mangle]
@@ -472,6 +482,12 @@ impl Wire2Api<OpeningFeeParams> for *mut wire_OpeningFeeParams {
     fn wire2api(self) -> OpeningFeeParams {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
         Wire2Api::<OpeningFeeParams>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<PrepareSweepRequest> for *mut wire_PrepareSweepRequest {
+    fn wire2api(self) -> PrepareSweepRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<PrepareSweepRequest>::wire2api(*wrap).into()
     }
 }
 impl Wire2Api<ReceiveOnchainRequest> for *mut wire_ReceiveOnchainRequest {
@@ -705,6 +721,14 @@ impl Wire2Api<OpeningFeeParams> for wire_OpeningFeeParams {
     }
 }
 
+impl Wire2Api<PrepareSweepRequest> for wire_PrepareSweepRequest {
+    fn wire2api(self) -> PrepareSweepRequest {
+        PrepareSweepRequest {
+            to_address: self.to_address.wire2api(),
+            sats_per_vbyte: self.sats_per_vbyte.wire2api(),
+        }
+    }
+}
 impl Wire2Api<ReceiveOnchainRequest> for wire_ReceiveOnchainRequest {
     fn wire2api(self) -> ReceiveOnchainRequest {
         ReceiveOnchainRequest {
@@ -925,6 +949,13 @@ pub struct wire_OpeningFeeParams {
     max_idle_time: u32,
     max_client_to_self_delay: u32,
     promise: *mut wire_uint_8_list,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_PrepareSweepRequest {
+    to_address: *mut wire_uint_8_list,
+    sats_per_vbyte: u64,
 }
 
 #[repr(C)]
@@ -1281,6 +1312,21 @@ impl NewWithNullPtr for wire_OpeningFeeParams {
 }
 
 impl Default for wire_OpeningFeeParams {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_PrepareSweepRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            to_address: core::ptr::null_mut(),
+            sats_per_vbyte: Default::default(),
+        }
+    }
+}
+
+impl Default for wire_PrepareSweepRequest {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }

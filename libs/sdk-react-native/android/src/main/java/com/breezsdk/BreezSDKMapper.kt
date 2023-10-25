@@ -1773,6 +1773,80 @@ fun asPaymentFailedDataList(arr: ReadableArray): List<PaymentFailedData> {
     return list
 }
 
+fun asPrepareSweepRequest(prepareSweepRequest: ReadableMap): PrepareSweepRequest? {
+    if (!validateMandatoryFields(
+            prepareSweepRequest,
+            arrayOf(
+                "toAddress",
+                "satsPerVbyte",
+            ),
+        )
+    ) {
+        return null
+    }
+    val toAddress = prepareSweepRequest.getString("toAddress")!!
+    val satsPerVbyte = prepareSweepRequest.getDouble("satsPerVbyte").toULong()
+    return PrepareSweepRequest(
+        toAddress,
+        satsPerVbyte,
+    )
+}
+
+fun readableMapOf(prepareSweepRequest: PrepareSweepRequest): ReadableMap {
+    return readableMapOf(
+        "toAddress" to prepareSweepRequest.toAddress,
+        "satsPerVbyte" to prepareSweepRequest.satsPerVbyte,
+    )
+}
+
+fun asPrepareSweepRequestList(arr: ReadableArray): List<PrepareSweepRequest> {
+    val list = ArrayList<PrepareSweepRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asPrepareSweepRequest(value)!!)
+            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
+fun asPrepareSweepResponse(prepareSweepResponse: ReadableMap): PrepareSweepResponse? {
+    if (!validateMandatoryFields(
+            prepareSweepResponse,
+            arrayOf(
+                "sweepTxWeight",
+                "sweepTxFeeSat",
+            ),
+        )
+    ) {
+        return null
+    }
+    val sweepTxWeight = prepareSweepResponse.getDouble("sweepTxWeight").toULong()
+    val sweepTxFeeSat = prepareSweepResponse.getDouble("sweepTxFeeSat").toULong()
+    return PrepareSweepResponse(
+        sweepTxWeight,
+        sweepTxFeeSat,
+    )
+}
+
+fun readableMapOf(prepareSweepResponse: PrepareSweepResponse): ReadableMap {
+    return readableMapOf(
+        "sweepTxWeight" to prepareSweepResponse.sweepTxWeight,
+        "sweepTxFeeSat" to prepareSweepResponse.sweepTxFeeSat,
+    )
+}
+
+fun asPrepareSweepResponseList(arr: ReadableArray): List<PrepareSweepResponse> {
+    val list = ArrayList<PrepareSweepResponse>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asPrepareSweepResponse(value)!!)
+            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asRate(rate: ReadableMap): Rate? {
     if (!validateMandatoryFields(
             rate,

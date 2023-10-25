@@ -115,7 +115,7 @@ pub(crate) async fn handle_command(
         }
         Commands::Sync {} => {
             sdk()?.sync().await?;
-            Ok("Sync finished succesfully".to_string())
+            Ok("Sync finished successfully".to_string())
         }
         Commands::Parse { input } => parse(&input)
             .await
@@ -232,12 +232,24 @@ pub(crate) async fn handle_command(
         }
         Commands::Sweep {
             to_address,
-            sat_per_vbyte: sat_per_byte,
+            fee_rate_sats_per_vbyte,
         } => {
             sdk()?
                 .sweep(SweepRequest {
                     to_address,
-                    fee_rate_sats_per_vbyte: sat_per_byte,
+                    fee_rate_sats_per_vbyte,
+                })
+                .await?;
+            Ok("Onchain funds were swept successfully".to_string())
+        }
+        Commands::PrepareSweep {
+            to_address,
+            sats_per_vbyte,
+        } => {
+            sdk()?
+                .sweep(SweepRequest {
+                    to_address,
+                    fee_rate_sats_per_vbyte: sats_per_vbyte,
                 })
                 .await?;
             Ok("Onchain funds were swept succesfully".to_string())
@@ -248,7 +260,7 @@ pub(crate) async fn handle_command(
         }
         Commands::ConnectLSP { lsp_id } => {
             sdk()?.connect_lsp(lsp_id).await?;
-            Ok("LSP connected succesfully".to_string())
+            Ok("LSP connected successfully".to_string())
         }
         Commands::OpenChannelFee {
             amount_msat,

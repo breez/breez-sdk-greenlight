@@ -1585,6 +1585,74 @@ class BreezSDKMapper {
         return paymentFailedDataList.map { v -> [String: Any?] in dictionaryOf(paymentFailedData: v) }
     }
 
+    static func asPrepareSweepRequest(prepareSweepRequest: [String: Any?]) throws -> PrepareSweepRequest {
+        guard let toAddress = prepareSweepRequest["toAddress"] as? String else { throw SdkError.Generic(message: "Missing mandatory field toAddress for type PrepareSweepRequest") }
+        guard let satsPerVbyte = prepareSweepRequest["satsPerVbyte"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field satsPerVbyte for type PrepareSweepRequest") }
+
+        return PrepareSweepRequest(
+            toAddress: toAddress,
+            satsPerVbyte: satsPerVbyte
+        )
+    }
+
+    static func dictionaryOf(prepareSweepRequest: PrepareSweepRequest) -> [String: Any?] {
+        return [
+            "toAddress": prepareSweepRequest.toAddress,
+            "satsPerVbyte": prepareSweepRequest.satsPerVbyte,
+        ]
+    }
+
+    static func asPrepareSweepRequestList(arr: [Any]) throws -> [PrepareSweepRequest] {
+        var list = [PrepareSweepRequest]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var prepareSweepRequest = try asPrepareSweepRequest(prepareSweepRequest: val)
+                list.append(prepareSweepRequest)
+            } else {
+                throw SdkError.Generic(message: "Invalid element type PrepareSweepRequest")
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(prepareSweepRequestList: [PrepareSweepRequest]) -> [Any] {
+        return prepareSweepRequestList.map { v -> [String: Any?] in dictionaryOf(prepareSweepRequest: v) }
+    }
+
+    static func asPrepareSweepResponse(prepareSweepResponse: [String: Any?]) throws -> PrepareSweepResponse {
+        guard let sweepTxWeight = prepareSweepResponse["sweepTxWeight"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field sweepTxWeight for type PrepareSweepResponse") }
+        guard let sweepTxFeeSat = prepareSweepResponse["sweepTxFeeSat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field sweepTxFeeSat for type PrepareSweepResponse") }
+
+        return PrepareSweepResponse(
+            sweepTxWeight: sweepTxWeight,
+            sweepTxFeeSat: sweepTxFeeSat
+        )
+    }
+
+    static func dictionaryOf(prepareSweepResponse: PrepareSweepResponse) -> [String: Any?] {
+        return [
+            "sweepTxWeight": prepareSweepResponse.sweepTxWeight,
+            "sweepTxFeeSat": prepareSweepResponse.sweepTxFeeSat,
+        ]
+    }
+
+    static func asPrepareSweepResponseList(arr: [Any]) throws -> [PrepareSweepResponse] {
+        var list = [PrepareSweepResponse]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var prepareSweepResponse = try asPrepareSweepResponse(prepareSweepResponse: val)
+                list.append(prepareSweepResponse)
+            } else {
+                throw SdkError.Generic(message: "Invalid element type PrepareSweepResponse")
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(prepareSweepResponseList: [PrepareSweepResponse]) -> [Any] {
+        return prepareSweepResponseList.map { v -> [String: Any?] in dictionaryOf(prepareSweepResponse: v) }
+    }
+
     static func asRate(rate: [String: Any?]) throws -> Rate {
         guard let coin = rate["coin"] as? String else { throw SdkError.Generic(message: "Missing mandatory field coin for type Rate") }
         guard let value = rate["value"] as? Double else { throw SdkError.Generic(message: "Missing mandatory field value for type Rate") }

@@ -702,4 +702,23 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             }
         }
     }
+
+    @ReactMethod
+    fun prepareSweep(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
+        executor.execute {
+            try {
+                val prepareSweepRequest =
+                    asPrepareSweepRequest(req) ?: run {
+                        throw SdkException.Generic("Missing mandatory field req of type PrepareSweepRequest")
+                    }
+                val res = getBreezServices().prepareSweep(prepareSweepRequest)
+                promise.resolve(readableMapOf(res))
+            } catch (e: SdkException) {
+                promise.reject(e.javaClass.simpleName, e.message, e)
+            }
+        }
+    }
 }
