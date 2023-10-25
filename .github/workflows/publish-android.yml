@@ -65,7 +65,7 @@ jobs:
       #     ./gradlew publish -PlibraryVersion=${{ inputs.package-version }} -PbreezReposiliteUsername="$BREEZ_MVN_USERNAME" -PbreezReposilitePassword="$BREEZ_MVN_PASSWORD"
 
       - name: Trigger Jitpack build
-        if: ${{ inputs.publish }}
+        # if: ${{ inputs.publish }}
         shell: bash
         run: |
           # Jitpack only makes artifacts avaiable when someone requests them.

@@ -98,83 +98,83 @@ jobs:
     steps:
       - run: echo "set setup output variables"
 
-  build-bindings-windows:
-    needs: setup
-    if: ${{ needs.setup.outputs.bindings-windows == 'true' }}
-    uses: ./.github/workflows/build-bindings-windows.yml
-    with:
-      ref: ${{ needs.setup.outputs.ref }}
-  build-bindings-darwin:
-    needs: setup
-    if: ${{ needs.setup.outputs.bindings-darwin == 'true' }}
-    uses: ./.github/workflows/build-bindings-darwin.yml
-    with:
-      ref: ${{ needs.setup.outputs.ref }}
-  build-bindings-linux:
-    needs: setup
-    if: ${{ needs.setup.outputs.bindings-linux == 'true' }}
-    uses: ./.github/workflows/build-bindings-linux.yml
-    with:
-      ref: ${{ needs.setup.outputs.ref }}
-  build-bindings-android:
-    needs: setup
-    if: ${{ needs.setup.outputs.bindings-android == 'true' }}
-    uses: ./.github/workflows/build-bindings-android.yml
-    with:
-      ref: ${{ needs.setup.outputs.ref }}
-  build-bindings-ios:
-    needs: setup
-    if: ${{ needs.setup.outputs.bindings-ios == 'true' }}
-    uses: ./.github/workflows/build-bindings-ios.yml
-    with:
-      ref: ${{ needs.setup.outputs.ref }}
+  # build-bindings-windows:
+  #   needs: setup
+  #   if: ${{ needs.setup.outputs.bindings-windows == 'true' }}
+  #   uses: ./.github/workflows/build-bindings-windows.yml
+  #   with:
+  #     ref: ${{ needs.setup.outputs.ref }}
+  # build-bindings-darwin:
+  #   needs: setup
+  #   if: ${{ needs.setup.outputs.bindings-darwin == 'true' }}
+  #   uses: ./.github/workflows/build-bindings-darwin.yml
+  #   with:
+  #     ref: ${{ needs.setup.outputs.ref }}
+  # build-bindings-linux:
+  #   needs: setup
+  #   if: ${{ needs.setup.outputs.bindings-linux == 'true' }}
+  #   uses: ./.github/workflows/build-bindings-linux.yml
+  #   with:
+  #     ref: ${{ needs.setup.outputs.ref }}
+  # build-bindings-android:
+  #   needs: setup
+  #   if: ${{ needs.setup.outputs.bindings-android == 'true' }}
+  #   uses: ./.github/workflows/build-bindings-android.yml
+  #   with:
+  #     ref: ${{ needs.setup.outputs.ref }}
+  # build-bindings-ios:
+  #   needs: setup
+  #   if: ${{ needs.setup.outputs.bindings-ios == 'true' }}
+  #   uses: ./.github/workflows/build-bindings-ios.yml
+  #   with:
+  #     ref: ${{ needs.setup.outputs.ref }}
 
-  build-language-bindings:
-    needs: setup
-    uses: ./.github/workflows/build-language-bindings.yml
-    with:
-      ref: ${{ needs.setup.outputs.ref }}
-      kotlin: ${{ needs.setup.outputs.kotlin == 'true'}}
-      csharp: ${{ needs.setup.outputs.csharp == 'true'}}
-      golang: ${{ needs.setup.outputs.golang == 'true'}}
-      python: ${{ needs.setup.outputs.python == 'true'}}
-      swift: ${{ needs.setup.outputs.swift == 'true'}}
+  # build-language-bindings:
+  #   needs: setup
+  #   uses: ./.github/workflows/build-language-bindings.yml
+  #   with:
+  #     ref: ${{ needs.setup.outputs.ref }}
+  #     kotlin: ${{ needs.setup.outputs.kotlin == 'true'}}
+  #     csharp: ${{ needs.setup.outputs.csharp == 'true'}}
+  #     golang: ${{ needs.setup.outputs.golang == 'true'}}
+  #     python: ${{ needs.setup.outputs.python == 'true'}}
+  #     swift: ${{ needs.setup.outputs.swift == 'true'}}
 
-  publish-csharp:
-    needs: 
-      - setup
-      - build-bindings-windows
-      - build-bindings-darwin
-      - build-bindings-linux
-      - build-language-bindings
-    if: ${{ needs.setup.outputs.csharp == 'true' }}
-    uses: ./.github/workflows/publish-csharp.yml
-    with:
-      ref: ${{ needs.setup.outputs.csharp-ref }}
-      package-version: ${{ needs.setup.outputs.csharp-package-version }}
-      publish: ${{ needs.setup.outputs.publish == 'true' }}
-    secrets:
-      NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+  # publish-csharp:
+  #   needs:
+  #     - setup
+  #     - build-bindings-windows
+  #     - build-bindings-darwin
+  #     - build-bindings-linux
+  #     - build-language-bindings
+  #   if: ${{ needs.setup.outputs.csharp == 'true' }}
+  #   uses: ./.github/workflows/publish-csharp.yml
+  #   with:
+  #     ref: ${{ needs.setup.outputs.csharp-ref }}
+  #     package-version: ${{ needs.setup.outputs.csharp-package-version }}
+  #     publish: ${{ needs.setup.outputs.publish == 'true' }}
+  #   secrets:
+  #     NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
 
-  publish-golang:
-    needs: 
-      - setup
-      - build-bindings-android
-      - build-bindings-windows
-      - build-bindings-darwin
-      - build-bindings-linux
-      - build-language-bindings
-    if: ${{ needs.setup.outputs.golang == 'true' }}
-    uses: ./.github/workflows/publish-golang.yml
-    with:
-      ref: ${{ needs.setup.outputs.ref }}
-      package-version: ${{ needs.setup.outputs.golang-package-version }}
-      publish: ${{ needs.setup.outputs.publish == 'true' }}
-    secrets:
-      REPO_SSH_KEY: ${{ secrets.REPO_SSH_KEY }}
+  # publish-golang:
+  #   needs:
+  #     - setup
+  #     - build-bindings-android
+  #     - build-bindings-windows
+  #     - build-bindings-darwin
+  #     - build-bindings-linux
+  #     - build-language-bindings
+  #   if: ${{ needs.setup.outputs.golang == 'true' }}
+  #   uses: ./.github/workflows/publish-golang.yml
+  #   with:
+  #     ref: ${{ needs.setup.outputs.ref }}
+  #     package-version: ${{ needs.setup.outputs.golang-package-version }}
+  #     publish: ${{ needs.setup.outputs.publish == 'true' }}
+  #   secrets:
+  #     REPO_SSH_KEY: ${{ secrets.REPO_SSH_KEY }}
   
   publish-maven:
-    needs: 
+    needs:
       - setup
       # - build-bindings-android
       # - build-language-bindings
@@ -188,45 +188,45 @@ jobs:
       BREEZ_MVN_USERNAME: ${{ secrets.BREEZ_MVN_USERNAME }}
       BREEZ_MVN_PASSWORD: ${{ secrets.BREEZ_MVN_PASSWORD }}
   
-  publish-kotlin-mpp:
-    needs: 
-      - setup
-      - build-bindings-android
-      - build-bindings-ios
-      - build-language-bindings
-    if: ${{ needs.setup.outputs.kotlin-mpp == 'true' }}
-    uses: ./.github/workflows/publish-kotlin-mpp.yml
-    with:
-      ref: ${{ needs.setup.outputs.ref }}
-      package-version: ${{ needs.setup.outputs.kotlin-mpp-package-version }}
-      publish: ${{ needs.setup.outputs.publish == 'true' }}
-    secrets:
-      BREEZ_MVN_USERNAME: ${{ secrets.BREEZ_MVN_USERNAME }}
-      BREEZ_MVN_PASSWORD: ${{ secrets.BREEZ_MVN_PASSWORD }}
+  # publish-kotlin-mpp:
+  #   needs:
+  #     - setup
+  #     - build-bindings-android
+  #     - build-bindings-ios
+  #     - build-language-bindings
+  #   if: ${{ needs.setup.outputs.kotlin-mpp == 'true' }}
+  #   uses: ./.github/workflows/publish-kotlin-mpp.yml
+  #   with:
+  #     ref: ${{ needs.setup.outputs.ref }}
+  #     package-version: ${{ needs.setup.outputs.kotlin-mpp-package-version }}
+  #     publish: ${{ needs.setup.outputs.publish == 'true' }}
+  #   secrets:
+  #     BREEZ_MVN_USERNAME: ${{ secrets.BREEZ_MVN_USERNAME }}
+  #     BREEZ_MVN_PASSWORD: ${{ secrets.BREEZ_MVN_PASSWORD }}
   
-  publish-flutter:
-    needs: 
-      - setup
-      - build-bindings-android      
-    if: ${{ needs.setup.outputs.flutter == 'true' }}
-    uses: ./.github/workflows/publish-flutter.yml
-    with:
-      ref: ${{ needs.setup.outputs.ref }}
-      package-version: ${{ needs.setup.outputs.flutter-package-version }}
-      publish: ${{ needs.setup.outputs.publish == 'true' }}
-    secrets:
-      REPO_SSH_KEY: ${{ secrets.REPO_SSH_KEY }}
+  # publish-flutter:
+  #   needs:
+  #     - setup
+  #     - build-bindings-android
+  #   if: ${{ needs.setup.outputs.flutter == 'true' }}
+  #   uses: ./.github/workflows/publish-flutter.yml
+  #   with:
+  #     ref: ${{ needs.setup.outputs.ref }}
+  #     package-version: ${{ needs.setup.outputs.flutter-package-version }}
+  #     publish: ${{ needs.setup.outputs.publish == 'true' }}
+  #   secrets:
+  #     REPO_SSH_KEY: ${{ secrets.REPO_SSH_KEY }}
 
   # react native version x.y.z will at runtime require
   # ios and android packages x.y.z being published already.
-  publish-react-native:
-    needs:
-      - setup
-    if: ${{ needs.setup.outputs.react-native == 'true' }}
-    uses: ./.github/workflows/publish-react-native.yml
-    with:
-      ref: ${{ needs.setup.outputs.ref }}
-      package-version: ${{ needs.setup.outputs.react-native-package-version }}
-      publish: ${{ needs.setup.outputs.publish == 'true' }}
-    secrets:
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+  # publish-react-native:
+  #   needs:
+  #     - setup
+  #   if: ${{ needs.setup.outputs.react-native == 'true' }}
+  #   uses: ./.github/workflows/publish-react-native.yml
+  #   with:
+  #     ref: ${{ needs.setup.outputs.ref }}
+  #     package-version: ${{ needs.setup.outputs.react-native-package-version }}
+  #     publish: ${{ needs.setup.outputs.publish == 'true' }}
+  #   secrets:
+  #     NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
