@@ -1,4 +1,4 @@
-name: Build iOS
+name: Build sdk-bindings for Linux
 on:
   workflow_dispatch:
     inputs:
@@ -15,14 +15,13 @@ on:
 
 jobs:
   build:
-    runs-on: macOS-latest
+    runs-on: ubuntu-20.04
     name: build ${{ matrix.target }}
     strategy:
       matrix:
         target: [
-          aarch64-apple-ios,
-          x86_64-apple-ios,
-          aarch64-apple-ios-sim,
+          aarch64-unknown-linux-gnu,
+          x86_64-unknown-linux-gnu,
         ]
     steps:
     - name: checkout
@@ -42,21 +41,31 @@ jobs:
         version: "23.4"
         repo-token: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Install gcc-aarch64-linux-gnu
+      if: matrix.target == 'aarch64-unknown-linux-gnu'
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu 
+
+    - name: Install gcc-x86-64-linux-gnu
+      if: matrix.target == 'x86_64-unknown-linux-gnu'
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y gcc-x86-64-linux-gnu g++-x86-64-linux-gnu 
+
     - uses: Swatinem/rust-cache@v2
       with:
         workspaces: libs
 
-    - name: Install xcode
-      uses: maxim-lobanov/setup-xcode@v1
-      with:
-        xcode-version: latest-stable
-
-    - name: Build Breez
+    - name: Build sdk-bindings
       working-directory: libs/sdk-bindings
+      env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: /usr/bin/aarch64-linux-gnu-gcc
+          CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER: /usr/bin/x86_64-linux-gnu-gcc
       run: cargo build --release --target ${{ matrix.target }}
     
     - name: Archive release
       uses: actions/upload-artifact@v3
       with:
         name: sdk-bindings-${{ matrix.target }}
-        path: libs/target/${{ matrix.target }}/release/libbreez_sdk_bindings.a
+        path: libs/target/${{ matrix.target }}/release/libbreez_sdk_bindings.so

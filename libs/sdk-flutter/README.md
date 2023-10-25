@@ -45,9 +45,8 @@ make android
 
 ### Generated artifacts:
 * Android libraries
- >* android/src/main/jniLibs/arm64-v8a/libbreez_sdk_core.so
- >* android/src/main/jniLibs/armeabi-v7a/libbreez_core_sdk.so
- >* android/src/main/jniLibs/x86/libbreez_sdk_core.so
- >* android/src/main/jniLibs/x86_64/libbreez_sdk_core.so
-* iOS library
- >* ios/libbreez_sdk_core.a
+ >* ./android/src/main/jniLibs/arm64-v8a/libbreez_sdk_bindings.so
+ >* ./android/src/main/jniLibs/armeabi-v7a/libbreez_sdk_bindings.so
+ >* ./android/src/main/jniLibs/x86/libbreez_sdk_bindings.so
+ >* ./android/src/main/jniLibs/x86_64/libbreez_sdk_bindings.so
+* iOS library is imported through libs/sdk-bindings/bindings-swift

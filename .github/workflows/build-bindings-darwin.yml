@@ -1,4 +1,4 @@
-name: Build Darwin
+name: Build sdk-bindings for Darwin
 on:
   workflow_dispatch:
     inputs:
@@ -46,7 +46,7 @@ jobs:
       with:
         workspaces: libs
 
-    - name: Build Breez 
+    - name: Build sdk-bindings
       working-directory: libs/sdk-bindings
       run: cargo lipo --release --targets ${{ matrix.target }}
     

@@ -12,17 +12,26 @@ pub enum SdkError {
     #[error("Failed to initialize the SDK: {err}")]
     InitFailed { err: String },
 
+    #[error("SDK is not ready: {err}")]
+    NotReady { err: String },
+
     #[error("Failed to communicate with the LSP API: {err}")]
     LspConnectFailed { err: String },
 
     #[error("LSP doesn't support opening a new channel: {err}")]
     LspOpenChannelNotSupported { err: String },
 
+    #[error("Failed to calculate channel opening fee: {err}")]
+    CalculateOpenChannelFeesFailed { err: String },
+
     #[error("Failed to use the local DB for persistence: {err}")]
     PersistenceFailure { err: String },
 
     #[error("Failed to receive payment: {err}")]
     ReceivePaymentFailed { err: String },
+
+    #[error("Failed to send payment: {err}")]
+    SendPaymentFailed { err: String },
 }
 
 impl From<rusqlite::Error> for SdkError {
@@ -48,4 +57,13 @@ impl From<anyhow::Error> for SdkError {
             err: value.to_string(),
         }
     }
+}
+
+#[macro_export]
+macro_rules! ensure_sdk {
+    ($cond:expr, $err:expr) => {
+        if !$cond {
+            return Err($err);
+        }
+    };
 }

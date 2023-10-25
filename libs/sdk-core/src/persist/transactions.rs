@@ -3,14 +3,15 @@ use crate::error::SdkResult;
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::models::*;
 use anyhow::{anyhow, Result};
-use rusqlite::types::{FromSql, FromSqlError, ToSql, ToSqlOutput};
-use rusqlite::OptionalExtension;
+use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use rusqlite::Row;
+use rusqlite::{params, OptionalExtension};
+use std::collections::HashSet;
 
 use std::str::FromStr;
 
 impl SqliteStorage {
-    /// Inserts payments into the payments table. Covers both pending and successful payments. Before
+    /// Inserts payments into the payments table. These can be pending, completed and failed payments. Before
     /// persisting, it automatically deletes previously pending payments
     ///
     /// Note that, if a payment has details of type [LnPaymentDetails] which contain a [SuccessActionProcessed],
@@ -29,10 +30,10 @@ impl SqliteStorage {
            payment_time,                                  
            amount_msat, 
            fee_msat,                 
-           pending,
+           status,
            description,
            details
-         )
+        )
          VALUES (?1,?2,?3,?4,?5,?6,?7,?8)
         ",
         )?;
@@ -44,7 +45,7 @@ impl SqliteStorage {
                 &ln_tx.payment_time,
                 &ln_tx.amount_msat,
                 &ln_tx.fee_msat,
-                &ln_tx.pending,
+                &ln_tx.status,
                 &ln_tx.description,
                 &ln_tx.details,
             ))?;
@@ -55,8 +56,8 @@ impl SqliteStorage {
     fn delete_pending_lightning_payments(&self) -> Result<usize> {
         self.get_connection()?
             .execute(
-                "DELETE FROM payments WHERE payment_type = ?1 AND pending = true",
-                [PaymentType::Sent.to_string()],
+                "DELETE FROM payments WHERE payment_type = ?1 AND status = ?2",
+                params![PaymentType::Sent.to_string(), PaymentStatus::Pending],
             )
             .map_err(|e| anyhow!(e))
     }
@@ -68,6 +69,7 @@ impl SqliteStorage {
         lnurl_pay_success_action: Option<&SuccessActionProcessed>,
         lnurl_metadata: Option<String>,
         ln_address: Option<String>,
+        lnurl_withdraw_endpoint: Option<String>,
     ) -> SdkResult<()> {
         let con = self.get_connection()?;
         let mut prep_statement = con.prepare(
@@ -76,9 +78,10 @@ impl SqliteStorage {
            payment_id,
            lnurl_success_action,
            lnurl_metadata,
-           ln_address
+           ln_address,
+           lnurl_withdraw_endpoint
          )
-         VALUES (?1,?2,?3,?4)
+         VALUES (?1,?2,?3,?4,?5)
         ",
         )?;
 
@@ -87,6 +90,7 @@ impl SqliteStorage {
             &lnurl_pay_success_action,
             lnurl_metadata,
             ln_address,
+            lnurl_withdraw_endpoint,
         ))?;
 
         Ok(())
@@ -114,11 +118,13 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub fn last_payment_timestamp(&self) -> Result<i64> {
+    pub fn last_payment_timestamp(&self) -> Result<u64> {
         self.get_connection()?
-            .query_row("SELECT max(payment_time) FROM payments", [], |row| {
-                row.get(0)
-            })
+            .query_row(
+                "SELECT max(payment_time) FROM payments where status != ?1",
+                params![PaymentStatus::Pending],
+                |row| row.get(0),
+            )
             .map_err(anyhow::Error::msg)
     }
 
@@ -126,13 +132,15 @@ impl SqliteStorage {
     ///
     /// This queries all payments. To query a single payment, see [Self::get_payment_by_hash]
     /// or [Self::get_completed_payment_by_hash]
-    pub fn list_payments(
-        &self,
-        type_filter: PaymentTypeFilter,
-        from_timestamp: Option<i64>,
-        to_timestamp: Option<i64>,
-    ) -> SdkResult<Vec<Payment>> {
-        let where_clause = filter_to_where_clause(type_filter, from_timestamp, to_timestamp);
+    pub fn list_payments(&self, req: ListPaymentsRequest) -> SdkResult<Vec<Payment>> {
+        let where_clause = filter_to_where_clause(
+            req.filters,
+            req.from_timestamp,
+            req.to_timestamp,
+            req.include_failures,
+        );
+        let offset = req.offset.unwrap_or(0u32);
+        let limit = req.limit.unwrap_or(u32::MAX);
         let con = self.get_connection()?;
         let mut stmt = con.prepare(
             format!(
@@ -143,12 +151,13 @@ impl SqliteStorage {
              p.payment_time,
              p.amount_msat,
              p.fee_msat,
-             p.pending,
+             p.status,
              p.description,
              p.details,
              e.lnurl_success_action,
              e.lnurl_metadata,
              e.ln_address,
+             e.lnurl_withdraw_endpoint,
              o.payer_amount_msat
             FROM payments p
             LEFT JOIN sync.payments_external_info e
@@ -158,6 +167,8 @@ impl SqliteStorage {
              ON
               p.id = o.payment_hash
             {where_clause} ORDER BY payment_time DESC
+            LIMIT {limit}
+            OFFSET {offset}
           "
             )
             .as_str(),
@@ -171,7 +182,7 @@ impl SqliteStorage {
         Ok(vec)
     }
 
-    /// This queries a single payment by hash, which may be pending or completed.
+    /// This queries a single payment by hash, which may be pending, completed or failed.
     ///
     /// To lookup a completed payment by hash, use [Self::get_completed_payment_by_hash]
     ///
@@ -186,12 +197,13 @@ impl SqliteStorage {
                  p.payment_time,
                  p.amount_msat,
                  p.fee_msat,
-                 p.pending,
+                 p.status,
                  p.description,
                  p.details,
                  e.lnurl_success_action,
                  e.lnurl_metadata,
                  e.ln_address,
+                 e.lnurl_withdraw_endpoint,
                  o.payer_amount_msat
                 FROM payments p
                 LEFT JOIN sync.payments_external_info e
@@ -211,9 +223,11 @@ impl SqliteStorage {
 
     /// Looks up a completed payment by hash.
     ///
-    /// To include pending payments in the lookup as well, use [Self::get_payment_by_hash]
+    /// To include pending or failed payments in the lookup as well, use [Self::get_payment_by_hash]
     pub(crate) fn get_completed_payment_by_hash(&self, hash: &String) -> Result<Option<Payment>> {
-        let res = self.get_payment_by_hash(hash)?.filter(|p| !p.pending);
+        let res = self
+            .get_payment_by_hash(hash)?
+            .filter(|p| p.status == PaymentStatus::Complete);
         Ok(res)
     }
 
@@ -226,7 +240,7 @@ impl SqliteStorage {
             payment_time: row.get(2)?,
             amount_msat,
             fee_msat: row.get(4)?,
-            pending: row.get(5)?,
+            status: row.get(5)?,
             description: row.get(6)?,
             details: row.get(7)?,
         };
@@ -235,10 +249,11 @@ impl SqliteStorage {
             data.lnurl_success_action = row.get(8)?;
             data.lnurl_metadata = row.get(9)?;
             data.ln_address = row.get(10)?;
+            data.lnurl_withdraw_endpoint = row.get(11)?;
         }
 
         // In case we have a record of the open channel fee, let's use it.
-        let payer_amount_msat: Option<u64> = row.get(11)?;
+        let payer_amount_msat: Option<u64> = row.get(12)?;
         if let Some(payer_amount) = payer_amount_msat {
             payment.fee_msat = payer_amount - amount_msat;
         }
@@ -248,11 +263,13 @@ impl SqliteStorage {
 }
 
 fn filter_to_where_clause(
-    type_filter: PaymentTypeFilter,
+    type_filters: Option<Vec<PaymentTypeFilter>>,
     from_timestamp: Option<i64>,
     to_timestamp: Option<i64>,
+    include_failures: Option<bool>,
 ) -> String {
     let mut where_clause: Vec<String> = Vec::new();
+    let with_failures = include_failures.unwrap_or(false);
 
     if let Some(t) = from_timestamp {
         where_clause.push(format!("payment_time >= {t}"));
@@ -260,19 +277,36 @@ fn filter_to_where_clause(
     if let Some(t) = to_timestamp {
         where_clause.push(format!("payment_time <= {t}"));
     };
+    if !with_failures {
+        where_clause.push(format!("status != {}", PaymentStatus::Failed as i64));
+    };
 
-    match type_filter {
-        PaymentTypeFilter::Sent => {
+    if let Some(filters) = type_filters {
+        if !filters.is_empty() {
+            let mut type_filter_clause: HashSet<PaymentType> = HashSet::new();
+            for type_filter in filters {
+                match type_filter {
+                    PaymentTypeFilter::Sent => {
+                        type_filter_clause.insert(PaymentType::Sent);
+                    }
+                    PaymentTypeFilter::Received => {
+                        type_filter_clause.insert(PaymentType::Received);
+                    }
+                    PaymentTypeFilter::ClosedChannels => {
+                        type_filter_clause.insert(PaymentType::ClosedChannel);
+                    }
+                }
+            }
+
             where_clause.push(format!(
-                "payment_type in ('{}','{}') ",
-                PaymentType::Sent,
-                PaymentType::ClosedChannel
+                "payment_type in ({})",
+                type_filter_clause
+                    .iter()
+                    .map(|t| format!("'{}'", t))
+                    .collect::<Vec<_>>()
+                    .join(", ")
             ));
         }
-        PaymentTypeFilter::Received => {
-            where_clause.push(format!("payment_type = '{}' ", PaymentType::Received));
-        }
-        PaymentTypeFilter::All => (),
     }
 
     let mut where_clause_str = String::new();
@@ -294,6 +328,26 @@ impl ToSql for PaymentDetails {
         Ok(ToSqlOutput::from(
             serde_json::to_string(&self).map_err(|_| FromSqlError::InvalidType)?,
         ))
+    }
+}
+
+impl FromSql for PaymentStatus {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        match value {
+            ValueRef::Integer(i) => match i as u8 {
+                0 => Ok(PaymentStatus::Pending),
+                1 => Ok(PaymentStatus::Complete),
+                2 => Ok(PaymentStatus::Failed),
+                _ => Err(FromSqlError::OutOfRange(i)),
+            },
+            _ => Err(FromSqlError::InvalidType),
+        }
+    }
+}
+
+impl ToSql for PaymentStatus {
+    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
+        Ok(rusqlite::types::ToSqlOutput::from(*self as i64))
     }
 }
 
@@ -327,6 +381,8 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let payment_hash_with_lnurl_success_action = "123";
+    let payment_hash_with_lnurl_withdraw = "124";
+    let lnurl_withdraw_url = "https://test.lnurl.withdraw.link";
     let txs = [
         Payment {
             id: payment_hash_with_lnurl_success_action.to_string(),
@@ -334,7 +390,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
             payment_time: 1001,
             amount_msat: 100,
             fee_msat: 20,
-            pending: false,
+            status: PaymentStatus::Complete,
             description: None,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
@@ -347,20 +403,21 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
                     lnurl_success_action: Some(sa.clone()),
                     lnurl_metadata: Some(lnurl_metadata.to_string()),
                     ln_address: Some(test_ln_address.to_string()),
+                    lnurl_withdraw_endpoint: None,
                 },
             },
         },
         Payment {
-            id: "124".to_string(),
+            id: payment_hash_with_lnurl_withdraw.to_string(),
             payment_type: PaymentType::Received,
             payment_time: 1000,
             amount_msat: 100,
             fee_msat: 20,
-            pending: false,
+            status: PaymentStatus::Complete,
             description: Some("desc".to_string()),
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
-                    payment_hash: "124".to_string(),
+                    payment_hash: payment_hash_with_lnurl_withdraw.to_string(),
                     label: "label".to_string(),
                     destination_pubkey: "pubey".to_string(),
                     payment_preimage: "payment_preimage".to_string(),
@@ -369,27 +426,77 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
                     lnurl_success_action: None,
                     lnurl_metadata: None,
                     ln_address: None,
+                    lnurl_withdraw_endpoint: Some(lnurl_withdraw_url.to_string()),
                 },
             },
         },
     ];
+    let failed_txs = [Payment {
+        id: "125".to_string(),
+        payment_type: PaymentType::Sent,
+        payment_time: 2000,
+        amount_msat: 1000,
+        fee_msat: 0,
+        status: PaymentStatus::Failed,
+        description: Some("desc".to_string()),
+        details: PaymentDetails::Ln {
+            data: LnPaymentDetails {
+                payment_hash: "125".to_string(),
+                label: "label".to_string(),
+                destination_pubkey: "pubey".to_string(),
+                payment_preimage: "payment_preimage".to_string(),
+                keysend: true,
+                bolt11: "bolt11".to_string(),
+                lnurl_success_action: None,
+                lnurl_metadata: None,
+                ln_address: None,
+                lnurl_withdraw_endpoint: None,
+            },
+        },
+    }];
     let storage = SqliteStorage::new(test_utils::create_test_sql_dir());
     storage.init()?;
     storage.insert_or_update_payments(&txs)?;
+    storage.insert_or_update_payments(&failed_txs)?;
     storage.insert_lnurl_payment_external_info(
         payment_hash_with_lnurl_success_action,
         Some(&sa),
         Some(lnurl_metadata.to_string()),
         Some(test_ln_address.to_string()),
+        None,
+    )?;
+    storage.insert_lnurl_payment_external_info(
+        payment_hash_with_lnurl_withdraw,
+        None,
+        None,
+        None,
+        Some(lnurl_withdraw_url.to_string()),
     )?;
 
     // retrieve all
-    let retrieve_txs = storage.list_payments(PaymentTypeFilter::All, None, None)?;
+    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+        filters: None,
+        from_timestamp: None,
+        to_timestamp: None,
+        include_failures: None,
+        offset: None,
+        limit: None,
+    })?;
     assert_eq!(retrieve_txs.len(), 2);
     assert_eq!(retrieve_txs, txs);
 
     //test only sent
-    let retrieve_txs = storage.list_payments(PaymentTypeFilter::Sent, None, None)?;
+    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+        filters: Some(vec![
+            PaymentTypeFilter::Sent,
+            PaymentTypeFilter::ClosedChannels,
+        ]),
+        from_timestamp: None,
+        to_timestamp: None,
+        include_failures: None,
+        offset: None,
+        limit: None,
+    })?;
     assert_eq!(retrieve_txs.len(), 1);
     assert_eq!(retrieve_txs[0], txs[0]);
     assert!(
@@ -400,21 +507,90 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     //test only received
-    let retrieve_txs = storage.list_payments(PaymentTypeFilter::Received, None, None)?;
+    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+        filters: Some(vec![PaymentTypeFilter::Received]),
+        from_timestamp: None,
+        to_timestamp: None,
+        include_failures: None,
+        offset: None,
+        limit: None,
+    })?;
     assert_eq!(retrieve_txs.len(), 1);
     assert_eq!(retrieve_txs[0], txs[1]);
 
     let max_ts = storage.last_payment_timestamp()?;
-    assert_eq!(max_ts, 1001);
+    assert_eq!(max_ts, 2000);
 
     storage.insert_or_update_payments(&txs)?;
-    let retrieve_txs = storage.list_payments(PaymentTypeFilter::All, None, None)?;
+    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+        filters: None,
+        from_timestamp: None,
+        to_timestamp: None,
+        include_failures: None,
+        offset: None,
+        limit: None,
+    })?;
     assert_eq!(retrieve_txs.len(), 2);
     assert_eq!(retrieve_txs, txs);
 
     storage.insert_open_channel_payment_info("123", 150)?;
-    let retrieve_txs = storage.list_payments(PaymentTypeFilter::All, None, None)?;
+    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+        filters: None,
+        from_timestamp: None,
+        to_timestamp: None,
+        include_failures: None,
+        offset: None,
+        limit: None,
+    })?;
     assert_eq!(retrieve_txs[0].fee_msat, 50);
+
+    // test all with failures
+    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+        filters: None,
+        from_timestamp: None,
+        to_timestamp: None,
+        include_failures: Some(true),
+        offset: None,
+        limit: None,
+    })?;
+    assert_eq!(retrieve_txs.len(), 3);
+
+    // test sent with failures
+    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+        filters: Some(vec![
+            PaymentTypeFilter::Sent,
+            PaymentTypeFilter::ClosedChannels,
+        ]),
+        from_timestamp: None,
+        to_timestamp: None,
+        include_failures: Some(true),
+        offset: None,
+        limit: None,
+    })?;
+    assert_eq!(retrieve_txs.len(), 2);
+
+    // test limit
+    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+        filters: None,
+        from_timestamp: None,
+        to_timestamp: None,
+        include_failures: Some(false),
+        offset: None,
+        limit: Some(1),
+    })?;
+    assert_eq!(retrieve_txs.len(), 1);
+
+    // test offset
+    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+        filters: None,
+        from_timestamp: None,
+        to_timestamp: None,
+        include_failures: Some(false),
+        offset: Some(1),
+        limit: Some(1),
+    })?;
+    assert_eq!(retrieve_txs.len(), 1);
+    assert_eq!(retrieve_txs[0].id, payment_hash_with_lnurl_withdraw);
 
     Ok(())
 }

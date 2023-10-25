@@ -1,9 +1,4 @@
-use std::sync::Arc;
-
 use anyhow::{anyhow, Result};
-use log::{Metadata, Record};
-use once_cell::sync::{Lazy, OnceCell};
-
 use breez_sdk_core::{
     error::*, mnemonic_to_seed as sdk_mnemonic_to_seed, parse as sdk_parse_input,
     parse_invoice as sdk_parse_invoice, AesSuccessActionDataDecrypted, BackupFailedData,
@@ -11,37 +6,51 @@ use breez_sdk_core::{
     BuyBitcoinRequest, BuyBitcoinResponse, ChannelState, CheckMessageRequest, CheckMessageResponse,
     ClosedChannelPaymentDetails, Config, CurrencyInfo, EnvironmentType, EventListener,
     FeeratePreset, FiatCurrency, GreenlightCredentials, GreenlightNodeConfig, InputType,
-    InvoicePaidDetails, LNInvoice, LnPaymentDetails, LnUrlAuthRequestData, LnUrlCallbackStatus,
-    LnUrlErrorData, LnUrlPayRequestData, LnUrlPayResult, LnUrlWithdrawRequestData, LocaleOverrides,
-    LocalizedName, LogEntry, LogStream, LspInformation, MessageSuccessActionData, MetadataItem,
-    Network, NodeConfig, NodeState, OpeningFeeParams, OpeningFeeParamsMenu, Payment,
-    PaymentDetails, PaymentFailedData, PaymentType, PaymentTypeFilter, Rate, ReceiveOnchainRequest,
-    ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees, ReverseSwapFeesRequest,
+    InvoicePaidDetails, LNInvoice, ListPaymentsRequest, LnPaymentDetails, LnUrlAuthRequestData,
+    LnUrlCallbackStatus, LnUrlErrorData, LnUrlPayRequest, LnUrlPayRequestData, LnUrlPayResult,
+    LnUrlWithdrawRequest, LnUrlWithdrawRequestData, LnUrlWithdrawResult, LnUrlWithdrawSuccessData,
+    LocaleOverrides, LocalizedName, LogEntry, LogStream, LspInformation, MessageSuccessActionData,
+    MetadataItem, Network, NodeConfig, NodeState, OpenChannelFeeRequest, OpenChannelFeeResponse,
+    OpeningFeeParams, OpeningFeeParamsMenu, Payment, PaymentDetails, PaymentFailedData,
+    PaymentStatus, PaymentType, PaymentTypeFilter, PrepareRefundRequest, PrepareRefundResponse,
+    PrepareSweepRequest, PrepareSweepResponse, Rate, ReceiveOnchainRequest, ReceivePaymentRequest,
+    ReceivePaymentResponse, RecommendedFees, RefundRequest, RefundResponse, ReverseSwapFeesRequest,
     ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop,
-    SignMessageRequest, SignMessageResponse, SuccessActionProcessed, SwapInfo, SwapStatus, Symbol,
-    UnspentTransactionOutput, UrlSuccessActionData,
+    SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
+    SendSpontaneousPaymentRequest, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
+    StaticBackupResponse, SuccessActionProcessed, SwapInfo, SwapStatus, SweepRequest,
+    SweepResponse, Symbol, UnspentTransactionOutput, UrlSuccessActionData,
 };
+use log::{Level, LevelFilter, Metadata, Record};
+use once_cell::sync::{Lazy, OnceCell};
+use std::sync::Arc;
 
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
-static LOG_STREAM: OnceCell<Box<dyn LogStream>> = OnceCell::new();
+static LOG_INIT: OnceCell<bool> = OnceCell::new();
 
-struct BindingLogger {}
+struct BindingLogger {
+    log_stream: Box<dyn LogStream>,
+}
+
+impl BindingLogger {
+    fn init(log_stream: Box<dyn LogStream>) {
+        let binding_logger = BindingLogger { log_stream };
+        log::set_boxed_logger(Box::new(binding_logger)).unwrap();
+        log::set_max_level(LevelFilter::Trace);
+    }
+}
 
 impl log::Log for BindingLogger {
     fn enabled(&self, m: &Metadata) -> bool {
         // ignore the internal uniffi log to prevent infinite loop.
-        return *m.target() != *"breez_sdk_bindings::uniffi_binding";
+        return m.level() <= Level::Trace && *m.target() != *"breez_sdk_bindings::uniffi_binding";
     }
 
     fn log(&self, record: &Record) {
-        if self.enabled(record.metadata()) {
-            if let Some(s) = LOG_STREAM.get() {
-                s.log(LogEntry {
-                    line: record.args().to_string(),
-                    level: record.level().as_str().to_string(),
-                });
-            }
-        }
+        self.log_stream.log(LogEntry {
+            line: record.args().to_string(),
+            level: record.level().as_str().to_string(),
+        });
     }
     fn flush(&self) {}
 }
@@ -53,6 +62,13 @@ pub fn default_config(
     node_config: NodeConfig,
 ) -> Config {
     BreezServices::default_config(env_type, api_key, node_config)
+}
+
+/// Get the static backup data from the peristent storage.
+/// This data enables the user to recover the node in an external core ligntning node.
+/// See here for instructions on how to recover using this data: https://docs.corelightning.org/docs/backup-and-recovery#backing-up-using-static-channel-backup
+pub fn static_backup(req: StaticBackupRequest) -> SdkResult<StaticBackupResponse> {
+    BreezServices::static_backup(req)
 }
 
 /// connect initializes the SDK services, schedule the node to run in the cloud and
@@ -73,12 +89,6 @@ pub fn connect(
     event_listener: Box<dyn EventListener>,
 ) -> SdkResult<Arc<BlockingBreezServices>> {
     rt().block_on(async move {
-        let uniffi_logger: Option<Box<dyn log::Log>> = match LOG_STREAM.get() {
-            None => None,
-            Some(_) => Some(Box::new(BindingLogger {})),
-        };
-        BreezServices::init_logging(&config.working_dir, uniffi_logger)?;
-
         let breez_services = BreezServices::connect(config, seed, event_listener).await?;
 
         Ok(Arc::new(BlockingBreezServices { breez_services }))
@@ -87,9 +97,10 @@ pub fn connect(
 
 /// If used, this must be called before `connect`
 pub fn set_log_stream(log_stream: Box<dyn LogStream>) -> Result<()> {
-    LOG_STREAM
-        .set(log_stream)
+    LOG_INIT
+        .set(true)
         .map_err(|_| anyhow!("log stream already created"))?;
+    BindingLogger::init(log_stream);
     Ok(())
 }
 
@@ -102,41 +113,32 @@ impl BlockingBreezServices {
         rt().block_on(self.breez_services.disconnect())
     }
 
-    pub fn send_payment(&self, bolt11: String, amount_sats: Option<u64>) -> SdkResult<Payment> {
-        rt().block_on(self.breez_services.send_payment(bolt11, amount_sats))
-            .map_err(|e| e.into())
+    pub fn send_payment(&self, req: SendPaymentRequest) -> SdkResult<SendPaymentResponse> {
+        rt().block_on(self.breez_services.send_payment(req))
     }
 
     pub fn send_spontaneous_payment(
         &self,
-        node_id: String,
-        amount_sats: u64,
-    ) -> SdkResult<Payment> {
-        rt().block_on(
-            self.breez_services
-                .send_spontaneous_payment(node_id, amount_sats),
-        )
-        .map_err(|e| e.into())
+        req: SendSpontaneousPaymentRequest,
+    ) -> SdkResult<SendPaymentResponse> {
+        rt().block_on(self.breez_services.send_spontaneous_payment(req))
     }
 
-    pub fn receive_payment(
-        &self,
-        req_data: ReceivePaymentRequest,
-    ) -> SdkResult<ReceivePaymentResponse> {
-        rt().block_on(self.breez_services.receive_payment(req_data))
+    pub fn receive_payment(&self, req: ReceivePaymentRequest) -> SdkResult<ReceivePaymentResponse> {
+        rt().block_on(self.breez_services.receive_payment(req))
     }
 
     pub fn node_info(&self) -> SdkResult<NodeState> {
         self.breez_services.node_info()
     }
 
-    pub fn sign_message(&self, request: SignMessageRequest) -> SdkResult<SignMessageResponse> {
-        rt().block_on(self.breez_services.sign_message(request))
+    pub fn sign_message(&self, req: SignMessageRequest) -> SdkResult<SignMessageResponse> {
+        rt().block_on(self.breez_services.sign_message(req))
             .map_err(|e| e.into())
     }
 
-    pub fn check_message(&self, request: CheckMessageRequest) -> SdkResult<CheckMessageResponse> {
-        rt().block_on(self.breez_services.check_message(request))
+    pub fn check_message(&self, req: CheckMessageRequest) -> SdkResult<CheckMessageResponse> {
+        rt().block_on(self.breez_services.check_message(req))
             .map_err(|e| e.into())
     }
 
@@ -149,16 +151,8 @@ impl BlockingBreezServices {
             .map_err(|e| e.into())
     }
 
-    pub fn list_payments(
-        &self,
-        filter: PaymentTypeFilter,
-        from_timestamp: Option<i64>,
-        to_timestamp: Option<i64>,
-    ) -> SdkResult<Vec<Payment>> {
-        rt().block_on(
-            self.breez_services
-                .list_payments(filter, from_timestamp, to_timestamp),
-        )
+    pub fn list_payments(&self, req: ListPaymentsRequest) -> SdkResult<Vec<Payment>> {
+        rt().block_on(self.breez_services.list_payments(req))
     }
 
     pub fn payment_by_hash(&self, hash: String) -> SdkResult<Option<Payment>> {
@@ -166,30 +160,14 @@ impl BlockingBreezServices {
             .map_err(|e| e.into())
     }
 
-    pub fn pay_lnurl(
-        &self,
-        req_data: LnUrlPayRequestData,
-        amount_sats: u64,
-        comment: Option<String>,
-    ) -> SdkResult<LnUrlPayResult> {
-        rt().block_on(
-            self.breez_services
-                .lnurl_pay(amount_sats, comment, req_data),
-        )
-        .map_err(|e| e.into())
+    pub fn pay_lnurl(&self, req: LnUrlPayRequest) -> SdkResult<LnUrlPayResult> {
+        rt().block_on(self.breez_services.lnurl_pay(req))
+            .map_err(|e| e.into())
     }
 
-    pub fn withdraw_lnurl(
-        &self,
-        req_data: LnUrlWithdrawRequestData,
-        amount_sats: u64,
-        description: Option<String>,
-    ) -> SdkResult<LnUrlCallbackStatus> {
-        rt().block_on(
-            self.breez_services
-                .lnurl_withdraw(req_data, amount_sats, description),
-        )
-        .map_err(|e| e.into())
+    pub fn withdraw_lnurl(&self, req: LnUrlWithdrawRequest) -> SdkResult<LnUrlWithdrawResult> {
+        rt().block_on(self.breez_services.lnurl_withdraw(req))
+            .map_err(|e| e.into())
     }
 
     pub fn lnurl_auth(&self, req_data: LnUrlAuthRequestData) -> SdkResult<LnUrlCallbackStatus> {
@@ -197,12 +175,9 @@ impl BlockingBreezServices {
             .map_err(|e| e.into())
     }
 
-    pub fn sweep(&self, to_address: String, fee_rate_sats_per_vbyte: u64) -> SdkResult<()> {
-        rt().block_on(
-            self.breez_services
-                .sweep(to_address, fee_rate_sats_per_vbyte),
-        )
-        .map_err(|e| e.into())
+    pub fn sweep(&self, req: SweepRequest) -> SdkResult<SweepResponse> {
+        rt().block_on(self.breez_services.sweep(req))
+            .map_err(|e| e.into())
     }
 
     pub fn fetch_fiat_rates(&self) -> SdkResult<Vec<Rate>> {
@@ -237,6 +212,13 @@ impl BlockingBreezServices {
             .map_err(|e: anyhow::Error| e.into())
     }
 
+    pub fn open_channel_fee(
+        &self,
+        req: OpenChannelFeeRequest,
+    ) -> SdkResult<OpenChannelFeeResponse> {
+        rt().block_on(self.breez_services.open_channel_fee(req))
+    }
+
     pub fn close_lsp_channels(&self) -> SdkResult<()> {
         rt().block_on(async {
             _ = self.breez_services.close_lsp_channels().await?;
@@ -263,18 +245,17 @@ impl BlockingBreezServices {
             .map_err(|e| e.into())
     }
 
+    // prepare a refund transaction for a failed/expired swap
+    // optionally used to know fees before calling `refund()`
+    pub fn prepare_refund(&self, req: PrepareRefundRequest) -> SdkResult<PrepareRefundResponse> {
+        rt().block_on(self.breez_services.prepare_refund(req))
+            .map_err(|e| e.into())
+    }
+
     // construct and broadcast a refund transaction for a faile/expired swap
-    pub fn refund(
-        &self,
-        swap_address: String,
-        to_address: String,
-        sat_per_vbyte: u32,
-    ) -> SdkResult<String> {
-        rt().block_on(
-            self.breez_services
-                .refund(swap_address, to_address, sat_per_vbyte),
-        )
-        .map_err(|e| e.into())
+    pub fn refund(&self, req: RefundRequest) -> SdkResult<RefundResponse> {
+        rt().block_on(self.breez_services.refund(req))
+            .map_err(|e| e.into())
     }
 
     pub fn fetch_reverse_swap_fees(
@@ -290,20 +271,9 @@ impl BlockingBreezServices {
             .map_err(|e| e.into())
     }
 
-    pub fn send_onchain(
-        &self,
-        amount_sat: u64,
-        onchain_recipient_address: String,
-        pair_hash: String,
-        sat_per_vbyte: u64,
-    ) -> SdkResult<ReverseSwapInfo> {
-        rt().block_on(self.breez_services.send_onchain(
-            amount_sat,
-            onchain_recipient_address,
-            pair_hash,
-            sat_per_vbyte,
-        ))
-        .map_err(|e| e.into())
+    pub fn send_onchain(&self, req: SendOnchainRequest) -> SdkResult<SendOnchainResponse> {
+        rt().block_on(self.breez_services.send_onchain(req))
+            .map_err(|e| e.into())
     }
 
     pub fn execute_dev_command(&self, command: String) -> Result<String> {
@@ -322,6 +292,14 @@ impl BlockingBreezServices {
 
     pub fn buy_bitcoin(&self, req: BuyBitcoinRequest) -> SdkResult<BuyBitcoinResponse> {
         rt().block_on(self.breez_services.buy_bitcoin(req))
+    }
+
+    pub fn prepare_sweep(
+        &self,
+        req: PrepareSweepRequest,
+    ) -> Result<PrepareSweepResponse, SdkError> {
+        rt().block_on(self.breez_services.prepare_sweep(req))
+            .map_err(|e| e.into())
     }
 }
 

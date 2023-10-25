@@ -11,22 +11,32 @@ To do this, you first need to build the Breez SDK bindings locally and then poin
 ## Prerequisites
 
 Set the ANDROID_NDK_HOME env variable to your SDK home folder:
-
 ```
 export ANDROID_NDK_HOME=<your android ndk directory>
 ```
 
-## Building the bindings
+To lint the result of the code generation ktlint, swiftformat and tslint need to be installed:
+```bash
+brew install kotlin ktlint swiftformat
+yarn global add tslint typescript
+```
 
 On first usage you will need to run:
-
-```
+```bash
 make init
 ```
 
-Then to build and copy the Kotlin and Swift bindings into the React Native plugin:
+## Generating the bridging code
 
+When there are changes to the UDL file in `libs/sdk-binding/src` the React Native bridging code needs to be regenerated:
+```bash
+make react-native-codegen
 ```
+
+## Building the bindings
+
+Then to build and copy the Kotlin and Swift bindings into the React Native plugin:
+```bash
 make all
 ```
 
@@ -48,12 +58,33 @@ This will generate the following artifacts:
 To use the locally built bindings instead of integrating them remotely:
 
 - For iOS:
-	- Remove `breez_sdk.podspec`
+	- Rename `breez_sdk.podspec` to `breez_sdk.podspec.prod`
 	- Rename `BreezSDK.podspec.dev` to `BreezSDK.podspec`
 - For Android:
 	- Remove the following line from the dependencies section in `android/build.gradle`:
-		- `implementation("com.github.breez:breez-sdk:0.1.4") { exclude group:"net.java.dev.jna" }`
+		- `implementation("com.github.breez:breez-sdk:${getVersionFromNpmPackage()}") { exclude group:"net.java.dev.jna" }`
 
 Reinstall the dependencies in the example project and run it.
 It will now use the locally built bindings.
 
+## Testing with the example app
+
+To test locally built bindings in the example app, the npm dependencies need to be updated to use the local package.
+In `example/package.json` replace the current version with `file:../`:
+```json
+    "@breeztech/react-native-breez-sdk": "file:../",
+```
+
+Run the npm/yarn install to download dependences for both the react-native-breez-sdk package and the example app:
+```bash
+yarn bootstrap
+```
+
+Finally in `example/` start either the iOS or Android app:
+```bash
+yarn android
+```
+or for iOS:
+```bash
+yarn ios
+```

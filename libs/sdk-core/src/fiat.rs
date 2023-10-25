@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use tonic::Request;
 
 /// Settings for the symbol representation of a currency
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Symbol {
     pub grapheme: Option<String>,
     pub template: Option<String>,
@@ -17,7 +17,7 @@ pub struct Symbol {
 }
 
 /// Locale-specific settings for the representation of a currency
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct LocaleOverrides {
     pub locale: String,
     pub spacing: Option<u32>,
@@ -25,14 +25,14 @@ pub struct LocaleOverrides {
 }
 
 /// Localized name of a currency
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct LocalizedName {
     pub locale: String,
     pub name: String,
 }
 
 /// Details about a supported currency in the fiat rate feed
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct CurrencyInfo {
     pub name: String,
@@ -45,14 +45,14 @@ pub struct CurrencyInfo {
 }
 
 /// Wrapper around the [CurrencyInfo] of a fiat currency
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FiatCurrency {
     pub id: String,
     pub info: CurrencyInfo,
 }
 
 /// Denominator in an exchange rate
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Rate {
     pub coin: String,
     pub value: f64,

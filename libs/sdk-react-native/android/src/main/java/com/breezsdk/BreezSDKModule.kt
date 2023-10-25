@@ -1,9 +1,5 @@
 package com.breezsdk
 
-import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.os.Message
 import breez_sdk.*
 import com.facebook.react.bridge.*
 import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter
@@ -47,11 +43,14 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     fun removeListeners(count: Int) {}
 
     @ReactMethod
-    fun mnemonicToSeed(mnemonic: String, promise: Promise) {
+    fun parseInvoice(
+        invoice: String,
+        promise: Promise,
+    ) {
         executor.execute {
             try {
-                val seed = mnemonicToSeed(mnemonic)
-                promise.resolve(readableArrayOf(seed))
+                val res = parseInvoice(invoice)
+                promise.resolve(readableMapOf(res))
             } catch (e: SdkException) {
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
@@ -59,36 +58,84 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun parseInput(input: String, promise: Promise) {
+    fun parseInput(
+        s: String,
+        promise: Promise,
+    ) {
         executor.execute {
             try {
-                val inputType = parseInput(input)
-                promise.resolve(readableMapOf(inputType))
+                val res = parseInput(s)
+                promise.resolve(readableMapOf(res))
             } catch (e: SdkException) {
-                e.printStackTrace()
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
     }
 
     @ReactMethod
-    fun parseInvoice(invoice: String, promise: Promise) {
+    fun mnemonicToSeed(
+        phrase: String,
+        promise: Promise,
+    ) {
         executor.execute {
             try {
-                val lnInvoice = parseInvoice(invoice)
-                promise.resolve(readableMapOf(lnInvoice))
+                val res = mnemonicToSeed(phrase)
+                promise.resolve(readableArrayOf(res))
             } catch (e: SdkException) {
-                e.printStackTrace()
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
     }
 
     @ReactMethod
-    fun startLogStream(promise: Promise) {
+    fun defaultConfig(
+        envType: String,
+        apiKey: String,
+        nodeConfig: ReadableMap,
+        promise: Promise,
+    ) {
+        executor.execute {
+            try {
+                val envTypeTmp = asEnvironmentType(envType)
+                val nodeConfigTmp = asNodeConfig(nodeConfig) ?: run { throw SdkException.Generic("Missing mandatory field nodeConfig of type NodeConfig") }
+                val res = defaultConfig(envTypeTmp, apiKey, nodeConfigTmp)
+                val workingDir = File(reactApplicationContext.filesDir.toString() + "/breezSdk")
+
+                if (!workingDir.exists()) {
+                    workingDir.mkdirs()
+                }
+
+                res.workingDir = workingDir.absolutePath
+                promise.resolve(readableMapOf(res))
+            } catch (e: SdkException) {
+                promise.reject(e.javaClass.simpleName, e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun staticBackup(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
+        executor.execute {
+            try {
+                val staticBackupRequest =
+                    asStaticBackupRequest(req) ?: run {
+                        throw SdkException.Generic("Missing mandatory field req of type StaticBackupRequest")
+                    }
+                val res = staticBackup(staticBackupRequest)
+                promise.resolve(readableMapOf(res))
+            } catch (e: SdkException) {
+                promise.reject(e.javaClass.simpleName, e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun setLogStream(promise: Promise) {
         try {
-            val emitter = reactApplicationContext
-                    .getJSModule(RCTDeviceEventEmitter::class.java)
+            val emitter = reactApplicationContext.getJSModule(RCTDeviceEventEmitter::class.java)
 
             setLogStream(BreezSDKLogStream(emitter))
             promise.resolve(readableMapOf("status" to "ok"))
@@ -99,101 +146,25 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun defaultConfig(envType: String, apiKey: String, nodeConfigMap: ReadableMap, promise: Promise) {
+    fun connect(
+        config: ReadableMap,
+        seed: ReadableArray,
+        promise: Promise,
+    ) {
+        if (breezServices != null) {
+            promise.reject(TAG, "BreezServices already initialized")
+            return
+        }
+
         try {
-            val nodeConfig = asNodeConfig(nodeConfigMap)
+            val configTmp = asConfig(config) ?: run { throw SdkException.Generic("Missing mandatory field config of type Config") }
+            val emitter = reactApplicationContext.getJSModule(RCTDeviceEventEmitter::class.java)
 
-            if (nodeConfig == null) {
-                promise.reject(GENERIC_CODE, "Invalid nodeConfig")
-            } else {
-                val workingDir = File(reactApplicationContext.filesDir.toString() + "/breezSdk")
-
-                if (!workingDir.exists()) {
-                    workingDir.mkdirs()
-                }
-
-                val config = defaultConfig(asEnvironmentType(envType), apiKey, nodeConfig)
-                config.workingDir = workingDir.absolutePath
-
-                promise.resolve(readableMapOf(config))
-            }
+            breezServices = connect(configTmp, asUByteList(seed), BreezSDKListener(emitter))
+            promise.resolve(readableMapOf("status" to "ok"))
         } catch (e: SdkException) {
             e.printStackTrace()
             promise.reject(e.javaClass.simpleName, e.message, e)
-        }
-    }
-
-    @ReactMethod
-    fun connect(config: ReadableMap, seed: ReadableArray, promise: Promise) {
-        if (breezServices != null) {
-            promise.reject(TAG, "BreezServices already initialized")
-        }
-
-        val configData = asConfig(config)
-
-        if (configData == null) {
-            promise.reject(GENERIC_CODE, "Invalid config")
-        } else {
-            val emitter = reactApplicationContext.getJSModule(RCTDeviceEventEmitter::class.java)
-
-            try {
-                breezServices = connect(configData, asUByteList(seed), BreezSDKListener(emitter))
-                promise.resolve(readableMapOf("status" to "ok"))
-            } catch (e: SdkException) {
-                e.printStackTrace()
-                promise.reject(e.javaClass.simpleName, e.message, e)
-            }
-        }
-    }
-
-    @ReactMethod
-    fun signMessage(reqData: ReadableMap, promise: Promise) {
-        executor.execute {
-            val signMessageRequest = asSignMessageRequest(reqData)
-            if (signMessageRequest == null) {
-                 promise.reject(TAG, "Invalid reqData")
-            } else {
-                try {
-                    val response = getBreezServices().signMessage(signMessageRequest)
-                    promise.resolve(readableMapOf(response))
-                } catch (e: SdkException) {
-                    e.printStackTrace()
-                    promise.reject(e.javaClass.simpleName, e.message, e)
-                }
-            }
-        }
-    }
-
-    @ReactMethod
-    fun checkMessage(reqData: ReadableMap, promise: Promise) {
-        executor.execute {
-            val checkMessageRequest = asCheckMessageRequest(reqData)
-            if (checkMessageRequest == null) {
-                 promise.reject(TAG, "Invalid reqData")
-            } else {
-                try {
-                    val response = getBreezServices().checkMessage(checkMessageRequest)
-                    promise.resolve(readableMapOf(response))
-                } catch (e: SdkException) {
-                    e.printStackTrace()
-                    promise.reject(e.javaClass.simpleName, e.message, e)
-                }
-            }
-        }
-    }
-
-
-
-    @ReactMethod
-    fun sync(promise: Promise) {
-        executor.execute {
-            try {
-                getBreezServices().sync()
-                promise.resolve(readableMapOf("status" to "ok"))
-            } catch (e: SdkException) {
-                e.printStackTrace()
-                promise.reject(e.javaClass.simpleName, e.message, e)
-            }
         }
     }
 
@@ -204,113 +175,118 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                 getBreezServices().disconnect()
                 promise.resolve(readableMapOf("status" to "ok"))
             } catch (e: SdkException) {
-                e.printStackTrace()
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
     }
 
     @ReactMethod
-    fun sendPayment(bolt11: String, amountSats: Double, promise: Promise) {
+    fun sendPayment(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
         executor.execute {
             try {
-                val optionalAmountSats = amountSats.takeUnless { it == 0.0 }
-                val payment = getBreezServices().sendPayment(bolt11, optionalAmountSats?.toULong())
-                promise.resolve(readableMapOf(payment))
+                val sendPaymentRequest =
+                    asSendPaymentRequest(req) ?: run {
+                        throw SdkException.Generic("Missing mandatory field req of type SendPaymentRequest")
+                    }
+                val res = getBreezServices().sendPayment(sendPaymentRequest)
+                promise.resolve(readableMapOf(res))
             } catch (e: SdkException) {
-                e.printStackTrace()
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
     }
 
     @ReactMethod
-    fun sendSpontaneousPayment(nodeId: String, amountSats: Double, promise: Promise) {
+    fun sendSpontaneousPayment(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
         executor.execute {
             try {
-                val payment = getBreezServices().sendSpontaneousPayment(nodeId, amountSats.toULong())
-                promise.resolve(readableMapOf(payment))
+                val sendSpontaneousPaymentRequest =
+                    asSendSpontaneousPaymentRequest(req) ?: run {
+                        throw SdkException.Generic("Missing mandatory field req of type SendSpontaneousPaymentRequest")
+                    }
+                val res = getBreezServices().sendSpontaneousPayment(sendSpontaneousPaymentRequest)
+                promise.resolve(readableMapOf(res))
             } catch (e: SdkException) {
-                e.printStackTrace()
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
     }
 
     @ReactMethod
-    fun receivePayment(reqData: ReadableMap, promise: Promise) {
+    fun receivePayment(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
         executor.execute {
-            val receivePaymentRequest = asReceivePaymentRequest(reqData)
-
-            if (receivePaymentRequest == null) {
-                promise.reject(GENERIC_CODE, "Invalid reqData")
-            } else {
-                try {
-                    val response = getBreezServices().receivePayment(receivePaymentRequest)
-                    promise.resolve(readableMapOf(response))
-                } catch (e: SdkException) {
-                    e.printStackTrace()
-                    promise.reject(e.javaClass.simpleName, e.message, e)
-                }
+            try {
+                val receivePaymentRequest =
+                    asReceivePaymentRequest(req) ?: run {
+                        throw SdkException.Generic("Missing mandatory field req of type ReceivePaymentRequest")
+                    }
+                val res = getBreezServices().receivePayment(receivePaymentRequest)
+                promise.resolve(readableMapOf(res))
+            } catch (e: SdkException) {
+                promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
     }
 
     @ReactMethod
-    fun lnurlAuth(reqData: ReadableMap, promise: Promise) {
+    fun payLnurl(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
         executor.execute {
-            val lnUrlAuthRequestData = asLnUrlAuthRequestData(reqData)
-
-            if (lnUrlAuthRequestData == null) {
-                promise.reject(GENERIC_CODE, "Invalid reqData")
-            } else {
-                try {
-                    val lnUrlCallbackStatus = getBreezServices().lnurlAuth(lnUrlAuthRequestData)
-                    promise.resolve(readableMapOf(lnUrlCallbackStatus))
-                } catch (e: SdkException) {
-                    e.printStackTrace()
-                    promise.reject(e.javaClass.simpleName, e.message, e)
-                }
+            try {
+                val lnUrlPayRequest = asLnUrlPayRequest(req) ?: run { throw SdkException.Generic("Missing mandatory field req of type LnUrlPayRequest") }
+                val res = getBreezServices().payLnurl(lnUrlPayRequest)
+                promise.resolve(readableMapOf(res))
+            } catch (e: SdkException) {
+                promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
     }
 
     @ReactMethod
-    fun payLnurl(reqData: ReadableMap, amountSats: Double, comment: String, promise: Promise) {
+    fun withdrawLnurl(
+        request: ReadableMap,
+        promise: Promise,
+    ) {
         executor.execute {
-            val lnUrlPayRequestData = asLnUrlPayRequestData(reqData)
-
-            if (lnUrlPayRequestData == null) {
-                promise.reject(GENERIC_CODE, "Invalid reqData")
-            } else {
-                try {
-                    val optionalComment = comment.takeUnless { it.isEmpty() }
-                    val lnUrlPayResult = getBreezServices().payLnurl(lnUrlPayRequestData, amountSats.toULong(), optionalComment)
-                    promise.resolve(readableMapOf(lnUrlPayResult))
-                } catch (e: SdkException) {
-                    e.printStackTrace()
-                    promise.reject(e.javaClass.simpleName, e.message, e)
-                }
+            try {
+                val lnUrlWithdrawRequest =
+                    asLnUrlWithdrawRequest(request) ?: run {
+                        throw SdkException.Generic("Missing mandatory field request of type LnUrlWithdrawRequest")
+                    }
+                val res = getBreezServices().withdrawLnurl(lnUrlWithdrawRequest)
+                promise.resolve(readableMapOf(res))
+            } catch (e: SdkException) {
+                promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
     }
 
     @ReactMethod
-    fun withdrawLnurl(reqData: ReadableMap, amountSats: Double, description: String, promise: Promise) {
+    fun lnurlAuth(
+        reqData: ReadableMap,
+        promise: Promise,
+    ) {
         executor.execute {
-            val lnUrlWithdrawRequestData = asLnUrlWithdrawRequestData(reqData)
-
-            if (lnUrlWithdrawRequestData == null) {
-                promise.reject(GENERIC_CODE, "Invalid reqData")
-            } else {
-                try {
-                    val optionalDescription = description.takeUnless { it.isEmpty() }
-                    val lnUrlCallbackStatus = getBreezServices().withdrawLnurl(lnUrlWithdrawRequestData, amountSats.toULong(), optionalDescription)
-                    promise.resolve(readableMapOf(lnUrlCallbackStatus))
-                } catch (e: SdkException) {
-                    e.printStackTrace()
-                    promise.reject(e.javaClass.simpleName, e.message, e)
-                }
+            try {
+                val lnUrlAuthRequestData =
+                    asLnUrlAuthRequestData(reqData) ?: run {
+                        throw SdkException.Generic("Missing mandatory field reqData of type LnUrlAuthRequestData")
+                    }
+                val res = getBreezServices().lnurlAuth(lnUrlAuthRequestData)
+                promise.resolve(readableMapOf(res))
+            } catch (e: SdkException) {
+                promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
     }
@@ -319,54 +295,121 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     fun nodeInfo(promise: Promise) {
         executor.execute {
             try {
-                val nodeState = getBreezServices().nodeInfo()
-                promise.resolve(readableMapOf(nodeState))                
+                val res = getBreezServices().nodeInfo()
+                promise.resolve(readableMapOf(res))
             } catch (e: SdkException) {
-                e.printStackTrace()
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
     }
 
     @ReactMethod
-    fun paymentByHash(hash: String, promise: Promise) {
+    fun signMessage(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
         executor.execute {
             try {
-                getBreezServices().paymentByHash(hash)?.let {payment->
-                    promise.resolve(readableMapOf(payment))
-                } ?: run {
-                    promise.reject(GENERIC_CODE, "No available payment")
-                }
+                val signMessageRequest =
+                    asSignMessageRequest(req) ?: run {
+                        throw SdkException.Generic("Missing mandatory field req of type SignMessageRequest")
+                    }
+                val res = getBreezServices().signMessage(signMessageRequest)
+                promise.resolve(readableMapOf(res))
             } catch (e: SdkException) {
-                e.printStackTrace()
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
     }
 
     @ReactMethod
-    fun listPayments(filter: String, fromTimestamp: Double, toTimestamp: Double, promise: Promise) {
+    fun checkMessage(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
         executor.execute {
             try {
-                val optionalFromTimestamp = fromTimestamp.takeUnless { it == 0.0 }
-                val optionalToTimestamp = toTimestamp.takeUnless { it == 0.0 }
-                val payments = getBreezServices().listPayments(asPaymentTypeFilter(filter), optionalFromTimestamp?.toLong(), optionalToTimestamp?.toLong())
-                promise.resolve(readableArrayOf(payments))
+                val checkMessageRequest =
+                    asCheckMessageRequest(req) ?: run {
+                        throw SdkException.Generic("Missing mandatory field req of type CheckMessageRequest")
+                    }
+                val res = getBreezServices().checkMessage(checkMessageRequest)
+                promise.resolve(readableMapOf(res))
             } catch (e: SdkException) {
-                e.printStackTrace()
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
     }
 
     @ReactMethod
-    fun sweep(toAddress: String, feeRateSatsPerVbyte: Double, promise: Promise) {
+    fun backupStatus(promise: Promise) {
         executor.execute {
             try {
-                getBreezServices().sweep(toAddress, feeRateSatsPerVbyte.toULong())
+                val res = getBreezServices().backupStatus()
+                promise.resolve(readableMapOf(res))
+            } catch (e: SdkException) {
+                promise.reject(e.javaClass.simpleName, e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun backup(promise: Promise) {
+        executor.execute {
+            try {
+                getBreezServices().backup()
                 promise.resolve(readableMapOf("status" to "ok"))
             } catch (e: SdkException) {
-                e.printStackTrace()
+                promise.reject(e.javaClass.simpleName, e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun paymentByHash(
+        hash: String,
+        promise: Promise,
+    ) {
+        executor.execute {
+            try {
+                val res = getBreezServices().paymentByHash(hash)
+                promise.resolve(res?.let { readableMapOf(res) })
+            } catch (e: SdkException) {
+                promise.reject(e.javaClass.simpleName, e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun listPayments(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
+        executor.execute {
+            try {
+                val listPaymentsRequest =
+                    asListPaymentsRequest(req) ?: run {
+                        throw SdkException.Generic("Missing mandatory field req of type ListPaymentsRequest")
+                    }
+                val res = getBreezServices().listPayments(listPaymentsRequest)
+                promise.resolve(readableArrayOf(res))
+            } catch (e: SdkException) {
+                promise.reject(e.javaClass.simpleName, e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun sweep(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
+        executor.execute {
+            try {
+                val sweepRequest = asSweepRequest(req) ?: run { throw SdkException.Generic("Missing mandatory field req of type SweepRequest") }
+                val res = getBreezServices().sweep(sweepRequest)
+                promise.resolve(readableMapOf(res))
+            } catch (e: SdkException) {
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
@@ -376,10 +419,9 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     fun fetchFiatRates(promise: Promise) {
         executor.execute {
             try {
-                val rates = getBreezServices().fetchFiatRates()
-                promise.resolve(readableArrayOf(rates))
+                val res = getBreezServices().fetchFiatRates()
+                promise.resolve(readableArrayOf(res))
             } catch (e: SdkException) {
-                e.printStackTrace()
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
@@ -389,10 +431,9 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     fun listFiatCurrencies(promise: Promise) {
         executor.execute {
             try {
-                val fiatCurrencies = getBreezServices().listFiatCurrencies()
-                promise.resolve(readableArrayOf(fiatCurrencies))
+                val res = getBreezServices().listFiatCurrencies()
+                promise.resolve(readableArrayOf(res))
             } catch (e: SdkException) {
-                e.printStackTrace()
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
@@ -402,39 +443,58 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     fun listLsps(promise: Promise) {
         executor.execute {
             try {
-                val lsps = getBreezServices().listLsps()
-                promise.resolve(readableArrayOf(lsps))
+                val res = getBreezServices().listLsps()
+                promise.resolve(readableArrayOf(res))
             } catch (e: SdkException) {
-                e.printStackTrace()
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
     }
 
     @ReactMethod
-    fun connectLsp(lspId: String, promise: Promise) {
+    fun connectLsp(
+        lspId: String,
+        promise: Promise,
+    ) {
         executor.execute {
             try {
                 getBreezServices().connectLsp(lspId)
                 promise.resolve(readableMapOf("status" to "ok"))
             } catch (e: SdkException) {
-                e.printStackTrace()
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
     }
 
     @ReactMethod
-    fun fetchLspInfo(lspId: String, promise: Promise) {
+    fun fetchLspInfo(
+        lspId: String,
+        promise: Promise,
+    ) {
         executor.execute {
             try {
-                getBreezServices().fetchLspInfo(lspId)?.let {lspInformation->
-                    promise.resolve(readableMapOf(lspInformation))
-                } ?: run {                    
-                    promise.reject(GENERIC_CODE, "No available lsp info")
-                }
+                val res = getBreezServices().fetchLspInfo(lspId)
+                promise.resolve(res?.let { readableMapOf(res) })
             } catch (e: SdkException) {
-                e.printStackTrace()
+                promise.reject(e.javaClass.simpleName, e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun openChannelFee(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
+        executor.execute {
+            try {
+                val openChannelFeeRequest =
+                    asOpenChannelFeeRequest(req) ?: run {
+                        throw SdkException.Generic("Missing mandatory field req of type OpenChannelFeeRequest")
+                    }
+                val res = getBreezServices().openChannelFee(openChannelFeeRequest)
+                promise.resolve(readableMapOf(res))
+            } catch (e: SdkException) {
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
@@ -444,13 +504,9 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     fun lspId(promise: Promise) {
         executor.execute {
             try {
-                getBreezServices().lspId()?.let {lspId->
-                    promise.resolve(lspId)
-                } ?: run {
-                    promise.reject(GENERIC_CODE, "No available lsp id")
-                }
+                val res = getBreezServices().lspId()
+                promise.resolve(res?.let { res })
             } catch (e: SdkException) {
-                e.printStackTrace()
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
@@ -460,10 +516,9 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     fun lspInfo(promise: Promise) {
         executor.execute {
             try {
-                val lspInformation = getBreezServices().lspInfo()
-                promise.resolve(readableMapOf(lspInformation))
+                val res = getBreezServices().lspInfo()
+                promise.resolve(readableMapOf(res))
             } catch (e: SdkException) {
-                e.printStackTrace()
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
@@ -476,27 +531,26 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                 getBreezServices().closeLspChannels()
                 promise.resolve(readableMapOf("status" to "ok"))
             } catch (e: SdkException) {
-                e.printStackTrace()
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
     }
 
     @ReactMethod
-    fun receiveOnchain(req: ReadableMap, promise: Promise) {
+    fun receiveOnchain(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
         executor.execute {
-            val receiveOnchainRequest = asReceiveOnchainRequest(req)
-
-            if (receiveOnchainRequest == null) {
-                promise.reject(GENERIC_CODE, "Invalid req")
-            } else {
-                try {
-                    val swapInfo = getBreezServices().receiveOnchain(receiveOnchainRequest)
-                    promise.resolve(readableMapOf(swapInfo))
-                } catch (e: SdkException) {
-                    e.printStackTrace()
-                    promise.reject(e.javaClass.simpleName, e.message, e)
-                }
+            try {
+                val receiveOnchainRequest =
+                    asReceiveOnchainRequest(req) ?: run {
+                        throw SdkException.Generic("Missing mandatory field req of type ReceiveOnchainRequest")
+                    }
+                val res = getBreezServices().receiveOnchain(receiveOnchainRequest)
+                promise.resolve(readableMapOf(res))
+            } catch (e: SdkException) {
+                promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
     }
@@ -505,13 +559,9 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     fun inProgressSwap(promise: Promise) {
         executor.execute {
             try {
-                getBreezServices().inProgressSwap()?.let {swapInfo->
-                    promise.resolve(readableMapOf(swapInfo))
-                } ?: run {
-                    promise.reject(GENERIC_CODE, "No available in progress swap")
-                }
+                val res = getBreezServices().inProgressSwap()
+                promise.resolve(res?.let { readableMapOf(res) })
             } catch (e: SdkException) {
-                e.printStackTrace()
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
@@ -521,38 +571,63 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     fun listRefundables(promise: Promise) {
         executor.execute {
             try {
-                val swapInfos = getBreezServices().listRefundables()
-                promise.resolve(readableArrayOf(swapInfos))
+                val res = getBreezServices().listRefundables()
+                promise.resolve(readableArrayOf(res))
             } catch (e: SdkException) {
-                e.printStackTrace()
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
     }
 
     @ReactMethod
-    fun refund(swapAddress: String, toAddress: String, satPerVbyte: Double, promise: Promise) {
+    fun prepareRefund(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
         executor.execute {
             try {
-                val result = getBreezServices().refund(swapAddress, toAddress, satPerVbyte.toUInt())
-                promise.resolve(result)
+                val prepareRefundRequest =
+                    asPrepareRefundRequest(req) ?: run {
+                        throw SdkException.Generic("Missing mandatory field req of type PrepareRefundRequest")
+                    }
+                val res = getBreezServices().prepareRefund(prepareRefundRequest)
+                promise.resolve(readableMapOf(res))
             } catch (e: SdkException) {
-                e.printStackTrace()
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
     }
 
     @ReactMethod
-    fun fetchReverseSwapFees(reqData: ReadableMap, promise: Promise) {
+    fun refund(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
         executor.execute {
-            val reverseSwapFeesRequest = asReverseSwapFeesRequest(reqData)
-
             try {
-                val reverseSwapFees = getBreezServices().fetchReverseSwapFees(reverseSwapFeesRequest)
-                promise.resolve(readableMapOf(reverseSwapFees))
+                val refundRequest = asRefundRequest(req) ?: run { throw SdkException.Generic("Missing mandatory field req of type RefundRequest") }
+                val res = getBreezServices().refund(refundRequest)
+                promise.resolve(readableMapOf(res))
             } catch (e: SdkException) {
-                e.printStackTrace()
+                promise.reject(e.javaClass.simpleName, e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun fetchReverseSwapFees(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
+        executor.execute {
+            try {
+                val reverseSwapFeesRequest =
+                    asReverseSwapFeesRequest(req) ?: run {
+                        throw SdkException.Generic("Missing mandatory field req of type ReverseSwapFeesRequest")
+                    }
+                val res = getBreezServices().fetchReverseSwapFees(reverseSwapFeesRequest)
+                promise.resolve(readableMapOf(res))
+            } catch (e: SdkException) {
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
@@ -562,36 +637,55 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     fun inProgressReverseSwaps(promise: Promise) {
         executor.execute {
             try {
-                val inProgressReverseSwaps = getBreezServices().inProgressReverseSwaps()
-                promise.resolve(readableArrayOf(inProgressReverseSwaps))
+                val res = getBreezServices().inProgressReverseSwaps()
+                promise.resolve(readableArrayOf(res))
             } catch (e: SdkException) {
-                e.printStackTrace()
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
     }
 
     @ReactMethod
-    fun sendOnchain(amountSat: Double, onchainRecipientAddress: String, pairHash: String, satPerVbyte: Double, promise: Promise) {
+    fun sendOnchain(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
         executor.execute {
             try {
-                val response = getBreezServices().sendOnchain(amountSat.toULong(), onchainRecipientAddress, pairHash, satPerVbyte.toULong())
-                promise.resolve(readableMapOf(response))
+                val sendOnchainRequest =
+                    asSendOnchainRequest(req) ?: run {
+                        throw SdkException.Generic("Missing mandatory field req of type SendOnchainRequest")
+                    }
+                val res = getBreezServices().sendOnchain(sendOnchainRequest)
+                promise.resolve(readableMapOf(res))
             } catch (e: SdkException) {
-                e.printStackTrace()
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
     }
 
     @ReactMethod
-    fun executeDevCommand(command: String, promise: Promise) {
+    fun executeDevCommand(
+        command: String,
+        promise: Promise,
+    ) {
         executor.execute {
             try {
-                val result = getBreezServices().executeDevCommand(command)
-                promise.resolve(result)
+                val res = getBreezServices().executeDevCommand(command)
+                promise.resolve(res)
             } catch (e: SdkException) {
-                e.printStackTrace()
+                promise.reject(e.javaClass.simpleName, e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun sync(promise: Promise) {
+        executor.execute {
+            try {
+                getBreezServices().sync()
+                promise.resolve(readableMapOf("status" to "ok"))
+            } catch (e: SdkException) {
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
@@ -601,55 +695,47 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     fun recommendedFees(promise: Promise) {
         executor.execute {
             try {
-                val fees = getBreezServices().recommendedFees()
-                promise.resolve(readableMapOf(fees))
+                val res = getBreezServices().recommendedFees()
+                promise.resolve(readableMapOf(res))
             } catch (e: SdkException) {
-                e.printStackTrace()
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
     }
 
     @ReactMethod
-    fun buyBitcoin(req: ReadableMap, promise: Promise) {
-        executor.execute {
-            val buyBitcoinRequest = asBuyBitcoinRequest(req)
-
-            if (buyBitcoinRequest == null) {
-                promise.reject(GENERIC_CODE, "Invalid req")
-            } else {
-                try {
-                    val result = getBreezServices().buyBitcoin(buyBitcoinRequest)
-                    promise.resolve(readableMapOf(result))
-                } catch (e: SdkException) {
-                    e.printStackTrace()
-                    promise.reject(e.javaClass.simpleName, e.message, e)
-                }
-            }
-        }
-    }
-
-    @ReactMethod
-    fun backup(promise: Promise) {
+    fun buyBitcoin(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
         executor.execute {
             try {
-                getBreezServices().backup()
-                promise.resolve(readableMapOf("status" to "ok"))
+                val buyBitcoinRequest =
+                    asBuyBitcoinRequest(req) ?: run {
+                        throw SdkException.Generic("Missing mandatory field req of type BuyBitcoinRequest")
+                    }
+                val res = getBreezServices().buyBitcoin(buyBitcoinRequest)
+                promise.resolve(readableMapOf(res))
             } catch (e: SdkException) {
-                e.printStackTrace()
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }
     }
 
     @ReactMethod
-    fun backupStatus(promise: Promise) {
+    fun prepareSweep(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
         executor.execute {
             try {
-                val status = getBreezServices().backupStatus()
-                promise.resolve(readableMapOf(status))
+                val prepareSweepRequest =
+                    asPrepareSweepRequest(req) ?: run {
+                        throw SdkException.Generic("Missing mandatory field req of type PrepareSweepRequest")
+                    }
+                val res = getBreezServices().prepareSweep(prepareSweepRequest)
+                promise.resolve(readableMapOf(res))
             } catch (e: SdkException) {
-                e.printStackTrace()
                 promise.reject(e.javaClass.simpleName, e.message, e)
             }
         }

@@ -1,6 +1,7 @@
 use std::collections::HashMap;
+use std::pin::Pin;
 use std::time::{Duration, SystemTime};
-use std::vec;
+use std::{mem, vec};
 
 use anyhow::{anyhow, Result};
 use bitcoin::hashes::hex::ToHex;
@@ -11,7 +12,7 @@ use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::Network;
 use chrono::{SecondsFormat, Utc};
 use gl_client::pb::amount::Unit;
-use gl_client::pb::{Amount, Peer, WithdrawResponse};
+use gl_client::pb::{Amount, PayStatus};
 use lightning::ln::PaymentSecret;
 use lightning_invoice::{Currency, InvoiceBuilder, RawInvoice};
 use rand::distributions::{Alphanumeric, DistString, Standard};
@@ -19,11 +20,13 @@ use rand::rngs::OsRng;
 use rand::{random, Rng};
 use tokio::sync::{mpsc, Mutex};
 use tokio::time::sleep;
+use tokio_stream::Stream;
+use tokio_stream::StreamExt;
 use tonic::Streaming;
 
 use crate::backup::{BackupState, BackupTransport};
 use crate::breez_services::Receiver;
-use crate::chain::{ChainService, OnchainTx, RecommendedFees};
+use crate::chain::{ChainService, OnchainTx, Outspend, RecommendedFees, TxStatus};
 use crate::error::SdkResult;
 use crate::fiat::{FiatCurrency, Rate};
 use crate::grpc::{PaymentInformation, RegisterPaymentReply};
@@ -31,7 +34,10 @@ use crate::lsp::LspInformation;
 use crate::models::{FiatAPI, LspAPI, NodeAPI, NodeState, Payment, Swap, SwapperAPI, SyncResponse};
 use crate::moonpay::MoonPayApi;
 use crate::swap::create_submarine_swap_script;
-use crate::{parse_invoice, Config, LNInvoice, PaymentResponse, RouteHint};
+use crate::{
+    parse_invoice, Config, CustomMessage, LNInvoice, PaymentResponse, Peer, PrepareSweepRequest,
+    PrepareSweepResponse, RouteHint,
+};
 use crate::{OpeningFeeParams, OpeningFeeParamsMenu};
 use crate::{ReceivePaymentRequest, SwapInfo};
 
@@ -184,6 +190,21 @@ impl ChainService for MockChainService {
     async fn current_tip(&self) -> Result<u32> {
         Ok(self.tip)
     }
+
+    async fn transaction_outspends(&self, _txid: String) -> Result<Vec<Outspend>> {
+        Ok(vec![Outspend {
+            spent: true,
+            txid: Some("test-tx-id".into()),
+            vin: Some(0),
+            status: Some(TxStatus {
+                confirmed: true,
+                block_height: Some(123),
+                block_hash: Some("test-hash".into()),
+                block_time: Some(123),
+            }),
+        }])
+    }
+
     async fn broadcast_transaction(&self, _tx: Vec<u8>) -> Result<String> {
         let mut array = [0; 32];
         rand::thread_rng().fill(&mut array);
@@ -227,11 +248,11 @@ impl Default for MockReceiver {
 impl Receiver for MockReceiver {
     async fn receive_payment(
         &self,
-        _req_data: ReceivePaymentRequest,
+        _request: ReceivePaymentRequest,
     ) -> SdkResult<crate::ReceivePaymentResponse> {
         Ok(crate::ReceivePaymentResponse {
             ln_invoice: parse_invoice(&self.bolt11)?,
-            opening_fee_params: _req_data.opening_fee_params,
+            opening_fee_params: _request.opening_fee_params,
             opening_fee_msat: None,
         })
     }
@@ -245,6 +266,8 @@ pub struct MockNodeAPI {
     /// added test payments
     cloud_payments: Mutex<Vec<gl_client::pb::Payment>>,
     node_state: NodeState,
+    on_send_custom_message: Box<dyn Fn(CustomMessage) -> Result<()> + Sync + Send>,
+    on_stream_custom_messages: Mutex<mpsc::Receiver<CustomMessage>>,
 }
 
 #[tonic::async_trait]
@@ -255,7 +278,7 @@ impl NodeAPI for MockNodeAPI {
         description: String,
         preimage: Option<Vec<u8>>,
         _use_description_hash: Option<bool>,
-        _expiry: Option<u64>,
+        _expiry: Option<u32>,
         _cltv: Option<u32>,
     ) -> Result<String> {
         let invoice = create_invoice(description, amount_sats * 1000, vec![], preimage);
@@ -264,7 +287,7 @@ impl NodeAPI for MockNodeAPI {
 
     async fn pull_changed(
         &self,
-        _since_timestamp: i64,
+        _since_timestamp: u64,
         _balance_changed: bool,
     ) -> Result<SyncResponse> {
         Ok(SyncResponse {
@@ -284,16 +307,16 @@ impl NodeAPI for MockNodeAPI {
     async fn send_payment(
         &self,
         bolt11: String,
-        _amount_sats: Option<u64>,
+        _amount_msat: Option<u64>,
     ) -> Result<PaymentResponse> {
-        let payment = self.add_dummy_payment_for(bolt11, None).await?;
+        let payment = self.add_dummy_payment_for(bolt11, None, None).await?;
         payment.try_into()
     }
 
     async fn send_spontaneous_payment(
         &self,
         _node_id: String,
-        _amount_sats: u64,
+        _amount_msat: u64,
     ) -> Result<PaymentResponse> {
         let payment = self.add_dummy_payment_rand().await?;
         payment.try_into()
@@ -303,15 +326,12 @@ impl NodeAPI for MockNodeAPI {
         Ok(())
     }
 
-    async fn sweep(
-        &self,
-        _to_address: String,
-        _fee_rate_sats_per_vbyte: u64,
-    ) -> Result<WithdrawResponse> {
-        Ok(WithdrawResponse {
-            tx: rand_vec_u8(32),
-            txid: rand_vec_u8(32),
-        })
+    async fn sweep(&self, _to_address: String, _fee_rate_sats_per_vbyte: u32) -> Result<Vec<u8>> {
+        Ok(rand_vec_u8(32))
+    }
+
+    async fn prepare_sweep(&self, _req: PrepareSweepRequest) -> Result<PrepareSweepResponse> {
+        Err(anyhow!("Not implemented"))
     }
 
     async fn start_signer(&self, _shutdown: mpsc::Receiver<()>) {}
@@ -347,12 +367,35 @@ impl NodeAPI for MockNodeAPI {
         Err(anyhow!("Not implemented"))
     }
 
+    async fn static_backup(&self) -> Result<Vec<String>> {
+        Ok(Vec::new())
+    }
+
     async fn execute_command(&self, _command: String) -> Result<String> {
         Err(anyhow!("Not implemented"))
     }
 
     fn derive_bip32_key(&self, _path: Vec<ChildNumber>) -> Result<ExtendedPrivKey> {
         Ok(ExtendedPrivKey::new_master(Network::Bitcoin, &[])?)
+    }
+
+    fn legacy_derive_bip32_key(&self, _path: Vec<ChildNumber>) -> Result<ExtendedPrivKey> {
+        Ok(ExtendedPrivKey::new_master(Network::Bitcoin, &[])?)
+    }
+
+    async fn send_custom_message(&self, message: CustomMessage) -> Result<()> {
+        (self.on_send_custom_message)(message)
+    }
+
+    async fn stream_custom_messages(
+        &self,
+    ) -> Result<Pin<Box<dyn Stream<Item = Result<CustomMessage>> + Send>>> {
+        let (_, next_rx) = mpsc::channel(1);
+        let mut guard = self.on_stream_custom_messages.lock().await;
+        let rx = mem::replace(&mut *guard, next_rx);
+        Ok(Box::pin(
+            tokio_stream::wrappers::ReceiverStream::new(rx).map(Ok),
+        ))
     }
 }
 
@@ -361,6 +404,11 @@ impl MockNodeAPI {
         Self {
             cloud_payments: Mutex::new(vec![]),
             node_state,
+            on_send_custom_message: Box::new(|_| Ok(())),
+            on_stream_custom_messages: {
+                let (_, rx) = mpsc::channel(1);
+                Mutex::new(rx)
+            },
         }
     }
     /// Creates a (simulated) payment for the specified BOLT11 and adds it to a test-specific
@@ -372,9 +420,28 @@ impl MockNodeAPI {
         &self,
         bolt11: String,
         preimage: Option<sha256::Hash>,
+        status: Option<PayStatus>,
     ) -> Result<Payment> {
         let inv = bolt11.parse::<lightning_invoice::Invoice>()?;
 
+        self.add_dummy_payment(inv, preimage, status).await
+    }
+
+    /// Adds a dummy payment with random attributes.
+    pub(crate) async fn add_dummy_payment_rand(&self) -> Result<Payment> {
+        let preimage = sha256::Hash::hash(&rand_vec_u8(10));
+        let inv = rand_invoice_with_description_hash_and_preimage("test".into(), preimage)?;
+
+        self.add_dummy_payment(inv, Some(preimage), None).await
+    }
+
+    /// Adds a dummy payment.
+    pub(crate) async fn add_dummy_payment(
+        &self,
+        inv: lightning_invoice::Invoice,
+        preimage: Option<sha256::Hash>,
+        status: Option<PayStatus>,
+    ) -> Result<Payment> {
         let gl_payment = gl_client::pb::Payment {
             payment_hash: hex::decode(inv.payment_hash().to_hex())?,
             bolt11: inv.to_string(),
@@ -392,36 +459,7 @@ impl MockNodeAPI {
                 Some(preimage) => hex::decode(preimage.to_hex())?,
                 None => rand_vec_u8(32),
             },
-            status: 1,
-            created_at: random(),
-            destination: rand_vec_u8(32),
-            completed_at: random(),
-        };
-
-        self.save_payment_for_future_sync_updates(gl_payment.clone())
-            .await
-    }
-
-    /// Adds a dummy payment with random attributes.
-    pub(crate) async fn add_dummy_payment_rand(&self) -> Result<Payment> {
-        let preimage = sha256::Hash::hash(&rand_vec_u8(10));
-        let inv = rand_invoice_with_description_hash_and_preimage("test".into(), preimage)?;
-
-        let gl_payment = gl_client::pb::Payment {
-            payment_hash: hex::decode(inv.payment_hash().to_hex())?,
-            bolt11: inv.to_string(),
-            amount: inv
-                .amount_milli_satoshis()
-                .map(Unit::Millisatoshi)
-                .map(Some)
-                .map(|amt| Amount { unit: amt }),
-            amount_sent: inv
-                .amount_milli_satoshis()
-                .map(Unit::Millisatoshi)
-                .map(Some)
-                .map(|amt| Amount { unit: amt }),
-            payment_preimage: preimage.to_hex().into_bytes(),
-            status: 1,
+            status: status.unwrap_or(PayStatus::Complete).into(),
             created_at: random(),
             destination: rand_vec_u8(32),
             completed_at: random(),
@@ -460,6 +498,17 @@ impl MockNodeAPI {
         };
 
         gl_payment.try_into()
+    }
+
+    pub fn set_on_send_custom_message(
+        &mut self,
+        f: Box<dyn Fn(CustomMessage) -> Result<()> + Sync + Send>,
+    ) {
+        self.on_send_custom_message = f;
+    }
+
+    pub async fn set_on_stream_custom_messages(&mut self, f: mpsc::Receiver<CustomMessage>) {
+        *self.on_stream_custom_messages.lock().await = f;
     }
 }
 
@@ -647,7 +696,7 @@ fn sign_invoice(invoice: RawInvoice) -> String {
 
 /// [OpeningFeeParams] that are valid for more than 48h
 pub(crate) fn get_test_ofp_48h(min_msat: u64, proportional: u32) -> crate::grpc::OpeningFeeParams {
-    get_test_ofp_generic(min_msat, proportional, true, chrono::Duration::days(3))
+    get_test_ofp_generic(min_msat, proportional, true, chrono::Duration::days(10))
 }
 
 /// [OpeningFeeParams] with 1 minute in the future or the past

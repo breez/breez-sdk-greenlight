@@ -4,6 +4,7 @@ use hex::ToHex;
 use lightning::routing::gossip::RoutingFees;
 use lightning::routing::*;
 use lightning_invoice::*;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use std::time::UNIX_EPOCH;
@@ -97,13 +98,9 @@ pub fn add_lsp_routing_hints(
 ) -> Result<RawInvoice> {
     let signed = invoice.parse::<SignedRawInvoice>()?;
     let invoice = Invoice::from_signed(signed)?;
-    let description = match invoice.description() {
-        InvoiceDescription::Direct(msg) => msg.to_string(),
-        InvoiceDescription::Hash(_) => String::from(""),
-    };
 
     let mut invoice_builder = InvoiceBuilder::new(invoice.currency())
-        .description(description)
+        .invoice_description(invoice.description())
         .payment_hash(*invoice.payment_hash())
         .timestamp(invoice.timestamp())
         .amount_milli_satoshis(new_amount_msats)
@@ -151,10 +148,9 @@ pub fn add_lsp_routing_hints(
 
 /// Parse a BOLT11 payment request and return a structure contains the parsed fields.
 pub fn parse_invoice(bolt11: &str) -> Result<LNInvoice> {
-    let signed = bolt11
-        .strip_prefix("lightning:")
-        .unwrap_or(bolt11)
-        .parse::<SignedRawInvoice>()?;
+    let re = Regex::new(r"(?i)^lightning:")?;
+    let bolt11 = re.replace_all(bolt11, "");
+    let signed = bolt11.parse::<SignedRawInvoice>()?;
     let invoice = Invoice::from_signed(signed)?;
 
     let since_the_epoch = invoice.timestamp().duration_since(UNIX_EPOCH)?;

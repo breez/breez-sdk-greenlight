@@ -1,8 +1,9 @@
 use std::str::FromStr;
 
-use crate::{lnurl::*, LnUrlCallbackStatus};
+use crate::input_parser::get_parse_and_log_response;
+use crate::{lnurl::*, LnUrlCallbackStatus, LnUrlWithdrawResult, LnUrlWithdrawSuccessData};
 use crate::{LNInvoice, LnUrlWithdrawRequestData};
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, ensure, Result};
 
 /// Validates invoice and performs the second and last step of LNURL-withdraw, as per
 /// <https://github.com/lnurl/luds/blob/luds/03.md>
@@ -15,25 +16,32 @@ use anyhow::{anyhow, Result};
 pub(crate) async fn validate_lnurl_withdraw(
     req_data: LnUrlWithdrawRequestData,
     invoice: LNInvoice,
-) -> Result<LnUrlCallbackStatus> {
-    match invoice
+) -> Result<LnUrlWithdrawResult> {
+    let amount_msat = invoice
         .amount_msat
         .ok_or("Expected invoice amount, but found none")
-        .map_err(|e| anyhow!(e))?
-    {
-        n if n < req_data.min_withdrawable => Err(anyhow!(
-            "Amount is smaller than the minimum allowed by the LNURL-withdraw endpoint"
-        )),
-        n if n > req_data.max_withdrawable => Err(anyhow!(
-            "Amount is bigger than the maximum allowed by the LNURL-withdraw endpoint"
-        )),
-        _ => {
-            let callback_url = build_withdraw_callback_url(&req_data, &invoice)?;
-            let callback_resp_text = reqwest::get(&callback_url).await?.text().await?;
+        .map_err(|e| anyhow!(e))?;
 
-            serde_json::from_str::<LnUrlCallbackStatus>(&callback_resp_text).map_err(|e| anyhow!(e))
-        }
-    }
+    ensure!(
+        amount_msat >= req_data.min_withdrawable,
+        "Amount is smaller than the minimum allowed by the LNURL-withdraw endpoint"
+    );
+    ensure!(
+        amount_msat <= req_data.max_withdrawable,
+        "Amount is bigger than the maximum allowed by the LNURL-withdraw endpoint"
+    );
+
+    // Send invoice to the LNURL-w endpoint via the callback
+    let callback_url = build_withdraw_callback_url(&req_data, &invoice)?;
+    let callback_res: LnUrlCallbackStatus = get_parse_and_log_response(&callback_url).await?;
+    let withdraw_status = match callback_res {
+        LnUrlCallbackStatus::Ok => LnUrlWithdrawResult::Ok {
+            data: LnUrlWithdrawSuccessData { invoice },
+        },
+        LnUrlCallbackStatus::ErrorStatus { data } => LnUrlWithdrawResult::ErrorStatus { data },
+    };
+
+    Ok(withdraw_status)
 }
 
 fn build_withdraw_callback_url(
@@ -54,6 +62,7 @@ fn build_withdraw_callback_url(
 mod tests {
     use anyhow::Result;
 
+    use crate::input_parser::tests::MOCK_HTTP_SERVER;
     use crate::input_parser::LnUrlWithdrawRequestData;
     use crate::lnurl::withdraw::*;
     use crate::test_utils::rand_string;
@@ -80,7 +89,10 @@ mod tests {
                 ["{\"status\": \"ERROR\", \"reason\": \"", &err_reason, "\"}"].join("")
             }
         };
-        Ok(mockito::mock("GET", mockito_path)
+
+        let mut server = MOCK_HTTP_SERVER.lock().unwrap();
+        Ok(server
+            .mock("GET", mockito_path)
             .with_body(response_body)
             .create())
     }
@@ -98,14 +110,14 @@ mod tests {
     #[tokio::test]
     async fn test_lnurl_withdraw_success() -> Result<()> {
         let invoice_str = "lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz";
-        let invoice = crate::invoice::parse_invoice(invoice_str)?;
+        let req_invoice = crate::invoice::parse_invoice(invoice_str)?;
         let withdraw_req = get_test_withdraw_req_data(0, 100);
 
-        let _m = mock_lnurl_withdraw_callback(&withdraw_req, &invoice, None)?;
+        let _m = mock_lnurl_withdraw_callback(&withdraw_req, &req_invoice, None)?;
 
         assert!(matches!(
-            validate_lnurl_withdraw(withdraw_req, invoice).await?,
-            LnUrlCallbackStatus::Ok
+            validate_lnurl_withdraw(withdraw_req, req_invoice.clone()).await?,
+            LnUrlWithdrawResult::Ok { data: LnUrlWithdrawSuccessData { invoice } } if invoice == req_invoice
         ));
 
         Ok(())
@@ -136,7 +148,7 @@ mod tests {
 
         assert!(matches!(
             validate_lnurl_withdraw(withdraw_req, invoice).await?,
-            LnUrlCallbackStatus::ErrorStatus { data: _ }
+            LnUrlWithdrawResult::ErrorStatus { data: _ }
         ));
 
         Ok(())

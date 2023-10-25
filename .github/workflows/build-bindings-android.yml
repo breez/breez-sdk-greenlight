@@ -1,4 +1,4 @@
-name: Build Android
+name: Build sdk-bindings for Android
 on:
   workflow_dispatch:
     inputs:
@@ -48,7 +48,7 @@ jobs:
       with:
         workspaces: libs
 
-    - name: Build Breez
+    - name: Build sdk-bindings
       working-directory: libs/sdk-bindings
       run: |
         cargo ndk -t ${{ matrix.target }} build --release
@@ -100,5 +100,5 @@ jobs:
       - name: Archive jniLibs
         uses: actions/upload-artifact@v3
         with:
-          name: android-jniLibs
+          name: sdk-bindings-android-jniLibs
           path: ./*

@@ -44,6 +44,8 @@ android.iml
 
 # Cocoapods
 #
+breez_sdk.podspec.*
+BreezSDK.podspec
 example/ios/Pods
 
 # node.js

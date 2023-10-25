@@ -1,11 +1,10 @@
 use crate::breez_services::BreezServer;
 use crate::crypt::encrypt;
-use crate::error::SdkResult;
+use crate::error::{SdkError, SdkResult};
 use crate::grpc::{
     self, LspListRequest, PaymentInformation, RegisterPaymentReply, RegisterPaymentRequest,
 };
 use crate::models::{LspAPI, OpeningFeeParams, OpeningFeeParamsMenu};
-use crate::DynamicFeeType;
 use anyhow::Result;
 use prost::Message;
 use serde::{Deserialize, Serialize};
@@ -73,31 +72,28 @@ impl LspInformation {
         Ok(info)
     }
 
-    /// Returns the channel opening fees, either the ones provided by the user (if any), or the ones from LSP.
+    /// Returns the cheapeset opening channel fees from LSP that within the expiry range.
     ///
     /// If the LSP fees are needed, the LSP is expected to have at least one dynamic fee entry in its menu,
     /// otherwise this will result in an error.
-    pub(crate) fn choose_channel_opening_fees(
-        &self,
-        maybe_user_supplied_fee_params: Option<OpeningFeeParams>,
-        fee_type: DynamicFeeType,
-    ) -> SdkResult<OpeningFeeParams> {
-        match maybe_user_supplied_fee_params {
-            // Validate given opening_fee_params and use it if possible
-            Some(user_supplied_fees) => {
-                user_supplied_fees.validate()?;
-                Ok(user_supplied_fees)
-            }
-            // We pick our own if None is supplied
-            None => match fee_type {
-                DynamicFeeType::Cheapest => self
-                    .opening_fee_params_list
-                    .get_cheapest_opening_fee_params(),
-                DynamicFeeType::Longest => {
-                    self.opening_fee_params_list.get_48h_opening_fee_params()
+    pub(crate) fn cheapest_open_channel_fee(&self, expiry: u32) -> SdkResult<&OpeningFeeParams> {
+        for fee in &self.opening_fee_params_list.values {
+            match fee.valid_for(expiry) {
+                Ok(valid) => {
+                    if valid {
+                        return Ok(fee);
+                    }
                 }
-            },
+                Err(e) => {
+                    return Err(SdkError::CalculateOpenChannelFeesFailed { err: e.to_string() })
+                }
+            }
         }
+        self.opening_fee_params_list.values.last().ok_or_else(|| {
+            SdkError::LspOpenChannelNotSupported {
+                err: "Dynamic fees menu contains no values".to_string(),
+            }
+        })
     }
 }
 
@@ -138,5 +134,72 @@ impl LspAPI for BreezServer {
         let response = client.register_payment(request).await?;
 
         Ok(response.into_inner())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use crate::{error::SdkError, LspInformation, OpeningFeeParams};
+
+    use super::OpeningFeeParamsMenu;
+    use anyhow::Result;
+    use chrono::{Duration, Utc};
+
+    #[test]
+    fn test_cheapest_open_channel_fee() -> Result<()> {
+        let mut tested_fees: Vec<OpeningFeeParams> = vec![];
+        for i in 1..3 {
+            tested_fees.push(OpeningFeeParams {
+                min_msat: i,
+                proportional: i as u32,
+                valid_until: std::ops::Add::add(Utc::now(), Duration::seconds((i * 3600) as i64))
+                    .to_rfc3339(),
+                max_idle_time: i as u32,
+                max_client_to_self_delay: i as u32,
+                promise: format!("promise {i}"),
+            })
+        }
+
+        let mut lsp_info = LspInformation {
+            id: "id".to_string(),
+            name: "test lsp".to_string(),
+            widget_url: "".to_string(),
+            pubkey: "pubkey".to_string(),
+            host: "localhost".to_string(),
+            channel_capacity: 1000000,
+            target_conf: 1,
+            base_fee_msat: 1,
+            fee_rate: 1.0,
+            time_lock_delta: 32,
+            min_htlc_msat: 1000,
+            lsp_pubkey: hex::decode("A0").unwrap(),
+            opening_fee_params_list: OpeningFeeParamsMenu {
+                values: tested_fees,
+            },
+        };
+
+        for expiry in 1..3 {
+            let fee = lsp_info
+                .cheapest_open_channel_fee(expiry * 3600 - 1000)
+                .unwrap();
+            assert_eq!(fee.min_msat, expiry as u64);
+        }
+
+        // Test that the fee is returned even after the expiry
+        let fee = lsp_info.cheapest_open_channel_fee(4 * 3600 - 1000).unwrap();
+        assert_eq!(fee.min_msat, 2);
+
+        // Test the correct error when there are no fees in the menu
+        lsp_info.opening_fee_params_list = OpeningFeeParamsMenu { values: vec![] };
+        if let SdkError::LspOpenChannelNotSupported { err } =
+            lsp_info.cheapest_open_channel_fee(4 * 3600).err().unwrap()
+        {
+            assert_eq!(err, "Dynamic fees menu contains no values");
+        } else {
+            panic!("Expected LspOpenChannelNotSupported error");
+        }
+
+        Ok(())
     }
 }

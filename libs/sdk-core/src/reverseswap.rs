@@ -2,13 +2,13 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use crate::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus::*};
-use crate::chain::{get_utxos, ChainService, MempoolSpace};
+use crate::chain::{get_utxos, ChainService, MempoolSpace, OnchainTx};
 use crate::models::{ReverseSwapServiceAPI, ReverseSwapperRoutingAPI};
-use crate::ReverseSwapStatus::*;
 use crate::{
-    BreezEvent, Config, FullReverseSwapInfo, NodeAPI, ReverseSwapInfoCached, ReverseSwapPairInfo,
-    ReverseSwapStatus,
+    BreezEvent, Config, FullReverseSwapInfo, NodeAPI, PaymentStatus, ReverseSwapInfo,
+    ReverseSwapInfoCached, ReverseSwapPairInfo, ReverseSwapStatus,
 };
+use crate::{ReverseSwapStatus::*, SendOnchainRequest};
 use anyhow::{anyhow, ensure, Result};
 use bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
 use bitcoin::consensus::serialize;
@@ -96,25 +96,16 @@ impl BTCSendSwap {
     /// status persisted.
     pub(crate) async fn create_reverse_swap(
         &self,
-        amount_sat: u64,
-        claim_pubkey: String,
-        pair_hash: String,
-        sat_per_vbyte: u64,
+        req: SendOnchainRequest,
     ) -> Result<FullReverseSwapInfo> {
-        Self::validate_rev_swap_args(&claim_pubkey)?;
+        Self::validate_rev_swap_args(&req.onchain_recipient_address)?;
 
         let reverse_routing_node = self
             .reverse_swapper_api
             .fetch_reverse_routing_node()
             .await?;
         let created_rsi = self
-            .create_and_validate_rev_swap_on_remote(
-                amount_sat,
-                claim_pubkey,
-                pair_hash,
-                hex::encode(reverse_routing_node),
-                sat_per_vbyte,
-            )
+            .create_and_validate_rev_swap_on_remote(req, hex::encode(reverse_routing_node))
             .await?;
         self.persister.insert_reverse_swap(&created_rsi)?;
         info!("Created and persisted reverse swap: {created_rsi:?}");
@@ -193,21 +184,18 @@ impl BTCSendSwap {
     /// before returning it
     async fn create_and_validate_rev_swap_on_remote(
         &self,
-        amount_sat: u64,
-        claim_pubkey: String,
-        pair_hash: String,
+        req: SendOnchainRequest,
         routing_node: String,
-        sat_per_vbyte: u64,
     ) -> Result<FullReverseSwapInfo> {
         let reverse_swap_keys = crate::swap::create_swap_keys()?;
 
         let boltz_response = self
             .reverse_swap_service_api
             .create_reverse_swap_on_remote(
-                amount_sat,
+                req.amount_sat,
                 reverse_swap_keys.preimage_hash_bytes().to_hex(),
                 reverse_swap_keys.public_key()?.to_hex(),
-                pair_hash.clone(),
+                req.pair_hash.clone(),
                 routing_node,
             )
             .await?;
@@ -215,19 +203,19 @@ impl BTCSendSwap {
             BoltzApiCreateReverseSwapResponse::BoltzApiSuccess(response) => {
                 let res = FullReverseSwapInfo {
                     created_at_block_height: self.chain_service.current_tip().await?,
-                    claim_pubkey,
+                    claim_pubkey: req.onchain_recipient_address,
                     invoice: response.invoice,
                     preimage: reverse_swap_keys.preimage,
                     private_key: reverse_swap_keys.priv_key,
                     timeout_block_height: response.timeout_block_height,
                     id: response.id,
                     onchain_amount_sat: response.onchain_amount,
-                    sat_per_vbyte,
+                    sat_per_vbyte: req.sat_per_vbyte,
                     redeem_script: response.redeem_script,
                     cache: ReverseSwapInfoCached { status: Initial },
                 };
 
-                res.validate_hodl_invoice(amount_sat * 1000)?;
+                res.validate_hodl_invoice(req.amount_sat * 1000)?;
                 res.validate_redeem_script(response.lockup_address, self.config.network)?;
                 Ok(res)
             }
@@ -280,10 +268,16 @@ impl BTCSendSwap {
                 debug!("Found confirmed txs for lockup address {lockup_addr}: {confirmed_txs:?}");
                 let utxos = get_utxos(lockup_addr.to_string(), confirmed_txs)?;
 
-                let confirmed_amount: u64 = utxos
-                    .confirmed
-                    .iter()
-                    .fold(0, |accum, item| accum + item.value);
+                // To decide the claim tx amount, we use the previously committed to amount
+                // We avoid trying to derive it from confirmed utxos on the lockup address, because
+                // in certain timeout scenarios (e.g. if the claim tx is not broadcast within the
+                // rev swap allocated time), then the service provider will claim the sats back
+                // and cancel the HODL invoice. Practically this results in a new utxo from the lockup
+                // address, of the same amount as was locked previously. In this scenario, relying
+                // on confirmed utxos to determine the claim tx amount will result in a panic (0 - fees < 0)
+                // Therefore we read the claim tx amount from the originally agreed upon onchain amount,
+                // confirmed by the service provider on rev swap creation.
+                let claim_amount_sat = rs.onchain_amount_sat;
 
                 let txins: Vec<TxIn> = utxos
                     .confirmed
@@ -297,7 +291,7 @@ impl BTCSendSwap {
                     .collect();
 
                 let tx_out: Vec<TxOut> = vec![TxOut {
-                    value: confirmed_amount,
+                    value: claim_amount_sat,
                     script_pubkey: claim_addr.script_pubkey(),
                 }];
 
@@ -315,10 +309,10 @@ impl BTCSendSwap {
                 let claim_witness_input_size: u32 = 1 + 1 + 8 + 73 + 1 + 32 + 1 + 100;
                 let tx_weight = tx.strippedsize() as u32 * WITNESS_SCALE_FACTOR as u32
                     + claim_witness_input_size * txins.len() as u32;
-                let fees: u64 = tx_weight as u64 * rs.sat_per_vbyte / WITNESS_SCALE_FACTOR as u64;
-                debug!("Locked confirmed amount: {confirmed_amount}");
+                let fees: u64 = (tx_weight * rs.sat_per_vbyte / WITNESS_SCALE_FACTOR as u32) as u64;
+                debug!("Claim tx amount: {claim_amount_sat}");
                 debug!("Claim tx fees: {fees}");
-                tx.output[0].value = confirmed_amount - fees;
+                tx.output[0].value = claim_amount_sat - fees;
 
                 let scpt = Secp256k1::signing_only();
 
@@ -408,7 +402,7 @@ impl BTCSendSwap {
         }
     }
 
-    async fn get_lockup_tx_status(&self, rsi: &FullReverseSwapInfo) -> Result<TxStatus> {
+    async fn get_lockup_tx(&self, rsi: &FullReverseSwapInfo) -> Result<Option<OnchainTx>> {
         let lockup_addr = rsi.get_lockup_address(self.config.network)?;
         let maybe_lockup_tx = self
             .chain_service
@@ -425,7 +419,12 @@ impl BTCSendSwap {
                 })
             });
 
-        let tx_status = match maybe_lockup_tx {
+        Ok(maybe_lockup_tx)
+    }
+
+    async fn get_lockup_tx_status(&self, rsi: &FullReverseSwapInfo) -> Result<TxStatus> {
+        let lockup_addr = rsi.get_lockup_address(self.config.network)?;
+        let tx_status = match self.get_lockup_tx(rsi).await? {
             None => TxStatus::Unknown,
             Some(tx) => match tx.status.block_height {
                 Some(_) => TxStatus::Confirmed,
@@ -449,11 +448,17 @@ impl BTCSendSwap {
             "Tried to get status for non-monitored reverse swap"
         );
 
+        let payment_hash_hex = &rsi.get_preimage_hash().to_hex();
+        let payment_status = self.persister.get_payment_by_hash(payment_hash_hex)?;
+        if let Some(ref payment) = payment_status {
+            if payment.status == PaymentStatus::Failed {
+                warn!("Payment failed for reverse swap {}", rsi.id);
+                return Ok(Some(Cancelled));
+            }
+        }
+
         let new_status = match &current_status {
-            Initial => match self
-                .persister
-                .get_payment_by_hash(&rsi.get_preimage_hash().to_hex())?
-            {
+            Initial => match payment_status {
                 Some(_) => Some(InProgress),
                 None => match self
                     .reverse_swap_service_api
@@ -469,10 +474,23 @@ impl BTCSendSwap {
                     _ => None,
                 },
             },
-            InProgress | CompletedSeen => match self.get_claim_tx_status(rsi).await? {
-                TxStatus::Unknown => None,
+            InProgress => match self.get_claim_tx_status(rsi).await? {
+                TxStatus::Unknown => {
+                    let block_height = self.chain_service.current_tip().await?;
+                    match block_height >= rsi.timeout_block_height {
+                        true => {
+                            warn!("Reverse swap {} crossed the timeout block height", rsi.id);
+                            Some(Cancelled)
+                        }
+                        false => None,
+                    }
+                }
                 TxStatus::Mempool => Some(CompletedSeen),
                 TxStatus::Confirmed => Some(CompletedConfirmed),
+            },
+            CompletedSeen => match self.get_claim_tx_status(rsi).await? {
+                TxStatus::Confirmed => Some(CompletedConfirmed),
+                _ => None,
             },
             _ => None,
         };
@@ -528,5 +546,30 @@ impl BTCSendSwap {
         self.reverse_swap_service_api
             .fetch_reverse_swap_fees()
             .await
+    }
+
+    /// Converts the internal [FullReverseSwapInfo] into the user-facing [ReverseSwapInfo]
+    pub(crate) async fn convert_reverse_swap_info(
+        &self,
+        full_rsi: FullReverseSwapInfo,
+    ) -> Result<ReverseSwapInfo> {
+        Ok(ReverseSwapInfo {
+            id: full_rsi.id.clone(),
+            claim_pubkey: full_rsi.claim_pubkey.clone(),
+            lockup_txid: self
+                .get_lockup_tx(&full_rsi)
+                .await?
+                .map(|lockup_tx| lockup_tx.txid),
+            claim_txid: match full_rsi.cache.status {
+                CompletedSeen | CompletedConfirmed => self
+                    .create_claim_tx(&full_rsi)
+                    .await
+                    .ok()
+                    .map(|claim_tx| claim_tx.txid().to_hex()),
+                _ => None,
+            },
+            onchain_amount_sat: full_rsi.onchain_amount_sat,
+            status: full_rsi.cache.status,
+        })
     }
 }

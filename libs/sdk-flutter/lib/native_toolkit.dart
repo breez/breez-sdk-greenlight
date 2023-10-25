@@ -4,7 +4,7 @@ import 'bridge_generated.dart';
 
 BreezSdkCore? _breezSDK;
 
-const _libName = "libbreez_sdk_core.so";
+const _libName = "libbreez_sdk_bindings.so";
 
 class UnsupportedPlatform implements Exception {
   UnsupportedPlatform(String s);

@@ -1,3 +1,6 @@
+use std::cmp::max;
+use std::ops::Add;
+use std::pin::Pin;
 use std::str::FromStr;
 
 use anyhow::{anyhow, ensure, Result};
@@ -8,19 +11,17 @@ use bitcoin::hashes::Hash;
 use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::{Address, Script};
-use chrono::{DateTime, Utc};
-use gl_client::pb::WithdrawResponse;
+use chrono::{DateTime, Duration, Utc};
 use lightning_invoice::RawInvoice;
 use ripemd::Digest;
 use ripemd::Ripemd160;
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef};
 use rusqlite::ToSql;
 use serde::{Deserialize, Serialize};
-use std::cmp::max;
+use strum_macros::{Display, EnumString};
 use tokio::sync::mpsc;
+use tokio_stream::Stream;
 use tonic::Streaming;
-
-use gl_client::signer::model::greenlight::Peer;
 
 use crate::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::fiat::{FiatCurrency, Rate};
@@ -28,18 +29,33 @@ use crate::grpc::{self, GetReverseRoutingNodeRequest, PaymentInformation, Regist
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lsp::LspInformation;
 use crate::models::Network::*;
-use crate::{LNInvoice, LnUrlErrorData};
+use crate::{LNInvoice, LnUrlErrorData, LnUrlPayRequestData, LnUrlWithdrawRequestData};
 
 use crate::breez_services::BreezServer;
 use crate::error::{SdkError, SdkResult};
-use strum_macros::{Display, EnumString};
+
+pub const SWAP_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60 * 24 * 2; // 2 days
+pub const INVOICE_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60; // 60 minutes
 
 /// Different types of supported payments
-#[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize, Hash)]
 pub enum PaymentType {
     Sent,
     Received,
     ClosedChannel,
+}
+
+#[derive(Debug)]
+pub struct CustomMessage {
+    pub peer_id: Vec<u8>,
+    pub message_type: u16,
+    pub payload: Vec<u8>,
+}
+
+#[derive(Debug)]
+pub struct Peer {
+    pub id: Vec<u8>,
+    pub channels: Vec<Channel>,
 }
 
 /// Trait covering functions affecting the LN node
@@ -47,35 +63,32 @@ pub enum PaymentType {
 pub trait NodeAPI: Send + Sync {
     async fn create_invoice(
         &self,
-        amount_sats: u64,
+        amount_msat: u64,
         description: String,
         preimage: Option<Vec<u8>>,
         use_description_hash: Option<bool>,
-        expiry: Option<u64>,
+        expiry: Option<u32>,
         cltv: Option<u32>,
     ) -> Result<String>;
     async fn pull_changed(
         &self,
-        since_timestamp: i64,
+        since_timestamp: u64,
         balance_changed: bool,
     ) -> Result<SyncResponse>;
-    /// As per the `pb::PayRequest` docs, `amount_sats` is only needed when the invoice doesn't specify an amount
+    /// As per the `pb::PayRequest` docs, `amount_msat` is only needed when the invoice doesn't specify an amount
     async fn send_payment(
         &self,
         bolt11: String,
-        amount_sats: Option<u64>,
-    ) -> Result<crate::models::PaymentResponse>;
+        amount_msat: Option<u64>,
+    ) -> Result<PaymentResponse>;
     async fn send_spontaneous_payment(
         &self,
         node_id: String,
-        amount_sats: u64,
-    ) -> Result<crate::models::PaymentResponse>;
+        amount_msat: u64,
+    ) -> Result<PaymentResponse>;
     async fn start(&self) -> Result<()>;
-    async fn sweep(
-        &self,
-        to_address: String,
-        fee_rate_sats_per_vbyte: u64,
-    ) -> Result<WithdrawResponse>;
+    async fn sweep(&self, to_address: String, fee_rate_sats_per_vbyte: u32) -> Result<Vec<u8>>;
+    async fn prepare_sweep(&self, req: PrepareSweepRequest) -> Result<PrepareSweepResponse>;
     async fn start_signer(&self, shutdown: mpsc::Receiver<()>);
     async fn list_peers(&self) -> Result<Vec<Peer>>;
     async fn connect_peer(&self, node_id: String, addr: String) -> Result<()>;
@@ -83,12 +96,18 @@ pub trait NodeAPI: Send + Sync {
     async fn close_peer_channels(&self, node_id: String) -> Result<Vec<String>>;
     async fn stream_incoming_payments(&self) -> Result<Streaming<gl_client::pb::IncomingPayment>>;
     async fn stream_log_messages(&self) -> Result<Streaming<gl_client::pb::LogEntry>>;
+    async fn static_backup(&self) -> Result<Vec<String>>;
     async fn execute_command(&self, command: String) -> Result<String>;
     async fn sign_message(&self, message: &str) -> Result<String>;
     async fn check_message(&self, message: &str, pubkey: &str, signature: &str) -> Result<bool>;
+    async fn send_custom_message(&self, message: CustomMessage) -> Result<()>;
+    async fn stream_custom_messages(
+        &self,
+    ) -> Result<Pin<Box<dyn Stream<Item = Result<CustomMessage>> + Send>>>;
 
     /// Gets the private key at the path specified
     fn derive_bip32_key(&self, path: Vec<ChildNumber>) -> Result<ExtendedPrivKey>;
+    fn legacy_derive_bip32_key(&self, path: Vec<ChildNumber>) -> Result<ExtendedPrivKey>;
 }
 
 /// Trait covering LSP-related functionality
@@ -190,7 +209,7 @@ pub struct FullReverseSwapInfo {
     pub onchain_amount_sat: u64,
 
     /// User-specified feerate for the claim tx
-    pub sat_per_vbyte: u64,
+    pub sat_per_vbyte: u32,
 
     pub cache: ReverseSwapInfoCached,
 }
@@ -324,19 +343,12 @@ impl FullReverseSwapInfo {
 pub struct ReverseSwapInfo {
     pub id: String,
     pub claim_pubkey: String,
+    /// The lockup tx id, available from the moment the lockup tx is seen in the mempool by the SDK
+    pub lockup_txid: Option<String>,
+    /// The claim tx id, available from the moment the claim tx is broadcast by the SDK
+    pub claim_txid: Option<String>,
     pub onchain_amount_sat: u64,
     pub status: ReverseSwapStatus,
-}
-
-impl From<FullReverseSwapInfo> for ReverseSwapInfo {
-    fn from(rsi: FullReverseSwapInfo) -> Self {
-        Self {
-            id: rsi.id,
-            claim_pubkey: rsi.claim_pubkey,
-            onchain_amount_sat: rsi.onchain_amount_sat,
-            status: rsi.cache.status,
-        }
-    }
 }
 
 /// The possible statuses of a reverse swap, from the Breez SDK perspective.
@@ -345,6 +357,8 @@ impl From<FullReverseSwapInfo> for ReverseSwapInfo {
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum ReverseSwapStatus {
     /// HODL invoice payment is not completed yet
+    ///
+    /// This is also the temporary status of a reverse swap when restoring a node, until `sync` finishes.
     Initial = 0,
 
     /// HODL invoice payment was successfully triggered and confirmed by Boltz, but the reverse swap
@@ -464,7 +478,10 @@ pub struct Config {
     pub payment_timeout_sec: u32,
     pub default_lsp_id: Option<String>,
     pub api_key: Option<String>,
+    /// Maps to the CLN `maxfeepercent` config when paying invoices (`lightning-pay`)
     pub maxfee_percent: f64,
+    /// Maps to the CLN `exemptfee` config when paying invoices (`lightning-pay`)
+    pub exemptfee_msat: u64,
     pub node_config: NodeConfig,
 }
 
@@ -479,6 +496,7 @@ impl Config {
             default_lsp_id: Some(String::from("03cea51f-b654-4fb0-8e82-eca137f236a0")),
             api_key: Some(api_key),
             maxfee_percent: 1.0,
+            exemptfee_msat: 20000,
             node_config,
         }
     }
@@ -493,6 +511,7 @@ impl Config {
             default_lsp_id: Some(String::from("ea51d025-042d-456c-8325-63e430797481")),
             api_key: Some(api_key),
             maxfee_percent: 0.5,
+            exemptfee_msat: 20000,
             node_config,
         }
     }
@@ -558,10 +577,11 @@ impl From<Network> for bitcoin::network::constants::Network {
 }
 
 /// Different types of supported filters which can be applied when retrieving the transaction list
+#[derive(PartialEq)]
 pub enum PaymentTypeFilter {
     Sent,
     Received,
-    All,
+    ClosedChannels,
 }
 
 /// Different types of supported feerates
@@ -615,6 +635,14 @@ pub struct SyncResponse {
     pub channels: Vec<crate::models::Channel>,
 }
 
+/// The status of a payment
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+pub enum PaymentStatus {
+    Pending = 0,
+    Complete = 1,
+    Failed = 2,
+}
+
 /// Represents a payment, including its [PaymentType] and [PaymentDetails].
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]
 pub struct Payment {
@@ -623,9 +651,19 @@ pub struct Payment {
     pub payment_time: i64,
     pub amount_msat: u64,
     pub fee_msat: u64,
-    pub pending: bool,
+    pub status: PaymentStatus,
     pub description: Option<String>,
     pub details: PaymentDetails,
+}
+
+/// Represents a list payments request.
+pub struct ListPaymentsRequest {
+    pub filters: Option<Vec<PaymentTypeFilter>>,
+    pub from_timestamp: Option<i64>,
+    pub to_timestamp: Option<i64>,
+    pub include_failures: Option<bool>,
+    pub offset: Option<u32>,
+    pub limit: Option<u32>,
 }
 
 /// Represents a payment response.
@@ -671,6 +709,9 @@ pub struct LnPaymentDetails {
 
     /// Only set for [PaymentType::Sent] payments where the receiver endpoint returned LNURL metadata
     pub lnurl_metadata: Option<String>,
+
+    /// Only set for [PaymentType::Received] payments that were received as part of LNURL-withdraw
+    pub lnurl_withdraw_endpoint: Option<String>,
 }
 
 /// Represents the funds that were on the user side of the channel at the time it was closed.
@@ -679,6 +720,8 @@ pub struct ClosedChannelPaymentDetails {
     pub short_channel_id: String,
     pub state: ChannelState,
     pub funding_txid: String,
+    /// Can be empty for older closed channels.
+    pub closing_txid: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -690,7 +733,7 @@ pub struct ReverseSwapFeesRequest {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReceivePaymentRequest {
     /// The amount in satoshis for this payment request
-    pub amount_sats: u64,
+    pub amount_msat: u64,
     /// The description for this payment request.
     pub description: String,
     /// Optional preimage for this payment request.
@@ -702,7 +745,7 @@ pub struct ReceivePaymentRequest {
     /// If set to true, then the bolt11 invoice returned includes the description hash.
     pub use_description_hash: Option<bool>,
     /// if specified, set the time the invoice is valid for, in seconds.
-    pub expiry: Option<u64>,
+    pub expiry: Option<u32>,
     /// if specified, sets the min_final_cltv_expiry for the invoice
     pub cltv: Option<u32>,
 }
@@ -713,6 +756,51 @@ pub struct ReceivePaymentResponse {
     pub ln_invoice: LNInvoice,
     pub opening_fee_params: Option<OpeningFeeParams>,
     pub opening_fee_msat: Option<u64>,
+}
+
+/// Represents a send payment request.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SendPaymentRequest {
+    /// The bolt11 invoice
+    pub bolt11: String,
+    /// The amount to pay in millisatoshis
+    pub amount_msat: Option<u64>,
+}
+
+/// Represents a send spontaneous payment request.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SendSpontaneousPaymentRequest {
+    /// The node id to send this payment is
+    pub node_id: String,
+    /// The amount in millisatoshis for this payment
+    pub amount_msat: u64,
+}
+
+/// Represents a send payment response.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SendPaymentResponse {
+    pub payment: Payment,
+}
+
+#[derive(Clone)]
+pub struct StaticBackupRequest {
+    pub working_dir: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct StaticBackupResponse {
+    pub backup: Option<Vec<String>>,
+}
+
+pub struct OpenChannelFeeRequest {
+    pub amount_msat: u64,
+    pub expiry: Option<u32>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct OpenChannelFeeResponse {
+    pub fee_msat: u64,
+    pub used_fee_params: Option<OpeningFeeParams>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -730,6 +818,49 @@ pub struct BuyBitcoinRequest {
 pub struct BuyBitcoinResponse {
     pub url: String,
     pub opening_fee_params: Option<OpeningFeeParams>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SweepRequest {
+    pub to_address: String,
+    pub fee_rate_sats_per_vbyte: u32,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SweepResponse {
+    pub txid: Vec<u8>,
+}
+
+pub struct SendOnchainRequest {
+    pub amount_sat: u64,
+    pub onchain_recipient_address: String,
+    pub pair_hash: String,
+    pub sat_per_vbyte: u32,
+}
+
+pub struct SendOnchainResponse {
+    pub reverse_swap_info: ReverseSwapInfo,
+}
+
+pub struct PrepareRefundRequest {
+    pub swap_address: String,
+    pub to_address: String,
+    pub sat_per_vbyte: u32,
+}
+
+pub struct RefundRequest {
+    pub swap_address: String,
+    pub to_address: String,
+    pub sat_per_vbyte: u32,
+}
+
+pub struct PrepareRefundResponse {
+    pub refund_tx_weight: u32,
+    pub refund_tx_fee_sat: u64,
+}
+
+pub struct RefundResponse {
+    pub refund_tx_id: String,
 }
 
 /// Dynamic fee parameters offered by the LSP for opening a new channel.
@@ -751,15 +882,14 @@ pub struct OpeningFeeParams {
 }
 
 impl OpeningFeeParams {
-    /// Simple validation: checks if `valid_until` is a valid date
-    pub(crate) fn validate(&self) -> Result<()> {
-        self.valid_until_date().map(|_| ())
-    }
-
     pub(crate) fn valid_until_date(&self) -> Result<DateTime<Utc>> {
         DateTime::parse_from_rfc3339(&self.valid_until)
             .map_err(|e| anyhow!(e))
             .map(|d| d.with_timezone(&Utc))
+    }
+
+    pub(crate) fn valid_for(&self, expiry: u32) -> Result<bool> {
+        Ok(self.valid_until_date()? > Utc::now().add(Duration::seconds(expiry as i64)))
     }
 
     pub(crate) fn get_channel_fees_msat_for(&self, amount_msats: u64) -> u64 {
@@ -916,6 +1046,14 @@ pub struct Channel {
     pub spendable_msat: u64,
     pub receivable_msat: u64,
     pub closed_at: Option<u64>,
+    /// The output number of the funding tx which opened the channel
+    pub funding_outnum: Option<u32>,
+    pub alias_local: Option<String>,
+    pub alias_remote: Option<String>,
+    /// Only set for closed channels.
+    ///
+    /// This may be empty for older closed channels, if it was not possible to retrieve the closing txid.
+    pub closing_txid: Option<String>,
 }
 
 /// State of a Lightning channel
@@ -1039,11 +1177,9 @@ pub struct UnspentTransactionOutput {
     pub address: String,
     #[serde(default)]
     pub reserved: bool,
-    #[serde(default)]
-    pub reserved_to_block: u32,
 }
 
-//// Contains the result of the entire LNURL interaction, as reported by the LNURL endpoint.
+/// Contains the result of the entire LNURL interaction, as reported by the LNURL endpoint.
 ///
 /// * `Ok` indicates the interaction with the endpoint was valid, and the endpoint
 ///  - started to pay the invoice asynchronously in the case of LNURL-withdraw,
@@ -1065,11 +1201,67 @@ pub enum LnUrlCallbackStatus {
     },
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LnUrlWithdrawRequest {
+    /// Request data containing information on how to call the lnurl withdraw
+    /// endpoint. Typically retrieved by calling `parse()` on a lnurl withdraw
+    /// input.
+    pub data: LnUrlWithdrawRequestData,
+
+    /// The amount to withdraw from the lnurl withdraw endpoint. Must be between
+    /// `min_withdrawable` and `max_withdrawable`.
+    pub amount_msat: u64,
+
+    /// Optional description that will be put in the payment request for the
+    /// lnurl withdraw endpoint.
+    pub description: Option<String>,
+}
+
+/// Represents a LNURL-pay request.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct LnUrlPayRequest {
+    /// The [LnUrlPayRequestData] returned by [BreezServices::parse_input]
+    pub data: LnUrlPayRequestData,
+    /// The amount in millisatoshis for this payment
+    pub amount_msat: u64,
+    /// An optional comment for this payment
+    pub comment: Option<String>,
+}
+
+/// [LnUrlCallbackStatus] specific to LNURL-withdraw, where the success case contains the invoice.
+#[derive(Serialize)]
+pub enum LnUrlWithdrawResult {
+    Ok { data: LnUrlWithdrawSuccessData },
+    ErrorStatus { data: LnUrlErrorData },
+}
+
+#[derive(Deserialize, Debug, Serialize)]
+pub struct LnUrlWithdrawSuccessData {
+    pub invoice: LNInvoice,
+}
+
 /// Different providers will demand different behaviours when the user is trying to buy bitcoin.
 #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
 #[serde(tag = "buy_bitcoin_provider")]
 pub enum BuyBitcoinProvider {
     Moonpay,
+}
+
+/// We need to prepare a sweep transaction to know what fee will be charged in satoshis this
+/// model holds the request data which consists of the address to sweep to and the fee rate in
+/// satoshis per vbyte which will be converted to absolute satoshis.
+#[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
+pub struct PrepareSweepRequest {
+    pub to_address: String,
+    pub sats_per_vbyte: u64,
+}
+
+/// We need to prepare a sweep transaction to know what a fee it will be charged in satoshis
+/// this model holds the response data, which consists of the weight and the absolute fee in sats
+#[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
+pub struct PrepareSweepResponse {
+    pub sweep_tx_weight: u64,
+    pub sweep_tx_fee_sat: u64,
 }
 
 impl FromStr for BuyBitcoinProvider {
@@ -1085,7 +1277,6 @@ impl FromStr for BuyBitcoinProvider {
 
 #[cfg(test)]
 mod tests {
-    use super::OpeningFeeParamsMenu;
     use anyhow::Result;
     use prost::Message;
     use rand::random;
@@ -1093,6 +1284,8 @@ mod tests {
     use crate::grpc::PaymentInformation;
     use crate::test_utils::{get_test_ofp, rand_vec_u8};
     use crate::OpeningFeeParams;
+
+    use super::OpeningFeeParamsMenu;
 
     #[test]
     fn test_ofp_menu_validation() -> Result<()> {
@@ -1188,6 +1381,6 @@ mod tests {
     fn test_dynamic_fee_valid_until_format() -> Result<()> {
         let mut ofp: OpeningFeeParams = get_test_ofp(1, 1, true).into();
         ofp.valid_until = "2023-08-03T00:30:35.117Z".to_string();
-        ofp.validate()
+        ofp.valid_until_date().map(|_| ())
     }
 }

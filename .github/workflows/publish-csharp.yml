@@ -59,6 +59,11 @@ jobs:
           name: sdk-bindings-x86_64-pc-windows-msvc
           path: libs/sdk-bindings/bindings-csharp/src/runtimes/win-x64/native
 
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-i686-pc-windows-msvc
+          path: libs/sdk-bindings/bindings-csharp/src/runtimes/win-x86/native
+
       - name: Update package version
         if: ${{ inputs.package-version }}
         working-directory: libs/sdk-bindings/bindings-csharp/src

@@ -1,4 +1,4 @@
-name: Build Windows
+name: Build sdk-bindings for Windows
 on:
   workflow_dispatch:
     inputs:
@@ -21,6 +21,7 @@ jobs:
       matrix:
         target: [
           x86_64-pc-windows-msvc,
+          i686-pc-windows-msvc,
         ]
     steps:
     - name: checkout
@@ -44,7 +45,7 @@ jobs:
       with:
         workspaces: libs
 
-    - name: Build Breez
+    - name: Build sdk-bindings
       working-directory: libs/sdk-bindings
       run: cargo build --release --target ${{ matrix.target }}
     

@@ -16,6 +16,10 @@ ndk-home:
 
 all: android ios
 
+react-native-codegen:
+	cargo install breez-sdk-rn-generator --git https://github.com/breez/breez-sdk-rn-generator
+	breez-sdk-rn-generator -b ../sdk-bindings -o ./
+
 android-make:
 	make -C ../sdk-bindings kotlin
 

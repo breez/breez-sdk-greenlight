@@ -78,13 +78,13 @@ See the instructions in each sub project readme on how to build, test and run.
 - [ ] Webhook for receiving payments
 - [ ] Mobile Notifications
 - [ ] Offline receive via notifications
+- [ ] Simplifed key management (cloud key backup)
 - [ ] Performance optimizations
 - [ ] Improve key share 
 - [ ] Close channels to a predefined address 
 - [ ] Make mempool.space dependency optional 
 - [ ] Receive 0 amount invoice via LSP (unified QR)
 - [ ] Send/receive bolt12
-- [ ] Cloud key backup? 
 - [ ] Async payments
 - [ ] LDK support
 - [ ] Splicing

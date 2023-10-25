@@ -59,27 +59,50 @@ use crate::models::Config;
 use crate::models::EnvironmentType;
 use crate::models::GreenlightCredentials;
 use crate::models::GreenlightNodeConfig;
+use crate::models::ListPaymentsRequest;
 use crate::models::LnPaymentDetails;
 use crate::models::LnUrlCallbackStatus;
+use crate::models::LnUrlPayRequest;
+use crate::models::LnUrlWithdrawRequest;
+use crate::models::LnUrlWithdrawResult;
+use crate::models::LnUrlWithdrawSuccessData;
 use crate::models::LogEntry;
 use crate::models::Network;
 use crate::models::NodeConfig;
 use crate::models::NodeState;
+use crate::models::OpenChannelFeeRequest;
+use crate::models::OpenChannelFeeResponse;
 use crate::models::OpeningFeeParams;
 use crate::models::OpeningFeeParamsMenu;
 use crate::models::Payment;
 use crate::models::PaymentDetails;
+use crate::models::PaymentStatus;
 use crate::models::PaymentType;
 use crate::models::PaymentTypeFilter;
+use crate::models::PrepareRefundRequest;
+use crate::models::PrepareRefundResponse;
+use crate::models::PrepareSweepRequest;
+use crate::models::PrepareSweepResponse;
 use crate::models::ReceiveOnchainRequest;
 use crate::models::ReceivePaymentRequest;
 use crate::models::ReceivePaymentResponse;
+use crate::models::RefundRequest;
+use crate::models::RefundResponse;
 use crate::models::ReverseSwapFeesRequest;
 use crate::models::ReverseSwapInfo;
 use crate::models::ReverseSwapPairInfo;
 use crate::models::ReverseSwapStatus;
+use crate::models::SendOnchainRequest;
+use crate::models::SendOnchainResponse;
+use crate::models::SendPaymentRequest;
+use crate::models::SendPaymentResponse;
+use crate::models::SendSpontaneousPaymentRequest;
+use crate::models::StaticBackupRequest;
+use crate::models::StaticBackupResponse;
 use crate::models::SwapInfo;
 use crate::models::SwapStatus;
+use crate::models::SweepRequest;
+use crate::models::SweepResponse;
 use crate::models::UnspentTransactionOutput;
 
 // Section: wire functions
@@ -142,10 +165,7 @@ fn wire_disconnect_impl(port_: MessagePort) {
         move || move |task_callback| disconnect(),
     )
 }
-fn wire_sign_message_impl(
-    port_: MessagePort,
-    request: impl Wire2Api<SignMessageRequest> + UnwindSafe,
-) {
+fn wire_sign_message_impl(port_: MessagePort, req: impl Wire2Api<SignMessageRequest> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
             debug_name: "sign_message",
@@ -153,14 +173,14 @@ fn wire_sign_message_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_request = request.wire2api();
-            move |task_callback| sign_message(api_request)
+            let api_req = req.wire2api();
+            move |task_callback| sign_message(api_req)
         },
     )
 }
 fn wire_check_message_impl(
     port_: MessagePort,
-    request: impl Wire2Api<CheckMessageRequest> + UnwindSafe,
+    req: impl Wire2Api<CheckMessageRequest> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -169,8 +189,8 @@ fn wire_check_message_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_request = request.wire2api();
-            move |task_callback| check_message(api_request)
+            let api_req = req.wire2api();
+            move |task_callback| check_message(api_req)
         },
     )
 }
@@ -204,6 +224,22 @@ fn wire_default_config_impl(
             let api_api_key = api_key.wire2api();
             let api_node_config = node_config.wire2api();
             move |task_callback| Ok(default_config(api_env_type, api_api_key, api_node_config))
+        },
+    )
+}
+fn wire_static_backup_impl(
+    port_: MessagePort,
+    req: impl Wire2Api<StaticBackupRequest> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "static_backup",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_req = req.wire2api();
+            move |task_callback| static_backup(api_req)
         },
     )
 }
@@ -341,9 +377,7 @@ fn wire_parse_input_impl(port_: MessagePort, input: impl Wire2Api<String> + Unwi
 }
 fn wire_list_payments_impl(
     port_: MessagePort,
-    filter: impl Wire2Api<PaymentTypeFilter> + UnwindSafe,
-    from_timestamp: impl Wire2Api<Option<i64>> + UnwindSafe,
-    to_timestamp: impl Wire2Api<Option<i64>> + UnwindSafe,
+    req: impl Wire2Api<ListPaymentsRequest> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -352,10 +386,8 @@ fn wire_list_payments_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_filter = filter.wire2api();
-            let api_from_timestamp = from_timestamp.wire2api();
-            let api_to_timestamp = to_timestamp.wire2api();
-            move |task_callback| list_payments(api_filter, api_from_timestamp, api_to_timestamp)
+            let api_req = req.wire2api();
+            move |task_callback| list_payments(api_req)
         },
     )
 }
@@ -372,11 +404,7 @@ fn wire_payment_by_hash_impl(port_: MessagePort, hash: impl Wire2Api<String> + U
         },
     )
 }
-fn wire_send_payment_impl(
-    port_: MessagePort,
-    bolt11: impl Wire2Api<String> + UnwindSafe,
-    amount_sats: impl Wire2Api<Option<u64>> + UnwindSafe,
-) {
+fn wire_send_payment_impl(port_: MessagePort, req: impl Wire2Api<SendPaymentRequest> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
             debug_name: "send_payment",
@@ -384,16 +412,14 @@ fn wire_send_payment_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_bolt11 = bolt11.wire2api();
-            let api_amount_sats = amount_sats.wire2api();
-            move |task_callback| send_payment(api_bolt11, api_amount_sats)
+            let api_req = req.wire2api();
+            move |task_callback| send_payment(api_req)
         },
     )
 }
 fn wire_send_spontaneous_payment_impl(
     port_: MessagePort,
-    node_id: impl Wire2Api<String> + UnwindSafe,
-    amount_sats: impl Wire2Api<u64> + UnwindSafe,
+    req: impl Wire2Api<SendSpontaneousPaymentRequest> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -402,15 +428,14 @@ fn wire_send_spontaneous_payment_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_node_id = node_id.wire2api();
-            let api_amount_sats = amount_sats.wire2api();
-            move |task_callback| send_spontaneous_payment(api_node_id, api_amount_sats)
+            let api_req = req.wire2api();
+            move |task_callback| send_spontaneous_payment(api_req)
         },
     )
 }
 fn wire_receive_payment_impl(
     port_: MessagePort,
-    req_data: impl Wire2Api<ReceivePaymentRequest> + UnwindSafe,
+    req: impl Wire2Api<ReceivePaymentRequest> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -419,17 +444,12 @@ fn wire_receive_payment_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_req_data = req_data.wire2api();
-            move |task_callback| receive_payment(api_req_data)
+            let api_req = req.wire2api();
+            move |task_callback| receive_payment(api_req)
         },
     )
 }
-fn wire_lnurl_pay_impl(
-    port_: MessagePort,
-    user_amount_sat: impl Wire2Api<u64> + UnwindSafe,
-    comment: impl Wire2Api<Option<String>> + UnwindSafe,
-    req_data: impl Wire2Api<LnUrlPayRequestData> + UnwindSafe,
-) {
+fn wire_lnurl_pay_impl(port_: MessagePort, req: impl Wire2Api<LnUrlPayRequest> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
             debug_name: "lnurl_pay",
@@ -437,18 +457,14 @@ fn wire_lnurl_pay_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_user_amount_sat = user_amount_sat.wire2api();
-            let api_comment = comment.wire2api();
-            let api_req_data = req_data.wire2api();
-            move |task_callback| lnurl_pay(api_user_amount_sat, api_comment, api_req_data)
+            let api_req = req.wire2api();
+            move |task_callback| lnurl_pay(api_req)
         },
     )
 }
 fn wire_lnurl_withdraw_impl(
     port_: MessagePort,
-    req_data: impl Wire2Api<LnUrlWithdrawRequestData> + UnwindSafe,
-    amount_sats: impl Wire2Api<u64> + UnwindSafe,
-    description: impl Wire2Api<Option<String>> + UnwindSafe,
+    req: impl Wire2Api<LnUrlWithdrawRequest> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -457,10 +473,8 @@ fn wire_lnurl_withdraw_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_req_data = req_data.wire2api();
-            let api_amount_sats = amount_sats.wire2api();
-            let api_description = description.wire2api();
-            move |task_callback| lnurl_withdraw(api_req_data, api_amount_sats, api_description)
+            let api_req = req.wire2api();
+            move |task_callback| lnurl_withdraw(api_req)
         },
     )
 }
@@ -500,13 +514,7 @@ fn wire_list_fiat_currencies_impl(port_: MessagePort) {
         move || move |task_callback| list_fiat_currencies(),
     )
 }
-fn wire_send_onchain_impl(
-    port_: MessagePort,
-    amount_sat: impl Wire2Api<u64> + UnwindSafe,
-    onchain_recipient_address: impl Wire2Api<String> + UnwindSafe,
-    pair_hash: impl Wire2Api<String> + UnwindSafe,
-    sat_per_vbyte: impl Wire2Api<u64> + UnwindSafe,
-) {
+fn wire_send_onchain_impl(port_: MessagePort, req: impl Wire2Api<SendOnchainRequest> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
             debug_name: "send_onchain",
@@ -514,24 +522,14 @@ fn wire_send_onchain_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_amount_sat = amount_sat.wire2api();
-            let api_onchain_recipient_address = onchain_recipient_address.wire2api();
-            let api_pair_hash = pair_hash.wire2api();
-            let api_sat_per_vbyte = sat_per_vbyte.wire2api();
-            move |task_callback| {
-                send_onchain(
-                    api_amount_sat,
-                    api_onchain_recipient_address,
-                    api_pair_hash,
-                    api_sat_per_vbyte,
-                )
-            }
+            let api_req = req.wire2api();
+            move |task_callback| send_onchain(api_req)
         },
     )
 }
 fn wire_receive_onchain_impl(
     port_: MessagePort,
-    req_data: impl Wire2Api<ReceiveOnchainRequest> + UnwindSafe,
+    req: impl Wire2Api<ReceiveOnchainRequest> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -540,15 +538,12 @@ fn wire_receive_onchain_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_req_data = req_data.wire2api();
-            move |task_callback| receive_onchain(api_req_data)
+            let api_req = req.wire2api();
+            move |task_callback| receive_onchain(api_req)
         },
     )
 }
-fn wire_buy_bitcoin_impl(
-    port_: MessagePort,
-    req_data: impl Wire2Api<BuyBitcoinRequest> + UnwindSafe,
-) {
+fn wire_buy_bitcoin_impl(port_: MessagePort, req: impl Wire2Api<BuyBitcoinRequest> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
             debug_name: "buy_bitcoin",
@@ -556,16 +551,12 @@ fn wire_buy_bitcoin_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_req_data = req_data.wire2api();
-            move |task_callback| buy_bitcoin(api_req_data)
+            let api_req = req.wire2api();
+            move |task_callback| buy_bitcoin(api_req)
         },
     )
 }
-fn wire_sweep_impl(
-    port_: MessagePort,
-    to_address: impl Wire2Api<String> + UnwindSafe,
-    fee_rate_sats_per_vbyte: impl Wire2Api<u64> + UnwindSafe,
-) {
+fn wire_sweep_impl(port_: MessagePort, req: impl Wire2Api<SweepRequest> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
             debug_name: "sweep",
@@ -573,9 +564,24 @@ fn wire_sweep_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_to_address = to_address.wire2api();
-            let api_fee_rate_sats_per_vbyte = fee_rate_sats_per_vbyte.wire2api();
-            move |task_callback| sweep(api_to_address, api_fee_rate_sats_per_vbyte)
+            let api_req = req.wire2api();
+            move |task_callback| sweep(api_req)
+        },
+    )
+}
+fn wire_prepare_sweep_impl(
+    port_: MessagePort,
+    req: impl Wire2Api<PrepareSweepRequest> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "prepare_sweep",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_req = req.wire2api();
+            move |task_callback| prepare_sweep(api_req)
         },
     )
 }
@@ -589,12 +595,23 @@ fn wire_list_refundables_impl(port_: MessagePort) {
         move || move |task_callback| list_refundables(),
     )
 }
-fn wire_refund_impl(
+fn wire_prepare_refund_impl(
     port_: MessagePort,
-    swap_address: impl Wire2Api<String> + UnwindSafe,
-    to_address: impl Wire2Api<String> + UnwindSafe,
-    sat_per_vbyte: impl Wire2Api<u32> + UnwindSafe,
+    req: impl Wire2Api<PrepareRefundRequest> + UnwindSafe,
 ) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "prepare_refund",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_req = req.wire2api();
+            move |task_callback| prepare_refund(api_req)
+        },
+    )
+}
+fn wire_refund_impl(port_: MessagePort, req: impl Wire2Api<RefundRequest> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
             debug_name: "refund",
@@ -602,10 +619,8 @@ fn wire_refund_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_swap_address = swap_address.wire2api();
-            let api_to_address = to_address.wire2api();
-            let api_sat_per_vbyte = sat_per_vbyte.wire2api();
-            move |task_callback| refund(api_swap_address, api_to_address, api_sat_per_vbyte)
+            let api_req = req.wire2api();
+            move |task_callback| refund(api_req)
         },
     )
 }
@@ -627,6 +642,22 @@ fn wire_in_progress_reverse_swaps_impl(port_: MessagePort) {
             mode: FfiCallMode::Normal,
         },
         move || move |task_callback| in_progress_reverse_swaps(),
+    )
+}
+fn wire_open_channel_fee_impl(
+    port_: MessagePort,
+    req: impl Wire2Api<OpenChannelFeeRequest> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "open_channel_fee",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_req = req.wire2api();
+            move |task_callback| open_channel_fee(api_req)
+        },
     )
 }
 fn wire_fetch_reverse_swap_fees_impl(
@@ -749,7 +780,7 @@ impl Wire2Api<PaymentTypeFilter> for i32 {
         match self {
             0 => PaymentTypeFilter::Sent,
             1 => PaymentTypeFilter::Received,
-            2 => PaymentTypeFilter::All,
+            2 => PaymentTypeFilter::ClosedChannels,
             _ => unreachable!("Invalid variant for PaymentTypeFilter: {}", self),
         }
     }
@@ -865,6 +896,7 @@ impl support::IntoDart for ClosedChannelPaymentDetails {
             self.short_channel_id.into_dart(),
             self.state.into_dart(),
             self.funding_txid.into_dart(),
+            self.closing_txid.into_dart(),
         ]
         .into_dart()
     }
@@ -882,6 +914,7 @@ impl support::IntoDart for Config {
             self.default_lsp_id.into_dart(),
             self.api_key.into_dart(),
             self.maxfee_percent.into_dart(),
+            self.exemptfee_msat.into_dart(),
             self.node_config.into_dart(),
         ]
         .into_dart()
@@ -984,6 +1017,7 @@ impl support::IntoDart for LnPaymentDetails {
             self.lnurl_success_action.into_dart(),
             self.ln_address.into_dart(),
             self.lnurl_metadata.into_dart(),
+            self.lnurl_withdraw_endpoint.into_dart(),
         ]
         .into_dart()
     }
@@ -1059,6 +1093,23 @@ impl support::IntoDart for LnUrlWithdrawRequestData {
     }
 }
 impl support::IntoDartExceptPrimitive for LnUrlWithdrawRequestData {}
+
+impl support::IntoDart for LnUrlWithdrawResult {
+    fn into_dart(self) -> support::DartAbi {
+        match self {
+            Self::Ok { data } => vec![0.into_dart(), data.into_dart()],
+            Self::ErrorStatus { data } => vec![1.into_dart(), data.into_dart()],
+        }
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for LnUrlWithdrawResult {}
+impl support::IntoDart for LnUrlWithdrawSuccessData {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.invoice.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for LnUrlWithdrawSuccessData {}
 
 impl support::IntoDart for LocaleOverrides {
     fn into_dart(self) -> support::DartAbi {
@@ -1156,6 +1207,13 @@ impl support::IntoDart for NodeState {
 }
 impl support::IntoDartExceptPrimitive for NodeState {}
 
+impl support::IntoDart for OpenChannelFeeResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.fee_msat.into_dart(), self.used_fee_params.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for OpenChannelFeeResponse {}
+
 impl support::IntoDart for OpeningFeeParams {
     fn into_dart(self) -> support::DartAbi {
         vec![
@@ -1186,7 +1244,7 @@ impl support::IntoDart for Payment {
             self.payment_time.into_dart(),
             self.amount_msat.into_dart(),
             self.fee_msat.into_dart(),
-            self.pending.into_dart(),
+            self.status.into_dart(),
             self.description.into_dart(),
             self.details.into_dart(),
         ]
@@ -1217,6 +1275,17 @@ impl support::IntoDart for PaymentFailedData {
 }
 impl support::IntoDartExceptPrimitive for PaymentFailedData {}
 
+impl support::IntoDart for PaymentStatus {
+    fn into_dart(self) -> support::DartAbi {
+        match self {
+            Self::Pending => 0,
+            Self::Complete => 1,
+            Self::Failed => 2,
+        }
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for PaymentStatus {}
 impl support::IntoDart for PaymentType {
     fn into_dart(self) -> support::DartAbi {
         match self {
@@ -1228,6 +1297,28 @@ impl support::IntoDart for PaymentType {
     }
 }
 impl support::IntoDartExceptPrimitive for PaymentType {}
+impl support::IntoDart for PrepareRefundResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.refund_tx_weight.into_dart(),
+            self.refund_tx_fee_sat.into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for PrepareRefundResponse {}
+
+impl support::IntoDart for PrepareSweepResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.sweep_tx_weight.into_dart(),
+            self.sweep_tx_fee_sat.into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for PrepareSweepResponse {}
+
 impl support::IntoDart for Rate {
     fn into_dart(self) -> support::DartAbi {
         vec![self.coin.into_dart(), self.value.into_dart()].into_dart()
@@ -1261,11 +1352,20 @@ impl support::IntoDart for RecommendedFees {
 }
 impl support::IntoDartExceptPrimitive for RecommendedFees {}
 
+impl support::IntoDart for RefundResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.refund_tx_id.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for RefundResponse {}
+
 impl support::IntoDart for ReverseSwapInfo {
     fn into_dart(self) -> support::DartAbi {
         vec![
             self.id.into_dart(),
             self.claim_pubkey.into_dart(),
+            self.lockup_txid.into_dart(),
+            self.claim_txid.into_dart(),
             self.onchain_amount_sat.into_dart(),
             self.status.into_dart(),
         ]
@@ -1326,12 +1426,33 @@ impl support::IntoDart for RouteHintHop {
 }
 impl support::IntoDartExceptPrimitive for RouteHintHop {}
 
+impl support::IntoDart for SendOnchainResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.reverse_swap_info.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for SendOnchainResponse {}
+
+impl support::IntoDart for SendPaymentResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.payment.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for SendPaymentResponse {}
+
 impl support::IntoDart for SignMessageResponse {
     fn into_dart(self) -> support::DartAbi {
         vec![self.signature.into_dart()].into_dart()
     }
 }
 impl support::IntoDartExceptPrimitive for SignMessageResponse {}
+
+impl support::IntoDart for StaticBackupResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.backup.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for StaticBackupResponse {}
 
 impl support::IntoDart for SuccessActionProcessed {
     fn into_dart(self) -> support::DartAbi {
@@ -1384,6 +1505,13 @@ impl support::IntoDart for SwapStatus {
     }
 }
 impl support::IntoDartExceptPrimitive for SwapStatus {}
+impl support::IntoDart for SweepResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.txid.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for SweepResponse {}
+
 impl support::IntoDart for Symbol {
     fn into_dart(self) -> support::DartAbi {
         vec![
@@ -1405,7 +1533,6 @@ impl support::IntoDart for UnspentTransactionOutput {
             self.amount_millisatoshi.into_dart(),
             self.address.into_dart(),
             self.reserved.into_dart(),
-            self.reserved_to_block.into_dart(),
         ]
         .into_dart()
     }

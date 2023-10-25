@@ -30,5 +30,6 @@
     <Content Include="runtimes/linux-arm64/native/libbreez_sdk_bindings.so" Link="runtimes/linux-arm64/native/libbreez_sdk_bindings.so" Pack="true" PackagePath="runtimes/linux-arm64/native/libbreez_sdk_bindings.so" />
     <Content Include="runtimes/linux-x64/native/libbreez_sdk_bindings.so" Link="runtimes/linux-x64/native/libbreez_sdk_bindings.so" Pack="true" PackagePath="runtimes/linux-x64/native/libbreez_sdk_bindings.so" />
     <Content Include="runtimes/win-x64/native/breez_sdk_bindings.dll" Link="runtimes/win-x64/native/breez_sdk_bindings.dll" Pack="true" PackagePath="runtimes/win-x64/native/breez_sdk_bindings.dll" />
+    <Content Include="runtimes/win-x86/native/breez_sdk_bindings.dll" Link="runtimes/win-x86/native/breez_sdk_bindings.dll" Pack="true" PackagePath="runtimes/win-x86/native/breez_sdk_bindings.dll" />
   </ItemGroup>  
 </Project>

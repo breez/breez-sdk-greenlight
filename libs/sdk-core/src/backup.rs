@@ -73,6 +73,7 @@ pub(crate) struct BackupWatcher {
     inner: Arc<dyn BackupTransport>,
     persister: Arc<SqliteStorage>,
     encryption_key: Vec<u8>,
+    legacy_encryption_key: Vec<u8>,
     events_notifier: broadcast::Sender<BreezEvent>,
 }
 
@@ -83,6 +84,7 @@ impl BackupWatcher {
         inner: Arc<dyn BackupTransport>,
         persister: Arc<SqliteStorage>,
         encryption_key: Vec<u8>,
+        legacy_encryption_key: Vec<u8>,
     ) -> Self {
         let (events_notifier, _) = broadcast::channel::<BreezEvent>(100);
 
@@ -92,6 +94,7 @@ impl BackupWatcher {
             inner,
             persister,
             encryption_key,
+            legacy_encryption_key,
             events_notifier,
         }
     }
@@ -107,6 +110,7 @@ impl BackupWatcher {
             self.inner.clone(),
             self.persister.clone(),
             self.encryption_key.clone(),
+            self.legacy_encryption_key.clone(),
             self.events_notifier.clone(),
         );
 
@@ -122,18 +126,18 @@ impl BackupWatcher {
                     tokio::select! {
 
                      // We listen to manual backup requests from the user
-                     request = backup_request_receiver.recv() => {
-                      match request {
-                       Some(request) => {
-                        match worker.sync(request.force).await {
+                     req = backup_request_receiver.recv() => {
+                      match req {
+                       Some(req) => {
+                        match worker.sync(req.force).await {
                          Ok(_) => {
-                          if let Some(callback) = request.on_complete {
+                          if let Some(callback) = req.on_complete {
                            _ = callback.send(Ok(())).await;
                           }
                          }
                          Err(e) => {
                           error!("Sync worker returned with error {e}");
-                          if let Some(callback) = request.on_complete {
+                          if let Some(callback) = req.on_complete {
                            _ = callback.send(Err(e)).await;
                           }
                          }
@@ -185,11 +189,11 @@ impl BackupWatcher {
         self.events_notifier.subscribe()
     }
 
-    pub(crate) async fn request_backup(&self, request: BackupRequest) -> Result<()> {
+    pub(crate) async fn request_backup(&self, req: BackupRequest) -> Result<()> {
         let request_handler = self.backup_request_sender.lock().await;
         let h = request_handler.clone();
         h.ok_or_else(|| anyhow!("No backup request handler found"))?
-            .send(request)
+            .send(req)
             .await
             .map_err(|_| anyhow!("Failed to send backup request, the channel is likely closed"))
     }
@@ -202,6 +206,7 @@ struct BackupWorker {
     inner: Arc<dyn BackupTransport>,
     persister: Arc<SqliteStorage>,
     encryption_key: Vec<u8>,
+    legacy_encryption_key: Vec<u8>,
     events_notifier: broadcast::Sender<BreezEvent>,
 }
 
@@ -211,6 +216,7 @@ impl BackupWorker {
         inner: Arc<dyn BackupTransport>,
         persister: Arc<SqliteStorage>,
         encryption_key: Vec<u8>,
+        legacy_encryption_key: Vec<u8>,
         events_notifier: broadcast::Sender<BreezEvent>,
     ) -> Self {
         Self {
@@ -218,6 +224,7 @@ impl BackupWorker {
             inner,
             persister,
             encryption_key,
+            legacy_encryption_key,
             events_notifier,
         }
     }
@@ -381,9 +388,14 @@ impl BackupWorker {
         let state = self.inner.pull().await?;
         match state {
             Some(state) => {
-                let decrypted_data =
-                    aes_decrypt(self.encryption_key.as_slice(), state.data.as_slice())
-                        .ok_or(anyhow!("Failed to decrypt backup"))?;
+                let mut decrypted =
+                    aes_decrypt(self.encryption_key.as_slice(), state.data.as_slice());
+                if decrypted.is_none() {
+                    warn!("Failed to decrypt backup with new key, trying legacy key");
+                    decrypted =
+                        aes_decrypt(self.legacy_encryption_key.as_slice(), state.data.as_slice());
+                }
+                let decrypted_data = decrypted.ok_or(anyhow!("Failed to decrypt backup"))?;
                 match decompress_to_vec_with_limit(&decrypted_data, 4000000) {
                     Ok(decompressed) => Ok(Some(BackupState {
                         generation: state.generation,
@@ -453,7 +465,13 @@ mod tests {
         let persister = Arc::new(create_test_persister(config.clone()));
         persister.init().unwrap();
         let transport = Arc::new(MockBackupTransport::new());
-        let watcher = BackupWatcher::new(config, transport.clone(), persister, vec![0; 32]);
+        let watcher = BackupWatcher::new(
+            config,
+            transport.clone(),
+            persister,
+            vec![0; 32],
+            vec![0; 32],
+        );
         let (quit_sender, receiver) = watch::channel(());
         watcher.start(receiver).await.unwrap();
         tokio::time::sleep(std::time::Duration::from_millis(100)).await;

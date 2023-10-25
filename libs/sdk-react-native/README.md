@@ -10,13 +10,13 @@ The Breez SDK provides the following services:
 
 ## Installation
 
-```console
-$ npm install @breeztech/react-native-breez-sdk
+```bash
+npm install @breeztech/react-native-breez-sdk
 ```
 or
 
-```console
-$ yarn add @breeztech/react-native-breez-sdk
+```bash
+yarn add @breeztech/react-native-breez-sdk
 ```
 
 ### Important fix for React Native versions below 0.71.0
@@ -31,7 +31,7 @@ If your project uses a React Native version less < 0.71.0, and you want to build
 
 To fix this you need to disambiguate which file to use by adding the following snippet to your app's `android/app/build.gradle`:
 
-``` gradle
+```gradle
 android {
     // ...
     packagingOptions {
@@ -55,8 +55,10 @@ Please contact [support@breez.technology](mailto:support@breez.technology?subjec
 ```ts
 import React, { useEffect } from "react"
 import { 
+    BreezEvent,
     defaultConfig,
-    EnvironmentType,    
+    EnvironmentType,   
+    NodeConfigVariant, 
     sendPayment,
     connect 
 } from "@breeztech/react-native-breez-sdk";
@@ -65,6 +67,10 @@ import BuildConfig from "react-native-build-config"
 const App = () => (
     ...
 
+    const onEvent = (breezEvent: BreezEvent) => {
+        console.log(`${JSON.stringify(breezEvent)}`)
+    }
+
     const payInvoice = async (bolt11: string, sats?: number) => {
         // Pay invoice
         const payment = await sendPayment(bolt11, sats)
@@ -72,10 +78,9 @@ const App = () => (
 
     useEffect(() => {
         const asyncFn = async () => {
-            
-            // create the specific node configuration
+            // Create the specific node configuration
             const nodeConfig = {
-                type: "greenlight",
+                type: NodeConfigVariant.GREENLIGHT,
                 config: {
                     partnerCredentials: {
                         deviceKey: null,
@@ -88,7 +93,7 @@ const App = () => (
             const config = await defaultConfig(EnvironmentType.PRODUCTION, BuildConfig.BREEZ_API_KEY, nodeConfig)            
 
              // Connect to the Breez SDK make it ready to use
-            await connect(config, seed)            
+            await connect(config, seed, onEvent)            
         }
 
         asyncFn()
@@ -103,14 +108,14 @@ export default App
 ## Example
 
 In the `example` folder of the [Breez SDK repository](https://github.com/breez/breez-sdk/tree/main/libs/sdk-react-native/example) you will find a basic application for using Breez SDK. Change directory into the folder and install the dependencies:
-```console
-$ yarn
+```bash
+yarn
 ```
 Then to run on android:
-```console
-$ yarn android
+```bash
+yarn android
 ```
 or for iOS:
-```console
-$ yarn pods && yarn ios
+```bash
+yarn pods && yarn ios
 ```

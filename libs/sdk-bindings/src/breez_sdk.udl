@@ -12,10 +12,13 @@ dictionary RouteHintHop {
 enum SdkError {
     "Generic",
     "InitFailed",
+    "NotReady",
     "LspConnectFailed",
     "LspOpenChannelNotSupported",
     "PersistenceFailure",
     "ReceivePaymentFailed",
+    "SendPaymentFailed",
+    "CalculateOpenChannelFeesFailed",
 };
 
 enum EnvironmentType {
@@ -54,6 +57,7 @@ dictionary Config {
     string? default_lsp_id;
     string? api_key;
     f64 maxfee_percent;
+    u64 exemptfee_msat;
     NodeConfig node_config;
 };
 
@@ -80,7 +84,6 @@ dictionary UnspentTransactionOutput {
     u64 amount_millisatoshi;
     string address;
     boolean reserved;
-    u32 reserved_to_block;
 };
 
 dictionary NodeState {
@@ -118,7 +121,13 @@ dictionary CheckMessageResponse {
 enum PaymentTypeFilter {
     "Sent",
     "Received",
-    "All",
+    "ClosedChannels",
+};
+
+enum PaymentStatus {
+    "Pending",
+    "Complete",
+    "Failed",
 };
 
 enum PaymentType {
@@ -133,9 +142,18 @@ dictionary Payment {
     i64 payment_time;    
     u64 amount_msat;
     u64 fee_msat;
-    boolean pending;
+    PaymentStatus status;
     string? description;
     PaymentDetails details;
+};
+
+dictionary ListPaymentsRequest {
+    sequence<PaymentTypeFilter>? filters = null;
+    i64? from_timestamp = null;
+    i64? to_timestamp = null;
+    boolean? include_failures = null;
+    u32? offset = null;
+    u32? limit = null;
 };
 
 [Enum]
@@ -175,12 +193,14 @@ dictionary LnPaymentDetails {
     SuccessActionProcessed? lnurl_success_action;
     string? lnurl_metadata;
     string? ln_address;
+    string? lnurl_withdraw_endpoint;
 };
 
 dictionary ClosedChannelPaymentDetails {
     string short_channel_id;
     ChannelState state;
     string funding_txid;
+    string? closing_txid;
 };
 
 enum ChannelState {
@@ -289,16 +309,16 @@ dictionary OpeningFeeParams {
 };
 
 dictionary ReverseSwapFeesRequest {
-    u64? send_amount_sat;
+    u64? send_amount_sat = null;
 };
 
 dictionary ReceivePaymentRequest {
-    u64 amount_sats;
+    u64 amount_msat;
     string description;
     sequence<u8>? preimage = null;
     OpeningFeeParams? opening_fee_params = null;
     boolean? use_description_hash = null;
-    u64? expiry = null;
+    u32? expiry = null;
     u32? cltv = null;
 };
 
@@ -308,13 +328,21 @@ dictionary ReceivePaymentResponse {
     u64? opening_fee_msat;
 };
 
+dictionary StaticBackupRequest {
+    string working_dir;
+};
+
+dictionary StaticBackupResponse {
+    sequence<string>? backup;
+};
+
 dictionary ReceiveOnchainRequest {
-    OpeningFeeParams? opening_fee_params;
+    OpeningFeeParams? opening_fee_params=null;
 };
 
 dictionary BuyBitcoinRequest {
     BuyBitcoinProvider provider;
-    OpeningFeeParams? opening_fee_params;
+    OpeningFeeParams? opening_fee_params=null;
 };
 
 dictionary BuyBitcoinResponse {
@@ -340,6 +368,16 @@ dictionary LspInformation {
     i64 min_htlc_msat;
     sequence<u8> lsp_pubkey;
     OpeningFeeParamsMenu opening_fee_params_list;
+};
+
+dictionary OpenChannelFeeRequest {
+    u64 amount_msat;
+    u32? expiry = null;
+};
+
+dictionary OpenChannelFeeResponse {
+    u64 fee_msat;
+    OpeningFeeParams? used_fee_params;
 };
 
 enum SwapStatus {
@@ -392,6 +430,8 @@ dictionary ReverseSwapPairInfo {
 dictionary ReverseSwapInfo {
     string id;
     string claim_pubkey;
+    string? lockup_txid;
+    string? claim_txid;
     u64 onchain_amount_sat;
     ReverseSwapStatus status;
 };
@@ -406,6 +446,12 @@ dictionary BitcoinAddressData {
 
 dictionary LnUrlErrorData {
     string reason;
+};
+
+dictionary LnUrlPayRequest {
+    LnUrlPayRequestData data;
+    u64 amount_msat;
+    string? comment;
 };
 
 dictionary LnUrlPayRequestData {
@@ -436,6 +482,22 @@ interface LnUrlPayResult {
 interface LnUrlCallbackStatus {
     Ok();
     ErrorStatus(LnUrlErrorData data);
+};
+
+dictionary LnUrlWithdrawRequest {
+    LnUrlWithdrawRequestData data;
+    u64 amount_msat;
+    string? description = null;
+};
+
+[Enum]
+interface LnUrlWithdrawResult {
+    Ok(LnUrlWithdrawSuccessData data);
+    ErrorStatus(LnUrlErrorData data);
+};
+
+dictionary LnUrlWithdrawSuccessData {
+    LNInvoice invoice;
 };
 
 dictionary LnUrlAuthRequestData {
@@ -474,25 +536,90 @@ enum BuyBitcoinProvider {
     "Moonpay",
 };
 
-interface BlockingBreezServices {   
+dictionary PrepareSweepRequest {
+    string to_address;
+    u64 sats_per_vbyte;
+};
+
+dictionary PrepareSweepResponse {
+    u64 sweep_tx_weight;
+    u64 sweep_tx_fee_sat;
+};
+
+dictionary SweepRequest {
+    string to_address;
+    u32 fee_rate_sats_per_vbyte;
+};
+
+dictionary SweepResponse {
+    sequence<u8> txid;
+};
+
+dictionary SendPaymentRequest {
+    string bolt11;
+    u64? amount_msat;
+};
+
+dictionary SendSpontaneousPaymentRequest {
+    string node_id;
+    u64 amount_msat;
+};
+
+dictionary SendPaymentResponse {
+    Payment payment;
+};
+
+dictionary SendOnchainRequest {
+    u64 amount_sat;
+    string onchain_recipient_address;
+    string pair_hash;
+    u32 sat_per_vbyte;
+};
+
+dictionary SendOnchainResponse {
+    ReverseSwapInfo reverse_swap_info;
+};
+
+dictionary PrepareRefundRequest {
+    string swap_address;
+    string to_address;
+    u32 sat_per_vbyte;
+};
+
+dictionary PrepareRefundResponse {
+    u32 refund_tx_weight;
+    u64 refund_tx_fee_sat;
+};
+
+dictionary RefundRequest {
+    string swap_address;
+    string to_address;
+    u32 sat_per_vbyte;
+};
+
+dictionary RefundResponse {
+    string refund_tx_id;
+};
+
+interface BlockingBreezServices {
 
    [Throws=SdkError]
    void disconnect();
 
    [Throws=SdkError]
-   Payment send_payment(string bolt11, u64? amount_sats);
+   SendPaymentResponse send_payment(SendPaymentRequest req);
 
    [Throws=SdkError]
-   Payment send_spontaneous_payment(string node_id, u64 amount_sats);
+   SendPaymentResponse send_spontaneous_payment(SendSpontaneousPaymentRequest req);
 
    [Throws=SdkError]
-   ReceivePaymentResponse receive_payment(ReceivePaymentRequest req_data);
+   ReceivePaymentResponse receive_payment(ReceivePaymentRequest req);
 
    [Throws=SdkError]
-   LnUrlPayResult pay_lnurl(LnUrlPayRequestData req_data, u64 amount_sats, string? comment);
+   LnUrlPayResult pay_lnurl(LnUrlPayRequest req);
 
    [Throws=SdkError]
-   LnUrlCallbackStatus withdraw_lnurl(LnUrlWithdrawRequestData req_data, u64 amount_sats, string? description);
+   LnUrlWithdrawResult withdraw_lnurl(LnUrlWithdrawRequest request);
 
    [Throws=SdkError]
    LnUrlCallbackStatus lnurl_auth(LnUrlAuthRequestData req_data);
@@ -501,10 +628,10 @@ interface BlockingBreezServices {
    NodeState node_info();
 
    [Throws=SdkError]
-   SignMessageResponse sign_message(SignMessageRequest request);
+   SignMessageResponse sign_message(SignMessageRequest req);
 
    [Throws=SdkError]
-   CheckMessageResponse check_message(CheckMessageRequest request);
+   CheckMessageResponse check_message(CheckMessageRequest req);
 
    [Throws=SdkError]
    BackupStatus backup_status();
@@ -516,10 +643,10 @@ interface BlockingBreezServices {
    Payment? payment_by_hash(string hash);
 
    [Throws=SdkError]
-   sequence<Payment> list_payments(PaymentTypeFilter filter, i64? from_timestamp, i64? to_timestamp);
+   sequence<Payment> list_payments(ListPaymentsRequest req);
 
    [Throws=SdkError]
-   void sweep(string to_address, u64 fee_rate_sats_per_vbyte);
+   SweepResponse sweep(SweepRequest req);
 
    [Throws=SdkError]
    sequence<Rate> fetch_fiat_rates();
@@ -535,6 +662,9 @@ interface BlockingBreezServices {
 
    [Throws=SdkError]
    LspInformation? fetch_lsp_info(string lsp_id);
+
+   [Throws=SdkError]
+   OpenChannelFeeResponse open_channel_fee(OpenChannelFeeRequest req);
 
    [Throws=SdkError]
    string? lsp_id();
@@ -555,7 +685,10 @@ interface BlockingBreezServices {
    sequence<SwapInfo> list_refundables();
 
    [Throws=SdkError]
-   string refund(string swap_address, string to_address, u32 sat_per_vbyte);
+   PrepareRefundResponse prepare_refund(PrepareRefundRequest req);
+
+   [Throws=SdkError]
+   RefundResponse refund(RefundRequest req);
 
    [Throws=SdkError]
    ReverseSwapPairInfo fetch_reverse_swap_fees(ReverseSwapFeesRequest req);
@@ -564,7 +697,7 @@ interface BlockingBreezServices {
    sequence<ReverseSwapInfo> in_progress_reverse_swaps();
 
    [Throws=SdkError]
-   ReverseSwapInfo send_onchain(u64 amount_sat, string onchain_recipient_address, string pair_hash, u64 sat_per_vbyte);
+   SendOnchainResponse send_onchain(SendOnchainRequest req);
 
    [Throws=SdkError]
    string execute_dev_command(string command);
@@ -577,6 +710,9 @@ interface BlockingBreezServices {
 
    [Throws=SdkError]
    BuyBitcoinResponse buy_bitcoin(BuyBitcoinRequest req);
+
+   [Throws=SdkError]
+   PrepareSweepResponse prepare_sweep(PrepareSweepRequest req);
 };
 
 namespace breez_sdk {  
@@ -597,4 +733,7 @@ namespace breez_sdk {
  sequence<u8> mnemonic_to_seed(string phrase);
 
  Config default_config(EnvironmentType env_type, string api_key, NodeConfig node_config);
+
+ [Throws=SdkError]
+ StaticBackupResponse static_backup(StaticBackupRequest req);
 };

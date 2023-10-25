@@ -1,6 +1,6 @@
 name: breez_sdk
 description: A new flutter plugin project.
-version: 0.2.0
+version: 0.2.7
 publish_to: none
 
 environment:
@@ -10,7 +10,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  fimber: ^0.7.0
   ### flutter_rust_bridge_codegen dependencies
   ffi: ^2.0.2
   flutter_rust_bridge: 1.75.2

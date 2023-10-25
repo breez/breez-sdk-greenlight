@@ -44,8 +44,8 @@ impl SqliteStorage {
     }
 
     pub(crate) fn init(&self) -> SdkResult<()> {
-        Self::migrate_sync_db(self.sync_db_file.clone())?;
         self.migrate_main_db()?;
+        Self::migrate_sync_db(self.sync_db_file.clone())?;
         Ok(())
     }
 

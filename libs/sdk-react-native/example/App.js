@@ -9,9 +9,12 @@
 import React, { useState } from "react"
 import { SafeAreaView, ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native"
 import {
-    addEventListener,
-    addLogListener,
+    backup,
+    backupStatus,
+    buyBitcoin,
     BuyBitcoinProvider,
+    checkMessage,
+    connect,
     defaultConfig,
     EnvironmentType,
     fetchFiatRates,
@@ -20,14 +23,12 @@ import {
     lspInfo,
     listFiatCurrencies,
     mnemonicToSeed,
+    NodeConfigVariant,
     nodeInfo,
-    connect,
-    buyBitcoin,
-    backup,
-    backupStatus,
-    signMessage,
-    checkMessage,
+    openChannelFee,
     receivePayment,
+    setLogStream,
+    signMessage
 } from "@breeztech/react-native-breez-sdk"
 import BuildConfig from "react-native-build-config"
 import { generateMnemonic } from "@dreson4/react-native-quick-bip39"
@@ -52,23 +53,23 @@ const App = () => {
 
     const addLine = (title, text) => {
         setLines((lines) => [{ at: new Date().getTime(), title, text }, ...lines])
+        console.log(`${title}${text && text.length > 0 ? ": " + text : ""}`)
     }
 
-    const logHandler = (l) => {
-        if (l.level != "TRACE") {
-            console.log(`[${l.level}]: ${l.line}`)
+    const logHandler = (logEntry) => {
+        if (logEntry.level != "TRACE") {
+            console.log(`[${logEntry.level}]: ${logEntry.line}`)
         }
     }
 
-    const eventHandler = (type, data) => {
-        addLine("event", `${type}${data ? " : " + JSON.stringify(data) : ""}`)
+    const eventHandler = (breezEvent) => {
+        addLine("event", JSON.stringify(breezEvent))
     }
 
     React.useEffect(() => {
         const asyncFn = async () => {
             try {
-                await addLogListener(logHandler)
-                addEventListener(eventHandler)
+                await setLogStream(logHandler)
 
                 let mnemonic = await getSecureItem(MNEMONIC_STORE)
 
@@ -81,14 +82,14 @@ const App = () => {
                 addLine("mnemonicToSeed", obfuscateString(JSON.stringify(seed)))
 
                 const nodeConfig = {
-                    type: "greenlight",
+                    type: NodeConfigVariant.GREENLIGHT,
                     config: {}
                 }
 
                 const config = await defaultConfig(EnvironmentType.PRODUCTION, BuildConfig.BREEZ_API_KEY, nodeConfig)
                 addLine("defaultConfig", JSON.stringify(config))
 
-                await connect(config, seed)
+                await connect(config, seed, eventHandler)
                 addLine("connect", null)
 
                 const nodeState = await nodeInfo()
@@ -125,12 +126,19 @@ const App = () => {
                 })
                 addLine("verifyMessage:", JSON.stringify(verifyMessageResult))
 
+                const openChannelFeeResult = await openChannelFee({
+                    amountMsat: 100000000,
+                    expiry: 3600
+                })
+                addLine("openChannelFee", JSON.stringify(openChannelFeeResult))
+
                 const receivePaymentResult = await receivePayment({
-                    amountSats: 100000,
+                    amountMsat: 100000000,
                     description: "Hello world",
                     expiry: 3600,
                     cltv: 144,
-                    useDescriptionHash: true
+                    useDescriptionHash: true,
+                    openingFeeParams: openChannelFeeResult.usedFeeParams
                 })
                 addLine("receivePayment", JSON.stringify(receivePaymentResult))
 

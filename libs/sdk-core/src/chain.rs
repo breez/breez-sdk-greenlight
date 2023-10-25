@@ -1,3 +1,4 @@
+use crate::input_parser::get_parse_and_log_response;
 use anyhow::Result;
 use bitcoin::hashes::hex::FromHex;
 use bitcoin::{OutPoint, Txid};
@@ -11,6 +12,11 @@ pub trait ChainService: Send + Sync {
     /// See <https://mempool.space/docs/api/rest#get-address-transactions>
     async fn address_transactions(&self, address: String) -> Result<Vec<OnchainTx>>;
     async fn current_tip(&self) -> Result<u32>;
+    /// Gets the spending status of all tx outputs for this tx.
+    ///
+    /// See <https://mempool.space/docs/api/rest#get-transaction-outspends>
+    async fn transaction_outspends(&self, txid: String) -> Result<Vec<Outspend>>;
+    /// If successful, it returns the transaction ID. Otherwise returns an `Err` describing the error.
     async fn broadcast_transaction(&self, tx: Vec<u8>) -> Result<String>;
 }
 
@@ -181,6 +187,18 @@ pub struct Vin {
     pub sequence: u32,
 }
 
+/// Spending status of a transaction output.
+///
+/// If this is an outspend of a confirmed tx, `spent` is true and all other fields are set.
+/// If this is an outspend of an unconfirmed tx, `spent` is false and none of the other fields are set.
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Outspend {
+    pub spent: bool,
+    pub txid: Option<String>,
+    pub vin: Option<u32>,
+    pub status: Option<TxStatus>,
+}
+
 impl Default for MempoolSpace {
     fn default() -> Self {
         MempoolSpace {
@@ -198,34 +216,26 @@ impl MempoolSpace {
 #[tonic::async_trait]
 impl ChainService for MempoolSpace {
     async fn recommended_fees(&self) -> Result<RecommendedFees> {
-        Ok(
-            reqwest::get(format!("{}/api/v1/fees/recommended", self.base_url))
-                .await?
-                .json()
-                .await?,
-        )
+        get_parse_and_log_response(&format!("{}/api/v1/fees/recommended", self.base_url)).await
     }
 
     async fn address_transactions(&self, address: String) -> Result<Vec<OnchainTx>> {
+        get_parse_and_log_response(&format!("{}/api/address/{address}/txs", self.base_url)).await
+    }
+
+    async fn current_tip(&self) -> Result<u32> {
+        get_parse_and_log_response(&format!("{}/api/blocks/tip/height", self.base_url)).await
+    }
+
+    async fn transaction_outspends(&self, txid: String) -> Result<Vec<Outspend>> {
         Ok(
-            reqwest::get(format!("{}/api/address/{}/txs", self.base_url, address))
+            reqwest::get(format!("{}/api/tx/{txid}/outspends", self.base_url))
                 .await?
                 .json()
                 .await?,
         )
     }
 
-    async fn current_tip(&self) -> Result<u32> {
-        Ok(
-            reqwest::get(format!("{}/api/blocks/tip/height", self.base_url))
-                .await?
-                .text()
-                .await?
-                .parse()?,
-        )
-    }
-
-    /// If successful, it returns the transaction ID. Otherwise returns an `Err` describing the error.
     async fn broadcast_transaction(&self, tx: Vec<u8>) -> Result<String> {
         let client = reqwest::Client::new();
         let txid_or_error = client

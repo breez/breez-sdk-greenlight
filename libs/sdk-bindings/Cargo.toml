@@ -15,13 +15,13 @@ crate-type = ["staticlib", "cdylib", "lib"]
 
 [dependencies]
 breez-sdk-core = { path = "../sdk-core" }
-anyhow = { version = "1.0.57", features = ["backtrace"] }
+anyhow = { version = "1.0", features = ["backtrace"] }
 thiserror = "1.0"
 tokio = { version = "1", features = ["full"] }
 uniffi = { version = "0.23.0", features = ["bindgen-tests", "cli"] }
 uniffi_bindgen = "0.23.0"
 uniffi_macros = "0.23.0"
-uniffi-kotlin-multiplatform = { git = "https://gitlab.com/trixnity/uniffi-kotlin-multiplatform-bindings", rev = "f33adbf1e97b3554eb815d5873308e0efc199f63" }
+uniffi-kotlin-multiplatform = { git = "https://gitlab.com/trixnity/uniffi-kotlin-multiplatform-bindings", rev = "bf48c5fcb153856e3055025a3cbfa56fbf213188" }
 camino = "1.1.1"
 lightning-invoice = "*"
 log = "*"
@@ -37,4 +37,4 @@ tonic = { version = "^0.8", features = [
 [build-dependencies]
 uniffi_build = { version = "0.23.0" }
 uniffi_bindgen = "0.23.0"
-anyhow = { version = "1.0.57", features = ["backtrace"] }
+anyhow = { version = "1.0", features = ["backtrace"] }

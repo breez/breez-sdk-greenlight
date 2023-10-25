@@ -23,13 +23,13 @@ pub(crate) enum Commands {
     },
     /// Connect to the sdk services, make it operational
     Connect {
-        /// The optional greenlight device certifiate
-        #[clap(name = "device_cert", short = 'c', long = "device_cert")]
-        device_cert: Option<std::path::PathBuf>,
+        /// The optional file location containing the greenlight partner certificate
+        #[clap(name = "partner_cert", short = 'c', long = "partner_cert")]
+        partner_cert: Option<std::path::PathBuf>,
 
-        /// The optional greenlight device key
-        #[clap(name = "device_key", short = 'k', long = "device_key")]
-        device_key: Option<std::path::PathBuf>,
+        /// The optional file location containing the greenlight partner key
+        #[clap(name = "partner_key", short = 'k', long = "partner_key")]
+        partner_key: Option<std::path::PathBuf>,
 
         /// The optional greenlight invite code
         #[clap(name = "invite_code", short = 'i', long = "invite_code")]
@@ -42,6 +42,9 @@ pub(crate) enum Commands {
     /// Triggers a backup of the local data
     Backup {},
 
+    /// Fetch the static backup data
+    StaticBackup {},
+
     /// Parse a generic string to get its type and relevant metadata
     Parse {
         /// Generic input (URL, LNURL, BIP-21 BTC Address, LN invoice, etc)
@@ -50,12 +53,12 @@ pub(crate) enum Commands {
 
     /// Generate a bolt11 invoice
     ReceivePayment {
-        amount: u64,
+        amount_msat: u64,
         description: String,
         #[clap(name = "use_description_hash", short = 's', long = "desc_hash")]
         use_description_hash: Option<bool>,
         #[clap(name = "expiry", short = 'e', long = "expiry")]
-        expiry: Option<u64>,
+        expiry: Option<u32>,
         #[clap(name = "cltv", short = 'c', long = "cltv")]
         cltv: Option<u32>,
     },
@@ -74,7 +77,7 @@ pub(crate) enum Commands {
         amount_sat: u64,
         onchain_recipient_address: String,
         /// The fee rate for the claim transaction
-        sat_per_vbyte: u64,
+        sat_per_vbyte: u32,
     },
 
     /// Get the current fees for a potential new reverse swap
@@ -90,12 +93,12 @@ pub(crate) enum Commands {
     SendPayment {
         bolt11: String,
 
-        #[clap(name = "amount", short = 'a', long = "amt")]
-        amount: Option<u64>,
+        #[clap(name = "amount_msat", short = 'a', long = "amt")]
+        amount_msat: Option<u64>,
     },
 
     /// Send a spontaneous (keysend) payment
-    SendSpontaneousPayment { node_id: String, amount: u64 },
+    SendSpontaneousPayment { node_id: String, amount_msat: u64 },
 
     /// Sign a message with the node's private key
     SignMessage { message: String },
@@ -108,7 +111,27 @@ pub(crate) enum Commands {
     },
 
     /// List all payments
-    ListPayments {},
+    ListPayments {
+        /// The optional from unix timestamp
+        #[clap(name = "from_timestamp", short = 'f', long = "from")]
+        from_timestamp: Option<i64>,
+
+        /// The optional to unix timestamp
+        #[clap(name = "to_timestamp", short = 't', long = "to")]
+        to_timestamp: Option<i64>,
+
+        /// Include failed payments
+        #[clap(short = 'i', long = "include_failures")]
+        include_failures: bool,
+
+        /// Optional limit of listed payments
+        #[clap(short = 'l', long = "limit")]
+        limit: Option<u32>,
+
+        /// Optional offset in payments
+        #[clap(short = 'o', long = "offset")]
+        offset: Option<u32>,
+    },
 
     /// Retrieve a payment by its hash
     PaymentByHash { hash: String },
@@ -119,7 +142,16 @@ pub(crate) enum Commands {
         to_address: String,
 
         /// The fee rate for the sweep transaction
-        sat_per_vbyte: u64,
+        fee_rate_sats_per_vbyte: u32,
+    },
+
+    /// Calculate the fee (in sats) for a potential transaction
+    PrepareSweep {
+        /// The destination address
+        to_address: String,
+
+        /// The fee rate for the transaction in vbyte/sats
+        sats_per_vbyte: u32,
     },
 
     /// List available LSPs
@@ -129,6 +161,14 @@ pub(crate) enum Commands {
     ConnectLSP {
         /// The lsp id the sdk should connect to
         lsp_id: String,
+    },
+
+    OpenChannelFee {
+        /// The received amount
+        amount_msat: u64,
+
+        /// The expiration of the fee returned
+        expiry: Option<u32>,
     },
 
     /// The up to date node information
@@ -157,6 +197,13 @@ pub(crate) enum Commands {
 
     /// List refundable swap addresses
     ListRefundables {},
+
+    /// Prepare a refund transaction for an incomplete swap
+    PrepareRefund {
+        swap_address: String,
+        to_address: String,
+        sat_per_vbyte: u32,
+    },
 
     /// Broadcast a refund transaction for an incomplete swap
     Refund {

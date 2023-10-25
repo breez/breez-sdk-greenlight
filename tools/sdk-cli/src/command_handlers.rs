@@ -5,17 +5,26 @@ use anyhow::{anyhow, Error, Result};
 use breez_sdk_core::InputType::{LnUrlAuth, LnUrlPay, LnUrlWithdraw};
 use breez_sdk_core::{
     parse, BreezEvent, BreezServices, BuyBitcoinRequest, CheckMessageRequest, EventListener,
-    GreenlightCredentials, PaymentTypeFilter, ReceiveOnchainRequest, ReceivePaymentRequest,
-    ReverseSwapFeesRequest, SignMessageRequest,
+    GreenlightCredentials, ListPaymentsRequest, LnUrlPayRequest, LnUrlWithdrawRequest,
+    PrepareRefundRequest, ReceiveOnchainRequest, ReceivePaymentRequest, RefundRequest,
+    ReverseSwapFeesRequest, SendOnchainRequest, SendPaymentRequest, SendSpontaneousPaymentRequest,
+    SignMessageRequest, StaticBackupRequest, SweepRequest,
 };
 use breez_sdk_core::{Config, GreenlightNodeConfig, NodeConfig};
 use once_cell::sync::OnceCell;
 use qrcode_rs::render::unicode;
 use qrcode_rs::{EcLevel, QrCode};
-use rustyline::Editor;
+use rustyline::history::DefaultHistory;
 
 use crate::persist::CliPersistence;
 use crate::Commands;
+
+use std::borrow::Cow::{self, Owned};
+
+use rustyline::highlight::Highlighter;
+use rustyline::hint::HistoryHinter;
+use rustyline::Editor;
+use rustyline::{Completer, Helper, Hinter, Validator};
 
 static BREEZ_SERVICES: OnceCell<Arc<BreezServices>> = OnceCell::new();
 
@@ -46,8 +55,20 @@ async fn connect(config: Config, seed: &[u8]) -> Result<()> {
     Ok(())
 }
 
+#[derive(Helper, Completer, Hinter, Validator)]
+pub(crate) struct CliHelper {
+    #[rustyline(Hinter)]
+    pub(crate) hinter: HistoryHinter,
+}
+
+impl Highlighter for CliHelper {
+    fn highlight_hint<'h>(&self, hint: &'h str) -> Cow<'h, str> {
+        Owned("\x1b[1m".to_owned() + hint + "\x1b[m")
+    }
+}
+
 pub(crate) async fn handle_command(
-    rl: &mut Editor<()>,
+    rl: &mut Editor<CliHelper, DefaultHistory>,
     persistence: &CliPersistence,
     command: Commands,
 ) -> Result<String, Error> {
@@ -65,17 +86,17 @@ pub(crate) async fn handle_command(
             Ok(format!("Environment was set to {:?}", env))
         }
         Commands::Connect {
-            device_cert,
-            device_key,
+            partner_cert,
+            partner_key,
             invite_code,
         } => {
             let mut config = persistence
                 .get_or_create_config()?
                 .to_sdk_config(&persistence.data_dir);
             let mut partner_credentials: Option<GreenlightCredentials> = None;
-            if device_cert.is_some() && device_key.is_some() {
-                let cert = fs::read(device_cert.unwrap())?;
-                let key = fs::read(device_key.unwrap())?;
+            if partner_cert.is_some() && partner_key.is_some() {
+                let cert = fs::read(partner_cert.unwrap())?;
+                let key = fs::read(partner_key.unwrap())?;
                 partner_credentials = Some(GreenlightCredentials {
                     device_cert: cert,
                     device_key: key,
@@ -94,14 +115,14 @@ pub(crate) async fn handle_command(
         }
         Commands::Sync {} => {
             sdk()?.sync().await?;
-            Ok("Sync finished succesfully".to_string())
+            Ok("Sync finished successfully".to_string())
         }
         Commands::Parse { input } => parse(&input)
             .await
             .map(|res| serde_json::to_string_pretty(&res))?
             .map_err(|e| e.into()),
         Commands::ReceivePayment {
-            amount: amount_sats,
+            amount_msat,
             description,
             use_description_hash,
             expiry,
@@ -109,7 +130,7 @@ pub(crate) async fn handle_command(
         } => {
             let recv_payment_response = sdk()?
                 .receive_payment(ReceivePaymentRequest {
-                    amount_sats,
+                    amount_msat,
                     description,
                     preimage: None,
                     opening_fee_params: None,
@@ -126,7 +147,7 @@ pub(crate) async fn handle_command(
         Commands::SendOnchain {
             amount_sat,
             onchain_recipient_address,
-            sat_per_vbyte: sat_per_byte,
+            sat_per_vbyte,
         } => {
             let pair_info = sdk()?
                 .fetch_reverse_swap_fees(ReverseSwapFeesRequest {
@@ -134,15 +155,16 @@ pub(crate) async fn handle_command(
                 })
                 .await
                 .map_err(|e| anyhow!("Failed to fetch reverse swap fee infos: {e}"))?;
+
             let rev_swap_res = sdk()?
-                .send_onchain(
+                .send_onchain(SendOnchainRequest {
                     amount_sat,
                     onchain_recipient_address,
-                    pair_info.fees_hash,
-                    sat_per_byte,
-                )
+                    pair_hash: pair_info.fees_hash,
+                    sat_per_vbyte,
+                })
                 .await?;
-            serde_json::to_string_pretty(&rev_swap_res).map_err(|e| e.into())
+            serde_json::to_string_pretty(&rev_swap_res.reverse_swap_info).map_err(|e| e.into())
         }
         Commands::FetchOnchainFees { send_amount_sat } => {
             let pair_info = sdk()?
@@ -161,17 +183,46 @@ pub(crate) async fn handle_command(
             }
             serde_json::to_string_pretty(&res).map_err(|e| e.into())
         }
-        Commands::SendPayment { bolt11, amount } => {
-            let payment = sdk()?.send_payment(bolt11, amount).await?;
+        Commands::SendPayment {
+            bolt11,
+            amount_msat,
+        } => {
+            let payment = sdk()?
+                .send_payment(SendPaymentRequest {
+                    bolt11,
+                    amount_msat,
+                })
+                .await?;
             serde_json::to_string_pretty(&payment).map_err(|e| e.into())
         }
-        Commands::SendSpontaneousPayment { node_id, amount } => {
-            let payment = sdk()?.send_spontaneous_payment(node_id, amount).await?;
-            serde_json::to_string_pretty(&payment).map_err(|e| e.into())
+        Commands::SendSpontaneousPayment {
+            node_id,
+            amount_msat,
+        } => {
+            let response = sdk()?
+                .send_spontaneous_payment(SendSpontaneousPaymentRequest {
+                    node_id,
+                    amount_msat,
+                })
+                .await?;
+            serde_json::to_string_pretty(&response.payment).map_err(|e| e.into())
         }
-        Commands::ListPayments {} => {
+        Commands::ListPayments {
+            from_timestamp,
+            to_timestamp,
+            include_failures,
+            limit,
+            offset,
+        } => {
             let payments = sdk()?
-                .list_payments(PaymentTypeFilter::All, None, None)
+                .list_payments(ListPaymentsRequest {
+                    filters: None,
+                    from_timestamp,
+                    to_timestamp,
+                    include_failures: Some(include_failures),
+                    limit,
+                    offset,
+                })
                 .await?;
             serde_json::to_string_pretty(&payments).map_err(|e| e.into())
         }
@@ -181,9 +232,26 @@ pub(crate) async fn handle_command(
         }
         Commands::Sweep {
             to_address,
-            sat_per_vbyte: sat_per_byte,
+            fee_rate_sats_per_vbyte,
         } => {
-            sdk()?.sweep(to_address, sat_per_byte).await?;
+            sdk()?
+                .sweep(SweepRequest {
+                    to_address,
+                    fee_rate_sats_per_vbyte,
+                })
+                .await?;
+            Ok("Onchain funds were swept successfully".to_string())
+        }
+        Commands::PrepareSweep {
+            to_address,
+            sats_per_vbyte,
+        } => {
+            sdk()?
+                .sweep(SweepRequest {
+                    to_address,
+                    fee_rate_sats_per_vbyte: sats_per_vbyte,
+                })
+                .await?;
             Ok("Onchain funds were swept succesfully".to_string())
         }
         Commands::ListLsps {} => {
@@ -192,7 +260,19 @@ pub(crate) async fn handle_command(
         }
         Commands::ConnectLSP { lsp_id } => {
             sdk()?.connect_lsp(lsp_id).await?;
-            Ok("LSP connected succesfully".to_string())
+            Ok("LSP connected successfully".to_string())
+        }
+        Commands::OpenChannelFee {
+            amount_msat,
+            expiry,
+        } => {
+            let res = sdk()?
+                .open_channel_fee(breez_sdk_core::OpenChannelFeeRequest {
+                    amount_msat,
+                    expiry,
+                })
+                .await?;
+            serde_json::to_string_pretty(&res).map_err(|e| e.into())
         }
         Commands::NodeInfo {} => {
             serde_json::to_string_pretty(&sdk()?.node_info()?).map_err(|e| e.into())
@@ -229,15 +309,36 @@ pub(crate) async fn handle_command(
         Commands::ListRefundables {} => {
             serde_json::to_string_pretty(&sdk()?.list_refundables().await?).map_err(|e| e.into())
         }
+        Commands::PrepareRefund {
+            swap_address,
+            to_address,
+            sat_per_vbyte,
+        } => {
+            let res = sdk()?
+                .prepare_refund(PrepareRefundRequest {
+                    swap_address,
+                    to_address,
+                    sat_per_vbyte,
+                })
+                .await?;
+            Ok(format!(
+                "Prepared refund tx - weight: {} - fees: {} sat",
+                res.refund_tx_weight, res.refund_tx_fee_sat
+            ))
+        }
         Commands::Refund {
             swap_address,
             to_address,
             sat_per_vbyte,
         } => {
             let res = sdk()?
-                .refund(swap_address, to_address, sat_per_vbyte)
+                .refund(RefundRequest {
+                    swap_address,
+                    to_address,
+                    sat_per_vbyte,
+                })
                 .await?;
-            Ok(format!("Refund tx: {}", res))
+            Ok(format!("Refund tx: {}", res.refund_tx_id))
         }
         Commands::SignMessage { message } => {
             let req = SignMessageRequest { message };
@@ -260,14 +361,17 @@ pub(crate) async fn handle_command(
         Commands::LnurlPay { lnurl } => match parse(&lnurl).await? {
             LnUrlPay { data: pd } => {
                 let prompt = format!(
-                    "Amount to pay in sats (min {} sat, max {} sat: ",
-                    pd.min_sendable / 1000,
-                    pd.max_sendable / 1000
+                    "Amount to pay in millisatoshi (min {} msat, max {} msat: ",
+                    pd.min_sendable, pd.max_sendable
                 );
 
-                let amount_sat = rl.readline(&prompt)?;
+                let amount_msat = rl.readline(&prompt)?;
                 let pay_res = sdk()?
-                    .lnurl_pay(amount_sat.parse::<u64>()?, None, pd)
+                    .lnurl_pay(LnUrlPayRequest {
+                        data: pd,
+                        amount_msat: amount_msat.parse::<u64>()?,
+                        comment: None,
+                    })
                     .await?;
                 //show_results(pay_res);
                 serde_json::to_string_pretty(&pay_res).map_err(|e| e.into())
@@ -283,29 +387,33 @@ pub(crate) async fn handle_command(
                     // max can receive = min(maxWithdrawable, local estimation of how much can be routed into wallet)
                     // min can receive = max(minWithdrawable, local minimal value allowed by wallet)
                     // However, for simplicity, we just use the LNURL-withdraw min/max bounds
-                    let user_input_max_sat = wd.max_withdrawable / 1000;
-                    let user_input_min_sat = 2001;
+                    let user_input_max_msat = wd.max_withdrawable;
+                    let user_input_min_msat = 2_001_000;
 
-                    if user_input_max_sat < user_input_min_sat {
-                        error!("The LNURLw endpoint needs to accept at least {} sats, but min / max withdrawable are {} sat / {} sat",
-                user_input_min_sat,
-                wd.min_withdrawable / 1000,
-                wd.max_withdrawable / 1000
-            );
+                    if user_input_max_msat < user_input_min_msat {
+                        error!("The LNURLw endpoint needs to accept at least {} msat, but min / max withdrawable are {} msat / {} msat",
+                            user_input_min_msat,
+                            wd.min_withdrawable,
+                            wd.max_withdrawable
+                        );
                         return Ok("".to_string());
                     }
 
                     let prompt = format!(
-                        "Amount to withdraw in sats (min {} sat, max {} sat: ",
-                        user_input_min_sat, user_input_max_sat,
+                        "Amount to withdraw in msat (min {} msat, max {} msat: ",
+                        user_input_min_msat, user_input_max_msat,
                     );
-                    let user_input_withdraw_amount_sat = rl.readline(&prompt)?;
+                    let user_input_withdraw_amount_msat = rl.readline(&prompt)?;
 
-                    let amount_sats: u64 = user_input_withdraw_amount_sat.parse()?;
+                    let amount_msat: u64 = user_input_withdraw_amount_msat.parse()?;
                     let description = "LNURL-withdraw";
 
                     let withdraw_res = sdk()?
-                        .lnurl_withdraw(wd, amount_sats, Some(description.into()))
+                        .lnurl_withdraw(LnUrlWithdrawRequest {
+                            data: wd,
+                            amount_msat,
+                            description: Some(description.into()),
+                        })
                         .await?;
                     serde_json::to_string_pretty(&withdraw_res).map_err(|e| e.into())
                 }
@@ -317,8 +425,6 @@ pub(crate) async fn handle_command(
 
             match parse(lnurl_endpoint).await? {
                 LnUrlAuth { data: ad } => {
-                    println!("received {ad:?}");
-
                     let auth_res = sdk()?.lnurl_auth(ad).await?;
                     serde_json::to_string_pretty(&auth_res).map_err(|e| e.into())
                 }
@@ -341,6 +447,21 @@ pub(crate) async fn handle_command(
         Commands::Backup {} => {
             sdk().unwrap().backup().await?;
             Ok("Backup completed successfully".into())
+        }
+        Commands::StaticBackup {} => {
+            let config = persistence
+                .get_or_create_config()?
+                .to_sdk_config(&persistence.data_dir);
+            let backup_data = BreezServices::static_backup(StaticBackupRequest {
+                working_dir: config.working_dir,
+            })?;
+            match backup_data.backup {
+                Some(backup) => {
+                    let backup_str = serde_json::to_string_pretty(&backup)?;
+                    Ok(format!("Static backup data:\n{}", backup_str))
+                }
+                None => Ok("No static backup data".into()),
+            }
         }
     }
 }

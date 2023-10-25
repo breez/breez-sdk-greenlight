@@ -41,69 +41,91 @@ on:
         default: false
 
 jobs:
+  pre-setup:
+    name: Pre-setup
+    runs-on: ubuntu-latest
+    outputs:
+      # These outputs mimic the inputs for the workflow.
+      # Their only purpose is to be able to test this workflow if you make 
+      # changes that you won't want to commit to main yet.
+      # You can set these values manually, to test how the CI behaves with 
+      # certain inputs.
+      ref: ${{ inputs.ref || github.sha }}
+      csharp-package-version: ${{ inputs.csharp-package-version }}
+      csharp-ref: ${{ inputs.csharp-ref || inputs.ref || github.sha }}
+      golang-package-version: ${{ inputs.golang-package-version }}
+      maven-package-version: ${{ inputs.maven-package-version }}
+      kotlin-mpp-package-version: ${{ inputs.kotlin-mpp-package-version }}
+      flutter-package-version: ${{ inputs.flutter-package-version }}
+      react-native-package-version: ${{ inputs.react-native-package-version }}
+      publish: ${{ inputs.publish }}
+    steps:
+      - run: echo "set pre-setup output variables"
+
   setup:
     name: Setup
+    needs: pre-setup
     runs-on: ubuntu-latest
     outputs: 
       # Careful, a boolean input is not a boolean output. A boolean input is
       # actually a boolean, but these outputs are strings. All the boolean
       # checks in this file have the format `boolean == 'true'`. So feel free
-      # to set these variables here to `true` or `false` (e.g. windows: true)
-      # if you want to test something.
-      windows: ${{ !!inputs.csharp-package-version || !!inputs.golang-package-version }}
-      darwin: ${{ !!inputs.csharp-package-version || !!inputs.golang-package-version }}
-      linux: ${{ !!inputs.csharp-package-version || !!inputs.golang-package-version }}
-      android: ${{ !!inputs.kotlin-mpp-package-version || !!inputs.maven-package-version || !!inputs.flutter-package-version || !!inputs.golang-package-version }}
-      ios: ${{ !!inputs.kotlin-mpp-package-version || !!inputs.maven-package-version }}
-      kotlin: ${{ !!inputs.kotlin-mpp-package-version || !!inputs.maven-package-version }}
+      # to set these variables here to `true` or `false` 
+      # (e.g. bindings-windows: true) if you want to test something.
+      bindings-windows: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version }}
+      bindings-darwin: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version }}
+      bindings-linux: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version }}
+      bindings-android: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version || !!needs.pre-setup.outputs.golang-package-version || !!needs.pre-setup.outputs.flutter-package-version }}
+      bindings-ios: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version }}
+      kotlin: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version }}
       swift: false
       python: false
-      csharp: ${{ !!inputs.csharp-package-version }}
-      golang: ${{ !!inputs.golang-package-version }}
-      maven: ${{ !!inputs.maven-package-version }}
-      kotlin-mpp: ${{ !!inputs.kotlin-mpp-package-version }}
-      flutter: ${{ !!inputs.flutter-package-version }}
-      react-native: ${{ !!inputs.react-native-package-version }}
-      ref: ${{ inputs.ref || github.sha }}
-      csharp-package-version: ${{ inputs.csharp-package-version || '0.0.2' }}
-      csharp-ref: ${{ inputs.csharp-ref || inputs.ref || github.sha }}
-      golang-package-version: ${{ inputs.golang-package-version || '0.0.2' }}
-      maven-package-version: ${{ inputs.maven-package-version || '0.0.2' }}
-      kotlin-mpp-package-version: ${{ inputs.kotlin-mpp-package-version || '0.0.2' }}
-      flutter-package-version: ${{ inputs.flutter-package-version || '0.0.2' }}
-      react-native-package-version: ${{ inputs.react-native-package-version || '0.0.2' }}
-      publish: ${{ inputs.publish }}
+      csharp: ${{ !!needs.pre-setup.outputs.csharp-package-version }}
+      golang: ${{ !!needs.pre-setup.outputs.golang-package-version }}
+      maven: ${{ !!needs.pre-setup.outputs.maven-package-version }}
+      kotlin-mpp: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version }}
+      flutter: ${{ !!needs.pre-setup.outputs.flutter-package-version }}
+      react-native: ${{ !!needs.pre-setup.outputs.react-native-package-version }}
+      ref: ${{ needs.pre-setup.outputs.ref }}
+      csharp-package-version: ${{ needs.pre-setup.outputs.csharp-package-version || '0.0.2' }}
+      csharp-ref: ${{ needs.pre-setup.outputs.csharp-ref }}
+      golang-package-version: ${{ needs.pre-setup.outputs.golang-package-version || '0.0.2' }}
+      maven-package-version: ${{ needs.pre-setup.outputs.maven-package-version || '0.0.2' }}
+      kotlin-mpp-package-version: ${{ needs.pre-setup.outputs.kotlin-mpp-package-version || '0.0.2' }}
+      flutter-package-version: ${{ needs.pre-setup.outputs.flutter-package-version || '0.0.2' }}
+      react-native-package-version: ${{ needs.pre-setup.outputs.react-native-package-version || '0.0.2' }}
+      publish: ${{ needs.pre-setup.outputs.publish }}
     steps:
-      - run: echo "set output variables"
+      - run: echo "set setup output variables"
 
-  build-windows:
+  build-bindings-windows:
     needs: setup
-    if: ${{ needs.setup.outputs.windows == 'true' }}
-    uses: ./.github/workflows/build-windows.yml
+    if: ${{ needs.setup.outputs.bindings-windows == 'true' }}
+    uses: ./.github/workflows/build-bindings-windows.yml
     with:
       ref: ${{ needs.setup.outputs.ref }}
-  build-darwin:
+  build-bindings-darwin:
     needs: setup
-    if: ${{ needs.setup.outputs.darwin == 'true' }}
-    uses: ./.github/workflows/build-darwin.yml
+    if: ${{ needs.setup.outputs.bindings-darwin == 'true' }}
+    uses: ./.github/workflows/build-bindings-darwin.yml
     with:
       ref: ${{ needs.setup.outputs.ref }}
-  build-linux:
+  build-bindings-linux:
     needs: setup
-    if: ${{ needs.setup.outputs.linux == 'true' }}
-    uses: ./.github/workflows/build-linux.yml
+    if: ${{ needs.setup.outputs.bindings-linux == 'true' }}
+    uses: ./.github/workflows/build-bindings-linux.yml
     with:
       ref: ${{ needs.setup.outputs.ref }}
-  build-android:
+  build-bindings-android:
     needs: setup
-    if: ${{ needs.setup.outputs.android == 'true' }}
-    uses: ./.github/workflows/build-android.yml
+    if: ${{ needs.setup.outputs.bindings-android == 'true' }}
+    uses: ./.github/workflows/build-bindings-android.yml
     with:
       ref: ${{ needs.setup.outputs.ref }}
-  build-ios:
+  build-bindings-ios:
     needs: setup
-    if: ${{ needs.setup.outputs.ios == 'true' }}
-    uses: ./.github/workflows/build-ios.yml
+    if: ${{ needs.setup.outputs.bindings-ios == 'true' }}
+    uses: ./.github/workflows/build-bindings-ios.yml
     with:
       ref: ${{ needs.setup.outputs.ref }}
 
@@ -121,9 +143,9 @@ jobs:
   publish-csharp:
     needs: 
       - setup
-      - build-windows
-      - build-darwin
-      - build-linux
+      - build-bindings-windows
+      - build-bindings-darwin
+      - build-bindings-linux
       - build-language-bindings
     if: ${{ needs.setup.outputs.csharp == 'true' }}
     uses: ./.github/workflows/publish-csharp.yml
@@ -137,10 +159,10 @@ jobs:
   publish-golang:
     needs: 
       - setup
-      - build-android
-      - build-windows
-      - build-darwin
-      - build-linux
+      - build-bindings-android
+      - build-bindings-windows
+      - build-bindings-darwin
+      - build-bindings-linux
       - build-language-bindings
     if: ${{ needs.setup.outputs.golang == 'true' }}
     uses: ./.github/workflows/publish-golang.yml
@@ -154,7 +176,7 @@ jobs:
   publish-maven:
     needs: 
       - setup
-      - build-android
+      - build-bindings-android
       - build-language-bindings
     if: ${{ needs.setup.outputs.maven == 'true' }}
     uses: ./.github/workflows/publish-android.yml
@@ -169,8 +191,8 @@ jobs:
   publish-kotlin-mpp:
     needs: 
       - setup
-      - build-android
-      - build-ios
+      - build-bindings-android
+      - build-bindings-ios
       - build-language-bindings
     if: ${{ needs.setup.outputs.kotlin-mpp == 'true' }}
     uses: ./.github/workflows/publish-kotlin-mpp.yml
@@ -185,7 +207,7 @@ jobs:
   publish-flutter:
     needs: 
       - setup
-      - build-android      
+      - build-bindings-android      
     if: ${{ needs.setup.outputs.flutter == 'true' }}
     uses: ./.github/workflows/publish-flutter.yml
     with:
