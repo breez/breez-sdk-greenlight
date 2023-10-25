@@ -715,6 +715,16 @@ class LnUrlErrorData {
   });
 }
 
+class LnUrlPayErrorData {
+  final String paymentHash;
+  final String reason;
+
+  const LnUrlPayErrorData({
+    required this.paymentHash,
+    required this.reason,
+  });
+}
+
 /// Represents a LNURL-pay request.
 class LnUrlPayRequest {
   /// The [LnUrlPayRequestData] returned by [BreezServices::parse_input]
@@ -779,16 +789,24 @@ class LnUrlPayRequestData {
 @freezed
 sealed class LnUrlPayResult with _$LnUrlPayResult {
   const factory LnUrlPayResult.endpointSuccess({
-    required String paymentHash,
-    SuccessActionProcessed? data,
+    required LnUrlSuccessData data,
   }) = LnUrlPayResult_EndpointSuccess;
   const factory LnUrlPayResult.endpointError({
     required LnUrlErrorData data,
   }) = LnUrlPayResult_EndpointError;
   const factory LnUrlPayResult.payError({
-    required String paymentHash,
-    required String reason,
+    required LnUrlPayErrorData data,
   }) = LnUrlPayResult_PayError;
+}
+
+class LnUrlSuccessData {
+  final String paymentHash;
+  final SuccessActionProcessed? data;
+
+  const LnUrlSuccessData({
+    required this.paymentHash,
+    this.data,
+  });
 }
 
 class LnUrlWithdrawRequest {
@@ -2489,8 +2507,16 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return _wire2api_ln_url_error_data(raw);
   }
 
+  LnUrlPayErrorData _wire2api_box_autoadd_ln_url_pay_error_data(dynamic raw) {
+    return _wire2api_ln_url_pay_error_data(raw);
+  }
+
   LnUrlPayRequestData _wire2api_box_autoadd_ln_url_pay_request_data(dynamic raw) {
     return _wire2api_ln_url_pay_request_data(raw);
+  }
+
+  LnUrlSuccessData _wire2api_box_autoadd_ln_url_success_data(dynamic raw) {
+    return _wire2api_ln_url_success_data(raw);
   }
 
   LnUrlWithdrawRequestData _wire2api_box_autoadd_ln_url_withdraw_request_data(dynamic raw) {
@@ -2842,6 +2868,15 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     );
   }
 
+  LnUrlPayErrorData _wire2api_ln_url_pay_error_data(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return LnUrlPayErrorData(
+      paymentHash: _wire2api_String(arr[0]),
+      reason: _wire2api_String(arr[1]),
+    );
+  }
+
   LnUrlPayRequestData _wire2api_ln_url_pay_request_data(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 7) throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
@@ -2860,8 +2895,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     switch (raw[0]) {
       case 0:
         return LnUrlPayResult_EndpointSuccess(
-          paymentHash: _wire2api_String(raw[1]),
-          data: _wire2api_opt_box_autoadd_success_action_processed(raw[2]),
+          data: _wire2api_box_autoadd_ln_url_success_data(raw[1]),
         );
       case 1:
         return LnUrlPayResult_EndpointError(
@@ -2869,12 +2903,20 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         );
       case 2:
         return LnUrlPayResult_PayError(
-          paymentHash: _wire2api_String(raw[1]),
-          reason: _wire2api_String(raw[2]),
+          data: _wire2api_box_autoadd_ln_url_pay_error_data(raw[1]),
         );
       default:
         throw Exception("unreachable");
     }
+  }
+
+  LnUrlSuccessData _wire2api_ln_url_success_data(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return LnUrlSuccessData(
+      paymentHash: _wire2api_String(arr[0]),
+      data: _wire2api_opt_box_autoadd_success_action_processed(arr[1]),
+    );
   }
 
   LnUrlWithdrawRequestData _wire2api_ln_url_withdraw_request_data(dynamic raw) {

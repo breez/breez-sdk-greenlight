@@ -45,7 +45,9 @@ use crate::invoice::LNInvoice;
 use crate::invoice::RouteHint;
 use crate::invoice::RouteHintHop;
 use crate::lnurl::pay::model::AesSuccessActionDataDecrypted;
+use crate::lnurl::pay::model::LnUrlPayErrorData;
 use crate::lnurl::pay::model::LnUrlPayResult;
+use crate::lnurl::pay::model::LnUrlSuccessData;
 use crate::lnurl::pay::model::MessageSuccessActionData;
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lnurl::pay::model::UrlSuccessActionData;
@@ -1196,6 +1198,22 @@ impl rust2dart::IntoIntoDart<LnUrlErrorData> for LnUrlErrorData {
     }
 }
 
+impl support::IntoDart for LnUrlPayErrorData {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.payment_hash.into_into_dart().into_dart(),
+            self.reason.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for LnUrlPayErrorData {}
+impl rust2dart::IntoIntoDart<LnUrlPayErrorData> for LnUrlPayErrorData {
+    fn into_into_dart(self) -> Self {
+        self
+    }
+}
+
 impl support::IntoDart for LnUrlPayRequestData {
     fn into_dart(self) -> support::DartAbi {
         vec![
@@ -1220,26 +1238,33 @@ impl rust2dart::IntoIntoDart<LnUrlPayRequestData> for LnUrlPayRequestData {
 impl support::IntoDart for LnUrlPayResult {
     fn into_dart(self) -> support::DartAbi {
         match self {
-            Self::EndpointSuccess { payment_hash, data } => vec![
-                0.into_dart(),
-                payment_hash.into_into_dart().into_dart(),
-                data.into_dart(),
-            ],
+            Self::EndpointSuccess { data } => {
+                vec![0.into_dart(), data.into_into_dart().into_dart()]
+            }
             Self::EndpointError { data } => vec![1.into_dart(), data.into_into_dart().into_dart()],
-            Self::PayError {
-                payment_hash,
-                reason,
-            } => vec![
-                2.into_dart(),
-                payment_hash.into_into_dart().into_dart(),
-                reason.into_into_dart().into_dart(),
-            ],
+            Self::PayError { data } => vec![2.into_dart(), data.into_into_dart().into_dart()],
         }
         .into_dart()
     }
 }
 impl support::IntoDartExceptPrimitive for LnUrlPayResult {}
 impl rust2dart::IntoIntoDart<LnUrlPayResult> for LnUrlPayResult {
+    fn into_into_dart(self) -> Self {
+        self
+    }
+}
+
+impl support::IntoDart for LnUrlSuccessData {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.payment_hash.into_into_dart().into_dart(),
+            self.data.into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for LnUrlSuccessData {}
+impl rust2dart::IntoIntoDart<LnUrlSuccessData> for LnUrlSuccessData {
     fn into_into_dart(self) -> Self {
         self
     }

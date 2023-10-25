@@ -838,6 +838,40 @@ class BreezSDKMapper {
         return lnUrlErrorDataList.map { v -> [String: Any?] in dictionaryOf(lnUrlErrorData: v) }
     }
 
+    static func asLnUrlPayErrorData(lnUrlPayErrorData: [String: Any?]) throws -> LnUrlPayErrorData {
+        guard let paymentHash = lnUrlPayErrorData["paymentHash"] as? String else { throw SdkError.Generic(message: "Missing mandatory field paymentHash for type LnUrlPayErrorData") }
+        guard let reason = lnUrlPayErrorData["reason"] as? String else { throw SdkError.Generic(message: "Missing mandatory field reason for type LnUrlPayErrorData") }
+
+        return LnUrlPayErrorData(
+            paymentHash: paymentHash,
+            reason: reason
+        )
+    }
+
+    static func dictionaryOf(lnUrlPayErrorData: LnUrlPayErrorData) -> [String: Any?] {
+        return [
+            "paymentHash": lnUrlPayErrorData.paymentHash,
+            "reason": lnUrlPayErrorData.reason,
+        ]
+    }
+
+    static func asLnUrlPayErrorDataList(arr: [Any]) throws -> [LnUrlPayErrorData] {
+        var list = [LnUrlPayErrorData]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var lnUrlPayErrorData = try asLnUrlPayErrorData(lnUrlPayErrorData: val)
+                list.append(lnUrlPayErrorData)
+            } else {
+                throw SdkError.Generic(message: "Unexpected type LnUrlPayErrorData")
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(lnUrlPayErrorDataList: [LnUrlPayErrorData]) -> [Any] {
+        return lnUrlPayErrorDataList.map { v -> [String: Any?] in dictionaryOf(lnUrlPayErrorData: v) }
+    }
+
     static func asLnUrlPayRequest(lnUrlPayRequest: [String: Any?]) throws -> LnUrlPayRequest {
         guard let dataTmp = lnUrlPayRequest["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type LnUrlPayRequest") }
         let data = try asLnUrlPayRequestData(lnUrlPayRequestData: dataTmp)
@@ -924,6 +958,44 @@ class BreezSDKMapper {
 
     static func arrayOf(lnUrlPayRequestDataList: [LnUrlPayRequestData]) -> [Any] {
         return lnUrlPayRequestDataList.map { v -> [String: Any?] in dictionaryOf(lnUrlPayRequestData: v) }
+    }
+
+    static func asLnUrlSuccessData(lnUrlSuccessData: [String: Any?]) throws -> LnUrlSuccessData {
+        var data: SuccessActionProcessed?
+        if let dataTmp = lnUrlSuccessData["data"] as? [String: Any?] {
+            data = try asSuccessActionProcessed(successActionProcessed: dataTmp)
+        }
+
+        guard let paymentHash = lnUrlSuccessData["paymentHash"] as? String else { throw SdkError.Generic(message: "Missing mandatory field paymentHash for type LnUrlSuccessData") }
+
+        return LnUrlSuccessData(
+            data: data,
+            paymentHash: paymentHash
+        )
+    }
+
+    static func dictionaryOf(lnUrlSuccessData: LnUrlSuccessData) -> [String: Any?] {
+        return [
+            "data": lnUrlSuccessData.data == nil ? nil : dictionaryOf(successActionProcessed: lnUrlSuccessData.data!),
+            "paymentHash": lnUrlSuccessData.paymentHash,
+        ]
+    }
+
+    static func asLnUrlSuccessDataList(arr: [Any]) throws -> [LnUrlSuccessData] {
+        var list = [LnUrlSuccessData]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var lnUrlSuccessData = try asLnUrlSuccessData(lnUrlSuccessData: val)
+                list.append(lnUrlSuccessData)
+            } else {
+                throw SdkError.Generic(message: "Unexpected type LnUrlSuccessData")
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(lnUrlSuccessDataList: [LnUrlSuccessData]) -> [Any] {
+        return lnUrlSuccessDataList.map { v -> [String: Any?] in dictionaryOf(lnUrlSuccessData: v) }
     }
 
     static func asLnUrlWithdrawRequest(lnUrlWithdrawRequest: [String: Any?]) throws -> LnUrlWithdrawRequest {
@@ -3244,10 +3316,8 @@ class BreezSDKMapper {
     static func asLnUrlPayResult(lnUrlPayResult: [String: Any?]) throws -> LnUrlPayResult {
         let type = lnUrlPayResult["type"] as! String
         if type == "endpointSuccess" {
-            var _data: SuccessActionProcessed?
-            if let dataTmp = lnUrlPayResult["data"] as? [String: Any?] {
-                _data = try asSuccessActionProcessed(successActionProcessed: dataTmp)
-            }
+            guard let dataTmp = lnUrlPayResult["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type LnUrlPayResult") }
+            let _data = try asLnUrlSuccessData(lnUrlSuccessData: dataTmp)
 
             return LnUrlPayResult.endpointSuccess(data: _data)
         }
@@ -3258,8 +3328,10 @@ class BreezSDKMapper {
             return LnUrlPayResult.endpointError(data: _data)
         }
         if type == "payError" {
-            guard let _paymentHash = lnUrlPayResult["paymentHash"] as? String else { throw SdkError.Generic(message: "Missing mandatory field paymentHash for type LnUrlPayResult") }
-            return LnUrlPayResult.payError(paymentHash: _paymentHash)
+            guard let dataTmp = lnUrlPayResult["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type LnUrlPayResult") }
+            let _data = try asLnUrlPayErrorData(lnUrlPayErrorData: dataTmp)
+
+            return LnUrlPayResult.payError(data: _data)
         }
 
         throw SdkError.Generic(message: "Unexpected type \(type) for enum LnUrlPayResult")
@@ -3268,12 +3340,11 @@ class BreezSDKMapper {
     static func dictionaryOf(lnUrlPayResult: LnUrlPayResult) -> [String: Any?] {
         switch lnUrlPayResult {
         case let .endpointSuccess(
-            data, paymentHash
+            data
         ):
             return [
                 "type": "endpointSuccess",
-                "data": data == nil ? nil : dictionaryOf(successActionProcessed: data!),
-                "paymentHash": paymentHash,
+                "data": dictionaryOf(lnUrlSuccessData: data),
             ]
 
         case let .endpointError(
@@ -3285,12 +3356,11 @@ class BreezSDKMapper {
             ]
 
         case let .payError(
-            paymentHash, reason
+            data
         ):
             return [
                 "type": "payError",
-                "paymentHash": paymentHash,
-                "reason": reason,
+                "data": dictionaryOf(lnUrlPayErrorData: data),
             ]
         }
     }

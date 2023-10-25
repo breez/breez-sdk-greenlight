@@ -320,8 +320,10 @@ impl BreezServices {
                         let invoice = parse_invoice(cb.pr.as_str())?;
 
                         return Ok(LnUrlPayResult::PayError {
-                            payment_hash: invoice.payment_hash,
-                            reason: err,
+                            data: LnUrlPayErrorData {
+                                payment_hash: invoice.payment_hash,
+                                reason: err,
+                            },
                         });
                     }
                     Err(e) => Err(e),
@@ -371,8 +373,10 @@ impl BreezServices {
                 )?;
 
                 Ok(LnUrlPayResult::EndpointSuccess {
-                    payment_hash: details.payment_hash.clone(),
-                    data: maybe_sa_processed,
+                    data: LnUrlSuccessData {
+                        payment_hash: details.payment_hash.clone(),
+                        data: maybe_sa_processed,
+                    },
                 })
             }
         }

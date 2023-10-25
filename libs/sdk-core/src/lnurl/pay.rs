@@ -161,17 +161,21 @@ pub(crate) mod model {
     /// field with the reason.
     #[derive(Debug, Serialize, Deserialize)]
     pub enum LnUrlPayResult {
-        EndpointSuccess {
-            payment_hash: String,
-            data: Option<SuccessActionProcessed>,
-        },
-        EndpointError {
-            data: LnUrlErrorData,
-        },
-        PayError {
-            payment_hash: String,
-            reason: String,
-        },
+        EndpointSuccess { data: LnUrlSuccessData },
+        EndpointError { data: LnUrlErrorData },
+        PayError { data: LnUrlPayErrorData },
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct LnUrlPayErrorData {
+        pub payment_hash: String,
+        pub reason: String,
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct LnUrlSuccessData {
+        pub payment_hash: String,
+        pub data: Option<SuccessActionProcessed>,
     }
 
     #[derive(Deserialize, Debug)]
@@ -853,10 +857,12 @@ mod tests {
             })
             .await?
         {
-            LnUrlPayResult::EndpointSuccess { data: None, .. } => Ok(()),
-            LnUrlPayResult::EndpointSuccess { data: Some(_), .. } => {
-                Err(anyhow!("Unexpected success action"))
-            }
+            LnUrlPayResult::EndpointSuccess {
+                data: LnUrlSuccessData { data: None, .. },
+            } => Ok(()),
+            LnUrlPayResult::EndpointSuccess {
+                data: LnUrlSuccessData { data: Some(_), .. },
+            } => Err(anyhow!("Unexpected success action")),
             _ => Err(anyhow!("Unexpected success action type")),
         }
     }
@@ -915,10 +921,7 @@ mod tests {
             })
             .await?
         {
-            LnUrlPayResult::EndpointSuccess {
-                data: _,
-                payment_hash,
-            } => match payment_hash {
+            LnUrlPayResult::EndpointSuccess { data } => match data.payment_hash {
                 s if s == inv.payment_hash().to_hex() => Ok(()),
                 _ => Err(anyhow!("Unexpected payment hash")),
             },
@@ -950,12 +953,17 @@ mod tests {
             })
             .await?
         {
-            LnUrlPayResult::EndpointSuccess { data: None, .. } => Err(anyhow!(
+            LnUrlPayResult::EndpointSuccess {
+                data: LnUrlSuccessData { data: None, .. },
+            } => Err(anyhow!(
                 "Expected success action in callback, but none provided"
             )),
             LnUrlPayResult::EndpointSuccess {
-                data: Some(SuccessActionProcessed::Message { data: msg }),
-                ..
+                data:
+                    LnUrlSuccessData {
+                        data: Some(SuccessActionProcessed::Message { data: msg }),
+                        ..
+                    },
             } => match msg.message {
                 s if s == "test msg" => Ok(()),
                 _ => Err(anyhow!("Unexpected success action message content")),
@@ -1054,8 +1062,11 @@ mod tests {
             .await?
         {
             LnUrlPayResult::EndpointSuccess {
-                data: Some(SuccessActionProcessed::Url { data: url }),
-                ..
+                data:
+                    LnUrlSuccessData {
+                        data: Some(SuccessActionProcessed::Url { data: url }),
+                        ..
+                    },
             } => {
                 if url.url == "https://localhost/test-url" && url.description == "test description"
                 {
@@ -1064,7 +1075,9 @@ mod tests {
                     Err(anyhow!("Unexpected success action content"))
                 }
             }
-            LnUrlPayResult::EndpointSuccess { data: None, .. } => Err(anyhow!(
+            LnUrlPayResult::EndpointSuccess {
+                data: LnUrlSuccessData { data: None, .. },
+            } => Err(anyhow!(
                 "Expected success action in callback, but none provided"
             )),
             _ => Err(anyhow!("Unexpected success action type")),
@@ -1127,15 +1140,20 @@ mod tests {
             .await?
         {
             LnUrlPayResult::EndpointSuccess {
-                data: Some(received_sa),
-                ..
+                data:
+                    LnUrlSuccessData {
+                        data: Some(received_sa),
+                        ..
+                    },
             } => match received_sa == sa {
                 true => Ok(()),
                 false => Err(anyhow!(
                     "Decrypted payload and description doesn't match expected success action"
                 )),
             },
-            LnUrlPayResult::EndpointSuccess { data: None, .. } => Err(anyhow!(
+            LnUrlPayResult::EndpointSuccess {
+                data: LnUrlSuccessData { data: None, .. },
+            } => Err(anyhow!(
                 "Expected success action in callback, but none provided"
             )),
             _ => Err(anyhow!("Unexpected success action type")),

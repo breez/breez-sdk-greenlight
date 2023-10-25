@@ -3107,25 +3107,26 @@ abstract class LnUrlCallbackStatus_ErrorStatus implements LnUrlCallbackStatus {
 
 /// @nodoc
 mixin _$LnUrlPayResult {
+  Object get data => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function(String paymentHash, SuccessActionProcessed? data) endpointSuccess,
+    required TResult Function(LnUrlSuccessData data) endpointSuccess,
     required TResult Function(LnUrlErrorData data) endpointError,
-    required TResult Function(String paymentHash, String reason) payError,
+    required TResult Function(LnUrlPayErrorData data) payError,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(String paymentHash, SuccessActionProcessed? data)? endpointSuccess,
+    TResult? Function(LnUrlSuccessData data)? endpointSuccess,
     TResult? Function(LnUrlErrorData data)? endpointError,
-    TResult? Function(String paymentHash, String reason)? payError,
+    TResult? Function(LnUrlPayErrorData data)? payError,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(String paymentHash, SuccessActionProcessed? data)? endpointSuccess,
+    TResult Function(LnUrlSuccessData data)? endpointSuccess,
     TResult Function(LnUrlErrorData data)? endpointError,
-    TResult Function(String paymentHash, String reason)? payError,
+    TResult Function(LnUrlPayErrorData data)? payError,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -3176,9 +3177,7 @@ abstract class _$$LnUrlPayResult_EndpointSuccessImplCopyWith<$Res> {
           $Res Function(_$LnUrlPayResult_EndpointSuccessImpl) then) =
       __$$LnUrlPayResult_EndpointSuccessImplCopyWithImpl<$Res>;
   @useResult
-  $Res call({String paymentHash, SuccessActionProcessed? data});
-
-  $SuccessActionProcessedCopyWith<$Res>? get data;
+  $Res call({LnUrlSuccessData data});
 }
 
 /// @nodoc
@@ -3192,47 +3191,28 @@ class __$$LnUrlPayResult_EndpointSuccessImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? paymentHash = null,
-    Object? data = freezed,
+    Object? data = null,
   }) {
     return _then(_$LnUrlPayResult_EndpointSuccessImpl(
-      paymentHash: null == paymentHash
-          ? _value.paymentHash
-          : paymentHash // ignore: cast_nullable_to_non_nullable
-              as String,
-      data: freezed == data
+      data: null == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
-              as SuccessActionProcessed?,
+              as LnUrlSuccessData,
     ));
-  }
-
-  @override
-  @pragma('vm:prefer-inline')
-  $SuccessActionProcessedCopyWith<$Res>? get data {
-    if (_value.data == null) {
-      return null;
-    }
-
-    return $SuccessActionProcessedCopyWith<$Res>(_value.data!, (value) {
-      return _then(_value.copyWith(data: value));
-    });
   }
 }
 
 /// @nodoc
 
 class _$LnUrlPayResult_EndpointSuccessImpl implements LnUrlPayResult_EndpointSuccess {
-  const _$LnUrlPayResult_EndpointSuccessImpl({required this.paymentHash, this.data});
+  const _$LnUrlPayResult_EndpointSuccessImpl({required this.data});
 
   @override
-  final String paymentHash;
-  @override
-  final SuccessActionProcessed? data;
+  final LnUrlSuccessData data;
 
   @override
   String toString() {
-    return 'LnUrlPayResult.endpointSuccess(paymentHash: $paymentHash, data: $data)';
+    return 'LnUrlPayResult.endpointSuccess(data: $data)';
   }
 
   @override
@@ -3240,12 +3220,11 @@ class _$LnUrlPayResult_EndpointSuccessImpl implements LnUrlPayResult_EndpointSuc
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$LnUrlPayResult_EndpointSuccessImpl &&
-            (identical(other.paymentHash, paymentHash) || other.paymentHash == paymentHash) &&
             (identical(other.data, data) || other.data == data));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, paymentHash, data);
+  int get hashCode => Object.hash(runtimeType, data);
 
   @JsonKey(ignore: true)
   @override
@@ -3257,33 +3236,33 @@ class _$LnUrlPayResult_EndpointSuccessImpl implements LnUrlPayResult_EndpointSuc
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function(String paymentHash, SuccessActionProcessed? data) endpointSuccess,
+    required TResult Function(LnUrlSuccessData data) endpointSuccess,
     required TResult Function(LnUrlErrorData data) endpointError,
-    required TResult Function(String paymentHash, String reason) payError,
+    required TResult Function(LnUrlPayErrorData data) payError,
   }) {
-    return endpointSuccess(paymentHash, data);
+    return endpointSuccess(data);
   }
 
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(String paymentHash, SuccessActionProcessed? data)? endpointSuccess,
+    TResult? Function(LnUrlSuccessData data)? endpointSuccess,
     TResult? Function(LnUrlErrorData data)? endpointError,
-    TResult? Function(String paymentHash, String reason)? payError,
+    TResult? Function(LnUrlPayErrorData data)? payError,
   }) {
-    return endpointSuccess?.call(paymentHash, data);
+    return endpointSuccess?.call(data);
   }
 
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(String paymentHash, SuccessActionProcessed? data)? endpointSuccess,
+    TResult Function(LnUrlSuccessData data)? endpointSuccess,
     TResult Function(LnUrlErrorData data)? endpointError,
-    TResult Function(String paymentHash, String reason)? payError,
+    TResult Function(LnUrlPayErrorData data)? payError,
     required TResult orElse(),
   }) {
     if (endpointSuccess != null) {
-      return endpointSuccess(paymentHash, data);
+      return endpointSuccess(data);
     }
     return orElse();
   }
@@ -3324,12 +3303,11 @@ class _$LnUrlPayResult_EndpointSuccessImpl implements LnUrlPayResult_EndpointSuc
 }
 
 abstract class LnUrlPayResult_EndpointSuccess implements LnUrlPayResult {
-  const factory LnUrlPayResult_EndpointSuccess(
-      {required final String paymentHash,
-      final SuccessActionProcessed? data}) = _$LnUrlPayResult_EndpointSuccessImpl;
+  const factory LnUrlPayResult_EndpointSuccess({required final LnUrlSuccessData data}) =
+      _$LnUrlPayResult_EndpointSuccessImpl;
 
-  String get paymentHash;
-  SuccessActionProcessed? get data;
+  @override
+  LnUrlSuccessData get data;
   @JsonKey(ignore: true)
   _$$LnUrlPayResult_EndpointSuccessImplCopyWith<_$LnUrlPayResult_EndpointSuccessImpl> get copyWith =>
       throw _privateConstructorUsedError;
@@ -3399,9 +3377,9 @@ class _$LnUrlPayResult_EndpointErrorImpl implements LnUrlPayResult_EndpointError
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function(String paymentHash, SuccessActionProcessed? data) endpointSuccess,
+    required TResult Function(LnUrlSuccessData data) endpointSuccess,
     required TResult Function(LnUrlErrorData data) endpointError,
-    required TResult Function(String paymentHash, String reason) payError,
+    required TResult Function(LnUrlPayErrorData data) payError,
   }) {
     return endpointError(data);
   }
@@ -3409,9 +3387,9 @@ class _$LnUrlPayResult_EndpointErrorImpl implements LnUrlPayResult_EndpointError
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(String paymentHash, SuccessActionProcessed? data)? endpointSuccess,
+    TResult? Function(LnUrlSuccessData data)? endpointSuccess,
     TResult? Function(LnUrlErrorData data)? endpointError,
-    TResult? Function(String paymentHash, String reason)? payError,
+    TResult? Function(LnUrlPayErrorData data)? payError,
   }) {
     return endpointError?.call(data);
   }
@@ -3419,9 +3397,9 @@ class _$LnUrlPayResult_EndpointErrorImpl implements LnUrlPayResult_EndpointError
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(String paymentHash, SuccessActionProcessed? data)? endpointSuccess,
+    TResult Function(LnUrlSuccessData data)? endpointSuccess,
     TResult Function(LnUrlErrorData data)? endpointError,
-    TResult Function(String paymentHash, String reason)? payError,
+    TResult Function(LnUrlPayErrorData data)? payError,
     required TResult orElse(),
   }) {
     if (endpointError != null) {
@@ -3469,6 +3447,7 @@ abstract class LnUrlPayResult_EndpointError implements LnUrlPayResult {
   const factory LnUrlPayResult_EndpointError({required final LnUrlErrorData data}) =
       _$LnUrlPayResult_EndpointErrorImpl;
 
+  @override
   LnUrlErrorData get data;
   @JsonKey(ignore: true)
   _$$LnUrlPayResult_EndpointErrorImplCopyWith<_$LnUrlPayResult_EndpointErrorImpl> get copyWith =>
@@ -3481,7 +3460,7 @@ abstract class _$$LnUrlPayResult_PayErrorImplCopyWith<$Res> {
           _$LnUrlPayResult_PayErrorImpl value, $Res Function(_$LnUrlPayResult_PayErrorImpl) then) =
       __$$LnUrlPayResult_PayErrorImplCopyWithImpl<$Res>;
   @useResult
-  $Res call({String paymentHash, String reason});
+  $Res call({LnUrlPayErrorData data});
 }
 
 /// @nodoc
@@ -3495,18 +3474,13 @@ class __$$LnUrlPayResult_PayErrorImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? paymentHash = null,
-    Object? reason = null,
+    Object? data = null,
   }) {
     return _then(_$LnUrlPayResult_PayErrorImpl(
-      paymentHash: null == paymentHash
-          ? _value.paymentHash
-          : paymentHash // ignore: cast_nullable_to_non_nullable
-              as String,
-      reason: null == reason
-          ? _value.reason
-          : reason // ignore: cast_nullable_to_non_nullable
-              as String,
+      data: null == data
+          ? _value.data
+          : data // ignore: cast_nullable_to_non_nullable
+              as LnUrlPayErrorData,
     ));
   }
 }
@@ -3514,16 +3488,14 @@ class __$$LnUrlPayResult_PayErrorImplCopyWithImpl<$Res>
 /// @nodoc
 
 class _$LnUrlPayResult_PayErrorImpl implements LnUrlPayResult_PayError {
-  const _$LnUrlPayResult_PayErrorImpl({required this.paymentHash, required this.reason});
+  const _$LnUrlPayResult_PayErrorImpl({required this.data});
 
   @override
-  final String paymentHash;
-  @override
-  final String reason;
+  final LnUrlPayErrorData data;
 
   @override
   String toString() {
-    return 'LnUrlPayResult.payError(paymentHash: $paymentHash, reason: $reason)';
+    return 'LnUrlPayResult.payError(data: $data)';
   }
 
   @override
@@ -3531,12 +3503,11 @@ class _$LnUrlPayResult_PayErrorImpl implements LnUrlPayResult_PayError {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$LnUrlPayResult_PayErrorImpl &&
-            (identical(other.paymentHash, paymentHash) || other.paymentHash == paymentHash) &&
-            (identical(other.reason, reason) || other.reason == reason));
+            (identical(other.data, data) || other.data == data));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, paymentHash, reason);
+  int get hashCode => Object.hash(runtimeType, data);
 
   @JsonKey(ignore: true)
   @override
@@ -3547,33 +3518,33 @@ class _$LnUrlPayResult_PayErrorImpl implements LnUrlPayResult_PayError {
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function(String paymentHash, SuccessActionProcessed? data) endpointSuccess,
+    required TResult Function(LnUrlSuccessData data) endpointSuccess,
     required TResult Function(LnUrlErrorData data) endpointError,
-    required TResult Function(String paymentHash, String reason) payError,
+    required TResult Function(LnUrlPayErrorData data) payError,
   }) {
-    return payError(paymentHash, reason);
+    return payError(data);
   }
 
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(String paymentHash, SuccessActionProcessed? data)? endpointSuccess,
+    TResult? Function(LnUrlSuccessData data)? endpointSuccess,
     TResult? Function(LnUrlErrorData data)? endpointError,
-    TResult? Function(String paymentHash, String reason)? payError,
+    TResult? Function(LnUrlPayErrorData data)? payError,
   }) {
-    return payError?.call(paymentHash, reason);
+    return payError?.call(data);
   }
 
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(String paymentHash, SuccessActionProcessed? data)? endpointSuccess,
+    TResult Function(LnUrlSuccessData data)? endpointSuccess,
     TResult Function(LnUrlErrorData data)? endpointError,
-    TResult Function(String paymentHash, String reason)? payError,
+    TResult Function(LnUrlPayErrorData data)? payError,
     required TResult orElse(),
   }) {
     if (payError != null) {
-      return payError(paymentHash, reason);
+      return payError(data);
     }
     return orElse();
   }
@@ -3614,11 +3585,11 @@ class _$LnUrlPayResult_PayErrorImpl implements LnUrlPayResult_PayError {
 }
 
 abstract class LnUrlPayResult_PayError implements LnUrlPayResult {
-  const factory LnUrlPayResult_PayError({required final String paymentHash, required final String reason}) =
+  const factory LnUrlPayResult_PayError({required final LnUrlPayErrorData data}) =
       _$LnUrlPayResult_PayErrorImpl;
 
-  String get paymentHash;
-  String get reason;
+  @override
+  LnUrlPayErrorData get data;
   @JsonKey(ignore: true)
   _$$LnUrlPayResult_PayErrorImplCopyWith<_$LnUrlPayResult_PayErrorImpl> get copyWith =>
       throw _privateConstructorUsedError;
