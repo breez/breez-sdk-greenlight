@@ -32,12 +32,12 @@ use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
     EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus, LnUrlPayRequest,
     LnUrlWithdrawRequest, LnUrlWithdrawResult, NodeConfig, OpenChannelFeeRequest,
-    OpenChannelFeeResponse, PrepareSweepRequest, PrepareSweepResponse, ReceiveOnchainRequest,
-    ReceivePaymentRequest, ReceivePaymentResponse, RefundRequest, RefundResponse,
-    ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo, SendOnchainRequest,
-    SendOnchainResponse, SendPaymentRequest, SendPaymentResponse, SendSpontaneousPaymentRequest,
-    SignMessageRequest, SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
-    SweepRequest, SweepResponse,
+    OpenChannelFeeResponse, PrepareRefundRequest, PrepareRefundResponse, PrepareSweepRequest,
+    PrepareSweepResponse, ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse,
+    RefundRequest, RefundResponse, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
+    SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
+    SendSpontaneousPaymentRequest, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
+    StaticBackupResponse, SweepRequest, SweepResponse,
 };
 
 /*
@@ -312,6 +312,11 @@ pub fn prepare_sweep(req: PrepareSweepRequest) -> Result<PrepareSweepResponse> {
 /// See [BreezServices::list_refundables]
 pub fn list_refundables() -> Result<Vec<SwapInfo>> {
     block_on(async { get_breez_services().await?.list_refundables().await })
+}
+
+/// See [BreezServices::prepare_refund]
+pub fn prepare_refund(req: PrepareRefundRequest) -> Result<PrepareRefundResponse> {
+    block_on(async { get_breez_services().await?.prepare_refund(req).await })
 }
 
 /// See [BreezServices::refund]

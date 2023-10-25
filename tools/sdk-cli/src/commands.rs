@@ -198,6 +198,13 @@ pub(crate) enum Commands {
     /// List refundable swap addresses
     ListRefundables {},
 
+    /// Prepare a refund transaction for an incomplete swap
+    PrepareRefund {
+        swap_address: String,
+        to_address: String,
+        sat_per_vbyte: u32,
+    },
+
     /// Broadcast a refund transaction for an incomplete swap
     Refund {
         swap_address: String,

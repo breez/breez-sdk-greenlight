@@ -842,10 +842,21 @@ pub struct SendOnchainResponse {
     pub reverse_swap_info: ReverseSwapInfo,
 }
 
+pub struct PrepareRefundRequest {
+    pub swap_address: String,
+    pub to_address: String,
+    pub sat_per_vbyte: u32,
+}
+
 pub struct RefundRequest {
     pub swap_address: String,
     pub to_address: String,
     pub sat_per_vbyte: u32,
+}
+
+pub struct PrepareRefundResponse {
+    pub refund_tx_weight: u32,
+    pub refund_tx_fee_sat: u64,
 }
 
 pub struct RefundResponse {

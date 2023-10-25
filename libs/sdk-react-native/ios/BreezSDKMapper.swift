@@ -1585,6 +1585,77 @@ class BreezSDKMapper {
         return paymentFailedDataList.map { v -> [String: Any?] in dictionaryOf(paymentFailedData: v) }
     }
 
+    static func asPrepareRefundRequest(prepareRefundRequest: [String: Any?]) throws -> PrepareRefundRequest {
+        guard let swapAddress = prepareRefundRequest["swapAddress"] as? String else { throw SdkError.Generic(message: "Missing mandatory field swapAddress for type PrepareRefundRequest") }
+        guard let toAddress = prepareRefundRequest["toAddress"] as? String else { throw SdkError.Generic(message: "Missing mandatory field toAddress for type PrepareRefundRequest") }
+        guard let satPerVbyte = prepareRefundRequest["satPerVbyte"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field satPerVbyte for type PrepareRefundRequest") }
+
+        return PrepareRefundRequest(
+            swapAddress: swapAddress,
+            toAddress: toAddress,
+            satPerVbyte: satPerVbyte
+        )
+    }
+
+    static func dictionaryOf(prepareRefundRequest: PrepareRefundRequest) -> [String: Any?] {
+        return [
+            "swapAddress": prepareRefundRequest.swapAddress,
+            "toAddress": prepareRefundRequest.toAddress,
+            "satPerVbyte": prepareRefundRequest.satPerVbyte,
+        ]
+    }
+
+    static func asPrepareRefundRequestList(arr: [Any]) throws -> [PrepareRefundRequest] {
+        var list = [PrepareRefundRequest]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var prepareRefundRequest = try asPrepareRefundRequest(prepareRefundRequest: val)
+                list.append(prepareRefundRequest)
+            } else {
+                throw SdkError.Generic(message: "Invalid element type PrepareRefundRequest")
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(prepareRefundRequestList: [PrepareRefundRequest]) -> [Any] {
+        return prepareRefundRequestList.map { v -> [String: Any?] in dictionaryOf(prepareRefundRequest: v) }
+    }
+
+    static func asPrepareRefundResponse(prepareRefundResponse: [String: Any?]) throws -> PrepareRefundResponse {
+        guard let refundTxWeight = prepareRefundResponse["refundTxWeight"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field refundTxWeight for type PrepareRefundResponse") }
+        guard let refundTxFeeSat = prepareRefundResponse["refundTxFeeSat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field refundTxFeeSat for type PrepareRefundResponse") }
+
+        return PrepareRefundResponse(
+            refundTxWeight: refundTxWeight,
+            refundTxFeeSat: refundTxFeeSat
+        )
+    }
+
+    static func dictionaryOf(prepareRefundResponse: PrepareRefundResponse) -> [String: Any?] {
+        return [
+            "refundTxWeight": prepareRefundResponse.refundTxWeight,
+            "refundTxFeeSat": prepareRefundResponse.refundTxFeeSat,
+        ]
+    }
+
+    static func asPrepareRefundResponseList(arr: [Any]) throws -> [PrepareRefundResponse] {
+        var list = [PrepareRefundResponse]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var prepareRefundResponse = try asPrepareRefundResponse(prepareRefundResponse: val)
+                list.append(prepareRefundResponse)
+            } else {
+                throw SdkError.Generic(message: "Invalid element type PrepareRefundResponse")
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(prepareRefundResponseList: [PrepareRefundResponse]) -> [Any] {
+        return prepareRefundResponseList.map { v -> [String: Any?] in dictionaryOf(prepareRefundResponse: v) }
+    }
+
     static func asPrepareSweepRequest(prepareSweepRequest: [String: Any?]) throws -> PrepareSweepRequest {
         guard let toAddress = prepareSweepRequest["toAddress"] as? String else { throw SdkError.Generic(message: "Missing mandatory field toAddress for type PrepareSweepRequest") }
         guard let satsPerVbyte = prepareSweepRequest["satsPerVbyte"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field satsPerVbyte for type PrepareSweepRequest") }

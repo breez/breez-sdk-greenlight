@@ -286,6 +286,17 @@ export type PaymentFailedData = {
     invoice?: LnInvoice
 }
 
+export type PrepareRefundRequest = {
+    swapAddress: string
+    toAddress: string
+    satPerVbyte: number
+}
+
+export type PrepareRefundResponse = {
+    refundTxWeight: number
+    refundTxFeeSat: number
+}
+
 export type PrepareSweepRequest = {
     toAddress: string
     satsPerVbyte: number
@@ -851,6 +862,11 @@ export const inProgressSwap = async (): Promise<SwapInfo | null> => {
 
 export const listRefundables = async (): Promise<SwapInfo[]> => {
     const response = await BreezSDK.listRefundables()
+    return response
+}
+
+export const prepareRefund = async (req: PrepareRefundRequest): Promise<PrepareRefundResponse> => {
+    const response = await BreezSDK.prepareRefund(req)
     return response
 }
 

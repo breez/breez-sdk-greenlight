@@ -580,6 +580,17 @@ dictionary SendOnchainResponse {
     ReverseSwapInfo reverse_swap_info;
 };
 
+dictionary PrepareRefundRequest {
+    string swap_address;
+    string to_address;
+    u32 sat_per_vbyte;
+};
+
+dictionary PrepareRefundResponse {
+    u32 refund_tx_weight;
+    u64 refund_tx_fee_sat;
+};
+
 dictionary RefundRequest {
     string swap_address;
     string to_address;
@@ -672,6 +683,9 @@ interface BlockingBreezServices {
 
    [Throws=SdkError]
    sequence<SwapInfo> list_refundables();
+
+   [Throws=SdkError]
+   PrepareRefundResponse prepare_refund(PrepareRefundRequest req);
 
    [Throws=SdkError]
    RefundResponse refund(RefundRequest req);
