@@ -38,7 +38,7 @@ pub const SWAP_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60 * 24 * 2; // 2 days
 pub const INVOICE_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60; // 60 minutes
 
 /// Different types of supported payments
-#[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize, Hash)]
 pub enum PaymentType {
     Sent,
     Received,
@@ -576,10 +576,11 @@ impl From<Network> for bitcoin::network::constants::Network {
 }
 
 /// Different types of supported filters which can be applied when retrieving the transaction list
+#[derive(PartialEq)]
 pub enum PaymentTypeFilter {
     Sent,
     Received,
-    All,
+    ClosedChannels,
 }
 
 /// Different types of supported feerates
@@ -656,7 +657,7 @@ pub struct Payment {
 
 /// Represents a list payments request.
 pub struct ListPaymentsRequest {
-    pub filter: PaymentTypeFilter,
+    pub filters: Option<Vec<PaymentTypeFilter>>,
     pub from_timestamp: Option<i64>,
     pub to_timestamp: Option<i64>,
     pub include_failures: Option<bool>,

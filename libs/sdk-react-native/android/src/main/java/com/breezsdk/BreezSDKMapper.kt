@@ -726,14 +726,19 @@ fun asLnInvoiceList(arr: ReadableArray): List<LnInvoice> {
 fun asListPaymentsRequest(listPaymentsRequest: ReadableMap): ListPaymentsRequest? {
     if (!validateMandatoryFields(
             listPaymentsRequest,
-            arrayOf(
-                "filter",
-            ),
+            arrayOf(),
         )
     ) {
         return null
     }
-    val filter = listPaymentsRequest.getString("filter")?.let { asPaymentTypeFilter(it) }!!
+    val filters =
+        if (hasNonNullKey(listPaymentsRequest, "filters")) {
+            listPaymentsRequest.getArray("filters")?.let {
+                asPaymentTypeFilterList(it)
+            }
+        } else {
+            null
+        }
     val fromTimestamp =
         if (hasNonNullKey(
                 listPaymentsRequest,
@@ -758,7 +763,7 @@ fun asListPaymentsRequest(listPaymentsRequest: ReadableMap): ListPaymentsRequest
     val offset = if (hasNonNullKey(listPaymentsRequest, "offset")) listPaymentsRequest.getInt("offset").toUInt() else null
     val limit = if (hasNonNullKey(listPaymentsRequest, "limit")) listPaymentsRequest.getInt("limit").toUInt() else null
     return ListPaymentsRequest(
-        filter,
+        filters,
         fromTimestamp,
         toTimestamp,
         includeFailures,
@@ -769,7 +774,7 @@ fun asListPaymentsRequest(listPaymentsRequest: ReadableMap): ListPaymentsRequest
 
 fun readableMapOf(listPaymentsRequest: ListPaymentsRequest): ReadableMap {
     return readableMapOf(
-        "filter" to listPaymentsRequest.filter.name.lowercase(),
+        "filters" to listPaymentsRequest.filters?.let { readableArrayOf(it) },
         "fromTimestamp" to listPaymentsRequest.fromTimestamp,
         "toTimestamp" to listPaymentsRequest.toTimestamp,
         "includeFailures" to listPaymentsRequest.includeFailures,
@@ -3370,6 +3375,7 @@ fun pushToArray(
         is LspInformation -> array.pushMap(readableMapOf(value))
         is OpeningFeeParams -> array.pushMap(readableMapOf(value))
         is Payment -> array.pushMap(readableMapOf(value))
+        is PaymentTypeFilter -> array.pushMap(readableMapOf(value))
         is Rate -> array.pushMap(readableMapOf(value))
         is ReverseSwapInfo -> array.pushMap(readableMapOf(value))
         is RouteHint -> array.pushMap(readableMapOf(value))

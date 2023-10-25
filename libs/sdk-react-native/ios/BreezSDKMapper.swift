@@ -657,8 +657,10 @@ class BreezSDKMapper {
     }
 
     static func asListPaymentsRequest(listPaymentsRequest: [String: Any?]) throws -> ListPaymentsRequest {
-        guard let filterTmp = listPaymentsRequest["filter"] as? String else { throw SdkError.Generic(message: "Missing mandatory field filter for type ListPaymentsRequest") }
-        let filter = try asPaymentTypeFilter(paymentTypeFilter: filterTmp)
+        var filters: [PaymentTypeFilter]?
+        if let filtersTmp = listPaymentsRequest["filters"] as? [String] {
+            filters = filtersTmp
+        }
 
         let fromTimestamp = listPaymentsRequest["fromTimestamp"] as? Int64
         let toTimestamp = listPaymentsRequest["toTimestamp"] as? Int64
@@ -667,7 +669,7 @@ class BreezSDKMapper {
         let limit = listPaymentsRequest["limit"] as? UInt32
 
         return ListPaymentsRequest(
-            filter: filter,
+            filters: filters,
             fromTimestamp: fromTimestamp,
             toTimestamp: toTimestamp,
             includeFailures: includeFailures,
@@ -678,7 +680,7 @@ class BreezSDKMapper {
 
     static func dictionaryOf(listPaymentsRequest: ListPaymentsRequest) -> [String: Any?] {
         return [
-            "filter": valueOf(paymentTypeFilter: listPaymentsRequest.filter),
+            "filters": listPaymentsRequest.filters == nil ? nil : arrayOf(paymentTypeFilterList: listPaymentsRequest.filters!),
             "fromTimestamp": listPaymentsRequest.fromTimestamp == nil ? nil : listPaymentsRequest.fromTimestamp,
             "toTimestamp": listPaymentsRequest.toTimestamp == nil ? nil : listPaymentsRequest.toTimestamp,
             "includeFailures": listPaymentsRequest.includeFailures == nil ? nil : listPaymentsRequest.includeFailures,
@@ -3219,8 +3221,8 @@ class BreezSDKMapper {
         case "received":
             return PaymentTypeFilter.received
 
-        case "all":
-            return PaymentTypeFilter.all
+        case "closedChannels":
+            return PaymentTypeFilter.closedChannels
 
         default: throw SdkError.Generic(message: "Invalid variant \(paymentTypeFilter) for enum PaymentTypeFilter")
         }
@@ -3234,8 +3236,8 @@ class BreezSDKMapper {
         case .received:
             return "received"
 
-        case .all:
-            return "all"
+        case .closedChannels:
+            return "closedChannels"
         }
     }
 
