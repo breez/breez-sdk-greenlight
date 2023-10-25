@@ -13,6 +13,8 @@ Download our one pager [here](https://drive.google.com/file/d/1MBINTyEXX9tFLVXd3
 
 To get started with the Breez SDK, follow [these examples](https://sdk-doc.breez.technology/).
 
+The Breez SDK is open source and free for developers.
+
 Note: in order to use the Breez SDK you need an API key from Breez, please email us at contact@breez.technology for more information.
 
 ## Demo
