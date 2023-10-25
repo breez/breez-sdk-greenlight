@@ -159,6 +159,9 @@ pub(crate) mod model {
     ///
     /// * `EndpointError` indicates a generic issue the LNURL endpoint encountered, including a freetext
     /// field with the reason.
+    ///
+    /// * `PayError` indicates that an error occurred while trying to pay the invoice from the LNURL endpoint.
+    /// This includes the payment hash of the failed invoice and the failure reason.
     #[derive(Debug, Serialize, Deserialize)]
     pub enum LnUrlPayResult {
         EndpointSuccess { data: LnUrlSuccessData },
