@@ -1095,17 +1095,24 @@ fun asLnUrlSuccessData(lnUrlSuccessData: ReadableMap): LnUrlSuccessData? {
     ) {
         return null
     }
-    val data = if (hasNonNullKey(lnUrlSuccessData, "data")) lnUrlSuccessData.getMap("data")?.let { asSuccessActionProcessed(it) } else null
+    val successAction =
+        if (hasNonNullKey(lnUrlSuccessData, "successAction")) {
+            lnUrlSuccessData.getMap("successAction")?.let {
+                asSuccessActionProcessed(it)
+            }
+        } else {
+            null
+        }
     val paymentHash = lnUrlSuccessData.getString("paymentHash")!!
     return LnUrlSuccessData(
-        data,
+        successAction,
         paymentHash,
     )
 }
 
 fun readableMapOf(lnUrlSuccessData: LnUrlSuccessData): ReadableMap {
     return readableMapOf(
-        "data" to lnUrlSuccessData.data?.let { readableMapOf(it) },
+        "successAction" to lnUrlSuccessData.successAction?.let { readableMapOf(it) },
         "paymentHash" to lnUrlSuccessData.paymentHash,
     )
 }

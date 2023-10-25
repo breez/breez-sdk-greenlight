@@ -512,7 +512,7 @@ dictionary BitcoinAddressData {
 };
 
 dictionary LnUrlSuccessData {
-    SuccessActionProcessed? data;
+    SuccessActionProcessed? success_action;
     string payment_hash;
 };
 

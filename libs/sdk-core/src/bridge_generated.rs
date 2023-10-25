@@ -1258,7 +1258,7 @@ impl support::IntoDart for LnUrlSuccessData {
     fn into_dart(self) -> support::DartAbi {
         vec![
             self.payment_hash.into_into_dart().into_dart(),
-            self.data.into_dart(),
+            self.success_action.into_dart(),
         ]
         .into_dart()
     }

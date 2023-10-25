@@ -961,22 +961,22 @@ class BreezSDKMapper {
     }
 
     static func asLnUrlSuccessData(lnUrlSuccessData: [String: Any?]) throws -> LnUrlSuccessData {
-        var data: SuccessActionProcessed?
-        if let dataTmp = lnUrlSuccessData["data"] as? [String: Any?] {
-            data = try asSuccessActionProcessed(successActionProcessed: dataTmp)
+        var successAction: SuccessActionProcessed?
+        if let successActionTmp = lnUrlSuccessData["successAction"] as? [String: Any?] {
+            successAction = try asSuccessActionProcessed(successActionProcessed: successActionTmp)
         }
 
         guard let paymentHash = lnUrlSuccessData["paymentHash"] as? String else { throw SdkError.Generic(message: "Missing mandatory field paymentHash for type LnUrlSuccessData") }
 
         return LnUrlSuccessData(
-            data: data,
+            successAction: successAction,
             paymentHash: paymentHash
         )
     }
 
     static func dictionaryOf(lnUrlSuccessData: LnUrlSuccessData) -> [String: Any?] {
         return [
-            "data": lnUrlSuccessData.data == nil ? nil : dictionaryOf(successActionProcessed: lnUrlSuccessData.data!),
+            "successAction": lnUrlSuccessData.successAction == nil ? nil : dictionaryOf(successActionProcessed: lnUrlSuccessData.successAction!),
             "paymentHash": lnUrlSuccessData.paymentHash,
         ]
     }

@@ -179,7 +179,7 @@ export type LnUrlPayRequestData = {
 }
 
 export type LnUrlSuccessData = {
-    data?: SuccessActionProcessed
+    successAction?: SuccessActionProcessed
     paymentHash: string
 }
 

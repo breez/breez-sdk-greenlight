@@ -175,7 +175,7 @@ pub(crate) mod model {
     #[derive(Serialize, Deserialize, Debug)]
     pub struct LnUrlSuccessData {
         pub payment_hash: String,
-        pub data: Option<SuccessActionProcessed>,
+        pub success_action: Option<SuccessActionProcessed>,
     }
 
     #[derive(Deserialize, Debug)]
@@ -858,10 +858,18 @@ mod tests {
             .await?
         {
             LnUrlPayResult::EndpointSuccess {
-                data: LnUrlSuccessData { data: None, .. },
+                data:
+                    LnUrlSuccessData {
+                        success_action: None,
+                        ..
+                    },
             } => Ok(()),
             LnUrlPayResult::EndpointSuccess {
-                data: LnUrlSuccessData { data: Some(_), .. },
+                data:
+                    LnUrlSuccessData {
+                        success_action: Some(_),
+                        ..
+                    },
             } => Err(anyhow!("Unexpected success action")),
             _ => Err(anyhow!("Unexpected success action type")),
         }
@@ -954,14 +962,18 @@ mod tests {
             .await?
         {
             LnUrlPayResult::EndpointSuccess {
-                data: LnUrlSuccessData { data: None, .. },
+                data:
+                    LnUrlSuccessData {
+                        success_action: None,
+                        ..
+                    },
             } => Err(anyhow!(
                 "Expected success action in callback, but none provided"
             )),
             LnUrlPayResult::EndpointSuccess {
                 data:
                     LnUrlSuccessData {
-                        data: Some(SuccessActionProcessed::Message { data: msg }),
+                        success_action: Some(SuccessActionProcessed::Message { data: msg }),
                         ..
                     },
             } => match msg.message {
@@ -1064,7 +1076,7 @@ mod tests {
             LnUrlPayResult::EndpointSuccess {
                 data:
                     LnUrlSuccessData {
-                        data: Some(SuccessActionProcessed::Url { data: url }),
+                        success_action: Some(SuccessActionProcessed::Url { data: url }),
                         ..
                     },
             } => {
@@ -1076,7 +1088,11 @@ mod tests {
                 }
             }
             LnUrlPayResult::EndpointSuccess {
-                data: LnUrlSuccessData { data: None, .. },
+                data:
+                    LnUrlSuccessData {
+                        success_action: None,
+                        ..
+                    },
             } => Err(anyhow!(
                 "Expected success action in callback, but none provided"
             )),
@@ -1142,7 +1158,7 @@ mod tests {
             LnUrlPayResult::EndpointSuccess {
                 data:
                     LnUrlSuccessData {
-                        data: Some(received_sa),
+                        success_action: Some(received_sa),
                         ..
                     },
             } => match received_sa == sa {
@@ -1152,7 +1168,11 @@ mod tests {
                 )),
             },
             LnUrlPayResult::EndpointSuccess {
-                data: LnUrlSuccessData { data: None, .. },
+                data:
+                    LnUrlSuccessData {
+                        success_action: None,
+                        ..
+                    },
             } => Err(anyhow!(
                 "Expected success action in callback, but none provided"
             )),
