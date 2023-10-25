@@ -22,6 +22,12 @@ on:
       BREEZ_MVN_PASSWORD:
         description: 'password for gradlew publish'
         required: true
+  workflow_dispatch:
+    inputs:
+      package-version:
+        description: 'version for the gradle library (MAJOR.MINOR.BUILD)'
+        required: true
+        type: string
 
 jobs:
   build-package:
