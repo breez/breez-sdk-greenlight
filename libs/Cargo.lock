@@ -4,9 +4,9 @@ version = 3
 
 [[package]]
 name = "addr2line"
-version = "0.21.0"
+version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a30b2e23b9e17a9f90641c7ab1549cd9b44f296d3ccbf309d2863cfe398a0cb"
+checksum = "a76fd60b23679b7d19bd066031410fb7e458ccc5e958eb5c325888ce4baedc97"
 dependencies = [
  "gimli",
 ]
@@ -328,15 +328,15 @@ dependencies = [
 
 [[package]]
 name = "backtrace"
-version = "0.3.69"
+version = "0.3.67"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2089b7e3f35b9dd2d0ed921ead4f6d318c27680d4a5bd167b3ee120edb105837"
+checksum = "233d376d6d185f2a3093e58f283f60f880315b6c60075b01f36b3b85154564ca"
 dependencies = [
  "addr2line",
  "cc",
  "cfg-if",
  "libc",
- "miniz_oxide",
+ "miniz_oxide 0.6.2",
  "object",
  "rustc-demangle",
 ]
@@ -538,7 +538,7 @@ dependencies = [
  "lightning 0.0.115",
  "lightning-invoice 0.23.0",
  "log",
- "miniz_oxide",
+ "miniz_oxide 0.7.1",
  "mockito",
  "once_cell",
  "openssl",
@@ -573,7 +573,7 @@ dependencies = [
  "breez-sdk-core",
  "camino",
  "flutter_rust_bridge",
- "lightning-invoice 0.23.0",
+ "lightning-invoice 0.24.0",
  "log",
  "once_cell",
  "thiserror",
@@ -1293,20 +1293,20 @@ dependencies = [
 
 [[package]]
 name = "gimli"
-version = "0.28.0"
+version = "0.27.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6fb8d784f27acf97159b40fc4db5ecd8aa23b9ad5ef69cdd136d3bc80665f0c0"
+checksum = "ad0a93d233ebf96623465aad4046a8d3aa4da22d4f4beba5388838c8a434bbb4"
 
 [[package]]
 name = "gl-client"
 version = "0.1.9"
-source = "git+https://github.com/Blockstream/greenlight.git?rev=28f41bb835659cb3d2e60cd612548f5b22027bb1#28f41bb835659cb3d2e60cd612548f5b22027bb1"
+source = "git+https://github.com/Blockstream/greenlight.git?rev=c7ff67eb062c021105f5601df3ac8699ecbeb51c#c7ff67eb062c021105f5601df3ac8699ecbeb51c"
 dependencies = [
  "anyhow",
  "async-trait",
  "base64 0.21.2",
  "bech32",
- "bitcoin 0.30.1",
+ "bitcoin 0.29.2",
  "bytes",
  "chacha20poly1305",
  "cln-grpc",
@@ -1934,6 +1934,15 @@ checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
 
 [[package]]
 name = "miniz_oxide"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b275950c28b37e794e8c55d88aeb5e139d0ce23fdbbeda68f8d7174abdf9e8fa"
+dependencies = [
+ "adler",
+]
+
+[[package]]
+name = "miniz_oxide"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e7810e0be55b428ada41041c41f32c9f1a42817901b4ccf45fa3d4b6561e74c7"
@@ -2080,9 +2089,9 @@ dependencies = [
 
 [[package]]
 name = "object"
-version = "0.32.1"
+version = "0.30.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9cf5f9dd3933bd50a9e1f149ec995f39ae2c496d31fd772c1fd45ebc27e902b0"
+checksum = "03b4680b86d9cfafba8fc491dc9b6df26b68cf40e9e6cd73909194759a63c385"
 dependencies = [
  "memchr",
 ]
