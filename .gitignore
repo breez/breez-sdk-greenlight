@@ -13,3 +13,7 @@ libs/sdk-react-native/ios/bindings-swift/**
 !.vscode/settings.json
 !.vscode/extensions.json
 libs/sdk-flutter/ios/bindings-swift/
+
+#Direnv
+.env
+.envrc
