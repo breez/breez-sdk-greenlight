@@ -328,6 +328,16 @@ class BreezSDK {
     return await _lnToolkit.refund(req: req);
   }
 
+  /// Prepares a refund transaction for a failed/expired swap.
+  ///
+  /// Can optionally be used before refund to know how much fees will be paid
+  /// to perform the refund.
+  Future<PrepareRefundResponse> prepareRefund({
+    required PrepareRefundRequest req,
+  }) async {
+    return await _lnToolkit.prepareRefund(req: req);
+  }
+
   /* In Progress Swap API's */
 
   /// Returns an optional in-progress [SwapInfo].
