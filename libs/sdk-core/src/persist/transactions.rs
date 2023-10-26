@@ -474,14 +474,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     // retrieve all
-    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        filters: None,
-        from_timestamp: None,
-        to_timestamp: None,
-        include_failures: None,
-        offset: None,
-        limit: None,
-    })?;
+    let retrieve_txs = storage.list_payments(ListPaymentsRequest::default())?;
     assert_eq!(retrieve_txs.len(), 2);
     assert_eq!(retrieve_txs, txs);
 
@@ -491,11 +484,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
             PaymentTypeFilter::Sent,
             PaymentTypeFilter::ClosedChannels,
         ]),
-        from_timestamp: None,
-        to_timestamp: None,
-        include_failures: None,
-        offset: None,
-        limit: None,
+        ..Default::default()
     })?;
     assert_eq!(retrieve_txs.len(), 1);
     assert_eq!(retrieve_txs[0], txs[0]);
@@ -509,11 +498,7 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
     //test only received
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {
         filters: Some(vec![PaymentTypeFilter::Received]),
-        from_timestamp: None,
-        to_timestamp: None,
-        include_failures: None,
-        offset: None,
-        limit: None,
+        ..Default::default()
     })?;
     assert_eq!(retrieve_txs.len(), 1);
     assert_eq!(retrieve_txs[0], txs[1]);
@@ -522,36 +507,18 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(max_ts, 2000);
 
     storage.insert_or_update_payments(&txs)?;
-    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        filters: None,
-        from_timestamp: None,
-        to_timestamp: None,
-        include_failures: None,
-        offset: None,
-        limit: None,
-    })?;
+    let retrieve_txs = storage.list_payments(ListPaymentsRequest::default())?;
     assert_eq!(retrieve_txs.len(), 2);
     assert_eq!(retrieve_txs, txs);
 
     storage.insert_open_channel_payment_info("123", 150)?;
-    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        filters: None,
-        from_timestamp: None,
-        to_timestamp: None,
-        include_failures: None,
-        offset: None,
-        limit: None,
-    })?;
+    let retrieve_txs = storage.list_payments(ListPaymentsRequest::default())?;
     assert_eq!(retrieve_txs[0].fee_msat, 50);
 
     // test all with failures
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        filters: None,
-        from_timestamp: None,
-        to_timestamp: None,
         include_failures: Some(true),
-        offset: None,
-        limit: None,
+        ..Default::default()
     })?;
     assert_eq!(retrieve_txs.len(), 3);
 
@@ -561,33 +528,25 @@ fn test_ln_transactions() -> Result<(), Box<dyn std::error::Error>> {
             PaymentTypeFilter::Sent,
             PaymentTypeFilter::ClosedChannels,
         ]),
-        from_timestamp: None,
-        to_timestamp: None,
         include_failures: Some(true),
-        offset: None,
-        limit: None,
+        ..Default::default()
     })?;
     assert_eq!(retrieve_txs.len(), 2);
 
     // test limit
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        filters: None,
-        from_timestamp: None,
-        to_timestamp: None,
         include_failures: Some(false),
-        offset: None,
         limit: Some(1),
+        ..Default::default()
     })?;
     assert_eq!(retrieve_txs.len(), 1);
 
     // test offset
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        filters: None,
-        from_timestamp: None,
-        to_timestamp: None,
         include_failures: Some(false),
         offset: Some(1),
         limit: Some(1),
+        ..Default::default()
     })?;
     assert_eq!(retrieve_txs.len(), 1);
     assert_eq!(retrieve_txs[0].id, payment_hash_with_lnurl_withdraw);

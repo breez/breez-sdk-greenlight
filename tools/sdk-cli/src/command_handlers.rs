@@ -132,11 +132,10 @@ pub(crate) async fn handle_command(
                 .receive_payment(ReceivePaymentRequest {
                     amount_msat,
                     description,
-                    preimage: None,
-                    opening_fee_params: None,
                     use_description_hash,
                     expiry,
                     cltv,
+                    ..Default::default()
                 })
                 .await?;
             let mut result = serde_json::to_string(&recv_payment_response)?;
@@ -150,9 +149,7 @@ pub(crate) async fn handle_command(
             sat_per_vbyte,
         } => {
             let pair_info = sdk()?
-                .fetch_reverse_swap_fees(ReverseSwapFeesRequest {
-                    send_amount_sat: None,
-                })
+                .fetch_reverse_swap_fees(ReverseSwapFeesRequest::default())
                 .await
                 .map_err(|e| anyhow!("Failed to fetch reverse swap fee infos: {e}"))?;
 
@@ -297,9 +294,7 @@ pub(crate) async fn handle_command(
         }
         Commands::ReceiveOnchain {} => serde_json::to_string_pretty(
             &sdk()?
-                .receive_onchain(ReceiveOnchainRequest {
-                    opening_fee_params: None,
-                })
+                .receive_onchain(ReceiveOnchainRequest::default())
                 .await?,
         )
         .map_err(|e| e.into()),
@@ -437,10 +432,7 @@ pub(crate) async fn handle_command(
         }
         Commands::BuyBitcoin { provider } => {
             let res = sdk()?
-                .buy_bitcoin(BuyBitcoinRequest {
-                    provider: provider.clone(),
-                    opening_fee_params: None,
-                })
+                .buy_bitcoin(BuyBitcoinRequest::from_provider(provider.clone()))
                 .await?;
             Ok(format!("Here your {:?} url: {}", provider, res.url))
         }
