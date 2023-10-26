@@ -312,7 +312,7 @@ class BreezSDK {
     required SweepRequest req,
   }) async {
     final sweepResponse = await _lnToolkit.sweep(req: req);
-    await listPayments(req: const ListPaymentsRequest(filter: PaymentTypeFilter.All));
+    await listPayments(req: const ListPaymentsRequest());
     return sweepResponse;
   }
 
@@ -326,6 +326,16 @@ class BreezSDK {
     required RefundRequest req,
   }) async {
     return await _lnToolkit.refund(req: req);
+  }
+
+  /// Prepares a refund transaction for a failed/expired swap.
+  ///
+  /// Can optionally be used before refund to know how much fees will be paid
+  /// to perform the refund.
+  Future<PrepareRefundResponse> prepareRefund({
+    required PrepareRefundRequest req,
+  }) async {
+    return await _lnToolkit.prepareRefund(req: req);
   }
 
   /* In Progress Swap API's */
@@ -392,7 +402,7 @@ class BreezSDK {
   /// Fetch node state & payment list
   Future fetchNodeData() async {
     await nodeInfo();
-    await listPayments(req: const ListPaymentsRequest(filter: PaymentTypeFilter.All));
+    await listPayments(req: const ListPaymentsRequest());
   }
 }
 

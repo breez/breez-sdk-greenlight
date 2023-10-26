@@ -1,31 +1,31 @@
 name: breez_sdk
 description: A new flutter plugin project.
-version: 0.2.7
+version: 0.2.8
 publish_to: none
 
 environment:
-  sdk: ">=2.19.6 <3.0.0"
-  flutter: ">=3.7.12"
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: ">=3.10.0"
 
 dependencies:
   flutter:
     sdk: flutter
   ### flutter_rust_bridge_codegen dependencies
-  ffi: ^2.0.2
-  flutter_rust_bridge: 1.75.2
-  freezed: ^2.3.5
-  freezed_annotation: ^2.2.0
+  ffi: ^2.1.0
+  flutter_rust_bridge: 1.80.1 # breez-sdk requirement
+  freezed: ^2.4.5
+  freezed_annotation: ^2.4.1
   ###
   rxdart: ^0.27.7
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.2
+  flutter_lints: ^3.0.0
   # The following dependencies are required by flutter_rust_bridge_codegen to
   # be defined under dev_dependencies to generate Dart files
-  build_runner: <2.4.0 # Requires Flutter 3.10
-  ffigen: <8.0.0-dev.0 # Requires Flutter 3.10
+  build_runner: ^2.4.6
+  ffigen: <9.0.0 # flutter_rust_bridge requirement
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
