@@ -2168,9 +2168,10 @@ pub(crate) mod tests {
         let breez_services = breez_services().await?;
         breez_services.sync().await?;
         let moonpay_url = breez_services
-            .buy_bitcoin(BuyBitcoinRequest::from_provider(
-                BuyBitcoinProvider::Moonpay,
-            ))
+            .buy_bitcoin(BuyBitcoinRequest {
+                provider: BuyBitcoinProvider::Moonpay,
+                opening_fee_params: None,
+            })
             .await?
             .url;
         let parsed = Url::parse(&moonpay_url)?;

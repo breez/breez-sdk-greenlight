@@ -432,7 +432,10 @@ pub(crate) async fn handle_command(
         }
         Commands::BuyBitcoin { provider } => {
             let res = sdk()?
-                .buy_bitcoin(BuyBitcoinRequest::from_provider(provider.clone()))
+                .buy_bitcoin(BuyBitcoinRequest {
+                    provider: provider.clone(),
+                    opening_fee_params: None,
+                })
                 .await?;
             Ok(format!("Here your {:?} url: {}", provider, res.url))
         }

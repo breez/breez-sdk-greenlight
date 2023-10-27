@@ -751,16 +751,6 @@ pub struct ReceivePaymentRequest {
     pub cltv: Option<u32>,
 }
 
-impl ReceivePaymentRequest {
-    pub fn from_amount_and_description(amount_msat: u64, description: String) -> Self {
-        ReceivePaymentRequest {
-            amount_msat,
-            description,
-            ..Default::default()
-        }
-    }
-}
-
 /// Represents a receive payment response.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReceivePaymentResponse {
@@ -776,15 +766,6 @@ pub struct SendPaymentRequest {
     pub bolt11: String,
     /// The amount to pay in millisatoshis. Should only be set when `bolt11` is a zero-amount invoice.
     pub amount_msat: Option<u64>,
-}
-
-impl SendPaymentRequest {
-    pub fn from_bolt11(bolt11: String) -> Self {
-        SendPaymentRequest {
-            bolt11,
-            amount_msat: None,
-        }
-    }
 }
 
 /// Represents a send spontaneous payment request.
@@ -817,15 +798,6 @@ pub struct OpenChannelFeeRequest {
     pub expiry: Option<u32>,
 }
 
-impl OpenChannelFeeRequest {
-    pub fn from_amount(amount_msat: u64) -> Self {
-        OpenChannelFeeRequest {
-            amount_msat,
-            expiry: None,
-        }
-    }
-}
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct OpenChannelFeeResponse {
     pub fee_msat: u64,
@@ -841,15 +813,6 @@ pub struct ReceiveOnchainRequest {
 pub struct BuyBitcoinRequest {
     pub provider: BuyBitcoinProvider,
     pub opening_fee_params: Option<OpeningFeeParams>,
-}
-
-impl BuyBitcoinRequest {
-    pub fn from_provider(provider: BuyBitcoinProvider) -> Self {
-        BuyBitcoinRequest {
-            provider,
-            opening_fee_params: None,
-        }
-    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
