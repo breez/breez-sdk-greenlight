@@ -34,6 +34,10 @@ on:
         description: 'version for the react native package (MAJOR.MINOR.BUILD)'
         required: false
         type: string
+      python-package-version:
+        description: 'version for the python package (MAJOR.MINOR.BUILD)'
+        required: false
+        type: string
       publish:
         description: 'boolean indicating whether packages should be published. true to publish. false to build only. Default = false.'
         required: false
@@ -58,6 +62,7 @@ jobs:
       kotlin-mpp-package-version: ${{ inputs.kotlin-mpp-package-version }}
       flutter-package-version: ${{ inputs.flutter-package-version }}
       react-native-package-version: ${{ inputs.react-native-package-version }}
+      python-package-version: ${{ inputs.python-package-version }}
       publish: ${{ inputs.publish }}
     steps:
       - run: echo "set pre-setup output variables"
@@ -73,13 +78,13 @@ jobs:
       # to set these variables here to `true` or `false` 
       # (e.g. bindings-windows: true) if you want to test something.
       bindings-windows: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version }}
-      bindings-darwin: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version }}
-      bindings-linux: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version }}
+      bindings-darwin: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version || !!needs.pre-setup.outputs.python-package-version }}
+      bindings-linux: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version || !!needs.pre-setup.outputs.python-package-version}}
       bindings-android: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version || !!needs.pre-setup.outputs.golang-package-version || !!needs.pre-setup.outputs.flutter-package-version }}
       bindings-ios: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version }}
       kotlin: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version }}
       swift: false
-      python: false
+      python: ${{ !!needs.pre-setup.outputs.python-package-version }}
       csharp: ${{ !!needs.pre-setup.outputs.csharp-package-version }}
       golang: ${{ !!needs.pre-setup.outputs.golang-package-version }}
       maven: ${{ !!needs.pre-setup.outputs.maven-package-version }}
@@ -94,6 +99,7 @@ jobs:
       kotlin-mpp-package-version: ${{ needs.pre-setup.outputs.kotlin-mpp-package-version || '0.0.2' }}
       flutter-package-version: ${{ needs.pre-setup.outputs.flutter-package-version || '0.0.2' }}
       react-native-package-version: ${{ needs.pre-setup.outputs.react-native-package-version || '0.0.2' }}
+      python-package-version: ${{ needs.pre-setup.outputs.python-package-version || '0.0.2' }}
       publish: ${{ needs.pre-setup.outputs.publish }}
     steps:
       - run: echo "set setup output variables"
@@ -230,3 +236,18 @@ jobs:
       publish: ${{ needs.setup.outputs.publish == 'true' }}
     secrets:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-python:
+    needs:
+      - setup
+      - build-bindings-darwin
+      - build-bindings-linux
+      - build-language-bindings
+    if: ${{ needs.setup.outputs.python == 'true' }}
+    uses: ./.github/workflows/publish-python.yml
+    with:
+      ref: ${{ needs.setup.outputs.ref }}
+      package-version: ${{ needs.setup.outputs.python-package-version }}
+      publish: ${{ needs.setup.outputs.publish == 'true' }}
+    secrets:
+      PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}

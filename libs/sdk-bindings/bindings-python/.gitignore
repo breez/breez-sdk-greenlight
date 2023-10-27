@@ -1,2 +1,5 @@
 src/breez_sdk/breez_sdk.py
 src/breez_sdk/*.dylib
+*.egg-info
+build
+dist
