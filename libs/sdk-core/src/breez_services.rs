@@ -356,11 +356,8 @@ impl BreezServices {
             .receive_payment(ReceivePaymentRequest {
                 amount_msat: req.amount_msat,
                 description: req.description.unwrap_or_default(),
-                preimage: None,
-                opening_fee_params: None,
                 use_description_hash: Some(false),
-                expiry: None,
-                cltv: None,
+                ..Default::default()
             })
             .await
             .map_err(|_| anyhow!("Failed to receive payment"))?
@@ -2050,14 +2047,7 @@ pub(crate) mod tests {
         assert_eq!(fetched_state, dummy_node_state);
 
         let all = breez_services
-            .list_payments(ListPaymentsRequest {
-                filters: None,
-                from_timestamp: None,
-                to_timestamp: None,
-                include_failures: None,
-                offset: None,
-                limit: None,
-            })
+            .list_payments(ListPaymentsRequest::default())
             .await?;
         let mut cloned = all.clone();
 
@@ -2068,11 +2058,7 @@ pub(crate) mod tests {
         let received = breez_services
             .list_payments(ListPaymentsRequest {
                 filters: Some(vec![PaymentTypeFilter::Received]),
-                from_timestamp: None,
-                to_timestamp: None,
-                include_failures: None,
-                offset: None,
-                limit: None,
+                ..Default::default()
             })
             .await?;
         assert_eq!(received, vec![cloned[1].clone(), cloned[0].clone()]);
@@ -2083,11 +2069,7 @@ pub(crate) mod tests {
                     PaymentTypeFilter::Sent,
                     PaymentTypeFilter::ClosedChannels,
                 ]),
-                from_timestamp: None,
-                to_timestamp: None,
-                include_failures: None,
-                offset: None,
-                limit: None,
+                ..Default::default()
             })
             .await?;
         assert_eq!(sent, vec![cloned[2].clone()]);
@@ -2131,11 +2113,8 @@ pub(crate) mod tests {
             .receive_payment(ReceivePaymentRequest {
                 amount_msat: 3_000_000,
                 description: "should populate lsp hints".to_string(),
-                preimage: None,
-                opening_fee_params: None,
                 use_description_hash: Some(false),
-                expiry: None,
-                cltv: None,
+                ..Default::default()
             })
             .await?
             .ln_invoice;

@@ -657,6 +657,7 @@ pub struct Payment {
 }
 
 /// Represents a list payments request.
+#[derive(Default)]
 pub struct ListPaymentsRequest {
     pub filters: Option<Vec<PaymentTypeFilter>>,
     pub from_timestamp: Option<i64>,
@@ -724,13 +725,13 @@ pub struct ClosedChannelPaymentDetails {
     pub closing_txid: Option<String>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct ReverseSwapFeesRequest {
     pub send_amount_sat: Option<u64>,
 }
 
 /// Represents a receive payment request.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct ReceivePaymentRequest {
     /// The amount in satoshis for this payment request
     pub amount_msat: u64,
@@ -763,7 +764,7 @@ pub struct ReceivePaymentResponse {
 pub struct SendPaymentRequest {
     /// The bolt11 invoice
     pub bolt11: String,
-    /// The amount to pay in millisatoshis
+    /// The amount to pay in millisatoshis. Should only be set when `bolt11` is a zero-amount invoice.
     pub amount_msat: Option<u64>,
 }
 
@@ -803,7 +804,7 @@ pub struct OpenChannelFeeResponse {
     pub used_fee_params: Option<OpeningFeeParams>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct ReceiveOnchainRequest {
     pub opening_fee_params: Option<OpeningFeeParams>,
 }
