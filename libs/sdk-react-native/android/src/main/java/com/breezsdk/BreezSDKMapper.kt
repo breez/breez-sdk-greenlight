@@ -3211,20 +3211,75 @@ fun readableMapOf(breezEvent: BreezEvent): ReadableMap? {
     return map
 }
 
+fun asBreezEventList(arr: ReadableArray): List<BreezEvent> {
+    val list = ArrayList<BreezEvent>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asBreezEvent(value)!!)
+            else -> throw IllegalArgumentException("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asBuyBitcoinProvider(type: String): BuyBitcoinProvider {
     return BuyBitcoinProvider.valueOf(type.uppercase())
+}
+
+fun asBuyBitcoinProviderList(arr: ReadableArray): List<BuyBitcoinProvider> {
+    val list = ArrayList<BuyBitcoinProvider>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is String -> list.add(asBuyBitcoinProvider(value)!!)
+            else -> throw IllegalArgumentException("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
 }
 
 fun asChannelState(type: String): ChannelState {
     return ChannelState.valueOf(type.uppercase())
 }
 
+fun asChannelStateList(arr: ReadableArray): List<ChannelState> {
+    val list = ArrayList<ChannelState>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is String -> list.add(asChannelState(value)!!)
+            else -> throw IllegalArgumentException("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asEnvironmentType(type: String): EnvironmentType {
     return EnvironmentType.valueOf(type.uppercase())
 }
 
+fun asEnvironmentTypeList(arr: ReadableArray): List<EnvironmentType> {
+    val list = ArrayList<EnvironmentType>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is String -> list.add(asEnvironmentType(value)!!)
+            else -> throw IllegalArgumentException("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asFeeratePreset(type: String): FeeratePreset {
     return FeeratePreset.valueOf(type.uppercase())
+}
+
+fun asFeeratePresetList(arr: ReadableArray): List<FeeratePreset> {
+    val list = ArrayList<FeeratePreset>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is String -> list.add(asFeeratePreset(value)!!)
+            else -> throw IllegalArgumentException("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
 }
 
 fun asInputType(inputType: ReadableMap): InputType? {
@@ -3296,6 +3351,17 @@ fun readableMapOf(inputType: InputType): ReadableMap? {
     return map
 }
 
+fun asInputTypeList(arr: ReadableArray): List<InputType> {
+    val list = ArrayList<InputType>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asInputType(value)!!)
+            else -> throw IllegalArgumentException("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asLnUrlCallbackStatus(lnUrlCallbackStatus: ReadableMap): LnUrlCallbackStatus? {
     val type = lnUrlCallbackStatus.getString("type")
 
@@ -3320,6 +3386,17 @@ fun readableMapOf(lnUrlCallbackStatus: LnUrlCallbackStatus): ReadableMap? {
         }
     }
     return map
+}
+
+fun asLnUrlCallbackStatusList(arr: ReadableArray): List<LnUrlCallbackStatus> {
+    val list = ArrayList<LnUrlCallbackStatus>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asLnUrlCallbackStatus(value)!!)
+            else -> throw IllegalArgumentException("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
 }
 
 fun asLnUrlPayResult(lnUrlPayResult: ReadableMap): LnUrlPayResult? {
@@ -3357,6 +3434,17 @@ fun readableMapOf(lnUrlPayResult: LnUrlPayResult): ReadableMap? {
     return map
 }
 
+fun asLnUrlPayResultList(arr: ReadableArray): List<LnUrlPayResult> {
+    val list = ArrayList<LnUrlPayResult>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asLnUrlPayResult(value)!!)
+            else -> throw IllegalArgumentException("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asLnUrlWithdrawResult(lnUrlWithdrawResult: ReadableMap): LnUrlWithdrawResult? {
     val type = lnUrlWithdrawResult.getString("type")
 
@@ -3384,8 +3472,30 @@ fun readableMapOf(lnUrlWithdrawResult: LnUrlWithdrawResult): ReadableMap? {
     return map
 }
 
+fun asLnUrlWithdrawResultList(arr: ReadableArray): List<LnUrlWithdrawResult> {
+    val list = ArrayList<LnUrlWithdrawResult>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asLnUrlWithdrawResult(value)!!)
+            else -> throw IllegalArgumentException("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asNetwork(type: String): Network {
     return Network.valueOf(type.uppercase())
+}
+
+fun asNetworkList(arr: ReadableArray): List<Network> {
+    val list = ArrayList<Network>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is String -> list.add(asNetwork(value)!!)
+            else -> throw IllegalArgumentException("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
 }
 
 fun asNodeConfig(nodeConfig: ReadableMap): NodeConfig? {
@@ -3406,6 +3516,17 @@ fun readableMapOf(nodeConfig: NodeConfig): ReadableMap? {
         }
     }
     return map
+}
+
+fun asNodeConfigList(arr: ReadableArray): List<NodeConfig> {
+    val list = ArrayList<NodeConfig>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asNodeConfig(value)!!)
+            else -> throw IllegalArgumentException("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
 }
 
 fun asPaymentDetails(paymentDetails: ReadableMap): PaymentDetails? {
@@ -3435,20 +3556,75 @@ fun readableMapOf(paymentDetails: PaymentDetails): ReadableMap? {
     return map
 }
 
+fun asPaymentDetailsList(arr: ReadableArray): List<PaymentDetails> {
+    val list = ArrayList<PaymentDetails>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asPaymentDetails(value)!!)
+            else -> throw IllegalArgumentException("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asPaymentStatus(type: String): PaymentStatus {
     return PaymentStatus.valueOf(type.uppercase())
+}
+
+fun asPaymentStatusList(arr: ReadableArray): List<PaymentStatus> {
+    val list = ArrayList<PaymentStatus>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is String -> list.add(asPaymentStatus(value)!!)
+            else -> throw IllegalArgumentException("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
 }
 
 fun asPaymentType(type: String): PaymentType {
     return PaymentType.valueOf(type.uppercase())
 }
 
+fun asPaymentTypeList(arr: ReadableArray): List<PaymentType> {
+    val list = ArrayList<PaymentType>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is String -> list.add(asPaymentType(value)!!)
+            else -> throw IllegalArgumentException("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asPaymentTypeFilter(type: String): PaymentTypeFilter {
     return PaymentTypeFilter.valueOf(type.uppercase())
 }
 
+fun asPaymentTypeFilterList(arr: ReadableArray): List<PaymentTypeFilter> {
+    val list = ArrayList<PaymentTypeFilter>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is String -> list.add(asPaymentTypeFilter(value)!!)
+            else -> throw IllegalArgumentException("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asReverseSwapStatus(type: String): ReverseSwapStatus {
     return ReverseSwapStatus.valueOf(type.uppercase())
+}
+
+fun asReverseSwapStatusList(arr: ReadableArray): List<ReverseSwapStatus> {
+    val list = ArrayList<ReverseSwapStatus>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is String -> list.add(asReverseSwapStatus(value)!!)
+            else -> throw IllegalArgumentException("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
 }
 
 fun asSuccessActionProcessed(successActionProcessed: ReadableMap): SuccessActionProcessed? {
@@ -3485,8 +3661,30 @@ fun readableMapOf(successActionProcessed: SuccessActionProcessed): ReadableMap? 
     return map
 }
 
+fun asSuccessActionProcessedList(arr: ReadableArray): List<SuccessActionProcessed> {
+    val list = ArrayList<SuccessActionProcessed>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asSuccessActionProcessed(value)!!)
+            else -> throw IllegalArgumentException("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asSwapStatus(type: String): SwapStatus {
     return SwapStatus.valueOf(type.uppercase())
+}
+
+fun asSwapStatusList(arr: ReadableArray): List<SwapStatus> {
+    val list = ArrayList<SwapStatus>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is String -> list.add(asSwapStatus(value)!!)
+            else -> throw IllegalArgumentException("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
 }
 
 fun readableMapOf(vararg values: Pair<String, *>): ReadableMap {
@@ -3527,7 +3725,7 @@ fun pushToArray(
         is LspInformation -> array.pushMap(readableMapOf(value))
         is OpeningFeeParams -> array.pushMap(readableMapOf(value))
         is Payment -> array.pushMap(readableMapOf(value))
-        is PaymentTypeFilter -> array.pushMap(readableMapOf(value))
+        is PaymentTypeFilter -> array.pushString(value.name.lowercase())
         is Rate -> array.pushMap(readableMapOf(value))
         is ReverseSwapInfo -> array.pushMap(readableMapOf(value))
         is RouteHint -> array.pushMap(readableMapOf(value))
