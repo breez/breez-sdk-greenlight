@@ -659,7 +659,7 @@ class BreezSDKMapper {
     static func asListPaymentsRequest(listPaymentsRequest: [String: Any?]) throws -> ListPaymentsRequest {
         var filters: [PaymentTypeFilter]?
         if let filtersTmp = listPaymentsRequest["filters"] as? [String] {
-            filters = filtersTmp
+            filters = try asPaymentTypeFilterList(arr: filtersTmp)
         }
 
         let fromTimestamp = listPaymentsRequest["fromTimestamp"] as? Int64
@@ -2872,6 +2872,23 @@ class BreezSDKMapper {
         }
     }
 
+    static func arrayOf(breezEventList: [BreezEvent]) -> [Any] {
+        return breezEventList.map { v -> [String: Any?] in dictionaryOf(breezEvent: v) }
+    }
+
+    static func asBreezEventList(arr: [Any]) throws -> [BreezEvent] {
+        var list = [BreezEvent]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var breezEvent = try asBreezEvent(breezEvent: val)
+                list.append(breezEvent)
+            } else {
+                throw NSError(domain: "Unexpected type BreezEvent", code: 0)
+            }
+        }
+        return list
+    }
+
     static func asBuyBitcoinProvider(buyBitcoinProvider: String) throws -> BuyBitcoinProvider {
         switch buyBitcoinProvider {
         case "moonpay":
@@ -2886,6 +2903,23 @@ class BreezSDKMapper {
         case .moonpay:
             return "moonpay"
         }
+    }
+
+    static func arrayOf(buyBitcoinProviderList: [BuyBitcoinProvider]) -> [String] {
+        return buyBitcoinProviderList.map { v -> String in valueOf(buyBitcoinProvider: v) }
+    }
+
+    static func asBuyBitcoinProviderList(arr: [Any]) throws -> [BuyBitcoinProvider] {
+        var list = [BuyBitcoinProvider]()
+        for value in arr {
+            if let val = value as? String {
+                var buyBitcoinProvider = try asBuyBitcoinProvider(buyBitcoinProvider: val)
+                list.append(buyBitcoinProvider)
+            } else {
+                throw NSError(domain: "Unexpected type BuyBitcoinProvider", code: 0)
+            }
+        }
+        return list
     }
 
     static func asChannelState(channelState: String) throws -> ChannelState {
@@ -2922,6 +2956,23 @@ class BreezSDKMapper {
         }
     }
 
+    static func arrayOf(channelStateList: [ChannelState]) -> [String] {
+        return channelStateList.map { v -> String in valueOf(channelState: v) }
+    }
+
+    static func asChannelStateList(arr: [Any]) throws -> [ChannelState] {
+        var list = [ChannelState]()
+        for value in arr {
+            if let val = value as? String {
+                var channelState = try asChannelState(channelState: val)
+                list.append(channelState)
+            } else {
+                throw NSError(domain: "Unexpected type ChannelState", code: 0)
+            }
+        }
+        return list
+    }
+
     static func asEnvironmentType(environmentType: String) throws -> EnvironmentType {
         switch environmentType {
         case "production":
@@ -2942,6 +2993,23 @@ class BreezSDKMapper {
         case .staging:
             return "staging"
         }
+    }
+
+    static func arrayOf(environmentTypeList: [EnvironmentType]) -> [String] {
+        return environmentTypeList.map { v -> String in valueOf(environmentType: v) }
+    }
+
+    static func asEnvironmentTypeList(arr: [Any]) throws -> [EnvironmentType] {
+        var list = [EnvironmentType]()
+        for value in arr {
+            if let val = value as? String {
+                var environmentType = try asEnvironmentType(environmentType: val)
+                list.append(environmentType)
+            } else {
+                throw NSError(domain: "Unexpected type EnvironmentType", code: 0)
+            }
+        }
+        return list
     }
 
     static func asFeeratePreset(feeratePreset: String) throws -> FeeratePreset {
@@ -2970,6 +3038,23 @@ class BreezSDKMapper {
         case .priority:
             return "priority"
         }
+    }
+
+    static func arrayOf(feeratePresetList: [FeeratePreset]) -> [String] {
+        return feeratePresetList.map { v -> String in valueOf(feeratePreset: v) }
+    }
+
+    static func asFeeratePresetList(arr: [Any]) throws -> [FeeratePreset] {
+        var list = [FeeratePreset]()
+        for value in arr {
+            if let val = value as? String {
+                var feeratePreset = try asFeeratePreset(feeratePreset: val)
+                list.append(feeratePreset)
+            } else {
+                throw NSError(domain: "Unexpected type FeeratePreset", code: 0)
+            }
+        }
+        return list
     }
 
     static func asInputType(inputType: [String: Any?]) throws -> InputType {
@@ -3090,6 +3175,23 @@ class BreezSDKMapper {
         }
     }
 
+    static func arrayOf(inputTypeList: [InputType]) -> [Any] {
+        return inputTypeList.map { v -> [String: Any?] in dictionaryOf(inputType: v) }
+    }
+
+    static func asInputTypeList(arr: [Any]) throws -> [InputType] {
+        var list = [InputType]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var inputType = try asInputType(inputType: val)
+                list.append(inputType)
+            } else {
+                throw NSError(domain: "Unexpected type InputType", code: 0)
+            }
+        }
+        return list
+    }
+
     static func asLnUrlCallbackStatus(lnUrlCallbackStatus: [String: Any?]) throws -> LnUrlCallbackStatus {
         let type = lnUrlCallbackStatus["type"] as! String
         if type == "ok" {
@@ -3120,6 +3222,23 @@ class BreezSDKMapper {
                 "data": dictionaryOf(lnUrlErrorData: data),
             ]
         }
+    }
+
+    static func arrayOf(lnUrlCallbackStatusList: [LnUrlCallbackStatus]) -> [Any] {
+        return lnUrlCallbackStatusList.map { v -> [String: Any?] in dictionaryOf(lnUrlCallbackStatus: v) }
+    }
+
+    static func asLnUrlCallbackStatusList(arr: [Any]) throws -> [LnUrlCallbackStatus] {
+        var list = [LnUrlCallbackStatus]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var lnUrlCallbackStatus = try asLnUrlCallbackStatus(lnUrlCallbackStatus: val)
+                list.append(lnUrlCallbackStatus)
+            } else {
+                throw NSError(domain: "Unexpected type LnUrlCallbackStatus", code: 0)
+            }
+        }
+        return list
     }
 
     static func asLnUrlPayResult(lnUrlPayResult: [String: Any?]) throws -> LnUrlPayResult {
@@ -3162,6 +3281,23 @@ class BreezSDKMapper {
         }
     }
 
+    static func arrayOf(lnUrlPayResultList: [LnUrlPayResult]) -> [Any] {
+        return lnUrlPayResultList.map { v -> [String: Any?] in dictionaryOf(lnUrlPayResult: v) }
+    }
+
+    static func asLnUrlPayResultList(arr: [Any]) throws -> [LnUrlPayResult] {
+        var list = [LnUrlPayResult]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var lnUrlPayResult = try asLnUrlPayResult(lnUrlPayResult: val)
+                list.append(lnUrlPayResult)
+            } else {
+                throw NSError(domain: "Unexpected type LnUrlPayResult", code: 0)
+            }
+        }
+        return list
+    }
+
     static func asLnUrlWithdrawResult(lnUrlWithdrawResult: [String: Any?]) throws -> LnUrlWithdrawResult {
         let type = lnUrlWithdrawResult["type"] as! String
         if type == "ok" {
@@ -3200,6 +3336,23 @@ class BreezSDKMapper {
         }
     }
 
+    static func arrayOf(lnUrlWithdrawResultList: [LnUrlWithdrawResult]) -> [Any] {
+        return lnUrlWithdrawResultList.map { v -> [String: Any?] in dictionaryOf(lnUrlWithdrawResult: v) }
+    }
+
+    static func asLnUrlWithdrawResultList(arr: [Any]) throws -> [LnUrlWithdrawResult] {
+        var list = [LnUrlWithdrawResult]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var lnUrlWithdrawResult = try asLnUrlWithdrawResult(lnUrlWithdrawResult: val)
+                list.append(lnUrlWithdrawResult)
+            } else {
+                throw NSError(domain: "Unexpected type LnUrlWithdrawResult", code: 0)
+            }
+        }
+        return list
+    }
+
     static func asNetwork(network: String) throws -> Network {
         switch network {
         case "bitcoin":
@@ -3234,6 +3387,23 @@ class BreezSDKMapper {
         }
     }
 
+    static func arrayOf(networkList: [Network]) -> [String] {
+        return networkList.map { v -> String in valueOf(network: v) }
+    }
+
+    static func asNetworkList(arr: [Any]) throws -> [Network] {
+        var list = [Network]()
+        for value in arr {
+            if let val = value as? String {
+                var network = try asNetwork(network: val)
+                list.append(network)
+            } else {
+                throw NSError(domain: "Unexpected type Network", code: 0)
+            }
+        }
+        return list
+    }
+
     static func asNodeConfig(nodeConfig: [String: Any?]) throws -> NodeConfig {
         let type = nodeConfig["type"] as! String
         if type == "greenlight" {
@@ -3256,6 +3426,23 @@ class BreezSDKMapper {
                 "config": dictionaryOf(greenlightNodeConfig: config),
             ]
         }
+    }
+
+    static func arrayOf(nodeConfigList: [NodeConfig]) -> [Any] {
+        return nodeConfigList.map { v -> [String: Any?] in dictionaryOf(nodeConfig: v) }
+    }
+
+    static func asNodeConfigList(arr: [Any]) throws -> [NodeConfig] {
+        var list = [NodeConfig]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var nodeConfig = try asNodeConfig(nodeConfig: val)
+                list.append(nodeConfig)
+            } else {
+                throw NSError(domain: "Unexpected type NodeConfig", code: 0)
+            }
+        }
+        return list
     }
 
     static func asPaymentDetails(paymentDetails: [String: Any?]) throws -> PaymentDetails {
@@ -3296,6 +3483,23 @@ class BreezSDKMapper {
         }
     }
 
+    static func arrayOf(paymentDetailsList: [PaymentDetails]) -> [Any] {
+        return paymentDetailsList.map { v -> [String: Any?] in dictionaryOf(paymentDetails: v) }
+    }
+
+    static func asPaymentDetailsList(arr: [Any]) throws -> [PaymentDetails] {
+        var list = [PaymentDetails]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var paymentDetails = try asPaymentDetails(paymentDetails: val)
+                list.append(paymentDetails)
+            } else {
+                throw NSError(domain: "Unexpected type PaymentDetails", code: 0)
+            }
+        }
+        return list
+    }
+
     static func asPaymentStatus(paymentStatus: String) throws -> PaymentStatus {
         switch paymentStatus {
         case "pending":
@@ -3322,6 +3526,23 @@ class BreezSDKMapper {
         case .failed:
             return "failed"
         }
+    }
+
+    static func arrayOf(paymentStatusList: [PaymentStatus]) -> [String] {
+        return paymentStatusList.map { v -> String in valueOf(paymentStatus: v) }
+    }
+
+    static func asPaymentStatusList(arr: [Any]) throws -> [PaymentStatus] {
+        var list = [PaymentStatus]()
+        for value in arr {
+            if let val = value as? String {
+                var paymentStatus = try asPaymentStatus(paymentStatus: val)
+                list.append(paymentStatus)
+            } else {
+                throw NSError(domain: "Unexpected type PaymentStatus", code: 0)
+            }
+        }
+        return list
     }
 
     static func asPaymentType(paymentType: String) throws -> PaymentType {
@@ -3352,6 +3573,23 @@ class BreezSDKMapper {
         }
     }
 
+    static func arrayOf(paymentTypeList: [PaymentType]) -> [String] {
+        return paymentTypeList.map { v -> String in valueOf(paymentType: v) }
+    }
+
+    static func asPaymentTypeList(arr: [Any]) throws -> [PaymentType] {
+        var list = [PaymentType]()
+        for value in arr {
+            if let val = value as? String {
+                var paymentType = try asPaymentType(paymentType: val)
+                list.append(paymentType)
+            } else {
+                throw NSError(domain: "Unexpected type PaymentType", code: 0)
+            }
+        }
+        return list
+    }
+
     static func asPaymentTypeFilter(paymentTypeFilter: String) throws -> PaymentTypeFilter {
         switch paymentTypeFilter {
         case "sent":
@@ -3378,6 +3616,23 @@ class BreezSDKMapper {
         case .closedChannels:
             return "closedChannels"
         }
+    }
+
+    static func arrayOf(paymentTypeFilterList: [PaymentTypeFilter]) -> [String] {
+        return paymentTypeFilterList.map { v -> String in valueOf(paymentTypeFilter: v) }
+    }
+
+    static func asPaymentTypeFilterList(arr: [Any]) throws -> [PaymentTypeFilter] {
+        var list = [PaymentTypeFilter]()
+        for value in arr {
+            if let val = value as? String {
+                var paymentTypeFilter = try asPaymentTypeFilter(paymentTypeFilter: val)
+                list.append(paymentTypeFilter)
+            } else {
+                throw NSError(domain: "Unexpected type PaymentTypeFilter", code: 0)
+            }
+        }
+        return list
     }
 
     static func asReverseSwapStatus(reverseSwapStatus: String) throws -> ReverseSwapStatus {
@@ -3418,6 +3673,23 @@ class BreezSDKMapper {
         case .completedConfirmed:
             return "completedConfirmed"
         }
+    }
+
+    static func arrayOf(reverseSwapStatusList: [ReverseSwapStatus]) -> [String] {
+        return reverseSwapStatusList.map { v -> String in valueOf(reverseSwapStatus: v) }
+    }
+
+    static func asReverseSwapStatusList(arr: [Any]) throws -> [ReverseSwapStatus] {
+        var list = [ReverseSwapStatus]()
+        for value in arr {
+            if let val = value as? String {
+                var reverseSwapStatus = try asReverseSwapStatus(reverseSwapStatus: val)
+                list.append(reverseSwapStatus)
+            } else {
+                throw NSError(domain: "Unexpected type ReverseSwapStatus", code: 0)
+            }
+        }
+        return list
     }
 
     static func asSuccessActionProcessed(successActionProcessed: [String: Any?]) throws -> SuccessActionProcessed {
@@ -3472,6 +3744,23 @@ class BreezSDKMapper {
         }
     }
 
+    static func arrayOf(successActionProcessedList: [SuccessActionProcessed]) -> [Any] {
+        return successActionProcessedList.map { v -> [String: Any?] in dictionaryOf(successActionProcessed: v) }
+    }
+
+    static func asSuccessActionProcessedList(arr: [Any]) throws -> [SuccessActionProcessed] {
+        var list = [SuccessActionProcessed]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var successActionProcessed = try asSuccessActionProcessed(successActionProcessed: val)
+                list.append(successActionProcessed)
+            } else {
+                throw NSError(domain: "Unexpected type SuccessActionProcessed", code: 0)
+            }
+        }
+        return list
+    }
+
     static func asSwapStatus(swapStatus: String) throws -> SwapStatus {
         switch swapStatus {
         case "initial":
@@ -3492,5 +3781,22 @@ class BreezSDKMapper {
         case .expired:
             return "expired"
         }
+    }
+
+    static func arrayOf(swapStatusList: [SwapStatus]) -> [String] {
+        return swapStatusList.map { v -> String in valueOf(swapStatus: v) }
+    }
+
+    static func asSwapStatusList(arr: [Any]) throws -> [SwapStatus] {
+        var list = [SwapStatus]()
+        for value in arr {
+            if let val = value as? String {
+                var swapStatus = try asSwapStatus(swapStatus: val)
+                list.append(swapStatus)
+            } else {
+                throw NSError(domain: "Unexpected type SwapStatus", code: 0)
+            }
+        }
+        return list
     }
 }
