@@ -25,7 +25,7 @@ setup(
     packages=["breez_sdk"],
     package_dir={"breez_sdk": "./src/breez_sdk"},
     include_package_data=True,
-    package_data={"breez_sdk": ["*.dylib"]},
+    package_data={"breez_sdk": ["*.dylib", "*.so"]},
     url="https://github.com/breez/breez-sdk",
     author="Breez <contact@breez.technology>",
     license="MIT",
