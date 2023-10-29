@@ -131,26 +131,23 @@ jobs:
       - name: Clean downloaded contents
         working-directory: libs/sdk-bindings/bindings-python
         run: |
-          echo "Artifacts before cleaning"
-          ls -laR dist
           find dist -maxdepth 1 ! -path dist ! -name "python-wheel-*" -exec rm -rf {} \;
-          echo "Artifacts after cleaning"
           ls -laR dist
 
       # for developing, testing, and experimenting
-      - name: "Publish on test PyPI"
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          verbose: true
-          user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN }}
-          repository_url: https://test.pypi.org/legacy/
-          packages_dir: libs/sdk-bindings/bindings-python/dist/*/
-
-      # - name: "Publish on PyPI"
+      # - name: "Publish on test PyPI"
       #   uses: pypa/gh-action-pypi-publish@release/v1
       #   with:
       #     verbose: true
       #     user: __token__
       #     password: ${{ secrets.PYPI_API_TOKEN }}
+      #     repository_url: https://test.pypi.org/legacy/
       #     packages_dir: libs/sdk-bindings/bindings-python/dist/*/
+
+      - name: "Publish on PyPI"
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          verbose: true
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          packages_dir: libs/sdk-bindings/bindings-python/dist/*/
