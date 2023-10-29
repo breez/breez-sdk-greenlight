@@ -1422,7 +1422,7 @@ class SendPaymentRequest {
   /// The bolt11 invoice
   final String bolt11;
 
-  /// The amount to pay in millisatoshis
+  /// The amount to pay in millisatoshis. Should only be set when `bolt11` is a zero-amount invoice.
   final int? amountMsat;
 
   const SendPaymentRequest({

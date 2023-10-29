@@ -1,5 +1,4 @@
-use anyhow::{anyhow, Result};
-use bitcoin::secp256k1::PublicKey;
+use bitcoin::secp256k1::{self, PublicKey};
 use hex::ToHex;
 use lightning::routing::gossip::RoutingFees;
 use lightning::routing::*;
@@ -7,7 +6,54 @@ use lightning_invoice::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-use std::time::UNIX_EPOCH;
+use std::time::{SystemTimeError, UNIX_EPOCH};
+
+pub type InvoiceResult<T, E = InvoiceError> = Result<T, E>;
+
+#[derive(Debug, thiserror::Error)]
+pub enum InvoiceError {
+    #[error("Generic: {0}")]
+    Generic(#[from] anyhow::Error),
+
+    #[error("Validation: {0}")]
+    Validation(anyhow::Error),
+}
+
+impl From<lightning_invoice::CreationError> for InvoiceError {
+    fn from(err: lightning_invoice::CreationError) -> Self {
+        Self::Generic(anyhow::Error::new(err))
+    }
+}
+
+impl From<lightning_invoice::ParseError> for InvoiceError {
+    fn from(err: lightning_invoice::ParseError) -> Self {
+        Self::Validation(anyhow::Error::new(err))
+    }
+}
+
+impl From<lightning_invoice::SemanticError> for InvoiceError {
+    fn from(err: lightning_invoice::SemanticError) -> Self {
+        Self::Validation(anyhow::Error::new(err))
+    }
+}
+
+impl From<regex::Error> for InvoiceError {
+    fn from(err: regex::Error) -> Self {
+        Self::Generic(anyhow::Error::new(err))
+    }
+}
+
+impl From<secp256k1::Error> for InvoiceError {
+    fn from(err: secp256k1::Error) -> Self {
+        Self::Generic(anyhow::Error::new(err))
+    }
+}
+
+impl From<SystemTimeError> for InvoiceError {
+    fn from(err: SystemTimeError) -> Self {
+        Self::Generic(anyhow::Error::new(err))
+    }
+}
 
 /// Wrapper for a BOLT11 LN invoice
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -50,7 +96,7 @@ pub struct RouteHint {
 }
 
 impl RouteHint {
-    pub fn to_ldk_hint(&self) -> Result<router::RouteHint> {
+    pub fn to_ldk_hint(&self) -> InvoiceResult<router::RouteHint> {
         let mut hops = Vec::new();
         for hop in self.hops.iter() {
             let pubkey_res = PublicKey::from_str(&hop.src_node_id)?;
@@ -95,7 +141,7 @@ pub fn add_lsp_routing_hints(
     invoice: String,
     lsp_hint: Option<RouteHint>,
     new_amount_msats: u64,
-) -> Result<RawInvoice> {
+) -> InvoiceResult<RawInvoice> {
     let signed = invoice.parse::<SignedRawInvoice>()?;
     let invoice = Invoice::from_signed(signed)?;
 
@@ -138,16 +184,11 @@ pub fn add_lsp_routing_hints(
         invoice_builder = invoice_builder.private_route(hint);
     }
 
-    let invoice_builder = invoice_builder.build_raw();
-
-    match invoice_builder {
-        Ok(invoice) => Ok(invoice),
-        Err(err) => Err(anyhow!(err)),
-    }
+    Ok(invoice_builder.build_raw()?)
 }
 
 /// Parse a BOLT11 payment request and return a structure contains the parsed fields.
-pub fn parse_invoice(bolt11: &str) -> Result<LNInvoice> {
+pub fn parse_invoice(bolt11: &str) -> InvoiceResult<LNInvoice> {
     let re = Regex::new(r"(?i)^lightning:")?;
     let bolt11 = re.replace_all(bolt11, "");
     let signed = bolt11.parse::<SignedRawInvoice>()?;

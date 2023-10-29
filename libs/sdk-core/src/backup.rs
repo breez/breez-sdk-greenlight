@@ -1,5 +1,6 @@
 use crate::{
     breez_services::BackupFailedData,
+    error::SdkResult,
     persist::db::{HookEvent, SqliteStorage},
     BreezEvent, Config,
 };
@@ -63,8 +64,8 @@ pub struct BackupState {
 /// BackupTransport is the interface for syncing the sdk state between multiple apps.
 #[tonic::async_trait]
 pub trait BackupTransport: Send + Sync {
-    async fn pull(&self) -> Result<Option<BackupState>>;
-    async fn push(&self, version: Option<u64>, data: Vec<u8>) -> Result<u64>;
+    async fn pull(&self) -> SdkResult<Option<BackupState>>;
+    async fn push(&self, version: Option<u64>, data: Vec<u8>) -> SdkResult<u64>;
 }
 
 pub(crate) struct BackupWatcher {

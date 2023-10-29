@@ -50,7 +50,7 @@ async fn connect(config: Config, seed: &[u8]) -> Result<()> {
 
     BREEZ_SERVICES
         .set(service)
-        .map_err(|_| anyhow!("Failed to set Breez Service"))?;
+        .map_err(|_| anyhow!("Breez Services already initialized"))?;
 
     Ok(())
 }

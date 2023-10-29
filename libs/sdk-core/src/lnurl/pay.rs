@@ -1,11 +1,13 @@
-use crate::input_parser::*;
 use crate::invoice::parse_invoice;
 use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 use crate::lnurl::pay::model::{CallbackResponse, SuccessAction, ValidatedCallbackResponse};
 use crate::LnUrlErrorData;
-use anyhow::{anyhow, Result};
+use crate::{ensure_sdk, input_parser::*};
+use anyhow::anyhow;
 use bitcoin::hashes::{sha256, Hash};
 use std::str::FromStr;
+
+use super::error::{LnUrlError, LnUrlResult};
 
 type Aes256CbcEnc = cbc::Encryptor<aes::Aes256>;
 type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
@@ -18,7 +20,7 @@ pub(crate) async fn validate_lnurl_pay(
     user_amount_msat: u64,
     comment: Option<String>,
     req_data: LnUrlPayRequestData,
-) -> Result<ValidatedCallbackResponse> {
+) -> LnUrlResult<ValidatedCallbackResponse> {
     validate_user_input(
         user_amount_msat,
         &comment,
@@ -28,7 +30,9 @@ pub(crate) async fn validate_lnurl_pay(
     )?;
 
     let callback_url = build_pay_callback_url(user_amount_msat, &comment, &req_data)?;
-    let callback_resp_text = get_and_log_response(&callback_url).await?;
+    let callback_resp_text = get_and_log_response(&callback_url)
+        .await
+        .map_err(LnUrlError::ServiceConnectivity)?;
 
     if let Ok(err) = serde_json::from_str::<LnUrlErrorData>(&callback_resp_text) {
         Ok(ValidatedCallbackResponse::EndpointError { data: err })
@@ -53,9 +57,10 @@ fn build_pay_callback_url(
     user_amount_msat: u64,
     user_comment: &Option<String>,
     data: &LnUrlPayRequestData,
-) -> Result<String> {
+) -> LnUrlResult<String> {
     let amount_msat = user_amount_msat.to_string();
-    let mut url = reqwest::Url::from_str(&data.callback)?;
+    let mut url = reqwest::Url::from_str(&data.callback)
+        .map_err(|e| LnUrlError::InvalidUri(anyhow::Error::new(e)))?;
 
     url.query_pairs_mut().append_pair("amount", &amount_msat);
     if let Some(comment) = user_comment {
@@ -73,54 +78,69 @@ fn validate_user_input(
     condition_min_amount_msat: u64,
     condition_max_amount_msat: u64,
     condition_max_comment_len: u16,
-) -> Result<()> {
-    if user_amount_msat < condition_min_amount_msat {
-        return Err(anyhow!("Amount is smaller than the minimum allowed"));
-    }
+) -> LnUrlResult<()> {
+    ensure_sdk!(
+        user_amount_msat >= condition_min_amount_msat,
+        LnUrlError::Generic(anyhow!("Amount is smaller than the minimum allowed"))
+    );
 
-    if user_amount_msat > condition_max_amount_msat {
-        return Err(anyhow!("Amount is bigger than the maximum allowed"));
-    }
+    ensure_sdk!(
+        user_amount_msat <= condition_max_amount_msat,
+        LnUrlError::Generic(anyhow!("Amount is bigger than the maximum allowed"))
+    );
 
     match comment {
         None => Ok(()),
         Some(msg) => match msg.len() <= condition_max_comment_len as usize {
             true => Ok(()),
-            false => Err(anyhow!(
+            false => Err(LnUrlError::Generic(anyhow!(
                 "Comment is longer than the maximum allowed comment length"
-            )),
+            ))),
         },
     }
 }
 
-fn validate_invoice(user_amount_msat: u64, bolt11: &str, data: &LnUrlPayRequestData) -> Result<()> {
+fn validate_invoice(
+    user_amount_msat: u64,
+    bolt11: &str,
+    data: &LnUrlPayRequestData,
+) -> LnUrlResult<()> {
     let invoice = parse_invoice(bolt11)?;
 
     match invoice.description_hash {
-        None => return Err(anyhow!("Invoice is missing description hash")),
+        None => {
+            return Err(LnUrlError::Generic(anyhow!(
+                "Invoice is missing description hash"
+            )))
+        }
         Some(received_hash) => {
             // The hash is calculated from the exact metadata string, as received from the LNURL endpoint
             let calculated_hash = sha256::Hash::hash(data.metadata_str.as_bytes());
             if received_hash != calculated_hash.to_string() {
-                return Err(anyhow!("Invoice has an invalid description hash"));
+                return Err(LnUrlError::Generic(anyhow!(
+                    "Invoice has an invalid description hash"
+                )));
             }
         }
     }
 
     match invoice.amount_msat {
-        None => Err(anyhow!("Amount is bigger than the maximum allowed")),
+        None => Err(LnUrlError::Generic(anyhow!(
+            "Amount is bigger than the maximum allowed"
+        ))),
         Some(invoice_amount_msat) => match invoice_amount_msat == user_amount_msat {
             true => Ok(()),
-            false => Err(anyhow!(
+            false => Err(LnUrlError::Generic(anyhow!(
                 "Invoice amount is different than the user chosen amount"
-            )),
+            ))),
         },
     }
 }
 
 pub(crate) mod model {
-    use crate::input_parser::*;
+    use crate::lnurl::error::{LnUrlError, LnUrlResult};
     use crate::lnurl::pay::{Aes256CbcDec, Aes256CbcEnc};
+    use crate::{ensure_sdk, input_parser::*};
 
     use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
     use anyhow::{anyhow, Result};
@@ -229,23 +249,28 @@ pub(crate) mod model {
 
     impl AesSuccessActionData {
         /// Validates the fields, but does not decrypt and validate the ciphertext.
-        pub fn validate(&self) -> Result<()> {
-            if self.description.len() > 144 {
-                return Err(anyhow!(
+        pub fn validate(&self) -> LnUrlResult<()> {
+            ensure_sdk!(
+                self.description.len() <= 144,
+                LnUrlError::Generic(anyhow!(
                     "AES action description length is larger than the maximum allowed"
-                ));
-            }
+                ))
+            );
 
-            if self.ciphertext.len() > 4096 {
-                return Err(anyhow!(
+            ensure_sdk!(
+                self.ciphertext.len() <= 4096,
+                LnUrlError::Generic(anyhow!(
                     "AES action ciphertext length is larger than the maximum allowed"
-                ));
-            }
+                ))
+            );
+
             base64::decode(&self.ciphertext)?;
 
-            if self.iv.len() != 24 {
-                return Err(anyhow!("AES action iv has unexpected length"));
-            }
+            ensure_sdk!(
+                self.iv.len() == 24,
+                LnUrlError::Generic(anyhow!("AES action iv has unexpected length"))
+            );
+
             base64::decode(&self.iv)?;
 
             Ok(())
@@ -257,7 +282,7 @@ pub(crate) mod model {
                 Aes256CbcDec::new_from_slices(key, &base64::decode(&self.iv)?)?
                     .decrypt_padded_vec_mut::<Pkcs7>(&base64::decode(&self.ciphertext)?)?;
 
-            String::from_utf8(plaintext_bytes).map_err(|e| e.into())
+            Ok(String::from_utf8(plaintext_bytes)?)
         }
 
         /// Helper method that encrypts a given plaintext, with a given key and IV.
@@ -286,40 +311,42 @@ pub(crate) mod model {
     }
 
     impl MessageSuccessActionData {
-        pub fn validate(&self) -> Result<()> {
+        pub fn validate(&self) -> LnUrlResult<()> {
             match self.message.len() <= 144 {
                 true => Ok(()),
-                false => Err(anyhow!(
+                false => Err(LnUrlError::Generic(anyhow!(
                     "Success action message is longer than the maximum allowed length"
-                )),
+                ))),
             }
         }
     }
 
     impl UrlSuccessActionData {
-        pub fn validate(&self, data: &LnUrlPayRequestData) -> Result<()> {
+        pub fn validate(&self, data: &LnUrlPayRequestData) -> LnUrlResult<()> {
             match self.description.len() <= 144 {
                 true => Ok(()),
-                false => Err(anyhow!(
+                false => Err(LnUrlError::Generic(anyhow!(
                     "Success action description is longer than the maximum allowed length"
-                )),
+                ))),
             }
             .and_then(|_| {
-                let req_url = reqwest::Url::parse(&data.callback)?;
-                let req_domain = req_url
-                    .domain()
-                    .ok_or_else(|| anyhow!("Could not determine callback domain"))?;
+                let req_url = reqwest::Url::parse(&data.callback)
+                    .map_err(|e| LnUrlError::InvalidUri(anyhow::Error::new(e)))?;
+                let req_domain = req_url.domain().ok_or_else(|| {
+                    LnUrlError::InvalidUri(anyhow!("Could not determine callback domain"))
+                })?;
 
-                let action_res_url = reqwest::Url::parse(&self.url)?;
-                let action_res_domain = action_res_url
-                    .domain()
-                    .ok_or_else(|| anyhow!("Could not determine Success Action URL domain"))?;
+                let action_res_url = reqwest::Url::parse(&self.url)
+                    .map_err(|e| LnUrlError::InvalidUri(anyhow::Error::new(e)))?;
+                let action_res_domain = action_res_url.domain().ok_or_else(|| {
+                    LnUrlError::InvalidUri(anyhow!("Could not determine Success Action URL domain"))
+                })?;
 
                 match req_domain == action_res_domain {
                     true => Ok(()),
-                    false => Err(anyhow!(
+                    false => Err(LnUrlError::Generic(anyhow!(
                         "Success Action URL has different domain than the callback domain"
-                    )),
+                    ))),
                 }
             })
         }
