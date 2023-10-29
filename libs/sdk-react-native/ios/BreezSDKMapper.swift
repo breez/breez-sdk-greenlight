@@ -26,7 +26,7 @@ class BreezSDKMapper {
                 var aesSuccessActionDataDecrypted = try asAesSuccessActionDataDecrypted(aesSuccessActionDataDecrypted: val)
                 list.append(aesSuccessActionDataDecrypted)
             } else {
-                throw SdkError.Generic(message: "Invalid element type AesSuccessActionDataDecrypted")
+                throw SdkError.Generic(message: "Unexpected type AesSuccessActionDataDecrypted")
             }
         }
         return list
@@ -56,7 +56,7 @@ class BreezSDKMapper {
                 var backupFailedData = try asBackupFailedData(backupFailedData: val)
                 list.append(backupFailedData)
             } else {
-                throw SdkError.Generic(message: "Invalid element type BackupFailedData")
+                throw SdkError.Generic(message: "Unexpected type BackupFailedData")
             }
         }
         return list
@@ -90,7 +90,7 @@ class BreezSDKMapper {
                 var backupStatus = try asBackupStatus(backupStatus: val)
                 list.append(backupStatus)
             } else {
-                throw SdkError.Generic(message: "Invalid element type BackupStatus")
+                throw SdkError.Generic(message: "Unexpected type BackupStatus")
             }
         }
         return list
@@ -135,7 +135,7 @@ class BreezSDKMapper {
                 var bitcoinAddressData = try asBitcoinAddressData(bitcoinAddressData: val)
                 list.append(bitcoinAddressData)
             } else {
-                throw SdkError.Generic(message: "Invalid element type BitcoinAddressData")
+                throw SdkError.Generic(message: "Unexpected type BitcoinAddressData")
             }
         }
         return list
@@ -174,7 +174,7 @@ class BreezSDKMapper {
                 var buyBitcoinRequest = try asBuyBitcoinRequest(buyBitcoinRequest: val)
                 list.append(buyBitcoinRequest)
             } else {
-                throw SdkError.Generic(message: "Invalid element type BuyBitcoinRequest")
+                throw SdkError.Generic(message: "Unexpected type BuyBitcoinRequest")
             }
         }
         return list
@@ -211,7 +211,7 @@ class BreezSDKMapper {
                 var buyBitcoinResponse = try asBuyBitcoinResponse(buyBitcoinResponse: val)
                 list.append(buyBitcoinResponse)
             } else {
-                throw SdkError.Generic(message: "Invalid element type BuyBitcoinResponse")
+                throw SdkError.Generic(message: "Unexpected type BuyBitcoinResponse")
             }
         }
         return list
@@ -248,7 +248,7 @@ class BreezSDKMapper {
                 var checkMessageRequest = try asCheckMessageRequest(checkMessageRequest: val)
                 list.append(checkMessageRequest)
             } else {
-                throw SdkError.Generic(message: "Invalid element type CheckMessageRequest")
+                throw SdkError.Generic(message: "Unexpected type CheckMessageRequest")
             }
         }
         return list
@@ -278,7 +278,7 @@ class BreezSDKMapper {
                 var checkMessageResponse = try asCheckMessageResponse(checkMessageResponse: val)
                 list.append(checkMessageResponse)
             } else {
-                throw SdkError.Generic(message: "Invalid element type CheckMessageResponse")
+                throw SdkError.Generic(message: "Unexpected type CheckMessageResponse")
             }
         }
         return list
@@ -320,7 +320,7 @@ class BreezSDKMapper {
                 var closedChannelPaymentDetails = try asClosedChannelPaymentDetails(closedChannelPaymentDetails: val)
                 list.append(closedChannelPaymentDetails)
             } else {
-                throw SdkError.Generic(message: "Invalid element type ClosedChannelPaymentDetails")
+                throw SdkError.Generic(message: "Unexpected type ClosedChannelPaymentDetails")
             }
         }
         return list
@@ -381,7 +381,7 @@ class BreezSDKMapper {
                 var config = try asConfig(config: val)
                 list.append(config)
             } else {
-                throw SdkError.Generic(message: "Invalid element type Config")
+                throw SdkError.Generic(message: "Unexpected type Config")
             }
         }
         return list
@@ -445,7 +445,7 @@ class BreezSDKMapper {
                 var currencyInfo = try asCurrencyInfo(currencyInfo: val)
                 list.append(currencyInfo)
             } else {
-                throw SdkError.Generic(message: "Invalid element type CurrencyInfo")
+                throw SdkError.Generic(message: "Unexpected type CurrencyInfo")
             }
         }
         return list
@@ -480,7 +480,7 @@ class BreezSDKMapper {
                 var fiatCurrency = try asFiatCurrency(fiatCurrency: val)
                 list.append(fiatCurrency)
             } else {
-                throw SdkError.Generic(message: "Invalid element type FiatCurrency")
+                throw SdkError.Generic(message: "Unexpected type FiatCurrency")
             }
         }
         return list
@@ -514,7 +514,7 @@ class BreezSDKMapper {
                 var greenlightCredentials = try asGreenlightCredentials(greenlightCredentials: val)
                 list.append(greenlightCredentials)
             } else {
-                throw SdkError.Generic(message: "Invalid element type GreenlightCredentials")
+                throw SdkError.Generic(message: "Unexpected type GreenlightCredentials")
             }
         }
         return list
@@ -552,7 +552,7 @@ class BreezSDKMapper {
                 var greenlightNodeConfig = try asGreenlightNodeConfig(greenlightNodeConfig: val)
                 list.append(greenlightNodeConfig)
             } else {
-                throw SdkError.Generic(message: "Invalid element type GreenlightNodeConfig")
+                throw SdkError.Generic(message: "Unexpected type GreenlightNodeConfig")
             }
         }
         return list
@@ -586,7 +586,7 @@ class BreezSDKMapper {
                 var invoicePaidDetails = try asInvoicePaidDetails(invoicePaidDetails: val)
                 list.append(invoicePaidDetails)
             } else {
-                throw SdkError.Generic(message: "Invalid element type InvoicePaidDetails")
+                throw SdkError.Generic(message: "Unexpected type InvoicePaidDetails")
             }
         }
         return list
@@ -646,7 +646,7 @@ class BreezSDKMapper {
                 var lnInvoice = try asLnInvoice(lnInvoice: val)
                 list.append(lnInvoice)
             } else {
-                throw SdkError.Generic(message: "Invalid element type LnInvoice")
+                throw SdkError.Generic(message: "Unexpected type LnInvoice")
             }
         }
         return list
@@ -696,7 +696,7 @@ class BreezSDKMapper {
                 var listPaymentsRequest = try asListPaymentsRequest(listPaymentsRequest: val)
                 list.append(listPaymentsRequest)
             } else {
-                throw SdkError.Generic(message: "Invalid element type ListPaymentsRequest")
+                throw SdkError.Generic(message: "Unexpected type ListPaymentsRequest")
             }
         }
         return list
@@ -758,7 +758,7 @@ class BreezSDKMapper {
                 var lnPaymentDetails = try asLnPaymentDetails(lnPaymentDetails: val)
                 list.append(lnPaymentDetails)
             } else {
-                throw SdkError.Generic(message: "Invalid element type LnPaymentDetails")
+                throw SdkError.Generic(message: "Unexpected type LnPaymentDetails")
             }
         }
         return list
@@ -798,7 +798,7 @@ class BreezSDKMapper {
                 var lnUrlAuthRequestData = try asLnUrlAuthRequestData(lnUrlAuthRequestData: val)
                 list.append(lnUrlAuthRequestData)
             } else {
-                throw SdkError.Generic(message: "Invalid element type LnUrlAuthRequestData")
+                throw SdkError.Generic(message: "Unexpected type LnUrlAuthRequestData")
             }
         }
         return list
@@ -828,7 +828,7 @@ class BreezSDKMapper {
                 var lnUrlErrorData = try asLnUrlErrorData(lnUrlErrorData: val)
                 list.append(lnUrlErrorData)
             } else {
-                throw SdkError.Generic(message: "Invalid element type LnUrlErrorData")
+                throw SdkError.Generic(message: "Unexpected type LnUrlErrorData")
             }
         }
         return list
@@ -867,7 +867,7 @@ class BreezSDKMapper {
                 var lnUrlPayRequest = try asLnUrlPayRequest(lnUrlPayRequest: val)
                 list.append(lnUrlPayRequest)
             } else {
-                throw SdkError.Generic(message: "Invalid element type LnUrlPayRequest")
+                throw SdkError.Generic(message: "Unexpected type LnUrlPayRequest")
             }
         }
         return list
@@ -916,7 +916,7 @@ class BreezSDKMapper {
                 var lnUrlPayRequestData = try asLnUrlPayRequestData(lnUrlPayRequestData: val)
                 list.append(lnUrlPayRequestData)
             } else {
-                throw SdkError.Generic(message: "Invalid element type LnUrlPayRequestData")
+                throw SdkError.Generic(message: "Unexpected type LnUrlPayRequestData")
             }
         }
         return list
@@ -955,7 +955,7 @@ class BreezSDKMapper {
                 var lnUrlWithdrawRequest = try asLnUrlWithdrawRequest(lnUrlWithdrawRequest: val)
                 list.append(lnUrlWithdrawRequest)
             } else {
-                throw SdkError.Generic(message: "Invalid element type LnUrlWithdrawRequest")
+                throw SdkError.Generic(message: "Unexpected type LnUrlWithdrawRequest")
             }
         }
         return list
@@ -998,7 +998,7 @@ class BreezSDKMapper {
                 var lnUrlWithdrawRequestData = try asLnUrlWithdrawRequestData(lnUrlWithdrawRequestData: val)
                 list.append(lnUrlWithdrawRequestData)
             } else {
-                throw SdkError.Generic(message: "Invalid element type LnUrlWithdrawRequestData")
+                throw SdkError.Generic(message: "Unexpected type LnUrlWithdrawRequestData")
             }
         }
         return list
@@ -1029,7 +1029,7 @@ class BreezSDKMapper {
                 var lnUrlWithdrawSuccessData = try asLnUrlWithdrawSuccessData(lnUrlWithdrawSuccessData: val)
                 list.append(lnUrlWithdrawSuccessData)
             } else {
-                throw SdkError.Generic(message: "Invalid element type LnUrlWithdrawSuccessData")
+                throw SdkError.Generic(message: "Unexpected type LnUrlWithdrawSuccessData")
             }
         }
         return list
@@ -1067,7 +1067,7 @@ class BreezSDKMapper {
                 var localeOverrides = try asLocaleOverrides(localeOverrides: val)
                 list.append(localeOverrides)
             } else {
-                throw SdkError.Generic(message: "Invalid element type LocaleOverrides")
+                throw SdkError.Generic(message: "Unexpected type LocaleOverrides")
             }
         }
         return list
@@ -1101,7 +1101,7 @@ class BreezSDKMapper {
                 var localizedName = try asLocalizedName(localizedName: val)
                 list.append(localizedName)
             } else {
-                throw SdkError.Generic(message: "Invalid element type LocalizedName")
+                throw SdkError.Generic(message: "Unexpected type LocalizedName")
             }
         }
         return list
@@ -1135,7 +1135,7 @@ class BreezSDKMapper {
                 var logEntry = try asLogEntry(logEntry: val)
                 list.append(logEntry)
             } else {
-                throw SdkError.Generic(message: "Invalid element type LogEntry")
+                throw SdkError.Generic(message: "Unexpected type LogEntry")
             }
         }
         return list
@@ -1203,7 +1203,7 @@ class BreezSDKMapper {
                 var lspInformation = try asLspInformation(lspInformation: val)
                 list.append(lspInformation)
             } else {
-                throw SdkError.Generic(message: "Invalid element type LspInformation")
+                throw SdkError.Generic(message: "Unexpected type LspInformation")
             }
         }
         return list
@@ -1233,7 +1233,7 @@ class BreezSDKMapper {
                 var messageSuccessActionData = try asMessageSuccessActionData(messageSuccessActionData: val)
                 list.append(messageSuccessActionData)
             } else {
-                throw SdkError.Generic(message: "Invalid element type MessageSuccessActionData")
+                throw SdkError.Generic(message: "Unexpected type MessageSuccessActionData")
             }
         }
         return list
@@ -1267,7 +1267,7 @@ class BreezSDKMapper {
                 var metadataItem = try asMetadataItem(metadataItem: val)
                 list.append(metadataItem)
             } else {
-                throw SdkError.Generic(message: "Invalid element type MetadataItem")
+                throw SdkError.Generic(message: "Unexpected type MetadataItem")
             }
         }
         return list
@@ -1330,7 +1330,7 @@ class BreezSDKMapper {
                 var nodeState = try asNodeState(nodeState: val)
                 list.append(nodeState)
             } else {
-                throw SdkError.Generic(message: "Invalid element type NodeState")
+                throw SdkError.Generic(message: "Unexpected type NodeState")
             }
         }
         return list
@@ -1364,7 +1364,7 @@ class BreezSDKMapper {
                 var openChannelFeeRequest = try asOpenChannelFeeRequest(openChannelFeeRequest: val)
                 list.append(openChannelFeeRequest)
             } else {
-                throw SdkError.Generic(message: "Invalid element type OpenChannelFeeRequest")
+                throw SdkError.Generic(message: "Unexpected type OpenChannelFeeRequest")
             }
         }
         return list
@@ -1401,7 +1401,7 @@ class BreezSDKMapper {
                 var openChannelFeeResponse = try asOpenChannelFeeResponse(openChannelFeeResponse: val)
                 list.append(openChannelFeeResponse)
             } else {
-                throw SdkError.Generic(message: "Invalid element type OpenChannelFeeResponse")
+                throw SdkError.Generic(message: "Unexpected type OpenChannelFeeResponse")
             }
         }
         return list
@@ -1447,7 +1447,7 @@ class BreezSDKMapper {
                 var openingFeeParams = try asOpeningFeeParams(openingFeeParams: val)
                 list.append(openingFeeParams)
             } else {
-                throw SdkError.Generic(message: "Invalid element type OpeningFeeParams")
+                throw SdkError.Generic(message: "Unexpected type OpeningFeeParams")
             }
         }
         return list
@@ -1478,7 +1478,7 @@ class BreezSDKMapper {
                 var openingFeeParamsMenu = try asOpeningFeeParamsMenu(openingFeeParamsMenu: val)
                 list.append(openingFeeParamsMenu)
             } else {
-                throw SdkError.Generic(message: "Invalid element type OpeningFeeParamsMenu")
+                throw SdkError.Generic(message: "Unexpected type OpeningFeeParamsMenu")
             }
         }
         return list
@@ -1535,7 +1535,7 @@ class BreezSDKMapper {
                 var payment = try asPayment(payment: val)
                 list.append(payment)
             } else {
-                throw SdkError.Generic(message: "Invalid element type Payment")
+                throw SdkError.Generic(message: "Unexpected type Payment")
             }
         }
         return list
@@ -1575,7 +1575,7 @@ class BreezSDKMapper {
                 var paymentFailedData = try asPaymentFailedData(paymentFailedData: val)
                 list.append(paymentFailedData)
             } else {
-                throw SdkError.Generic(message: "Invalid element type PaymentFailedData")
+                throw SdkError.Generic(message: "Unexpected type PaymentFailedData")
             }
         }
         return list
@@ -1612,7 +1612,7 @@ class BreezSDKMapper {
                 var prepareRefundRequest = try asPrepareRefundRequest(prepareRefundRequest: val)
                 list.append(prepareRefundRequest)
             } else {
-                throw SdkError.Generic(message: "Invalid element type PrepareRefundRequest")
+                throw SdkError.Generic(message: "Unexpected type PrepareRefundRequest")
             }
         }
         return list
@@ -1646,7 +1646,7 @@ class BreezSDKMapper {
                 var prepareRefundResponse = try asPrepareRefundResponse(prepareRefundResponse: val)
                 list.append(prepareRefundResponse)
             } else {
-                throw SdkError.Generic(message: "Invalid element type PrepareRefundResponse")
+                throw SdkError.Generic(message: "Unexpected type PrepareRefundResponse")
             }
         }
         return list
@@ -1680,7 +1680,7 @@ class BreezSDKMapper {
                 var prepareSweepRequest = try asPrepareSweepRequest(prepareSweepRequest: val)
                 list.append(prepareSweepRequest)
             } else {
-                throw SdkError.Generic(message: "Invalid element type PrepareSweepRequest")
+                throw SdkError.Generic(message: "Unexpected type PrepareSweepRequest")
             }
         }
         return list
@@ -1714,7 +1714,7 @@ class BreezSDKMapper {
                 var prepareSweepResponse = try asPrepareSweepResponse(prepareSweepResponse: val)
                 list.append(prepareSweepResponse)
             } else {
-                throw SdkError.Generic(message: "Invalid element type PrepareSweepResponse")
+                throw SdkError.Generic(message: "Unexpected type PrepareSweepResponse")
             }
         }
         return list
@@ -1748,7 +1748,7 @@ class BreezSDKMapper {
                 var rate = try asRate(rate: val)
                 list.append(rate)
             } else {
-                throw SdkError.Generic(message: "Invalid element type Rate")
+                throw SdkError.Generic(message: "Unexpected type Rate")
             }
         }
         return list
@@ -1781,7 +1781,7 @@ class BreezSDKMapper {
                 var receiveOnchainRequest = try asReceiveOnchainRequest(receiveOnchainRequest: val)
                 list.append(receiveOnchainRequest)
             } else {
-                throw SdkError.Generic(message: "Invalid element type ReceiveOnchainRequest")
+                throw SdkError.Generic(message: "Unexpected type ReceiveOnchainRequest")
             }
         }
         return list
@@ -1834,7 +1834,7 @@ class BreezSDKMapper {
                 var receivePaymentRequest = try asReceivePaymentRequest(receivePaymentRequest: val)
                 list.append(receivePaymentRequest)
             } else {
-                throw SdkError.Generic(message: "Invalid element type ReceivePaymentRequest")
+                throw SdkError.Generic(message: "Unexpected type ReceivePaymentRequest")
             }
         }
         return list
@@ -1877,7 +1877,7 @@ class BreezSDKMapper {
                 var receivePaymentResponse = try asReceivePaymentResponse(receivePaymentResponse: val)
                 list.append(receivePaymentResponse)
             } else {
-                throw SdkError.Generic(message: "Invalid element type ReceivePaymentResponse")
+                throw SdkError.Generic(message: "Unexpected type ReceivePaymentResponse")
             }
         }
         return list
@@ -1920,7 +1920,7 @@ class BreezSDKMapper {
                 var recommendedFees = try asRecommendedFees(recommendedFees: val)
                 list.append(recommendedFees)
             } else {
-                throw SdkError.Generic(message: "Invalid element type RecommendedFees")
+                throw SdkError.Generic(message: "Unexpected type RecommendedFees")
             }
         }
         return list
@@ -1957,7 +1957,7 @@ class BreezSDKMapper {
                 var refundRequest = try asRefundRequest(refundRequest: val)
                 list.append(refundRequest)
             } else {
-                throw SdkError.Generic(message: "Invalid element type RefundRequest")
+                throw SdkError.Generic(message: "Unexpected type RefundRequest")
             }
         }
         return list
@@ -1987,7 +1987,7 @@ class BreezSDKMapper {
                 var refundResponse = try asRefundResponse(refundResponse: val)
                 list.append(refundResponse)
             } else {
-                throw SdkError.Generic(message: "Invalid element type RefundResponse")
+                throw SdkError.Generic(message: "Unexpected type RefundResponse")
             }
         }
         return list
@@ -2017,7 +2017,7 @@ class BreezSDKMapper {
                 var reverseSwapFeesRequest = try asReverseSwapFeesRequest(reverseSwapFeesRequest: val)
                 list.append(reverseSwapFeesRequest)
             } else {
-                throw SdkError.Generic(message: "Invalid element type ReverseSwapFeesRequest")
+                throw SdkError.Generic(message: "Unexpected type ReverseSwapFeesRequest")
             }
         }
         return list
@@ -2064,7 +2064,7 @@ class BreezSDKMapper {
                 var reverseSwapInfo = try asReverseSwapInfo(reverseSwapInfo: val)
                 list.append(reverseSwapInfo)
             } else {
-                throw SdkError.Generic(message: "Invalid element type ReverseSwapInfo")
+                throw SdkError.Generic(message: "Unexpected type ReverseSwapInfo")
             }
         }
         return list
@@ -2113,7 +2113,7 @@ class BreezSDKMapper {
                 var reverseSwapPairInfo = try asReverseSwapPairInfo(reverseSwapPairInfo: val)
                 list.append(reverseSwapPairInfo)
             } else {
-                throw SdkError.Generic(message: "Invalid element type ReverseSwapPairInfo")
+                throw SdkError.Generic(message: "Unexpected type ReverseSwapPairInfo")
             }
         }
         return list
@@ -2144,7 +2144,7 @@ class BreezSDKMapper {
                 var routeHint = try asRouteHint(routeHint: val)
                 list.append(routeHint)
             } else {
-                throw SdkError.Generic(message: "Invalid element type RouteHint")
+                throw SdkError.Generic(message: "Unexpected type RouteHint")
             }
         }
         return list
@@ -2193,7 +2193,7 @@ class BreezSDKMapper {
                 var routeHintHop = try asRouteHintHop(routeHintHop: val)
                 list.append(routeHintHop)
             } else {
-                throw SdkError.Generic(message: "Invalid element type RouteHintHop")
+                throw SdkError.Generic(message: "Unexpected type RouteHintHop")
             }
         }
         return list
@@ -2233,7 +2233,7 @@ class BreezSDKMapper {
                 var sendOnchainRequest = try asSendOnchainRequest(sendOnchainRequest: val)
                 list.append(sendOnchainRequest)
             } else {
-                throw SdkError.Generic(message: "Invalid element type SendOnchainRequest")
+                throw SdkError.Generic(message: "Unexpected type SendOnchainRequest")
             }
         }
         return list
@@ -2264,7 +2264,7 @@ class BreezSDKMapper {
                 var sendOnchainResponse = try asSendOnchainResponse(sendOnchainResponse: val)
                 list.append(sendOnchainResponse)
             } else {
-                throw SdkError.Generic(message: "Invalid element type SendOnchainResponse")
+                throw SdkError.Generic(message: "Unexpected type SendOnchainResponse")
             }
         }
         return list
@@ -2298,7 +2298,7 @@ class BreezSDKMapper {
                 var sendPaymentRequest = try asSendPaymentRequest(sendPaymentRequest: val)
                 list.append(sendPaymentRequest)
             } else {
-                throw SdkError.Generic(message: "Invalid element type SendPaymentRequest")
+                throw SdkError.Generic(message: "Unexpected type SendPaymentRequest")
             }
         }
         return list
@@ -2329,7 +2329,7 @@ class BreezSDKMapper {
                 var sendPaymentResponse = try asSendPaymentResponse(sendPaymentResponse: val)
                 list.append(sendPaymentResponse)
             } else {
-                throw SdkError.Generic(message: "Invalid element type SendPaymentResponse")
+                throw SdkError.Generic(message: "Unexpected type SendPaymentResponse")
             }
         }
         return list
@@ -2363,7 +2363,7 @@ class BreezSDKMapper {
                 var sendSpontaneousPaymentRequest = try asSendSpontaneousPaymentRequest(sendSpontaneousPaymentRequest: val)
                 list.append(sendSpontaneousPaymentRequest)
             } else {
-                throw SdkError.Generic(message: "Invalid element type SendSpontaneousPaymentRequest")
+                throw SdkError.Generic(message: "Unexpected type SendSpontaneousPaymentRequest")
             }
         }
         return list
@@ -2393,7 +2393,7 @@ class BreezSDKMapper {
                 var signMessageRequest = try asSignMessageRequest(signMessageRequest: val)
                 list.append(signMessageRequest)
             } else {
-                throw SdkError.Generic(message: "Invalid element type SignMessageRequest")
+                throw SdkError.Generic(message: "Unexpected type SignMessageRequest")
             }
         }
         return list
@@ -2423,7 +2423,7 @@ class BreezSDKMapper {
                 var signMessageResponse = try asSignMessageResponse(signMessageResponse: val)
                 list.append(signMessageResponse)
             } else {
-                throw SdkError.Generic(message: "Invalid element type SignMessageResponse")
+                throw SdkError.Generic(message: "Unexpected type SignMessageResponse")
             }
         }
         return list
@@ -2453,7 +2453,7 @@ class BreezSDKMapper {
                 var staticBackupRequest = try asStaticBackupRequest(staticBackupRequest: val)
                 list.append(staticBackupRequest)
             } else {
-                throw SdkError.Generic(message: "Invalid element type StaticBackupRequest")
+                throw SdkError.Generic(message: "Unexpected type StaticBackupRequest")
             }
         }
         return list
@@ -2483,7 +2483,7 @@ class BreezSDKMapper {
                 var staticBackupResponse = try asStaticBackupResponse(staticBackupResponse: val)
                 list.append(staticBackupResponse)
             } else {
-                throw SdkError.Generic(message: "Invalid element type StaticBackupResponse")
+                throw SdkError.Generic(message: "Unexpected type StaticBackupResponse")
             }
         }
         return list
@@ -2579,7 +2579,7 @@ class BreezSDKMapper {
                 var swapInfo = try asSwapInfo(swapInfo: val)
                 list.append(swapInfo)
             } else {
-                throw SdkError.Generic(message: "Invalid element type SwapInfo")
+                throw SdkError.Generic(message: "Unexpected type SwapInfo")
             }
         }
         return list
@@ -2613,7 +2613,7 @@ class BreezSDKMapper {
                 var sweepRequest = try asSweepRequest(sweepRequest: val)
                 list.append(sweepRequest)
             } else {
-                throw SdkError.Generic(message: "Invalid element type SweepRequest")
+                throw SdkError.Generic(message: "Unexpected type SweepRequest")
             }
         }
         return list
@@ -2643,7 +2643,7 @@ class BreezSDKMapper {
                 var sweepResponse = try asSweepResponse(sweepResponse: val)
                 list.append(sweepResponse)
             } else {
-                throw SdkError.Generic(message: "Invalid element type SweepResponse")
+                throw SdkError.Generic(message: "Unexpected type SweepResponse")
             }
         }
         return list
@@ -2683,7 +2683,7 @@ class BreezSDKMapper {
                 var symbol = try asSymbol(symbol: val)
                 list.append(symbol)
             } else {
-                throw SdkError.Generic(message: "Invalid element type Symbol")
+                throw SdkError.Generic(message: "Unexpected type Symbol")
             }
         }
         return list
@@ -2726,7 +2726,7 @@ class BreezSDKMapper {
                 var unspentTransactionOutput = try asUnspentTransactionOutput(unspentTransactionOutput: val)
                 list.append(unspentTransactionOutput)
             } else {
-                throw SdkError.Generic(message: "Invalid element type UnspentTransactionOutput")
+                throw SdkError.Generic(message: "Unexpected type UnspentTransactionOutput")
             }
         }
         return list
@@ -2760,7 +2760,7 @@ class BreezSDKMapper {
                 var urlSuccessActionData = try asUrlSuccessActionData(urlSuccessActionData: val)
                 list.append(urlSuccessActionData)
             } else {
-                throw SdkError.Generic(message: "Invalid element type UrlSuccessActionData")
+                throw SdkError.Generic(message: "Unexpected type UrlSuccessActionData")
             }
         }
         return list
@@ -2810,7 +2810,7 @@ class BreezSDKMapper {
             return BreezEvent.backupFailed(details: _details)
         }
 
-        throw SdkError.Generic(message: "Invalid enum variant \(type) for enum BreezEvent")
+        throw SdkError.Generic(message: "Unexpected type \(type) for enum BreezEvent")
     }
 
     static func dictionaryOf(breezEvent: BreezEvent) -> [String: Any?] {
@@ -2883,7 +2883,7 @@ class BreezSDKMapper {
                 var breezEvent = try asBreezEvent(breezEvent: val)
                 list.append(breezEvent)
             } else {
-                throw NSError(domain: "Unexpected type BreezEvent", code: 0)
+                throw SdkError.Generic(message: "Unexpected type BreezEvent")
             }
         }
         return list
@@ -2916,7 +2916,7 @@ class BreezSDKMapper {
                 var buyBitcoinProvider = try asBuyBitcoinProvider(buyBitcoinProvider: val)
                 list.append(buyBitcoinProvider)
             } else {
-                throw NSError(domain: "Unexpected type BuyBitcoinProvider", code: 0)
+                throw SdkError.Generic(message: "Unexpected type BuyBitcoinProvider")
             }
         }
         return list
@@ -2967,7 +2967,7 @@ class BreezSDKMapper {
                 var channelState = try asChannelState(channelState: val)
                 list.append(channelState)
             } else {
-                throw NSError(domain: "Unexpected type ChannelState", code: 0)
+                throw SdkError.Generic(message: "Unexpected type ChannelState")
             }
         }
         return list
@@ -3006,7 +3006,7 @@ class BreezSDKMapper {
                 var environmentType = try asEnvironmentType(environmentType: val)
                 list.append(environmentType)
             } else {
-                throw NSError(domain: "Unexpected type EnvironmentType", code: 0)
+                throw SdkError.Generic(message: "Unexpected type EnvironmentType")
             }
         }
         return list
@@ -3051,7 +3051,7 @@ class BreezSDKMapper {
                 var feeratePreset = try asFeeratePreset(feeratePreset: val)
                 list.append(feeratePreset)
             } else {
-                throw NSError(domain: "Unexpected type FeeratePreset", code: 0)
+                throw SdkError.Generic(message: "Unexpected type FeeratePreset")
             }
         }
         return list
@@ -3104,7 +3104,7 @@ class BreezSDKMapper {
             return InputType.lnUrlError(data: _data)
         }
 
-        throw SdkError.Generic(message: "Invalid enum variant \(type) for enum InputType")
+        throw SdkError.Generic(message: "Unexpected type \(type) for enum InputType")
     }
 
     static func dictionaryOf(inputType: InputType) -> [String: Any?] {
@@ -3186,7 +3186,7 @@ class BreezSDKMapper {
                 var inputType = try asInputType(inputType: val)
                 list.append(inputType)
             } else {
-                throw NSError(domain: "Unexpected type InputType", code: 0)
+                throw SdkError.Generic(message: "Unexpected type InputType")
             }
         }
         return list
@@ -3204,7 +3204,7 @@ class BreezSDKMapper {
             return LnUrlCallbackStatus.errorStatus(data: _data)
         }
 
-        throw SdkError.Generic(message: "Invalid enum variant \(type) for enum LnUrlCallbackStatus")
+        throw SdkError.Generic(message: "Unexpected type \(type) for enum LnUrlCallbackStatus")
     }
 
     static func dictionaryOf(lnUrlCallbackStatus: LnUrlCallbackStatus) -> [String: Any?] {
@@ -3235,7 +3235,7 @@ class BreezSDKMapper {
                 var lnUrlCallbackStatus = try asLnUrlCallbackStatus(lnUrlCallbackStatus: val)
                 list.append(lnUrlCallbackStatus)
             } else {
-                throw NSError(domain: "Unexpected type LnUrlCallbackStatus", code: 0)
+                throw SdkError.Generic(message: "Unexpected type LnUrlCallbackStatus")
             }
         }
         return list
@@ -3258,7 +3258,7 @@ class BreezSDKMapper {
             return LnUrlPayResult.endpointError(data: _data)
         }
 
-        throw SdkError.Generic(message: "Invalid enum variant \(type) for enum LnUrlPayResult")
+        throw SdkError.Generic(message: "Unexpected type \(type) for enum LnUrlPayResult")
     }
 
     static func dictionaryOf(lnUrlPayResult: LnUrlPayResult) -> [String: Any?] {
@@ -3292,7 +3292,7 @@ class BreezSDKMapper {
                 var lnUrlPayResult = try asLnUrlPayResult(lnUrlPayResult: val)
                 list.append(lnUrlPayResult)
             } else {
-                throw NSError(domain: "Unexpected type LnUrlPayResult", code: 0)
+                throw SdkError.Generic(message: "Unexpected type LnUrlPayResult")
             }
         }
         return list
@@ -3313,7 +3313,7 @@ class BreezSDKMapper {
             return LnUrlWithdrawResult.errorStatus(data: _data)
         }
 
-        throw SdkError.Generic(message: "Invalid enum variant \(type) for enum LnUrlWithdrawResult")
+        throw SdkError.Generic(message: "Unexpected type \(type) for enum LnUrlWithdrawResult")
     }
 
     static func dictionaryOf(lnUrlWithdrawResult: LnUrlWithdrawResult) -> [String: Any?] {
@@ -3347,7 +3347,7 @@ class BreezSDKMapper {
                 var lnUrlWithdrawResult = try asLnUrlWithdrawResult(lnUrlWithdrawResult: val)
                 list.append(lnUrlWithdrawResult)
             } else {
-                throw NSError(domain: "Unexpected type LnUrlWithdrawResult", code: 0)
+                throw SdkError.Generic(message: "Unexpected type LnUrlWithdrawResult")
             }
         }
         return list
@@ -3398,7 +3398,7 @@ class BreezSDKMapper {
                 var network = try asNetwork(network: val)
                 list.append(network)
             } else {
-                throw NSError(domain: "Unexpected type Network", code: 0)
+                throw SdkError.Generic(message: "Unexpected type Network")
             }
         }
         return list
@@ -3413,7 +3413,7 @@ class BreezSDKMapper {
             return NodeConfig.greenlight(config: _config)
         }
 
-        throw SdkError.Generic(message: "Invalid enum variant \(type) for enum NodeConfig")
+        throw SdkError.Generic(message: "Unexpected type \(type) for enum NodeConfig")
     }
 
     static func dictionaryOf(nodeConfig: NodeConfig) -> [String: Any?] {
@@ -3439,7 +3439,7 @@ class BreezSDKMapper {
                 var nodeConfig = try asNodeConfig(nodeConfig: val)
                 list.append(nodeConfig)
             } else {
-                throw NSError(domain: "Unexpected type NodeConfig", code: 0)
+                throw SdkError.Generic(message: "Unexpected type NodeConfig")
             }
         }
         return list
@@ -3460,7 +3460,7 @@ class BreezSDKMapper {
             return PaymentDetails.closedChannel(data: _data)
         }
 
-        throw SdkError.Generic(message: "Invalid enum variant \(type) for enum PaymentDetails")
+        throw SdkError.Generic(message: "Unexpected type \(type) for enum PaymentDetails")
     }
 
     static func dictionaryOf(paymentDetails: PaymentDetails) -> [String: Any?] {
@@ -3494,7 +3494,7 @@ class BreezSDKMapper {
                 var paymentDetails = try asPaymentDetails(paymentDetails: val)
                 list.append(paymentDetails)
             } else {
-                throw NSError(domain: "Unexpected type PaymentDetails", code: 0)
+                throw SdkError.Generic(message: "Unexpected type PaymentDetails")
             }
         }
         return list
@@ -3539,7 +3539,7 @@ class BreezSDKMapper {
                 var paymentStatus = try asPaymentStatus(paymentStatus: val)
                 list.append(paymentStatus)
             } else {
-                throw NSError(domain: "Unexpected type PaymentStatus", code: 0)
+                throw SdkError.Generic(message: "Unexpected type PaymentStatus")
             }
         }
         return list
@@ -3584,7 +3584,7 @@ class BreezSDKMapper {
                 var paymentType = try asPaymentType(paymentType: val)
                 list.append(paymentType)
             } else {
-                throw NSError(domain: "Unexpected type PaymentType", code: 0)
+                throw SdkError.Generic(message: "Unexpected type PaymentType")
             }
         }
         return list
@@ -3629,7 +3629,7 @@ class BreezSDKMapper {
                 var paymentTypeFilter = try asPaymentTypeFilter(paymentTypeFilter: val)
                 list.append(paymentTypeFilter)
             } else {
-                throw NSError(domain: "Unexpected type PaymentTypeFilter", code: 0)
+                throw SdkError.Generic(message: "Unexpected type PaymentTypeFilter")
             }
         }
         return list
@@ -3686,7 +3686,7 @@ class BreezSDKMapper {
                 var reverseSwapStatus = try asReverseSwapStatus(reverseSwapStatus: val)
                 list.append(reverseSwapStatus)
             } else {
-                throw NSError(domain: "Unexpected type ReverseSwapStatus", code: 0)
+                throw SdkError.Generic(message: "Unexpected type ReverseSwapStatus")
             }
         }
         return list
@@ -3713,7 +3713,7 @@ class BreezSDKMapper {
             return SuccessActionProcessed.url(data: _data)
         }
 
-        throw SdkError.Generic(message: "Invalid enum variant \(type) for enum SuccessActionProcessed")
+        throw SdkError.Generic(message: "Unexpected type \(type) for enum SuccessActionProcessed")
     }
 
     static func dictionaryOf(successActionProcessed: SuccessActionProcessed) -> [String: Any?] {
@@ -3755,7 +3755,7 @@ class BreezSDKMapper {
                 var successActionProcessed = try asSuccessActionProcessed(successActionProcessed: val)
                 list.append(successActionProcessed)
             } else {
-                throw NSError(domain: "Unexpected type SuccessActionProcessed", code: 0)
+                throw SdkError.Generic(message: "Unexpected type SuccessActionProcessed")
             }
         }
         return list
@@ -3794,7 +3794,7 @@ class BreezSDKMapper {
                 var swapStatus = try asSwapStatus(swapStatus: val)
                 list.append(swapStatus)
             } else {
-                throw NSError(domain: "Unexpected type SwapStatus", code: 0)
+                throw SdkError.Generic(message: "Unexpected type SwapStatus")
             }
         }
         return list

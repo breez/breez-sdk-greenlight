@@ -4,6 +4,7 @@ use std::sync::Arc;
 use crate::binding::parse_invoice;
 use crate::chain::{get_utxos, AddressUtxos, ChainService, MempoolSpace, OnchainTx};
 use crate::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
+use crate::swap_in::error::SwapError;
 use crate::{
     OpeningFeeParams, PrepareRefundRequest, PrepareRefundResponse, ReceivePaymentRequest,
     RefundRequest, RefundResponse, SWAP_PAYMENT_FEE_EXPIRY_SECONDS,
@@ -25,6 +26,8 @@ use ripemd::{Digest, Ripemd160};
 use crate::breez_services::{BreezEvent, BreezServer, PaymentReceiver, Receiver};
 use crate::models::{Swap, SwapInfo, SwapStatus, SwapperAPI};
 
+use super::error::SwapResult;
+
 #[tonic::async_trait]
 impl SwapperAPI for BreezServer {
     async fn create_swap(
@@ -32,7 +35,7 @@ impl SwapperAPI for BreezServer {
         hash: Vec<u8>,
         payer_pubkey: Vec<u8>,
         node_id: String,
-    ) -> Result<Swap> {
+    ) -> SwapResult<Swap> {
         let mut fund_client = self.get_fund_manager_client().await?;
         let req = AddFundInitRequest {
             hash: hash.clone(),
@@ -135,11 +138,11 @@ impl BTCReceiveSwap {
     pub(crate) async fn create_swap_address(
         &self,
         channel_opening_fees: OpeningFeeParams,
-    ) -> Result<SwapInfo> {
-        let node_state = self.persister.get_node_state()?;
-        if node_state.is_none() {
-            return Err(anyhow!("node is not initialized"));
-        }
+    ) -> SwapResult<SwapInfo> {
+        let node_state = self
+            .persister
+            .get_node_state()?
+            .ok_or(anyhow!("Node info not found"))?;
 
         // check first that we don't have any swap in progress waiting for redeem.
         if let Some(in_progress_swap) = self.list_unused()?.first().cloned() {
@@ -152,7 +155,6 @@ impl BTCReceiveSwap {
             return Ok(in_progress_swap);
         }
 
-        let node_id = node_state.unwrap().id;
         // create swap keys
         let swap_keys = create_swap_keys()?;
         let pubkey = swap_keys.public_key_bytes()?;
@@ -161,7 +163,7 @@ impl BTCReceiveSwap {
         // use swap API to fetch a new swap address
         let swap_reply = self
             .swapper_api
-            .create_swap(hash.clone(), pubkey.clone(), node_id)
+            .create_swap(hash.clone(), pubkey.clone(), node_state.id)
             .await?;
 
         // calculate the submarine swap script
@@ -177,7 +179,7 @@ impl BTCReceiveSwap {
 
         // Ensure our address generation match the service
         if address_str != swap_reply.bitcoin_address {
-            return Err(anyhow!("wrong address"));
+            return Err(SwapError::Generic(anyhow!("Wrong address: {address_str}")));
         }
 
         let swap_info = SwapInfo {
@@ -258,12 +260,12 @@ impl BTCReceiveSwap {
     }
 
     pub(crate) fn get_swap_info(&self, address: String) -> Result<Option<SwapInfo>> {
-        self.persister.get_swap_info_by_address(address)
+        Ok(self.persister.get_swap_info_by_address(address)?)
     }
 
     fn get_swap_info_ok(&self, address: String) -> Result<SwapInfo> {
         self.get_swap_info(address.clone())?
-            .ok_or_else(|| anyhow!(format!("swap address {} was not found", address)))
+            .ok_or_else(|| anyhow!(format!("Swap address {} was not found", address)))
     }
 
     pub(crate) async fn execute_pending_swaps(&self, tip: u32) -> Result<()> {
@@ -380,14 +382,14 @@ impl BTCReceiveSwap {
             )?;
         }
 
-        self.persister.update_swap_chain_info(
+        Ok(self.persister.update_swap_chain_info(
             bitcoin_address,
             utxos.unconfirmed_sats(),
             utxos.unconfirmed_tx_ids(),
             utxos.confirmed_sats(),
             utxos.confirmed_tx_ids(),
             swap_status,
-        )
+        )?)
     }
 
     /// redeem_swap executes the final step of receiving lightning payment
@@ -418,7 +420,7 @@ impl BTCReceiveSwap {
                 .update_swap_bolt11(bitcoin_address.clone(), invoice.bolt11)?;
             swap_info = self
                 .persister
-                .get_swap_info_by_address(bitcoin_address.clone())?
+                .get_swap_info_by_address(bitcoin_address)?
                 .unwrap();
         }
 
@@ -431,7 +433,7 @@ impl BTCReceiveSwap {
                 "invoice amount doesn't match confirmed sats {:?}",
                 ln_invoice.amount_msat.unwrap()
             );
-            return Err(anyhow!("invoice amount doesn't match confirmed sats"));
+            return Err(anyhow!("Does not match confirmed sats"));
         }
 
         // Asking the service to initiate the lightning payment.
@@ -479,14 +481,6 @@ impl BTCReceiveSwap {
         info!("broadcasting refund tx {:?}", hex::encode(&refund_tx));
         let tx_id = self.chain_service.broadcast_transaction(refund_tx).await?;
 
-        self.persister.update_swap_chain_info(
-            swap_info.bitcoin_address.clone(),
-            utxos.unconfirmed_sats(),
-            utxos.unconfirmed_tx_ids(),
-            utxos.confirmed_sats(),
-            utxos.confirmed_tx_ids(),
-            swap_info.status,
-        )?;
         self.persister
             .insert_swap_refund_tx_ids(swap_info.bitcoin_address, tx_id.clone())?;
 
@@ -511,7 +505,7 @@ pub(crate) struct SwapKeys {
 
 impl SwapKeys {
     pub(crate) fn secret_key(&self) -> Result<SecretKey> {
-        SecretKey::from_slice(&self.priv_key).map_err(|e| anyhow!(e))
+        Ok(SecretKey::from_slice(&self.priv_key)?)
     }
 
     pub(crate) fn public_key(&self) -> Result<PublicKey> {
@@ -583,7 +577,7 @@ fn prepare_refund_tx(
     lock_delay: u32,
 ) -> Result<Transaction> {
     if utxos.confirmed.is_empty() {
-        return Err(anyhow!("must have at least one input"));
+        return Err(anyhow!("Must have at least one input"));
     }
 
     let lock_time = utxos.confirmed.iter().fold(0, |accum, item| {
@@ -623,7 +617,7 @@ fn prepare_refund_tx(
     let tx = Transaction {
         version: 2,
         lock_time: bitcoin::PackedLockTime(lock_time),
-        input: txins.clone(),
+        input: txins,
         output: tx_out,
     };
 
@@ -648,7 +642,7 @@ fn create_refund_tx(
     let fees = compute_tx_fee(tx_weight, sat_per_vbyte);
 
     if fees >= tx.output[0].value {
-        return Err(anyhow!("insufficient funds to pay fees"));
+        return Err(anyhow!("Insufficient funds to pay fees"));
     }
     tx.output[0].value -= fees;
 
@@ -697,14 +691,13 @@ mod tests {
     };
 
     use crate::chain::{AddressUtxos, Utxo};
-    use crate::swap::{compute_refund_tx_weight, compute_tx_fee, prepare_refund_tx};
+    use crate::swap_in::swap::{compute_refund_tx_weight, compute_tx_fee, prepare_refund_tx};
     use crate::test_utils::get_test_ofp;
     use crate::{
         breez_services::tests::get_dummy_node_state,
         chain::{ChainService, OnchainTx},
         models::*,
         persist::db::SqliteStorage,
-        swap::BTCReceiveSwap,
         test_utils::{
             create_test_config, create_test_persister, MockChainService, MockReceiver,
             MockSwapperAPI,
@@ -712,7 +705,7 @@ mod tests {
         BreezEvent,
     };
 
-    use super::{create_refund_tx, create_submarine_swap_script, get_utxos};
+    use super::{create_refund_tx, create_submarine_swap_script, get_utxos, BTCReceiveSwap};
 
     #[test]
     fn test_build_swap_script() -> Result<()> {

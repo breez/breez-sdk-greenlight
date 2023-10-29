@@ -1,9 +1,12 @@
 use std::str::FromStr;
 
 use crate::input_parser::get_parse_and_log_response;
-use crate::{lnurl::*, LnUrlCallbackStatus, LnUrlWithdrawResult, LnUrlWithdrawSuccessData};
+use crate::lnurl::error::LnUrlError;
+use crate::{
+    ensure_sdk, lnurl::*, LnUrlCallbackStatus, LnUrlWithdrawResult, LnUrlWithdrawSuccessData,
+};
 use crate::{LNInvoice, LnUrlWithdrawRequestData};
-use anyhow::{anyhow, ensure, Result};
+use anyhow::anyhow;
 
 /// Validates invoice and performs the second and last step of LNURL-withdraw, as per
 /// <https://github.com/lnurl/luds/blob/luds/03.md>
@@ -16,24 +19,29 @@ use anyhow::{anyhow, ensure, Result};
 pub(crate) async fn validate_lnurl_withdraw(
     req_data: LnUrlWithdrawRequestData,
     invoice: LNInvoice,
-) -> Result<LnUrlWithdrawResult> {
-    let amount_msat = invoice
-        .amount_msat
-        .ok_or("Expected invoice amount, but found none")
-        .map_err(|e| anyhow!(e))?;
+) -> LnUrlResult<LnUrlWithdrawResult> {
+    let amount_msat = invoice.amount_msat.ok_or(LnUrlError::Generic(anyhow!(
+        "Expected invoice amount, but found none"
+    )))?;
 
-    ensure!(
+    ensure_sdk!(
         amount_msat >= req_data.min_withdrawable,
-        "Amount is smaller than the minimum allowed by the LNURL-withdraw endpoint"
+        LnUrlError::Generic(anyhow!(
+            "Amount is smaller than the minimum allowed by the LNURL-withdraw endpoint"
+        ))
     );
-    ensure!(
+    ensure_sdk!(
         amount_msat <= req_data.max_withdrawable,
-        "Amount is bigger than the maximum allowed by the LNURL-withdraw endpoint"
+        LnUrlError::Generic(anyhow!(
+            "Amount is bigger than the maximum allowed by the LNURL-withdraw endpoint"
+        ))
     );
 
     // Send invoice to the LNURL-w endpoint via the callback
     let callback_url = build_withdraw_callback_url(&req_data, &invoice)?;
-    let callback_res: LnUrlCallbackStatus = get_parse_and_log_response(&callback_url).await?;
+    let callback_res: LnUrlCallbackStatus = get_parse_and_log_response(&callback_url)
+        .await
+        .map_err(LnUrlError::ServiceConnectivity)?;
     let withdraw_status = match callback_res {
         LnUrlCallbackStatus::Ok => LnUrlWithdrawResult::Ok {
             data: LnUrlWithdrawSuccessData { invoice },
@@ -47,8 +55,9 @@ pub(crate) async fn validate_lnurl_withdraw(
 fn build_withdraw_callback_url(
     req_data: &LnUrlWithdrawRequestData,
     invoice: &LNInvoice,
-) -> Result<String> {
-    let mut url = reqwest::Url::from_str(&req_data.callback)?;
+) -> LnUrlResult<String> {
+    let mut url = reqwest::Url::from_str(&req_data.callback)
+        .map_err(|e| LnUrlError::InvalidUri(anyhow::Error::new(e)))?;
 
     url.query_pairs_mut().append_pair("k1", &req_data.k1);
     url.query_pairs_mut().append_pair("pr", &invoice.bolt11);

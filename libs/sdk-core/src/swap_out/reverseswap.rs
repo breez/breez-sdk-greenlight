@@ -1,12 +1,15 @@
 use std::str::FromStr;
 use std::sync::Arc;
 
-use crate::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus::*};
+use super::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus::*};
+use super::error::{ReverseSwapError, ReverseSwapResult};
 use crate::chain::{get_utxos, ChainService, MempoolSpace, OnchainTx};
 use crate::models::{ReverseSwapServiceAPI, ReverseSwapperRoutingAPI};
+use crate::node_api::{NodeAPI, NodeError};
+use crate::swap_in::swap::create_swap_keys;
 use crate::{
-    BreezEvent, Config, FullReverseSwapInfo, NodeAPI, PaymentStatus, ReverseSwapInfo,
-    ReverseSwapInfoCached, ReverseSwapPairInfo, ReverseSwapStatus,
+    BreezEvent, Config, FullReverseSwapInfo, PaymentStatus, ReverseSwapInfo, ReverseSwapInfoCached,
+    ReverseSwapPairInfo, ReverseSwapStatus,
 };
 use crate::{ReverseSwapStatus::*, SendOnchainRequest};
 use anyhow::{anyhow, ensure, Result};
@@ -86,10 +89,10 @@ impl BTCSendSwap {
     }
 
     /// Validates the reverse swap arguments given by the user
-    fn validate_rev_swap_args(claim_pubkey: &str) -> Result<()> {
+    fn validate_rev_swap_args(claim_pubkey: &str) -> ReverseSwapResult<()> {
         Address::from_str(claim_pubkey)
             .map(|_| ())
-            .map_err(|_e| anyhow!("Invalid destination address"))
+            .map_err(|e| ReverseSwapError::InvalidDestinationAddress(anyhow::Error::new(e)))
     }
 
     /// Creates and persists a reverse swap. If the initial payment fails, the reverse swap has the new
@@ -97,7 +100,7 @@ impl BTCSendSwap {
     pub(crate) async fn create_reverse_swap(
         &self,
         req: SendOnchainRequest,
-    ) -> Result<FullReverseSwapInfo> {
+    ) -> ReverseSwapResult<FullReverseSwapInfo> {
         Self::validate_rev_swap_args(&req.onchain_recipient_address)?;
 
         let reverse_routing_node = self
@@ -123,17 +126,17 @@ impl BTCSendSwap {
                 // TODO It doesn't fail when trying to pay more sats than max_payable?
                 match pay_thread_res {
                     // Paying a HODL invoice does not typically return, so if send_payment() returned, it's an abnormal situation
-                    Ok(Ok(res)) => Err(anyhow!("Payment of HODL invoice unexpectedly returned: {res:?}")),
+                    Ok(Ok(res)) => Err(NodeError::PaymentFailed(anyhow!("Payment of HODL invoice unexpectedly returned: {res:?}"))),
 
                     // send_payment() returned an error, so we know paying the HODL invoice failed
-                    Ok(Err(e)) => Err(anyhow!("Failed to pay HODL invoice: {e}")),
+                    Ok(Err(e)) => Err(NodeError::PaymentFailed(anyhow!("Failed to pay HODL invoice: {e}"))),
 
                     // send_payment() has been trying to pay for longer than the payment timeout
-                    Err(e) => Err(anyhow!("Trying to pay the HODL invoice timed out: {e}"))
+                    Err(e) => Err(NodeError::PaymentTimeout(anyhow!("Trying to pay the HODL invoice timed out: {e}")))
                 }
             },
             paid_invoice_res = self.poll_initial_boltz_status_transition(&created_rsi.id) => {
-                paid_invoice_res.map(|_| created_rsi.clone())
+                paid_invoice_res.map(|_| created_rsi.clone()).map_err(NodeError::Generic)
             }
         };
 
@@ -148,7 +151,7 @@ impl BTCSendSwap {
                 .update_reverse_swap_status(&created_rsi.id, &Cancelled)?,
         }
 
-        res
+        Ok(res?)
     }
 
     /// Endless loop that periodically polls whether the reverse swap transitioned away from the
@@ -186,8 +189,8 @@ impl BTCSendSwap {
         &self,
         req: SendOnchainRequest,
         routing_node: String,
-    ) -> Result<FullReverseSwapInfo> {
-        let reverse_swap_keys = crate::swap::create_swap_keys()?;
+    ) -> ReverseSwapResult<FullReverseSwapInfo> {
+        let reverse_swap_keys = create_swap_keys()?;
 
         let boltz_response = self
             .reverse_swap_service_api
@@ -219,7 +222,11 @@ impl BTCSendSwap {
                 res.validate_redeem_script(response.lockup_address, self.config.network)?;
                 Ok(res)
             }
-            BoltzApiCreateReverseSwapResponse::BoltzApiError { error } => Err(anyhow!(error)),
+            BoltzApiCreateReverseSwapResponse::BoltzApiError { error } => {
+                Err(ReverseSwapError::ServiceConnectivity(anyhow!(
+                    "(Boltz) Failed to create reverse swap: {error}"
+                )))
+            }
         }
     }
 
@@ -511,9 +518,9 @@ impl BTCSendSwap {
     async fn refresh_reverse_swap(&self, rsi: FullReverseSwapInfo) -> Result<()> {
         match self.get_status_update_for_monitored(&rsi).await? {
             None => Ok(()),
-            Some(new_status) => self
+            Some(new_status) => Ok(self
                 .persister
-                .update_reverse_swap_status(&rsi.id, &new_status),
+                .update_reverse_swap_status(&rsi.id, &new_status)?),
         }
     }
 
@@ -542,7 +549,7 @@ impl BTCSendSwap {
     }
 
     /// See [ReverseSwapServiceAPI::fetch_reverse_swap_fees]
-    pub(crate) async fn fetch_reverse_swap_fees(&self) -> Result<ReverseSwapPairInfo> {
+    pub(crate) async fn fetch_reverse_swap_fees(&self) -> ReverseSwapResult<ReverseSwapPairInfo> {
         self.reverse_swap_service_api
             .fetch_reverse_swap_fees()
             .await

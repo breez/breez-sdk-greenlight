@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 
+use crate::node_api::NodeAPI;
 use crate::CustomMessage;
-use crate::NodeAPI;
 use anyhow::{anyhow, Result};
 use rand::distributions::Alphanumeric;
 use rand::distributions::DistString;

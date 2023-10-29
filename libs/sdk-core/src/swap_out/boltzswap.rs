@@ -13,8 +13,10 @@ use reqwest::{Body, Client};
 
 use crate::input_parser::get_parse_and_log_response;
 use crate::models::ReverseSwapPairInfo;
-use crate::reverseswap::CreateReverseSwapResponse;
+use crate::swap_out::reverseswap::CreateReverseSwapResponse;
 use crate::ReverseSwapServiceAPI;
+
+use super::error::{ReverseSwapError, ReverseSwapResult};
 
 const BOLTZ_API_URL: &str = "https://api.boltz.exchange/";
 const GET_PAIRS_ENDPOINT: &str = concatcp!(BOLTZ_API_URL, "getpairs");
@@ -162,8 +164,8 @@ pub struct BoltzApi {}
 
 #[tonic::async_trait]
 impl ReverseSwapServiceAPI for BoltzApi {
-    async fn fetch_reverse_swap_fees(&self) -> Result<ReverseSwapPairInfo> {
-        reverse_swap_pair_info().await
+    async fn fetch_reverse_swap_fees(&self) -> ReverseSwapResult<ReverseSwapPairInfo> {
+        Ok(reverse_swap_pair_info().await?)
     }
 
     /// Call Boltz API and parse response as per https://docs.boltz.exchange/en/latest/api/#creating-reverse-swaps
@@ -182,7 +184,7 @@ impl ReverseSwapServiceAPI for BoltzApi {
         claim_pubkey: String,
         pair_hash: String,
         routing_node: String,
-    ) -> Result<BoltzApiCreateReverseSwapResponse> {
+    ) -> ReverseSwapResult<BoltzApiCreateReverseSwapResponse> {
         Client::new()
             .post(CREATE_REVERSE_SWAP_ENDPOINT)
             .header(CONTENT_TYPE, "application/json")
@@ -197,11 +199,18 @@ impl ReverseSwapServiceAPI for BoltzApi {
             .await?
             .text()
             .await
-            .map_err(|e| anyhow!("Failed to request creation of reverse swap: {e}"))
+            .map_err(|e| {
+                ReverseSwapError::ServiceConnectivity(anyhow!(
+                    "(Boltz {CREATE_REVERSE_SWAP_ENDPOINT}) Failed to request creation of reverse swap: {e}"
+                ))
+            })
             .and_then(|res| {
                 trace!("Boltz API create raw response {}", to_string_pretty(&res)?);
-                serde_json::from_str::<BoltzApiCreateReverseSwapResponse>(&res)
-                    .map_err(|e| anyhow!("Failed to parse crate swap response: {e}"))
+                serde_json::from_str::<BoltzApiCreateReverseSwapResponse>(&res).map_err(|e| {
+                    ReverseSwapError::ServiceConnectivity(anyhow!(
+                        "(Boltz {CREATE_REVERSE_SWAP_ENDPOINT}) Failed to parse create swap response: {e}"
+                    ))
+                })
             })
     }
 
@@ -214,7 +223,7 @@ impl ReverseSwapServiceAPI for BoltzApi {
     ///
     /// Boltz API errors (e.g. providing an invalid ID arg) are returned as a successful response of
     /// type [BoltzApiCreateReverseSwapResponse::BoltzApiError]
-    async fn get_boltz_status(&self, id: String) -> Result<BoltzApiReverseSwapStatus> {
+    async fn get_boltz_status(&self, id: String) -> ReverseSwapResult<BoltzApiReverseSwapStatus> {
         Client::new()
             .post(GET_SWAP_STATUS_ENDPOINT)
             .header(CONTENT_TYPE, "application/json")
@@ -223,11 +232,18 @@ impl ReverseSwapServiceAPI for BoltzApi {
             .await?
             .text()
             .await
-            .map_err(|e| anyhow!("Failed to request swap status: {e}"))
+            .map_err(|e| {
+                ReverseSwapError::ServiceConnectivity(anyhow!(
+                    "(Boltz {GET_SWAP_STATUS_ENDPOINT}) Failed to request swap status: {e}"
+                ))
+            })
             .and_then(|res| {
                 trace!("Boltz API status raw response {}", to_string_pretty(&res)?);
-                serde_json::from_str::<BoltzApiReverseSwapStatus>(&res)
-                    .map_err(|e| anyhow!("Failed to parse get status response: {e}"))
+                serde_json::from_str::<BoltzApiReverseSwapStatus>(&res).map_err(|e| {
+                    ReverseSwapError::ServiceConnectivity(anyhow!(
+                        "(Boltz {GET_SWAP_STATUS_ENDPOINT}) Failed to parse get status response: {e}"
+                    ))
+                })
             })
     }
 }
@@ -277,9 +293,10 @@ fn build_boltz_reverse_swap_args(
 
 #[cfg(test)]
 mod tests {
-    use crate::boltzswap::*;
     use bitcoin::Txid;
     use std::str::FromStr;
+
+    use crate::swap_out::boltzswap::{BoltzApiReverseSwapStatus, LockTxData};
 
     #[test]
     fn test_boltz_status_deserialize() {

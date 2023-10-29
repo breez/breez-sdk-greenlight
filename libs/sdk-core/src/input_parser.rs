@@ -7,10 +7,12 @@ use bitcoin::bech32::FromBase32;
 use serde::Deserialize;
 use serde::Serialize;
 
+use crate::ensure_sdk;
 use crate::input_parser::InputType::*;
 use crate::input_parser::LnUrlRequestData::*;
 use crate::invoice::{parse_invoice, LNInvoice};
 
+use crate::lnurl::error::LnUrlResult;
 use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 
 /// Parses generic user input, typically pasted from clipboard or scanned from a QR.
@@ -204,7 +206,9 @@ pub async fn parse(input: &str) -> Result<InputType> {
         }
 
         lnurl_endpoint = maybe_replace_host_with_mockito_test_host(lnurl_endpoint)?;
-        let lnurl_data: LnUrlRequestData = get_parse_and_log_response(&lnurl_endpoint).await?;
+        let lnurl_data: LnUrlRequestData = get_parse_and_log_response(&lnurl_endpoint)
+            .await
+            .map_err(|_| anyhow!("Failed to parse response"))?;
         let temp = lnurl_data.into();
         let temp = match temp {
             // Modify the LnUrlPay payload by adding the domain of the LNURL endpoint
@@ -246,7 +250,7 @@ where
 {
     let raw_body = get_and_log_response(url).await?;
 
-    serde_json::from_str(&raw_body).map_err(|e| anyhow!("Failed to parse json: {e}"))
+    Ok(serde_json::from_str(&raw_body)?)
 }
 
 /// Prepends the given prefix to the input, if the input doesn't already start with it
@@ -308,25 +312,30 @@ fn ln_address_decode(ln_address: &str) -> Result<(String, String)> {
 /// LNURLs in all uppercase or all lowercase are valid, but mixed case ones are invalid.
 ///
 /// For LN addresses, the username is limited to `a-z0-9-_.`, which is more restrictive than email addresses.
-fn lnurl_decode(encoded: &str) -> Result<(String, String, bool)> {
+fn lnurl_decode(encoded: &str) -> LnUrlResult<(String, String, bool)> {
     if let Ok((domain, url)) = ln_address_decode(encoded) {
         return Ok((domain, url, true));
     }
 
     match bech32::decode(encoded) {
         Ok((_hrp, payload, _variant)) => {
-            let decoded = String::from_utf8(Vec::from_base32(&payload)?).map_err(|e| anyhow!(e))?;
+            let decoded = String::from_utf8(Vec::from_base32(&payload)?)?;
 
-            let url = reqwest::Url::parse(&decoded)?;
-            let domain = url
-                .domain()
-                .ok_or_else(|| anyhow!("Could not determine domain"))?;
+            let url = reqwest::Url::parse(&decoded)
+                .map_err(|e| super::lnurl::error::LnUrlError::InvalidUri(anyhow::Error::new(e)))?;
+            let domain = url.domain().ok_or_else(|| {
+                super::lnurl::error::LnUrlError::InvalidUri(anyhow!("Could not determine domain"))
+            })?;
 
             if url.scheme() == "http" && !domain.ends_with(".onion") {
-                return Err(anyhow!("HTTP scheme only allowed for onion domains"));
+                return Err(super::lnurl::error::LnUrlError::Generic(anyhow!(
+                    "HTTP scheme only allowed for onion domains"
+                )));
             }
             if url.scheme() == "https" && domain.ends_with(".onion") {
-                return Err(anyhow!("HTTPS scheme not allowed for onion domains"));
+                return Err(super::lnurl::error::LnUrlError::Generic(anyhow!(
+                    "HTTPS scheme not allowed for onion domains"
+                )));
             }
 
             Ok((domain.into(), decoded, false))
@@ -346,14 +355,15 @@ fn lnurl_decode(encoded: &str) -> Result<(String, String, bool)> {
                 }
             }
 
-            let url = reqwest::Url::parse(&encoded)?;
-            let domain = url
-                .domain()
-                .ok_or_else(|| anyhow!("Could not determine domain"))?;
-
-            if !supported_prefixes.contains(&url.scheme()) {
-                return Err(anyhow!("Invalid prefix scheme"));
-            }
+            let url = reqwest::Url::parse(&encoded)
+                .map_err(|e| super::lnurl::error::LnUrlError::InvalidUri(anyhow::Error::new(e)))?;
+            let domain = url.domain().ok_or_else(|| {
+                super::lnurl::error::LnUrlError::InvalidUri(anyhow!("Could not determine domain"))
+            })?;
+            ensure_sdk!(
+                supported_prefixes.contains(&url.scheme()),
+                super::lnurl::error::LnUrlError::Generic(anyhow!("Invalid prefix scheme"))
+            );
 
             let scheme = url.scheme();
             let new_scheme = match domain.ends_with(".onion") {
@@ -520,7 +530,9 @@ impl LnUrlPayRequestData {
     /// Parsed metadata items. Use `metadata_str` to get the raw metadata string, as received from
     /// the LNURL endpoint.
     pub fn metadata_vec(&self) -> Result<Vec<MetadataItem>> {
-        serde_json::from_str::<Vec<MetadataItem>>(&self.metadata_str).map_err(|err| anyhow!(err))
+        Ok(serde_json::from_str::<Vec<MetadataItem>>(
+            &self.metadata_str,
+        )?)
     }
 }
 

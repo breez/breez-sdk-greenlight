@@ -1,6 +1,4 @@
-use super::db::SqliteStorage;
-use crate::error::SdkResult;
-use anyhow::Result;
+use super::{db::SqliteStorage, error::PersistResult};
 
 #[allow(dead_code)]
 pub struct SettingItem {
@@ -9,7 +7,7 @@ pub struct SettingItem {
 }
 
 impl SqliteStorage {
-    pub fn update_setting(&self, key: String, value: String) -> SdkResult<()> {
+    pub fn update_setting(&self, key: String, value: String) -> PersistResult<()> {
         self.get_connection()?.execute(
             "INSERT OR REPLACE INTO settings (key, value) VALUES (?1,?2)",
             (key, value),
@@ -17,7 +15,7 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub fn get_setting(&self, key: String) -> SdkResult<Option<String>> {
+    pub fn get_setting(&self, key: String) -> PersistResult<Option<String>> {
         let res = self.get_connection()?.query_row(
             "SELECT value FROM settings WHERE key = ?1",
             [key],
@@ -27,14 +25,14 @@ impl SqliteStorage {
     }
 
     #[allow(dead_code)]
-    pub fn delete_setting(&self, key: String) -> Result<()> {
+    pub fn delete_setting(&self, key: String) -> PersistResult<()> {
         self.get_connection()?
             .execute("DELETE FROM settings WHERE key = ?1", [key])?;
         Ok(())
     }
 
     #[allow(dead_code)]
-    pub fn list_settings(&self) -> Result<Vec<SettingItem>> {
+    pub fn list_settings(&self) -> PersistResult<Vec<SettingItem>> {
         let con = self.get_connection()?;
         let mut stmt = con.prepare("SELECT * FROM settings ORDER BY key")?;
         let vec = stmt
@@ -50,11 +48,11 @@ impl SqliteStorage {
         Ok(vec)
     }
 
-    pub fn set_lsp_id(&self, lsp_id: String) -> SdkResult<()> {
+    pub fn set_lsp_id(&self, lsp_id: String) -> PersistResult<()> {
         self.update_setting("lsp".to_string(), lsp_id)
     }
 
-    pub fn get_lsp_id(&self) -> SdkResult<Option<String>> {
+    pub fn get_lsp_id(&self) -> PersistResult<Option<String>> {
         self.get_setting("lsp".to_string())
     }
 }

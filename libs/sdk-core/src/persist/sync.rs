@@ -1,7 +1,6 @@
 use crate::ReverseSwapStatus;
 
-use super::db::SqliteStorage;
-use anyhow::Result;
+use super::{db::SqliteStorage, error::PersistResult};
 use rusqlite::{named_params, Row, Transaction};
 use std::path::Path;
 
@@ -13,22 +12,27 @@ pub(crate) struct SyncVersion {
 }
 
 impl SqliteStorage {
-    pub(crate) fn backup<P: AsRef<Path>>(&self, dst_path: P) -> Result<()> {
-        self.get_connection()?
-            .backup(rusqlite::DatabaseName::Attached("sync"), dst_path, None)
-            .map_err(anyhow::Error::msg)
+    pub(crate) fn backup<P: AsRef<Path>>(&self, dst_path: P) -> PersistResult<()> {
+        Ok(self.get_connection()?.backup(
+            rusqlite::DatabaseName::Attached("sync"),
+            dst_path,
+            None,
+        )?)
     }
 
-    pub(crate) fn get_last_sync_version(&self) -> Result<Option<u64>> {
-        let res: rusqlite::Result<Option<u64>> = self.get_connection()?.query_row(
+    pub(crate) fn get_last_sync_version(&self) -> PersistResult<Option<u64>> {
+        Ok(self.get_connection()?.query_row(
             "SELECT max(last_version) FROM sync_versions",
             [],
             |row| row.get::<usize, Option<u64>>(0),
-        );
-        res.map_err(anyhow::Error::msg)
+        )?)
     }
 
-    pub(crate) fn set_last_sync_version(&self, last_version: u64, data: &Vec<u8>) -> Result<()> {
+    pub(crate) fn set_last_sync_version(
+        &self,
+        last_version: u64,
+        data: &Vec<u8>,
+    ) -> PersistResult<()> {
         let con = self.get_connection()?;
 
         // make sure we have no more than 20 history entries
@@ -42,7 +46,7 @@ impl SqliteStorage {
     }
 
     #[allow(dead_code)]
-    pub(crate) fn sync_versions_history(&self) -> Result<Vec<SyncVersion>> {
+    pub(crate) fn sync_versions_history(&self) -> PersistResult<Vec<SyncVersion>> {
         let con = self.get_connection()?;
         let mut stmt = con.prepare(
             "SELECT created_at, last_version, data FROM sync_versions ORDER BY created_at DESC;",
@@ -56,7 +60,7 @@ impl SqliteStorage {
         Ok(vec)
     }
 
-    fn sql_row_to_sync_version(&self, row: &Row) -> Result<SyncVersion, rusqlite::Error> {
+    fn sql_row_to_sync_version(&self, row: &Row) -> PersistResult<SyncVersion, rusqlite::Error> {
         let version = SyncVersion {
             created_at: row.get(0)?,
             last_version: row.get(1)?,
@@ -66,16 +70,16 @@ impl SqliteStorage {
         Ok(version)
     }
 
-    pub fn get_last_sync_request(&self) -> Result<Option<u64>> {
+    pub fn get_last_sync_request(&self) -> PersistResult<Option<u64>> {
         let res: rusqlite::Result<Option<u64>> =
             self.get_connection()?
                 .query_row("SELECT max(id) FROM sync.sync_requests", [], |row| {
                     row.get::<usize, Option<u64>>(0)
                 });
-        res.map_err(anyhow::Error::msg)
+        Ok(res?)
     }
 
-    pub(crate) fn delete_sync_requests_up_to(&self, request_id: u64) -> Result<()> {
+    pub(crate) fn delete_sync_requests_up_to(&self, request_id: u64) -> PersistResult<()> {
         self.get_connection()?.execute(
             "DELETE FROM sync.sync_requests where id <= ?1",
             [request_id],
@@ -87,7 +91,7 @@ impl SqliteStorage {
         &self,
         remote_storage: &SqliteStorage,
         to_local: bool,
-    ) -> Result<()> {
+    ) -> PersistResult<()> {
         let sync_data_file = remote_storage.sync_db_path();
         match SqliteStorage::migrate_sync_db(sync_data_file.clone()) {
             Ok(_) => {}
@@ -213,7 +217,7 @@ impl SqliteStorage {
     }
 
     /// Insert or update to local db all rows that have created_at larger than in the local
-    fn sync_swaps_fees_local(tx: &Transaction) -> Result<()> {
+    fn sync_swaps_fees_local(tx: &Transaction) -> PersistResult<()> {
         // The WHERE clause covers both possible scenarios for the swaps_fees table:
         // - Local DB doesn't have a row matching a remote DB row with the same swap address
         //   - checked via `sync.swaps_fees.created_at IS NULL`
@@ -240,17 +244,18 @@ impl SqliteStorage {
 
 #[cfg(test)]
 mod tests {
-    use anyhow::{anyhow, Result};
+    use anyhow::anyhow;
     use rand::random;
     use std::time::Duration;
 
     use crate::persist::db::SqliteStorage;
+    use crate::persist::error::PersistResult;
     use crate::persist::test_utils;
     use crate::test_utils::{get_test_ofp_48h, rand_string, rand_vec_u8};
     use crate::SwapInfo;
 
     #[test]
-    fn test_sync() -> Result<()> {
+    fn test_sync() -> PersistResult<()> {
         let local_storage = SqliteStorage::new(test_utils::create_test_sql_dir());
         local_storage.init()?;
 
@@ -292,7 +297,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_sync_swaps_update_swap_fees() -> Result<()> {
+    async fn test_sync_swaps_update_swap_fees() -> PersistResult<()> {
         let local_storage = SqliteStorage::new(test_utils::create_test_sql_dir());
         local_storage.init()?;
 
@@ -321,7 +326,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_sync_swaps_fees_local_vs_remote() -> Result<()> {
+    async fn test_sync_swaps_fees_local_vs_remote() -> PersistResult<()> {
         let local_storage = SqliteStorage::new(test_utils::create_test_sql_dir());
         local_storage.init()?;
 
