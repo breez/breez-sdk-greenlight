@@ -267,3 +267,9 @@ jobs:
           else
             echo "No changes in git status"
           fi
+
+      - name: dart-analyze
+        run: dart analyze --fatal-infos
+
+      - name: dart-format
+        run: dart format -o none --set-exit-if-changed -l 110 .
