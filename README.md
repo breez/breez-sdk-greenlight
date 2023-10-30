@@ -40,7 +40,7 @@ This diagram is a high-level description of the Breez SDK:
 ![SDK Architecture](https://user-images.githubusercontent.com/31890660/208512955-6e648b86-4c8a-457a-b844-3dda8b2aa8ec.png)
 
 ## Command line
-[Breez sdk-cli](https://github.com/breez/breez-sdk/tree/main/tools/sdk-cli)) is a command line client that allows you to test the functionality of the Breez SDK.
+[Breez sdk-cli](https://github.com/breez/breez-sdk/tree/main/tools/sdk-cli) is a command line client that allows you to test the functionality of the Breez SDK.
 
 ## Build & Test
 The libs folder contains three sub folders and is a structured as a cargo workspace:
