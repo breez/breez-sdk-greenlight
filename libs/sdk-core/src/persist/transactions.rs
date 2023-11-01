@@ -291,7 +291,7 @@ fn filter_to_where_clause(
                     PaymentTypeFilter::Received => {
                         type_filter_clause.insert(PaymentType::Received);
                     }
-                    PaymentTypeFilter::ClosedChannels => {
+                    PaymentTypeFilter::ClosedChannel => {
                         type_filter_clause.insert(PaymentType::ClosedChannel);
                     }
                 }
@@ -481,7 +481,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {
         filters: Some(vec![
             PaymentTypeFilter::Sent,
-            PaymentTypeFilter::ClosedChannels,
+            PaymentTypeFilter::ClosedChannel,
         ]),
         ..Default::default()
     })?;
@@ -525,7 +525,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {
         filters: Some(vec![
             PaymentTypeFilter::Sent,
-            PaymentTypeFilter::ClosedChannels,
+            PaymentTypeFilter::ClosedChannel,
         ]),
         include_failures: Some(true),
         ..Default::default()

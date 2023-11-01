@@ -2088,7 +2088,7 @@ pub(crate) mod tests {
             .list_payments(ListPaymentsRequest {
                 filters: Some(vec![
                     PaymentTypeFilter::Sent,
-                    PaymentTypeFilter::ClosedChannels,
+                    PaymentTypeFilter::ClosedChannel,
                 ]),
                 ..Default::default()
             })
