@@ -656,7 +656,7 @@ export enum PaymentType {
 export enum PaymentTypeFilter {
     SENT = "sent",
     RECEIVED = "received",
-    CLOSED_CHANNELS = "closedChannels"
+    CLOSED_CHANNEL = "closedChannel"
 }
 
 export enum ReverseSwapStatus {

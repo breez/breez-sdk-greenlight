@@ -188,7 +188,7 @@ dictionary CheckMessageResponse {
 enum PaymentTypeFilter {
     "Sent",
     "Received",
-    "ClosedChannels",
+    "ClosedChannel",
 };
 
 enum PaymentStatus {

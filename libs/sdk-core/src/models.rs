@@ -528,7 +528,7 @@ impl From<Network> for bitcoin::network::constants::Network {
 pub enum PaymentTypeFilter {
     Sent,
     Received,
-    ClosedChannels,
+    ClosedChannel,
 }
 
 /// Different types of supported feerates

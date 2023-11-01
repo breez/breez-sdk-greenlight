@@ -1106,7 +1106,7 @@ enum PaymentType {
 enum PaymentTypeFilter {
   Sent,
   Received,
-  ClosedChannels,
+  ClosedChannel,
 }
 
 class PrepareRefundRequest {
