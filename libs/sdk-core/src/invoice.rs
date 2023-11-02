@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use bitcoin::secp256k1::{self, PublicKey};
 use hex::ToHex;
 use lightning::routing::gossip::RoutingFees;
@@ -189,6 +190,11 @@ pub fn add_lsp_routing_hints(
 
 /// Parse a BOLT11 payment request and return a structure contains the parsed fields.
 pub fn parse_invoice(bolt11: &str) -> InvoiceResult<LNInvoice> {
+    if bolt11.trim().is_empty() {
+        return Err(InvoiceError::Validation(anyhow!(
+            "bolt11 is an empty string"
+        )));
+    }
     let re = Regex::new(r"(?i)^lightning:")?;
     let bolt11 = re.replace_all(bolt11, "");
     let signed = bolt11.parse::<SignedRawInvoice>()?;
