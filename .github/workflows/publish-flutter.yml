@@ -38,11 +38,6 @@ jobs:
           ref: ${{ inputs.ref || github.sha }}
           path: breez-sdk
 
-      - uses: actions/download-artifact@v3
-        with:
-          name: sdk-bindings-android-jniLibs
-          path: flutter/android/src/main/jniLibs
-
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.13.8'
@@ -52,13 +47,21 @@ jobs:
         working-directory: flutter
         run: |
           rm -f ../breez-sdk/libs/sdk-flutter/ios/breez_sdk.podspec.dev
-          mv ../breez-sdk/libs/sdk-flutter/ios/breez_sdk.podspec.production ../breez-sdk/libs/sdk-flutter/ios/breez_sdk.podspec
+          rm -r ios
+          rm -r android
+          rm -r lib
           cp -r ../breez-sdk/libs/sdk-flutter/ios .
+          mv ios/breez_sdk.podspec.production ios/breez_sdk.podspec
           cp -r ../breez-sdk/libs/sdk-flutter/android .
           cp -r ../breez-sdk/libs/sdk-flutter/lib .
           cp ../breez-sdk/libs/sdk-flutter/pubspec.yaml .
-          cp ../breez-sdk/libs/sdk-flutter/pubspec.lock .          
-      
+          cp ../breez-sdk/libs/sdk-flutter/pubspec.lock .  
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-android-jniLibs
+          path: flutter/android/src/main/jniLibs
+
       - name: Set package version
         working-directory: flutter
         run: |
