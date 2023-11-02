@@ -145,6 +145,7 @@ jobs:
       #     packages_dir: libs/sdk-bindings/bindings-python/dist/*/
 
       - name: "Publish on PyPI"
+        if: ${{ inputs.publish }}
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           verbose: true
