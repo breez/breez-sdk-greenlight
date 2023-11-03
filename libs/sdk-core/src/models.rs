@@ -554,6 +554,7 @@ impl TryFrom<i32> for FeeratePreset {
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
 pub struct BackupStatus {
     pub backed_up: bool,
+    /// Epoch time, in seconds
     pub last_backup_time: Option<u64>,
 }
 
@@ -595,6 +596,7 @@ pub enum PaymentStatus {
 pub struct Payment {
     pub id: String,
     pub payment_type: PaymentType,
+    /// Epoch time, in seconds
     pub payment_time: i64,
     pub amount_msat: u64,
     pub fee_msat: u64,
@@ -607,7 +609,9 @@ pub struct Payment {
 #[derive(Default)]
 pub struct ListPaymentsRequest {
     pub filters: Option<Vec<PaymentTypeFilter>>,
+    /// Epoch time, in seconds
     pub from_timestamp: Option<i64>,
+    /// Epoch time, in seconds
     pub to_timestamp: Option<i64>,
     pub include_failures: Option<bool>,
     pub offset: Option<u32>,
@@ -617,6 +621,7 @@ pub struct ListPaymentsRequest {
 /// Represents a payment response.
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]
 pub struct PaymentResponse {
+    /// Epoch time, in seconds
     pub payment_time: i64,
     pub amount_msat: u64,
     pub fee_msat: u64,
