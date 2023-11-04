@@ -217,6 +217,7 @@ jobs:
       ref: ${{ needs.setup.outputs.csharp-ref }}
       package-version: ${{ needs.setup.outputs.csharp-package-version }}
       publish: ${{ needs.setup.outputs.publish == 'true' }}
+      skip-tests: ${{ needs.setup.outputs.use-dummy-binaries == 'true' }}
     secrets:
       NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
 
