@@ -16,9 +16,15 @@ on:
         description: 'commit/tag/branch reference'
         required: true
         type: string
+      use-dummy-binaries:
+        description: 'If true, creates dummy binaries rather than real binaries'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   build:
+    if: ${{ !inputs.use-dummy-binaries }}
     runs-on: macOS-latest
     name: build ${{ matrix.target }}
     strategy:
@@ -65,3 +71,25 @@ jobs:
       with:
         name: sdk-bindings-${{ matrix.target }}
         path: libs/target/${{ matrix.target }}/release/libbreez_sdk_bindings.a
+
+  build-dummies:
+    if: ${{ inputs.use-dummy-binaries }}
+    runs-on: ubuntu-latest
+    name: build ios dummies
+    strategy:
+      matrix:
+        target: [
+          aarch64-apple-ios,
+          x86_64-apple-ios,
+          aarch64-apple-ios-sim,
+        ]
+    steps:
+      - name: Build dummy ios ${{ matrix.target }}
+        run: |
+          touch libbreez_sdk_bindings.a
+
+      - name: Upload dummy ios ${{ matrix.target }} artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: sdk-bindings-${{ matrix.target }}
+          path: ./*

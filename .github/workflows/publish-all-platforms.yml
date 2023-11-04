@@ -34,6 +34,11 @@ on:
         description: 'version for the react native package (MAJOR.MINOR.BUILD)'
         required: false
         type: string
+      use-dummy-binaries:
+        description: 'boolean indicating whether to use dummies for the sdk binaries. Default = false.'
+        required: false
+        type: boolean
+        default: false
       publish:
         description: 'boolean indicating whether packages should be published. true to publish. false to build only. Default = false.'
         required: false
@@ -102,6 +107,7 @@ jobs:
       kotlin-mpp-package-version: ${{ inputs.kotlin-mpp-package-version }}
       flutter-package-version: ${{ inputs.flutter-package-version }}
       react-native-package-version: ${{ inputs.react-native-package-version }}
+      use-dummy-binaries: ${{ inputs.use-dummy-binaries }}
       publish: ${{ inputs.publish }}
     steps:
       - run: echo "set pre-setup output variables"
@@ -140,6 +146,7 @@ jobs:
       flutter-package-version: ${{ needs.pre-setup.outputs.flutter-package-version || '0.0.2' }}
       react-native-package-version: ${{ needs.pre-setup.outputs.react-native-package-version || '0.0.2' }}
       publish: ${{ needs.pre-setup.outputs.publish }}
+      use-dummy-binaries: ${{ needs.pre-setup.outputs.use-dummy-binaries }}
     steps:
       - run: echo "set setup output variables"
 
@@ -150,6 +157,7 @@ jobs:
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
+      use-dummy-binaries: ${{ needs.setup.outputs.use-dummy-binaries == 'true' }}
   build-bindings-darwin:
     needs: setup
     if: ${{ needs.setup.outputs.bindings-darwin == 'true' }}
@@ -157,6 +165,7 @@ jobs:
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
+      use-dummy-binaries: ${{ needs.setup.outputs.use-dummy-binaries == 'true' }}
   build-bindings-linux:
     needs: setup
     if: ${{ needs.setup.outputs.bindings-linux == 'true' }}
@@ -164,6 +173,7 @@ jobs:
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
+      use-dummy-binaries: ${{ needs.setup.outputs.use-dummy-binaries == 'true' }}
   build-bindings-android:
     needs: setup
     if: ${{ needs.setup.outputs.bindings-android == 'true' }}
@@ -171,6 +181,7 @@ jobs:
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
+      use-dummy-binaries: ${{ needs.setup.outputs.use-dummy-binaries == 'true' }}
   build-bindings-ios:
     needs: setup
     if: ${{ needs.setup.outputs.bindings-ios == 'true' }}
@@ -178,6 +189,7 @@ jobs:
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
+      use-dummy-binaries: ${{ needs.setup.outputs.use-dummy-binaries == 'true' }}
 
   build-language-bindings:
     needs: setup

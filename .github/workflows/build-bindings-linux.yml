@@ -16,9 +16,15 @@ on:
         description: 'commit/tag/branch reference'
         required: true
         type: string
+      use-dummy-binaries:
+        description: 'If true, creates dummy binaries rather than real binaries'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   build:
+    if: ${{ !inputs.use-dummy-binaries }}
     runs-on: ubuntu-20.04
     name: build ${{ matrix.target }}
     strategy:
@@ -74,3 +80,24 @@ jobs:
       with:
         name: sdk-bindings-${{ matrix.target }}
         path: libs/target/${{ matrix.target }}/release/libbreez_sdk_bindings.so
+
+  build-dummies:
+    if: ${{ inputs.use-dummy-binaries }}
+    runs-on: ubuntu-latest
+    name: build linux dummies
+    strategy:
+      matrix:
+        target: [
+          aarch64-unknown-linux-gnu,
+          x86_64-unknown-linux-gnu,
+        ]
+    steps:
+      - name: Build dummy linux ${{ matrix.target }}
+        run: |
+          touch libbreez_sdk_bindings.so
+
+      - name: Upload dummy linux ${{ matrix.target }} artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: sdk-bindings-${{ matrix.target }}
+          path: ./*
