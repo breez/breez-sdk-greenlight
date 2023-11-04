@@ -39,6 +39,49 @@ on:
         required: false
         type: boolean
         default: false
+  workflow_call:
+    inputs:
+      repository:
+        description: 'sdk repository, defaults to current repository'
+        required: false
+        type: string
+      ref:
+        description: 'commit/tag/branch reference'
+        required: true
+        type: string
+      csharp-package-version:
+        description: 'version for the C# nuget package (MAJOR.MINOR.BUILD)'
+        required: false
+        type: string
+      csharp-ref:
+        description: 'optional commit/tag/branch reference for the C# project. Defaults to ref.'
+        required: false
+        type: string
+      golang-package-version:
+        description: 'version for the golang package (MAJOR.MINOR.BUILD) (no v prefix)'
+        required: false
+        type: string
+      maven-package-version:
+        description: 'version for the android package (MAJOR.MINOR.BUILD)'
+        required: false
+        type: string
+      kotlin-mpp-package-version:
+        description: 'version for the kotlin multiplatform package (MAJOR.MINOR.BUILD)'
+        required: false
+        type: string
+      flutter-package-version:
+        description: 'version for the flutter package (MAJOR.MINOR.BUILD) (no v prefix)'
+        required: false
+        type: string
+      react-native-package-version:
+        description: 'version for the react native package (MAJOR.MINOR.BUILD)'
+        required: false
+        type: string
+      use-dummy-binaries:
+        description: 'boolean indicating whether to use dummies for the sdk binaries. Default = false.'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   pre-setup:
@@ -50,6 +93,7 @@ jobs:
       # changes that you won't want to commit to main yet.
       # You can set these values manually, to test how the CI behaves with 
       # certain inputs.
+      repository: ${{ inputs.repository || github.repository }}
       ref: ${{ inputs.ref || github.sha }}
       csharp-package-version: ${{ inputs.csharp-package-version }}
       csharp-ref: ${{ inputs.csharp-ref || inputs.ref || github.sha }}
@@ -72,6 +116,7 @@ jobs:
       # checks in this file have the format `boolean == 'true'`. So feel free
       # to set these variables here to `true` or `false` 
       # (e.g. bindings-windows: true) if you want to test something.
+      repository: ${{ needs.pre-setup.outputs.repository }}
       bindings-windows: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version }}
       bindings-darwin: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version }}
       bindings-linux: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version }}
@@ -103,36 +148,42 @@ jobs:
     if: ${{ needs.setup.outputs.bindings-windows == 'true' }}
     uses: ./.github/workflows/build-bindings-windows.yml
     with:
+      repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
   build-bindings-darwin:
     needs: setup
     if: ${{ needs.setup.outputs.bindings-darwin == 'true' }}
     uses: ./.github/workflows/build-bindings-darwin.yml
     with:
+      repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
   build-bindings-linux:
     needs: setup
     if: ${{ needs.setup.outputs.bindings-linux == 'true' }}
     uses: ./.github/workflows/build-bindings-linux.yml
     with:
+      repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
   build-bindings-android:
     needs: setup
     if: ${{ needs.setup.outputs.bindings-android == 'true' }}
     uses: ./.github/workflows/build-bindings-android.yml
     with:
+      repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
   build-bindings-ios:
     needs: setup
     if: ${{ needs.setup.outputs.bindings-ios == 'true' }}
     uses: ./.github/workflows/build-bindings-ios.yml
     with:
+      repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
 
   build-language-bindings:
     needs: setup
     uses: ./.github/workflows/build-language-bindings.yml
     with:
+      repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
       kotlin: ${{ needs.setup.outputs.kotlin == 'true'}}
       csharp: ${{ needs.setup.outputs.csharp == 'true'}}
@@ -150,6 +201,7 @@ jobs:
     if: ${{ needs.setup.outputs.csharp == 'true' }}
     uses: ./.github/workflows/publish-csharp.yml
     with:
+      repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.csharp-ref }}
       package-version: ${{ needs.setup.outputs.csharp-package-version }}
       publish: ${{ needs.setup.outputs.publish == 'true' }}
@@ -181,6 +233,7 @@ jobs:
     if: ${{ needs.setup.outputs.maven == 'true' }}
     uses: ./.github/workflows/publish-android.yml
     with:
+      repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
       package-version: ${{ needs.setup.outputs.maven-package-version }}
       publish: ${{ needs.setup.outputs.publish == 'true' }}
@@ -197,6 +250,7 @@ jobs:
     if: ${{ needs.setup.outputs.kotlin-mpp == 'true' }}
     uses: ./.github/workflows/publish-kotlin-mpp.yml
     with:
+      repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
       package-version: ${{ needs.setup.outputs.kotlin-mpp-package-version }}
       publish: ${{ needs.setup.outputs.publish == 'true' }}
@@ -211,6 +265,7 @@ jobs:
     if: ${{ needs.setup.outputs.flutter == 'true' }}
     uses: ./.github/workflows/publish-flutter.yml
     with:
+      repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
       package-version: ${{ needs.setup.outputs.flutter-package-version }}
       publish: ${{ needs.setup.outputs.publish == 'true' }}
@@ -225,6 +280,7 @@ jobs:
     if: ${{ needs.setup.outputs.react-native == 'true' }}
     uses: ./.github/workflows/publish-react-native.yml
     with:
+      repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
       package-version: ${{ needs.setup.outputs.react-native-package-version }}
       publish: ${{ needs.setup.outputs.publish == 'true' }}

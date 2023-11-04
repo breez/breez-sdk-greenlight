@@ -2,6 +2,10 @@ name: Publish Kotlin multiplatform Bindings
 on:
   workflow_call:
     inputs:
+      repository:
+        description: 'sdk repository, defaults to current repository'
+        required: false
+        type: string
       ref:
         description: 'commit/tag/branch reference'
         required: true
@@ -30,6 +34,7 @@ jobs:
       - name: Checkout breez-sdk repo
         uses: actions/checkout@v3
         with:
+          repository: ${{ inputs.repository || github.repository }}
           ref: ${{ inputs.ref || github.sha }}
 
       - uses: actions/setup-java@v3
