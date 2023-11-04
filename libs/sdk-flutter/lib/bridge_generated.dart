@@ -272,6 +272,8 @@ class BackupFailedData {
 
 class BackupStatus {
   final bool backedUp;
+
+  /// Epoch time, in seconds
   final int? lastBackupTime;
 
   const BackupStatus({
@@ -582,7 +584,11 @@ class InvoicePaidDetails {
 /// Represents a list payments request.
 class ListPaymentsRequest {
   final List<PaymentTypeFilter>? filters;
+
+  /// Epoch time, in seconds
   final int? fromTimestamp;
+
+  /// Epoch time, in seconds
   final int? toTimestamp;
   final bool? includeFailures;
   final int? offset;
@@ -1047,6 +1053,8 @@ class OpeningFeeParamsMenu {
 class Payment {
   final String id;
   final PaymentType paymentType;
+
+  /// Epoch time, in seconds
   final int paymentTime;
   final int amountMsat;
   final int feeMsat;
