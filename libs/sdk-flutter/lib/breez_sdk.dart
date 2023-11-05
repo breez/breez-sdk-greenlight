@@ -286,6 +286,10 @@ class BreezSDK {
 
   /* On-Chain Swap API's */
 
+  Future<MaxReverseSwapAmountResponse> maxReverseSwapAmount() async {
+    return await _lnToolkit.maxReverseSwapAmount();
+  }
+
   /// Creates a reverse swap and attempts to pay the HODL invoice
   Future<SendOnchainResponse> sendOnchain({
     required SendOnchainRequest req,
