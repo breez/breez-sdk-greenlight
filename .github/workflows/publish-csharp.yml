@@ -2,6 +2,10 @@ name: Publish C# Bindings
 on:
   workflow_call:
     inputs:
+      repository:
+        description: 'sdk repository, defaults to current repository'
+        required: false
+        type: string
       ref:
         description: 'commit/tag/branch reference'
         required: true
@@ -10,6 +14,11 @@ on:
         description: 'version for the nuget package (MAJOR.MINOR.BUILD)'
         required: true
         type: string
+      skip-tests:
+        description: 'value indicating whether to skip the tests'
+        required: false
+        default: false
+        type: boolean
       publish:
         description: 'value indicating whether to publish to nuget.'
         required: true
@@ -27,6 +36,7 @@ jobs:
       - name: Checkout breez-sdk repo
         uses: actions/checkout@v3
         with:
+          repository: ${{ inputs.repository || github.repository }}
           ref: ${{ inputs.ref || github.sha }}
  
       - uses: actions/download-artifact@v3
@@ -101,21 +111,26 @@ jobs:
         ]
     steps:
       - name: Checkout breez-sdk repo
+        if: ${{ !inputs.skip-tests }}
         uses: actions/checkout@v3
         with:
+          repository: ${{ inputs.repository || github.repository }}
           ref: ${{ inputs.ref || github.sha }}
       
       - uses: actions/download-artifact@v3
+        if: ${{ !inputs.skip-tests }}
         with:
           name: Breez.Sdk.${{ inputs.package-version || '0.0.1' }}.nupkg
           path: libs/sdk-bindings/bindings-csharp/src/bin/Release
 
       - name: Setup dotnet
+        if: ${{ !inputs.skip-tests }}
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '7.0.x'
       
       - name: test package
+        if: ${{ !inputs.skip-tests }}
         working-directory: libs/sdk-bindings/bindings-csharp/test
         run: dotnet run
       

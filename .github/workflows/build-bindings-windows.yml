@@ -8,13 +8,23 @@ on:
         type: string
   workflow_call:
     inputs:
+      repository:
+        description: 'sdk repository, defaults to current repository'
+        required: false
+        type: string
       ref:
         description: 'commit/tag/branch reference'
         required: true
         type: string
+      use-dummy-binaries:
+        description: 'If true, creates dummy binaries rather than real binaries'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   build:
+    if: ${{ !inputs.use-dummy-binaries }}
     runs-on: windows-latest
     name: build ${{ matrix.target }}
     strategy:
@@ -28,6 +38,7 @@ jobs:
       uses: actions/checkout@v3
       with: 
         ref: ${{ inputs.ref }}
+        repository: ${{ inputs.repository || github.repository }}
 
     - name: Install rust toolchain
       run: |
@@ -54,3 +65,24 @@ jobs:
       with:
         name: sdk-bindings-${{ matrix.target }}
         path: libs/target/${{ matrix.target }}/release/breez_sdk_bindings.dll
+
+  build-dummies:
+    if: ${{ inputs.use-dummy-binaries }}
+    runs-on: ubuntu-latest
+    name: build windows dummies
+    strategy:
+      matrix:
+        target: [
+          x86_64-pc-windows-msvc,
+          i686-pc-windows-msvc,
+        ]
+    steps:
+      - name: Build dummy windows ${{ matrix.target }}
+        run: |
+          touch breez_sdk_bindings.dll
+
+      - name: Upload dummy windows ${{ matrix.target }} artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: sdk-bindings-${{ matrix.target }}
+          path: ./*
