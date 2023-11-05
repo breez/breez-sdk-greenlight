@@ -170,6 +170,11 @@ pub extern "C" fn wire_list_fiat_currencies(port_: i64) {
 }
 
 #[no_mangle]
+pub extern "C" fn wire_max_reverse_swap_amount(port_: i64) {
+    wire_max_reverse_swap_amount_impl(port_)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_send_onchain(port_: i64, req: *mut wire_SendOnchainRequest) {
     wire_send_onchain_impl(port_, req)
 }
