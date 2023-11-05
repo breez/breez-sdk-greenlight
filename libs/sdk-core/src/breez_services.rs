@@ -696,7 +696,7 @@ impl BreezServices {
     /// Returns the max amount that can be sent on-chain using the send_onchain method.
     /// The returned amount is the sum of the max amount that can be sent on each channel
     /// minus the expected fees.
-    /// This is possible since the route to the swapper node is known in advance ans is expected
+    /// This is possible since the route to the swapper node is known in advance and is expected
     /// to consist of maximum 3 hops.
     pub async fn max_reverse_swap_amount(&self) -> SdkResult<MaxReverseSwapAmountResponse> {
         // fetch the last hop hints from the swapper

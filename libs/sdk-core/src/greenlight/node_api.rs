@@ -414,7 +414,7 @@ impl Greenlight {
         Ok(utxos)
     }
 
-    async fn build_payment_path(&self, route: Vec<GetrouteRoute>) -> Result<PaymentPath> {
+    async fn build_payment_path(&self, route: Vec<GetrouteRoute>) -> NodeResult<PaymentPath> {
         let mut client = self.get_node_client().await?;
         let mut hops = vec![];
         for hop in &route {
@@ -428,10 +428,10 @@ impl Greenlight {
                 .into_inner()
                 .channels;
 
-            let first_channel = hopchannels
-                .first()
-                .ok_or("no route found")
-                .map_err(|e| anyhow!(e))?;
+            let first_channel = hopchannels.first().ok_or(NodeError::RouteNotFound(anyhow!(
+                "channel not found {}",
+                hop.channel.clone()
+            )))?;
 
             info!("found channel in route: {:?}", first_channel);
             hops.push(PaymentPathEdge {
@@ -597,7 +597,7 @@ impl NodeAPI for Greenlight {
             .await?;
         info!("send_pay: route: {:?}", payment_path);
 
-        // Calculat the total amount to pay
+        // Calculate the total amount to pay
         let total: u64 = max_amount_per_channel.iter().map(|m| m.amount_msat).sum();
 
         // Sort the channels by max amount descending so we can build the route in a way that it
@@ -606,7 +606,7 @@ impl NodeAPI for Greenlight {
 
         let amount_to_pay = match invoice.amount_msat {
             Some(amount) => Ok(amount),
-            None => Err(NodeError::Generic(anyhow!("invoice has no amount"))),
+            None => Err(NodeError::Generic(anyhow!("Invoice has no amount"))),
         }?;
 
         if amount_to_pay > total {
@@ -1630,7 +1630,7 @@ fn convert_to_send_pay_route(
             // last hop should not take any fees and should use the final_cltv_delta.
             true => (to_forward, final_cltv_delta),
 
-            // all other hops are forwarding and should take fees and increaase the cltv delta.
+            // all other hops are forwarding therefore should take fees and increase the cltv delta.
             false => (
                 hops_arr[reverse_index + 1].amount_from_forward(to_forward),
                 cltv_delay + hops_arr[reverse_index + 1].channel_delay,

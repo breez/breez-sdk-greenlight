@@ -21,7 +21,7 @@ use super::error::{ReverseSwapError, ReverseSwapResult};
 const BOLTZ_API_URL: &str = "https://api.boltz.exchange/";
 const GET_PAIRS_ENDPOINT: &str = concatcp!(BOLTZ_API_URL, "getpairs");
 const GET_SWAP_STATUS_ENDPOINT: &str = concatcp!(BOLTZ_API_URL, "swapstatus");
-const GET_ROUTE_HINTS_ENDPIONT: &str = concatcp!(BOLTZ_API_URL, "routinghints");
+const GET_ROUTE_HINTS_ENDPOINT: &str = concatcp!(BOLTZ_API_URL, "routinghints");
 pub(crate) const CREATE_REVERSE_SWAP_ENDPOINT: &str = concatcp!(BOLTZ_API_URL, "createswap");
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -308,7 +308,7 @@ impl ReverseSwapServiceAPI for BoltzApi {
 
     async fn get_route_hints(&self, routing_node_id: String) -> ReverseSwapResult<Vec<RouteHint>> {
         Client::new()
-            .post(GET_ROUTE_HINTS_ENDPIONT)
+            .post(GET_ROUTE_HINTS_ENDPOINT)
             .header(CONTENT_TYPE, "application/json")
             .body(Body::from(
                 json!({ "routingNode": routing_node_id, "symbol": "BTC" }).to_string(),
@@ -319,7 +319,7 @@ impl ReverseSwapServiceAPI for BoltzApi {
             .await
             .map_err(|e| {
                 ReverseSwapError::ServiceConnectivity(anyhow!(
-                    "(Boltz {GET_ROUTE_HINTS_ENDPIONT}) Failed to get routing hints: {e}"
+                    "(Boltz {GET_ROUTE_HINTS_ENDPOINT}) Failed to get routing hints: {e}"
                 ))
             })
             .and_then(|res| {
@@ -330,7 +330,7 @@ impl ReverseSwapServiceAPI for BoltzApi {
                 serde_json::from_str::<BoltzRouteHints>(&res)
                 .map_err(|e| {
                     ReverseSwapError::ServiceConnectivity(anyhow!(
-                        "(Boltz {GET_ROUTE_HINTS_ENDPIONT}) Failed to parse get route hints response: {e}"
+                        "(Boltz {GET_ROUTE_HINTS_ENDPOINT}) Failed to parse get route hints response: {e}"
                     ))
                 })
             })

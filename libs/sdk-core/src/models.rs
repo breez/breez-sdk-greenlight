@@ -1125,7 +1125,7 @@ pub(crate) fn parse_short_channel_id(id_str: &str) -> Result<u64> {
 pub(crate) fn format_short_channel_id(id: u64) -> String {
     let block_num = (id >> 40) as u32;
     let tx_num = ((id >> 16) & 0xFFFFFF) as u32;
-    let tx_out = id as u16;
+    let tx_out = (id & 0xFFFF) as u16;
     format!("{block_num}x{tx_num}x{tx_out}")
 }
 

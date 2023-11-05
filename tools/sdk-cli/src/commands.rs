@@ -86,7 +86,7 @@ pub(crate) enum Commands {
         sat_per_vbyte: u32,
     },
 
-    MaxOnchainPayment {},
+    MaxReverseSwapAmount {},
 
     /// Get the current fees for a potential new reverse swap
     FetchOnchainFees {

@@ -84,7 +84,7 @@ pub trait NodeAPI: Send + Sync {
     /// This is useful function to send the largest anount possible to a node.
     async fn send_pay(&self, bolt11: String, max_hops: u32) -> NodeResult<PaymentResponse>;
 
-    /// Calcualtes the maximum amount that can be sent to a node.
+    /// Calculates the maximum amount that can be sent to a node.
     async fn max_amount_to_send(
         &self,
         payee_node_id: Option<Vec<u8>>,
