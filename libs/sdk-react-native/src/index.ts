@@ -122,6 +122,7 @@ export type LnInvoice = {
     expiry: number
     routingHints: RouteHint[]
     paymentSecret: number[]
+    minFinalCltvExpiryDelta: number
 }
 
 export type ListPaymentsRequest = {
@@ -231,6 +232,10 @@ export type LspInformation = {
     minHtlcMsat: number
     lspPubkey: number[]
     openingFeeParamsList: OpeningFeeParamsMenu
+}
+
+export type MaxReverseSwapAmountResponse = {
+    totalMsat: number
 }
 
 export type MessageSuccessActionData = {
@@ -896,6 +901,11 @@ export const fetchReverseSwapFees = async (req: ReverseSwapFeesRequest): Promise
 
 export const inProgressReverseSwaps = async (): Promise<ReverseSwapInfo[]> => {
     const response = await BreezSDK.inProgressReverseSwaps()
+    return response
+}
+
+export const maxReverseSwapAmount = async (): Promise<MaxReverseSwapAmountResponse> => {
+    const response = await BreezSDK.maxReverseSwapAmount()
     return response
 }
 

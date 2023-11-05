@@ -645,6 +645,18 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
+    fun maxReverseSwapAmount(promise: Promise) {
+        executor.execute {
+            try {
+                val res = getBreezServices().maxReverseSwapAmount()
+                promise.resolve(readableMapOf(res))
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
     fun sendOnchain(
         req: ReadableMap,
         promise: Promise,

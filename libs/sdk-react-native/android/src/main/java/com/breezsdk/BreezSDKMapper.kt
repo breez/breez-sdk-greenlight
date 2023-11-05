@@ -668,6 +668,7 @@ fun asLnInvoice(lnInvoice: ReadableMap): LnInvoice? {
                 "expiry",
                 "routingHints",
                 "paymentSecret",
+                "minFinalCltvExpiryDelta",
             ),
         )
     ) {
@@ -683,6 +684,7 @@ fun asLnInvoice(lnInvoice: ReadableMap): LnInvoice? {
     val expiry = lnInvoice.getDouble("expiry").toULong()
     val routingHints = lnInvoice.getArray("routingHints")?.let { asRouteHintList(it) }!!
     val paymentSecret = lnInvoice.getArray("paymentSecret")?.let { asUByteList(it) }!!
+    val minFinalCltvExpiryDelta = lnInvoice.getDouble("minFinalCltvExpiryDelta").toULong()
     return LnInvoice(
         bolt11,
         payeePubkey,
@@ -694,6 +696,7 @@ fun asLnInvoice(lnInvoice: ReadableMap): LnInvoice? {
         expiry,
         routingHints,
         paymentSecret,
+        minFinalCltvExpiryDelta,
     )
 }
 
@@ -709,6 +712,7 @@ fun readableMapOf(lnInvoice: LnInvoice): ReadableMap {
         "expiry" to lnInvoice.expiry,
         "routingHints" to readableArrayOf(lnInvoice.routingHints),
         "paymentSecret" to readableArrayOf(lnInvoice.paymentSecret),
+        "minFinalCltvExpiryDelta" to lnInvoice.minFinalCltvExpiryDelta,
     )
 }
 
@@ -1439,6 +1443,39 @@ fun asLspInformationList(arr: ReadableArray): List<LspInformation> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asLspInformation(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
+fun asMaxReverseSwapAmountResponse(maxReverseSwapAmountResponse: ReadableMap): MaxReverseSwapAmountResponse? {
+    if (!validateMandatoryFields(
+            maxReverseSwapAmountResponse,
+            arrayOf(
+                "totalMsat",
+            ),
+        )
+    ) {
+        return null
+    }
+    val totalMsat = maxReverseSwapAmountResponse.getDouble("totalMsat").toULong()
+    return MaxReverseSwapAmountResponse(
+        totalMsat,
+    )
+}
+
+fun readableMapOf(maxReverseSwapAmountResponse: MaxReverseSwapAmountResponse): ReadableMap {
+    return readableMapOf(
+        "totalMsat" to maxReverseSwapAmountResponse.totalMsat,
+    )
+}
+
+fun asMaxReverseSwapAmountResponseList(arr: ReadableArray): List<MaxReverseSwapAmountResponse> {
+    val list = ArrayList<MaxReverseSwapAmountResponse>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asMaxReverseSwapAmountResponse(value)!!)
             else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
