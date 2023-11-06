@@ -1,44 +1,39 @@
+use std::cmp::max;
 use std::ops::Add;
-use std::pin::Pin;
 use std::str::FromStr;
 
 use anyhow::{anyhow, ensure, Result};
 use bitcoin::blockdata::opcodes;
 use bitcoin::blockdata::script::Builder;
 use bitcoin::hashes::hex::{FromHex, ToHex};
-use bitcoin::hashes::Hash;
+use bitcoin::hashes::{sha256, Hash};
 use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
-use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::{Address, Script};
 use chrono::{DateTime, Duration, Utc};
-use lightning_invoice::RawInvoice;
 use ripemd::Digest;
 use ripemd::Ripemd160;
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef};
 use rusqlite::ToSql;
 use serde::{Deserialize, Serialize};
-use std::cmp::max;
-use tokio::sync::mpsc;
-use tokio_stream::Stream;
-use tonic::Streaming;
+use strum_macros::{Display, EnumString};
 
-use crate::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
+use crate::breez_services::BreezServer;
+use crate::error::SdkResult;
 use crate::fiat::{FiatCurrency, Rate};
 use crate::grpc::{self, GetReverseRoutingNodeRequest, PaymentInformation, RegisterPaymentReply};
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lsp::LspInformation;
 use crate::models::Network::*;
+use crate::swap_in::error::SwapResult;
+use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
+use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
 use crate::{LNInvoice, LnUrlErrorData, LnUrlPayRequestData, LnUrlWithdrawRequestData};
-
-use crate::breez_services::BreezServer;
-use crate::error::{SdkError, SdkResult};
-use strum_macros::{Display, EnumString};
 
 pub const SWAP_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60 * 24 * 2; // 2 days
 pub const INVOICE_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60; // 60 minutes
 
 /// Different types of supported payments
-#[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize, Hash)]
 pub enum PaymentType {
     Sent,
     Received,
@@ -58,77 +53,26 @@ pub struct Peer {
     pub channels: Vec<Channel>,
 }
 
-/// Trait covering functions affecting the LN node
-#[tonic::async_trait]
-pub trait NodeAPI: Send + Sync {
-    async fn create_invoice(
-        &self,
-        amount_msat: u64,
-        description: String,
-        preimage: Option<Vec<u8>>,
-        use_description_hash: Option<bool>,
-        expiry: Option<u32>,
-        cltv: Option<u32>,
-    ) -> Result<String>;
-    async fn pull_changed(
-        &self,
-        since_timestamp: u64,
-        balance_changed: bool,
-    ) -> Result<SyncResponse>;
-    /// As per the `pb::PayRequest` docs, `amount_msat` is only needed when the invoice doesn't specify an amount
-    async fn send_payment(
-        &self,
-        bolt11: String,
-        amount_msat: Option<u64>,
-    ) -> Result<crate::models::PaymentResponse>;
-    async fn send_spontaneous_payment(
-        &self,
-        node_id: String,
-        amount_msat: u64,
-    ) -> Result<crate::models::PaymentResponse>;
-    async fn start(&self) -> Result<()>;
-    async fn sweep(&self, to_address: String, fee_rate_sats_per_vbyte: u32) -> Result<Vec<u8>>;
-    async fn start_signer(&self, shutdown: mpsc::Receiver<()>);
-    async fn list_peers(&self) -> Result<Vec<Peer>>;
-    async fn connect_peer(&self, node_id: String, addr: String) -> Result<()>;
-    fn sign_invoice(&self, invoice: RawInvoice) -> Result<String>;
-    async fn close_peer_channels(&self, node_id: String) -> Result<Vec<String>>;
-    async fn stream_incoming_payments(&self) -> Result<Streaming<gl_client::pb::IncomingPayment>>;
-    async fn stream_log_messages(&self) -> Result<Streaming<gl_client::pb::LogEntry>>;
-    async fn static_backup(&self) -> Result<Vec<String>>;
-    async fn execute_command(&self, command: String) -> Result<String>;
-    async fn sign_message(&self, message: &str) -> Result<String>;
-    async fn check_message(&self, message: &str, pubkey: &str, signature: &str) -> Result<bool>;
-    async fn send_custom_message(&self, message: CustomMessage) -> Result<()>;
-    async fn stream_custom_messages(
-        &self,
-    ) -> Result<Pin<Box<dyn Stream<Item = Result<CustomMessage>> + Send>>>;
-
-    /// Gets the private key at the path specified
-    fn derive_bip32_key(&self, path: Vec<ChildNumber>) -> Result<ExtendedPrivKey>;
-    fn legacy_derive_bip32_key(&self, path: Vec<ChildNumber>) -> Result<ExtendedPrivKey>;
-}
-
 /// Trait covering LSP-related functionality
 #[tonic::async_trait]
 pub trait LspAPI: Send + Sync {
-    async fn list_lsps(&self, node_pubkey: String) -> Result<Vec<LspInformation>>;
+    async fn list_lsps(&self, node_pubkey: String) -> SdkResult<Vec<LspInformation>>;
     async fn register_payment(
         &self,
         lsp_id: String,
         lsp_pubkey: Vec<u8>,
         payment_info: PaymentInformation,
-    ) -> Result<RegisterPaymentReply>;
+    ) -> SdkResult<RegisterPaymentReply>;
 }
 
 /// Trait covering fiat-related functionality
 #[tonic::async_trait]
 pub trait FiatAPI: Send + Sync {
     /// List all supported fiat currencies for which there is a known exchange rate.
-    async fn list_fiat_currencies(&self) -> Result<Vec<FiatCurrency>>;
+    async fn list_fiat_currencies(&self) -> SdkResult<Vec<FiatCurrency>>;
 
     /// Get the live rates from the server.
-    async fn fetch_fiat_rates(&self) -> Result<Vec<Rate>>;
+    async fn fetch_fiat_rates(&self) -> SdkResult<Vec<Rate>>;
 }
 
 /// Summary of an ongoing swap
@@ -150,7 +94,7 @@ pub trait SwapperAPI: Send + Sync {
         hash: Vec<u8>,
         payer_pubkey: Vec<u8>,
         node_pubkey: String,
-    ) -> Result<Swap>;
+    ) -> SwapResult<Swap>;
 
     async fn complete_swap(&self, bolt11: String) -> Result<()>;
 }
@@ -225,7 +169,7 @@ impl FullReverseSwapInfo {
         compressed_pub_key: Vec<u8>,
         sig: Vec<u8>,
         lock_height: u32,
-    ) -> Result<Script> {
+    ) -> ReverseSwapResult<Script> {
         let mut ripemd160_hasher = Ripemd160::new();
         ripemd160_hasher.update(preimage_hash);
         let ripemd160_hash = ripemd160_hasher.finalize();
@@ -265,7 +209,7 @@ impl FullReverseSwapInfo {
         &self,
         received_lockup_address: String,
         network: Network,
-    ) -> Result<()> {
+    ) -> ReverseSwapResult<()> {
         let redeem_script_received = Script::from_hex(&self.redeem_script)?;
         let asm = redeem_script_received.asm();
         debug!("received asm = {asm:?}");
@@ -294,10 +238,10 @@ impl FullReverseSwapInfo {
 
                 match lockup_addr_from_script == lockup_addr_expected {
                     true => Ok(()),
-                    false => Err(anyhow!("Unexpected lockup address")),
+                    false => Err(ReverseSwapError::UnexpectedLockupAddress),
                 }
             }
-            false => Err(anyhow!("Unexpected redeem script")),
+            false => Err(ReverseSwapError::UnexpectedRedeemScript),
         }
     }
 
@@ -306,19 +250,23 @@ impl FullReverseSwapInfo {
     /// - checks if amount matches the amount requested by the user
     /// - checks if the payment hash is the same preimage hash (derived from local secret bytes)
     /// included in the create request
-    pub(crate) fn validate_hodl_invoice(&self, amount_req_msat: u64) -> Result<()> {
+    pub(crate) fn validate_hodl_invoice(&self, amount_req_msat: u64) -> ReverseSwapResult<()> {
         let inv: lightning_invoice::Invoice = self.invoice.parse()?;
 
         // Validate if received invoice has the same amount as requested by the user
         let amount_from_invoice_msat = inv.amount_milli_satoshis().unwrap_or_default();
         match amount_from_invoice_msat == amount_req_msat {
-            false => Err(anyhow!("Invoice amount doesn't match the request")),
+            false => Err(ReverseSwapError::UnexpectedInvoiceAmount(anyhow!(
+                "Does not match the request"
+            ))),
             true => {
                 // Validate if received invoice has the same payment hash as the preimage hash in the request
                 let preimage_hash_from_invoice = inv.payment_hash();
                 let preimage_hash_from_req = &self.get_preimage_hash();
                 match preimage_hash_from_invoice == preimage_hash_from_req {
-                    false => Err(anyhow!("Invoice payment hash doesn't match the request")),
+                    false => Err(ReverseSwapError::UnexpectedPaymentHash(anyhow!(
+                        "Does not match the request"
+                    ))),
                     true => Ok(()),
                 }
             }
@@ -326,14 +274,14 @@ impl FullReverseSwapInfo {
     }
 
     /// Derives the lockup address from the redeem script
-    pub(crate) fn get_lockup_address(&self, network: Network) -> Result<Address> {
+    pub(crate) fn get_lockup_address(&self, network: Network) -> ReverseSwapResult<Address> {
         let redeem_script = Script::from_hex(&self.redeem_script)?;
         Ok(Address::p2wsh(&redeem_script, network.into()))
     }
 
     /// Get the preimage hash sent in the create request
-    pub(crate) fn get_preimage_hash(&self) -> bitcoin::hashes::sha256::Hash {
-        bitcoin::hashes::sha256::Hash::hash(&self.preimage)
+    pub(crate) fn get_preimage_hash(&self) -> sha256::Hash {
+        sha256::Hash::hash(&self.preimage)
     }
 }
 
@@ -411,18 +359,18 @@ impl TryFrom<i32> for ReverseSwapStatus {
 /// Trait covering Breez Server reverse swap functionality
 #[tonic::async_trait]
 pub(crate) trait ReverseSwapperRoutingAPI: Send + Sync {
-    async fn fetch_reverse_routing_node(&self) -> Result<Vec<u8>>;
+    async fn fetch_reverse_routing_node(&self) -> ReverseSwapResult<Vec<u8>>;
 }
 
 #[tonic::async_trait]
 impl ReverseSwapperRoutingAPI for BreezServer {
-    async fn fetch_reverse_routing_node(&self) -> Result<Vec<u8>> {
-        self.get_swapper_client()
+    async fn fetch_reverse_routing_node(&self) -> ReverseSwapResult<Vec<u8>> {
+        Ok(self
+            .get_swapper_client()
             .await?
             .get_reverse_routing_node(GetReverseRoutingNodeRequest::default())
             .await
-            .map(|reply| reply.into_inner().node_id)
-            .map_err(anyhow::Error::new)
+            .map(|reply| reply.into_inner().node_id)?)
     }
 }
 
@@ -431,7 +379,7 @@ impl ReverseSwapperRoutingAPI for BreezServer {
 pub(crate) trait ReverseSwapServiceAPI: Send + Sync {
     /// Lookup the most recent reverse swap pair info using the Boltz API. The fees are only valid
     /// for a set amount of time.
-    async fn fetch_reverse_swap_fees(&self) -> Result<ReverseSwapPairInfo>;
+    async fn fetch_reverse_swap_fees(&self) -> ReverseSwapResult<ReverseSwapPairInfo>;
 
     /// Creates a reverse submarine swap on the remote service (Boltz).
     ///
@@ -449,10 +397,10 @@ pub(crate) trait ReverseSwapServiceAPI: Send + Sync {
         claim_pubkey: String,
         pair_hash: String,
         routing_node: String,
-    ) -> Result<BoltzApiCreateReverseSwapResponse>;
+    ) -> ReverseSwapResult<BoltzApiCreateReverseSwapResponse>;
 
     /// Performs a live lookup of the reverse swap's status on the Boltz API
-    async fn get_boltz_status(&self, id: String) -> Result<BoltzApiReverseSwapStatus>;
+    async fn get_boltz_status(&self, id: String) -> ReverseSwapResult<BoltzApiReverseSwapStatus>;
 }
 
 /// Internal SDK log entry
@@ -576,10 +524,11 @@ impl From<Network> for bitcoin::network::constants::Network {
 }
 
 /// Different types of supported filters which can be applied when retrieving the transaction list
+#[derive(PartialEq)]
 pub enum PaymentTypeFilter {
     Sent,
     Received,
-    All,
+    ClosedChannel,
 }
 
 /// Different types of supported feerates
@@ -605,6 +554,7 @@ impl TryFrom<i32> for FeeratePreset {
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
 pub struct BackupStatus {
     pub backed_up: bool,
+    /// Epoch time, in seconds
     pub last_backup_time: Option<u64>,
 }
 
@@ -646,6 +596,7 @@ pub enum PaymentStatus {
 pub struct Payment {
     pub id: String,
     pub payment_type: PaymentType,
+    /// Epoch time, in seconds
     pub payment_time: i64,
     pub amount_msat: u64,
     pub fee_msat: u64,
@@ -655,9 +606,12 @@ pub struct Payment {
 }
 
 /// Represents a list payments request.
+#[derive(Default)]
 pub struct ListPaymentsRequest {
-    pub filter: PaymentTypeFilter,
+    pub filters: Option<Vec<PaymentTypeFilter>>,
+    /// Epoch time, in seconds
     pub from_timestamp: Option<i64>,
+    /// Epoch time, in seconds
     pub to_timestamp: Option<i64>,
     pub include_failures: Option<bool>,
     pub offset: Option<u32>,
@@ -667,6 +621,7 @@ pub struct ListPaymentsRequest {
 /// Represents a payment response.
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]
 pub struct PaymentResponse {
+    /// Epoch time, in seconds
     pub payment_time: i64,
     pub amount_msat: u64,
     pub fee_msat: u64,
@@ -722,13 +677,13 @@ pub struct ClosedChannelPaymentDetails {
     pub closing_txid: Option<String>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct ReverseSwapFeesRequest {
     pub send_amount_sat: Option<u64>,
 }
 
 /// Represents a receive payment request.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct ReceivePaymentRequest {
     /// The amount in satoshis for this payment request
     pub amount_msat: u64,
@@ -761,7 +716,7 @@ pub struct ReceivePaymentResponse {
 pub struct SendPaymentRequest {
     /// The bolt11 invoice
     pub bolt11: String,
-    /// The amount to pay in millisatoshis
+    /// The amount to pay in millisatoshis. Should only be set when `bolt11` is a zero-amount invoice.
     pub amount_msat: Option<u64>,
 }
 
@@ -801,7 +756,7 @@ pub struct OpenChannelFeeResponse {
     pub used_fee_params: Option<OpeningFeeParams>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct ReceiveOnchainRequest {
     pub opening_fee_params: Option<OpeningFeeParams>,
 }
@@ -840,10 +795,21 @@ pub struct SendOnchainResponse {
     pub reverse_swap_info: ReverseSwapInfo,
 }
 
+pub struct PrepareRefundRequest {
+    pub swap_address: String,
+    pub to_address: String,
+    pub sat_per_vbyte: u32,
+}
+
 pub struct RefundRequest {
     pub swap_address: String,
     pub to_address: String,
     pub sat_per_vbyte: u32,
+}
+
+pub struct PrepareRefundResponse {
+    pub refund_tx_weight: u32,
+    pub refund_tx_fee_sat: u64,
 }
 
 pub struct RefundResponse {
@@ -870,9 +836,7 @@ pub struct OpeningFeeParams {
 
 impl OpeningFeeParams {
     pub(crate) fn valid_until_date(&self) -> Result<DateTime<Utc>> {
-        DateTime::parse_from_rfc3339(&self.valid_until)
-            .map_err(|e| anyhow!(e))
-            .map(|d| d.with_timezone(&Utc))
+        Ok(DateTime::parse_from_rfc3339(&self.valid_until).map(|d| d.with_timezone(&Utc))?)
     }
 
     pub(crate) fn valid_for(&self, expiry: u32) -> Result<bool> {
@@ -982,20 +946,13 @@ impl OpeningFeeParamsMenu {
         Ok(())
     }
 
-    pub fn get_cheapest_opening_fee_params(&self) -> SdkResult<OpeningFeeParams> {
-        self.values
-            .first()
-            .cloned()
-            .ok_or_else(|| {
-                SdkError::LspOpenChannelNotSupported {
-            err:
-                "The LSP doesn't support opening new channels: Dynamic fees menu contains no values"
-                    .into(),
-        }
-            })
+    pub fn get_cheapest_opening_fee_params(&self) -> Result<OpeningFeeParams> {
+        self.values.first().cloned().ok_or_else(|| {
+            anyhow!("The LSP doesn't support opening new channels: Dynamic fees menu contains no values")
+        })
     }
 
-    pub fn get_48h_opening_fee_params(&self) -> SdkResult<OpeningFeeParams> {
+    pub fn get_48h_opening_fee_params(&self) -> Result<OpeningFeeParams> {
         // Find the fee params that are valid for at least 48h
         let now = Utc::now();
         let duration_48h = chrono::Duration::hours(48);
@@ -1014,13 +971,9 @@ impl OpeningFeeParamsMenu {
 
         // Of those, return the first, which is the cheapest
         // (sorting order of fee params list was checked when the menu was initialized)
-        valid_min_48h
-            .first()
-            .cloned()
-            .ok_or_else(|| SdkError::LspOpenChannelNotSupported {
-                err: "The LSP doesn't support opening fees that are valid for at least 48 hours"
-                    .into(),
-            })
+        valid_min_48h.first().cloned().ok_or_else(|| {
+            anyhow!("The LSP doesn't support opening fees that are valid for at least 48 hours")
+        })
     }
 }
 
@@ -1234,6 +1187,23 @@ pub enum BuyBitcoinProvider {
     Moonpay,
 }
 
+/// We need to prepare a sweep transaction to know what fee will be charged in satoshis this
+/// model holds the request data which consists of the address to sweep to and the fee rate in
+/// satoshis per vbyte which will be converted to absolute satoshis.
+#[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
+pub struct PrepareSweepRequest {
+    pub to_address: String,
+    pub sats_per_vbyte: u64,
+}
+
+/// We need to prepare a sweep transaction to know what a fee it will be charged in satoshis
+/// this model holds the response data, which consists of the weight and the absolute fee in sats
+#[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
+pub struct PrepareSweepResponse {
+    pub sweep_tx_weight: u64,
+    pub sweep_tx_fee_sat: u64,
+}
+
 impl FromStr for BuyBitcoinProvider {
     type Err = anyhow::Error;
 
@@ -1247,7 +1217,6 @@ impl FromStr for BuyBitcoinProvider {
 
 #[cfg(test)]
 mod tests {
-    use super::OpeningFeeParamsMenu;
     use anyhow::Result;
     use prost::Message;
     use rand::random;
@@ -1255,6 +1224,8 @@ mod tests {
     use crate::grpc::PaymentInformation;
     use crate::test_utils::{get_test_ofp, rand_vec_u8};
     use crate::OpeningFeeParams;
+
+    use super::OpeningFeeParamsMenu;
 
     #[test]
     fn test_ofp_menu_validation() -> Result<()> {

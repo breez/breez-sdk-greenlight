@@ -1,12 +1,16 @@
 use crate::models::{SwapInfo, SwapStatus};
 
-use super::db::{SqliteStorage, StringArray};
+use super::{
+    db::{SqliteStorage, StringArray},
+    error::PersistError,
+    error::PersistResult,
+};
 use crate::OpeningFeeParams;
-use anyhow::{anyhow, Result};
+use anyhow::anyhow;
 use rusqlite::{named_params, OptionalExtension, Params, Row, Transaction};
 
 impl SqliteStorage {
-    pub(crate) fn insert_swap(&self, swap_info: SwapInfo) -> Result<()> {
+    pub(crate) fn insert_swap(&self, swap_info: SwapInfo) -> PersistResult<()> {
         let mut con = self.get_connection()?;
         let tx = con.transaction()?;
 
@@ -67,9 +71,9 @@ impl SqliteStorage {
         Self::insert_swaps_fees(
             &tx,
             swap_info.bitcoin_address,
-            swap_info
-                .channel_opening_fees
-                .ok_or_else(|| anyhow!("Dynamic fees must be set when creating a new swap"))?,
+            swap_info.channel_opening_fees.ok_or_else(|| {
+                PersistError::Generic(anyhow!("Dynamic fees must be set when creating a new swap"))
+            })?,
         )?;
 
         tx.commit()?;
@@ -80,7 +84,7 @@ impl SqliteStorage {
         &self,
         bitcoin_address: String,
         paid_sats: u32,
-    ) -> Result<()> {
+    ) -> PersistResult<()> {
         self.get_connection()?.execute(
             "UPDATE swaps_info SET paid_sats=:paid_sats where bitcoin_address=:bitcoin_address",
             named_params! {
@@ -96,7 +100,7 @@ impl SqliteStorage {
         &self,
         bitcoin_address: String,
         redeem_err: String,
-    ) -> Result<()> {
+    ) -> PersistResult<()> {
         self.get_connection()?.execute(
             "UPDATE swaps_info SET last_redeem_error=:redeem_err where bitcoin_address=:bitcoin_address",
             named_params! {
@@ -108,7 +112,11 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub(crate) fn update_swap_bolt11(&self, bitcoin_address: String, bolt11: String) -> Result<()> {
+    pub(crate) fn update_swap_bolt11(
+        &self,
+        bitcoin_address: String,
+        bolt11: String,
+    ) -> PersistResult<()> {
         self.get_connection()?.execute(
             "UPDATE swaps_info SET bolt11=:bolt11 where bitcoin_address=:bitcoin_address",
             named_params! {
@@ -124,7 +132,7 @@ impl SqliteStorage {
         tx: &Transaction,
         bitcoin_address: String,
         channel_opening_fees: OpeningFeeParams,
-    ) -> Result<()> {
+    ) -> PersistResult<()> {
         tx.execute(
             "INSERT OR REPLACE INTO sync.swaps_fees (bitcoin_address, created_at, channel_opening_fees) VALUES(:bitcoin_address, CURRENT_TIMESTAMP, :channel_opening_fees)",
             named_params! {
@@ -141,7 +149,7 @@ impl SqliteStorage {
         &self,
         bitcoin_address: String,
         channel_opening_fees: OpeningFeeParams,
-    ) -> Result<()> {
+    ) -> PersistResult<()> {
         let mut con = self.get_connection()?;
         let tx = con.transaction()?;
 
@@ -155,7 +163,7 @@ impl SqliteStorage {
         &self,
         bitcoin_address: String,
         refund_tx_id: String,
-    ) -> Result<()> {
+    ) -> PersistResult<()> {
         self.get_connection()?.execute(
             "INSERT INTO sync.swap_refunds (bitcoin_address, refund_tx_id) VALUES(:bitcoin_address, :refund_tx_id)",
             named_params! {
@@ -175,7 +183,7 @@ impl SqliteStorage {
         confirmed_sats: u64,
         confirmed_tx_ids: Vec<String>,
         status: SwapStatus,
-    ) -> Result<SwapInfo> {
+    ) -> PersistResult<SwapInfo> {
         self.get_connection()?.execute(
             "UPDATE swaps_info SET unconfirmed_sats=:unconfirmed_sats, unconfirmed_tx_ids=:unconfirmed_tx_ids, confirmed_sats=:confirmed_sats, confirmed_tx_ids=:confirmed_tx_ids, status=:status where bitcoin_address=:bitcoin_address",
             named_params! {
@@ -225,27 +233,37 @@ impl SqliteStorage {
         )
     }
 
-    fn select_single_swap<P>(&self, where_clause: &str, params: P) -> Result<Option<SwapInfo>>
+    fn select_single_swap<P>(
+        &self,
+        where_clause: &str,
+        params: P,
+    ) -> PersistResult<Option<SwapInfo>>
     where
         P: Params,
     {
-        self.get_connection()?
+        Ok(self
+            .get_connection()?
             .query_row(&self.select_swap_query(where_clause), params, |row| {
                 self.sql_row_to_swap(row)
             })
-            .optional()
-            .map_err(|e| anyhow!(e))
+            .optional()?)
     }
 
-    pub(crate) fn get_swap_info_by_hash(&self, hash: &Vec<u8>) -> Result<Option<SwapInfo>> {
+    pub(crate) fn get_swap_info_by_hash(&self, hash: &Vec<u8>) -> PersistResult<Option<SwapInfo>> {
         self.select_single_swap("payment_hash = ?1", [hash])
     }
 
-    pub(crate) fn get_swap_info_by_address(&self, address: String) -> Result<Option<SwapInfo>> {
+    pub(crate) fn get_swap_info_by_address(
+        &self,
+        address: String,
+    ) -> PersistResult<Option<SwapInfo>> {
         self.select_single_swap("swaps.bitcoin_address = ?1", [address])
     }
 
-    pub(crate) fn list_swaps_with_status(&self, status: SwapStatus) -> Result<Vec<SwapInfo>> {
+    pub(crate) fn list_swaps_with_status(
+        &self,
+        status: SwapStatus,
+    ) -> PersistResult<Vec<SwapInfo>> {
         let con = self.get_connection()?;
         let mut stmt = con.prepare(&self.select_swap_query("status = ?1"))?;
 
@@ -257,7 +275,7 @@ impl SqliteStorage {
         Ok(vec)
     }
 
-    pub(crate) fn list_swaps(&self) -> Result<Vec<SwapInfo>> {
+    pub(crate) fn list_swaps(&self) -> PersistResult<Vec<SwapInfo>> {
         let con = self.get_connection()?;
         let mut stmt = con.prepare(&self.select_swap_query("true"))?;
 
@@ -269,7 +287,7 @@ impl SqliteStorage {
         Ok(vec)
     }
 
-    fn sql_row_to_swap(&self, row: &Row) -> Result<SwapInfo, rusqlite::Error> {
+    fn sql_row_to_swap(&self, row: &Row) -> PersistResult<SwapInfo, rusqlite::Error> {
         let status: i32 = row
             .get::<&str, Option<i32>>("status")?
             .unwrap_or(SwapStatus::Initial as i32);
@@ -322,15 +340,15 @@ impl SqliteStorage {
 #[cfg(test)]
 mod tests {
     use crate::persist::db::SqliteStorage;
+    use crate::persist::error::PersistResult;
     use crate::test_utils::get_test_ofp_48h;
     use crate::{OpeningFeeParams, SwapInfo, SwapStatus};
-    use anyhow::Result;
     use rusqlite::{named_params, Connection};
 
     #[test]
-    fn test_swaps() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_swaps() -> PersistResult<(), Box<dyn std::error::Error>> {
         use crate::persist::test_utils;
-        fn list_in_progress_swaps(storage: &SqliteStorage) -> Result<Vec<SwapInfo>> {
+        fn list_in_progress_swaps(storage: &SqliteStorage) -> PersistResult<Vec<SwapInfo>> {
             Ok(storage
                 .list_swaps_with_status(SwapStatus::Initial)?
                 .into_iter()
@@ -460,7 +478,7 @@ mod tests {
 
     #[test]
     /// Checks if an empty column is converted to None
-    fn test_rusqlite_empty_col_handling() -> Result<()> {
+    fn test_rusqlite_empty_col_handling() -> PersistResult<()> {
         let db = Connection::open_in_memory()?;
 
         // Insert a NULL

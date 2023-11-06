@@ -1,19 +1,29 @@
 pub(crate) mod auth;
+pub(crate) mod error;
 pub(crate) mod pay;
 pub(crate) mod withdraw;
 
-use anyhow::Result;
+use crate::lnurl::error::LnUrlResult;
 
 /// Replaces the scheme, host and port with a local mockito host. Preserves the rest of the path.
 #[cfg(test)]
-pub(crate) fn maybe_replace_host_with_mockito_test_host(lnurl_endpoint: String) -> Result<String> {
+pub(crate) fn maybe_replace_host_with_mockito_test_host(
+    lnurl_endpoint: String,
+) -> LnUrlResult<String> {
     // During tests, the mockito test URL chooses a free port. This cannot be known in advance,
     // so the URL has to be adjusted dynamically.
-    let server = crate::input_parser::tests::MOCK_HTTP_SERVER.lock().unwrap();
-    let mockito_endpoint_url = reqwest::Url::parse(&server.url())?;
-    let mut parsed_lnurl_endpoint = reqwest::Url::parse(&lnurl_endpoint)?;
 
-    parsed_lnurl_endpoint.set_host(mockito_endpoint_url.host_str())?;
+    use self::error::LnUrlError;
+
+    let server = crate::input_parser::tests::MOCK_HTTP_SERVER.lock().unwrap();
+    let mockito_endpoint_url = reqwest::Url::parse(&server.url())
+        .map_err(|e| LnUrlError::InvalidUri(anyhow::Error::new(e)))?;
+    let mut parsed_lnurl_endpoint = reqwest::Url::parse(&lnurl_endpoint)
+        .map_err(|e| LnUrlError::InvalidUri(anyhow::Error::new(e)))?;
+
+    parsed_lnurl_endpoint
+        .set_host(mockito_endpoint_url.host_str())
+        .map_err(|e| LnUrlError::InvalidUri(anyhow::Error::new(e)))?;
     let _ = parsed_lnurl_endpoint.set_scheme(mockito_endpoint_url.scheme());
     let _ = parsed_lnurl_endpoint.set_port(mockito_endpoint_url.port());
 
@@ -21,7 +31,9 @@ pub(crate) fn maybe_replace_host_with_mockito_test_host(lnurl_endpoint: String) 
 }
 
 #[cfg(not(test))]
-pub(crate) fn maybe_replace_host_with_mockito_test_host(lnurl_endpoint: String) -> Result<String> {
+pub(crate) fn maybe_replace_host_with_mockito_test_host(
+    lnurl_endpoint: String,
+) -> LnUrlResult<String> {
     // When not called from a test, we fallback to keeping the URL intact
     Ok(lnurl_endpoint)
 }

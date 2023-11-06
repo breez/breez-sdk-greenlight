@@ -11,14 +11,81 @@ dictionary RouteHintHop {
 [Error]
 enum SdkError {
     "Generic",
-    "InitFailed",
-    "NotReady",
-    "LspConnectFailed",
-    "LspOpenChannelNotSupported",
-    "PersistenceFailure",
-    "ReceivePaymentFailed",
-    "SendPaymentFailed",
-    "CalculateOpenChannelFeesFailed",
+    "ServiceConnectivity",
+};
+
+[Error]
+enum LnUrlAuthError {
+    "Generic",
+    "InvalidUri",
+    "ServiceConnectivity",
+};
+
+[Error]
+enum LnUrlPayError {
+    "AesDecryptionFailed",
+    "AlreadyPaid",
+    "Generic",
+    "InvalidAmount",
+    "InvalidInvoice",
+    "InvalidUri",
+    "InvoiceExpired",
+    "PaymentFailed",
+    "PaymentTimeout",
+    "RouteNotFound",
+    "RouteTooExpensive",
+    "ServiceConnectivity",
+};
+
+[Error]
+enum LnUrlWithdrawError {
+    "Generic",
+    "InvalidAmount",
+    "InvalidInvoice",
+    "InvalidUri",
+    "ServiceConnectivity",
+};
+
+[Error]
+enum ReceiveOnchainError {
+    "Generic",
+    "ServiceConnectivity",
+    "SwapInProgress",
+};
+
+[Error]
+enum ReceivePaymentError {
+    "Generic",
+    "InvalidAmount",
+    "InvalidInvoice",
+    "InvoiceExpired",
+    "InvoiceNoDescription",
+    "InvoicePreimageAlreadyExists",
+    "ServiceConnectivity",
+};
+
+[Error]
+enum SendOnchainError {
+    "Generic",
+    "InvalidDestinationAddress",
+    "PaymentFailed",
+    "PaymentTimeout",
+    "ReverseSwapInProgress",
+    "ServiceConnectivity",
+};
+
+[Error]
+enum SendPaymentError {
+    "AlreadyPaid",
+    "Generic",
+    "InvalidAmount",
+    "InvalidInvoice",
+    "InvoiceExpired",
+    "PaymentFailed",
+    "PaymentTimeout",
+    "RouteNotFound",
+    "RouteTooExpensive",
+    "ServiceConnectivity",
 };
 
 enum EnvironmentType {
@@ -83,7 +150,7 @@ dictionary UnspentTransactionOutput {
     u32 outnum;
     u64 amount_millisatoshi;
     string address;
-    boolean reserved;  
+    boolean reserved;
 };
 
 dictionary NodeState {
@@ -121,7 +188,7 @@ dictionary CheckMessageResponse {
 enum PaymentTypeFilter {
     "Sent",
     "Received",
-    "All",
+    "ClosedChannel",
 };
 
 enum PaymentStatus {
@@ -148,7 +215,7 @@ dictionary Payment {
 };
 
 dictionary ListPaymentsRequest {
-    PaymentTypeFilter filter;
+    sequence<PaymentTypeFilter>? filters = null;
     i64? from_timestamp = null;
     i64? to_timestamp = null;
     boolean? include_failures = null;
@@ -536,6 +603,16 @@ enum BuyBitcoinProvider {
     "Moonpay",
 };
 
+dictionary PrepareSweepRequest {
+    string to_address;
+    u64 sats_per_vbyte;
+};
+
+dictionary PrepareSweepResponse {
+    u64 sweep_tx_weight;
+    u64 sweep_tx_fee_sat;
+};
+
 dictionary SweepRequest {
     string to_address;
     u32 fee_rate_sats_per_vbyte;
@@ -570,6 +647,17 @@ dictionary SendOnchainResponse {
     ReverseSwapInfo reverse_swap_info;
 };
 
+dictionary PrepareRefundRequest {
+    string swap_address;
+    string to_address;
+    u32 sat_per_vbyte;
+};
+
+dictionary PrepareRefundResponse {
+    u32 refund_tx_weight;
+    u64 refund_tx_fee_sat;
+};
+
 dictionary RefundRequest {
     string swap_address;
     string to_address;
@@ -580,27 +668,27 @@ dictionary RefundResponse {
     string refund_tx_id;
 };
 
-interface BlockingBreezServices {   
+interface BlockingBreezServices {
 
    [Throws=SdkError]
    void disconnect();
 
-   [Throws=SdkError]
+   [Throws=SendPaymentError]
    SendPaymentResponse send_payment(SendPaymentRequest req);
 
-   [Throws=SdkError]
+   [Throws=SendPaymentError]
    SendPaymentResponse send_spontaneous_payment(SendSpontaneousPaymentRequest req);
 
-   [Throws=SdkError]
+   [Throws=ReceivePaymentError]
    ReceivePaymentResponse receive_payment(ReceivePaymentRequest req);
 
-   [Throws=SdkError]
+   [Throws=LnUrlPayError]
    LnUrlPayResult pay_lnurl(LnUrlPayRequest req);
 
-   [Throws=SdkError]
+   [Throws=LnUrlWithdrawError]
    LnUrlWithdrawResult withdraw_lnurl(LnUrlWithdrawRequest request);
 
-   [Throws=SdkError]
+   [Throws=LnUrlAuthError]
    LnUrlCallbackStatus lnurl_auth(LnUrlAuthRequestData req_data);
 
    [Throws=SdkError]
@@ -654,7 +742,7 @@ interface BlockingBreezServices {
    [Throws=SdkError]
    void close_lsp_channels();
 
-   [Throws=SdkError]
+   [Throws=ReceiveOnchainError]
    SwapInfo receive_onchain(ReceiveOnchainRequest req);
 
    [Throws=SdkError]
@@ -662,6 +750,9 @@ interface BlockingBreezServices {
 
    [Throws=SdkError]
    sequence<SwapInfo> list_refundables();
+
+   [Throws=SdkError]
+   PrepareRefundResponse prepare_refund(PrepareRefundRequest req);
 
    [Throws=SdkError]
    RefundResponse refund(RefundRequest req);
@@ -672,7 +763,7 @@ interface BlockingBreezServices {
    [Throws=SdkError]
    sequence<ReverseSwapInfo> in_progress_reverse_swaps();
 
-   [Throws=SdkError]
+   [Throws=SendOnchainError]
    SendOnchainResponse send_onchain(SendOnchainRequest req);
 
    [Throws=SdkError]
@@ -684,8 +775,11 @@ interface BlockingBreezServices {
    [Throws=SdkError]
    RecommendedFees recommended_fees();
 
-   [Throws=SdkError]
+   [Throws=ReceiveOnchainError]
    BuyBitcoinResponse buy_bitcoin(BuyBitcoinRequest req);
+
+   [Throws=SdkError]
+   PrepareSweepResponse prepare_sweep(PrepareSweepRequest req);
 };
 
 namespace breez_sdk {  

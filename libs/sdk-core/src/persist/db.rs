@@ -1,5 +1,7 @@
-use super::migrations::{current_migrations, current_sync_migrations};
-use crate::error::SdkResult;
+use super::{
+    error::PersistResult,
+    migrations::{current_migrations, current_sync_migrations},
+};
 use anyhow::Result;
 use rusqlite::{
     hooks::Action,
@@ -43,13 +45,13 @@ impl SqliteStorage {
         self.events_publisher.subscribe()
     }
 
-    pub(crate) fn init(&self) -> SdkResult<()> {
+    pub(crate) fn init(&self) -> PersistResult<()> {
         self.migrate_main_db()?;
         Self::migrate_sync_db(self.sync_db_file.clone())?;
         Ok(())
     }
 
-    pub(crate) fn migrate_sync_db(sync_db_path: String) -> SdkResult<()> {
+    pub(crate) fn migrate_sync_db(sync_db_path: String) -> PersistResult<()> {
         let mut sync_con = Connection::open(sync_db_path)?;
         let sync_migrations =
             Migrations::new(current_sync_migrations().into_iter().map(M::up).collect());
@@ -57,14 +59,14 @@ impl SqliteStorage {
         Ok(())
     }
 
-    fn migrate_main_db(&self) -> SdkResult<()> {
+    fn migrate_main_db(&self) -> PersistResult<()> {
         let migrations = Migrations::new(current_migrations().into_iter().map(M::up).collect());
         let mut conn = self.get_connection()?;
         migrations.to_latest(&mut conn)?;
         Ok(())
     }
 
-    pub(crate) fn get_connection(&self) -> SdkResult<Connection> {
+    pub(crate) fn get_connection(&self) -> PersistResult<Connection> {
         let con = Connection::open(self.main_db_file.clone())?;
         let sql = "ATTACH DATABASE ? AS sync;";
         con.execute(sql, [self.sync_db_file.clone()])?;

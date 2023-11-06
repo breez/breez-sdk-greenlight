@@ -1,8 +1,7 @@
 use crate::models::*;
 use std::collections::HashMap;
 
-use super::db::SqliteStorage;
-use anyhow::Result;
+use super::{db::SqliteStorage, error::PersistResult};
 use std::str::FromStr;
 
 impl SqliteStorage {
@@ -12,7 +11,7 @@ impl SqliteStorage {
     /// closing-related fields `closed_at` and `closing_txid` are not set, because doing so would require
     /// a chain service lookup. Instead, they will be set on first lookup in
     /// [BreezServices::closed_channel_to_transaction]
-    pub(crate) fn update_channels(&self, fetched_channels: &[Channel]) -> Result<()> {
+    pub(crate) fn update_channels(&self, fetched_channels: &[Channel]) -> PersistResult<()> {
         // create a hash map of the channels before the update
         let channels_before_update = self
             .list_channels()?
@@ -63,7 +62,7 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub(crate) fn list_channels(&self) -> Result<Vec<Channel>> {
+    pub(crate) fn list_channels(&self) -> PersistResult<Vec<Channel>> {
         let con = self.get_connection()?;
         let mut stmt = con.prepare(
             "
@@ -104,7 +103,7 @@ impl SqliteStorage {
         Ok(channels)
     }
 
-    pub(crate) fn insert_or_update_channel(&self, c: Channel) -> Result<()> {
+    pub(crate) fn insert_or_update_channel(&self, c: Channel) -> PersistResult<()> {
         self.get_connection()?.execute(
             "INSERT OR REPLACE INTO channels (
                    funding_txid, 

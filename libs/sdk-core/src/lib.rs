@@ -161,7 +161,6 @@ extern crate log;
 
 mod backup;
 pub mod binding;
-mod boltzswap;
 mod breez_services;
 mod chain;
 mod crypt;
@@ -180,9 +179,10 @@ mod lsps0;
 mod lsps2;
 mod models;
 mod moonpay;
+mod node_api;
 mod persist;
-mod reverseswap;
-mod swap;
+mod swap_in;
+mod swap_out;
 #[cfg(test)]
 mod test_utils;
 
@@ -202,4 +202,4 @@ pub use invoice::{parse_invoice, LNInvoice, RouteHint, RouteHintHop};
 pub use lnurl::pay::model::*;
 pub use lsp::LspInformation;
 pub use models::*;
-pub use reverseswap::{ESTIMATED_CLAIM_TX_VSIZE, ESTIMATED_LOCKUP_TX_VSIZE};
+pub use swap_out::reverseswap::{ESTIMATED_CLAIM_TX_VSIZE, ESTIMATED_LOCKUP_TX_VSIZE};

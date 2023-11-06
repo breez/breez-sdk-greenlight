@@ -3,7 +3,7 @@ use std::pin::Pin;
 use std::time::{Duration, SystemTime};
 use std::{mem, vec};
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Error, Result};
 use bitcoin::hashes::hex::ToHex;
 use bitcoin::hashes::{sha256, Hash};
 use bitcoin::secp256k1::ecdsa::RecoverableSignature;
@@ -27,14 +27,20 @@ use tonic::Streaming;
 use crate::backup::{BackupState, BackupTransport};
 use crate::breez_services::Receiver;
 use crate::chain::{ChainService, OnchainTx, Outspend, RecommendedFees, TxStatus};
-use crate::error::SdkResult;
+use crate::error::{ReceivePaymentError, SdkError, SdkResult};
 use crate::fiat::{FiatCurrency, Rate};
 use crate::grpc::{PaymentInformation, RegisterPaymentReply};
+use crate::invoice::{InvoiceError, InvoiceResult};
 use crate::lsp::LspInformation;
-use crate::models::{FiatAPI, LspAPI, NodeAPI, NodeState, Payment, Swap, SwapperAPI, SyncResponse};
+use crate::models::{FiatAPI, LspAPI, NodeState, Payment, Swap, SwapperAPI, SyncResponse};
 use crate::moonpay::MoonPayApi;
-use crate::swap::create_submarine_swap_script;
-use crate::{parse_invoice, Config, CustomMessage, LNInvoice, PaymentResponse, Peer, RouteHint};
+use crate::node_api::{NodeAPI, NodeError, NodeResult};
+use crate::swap_in::error::SwapResult;
+use crate::swap_in::swap::create_submarine_swap_script;
+use crate::{
+    parse_invoice, Config, CustomMessage, LNInvoice, PaymentResponse, Peer, PrepareSweepRequest,
+    PrepareSweepResponse, RouteHint,
+};
 use crate::{OpeningFeeParams, OpeningFeeParamsMenu};
 use crate::{ReceivePaymentRequest, SwapInfo};
 
@@ -64,7 +70,7 @@ impl MockBackupTransport {
 
 #[tonic::async_trait]
 impl BackupTransport for MockBackupTransport {
-    async fn pull(&self) -> Result<Option<BackupState>> {
+    async fn pull(&self) -> SdkResult<Option<BackupState>> {
         sleep(Duration::from_millis(10)).await;
         *self.num_pulled.lock().unwrap() += 1;
         let current_state = self.state.lock().unwrap();
@@ -74,14 +80,16 @@ impl BackupTransport for MockBackupTransport {
             None => Ok(None),
         }
     }
-    async fn push(&self, version: Option<u64>, data: Vec<u8>) -> Result<u64> {
+    async fn push(&self, version: Option<u64>, data: Vec<u8>) -> SdkResult<u64> {
         sleep(Duration::from_millis(10)).await;
         let mut remote_version = self.remote_version.lock().unwrap();
         let mut numpushed = self.num_pushed.lock().unwrap();
         *numpushed += 1;
 
         if !remote_version.is_none() && *remote_version != version {
-            return Err(anyhow!("version mismatch"));
+            return Err(SdkError::Generic {
+                err: "version mismatch".into(),
+            });
         }
         let next_version = match version {
             Some(v) => v + 1,
@@ -105,7 +113,7 @@ impl SwapperAPI for MockSwapperAPI {
         hash: Vec<u8>,
         payer_pubkey: Vec<u8>,
         _node_pubkey: String,
-    ) -> Result<Swap> {
+    ) -> SwapResult<Swap> {
         let mut swapper_priv_key_raw = [2; 32];
         rand::thread_rng().fill(&mut swapper_priv_key_raw);
 
@@ -246,7 +254,7 @@ impl Receiver for MockReceiver {
     async fn receive_payment(
         &self,
         _request: ReceivePaymentRequest,
-    ) -> SdkResult<crate::ReceivePaymentResponse> {
+    ) -> Result<crate::ReceivePaymentResponse, ReceivePaymentError> {
         Ok(crate::ReceivePaymentResponse {
             ln_invoice: parse_invoice(&self.bolt11)?,
             opening_fee_params: _request.opening_fee_params,
@@ -263,7 +271,7 @@ pub struct MockNodeAPI {
     /// added test payments
     cloud_payments: Mutex<Vec<gl_client::pb::Payment>>,
     node_state: NodeState,
-    on_send_custom_message: Box<dyn Fn(CustomMessage) -> Result<()> + Sync + Send>,
+    on_send_custom_message: Box<dyn Fn(CustomMessage) -> NodeResult<()> + Sync + Send>,
     on_stream_custom_messages: Mutex<mpsc::Receiver<CustomMessage>>,
 }
 
@@ -277,7 +285,7 @@ impl NodeAPI for MockNodeAPI {
         _use_description_hash: Option<bool>,
         _expiry: Option<u32>,
         _cltv: Option<u32>,
-    ) -> Result<String> {
+    ) -> NodeResult<String> {
         let invoice = create_invoice(description, amount_sats * 1000, vec![], preimage);
         Ok(invoice.bolt11)
     }
@@ -286,7 +294,7 @@ impl NodeAPI for MockNodeAPI {
         &self,
         _since_timestamp: u64,
         _balance_changed: bool,
-    ) -> Result<SyncResponse> {
+    ) -> NodeResult<SyncResponse> {
         Ok(SyncResponse {
             node_state: self.node_state.clone(),
             payments: self
@@ -305,84 +313,100 @@ impl NodeAPI for MockNodeAPI {
         &self,
         bolt11: String,
         _amount_msat: Option<u64>,
-    ) -> Result<PaymentResponse> {
+    ) -> NodeResult<PaymentResponse> {
         let payment = self.add_dummy_payment_for(bolt11, None, None).await?;
-        payment.try_into()
+        Ok(payment.try_into()?)
     }
 
     async fn send_spontaneous_payment(
         &self,
         _node_id: String,
         _amount_msat: u64,
-    ) -> Result<PaymentResponse> {
+    ) -> NodeResult<PaymentResponse> {
         let payment = self.add_dummy_payment_rand().await?;
-        payment.try_into()
+        Ok(payment.try_into()?)
     }
 
-    async fn start(&self) -> Result<()> {
+    async fn start(&self) -> NodeResult<()> {
         Ok(())
     }
 
-    async fn sweep(&self, _to_address: String, _fee_rate_sats_per_vbyte: u32) -> Result<Vec<u8>> {
+    async fn sweep(
+        &self,
+        _to_address: String,
+        _fee_rate_sats_per_vbyte: u32,
+    ) -> NodeResult<Vec<u8>> {
         Ok(rand_vec_u8(32))
+    }
+
+    async fn prepare_sweep(&self, _req: PrepareSweepRequest) -> NodeResult<PrepareSweepResponse> {
+        Err(NodeError::Generic(anyhow!("Not implemented")))
     }
 
     async fn start_signer(&self, _shutdown: mpsc::Receiver<()>) {}
 
-    async fn list_peers(&self) -> Result<Vec<Peer>> {
+    async fn list_peers(&self) -> NodeResult<Vec<Peer>> {
         Ok(vec![])
     }
 
-    async fn connect_peer(&self, _node_id: String, _addr: String) -> Result<()> {
+    async fn connect_peer(&self, _node_id: String, _addr: String) -> NodeResult<()> {
         Ok(())
     }
 
-    async fn sign_message(&self, _message: &str) -> Result<String> {
+    async fn sign_message(&self, _message: &str) -> NodeResult<String> {
         Ok("".to_string())
     }
 
-    async fn check_message(&self, _message: &str, _pubkey: &str, _signature: &str) -> Result<bool> {
+    async fn check_message(
+        &self,
+        _message: &str,
+        _pubkey: &str,
+        _signature: &str,
+    ) -> NodeResult<bool> {
         Ok(true)
     }
 
-    fn sign_invoice(&self, invoice: RawInvoice) -> Result<String> {
+    fn sign_invoice(&self, invoice: RawInvoice) -> NodeResult<String> {
         Ok(sign_invoice(invoice))
     }
 
-    async fn close_peer_channels(&self, _node_id: String) -> Result<Vec<String>> {
+    async fn close_peer_channels(&self, _node_id: String) -> NodeResult<Vec<String>> {
         Ok(vec![])
     }
-    async fn stream_incoming_payments(&self) -> Result<Streaming<gl_client::pb::IncomingPayment>> {
-        Err(anyhow!("Not implemented"))
+    async fn stream_incoming_payments(
+        &self,
+    ) -> NodeResult<Streaming<gl_client::pb::IncomingPayment>> {
+        Err(NodeError::Generic(anyhow!("Not implemented")))
     }
 
-    async fn stream_log_messages(&self) -> Result<Streaming<gl_client::pb::LogEntry>> {
-        Err(anyhow!("Not implemented"))
+    async fn stream_log_messages(&self) -> NodeResult<Streaming<gl_client::pb::LogEntry>> {
+        Err(NodeError::Generic(anyhow!("Not implemented")))
     }
 
-    async fn static_backup(&self) -> Result<Vec<String>> {
+    async fn static_backup(&self) -> NodeResult<Vec<String>> {
         Ok(Vec::new())
     }
 
-    async fn execute_command(&self, _command: String) -> Result<String> {
-        Err(anyhow!("Not implemented"))
+    async fn execute_command(&self, _command: String) -> NodeResult<String> {
+        Err(NodeError::Generic(anyhow!("Not implemented")))
     }
 
-    fn derive_bip32_key(&self, _path: Vec<ChildNumber>) -> Result<ExtendedPrivKey> {
+    fn derive_bip32_key(&self, _path: Vec<ChildNumber>) -> NodeResult<ExtendedPrivKey> {
         Ok(ExtendedPrivKey::new_master(Network::Bitcoin, &[])?)
     }
 
-    fn legacy_derive_bip32_key(&self, _path: Vec<ChildNumber>) -> Result<ExtendedPrivKey> {
+    fn legacy_derive_bip32_key(&self, _path: Vec<ChildNumber>) -> NodeResult<ExtendedPrivKey> {
         Ok(ExtendedPrivKey::new_master(Network::Bitcoin, &[])?)
     }
 
-    async fn send_custom_message(&self, message: CustomMessage) -> Result<()> {
+    async fn send_custom_message(&self, message: CustomMessage) -> NodeResult<()> {
         (self.on_send_custom_message)(message)
     }
 
     async fn stream_custom_messages(
         &self,
-    ) -> Result<Pin<Box<dyn Stream<Item = Result<CustomMessage>> + Send>>> {
+    ) -> NodeResult<Pin<Box<dyn Stream<Item = core::result::Result<CustomMessage, Error>> + Send>>>
+    {
         let (_, next_rx) = mpsc::channel(1);
         let mut guard = self.on_stream_custom_messages.lock().await;
         let rx = mem::replace(&mut *guard, next_rx);
@@ -414,14 +438,16 @@ impl MockNodeAPI {
         bolt11: String,
         preimage: Option<sha256::Hash>,
         status: Option<PayStatus>,
-    ) -> Result<Payment> {
-        let inv = bolt11.parse::<lightning_invoice::Invoice>()?;
+    ) -> NodeResult<Payment> {
+        let inv = bolt11
+            .parse::<lightning_invoice::Invoice>()
+            .map_err(|e| NodeError::Generic(anyhow::Error::new(e)))?;
 
         self.add_dummy_payment(inv, preimage, status).await
     }
 
     /// Adds a dummy payment with random attributes.
-    pub(crate) async fn add_dummy_payment_rand(&self) -> Result<Payment> {
+    pub(crate) async fn add_dummy_payment_rand(&self) -> NodeResult<Payment> {
         let preimage = sha256::Hash::hash(&rand_vec_u8(10));
         let inv = rand_invoice_with_description_hash_and_preimage("test".into(), preimage)?;
 
@@ -434,7 +460,7 @@ impl MockNodeAPI {
         inv: lightning_invoice::Invoice,
         preimage: Option<sha256::Hash>,
         status: Option<PayStatus>,
-    ) -> Result<Payment> {
+    ) -> NodeResult<Payment> {
         let gl_payment = gl_client::pb::Payment {
             payment_hash: hex::decode(inv.payment_hash().to_hex())?,
             bolt11: inv.to_string(),
@@ -466,7 +492,7 @@ impl MockNodeAPI {
     async fn save_payment_for_future_sync_updates(
         &self,
         gl_payment: gl_client::pb::Payment,
-    ) -> Result<Payment> {
+    ) -> NodeResult<Payment> {
         let mut cloud_payments = self.cloud_payments.lock().await;
 
         // Only store it if a payment with the same ID doesn't already exist
@@ -495,7 +521,7 @@ impl MockNodeAPI {
 
     pub fn set_on_send_custom_message(
         &mut self,
-        f: Box<dyn Fn(CustomMessage) -> Result<()> + Sync + Send>,
+        f: Box<dyn Fn(CustomMessage) -> NodeResult<()> + Sync + Send>,
     ) {
         self.on_send_custom_message = f;
     }
@@ -518,7 +544,7 @@ impl MockBreezServer {
 
 #[tonic::async_trait]
 impl LspAPI for MockBreezServer {
-    async fn list_lsps(&self, _node_pubkey: String) -> Result<Vec<LspInformation>> {
+    async fn list_lsps(&self, _node_pubkey: String) -> SdkResult<Vec<LspInformation>> {
         Ok(vec![LspInformation {
             id: self.lsp_id(),
             name: "test lsp".to_string(),
@@ -546,18 +572,18 @@ impl LspAPI for MockBreezServer {
         _lsp_id: String,
         _lsp_pubkey: Vec<u8>,
         _payment_info: PaymentInformation,
-    ) -> Result<RegisterPaymentReply> {
+    ) -> SdkResult<RegisterPaymentReply> {
         Ok(RegisterPaymentReply {})
     }
 }
 
 #[tonic::async_trait]
 impl FiatAPI for MockBreezServer {
-    async fn list_fiat_currencies(&self) -> Result<Vec<FiatCurrency>> {
+    async fn list_fiat_currencies(&self) -> SdkResult<Vec<FiatCurrency>> {
         Ok(vec![])
     }
 
-    async fn fetch_fiat_rates(&self) -> Result<Vec<Rate>> {
+    async fn fetch_fiat_rates(&self) -> SdkResult<Vec<Rate>> {
         Ok(vec![Rate {
             coin: "USD".to_string(),
             value: 20_000.00,
@@ -578,7 +604,7 @@ impl MoonPayApi for MockBreezServer {
 
 pub(crate) fn rand_invoice_with_description_hash(
     expected_desc: String,
-) -> Result<lightning_invoice::Invoice> {
+) -> InvoiceResult<lightning_invoice::Invoice> {
     let preimage = sha256::Hash::hash(&rand_vec_u8(10));
 
     rand_invoice_with_description_hash_and_preimage(expected_desc, preimage)
@@ -587,7 +613,7 @@ pub(crate) fn rand_invoice_with_description_hash(
 pub(crate) fn rand_invoice_with_description_hash_and_preimage(
     expected_desc: String,
     preimage: sha256::Hash,
-) -> Result<lightning_invoice::Invoice> {
+) -> InvoiceResult<lightning_invoice::Invoice> {
     let expected_desc_hash = Hash::hash(expected_desc.as_bytes());
 
     let hashed_preimage = Message::from_hashed_data::<sha256::Hash>(&preimage[..]);
@@ -599,15 +625,17 @@ pub(crate) fn rand_invoice_with_description_hash_and_preimage(
     let key_pair = KeyPair::new(&secp, &mut rand::thread_rng());
     let private_key = key_pair.secret_key();
 
-    InvoiceBuilder::new(Currency::Bitcoin)
+    Ok(InvoiceBuilder::new(Currency::Bitcoin)
         .description_hash(expected_desc_hash)
         .amount_milli_satoshis(50 * 1000)
-        .payment_hash(Hash::from_slice(payment_hash)?)
+        .payment_hash(
+            Hash::from_slice(payment_hash)
+                .map_err(|e| InvoiceError::Generic(anyhow::Error::new(e)))?,
+        )
         .payment_secret(payment_secret)
         .current_timestamp()
         .min_final_cltv_expiry_delta(144)
-        .build_signed(|hash| Secp256k1::new().sign_ecdsa_recoverable(hash, &private_key))
-        .map_err(|err| anyhow!(err))
+        .build_signed(|hash| Secp256k1::new().sign_ecdsa_recoverable(hash, &private_key))?)
 }
 
 pub fn rand_string(len: usize) -> String {

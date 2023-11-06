@@ -1,10 +1,9 @@
-use super::db::SqliteStorage;
+use super::{db::SqliteStorage, error::PersistResult};
 use crate::{FullReverseSwapInfo, ReverseSwapInfoCached, ReverseSwapStatus};
-use anyhow::Result;
 use rusqlite::{named_params, Row};
 
 impl SqliteStorage {
-    pub(crate) fn insert_reverse_swap(&self, rsi: &FullReverseSwapInfo) -> Result<()> {
+    pub(crate) fn insert_reverse_swap(&self, rsi: &FullReverseSwapInfo) -> PersistResult<()> {
         let mut con = self.get_connection()?;
         let tx = con.transaction()?;
 
@@ -42,7 +41,7 @@ impl SqliteStorage {
         &self,
         id: &str,
         status: &ReverseSwapStatus,
-    ) -> Result<()> {
+    ) -> PersistResult<()> {
         debug!("Persisting new status for reverse swap {id} to be {status:?}");
 
         self.get_connection()?.execute(
@@ -56,7 +55,7 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub(crate) fn list_reverse_swaps(&self) -> Result<Vec<FullReverseSwapInfo>> {
+    pub(crate) fn list_reverse_swaps(&self) -> PersistResult<Vec<FullReverseSwapInfo>> {
         let con = self.get_connection()?;
         let mut stmt = con.prepare(&self.select_reverse_swap_query())?;
 
@@ -68,7 +67,10 @@ impl SqliteStorage {
         Ok(vec)
     }
 
-    fn sql_row_to_reverse_swap(&self, row: &Row) -> Result<FullReverseSwapInfo, rusqlite::Error> {
+    fn sql_row_to_reverse_swap(
+        &self,
+        row: &Row,
+    ) -> PersistResult<FullReverseSwapInfo, rusqlite::Error> {
         Ok(FullReverseSwapInfo {
             id: row.get("id")?,
             created_at_block_height: row.get("created_at_block_height")?,

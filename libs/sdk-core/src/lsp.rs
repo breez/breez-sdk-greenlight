@@ -5,7 +5,7 @@ use crate::grpc::{
     self, LspListRequest, PaymentInformation, RegisterPaymentReply, RegisterPaymentRequest,
 };
 use crate::models::{LspAPI, OpeningFeeParams, OpeningFeeParamsMenu};
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use prost::Message;
 use serde::{Deserialize, Serialize};
 use tonic::Request;
@@ -76,7 +76,7 @@ impl LspInformation {
     ///
     /// If the LSP fees are needed, the LSP is expected to have at least one dynamic fee entry in its menu,
     /// otherwise this will result in an error.
-    pub(crate) fn cheapest_open_channel_fee(&self, expiry: u32) -> SdkResult<&OpeningFeeParams> {
+    pub(crate) fn cheapest_open_channel_fee(&self, expiry: u32) -> Result<&OpeningFeeParams> {
         for fee in &self.opening_fee_params_list.values {
             match fee.valid_for(expiry) {
                 Ok(valid) => {
@@ -84,22 +84,19 @@ impl LspInformation {
                         return Ok(fee);
                     }
                 }
-                Err(e) => {
-                    return Err(SdkError::CalculateOpenChannelFeesFailed { err: e.to_string() })
-                }
+                Err(e) => return Err(anyhow!("Failed to calculate open channel fees: {e}")),
             }
         }
-        self.opening_fee_params_list.values.last().ok_or_else(|| {
-            SdkError::LspOpenChannelNotSupported {
-                err: "Dynamic fees menu contains no values".to_string(),
-            }
-        })
+        self.opening_fee_params_list
+            .values
+            .last()
+            .ok_or_else(|| anyhow!("Dynamic fees menu contains no values"))
     }
 }
 
 #[tonic::async_trait]
 impl LspAPI for BreezServer {
-    async fn list_lsps(&self, pubkey: String) -> Result<Vec<LspInformation>> {
+    async fn list_lsps(&self, pubkey: String) -> SdkResult<Vec<LspInformation>> {
         let mut client = self.get_channel_opener_client().await?;
 
         let request = Request::new(LspListRequest { pubkey });
@@ -120,12 +117,16 @@ impl LspAPI for BreezServer {
         lsp_id: String,
         lsp_pubkey: Vec<u8>,
         payment_info: PaymentInformation,
-    ) -> Result<RegisterPaymentReply> {
+    ) -> SdkResult<RegisterPaymentReply> {
         let mut client = self.get_channel_opener_client().await?;
 
         let mut buf = Vec::new();
         buf.reserve(payment_info.encoded_len());
-        payment_info.encode(&mut buf)?;
+        payment_info
+            .encode(&mut buf)
+            .map_err(|e| SdkError::ServiceConnectivity {
+                err: format!("(LSP {lsp_id}) Failed to encode payment info: {e}"),
+            })?;
 
         let request = Request::new(RegisterPaymentRequest {
             lsp_id,
@@ -139,8 +140,7 @@ impl LspAPI for BreezServer {
 
 #[cfg(test)]
 mod tests {
-
-    use crate::{error::SdkError, LspInformation, OpeningFeeParams};
+    use crate::{LspInformation, OpeningFeeParams};
 
     use super::OpeningFeeParamsMenu;
     use anyhow::Result;
@@ -192,13 +192,8 @@ mod tests {
 
         // Test the correct error when there are no fees in the menu
         lsp_info.opening_fee_params_list = OpeningFeeParamsMenu { values: vec![] };
-        if let SdkError::LspOpenChannelNotSupported { err } =
-            lsp_info.cheapest_open_channel_fee(4 * 3600).err().unwrap()
-        {
-            assert_eq!(err, "Dynamic fees menu contains no values");
-        } else {
-            panic!("Expected LspOpenChannelNotSupported error");
-        }
+        let err = lsp_info.cheapest_open_channel_fee(4 * 3600).err().unwrap();
+        assert_eq!(err.to_string(), "Dynamic fees menu contains no values");
 
         Ok(())
     }

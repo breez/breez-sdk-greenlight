@@ -175,3 +175,101 @@ jobs:
           cargo clippy --tests -- -D warnings -A clippy::uninlined-format-args
           cd ../tools/sdk-cli
           cargo clippy -- -D warnings
+  
+  react-native:
+    name: Check react native
+    runs-on: macOS-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install rust
+        run: |
+          rustup set auto-self-update disable
+          rustup toolchain install stable --profile minimal
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            libs -> target
+      
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v2
+        with:
+          version: "23.4"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: React native codegen
+        working-directory: libs/sdk-react-native 
+        run: |
+          yarn global add tslint typescript
+          brew install kotlin ktlint swiftformat
+          make react-native-codegen
+
+      - name: Check git status
+        env: 
+          GIT_PAGER: cat
+        run: |
+          status=$(git status --porcelain)
+          if [[ -n "$status" ]]; then
+            echo "Git status has changes"
+            echo "$status"
+            git diff
+            exit 1
+          else
+            echo "No changes in git status"
+          fi
+
+  flutter:
+    name: Check flutter
+    runs-on: macOS-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install rust
+        run: |
+          rustup set auto-self-update disable
+          rustup toolchain install stable --profile minimal
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            libs -> target
+      
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v2
+        with:
+          version: "23.4"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.13.9'
+          channel: 'stable'
+
+      - name: Flutter bridge codegen
+        working-directory: libs/sdk-flutter
+        run: |
+          make init
+          make flutter_rust_bridge
+    
+      - name: Check git status
+        env: 
+          GIT_PAGER: cat
+        run: |
+          status=$(git status --porcelain)
+          if [[ -n "$status" ]]; then
+            echo "Git status has changes"
+            echo "$status"
+            git diff
+            exit 1
+          else
+            echo "No changes in git status"
+          fi
+
+      - name: dart-analyze
+        run: dart analyze --fatal-infos
+
+      - name: dart-format
+        run: dart format -o none --set-exit-if-changed -l 110 .

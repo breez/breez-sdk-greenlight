@@ -34,7 +34,7 @@ fun asAesSuccessActionDataDecryptedList(arr: ReadableArray): List<AesSuccessActi
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asAesSuccessActionDataDecrypted(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -67,7 +67,7 @@ fun asBackupFailedDataList(arr: ReadableArray): List<BackupFailedData> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asBackupFailedData(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -103,7 +103,7 @@ fun asBackupStatusList(arr: ReadableArray): List<BackupStatus> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asBackupStatus(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -149,7 +149,7 @@ fun asBitcoinAddressDataList(arr: ReadableArray): List<BitcoinAddressData> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asBitcoinAddressData(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -192,7 +192,7 @@ fun asBuyBitcoinRequestList(arr: ReadableArray): List<BuyBitcoinRequest> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asBuyBitcoinRequest(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -235,7 +235,7 @@ fun asBuyBitcoinResponseList(arr: ReadableArray): List<BuyBitcoinResponse> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asBuyBitcoinResponse(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -276,7 +276,7 @@ fun asCheckMessageRequestList(arr: ReadableArray): List<CheckMessageRequest> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asCheckMessageRequest(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -309,7 +309,7 @@ fun asCheckMessageResponseList(arr: ReadableArray): List<CheckMessageResponse> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asCheckMessageResponse(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -362,7 +362,7 @@ fun asClosedChannelPaymentDetailsList(arr: ReadableArray): List<ClosedChannelPay
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asClosedChannelPaymentDetails(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -429,7 +429,7 @@ fun asConfigList(arr: ReadableArray): List<Config> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asConfig(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -495,7 +495,7 @@ fun asCurrencyInfoList(arr: ReadableArray): List<CurrencyInfo> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asCurrencyInfo(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -532,7 +532,7 @@ fun asFiatCurrencyList(arr: ReadableArray): List<FiatCurrency> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asFiatCurrency(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -569,7 +569,7 @@ fun asGreenlightCredentialsList(arr: ReadableArray): List<GreenlightCredentials>
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asGreenlightCredentials(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -614,7 +614,7 @@ fun asGreenlightNodeConfigList(arr: ReadableArray): List<GreenlightNodeConfig> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asGreenlightNodeConfig(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -651,7 +651,7 @@ fun asInvoicePaidDetailsList(arr: ReadableArray): List<InvoicePaidDetails> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asInvoicePaidDetails(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -717,7 +717,7 @@ fun asLnInvoiceList(arr: ReadableArray): List<LnInvoice> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asLnInvoice(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -726,14 +726,19 @@ fun asLnInvoiceList(arr: ReadableArray): List<LnInvoice> {
 fun asListPaymentsRequest(listPaymentsRequest: ReadableMap): ListPaymentsRequest? {
     if (!validateMandatoryFields(
             listPaymentsRequest,
-            arrayOf(
-                "filter",
-            ),
+            arrayOf(),
         )
     ) {
         return null
     }
-    val filter = listPaymentsRequest.getString("filter")?.let { asPaymentTypeFilter(it) }!!
+    val filters =
+        if (hasNonNullKey(listPaymentsRequest, "filters")) {
+            listPaymentsRequest.getArray("filters")?.let {
+                asPaymentTypeFilterList(it)
+            }
+        } else {
+            null
+        }
     val fromTimestamp =
         if (hasNonNullKey(
                 listPaymentsRequest,
@@ -758,7 +763,7 @@ fun asListPaymentsRequest(listPaymentsRequest: ReadableMap): ListPaymentsRequest
     val offset = if (hasNonNullKey(listPaymentsRequest, "offset")) listPaymentsRequest.getInt("offset").toUInt() else null
     val limit = if (hasNonNullKey(listPaymentsRequest, "limit")) listPaymentsRequest.getInt("limit").toUInt() else null
     return ListPaymentsRequest(
-        filter,
+        filters,
         fromTimestamp,
         toTimestamp,
         includeFailures,
@@ -769,7 +774,7 @@ fun asListPaymentsRequest(listPaymentsRequest: ReadableMap): ListPaymentsRequest
 
 fun readableMapOf(listPaymentsRequest: ListPaymentsRequest): ReadableMap {
     return readableMapOf(
-        "filter" to listPaymentsRequest.filter.name.lowercase(),
+        "filters" to listPaymentsRequest.filters?.let { readableArrayOf(it) },
         "fromTimestamp" to listPaymentsRequest.fromTimestamp,
         "toTimestamp" to listPaymentsRequest.toTimestamp,
         "includeFailures" to listPaymentsRequest.includeFailures,
@@ -783,7 +788,7 @@ fun asListPaymentsRequestList(arr: ReadableArray): List<ListPaymentsRequest> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asListPaymentsRequest(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -864,7 +869,7 @@ fun asLnPaymentDetailsList(arr: ReadableArray): List<LnPaymentDetails> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asLnPaymentDetails(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -908,7 +913,7 @@ fun asLnUrlAuthRequestDataList(arr: ReadableArray): List<LnUrlAuthRequestData> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asLnUrlAuthRequestData(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -941,7 +946,7 @@ fun asLnUrlErrorDataList(arr: ReadableArray): List<LnUrlErrorData> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asLnUrlErrorData(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -981,7 +986,7 @@ fun asLnUrlPayRequestList(arr: ReadableArray): List<LnUrlPayRequest> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asLnUrlPayRequest(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -1037,7 +1042,7 @@ fun asLnUrlPayRequestDataList(arr: ReadableArray): List<LnUrlPayRequestData> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asLnUrlPayRequestData(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -1077,7 +1082,7 @@ fun asLnUrlWithdrawRequestList(arr: ReadableArray): List<LnUrlWithdrawRequest> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asLnUrlWithdrawRequest(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -1126,7 +1131,7 @@ fun asLnUrlWithdrawRequestDataList(arr: ReadableArray): List<LnUrlWithdrawReques
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asLnUrlWithdrawRequestData(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -1159,7 +1164,7 @@ fun asLnUrlWithdrawSuccessDataList(arr: ReadableArray): List<LnUrlWithdrawSucces
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asLnUrlWithdrawSuccessData(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -1199,7 +1204,7 @@ fun asLocaleOverridesList(arr: ReadableArray): List<LocaleOverrides> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asLocaleOverrides(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -1236,7 +1241,7 @@ fun asLocalizedNameList(arr: ReadableArray): List<LocalizedName> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asLocalizedName(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -1273,7 +1278,7 @@ fun asLogEntryList(arr: ReadableArray): List<LogEntry> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asLogEntry(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -1354,7 +1359,7 @@ fun asLspInformationList(arr: ReadableArray): List<LspInformation> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asLspInformation(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -1387,7 +1392,7 @@ fun asMessageSuccessActionDataList(arr: ReadableArray): List<MessageSuccessActio
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asMessageSuccessActionData(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -1424,7 +1429,7 @@ fun asMetadataItemList(arr: ReadableArray): List<MetadataItem> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asMetadataItem(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -1497,7 +1502,7 @@ fun asNodeStateList(arr: ReadableArray): List<NodeState> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asNodeState(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -1533,7 +1538,7 @@ fun asOpenChannelFeeRequestList(arr: ReadableArray): List<OpenChannelFeeRequest>
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asOpenChannelFeeRequest(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -1576,7 +1581,7 @@ fun asOpenChannelFeeResponseList(arr: ReadableArray): List<OpenChannelFeeRespons
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asOpenChannelFeeResponse(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -1629,7 +1634,7 @@ fun asOpeningFeeParamsList(arr: ReadableArray): List<OpeningFeeParams> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asOpeningFeeParams(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -1662,7 +1667,7 @@ fun asOpeningFeeParamsMenuList(arr: ReadableArray): List<OpeningFeeParamsMenu> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asOpeningFeeParamsMenu(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -1722,7 +1727,7 @@ fun asPaymentList(arr: ReadableArray): List<Payment> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asPayment(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -1762,7 +1767,159 @@ fun asPaymentFailedDataList(arr: ReadableArray): List<PaymentFailedData> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asPaymentFailedData(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
+fun asPrepareRefundRequest(prepareRefundRequest: ReadableMap): PrepareRefundRequest? {
+    if (!validateMandatoryFields(
+            prepareRefundRequest,
+            arrayOf(
+                "swapAddress",
+                "toAddress",
+                "satPerVbyte",
+            ),
+        )
+    ) {
+        return null
+    }
+    val swapAddress = prepareRefundRequest.getString("swapAddress")!!
+    val toAddress = prepareRefundRequest.getString("toAddress")!!
+    val satPerVbyte = prepareRefundRequest.getInt("satPerVbyte").toUInt()
+    return PrepareRefundRequest(
+        swapAddress,
+        toAddress,
+        satPerVbyte,
+    )
+}
+
+fun readableMapOf(prepareRefundRequest: PrepareRefundRequest): ReadableMap {
+    return readableMapOf(
+        "swapAddress" to prepareRefundRequest.swapAddress,
+        "toAddress" to prepareRefundRequest.toAddress,
+        "satPerVbyte" to prepareRefundRequest.satPerVbyte,
+    )
+}
+
+fun asPrepareRefundRequestList(arr: ReadableArray): List<PrepareRefundRequest> {
+    val list = ArrayList<PrepareRefundRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asPrepareRefundRequest(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
+fun asPrepareRefundResponse(prepareRefundResponse: ReadableMap): PrepareRefundResponse? {
+    if (!validateMandatoryFields(
+            prepareRefundResponse,
+            arrayOf(
+                "refundTxWeight",
+                "refundTxFeeSat",
+            ),
+        )
+    ) {
+        return null
+    }
+    val refundTxWeight = prepareRefundResponse.getInt("refundTxWeight").toUInt()
+    val refundTxFeeSat = prepareRefundResponse.getDouble("refundTxFeeSat").toULong()
+    return PrepareRefundResponse(
+        refundTxWeight,
+        refundTxFeeSat,
+    )
+}
+
+fun readableMapOf(prepareRefundResponse: PrepareRefundResponse): ReadableMap {
+    return readableMapOf(
+        "refundTxWeight" to prepareRefundResponse.refundTxWeight,
+        "refundTxFeeSat" to prepareRefundResponse.refundTxFeeSat,
+    )
+}
+
+fun asPrepareRefundResponseList(arr: ReadableArray): List<PrepareRefundResponse> {
+    val list = ArrayList<PrepareRefundResponse>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asPrepareRefundResponse(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
+fun asPrepareSweepRequest(prepareSweepRequest: ReadableMap): PrepareSweepRequest? {
+    if (!validateMandatoryFields(
+            prepareSweepRequest,
+            arrayOf(
+                "toAddress",
+                "satsPerVbyte",
+            ),
+        )
+    ) {
+        return null
+    }
+    val toAddress = prepareSweepRequest.getString("toAddress")!!
+    val satsPerVbyte = prepareSweepRequest.getDouble("satsPerVbyte").toULong()
+    return PrepareSweepRequest(
+        toAddress,
+        satsPerVbyte,
+    )
+}
+
+fun readableMapOf(prepareSweepRequest: PrepareSweepRequest): ReadableMap {
+    return readableMapOf(
+        "toAddress" to prepareSweepRequest.toAddress,
+        "satsPerVbyte" to prepareSweepRequest.satsPerVbyte,
+    )
+}
+
+fun asPrepareSweepRequestList(arr: ReadableArray): List<PrepareSweepRequest> {
+    val list = ArrayList<PrepareSweepRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asPrepareSweepRequest(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
+fun asPrepareSweepResponse(prepareSweepResponse: ReadableMap): PrepareSweepResponse? {
+    if (!validateMandatoryFields(
+            prepareSweepResponse,
+            arrayOf(
+                "sweepTxWeight",
+                "sweepTxFeeSat",
+            ),
+        )
+    ) {
+        return null
+    }
+    val sweepTxWeight = prepareSweepResponse.getDouble("sweepTxWeight").toULong()
+    val sweepTxFeeSat = prepareSweepResponse.getDouble("sweepTxFeeSat").toULong()
+    return PrepareSweepResponse(
+        sweepTxWeight,
+        sweepTxFeeSat,
+    )
+}
+
+fun readableMapOf(prepareSweepResponse: PrepareSweepResponse): ReadableMap {
+    return readableMapOf(
+        "sweepTxWeight" to prepareSweepResponse.sweepTxWeight,
+        "sweepTxFeeSat" to prepareSweepResponse.sweepTxFeeSat,
+    )
+}
+
+fun asPrepareSweepResponseList(arr: ReadableArray): List<PrepareSweepResponse> {
+    val list = ArrayList<PrepareSweepResponse>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asPrepareSweepResponse(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -1799,7 +1956,7 @@ fun asRateList(arr: ReadableArray): List<Rate> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asRate(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -1841,7 +1998,7 @@ fun asReceiveOnchainRequestList(arr: ReadableArray): List<ReceiveOnchainRequest>
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asReceiveOnchainRequest(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -1920,7 +2077,7 @@ fun asReceivePaymentRequestList(arr: ReadableArray): List<ReceivePaymentRequest>
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asReceivePaymentRequest(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -1979,7 +2136,7 @@ fun asReceivePaymentResponseList(arr: ReadableArray): List<ReceivePaymentRespons
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asReceivePaymentResponse(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -2028,7 +2185,7 @@ fun asRecommendedFeesList(arr: ReadableArray): List<RecommendedFees> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asRecommendedFees(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -2069,7 +2226,7 @@ fun asRefundRequestList(arr: ReadableArray): List<RefundRequest> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asRefundRequest(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -2102,7 +2259,7 @@ fun asRefundResponseList(arr: ReadableArray): List<RefundResponse> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asRefundResponse(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -2142,7 +2299,7 @@ fun asReverseSwapFeesRequestList(arr: ReadableArray): List<ReverseSwapFeesReques
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asReverseSwapFeesRequest(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -2193,7 +2350,7 @@ fun asReverseSwapInfoList(arr: ReadableArray): List<ReverseSwapInfo> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asReverseSwapInfo(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -2258,7 +2415,7 @@ fun asReverseSwapPairInfoList(arr: ReadableArray): List<ReverseSwapPairInfo> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asReverseSwapPairInfo(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -2291,7 +2448,7 @@ fun asRouteHintList(arr: ReadableArray): List<RouteHint> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asRouteHint(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -2346,7 +2503,7 @@ fun asRouteHintHopList(arr: ReadableArray): List<RouteHintHop> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asRouteHintHop(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -2391,7 +2548,7 @@ fun asSendOnchainRequestList(arr: ReadableArray): List<SendOnchainRequest> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asSendOnchainRequest(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -2424,7 +2581,7 @@ fun asSendOnchainResponseList(arr: ReadableArray): List<SendOnchainResponse> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asSendOnchainResponse(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -2460,7 +2617,7 @@ fun asSendPaymentRequestList(arr: ReadableArray): List<SendPaymentRequest> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asSendPaymentRequest(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -2493,7 +2650,7 @@ fun asSendPaymentResponseList(arr: ReadableArray): List<SendPaymentResponse> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asSendPaymentResponse(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -2530,7 +2687,7 @@ fun asSendSpontaneousPaymentRequestList(arr: ReadableArray): List<SendSpontaneou
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asSendSpontaneousPaymentRequest(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -2563,7 +2720,7 @@ fun asSignMessageRequestList(arr: ReadableArray): List<SignMessageRequest> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asSignMessageRequest(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -2596,7 +2753,7 @@ fun asSignMessageResponseList(arr: ReadableArray): List<SignMessageResponse> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asSignMessageResponse(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -2629,7 +2786,7 @@ fun asStaticBackupRequestList(arr: ReadableArray): List<StaticBackupRequest> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asStaticBackupRequest(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -2669,7 +2826,7 @@ fun asStaticBackupResponseList(arr: ReadableArray): List<StaticBackupResponse> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asStaticBackupResponse(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -2786,7 +2943,7 @@ fun asSwapInfoList(arr: ReadableArray): List<SwapInfo> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asSwapInfo(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -2823,7 +2980,7 @@ fun asSweepRequestList(arr: ReadableArray): List<SweepRequest> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asSweepRequest(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -2856,7 +3013,7 @@ fun asSweepResponseList(arr: ReadableArray): List<SweepResponse> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asSweepResponse(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -2896,7 +3053,7 @@ fun asSymbolList(arr: ReadableArray): List<Symbol> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asSymbol(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -2945,7 +3102,7 @@ fun asUnspentTransactionOutputList(arr: ReadableArray): List<UnspentTransactionO
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asUnspentTransactionOutput(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -2982,7 +3139,7 @@ fun asUrlSuccessActionDataList(arr: ReadableArray): List<UrlSuccessActionData> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asUrlSuccessActionData(value)!!)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list
@@ -3054,20 +3211,75 @@ fun readableMapOf(breezEvent: BreezEvent): ReadableMap? {
     return map
 }
 
+fun asBreezEventList(arr: ReadableArray): List<BreezEvent> {
+    val list = ArrayList<BreezEvent>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asBreezEvent(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asBuyBitcoinProvider(type: String): BuyBitcoinProvider {
     return BuyBitcoinProvider.valueOf(type.uppercase())
+}
+
+fun asBuyBitcoinProviderList(arr: ReadableArray): List<BuyBitcoinProvider> {
+    val list = ArrayList<BuyBitcoinProvider>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is String -> list.add(asBuyBitcoinProvider(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
 }
 
 fun asChannelState(type: String): ChannelState {
     return ChannelState.valueOf(type.uppercase())
 }
 
+fun asChannelStateList(arr: ReadableArray): List<ChannelState> {
+    val list = ArrayList<ChannelState>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is String -> list.add(asChannelState(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asEnvironmentType(type: String): EnvironmentType {
     return EnvironmentType.valueOf(type.uppercase())
 }
 
+fun asEnvironmentTypeList(arr: ReadableArray): List<EnvironmentType> {
+    val list = ArrayList<EnvironmentType>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is String -> list.add(asEnvironmentType(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asFeeratePreset(type: String): FeeratePreset {
     return FeeratePreset.valueOf(type.uppercase())
+}
+
+fun asFeeratePresetList(arr: ReadableArray): List<FeeratePreset> {
+    val list = ArrayList<FeeratePreset>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is String -> list.add(asFeeratePreset(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
 }
 
 fun asInputType(inputType: ReadableMap): InputType? {
@@ -3139,6 +3351,17 @@ fun readableMapOf(inputType: InputType): ReadableMap? {
     return map
 }
 
+fun asInputTypeList(arr: ReadableArray): List<InputType> {
+    val list = ArrayList<InputType>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asInputType(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asLnUrlCallbackStatus(lnUrlCallbackStatus: ReadableMap): LnUrlCallbackStatus? {
     val type = lnUrlCallbackStatus.getString("type")
 
@@ -3163,6 +3386,17 @@ fun readableMapOf(lnUrlCallbackStatus: LnUrlCallbackStatus): ReadableMap? {
         }
     }
     return map
+}
+
+fun asLnUrlCallbackStatusList(arr: ReadableArray): List<LnUrlCallbackStatus> {
+    val list = ArrayList<LnUrlCallbackStatus>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asLnUrlCallbackStatus(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
 }
 
 fun asLnUrlPayResult(lnUrlPayResult: ReadableMap): LnUrlPayResult? {
@@ -3200,6 +3434,17 @@ fun readableMapOf(lnUrlPayResult: LnUrlPayResult): ReadableMap? {
     return map
 }
 
+fun asLnUrlPayResultList(arr: ReadableArray): List<LnUrlPayResult> {
+    val list = ArrayList<LnUrlPayResult>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asLnUrlPayResult(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asLnUrlWithdrawResult(lnUrlWithdrawResult: ReadableMap): LnUrlWithdrawResult? {
     val type = lnUrlWithdrawResult.getString("type")
 
@@ -3227,8 +3472,30 @@ fun readableMapOf(lnUrlWithdrawResult: LnUrlWithdrawResult): ReadableMap? {
     return map
 }
 
+fun asLnUrlWithdrawResultList(arr: ReadableArray): List<LnUrlWithdrawResult> {
+    val list = ArrayList<LnUrlWithdrawResult>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asLnUrlWithdrawResult(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asNetwork(type: String): Network {
     return Network.valueOf(type.uppercase())
+}
+
+fun asNetworkList(arr: ReadableArray): List<Network> {
+    val list = ArrayList<Network>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is String -> list.add(asNetwork(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
 }
 
 fun asNodeConfig(nodeConfig: ReadableMap): NodeConfig? {
@@ -3249,6 +3516,17 @@ fun readableMapOf(nodeConfig: NodeConfig): ReadableMap? {
         }
     }
     return map
+}
+
+fun asNodeConfigList(arr: ReadableArray): List<NodeConfig> {
+    val list = ArrayList<NodeConfig>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asNodeConfig(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
 }
 
 fun asPaymentDetails(paymentDetails: ReadableMap): PaymentDetails? {
@@ -3278,20 +3556,75 @@ fun readableMapOf(paymentDetails: PaymentDetails): ReadableMap? {
     return map
 }
 
+fun asPaymentDetailsList(arr: ReadableArray): List<PaymentDetails> {
+    val list = ArrayList<PaymentDetails>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asPaymentDetails(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asPaymentStatus(type: String): PaymentStatus {
     return PaymentStatus.valueOf(type.uppercase())
+}
+
+fun asPaymentStatusList(arr: ReadableArray): List<PaymentStatus> {
+    val list = ArrayList<PaymentStatus>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is String -> list.add(asPaymentStatus(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
 }
 
 fun asPaymentType(type: String): PaymentType {
     return PaymentType.valueOf(type.uppercase())
 }
 
+fun asPaymentTypeList(arr: ReadableArray): List<PaymentType> {
+    val list = ArrayList<PaymentType>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is String -> list.add(asPaymentType(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asPaymentTypeFilter(type: String): PaymentTypeFilter {
     return PaymentTypeFilter.valueOf(type.uppercase())
 }
 
+fun asPaymentTypeFilterList(arr: ReadableArray): List<PaymentTypeFilter> {
+    val list = ArrayList<PaymentTypeFilter>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is String -> list.add(asPaymentTypeFilter(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asReverseSwapStatus(type: String): ReverseSwapStatus {
     return ReverseSwapStatus.valueOf(type.uppercase())
+}
+
+fun asReverseSwapStatusList(arr: ReadableArray): List<ReverseSwapStatus> {
+    val list = ArrayList<ReverseSwapStatus>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is String -> list.add(asReverseSwapStatus(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
 }
 
 fun asSuccessActionProcessed(successActionProcessed: ReadableMap): SuccessActionProcessed? {
@@ -3328,8 +3661,30 @@ fun readableMapOf(successActionProcessed: SuccessActionProcessed): ReadableMap? 
     return map
 }
 
+fun asSuccessActionProcessedList(arr: ReadableArray): List<SuccessActionProcessed> {
+    val list = ArrayList<SuccessActionProcessed>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asSuccessActionProcessed(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asSwapStatus(type: String): SwapStatus {
     return SwapStatus.valueOf(type.uppercase())
+}
+
+fun asSwapStatusList(arr: ReadableArray): List<SwapStatus> {
+    val list = ArrayList<SwapStatus>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is String -> list.add(asSwapStatus(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
 }
 
 fun readableMapOf(vararg values: Pair<String, *>): ReadableMap {
@@ -3370,6 +3725,7 @@ fun pushToArray(
         is LspInformation -> array.pushMap(readableMapOf(value))
         is OpeningFeeParams -> array.pushMap(readableMapOf(value))
         is Payment -> array.pushMap(readableMapOf(value))
+        is PaymentTypeFilter -> array.pushString(value.name.lowercase())
         is Rate -> array.pushMap(readableMapOf(value))
         is ReverseSwapInfo -> array.pushMap(readableMapOf(value))
         is RouteHint -> array.pushMap(readableMapOf(value))
@@ -3380,7 +3736,7 @@ fun pushToArray(
         is UnspentTransactionOutput -> array.pushMap(readableMapOf(value))
         is Array<*> -> array.pushArray(readableArrayOf(value.asIterable()))
         is List<*> -> array.pushArray(readableArrayOf(value))
-        else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+        else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
     }
 }
 
@@ -3405,7 +3761,7 @@ fun pushToMap(
         is ULong -> map.putDouble(key, value.toDouble())
         is Array<*> -> map.putArray(key, readableArrayOf(value.asIterable()))
         is List<*> -> map.putArray(key, readableArrayOf(value))
-        else -> throw IllegalArgumentException("Unsupported value type ${value::class.java.name} for key [$key]")
+        else -> throw SdkException.Generic("Unexpected type ${value::class.java.name} for key [$key]")
     }
 }
 
@@ -3427,7 +3783,7 @@ fun asUByteList(arr: ReadableArray): List<UByte> {
             is Double -> list.add(value.toInt().toUByte())
             is Int -> list.add(value.toUByte())
             is UByte -> list.add(value)
-            else -> throw IllegalArgumentException("Unsupported type ${value::class.java.name}")
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
     return list

@@ -47,9 +47,17 @@ class BreezSDK {
         _backupStreamController.addError(Exception(event.details.error));
       }
     });
+    _lnToolkit.breezLogStream().listen((logEntry) {
+      _logStreamController.add(logEntry);
+    }, onError: (e) {
+      _logStreamController.addError(e);
+    });
   }
 
-  Stream<LogEntry> get logStream => _lnToolkit.breezLogStream();
+  final _logStreamController = StreamController<LogEntry>.broadcast();
+
+  /// Listen to log events
+  Stream<LogEntry> get logStream => _logStreamController.stream;
 
   /* Breez Services API's & Streams*/
 
@@ -304,7 +312,7 @@ class BreezSDK {
     required SweepRequest req,
   }) async {
     final sweepResponse = await _lnToolkit.sweep(req: req);
-    await listPayments(req: const ListPaymentsRequest(filter: PaymentTypeFilter.All));
+    await listPayments(req: const ListPaymentsRequest());
     return sweepResponse;
   }
 
@@ -318,6 +326,16 @@ class BreezSDK {
     required RefundRequest req,
   }) async {
     return await _lnToolkit.refund(req: req);
+  }
+
+  /// Prepares a refund transaction for a failed/expired swap.
+  ///
+  /// Can optionally be used before refund to know how much fees will be paid
+  /// to perform the refund.
+  Future<PrepareRefundResponse> prepareRefund({
+    required PrepareRefundRequest req,
+  }) async {
+    return await _lnToolkit.prepareRefund(req: req);
   }
 
   /* In Progress Swap API's */
@@ -348,6 +366,17 @@ class BreezSDK {
   /// Fetches the current recommended fees
   Future<RecommendedFees> recommendedFees() async => await _lnToolkit.recommendedFees();
 
+  Future<PrepareSweepResponse> prepareSweep({
+    required String address,
+    required int satsPerVbyte,
+  }) async =>
+      _lnToolkit.prepareSweep(
+        req: PrepareSweepRequest(
+          toAddress: address,
+          satsPerVbyte: satsPerVbyte,
+        ),
+      );
+
   /* CLI API's */
 
   /// Execute a command directly on the NodeAPI interface.
@@ -373,7 +402,7 @@ class BreezSDK {
   /// Fetch node state & payment list
   Future fetchNodeData() async {
     await nodeInfo();
-    await listPayments(req: const ListPaymentsRequest(filter: PaymentTypeFilter.All));
+    await listPayments(req: const ListPaymentsRequest());
   }
 }
 

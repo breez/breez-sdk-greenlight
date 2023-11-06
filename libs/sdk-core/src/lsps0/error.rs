@@ -1,5 +1,7 @@
 use anyhow::anyhow;
 
+use crate::node_api::NodeError;
+
 use super::jsonrpc::RpcError;
 
 #[derive(Debug, thiserror::Error)]
@@ -9,6 +11,9 @@ pub enum Error {
 
     #[error("Lsps0 deserialization error: {0}")]
     Deserialization(serde_json::Error),
+
+    #[error("Lsps0 node: {0}")]
+    Node(NodeError),
 
     #[error("Lsps0 request timed out")]
     Timeout,
@@ -20,6 +25,12 @@ pub enum Error {
 impl From<anyhow::Error> for Error {
     fn from(value: anyhow::Error) -> Self {
         Self::Local(value)
+    }
+}
+
+impl From<NodeError> for Error {
+    fn from(value: NodeError) -> Self {
+        Self::Node(value)
     }
 }
 

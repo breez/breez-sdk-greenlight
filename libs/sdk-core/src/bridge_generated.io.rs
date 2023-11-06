@@ -190,8 +190,18 @@ pub extern "C" fn wire_sweep(port_: i64, req: *mut wire_SweepRequest) {
 }
 
 #[no_mangle]
+pub extern "C" fn wire_prepare_sweep(port_: i64, req: *mut wire_PrepareSweepRequest) {
+    wire_prepare_sweep_impl(port_, req)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_list_refundables(port_: i64) {
     wire_list_refundables_impl(port_)
+}
+
+#[no_mangle]
+pub extern "C" fn wire_prepare_refund(port_: i64, req: *mut wire_PrepareRefundRequest) {
+    wire_prepare_refund_impl(port_, req)
 }
 
 #[no_mangle]
@@ -302,6 +312,16 @@ pub extern "C" fn new_box_autoadd_opening_fee_params_0() -> *mut wire_OpeningFee
 }
 
 #[no_mangle]
+pub extern "C" fn new_box_autoadd_prepare_refund_request_0() -> *mut wire_PrepareRefundRequest {
+    support::new_leak_box_ptr(wire_PrepareRefundRequest::new_with_null_ptr())
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_autoadd_prepare_sweep_request_0() -> *mut wire_PrepareSweepRequest {
+    support::new_leak_box_ptr(wire_PrepareSweepRequest::new_with_null_ptr())
+}
+
+#[no_mangle]
 pub extern "C" fn new_box_autoadd_receive_onchain_request_0() -> *mut wire_ReceiveOnchainRequest {
     support::new_leak_box_ptr(wire_ReceiveOnchainRequest::new_with_null_ptr())
 }
@@ -361,6 +381,15 @@ pub extern "C" fn new_box_autoadd_u32_0(value: u32) -> *mut u32 {
 #[no_mangle]
 pub extern "C" fn new_box_autoadd_u64_0(value: u64) -> *mut u64 {
     support::new_leak_box_ptr(value)
+}
+
+#[no_mangle]
+pub extern "C" fn new_list_payment_type_filter_0(len: i32) -> *mut wire_list_payment_type_filter {
+    let wrap = wire_list_payment_type_filter {
+        ptr: support::new_leak_vec_ptr(Default::default(), len),
+        len,
+    };
+    support::new_leak_box_ptr(wrap)
 }
 
 #[no_mangle]
@@ -463,6 +492,18 @@ impl Wire2Api<OpeningFeeParams> for *mut wire_OpeningFeeParams {
     fn wire2api(self) -> OpeningFeeParams {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
         Wire2Api::<OpeningFeeParams>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<PrepareRefundRequest> for *mut wire_PrepareRefundRequest {
+    fn wire2api(self) -> PrepareRefundRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<PrepareRefundRequest>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<PrepareSweepRequest> for *mut wire_PrepareSweepRequest {
+    fn wire2api(self) -> PrepareSweepRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<PrepareSweepRequest>::wire2api(*wrap).into()
     }
 }
 impl Wire2Api<ReceiveOnchainRequest> for *mut wire_ReceiveOnchainRequest {
@@ -587,10 +628,19 @@ impl Wire2Api<GreenlightNodeConfig> for wire_GreenlightNodeConfig {
     }
 }
 
+impl Wire2Api<Vec<PaymentTypeFilter>> for *mut wire_list_payment_type_filter {
+    fn wire2api(self) -> Vec<PaymentTypeFilter> {
+        let vec = unsafe {
+            let wrap = support::box_from_leak_ptr(self);
+            support::vec_from_leak_ptr(wrap.ptr, wrap.len)
+        };
+        vec.into_iter().map(Wire2Api::wire2api).collect()
+    }
+}
 impl Wire2Api<ListPaymentsRequest> for wire_ListPaymentsRequest {
     fn wire2api(self) -> ListPaymentsRequest {
         ListPaymentsRequest {
-            filter: self.filter.wire2api(),
+            filters: self.filters.wire2api(),
             from_timestamp: self.from_timestamp.wire2api(),
             to_timestamp: self.to_timestamp.wire2api(),
             include_failures: self.include_failures.wire2api(),
@@ -687,6 +737,23 @@ impl Wire2Api<OpeningFeeParams> for wire_OpeningFeeParams {
     }
 }
 
+impl Wire2Api<PrepareRefundRequest> for wire_PrepareRefundRequest {
+    fn wire2api(self) -> PrepareRefundRequest {
+        PrepareRefundRequest {
+            swap_address: self.swap_address.wire2api(),
+            to_address: self.to_address.wire2api(),
+            sat_per_vbyte: self.sat_per_vbyte.wire2api(),
+        }
+    }
+}
+impl Wire2Api<PrepareSweepRequest> for wire_PrepareSweepRequest {
+    fn wire2api(self) -> PrepareSweepRequest {
+        PrepareSweepRequest {
+            to_address: self.to_address.wire2api(),
+            sats_per_vbyte: self.sats_per_vbyte.wire2api(),
+        }
+    }
+}
 impl Wire2Api<ReceiveOnchainRequest> for wire_ReceiveOnchainRequest {
     fn wire2api(self) -> ReceiveOnchainRequest {
         ReceiveOnchainRequest {
@@ -828,8 +895,15 @@ pub struct wire_GreenlightNodeConfig {
 
 #[repr(C)]
 #[derive(Clone)]
+pub struct wire_list_payment_type_filter {
+    ptr: *mut i32,
+    len: i32,
+}
+
+#[repr(C)]
+#[derive(Clone)]
 pub struct wire_ListPaymentsRequest {
-    filter: i32,
+    filters: *mut wire_list_payment_type_filter,
     from_timestamp: *mut i64,
     to_timestamp: *mut i64,
     include_failures: *mut bool,
@@ -900,6 +974,21 @@ pub struct wire_OpeningFeeParams {
     max_idle_time: u32,
     max_client_to_self_delay: u32,
     promise: *mut wire_uint_8_list,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_PrepareRefundRequest {
+    swap_address: *mut wire_uint_8_list,
+    to_address: *mut wire_uint_8_list,
+    sat_per_vbyte: u32,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_PrepareSweepRequest {
+    to_address: *mut wire_uint_8_list,
+    sats_per_vbyte: u64,
 }
 
 #[repr(C)]
@@ -1100,7 +1189,7 @@ impl Default for wire_GreenlightNodeConfig {
 impl NewWithNullPtr for wire_ListPaymentsRequest {
     fn new_with_null_ptr() -> Self {
         Self {
-            filter: Default::default(),
+            filters: core::ptr::null_mut(),
             from_timestamp: core::ptr::null_mut(),
             to_timestamp: core::ptr::null_mut(),
             include_failures: core::ptr::null_mut(),
@@ -1256,6 +1345,37 @@ impl NewWithNullPtr for wire_OpeningFeeParams {
 }
 
 impl Default for wire_OpeningFeeParams {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_PrepareRefundRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            swap_address: core::ptr::null_mut(),
+            to_address: core::ptr::null_mut(),
+            sat_per_vbyte: Default::default(),
+        }
+    }
+}
+
+impl Default for wire_PrepareRefundRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_PrepareSweepRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            to_address: core::ptr::null_mut(),
+            sats_per_vbyte: Default::default(),
+        }
+    }
+}
+
+impl Default for wire_PrepareSweepRequest {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }

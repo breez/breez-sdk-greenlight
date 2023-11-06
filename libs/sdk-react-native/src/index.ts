@@ -125,7 +125,7 @@ export type LnInvoice = {
 }
 
 export type ListPaymentsRequest = {
-    filter: PaymentTypeFilter
+    filters?: PaymentTypeFilter[]
     fromTimestamp?: number
     toTimestamp?: number
     includeFailures?: boolean
@@ -284,6 +284,27 @@ export type PaymentFailedData = {
     error: string
     nodeId: string
     invoice?: LnInvoice
+}
+
+export type PrepareRefundRequest = {
+    swapAddress: string
+    toAddress: string
+    satPerVbyte: number
+}
+
+export type PrepareRefundResponse = {
+    refundTxWeight: number
+    refundTxFeeSat: number
+}
+
+export type PrepareSweepRequest = {
+    toAddress: string
+    satsPerVbyte: number
+}
+
+export type PrepareSweepResponse = {
+    sweepTxWeight: number
+    sweepTxFeeSat: number
 }
 
 export type Rate = {
@@ -635,7 +656,7 @@ export enum PaymentType {
 export enum PaymentTypeFilter {
     SENT = "sent",
     RECEIVED = "received",
-    ALL = "all"
+    CLOSED_CHANNEL = "closedChannel"
 }
 
 export enum ReverseSwapStatus {
@@ -844,6 +865,11 @@ export const listRefundables = async (): Promise<SwapInfo[]> => {
     return response
 }
 
+export const prepareRefund = async (req: PrepareRefundRequest): Promise<PrepareRefundResponse> => {
+    const response = await BreezSDK.prepareRefund(req)
+    return response
+}
+
 export const refund = async (req: RefundRequest): Promise<RefundResponse> => {
     const response = await BreezSDK.refund(req)
     return response
@@ -880,5 +906,10 @@ export const recommendedFees = async (): Promise<RecommendedFees> => {
 
 export const buyBitcoin = async (req: BuyBitcoinRequest): Promise<BuyBitcoinResponse> => {
     const response = await BreezSDK.buyBitcoin(req)
+    return response
+}
+
+export const prepareSweep = async (req: PrepareSweepRequest): Promise<PrepareSweepResponse> => {
+    const response = await BreezSDK.prepareSweep(req)
     return response
 }

@@ -72,8 +72,13 @@ typedef struct wire_StaticBackupRequest {
   struct wire_uint_8_list *working_dir;
 } wire_StaticBackupRequest;
 
+typedef struct wire_list_payment_type_filter {
+  int32_t *ptr;
+  int32_t len;
+} wire_list_payment_type_filter;
+
 typedef struct wire_ListPaymentsRequest {
-  int32_t filter;
+  struct wire_list_payment_type_filter *filters;
   int64_t *from_timestamp;
   int64_t *to_timestamp;
   bool *include_failures;
@@ -167,6 +172,17 @@ typedef struct wire_SweepRequest {
   struct wire_uint_8_list *to_address;
   uint32_t fee_rate_sats_per_vbyte;
 } wire_SweepRequest;
+
+typedef struct wire_PrepareSweepRequest {
+  struct wire_uint_8_list *to_address;
+  uint64_t sats_per_vbyte;
+} wire_PrepareSweepRequest;
+
+typedef struct wire_PrepareRefundRequest {
+  struct wire_uint_8_list *swap_address;
+  struct wire_uint_8_list *to_address;
+  uint32_t sat_per_vbyte;
+} wire_PrepareRefundRequest;
 
 typedef struct wire_RefundRequest {
   struct wire_uint_8_list *swap_address;
@@ -270,7 +286,11 @@ void wire_buy_bitcoin(int64_t port_, struct wire_BuyBitcoinRequest *req);
 
 void wire_sweep(int64_t port_, struct wire_SweepRequest *req);
 
+void wire_prepare_sweep(int64_t port_, struct wire_PrepareSweepRequest *req);
+
 void wire_list_refundables(int64_t port_);
+
+void wire_prepare_refund(int64_t port_, struct wire_PrepareRefundRequest *req);
 
 void wire_refund(int64_t port_, struct wire_RefundRequest *req);
 
@@ -314,6 +334,10 @@ struct wire_OpenChannelFeeRequest *new_box_autoadd_open_channel_fee_request_0(vo
 
 struct wire_OpeningFeeParams *new_box_autoadd_opening_fee_params_0(void);
 
+struct wire_PrepareRefundRequest *new_box_autoadd_prepare_refund_request_0(void);
+
+struct wire_PrepareSweepRequest *new_box_autoadd_prepare_sweep_request_0(void);
+
 struct wire_ReceiveOnchainRequest *new_box_autoadd_receive_onchain_request_0(void);
 
 struct wire_ReceivePaymentRequest *new_box_autoadd_receive_payment_request_0(void);
@@ -337,6 +361,8 @@ struct wire_SweepRequest *new_box_autoadd_sweep_request_0(void);
 uint32_t *new_box_autoadd_u32_0(uint32_t value);
 
 uint64_t *new_box_autoadd_u64_0(uint64_t value);
+
+struct wire_list_payment_type_filter *new_list_payment_type_filter_0(int32_t len);
 
 struct wire_uint_8_list *new_uint_8_list_0(int32_t len);
 
@@ -382,7 +408,9 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_receive_onchain);
     dummy_var ^= ((int64_t) (void*) wire_buy_bitcoin);
     dummy_var ^= ((int64_t) (void*) wire_sweep);
+    dummy_var ^= ((int64_t) (void*) wire_prepare_sweep);
     dummy_var ^= ((int64_t) (void*) wire_list_refundables);
+    dummy_var ^= ((int64_t) (void*) wire_prepare_refund);
     dummy_var ^= ((int64_t) (void*) wire_refund);
     dummy_var ^= ((int64_t) (void*) wire_in_progress_swap);
     dummy_var ^= ((int64_t) (void*) wire_in_progress_reverse_swaps);
@@ -404,6 +432,8 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_node_config_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_open_channel_fee_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_opening_fee_params_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_prepare_refund_request_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_prepare_sweep_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_receive_onchain_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_receive_payment_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_refund_request_0);
@@ -416,6 +446,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_sweep_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_u32_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_u64_0);
+    dummy_var ^= ((int64_t) (void*) new_list_payment_type_filter_0);
     dummy_var ^= ((int64_t) (void*) new_uint_8_list_0);
     dummy_var ^= ((int64_t) (void*) inflate_NodeConfig_Greenlight);
     dummy_var ^= ((int64_t) (void*) free_WireSyncReturn);

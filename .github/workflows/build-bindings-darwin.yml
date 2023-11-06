@@ -8,13 +8,23 @@ on:
         type: string
   workflow_call:
     inputs:
+      repository:
+        description: 'sdk repository, defaults to current repository'
+        required: false
+        type: string
       ref:
         description: 'commit/tag/branch reference'
         required: true
         type: string
+      use-dummy-binaries:
+        description: 'If true, creates dummy binaries rather than real binaries'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   build:
+    if: ${{ !inputs.use-dummy-binaries }}
     runs-on: macOS-latest
     name: build ${{ matrix.target }}
     strategy:
@@ -28,6 +38,7 @@ jobs:
       uses: actions/checkout@v3
       with: 
         ref: ${{ inputs.ref }}
+        repository: ${{ inputs.repository || github.repository }}
 
     - name: Install rust toolchain
       run: |
@@ -86,3 +97,26 @@ jobs:
         path: |
           darwin-universal/libbreez_sdk_bindings.dylib
           darwin-universal/libbreez_sdk_bindings.a
+
+  build-dummies:
+    if: ${{ inputs.use-dummy-binaries }}
+    runs-on: ubuntu-latest
+    name: build darwin dummies
+    strategy:
+      matrix:
+        target: [
+          aarch64-apple-darwin,
+          x86_64-apple-darwin,
+          darwin-universal
+        ]
+    steps:
+      - name: Build dummy darwin ${{ matrix.target }}
+        run: |
+          touch libbreez_sdk_bindings.dylib
+          touch libbreez_sdk_bindings.a
+
+      - name: Upload dummy darwin ${{ matrix.target }} artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: sdk-bindings-${{ matrix.target }}
+          path: ./*

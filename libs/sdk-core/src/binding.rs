@@ -21,7 +21,10 @@ use tokio::sync::Mutex;
 
 use crate::breez_services::{self, BreezEvent, BreezServices, EventListener};
 use crate::chain::RecommendedFees;
-use crate::error::SdkError;
+use crate::error::{
+    LnUrlAuthError, LnUrlPayError, LnUrlWithdrawError, ReceiveOnchainError, ReceivePaymentError,
+    SdkError, SendOnchainError, SendPaymentError,
+};
 use crate::fiat::{FiatCurrency, Rate};
 use crate::input_parser::{self, InputType, LnUrlAuthRequestData};
 use crate::invoice::{self, LNInvoice};
@@ -32,7 +35,8 @@ use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
     EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus, LnUrlPayRequest,
     LnUrlWithdrawRequest, LnUrlWithdrawResult, NodeConfig, OpenChannelFeeRequest,
-    OpenChannelFeeResponse, ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse,
+    OpenChannelFeeResponse, PrepareRefundRequest, PrepareRefundResponse, PrepareSweepRequest,
+    PrepareSweepResponse, ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse,
     RefundRequest, RefundResponse, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
     SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
     SendSpontaneousPaymentRequest, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
@@ -63,8 +67,8 @@ pub fn connect(config: Config, seed: Vec<u8>) -> Result<()> {
                 *locked = Some(breez_services);
                 Ok(())
             }
-            Some(_) => Err(SdkError::InitFailed {
-                err: "static node services already set, please call disconnect() first".into(),
+            Some(_) => Err(SdkError::Generic {
+                err: "Static node services already set, please call disconnect() first".into(),
             }),
         }
     })
@@ -79,6 +83,7 @@ pub fn is_initialized() -> bool {
 /// See [BreezServices::sync]
 pub fn sync() -> Result<()> {
     block_on(async { get_breez_services().await?.sync().await })
+        .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// See [BreezServices::node_info]
@@ -87,7 +92,7 @@ pub fn node_info() -> Result<NodeState> {
         get_breez_services()
             .await?
             .node_info()
-            .map_err(anyhow::Error::new)
+            .map_err(anyhow::Error::new::<SdkError>)
     })
 }
 
@@ -101,16 +106,19 @@ pub fn disconnect() -> Result<()> {
 
         Ok(())
     })
+    .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// See [BreezServices::sign_message]
 pub fn sign_message(req: SignMessageRequest) -> Result<SignMessageResponse> {
     block_on(async { get_breez_services().await?.sign_message(req).await })
+        .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// See [BreezServices::check_message]
 pub fn check_message(req: CheckMessageRequest) -> Result<CheckMessageResponse> {
     block_on(async { get_breez_services().await?.check_message(req).await })
+        .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /*  Breez Services Helper API's */
@@ -131,7 +139,7 @@ pub fn default_config(
 
 /// See [BreezServices::static_backup]
 pub fn static_backup(req: StaticBackupRequest) -> Result<StaticBackupResponse> {
-    BreezServices::static_backup(req).map_err(anyhow::Error::new)
+    BreezServices::static_backup(req).map_err(anyhow::Error::new::<SdkError>)
 }
 
 /*  Stream API's */
@@ -140,7 +148,7 @@ pub fn static_backup(req: StaticBackupRequest) -> Result<StaticBackupResponse> {
 pub fn breez_events_stream(s: StreamSink<BreezEvent>) -> Result<()> {
     NOTIFICATION_STREAM
         .set(s)
-        .map_err(|_| anyhow!("events stream already created"))?;
+        .map_err(|_| anyhow!("Events stream already created"))?;
     Ok(())
 }
 
@@ -148,7 +156,7 @@ pub fn breez_events_stream(s: StreamSink<BreezEvent>) -> Result<()> {
 pub fn breez_log_stream(s: StreamSink<LogEntry>) -> Result<()> {
     LOG_INIT
         .set(true)
-        .map_err(|_| anyhow!("log stream already created"))?;
+        .map_err(|_| anyhow!("Log stream already created"))?;
     BindingLogger::init(s);
     Ok(())
 }
@@ -157,7 +165,8 @@ pub fn breez_log_stream(s: StreamSink<LogEntry>) -> Result<()> {
 
 /// See [BreezServices::list_lsps]
 pub fn list_lsps() -> Result<Vec<LspInformation>> {
-    block_on(async { get_breez_services().await?.list_lsps().await }).map_err(anyhow::Error::new)
+    block_on(async { get_breez_services().await?.list_lsps().await })
+        .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// See [BreezServices::connect_lsp]
@@ -168,23 +177,26 @@ pub fn connect_lsp(lsp_id: String) -> Result<()> {
 
 /// See [BreezServices::lsp_id]
 pub fn lsp_id() -> Result<Option<String>> {
-    block_on(async { get_breez_services().await?.lsp_id().await }).map_err(anyhow::Error::new)
+    block_on(async { get_breez_services().await?.lsp_id().await })
+        .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// See [BreezServices::fetch_lsp_info]
 pub fn fetch_lsp_info(id: String) -> Result<Option<LspInformation>> {
     block_on(async { get_breez_services().await?.fetch_lsp_info(id).await })
+        .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// See [BreezServices::lsp_info]
 pub fn lsp_info() -> Result<LspInformation> {
     block_on(async { get_breez_services().await?.lsp_info().await })
+        .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// See [BreezServices::close_lsp_channels]
 pub fn close_lsp_channels() -> Result<()> {
     block_on(async {
-        _ = get_breez_services().await?.close_lsp_channels().await;
+        _ = get_breez_services().await?.close_lsp_channels().await?;
         Ok(())
     })
 }
@@ -194,17 +206,19 @@ pub fn close_lsp_channels() -> Result<()> {
 /// See [BreezServices::backup]
 pub fn backup() -> Result<()> {
     block_on(async { get_breez_services().await?.backup().await })
+        .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// See [BreezServices::backup_status]
 pub fn backup_status() -> Result<BackupStatus> {
     block_on(async { get_breez_services().await?.backup_status() })
+        .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /*  Parse API's */
 
 pub fn parse_invoice(invoice: String) -> Result<LNInvoice> {
-    invoice::parse_invoice(&invoice)
+    invoice::parse_invoice(&invoice).map_err(|e| anyhow::Error::new::<SdkError>(e.into()))
 }
 
 pub fn parse_input(input: String) -> Result<InputType> {
@@ -216,12 +230,13 @@ pub fn parse_input(input: String) -> Result<InputType> {
 /// See [BreezServices::list_payments]
 pub fn list_payments(req: ListPaymentsRequest) -> Result<Vec<Payment>> {
     block_on(async { get_breez_services().await?.list_payments(req).await })
-        .map_err(anyhow::Error::new)
+        .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// See [BreezServices::list_payments]
 pub fn payment_by_hash(hash: String) -> Result<Option<Payment>> {
     block_on(async { get_breez_services().await?.payment_by_hash(hash).await })
+        .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /*  Lightning Payment API's */
@@ -229,7 +244,7 @@ pub fn payment_by_hash(hash: String) -> Result<Option<Payment>> {
 /// See [BreezServices::send_payment]
 pub fn send_payment(req: SendPaymentRequest) -> Result<SendPaymentResponse> {
     block_on(async { get_breez_services().await?.send_payment(req).await })
-        .map_err(anyhow::Error::new::<SdkError>)
+        .map_err(anyhow::Error::new::<SendPaymentError>)
 }
 
 /// See [BreezServices::send_spontaneous_payment]
@@ -240,13 +255,13 @@ pub fn send_spontaneous_payment(req: SendSpontaneousPaymentRequest) -> Result<Se
             .send_spontaneous_payment(req)
             .await
     })
-    .map_err(anyhow::Error::new::<SdkError>)
+    .map_err(anyhow::Error::new::<SendPaymentError>)
 }
 
 /// See [BreezServices::receive_payment]
 pub fn receive_payment(req: ReceivePaymentRequest) -> Result<ReceivePaymentResponse> {
     block_on(async { get_breez_services().await?.receive_payment(req).await })
-        .map_err(anyhow::Error::new)
+        .map_err(anyhow::Error::new::<ReceivePaymentError>)
 }
 
 /*  LNURL API's */
@@ -254,16 +269,19 @@ pub fn receive_payment(req: ReceivePaymentRequest) -> Result<ReceivePaymentRespo
 /// See [BreezServices::lnurl_pay]
 pub fn lnurl_pay(req: LnUrlPayRequest) -> Result<LnUrlPayResult> {
     block_on(async { get_breez_services().await?.lnurl_pay(req).await })
+        .map_err(anyhow::Error::new::<LnUrlPayError>)
 }
 
 /// See [BreezServices::lnurl_withdraw]
 pub fn lnurl_withdraw(req: LnUrlWithdrawRequest) -> Result<LnUrlWithdrawResult> {
     block_on(async { get_breez_services().await?.lnurl_withdraw(req).await })
+        .map_err(anyhow::Error::new::<LnUrlWithdrawError>)
 }
 
 /// See [BreezServices::lnurl_auth]
 pub fn lnurl_auth(req_data: LnUrlAuthRequestData) -> Result<LnUrlCallbackStatus> {
     block_on(async { get_breez_services().await?.lnurl_auth(req_data).await })
+        .map_err(anyhow::Error::new::<LnUrlAuthError>)
 }
 
 /*  Fiat Currency API's */
@@ -271,11 +289,13 @@ pub fn lnurl_auth(req_data: LnUrlAuthRequestData) -> Result<LnUrlCallbackStatus>
 /// See [BreezServices::fetch_fiat_rates]
 pub fn fetch_fiat_rates() -> Result<Vec<Rate>> {
     block_on(async { get_breez_services().await?.fetch_fiat_rates().await })
+        .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// See [BreezServices::list_fiat_currencies]
 pub fn list_fiat_currencies() -> Result<Vec<FiatCurrency>> {
     block_on(async { get_breez_services().await?.list_fiat_currencies().await })
+        .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /*  On-Chain Swap API's */
@@ -283,22 +303,31 @@ pub fn list_fiat_currencies() -> Result<Vec<FiatCurrency>> {
 /// See [BreezServices::send_onchain]
 pub fn send_onchain(req: SendOnchainRequest) -> Result<SendOnchainResponse> {
     block_on(async { get_breez_services().await?.send_onchain(req).await })
+        .map_err(anyhow::Error::new::<SendOnchainError>)
 }
 
 /// See [BreezServices::receive_onchain]
 pub fn receive_onchain(req: ReceiveOnchainRequest) -> Result<SwapInfo> {
     block_on(async { get_breez_services().await?.receive_onchain(req).await })
+        .map_err(anyhow::Error::new::<ReceiveOnchainError>)
 }
 
 /// See [BreezServices::buy_bitcoin]
 pub fn buy_bitcoin(req: BuyBitcoinRequest) -> Result<BuyBitcoinResponse> {
     block_on(async { get_breez_services().await?.buy_bitcoin(req).await })
-        .map_err(anyhow::Error::new)
+        .map_err(anyhow::Error::new::<ReceiveOnchainError>)
 }
 
 /// See [BreezServices::sweep]
 pub fn sweep(req: SweepRequest) -> Result<SweepResponse> {
     block_on(async { get_breez_services().await?.sweep(req).await })
+        .map_err(anyhow::Error::new::<SdkError>)
+}
+
+/// See [BreezServices::prepare_sweep]
+pub fn prepare_sweep(req: PrepareSweepRequest) -> Result<PrepareSweepResponse> {
+    block_on(async { get_breez_services().await?.prepare_sweep(req).await })
+        .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /*  Refundables API's */
@@ -306,11 +335,19 @@ pub fn sweep(req: SweepRequest) -> Result<SweepResponse> {
 /// See [BreezServices::list_refundables]
 pub fn list_refundables() -> Result<Vec<SwapInfo>> {
     block_on(async { get_breez_services().await?.list_refundables().await })
+        .map_err(anyhow::Error::new::<SdkError>)
+}
+
+/// See [BreezServices::prepare_refund]
+pub fn prepare_refund(req: PrepareRefundRequest) -> Result<PrepareRefundResponse> {
+    block_on(async { get_breez_services().await?.prepare_refund(req).await })
+        .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// See [BreezServices::refund]
 pub fn refund(req: RefundRequest) -> Result<RefundResponse> {
     block_on(async { get_breez_services().await?.refund(req).await })
+        .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /*  In Progress Swap API's */
@@ -318,6 +355,7 @@ pub fn refund(req: RefundRequest) -> Result<RefundResponse> {
 /// See [BreezServices::in_progress_swap]
 pub fn in_progress_swap() -> Result<Option<SwapInfo>> {
     block_on(async { get_breez_services().await?.in_progress_swap().await })
+        .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// See [BreezServices::in_progress_reverse_swaps]
@@ -328,6 +366,7 @@ pub fn in_progress_reverse_swaps() -> Result<Vec<ReverseSwapInfo>> {
             .in_progress_reverse_swaps()
             .await
     })
+    .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /*  Swap Fee API's */
@@ -346,11 +385,13 @@ pub fn fetch_reverse_swap_fees(req: ReverseSwapFeesRequest) -> Result<ReverseSwa
             .fetch_reverse_swap_fees(req)
             .await
     })
+    .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// See [BreezServices::recommended_fees]
 pub fn recommended_fees() -> Result<RecommendedFees> {
     block_on(async { get_breez_services().await?.recommended_fees().await })
+        .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /*  CLI API's */
@@ -363,6 +404,7 @@ pub fn execute_command(command: String) -> Result<String> {
             .execute_dev_command(command)
             .await
     })
+    .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /*  Binding Related Logic */
@@ -405,10 +447,12 @@ impl log::Log for BindingLogger {
     fn flush(&self) {}
 }
 
-async fn get_breez_services() -> Result<Arc<BreezServices>> {
+async fn get_breez_services() -> Result<Arc<BreezServices>, SdkError> {
     match BREEZ_SERVICES_INSTANCE.lock().await.as_ref() {
-        None => Err(anyhow!("Node service was not initialized")),
-        Some(sdk) => anyhow::Ok(sdk.clone()),
+        None => Err(SdkError::Generic {
+            err: "Node service was not initialized".into(),
+        }),
+        Some(sdk) => Ok(sdk.clone()),
     }
 }
 

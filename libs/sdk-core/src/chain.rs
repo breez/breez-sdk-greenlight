@@ -1,5 +1,5 @@
 use crate::input_parser::get_parse_and_log_response;
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use bitcoin::hashes::hex::FromHex;
 use bitcoin::{OutPoint, Txid};
 use serde::{Deserialize, Serialize};
@@ -244,10 +244,9 @@ impl ChainService for MempoolSpace {
             .send()
             .await?
             .text()
-            .await
-            .map_err(anyhow::Error::msg)?;
+            .await?;
         match txid_or_error.contains("error") {
-            true => Err(anyhow::Error::msg(txid_or_error)),
+            true => Err(anyhow!("Error fetching tx: {txid_or_error}")),
             false => Ok(txid_or_error),
         }
     }

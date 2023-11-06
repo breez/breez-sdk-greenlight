@@ -6,7 +6,7 @@ use breez_sdk_core::InputType::{LnUrlAuth, LnUrlPay, LnUrlWithdraw};
 use breez_sdk_core::{
     parse, BreezEvent, BreezServices, BuyBitcoinRequest, CheckMessageRequest, EventListener,
     GreenlightCredentials, ListPaymentsRequest, LnUrlPayRequest, LnUrlWithdrawRequest,
-    PaymentTypeFilter, ReceiveOnchainRequest, ReceivePaymentRequest, RefundRequest,
+    PrepareRefundRequest, ReceiveOnchainRequest, ReceivePaymentRequest, RefundRequest,
     ReverseSwapFeesRequest, SendOnchainRequest, SendPaymentRequest, SendSpontaneousPaymentRequest,
     SignMessageRequest, StaticBackupRequest, SweepRequest,
 };
@@ -50,7 +50,7 @@ async fn connect(config: Config, seed: &[u8]) -> Result<()> {
 
     BREEZ_SERVICES
         .set(service)
-        .map_err(|_| anyhow!("Failed to set Breez Service"))?;
+        .map_err(|_| anyhow!("Breez Services already initialized"))?;
 
     Ok(())
 }
@@ -115,7 +115,7 @@ pub(crate) async fn handle_command(
         }
         Commands::Sync {} => {
             sdk()?.sync().await?;
-            Ok("Sync finished succesfully".to_string())
+            Ok("Sync finished successfully".to_string())
         }
         Commands::Parse { input } => parse(&input)
             .await
@@ -132,11 +132,10 @@ pub(crate) async fn handle_command(
                 .receive_payment(ReceivePaymentRequest {
                     amount_msat,
                     description,
-                    preimage: None,
-                    opening_fee_params: None,
                     use_description_hash,
                     expiry,
                     cltv,
+                    ..Default::default()
                 })
                 .await?;
             let mut result = serde_json::to_string(&recv_payment_response)?;
@@ -150,9 +149,7 @@ pub(crate) async fn handle_command(
             sat_per_vbyte,
         } => {
             let pair_info = sdk()?
-                .fetch_reverse_swap_fees(ReverseSwapFeesRequest {
-                    send_amount_sat: None,
-                })
+                .fetch_reverse_swap_fees(ReverseSwapFeesRequest::default())
                 .await
                 .map_err(|e| anyhow!("Failed to fetch reverse swap fee infos: {e}"))?;
 
@@ -216,7 +213,7 @@ pub(crate) async fn handle_command(
         } => {
             let payments = sdk()?
                 .list_payments(ListPaymentsRequest {
-                    filter: PaymentTypeFilter::All,
+                    filters: None,
                     from_timestamp,
                     to_timestamp,
                     include_failures: Some(include_failures),
@@ -232,12 +229,24 @@ pub(crate) async fn handle_command(
         }
         Commands::Sweep {
             to_address,
-            sat_per_vbyte: sat_per_byte,
+            fee_rate_sats_per_vbyte,
         } => {
             sdk()?
                 .sweep(SweepRequest {
                     to_address,
-                    fee_rate_sats_per_vbyte: sat_per_byte,
+                    fee_rate_sats_per_vbyte,
+                })
+                .await?;
+            Ok("Onchain funds were swept successfully".to_string())
+        }
+        Commands::PrepareSweep {
+            to_address,
+            sats_per_vbyte,
+        } => {
+            sdk()?
+                .sweep(SweepRequest {
+                    to_address,
+                    fee_rate_sats_per_vbyte: sats_per_vbyte,
                 })
                 .await?;
             Ok("Onchain funds were swept succesfully".to_string())
@@ -248,7 +257,7 @@ pub(crate) async fn handle_command(
         }
         Commands::ConnectLSP { lsp_id } => {
             sdk()?.connect_lsp(lsp_id).await?;
-            Ok("LSP connected succesfully".to_string())
+            Ok("LSP connected successfully".to_string())
         }
         Commands::OpenChannelFee {
             amount_msat,
@@ -285,9 +294,7 @@ pub(crate) async fn handle_command(
         }
         Commands::ReceiveOnchain {} => serde_json::to_string_pretty(
             &sdk()?
-                .receive_onchain(ReceiveOnchainRequest {
-                    opening_fee_params: None,
-                })
+                .receive_onchain(ReceiveOnchainRequest::default())
                 .await?,
         )
         .map_err(|e| e.into()),
@@ -296,6 +303,23 @@ pub(crate) async fn handle_command(
         }
         Commands::ListRefundables {} => {
             serde_json::to_string_pretty(&sdk()?.list_refundables().await?).map_err(|e| e.into())
+        }
+        Commands::PrepareRefund {
+            swap_address,
+            to_address,
+            sat_per_vbyte,
+        } => {
+            let res = sdk()?
+                .prepare_refund(PrepareRefundRequest {
+                    swap_address,
+                    to_address,
+                    sat_per_vbyte,
+                })
+                .await?;
+            Ok(format!(
+                "Prepared refund tx - weight: {} - fees: {} sat",
+                res.refund_tx_weight, res.refund_tx_fee_sat
+            ))
         }
         Commands::Refund {
             swap_address,

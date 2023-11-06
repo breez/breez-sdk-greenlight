@@ -8,13 +8,23 @@ on:
         type: string
   workflow_call:
     inputs:
+      repository:
+        description: 'sdk repository, defaults to current repository'
+        required: false
+        type: string
       ref:
         description: 'commit/tag/branch reference'
         required: true
         type: string
+      use-dummy-binaries:
+        description: 'If true, creates dummy binaries rather than real binaries'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   build:
+    if: ${{ !inputs.use-dummy-binaries }}
     runs-on: ubuntu-latest
     name: build ${{ matrix.target }}
     strategy:
@@ -30,6 +40,7 @@ jobs:
       uses: actions/checkout@v3
       with: 
         ref: ${{ inputs.ref }}
+        repository: ${{ inputs.repository || github.repository }}
 
     - name: Install rust toolchain
       run: |
@@ -76,6 +87,61 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     name: build jniLibs
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-aarch64-linux-android
+          path: arm64-v8a
+      
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-armv7-linux-androideabi
+          path: armeabi-v7a
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-i686-linux-android
+          path: x86
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-x86_64-linux-android
+          path: x86_64
+      
+      - name: Archive jniLibs
+        uses: actions/upload-artifact@v3
+        with:
+          name: sdk-bindings-android-jniLibs
+          path: ./*
+
+  build-dummies:
+    if: ${{ inputs.use-dummy-binaries }}
+    runs-on: ubuntu-latest
+    name: build android dummies
+    strategy:
+      matrix:
+        target: [
+          aarch64-linux-android,
+          armv7-linux-androideabi,
+          i686-linux-android,
+          x86_64-linux-android,
+        ]
+    steps:
+      - name: Build Android ${{ matrix.target }} dummy
+        run: |
+          touch libbreez_sdk_bindings.so
+          touch libc++_shared.so.so
+
+      - name: Upload dummy Android ${{ matrix.target }} artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: sdk-bindings-${{ matrix.target }}
+          path: ./*
+
+  jnilibs-dummy:
+    needs: build-dummies
+    runs-on: ubuntu-latest
+    name: build jniLibs dummy
     steps:
       - uses: actions/download-artifact@v3
         with:

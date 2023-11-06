@@ -14,7 +14,6 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
     companion object {
         const val TAG = "RNBreezSDK"
-        const val GENERIC_CODE = "Generic"
     }
 
     override fun initialize() {
@@ -51,8 +50,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             try {
                 val res = parseInvoice(invoice)
                 promise.resolve(readableMapOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -66,8 +65,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             try {
                 val res = parseInput(s)
                 promise.resolve(readableMapOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -81,8 +80,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             try {
                 val res = mnemonicToSeed(phrase)
                 promise.resolve(readableArrayOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -107,8 +106,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
                 res.workingDir = workingDir.absolutePath
                 promise.resolve(readableMapOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -126,8 +125,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                     }
                 val res = staticBackup(staticBackupRequest)
                 promise.resolve(readableMapOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -139,9 +138,9 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
             setLogStream(BreezSDKLogStream(emitter))
             promise.resolve(readableMapOf("status" to "ok"))
-        } catch (e: SdkException) {
+        } catch (e: Exception) {
             e.printStackTrace()
-            promise.reject(e.javaClass.simpleName, e.message, e)
+            promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
         }
     }
 
@@ -152,7 +151,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
         promise: Promise,
     ) {
         if (breezServices != null) {
-            promise.reject(TAG, "BreezServices already initialized")
+            promise.reject("Generic", "BreezServices already initialized")
             return
         }
 
@@ -162,9 +161,9 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
             breezServices = connect(configTmp, asUByteList(seed), BreezSDKListener(emitter))
             promise.resolve(readableMapOf("status" to "ok"))
-        } catch (e: SdkException) {
+        } catch (e: Exception) {
             e.printStackTrace()
-            promise.reject(e.javaClass.simpleName, e.message, e)
+            promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
         }
     }
 
@@ -174,8 +173,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             try {
                 getBreezServices().disconnect()
                 promise.resolve(readableMapOf("status" to "ok"))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -193,8 +192,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                     }
                 val res = getBreezServices().sendPayment(sendPaymentRequest)
                 promise.resolve(readableMapOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -212,8 +211,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                     }
                 val res = getBreezServices().sendSpontaneousPayment(sendSpontaneousPaymentRequest)
                 promise.resolve(readableMapOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -231,8 +230,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                     }
                 val res = getBreezServices().receivePayment(receivePaymentRequest)
                 promise.resolve(readableMapOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -247,8 +246,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                 val lnUrlPayRequest = asLnUrlPayRequest(req) ?: run { throw SdkException.Generic("Missing mandatory field req of type LnUrlPayRequest") }
                 val res = getBreezServices().payLnurl(lnUrlPayRequest)
                 promise.resolve(readableMapOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -266,8 +265,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                     }
                 val res = getBreezServices().withdrawLnurl(lnUrlWithdrawRequest)
                 promise.resolve(readableMapOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -285,8 +284,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                     }
                 val res = getBreezServices().lnurlAuth(lnUrlAuthRequestData)
                 promise.resolve(readableMapOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -297,8 +296,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             try {
                 val res = getBreezServices().nodeInfo()
                 promise.resolve(readableMapOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -316,8 +315,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                     }
                 val res = getBreezServices().signMessage(signMessageRequest)
                 promise.resolve(readableMapOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -335,8 +334,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                     }
                 val res = getBreezServices().checkMessage(checkMessageRequest)
                 promise.resolve(readableMapOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -347,8 +346,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             try {
                 val res = getBreezServices().backupStatus()
                 promise.resolve(readableMapOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -359,8 +358,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             try {
                 getBreezServices().backup()
                 promise.resolve(readableMapOf("status" to "ok"))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -374,8 +373,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             try {
                 val res = getBreezServices().paymentByHash(hash)
                 promise.resolve(res?.let { readableMapOf(res) })
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -393,8 +392,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                     }
                 val res = getBreezServices().listPayments(listPaymentsRequest)
                 promise.resolve(readableArrayOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -409,8 +408,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                 val sweepRequest = asSweepRequest(req) ?: run { throw SdkException.Generic("Missing mandatory field req of type SweepRequest") }
                 val res = getBreezServices().sweep(sweepRequest)
                 promise.resolve(readableMapOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -421,8 +420,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             try {
                 val res = getBreezServices().fetchFiatRates()
                 promise.resolve(readableArrayOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -433,8 +432,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             try {
                 val res = getBreezServices().listFiatCurrencies()
                 promise.resolve(readableArrayOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -445,8 +444,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             try {
                 val res = getBreezServices().listLsps()
                 promise.resolve(readableArrayOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -460,8 +459,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             try {
                 getBreezServices().connectLsp(lspId)
                 promise.resolve(readableMapOf("status" to "ok"))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -475,8 +474,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             try {
                 val res = getBreezServices().fetchLspInfo(lspId)
                 promise.resolve(res?.let { readableMapOf(res) })
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -494,8 +493,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                     }
                 val res = getBreezServices().openChannelFee(openChannelFeeRequest)
                 promise.resolve(readableMapOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -506,8 +505,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             try {
                 val res = getBreezServices().lspId()
                 promise.resolve(res?.let { res })
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -518,8 +517,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             try {
                 val res = getBreezServices().lspInfo()
                 promise.resolve(readableMapOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -530,8 +529,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             try {
                 getBreezServices().closeLspChannels()
                 promise.resolve(readableMapOf("status" to "ok"))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -549,8 +548,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                     }
                 val res = getBreezServices().receiveOnchain(receiveOnchainRequest)
                 promise.resolve(readableMapOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -561,8 +560,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             try {
                 val res = getBreezServices().inProgressSwap()
                 promise.resolve(res?.let { readableMapOf(res) })
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -573,8 +572,27 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             try {
                 val res = getBreezServices().listRefundables()
                 promise.resolve(readableArrayOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun prepareRefund(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
+        executor.execute {
+            try {
+                val prepareRefundRequest =
+                    asPrepareRefundRequest(req) ?: run {
+                        throw SdkException.Generic("Missing mandatory field req of type PrepareRefundRequest")
+                    }
+                val res = getBreezServices().prepareRefund(prepareRefundRequest)
+                promise.resolve(readableMapOf(res))
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -589,8 +607,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                 val refundRequest = asRefundRequest(req) ?: run { throw SdkException.Generic("Missing mandatory field req of type RefundRequest") }
                 val res = getBreezServices().refund(refundRequest)
                 promise.resolve(readableMapOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -608,8 +626,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                     }
                 val res = getBreezServices().fetchReverseSwapFees(reverseSwapFeesRequest)
                 promise.resolve(readableMapOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -620,8 +638,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             try {
                 val res = getBreezServices().inProgressReverseSwaps()
                 promise.resolve(readableArrayOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -639,8 +657,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                     }
                 val res = getBreezServices().sendOnchain(sendOnchainRequest)
                 promise.resolve(readableMapOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -654,8 +672,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             try {
                 val res = getBreezServices().executeDevCommand(command)
                 promise.resolve(res)
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -666,8 +684,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             try {
                 getBreezServices().sync()
                 promise.resolve(readableMapOf("status" to "ok"))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -678,8 +696,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             try {
                 val res = getBreezServices().recommendedFees()
                 promise.resolve(readableMapOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }
@@ -697,8 +715,27 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                     }
                 val res = getBreezServices().buyBitcoin(buyBitcoinRequest)
                 promise.resolve(readableMapOf(res))
-            } catch (e: SdkException) {
-                promise.reject(e.javaClass.simpleName, e.message, e)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun prepareSweep(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
+        executor.execute {
+            try {
+                val prepareSweepRequest =
+                    asPrepareSweepRequest(req) ?: run {
+                        throw SdkException.Generic("Missing mandatory field req of type PrepareSweepRequest")
+                    }
+                val res = getBreezServices().prepareSweep(prepareSweepRequest)
+                promise.resolve(readableMapOf(res))
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
         }
     }

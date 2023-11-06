@@ -2,6 +2,10 @@ name: Publish Flutter Package
 on:   
   workflow_call:
     inputs:
+      repository:
+        description: 'sdk repository, defaults to current repository'
+        required: false
+        type: string
       ref:
         description: 'commit/tag/branch reference'
         required: true
@@ -35,35 +39,39 @@ jobs:
       - name: Checkout breez-sdk repo
         uses: actions/checkout@v3
         with:
+          repository: ${{ inputs.repository || github.repository }}
           ref: ${{ inputs.ref || github.sha }}
           path: breez-sdk
 
-      - uses: actions/download-artifact@v3
-        with:
-          name: sdk-bindings-android-jniLibs
-          path: flutter/android/src/main/jniLibs
-
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.7.12'
+          flutter-version: '3.13.9'
           channel: 'stable'                      
 
       - name: Copy package files        
         working-directory: flutter
         run: |
           rm -f ../breez-sdk/libs/sdk-flutter/ios/breez_sdk.podspec.dev
-          mv ../breez-sdk/libs/sdk-flutter/ios/breez_sdk.podspec.production ../breez-sdk/libs/sdk-flutter/ios/breez_sdk.podspec
+          rm -r ios
+          rm -r android
+          rm -r lib
           cp -r ../breez-sdk/libs/sdk-flutter/ios .
+          mv ios/breez_sdk.podspec.production ios/breez_sdk.podspec
           cp -r ../breez-sdk/libs/sdk-flutter/android .
           cp -r ../breez-sdk/libs/sdk-flutter/lib .
           cp ../breez-sdk/libs/sdk-flutter/pubspec.yaml .
-          cp ../breez-sdk/libs/sdk-flutter/pubspec.lock .          
-      
+          cp ../breez-sdk/libs/sdk-flutter/pubspec.lock .  
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-android-jniLibs
+          path: flutter/android/src/main/jniLibs
+
       - name: Set package version
         working-directory: flutter
         run: |
-          flutter pub global activate pubspec_version
-          pubver set ${{ inputs.package-version }}
+          sed -i.bak -e 's/version:.*/version: ${{ inputs.package-version }}/' pubspec.yaml
+          rm pubspec.yaml.bak
 
       - name: Archive flutter release
         uses: actions/upload-artifact@v3

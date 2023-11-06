@@ -1,7 +1,7 @@
 # Breez SDK
 
 ## Overview
-The Breez SDK enables mobile developers to integrate Lightning and bitcoin payments into their apps with a very shallow learning curve. The use cases are endless – from social apps that want to integrate tipping between users to content-creation apps interested in adding bitcoin monetization. Crucially, this SDK is an end-to-end, non-custodial, drop-in solution powered by Greenlight, a built-in LSP, on-chain interoperability, third-party fiat on-ramps, and other services users and operators need.
+The Breez SDK enables mobile developers to integrate Lightning and bitcoin payments into their apps with a very shallow learning curve. The use cases are endless – from social apps that want to integrate tipping between users to content-creation apps interested in adding bitcoin monetization. Crucially, this SDK is an end-to-end, non-custodial, drop-in solution powered by Greenlight, a built-in LSP, on-chain interoperability, third-party fiat on-ramps, and other services users and operators need. The Breez SDK is free for developers.
    
 The Breez SDK provides the following services:
 * Sending payments (via various protocols such as: bolt11, keysend, lnurl-pay, lightning address, etc.)
@@ -40,7 +40,7 @@ This diagram is a high-level description of the Breez SDK:
 ![SDK Architecture](https://user-images.githubusercontent.com/31890660/208512955-6e648b86-4c8a-457a-b844-3dda8b2aa8ec.png)
 
 ## Command line
-[Breez SDK CLI Wallet](https://github.com/hodlapp/breez-sdk-cli-wallet) created by @bilthon is CLI client that allows you to test the functionality of the Breez SDK.
+[Breez sdk-cli](https://github.com/breez/breez-sdk/tree/main/tools/sdk-cli) is a command line client that allows you to test the functionality of the Breez SDK.
 
 ## Build & Test
 The libs folder contains three sub folders and is a structured as a cargo workspace:
@@ -78,6 +78,8 @@ See the instructions in each sub project readme on how to build, test and run.
 - [ ] Webhook for receiving payments
 - [ ] Mobile Notifications
 - [ ] Offline receive via notifications
+- [ ] LSPS2 support 
+- [ ] LSPS1 support 
 - [ ] Simplifed key management (cloud key backup)
 - [ ] Performance optimizations
 - [ ] Improve key share 

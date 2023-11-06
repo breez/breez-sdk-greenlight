@@ -107,7 +107,7 @@ class RNBreezSDK: RCTEventEmitter {
     @objc(connect:seed:resolve:reject:)
     func connect(_ config: [String: Any], seed: [UInt8], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         if breezServices != nil {
-            reject(RNBreezSDK.TAG, "BreezServices already initialized", nil)
+            reject("Generic", "BreezServices already initialized", nil)
             return
         }
 
@@ -418,6 +418,17 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
+    @objc(prepareRefund:resolve:reject:)
+    func prepareRefund(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            let prepareRefundRequest = try BreezSDKMapper.asPrepareRefundRequest(prepareRefundRequest: req)
+            var res = try getBreezServices().prepareRefund(req: prepareRefundRequest)
+            resolve(BreezSDKMapper.dictionaryOf(prepareRefundResponse: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
     @objc(refund:resolve:reject:)
     func refund(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
@@ -502,16 +513,26 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
+    @objc(prepareSweep:resolve:reject:)
+    func prepareSweep(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            let prepareSweepRequest = try BreezSDKMapper.asPrepareSweepRequest(prepareSweepRequest: req)
+            var res = try getBreezServices().prepareSweep(req: prepareSweepRequest)
+            resolve(BreezSDKMapper.dictionaryOf(prepareSweepResponse: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
     func rejectErr(err: Error, reject: @escaping RCTPromiseRejectBlock) {
-        var errorCode = "Generic"
+        var errorName = "Generic"
         var message = "\(err)"
-        if let sdkErr = err as? SdkError {
-            if let sdkErrAssociated = Mirror(reflecting: sdkErr).children.first {
-                if let associatedMessage = Mirror(reflecting: sdkErrAssociated.value).children.first {
-                    message = associatedMessage.value as! String
-                }
+        if let errAssociated = Mirror(reflecting: err).children.first {
+            errorName = errAssociated.label ?? errorName
+            if let associatedMessage = Mirror(reflecting: errAssociated.value).children.first {
+                message = associatedMessage.value as! String
             }
         }
-        reject(errorCode, message, err)
+        reject(errorName, message, err)
     }
 }

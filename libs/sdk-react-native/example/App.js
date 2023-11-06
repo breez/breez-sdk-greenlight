@@ -146,6 +146,7 @@ const App = () => {
                 addLine("backupStatus", JSON.stringify(await backupStatus()))
             } catch (e) {
                 addLine("error", e.toString())
+                console.log(`Error: ${JSON.stringify(e)}`)
             }
         }
         asyncFn()
