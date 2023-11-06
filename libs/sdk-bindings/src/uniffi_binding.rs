@@ -248,7 +248,6 @@ impl BlockingBreezServices {
     // optionally used to know fees before calling `refund()`
     pub fn prepare_refund(&self, req: PrepareRefundRequest) -> SdkResult<PrepareRefundResponse> {
         rt().block_on(self.breez_services.prepare_refund(req))
-            .map_err(|e| e.into())
     }
 
     // construct and broadcast a refund transaction for a faile/expired swap

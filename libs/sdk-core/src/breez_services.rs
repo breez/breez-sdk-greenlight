@@ -719,8 +719,11 @@ impl BreezServices {
     ///
     /// Can optionally be used before [BreezServices::refund] to know how much fees will be paid
     /// to perform the refund.
-    pub async fn prepare_refund(&self, req: PrepareRefundRequest) -> Result<PrepareRefundResponse> {
-        self.btc_receive_swapper.prepare_refund_swap(req).await
+    pub async fn prepare_refund(
+        &self,
+        req: PrepareRefundRequest,
+    ) -> SdkResult<PrepareRefundResponse> {
+        Ok(self.btc_receive_swapper.prepare_refund_swap(req).await?)
     }
 
     /// Construct and broadcast a refund transaction for a failed/expired swap
