@@ -1,1 +1,1 @@
-from breez_sdk.breez_sdk import *
+from breez_sdk import *
