@@ -77,18 +77,18 @@ jobs:
 
   build-linux-wheels:
     runs-on: ubuntu-20.04
-    container:
-      image: quay.io/pypa/manylinux2014_x86_64
-      env:
-        PLAT: manylinux2014_${{ matrix.arch }}
-        PYBIN: "/opt/python/${{ matrix.python }}/bin"
     strategy:
       matrix:
         arch: [x86_64, aarch64]
-        python: [cp38-cp38, cp39-cp39, cp310-cp310]
+        python: ["3.8", "3.9", "3.10"]
     steps:
       - name: "Checkout"
         uses: actions/checkout@v3
+
+      - name: "Setup Python"
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
 
       - uses: actions/download-artifact@v3
         with:
@@ -105,13 +105,17 @@ jobs:
         working-directory: libs/sdk-bindings/bindings-python
         run: sed -i.bak -e 's/    version=".*",/    version="${{ inputs.package-version }}",/' setup.py
 
+      - name: Install dependencies
+        working-directory: libs/sdk-bindings/bindings-python
+        run: pip3 install wheel setuptools
+
       - name: "Build wheel"
         working-directory: libs/sdk-bindings/bindings-python
-        run: ${PYBIN}/python setup.py bdist_wheel --plat-name manylinux2014_${{ matrix.arch }} --verbose
+        run: python3 setup.py bdist_wheel --plat-name manylinux_2_31_${{ matrix.arch }} --verbose
 
       - uses: actions/upload-artifact@v3
         with:
-          name: python-wheel-${{ matrix.python }}-manylinux2014-${{ matrix.arch }}
+          name: python-wheel-${{ matrix.python }}-manylinux_2_31_${{ matrix.arch }}
           path: libs/sdk-bindings/bindings-python/dist/*.whl
 
   publish-package:
