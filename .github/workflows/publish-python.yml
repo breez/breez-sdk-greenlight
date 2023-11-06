@@ -139,20 +139,20 @@ jobs:
           ls -laR dist
 
       # for developing, testing, and experimenting
-      # - name: "Publish on test PyPI"
-      #   uses: pypa/gh-action-pypi-publish@release/v1
-      #   with:
-      #     verbose: true
-      #     user: __token__
-      #     password: ${{ secrets.PYPI_API_TOKEN }}
-      #     repository_url: https://test.pypi.org/legacy/
-      #     packages_dir: libs/sdk-bindings/bindings-python/dist/*/
-
-      - name: "Publish on PyPI"
-        if: ${{ inputs.publish }}
+      - name: "Publish on test PyPI"
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           verbose: true
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
+          repository_url: https://test.pypi.org/legacy/
           packages_dir: libs/sdk-bindings/bindings-python/dist/*/
+
+      # - name: "Publish on PyPI"
+      #   if: ${{ inputs.publish }}
+      #   uses: pypa/gh-action-pypi-publish@release/v1
+      #   with:
+      #     verbose: true
+      #     user: __token__
+      #     password: ${{ secrets.PYPI_API_TOKEN }}
+      #     packages_dir: libs/sdk-bindings/bindings-python/dist/*/
