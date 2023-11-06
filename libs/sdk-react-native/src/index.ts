@@ -235,7 +235,7 @@ export type LspInformation = {
 }
 
 export type MaxReverseSwapAmountResponse = {
-    totalMsat: number
+    totalSat: number
 }
 
 export type MessageSuccessActionData = {

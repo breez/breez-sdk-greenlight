@@ -116,7 +116,7 @@ impl BTCSendSwap {
             .first()
             .ok_or_else(|| {
                 ReverseSwapError::Generic(anyhow!(
-                    "No route hints found for reverse routing node {reverse_routing_node:?}"
+                    "No hops found for reverse routing node {reverse_routing_node:?}"
                 ))
             })
             .map(|r| r.clone())

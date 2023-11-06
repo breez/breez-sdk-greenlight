@@ -707,7 +707,7 @@ impl BreezServices {
         // User Node -> LSP Node -> Routing Node -> Swapper Node
         let (max_to_pay, _) = self
             .node_api
-            .max_amount_to_send(
+            .max_sendable_amount(
                 Some(
                     hex::decode(&last_hop.src_node_id)
                         .map_err(|e| anyhow!("Failed to decode hex node_id: {e}"))?,
@@ -718,9 +718,9 @@ impl BreezServices {
             .await?;
 
         // Sum the max amount per channel and return the result
-        let total_msat = max_to_pay.into_iter().map(|m| m.amount_msat).sum();
-
-        Ok(MaxReverseSwapAmountResponse { total_msat })
+        let total_msat: u64 = max_to_pay.into_iter().map(|m| m.amount_msat).sum();
+        let total_sat = total_msat / 1000;
+        Ok(MaxReverseSwapAmountResponse { total_sat })
     }
 
     /// Creates a reverse swap and attempts to pay the HODL invoice

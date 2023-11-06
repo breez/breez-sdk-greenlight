@@ -1453,21 +1453,21 @@ fun asMaxReverseSwapAmountResponse(maxReverseSwapAmountResponse: ReadableMap): M
     if (!validateMandatoryFields(
             maxReverseSwapAmountResponse,
             arrayOf(
-                "totalMsat",
+                "totalSat",
             ),
         )
     ) {
         return null
     }
-    val totalMsat = maxReverseSwapAmountResponse.getDouble("totalMsat").toULong()
+    val totalSat = maxReverseSwapAmountResponse.getDouble("totalSat").toULong()
     return MaxReverseSwapAmountResponse(
-        totalMsat,
+        totalSat,
     )
 }
 
 fun readableMapOf(maxReverseSwapAmountResponse: MaxReverseSwapAmountResponse): ReadableMap {
     return readableMapOf(
-        "totalMsat" to maxReverseSwapAmountResponse.totalMsat,
+        "totalSat" to maxReverseSwapAmountResponse.totalSat,
     )
 }
 

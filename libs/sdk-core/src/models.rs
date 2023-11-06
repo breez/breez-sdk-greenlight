@@ -687,7 +687,7 @@ pub struct ReverseSwapFeesRequest {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MaxReverseSwapAmountResponse {
-    pub total_msat: u64,
+    pub total_sat: u64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1271,18 +1271,17 @@ pub struct PaymentPathEdge {
 impl PaymentPathEdge {
     pub(crate) fn amount_to_forward(&self, in_amount_msat: u64) -> u64 {
         let forward = (in_amount_msat - self.base_fee_msat as u64) as f64
-            / (1f64 + self.fee_per_millionth as f64 / 1000000f64);
+            / (1f64 + self.fee_per_millionth as f64 / 1_000_000f64);
 
         let amount_to_forward = forward.floor() as u64;
         info!("amount_to_forward: in_amount_msat = {in_amount_msat},base_fee_msat={}, fee_per_millionth={}  amount_to_forward: {}", self.base_fee_msat, self.fee_per_millionth, amount_to_forward);
         amount_to_forward
     }
-
-    // forward_amount_msat * (1000000 + self.fee_per_millionth)/1000000 + self.base_fee_msat = x
+    
     pub(crate) fn amount_from_forward(&self, forward_amount_msat: u64) -> u64 {
         let in_amount_msat = self.base_fee_msat as f64
-            + forward_amount_msat as f64 * (1000000f64 + self.fee_per_millionth as f64)
-                / 1000000f64;
+            + forward_amount_msat as f64 * (1_000_000f64 + self.fee_per_millionth as f64)
+                / 1_000_000f64;
         print!("amount_from_forward: in_amount_msat = {in_amount_msat},base_fee_msat={}, fee_per_millionth={}  amount_to_forward: {}", self.base_fee_msat, self.fee_per_millionth, forward_amount_msat);
         in_amount_msat.ceil() as u64
     }

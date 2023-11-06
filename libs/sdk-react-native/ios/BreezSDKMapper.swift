@@ -1289,15 +1289,15 @@ class BreezSDKMapper {
     }
 
     static func asMaxReverseSwapAmountResponse(maxReverseSwapAmountResponse: [String: Any?]) throws -> MaxReverseSwapAmountResponse {
-        guard let totalMsat = maxReverseSwapAmountResponse["totalMsat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field totalMsat for type MaxReverseSwapAmountResponse") }
+        guard let totalSat = maxReverseSwapAmountResponse["totalSat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field totalSat for type MaxReverseSwapAmountResponse") }
 
         return MaxReverseSwapAmountResponse(
-            totalMsat: totalMsat)
+            totalSat: totalSat)
     }
 
     static func dictionaryOf(maxReverseSwapAmountResponse: MaxReverseSwapAmountResponse) -> [String: Any?] {
         return [
-            "totalMsat": maxReverseSwapAmountResponse.totalMsat,
+            "totalSat": maxReverseSwapAmountResponse.totalSat,
         ]
     }
 

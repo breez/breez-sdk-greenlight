@@ -1409,7 +1409,7 @@ impl rust2dart::IntoIntoDart<LspInformation> for LspInformation {
 
 impl support::IntoDart for MaxReverseSwapAmountResponse {
     fn into_dart(self) -> support::DartAbi {
-        vec![self.total_msat.into_into_dart().into_dart()].into_dart()
+        vec![self.total_sat.into_into_dart().into_dart()].into_dart()
     }
 }
 impl support::IntoDartExceptPrimitive for MaxReverseSwapAmountResponse {}

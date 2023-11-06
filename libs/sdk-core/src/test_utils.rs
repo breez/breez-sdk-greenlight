@@ -398,7 +398,7 @@ impl NodeAPI for MockNodeAPI {
         Err(NodeError::Generic(anyhow!("Not implemented")))
     }
 
-    async fn max_amount_to_send(
+    async fn max_sendable_amount(
         &self,
         _payee_node_id: Option<Vec<u8>>,
         _max_hops: u32,

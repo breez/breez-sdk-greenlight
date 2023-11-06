@@ -649,7 +649,7 @@ dictionary SendPaymentResponse {
 };
 
 dictionary MaxReverseSwapAmountResponse {
-    u64 total_msat;
+    u64 total_sat;
 };
 
 dictionary SendOnchainRequest {

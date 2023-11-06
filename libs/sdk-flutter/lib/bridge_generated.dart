@@ -968,10 +968,10 @@ class LspInformation {
 }
 
 class MaxReverseSwapAmountResponse {
-  final int totalMsat;
+  final int totalSat;
 
   const MaxReverseSwapAmountResponse({
-    required this.totalMsat,
+    required this.totalSat,
   });
 }
 
@@ -3036,7 +3036,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     final arr = raw as List<dynamic>;
     if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
     return MaxReverseSwapAmountResponse(
-      totalMsat: _wire2api_u64(arr[0]),
+      totalSat: _wire2api_u64(arr[0]),
     );
   }
 

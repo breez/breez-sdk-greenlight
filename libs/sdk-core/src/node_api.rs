@@ -85,7 +85,7 @@ pub trait NodeAPI: Send + Sync {
     async fn send_pay(&self, bolt11: String, max_hops: u32) -> NodeResult<PaymentResponse>;
 
     /// Calculates the maximum amount that can be sent to a node.
-    async fn max_amount_to_send(
+    async fn max_sendable_amount(
         &self,
         payee_node_id: Option<Vec<u8>>,
         max_hops: u32,
