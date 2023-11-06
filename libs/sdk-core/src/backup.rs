@@ -6,7 +6,7 @@ use crate::{
 };
 
 use anyhow::{anyhow, Result};
-use ecies::utils::{aes_decrypt, aes_encrypt};
+use ecies::symmetric::{sym_decrypt, sym_encrypt};
 use miniz_oxide::{deflate::compress_to_vec, inflate::decompress_to_vec_with_limit};
 use std::{
     fs::{self, File},
@@ -390,11 +390,11 @@ impl BackupWorker {
         match state {
             Some(state) => {
                 let mut decrypted =
-                    aes_decrypt(self.encryption_key.as_slice(), state.data.as_slice());
+                    sym_decrypt(self.encryption_key.as_slice(), state.data.as_slice());
                 if decrypted.is_none() {
                     warn!("Failed to decrypt backup with new key, trying legacy key");
                     decrypted =
-                        aes_decrypt(self.legacy_encryption_key.as_slice(), state.data.as_slice());
+                        sym_decrypt(self.legacy_encryption_key.as_slice(), state.data.as_slice());
                 }
                 let decrypted_data = decrypted.ok_or(anyhow!("Failed to decrypt backup"))?;
                 match decompress_to_vec_with_limit(&decrypted_data, 4000000) {
@@ -419,7 +419,7 @@ impl BackupWorker {
             compressed_data.len()
         );
         let encrypted_data =
-            aes_encrypt(self.encryption_key.as_slice(), compressed_data.as_slice())
+            sym_encrypt(self.encryption_key.as_slice(), compressed_data.as_slice())
                 .ok_or(anyhow!("Failed to encrypt backup"))?;
         let version = self.inner.push(version, encrypted_data.clone()).await?;
         Ok((version, encrypted_data))

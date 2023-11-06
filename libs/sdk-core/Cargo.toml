@@ -22,7 +22,7 @@ gl-client = { git = "https://github.com/Blockstream/greenlight.git", features = 
 zbase32 = "0.1.2"
 base64 = "0.13.0"
 chrono = "0.4"
-ecies = { version = "0.2", default-features = false, features = ["pure"] }
+ecies = { version = "0.2.6", default-features = false, features = ["pure"] }
 env_logger = "0.10"
 futures = "0.3.28"
 ripemd = "0.1"
