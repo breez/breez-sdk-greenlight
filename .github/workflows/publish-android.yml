@@ -76,8 +76,10 @@ jobs:
           # Jitpack only makes artifacts avaiable when someone requests them.
           # Here we trick Jitpack into thinking we're already requesting the newly built package
           # to make sure it is available right away for anyone that needs it later.
-          # We're sleeping for 30s before triggering the Jitpack build to give our Maven repo
+          # We're waiting for at most 60s before triggering the Jitpack build to give our Maven repo
           # some time to process the just uploaded files (the Jitpack build is dependent upon them being available).
           # If anything fails here, we'll still finish sucessfully as this is an optional optimization.
-          sleep 30s
+          timeout 60 bash -c 'while [[ "$(curl --output /dev/null --silent --head --write-out ''%{http_code}'' https://mvn.breez.technology/releases/breez_sdk/bindings-android/${{ inputs.package-version }}/bindings-android-${{ inputs.package-version }}.pom)" != "200" ]]; do echo "Waiting for package to be published on mvn.breez.technology..." && sleep 5; done && echo "Package found."' || echo "Package not found." && true
+          echo "Attempting to trigger Jitpack build..."
           curl -s -m 30 https://jitpack.io/api/builds/com.github.breez/breez-sdk/${{ inputs.package-version }} || true
+          echo "Done"
