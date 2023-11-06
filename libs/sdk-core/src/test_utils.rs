@@ -11,8 +11,9 @@ use bitcoin::secp256k1::{KeyPair, Message, PublicKey, Secp256k1, SecretKey};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::Network;
 use chrono::{SecondsFormat, Utc};
-use gl_client::pb::amount::Unit;
-use gl_client::pb::{Amount, PayStatus};
+use gl_client::signer::model::greenlight::amount::Unit;
+use gl_client::signer::model::greenlight::Amount;
+use gl_client::signer::model::greenlight::PayStatus;
 use lightning::ln::PaymentSecret;
 use lightning_invoice::{Currency, InvoiceBuilder, RawInvoice};
 use rand::distributions::{Alphanumeric, DistString, Standard};
@@ -269,7 +270,7 @@ pub struct MockNodeAPI {
     /// Each call to [MockNodeAPI::add_dummy_payment_for] will add the new payment here such that
     /// [NodeAPI::pull_changed], which is called in [BreezServices::sync], always retrieves the newly
     /// added test payments
-    cloud_payments: Mutex<Vec<gl_client::pb::Payment>>,
+    cloud_payments: Mutex<Vec<gl_client::signer::model::greenlight::Payment>>,
     node_state: NodeState,
     on_send_custom_message: Box<dyn Fn(CustomMessage) -> NodeResult<()> + Sync + Send>,
     on_stream_custom_messages: Mutex<mpsc::Receiver<CustomMessage>>,
@@ -375,11 +376,13 @@ impl NodeAPI for MockNodeAPI {
     }
     async fn stream_incoming_payments(
         &self,
-    ) -> NodeResult<Streaming<gl_client::pb::IncomingPayment>> {
+    ) -> NodeResult<Streaming<gl_client::signer::model::greenlight::IncomingPayment>> {
         Err(NodeError::Generic(anyhow!("Not implemented")))
     }
 
-    async fn stream_log_messages(&self) -> NodeResult<Streaming<gl_client::pb::LogEntry>> {
+    async fn stream_log_messages(
+        &self,
+    ) -> NodeResult<Streaming<gl_client::signer::model::greenlight::LogEntry>> {
         Err(NodeError::Generic(anyhow!("Not implemented")))
     }
 
@@ -461,7 +464,7 @@ impl MockNodeAPI {
         preimage: Option<sha256::Hash>,
         status: Option<PayStatus>,
     ) -> NodeResult<Payment> {
-        let gl_payment = gl_client::pb::Payment {
+        let gl_payment = gl_client::signer::model::greenlight::Payment {
             payment_hash: hex::decode(inv.payment_hash().to_hex())?,
             bolt11: inv.to_string(),
             amount: inv
@@ -491,7 +494,7 @@ impl MockNodeAPI {
     /// Include payment in the result of [MockNodeAPI::pull_changed].
     async fn save_payment_for_future_sync_updates(
         &self,
-        gl_payment: gl_client::pb::Payment,
+        gl_payment: gl_client::signer::model::greenlight::Payment,
     ) -> NodeResult<Payment> {
         let mut cloud_payments = self.cloud_payments.lock().await;
 

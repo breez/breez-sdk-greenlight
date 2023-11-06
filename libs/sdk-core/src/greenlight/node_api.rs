@@ -17,19 +17,12 @@ use ecies::symmetric::{sym_decrypt, sym_encrypt};
 use gl_client::node::ClnClient;
 use gl_client::pb::cln::listinvoices_invoices::ListinvoicesInvoicesStatus;
 use gl_client::pb::cln::listpays_pays::ListpaysPaysStatus;
-use gl_client::pb::cln::{
-    self, CloseRequest, ListclosedchannelsClosedchannels, ListclosedchannelsRequest,
-    ListfundsRequest, ListfundsResponse, ListinvoicesInvoices, ListpaysPays,
-    ListpeerchannelsRequest, SendcustommsgRequest, StaticbackupRequest,
-};
-use gl_client::pb::cln::{AmountOrAny, InvoiceRequest};
-use gl_client::pb::{OffChainPayment, PayStatus};
-
 use gl_client::pb::cln::listpeers_peers_channels::ListpeersPeersChannelsState::*;
 use gl_client::scheduler::Scheduler;
+use gl_client::signer::model::greenlight::{amount, cln, scheduler, OffChainPayment, PayStatus};
 use gl_client::signer::Signer;
 use gl_client::tls::TlsConfig;
-use gl_client::{node, pb, utils};
+use gl_client::{node, utils};
 use lightning::util::message_signing::verify;
 use lightning_invoice::{RawInvoice, SignedRawInvoice};
 use serde::{Deserialize, Serialize};
@@ -232,7 +225,7 @@ impl Greenlight {
             &tls_config,
         )
         .await?;
-        let recover_res: pb::scheduler::RegistrationResponse =
+        let recover_res: scheduler::RegistrationResponse =
             scheduler.register(&signer, invite_code).await?;
 
         Ok(GreenlightCredentials {
@@ -246,7 +239,7 @@ impl Greenlight {
         let tls_config = TlsConfig::new()?;
         let signer = Signer::new(seed, greenlight_network, tls_config.clone())?;
         let scheduler = Scheduler::new(signer.node_id(), greenlight_network).await?;
-        let recover_res: pb::scheduler::RecoveryResponse = scheduler.recover(&signer).await?;
+        let recover_res: scheduler::RecoveryResponse = scheduler.recover(&signer).await?;
 
         Ok(GreenlightCredentials {
             device_key: recover_res.device_key.as_bytes().to_vec(),
@@ -371,16 +364,16 @@ impl Greenlight {
         ))
     }
 
-    async fn list_funds(&self) -> Result<ListfundsResponse> {
+    async fn list_funds(&self) -> Result<cln::ListfundsResponse> {
         let mut client = self.get_node_client().await?;
-        let funds: ListfundsResponse = client
-            .list_funds(ListfundsRequest::default())
+        let funds: cln::ListfundsResponse = client
+            .list_funds(cln::ListfundsRequest::default())
             .await?
             .into_inner();
         Ok(funds)
     }
 
-    async fn on_chain_balance(&self, funds: ListfundsResponse) -> Result<u64> {
+    async fn on_chain_balance(&self, funds: cln::ListfundsResponse) -> Result<u64> {
         let on_chain_balance = funds.outputs.iter().fold(0, |a, b| {
             if b.reserved {
                 return a;
@@ -391,7 +384,7 @@ impl Greenlight {
     }
 
     // Collect utxos from onchain funds
-    async fn utxos(&self, funds: ListfundsResponse) -> Result<Vec<UnspentTransactionOutput>> {
+    async fn utxos(&self, funds: cln::ListfundsResponse) -> Result<Vec<UnspentTransactionOutput>> {
         let utxos: Vec<UnspentTransactionOutput> = funds
             .outputs
             .iter()
@@ -423,11 +416,11 @@ impl NodeAPI for Greenlight {
         cltv: Option<u32>,
     ) -> NodeResult<String> {
         let mut client = self.get_node_client().await?;
-        let request = InvoiceRequest {
-            amount_msat: Some(AmountOrAny {
-                value: Some(gl_client::pb::cln::amount_or_any::Value::Amount(
-                    gl_client::pb::cln::Amount { msat: amount_msat },
-                )),
+        let request = cln::InvoiceRequest {
+            amount_msat: Some(cln::AmountOrAny {
+                value: Some(cln::amount_or_any::Value::Amount(cln::Amount {
+                    msat: amount_msat,
+                })),
             }),
             label: format!(
                 "breez-{}",
@@ -456,15 +449,15 @@ impl NodeAPI for Greenlight {
 
         // get node info
         let mut node_info_client = node_client.clone();
-        let node_info_future = node_info_client.getinfo(pb::cln::GetinfoRequest::default());
+        let node_info_future = node_info_client.getinfo(cln::GetinfoRequest::default());
 
         // list both off chain funds and on chain fudns
         let funds_future = self.list_funds();
 
         // Fetch closed channels from greenlight
         let mut closed_channels_client = node_client.clone();
-        let closed_channels_future =
-            closed_channels_client.list_closed_channels(ListclosedchannelsRequest { id: None });
+        let closed_channels_future = closed_channels_client
+            .list_closed_channels(cln::ListclosedchannelsRequest { id: None });
 
         // calculate the node new balance and in case the caller signals balance has changed
         // keep polling until the balance is updated
@@ -562,9 +555,9 @@ impl NodeAPI for Greenlight {
         }
 
         let mut client: node::ClnClient = self.get_node_client().await?;
-        let request = pb::cln::PayRequest {
+        let request = cln::PayRequest {
             bolt11,
-            amount_msat: amount_msat.map(|amt| gl_client::pb::cln::Amount { msat: amt }),
+            amount_msat: amount_msat.map(|amt| cln::Amount { msat: amt }),
             maxfeepercent: Some(self.sdk_config.maxfee_percent),
             retry_for: Some(self.sdk_config.payment_timeout_sec),
             label: None,
@@ -574,7 +567,7 @@ impl NodeAPI for Greenlight {
             exclude: vec![],
             maxfee: None,
             description,
-            exemptfee: Some(gl_client::pb::cln::Amount {
+            exemptfee: Some(cln::Amount {
                 msat: self.sdk_config.exemptfee_msat,
             }),
         };
@@ -587,9 +580,9 @@ impl NodeAPI for Greenlight {
         amount_msat: u64,
     ) -> NodeResult<PaymentResponse> {
         let mut client: node::ClnClient = self.get_node_client().await?;
-        let request = pb::cln::KeysendRequest {
+        let request = cln::KeysendRequest {
             destination: hex::decode(node_id)?,
-            amount_msat: Some(gl_client::pb::cln::Amount { msat: amount_msat }),
+            amount_msat: Some(cln::Amount { msat: amount_msat }),
             label: Some(format!(
                 "breez-{}",
                 SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis()
@@ -607,7 +600,7 @@ impl NodeAPI for Greenlight {
     async fn start(&self) -> NodeResult<()> {
         self.get_node_client()
             .await?
-            .getinfo(pb::cln::GetinfoRequest {})
+            .getinfo(cln::GetinfoRequest {})
             .await?;
         Ok(())
     }
@@ -615,14 +608,12 @@ impl NodeAPI for Greenlight {
     async fn sweep(&self, to_address: String, fee_rate_sats_per_vbyte: u32) -> NodeResult<Vec<u8>> {
         let mut client = self.get_node_client().await?;
 
-        let request = pb::cln::WithdrawRequest {
-            feerate: Some(pb::cln::Feerate {
-                style: Some(pb::cln::feerate::Style::Perkw(
-                    fee_rate_sats_per_vbyte * 250,
-                )),
+        let request = cln::WithdrawRequest {
+            feerate: Some(cln::Feerate {
+                style: Some(cln::feerate::Style::Perkw(fee_rate_sats_per_vbyte * 250)),
             }),
-            satoshi: Some(pb::cln::AmountOrAll {
-                value: Some(pb::cln::amount_or_all::Value::All(true)),
+            satoshi: Some(cln::AmountOrAll {
+                value: Some(cln::amount_or_all::Value::All(true)),
             }),
             destination: to_address,
             minconf: None,
@@ -708,7 +699,7 @@ impl NodeAPI for Greenlight {
 
     async fn connect_peer(&self, id: String, addr: String) -> NodeResult<()> {
         let mut client = self.get_node_client().await?;
-        let connect_req = pb::cln::ConnectRequest {
+        let connect_req = cln::ConnectRequest {
             id: format!("{id}@{addr}"),
             host: None,
             port: None,
@@ -771,7 +762,7 @@ impl NodeAPI for Greenlight {
     async fn close_peer_channels(&self, node_id: String) -> NodeResult<Vec<String>> {
         let mut client = self.get_node_client().await?;
         let closed_channels = client
-            .list_peer_channels(ListpeerchannelsRequest {
+            .list_peer_channels(cln::ListpeerchannelsRequest {
                 id: Some(hex::decode(node_id)?),
             })
             .await?
@@ -796,7 +787,7 @@ impl NodeAPI for Greenlight {
             if should_close {
                 let chan_id = channel.channel_id.ok_or(anyhow!("Empty channel id"))?;
                 let response = client
-                    .close(CloseRequest {
+                    .close(cln::CloseRequest {
                         id: hex::encode(chan_id),
                         unilateraltimeout: None,
                         destination: None,
@@ -823,19 +814,21 @@ impl NodeAPI for Greenlight {
 
     async fn stream_incoming_payments(
         &self,
-    ) -> NodeResult<Streaming<gl_client::pb::IncomingPayment>> {
+    ) -> NodeResult<Streaming<gl_client::signer::model::greenlight::IncomingPayment>> {
         let mut client = self.get_client().await?;
         let stream = client
-            .stream_incoming(gl_client::pb::StreamIncomingFilter {})
+            .stream_incoming(gl_client::signer::model::greenlight::StreamIncomingFilter {})
             .await?
             .into_inner();
         Ok(stream)
     }
 
-    async fn stream_log_messages(&self) -> NodeResult<Streaming<gl_client::pb::LogEntry>> {
+    async fn stream_log_messages(
+        &self,
+    ) -> NodeResult<Streaming<gl_client::signer::model::greenlight::LogEntry>> {
         let mut client = self.get_client().await?;
         let stream = client
-            .stream_log(gl_client::pb::StreamLogRequest {})
+            .stream_log(gl_client::signer::model::greenlight::StreamLogRequest {})
             .await?
             .into_inner();
         Ok(stream)
@@ -844,7 +837,7 @@ impl NodeAPI for Greenlight {
     async fn static_backup(&self) -> NodeResult<Vec<String>> {
         let mut client = self.get_node_client().await?;
         let res = client
-            .static_backup(StaticbackupRequest {})
+            .static_backup(cln::StaticbackupRequest {})
             .await?
             .into_inner();
         let hex_vec: Vec<String> = res.scb.into_iter().map(hex::encode).collect();
@@ -859,7 +852,7 @@ impl NodeAPI for Greenlight {
                 let resp = self
                     .get_node_client()
                     .await?
-                    .list_peers(pb::cln::ListpeersRequest::default())
+                    .list_peers(cln::ListpeersRequest::default())
                     .await?
                     .into_inner();
                 Ok(format!("{resp:?}"))
@@ -868,7 +861,7 @@ impl NodeAPI for Greenlight {
                 let resp = self
                     .get_node_client()
                     .await?
-                    .list_peer_channels(pb::cln::ListpeerchannelsRequest::default())
+                    .list_peer_channels(cln::ListpeerchannelsRequest::default())
                     .await?
                     .into_inner();
                 Ok(format!("{resp:?}"))
@@ -877,7 +870,7 @@ impl NodeAPI for Greenlight {
                 let resp = self
                     .get_node_client()
                     .await?
-                    .list_funds(ListfundsRequest::default())
+                    .list_funds(cln::ListfundsRequest::default())
                     .await?
                     .into_inner();
                 Ok(format!("{resp:?}"))
@@ -886,7 +879,7 @@ impl NodeAPI for Greenlight {
                 let resp = self
                     .get_node_client()
                     .await?
-                    .list_pays(pb::cln::ListpaysRequest::default())
+                    .list_pays(cln::ListpaysRequest::default())
                     .await?
                     .into_inner();
                 Ok(format!("{resp:?}"))
@@ -895,7 +888,7 @@ impl NodeAPI for Greenlight {
                 let resp = self
                     .get_node_client()
                     .await?
-                    .list_invoices(pb::cln::ListinvoicesRequest::default())
+                    .list_invoices(cln::ListinvoicesRequest::default())
                     .await?
                     .into_inner();
                 Ok(format!("{resp:?}"))
@@ -904,7 +897,7 @@ impl NodeAPI for Greenlight {
                 let peers_res = self
                     .get_node_client()
                     .await?
-                    .list_peers(pb::cln::ListpeersRequest::default())
+                    .list_peers(cln::ListpeersRequest::default())
                     .await?
                     .into_inner();
                 for p in peers_res.peers {
@@ -917,7 +910,7 @@ impl NodeAPI for Greenlight {
                 let resp = self
                     .get_node_client()
                     .await?
-                    .getinfo(pb::cln::GetinfoRequest::default())
+                    .getinfo(cln::GetinfoRequest::default())
                     .await?
                     .into_inner();
                 Ok(format!("{resp:?}"))
@@ -943,7 +936,7 @@ impl NodeAPI for Greenlight {
             }?;
 
             match client
-                .stream_custommsg(gl_client::pb::StreamCustommsgRequest {})
+                .stream_custommsg(gl_client::signer::model::greenlight::StreamCustommsgRequest {})
                 .await
             {
                 Ok(s) => Ok(s),
@@ -982,7 +975,7 @@ impl NodeAPI for Greenlight {
         let resp = self
             .get_node_client()
             .await?
-            .send_custom_msg(SendcustommsgRequest {
+            .send_custom_msg(cln::SendcustommsgRequest {
                 msg,
                 node_id: message.peer_id,
             })
@@ -1027,7 +1020,7 @@ async fn pull_transactions(
 
     // list invoices
     let invoices = c
-        .list_invoices(pb::cln::ListinvoicesRequest::default())
+        .list_invoices(cln::ListinvoicesRequest::default())
         .await?
         .into_inner();
     // construct the received transactions by filtering the invoices to those paid and beyond the filter timestamp
@@ -1043,7 +1036,7 @@ async fn pull_transactions(
 
     // fetch payments from greenlight
     let payments = c
-        .list_pays(pb::cln::ListpaysRequest::default())
+        .list_pays(cln::ListpaysRequest::default())
         .await?
         .into_inner();
     debug!("list payments: {:?}", payments);
@@ -1098,10 +1091,12 @@ impl TryFrom<OffChainPayment> for Payment {
 }
 
 /// Construct a lightning transaction from an invoice
-impl TryFrom<pb::Invoice> for Payment {
+impl TryFrom<gl_client::signer::model::greenlight::Invoice> for Payment {
     type Error = NodeError;
 
-    fn try_from(invoice: pb::Invoice) -> std::result::Result<Self, Self::Error> {
+    fn try_from(
+        invoice: gl_client::signer::model::greenlight::Invoice,
+    ) -> std::result::Result<Self, Self::Error> {
         let ln_invoice = parse_invoice(&invoice.bolt11)?;
         Ok(Payment {
             id: hex::encode(invoice.payment_hash.clone()),
@@ -1140,10 +1135,12 @@ impl From<PayStatus> for PaymentStatus {
 }
 
 /// Construct a lightning transaction from an invoice
-impl TryFrom<pb::Payment> for Payment {
+impl TryFrom<gl_client::signer::model::greenlight::Payment> for Payment {
     type Error = NodeError;
 
-    fn try_from(payment: pb::Payment) -> std::result::Result<Self, Self::Error> {
+    fn try_from(
+        payment: gl_client::signer::model::greenlight::Payment,
+    ) -> std::result::Result<Self, Self::Error> {
         let mut description = None;
         if !payment.bolt11.is_empty() {
             description = parse_invoice(&payment.bolt11)?.description;
@@ -1180,10 +1177,10 @@ impl TryFrom<pb::Payment> for Payment {
 }
 
 /// Construct a lightning transaction from an invoice
-impl TryFrom<ListinvoicesInvoices> for Payment {
+impl TryFrom<cln::ListinvoicesInvoices> for Payment {
     type Error = NodeError;
 
-    fn try_from(invoice: ListinvoicesInvoices) -> std::result::Result<Self, Self::Error> {
+    fn try_from(invoice: cln::ListinvoicesInvoices) -> std::result::Result<Self, Self::Error> {
         let ln_invoice = invoice
             .bolt11
             .as_ref()
@@ -1228,10 +1225,10 @@ impl From<ListpaysPaysStatus> for PaymentStatus {
     }
 }
 
-impl TryFrom<ListpaysPays> for Payment {
+impl TryFrom<cln::ListpaysPays> for Payment {
     type Error = NodeError;
 
-    fn try_from(payment: ListpaysPays) -> NodeResult<Self, Self::Error> {
+    fn try_from(payment: cln::ListpaysPays) -> NodeResult<Self, Self::Error> {
         let ln_invoice = payment
             .bolt11
             .as_ref()
@@ -1280,10 +1277,10 @@ impl TryFrom<ListpaysPays> for Payment {
     }
 }
 
-impl TryFrom<pb::cln::PayResponse> for PaymentResponse {
+impl TryFrom<cln::PayResponse> for PaymentResponse {
     type Error = NodeError;
 
-    fn try_from(payment: pb::cln::PayResponse) -> std::result::Result<Self, Self::Error> {
+    fn try_from(payment: cln::PayResponse) -> std::result::Result<Self, Self::Error> {
         let payment_amount = payment.amount_msat.unwrap_or_default().msat;
         let payment_amount_sent = payment.amount_sent_msat.unwrap_or_default().msat;
 
@@ -1297,10 +1294,10 @@ impl TryFrom<pb::cln::PayResponse> for PaymentResponse {
     }
 }
 
-impl TryFrom<pb::cln::KeysendResponse> for PaymentResponse {
+impl TryFrom<cln::KeysendResponse> for PaymentResponse {
     type Error = NodeError;
 
-    fn try_from(payment: pb::cln::KeysendResponse) -> std::result::Result<Self, Self::Error> {
+    fn try_from(payment: cln::KeysendResponse) -> std::result::Result<Self, Self::Error> {
         let payment_amount = payment.amount_msat.unwrap_or_default().msat;
         let payment_amount_sent = payment.amount_sent_msat.unwrap_or_default().msat;
 
@@ -1314,11 +1311,11 @@ impl TryFrom<pb::cln::KeysendResponse> for PaymentResponse {
     }
 }
 
-fn amount_to_msat(amount: &pb::Amount) -> u64 {
+fn amount_to_msat(amount: &gl_client::pb::greenlight::Amount) -> u64 {
     match amount.unit {
-        Some(pb::amount::Unit::Millisatoshi(val)) => val,
-        Some(pb::amount::Unit::Satoshi(val)) => val * 1000,
-        Some(pb::amount::Unit::Bitcoin(val)) => val * 100000000,
+        Some(amount::Unit::Millisatoshi(val)) => val,
+        Some(amount::Unit::Satoshi(val)) => val * 1000,
+        Some(amount::Unit::Bitcoin(val)) => val * 100000000,
         Some(_) => 0,
         None => 0,
     }
@@ -1366,10 +1363,12 @@ impl From<cln::ListpeersPeersChannels> for Channel {
 }
 
 /// Conversion for a closed channel
-impl TryFrom<ListclosedchannelsClosedchannels> for Channel {
+impl TryFrom<cln::ListclosedchannelsClosedchannels> for Channel {
     type Error = NodeError;
 
-    fn try_from(c: ListclosedchannelsClosedchannels) -> std::result::Result<Self, Self::Error> {
+    fn try_from(
+        c: cln::ListclosedchannelsClosedchannels,
+    ) -> std::result::Result<Self, Self::Error> {
         let (alias_remote, alias_local) = match c.alias {
             Some(a) => (a.remote, a.local),
             None => (None, None),
