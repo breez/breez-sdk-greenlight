@@ -78,7 +78,7 @@ jobs:
       # to set these variables here to `true` or `false` 
       # (e.g. bindings-windows: true) if you want to test something.
       bindings-windows: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version }}
-      bindings-darwin: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version || !!needs.pre-setup.outputs.python-package-version }}
+      bindings-darwin: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version }}
       bindings-linux: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version || !!needs.pre-setup.outputs.python-package-version}}
       bindings-android: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version || !!needs.pre-setup.outputs.golang-package-version || !!needs.pre-setup.outputs.flutter-package-version }}
       bindings-ios: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version }}
@@ -240,7 +240,7 @@ jobs:
   publish-python:
     needs:
       - setup
-      - build-bindings-darwin
+      # - build-bindings-darwin
       - build-bindings-linux
       - build-language-bindings
     if: ${{ needs.setup.outputs.python == 'true' }}
