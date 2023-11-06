@@ -13,7 +13,7 @@ use bitcoin::secp256k1::PublicKey;
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::{Address, OutPoint, Script, Sequence, Transaction, TxIn, TxOut, Txid, Witness};
-use ecies::utils::{aes_decrypt, aes_encrypt};
+use ecies::symmetric::{sym_decrypt, sym_encrypt};
 use gl_client::node::ClnClient;
 use gl_client::pb::cln::listinvoices_invoices::ListinvoicesInvoicesStatus;
 use gl_client::pb::cln::listpays_pays::ListpaysPaysStatus;
@@ -99,11 +99,11 @@ impl Greenlight {
         let parsed_credentials: Result<GreenlightCredentials> = match credentials {
             // In case we found existing credentials, try to decrypt them and connect to the node
             Some(creds) => {
-                let mut decrypted_credentials = aes_decrypt(encryption_key_slice, creds.as_slice());
+                let mut decrypted_credentials = sym_decrypt(encryption_key_slice, creds.as_slice());
                 if decrypted_credentials.is_none() {
                     info!("Failed to decrypt credentials, trying legacy key");
                     decrypted_credentials =
-                        aes_decrypt(legacy_encryption_key_slice, creds.as_slice());
+                        sym_decrypt(legacy_encryption_key_slice, creds.as_slice());
                 }
                 match decrypted_credentials {
                     Some(creds) => {
@@ -145,7 +145,7 @@ impl Greenlight {
         let res = match parsed_credentials {
             Ok(creds) => {
                 let json_creds = serde_json::to_string(&creds)?.as_bytes().to_vec();
-                let encryptd_creds = aes_encrypt(encryption_key_slice, json_creds.as_slice());
+                let encryptd_creds = sym_encrypt(encryption_key_slice, json_creds.as_slice());
                 match encryptd_creds {
                     Some(c) => {
                         persister.set_gl_credentials(c)?;
