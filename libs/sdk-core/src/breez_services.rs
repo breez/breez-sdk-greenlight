@@ -1056,7 +1056,7 @@ impl BreezServices {
                                       match paid_invoice_res {
                                           Ok(Some(i)) => {
                                               debug!("invoice stream got new invoice");
-                                              if let Some(gl_client::pb::incoming_payment::Details::Offchain(p)) = i.details {
+                                              if let Some(gl_client::signer::model::greenlight::incoming_payment::Details::Offchain(p)) = i.details {
                                                   let payment: Option<crate::models::Payment> = p.clone().try_into().ok();
                                                   if payment.is_some() {
                                                       let res = cloned

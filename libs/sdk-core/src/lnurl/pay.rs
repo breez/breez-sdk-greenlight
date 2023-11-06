@@ -363,7 +363,7 @@ mod tests {
 
     use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
     use anyhow::{anyhow, Result};
-    use gl_client::pb::PayStatus;
+    use gl_client::signer::model::greenlight::PayStatus;
 
     use mockito::Mock;
     use rand::random;

@@ -4,7 +4,7 @@ use crate::{
 };
 
 use super::node_api::Greenlight;
-use gl_client::{node, pb};
+use gl_client::{node, pb::cln};
 use std::sync::Arc;
 
 const BREEZ_SDK_DATASTORE_PATH: [&str; 2] = ["breez-sdk", "backup"];
@@ -24,8 +24,8 @@ impl BackupTransport for GLBackupTransport {
     async fn pull(&self) -> SdkResult<Option<BackupState>> {
         let key = self.gl_key();
         let mut c: node::ClnClient = self.inner.get_node_client().await?;
-        let response: pb::cln::ListdatastoreResponse = c
-            .list_datastore(pb::cln::ListdatastoreRequest { key })
+        let response: cln::ListdatastoreResponse = c
+            .list_datastore(cln::ListdatastoreRequest { key })
             .await?
             .into_inner();
         let store = response.datastore;
@@ -45,12 +45,12 @@ impl BackupTransport for GLBackupTransport {
         let key = self.gl_key();
         info!("set_value key = {:?} data length={:?}", key, hex.len());
         let mut c: node::ClnClient = self.inner.get_node_client().await?;
-        let mut mode = pb::cln::datastore_request::DatastoreMode::MustCreate;
+        let mut mode = cln::datastore_request::DatastoreMode::MustCreate;
         if version.is_some() {
-            mode = pb::cln::datastore_request::DatastoreMode::MustReplace;
+            mode = cln::datastore_request::DatastoreMode::MustReplace;
         }
         let response = c
-            .datastore(pb::cln::DatastoreRequest {
+            .datastore(cln::DatastoreRequest {
                 key,
                 string: None,
                 hex: Some(hex),

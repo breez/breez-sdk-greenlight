@@ -86,8 +86,10 @@ pub trait NodeAPI: Send + Sync {
     async fn close_peer_channels(&self, node_id: String) -> NodeResult<Vec<String>>;
     async fn stream_incoming_payments(
         &self,
-    ) -> NodeResult<Streaming<gl_client::pb::IncomingPayment>>;
-    async fn stream_log_messages(&self) -> NodeResult<Streaming<gl_client::pb::LogEntry>>;
+    ) -> NodeResult<Streaming<gl_client::signer::model::greenlight::IncomingPayment>>;
+    async fn stream_log_messages(
+        &self,
+    ) -> NodeResult<Streaming<gl_client::signer::model::greenlight::LogEntry>>;
     async fn static_backup(&self) -> NodeResult<Vec<String>>;
     async fn execute_command(&self, command: String) -> NodeResult<String>;
     async fn sign_message(&self, message: &str) -> NodeResult<String>;
