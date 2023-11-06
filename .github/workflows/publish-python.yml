@@ -21,59 +21,59 @@ on:
         required: true
 
 jobs:
-  # build-macos-wheels:
-  #   runs-on: macos-latest
-  #   strategy:
-  #     matrix:
-  #       python: ["3.8", "3.9", "3.10"]
-  #   steps:
-  #     - name: Checkout breez-sdk repo
-  #       uses: actions/checkout@v3
-  #       with:
-  #         ref: ${{ inputs.ref || github.sha }}
+  build-macos-wheels:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        python: ["3.8", "3.9", "3.10"]
+    steps:
+      - name: Checkout breez-sdk repo
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.ref || github.sha }}
 
-  #     - name: "Install Python"
-  #       uses: actions/setup-python@v4
-  #       with:
-  #         python-version: ${{ matrix.python }}
+      - name: "Install Python"
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
 
-  #     - uses: actions/download-artifact@v3
-  #       with:
-  #         name: sdk-bindings-darwin-universal
-  #         path: libs/sdk-bindings/bindings-python/src/breez_sdk
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdk-bindings-darwin-universal
+          path: libs/sdk-bindings/bindings-python/src/breez_sdk
 
-  #     - uses: actions/download-artifact@v3
-  #       with:
-  #         name: bindings-python
-  #         path: libs/sdk-bindings/bindings-python/src/breez_sdk
+      - uses: actions/download-artifact@v3
+        with:
+          name: bindings-python
+          path: libs/sdk-bindings/bindings-python/src/breez_sdk
 
-  #     - name: Clean up downloaded files
-  #       run: |
-  #         rm -f libs/sdk-bindings/bindings-python/src/breez_sdk/*.a
-  #         ls -R libs/sdk-bindings/bindings-python
+      - name: Clean up downloaded files
+        run: |
+          rm -f libs/sdk-bindings/bindings-python/src/breez_sdk/*.a
+          ls -R libs/sdk-bindings/bindings-python
 
-  #     - name: Update package version
-  #       if: ${{ inputs.package-version }}
-  #       working-directory: libs/sdk-bindings/bindings-python
-  #       run: sed -i.bak -e 's/    version=".*",/    version="${{ inputs.package-version }}",/' setup.py
+      - name: Update package version
+        if: ${{ inputs.package-version }}
+        working-directory: libs/sdk-bindings/bindings-python
+        run: sed -i.bak -e 's/    version=".*",/    version="${{ inputs.package-version }}",/' setup.py
 
-  #     - name: Install dependencies
-  #       working-directory: libs/sdk-bindings/bindings-python
-  #       run: pip3 install wheel setuptools
+      - name: Install dependencies
+        working-directory: libs/sdk-bindings/bindings-python
+        run: pip3 install wheel setuptools
 
-  #     - name: Build wheel
-  #       working-directory: libs/sdk-bindings/bindings-python
-  #       run: python3 setup.py bdist_wheel --plat-name macosx_11_0_universal2 --verbose
+      - name: Build wheel
+        working-directory: libs/sdk-bindings/bindings-python
+        run: python3 setup.py bdist_wheel --plat-name macosx_11_0_universal2 --verbose
 
-  #     - name: List wheel contents
-  #       working-directory: libs/sdk-bindings/bindings-python/dist
-  #       run: python3 -m zipfile --list *.whl || true
+      - name: List wheel contents
+        working-directory: libs/sdk-bindings/bindings-python/dist
+        run: python3 -m zipfile --list *.whl || true
 
-  #     - name: Archive the wheel
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         name: python-wheel-${{ matrix.python }}-macos
-  #         path: libs/sdk-bindings/bindings-python/dist/*.whl
+      - name: Archive the wheel
+        uses: actions/upload-artifact@v3
+        with:
+          name: python-wheel-${{ matrix.python }}-macos
+          path: libs/sdk-bindings/bindings-python/dist/*.whl
 
   build-linux-wheels:
     runs-on: ubuntu-20.04
@@ -120,7 +120,7 @@ jobs:
 
   publish-package:
     runs-on: ubuntu-latest
-    needs: [build-linux-wheels]
+    needs: [build-macos-wheels, build-linux-wheels]
     steps:
       - name: Checkout breez-sdk repo
         uses: actions/checkout@v3
