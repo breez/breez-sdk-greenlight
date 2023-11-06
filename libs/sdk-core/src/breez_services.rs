@@ -316,17 +316,20 @@ impl BreezServices {
 
                 let payment = match self.send_payment(pay_req).await {
                     Ok(p) => Ok(p),
-                    Err(SdkError::SendPaymentFailed { err }) => {
-                        let invoice = parse_invoice(cb.pr.as_str())?;
+                    Err(e) => match e {
+                        SendPaymentError::InvalidInvoice { .. } => Err(e),
+                        SendPaymentError::ServiceConnectivity { .. } => Err(e),
+                        _ => {
+                            let invoice = parse_invoice(cb.pr.as_str())?;
 
-                        return Ok(LnUrlPayResult::PayError {
-                            data: LnUrlPayErrorData {
-                                payment_hash: invoice.payment_hash,
-                                reason: err,
-                            },
-                        });
-                    }
-                    Err(e) => Err(e),
+                            return Ok(LnUrlPayResult::PayError {
+                                data: LnUrlPayErrorData {
+                                    payment_hash: invoice.payment_hash,
+                                    reason: e.to_string(),
+                                },
+                            });
+                        }
+                    },
                 }?
                 .payment;
                 let details = match &payment.details {

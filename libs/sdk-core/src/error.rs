@@ -606,6 +606,14 @@ impl From<InvoiceError> for SendPaymentError {
     }
 }
 
+impl From<InvoiceError> for LnUrlPayError {
+    fn from(err: InvoiceError) -> Self {
+        Self::InvalidInvoice {
+            err: err.to_string(),
+        }
+    }
+}
+
 impl From<NodeError> for SendPaymentError {
     fn from(value: NodeError) -> Self {
         match value {
