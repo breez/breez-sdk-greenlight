@@ -341,6 +341,7 @@ pub fn list_refundables() -> Result<Vec<SwapInfo>> {
 /// See [BreezServices::prepare_refund]
 pub fn prepare_refund(req: PrepareRefundRequest) -> Result<PrepareRefundResponse> {
     block_on(async { get_breez_services().await?.prepare_refund(req).await })
+        .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// See [BreezServices::refund]
