@@ -81,6 +81,14 @@ jobs:
           name: sdk-bindings-x86_64-pc-windows-msvc
           path: breez_sdk/lib/windows-amd64
 
+      - name: Archive Go release
+        uses: actions/upload-artifact@v3
+        with:
+          name: breez-sdk-go-${{ inputs.package-version || github.sha }}
+          path: |
+            ./*
+            !./.git
+
       - name: Tag the Go bindings
         if: ${{ inputs.publish }}
         run: |
