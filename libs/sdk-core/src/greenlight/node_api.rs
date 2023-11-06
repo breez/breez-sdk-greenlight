@@ -1088,6 +1088,7 @@ impl TryFrom<OffChainPayment> for Payment {
                     lnurl_metadata: None,       // For received payments, this is None
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
+                    swap_info: None,
                 },
             },
         })
@@ -1123,6 +1124,7 @@ impl TryFrom<pb::Invoice> for Payment {
                     lnurl_metadata: None,       // For received payments, this is None
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
+                    swap_info: None,
                 },
             },
         })
@@ -1173,6 +1175,7 @@ impl TryFrom<pb::Payment> for Payment {
                     lnurl_metadata: None,
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
+                    swap_info: None,
                 },
             },
         })
@@ -1212,6 +1215,7 @@ impl TryFrom<ListinvoicesInvoices> for Payment {
                     lnurl_metadata: None,       // For received payments, this is None
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
+                    swap_info: None,
                 },
             },
         })
@@ -1274,6 +1278,7 @@ impl TryFrom<ListpaysPays> for Payment {
                     lnurl_metadata: None,
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
+                    swap_info: None,
                 },
             },
         })

@@ -870,6 +870,7 @@ mod tests {
                     lnurl_metadata: None,
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
+                    swap_info: None,
                 },
             },
         };

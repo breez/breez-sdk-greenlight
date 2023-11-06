@@ -1941,7 +1941,8 @@ pub(crate) mod tests {
     use crate::PaymentType;
     use crate::{
         input_parser, parse_short_channel_id, test_utils::*, BuyBitcoinProvider, BuyBitcoinRequest,
-        InputType, ListPaymentsRequest, PaymentStatus, ReceivePaymentRequest,
+        InputType, ListPaymentsRequest, OpeningFeeParams, PaymentStatus, ReceivePaymentRequest,
+        SwapInfo, SwapStatus,
     };
 
     use super::{PaymentReceiver, Receiver};
@@ -1964,6 +1965,37 @@ pub(crate) mod tests {
 
         let payment_hash_lnurl_withdraw = "2222";
         let payment_hash_with_lnurl_success_action = "3333";
+        let payment_hash_swap: Vec<u8> = vec![1, 2, 3, 4, 5, 6, 7, 8];
+        let swap_info = SwapInfo {
+            bitcoin_address: "123".to_string(),
+            created_at: 12345678,
+            lock_height: 654321,
+            payment_hash: payment_hash_swap.clone(),
+            preimage: vec![],
+            private_key: vec![],
+            public_key: vec![],
+            swapper_public_key: vec![],
+            script: vec![],
+            bolt11: Some("312".into()),
+            paid_sats: 1,
+            confirmed_sats: 1,
+            unconfirmed_sats: 0,
+            status: SwapStatus::Expired,
+            refund_tx_ids: vec![],
+            unconfirmed_tx_ids: vec![],
+            confirmed_tx_ids: vec![],
+            min_allowed_deposit: 5_000,
+            max_allowed_deposit: 1_000_000,
+            last_redeem_error: None,
+            channel_opening_fees: Some(OpeningFeeParams {
+                min_msat: 5_000_000,
+                proportional: 50,
+                valid_until: "date".to_string(),
+                max_idle_time: 12345,
+                max_client_to_self_delay: 234,
+                promise: "promise".to_string(),
+            }),
+        };
         let dummy_transactions = vec![
             Payment {
                 id: "1111".to_string(),
@@ -1985,6 +2017,7 @@ pub(crate) mod tests {
                         lnurl_metadata: None,
                         ln_address: None,
                         lnurl_withdraw_endpoint: None,
+                        swap_info: None,
                     },
                 },
             },
@@ -2008,6 +2041,7 @@ pub(crate) mod tests {
                         lnurl_metadata: None,
                         ln_address: None,
                         lnurl_withdraw_endpoint: Some(test_lnurl_withdraw_endpoint.to_string()),
+                        swap_info: None,
                     },
                 },
             },
@@ -2031,6 +2065,31 @@ pub(crate) mod tests {
                         lnurl_metadata: Some(lnurl_metadata.to_string()),
                         ln_address: Some(test_ln_address.to_string()),
                         lnurl_withdraw_endpoint: None,
+                        swap_info: None,
+                    },
+                },
+            },
+            Payment {
+                id: hex::encode(payment_hash_swap.clone()),
+                payment_type: PaymentType::Received,
+                payment_time: 250000,
+                amount_msat: 1_000,
+                fee_msat: 0,
+                status: PaymentStatus::Complete,
+                description: Some("test receive".to_string()),
+                details: PaymentDetails::Ln {
+                    data: LnPaymentDetails {
+                        payment_hash: hex::encode(payment_hash_swap),
+                        label: "".to_string(),
+                        destination_pubkey: "321".to_string(),
+                        payment_preimage: "5555".to_string(),
+                        keysend: false,
+                        bolt11: "312".to_string(),
+                        lnurl_success_action: None,
+                        lnurl_metadata: None,
+                        ln_address: None,
+                        lnurl_withdraw_endpoint: None,
+                        swap_info: Some(swap_info.clone()),
                     },
                 },
             },
@@ -2054,6 +2113,11 @@ pub(crate) mod tests {
             None,
             None,
             Some(test_lnurl_withdraw_endpoint.to_string()),
+        )?;
+        persister.insert_swap(swap_info.clone())?;
+        persister.update_swap_bolt11(
+            swap_info.bitcoin_address.clone(),
+            swap_info.bolt11.clone().unwrap(),
         )?;
 
         let mut builder = BreezServicesBuilder::new(test_config.clone());
@@ -2085,7 +2149,10 @@ pub(crate) mod tests {
                 ..Default::default()
             })
             .await?;
-        assert_eq!(received, vec![cloned[1].clone(), cloned[0].clone()]);
+        assert_eq!(
+            received,
+            vec![cloned[3].clone(), cloned[1].clone(), cloned[0].clone()]
+        );
 
         let sent = breez_services
             .list_payments(ListPaymentsRequest {
@@ -2106,9 +2173,13 @@ pub(crate) mod tests {
                 PaymentDetails::Ln {data: LnPaymentDetails {ln_address, ..}}
                 if ln_address == &Some(test_ln_address.to_string())));
         assert!(matches!(
-                &received[0].details,
+                &received[1].details,
                 PaymentDetails::Ln {data: LnPaymentDetails {lnurl_withdraw_endpoint, ..}}
                 if lnurl_withdraw_endpoint == &Some(test_lnurl_withdraw_endpoint.to_string())));
+        assert!(matches!(
+                &received[0].details,
+                PaymentDetails::Ln {data: LnPaymentDetails {swap_info: swap, ..}}
+                if swap == &Some(swap_info)));
 
         Ok(())
     }

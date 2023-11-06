@@ -261,6 +261,7 @@ dictionary LnPaymentDetails {
     string? lnurl_metadata;
     string? ln_address;
     string? lnurl_withdraw_endpoint;
+    SwapInfo? swap_info;
 };
 
 dictionary ClosedChannelPaymentDetails {

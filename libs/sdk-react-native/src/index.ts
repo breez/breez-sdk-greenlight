@@ -144,6 +144,7 @@ export type LnPaymentDetails = {
     lnurlMetadata?: string
     lnAddress?: string
     lnurlWithdrawEndpoint?: string
+    swapInfo?: SwapInfo
 }
 
 export type LnUrlAuthRequestData = {
