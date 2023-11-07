@@ -838,6 +838,40 @@ class BreezSDKMapper {
         return lnUrlErrorDataList.map { v -> [String: Any?] in dictionaryOf(lnUrlErrorData: v) }
     }
 
+    static func asLnUrlPayErrorData(lnUrlPayErrorData: [String: Any?]) throws -> LnUrlPayErrorData {
+        guard let paymentHash = lnUrlPayErrorData["paymentHash"] as? String else { throw SdkError.Generic(message: "Missing mandatory field paymentHash for type LnUrlPayErrorData") }
+        guard let reason = lnUrlPayErrorData["reason"] as? String else { throw SdkError.Generic(message: "Missing mandatory field reason for type LnUrlPayErrorData") }
+
+        return LnUrlPayErrorData(
+            paymentHash: paymentHash,
+            reason: reason
+        )
+    }
+
+    static func dictionaryOf(lnUrlPayErrorData: LnUrlPayErrorData) -> [String: Any?] {
+        return [
+            "paymentHash": lnUrlPayErrorData.paymentHash,
+            "reason": lnUrlPayErrorData.reason,
+        ]
+    }
+
+    static func asLnUrlPayErrorDataList(arr: [Any]) throws -> [LnUrlPayErrorData] {
+        var list = [LnUrlPayErrorData]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var lnUrlPayErrorData = try asLnUrlPayErrorData(lnUrlPayErrorData: val)
+                list.append(lnUrlPayErrorData)
+            } else {
+                throw SdkError.Generic(message: "Unexpected type LnUrlPayErrorData")
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(lnUrlPayErrorDataList: [LnUrlPayErrorData]) -> [Any] {
+        return lnUrlPayErrorDataList.map { v -> [String: Any?] in dictionaryOf(lnUrlPayErrorData: v) }
+    }
+
     static func asLnUrlPayRequest(lnUrlPayRequest: [String: Any?]) throws -> LnUrlPayRequest {
         guard let dataTmp = lnUrlPayRequest["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type LnUrlPayRequest") }
         let data = try asLnUrlPayRequestData(lnUrlPayRequestData: dataTmp)
@@ -924,6 +958,44 @@ class BreezSDKMapper {
 
     static func arrayOf(lnUrlPayRequestDataList: [LnUrlPayRequestData]) -> [Any] {
         return lnUrlPayRequestDataList.map { v -> [String: Any?] in dictionaryOf(lnUrlPayRequestData: v) }
+    }
+
+    static func asLnUrlPaySuccessData(lnUrlPaySuccessData: [String: Any?]) throws -> LnUrlPaySuccessData {
+        var successAction: SuccessActionProcessed?
+        if let successActionTmp = lnUrlPaySuccessData["successAction"] as? [String: Any?] {
+            successAction = try asSuccessActionProcessed(successActionProcessed: successActionTmp)
+        }
+
+        guard let paymentHash = lnUrlPaySuccessData["paymentHash"] as? String else { throw SdkError.Generic(message: "Missing mandatory field paymentHash for type LnUrlPaySuccessData") }
+
+        return LnUrlPaySuccessData(
+            successAction: successAction,
+            paymentHash: paymentHash
+        )
+    }
+
+    static func dictionaryOf(lnUrlPaySuccessData: LnUrlPaySuccessData) -> [String: Any?] {
+        return [
+            "successAction": lnUrlPaySuccessData.successAction == nil ? nil : dictionaryOf(successActionProcessed: lnUrlPaySuccessData.successAction!),
+            "paymentHash": lnUrlPaySuccessData.paymentHash,
+        ]
+    }
+
+    static func asLnUrlPaySuccessDataList(arr: [Any]) throws -> [LnUrlPaySuccessData] {
+        var list = [LnUrlPaySuccessData]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var lnUrlPaySuccessData = try asLnUrlPaySuccessData(lnUrlPaySuccessData: val)
+                list.append(lnUrlPaySuccessData)
+            } else {
+                throw SdkError.Generic(message: "Unexpected type LnUrlPaySuccessData")
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(lnUrlPaySuccessDataList: [LnUrlPaySuccessData]) -> [Any] {
+        return lnUrlPaySuccessDataList.map { v -> [String: Any?] in dictionaryOf(lnUrlPaySuccessData: v) }
     }
 
     static func asLnUrlWithdrawRequest(lnUrlWithdrawRequest: [String: Any?]) throws -> LnUrlWithdrawRequest {
@@ -3244,10 +3316,8 @@ class BreezSDKMapper {
     static func asLnUrlPayResult(lnUrlPayResult: [String: Any?]) throws -> LnUrlPayResult {
         let type = lnUrlPayResult["type"] as! String
         if type == "endpointSuccess" {
-            var _data: SuccessActionProcessed?
-            if let dataTmp = lnUrlPayResult["data"] as? [String: Any?] {
-                _data = try asSuccessActionProcessed(successActionProcessed: dataTmp)
-            }
+            guard let dataTmp = lnUrlPayResult["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type LnUrlPayResult") }
+            let _data = try asLnUrlPaySuccessData(lnUrlPaySuccessData: dataTmp)
 
             return LnUrlPayResult.endpointSuccess(data: _data)
         }
@@ -3256,6 +3326,12 @@ class BreezSDKMapper {
             let _data = try asLnUrlErrorData(lnUrlErrorData: dataTmp)
 
             return LnUrlPayResult.endpointError(data: _data)
+        }
+        if type == "payError" {
+            guard let dataTmp = lnUrlPayResult["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type LnUrlPayResult") }
+            let _data = try asLnUrlPayErrorData(lnUrlPayErrorData: dataTmp)
+
+            return LnUrlPayResult.payError(data: _data)
         }
 
         throw SdkError.Generic(message: "Unexpected type \(type) for enum LnUrlPayResult")
@@ -3268,7 +3344,7 @@ class BreezSDKMapper {
         ):
             return [
                 "type": "endpointSuccess",
-                "data": data == nil ? nil : dictionaryOf(successActionProcessed: data!),
+                "data": dictionaryOf(lnUrlPaySuccessData: data),
             ]
 
         case let .endpointError(
@@ -3277,6 +3353,14 @@ class BreezSDKMapper {
             return [
                 "type": "endpointError",
                 "data": dictionaryOf(lnUrlErrorData: data),
+            ]
+
+        case let .payError(
+            data
+        ):
+            return [
+                "type": "payError",
+                "data": dictionaryOf(lnUrlPayErrorData: data),
             ]
         }
     }

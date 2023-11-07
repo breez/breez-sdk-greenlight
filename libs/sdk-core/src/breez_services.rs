@@ -310,10 +310,28 @@ impl BreezServices {
             }
             ValidatedCallbackResponse::EndpointSuccess { data: cb } => {
                 let pay_req = SendPaymentRequest {
-                    bolt11: cb.pr,
+                    bolt11: cb.pr.clone(),
                     amount_msat: None,
                 };
-                let payment = self.send_payment(pay_req).await?.payment;
+
+                let payment = match self.send_payment(pay_req).await {
+                    Ok(p) => Ok(p),
+                    Err(e) => match e {
+                        SendPaymentError::InvalidInvoice { .. } => Err(e),
+                        SendPaymentError::ServiceConnectivity { .. } => Err(e),
+                        _ => {
+                            let invoice = parse_invoice(cb.pr.as_str())?;
+
+                            return Ok(LnUrlPayResult::PayError {
+                                data: LnUrlPayErrorData {
+                                    payment_hash: invoice.payment_hash,
+                                    reason: e.to_string(),
+                                },
+                            });
+                        }
+                    },
+                }?
+                .payment;
                 let details = match &payment.details {
                     PaymentDetails::ClosedChannel { .. } => {
                         return Err(LnUrlPayError::Generic {
@@ -358,7 +376,10 @@ impl BreezServices {
                 )?;
 
                 Ok(LnUrlPayResult::EndpointSuccess {
-                    data: maybe_sa_processed,
+                    data: LnUrlPaySuccessData {
+                        payment_hash: details.payment_hash.clone(),
+                        success_action: maybe_sa_processed,
+                    },
                 })
             }
         }

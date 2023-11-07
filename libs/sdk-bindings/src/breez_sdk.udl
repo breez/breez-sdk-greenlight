@@ -511,7 +511,17 @@ dictionary BitcoinAddressData {
     string? message;
 };
 
+dictionary LnUrlPaySuccessData {
+    SuccessActionProcessed? success_action;
+    string payment_hash;
+};
+
 dictionary LnUrlErrorData {
+    string reason;
+};
+
+dictionary LnUrlPayErrorData {
+    string payment_hash;
     string reason;
 };
 
@@ -541,8 +551,9 @@ dictionary LnUrlWithdrawRequestData {
 
 [Enum]
 interface LnUrlPayResult {
-    EndpointSuccess(SuccessActionProcessed? data);
+    EndpointSuccess(LnUrlPaySuccessData data);
     EndpointError(LnUrlErrorData data);
+    PayError(LnUrlPayErrorData data);
 };
 
 [Enum]

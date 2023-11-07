@@ -952,6 +952,43 @@ fun asLnUrlErrorDataList(arr: ReadableArray): List<LnUrlErrorData> {
     return list
 }
 
+fun asLnUrlPayErrorData(lnUrlPayErrorData: ReadableMap): LnUrlPayErrorData? {
+    if (!validateMandatoryFields(
+            lnUrlPayErrorData,
+            arrayOf(
+                "paymentHash",
+                "reason",
+            ),
+        )
+    ) {
+        return null
+    }
+    val paymentHash = lnUrlPayErrorData.getString("paymentHash")!!
+    val reason = lnUrlPayErrorData.getString("reason")!!
+    return LnUrlPayErrorData(
+        paymentHash,
+        reason,
+    )
+}
+
+fun readableMapOf(lnUrlPayErrorData: LnUrlPayErrorData): ReadableMap {
+    return readableMapOf(
+        "paymentHash" to lnUrlPayErrorData.paymentHash,
+        "reason" to lnUrlPayErrorData.reason,
+    )
+}
+
+fun asLnUrlPayErrorDataList(arr: ReadableArray): List<LnUrlPayErrorData> {
+    val list = ArrayList<LnUrlPayErrorData>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asLnUrlPayErrorData(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asLnUrlPayRequest(lnUrlPayRequest: ReadableMap): LnUrlPayRequest? {
     if (!validateMandatoryFields(
             lnUrlPayRequest,
@@ -1042,6 +1079,49 @@ fun asLnUrlPayRequestDataList(arr: ReadableArray): List<LnUrlPayRequestData> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asLnUrlPayRequestData(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
+fun asLnUrlPaySuccessData(lnUrlPaySuccessData: ReadableMap): LnUrlPaySuccessData? {
+    if (!validateMandatoryFields(
+            lnUrlPaySuccessData,
+            arrayOf(
+                "paymentHash",
+            ),
+        )
+    ) {
+        return null
+    }
+    val successAction =
+        if (hasNonNullKey(lnUrlPaySuccessData, "successAction")) {
+            lnUrlPaySuccessData.getMap("successAction")?.let {
+                asSuccessActionProcessed(it)
+            }
+        } else {
+            null
+        }
+    val paymentHash = lnUrlPaySuccessData.getString("paymentHash")!!
+    return LnUrlPaySuccessData(
+        successAction,
+        paymentHash,
+    )
+}
+
+fun readableMapOf(lnUrlPaySuccessData: LnUrlPaySuccessData): ReadableMap {
+    return readableMapOf(
+        "successAction" to lnUrlPaySuccessData.successAction?.let { readableMapOf(it) },
+        "paymentHash" to lnUrlPaySuccessData.paymentHash,
+    )
+}
+
+fun asLnUrlPaySuccessDataList(arr: ReadableArray): List<LnUrlPaySuccessData> {
+    val list = ArrayList<LnUrlPaySuccessData>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asLnUrlPaySuccessData(value)!!)
             else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }
@@ -3403,18 +3483,13 @@ fun asLnUrlPayResult(lnUrlPayResult: ReadableMap): LnUrlPayResult? {
     val type = lnUrlPayResult.getString("type")
 
     if (type == "endpointSuccess") {
-        return LnUrlPayResult.EndpointSuccess(
-            if (hasNonNullKey(lnUrlPayResult, "data")) {
-                lnUrlPayResult.getMap("data")?.let {
-                    asSuccessActionProcessed(it)
-                }
-            } else {
-                null
-            },
-        )
+        return LnUrlPayResult.EndpointSuccess(lnUrlPayResult.getMap("data")?.let { asLnUrlPaySuccessData(it) }!!)
     }
     if (type == "endpointError") {
         return LnUrlPayResult.EndpointError(lnUrlPayResult.getMap("data")?.let { asLnUrlErrorData(it) }!!)
+    }
+    if (type == "payError") {
+        return LnUrlPayResult.PayError(lnUrlPayResult.getMap("data")?.let { asLnUrlPayErrorData(it) }!!)
     }
     return null
 }
@@ -3424,10 +3499,14 @@ fun readableMapOf(lnUrlPayResult: LnUrlPayResult): ReadableMap? {
     when (lnUrlPayResult) {
         is LnUrlPayResult.EndpointSuccess -> {
             pushToMap(map, "type", "endpointSuccess")
-            pushToMap(map, "data", lnUrlPayResult.data?.let { readableMapOf(it) })
+            pushToMap(map, "data", readableMapOf(lnUrlPayResult.data))
         }
         is LnUrlPayResult.EndpointError -> {
             pushToMap(map, "type", "endpointError")
+            pushToMap(map, "data", readableMapOf(lnUrlPayResult.data))
+        }
+        is LnUrlPayResult.PayError -> {
+            pushToMap(map, "type", "payError")
             pushToMap(map, "data", readableMapOf(lnUrlPayResult.data))
         }
     }

@@ -157,6 +157,11 @@ export type LnUrlErrorData = {
     reason: string
 }
 
+export type LnUrlPayErrorData = {
+    paymentHash: string
+    reason: string
+}
+
 export type LnUrlPayRequest = {
     data: LnUrlPayRequestData
     amountMsat: number
@@ -171,6 +176,11 @@ export type LnUrlPayRequestData = {
     commentAllowed: number
     domain: string
     lnAddress?: string
+}
+
+export type LnUrlPaySuccessData = {
+    successAction?: SuccessActionProcessed
+    paymentHash: string
 }
 
 export type LnUrlWithdrawRequest = {
@@ -588,15 +598,19 @@ export type LnUrlCallbackStatus = {
 
 export enum LnUrlPayResultVariant {
     ENDPOINT_SUCCESS = "endpointSuccess",
-    ENDPOINT_ERROR = "endpointError"
+    ENDPOINT_ERROR = "endpointError",
+    PAY_ERROR = "payError"
 }
 
 export type LnUrlPayResult = {
     type: LnUrlPayResultVariant.ENDPOINT_SUCCESS,
-    data?: SuccessActionProcessed
+    data: LnUrlPaySuccessData
 } | {
     type: LnUrlPayResultVariant.ENDPOINT_ERROR,
     data: LnUrlErrorData
+} | {
+    type: LnUrlPayResultVariant.PAY_ERROR,
+    data: LnUrlPayErrorData
 }
 
 export enum LnUrlWithdrawResultVariant {
