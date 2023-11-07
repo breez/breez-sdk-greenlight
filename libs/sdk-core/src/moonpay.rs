@@ -2,6 +2,7 @@ use anyhow::Result;
 use reqwest::Url;
 
 use crate::breez_services::BreezServer;
+use crate::connectivity::NeedsConnectivity;
 use crate::grpc::SignUrlRequest;
 use crate::SwapInfo;
 
@@ -43,6 +44,12 @@ async fn create_moonpay_url(wallet_address: &str, max_amount: &str) -> Result<Ur
         ],
     )?;
     Ok(url)
+}
+
+impl NeedsConnectivity for MoonPayConfig {
+    fn get_endpoint_url(&self) -> String {
+        self.base_url.clone()
+    }
 }
 
 #[tonic::async_trait]

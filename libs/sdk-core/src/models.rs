@@ -18,6 +18,7 @@ use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 
 use crate::breez_services::BreezServer;
+use crate::connectivity::NeedsConnectivity;
 use crate::error::SdkResult;
 use crate::fiat::{FiatCurrency, Rate};
 use crate::grpc::{self, GetReverseRoutingNodeRequest, PaymentInformation, RegisterPaymentReply};
@@ -376,7 +377,7 @@ impl ReverseSwapperRoutingAPI for BreezServer {
 
 /// Trait covering reverse swap functionality on the external service
 #[tonic::async_trait]
-pub(crate) trait ReverseSwapServiceAPI: Send + Sync {
+pub(crate) trait ReverseSwapServiceAPI: NeedsConnectivity + Send + Sync {
     /// Lookup the most recent reverse swap pair info using the Boltz API. The fees are only valid
     /// for a set amount of time.
     async fn fetch_reverse_swap_fees(&self) -> ReverseSwapResult<ReverseSwapPairInfo>;
@@ -461,6 +462,12 @@ impl Config {
             exemptfee_msat: 20000,
             node_config,
         }
+    }
+}
+
+impl NeedsConnectivity for Config {
+    fn get_endpoint_url(&self) -> String {
+        self.breezserver.clone()
     }
 }
 

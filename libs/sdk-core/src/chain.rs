@@ -1,11 +1,13 @@
+use crate::connectivity::NeedsConnectivity;
 use crate::input_parser::get_parse_and_log_response;
+
 use anyhow::{anyhow, Result};
 use bitcoin::hashes::hex::FromHex;
 use bitcoin::{OutPoint, Txid};
 use serde::{Deserialize, Serialize};
 
 #[tonic::async_trait]
-pub trait ChainService: Send + Sync {
+pub trait ChainService: NeedsConnectivity + Send + Sync {
     async fn recommended_fees(&self) -> Result<RecommendedFees>;
     /// Gets up to 50 onchain and up to 25 mempool transactions associated with this address.
     ///
@@ -251,6 +253,13 @@ impl ChainService for MempoolSpace {
         }
     }
 }
+
+impl NeedsConnectivity for MempoolSpace {
+    fn get_endpoint_url(&self) -> String {
+        self.base_url.clone()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::chain::{MempoolSpace, OnchainTx};

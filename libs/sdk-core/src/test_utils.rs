@@ -28,6 +28,7 @@ use tonic::Streaming;
 use crate::backup::{BackupState, BackupTransport};
 use crate::breez_services::Receiver;
 use crate::chain::{ChainService, OnchainTx, Outspend, RecommendedFees, TxStatus};
+use crate::connectivity::NeedsConnectivity;
 use crate::error::{ReceivePaymentError, SdkError, SdkResult};
 use crate::fiat::{FiatCurrency, Rate};
 use crate::grpc::{PaymentInformation, RegisterPaymentReply};
@@ -215,6 +216,12 @@ impl ChainService for MockChainService {
         let mut array = [0; 32];
         rand::thread_rng().fill(&mut array);
         Ok(hex::encode(array))
+    }
+}
+
+impl NeedsConnectivity for MockChainService {
+    fn get_endpoint_url(&self) -> String {
+        "localhost".into()
     }
 }
 
@@ -416,6 +423,12 @@ impl NodeAPI for MockNodeAPI {
         Ok(Box::pin(
             tokio_stream::wrappers::ReceiverStream::new(rx).map(Ok),
         ))
+    }
+}
+
+impl NeedsConnectivity for MockNodeAPI {
+    fn get_endpoint_url(&self) -> String {
+        "localhost".into()
     }
 }
 

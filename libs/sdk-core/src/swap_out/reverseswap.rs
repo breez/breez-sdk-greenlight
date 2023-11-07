@@ -62,7 +62,7 @@ enum TxStatus {
 /// It uses internally an implementation of [ReverseSwapServiceAPI] that represents Boltz reverse swapper service.
 pub(crate) struct BTCSendSwap {
     config: Config,
-    pub(crate) reverse_swapper_api: Arc<dyn ReverseSwapperRoutingAPI>,
+    reverse_swapper_api: Arc<dyn ReverseSwapperRoutingAPI>,
     pub(crate) reverse_swap_service_api: Arc<dyn ReverseSwapServiceAPI>,
     persister: Arc<crate::persist::db::SqliteStorage>,
     chain_service: Arc<dyn ChainService>,

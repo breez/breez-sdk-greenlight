@@ -32,6 +32,7 @@ use tokio::time::sleep;
 use tokio_stream::{Stream, StreamExt};
 use tonic::Streaming;
 
+use crate::connectivity::NeedsConnectivity;
 use crate::invoice::{parse_invoice, InvoiceError};
 use crate::models::*;
 use crate::node_api::{NodeAPI, NodeError, NodeResult};
@@ -56,8 +57,9 @@ impl Greenlight {
     /// If the node is not registered, it will try to recover it using the seed.
     /// If the node is not created, it will register it using the provided partner credentials
     /// or invite code
-    /// If the node is already registered and an existing credentials were found, it will try to
-    /// connect to the node using these credentials.
+    /// If the node is already registered and an existing credentials were found, it will prepare
+    /// the SDK service to allow it to connect to the node using these credentials. In this case,
+    /// the connection to the node happens automatically, outside of this call.
     pub async fn connect(
         config: Config,
         seed: Vec<u8>,
@@ -983,6 +985,13 @@ impl NodeAPI for Greenlight {
             .into_inner();
         debug!("send_custom_message returned status {:?}", resp.status);
         Ok(())
+    }
+}
+
+impl NeedsConnectivity for Greenlight {
+    fn get_endpoint_url(&self) -> String {
+        // All GL outbound connections are made to the scheduler, so that is the endpoint to check
+        utils::scheduler_uri()
     }
 }
 

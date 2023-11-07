@@ -1,16 +1,15 @@
 use std::collections::HashMap;
 
-use serde::{Deserialize, Serialize};
-use serde_json::to_string_pretty;
-
 use anyhow::{anyhow, Result};
 use bitcoin::Txid;
-use serde_json::json;
-
 use const_format::concatcp;
 use reqwest::header::CONTENT_TYPE;
 use reqwest::{Body, Client};
+use serde::{Deserialize, Serialize};
+use serde_json::json;
+use serde_json::to_string_pretty;
 
+use crate::connectivity::NeedsConnectivity;
 use crate::input_parser::get_parse_and_log_response;
 use crate::models::ReverseSwapPairInfo;
 use crate::swap_out::reverseswap::CreateReverseSwapResponse;
@@ -245,6 +244,12 @@ impl ReverseSwapServiceAPI for BoltzApi {
                     ))
                 })
             })
+    }
+}
+
+impl NeedsConnectivity for BoltzApi {
+    fn get_endpoint_url(&self) -> String {
+        GET_PAIRS_ENDPOINT.to_string()
     }
 }
 

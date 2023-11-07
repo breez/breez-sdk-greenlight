@@ -24,6 +24,7 @@ use tonic::{Request, Status};
 
 use crate::backup::{BackupRequest, BackupTransport, BackupWatcher};
 use crate::chain::{ChainService, MempoolSpace, Outspend, RecommendedFees};
+use crate::connectivity::NeedsConnectivity;
 use crate::error::{
     LnUrlAuthError, LnUrlPayError, LnUrlWithdrawError, ReceiveOnchainError, ReceivePaymentError,
     SdkError, SdkResult, SendOnchainError, SendPaymentError,
@@ -181,13 +182,27 @@ impl BreezServices {
         event_listener: Box<dyn EventListener>,
     ) -> SdkResult<Arc<BreezServices>> {
         let start = Instant::now();
-        let services = BreezServicesBuilder::new(config)
+        let services = BreezServicesBuilder::new(config.clone())
             .seed(seed)
             .build(Some(event_listener))
             .await?;
+
+        // Check the connectivity of every sub-service that makes outbound connections
+        let start_connectivity_check = Instant::now();
+        services.node_api.check_connectivity().await?;
+        config.check_connectivity().await?; // Checking BreezServer covers LSP API, Fiat API
+        moonpay::moonpay_config().check_connectivity().await?;
+        services.chain_service.check_connectivity().await?;
+        services
+            .btc_send_swapper
+            .reverse_swap_service_api
+            .check_connectivity()
+            .await?;
+        let connectivity_check_duration = start_connectivity_check.elapsed();
+
         services.start().await?;
         let connect_duration = start.elapsed();
-        info!("SDK connected in: {:?}", connect_duration);
+        info!("SDK connected in: {connect_duration:?}, including an active connectivity check of {connectivity_check_duration:?}");
         Ok(services)
     }
 

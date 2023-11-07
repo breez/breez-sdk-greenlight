@@ -163,6 +163,7 @@ mod backup;
 pub mod binding;
 mod breez_services;
 mod chain;
+mod connectivity;
 mod crypt;
 pub mod error;
 mod fiat;
