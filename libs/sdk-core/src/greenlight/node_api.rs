@@ -1642,17 +1642,20 @@ fn convert_to_send_pay_route(
     let mut cltv_delay = 0;
     let hops_arr = route.edges.as_slice();
 
-    for i in 1..hops_arr.len() + 1 {
-        let reverse_index = hops_arr.len() - i;
-        let hop = hops_arr[reverse_index].clone();
-        (to_forward, cltv_delay) = match reverse_index == hops_arr.len() - 1 {
+    let reverse_hops: Vec<&PaymentPathEdge> = hops_arr.iter().rev().collect();
+
+    // Iterating over the path in a reverse order so we can calculate
+    // the cltv deltas and fees.
+    for (reverse_index, hop) in reverse_hops.iter().enumerate() {
+        //let hop = h.clone();
+        (to_forward, cltv_delay) = match reverse_index == 0 {
             // last hop should not take any fees and should use the final_cltv_delta.
             true => (to_forward, final_cltv_delta),
 
             // all other hops are forwarding therefore should take fees and increase the cltv delta.
             false => (
-                hops_arr[reverse_index + 1].amount_from_forward(to_forward),
-                cltv_delay + hops_arr[reverse_index + 1].channel_delay,
+                reverse_hops[reverse_index - 1].amount_from_forward(to_forward),
+                cltv_delay + reverse_hops[reverse_index - 1].channel_delay,
             ),
         };
 
@@ -1660,9 +1663,9 @@ fn convert_to_send_pay_route(
             0,
             SendpayRoute {
                 amount_msat: Some(gl_client::pb::cln::Amount { msat: to_forward }),
-                id: hop.node_id,
+                id: hop.node_id.clone(),
                 delay: cltv_delay as u32,
-                channel: hop.short_channel_id,
+                channel: hop.short_channel_id.clone(),
             },
         );
     }
