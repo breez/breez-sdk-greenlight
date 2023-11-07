@@ -633,9 +633,11 @@ fun asInvoicePaidDetails(invoicePaidDetails: ReadableMap): InvoicePaidDetails? {
     }
     val paymentHash = invoicePaidDetails.getString("paymentHash")!!
     val bolt11 = invoicePaidDetails.getString("bolt11")!!
+    val payment = if (hasNonNullKey(invoicePaidDetails, "payment")) invoicePaidDetails.getMap("payment")?.let { asPayment(it) } else null
     return InvoicePaidDetails(
         paymentHash,
         bolt11,
+        payment,
     )
 }
 
@@ -643,6 +645,7 @@ fun readableMapOf(invoicePaidDetails: InvoicePaidDetails): ReadableMap {
     return readableMapOf(
         "paymentHash" to invoicePaidDetails.paymentHash,
         "bolt11" to invoicePaidDetails.bolt11,
+        "payment" to invoicePaidDetails.payment?.let { readableMapOf(it) },
     )
 }
 

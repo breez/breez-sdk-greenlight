@@ -331,6 +331,7 @@ dictionary LogEntry {
 dictionary InvoicePaidDetails {
     string payment_hash;
     string bolt11;
+    Payment? payment;
 };
 
 dictionary PaymentFailedData {

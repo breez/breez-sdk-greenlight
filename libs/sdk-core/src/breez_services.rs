@@ -106,6 +106,7 @@ pub struct PaymentFailedData {
 pub struct InvoicePaidDetails {
     pub payment_hash: String,
     pub bolt11: String,
+    pub payment: Option<Payment>,
 }
 
 pub trait LogStream: Send + Sync {
@@ -1134,7 +1135,7 @@ impl BreezServices {
                                                   if payment.is_some() {
                                                       let res = cloned
                                                           .persister
-                                                          .insert_or_update_payments(&vec![payment.unwrap()]);
+                                                          .insert_or_update_payments(&vec![payment.clone().unwrap()]);
                                                       debug!("paid invoice was added to payments list {:?}", res);
                                                   }
                                                   if let Err(e) = cloned.do_sync(true).await {
@@ -1144,6 +1145,7 @@ impl BreezServices {
                                                       details: InvoicePaidDetails {
                                                           payment_hash: hex::encode(p.payment_hash),
                                                           bolt11: p.bolt11,
+                                                          payment,
                                                       },
                                                   }).await;
                                               }

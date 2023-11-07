@@ -1117,6 +1117,7 @@ impl support::IntoDart for InvoicePaidDetails {
         vec![
             self.payment_hash.into_into_dart().into_dart(),
             self.bolt11.into_into_dart().into_dart(),
+            self.payment.into_dart(),
         ]
         .into_dart()
     }
