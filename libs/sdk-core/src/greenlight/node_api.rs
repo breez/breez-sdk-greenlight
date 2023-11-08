@@ -1113,7 +1113,7 @@ impl NodeAPI for Greenlight {
         let route_response = client
             .get_route(GetrouteRequest {
                 id: last_node.clone(),
-                amount_msat: Some(Amount { msat: 1_000 }),
+                amount_msat: Some(Amount { msat: 0 }),
                 riskfactor: 0,
                 cltv: None,
                 fromid: Some(via_peer_id.clone()),
