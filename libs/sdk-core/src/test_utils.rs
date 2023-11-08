@@ -30,7 +30,10 @@ use crate::breez_services::Receiver;
 use crate::chain::{ChainService, OnchainTx, Outspend, RecommendedFees, TxStatus};
 use crate::error::{ReceivePaymentError, SdkError, SdkResult};
 use crate::fiat::{FiatCurrency, Rate};
-use crate::grpc::{PaymentInformation, RegisterPaymentReply};
+use crate::grpc::{
+    PaymentInformation, RegisterPaymentNotificationResponse, RegisterPaymentReply,
+    SubscribeNotificationsRequest,
+};
 use crate::invoice::{InvoiceError, InvoiceResult};
 use crate::lsp::LspInformation;
 use crate::models::{FiatAPI, LspAPI, NodeState, Payment, Swap, SwapperAPI, SyncResponse};
@@ -568,6 +571,15 @@ impl LspAPI for MockBreezServer {
                 10, 12,
             )])?,
         }])
+    }
+
+    async fn register_notifications(
+        &self,
+        _lsp_id: String,
+        _lsp_pubkey: Vec<u8>,
+        _subscribe_request: SubscribeNotificationsRequest,
+    ) -> SdkResult<RegisterPaymentNotificationResponse> {
+        Ok(RegisterPaymentNotificationResponse {})
     }
 
     async fn register_payment(

@@ -2,9 +2,12 @@ use crate::breez_services::BreezServer;
 use crate::crypt::encrypt;
 use crate::error::{SdkError, SdkResult};
 use crate::grpc::{
-    self, LspListRequest, PaymentInformation, RegisterPaymentReply, RegisterPaymentRequest,
+    self, LspListRequest, PaymentInformation, RegisterPaymentNotificationRequest,
+    RegisterPaymentNotificationResponse, RegisterPaymentReply, RegisterPaymentRequest,
+    SubscribeNotificationsRequest,
 };
 use crate::models::{LspAPI, OpeningFeeParams, OpeningFeeParamsMenu};
+
 use anyhow::{anyhow, Result};
 use prost::Message;
 use serde::{Deserialize, Serialize};
@@ -110,6 +113,31 @@ impl LspAPI for BreezServer {
         }
         lsp_list.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
         Ok(lsp_list)
+    }
+
+    async fn register_notifications(
+        &self,
+        lsp_id: String,
+        lsp_pubkey: Vec<u8>,
+        subscribe_request: SubscribeNotificationsRequest,
+    ) -> SdkResult<RegisterPaymentNotificationResponse> {
+        let mut client = self.get_subscription_client().await?;
+
+        let mut buf = Vec::new();
+        buf.reserve(subscribe_request.encoded_len());
+        subscribe_request
+            .encode(&mut buf)
+            .map_err(|e| SdkError::ServiceConnectivity {
+                err: format!("(LSP {lsp_id}) Failed to encode subscription request: {e}"),
+            })?;
+
+        let request = RegisterPaymentNotificationRequest {
+            lsp_id,
+            blob: encrypt(lsp_pubkey, buf)?,
+        };
+        let response = client.register_payment_notification(request).await?;
+
+        Ok(response.into_inner())
     }
 
     async fn register_payment(

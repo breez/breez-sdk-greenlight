@@ -33,9 +33,11 @@ use crate::greenlight::{GLBackupTransport, Greenlight};
 use crate::grpc::channel_opener_client::ChannelOpenerClient;
 use crate::grpc::fund_manager_client::FundManagerClient;
 use crate::grpc::information_client::InformationClient;
+use crate::grpc::payment_notifier_client::PaymentNotifierClient;
 use crate::grpc::signer_client::SignerClient;
 use crate::grpc::swapper_client::SwapperClient;
-use crate::grpc::PaymentInformation;
+use crate::grpc::SubscribeNotificationsRequest;
+use crate::grpc::{PaymentInformation, RegisterPaymentNotificationResponse};
 use crate::invoice::{add_lsp_routing_hints, parse_invoice, LNInvoice, RouteHint, RouteHintHop};
 use crate::lnurl::auth::perform_lnurl_auth;
 use crate::lnurl::pay::model::SuccessAction::Aes;
@@ -1368,6 +1370,36 @@ impl BreezServices {
             },
         })
     }
+
+    pub async fn register_notifications(
+        &self,
+        platform: String,
+        token: String,
+    ) -> SdkResult<RegisterPaymentNotificationResponse> {
+        info!("Registering notification");
+
+        // TODO Make configurable?
+        let base_url = "https://notifier.breez.technology";
+        let url = format!("/api/v1/notify{base_url}?platform={platform}&token={token}");
+
+        let message = url.clone();
+        let sign_request = SignMessageRequest { message };
+        let sign_response = self.sign_message(sign_request).await?;
+
+        let subscribe_request = SubscribeNotificationsRequest {
+            url,
+            signature: hex::decode(sign_response.signature)
+                .map_err(|e| anyhow!("Failed to decode signature: {e}"))?,
+        };
+
+        let lsp_info = self.lsp_info().await?;
+        let register_response = self
+            .lsp_api
+            .register_notifications(lsp_info.id, lsp_info.lsp_pubkey, subscribe_request)
+            .await?;
+
+        Ok(register_response)
+    }
 }
 
 struct GlobalSdkLogger {
@@ -1674,6 +1706,15 @@ impl BreezServer {
         let client =
             ChannelOpenerClient::with_interceptor(channel, ApiKeyInterceptor { api_key_metadata });
         Ok(client)
+    }
+
+    pub(crate) async fn get_subscription_client(
+        &self,
+    ) -> SdkResult<PaymentNotifierClient<Channel>> {
+        let url = Uri::from_str(&self.server_url).map_err(|e| SdkError::ServiceConnectivity {
+            err: format!("(Breez: {}) {e}", self.server_url.clone()),
+        })?;
+        Ok(PaymentNotifierClient::connect(url).await?)
     }
 
     pub(crate) async fn get_information_client(&self) -> SdkResult<InformationClient<Channel>> {

@@ -20,7 +20,10 @@ use strum_macros::{Display, EnumString};
 use crate::breez_services::BreezServer;
 use crate::error::SdkResult;
 use crate::fiat::{FiatCurrency, Rate};
-use crate::grpc::{self, GetReverseRoutingNodeRequest, PaymentInformation, RegisterPaymentReply};
+use crate::grpc::{
+    self, GetReverseRoutingNodeRequest, PaymentInformation, RegisterPaymentNotificationResponse,
+    RegisterPaymentReply, SubscribeNotificationsRequest,
+};
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lsp::LspInformation;
 use crate::models::Network::*;
@@ -57,6 +60,12 @@ pub struct Peer {
 #[tonic::async_trait]
 pub trait LspAPI: Send + Sync {
     async fn list_lsps(&self, node_pubkey: String) -> SdkResult<Vec<LspInformation>>;
+    async fn register_notifications(
+        &self,
+        lsp_id: String,
+        lsp_pubkey: Vec<u8>,
+        subscribe_request: SubscribeNotificationsRequest,
+    ) -> SdkResult<RegisterPaymentNotificationResponse>;
     async fn register_payment(
         &self,
         lsp_id: String,

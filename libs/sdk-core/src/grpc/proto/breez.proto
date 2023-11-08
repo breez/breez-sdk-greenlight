@@ -89,6 +89,10 @@ service InactiveNotifier {
   rpc InactiveNotify(InactiveNotifyRequest) returns (InactiveNotifyResponse) {}
 }
 
+service PaymentNotifier {
+  rpc RegisterPaymentNotification(RegisterPaymentNotificationRequest) returns (RegisterPaymentNotificationResponse) {}
+}
+
 service Signer {
   rpc SignUrl(SignUrlRequest) returns (SignUrlResponse) {}
 }
@@ -105,6 +109,14 @@ message InactiveNotifyRequest {
   int32 days = 2 [ json_name = "days" ];
 }
 message InactiveNotifyResponse {}
+
+message RegisterPaymentNotificationRequest {
+  string lsp_id = 1;
+  bytes blob = 2;
+}
+
+message RegisterPaymentNotificationResponse {
+}
 
 message ReceiverInfoRequest {}
 message ReceiverInfoReply { string pubkey = 1 [ json_name = "pubkey" ]; }
@@ -387,6 +399,11 @@ message BreezAppVersionsReply { repeated string version = 1; }
 message GetReverseRoutingNodeRequest {}
 message GetReverseRoutingNodeReply { bytes node_id = 1; }
 
+
+/////////////////////////////////////////////
+// From lspd.proto
+/////////////////////////////////////////////
+
 message PaymentInformation {
   bytes payment_hash = 1;
   bytes payment_secret = 2;
@@ -396,3 +413,15 @@ message PaymentInformation {
   string tag = 6;
   OpeningFeeParams opening_fee_params = 7;
 }
+
+
+/////////////////////////////////////////////
+// From notifications.proto
+/////////////////////////////////////////////
+
+message SubscribeNotificationsRequest {
+    string url = 1;
+    bytes signature = 2;
+}
+
+message SubscribeNotificationsReply {}
