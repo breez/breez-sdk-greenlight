@@ -702,8 +702,9 @@ impl BreezServices {
         // fetch the last hop hints from the swapper
         let last_hop = self.btc_send_swapper.last_hop_for_payment().await?;
         let lsp = self.lsp_info().await?;
-        let lsp_pubkey =
-            hex::decode(lsp.pubkey).map_err(|e| anyhow!("Failed to decode lsp pubkey: {e}"))?;
+        let lsp_pubkey = hex::decode(lsp.pubkey).map_err(|e| SdkError::Generic {
+            err: format!("Failed to decode lsp pubkey: {e}"),
+        })?;
         // calculate the largest payment we can send over this route using maximum 3 hops
         // as follows:
         // User Node -> LSP Node -> Routing Node -> Swapper Node
@@ -712,8 +713,9 @@ impl BreezServices {
             .max_sendable_amount(
                 lsp_pubkey,
                 Some(
-                    hex::decode(&last_hop.src_node_id)
-                        .map_err(|e| anyhow!("Failed to decode hex node_id: {e}"))?,
+                    hex::decode(&last_hop.src_node_id).map_err(|e| SdkError::Generic {
+                        err: format!("Failed to decode hex node_id: {e}"),
+                    })?,
                 ),
                 swap_out::reverseswap::MAX_PAYMENT_PATH_HOPS,
                 Some(&last_hop),
@@ -737,8 +739,9 @@ impl BreezServices {
         });
 
         let lsp_info = self.lsp_info().await?;
-        let lsp_pubkey = hex::decode(lsp_info.pubkey)
-            .map_err(|e| anyhow!("Failed to decode lsp pubkey: {e}"))?;
+        let lsp_pubkey = hex::decode(lsp_info.pubkey).map_err(|e| SendOnchainError::Generic {
+            err: format!("Failed to decode lsp pubkey: {e}"),
+        })?;
 
         let full_rsi = self
             .btc_send_swapper

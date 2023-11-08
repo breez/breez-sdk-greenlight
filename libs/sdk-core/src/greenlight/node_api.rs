@@ -1103,7 +1103,7 @@ impl NodeAPI for Greenlight {
                 Some(node_id) => (node_id, max_hops),
                 None => {
                     return Err(NodeError::RouteNotFound(anyhow!(
-                        "no payee node id or last hop hints provided, cannot calculate max amount"
+                        "No payee node id or last hop hints provided, cannot calculate max amount"
                     )));
                 }
             },
@@ -1119,7 +1119,7 @@ impl NodeAPI for Greenlight {
                 fromid: Some(via_peer_id.clone()),
                 fuzzpercent: Some(0),
                 exclude: vec![],
-                // we reduce the first hope that we calculate manually
+                // we deduct the first hop that we calculate manually
                 maxhops: Some(max_hops - 1),
             })
             .await?
@@ -1175,7 +1175,7 @@ impl NodeAPI for Greenlight {
             let chan_id = c
                 .clone()
                 .channel_id
-                .ok_or(NodeError::Generic(anyhow!("empty channel id")))?;
+                .ok_or(NodeError::Generic(anyhow!("Empty channel id")))?;
 
             // First hop is forwarding so no fees and delays.
             let first_edge = PaymentPathEdge {
