@@ -597,12 +597,14 @@ impl NodeAPI for Greenlight {
         client.key_send(request).await?.into_inner().try_into()
     }
 
-    async fn start(&self) -> NodeResult<()> {
-        self.get_node_client()
+    async fn start(&self) -> NodeResult<String> {
+        let node_info = self
+            .get_node_client()
             .await?
             .getinfo(cln::GetinfoRequest {})
-            .await?;
-        Ok(())
+            .await?
+            .into_inner();
+        Ok(hex::encode(node_info.id))
     }
 
     async fn sweep(&self, to_address: String, fee_rate_sats_per_vbyte: u32) -> NodeResult<Vec<u8>> {
