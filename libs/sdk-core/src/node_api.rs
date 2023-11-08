@@ -81,7 +81,7 @@ pub trait NodeAPI: Send + Sync {
 
     /// Attempts to find a payment path "manually" and send the htlcs in a way that will drain
     /// Large channels first.
-    /// This is useful function to send the largest anount possible to a node.
+    /// This is useful function to send the largest amount possible to a node.
     async fn send_pay(&self, bolt11: String, max_hops: u32) -> NodeResult<PaymentResponse>;
 
     /// Calculates the maximum amount that can be sent to a node.
