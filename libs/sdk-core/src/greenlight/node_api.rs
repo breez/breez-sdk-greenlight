@@ -435,8 +435,8 @@ impl Greenlight {
 
             info!("found channel in route: {:?}", first_channel);
             hops.push(PaymentPathEdge {
-                base_fee_msat: first_channel.base_fee_millisatoshi,
-                fee_per_millionth: first_channel.fee_per_millionth,
+                base_fee_msat: first_channel.base_fee_millisatoshi as u64,
+                fee_per_millionth: first_channel.fee_per_millionth as u64,
                 node_id: hop.id.clone(),
                 short_channel_id: hop.channel.clone(),
                 channel_delay: first_channel.delay as u64,
@@ -1126,8 +1126,8 @@ impl NodeAPI for Greenlight {
         // Add the last hop hints (if any) to the route
         if let Some(hint) = last_hop_hints {
             payment_path.edges.extend(vec![PaymentPathEdge {
-                base_fee_msat: hint.fees_base_msat,
-                fee_per_millionth: hint.fees_proportional_millionths,
+                base_fee_msat: hint.fees_base_msat as u64,
+                fee_per_millionth: hint.fees_proportional_millionths as u64,
                 node_id: payee_node_id.unwrap_or_default(),
                 short_channel_id: format_short_channel_id(hint.short_channel_id),
                 channel_delay: hint.cltv_expiry_delta,

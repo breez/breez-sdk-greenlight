@@ -1264,26 +1264,35 @@ pub struct PaymentPathEdge {
     pub node_id: Vec<u8>,
     pub short_channel_id: String,
     pub channel_delay: u64,
-    pub base_fee_msat: u32,
-    pub fee_per_millionth: u32,
+    pub base_fee_msat: u64,
+    pub fee_per_millionth: u64,
 }
 
 impl PaymentPathEdge {
     pub(crate) fn amount_to_forward(&self, in_amount_msat: u64) -> u64 {
-        let forward = (in_amount_msat - self.base_fee_msat as u64) as f64
-            / (1f64 + self.fee_per_millionth as f64 / 1_000_000f64);
+        // return incomingAmt - divideCeil(
+        //     feeRateParts*(incomingAmt-c.FeeBaseMSat),
+        //     feeRateParts+c.FeeProportionalMillionths,
+        // )
+        let amount_to_forward = Self::devide_ceil(
+            1_000_000 * (in_amount_msat - self.base_fee_msat),
+            1000000 + self.fee_per_millionth,
+        );
 
-        let amount_to_forward = forward.floor() as u64;
         info!("amount_to_forward: in_amount_msat = {in_amount_msat},base_fee_msat={}, fee_per_millionth={}  amount_to_forward: {}", self.base_fee_msat, self.fee_per_millionth, amount_to_forward);
         amount_to_forward
     }
 
     pub(crate) fn amount_from_forward(&self, forward_amount_msat: u64) -> u64 {
-        let in_amount_msat = self.base_fee_msat as f64
-            + forward_amount_msat as f64 * (1_000_000f64 + self.fee_per_millionth as f64)
-                / 1_000_000f64;
+        let in_amount_msat = self.base_fee_msat
+            + forward_amount_msat * (1_000_000 + self.fee_per_millionth) / 1_000_000;
+
         print!("amount_from_forward: in_amount_msat = {in_amount_msat},base_fee_msat={}, fee_per_millionth={}  amount_to_forward: {}", self.base_fee_msat, self.fee_per_millionth, forward_amount_msat);
-        in_amount_msat.ceil() as u64
+        in_amount_msat
+    }
+
+    fn devide_ceil(dividend: u64, factor: u64) -> u64 {
+        return (dividend + factor - 1) / factor;
     }
 }
 
@@ -1324,8 +1333,8 @@ mod tests {
                 },
             ],
         };
-        assert_eq!(route.final_hop_amount(1141000), 1139998);
-        assert_eq!(route.first_hop_amount(1139998), 1141000);
+        assert_eq!(route.final_hop_amount(1141000), 1139999);
+        assert_eq!(route.first_hop_amount(1139999), 1141000);
 
         let route = PaymentPath {
             edges: vec![
@@ -1352,8 +1361,8 @@ mod tests {
                 },
             ],
         };
-        assert_eq!(route.final_hop_amount(1141314), 1139035);
-        assert_eq!(route.first_hop_amount(1139035), 1141314);
+        assert_eq!(route.final_hop_amount(1141314), 1139036);
+        assert_eq!(route.first_hop_amount(1139036), 1141314);
 
         Ok(())
     }
