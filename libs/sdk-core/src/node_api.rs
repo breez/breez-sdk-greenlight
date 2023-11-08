@@ -76,7 +76,7 @@ pub trait NodeAPI: Send + Sync {
         node_id: String,
         amount_msat: u64,
     ) -> NodeResult<PaymentResponse>;
-    async fn start(&self) -> NodeResult<()>;
+    async fn start(&self) -> NodeResult<String>;
     async fn sweep(&self, to_address: String, fee_rate_sats_per_vbyte: u32) -> NodeResult<Vec<u8>>;
     async fn prepare_sweep(&self, req: PrepareSweepRequest) -> NodeResult<PrepareSweepResponse>;
     async fn start_signer(&self, shutdown: mpsc::Receiver<()>);

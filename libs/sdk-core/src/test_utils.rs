@@ -328,8 +328,8 @@ impl NodeAPI for MockNodeAPI {
         Ok(payment.try_into()?)
     }
 
-    async fn start(&self) -> NodeResult<()> {
-        Ok(())
+    async fn start(&self) -> NodeResult<String> {
+        Ok("".to_string())
     }
 
     async fn sweep(
@@ -651,6 +651,7 @@ pub fn rand_vec_u8(len: usize) -> Vec<u8> {
 
 pub fn create_test_config() -> crate::models::Config {
     let mut conf = Config {
+        default_lsp_id: Some(String::from("03cea51f-b654-4fb0-8e82-eca137f236a0")),
         ..Config::production(
             "".into(),
             crate::NodeConfig::Greenlight {

@@ -771,8 +771,8 @@ impl BreezServices {
 
     async fn do_sync(&self, balance_changed: bool) -> Result<()> {
         let start = Instant::now();
-        self.start_node().await?;
-        self.connect_lsp_peer().await?;
+        let node_pubkey = self.node_api.start().await?;
+        self.connect_lsp_peer(node_pubkey).await?;
 
         // First query the changes since last sync time.
         let since_timestamp = self.persister.last_payment_timestamp().unwrap_or(0);
@@ -823,8 +823,14 @@ impl BreezServices {
         Ok(())
     }
 
-    /// Connects to the selected LSP, if any
-    async fn connect_lsp_peer(&self) -> SdkResult<()> {
+    /// Connects to the selected LSP peer. If none is selected, this selects the first one from [`list_lsps`] and persists the selection.
+    async fn connect_lsp_peer(&self, node_pubkey: String) -> SdkResult<()> {
+        // Sets the LSP id, if not already set
+        if self.persister.get_lsp_id()?.is_none() {
+            if let Some(lsp) = self.lsp_api.list_lsps(node_pubkey).await?.first().cloned() {
+                self.persister.set_lsp_id(lsp.id)?;
+            }
+        }
         if let Ok(lsp_info) = self.lsp_info().await {
             let node_id = lsp_info.pubkey;
             let address = lsp_info.host;
@@ -909,7 +915,8 @@ impl BreezServices {
     }
 
     pub(crate) async fn start_node(&self) -> Result<()> {
-        Ok(self.node_api.start().await?)
+        self.node_api.start().await?;
+        Ok(())
     }
 
     /// Get the recommended fees for onchain transactions
@@ -1918,17 +1925,20 @@ impl Receiver for PaymentReceiver {
 }
 
 /// Convenience method to look up LSP info based on current LSP ID
-async fn get_lsp(persister: Arc<SqliteStorage>, lsp: Arc<dyn LspAPI>) -> Result<LspInformation> {
+async fn get_lsp(
+    persister: Arc<SqliteStorage>,
+    lsp_api: Arc<dyn LspAPI>,
+) -> Result<LspInformation> {
     let lsp_id = persister.get_lsp_id()?.ok_or(anyhow!("No LSP ID found"))?;
 
-    get_lsp_by_id(persister, lsp, lsp_id.as_str())
+    get_lsp_by_id(persister, lsp_api, lsp_id.as_str())
         .await?
         .ok_or_else(|| anyhow!("No LSP found for id {lsp_id}"))
 }
 
 async fn get_lsp_by_id(
     persister: Arc<SqliteStorage>,
-    lsp: Arc<dyn LspAPI>,
+    lsp_api: Arc<dyn LspAPI>,
     lsp_id: &str,
 ) -> Result<Option<LspInformation>> {
     let node_pubkey = persister
@@ -1936,7 +1946,7 @@ async fn get_lsp_by_id(
         .ok_or(anyhow!("Node info not found"))?
         .id;
 
-    Ok(lsp
+    Ok(lsp_api
         .list_lsps(node_pubkey)
         .await?
         .iter()
