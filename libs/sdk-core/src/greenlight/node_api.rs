@@ -645,7 +645,7 @@ impl NodeAPI for Greenlight {
         // The total amount received by the recipient
         let mut amount_received_msat = 0;
 
-        // The algorithm goes over each channel and drains it until the recived amount
+        // The algorithm goes over each channel and drains it until the received amount
         // equals to the amount to pay defined in the bolt11 invoice.
         for max in max_amount_per_channel {
             // calculating the incoming amount for the remaining amount to pay.
