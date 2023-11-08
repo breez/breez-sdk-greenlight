@@ -127,7 +127,6 @@ impl BTCSendSwap {
     pub(crate) async fn create_reverse_swap(
         &self,
         req: SendOnchainRequest,
-        via_peer_id: Vec<u8>,
     ) -> ReverseSwapResult<FullReverseSwapInfo> {
         Self::validate_rev_swap_args(&req.onchain_recipient_address)?;
 
@@ -149,7 +148,7 @@ impl BTCSendSwap {
         let res = tokio::select! {
             pay_thread_res = tokio::time::timeout(
                 Duration::from_secs(self.config.payment_timeout_sec as u64),
-                self.node_api.send_pay(via_peer_id, created_rsi.invoice.clone(), MAX_PAYMENT_PATH_HOPS)
+                self.node_api.send_pay(created_rsi.invoice.clone(), MAX_PAYMENT_PATH_HOPS)
             ) => {
                 // TODO It doesn't fail when trying to pay more sats than max_payable?
                 match pay_thread_res {

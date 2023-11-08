@@ -310,12 +310,7 @@ impl NodeAPI for MockNodeAPI {
         })
     }
 
-    async fn send_pay(
-        &self,
-        _from_node_id: Vec<u8>,
-        _bolt11: String,
-        _max_hops: u32,
-    ) -> NodeResult<PaymentResponse> {
+    async fn send_pay(&self, _bolt11: String, _max_hops: u32) -> NodeResult<PaymentResponse> {
         Err(NodeError::Generic(anyhow!("Not implemented")))
     }
 
@@ -405,7 +400,6 @@ impl NodeAPI for MockNodeAPI {
 
     async fn max_sendable_amount(
         &self,
-        _from_node_id: Vec<u8>,
         _payee_node_id: Option<Vec<u8>>,
         _max_hops: u32,
         _last_hop: Option<&RouteHintHop>,

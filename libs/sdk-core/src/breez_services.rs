@@ -701,17 +701,12 @@ impl BreezServices {
     pub async fn max_reverse_swap_amount(&self) -> SdkResult<MaxReverseSwapAmountResponse> {
         // fetch the last hop hints from the swapper
         let last_hop = self.btc_send_swapper.last_hop_for_payment().await?;
-        let lsp = self.lsp_info().await?;
-        let lsp_pubkey = hex::decode(lsp.pubkey).map_err(|e| SdkError::Generic {
-            err: format!("Failed to decode lsp pubkey: {e}"),
-        })?;
         // calculate the largest payment we can send over this route using maximum 3 hops
         // as follows:
         // User Node -> LSP Node -> Routing Node -> Swapper Node
         let max_to_pay = self
             .node_api
             .max_sendable_amount(
-                lsp_pubkey,
                 Some(
                     hex::decode(&last_hop.src_node_id).map_err(|e| SdkError::Generic {
                         err: format!("Failed to decode hex node_id: {e}"),
@@ -738,15 +733,7 @@ impl BreezServices {
             Use the in_progress_reverse_swaps method to get an overview of currently ongoing reverse swaps".into(), 
         });
 
-        let lsp_info = self.lsp_info().await?;
-        let lsp_pubkey = hex::decode(lsp_info.pubkey).map_err(|e| SendOnchainError::Generic {
-            err: format!("Failed to decode lsp pubkey: {e}"),
-        })?;
-
-        let full_rsi = self
-            .btc_send_swapper
-            .create_reverse_swap(req, lsp_pubkey)
-            .await?;
+        let full_rsi = self.btc_send_swapper.create_reverse_swap(req).await?;
         let rsi = self
             .btc_send_swapper
             .convert_reverse_swap_info(full_rsi)
