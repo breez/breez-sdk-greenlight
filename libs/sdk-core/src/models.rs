@@ -1275,13 +1275,9 @@ pub struct PaymentPathEdge {
 
 impl PaymentPathEdge {
     pub(crate) fn amount_to_forward(&self, in_amount_msat: u64) -> u64 {
-        // return incomingAmt - divideCeil(
-        //     feeRateParts*(incomingAmt-c.FeeBaseMSat),
-        //     feeRateParts+c.FeeProportionalMillionths,
-        // )
         let amount_to_forward = Self::devide_ceil(
             1_000_000 * (in_amount_msat - self.base_fee_msat),
-            1000000 + self.fee_per_millionth,
+            1_000_000 + self.fee_per_millionth,
         );
 
         info!("amount_to_forward: in_amount_msat = {in_amount_msat},base_fee_msat={}, fee_per_millionth={}  amount_to_forward: {}", self.base_fee_msat, self.fee_per_millionth, amount_to_forward);

@@ -1,4 +1,4 @@
-use std::cmp::{max, min};
+use std::cmp::{max, min, Reverse};
 use std::pin::Pin;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -617,7 +617,7 @@ impl NodeAPI for Greenlight {
 
         // Sort the channels by max amount descending so we can build the route in a way that it
         // drains the largest channels first
-        max_amount_per_channel.sort_by(|m1, m2| m2.amount_msat.cmp(&m1.amount_msat));
+        max_amount_per_channel.sort_by_key(|m| Reverse(m.amount_msat));
 
         let amount_to_pay_msat = match invoice.amount_msat {
             Some(amount) => Ok(amount),
