@@ -1,7 +1,6 @@
 use crate::{
     invoice::InvoiceError, persist::error::PersistError, CustomMessage, MaxChannelAmount,
-    PaymentPath, PaymentResponse, Peer, PrepareSweepRequest, PrepareSweepResponse, RouteHintHop,
-    SyncResponse,
+    PaymentResponse, Peer, PrepareSweepRequest, PrepareSweepResponse, RouteHintHop, SyncResponse,
 };
 use anyhow::Result;
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
@@ -82,15 +81,21 @@ pub trait NodeAPI: Send + Sync {
     /// Attempts to find a payment path "manually" and send the htlcs in a way that will drain
     /// Large channels first.
     /// This is useful function to send the largest amount possible to a node.
-    async fn send_pay(&self, bolt11: String, max_hops: u32) -> NodeResult<PaymentResponse>;
+    async fn send_pay(
+        &self,
+        via_peer_id: Vec<u8>,
+        bolt11: String,
+        max_hops: u32,
+    ) -> NodeResult<PaymentResponse>;
 
     /// Calculates the maximum amount that can be sent to a node.
     async fn max_sendable_amount(
         &self,
+        via_peer_id: Vec<u8>,
         payee_node_id: Option<Vec<u8>>,
         max_hops: u32,
         last_hop: Option<&RouteHintHop>,
-    ) -> NodeResult<(Vec<MaxChannelAmount>, PaymentPath)>;
+    ) -> NodeResult<Vec<MaxChannelAmount>>;
     async fn sweep(&self, to_address: String, fee_rate_sats_per_vbyte: u32) -> NodeResult<Vec<u8>>;
     async fn prepare_sweep(&self, req: PrepareSweepRequest) -> NodeResult<PrepareSweepResponse>;
     async fn start_signer(&self, shutdown: mpsc::Receiver<()>);

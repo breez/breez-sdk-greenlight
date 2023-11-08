@@ -39,8 +39,8 @@ use crate::node_api::{NodeAPI, NodeError, NodeResult};
 use crate::swap_in::error::SwapResult;
 use crate::swap_in::swap::create_submarine_swap_script;
 use crate::{
-    parse_invoice, Config, CustomMessage, LNInvoice, MaxChannelAmount, PaymentPath,
-    PaymentResponse, Peer, PrepareSweepRequest, PrepareSweepResponse, RouteHint, RouteHintHop,
+    parse_invoice, Config, CustomMessage, LNInvoice, MaxChannelAmount, PaymentResponse, Peer,
+    PrepareSweepRequest, PrepareSweepResponse, RouteHint, RouteHintHop,
 };
 use crate::{OpeningFeeParams, OpeningFeeParamsMenu};
 use crate::{ReceivePaymentRequest, SwapInfo};
@@ -310,7 +310,12 @@ impl NodeAPI for MockNodeAPI {
         })
     }
 
-    async fn send_pay(&self, _bolt11: String, _max_hops: u32) -> NodeResult<PaymentResponse> {
+    async fn send_pay(
+        &self,
+        _from_node_id: Vec<u8>,
+        _bolt11: String,
+        _max_hops: u32,
+    ) -> NodeResult<PaymentResponse> {
         Err(NodeError::Generic(anyhow!("Not implemented")))
     }
 
@@ -400,10 +405,11 @@ impl NodeAPI for MockNodeAPI {
 
     async fn max_sendable_amount(
         &self,
+        _from_node_id: Vec<u8>,
         _payee_node_id: Option<Vec<u8>>,
         _max_hops: u32,
         _last_hop: Option<&RouteHintHop>,
-    ) -> NodeResult<(Vec<MaxChannelAmount>, PaymentPath)> {
+    ) -> NodeResult<Vec<MaxChannelAmount>> {
         Err(NodeError::Generic(anyhow!("Not implemented")))
     }
 

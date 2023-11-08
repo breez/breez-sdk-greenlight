@@ -694,6 +694,7 @@ pub struct MaxReverseSwapAmountResponse {
 pub struct MaxChannelAmount {
     pub channel_id: String,
     pub amount_msat: u64,
+    pub path: PaymentPath,
 }
 
 /// Represents a receive payment request.
@@ -1236,7 +1237,7 @@ impl FromStr for BuyBitcoinProvider {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct PaymentPath {
     pub edges: Vec<PaymentPathEdge>,
 }
@@ -1259,7 +1260,7 @@ impl PaymentPath {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct PaymentPathEdge {
     pub node_id: Vec<u8>,
     pub short_channel_id: String,
@@ -1292,7 +1293,7 @@ impl PaymentPathEdge {
     }
 
     fn devide_ceil(dividend: u64, factor: u64) -> u64 {
-        return (dividend + factor - 1) / factor;
+        (dividend + factor - 1) / factor
     }
 }
 

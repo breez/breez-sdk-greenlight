@@ -414,10 +414,15 @@ impl Greenlight {
         Ok(utxos)
     }
 
-    async fn build_payment_path(&self, route: Vec<GetrouteRoute>) -> NodeResult<PaymentPath> {
+    async fn build_payment_path(
+        &self,
+        route: &Vec<GetrouteRoute>,
+        first_edge: PaymentPathEdge,
+    ) -> NodeResult<PaymentPath> {
         let mut client = self.get_node_client().await?;
-        let mut hops = vec![];
-        for hop in &route {
+        let mut hops = vec![first_edge];
+
+        for hop in route {
             let hopchannels = client
                 .list_channels(ListchannelsRequest {
                     short_channel_id: Some(hop.channel.clone()),
@@ -586,16 +591,26 @@ impl NodeAPI for Greenlight {
         })
     }
 
-    async fn send_pay(&self, bolt11: String, max_hops: u32) -> NodeResult<PaymentResponse> {
+    async fn send_pay(
+        &self,
+        via_peer_id: Vec<u8>,
+        bolt11: String,
+        max_hops: u32,
+    ) -> NodeResult<PaymentResponse> {
         let invoice = parse_invoice(&bolt11)?;
         let last_hop = invoice.routing_hints.first().and_then(|rh| rh.hops.first());
         let mut client: node::ClnClient = self.get_node_client().await?;
 
         // We first calculate for each channel the max amount to pay (at the receiver)
-        let (mut max_amount_per_channel, payment_path) = self
-            .max_sendable_amount(Some(hex::decode(invoice.payee_pubkey)?), max_hops, last_hop)
+        let mut max_amount_per_channel = self
+            .max_sendable_amount(
+                via_peer_id,
+                Some(hex::decode(invoice.payee_pubkey)?),
+                max_hops,
+                last_hop,
+            )
             .await?;
-        info!("send_pay: route: {:?}", payment_path);
+        info!("send_pay: routes: {:?}", max_amount_per_channel);
 
         // Calculate the total amount to pay
         let total_msat: u64 = max_amount_per_channel.iter().map(|m| m.amount_msat).sum();
@@ -641,7 +656,7 @@ impl NodeAPI for Greenlight {
             // We convert our payment path to an actual route that can be sent to the node.
             // This requires calculating the right fees and cltv delta in each hop.
             let (route, sent_msat) = convert_to_send_pay_route(
-                payment_path.clone(),
+                max.path.clone(),
                 to_pay_msat,
                 invoice.min_final_cltv_expiry_delta,
             );
@@ -1072,10 +1087,11 @@ impl NodeAPI for Greenlight {
 
     async fn max_sendable_amount(
         &self,
+        via_peer_id: Vec<u8>,
         payee_node_id: Option<Vec<u8>>,
         max_hops: u32,
         last_hop_hints: Option<&RouteHintHop>,
-    ) -> NodeResult<(Vec<MaxChannelAmount>, PaymentPath)> {
+    ) -> NodeResult<Vec<MaxChannelAmount>> {
         let mut client = self.get_node_client().await?;
 
         // Consider the hints as part of the route. If there is a routing hint we will
@@ -1100,10 +1116,11 @@ impl NodeAPI for Greenlight {
                 amount_msat: Some(Amount { msat: 1_000 }),
                 riskfactor: 0,
                 cltv: None,
-                fromid: None,
+                fromid: Some(via_peer_id.clone()),
                 fuzzpercent: Some(0),
                 exclude: vec![],
-                maxhops: Some(max_hops),
+                // we reduce the first hope that we calculate manually
+                maxhops: Some(max_hops - 1),
             })
             .await?
             .into_inner();
@@ -1120,26 +1137,10 @@ impl NodeAPI for Greenlight {
             route_response.route
         );
 
-        // convert the route to a payment path so we can calculate the amount to forward for each hop
-        let mut payment_path = self.build_payment_path(route_response.route).await?;
-
-        // Add the last hop hints (if any) to the route
-        if let Some(hint) = last_hop_hints {
-            payment_path.edges.extend(vec![PaymentPathEdge {
-                base_fee_msat: hint.fees_base_msat as u64,
-                fee_per_millionth: hint.fees_proportional_millionths as u64,
-                node_id: payee_node_id.unwrap_or_default(),
-                short_channel_id: format_short_channel_id(hint.short_channel_id),
-                channel_delay: hint.cltv_expiry_delta,
-            }])
-        }
-
-        info!("max_sendable_amount: route_hops = {:?}", payment_path.edges);
-
         // We first want to find the channels with the first hop of the route
         let peers = client
             .list_peers(cln::ListpeersRequest {
-                id: Some(payment_path.edges[0].node_id.clone()),
+                id: Some(via_peer_id.clone()),
                 ..cln::ListpeersRequest::default()
             })
             .await?
@@ -1148,7 +1149,7 @@ impl NodeAPI for Greenlight {
         if peers.peers.is_empty() {
             return Err(NodeError::RouteNotFound(anyhow!(
                 "Peer not found for node: {}",
-                hex::encode(&payment_path.edges[0].node_id)
+                hex::encode(&via_peer_id)
             )));
         }
 
@@ -1176,16 +1177,44 @@ impl NodeAPI for Greenlight {
                 .channel_id
                 .ok_or(NodeError::Generic(anyhow!("empty channel id")))?;
 
+            // First hop is forwarding so no fees and delays.
+            let first_edge = PaymentPathEdge {
+                base_fee_msat: 0,
+                fee_per_millionth: 0,
+                node_id: via_peer_id.clone(),
+                short_channel_id: c.clone().short_channel_id.unwrap_or_default(),
+                channel_delay: 0,
+            };
+
+            // convert the route to a payment path so we can calculate the amount to forward for each hop
+            let mut payment_path = self
+                .build_payment_path(&route_response.route, first_edge)
+                .await?;
+
+            // Add the last hop hints (if any) to the route
+            if let Some(hint) = last_hop_hints {
+                payment_path.edges.extend(vec![PaymentPathEdge {
+                    base_fee_msat: hint.fees_base_msat as u64,
+                    fee_per_millionth: hint.fees_proportional_millionths as u64,
+                    node_id: payee_node_id.clone().unwrap_or_default(),
+                    short_channel_id: format_short_channel_id(hint.short_channel_id),
+                    channel_delay: hint.cltv_expiry_delta,
+                }])
+            }
+
+            info!("max_sendable_amount: route_hops = {:?}", payment_path.edges);
+
             // go over each hop and calculate the amount to forward.
             let max_payment_amount =
                 payment_path.final_hop_amount(c.clone().spendable_msat.unwrap_or_default().msat);
             max_per_channel.push(MaxChannelAmount {
                 channel_id: hex::encode(chan_id),
                 amount_msat: max_payment_amount,
+                path: payment_path,
             });
         }
 
-        Ok((max_per_channel, payment_path))
+        Ok(max_per_channel)
     }
 
     fn derive_bip32_key(&self, path: Vec<ChildNumber>) -> NodeResult<ExtendedPrivKey> {
