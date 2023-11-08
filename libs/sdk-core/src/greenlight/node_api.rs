@@ -476,7 +476,7 @@ impl Greenlight {
         };
 
         // fetch a route from greenlight
-        let route_response = client
+        let route_result = client
             .get_route(GetrouteRequest {
                 id: last_node.clone(),
                 amount_msat: Some(Amount { msat: 0 }),
@@ -488,16 +488,19 @@ impl Greenlight {
                 // we deduct the first hop that we calculate manually
                 maxhops: Some(max_hops - 1),
             })
-            .await?
-            .into_inner();
+            .await;
 
-        if route_response.route.is_empty() {
-            return Err(NodeError::RouteNotFound(anyhow!(
-                "no route found to node: {}",
-                hex::encode(&last_node),
-            )));
+        // In case we have no route better to return no amounts for this peer's channels.
+        if let Err(e) = route_result {
+            error!(
+                "Failed to get route for peer {}: {}",
+                hex::encode(via_peer_id.clone()),
+                e
+            );
+            return Ok(vec![]);
         }
 
+        let route_response = route_result?.into_inner();
         info!(
             "max_sendable_amount: route response = {:?}",
             route_response.route
