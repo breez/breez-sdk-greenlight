@@ -968,6 +968,7 @@ class LspInformation {
 }
 
 class MaxReverseSwapAmountResponse {
+  /// The total sats that can be sent onchain.
   final int totalSat;
 
   const MaxReverseSwapAmountResponse({

@@ -687,13 +687,17 @@ pub struct ReverseSwapFeesRequest {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MaxReverseSwapAmountResponse {
+    /// The total sats that can be sent onchain.
     pub total_sat: u64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MaxChannelAmount {
+    /// The channel id.
     pub channel_id: String,
+    /// The max amount can be sent from this channel.
     pub amount_msat: u64,
+    /// The payment path to be used for thte maximum amount.
     pub path: PaymentPath,
 }
 
