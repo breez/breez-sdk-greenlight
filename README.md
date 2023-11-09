@@ -74,20 +74,19 @@ See the instructions in each sub project readme on how to build, test and run.
 - [x] MoonPay fiat on-ramp
 - [x] C# bindings 
 - [x] Python bindings 
-- [ ] Spend all funds
+- [x] Spend all funds
 - [ ] Webhook for receiving payments
 - [ ] Mobile Notifications
 - [ ] Offline receive via notifications
 - [ ] LSPS2 support 
-- [ ] LSPS1 support 
+- [ ] LSPS1 support
+- [ ] Send/receive bolt12
 - [ ] Simplifed key management (cloud key backup)
-- [ ] Performance optimizations
+- [ ] WebAssembly support
 - [ ] Improve key share 
 - [ ] Close channels to a predefined address 
 - [ ] Make mempool.space dependency optional 
 - [ ] Receive 0 amount invoice via LSP (unified QR)
-- [ ] Send/receive bolt12
 - [ ] Async payments
 - [ ] LDK support
 - [ ] Splicing
-- [ ] WebAssembly support
