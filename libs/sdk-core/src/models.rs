@@ -22,7 +22,7 @@ use crate::error::SdkResult;
 use crate::fiat::{FiatCurrency, Rate};
 use crate::grpc::{
     self, GetReverseRoutingNodeRequest, PaymentInformation, RegisterPaymentNotificationResponse,
-    RegisterPaymentReply, SubscribeNotificationsRequest,
+    RegisterPaymentReply,
 };
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lsp::LspInformation;
@@ -64,7 +64,8 @@ pub trait LspAPI: Send + Sync {
         &self,
         lsp_id: String,
         lsp_pubkey: Vec<u8>,
-        subscribe_request: SubscribeNotificationsRequest,
+        callback_url: String,
+        callback_url_signature: Vec<u8>,
     ) -> SdkResult<RegisterPaymentNotificationResponse>;
     async fn register_payment(
         &self,

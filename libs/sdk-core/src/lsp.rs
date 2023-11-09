@@ -119,8 +119,14 @@ impl LspAPI for BreezServer {
         &self,
         lsp_id: String,
         lsp_pubkey: Vec<u8>,
-        subscribe_request: SubscribeNotificationsRequest,
+        callback_url: String,
+        callback_url_signature: Vec<u8>,
     ) -> SdkResult<RegisterPaymentNotificationResponse> {
+        let subscribe_request = SubscribeNotificationsRequest {
+            url: callback_url,
+            signature: callback_url_signature,
+        };
+
         let mut client = self.get_subscription_client().await?;
 
         let mut buf = Vec::new();

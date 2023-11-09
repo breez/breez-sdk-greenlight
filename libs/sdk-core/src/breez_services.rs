@@ -36,7 +36,6 @@ use crate::grpc::information_client::InformationClient;
 use crate::grpc::payment_notifier_client::PaymentNotifierClient;
 use crate::grpc::signer_client::SignerClient;
 use crate::grpc::swapper_client::SwapperClient;
-use crate::grpc::SubscribeNotificationsRequest;
 use crate::grpc::{PaymentInformation, RegisterPaymentNotificationResponse};
 use crate::invoice::{add_lsp_routing_hints, parse_invoice, LNInvoice, RouteHint, RouteHintHop};
 use crate::lnurl::auth::perform_lnurl_auth;
@@ -1373,24 +1372,24 @@ impl BreezServices {
 
     pub async fn register_webhook(
         &self,
-        url: String,
+        callback_url: String,
     ) -> SdkResult<RegisterPaymentNotificationResponse> {
         info!("Registering for webhook notifications");
 
-        let message = url.clone();
+        let message = callback_url.clone();
         let sign_request = SignMessageRequest { message };
         let sign_response = self.sign_message(sign_request).await?;
-
-        let subscribe_request = SubscribeNotificationsRequest {
-            url,
-            signature: hex::decode(sign_response.signature)
-                .map_err(|e| anyhow!("Failed to decode signature: {e}"))?,
-        };
 
         let lsp_info = self.lsp_info().await?;
         let register_response = self
             .lsp_api
-            .register_notifications(lsp_info.id, lsp_info.lsp_pubkey, subscribe_request)
+            .register_notifications(
+                lsp_info.id,
+                lsp_info.lsp_pubkey,
+                callback_url,
+                hex::decode(sign_response.signature)
+                    .map_err(|e| anyhow!("Failed to decode signature: {e}"))?,
+            )
             .await?;
 
         Ok(register_response)
