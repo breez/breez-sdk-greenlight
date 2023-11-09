@@ -11,7 +11,7 @@ use crate::{
     BreezEvent, Config, FullReverseSwapInfo, PaymentStatus, ReverseSwapInfo, ReverseSwapInfoCached,
     ReverseSwapPairInfo, ReverseSwapStatus,
 };
-use crate::{ReverseSwapStatus::*, SendOnchainRequest};
+use crate::{ReverseSwapStatus::*, RouteHintHop, SendOnchainRequest};
 use anyhow::{anyhow, ensure, Result};
 use bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
 use bitcoin::consensus::serialize;
@@ -28,6 +28,7 @@ use tokio::time::{sleep, Duration};
 // Estimates based on https://github.com/BoltzExchange/boltz-backend/blob/master/lib/rates/FeeProvider.ts#L31-L42
 pub const ESTIMATED_CLAIM_TX_VSIZE: u64 = 138;
 pub const ESTIMATED_LOCKUP_TX_VSIZE: u64 = 153;
+pub(crate) const MAX_PAYMENT_PATH_HOPS: u32 = 3;
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -95,6 +96,32 @@ impl BTCSendSwap {
             .map_err(|e| ReverseSwapError::InvalidDestinationAddress(anyhow::Error::new(e)))
     }
 
+    pub(crate) async fn last_hop_for_payment(&self) -> ReverseSwapResult<RouteHintHop> {
+        let reverse_routing_node = self
+            .reverse_swapper_api
+            .fetch_reverse_routing_node()
+            .await?;
+        let routing_hints = self
+            .reverse_swap_service_api
+            .get_route_hints(hex::encode(reverse_routing_node.clone()))
+            .await?;
+        routing_hints
+            .first()
+            .ok_or_else(|| {
+                ReverseSwapError::RouteNotFound(anyhow!(
+                    "No route hints found for reverse routing node {reverse_routing_node:?}"
+                ))
+            })?
+            .hops
+            .first()
+            .ok_or_else(|| {
+                ReverseSwapError::RouteNotFound(anyhow!(
+                    "No hops found for reverse routing node {reverse_routing_node:?}"
+                ))
+            })
+            .map(|r| r.clone())
+    }
+
     /// Creates and persists a reverse swap. If the initial payment fails, the reverse swap has the new
     /// status persisted.
     pub(crate) async fn create_reverse_swap(
@@ -121,7 +148,7 @@ impl BTCSendSwap {
         let res = tokio::select! {
             pay_thread_res = tokio::time::timeout(
                 Duration::from_secs(self.config.payment_timeout_sec as u64),
-                self.node_api.send_payment(created_rsi.invoice.clone(), None)
+                self.node_api.send_pay(created_rsi.invoice.clone(), MAX_PAYMENT_PATH_HOPS)
             ) => {
                 // TODO It doesn't fail when trying to pay more sats than max_payable?
                 match pay_thread_res {

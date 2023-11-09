@@ -27,7 +27,7 @@ use crate::models::Network::*;
 use crate::swap_in::error::SwapResult;
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
-use crate::{LNInvoice, LnUrlErrorData, LnUrlPayRequestData, LnUrlWithdrawRequestData};
+use crate::{LNInvoice, LnUrlErrorData, LnUrlPayRequestData, LnUrlWithdrawRequestData, RouteHint};
 
 pub const SWAP_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60 * 24 * 2; // 2 days
 pub const INVOICE_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60; // 60 minutes
@@ -401,6 +401,9 @@ pub(crate) trait ReverseSwapServiceAPI: Send + Sync {
 
     /// Performs a live lookup of the reverse swap's status on the Boltz API
     async fn get_boltz_status(&self, id: String) -> ReverseSwapResult<BoltzApiReverseSwapStatus>;
+
+    /// Fetch the private route hints for the reverse swap node.
+    async fn get_route_hints(&self, routing_node_id: String) -> ReverseSwapResult<Vec<RouteHint>>;
 }
 
 /// Internal SDK log entry
@@ -680,6 +683,22 @@ pub struct ClosedChannelPaymentDetails {
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct ReverseSwapFeesRequest {
     pub send_amount_sat: Option<u64>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct MaxReverseSwapAmountResponse {
+    /// The total sats that can be sent onchain.
+    pub total_sat: u64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct MaxChannelAmount {
+    /// The channel id.
+    pub channel_id: String,
+    /// The max amount can be sent from this channel.
+    pub amount_msat: u64,
+    /// The payment path to be used for the maximum amount.
+    pub path: PaymentPath,
 }
 
 /// Represents a receive payment request.
@@ -1108,6 +1127,13 @@ pub(crate) fn parse_short_channel_id(id_str: &str) -> Result<u64> {
     Ok((block_num & 0xFFFFFF) << 40 | (tx_num & 0xFFFFFF) << 16 | (tx_out & 0xFFFF))
 }
 
+pub(crate) fn format_short_channel_id(id: u64) -> String {
+    let block_num = (id >> 40) as u32;
+    let tx_num = ((id >> 16) & 0xFFFFFF) as u32;
+    let tx_out = (id & 0xFFFF) as u16;
+    format!("{block_num}x{tx_num}x{tx_out}")
+}
+
 /// UTXO known to the LN node
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
 pub struct UnspentTransactionOutput {
@@ -1215,6 +1241,62 @@ impl FromStr for BuyBitcoinProvider {
     }
 }
 
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+pub struct PaymentPath {
+    pub edges: Vec<PaymentPathEdge>,
+}
+
+impl PaymentPath {
+    pub fn final_hop_amount(&self, first_hop_amount_msat: u64) -> u64 {
+        let mut max_to_send = first_hop_amount_msat;
+        for h in self.edges.iter().skip(1) {
+            max_to_send = h.amount_to_forward(max_to_send);
+        }
+        max_to_send
+    }
+
+    pub fn first_hop_amount(&self, final_hop_amount_msat: u64) -> u64 {
+        let mut first_hop_amount = final_hop_amount_msat;
+        for h in self.edges.iter().skip(1).rev() {
+            first_hop_amount = h.amount_from_forward(first_hop_amount);
+        }
+        first_hop_amount
+    }
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+pub struct PaymentPathEdge {
+    pub node_id: Vec<u8>,
+    pub short_channel_id: String,
+    pub channel_delay: u64,
+    pub base_fee_msat: u64,
+    pub fee_per_millionth: u64,
+}
+
+impl PaymentPathEdge {
+    pub(crate) fn amount_to_forward(&self, in_amount_msat: u64) -> u64 {
+        let amount_to_forward = Self::divide_ceil(
+            1_000_000 * (in_amount_msat - self.base_fee_msat),
+            1_000_000 + self.fee_per_millionth,
+        );
+
+        info!("amount_to_forward: in_amount_msat = {in_amount_msat},base_fee_msat={}, fee_per_millionth={}  amount_to_forward: {}", self.base_fee_msat, self.fee_per_millionth, amount_to_forward);
+        amount_to_forward
+    }
+
+    pub(crate) fn amount_from_forward(&self, forward_amount_msat: u64) -> u64 {
+        let in_amount_msat = self.base_fee_msat
+            + forward_amount_msat * (1_000_000 + self.fee_per_millionth) / 1_000_000;
+
+        print!("amount_from_forward: in_amount_msat = {in_amount_msat},base_fee_msat={}, fee_per_millionth={}  amount_to_forward: {}", self.base_fee_msat, self.fee_per_millionth, forward_amount_msat);
+        in_amount_msat
+    }
+
+    fn divide_ceil(dividend: u64, factor: u64) -> u64 {
+        (dividend + factor - 1) / factor
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
@@ -1223,7 +1305,68 @@ mod tests {
 
     use crate::grpc::PaymentInformation;
     use crate::test_utils::{get_test_ofp, rand_vec_u8};
-    use crate::OpeningFeeParams;
+    use crate::{OpeningFeeParams, PaymentPath, PaymentPathEdge};
+
+    #[test]
+    fn test_route_fees() -> Result<()> {
+        let route = PaymentPath {
+            edges: vec![
+                PaymentPathEdge {
+                    node_id: vec![1],
+                    short_channel_id: "807189x2048x0".into(),
+                    channel_delay: 34,
+                    base_fee_msat: 1000,
+                    fee_per_millionth: 10,
+                },
+                PaymentPathEdge {
+                    node_id: vec![2],
+                    short_channel_id: "811871x2726x1".into(),
+                    channel_delay: 34,
+                    base_fee_msat: 0,
+                    fee_per_millionth: 0,
+                },
+                PaymentPathEdge {
+                    node_id: vec![3],
+                    short_channel_id: "16000000x0x18087".into(),
+                    channel_delay: 40,
+                    base_fee_msat: 1000,
+                    fee_per_millionth: 1,
+                },
+            ],
+        };
+        assert_eq!(route.final_hop_amount(1141000), 1139999);
+        assert_eq!(route.first_hop_amount(1139999), 1141000);
+
+        let route = PaymentPath {
+            edges: vec![
+                PaymentPathEdge {
+                    node_id: vec![1],
+                    short_channel_id: "807189x2048x0".into(),
+                    channel_delay: 34,
+                    base_fee_msat: 1000,
+                    fee_per_millionth: 10,
+                },
+                PaymentPathEdge {
+                    node_id: vec![2],
+                    short_channel_id: "811871x2726x1".into(),
+                    channel_delay: 34,
+                    base_fee_msat: 0,
+                    fee_per_millionth: 0,
+                },
+                PaymentPathEdge {
+                    node_id: vec![3],
+                    short_channel_id: "16000000x0x18087".into(),
+                    channel_delay: 40,
+                    base_fee_msat: 0,
+                    fee_per_millionth: 2000,
+                },
+            ],
+        };
+        assert_eq!(route.final_hop_amount(1141314), 1139036);
+        assert_eq!(route.first_hop_amount(1139036), 1141314);
+
+        Ok(())
+    }
 
     use super::OpeningFeeParamsMenu;
 

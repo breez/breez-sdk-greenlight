@@ -693,6 +693,36 @@ impl BreezServices {
         Ok(res)
     }
 
+    /// Returns the max amount that can be sent on-chain using the send_onchain method.
+    /// The returned amount is the sum of the max amount that can be sent on each channel
+    /// minus the expected fees.
+    /// This is possible since the route to the swapper node is known in advance and is expected
+    /// to consist of maximum 3 hops.
+    pub async fn max_reverse_swap_amount(&self) -> SdkResult<MaxReverseSwapAmountResponse> {
+        // fetch the last hop hints from the swapper
+        let last_hop = self.btc_send_swapper.last_hop_for_payment().await?;
+        // calculate the largest payment we can send over this route using maximum 3 hops
+        // as follows:
+        // User Node -> LSP Node -> Routing Node -> Swapper Node
+        let max_to_pay = self
+            .node_api
+            .max_sendable_amount(
+                Some(
+                    hex::decode(&last_hop.src_node_id).map_err(|e| SdkError::Generic {
+                        err: format!("Failed to decode hex node_id: {e}"),
+                    })?,
+                ),
+                swap_out::reverseswap::MAX_PAYMENT_PATH_HOPS,
+                Some(&last_hop),
+            )
+            .await?;
+
+        // Sum the max amount per channel and return the result
+        let total_msat: u64 = max_to_pay.into_iter().map(|m| m.amount_msat).sum();
+        let total_sat = total_msat / 1000;
+        Ok(MaxReverseSwapAmountResponse { total_sat })
+    }
+
     /// Creates a reverse swap and attempts to pay the HODL invoice
     pub async fn send_onchain(
         &self,

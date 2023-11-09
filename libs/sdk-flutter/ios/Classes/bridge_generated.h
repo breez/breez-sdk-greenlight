@@ -278,6 +278,8 @@ void wire_fetch_fiat_rates(int64_t port_);
 
 void wire_list_fiat_currencies(int64_t port_);
 
+void wire_max_reverse_swap_amount(int64_t port_);
+
 void wire_send_onchain(int64_t port_, struct wire_SendOnchainRequest *req);
 
 void wire_receive_onchain(int64_t port_, struct wire_ReceiveOnchainRequest *req);
@@ -404,6 +406,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_lnurl_auth);
     dummy_var ^= ((int64_t) (void*) wire_fetch_fiat_rates);
     dummy_var ^= ((int64_t) (void*) wire_list_fiat_currencies);
+    dummy_var ^= ((int64_t) (void*) wire_max_reverse_swap_amount);
     dummy_var ^= ((int64_t) (void*) wire_send_onchain);
     dummy_var ^= ((int64_t) (void*) wire_receive_onchain);
     dummy_var ^= ((int64_t) (void*) wire_buy_bitcoin);

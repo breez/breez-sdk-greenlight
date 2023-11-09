@@ -70,6 +70,7 @@ use crate::models::LnUrlWithdrawRequest;
 use crate::models::LnUrlWithdrawResult;
 use crate::models::LnUrlWithdrawSuccessData;
 use crate::models::LogEntry;
+use crate::models::MaxReverseSwapAmountResponse;
 use crate::models::Network;
 use crate::models::NodeConfig;
 use crate::models::NodeState;
@@ -517,6 +518,16 @@ fn wire_list_fiat_currencies_impl(port_: MessagePort) {
             mode: FfiCallMode::Normal,
         },
         move || move |task_callback| list_fiat_currencies(),
+    )
+}
+fn wire_max_reverse_swap_amount_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, MaxReverseSwapAmountResponse>(
+        WrapInfo {
+            debug_name: "max_reverse_swap_amount",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || move |task_callback| max_reverse_swap_amount(),
     )
 }
 fn wire_send_onchain_impl(port_: MessagePort, req: impl Wire2Api<SendOnchainRequest> + UnwindSafe) {
@@ -1117,6 +1128,9 @@ impl support::IntoDart for LNInvoice {
             self.expiry.into_into_dart().into_dart(),
             self.routing_hints.into_into_dart().into_dart(),
             self.payment_secret.into_into_dart().into_dart(),
+            self.min_final_cltv_expiry_delta
+                .into_into_dart()
+                .into_dart(),
         ]
         .into_dart()
     }
@@ -1388,6 +1402,18 @@ impl support::IntoDart for LspInformation {
 }
 impl support::IntoDartExceptPrimitive for LspInformation {}
 impl rust2dart::IntoIntoDart<LspInformation> for LspInformation {
+    fn into_into_dart(self) -> Self {
+        self
+    }
+}
+
+impl support::IntoDart for MaxReverseSwapAmountResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.total_sat.into_into_dart().into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for MaxReverseSwapAmountResponse {}
+impl rust2dart::IntoIntoDart<MaxReverseSwapAmountResponse> for MaxReverseSwapAmountResponse {
     fn into_into_dart(self) -> Self {
         self
     }

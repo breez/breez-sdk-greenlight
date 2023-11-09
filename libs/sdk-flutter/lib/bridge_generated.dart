@@ -177,6 +177,11 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kListFiatCurrenciesConstMeta;
 
+  /// See [BreezServices::max_reverse_swap_amount]
+  Future<MaxReverseSwapAmountResponse> maxReverseSwapAmount({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kMaxReverseSwapAmountConstMeta;
+
   /// See [BreezServices::send_onchain]
   Future<SendOnchainResponse> sendOnchain({required SendOnchainRequest req, dynamic hint});
 
@@ -616,6 +621,7 @@ class LNInvoice {
   final int expiry;
   final List<RouteHint> routingHints;
   final Uint8List paymentSecret;
+  final int minFinalCltvExpiryDelta;
 
   const LNInvoice({
     required this.bolt11,
@@ -628,6 +634,7 @@ class LNInvoice {
     required this.expiry,
     required this.routingHints,
     required this.paymentSecret,
+    required this.minFinalCltvExpiryDelta,
   });
 }
 
@@ -958,6 +965,15 @@ class LspInformation {
     required this.minHtlcMsat,
     required this.lspPubkey,
     required this.openingFeeParamsList,
+  });
+}
+
+class MaxReverseSwapAmountResponse {
+  /// The total sats that can be sent onchain.
+  final int totalSat;
+
+  const MaxReverseSwapAmountResponse({
+    required this.totalSat,
   });
 }
 
@@ -2184,6 +2200,21 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: [],
       );
 
+  Future<MaxReverseSwapAmountResponse> maxReverseSwapAmount({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_max_reverse_swap_amount(port_),
+      parseSuccessData: _wire2api_max_reverse_swap_amount_response,
+      constMeta: kMaxReverseSwapAmountConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kMaxReverseSwapAmountConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "max_reverse_swap_amount",
+        argNames: [],
+      );
+
   Future<SendOnchainResponse> sendOnchain({required SendOnchainRequest req, dynamic hint}) {
     var arg0 = _platform.api2wire_box_autoadd_send_onchain_request(req);
     return _platform.executeNormal(FlutterRustBridgeTask(
@@ -2804,7 +2835,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   LNInvoice _wire2api_ln_invoice(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 10) throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
+    if (arr.length != 11) throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
     return LNInvoice(
       bolt11: _wire2api_String(arr[0]),
       payeePubkey: _wire2api_String(arr[1]),
@@ -2816,6 +2847,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       expiry: _wire2api_u64(arr[7]),
       routingHints: _wire2api_list_route_hint(arr[8]),
       paymentSecret: _wire2api_uint_8_list(arr[9]),
+      minFinalCltvExpiryDelta: _wire2api_u64(arr[10]),
     );
   }
 
@@ -2999,6 +3031,14 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       minHtlcMsat: _wire2api_i64(arr[10]),
       lspPubkey: _wire2api_uint_8_list(arr[11]),
       openingFeeParamsList: _wire2api_opening_fee_params_menu(arr[12]),
+    );
+  }
+
+  MaxReverseSwapAmountResponse _wire2api_max_reverse_swap_amount_response(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
+    return MaxReverseSwapAmountResponse(
+      totalSat: _wire2api_u64(arr[0]),
     );
   }
 
@@ -4628,6 +4668,19 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_list_fiat_currenciesPtr =
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_list_fiat_currencies');
   late final _wire_list_fiat_currencies = _wire_list_fiat_currenciesPtr.asFunction<void Function(int)>();
+
+  void wire_max_reverse_swap_amount(
+    int port_,
+  ) {
+    return _wire_max_reverse_swap_amount(
+      port_,
+    );
+  }
+
+  late final _wire_max_reverse_swap_amountPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_max_reverse_swap_amount');
+  late final _wire_max_reverse_swap_amount =
+      _wire_max_reverse_swap_amountPtr.asFunction<void Function(int)>();
 
   void wire_send_onchain(
     int port_,

@@ -461,6 +461,16 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
+    @objc(maxReverseSwapAmount:reject:)
+    func maxReverseSwapAmount(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            var res = try getBreezServices().maxReverseSwapAmount()
+            resolve(BreezSDKMapper.dictionaryOf(maxReverseSwapAmountResponse: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
     @objc(sendOnchain:resolve:reject:)
     func sendOnchain(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {

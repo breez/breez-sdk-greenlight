@@ -609,6 +609,7 @@ class BreezSDKMapper {
         let routingHints = try asRouteHintList(arr: routingHintsTmp)
 
         guard let paymentSecret = lnInvoice["paymentSecret"] as? [UInt8] else { throw SdkError.Generic(message: "Missing mandatory field paymentSecret for type LnInvoice") }
+        guard let minFinalCltvExpiryDelta = lnInvoice["minFinalCltvExpiryDelta"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field minFinalCltvExpiryDelta for type LnInvoice") }
 
         return LnInvoice(
             bolt11: bolt11,
@@ -620,7 +621,8 @@ class BreezSDKMapper {
             timestamp: timestamp,
             expiry: expiry,
             routingHints: routingHints,
-            paymentSecret: paymentSecret
+            paymentSecret: paymentSecret,
+            minFinalCltvExpiryDelta: minFinalCltvExpiryDelta
         )
     }
 
@@ -636,6 +638,7 @@ class BreezSDKMapper {
             "expiry": lnInvoice.expiry,
             "routingHints": arrayOf(routeHintList: lnInvoice.routingHints),
             "paymentSecret": lnInvoice.paymentSecret,
+            "minFinalCltvExpiryDelta": lnInvoice.minFinalCltvExpiryDelta,
         ]
     }
 
@@ -1283,6 +1286,36 @@ class BreezSDKMapper {
 
     static func arrayOf(lspInformationList: [LspInformation]) -> [Any] {
         return lspInformationList.map { v -> [String: Any?] in dictionaryOf(lspInformation: v) }
+    }
+
+    static func asMaxReverseSwapAmountResponse(maxReverseSwapAmountResponse: [String: Any?]) throws -> MaxReverseSwapAmountResponse {
+        guard let totalSat = maxReverseSwapAmountResponse["totalSat"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field totalSat for type MaxReverseSwapAmountResponse") }
+
+        return MaxReverseSwapAmountResponse(
+            totalSat: totalSat)
+    }
+
+    static func dictionaryOf(maxReverseSwapAmountResponse: MaxReverseSwapAmountResponse) -> [String: Any?] {
+        return [
+            "totalSat": maxReverseSwapAmountResponse.totalSat,
+        ]
+    }
+
+    static func asMaxReverseSwapAmountResponseList(arr: [Any]) throws -> [MaxReverseSwapAmountResponse] {
+        var list = [MaxReverseSwapAmountResponse]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var maxReverseSwapAmountResponse = try asMaxReverseSwapAmountResponse(maxReverseSwapAmountResponse: val)
+                list.append(maxReverseSwapAmountResponse)
+            } else {
+                throw SdkError.Generic(message: "Unexpected type MaxReverseSwapAmountResponse")
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(maxReverseSwapAmountResponseList: [MaxReverseSwapAmountResponse]) -> [Any] {
+        return maxReverseSwapAmountResponseList.map { v -> [String: Any?] in dictionaryOf(maxReverseSwapAmountResponse: v) }
     }
 
     static func asMessageSuccessActionData(messageSuccessActionData: [String: Any?]) throws -> MessageSuccessActionData {

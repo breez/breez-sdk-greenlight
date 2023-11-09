@@ -30,6 +30,9 @@ pub enum ReverseSwapError {
 
     #[error("Unexpected redeem script")]
     UnexpectedRedeemScript,
+
+    #[error("Route not found: {0}")]
+    RouteNotFound(anyhow::Error),
 }
 
 impl From<hashes::hex::Error> for ReverseSwapError {
