@@ -1379,6 +1379,7 @@ impl TryFrom<OffChainPayment> for Payment {
                     lnurl_metadata: None,       // For received payments, this is None
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
+                    swap_info: None,
                 },
             },
         })
@@ -1416,6 +1417,7 @@ impl TryFrom<gl_client::signer::model::greenlight::Invoice> for Payment {
                     lnurl_metadata: None,       // For received payments, this is None
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
+                    swap_info: None,
                 },
             },
         })
@@ -1468,6 +1470,7 @@ impl TryFrom<gl_client::signer::model::greenlight::Payment> for Payment {
                     lnurl_metadata: None,
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
+                    swap_info: None,
                 },
             },
         })
@@ -1507,6 +1510,7 @@ impl TryFrom<cln::ListinvoicesInvoices> for Payment {
                     lnurl_metadata: None,       // For received payments, this is None
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
+                    swap_info: None,
                 },
             },
         })
@@ -1569,6 +1573,7 @@ impl TryFrom<cln::ListpaysPays> for Payment {
                     lnurl_metadata: None,
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
+                    swap_info: None,
                 },
             },
         })

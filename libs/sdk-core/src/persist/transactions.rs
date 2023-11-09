@@ -249,6 +249,9 @@ impl SqliteStorage {
             data.lnurl_metadata = row.get(9)?;
             data.ln_address = row.get(10)?;
             data.lnurl_withdraw_endpoint = row.get(11)?;
+            data.swap_info = self
+                .get_swap_info_by_hash(&hex::decode(&payment.id).unwrap_or_default())
+                .unwrap_or(None)
         }
 
         // In case we have a record of the open channel fee, let's use it.
@@ -381,7 +384,38 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
 
     let payment_hash_with_lnurl_success_action = "123";
     let payment_hash_with_lnurl_withdraw = "124";
+    let payment_hash_with_swap_info: Vec<u8> = vec![234, 12, 53, 124];
     let lnurl_withdraw_url = "https://test.lnurl.withdraw.link";
+    let swap_info = SwapInfo {
+        bitcoin_address: "123".to_string(),
+        created_at: 1234567,
+        lock_height: 7654321,
+        payment_hash: payment_hash_with_swap_info.clone(),
+        preimage: vec![1, 2, 3],
+        private_key: vec![3, 2, 1],
+        public_key: vec![1, 3, 2],
+        swapper_public_key: vec![2, 1, 3],
+        script: vec![2, 3, 1],
+        bolt11: Some("swap_bolt11".into()),
+        paid_sats: 50,
+        confirmed_sats: 50,
+        unconfirmed_sats: 0,
+        status: SwapStatus::Expired,
+        refund_tx_ids: vec![],
+        unconfirmed_tx_ids: vec![],
+        confirmed_tx_ids: vec![],
+        min_allowed_deposit: 5_000,
+        max_allowed_deposit: 1_000_000,
+        last_redeem_error: None,
+        channel_opening_fees: Some(OpeningFeeParams {
+            min_msat: 5_000_000,
+            proportional: 50,
+            valid_until: "date".to_string(),
+            max_idle_time: 12345,
+            max_client_to_self_delay: 234,
+            promise: "promise".to_string(),
+        }),
+    };
     let txs = [
         Payment {
             id: payment_hash_with_lnurl_success_action.to_string(),
@@ -403,6 +437,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                     lnurl_metadata: Some(lnurl_metadata.to_string()),
                     ln_address: Some(test_ln_address.to_string()),
                     lnurl_withdraw_endpoint: None,
+                    swap_info: None,
                 },
             },
         },
@@ -426,6 +461,31 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                     lnurl_metadata: None,
                     ln_address: None,
                     lnurl_withdraw_endpoint: Some(lnurl_withdraw_url.to_string()),
+                    swap_info: None,
+                },
+            },
+        },
+        Payment {
+            id: hex::encode(payment_hash_with_swap_info.clone()),
+            payment_type: PaymentType::Received,
+            payment_time: 999,
+            amount_msat: 50_000,
+            fee_msat: 20,
+            status: PaymentStatus::Complete,
+            description: Some("desc".to_string()),
+            details: PaymentDetails::Ln {
+                data: LnPaymentDetails {
+                    payment_hash: hex::encode(payment_hash_with_swap_info.clone()),
+                    label: "label".to_string(),
+                    destination_pubkey: "pubkey".to_string(),
+                    payment_preimage: "payment_preimage".to_string(),
+                    keysend: false,
+                    bolt11: "swap_bolt11".to_string(),
+                    lnurl_success_action: None,
+                    lnurl_metadata: None,
+                    ln_address: None,
+                    lnurl_withdraw_endpoint: None,
+                    swap_info: Some(swap_info.clone()),
                 },
             },
         },
@@ -450,6 +510,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                 lnurl_metadata: None,
                 ln_address: None,
                 lnurl_withdraw_endpoint: None,
+                swap_info: None,
             },
         },
     }];
@@ -471,10 +532,15 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
         None,
         Some(lnurl_withdraw_url.to_string()),
     )?;
+    storage.insert_swap(swap_info.clone())?;
+    storage.update_swap_bolt11(
+        swap_info.bitcoin_address.clone(),
+        swap_info.bolt11.clone().unwrap(),
+    )?;
 
     // retrieve all
     let retrieve_txs = storage.list_payments(ListPaymentsRequest::default())?;
-    assert_eq!(retrieve_txs.len(), 2);
+    assert_eq!(retrieve_txs.len(), 3);
     assert_eq!(retrieve_txs, txs);
 
     //test only sent
@@ -499,15 +565,19 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
         filters: Some(vec![PaymentTypeFilter::Received]),
         ..Default::default()
     })?;
-    assert_eq!(retrieve_txs.len(), 1);
+    assert_eq!(retrieve_txs.len(), 2);
     assert_eq!(retrieve_txs[0], txs[1]);
+    assert_eq!(retrieve_txs[1], txs[2]);
+    assert!(
+        matches!( &retrieve_txs[1].details, PaymentDetails::Ln {data: LnPaymentDetails {swap_info: swap, ..}} if swap == &Some(swap_info))
+    );
 
     let max_ts = storage.last_payment_timestamp()?;
     assert_eq!(max_ts, 2000);
 
     storage.insert_or_update_payments(&txs)?;
     let retrieve_txs = storage.list_payments(ListPaymentsRequest::default())?;
-    assert_eq!(retrieve_txs.len(), 2);
+    assert_eq!(retrieve_txs.len(), 3);
     assert_eq!(retrieve_txs, txs);
 
     storage.insert_open_channel_payment_info("123", 150)?;
@@ -519,7 +589,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
         include_failures: Some(true),
         ..Default::default()
     })?;
-    assert_eq!(retrieve_txs.len(), 3);
+    assert_eq!(retrieve_txs.len(), 4);
 
     // test sent with failures
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {

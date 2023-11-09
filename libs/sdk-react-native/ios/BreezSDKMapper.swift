@@ -724,6 +724,10 @@ class BreezSDKMapper {
         let lnurlMetadata = lnPaymentDetails["lnurlMetadata"] as? String
         let lnAddress = lnPaymentDetails["lnAddress"] as? String
         let lnurlWithdrawEndpoint = lnPaymentDetails["lnurlWithdrawEndpoint"] as? String
+        var swapInfo: SwapInfo?
+        if let swapInfoTmp = lnPaymentDetails["swapInfo"] as? [String: Any?] {
+            swapInfo = try asSwapInfo(swapInfo: swapInfoTmp)
+        }
 
         return LnPaymentDetails(
             paymentHash: paymentHash,
@@ -735,7 +739,8 @@ class BreezSDKMapper {
             lnurlSuccessAction: lnurlSuccessAction,
             lnurlMetadata: lnurlMetadata,
             lnAddress: lnAddress,
-            lnurlWithdrawEndpoint: lnurlWithdrawEndpoint
+            lnurlWithdrawEndpoint: lnurlWithdrawEndpoint,
+            swapInfo: swapInfo
         )
     }
 
@@ -751,6 +756,7 @@ class BreezSDKMapper {
             "lnurlMetadata": lnPaymentDetails.lnurlMetadata == nil ? nil : lnPaymentDetails.lnurlMetadata,
             "lnAddress": lnPaymentDetails.lnAddress == nil ? nil : lnPaymentDetails.lnAddress,
             "lnurlWithdrawEndpoint": lnPaymentDetails.lnurlWithdrawEndpoint == nil ? nil : lnPaymentDetails.lnurlWithdrawEndpoint,
+            "swapInfo": lnPaymentDetails.swapInfo == nil ? nil : dictionaryOf(swapInfo: lnPaymentDetails.swapInfo!),
         ]
     }
 

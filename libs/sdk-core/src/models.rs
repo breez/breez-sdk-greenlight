@@ -633,6 +633,7 @@ pub struct PaymentResponse {
 }
 
 /// Wrapper for the different types of payments
+#[allow(clippy::large_enum_variant)]
 #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum PaymentDetails {
@@ -668,6 +669,9 @@ pub struct LnPaymentDetails {
 
     /// Only set for [PaymentType::Received] payments that were received as part of LNURL-withdraw
     pub lnurl_withdraw_endpoint: Option<String>,
+
+    /// Only set for [PaymentType::Received] payments that were received in the context of a swap
+    pub swap_info: Option<SwapInfo>,
 }
 
 /// Represents the funds that were on the user side of the channel at the time it was closed.
