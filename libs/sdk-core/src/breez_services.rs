@@ -1371,16 +1371,11 @@ impl BreezServices {
         })
     }
 
-    pub async fn register_notifications(
+    pub async fn register_webhook(
         &self,
-        platform: String,
-        token: String,
+        url: String,
     ) -> SdkResult<RegisterPaymentNotificationResponse> {
-        info!("Registering notification");
-
-        // TODO Make configurable?
-        let base_url = "https://notifier.breez.technology";
-        let url = format!("/api/v1/notify{base_url}?platform={platform}&token={token}");
+        info!("Registering for webhook notifications");
 
         let message = url.clone();
         let sign_request = SignMessageRequest { message };
