@@ -697,7 +697,7 @@ pub struct MaxChannelAmount {
     pub channel_id: String,
     /// The max amount can be sent from this channel.
     pub amount_msat: u64,
-    /// The payment path to be used for thte maximum amount.
+    /// The payment path to be used for the maximum amount.
     pub path: PaymentPath,
 }
 
@@ -1275,7 +1275,7 @@ pub struct PaymentPathEdge {
 
 impl PaymentPathEdge {
     pub(crate) fn amount_to_forward(&self, in_amount_msat: u64) -> u64 {
-        let amount_to_forward = Self::devide_ceil(
+        let amount_to_forward = Self::divide_ceil(
             1_000_000 * (in_amount_msat - self.base_fee_msat),
             1_000_000 + self.fee_per_millionth,
         );
@@ -1292,7 +1292,7 @@ impl PaymentPathEdge {
         in_amount_msat
     }
 
-    fn devide_ceil(dividend: u64, factor: u64) -> u64 {
+    fn divide_ceil(dividend: u64, factor: u64) -> u64 {
         (dividend + factor - 1) / factor
     }
 }

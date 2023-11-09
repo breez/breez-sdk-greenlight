@@ -300,6 +300,7 @@ pub fn list_fiat_currencies() -> Result<Vec<FiatCurrency>> {
 
 /*  On-Chain Swap API's */
 
+/// See [BreezServices::max_reverse_swap_amount]
 pub fn max_reverse_swap_amount() -> Result<MaxReverseSwapAmountResponse> {
     block_on(async { get_breez_services().await?.max_reverse_swap_amount().await })
         .map_err(anyhow::Error::new::<SdkError>)

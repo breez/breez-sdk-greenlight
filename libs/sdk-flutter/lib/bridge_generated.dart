@@ -177,6 +177,7 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kListFiatCurrenciesConstMeta;
 
+  /// See [BreezServices::max_reverse_swap_amount]
   Future<MaxReverseSwapAmountResponse> maxReverseSwapAmount({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kMaxReverseSwapAmountConstMeta;
