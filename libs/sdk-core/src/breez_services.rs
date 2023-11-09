@@ -270,6 +270,7 @@ impl BreezServices {
                     .on_payment_completed(
                         parsed_invoice.payee_pubkey.clone(),
                         Some(parsed_invoice),
+                        req.amount_msat,
                         payment_res,
                     )
                     .await?;
@@ -290,7 +291,7 @@ impl BreezServices {
             .map_err(Into::into)
             .await;
         let payment = self
-            .on_payment_completed(req.node_id, None, payment_res)
+            .on_payment_completed(req.node_id, None, Some(req.amount_msat), payment_res)
             .await?;
         Ok(SendPaymentResponse { payment })
     }
@@ -367,11 +368,12 @@ impl BreezServices {
                 };
 
                 // Store SA (if available) + LN Address in separate table, associated to payment_hash
-                self.persister.insert_lnurl_payment_external_info(
+                self.persister.insert_payment_external_info(
                     &details.payment_hash,
                     maybe_sa_processed.as_ref(),
                     Some(req.data.metadata_str),
                     req.data.ln_address,
+                    None,
                     None,
                 )?;
 
@@ -410,12 +412,13 @@ impl BreezServices {
 
         if let LnUrlWithdrawResult::Ok { ref data } = res {
             // If endpoint was successfully called, store the LNURL-withdraw endpoint URL as metadata linked to the invoice
-            self.persister.insert_lnurl_payment_external_info(
+            self.persister.insert_payment_external_info(
                 &data.invoice.payment_hash,
                 None,
                 None,
                 None,
                 Some(lnurl_w_endpoint),
+                None,
             )?;
         }
 
@@ -885,6 +888,7 @@ impl BreezServices {
         &self,
         node_id: String,
         invoice: Option<LNInvoice>,
+        amount_msat: Option<u64>,
         payment_res: Result<PaymentResponse, SendPaymentError>,
     ) -> Result<Payment, SendPaymentError> {
         self.do_sync(payment_res.is_ok()).await?;
@@ -901,6 +905,16 @@ impl BreezServices {
                 }),
             },
             Err(e) => {
+                if let Some(inv) = invoice.clone() {
+                    self.persister.insert_payment_external_info(
+                        &inv.payment_hash,
+                        None,
+                        None,
+                        None,
+                        None,
+                        amount_msat.or(inv.amount_msat),
+                    )?;
+                }
                 self.notify_event_listeners(BreezEvent::PaymentFailed {
                     details: PaymentFailedData {
                         error: e.to_string(),
@@ -2161,19 +2175,21 @@ pub(crate) mod tests {
         let persister = Arc::new(create_test_persister(test_config.clone()));
         persister.init()?;
         persister.insert_or_update_payments(&dummy_transactions)?;
-        persister.insert_lnurl_payment_external_info(
+        persister.insert_payment_external_info(
             payment_hash_with_lnurl_success_action,
             Some(&sa),
             Some(lnurl_metadata.to_string()),
             Some(test_ln_address.to_string()),
             None,
+            None,
         )?;
-        persister.insert_lnurl_payment_external_info(
+        persister.insert_payment_external_info(
             payment_hash_lnurl_withdraw,
             None,
             None,
             None,
             Some(test_lnurl_withdraw_endpoint.to_string()),
+            None,
         )?;
         persister.insert_swap(swap_info.clone())?;
         persister.update_swap_bolt11(

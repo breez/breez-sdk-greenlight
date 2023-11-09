@@ -530,5 +530,6 @@ pub(crate) fn current_sync_migrations() -> Vec<&'static str> {
          INSERT INTO sync_requests(changed_table) VALUES('payments_external_info');
         END;
         ",
+        "ALTER TABLE payments_external_info ADD COLUMN failed_amount_msat INTEGER;",
     ]
 }
