@@ -32,7 +32,6 @@ use gl_client::tls::TlsConfig;
 use gl_client::{node, utils};
 use lightning::util::message_signing::verify;
 use lightning_invoice::{RawInvoice, SignedRawInvoice};
-use rand::Rng;
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 use tokio::sync::{mpsc, Mutex};
