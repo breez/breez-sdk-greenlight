@@ -133,7 +133,7 @@ impl LspAPI for BreezServer {
         buf.reserve(subscribe_request.encoded_len());
         subscribe_request
             .encode(&mut buf)
-            .map_err(|e| SdkError::ServiceConnectivity {
+            .map_err(|e| SdkError::Generic {
                 err: format!("(LSP {lsp_id}) Failed to encode subscription request: {e}"),
             })?;
 
