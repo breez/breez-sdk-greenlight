@@ -60,7 +60,8 @@ pub struct Peer {
 #[tonic::async_trait]
 pub trait LspAPI: Send + Sync {
     async fn list_lsps(&self, node_pubkey: String) -> SdkResult<Vec<LspInformation>>;
-    async fn register_notifications(
+    /// Register for webhook callbacks at the given `callback_url` whenever a new payment is received
+    async fn register_payment_notifications(
         &self,
         lsp_id: String,
         lsp_pubkey: Vec<u8>,

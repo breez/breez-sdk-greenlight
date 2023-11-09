@@ -115,7 +115,7 @@ impl LspAPI for BreezServer {
         Ok(lsp_list)
     }
 
-    async fn register_notifications(
+    async fn register_payment_notifications(
         &self,
         lsp_id: String,
         lsp_pubkey: Vec<u8>,

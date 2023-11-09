@@ -36,7 +36,7 @@ use crate::grpc::information_client::InformationClient;
 use crate::grpc::payment_notifier_client::PaymentNotifierClient;
 use crate::grpc::signer_client::SignerClient;
 use crate::grpc::swapper_client::SwapperClient;
-use crate::grpc::{PaymentInformation, RegisterPaymentNotificationResponse};
+use crate::grpc::PaymentInformation;
 use crate::invoice::{add_lsp_routing_hints, parse_invoice, LNInvoice, RouteHint, RouteHintHop};
 use crate::lnurl::auth::perform_lnurl_auth;
 use crate::lnurl::pay::model::SuccessAction::Aes;
@@ -1370,10 +1370,10 @@ impl BreezServices {
         })
     }
 
-    pub async fn register_webhook(
-        &self,
-        callback_url: String,
-    ) -> SdkResult<RegisterPaymentNotificationResponse> {
+    /// Register for webhook callbacks at the given `callback_url` whenever a new payment is received.
+    ///
+    /// More webhook types may be supported in the future.
+    pub async fn register_webhook(&self, callback_url: String) -> SdkResult<()> {
         info!("Registering for webhook notifications");
 
         let message = callback_url.clone();
@@ -1381,9 +1381,8 @@ impl BreezServices {
         let sign_response = self.sign_message(sign_request).await?;
 
         let lsp_info = self.lsp_info().await?;
-        let register_response = self
-            .lsp_api
-            .register_notifications(
+        self.lsp_api
+            .register_payment_notifications(
                 lsp_info.id,
                 lsp_info.lsp_pubkey,
                 callback_url,
@@ -1392,7 +1391,7 @@ impl BreezServices {
             )
             .await?;
 
-        Ok(register_response)
+        Ok(())
     }
 }
 
