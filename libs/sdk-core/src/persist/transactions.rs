@@ -15,7 +15,7 @@ impl SqliteStorage {
     ///
     /// Note that, if a payment has details of type [LnPaymentDetails] which contain a [SuccessActionProcessed],
     /// then the [LnPaymentDetails] will NOT be persisted. In that case, the [SuccessActionProcessed]
-    /// can be inserted separately via [SqliteStorage::insert_lnurl_payment_external_info].
+    /// can be inserted separately via [SqliteStorage::insert_payment_external_info].
     pub fn insert_or_update_payments(&self, transactions: &[Payment]) -> PersistResult<()> {
         let deleted = self.delete_pending_lightning_payments()?;
         debug!("Deleted {deleted} pending payments");
@@ -60,14 +60,15 @@ impl SqliteStorage {
         )?)
     }
 
-    /// Inserts LNURL-related metadata associated with this payment
-    pub fn insert_lnurl_payment_external_info(
+    /// Inserts metadata associated with this payment
+    pub fn insert_payment_external_info(
         &self,
         payment_hash: &str,
         lnurl_pay_success_action: Option<&SuccessActionProcessed>,
         lnurl_metadata: Option<String>,
         ln_address: Option<String>,
         lnurl_withdraw_endpoint: Option<String>,
+        failed_amount_msat: Option<u64>,
     ) -> PersistResult<()> {
         let con = self.get_connection()?;
         let mut prep_statement = con.prepare(
@@ -77,9 +78,10 @@ impl SqliteStorage {
            lnurl_success_action,
            lnurl_metadata,
            ln_address,
-           lnurl_withdraw_endpoint
+           lnurl_withdraw_endpoint,
+           failed_amount_msat
          )
-         VALUES (?1,?2,?3,?4,?5)
+         VALUES (?1,?2,?3,?4,?5,?6)
         ",
         )?;
 
@@ -89,6 +91,7 @@ impl SqliteStorage {
             lnurl_metadata,
             ln_address,
             lnurl_withdraw_endpoint,
+            failed_amount_msat,
         ))?;
 
         Ok(())
@@ -154,6 +157,7 @@ impl SqliteStorage {
              e.lnurl_metadata,
              e.ln_address,
              e.lnurl_withdraw_endpoint,
+             e.failed_amount_msat,
              o.payer_amount_msat
             FROM payments p
             LEFT JOIN sync.payments_external_info e
@@ -201,6 +205,7 @@ impl SqliteStorage {
                  e.lnurl_metadata,
                  e.ln_address,
                  e.lnurl_withdraw_endpoint,
+                 e.failed_amount_msat,
                  o.payer_amount_msat
                 FROM payments p
                 LEFT JOIN sync.payments_external_info e
@@ -233,13 +238,18 @@ impl SqliteStorage {
     fn sql_row_to_payment(&self, row: &Row) -> PersistResult<Payment, rusqlite::Error> {
         let payment_type_str: String = row.get(1)?;
         let amount_msat = row.get(3)?;
+        let status: PaymentStatus = row.get(5)?;
+        let failed_amount_msat: Option<u64> = row.get(12)?;
         let mut payment = Payment {
             id: row.get(0)?,
             payment_type: PaymentType::from_str(payment_type_str.as_str()).unwrap(),
             payment_time: row.get(2)?,
-            amount_msat,
+            amount_msat: match status {
+                PaymentStatus::Failed => failed_amount_msat.unwrap_or(amount_msat),
+                _ => amount_msat,
+            },
             fee_msat: row.get(4)?,
-            status: row.get(5)?,
+            status,
             description: row.get(6)?,
             details: row.get(7)?,
         };
@@ -252,7 +262,7 @@ impl SqliteStorage {
         }
 
         // In case we have a record of the open channel fee, let's use it.
-        let payer_amount_msat: Option<u64> = row.get(12)?;
+        let payer_amount_msat: Option<u64> = row.get(13)?;
         if let Some(payer_amount) = payer_amount_msat {
             payment.fee_msat = payer_amount - amount_msat;
         }
@@ -457,19 +467,21 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
     storage.init()?;
     storage.insert_or_update_payments(&txs)?;
     storage.insert_or_update_payments(&failed_txs)?;
-    storage.insert_lnurl_payment_external_info(
+    storage.insert_payment_external_info(
         payment_hash_with_lnurl_success_action,
         Some(&sa),
         Some(lnurl_metadata.to_string()),
         Some(test_ln_address.to_string()),
         None,
+        None,
     )?;
-    storage.insert_lnurl_payment_external_info(
+    storage.insert_payment_external_info(
         payment_hash_with_lnurl_withdraw,
         None,
         None,
         None,
         Some(lnurl_withdraw_url.to_string()),
+        None,
     )?;
 
     // retrieve all
