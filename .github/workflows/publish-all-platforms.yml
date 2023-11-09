@@ -39,36 +39,17 @@ on:
         description: 'commit/tag/branch reference'
         required: true
         type: string
-      csharp-package-version:
-        description: 'version for the C# nuget package (MAJOR.MINOR.BUILD)'
-        required: false
+      package-version:
+        description: 'version for the published package(s) (MAJOR.MINOR.BUILD)'
+        required: true
         type: string
+      packages-to-publish:
+        description: 'array of packages to publish (remove what you do not want)'
+        required: true
+        type: string
+        default: '["csharp", "golang", "maven", "kotlin-mpp", "flutter", "react-native", "python"]'
       csharp-ref:
         description: 'optional commit/tag/branch reference for the C# project. Defaults to ref.'
-        required: false
-        type: string
-      golang-package-version:
-        description: 'version for the golang package (MAJOR.MINOR.BUILD) (no v prefix)'
-        required: false
-        type: string
-      maven-package-version:
-        description: 'version for the android package (MAJOR.MINOR.BUILD)'
-        required: false
-        type: string
-      kotlin-mpp-package-version:
-        description: 'version for the kotlin multiplatform package (MAJOR.MINOR.BUILD)'
-        required: false
-        type: string
-      flutter-package-version:
-        description: 'version for the flutter package (MAJOR.MINOR.BUILD) (no v prefix)'
-        required: false
-        type: string
-      react-native-package-version:
-        description: 'version for the react native package (MAJOR.MINOR.BUILD)'
-        required: false
-        type: string
-      python-package-version:
-        description: 'version for the python package (MAJOR.MINOR.BUILD)'
         required: false
         type: string
       use-dummy-binaries:
@@ -89,14 +70,14 @@ jobs:
       # certain inputs.
       repository: ${{ inputs.repository || github.repository }}
       ref: ${{ inputs.ref || github.sha }}
-      csharp-package-version: ${{ inputs.csharp-package-version || (contains(fromJSON(inputs.packages-to-publish), 'csharp') && inputs.package-version) || '' }}
+      csharp-package-version: ${{ (contains(fromJSON(inputs.packages-to-publish), 'csharp') && inputs.package-version) || '' }}
       csharp-ref: ${{ inputs.csharp-ref || inputs.ref || github.sha }}
-      golang-package-version: ${{ inputs.golang-package-version || (contains(fromJSON(inputs.packages-to-publish), 'golang') && inputs.package-version) || '' }}
-      maven-package-version: ${{ inputs.maven-package-version || (contains(fromJSON(inputs.packages-to-publish), 'maven') && inputs.package-version) || ''}}
-      kotlin-mpp-package-version: ${{ inputs.kotlin-mpp-package-version || (contains(fromJSON(inputs.packages-to-publish), 'kotlin-mpp') && inputs.package-version) || '' }}
-      flutter-package-version: ${{ inputs.flutter-package-version || (contains(fromJSON(inputs.packages-to-publish), 'flutter') && inputs.package-version) || '' }}
-      react-native-package-version: ${{ inputs.react-native-package-version || (contains(fromJSON(inputs.packages-to-publish), 'react-native') && inputs.package-version) || '' }}
-      python-package-version: ${{ inputs.python-package-version || (contains(fromJSON(inputs.packages-to-publish), 'python') && inputs.package-version) || '' }}
+      golang-package-version: ${{ (contains(fromJSON(inputs.packages-to-publish), 'golang') && inputs.package-version) || '' }}
+      maven-package-version: ${{ (contains(fromJSON(inputs.packages-to-publish), 'maven') && inputs.package-version) || ''}}
+      kotlin-mpp-package-version: ${{ (contains(fromJSON(inputs.packages-to-publish), 'kotlin-mpp') && inputs.package-version) || '' }}
+      flutter-package-version: ${{ (contains(fromJSON(inputs.packages-to-publish), 'flutter') && inputs.package-version) || '' }}
+      react-native-package-version: ${{ (contains(fromJSON(inputs.packages-to-publish), 'react-native') && inputs.package-version) || '' }}
+      python-package-version: ${{ (contains(fromJSON(inputs.packages-to-publish), 'python') && inputs.package-version) || '' }}
       use-dummy-binaries: ${{ inputs.use-dummy-binaries }}
       publish: ${{ inputs.publish }}
     steps:
