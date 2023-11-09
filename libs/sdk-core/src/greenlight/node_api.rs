@@ -456,14 +456,14 @@ impl Greenlight {
         via_peer_channels: Vec<ListpeersPeersChannels>,
         payee_node_id: Option<Vec<u8>>,
         max_hops: u32,
-        last_hop_hints: Option<&RouteHintHop>,
+        last_hop_hint: Option<&RouteHintHop>,
     ) -> NodeResult<Vec<MaxChannelAmount>> {
         let mut client = self.get_node_client().await?;
 
         // Consider the hints as part of the route. If there is a routing hint we will
         // attempt to calculate the path until the last hop in the hint and then add
         // the last hop to the path.
-        let (last_node, max_hops) = match last_hop_hints {
+        let (last_node, max_hops) = match last_hop_hint {
             Some(hop) => (hex::decode(&hop.src_node_id)?, max_hops - 1),
             None => match payee_node_id.clone() {
                 Some(node_id) => (node_id, max_hops),
@@ -544,7 +544,7 @@ impl Greenlight {
                 .await?;
 
             // Add the last hop hints (if any) to the route
-            if let Some(hint) = last_hop_hints {
+            if let Some(hint) = last_hop_hint {
                 payment_path.edges.extend(vec![PaymentPathEdge {
                     base_fee_msat: hint.fees_base_msat as u64,
                     fee_per_millionth: hint.fees_proportional_millionths as u64,
@@ -1198,7 +1198,7 @@ impl NodeAPI for Greenlight {
         &self,
         payee_node_id: Option<Vec<u8>>,
         max_hops: u32,
-        last_hop_hints: Option<&RouteHintHop>,
+        last_hop_hint: Option<&RouteHintHop>,
     ) -> NodeResult<Vec<MaxChannelAmount>> {
         let mut client = self.get_node_client().await?;
 
@@ -1215,7 +1215,7 @@ impl NodeAPI for Greenlight {
                     peer.channels,
                     payee_node_id.clone(),
                     max_hops,
-                    last_hop_hints,
+                    last_hop_hint,
                 )
                 .await?;
             max_channel_amounts.extend_from_slice(max_amounts_for_peer.as_slice());
