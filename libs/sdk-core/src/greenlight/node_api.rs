@@ -507,20 +507,11 @@ impl Greenlight {
         );
 
         // We fetch the opened channels so can calculate max amount to send for each channel
-        let mut opened_channels: Vec<cln::ListpeersPeersChannels> = via_peer_channels
+        let opened_channels: Vec<cln::ListpeersPeersChannels> = via_peer_channels
             .iter()
             .cloned()
             .filter(|c| c.state() == ChanneldNormal)
             .collect();
-
-        // opened_channels.into_iter().filter(|c: &cln::ListpeersPeersChannels|c)
-        opened_channels.sort_by(|c1, c2| {
-            c2.spendable_msat
-                .clone()
-                .unwrap_or_default()
-                .msat
-                .cmp(&c1.spendable_msat.clone().unwrap_or_default().msat)
-        });
 
         let mut max_per_channel = vec![];
         for c in opened_channels {
