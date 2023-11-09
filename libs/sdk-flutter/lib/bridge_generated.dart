@@ -108,6 +108,10 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kCloseLspChannelsConstMeta;
 
+  Future<void> registerWebhook({required String callbackUrl, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kRegisterWebhookConstMeta;
+
   /// See [BreezServices::backup]
   Future<void> backup({dynamic hint});
 
@@ -1961,6 +1965,22 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kCloseLspChannelsConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "close_lsp_channels",
         argNames: [],
+      );
+
+  Future<void> registerWebhook({required String callbackUrl, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(callbackUrl);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_register_webhook(port_, arg0),
+      parseSuccessData: _wire2api_unit,
+      constMeta: kRegisterWebhookConstMeta,
+      argValues: [callbackUrl],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kRegisterWebhookConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "register_webhook",
+        argNames: ["callbackUrl"],
       );
 
   Future<void> backup({dynamic hint}) {
@@ -4421,6 +4441,22 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_close_lsp_channelsPtr =
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_close_lsp_channels');
   late final _wire_close_lsp_channels = _wire_close_lsp_channelsPtr.asFunction<void Function(int)>();
+
+  void wire_register_webhook(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> callback_url,
+  ) {
+    return _wire_register_webhook(
+      port_,
+      callback_url,
+    );
+  }
+
+  late final _wire_register_webhookPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>(
+          'wire_register_webhook');
+  late final _wire_register_webhook =
+      _wire_register_webhookPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
   void wire_backup(
     int port_,

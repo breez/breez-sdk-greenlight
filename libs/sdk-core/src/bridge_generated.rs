@@ -334,6 +334,22 @@ fn wire_close_lsp_channels_impl(port_: MessagePort) {
         move || move |task_callback| close_lsp_channels(),
     )
 }
+fn wire_register_webhook_impl(
+    port_: MessagePort,
+    callback_url: impl Wire2Api<String> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, ()>(
+        WrapInfo {
+            debug_name: "register_webhook",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_callback_url = callback_url.wire2api();
+            move |task_callback| register_webhook(api_callback_url)
+        },
+    )
+}
 fn wire_backup_impl(port_: MessagePort) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, ()>(
         WrapInfo {

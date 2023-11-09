@@ -383,6 +383,16 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
+    @objc(registerWebhook:resolve:reject:)
+    func registerWebhook(_ callbackUrl: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            try getBreezServices().registerWebhook(callbackUrl: callbackUrl)
+            resolve(["status": "ok"])
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
     @objc(receiveOnchain:resolve:reject:)
     func receiveOnchain(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {

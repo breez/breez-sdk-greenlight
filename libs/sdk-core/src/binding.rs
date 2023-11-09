@@ -201,6 +201,16 @@ pub fn close_lsp_channels() -> Result<()> {
     })
 }
 
+pub fn register_webhook(callback_url: String) -> Result<()> {
+    block_on(async {
+        get_breez_services()
+            .await?
+            .register_webhook(callback_url)
+            .await
+    })
+    .map_err(anyhow::Error::new::<SdkError>)
+}
+
 /*  Backup API's */
 
 /// See [BreezServices::backup]
