@@ -32,6 +32,7 @@ use gl_client::tls::TlsConfig;
 use gl_client::{node, utils};
 use lightning::util::message_signing::verify;
 use lightning_invoice::{RawInvoice, SignedRawInvoice};
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 use tokio::sync::{mpsc, Mutex};
@@ -753,6 +754,8 @@ impl NodeAPI for Greenlight {
         let mut amount_sent_msat = 0;
         // The total amount received by the recipient
         let mut amount_received_msat = 0;
+        // Generate a random group_id for the payment
+        let group_id = rand::random::<u64>();
 
         // The algorithm goes over each channel and drains it until the received amount
         // equals to the amount to pay defined in the bolt11 invoice.
@@ -805,7 +808,7 @@ impl NodeAPI for Greenlight {
                 payment_hash: hex::decode(invoice.payment_hash.clone())?,
                 partid: Some(1),
                 timeout: Some(self.sdk_config.payment_timeout_sec),
-                groupid: None,
+                groupid: Some(group_id),
             })
             .await?
             .into_inner();
