@@ -421,7 +421,7 @@ message PaymentInformation {
 
 message SubscribeNotificationsRequest {
     string url = 1;
-    bytes signature = 2;
+    string signature = 2;
 }
 
 message SubscribeNotificationsReply {}

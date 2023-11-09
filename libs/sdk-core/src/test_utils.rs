@@ -575,7 +575,7 @@ impl LspAPI for MockBreezServer {
         _lsp_id: String,
         _lsp_pubkey: Vec<u8>,
         _callback_url: String,
-        _callback_url_signature: Vec<u8>,
+        _callback_url_signature: String,
     ) -> SdkResult<RegisterPaymentNotificationResponse> {
         Ok(RegisterPaymentNotificationResponse {})
     }

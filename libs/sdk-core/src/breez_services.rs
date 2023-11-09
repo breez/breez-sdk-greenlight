@@ -1386,8 +1386,7 @@ impl BreezServices {
                 lsp_info.id,
                 lsp_info.lsp_pubkey,
                 callback_url,
-                hex::decode(sign_response.signature)
-                    .map_err(|e| anyhow!("Failed to decode signature: {e}"))?,
+                sign_response.signature,
             )
             .await?;
 

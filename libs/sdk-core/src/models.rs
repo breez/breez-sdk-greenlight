@@ -66,7 +66,7 @@ pub trait LspAPI: Send + Sync {
         lsp_id: String,
         lsp_pubkey: Vec<u8>,
         callback_url: String,
-        callback_url_signature: Vec<u8>,
+        callback_url_signature: String,
     ) -> SdkResult<RegisterPaymentNotificationResponse>;
     async fn register_payment(
         &self,
