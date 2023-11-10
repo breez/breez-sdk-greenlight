@@ -201,11 +201,11 @@ pub fn close_lsp_channels() -> Result<()> {
     })
 }
 
-pub fn register_webhook(callback_url: String) -> Result<()> {
+pub fn register_webhook(webhook_url: String) -> Result<()> {
     block_on(async {
         get_breez_services()
             .await?
-            .register_webhook(callback_url)
+            .register_webhook(webhook_url)
             .await
     })
     .map_err(anyhow::Error::new::<SdkError>)

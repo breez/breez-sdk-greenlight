@@ -250,7 +250,7 @@ void wire_lsp_info(int64_t port_);
 
 void wire_close_lsp_channels(int64_t port_);
 
-void wire_register_webhook(int64_t port_, struct wire_uint_8_list *callback_url);
+void wire_register_webhook(int64_t port_, struct wire_uint_8_list *webhook_url);
 
 void wire_backup(int64_t port_);
 

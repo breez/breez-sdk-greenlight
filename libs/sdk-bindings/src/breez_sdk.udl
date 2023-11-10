@@ -754,7 +754,7 @@ interface BlockingBreezServices {
    void close_lsp_channels();
 
    [Throws=SdkError]
-   void register_webhook(string callback_url);
+   void register_webhook(string webhook_url);
 
    [Throws=ReceiveOnchainError]
    SwapInfo receive_onchain(ReceiveOnchainRequest req);

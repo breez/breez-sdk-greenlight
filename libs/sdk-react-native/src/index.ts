@@ -864,8 +864,8 @@ export const closeLspChannels = async (): Promise<void> => {
     await BreezSDK.closeLspChannels()
 }
 
-export const registerWebhook = async (callbackUrl: string): Promise<void> => {
-    await BreezSDK.registerWebhook(callbackUrl)
+export const registerWebhook = async (webhookUrl: string): Promise<void> => {
+    await BreezSDK.registerWebhook(webhookUrl)
 }
 
 export const receiveOnchain = async (req: ReceiveOnchainRequest): Promise<SwapInfo> => {

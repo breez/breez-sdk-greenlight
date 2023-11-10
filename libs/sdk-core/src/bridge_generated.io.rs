@@ -97,8 +97,8 @@ pub extern "C" fn wire_close_lsp_channels(port_: i64) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_register_webhook(port_: i64, callback_url: *mut wire_uint_8_list) {
-    wire_register_webhook_impl(port_, callback_url)
+pub extern "C" fn wire_register_webhook(port_: i64, webhook_url: *mut wire_uint_8_list) {
+    wire_register_webhook_impl(port_, webhook_url)
 }
 
 #[no_mangle]

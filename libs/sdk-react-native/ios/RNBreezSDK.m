@@ -182,7 +182,7 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
-    registerWebhook: (NSString*)callbackUrl
+    registerWebhook: (NSString*)webhookUrl
     resolve: (RCTPromiseResolveBlock)resolve
     reject: (RCTPromiseRejectBlock)reject
 )

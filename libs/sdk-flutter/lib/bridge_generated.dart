@@ -108,7 +108,7 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kCloseLspChannelsConstMeta;
 
-  Future<void> registerWebhook({required String callbackUrl, dynamic hint});
+  Future<void> registerWebhook({required String webhookUrl, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kRegisterWebhookConstMeta;
 
@@ -1967,20 +1967,20 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: [],
       );
 
-  Future<void> registerWebhook({required String callbackUrl, dynamic hint}) {
-    var arg0 = _platform.api2wire_String(callbackUrl);
+  Future<void> registerWebhook({required String webhookUrl, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(webhookUrl);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_register_webhook(port_, arg0),
       parseSuccessData: _wire2api_unit,
       constMeta: kRegisterWebhookConstMeta,
-      argValues: [callbackUrl],
+      argValues: [webhookUrl],
       hint: hint,
     ));
   }
 
   FlutterRustBridgeTaskConstMeta get kRegisterWebhookConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "register_webhook",
-        argNames: ["callbackUrl"],
+        argNames: ["webhookUrl"],
       );
 
   Future<void> backup({dynamic hint}) {
@@ -4444,11 +4444,11 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
 
   void wire_register_webhook(
     int port_,
-    ffi.Pointer<wire_uint_8_list> callback_url,
+    ffi.Pointer<wire_uint_8_list> webhook_url,
   ) {
     return _wire_register_webhook(
       port_,
-      callback_url,
+      webhook_url,
     );
   }
 

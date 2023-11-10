@@ -119,12 +119,12 @@ impl LspAPI for BreezServer {
         &self,
         lsp_id: String,
         lsp_pubkey: Vec<u8>,
-        callback_url: String,
-        callback_url_signature: String,
+        webhook_url: String,
+        webhook_url_signature: String,
     ) -> SdkResult<RegisterPaymentNotificationResponse> {
         let subscribe_request = SubscribeNotificationsRequest {
-            url: callback_url,
-            signature: callback_url_signature,
+            url: webhook_url,
+            signature: webhook_url_signature,
         };
 
         let mut client = self.get_subscription_client().await?;

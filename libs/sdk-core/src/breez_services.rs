@@ -1370,13 +1370,13 @@ impl BreezServices {
         })
     }
 
-    /// Register for webhook callbacks at the given `callback_url` whenever a new payment is received.
+    /// Register for webhook callbacks at the given `webhook_url` whenever a new payment is received.
     ///
     /// More webhook types may be supported in the future.
-    pub async fn register_webhook(&self, callback_url: String) -> SdkResult<()> {
+    pub async fn register_webhook(&self, webhook_url: String) -> SdkResult<()> {
         info!("Registering for webhook notifications");
 
-        let message = callback_url.clone();
+        let message = webhook_url.clone();
         let sign_request = SignMessageRequest { message };
         let sign_response = self.sign_message(sign_request).await?;
 
@@ -1385,7 +1385,7 @@ impl BreezServices {
             .register_payment_notifications(
                 lsp_info.id,
                 lsp_info.lsp_pubkey,
-                callback_url,
+                webhook_url,
                 sign_response.signature,
             )
             .await?;

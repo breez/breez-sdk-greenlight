@@ -537,12 +537,12 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
     @ReactMethod
     fun registerWebhook(
-        callbackUrl: String,
+        webhookUrl: String,
         promise: Promise,
     ) {
         executor.execute {
             try {
-                getBreezServices().registerWebhook(callbackUrl)
+                getBreezServices().registerWebhook(webhookUrl)
                 promise.resolve(readableMapOf("status" to "ok"))
             } catch (e: Exception) {
                 promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
