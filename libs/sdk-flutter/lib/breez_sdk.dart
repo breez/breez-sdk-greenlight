@@ -66,6 +66,13 @@ class BreezSDK {
 
   Stream<NodeState?> get nodeStateStream => nodeStateController.stream;
 
+  /// Register for webhook callbacks at the given `webhook_url` whenever a new payment is received.
+  ///
+  /// More webhook types may be supported in the future.
+  Future<void> registerWebhook({required String webhookUrl}) async {
+    return _lnToolkit.registerWebhook(webhookUrl: webhookUrl);
+  }
+
   /// connect initializes the global NodeService, schedule the node to run in the cloud and
   /// run the signer. This must be called in order to start communicate with the node
   ///
