@@ -33,6 +33,7 @@ use crate::greenlight::{GLBackupTransport, Greenlight};
 use crate::grpc::channel_opener_client::ChannelOpenerClient;
 use crate::grpc::fund_manager_client::FundManagerClient;
 use crate::grpc::information_client::InformationClient;
+use crate::grpc::payment_notifier_client::PaymentNotifierClient;
 use crate::grpc::signer_client::SignerClient;
 use crate::grpc::swapper_client::SwapperClient;
 use crate::grpc::PaymentInformation;
@@ -1412,6 +1413,29 @@ impl BreezServices {
             },
         })
     }
+
+    /// Register for webhook callbacks at the given `webhook_url` whenever a new payment is received.
+    ///
+    /// More webhook types may be supported in the future.
+    pub async fn register_webhook(&self, webhook_url: String) -> SdkResult<()> {
+        info!("Registering for webhook notifications");
+
+        let message = webhook_url.clone();
+        let sign_request = SignMessageRequest { message };
+        let sign_response = self.sign_message(sign_request).await?;
+
+        let lsp_info = self.lsp_info().await?;
+        self.lsp_api
+            .register_payment_notifications(
+                lsp_info.id,
+                lsp_info.lsp_pubkey,
+                webhook_url,
+                sign_response.signature,
+            )
+            .await?;
+
+        Ok(())
+    }
 }
 
 struct GlobalSdkLogger {
@@ -1718,6 +1742,15 @@ impl BreezServer {
         let client =
             ChannelOpenerClient::with_interceptor(channel, ApiKeyInterceptor { api_key_metadata });
         Ok(client)
+    }
+
+    pub(crate) async fn get_subscription_client(
+        &self,
+    ) -> SdkResult<PaymentNotifierClient<Channel>> {
+        let url = Uri::from_str(&self.server_url).map_err(|e| SdkError::ServiceConnectivity {
+            err: format!("(Breez: {}) {e}", self.server_url.clone()),
+        })?;
+        Ok(PaymentNotifierClient::connect(url).await?)
     }
 
     pub(crate) async fn get_information_client(&self) -> SdkResult<InformationClient<Channel>> {
