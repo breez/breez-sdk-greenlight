@@ -1979,24 +1979,24 @@ fun asPrepareSweepRequest(prepareSweepRequest: ReadableMap): PrepareSweepRequest
             prepareSweepRequest,
             arrayOf(
                 "toAddress",
-                "satsPerVbyte",
+                "satPerVbyte",
             ),
         )
     ) {
         return null
     }
     val toAddress = prepareSweepRequest.getString("toAddress")!!
-    val satsPerVbyte = prepareSweepRequest.getDouble("satsPerVbyte").toULong()
+    val satPerVbyte = prepareSweepRequest.getDouble("satPerVbyte").toULong()
     return PrepareSweepRequest(
         toAddress,
-        satsPerVbyte,
+        satPerVbyte,
     )
 }
 
 fun readableMapOf(prepareSweepRequest: PrepareSweepRequest): ReadableMap {
     return readableMapOf(
         "toAddress" to prepareSweepRequest.toAddress,
-        "satsPerVbyte" to prepareSweepRequest.satsPerVbyte,
+        "satPerVbyte" to prepareSweepRequest.satPerVbyte,
     )
 }
 
@@ -3077,24 +3077,24 @@ fun asSweepRequest(sweepRequest: ReadableMap): SweepRequest? {
             sweepRequest,
             arrayOf(
                 "toAddress",
-                "feeRateSatsPerVbyte",
+                "satPerVbyte",
             ),
         )
     ) {
         return null
     }
     val toAddress = sweepRequest.getString("toAddress")!!
-    val feeRateSatsPerVbyte = sweepRequest.getInt("feeRateSatsPerVbyte").toUInt()
+    val satPerVbyte = sweepRequest.getInt("satPerVbyte").toUInt()
     return SweepRequest(
         toAddress,
-        feeRateSatsPerVbyte,
+        satPerVbyte,
     )
 }
 
 fun readableMapOf(sweepRequest: SweepRequest): ReadableMap {
     return readableMapOf(
         "toAddress" to sweepRequest.toAddress,
-        "feeRateSatsPerVbyte" to sweepRequest.feeRateSatsPerVbyte,
+        "satPerVbyte" to sweepRequest.satPerVbyte,
     )
 }
 

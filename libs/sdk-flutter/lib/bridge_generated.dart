@@ -1193,11 +1193,11 @@ class PrepareRefundResponse {
 /// satoshis per vbyte which will be converted to absolute satoshis.
 class PrepareSweepRequest {
   final String toAddress;
-  final int satsPerVbyte;
+  final int satPerVbyte;
 
   const PrepareSweepRequest({
     required this.toAddress,
-    required this.satsPerVbyte,
+    required this.satPerVbyte,
   });
 }
 
@@ -1639,11 +1639,11 @@ enum SwapStatus {
 
 class SweepRequest {
   final String toAddress;
-  final int feeRateSatsPerVbyte;
+  final int satPerVbyte;
 
   const SweepRequest({
     required this.toAddress,
-    required this.feeRateSatsPerVbyte,
+    required this.satPerVbyte,
   });
 }
 
@@ -4093,7 +4093,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
 
   void _api_fill_to_wire_prepare_sweep_request(PrepareSweepRequest apiObj, wire_PrepareSweepRequest wireObj) {
     wireObj.to_address = api2wire_String(apiObj.toAddress);
-    wireObj.sats_per_vbyte = api2wire_u64(apiObj.satsPerVbyte);
+    wireObj.sat_per_vbyte = api2wire_u64(apiObj.satPerVbyte);
   }
 
   void _api_fill_to_wire_receive_onchain_request(
@@ -4151,7 +4151,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
 
   void _api_fill_to_wire_sweep_request(SweepRequest apiObj, wire_SweepRequest wireObj) {
     wireObj.to_address = api2wire_String(apiObj.toAddress);
-    wireObj.fee_rate_sats_per_vbyte = api2wire_u32(apiObj.feeRateSatsPerVbyte);
+    wireObj.sat_per_vbyte = api2wire_u32(apiObj.satPerVbyte);
   }
 }
 
@@ -5507,14 +5507,14 @@ final class wire_SweepRequest extends ffi.Struct {
   external ffi.Pointer<wire_uint_8_list> to_address;
 
   @ffi.Uint32()
-  external int fee_rate_sats_per_vbyte;
+  external int sat_per_vbyte;
 }
 
 final class wire_PrepareSweepRequest extends ffi.Struct {
   external ffi.Pointer<wire_uint_8_list> to_address;
 
   @ffi.Uint64()
-  external int sats_per_vbyte;
+  external int sat_per_vbyte;
 }
 
 final class wire_PrepareRefundRequest extends ffi.Struct {

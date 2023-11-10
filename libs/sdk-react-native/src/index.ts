@@ -316,7 +316,7 @@ export type PrepareRefundResponse = {
 
 export type PrepareSweepRequest = {
     toAddress: string
-    satsPerVbyte: number
+    satPerVbyte: number
 }
 
 export type PrepareSweepResponse = {
@@ -471,7 +471,7 @@ export type SwapInfo = {
 
 export type SweepRequest = {
     toAddress: string
-    feeRateSatsPerVbyte: number
+    satPerVbyte: number
 }
 
 export type SweepResponse = {

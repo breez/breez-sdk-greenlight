@@ -232,24 +232,24 @@ pub(crate) async fn handle_command(
         }
         Commands::Sweep {
             to_address,
-            fee_rate_sats_per_vbyte,
+            sat_per_vbyte,
         } => {
             sdk()?
                 .sweep(SweepRequest {
                     to_address,
-                    fee_rate_sats_per_vbyte,
+                    sat_per_vbyte,
                 })
                 .await?;
             Ok("Onchain funds were swept successfully".to_string())
         }
         Commands::PrepareSweep {
             to_address,
-            sats_per_vbyte,
+            sat_per_vbyte,
         } => {
             sdk()?
                 .sweep(SweepRequest {
                     to_address,
-                    fee_rate_sats_per_vbyte: sats_per_vbyte,
+                    sat_per_vbyte,
                 })
                 .await?;
             Ok("Onchain funds were swept succesfully".to_string())
