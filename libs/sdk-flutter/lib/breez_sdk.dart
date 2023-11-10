@@ -286,10 +286,6 @@ class BreezSDK {
 
   /* On-Chain Swap API's */
 
-  Future<MaxReverseSwapAmountResponse> maxReverseSwapAmount() async {
-    return await _lnToolkit.maxReverseSwapAmount();
-  }
-
   /// Creates a reverse swap and attempts to pay the HODL invoice
   Future<SendOnchainResponse> sendOnchain({
     required SendOnchainRequest req,
@@ -318,6 +314,15 @@ class BreezSDK {
     final sweepResponse = await _lnToolkit.sweep(req: req);
     await listPayments(req: const ListPaymentsRequest());
     return sweepResponse;
+  }
+
+  /// Returns the max amount that can be sent on-chain using the send_onchain method.
+  /// The returned amount is the sum of the max amount that can be sent on each channel
+  /// minus the expected fees.
+  /// This is possible since the route to the swapper node is known in advance and is expected
+  /// to consist of maximum 3 hops.
+  Future<MaxReverseSwapAmountResponse> maxReverseSwapAmount() async {
+    return await _lnToolkit.maxReverseSwapAmount();
   }
 
   /* Refundables API's */
