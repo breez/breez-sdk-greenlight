@@ -4129,6 +4129,209 @@ abstract class NodeConfig_Greenlight implements NodeConfig {
 }
 
 /// @nodoc
+mixin _$NodeCredentials {
+  GreenlightCredentials get credentials => throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(GreenlightCredentials credentials) greenlight,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(GreenlightCredentials credentials)? greenlight,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(GreenlightCredentials credentials)? greenlight,
+    required TResult orElse(),
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(NodeCredentials_Greenlight value) greenlight,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(NodeCredentials_Greenlight value)? greenlight,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(NodeCredentials_Greenlight value)? greenlight,
+    required TResult orElse(),
+  }) =>
+      throw _privateConstructorUsedError;
+
+  @JsonKey(ignore: true)
+  $NodeCredentialsCopyWith<NodeCredentials> get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $NodeCredentialsCopyWith<$Res> {
+  factory $NodeCredentialsCopyWith(NodeCredentials value, $Res Function(NodeCredentials) then) =
+      _$NodeCredentialsCopyWithImpl<$Res, NodeCredentials>;
+  @useResult
+  $Res call({GreenlightCredentials credentials});
+}
+
+/// @nodoc
+class _$NodeCredentialsCopyWithImpl<$Res, $Val extends NodeCredentials>
+    implements $NodeCredentialsCopyWith<$Res> {
+  _$NodeCredentialsCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? credentials = null,
+  }) {
+    return _then(_value.copyWith(
+      credentials: null == credentials
+          ? _value.credentials
+          : credentials // ignore: cast_nullable_to_non_nullable
+              as GreenlightCredentials,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$NodeCredentials_GreenlightImplCopyWith<$Res> implements $NodeCredentialsCopyWith<$Res> {
+  factory _$$NodeCredentials_GreenlightImplCopyWith(
+          _$NodeCredentials_GreenlightImpl value, $Res Function(_$NodeCredentials_GreenlightImpl) then) =
+      __$$NodeCredentials_GreenlightImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({GreenlightCredentials credentials});
+}
+
+/// @nodoc
+class __$$NodeCredentials_GreenlightImplCopyWithImpl<$Res>
+    extends _$NodeCredentialsCopyWithImpl<$Res, _$NodeCredentials_GreenlightImpl>
+    implements _$$NodeCredentials_GreenlightImplCopyWith<$Res> {
+  __$$NodeCredentials_GreenlightImplCopyWithImpl(
+      _$NodeCredentials_GreenlightImpl _value, $Res Function(_$NodeCredentials_GreenlightImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? credentials = null,
+  }) {
+    return _then(_$NodeCredentials_GreenlightImpl(
+      credentials: null == credentials
+          ? _value.credentials
+          : credentials // ignore: cast_nullable_to_non_nullable
+              as GreenlightCredentials,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$NodeCredentials_GreenlightImpl implements NodeCredentials_Greenlight {
+  const _$NodeCredentials_GreenlightImpl({required this.credentials});
+
+  @override
+  final GreenlightCredentials credentials;
+
+  @override
+  String toString() {
+    return 'NodeCredentials.greenlight(credentials: $credentials)';
+  }
+
+  @override
+  bool operator ==(dynamic other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$NodeCredentials_GreenlightImpl &&
+            (identical(other.credentials, credentials) || other.credentials == credentials));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, credentials);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$NodeCredentials_GreenlightImplCopyWith<_$NodeCredentials_GreenlightImpl> get copyWith =>
+      __$$NodeCredentials_GreenlightImplCopyWithImpl<_$NodeCredentials_GreenlightImpl>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(GreenlightCredentials credentials) greenlight,
+  }) {
+    return greenlight(credentials);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(GreenlightCredentials credentials)? greenlight,
+  }) {
+    return greenlight?.call(credentials);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(GreenlightCredentials credentials)? greenlight,
+    required TResult orElse(),
+  }) {
+    if (greenlight != null) {
+      return greenlight(credentials);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(NodeCredentials_Greenlight value) greenlight,
+  }) {
+    return greenlight(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(NodeCredentials_Greenlight value)? greenlight,
+  }) {
+    return greenlight?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(NodeCredentials_Greenlight value)? greenlight,
+    required TResult orElse(),
+  }) {
+    if (greenlight != null) {
+      return greenlight(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class NodeCredentials_Greenlight implements NodeCredentials {
+  const factory NodeCredentials_Greenlight({required final GreenlightCredentials credentials}) =
+      _$NodeCredentials_GreenlightImpl;
+
+  @override
+  GreenlightCredentials get credentials;
+  @override
+  @JsonKey(ignore: true)
+  _$$NodeCredentials_GreenlightImplCopyWith<_$NodeCredentials_GreenlightImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
 mixin _$PaymentDetails {
   Object get data => throw _privateConstructorUsedError;
   @optionalTypeArgs

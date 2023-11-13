@@ -73,6 +73,7 @@ use crate::models::LogEntry;
 use crate::models::MaxReverseSwapAmountResponse;
 use crate::models::Network;
 use crate::models::NodeConfig;
+use crate::models::NodeCredentials;
 use crate::models::NodeState;
 use crate::models::OpenChannelFeeRequest;
 use crate::models::OpenChannelFeeResponse;
@@ -147,6 +148,16 @@ fn wire_sync_impl(port_: MessagePort) {
             mode: FfiCallMode::Normal,
         },
         move || move |task_callback| sync(),
+    )
+}
+fn wire_node_credentials_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, Option<NodeCredentials>>(
+        WrapInfo {
+            debug_name: "node_credentials",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || move |task_callback| node_credentials(),
     )
 }
 fn wire_node_info_impl(port_: MessagePort) {
@@ -1474,6 +1485,23 @@ impl support::IntoDart for NodeConfig {
 }
 impl support::IntoDartExceptPrimitive for NodeConfig {}
 impl rust2dart::IntoIntoDart<NodeConfig> for NodeConfig {
+    fn into_into_dart(self) -> Self {
+        self
+    }
+}
+
+impl support::IntoDart for NodeCredentials {
+    fn into_dart(self) -> support::DartAbi {
+        match self {
+            Self::Greenlight { credentials } => {
+                vec![0.into_dart(), credentials.into_into_dart().into_dart()]
+            }
+        }
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for NodeCredentials {}
+impl rust2dart::IntoIntoDart<NodeCredentials> for NodeCredentials {
     fn into_into_dart(self) -> Self {
         self
     }

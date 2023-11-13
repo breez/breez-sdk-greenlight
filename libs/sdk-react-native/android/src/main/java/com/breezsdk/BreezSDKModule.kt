@@ -303,6 +303,18 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
+    fun nodeCredentials(promise: Promise) {
+        executor.execute {
+            try {
+                val res = getBreezServices().nodeCredentials()
+                promise.resolve(res?.let { readableMapOf(res) })
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
     fun nodeInfo(promise: Promise) {
         executor.execute {
             try {

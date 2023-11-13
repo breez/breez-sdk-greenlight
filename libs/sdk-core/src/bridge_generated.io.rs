@@ -17,6 +17,11 @@ pub extern "C" fn wire_sync(port_: i64) {
 }
 
 #[no_mangle]
+pub extern "C" fn wire_node_credentials(port_: i64) {
+    wire_node_credentials_impl(port_)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_node_info(port_: i64) {
     wire_node_info_impl(port_)
 }

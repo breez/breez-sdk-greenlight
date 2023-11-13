@@ -210,6 +210,20 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
+    @objc(nodeCredentials:reject:)
+    func nodeCredentials(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            var res = try getBreezServices().nodeCredentials()
+            if res != nil {
+                resolve(BreezSDKMapper.dictionaryOf(nodeCredentials: res!))
+            } else {
+                resolve(nil)
+            }
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
     @objc(nodeInfo:reject:)
     func nodeInfo(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {

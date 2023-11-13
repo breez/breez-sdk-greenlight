@@ -1,6 +1,7 @@
 use crate::{
     invoice::InvoiceError, persist::error::PersistError, CustomMessage, MaxChannelAmount,
-    PaymentResponse, Peer, PrepareSweepRequest, PrepareSweepResponse, RouteHintHop, SyncResponse,
+    NodeCredentials, PaymentResponse, Peer, PrepareSweepRequest, PrepareSweepResponse,
+    RouteHintHop, SyncResponse,
 };
 use anyhow::Result;
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
@@ -51,6 +52,7 @@ pub enum NodeError {
 /// Trait covering functions affecting the LN node
 #[tonic::async_trait]
 pub trait NodeAPI: Send + Sync {
+    fn node_credentials(&self) -> NodeResult<Option<NodeCredentials>>;
     async fn create_invoice(
         &self,
         amount_msat: u64,

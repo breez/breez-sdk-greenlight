@@ -3574,6 +3574,47 @@ enum BreezSDKMapper {
         return list
     }
 
+    static func asNodeCredentials(nodeCredentials: [String: Any?]) throws -> NodeCredentials {
+        let type = nodeCredentials["type"] as! String
+        if type == "greenlight" {
+            guard let credentialsTmp = nodeCredentials["credentials"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field credentials for type NodeCredentials") }
+            let _credentials = try asGreenlightCredentials(greenlightCredentials: credentialsTmp)
+
+            return NodeCredentials.greenlight(credentials: _credentials)
+        }
+
+        throw SdkError.Generic(message: "Unexpected type \(type) for enum NodeCredentials")
+    }
+
+    static func dictionaryOf(nodeCredentials: NodeCredentials) -> [String: Any?] {
+        switch nodeCredentials {
+        case let .greenlight(
+            credentials
+        ):
+            return [
+                "type": "greenlight",
+                "credentials": dictionaryOf(greenlightCredentials: credentials),
+            ]
+        }
+    }
+
+    static func arrayOf(nodeCredentialsList: [NodeCredentials]) -> [Any] {
+        return nodeCredentialsList.map { v -> [String: Any?] in dictionaryOf(nodeCredentials: v) }
+    }
+
+    static func asNodeCredentialsList(arr: [Any]) throws -> [NodeCredentials] {
+        var list = [NodeCredentials]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var nodeCredentials = try asNodeCredentials(nodeCredentials: val)
+                list.append(nodeCredentials)
+            } else {
+                throw SdkError.Generic(message: "Unexpected type NodeCredentials")
+            }
+        }
+        return list
+    }
+
     static func asPaymentDetails(paymentDetails: [String: Any?]) throws -> PaymentDetails {
         let type = paymentDetails["type"] as! String
         if type == "ln" {
