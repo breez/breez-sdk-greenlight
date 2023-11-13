@@ -1,6 +1,6 @@
 PODS:
   - boost (1.76.0)
-  - BreezSDK (0.2.3):
+  - BreezSDK (0.2.7):
     - React-Core
   - CocoaAsyncSocket (7.6.5)
   - DoubleConversion (1.1.6)
@@ -552,7 +552,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   boost: a7c83b31436843459a1961bfd74b96033dc77234
-  BreezSDK: 29da4e607a0db869f3a8f530630fd0b3067a09de
+  BreezSDK: 8a21e8626fad0fe52f3f0b864a43689a53afc6df
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
   DoubleConversion: 5189b271737e1565bdce30deb4a08d647e3f5f54
   FBLazyVector: 48289402952f4f7a4e235de70a9a590aa0b79ef4
