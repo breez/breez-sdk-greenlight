@@ -583,10 +583,12 @@ sealed class InputType with _$InputType {
 class InvoicePaidDetails {
   final String paymentHash;
   final String bolt11;
+  final Payment? payment;
 
   const InvoicePaidDetails({
     required this.paymentHash,
     required this.bolt11,
+    this.payment,
   });
 }
 
@@ -2802,10 +2804,11 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   InvoicePaidDetails _wire2api_invoice_paid_details(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    if (arr.length != 3) throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
     return InvoicePaidDetails(
       paymentHash: _wire2api_String(arr[0]),
       bolt11: _wire2api_String(arr[1]),
+      payment: _wire2api_opt_box_autoadd_payment(arr[2]),
     );
   }
 

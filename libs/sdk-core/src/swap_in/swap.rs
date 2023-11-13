@@ -910,6 +910,7 @@ mod tests {
                 details: crate::InvoicePaidDetails {
                     payment_hash: hex::encode(swap_info.payment_hash.clone()),
                     bolt11: "".to_string(),
+                    payment: None,
                 },
             })
             .await?;

@@ -109,6 +109,7 @@ export type GreenlightNodeConfig = {
 export type InvoicePaidDetails = {
     paymentHash: string
     bolt11: string
+    payment?: Payment
 }
 
 export type LnInvoice = {

@@ -565,10 +565,15 @@ class BreezSDKMapper {
     static func asInvoicePaidDetails(invoicePaidDetails: [String: Any?]) throws -> InvoicePaidDetails {
         guard let paymentHash = invoicePaidDetails["paymentHash"] as? String else { throw SdkError.Generic(message: "Missing mandatory field paymentHash for type InvoicePaidDetails") }
         guard let bolt11 = invoicePaidDetails["bolt11"] as? String else { throw SdkError.Generic(message: "Missing mandatory field bolt11 for type InvoicePaidDetails") }
+        var payment: Payment?
+        if let paymentTmp = invoicePaidDetails["payment"] as? [String: Any?] {
+            payment = try asPayment(payment: paymentTmp)
+        }
 
         return InvoicePaidDetails(
             paymentHash: paymentHash,
-            bolt11: bolt11
+            bolt11: bolt11,
+            payment: payment
         )
     }
 
@@ -576,6 +581,7 @@ class BreezSDKMapper {
         return [
             "paymentHash": invoicePaidDetails.paymentHash,
             "bolt11": invoicePaidDetails.bolt11,
+            "payment": invoicePaidDetails.payment == nil ? nil : dictionaryOf(payment: invoicePaidDetails.payment!),
         ]
     }
 
