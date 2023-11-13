@@ -24,6 +24,8 @@ It will create wheels for the following Python versions and Platforms and upload
 | **Python 3.8**  | ✅               | ✅                 | ✅            | ✅             |
 | **Python 3.9**  | ✅               | ✅                 | ✅            | ✅             |
 | **Python 3.10** | ✅               | ✅                 | ✅            | ✅             |
+| **Python 3.11** | ✅               | ✅                 | ✅            | ✅             |
+| **Python 3.12** | ✅               | ✅                 | ✅            | ✅             |
 
 ## Building Manually
 
