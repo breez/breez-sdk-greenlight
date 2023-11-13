@@ -11,13 +11,13 @@ use breez_sdk_core::{
     LnUrlPayResult, LnUrlPaySuccessData, LnUrlWithdrawRequest, LnUrlWithdrawRequestData,
     LnUrlWithdrawResult, LnUrlWithdrawSuccessData, LocaleOverrides, LocalizedName, LogEntry,
     LogStream, LspInformation, MaxReverseSwapAmountResponse, MessageSuccessActionData,
-    MetadataItem, Network, NodeConfig, NodeState, OpenChannelFeeRequest, OpenChannelFeeResponse,
-    OpeningFeeParams, OpeningFeeParamsMenu, Payment, PaymentDetails, PaymentFailedData,
-    PaymentStatus, PaymentType, PaymentTypeFilter, PrepareRefundRequest, PrepareRefundResponse,
-    PrepareSweepRequest, PrepareSweepResponse, Rate, ReceiveOnchainRequest, ReceivePaymentRequest,
-    ReceivePaymentResponse, RecommendedFees, RefundRequest, RefundResponse, ReverseSwapFeesRequest,
-    ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop,
-    SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
+    MetadataItem, Network, NodeConfig, NodeCredentials, NodeState, OpenChannelFeeRequest,
+    OpenChannelFeeResponse, OpeningFeeParams, OpeningFeeParamsMenu, Payment, PaymentDetails,
+    PaymentFailedData, PaymentStatus, PaymentType, PaymentTypeFilter, PrepareRefundRequest,
+    PrepareRefundResponse, PrepareSweepRequest, PrepareSweepResponse, Rate, ReceiveOnchainRequest,
+    ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees, RefundRequest, RefundResponse,
+    ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint,
+    RouteHintHop, SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
     SendSpontaneousPaymentRequest, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
     StaticBackupResponse, SuccessActionProcessed, SwapInfo, SwapStatus, SweepRequest,
     SweepResponse, Symbol, UnspentTransactionOutput, UrlSuccessActionData,
@@ -133,6 +133,10 @@ impl BlockingBreezServices {
         req: ReceivePaymentRequest,
     ) -> Result<ReceivePaymentResponse, ReceivePaymentError> {
         rt().block_on(self.breez_services.receive_payment(req))
+    }
+
+    pub fn node_credentials(&self) -> SdkResult<Option<NodeCredentials>> {
+        self.breez_services.node_credentials()
     }
 
     pub fn node_info(&self) -> SdkResult<NodeState> {

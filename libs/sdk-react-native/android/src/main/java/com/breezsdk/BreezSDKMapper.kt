@@ -3648,6 +3648,37 @@ fun asNodeConfigList(arr: ReadableArray): List<NodeConfig> {
     return list
 }
 
+fun asNodeCredentials(nodeCredentials: ReadableMap): NodeCredentials? {
+    val type = nodeCredentials.getString("type")
+
+    if (type == "greenlight") {
+        return NodeCredentials.Greenlight(nodeCredentials.getMap("credentials")?.let { asGreenlightCredentials(it) }!!)
+    }
+    return null
+}
+
+fun readableMapOf(nodeCredentials: NodeCredentials): ReadableMap? {
+    val map = Arguments.createMap()
+    when (nodeCredentials) {
+        is NodeCredentials.Greenlight -> {
+            pushToMap(map, "type", "greenlight")
+            pushToMap(map, "credentials", readableMapOf(nodeCredentials.credentials))
+        }
+    }
+    return map
+}
+
+fun asNodeCredentialsList(arr: ReadableArray): List<NodeCredentials> {
+    val list = ArrayList<NodeCredentials>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asNodeCredentials(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asPaymentDetails(paymentDetails: ReadableMap): PaymentDetails? {
     val type = paymentDetails.getString("type")
 

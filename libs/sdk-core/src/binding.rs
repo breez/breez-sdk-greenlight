@@ -35,12 +35,13 @@ use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
     EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus, LnUrlPayRequest,
     LnUrlWithdrawRequest, LnUrlWithdrawResult, MaxReverseSwapAmountResponse, NodeConfig,
-    OpenChannelFeeRequest, OpenChannelFeeResponse, PrepareRefundRequest, PrepareRefundResponse,
-    PrepareSweepRequest, PrepareSweepResponse, ReceiveOnchainRequest, ReceivePaymentRequest,
-    ReceivePaymentResponse, RefundRequest, RefundResponse, ReverseSwapFeesRequest, ReverseSwapInfo,
-    ReverseSwapPairInfo, SendOnchainRequest, SendOnchainResponse, SendPaymentRequest,
-    SendPaymentResponse, SendSpontaneousPaymentRequest, SignMessageRequest, SignMessageResponse,
-    StaticBackupRequest, StaticBackupResponse, SweepRequest, SweepResponse,
+    NodeCredentials, OpenChannelFeeRequest, OpenChannelFeeResponse, PrepareRefundRequest,
+    PrepareRefundResponse, PrepareSweepRequest, PrepareSweepResponse, ReceiveOnchainRequest,
+    ReceivePaymentRequest, ReceivePaymentResponse, RefundRequest, RefundResponse,
+    ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo, SendOnchainRequest,
+    SendOnchainResponse, SendPaymentRequest, SendPaymentResponse, SendSpontaneousPaymentRequest,
+    SignMessageRequest, SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
+    SweepRequest, SweepResponse,
 };
 
 /*
@@ -84,6 +85,16 @@ pub fn is_initialized() -> bool {
 pub fn sync() -> Result<()> {
     block_on(async { get_breez_services().await?.sync().await })
         .map_err(anyhow::Error::new::<SdkError>)
+}
+
+/// See [BreezServices::node_credentials]
+pub fn node_credentials() -> Result<Option<NodeCredentials>> {
+    block_on(async {
+        get_breez_services()
+            .await?
+            .node_credentials()
+            .map_err(anyhow::Error::new::<SdkError>)
+    })
 }
 
 /// See [BreezServices::node_info]

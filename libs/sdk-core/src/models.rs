@@ -472,6 +472,11 @@ pub enum NodeConfig {
     Greenlight { config: GreenlightNodeConfig },
 }
 
+#[derive(Clone, Serialize)]
+pub enum NodeCredentials {
+    Greenlight { credentials: GreenlightCredentials },
+}
+
 #[derive(Clone)]
 pub struct GreenlightNodeConfig {
     pub partner_credentials: Option<GreenlightCredentials>,

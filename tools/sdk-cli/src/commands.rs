@@ -186,6 +186,9 @@ pub(crate) enum Commands {
         expiry: Option<u32>,
     },
 
+    /// The node credentials
+    NodeCredentials {},
+
     /// The up to date node information
     NodeInfo {},
 

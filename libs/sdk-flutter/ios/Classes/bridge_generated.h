@@ -217,6 +217,8 @@ void wire_is_initialized(int64_t port_);
 
 void wire_sync(int64_t port_);
 
+void wire_node_credentials(int64_t port_);
+
 void wire_node_info(int64_t port_);
 
 void wire_disconnect(int64_t port_);
@@ -377,6 +379,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_connect);
     dummy_var ^= ((int64_t) (void*) wire_is_initialized);
     dummy_var ^= ((int64_t) (void*) wire_sync);
+    dummy_var ^= ((int64_t) (void*) wire_node_credentials);
     dummy_var ^= ((int64_t) (void*) wire_node_info);
     dummy_var ^= ((int64_t) (void*) wire_disconnect);
     dummy_var ^= ((int64_t) (void*) wire_sign_message);

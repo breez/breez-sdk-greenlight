@@ -29,6 +29,11 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kSyncConstMeta;
 
+  /// See [BreezServices::node_credentials]
+  Future<NodeCredentials?> nodeCredentials({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kNodeCredentialsConstMeta;
+
   /// See [BreezServices::node_info]
   Future<NodeState> nodeInfo({dynamic hint});
 
@@ -1005,6 +1010,13 @@ sealed class NodeConfig with _$NodeConfig {
   }) = NodeConfig_Greenlight;
 }
 
+@freezed
+sealed class NodeCredentials with _$NodeCredentials {
+  const factory NodeCredentials.greenlight({
+    required GreenlightCredentials credentials,
+  }) = NodeCredentials_Greenlight;
+}
+
 /// The node state of a Greenlight LN node running in the cloud
 class NodeState {
   final String id;
@@ -1742,6 +1754,21 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kSyncConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "sync",
+        argNames: [],
+      );
+
+  Future<NodeCredentials?> nodeCredentials({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_node_credentials(port_),
+      parseSuccessData: _wire2api_opt_box_autoadd_node_credentials,
+      constMeta: kNodeCredentialsConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kNodeCredentialsConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "node_credentials",
         argNames: [],
       );
 
@@ -2570,6 +2597,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return _wire2api_message_success_action_data(raw);
   }
 
+  NodeCredentials _wire2api_box_autoadd_node_credentials(dynamic raw) {
+    return _wire2api_node_credentials(raw);
+  }
+
   OpeningFeeParams _wire2api_box_autoadd_opening_fee_params(dynamic raw) {
     return _wire2api_opening_fee_params(raw);
   }
@@ -3070,6 +3101,17 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     }
   }
 
+  NodeCredentials _wire2api_node_credentials(dynamic raw) {
+    switch (raw[0]) {
+      case 0:
+        return NodeCredentials_Greenlight(
+          credentials: _wire2api_box_autoadd_greenlight_credentials(raw[1]),
+        );
+      default:
+        throw Exception("unreachable");
+    }
+  }
+
   NodeState _wire2api_node_state(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 11) throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
@@ -3140,6 +3182,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   LspInformation? _wire2api_opt_box_autoadd_lsp_information(dynamic raw) {
     return raw == null ? null : _wire2api_box_autoadd_lsp_information(raw);
+  }
+
+  NodeCredentials? _wire2api_opt_box_autoadd_node_credentials(dynamic raw) {
+    return raw == null ? null : _wire2api_box_autoadd_node_credentials(raw);
   }
 
   OpeningFeeParams? _wire2api_opt_box_autoadd_opening_fee_params(dynamic raw) {
@@ -4257,6 +4303,18 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
 
   late final _wire_syncPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_sync');
   late final _wire_sync = _wire_syncPtr.asFunction<void Function(int)>();
+
+  void wire_node_credentials(
+    int port_,
+  ) {
+    return _wire_node_credentials(
+      port_,
+    );
+  }
+
+  late final _wire_node_credentialsPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_node_credentials');
+  late final _wire_node_credentials = _wire_node_credentialsPtr.asFunction<void Function(int)>();
 
   void wire_node_info(
     int port_,

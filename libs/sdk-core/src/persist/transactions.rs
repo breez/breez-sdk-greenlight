@@ -485,7 +485,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
             description: Some("desc".to_string()),
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
-                    payment_hash: hex::encode(payment_hash_with_swap_info.clone()),
+                    payment_hash: hex::encode(payment_hash_with_swap_info),
                     label: "label".to_string(),
                     destination_pubkey: "pubkey".to_string(),
                     payment_preimage: "payment_preimage".to_string(),

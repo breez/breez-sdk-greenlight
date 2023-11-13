@@ -648,6 +648,15 @@ export type NodeConfig = {
     config: GreenlightNodeConfig
 }
 
+export enum NodeCredentialsVariant {
+    GREENLIGHT = "greenlight"
+}
+
+export type NodeCredentials = {
+    type: NodeCredentialsVariant.GREENLIGHT,
+    credentials: GreenlightCredentials
+}
+
 export enum PaymentDetailsVariant {
     LN = "ln",
     CLOSED_CHANNEL = "closedChannel"
@@ -785,6 +794,11 @@ export const withdrawLnurl = async (request: LnUrlWithdrawRequest): Promise<LnUr
 
 export const lnurlAuth = async (reqData: LnUrlAuthRequestData): Promise<LnUrlCallbackStatus> => {
     const response = await BreezSDK.lnurlAuth(reqData)
+    return response
+}
+
+export const nodeCredentials = async (): Promise<NodeCredentials | null> => {
+    const response = await BreezSDK.nodeCredentials()
     return response
 }
 

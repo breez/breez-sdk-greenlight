@@ -105,6 +105,11 @@ dictionary GreenlightCredentials {
     sequence<u8> device_cert;
 };
 
+[Enum]
+interface NodeCredentials {
+    Greenlight(GreenlightCredentials credentials);
+};
+
 dictionary GreenlightNodeConfig {
     GreenlightCredentials? partner_credentials;
     string? invite_code;
@@ -112,7 +117,7 @@ dictionary GreenlightNodeConfig {
 
 [Enum]
 interface NodeConfig {
- Greenlight(GreenlightNodeConfig config);
+    Greenlight(GreenlightNodeConfig config);
 };
 
 dictionary Config {
@@ -707,6 +712,9 @@ interface BlockingBreezServices {
 
    [Throws=LnUrlAuthError]
    LnUrlCallbackStatus lnurl_auth(LnUrlAuthRequestData req_data);
+
+   [Throws=SdkError]
+   NodeCredentials? node_credentials();
 
    [Throws=SdkError]
    NodeState node_info();

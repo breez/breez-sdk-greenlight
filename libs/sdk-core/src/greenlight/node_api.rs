@@ -81,72 +81,39 @@ impl Greenlight {
         .to_bytes();
         let encryption_key_slice = encryption_key.as_slice();
 
-        let legacy_encryption_key = Self::legacy_derive_bip32_key(
-            config.network,
-            &signer,
-            vec![ChildNumber::from_hardened_idx(140)?, ChildNumber::from(0)],
-        )?
-        .to_priv()
-        .to_bytes();
-        let legacy_encryption_key_slice = legacy_encryption_key.as_slice();
-
         let register_credentials = match config.node_config.clone() {
             NodeConfig::Greenlight { config } => config,
         };
 
-        // query for the existing credentials
-        let credentials = persister.get_gl_credentials()?;
-        let parsed_credentials: Result<GreenlightCredentials> = match credentials {
-            // In case we found existing credentials, try to decrypt them and connect to the node
-            Some(creds) => {
-                let mut decrypted_credentials = sym_decrypt(encryption_key_slice, creds.as_slice());
-                if decrypted_credentials.is_none() {
-                    info!("Failed to decrypt credentials, trying legacy key");
-                    decrypted_credentials =
-                        sym_decrypt(legacy_encryption_key_slice, creds.as_slice());
-                }
-                match decrypted_credentials {
-                    Some(creds) => {
-                        let built_credentials: GreenlightCredentials =
-                            serde_json::from_slice(creds.as_slice())?;
-                        info!("Initializing greenlight from existing credentials");
-                        Ok(built_credentials)
-                    }
-                    None => {
-                        return Err(anyhow!(
-                            "Failed to decrypt credentials, seed doesn't match existing node"
-                        ));
-                    }
+        // Query for the existing credentials
+        let mut parsed_credentials =
+            Self::get_node_credentials(config.network, &signer, persister.clone())?
+                .ok_or(anyhow!("No credentials found"));
+        if parsed_credentials.is_err() {
+            info!("No credentials found, trying to recover existing node");
+            parsed_credentials = match Self::recover(config.network, seed.clone()).await {
+                Ok(creds) => Ok(creds),
+                Err(_) => {
+                    // If we got here it means we failed to recover so we need to register a new node
+                    info!("Failed to recover node, registering new one");
+                    let credentials = Self::register(
+                        config.clone().network,
+                        seed.clone(),
+                        register_credentials.partner_credentials,
+                        register_credentials.invite_code,
+                    )
+                    .await?;
+                    Ok(credentials)
                 }
             }
-            // In case no credentials were found, try to recover the node
-            None => {
-                info!("No credentials found, trying to recover existing node");
-                let recovered = Self::recover(config.network, seed.clone()).await;
-                match recovered {
-                    Ok(creds) => Ok(creds),
-                    Err(_) => {
-                        // If we got here it means we failed to recover so we need to register a new node
-                        info!("Failed to recover node, registering new one");
-                        let credentials = Self::register(
-                            config.clone().network,
-                            seed.clone(),
-                            register_credentials.partner_credentials,
-                            register_credentials.invite_code,
-                        )
-                        .await?;
-                        Ok(credentials)
-                    }
-                }
-            }
-        };
+        }
 
         // Persist the connection credentials for future use and return the node instance
         let res = match parsed_credentials {
             Ok(creds) => {
                 let json_creds = serde_json::to_string(&creds)?.as_bytes().to_vec();
-                let encryptd_creds = sym_encrypt(encryption_key_slice, json_creds.as_slice());
-                match encryptd_creds {
+                let encrypted_creds = sym_encrypt(encryption_key_slice, json_creds.as_slice());
+                match encrypted_creds {
                     Some(c) => {
                         persister.set_gl_credentials(c)?;
                         let gl_node = Greenlight::new(config, seed, creds, persister).await?;
@@ -288,6 +255,56 @@ impl Greenlight {
             );
         }
         Ok(node_client.clone().unwrap())
+    }
+
+    fn get_node_credentials(
+        network: Network,
+        signer: &Signer,
+        persister: Arc<SqliteStorage>,
+    ) -> NodeResult<Option<GreenlightCredentials>> {
+        // Derive the encryption key from the seed
+        let encryption_key = Self::derive_bip32_key(
+            network,
+            signer,
+            vec![ChildNumber::from_hardened_idx(140)?, ChildNumber::from(0)],
+        )?
+        .to_priv()
+        .to_bytes();
+        let encryption_key_slice = encryption_key.as_slice();
+
+        let legacy_encryption_key = Self::legacy_derive_bip32_key(
+            network,
+            signer,
+            vec![ChildNumber::from_hardened_idx(140)?, ChildNumber::from(0)],
+        )?
+        .to_priv()
+        .to_bytes();
+        let legacy_encryption_key_slice = legacy_encryption_key.as_slice();
+
+        match persister.get_gl_credentials()? {
+            Some(encrypted_creds) => {
+                let mut decrypted_credentials =
+                    sym_decrypt(encryption_key_slice, encrypted_creds.as_slice());
+                if decrypted_credentials.is_none() {
+                    info!("Failed to decrypt credentials, trying legacy key");
+                    decrypted_credentials =
+                        sym_decrypt(legacy_encryption_key_slice, encrypted_creds.as_slice());
+                }
+                match decrypted_credentials {
+                    Some(decrypted_creds) => {
+                        let credentials: GreenlightCredentials =
+                            serde_json::from_slice(decrypted_creds.as_slice()).map_err(|e| {
+                                NodeError::Generic(anyhow!("Unable to parse credentials: {e}"))
+                            })?;
+                        Ok(Some(credentials))
+                    }
+                    None => Err(NodeError::Generic(anyhow!(
+                        "Failed to decrypt credentials, seed doesn't match existing node"
+                    ))),
+                }
+            }
+            None => Ok(None),
+        }
     }
 
     async fn fetch_channels_and_balance_with_retry(
@@ -563,6 +580,15 @@ impl Greenlight {
 
 #[tonic::async_trait]
 impl NodeAPI for Greenlight {
+    fn node_credentials(&self) -> NodeResult<Option<NodeCredentials>> {
+        Ok(Self::get_node_credentials(
+            self.sdk_config.network,
+            &self.signer,
+            self.persister.clone(),
+        )?
+        .map(|credentials| NodeCredentials::Greenlight { credentials }))
+    }
+
     async fn create_invoice(
         &self,
         amount_msat: u64,

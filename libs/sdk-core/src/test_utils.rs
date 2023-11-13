@@ -39,8 +39,8 @@ use crate::node_api::{NodeAPI, NodeError, NodeResult};
 use crate::swap_in::error::SwapResult;
 use crate::swap_in::swap::create_submarine_swap_script;
 use crate::{
-    parse_invoice, Config, CustomMessage, LNInvoice, MaxChannelAmount, PaymentResponse, Peer,
-    PrepareSweepRequest, PrepareSweepResponse, RouteHint, RouteHintHop,
+    parse_invoice, Config, CustomMessage, LNInvoice, MaxChannelAmount, NodeCredentials,
+    PaymentResponse, Peer, PrepareSweepRequest, PrepareSweepResponse, RouteHint, RouteHintHop,
 };
 use crate::{OpeningFeeParams, OpeningFeeParamsMenu};
 use crate::{ReceivePaymentRequest, SwapInfo};
@@ -278,6 +278,10 @@ pub struct MockNodeAPI {
 
 #[tonic::async_trait]
 impl NodeAPI for MockNodeAPI {
+    fn node_credentials(&self) -> NodeResult<Option<NodeCredentials>> {
+        Err(NodeError::Generic(anyhow!("Not implemented")))
+    }
+
     async fn create_invoice(
         &self,
         amount_sats: u64,

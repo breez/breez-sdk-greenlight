@@ -448,6 +448,11 @@ impl BreezServices {
         self.payment_receiver.receive_payment(req).await
     }
 
+    /// Retrieve the decrypted credentials from the node.
+    pub fn node_credentials(&self) -> SdkResult<Option<NodeCredentials>> {
+        Ok(self.node_api.node_credentials()?)
+    }
+
     /// Retrieve the node state from the persistent storage.
     ///
     /// Fail if it could not be retrieved or if `None` was found.
