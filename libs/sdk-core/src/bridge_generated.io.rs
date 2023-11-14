@@ -765,7 +765,7 @@ impl Wire2Api<PrepareSweepRequest> for wire_PrepareSweepRequest {
     fn wire2api(self) -> PrepareSweepRequest {
         PrepareSweepRequest {
             to_address: self.to_address.wire2api(),
-            sats_per_vbyte: self.sats_per_vbyte.wire2api(),
+            sat_per_vbyte: self.sat_per_vbyte.wire2api(),
         }
     }
 }
@@ -849,7 +849,7 @@ impl Wire2Api<SweepRequest> for wire_SweepRequest {
     fn wire2api(self) -> SweepRequest {
         SweepRequest {
             to_address: self.to_address.wire2api(),
-            fee_rate_sats_per_vbyte: self.fee_rate_sats_per_vbyte.wire2api(),
+            sat_per_vbyte: self.sat_per_vbyte.wire2api(),
         }
     }
 }
@@ -1003,7 +1003,7 @@ pub struct wire_PrepareRefundRequest {
 #[derive(Clone)]
 pub struct wire_PrepareSweepRequest {
     to_address: *mut wire_uint_8_list,
-    sats_per_vbyte: u64,
+    sat_per_vbyte: u64,
 }
 
 #[repr(C)]
@@ -1077,7 +1077,7 @@ pub struct wire_StaticBackupRequest {
 #[derive(Clone)]
 pub struct wire_SweepRequest {
     to_address: *mut wire_uint_8_list,
-    fee_rate_sats_per_vbyte: u32,
+    sat_per_vbyte: u32,
 }
 
 #[repr(C)]
@@ -1385,7 +1385,7 @@ impl NewWithNullPtr for wire_PrepareSweepRequest {
     fn new_with_null_ptr() -> Self {
         Self {
             to_address: core::ptr::null_mut(),
-            sats_per_vbyte: Default::default(),
+            sat_per_vbyte: Default::default(),
         }
     }
 }
@@ -1539,7 +1539,7 @@ impl NewWithNullPtr for wire_SweepRequest {
     fn new_with_null_ptr() -> Self {
         Self {
             to_address: core::ptr::null_mut(),
-            fee_rate_sats_per_vbyte: Default::default(),
+            sat_per_vbyte: Default::default(),
         }
     }
 }

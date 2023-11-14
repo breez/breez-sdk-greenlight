@@ -170,12 +170,12 @@ typedef struct wire_BuyBitcoinRequest {
 
 typedef struct wire_SweepRequest {
   struct wire_uint_8_list *to_address;
-  uint32_t fee_rate_sats_per_vbyte;
+  uint32_t sat_per_vbyte;
 } wire_SweepRequest;
 
 typedef struct wire_PrepareSweepRequest {
   struct wire_uint_8_list *to_address;
-  uint64_t sats_per_vbyte;
+  uint64_t sat_per_vbyte;
 } wire_PrepareSweepRequest;
 
 typedef struct wire_PrepareRefundRequest {

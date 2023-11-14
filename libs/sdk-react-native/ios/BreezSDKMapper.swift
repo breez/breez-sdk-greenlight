@@ -1775,18 +1775,18 @@ enum BreezSDKMapper {
 
     static func asPrepareSweepRequest(prepareSweepRequest: [String: Any?]) throws -> PrepareSweepRequest {
         guard let toAddress = prepareSweepRequest["toAddress"] as? String else { throw SdkError.Generic(message: "Missing mandatory field toAddress for type PrepareSweepRequest") }
-        guard let satsPerVbyte = prepareSweepRequest["satsPerVbyte"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field satsPerVbyte for type PrepareSweepRequest") }
+        guard let satPerVbyte = prepareSweepRequest["satPerVbyte"] as? UInt64 else { throw SdkError.Generic(message: "Missing mandatory field satPerVbyte for type PrepareSweepRequest") }
 
         return PrepareSweepRequest(
             toAddress: toAddress,
-            satsPerVbyte: satsPerVbyte
+            satPerVbyte: satPerVbyte
         )
     }
 
     static func dictionaryOf(prepareSweepRequest: PrepareSweepRequest) -> [String: Any?] {
         return [
             "toAddress": prepareSweepRequest.toAddress,
-            "satsPerVbyte": prepareSweepRequest.satsPerVbyte,
+            "satPerVbyte": prepareSweepRequest.satPerVbyte,
         ]
     }
 
@@ -2708,18 +2708,18 @@ enum BreezSDKMapper {
 
     static func asSweepRequest(sweepRequest: [String: Any?]) throws -> SweepRequest {
         guard let toAddress = sweepRequest["toAddress"] as? String else { throw SdkError.Generic(message: "Missing mandatory field toAddress for type SweepRequest") }
-        guard let feeRateSatsPerVbyte = sweepRequest["feeRateSatsPerVbyte"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field feeRateSatsPerVbyte for type SweepRequest") }
+        guard let satPerVbyte = sweepRequest["satPerVbyte"] as? UInt32 else { throw SdkError.Generic(message: "Missing mandatory field satPerVbyte for type SweepRequest") }
 
         return SweepRequest(
             toAddress: toAddress,
-            feeRateSatsPerVbyte: feeRateSatsPerVbyte
+            satPerVbyte: satPerVbyte
         )
     }
 
     static func dictionaryOf(sweepRequest: SweepRequest) -> [String: Any?] {
         return [
             "toAddress": sweepRequest.toAddress,
-            "feeRateSatsPerVbyte": sweepRequest.feeRateSatsPerVbyte,
+            "satPerVbyte": sweepRequest.satPerVbyte,
         ]
     }
 

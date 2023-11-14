@@ -92,7 +92,7 @@ pub trait NodeAPI: Send + Sync {
         max_hops: u32,
         last_hop: Option<&RouteHintHop>,
     ) -> NodeResult<Vec<MaxChannelAmount>>;
-    async fn sweep(&self, to_address: String, fee_rate_sats_per_vbyte: u32) -> NodeResult<Vec<u8>>;
+    async fn sweep(&self, to_address: String, sat_per_vbyte: u32) -> NodeResult<Vec<u8>>;
     async fn prepare_sweep(&self, req: PrepareSweepRequest) -> NodeResult<PrepareSweepResponse>;
     async fn start_signer(&self, shutdown: mpsc::Receiver<()>);
     async fn list_peers(&self) -> NodeResult<Vec<Peer>>;

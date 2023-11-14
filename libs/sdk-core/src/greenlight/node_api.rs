@@ -900,12 +900,12 @@ impl NodeAPI for Greenlight {
         Ok(hex::encode(node_info.id))
     }
 
-    async fn sweep(&self, to_address: String, fee_rate_sats_per_vbyte: u32) -> NodeResult<Vec<u8>> {
+    async fn sweep(&self, to_address: String, sat_per_vbyte: u32) -> NodeResult<Vec<u8>> {
         let mut client = self.get_node_client().await?;
 
         let request = cln::WithdrawRequest {
             feerate: Some(cln::Feerate {
-                style: Some(cln::feerate::Style::Perkw(fee_rate_sats_per_vbyte * 250)),
+                style: Some(cln::feerate::Style::Perkw(sat_per_vbyte * 250)),
             }),
             satoshi: Some(cln::AmountOrAll {
                 value: Some(cln::amount_or_all::Value::All(true)),
@@ -958,7 +958,7 @@ impl NodeAPI for Greenlight {
         let witness_input_size: u64 = 110;
         let tx_weight = tx.strippedsize() as u64 * WITNESS_SCALE_FACTOR as u64
             + witness_input_size * txins.len() as u64;
-        let fee: u64 = tx_weight * req.sats_per_vbyte / WITNESS_SCALE_FACTOR as u64;
+        let fee: u64 = tx_weight * req.sat_per_vbyte / WITNESS_SCALE_FACTOR as u64;
         if fee >= amount {
             return Err(NodeError::Generic(anyhow!(
                 "Insufficient funds to pay fees"

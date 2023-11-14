@@ -522,7 +522,7 @@ impl BreezServices {
         self.start_node().await?;
         let txid = self
             .node_api
-            .sweep(req.to_address, req.fee_rate_sats_per_vbyte)
+            .sweep(req.to_address, req.sat_per_vbyte)
             .await?;
         self.sync().await?;
         Ok(SweepResponse { txid })
