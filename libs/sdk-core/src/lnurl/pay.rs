@@ -107,8 +107,9 @@ fn validate_invoice(
     data: &LnUrlPayRequestData,
     network: Network,
 ) -> LnUrlResult<()> {
-    validate_network(bolt11, network)?;
     let invoice = parse_invoice(bolt11)?;
+    // Valid the invoice network against the config network
+    validate_network(invoice.clone(), network)?;
 
     match invoice.description_hash {
         None => {

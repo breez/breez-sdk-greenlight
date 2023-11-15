@@ -195,18 +195,9 @@ pub fn add_lsp_routing_hints(
     Ok(invoice_builder.build_raw()?)
 }
 
-// Validate that the BOLT11 payment request matches the network
-pub fn validate_network(bolt11: &str, network: Network) -> InvoiceResult<()> {
-    if bolt11.trim().is_empty() {
-        return Err(InvoiceError::Validation(anyhow!(
-            "bolt11 is an empty string"
-        )));
-    }
-    let re = Regex::new(r"(?i)^lightning:")?;
-    let bolt11 = re.replace_all(bolt11, "");
-    let signed = bolt11.parse::<SignedRawInvoice>()?;
-    let invoice = Invoice::from_signed(signed)?;
-    match invoice.network() == network.into() {
+// Validate that the LNInvoice network matches the provided network
+pub fn validate_network(invoice: LNInvoice, network: Network) -> InvoiceResult<()> {
+    match invoice.network == network {
         true => Ok(()),
         false => Err(InvoiceError::InvalidNetwork(anyhow!(
             "Invoice network does not match config"
@@ -300,9 +291,8 @@ mod tests {
     #[test]
     fn test_parse_invoice_network() {
         let payreq = String::from("lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz");
-        assert!(validate_network(&payreq, Network::Bitcoin).is_ok());
-
-        let res = parse_invoice(&payreq).unwrap();
+        let res: LNInvoice = parse_invoice(&payreq).unwrap();
+        assert!(validate_network(res.clone(), Network::Bitcoin).is_ok());
 
         let private_key_vec =
             hex::decode("3e171115f50b2c355836dc026a6d54d525cf0d796eb50b3460a205d25c9d38fd")
@@ -329,16 +319,18 @@ mod tests {
     #[test]
     fn test_parse_invoice_invalid_bitcoin_network() {
         let payreq = String::from("lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz");
+        let res = parse_invoice(&payreq);
 
-        assert!(validate_network(&payreq, Network::Testnet).is_err());
-        assert!(parse_invoice(&payreq).is_ok());
+        assert!(res.is_ok());
+        assert!(validate_network(res.unwrap(), Network::Testnet).is_err());
     }
 
     #[test]
     fn test_parse_invoice_invalid_testnet_network() {
         let payreq = String::from("lntb15u1pj53l9tpp5p7kjsjcv3eqa39upytmj6k7ac8rqvdffyqr4um98pq5n4ppwxvnsdpzxysy2umswfjhxum0yppk76twypgxzmnwvyxqrrsscqp79qy9qsqsp53xw4x5ezpzvnheff9mrt0ju72u5a5dnxyh4rq6gtweufv9650d4qwqj3ds5xfg4pxc9h7a2g43fmntr4tt322jzujsycvuvury50u994kzr8539qf658hrp07hyz634qpvkeh378wnvf7lddp2x7yfgyk9cp7f7937");
+        let res = parse_invoice(&payreq);
 
-        assert!(validate_network(&payreq, Network::Bitcoin).is_err());
-        assert!(parse_invoice(&payreq).is_ok());
+        assert!(res.is_ok());
+        assert!(validate_network(res.unwrap(), Network::Bitcoin).is_err());
     }
 }

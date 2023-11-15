@@ -702,10 +702,12 @@ impl NodeAPI for Greenlight {
     }
 
     async fn send_pay(&self, bolt11: String, max_hops: u32) -> NodeResult<PaymentResponse> {
-        validate_network(&bolt11, self.sdk_config.network)?;
         let invoice = parse_invoice(&bolt11)?;
         let last_hop = invoice.routing_hints.first().and_then(|rh| rh.hops.first());
         let mut client: node::ClnClient = self.get_node_client().await?;
+
+        // Valid the invoice network against the config network
+        validate_network(invoice.clone(), self.sdk_config.network)?;
 
         // We first calculate for each channel the max amount to pay (at the receiver)
         let mut max_amount_per_channel = self
@@ -819,8 +821,9 @@ impl NodeAPI for Greenlight {
     ) -> NodeResult<PaymentResponse> {
         let mut description = None;
         if !bolt11.is_empty() {
-            validate_network(&bolt11, self.sdk_config.network)?;
-            description = parse_invoice(&bolt11)?.description;
+            let invoice = parse_invoice(&bolt11)?;
+            validate_network(invoice.clone(), self.sdk_config.network)?;
+            description = invoice.description;
         }
 
         let mut client: node::ClnClient = self.get_node_client().await?;

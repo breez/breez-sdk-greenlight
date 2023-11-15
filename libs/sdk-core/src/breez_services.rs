@@ -242,10 +242,12 @@ impl BreezServices {
         req: SendPaymentRequest,
     ) -> Result<SendPaymentResponse, SendPaymentError> {
         self.start_node().await?;
-        validate_network(req.bolt11.as_str(), self.config.network)?;
         let parsed_invoice = parse_invoice(req.bolt11.as_str())?;
         let invoice_amount_msat = parsed_invoice.amount_msat.unwrap_or_default();
         let provided_amount_msat = req.amount_msat.unwrap_or_default();
+
+        // Valid the invoice network against the config network
+        validate_network(parsed_invoice.clone(), self.config.network)?;
 
         // Ensure amount is provided for zero invoice
         if provided_amount_msat == 0 && invoice_amount_msat == 0 {
