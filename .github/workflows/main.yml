@@ -90,7 +90,7 @@ jobs:
       - name: Build golang bindings
         working-directory: libs/sdk-bindings       
         run: |
-          cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go
+          cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go --tag v0.1.5+v0.23.0
           uniffi-bindgen-go src/breez_sdk.udl -o ffi/golang -c ./uniffi.toml
           cp ../target/debug/libbreez_sdk_bindings.dylib ffi/golang
           cp -r ffi/golang/breez/breez_sdk tests/bindings/golang/
