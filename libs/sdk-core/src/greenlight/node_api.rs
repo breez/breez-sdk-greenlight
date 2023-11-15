@@ -39,7 +39,7 @@ use tokio::time::sleep;
 use tokio_stream::{Stream, StreamExt};
 use tonic::Streaming;
 
-use crate::invoice::{parse_invoice, InvoiceError, RouteHintHop};
+use crate::invoice::{parse_invoice, validate_network, InvoiceError, RouteHintHop};
 use crate::models::*;
 use crate::node_api::{NodeAPI, NodeError, NodeResult};
 use crate::persist::db::SqliteStorage;
@@ -732,6 +732,9 @@ impl NodeAPI for Greenlight {
         let last_hop = invoice.routing_hints.first().and_then(|rh| rh.hops.first());
         let mut client: node::ClnClient = self.get_node_client().await?;
 
+        // Valid the invoice network against the config network
+        validate_network(invoice.clone(), self.sdk_config.network)?;
+
         // We first calculate for each channel the max amount to pay (at the receiver)
         let mut max_amount_per_channel = self
             .max_sendable_amount(Some(hex::decode(invoice.payee_pubkey)?), max_hops, last_hop)
@@ -844,7 +847,9 @@ impl NodeAPI for Greenlight {
     ) -> NodeResult<PaymentResponse> {
         let mut description = None;
         if !bolt11.is_empty() {
-            description = parse_invoice(&bolt11)?.description;
+            let invoice = parse_invoice(&bolt11)?;
+            validate_network(invoice.clone(), self.sdk_config.network)?;
+            description = invoice.description;
         }
 
         let mut client: node::ClnClient = self.get_node_client().await?;

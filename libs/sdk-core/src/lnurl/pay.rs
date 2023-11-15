@@ -1,8 +1,8 @@
-use crate::invoice::parse_invoice;
+use crate::invoice::{parse_invoice, validate_network};
 use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 use crate::lnurl::pay::model::{CallbackResponse, SuccessAction, ValidatedCallbackResponse};
-use crate::LnUrlErrorData;
 use crate::{ensure_sdk, input_parser::*};
+use crate::{LnUrlErrorData, Network};
 use anyhow::anyhow;
 use bitcoin::hashes::{sha256, Hash};
 use std::str::FromStr;
@@ -20,6 +20,7 @@ pub(crate) async fn validate_lnurl_pay(
     user_amount_msat: u64,
     comment: Option<String>,
     req_data: LnUrlPayRequestData,
+    network: Network,
 ) -> LnUrlResult<ValidatedCallbackResponse> {
     validate_user_input(
         user_amount_msat,
@@ -46,7 +47,7 @@ pub(crate) async fn validate_lnurl_pay(
             }
         }
 
-        validate_invoice(user_amount_msat, &callback_resp.pr, &req_data)?;
+        validate_invoice(user_amount_msat, &callback_resp.pr, &req_data, network)?;
         Ok(ValidatedCallbackResponse::EndpointSuccess {
             data: callback_resp,
         })
@@ -104,8 +105,11 @@ fn validate_invoice(
     user_amount_msat: u64,
     bolt11: &str,
     data: &LnUrlPayRequestData,
+    network: Network,
 ) -> LnUrlResult<()> {
     let invoice = parse_invoice(bolt11)?;
+    // Valid the invoice network against the config network
+    validate_network(invoice.clone(), network)?;
 
     match invoice.description_hash {
         None => {
@@ -668,10 +672,63 @@ mod tests {
         let inv = rand_invoice_with_description_hash(temp_desc.clone())?;
         let payreq: String = rand_invoice_with_description_hash(temp_desc)?.to_string();
 
-        assert!(validate_invoice(inv.amount_milli_satoshis().unwrap(), &payreq, &req).is_ok());
-        assert!(
-            validate_invoice(inv.amount_milli_satoshis().unwrap() + 1000, &payreq, &req).is_err()
-        );
+        assert!(validate_invoice(
+            inv.amount_milli_satoshis().unwrap(),
+            &payreq,
+            &req,
+            Network::Bitcoin
+        )
+        .is_ok());
+        assert!(validate_invoice(
+            inv.amount_milli_satoshis().unwrap() + 1000,
+            &payreq,
+            &req,
+            Network::Bitcoin,
+        )
+        .is_err());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_lnurl_pay_validate_invoice_network() -> Result<()> {
+        let req = get_test_pay_req_data(0, 50_000, 0);
+        let temp_desc = req.metadata_str.clone();
+        let inv = rand_invoice_with_description_hash(temp_desc.clone())?;
+        let payreq: String = rand_invoice_with_description_hash(temp_desc)?.to_string();
+
+        assert!(validate_invoice(
+            inv.amount_milli_satoshis().unwrap(),
+            &payreq,
+            &req,
+            Network::Bitcoin,
+        )
+        .is_ok());
+        assert!(validate_invoice(
+            inv.amount_milli_satoshis().unwrap() + 1000,
+            &payreq,
+            &req,
+            Network::Bitcoin,
+        )
+        .is_err());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_lnurl_pay_validate_invoice_wrong_network() -> Result<()> {
+        let req = get_test_pay_req_data(0, 25_000, 0);
+        let temp_desc = req.metadata_str.clone();
+        let inv = rand_invoice_with_description_hash(temp_desc.clone())?;
+        let payreq: String = rand_invoice_with_description_hash(temp_desc)?.to_string();
+
+        assert!(validate_invoice(
+            inv.amount_milli_satoshis().unwrap(),
+            &payreq,
+            &req,
+            Network::Testnet,
+        )
+        .is_err());
 
         Ok(())
     }

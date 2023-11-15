@@ -67,6 +67,9 @@ pub enum LnUrlPayError {
     #[error("Invalid invoice: {err}")]
     InvalidInvoice { err: String },
 
+    #[error("Invalid network: {err}")]
+    InvalidNetwork { err: String },
+
     #[error("Invalid uri: {err}")]
     InvalidUri { err: String },
 
@@ -105,15 +108,26 @@ impl From<bitcoin::hashes::hex::Error> for LnUrlPayError {
     }
 }
 
+impl From<InvoiceError> for LnUrlPayError {
+    fn from(value: InvoiceError) -> Self {
+        match value {
+            InvoiceError::InvalidNetwork(err) => Self::InvalidNetwork {
+                err: err.to_string(),
+            },
+            _ => Self::InvalidInvoice {
+                err: value.to_string(),
+            },
+        }
+    }
+}
+
 impl From<LnUrlError> for LnUrlPayError {
     fn from(value: LnUrlError) -> Self {
         match value {
             LnUrlError::InvalidUri(err) => Self::InvalidUri {
                 err: err.to_string(),
             },
-            LnUrlError::InvalidInvoice(err) => Self::InvalidInvoice {
-                err: err.to_string(),
-            },
+            LnUrlError::InvalidInvoice(err) => err.into(),
             LnUrlError::ServiceConnectivity(err) => Self::ServiceConnectivity {
                 err: err.to_string(),
             },
@@ -149,6 +163,7 @@ impl From<SendPaymentError> for LnUrlPayError {
             SendPaymentError::AlreadyPaid => Self::AlreadyPaid,
             SendPaymentError::InvalidAmount { err } => Self::InvalidAmount { err },
             SendPaymentError::InvalidInvoice { err } => Self::InvalidInvoice { err },
+            SendPaymentError::InvalidNetwork { err } => Self::InvalidNetwork { err },
             SendPaymentError::InvoiceExpired { err } => Self::InvoiceExpired { err },
             SendPaymentError::PaymentFailed { err } => Self::PaymentFailed { err },
             SendPaymentError::PaymentTimeout { err } => Self::PaymentTimeout { err },
@@ -571,6 +586,9 @@ pub enum SendPaymentError {
     #[error("Invalid invoice: {err}")]
     InvalidInvoice { err: String },
 
+    #[error("Invalid network: {err}")]
+    InvalidNetwork { err: String },
+
     #[error("Invoice expired: {err}")]
     InvoiceExpired { err: String },
 
@@ -599,17 +617,14 @@ impl From<anyhow::Error> for SendPaymentError {
 }
 
 impl From<InvoiceError> for SendPaymentError {
-    fn from(err: InvoiceError) -> Self {
-        Self::InvalidInvoice {
-            err: err.to_string(),
-        }
-    }
-}
-
-impl From<InvoiceError> for LnUrlPayError {
-    fn from(err: InvoiceError) -> Self {
-        Self::InvalidInvoice {
-            err: err.to_string(),
+    fn from(value: InvoiceError) -> Self {
+        match value {
+            InvoiceError::InvalidNetwork(err) => Self::InvalidNetwork {
+                err: err.to_string(),
+            },
+            _ => Self::InvalidInvoice {
+                err: value.to_string(),
+            },
         }
     }
 }

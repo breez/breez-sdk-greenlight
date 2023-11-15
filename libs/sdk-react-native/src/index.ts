@@ -114,6 +114,7 @@ export type InvoicePaidDetails = {
 
 export type LnInvoice = {
     bolt11: string
+    network: Network
     payeePubkey: string
     paymentHash: string
     description?: string
