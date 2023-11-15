@@ -39,7 +39,7 @@ use tokio::time::sleep;
 use tokio_stream::{Stream, StreamExt};
 use tonic::Streaming;
 
-use crate::invoice::{parse_invoice, InvoiceError, RouteHintHop};
+use crate::invoice::{parse_invoice, validate_network, InvoiceError, RouteHintHop};
 use crate::models::*;
 use crate::node_api::{NodeAPI, NodeError, NodeResult};
 use crate::persist::db::SqliteStorage;
@@ -702,6 +702,7 @@ impl NodeAPI for Greenlight {
     }
 
     async fn send_pay(&self, bolt11: String, max_hops: u32) -> NodeResult<PaymentResponse> {
+        validate_network(&bolt11, self.sdk_config.network)?;
         let invoice = parse_invoice(&bolt11)?;
         let last_hop = invoice.routing_hints.first().and_then(|rh| rh.hops.first());
         let mut client: node::ClnClient = self.get_node_client().await?;
@@ -818,6 +819,7 @@ impl NodeAPI for Greenlight {
     ) -> NodeResult<PaymentResponse> {
         let mut description = None;
         if !bolt11.is_empty() {
+            validate_network(&bolt11, self.sdk_config.network)?;
             description = parse_invoice(&bolt11)?.description;
         }
 

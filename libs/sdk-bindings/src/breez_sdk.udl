@@ -28,6 +28,7 @@ enum LnUrlPayError {
     "Generic",
     "InvalidAmount",
     "InvalidInvoice",
+    "InvalidNetwork",
     "InvalidUri",
     "InvoiceExpired",
     "PaymentFailed",
@@ -81,6 +82,7 @@ enum SendPaymentError {
     "InvalidAmount",
     "InvalidInvoice",
     "InvoiceExpired",
+    "InvalidNetwork",
     "PaymentFailed",
     "PaymentTimeout",
     "RouteNotFound",
@@ -134,6 +136,7 @@ dictionary RouteHint {
 
 dictionary LNInvoice {
     string bolt11;
+    Network network;
     string payee_pubkey;
     string payment_hash;
     string? description;

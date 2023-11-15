@@ -1,7 +1,7 @@
 import BreezSDK
 import Foundation
 
-class BreezSDKMapper {
+enum BreezSDKMapper {
     static func asAesSuccessActionDataDecrypted(aesSuccessActionDataDecrypted: [String: Any?]) throws -> AesSuccessActionDataDecrypted {
         guard let description = aesSuccessActionDataDecrypted["description"] as? String else { throw SdkError.Generic(message: "Missing mandatory field description for type AesSuccessActionDataDecrypted") }
         guard let plaintext = aesSuccessActionDataDecrypted["plaintext"] as? String else { throw SdkError.Generic(message: "Missing mandatory field plaintext for type AesSuccessActionDataDecrypted") }
@@ -604,6 +604,9 @@ class BreezSDKMapper {
 
     static func asLnInvoice(lnInvoice: [String: Any?]) throws -> LnInvoice {
         guard let bolt11 = lnInvoice["bolt11"] as? String else { throw SdkError.Generic(message: "Missing mandatory field bolt11 for type LnInvoice") }
+        guard let networkTmp = lnInvoice["network"] as? String else { throw SdkError.Generic(message: "Missing mandatory field network for type LnInvoice") }
+        let network = try asNetwork(network: networkTmp)
+
         guard let payeePubkey = lnInvoice["payeePubkey"] as? String else { throw SdkError.Generic(message: "Missing mandatory field payeePubkey for type LnInvoice") }
         guard let paymentHash = lnInvoice["paymentHash"] as? String else { throw SdkError.Generic(message: "Missing mandatory field paymentHash for type LnInvoice") }
         let description = lnInvoice["description"] as? String
@@ -619,6 +622,7 @@ class BreezSDKMapper {
 
         return LnInvoice(
             bolt11: bolt11,
+            network: network,
             payeePubkey: payeePubkey,
             paymentHash: paymentHash,
             description: description,
@@ -635,6 +639,7 @@ class BreezSDKMapper {
     static func dictionaryOf(lnInvoice: LnInvoice) -> [String: Any?] {
         return [
             "bolt11": lnInvoice.bolt11,
+            "network": valueOf(network: lnInvoice.network),
             "payeePubkey": lnInvoice.payeePubkey,
             "paymentHash": lnInvoice.paymentHash,
             "description": lnInvoice.description == nil ? nil : lnInvoice.description,

@@ -665,6 +665,7 @@ fun asLnInvoice(lnInvoice: ReadableMap): LnInvoice? {
             lnInvoice,
             arrayOf(
                 "bolt11",
+                "network",
                 "payeePubkey",
                 "paymentHash",
                 "timestamp",
@@ -678,6 +679,7 @@ fun asLnInvoice(lnInvoice: ReadableMap): LnInvoice? {
         return null
     }
     val bolt11 = lnInvoice.getString("bolt11")!!
+    val network = lnInvoice.getString("network")?.let { asNetwork(it) }!!
     val payeePubkey = lnInvoice.getString("payeePubkey")!!
     val paymentHash = lnInvoice.getString("paymentHash")!!
     val description = if (hasNonNullKey(lnInvoice, "description")) lnInvoice.getString("description") else null
@@ -690,6 +692,7 @@ fun asLnInvoice(lnInvoice: ReadableMap): LnInvoice? {
     val minFinalCltvExpiryDelta = lnInvoice.getDouble("minFinalCltvExpiryDelta").toULong()
     return LnInvoice(
         bolt11,
+        network,
         payeePubkey,
         paymentHash,
         description,
@@ -706,6 +709,7 @@ fun asLnInvoice(lnInvoice: ReadableMap): LnInvoice? {
 fun readableMapOf(lnInvoice: LnInvoice): ReadableMap {
     return readableMapOf(
         "bolt11" to lnInvoice.bolt11,
+        "network" to lnInvoice.network.name.lowercase(),
         "payeePubkey" to lnInvoice.payeePubkey,
         "paymentHash" to lnInvoice.paymentHash,
         "description" to lnInvoice.description,

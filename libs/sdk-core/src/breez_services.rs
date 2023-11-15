@@ -37,7 +37,9 @@ use crate::grpc::payment_notifier_client::PaymentNotifierClient;
 use crate::grpc::signer_client::SignerClient;
 use crate::grpc::swapper_client::SwapperClient;
 use crate::grpc::PaymentInformation;
-use crate::invoice::{add_lsp_routing_hints, parse_invoice, LNInvoice, RouteHint, RouteHintHop};
+use crate::invoice::{
+    add_lsp_routing_hints, parse_invoice, validate_network, LNInvoice, RouteHint, RouteHintHop,
+};
 use crate::lnurl::auth::perform_lnurl_auth;
 use crate::lnurl::pay::model::SuccessAction::Aes;
 use crate::lnurl::pay::model::{
@@ -149,6 +151,7 @@ pub struct CheckMessageResponse {
 
 /// BreezServices is a facade and the single entry point for the SDK.
 pub struct BreezServices {
+    config: Config,
     started: Mutex<bool>,
     node_api: Arc<dyn NodeAPI>,
     lsp_api: Arc<dyn LspAPI>,
@@ -239,6 +242,7 @@ impl BreezServices {
         req: SendPaymentRequest,
     ) -> Result<SendPaymentResponse, SendPaymentError> {
         self.start_node().await?;
+        validate_network(req.bolt11.as_str(), self.config.network)?;
         let parsed_invoice = parse_invoice(req.bolt11.as_str())?;
         let invoice_amount_msat = parsed_invoice.amount_msat.unwrap_or_default();
         let provided_amount_msat = req.amount_msat.unwrap_or_default();
@@ -307,7 +311,14 @@ impl BreezServices {
     ///
     /// This method will return an [anyhow::Error] when any validation check fails.
     pub async fn lnurl_pay(&self, req: LnUrlPayRequest) -> Result<LnUrlPayResult, LnUrlPayError> {
-        match validate_lnurl_pay(req.amount_msat, req.comment, req.data.clone()).await? {
+        match validate_lnurl_pay(
+            req.amount_msat,
+            req.comment,
+            req.data.clone(),
+            self.config.network,
+        )
+        .await?
+        {
             ValidatedCallbackResponse::EndpointError { data: e } => {
                 Ok(LnUrlPayResult::EndpointError { data: e })
             }
@@ -1673,6 +1684,7 @@ impl BreezServicesBuilder {
 
         // Create the node services and it them statically
         let breez_services = Arc::new(BreezServices {
+            config: self.config.clone(),
             started: Mutex::new(false),
             node_api: unwrapped_node_api.clone(),
             lsp_api: self.lsp_api.clone().unwrap_or_else(|| breez_server.clone()),
