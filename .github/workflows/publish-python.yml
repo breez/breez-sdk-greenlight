@@ -25,7 +25,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        python: ["3.8", "3.9", "3.10"]
+        python: ["3.8", "3.9", "3.10", "3.11", "3.12"]
     steps:
       - name: Checkout breez-sdk repo
         uses: actions/checkout@v3
@@ -80,10 +80,12 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, aarch64]
-        python: ["3.8", "3.9", "3.10"]
+        python: ["3.8", "3.9", "3.10", "3.11", "3.12"]
     steps:
       - name: "Checkout"
         uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.ref || github.sha }}
 
       - name: "Setup Python"
         uses: actions/setup-python@v4
