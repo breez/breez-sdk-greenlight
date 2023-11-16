@@ -1,4 +1,4 @@
-use std::cmp::{max, min, Reverse};
+use std::cmp::{min, Reverse};
 use std::pin::Pin;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -702,7 +702,8 @@ impl NodeAPI for Greenlight {
             Ok(())
         })?;
 
-        let max_allowed_to_receive_msats = max(MAX_INBOUND_LIQUIDITY_MSAT - channels_balance, 0);
+        let max_allowed_to_receive_msats =
+            MAX_INBOUND_LIQUIDITY_MSAT.saturating_sub(channels_balance);
         let node_pubkey = hex::encode(node_info.id);
 
         // construct the node state
