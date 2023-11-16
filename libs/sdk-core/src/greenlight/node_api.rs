@@ -1613,10 +1613,10 @@ impl TryFrom<cln::ListpaysPays> for Payment {
             payment_type: PaymentType::Sent,
             payment_time: payment.completed_at.unwrap_or(payment.created_at) as i64,
             amount_msat: match status {
-                PaymentStatus::Failed => ln_invoice
+                PaymentStatus::Complete => payment_amount,
+                _ => ln_invoice
                     .as_ref()
                     .map_or(0, |i| i.amount_msat.unwrap_or_default()),
-                _ => payment_amount,
             },
             fee_msat: payment_amount_sent - payment_amount,
             status,

@@ -531,5 +531,6 @@ pub(crate) fn current_sync_migrations() -> Vec<&'static str> {
         END;
         ",
         "ALTER TABLE payments_external_info ADD COLUMN failed_amount_msat INTEGER;",
+        "ALTER TABLE payments_external_info RENAME COLUMN failed_amount_msat TO attempted_amount_msat;",
     ]
 }
