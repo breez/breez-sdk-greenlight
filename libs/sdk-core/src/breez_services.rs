@@ -1,3 +1,4 @@
+use std::cmp::max;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::str::FromStr;
@@ -264,12 +265,15 @@ impl BreezServices {
             });
         }
 
+        let amount_msat = max(provided_amount_msat, invoice_amount_msat);
+
         match self
             .persister
             .get_completed_payment_by_hash(&parsed_invoice.payment_hash)?
         {
             Some(_) => Err(SendPaymentError::AlreadyPaid),
             None => {
+                self.persist_pending_payment(&parsed_invoice, amount_msat)?;
                 let payment_res = self
                     .node_api
                     .send_payment(req.bolt11.clone(), req.amount_msat)
@@ -902,6 +906,38 @@ impl BreezServices {
             }
             debug!("connected to lsp {}@{}", node_id.clone(), address.clone());
         }
+        Ok(())
+    }
+
+    fn persist_pending_payment(
+        &self,
+        invoice: &LNInvoice,
+        amount_msat: u64,
+    ) -> Result<(), SendPaymentError> {
+        self.persister.insert_or_update_payments(&[Payment {
+            id: invoice.payment_hash.clone(),
+            payment_type: PaymentType::Sent,
+            payment_time: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64,
+            amount_msat,
+            fee_msat: 0,
+            status: PaymentStatus::Pending,
+            description: invoice.description.clone(),
+            details: PaymentDetails::Ln {
+                data: LnPaymentDetails {
+                    payment_hash: invoice.payment_hash.clone(),
+                    label: String::new(),
+                    destination_pubkey: invoice.payee_pubkey.clone(),
+                    payment_preimage: String::new(),
+                    keysend: false,
+                    bolt11: invoice.bolt11.clone(),
+                    lnurl_success_action: None,
+                    ln_address: None,
+                    lnurl_metadata: None,
+                    lnurl_withdraw_endpoint: None,
+                    swap_info: None,
+                },
+            },
+        }])?;
         Ok(())
     }
 

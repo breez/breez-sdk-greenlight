@@ -1,5 +1,6 @@
 use anyhow::Result;
 use bitcoin::util::bip32;
+use std::time::SystemTimeError;
 use thiserror::Error;
 
 use crate::{
@@ -672,6 +673,14 @@ impl From<SdkError> for SendPaymentError {
             _ => Self::Generic {
                 err: value.to_string(),
             },
+        }
+    }
+}
+
+impl From<SystemTimeError> for SendPaymentError {
+    fn from(err: SystemTimeError) -> Self {
+        Self::Generic {
+            err: err.to_string(),
         }
     }
 }
