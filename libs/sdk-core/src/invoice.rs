@@ -147,6 +147,7 @@ impl RouteHint {
 
 pub fn add_lsp_routing_hints(
     invoice: String,
+    include_route_hints: bool,
     lsp_hint: Option<RouteHint>,
     new_amount_msats: u64,
 ) -> InvoiceResult<RawInvoice> {
@@ -167,24 +168,27 @@ pub fn add_lsp_routing_hints(
     // We make sure not to include them in the new hints.
     let unique_hop_hints: Vec<lightning::routing::router::RouteHint> = match lsp_hint {
         None => invoice.route_hints(),
-        Some(lsp_hint) => {
-            let mut all_hints: Vec<lightning::routing::router::RouteHint> = invoice
-                .route_hints()
-                .into_iter()
-                .filter(|hint| {
-                    hint.clone().0.into_iter().all(|hop| {
-                        lsp_hint.clone().hops.into_iter().all(|lsp_hop| {
-                            hop.src_node_id.serialize().encode_hex::<String>()
-                                != lsp_hop.src_node_id
+        Some(lsp_hint) => match include_route_hints {
+            true => {
+                let mut all_hints: Vec<lightning::routing::router::RouteHint> = invoice
+                    .route_hints()
+                    .into_iter()
+                    .filter(|hint| {
+                        hint.clone().0.into_iter().all(|hop| {
+                            lsp_hint.clone().hops.into_iter().all(|lsp_hop| {
+                                hop.src_node_id.serialize().encode_hex::<String>()
+                                    != lsp_hop.src_node_id
+                            })
                         })
                     })
-                })
-                .collect();
+                    .collect();
 
-            // Adding the lsp hint
-            all_hints.push(lsp_hint.to_ldk_hint()?);
-            all_hints
-        }
+                // Adding the lsp hint
+                all_hints.push(lsp_hint.to_ldk_hint()?);
+                all_hints
+            }
+            false => vec![lsp_hint.to_ldk_hint()?],
+        },
     };
 
     // Adding the unique existing hints
@@ -284,7 +288,7 @@ mod tests {
             hops: vec![hint_hop],
         };
 
-        let encoded = add_lsp_routing_hints(payreq, Some(route_hint), 100).unwrap();
+        let encoded = add_lsp_routing_hints(payreq, true, Some(route_hint), 100).unwrap();
         print!("{encoded:?}");
     }
 
@@ -312,7 +316,7 @@ mod tests {
             hops: vec![hint_hop],
         };
 
-        let encoded = add_lsp_routing_hints(payreq, Some(route_hint), 100).unwrap();
+        let encoded = add_lsp_routing_hints(payreq, false, Some(route_hint), 100).unwrap();
         print!("{encoded:?}");
     }
 
