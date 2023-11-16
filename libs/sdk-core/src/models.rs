@@ -1469,8 +1469,7 @@ mod tests {
             opening_fee_params: None,
         };
 
-        let mut buf = Vec::new();
-        buf.reserve(dummy_payment_info.encoded_len());
+        let mut buf = Vec::with_capacity(dummy_payment_info.encoded_len());
         dummy_payment_info.encode(&mut buf)?;
 
         let decoded_payment_info: PaymentInformation = PaymentInformation::decode(&*buf)?;

@@ -129,8 +129,7 @@ impl LspAPI for BreezServer {
 
         let mut client = self.get_subscription_client().await?;
 
-        let mut buf = Vec::new();
-        buf.reserve(subscribe_request.encoded_len());
+        let mut buf = Vec::with_capacity(subscribe_request.encoded_len());
         subscribe_request
             .encode(&mut buf)
             .map_err(|e| SdkError::Generic {
@@ -154,8 +153,7 @@ impl LspAPI for BreezServer {
     ) -> SdkResult<RegisterPaymentReply> {
         let mut client = self.get_channel_opener_client().await?;
 
-        let mut buf = Vec::new();
-        buf.reserve(payment_info.encoded_len());
+        let mut buf = Vec::with_capacity(payment_info.encoded_len());
         payment_info
             .encode(&mut buf)
             .map_err(|e| SdkError::ServiceConnectivity {
