@@ -79,6 +79,7 @@ pub trait NodeAPI: Send + Sync {
         amount_msat: u64,
     ) -> NodeResult<PaymentResponse>;
     async fn start(&self) -> NodeResult<String>;
+    async fn stop(&self);
 
     /// Attempts to find a payment path "manually" and send the htlcs in a way that will drain
     /// Large channels first.

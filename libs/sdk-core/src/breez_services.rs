@@ -230,6 +230,7 @@ impl BreezServices {
                 err: format!("Shutdown failed: {e}"),
             })?;
         *started = false;
+        self.node_api.stop().await;
         Ok(())
     }
 

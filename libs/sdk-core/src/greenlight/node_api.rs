@@ -1215,6 +1215,15 @@ impl NodeAPI for Greenlight {
                     .into_inner();
                 Ok(format!("{resp:?}"))
             }
+            NodeCommand::Stop => {
+                let resp = self
+                    .get_node_client()
+                    .await?
+                    .stop(cln::StopRequest::default())
+                    .await?
+                    .into_inner();
+                Ok(format!("{resp:?}"))
+            }
         }
     }
 
@@ -1313,30 +1322,49 @@ impl NodeAPI for Greenlight {
         debug!("send_custom_message returned status {:?}", resp.status);
         Ok(())
     }
+
+    async fn stop(&self) {
+        _ = self.execute_command(NodeCommand::Stop.to_string()).await;
+    }
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
 enum NodeCommand {
+    /// Closes all channels of all peers.
     #[strum(serialize = "closeallchannels")]
     CloseAllChannels,
 
+    /// See <https://docs.corelightning.org/reference/lightning-getinfo>
     #[strum(serialize = "getinfo")]
     GetInfo,
 
+    /// See <https://docs.corelightning.org/reference/lightning-listfunds>
     #[strum(serialize = "listfunds")]
     ListFunds,
 
+    /// See <https://docs.corelightning.org/reference/lightning-listinvoices>
     #[strum(serialize = "listinvoices")]
     ListInvoices,
 
+    /// See <https://docs.corelightning.org/reference/lightning-listpays>
     #[strum(serialize = "listpayments")]
     ListPayments,
 
+    /// See <https://docs.corelightning.org/reference/lightning-listpeers>
     #[strum(serialize = "listpeers")]
     ListPeers,
 
+    /// See <https://docs.corelightning.org/reference/lightning-listpeerchannels>
     #[strum(serialize = "listpeerchannels")]
     ListPeerChannels,
+
+    /// Stops the node.
+    ///
+    /// Note that this command will return an error, as the node is stopped before it can reply.
+    ///
+    /// See <https://docs.corelightning.org/reference/lightning-stop>
+    #[strum(serialize = "stop")]
+    Stop,
 }
 
 // pulls transactions from greenlight based on last sync timestamp.
