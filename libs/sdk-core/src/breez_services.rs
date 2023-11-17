@@ -1967,8 +1967,12 @@ impl Receiver for PaymentReceiver {
         // We only create a new invoice if we need to add the lsp hint or change the amount
         if lsp_hint.is_some() || req.amount_msat != destination_invoice_amount_msat {
             // create the large amount invoice
-            let raw_invoice_with_hint =
-                add_lsp_routing_hints(invoice.clone(), lsp_hint, req.amount_msat)?;
+            let raw_invoice_with_hint = add_lsp_routing_hints(
+                invoice.clone(),
+                !open_channel_needed,
+                lsp_hint,
+                req.amount_msat,
+            )?;
 
             info!("Routing hint added");
             let signed_invoice_with_hint = self.node_api.sign_invoice(raw_invoice_with_hint)?;
