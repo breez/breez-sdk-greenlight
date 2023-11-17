@@ -374,8 +374,8 @@ impl Greenlight {
         // filter only opened channels
         let opened_channels: Vec<cln::ListpeersPeersChannels> = all_channels
             .iter()
-            .cloned()
             .filter(|c| c.state() == ChanneldNormal)
+            .cloned()
             .collect();
 
         // calculate channels balance only from opened channels
@@ -526,8 +526,8 @@ impl Greenlight {
         // We fetch the opened channels so can calculate max amount to send for each channel
         let opened_channels: Vec<cln::ListpeersPeersChannels> = via_peer_channels
             .iter()
-            .cloned()
             .filter(|c| c.state() == ChanneldNormal)
+            .cloned()
             .collect();
 
         let mut max_per_channel = vec![];
