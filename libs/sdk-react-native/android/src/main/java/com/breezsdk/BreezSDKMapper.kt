@@ -2392,6 +2392,42 @@ fun asRefundResponseList(arr: ReadableArray): List<RefundResponse> {
     return list
 }
 
+fun asReportPaymentFailureDetails(reportPaymentFailureDetails: ReadableMap): ReportPaymentFailureDetails? {
+    if (!validateMandatoryFields(
+            reportPaymentFailureDetails,
+            arrayOf(
+                "paymentHash",
+            ),
+        )
+    ) {
+        return null
+    }
+    val paymentHash = reportPaymentFailureDetails.getString("paymentHash")!!
+    val comment = if (hasNonNullKey(reportPaymentFailureDetails, "comment")) reportPaymentFailureDetails.getString("comment") else null
+    return ReportPaymentFailureDetails(
+        paymentHash,
+        comment,
+    )
+}
+
+fun readableMapOf(reportPaymentFailureDetails: ReportPaymentFailureDetails): ReadableMap {
+    return readableMapOf(
+        "paymentHash" to reportPaymentFailureDetails.paymentHash,
+        "comment" to reportPaymentFailureDetails.comment,
+    )
+}
+
+fun asReportPaymentFailureDetailsList(arr: ReadableArray): List<ReportPaymentFailureDetails> {
+    val list = ArrayList<ReportPaymentFailureDetails>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asReportPaymentFailureDetails(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asReverseSwapFeesRequest(reverseSwapFeesRequest: ReadableMap): ReverseSwapFeesRequest? {
     if (!validateMandatoryFields(
             reverseSwapFeesRequest,
@@ -3763,6 +3799,37 @@ fun asPaymentTypeFilterList(arr: ReadableArray): List<PaymentTypeFilter> {
     for (value in arr.toArrayList()) {
         when (value) {
             is String -> list.add(asPaymentTypeFilter(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
+fun asReportIssueRequest(reportIssueRequest: ReadableMap): ReportIssueRequest? {
+    val type = reportIssueRequest.getString("type")
+
+    if (type == "paymentFailure") {
+        return ReportIssueRequest.PaymentFailure(reportIssueRequest.getMap("data")?.let { asReportPaymentFailureDetails(it) }!!)
+    }
+    return null
+}
+
+fun readableMapOf(reportIssueRequest: ReportIssueRequest): ReadableMap? {
+    val map = Arguments.createMap()
+    when (reportIssueRequest) {
+        is ReportIssueRequest.PaymentFailure -> {
+            pushToMap(map, "type", "paymentFailure")
+            pushToMap(map, "data", readableMapOf(reportIssueRequest.data))
+        }
+    }
+    return map
+}
+
+fun asReportIssueRequestList(arr: ReadableArray): List<ReportIssueRequest> {
+    val list = ArrayList<ReportIssueRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asReportIssueRequest(value)!!)
             else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }

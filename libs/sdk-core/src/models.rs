@@ -774,6 +774,32 @@ pub struct SendPaymentResponse {
     pub payment: Payment,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ReportPaymentFailureDetails {
+    /// The payment hash of the payment failure
+    pub payment_hash: String,
+    /// The comment or error text
+    pub comment: Option<String>,
+}
+
+/// Represents a report issue request.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum ReportIssueRequest {
+    PaymentFailure { data: ReportPaymentFailureDetails },
+}
+
+/// Trait covering support-related functionality
+#[tonic::async_trait]
+pub trait SupportAPI: Send + Sync {
+    async fn report_payment_failure(
+        &self,
+        node_state: NodeState,
+        payment: Payment,
+        api_key: Option<String>,
+        comment: Option<String>,
+    ) -> SdkResult<()>;
+}
+
 #[derive(Clone)]
 pub struct StaticBackupRequest {
     pub working_dir: String,

@@ -16,11 +16,12 @@ use breez_sdk_core::{
     PaymentFailedData, PaymentStatus, PaymentType, PaymentTypeFilter, PrepareRefundRequest,
     PrepareRefundResponse, PrepareSweepRequest, PrepareSweepResponse, Rate, ReceiveOnchainRequest,
     ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees, RefundRequest, RefundResponse,
-    ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint,
-    RouteHintHop, SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
-    SendSpontaneousPaymentRequest, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
-    StaticBackupResponse, SuccessActionProcessed, SwapInfo, SwapStatus, SweepRequest,
-    SweepResponse, Symbol, UnspentTransactionOutput, UrlSuccessActionData,
+    ReportIssueRequest, ReportPaymentFailureDetails, ReverseSwapFeesRequest, ReverseSwapInfo,
+    ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop, SendOnchainRequest,
+    SendOnchainResponse, SendPaymentRequest, SendPaymentResponse, SendSpontaneousPaymentRequest,
+    SignMessageRequest, SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
+    SuccessActionProcessed, SwapInfo, SwapStatus, SweepRequest, SweepResponse, Symbol,
+    UnspentTransactionOutput, UrlSuccessActionData,
 };
 use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
@@ -183,6 +184,10 @@ impl BlockingBreezServices {
         req_data: LnUrlAuthRequestData,
     ) -> Result<LnUrlCallbackStatus, LnUrlAuthError> {
         rt().block_on(self.breez_services.lnurl_auth(req_data))
+    }
+
+    pub fn report_issue(&self, req: ReportIssueRequest) -> SdkResult<()> {
+        rt().block_on(self.breez_services.report_issue(req))
     }
 
     pub fn sweep(&self, req: SweepRequest) -> SdkResult<SweepResponse> {

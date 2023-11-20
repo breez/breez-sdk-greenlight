@@ -181,6 +181,7 @@ mod models;
 mod moonpay;
 mod node_api;
 mod persist;
+mod support;
 mod swap_in;
 mod swap_out;
 #[cfg(test)]

@@ -93,6 +93,8 @@ use crate::models::ReceivePaymentRequest;
 use crate::models::ReceivePaymentResponse;
 use crate::models::RefundRequest;
 use crate::models::RefundResponse;
+use crate::models::ReportIssueRequest;
+use crate::models::ReportPaymentFailureDetails;
 use crate::models::ReverseSwapFeesRequest;
 use crate::models::ReverseSwapInfo;
 use crate::models::ReverseSwapPairInfo;
@@ -521,6 +523,19 @@ fn wire_lnurl_auth_impl(
         move || {
             let api_req_data = req_data.wire2api();
             move |task_callback| lnurl_auth(api_req_data)
+        },
+    )
+}
+fn wire_report_issue_impl(port_: MessagePort, req: impl Wire2Api<ReportIssueRequest> + UnwindSafe) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, ()>(
+        WrapInfo {
+            debug_name: "report_issue",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_req = req.wire2api();
+            move |task_callback| report_issue(api_req)
         },
     )
 }

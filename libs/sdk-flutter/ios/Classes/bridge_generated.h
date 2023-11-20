@@ -152,6 +152,24 @@ typedef struct wire_LnUrlAuthRequestData {
   struct wire_uint_8_list *url;
 } wire_LnUrlAuthRequestData;
 
+typedef struct wire_ReportPaymentFailureDetails {
+  struct wire_uint_8_list *payment_hash;
+  struct wire_uint_8_list *comment;
+} wire_ReportPaymentFailureDetails;
+
+typedef struct wire_ReportIssueRequest_PaymentFailure {
+  struct wire_ReportPaymentFailureDetails *data;
+} wire_ReportIssueRequest_PaymentFailure;
+
+typedef union ReportIssueRequestKind {
+  struct wire_ReportIssueRequest_PaymentFailure *PaymentFailure;
+} ReportIssueRequestKind;
+
+typedef struct wire_ReportIssueRequest {
+  int32_t tag;
+  union ReportIssueRequestKind *kind;
+} wire_ReportIssueRequest;
+
 typedef struct wire_SendOnchainRequest {
   uint64_t amount_sat;
   struct wire_uint_8_list *onchain_recipient_address;
@@ -278,6 +296,8 @@ void wire_lnurl_withdraw(int64_t port_, struct wire_LnUrlWithdrawRequest *req);
 
 void wire_lnurl_auth(int64_t port_, struct wire_LnUrlAuthRequestData *req_data);
 
+void wire_report_issue(int64_t port_, struct wire_ReportIssueRequest *req);
+
 void wire_fetch_fiat_rates(int64_t port_);
 
 void wire_list_fiat_currencies(int64_t port_);
@@ -350,6 +370,10 @@ struct wire_ReceivePaymentRequest *new_box_autoadd_receive_payment_request_0(voi
 
 struct wire_RefundRequest *new_box_autoadd_refund_request_0(void);
 
+struct wire_ReportIssueRequest *new_box_autoadd_report_issue_request_0(void);
+
+struct wire_ReportPaymentFailureDetails *new_box_autoadd_report_payment_failure_details_0(void);
+
 struct wire_ReverseSwapFeesRequest *new_box_autoadd_reverse_swap_fees_request_0(void);
 
 struct wire_SendOnchainRequest *new_box_autoadd_send_onchain_request_0(void);
@@ -373,6 +397,8 @@ struct wire_list_payment_type_filter *new_list_payment_type_filter_0(int32_t len
 struct wire_uint_8_list *new_uint_8_list_0(int32_t len);
 
 union NodeConfigKind *inflate_NodeConfig_Greenlight(void);
+
+union ReportIssueRequestKind *inflate_ReportIssueRequest_PaymentFailure(void);
 
 void free_WireSyncReturn(WireSyncReturn ptr);
 
@@ -410,6 +436,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_lnurl_pay);
     dummy_var ^= ((int64_t) (void*) wire_lnurl_withdraw);
     dummy_var ^= ((int64_t) (void*) wire_lnurl_auth);
+    dummy_var ^= ((int64_t) (void*) wire_report_issue);
     dummy_var ^= ((int64_t) (void*) wire_fetch_fiat_rates);
     dummy_var ^= ((int64_t) (void*) wire_list_fiat_currencies);
     dummy_var ^= ((int64_t) (void*) wire_max_reverse_swap_amount);
@@ -446,6 +473,8 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_receive_onchain_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_receive_payment_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_refund_request_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_report_issue_request_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_report_payment_failure_details_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_reverse_swap_fees_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_send_onchain_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_send_payment_request_0);
@@ -458,6 +487,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_list_payment_type_filter_0);
     dummy_var ^= ((int64_t) (void*) new_uint_8_list_0);
     dummy_var ^= ((int64_t) (void*) inflate_NodeConfig_Greenlight);
+    dummy_var ^= ((int64_t) (void*) inflate_ReportIssueRequest_PaymentFailure);
     dummy_var ^= ((int64_t) (void*) free_WireSyncReturn);
     dummy_var ^= ((int64_t) (void*) store_dart_post_cobject);
     dummy_var ^= ((int64_t) (void*) get_dart_object);

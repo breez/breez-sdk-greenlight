@@ -38,10 +38,10 @@ use crate::{
     NodeCredentials, OpenChannelFeeRequest, OpenChannelFeeResponse, PrepareRefundRequest,
     PrepareRefundResponse, PrepareSweepRequest, PrepareSweepResponse, ReceiveOnchainRequest,
     ReceivePaymentRequest, ReceivePaymentResponse, RefundRequest, RefundResponse,
-    ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo, SendOnchainRequest,
-    SendOnchainResponse, SendPaymentRequest, SendPaymentResponse, SendSpontaneousPaymentRequest,
-    SignMessageRequest, SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
-    SweepRequest, SweepResponse,
+    ReportIssueRequest, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
+    SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
+    SendSpontaneousPaymentRequest, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
+    StaticBackupResponse, SweepRequest, SweepResponse,
 };
 
 /*
@@ -303,6 +303,12 @@ pub fn lnurl_withdraw(req: LnUrlWithdrawRequest) -> Result<LnUrlWithdrawResult> 
 pub fn lnurl_auth(req_data: LnUrlAuthRequestData) -> Result<LnUrlCallbackStatus> {
     block_on(async { get_breez_services().await?.lnurl_auth(req_data).await })
         .map_err(anyhow::Error::new::<LnUrlAuthError>)
+}
+
+/// See [BreezServices::report_issue]
+pub fn report_issue(req: ReportIssueRequest) -> Result<()> {
+    block_on(async { get_breez_services().await?.report_issue(req).await })
+        .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /*  Fiat Currency API's */

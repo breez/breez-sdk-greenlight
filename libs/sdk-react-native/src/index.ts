@@ -368,6 +368,11 @@ export type RefundResponse = {
     refundTxId: string
 }
 
+export type ReportPaymentFailureDetails = {
+    paymentHash: string
+    comment?: string
+}
+
 export type ReverseSwapFeesRequest = {
     sendAmountSat?: number
 }
@@ -690,6 +695,15 @@ export enum PaymentTypeFilter {
     CLOSED_CHANNEL = "closedChannel"
 }
 
+export enum ReportIssueRequestVariant {
+    PAYMENT_FAILURE = "paymentFailure"
+}
+
+export type ReportIssueRequest = {
+    type: ReportIssueRequestVariant.PAYMENT_FAILURE,
+    data: ReportPaymentFailureDetails
+}
+
 export enum ReverseSwapStatus {
     INITIAL = "initial",
     IN_PROGRESS = "inProgress",
@@ -797,6 +811,10 @@ export const withdrawLnurl = async (request: LnUrlWithdrawRequest): Promise<LnUr
 export const lnurlAuth = async (reqData: LnUrlAuthRequestData): Promise<LnUrlCallbackStatus> => {
     const response = await BreezSDK.lnurlAuth(reqData)
     return response
+}
+
+export const reportIssue = async (req: ReportIssueRequest): Promise<void> => {
+    await BreezSDK.reportIssue(req)
 }
 
 export const nodeCredentials = async (): Promise<NodeCredentials | null> => {

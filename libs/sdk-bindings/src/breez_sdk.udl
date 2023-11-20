@@ -596,6 +596,16 @@ dictionary LnUrlAuthRequestData {
     string url;
 };
 
+dictionary ReportPaymentFailureDetails {
+    string payment_hash;
+    string? comment;
+};
+
+[Enum]
+interface ReportIssueRequest {
+    PaymentFailure(ReportPaymentFailureDetails data);
+};
+
 dictionary MetadataItem {
     string key;
     string value;
@@ -716,6 +726,9 @@ interface BlockingBreezServices {
 
    [Throws=LnUrlAuthError]
    LnUrlCallbackStatus lnurl_auth(LnUrlAuthRequestData req_data);
+
+   [Throws=SdkError]
+   void report_issue(ReportIssueRequest req);
 
    [Throws=SdkError]
    NodeCredentials? node_credentials();

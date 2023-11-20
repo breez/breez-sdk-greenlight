@@ -210,6 +210,17 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
+    @objc(reportIssue:resolve:reject:)
+    func reportIssue(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            let reqTmp = try BreezSDKMapper.asReportIssueRequest(reportIssueRequest: req)
+            try getBreezServices().reportIssue(req: reqTmp)
+            resolve(["status": "ok"])
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
     @objc(nodeCredentials:reject:)
     func nodeCredentials(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
