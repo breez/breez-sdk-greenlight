@@ -176,7 +176,7 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kLnurlAuthConstMeta;
 
-  /// See [BreezServices::report_issue]
+  /// See [BreezServices::fetch_breez_status]
   Future<BreezStatusResponse> fetchBreezStatus({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kFetchBreezStatusConstMeta;
