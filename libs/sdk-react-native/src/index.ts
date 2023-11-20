@@ -41,6 +41,10 @@ export type BitcoinAddressData = {
     message?: string
 }
 
+export type BreezStatusResponse = {
+    status: BreezStatus
+}
+
 export type BuyBitcoinRequest = {
     provider: BuyBitcoinProvider
     openingFeeParams?: OpeningFeeParams
@@ -538,6 +542,12 @@ export type BreezEvent = {
     details: BackupFailedData
 }
 
+export enum BreezStatus {
+    OPERATIONAL = "operational",
+    MAINTENANCE = "maintenance",
+    SERVICE_DISRUPTION = "serviceDisruption"
+}
+
 export enum BuyBitcoinProvider {
     MOONPAY = "moonpay"
 }
@@ -950,6 +960,11 @@ export const maxReverseSwapAmount = async (): Promise<MaxReverseSwapAmountRespon
 
 export const sendOnchain = async (req: SendOnchainRequest): Promise<SendOnchainResponse> => {
     const response = await BreezSDK.sendOnchain(req)
+    return response
+}
+
+export const fetchBreezStatus = async (): Promise<BreezStatusResponse> => {
+    const response = await BreezSDK.fetchBreezStatus()
     return response
 }
 

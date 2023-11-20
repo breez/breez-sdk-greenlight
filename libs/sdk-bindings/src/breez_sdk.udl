@@ -606,6 +606,16 @@ interface ReportIssueRequest {
     PaymentFailure(ReportPaymentFailureDetails data);
 };
 
+enum BreezStatus {
+    "Operational",
+    "Maintenance",
+    "ServiceDisruption",
+};
+
+dictionary BreezStatusResponse {
+    BreezStatus status;
+};
+
 dictionary MetadataItem {
     string key;
     string value;
@@ -813,6 +823,9 @@ interface BlockingBreezServices {
 
    [Throws=SendOnchainError]
    SendOnchainResponse send_onchain(SendOnchainRequest req);
+
+   [Throws=SdkError]
+   BreezStatusResponse fetch_breez_status();
 
    [Throws=SdkError]
    string execute_dev_command(string command);

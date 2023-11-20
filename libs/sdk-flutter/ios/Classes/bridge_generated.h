@@ -296,6 +296,8 @@ void wire_lnurl_withdraw(int64_t port_, struct wire_LnUrlWithdrawRequest *req);
 
 void wire_lnurl_auth(int64_t port_, struct wire_LnUrlAuthRequestData *req_data);
 
+void wire_fetch_breez_status(int64_t port_);
+
 void wire_report_issue(int64_t port_, struct wire_ReportIssueRequest *req);
 
 void wire_fetch_fiat_rates(int64_t port_);
@@ -436,6 +438,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_lnurl_pay);
     dummy_var ^= ((int64_t) (void*) wire_lnurl_withdraw);
     dummy_var ^= ((int64_t) (void*) wire_lnurl_auth);
+    dummy_var ^= ((int64_t) (void*) wire_fetch_breez_status);
     dummy_var ^= ((int64_t) (void*) wire_report_issue);
     dummy_var ^= ((int64_t) (void*) wire_fetch_fiat_rates);
     dummy_var ^= ((int64_t) (void*) wire_list_fiat_currencies);

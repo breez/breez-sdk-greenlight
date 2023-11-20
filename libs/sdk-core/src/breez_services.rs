@@ -466,6 +466,11 @@ impl BreezServices {
         self.payment_receiver.receive_payment(req).await
     }
 
+    /// Fetch the current Breez service status.
+    pub async fn fetch_breez_status(&self) -> SdkResult<BreezStatusResponse> {
+        self.support_api.fetch_breez_status().await
+    }
+
     /// Report an issue.
     ///
     /// Calling `report_issue` with a [ReportIssueRequest] enum param sends an issue report using the Support API.

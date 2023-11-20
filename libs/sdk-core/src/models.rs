@@ -788,9 +788,25 @@ pub enum ReportIssueRequest {
     PaymentFailure { data: ReportPaymentFailureDetails },
 }
 
+/// Indicates the different kinds of Breez service status.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub enum BreezStatus {
+    Operational,
+    Maintenance,
+    ServiceDisruption,
+}
+
+/// Represents a breez status response.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct BreezStatusResponse {
+    pub status: BreezStatus,
+}
+
 /// Trait covering support-related functionality
 #[tonic::async_trait]
 pub trait SupportAPI: Send + Sync {
+    async fn fetch_breez_status(&self) -> SdkResult<BreezStatusResponse>;
+
     async fn report_payment_failure(
         &self,
         node_state: NodeState,

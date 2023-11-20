@@ -155,6 +155,39 @@ fun asBitcoinAddressDataList(arr: ReadableArray): List<BitcoinAddressData> {
     return list
 }
 
+fun asBreezStatusResponse(breezStatusResponse: ReadableMap): BreezStatusResponse? {
+    if (!validateMandatoryFields(
+            breezStatusResponse,
+            arrayOf(
+                "status",
+            ),
+        )
+    ) {
+        return null
+    }
+    val status = breezStatusResponse.getString("status")?.let { asBreezStatus(it) }!!
+    return BreezStatusResponse(
+        status,
+    )
+}
+
+fun readableMapOf(breezStatusResponse: BreezStatusResponse): ReadableMap {
+    return readableMapOf(
+        "status" to breezStatusResponse.status.name.lowercase(),
+    )
+}
+
+fun asBreezStatusResponseList(arr: ReadableArray): List<BreezStatusResponse> {
+    val list = ArrayList<BreezStatusResponse>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asBreezStatusResponse(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asBuyBitcoinRequest(buyBitcoinRequest: ReadableMap): BuyBitcoinRequest? {
     if (!validateMandatoryFields(
             buyBitcoinRequest,
@@ -3379,6 +3412,21 @@ fun asBreezEventList(arr: ReadableArray): List<BreezEvent> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asBreezEvent(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
+fun asBreezStatus(type: String): BreezStatus {
+    return BreezStatus.valueOf(type.uppercase())
+}
+
+fun asBreezStatusList(arr: ReadableArray): List<BreezStatus> {
+    val list = ArrayList<BreezStatus>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is String -> list.add(asBreezStatus(value)!!)
             else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }

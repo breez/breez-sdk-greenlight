@@ -731,6 +731,18 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
+    fun fetchBreezStatus(promise: Promise) {
+        executor.execute {
+            try {
+                val res = getBreezServices().fetchBreezStatus()
+                promise.resolve(readableMapOf(res))
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
     fun executeDevCommand(
         command: String,
         promise: Promise,

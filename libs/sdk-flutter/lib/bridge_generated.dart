@@ -177,6 +177,11 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kLnurlAuthConstMeta;
 
   /// See [BreezServices::report_issue]
+  Future<BreezStatusResponse> fetchBreezStatus({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kFetchBreezStatusConstMeta;
+
+  /// See [BreezServices::report_issue]
   Future<void> reportIssue({required ReportIssueRequest req, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kReportIssueConstMeta;
@@ -353,6 +358,22 @@ sealed class BreezEvent with _$BreezEvent {
   const factory BreezEvent.backupFailed({
     required BackupFailedData details,
   }) = BreezEvent_BackupFailed;
+}
+
+/// Indicates the different kinds of Breez service status.
+enum BreezStatus {
+  Operational,
+  Maintenance,
+  ServiceDisruption,
+}
+
+/// Represents a breez status response.
+class BreezStatusResponse {
+  final BreezStatus status;
+
+  const BreezStatusResponse({
+    required this.status,
+  });
 }
 
 /// Different providers will demand different behaviours when the user is trying to buy bitcoin.
@@ -2250,6 +2271,21 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["reqData"],
       );
 
+  Future<BreezStatusResponse> fetchBreezStatus({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_fetch_breez_status(port_),
+      parseSuccessData: _wire2api_breez_status_response,
+      constMeta: kFetchBreezStatusConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kFetchBreezStatusConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "fetch_breez_status",
+        argNames: [],
+      );
+
   Future<void> reportIssue({required ReportIssueRequest req, dynamic hint}) {
     var arg0 = _platform.api2wire_box_autoadd_report_issue_request(req);
     return _platform.executeNormal(FlutterRustBridgeTask(
@@ -2733,6 +2769,18 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       default:
         throw Exception("unreachable");
     }
+  }
+
+  BreezStatus _wire2api_breez_status(dynamic raw) {
+    return BreezStatus.values[raw as int];
+  }
+
+  BreezStatusResponse _wire2api_breez_status_response(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
+    return BreezStatusResponse(
+      status: _wire2api_breez_status(arr[0]),
+    );
   }
 
   BuyBitcoinResponse _wire2api_buy_bitcoin_response(dynamic raw) {
@@ -4831,6 +4879,18 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
           'wire_lnurl_auth');
   late final _wire_lnurl_auth =
       _wire_lnurl_authPtr.asFunction<void Function(int, ffi.Pointer<wire_LnUrlAuthRequestData>)>();
+
+  void wire_fetch_breez_status(
+    int port_,
+  ) {
+    return _wire_fetch_breez_status(
+      port_,
+    );
+  }
+
+  late final _wire_fetch_breez_statusPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_fetch_breez_status');
+  late final _wire_fetch_breez_status = _wire_fetch_breez_statusPtr.asFunction<void Function(int)>();
 
   void wire_report_issue(
     int port_,

@@ -53,6 +53,8 @@ use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lnurl::pay::model::UrlSuccessActionData;
 use crate::lsp::LspInformation;
 use crate::models::BackupStatus;
+use crate::models::BreezStatus;
+use crate::models::BreezStatusResponse;
 use crate::models::BuyBitcoinProvider;
 use crate::models::BuyBitcoinRequest;
 use crate::models::BuyBitcoinResponse;
@@ -526,6 +528,16 @@ fn wire_lnurl_auth_impl(
         },
     )
 }
+fn wire_fetch_breez_status_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, BreezStatusResponse>(
+        WrapInfo {
+            debug_name: "fetch_breez_status",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || move |task_callback| fetch_breez_status(),
+    )
+}
 fn wire_report_issue_impl(port_: MessagePort, req: impl Wire2Api<ReportIssueRequest> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, ()>(
         WrapInfo {
@@ -952,6 +964,35 @@ impl support::IntoDart for BreezEvent {
 }
 impl support::IntoDartExceptPrimitive for BreezEvent {}
 impl rust2dart::IntoIntoDart<BreezEvent> for BreezEvent {
+    fn into_into_dart(self) -> Self {
+        self
+    }
+}
+
+impl support::IntoDart for BreezStatus {
+    fn into_dart(self) -> support::DartAbi {
+        match self {
+            Self::Operational => 0,
+            Self::Maintenance => 1,
+            Self::ServiceDisruption => 2,
+        }
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for BreezStatus {}
+impl rust2dart::IntoIntoDart<BreezStatus> for BreezStatus {
+    fn into_into_dart(self) -> Self {
+        self
+    }
+}
+
+impl support::IntoDart for BreezStatusResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.status.into_into_dart().into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for BreezStatusResponse {}
+impl rust2dart::IntoIntoDart<BreezStatusResponse> for BreezStatusResponse {
     fn into_into_dart(self) -> Self {
         self
     }

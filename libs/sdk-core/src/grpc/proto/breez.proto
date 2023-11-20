@@ -99,6 +99,7 @@ service Signer {
 
 service Support {
   rpc ReportPaymentFailure(ReportPaymentFailureRequest) returns (ReportPaymentFailureReply) {}
+  rpc BreezStatus(BreezStatusRequest) returns (BreezStatusReply) {}
 }
 
 message SignUrlRequest {
@@ -414,6 +415,16 @@ message ReportPaymentFailureRequest {
   string report = 4;
 }
 message ReportPaymentFailureReply {}
+
+message BreezStatusRequest {}
+message BreezStatusReply {
+  enum BreezStatus {
+    OPERATIONAL = 0;
+    MAINTENANCE = 1;
+    SERVICE_DISRUPTION = 2;
+  }
+  BreezStatus status = 1;
+}
 
 /////////////////////////////////////////////
 // From lspd.proto

@@ -145,6 +145,37 @@ enum BreezSDKMapper {
         return bitcoinAddressDataList.map { v -> [String: Any?] in dictionaryOf(bitcoinAddressData: v) }
     }
 
+    static func asBreezStatusResponse(breezStatusResponse: [String: Any?]) throws -> BreezStatusResponse {
+        guard let statusTmp = breezStatusResponse["status"] as? String else { throw SdkError.Generic(message: "Missing mandatory field status for type BreezStatusResponse") }
+        let status = try asBreezStatus(breezStatus: statusTmp)
+
+        return BreezStatusResponse(
+            status: status)
+    }
+
+    static func dictionaryOf(breezStatusResponse: BreezStatusResponse) -> [String: Any?] {
+        return [
+            "status": valueOf(breezStatus: breezStatusResponse.status),
+        ]
+    }
+
+    static func asBreezStatusResponseList(arr: [Any]) throws -> [BreezStatusResponse] {
+        var list = [BreezStatusResponse]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var breezStatusResponse = try asBreezStatusResponse(breezStatusResponse: val)
+                list.append(breezStatusResponse)
+            } else {
+                throw SdkError.Generic(message: "Unexpected type BreezStatusResponse")
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(breezStatusResponseList: [BreezStatusResponse]) -> [Any] {
+        return breezStatusResponseList.map { v -> [String: Any?] in dictionaryOf(breezStatusResponse: v) }
+    }
+
     static func asBuyBitcoinRequest(buyBitcoinRequest: [String: Any?]) throws -> BuyBitcoinRequest {
         guard let providerTmp = buyBitcoinRequest["provider"] as? String else { throw SdkError.Generic(message: "Missing mandatory field provider for type BuyBitcoinRequest") }
         let provider = try asBuyBitcoinProvider(buyBitcoinProvider: providerTmp)
@@ -3040,6 +3071,51 @@ enum BreezSDKMapper {
                 list.append(breezEvent)
             } else {
                 throw SdkError.Generic(message: "Unexpected type BreezEvent")
+            }
+        }
+        return list
+    }
+
+    static func asBreezStatus(breezStatus: String) throws -> BreezStatus {
+        switch breezStatus {
+        case "operational":
+            return BreezStatus.operational
+
+        case "maintenance":
+            return BreezStatus.maintenance
+
+        case "serviceDisruption":
+            return BreezStatus.serviceDisruption
+
+        default: throw SdkError.Generic(message: "Invalid variant \(breezStatus) for enum BreezStatus")
+        }
+    }
+
+    static func valueOf(breezStatus: BreezStatus) -> String {
+        switch breezStatus {
+        case .operational:
+            return "operational"
+
+        case .maintenance:
+            return "maintenance"
+
+        case .serviceDisruption:
+            return "serviceDisruption"
+        }
+    }
+
+    static func arrayOf(breezStatusList: [BreezStatus]) -> [String] {
+        return breezStatusList.map { v -> String in valueOf(breezStatus: v) }
+    }
+
+    static func asBreezStatusList(arr: [Any]) throws -> [BreezStatus] {
+        var list = [BreezStatus]()
+        for value in arr {
+            if let val = value as? String {
+                var breezStatus = try asBreezStatus(breezStatus: val)
+                list.append(breezStatus)
+            } else {
+                throw SdkError.Generic(message: "Unexpected type BreezStatus")
             }
         }
         return list
