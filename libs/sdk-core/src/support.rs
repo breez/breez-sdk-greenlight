@@ -4,8 +4,6 @@ use crate::error::SdkResult;
 use crate::grpc::ReportPaymentFailureRequest;
 use crate::{breez_services::BreezServer, error::SdkError};
 use crate::{NodeState, Payment, SupportAPI};
-use bitcoin::hashes::hex::ToHex;
-use bitcoin::hashes::{sha256, Hash};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tonic::Request;
@@ -22,7 +20,6 @@ impl SupportAPI for BreezServer {
         &self,
         node_state: NodeState,
         payment: Payment,
-        api_key: Option<String>,
         comment: Option<String>,
     ) -> SdkResult<()> {
         let mut client = self.get_support_client().await?;
@@ -34,9 +31,6 @@ impl SupportAPI for BreezServer {
 
         let request = Request::new(ReportPaymentFailureRequest {
             node_id: node_state.id,
-            api_key_hash: api_key
-                .map(|api_key| sha256::Hash::hash(api_key.as_bytes()).to_hex())
-                .unwrap_or_default(),
             timestamp: timestamp.to_rfc3339(),
             comment: comment.unwrap_or_default(),
             report: serde_json::to_string(&report)?,

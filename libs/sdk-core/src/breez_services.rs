@@ -483,12 +483,7 @@ impl BreezServices {
                         })?;
 
                     self.support_api
-                        .report_payment_failure(
-                            node_state,
-                            payment,
-                            self.config.api_key.clone(),
-                            data.comment,
-                        )
+                        .report_payment_failure(node_state, payment, data.comment)
                         .await
                 }
             },
@@ -1778,11 +1773,8 @@ impl BreezServer {
         }
     }
 
-    pub(crate) async fn get_channel_opener_client(
-        &self,
-    ) -> SdkResult<ChannelOpenerClient<InterceptedService<Channel, ApiKeyInterceptor>>> {
-        let s = self.server_url.clone();
-        let channel = Channel::from_shared(s)
+    async fn channel(&self) -> SdkResult<Channel> {
+        Channel::from_shared(self.server_url.clone())
             .map_err(|e| SdkError::ServiceConnectivity {
                 err: format!("(Breez: {}) {e}", self.server_url.clone()),
             })?
@@ -1793,22 +1785,32 @@ impl BreezServer {
                     "(Breez: {}) Failed to connect: {e}",
                     self.server_url.clone()
                 ),
-            })?;
+            })
+    }
 
-        let api_key_metadata: Option<MetadataValue<Ascii>> = match &self.api_key {
-            Some(key) => Some(format!("Bearer {key}").parse().map_err(
+    fn api_key_metadata(&self) -> SdkResult<Option<MetadataValue<Ascii>>> {
+        match &self.api_key {
+            Some(key) => Ok(Some(format!("Bearer {key}").parse().map_err(
                 |e: InvalidMetadataValue| SdkError::ServiceConnectivity {
                     err: format!(
                         "(Breez: {}) Failed parse API key: {e}",
                         self.server_url.clone()
                     ),
                 },
-            )?),
-            _ => None,
-        };
-        let client =
-            ChannelOpenerClient::with_interceptor(channel, ApiKeyInterceptor { api_key_metadata });
-        Ok(client)
+            )?)),
+            _ => Ok(None),
+        }
+    }
+
+    pub(crate) async fn get_channel_opener_client(
+        &self,
+    ) -> SdkResult<ChannelOpenerClient<InterceptedService<Channel, ApiKeyInterceptor>>> {
+        let channel = self.channel().await?;
+        let api_key_metadata = self.api_key_metadata()?;
+        Ok(ChannelOpenerClient::with_interceptor(
+            channel,
+            ApiKeyInterceptor { api_key_metadata },
+        ))
     }
 
     pub(crate) async fn get_subscription_client(
@@ -1841,11 +1843,15 @@ impl BreezServer {
         Ok(SignerClient::new(Endpoint::new(url)?.connect().await?))
     }
 
-    pub(crate) async fn get_support_client(&self) -> SdkResult<SupportClient<Channel>> {
-        let url = Uri::from_str(&self.server_url).map_err(|e| SdkError::ServiceConnectivity {
-            err: format!("(Breez: {}) {e}", self.server_url.clone()),
-        })?;
-        Ok(SupportClient::connect(url).await?)
+    pub(crate) async fn get_support_client(
+        &self,
+    ) -> SdkResult<SupportClient<InterceptedService<Channel, ApiKeyInterceptor>>> {
+        let channel = self.channel().await?;
+        let api_key_metadata = self.api_key_metadata()?;
+        Ok(SupportClient::with_interceptor(
+            channel,
+            ApiKeyInterceptor { api_key_metadata },
+        ))
     }
 
     pub(crate) async fn get_swapper_client(&self) -> SdkResult<SwapperClient<Channel>> {

@@ -795,7 +795,6 @@ pub trait SupportAPI: Send + Sync {
         &self,
         node_state: NodeState,
         payment: Payment,
-        api_key: Option<String>,
         comment: Option<String>,
     ) -> SdkResult<()>;
 }

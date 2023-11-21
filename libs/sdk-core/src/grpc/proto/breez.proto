@@ -406,14 +406,12 @@ message GetReverseRoutingNodeReply { bytes node_id = 1; }
 message ReportPaymentFailureRequest {
   // The node pubkey reporting the failure
   string node_id = 1;
-  // The hash of the API key
-  string api_key_hash = 2;
   // The ISO 8601 timestamp 
-  string timestamp = 3;
+  string timestamp = 2;
   // The optional comment/error response text
-  string comment = 4;
+  string comment = 3;
   // The JSON encoded report payload
-  string report = 5;
+  string report = 4;
 }
 message ReportPaymentFailureReply {}
 
