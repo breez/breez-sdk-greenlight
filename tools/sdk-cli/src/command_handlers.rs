@@ -434,6 +434,10 @@ pub(crate) async fn handle_command(
                 _ => Err(anyhow!("Unexpected result type")),
             }
         }
+        Commands::FetchBreezStatus {} => {
+            let breez_status = sdk().unwrap().fetch_breez_status().await?;
+            serde_json::to_string_pretty(&breez_status).map_err(|e| e.into())
+        }
         Commands::ReportPaymentFailure {
             payment_hash,
             comment,

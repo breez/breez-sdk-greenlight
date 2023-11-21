@@ -229,6 +229,9 @@ pub(crate) enum Commands {
         to_address: String,
         sat_per_vbyte: u32,
     },
+    
+    /// Fetch the Breez service status
+    FetchBreezStatus {},
 
     /// Send a payment failure report
     ReportPaymentFailure {
