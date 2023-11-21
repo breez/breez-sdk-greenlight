@@ -387,6 +387,17 @@ class BreezSDK {
   }) async =>
       _lnToolkit.prepareSweep(req: req);
 
+  /* Support API's */
+
+  /// Send an issue report using the Support API.
+  /// - `ReportIssueRequest.paymentFailure` sends a payment failure report to the Support API
+  ///   using the provided `paymentHash` to lookup the failed `Payment` and the current `NodeState`.
+  Future<void> reportIssue({
+    required ReportIssueRequest req,
+  }) async {
+    return await _lnToolkit.reportIssue(req: req);
+  }
+
   /* CLI API's */
 
   /// Execute a command directly on the NodeAPI interface.
