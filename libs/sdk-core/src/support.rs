@@ -3,7 +3,7 @@ use std::time::SystemTime;
 use crate::error::SdkResult;
 use crate::grpc::{BreezStatusRequest, ReportPaymentFailureRequest};
 use crate::{breez_services::BreezServer, error::SdkError};
-use crate::{BreezStatus, BreezStatusResponse, NodeState, Payment, SupportAPI};
+use crate::{HealthCheckStatus, NodeState, Payment, ServiceHealthCheckResponse, SupportAPI};
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -15,14 +15,14 @@ struct PaymentFailureReport {
     pub payment: Payment,
 }
 
-impl TryFrom<i32> for BreezStatus {
+impl TryFrom<i32> for HealthCheckStatus {
     type Error = anyhow::Error;
 
     fn try_from(value: i32) -> Result<Self, Self::Error> {
         match value {
-            0 => Ok(BreezStatus::Operational),
-            1 => Ok(BreezStatus::Maintenance),
-            2 => Ok(BreezStatus::ServiceDisruption),
+            0 => Ok(HealthCheckStatus::Operational),
+            1 => Ok(HealthCheckStatus::Maintenance),
+            2 => Ok(HealthCheckStatus::ServiceDisruption),
             _ => Err(anyhow!("illegal value")),
         }
     }
@@ -30,7 +30,7 @@ impl TryFrom<i32> for BreezStatus {
 
 #[tonic::async_trait]
 impl SupportAPI for BreezServer {
-    async fn fetch_breez_status(&self) -> SdkResult<BreezStatusResponse> {
+    async fn service_health_check(&self) -> SdkResult<ServiceHealthCheckResponse> {
         let mut client = self.get_support_client().await?;
 
         let request = Request::new(BreezStatusRequest {});
@@ -42,7 +42,7 @@ impl SupportAPI for BreezServer {
                     err: format!("(Breez) Fetch status failed: {e}"),
                 })?;
         let status = response.into_inner().status.try_into()?;
-        Ok(BreezStatusResponse { status })
+        Ok(ServiceHealthCheckResponse { status })
     }
 
     async fn report_payment_failure(

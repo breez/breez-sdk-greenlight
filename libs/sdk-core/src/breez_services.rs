@@ -466,9 +466,9 @@ impl BreezServices {
         self.payment_receiver.receive_payment(req).await
     }
 
-    /// Fetch the current Breez service status.
-    pub async fn fetch_breez_status(&self) -> SdkResult<BreezStatusResponse> {
-        self.support_api.fetch_breez_status().await
+    /// Fetches the service health check from the support API.
+    pub async fn service_health_check(&self) -> SdkResult<ServiceHealthCheckResponse> {
+        self.support_api.service_health_check().await
     }
 
     /// Report an issue.

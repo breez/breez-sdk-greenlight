@@ -788,24 +788,24 @@ pub enum ReportIssueRequest {
     PaymentFailure { data: ReportPaymentFailureDetails },
 }
 
-/// Indicates the different kinds of Breez service status.
+/// Indicates the different service health check statuses.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-pub enum BreezStatus {
+pub enum HealthCheckStatus {
     Operational,
     Maintenance,
     ServiceDisruption,
 }
 
-/// Represents a breez status response.
+/// Represents a service health check response.
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct BreezStatusResponse {
-    pub status: BreezStatus,
+pub struct ServiceHealthCheckResponse {
+    pub status: HealthCheckStatus,
 }
 
 /// Trait covering support-related functionality
 #[tonic::async_trait]
 pub trait SupportAPI: Send + Sync {
-    async fn fetch_breez_status(&self) -> SdkResult<BreezStatusResponse>;
+    async fn service_health_check(&self) -> SdkResult<ServiceHealthCheckResponse>;
 
     async fn report_payment_failure(
         &self,

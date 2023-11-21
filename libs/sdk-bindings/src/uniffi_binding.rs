@@ -2,10 +2,10 @@ use anyhow::Result;
 use breez_sdk_core::{
     error::*, mnemonic_to_seed as sdk_mnemonic_to_seed, parse as sdk_parse_input,
     parse_invoice as sdk_parse_invoice, AesSuccessActionDataDecrypted, BackupFailedData,
-    BackupStatus, BitcoinAddressData, BreezEvent, BreezServices, BreezStatus, BreezStatusResponse,
-    BuyBitcoinProvider, BuyBitcoinRequest, BuyBitcoinResponse, ChannelState, CheckMessageRequest,
-    CheckMessageResponse, ClosedChannelPaymentDetails, Config, CurrencyInfo, EnvironmentType,
-    EventListener, FeeratePreset, FiatCurrency, GreenlightCredentials, GreenlightNodeConfig,
+    BackupStatus, BitcoinAddressData, BreezEvent, BreezServices, BuyBitcoinProvider,
+    BuyBitcoinRequest, BuyBitcoinResponse, ChannelState, CheckMessageRequest, CheckMessageResponse,
+    ClosedChannelPaymentDetails, Config, CurrencyInfo, EnvironmentType, EventListener,
+    FeeratePreset, FiatCurrency, GreenlightCredentials, GreenlightNodeConfig, HealthCheckStatus,
     InputType, InvoicePaidDetails, LNInvoice, ListPaymentsRequest, LnPaymentDetails,
     LnUrlAuthRequestData, LnUrlCallbackStatus, LnUrlErrorData, LnUrlPayErrorData, LnUrlPayRequest,
     LnUrlPayRequestData, LnUrlPayResult, LnUrlPaySuccessData, LnUrlWithdrawRequest,
@@ -19,9 +19,10 @@ use breez_sdk_core::{
     RefundRequest, RefundResponse, ReportIssueRequest, ReportPaymentFailureDetails,
     ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint,
     RouteHintHop, SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
-    SendSpontaneousPaymentRequest, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
-    StaticBackupResponse, SuccessActionProcessed, SwapInfo, SwapStatus, SweepRequest,
-    SweepResponse, Symbol, UnspentTransactionOutput, UrlSuccessActionData,
+    SendSpontaneousPaymentRequest, ServiceHealthCheckResponse, SignMessageRequest,
+    SignMessageResponse, StaticBackupRequest, StaticBackupResponse, SuccessActionProcessed,
+    SwapInfo, SwapStatus, SweepRequest, SweepResponse, Symbol, UnspentTransactionOutput,
+    UrlSuccessActionData,
 };
 use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
@@ -186,8 +187,8 @@ impl BlockingBreezServices {
         rt().block_on(self.breez_services.lnurl_auth(req_data))
     }
 
-    pub fn fetch_breez_status(&self) -> SdkResult<BreezStatusResponse> {
-        rt().block_on(self.breez_services.fetch_breez_status())
+    pub fn service_health_check(&self) -> SdkResult<ServiceHealthCheckResponse> {
+        rt().block_on(self.breez_services.service_health_check())
     }
 
     pub fn report_issue(&self, req: ReportIssueRequest) -> SdkResult<()> {

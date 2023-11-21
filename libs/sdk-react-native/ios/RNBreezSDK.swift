@@ -531,11 +531,11 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
-    @objc(fetchBreezStatus:reject:)
-    func fetchBreezStatus(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    @objc(serviceHealthCheck:reject:)
+    func serviceHealthCheck(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            var res = try getBreezServices().fetchBreezStatus()
-            resolve(BreezSDKMapper.dictionaryOf(breezStatusResponse: res))
+            var res = try getBreezServices().serviceHealthCheck()
+            resolve(BreezSDKMapper.dictionaryOf(serviceHealthCheckResponse: res))
         } catch let err {
             rejectErr(err: err, reject: reject)
         }

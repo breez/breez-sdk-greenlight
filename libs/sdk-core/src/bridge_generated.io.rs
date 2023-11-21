@@ -170,8 +170,8 @@ pub extern "C" fn wire_lnurl_auth(port_: i64, req_data: *mut wire_LnUrlAuthReque
 }
 
 #[no_mangle]
-pub extern "C" fn wire_fetch_breez_status(port_: i64) {
-    wire_fetch_breez_status_impl(port_)
+pub extern "C" fn wire_service_health_check(port_: i64) {
+    wire_service_health_check_impl(port_)
 }
 
 #[no_mangle]

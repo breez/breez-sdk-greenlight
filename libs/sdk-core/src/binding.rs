@@ -32,16 +32,16 @@ use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
 use crate::{
-    BackupStatus, BreezStatusResponse, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest,
-    CheckMessageResponse, EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus,
-    LnUrlPayRequest, LnUrlWithdrawRequest, LnUrlWithdrawResult, MaxReverseSwapAmountResponse,
-    NodeConfig, NodeCredentials, OpenChannelFeeRequest, OpenChannelFeeResponse,
-    PrepareRefundRequest, PrepareRefundResponse, PrepareSweepRequest, PrepareSweepResponse,
-    ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse, RefundRequest,
-    RefundResponse, ReportIssueRequest, ReverseSwapFeesRequest, ReverseSwapInfo,
-    ReverseSwapPairInfo, SendOnchainRequest, SendOnchainResponse, SendPaymentRequest,
-    SendPaymentResponse, SendSpontaneousPaymentRequest, SignMessageRequest, SignMessageResponse,
-    StaticBackupRequest, StaticBackupResponse, SweepRequest, SweepResponse,
+    BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
+    EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus, LnUrlPayRequest,
+    LnUrlWithdrawRequest, LnUrlWithdrawResult, MaxReverseSwapAmountResponse, NodeConfig,
+    NodeCredentials, OpenChannelFeeRequest, OpenChannelFeeResponse, PrepareRefundRequest,
+    PrepareRefundResponse, PrepareSweepRequest, PrepareSweepResponse, ReceiveOnchainRequest,
+    ReceivePaymentRequest, ReceivePaymentResponse, RefundRequest, RefundResponse,
+    ReportIssueRequest, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
+    SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
+    SendSpontaneousPaymentRequest, ServiceHealthCheckResponse, SignMessageRequest,
+    SignMessageResponse, StaticBackupRequest, StaticBackupResponse, SweepRequest, SweepResponse,
 };
 
 /*
@@ -307,9 +307,9 @@ pub fn lnurl_auth(req_data: LnUrlAuthRequestData) -> Result<LnUrlCallbackStatus>
 
 /*  Support API's */
 
-/// See [BreezServices::fetch_breez_status]
-pub fn fetch_breez_status() -> Result<BreezStatusResponse> {
-    block_on(async { get_breez_services().await?.fetch_breez_status().await })
+/// See [BreezServices::service_health_check]
+pub fn service_health_check() -> Result<ServiceHealthCheckResponse> {
+    block_on(async { get_breez_services().await?.service_health_check().await })
         .map_err(anyhow::Error::new::<SdkError>)
 }
 

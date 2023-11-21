@@ -731,10 +731,10 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun fetchBreezStatus(promise: Promise) {
+    fun serviceHealthCheck(promise: Promise) {
         executor.execute {
             try {
-                val res = getBreezServices().fetchBreezStatus()
+                val res = getBreezServices().serviceHealthCheck()
                 promise.resolve(readableMapOf(res))
             } catch (e: Exception) {
                 promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)

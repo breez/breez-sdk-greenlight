@@ -155,39 +155,6 @@ fun asBitcoinAddressDataList(arr: ReadableArray): List<BitcoinAddressData> {
     return list
 }
 
-fun asBreezStatusResponse(breezStatusResponse: ReadableMap): BreezStatusResponse? {
-    if (!validateMandatoryFields(
-            breezStatusResponse,
-            arrayOf(
-                "status",
-            ),
-        )
-    ) {
-        return null
-    }
-    val status = breezStatusResponse.getString("status")?.let { asBreezStatus(it) }!!
-    return BreezStatusResponse(
-        status,
-    )
-}
-
-fun readableMapOf(breezStatusResponse: BreezStatusResponse): ReadableMap {
-    return readableMapOf(
-        "status" to breezStatusResponse.status.name.lowercase(),
-    )
-}
-
-fun asBreezStatusResponseList(arr: ReadableArray): List<BreezStatusResponse> {
-    val list = ArrayList<BreezStatusResponse>()
-    for (value in arr.toArrayList()) {
-        when (value) {
-            is ReadableMap -> list.add(asBreezStatusResponse(value)!!)
-            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
-        }
-    }
-    return list
-}
-
 fun asBuyBitcoinRequest(buyBitcoinRequest: ReadableMap): BuyBitcoinRequest? {
     if (!validateMandatoryFields(
             buyBitcoinRequest,
@@ -2889,6 +2856,39 @@ fun asSendSpontaneousPaymentRequestList(arr: ReadableArray): List<SendSpontaneou
     return list
 }
 
+fun asServiceHealthCheckResponse(serviceHealthCheckResponse: ReadableMap): ServiceHealthCheckResponse? {
+    if (!validateMandatoryFields(
+            serviceHealthCheckResponse,
+            arrayOf(
+                "status",
+            ),
+        )
+    ) {
+        return null
+    }
+    val status = serviceHealthCheckResponse.getString("status")?.let { asHealthCheckStatus(it) }!!
+    return ServiceHealthCheckResponse(
+        status,
+    )
+}
+
+fun readableMapOf(serviceHealthCheckResponse: ServiceHealthCheckResponse): ReadableMap {
+    return readableMapOf(
+        "status" to serviceHealthCheckResponse.status.name.lowercase(),
+    )
+}
+
+fun asServiceHealthCheckResponseList(arr: ReadableArray): List<ServiceHealthCheckResponse> {
+    val list = ArrayList<ServiceHealthCheckResponse>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asServiceHealthCheckResponse(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asSignMessageRequest(signMessageRequest: ReadableMap): SignMessageRequest? {
     if (!validateMandatoryFields(
             signMessageRequest,
@@ -3418,21 +3418,6 @@ fun asBreezEventList(arr: ReadableArray): List<BreezEvent> {
     return list
 }
 
-fun asBreezStatus(type: String): BreezStatus {
-    return BreezStatus.valueOf(type.uppercase())
-}
-
-fun asBreezStatusList(arr: ReadableArray): List<BreezStatus> {
-    val list = ArrayList<BreezStatus>()
-    for (value in arr.toArrayList()) {
-        when (value) {
-            is String -> list.add(asBreezStatus(value)!!)
-            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
-        }
-    }
-    return list
-}
-
 fun asBuyBitcoinProvider(type: String): BuyBitcoinProvider {
     return BuyBitcoinProvider.valueOf(type.uppercase())
 }
@@ -3487,6 +3472,21 @@ fun asFeeratePresetList(arr: ReadableArray): List<FeeratePreset> {
     for (value in arr.toArrayList()) {
         when (value) {
             is String -> list.add(asFeeratePreset(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
+fun asHealthCheckStatus(type: String): HealthCheckStatus {
+    return HealthCheckStatus.valueOf(type.uppercase())
+}
+
+fun asHealthCheckStatusList(arr: ReadableArray): List<HealthCheckStatus> {
+    val list = ArrayList<HealthCheckStatus>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is String -> list.add(asHealthCheckStatus(value)!!)
             else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
         }
     }

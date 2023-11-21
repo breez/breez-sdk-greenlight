@@ -398,8 +398,8 @@ class BreezSDK {
     return await _lnToolkit.reportIssue(req: req);
   }
 
-  /// Fetches the current Breez service status.
-  Future<BreezStatusResponse> fetchBreezStatus() async => await _lnToolkit.fetchBreezStatus();
+  /// Fetches the service health check from the support API.
+  Future<ServiceHealthCheckResponse> serviceHealthCheck() async => await _lnToolkit.serviceHealthCheck();
 
   /* CLI API's */
 

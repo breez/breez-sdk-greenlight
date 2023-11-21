@@ -41,10 +41,6 @@ export type BitcoinAddressData = {
     message?: string
 }
 
-export type BreezStatusResponse = {
-    status: BreezStatus
-}
-
 export type BuyBitcoinRequest = {
     provider: BuyBitcoinProvider
     openingFeeParams?: OpeningFeeParams
@@ -439,6 +435,10 @@ export type SendSpontaneousPaymentRequest = {
     amountMsat: number
 }
 
+export type ServiceHealthCheckResponse = {
+    status: HealthCheckStatus
+}
+
 export type SignMessageRequest = {
     message: string
 }
@@ -542,12 +542,6 @@ export type BreezEvent = {
     details: BackupFailedData
 }
 
-export enum BreezStatus {
-    OPERATIONAL = "operational",
-    MAINTENANCE = "maintenance",
-    SERVICE_DISRUPTION = "serviceDisruption"
-}
-
 export enum BuyBitcoinProvider {
     MOONPAY = "moonpay"
 }
@@ -568,6 +562,12 @@ export enum FeeratePreset {
     REGULAR = "regular",
     ECONOMY = "economy",
     PRIORITY = "priority"
+}
+
+export enum HealthCheckStatus {
+    OPERATIONAL = "operational",
+    MAINTENANCE = "maintenance",
+    SERVICE_DISRUPTION = "serviceDisruption"
 }
 
 export enum InputTypeVariant {
@@ -963,8 +963,8 @@ export const sendOnchain = async (req: SendOnchainRequest): Promise<SendOnchainR
     return response
 }
 
-export const fetchBreezStatus = async (): Promise<BreezStatusResponse> => {
-    const response = await BreezSDK.fetchBreezStatus()
+export const serviceHealthCheck = async (): Promise<ServiceHealthCheckResponse> => {
+    const response = await BreezSDK.serviceHealthCheck()
     return response
 }
 

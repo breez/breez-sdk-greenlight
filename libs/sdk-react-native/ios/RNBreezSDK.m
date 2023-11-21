@@ -249,7 +249,7 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
-    fetchBreezStatus: (RCTPromiseResolveBlock)resolve
+    serviceHealthCheck: (RCTPromiseResolveBlock)resolve
     reject: (RCTPromiseRejectBlock)reject
 )
 

@@ -53,8 +53,6 @@ use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lnurl::pay::model::UrlSuccessActionData;
 use crate::lsp::LspInformation;
 use crate::models::BackupStatus;
-use crate::models::BreezStatus;
-use crate::models::BreezStatusResponse;
 use crate::models::BuyBitcoinProvider;
 use crate::models::BuyBitcoinRequest;
 use crate::models::BuyBitcoinResponse;
@@ -64,6 +62,7 @@ use crate::models::Config;
 use crate::models::EnvironmentType;
 use crate::models::GreenlightCredentials;
 use crate::models::GreenlightNodeConfig;
+use crate::models::HealthCheckStatus;
 use crate::models::ListPaymentsRequest;
 use crate::models::LnPaymentDetails;
 use crate::models::LnUrlCallbackStatus;
@@ -106,6 +105,7 @@ use crate::models::SendOnchainResponse;
 use crate::models::SendPaymentRequest;
 use crate::models::SendPaymentResponse;
 use crate::models::SendSpontaneousPaymentRequest;
+use crate::models::ServiceHealthCheckResponse;
 use crate::models::StaticBackupRequest;
 use crate::models::StaticBackupResponse;
 use crate::models::SwapInfo;
@@ -528,14 +528,14 @@ fn wire_lnurl_auth_impl(
         },
     )
 }
-fn wire_fetch_breez_status_impl(port_: MessagePort) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, BreezStatusResponse>(
+fn wire_service_health_check_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, ServiceHealthCheckResponse>(
         WrapInfo {
-            debug_name: "fetch_breez_status",
+            debug_name: "service_health_check",
             port: Some(port_),
             mode: FfiCallMode::Normal,
         },
-        move || move |task_callback| fetch_breez_status(),
+        move || move |task_callback| service_health_check(),
     )
 }
 fn wire_report_issue_impl(port_: MessagePort, req: impl Wire2Api<ReportIssueRequest> + UnwindSafe) {
@@ -969,35 +969,6 @@ impl rust2dart::IntoIntoDart<BreezEvent> for BreezEvent {
     }
 }
 
-impl support::IntoDart for BreezStatus {
-    fn into_dart(self) -> support::DartAbi {
-        match self {
-            Self::Operational => 0,
-            Self::Maintenance => 1,
-            Self::ServiceDisruption => 2,
-        }
-        .into_dart()
-    }
-}
-impl support::IntoDartExceptPrimitive for BreezStatus {}
-impl rust2dart::IntoIntoDart<BreezStatus> for BreezStatus {
-    fn into_into_dart(self) -> Self {
-        self
-    }
-}
-
-impl support::IntoDart for BreezStatusResponse {
-    fn into_dart(self) -> support::DartAbi {
-        vec![self.status.into_into_dart().into_dart()].into_dart()
-    }
-}
-impl support::IntoDartExceptPrimitive for BreezStatusResponse {}
-impl rust2dart::IntoIntoDart<BreezStatusResponse> for BreezStatusResponse {
-    fn into_into_dart(self) -> Self {
-        self
-    }
-}
-
 impl support::IntoDart for BuyBitcoinResponse {
     fn into_dart(self) -> support::DartAbi {
         vec![
@@ -1150,6 +1121,23 @@ impl support::IntoDart for GreenlightNodeConfig {
 }
 impl support::IntoDartExceptPrimitive for GreenlightNodeConfig {}
 impl rust2dart::IntoIntoDart<GreenlightNodeConfig> for GreenlightNodeConfig {
+    fn into_into_dart(self) -> Self {
+        self
+    }
+}
+
+impl support::IntoDart for HealthCheckStatus {
+    fn into_dart(self) -> support::DartAbi {
+        match self {
+            Self::Operational => 0,
+            Self::Maintenance => 1,
+            Self::ServiceDisruption => 2,
+        }
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for HealthCheckStatus {}
+impl rust2dart::IntoIntoDart<HealthCheckStatus> for HealthCheckStatus {
     fn into_into_dart(self) -> Self {
         self
     }
@@ -1938,6 +1926,18 @@ impl support::IntoDart for SendPaymentResponse {
 }
 impl support::IntoDartExceptPrimitive for SendPaymentResponse {}
 impl rust2dart::IntoIntoDart<SendPaymentResponse> for SendPaymentResponse {
+    fn into_into_dart(self) -> Self {
+        self
+    }
+}
+
+impl support::IntoDart for ServiceHealthCheckResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.status.into_into_dart().into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for ServiceHealthCheckResponse {}
+impl rust2dart::IntoIntoDart<ServiceHealthCheckResponse> for ServiceHealthCheckResponse {
     fn into_into_dart(self) -> Self {
         self
     }
