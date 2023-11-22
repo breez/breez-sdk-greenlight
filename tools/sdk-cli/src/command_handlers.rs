@@ -259,6 +259,10 @@ pub(crate) async fn handle_command(
             let lsps = sdk()?.list_lsps().await?;
             serde_json::to_string_pretty(&lsps).map_err(|e| e.into())
         }
+        Commands::LspInfo {} => {
+            let lsp_info = sdk()?.lsp_info().await?;
+            serde_json::to_string_pretty(&lsp_info).map_err(|e| e.into())
+        }
         Commands::ConnectLSP { lsp_id } => {
             sdk()?.connect_lsp(lsp_id).await?;
             Ok("LSP connected successfully".to_string())
