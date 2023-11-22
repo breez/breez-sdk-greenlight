@@ -368,6 +368,11 @@ export type RefundResponse = {
     refundTxId: string
 }
 
+export type ReportPaymentFailureDetails = {
+    paymentHash: string
+    comment?: string
+}
+
 export type ReverseSwapFeesRequest = {
     sendAmountSat?: number
 }
@@ -428,6 +433,10 @@ export type SendPaymentResponse = {
 export type SendSpontaneousPaymentRequest = {
     nodeId: string
     amountMsat: number
+}
+
+export type ServiceHealthCheckResponse = {
+    status: HealthCheckStatus
 }
 
 export type SignMessageRequest = {
@@ -553,6 +562,12 @@ export enum FeeratePreset {
     REGULAR = "regular",
     ECONOMY = "economy",
     PRIORITY = "priority"
+}
+
+export enum HealthCheckStatus {
+    OPERATIONAL = "operational",
+    MAINTENANCE = "maintenance",
+    SERVICE_DISRUPTION = "serviceDisruption"
 }
 
 export enum InputTypeVariant {
@@ -690,6 +705,15 @@ export enum PaymentTypeFilter {
     CLOSED_CHANNEL = "closedChannel"
 }
 
+export enum ReportIssueRequestVariant {
+    PAYMENT_FAILURE = "paymentFailure"
+}
+
+export type ReportIssueRequest = {
+    type: ReportIssueRequestVariant.PAYMENT_FAILURE,
+    data: ReportPaymentFailureDetails
+}
+
 export enum ReverseSwapStatus {
     INITIAL = "initial",
     IN_PROGRESS = "inProgress",
@@ -797,6 +821,10 @@ export const withdrawLnurl = async (request: LnUrlWithdrawRequest): Promise<LnUr
 export const lnurlAuth = async (reqData: LnUrlAuthRequestData): Promise<LnUrlCallbackStatus> => {
     const response = await BreezSDK.lnurlAuth(reqData)
     return response
+}
+
+export const reportIssue = async (req: ReportIssueRequest): Promise<void> => {
+    await BreezSDK.reportIssue(req)
 }
 
 export const nodeCredentials = async (): Promise<NodeCredentials | null> => {
@@ -932,6 +960,11 @@ export const maxReverseSwapAmount = async (): Promise<MaxReverseSwapAmountRespon
 
 export const sendOnchain = async (req: SendOnchainRequest): Promise<SendOnchainResponse> => {
     const response = await BreezSDK.sendOnchain(req)
+    return response
+}
+
+export const serviceHealthCheck = async (): Promise<ServiceHealthCheckResponse> => {
+    const response = await BreezSDK.serviceHealthCheck()
     return response
 }
 

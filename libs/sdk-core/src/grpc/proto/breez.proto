@@ -97,6 +97,11 @@ service Signer {
   rpc SignUrl(SignUrlRequest) returns (SignUrlResponse) {}
 }
 
+service Support {
+  rpc ReportPaymentFailure(ReportPaymentFailureRequest) returns (ReportPaymentFailureReply) {}
+  rpc BreezStatus(BreezStatusRequest) returns (BreezStatusReply) {}
+}
+
 message SignUrlRequest {
   string baseUrl = 1 [ json_name = "base_url" ];
   string queryString = 2 [ json_name = "query_string" ];
@@ -399,6 +404,33 @@ message BreezAppVersionsReply { repeated string version = 1; }
 message GetReverseRoutingNodeRequest {}
 message GetReverseRoutingNodeReply { bytes node_id = 1; }
 
+message ReportPaymentFailureRequest {
+  // The sdk build version
+  string sdk_version = 1;
+  // The sdk build git hash
+  string sdk_git_hash = 2;
+  // The node pubkey reporting the failure
+  string node_id = 3;
+  // The currently used lsp id
+  string lsp_id = 4;
+  // The ISO 8601 timestamp 
+  string timestamp = 5;
+  // The optional comment/error response text
+  string comment = 6;
+  // The JSON encoded report payload
+  string report = 7;
+}
+message ReportPaymentFailureReply {}
+
+message BreezStatusRequest {}
+message BreezStatusReply {
+  enum BreezStatus {
+    OPERATIONAL = 0;
+    MAINTENANCE = 1;
+    SERVICE_DISRUPTION = 2;
+  }
+  BreezStatus status = 1;
+}
 
 /////////////////////////////////////////////
 // From lspd.proto

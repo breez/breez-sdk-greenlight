@@ -5,22 +5,24 @@ use breez_sdk_core::{
     BackupStatus, BitcoinAddressData, BreezEvent, BreezServices, BuyBitcoinProvider,
     BuyBitcoinRequest, BuyBitcoinResponse, ChannelState, CheckMessageRequest, CheckMessageResponse,
     ClosedChannelPaymentDetails, Config, CurrencyInfo, EnvironmentType, EventListener,
-    FeeratePreset, FiatCurrency, GreenlightCredentials, GreenlightNodeConfig, InputType,
-    InvoicePaidDetails, LNInvoice, ListPaymentsRequest, LnPaymentDetails, LnUrlAuthRequestData,
-    LnUrlCallbackStatus, LnUrlErrorData, LnUrlPayErrorData, LnUrlPayRequest, LnUrlPayRequestData,
-    LnUrlPayResult, LnUrlPaySuccessData, LnUrlWithdrawRequest, LnUrlWithdrawRequestData,
-    LnUrlWithdrawResult, LnUrlWithdrawSuccessData, LocaleOverrides, LocalizedName, LogEntry,
-    LogStream, LspInformation, MaxReverseSwapAmountResponse, MessageSuccessActionData,
-    MetadataItem, Network, NodeConfig, NodeCredentials, NodeState, OpenChannelFeeRequest,
-    OpenChannelFeeResponse, OpeningFeeParams, OpeningFeeParamsMenu, Payment, PaymentDetails,
-    PaymentFailedData, PaymentStatus, PaymentType, PaymentTypeFilter, PrepareRefundRequest,
-    PrepareRefundResponse, PrepareSweepRequest, PrepareSweepResponse, Rate, ReceiveOnchainRequest,
-    ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees, RefundRequest, RefundResponse,
+    FeeratePreset, FiatCurrency, GreenlightCredentials, GreenlightNodeConfig, HealthCheckStatus,
+    InputType, InvoicePaidDetails, LNInvoice, ListPaymentsRequest, LnPaymentDetails,
+    LnUrlAuthRequestData, LnUrlCallbackStatus, LnUrlErrorData, LnUrlPayErrorData, LnUrlPayRequest,
+    LnUrlPayRequestData, LnUrlPayResult, LnUrlPaySuccessData, LnUrlWithdrawRequest,
+    LnUrlWithdrawRequestData, LnUrlWithdrawResult, LnUrlWithdrawSuccessData, LocaleOverrides,
+    LocalizedName, LogEntry, LogStream, LspInformation, MaxReverseSwapAmountResponse,
+    MessageSuccessActionData, MetadataItem, Network, NodeConfig, NodeCredentials, NodeState,
+    OpenChannelFeeRequest, OpenChannelFeeResponse, OpeningFeeParams, OpeningFeeParamsMenu, Payment,
+    PaymentDetails, PaymentFailedData, PaymentStatus, PaymentType, PaymentTypeFilter,
+    PrepareRefundRequest, PrepareRefundResponse, PrepareSweepRequest, PrepareSweepResponse, Rate,
+    ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees,
+    RefundRequest, RefundResponse, ReportIssueRequest, ReportPaymentFailureDetails,
     ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint,
     RouteHintHop, SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
-    SendSpontaneousPaymentRequest, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
-    StaticBackupResponse, SuccessActionProcessed, SwapInfo, SwapStatus, SweepRequest,
-    SweepResponse, Symbol, UnspentTransactionOutput, UrlSuccessActionData,
+    SendSpontaneousPaymentRequest, ServiceHealthCheckResponse, SignMessageRequest,
+    SignMessageResponse, StaticBackupRequest, StaticBackupResponse, SuccessActionProcessed,
+    SwapInfo, SwapStatus, SweepRequest, SweepResponse, Symbol, UnspentTransactionOutput,
+    UrlSuccessActionData,
 };
 use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
@@ -183,6 +185,14 @@ impl BlockingBreezServices {
         req_data: LnUrlAuthRequestData,
     ) -> Result<LnUrlCallbackStatus, LnUrlAuthError> {
         rt().block_on(self.breez_services.lnurl_auth(req_data))
+    }
+
+    pub fn service_health_check(&self) -> SdkResult<ServiceHealthCheckResponse> {
+        rt().block_on(self.breez_services.service_health_check())
+    }
+
+    pub fn report_issue(&self, req: ReportIssueRequest) -> SdkResult<()> {
+        rt().block_on(self.breez_services.report_issue(req))
     }
 
     pub fn sweep(&self, req: SweepRequest) -> SdkResult<SweepResponse> {

@@ -596,6 +596,26 @@ dictionary LnUrlAuthRequestData {
     string url;
 };
 
+dictionary ReportPaymentFailureDetails {
+    string payment_hash;
+    string? comment;
+};
+
+[Enum]
+interface ReportIssueRequest {
+    PaymentFailure(ReportPaymentFailureDetails data);
+};
+
+enum HealthCheckStatus {
+    "Operational",
+    "Maintenance",
+    "ServiceDisruption",
+};
+
+dictionary ServiceHealthCheckResponse {
+    HealthCheckStatus status;
+};
+
 dictionary MetadataItem {
     string key;
     string value;
@@ -718,6 +738,9 @@ interface BlockingBreezServices {
    LnUrlCallbackStatus lnurl_auth(LnUrlAuthRequestData req_data);
 
    [Throws=SdkError]
+   void report_issue(ReportIssueRequest req);
+
+   [Throws=SdkError]
    NodeCredentials? node_credentials();
 
    [Throws=SdkError]
@@ -800,6 +823,9 @@ interface BlockingBreezServices {
 
    [Throws=SendOnchainError]
    SendOnchainResponse send_onchain(SendOnchainRequest req);
+
+   [Throws=SdkError]
+   ServiceHealthCheckResponse service_health_check();
 
    [Throws=SdkError]
    string execute_dev_command(string command);

@@ -230,6 +230,15 @@ pub(crate) enum Commands {
         sat_per_vbyte: u32,
     },
 
+    /// Fetches the service health check
+    ServiceHealthCheck {},
+
+    /// Send a payment failure report
+    ReportPaymentFailure {
+        payment_hash: String,
+        comment: Option<String>,
+    },
+
     /// Execute a low level node command (used for debugging)
     ExecuteDevCommand {
         command: String,

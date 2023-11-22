@@ -7,8 +7,9 @@ use breez_sdk_core::{
     parse, BreezEvent, BreezServices, BuyBitcoinRequest, CheckMessageRequest, EventListener,
     GreenlightCredentials, ListPaymentsRequest, LnUrlPayRequest, LnUrlWithdrawRequest,
     PrepareRefundRequest, ReceiveOnchainRequest, ReceivePaymentRequest, RefundRequest,
-    ReverseSwapFeesRequest, SendOnchainRequest, SendPaymentRequest, SendSpontaneousPaymentRequest,
-    SignMessageRequest, StaticBackupRequest, SweepRequest,
+    ReportIssueRequest, ReportPaymentFailureDetails, ReverseSwapFeesRequest, SendOnchainRequest,
+    SendPaymentRequest, SendSpontaneousPaymentRequest, SignMessageRequest, StaticBackupRequest,
+    SweepRequest,
 };
 use breez_sdk_core::{Config, GreenlightNodeConfig, NodeConfig};
 use once_cell::sync::OnceCell;
@@ -432,6 +433,24 @@ pub(crate) async fn handle_command(
                 }
                 _ => Err(anyhow!("Unexpected result type")),
             }
+        }
+        Commands::ServiceHealthCheck {} => {
+            let health_check = sdk()?.service_health_check().await?;
+            serde_json::to_string_pretty(&health_check).map_err(|e| e.into())
+        }
+        Commands::ReportPaymentFailure {
+            payment_hash,
+            comment,
+        } => {
+            sdk()?
+                .report_issue(ReportIssueRequest::PaymentFailure {
+                    data: ReportPaymentFailureDetails {
+                        payment_hash,
+                        comment,
+                    },
+                })
+                .await?;
+            Ok("Report sent".into())
         }
         Commands::ExecuteDevCommand { command } => {
             serde_json::to_string_pretty(&sdk()?.execute_dev_command(command).await?)

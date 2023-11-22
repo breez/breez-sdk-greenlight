@@ -4661,6 +4661,211 @@ abstract class PaymentDetails_ClosedChannel implements PaymentDetails {
 }
 
 /// @nodoc
+mixin _$ReportIssueRequest {
+  ReportPaymentFailureDetails get data => throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(ReportPaymentFailureDetails data) paymentFailure,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(ReportPaymentFailureDetails data)? paymentFailure,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(ReportPaymentFailureDetails data)? paymentFailure,
+    required TResult orElse(),
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(ReportIssueRequest_PaymentFailure value) paymentFailure,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(ReportIssueRequest_PaymentFailure value)? paymentFailure,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(ReportIssueRequest_PaymentFailure value)? paymentFailure,
+    required TResult orElse(),
+  }) =>
+      throw _privateConstructorUsedError;
+
+  @JsonKey(ignore: true)
+  $ReportIssueRequestCopyWith<ReportIssueRequest> get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ReportIssueRequestCopyWith<$Res> {
+  factory $ReportIssueRequestCopyWith(ReportIssueRequest value, $Res Function(ReportIssueRequest) then) =
+      _$ReportIssueRequestCopyWithImpl<$Res, ReportIssueRequest>;
+  @useResult
+  $Res call({ReportPaymentFailureDetails data});
+}
+
+/// @nodoc
+class _$ReportIssueRequestCopyWithImpl<$Res, $Val extends ReportIssueRequest>
+    implements $ReportIssueRequestCopyWith<$Res> {
+  _$ReportIssueRequestCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? data = null,
+  }) {
+    return _then(_value.copyWith(
+      data: null == data
+          ? _value.data
+          : data // ignore: cast_nullable_to_non_nullable
+              as ReportPaymentFailureDetails,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ReportIssueRequest_PaymentFailureImplCopyWith<$Res>
+    implements $ReportIssueRequestCopyWith<$Res> {
+  factory _$$ReportIssueRequest_PaymentFailureImplCopyWith(_$ReportIssueRequest_PaymentFailureImpl value,
+          $Res Function(_$ReportIssueRequest_PaymentFailureImpl) then) =
+      __$$ReportIssueRequest_PaymentFailureImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({ReportPaymentFailureDetails data});
+}
+
+/// @nodoc
+class __$$ReportIssueRequest_PaymentFailureImplCopyWithImpl<$Res>
+    extends _$ReportIssueRequestCopyWithImpl<$Res, _$ReportIssueRequest_PaymentFailureImpl>
+    implements _$$ReportIssueRequest_PaymentFailureImplCopyWith<$Res> {
+  __$$ReportIssueRequest_PaymentFailureImplCopyWithImpl(_$ReportIssueRequest_PaymentFailureImpl _value,
+      $Res Function(_$ReportIssueRequest_PaymentFailureImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? data = null,
+  }) {
+    return _then(_$ReportIssueRequest_PaymentFailureImpl(
+      data: null == data
+          ? _value.data
+          : data // ignore: cast_nullable_to_non_nullable
+              as ReportPaymentFailureDetails,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$ReportIssueRequest_PaymentFailureImpl implements ReportIssueRequest_PaymentFailure {
+  const _$ReportIssueRequest_PaymentFailureImpl({required this.data});
+
+  @override
+  final ReportPaymentFailureDetails data;
+
+  @override
+  String toString() {
+    return 'ReportIssueRequest.paymentFailure(data: $data)';
+  }
+
+  @override
+  bool operator ==(dynamic other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ReportIssueRequest_PaymentFailureImpl &&
+            (identical(other.data, data) || other.data == data));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, data);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ReportIssueRequest_PaymentFailureImplCopyWith<_$ReportIssueRequest_PaymentFailureImpl> get copyWith =>
+      __$$ReportIssueRequest_PaymentFailureImplCopyWithImpl<_$ReportIssueRequest_PaymentFailureImpl>(
+          this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(ReportPaymentFailureDetails data) paymentFailure,
+  }) {
+    return paymentFailure(data);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(ReportPaymentFailureDetails data)? paymentFailure,
+  }) {
+    return paymentFailure?.call(data);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(ReportPaymentFailureDetails data)? paymentFailure,
+    required TResult orElse(),
+  }) {
+    if (paymentFailure != null) {
+      return paymentFailure(data);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(ReportIssueRequest_PaymentFailure value) paymentFailure,
+  }) {
+    return paymentFailure(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(ReportIssueRequest_PaymentFailure value)? paymentFailure,
+  }) {
+    return paymentFailure?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(ReportIssueRequest_PaymentFailure value)? paymentFailure,
+    required TResult orElse(),
+  }) {
+    if (paymentFailure != null) {
+      return paymentFailure(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class ReportIssueRequest_PaymentFailure implements ReportIssueRequest {
+  const factory ReportIssueRequest_PaymentFailure({required final ReportPaymentFailureDetails data}) =
+      _$ReportIssueRequest_PaymentFailureImpl;
+
+  @override
+  ReportPaymentFailureDetails get data;
+  @override
+  @JsonKey(ignore: true)
+  _$$ReportIssueRequest_PaymentFailureImplCopyWith<_$ReportIssueRequest_PaymentFailureImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
 mixin _$SuccessActionProcessed {
   Object get data => throw _privateConstructorUsedError;
   @optionalTypeArgs

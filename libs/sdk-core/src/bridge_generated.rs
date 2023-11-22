@@ -62,6 +62,7 @@ use crate::models::Config;
 use crate::models::EnvironmentType;
 use crate::models::GreenlightCredentials;
 use crate::models::GreenlightNodeConfig;
+use crate::models::HealthCheckStatus;
 use crate::models::ListPaymentsRequest;
 use crate::models::LnPaymentDetails;
 use crate::models::LnUrlCallbackStatus;
@@ -93,6 +94,8 @@ use crate::models::ReceivePaymentRequest;
 use crate::models::ReceivePaymentResponse;
 use crate::models::RefundRequest;
 use crate::models::RefundResponse;
+use crate::models::ReportIssueRequest;
+use crate::models::ReportPaymentFailureDetails;
 use crate::models::ReverseSwapFeesRequest;
 use crate::models::ReverseSwapInfo;
 use crate::models::ReverseSwapPairInfo;
@@ -102,6 +105,7 @@ use crate::models::SendOnchainResponse;
 use crate::models::SendPaymentRequest;
 use crate::models::SendPaymentResponse;
 use crate::models::SendSpontaneousPaymentRequest;
+use crate::models::ServiceHealthCheckResponse;
 use crate::models::StaticBackupRequest;
 use crate::models::StaticBackupResponse;
 use crate::models::SwapInfo;
@@ -521,6 +525,29 @@ fn wire_lnurl_auth_impl(
         move || {
             let api_req_data = req_data.wire2api();
             move |task_callback| lnurl_auth(api_req_data)
+        },
+    )
+}
+fn wire_service_health_check_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, ServiceHealthCheckResponse>(
+        WrapInfo {
+            debug_name: "service_health_check",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || move |task_callback| service_health_check(),
+    )
+}
+fn wire_report_issue_impl(port_: MessagePort, req: impl Wire2Api<ReportIssueRequest> + UnwindSafe) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, ()>(
+        WrapInfo {
+            debug_name: "report_issue",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_req = req.wire2api();
+            move |task_callback| report_issue(api_req)
         },
     )
 }
@@ -1094,6 +1121,23 @@ impl support::IntoDart for GreenlightNodeConfig {
 }
 impl support::IntoDartExceptPrimitive for GreenlightNodeConfig {}
 impl rust2dart::IntoIntoDart<GreenlightNodeConfig> for GreenlightNodeConfig {
+    fn into_into_dart(self) -> Self {
+        self
+    }
+}
+
+impl support::IntoDart for HealthCheckStatus {
+    fn into_dart(self) -> support::DartAbi {
+        match self {
+            Self::Operational => 0,
+            Self::Maintenance => 1,
+            Self::ServiceDisruption => 2,
+        }
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for HealthCheckStatus {}
+impl rust2dart::IntoIntoDart<HealthCheckStatus> for HealthCheckStatus {
     fn into_into_dart(self) -> Self {
         self
     }
@@ -1882,6 +1926,18 @@ impl support::IntoDart for SendPaymentResponse {
 }
 impl support::IntoDartExceptPrimitive for SendPaymentResponse {}
 impl rust2dart::IntoIntoDart<SendPaymentResponse> for SendPaymentResponse {
+    fn into_into_dart(self) -> Self {
+        self
+    }
+}
+
+impl support::IntoDart for ServiceHealthCheckResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.status.into_into_dart().into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for ServiceHealthCheckResponse {}
+impl rust2dart::IntoIntoDart<ServiceHealthCheckResponse> for ServiceHealthCheckResponse {
     fn into_into_dart(self) -> Self {
         self
     }

@@ -36,6 +36,7 @@ use crate::grpc::fund_manager_client::FundManagerClient;
 use crate::grpc::information_client::InformationClient;
 use crate::grpc::payment_notifier_client::PaymentNotifierClient;
 use crate::grpc::signer_client::SignerClient;
+use crate::grpc::support_client::SupportClient;
 use crate::grpc::swapper_client::SwapperClient;
 use crate::grpc::PaymentInformation;
 use crate::invoice::{
@@ -158,6 +159,7 @@ pub struct BreezServices {
     lsp_api: Arc<dyn LspAPI>,
     fiat_api: Arc<dyn FiatAPI>,
     moonpay_api: Arc<dyn MoonPayApi>,
+    support_api: Arc<dyn SupportAPI>,
     chain_service: Arc<dyn ChainService>,
     persister: Arc<SqliteStorage>,
     payment_receiver: Arc<PaymentReceiver>,
@@ -186,6 +188,9 @@ impl BreezServices {
         seed: Vec<u8>,
         event_listener: Box<dyn EventListener>,
     ) -> SdkResult<Arc<BreezServices>> {
+        let sdk_version = option_env!("CARGO_PKG_VERSION").unwrap_or_default();
+        let sdk_git_hash = option_env!("SDK_GIT_HASH").unwrap_or_default();
+        info!("SDK v{sdk_version} ({sdk_git_hash})");
         let start = Instant::now();
         let services = BreezServicesBuilder::new(config)
             .seed(seed)
@@ -464,6 +469,39 @@ impl BreezServices {
         req: ReceivePaymentRequest,
     ) -> Result<ReceivePaymentResponse, ReceivePaymentError> {
         self.payment_receiver.receive_payment(req).await
+    }
+
+    /// Fetches the service health check from the support API.
+    pub async fn service_health_check(&self) -> SdkResult<ServiceHealthCheckResponse> {
+        self.support_api.service_health_check().await
+    }
+
+    /// Report an issue.
+    ///
+    /// Calling `report_issue` with a [ReportIssueRequest] enum param sends an issue report using the Support API.
+    /// - [ReportIssueRequest::PaymentFailure] sends a payment failure report to the Support API
+    /// using the provided `payment_hash` to lookup the failed payment and the current [NodeState].
+    pub async fn report_issue(&self, req: ReportIssueRequest) -> SdkResult<()> {
+        match self.persister.get_node_state()? {
+            Some(node_state) => match req {
+                ReportIssueRequest::PaymentFailure { data } => {
+                    let payment = self
+                        .persister
+                        .get_payment_by_hash(&data.payment_hash)?
+                        .ok_or(SdkError::Generic {
+                            err: "Payment not found".into(),
+                        })?;
+                    let lsp_id = self.persister.get_lsp_id()?;
+
+                    self.support_api
+                        .report_payment_failure(node_state, payment, lsp_id, data.comment)
+                        .await
+                }
+            },
+            None => Err(SdkError::Generic {
+                err: "Node state not found".into(),
+            }),
+        }
     }
 
     /// Retrieve the decrypted credentials from the node.
@@ -1528,6 +1566,7 @@ struct BreezServicesBuilder {
     lsp_api: Option<Arc<dyn LspAPI>>,
     fiat_api: Option<Arc<dyn FiatAPI>>,
     persister: Option<Arc<SqliteStorage>>,
+    support_api: Option<Arc<dyn SupportAPI>>,
     swapper_api: Option<Arc<dyn SwapperAPI>>,
     /// Reverse swap functionality on the Breez Server
     reverse_swapper_api: Option<Arc<dyn ReverseSwapperRoutingAPI>>,
@@ -1546,6 +1585,7 @@ impl BreezServicesBuilder {
             lsp_api: None,
             fiat_api: None,
             persister: None,
+            support_api: None,
             swapper_api: None,
             reverse_swapper_api: None,
             reverse_swap_service_api: None,
@@ -1576,6 +1616,11 @@ impl BreezServicesBuilder {
 
     pub fn persister(&mut self, persister: Arc<SqliteStorage>) -> &mut Self {
         self.persister = Some(persister);
+        self
+    }
+
+    pub fn support_api(&mut self, support_api: Arc<dyn SupportAPI>) -> &mut Self {
+        self.support_api = Some(support_api.clone());
         self
     }
 
@@ -1734,6 +1779,10 @@ impl BreezServicesBuilder {
                 .fiat_api
                 .clone()
                 .unwrap_or_else(|| breez_server.clone()),
+            support_api: self
+                .support_api
+                .clone()
+                .unwrap_or_else(|| breez_server.clone()),
             moonpay_api: self
                 .moonpay_api
                 .clone()
@@ -1767,11 +1816,8 @@ impl BreezServer {
         }
     }
 
-    pub(crate) async fn get_channel_opener_client(
-        &self,
-    ) -> SdkResult<ChannelOpenerClient<InterceptedService<Channel, ApiKeyInterceptor>>> {
-        let s = self.server_url.clone();
-        let channel = Channel::from_shared(s)
+    async fn channel(&self) -> SdkResult<Channel> {
+        Channel::from_shared(self.server_url.clone())
             .map_err(|e| SdkError::ServiceConnectivity {
                 err: format!("(Breez: {}) {e}", self.server_url.clone()),
             })?
@@ -1782,22 +1828,32 @@ impl BreezServer {
                     "(Breez: {}) Failed to connect: {e}",
                     self.server_url.clone()
                 ),
-            })?;
+            })
+    }
 
-        let api_key_metadata: Option<MetadataValue<Ascii>> = match &self.api_key {
-            Some(key) => Some(format!("Bearer {key}").parse().map_err(
+    fn api_key_metadata(&self) -> SdkResult<Option<MetadataValue<Ascii>>> {
+        match &self.api_key {
+            Some(key) => Ok(Some(format!("Bearer {key}").parse().map_err(
                 |e: InvalidMetadataValue| SdkError::ServiceConnectivity {
                     err: format!(
                         "(Breez: {}) Failed parse API key: {e}",
                         self.server_url.clone()
                     ),
                 },
-            )?),
-            _ => None,
-        };
-        let client =
-            ChannelOpenerClient::with_interceptor(channel, ApiKeyInterceptor { api_key_metadata });
-        Ok(client)
+            )?)),
+            _ => Ok(None),
+        }
+    }
+
+    pub(crate) async fn get_channel_opener_client(
+        &self,
+    ) -> SdkResult<ChannelOpenerClient<InterceptedService<Channel, ApiKeyInterceptor>>> {
+        let channel = self.channel().await?;
+        let api_key_metadata = self.api_key_metadata()?;
+        Ok(ChannelOpenerClient::with_interceptor(
+            channel,
+            ApiKeyInterceptor { api_key_metadata },
+        ))
     }
 
     pub(crate) async fn get_subscription_client(
@@ -1828,6 +1884,17 @@ impl BreezServer {
             err: format!("(Breez: {}) {e}", self.server_url.clone()),
         })?;
         Ok(SignerClient::new(Endpoint::new(url)?.connect().await?))
+    }
+
+    pub(crate) async fn get_support_client(
+        &self,
+    ) -> SdkResult<SupportClient<InterceptedService<Channel, ApiKeyInterceptor>>> {
+        let channel = self.channel().await?;
+        let api_key_metadata = self.api_key_metadata()?;
+        Ok(SupportClient::with_interceptor(
+            channel,
+            ApiKeyInterceptor { api_key_metadata },
+        ))
     }
 
     pub(crate) async fn get_swapper_client(&self) -> SdkResult<SwapperClient<Channel>> {
