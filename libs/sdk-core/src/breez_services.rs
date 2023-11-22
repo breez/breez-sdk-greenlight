@@ -283,7 +283,6 @@ impl BreezServices {
                     .on_payment_completed(
                         parsed_invoice.payee_pubkey.clone(),
                         Some(parsed_invoice),
-                        req.amount_msat,
                         payment_res,
                     )
                     .await?;
@@ -304,7 +303,7 @@ impl BreezServices {
             .map_err(Into::into)
             .await;
         let payment = self
-            .on_payment_completed(req.node_id, None, Some(req.amount_msat), payment_res)
+            .on_payment_completed(req.node_id, None, payment_res)
             .await?;
         Ok(SendPaymentResponse { payment })
     }
@@ -334,6 +333,7 @@ impl BreezServices {
                     bolt11: cb.pr.clone(),
                     amount_msat: None,
                 };
+                let invoice = parse_invoice(cb.pr.as_str())?;
 
                 let payment = match self.send_payment(pay_req).await {
                     Ok(p) => Ok(p),
@@ -341,8 +341,6 @@ impl BreezServices {
                         SendPaymentError::InvalidInvoice { .. } => Err(e),
                         SendPaymentError::ServiceConnectivity { .. } => Err(e),
                         _ => {
-                            let invoice = parse_invoice(cb.pr.as_str())?;
-
                             return Ok(LnUrlPayResult::PayError {
                                 data: LnUrlPayErrorData {
                                     payment_hash: invoice.payment_hash,
@@ -394,7 +392,7 @@ impl BreezServices {
                     Some(req.data.metadata_str),
                     req.data.ln_address,
                     None,
-                    None,
+                    invoice.amount_msat,
                 )?;
 
                 Ok(LnUrlPayResult::EndpointSuccess {
@@ -938,6 +936,17 @@ impl BreezServices {
                 },
             },
         }])?;
+
+        if invoice.amount_msat.is_none() {
+            self.persister.insert_payment_external_info(
+                &invoice.payment_hash,
+                None,
+                None,
+                None,
+                None,
+                Some(amount_msat),
+            )?;
+        }
         Ok(())
     }
 
@@ -945,7 +954,6 @@ impl BreezServices {
         &self,
         node_id: String,
         invoice: Option<LNInvoice>,
-        amount_msat: Option<u64>,
         payment_res: Result<PaymentResponse, SendPaymentError>,
     ) -> Result<Payment, SendPaymentError> {
         self.do_sync(payment_res.is_ok()).await?;
@@ -962,16 +970,6 @@ impl BreezServices {
                 }),
             },
             Err(e) => {
-                if let Some(inv) = invoice.clone() {
-                    self.persister.insert_payment_external_info(
-                        &inv.payment_hash,
-                        None,
-                        None,
-                        None,
-                        None,
-                        amount_msat.or(inv.amount_msat),
-                    )?;
-                }
                 self.notify_event_listeners(BreezEvent::PaymentFailed {
                     details: PaymentFailedData {
                         error: e.to_string(),

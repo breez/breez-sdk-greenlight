@@ -68,7 +68,7 @@ impl SqliteStorage {
         lnurl_metadata: Option<String>,
         ln_address: Option<String>,
         lnurl_withdraw_endpoint: Option<String>,
-        failed_amount_msat: Option<u64>,
+        attempted_amount_msat: Option<u64>,
     ) -> PersistResult<()> {
         let con = self.get_connection()?;
         let mut prep_statement = con.prepare(
@@ -79,7 +79,7 @@ impl SqliteStorage {
            lnurl_metadata,
            ln_address,
            lnurl_withdraw_endpoint,
-           failed_amount_msat
+           attempted_amount_msat
          )
          VALUES (?1,?2,?3,?4,?5,?6)
         ",
@@ -91,7 +91,7 @@ impl SqliteStorage {
             lnurl_metadata,
             ln_address,
             lnurl_withdraw_endpoint,
-            failed_amount_msat,
+            attempted_amount_msat,
         ))?;
 
         Ok(())
@@ -157,7 +157,7 @@ impl SqliteStorage {
              e.lnurl_metadata,
              e.ln_address,
              e.lnurl_withdraw_endpoint,
-             e.failed_amount_msat,
+             e.attempted_amount_msat,
              o.payer_amount_msat
             FROM payments p
             LEFT JOIN sync.payments_external_info e
@@ -205,7 +205,7 @@ impl SqliteStorage {
                  e.lnurl_metadata,
                  e.ln_address,
                  e.lnurl_withdraw_endpoint,
-                 e.failed_amount_msat,
+                 e.attempted_amount_msat,
                  o.payer_amount_msat
                 FROM payments p
                 LEFT JOIN sync.payments_external_info e
@@ -239,14 +239,14 @@ impl SqliteStorage {
         let payment_type_str: String = row.get(1)?;
         let amount_msat = row.get(3)?;
         let status: PaymentStatus = row.get(5)?;
-        let failed_amount_msat: Option<u64> = row.get(12)?;
+        let attempted_amount_msat: Option<u64> = row.get(12)?;
         let mut payment = Payment {
             id: row.get(0)?,
             payment_type: PaymentType::from_str(payment_type_str.as_str()).unwrap(),
             payment_time: row.get(2)?,
             amount_msat: match status {
-                PaymentStatus::Failed => failed_amount_msat.unwrap_or(amount_msat),
-                _ => amount_msat,
+                PaymentStatus::Complete => amount_msat,
+                _ => attempted_amount_msat.unwrap_or(amount_msat),
             },
             fee_msat: row.get(4)?,
             status,
