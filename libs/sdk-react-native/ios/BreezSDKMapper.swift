@@ -2119,6 +2119,40 @@ enum BreezSDKMapper {
         return refundResponseList.map { v -> [String: Any?] in dictionaryOf(refundResponse: v) }
     }
 
+    static func asReportPaymentFailureDetails(reportPaymentFailureDetails: [String: Any?]) throws -> ReportPaymentFailureDetails {
+        guard let paymentHash = reportPaymentFailureDetails["paymentHash"] as? String else { throw SdkError.Generic(message: "Missing mandatory field paymentHash for type ReportPaymentFailureDetails") }
+        let comment = reportPaymentFailureDetails["comment"] as? String
+
+        return ReportPaymentFailureDetails(
+            paymentHash: paymentHash,
+            comment: comment
+        )
+    }
+
+    static func dictionaryOf(reportPaymentFailureDetails: ReportPaymentFailureDetails) -> [String: Any?] {
+        return [
+            "paymentHash": reportPaymentFailureDetails.paymentHash,
+            "comment": reportPaymentFailureDetails.comment == nil ? nil : reportPaymentFailureDetails.comment,
+        ]
+    }
+
+    static func asReportPaymentFailureDetailsList(arr: [Any]) throws -> [ReportPaymentFailureDetails] {
+        var list = [ReportPaymentFailureDetails]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var reportPaymentFailureDetails = try asReportPaymentFailureDetails(reportPaymentFailureDetails: val)
+                list.append(reportPaymentFailureDetails)
+            } else {
+                throw SdkError.Generic(message: "Unexpected type ReportPaymentFailureDetails")
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(reportPaymentFailureDetailsList: [ReportPaymentFailureDetails]) -> [Any] {
+        return reportPaymentFailureDetailsList.map { v -> [String: Any?] in dictionaryOf(reportPaymentFailureDetails: v) }
+    }
+
     static func asReverseSwapFeesRequest(reverseSwapFeesRequest: [String: Any?]) throws -> ReverseSwapFeesRequest {
         let sendAmountSat = reverseSwapFeesRequest["sendAmountSat"] as? UInt64
 
@@ -2493,6 +2527,37 @@ enum BreezSDKMapper {
 
     static func arrayOf(sendSpontaneousPaymentRequestList: [SendSpontaneousPaymentRequest]) -> [Any] {
         return sendSpontaneousPaymentRequestList.map { v -> [String: Any?] in dictionaryOf(sendSpontaneousPaymentRequest: v) }
+    }
+
+    static func asServiceHealthCheckResponse(serviceHealthCheckResponse: [String: Any?]) throws -> ServiceHealthCheckResponse {
+        guard let statusTmp = serviceHealthCheckResponse["status"] as? String else { throw SdkError.Generic(message: "Missing mandatory field status for type ServiceHealthCheckResponse") }
+        let status = try asHealthCheckStatus(healthCheckStatus: statusTmp)
+
+        return ServiceHealthCheckResponse(
+            status: status)
+    }
+
+    static func dictionaryOf(serviceHealthCheckResponse: ServiceHealthCheckResponse) -> [String: Any?] {
+        return [
+            "status": valueOf(healthCheckStatus: serviceHealthCheckResponse.status),
+        ]
+    }
+
+    static func asServiceHealthCheckResponseList(arr: [Any]) throws -> [ServiceHealthCheckResponse] {
+        var list = [ServiceHealthCheckResponse]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var serviceHealthCheckResponse = try asServiceHealthCheckResponse(serviceHealthCheckResponse: val)
+                list.append(serviceHealthCheckResponse)
+            } else {
+                throw SdkError.Generic(message: "Unexpected type ServiceHealthCheckResponse")
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(serviceHealthCheckResponseList: [ServiceHealthCheckResponse]) -> [Any] {
+        return serviceHealthCheckResponseList.map { v -> [String: Any?] in dictionaryOf(serviceHealthCheckResponse: v) }
     }
 
     static func asSignMessageRequest(signMessageRequest: [String: Any?]) throws -> SignMessageRequest {
@@ -3179,6 +3244,51 @@ enum BreezSDKMapper {
         return list
     }
 
+    static func asHealthCheckStatus(healthCheckStatus: String) throws -> HealthCheckStatus {
+        switch healthCheckStatus {
+        case "operational":
+            return HealthCheckStatus.operational
+
+        case "maintenance":
+            return HealthCheckStatus.maintenance
+
+        case "serviceDisruption":
+            return HealthCheckStatus.serviceDisruption
+
+        default: throw SdkError.Generic(message: "Invalid variant \(healthCheckStatus) for enum HealthCheckStatus")
+        }
+    }
+
+    static func valueOf(healthCheckStatus: HealthCheckStatus) -> String {
+        switch healthCheckStatus {
+        case .operational:
+            return "operational"
+
+        case .maintenance:
+            return "maintenance"
+
+        case .serviceDisruption:
+            return "serviceDisruption"
+        }
+    }
+
+    static func arrayOf(healthCheckStatusList: [HealthCheckStatus]) -> [String] {
+        return healthCheckStatusList.map { v -> String in valueOf(healthCheckStatus: v) }
+    }
+
+    static func asHealthCheckStatusList(arr: [Any]) throws -> [HealthCheckStatus] {
+        var list = [HealthCheckStatus]()
+        for value in arr {
+            if let val = value as? String {
+                var healthCheckStatus = try asHealthCheckStatus(healthCheckStatus: val)
+                list.append(healthCheckStatus)
+            } else {
+                throw SdkError.Generic(message: "Unexpected type HealthCheckStatus")
+            }
+        }
+        return list
+    }
+
     static func asInputType(inputType: [String: Any?]) throws -> InputType {
         let type = inputType["type"] as! String
         if type == "bitcoinAddress" {
@@ -3805,6 +3915,47 @@ enum BreezSDKMapper {
                 list.append(paymentTypeFilter)
             } else {
                 throw SdkError.Generic(message: "Unexpected type PaymentTypeFilter")
+            }
+        }
+        return list
+    }
+
+    static func asReportIssueRequest(reportIssueRequest: [String: Any?]) throws -> ReportIssueRequest {
+        let type = reportIssueRequest["type"] as! String
+        if type == "paymentFailure" {
+            guard let dataTmp = reportIssueRequest["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type ReportIssueRequest") }
+            let _data = try asReportPaymentFailureDetails(reportPaymentFailureDetails: dataTmp)
+
+            return ReportIssueRequest.paymentFailure(data: _data)
+        }
+
+        throw SdkError.Generic(message: "Unexpected type \(type) for enum ReportIssueRequest")
+    }
+
+    static func dictionaryOf(reportIssueRequest: ReportIssueRequest) -> [String: Any?] {
+        switch reportIssueRequest {
+        case let .paymentFailure(
+            data
+        ):
+            return [
+                "type": "paymentFailure",
+                "data": dictionaryOf(reportPaymentFailureDetails: data),
+            ]
+        }
+    }
+
+    static func arrayOf(reportIssueRequestList: [ReportIssueRequest]) -> [Any] {
+        return reportIssueRequestList.map { v -> [String: Any?] in dictionaryOf(reportIssueRequest: v) }
+    }
+
+    static func asReportIssueRequestList(arr: [Any]) throws -> [ReportIssueRequest] {
+        var list = [ReportIssueRequest]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var reportIssueRequest = try asReportIssueRequest(reportIssueRequest: val)
+                list.append(reportIssueRequest)
+            } else {
+                throw SdkError.Generic(message: "Unexpected type ReportIssueRequest")
             }
         }
         return list

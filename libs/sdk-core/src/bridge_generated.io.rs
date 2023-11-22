@@ -170,6 +170,16 @@ pub extern "C" fn wire_lnurl_auth(port_: i64, req_data: *mut wire_LnUrlAuthReque
 }
 
 #[no_mangle]
+pub extern "C" fn wire_service_health_check(port_: i64) {
+    wire_service_health_check_impl(port_)
+}
+
+#[no_mangle]
+pub extern "C" fn wire_report_issue(port_: i64, req: *mut wire_ReportIssueRequest) {
+    wire_report_issue_impl(port_, req)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_fetch_fiat_rates(port_: i64) {
     wire_fetch_fiat_rates_impl(port_)
 }
@@ -349,6 +359,17 @@ pub extern "C" fn new_box_autoadd_receive_payment_request_0() -> *mut wire_Recei
 #[no_mangle]
 pub extern "C" fn new_box_autoadd_refund_request_0() -> *mut wire_RefundRequest {
     support::new_leak_box_ptr(wire_RefundRequest::new_with_null_ptr())
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_autoadd_report_issue_request_0() -> *mut wire_ReportIssueRequest {
+    support::new_leak_box_ptr(wire_ReportIssueRequest::new_with_null_ptr())
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_autoadd_report_payment_failure_details_0(
+) -> *mut wire_ReportPaymentFailureDetails {
+    support::new_leak_box_ptr(wire_ReportPaymentFailureDetails::new_with_null_ptr())
 }
 
 #[no_mangle]
@@ -537,6 +558,18 @@ impl Wire2Api<RefundRequest> for *mut wire_RefundRequest {
     fn wire2api(self) -> RefundRequest {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
         Wire2Api::<RefundRequest>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<ReportIssueRequest> for *mut wire_ReportIssueRequest {
+    fn wire2api(self) -> ReportIssueRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<ReportIssueRequest>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<ReportPaymentFailureDetails> for *mut wire_ReportPaymentFailureDetails {
+    fn wire2api(self) -> ReportPaymentFailureDetails {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<ReportPaymentFailureDetails>::wire2api(*wrap).into()
     }
 }
 impl Wire2Api<ReverseSwapFeesRequest> for *mut wire_ReverseSwapFeesRequest {
@@ -798,6 +831,28 @@ impl Wire2Api<RefundRequest> for wire_RefundRequest {
         }
     }
 }
+impl Wire2Api<ReportIssueRequest> for wire_ReportIssueRequest {
+    fn wire2api(self) -> ReportIssueRequest {
+        match self.tag {
+            0 => unsafe {
+                let ans = support::box_from_leak_ptr(self.kind);
+                let ans = support::box_from_leak_ptr(ans.PaymentFailure);
+                ReportIssueRequest::PaymentFailure {
+                    data: ans.data.wire2api(),
+                }
+            },
+            _ => unreachable!(),
+        }
+    }
+}
+impl Wire2Api<ReportPaymentFailureDetails> for wire_ReportPaymentFailureDetails {
+    fn wire2api(self) -> ReportPaymentFailureDetails {
+        ReportPaymentFailureDetails {
+            payment_hash: self.payment_hash.wire2api(),
+            comment: self.comment.wire2api(),
+        }
+    }
+}
 impl Wire2Api<ReverseSwapFeesRequest> for wire_ReverseSwapFeesRequest {
     fn wire2api(self) -> ReverseSwapFeesRequest {
         ReverseSwapFeesRequest {
@@ -1034,6 +1089,13 @@ pub struct wire_RefundRequest {
 
 #[repr(C)]
 #[derive(Clone)]
+pub struct wire_ReportPaymentFailureDetails {
+    payment_hash: *mut wire_uint_8_list,
+    comment: *mut wire_uint_8_list,
+}
+
+#[repr(C)]
+#[derive(Clone)]
 pub struct wire_ReverseSwapFeesRequest {
     send_amount_sat: *mut u64,
 }
@@ -1103,6 +1165,24 @@ pub union NodeConfigKind {
 #[derive(Clone)]
 pub struct wire_NodeConfig_Greenlight {
     config: *mut wire_GreenlightNodeConfig,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_ReportIssueRequest {
+    tag: i32,
+    kind: *mut ReportIssueRequestKind,
+}
+
+#[repr(C)]
+pub union ReportIssueRequestKind {
+    PaymentFailure: *mut wire_ReportIssueRequest_PaymentFailure,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_ReportIssueRequest_PaymentFailure {
+    data: *mut wire_ReportPaymentFailureDetails,
 }
 
 // Section: impl NewWithNullPtr
@@ -1441,6 +1521,45 @@ impl NewWithNullPtr for wire_RefundRequest {
 }
 
 impl Default for wire_RefundRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl Default for wire_ReportIssueRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_ReportIssueRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            tag: -1,
+            kind: core::ptr::null_mut(),
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn inflate_ReportIssueRequest_PaymentFailure() -> *mut ReportIssueRequestKind {
+    support::new_leak_box_ptr(ReportIssueRequestKind {
+        PaymentFailure: support::new_leak_box_ptr(wire_ReportIssueRequest_PaymentFailure {
+            data: core::ptr::null_mut(),
+        }),
+    })
+}
+
+impl NewWithNullPtr for wire_ReportPaymentFailureDetails {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            payment_hash: core::ptr::null_mut(),
+            comment: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_ReportPaymentFailureDetails {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }

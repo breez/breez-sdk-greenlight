@@ -303,6 +303,22 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
+    fun reportIssue(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
+        executor.execute {
+            try {
+                val reqTmp = asReportIssueRequest(req) ?: run { throw SdkException.Generic("Missing mandatory field req of type ReportIssueRequest") }
+                getBreezServices().reportIssue(reqTmp)
+                promise.resolve(readableMapOf("status" to "ok"))
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
     fun nodeCredentials(promise: Promise) {
         executor.execute {
             try {
@@ -707,6 +723,18 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                         throw SdkException.Generic("Missing mandatory field req of type SendOnchainRequest")
                     }
                 val res = getBreezServices().sendOnchain(sendOnchainRequest)
+                promise.resolve(readableMapOf(res))
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun serviceHealthCheck(promise: Promise) {
+        executor.execute {
+            try {
+                val res = getBreezServices().serviceHealthCheck()
                 promise.resolve(readableMapOf(res))
             } catch (e: Exception) {
                 promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)

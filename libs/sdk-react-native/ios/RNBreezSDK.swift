@@ -210,6 +210,17 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
+    @objc(reportIssue:resolve:reject:)
+    func reportIssue(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            let reqTmp = try BreezSDKMapper.asReportIssueRequest(reportIssueRequest: req)
+            try getBreezServices().reportIssue(req: reqTmp)
+            resolve(["status": "ok"])
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
     @objc(nodeCredentials:reject:)
     func nodeCredentials(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
@@ -515,6 +526,16 @@ class RNBreezSDK: RCTEventEmitter {
             let sendOnchainRequest = try BreezSDKMapper.asSendOnchainRequest(sendOnchainRequest: req)
             var res = try getBreezServices().sendOnchain(req: sendOnchainRequest)
             resolve(BreezSDKMapper.dictionaryOf(sendOnchainResponse: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(serviceHealthCheck:reject:)
+    func serviceHealthCheck(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            var res = try getBreezServices().serviceHealthCheck()
+            resolve(BreezSDKMapper.dictionaryOf(serviceHealthCheckResponse: res))
         } catch let err {
             rejectErr(err: err, reject: reject)
         }
