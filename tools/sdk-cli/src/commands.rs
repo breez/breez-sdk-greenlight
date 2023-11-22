@@ -169,6 +169,9 @@ pub(crate) enum Commands {
         sat_per_vbyte: u32,
     },
 
+    /// The up to date lsp information
+    LspInfo {},
+
     /// List available LSPs
     ListLsps {},
 
