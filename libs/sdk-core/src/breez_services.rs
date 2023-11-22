@@ -276,7 +276,7 @@ impl BreezServices {
                 self.persist_pending_payment(&parsed_invoice, amount_msat)?;
                 let payment_res = self
                     .node_api
-                    .send_payment(req.bolt11.clone(), req.amount_msat)
+                    .send_payment(parsed_invoice.bolt11.clone(), req.amount_msat)
                     .map_err(Into::into)
                     .await;
                 let payment = self
