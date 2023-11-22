@@ -652,9 +652,8 @@ dependencies = [
 
 [[package]]
 name = "cln-grpc"
-version = "0.1.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57af6eff15ee3fd7a0e09d0baeab8d33c892a73d97b87248e5f94f4749eacfe1"
+version = "0.1.7"
+source = "git+https://github.com/cdecker/lightning.git?tag=gl-20231113#075927b2c5f38fdbde4c0764135be58340b0ce08"
 dependencies = [
  "anyhow",
  "bitcoin 0.30.1",
@@ -1200,13 +1199,13 @@ checksum = "ad0a93d233ebf96623465aad4046a8d3aa4da22d4f4beba5388838c8a434bbb4"
 [[package]]
 name = "gl-client"
 version = "0.1.9"
-source = "git+https://github.com/Blockstream/greenlight.git?rev=c7ff67eb062c021105f5601df3ac8699ecbeb51c#c7ff67eb062c021105f5601df3ac8699ecbeb51c"
+source = "git+https://github.com/Blockstream/greenlight.git?rev=84a66ac3c467569365285814ef5a691b5b97f60d#84a66ac3c467569365285814ef5a691b5b97f60d"
 dependencies = [
  "anyhow",
  "async-trait",
  "base64 0.21.2",
  "bech32",
- "bitcoin 0.30.1",
+ "bitcoin 0.29.2",
  "bytes",
  "chacha20poly1305",
  "cln-grpc",
@@ -1228,7 +1227,6 @@ dependencies = [
  "serde",
  "serde_bolt 0.2.4",
  "serde_json",
- "serde_with 2.3.3",
  "sha256",
  "tempfile",
  "thiserror",
@@ -2765,7 +2763,6 @@ dependencies = [
  "base64 0.13.1",
  "chrono",
  "hex",
- "indexmap 1.9.3",
  "serde",
  "serde_json",
  "serde_with_macros 2.3.3",
