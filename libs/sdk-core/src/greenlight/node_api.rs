@@ -1772,6 +1772,15 @@ impl From<cln::ListpeersPeersChannels> for Channel {
             alias_remote,
             alias_local,
             closing_txid: None,
+            htlc: Some(
+                c.htlcs
+                    .into_iter()
+                    .map(|c| Htlc {
+                        expiry: c.expiry,
+                        payment_hash: c.payment_hash,
+                    })
+                    .collect(),
+            ),
         }
     }
 }
@@ -1846,6 +1855,7 @@ impl TryFrom<ListclosedchannelsClosedchannels> for Channel {
             alias_remote,
             alias_local,
             closing_txid: None,
+            htlc: None,
         })
     }
 }

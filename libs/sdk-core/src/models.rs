@@ -1098,6 +1098,23 @@ pub struct Channel {
     ///
     /// This may be empty for older closed channels, if it was not possible to retrieve the closing txid.
     pub closing_txid: Option<String>,
+
+    pub htlc: Option<Vec<Htlc>>,
+}
+
+#[derive(Clone, PartialEq, Eq, Debug)] // TODO find out how derive works.
+pub struct Htlc {
+    pub expiry: u32,
+    pub payment_hash: Vec<u8>,
+}
+
+impl Htlc {
+    pub fn from(expiry: u32, payment_hash: Vec<u8>) -> Self {
+        Htlc {
+            expiry: expiry,
+            payment_hash: payment_hash,
+        }
+    }
 }
 
 /// State of a Lightning channel
