@@ -207,6 +207,13 @@ pub(crate) mod model {
         pub iv: String,
     }
 
+    /// Result of decryption of [AesSuccessActionData] payload
+    #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
+    pub enum AesSuccessActionDataResult {
+        Decrypted { data: AesSuccessActionDataDecrypted },
+        ErrorStatus { data: String },
+    }
+
     /// Wrapper for the decrypted [AesSuccessActionData] payload
     #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
     pub struct AesSuccessActionDataDecrypted {
@@ -236,7 +243,7 @@ pub(crate) mod model {
         /// See [SuccessAction::Aes] for received payload
         ///
         /// See [AesSuccessActionDataDecrypted] for decrypted payload
-        Aes { data: AesSuccessActionDataDecrypted },
+        Aes { result: AesSuccessActionDataResult },
 
         /// See [SuccessAction::Message]
         Message { data: MessageSuccessActionData },
@@ -1170,7 +1177,9 @@ mod tests {
             plaintext: plaintext.clone(),
         };
         let sa = SuccessActionProcessed::Aes {
-            data: sa_data.clone(),
+            result: AesSuccessActionDataResult::Decrypted {
+                data: sa_data.clone(),
+            },
         };
 
         // Generate preimage

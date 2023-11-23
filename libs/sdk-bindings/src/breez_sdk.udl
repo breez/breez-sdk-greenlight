@@ -23,7 +23,6 @@ enum LnUrlAuthError {
 
 [Error]
 enum LnUrlPayError {
-    "AesDecryptionFailed",
     "AlreadyPaid",
     "Generic",
     "InvalidAmount",
@@ -238,6 +237,12 @@ interface PaymentDetails {
     ClosedChannel(ClosedChannelPaymentDetails data);
 };
 
+[Enum]
+interface AesSuccessActionDataResult {
+    Decrypted(AesSuccessActionDataDecrypted data);
+    ErrorStatus(string data);
+};
+
 dictionary AesSuccessActionDataDecrypted {
     string description;
     string plaintext;
@@ -254,7 +259,7 @@ dictionary UrlSuccessActionData {
 
 [Enum]
 interface SuccessActionProcessed {
-    Aes(AesSuccessActionDataDecrypted data);
+    Aes(AesSuccessActionDataResult result);
     Message(MessageSuccessActionData data);
     Url(UrlSuccessActionData data);
 };

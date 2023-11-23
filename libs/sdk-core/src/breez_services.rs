@@ -372,13 +372,13 @@ impl BreezServices {
                             Aes(data) => {
                                 let preimage = sha256::Hash::from_str(&details.payment_preimage)?;
                                 let preimage_arr: [u8; 32] = preimage.into_inner();
-
-                                let decrypted = (data, &preimage_arr).try_into().map_err(
-                                    |e: anyhow::Error| LnUrlPayError::AesDecryptionFailed {
-                                        err: e.to_string(),
+                                let result = match (data, &preimage_arr).try_into() {
+                                    Ok(data) => AesSuccessActionDataResult::Decrypted { data },
+                                    Err(e) => AesSuccessActionDataResult::ErrorStatus {
+                                        data: e.to_string(),
                                     },
-                                )?;
-                                SuccessActionProcessed::Aes { data: decrypted }
+                                };
+                                SuccessActionProcessed::Aes { result }
                             }
                             SuccessAction::Message(data) => {
                                 SuccessActionProcessed::Message { data }

@@ -2957,6 +2957,59 @@ enum BreezSDKMapper {
         return urlSuccessActionDataList.map { v -> [String: Any?] in dictionaryOf(urlSuccessActionData: v) }
     }
 
+    static func asAesSuccessActionDataResult(aesSuccessActionDataResult: [String: Any?]) throws -> AesSuccessActionDataResult {
+        let type = aesSuccessActionDataResult["type"] as! String
+        if type == "decrypted" {
+            guard let dataTmp = aesSuccessActionDataResult["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type AesSuccessActionDataResult") }
+            let _data = try asAesSuccessActionDataDecrypted(aesSuccessActionDataDecrypted: dataTmp)
+
+            return AesSuccessActionDataResult.decrypted(data: _data)
+        }
+        if type == "errorStatus" {
+            guard let _data = aesSuccessActionDataResult["data"] as? String else { throw SdkError.Generic(message: "Missing mandatory field data for type AesSuccessActionDataResult") }
+            return AesSuccessActionDataResult.errorStatus(data: _data)
+        }
+
+        throw SdkError.Generic(message: "Unexpected type \(type) for enum AesSuccessActionDataResult")
+    }
+
+    static func dictionaryOf(aesSuccessActionDataResult: AesSuccessActionDataResult) -> [String: Any?] {
+        switch aesSuccessActionDataResult {
+        case let .decrypted(
+            data
+        ):
+            return [
+                "type": "decrypted",
+                "data": dictionaryOf(aesSuccessActionDataDecrypted: data),
+            ]
+
+        case let .errorStatus(
+            data
+        ):
+            return [
+                "type": "errorStatus",
+                "data": data,
+            ]
+        }
+    }
+
+    static func arrayOf(aesSuccessActionDataResultList: [AesSuccessActionDataResult]) -> [Any] {
+        return aesSuccessActionDataResultList.map { v -> [String: Any?] in dictionaryOf(aesSuccessActionDataResult: v) }
+    }
+
+    static func asAesSuccessActionDataResultList(arr: [Any]) throws -> [AesSuccessActionDataResult] {
+        var list = [AesSuccessActionDataResult]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var aesSuccessActionDataResult = try asAesSuccessActionDataResult(aesSuccessActionDataResult: val)
+                list.append(aesSuccessActionDataResult)
+            } else {
+                throw SdkError.Generic(message: "Unexpected type AesSuccessActionDataResult")
+            }
+        }
+        return list
+    }
+
     static func asBreezEvent(breezEvent: [String: Any?]) throws -> BreezEvent {
         let type = breezEvent["type"] as! String
         if type == "newBlock" {
@@ -4021,10 +4074,10 @@ enum BreezSDKMapper {
     static func asSuccessActionProcessed(successActionProcessed: [String: Any?]) throws -> SuccessActionProcessed {
         let type = successActionProcessed["type"] as! String
         if type == "aes" {
-            guard let dataTmp = successActionProcessed["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type SuccessActionProcessed") }
-            let _data = try asAesSuccessActionDataDecrypted(aesSuccessActionDataDecrypted: dataTmp)
+            guard let resultTmp = successActionProcessed["result"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field result for type SuccessActionProcessed") }
+            let _result = try asAesSuccessActionDataResult(aesSuccessActionDataResult: resultTmp)
 
-            return SuccessActionProcessed.aes(data: _data)
+            return SuccessActionProcessed.aes(result: _result)
         }
         if type == "message" {
             guard let dataTmp = successActionProcessed["data"] as? [String: Any?] else { throw SdkError.Generic(message: "Missing mandatory field data for type SuccessActionProcessed") }
@@ -4045,11 +4098,11 @@ enum BreezSDKMapper {
     static func dictionaryOf(successActionProcessed: SuccessActionProcessed) -> [String: Any?] {
         switch successActionProcessed {
         case let .aes(
-            data
+            result
         ):
             return [
                 "type": "aes",
-                "data": dictionaryOf(aesSuccessActionDataDecrypted: data),
+                "result": dictionaryOf(aesSuccessActionDataResult: result),
             ]
 
         case let .message(
