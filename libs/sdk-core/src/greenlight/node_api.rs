@@ -1397,7 +1397,7 @@ async fn pull_transactions(
         .list_pays(cln::ListpaysRequest::default())
         .await?
         .into_inner();
-    debug!("list payments: {:?}", payments);
+    trace!("list payments (unfiltered): {:?}", payments);
     // construct the payment transactions (pending and complete)
     let outbound_transactions: NodeResult<Vec<Payment>> = payments
         .pays
