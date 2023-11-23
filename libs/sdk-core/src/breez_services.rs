@@ -917,15 +917,18 @@ impl BreezServices {
         Ok(())
     }
 
-    /// Connects to the selected LSP peer. If none is selected, this selects the first one from [`list_lsps`] and persists the selection.
+    /// Connects to the selected LSP peer.
+    /// This validates if the selected LSP is still in [`list_lsps`].
+    /// If not or no LSP is selected, it selects the first LSP in [`list_lsps`].
     async fn connect_lsp_peer(&self, node_pubkey: String) -> SdkResult<()> {
-        // Sets the LSP id, if not already set
-        if self.persister.get_lsp_id()?.is_none() {
-            if let Some(lsp) = self.lsp_api.list_lsps(node_pubkey).await?.first().cloned() {
-                self.persister.set_lsp_id(lsp.id)?;
-            }
-        }
-        if let Ok(lsp_info) = self.lsp_info().await {
+        let lsps = self.lsp_api.list_lsps(node_pubkey).await?;
+        let lsp = self
+            .persister
+            .get_lsp_id()?
+            .and_then(|lsp_id| lsps.clone().into_iter().find(|lsp| lsp.id == lsp_id))
+            .or_else(|| lsps.first().cloned());
+        if let Some(lsp_info) = lsp {
+            self.persister.set_lsp_id(lsp_info.id)?;
             let node_id = lsp_info.pubkey;
             let address = lsp_info.host;
             let lsp_connected = self
