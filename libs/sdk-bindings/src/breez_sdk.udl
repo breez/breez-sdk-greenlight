@@ -415,12 +415,12 @@ dictionary StaticBackupResponse {
 };
 
 dictionary ReceiveOnchainRequest {
-    OpeningFeeParams? opening_fee_params=null;
+    OpeningFeeParams? opening_fee_params = null;
 };
 
 dictionary BuyBitcoinRequest {
     BuyBitcoinProvider provider;
-    OpeningFeeParams? opening_fee_params=null;
+    OpeningFeeParams? opening_fee_params = null;
 };
 
 dictionary BuyBitcoinResponse {
@@ -539,7 +539,7 @@ dictionary LnUrlPayErrorData {
 dictionary LnUrlPayRequest {
     LnUrlPayRequestData data;
     u64 amount_msat;
-    string? comment;
+    string? comment = null;
 };
 
 dictionary LnUrlPayRequestData {
@@ -591,14 +591,14 @@ dictionary LnUrlWithdrawSuccessData {
 
 dictionary LnUrlAuthRequestData {
     string k1;
-    string? action;
     string domain;
     string url;
+    string? action = null;
 };
 
 dictionary ReportPaymentFailureDetails {
     string payment_hash;
-    string? comment;
+    string? comment = null;
 };
 
 [Enum]
@@ -666,7 +666,7 @@ dictionary SweepResponse {
 
 dictionary SendPaymentRequest {
     string bolt11;
-    u64? amount_msat;
+    u64? amount_msat = null;
 };
 
 dictionary SendSpontaneousPaymentRequest {

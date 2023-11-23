@@ -790,24 +790,24 @@ enum BreezSDKMapper {
 
     static func asLnUrlAuthRequestData(lnUrlAuthRequestData: [String: Any?]) throws -> LnUrlAuthRequestData {
         guard let k1 = lnUrlAuthRequestData["k1"] as? String else { throw SdkError.Generic(message: "Missing mandatory field k1 for type LnUrlAuthRequestData") }
-        let action = lnUrlAuthRequestData["action"] as? String
         guard let domain = lnUrlAuthRequestData["domain"] as? String else { throw SdkError.Generic(message: "Missing mandatory field domain for type LnUrlAuthRequestData") }
         guard let url = lnUrlAuthRequestData["url"] as? String else { throw SdkError.Generic(message: "Missing mandatory field url for type LnUrlAuthRequestData") }
+        let action = lnUrlAuthRequestData["action"] as? String
 
         return LnUrlAuthRequestData(
             k1: k1,
-            action: action,
             domain: domain,
-            url: url
+            url: url,
+            action: action
         )
     }
 
     static func dictionaryOf(lnUrlAuthRequestData: LnUrlAuthRequestData) -> [String: Any?] {
         return [
             "k1": lnUrlAuthRequestData.k1,
-            "action": lnUrlAuthRequestData.action == nil ? nil : lnUrlAuthRequestData.action,
             "domain": lnUrlAuthRequestData.domain,
             "url": lnUrlAuthRequestData.url,
+            "action": lnUrlAuthRequestData.action == nil ? nil : lnUrlAuthRequestData.action,
         ]
     }
 

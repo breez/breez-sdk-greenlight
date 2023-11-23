@@ -902,23 +902,23 @@ fun asLnUrlAuthRequestData(lnUrlAuthRequestData: ReadableMap): LnUrlAuthRequestD
         return null
     }
     val k1 = lnUrlAuthRequestData.getString("k1")!!
-    val action = if (hasNonNullKey(lnUrlAuthRequestData, "action")) lnUrlAuthRequestData.getString("action") else null
     val domain = lnUrlAuthRequestData.getString("domain")!!
     val url = lnUrlAuthRequestData.getString("url")!!
+    val action = if (hasNonNullKey(lnUrlAuthRequestData, "action")) lnUrlAuthRequestData.getString("action") else null
     return LnUrlAuthRequestData(
         k1,
-        action,
         domain,
         url,
+        action,
     )
 }
 
 fun readableMapOf(lnUrlAuthRequestData: LnUrlAuthRequestData): ReadableMap {
     return readableMapOf(
         "k1" to lnUrlAuthRequestData.k1,
-        "action" to lnUrlAuthRequestData.action,
         "domain" to lnUrlAuthRequestData.domain,
         "url" to lnUrlAuthRequestData.url,
+        "action" to lnUrlAuthRequestData.action,
     )
 }
 

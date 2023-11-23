@@ -152,9 +152,9 @@ export type LnPaymentDetails = {
 
 export type LnUrlAuthRequestData = {
     k1: string
-    action?: string
     domain: string
     url: string
+    action?: string
 }
 
 export type LnUrlErrorData = {
