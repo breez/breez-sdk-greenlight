@@ -292,7 +292,7 @@ sealed class AesSuccessActionDataResult with _$AesSuccessActionDataResult {
     required AesSuccessActionDataDecrypted data,
   }) = AesSuccessActionDataResult_Decrypted;
   const factory AesSuccessActionDataResult.errorStatus({
-    required String data,
+    required String reason,
   }) = AesSuccessActionDataResult_ErrorStatus;
 }
 
@@ -2607,7 +2607,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         );
       case 1:
         return AesSuccessActionDataResult_ErrorStatus(
-          data: _wire2api_String(raw[1]),
+          reason: _wire2api_String(raw[1]),
         );
       default:
         throw Exception("unreachable");

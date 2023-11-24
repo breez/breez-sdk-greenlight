@@ -897,7 +897,9 @@ impl support::IntoDart for AesSuccessActionDataResult {
     fn into_dart(self) -> support::DartAbi {
         match self {
             Self::Decrypted { data } => vec![0.into_dart(), data.into_into_dart().into_dart()],
-            Self::ErrorStatus { data } => vec![1.into_dart(), data.into_into_dart().into_dart()],
+            Self::ErrorStatus { reason } => {
+                vec![1.into_dart(), reason.into_into_dart().into_dart()]
+            }
         }
         .into_dart()
     }

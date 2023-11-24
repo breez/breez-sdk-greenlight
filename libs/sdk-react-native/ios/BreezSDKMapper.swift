@@ -2966,8 +2966,8 @@ enum BreezSDKMapper {
             return AesSuccessActionDataResult.decrypted(data: _data)
         }
         if type == "errorStatus" {
-            guard let _data = aesSuccessActionDataResult["data"] as? String else { throw SdkError.Generic(message: "Missing mandatory field data for type AesSuccessActionDataResult") }
-            return AesSuccessActionDataResult.errorStatus(data: _data)
+            guard let _reason = aesSuccessActionDataResult["reason"] as? String else { throw SdkError.Generic(message: "Missing mandatory field reason for type AesSuccessActionDataResult") }
+            return AesSuccessActionDataResult.errorStatus(reason: _reason)
         }
 
         throw SdkError.Generic(message: "Unexpected type \(type) for enum AesSuccessActionDataResult")
@@ -2984,11 +2984,11 @@ enum BreezSDKMapper {
             ]
 
         case let .errorStatus(
-            data
+            reason
         ):
             return [
                 "type": "errorStatus",
-                "data": data,
+                "reason": reason,
             ]
         }
     }

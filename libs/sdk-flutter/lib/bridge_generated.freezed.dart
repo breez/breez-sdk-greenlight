@@ -16,23 +16,22 @@ final _privateConstructorUsedError = UnsupportedError(
 
 /// @nodoc
 mixin _$AesSuccessActionDataResult {
-  Object get data => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(AesSuccessActionDataDecrypted data) decrypted,
-    required TResult Function(String data) errorStatus,
+    required TResult Function(String reason) errorStatus,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(AesSuccessActionDataDecrypted data)? decrypted,
-    TResult? Function(String data)? errorStatus,
+    TResult? Function(String reason)? errorStatus,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(AesSuccessActionDataDecrypted data)? decrypted,
-    TResult Function(String data)? errorStatus,
+    TResult Function(String reason)? errorStatus,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -142,7 +141,7 @@ class _$AesSuccessActionDataResult_DecryptedImpl implements AesSuccessActionData
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(AesSuccessActionDataDecrypted data) decrypted,
-    required TResult Function(String data) errorStatus,
+    required TResult Function(String reason) errorStatus,
   }) {
     return decrypted(data);
   }
@@ -151,7 +150,7 @@ class _$AesSuccessActionDataResult_DecryptedImpl implements AesSuccessActionData
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(AesSuccessActionDataDecrypted data)? decrypted,
-    TResult? Function(String data)? errorStatus,
+    TResult? Function(String reason)? errorStatus,
   }) {
     return decrypted?.call(data);
   }
@@ -160,7 +159,7 @@ class _$AesSuccessActionDataResult_DecryptedImpl implements AesSuccessActionData
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(AesSuccessActionDataDecrypted data)? decrypted,
-    TResult Function(String data)? errorStatus,
+    TResult Function(String reason)? errorStatus,
     required TResult orElse(),
   }) {
     if (decrypted != null) {
@@ -205,7 +204,6 @@ abstract class AesSuccessActionDataResult_Decrypted implements AesSuccessActionD
   const factory AesSuccessActionDataResult_Decrypted({required final AesSuccessActionDataDecrypted data}) =
       _$AesSuccessActionDataResult_DecryptedImpl;
 
-  @override
   AesSuccessActionDataDecrypted get data;
   @JsonKey(ignore: true)
   _$$AesSuccessActionDataResult_DecryptedImplCopyWith<_$AesSuccessActionDataResult_DecryptedImpl>
@@ -219,7 +217,7 @@ abstract class _$$AesSuccessActionDataResult_ErrorStatusImplCopyWith<$Res> {
           $Res Function(_$AesSuccessActionDataResult_ErrorStatusImpl) then) =
       __$$AesSuccessActionDataResult_ErrorStatusImplCopyWithImpl<$Res>;
   @useResult
-  $Res call({String data});
+  $Res call({String reason});
 }
 
 /// @nodoc
@@ -234,12 +232,12 @@ class __$$AesSuccessActionDataResult_ErrorStatusImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? data = null,
+    Object? reason = null,
   }) {
     return _then(_$AesSuccessActionDataResult_ErrorStatusImpl(
-      data: null == data
-          ? _value.data
-          : data // ignore: cast_nullable_to_non_nullable
+      reason: null == reason
+          ? _value.reason
+          : reason // ignore: cast_nullable_to_non_nullable
               as String,
     ));
   }
@@ -248,14 +246,14 @@ class __$$AesSuccessActionDataResult_ErrorStatusImplCopyWithImpl<$Res>
 /// @nodoc
 
 class _$AesSuccessActionDataResult_ErrorStatusImpl implements AesSuccessActionDataResult_ErrorStatus {
-  const _$AesSuccessActionDataResult_ErrorStatusImpl({required this.data});
+  const _$AesSuccessActionDataResult_ErrorStatusImpl({required this.reason});
 
   @override
-  final String data;
+  final String reason;
 
   @override
   String toString() {
-    return 'AesSuccessActionDataResult.errorStatus(data: $data)';
+    return 'AesSuccessActionDataResult.errorStatus(reason: $reason)';
   }
 
   @override
@@ -263,11 +261,11 @@ class _$AesSuccessActionDataResult_ErrorStatusImpl implements AesSuccessActionDa
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$AesSuccessActionDataResult_ErrorStatusImpl &&
-            (identical(other.data, data) || other.data == data));
+            (identical(other.reason, reason) || other.reason == reason));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, data);
+  int get hashCode => Object.hash(runtimeType, reason);
 
   @JsonKey(ignore: true)
   @override
@@ -280,29 +278,29 @@ class _$AesSuccessActionDataResult_ErrorStatusImpl implements AesSuccessActionDa
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(AesSuccessActionDataDecrypted data) decrypted,
-    required TResult Function(String data) errorStatus,
+    required TResult Function(String reason) errorStatus,
   }) {
-    return errorStatus(data);
+    return errorStatus(reason);
   }
 
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(AesSuccessActionDataDecrypted data)? decrypted,
-    TResult? Function(String data)? errorStatus,
+    TResult? Function(String reason)? errorStatus,
   }) {
-    return errorStatus?.call(data);
+    return errorStatus?.call(reason);
   }
 
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(AesSuccessActionDataDecrypted data)? decrypted,
-    TResult Function(String data)? errorStatus,
+    TResult Function(String reason)? errorStatus,
     required TResult orElse(),
   }) {
     if (errorStatus != null) {
-      return errorStatus(data);
+      return errorStatus(reason);
     }
     return orElse();
   }
@@ -340,11 +338,10 @@ class _$AesSuccessActionDataResult_ErrorStatusImpl implements AesSuccessActionDa
 }
 
 abstract class AesSuccessActionDataResult_ErrorStatus implements AesSuccessActionDataResult {
-  const factory AesSuccessActionDataResult_ErrorStatus({required final String data}) =
+  const factory AesSuccessActionDataResult_ErrorStatus({required final String reason}) =
       _$AesSuccessActionDataResult_ErrorStatusImpl;
 
-  @override
-  String get data;
+  String get reason;
   @JsonKey(ignore: true)
   _$$AesSuccessActionDataResult_ErrorStatusImplCopyWith<_$AesSuccessActionDataResult_ErrorStatusImpl>
       get copyWith => throw _privateConstructorUsedError;

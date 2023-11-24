@@ -211,7 +211,7 @@ pub(crate) mod model {
     #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
     pub enum AesSuccessActionDataResult {
         Decrypted { data: AesSuccessActionDataDecrypted },
-        ErrorStatus { data: String },
+        ErrorStatus { reason: String },
     }
 
     /// Wrapper for the decrypted [AesSuccessActionData] payload

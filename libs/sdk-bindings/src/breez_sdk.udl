@@ -240,7 +240,7 @@ interface PaymentDetails {
 [Enum]
 interface AesSuccessActionDataResult {
     Decrypted(AesSuccessActionDataDecrypted data);
-    ErrorStatus(string data);
+    ErrorStatus(string reason);
 };
 
 dictionary AesSuccessActionDataDecrypted {

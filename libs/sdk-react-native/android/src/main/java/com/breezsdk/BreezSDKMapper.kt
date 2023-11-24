@@ -3350,7 +3350,7 @@ fun asAesSuccessActionDataResult(aesSuccessActionDataResult: ReadableMap): AesSu
         )
     }
     if (type == "errorStatus") {
-        return AesSuccessActionDataResult.ErrorStatus(aesSuccessActionDataResult.getString("data")!!)
+        return AesSuccessActionDataResult.ErrorStatus(aesSuccessActionDataResult.getString("reason")!!)
     }
     return null
 }
@@ -3364,7 +3364,7 @@ fun readableMapOf(aesSuccessActionDataResult: AesSuccessActionDataResult): Reada
         }
         is AesSuccessActionDataResult.ErrorStatus -> {
             pushToMap(map, "type", "errorStatus")
-            pushToMap(map, "data", aesSuccessActionDataResult.data)
+            pushToMap(map, "reason", aesSuccessActionDataResult.reason)
         }
     }
     return map

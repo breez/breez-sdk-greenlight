@@ -375,7 +375,7 @@ impl BreezServices {
                                 let result = match (data, &preimage_arr).try_into() {
                                     Ok(data) => AesSuccessActionDataResult::Decrypted { data },
                                     Err(e) => AesSuccessActionDataResult::ErrorStatus {
-                                        data: e.to_string(),
+                                        reason: e.to_string(),
                                     },
                                 };
                                 SuccessActionProcessed::Aes { result }

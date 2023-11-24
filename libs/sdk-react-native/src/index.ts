@@ -518,7 +518,7 @@ export type AesSuccessActionDataResult = {
     data: AesSuccessActionDataDecrypted
 } | {
     type: AesSuccessActionDataResultVariant.ERROR_STATUS,
-    data: string
+    reason: string
 }
 
 export enum BreezEventVariant {
