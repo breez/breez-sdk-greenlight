@@ -917,30 +917,36 @@ impl BreezServices {
         Ok(())
     }
 
-    /// Connects to the selected LSP peer. If none is selected, this selects the first one from [`list_lsps`] and persists the selection.
+    /// Connects to the selected LSP peer.
+    /// This validates if the selected LSP is still in [`list_lsps`].
+    /// If not or no LSP is selected, it selects the first LSP in [`list_lsps`].
     async fn connect_lsp_peer(&self, node_pubkey: String) -> SdkResult<()> {
-        // Sets the LSP id, if not already set
-        if self.persister.get_lsp_id()?.is_none() {
-            if let Some(lsp) = self.lsp_api.list_lsps(node_pubkey).await?.first().cloned() {
-                self.persister.set_lsp_id(lsp.id)?;
+        let lsps = self.lsp_api.list_lsps(node_pubkey).await?;
+        if let Some(lsp) = self
+            .persister
+            .get_lsp_id()?
+            .and_then(|lsp_id| lsps.clone().into_iter().find(|lsp| lsp.id == lsp_id))
+            .or_else(|| lsps.first().cloned())
+        {
+            self.persister.set_lsp_id(lsp.id)?;
+            if let Ok(node_state) = self.node_info() {
+                let node_id = lsp.pubkey;
+                let address = lsp.host;
+                let lsp_connected = node_state
+                    .connected_peers
+                    .iter()
+                    .any(|e| e == node_id.as_str());
+                if !lsp_connected {
+                    debug!("connecting to lsp {}@{}", node_id.clone(), address.clone());
+                    self.node_api
+                        .connect_peer(node_id.clone(), address.clone())
+                        .await
+                        .map_err(|e| SdkError::ServiceConnectivity {
+                            err: format!("(LSP: {node_id}) Failed to connect: {e}"),
+                        })?;
+                }
+                debug!("connected to lsp {}@{}", node_id.clone(), address.clone());
             }
-        }
-        if let Ok(lsp_info) = self.lsp_info().await {
-            let node_id = lsp_info.pubkey;
-            let address = lsp_info.host;
-            let lsp_connected = self
-                .node_info()
-                .map(|info| info.connected_peers.iter().any(|e| e == node_id.as_str()))?;
-            if !lsp_connected {
-                debug!("connecting to lsp {}@{}", node_id.clone(), address.clone());
-                self.node_api
-                    .connect_peer(node_id.clone(), address.clone())
-                    .await
-                    .map_err(|e| SdkError::ServiceConnectivity {
-                        err: format!("(LSP: {node_id}) Failed to connect: {e}"),
-                    })?;
-            }
-            debug!("connected to lsp {}@{}", node_id.clone(), address.clone());
         }
         Ok(())
     }
@@ -1964,7 +1970,7 @@ impl Receiver for PaymentReceiver {
             }
         );
 
-        let mut short_channel_id = parse_short_channel_id("1x0x0")?;
+        let mut short_channel_id = None;
         let mut destination_invoice_amount_msat = req.amount_msat;
 
         let mut channel_opening_fee_params = None;
@@ -1981,6 +1987,7 @@ impl Receiver for PaymentReceiver {
                 None => lsp_info.cheapest_open_channel_fee(expiry)?.clone(),
             };
 
+            short_channel_id = Some(parse_short_channel_id("1x0x0")?);
             channel_opening_fee_params = Some(ofp.clone());
             channel_fees_msat = Some(ofp.get_channel_fees_msat_for(req.amount_msat));
             if let Some(channel_fees_msat) = channel_fees_msat {
@@ -2013,8 +2020,8 @@ impl Receiver for PaymentReceiver {
                         .alias_remote
                         .unwrap_or(active_channel.clone().short_channel_id);
 
-                    short_channel_id = parse_short_channel_id(&hint)?;
-                    info!("Found channel ID: {short_channel_id} {active_channel:?}");
+                    short_channel_id = Some(parse_short_channel_id(&hint)?);
+                    info!("Found channel ID: {short_channel_id:?} {active_channel:?}");
                     break;
                 }
             }
@@ -2049,20 +2056,25 @@ impl Receiver for PaymentReceiver {
         // or if the invoice doesn't have any routing hints that points to the lsp
         let mut lsp_hint: Option<RouteHint> = None;
         if !has_lsp_hint || open_channel_needed {
-            let lsp_hop = RouteHintHop {
-                src_node_id: lsp_info.pubkey,
-                short_channel_id,
-                fees_base_msat: lsp_info.base_fee_msat as u32,
-                fees_proportional_millionths: (lsp_info.fee_rate * 1000000.0) as u32,
-                cltv_expiry_delta: lsp_info.time_lock_delta as u64,
-                htlc_minimum_msat: Some(lsp_info.min_htlc_msat as u64),
-                htlc_maximum_msat: None,
-            };
+            match short_channel_id {
+                Some(short_channel_id) => {
+                    let lsp_hop = RouteHintHop {
+                        src_node_id: lsp_info.pubkey,
+                        short_channel_id,
+                        fees_base_msat: lsp_info.base_fee_msat as u32,
+                        fees_proportional_millionths: (lsp_info.fee_rate * 1000000.0) as u32,
+                        cltv_expiry_delta: lsp_info.time_lock_delta as u64,
+                        htlc_minimum_msat: Some(lsp_info.min_htlc_msat as u64),
+                        htlc_maximum_msat: None,
+                    };
 
-            info!("Adding LSP hop as routing hint: {:?}", lsp_hop);
-            lsp_hint = Some(RouteHint {
-                hops: vec![lsp_hop],
-            });
+                    info!("Adding LSP hop as routing hint: {:?}", lsp_hop);
+                    lsp_hint = Some(RouteHint {
+                        hops: vec![lsp_hop],
+                    });
+                }
+                None => info!("No available channel ID for route hint"),
+            }
         }
 
         // We only create a new invoice if we need to add the lsp hint or change the amount
