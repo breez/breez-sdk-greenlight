@@ -929,23 +929,24 @@ impl BreezServices {
             .or_else(|| lsps.first().cloned())
         {
             self.persister.set_lsp_id(lsp.id)?;
-        }
-        if let Ok(lsp_info) = self.lsp_info().await {
-            let node_id = lsp_info.pubkey;
-            let address = lsp_info.host;
-            let lsp_connected = self
-                .node_info()
-                .map(|info| info.connected_peers.iter().any(|e| e == node_id.as_str()))?;
-            if !lsp_connected {
-                debug!("connecting to lsp {}@{}", node_id.clone(), address.clone());
-                self.node_api
-                    .connect_peer(node_id.clone(), address.clone())
-                    .await
-                    .map_err(|e| SdkError::ServiceConnectivity {
-                        err: format!("(LSP: {node_id}) Failed to connect: {e}"),
-                    })?;
+            if let Ok(node_state) = self.node_info() {
+                let node_id = lsp.pubkey;
+                let address = lsp.host;
+                let lsp_connected = node_state
+                    .connected_peers
+                    .iter()
+                    .any(|e| e == node_id.as_str());
+                if !lsp_connected {
+                    debug!("connecting to lsp {}@{}", node_id.clone(), address.clone());
+                    self.node_api
+                        .connect_peer(node_id.clone(), address.clone())
+                        .await
+                        .map_err(|e| SdkError::ServiceConnectivity {
+                            err: format!("(LSP: {node_id}) Failed to connect: {e}"),
+                        })?;
+                }
+                debug!("connected to lsp {}@{}", node_id.clone(), address.clone());
             }
-            debug!("connected to lsp {}@{}", node_id.clone(), address.clone());
         }
         Ok(())
     }
