@@ -1323,10 +1323,6 @@ impl NodeAPI for Greenlight {
         debug!("send_custom_message returned status {:?}", resp.status);
         Ok(())
     }
-
-    async fn stop(&self) {
-        _ = self.execute_command(NodeCommand::Stop.to_string()).await;
-    }
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]

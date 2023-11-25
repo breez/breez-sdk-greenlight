@@ -430,8 +430,6 @@ impl NodeAPI for MockNodeAPI {
             tokio_stream::wrappers::ReceiverStream::new(rx).map(Ok),
         ))
     }
-
-    async fn stop(&self) {}
 }
 
 impl MockNodeAPI {
