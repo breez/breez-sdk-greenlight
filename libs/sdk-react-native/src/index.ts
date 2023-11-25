@@ -508,6 +508,19 @@ export type UrlSuccessActionData = {
     url: string
 }
 
+export enum AesSuccessActionDataResultVariant {
+    DECRYPTED = "decrypted",
+    ERROR_STATUS = "errorStatus"
+}
+
+export type AesSuccessActionDataResult = {
+    type: AesSuccessActionDataResultVariant.DECRYPTED,
+    data: AesSuccessActionDataDecrypted
+} | {
+    type: AesSuccessActionDataResultVariant.ERROR_STATUS,
+    reason: string
+}
+
 export enum BreezEventVariant {
     NEW_BLOCK = "newBlock",
     INVOICE_PAID = "invoicePaid",
@@ -730,7 +743,7 @@ export enum SuccessActionProcessedVariant {
 
 export type SuccessActionProcessed = {
     type: SuccessActionProcessedVariant.AES,
-    data: AesSuccessActionDataDecrypted
+    result: AesSuccessActionDataResult
 } | {
     type: SuccessActionProcessedVariant.MESSAGE,
     data: MessageSuccessActionData

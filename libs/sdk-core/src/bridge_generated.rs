@@ -45,6 +45,7 @@ use crate::invoice::LNInvoice;
 use crate::invoice::RouteHint;
 use crate::invoice::RouteHintHop;
 use crate::lnurl::pay::model::AesSuccessActionDataDecrypted;
+use crate::lnurl::pay::model::AesSuccessActionDataResult;
 use crate::lnurl::pay::model::LnUrlPayErrorData;
 use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::lnurl::pay::model::LnUrlPaySuccessData;
@@ -887,6 +888,24 @@ impl support::IntoDart for AesSuccessActionDataDecrypted {
 }
 impl support::IntoDartExceptPrimitive for AesSuccessActionDataDecrypted {}
 impl rust2dart::IntoIntoDart<AesSuccessActionDataDecrypted> for AesSuccessActionDataDecrypted {
+    fn into_into_dart(self) -> Self {
+        self
+    }
+}
+
+impl support::IntoDart for AesSuccessActionDataResult {
+    fn into_dart(self) -> support::DartAbi {
+        match self {
+            Self::Decrypted { data } => vec![0.into_dart(), data.into_into_dart().into_dart()],
+            Self::ErrorStatus { reason } => {
+                vec![1.into_dart(), reason.into_into_dart().into_dart()]
+            }
+        }
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for AesSuccessActionDataResult {}
+impl rust2dart::IntoIntoDart<AesSuccessActionDataResult> for AesSuccessActionDataResult {
     fn into_into_dart(self) -> Self {
         self
     }
@@ -1970,7 +1989,7 @@ impl rust2dart::IntoIntoDart<StaticBackupResponse> for StaticBackupResponse {
 impl support::IntoDart for SuccessActionProcessed {
     fn into_dart(self) -> support::DartAbi {
         match self {
-            Self::Aes { data } => vec![0.into_dart(), data.into_into_dart().into_dart()],
+            Self::Aes { result } => vec![0.into_dart(), result.into_into_dart().into_dart()],
             Self::Message { data } => vec![1.into_dart(), data.into_into_dart().into_dart()],
             Self::Url { data } => vec![2.into_dart(), data.into_into_dart().into_dart()],
         }

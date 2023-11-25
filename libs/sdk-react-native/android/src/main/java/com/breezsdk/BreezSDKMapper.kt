@@ -3341,6 +3341,46 @@ fun asUrlSuccessActionDataList(arr: ReadableArray): List<UrlSuccessActionData> {
     return list
 }
 
+fun asAesSuccessActionDataResult(aesSuccessActionDataResult: ReadableMap): AesSuccessActionDataResult? {
+    val type = aesSuccessActionDataResult.getString("type")
+
+    if (type == "decrypted") {
+        return AesSuccessActionDataResult.Decrypted(
+            aesSuccessActionDataResult.getMap("data")?.let { asAesSuccessActionDataDecrypted(it) }!!,
+        )
+    }
+    if (type == "errorStatus") {
+        return AesSuccessActionDataResult.ErrorStatus(aesSuccessActionDataResult.getString("reason")!!)
+    }
+    return null
+}
+
+fun readableMapOf(aesSuccessActionDataResult: AesSuccessActionDataResult): ReadableMap? {
+    val map = Arguments.createMap()
+    when (aesSuccessActionDataResult) {
+        is AesSuccessActionDataResult.Decrypted -> {
+            pushToMap(map, "type", "decrypted")
+            pushToMap(map, "data", readableMapOf(aesSuccessActionDataResult.data))
+        }
+        is AesSuccessActionDataResult.ErrorStatus -> {
+            pushToMap(map, "type", "errorStatus")
+            pushToMap(map, "reason", aesSuccessActionDataResult.reason)
+        }
+    }
+    return map
+}
+
+fun asAesSuccessActionDataResultList(arr: ReadableArray): List<AesSuccessActionDataResult> {
+    val list = ArrayList<AesSuccessActionDataResult>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asAesSuccessActionDataResult(value)!!)
+            else -> throw SdkException.Generic("Unexpected type ${value::class.java.name}")
+        }
+    }
+    return list
+}
+
 fun asBreezEvent(breezEvent: ReadableMap): BreezEvent? {
     val type = breezEvent.getString("type")
 
@@ -3903,7 +3943,7 @@ fun asSuccessActionProcessed(successActionProcessed: ReadableMap): SuccessAction
     val type = successActionProcessed.getString("type")
 
     if (type == "aes") {
-        return SuccessActionProcessed.Aes(successActionProcessed.getMap("data")?.let { asAesSuccessActionDataDecrypted(it) }!!)
+        return SuccessActionProcessed.Aes(successActionProcessed.getMap("result")?.let { asAesSuccessActionDataResult(it) }!!)
     }
     if (type == "message") {
         return SuccessActionProcessed.Message(successActionProcessed.getMap("data")?.let { asMessageSuccessActionData(it) }!!)
@@ -3919,7 +3959,7 @@ fun readableMapOf(successActionProcessed: SuccessActionProcessed): ReadableMap? 
     when (successActionProcessed) {
         is SuccessActionProcessed.Aes -> {
             pushToMap(map, "type", "aes")
-            pushToMap(map, "data", readableMapOf(successActionProcessed.data))
+            pushToMap(map, "result", readableMapOf(successActionProcessed.result))
         }
         is SuccessActionProcessed.Message -> {
             pushToMap(map, "type", "message")

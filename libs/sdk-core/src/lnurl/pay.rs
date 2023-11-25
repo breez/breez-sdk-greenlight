@@ -207,6 +207,13 @@ pub(crate) mod model {
         pub iv: String,
     }
 
+    /// Result of decryption of [AesSuccessActionData] payload
+    #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
+    pub enum AesSuccessActionDataResult {
+        Decrypted { data: AesSuccessActionDataDecrypted },
+        ErrorStatus { reason: String },
+    }
+
     /// Wrapper for the decrypted [AesSuccessActionData] payload
     #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
     pub struct AesSuccessActionDataDecrypted {
@@ -236,7 +243,7 @@ pub(crate) mod model {
         /// See [SuccessAction::Aes] for received payload
         ///
         /// See [AesSuccessActionDataDecrypted] for decrypted payload
-        Aes { data: AesSuccessActionDataDecrypted },
+        Aes { result: AesSuccessActionDataResult },
 
         /// See [SuccessAction::Message]
         Message { data: MessageSuccessActionData },
@@ -1170,7 +1177,9 @@ mod tests {
             plaintext: plaintext.clone(),
         };
         let sa = SuccessActionProcessed::Aes {
-            data: sa_data.clone(),
+            result: AesSuccessActionDataResult::Decrypted {
+                data: sa_data.clone(),
+            },
         };
 
         // Generate preimage
@@ -1225,6 +1234,89 @@ mod tests {
                 true => Ok(()),
                 false => Err(anyhow!(
                     "Decrypted payload and description doesn't match expected success action"
+                )),
+            },
+            LnUrlPayResult::EndpointSuccess {
+                data:
+                    LnUrlPaySuccessData {
+                        success_action: None,
+                        ..
+                    },
+            } => Err(anyhow!(
+                "Expected success action in callback, but none provided"
+            )),
+            _ => Err(anyhow!("Unexpected success action type")),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_lnurl_pay_aes_success_action_fail_to_decrypt() -> Result<()> {
+        // Expected error in the AES payload
+        let sa = SuccessActionProcessed::Aes {
+            result: AesSuccessActionDataResult::ErrorStatus {
+                reason: "Unpad Error".into(),
+            },
+        };
+
+        // Generate preimage
+        let preimage = sha256::Hash::hash(&rand_vec_u8(10));
+
+        let comment = rand_string(COMMENT_LENGHT as usize);
+        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGHT);
+        let temp_desc = pay_req.metadata_str.clone();
+
+        // The invoice (served by LNURL-pay endpoint, matching preimage and description hash)
+        let inv = rand_invoice_with_description_hash_and_preimage(temp_desc, preimage)?;
+
+        let user_amount_msat = inv.amount_milli_satoshis().unwrap();
+        let bolt11 = inv.to_string();
+        let description = "test description in AES payload".to_string();
+        let plaintext = "Hello, test plaintext".to_string();
+        let sa_data = AesSuccessActionDataDecrypted {
+            description,
+            plaintext,
+        };
+        let wrong_key = vec![0u8; 32];
+        let _m = mock_lnurl_pay_callback_endpoint_aes_success_action(AesPayCallbackParams {
+            pay_req: &pay_req,
+            user_amount_msat,
+            error: None,
+            pr: Some(bolt11.clone()),
+            sa_data: sa_data.clone(),
+            iv_bytes: random::<[u8; 16]>(),
+            key_bytes: wrong_key.try_into().unwrap(),
+            comment: comment.clone(),
+        })?;
+
+        let mock_node_api = MockNodeAPI::new(get_dummy_node_state());
+        let model_payment = mock_node_api
+            .add_dummy_payment_for(bolt11, Some(preimage), Some(PayStatus::Pending))
+            .await?;
+
+        let known_payments: Vec<crate::models::Payment> = vec![model_payment];
+        let mock_breez_services = crate::breez_services::tests::breez_services_with(
+            Some(Arc::new(mock_node_api)),
+            known_payments,
+        )
+        .await?;
+        match mock_breez_services
+            .lnurl_pay(LnUrlPayRequest {
+                data: pay_req,
+                amount_msat: user_amount_msat,
+                comment: Some(comment),
+            })
+            .await?
+        {
+            LnUrlPayResult::EndpointSuccess {
+                data:
+                    LnUrlPaySuccessData {
+                        success_action: Some(received_sa),
+                        ..
+                    },
+            } => match received_sa == sa {
+                true => Ok(()),
+                false => Err(anyhow!(
+                    "Decrypted payload and description doesn't match expected success action: {received_sa:?}"
                 )),
             },
             LnUrlPayResult::EndpointSuccess {

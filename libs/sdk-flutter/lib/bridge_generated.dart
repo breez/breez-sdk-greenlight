@@ -286,6 +286,16 @@ class AesSuccessActionDataDecrypted {
   });
 }
 
+@freezed
+sealed class AesSuccessActionDataResult with _$AesSuccessActionDataResult {
+  const factory AesSuccessActionDataResult.decrypted({
+    required AesSuccessActionDataDecrypted data,
+  }) = AesSuccessActionDataResult_Decrypted;
+  const factory AesSuccessActionDataResult.errorStatus({
+    required String reason,
+  }) = AesSuccessActionDataResult_ErrorStatus;
+}
+
 class BackupFailedData {
   final String error;
 
@@ -1614,7 +1624,7 @@ sealed class SuccessActionProcessed with _$SuccessActionProcessed {
   ///
   /// See [AesSuccessActionDataDecrypted] for decrypted payload
   const factory SuccessActionProcessed.aes({
-    required AesSuccessActionDataDecrypted data,
+    required AesSuccessActionDataResult result,
   }) = SuccessActionProcessed_Aes;
 
   /// See [SuccessAction::Message]
@@ -2589,6 +2599,21 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     );
   }
 
+  AesSuccessActionDataResult _wire2api_aes_success_action_data_result(dynamic raw) {
+    switch (raw[0]) {
+      case 0:
+        return AesSuccessActionDataResult_Decrypted(
+          data: _wire2api_box_autoadd_aes_success_action_data_decrypted(raw[1]),
+        );
+      case 1:
+        return AesSuccessActionDataResult_ErrorStatus(
+          reason: _wire2api_String(raw[1]),
+        );
+      default:
+        throw Exception("unreachable");
+    }
+  }
+
   BackupFailedData _wire2api_backup_failed_data(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
@@ -2624,6 +2649,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   AesSuccessActionDataDecrypted _wire2api_box_autoadd_aes_success_action_data_decrypted(dynamic raw) {
     return _wire2api_aes_success_action_data_decrypted(raw);
+  }
+
+  AesSuccessActionDataResult _wire2api_box_autoadd_aes_success_action_data_result(dynamic raw) {
+    return _wire2api_aes_success_action_data_result(raw);
   }
 
   BackupFailedData _wire2api_box_autoadd_backup_failed_data(dynamic raw) {
@@ -3533,7 +3562,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     switch (raw[0]) {
       case 0:
         return SuccessActionProcessed_Aes(
-          data: _wire2api_box_autoadd_aes_success_action_data_decrypted(raw[1]),
+          result: _wire2api_box_autoadd_aes_success_action_data_result(raw[1]),
         );
       case 1:
         return SuccessActionProcessed_Message(

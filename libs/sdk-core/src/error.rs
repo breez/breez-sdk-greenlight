@@ -53,9 +53,6 @@ impl From<SdkError> for LnUrlAuthError {
 /// Error returned by [BreezServices::lnurl_pay]
 #[derive(Debug, Error)]
 pub enum LnUrlPayError {
-    #[error("Aes decryption failed: {err}")]
-    AesDecryptionFailed { err: String },
-
     #[error("Invoice already paid")]
     AlreadyPaid,
 
