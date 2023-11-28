@@ -2125,11 +2125,11 @@ impl Receiver for PaymentReceiver {
                 )
                 .await?;
             info!("Payment registered");
+            // Make sure we save the large amount so we can deduce the fees later.
+            self.persister
+                .insert_open_channel_payment_info(&parsed_invoice.payment_hash, req.amount_msat)?;
         }
 
-        // Make sure we save the large amount so we can deduce the fees later.
-        self.persister
-            .insert_open_channel_payment_info(&parsed_invoice.payment_hash, req.amount_msat)?;
         // return the signed, converted invoice with hints
         Ok(ReceivePaymentResponse {
             ln_invoice: parsed_invoice,
