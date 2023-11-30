@@ -67,6 +67,11 @@ jobs:
           name: sdk-bindings-android-jniLibs
           path: flutter/android/src/main/jniLibs
 
+      - uses: actions/download-artifact@v3
+        with:
+          name: bindings-swift
+          path: flutter/ios/bindings-swift/Sources/BreezSDK/
+
       - name: Set package version
         working-directory: flutter
         run: |
