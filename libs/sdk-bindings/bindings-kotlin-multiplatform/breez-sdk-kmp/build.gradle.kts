@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
-
 plugins {
     kotlin("multiplatform")
     id("com.android.library")
@@ -8,10 +6,9 @@ plugins {
 
 apply(plugin = "kotlinx-atomicfu")
 
-@OptIn(ExperimentalKotlinGradlePluginApi::class)
 kotlin {
     // Enable the default target hierarchy
-    targetHierarchy.default()
+    applyDefaultHierarchyTemplate()
 
     androidTarget {
         compilations.all {
@@ -58,8 +55,8 @@ kotlin {
 
         val commonMain by getting {
             dependencies {
-                implementation("com.squareup.okio:okio:3.3.0")
-                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
+                implementation("com.squareup.okio:okio:3.6.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.1")
             }
         }
 
@@ -80,7 +77,7 @@ kotlin {
             dependsOn(commonMain)
             dependencies {
                 implementation("net.java.dev.jna:jna:5.13.0@aar")
-                implementation("org.jetbrains.kotlinx:atomicfu:0.21.0")
+                implementation("org.jetbrains.kotlinx:atomicfu:0.23.1")
             }
         }
     }
