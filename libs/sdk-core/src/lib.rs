@@ -159,7 +159,7 @@ mod bridge_generated; /* AUTO INJECTED BY flutter_rust_bridge. This line may not
 #[macro_use]
 extern crate log;
 
-
+#[rustfmt::skip]
 #[cfg(test)]
 mod test_utils; // flutter_rust_bridge_codegen: has to be defined before breez_services
 mod backup;
@@ -168,12 +168,14 @@ mod breez_services;
 mod chain;
 mod crypt;
 pub mod error;
+#[rustfmt::skip]
 mod node_api; // flutter_rust_bridge_codegen: has to be defined before greenlight; greenlight::node_api
 mod greenlight;
 // GRPC structs are documented as follows:
 // - if they are mirrored in Rust model structs, documented in the model structs
 // - if there is no corresponding model struct, documented in breez.proto
 mod grpc;
+#[rustfmt::skip]
 mod fiat; // flutter_rust_bridge_codegen: has to be defined after grpc; grpc::Rate
 pub mod input_parser;
 mod invoice;
