@@ -43,3 +43,12 @@ flutter:
         pluginClass: BreezSDKPlugin
       ios:
         pluginClass: BreezSDKPlugin
+
+flutter_rust_bridge:
+  rust_input:
+    - ../sdk-core/src/binding.rs
+  dart_output:
+    - lib/bridge_generated.dart
+  c-output:
+    - ios/Classes/bridge_generated.h
+  dart_format_line_length: 110
