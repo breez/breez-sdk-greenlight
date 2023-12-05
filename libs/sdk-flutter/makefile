@@ -15,7 +15,7 @@ all: ios android
 dev: ios-dev android
 
 flutter_rust_bridge:
-	cargo install flutter_rust_bridge_codegen --version 1.80.1
+	cargo install flutter_rust_bridge_codegen --version 1.82.4
 	flutter_rust_bridge_codegen
 
 ios: $(SOURCES) flutter_rust_bridge
