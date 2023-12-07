@@ -33,6 +33,8 @@ android: $(SOURCES) flutter_rust_bridge
 	cd ../sdk-bindings && make android
 	mkdir -p ./android/src/main/jniLibs
 	cp -r ../sdk-bindings/ffi/kotlin/jniLibs/* ./android/src/main/jniLibs
+	mkdir -p ./android/src/main/kotlin/breez_sdk/
+	cp -r ../sdk-bindings/bindings-android/lib/src/main/kotlin/breez_sdk/* ./android/src/main/kotlin/breez_sdk/
 
 ## desktop: compiles for x86_64-unknown-linux-gnu by default, other targets can be specified
 ## with the TARGET variable eg. make desktop TARGET=aarch64-unknown-linux-gnu
@@ -48,4 +50,5 @@ desktop: $(SOURCES) flutter_rust_bridge
 clean:
 	cargo clean
 	rm -rf ./android/src/main/jniLibs
+	rm -rf ./android/src/main/kotlin/breez_sdk/
 	rm -rf ./ios/libbreez_sdk_bindings.a
