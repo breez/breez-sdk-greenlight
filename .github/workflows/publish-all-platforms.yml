@@ -99,7 +99,7 @@ jobs:
       bindings-linux: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version || !!needs.pre-setup.outputs.python-package-version}}
       bindings-android: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version || !!needs.pre-setup.outputs.golang-package-version || !!needs.pre-setup.outputs.flutter-package-version }}
       bindings-ios: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version }}
-      kotlin: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version }}
+      kotlin: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version || !!needs.pre-setup.outputs.flutter-package-version }}
       swift: ${{ !!needs.pre-setup.outputs.flutter-package-version }}
       python: ${{ !!needs.pre-setup.outputs.python-package-version }}
       csharp: ${{ !!needs.pre-setup.outputs.csharp-package-version }}

@@ -70,6 +70,11 @@ jobs:
         with:
           name: bindings-swift
           path: flutter/ios/bindings-swift/Sources/BreezSDK/
+      
+      - uses: actions/download-artifact@v3
+        with:
+          name: bindings-kotlin
+          path: flutter/android/src/main/kotlin/breez_sdk
 
       - name: Set package version
         working-directory: flutter
