@@ -318,6 +318,7 @@ impl Greenlight {
             response = cln_client
                 .list_pays(cln::ListpaysRequest {
                     payment_hash: Some(payment_hash.clone()),
+                    status: Some(cln::listpays_request::ListpaysStatus::Complete.into()),
                     ..cln::ListpaysRequest::default()
                 })
                 .await?
