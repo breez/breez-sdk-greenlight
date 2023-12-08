@@ -312,7 +312,7 @@ impl Greenlight {
         payment_hash: Vec<u8>,
     ) -> Result<cln::ListpaysPays> {
         let mut response = cln::ListpaysResponse::default();
-        let retry = 0;
+        let mut retry = 0;
         let max_retries = 20;
         while response.pays.is_empty() && retry < max_retries {
             response = cln_client
@@ -326,6 +326,7 @@ impl Greenlight {
                 warn!("fetch outgoing payment failed, retrying in 100ms...");
                 sleep(Duration::from_millis(100)).await;
             }
+            retry += 1;
         }
 
         if response.pays.is_empty() {
