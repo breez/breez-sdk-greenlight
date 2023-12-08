@@ -997,21 +997,17 @@ impl BreezServices {
         &self,
         node_id: String,
         invoice: Option<LNInvoice>,
-        payment_res: Result<PaymentResponse, SendPaymentError>,
+        payment_res: Result<Payment, SendPaymentError>,
     ) -> Result<Payment, SendPaymentError> {
         self.do_sync(payment_res.is_ok()).await?;
-
         match payment_res {
-            Ok(payment) => match self.persister.get_payment_by_hash(&payment.payment_hash)? {
-                Some(p) => {
-                    self.notify_event_listeners(BreezEvent::PaymentSucceed { details: p.clone() })
-                        .await?;
-                    Ok(p)
-                }
-                None => Err(SendPaymentError::Generic {
-                    err: "Payment not found".into(),
-                }),
-            },
+            Ok(payment) => {
+                self.notify_event_listeners(BreezEvent::PaymentSucceed {
+                    details: payment.clone(),
+                })
+                .await?;
+                Ok(payment)
+            }
             Err(e) => {
                 self.notify_event_listeners(BreezEvent::PaymentFailed {
                     details: PaymentFailedData {
