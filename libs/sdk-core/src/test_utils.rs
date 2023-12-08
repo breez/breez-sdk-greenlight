@@ -318,22 +318,18 @@ impl NodeAPI for MockNodeAPI {
         Err(NodeError::Generic(anyhow!("Not implemented")))
     }
 
-    async fn send_payment(
-        &self,
-        bolt11: String,
-        _amount_msat: Option<u64>,
-    ) -> NodeResult<PaymentResponse> {
+    async fn send_payment(&self, bolt11: String, _amount_msat: Option<u64>) -> NodeResult<Payment> {
         let payment = self.add_dummy_payment_for(bolt11, None, None).await?;
-        Ok(payment.try_into()?)
+        Ok(payment)
     }
 
     async fn send_spontaneous_payment(
         &self,
         _node_id: String,
         _amount_msat: u64,
-    ) -> NodeResult<PaymentResponse> {
+    ) -> NodeResult<Payment> {
         let payment = self.add_dummy_payment_rand().await?;
-        Ok(payment.try_into()?)
+        Ok(payment)
     }
 
     async fn start(&self) -> NodeResult<String> {

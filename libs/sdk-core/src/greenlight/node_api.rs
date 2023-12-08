@@ -307,6 +307,35 @@ impl Greenlight {
         }
     }
 
+    async fn fetch_outgoing_payment_with_retry(
+        mut cln_client: node::ClnClient,
+        payment_hash: Vec<u8>,
+    ) -> Result<cln::ListpaysPays> {
+        let mut response = cln::ListpaysResponse::default();
+        let mut retry = 0;
+        let max_retries = 20;
+        while response.pays.is_empty() && retry < max_retries {
+            response = cln_client
+                .list_pays(cln::ListpaysRequest {
+                    payment_hash: Some(payment_hash.clone()),
+                    status: Some(cln::listpays_request::ListpaysStatus::Complete.into()),
+                    ..cln::ListpaysRequest::default()
+                })
+                .await?
+                .into_inner();
+            if response.pays.is_empty() {
+                debug!("fetch outgoing payment failed, retrying in 100ms...");
+                sleep(Duration::from_millis(100)).await;
+            }
+            retry += 1;
+        }
+
+        if response.pays.is_empty() {
+            return Err(anyhow!("Payment not found"));
+        }
+        Ok(response.pays[0].clone())
+    }
+
     async fn fetch_channels_and_balance_with_retry(
         cln_client: node::ClnClient,
         persister: Arc<SqliteStorage>,
@@ -841,11 +870,7 @@ impl NodeAPI for Greenlight {
         })
     }
 
-    async fn send_payment(
-        &self,
-        bolt11: String,
-        amount_msat: Option<u64>,
-    ) -> NodeResult<PaymentResponse> {
+    async fn send_payment(&self, bolt11: String, amount_msat: Option<u64>) -> NodeResult<Payment> {
         let mut description = None;
         if !bolt11.is_empty() {
             let invoice = parse_invoice(&bolt11)?;
@@ -870,14 +895,19 @@ impl NodeAPI for Greenlight {
                 msat: self.sdk_config.exemptfee_msat,
             }),
         };
-        client.pay(request).await?.into_inner().try_into()
+        let result: cln::PayResponse = client.pay(request).await?.into_inner();
+
+        // Before returning from send_payment we need to make sure it is persisted in the backend node.
+        // We do so by polling for the payment.
+        let payment = Self::fetch_outgoing_payment_with_retry(client, result.payment_hash).await?;
+        payment.try_into()
     }
 
     async fn send_spontaneous_payment(
         &self,
         node_id: String,
         amount_msat: u64,
-    ) -> NodeResult<PaymentResponse> {
+    ) -> NodeResult<Payment> {
         let mut client: node::ClnClient = self.get_node_client().await?;
         let request = cln::KeysendRequest {
             destination: hex::decode(node_id)?,
@@ -893,7 +923,12 @@ impl NodeAPI for Greenlight {
             retry_for: Some(self.sdk_config.payment_timeout_sec),
             maxdelay: None,
         };
-        client.key_send(request).await?.into_inner().try_into()
+        let result = client.key_send(request).await?.into_inner();
+
+        // Before returning from send_payment we need to make sure it is persisted in the backend node.
+        // We do so by polling for the payment.
+        let payment = Self::fetch_outgoing_payment_with_retry(client, result.payment_hash).await?;
+        payment.try_into()
     }
 
     async fn start(&self) -> NodeResult<String> {
