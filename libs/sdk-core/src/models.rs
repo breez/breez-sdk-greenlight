@@ -1102,7 +1102,7 @@ pub struct Channel {
     pub htlc: Option<Vec<Htlc>>,
 }
 
-#[derive(Clone, PartialEq, Eq, Debug)] // TODO find out how derive works.
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Htlc {
     pub expiry: u32,
     pub payment_hash: Vec<u8>,
@@ -1111,8 +1111,8 @@ pub struct Htlc {
 impl Htlc {
     pub fn from(expiry: u32, payment_hash: Vec<u8>) -> Self {
         Htlc {
-            expiry: expiry,
-            payment_hash: payment_hash,
+            expiry,
+            payment_hash,
         }
     }
 }

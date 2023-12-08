@@ -76,8 +76,7 @@ impl SqliteStorage {
                 funding_outnum,
                 alias_local,
                 alias_remote,
-                closing_txid,
-                htlc,
+                closing_txid
                FROM channels             
              ",
         )?;
@@ -96,7 +95,7 @@ impl SqliteStorage {
                     alias_local: row.get(7)?,
                     alias_remote: row.get(8)?,
                     closing_txid: row.get(9)?,
-                    htlc: None, // TODO ubba find out how to get values from statement.
+                    htlc: None,
                 })
             })?
             .map(|i| i.unwrap())

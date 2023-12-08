@@ -706,6 +706,7 @@ impl NodeAPI for Greenlight {
             all_channels.clone().into_iter().map(|c| c.into()).collect();
         all_channel_models.extend(forgotten_closed_channels?);
 
+        info!("in flight htlc {:?}", all_channel_models);
         // calculate onchain balance
         let onchain_balance = self.on_chain_balance(funds.clone()).await?;
         let utxos = self.utxos(funds).await?;
@@ -733,7 +734,7 @@ impl NodeAPI for Greenlight {
         let max_allowed_to_receive_msats =
             MAX_INBOUND_LIQUIDITY_MSAT.saturating_sub(channels_balance);
         let node_pubkey = hex::encode(node_info.id);
-
+        // perhaps add inflight htlc to NodeState
         // construct the node state
         let node_state = NodeState {
             id: node_pubkey.clone(),
