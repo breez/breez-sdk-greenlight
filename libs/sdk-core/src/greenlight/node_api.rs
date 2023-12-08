@@ -323,7 +323,7 @@ impl Greenlight {
                 .await?
                 .into_inner();
             if response.pays.is_empty() {
-                warn!("fetch outgoing payment failed, retrying in 100ms...");
+                debug!("fetch outgoing payment failed, retrying in 100ms...");
                 sleep(Duration::from_millis(100)).await;
             }
             retry += 1;
