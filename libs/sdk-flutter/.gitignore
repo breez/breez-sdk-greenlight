@@ -1,3 +1,4 @@
 build/
 .flutter-version
 android/src/main/kotlin/breez_sdk/
+ios/bindings-swift/
