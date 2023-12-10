@@ -285,7 +285,8 @@ impl SqliteStorage {
             data.lnurl_withdraw_endpoint = row.get(11)?;
             data.swap_info = self
                 .get_swap_info_by_hash(&hex::decode(&payment.id).unwrap_or_default())
-                .unwrap_or(None)
+                .unwrap_or(None);
+            data.htlc_expiry = None; // TODO add expiry
         }
 
         // In case we have a record of the open channel fee, let's use it.
@@ -473,6 +474,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                     ln_address: Some(test_ln_address.to_string()),
                     lnurl_withdraw_endpoint: None,
                     swap_info: None,
+                    htlc_expiry: None,
                 },
             },
         },
@@ -498,6 +500,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                     ln_address: None,
                     lnurl_withdraw_endpoint: Some(lnurl_withdraw_url.to_string()),
                     swap_info: None,
+                    htlc_expiry: None,
                 },
             },
         },
@@ -523,6 +526,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
                     swap_info: Some(swap_info.clone()),
+                    htlc_expiry: None,
                 },
             },
         },
@@ -549,6 +553,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                 ln_address: None,
                 lnurl_withdraw_endpoint: None,
                 swap_info: None,
+                htlc_expiry: None,
             },
         },
     }];

@@ -705,6 +705,9 @@ class LnPaymentDetails {
   /// Only set for [PaymentType::Received] payments that were received in the context of a swap
   final SwapInfo? swapInfo;
 
+  /// Only set for [PaymentType::Pending] payments that are inflight.
+  final int? htlcExpiry;
+
   const LnPaymentDetails({
     required this.paymentHash,
     required this.label,
@@ -717,6 +720,7 @@ class LnPaymentDetails {
     this.lnurlMetadata,
     this.lnurlWithdrawEndpoint,
     this.swapInfo,
+    this.htlcExpiry,
   });
 }
 
@@ -3102,7 +3106,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   LnPaymentDetails _wire2api_ln_payment_details(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 11) throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
+    if (arr.length != 12) throw Exception('unexpected arr length: expect 12 but see ${arr.length}');
     return LnPaymentDetails(
       paymentHash: _wire2api_String(arr[0]),
       label: _wire2api_String(arr[1]),
@@ -3115,6 +3119,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       lnurlMetadata: _wire2api_opt_String(arr[8]),
       lnurlWithdrawEndpoint: _wire2api_opt_String(arr[9]),
       swapInfo: _wire2api_opt_box_autoadd_swap_info(arr[10]),
+      htlcExpiry: _wire2api_opt_box_autoadd_u32(arr[11]),
     );
   }
 

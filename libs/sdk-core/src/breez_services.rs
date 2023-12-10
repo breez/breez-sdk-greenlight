@@ -914,34 +914,12 @@ impl BreezServices {
             let closed_channel_tx = self.closed_channel_to_transaction(closed_channel).await?;
             closed_channel_payments.push(closed_channel_tx);
         }
-        let peers = self.node_api.list_peers().await?;
 
-        for p in peers {
-            for h in p.channels {
-                let htlcs = h.htlc;
-                if let Some(hh) = htlcs {
-                    for cc in hh {
-                        info!("htlc info {:?}{:?}", cc.payment_hash, cc.expiry);
-                        let payment_hash = hex::encode(cc.payment_hash);
-
-                        if let Ok(Some(payment)) = self.persister.get_payment_by_hash(&payment_hash)
-                        {
-                            info!(
-                                "htlc payment is {:?}",
-                                payment.status == PaymentStatus::Pending
-                            );
-                        }
-                    }
-                }
-            }
-        }
-
-        // todo add payement filters
         // update both closed channels and lightning transaction payments
         let mut payments = closed_channel_payments;
         payments.extend(new_data.payments.clone());
         self.persister.insert_or_update_payments(&payments, true)?;
-
+        info!("payment list consist of {:?}", payments);
         let duration = start.elapsed();
         info!("Sync duration: {:?}", duration);
 
@@ -1011,7 +989,7 @@ impl BreezServices {
                         lnurl_metadata: None,
                         lnurl_withdraw_endpoint: None,
                         swap_info: None,
-                        htlc_expiry: None // TODO insert here
+                        htlc_expiry: None,
                     },
                 },
             }],

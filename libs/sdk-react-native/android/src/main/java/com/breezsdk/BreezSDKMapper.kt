@@ -847,6 +847,7 @@ fun asLnPaymentDetails(lnPaymentDetails: ReadableMap): LnPaymentDetails? {
             null
         }
     val swapInfo = if (hasNonNullKey(lnPaymentDetails, "swapInfo")) lnPaymentDetails.getMap("swapInfo")?.let { asSwapInfo(it) } else null
+    val htlcExpiry = if (hasNonNullKey(lnPaymentDetails, "htlcExpiry")) lnPaymentDetails.getInt("htlcExpiry").toUInt() else null
     return LnPaymentDetails(
         paymentHash,
         label,
@@ -859,6 +860,7 @@ fun asLnPaymentDetails(lnPaymentDetails: ReadableMap): LnPaymentDetails? {
         lnAddress,
         lnurlWithdrawEndpoint,
         swapInfo,
+        htlcExpiry,
     )
 }
 
@@ -875,6 +877,7 @@ fun readableMapOf(lnPaymentDetails: LnPaymentDetails): ReadableMap {
         "lnAddress" to lnPaymentDetails.lnAddress,
         "lnurlWithdrawEndpoint" to lnPaymentDetails.lnurlWithdrawEndpoint,
         "swapInfo" to lnPaymentDetails.swapInfo?.let { readableMapOf(it) },
+        "htlcExpiry" to lnPaymentDetails.htlcExpiry,
     )
 }
 

@@ -42,6 +42,7 @@ use tonic::Streaming;
 use crate::invoice::{parse_invoice, validate_network, InvoiceError, RouteHintHop};
 use crate::models::*;
 use crate::node_api::{NodeAPI, NodeError, NodeResult};
+
 use crate::persist::db::SqliteStorage;
 use crate::{
     Channel, ChannelState, NodeConfig, PrepareRedeemOnchainFundsRequest,
@@ -706,7 +707,6 @@ impl NodeAPI for Greenlight {
             all_channels.clone().into_iter().map(|c| c.into()).collect();
         all_channel_models.extend(forgotten_closed_channels?);
 
-        info!("in flight htlc {:?}", all_channel_models);
         // calculate onchain balance
         let onchain_balance = self.on_chain_balance(funds.clone()).await?;
         let utxos = self.utxos(funds).await?;
@@ -734,7 +734,6 @@ impl NodeAPI for Greenlight {
         let max_allowed_to_receive_msats =
             MAX_INBOUND_LIQUIDITY_MSAT.saturating_sub(channels_balance);
         let node_pubkey = hex::encode(node_info.id);
-        // perhaps add inflight htlc to NodeState
         // construct the node state
         let node_state = NodeState {
             id: node_pubkey.clone(),
@@ -1453,11 +1452,52 @@ async fn pull_transactions(
         .map(TryInto::try_into)
         .collect();
 
+    let res = c
+        .list_peers(cln::ListpeersRequest::default())
+        .await?
+        .into_inner();
+    let peers_models: Vec<Peer> = res.peers.into_iter().map(|p| p.into()).collect();
+
+    let outbound_transactions: NodeResult<Vec<Payment>> =
+        htlc_expiry(outbound_transactions.unwrap(), peers_models);
+
     let mut transactions: Vec<Payment> = Vec::new();
     transactions.extend(received_transactions?);
     transactions.extend(outbound_transactions?);
 
     Ok(transactions)
+}
+
+fn htlc_expiry(payments: Vec<Payment>, peers: Vec<Peer>) -> NodeResult<Vec<Payment>> {
+    let mut pending_payments: Vec<Payment> = vec![];
+    if peers.is_empty() {
+        return Ok(pending_payments);
+    }
+    for peer in peers {
+        for channel in peer.channels {
+            let htlcs = channel.htlc;
+            if let Some(htlc) = htlcs {
+                info!("We have inflight htlcs {:?}", htlc);
+                for h in htlc {
+                    let payment_hash = hex::encode(h.clone().payment_hash);
+                    info!("htlc payment hash is {:?}", payment_hash);
+                    for mut payment in payments.clone() {
+                        let new_data = payment.clone().details;
+                        if let PaymentDetails::Ln { data } = new_data {
+                            if data.payment_hash == payment_hash {
+                                info!("payment hashes match let add the htlc");
+                                info!("adding htlc to payment {:?}", h);
+                                payment.details.add_htlc_expiry(h.clone());
+                                pending_payments.push(payment)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    info!("pending htlc payments {:?}", pending_payments);
+    Ok(pending_payments)
 }
 
 //pub(crate) fn offchain_payment_to_transaction
@@ -1488,6 +1528,7 @@ impl TryFrom<OffChainPayment> for Payment {
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
                     swap_info: None,
+                    htlc_expiry: None,
                 },
             },
         })
@@ -1527,6 +1568,7 @@ impl TryFrom<gl_client::signer::model::greenlight::Invoice> for Payment {
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
                     swap_info: None,
+                    htlc_expiry: None,
                 },
             },
         })
@@ -1581,6 +1623,7 @@ impl TryFrom<gl_client::signer::model::greenlight::Payment> for Payment {
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
                     swap_info: None,
+                    htlc_expiry: None,
                 },
             },
         })
@@ -1622,6 +1665,7 @@ impl TryFrom<cln::ListinvoicesInvoices> for Payment {
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
                     swap_info: None,
+                    htlc_expiry: None,
                 },
             },
         })
@@ -1686,6 +1730,7 @@ impl TryFrom<cln::ListpaysPays> for Payment {
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
                     swap_info: None,
+                    htlc_expiry: None,
                 },
             },
         })

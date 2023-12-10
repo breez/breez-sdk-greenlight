@@ -675,6 +675,15 @@ pub enum PaymentDetails {
     },
 }
 
+impl PaymentDetails {
+    pub fn add_htlc_expiry(&mut self, htlc: Htlc) {
+        info!("adding htlc expiry to payment details{:?}", htlc);
+        if let PaymentDetails::Ln { data } = self {
+            data.htlc_expiry = Some(htlc.expiry)
+        }
+    }
+}
+
 /// Details of a LN payment, as included in a [Payment]
 #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
 pub struct LnPaymentDetails {
