@@ -926,7 +926,10 @@ impl BreezServices {
 
                         if let Ok(Some(payment)) = self.persister.get_payment_by_hash(&payment_hash)
                         {
-                            info!("htlc payment is {:?}", payment);
+                            info!(
+                                "htlc payment is {:?}",
+                                payment.status == PaymentStatus::Pending
+                            );
                         }
                     }
                 }
@@ -1008,6 +1011,7 @@ impl BreezServices {
                         lnurl_metadata: None,
                         lnurl_withdraw_endpoint: None,
                         swap_info: None,
+                        htlc_expiry: None // TODO insert here
                     },
                 },
             }],
@@ -2297,6 +2301,7 @@ pub(crate) mod tests {
                         ln_address: None,
                         lnurl_withdraw_endpoint: None,
                         swap_info: None,
+                        htlc_expiry: None,
                     },
                 },
             },
@@ -2322,6 +2327,7 @@ pub(crate) mod tests {
                         ln_address: None,
                         lnurl_withdraw_endpoint: Some(test_lnurl_withdraw_endpoint.to_string()),
                         swap_info: None,
+                        htlc_expiry: None,
                     },
                 },
             },
@@ -2347,6 +2353,7 @@ pub(crate) mod tests {
                         ln_address: Some(test_ln_address.to_string()),
                         lnurl_withdraw_endpoint: None,
                         swap_info: None,
+                        htlc_expiry: None,
                     },
                 },
             },
@@ -2372,6 +2379,7 @@ pub(crate) mod tests {
                         ln_address: None,
                         lnurl_withdraw_endpoint: None,
                         swap_info: Some(swap_info.clone()),
+                        htlc_expiry: None,
                     },
                 },
             },

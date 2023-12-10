@@ -700,6 +700,9 @@ pub struct LnPaymentDetails {
 
     /// Only set for [PaymentType::Received] payments that were received in the context of a swap
     pub swap_info: Option<SwapInfo>,
+
+    /// Only set for [PaymentType::Pending] payments that are inflight.
+    pub htlc_expiry: Option<u32>,
 }
 
 /// Represents the funds that were on the user side of the channel at the time it was closed.
