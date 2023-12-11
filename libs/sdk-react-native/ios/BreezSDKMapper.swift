@@ -3078,10 +3078,15 @@ enum BreezSDKMapper {
         guard let amountMsat = sendSpontaneousPaymentRequest["amountMsat"] as? UInt64 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "amountMsat", typeName: "SendSpontaneousPaymentRequest"))
         }
+        var extraTlvs: [TlvEntry]?
+        if let extraTlvsTmp = sendSpontaneousPaymentRequest["extraTlvs"] as? [[String: Any?]] {
+            extraTlvs = try asTlvEntryList(arr: extraTlvsTmp)
+        }
 
         return SendSpontaneousPaymentRequest(
             nodeId: nodeId,
-            amountMsat: amountMsat
+            amountMsat: amountMsat,
+            extraTlvs: extraTlvs
         )
     }
 
@@ -3089,6 +3094,7 @@ enum BreezSDKMapper {
         return [
             "nodeId": sendSpontaneousPaymentRequest.nodeId,
             "amountMsat": sendSpontaneousPaymentRequest.amountMsat,
+            "extraTlvs": sendSpontaneousPaymentRequest.extraTlvs == nil ? nil : arrayOf(tlvEntryList: sendSpontaneousPaymentRequest.extraTlvs!),
         ]
     }
 
@@ -3550,6 +3556,44 @@ enum BreezSDKMapper {
 
     static func arrayOf(symbolList: [Symbol]) -> [Any] {
         return symbolList.map { v -> [String: Any?] in dictionaryOf(symbol: v) }
+    }
+
+    static func asTlvEntry(tlvEntry: [String: Any?]) throws -> TlvEntry {
+        guard let fieldNumber = tlvEntry["fieldNumber"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "fieldNumber", typeName: "TlvEntry"))
+        }
+        guard let value = tlvEntry["value"] as? [UInt8] else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "value", typeName: "TlvEntry"))
+        }
+
+        return TlvEntry(
+            fieldNumber: fieldNumber,
+            value: value
+        )
+    }
+
+    static func dictionaryOf(tlvEntry: TlvEntry) -> [String: Any?] {
+        return [
+            "fieldNumber": tlvEntry.fieldNumber,
+            "value": tlvEntry.value,
+        ]
+    }
+
+    static func asTlvEntryList(arr: [Any]) throws -> [TlvEntry] {
+        var list = [TlvEntry]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var tlvEntry = try asTlvEntry(tlvEntry: val)
+                list.append(tlvEntry)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "TlvEntry"))
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(tlvEntryList: [TlvEntry]) -> [Any] {
+        return tlvEntryList.map { v -> [String: Any?] in dictionaryOf(tlvEntry: v) }
     }
 
     static func asUnspentTransactionOutput(unspentTransactionOutput: [String: Any?]) throws -> UnspentTransactionOutput {

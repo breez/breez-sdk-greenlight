@@ -1,7 +1,7 @@
 use crate::{
     invoice::InvoiceError, persist::error::PersistError, CustomMessage, MaxChannelAmount,
     NodeCredentials, Payment, PaymentResponse, Peer, PrepareSweepRequest, PrepareSweepResponse,
-    RouteHintHop, SyncResponse,
+    RouteHintHop, SyncResponse, TlvEntry,
 };
 use anyhow::Result;
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
@@ -73,6 +73,7 @@ pub trait NodeAPI: Send + Sync {
         &self,
         node_id: String,
         amount_msat: u64,
+        extra_tlvs: Option<Vec<TlvEntry>>,
     ) -> NodeResult<Payment>;
     async fn start(&self) -> NodeResult<String>;
 

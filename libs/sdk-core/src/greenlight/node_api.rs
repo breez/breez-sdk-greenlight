@@ -907,6 +907,7 @@ impl NodeAPI for Greenlight {
         &self,
         node_id: String,
         amount_msat: u64,
+        extra_tlvs: Option<Vec<TlvEntry>>,
     ) -> NodeResult<Payment> {
         let mut client: node::ClnClient = self.get_node_client().await?;
         let request = cln::KeysendRequest {
@@ -916,7 +917,15 @@ impl NodeAPI for Greenlight {
                 "breez-{}",
                 SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis()
             )),
-            extratlvs: None,
+            extratlvs: extra_tlvs.map(|tlvs| cln::TlvStream {
+                entries: tlvs
+                    .into_iter()
+                    .map(|tlv| cln::TlvEntry {
+                        r#type: tlv.field_number,
+                        value: tlv.value,
+                    })
+                    .collect(),
+            }),
             routehints: None,
             maxfeepercent: Some(self.sdk_config.maxfee_percent),
             exemptfee: None,

@@ -759,6 +759,15 @@ pub struct SendPaymentRequest {
     pub amount_msat: Option<u64>,
 }
 
+/// Represents a TLV entry for a keysend payment.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TlvEntry {
+    /// The type field for the TLV
+    pub field_number: u64,
+    /// The value bytes for the TLV
+    pub value: Vec<u8>,
+}
+
 /// Represents a send spontaneous payment request.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SendSpontaneousPaymentRequest {
@@ -766,6 +775,8 @@ pub struct SendSpontaneousPaymentRequest {
     pub node_id: String,
     /// The amount in millisatoshis for this payment
     pub amount_msat: u64,
+    // Optional extra TLVs
+    pub extra_tlvs: Option<Vec<TlvEntry>>,
 }
 
 /// Represents a send payment response.

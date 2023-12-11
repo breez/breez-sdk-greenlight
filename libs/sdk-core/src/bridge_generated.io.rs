@@ -429,6 +429,15 @@ pub extern "C" fn new_list_payment_type_filter_0(len: i32) -> *mut wire_list_pay
 }
 
 #[no_mangle]
+pub extern "C" fn new_list_tlv_entry_0(len: i32) -> *mut wire_list_tlv_entry {
+    let wrap = wire_list_tlv_entry {
+        ptr: support::new_leak_vec_ptr(<wire_TlvEntry>::new_with_null_ptr(), len),
+        len,
+    };
+    support::new_leak_box_ptr(wrap)
+}
+
+#[no_mangle]
 pub extern "C" fn new_uint_8_list_0(len: i32) -> *mut wire_uint_8_list {
     let ans = wire_uint_8_list {
         ptr: support::new_leak_vec_ptr(Default::default(), len),
@@ -697,6 +706,15 @@ impl Wire2Api<ListPaymentsRequest> for wire_ListPaymentsRequest {
         }
     }
 }
+impl Wire2Api<Vec<TlvEntry>> for *mut wire_list_tlv_entry {
+    fn wire2api(self) -> Vec<TlvEntry> {
+        let vec = unsafe {
+            let wrap = support::box_from_leak_ptr(self);
+            support::vec_from_leak_ptr(wrap.ptr, wrap.len)
+        };
+        vec.into_iter().map(Wire2Api::wire2api).collect()
+    }
+}
 impl Wire2Api<LnUrlAuthRequestData> for wire_LnUrlAuthRequestData {
     fn wire2api(self) -> LnUrlAuthRequestData {
         LnUrlAuthRequestData {
@@ -883,6 +901,7 @@ impl Wire2Api<SendSpontaneousPaymentRequest> for wire_SendSpontaneousPaymentRequ
         SendSpontaneousPaymentRequest {
             node_id: self.node_id.wire2api(),
             amount_msat: self.amount_msat.wire2api(),
+            extra_tlvs: self.extra_tlvs.wire2api(),
         }
     }
 }
@@ -905,6 +924,14 @@ impl Wire2Api<SweepRequest> for wire_SweepRequest {
         SweepRequest {
             to_address: self.to_address.wire2api(),
             sat_per_vbyte: self.sat_per_vbyte.wire2api(),
+        }
+    }
+}
+impl Wire2Api<TlvEntry> for wire_TlvEntry {
+    fn wire2api(self) -> TlvEntry {
+        TlvEntry {
+            field_number: self.field_number.wire2api(),
+            value: self.value.wire2api(),
         }
     }
 }
@@ -979,6 +1006,13 @@ pub struct wire_ListPaymentsRequest {
     include_failures: *mut bool,
     offset: *mut u32,
     limit: *mut u32,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_list_tlv_entry {
+    ptr: *mut wire_TlvEntry,
+    len: i32,
 }
 
 #[repr(C)]
@@ -1121,6 +1155,7 @@ pub struct wire_SendPaymentRequest {
 pub struct wire_SendSpontaneousPaymentRequest {
     node_id: *mut wire_uint_8_list,
     amount_msat: u64,
+    extra_tlvs: *mut wire_list_tlv_entry,
 }
 
 #[repr(C)]
@@ -1140,6 +1175,13 @@ pub struct wire_StaticBackupRequest {
 pub struct wire_SweepRequest {
     to_address: *mut wire_uint_8_list,
     sat_per_vbyte: u32,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_TlvEntry {
+    field_number: u64,
+    value: *mut wire_uint_8_list,
 }
 
 #[repr(C)]
@@ -1616,6 +1658,7 @@ impl NewWithNullPtr for wire_SendSpontaneousPaymentRequest {
         Self {
             node_id: core::ptr::null_mut(),
             amount_msat: Default::default(),
+            extra_tlvs: core::ptr::null_mut(),
         }
     }
 }
@@ -1664,6 +1707,21 @@ impl NewWithNullPtr for wire_SweepRequest {
 }
 
 impl Default for wire_SweepRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_TlvEntry {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            field_number: Default::default(),
+            value: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_TlvEntry {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }

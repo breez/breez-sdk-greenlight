@@ -204,6 +204,7 @@ pub(crate) async fn handle_command(
                 .send_spontaneous_payment(SendSpontaneousPaymentRequest {
                     node_id,
                     amount_msat,
+                    extra_tlvs: None,
                 })
                 .await?;
             serde_json::to_string_pretty(&response.payment).map_err(|e| e.into())

@@ -1565,10 +1565,12 @@ class SendSpontaneousPaymentRequest {
 
   /// The amount in millisatoshis for this payment
   final int amountMsat;
+  final List<TlvEntry>? extraTlvs;
 
   const SendSpontaneousPaymentRequest({
     required this.nodeId,
     required this.amountMsat,
+    this.extraTlvs,
   });
 }
 
@@ -1737,6 +1739,20 @@ class Symbol {
     this.template,
     this.rtl,
     this.position,
+  });
+}
+
+/// Represents a TLV entry for a keysend payment.
+class TlvEntry {
+  /// The type field for the TLV
+  final int fieldNumber;
+
+  /// The value bytes for the TLV
+  final Uint8List value;
+
+  const TlvEntry({
+    required this.fieldNumber,
+    required this.value,
   });
 }
 
@@ -4021,6 +4037,15 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<wire_list_tlv_entry> api2wire_list_tlv_entry(List<TlvEntry> raw) {
+    final ans = inner.new_list_tlv_entry_0(raw.length);
+    for (var i = 0; i < raw.length; ++i) {
+      _api_fill_to_wire_tlv_entry(raw[i], ans.ref.ptr[i]);
+    }
+    return ans;
+  }
+
+  @protected
   ffi.Pointer<wire_uint_8_list> api2wire_opt_String(String? raw) {
     return raw == null ? ffi.nullptr : api2wire_String(raw);
   }
@@ -4060,6 +4085,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   ffi.Pointer<wire_list_payment_type_filter> api2wire_opt_list_payment_type_filter(
       List<PaymentTypeFilter>? raw) {
     return raw == null ? ffi.nullptr : api2wire_list_payment_type_filter(raw);
+  }
+
+  @protected
+  ffi.Pointer<wire_list_tlv_entry> api2wire_opt_list_tlv_entry(List<TlvEntry>? raw) {
+    return raw == null ? ffi.nullptr : api2wire_list_tlv_entry(raw);
   }
 
   @protected
@@ -4392,6 +4422,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
       SendSpontaneousPaymentRequest apiObj, wire_SendSpontaneousPaymentRequest wireObj) {
     wireObj.node_id = api2wire_String(apiObj.nodeId);
     wireObj.amount_msat = api2wire_u64(apiObj.amountMsat);
+    wireObj.extra_tlvs = api2wire_opt_list_tlv_entry(apiObj.extraTlvs);
   }
 
   void _api_fill_to_wire_sign_message_request(SignMessageRequest apiObj, wire_SignMessageRequest wireObj) {
@@ -4405,6 +4436,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   void _api_fill_to_wire_sweep_request(SweepRequest apiObj, wire_SweepRequest wireObj) {
     wireObj.to_address = api2wire_String(apiObj.toAddress);
     wireObj.sat_per_vbyte = api2wire_u32(apiObj.satPerVbyte);
+  }
+
+  void _api_fill_to_wire_tlv_entry(TlvEntry apiObj, wire_TlvEntry wireObj) {
+    wireObj.field_number = api2wire_u64(apiObj.fieldNumber);
+    wireObj.value = api2wire_uint_8_list(apiObj.value);
   }
 }
 
@@ -5551,6 +5587,20 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _new_list_payment_type_filter_0 = _new_list_payment_type_filter_0Ptr
       .asFunction<ffi.Pointer<wire_list_payment_type_filter> Function(int)>();
 
+  ffi.Pointer<wire_list_tlv_entry> new_list_tlv_entry_0(
+    int len,
+  ) {
+    return _new_list_tlv_entry_0(
+      len,
+    );
+  }
+
+  late final _new_list_tlv_entry_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_list_tlv_entry> Function(ffi.Int32)>>(
+          'new_list_tlv_entry_0');
+  late final _new_list_tlv_entry_0 =
+      _new_list_tlv_entry_0Ptr.asFunction<ffi.Pointer<wire_list_tlv_entry> Function(int)>();
+
   ffi.Pointer<wire_uint_8_list> new_uint_8_list_0(
     int len,
   ) {
@@ -5701,11 +5751,27 @@ final class wire_SendPaymentRequest extends ffi.Struct {
   external ffi.Pointer<ffi.Uint64> amount_msat;
 }
 
+final class wire_TlvEntry extends ffi.Struct {
+  @ffi.Uint64()
+  external int field_number;
+
+  external ffi.Pointer<wire_uint_8_list> value;
+}
+
+final class wire_list_tlv_entry extends ffi.Struct {
+  external ffi.Pointer<wire_TlvEntry> ptr;
+
+  @ffi.Int32()
+  external int len;
+}
+
 final class wire_SendSpontaneousPaymentRequest extends ffi.Struct {
   external ffi.Pointer<wire_uint_8_list> node_id;
 
   @ffi.Uint64()
   external int amount_msat;
+
+  external ffi.Pointer<wire_list_tlv_entry> extra_tlvs;
 }
 
 final class wire_OpeningFeeParams extends ffi.Struct {
