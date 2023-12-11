@@ -907,7 +907,7 @@ impl BreezServices {
         // update both closed channels and lightning transaction payments
         let mut payments = closed_channel_payments;
         payments.extend(new_data.payments.clone());
-        self.persister.insert_or_update_payments(&payments)?;
+        self.persister.insert_or_update_payments(&payments, true)?;
 
         let duration = start.elapsed();
         info!("Sync duration: {:?}", duration);
@@ -955,30 +955,33 @@ impl BreezServices {
         invoice: &LNInvoice,
         amount_msat: u64,
     ) -> Result<(), SendPaymentError> {
-        self.persister.insert_or_update_payments(&[Payment {
-            id: invoice.payment_hash.clone(),
-            payment_type: PaymentType::Sent,
-            payment_time: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64,
-            amount_msat,
-            fee_msat: 0,
-            status: PaymentStatus::Pending,
-            description: invoice.description.clone(),
-            details: PaymentDetails::Ln {
-                data: LnPaymentDetails {
-                    payment_hash: invoice.payment_hash.clone(),
-                    label: String::new(),
-                    destination_pubkey: invoice.payee_pubkey.clone(),
-                    payment_preimage: String::new(),
-                    keysend: false,
-                    bolt11: invoice.bolt11.clone(),
-                    lnurl_success_action: None,
-                    ln_address: None,
-                    lnurl_metadata: None,
-                    lnurl_withdraw_endpoint: None,
-                    swap_info: None,
+        self.persister.insert_or_update_payments(
+            &[Payment {
+                id: invoice.payment_hash.clone(),
+                payment_type: PaymentType::Sent,
+                payment_time: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64,
+                amount_msat,
+                fee_msat: 0,
+                status: PaymentStatus::Pending,
+                description: invoice.description.clone(),
+                details: PaymentDetails::Ln {
+                    data: LnPaymentDetails {
+                        payment_hash: invoice.payment_hash.clone(),
+                        label: String::new(),
+                        destination_pubkey: invoice.payee_pubkey.clone(),
+                        payment_preimage: String::new(),
+                        keysend: false,
+                        bolt11: invoice.bolt11.clone(),
+                        lnurl_success_action: None,
+                        ln_address: None,
+                        lnurl_metadata: None,
+                        lnurl_withdraw_endpoint: None,
+                        swap_info: None,
+                    },
                 },
-            },
-        }])?;
+            }],
+            false,
+        )?;
 
         if invoice.amount_msat.is_none() {
             self.persister.insert_payment_external_info(
@@ -1227,7 +1230,7 @@ impl BreezServices {
                                                   if payment.is_some() {
                                                       let res = cloned
                                                           .persister
-                                                          .insert_or_update_payments(&vec![payment.clone().unwrap()]);
+                                                          .insert_or_update_payments(&vec![payment.clone().unwrap()], false);
                                                       debug!("paid invoice was added to payments list {:?}", res);
                                                   }
                                                   _ = cloned.on_event(BreezEvent::InvoicePaid {
@@ -2341,7 +2344,7 @@ pub(crate) mod tests {
         let test_config = create_test_config();
         let persister = Arc::new(create_test_persister(test_config.clone()));
         persister.init()?;
-        persister.insert_or_update_payments(&dummy_transactions)?;
+        persister.insert_or_update_payments(&dummy_transactions, false)?;
         persister.insert_payment_external_info(
             payment_hash_with_lnurl_success_action,
             Some(&sa),
@@ -2544,7 +2547,7 @@ pub(crate) mod tests {
         let test_config = create_test_config();
         let persister = Arc::new(create_test_persister(test_config.clone()));
         persister.init()?;
-        persister.insert_or_update_payments(&known_payments)?;
+        persister.insert_or_update_payments(&known_payments, false)?;
         persister.set_lsp_id(MockBreezServer {}.lsp_id())?;
 
         let mut builder = BreezServicesBuilder::new(test_config.clone());

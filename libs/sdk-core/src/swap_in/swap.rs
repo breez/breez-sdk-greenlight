@@ -874,7 +874,7 @@ mod tests {
                 },
             },
         };
-        persister.insert_or_update_payments(&vec![payment.clone()])?;
+        persister.insert_or_update_payments(&vec![payment.clone()], false)?;
 
         // We test the case that a confirmed transaction was detected on chain that
         // sent funds to this address.
@@ -904,7 +904,7 @@ mod tests {
         // paid_amount of the swap.
         let mut payment = payment.clone();
         payment.amount_msat = 2000;
-        persister.insert_or_update_payments(&vec![payment])?;
+        persister.insert_or_update_payments(&vec![payment], false)?;
         swapper
             .on_event(BreezEvent::InvoicePaid {
                 details: crate::InvoicePaidDetails {
