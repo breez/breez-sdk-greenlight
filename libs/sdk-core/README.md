@@ -25,4 +25,4 @@ make android
 All artifacts are written to the libs/target directory.
 
 ## Test
-cargo test
+`cargo test`
