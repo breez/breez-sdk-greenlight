@@ -434,6 +434,7 @@ export type SendPaymentResponse = {
 export type SendSpontaneousPaymentRequest = {
     nodeId: string
     amountMsat: number
+    extraTlvs?: TlvEntry[]
 }
 
 export type ServiceHealthCheckResponse = {
@@ -494,6 +495,11 @@ export type SymbolType = {
     template?: string
     rtl?: boolean
     position?: number
+}
+
+export type TlvEntry = {
+    fieldNumber: number
+    value: number[]
 }
 
 export type UnspentTransactionOutput = {

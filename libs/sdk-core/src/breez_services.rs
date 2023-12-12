@@ -303,7 +303,7 @@ impl BreezServices {
         self.start_node().await?;
         let payment_res = self
             .node_api
-            .send_spontaneous_payment(req.node_id.clone(), req.amount_msat)
+            .send_spontaneous_payment(req.node_id.clone(), req.amount_msat, req.extra_tlvs)
             .map_err(Into::into)
             .await;
         let payment = self

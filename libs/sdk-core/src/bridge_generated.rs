@@ -113,6 +113,7 @@ use crate::models::SwapInfo;
 use crate::models::SwapStatus;
 use crate::models::SweepRequest;
 use crate::models::SweepResponse;
+use crate::models::TlvEntry;
 use crate::models::UnspentTransactionOutput;
 
 // Section: wire functions

@@ -33,7 +33,7 @@ use crate::fiat::{FiatCurrency, Rate};
 use crate::grpc::{PaymentInformation, RegisterPaymentNotificationResponse, RegisterPaymentReply};
 use crate::invoice::{InvoiceError, InvoiceResult};
 use crate::lsp::LspInformation;
-use crate::models::{FiatAPI, LspAPI, NodeState, Payment, Swap, SwapperAPI, SyncResponse};
+use crate::models::{FiatAPI, LspAPI, NodeState, Payment, Swap, SwapperAPI, SyncResponse, TlvEntry};
 use crate::moonpay::MoonPayApi;
 use crate::node_api::{NodeAPI, NodeError, NodeResult};
 use crate::swap_in::error::SwapResult;
@@ -327,6 +327,7 @@ impl NodeAPI for MockNodeAPI {
         &self,
         _node_id: String,
         _amount_msat: u64,
+        _extra_tlvs: Option<Vec<TlvEntry>>,
     ) -> NodeResult<Payment> {
         let payment = self.add_dummy_payment_rand().await?;
         Ok(payment)

@@ -2835,9 +2835,22 @@ fun asSendSpontaneousPaymentRequest(sendSpontaneousPaymentRequest: ReadableMap):
     }
     val nodeId = sendSpontaneousPaymentRequest.getString("nodeId")!!
     val amountMsat = sendSpontaneousPaymentRequest.getDouble("amountMsat").toULong()
+    val extraTlvs =
+        if (hasNonNullKey(
+                sendSpontaneousPaymentRequest,
+                "extraTlvs",
+            )
+        ) {
+            sendSpontaneousPaymentRequest.getArray("extraTlvs")?.let {
+                asTlvEntryList(it)
+            }
+        } else {
+            null
+        }
     return SendSpontaneousPaymentRequest(
         nodeId,
         amountMsat,
+        extraTlvs,
     )
 }
 
@@ -2845,6 +2858,7 @@ fun readableMapOf(sendSpontaneousPaymentRequest: SendSpontaneousPaymentRequest):
     return readableMapOf(
         "nodeId" to sendSpontaneousPaymentRequest.nodeId,
         "amountMsat" to sendSpontaneousPaymentRequest.amountMsat,
+        "extraTlvs" to sendSpontaneousPaymentRequest.extraTlvs?.let { readableArrayOf(it) },
     )
 }
 
@@ -3252,6 +3266,43 @@ fun asSymbolList(arr: ReadableArray): List<Symbol> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asSymbol(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
+fun asTlvEntry(tlvEntry: ReadableMap): TlvEntry? {
+    if (!validateMandatoryFields(
+            tlvEntry,
+            arrayOf(
+                "fieldNumber",
+                "value",
+            ),
+        )
+    ) {
+        return null
+    }
+    val fieldNumber = tlvEntry.getDouble("fieldNumber").toULong()
+    val value = tlvEntry.getArray("value")?.let { asUByteList(it) }!!
+    return TlvEntry(
+        fieldNumber,
+        value,
+    )
+}
+
+fun readableMapOf(tlvEntry: TlvEntry): ReadableMap {
+    return readableMapOf(
+        "fieldNumber" to tlvEntry.fieldNumber,
+        "value" to readableArrayOf(tlvEntry.value),
+    )
+}
+
+fun asTlvEntryList(arr: ReadableArray): List<TlvEntry> {
+    val list = ArrayList<TlvEntry>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asTlvEntry(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
         }
     }
@@ -4047,6 +4098,7 @@ fun pushToArray(
         is RouteHintHop -> array.pushMap(readableMapOf(value))
         is String -> array.pushString(value)
         is SwapInfo -> array.pushMap(readableMapOf(value))
+        is TlvEntry -> array.pushMap(readableMapOf(value))
         is UByte -> array.pushInt(value.toInt())
         is UnspentTransactionOutput -> array.pushMap(readableMapOf(value))
         is Array<*> -> array.pushArray(readableArrayOf(value.asIterable()))

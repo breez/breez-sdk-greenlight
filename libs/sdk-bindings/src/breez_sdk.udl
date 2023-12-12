@@ -238,6 +238,11 @@ interface PaymentDetails {
     ClosedChannel(ClosedChannelPaymentDetails data);
 };
 
+dictionary TlvEntry {
+    u64 field_number;
+    sequence<u8> value;
+};
+
 [Enum]
 interface AesSuccessActionDataResult {
     Decrypted(AesSuccessActionDataDecrypted data);
@@ -678,6 +683,7 @@ dictionary SendPaymentRequest {
 dictionary SendSpontaneousPaymentRequest {
     string node_id;
     u64 amount_msat;
+    sequence<TlvEntry>? extra_tlvs = null;
 };
 
 dictionary SendPaymentResponse {
