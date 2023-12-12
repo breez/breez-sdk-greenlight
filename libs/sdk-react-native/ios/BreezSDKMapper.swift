@@ -2013,6 +2013,13 @@ enum BreezSDKMapper {
         }
         let status = try asPaymentStatus(paymentStatus: statusTmp)
 
+        var error: String?
+        if hasNonNilKey(data: payment, key: "error") {
+            guard let errorTmp = payment["error"] as? String else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "error"))
+            }
+            error = errorTmp
+        }
         var description: String?
         if hasNonNilKey(data: payment, key: "description") {
             guard let descriptionTmp = payment["description"] as? String else {
@@ -2032,6 +2039,7 @@ enum BreezSDKMapper {
             amountMsat: amountMsat,
             feeMsat: feeMsat,
             status: status,
+            error: error,
             description: description,
             details: details
         )
@@ -2045,6 +2053,7 @@ enum BreezSDKMapper {
             "amountMsat": payment.amountMsat,
             "feeMsat": payment.feeMsat,
             "status": valueOf(paymentStatus: payment.status),
+            "error": payment.error == nil ? nil : payment.error,
             "description": payment.description == nil ? nil : payment.description,
             "details": dictionaryOf(paymentDetails: payment.details),
         ]

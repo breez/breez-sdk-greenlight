@@ -218,6 +218,7 @@ dictionary Payment {
     u64 amount_msat;
     u64 fee_msat;
     PaymentStatus status;
+    string? error;
     string? description;
     PaymentDetails details;
 };

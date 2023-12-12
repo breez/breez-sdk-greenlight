@@ -570,7 +570,7 @@ impl From<ReverseSwapError> for SendOnchainError {
 }
 
 /// Error returned by [BreezServices::send_payment] and [BreezServices::send_spontaneous_payment]
-#[derive(Debug, Error)]
+#[derive(Clone, Debug, Error)]
 pub enum SendPaymentError {
     #[error("Invoice already paid")]
     AlreadyPaid,

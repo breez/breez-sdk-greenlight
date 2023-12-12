@@ -1822,6 +1822,7 @@ fun asPayment(payment: ReadableMap): Payment? {
     val amountMsat = payment.getDouble("amountMsat").toULong()
     val feeMsat = payment.getDouble("feeMsat").toULong()
     val status = payment.getString("status")?.let { asPaymentStatus(it) }!!
+    val error = if (hasNonNullKey(payment, "error")) payment.getString("error") else null
     val description = if (hasNonNullKey(payment, "description")) payment.getString("description") else null
     val details = payment.getMap("details")?.let { asPaymentDetails(it) }!!
     return Payment(
@@ -1831,6 +1832,7 @@ fun asPayment(payment: ReadableMap): Payment? {
         amountMsat,
         feeMsat,
         status,
+        error,
         description,
         details,
     )
@@ -1844,6 +1846,7 @@ fun readableMapOf(payment: Payment): ReadableMap {
         "amountMsat" to payment.amountMsat,
         "feeMsat" to payment.feeMsat,
         "status" to payment.status.name.lowercase(),
+        "error" to payment.error,
         "description" to payment.description,
         "details" to readableMapOf(payment.details),
     )
