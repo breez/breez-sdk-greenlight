@@ -392,11 +392,14 @@ impl BreezServices {
                 // Store SA (if available) + LN Address in separate table, associated to payment_hash
                 self.persister.insert_payment_external_info(
                     &details.payment_hash,
-                    maybe_sa_processed.as_ref(),
-                    Some(req.data.metadata_str),
-                    req.data.ln_address,
-                    None,
-                    invoice.amount_msat,
+                    PaymentExternalInfo {
+                        lnurl_pay_success_action: maybe_sa_processed.clone(),
+                        lnurl_metadata: Some(req.data.metadata_str),
+                        ln_address: req.data.ln_address,
+                        lnurl_withdraw_endpoint: None,
+                        attempted_amount_msat: invoice.amount_msat,
+                        attempted_error: None,
+                    },
                 )?;
 
                 Ok(LnUrlPayResult::EndpointSuccess {
@@ -436,11 +439,14 @@ impl BreezServices {
             // If endpoint was successfully called, store the LNURL-withdraw endpoint URL as metadata linked to the invoice
             self.persister.insert_payment_external_info(
                 &data.invoice.payment_hash,
-                None,
-                None,
-                None,
-                Some(lnurl_w_endpoint),
-                None,
+                PaymentExternalInfo {
+                    lnurl_pay_success_action: None,
+                    lnurl_metadata: None,
+                    ln_address: None,
+                    lnurl_withdraw_endpoint: Some(lnurl_w_endpoint),
+                    attempted_amount_msat: None,
+                    attempted_error: None,
+                },
             )?;
         }
 
@@ -963,6 +969,7 @@ impl BreezServices {
                 amount_msat,
                 fee_msat: 0,
                 status: PaymentStatus::Pending,
+                error: None,
                 description: invoice.description.clone(),
                 details: PaymentDetails::Ln {
                     data: LnPaymentDetails {
@@ -983,16 +990,17 @@ impl BreezServices {
             false,
         )?;
 
-        if invoice.amount_msat.is_none() {
-            self.persister.insert_payment_external_info(
-                &invoice.payment_hash,
-                None,
-                None,
-                None,
-                None,
-                Some(amount_msat),
-            )?;
-        }
+        self.persister.insert_payment_external_info(
+            &invoice.payment_hash,
+            PaymentExternalInfo {
+                lnurl_pay_success_action: None,
+                lnurl_metadata: None,
+                ln_address: None,
+                lnurl_withdraw_endpoint: None,
+                attempted_amount_msat: invoice.amount_msat.map_or(Some(amount_msat), |_| None),
+                attempted_error: None,
+            },
+        )?;
         Ok(())
     }
 
@@ -1012,6 +1020,12 @@ impl BreezServices {
                 Ok(payment)
             }
             Err(e) => {
+                if let Some(invoice) = invoice.clone() {
+                    self.persister.update_payment_attempted_error(
+                        &invoice.payment_hash,
+                        Some(e.to_string()),
+                    )?;
+                }
                 self.notify_event_listeners(BreezEvent::PaymentFailed {
                     details: PaymentFailedData {
                         error: e.to_string(),
@@ -1508,6 +1522,7 @@ impl BreezServices {
                     closing_txid,
                 },
             },
+            error: None,
         })
     }
 
@@ -2183,12 +2198,12 @@ pub(crate) mod tests {
     use crate::lnurl::pay::model::SuccessActionProcessed;
     use crate::models::{LnPaymentDetails, NodeState, Payment, PaymentDetails, PaymentTypeFilter};
     use crate::node_api::NodeAPI;
-    use crate::PaymentType;
     use crate::{
         input_parser, parse_short_channel_id, test_utils::*, BuyBitcoinProvider, BuyBitcoinRequest,
         InputType, ListPaymentsRequest, OpeningFeeParams, PaymentStatus, ReceivePaymentRequest,
         SwapInfo, SwapStatus,
     };
+    use crate::{PaymentExternalInfo, PaymentType};
 
     use super::{PaymentReceiver, Receiver};
 
@@ -2249,6 +2264,7 @@ pub(crate) mod tests {
                 amount_msat: 10,
                 fee_msat: 0,
                 status: PaymentStatus::Complete,
+                error: None,
                 description: Some("test receive".to_string()),
                 details: PaymentDetails::Ln {
                     data: LnPaymentDetails {
@@ -2273,6 +2289,7 @@ pub(crate) mod tests {
                 amount_msat: 10,
                 fee_msat: 0,
                 status: PaymentStatus::Complete,
+                error: None,
                 description: Some("test lnurl-withdraw receive".to_string()),
                 details: PaymentDetails::Ln {
                     data: LnPaymentDetails {
@@ -2297,6 +2314,7 @@ pub(crate) mod tests {
                 amount_msat: 8,
                 fee_msat: 2,
                 status: PaymentStatus::Complete,
+                error: None,
                 description: Some("test payment".to_string()),
                 details: PaymentDetails::Ln {
                     data: LnPaymentDetails {
@@ -2321,6 +2339,7 @@ pub(crate) mod tests {
                 amount_msat: 1_000,
                 fee_msat: 0,
                 status: PaymentStatus::Complete,
+                error: None,
                 description: Some("test receive".to_string()),
                 details: PaymentDetails::Ln {
                     data: LnPaymentDetails {
@@ -2347,19 +2366,25 @@ pub(crate) mod tests {
         persister.insert_or_update_payments(&dummy_transactions, false)?;
         persister.insert_payment_external_info(
             payment_hash_with_lnurl_success_action,
-            Some(&sa),
-            Some(lnurl_metadata.to_string()),
-            Some(test_ln_address.to_string()),
-            None,
-            None,
+            PaymentExternalInfo {
+                lnurl_pay_success_action: Some(sa.clone()),
+                lnurl_metadata: Some(lnurl_metadata.to_string()),
+                ln_address: Some(test_ln_address.to_string()),
+                lnurl_withdraw_endpoint: None,
+                attempted_amount_msat: None,
+                attempted_error: None,
+            },
         )?;
         persister.insert_payment_external_info(
             payment_hash_lnurl_withdraw,
-            None,
-            None,
-            None,
-            Some(test_lnurl_withdraw_endpoint.to_string()),
-            None,
+            PaymentExternalInfo {
+                lnurl_pay_success_action: None,
+                lnurl_metadata: None,
+                ln_address: None,
+                lnurl_withdraw_endpoint: Some(test_lnurl_withdraw_endpoint.to_string()),
+                attempted_amount_msat: None,
+                attempted_error: None,
+            },
         )?;
         persister.insert_swap(swap_info.clone())?;
         persister.update_swap_bolt11(

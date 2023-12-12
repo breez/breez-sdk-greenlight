@@ -294,6 +294,7 @@ export type Payment = {
     amountMsat: number
     feeMsat: number
     status: PaymentStatus
+    error?: string
     description?: string
     details: PaymentDetails
 }

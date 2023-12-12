@@ -620,8 +620,20 @@ pub struct Payment {
     pub amount_msat: u64,
     pub fee_msat: u64,
     pub status: PaymentStatus,
+    pub error: Option<String>,
     pub description: Option<String>,
     pub details: PaymentDetails,
+}
+
+/// Represents a payments external information.
+#[derive(Default)]
+pub struct PaymentExternalInfo {
+    pub lnurl_pay_success_action: Option<SuccessActionProcessed>,
+    pub lnurl_metadata: Option<String>,
+    pub ln_address: Option<String>,
+    pub lnurl_withdraw_endpoint: Option<String>,
+    pub attempted_amount_msat: Option<u64>,
+    pub attempted_error: Option<String>,
 }
 
 /// Represents a list payments request.

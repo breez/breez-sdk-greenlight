@@ -1657,6 +1657,7 @@ impl support::IntoDart for Payment {
             self.amount_msat.into_into_dart().into_dart(),
             self.fee_msat.into_into_dart().into_dart(),
             self.status.into_into_dart().into_dart(),
+            self.error.into_dart(),
             self.description.into_dart(),
             self.details.into_into_dart().into_dart(),
         ]

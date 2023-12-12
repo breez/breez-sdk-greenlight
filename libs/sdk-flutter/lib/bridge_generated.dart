@@ -1149,6 +1149,7 @@ class Payment {
   final int amountMsat;
   final int feeMsat;
   final PaymentStatus status;
+  final String? error;
   final String? description;
   final PaymentDetails details;
 
@@ -1159,6 +1160,7 @@ class Payment {
     required this.amountMsat,
     required this.feeMsat,
     required this.status,
+    this.error,
     this.description,
     required this.details,
   });
@@ -3417,7 +3419,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   Payment _wire2api_payment(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 8) throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    if (arr.length != 9) throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
     return Payment(
       id: _wire2api_String(arr[0]),
       paymentType: _wire2api_payment_type(arr[1]),
@@ -3425,8 +3427,9 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       amountMsat: _wire2api_u64(arr[3]),
       feeMsat: _wire2api_u64(arr[4]),
       status: _wire2api_payment_status(arr[5]),
-      description: _wire2api_opt_String(arr[6]),
-      details: _wire2api_payment_details(arr[7]),
+      error: _wire2api_opt_String(arr[6]),
+      description: _wire2api_opt_String(arr[7]),
+      details: _wire2api_payment_details(arr[8]),
     );
   }
 

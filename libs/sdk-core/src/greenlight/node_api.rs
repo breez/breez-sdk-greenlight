@@ -1453,6 +1453,7 @@ impl TryFrom<OffChainPayment> for Payment {
             amount_msat: amount_to_msat(&p.amount.unwrap_or_default()),
             fee_msat: 0,
             status: PaymentStatus::Complete,
+            error: None,
             description: ln_invoice.description,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
@@ -1491,6 +1492,7 @@ impl TryFrom<gl_client::signer::model::greenlight::Invoice> for Payment {
             amount_msat: amount_to_msat(&invoice.amount.unwrap_or_default()),
             fee_msat: 0,
             status: PaymentStatus::Complete,
+            error: None,
             description: ln_invoice.description,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
@@ -1544,6 +1546,7 @@ impl TryFrom<gl_client::signer::model::greenlight::Payment> for Payment {
             amount_msat: payment_amount,
             fee_msat: payment_amount_sent - payment_amount,
             status,
+            error: None,
             description,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
@@ -1581,6 +1584,7 @@ impl TryFrom<cln::ListinvoicesInvoices> for Payment {
             amount_msat: invoice.amount_msat.map(|a| a.msat).unwrap_or_default(),
             fee_msat: 0,
             status: PaymentStatus::Complete,
+            error: None,
             description: ln_invoice.description,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
@@ -1647,6 +1651,7 @@ impl TryFrom<cln::ListpaysPays> for Payment {
             },
             fee_msat: payment_amount_sent - payment_amount,
             status,
+            error: None,
             description: ln_invoice.map(|i| i.description).unwrap_or_default(),
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
