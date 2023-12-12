@@ -79,6 +79,7 @@ impl FiatAPI for BreezServer {
                 fiat_currency_list.push(convert_to_fiat_currency_with_id(key, value));
             }
         }
+        fiat_currency_list.sort_by(|a, b| a.info.name.cmp(&b.info.name));
         Ok(fiat_currency_list)
     }
 
