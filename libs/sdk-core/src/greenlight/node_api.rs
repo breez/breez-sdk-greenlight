@@ -116,11 +116,7 @@ impl Greenlight {
                 match encrypted_creds {
                     Some(c) => {
                         persister.set_gl_credentials(c)?;
-                        let gl_node = Greenlight::new(config, seed, creds, persister).await?;
-                        // Make small API call to ensure the signer can be scheduled. This will fail if there are any network issues.
-                        // The other two scenarios (recover, register) already include a network call.
-                        gl_node.start().await?;
-                        Ok(gl_node)
+                        Greenlight::new(config, seed, creds, persister).await
                     }
                     None => {
                         return Err(anyhow!("Failed to encrypt credentials"));
