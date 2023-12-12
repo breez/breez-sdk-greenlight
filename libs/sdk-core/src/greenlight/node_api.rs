@@ -835,7 +835,7 @@ impl NodeAPI for Greenlight {
                     payment_secret: Some(invoice.payment_secret.clone()),
                     partid: Some(part_id),
                     localinvreqid: None,
-                    groupid: None,
+                    groupid: Some(group_id),
                 })
                 .await?;
             part_id += 1;
