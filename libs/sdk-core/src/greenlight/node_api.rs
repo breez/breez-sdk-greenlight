@@ -116,7 +116,7 @@ impl Greenlight {
                 match encrypted_creds {
                     Some(c) => {
                         persister.set_gl_credentials(c)?;
-                        Greenlight::new(config, seed, creds, persister).await
+                        Greenlight::new(config, seed, creds, persister)
                     }
                     None => {
                         return Err(anyhow!("Failed to encrypt credentials"));
@@ -128,7 +128,7 @@ impl Greenlight {
         res
     }
 
-    async fn new(
+    fn new(
         sdk_config: Config,
         seed: Vec<u8>,
         connection_credentials: GreenlightCredentials,
