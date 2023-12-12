@@ -93,9 +93,10 @@ impl FiatAPI for BreezServer {
             .map_err(|e| SdkError::ServiceConnectivity {
                 err: format!("Fetch rates request failed: {e}"),
             })?;
-        Ok(response
-            .into_inner()
-            .rates
+
+        let mut rates = response.into_inner().rates;
+        rates.sort_by(|a, b| a.coin.cmp(&b.coin));
+        Ok(rates
             .into_iter()
             .map(|r| Rate {
                 coin: r.coin,

@@ -587,12 +587,13 @@ impl BreezServices {
         Ok(response)
     }
 
-    /// Fetch live rates of fiat currencies
+    /// Fetch live rates of fiat currencies, sorted by their name
     pub async fn fetch_fiat_rates(&self) -> SdkResult<Vec<Rate>> {
         self.fiat_api.fetch_fiat_rates().await
     }
 
-    /// List all supported fiat currencies for which there is a known exchange rate.
+    /// Fetch a list of all supported fiat currencies for which there is a known exchange rate
+    /// List is sorted by the canonical name of the currency
     pub async fn list_fiat_currencies(&self) -> SdkResult<Vec<FiatCurrency>> {
         self.fiat_api.list_fiat_currencies().await
     }
