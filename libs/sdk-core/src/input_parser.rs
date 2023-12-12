@@ -269,12 +269,8 @@ fn prepend_if_missing(prefix: &str, input: &str) -> String {
 fn ln_address_decode(ln_address: &str) -> Result<(String, String)> {
     if ln_address.contains('@') {
         let split = ln_address.split('@').collect::<Vec<&str>>();
-        let user = split[0];
+        let user = split[0].to_lowercase();
         let domain = split[1];
-
-        if user.to_lowercase() != user {
-            return Err(anyhow!("Invalid username"));
-        }
 
         if !user
             .chars()
@@ -1284,12 +1280,19 @@ pub(crate) mod tests {
                 true
             )
         );
+        assert_eq!(
+            lnurl_decode("User@domain.com")?,
+            (
+                "domain.com".into(),
+                "https://domain.com/.well-known/lnurlp/user".into(),
+                true
+            )
+        );
         assert!(ln_address_decode("invalid_ln_address").is_err());
 
         // Valid chars are a-z0-9-_.
         assert!(lnurl_decode("user.testy_test1@domain.com").is_ok());
         assert!(lnurl_decode("user+1@domain.com").is_err());
-        assert!(lnurl_decode("User@domain.com").is_err());
 
         Ok(())
     }
