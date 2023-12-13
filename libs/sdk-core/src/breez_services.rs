@@ -27,7 +27,7 @@ use crate::backup::{BackupRequest, BackupTransport, BackupWatcher};
 use crate::chain::{ChainService, MempoolSpace, Outspend, RecommendedFees};
 use crate::error::{
     LnUrlAuthError, LnUrlPayError, LnUrlWithdrawError, ReceiveOnchainError, ReceivePaymentError,
-    SdkError, SdkResult, SendOnchainError, SendPaymentError,
+    RedeemSwapError, SdkError, SdkResult, SendOnchainError, SendPaymentError,
 };
 use crate::fiat::{FiatCurrency, Rate};
 use crate::greenlight::{GLBackupTransport, Greenlight};
@@ -717,6 +717,33 @@ impl BreezServices {
             return Ok(Some(in_progress[0].clone()));
         }
         Ok(None)
+    }
+
+    /// Attempt to redeem a [SwapInfo].
+    /// A [SwapInfo] is in-progress if it is waiting for confirmation to be redeemed and complete the swap.
+    pub async fn redeem_swap(
+        &self,
+        req: RedeemSwapRequest,
+    ) -> Result<(), RedeemSwapError> {
+        let swap = self
+            .btc_receive_swapper
+            .get_swap_info(req.swap_address.clone())?;
+        match swap {
+            Some(s) => {
+                if !s.redeemable() {
+                    return Err(RedeemSwapError::SwapNotRedeemable {
+                        err: req.swap_address,
+                    });
+                }
+                self.btc_receive_swapper
+                    .redeem_swap(s.bitcoin_address)
+                    .await?;                
+                Ok(())
+            }
+            None => Err(RedeemSwapError::SwapNotFound {
+                err: req.swap_address,
+            }),
+        }
     }
 
     /// Lookup the reverse swap fees (see [ReverseSwapServiceAPI::fetch_reverse_swap_fees]).

@@ -275,25 +275,7 @@ impl BTCReceiveSwap {
         // redeem swaps
         let redeemable_swaps = self.list_redeemables()?;
         for s in redeemable_swaps {
-            let redeem_res = self.redeem_swap(s.bitcoin_address.clone()).await;
-
-            if redeem_res.is_err() {
-                let err = redeem_res.as_ref().err().unwrap();
-                error!(
-                    "failed to redeem swap {:?}: {} {}",
-                    err,
-                    s.bitcoin_address,
-                    s.bolt11.unwrap_or_default(),
-                );
-                self.persister
-                    .update_swap_redeem_error(s.bitcoin_address, err.to_string())?;
-            } else {
-                info!(
-                    "succeed to redeem swap {:?}: {}",
-                    s.bitcoin_address,
-                    s.bolt11.unwrap_or_default()
-                )
-            }
+            _ = self.redeem_swap(s.bitcoin_address.clone()).await;
         }
 
         Ok(())
@@ -394,7 +376,7 @@ impl BTCReceiveSwap {
 
     /// redeem_swap executes the final step of receiving lightning payment
     /// in exchange for the on chain funds.
-    async fn redeem_swap(&self, bitcoin_address: String) -> Result<()> {
+    pub(crate) async fn redeem_swap(&self, bitcoin_address: String) -> Result<()> {
         let mut swap_info = self
             .persister
             .get_swap_info_by_address(bitcoin_address.clone())?
@@ -425,7 +407,7 @@ impl BTCReceiveSwap {
         }
 
         // Making sure the invoice amount matches the on-chain amount
-        let payreq = swap_info.bolt11.unwrap();
+        let payreq = swap_info.bolt11.clone().unwrap();
         let ln_invoice = parse_invoice(payreq.clone())?;
         debug!("swap info confirmed = {}", swap_info.confirmed_sats);
         if ln_invoice.amount_msat.unwrap() != (swap_info.confirmed_sats * 1000) {
@@ -437,7 +419,28 @@ impl BTCReceiveSwap {
         }
 
         // Asking the service to initiate the lightning payment.
-        self.swapper_api.complete_swap(payreq.clone()).await
+        let complete_res = self.swapper_api.complete_swap(payreq.clone()).await;
+        match complete_res {
+            Err(err) => {
+                error!(
+                    "failed to redeem swap {:?}: {} {}",
+                    err,
+                    swap_info.bitcoin_address,
+                    swap_info.bolt11.unwrap_or_default(),
+                );
+                self.persister
+                    .update_swap_redeem_error(swap_info.bitcoin_address, err.to_string())?;
+                Err(err)
+            }
+            Ok(_) => {
+                info!(
+                    "succeed to redeem swap {:?}: {}",
+                    swap_info.bitcoin_address,
+                    swap_info.bolt11.unwrap_or_default()
+                );
+                Ok(())
+            }
+        }
     }
 
     pub(crate) async fn prepare_refund_swap(

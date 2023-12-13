@@ -897,6 +897,10 @@ pub struct RefundResponse {
     pub refund_tx_id: String,
 }
 
+pub struct RedeemSwapRequest {
+    pub swap_address: String,
+}
+
 /// Dynamic fee parameters offered by the LSP for opening a new channel.
 ///
 /// After they are received, the client shouldn't change them when calling LSP methods,

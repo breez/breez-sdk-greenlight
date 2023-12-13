@@ -47,6 +47,15 @@ enum LnUrlWithdrawError {
 };
 
 [Error]
+enum RedeemSwapError {
+    "Generic",
+    "ServiceConnectivity",
+    "SwapNotFound",
+    "SwapAlreadyRedeemed",
+    "SwapNotRedeemable",
+};
+
+[Error]
 enum ReceiveOnchainError {
     "Generic",
     "ServiceConnectivity",
@@ -421,6 +430,10 @@ dictionary StaticBackupResponse {
 
 dictionary ReceiveOnchainRequest {
     OpeningFeeParams? opening_fee_params = null;
+};
+
+dictionary RedeemSwapRequest {
+  string swap_address;
 };
 
 dictionary BuyBitcoinRequest {
@@ -807,6 +820,9 @@ interface BlockingBreezServices {
 
    [Throws=SdkError]
    SwapInfo? in_progress_swap();
+
+   [Throws=RedeemSwapError]
+   void redeem_swap(RedeemSwapRequest req);
 
    [Throws=SdkError]
    sequence<SwapInfo> list_refundables();

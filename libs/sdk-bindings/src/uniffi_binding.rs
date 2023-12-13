@@ -16,13 +16,14 @@ use breez_sdk_core::{
     OpeningFeeParamsMenu, Payment, PaymentDetails, PaymentFailedData, PaymentStatus, PaymentType,
     PaymentTypeFilter, PrepareRefundRequest, PrepareRefundResponse, PrepareSweepRequest,
     PrepareSweepResponse, Rate, ReceiveOnchainRequest, ReceivePaymentRequest,
-    ReceivePaymentResponse, RecommendedFees, RefundRequest, RefundResponse, ReportIssueRequest,
-    ReportPaymentFailureDetails, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
-    ReverseSwapStatus, RouteHint, RouteHintHop, SendOnchainRequest, SendOnchainResponse,
-    SendPaymentRequest, SendPaymentResponse, SendSpontaneousPaymentRequest,
-    ServiceHealthCheckResponse, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
-    StaticBackupResponse, SuccessActionProcessed, SwapInfo, SwapStatus, SweepRequest,
-    SweepResponse, Symbol, UnspentTransactionOutput, UrlSuccessActionData,
+    ReceivePaymentResponse, RecommendedFees, RedeemSwapRequest, RefundRequest,
+    RefundResponse, ReportIssueRequest, ReportPaymentFailureDetails, ReverseSwapFeesRequest,
+    ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop,
+    SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
+    SendSpontaneousPaymentRequest, ServiceHealthCheckResponse, SignMessageRequest,
+    SignMessageResponse, StaticBackupRequest, StaticBackupResponse, SuccessActionProcessed,
+    SwapInfo, SwapStatus, SweepRequest, SweepResponse, Symbol, UnspentTransactionOutput,
+    UrlSuccessActionData,
 };
 use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
@@ -256,6 +257,13 @@ impl BlockingBreezServices {
     /// Onchain receive swap API
     pub fn in_progress_swap(&self) -> SdkResult<Option<SwapInfo>> {
         rt().block_on(self.breez_services.in_progress_swap())
+    }
+
+    pub fn redeem_swap(
+        &self,
+        req: RedeemSwapRequest,
+    ) -> Result<(), RedeemSwapError> {
+        rt().block_on(self.breez_services.redeem_swap(req))
     }
 
     /// list non-completed expired swaps that should be refunded by calling [BreezServices::refund]

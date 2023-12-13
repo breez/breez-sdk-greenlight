@@ -245,6 +245,33 @@ impl From<SdkError> for LnUrlWithdrawError {
     }
 }
 
+/// Error returned by [BreezServices::redeem_swap]
+#[derive(Debug, Error)]
+pub enum RedeemSwapError {
+    #[error("Generic: {err}")]
+    Generic { err: String },
+
+    #[error("Service connectivity: {err}")]
+    ServiceConnectivity { err: String },
+
+    #[error("Swap not found: {err}")]
+    SwapNotFound { err: String },
+
+    #[error("Swap has been already redeemed: {err}")]
+    SwapAlreadyRedeemed { err: String },
+
+    #[error("Swap is not redeemable: {err}")]
+    SwapNotRedeemable { err: String },
+}
+
+impl From<anyhow::Error> for RedeemSwapError {
+    fn from(err: anyhow::Error) -> Self {
+        Self::Generic {
+            err: err.to_string(),
+        }
+    }
+}
+
 /// Error returned by [BreezServices::receive_onchain] and [BreezServices::buy_bitcoin]
 #[derive(Debug, Error)]
 pub enum ReceiveOnchainError {

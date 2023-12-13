@@ -213,6 +213,11 @@ pub(crate) enum Commands {
     /// Generate address to receive onchain
     ReceiveOnchain {},
 
+    /// Redeem swap funds
+    RedeemSwap {
+        swap_address: String,
+    },
+
     /// Get the current in-progress swap if exists
     InProgressSwap {},
 

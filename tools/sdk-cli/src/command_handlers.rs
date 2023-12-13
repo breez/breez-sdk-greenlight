@@ -6,10 +6,10 @@ use breez_sdk_core::InputType::{LnUrlAuth, LnUrlPay, LnUrlWithdraw};
 use breez_sdk_core::{
     parse, BreezEvent, BreezServices, BuyBitcoinRequest, CheckMessageRequest, EventListener,
     GreenlightCredentials, ListPaymentsRequest, LnUrlPayRequest, LnUrlWithdrawRequest,
-    PrepareRefundRequest, ReceiveOnchainRequest, ReceivePaymentRequest, RefundRequest,
-    ReportIssueRequest, ReportPaymentFailureDetails, ReverseSwapFeesRequest, SendOnchainRequest,
-    SendPaymentRequest, SendSpontaneousPaymentRequest, SignMessageRequest, StaticBackupRequest,
-    SweepRequest,
+    PrepareRefundRequest, ReceiveOnchainRequest, ReceivePaymentRequest, RedeemSwapRequest,
+    RefundRequest, ReportIssueRequest, ReportPaymentFailureDetails, ReverseSwapFeesRequest,
+    SendOnchainRequest, SendPaymentRequest, SendSpontaneousPaymentRequest, SignMessageRequest,
+    StaticBackupRequest, SweepRequest,
 };
 use breez_sdk_core::{Config, GreenlightNodeConfig, NodeConfig};
 use once_cell::sync::OnceCell;
@@ -307,6 +307,12 @@ pub(crate) async fn handle_command(
         Commands::ReceiveOnchain {} => serde_json::to_string_pretty(
             &sdk()?
                 .receive_onchain(ReceiveOnchainRequest::default())
+                .await?,
+        )
+        .map_err(|e| e.into()),
+        Commands::RedeemSwap { swap_address } => serde_json::to_string_pretty(
+            &sdk()?
+                .redeem_swap(RedeemSwapRequest { swap_address })
                 .await?,
         )
         .map_err(|e| e.into()),
