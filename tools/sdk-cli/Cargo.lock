@@ -440,7 +440,7 @@ dependencies = [
 
 [[package]]
 name = "breez-sdk-cli"
-version = "0.2.10"
+version = "0.2.11"
 dependencies = [
  "anyhow",
  "breez-sdk-core",
@@ -457,7 +457,7 @@ dependencies = [
 
 [[package]]
 name = "breez-sdk-core"
-version = "0.2.10"
+version = "0.2.11"
 dependencies = [
  "aes",
  "anyhow",
