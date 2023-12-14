@@ -878,13 +878,13 @@ pub struct BuyBitcoinResponse {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SweepRequest {
+pub struct RedeemOnchainFundsRequest {
     pub to_address: String,
     pub sat_per_vbyte: u32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SweepResponse {
+pub struct RedeemOnchainFundsResponse {
     pub txid: Vec<u8>,
 }
 
@@ -1298,21 +1298,21 @@ pub enum BuyBitcoinProvider {
     Moonpay,
 }
 
-/// We need to prepare a sweep transaction to know what fee will be charged in satoshis this
-/// model holds the request data which consists of the address to sweep to and the fee rate in
+/// We need to prepare a redeem_onchain_funds transaction to know what fee will be charged in satoshis.
+/// This model holds the request data which consists of the address to redeem on-chain funds to and the fee rate in.
 /// satoshis per vbyte which will be converted to absolute satoshis.
 #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
-pub struct PrepareSweepRequest {
+pub struct PrepareRedeemOnchainFundsRequest {
     pub to_address: String,
     pub sat_per_vbyte: u32,
 }
 
-/// We need to prepare a sweep transaction to know what a fee it will be charged in satoshis
+/// We need to prepare a redeem_onchain_funds transaction to know what a fee it will be charged in satoshis
 /// this model holds the response data, which consists of the weight and the absolute fee in sats
 #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
-pub struct PrepareSweepResponse {
-    pub sweep_tx_weight: u64,
-    pub sweep_tx_fee_sat: u64,
+pub struct PrepareRedeemOnchainFundsResponse {
+    pub tx_weight: u64,
+    pub tx_fee_sat: u64,
 }
 
 impl FromStr for BuyBitcoinProvider {

@@ -43,7 +43,10 @@ use crate::invoice::{parse_invoice, validate_network, InvoiceError, RouteHintHop
 use crate::models::*;
 use crate::node_api::{NodeAPI, NodeError, NodeResult};
 use crate::persist::db::SqliteStorage;
-use crate::{Channel, ChannelState, NodeConfig, PrepareSweepRequest, PrepareSweepResponse};
+use crate::{
+    Channel, ChannelState, NodeConfig, PrepareRedeemOnchainFundsRequest,
+    PrepareRedeemOnchainFundsResponse,
+};
 use std::iter::Iterator;
 
 const MAX_PAYMENT_AMOUNT_MSAT: u64 = 4294967000;
@@ -946,7 +949,11 @@ impl NodeAPI for Greenlight {
         Ok(hex::encode(node_info.id))
     }
 
-    async fn sweep(&self, to_address: String, sat_per_vbyte: u32) -> NodeResult<Vec<u8>> {
+    async fn redeem_onchain_funds(
+        &self,
+        to_address: String,
+        sat_per_vbyte: u32,
+    ) -> NodeResult<Vec<u8>> {
         let mut client = self.get_node_client().await?;
 
         let request = cln::WithdrawRequest {
@@ -964,7 +971,10 @@ impl NodeAPI for Greenlight {
         Ok(client.withdraw(request).await?.into_inner().txid)
     }
 
-    async fn prepare_sweep(&self, req: PrepareSweepRequest) -> NodeResult<PrepareSweepResponse> {
+    async fn prepare_redeem_onchain_funds(
+        &self,
+        req: PrepareRedeemOnchainFundsRequest,
+    ) -> NodeResult<PrepareRedeemOnchainFundsResponse> {
         let funds = self.list_funds().await?;
         let utxos = self.utxos(funds).await?;
 
@@ -1012,9 +1022,9 @@ impl NodeAPI for Greenlight {
         }
         tx.output[0].value = amount - fee;
 
-        return Ok(PrepareSweepResponse {
-            sweep_tx_weight: tx_weight,
-            sweep_tx_fee_sat: fee,
+        return Ok(PrepareRedeemOnchainFundsResponse {
+            tx_weight,
+            tx_fee_sat: fee,
         });
     }
 

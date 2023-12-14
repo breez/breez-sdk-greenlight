@@ -40,7 +40,7 @@ use crate::swap_in::error::SwapResult;
 use crate::swap_in::swap::create_submarine_swap_script;
 use crate::{
     parse_invoice, Config, CustomMessage, LNInvoice, MaxChannelAmount, NodeCredentials,
-    PaymentResponse, Peer, PrepareSweepRequest, PrepareSweepResponse, RouteHint, RouteHintHop,
+    PaymentResponse, Peer, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, RouteHint, RouteHintHop,
 };
 use crate::{OpeningFeeParams, OpeningFeeParamsMenu};
 use crate::{ReceivePaymentRequest, SwapInfo};
@@ -337,11 +337,11 @@ impl NodeAPI for MockNodeAPI {
         Ok("".to_string())
     }
 
-    async fn sweep(&self, _to_address: String, _sat_per_vbyte: u32) -> NodeResult<Vec<u8>> {
+    async fn redeem_onchain_funds(&self, _to_address: String, _sat_per_vbyte: u32) -> NodeResult<Vec<u8>> {
         Ok(rand_vec_u8(32))
     }
 
-    async fn prepare_sweep(&self, _req: PrepareSweepRequest) -> NodeResult<PrepareSweepResponse> {
+    async fn prepare_redeem_onchain_funds(&self, _req: PrepareRedeemOnchainFundsRequest) -> NodeResult<PrepareRedeemOnchainFundsResponse> {
         Err(NodeError::Generic(anyhow!("Not implemented")))
     }
 

@@ -315,12 +315,12 @@ class BreezSDK {
   }
 
   /// Withdraw on-chain funds in the wallet to an external btc address
-  Future<SweepResponse> sweep({
-    required SweepRequest req,
+  Future<RedeemOnchainFundsResponse> redeemOnchainFunds({
+    required RedeemOnchainFundsRequest req,
   }) async {
-    final sweepResponse = await _lnToolkit.sweep(req: req);
+    final redeemOnchainFundsResponse = await _lnToolkit.redeemOnchainFunds(req: req);
     await listPayments(req: const ListPaymentsRequest());
-    return sweepResponse;
+    return redeemOnchainFundsResponse;
   }
 
   /// Returns the max amount that can be sent on-chain using the send_onchain method.
@@ -382,10 +382,10 @@ class BreezSDK {
   /// Fetches the current recommended fees
   Future<RecommendedFees> recommendedFees() async => await _lnToolkit.recommendedFees();
 
-  Future<PrepareSweepResponse> prepareSweep({
-    required PrepareSweepRequest req,
+  Future<PrepareRedeemOnchainFundsResponse> prepareRedeemOnchainFunds({
+    required PrepareRedeemOnchainFundsRequest req,
   }) async =>
-      _lnToolkit.prepareSweep(req: req);
+      _lnToolkit.prepareRedeemOnchainFunds(req: req);
 
   /* Support API's */
 

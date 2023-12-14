@@ -2120,6 +2120,82 @@ enum BreezSDKMapper {
         return paymentFailedDataList.map { v -> [String: Any?] in dictionaryOf(paymentFailedData: v) }
     }
 
+    static func asPrepareRedeemOnchainFundsRequest(prepareRedeemOnchainFundsRequest: [String: Any?]) throws -> PrepareRedeemOnchainFundsRequest {
+        guard let toAddress = prepareRedeemOnchainFundsRequest["toAddress"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "toAddress", typeName: "PrepareRedeemOnchainFundsRequest"))
+        }
+        guard let satPerVbyte = prepareRedeemOnchainFundsRequest["satPerVbyte"] as? UInt32 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "satPerVbyte", typeName: "PrepareRedeemOnchainFundsRequest"))
+        }
+
+        return PrepareRedeemOnchainFundsRequest(
+            toAddress: toAddress,
+            satPerVbyte: satPerVbyte
+        )
+    }
+
+    static func dictionaryOf(prepareRedeemOnchainFundsRequest: PrepareRedeemOnchainFundsRequest) -> [String: Any?] {
+        return [
+            "toAddress": prepareRedeemOnchainFundsRequest.toAddress,
+            "satPerVbyte": prepareRedeemOnchainFundsRequest.satPerVbyte,
+        ]
+    }
+
+    static func asPrepareRedeemOnchainFundsRequestList(arr: [Any]) throws -> [PrepareRedeemOnchainFundsRequest] {
+        var list = [PrepareRedeemOnchainFundsRequest]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var prepareRedeemOnchainFundsRequest = try asPrepareRedeemOnchainFundsRequest(prepareRedeemOnchainFundsRequest: val)
+                list.append(prepareRedeemOnchainFundsRequest)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "PrepareRedeemOnchainFundsRequest"))
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(prepareRedeemOnchainFundsRequestList: [PrepareRedeemOnchainFundsRequest]) -> [Any] {
+        return prepareRedeemOnchainFundsRequestList.map { v -> [String: Any?] in dictionaryOf(prepareRedeemOnchainFundsRequest: v) }
+    }
+
+    static func asPrepareRedeemOnchainFundsResponse(prepareRedeemOnchainFundsResponse: [String: Any?]) throws -> PrepareRedeemOnchainFundsResponse {
+        guard let txWeight = prepareRedeemOnchainFundsResponse["txWeight"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "txWeight", typeName: "PrepareRedeemOnchainFundsResponse"))
+        }
+        guard let txFeeSat = prepareRedeemOnchainFundsResponse["txFeeSat"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "txFeeSat", typeName: "PrepareRedeemOnchainFundsResponse"))
+        }
+
+        return PrepareRedeemOnchainFundsResponse(
+            txWeight: txWeight,
+            txFeeSat: txFeeSat
+        )
+    }
+
+    static func dictionaryOf(prepareRedeemOnchainFundsResponse: PrepareRedeemOnchainFundsResponse) -> [String: Any?] {
+        return [
+            "txWeight": prepareRedeemOnchainFundsResponse.txWeight,
+            "txFeeSat": prepareRedeemOnchainFundsResponse.txFeeSat,
+        ]
+    }
+
+    static func asPrepareRedeemOnchainFundsResponseList(arr: [Any]) throws -> [PrepareRedeemOnchainFundsResponse] {
+        var list = [PrepareRedeemOnchainFundsResponse]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var prepareRedeemOnchainFundsResponse = try asPrepareRedeemOnchainFundsResponse(prepareRedeemOnchainFundsResponse: val)
+                list.append(prepareRedeemOnchainFundsResponse)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "PrepareRedeemOnchainFundsResponse"))
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(prepareRedeemOnchainFundsResponseList: [PrepareRedeemOnchainFundsResponse]) -> [Any] {
+        return prepareRedeemOnchainFundsResponseList.map { v -> [String: Any?] in dictionaryOf(prepareRedeemOnchainFundsResponse: v) }
+    }
+
     static func asPrepareRefundRequest(prepareRefundRequest: [String: Any?]) throws -> PrepareRefundRequest {
         guard let swapAddress = prepareRefundRequest["swapAddress"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "swapAddress", typeName: "PrepareRefundRequest"))
@@ -2199,82 +2275,6 @@ enum BreezSDKMapper {
 
     static func arrayOf(prepareRefundResponseList: [PrepareRefundResponse]) -> [Any] {
         return prepareRefundResponseList.map { v -> [String: Any?] in dictionaryOf(prepareRefundResponse: v) }
-    }
-
-    static func asPrepareSweepRequest(prepareSweepRequest: [String: Any?]) throws -> PrepareSweepRequest {
-        guard let toAddress = prepareSweepRequest["toAddress"] as? String else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "toAddress", typeName: "PrepareSweepRequest"))
-        }
-        guard let satPerVbyte = prepareSweepRequest["satPerVbyte"] as? UInt32 else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "satPerVbyte", typeName: "PrepareSweepRequest"))
-        }
-
-        return PrepareSweepRequest(
-            toAddress: toAddress,
-            satPerVbyte: satPerVbyte
-        )
-    }
-
-    static func dictionaryOf(prepareSweepRequest: PrepareSweepRequest) -> [String: Any?] {
-        return [
-            "toAddress": prepareSweepRequest.toAddress,
-            "satPerVbyte": prepareSweepRequest.satPerVbyte,
-        ]
-    }
-
-    static func asPrepareSweepRequestList(arr: [Any]) throws -> [PrepareSweepRequest] {
-        var list = [PrepareSweepRequest]()
-        for value in arr {
-            if let val = value as? [String: Any?] {
-                var prepareSweepRequest = try asPrepareSweepRequest(prepareSweepRequest: val)
-                list.append(prepareSweepRequest)
-            } else {
-                throw SdkError.Generic(message: errUnexpectedType(typeName: "PrepareSweepRequest"))
-            }
-        }
-        return list
-    }
-
-    static func arrayOf(prepareSweepRequestList: [PrepareSweepRequest]) -> [Any] {
-        return prepareSweepRequestList.map { v -> [String: Any?] in dictionaryOf(prepareSweepRequest: v) }
-    }
-
-    static func asPrepareSweepResponse(prepareSweepResponse: [String: Any?]) throws -> PrepareSweepResponse {
-        guard let sweepTxWeight = prepareSweepResponse["sweepTxWeight"] as? UInt64 else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "sweepTxWeight", typeName: "PrepareSweepResponse"))
-        }
-        guard let sweepTxFeeSat = prepareSweepResponse["sweepTxFeeSat"] as? UInt64 else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "sweepTxFeeSat", typeName: "PrepareSweepResponse"))
-        }
-
-        return PrepareSweepResponse(
-            sweepTxWeight: sweepTxWeight,
-            sweepTxFeeSat: sweepTxFeeSat
-        )
-    }
-
-    static func dictionaryOf(prepareSweepResponse: PrepareSweepResponse) -> [String: Any?] {
-        return [
-            "sweepTxWeight": prepareSweepResponse.sweepTxWeight,
-            "sweepTxFeeSat": prepareSweepResponse.sweepTxFeeSat,
-        ]
-    }
-
-    static func asPrepareSweepResponseList(arr: [Any]) throws -> [PrepareSweepResponse] {
-        var list = [PrepareSweepResponse]()
-        for value in arr {
-            if let val = value as? [String: Any?] {
-                var prepareSweepResponse = try asPrepareSweepResponse(prepareSweepResponse: val)
-                list.append(prepareSweepResponse)
-            } else {
-                throw SdkError.Generic(message: errUnexpectedType(typeName: "PrepareSweepResponse"))
-            }
-        }
-        return list
-    }
-
-    static func arrayOf(prepareSweepResponseList: [PrepareSweepResponse]) -> [Any] {
-        return prepareSweepResponseList.map { v -> [String: Any?] in dictionaryOf(prepareSweepResponse: v) }
     }
 
     static func asRate(rate: [String: Any?]) throws -> Rate {
@@ -2531,6 +2531,76 @@ enum BreezSDKMapper {
 
     static func arrayOf(recommendedFeesList: [RecommendedFees]) -> [Any] {
         return recommendedFeesList.map { v -> [String: Any?] in dictionaryOf(recommendedFees: v) }
+    }
+
+    static func asRedeemOnchainFundsRequest(redeemOnchainFundsRequest: [String: Any?]) throws -> RedeemOnchainFundsRequest {
+        guard let toAddress = redeemOnchainFundsRequest["toAddress"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "toAddress", typeName: "RedeemOnchainFundsRequest"))
+        }
+        guard let satPerVbyte = redeemOnchainFundsRequest["satPerVbyte"] as? UInt32 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "satPerVbyte", typeName: "RedeemOnchainFundsRequest"))
+        }
+
+        return RedeemOnchainFundsRequest(
+            toAddress: toAddress,
+            satPerVbyte: satPerVbyte
+        )
+    }
+
+    static func dictionaryOf(redeemOnchainFundsRequest: RedeemOnchainFundsRequest) -> [String: Any?] {
+        return [
+            "toAddress": redeemOnchainFundsRequest.toAddress,
+            "satPerVbyte": redeemOnchainFundsRequest.satPerVbyte,
+        ]
+    }
+
+    static func asRedeemOnchainFundsRequestList(arr: [Any]) throws -> [RedeemOnchainFundsRequest] {
+        var list = [RedeemOnchainFundsRequest]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var redeemOnchainFundsRequest = try asRedeemOnchainFundsRequest(redeemOnchainFundsRequest: val)
+                list.append(redeemOnchainFundsRequest)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "RedeemOnchainFundsRequest"))
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(redeemOnchainFundsRequestList: [RedeemOnchainFundsRequest]) -> [Any] {
+        return redeemOnchainFundsRequestList.map { v -> [String: Any?] in dictionaryOf(redeemOnchainFundsRequest: v) }
+    }
+
+    static func asRedeemOnchainFundsResponse(redeemOnchainFundsResponse: [String: Any?]) throws -> RedeemOnchainFundsResponse {
+        guard let txid = redeemOnchainFundsResponse["txid"] as? [UInt8] else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "txid", typeName: "RedeemOnchainFundsResponse"))
+        }
+
+        return RedeemOnchainFundsResponse(
+            txid: txid)
+    }
+
+    static func dictionaryOf(redeemOnchainFundsResponse: RedeemOnchainFundsResponse) -> [String: Any?] {
+        return [
+            "txid": redeemOnchainFundsResponse.txid,
+        ]
+    }
+
+    static func asRedeemOnchainFundsResponseList(arr: [Any]) throws -> [RedeemOnchainFundsResponse] {
+        var list = [RedeemOnchainFundsResponse]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var redeemOnchainFundsResponse = try asRedeemOnchainFundsResponse(redeemOnchainFundsResponse: val)
+                list.append(redeemOnchainFundsResponse)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "RedeemOnchainFundsResponse"))
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(redeemOnchainFundsResponseList: [RedeemOnchainFundsResponse]) -> [Any] {
+        return redeemOnchainFundsResponseList.map { v -> [String: Any?] in dictionaryOf(redeemOnchainFundsResponse: v) }
     }
 
     static func asRefundRequest(refundRequest: [String: Any?]) throws -> RefundRequest {
@@ -3431,76 +3501,6 @@ enum BreezSDKMapper {
 
     static func arrayOf(swapInfoList: [SwapInfo]) -> [Any] {
         return swapInfoList.map { v -> [String: Any?] in dictionaryOf(swapInfo: v) }
-    }
-
-    static func asSweepRequest(sweepRequest: [String: Any?]) throws -> SweepRequest {
-        guard let toAddress = sweepRequest["toAddress"] as? String else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "toAddress", typeName: "SweepRequest"))
-        }
-        guard let satPerVbyte = sweepRequest["satPerVbyte"] as? UInt32 else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "satPerVbyte", typeName: "SweepRequest"))
-        }
-
-        return SweepRequest(
-            toAddress: toAddress,
-            satPerVbyte: satPerVbyte
-        )
-    }
-
-    static func dictionaryOf(sweepRequest: SweepRequest) -> [String: Any?] {
-        return [
-            "toAddress": sweepRequest.toAddress,
-            "satPerVbyte": sweepRequest.satPerVbyte,
-        ]
-    }
-
-    static func asSweepRequestList(arr: [Any]) throws -> [SweepRequest] {
-        var list = [SweepRequest]()
-        for value in arr {
-            if let val = value as? [String: Any?] {
-                var sweepRequest = try asSweepRequest(sweepRequest: val)
-                list.append(sweepRequest)
-            } else {
-                throw SdkError.Generic(message: errUnexpectedType(typeName: "SweepRequest"))
-            }
-        }
-        return list
-    }
-
-    static func arrayOf(sweepRequestList: [SweepRequest]) -> [Any] {
-        return sweepRequestList.map { v -> [String: Any?] in dictionaryOf(sweepRequest: v) }
-    }
-
-    static func asSweepResponse(sweepResponse: [String: Any?]) throws -> SweepResponse {
-        guard let txid = sweepResponse["txid"] as? [UInt8] else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "txid", typeName: "SweepResponse"))
-        }
-
-        return SweepResponse(
-            txid: txid)
-    }
-
-    static func dictionaryOf(sweepResponse: SweepResponse) -> [String: Any?] {
-        return [
-            "txid": sweepResponse.txid,
-        ]
-    }
-
-    static func asSweepResponseList(arr: [Any]) throws -> [SweepResponse] {
-        var list = [SweepResponse]()
-        for value in arr {
-            if let val = value as? [String: Any?] {
-                var sweepResponse = try asSweepResponse(sweepResponse: val)
-                list.append(sweepResponse)
-            } else {
-                throw SdkError.Generic(message: errUnexpectedType(typeName: "SweepResponse"))
-            }
-        }
-        return list
-    }
-
-    static func arrayOf(sweepResponseList: [SweepResponse]) -> [Any] {
-        return sweepResponseList.map { v -> [String: Any?] in dictionaryOf(sweepResponse: v) }
     }
 
     static func asSymbol(symbol: [String: Any?]) throws -> Symbol {

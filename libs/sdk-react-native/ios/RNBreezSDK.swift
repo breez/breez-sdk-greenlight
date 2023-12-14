@@ -312,12 +312,12 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
-    @objc(sweep:resolve:reject:)
-    func sweep(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    @objc(redeemOnchainFunds:resolve:reject:)
+    func redeemOnchainFunds(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let sweepRequest = try BreezSDKMapper.asSweepRequest(sweepRequest: req)
-            var res = try getBreezServices().sweep(req: sweepRequest)
-            resolve(BreezSDKMapper.dictionaryOf(sweepResponse: res))
+            let redeemOnchainFundsRequest = try BreezSDKMapper.asRedeemOnchainFundsRequest(redeemOnchainFundsRequest: req)
+            var res = try getBreezServices().redeemOnchainFunds(req: redeemOnchainFundsRequest)
+            resolve(BreezSDKMapper.dictionaryOf(redeemOnchainFundsResponse: res))
         } catch let err {
             rejectErr(err: err, reject: reject)
         }
@@ -582,12 +582,12 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
-    @objc(prepareSweep:resolve:reject:)
-    func prepareSweep(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    @objc(prepareRedeemOnchainFunds:resolve:reject:)
+    func prepareRedeemOnchainFunds(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let prepareSweepRequest = try BreezSDKMapper.asPrepareSweepRequest(prepareSweepRequest: req)
-            var res = try getBreezServices().prepareSweep(req: prepareSweepRequest)
-            resolve(BreezSDKMapper.dictionaryOf(prepareSweepResponse: res))
+            let prepareRedeemOnchainFundsRequest = try BreezSDKMapper.asPrepareRedeemOnchainFundsRequest(prepareRedeemOnchainFundsRequest: req)
+            var res = try getBreezServices().prepareRedeemOnchainFunds(req: prepareRedeemOnchainFundsRequest)
+            resolve(BreezSDKMapper.dictionaryOf(prepareRedeemOnchainFundsResponse: res))
         } catch let err {
             rejectErr(err: err, reject: reject)
         }

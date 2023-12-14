@@ -1,6 +1,6 @@
 use crate::{
     invoice::InvoiceError, persist::error::PersistError, CustomMessage, MaxChannelAmount,
-    NodeCredentials, Payment, PaymentResponse, Peer, PrepareSweepRequest, PrepareSweepResponse,
+    NodeCredentials, Payment, PaymentResponse, Peer, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse,
     RouteHintHop, SyncResponse, TlvEntry,
 };
 use anyhow::Result;
@@ -89,8 +89,8 @@ pub trait NodeAPI: Send + Sync {
         max_hops: u32,
         last_hop: Option<&RouteHintHop>,
     ) -> NodeResult<Vec<MaxChannelAmount>>;
-    async fn sweep(&self, to_address: String, sat_per_vbyte: u32) -> NodeResult<Vec<u8>>;
-    async fn prepare_sweep(&self, req: PrepareSweepRequest) -> NodeResult<PrepareSweepResponse>;
+    async fn redeem_onchain_funds(&self, to_address: String, sat_per_vbyte: u32) -> NodeResult<Vec<u8>>;
+    async fn prepare_redeem_onchain_funds(&self, req: PrepareRedeemOnchainFundsRequest) -> NodeResult<PrepareRedeemOnchainFundsResponse>;
     async fn start_signer(&self, shutdown: mpsc::Receiver<()>);
     async fn list_peers(&self) -> NodeResult<Vec<Peer>>;
     async fn connect_peer(&self, node_id: String, addr: String) -> NodeResult<()>;

@@ -35,13 +35,14 @@ use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
     EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus, LnUrlPayRequest,
     LnUrlWithdrawRequest, LnUrlWithdrawResult, MaxReverseSwapAmountResponse, NodeConfig,
-    NodeCredentials, OpenChannelFeeRequest, OpenChannelFeeResponse, PrepareRefundRequest,
-    PrepareRefundResponse, PrepareSweepRequest, PrepareSweepResponse, ReceiveOnchainRequest,
-    ReceivePaymentRequest, ReceivePaymentResponse, RefundRequest, RefundResponse,
+    NodeCredentials, OpenChannelFeeRequest, OpenChannelFeeResponse,
+    PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, PrepareRefundRequest,
+    PrepareRefundResponse, ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse,
+    RedeemOnchainFundsRequest, RedeemOnchainFundsResponse, RefundRequest, RefundResponse,
     ReportIssueRequest, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
     SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
     SendSpontaneousPaymentRequest, ServiceHealthCheckResponse, SignMessageRequest,
-    SignMessageResponse, StaticBackupRequest, StaticBackupResponse, SweepRequest, SweepResponse,
+    SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
 };
 
 /*
@@ -359,16 +360,23 @@ pub fn buy_bitcoin(req: BuyBitcoinRequest) -> Result<BuyBitcoinResponse> {
         .map_err(anyhow::Error::new::<ReceiveOnchainError>)
 }
 
-/// See [BreezServices::sweep]
-pub fn sweep(req: SweepRequest) -> Result<SweepResponse> {
-    block_on(async { get_breez_services().await?.sweep(req).await })
+/// See [BreezServices::redeem_onchain_funds]
+pub fn redeem_onchain_funds(req: RedeemOnchainFundsRequest) -> Result<RedeemOnchainFundsResponse> {
+    block_on(async { get_breez_services().await?.redeem_onchain_funds(req).await })
         .map_err(anyhow::Error::new::<SdkError>)
 }
 
-/// See [BreezServices::prepare_sweep]
-pub fn prepare_sweep(req: PrepareSweepRequest) -> Result<PrepareSweepResponse> {
-    block_on(async { get_breez_services().await?.prepare_sweep(req).await })
-        .map_err(anyhow::Error::new::<SdkError>)
+/// See [BreezServices::prepare_redeem_onchain_funds]
+pub fn prepare_redeem_onchain_funds(
+    req: PrepareRedeemOnchainFundsRequest,
+) -> Result<PrepareRedeemOnchainFundsResponse> {
+    block_on(async {
+        get_breez_services()
+            .await?
+            .prepare_redeem_onchain_funds(req)
+            .await
+    })
+    .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /*  Refundables API's */

@@ -6,10 +6,10 @@ use breez_sdk_core::InputType::{LnUrlAuth, LnUrlPay, LnUrlWithdraw};
 use breez_sdk_core::{
     parse, BreezEvent, BreezServices, BuyBitcoinRequest, CheckMessageRequest, EventListener,
     GreenlightCredentials, ListPaymentsRequest, LnUrlPayRequest, LnUrlWithdrawRequest,
-    PrepareRefundRequest, PrepareSweepRequest, ReceiveOnchainRequest, ReceivePaymentRequest,
-    RefundRequest, ReportIssueRequest, ReportPaymentFailureDetails, ReverseSwapFeesRequest,
-    SendOnchainRequest, SendPaymentRequest, SendSpontaneousPaymentRequest, SignMessageRequest,
-    StaticBackupRequest, SweepRequest,
+    PrepareRedeemOnchainFundsRequest, PrepareRefundRequest, ReceiveOnchainRequest,
+    ReceivePaymentRequest, RedeemOnchainFundsRequest, RefundRequest, ReportIssueRequest,
+    ReportPaymentFailureDetails, ReverseSwapFeesRequest, SendOnchainRequest, SendPaymentRequest,
+    SendSpontaneousPaymentRequest, SignMessageRequest, StaticBackupRequest,
 };
 use breez_sdk_core::{Config, GreenlightNodeConfig, NodeConfig};
 use once_cell::sync::OnceCell;
@@ -232,24 +232,24 @@ pub(crate) async fn handle_command(
             let payment = sdk()?.payment_by_hash(hash).await?;
             serde_json::to_string_pretty(&payment).map_err(|e| e.into())
         }
-        Commands::Sweep {
-            to_address,
-            sat_per_vbyte,
-        } => {
-            sdk()?
-                .sweep(SweepRequest {
-                    to_address,
-                    sat_per_vbyte,
-                })
-                .await?;
-            Ok("Onchain funds were swept successfully".to_string())
-        }
-        Commands::PrepareSweep {
+        Commands::RedeemOnchainFunds {
             to_address,
             sat_per_vbyte,
         } => {
             let resp = sdk()?
-                .prepare_sweep(PrepareSweepRequest {
+                .redeem_onchain_funds(RedeemOnchainFundsRequest {
+                    to_address,
+                    sat_per_vbyte,
+                })
+                .await?;
+            serde_json::to_string_pretty(&resp).map_err(|e| e.into())
+        }
+        Commands::PrepareRedeemOnchainFunds {
+            to_address,
+            sat_per_vbyte,
+        } => {
+            let resp = sdk()?
+                .prepare_redeem_onchain_funds(PrepareRedeemOnchainFundsRequest {
                     to_address,
                     sat_per_vbyte,
                 })
