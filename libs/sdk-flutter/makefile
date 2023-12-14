@@ -30,11 +30,11 @@ ios-dev: ios
 ## android: Compile the android targets (arm64, armv7 and i686)
 .PHONY: android
 android: $(SOURCES) flutter_rust_bridge
-	cd ../sdk-bindings && make android
+	cd ../sdk-bindings && make kotlin
 	mkdir -p ./android/src/main/jniLibs
 	cp -r ../sdk-bindings/ffi/kotlin/jniLibs/* ./android/src/main/jniLibs
 	mkdir -p ./android/src/main/kotlin/breez_sdk/
-	cp -r ../sdk-bindings/bindings-android/lib/src/main/kotlin/breez_sdk/* ./android/src/main/kotlin/breez_sdk/
+	cp -r ../sdk-bindings/ffi/kotlin/breez_sdk/* ./android/src/main/kotlin/breez_sdk/
 
 ## desktop: compiles for x86_64-unknown-linux-gnu by default, other targets can be specified
 ## with the TARGET variable eg. make desktop TARGET=aarch64-unknown-linux-gnu
