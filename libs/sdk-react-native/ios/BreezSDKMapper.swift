@@ -2205,7 +2205,7 @@ enum BreezSDKMapper {
         guard let toAddress = prepareSweepRequest["toAddress"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "toAddress", typeName: "PrepareSweepRequest"))
         }
-        guard let satPerVbyte = prepareSweepRequest["satPerVbyte"] as? UInt64 else {
+        guard let satPerVbyte = prepareSweepRequest["satPerVbyte"] as? UInt32 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "satPerVbyte", typeName: "PrepareSweepRequest"))
         }
 

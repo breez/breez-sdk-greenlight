@@ -6,10 +6,10 @@ use breez_sdk_core::InputType::{LnUrlAuth, LnUrlPay, LnUrlWithdraw};
 use breez_sdk_core::{
     parse, BreezEvent, BreezServices, BuyBitcoinRequest, CheckMessageRequest, EventListener,
     GreenlightCredentials, ListPaymentsRequest, LnUrlPayRequest, LnUrlWithdrawRequest,
-    PrepareRefundRequest, ReceiveOnchainRequest, ReceivePaymentRequest, RefundRequest,
-    ReportIssueRequest, ReportPaymentFailureDetails, ReverseSwapFeesRequest, SendOnchainRequest,
-    SendPaymentRequest, SendSpontaneousPaymentRequest, SignMessageRequest, StaticBackupRequest,
-    SweepRequest,
+    PrepareRefundRequest, PrepareSweepRequest, ReceiveOnchainRequest, ReceivePaymentRequest,
+    RefundRequest, ReportIssueRequest, ReportPaymentFailureDetails, ReverseSwapFeesRequest,
+    SendOnchainRequest, SendPaymentRequest, SendSpontaneousPaymentRequest, SignMessageRequest,
+    StaticBackupRequest, SweepRequest,
 };
 use breez_sdk_core::{Config, GreenlightNodeConfig, NodeConfig};
 use once_cell::sync::OnceCell;
@@ -248,13 +248,13 @@ pub(crate) async fn handle_command(
             to_address,
             sat_per_vbyte,
         } => {
-            sdk()?
-                .sweep(SweepRequest {
+            let resp = sdk()?
+                .prepare_sweep(PrepareSweepRequest {
                     to_address,
                     sat_per_vbyte,
                 })
                 .await?;
-            Ok("Onchain funds were swept succesfully".to_string())
+            serde_json::to_string_pretty(&resp).map_err(|e| e.into())
         }
         Commands::ListLsps {} => {
             let lsps = sdk()?.list_lsps().await?;

@@ -4363,7 +4363,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
 
   void _api_fill_to_wire_prepare_sweep_request(PrepareSweepRequest apiObj, wire_PrepareSweepRequest wireObj) {
     wireObj.to_address = api2wire_String(apiObj.toAddress);
-    wireObj.sat_per_vbyte = api2wire_u64(apiObj.satPerVbyte);
+    wireObj.sat_per_vbyte = api2wire_u32(apiObj.satPerVbyte);
   }
 
   void _api_fill_to_wire_receive_onchain_request(
@@ -5927,7 +5927,7 @@ final class wire_SweepRequest extends ffi.Struct {
 final class wire_PrepareSweepRequest extends ffi.Struct {
   external ffi.Pointer<wire_uint_8_list> to_address;
 
-  @ffi.Uint64()
+  @ffi.Uint32()
   external int sat_per_vbyte;
 }
 

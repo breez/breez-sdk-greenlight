@@ -1092,7 +1092,7 @@ pub struct wire_PrepareRefundRequest {
 #[derive(Clone)]
 pub struct wire_PrepareSweepRequest {
     to_address: *mut wire_uint_8_list,
-    sat_per_vbyte: u64,
+    sat_per_vbyte: u32,
 }
 
 #[repr(C)]

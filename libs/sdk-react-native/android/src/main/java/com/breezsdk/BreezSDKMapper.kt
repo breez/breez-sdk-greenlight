@@ -1993,7 +1993,7 @@ fun asPrepareSweepRequest(prepareSweepRequest: ReadableMap): PrepareSweepRequest
         return null
     }
     val toAddress = prepareSweepRequest.getString("toAddress")!!
-    val satPerVbyte = prepareSweepRequest.getDouble("satPerVbyte").toULong()
+    val satPerVbyte = prepareSweepRequest.getInt("satPerVbyte").toUInt()
     return PrepareSweepRequest(
         toAddress,
         satPerVbyte,

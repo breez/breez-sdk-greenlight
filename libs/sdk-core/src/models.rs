@@ -1304,7 +1304,7 @@ pub enum BuyBitcoinProvider {
 #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
 pub struct PrepareSweepRequest {
     pub to_address: String,
-    pub sat_per_vbyte: u64,
+    pub sat_per_vbyte: u32,
 }
 
 /// We need to prepare a sweep transaction to know what a fee it will be charged in satoshis

@@ -658,7 +658,7 @@ enum BuyBitcoinProvider {
 
 dictionary PrepareSweepRequest {
     string to_address;
-    u64 sat_per_vbyte;
+    u32 sat_per_vbyte;
 };
 
 dictionary PrepareSweepResponse {

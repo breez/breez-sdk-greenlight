@@ -1004,7 +1004,7 @@ impl NodeAPI for Greenlight {
         let witness_input_size: u64 = 110;
         let tx_weight = tx.strippedsize() as u64 * WITNESS_SCALE_FACTOR as u64
             + witness_input_size * txins.len() as u64;
-        let fee: u64 = tx_weight * req.sat_per_vbyte / WITNESS_SCALE_FACTOR as u64;
+        let fee: u64 = tx_weight * req.sat_per_vbyte as u64 / WITNESS_SCALE_FACTOR as u64;
         if fee >= amount {
             return Err(NodeError::Generic(anyhow!(
                 "Insufficient funds to pay fees"
