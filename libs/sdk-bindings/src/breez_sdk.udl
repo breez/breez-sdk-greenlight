@@ -656,22 +656,22 @@ enum BuyBitcoinProvider {
     "Moonpay",
 };
 
-dictionary PrepareSweepRequest {
-    string to_address;
-    u64 sat_per_vbyte;
-};
-
-dictionary PrepareSweepResponse {
-    u64 sweep_tx_weight;
-    u64 sweep_tx_fee_sat;
-};
-
-dictionary SweepRequest {
+dictionary PrepareRedeemOnchainFundsRequest {
     string to_address;
     u32 sat_per_vbyte;
 };
 
-dictionary SweepResponse {
+dictionary PrepareRedeemOnchainFundsResponse {
+    u64 tx_weight;
+    u64 tx_fee_sat;
+};
+
+dictionary RedeemOnchainFundsRequest {
+    string to_address;
+    u32 sat_per_vbyte;
+};
+
+dictionary RedeemOnchainFundsResponse {
     sequence<u8> txid;
 };
 
@@ -777,7 +777,7 @@ interface BlockingBreezServices {
    sequence<Payment> list_payments(ListPaymentsRequest req);
 
    [Throws=SdkError]
-   SweepResponse sweep(SweepRequest req);
+   RedeemOnchainFundsResponse redeem_onchain_funds(RedeemOnchainFundsRequest req);
 
    [Throws=SdkError]
    sequence<Rate> fetch_fiat_rates();
@@ -852,7 +852,7 @@ interface BlockingBreezServices {
    BuyBitcoinResponse buy_bitcoin(BuyBitcoinRequest req);
 
    [Throws=SdkError]
-   PrepareSweepResponse prepare_sweep(PrepareSweepRequest req);
+   PrepareRedeemOnchainFundsResponse prepare_redeem_onchain_funds(PrepareRedeemOnchainFundsRequest req);
 };
 
 namespace breez_sdk {  

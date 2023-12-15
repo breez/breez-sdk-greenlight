@@ -1903,6 +1903,80 @@ fun asPaymentFailedDataList(arr: ReadableArray): List<PaymentFailedData> {
     return list
 }
 
+fun asPrepareRedeemOnchainFundsRequest(prepareRedeemOnchainFundsRequest: ReadableMap): PrepareRedeemOnchainFundsRequest? {
+    if (!validateMandatoryFields(
+            prepareRedeemOnchainFundsRequest,
+            arrayOf(
+                "toAddress",
+                "satPerVbyte",
+            ),
+        )
+    ) {
+        return null
+    }
+    val toAddress = prepareRedeemOnchainFundsRequest.getString("toAddress")!!
+    val satPerVbyte = prepareRedeemOnchainFundsRequest.getInt("satPerVbyte").toUInt()
+    return PrepareRedeemOnchainFundsRequest(
+        toAddress,
+        satPerVbyte,
+    )
+}
+
+fun readableMapOf(prepareRedeemOnchainFundsRequest: PrepareRedeemOnchainFundsRequest): ReadableMap {
+    return readableMapOf(
+        "toAddress" to prepareRedeemOnchainFundsRequest.toAddress,
+        "satPerVbyte" to prepareRedeemOnchainFundsRequest.satPerVbyte,
+    )
+}
+
+fun asPrepareRedeemOnchainFundsRequestList(arr: ReadableArray): List<PrepareRedeemOnchainFundsRequest> {
+    val list = ArrayList<PrepareRedeemOnchainFundsRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asPrepareRedeemOnchainFundsRequest(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
+fun asPrepareRedeemOnchainFundsResponse(prepareRedeemOnchainFundsResponse: ReadableMap): PrepareRedeemOnchainFundsResponse? {
+    if (!validateMandatoryFields(
+            prepareRedeemOnchainFundsResponse,
+            arrayOf(
+                "txWeight",
+                "txFeeSat",
+            ),
+        )
+    ) {
+        return null
+    }
+    val txWeight = prepareRedeemOnchainFundsResponse.getDouble("txWeight").toULong()
+    val txFeeSat = prepareRedeemOnchainFundsResponse.getDouble("txFeeSat").toULong()
+    return PrepareRedeemOnchainFundsResponse(
+        txWeight,
+        txFeeSat,
+    )
+}
+
+fun readableMapOf(prepareRedeemOnchainFundsResponse: PrepareRedeemOnchainFundsResponse): ReadableMap {
+    return readableMapOf(
+        "txWeight" to prepareRedeemOnchainFundsResponse.txWeight,
+        "txFeeSat" to prepareRedeemOnchainFundsResponse.txFeeSat,
+    )
+}
+
+fun asPrepareRedeemOnchainFundsResponseList(arr: ReadableArray): List<PrepareRedeemOnchainFundsResponse> {
+    val list = ArrayList<PrepareRedeemOnchainFundsResponse>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asPrepareRedeemOnchainFundsResponse(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
 fun asPrepareRefundRequest(prepareRefundRequest: ReadableMap): PrepareRefundRequest? {
     if (!validateMandatoryFields(
             prepareRefundRequest,
@@ -1975,80 +2049,6 @@ fun asPrepareRefundResponseList(arr: ReadableArray): List<PrepareRefundResponse>
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asPrepareRefundResponse(value)!!)
-            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
-        }
-    }
-    return list
-}
-
-fun asPrepareSweepRequest(prepareSweepRequest: ReadableMap): PrepareSweepRequest? {
-    if (!validateMandatoryFields(
-            prepareSweepRequest,
-            arrayOf(
-                "toAddress",
-                "satPerVbyte",
-            ),
-        )
-    ) {
-        return null
-    }
-    val toAddress = prepareSweepRequest.getString("toAddress")!!
-    val satPerVbyte = prepareSweepRequest.getDouble("satPerVbyte").toULong()
-    return PrepareSweepRequest(
-        toAddress,
-        satPerVbyte,
-    )
-}
-
-fun readableMapOf(prepareSweepRequest: PrepareSweepRequest): ReadableMap {
-    return readableMapOf(
-        "toAddress" to prepareSweepRequest.toAddress,
-        "satPerVbyte" to prepareSweepRequest.satPerVbyte,
-    )
-}
-
-fun asPrepareSweepRequestList(arr: ReadableArray): List<PrepareSweepRequest> {
-    val list = ArrayList<PrepareSweepRequest>()
-    for (value in arr.toArrayList()) {
-        when (value) {
-            is ReadableMap -> list.add(asPrepareSweepRequest(value)!!)
-            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
-        }
-    }
-    return list
-}
-
-fun asPrepareSweepResponse(prepareSweepResponse: ReadableMap): PrepareSweepResponse? {
-    if (!validateMandatoryFields(
-            prepareSweepResponse,
-            arrayOf(
-                "sweepTxWeight",
-                "sweepTxFeeSat",
-            ),
-        )
-    ) {
-        return null
-    }
-    val sweepTxWeight = prepareSweepResponse.getDouble("sweepTxWeight").toULong()
-    val sweepTxFeeSat = prepareSweepResponse.getDouble("sweepTxFeeSat").toULong()
-    return PrepareSweepResponse(
-        sweepTxWeight,
-        sweepTxFeeSat,
-    )
-}
-
-fun readableMapOf(prepareSweepResponse: PrepareSweepResponse): ReadableMap {
-    return readableMapOf(
-        "sweepTxWeight" to prepareSweepResponse.sweepTxWeight,
-        "sweepTxFeeSat" to prepareSweepResponse.sweepTxFeeSat,
-    )
-}
-
-fun asPrepareSweepResponseList(arr: ReadableArray): List<PrepareSweepResponse> {
-    val list = ArrayList<PrepareSweepResponse>()
-    for (value in arr.toArrayList()) {
-        when (value) {
-            is ReadableMap -> list.add(asPrepareSweepResponse(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
         }
     }
@@ -2315,6 +2315,76 @@ fun asRecommendedFeesList(arr: ReadableArray): List<RecommendedFees> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asRecommendedFees(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
+fun asRedeemOnchainFundsRequest(redeemOnchainFundsRequest: ReadableMap): RedeemOnchainFundsRequest? {
+    if (!validateMandatoryFields(
+            redeemOnchainFundsRequest,
+            arrayOf(
+                "toAddress",
+                "satPerVbyte",
+            ),
+        )
+    ) {
+        return null
+    }
+    val toAddress = redeemOnchainFundsRequest.getString("toAddress")!!
+    val satPerVbyte = redeemOnchainFundsRequest.getInt("satPerVbyte").toUInt()
+    return RedeemOnchainFundsRequest(
+        toAddress,
+        satPerVbyte,
+    )
+}
+
+fun readableMapOf(redeemOnchainFundsRequest: RedeemOnchainFundsRequest): ReadableMap {
+    return readableMapOf(
+        "toAddress" to redeemOnchainFundsRequest.toAddress,
+        "satPerVbyte" to redeemOnchainFundsRequest.satPerVbyte,
+    )
+}
+
+fun asRedeemOnchainFundsRequestList(arr: ReadableArray): List<RedeemOnchainFundsRequest> {
+    val list = ArrayList<RedeemOnchainFundsRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asRedeemOnchainFundsRequest(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
+fun asRedeemOnchainFundsResponse(redeemOnchainFundsResponse: ReadableMap): RedeemOnchainFundsResponse? {
+    if (!validateMandatoryFields(
+            redeemOnchainFundsResponse,
+            arrayOf(
+                "txid",
+            ),
+        )
+    ) {
+        return null
+    }
+    val txid = redeemOnchainFundsResponse.getArray("txid")?.let { asUByteList(it) }!!
+    return RedeemOnchainFundsResponse(
+        txid,
+    )
+}
+
+fun readableMapOf(redeemOnchainFundsResponse: RedeemOnchainFundsResponse): ReadableMap {
+    return readableMapOf(
+        "txid" to readableArrayOf(redeemOnchainFundsResponse.txid),
+    )
+}
+
+fun asRedeemOnchainFundsResponseList(arr: ReadableArray): List<RedeemOnchainFundsResponse> {
+    val list = ArrayList<RedeemOnchainFundsResponse>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asRedeemOnchainFundsResponse(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
         }
     }
@@ -3156,76 +3226,6 @@ fun asSwapInfoList(arr: ReadableArray): List<SwapInfo> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asSwapInfo(value)!!)
-            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
-        }
-    }
-    return list
-}
-
-fun asSweepRequest(sweepRequest: ReadableMap): SweepRequest? {
-    if (!validateMandatoryFields(
-            sweepRequest,
-            arrayOf(
-                "toAddress",
-                "satPerVbyte",
-            ),
-        )
-    ) {
-        return null
-    }
-    val toAddress = sweepRequest.getString("toAddress")!!
-    val satPerVbyte = sweepRequest.getInt("satPerVbyte").toUInt()
-    return SweepRequest(
-        toAddress,
-        satPerVbyte,
-    )
-}
-
-fun readableMapOf(sweepRequest: SweepRequest): ReadableMap {
-    return readableMapOf(
-        "toAddress" to sweepRequest.toAddress,
-        "satPerVbyte" to sweepRequest.satPerVbyte,
-    )
-}
-
-fun asSweepRequestList(arr: ReadableArray): List<SweepRequest> {
-    val list = ArrayList<SweepRequest>()
-    for (value in arr.toArrayList()) {
-        when (value) {
-            is ReadableMap -> list.add(asSweepRequest(value)!!)
-            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
-        }
-    }
-    return list
-}
-
-fun asSweepResponse(sweepResponse: ReadableMap): SweepResponse? {
-    if (!validateMandatoryFields(
-            sweepResponse,
-            arrayOf(
-                "txid",
-            ),
-        )
-    ) {
-        return null
-    }
-    val txid = sweepResponse.getArray("txid")?.let { asUByteList(it) }!!
-    return SweepResponse(
-        txid,
-    )
-}
-
-fun readableMapOf(sweepResponse: SweepResponse): ReadableMap {
-    return readableMapOf(
-        "txid" to readableArrayOf(sweepResponse.txid),
-    )
-}
-
-fun asSweepResponseList(arr: ReadableArray): List<SweepResponse> {
-    val list = ArrayList<SweepResponse>()
-    for (value in arr.toArrayList()) {
-        when (value) {
-            is ReadableMap -> list.add(asSweepResponse(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
         }
     }

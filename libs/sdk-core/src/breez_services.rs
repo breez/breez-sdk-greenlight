@@ -576,20 +576,26 @@ impl BreezServices {
         Ok(self.persister.get_payment_by_hash(&hash)?)
     }
 
-    /// Sweep on-chain funds to the specified on-chain address, with the given feerate
-    pub async fn sweep(&self, req: SweepRequest) -> SdkResult<SweepResponse> {
+    /// Redeem on-chain funds from closed channels to the specified on-chain address, with the given feerate
+    pub async fn redeem_onchain_funds(
+        &self,
+        req: RedeemOnchainFundsRequest,
+    ) -> SdkResult<RedeemOnchainFundsResponse> {
         self.start_node().await?;
         let txid = self
             .node_api
-            .sweep(req.to_address, req.sat_per_vbyte)
+            .redeem_onchain_funds(req.to_address, req.sat_per_vbyte)
             .await?;
         self.sync().await?;
-        Ok(SweepResponse { txid })
+        Ok(RedeemOnchainFundsResponse { txid })
     }
 
-    pub async fn prepare_sweep(&self, req: PrepareSweepRequest) -> SdkResult<PrepareSweepResponse> {
+    pub async fn prepare_redeem_onchain_funds(
+        &self,
+        req: PrepareRedeemOnchainFundsRequest,
+    ) -> SdkResult<PrepareRedeemOnchainFundsResponse> {
         self.start_node().await?;
-        let response = self.node_api.prepare_sweep(req).await?;
+        let response = self.node_api.prepare_redeem_onchain_funds(req).await?;
         Ok(response)
     }
 

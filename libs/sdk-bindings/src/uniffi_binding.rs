@@ -14,15 +14,16 @@ use breez_sdk_core::{
     MaxReverseSwapAmountResponse, MessageSuccessActionData, MetadataItem, Network, NodeConfig,
     NodeCredentials, NodeState, OpenChannelFeeRequest, OpenChannelFeeResponse, OpeningFeeParams,
     OpeningFeeParamsMenu, Payment, PaymentDetails, PaymentFailedData, PaymentStatus, PaymentType,
-    PaymentTypeFilter, PrepareRefundRequest, PrepareRefundResponse, PrepareSweepRequest,
-    PrepareSweepResponse, Rate, ReceiveOnchainRequest, ReceivePaymentRequest,
-    ReceivePaymentResponse, RecommendedFees, RefundRequest, RefundResponse, ReportIssueRequest,
+    PaymentTypeFilter, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse,
+    PrepareRefundRequest, PrepareRefundResponse, Rate, ReceiveOnchainRequest,
+    ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees, RedeemOnchainFundsRequest,
+    RedeemOnchainFundsResponse, RefundRequest, RefundResponse, ReportIssueRequest,
     ReportPaymentFailureDetails, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
     ReverseSwapStatus, RouteHint, RouteHintHop, SendOnchainRequest, SendOnchainResponse,
     SendPaymentRequest, SendPaymentResponse, SendSpontaneousPaymentRequest,
     ServiceHealthCheckResponse, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
-    StaticBackupResponse, SuccessActionProcessed, SwapInfo, SwapStatus, SweepRequest,
-    SweepResponse, Symbol, TlvEntry, UnspentTransactionOutput, UrlSuccessActionData,
+    StaticBackupResponse, SuccessActionProcessed, SwapInfo, SwapStatus, Symbol, TlvEntry,
+    UnspentTransactionOutput, UrlSuccessActionData,
 };
 use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
@@ -195,8 +196,11 @@ impl BlockingBreezServices {
         rt().block_on(self.breez_services.report_issue(req))
     }
 
-    pub fn sweep(&self, req: SweepRequest) -> SdkResult<SweepResponse> {
-        rt().block_on(self.breez_services.sweep(req))
+    pub fn redeem_onchain_funds(
+        &self,
+        req: RedeemOnchainFundsRequest,
+    ) -> SdkResult<RedeemOnchainFundsResponse> {
+        rt().block_on(self.breez_services.redeem_onchain_funds(req))
     }
 
     pub fn fetch_fiat_rates(&self) -> SdkResult<Vec<Rate>> {
@@ -315,8 +319,11 @@ impl BlockingBreezServices {
         rt().block_on(self.breez_services.buy_bitcoin(req))
     }
 
-    pub fn prepare_sweep(&self, req: PrepareSweepRequest) -> SdkResult<PrepareSweepResponse> {
-        rt().block_on(self.breez_services.prepare_sweep(req))
+    pub fn prepare_redeem_onchain_funds(
+        &self,
+        req: PrepareRedeemOnchainFundsRequest,
+    ) -> SdkResult<PrepareRedeemOnchainFundsResponse> {
+        rt().block_on(self.breez_services.prepare_redeem_onchain_funds(req))
     }
 }
 

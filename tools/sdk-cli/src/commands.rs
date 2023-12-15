@@ -152,16 +152,16 @@ pub(crate) enum Commands {
     },
 
     /// Send on-chain funds to an external address
-    Sweep {
-        /// The sweep destination address
+    RedeemOnchainFunds {
+        /// The redeem_onchain_funds destination address
         to_address: String,
 
-        /// The fee rate for the sweep transaction
+        /// The fee rate for the redeem_onchain_funds transaction
         sat_per_vbyte: u32,
     },
 
     /// Calculate the fee (in sats) for a potential transaction
-    PrepareSweep {
+    PrepareRedeemOnchainFunds {
         /// The destination address
         to_address: String,
 
