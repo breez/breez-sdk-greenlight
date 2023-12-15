@@ -27,7 +27,7 @@ use gl_client::pb::{OffChainPayment, PayStatus};
 use gl_client::pb::cln::listpeers_peers_channels::ListpeersPeersChannelsState::*;
 use gl_client::scheduler::Scheduler;
 use gl_client::signer::model::greenlight::{amount, scheduler};
-use gl_client::signer::Signer;
+use gl_client::signer::{Error, Signer};
 use gl_client::tls::TlsConfig;
 use gl_client::{node, utils};
 use lightning::util::message_signing::verify;
@@ -37,7 +37,7 @@ use strum_macros::{Display, EnumString};
 use tokio::sync::{mpsc, Mutex};
 use tokio::time::sleep;
 use tokio_stream::{Stream, StreamExt};
-use tonic::Streaming;
+use tonic::{Code, Streaming};
 
 use crate::invoice::{parse_invoice, validate_network, InvoiceError, RouteHintHop};
 use crate::models::*;
@@ -1028,11 +1028,65 @@ impl NodeAPI for Greenlight {
         });
     }
 
-    /// Starts the signer that listens in a loop until the shutdown signal is received
-    async fn start_signer(&self, shutdown: mpsc::Receiver<()>) {
-        match self.signer.run_forever(shutdown).await {
-            Ok(_) => info!("signer exited gracefully"),
-            Err(e) => error!("signer exited with error: {e}"),
+    /// Starts the signer that listens in a loop until the shutdown signal is received.
+    ///
+    /// The signer loop, created and managed in [Signer::run_forever] can exit 1) as a
+    /// result of receiving the shutdown signal, or 2) unexpectedly, as a result of connectivity
+    /// or other errors.
+    ///
+    /// This method creates an outer loop and an outer shutdown signal around the signer loop. If
+    /// the signer loop exits with a connectivity error, the outer loop will backoff for a few
+    /// seconds and restart it.
+    async fn start_signer(&self, mut shutdown: mpsc::Receiver<()>) {
+        let is_connection_err = |err: &gl_client::signer::Error| -> bool {
+            match err {
+                Error::SchedulerConnection() => true,
+                Error::NodeConnection(_) => true,
+                Error::NodeDisconnect(_) => true,
+                Error::Upgrade(status) => matches!(status.code(), Code::Unavailable),
+                _ => false,
+            }
+        };
+
+        let (mut inner_tx, mut inner_rx) = mpsc::channel::<()>(1);
+        tokio::select! {
+            _ = async {
+                loop {
+                    match self.signer.run_forever(inner_rx).await {
+                        Ok(_) => {
+                            info!("signer exited gracefully");
+                            break;
+                        }
+                        Err(e) => match e.downcast_ref::<gl_client::signer::Error>() {
+                            Some(signer_err) => {
+                                match is_connection_err(signer_err) {
+                                    true => {
+                                        info!("signer exited with connection error: {e}");
+                                        info!("sleeping before trying to re-connect signer ...");
+                                        tokio::time::sleep(Duration::from_secs(2)).await;
+                                        (inner_tx, inner_rx) = mpsc::channel::<()>(1);
+                                        continue;
+                                    }
+                                    false => {
+                                        info!("signer exited with error: {e}");
+                                        break;
+                                    }
+                                }
+                            }
+                            None => {
+                                error!("signer loop exited with an unexpected error: {e}");
+                                break;
+                            }
+                        }
+                    }
+                }
+            } => {},
+
+            _ = shutdown.recv() => {
+                debug!("received shutdown signal to exit the signer loop");
+                let res = inner_tx.send(()).await;
+                debug!("Sent shutdown signal to inner signer loop: {res:?}");
+            },
         }
     }
 
