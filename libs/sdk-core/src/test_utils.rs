@@ -15,7 +15,7 @@ use gl_client::signer::model::greenlight::amount::Unit;
 use gl_client::signer::model::greenlight::Amount;
 use gl_client::signer::model::greenlight::PayStatus;
 use lightning::ln::PaymentSecret;
-use lightning_invoice::{Currency, InvoiceBuilder, RawInvoice};
+use lightning_invoice::{Currency, InvoiceBuilder, RawBolt11Invoice};
 use rand::distributions::{Alphanumeric, DistString, Standard};
 use rand::rngs::OsRng;
 use rand::{random, Rng};
@@ -368,7 +368,7 @@ impl NodeAPI for MockNodeAPI {
         Ok(true)
     }
 
-    fn sign_invoice(&self, invoice: RawInvoice) -> NodeResult<String> {
+    fn sign_invoice(&self, invoice: RawBolt11Invoice) -> NodeResult<String> {
         Ok(sign_invoice(invoice))
     }
 
@@ -453,7 +453,7 @@ impl MockNodeAPI {
         status: Option<PayStatus>,
     ) -> NodeResult<Payment> {
         let inv = bolt11
-            .parse::<lightning_invoice::Invoice>()
+            .parse::<lightning_invoice::Bolt11Invoice>()
             .map_err(|e| NodeError::Generic(anyhow::Error::new(e)))?;
 
         self.add_dummy_payment(inv, preimage, status).await
@@ -470,7 +470,7 @@ impl MockNodeAPI {
     /// Adds a dummy payment.
     pub(crate) async fn add_dummy_payment(
         &self,
-        inv: lightning_invoice::Invoice,
+        inv: lightning_invoice::Bolt11Invoice,
         preimage: Option<sha256::Hash>,
         status: Option<PayStatus>,
     ) -> NodeResult<Payment> {
@@ -627,7 +627,7 @@ impl MoonPayApi for MockBreezServer {
 
 pub(crate) fn rand_invoice_with_description_hash(
     expected_desc: String,
-) -> InvoiceResult<lightning_invoice::Invoice> {
+) -> InvoiceResult<lightning_invoice::Bolt11Invoice> {
     let preimage = sha256::Hash::hash(&rand_vec_u8(10));
 
     rand_invoice_with_description_hash_and_preimage(expected_desc, preimage)
@@ -636,7 +636,7 @@ pub(crate) fn rand_invoice_with_description_hash(
 pub(crate) fn rand_invoice_with_description_hash_and_preimage(
     expected_desc: String,
     preimage: sha256::Hash,
-) -> InvoiceResult<lightning_invoice::Invoice> {
+) -> InvoiceResult<lightning_invoice::Bolt11Invoice> {
     let expected_desc_hash = Hash::hash(expected_desc.as_bytes());
 
     let hashed_preimage = Message::from_hashed_data::<sha256::Hash>(&preimage[..]);
@@ -728,7 +728,7 @@ pub fn create_invoice(
     parse_invoice(&sign_invoice(raw_invoice)).unwrap()
 }
 
-fn sign_invoice(invoice: RawInvoice) -> String {
+fn sign_invoice(invoice: RawBolt11Invoice) -> String {
     let secp = Secp256k1::new();
     let (secret_key, _) = secp.generate_keypair(&mut OsRng);
     invoice

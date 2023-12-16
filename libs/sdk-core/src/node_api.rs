@@ -5,7 +5,7 @@ use crate::{
 };
 use anyhow::Result;
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
-use lightning_invoice::RawInvoice;
+use lightning_invoice::RawBolt11Invoice;
 use std::pin::Pin;
 use tokio::sync::mpsc;
 use tokio_stream::Stream;
@@ -94,7 +94,7 @@ pub trait NodeAPI: Send + Sync {
     async fn start_signer(&self, shutdown: mpsc::Receiver<()>);
     async fn list_peers(&self) -> NodeResult<Vec<Peer>>;
     async fn connect_peer(&self, node_id: String, addr: String) -> NodeResult<()>;
-    fn sign_invoice(&self, invoice: RawInvoice) -> NodeResult<String>;
+    fn sign_invoice(&self, invoice: RawBolt11Invoice) -> NodeResult<String>;
     async fn close_peer_channels(&self, node_id: String) -> NodeResult<Vec<String>>;
     async fn stream_incoming_payments(
         &self,
