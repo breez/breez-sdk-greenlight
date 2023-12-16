@@ -753,7 +753,8 @@ dependencies = [
 [[package]]
 name = "cln-grpc"
 version = "0.1.7"
-source = "git+https://github.com/hydra-yse/lightning.git?branch=20231122-offer-grpc#d1b1b8b1d50e386851c385e5fbca0f5264f43159"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9e745ebc04340d421c7bc8305942a60d3dd8531d94df24f1b8c3906942735f0d"
 dependencies = [
  "anyhow",
  "bitcoin 0.30.2",
@@ -1289,7 +1290,7 @@ checksum = "4271d37baee1b8c7e4b708028c57d816cf9d2434acb33a549475f78c181f6253"
 [[package]]
 name = "gl-client"
 version = "0.1.9"
-source = "git+https://github.com/hydra-yse/greenlight.git?branch=cln-grpc-bump#54b47c43f1fe807e96893e14b55362d10fab3bbf"
+source = "git+https://github.com/Blockstream/greenlight.git?rev=8b664c8f8e514957dfacf66e9b5a9dc6ff15eb13#8b664c8f8e514957dfacf66e9b5a9dc6ff15eb13"
 dependencies = [
  "anyhow",
  "async-trait",
