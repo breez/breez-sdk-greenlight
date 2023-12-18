@@ -12,8 +12,8 @@ dependencies:
     sdk: flutter
   ### flutter_rust_bridge_codegen dependencies
   ffi: ^2.1.0
-  flutter_rust_bridge: 1.82.4 # breez-sdk requirement
-  freezed: ^2.4.5
+  flutter_rust_bridge: ^1.82.6 # breez-sdk requirement
+  freezed: ^2.4.6
   freezed_annotation: ^2.4.1
   ###
   rxdart: ^0.27.7
