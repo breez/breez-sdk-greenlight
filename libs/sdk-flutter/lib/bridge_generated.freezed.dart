@@ -120,7 +120,7 @@ class _$AesSuccessActionDataResult_DecryptedImpl implements AesSuccessActionData
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$AesSuccessActionDataResult_DecryptedImpl &&
@@ -257,7 +257,7 @@ class _$AesSuccessActionDataResult_ErrorStatusImpl implements AesSuccessActionDa
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$AesSuccessActionDataResult_ErrorStatusImpl &&
@@ -486,7 +486,7 @@ class _$BreezEvent_NewBlockImpl implements BreezEvent_NewBlock {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$BreezEvent_NewBlockImpl &&
@@ -655,7 +655,7 @@ class _$BreezEvent_InvoicePaidImpl implements BreezEvent_InvoicePaid {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$BreezEvent_InvoicePaidImpl &&
@@ -807,7 +807,7 @@ class _$BreezEvent_SyncedImpl implements BreezEvent_Synced {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) || (other.runtimeType == runtimeType && other is _$BreezEvent_SyncedImpl);
   }
 
@@ -962,7 +962,7 @@ class _$BreezEvent_PaymentSucceedImpl implements BreezEvent_PaymentSucceed {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$BreezEvent_PaymentSucceedImpl &&
@@ -1131,7 +1131,7 @@ class _$BreezEvent_PaymentFailedImpl implements BreezEvent_PaymentFailed {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$BreezEvent_PaymentFailedImpl &&
@@ -1283,7 +1283,7 @@ class _$BreezEvent_BackupStartedImpl implements BreezEvent_BackupStarted {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType && other is _$BreezEvent_BackupStartedImpl);
   }
@@ -1421,7 +1421,7 @@ class _$BreezEvent_BackupSucceededImpl implements BreezEvent_BackupSucceeded {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType && other is _$BreezEvent_BackupSucceededImpl);
   }
@@ -1577,7 +1577,7 @@ class _$BreezEvent_BackupFailedImpl implements BreezEvent_BackupFailed {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$BreezEvent_BackupFailedImpl &&
@@ -1841,7 +1841,7 @@ class _$InputType_BitcoinAddressImpl implements InputType_BitcoinAddress {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$InputType_BitcoinAddressImpl &&
@@ -2010,7 +2010,7 @@ class _$InputType_Bolt11Impl implements InputType_Bolt11 {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$InputType_Bolt11Impl &&
@@ -2177,7 +2177,7 @@ class _$InputType_NodeIdImpl implements InputType_NodeId {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$InputType_NodeIdImpl &&
@@ -2342,7 +2342,7 @@ class _$InputType_UrlImpl implements InputType_Url {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$InputType_UrlImpl &&
@@ -2510,7 +2510,7 @@ class _$InputType_LnUrlPayImpl implements InputType_LnUrlPay {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$InputType_LnUrlPayImpl &&
@@ -2679,7 +2679,7 @@ class _$InputType_LnUrlWithdrawImpl implements InputType_LnUrlWithdraw {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$InputType_LnUrlWithdrawImpl &&
@@ -2849,7 +2849,7 @@ class _$InputType_LnUrlAuthImpl implements InputType_LnUrlAuth {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$InputType_LnUrlAuthImpl &&
@@ -3018,7 +3018,7 @@ class _$InputType_LnUrlErrorImpl implements InputType_LnUrlError {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$InputType_LnUrlErrorImpl &&
@@ -3228,7 +3228,7 @@ class _$LnUrlCallbackStatus_OkImpl implements LnUrlCallbackStatus_Ok {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType && other is _$LnUrlCallbackStatus_OkImpl);
   }
@@ -3348,7 +3348,7 @@ class _$LnUrlCallbackStatus_ErrorStatusImpl implements LnUrlCallbackStatus_Error
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$LnUrlCallbackStatus_ErrorStatusImpl &&
@@ -3549,7 +3549,7 @@ class _$LnUrlPayResult_EndpointSuccessImpl implements LnUrlPayResult_EndpointSuc
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$LnUrlPayResult_EndpointSuccessImpl &&
@@ -3691,7 +3691,7 @@ class _$LnUrlPayResult_EndpointErrorImpl implements LnUrlPayResult_EndpointError
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$LnUrlPayResult_EndpointErrorImpl &&
@@ -3832,7 +3832,7 @@ class _$LnUrlPayResult_PayErrorImpl implements LnUrlPayResult_PayError {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$LnUrlPayResult_PayErrorImpl &&
@@ -4033,7 +4033,7 @@ class _$LnUrlWithdrawResult_OkImpl implements LnUrlWithdrawResult_Ok {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$LnUrlWithdrawResult_OkImpl &&
@@ -4168,7 +4168,7 @@ class _$LnUrlWithdrawResult_ErrorStatusImpl implements LnUrlWithdrawResult_Error
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$LnUrlWithdrawResult_ErrorStatusImpl &&
@@ -4376,7 +4376,7 @@ class _$NodeConfig_GreenlightImpl implements NodeConfig_Greenlight {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$NodeConfig_GreenlightImpl &&
@@ -4579,7 +4579,7 @@ class _$NodeCredentials_GreenlightImpl implements NodeCredentials_Greenlight {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$NodeCredentials_GreenlightImpl &&
@@ -4769,7 +4769,7 @@ class _$PaymentDetails_LnImpl implements PaymentDetails_Ln {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$PaymentDetails_LnImpl &&
@@ -4903,7 +4903,7 @@ class _$PaymentDetails_ClosedChannelImpl implements PaymentDetails_ClosedChannel
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$PaymentDetails_ClosedChannelImpl &&
@@ -5112,7 +5112,7 @@ class _$ReportIssueRequest_PaymentFailureImpl implements ReportIssueRequest_Paym
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$ReportIssueRequest_PaymentFailureImpl &&
@@ -5319,7 +5319,7 @@ class _$SuccessActionProcessed_AesImpl implements SuccessActionProcessed_Aes {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$SuccessActionProcessed_AesImpl &&
@@ -5459,7 +5459,7 @@ class _$SuccessActionProcessed_MessageImpl implements SuccessActionProcessed_Mes
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$SuccessActionProcessed_MessageImpl &&
@@ -5600,7 +5600,7 @@ class _$SuccessActionProcessed_UrlImpl implements SuccessActionProcessed_Url {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$SuccessActionProcessed_UrlImpl &&
