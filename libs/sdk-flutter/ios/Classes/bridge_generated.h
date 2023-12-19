@@ -91,9 +91,20 @@ typedef struct wire_SendPaymentRequest {
   uint64_t *amount_msat;
 } wire_SendPaymentRequest;
 
+typedef struct wire_TlvEntry {
+  uint64_t field_number;
+  struct wire_uint_8_list *value;
+} wire_TlvEntry;
+
+typedef struct wire_list_tlv_entry {
+  struct wire_TlvEntry *ptr;
+  int32_t len;
+} wire_list_tlv_entry;
+
 typedef struct wire_SendSpontaneousPaymentRequest {
   struct wire_uint_8_list *node_id;
   uint64_t amount_msat;
+  struct wire_list_tlv_entry *extra_tlvs;
 } wire_SendSpontaneousPaymentRequest;
 
 typedef struct wire_OpeningFeeParams {
@@ -186,15 +197,15 @@ typedef struct wire_BuyBitcoinRequest {
   struct wire_OpeningFeeParams *opening_fee_params;
 } wire_BuyBitcoinRequest;
 
-typedef struct wire_SweepRequest {
+typedef struct wire_RedeemOnchainFundsRequest {
   struct wire_uint_8_list *to_address;
   uint32_t sat_per_vbyte;
-} wire_SweepRequest;
+} wire_RedeemOnchainFundsRequest;
 
-typedef struct wire_PrepareSweepRequest {
+typedef struct wire_PrepareRedeemOnchainFundsRequest {
   struct wire_uint_8_list *to_address;
-  uint64_t sat_per_vbyte;
-} wire_PrepareSweepRequest;
+  uint32_t sat_per_vbyte;
+} wire_PrepareRedeemOnchainFundsRequest;
 
 typedef struct wire_PrepareRefundRequest {
   struct wire_uint_8_list *swap_address;
@@ -312,9 +323,10 @@ void wire_receive_onchain(int64_t port_, struct wire_ReceiveOnchainRequest *req)
 
 void wire_buy_bitcoin(int64_t port_, struct wire_BuyBitcoinRequest *req);
 
-void wire_sweep(int64_t port_, struct wire_SweepRequest *req);
+void wire_redeem_onchain_funds(int64_t port_, struct wire_RedeemOnchainFundsRequest *req);
 
-void wire_prepare_sweep(int64_t port_, struct wire_PrepareSweepRequest *req);
+void wire_prepare_redeem_onchain_funds(int64_t port_,
+                                       struct wire_PrepareRedeemOnchainFundsRequest *req);
 
 void wire_list_refundables(int64_t port_);
 
@@ -362,13 +374,15 @@ struct wire_OpenChannelFeeRequest *new_box_autoadd_open_channel_fee_request_0(vo
 
 struct wire_OpeningFeeParams *new_box_autoadd_opening_fee_params_0(void);
 
-struct wire_PrepareRefundRequest *new_box_autoadd_prepare_refund_request_0(void);
+struct wire_PrepareRedeemOnchainFundsRequest *new_box_autoadd_prepare_redeem_onchain_funds_request_0(void);
 
-struct wire_PrepareSweepRequest *new_box_autoadd_prepare_sweep_request_0(void);
+struct wire_PrepareRefundRequest *new_box_autoadd_prepare_refund_request_0(void);
 
 struct wire_ReceiveOnchainRequest *new_box_autoadd_receive_onchain_request_0(void);
 
 struct wire_ReceivePaymentRequest *new_box_autoadd_receive_payment_request_0(void);
+
+struct wire_RedeemOnchainFundsRequest *new_box_autoadd_redeem_onchain_funds_request_0(void);
 
 struct wire_RefundRequest *new_box_autoadd_refund_request_0(void);
 
@@ -388,13 +402,13 @@ struct wire_SignMessageRequest *new_box_autoadd_sign_message_request_0(void);
 
 struct wire_StaticBackupRequest *new_box_autoadd_static_backup_request_0(void);
 
-struct wire_SweepRequest *new_box_autoadd_sweep_request_0(void);
-
 uint32_t *new_box_autoadd_u32_0(uint32_t value);
 
 uint64_t *new_box_autoadd_u64_0(uint64_t value);
 
 struct wire_list_payment_type_filter *new_list_payment_type_filter_0(int32_t len);
+
+struct wire_list_tlv_entry *new_list_tlv_entry_0(int32_t len);
 
 struct wire_uint_8_list *new_uint_8_list_0(int32_t len);
 
@@ -446,8 +460,8 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_send_onchain);
     dummy_var ^= ((int64_t) (void*) wire_receive_onchain);
     dummy_var ^= ((int64_t) (void*) wire_buy_bitcoin);
-    dummy_var ^= ((int64_t) (void*) wire_sweep);
-    dummy_var ^= ((int64_t) (void*) wire_prepare_sweep);
+    dummy_var ^= ((int64_t) (void*) wire_redeem_onchain_funds);
+    dummy_var ^= ((int64_t) (void*) wire_prepare_redeem_onchain_funds);
     dummy_var ^= ((int64_t) (void*) wire_list_refundables);
     dummy_var ^= ((int64_t) (void*) wire_prepare_refund);
     dummy_var ^= ((int64_t) (void*) wire_refund);
@@ -471,10 +485,11 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_node_config_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_open_channel_fee_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_opening_fee_params_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_prepare_redeem_onchain_funds_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_prepare_refund_request_0);
-    dummy_var ^= ((int64_t) (void*) new_box_autoadd_prepare_sweep_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_receive_onchain_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_receive_payment_request_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_redeem_onchain_funds_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_refund_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_report_issue_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_report_payment_failure_details_0);
@@ -484,10 +499,10 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_send_spontaneous_payment_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_sign_message_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_static_backup_request_0);
-    dummy_var ^= ((int64_t) (void*) new_box_autoadd_sweep_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_u32_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_u64_0);
     dummy_var ^= ((int64_t) (void*) new_list_payment_type_filter_0);
+    dummy_var ^= ((int64_t) (void*) new_list_tlv_entry_0);
     dummy_var ^= ((int64_t) (void*) new_uint_8_list_0);
     dummy_var ^= ((int64_t) (void*) inflate_NodeConfig_Greenlight);
     dummy_var ^= ((int64_t) (void*) inflate_ReportIssueRequest_PaymentFailure);

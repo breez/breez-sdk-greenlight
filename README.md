@@ -75,9 +75,8 @@ See the instructions in each sub project readme on how to build, test and run.
 - [x] C# bindings 
 - [x] Python bindings 
 - [x] Spend all funds
-- [ ] Webhook for receiving payments
-- [ ] Mobile Notifications
-- [ ] Offline receive via notifications
+- [x] Webhook for receiving payments
+- [x] Offline receive via notifications
 - [ ] LSPS2 support 
 - [ ] LSPS1 support
 - [ ] Send/receive bolt12
