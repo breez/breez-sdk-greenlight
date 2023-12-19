@@ -31,7 +31,7 @@ use gl_client::signer::Signer;
 use gl_client::tls::TlsConfig;
 use gl_client::{node, utils};
 use lightning::util::message_signing::verify;
-use lightning_invoice::{RawInvoice, SignedRawInvoice};
+use lightning_invoice::{RawBolt11Invoice, SignedRawBolt11Invoice};
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 use tokio::sync::{mpsc, Mutex};
@@ -1076,7 +1076,7 @@ impl NodeAPI for Greenlight {
         Ok(verify(message.as_bytes(), signature, &pk))
     }
 
-    fn sign_invoice(&self, invoice: RawInvoice) -> NodeResult<String> {
+    fn sign_invoice(&self, invoice: RawBolt11Invoice) -> NodeResult<String> {
         let hrp_bytes = invoice.hrp.to_string().as_bytes().to_vec();
         let data_bytes = invoice.data.to_base32();
 
@@ -1106,7 +1106,7 @@ impl NodeAPI for Greenlight {
         let sig = &raw_result[0..64];
         let recoverable_sig = RecoverableSignature::from_compact(sig, rid)?;
 
-        let signed_invoice: Result<SignedRawInvoice> = invoice.sign(|_| Ok(recoverable_sig));
+        let signed_invoice: Result<SignedRawBolt11Invoice> = invoice.sign(|_| Ok(recoverable_sig));
         Ok(signed_invoice?.to_string())
     }
 
