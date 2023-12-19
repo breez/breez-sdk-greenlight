@@ -281,7 +281,7 @@ mod tests {
             cltv_expiry_delta: 2000,
             htlc_minimum_msat: Some(3000),
             htlc_maximum_msat: Some(4000),
-            fees_base_msat: 1000, 
+            fees_base_msat: 1000,
             fees_proportional_millionths: 100,
         };
         let route_hint = crate::RouteHint {
@@ -311,8 +311,8 @@ mod tests {
             htlc_minimum_msat: Some(3000),
             htlc_maximum_msat: Some(4000),
         };
-        let route_hint = crate::RouteHint { 
-            hops: vec![hint_hop] 
+        let route_hint = crate::RouteHint {
+            hops: vec![hint_hop],
         };
         let encoded = add_lsp_routing_hints(payreq, false, Some(route_hint), 100).unwrap();
         print!("{encoded:?}");
