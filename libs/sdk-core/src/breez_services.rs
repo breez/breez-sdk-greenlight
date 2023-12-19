@@ -1,11 +1,10 @@
-use std::cmp::max;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, ensure, Result};
 use bip39::*;
 use bitcoin::hashes::hex::ToHex;
 use bitcoin::hashes::{sha256, Hash};
@@ -198,7 +197,7 @@ impl BreezServices {
             .await?;
         services.start().await?;
         let connect_duration = start.elapsed();
-        info!("SDK connected in: {:?}", connect_duration);
+        info!("SDK connected in: {connect_duration:?}");
         Ok(services)
     }
 
@@ -211,13 +210,12 @@ impl BreezServices {
     /// background and back.
     async fn start(self: &Arc<BreezServices>) -> Result<()> {
         let mut started = self.started.lock().await;
-        if *started {
-            return Err(anyhow!("BreezServices already started"));
-        }
+        ensure!(!*started, "BreezServices already started");
+
         let start = Instant::now();
         self.start_background_tasks().await?;
         let start_duration = start.elapsed();
-        info!("SDK initialized in: {:?}", start_duration);
+        info!("SDK initialized in: {start_duration:?}");
         *started = true;
         Ok(())
     }
@@ -225,11 +223,12 @@ impl BreezServices {
     /// Trigger the stopping of BreezServices background threads for this instance.
     pub async fn disconnect(&self) -> SdkResult<()> {
         let mut started = self.started.lock().await;
-        if !*started {
-            return Err(SdkError::Generic {
+        ensure_sdk!(
+            *started,
+            SdkError::Generic {
                 err: "BreezServices is not running".into(),
-            });
-        }
+            }
+        );
         self.shutdown_sender
             .send(())
             .map_err(|e| SdkError::Generic {
@@ -255,21 +254,20 @@ impl BreezServices {
         // Valid the invoice network against the config network
         validate_network(parsed_invoice.clone(), self.config.network)?;
 
-        // Ensure amount is provided for zero invoice
-        if provided_amount_msat == 0 && invoice_amount_msat == 0 {
-            return Err(SendPaymentError::InvalidAmount {
-                err: "Amount must be provided when paying a zero invoice".into(),
-            });
-        }
-
-        // Ensure amount is not provided for invoice that contains amount
-        if provided_amount_msat > 0 && invoice_amount_msat > 0 {
-            return Err(SendPaymentError::InvalidAmount {
-                err: "Amount should not be provided when paying a non zero invoice".into(),
-            });
-        }
-
-        let amount_msat = max(provided_amount_msat, invoice_amount_msat);
+        let amount_msat = match (provided_amount_msat, invoice_amount_msat) {
+            (0, 0) => {
+                return Err(SendPaymentError::InvalidAmount {
+                    err: "Amount must be provided when paying a zero invoice".into(),
+                })
+            }
+            (0, amount_msat) => amount_msat,
+            (amount_msat, 0) => amount_msat,
+            (_amount_1, _amount_2) => {
+                return Err(SendPaymentError::InvalidAmount {
+                    err: "Amount should not be provided when paying a non zero invoice".into(),
+                })
+            }
+        };
 
         match self
             .persister
@@ -341,18 +339,18 @@ impl BreezServices {
 
                 let payment = match self.send_payment(pay_req).await {
                     Ok(p) => Ok(p),
-                    Err(e) => match e {
-                        SendPaymentError::InvalidInvoice { .. } => Err(e),
-                        SendPaymentError::ServiceConnectivity { .. } => Err(e),
-                        _ => {
-                            return Ok(LnUrlPayResult::PayError {
-                                data: LnUrlPayErrorData {
-                                    payment_hash: invoice.payment_hash,
-                                    reason: e.to_string(),
-                                },
-                            });
-                        }
-                    },
+                    e @ Err(
+                        SendPaymentError::InvalidInvoice { .. }
+                        | SendPaymentError::ServiceConnectivity { .. },
+                    ) => e,
+                    Err(e) => {
+                        return Ok(LnUrlPayResult::PayError {
+                            data: LnUrlPayErrorData {
+                                payment_hash: invoice.payment_hash,
+                                reason: e.to_string(),
+                            },
+                        })
+                    }
                 }?
                 .payment;
                 let details = match &payment.details {
@@ -957,7 +955,7 @@ impl BreezServices {
                             err: format!("(LSP: {node_id}) Failed to connect: {e}"),
                         })?;
                 }
-                debug!("connected to lsp {}@{}", node_id.clone(), address.clone());
+                debug!("connected to lsp {node_id}@{address}");
             }
         }
         Ok(())
@@ -1235,7 +1233,7 @@ impl BreezServices {
         tokio::spawn(async move {
             let mut shutdown_receiver = cloned.shutdown_receiver.clone();
             loop {
-                if shutdown_receiver.has_changed().map_or(true, |c| c) {
+                if shutdown_receiver.has_changed().unwrap_or(true) {
                     return;
                 }
                 let invoice_stream_res = cloned.node_api.stream_incoming_payments().await;
@@ -1294,7 +1292,7 @@ impl BreezServices {
         tokio::spawn(async move {
             let mut shutdown_receiver = cloned.shutdown_receiver.clone();
             loop {
-                if shutdown_receiver.has_changed().map_or(true, |c| c) {
+                if shutdown_receiver.has_changed().unwrap_or(true) {
                     return;
                 }
                 let log_stream_res = cloned.node_api.stream_log_messages().await;
@@ -1850,10 +1848,7 @@ impl BreezServer {
             .connect()
             .await
             .map_err(|e| SdkError::ServiceConnectivity {
-                err: format!(
-                    "(Breez: {}) Failed to connect: {e}",
-                    self.server_url.clone()
-                ),
+                err: format!("(Breez: {}) Failed to connect: {e}", self.server_url),
             })
     }
 
@@ -1861,10 +1856,7 @@ impl BreezServer {
         match &self.api_key {
             Some(key) => Ok(Some(format!("Bearer {key}").parse().map_err(
                 |e: InvalidMetadataValue| SdkError::ServiceConnectivity {
-                    err: format!(
-                        "(Breez: {}) Failed parse API key: {e}",
-                        self.server_url.clone()
-                    ),
+                    err: format!("(Breez: {}) Failed parse API key: {e}", self.server_url),
                 },
             )?)),
             _ => Ok(None),
@@ -1886,28 +1878,28 @@ impl BreezServer {
         &self,
     ) -> SdkResult<PaymentNotifierClient<Channel>> {
         let url = Uri::from_str(&self.server_url).map_err(|e| SdkError::ServiceConnectivity {
-            err: format!("(Breez: {}) {e}", self.server_url.clone()),
+            err: format!("(Breez: {}) {e}", self.server_url),
         })?;
         Ok(PaymentNotifierClient::connect(url).await?)
     }
 
     pub(crate) async fn get_information_client(&self) -> SdkResult<InformationClient<Channel>> {
         let url = Uri::from_str(&self.server_url).map_err(|e| SdkError::ServiceConnectivity {
-            err: format!("(Breez: {}) {e}", self.server_url.clone()),
+            err: format!("(Breez: {}) {e}", self.server_url),
         })?;
         Ok(InformationClient::connect(url).await?)
     }
 
     pub(crate) async fn get_fund_manager_client(&self) -> SdkResult<FundManagerClient<Channel>> {
         let url = Uri::from_str(&self.server_url).map_err(|e| SdkError::ServiceConnectivity {
-            err: format!("(Breez: {}) {e}", self.server_url.clone()),
+            err: format!("(Breez: {}) {e}", self.server_url),
         })?;
         Ok(FundManagerClient::connect(url).await?)
     }
 
     pub(crate) async fn get_signer_client(&self) -> SdkResult<SignerClient<Channel>> {
         let url = Uri::from_str(&self.server_url).map_err(|e| SdkError::ServiceConnectivity {
-            err: format!("(Breez: {}) {e}", self.server_url.clone()),
+            err: format!("(Breez: {}) {e}", self.server_url),
         })?;
         Ok(SignerClient::new(Endpoint::new(url)?.connect().await?))
     }
@@ -1925,7 +1917,7 @@ impl BreezServer {
 
     pub(crate) async fn get_swapper_client(&self) -> SdkResult<SwapperClient<Channel>> {
         let url = Uri::from_str(&self.server_url).map_err(|e| SdkError::ServiceConnectivity {
-            err: format!("(Breez: {}) {e}", self.server_url.clone()),
+            err: format!("(Breez: {}) {e}", self.server_url),
         })?;
         Ok(SwapperClient::new(Endpoint::new(url)?.connect().await?))
     }

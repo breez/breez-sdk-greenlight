@@ -707,7 +707,7 @@ pub fn create_invoice(
     hints: Vec<RouteHint>,
     invoice_preimage: Option<Vec<u8>>,
 ) -> LNInvoice {
-    let preimage = invoice_preimage.map_or(rand::thread_rng().gen::<[u8; 32]>().to_vec(), |p| p);
+    let preimage = invoice_preimage.unwrap_or(rand::thread_rng().gen::<[u8; 32]>().to_vec());
     let hashed = Message::from_hashed_data::<sha256::Hash>(&preimage[..]);
     let hash = hashed.as_ref();
 
