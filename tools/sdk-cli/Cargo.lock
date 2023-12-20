@@ -431,7 +431,8 @@ dependencies = [
 [[package]]
 name = "bolt-derive"
 version = "0.2.0"
-source = "git+https://gitlab.com/cdecker/vls?tag=snapshot-20230920#b8d42d68bb3a525a8b7340b132220a0de922d62f"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7b4a20c5d2dd939142aa8edcfcaa5126bf0e4483d8edce6502037c2b0adbe069"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -474,8 +475,8 @@ dependencies = [
  "gl-client",
  "hex",
  "lazy_static",
- "lightning 0.0.115",
- "lightning-invoice 0.23.0",
+ "lightning 0.0.118",
+ "lightning-invoice 0.26.0",
  "log",
  "miniz_oxide",
  "once_cell",
@@ -654,7 +655,8 @@ dependencies = [
 [[package]]
 name = "cln-grpc"
 version = "0.1.7"
-source = "git+https://github.com/cdecker/lightning.git?tag=gl-20231113#075927b2c5f38fdbde4c0764135be58340b0ce08"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9e745ebc04340d421c7bc8305942a60d3dd8531d94df24f1b8c3906942735f0d"
 dependencies = [
  "anyhow",
  "bitcoin 0.30.1",
@@ -1201,7 +1203,7 @@ checksum = "4271d37baee1b8c7e4b708028c57d816cf9d2434acb33a549475f78c181f6253"
 [[package]]
 name = "gl-client"
 version = "0.1.9"
-source = "git+https://github.com/Blockstream/greenlight.git?rev=84a66ac3c467569365285814ef5a691b5b97f60d#84a66ac3c467569365285814ef5a691b5b97f60d"
+source = "git+https://github.com/Blockstream/greenlight.git?rev=8b664c8f8e514957dfacf66e9b5a9dc6ff15eb13#8b664c8f8e514957dfacf66e9b5a9dc6ff15eb13"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1215,7 +1217,7 @@ dependencies = [
  "hex",
  "http",
  "http-body",
- "lightning-invoice 0.24.0",
+ "lightning-invoice 0.26.0",
  "log",
  "mockall",
  "pin-project",
@@ -1690,9 +1692,9 @@ dependencies = [
 
 [[package]]
 name = "lightning"
-version = "0.0.116"
+version = "0.0.118"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "90a0f2155316f1570446a0447c993480673f840748c8ed25bbc59dfc442ac770"
+checksum = "d52cec5fa9382154fe9671e8df93095b800c7d77abc66e2a5ef839d672521c5e"
 dependencies = [
  "bitcoin 0.29.2",
 ]
@@ -1713,14 +1715,14 @@ dependencies = [
 
 [[package]]
 name = "lightning-invoice"
-version = "0.24.0"
+version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1788c0158526ec27a502043c2911ea6ea58fdc656bdf8749484942c07b790d23"
+checksum = "3eb24878b0f4ef75f020976c886d9ad1503867802329cc963e0ab4623ea3b25c"
 dependencies = [
  "bech32",
  "bitcoin 0.29.2",
  "bitcoin_hashes 0.11.0",
- "lightning 0.0.116",
+ "lightning 0.0.118",
  "num-traits",
  "secp256k1 0.24.3",
 ]
@@ -3400,8 +3402,9 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 
 [[package]]
 name = "vls-core"
-version = "0.10.0"
-source = "git+https://gitlab.com/cdecker/vls?tag=snapshot-20230920#b8d42d68bb3a525a8b7340b132220a0de922d62f"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7465dd7f8cc004b67c52c6610ebf157695a93daf33f6a69c1b06b0f4e1fecbc0"
 dependencies = [
  "anyhow",
  "backtrace",
@@ -3427,7 +3430,8 @@ dependencies = [
 [[package]]
 name = "vls-persist"
 version = "0.10.0"
-source = "git+https://gitlab.com/cdecker/vls?tag=snapshot-20230920#b8d42d68bb3a525a8b7340b132220a0de922d62f"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "86279e60e9dcdd3bcc135b7979655f1c80c6b99c38fee25d390725bfc5a24994"
 dependencies = [
  "hex",
  "log",
@@ -3440,7 +3444,8 @@ dependencies = [
 [[package]]
 name = "vls-protocol"
 version = "0.10.0"
-source = "git+https://gitlab.com/cdecker/vls?tag=snapshot-20230920#b8d42d68bb3a525a8b7340b132220a0de922d62f"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "55e525ef3cb95a27b240662fb518ea283d25b1f51afe899f0f253747acc284f4"
 dependencies = [
  "as-any",
  "bitcoin-consensus-derive",
@@ -3453,7 +3458,8 @@ dependencies = [
 [[package]]
 name = "vls-protocol-signer"
 version = "0.10.0"
-source = "git+https://gitlab.com/cdecker/vls?tag=snapshot-20230920#b8d42d68bb3a525a8b7340b132220a0de922d62f"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a766ac452520406eed1e7d8ad1c744156fc3ceaf6bdcefe3f3a44bd5f5ea0b29"
 dependencies = [
  "bit-vec",
  "log",
