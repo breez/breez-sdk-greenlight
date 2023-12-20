@@ -1494,7 +1494,7 @@ fn htlc_expiry(
                     for mut payment in payments.clone() {
                         let new_data = payment.clone().details;
                         if let PaymentDetails::Ln { data } = new_data {
-                            if data.payment_hash == payment_hash {
+                            if data.payment_hash == payment_hash && data.payment_expiry.is_none() {
                                 info!("payment hashes match let add the htlc");
                                 info!("adding htlc to payment {:?}", h);
                                 payment.details.add_payment_expiry(
