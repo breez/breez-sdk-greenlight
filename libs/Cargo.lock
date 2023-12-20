@@ -567,7 +567,7 @@ dependencies = [
  "breez-sdk-core",
  "camino",
  "flutter_rust_bridge",
- "lightning-invoice 0.26.0",
+ "lightning-invoice 0.23.0",
  "log",
  "once_cell",
  "thiserror",
@@ -1811,6 +1811,7 @@ dependencies = [
  "bitcoin 0.29.2",
  "bitcoin_hashes 0.11.0",
  "lightning 0.0.118",
+
  "num-traits",
  "secp256k1 0.24.3",
 ]
