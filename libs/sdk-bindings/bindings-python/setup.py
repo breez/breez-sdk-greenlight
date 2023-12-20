@@ -8,7 +8,7 @@ Python language bindings for the [Breez SDK](https://github.com/breez/breez-sdk)
 ## Installing
 
 ```shell
-pip install breez_sdk_lib
+pip install breez_sdk
 ```
 
 ## Docs
@@ -17,7 +17,7 @@ See [sdk-doc.breez.technology](https://sdk-doc.breez.technology).
 """
 
 setup(
-    name="breez_sdk_lib",
+    name="breez_sdk",
     version="0.2.7.dev9",
     description="Python language bindings for the Breez SDK",
     long_description=LONG_DESCRIPTION,
