@@ -85,7 +85,7 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
           'payment_preimage', payment_preimage, 
           'keysend', CASE keysend WHEN 1 THEN json('true') ELSE json('false') END, 
           'bolt11', bolt11,
-          'htlc_expiry', CASE htlc_expiry IS NULL THEN NULL ELSE htlc_expiry END
+          'payment_expiry', CASE payment_expiry IS NULL THEN NULL ELSE payment_expiry END
          )
         FROM old_payments;
        

@@ -751,7 +751,12 @@ impl NodeAPI for Greenlight {
 
         Ok(SyncResponse {
             node_state,
-            payments: pull_transactions(since_timestamp, node_client.clone()).await?,
+            payments: pull_transactions(
+                since_timestamp,
+                node_client.clone(),
+                node_info.blockheight,
+            )
+            .await?,
             channels: all_channel_models,
         })
     }
@@ -1419,6 +1424,7 @@ enum NodeCommand {
 async fn pull_transactions(
     since_timestamp: u64,
     client: node::ClnClient,
+    block_height: u32,
 ) -> NodeResult<Vec<Payment>> {
     let mut c = client.clone();
 
@@ -1459,7 +1465,7 @@ async fn pull_transactions(
     let peers_models: Vec<Peer> = res.peers.into_iter().map(|p| p.into()).collect();
 
     let outbound_transactions: NodeResult<Vec<Payment>> =
-        htlc_expiry(outbound_transactions.unwrap(), peers_models);
+        htlc_expiry(outbound_transactions.unwrap(), peers_models, block_height);
 
     let mut transactions: Vec<Payment> = Vec::new();
     transactions.extend(received_transactions?);
@@ -1468,7 +1474,11 @@ async fn pull_transactions(
     Ok(transactions)
 }
 
-fn htlc_expiry(payments: Vec<Payment>, peers: Vec<Peer>) -> NodeResult<Vec<Payment>> {
+fn htlc_expiry(
+    payments: Vec<Payment>,
+    peers: Vec<Peer>,
+    block_height: u32,
+) -> NodeResult<Vec<Payment>> {
     let mut pending_payments: Vec<Payment> = vec![];
     if peers.is_empty() {
         return Ok(pending_payments);
@@ -1487,7 +1497,11 @@ fn htlc_expiry(payments: Vec<Payment>, peers: Vec<Peer>) -> NodeResult<Vec<Payme
                             if data.payment_hash == payment_hash {
                                 info!("payment hashes match let add the htlc");
                                 info!("adding htlc to payment {:?}", h);
-                                payment.details.add_htlc_expiry(h.clone());
+                                payment.details.add_payment_expiry(
+                                    h.clone(),
+                                    payment.payment_time,
+                                    block_height,
+                                );
                                 pending_payments.push(payment)
                             }
                         }
@@ -1528,7 +1542,7 @@ impl TryFrom<OffChainPayment> for Payment {
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
                     swap_info: None,
-                    htlc_expiry: None,
+                    payment_expiry: None,
                 },
             },
         })
@@ -1568,7 +1582,7 @@ impl TryFrom<gl_client::signer::model::greenlight::Invoice> for Payment {
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
                     swap_info: None,
-                    htlc_expiry: None,
+                    payment_expiry: None,
                 },
             },
         })
@@ -1623,7 +1637,7 @@ impl TryFrom<gl_client::signer::model::greenlight::Payment> for Payment {
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
                     swap_info: None,
-                    htlc_expiry: None,
+                    payment_expiry: None,
                 },
             },
         })
@@ -1665,7 +1679,7 @@ impl TryFrom<cln::ListinvoicesInvoices> for Payment {
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
                     swap_info: None,
-                    htlc_expiry: None,
+                    payment_expiry: None,
                 },
             },
         })
@@ -1730,7 +1744,7 @@ impl TryFrom<cln::ListpaysPays> for Payment {
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
                     swap_info: None,
-                    htlc_expiry: None,
+                    payment_expiry: None,
                 },
             },
         })

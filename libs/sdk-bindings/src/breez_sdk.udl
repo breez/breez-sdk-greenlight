@@ -282,7 +282,7 @@ dictionary LnPaymentDetails {
     string? ln_address;
     string? lnurl_withdraw_endpoint;
     SwapInfo? swap_info;
-    u32? htlc_expiry;
+    u32? payment_expiry;
 };
 
 dictionary ClosedChannelPaymentDetails {

@@ -676,9 +676,14 @@ pub enum PaymentDetails {
 }
 
 impl PaymentDetails {
-    pub fn add_htlc_expiry(&mut self, htlc: Htlc) {
+    pub fn add_payment_expiry(&mut self, htlc: Htlc, payment_time: i64, block_height: u32) {
+        let block_diff = htlc.expiry as i32 - block_height as i32;
+        let expiry_time_secs = block_diff * 600;
+        let payment_expiry_unix = payment_time + expiry_time_secs as i64;
+
+        info!("payment_expiry_unix {}", payment_expiry_unix);
         if let PaymentDetails::Ln { data } = self {
-            data.htlc_expiry = Some(htlc.expiry)
+            data.payment_expiry = Some(payment_expiry_unix as u32)
         }
     }
 }
@@ -710,7 +715,7 @@ pub struct LnPaymentDetails {
     pub swap_info: Option<SwapInfo>,
 
     /// Only set for [PaymentType::Pending] payments that are inflight.
-    pub htlc_expiry: Option<u32>,
+    pub payment_expiry: Option<u32>,
 }
 
 /// Represents the funds that were on the user side of the channel at the time it was closed.
