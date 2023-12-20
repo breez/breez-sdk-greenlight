@@ -1203,13 +1203,13 @@ checksum = "4271d37baee1b8c7e4b708028c57d816cf9d2434acb33a549475f78c181f6253"
 [[package]]
 name = "gl-client"
 version = "0.1.9"
-source = "git+https://github.com/Blockstream/greenlight.git?rev=8b664c8f8e514957dfacf66e9b5a9dc6ff15eb13#8b664c8f8e514957dfacf66e9b5a9dc6ff15eb13"
+source = "git+https://github.com/Blockstream/greenlight.git?rev=556eedf47a837b71c4277ba6ee84322f5cbd80de#556eedf47a837b71c4277ba6ee84322f5cbd80de"
 dependencies = [
  "anyhow",
  "async-trait",
  "base64 0.21.2",
  "bech32",
- "bitcoin 0.30.1",
+ "bitcoin 0.29.2",
  "bytes",
  "chacha20poly1305",
  "cln-grpc",
