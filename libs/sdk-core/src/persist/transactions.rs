@@ -286,7 +286,6 @@ impl SqliteStorage {
             data.swap_info = self
                 .get_swap_info_by_hash(&hex::decode(&payment.id).unwrap_or_default())
                 .unwrap_or(None);
-            data.htlc_expiry = None; // TODO add expiry
         }
 
         // In case we have a record of the open channel fee, let's use it.

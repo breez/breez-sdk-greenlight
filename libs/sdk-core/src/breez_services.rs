@@ -919,7 +919,6 @@ impl BreezServices {
         let mut payments = closed_channel_payments;
         payments.extend(new_data.payments.clone());
         self.persister.insert_or_update_payments(&payments, true)?;
-        info!("payment list consist of {:?}", payments);
         let duration = start.elapsed();
         info!("Sync duration: {:?}", duration);
 
