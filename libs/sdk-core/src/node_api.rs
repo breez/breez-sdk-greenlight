@@ -1,11 +1,11 @@
 use crate::{
     invoice::InvoiceError, persist::error::PersistError, CustomMessage, MaxChannelAmount,
-    NodeCredentials, Payment, PaymentResponse, Peer, PrepareSweepRequest, PrepareSweepResponse,
-    RouteHintHop, SyncResponse,
+    NodeCredentials, Payment, PaymentResponse, Peer, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse,
+    RouteHintHop, SyncResponse, TlvEntry,
 };
 use anyhow::Result;
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
-use lightning_invoice::RawInvoice;
+use lightning_invoice::RawBolt11Invoice;
 use std::pin::Pin;
 use tokio::sync::mpsc;
 use tokio_stream::Stream;
@@ -73,6 +73,7 @@ pub trait NodeAPI: Send + Sync {
         &self,
         node_id: String,
         amount_msat: u64,
+        extra_tlvs: Option<Vec<TlvEntry>>,
     ) -> NodeResult<Payment>;
     async fn start(&self) -> NodeResult<String>;
 
@@ -88,12 +89,12 @@ pub trait NodeAPI: Send + Sync {
         max_hops: u32,
         last_hop: Option<&RouteHintHop>,
     ) -> NodeResult<Vec<MaxChannelAmount>>;
-    async fn sweep(&self, to_address: String, sat_per_vbyte: u32) -> NodeResult<Vec<u8>>;
-    async fn prepare_sweep(&self, req: PrepareSweepRequest) -> NodeResult<PrepareSweepResponse>;
+    async fn redeem_onchain_funds(&self, to_address: String, sat_per_vbyte: u32) -> NodeResult<Vec<u8>>;
+    async fn prepare_redeem_onchain_funds(&self, req: PrepareRedeemOnchainFundsRequest) -> NodeResult<PrepareRedeemOnchainFundsResponse>;
     async fn start_signer(&self, shutdown: mpsc::Receiver<()>);
     async fn list_peers(&self) -> NodeResult<Vec<Peer>>;
     async fn connect_peer(&self, node_id: String, addr: String) -> NodeResult<()>;
-    fn sign_invoice(&self, invoice: RawInvoice) -> NodeResult<String>;
+    fn sign_invoice(&self, invoice: RawBolt11Invoice) -> NodeResult<String>;
     async fn close_peer_channels(&self, node_id: String) -> NodeResult<Vec<String>>;
     async fn stream_incoming_payments(
         &self,

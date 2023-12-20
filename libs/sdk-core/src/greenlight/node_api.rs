@@ -31,7 +31,7 @@ use gl_client::signer::Signer;
 use gl_client::tls::TlsConfig;
 use gl_client::{node, utils};
 use lightning::util::message_signing::verify;
-use lightning_invoice::{RawInvoice, SignedRawInvoice};
+use lightning_invoice::{RawBolt11Invoice, SignedRawBolt11Invoice};
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 use tokio::sync::{mpsc, Mutex};
@@ -43,7 +43,10 @@ use crate::invoice::{parse_invoice, validate_network, InvoiceError, RouteHintHop
 use crate::models::*;
 use crate::node_api::{NodeAPI, NodeError, NodeResult};
 use crate::persist::db::SqliteStorage;
-use crate::{Channel, ChannelState, NodeConfig, PrepareSweepRequest, PrepareSweepResponse};
+use crate::{
+    Channel, ChannelState, NodeConfig, PrepareRedeemOnchainFundsRequest,
+    PrepareRedeemOnchainFundsResponse,
+};
 use std::iter::Iterator;
 
 const MAX_PAYMENT_AMOUNT_MSAT: u64 = 4294967000;
@@ -903,6 +906,7 @@ impl NodeAPI for Greenlight {
         &self,
         node_id: String,
         amount_msat: u64,
+        extra_tlvs: Option<Vec<TlvEntry>>,
     ) -> NodeResult<Payment> {
         let mut client: node::ClnClient = self.get_node_client().await?;
         let request = cln::KeysendRequest {
@@ -912,7 +916,15 @@ impl NodeAPI for Greenlight {
                 "breez-{}",
                 SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis()
             )),
-            extratlvs: None,
+            extratlvs: extra_tlvs.map(|tlvs| cln::TlvStream {
+                entries: tlvs
+                    .into_iter()
+                    .map(|tlv| cln::TlvEntry {
+                        r#type: tlv.field_number,
+                        value: tlv.value,
+                    })
+                    .collect(),
+            }),
             routehints: None,
             maxfeepercent: Some(self.sdk_config.maxfee_percent),
             exemptfee: None,
@@ -937,7 +949,11 @@ impl NodeAPI for Greenlight {
         Ok(hex::encode(node_info.id))
     }
 
-    async fn sweep(&self, to_address: String, sat_per_vbyte: u32) -> NodeResult<Vec<u8>> {
+    async fn redeem_onchain_funds(
+        &self,
+        to_address: String,
+        sat_per_vbyte: u32,
+    ) -> NodeResult<Vec<u8>> {
         let mut client = self.get_node_client().await?;
 
         let request = cln::WithdrawRequest {
@@ -955,7 +971,10 @@ impl NodeAPI for Greenlight {
         Ok(client.withdraw(request).await?.into_inner().txid)
     }
 
-    async fn prepare_sweep(&self, req: PrepareSweepRequest) -> NodeResult<PrepareSweepResponse> {
+    async fn prepare_redeem_onchain_funds(
+        &self,
+        req: PrepareRedeemOnchainFundsRequest,
+    ) -> NodeResult<PrepareRedeemOnchainFundsResponse> {
         let funds = self.list_funds().await?;
         let utxos = self.utxos(funds).await?;
 
@@ -995,7 +1014,7 @@ impl NodeAPI for Greenlight {
         let witness_input_size: u64 = 110;
         let tx_weight = tx.strippedsize() as u64 * WITNESS_SCALE_FACTOR as u64
             + witness_input_size * txins.len() as u64;
-        let fee: u64 = tx_weight * req.sat_per_vbyte / WITNESS_SCALE_FACTOR as u64;
+        let fee: u64 = tx_weight * req.sat_per_vbyte as u64 / WITNESS_SCALE_FACTOR as u64;
         if fee >= amount {
             return Err(NodeError::Generic(anyhow!(
                 "Insufficient funds to pay fees"
@@ -1003,9 +1022,9 @@ impl NodeAPI for Greenlight {
         }
         tx.output[0].value = amount - fee;
 
-        return Ok(PrepareSweepResponse {
-            sweep_tx_weight: tx_weight,
-            sweep_tx_fee_sat: fee,
+        return Ok(PrepareRedeemOnchainFundsResponse {
+            tx_weight,
+            tx_fee_sat: fee,
         });
     }
 
@@ -1057,7 +1076,7 @@ impl NodeAPI for Greenlight {
         Ok(verify(message.as_bytes(), signature, &pk))
     }
 
-    fn sign_invoice(&self, invoice: RawInvoice) -> NodeResult<String> {
+    fn sign_invoice(&self, invoice: RawBolt11Invoice) -> NodeResult<String> {
         let hrp_bytes = invoice.hrp.to_string().as_bytes().to_vec();
         let data_bytes = invoice.data.to_base32();
 
@@ -1087,7 +1106,7 @@ impl NodeAPI for Greenlight {
         let sig = &raw_result[0..64];
         let recoverable_sig = RecoverableSignature::from_compact(sig, rid)?;
 
-        let signed_invoice: Result<SignedRawInvoice> = invoice.sign(|_| Ok(recoverable_sig));
+        let signed_invoice: Result<SignedRawBolt11Invoice> = invoice.sign(|_| Ok(recoverable_sig));
         Ok(signed_invoice?.to_string())
     }
 
@@ -1453,6 +1472,7 @@ impl TryFrom<OffChainPayment> for Payment {
             amount_msat: amount_to_msat(&p.amount.unwrap_or_default()),
             fee_msat: 0,
             status: PaymentStatus::Complete,
+            error: None,
             description: ln_invoice.description,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
@@ -1491,6 +1511,7 @@ impl TryFrom<gl_client::signer::model::greenlight::Invoice> for Payment {
             amount_msat: amount_to_msat(&invoice.amount.unwrap_or_default()),
             fee_msat: 0,
             status: PaymentStatus::Complete,
+            error: None,
             description: ln_invoice.description,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
@@ -1544,6 +1565,7 @@ impl TryFrom<gl_client::signer::model::greenlight::Payment> for Payment {
             amount_msat: payment_amount,
             fee_msat: payment_amount_sent - payment_amount,
             status,
+            error: None,
             description,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
@@ -1581,6 +1603,7 @@ impl TryFrom<cln::ListinvoicesInvoices> for Payment {
             amount_msat: invoice.amount_msat.map(|a| a.msat).unwrap_or_default(),
             fee_msat: 0,
             status: PaymentStatus::Complete,
+            error: None,
             description: ln_invoice.description,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
@@ -1647,6 +1670,7 @@ impl TryFrom<cln::ListpaysPays> for Payment {
             },
             fee_msat: payment_amount_sent - payment_amount,
             status,
+            error: None,
             description: ln_invoice.map(|i| i.description).unwrap_or_default(),
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {

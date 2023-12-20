@@ -857,6 +857,7 @@ mod tests {
             amount_msat: 5000,
             fee_msat: 0,
             status: PaymentStatus::Complete,
+            error: None,
             description: Some("desc".to_string()),
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {

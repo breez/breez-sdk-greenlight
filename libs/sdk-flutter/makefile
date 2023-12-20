@@ -15,8 +15,8 @@ all: ios android
 dev: ios-dev android
 
 flutter_rust_bridge:
-	cargo install flutter_rust_bridge_codegen --version 1.82.4
-	flutter_rust_bridge_codegen
+	cargo install flutter_rust_bridge_codegen --version 1.82.6
+	flutter_rust_bridge_codegen --dart-format-line-length 110 -r ../sdk-core/src/binding.rs -d lib/bridge_generated.dart -c ios/Classes/bridge_generated.h
 
 ios: $(SOURCES) flutter_rust_bridge
 	make -C ../sdk-bindings bindings-swift
@@ -30,11 +30,11 @@ ios-dev: ios
 ## android: Compile the android targets (arm64, armv7 and i686)
 .PHONY: android
 android: $(SOURCES) flutter_rust_bridge
-	cd ../sdk-bindings && make android
+	cd ../sdk-bindings && make kotlin
 	mkdir -p ./android/src/main/jniLibs
 	cp -r ../sdk-bindings/ffi/kotlin/jniLibs/* ./android/src/main/jniLibs
 	mkdir -p ./android/src/main/kotlin/breez_sdk/
-	cp -r ../sdk-bindings/bindings-android/lib/src/main/kotlin/breez_sdk/* ./android/src/main/kotlin/breez_sdk/
+	cp -r ../sdk-bindings/ffi/kotlin/breez_sdk/* ./android/src/main/kotlin/breez_sdk/
 
 ## desktop: compiles for x86_64-unknown-linux-gnu by default, other targets can be specified
 ## with the TARGET variable eg. make desktop TARGET=aarch64-unknown-linux-gnu

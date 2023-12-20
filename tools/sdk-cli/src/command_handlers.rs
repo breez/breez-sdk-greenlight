@@ -6,10 +6,10 @@ use breez_sdk_core::InputType::{LnUrlAuth, LnUrlPay, LnUrlWithdraw};
 use breez_sdk_core::{
     parse, BreezEvent, BreezServices, BuyBitcoinRequest, CheckMessageRequest, EventListener,
     GreenlightCredentials, ListPaymentsRequest, LnUrlPayRequest, LnUrlWithdrawRequest,
-    PrepareRefundRequest, ReceiveOnchainRequest, ReceivePaymentRequest, RefundRequest,
-    ReportIssueRequest, ReportPaymentFailureDetails, ReverseSwapFeesRequest, SendOnchainRequest,
-    SendPaymentRequest, SendSpontaneousPaymentRequest, SignMessageRequest, StaticBackupRequest,
-    SweepRequest,
+    PrepareRedeemOnchainFundsRequest, PrepareRefundRequest, ReceiveOnchainRequest,
+    ReceivePaymentRequest, RedeemOnchainFundsRequest, RefundRequest, ReportIssueRequest,
+    ReportPaymentFailureDetails, ReverseSwapFeesRequest, SendOnchainRequest, SendPaymentRequest,
+    SendSpontaneousPaymentRequest, SignMessageRequest, StaticBackupRequest,
 };
 use breez_sdk_core::{Config, GreenlightNodeConfig, NodeConfig};
 use once_cell::sync::OnceCell;
@@ -204,6 +204,7 @@ pub(crate) async fn handle_command(
                 .send_spontaneous_payment(SendSpontaneousPaymentRequest {
                     node_id,
                     amount_msat,
+                    extra_tlvs: None,
                 })
                 .await?;
             serde_json::to_string_pretty(&response.payment).map_err(|e| e.into())
@@ -231,29 +232,29 @@ pub(crate) async fn handle_command(
             let payment = sdk()?.payment_by_hash(hash).await?;
             serde_json::to_string_pretty(&payment).map_err(|e| e.into())
         }
-        Commands::Sweep {
+        Commands::RedeemOnchainFunds {
             to_address,
             sat_per_vbyte,
         } => {
-            sdk()?
-                .sweep(SweepRequest {
+            let resp = sdk()?
+                .redeem_onchain_funds(RedeemOnchainFundsRequest {
                     to_address,
                     sat_per_vbyte,
                 })
                 .await?;
-            Ok("Onchain funds were swept successfully".to_string())
+            serde_json::to_string_pretty(&resp).map_err(|e| e.into())
         }
-        Commands::PrepareSweep {
+        Commands::PrepareRedeemOnchainFunds {
             to_address,
             sat_per_vbyte,
         } => {
-            sdk()?
-                .sweep(SweepRequest {
+            let resp = sdk()?
+                .prepare_redeem_onchain_funds(PrepareRedeemOnchainFundsRequest {
                     to_address,
                     sat_per_vbyte,
                 })
                 .await?;
-            Ok("Onchain funds were swept succesfully".to_string())
+            serde_json::to_string_pretty(&resp).map_err(|e| e.into())
         }
         Commands::ListLsps {} => {
             let lsps = sdk()?.list_lsps().await?;

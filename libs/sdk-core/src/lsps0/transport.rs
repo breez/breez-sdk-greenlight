@@ -81,7 +81,7 @@ impl Transport {
         tokio::spawn(async move {
             loop {
                 let mut cancel = cancel.clone();
-                if cancel.has_changed().map_or(true, |c| c) {
+                if cancel.has_changed().unwrap_or(true) {
                     return;
                 }
 

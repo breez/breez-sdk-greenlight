@@ -31,14 +31,14 @@ impl From<lightning_invoice::CreationError> for InvoiceError {
     }
 }
 
-impl From<lightning_invoice::ParseError> for InvoiceError {
-    fn from(err: lightning_invoice::ParseError) -> Self {
+impl From<lightning_invoice::Bolt11ParseError> for InvoiceError {
+    fn from(err: lightning_invoice::Bolt11ParseError) -> Self {
         Self::Validation(anyhow::Error::new(err))
     }
 }
 
-impl From<lightning_invoice::SemanticError> for InvoiceError {
-    fn from(err: lightning_invoice::SemanticError) -> Self {
+impl From<lightning_invoice::Bolt11SemanticError> for InvoiceError {
+    fn from(err: lightning_invoice::Bolt11SemanticError) -> Self {
         Self::Validation(anyhow::Error::new(err))
     }
 }
@@ -150,9 +150,9 @@ pub fn add_lsp_routing_hints(
     include_route_hints: bool,
     lsp_hint: Option<RouteHint>,
     new_amount_msats: u64,
-) -> InvoiceResult<RawInvoice> {
-    let signed = invoice.parse::<SignedRawInvoice>()?;
-    let invoice = Invoice::from_signed(signed)?;
+) -> InvoiceResult<RawBolt11Invoice> {
+    let signed = invoice.parse::<SignedRawBolt11Invoice>()?;
+    let invoice = Bolt11Invoice::from_signed(signed)?;
 
     let mut invoice_builder = InvoiceBuilder::new(invoice.currency())
         .invoice_description(invoice.description())
@@ -218,8 +218,8 @@ pub fn parse_invoice(bolt11: &str) -> InvoiceResult<LNInvoice> {
     }
     let re = Regex::new(r"(?i)^lightning:")?;
     let bolt11 = re.replace_all(bolt11, "");
-    let signed = bolt11.parse::<SignedRawInvoice>()?;
-    let invoice = Invoice::from_signed(signed)?;
+    let signed = bolt11.parse::<SignedRawBolt11Invoice>()?;
+    let invoice = Bolt11Invoice::from_signed(signed)?;
     let since_the_epoch = invoice.timestamp().duration_since(UNIX_EPOCH)?;
 
     // make sure signature is valid
@@ -249,12 +249,12 @@ pub fn parse_invoice(bolt11: &str) -> InvoiceResult<LNInvoice> {
         payment_hash: invoice.payment_hash().encode_hex::<String>(),
         payment_secret: invoice.payment_secret().0.to_vec(),
         description: match invoice.description() {
-            InvoiceDescription::Direct(msg) => Some(msg.to_string()),
-            InvoiceDescription::Hash(_) => None,
+            Bolt11InvoiceDescription::Direct(msg) => Some(msg.to_string()),
+            Bolt11InvoiceDescription::Hash(_) => None,
         },
         description_hash: match invoice.description() {
-            InvoiceDescription::Direct(_) => None,
-            InvoiceDescription::Hash(h) => Some(h.0.to_string()),
+            Bolt11InvoiceDescription::Direct(_) => None,
+            Bolt11InvoiceDescription::Hash(h) => Some(h.0.to_string()),
         },
         min_final_cltv_expiry_delta: invoice.min_final_cltv_expiry_delta(),
     };
@@ -275,19 +275,18 @@ mod tests {
                 .unwrap();
         let mut private_key: [u8; 32] = Default::default();
         private_key.copy_from_slice(&private_key_vec[0..32]);
-        let hint_hop = RouteHintHop {
+        let hint_hop = crate::RouteHintHop {
             src_node_id: res.payee_pubkey,
             short_channel_id: 1234,
-            fees_base_msat: 1000,
-            fees_proportional_millionths: 100,
             cltv_expiry_delta: 2000,
             htlc_minimum_msat: Some(3000),
             htlc_maximum_msat: Some(4000),
+            fees_base_msat: 1000, 
+            fees_proportional_millionths: 100,
         };
-        let route_hint = RouteHint {
+        let route_hint = crate::RouteHint {
             hops: vec![hint_hop],
         };
-
         let encoded = add_lsp_routing_hints(payreq, true, Some(route_hint), 100).unwrap();
         print!("{encoded:?}");
     }
@@ -303,7 +302,7 @@ mod tests {
                 .unwrap();
         let mut private_key: [u8; 32] = Default::default();
         private_key.copy_from_slice(&private_key_vec[0..32]);
-        let hint_hop = RouteHintHop {
+        let hint_hop = crate::RouteHintHop {
             src_node_id: res.payee_pubkey,
             short_channel_id: 1234,
             fees_base_msat: 1000,
@@ -312,10 +311,9 @@ mod tests {
             htlc_minimum_msat: Some(3000),
             htlc_maximum_msat: Some(4000),
         };
-        let route_hint = RouteHint {
-            hops: vec![hint_hop],
+        let route_hint = crate::RouteHint { 
+            hops: vec![hint_hop] 
         };
-
         let encoded = add_lsp_routing_hints(payreq, false, Some(route_hint), 100).unwrap();
         print!("{encoded:?}");
     }

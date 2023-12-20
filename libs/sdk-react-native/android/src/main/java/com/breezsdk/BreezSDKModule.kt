@@ -439,14 +439,17 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun sweep(
+    fun redeemOnchainFunds(
         req: ReadableMap,
         promise: Promise,
     ) {
         executor.execute {
             try {
-                val sweepRequest = asSweepRequest(req) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "SweepRequest")) }
-                val res = getBreezServices().sweep(sweepRequest)
+                val redeemOnchainFundsRequest =
+                    asRedeemOnchainFundsRequest(req) ?: run {
+                        throw SdkException.Generic(errMissingMandatoryField("req", "RedeemOnchainFundsRequest"))
+                    }
+                val res = getBreezServices().redeemOnchainFunds(redeemOnchainFundsRequest)
                 promise.resolve(readableMapOf(res))
             } catch (e: Exception) {
                 promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
@@ -798,17 +801,17 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun prepareSweep(
+    fun prepareRedeemOnchainFunds(
         req: ReadableMap,
         promise: Promise,
     ) {
         executor.execute {
             try {
-                val prepareSweepRequest =
-                    asPrepareSweepRequest(req) ?: run {
-                        throw SdkException.Generic(errMissingMandatoryField("req", "PrepareSweepRequest"))
+                val prepareRedeemOnchainFundsRequest =
+                    asPrepareRedeemOnchainFundsRequest(req) ?: run {
+                        throw SdkException.Generic(errMissingMandatoryField("req", "PrepareRedeemOnchainFundsRequest"))
                     }
-                val res = getBreezServices().prepareSweep(prepareSweepRequest)
+                val res = getBreezServices().prepareRedeemOnchainFunds(prepareRedeemOnchainFundsRequest)
                 promise.resolve(readableMapOf(res))
             } catch (e: Exception) {
                 promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)

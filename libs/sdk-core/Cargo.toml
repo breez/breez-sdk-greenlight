@@ -8,7 +8,7 @@ name = "breez_sdk_core"
 crate-type = ["staticlib", "cdylib", "lib"]
 
 [dependencies]
-flutter_rust_bridge = "=1.82.4"
+flutter_rust_bridge = "=1.82.6"
 aes = "0.8"
 anyhow = { version = "1.0", features = ["backtrace"] }
 cbc = { version = "0.1", features = ["std"] }
@@ -18,7 +18,7 @@ bip21 = "0.2"
 bitcoin = "0.29.2"
 gl-client = { git = "https://github.com/Blockstream/greenlight.git", features = [
     "permissive",
-], rev = "84a66ac3c467569365285814ef5a691b5b97f60d" }
+], rev = "8b664c8f8e514957dfacf66e9b5a9dc6ff15eb13" }
 zbase32 = "0.1.2"
 base64 = "0.13.0"
 chrono = "0.4"
@@ -49,9 +49,9 @@ tonic = { version = "^0.8", features = [
     "tls-webpki-roots",
 ] }
 lazy_static = "^1.4.0"
-lightning = "0.0.115"
+lightning = "0.0.118"
 # Keep in sync with version used in gl-client
-lightning-invoice = "0.23.0"
+lightning-invoice = "0.26.0"
 log = "0.4"
 once_cell = "1"
 openssl = { version = "0.10", features = ["vendored"] }

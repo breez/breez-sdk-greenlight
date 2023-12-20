@@ -1,11 +1,10 @@
-use std::cmp::max;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, ensure, Result};
 use bip39::*;
 use bitcoin::hashes::hex::ToHex;
 use bitcoin::hashes::{sha256, Hash};
@@ -198,7 +197,7 @@ impl BreezServices {
             .await?;
         services.start().await?;
         let connect_duration = start.elapsed();
-        info!("SDK connected in: {:?}", connect_duration);
+        info!("SDK connected in: {connect_duration:?}");
         Ok(services)
     }
 
@@ -211,13 +210,12 @@ impl BreezServices {
     /// background and back.
     async fn start(self: &Arc<BreezServices>) -> Result<()> {
         let mut started = self.started.lock().await;
-        if *started {
-            return Err(anyhow!("BreezServices already started"));
-        }
+        ensure!(!*started, "BreezServices already started");
+
         let start = Instant::now();
         self.start_background_tasks().await?;
         let start_duration = start.elapsed();
-        info!("SDK initialized in: {:?}", start_duration);
+        info!("SDK initialized in: {start_duration:?}");
         *started = true;
         Ok(())
     }
@@ -225,11 +223,12 @@ impl BreezServices {
     /// Trigger the stopping of BreezServices background threads for this instance.
     pub async fn disconnect(&self) -> SdkResult<()> {
         let mut started = self.started.lock().await;
-        if !*started {
-            return Err(SdkError::Generic {
+        ensure_sdk!(
+            *started,
+            SdkError::Generic {
                 err: "BreezServices is not running".into(),
-            });
-        }
+            }
+        );
         self.shutdown_sender
             .send(())
             .map_err(|e| SdkError::Generic {
@@ -255,21 +254,20 @@ impl BreezServices {
         // Valid the invoice network against the config network
         validate_network(parsed_invoice.clone(), self.config.network)?;
 
-        // Ensure amount is provided for zero invoice
-        if provided_amount_msat == 0 && invoice_amount_msat == 0 {
-            return Err(SendPaymentError::InvalidAmount {
-                err: "Amount must be provided when paying a zero invoice".into(),
-            });
-        }
-
-        // Ensure amount is not provided for invoice that contains amount
-        if provided_amount_msat > 0 && invoice_amount_msat > 0 {
-            return Err(SendPaymentError::InvalidAmount {
-                err: "Amount should not be provided when paying a non zero invoice".into(),
-            });
-        }
-
-        let amount_msat = max(provided_amount_msat, invoice_amount_msat);
+        let amount_msat = match (provided_amount_msat, invoice_amount_msat) {
+            (0, 0) => {
+                return Err(SendPaymentError::InvalidAmount {
+                    err: "Amount must be provided when paying a zero invoice".into(),
+                })
+            }
+            (0, amount_msat) => amount_msat,
+            (amount_msat, 0) => amount_msat,
+            (_amount_1, _amount_2) => {
+                return Err(SendPaymentError::InvalidAmount {
+                    err: "Amount should not be provided when paying a non zero invoice".into(),
+                })
+            }
+        };
 
         match self
             .persister
@@ -303,7 +301,7 @@ impl BreezServices {
         self.start_node().await?;
         let payment_res = self
             .node_api
-            .send_spontaneous_payment(req.node_id.clone(), req.amount_msat)
+            .send_spontaneous_payment(req.node_id.clone(), req.amount_msat, req.extra_tlvs)
             .map_err(Into::into)
             .await;
         let payment = self
@@ -341,18 +339,18 @@ impl BreezServices {
 
                 let payment = match self.send_payment(pay_req).await {
                     Ok(p) => Ok(p),
-                    Err(e) => match e {
-                        SendPaymentError::InvalidInvoice { .. } => Err(e),
-                        SendPaymentError::ServiceConnectivity { .. } => Err(e),
-                        _ => {
-                            return Ok(LnUrlPayResult::PayError {
-                                data: LnUrlPayErrorData {
-                                    payment_hash: invoice.payment_hash,
-                                    reason: e.to_string(),
-                                },
-                            });
-                        }
-                    },
+                    e @ Err(
+                        SendPaymentError::InvalidInvoice { .. }
+                        | SendPaymentError::ServiceConnectivity { .. },
+                    ) => e,
+                    Err(e) => {
+                        return Ok(LnUrlPayResult::PayError {
+                            data: LnUrlPayErrorData {
+                                payment_hash: invoice.payment_hash,
+                                reason: e.to_string(),
+                            },
+                        })
+                    }
                 }?
                 .payment;
                 let details = match &payment.details {
@@ -392,11 +390,14 @@ impl BreezServices {
                 // Store SA (if available) + LN Address in separate table, associated to payment_hash
                 self.persister.insert_payment_external_info(
                     &details.payment_hash,
-                    maybe_sa_processed.as_ref(),
-                    Some(req.data.metadata_str),
-                    req.data.ln_address,
-                    None,
-                    invoice.amount_msat,
+                    PaymentExternalInfo {
+                        lnurl_pay_success_action: maybe_sa_processed.clone(),
+                        lnurl_metadata: Some(req.data.metadata_str),
+                        ln_address: req.data.ln_address,
+                        lnurl_withdraw_endpoint: None,
+                        attempted_amount_msat: invoice.amount_msat,
+                        attempted_error: None,
+                    },
                 )?;
 
                 Ok(LnUrlPayResult::EndpointSuccess {
@@ -436,11 +437,14 @@ impl BreezServices {
             // If endpoint was successfully called, store the LNURL-withdraw endpoint URL as metadata linked to the invoice
             self.persister.insert_payment_external_info(
                 &data.invoice.payment_hash,
-                None,
-                None,
-                None,
-                Some(lnurl_w_endpoint),
-                None,
+                PaymentExternalInfo {
+                    lnurl_pay_success_action: None,
+                    lnurl_metadata: None,
+                    ln_address: None,
+                    lnurl_withdraw_endpoint: Some(lnurl_w_endpoint),
+                    attempted_amount_msat: None,
+                    attempted_error: None,
+                },
             )?;
         }
 
@@ -570,29 +574,36 @@ impl BreezServices {
         Ok(self.persister.get_payment_by_hash(&hash)?)
     }
 
-    /// Sweep on-chain funds to the specified on-chain address, with the given feerate
-    pub async fn sweep(&self, req: SweepRequest) -> SdkResult<SweepResponse> {
+    /// Redeem on-chain funds from closed channels to the specified on-chain address, with the given feerate
+    pub async fn redeem_onchain_funds(
+        &self,
+        req: RedeemOnchainFundsRequest,
+    ) -> SdkResult<RedeemOnchainFundsResponse> {
         self.start_node().await?;
         let txid = self
             .node_api
-            .sweep(req.to_address, req.sat_per_vbyte)
+            .redeem_onchain_funds(req.to_address, req.sat_per_vbyte)
             .await?;
         self.sync().await?;
-        Ok(SweepResponse { txid })
+        Ok(RedeemOnchainFundsResponse { txid })
     }
 
-    pub async fn prepare_sweep(&self, req: PrepareSweepRequest) -> SdkResult<PrepareSweepResponse> {
+    pub async fn prepare_redeem_onchain_funds(
+        &self,
+        req: PrepareRedeemOnchainFundsRequest,
+    ) -> SdkResult<PrepareRedeemOnchainFundsResponse> {
         self.start_node().await?;
-        let response = self.node_api.prepare_sweep(req).await?;
+        let response = self.node_api.prepare_redeem_onchain_funds(req).await?;
         Ok(response)
     }
 
-    /// Fetch live rates of fiat currencies
+    /// Fetch live rates of fiat currencies, sorted by name
     pub async fn fetch_fiat_rates(&self) -> SdkResult<Vec<Rate>> {
         self.fiat_api.fetch_fiat_rates().await
     }
 
     /// List all supported fiat currencies for which there is a known exchange rate.
+    /// List is sorted by the canonical name of the currency
     pub async fn list_fiat_currencies(&self) -> SdkResult<Vec<FiatCurrency>> {
         self.fiat_api.list_fiat_currencies().await
     }
@@ -944,7 +955,7 @@ impl BreezServices {
                             err: format!("(LSP: {node_id}) Failed to connect: {e}"),
                         })?;
                 }
-                debug!("connected to lsp {}@{}", node_id.clone(), address.clone());
+                debug!("connected to lsp {node_id}@{address}");
             }
         }
         Ok(())
@@ -963,6 +974,7 @@ impl BreezServices {
                 amount_msat,
                 fee_msat: 0,
                 status: PaymentStatus::Pending,
+                error: None,
                 description: invoice.description.clone(),
                 details: PaymentDetails::Ln {
                     data: LnPaymentDetails {
@@ -983,16 +995,17 @@ impl BreezServices {
             false,
         )?;
 
-        if invoice.amount_msat.is_none() {
-            self.persister.insert_payment_external_info(
-                &invoice.payment_hash,
-                None,
-                None,
-                None,
-                None,
-                Some(amount_msat),
-            )?;
-        }
+        self.persister.insert_payment_external_info(
+            &invoice.payment_hash,
+            PaymentExternalInfo {
+                lnurl_pay_success_action: None,
+                lnurl_metadata: None,
+                ln_address: None,
+                lnurl_withdraw_endpoint: None,
+                attempted_amount_msat: invoice.amount_msat.map_or(Some(amount_msat), |_| None),
+                attempted_error: None,
+            },
+        )?;
         Ok(())
     }
 
@@ -1012,6 +1025,12 @@ impl BreezServices {
                 Ok(payment)
             }
             Err(e) => {
+                if let Some(invoice) = invoice.clone() {
+                    self.persister.update_payment_attempted_error(
+                        &invoice.payment_hash,
+                        Some(e.to_string()),
+                    )?;
+                }
                 self.notify_event_listeners(BreezEvent::PaymentFailed {
                     details: PaymentFailedData {
                         error: e.to_string(),
@@ -1214,7 +1233,7 @@ impl BreezServices {
         tokio::spawn(async move {
             let mut shutdown_receiver = cloned.shutdown_receiver.clone();
             loop {
-                if shutdown_receiver.has_changed().map_or(true, |c| c) {
+                if shutdown_receiver.has_changed().unwrap_or(true) {
                     return;
                 }
                 let invoice_stream_res = cloned.node_api.stream_incoming_payments().await;
@@ -1273,7 +1292,7 @@ impl BreezServices {
         tokio::spawn(async move {
             let mut shutdown_receiver = cloned.shutdown_receiver.clone();
             loop {
-                if shutdown_receiver.has_changed().map_or(true, |c| c) {
+                if shutdown_receiver.has_changed().unwrap_or(true) {
                     return;
                 }
                 let log_stream_res = cloned.node_api.stream_log_messages().await;
@@ -1508,6 +1527,7 @@ impl BreezServices {
                     closing_txid,
                 },
             },
+            error: None,
         })
     }
 
@@ -1828,10 +1848,7 @@ impl BreezServer {
             .connect()
             .await
             .map_err(|e| SdkError::ServiceConnectivity {
-                err: format!(
-                    "(Breez: {}) Failed to connect: {e}",
-                    self.server_url.clone()
-                ),
+                err: format!("(Breez: {}) Failed to connect: {e}", self.server_url),
             })
     }
 
@@ -1839,10 +1856,7 @@ impl BreezServer {
         match &self.api_key {
             Some(key) => Ok(Some(format!("Bearer {key}").parse().map_err(
                 |e: InvalidMetadataValue| SdkError::ServiceConnectivity {
-                    err: format!(
-                        "(Breez: {}) Failed parse API key: {e}",
-                        self.server_url.clone()
-                    ),
+                    err: format!("(Breez: {}) Failed parse API key: {e}", self.server_url),
                 },
             )?)),
             _ => Ok(None),
@@ -1864,28 +1878,28 @@ impl BreezServer {
         &self,
     ) -> SdkResult<PaymentNotifierClient<Channel>> {
         let url = Uri::from_str(&self.server_url).map_err(|e| SdkError::ServiceConnectivity {
-            err: format!("(Breez: {}) {e}", self.server_url.clone()),
+            err: format!("(Breez: {}) {e}", self.server_url),
         })?;
         Ok(PaymentNotifierClient::connect(url).await?)
     }
 
     pub(crate) async fn get_information_client(&self) -> SdkResult<InformationClient<Channel>> {
         let url = Uri::from_str(&self.server_url).map_err(|e| SdkError::ServiceConnectivity {
-            err: format!("(Breez: {}) {e}", self.server_url.clone()),
+            err: format!("(Breez: {}) {e}", self.server_url),
         })?;
         Ok(InformationClient::connect(url).await?)
     }
 
     pub(crate) async fn get_fund_manager_client(&self) -> SdkResult<FundManagerClient<Channel>> {
         let url = Uri::from_str(&self.server_url).map_err(|e| SdkError::ServiceConnectivity {
-            err: format!("(Breez: {}) {e}", self.server_url.clone()),
+            err: format!("(Breez: {}) {e}", self.server_url),
         })?;
         Ok(FundManagerClient::connect(url).await?)
     }
 
     pub(crate) async fn get_signer_client(&self) -> SdkResult<SignerClient<Channel>> {
         let url = Uri::from_str(&self.server_url).map_err(|e| SdkError::ServiceConnectivity {
-            err: format!("(Breez: {}) {e}", self.server_url.clone()),
+            err: format!("(Breez: {}) {e}", self.server_url),
         })?;
         Ok(SignerClient::new(Endpoint::new(url)?.connect().await?))
     }
@@ -1903,7 +1917,7 @@ impl BreezServer {
 
     pub(crate) async fn get_swapper_client(&self) -> SdkResult<SwapperClient<Channel>> {
         let url = Uri::from_str(&self.server_url).map_err(|e| SdkError::ServiceConnectivity {
-            err: format!("(Breez: {}) {e}", self.server_url.clone()),
+            err: format!("(Breez: {}) {e}", self.server_url),
         })?;
         Ok(SwapperClient::new(Endpoint::new(url)?.connect().await?))
     }
@@ -2183,12 +2197,12 @@ pub(crate) mod tests {
     use crate::lnurl::pay::model::SuccessActionProcessed;
     use crate::models::{LnPaymentDetails, NodeState, Payment, PaymentDetails, PaymentTypeFilter};
     use crate::node_api::NodeAPI;
-    use crate::PaymentType;
     use crate::{
         input_parser, parse_short_channel_id, test_utils::*, BuyBitcoinProvider, BuyBitcoinRequest,
         InputType, ListPaymentsRequest, OpeningFeeParams, PaymentStatus, ReceivePaymentRequest,
         SwapInfo, SwapStatus,
     };
+    use crate::{PaymentExternalInfo, PaymentType};
 
     use super::{PaymentReceiver, Receiver};
 
@@ -2249,6 +2263,7 @@ pub(crate) mod tests {
                 amount_msat: 10,
                 fee_msat: 0,
                 status: PaymentStatus::Complete,
+                error: None,
                 description: Some("test receive".to_string()),
                 details: PaymentDetails::Ln {
                     data: LnPaymentDetails {
@@ -2273,6 +2288,7 @@ pub(crate) mod tests {
                 amount_msat: 10,
                 fee_msat: 0,
                 status: PaymentStatus::Complete,
+                error: None,
                 description: Some("test lnurl-withdraw receive".to_string()),
                 details: PaymentDetails::Ln {
                     data: LnPaymentDetails {
@@ -2297,6 +2313,7 @@ pub(crate) mod tests {
                 amount_msat: 8,
                 fee_msat: 2,
                 status: PaymentStatus::Complete,
+                error: None,
                 description: Some("test payment".to_string()),
                 details: PaymentDetails::Ln {
                     data: LnPaymentDetails {
@@ -2321,6 +2338,7 @@ pub(crate) mod tests {
                 amount_msat: 1_000,
                 fee_msat: 0,
                 status: PaymentStatus::Complete,
+                error: None,
                 description: Some("test receive".to_string()),
                 details: PaymentDetails::Ln {
                     data: LnPaymentDetails {
@@ -2347,19 +2365,25 @@ pub(crate) mod tests {
         persister.insert_or_update_payments(&dummy_transactions, false)?;
         persister.insert_payment_external_info(
             payment_hash_with_lnurl_success_action,
-            Some(&sa),
-            Some(lnurl_metadata.to_string()),
-            Some(test_ln_address.to_string()),
-            None,
-            None,
+            PaymentExternalInfo {
+                lnurl_pay_success_action: Some(sa.clone()),
+                lnurl_metadata: Some(lnurl_metadata.to_string()),
+                ln_address: Some(test_ln_address.to_string()),
+                lnurl_withdraw_endpoint: None,
+                attempted_amount_msat: None,
+                attempted_error: None,
+            },
         )?;
         persister.insert_payment_external_info(
             payment_hash_lnurl_withdraw,
-            None,
-            None,
-            None,
-            Some(test_lnurl_withdraw_endpoint.to_string()),
-            None,
+            PaymentExternalInfo {
+                lnurl_pay_success_action: None,
+                lnurl_metadata: None,
+                ln_address: None,
+                lnurl_withdraw_endpoint: Some(test_lnurl_withdraw_endpoint.to_string()),
+                attempted_amount_msat: None,
+                attempted_error: None,
+            },
         )?;
         persister.insert_swap(swap_info.clone())?;
         persister.update_swap_bolt11(

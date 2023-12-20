@@ -294,6 +294,7 @@ export type Payment = {
     amountMsat: number
     feeMsat: number
     status: PaymentStatus
+    error?: string
     description?: string
     details: PaymentDetails
 }
@@ -302,6 +303,16 @@ export type PaymentFailedData = {
     error: string
     nodeId: string
     invoice?: LnInvoice
+}
+
+export type PrepareRedeemOnchainFundsRequest = {
+    toAddress: string
+    satPerVbyte: number
+}
+
+export type PrepareRedeemOnchainFundsResponse = {
+    txWeight: number
+    txFeeSat: number
 }
 
 export type PrepareRefundRequest = {
@@ -313,16 +324,6 @@ export type PrepareRefundRequest = {
 export type PrepareRefundResponse = {
     refundTxWeight: number
     refundTxFeeSat: number
-}
-
-export type PrepareSweepRequest = {
-    toAddress: string
-    satPerVbyte: number
-}
-
-export type PrepareSweepResponse = {
-    sweepTxWeight: number
-    sweepTxFeeSat: number
 }
 
 export type Rate = {
@@ -356,6 +357,15 @@ export type RecommendedFees = {
     hourFee: number
     economyFee: number
     minimumFee: number
+}
+
+export type RedeemOnchainFundsRequest = {
+    toAddress: string
+    satPerVbyte: number
+}
+
+export type RedeemOnchainFundsResponse = {
+    txid: number[]
 }
 
 export type RefundRequest = {
@@ -433,6 +443,7 @@ export type SendPaymentResponse = {
 export type SendSpontaneousPaymentRequest = {
     nodeId: string
     amountMsat: number
+    extraTlvs?: TlvEntry[]
 }
 
 export type ServiceHealthCheckResponse = {
@@ -479,20 +490,16 @@ export type SwapInfo = {
     channelOpeningFees?: OpeningFeeParams
 }
 
-export type SweepRequest = {
-    toAddress: string
-    satPerVbyte: number
-}
-
-export type SweepResponse = {
-    txid: number[]
-}
-
 export type SymbolType = {
     grapheme?: string
     template?: string
     rtl?: boolean
     position?: number
+}
+
+export type TlvEntry = {
+    fieldNumber: number
+    value: number[]
 }
 
 export type UnspentTransactionOutput = {
@@ -879,8 +886,8 @@ export const listPayments = async (req: ListPaymentsRequest): Promise<Payment[]>
     return response
 }
 
-export const sweep = async (req: SweepRequest): Promise<SweepResponse> => {
-    const response = await BreezSDK.sweep(req)
+export const redeemOnchainFunds = async (req: RedeemOnchainFundsRequest): Promise<RedeemOnchainFundsResponse> => {
+    const response = await BreezSDK.redeemOnchainFunds(req)
     return response
 }
 
@@ -1000,7 +1007,7 @@ export const buyBitcoin = async (req: BuyBitcoinRequest): Promise<BuyBitcoinResp
     return response
 }
 
-export const prepareSweep = async (req: PrepareSweepRequest): Promise<PrepareSweepResponse> => {
-    const response = await BreezSDK.prepareSweep(req)
+export const prepareRedeemOnchainFunds = async (req: PrepareRedeemOnchainFundsRequest): Promise<PrepareRedeemOnchainFundsResponse> => {
+    const response = await BreezSDK.prepareRedeemOnchainFunds(req)
     return response
 }

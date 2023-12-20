@@ -291,7 +291,7 @@ impl SqliteStorage {
         let status: i32 = row
             .get::<&str, Option<i32>>("status")?
             .unwrap_or(SwapStatus::Initial as i32);
-        let status: SwapStatus = status.try_into().map_or(SwapStatus::Initial, |v| v);
+        let status: SwapStatus = status.try_into().unwrap_or(SwapStatus::Initial);
         let refund_txs_raw: String = row
             .get::<&str, Option<String>>("refund_tx_ids")?
             .unwrap_or("[]".to_string());

@@ -1,39 +1,39 @@
 {
-    "name": "react-native-breez-sdk-example",
-    "version": "0.0.1",
-    "private": true,
-    "scripts": {
-        "clean": "rm -rf /tmp/metro-* && yarn start --reset-cache",
-        "android": "react-native run-android",
-        "ios": "react-native run-ios",
-        "start": "react-native start",
-        "test": "jest",
-        "lint": "eslint .",
-        "pods": "cd ios && pod install --repo-update",
-        "rebuild": "rm -rf node_modules && yarn && yarn pods"
-    },
-    "dependencies": {
-        "@breeztech/react-native-breez-sdk": "0.2.12",
-        "@dreson4/react-native-quick-bip39": "^0.0.5",
-        "react": "18.1.0",
-        "react-native": "0.70.6",
-        "react-native-build-config": "^0.3.2",
-        "react-native-quick-base64": "^2.0.5",
-        "react-native-quick-crypto": "^0.5.0",
-        "react-native-secure-storage": "https://github.com/satimoto/react-native-secure-storage"
-    },
-    "devDependencies": {
-        "@babel/core": "^7.12.9",
-        "@babel/runtime": "^7.12.5",
-        "@react-native-community/eslint-config": "^2.0.0",
-        "babel-jest": "^26.6.3",
-        "babel-plugin-module-resolver": "4.1.0",
-        "eslint": "^7.32.0",
-        "jest": "^26.6.3",
-        "metro-react-native-babel-preset": "0.72.3",
-        "react-test-renderer": "18.1.0"
-    },
-    "jest": {
-        "preset": "react-native"
-    }
+  "name": "react-native-breez-sdk-example",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "clean": "rm -rf /tmp/metro-* && yarn start --reset-cache",
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
+    "start": "react-native start",
+    "test": "jest",
+    "lint": "eslint .",
+    "pods": "cd ios && pod install --repo-update",
+    "rebuild": "rm -rf node_modules && yarn && yarn pods"
+  },
+  "dependencies": {
+    "@breeztech/react-native-breez-sdk": "0.2.12",
+    "@dreson4/react-native-quick-bip39": "^0.0.5",
+    "react": "18.1.0",
+    "react-native": "0.70.6",
+    "react-native-build-config": "^0.3.2",
+    "react-native-quick-base64": "^2.0.5",
+    "react-native-quick-crypto": "^0.5.0",
+    "react-native-secure-storage": "https://github.com/satimoto/react-native-secure-storage"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.12.9",
+    "@babel/runtime": "^7.12.5",
+    "@react-native-community/eslint-config": "^2.0.0",
+    "babel-jest": "^26.6.3",
+    "babel-plugin-module-resolver": "4.1.0",
+    "eslint": "^7.32.0",
+    "jest": "^26.6.3",
+    "metro-react-native-babel-preset": "0.72.3",
+    "react-test-renderer": "18.1.0"
+  },
+  "jest": {
+    "preset": "react-native"
+  }
 }

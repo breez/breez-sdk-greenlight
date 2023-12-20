@@ -4,7 +4,7 @@ use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::models::*;
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use rusqlite::Row;
-use rusqlite::{params, OptionalExtension};
+use rusqlite::{named_params, params, OptionalExtension};
 use std::collections::HashSet;
 
 use std::str::FromStr;
@@ -70,11 +70,7 @@ impl SqliteStorage {
     pub fn insert_payment_external_info(
         &self,
         payment_hash: &str,
-        lnurl_pay_success_action: Option<&SuccessActionProcessed>,
-        lnurl_metadata: Option<String>,
-        ln_address: Option<String>,
-        lnurl_withdraw_endpoint: Option<String>,
-        attempted_amount_msat: Option<u64>,
+        payment_external_info: PaymentExternalInfo,
     ) -> PersistResult<()> {
         let con = self.get_connection()?;
         let mut prep_statement = con.prepare(
@@ -85,20 +81,39 @@ impl SqliteStorage {
            lnurl_metadata,
            ln_address,
            lnurl_withdraw_endpoint,
-           attempted_amount_msat
+           attempted_amount_msat,
+           attempted_error
          )
-         VALUES (?1,?2,?3,?4,?5,?6)
+         VALUES (?1,?2,?3,?4,?5,?6,?7)
         ",
         )?;
 
         _ = prep_statement.execute((
             payment_hash,
-            &lnurl_pay_success_action,
-            lnurl_metadata,
-            ln_address,
-            lnurl_withdraw_endpoint,
-            attempted_amount_msat,
+            payment_external_info.lnurl_pay_success_action,
+            payment_external_info.lnurl_metadata,
+            payment_external_info.ln_address,
+            payment_external_info.lnurl_withdraw_endpoint,
+            payment_external_info.attempted_amount_msat,
+            payment_external_info.attempted_error,
         ))?;
+
+        Ok(())
+    }
+
+    /// Updates attempted error data associated with this payment
+    pub fn update_payment_attempted_error(
+        &self,
+        payment_hash: &str,
+        attempted_error: Option<String>,
+    ) -> PersistResult<()> {
+        self.get_connection()?.execute(
+            "UPDATE sync.payments_external_info SET attempted_error=:attempted_error WHERE payment_id=:payment_id",
+            named_params! {
+             ":payment_id": payment_hash,
+             ":attempted_error": attempted_error,
+            },
+        )?;
 
         Ok(())
     }
@@ -164,6 +179,7 @@ impl SqliteStorage {
              e.ln_address,
              e.lnurl_withdraw_endpoint,
              e.attempted_amount_msat,
+             e.attempted_error,
              o.payer_amount_msat
             FROM payments p
             LEFT JOIN sync.payments_external_info e
@@ -212,6 +228,7 @@ impl SqliteStorage {
                  e.ln_address,
                  e.lnurl_withdraw_endpoint,
                  e.attempted_amount_msat,
+                 e.attempted_error,
                  o.payer_amount_msat
                 FROM payments p
                 LEFT JOIN sync.payments_external_info e
@@ -258,6 +275,7 @@ impl SqliteStorage {
             status,
             description: row.get(6)?,
             details: row.get(7)?,
+            error: row.get(13)?,
         };
 
         if let PaymentDetails::Ln { ref mut data } = payment.details {
@@ -271,7 +289,7 @@ impl SqliteStorage {
         }
 
         // In case we have a record of the open channel fee, let's use it.
-        let payer_amount_msat: Option<u64> = row.get(13)?;
+        let payer_amount_msat: Option<u64> = row.get(14)?;
         if let Some(payer_amount) = payer_amount_msat {
             payment.fee_msat = payer_amount - amount_msat;
         }
@@ -440,6 +458,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
             amount_msat: 100,
             fee_msat: 20,
             status: PaymentStatus::Complete,
+            error: None,
             description: None,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
@@ -464,6 +483,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
             amount_msat: 100,
             fee_msat: 20,
             status: PaymentStatus::Complete,
+            error: None,
             description: Some("desc".to_string()),
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
@@ -488,6 +508,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
             amount_msat: 50_000,
             fee_msat: 20,
             status: PaymentStatus::Complete,
+            error: None,
             description: Some("desc".to_string()),
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
@@ -513,6 +534,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
         amount_msat: 1000,
         fee_msat: 0,
         status: PaymentStatus::Failed,
+        error: None,
         description: Some("desc".to_string()),
         details: PaymentDetails::Ln {
             data: LnPaymentDetails {
@@ -536,19 +558,25 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
     storage.insert_or_update_payments(&failed_txs, false)?;
     storage.insert_payment_external_info(
         payment_hash_with_lnurl_success_action,
-        Some(&sa),
-        Some(lnurl_metadata.to_string()),
-        Some(test_ln_address.to_string()),
-        None,
-        None,
+        PaymentExternalInfo {
+            lnurl_pay_success_action: Some(sa.clone()),
+            lnurl_metadata: Some(lnurl_metadata.to_string()),
+            ln_address: Some(test_ln_address.to_string()),
+            lnurl_withdraw_endpoint: None,
+            attempted_amount_msat: None,
+            attempted_error: None,
+        },
     )?;
     storage.insert_payment_external_info(
         payment_hash_with_lnurl_withdraw,
-        None,
-        None,
-        None,
-        Some(lnurl_withdraw_url.to_string()),
-        None,
+        PaymentExternalInfo {
+            lnurl_pay_success_action: None,
+            lnurl_metadata: None,
+            ln_address: None,
+            lnurl_withdraw_endpoint: Some(lnurl_withdraw_url.to_string()),
+            attempted_amount_msat: None,
+            attempted_error: None,
+        },
     )?;
     storage.insert_swap(swap_info.clone())?;
     storage.update_swap_bolt11(

@@ -262,7 +262,7 @@ impl FullReverseSwapInfo {
     /// - checks if the payment hash is the same preimage hash (derived from local secret bytes)
     /// included in the create request
     pub(crate) fn validate_hodl_invoice(&self, amount_req_msat: u64) -> ReverseSwapResult<()> {
-        let inv: lightning_invoice::Invoice = self.invoice.parse()?;
+        let inv: lightning_invoice::Bolt11Invoice = self.invoice.parse()?;
 
         // Validate if received invoice has the same amount as requested by the user
         let amount_from_invoice_msat = inv.amount_milli_satoshis().unwrap_or_default();
@@ -620,8 +620,20 @@ pub struct Payment {
     pub amount_msat: u64,
     pub fee_msat: u64,
     pub status: PaymentStatus,
+    pub error: Option<String>,
     pub description: Option<String>,
     pub details: PaymentDetails,
+}
+
+/// Represents a payments external information.
+#[derive(Default)]
+pub struct PaymentExternalInfo {
+    pub lnurl_pay_success_action: Option<SuccessActionProcessed>,
+    pub lnurl_metadata: Option<String>,
+    pub ln_address: Option<String>,
+    pub lnurl_withdraw_endpoint: Option<String>,
+    pub attempted_amount_msat: Option<u64>,
+    pub attempted_error: Option<String>,
 }
 
 /// Represents a list payments request.
@@ -759,6 +771,15 @@ pub struct SendPaymentRequest {
     pub amount_msat: Option<u64>,
 }
 
+/// Represents a TLV entry for a keysend payment.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TlvEntry {
+    /// The type field for the TLV
+    pub field_number: u64,
+    /// The value bytes for the TLV
+    pub value: Vec<u8>,
+}
+
 /// Represents a send spontaneous payment request.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SendSpontaneousPaymentRequest {
@@ -766,6 +787,8 @@ pub struct SendSpontaneousPaymentRequest {
     pub node_id: String,
     /// The amount in millisatoshis for this payment
     pub amount_msat: u64,
+    // Optional extra TLVs
+    pub extra_tlvs: Option<Vec<TlvEntry>>,
 }
 
 /// Represents a send payment response.
@@ -855,13 +878,13 @@ pub struct BuyBitcoinResponse {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SweepRequest {
+pub struct RedeemOnchainFundsRequest {
     pub to_address: String,
     pub sat_per_vbyte: u32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SweepResponse {
+pub struct RedeemOnchainFundsResponse {
     pub txid: Vec<u8>,
 }
 
@@ -1275,21 +1298,21 @@ pub enum BuyBitcoinProvider {
     Moonpay,
 }
 
-/// We need to prepare a sweep transaction to know what fee will be charged in satoshis this
-/// model holds the request data which consists of the address to sweep to and the fee rate in
+/// We need to prepare a redeem_onchain_funds transaction to know what fee will be charged in satoshis.
+/// This model holds the request data which consists of the address to redeem on-chain funds to and the fee rate in.
 /// satoshis per vbyte which will be converted to absolute satoshis.
 #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
-pub struct PrepareSweepRequest {
+pub struct PrepareRedeemOnchainFundsRequest {
     pub to_address: String,
-    pub sat_per_vbyte: u64,
+    pub sat_per_vbyte: u32,
 }
 
-/// We need to prepare a sweep transaction to know what a fee it will be charged in satoshis
+/// We need to prepare a redeem_onchain_funds transaction to know what a fee it will be charged in satoshis
 /// this model holds the response data, which consists of the weight and the absolute fee in sats
 #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
-pub struct PrepareSweepResponse {
-    pub sweep_tx_weight: u64,
-    pub sweep_tx_fee_sat: u64,
+pub struct PrepareRedeemOnchainFundsResponse {
+    pub tx_weight: u64,
+    pub tx_fee_sat: u64,
 }
 
 impl FromStr for BuyBitcoinProvider {
