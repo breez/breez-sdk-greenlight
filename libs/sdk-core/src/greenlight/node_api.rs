@@ -751,12 +751,7 @@ impl NodeAPI for Greenlight {
 
         Ok(SyncResponse {
             node_state,
-            payments: pull_transactions(
-                since_timestamp,
-                node_client.clone(),
-                node_info.blockheight,
-            )
-            .await?,
+            payments: pull_transactions(since_timestamp, node_client.clone()).await?,
             channels: all_channel_models,
         })
     }
@@ -1424,7 +1419,6 @@ enum NodeCommand {
 async fn pull_transactions(
     since_timestamp: u64,
     client: node::ClnClient,
-    block_height: u32,
 ) -> NodeResult<Vec<Payment>> {
     let mut c = client.clone();
 
@@ -1457,7 +1451,11 @@ async fn pull_transactions(
         .filter(|p| p.created_at > since_timestamp)
         .map(TryInto::try_into)
         .collect();
-
+    info!(
+        "len outbound transaction before {} and is {:?}",
+        outbound_transactions.iter().len(),
+        outbound_transactions
+    );
     let res = c
         .list_peers(cln::ListpeersRequest::default())
         .await?
@@ -1465,7 +1463,7 @@ async fn pull_transactions(
     let peers_models: Vec<Peer> = res.peers.into_iter().map(|p| p.into()).collect();
 
     let outbound_transactions: NodeResult<Vec<Payment>> =
-        htlc_expiry(outbound_transactions.unwrap(), peers_models, block_height);
+        htlc_expiry(outbound_transactions.unwrap(), peers_models);
 
     let mut transactions: Vec<Payment> = Vec::new();
     transactions.extend(received_transactions?);
@@ -1474,41 +1472,32 @@ async fn pull_transactions(
     Ok(transactions)
 }
 
-fn htlc_expiry(
-    payments: Vec<Payment>,
-    peers: Vec<Peer>,
-    block_height: u32,
-) -> NodeResult<Vec<Payment>> {
+fn htlc_expiry(payments: Vec<Payment>, peers: Vec<Peer>) -> NodeResult<Vec<Payment>> {
     let mut pending_payments: Vec<Payment> = vec![];
     if peers.is_empty() {
         return Ok(pending_payments);
     }
-    for peer in peers {
-        for channel in peer.channels {
-            let htlcs = channel.htlc;
-            if let Some(htlc) = htlcs {
-                info!("We have inflight htlcs {:?}", htlc);
-                for h in htlc {
-                    let payment_hash = hex::encode(h.clone().payment_hash);
-                    info!("htlc payment hash is {:?}", payment_hash);
-                    for mut payment in payments.clone() {
-                        let new_data = payment.clone().details;
-                        if let PaymentDetails::Ln { data } = new_data {
-                            if data.payment_hash == payment_hash && data.payment_expiry.is_none() {
-                                info!("payment hashes match let add the htlc");
-                                info!("adding htlc to payment {:?}", h);
-                                payment.details.add_payment_expiry(
-                                    h.clone(),
-                                    payment.payment_time,
-                                    block_height,
-                                );
-                                pending_payments.push(payment)
+
+    for mut payment in payments.clone() {
+        let new_data = payment.clone().details;
+        if let PaymentDetails::Ln { data } = new_data {
+            for peer in &peers {
+                for channel in &peer.channels {
+                    let htlcs = channel.htlc.as_ref();
+                    if let Some(htlc) = htlcs {
+                        for h in htlc {
+                            let payment_hash = hex::encode(h.clone().payment_hash);
+                            if payment_hash == data.payment_hash
+                                && data.payment_expiry < Some(h.expiry)
+                            {
+                                payment.details.add_payment_expiry(h.clone())
                             }
                         }
                     }
                 }
             }
         }
+        pending_payments.push(payment);
     }
     info!("pending htlc payments {:?}", pending_payments);
     Ok(pending_payments)

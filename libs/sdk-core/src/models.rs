@@ -676,14 +676,9 @@ pub enum PaymentDetails {
 }
 
 impl PaymentDetails {
-    pub fn add_payment_expiry(&mut self, htlc: Htlc, payment_time: i64, block_height: u32) {
-        let block_diff = htlc.expiry as i32 - block_height as i32;
-        let expiry_time_secs = block_diff * 600;
-        let payment_expiry_unix = payment_time + expiry_time_secs as i64;
-
-        info!("payment_expiry_unix {}", payment_expiry_unix);
+    pub fn add_payment_expiry(&mut self, htlc: Htlc) {
         if let PaymentDetails::Ln { data } = self {
-            data.payment_expiry = Some(payment_expiry_unix as u32)
+            data.payment_expiry = Some(htlc.expiry)
         }
     }
 }
