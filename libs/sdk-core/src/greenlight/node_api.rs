@@ -1451,11 +1451,7 @@ async fn pull_transactions(
         .filter(|p| p.created_at > since_timestamp)
         .map(TryInto::try_into)
         .collect();
-    info!(
-        "len outbound transaction before {} and is {:?}",
-        outbound_transactions.iter().len(),
-        outbound_transactions
-    );
+
     let res = c
         .list_peers(cln::ListpeersRequest::default())
         .await?
