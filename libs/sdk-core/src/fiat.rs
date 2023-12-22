@@ -4,6 +4,8 @@ use crate::error::SdkResult;
 use crate::grpc::RatesRequest;
 use crate::models::FiatAPI;
 use crate::{breez_services::BreezServer, error::SdkError};
+
+use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use tonic::Request;
 
@@ -62,7 +64,8 @@ fn convert_to_fiat_currency_with_id(id: String, info: CurrencyInfo) -> FiatCurre
     FiatCurrency { id, info }
 }
 
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl FiatAPI for BreezServer {
     async fn list_fiat_currencies(&self) -> SdkResult<Vec<FiatCurrency>> {
         let known_rates = self.fetch_fiat_rates().await?;

@@ -10,6 +10,7 @@ use crate::{
     RefundRequest, RefundResponse, SWAP_PAYMENT_FEE_EXPIRY_SECONDS,
 };
 use anyhow::{anyhow, Result};
+use async_trait::async_trait;
 use bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
 use bitcoin::blockdata::opcodes;
 use bitcoin::blockdata::script::Builder;
@@ -28,7 +29,8 @@ use crate::models::{Swap, SwapInfo, SwapStatus, SwapperAPI};
 
 use super::error::SwapResult;
 
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl SwapperAPI for BreezServer {
     async fn create_swap(
         &self,

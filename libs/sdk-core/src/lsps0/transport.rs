@@ -5,6 +5,7 @@ use std::time::Duration;
 use crate::node_api::NodeAPI;
 use crate::CustomMessage;
 use anyhow::{anyhow, Result};
+use async_trait::async_trait;
 use rand::distributions::Alphanumeric;
 use rand::distributions::DistString;
 use serde::de::DeserializeOwned;
@@ -20,7 +21,8 @@ use super::jsonrpc::{RpcError, RpcRequest, RpcServerMessage};
 const LSPS0_MESSAGE_TYPE: u16 = 37913;
 const JSONRPC_VERSION: &str = "2.0";
 
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 trait NotificationSender: Send + Sync {
     async fn send(&self, params: serde_json::Value) -> Result<(), Error>;
 }
@@ -31,7 +33,8 @@ where
     tx: mpsc::Sender<TNotification>,
 }
 
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl<TNotification> NotificationSender for NotificationHandler<TNotification>
 where
     TNotification: DeserializeOwned + Send,
@@ -78,7 +81,7 @@ impl Transport {
     pub fn start(self: &Arc<Transport>, cancel: watch::Receiver<()>) {
         debug!("starting lsps0 transport.");
         let cloned = self.clone();
-        tokio::spawn(async move {
+        crate::spawn(async move {
             loop {
                 let mut cancel = cancel.clone();
                 if cancel.has_changed().unwrap_or(true) {
@@ -352,7 +355,7 @@ mod tests {
             let raw_resp = serde_json::to_vec(&resp).unwrap();
             let tx_arc = tx_arc.clone();
             let peer_id = peer_id_clone.clone();
-            tokio::spawn(async move {
+            crate::spawn(async move {
                 tx_arc
                     .send(CustomMessage {
                         message_type: LSPS0_MESSAGE_TYPE,
@@ -421,7 +424,7 @@ mod tests {
             };
             let raw_resp = serde_json::to_vec(&resp).unwrap();
             let tx_arc = tx_arc.clone();
-            tokio::spawn(async move {
+            crate::spawn(async move {
                 tx_arc
                     .send(CustomMessage {
                         message_type: LSPS0_MESSAGE_TYPE,
@@ -477,7 +480,7 @@ mod tests {
             let raw_resp = serde_json::to_vec(&resp).unwrap();
             let tx_arc = tx_arc.clone();
             let peer_id = peer_id_clone.clone();
-            tokio::spawn(async move {
+            crate::spawn(async move {
                 tx_arc
                     .send(CustomMessage {
                         message_type: LSPS0_MESSAGE_TYPE,
@@ -538,7 +541,7 @@ mod tests {
             let raw_resp = serde_json::to_vec(&resp).unwrap();
             let tx_arc = tx_arc.clone();
             let peer_id = peer_id_clone.clone();
-            tokio::spawn(async move {
+            crate::spawn(async move {
                 tx_arc
                     .send(CustomMessage {
                         message_type: LSPS0_MESSAGE_TYPE,
@@ -591,7 +594,7 @@ mod tests {
             let raw_resp = serde_json::to_vec(&resp).unwrap();
             let tx_arc = tx_arc.clone();
             let peer_id = peer_id_clone.clone();
-            tokio::spawn(async move {
+            crate::spawn(async move {
                 tx_arc
                     .send(CustomMessage {
                         message_type: LSPS0_MESSAGE_TYPE,
@@ -642,7 +645,7 @@ mod tests {
             let raw_resp = serde_json::to_vec(&resp).unwrap();
             let tx_arc = tx_arc.clone();
             let peer_id = peer_id_clone.clone();
-            tokio::spawn(async move {
+            crate::spawn(async move {
                 tx_arc
                     .send(CustomMessage {
                         message_type: LSPS0_MESSAGE_TYPE + 1,

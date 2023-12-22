@@ -5,6 +5,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use anyhow::{anyhow, ensure, Result};
+use async_trait::async_trait;
 use bip39::*;
 use bitcoin::hashes::hex::ToHex;
 use bitcoin::hashes::{sha256, Hash};
@@ -1168,7 +1169,7 @@ impl BreezServices {
 
         // Stop signer on shutdown
         let mut shutdown_receiver = self.shutdown_receiver.clone();
-        tokio::spawn(async move {
+        crate::spawn(async move {
             // start the backup watcher
             _ = shutdown_receiver.changed().await;
             _ = shutdown_signer_sender.send(()).await;
@@ -1180,7 +1181,7 @@ impl BreezServices {
 
     async fn start_signer(self: &Arc<BreezServices>, shutdown_receiver: mpsc::Receiver<()>) {
         let signer_api = self.clone();
-        tokio::spawn(async move {
+        crate::spawn(async move {
             signer_api.node_api.start_signer(shutdown_receiver).await;
         });
     }
@@ -1205,7 +1206,7 @@ impl BreezServices {
 
     async fn track_backup_events(self: &Arc<BreezServices>) {
         let cloned = self.clone();
-        tokio::spawn(async move {
+        crate::spawn(async move {
             let mut events_stream = cloned.backup_watcher.subscribe_events();
             let mut shutdown_receiver = cloned.shutdown_receiver.clone();
             loop {
@@ -1230,7 +1231,7 @@ impl BreezServices {
 
     async fn track_invoices(self: &Arc<BreezServices>) {
         let cloned = self.clone();
-        tokio::spawn(async move {
+        crate::spawn(async move {
             let mut shutdown_receiver = cloned.shutdown_receiver.clone();
             loop {
                 if shutdown_receiver.has_changed().unwrap_or(true) {
@@ -1289,7 +1290,7 @@ impl BreezServices {
 
     async fn track_logs(self: &Arc<BreezServices>) {
         let cloned = self.clone();
-        tokio::spawn(async move {
+        crate::spawn(async move {
             let mut shutdown_receiver = cloned.shutdown_receiver.clone();
             loop {
                 if shutdown_receiver.has_changed().unwrap_or(true) {
@@ -1329,7 +1330,7 @@ impl BreezServices {
 
     async fn track_new_blocks(self: &Arc<BreezServices>) {
         let cloned = self.clone();
-        tokio::spawn(async move {
+        crate::spawn(async move {
             let mut current_block: u32 = 0;
             let mut shutdown_receiver = cloned.shutdown_receiver.clone();
             let mut interval = tokio::time::interval(Duration::from_secs(30));
@@ -1946,7 +1947,8 @@ pub fn mnemonic_to_seed(phrase: String) -> Result<Vec<u8>> {
     Ok(seed.as_bytes().to_vec())
 }
 
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 pub trait Receiver: Send + Sync {
     async fn receive_payment(
         &self,
@@ -1961,7 +1963,8 @@ pub(crate) struct PaymentReceiver {
     persister: Arc<SqliteStorage>,
 }
 
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl Receiver for PaymentReceiver {
     async fn receive_payment(
         &self,

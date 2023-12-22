@@ -4,6 +4,7 @@ use crate::{
 };
 
 use super::node_api::Greenlight;
+use async_trait::async_trait;
 use gl_client::{node, pb::cln};
 use std::sync::Arc;
 
@@ -19,7 +20,8 @@ impl GLBackupTransport {
     }
 }
 
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl BackupTransport for GLBackupTransport {
     async fn pull(&self) -> SdkResult<Option<BackupState>> {
         let key = self.gl_key();

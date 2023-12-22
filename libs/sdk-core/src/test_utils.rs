@@ -4,6 +4,7 @@ use std::time::{Duration, SystemTime};
 use std::{mem, vec};
 
 use anyhow::{anyhow, Error, Result};
+use async_trait::async_trait;
 use bitcoin::hashes::hex::ToHex;
 use bitcoin::hashes::{sha256, Hash};
 use bitcoin::secp256k1::ecdsa::RecoverableSignature;
@@ -69,7 +70,8 @@ impl MockBackupTransport {
     }
 }
 
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl BackupTransport for MockBackupTransport {
     async fn pull(&self) -> SdkResult<Option<BackupState>> {
         sleep(Duration::from_millis(10)).await;
@@ -107,7 +109,8 @@ impl BackupTransport for MockBackupTransport {
 
 pub struct MockSwapperAPI {}
 
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl SwapperAPI for MockSwapperAPI {
     async fn create_swap(
         &self,
@@ -179,7 +182,8 @@ impl Default for MockChainService {
     }
 }
 
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl ChainService for MockChainService {
     async fn recommended_fees(&self) -> Result<RecommendedFees> {
         Ok(self.recommended_fees.clone())
@@ -250,7 +254,8 @@ impl Default for MockReceiver {
     }
 }
 
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl Receiver for MockReceiver {
     async fn receive_payment(
         &self,
@@ -276,7 +281,8 @@ pub struct MockNodeAPI {
     on_stream_custom_messages: Mutex<mpsc::Receiver<CustomMessage>>,
 }
 
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl NodeAPI for MockNodeAPI {
     fn node_credentials(&self) -> NodeResult<Option<NodeCredentials>> {
         Err(NodeError::Generic(anyhow!("Not implemented")))
@@ -555,7 +561,8 @@ impl MockBreezServer {
     }
 }
 
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl LspAPI for MockBreezServer {
     async fn list_lsps(&self, _node_pubkey: String) -> SdkResult<Vec<LspInformation>> {
         Ok(vec![LspInformation {
@@ -600,7 +607,8 @@ impl LspAPI for MockBreezServer {
     }
 }
 
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl FiatAPI for MockBreezServer {
     async fn list_fiat_currencies(&self) -> SdkResult<Vec<FiatCurrency>> {
         Ok(vec![])
@@ -614,7 +622,8 @@ impl FiatAPI for MockBreezServer {
     }
 }
 
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl MoonPayApi for MockBreezServer {
     async fn buy_bitcoin_url(&self, swap_info: &SwapInfo) -> Result<String> {
         Ok(format!(

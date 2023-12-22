@@ -190,6 +190,11 @@ mod support;
 mod swap_in;
 mod swap_out;
 
+#[cfg(not(target_arch = "wasm32"))]
+pub(crate) use tokio::spawn;
+#[cfg(target_arch = "wasm32")]
+pub(crate) use wasm_bindgen_futures::spawn_local as spawn;
+
 pub use breez_services::{
     mnemonic_to_seed, BackupFailedData, BreezEvent, BreezServices, CheckMessageRequest,
     CheckMessageResponse, EventListener, InvoicePaidDetails, LogStream, PaymentFailedData,

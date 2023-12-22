@@ -1,4 +1,5 @@
 use anyhow::Result;
+use async_trait::async_trait;
 use reqwest::Url;
 
 use crate::breez_services::BreezServer;
@@ -45,12 +46,14 @@ async fn create_moonpay_url(wallet_address: &str, max_amount: &str) -> Result<Ur
     Ok(url)
 }
 
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 pub(crate) trait MoonPayApi: Send + Sync {
     async fn buy_bitcoin_url(&self, swap_info: &SwapInfo) -> Result<String>;
 }
 
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl MoonPayApi for BreezServer {
     async fn buy_bitcoin_url(&self, swap_info: &SwapInfo) -> Result<String> {
         let config = moonpay_config();

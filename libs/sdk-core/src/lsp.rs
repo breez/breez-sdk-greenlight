@@ -9,6 +9,7 @@ use crate::grpc::{
 use crate::models::{LspAPI, OpeningFeeParams, OpeningFeeParamsMenu};
 
 use anyhow::{anyhow, Result};
+use async_trait::async_trait;
 use prost::Message;
 use serde::{Deserialize, Serialize};
 use tonic::Request;
@@ -97,7 +98,8 @@ impl LspInformation {
     }
 }
 
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl LspAPI for BreezServer {
     async fn list_lsps(&self, pubkey: String) -> SdkResult<Vec<LspInformation>> {
         let mut client = self.get_channel_opener_client().await?;

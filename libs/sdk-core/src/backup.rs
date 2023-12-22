@@ -6,6 +6,7 @@ use crate::{
 };
 
 use anyhow::{anyhow, Result};
+use async_trait::async_trait;
 use ecies::symmetric::{sym_decrypt, sym_encrypt};
 use miniz_oxide::{deflate::compress_to_vec, inflate::decompress_to_vec_with_limit};
 use std::{
@@ -62,7 +63,8 @@ pub struct BackupState {
 }
 
 /// BackupTransport is the interface for syncing the sdk state between multiple apps.
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 pub trait BackupTransport: Send + Sync {
     async fn pull(&self) -> SdkResult<Option<BackupState>>;
     async fn push(&self, version: Option<u64>, data: Vec<u8>) -> SdkResult<u64>;
@@ -537,7 +539,7 @@ mod tests {
         let task_subscription = watcher.subscribe_events();
         //let cloned_watcher = watcher.clone();
         //let request_handler = watcher.request_handler().unwrap();
-        tokio::spawn(async move {
+        crate::spawn(async move {
             watcher
                 .request_backup(BackupRequest::new(true))
                 .await
@@ -567,7 +569,7 @@ mod tests {
 
         let persister = watcher.persister.clone();
         let task_subscription = watcher.subscribe_events();
-        tokio::spawn(async move {
+        crate::spawn(async move {
             let subscription = task_subscription.resubscribe();
             watcher
                 .request_backup(BackupRequest::new(true))
@@ -599,7 +601,7 @@ mod tests {
 
         let persister = watcher.persister.clone();
         let task_subscription = watcher.subscribe_events();
-        tokio::spawn(async move {
+        crate::spawn(async move {
             let subscription = task_subscription.resubscribe();
             watcher
                 .request_backup(BackupRequest::new(true))
@@ -633,7 +635,7 @@ mod tests {
 
         let task_subscription = watcher.subscribe_events();
         let persister = watcher.persister.clone();
-        tokio::spawn(async move {
+        crate::spawn(async move {
             for _ in 0..3 {
                 let subscription = task_subscription.resubscribe();
                 watcher
@@ -663,7 +665,7 @@ mod tests {
 
         let task_subscription = watcher.subscribe_events();
         let persister = watcher.persister.clone();
-        tokio::spawn(async move {
+        crate::spawn(async move {
             for _ in 0..30 {
                 let subscription = task_subscription.resubscribe();
                 watcher
@@ -728,7 +730,7 @@ mod tests {
         let task_subscription = watcher.subscribe_events();
         let task_subscription1 = task_subscription.resubscribe();
         let cloned_persister = watcher.persister.clone();
-        tokio::spawn(async move {
+        crate::spawn(async move {
             // Add some data to the sync database and wait for backup to complete.
             populate_sync_table(persister.clone());
             wait_for_backup_success(task_subscription1).await;

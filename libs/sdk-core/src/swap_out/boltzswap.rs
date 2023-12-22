@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::to_string_pretty;
 
 use anyhow::{anyhow, Result};
+use async_trait::async_trait;
 use bitcoin::Txid;
 use serde_json::json;
 
@@ -221,7 +222,8 @@ pub enum BoltzApiReverseSwapStatus {
 
 pub struct BoltzApi {}
 
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl ReverseSwapServiceAPI for BoltzApi {
     async fn fetch_reverse_swap_fees(&self) -> ReverseSwapResult<ReverseSwapPairInfo> {
         Ok(reverse_swap_pair_info().await?)

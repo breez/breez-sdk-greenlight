@@ -1,10 +1,12 @@
 use crate::input_parser::get_parse_and_log_response;
 use anyhow::{anyhow, Result};
+use async_trait::async_trait;
 use bitcoin::hashes::hex::FromHex;
 use bitcoin::{OutPoint, Txid};
 use serde::{Deserialize, Serialize};
 
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 pub trait ChainService: Send + Sync {
     async fn recommended_fees(&self) -> Result<RecommendedFees>;
     /// Gets up to 50 onchain and up to 25 mempool transactions associated with this address.
@@ -213,7 +215,8 @@ impl MempoolSpace {
     }
 }
 
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl ChainService for MempoolSpace {
     async fn recommended_fees(&self) -> Result<RecommendedFees> {
         get_parse_and_log_response(&format!("{}/api/v1/fees/recommended", self.base_url)).await

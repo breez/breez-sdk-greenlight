@@ -10,6 +10,9 @@ members = [
   "sdk-core",
   "sdk-bindings",
 ]
+exclude = [
+  "sdk-wasm",
+]
 resolver = "2"
 
 [workspace.package]

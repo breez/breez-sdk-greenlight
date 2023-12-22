@@ -3,7 +3,9 @@ use crate::{
     NodeCredentials, Payment, PaymentResponse, Peer, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse,
     RouteHintHop, SyncResponse, TlvEntry,
 };
+
 use anyhow::Result;
+use async_trait::async_trait;
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use lightning_invoice::RawBolt11Invoice;
 use std::pin::Pin;
@@ -50,7 +52,8 @@ pub enum NodeError {
 }
 
 /// Trait covering functions affecting the LN node
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 pub trait NodeAPI: Send + Sync {
     fn node_credentials(&self) -> NodeResult<Option<NodeCredentials>>;
     async fn create_invoice(

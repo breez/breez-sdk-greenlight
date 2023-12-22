@@ -5,6 +5,7 @@ use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use anyhow::{anyhow, Result};
+use async_trait::async_trait;
 use bitcoin::bech32::{u5, ToBase32};
 use bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
 use bitcoin::hashes::Hash;
@@ -606,7 +607,8 @@ impl Greenlight {
     }
 }
 
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl NodeAPI for Greenlight {
     fn node_credentials(&self) -> NodeResult<Option<NodeCredentials>> {
         Ok(Self::get_node_credentials(

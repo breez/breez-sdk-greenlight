@@ -1,0 +1,46 @@
+[package]
+name = "breez-sdk-wasm"
+version = "0.2.9"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["console_error_panic_hook"]
+
+[dependencies]
+breez-sdk-core = { path = "../sdk-core" }
+wasm-bindgen = { version = "=0.2.89", features = ["serde-serialize"] }
+wasm-bindgen-futures = { version = "0.4" }
+js-sys = "=0.3.65"
+console_error_panic_hook = { version = "0.1.7", optional = true }
+secp256k1 = { version = "0.28", features = ["global-context-less-secure"] }
+reqwest = { version = "=0.11.18", features = ["json"] }
+tokio = { version = "=1.24.2", features = ["full"] }
+rcgen = { version = "=0.10.0" }
+ring = { version = "=0.16.20", git = "https://github.com/dangeross/ring.git", branch = "wasix" }
+rustls = { version = "=0.21.5", git = "https://github.com/dangeross/rustls.git", branch = "v0.21.5" }
+rustls-webpki = { version = "=0.101.1", git = "https://github.com/dangeross/webpki.git", branch = "v0.101.0" }
+tokio-rustls = { version = "=0.24.1", git = "https://github.com/dangeross/tokio-rustls.git" }
+hyper-rustls = { version = "=0.24.1", git = "https://github.com/dangeross/hyper-rustls.git", branch = "wasix" }
+webpki-roots = { version = "=0.22.1" }
+webpki = { version = "=0.22.1" }
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3.34"
+
+[patch.crates-io]
+sct = { git = "https://github.com/dangeross/sct", branch = "v0.7.0" }
+h2 = { git = "https://github.com/wasix-org/h2" }
+rustls = { git = "https://github.com/dangeross/rustls.git", branch = "v0.21.5" }
+rustls-native-certs = { git = "https://github.com/wasix-org/rustls-native-certs.git" }
+rustls-webpki = { git = "https://github.com/dangeross/webpki.git", branch = "v0.101.0" }
+socket2 = { git = "https://github.com/wasix-org/socket2.git", branch = "v0.4.9" }
+reqwest = { git = "https://github.com/dangeross/reqwest.git" }
+ring = { git = "https://github.com/dangeross/ring.git", branch = "wasix" }
+tokio = { git = "https://github.com/wasix-org/tokio.git", branch = "epoll" }
+tokio-rustls = { git = "https://github.com/dangeross/tokio-rustls.git" }
+hyper = { git = "https://github.com/wasix-org/hyper.git", branch = "v0.14.27" }
+hyper-rustls = { git = "https://github.com/dangeross/hyper-rustls.git", branch = "wasix" }
+tonic = { git = "https://github.com/dangeross/tonic.git", branch = "v0.8.3" }

@@ -3,6 +3,7 @@ use std::ops::Add;
 use std::str::FromStr;
 
 use anyhow::{anyhow, ensure, Result};
+use async_trait::async_trait;
 use bitcoin::blockdata::opcodes;
 use bitcoin::blockdata::script::Builder;
 use bitcoin::hashes::hex::{FromHex, ToHex};
@@ -57,7 +58,8 @@ pub struct Peer {
 }
 
 /// Trait covering LSP-related functionality
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 pub trait LspAPI: Send + Sync {
     async fn list_lsps(&self, node_pubkey: String) -> SdkResult<Vec<LspInformation>>;
     /// Register for webhook callbacks at the given `webhook_url` whenever a new payment is received
@@ -77,7 +79,8 @@ pub trait LspAPI: Send + Sync {
 }
 
 /// Trait covering fiat-related functionality
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 pub trait FiatAPI: Send + Sync {
     /// List all supported fiat currencies for which there is a known exchange rate.
     async fn list_fiat_currencies(&self) -> SdkResult<Vec<FiatCurrency>>;
@@ -98,7 +101,8 @@ pub struct Swap {
 }
 
 /// Trait covering functionality involving swaps
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 pub trait SwapperAPI: Send + Sync {
     async fn create_swap(
         &self,
@@ -368,12 +372,14 @@ impl TryFrom<i32> for ReverseSwapStatus {
 }
 
 /// Trait covering Breez Server reverse swap functionality
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 pub(crate) trait ReverseSwapperRoutingAPI: Send + Sync {
     async fn fetch_reverse_routing_node(&self) -> ReverseSwapResult<Vec<u8>>;
 }
 
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl ReverseSwapperRoutingAPI for BreezServer {
     async fn fetch_reverse_routing_node(&self) -> ReverseSwapResult<Vec<u8>> {
         Ok(self
@@ -386,7 +392,8 @@ impl ReverseSwapperRoutingAPI for BreezServer {
 }
 
 /// Trait covering reverse swap functionality on the external service
-#[tonic::async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 pub(crate) trait ReverseSwapServiceAPI: Send + Sync {
     /// Lookup the most recent reverse swap pair info using the Boltz API. The fees are only valid
     /// for a set amount of time.
