@@ -196,7 +196,7 @@ pub async fn parse(input: &str) -> Result<InputType> {
 
     // Try to strip the "lightning:" prefix from possible lnurl string. If prefix is not there, default to original input
     let input = input.strip_prefix("lightning:").unwrap_or(input);
-    if let Ok((domain, mut lnurl_endpoint, is_ln_address)) = lnurl_decode(input) {
+    if let Ok((domain, mut lnurl_endpoint, ln_address)) = lnurl_decode(input) {
         // For LNURL-auth links, their type is already known if the link contains the login tag
         // No need to query the endpoint for details
         if lnurl_endpoint.contains("tag=login") {
@@ -215,10 +215,7 @@ pub async fn parse(input: &str) -> Result<InputType> {
             LnUrlPay { data } => LnUrlPay {
                 data: LnUrlPayRequestData {
                     domain,
-                    ln_address: match is_ln_address {
-                        true => Some(input.to_string()),
-                        false => None,
-                    },
+                    ln_address,
                     ..data
                 },
             },
@@ -263,14 +260,17 @@ fn prepend_if_missing(prefix: &str, input: &str) -> String {
 /// - https://<domain>/.well-known/lnurlp/<username> for clearnet domains
 /// - http://<domain>/.well-known/lnurlp/<username> for onion domains
 ///
-/// Valid characters for the username are `a-z0-9-_.`
+/// Valid characters for the username are `a-z0-9-_.`, however the function
+/// tolerates capital letters by downcasing the address.
 ///
-/// The result is a tuple of (domain, LNURL-pay endpoint)
-fn ln_address_decode(ln_address: &str) -> Result<(String, String)> {
+/// The result is a tuple of (domain, LNURL-pay endpoint, downcased lightning address)
+fn ln_address_decode(ln_address: &str) -> Result<(String, String, String)> {
     if ln_address.contains('@') {
         let split = ln_address.split('@').collect::<Vec<&str>>();
         let user = split[0].to_lowercase();
-        let domain = split[1];
+        // It is safe to downcase the domains since they are case-insensitive.
+        // https://www.rfc-editor.org/rfc/rfc3986#section-3.2.2
+        let domain = split[1].to_lowercase();
 
         if !user
             .chars()
@@ -285,15 +285,16 @@ fn ln_address_decode(ln_address: &str) -> Result<(String, String)> {
         };
 
         return Ok((
-            domain.into(),
+            domain.clone(),
             format!("{schema}{domain}/.well-known/lnurlp/{user}"),
+            format!("{user}@{domain}"),
         ));
     }
 
     Err(anyhow!("Invalid LN address"))
 }
 
-/// Decodes the input to a human-readable http or https LNURL. Returns a tuple of (domain, url, is_ln_address).
+/// Decodes the input to a human-readable http or https LNURL. Returns a tuple of (domain, url, lightning address if present).
 ///
 /// It can handle three kinds of input:
 ///
@@ -308,9 +309,10 @@ fn ln_address_decode(ln_address: &str) -> Result<(String, String)> {
 /// LNURLs in all uppercase or all lowercase are valid, but mixed case ones are invalid.
 ///
 /// For LN addresses, the username is limited to `a-z0-9-_.`, which is more restrictive than email addresses.
-fn lnurl_decode(encoded: &str) -> LnUrlResult<(String, String, bool)> {
-    if let Ok((domain, url)) = ln_address_decode(encoded) {
-        return Ok((domain, url, true));
+/// However the function tolerates capital letters by downcasing the address.
+fn lnurl_decode(encoded: &str) -> LnUrlResult<(String, String, Option<String>)> {
+    if let Ok((domain, url, ln_address)) = ln_address_decode(encoded) {
+        return Ok((domain, url, Some(ln_address)));
     }
 
     match bech32::decode(encoded) {
@@ -334,7 +336,7 @@ fn lnurl_decode(encoded: &str) -> LnUrlResult<(String, String, bool)> {
                 )));
             }
 
-            Ok((domain.into(), decoded, false))
+            Ok((domain.into(), decoded, None))
         }
         Err(_) => {
             let supported_prefixes = ["lnurlp", "lnurlw", "keyauth"];
@@ -367,7 +369,7 @@ fn lnurl_decode(encoded: &str) -> LnUrlResult<(String, String, bool)> {
                 false => "https",
             };
 
-            Ok((domain.into(), encoded.replace(scheme, new_scheme), false))
+            Ok((domain.into(), encoded.replace(scheme, new_scheme), None))
         }
     }
 }
@@ -885,7 +887,7 @@ pub(crate) mod tests {
                 "https://domain.com".to_base32(),
                 Variant::Bech32
             )?)?,
-            ("domain.com".into(), "https://domain.com".into(), false)
+            ("domain.com".into(), "https://domain.com".into(), None)
         );
 
         // HTTP not allowed with clearnet domains
@@ -903,7 +905,7 @@ pub(crate) mod tests {
                 "http://3fdsf.onion".to_base32(),
                 Variant::Bech32
             )?)?,
-            ("3fdsf.onion".into(), "http://3fdsf.onion".into(), false)
+            ("3fdsf.onion".into(), "http://3fdsf.onion".into(), None)
         );
 
         // HTTPS not allowed with onion domains
@@ -919,7 +921,7 @@ pub(crate) mod tests {
 
         assert_eq!(
             lnurl_decode(lnurl_raw)?,
-            ("service.com".into(), decoded_url.into(), false)
+            ("service.com".into(), decoded_url.into(), None)
         );
 
         // Uppercase and lowercase allowed, but mixed case is invalid
@@ -969,11 +971,7 @@ pub(crate) mod tests {
         let lnurl_withdraw_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4exctthd96xserjv9mn7um9wdekjmmw843xxwpexdnxzen9vgunsvfexq6rvdecx93rgdmyxcuxverrvcursenpxvukzv3c8qunsdecx33nzwpnvg6ryc3hv93nzvecxgcxgwp3h33lxk";
         assert_eq!(
             lnurl_decode(lnurl_withdraw_encoded)?,
-            (
-                "localhost".into(),
-                format!("https://localhost{path}"),
-                false
-            )
+            ("localhost".into(), format!("https://localhost{path}"), None,)
         );
 
         if let LnUrlWithdraw { data: wd } = parse(lnurl_withdraw_encoded).await? {
@@ -1000,7 +998,7 @@ pub(crate) mod tests {
         let lnurl_auth_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgeqgntfgu";
         assert_eq!(
             lnurl_decode(lnurl_auth_encoded)?,
-            ("localhost".into(), decoded_url.into(), false)
+            ("localhost".into(), decoded_url.into(), None)
         );
 
         if let LnUrlAuth { data: ad } = parse(lnurl_auth_encoded).await? {
@@ -1106,7 +1104,7 @@ pub(crate) mod tests {
         ln_address: &str,
         return_lnurl_error: Option<String>,
     ) -> Result<Mock> {
-        let (_domain, lnurl_pay_url) = ln_address_decode(ln_address)?;
+        let (_domain, lnurl_pay_url, _ln_address) = ln_address_decode(ln_address)?;
         let url = reqwest::Url::parse(&lnurl_pay_url)?;
         let path = url.path();
 
@@ -1155,11 +1153,7 @@ pub(crate) mod tests {
         let lnurl_pay_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttsv9un7um9wdekjmmw84jxywf5x43rvv35xgmr2enrxanr2cfcvsmnwe3jxcukvde48qukgdec89snwde3vfjxvepjxpjnjvtpxd3kvdnxx5crxwpjvyunsephsz36jf";
         assert_eq!(
             lnurl_decode(lnurl_pay_encoded)?,
-            (
-                "localhost".into(),
-                format!("https://localhost{path}"),
-                false
-            )
+            ("localhost".into(), format!("https://localhost{path}"), None)
         );
 
         if let LnUrlPay { data: pd } = parse(lnurl_pay_encoded).await? {
@@ -1261,7 +1255,7 @@ pub(crate) mod tests {
             (
                 "domain.onion".into(),
                 "http://domain.onion/.well-known/lnurlp/user".into(),
-                true
+                Some("user@domain.onion".into()),
             )
         );
         assert_eq!(
@@ -1269,7 +1263,7 @@ pub(crate) mod tests {
             (
                 "domain.com".into(),
                 "https://domain.com/.well-known/lnurlp/user".into(),
-                true
+                Some("user@domain.com".into()),
             )
         );
         assert_eq!(
@@ -1277,7 +1271,7 @@ pub(crate) mod tests {
             (
                 "domain.net".into(),
                 "https://domain.net/.well-known/lnurlp/user".into(),
-                true
+                Some("user@domain.net".into()),
             )
         );
         assert_eq!(
@@ -1285,7 +1279,15 @@ pub(crate) mod tests {
             (
                 "domain.com".into(),
                 "https://domain.com/.well-known/lnurlp/user".into(),
-                true
+                Some("user@domain.com".into()),
+            )
+        );
+        assert_eq!(
+            lnurl_decode("ODELL@DOMAIN.COM")?,
+            (
+                "domain.com".into(),
+                "https://domain.com/.well-known/lnurlp/odell".into(),
+                Some("odell@domain.com".into()),
             )
         );
         assert!(ln_address_decode("invalid_ln_address").is_err());
@@ -1310,7 +1312,7 @@ pub(crate) mod tests {
             (
                 "asfddf2dsf3f.onion".into(),
                 "http://asfddf2dsf3f.onion".into(),
-                false
+                None,
             )
         );
         assert_eq!(
@@ -1318,7 +1320,7 @@ pub(crate) mod tests {
             (
                 "asfddf2dsf3f.onion".into(),
                 "http://asfddf2dsf3f.onion".into(),
-                false
+                None,
             )
         );
         assert_eq!(
@@ -1326,22 +1328,22 @@ pub(crate) mod tests {
             (
                 "asfddf2dsf3f.onion".into(),
                 "http://asfddf2dsf3f.onion".into(),
-                false
+                None,
             )
         );
 
         // For non-onion addresses, the prefix maps to an equivalent HTTPS URL
         assert_eq!(
             lnurl_decode("lnurlp://domain.com")?,
-            ("domain.com".into(), "https://domain.com".into(), false)
+            ("domain.com".into(), "https://domain.com".into(), None)
         );
         assert_eq!(
             lnurl_decode("lnurlw://domain.com")?,
-            ("domain.com".into(), "https://domain.com".into(), false)
+            ("domain.com".into(), "https://domain.com".into(), None)
         );
         assert_eq!(
             lnurl_decode("keyauth://domain.com")?,
-            ("domain.com".into(), "https://domain.com".into(), false)
+            ("domain.com".into(), "https://domain.com".into(), None)
         );
 
         // Same as above, but prefix: approach instead of prefix://
@@ -1350,7 +1352,7 @@ pub(crate) mod tests {
             (
                 "asfddf2dsf3f.onion".into(),
                 "http://asfddf2dsf3f.onion".into(),
-                false
+                None
             )
         );
         assert_eq!(
@@ -1358,7 +1360,7 @@ pub(crate) mod tests {
             (
                 "asfddf2dsf3f.onion".into(),
                 "http://asfddf2dsf3f.onion".into(),
-                false
+                None
             )
         );
         assert_eq!(
@@ -1366,21 +1368,21 @@ pub(crate) mod tests {
             (
                 "asfddf2dsf3f.onion".into(),
                 "http://asfddf2dsf3f.onion".into(),
-                false
+                None
             )
         );
 
         assert_eq!(
             lnurl_decode("lnurlp:domain.com")?,
-            ("domain.com".into(), "https://domain.com".into(), false)
+            ("domain.com".into(), "https://domain.com".into(), None)
         );
         assert_eq!(
             lnurl_decode("lnurlw:domain.com")?,
-            ("domain.com".into(), "https://domain.com".into(), false)
+            ("domain.com".into(), "https://domain.com".into(), None)
         );
         assert_eq!(
             lnurl_decode("keyauth:domain.com")?,
-            ("domain.com".into(), "https://domain.com".into(), false)
+            ("domain.com".into(), "https://domain.com".into(), None)
         );
 
         Ok(())
