@@ -676,9 +676,9 @@ pub enum PaymentDetails {
 }
 
 impl PaymentDetails {
-    pub fn add_payment_expiry(&mut self, htlc: Htlc) {
+    pub fn add_pending_expiration_block(&mut self, htlc: Htlc) {
         if let PaymentDetails::Ln { data } = self {
-            data.payment_expiry = Some(htlc.expiry)
+            data.pending_expiration_block = Some(htlc.expiry)
         }
     }
 }
@@ -710,7 +710,7 @@ pub struct LnPaymentDetails {
     pub swap_info: Option<SwapInfo>,
 
     /// Only set for [PaymentType::Pending] payments that are inflight.
-    pub payment_expiry: Option<u32>,
+    pub pending_expiration_block: Option<u32>,
 }
 
 /// Represents the funds that were on the user side of the channel at the time it was closed.
@@ -1110,7 +1110,7 @@ pub struct Channel {
     /// This may be empty for older closed channels, if it was not possible to retrieve the closing txid.
     pub closing_txid: Option<String>,
 
-    pub htlc: Option<Vec<Htlc>>,
+    pub htlc: Vec<Htlc>,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]

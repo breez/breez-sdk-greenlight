@@ -952,12 +952,12 @@ enum BreezSDKMapper {
             swapInfo = try asSwapInfo(swapInfo: swapInfoTmp)
         }
 
-        var paymentExpiry: UInt32?
-        if hasNonNilKey(data: lnPaymentDetails, key: "paymentExpiry") {
-            guard let paymentExpiryTmp = lnPaymentDetails["paymentExpiry"] as? UInt32 else {
-                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "paymentExpiry"))
+        var pendingExpirationBlock: UInt32?
+        if hasNonNilKey(data: lnPaymentDetails, key: "pendingExpirationBlock") {
+            guard let pendingExpirationBlockTmp = lnPaymentDetails["pendingExpirationBlock"] as? UInt32 else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "pendingExpirationBlock"))
             }
-            paymentExpiry = paymentExpiryTmp
+            pendingExpirationBlock = pendingExpirationBlockTmp
         }
 
         return LnPaymentDetails(
@@ -972,7 +972,7 @@ enum BreezSDKMapper {
             lnAddress: lnAddress,
             lnurlWithdrawEndpoint: lnurlWithdrawEndpoint,
             swapInfo: swapInfo,
-            paymentExpiry: paymentExpiry
+            pendingExpirationBlock: pendingExpirationBlock
         )
     }
 
@@ -989,7 +989,7 @@ enum BreezSDKMapper {
             "lnAddress": lnPaymentDetails.lnAddress == nil ? nil : lnPaymentDetails.lnAddress,
             "lnurlWithdrawEndpoint": lnPaymentDetails.lnurlWithdrawEndpoint == nil ? nil : lnPaymentDetails.lnurlWithdrawEndpoint,
             "swapInfo": lnPaymentDetails.swapInfo == nil ? nil : dictionaryOf(swapInfo: lnPaymentDetails.swapInfo!),
-            "paymentExpiry": lnPaymentDetails.paymentExpiry == nil ? nil : lnPaymentDetails.paymentExpiry,
+            "pendingExpirationBlock": lnPaymentDetails.pendingExpirationBlock == nil ? nil : lnPaymentDetails.pendingExpirationBlock,
         ]
     }
 

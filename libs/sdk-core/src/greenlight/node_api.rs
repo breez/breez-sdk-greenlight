@@ -751,10 +751,7 @@ impl NodeAPI for Greenlight {
         };
         let mut htlc_list: Vec<Htlc> = Vec::new();
         for channel in all_channel_models.clone() {
-            let htlcs = channel.htlc;
-            if let Some(htlc) = htlcs {
-                htlc_list.extend(htlc);
-            }
+            htlc_list.extend(channel.htlc);
         }
 
         Ok(SyncResponse {
@@ -1482,8 +1479,10 @@ fn htlc_expiry(payments: Vec<Payment>, htlc_list: Vec<Htlc>) -> NodeResult<Vec<P
         if let PaymentDetails::Ln { data } = new_data {
             for htlc in &htlc_list {
                 let payment_hash = hex::encode(htlc.clone().payment_hash);
-                if payment_hash == data.payment_hash && data.payment_expiry < Some(htlc.expiry) {
-                    payment.details.add_payment_expiry(htlc.clone())
+                if payment_hash == data.payment_hash
+                    && data.pending_expiration_block < Some(htlc.expiry)
+                {
+                    payment.details.add_pending_expiration_block(htlc.clone())
                 }
             }
         }
@@ -1521,7 +1520,7 @@ impl TryFrom<OffChainPayment> for Payment {
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
                     swap_info: None,
-                    payment_expiry: None,
+                    pending_expiration_block: None,
                 },
             },
         })
@@ -1561,7 +1560,7 @@ impl TryFrom<gl_client::signer::model::greenlight::Invoice> for Payment {
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
                     swap_info: None,
-                    payment_expiry: None,
+                    pending_expiration_block: None,
                 },
             },
         })
@@ -1616,7 +1615,7 @@ impl TryFrom<gl_client::signer::model::greenlight::Payment> for Payment {
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
                     swap_info: None,
-                    payment_expiry: None,
+                    pending_expiration_block: None,
                 },
             },
         })
@@ -1658,7 +1657,7 @@ impl TryFrom<cln::ListinvoicesInvoices> for Payment {
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
                     swap_info: None,
-                    payment_expiry: None,
+                    pending_expiration_block: None,
                 },
             },
         })
@@ -1723,7 +1722,7 @@ impl TryFrom<cln::ListpaysPays> for Payment {
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
                     swap_info: None,
-                    payment_expiry: None,
+                    pending_expiration_block: None,
                 },
             },
         })
@@ -1811,15 +1810,14 @@ impl From<cln::ListpeersPeersChannels> for Channel {
             alias_remote,
             alias_local,
             closing_txid: None,
-            htlc: Some(
-                c.htlcs
-                    .into_iter()
-                    .map(|c| Htlc {
-                        expiry: c.expiry,
-                        payment_hash: c.payment_hash,
-                    })
-                    .collect(),
-            ),
+            htlc: c
+                .htlcs
+                .into_iter()
+                .map(|c| Htlc {
+                    expiry: c.expiry,
+                    payment_hash: c.payment_hash,
+                })
+                .collect(),
         }
     }
 }
@@ -1894,7 +1892,7 @@ impl TryFrom<ListclosedchannelsClosedchannels> for Channel {
             alias_remote,
             alias_local,
             closing_txid: None,
-            htlc: None,
+            htlc: Vec::new(),
         })
     }
 }

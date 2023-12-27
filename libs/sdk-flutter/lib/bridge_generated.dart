@@ -706,7 +706,7 @@ class LnPaymentDetails {
   final SwapInfo? swapInfo;
 
   /// Only set for [PaymentType::Pending] payments that are inflight.
-  final int? paymentExpiry;
+  final int? pendingExpirationBlock;
 
   const LnPaymentDetails({
     required this.paymentHash,
@@ -720,7 +720,7 @@ class LnPaymentDetails {
     this.lnurlMetadata,
     this.lnurlWithdrawEndpoint,
     this.swapInfo,
-    this.paymentExpiry,
+    this.pendingExpirationBlock,
   });
 }
 
@@ -3119,7 +3119,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       lnurlMetadata: _wire2api_opt_String(arr[8]),
       lnurlWithdrawEndpoint: _wire2api_opt_String(arr[9]),
       swapInfo: _wire2api_opt_box_autoadd_swap_info(arr[10]),
-      paymentExpiry: _wire2api_opt_box_autoadd_u32(arr[11]),
+      pendingExpirationBlock: _wire2api_opt_box_autoadd_u32(arr[11]),
     );
   }
 

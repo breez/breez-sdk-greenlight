@@ -13,8 +13,7 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
           keysend INTEGER NOT NULL,                  
           bolt11 TEXT,
           pending INTEGER NOT NULL,
-          description TEXT,
-          payment_expiry INTEGER NOT NULL
+          description TEXT
         ) STRICT;  
         
         CREATE TABLE IF NOT EXISTS settings (
@@ -85,8 +84,7 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
           'destination_pubkey', destination_pubkey, 
           'payment_preimage', payment_preimage, 
           'keysend', CASE keysend WHEN 1 THEN json('true') ELSE json('false') END, 
-          'bolt11', bolt11,
-          'payment_expiry', CASE payment_expiry WHEN NULL THEN NULL ELSE payment_expiry END
+          'bolt11', bolt11
          )
         FROM old_payments;
        

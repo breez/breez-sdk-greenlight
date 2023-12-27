@@ -872,7 +872,7 @@ mod tests {
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
                     swap_info: None,
-                    payment_expiry: None,
+                    pending_expiration_block: None,
                 },
             },
         };
