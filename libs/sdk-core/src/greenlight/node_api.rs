@@ -14,6 +14,7 @@ use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::{Address, OutPoint, Script, Sequence, Transaction, TxIn, TxOut, Txid, Witness};
 use ecies::symmetric::{sym_decrypt, sym_encrypt};
+use futures::Stream;
 use gl_client::node::ClnClient;
 use gl_client::pb::cln::listinvoices_invoices::ListinvoicesInvoicesStatus;
 use gl_client::pb::cln::listpays_pays::ListpaysPaysStatus;
@@ -36,7 +37,7 @@ use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 use tokio::sync::{mpsc, Mutex};
 use tokio::time::sleep;
-use tokio_stream::{Stream, StreamExt};
+use tokio_stream::StreamExt;
 use tonic::Streaming;
 
 use crate::invoice::{parse_invoice, validate_network, InvoiceError, RouteHintHop};
@@ -748,10 +749,17 @@ impl NodeAPI for Greenlight {
             connected_peers,
             inbound_liquidity_msats: max_receivable_single_channel,
         };
+        let mut htlc_list: Vec<Htlc> = Vec::new();
+        for channel in all_channel_models.clone() {
+            let htlcs = channel.htlc;
+            if let Some(htlc) = htlcs {
+                htlc_list.extend(htlc);
+            }
+        }
 
         Ok(SyncResponse {
             node_state,
-            payments: pull_transactions(since_timestamp, node_client.clone()).await?,
+            payments: pull_transactions(since_timestamp, node_client.clone(), htlc_list).await?,
             channels: all_channel_models,
         })
     }
@@ -1419,6 +1427,7 @@ enum NodeCommand {
 async fn pull_transactions(
     since_timestamp: u64,
     client: node::ClnClient,
+    htlc_list: Vec<Htlc>,
 ) -> NodeResult<Vec<Payment>> {
     let mut c = client.clone();
 
@@ -1452,14 +1461,8 @@ async fn pull_transactions(
         .map(TryInto::try_into)
         .collect();
 
-    let res = c
-        .list_peers(cln::ListpeersRequest::default())
-        .await?
-        .into_inner();
-    let peers_models: Vec<Peer> = res.peers.into_iter().map(|p| p.into()).collect();
-
     let outbound_transactions: NodeResult<Vec<Payment>> =
-        htlc_expiry(outbound_transactions.unwrap(), peers_models);
+        htlc_expiry(outbound_transactions.unwrap(), htlc_list);
 
     let mut transactions: Vec<Payment> = Vec::new();
     transactions.extend(received_transactions?);
@@ -1468,28 +1471,19 @@ async fn pull_transactions(
     Ok(transactions)
 }
 
-fn htlc_expiry(payments: Vec<Payment>, peers: Vec<Peer>) -> NodeResult<Vec<Payment>> {
-    let mut pending_payments: Vec<Payment> = vec![];
-    if peers.is_empty() {
+fn htlc_expiry(payments: Vec<Payment>, htlc_list: Vec<Htlc>) -> NodeResult<Vec<Payment>> {
+    let mut pending_payments: Vec<Payment> = Vec::new();
+    if htlc_list.is_empty() {
         return Ok(pending_payments);
     }
 
     for mut payment in payments.clone() {
         let new_data = payment.clone().details;
         if let PaymentDetails::Ln { data } = new_data {
-            for peer in &peers {
-                for channel in &peer.channels {
-                    let htlcs = channel.htlc.as_ref();
-                    if let Some(htlc) = htlcs {
-                        for h in htlc {
-                            let payment_hash = hex::encode(h.clone().payment_hash);
-                            if payment_hash == data.payment_hash
-                                && data.payment_expiry < Some(h.expiry)
-                            {
-                                payment.details.add_payment_expiry(h.clone())
-                            }
-                        }
-                    }
+            for htlc in &htlc_list {
+                let payment_hash = hex::encode(htlc.clone().payment_hash);
+                if payment_hash == data.payment_hash && data.payment_expiry < Some(htlc.expiry) {
+                    payment.details.add_payment_expiry(htlc.clone())
                 }
             }
         }
