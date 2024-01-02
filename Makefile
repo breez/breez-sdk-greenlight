@@ -1,4 +1,4 @@
-all: fmt clippy codegen
+all: fmt codegen clippy
 
 fmt:
 	cd libs && cargo fmt -- --check
