@@ -27,9 +27,6 @@ jobs:
     if: ${{ !inputs.use-dummy-binaries }}
     runs-on: ubuntu-20.04
     name: build ${{ matrix.target }}
-    env:
-      WASI_MAJOR_VERSION: 20
-      WASI_MINOR_VERSION: 0
     strategy:
       matrix:
         target: [
@@ -44,10 +41,13 @@ jobs:
 
     - name: Install wasm-sdk
       working-directory: /opt
+      env:
+        WASI_MAJOR_VERSION: 20
+        WASI_MINOR_VERSION: 0
       run: |
-        wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${{ WASI_MAJOR_VERSION }}/wasi-sdk-${{ WASI_MAJOR_VERSION }}.${{ WASI_MINOR_VERSION }}-linux.tar.gz
-        tar xvf wasi-sdk-${{ WASI_MAJOR_VERSION }}.${{ WASI_MINOR_VERSION }}-linux.tar.gz
-        mv wasi-sdk-${{ WASI_MAJOR_VERSION }}.${{ WASI_MINOR_VERSION }} wasi-sdk
+        wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-$WASI_MAJOR_VERSION/wasi-sdk-$WASI_MAJOR_VERSION.$WASI_MINOR_VERSION-linux.tar.gz
+        tar xvf wasi-sdk-$WASI_MAJOR_VERSION.$WASI_MINOR_VERSION-linux.tar.gz
+        mv wasi-sdk-$WASI_MAJOR_VERSION.$WASI_MINOR_VERSION wasi-sdk
 
     - name: Install openssl
       working-directory: /opt
