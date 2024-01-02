@@ -24,6 +24,9 @@ class BreezSDK {
   void initialize() {
     /// Listen to BreezEvent's(new block, invoice paid, synced)
     _lnToolkit.breezEventsStream().listen((event) async {
+      if (event is BreezEvent_NewBlock) {
+        await fetchNodeData();
+      }
       if (event is BreezEvent_InvoicePaid) {
         _invoicePaidStream.add(event.details);
         await fetchNodeData();
