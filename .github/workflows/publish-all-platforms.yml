@@ -14,7 +14,7 @@ on:
         description: 'array of packages to publish (remove what you do not want)'
         required: true
         type: string
-        default: '["csharp", "golang", "maven", "kotlin-mpp", "flutter", "react-native", "python"]'
+        default: '["csharp", "golang", "maven", "kotlin-mpp", "flutter", "react-native", "python", "wasix"]'
       csharp-ref:
         description: 'optional commit/tag/branch reference for the C# project. Defaults to ref.'
         required: false
@@ -47,7 +47,7 @@ on:
         description: 'array of packages to publish (remove what you do not want)'
         required: true
         type: string
-        default: '["csharp", "golang", "maven", "kotlin-mpp", "flutter", "react-native", "python"]'
+        default: '["csharp", "golang", "maven", "kotlin-mpp", "flutter", "react-native", "python", "wasix"]'
       csharp-ref:
         description: 'optional commit/tag/branch reference for the C# project. Defaults to ref.'
         required: false
@@ -78,6 +78,7 @@ jobs:
       flutter-package-version: ${{ (contains(fromJSON(inputs.packages-to-publish), 'flutter') && inputs.package-version) || '' }}
       react-native-package-version: ${{ (contains(fromJSON(inputs.packages-to-publish), 'react-native') && inputs.package-version) || '' }}
       python-package-version: ${{ (contains(fromJSON(inputs.packages-to-publish), 'python') && inputs.package-version) || '' }}
+      wasix-package-version: ${{ (contains(fromJSON(inputs.packages-to-publish), 'wasix') && inputs.package-version) || '' }}
       use-dummy-binaries: ${{ inputs.use-dummy-binaries }}
       publish: ${{ inputs.publish }}
     steps:
@@ -99,6 +100,7 @@ jobs:
       bindings-linux: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version || !!needs.pre-setup.outputs.python-package-version}}
       bindings-android: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version || !!needs.pre-setup.outputs.golang-package-version || !!needs.pre-setup.outputs.flutter-package-version }}
       bindings-ios: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version }}
+      bindings-wasix: ${{ !!needs.pre-setup.outputs.wasix-package-version }}
       kotlin: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version || !!needs.pre-setup.outputs.flutter-package-version }}
       swift: ${{ !!needs.pre-setup.outputs.flutter-package-version }}
       python: ${{ !!needs.pre-setup.outputs.python-package-version }}
@@ -108,6 +110,7 @@ jobs:
       kotlin-mpp: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version }}
       flutter: ${{ !!needs.pre-setup.outputs.flutter-package-version }}
       react-native: ${{ !!needs.pre-setup.outputs.react-native-package-version }}
+      wasix: ${{ !!needs.pre-setup.outputs.wasix-package-version }}
       ref: ${{ needs.pre-setup.outputs.ref }}
       csharp-package-version: ${{ needs.pre-setup.outputs.csharp-package-version || '0.0.2' }}
       csharp-ref: ${{ needs.pre-setup.outputs.csharp-ref }}
@@ -117,6 +120,7 @@ jobs:
       flutter-package-version: ${{ needs.pre-setup.outputs.flutter-package-version || '0.0.2' }}
       react-native-package-version: ${{ needs.pre-setup.outputs.react-native-package-version || '0.0.2' }}
       python-package-version: ${{ needs.pre-setup.outputs.python-package-version || '0.0.2' }}
+      wasix-package-version: ${{ needs.pre-setup.outputs.wasix-package-version || '0.0.2' }}
       publish: ${{ needs.pre-setup.outputs.publish }}
       use-dummy-binaries: ${{ needs.pre-setup.outputs.use-dummy-binaries }}
     steps:
@@ -158,6 +162,14 @@ jobs:
     needs: setup
     if: ${{ needs.setup.outputs.bindings-ios == 'true' }}
     uses: ./.github/workflows/build-bindings-ios.yml
+    with:
+      repository: ${{ needs.setup.outputs.repository }}
+      ref: ${{ needs.setup.outputs.ref }}
+      use-dummy-binaries: ${{ needs.setup.outputs.use-dummy-binaries == 'true' }}
+  build-bindings-wasix:
+    needs: setup
+    if: ${{ needs.setup.outputs.bindings-wasix == 'true' }}
+    uses: ./.github/workflows/build-bindings-wasix.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}

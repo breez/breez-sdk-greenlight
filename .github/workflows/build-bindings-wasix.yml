@@ -1,0 +1,112 @@
+name: Build sdk-bindings for Wasix
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'commit/tag/branch reference'
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      repository:
+        description: 'sdk repository, defaults to current repository'
+        required: false
+        type: string
+      ref:
+        description: 'commit/tag/branch reference'
+        required: true
+        type: string
+      use-dummy-binaries:
+        description: 'If true, creates dummy binaries rather than real binaries'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    if: ${{ !inputs.use-dummy-binaries }}
+    runs-on: ubuntu-20.04
+    name: build ${{ matrix.target }}
+    env:
+      WASI_MAJOR_VERSION: 20
+      WASI_MINOR_VERSION: 0
+    strategy:
+      matrix:
+        target: [
+          wasm32-wasmer-wasi,
+        ]
+    steps:
+    - name: checkout
+      uses: actions/checkout@v3
+      with: 
+        ref: ${{ inputs.ref }}
+        repository: ${{ inputs.repository || github.repository }}
+
+    - name: Install wasm-sdk
+      working-directory: /opt
+      run: |
+        wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${{ WASI_MAJOR_VERSION }}/wasi-sdk-${{ WASI_MAJOR_VERSION }}.${{ WASI_MINOR_VERSION }}-linux.tar.gz
+        tar xvf wasi-sdk-${{ WASI_MAJOR_VERSION }}.${{ WASI_MINOR_VERSION }}-linux.tar.gz
+        mv wasi-sdk-${{ WASI_MAJOR_VERSION }}.${{ WASI_MINOR_VERSION }} wasi-sdk
+
+    - name: Install openssl
+      working-directory: /opt
+      run: |
+        git clone --recursive https://github.com/doramatadora/openssl-wasm32-wasi
+
+    - name: Install rust toolchain
+      run: |
+        rustup set auto-self-update disable
+        rustup toolchain install stable --profile minimal
+        rustup target add wasm32-wasi
+
+    - name: Install Protoc
+      uses: arduino/setup-protoc@v2
+      with:
+        version: "23.4"
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: libs
+
+    - name: Install wasix
+      run: |
+        cargo install cargo-wasix
+        cargo wasix download-toolchain
+
+    - name: Build sdk-wasm
+      working-directory: libs/sdk-wasm
+      env:
+        LIBSQLITE3_FLAGS: -DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_SHARED_CACHE -D_LARGEFILE64_SOURCE
+        OPENSSL_DIR: /opt/openssl-wasm32-wasi/precompiled
+        OPENSSL_NO_VENDOR: 1
+        OPENSSL_STATIC: 1 
+        CC: /opt/wasi-sdk/bin/clang --sysroot=/opt/wasi-sdk/share/wasi-sysroot
+      run: cargo wasix build --release
+    
+    - name: Archive release
+      uses: actions/upload-artifact@v3
+      with:
+        name: sdk-bindings-${{ matrix.target }}
+        path: libs/sdk-wasm/target/${{ matrix.target }}/release/breez-sdk-wasm.wasm
+
+  build-dummies:
+    if: ${{ inputs.use-dummy-binaries }}
+    runs-on: ubuntu-latest
+    name: build wasix dummies
+    strategy:
+      matrix:
+        target: [
+          wasm32-wasmer-wasi,
+        ]
+    steps:
+      - name: Build dummy wasix ${{ matrix.target }}
+        run: |
+          touch breez-sdk-wasm.wasm
+
+      - name: Upload dummy wasix ${{ matrix.target }} artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: sdk-bindings-${{ matrix.target }}
+          path: ./*
