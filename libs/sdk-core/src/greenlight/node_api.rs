@@ -14,6 +14,7 @@ use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::{Address, OutPoint, Script, Sequence, Transaction, TxIn, TxOut, Txid, Witness};
 use ecies::symmetric::{sym_decrypt, sym_encrypt};
+use futures::Stream;
 use gl_client::node::ClnClient;
 use gl_client::pb::cln::listinvoices_invoices::ListinvoicesInvoicesStatus;
 use gl_client::pb::cln::listpays_pays::ListpaysPaysStatus;
@@ -36,12 +37,13 @@ use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 use tokio::sync::{mpsc, Mutex};
 use tokio::time::sleep;
-use tokio_stream::{Stream, StreamExt};
+use tokio_stream::StreamExt;
 use tonic::Streaming;
 
 use crate::invoice::{parse_invoice, validate_network, InvoiceError, RouteHintHop};
 use crate::models::*;
 use crate::node_api::{NodeAPI, NodeError, NodeResult};
+
 use crate::persist::db::SqliteStorage;
 use crate::{
     Channel, ChannelState, NodeConfig, PrepareRedeemOnchainFundsRequest,
@@ -733,7 +735,6 @@ impl NodeAPI for Greenlight {
         let max_allowed_to_receive_msats =
             MAX_INBOUND_LIQUIDITY_MSAT.saturating_sub(channels_balance);
         let node_pubkey = hex::encode(node_info.id);
-
         // construct the node state
         let node_state = NodeState {
             id: node_pubkey.clone(),
@@ -748,10 +749,14 @@ impl NodeAPI for Greenlight {
             connected_peers,
             inbound_liquidity_msats: max_receivable_single_channel,
         };
+        let mut htlc_list: Vec<Htlc> = Vec::new();
+        for channel in all_channel_models.clone() {
+            htlc_list.extend(channel.htlcs);
+        }
 
         Ok(SyncResponse {
             node_state,
-            payments: pull_transactions(since_timestamp, node_client.clone()).await?,
+            payments: pull_transactions(since_timestamp, node_client.clone(), htlc_list).await?,
             channels: all_channel_models,
         })
     }
@@ -1419,6 +1424,7 @@ enum NodeCommand {
 async fn pull_transactions(
     since_timestamp: u64,
     client: node::ClnClient,
+    htlc_list: Vec<Htlc>,
 ) -> NodeResult<Vec<Payment>> {
     let mut c = client.clone();
 
@@ -1452,11 +1458,41 @@ async fn pull_transactions(
         .map(TryInto::try_into)
         .collect();
 
+    let outbound_transactions: NodeResult<Vec<Payment>> =
+        update_payment_expirations(outbound_transactions?, htlc_list);
+
     let mut transactions: Vec<Payment> = Vec::new();
     transactions.extend(received_transactions?);
     transactions.extend(outbound_transactions?);
 
     Ok(transactions)
+}
+
+fn update_payment_expirations(
+    payments: Vec<Payment>,
+    htlc_list: Vec<Htlc>,
+) -> NodeResult<Vec<Payment>> {
+    let mut payments_res: Vec<Payment> = Vec::new();
+    if htlc_list.is_empty() {
+        return Ok(payments_res);
+    }
+
+    for mut payment in payments.clone() {
+        let new_data = payment.clone().details;
+        if let PaymentDetails::Ln { data } = new_data {
+            for htlc in &htlc_list {
+                let payment_hash = hex::encode(htlc.clone().payment_hash);
+                if payment_hash == data.payment_hash
+                    && data.pending_expiration_block < Some(htlc.expiry)
+                {
+                    payment.details.add_pending_expiration_block(htlc.clone())
+                }
+            }
+        }
+        payments_res.push(payment);
+    }
+    info!("pending htlc payments {:?}", payments_res);
+    Ok(payments_res)
 }
 
 //pub(crate) fn offchain_payment_to_transaction
@@ -1487,6 +1523,7 @@ impl TryFrom<OffChainPayment> for Payment {
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
                     swap_info: None,
+                    pending_expiration_block: None,
                 },
             },
         })
@@ -1526,6 +1563,7 @@ impl TryFrom<gl_client::signer::model::greenlight::Invoice> for Payment {
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
                     swap_info: None,
+                    pending_expiration_block: None,
                 },
             },
         })
@@ -1580,6 +1618,7 @@ impl TryFrom<gl_client::signer::model::greenlight::Payment> for Payment {
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
                     swap_info: None,
+                    pending_expiration_block: None,
                 },
             },
         })
@@ -1621,6 +1660,7 @@ impl TryFrom<cln::ListinvoicesInvoices> for Payment {
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
                     swap_info: None,
+                    pending_expiration_block: None,
                 },
             },
         })
@@ -1685,6 +1725,7 @@ impl TryFrom<cln::ListpaysPays> for Payment {
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
                     swap_info: None,
+                    pending_expiration_block: None,
                 },
             },
         })
@@ -1772,6 +1813,11 @@ impl From<cln::ListpeersPeersChannels> for Channel {
             alias_remote,
             alias_local,
             closing_txid: None,
+            htlcs: c
+                .htlcs
+                .into_iter()
+                .map(|c| Htlc::from(c.expiry, c.payment_hash))
+                .collect(),
         }
     }
 }
@@ -1846,6 +1892,7 @@ impl TryFrom<ListclosedchannelsClosedchannels> for Channel {
             alias_remote,
             alias_local,
             closing_txid: None,
+            htlcs: Vec::new(),
         })
     }
 }

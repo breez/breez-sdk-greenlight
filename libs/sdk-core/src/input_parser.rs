@@ -1165,11 +1165,11 @@ pub(crate) mod tests {
 
             assert_eq!(pd.metadata_vec()?.len(), 3);
             assert_eq!(
-                pd.metadata_vec()?.get(0).ok_or("Key not found")?.key,
+                pd.metadata_vec()?.first().ok_or("Key not found")?.key,
                 "text/plain"
             );
             assert_eq!(
-                pd.metadata_vec()?.get(0).ok_or("Key not found")?.value,
+                pd.metadata_vec()?.first().ok_or("Key not found")?.value,
                 "WRhtV"
             );
             assert_eq!(
@@ -1207,11 +1207,11 @@ pub(crate) mod tests {
 
             assert_eq!(pd.metadata_vec()?.len(), 3);
             assert_eq!(
-                pd.metadata_vec()?.get(0).ok_or("Key not found")?.key,
+                pd.metadata_vec()?.first().ok_or("Key not found")?.key,
                 "text/plain"
             );
             assert_eq!(
-                pd.metadata_vec()?.get(0).ok_or("Key not found")?.value,
+                pd.metadata_vec()?.first().ok_or("Key not found")?.value,
                 "WRhtV"
             );
             assert_eq!(
@@ -1404,11 +1404,11 @@ pub(crate) mod tests {
 
             assert_eq!(pd.metadata_vec()?.len(), 3);
             assert_eq!(
-                pd.metadata_vec()?.get(0).ok_or("Key not found")?.key,
+                pd.metadata_vec()?.first().ok_or("Key not found")?.key,
                 "text/plain"
             );
             assert_eq!(
-                pd.metadata_vec()?.get(0).ok_or("Key not found")?.value,
+                pd.metadata_vec()?.first().ok_or("Key not found")?.value,
                 "WRhtV"
             );
             assert_eq!(

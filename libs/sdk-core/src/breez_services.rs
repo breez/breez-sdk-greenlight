@@ -919,7 +919,6 @@ impl BreezServices {
         let mut payments = closed_channel_payments;
         payments.extend(new_data.payments.clone());
         self.persister.insert_or_update_payments(&payments, true)?;
-
         let duration = start.elapsed();
         info!("Sync duration: {:?}", duration);
 
@@ -989,6 +988,7 @@ impl BreezServices {
                         lnurl_metadata: None,
                         lnurl_withdraw_endpoint: None,
                         swap_info: None,
+                        pending_expiration_block: None,
                     },
                 },
             }],
@@ -2278,6 +2278,7 @@ pub(crate) mod tests {
                         ln_address: None,
                         lnurl_withdraw_endpoint: None,
                         swap_info: None,
+                        pending_expiration_block: None,
                     },
                 },
             },
@@ -2303,6 +2304,7 @@ pub(crate) mod tests {
                         ln_address: None,
                         lnurl_withdraw_endpoint: Some(test_lnurl_withdraw_endpoint.to_string()),
                         swap_info: None,
+                        pending_expiration_block: None,
                     },
                 },
             },
@@ -2328,6 +2330,7 @@ pub(crate) mod tests {
                         ln_address: Some(test_ln_address.to_string()),
                         lnurl_withdraw_endpoint: None,
                         swap_info: None,
+                        pending_expiration_block: None,
                     },
                 },
             },
@@ -2353,6 +2356,7 @@ pub(crate) mod tests {
                         ln_address: None,
                         lnurl_withdraw_endpoint: None,
                         swap_info: Some(swap_info.clone()),
+                        pending_expiration_block: None,
                     },
                 },
             },

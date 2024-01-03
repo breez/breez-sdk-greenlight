@@ -952,6 +952,14 @@ enum BreezSDKMapper {
             swapInfo = try asSwapInfo(swapInfo: swapInfoTmp)
         }
 
+        var pendingExpirationBlock: UInt32?
+        if hasNonNilKey(data: lnPaymentDetails, key: "pendingExpirationBlock") {
+            guard let pendingExpirationBlockTmp = lnPaymentDetails["pendingExpirationBlock"] as? UInt32 else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "pendingExpirationBlock"))
+            }
+            pendingExpirationBlock = pendingExpirationBlockTmp
+        }
+
         return LnPaymentDetails(
             paymentHash: paymentHash,
             label: label,
@@ -963,7 +971,8 @@ enum BreezSDKMapper {
             lnurlMetadata: lnurlMetadata,
             lnAddress: lnAddress,
             lnurlWithdrawEndpoint: lnurlWithdrawEndpoint,
-            swapInfo: swapInfo
+            swapInfo: swapInfo,
+            pendingExpirationBlock: pendingExpirationBlock
         )
     }
 
@@ -980,6 +989,7 @@ enum BreezSDKMapper {
             "lnAddress": lnPaymentDetails.lnAddress == nil ? nil : lnPaymentDetails.lnAddress,
             "lnurlWithdrawEndpoint": lnPaymentDetails.lnurlWithdrawEndpoint == nil ? nil : lnPaymentDetails.lnurlWithdrawEndpoint,
             "swapInfo": lnPaymentDetails.swapInfo == nil ? nil : dictionaryOf(swapInfo: lnPaymentDetails.swapInfo!),
+            "pendingExpirationBlock": lnPaymentDetails.pendingExpirationBlock == nil ? nil : lnPaymentDetails.pendingExpirationBlock,
         ]
     }
 

@@ -95,6 +95,7 @@ impl SqliteStorage {
                     alias_local: row.get(7)?,
                     alias_remote: row.get(8)?,
                     closing_txid: row.get(9)?,
+                    htlcs: Vec::new(),
                 })
             })?
             .map(|i| i.unwrap())
@@ -158,6 +159,7 @@ fn test_simple_sync_channels() {
             alias_local: None,
             alias_remote: None,
             closing_txid: None,
+            htlcs: Vec::new(),
         },
         Channel {
             funding_txid: "456".to_string(),
@@ -170,6 +172,7 @@ fn test_simple_sync_channels() {
             alias_local: None,
             alias_remote: None,
             closing_txid: None,
+            htlcs: Vec::new(),
         },
     ];
 
@@ -201,6 +204,7 @@ fn test_sync_closed_channels() {
             alias_local: None,
             alias_remote: None,
             closing_txid: None,
+            htlcs: Vec::new(),
         },
         // Simulate closed channel that was persisted with closed_at and closing_txid
         Channel {
@@ -214,6 +218,7 @@ fn test_sync_closed_channels() {
             alias_local: None,
             alias_remote: None,
             closing_txid: Some("a".into()),
+            htlcs: Vec::new(),
         },
     ];
 
@@ -243,6 +248,7 @@ fn test_sync_closed_channels() {
             alias_local: None,
             alias_remote: None,
             closing_txid: None,
+            htlcs: Vec::new(),
         },
         Channel {
             funding_txid: "456".to_string(),
@@ -255,6 +261,7 @@ fn test_sync_closed_channels() {
             alias_local: None,
             alias_remote: None,
             closing_txid: None,
+            htlcs: Vec::new(),
         },
     ];
     assert_eq!(expected.len(), queried_channels.len());

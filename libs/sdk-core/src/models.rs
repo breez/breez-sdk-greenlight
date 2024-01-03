@@ -675,6 +675,14 @@ pub enum PaymentDetails {
     },
 }
 
+impl PaymentDetails {
+    pub fn add_pending_expiration_block(&mut self, htlc: Htlc) {
+        if let PaymentDetails::Ln { data } = self {
+            data.pending_expiration_block = Some(htlc.expiry)
+        }
+    }
+}
+
 /// Details of a LN payment, as included in a [Payment]
 #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
 pub struct LnPaymentDetails {
@@ -700,6 +708,9 @@ pub struct LnPaymentDetails {
 
     /// Only set for [PaymentType::Received] payments that were received in the context of a swap
     pub swap_info: Option<SwapInfo>,
+
+    /// Only set for [PaymentType::Pending] payments that are inflight.
+    pub pending_expiration_block: Option<u32>,
 }
 
 /// Represents the funds that were on the user side of the channel at the time it was closed.
@@ -1098,6 +1109,23 @@ pub struct Channel {
     ///
     /// This may be empty for older closed channels, if it was not possible to retrieve the closing txid.
     pub closing_txid: Option<String>,
+
+    pub htlcs: Vec<Htlc>,
+}
+
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct Htlc {
+    pub expiry: u32,
+    pub payment_hash: Vec<u8>,
+}
+
+impl Htlc {
+    pub fn from(expiry: u32, payment_hash: Vec<u8>) -> Self {
+        Htlc {
+            expiry,
+            payment_hash,
+        }
+    }
 }
 
 /// State of a Lightning channel

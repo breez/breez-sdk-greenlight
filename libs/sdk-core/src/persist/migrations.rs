@@ -120,7 +120,7 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
         confirmed_tx_ids TEXT NOT NULL,
         min_allowed_deposit INTEGER NOT NULL,
         max_allowed_deposit INTEGER NOT NULL,
-        last_redeem_error TEXT   
+        last_redeem_error TEXT
        ) STRICT;
        
        INSERT INTO swaps
