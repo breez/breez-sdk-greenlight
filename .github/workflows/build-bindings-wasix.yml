@@ -25,7 +25,7 @@ on:
 jobs:
   build:
     if: ${{ !inputs.use-dummy-binaries }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     name: build ${{ matrix.target }}
     strategy:
       matrix:
