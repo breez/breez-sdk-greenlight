@@ -751,7 +751,7 @@ impl NodeAPI for Greenlight {
         };
         let mut htlc_list: Vec<Htlc> = Vec::new();
         for channel in all_channel_models.clone() {
-            htlc_list.extend(channel.htlc);
+            htlc_list.extend(channel.htlcs);
         }
 
         Ok(SyncResponse {
@@ -1459,7 +1459,7 @@ async fn pull_transactions(
         .collect();
 
     let outbound_transactions: NodeResult<Vec<Payment>> =
-        htlc_expiry(outbound_transactions.unwrap(), htlc_list);
+        update_payment_expirations(outbound_transactions?, htlc_list);
 
     let mut transactions: Vec<Payment> = Vec::new();
     transactions.extend(received_transactions?);
@@ -1468,10 +1468,13 @@ async fn pull_transactions(
     Ok(transactions)
 }
 
-fn htlc_expiry(payments: Vec<Payment>, htlc_list: Vec<Htlc>) -> NodeResult<Vec<Payment>> {
-    let mut pending_payments: Vec<Payment> = Vec::new();
+fn update_payment_expirations(
+    payments: Vec<Payment>,
+    htlc_list: Vec<Htlc>,
+) -> NodeResult<Vec<Payment>> {
+    let mut payments_res: Vec<Payment> = Vec::new();
     if htlc_list.is_empty() {
-        return Ok(pending_payments);
+        return Ok(payments_res);
     }
 
     for mut payment in payments.clone() {
@@ -1486,10 +1489,10 @@ fn htlc_expiry(payments: Vec<Payment>, htlc_list: Vec<Htlc>) -> NodeResult<Vec<P
                 }
             }
         }
-        pending_payments.push(payment);
+        payments_res.push(payment);
     }
-    info!("pending htlc payments {:?}", pending_payments);
-    Ok(pending_payments)
+    info!("pending htlc payments {:?}", payments_res);
+    Ok(payments_res)
 }
 
 //pub(crate) fn offchain_payment_to_transaction
@@ -1810,13 +1813,10 @@ impl From<cln::ListpeersPeersChannels> for Channel {
             alias_remote,
             alias_local,
             closing_txid: None,
-            htlc: c
+            htlcs: c
                 .htlcs
                 .into_iter()
-                .map(|c| Htlc {
-                    expiry: c.expiry,
-                    payment_hash: c.payment_hash,
-                })
+                .map(|c| Htlc::from(c.expiry, c.payment_hash))
                 .collect(),
         }
     }
@@ -1892,7 +1892,7 @@ impl TryFrom<ListclosedchannelsClosedchannels> for Channel {
             alias_remote,
             alias_local,
             closing_txid: None,
-            htlc: Vec::new(),
+            htlcs: Vec::new(),
         })
     }
 }

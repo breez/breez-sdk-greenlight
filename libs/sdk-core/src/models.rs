@@ -1110,7 +1110,7 @@ pub struct Channel {
     /// This may be empty for older closed channels, if it was not possible to retrieve the closing txid.
     pub closing_txid: Option<String>,
 
-    pub htlc: Vec<Htlc>,
+    pub htlcs: Vec<Htlc>,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]
