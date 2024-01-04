@@ -397,6 +397,7 @@ impl BreezServices {
                         lnurl_withdraw_endpoint: None,
                         attempted_amount_msat: invoice.amount_msat,
                         attempted_error: None,
+                        external_metadata: None
                     },
                 )?;
 
@@ -444,6 +445,7 @@ impl BreezServices {
                     lnurl_withdraw_endpoint: Some(lnurl_w_endpoint),
                     attempted_amount_msat: None,
                     attempted_error: None,
+                    external_metadata: None
                 },
             )?;
         }
@@ -1004,6 +1006,7 @@ impl BreezServices {
                 lnurl_withdraw_endpoint: None,
                 attempted_amount_msat: invoice.amount_msat.map_or(Some(amount_msat), |_| None),
                 attempted_error: None,
+                external_metadata: None
             },
         )?;
         Ok(())
@@ -2376,6 +2379,7 @@ pub(crate) mod tests {
                 lnurl_withdraw_endpoint: None,
                 attempted_amount_msat: None,
                 attempted_error: None,
+                external_metadata: None
             },
         )?;
         persister.insert_payment_external_info(
@@ -2387,6 +2391,7 @@ pub(crate) mod tests {
                 lnurl_withdraw_endpoint: Some(test_lnurl_withdraw_endpoint.to_string()),
                 attempted_amount_msat: None,
                 attempted_error: None,
+                external_metadata: None
             },
         )?;
         persister.insert_swap(swap_info.clone())?;

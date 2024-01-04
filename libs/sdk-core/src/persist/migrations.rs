@@ -180,6 +180,7 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
        ",
        "ALTER TABLE payments_external_info ADD COLUMN ln_address TEXT;",
        "ALTER TABLE payments_external_info ADD COLUMN lnurl_metadata TEXT;",
+       "ALTER TABLE payments_external_info ADD COLUMN external_metadata TEXT;",
        "
        ALTER TABLE swaps RENAME TO old_swaps;
 
@@ -356,7 +357,8 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
          payment_id TEXT NOT NULL PRIMARY KEY,
          lnurl_success_action TEXT,
          ln_address TEXT,
-         lnurl_metadata TEXT
+         lnurl_metadata TEXT,
+         external_metadata TEXT
         ) STRICT;
 
         INSERT INTO sync.payments_external_info
@@ -462,7 +464,8 @@ pub(crate) fn current_sync_migrations() -> Vec<&'static str> {
          payment_id TEXT NOT NULL PRIMARY KEY,
          lnurl_success_action TEXT,
          ln_address TEXT,
-         lnurl_metadata TEXT
+         lnurl_metadata TEXT,
+         external_metadata TEXT
         ) STRICT;
 
         CREATE TABLE IF NOT EXISTS reverse_swaps (
@@ -509,16 +512,18 @@ pub(crate) fn current_sync_migrations() -> Vec<&'static str> {
          lnurl_success_action TEXT,
          ln_address TEXT,
          lnurl_metadata TEXT,
-         lnurl_withdraw_endpoint TEXT
+         lnurl_withdraw_endpoint TEXT,
+         external_metadata TEXT
         ) STRICT;
 
         INSERT INTO payments_external_info
-         (payment_id, lnurl_success_action, ln_address, lnurl_metadata, lnurl_withdraw_endpoint)
+         (payment_id, lnurl_success_action, ln_address, lnurl_metadata, external_metadata, lnurl_withdraw_endpoint)
          SELECT
           payment_id,
           lnurl_success_action,
           ln_address,
           lnurl_metadata,
+          external_metadata,
           NULL
          FROM payments_external_info_old;
 

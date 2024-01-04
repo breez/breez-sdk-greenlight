@@ -634,6 +634,7 @@ pub struct PaymentExternalInfo {
     pub lnurl_withdraw_endpoint: Option<String>,
     pub attempted_amount_msat: Option<u64>,
     pub attempted_error: Option<String>,
+    pub external_metadata: Option<String>
 }
 
 /// Represents a list payments request.

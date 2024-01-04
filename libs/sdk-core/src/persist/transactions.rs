@@ -82,9 +82,10 @@ impl SqliteStorage {
            ln_address,
            lnurl_withdraw_endpoint,
            attempted_amount_msat,
-           attempted_error
+           attempted_error,
+           external_metadata
          )
-         VALUES (?1,?2,?3,?4,?5,?6,?7)
+         VALUES (?1,?2,?3,?4,?5,?6,?7,?8)
         ",
         )?;
 
@@ -96,9 +97,38 @@ impl SqliteStorage {
             payment_external_info.lnurl_withdraw_endpoint,
             payment_external_info.attempted_amount_msat,
             payment_external_info.attempted_error,
+            payment_external_info.external_metadata,
         ))?;
 
         Ok(())
+    }
+
+    /// Selectively updates the external metadata fields of a payment
+    pub fn update_payment_external_metadata(
+        &self,
+        payment_hash: &str,
+        new_metadata: String,
+    ) -> PersistResult<usize> {
+        Ok(self.get_connection()?.execute(
+            "UPDATE sync.payments_external_info SET external_metadata = json_set(external_metadata, '$', ?2) WHERE payment_id = ?1", 
+            params![payment_hash, new_metadata]
+        )?)
+    }
+
+    /// Retrieves the payment's external metadata, and parses the JSON into the specified type
+    pub fn get_payment_external_metadata<T>(
+        &self,
+        payment_hash: &str
+    ) -> PersistResult<T>
+        where T: serde::de::DeserializeOwned
+    {
+        let external_metadata: String = self.get_connection()?.query_row(
+            "SELECT external_metadata FROM sync.payments_external_info WHERE payment_id = ?1",
+            params![payment_hash],
+            |row| row.get(0),
+        )?;
+       
+        Ok(serde_json::from_str(external_metadata.as_str())?)
     }
 
     /// Updates attempted error data associated with this payment
@@ -180,6 +210,7 @@ impl SqliteStorage {
              e.lnurl_withdraw_endpoint,
              e.attempted_amount_msat,
              e.attempted_error,
+             e.external_metadata,
              o.payer_amount_msat
             FROM payments p
             LEFT JOIN sync.payments_external_info e
@@ -229,6 +260,7 @@ impl SqliteStorage {
                  e.lnurl_withdraw_endpoint,
                  e.attempted_amount_msat,
                  e.attempted_error,
+                 e.external_metadata,
                  o.payer_amount_msat
                 FROM payments p
                 LEFT JOIN sync.payments_external_info e
@@ -289,7 +321,7 @@ impl SqliteStorage {
         }
 
         // In case we have a record of the open channel fee, let's use it.
-        let payer_amount_msat: Option<u64> = row.get(14)?;
+        let payer_amount_msat: Option<u64> = row.get(15)?;
         if let Some(payer_amount) = payer_amount_msat {
             payment.fee_msat = payer_amount - amount_msat;
         }
@@ -569,6 +601,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
             lnurl_withdraw_endpoint: None,
             attempted_amount_msat: None,
             attempted_error: None,
+            external_metadata: None
         },
     )?;
     storage.insert_payment_external_info(
@@ -580,8 +613,10 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
             lnurl_withdraw_endpoint: Some(lnurl_withdraw_url.to_string()),
             attempted_amount_msat: None,
             attempted_error: None,
+            external_metadata: None
         },
     )?;
+    storage.update_payment_external_metadata(payment_hash_with_lnurl_withdraw, r#"{ "isWorking": true }"#.to_string())?;
     storage.insert_swap(swap_info.clone())?;
     storage.update_swap_bolt11(
         swap_info.bitcoin_address.clone(),
@@ -669,6 +704,12 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
     })?;
     assert_eq!(retrieve_txs.len(), 1);
     assert_eq!(retrieve_txs[0].id, payment_hash_with_lnurl_withdraw);
+
+    // test external metadata
+    assert_eq!(
+        storage.get_payment_external_metadata::<String>(payment_hash_with_lnurl_withdraw)?, 
+        r#"{ "isWorking": true }"#.to_string()
+    );
 
     Ok(())
 }
