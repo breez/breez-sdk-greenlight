@@ -397,6 +397,9 @@ enum BreezSDKMapper {
         guard let mempoolspaceUrl = config["mempoolspaceUrl"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "mempoolspaceUrl", typeName: "Config"))
         }
+        guard let mempoolspaceFallbackUrl = config["mempoolspaceFallbackUrl"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "mempoolspaceFallbackUrl", typeName: "Config"))
+        }
         guard let workingDir = config["workingDir"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "workingDir", typeName: "Config"))
         }
@@ -436,6 +439,7 @@ enum BreezSDKMapper {
         return Config(
             breezserver: breezserver,
             mempoolspaceUrl: mempoolspaceUrl,
+            mempoolspaceFallbackUrl: mempoolspaceFallbackUrl,
             workingDir: workingDir,
             network: network,
             paymentTimeoutSec: paymentTimeoutSec,
@@ -451,6 +455,7 @@ enum BreezSDKMapper {
         return [
             "breezserver": config.breezserver,
             "mempoolspaceUrl": config.mempoolspaceUrl,
+            "mempoolspaceFallbackUrl": config.mempoolspaceFallbackUrl,
             "workingDir": config.workingDir,
             "network": valueOf(network: config.network),
             "paymentTimeoutSec": config.paymentTimeoutSec,
