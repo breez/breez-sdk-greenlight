@@ -1478,14 +1478,16 @@ fn update_payment_expirations(
     }
 
     for mut payment in payments.clone() {
-        let new_data = payment.clone().details;
-        if let PaymentDetails::Ln { data } = new_data {
-            for htlc in &htlc_list {
-                let payment_hash = hex::encode(htlc.clone().payment_hash);
-                if payment_hash == data.payment_hash
-                    && data.pending_expiration_block < Some(htlc.expiry)
-                {
-                    payment.details.add_pending_expiration_block(htlc.clone())
+        if payment.status == PaymentStatus::Pending {
+            let new_data = payment.clone().details;
+            if let PaymentDetails::Ln { data } = new_data {
+                for htlc in &htlc_list {
+                    let payment_hash = hex::encode(htlc.clone().payment_hash);
+                    if payment_hash == data.payment_hash
+                        && data.pending_expiration_block < Some(htlc.expiry)
+                    {
+                        payment.details.add_pending_expiration_block(htlc.clone())
+                    }
                 }
             }
         }
