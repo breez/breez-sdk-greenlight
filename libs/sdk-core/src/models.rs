@@ -432,6 +432,7 @@ pub struct LogEntry {
 pub struct Config {
     pub breezserver: String,
     pub mempoolspace_url: String,
+    pub mempoolspace_fallback_url: String,
     /// Directory in which all SDK files (DB, log) are stored. Defaults to ".", otherwise if it's customized,
     /// the folder should exist before starting the SDK.
     pub working_dir: String,
@@ -451,6 +452,7 @@ impl Config {
         Config {
             breezserver: "https://bs1.breez.technology:443".to_string(),
             mempoolspace_url: "https://mempool.space".to_string(),
+            mempoolspace_fallback_url: "https://mempool.emzy.de".to_string(),
             working_dir: ".".to_string(),
             network: Bitcoin,
             payment_timeout_sec: 60,
@@ -466,6 +468,7 @@ impl Config {
         Config {
             breezserver: "https://bs1-st.breez.technology:443".to_string(),
             mempoolspace_url: "https://mempool.space".to_string(),
+            mempoolspace_fallback_url: "https://mempool.emzy.de".to_string(),
             working_dir: ".".to_string(),
             network: Bitcoin,
             payment_timeout_sec: 60,

@@ -228,6 +228,19 @@ pub async fn parse(input: &str) -> Result<InputType> {
     Err(anyhow!("Unrecognized input type"))
 }
 
+pub(crate) async fn post_and_log_response(url: &str, body: Option<String>) -> Result<String> {
+    debug!("Making POST request to: {url}");
+
+    let mut req = reqwest::Client::new().post(url);
+    if let Some(body) = body {
+        req = req.body(body);
+    }
+    let raw_body = req.send().await?.text().await?;
+    debug!("Received raw response body: {raw_body}");
+
+    Ok(raw_body)
+}
+
 /// Makes a GET request to the specified `url` and logs on DEBUG:
 /// - the URL
 /// - the raw response body

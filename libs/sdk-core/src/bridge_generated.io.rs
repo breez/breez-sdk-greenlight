@@ -661,6 +661,7 @@ impl Wire2Api<Config> for wire_Config {
         Config {
             breezserver: self.breezserver.wire2api(),
             mempoolspace_url: self.mempoolspace_url.wire2api(),
+            mempoolspace_fallback_url: self.mempoolspace_fallback_url.wire2api(),
             working_dir: self.working_dir.wire2api(),
             network: self.network.wire2api(),
             payment_timeout_sec: self.payment_timeout_sec.wire2api(),
@@ -971,6 +972,7 @@ pub struct wire_CheckMessageRequest {
 pub struct wire_Config {
     breezserver: *mut wire_uint_8_list,
     mempoolspace_url: *mut wire_uint_8_list,
+    mempoolspace_fallback_url: *mut wire_uint_8_list,
     working_dir: *mut wire_uint_8_list,
     network: i32,
     payment_timeout_sec: u32,
@@ -1280,6 +1282,7 @@ impl NewWithNullPtr for wire_Config {
         Self {
             breezserver: core::ptr::null_mut(),
             mempoolspace_url: core::ptr::null_mut(),
+            mempoolspace_fallback_url: core::ptr::null_mut(),
             working_dir: core::ptr::null_mut(),
             network: Default::default(),
             payment_timeout_sec: Default::default(),

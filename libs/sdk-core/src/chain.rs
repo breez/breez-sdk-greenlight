@@ -1,4 +1,5 @@
-use crate::input_parser::get_parse_and_log_response;
+use crate::input_parser::{get_parse_and_log_response, post_and_log_response};
+
 use anyhow::{anyhow, Result};
 use bitcoin::hashes::hex::FromHex;
 use bitcoin::{OutPoint, Txid};
@@ -124,6 +125,7 @@ pub(crate) fn get_utxos(address: String, transactions: Vec<OnchainTx>) -> Result
 #[derive(Clone)]
 pub(crate) struct MempoolSpace {
     pub(crate) base_url: String,
+    pub(crate) fallback_base_url: Option<String>,
 }
 
 /// Wrapper containing the result of the recommended fees query, in sat/vByte, based on mempool.space data
@@ -203,47 +205,91 @@ impl Default for MempoolSpace {
     fn default() -> Self {
         MempoolSpace {
             base_url: "https://mempool.space".to_string(),
+            fallback_base_url: Some("https://mempool.emzy.de".to_string()),
         }
     }
 }
 
 impl MempoolSpace {
+    #[allow(dead_code)]
     pub fn from_base_url(base_url: String) -> MempoolSpace {
-        MempoolSpace { base_url }
+        MempoolSpace {
+            base_url,
+            fallback_base_url: None,
+        }
+    }
+
+    pub fn from_base_url_with_fallback(base_url: String, fallback_url: String) -> MempoolSpace {
+        MempoolSpace {
+            base_url,
+            fallback_base_url: Some(fallback_url),
+        }
+    }
+
+    async fn call_get_with_fallback<T>(&self, url_from: impl Fn(&str) -> String) -> Result<T>
+    where
+        for<'a> T: serde::de::Deserialize<'a>,
+    {
+        let get_fn = get_parse_and_log_response;
+
+        match get_fn(&url_from(&self.base_url)).await {
+            Ok(t) => Ok(t),
+            Err(err) => match &self.fallback_base_url {
+                None => Err(err),
+                Some(fallback_url) => {
+                    debug!("Re-trying GET request on fallback URL {fallback_url}");
+                    get_fn(&url_from(fallback_url)).await
+                }
+            },
+        }
+    }
+
+    async fn call_post_with_fallback(
+        &self,
+        url_from: impl Fn(&str) -> String,
+        body: Option<String>,
+    ) -> Result<String> {
+        let post_fn = post_and_log_response;
+
+        match post_fn(&url_from(&self.base_url), body.clone()).await {
+            Ok(res_body) => Ok(res_body),
+            Err(err) => match &self.fallback_base_url {
+                None => Err(err),
+                Some(fallback_url) => {
+                    debug!("Re-trying POST request on fallback URL {fallback_url}");
+                    post_fn(&url_from(fallback_url), body).await
+                }
+            },
+        }
     }
 }
 
 #[tonic::async_trait]
 impl ChainService for MempoolSpace {
     async fn recommended_fees(&self) -> Result<RecommendedFees> {
-        get_parse_and_log_response(&format!("{}/api/v1/fees/recommended", self.base_url)).await
+        let url_from = |base_url: &str| format!("{base_url}/api/v1/fees/recommended");
+        self.call_get_with_fallback(url_from).await
     }
 
     async fn address_transactions(&self, address: String) -> Result<Vec<OnchainTx>> {
-        get_parse_and_log_response(&format!("{}/api/address/{address}/txs", self.base_url)).await
+        let url_from = |base_url: &str| format!("{base_url}/api/address/{address}/txs");
+        self.call_get_with_fallback(url_from).await
     }
 
     async fn current_tip(&self) -> Result<u32> {
-        get_parse_and_log_response(&format!("{}/api/blocks/tip/height", self.base_url)).await
+        let url_from = |base_url: &str| format!("{base_url}/api/blocks/tip/height");
+        self.call_get_with_fallback(url_from).await
     }
 
     async fn transaction_outspends(&self, txid: String) -> Result<Vec<Outspend>> {
-        Ok(
-            reqwest::get(format!("{}/api/tx/{txid}/outspends", self.base_url))
-                .await?
-                .json()
-                .await?,
-        )
+        let url_from = |base_url: &str| format!("{base_url}/api/tx/{txid}/outspends");
+        self.call_get_with_fallback(url_from).await
     }
 
     async fn broadcast_transaction(&self, tx: Vec<u8>) -> Result<String> {
-        let client = reqwest::Client::new();
-        let txid_or_error = client
-            .post(format!("{}/api/tx", self.base_url))
-            .body(hex::encode(tx))
-            .send()
-            .await?
-            .text()
+        let url_from = |base_url: &str| format!("{base_url}/api/tx");
+        let txid_or_error = self
+            .call_post_with_fallback(url_from, Some(hex::encode(tx)))
             .await?;
         match txid_or_error.contains("error") {
             true => Err(anyhow!("Error fetching tx: {txid_or_error}")),
@@ -253,11 +299,10 @@ impl ChainService for MempoolSpace {
 }
 #[cfg(test)]
 mod tests {
-    use crate::chain::{MempoolSpace, OnchainTx};
+    use crate::chain::{ChainService, MempoolSpace, OnchainTx};
+
     use anyhow::Result;
     use tokio::test;
-
-    use super::ChainService;
 
     #[test]
     async fn test_recommended_fees() -> Result<()> {
@@ -270,6 +315,24 @@ mod tests {
         assert!(fees.half_hour_fee > 0);
         assert!(fees.hour_fee > 0);
         assert!(fees.minimum_fee > 0);
+
+        Ok(())
+    }
+
+    #[test]
+    async fn test_fallback() -> Result<()> {
+        let unreachable_mempool_space = "https://mempool-url-unreachable.space".to_string();
+
+        let ms = Box::new(MempoolSpace::from_base_url(
+            unreachable_mempool_space.clone(),
+        ));
+        assert!(ms.recommended_fees().await.is_err());
+
+        let ms = Box::new(MempoolSpace::from_base_url_with_fallback(
+            unreachable_mempool_space,
+            "https://mempool.emzy.de".to_string(),
+        ));
+        assert!(ms.recommended_fees().await.is_ok());
 
         Ok(())
     }

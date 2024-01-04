@@ -1697,8 +1697,9 @@ impl BreezServicesBuilder {
         persister.init()?;
 
         // mempool space is used to monitor the chain
-        let chain_service = Arc::new(MempoolSpace::from_base_url(
+        let chain_service = Arc::new(MempoolSpace::from_base_url_with_fallback(
             self.config.mempoolspace_url.clone(),
+            self.config.mempoolspace_fallback_url.clone(),
         ));
 
         let mut node_api = self.node_api.clone();
