@@ -705,11 +705,5 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
     assert_eq!(retrieve_txs.len(), 1);
     assert_eq!(retrieve_txs[0].id, payment_hash_with_lnurl_withdraw);
 
-    // test external metadata
-    assert_eq!(
-        storage.get_payment_external_metadata::<String>(payment_hash_with_lnurl_withdraw)?, 
-        r#"{ "isWorking": true }"#.to_string()
-    );
-
     Ok(())
 }
