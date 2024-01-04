@@ -1,26 +1,20 @@
-use breez_sdk_core::{
-    mnemonic_to_seed as sdk_mnemonic_to_seed, parse as sdk_parse_input,
-    parse_invoice as sdk_parse_invoice,
-};
-use js_sys::{Array, Promise};
-use std::rc::Rc;
-use std::str::FromStr;
-use wasm_bindgen::prelude::*;
+use breez_sdk_core::{InputType, LNInvoice, error::SdkResult};
+use once_cell::sync::Lazy;
 
-pub type JSResult<T, E = JSError> = Result<T, E>;
+static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
 
-#[wasm_bindgen(js_name = parseInput)]
-pub fn parse_input(s: String) -> Promise {
-    future_to_promise(async move {
-        sdk_parse_input(&s)
-            .await
-            .map(|inputType| serde_wasm_bindgen::to_value(&inputType)?)
-    })
+pub fn parse_invoice(invoice: String) -> SdkResult<LNInvoice> {
+    Ok(breez_sdk_core::parse_invoice(&invoice)?)
 }
 
-#[wasm_bindgen(js_name = mnemonicToSeed)]
-pub fn mnemonic_to_seed(phrase: String) -> JSResult<Array> {
-    Ok(sdk_mnemonic_to_seed(phrase)?
-        .map(JsValue::from)
-        .map_err(|e| JsError::new(&e.to_string())))
+pub fn parse_input(s: String) -> SdkResult<InputType> {
+    rt().block_on(async move { Ok(breez_sdk_core::parse(&s).await?) })
+}
+
+pub fn mnemonic_to_seed(phrase: String) -> SdkResult<Vec<u8>> {
+    Ok(breez_sdk_core::mnemonic_to_seed(phrase)?)
+}
+
+fn rt() -> &'static tokio::runtime::Runtime {
+    &RT
 }

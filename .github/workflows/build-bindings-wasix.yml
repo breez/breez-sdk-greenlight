@@ -83,6 +83,8 @@ jobs:
         OPENSSL_NO_VENDOR: 1
         OPENSSL_STATIC: 1 
         CC: /opt/wasi-sdk/bin/clang --sysroot=/opt/wasi-sdk/share/wasi-sysroot
+        CARGO_TARGET_WASM32_WASI_LINKER: /opt/wasi-sdk/bin/clang
+        CARGO_TARGET_WASM32_WASMER_WASI_LINKER: /opt/wasi-sdk/bin/clang
       run: cargo wasix build --release
     
     - name: Archive release
