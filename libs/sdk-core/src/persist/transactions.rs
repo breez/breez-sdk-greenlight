@@ -115,20 +115,6 @@ impl SqliteStorage {
         Ok(())
     }
 
-    /// Retrieves the payment's external metadata, and parses the JSON into the specified type
-    pub fn get_payment_external_metadata<T>(&self, payment_hash: String) -> PersistResult<T>
-    where
-        T: serde::de::DeserializeOwned,
-    {
-        let external_metadata: String = self.get_connection()?.query_row(
-            "SELECT external_metadata FROM sync.payments_external_info WHERE payment_id = ?1",
-            params![payment_hash],
-            |row| row.get(0),
-        )?;
-
-        Ok(serde_json::from_str(external_metadata.as_str())?)
-    }
-
     /// Updates attempted error data associated with this payment
     pub fn update_payment_attempted_error(
         &self,
@@ -306,6 +292,12 @@ impl SqliteStorage {
             description: row.get(6)?,
             details: row.get(7)?,
             error: row.get(13)?,
+            metadata: row
+                .get::<usize, String>(14)
+                .map(|content| match content.as_str() {
+                    "{}" => None,
+                    _ => Some(PaymentMetadata { content }),
+                })?,
         };
 
         if let PaymentDetails::Ln { ref mut data } = payment.details {
@@ -506,6 +498,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                     pending_expiration_block: None,
                 },
             },
+            metadata: None,
         },
         Payment {
             id: payment_hash_with_lnurl_withdraw.to_string(),
@@ -532,6 +525,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                     pending_expiration_block: None,
                 },
             },
+            metadata: None,
         },
         Payment {
             id: hex::encode(payment_hash_with_swap_info.clone()),
@@ -558,6 +552,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                     pending_expiration_block: None,
                 },
             },
+            metadata: None,
         },
     ];
     let failed_txs = [Payment {
@@ -585,6 +580,9 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                 pending_expiration_block: None,
             },
         },
+        metadata: Some(PaymentMetadata {
+            content: r#"{ "failedCounter": 3 }"#.to_string(),
+        }),
     }];
     let storage = SqliteStorage::new(test_utils::create_test_sql_dir());
     storage.init()?;

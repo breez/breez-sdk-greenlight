@@ -574,22 +574,8 @@ impl BreezServices {
         Ok(self.persister.get_payment_by_hash(&hash)?)
     }
 
-    /// Fetch the external metadata of a payment.
-    /// Useful for persisting external, platform-specific information,
-    /// unrelated to the SDK
-    pub async fn payment_external_metadata<T: serde::de::DeserializeOwned>(
-        &self,
-        hash: String,
-    ) -> SdkResult<T> {
-        Ok(self.persister.get_payment_external_metadata(hash)?)
-    }
-
     /// Set the external metadata of a payment as a valid JSON string
-    pub async fn set_payment_external_metadata(
-        &self,
-        hash: String,
-        metadata: String,
-    ) -> SdkResult<()> {
+    pub async fn set_payment_metadata(&self, hash: String, metadata: String) -> SdkResult<()> {
         Ok(self
             .persister
             .update_payment_external_metadata(hash, metadata)?)
@@ -1012,6 +998,7 @@ impl BreezServices {
                         pending_expiration_block: None,
                     },
                 },
+                metadata: None,
             }],
             false,
         )?;
@@ -1549,6 +1536,7 @@ impl BreezServices {
                 },
             },
             error: None,
+            metadata: None,
         })
     }
 
@@ -2302,6 +2290,7 @@ pub(crate) mod tests {
                         pending_expiration_block: None,
                     },
                 },
+                metadata: None,
             },
             Payment {
                 id: payment_hash_lnurl_withdraw.to_string(),
@@ -2328,6 +2317,7 @@ pub(crate) mod tests {
                         pending_expiration_block: None,
                     },
                 },
+                metadata: None,
             },
             Payment {
                 id: payment_hash_with_lnurl_success_action.to_string(),
@@ -2354,6 +2344,7 @@ pub(crate) mod tests {
                         pending_expiration_block: None,
                     },
                 },
+                metadata: None,
             },
             Payment {
                 id: hex::encode(payment_hash_swap.clone()),
@@ -2380,6 +2371,7 @@ pub(crate) mod tests {
                         pending_expiration_block: None,
                     },
                 },
+                metadata: None,
             },
         ];
         let node_api = Arc::new(MockNodeAPI::new(dummy_node_state.clone()));
