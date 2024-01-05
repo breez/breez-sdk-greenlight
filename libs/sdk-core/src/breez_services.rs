@@ -879,11 +879,19 @@ impl BreezServices {
         self.connect_lsp_peer(node_pubkey).await?;
 
         // First query the changes since last sync time.
-        let since_timestamp = self.persister.last_payment_timestamp().unwrap_or(0);
+        let since_timestamp = self
+            .persister
+            .get_last_sync_time()?
+            .or_else(|| self.persister.last_payment_timestamp().ok())
+            .unwrap_or(0);
         let new_data = &self
             .node_api
             .pull_changed(since_timestamp, balance_changed)
             .await?;
+        let last_sync_time = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
 
         debug!(
             "pull changed time={:?} {:?}",
@@ -919,6 +927,7 @@ impl BreezServices {
         let mut payments = closed_channel_payments;
         payments.extend(new_data.payments.clone());
         self.persister.insert_or_update_payments(&payments, true)?;
+        self.persister.set_last_sync_time(last_sync_time)?;
         let duration = start.elapsed();
         info!("Sync duration: {:?}", duration);
 
