@@ -59,7 +59,7 @@ jobs:
       with:
         workspaces: libs
 
-    - name: Setup NDK version
+    - name: Set NDK environment variables
       run: |
         # https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2204-Readme.md#environment-variables-2 
         echo "ANDROID_NDK_HOME=$ANDROID_NDK_LATEST_HOME" >> $GITHUB_ENV

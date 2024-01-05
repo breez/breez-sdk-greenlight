@@ -2,11 +2,11 @@ use anyhow::*;
 use std::env;
 use std::path::Path;
 
-const DEFAULT_CLANG_VERSION: &str = "14.0.7";
+const DEFAULT_CLANG_VERSION: &str = "17";
 
 /// Adds a temporary workaround for an issue with the Rust compiler and Android
 /// in x86_64 devices: https://github.com/rust-lang/rust/issues/109717.
-/// The workaround comes from: https://github.com/smartvaults/smartvaults/blob/827805a989561b78c0ea5b41f2c1c9e9e59545e0/bindings/smartvaults-sdk-ffi/build.rs
+/// The workaround comes from: https://github.com/smartvaults/smartvaults/blob/dd7c03b2cb6930fd15c719ce5a36a7f6e528a187/bindings/smartvaults-sdk-ffi/build.rs
 fn setup_x86_64_android_workaround() {
     let target_os = env::var("CARGO_CFG_TARGET_OS").expect("CARGO_CFG_TARGET_OS not set");
     let target_arch = env::var("CARGO_CFG_TARGET_ARCH").expect("CARGO_CFG_TARGET_ARCH not set");
@@ -23,7 +23,7 @@ fn setup_x86_64_android_workaround() {
         let clang_version =
             env::var("NDK_CLANG_VERSION").unwrap_or_else(|_| DEFAULT_CLANG_VERSION.to_owned());
         let linux_x86_64_lib_dir = format!(
-            "toolchains/llvm/prebuilt/{build_os}-x86_64/lib64/clang/{clang_version}/lib/linux/"
+            "toolchains/llvm/prebuilt/{build_os}-x86_64/lib/clang/{clang_version}/lib/linux/"
         );
         let linkpath = format!("{android_ndk_home}/{linux_x86_64_lib_dir}");
         if Path::new(&linkpath).exists() {
