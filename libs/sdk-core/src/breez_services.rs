@@ -888,10 +888,6 @@ impl BreezServices {
             .node_api
             .pull_changed(since_timestamp, balance_changed)
             .await?;
-        let last_sync_time = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs();
 
         debug!(
             "pull changed time={:?} {:?}",
@@ -927,9 +923,13 @@ impl BreezServices {
         let mut payments = closed_channel_payments;
         payments.extend(new_data.payments.clone());
         self.persister.insert_or_update_payments(&payments, true)?;
-        self.persister.set_last_sync_time(last_sync_time)?;
         let duration = start.elapsed();
         info!("Sync duration: {:?}", duration);
+
+        // update the cached last sync time
+        if let Ok(last_payment_timestamp) = self.persister.last_payment_timestamp() {
+            self.persister.set_last_sync_time(last_payment_timestamp)?;
+        }
 
         self.notify_event_listeners(BreezEvent::Synced).await?;
         Ok(())
