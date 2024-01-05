@@ -23,7 +23,7 @@ use breez_sdk_core::{
     SendPaymentRequest, SendPaymentResponse, SendSpontaneousPaymentRequest,
     ServiceHealthCheckResponse, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
     StaticBackupResponse, SuccessActionProcessed, SwapInfo, SwapStatus, Symbol, TlvEntry,
-    UnspentTransactionOutput, UrlSuccessActionData,
+    UnspentTransactionOutput, UrlSuccessActionData, PaymentMetadata
 };
 use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
@@ -168,6 +168,10 @@ impl BlockingBreezServices {
 
     pub fn payment_by_hash(&self, hash: String) -> SdkResult<Option<Payment>> {
         rt().block_on(self.breez_services.payment_by_hash(hash))
+    }
+
+    pub fn set_payment_metadata(&self, hash: String, metadata: String) -> SdkResult<()> {
+        rt().block_on(self.breez_services.set_payment_metadata(hash, metadata))
     }
 
     pub fn pay_lnurl(&self, req: LnUrlPayRequest) -> Result<LnUrlPayResult, LnUrlPayError> {

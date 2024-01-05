@@ -221,6 +221,7 @@ dictionary Payment {
     string? error;
     string? description;
     PaymentDetails details;
+    PaymentMetadata? metadata;
 };
 
 dictionary ListPaymentsRequest {
@@ -236,6 +237,10 @@ dictionary ListPaymentsRequest {
 interface PaymentDetails {
     Ln(LnPaymentDetails data);
     ClosedChannel(ClosedChannelPaymentDetails data);
+};
+
+dictionary PaymentMetadata {
+    string content;
 };
 
 dictionary TlvEntry {
@@ -772,10 +777,13 @@ interface BlockingBreezServices {
    void backup();
 
    [Throws=SdkError]
+   sequence<Payment> list_payments(ListPaymentsRequest req);
+
+   [Throws=SdkError]
    Payment? payment_by_hash(string hash);
 
    [Throws=SdkError]
-   sequence<Payment> list_payments(ListPaymentsRequest req);
+   void set_payment_metadata(string hash, string metadata);
 
    [Throws=SdkError]
    RedeemOnchainFundsResponse redeem_onchain_funds(RedeemOnchainFundsRequest req);
