@@ -397,7 +397,6 @@ impl BreezServices {
                         lnurl_withdraw_endpoint: None,
                         attempted_amount_msat: invoice.amount_msat,
                         attempted_error: None,
-                        external_metadata: None
                     },
                 )?;
 
@@ -445,7 +444,6 @@ impl BreezServices {
                     lnurl_withdraw_endpoint: Some(lnurl_w_endpoint),
                     attempted_amount_msat: None,
                     attempted_error: None,
-                    external_metadata: None
                 },
             )?;
         }
@@ -574,6 +572,27 @@ impl BreezServices {
     /// Fetch a specific payment by its hash.
     pub async fn payment_by_hash(&self, hash: String) -> SdkResult<Option<Payment>> {
         Ok(self.persister.get_payment_by_hash(&hash)?)
+    }
+
+    /// Fetch the external metadata of a payment.
+    /// Useful for persisting external, platform-specific information,
+    /// unrelated to the SDK
+    pub async fn payment_external_metadata<T: serde::de::DeserializeOwned>(
+        &self,
+        hash: String,
+    ) -> SdkResult<T> {
+        Ok(self.persister.get_payment_external_metadata(hash)?)
+    }
+
+    /// Set the external metadata of a payment as a valid JSON string
+    pub async fn set_payment_external_metadata(
+        &self,
+        hash: String,
+        metadata: String,
+    ) -> SdkResult<()> {
+        Ok(self
+            .persister
+            .update_payment_external_metadata(hash, metadata)?)
     }
 
     /// Redeem on-chain funds from closed channels to the specified on-chain address, with the given feerate
@@ -1006,7 +1025,6 @@ impl BreezServices {
                 lnurl_withdraw_endpoint: None,
                 attempted_amount_msat: invoice.amount_msat.map_or(Some(amount_msat), |_| None),
                 attempted_error: None,
-                external_metadata: None
             },
         )?;
         Ok(())
@@ -2379,7 +2397,6 @@ pub(crate) mod tests {
                 lnurl_withdraw_endpoint: None,
                 attempted_amount_msat: None,
                 attempted_error: None,
-                external_metadata: None
             },
         )?;
         persister.insert_payment_external_info(
@@ -2391,7 +2408,6 @@ pub(crate) mod tests {
                 lnurl_withdraw_endpoint: Some(test_lnurl_withdraw_endpoint.to_string()),
                 attempted_amount_msat: None,
                 attempted_error: None,
-                external_metadata: None
             },
         )?;
         persister.insert_swap(swap_info.clone())?;
