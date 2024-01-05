@@ -48,6 +48,7 @@ typedef struct wire_NodeConfig {
 typedef struct wire_Config {
   struct wire_uint_8_list *breezserver;
   struct wire_uint_8_list *mempoolspace_url;
+  struct wire_uint_8_list *mempoolspace_fallback_url;
   struct wire_uint_8_list *working_dir;
   int32_t network;
   uint32_t payment_timeout_sec;

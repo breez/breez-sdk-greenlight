@@ -458,6 +458,7 @@ class ClosedChannelPaymentDetails {
 class Config {
   final String breezserver;
   final String mempoolspaceUrl;
+  final String mempoolspaceFallbackUrl;
 
   /// Directory in which all SDK files (DB, log) are stored. Defaults to ".", otherwise if it's customized,
   /// the folder should exist before starting the SDK.
@@ -477,6 +478,7 @@ class Config {
   const Config({
     required this.breezserver,
     required this.mempoolspaceUrl,
+    required this.mempoolspaceFallbackUrl,
     required this.workingDir,
     required this.network,
     required this.paymentTimeoutSec,
@@ -2916,18 +2918,19 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   Config _wire2api_config(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 10) throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
+    if (arr.length != 11) throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
     return Config(
       breezserver: _wire2api_String(arr[0]),
       mempoolspaceUrl: _wire2api_String(arr[1]),
-      workingDir: _wire2api_String(arr[2]),
-      network: _wire2api_network(arr[3]),
-      paymentTimeoutSec: _wire2api_u32(arr[4]),
-      defaultLspId: _wire2api_opt_String(arr[5]),
-      apiKey: _wire2api_opt_String(arr[6]),
-      maxfeePercent: _wire2api_f64(arr[7]),
-      exemptfeeMsat: _wire2api_u64(arr[8]),
-      nodeConfig: _wire2api_node_config(arr[9]),
+      mempoolspaceFallbackUrl: _wire2api_String(arr[2]),
+      workingDir: _wire2api_String(arr[3]),
+      network: _wire2api_network(arr[4]),
+      paymentTimeoutSec: _wire2api_u32(arr[5]),
+      defaultLspId: _wire2api_opt_String(arr[6]),
+      apiKey: _wire2api_opt_String(arr[7]),
+      maxfeePercent: _wire2api_f64(arr[8]),
+      exemptfeeMsat: _wire2api_u64(arr[9]),
+      nodeConfig: _wire2api_node_config(arr[10]),
     );
   }
 
@@ -4269,6 +4272,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   void _api_fill_to_wire_config(Config apiObj, wire_Config wireObj) {
     wireObj.breezserver = api2wire_String(apiObj.breezserver);
     wireObj.mempoolspace_url = api2wire_String(apiObj.mempoolspaceUrl);
+    wireObj.mempoolspace_fallback_url = api2wire_String(apiObj.mempoolspaceFallbackUrl);
     wireObj.working_dir = api2wire_String(apiObj.workingDir);
     wireObj.network = api2wire_network(apiObj.network);
     wireObj.payment_timeout_sec = api2wire_u32(apiObj.paymentTimeoutSec);
@@ -5709,6 +5713,8 @@ final class wire_Config extends ffi.Struct {
   external ffi.Pointer<wire_uint_8_list> breezserver;
 
   external ffi.Pointer<wire_uint_8_list> mempoolspace_url;
+
+  external ffi.Pointer<wire_uint_8_list> mempoolspace_fallback_url;
 
   external ffi.Pointer<wire_uint_8_list> working_dir;
 

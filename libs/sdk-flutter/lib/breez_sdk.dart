@@ -434,6 +434,7 @@ extension SDKConfig on Config {
   Config copyWith({
     String? breezserver,
     String? mempoolspaceUrl,
+    String? mempoolspaceFallbackUrl,
     String? workingDir,
     Network? network,
     int? paymentTimeoutSec,
@@ -446,6 +447,7 @@ extension SDKConfig on Config {
     return Config(
       breezserver: breezserver ?? this.breezserver,
       mempoolspaceUrl: mempoolspaceUrl ?? this.mempoolspaceUrl,
+      mempoolspaceFallbackUrl: mempoolspaceFallbackUrl ?? this.mempoolspaceFallbackUrl,
       workingDir: workingDir ?? this.workingDir,
       network: network ?? this.network,
       paymentTimeoutSec: paymentTimeoutSec ?? this.paymentTimeoutSec,
