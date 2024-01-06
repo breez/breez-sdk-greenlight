@@ -1837,6 +1837,7 @@ fun asPayment(payment: ReadableMap): Payment? {
     val error = if (hasNonNullKey(payment, "error")) payment.getString("error") else null
     val description = if (hasNonNullKey(payment, "description")) payment.getString("description") else null
     val details = payment.getMap("details")?.let { asPaymentDetails(it) }!!
+    val metadata = if (hasNonNullKey(payment, "metadata")) payment.getString("metadata") else null
     return Payment(
         id,
         paymentType,
@@ -1847,6 +1848,7 @@ fun asPayment(payment: ReadableMap): Payment? {
         error,
         description,
         details,
+        metadata,
     )
 }
 
@@ -1861,6 +1863,7 @@ fun readableMapOf(payment: Payment): ReadableMap {
         "error" to payment.error,
         "description" to payment.description,
         "details" to readableMapOf(payment.details),
+        "metadata" to payment.metadata,
     )
 }
 

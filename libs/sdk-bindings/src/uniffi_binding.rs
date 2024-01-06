@@ -23,7 +23,7 @@ use breez_sdk_core::{
     SendPaymentRequest, SendPaymentResponse, SendSpontaneousPaymentRequest,
     ServiceHealthCheckResponse, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
     StaticBackupResponse, SuccessActionProcessed, SwapInfo, SwapStatus, Symbol, TlvEntry,
-    UnspentTransactionOutput, UrlSuccessActionData, PaymentMetadata
+    UnspentTransactionOutput, UrlSuccessActionData,
 };
 use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};

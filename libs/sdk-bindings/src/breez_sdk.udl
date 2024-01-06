@@ -221,7 +221,7 @@ dictionary Payment {
     string? error;
     string? description;
     PaymentDetails details;
-    PaymentMetadata? metadata;
+    string? metadata;
 };
 
 dictionary ListPaymentsRequest {
@@ -237,10 +237,6 @@ dictionary ListPaymentsRequest {
 interface PaymentDetails {
     Ln(LnPaymentDetails data);
     ClosedChannel(ClosedChannelPaymentDetails data);
-};
-
-dictionary PaymentMetadata {
-    string content;
 };
 
 dictionary TlvEntry {

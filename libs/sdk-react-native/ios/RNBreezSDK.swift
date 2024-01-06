@@ -287,6 +287,17 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
+    @objc(listPayments:resolve:reject:)
+    func listPayments(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            let listPaymentsRequest = try BreezSDKMapper.asListPaymentsRequest(listPaymentsRequest: req)
+            var res = try getBreezServices().listPayments(req: listPaymentsRequest)
+            resolve(BreezSDKMapper.arrayOf(paymentList: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
     @objc(paymentByHash:resolve:reject:)
     func paymentByHash(_ hash: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
@@ -301,12 +312,11 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
-    @objc(listPayments:resolve:reject:)
-    func listPayments(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    @objc(setPaymentMetadata:metadata:resolve:reject:)
+    func setPaymentMetadata(_ hash: String, metadata: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let listPaymentsRequest = try BreezSDKMapper.asListPaymentsRequest(listPaymentsRequest: req)
-            var res = try getBreezServices().listPayments(req: listPaymentsRequest)
-            resolve(BreezSDKMapper.arrayOf(paymentList: res))
+            try getBreezServices().setPaymentMetadata(hash: hash, metadata: metadata)
+            resolve(["status": "ok"])
         } catch let err {
             rejectErr(err: err, reject: reject)
         }

@@ -127,13 +127,20 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
+    listPayments: (NSDictionary*)req
+    resolve: (RCTPromiseResolveBlock)resolve
+    reject: (RCTPromiseRejectBlock)reject
+)
+
+RCT_EXTERN_METHOD(
     paymentByHash: (NSString*)hash
     resolve: (RCTPromiseResolveBlock)resolve
     reject: (RCTPromiseRejectBlock)reject
 )
 
 RCT_EXTERN_METHOD(
-    listPayments: (NSDictionary*)req
+    setPaymentMetadata: (NSString*)hash
+    metadata: (NSString*)metadata
     resolve: (RCTPromiseResolveBlock)resolve
     reject: (RCTPromiseRejectBlock)reject
 )

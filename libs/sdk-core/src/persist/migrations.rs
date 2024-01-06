@@ -541,6 +541,6 @@ pub(crate) fn current_sync_migrations() -> Vec<&'static str> {
 
         ALTER TABLE payments_external_info ADD COLUMN attempted_error TEXT;
         ",
-        "ALTER TABLE payments_external_info ADD COLUMN external_metadata TEXT NOT NULL DEFAULT '{}';"
+        "ALTER TABLE payments_external_info ADD COLUMN external_metadata TEXT;"
     ]
 }

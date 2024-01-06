@@ -2042,6 +2042,14 @@ enum BreezSDKMapper {
         }
         let details = try asPaymentDetails(paymentDetails: detailsTmp)
 
+        var metadata: String?
+        if hasNonNilKey(data: payment, key: "metadata") {
+            guard let metadataTmp = payment["metadata"] as? String else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "metadata"))
+            }
+            metadata = metadataTmp
+        }
+
         return Payment(
             id: id,
             paymentType: paymentType,
@@ -2051,7 +2059,8 @@ enum BreezSDKMapper {
             status: status,
             error: error,
             description: description,
-            details: details
+            details: details,
+            metadata: metadata
         )
     }
 
@@ -2066,6 +2075,7 @@ enum BreezSDKMapper {
             "error": payment.error == nil ? nil : payment.error,
             "description": payment.description == nil ? nil : payment.description,
             "details": dictionaryOf(paymentDetails: payment.details),
+            "metadata": payment.metadata == nil ? nil : payment.metadata,
         ]
     }
 

@@ -610,7 +610,7 @@ pub enum PaymentStatus {
     Failed = 2,
 }
 
-/// Represents a payment, including its [PaymentType], [PaymentDetails] and [PaymentMetadata].
+/// Represents a payment, including its [PaymentType] and [PaymentDetails]
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]
 pub struct Payment {
     pub id: String,
@@ -623,7 +623,7 @@ pub struct Payment {
     pub error: Option<String>,
     pub description: Option<String>,
     pub details: PaymentDetails,
-    pub metadata: Option<PaymentMetadata>,
+    pub metadata: Option<String>,
 }
 
 /// Represents a payments external information.
@@ -681,17 +681,6 @@ impl PaymentDetails {
         if let PaymentDetails::Ln { data } = self {
             data.pending_expiration_block = Some(htlc.expiry)
         }
-    }
-}
-
-#[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]
-pub struct PaymentMetadata {
-    pub content: String,
-}
-
-impl PaymentMetadata {
-    pub fn try_deserialize<T: serde::de::DeserializeOwned>(&self) -> Result<T, serde_json::Error> {
-        serde_json::from_str(&self.content)
     }
 }
 

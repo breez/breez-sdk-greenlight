@@ -1665,6 +1665,7 @@ impl support::IntoDart for Payment {
             self.error.into_dart(),
             self.description.into_dart(),
             self.details.into_into_dart().into_dart(),
+            self.metadata.into_dart(),
         ]
         .into_dart()
     }

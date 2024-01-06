@@ -108,8 +108,14 @@ impl SqliteStorage {
         new_metadata: String,
     ) -> PersistResult<()> {
         self.get_connection()?.execute(
-            "UPDATE sync.payments_external_info SET external_metadata = json_set(external_metadata, '$', ?2) WHERE payment_id = ?1", 
-            params![payment_hash, new_metadata]
+            "
+             UPDATE sync.payments_external_info 
+             SET external_metadata = json_set(
+                 COALESCE(external_metadata, '{}'),
+                 '$', 
+                 ?2
+             ) WHERE payment_id = ?1",
+            params![payment_hash, new_metadata],
         )?;
 
         Ok(())
@@ -292,12 +298,7 @@ impl SqliteStorage {
             description: row.get(6)?,
             details: row.get(7)?,
             error: row.get(13)?,
-            metadata: row
-                .get::<usize, String>(14)
-                .map(|content| match content.as_str() {
-                    "{}" => None,
-                    _ => Some(PaymentMetadata { content }),
-                })?,
+            metadata: row.get(14)?,
         };
 
         if let PaymentDetails::Ln { ref mut data } = payment.details {
@@ -525,7 +526,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                     pending_expiration_block: None,
                 },
             },
-            metadata: None,
+            metadata: Some(r#"{ "isWorking": true }"#.to_string()),
         },
         Payment {
             id: hex::encode(payment_hash_with_swap_info.clone()),
@@ -580,9 +581,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                 pending_expiration_block: None,
             },
         },
-        metadata: Some(PaymentMetadata {
-            content: r#"{ "failedCounter": 3 }"#.to_string(),
-        }),
+        metadata: None,
     }];
     let storage = SqliteStorage::new(test_utils::create_test_sql_dir());
     storage.init()?;

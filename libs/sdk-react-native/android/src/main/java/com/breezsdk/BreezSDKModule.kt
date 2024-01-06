@@ -405,6 +405,25 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
+    fun listPayments(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
+        executor.execute {
+            try {
+                val listPaymentsRequest =
+                    asListPaymentsRequest(req) ?: run {
+                        throw SdkException.Generic(errMissingMandatoryField("req", "ListPaymentsRequest"))
+                    }
+                val res = getBreezServices().listPayments(listPaymentsRequest)
+                promise.resolve(readableArrayOf(res))
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
     fun paymentByHash(
         hash: String,
         promise: Promise,
@@ -420,18 +439,15 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun listPayments(
-        req: ReadableMap,
+    fun setPaymentMetadata(
+        hash: String,
+        metadata: String,
         promise: Promise,
     ) {
         executor.execute {
             try {
-                val listPaymentsRequest =
-                    asListPaymentsRequest(req) ?: run {
-                        throw SdkException.Generic(errMissingMandatoryField("req", "ListPaymentsRequest"))
-                    }
-                val res = getBreezServices().listPayments(listPaymentsRequest)
-                promise.resolve(readableArrayOf(res))
+                getBreezServices().setPaymentMetadata(hash, metadata)
+                promise.resolve(readableMapOf("status" to "ok"))
             } catch (e: Exception) {
                 promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
