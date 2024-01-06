@@ -107,6 +107,9 @@ impl SqliteStorage {
         payment_hash: String,
         new_metadata: String,
     ) -> PersistResult<()> {
+        // Check whether the provided JSON is a valid string
+        let _: serde_json::Value = serde_json::from_str(new_metadata.as_str())?;
+
         self.get_connection()?.execute(
             "
              UPDATE sync.payments_external_info 
