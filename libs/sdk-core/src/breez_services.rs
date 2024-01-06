@@ -879,11 +879,7 @@ impl BreezServices {
         self.connect_lsp_peer(node_pubkey).await?;
 
         // First query the changes since last sync time.
-        let since_timestamp = self
-            .persister
-            .get_last_sync_time()?
-            .or_else(|| self.persister.last_payment_timestamp().ok())
-            .unwrap_or(0);
+        let since_timestamp = self.persister.get_last_sync_time()?.unwrap_or(0);
         let new_data = &self
             .node_api
             .pull_changed(since_timestamp, balance_changed)
