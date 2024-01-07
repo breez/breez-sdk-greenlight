@@ -301,8 +301,9 @@ mod tests {
 
     #[test]
     async fn test_recommended_fees() -> Result<()> {
-        let ms = Box::new(MempoolSpace::from_base_url(
+        let ms = Box::new(MempoolSpace::from_base_url_with_fallback(
             "https://mempool.space".to_string(),
+            None,
         ));
         let fees = ms.recommended_fees().await?;
         assert!(fees.economy_fee > 0);
@@ -318,14 +319,15 @@ mod tests {
     async fn test_fallback() -> Result<()> {
         let unreachable_mempool_space = "https://mempool-url-unreachable.space".to_string();
 
-        let ms = Box::new(MempoolSpace::from_base_url(
+        let ms = Box::new(MempoolSpace::from_base_url_with_fallback(
             unreachable_mempool_space.clone(),
+            None,
         ));
         assert!(ms.recommended_fees().await.is_err());
 
         let ms = Box::new(MempoolSpace::from_base_url_with_fallback(
             unreachable_mempool_space,
-            "https://mempool.emzy.de".to_string(),
+            Some("https://mempool.emzy.de".to_string()),
         ));
         assert!(ms.recommended_fees().await.is_ok());
 
@@ -334,7 +336,8 @@ mod tests {
 
     #[test]
     async fn test_address_transactions() -> Result<()> {
-        let ms = MempoolSpace::from_base_url("https://mempool.space".to_string());
+        let ms =
+            MempoolSpace::from_base_url_with_fallback("https://mempool.space".to_string(), None);
         let txs = ms
             .address_transactions("bc1qvhykeqcpdzu0pdvy99xnh9ckhwzcfskct6h6l2".to_string())
             .await?;
