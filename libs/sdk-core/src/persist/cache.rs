@@ -53,6 +53,20 @@ impl SqliteStorage {
             None => None,
         })
     }
+
+    pub fn set_last_sync_time(&self, t: u64) -> PersistResult<()> {
+        self.update_cached_item("last_sync_time".to_string(), t.to_string())?;
+        Ok(())
+    }
+
+    pub fn get_last_sync_time(&self) -> PersistResult<Option<u64>> {
+        let state_str = self.get_cached_item("last_sync_time".to_string())?;
+        Ok(match state_str {
+            Some(str) => str.as_str().parse::<u64>().ok(),
+            None => None,
+        })
+    }
+
     pub fn set_gl_credentials(&self, creds: Vec<u8>) -> PersistResult<()> {
         self.update_cached_item("gl_credentials".to_string(), hex::encode(creds))?;
         Ok(())
