@@ -211,18 +211,13 @@ impl Default for MempoolSpace {
 }
 
 impl MempoolSpace {
-    #[allow(dead_code)]
-    pub fn from_base_url(base_url: String) -> MempoolSpace {
+    pub fn from_base_url_with_fallback(
+        base_url: String,
+        fallback_base_url: Option<String>,
+    ) -> MempoolSpace {
         MempoolSpace {
             base_url,
-            fallback_base_url: None,
-        }
-    }
-
-    pub fn from_base_url_with_fallback(base_url: String, fallback_url: String) -> MempoolSpace {
-        MempoolSpace {
-            base_url,
-            fallback_base_url: Some(fallback_url),
+            fallback_base_url,
         }
     }
 

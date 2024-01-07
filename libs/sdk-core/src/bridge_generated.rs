@@ -1063,7 +1063,7 @@ impl support::IntoDart for Config {
         vec![
             self.breezserver.into_into_dart().into_dart(),
             self.mempoolspace_url.into_into_dart().into_dart(),
-            self.mempoolspace_fallback_url.into_into_dart().into_dart(),
+            self.mempoolspace_fallback_url.into_dart(),
             self.working_dir.into_into_dart().into_dart(),
             self.network.into_into_dart().into_dart(),
             self.payment_timeout_sec.into_into_dart().into_dart(),

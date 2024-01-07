@@ -458,7 +458,7 @@ class ClosedChannelPaymentDetails {
 class Config {
   final String breezserver;
   final String mempoolspaceUrl;
-  final String mempoolspaceFallbackUrl;
+  final String? mempoolspaceFallbackUrl;
 
   /// Directory in which all SDK files (DB, log) are stored. Defaults to ".", otherwise if it's customized,
   /// the folder should exist before starting the SDK.
@@ -478,7 +478,7 @@ class Config {
   const Config({
     required this.breezserver,
     required this.mempoolspaceUrl,
-    required this.mempoolspaceFallbackUrl,
+    this.mempoolspaceFallbackUrl,
     required this.workingDir,
     required this.network,
     required this.paymentTimeoutSec,
@@ -2922,7 +2922,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return Config(
       breezserver: _wire2api_String(arr[0]),
       mempoolspaceUrl: _wire2api_String(arr[1]),
-      mempoolspaceFallbackUrl: _wire2api_String(arr[2]),
+      mempoolspaceFallbackUrl: _wire2api_opt_String(arr[2]),
       workingDir: _wire2api_String(arr[3]),
       network: _wire2api_network(arr[4]),
       paymentTimeoutSec: _wire2api_u32(arr[5]),
@@ -4272,7 +4272,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   void _api_fill_to_wire_config(Config apiObj, wire_Config wireObj) {
     wireObj.breezserver = api2wire_String(apiObj.breezserver);
     wireObj.mempoolspace_url = api2wire_String(apiObj.mempoolspaceUrl);
-    wireObj.mempoolspace_fallback_url = api2wire_String(apiObj.mempoolspaceFallbackUrl);
+    wireObj.mempoolspace_fallback_url = api2wire_opt_String(apiObj.mempoolspaceFallbackUrl);
     wireObj.working_dir = api2wire_String(apiObj.workingDir);
     wireObj.network = api2wire_network(apiObj.network);
     wireObj.payment_timeout_sec = api2wire_u32(apiObj.paymentTimeoutSec);
