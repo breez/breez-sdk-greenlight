@@ -181,6 +181,7 @@ impl SqliteStorage {
     pub fn list_payments(&self, req: ListPaymentsRequest) -> PersistResult<Vec<Payment>> {
         let where_clause = filter_to_where_clause(
             req.filters,
+            req.metadata_filters,
             req.from_timestamp,
             req.to_timestamp,
             req.include_failures,
@@ -327,8 +328,24 @@ impl SqliteStorage {
     }
 }
 
+fn build_metadata_filter_query(key: &String, value: &String) -> String {
+    match value.as_str() {
+        "null" => format!("json_extract(external_metadata, '$.{}') IS NULL", key),
+        "true" | "false" => format!(
+            "json_extract(external_metadata, '$.{}') = {}",
+            key,
+            if value == "true" { 1 } else { 0 }
+        ),
+        _ => format!(
+            "CAST(json_extract(external_metadata, '$.{}') AS TEXT) = '{}'",
+            key, value
+        ),
+    }
+}
+
 fn filter_to_where_clause(
     type_filters: Option<Vec<PaymentTypeFilter>>,
+    metadata_filters: Option<Vec<PaymentMetadata>>,
     from_timestamp: Option<i64>,
     to_timestamp: Option<i64>,
     include_failures: Option<bool>,
@@ -372,6 +389,12 @@ fn filter_to_where_clause(
                     .join(", ")
             ));
         }
+    }
+
+    if let Some(filters) = metadata_filters {
+        filters.iter().for_each(|PaymentMetadata { key, value }| {
+            where_clause.push(build_metadata_filter_query(key, value))
+        });
     }
 
     let mut where_clause_str = String::new();
@@ -706,6 +729,29 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
     })?;
     assert_eq!(retrieve_txs.len(), 1);
     assert_eq!(retrieve_txs[0].id, payment_hash_with_lnurl_withdraw);
+
+    // test json metadata validation
+    assert!(storage
+        .update_payment_external_metadata(
+            payment_hash_with_lnurl_withdraw.to_string(),
+            r#"{ "malformed: true, }"#.to_string(),
+        )
+        .is_err());
+
+    // test metadata filter
+    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+        metadata_filters: Some(vec![PaymentMetadata {
+            key: "isWorking".to_string(),
+            value: "true".to_string(),
+        }]),
+        ..Default::default()
+    })?;
+    assert_eq!(retrieve_txs.len(), 1);
+    assert_eq!(retrieve_txs[0].id, payment_hash_with_lnurl_withdraw);
+    assert_eq!(
+        retrieve_txs[0].metadata,
+        Some(r#"{ "isWorking": true }"#.to_string())
+    );
 
     Ok(())
 }

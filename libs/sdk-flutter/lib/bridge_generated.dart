@@ -629,6 +629,7 @@ class InvoicePaidDetails {
 /// Represents a list payments request.
 class ListPaymentsRequest {
   final List<PaymentTypeFilter>? filters;
+  final List<PaymentMetadata>? metadataFilters;
 
   /// Epoch time, in seconds
   final int? fromTimestamp;
@@ -641,6 +642,7 @@ class ListPaymentsRequest {
 
   const ListPaymentsRequest({
     this.filters,
+    this.metadataFilters,
     this.fromTimestamp,
     this.toTimestamp,
     this.includeFailures,
@@ -1193,6 +1195,17 @@ class PaymentFailedData {
     required this.error,
     required this.nodeId,
     this.invoice,
+  });
+}
+
+/// A basic payment metadata record, representing a JSON field
+class PaymentMetadata {
+  final String key;
+  final String value;
+
+  const PaymentMetadata({
+    required this.key,
+    required this.value,
   });
 }
 
@@ -4046,6 +4059,15 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<wire_list_payment_metadata> api2wire_list_payment_metadata(List<PaymentMetadata> raw) {
+    final ans = inner.new_list_payment_metadata_0(raw.length);
+    for (var i = 0; i < raw.length; ++i) {
+      _api_fill_to_wire_payment_metadata(raw[i], ans.ref.ptr[i]);
+    }
+    return ans;
+  }
+
+  @protected
   ffi.Pointer<wire_list_payment_type_filter> api2wire_list_payment_type_filter(List<PaymentTypeFilter> raw) {
     final ans = inner.new_list_payment_type_filter_0(raw.length);
     for (var i = 0; i < raw.length; ++i) {
@@ -4097,6 +4119,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   @protected
   ffi.Pointer<ffi.Uint64> api2wire_opt_box_autoadd_u64(int? raw) {
     return raw == null ? ffi.nullptr : api2wire_box_autoadd_u64(raw);
+  }
+
+  @protected
+  ffi.Pointer<wire_list_payment_metadata> api2wire_opt_list_payment_metadata(List<PaymentMetadata>? raw) {
+    return raw == null ? ffi.nullptr : api2wire_list_payment_metadata(raw);
   }
 
   @protected
@@ -4296,6 +4323,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
 
   void _api_fill_to_wire_list_payments_request(ListPaymentsRequest apiObj, wire_ListPaymentsRequest wireObj) {
     wireObj.filters = api2wire_opt_list_payment_type_filter(apiObj.filters);
+    wireObj.metadata_filters = api2wire_opt_list_payment_metadata(apiObj.metadataFilters);
     wireObj.from_timestamp = api2wire_opt_box_autoadd_i64(apiObj.fromTimestamp);
     wireObj.to_timestamp = api2wire_opt_box_autoadd_i64(apiObj.toTimestamp);
     wireObj.include_failures = api2wire_opt_box_autoadd_bool(apiObj.includeFailures);
@@ -4367,6 +4395,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.max_idle_time = api2wire_u32(apiObj.maxIdleTime);
     wireObj.max_client_to_self_delay = api2wire_u32(apiObj.maxClientToSelfDelay);
     wireObj.promise = api2wire_String(apiObj.promise);
+  }
+
+  void _api_fill_to_wire_payment_metadata(PaymentMetadata apiObj, wire_PaymentMetadata wireObj) {
+    wireObj.key = api2wire_String(apiObj.key);
+    wireObj.value = api2wire_String(apiObj.value);
   }
 
   void _api_fill_to_wire_prepare_redeem_onchain_funds_request(
@@ -5598,6 +5631,20 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _new_box_autoadd_u64_0 =
       _new_box_autoadd_u64_0Ptr.asFunction<ffi.Pointer<ffi.Uint64> Function(int)>();
 
+  ffi.Pointer<wire_list_payment_metadata> new_list_payment_metadata_0(
+    int len,
+  ) {
+    return _new_list_payment_metadata_0(
+      len,
+    );
+  }
+
+  late final _new_list_payment_metadata_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_list_payment_metadata> Function(ffi.Int32)>>(
+          'new_list_payment_metadata_0');
+  late final _new_list_payment_metadata_0 =
+      _new_list_payment_metadata_0Ptr.asFunction<ffi.Pointer<wire_list_payment_metadata> Function(int)>();
+
   ffi.Pointer<wire_list_payment_type_filter> new_list_payment_type_filter_0(
     int len,
   ) {
@@ -5756,8 +5803,23 @@ final class wire_list_payment_type_filter extends ffi.Struct {
   external int len;
 }
 
+final class wire_PaymentMetadata extends ffi.Struct {
+  external ffi.Pointer<wire_uint_8_list> key;
+
+  external ffi.Pointer<wire_uint_8_list> value;
+}
+
+final class wire_list_payment_metadata extends ffi.Struct {
+  external ffi.Pointer<wire_PaymentMetadata> ptr;
+
+  @ffi.Int32()
+  external int len;
+}
+
 final class wire_ListPaymentsRequest extends ffi.Struct {
   external ffi.Pointer<wire_list_payment_type_filter> filters;
+
+  external ffi.Pointer<wire_list_payment_metadata> metadata_filters;
 
   external ffi.Pointer<ffi.Int64> from_timestamp;
 

@@ -550,6 +550,12 @@ pub enum PaymentTypeFilter {
     ClosedChannel,
 }
 
+/// A basic payment metadata record, representing a JSON field
+pub struct PaymentMetadata {
+    pub key: String,
+    pub value: String,
+}
+
 /// Different types of supported feerates
 pub enum FeeratePreset {
     Regular,
@@ -641,6 +647,7 @@ pub struct PaymentExternalInfo {
 #[derive(Default)]
 pub struct ListPaymentsRequest {
     pub filters: Option<Vec<PaymentTypeFilter>>,
+    pub metadata_filters: Option<Vec<PaymentMetadata>>,
     /// Epoch time, in seconds
     pub from_timestamp: Option<i64>,
     /// Epoch time, in seconds
