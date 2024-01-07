@@ -113,11 +113,14 @@ impl SqliteStorage {
         self.get_connection()?.execute(
             "
              UPDATE sync.payments_external_info 
-             SET external_metadata = json_set(
-                 COALESCE(external_metadata, '{}'),
-                 '$', 
-                 ?2
-             ) WHERE payment_id = ?1",
+             SET 
+             external_metadata = json_set(
+                COALESCE(external_metadata, '{}'),
+                '$', 
+                ?2
+             ),
+             updated_at = CURRENT_TIMESTAMP
+             WHERE payment_id = ?1",
             params![payment_hash, new_metadata],
         )?;
 
