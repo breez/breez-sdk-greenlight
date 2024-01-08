@@ -1672,29 +1672,69 @@ sealed class SuccessActionProcessed with _$SuccessActionProcessed {
 /// saved to the persistent storage.
 ///
 /// The SwapInfo has a status which changes accordingly, documented in [SwapStatus].
+///
 class SwapInfo {
+  /// Bitcoin address for this swap. Sats sent to this address will be swapped.
   final String bitcoinAddress;
+
+  /// Relative time lock start, received from [SwapperAPI::create_swap].
   final int createdAt;
+
+  /// Relative time lock for the timeout for the script to be redeemed before swap fails.
   final int lockHeight;
+
+  /// sha256 hash of preimage to used in the claim sript.
   final Uint8List paymentHash;
+
+  /// Secret to claim the swap.
   final Uint8List preimage;
+
+  /// Secret claim key for the bitcoin address.
   final Uint8List privateKey;
+
+  /// Public key in binary format of the private claim private key.
   final Uint8List publicKey;
+
+  /// The public key in binary format from the swapping service. Received from [SwapperAPI::create_swap].
   final Uint8List swapperPublicKey;
+
+  /// The lockingsscript for the generated bitcoin address. Received from [SwapperAPI::create_swap].
   final Uint8List script;
+
+  /// bolt11 invoice to claim the sent funds.
   final String? bolt11;
+
+  /// Amount of sats payed to the claim address.
   final int paidSats;
+
+  /// Confirmed onchain sats to be claim with an bolt11 invoice or refunded if swap fails.
   final int confirmedSats;
+
+  /// Unconfirmed sats waiting to be confirmed onchain.
   final int unconfirmedSats;
+
+  /// Shows the current status of the swap, either `Initial` or `Expired`.
   final SwapStatus status;
+
+  /// Transaction IDs for failed swap attempts.
   final List<String> refundTxIds;
+
+  /// Refund transaction IDs for ongoing swap awaiting confirmation.
   final List<String> unconfirmedTxIds;
+
+  /// Transaction IDs that have been confirmed on-chain.
   final List<String> confirmedTxIds;
+
+  /// The minimum amount of sats one can send in order for the swap to succeed. Received from [SwapperAPI::create_swap].
   final int minAllowedDeposit;
+
+  /// The maximum amount of sats one can send in order for the swap to succeed. Received from [SwapperAPI::create_swap].
   final int maxAllowedDeposit;
+
+  /// Error reason for when swap fails.
   final String? lastRedeemError;
 
-  /// The dynamic fees that may have been used when the swap was created
+  /// The dynamic fees which is present if a channel opening is needed.
   final OpeningFeeParams? channelOpeningFees;
 
   const SwapInfo({

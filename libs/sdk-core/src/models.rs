@@ -1169,32 +1169,52 @@ impl TryFrom<i32> for SwapStatus {
 /// saved to the persistent storage.
 ///
 /// The SwapInfo has a status which changes accordingly, documented in [SwapStatus].
+///
+
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct SwapInfo {
-    //static immutable data
+    /// Bitcoin address for this swap. Sats sent to this address will be swapped.
     pub bitcoin_address: String,
+    /// Relative time lock start, received from [SwapperAPI::create_swap].
     pub created_at: i64,
+    /// Relative time lock for the timeout for the script to be redeemed before swap fails.
     pub lock_height: i64,
+    /// sha256 hash of preimage to used in the claim sript.
     pub payment_hash: Vec<u8>,
+    /// Secret to claim the swap.
     pub preimage: Vec<u8>,
+    /// Secret claim key for the bitcoin address.
     pub private_key: Vec<u8>,
+    /// Public key in binary format of the private claim private key.
     pub public_key: Vec<u8>,
+    /// The public key in binary format from the swapping service. Received from [SwapperAPI::create_swap].
     pub swapper_public_key: Vec<u8>,
+    /// The lockingsscript for the generated bitcoin address. Received from [SwapperAPI::create_swap].
     pub script: Vec<u8>,
 
-    // dynamic data
+    /// bolt11 invoice to claim the sent funds.
     pub bolt11: Option<String>,
+    /// Amount of sats payed to the claim address.
     pub paid_sats: u64,
+    /// Confirmed onchain sats to be claim with an bolt11 invoice or refunded if swap fails.
     pub confirmed_sats: u64,
+    /// Unconfirmed sats waiting to be confirmed onchain.
     pub unconfirmed_sats: u64,
+    /// Shows the current status of the swap, either `Initial` or `Expired`.
     pub status: SwapStatus,
+    /// Transaction IDs for failed swap attempts.
     pub refund_tx_ids: Vec<String>,
+    /// Refund transaction IDs for ongoing swap awaiting confirmation.
     pub unconfirmed_tx_ids: Vec<String>,
+    /// Transaction IDs that have been confirmed on-chain.
     pub confirmed_tx_ids: Vec<String>,
+    /// The minimum amount of sats one can send in order for the swap to succeed. Received from [SwapperAPI::create_swap].   
     pub min_allowed_deposit: i64,
+    /// The maximum amount of sats one can send in order for the swap to succeed. Received from [SwapperAPI::create_swap].
     pub max_allowed_deposit: i64,
+    /// Error reason for when swap fails.
     pub last_redeem_error: Option<String>,
-    /// The dynamic fees that may have been used when the swap was created
+    /// The dynamic fees which is present if a channel opening is needed.
     pub channel_opening_fees: Option<OpeningFeeParams>,
 }
 
