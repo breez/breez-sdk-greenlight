@@ -828,11 +828,13 @@ enum BreezSDKMapper {
             filters = try asPaymentTypeFilterList(arr: filtersTmp)
         }
 
-        var metadataFilters: [PaymentMetadata]?
-        if let metadataFiltersTmp = listPaymentsRequest["metadataFilters"] as? [[String: Any?]] {
-            metadataFilters = try asPaymentMetadataList(arr: metadataFiltersTmp)
+        var metadataFilters: String?
+        if hasNonNilKey(data: listPaymentsRequest, key: "metadataFilters") {
+            guard let metadataFiltersTmp = listPaymentsRequest["metadataFilters"] as? String else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "metadataFilters"))
+            }
+            metadataFilters = metadataFiltersTmp
         }
-
         var fromTimestamp: Int64?
         if hasNonNilKey(data: listPaymentsRequest, key: "fromTimestamp") {
             guard let fromTimestampTmp = listPaymentsRequest["fromTimestamp"] as? Int64 else {
@@ -883,7 +885,7 @@ enum BreezSDKMapper {
     static func dictionaryOf(listPaymentsRequest: ListPaymentsRequest) -> [String: Any?] {
         return [
             "filters": listPaymentsRequest.filters == nil ? nil : arrayOf(paymentTypeFilterList: listPaymentsRequest.filters!),
-            "metadataFilters": listPaymentsRequest.metadataFilters == nil ? nil : arrayOf(paymentMetadataList: listPaymentsRequest.metadataFilters!),
+            "metadataFilters": listPaymentsRequest.metadataFilters == nil ? nil : listPaymentsRequest.metadataFilters,
             "fromTimestamp": listPaymentsRequest.fromTimestamp == nil ? nil : listPaymentsRequest.fromTimestamp,
             "toTimestamp": listPaymentsRequest.toTimestamp == nil ? nil : listPaymentsRequest.toTimestamp,
             "includeFailures": listPaymentsRequest.includeFailures == nil ? nil : listPaymentsRequest.includeFailures,
@@ -2145,44 +2147,6 @@ enum BreezSDKMapper {
 
     static func arrayOf(paymentFailedDataList: [PaymentFailedData]) -> [Any] {
         return paymentFailedDataList.map { v -> [String: Any?] in dictionaryOf(paymentFailedData: v) }
-    }
-
-    static func asPaymentMetadata(paymentMetadata: [String: Any?]) throws -> PaymentMetadata {
-        guard let key = paymentMetadata["key"] as? String else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "key", typeName: "PaymentMetadata"))
-        }
-        guard let value = paymentMetadata["value"] as? String else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "value", typeName: "PaymentMetadata"))
-        }
-
-        return PaymentMetadata(
-            key: key,
-            value: value
-        )
-    }
-
-    static func dictionaryOf(paymentMetadata: PaymentMetadata) -> [String: Any?] {
-        return [
-            "key": paymentMetadata.key,
-            "value": paymentMetadata.value,
-        ]
-    }
-
-    static func asPaymentMetadataList(arr: [Any]) throws -> [PaymentMetadata] {
-        var list = [PaymentMetadata]()
-        for value in arr {
-            if let val = value as? [String: Any?] {
-                var paymentMetadata = try asPaymentMetadata(paymentMetadata: val)
-                list.append(paymentMetadata)
-            } else {
-                throw SdkError.Generic(message: errUnexpectedType(typeName: "PaymentMetadata"))
-            }
-        }
-        return list
-    }
-
-    static func arrayOf(paymentMetadataList: [PaymentMetadata]) -> [Any] {
-        return paymentMetadataList.map { v -> [String: Any?] in dictionaryOf(paymentMetadata: v) }
     }
 
     static func asPrepareRedeemOnchainFundsRequest(prepareRedeemOnchainFundsRequest: [String: Any?]) throws -> PrepareRedeemOnchainFundsRequest {

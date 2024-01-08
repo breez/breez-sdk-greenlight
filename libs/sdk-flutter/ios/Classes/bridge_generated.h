@@ -77,19 +77,9 @@ typedef struct wire_list_payment_type_filter {
   int32_t len;
 } wire_list_payment_type_filter;
 
-typedef struct wire_PaymentMetadata {
-  struct wire_uint_8_list *key;
-  struct wire_uint_8_list *value;
-} wire_PaymentMetadata;
-
-typedef struct wire_list_payment_metadata {
-  struct wire_PaymentMetadata *ptr;
-  int32_t len;
-} wire_list_payment_metadata;
-
 typedef struct wire_ListPaymentsRequest {
   struct wire_list_payment_type_filter *filters;
-  struct wire_list_payment_metadata *metadata_filters;
+  struct wire_uint_8_list *metadata_filters;
   int64_t *from_timestamp;
   int64_t *to_timestamp;
   bool *include_failures;
@@ -417,8 +407,6 @@ uint32_t *new_box_autoadd_u32_0(uint32_t value);
 
 uint64_t *new_box_autoadd_u64_0(uint64_t value);
 
-struct wire_list_payment_metadata *new_list_payment_metadata_0(int32_t len);
-
 struct wire_list_payment_type_filter *new_list_payment_type_filter_0(int32_t len);
 
 struct wire_list_tlv_entry *new_list_tlv_entry_0(int32_t len);
@@ -514,7 +502,6 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_static_backup_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_u32_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_u64_0);
-    dummy_var ^= ((int64_t) (void*) new_list_payment_metadata_0);
     dummy_var ^= ((int64_t) (void*) new_list_payment_type_filter_0);
     dummy_var ^= ((int64_t) (void*) new_list_tlv_entry_0);
     dummy_var ^= ((int64_t) (void*) new_uint_8_list_0);
