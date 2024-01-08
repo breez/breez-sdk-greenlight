@@ -578,7 +578,7 @@ impl BreezServices {
     pub async fn set_payment_metadata(&self, hash: String, metadata: String) -> SdkResult<()> {
         Ok(self
             .persister
-            .update_payment_external_metadata(hash, metadata)?)
+            .set_payment_external_metadata(hash, metadata)?)
     }
 
     /// Redeem on-chain funds from closed channels to the specified on-chain address, with the given feerate

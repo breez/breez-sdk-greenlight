@@ -13,7 +13,7 @@ use breez_sdk_core::{
     LocaleOverrides, LocalizedName, LogEntry, LogStream, LspInformation,
     MaxReverseSwapAmountResponse, MessageSuccessActionData, MetadataItem, Network, NodeConfig,
     NodeCredentials, NodeState, OpenChannelFeeRequest, OpenChannelFeeResponse, OpeningFeeParams,
-    OpeningFeeParamsMenu, Payment, PaymentDetails, PaymentFailedData, PaymentMetadata,
+    OpeningFeeParamsMenu, Payment, PaymentDetails, PaymentFailedData,
     PaymentStatus, PaymentType, PaymentTypeFilter, PrepareRedeemOnchainFundsRequest,
     PrepareRedeemOnchainFundsResponse, PrepareRefundRequest, PrepareRefundResponse, Rate,
     ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees,

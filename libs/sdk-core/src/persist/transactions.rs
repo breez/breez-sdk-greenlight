@@ -1,5 +1,5 @@
 use super::db::SqliteStorage;
-use super::error::PersistResult;
+use super::error::{PersistResult, PersistError};
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::models::*;
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
@@ -8,6 +8,9 @@ use rusqlite::{named_params, params, OptionalExtension};
 use std::collections::HashSet;
 
 use std::str::FromStr;
+use serde_json::{Value, Map};
+
+const METADATA_MAX_SIZE_KB: usize = 10000;
 
 impl SqliteStorage {
     /// Inserts payments into the payments table. These can be pending, completed and failed payments. Before
@@ -102,25 +105,31 @@ impl SqliteStorage {
     }
 
     /// Selectively updates the external metadata fields of a payment
-    pub fn update_payment_external_metadata(
+    pub fn set_payment_external_metadata(
         &self,
         payment_hash: String,
         new_metadata: String,
     ) -> PersistResult<()> {
-        // Check whether the provided JSON is a valid string
-        let _: serde_json::Value = serde_json::from_str(new_metadata.as_str())?;
+        if new_metadata.len() > METADATA_MAX_SIZE_KB {
+            return Err(PersistError::Generic(
+                anyhow::anyhow!("Max metadata size ({}MB) has been exceeded", METADATA_MAX_SIZE_KB / 1000)
+            ));
+        }         
 
+        let _ = serde_json::from_str::<Map<String, Value>>(&new_metadata)?;
+        
         self.get_connection()?.execute(
             "
-             UPDATE sync.payments_external_info 
-             SET 
-             external_metadata = json_set(
-                COALESCE(external_metadata, '{}'),
-                '$', 
-                ?2
-             ),
-             updated_at = CURRENT_TIMESTAMP
-             WHERE payment_id = ?1",
+             INSERT OR REPLACE INTO sync.payments_metadata(
+                payment_id,
+                metadata,
+                updated_at
+             )
+             VALUES (
+                ?1,
+                json(?2),
+                CURRENT_TIMESTAMP
+             );",
             params![payment_hash, new_metadata],
         )?;
 
@@ -207,12 +216,15 @@ impl SqliteStorage {
              e.lnurl_withdraw_endpoint,
              e.attempted_amount_msat,
              e.attempted_error,
-             e.external_metadata,
-             o.payer_amount_msat
+             o.payer_amount_msat,
+             m.metadata
             FROM payments p
             LEFT JOIN sync.payments_external_info e
             ON
              p.id = e.payment_id
+            LEFT JOIN sync.payments_metadata m
+            ON
+              p.id = m.payment_id
             LEFT JOIN sync.open_channel_payment_info o
              ON
               p.id = o.payment_hash
@@ -257,12 +269,15 @@ impl SqliteStorage {
                  e.lnurl_withdraw_endpoint,
                  e.attempted_amount_msat,
                  e.attempted_error,
-                 e.external_metadata,
-                 o.payer_amount_msat
+                 o.payer_amount_msat,
+                 m.metadata
                 FROM payments p
                 LEFT JOIN sync.payments_external_info e
                 ON
                  p.id = e.payment_id
+                LEFT JOIN sync.payments_metadata m
+                ON
+                  p.id = m.payment_id
                 LEFT JOIN sync.open_channel_payment_info o
                  ON
                   p.id = o.payment_hash
@@ -305,7 +320,7 @@ impl SqliteStorage {
             description: row.get(6)?,
             details: row.get(7)?,
             error: row.get(13)?,
-            metadata: row.get(14)?,
+            metadata: row.get(15)?,
         };
 
         if let PaymentDetails::Ln { ref mut data } = payment.details {
@@ -319,7 +334,7 @@ impl SqliteStorage {
         }
 
         // In case we have a record of the open channel fee, let's use it.
-        let payer_amount_msat: Option<u64> = row.get(15)?;
+        let payer_amount_msat: Option<u64> = row.get(14)?;
         if let Some(payer_amount) = payer_amount_msat {
             payment.fee_msat = payer_amount - amount_msat;
         }
@@ -328,24 +343,9 @@ impl SqliteStorage {
     }
 }
 
-fn build_metadata_filter_query(key: &String, value: &String) -> String {
-    match value.as_str() {
-        "null" => format!("json_extract(external_metadata, '$.{}') IS NULL", key),
-        "true" | "false" => format!(
-            "json_extract(external_metadata, '$.{}') = {}",
-            key,
-            if value == "true" { 1 } else { 0 }
-        ),
-        _ => format!(
-            "CAST(json_extract(external_metadata, '$.{}') AS TEXT) = '{}'",
-            key, value
-        ),
-    }
-}
-
 fn filter_to_where_clause(
     type_filters: Option<Vec<PaymentTypeFilter>>,
-    metadata_filters: Option<Vec<PaymentMetadata>>,
+    metadata_filters: Option<String>,
     from_timestamp: Option<i64>,
     to_timestamp: Option<i64>,
     include_failures: Option<bool>,
@@ -392,9 +392,25 @@ fn filter_to_where_clause(
     }
 
     if let Some(filters) = metadata_filters {
-        filters.iter().for_each(|PaymentMetadata { key, value }| {
-            where_clause.push(build_metadata_filter_query(key, value))
-        });
+        if let Ok(map) = serde_json::from_str::<Map<String, Value>>(&filters) {
+            map.iter().for_each(|(key, value)| {
+                let query = match value {
+                    Value::Null => format!("json_extract(metadata, '$.{}') IS NULL", key),
+                    Value::Bool(boolean) => format!(
+                        "json_extract(metadata, '$.{}') = {}", 
+                        key,
+                        *boolean as i32
+                    ),
+                    _ => format!(
+                        "CAST(json_extract(metadata, '$.{}') AS TEXT) = '{}'",
+                        key,
+                        value
+                    )
+                };
+
+                where_clause.push(query);
+            });
+        }
     }
 
     let mut where_clause_str = String::new();
@@ -555,7 +571,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                     pending_expiration_block: None,
                 },
             },
-            metadata: Some(r#"{ "isWorking": true }"#.to_string()),
+            metadata: None,
         },
         Payment {
             id: hex::encode(payment_hash_with_swap_info.clone()),
@@ -637,10 +653,6 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
             attempted_amount_msat: None,
             attempted_error: None,
         },
-    )?;
-    storage.update_payment_external_metadata(
-        payment_hash_with_lnurl_withdraw.to_string(),
-        r#"{ "isWorking": true }"#.to_string(),
     )?;
     storage.insert_swap(swap_info.clone())?;
     storage.update_swap_bolt11(
@@ -732,25 +744,27 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
 
     // test json metadata validation
     assert!(storage
-        .update_payment_external_metadata(
+        .set_payment_external_metadata(
             payment_hash_with_lnurl_withdraw.to_string(),
-            r#"{ "malformed: true, }"#.to_string(),
+            r#"{ "malformed: true }"#.to_string()
         )
         .is_err());
 
-    // test metadata filter
+    // test metadata set and filter
+    storage.set_payment_external_metadata(
+        payment_hash_with_lnurl_withdraw.to_string(),
+        r#"{ "isWorking": true }"#.to_string(),
+    )?;
+
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        metadata_filters: Some(vec![PaymentMetadata {
-            key: "isWorking".to_string(),
-            value: "true".to_string(),
-        }]),
+        metadata_filters: Some(r#"{ "isWorking": true }"#.to_string()),
         ..Default::default()
     })?;
     assert_eq!(retrieve_txs.len(), 1);
     assert_eq!(retrieve_txs[0].id, payment_hash_with_lnurl_withdraw);
     assert_eq!(
         retrieve_txs[0].metadata,
-        Some(r#"{ "isWorking": true }"#.to_string())
+        Some(r#"{"isWorking":true}"#.to_string())
     );
 
     Ok(())

@@ -415,7 +415,14 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
        "SELECT 1;", // Placeholder statement, to avoid that column is added twice (from sync fn below and here)
        "ALTER TABLE channels ADD COLUMN alias_local TEXT;",
        "ALTER TABLE channels ADD COLUMN alias_remote TEXT;",
-       "ALTER TABLE channels ADD COLUMN closing_txid TEXT;"
+       "ALTER TABLE channels ADD COLUMN closing_txid TEXT;",
+       "
+       CREATE TABLE IF NOT EXISTS payments_metadata (
+        payment_id TEXT NOT NULL PRIMARY KEY,
+        metadata TEXT,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+       ) STRICT;
+       "
     ]
 }
 
@@ -541,7 +548,12 @@ pub(crate) fn current_sync_migrations() -> Vec<&'static str> {
 
         ALTER TABLE payments_external_info ADD COLUMN attempted_error TEXT;
         ",
-        "ALTER TABLE payments_external_info ADD COLUMN external_metadata TEXT;",
-        "ALTER TABLE payments_external_info ADD COLUMN updated_at TEXT DEFAULT CURRENT_TIMESTAMP;",
+        "
+         CREATE TABLE IF NOT EXISTS payments_metadata (
+          payment_id TEXT NOT NULL PRIMARY KEY,
+          metadata TEXT,
+          updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+         ) STRICT;
+        ",
     ]
 }
