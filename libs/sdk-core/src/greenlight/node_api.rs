@@ -16,6 +16,7 @@ use bitcoin::{Address, OutPoint, Script, Sequence, Transaction, TxIn, TxOut, Txi
 use ecies::symmetric::{sym_decrypt, sym_encrypt};
 use futures::Stream;
 use gl_client::node::ClnClient;
+use gl_client::pb::cln::listfunds_outputs::ListfundsOutputsStatus;
 use gl_client::pb::cln::listinvoices_invoices::ListinvoicesInvoicesStatus;
 use gl_client::pb::cln::listpays_pays::ListpaysPaysStatus;
 use gl_client::pb::cln::{
@@ -45,10 +46,7 @@ use crate::models::*;
 use crate::node_api::{NodeAPI, NodeError, NodeResult};
 
 use crate::persist::db::SqliteStorage;
-use crate::{
-    Channel, ChannelState, NodeConfig, PrepareRedeemOnchainFundsRequest,
-    PrepareRedeemOnchainFundsResponse,
-};
+use crate::{NodeConfig, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse};
 use std::iter::Iterator;
 
 const MAX_PAYMENT_AMOUNT_MSAT: u64 = 4294967000;
@@ -441,6 +439,20 @@ impl Greenlight {
         Ok(on_chain_balance)
     }
 
+    async fn pending_onchain_balance(&self, funds: cln::ListfundsResponse) -> Result<u64> {
+        let pending_onchain_balance = funds.outputs.iter().fold(0, |a, b| {
+            if b.status() == ListfundsOutputsStatus::Unconfirmed || b.reserved {
+                return a + b.amount_msat.clone().unwrap_or_default().msat;
+            }
+            a
+        });
+        info!(
+            "pending_onchain_balance sum is = {}",
+            pending_onchain_balance
+        );
+        Ok(pending_onchain_balance)
+    }
+
     // Collect utxos from onchain funds
     async fn utxos(&self, funds: cln::ListfundsResponse) -> Result<Vec<UnspentTransactionOutput>> {
         let utxos: Vec<UnspentTransactionOutput> = funds
@@ -716,7 +728,8 @@ impl NodeAPI for Greenlight {
 
         // calculate onchain balance
         let onchain_balance = self.on_chain_balance(funds.clone()).await?;
-        let utxos = self.utxos(funds).await?;
+        let pending_onchain_balance = self.pending_onchain_balance(funds.clone()).await?;
+        let utxos: Vec<UnspentTransactionOutput> = self.utxos(funds).await?;
 
         // calculate payment limits and inbound liquidity
         let mut max_payable: u64 = 0;
@@ -747,6 +760,7 @@ impl NodeAPI for Greenlight {
             block_height: node_info.blockheight,
             channels_balance_msat: channels_balance,
             onchain_balance_msat: onchain_balance,
+            pending_onchain_balance_msat: pending_onchain_balance,
             utxos,
             max_payable_msat: max_payable,
             max_receivable_msat: max_allowed_to_receive_msats,

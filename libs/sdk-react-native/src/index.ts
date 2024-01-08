@@ -264,6 +264,7 @@ export type NodeState = {
     blockHeight: number
     channelsBalanceMsat: number
     onchainBalanceMsat: number
+    pendingOnchainBalanceMsat: number
     utxos: UnspentTransactionOutput[]
     maxPayableMsat: number
     maxReceivableMsat: number
