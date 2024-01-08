@@ -219,7 +219,7 @@ pub(crate) async fn handle_command(
             let payments = sdk()?
                 .list_payments(ListPaymentsRequest {
                     filters: None,
-                    metadata_filters: None,
+                    metadata_filter: None,
                     from_timestamp,
                     to_timestamp,
                     include_failures: Some(include_failures),

@@ -226,7 +226,7 @@ dictionary Payment {
 
 dictionary ListPaymentsRequest {
     sequence<PaymentTypeFilter>? filters = null;
-    string? metadata_filters = null;
+    string? metadata_filter = null;
     i64? from_timestamp = null;
     i64? to_timestamp = null;
     boolean? include_failures = null;

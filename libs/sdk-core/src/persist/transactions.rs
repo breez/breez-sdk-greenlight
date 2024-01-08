@@ -1,16 +1,16 @@
 use super::db::SqliteStorage;
-use super::error::{PersistResult, PersistError};
+use super::error::{PersistError, PersistResult};
 use crate::lnurl::pay::model::SuccessActionProcessed;
-use crate::models::*;
+use crate::{ensure_sdk, models::*};
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use rusqlite::Row;
 use rusqlite::{named_params, params, OptionalExtension};
 use std::collections::HashSet;
 
+use serde_json::{Map, Value};
 use std::str::FromStr;
-use serde_json::{Value, Map};
 
-const METADATA_MAX_SIZE_KB: usize = 10000;
+const METADATA_MAX_LEN: usize = 10000;
 
 impl SqliteStorage {
     /// Inserts payments into the payments table. These can be pending, completed and failed payments. Before
@@ -110,14 +110,16 @@ impl SqliteStorage {
         payment_hash: String,
         new_metadata: String,
     ) -> PersistResult<()> {
-        if new_metadata.len() > METADATA_MAX_SIZE_KB {
-            return Err(PersistError::Generic(
-                anyhow::anyhow!("Max metadata size ({}MB) has been exceeded", METADATA_MAX_SIZE_KB / 1000)
-            ));
-        }         
+        ensure_sdk!(
+            new_metadata.len() <= METADATA_MAX_LEN,
+            PersistError::Generic(anyhow::anyhow!(
+                "Max metadata size ({} characters) has been exceeded",
+                METADATA_MAX_LEN
+            ))
+        );
 
         let _ = serde_json::from_str::<Map<String, Value>>(&new_metadata)?;
-        
+
         self.get_connection()?.execute(
             "
              INSERT OR REPLACE INTO sync.payments_metadata(
@@ -190,7 +192,7 @@ impl SqliteStorage {
     pub fn list_payments(&self, req: ListPaymentsRequest) -> PersistResult<Vec<Payment>> {
         let where_clause = filter_to_where_clause(
             req.filters,
-            req.metadata_filters,
+            req.metadata_filter,
             req.from_timestamp,
             req.to_timestamp,
             req.include_failures,
@@ -345,7 +347,7 @@ impl SqliteStorage {
 
 fn filter_to_where_clause(
     type_filters: Option<Vec<PaymentTypeFilter>>,
-    metadata_filters: Option<String>,
+    metadata_filter: Option<String>,
     from_timestamp: Option<i64>,
     to_timestamp: Option<i64>,
     include_failures: Option<bool>,
@@ -391,21 +393,18 @@ fn filter_to_where_clause(
         }
     }
 
-    if let Some(filters) = metadata_filters {
+    if let Some(filters) = metadata_filter {
         if let Ok(map) = serde_json::from_str::<Map<String, Value>>(&filters) {
             map.iter().for_each(|(key, value)| {
                 let query = match value {
                     Value::Null => format!("json_extract(metadata, '$.{}') IS NULL", key),
-                    Value::Bool(boolean) => format!(
-                        "json_extract(metadata, '$.{}') = {}", 
-                        key,
-                        *boolean as i32
-                    ),
+                    Value::Bool(boolean) => {
+                        format!("json_extract(metadata, '$.{}') = {}", key, *boolean as i32)
+                    }
                     _ => format!(
                         "CAST(json_extract(metadata, '$.{}') AS TEXT) = '{}'",
-                        key,
-                        value
-                    )
+                        key, value
+                    ),
                 };
 
                 where_clause.push(query);
@@ -757,7 +756,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
     )?;
 
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        metadata_filters: Some(r#"{ "isWorking": true }"#.to_string()),
+        metadata_filter: Some(r#"{ "isWorking": true }"#.to_string()),
         ..Default::default()
     })?;
     assert_eq!(retrieve_txs.len(), 1);

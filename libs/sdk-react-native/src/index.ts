@@ -129,7 +129,7 @@ export type LnInvoice = {
 
 export type ListPaymentsRequest = {
     filters?: PaymentTypeFilter[]
-    metadataFilters?: string
+    metadataFilter?: string
     fromTimestamp?: number
     toTimestamp?: number
     includeFailures?: boolean

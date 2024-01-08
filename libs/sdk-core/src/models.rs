@@ -641,7 +641,7 @@ pub struct PaymentExternalInfo {
 #[derive(Default)]
 pub struct ListPaymentsRequest {
     pub filters: Option<Vec<PaymentTypeFilter>>,
-    pub metadata_filters: Option<String>,
+    pub metadata_filter: Option<String>,
     /// Epoch time, in seconds
     pub from_timestamp: Option<i64>,
     /// Epoch time, in seconds

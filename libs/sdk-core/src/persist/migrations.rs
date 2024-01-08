@@ -416,13 +416,6 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
        "ALTER TABLE channels ADD COLUMN alias_local TEXT;",
        "ALTER TABLE channels ADD COLUMN alias_remote TEXT;",
        "ALTER TABLE channels ADD COLUMN closing_txid TEXT;",
-       "
-       CREATE TABLE IF NOT EXISTS payments_metadata (
-        payment_id TEXT NOT NULL PRIMARY KEY,
-        metadata TEXT,
-        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-       ) STRICT;
-       "
     ]
 }
 

@@ -828,12 +828,12 @@ enum BreezSDKMapper {
             filters = try asPaymentTypeFilterList(arr: filtersTmp)
         }
 
-        var metadataFilters: String?
-        if hasNonNilKey(data: listPaymentsRequest, key: "metadataFilters") {
-            guard let metadataFiltersTmp = listPaymentsRequest["metadataFilters"] as? String else {
-                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "metadataFilters"))
+        var metadataFilter: String?
+        if hasNonNilKey(data: listPaymentsRequest, key: "metadataFilter") {
+            guard let metadataFilterTmp = listPaymentsRequest["metadataFilter"] as? String else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "metadataFilter"))
             }
-            metadataFilters = metadataFiltersTmp
+            metadataFilter = metadataFilterTmp
         }
         var fromTimestamp: Int64?
         if hasNonNilKey(data: listPaymentsRequest, key: "fromTimestamp") {
@@ -873,7 +873,7 @@ enum BreezSDKMapper {
 
         return ListPaymentsRequest(
             filters: filters,
-            metadataFilters: metadataFilters,
+            metadataFilter: metadataFilter,
             fromTimestamp: fromTimestamp,
             toTimestamp: toTimestamp,
             includeFailures: includeFailures,
@@ -885,7 +885,7 @@ enum BreezSDKMapper {
     static func dictionaryOf(listPaymentsRequest: ListPaymentsRequest) -> [String: Any?] {
         return [
             "filters": listPaymentsRequest.filters == nil ? nil : arrayOf(paymentTypeFilterList: listPaymentsRequest.filters!),
-            "metadataFilters": listPaymentsRequest.metadataFilters == nil ? nil : listPaymentsRequest.metadataFilters,
+            "metadataFilter": listPaymentsRequest.metadataFilter == nil ? nil : listPaymentsRequest.metadataFilter,
             "fromTimestamp": listPaymentsRequest.fromTimestamp == nil ? nil : listPaymentsRequest.fromTimestamp,
             "toTimestamp": listPaymentsRequest.toTimestamp == nil ? nil : listPaymentsRequest.toTimestamp,
             "includeFailures": listPaymentsRequest.includeFailures == nil ? nil : listPaymentsRequest.includeFailures,

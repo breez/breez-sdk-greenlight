@@ -79,7 +79,7 @@ typedef struct wire_list_payment_type_filter {
 
 typedef struct wire_ListPaymentsRequest {
   struct wire_list_payment_type_filter *filters;
-  struct wire_uint_8_list *metadata_filters;
+  struct wire_uint_8_list *metadata_filter;
   int64_t *from_timestamp;
   int64_t *to_timestamp;
   bool *include_failures;

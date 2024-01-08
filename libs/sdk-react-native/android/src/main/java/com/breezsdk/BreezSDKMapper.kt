@@ -750,16 +750,7 @@ fun asListPaymentsRequest(listPaymentsRequest: ReadableMap): ListPaymentsRequest
         } else {
             null
         }
-    val metadataFilters =
-        if (hasNonNullKey(
-                listPaymentsRequest,
-                "metadataFilters",
-            )
-        ) {
-            listPaymentsRequest.getString("metadataFilters")
-        } else {
-            null
-        }
+    val metadataFilter = if (hasNonNullKey(listPaymentsRequest, "metadataFilter")) listPaymentsRequest.getString("metadataFilter") else null
     val fromTimestamp =
         if (hasNonNullKey(
                 listPaymentsRequest,
@@ -785,7 +776,7 @@ fun asListPaymentsRequest(listPaymentsRequest: ReadableMap): ListPaymentsRequest
     val limit = if (hasNonNullKey(listPaymentsRequest, "limit")) listPaymentsRequest.getInt("limit").toUInt() else null
     return ListPaymentsRequest(
         filters,
-        metadataFilters,
+        metadataFilter,
         fromTimestamp,
         toTimestamp,
         includeFailures,
@@ -797,7 +788,7 @@ fun asListPaymentsRequest(listPaymentsRequest: ReadableMap): ListPaymentsRequest
 fun readableMapOf(listPaymentsRequest: ListPaymentsRequest): ReadableMap {
     return readableMapOf(
         "filters" to listPaymentsRequest.filters?.let { readableArrayOf(it) },
-        "metadataFilters" to listPaymentsRequest.metadataFilters,
+        "metadataFilter" to listPaymentsRequest.metadataFilter,
         "fromTimestamp" to listPaymentsRequest.fromTimestamp,
         "toTimestamp" to listPaymentsRequest.toTimestamp,
         "includeFailures" to listPaymentsRequest.includeFailures,

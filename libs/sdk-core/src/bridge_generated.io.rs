@@ -703,7 +703,7 @@ impl Wire2Api<ListPaymentsRequest> for wire_ListPaymentsRequest {
     fn wire2api(self) -> ListPaymentsRequest {
         ListPaymentsRequest {
             filters: self.filters.wire2api(),
-            metadata_filters: self.metadata_filters.wire2api(),
+            metadata_filter: self.metadata_filter.wire2api(),
             from_timestamp: self.from_timestamp.wire2api(),
             to_timestamp: self.to_timestamp.wire2api(),
             include_failures: self.include_failures.wire2api(),
@@ -1007,7 +1007,7 @@ pub struct wire_list_payment_type_filter {
 #[derive(Clone)]
 pub struct wire_ListPaymentsRequest {
     filters: *mut wire_list_payment_type_filter,
-    metadata_filters: *mut wire_uint_8_list,
+    metadata_filter: *mut wire_uint_8_list,
     from_timestamp: *mut i64,
     to_timestamp: *mut i64,
     include_failures: *mut bool,
@@ -1334,7 +1334,7 @@ impl NewWithNullPtr for wire_ListPaymentsRequest {
     fn new_with_null_ptr() -> Self {
         Self {
             filters: core::ptr::null_mut(),
-            metadata_filters: core::ptr::null_mut(),
+            metadata_filter: core::ptr::null_mut(),
             from_timestamp: core::ptr::null_mut(),
             to_timestamp: core::ptr::null_mut(),
             include_failures: core::ptr::null_mut(),

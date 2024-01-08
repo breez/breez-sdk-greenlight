@@ -629,7 +629,7 @@ class InvoicePaidDetails {
 /// Represents a list payments request.
 class ListPaymentsRequest {
   final List<PaymentTypeFilter>? filters;
-  final String? metadataFilters;
+  final String? metadataFilter;
 
   /// Epoch time, in seconds
   final int? fromTimestamp;
@@ -642,7 +642,7 @@ class ListPaymentsRequest {
 
   const ListPaymentsRequest({
     this.filters,
-    this.metadataFilters,
+    this.metadataFilter,
     this.fromTimestamp,
     this.toTimestamp,
     this.includeFailures,
@@ -4298,7 +4298,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
 
   void _api_fill_to_wire_list_payments_request(ListPaymentsRequest apiObj, wire_ListPaymentsRequest wireObj) {
     wireObj.filters = api2wire_opt_list_payment_type_filter(apiObj.filters);
-    wireObj.metadata_filters = api2wire_opt_String(apiObj.metadataFilters);
+    wireObj.metadata_filter = api2wire_opt_String(apiObj.metadataFilter);
     wireObj.from_timestamp = api2wire_opt_box_autoadd_i64(apiObj.fromTimestamp);
     wireObj.to_timestamp = api2wire_opt_box_autoadd_i64(apiObj.toTimestamp);
     wireObj.include_failures = api2wire_opt_box_autoadd_bool(apiObj.includeFailures);
@@ -5762,7 +5762,7 @@ final class wire_list_payment_type_filter extends ffi.Struct {
 final class wire_ListPaymentsRequest extends ffi.Struct {
   external ffi.Pointer<wire_list_payment_type_filter> filters;
 
-  external ffi.Pointer<wire_uint_8_list> metadata_filters;
+  external ffi.Pointer<wire_uint_8_list> metadata_filter;
 
   external ffi.Pointer<ffi.Int64> from_timestamp;
 
