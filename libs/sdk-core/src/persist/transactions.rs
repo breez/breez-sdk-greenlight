@@ -396,18 +396,14 @@ fn filter_to_where_clause(
     if let Some(filters) = metadata_filter {
         if let Ok(map) = serde_json::from_str::<Map<String, Value>>(&filters) {
             map.iter().for_each(|(key, value)| {
-                let query = match value {
-                    Value::Null => format!("json_extract(metadata, '$.{}') IS NULL", key),
-                    Value::Bool(boolean) => {
-                        format!("json_extract(metadata, '$.{}') = {}", key, *boolean as i32)
+                where_clause.push(format!(
+                    "metadata->'$.{}' = '{}'",
+                    key,
+                    match value {
+                        Value::String(s) => format!(r#""{s}""#),
+                        _ => value.to_string(),
                     }
-                    _ => format!(
-                        "CAST(json_extract(metadata, '$.{}') AS TEXT) = '{}'",
-                        key, value
-                    ),
-                };
-
-                where_clause.push(query);
+                ))
             });
         }
     }
@@ -750,20 +746,35 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
         .is_err());
 
     // test metadata set and filter
+    let test_json = r#"{ 
+        "supportsBoolean": true, 
+        "supportsInt": 10, 
+        "supportsString": "true",
+        "supportsNested": {
+            "value": [1, 2]
+        }
+    }"#;
+    let test_json_filter = r#"{ 
+        "supportsBoolean": true, 
+        "supportsInt": 10, 
+        "supportsString": "true",
+        "supportsNested.value": [1, 2]
+    }"#;
+
     storage.set_payment_external_metadata(
         payment_hash_with_lnurl_withdraw.to_string(),
-        r#"{ "isWorking": true }"#.to_string(),
+        test_json.to_string(),
     )?;
 
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        metadata_filter: Some(r#"{ "isWorking": true }"#.to_string()),
+        metadata_filter: Some(test_json_filter.to_string()),
         ..Default::default()
     })?;
     assert_eq!(retrieve_txs.len(), 1);
     assert_eq!(retrieve_txs[0].id, payment_hash_with_lnurl_withdraw);
     assert_eq!(
         retrieve_txs[0].metadata,
-        Some(r#"{"isWorking":true}"#.to_string())
+        Some(test_json.chars().filter(|c| !c.is_whitespace()).collect()),
     );
 
     Ok(())
