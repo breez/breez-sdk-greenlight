@@ -129,7 +129,7 @@ export type LnInvoice = {
 
 export type ListPaymentsRequest = {
     filters?: PaymentTypeFilter[]
-    metadataFilter?: string
+    metadataFilters?: PaymentMetadataFilter[]
     fromTimestamp?: number
     toTimestamp?: number
     includeFailures?: boolean
@@ -306,6 +306,11 @@ export type PaymentFailedData = {
     error: string
     nodeId: string
     invoice?: LnInvoice
+}
+
+export type PaymentMetadataFilter = {
+    searchPath: string
+    searchValue: string
 }
 
 export type PrepareRedeemOnchainFundsRequest = {

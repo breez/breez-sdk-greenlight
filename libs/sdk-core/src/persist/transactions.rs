@@ -104,7 +104,7 @@ impl SqliteStorage {
         Ok(())
     }
 
-    /// Selectively updates the external metadata fields of a payment
+    /// Updates the metadata object associated to a payment
     pub fn set_payment_external_metadata(
         &self,
         payment_hash: String,
@@ -192,7 +192,7 @@ impl SqliteStorage {
     pub fn list_payments(&self, req: ListPaymentsRequest) -> PersistResult<Vec<Payment>> {
         let where_clause = filter_to_where_clause(
             req.filters,
-            req.metadata_filter,
+            req.metadata_filters,
             req.from_timestamp,
             req.to_timestamp,
             req.include_failures,
@@ -347,7 +347,7 @@ impl SqliteStorage {
 
 fn filter_to_where_clause(
     type_filters: Option<Vec<PaymentTypeFilter>>,
-    metadata_filter: Option<String>,
+    metadata_filters: Option<Vec<PaymentMetadataFilter>>,
     from_timestamp: Option<i64>,
     to_timestamp: Option<i64>,
     include_failures: Option<bool>,
@@ -393,19 +393,18 @@ fn filter_to_where_clause(
         }
     }
 
-    if let Some(filters) = metadata_filter {
-        if let Ok(map) = serde_json::from_str::<Map<String, Value>>(&filters) {
-            map.iter().for_each(|(key, value)| {
+    if let Some(filters) = metadata_filters {
+        filters.iter().for_each(
+            |PaymentMetadataFilter {
+                 search_path,
+                 search_value,
+             }| {
                 where_clause.push(format!(
                     "metadata->'$.{}' = '{}'",
-                    key,
-                    match value {
-                        Value::String(s) => format!(r#""{s}""#),
-                        _ => value.to_string(),
-                    }
-                ))
-            });
-        }
+                    search_path, search_value
+                ));
+            },
+        );
     }
 
     let mut where_clause_str = String::new();
@@ -746,20 +745,25 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
         .is_err());
 
     // test metadata set and filter
-    let test_json = r#"{ 
-        "supportsBoolean": true, 
-        "supportsInt": 10, 
-        "supportsString": "true",
-        "supportsNested": {
-            "value": [1, 2]
-        }
-    }"#;
-    let test_json_filter = r#"{ 
-        "supportsBoolean": true, 
-        "supportsInt": 10, 
-        "supportsString": "true",
-        "supportsNested.value": [1, 2]
-    }"#;
+    let test_json = r#"{"supportsBoolean":true,"supportsInt":10,"supportsString":"supports string","supportsNested":{"value":[1,2]}}"#;
+    let test_json_filters = Some(vec![
+        PaymentMetadataFilter {
+            search_path: "supportsBoolean".to_string(),
+            search_value: "true".to_string(),
+        },
+        PaymentMetadataFilter {
+            search_path: "supportsInt".to_string(),
+            search_value: "10".to_string(),
+        },
+        PaymentMetadataFilter {
+            search_path: "supportsString".to_string(),
+            search_value: r#""supports string""#.to_string(),
+        },
+        PaymentMetadataFilter {
+            search_path: "supportsNested.value".to_string(),
+            search_value: "[1,2]".to_string(),
+        },
+    ]);
 
     storage.set_payment_external_metadata(
         payment_hash_with_lnurl_withdraw.to_string(),
@@ -767,15 +771,12 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
     )?;
 
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        metadata_filter: Some(test_json_filter.to_string()),
+        metadata_filters: test_json_filters,
         ..Default::default()
     })?;
     assert_eq!(retrieve_txs.len(), 1);
     assert_eq!(retrieve_txs[0].id, payment_hash_with_lnurl_withdraw);
-    assert_eq!(
-        retrieve_txs[0].metadata,
-        Some(test_json.chars().filter(|c| !c.is_whitespace()).collect()),
-    );
+    assert_eq!(retrieve_txs[0].metadata, Some(test_json.to_string()),);
 
     Ok(())
 }

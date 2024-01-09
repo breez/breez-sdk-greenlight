@@ -83,6 +83,7 @@ use crate::models::OpeningFeeParams;
 use crate::models::OpeningFeeParamsMenu;
 use crate::models::Payment;
 use crate::models::PaymentDetails;
+use crate::models::PaymentMetadataFilter;
 use crate::models::PaymentStatus;
 use crate::models::PaymentType;
 use crate::models::PaymentTypeFilter;

@@ -750,7 +750,14 @@ fun asListPaymentsRequest(listPaymentsRequest: ReadableMap): ListPaymentsRequest
         } else {
             null
         }
-    val metadataFilter = if (hasNonNullKey(listPaymentsRequest, "metadataFilter")) listPaymentsRequest.getString("metadataFilter") else null
+    val metadataFilters =
+        if (hasNonNullKey(listPaymentsRequest, "metadataFilters")) {
+            listPaymentsRequest.getArray("metadataFilters")?.let {
+                asPaymentMetadataFilterList(it)
+            }
+        } else {
+            null
+        }
     val fromTimestamp =
         if (hasNonNullKey(
                 listPaymentsRequest,
@@ -776,7 +783,7 @@ fun asListPaymentsRequest(listPaymentsRequest: ReadableMap): ListPaymentsRequest
     val limit = if (hasNonNullKey(listPaymentsRequest, "limit")) listPaymentsRequest.getInt("limit").toUInt() else null
     return ListPaymentsRequest(
         filters,
-        metadataFilter,
+        metadataFilters,
         fromTimestamp,
         toTimestamp,
         includeFailures,
@@ -788,7 +795,7 @@ fun asListPaymentsRequest(listPaymentsRequest: ReadableMap): ListPaymentsRequest
 fun readableMapOf(listPaymentsRequest: ListPaymentsRequest): ReadableMap {
     return readableMapOf(
         "filters" to listPaymentsRequest.filters?.let { readableArrayOf(it) },
-        "metadataFilter" to listPaymentsRequest.metadataFilter,
+        "metadataFilters" to listPaymentsRequest.metadataFilters?.let { readableArrayOf(it) },
         "fromTimestamp" to listPaymentsRequest.fromTimestamp,
         "toTimestamp" to listPaymentsRequest.toTimestamp,
         "includeFailures" to listPaymentsRequest.includeFailures,
@@ -1915,6 +1922,43 @@ fun asPaymentFailedDataList(arr: ReadableArray): List<PaymentFailedData> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asPaymentFailedData(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
+fun asPaymentMetadataFilter(paymentMetadataFilter: ReadableMap): PaymentMetadataFilter? {
+    if (!validateMandatoryFields(
+            paymentMetadataFilter,
+            arrayOf(
+                "searchPath",
+                "searchValue",
+            ),
+        )
+    ) {
+        return null
+    }
+    val searchPath = paymentMetadataFilter.getString("searchPath")!!
+    val searchValue = paymentMetadataFilter.getString("searchValue")!!
+    return PaymentMetadataFilter(
+        searchPath,
+        searchValue,
+    )
+}
+
+fun readableMapOf(paymentMetadataFilter: PaymentMetadataFilter): ReadableMap {
+    return readableMapOf(
+        "searchPath" to paymentMetadataFilter.searchPath,
+        "searchValue" to paymentMetadataFilter.searchValue,
+    )
+}
+
+fun asPaymentMetadataFilterList(arr: ReadableArray): List<PaymentMetadataFilter> {
+    val list = ArrayList<PaymentMetadataFilter>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asPaymentMetadataFilter(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
         }
     }
@@ -4109,6 +4153,7 @@ fun pushToArray(
         is LspInformation -> array.pushMap(readableMapOf(value))
         is OpeningFeeParams -> array.pushMap(readableMapOf(value))
         is Payment -> array.pushMap(readableMapOf(value))
+        is PaymentMetadataFilter -> array.pushMap(readableMapOf(value))
         is PaymentTypeFilter -> array.pushString(value.name.lowercase())
         is Rate -> array.pushMap(readableMapOf(value))
         is ReverseSwapInfo -> array.pushMap(readableMapOf(value))

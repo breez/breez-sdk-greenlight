@@ -425,6 +425,17 @@ pub extern "C" fn new_box_autoadd_u64_0(value: u64) -> *mut u64 {
 }
 
 #[no_mangle]
+pub extern "C" fn new_list_payment_metadata_filter_0(
+    len: i32,
+) -> *mut wire_list_payment_metadata_filter {
+    let wrap = wire_list_payment_metadata_filter {
+        ptr: support::new_leak_vec_ptr(<wire_PaymentMetadataFilter>::new_with_null_ptr(), len),
+        len,
+    };
+    support::new_leak_box_ptr(wrap)
+}
+
+#[no_mangle]
 pub extern "C" fn new_list_payment_type_filter_0(len: i32) -> *mut wire_list_payment_type_filter {
     let wrap = wire_list_payment_type_filter {
         ptr: support::new_leak_vec_ptr(Default::default(), len),
@@ -690,6 +701,15 @@ impl Wire2Api<GreenlightNodeConfig> for wire_GreenlightNodeConfig {
     }
 }
 
+impl Wire2Api<Vec<PaymentMetadataFilter>> for *mut wire_list_payment_metadata_filter {
+    fn wire2api(self) -> Vec<PaymentMetadataFilter> {
+        let vec = unsafe {
+            let wrap = support::box_from_leak_ptr(self);
+            support::vec_from_leak_ptr(wrap.ptr, wrap.len)
+        };
+        vec.into_iter().map(Wire2Api::wire2api).collect()
+    }
+}
 impl Wire2Api<Vec<PaymentTypeFilter>> for *mut wire_list_payment_type_filter {
     fn wire2api(self) -> Vec<PaymentTypeFilter> {
         let vec = unsafe {
@@ -703,7 +723,7 @@ impl Wire2Api<ListPaymentsRequest> for wire_ListPaymentsRequest {
     fn wire2api(self) -> ListPaymentsRequest {
         ListPaymentsRequest {
             filters: self.filters.wire2api(),
-            metadata_filter: self.metadata_filter.wire2api(),
+            metadata_filters: self.metadata_filters.wire2api(),
             from_timestamp: self.from_timestamp.wire2api(),
             to_timestamp: self.to_timestamp.wire2api(),
             include_failures: self.include_failures.wire2api(),
@@ -805,6 +825,15 @@ impl Wire2Api<OpeningFeeParams> for wire_OpeningFeeParams {
             max_idle_time: self.max_idle_time.wire2api(),
             max_client_to_self_delay: self.max_client_to_self_delay.wire2api(),
             promise: self.promise.wire2api(),
+        }
+    }
+}
+
+impl Wire2Api<PaymentMetadataFilter> for wire_PaymentMetadataFilter {
+    fn wire2api(self) -> PaymentMetadataFilter {
+        PaymentMetadataFilter {
+            search_path: self.search_path.wire2api(),
+            search_value: self.search_value.wire2api(),
         }
     }
 }
@@ -998,6 +1027,13 @@ pub struct wire_GreenlightNodeConfig {
 
 #[repr(C)]
 #[derive(Clone)]
+pub struct wire_list_payment_metadata_filter {
+    ptr: *mut wire_PaymentMetadataFilter,
+    len: i32,
+}
+
+#[repr(C)]
+#[derive(Clone)]
 pub struct wire_list_payment_type_filter {
     ptr: *mut i32,
     len: i32,
@@ -1007,7 +1043,7 @@ pub struct wire_list_payment_type_filter {
 #[derive(Clone)]
 pub struct wire_ListPaymentsRequest {
     filters: *mut wire_list_payment_type_filter,
-    metadata_filter: *mut wire_uint_8_list,
+    metadata_filters: *mut wire_list_payment_metadata_filter,
     from_timestamp: *mut i64,
     to_timestamp: *mut i64,
     include_failures: *mut bool,
@@ -1085,6 +1121,13 @@ pub struct wire_OpeningFeeParams {
     max_idle_time: u32,
     max_client_to_self_delay: u32,
     promise: *mut wire_uint_8_list,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_PaymentMetadataFilter {
+    search_path: *mut wire_uint_8_list,
+    search_value: *mut wire_uint_8_list,
 }
 
 #[repr(C)]
@@ -1334,7 +1377,7 @@ impl NewWithNullPtr for wire_ListPaymentsRequest {
     fn new_with_null_ptr() -> Self {
         Self {
             filters: core::ptr::null_mut(),
-            metadata_filter: core::ptr::null_mut(),
+            metadata_filters: core::ptr::null_mut(),
             from_timestamp: core::ptr::null_mut(),
             to_timestamp: core::ptr::null_mut(),
             include_failures: core::ptr::null_mut(),
@@ -1490,6 +1533,21 @@ impl NewWithNullPtr for wire_OpeningFeeParams {
 }
 
 impl Default for wire_OpeningFeeParams {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_PaymentMetadataFilter {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            search_path: core::ptr::null_mut(),
+            search_value: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_PaymentMetadataFilter {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }
