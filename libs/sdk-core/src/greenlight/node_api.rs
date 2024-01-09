@@ -959,8 +959,17 @@ impl NodeAPI for Greenlight {
         to_address: String,
         sat_per_vbyte: u32,
     ) -> NodeResult<Vec<u8>> {
-        let mut client = self.get_node_client().await?;
+        let funds: cln::ListfundsResponse = self.list_funds().await?;
+        let utxos = funds
+            .outputs
+            .iter()
+            .map(|output| cln::Outpoint {
+                txid: output.txid.clone(),
+                outnum: output.output,
+            })
+            .collect();
 
+        let mut client = self.get_node_client().await?;
         let request = cln::WithdrawRequest {
             feerate: Some(cln::Feerate {
                 style: Some(cln::feerate::Style::Perkw(sat_per_vbyte * 250)),
@@ -970,7 +979,7 @@ impl NodeAPI for Greenlight {
             }),
             destination: to_address,
             minconf: None,
-            utxos: vec![],
+            utxos,
         };
 
         Ok(client.withdraw(request).await?.into_inner().txid)
