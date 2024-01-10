@@ -79,7 +79,7 @@ jobs:
           sed -i.bak -e "s/s.version          = .*/s.version          = '${{ inputs.package-version }}'/" ios/breez_sdk.podspec
           rm pubspec.yaml.bak
           rm android/build.gradle.bak
-          ios/breez_sdk.podspec.bak
+          rm ios/breez_sdk.podspec.bak
 
       - name: Archive flutter release
         uses: actions/upload-artifact@v3
