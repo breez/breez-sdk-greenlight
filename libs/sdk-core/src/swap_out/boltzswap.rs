@@ -9,9 +9,9 @@ use serde_json::json;
 
 use const_format::concatcp;
 use reqwest::header::CONTENT_TYPE;
-use reqwest::{Body, Client};
+use reqwest::Body;
 
-use crate::input_parser::get_parse_and_log_response;
+use crate::input_parser::{get_parse_and_log_response, get_reqwest_client};
 use crate::models::ReverseSwapPairInfo;
 use crate::swap_out::reverseswap::CreateReverseSwapResponse;
 use crate::{ReverseSwapServiceAPI, RouteHint, RouteHintHop};
@@ -244,7 +244,7 @@ impl ReverseSwapServiceAPI for BoltzApi {
         pair_hash: String,
         routing_node: String,
     ) -> ReverseSwapResult<BoltzApiCreateReverseSwapResponse> {
-        Client::new()
+        get_reqwest_client()?
             .post(CREATE_REVERSE_SWAP_ENDPOINT)
             .header(CONTENT_TYPE, "application/json")
             .body(build_boltz_reverse_swap_args(
@@ -283,7 +283,7 @@ impl ReverseSwapServiceAPI for BoltzApi {
     /// Boltz API errors (e.g. providing an invalid ID arg) are returned as a successful response of
     /// type [BoltzApiCreateReverseSwapResponse::BoltzApiError]
     async fn get_boltz_status(&self, id: String) -> ReverseSwapResult<BoltzApiReverseSwapStatus> {
-        Client::new()
+        get_reqwest_client()?
             .post(GET_SWAP_STATUS_ENDPOINT)
             .header(CONTENT_TYPE, "application/json")
             .body(Body::from(json!({ "id": id }).to_string()))
@@ -307,7 +307,7 @@ impl ReverseSwapServiceAPI for BoltzApi {
     }
 
     async fn get_route_hints(&self, routing_node_id: String) -> ReverseSwapResult<Vec<RouteHint>> {
-        Client::new()
+        get_reqwest_client()?
             .post(GET_ROUTE_HINTS_ENDPOINT)
             .header(CONTENT_TYPE, "application/json")
             .body(Body::from(
