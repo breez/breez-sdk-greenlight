@@ -378,7 +378,7 @@ fn lnurl_decode(encoded: &str) -> LnUrlResult<(String, String, Option<String>)> 
 /// Creates an HTTP client with a built-in connection timeout
 pub(crate) fn get_reqwest_client() -> Result<reqwest::Client> {
     reqwest::Client::builder()
-        .timeout(Duration::from_secs(60))
+        .timeout(Duration::from_secs(30))
         .build()
         .map_err(Into::into)
 }
