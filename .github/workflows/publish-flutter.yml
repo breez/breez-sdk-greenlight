@@ -89,14 +89,14 @@ jobs:
             flutter/*
             !flutter/.git
 
-      # - name: Tag the Flutter package
-      #   working-directory: flutter
-      #   if: ${{ inputs.publish }}
-      #   run: |
-      #     git config --global user.email github-actions@github.com
-      #     git config --global user.name github-actions
-      #     git add .
-      #     git commit -m "Update Breez SDK Flutter package to version v${{ inputs.package-version }}"
-      #     git push
-      #     git tag v${{ inputs.package-version }} -m "v${{ inputs.package-version }}"
-      #     git push --tags
+      - name: Tag the Flutter package
+        working-directory: flutter
+        if: ${{ inputs.publish }}
+        run: |
+          git config --global user.email github-actions@github.com
+          git config --global user.name github-actions
+          git add .
+          git commit -m "Update Breez SDK Flutter package to version v${{ inputs.package-version }}"
+          git push
+          git tag v${{ inputs.package-version }} -m "v${{ inputs.package-version }}"
+          git push --tags
