@@ -3,8 +3,8 @@ use super::error::{PersistError, PersistResult};
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::{ensure_sdk, models::*};
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
-use rusqlite::{Row, params_from_iter};
 use rusqlite::{named_params, params, OptionalExtension};
+use rusqlite::{params_from_iter, Row};
 use std::collections::HashSet;
 
 use serde_json::{Map, Value};
@@ -240,16 +240,19 @@ impl SqliteStorage {
 
         let mut params: Vec<String> = vec![];
         if let Some(metadata_filters) = &req.metadata_filters {
-            metadata_filters.iter().for_each(|PaymentMetadataFilter { search_path, search_value }| {
-                params.push(search_path.clone());
-                params.push(search_value.clone());
-            })
+            metadata_filters.iter().for_each(
+                |PaymentMetadataFilter {
+                     search_path,
+                     search_value,
+                 }| {
+                    params.push(format!("$.{}", search_path.clone()));
+                    params.push(format!("{}", search_value.clone()));
+                },
+            )
         }
 
         let vec: Vec<Payment> = stmt
-            .query_map(
-                params_from_iter(params),
-                |row| self.sql_row_to_payment(row))?
+            .query_map(params_from_iter(params), |row| self.sql_row_to_payment(row))?
             .map(|i| i.unwrap())
             .collect();
 
@@ -405,7 +408,7 @@ fn filter_to_where_clause(
 
     if let Some(filters) = metadata_filters {
         filters.iter().for_each(|_| {
-            where_clause.push("metadata->'$.?'='?'".to_string());
+            where_clause.push("metadata->?=?".to_string());
         });
     }
 
