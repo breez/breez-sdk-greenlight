@@ -3,14 +3,14 @@ use super::error::{PersistError, PersistResult};
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::{ensure_sdk, models::*};
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
-use rusqlite::Row;
+use rusqlite::{Row, params_from_iter};
 use rusqlite::{named_params, params, OptionalExtension};
 use std::collections::HashSet;
 
 use serde_json::{Map, Value};
 use std::str::FromStr;
 
-const METADATA_MAX_LEN: usize = 10000;
+const METADATA_MAX_LEN: usize = 1000;
 
 impl SqliteStorage {
     /// Inserts payments into the payments table. These can be pending, completed and failed payments. Before
@@ -192,7 +192,7 @@ impl SqliteStorage {
     pub fn list_payments(&self, req: ListPaymentsRequest) -> PersistResult<Vec<Payment>> {
         let where_clause = filter_to_where_clause(
             req.filters,
-            req.metadata_filters,
+            &req.metadata_filters,
             req.from_timestamp,
             req.to_timestamp,
             req.include_failures,
@@ -238,8 +238,18 @@ impl SqliteStorage {
             .as_str(),
         )?;
 
+        let mut params: Vec<String> = vec![];
+        if let Some(metadata_filters) = &req.metadata_filters {
+            metadata_filters.iter().for_each(|PaymentMetadataFilter { search_path, search_value }| {
+                params.push(search_path.clone());
+                params.push(search_value.clone());
+            })
+        }
+
         let vec: Vec<Payment> = stmt
-            .query_map([], |row| self.sql_row_to_payment(row))?
+            .query_map(
+                params_from_iter(params),
+                |row| self.sql_row_to_payment(row))?
             .map(|i| i.unwrap())
             .collect();
 
@@ -347,7 +357,7 @@ impl SqliteStorage {
 
 fn filter_to_where_clause(
     type_filters: Option<Vec<PaymentTypeFilter>>,
-    metadata_filters: Option<Vec<PaymentMetadataFilter>>,
+    metadata_filters: &Option<Vec<PaymentMetadataFilter>>,
     from_timestamp: Option<i64>,
     to_timestamp: Option<i64>,
     include_failures: Option<bool>,
@@ -394,17 +404,9 @@ fn filter_to_where_clause(
     }
 
     if let Some(filters) = metadata_filters {
-        filters.iter().for_each(
-            |PaymentMetadataFilter {
-                 search_path,
-                 search_value,
-             }| {
-                where_clause.push(format!(
-                    "metadata->'$.{}' = '{}'",
-                    search_path, search_value
-                ));
-            },
-        );
+        filters.iter().for_each(|_| {
+            where_clause.push("metadata->'$.?'='?'".to_string());
+        });
     }
 
     let mut where_clause_str = String::new();
