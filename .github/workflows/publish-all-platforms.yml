@@ -168,8 +168,7 @@ jobs:
     uses: ./.github/workflows/build-language-bindings.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
-      # ref: ${{ needs.setup.outputs.ref }}
-      ref: 0.2.12 # for testing, build 0.2.12 language bindings to match 0.2.12 gradle dependency
+      ref: ${{ needs.setup.outputs.ref }}
       kotlin: ${{ needs.setup.outputs.kotlin == 'true'}}
       csharp: ${{ needs.setup.outputs.csharp == 'true'}}
       golang: ${{ needs.setup.outputs.golang == 'true'}}
