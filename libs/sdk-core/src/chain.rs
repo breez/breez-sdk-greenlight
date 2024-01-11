@@ -1,4 +1,4 @@
-use crate::input_parser::get_parse_and_log_response;
+use crate::input_parser::{get_parse_and_log_response, get_reqwest_client};
 use anyhow::{anyhow, Result};
 use bitcoin::hashes::hex::FromHex;
 use bitcoin::{OutPoint, Txid};
@@ -228,16 +228,12 @@ impl ChainService for MempoolSpace {
     }
 
     async fn transaction_outspends(&self, txid: String) -> Result<Vec<Outspend>> {
-        Ok(
-            reqwest::get(format!("{}/api/tx/{txid}/outspends", self.base_url))
-                .await?
-                .json()
-                .await?,
-        )
+        let url = format!("{}/api/tx/{txid}/outspends", self.base_url);
+        Ok(get_reqwest_client()?.get(url).send().await?.json().await?)
     }
 
     async fn broadcast_transaction(&self, tx: Vec<u8>) -> Result<String> {
-        let client = reqwest::Client::new();
+        let client = get_reqwest_client()?;
         let txid_or_error = client
             .post(format!("{}/api/tx", self.base_url))
             .body(hex::encode(tx))

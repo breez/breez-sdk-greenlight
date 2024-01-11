@@ -1,4 +1,5 @@
 use std::str::FromStr;
+use std::time::Duration;
 
 use anyhow::{anyhow, Result};
 use bip21::Uri;
@@ -234,7 +235,7 @@ pub async fn parse(input: &str) -> Result<InputType> {
 pub(crate) async fn get_and_log_response(url: &str) -> Result<String> {
     debug!("Making GET request to: {url}");
 
-    let raw_body = reqwest::get(url).await?.text().await?;
+    let raw_body = get_reqwest_client()?.get(url).send().await?.text().await?;
     debug!("Received raw response body: {raw_body}");
 
     Ok(raw_body)
@@ -372,6 +373,14 @@ fn lnurl_decode(encoded: &str) -> LnUrlResult<(String, String, Option<String>)> 
             Ok((domain.into(), encoded.replace(scheme, new_scheme), None))
         }
     }
+}
+
+/// Creates an HTTP client with a built-in connection timeout
+pub(crate) fn get_reqwest_client() -> Result<reqwest::Client> {
+    reqwest::Client::builder()
+        .timeout(Duration::from_secs(60))
+        .build()
+        .map_err(Into::into)
 }
 
 /// Different kinds of inputs supported by [parse], including any relevant details extracted from the input
