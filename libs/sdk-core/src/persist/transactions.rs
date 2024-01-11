@@ -5,7 +5,7 @@ use crate::{ensure_sdk, models::*};
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use rusqlite::Row;
 use rusqlite::{named_params, params, OptionalExtension};
-use std::collections::{HashSet, HashMap};
+use std::collections::{HashMap, HashSet};
 
 use serde_json::{Map, Value};
 use std::str::FromStr;
@@ -238,22 +238,32 @@ impl SqliteStorage {
             .as_str(),
         )?;
 
-        let mut params: HashMap::<String, String> = HashMap::new();
+        let mut params: HashMap<String, String> = HashMap::new();
 
         if let Some(metadata_filters) = &req.metadata_filters {
-            metadata_filters.iter().enumerate().for_each(|(i, PaymentMetadataFilter { search_path, search_value })| {
-                params.insert(format!(":search_path_{i}"), format!("'$.{search_path}'"));
-                params.insert(format!(":search_value_{i}"), format!("'{search_value}'"));
-            })
+            metadata_filters.iter().enumerate().for_each(
+                |(
+                    i,
+                    PaymentMetadataFilter {
+                        search_path,
+                        search_value,
+                    },
+                )| {
+                    params.insert(format!(":search_path_{i}"), format!("$.{search_path}"));
+                    params.insert(format!(":search_value_{i}"), search_value.clone());
+                },
+            )
         }
 
         let vec: Vec<Payment> = stmt
             .query_map(
-                params.iter()
+                params
+                    .iter()
                     .map(|(k, v)| (k.as_str(), v as &dyn ToSql))
                     .collect::<Vec<(&str, &dyn ToSql)>>()
                     .as_slice(),
-                |row| self.sql_row_to_payment(row))?
+                |row| self.sql_row_to_payment(row),
+            )?
             .map(|i| i.unwrap())
             .collect();
 
