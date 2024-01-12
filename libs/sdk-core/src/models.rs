@@ -766,10 +766,17 @@ pub struct ReceivePaymentRequest {
 }
 
 /// Represents a receive payment response.
+///
+/// Breez SDK may have to open a new channel to receive this payment. In that case, the channel will
+/// be opened automatically when the invoice is paid, and the fees will be described in the
+/// [opening_fee_params] and [opening_fee_msat] fields.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReceivePaymentResponse {
+    /// The generated invoice, including any necessary routing hints
     pub ln_invoice: LNInvoice,
+    /// If set, these are the [OpeningFeeParams] used to calculate the channel opening fees.
     pub opening_fee_params: Option<OpeningFeeParams>,
+    /// If set, this is the channel opening fee that will be deduced from the invoice amount.
     pub opening_fee_msat: Option<u64>,
 }
 
