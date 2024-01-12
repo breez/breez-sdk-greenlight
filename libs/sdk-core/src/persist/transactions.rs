@@ -244,13 +244,13 @@ impl SqliteStorage {
             metadata_filters.iter().enumerate().for_each(
                 |(
                     i,
-                    PaymentMetadataFilter {
-                        search_path,
-                        search_value,
+                    MetadataFilter {
+                        json_path,
+                        json_value,
                     },
                 )| {
-                    params.insert(format!(":search_path_{i}"), format!("$.{search_path}"));
-                    params.insert(format!(":search_value_{i}"), search_value.clone());
+                    params.insert(format!(":json_path_{i}"), format!("$.{json_path}"));
+                    params.insert(format!(":json_value_{i}"), json_value.clone());
                 },
             )
         }
@@ -371,7 +371,7 @@ impl SqliteStorage {
 
 fn filter_to_where_clause(
     type_filters: Option<Vec<PaymentTypeFilter>>,
-    metadata_filters: &Option<Vec<PaymentMetadataFilter>>,
+    metadata_filters: &Option<Vec<MetadataFilter>>,
     from_timestamp: Option<i64>,
     to_timestamp: Option<i64>,
     include_failures: Option<bool>,
@@ -419,7 +419,7 @@ fn filter_to_where_clause(
 
     if let Some(filters) = metadata_filters {
         filters.iter().enumerate().for_each(|(i, _)| {
-            where_clause.push(format!("metadata->:search_path_{i} = :search_value_{i}"));
+            where_clause.push(format!("metadata->:json_path_{i} = :json_value_{i}"));
         });
     }
 
@@ -763,21 +763,21 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
     // test metadata set and filter
     let test_json = r#"{"supportsBoolean":true,"supportsInt":10,"supportsString":"supports string","supportsNested":{"value":[1,2]}}"#;
     let test_json_filters = Some(vec![
-        PaymentMetadataFilter {
-            search_path: "supportsBoolean".to_string(),
-            search_value: "true".to_string(),
+        MetadataFilter {
+            json_path: "supportsBoolean".to_string(),
+            json_value: "true".to_string(),
         },
-        PaymentMetadataFilter {
-            search_path: "supportsInt".to_string(),
-            search_value: "10".to_string(),
+        MetadataFilter {
+            json_path: "supportsInt".to_string(),
+            json_value: "10".to_string(),
         },
-        PaymentMetadataFilter {
-            search_path: "supportsString".to_string(),
-            search_value: r#""supports string""#.to_string(),
+        MetadataFilter {
+            json_path: "supportsString".to_string(),
+            json_value: r#""supports string""#.to_string(),
         },
-        PaymentMetadataFilter {
-            search_path: "supportsNested.value".to_string(),
-            search_value: "[1,2]".to_string(),
+        MetadataFilter {
+            json_path: "supportsNested.value".to_string(),
+            json_value: "[1,2]".to_string(),
         },
     ]);
 

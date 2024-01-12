@@ -425,11 +425,9 @@ pub extern "C" fn new_box_autoadd_u64_0(value: u64) -> *mut u64 {
 }
 
 #[no_mangle]
-pub extern "C" fn new_list_payment_metadata_filter_0(
-    len: i32,
-) -> *mut wire_list_payment_metadata_filter {
-    let wrap = wire_list_payment_metadata_filter {
-        ptr: support::new_leak_vec_ptr(<wire_PaymentMetadataFilter>::new_with_null_ptr(), len),
+pub extern "C" fn new_list_metadata_filter_0(len: i32) -> *mut wire_list_metadata_filter {
+    let wrap = wire_list_metadata_filter {
+        ptr: support::new_leak_vec_ptr(<wire_MetadataFilter>::new_with_null_ptr(), len),
         len,
     };
     support::new_leak_box_ptr(wrap)
@@ -701,8 +699,8 @@ impl Wire2Api<GreenlightNodeConfig> for wire_GreenlightNodeConfig {
     }
 }
 
-impl Wire2Api<Vec<PaymentMetadataFilter>> for *mut wire_list_payment_metadata_filter {
-    fn wire2api(self) -> Vec<PaymentMetadataFilter> {
+impl Wire2Api<Vec<MetadataFilter>> for *mut wire_list_metadata_filter {
+    fn wire2api(self) -> Vec<MetadataFilter> {
         let vec = unsafe {
             let wrap = support::box_from_leak_ptr(self);
             support::vec_from_leak_ptr(wrap.ptr, wrap.len)
@@ -793,6 +791,14 @@ impl Wire2Api<LnUrlWithdrawRequestData> for wire_LnUrlWithdrawRequestData {
         }
     }
 }
+impl Wire2Api<MetadataFilter> for wire_MetadataFilter {
+    fn wire2api(self) -> MetadataFilter {
+        MetadataFilter {
+            json_path: self.json_path.wire2api(),
+            json_value: self.json_value.wire2api(),
+        }
+    }
+}
 
 impl Wire2Api<NodeConfig> for wire_NodeConfig {
     fn wire2api(self) -> NodeConfig {
@@ -825,15 +831,6 @@ impl Wire2Api<OpeningFeeParams> for wire_OpeningFeeParams {
             max_idle_time: self.max_idle_time.wire2api(),
             max_client_to_self_delay: self.max_client_to_self_delay.wire2api(),
             promise: self.promise.wire2api(),
-        }
-    }
-}
-
-impl Wire2Api<PaymentMetadataFilter> for wire_PaymentMetadataFilter {
-    fn wire2api(self) -> PaymentMetadataFilter {
-        PaymentMetadataFilter {
-            search_path: self.search_path.wire2api(),
-            search_value: self.search_value.wire2api(),
         }
     }
 }
@@ -1027,8 +1024,8 @@ pub struct wire_GreenlightNodeConfig {
 
 #[repr(C)]
 #[derive(Clone)]
-pub struct wire_list_payment_metadata_filter {
-    ptr: *mut wire_PaymentMetadataFilter,
+pub struct wire_list_metadata_filter {
+    ptr: *mut wire_MetadataFilter,
     len: i32,
 }
 
@@ -1043,7 +1040,7 @@ pub struct wire_list_payment_type_filter {
 #[derive(Clone)]
 pub struct wire_ListPaymentsRequest {
     filters: *mut wire_list_payment_type_filter,
-    metadata_filters: *mut wire_list_payment_metadata_filter,
+    metadata_filters: *mut wire_list_metadata_filter,
     from_timestamp: *mut i64,
     to_timestamp: *mut i64,
     include_failures: *mut bool,
@@ -1107,6 +1104,13 @@ pub struct wire_LnUrlWithdrawRequestData {
 
 #[repr(C)]
 #[derive(Clone)]
+pub struct wire_MetadataFilter {
+    json_path: *mut wire_uint_8_list,
+    json_value: *mut wire_uint_8_list,
+}
+
+#[repr(C)]
+#[derive(Clone)]
 pub struct wire_OpenChannelFeeRequest {
     amount_msat: u64,
     expiry: *mut u32,
@@ -1121,13 +1125,6 @@ pub struct wire_OpeningFeeParams {
     max_idle_time: u32,
     max_client_to_self_delay: u32,
     promise: *mut wire_uint_8_list,
-}
-
-#[repr(C)]
-#[derive(Clone)]
-pub struct wire_PaymentMetadataFilter {
-    search_path: *mut wire_uint_8_list,
-    search_value: *mut wire_uint_8_list,
 }
 
 #[repr(C)]
@@ -1480,6 +1477,21 @@ impl Default for wire_LnUrlWithdrawRequestData {
     }
 }
 
+impl NewWithNullPtr for wire_MetadataFilter {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            json_path: core::ptr::null_mut(),
+            json_value: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_MetadataFilter {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
 impl Default for wire_NodeConfig {
     fn default() -> Self {
         Self::new_with_null_ptr()
@@ -1533,21 +1545,6 @@ impl NewWithNullPtr for wire_OpeningFeeParams {
 }
 
 impl Default for wire_OpeningFeeParams {
-    fn default() -> Self {
-        Self::new_with_null_ptr()
-    }
-}
-
-impl NewWithNullPtr for wire_PaymentMetadataFilter {
-    fn new_with_null_ptr() -> Self {
-        Self {
-            search_path: core::ptr::null_mut(),
-            search_value: core::ptr::null_mut(),
-        }
-    }
-}
-
-impl Default for wire_PaymentMetadataFilter {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }

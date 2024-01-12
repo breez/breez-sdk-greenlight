@@ -199,9 +199,9 @@ enum PaymentTypeFilter {
     "ClosedChannel",
 };
 
-dictionary PaymentMetadataFilter {
-    string search_path;
-    string search_value;
+dictionary MetadataFilter {
+    string json_path;
+    string json_value;
 };
 
 enum PaymentStatus {
@@ -231,7 +231,7 @@ dictionary Payment {
 
 dictionary ListPaymentsRequest {
     sequence<PaymentTypeFilter>? filters = null;
-    sequence<PaymentMetadataFilter>? metadata_filters = null;
+    sequence<MetadataFilter>? metadata_filters = null;
     i64? from_timestamp = null;
     i64? to_timestamp = null;
     boolean? include_failures = null;

@@ -629,7 +629,7 @@ class InvoicePaidDetails {
 /// Represents a list payments request.
 class ListPaymentsRequest {
   final List<PaymentTypeFilter>? filters;
-  final List<PaymentMetadataFilter>? metadataFilters;
+  final List<MetadataFilter>? metadataFilters;
 
   /// Epoch time, in seconds
   final int? fromTimestamp;
@@ -1037,6 +1037,21 @@ class MessageSuccessActionData {
   });
 }
 
+/// A metadata filter which can be applied when retrieving the transaction list
+class MetadataFilter {
+  /// Specifies which field to apply the filter on, using the JSON path format
+  final String jsonPath;
+
+  /// Specifies which JSON value to filter for.
+  /// As such, strings must be wrapped with quotes ("") in order to be properly filtered
+  final String jsonValue;
+
+  const MetadataFilter({
+    required this.jsonPath,
+    required this.jsonValue,
+  });
+}
+
 /// The different supported bitcoin networks
 enum Network {
   /// Mainnet
@@ -1195,21 +1210,6 @@ class PaymentFailedData {
     required this.error,
     required this.nodeId,
     this.invoice,
-  });
-}
-
-/// A metadata filter which can be applied when retrieving the transaction list
-class PaymentMetadataFilter {
-  /// Specifies which field to apply the filter on, using the JSON path format
-  final String searchPath;
-
-  /// Specifies which JSON value to filter for.
-  /// As such, strings must be wrappe with quotes ("") in order to be properly filtered
-  final String searchValue;
-
-  const PaymentMetadataFilter({
-    required this.searchPath,
-    required this.searchValue,
   });
 }
 
@@ -4063,11 +4063,10 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
-  ffi.Pointer<wire_list_payment_metadata_filter> api2wire_list_payment_metadata_filter(
-      List<PaymentMetadataFilter> raw) {
-    final ans = inner.new_list_payment_metadata_filter_0(raw.length);
+  ffi.Pointer<wire_list_metadata_filter> api2wire_list_metadata_filter(List<MetadataFilter> raw) {
+    final ans = inner.new_list_metadata_filter_0(raw.length);
     for (var i = 0; i < raw.length; ++i) {
-      _api_fill_to_wire_payment_metadata_filter(raw[i], ans.ref.ptr[i]);
+      _api_fill_to_wire_metadata_filter(raw[i], ans.ref.ptr[i]);
     }
     return ans;
   }
@@ -4127,9 +4126,8 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
-  ffi.Pointer<wire_list_payment_metadata_filter> api2wire_opt_list_payment_metadata_filter(
-      List<PaymentMetadataFilter>? raw) {
-    return raw == null ? ffi.nullptr : api2wire_list_payment_metadata_filter(raw);
+  ffi.Pointer<wire_list_metadata_filter> api2wire_opt_list_metadata_filter(List<MetadataFilter>? raw) {
+    return raw == null ? ffi.nullptr : api2wire_list_metadata_filter(raw);
   }
 
   @protected
@@ -4329,7 +4327,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
 
   void _api_fill_to_wire_list_payments_request(ListPaymentsRequest apiObj, wire_ListPaymentsRequest wireObj) {
     wireObj.filters = api2wire_opt_list_payment_type_filter(apiObj.filters);
-    wireObj.metadata_filters = api2wire_opt_list_payment_metadata_filter(apiObj.metadataFilters);
+    wireObj.metadata_filters = api2wire_opt_list_metadata_filter(apiObj.metadataFilters);
     wireObj.from_timestamp = api2wire_opt_box_autoadd_i64(apiObj.fromTimestamp);
     wireObj.to_timestamp = api2wire_opt_box_autoadd_i64(apiObj.toTimestamp);
     wireObj.include_failures = api2wire_opt_box_autoadd_bool(apiObj.includeFailures);
@@ -4378,6 +4376,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.max_withdrawable = api2wire_u64(apiObj.maxWithdrawable);
   }
 
+  void _api_fill_to_wire_metadata_filter(MetadataFilter apiObj, wire_MetadataFilter wireObj) {
+    wireObj.json_path = api2wire_String(apiObj.jsonPath);
+    wireObj.json_value = api2wire_String(apiObj.jsonValue);
+  }
+
   void _api_fill_to_wire_node_config(NodeConfig apiObj, wire_NodeConfig wireObj) {
     if (apiObj is NodeConfig_Greenlight) {
       var pre_config = api2wire_box_autoadd_greenlight_node_config(apiObj.config);
@@ -4401,12 +4404,6 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.max_idle_time = api2wire_u32(apiObj.maxIdleTime);
     wireObj.max_client_to_self_delay = api2wire_u32(apiObj.maxClientToSelfDelay);
     wireObj.promise = api2wire_String(apiObj.promise);
-  }
-
-  void _api_fill_to_wire_payment_metadata_filter(
-      PaymentMetadataFilter apiObj, wire_PaymentMetadataFilter wireObj) {
-    wireObj.search_path = api2wire_String(apiObj.searchPath);
-    wireObj.search_value = api2wire_String(apiObj.searchValue);
   }
 
   void _api_fill_to_wire_prepare_redeem_onchain_funds_request(
@@ -5638,19 +5635,19 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _new_box_autoadd_u64_0 =
       _new_box_autoadd_u64_0Ptr.asFunction<ffi.Pointer<ffi.Uint64> Function(int)>();
 
-  ffi.Pointer<wire_list_payment_metadata_filter> new_list_payment_metadata_filter_0(
+  ffi.Pointer<wire_list_metadata_filter> new_list_metadata_filter_0(
     int len,
   ) {
-    return _new_list_payment_metadata_filter_0(
+    return _new_list_metadata_filter_0(
       len,
     );
   }
 
-  late final _new_list_payment_metadata_filter_0Ptr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<wire_list_payment_metadata_filter> Function(ffi.Int32)>>(
-          'new_list_payment_metadata_filter_0');
-  late final _new_list_payment_metadata_filter_0 = _new_list_payment_metadata_filter_0Ptr
-      .asFunction<ffi.Pointer<wire_list_payment_metadata_filter> Function(int)>();
+  late final _new_list_metadata_filter_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_list_metadata_filter> Function(ffi.Int32)>>(
+          'new_list_metadata_filter_0');
+  late final _new_list_metadata_filter_0 =
+      _new_list_metadata_filter_0Ptr.asFunction<ffi.Pointer<wire_list_metadata_filter> Function(int)>();
 
   ffi.Pointer<wire_list_payment_type_filter> new_list_payment_type_filter_0(
     int len,
@@ -5810,14 +5807,14 @@ final class wire_list_payment_type_filter extends ffi.Struct {
   external int len;
 }
 
-final class wire_PaymentMetadataFilter extends ffi.Struct {
-  external ffi.Pointer<wire_uint_8_list> search_path;
+final class wire_MetadataFilter extends ffi.Struct {
+  external ffi.Pointer<wire_uint_8_list> json_path;
 
-  external ffi.Pointer<wire_uint_8_list> search_value;
+  external ffi.Pointer<wire_uint_8_list> json_value;
 }
 
-final class wire_list_payment_metadata_filter extends ffi.Struct {
-  external ffi.Pointer<wire_PaymentMetadataFilter> ptr;
+final class wire_list_metadata_filter extends ffi.Struct {
+  external ffi.Pointer<wire_MetadataFilter> ptr;
 
   @ffi.Int32()
   external int len;
@@ -5826,7 +5823,7 @@ final class wire_list_payment_metadata_filter extends ffi.Struct {
 final class wire_ListPaymentsRequest extends ffi.Struct {
   external ffi.Pointer<wire_list_payment_type_filter> filters;
 
-  external ffi.Pointer<wire_list_payment_metadata_filter> metadata_filters;
+  external ffi.Pointer<wire_list_metadata_filter> metadata_filters;
 
   external ffi.Pointer<ffi.Int64> from_timestamp;
 
