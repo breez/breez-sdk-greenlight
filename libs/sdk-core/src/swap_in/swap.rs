@@ -875,6 +875,7 @@ mod tests {
                     pending_expiration_block: None,
                 },
             },
+            metadata: None,
         };
         persister.insert_or_update_payments(&vec![payment.clone()], false)?;
 

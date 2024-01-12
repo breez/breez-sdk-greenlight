@@ -1528,6 +1528,7 @@ impl TryFrom<OffChainPayment> for Payment {
                     pending_expiration_block: None,
                 },
             },
+            metadata: None,
         })
     }
     // fn from(p: OffChainPayment) -> Self {
@@ -1568,6 +1569,7 @@ impl TryFrom<gl_client::signer::model::greenlight::Invoice> for Payment {
                     pending_expiration_block: None,
                 },
             },
+            metadata: None,
         })
     }
 }
@@ -1623,6 +1625,7 @@ impl TryFrom<gl_client::signer::model::greenlight::Payment> for Payment {
                     pending_expiration_block: None,
                 },
             },
+            metadata: None,
         })
     }
 }
@@ -1665,6 +1668,7 @@ impl TryFrom<cln::ListinvoicesInvoices> for Payment {
                     pending_expiration_block: None,
                 },
             },
+            metadata: None,
         })
     }
 }
@@ -1730,6 +1734,7 @@ impl TryFrom<cln::ListpaysPays> for Payment {
                     pending_expiration_block: None,
                 },
             },
+            metadata: None,
         })
     }
 }

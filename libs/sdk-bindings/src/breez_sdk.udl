@@ -199,6 +199,11 @@ enum PaymentTypeFilter {
     "ClosedChannel",
 };
 
+dictionary MetadataFilter {
+    string json_path;
+    string json_value;
+};
+
 enum PaymentStatus {
     "Pending",
     "Complete",
@@ -221,10 +226,12 @@ dictionary Payment {
     string? error;
     string? description;
     PaymentDetails details;
+    string? metadata;
 };
 
 dictionary ListPaymentsRequest {
     sequence<PaymentTypeFilter>? filters = null;
+    sequence<MetadataFilter>? metadata_filters = null;
     i64? from_timestamp = null;
     i64? to_timestamp = null;
     boolean? include_failures = null;
@@ -772,10 +779,13 @@ interface BlockingBreezServices {
    void backup();
 
    [Throws=SdkError]
+   sequence<Payment> list_payments(ListPaymentsRequest req);
+
+   [Throws=SdkError]
    Payment? payment_by_hash(string hash);
 
    [Throws=SdkError]
-   sequence<Payment> list_payments(ListPaymentsRequest req);
+   void set_payment_metadata(string hash, string metadata);
 
    [Throws=SdkError]
    RedeemOnchainFundsResponse redeem_onchain_funds(RedeemOnchainFundsRequest req);

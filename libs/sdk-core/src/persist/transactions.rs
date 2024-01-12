@@ -1,13 +1,16 @@
 use super::db::SqliteStorage;
-use super::error::PersistResult;
+use super::error::{PersistError, PersistResult};
 use crate::lnurl::pay::model::SuccessActionProcessed;
-use crate::models::*;
+use crate::{ensure_sdk, models::*};
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use rusqlite::Row;
 use rusqlite::{named_params, params, OptionalExtension};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
+use serde_json::{Map, Value};
 use std::str::FromStr;
+
+const METADATA_MAX_LEN: usize = 1000;
 
 impl SqliteStorage {
     /// Inserts payments into the payments table. These can be pending, completed and failed payments. Before
@@ -101,6 +104,40 @@ impl SqliteStorage {
         Ok(())
     }
 
+    /// Updates the metadata object associated to a payment
+    pub fn set_payment_external_metadata(
+        &self,
+        payment_hash: String,
+        new_metadata: String,
+    ) -> PersistResult<()> {
+        ensure_sdk!(
+            new_metadata.len() <= METADATA_MAX_LEN,
+            PersistError::Generic(anyhow::anyhow!(
+                "Max metadata size ({} characters) has been exceeded",
+                METADATA_MAX_LEN
+            ))
+        );
+
+        let _ = serde_json::from_str::<Map<String, Value>>(&new_metadata)?;
+
+        self.get_connection()?.execute(
+            "
+             INSERT OR REPLACE INTO sync.payments_metadata(
+                payment_id,
+                metadata,
+                updated_at
+             )
+             VALUES (
+                ?1,
+                json(?2),
+                CURRENT_TIMESTAMP
+             );",
+            params![payment_hash, new_metadata],
+        )?;
+
+        Ok(())
+    }
+
     /// Updates attempted error data associated with this payment
     pub fn update_payment_attempted_error(
         &self,
@@ -155,6 +192,7 @@ impl SqliteStorage {
     pub fn list_payments(&self, req: ListPaymentsRequest) -> PersistResult<Vec<Payment>> {
         let where_clause = filter_to_where_clause(
             req.filters,
+            &req.metadata_filters,
             req.from_timestamp,
             req.to_timestamp,
             req.include_failures,
@@ -180,11 +218,15 @@ impl SqliteStorage {
              e.lnurl_withdraw_endpoint,
              e.attempted_amount_msat,
              e.attempted_error,
-             o.payer_amount_msat
+             o.payer_amount_msat,
+             m.metadata
             FROM payments p
             LEFT JOIN sync.payments_external_info e
             ON
              p.id = e.payment_id
+            LEFT JOIN sync.payments_metadata m
+            ON
+              p.id = m.payment_id
             LEFT JOIN sync.open_channel_payment_info o
              ON
               p.id = o.payment_hash
@@ -196,8 +238,32 @@ impl SqliteStorage {
             .as_str(),
         )?;
 
+        let mut params: HashMap<String, String> = HashMap::new();
+
+        if let Some(metadata_filters) = &req.metadata_filters {
+            metadata_filters.iter().enumerate().for_each(
+                |(
+                    i,
+                    MetadataFilter {
+                        json_path,
+                        json_value,
+                    },
+                )| {
+                    params.insert(format!(":json_path_{i}"), format!("$.{json_path}"));
+                    params.insert(format!(":json_value_{i}"), json_value.clone());
+                },
+            )
+        }
+
         let vec: Vec<Payment> = stmt
-            .query_map([], |row| self.sql_row_to_payment(row))?
+            .query_map(
+                params
+                    .iter()
+                    .map(|(k, v)| (k.as_str(), v as &dyn ToSql))
+                    .collect::<Vec<(&str, &dyn ToSql)>>()
+                    .as_slice(),
+                |row| self.sql_row_to_payment(row),
+            )?
             .map(|i| i.unwrap())
             .collect();
 
@@ -229,11 +295,15 @@ impl SqliteStorage {
                  e.lnurl_withdraw_endpoint,
                  e.attempted_amount_msat,
                  e.attempted_error,
-                 o.payer_amount_msat
+                 o.payer_amount_msat,
+                 m.metadata
                 FROM payments p
                 LEFT JOIN sync.payments_external_info e
                 ON
                  p.id = e.payment_id
+                LEFT JOIN sync.payments_metadata m
+                ON
+                  p.id = m.payment_id
                 LEFT JOIN sync.open_channel_payment_info o
                  ON
                   p.id = o.payment_hash
@@ -276,6 +346,7 @@ impl SqliteStorage {
             description: row.get(6)?,
             details: row.get(7)?,
             error: row.get(13)?,
+            metadata: row.get(15)?,
         };
 
         if let PaymentDetails::Ln { ref mut data } = payment.details {
@@ -300,6 +371,7 @@ impl SqliteStorage {
 
 fn filter_to_where_clause(
     type_filters: Option<Vec<PaymentTypeFilter>>,
+    metadata_filters: &Option<Vec<MetadataFilter>>,
     from_timestamp: Option<i64>,
     to_timestamp: Option<i64>,
     include_failures: Option<bool>,
@@ -343,6 +415,12 @@ fn filter_to_where_clause(
                     .join(", ")
             ));
         }
+    }
+
+    if let Some(filters) = metadata_filters {
+        filters.iter().enumerate().for_each(|(i, _)| {
+            where_clause.push(format!("metadata->:json_path_{i} = :json_value_{i}"));
+        });
     }
 
     let mut where_clause_str = String::new();
@@ -476,6 +554,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                     pending_expiration_block: None,
                 },
             },
+            metadata: None,
         },
         Payment {
             id: payment_hash_with_lnurl_withdraw.to_string(),
@@ -502,6 +581,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                     pending_expiration_block: None,
                 },
             },
+            metadata: None,
         },
         Payment {
             id: hex::encode(payment_hash_with_swap_info.clone()),
@@ -528,6 +608,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                     pending_expiration_block: None,
                 },
             },
+            metadata: None,
         },
     ];
     let failed_txs = [Payment {
@@ -555,6 +636,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                 pending_expiration_block: None,
             },
         },
+        metadata: None,
     }];
     let storage = SqliteStorage::new(test_utils::create_test_sql_dir());
     storage.init()?;
@@ -669,6 +751,48 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
     })?;
     assert_eq!(retrieve_txs.len(), 1);
     assert_eq!(retrieve_txs[0].id, payment_hash_with_lnurl_withdraw);
+
+    // test json metadata validation
+    assert!(storage
+        .set_payment_external_metadata(
+            payment_hash_with_lnurl_withdraw.to_string(),
+            r#"{ "malformed: true }"#.to_string()
+        )
+        .is_err());
+
+    // test metadata set and filter
+    let test_json = r#"{"supportsBoolean":true,"supportsInt":10,"supportsString":"supports string","supportsNested":{"value":[1,2]}}"#;
+    let test_json_filters = Some(vec![
+        MetadataFilter {
+            json_path: "supportsBoolean".to_string(),
+            json_value: "true".to_string(),
+        },
+        MetadataFilter {
+            json_path: "supportsInt".to_string(),
+            json_value: "10".to_string(),
+        },
+        MetadataFilter {
+            json_path: "supportsString".to_string(),
+            json_value: r#""supports string""#.to_string(),
+        },
+        MetadataFilter {
+            json_path: "supportsNested.value".to_string(),
+            json_value: "[1,2]".to_string(),
+        },
+    ]);
+
+    storage.set_payment_external_metadata(
+        payment_hash_with_lnurl_withdraw.to_string(),
+        test_json.to_string(),
+    )?;
+
+    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+        metadata_filters: test_json_filters,
+        ..Default::default()
+    })?;
+    assert_eq!(retrieve_txs.len(), 1);
+    assert_eq!(retrieve_txs[0].id, payment_hash_with_lnurl_withdraw);
+    assert_eq!(retrieve_txs[0].metadata, Some(test_json.to_string()),);
 
     Ok(())
 }

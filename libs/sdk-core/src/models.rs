@@ -550,6 +550,15 @@ pub enum PaymentTypeFilter {
     ClosedChannel,
 }
 
+/// A metadata filter which can be applied when retrieving the transaction list
+pub struct MetadataFilter {
+    /// Specifies which field to apply the filter on, using the JSON path format
+    pub json_path: String,
+    /// Specifies which JSON value to filter for.
+    /// As such, strings must be wrapped with quotes ("") in order to be properly filtered
+    pub json_value: String,
+}
+
 /// Different types of supported feerates
 pub enum FeeratePreset {
     Regular,
@@ -610,7 +619,7 @@ pub enum PaymentStatus {
     Failed = 2,
 }
 
-/// Represents a payment, including its [PaymentType] and [PaymentDetails].
+/// Represents a payment, including its [PaymentType] and [PaymentDetails]
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]
 pub struct Payment {
     pub id: String,
@@ -623,6 +632,7 @@ pub struct Payment {
     pub error: Option<String>,
     pub description: Option<String>,
     pub details: PaymentDetails,
+    pub metadata: Option<String>,
 }
 
 /// Represents a payments external information.
@@ -640,6 +650,7 @@ pub struct PaymentExternalInfo {
 #[derive(Default)]
 pub struct ListPaymentsRequest {
     pub filters: Option<Vec<PaymentTypeFilter>>,
+    pub metadata_filters: Option<Vec<MetadataFilter>>,
     /// Epoch time, in seconds
     pub from_timestamp: Option<i64>,
     /// Epoch time, in seconds

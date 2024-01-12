@@ -162,17 +162,33 @@ impl SqliteStorage {
         // sync remote payments_external_info table
         tx.execute(
             "
-         INSERT into sync.payments_external_info
-         SELECT
-          payment_id,
-          lnurl_success_action,
-          ln_address,
-          lnurl_metadata,
-          lnurl_withdraw_endpoint,
-          attempted_amount_msat,
-          attempted_error
-         FROM remote_sync.payments_external_info
-         WHERE payment_id NOT IN (SELECT payment_id FROM sync.payments_external_info);",
+             INSERT into sync.payments_external_info
+             SELECT
+              payment_id,
+              lnurl_success_action,
+              ln_address,
+              lnurl_metadata,
+              lnurl_withdraw_endpoint,
+              attempted_amount_msat,
+              attempted_error
+             FROM remote_sync.payments_external_info
+             WHERE payment_id NOT IN (SELECT payment_id FROM sync.payments_external_info);",
+            [],
+        )?;
+
+        // sync remote payments_metadata table
+        tx.execute(
+            "
+             INSERT OR REPLACE INTO sync.payments_metadata
+             SELECT
+              remote_sync.payments_metadata.payment_id,
+              remote_sync.payments_metadata.metadata,
+              remote_sync.payments_metadata.updated_at
+             FROM remote_sync.payments_metadata
+             LEFT JOIN sync.payments_metadata 
+             ON sync.payments_metadata.payment_id = remote_sync.payments_metadata.payment_id
+             WHERE
+              remote_sync.payments_metadata.updated_at > sync.payments_metadata.updated_at;",
             [],
         )?;
 

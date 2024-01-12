@@ -129,6 +129,7 @@ export type LnInvoice = {
 
 export type ListPaymentsRequest = {
     filters?: PaymentTypeFilter[]
+    metadataFilters?: PaymentMetadataFilter[]
     fromTimestamp?: number
     toTimestamp?: number
     includeFailures?: boolean
@@ -298,12 +299,18 @@ export type Payment = {
     error?: string
     description?: string
     details: PaymentDetails
+    metadata?: string
 }
 
 export type PaymentFailedData = {
     error: string
     nodeId: string
     invoice?: LnInvoice
+}
+
+export type PaymentMetadataFilter = {
+    searchPath: string
+    searchValue: string
 }
 
 export type PrepareRedeemOnchainFundsRequest = {
@@ -877,14 +884,18 @@ export const backup = async (): Promise<void> => {
     await BreezSDK.backup()
 }
 
+export const listPayments = async (req: ListPaymentsRequest): Promise<Payment[]> => {
+    const response = await BreezSDK.listPayments(req)
+    return response
+}
+
 export const paymentByHash = async (hash: string): Promise<Payment | null> => {
     const response = await BreezSDK.paymentByHash(hash)
     return response
 }
 
-export const listPayments = async (req: ListPaymentsRequest): Promise<Payment[]> => {
-    const response = await BreezSDK.listPayments(req)
-    return response
+export const setPaymentMetadata = async (hash: string, metadata: string): Promise<void> => {
+    await BreezSDK.setPaymentMetadata(hash, metadata)
 }
 
 export const redeemOnchainFunds = async (req: RedeemOnchainFundsRequest): Promise<RedeemOnchainFundsResponse> => {

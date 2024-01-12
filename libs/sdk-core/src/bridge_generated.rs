@@ -73,6 +73,7 @@ use crate::models::LnUrlWithdrawResult;
 use crate::models::LnUrlWithdrawSuccessData;
 use crate::models::LogEntry;
 use crate::models::MaxReverseSwapAmountResponse;
+use crate::models::MetadataFilter;
 use crate::models::Network;
 use crate::models::NodeConfig;
 use crate::models::NodeCredentials;
@@ -1665,6 +1666,7 @@ impl support::IntoDart for Payment {
             self.error.into_dart(),
             self.description.into_dart(),
             self.details.into_into_dart().into_dart(),
+            self.metadata.into_dart(),
         ]
         .into_dart()
     }
