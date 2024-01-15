@@ -490,6 +490,10 @@ pub(crate) async fn handle_command(
                 None => Ok("No static backup data".into()),
             }
         }
+        Commands::RegisterWebhook { url } => {
+            sdk()?.register_webhook(url).await?;
+            Ok("Url registered successfully".into())
+        }
     }
 }
 

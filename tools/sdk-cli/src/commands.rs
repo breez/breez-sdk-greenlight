@@ -251,4 +251,7 @@ pub(crate) enum Commands {
     BuyBitcoin {
         provider: BuyBitcoinProvider,
     },
+    RegisterWebhook {
+        url: String,
+    },
 }
