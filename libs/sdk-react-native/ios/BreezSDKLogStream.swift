@@ -1,17 +1,11 @@
 import Foundation
 import BreezSDK
 
-class BreezSDKLogStream: NSObject, LogStream {
-    var emitter: RCTEventEmitter
-    
+class BreezSDKLogStream: LogStream {
     static let emitterName: String = "breezSdkLog"
     
-    init(emitter: RCTEventEmitter) {
-        self.emitter = emitter
-    }
-    
     func log(l: LogEntry) {
-        self.emitter.sendEvent(withName: BreezSDKLogStream.emitterName, 
-                               body: BreezSDKMapper.dictionaryOf(logEntry: l))
+        RNBreezSDK.emitter.sendEvent(withName: BreezSDKLogStream.emitterName,
+                                     body: BreezSDKMapper.dictionaryOf(logEntry: l))
     }
 }
