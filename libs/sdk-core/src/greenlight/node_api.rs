@@ -439,29 +439,19 @@ impl Greenlight {
     }
 
     async fn pending_onchain_balance(&self, funds: cln::ListfundsResponse) -> Result<u64> {
-        let pending_onchain_balance = funds.channels.iter().fold(0, |a, b| match b.state() {
-            cln::ChannelState::ChanneldShuttingDown => {
-                a + b.our_amount_msat.clone().unwrap_or_default().msat
-            }
-            cln::ChannelState::ClosingdSigexchange => {
-                a + b.our_amount_msat.clone().unwrap_or_default().msat
-            }
-            cln::ChannelState::ClosingdComplete => {
-                a + b.our_amount_msat.clone().unwrap_or_default().msat
-            }
-            cln::ChannelState::AwaitingUnilateral => {
-                a + b.our_amount_msat.clone().unwrap_or_default().msat
-            }
-            cln::ChannelState::FundingSpendSeen => {
-                a + b.our_amount_msat.clone().unwrap_or_default().msat
-            }
-            _ => a,
-        });
-        info!(
-            "pending_onchain_balance sum is = {}",
-            pending_onchain_balance
-        );
-        Ok(pending_onchain_balance)
+        let pending_closing_channel_balance =
+            funds.channels.iter().fold(0, |a, b| match b.state() {
+                cln::ChannelState::ChanneldShuttingDown
+                | cln::ChannelState::ClosingdSigexchange
+                | cln::ChannelState::ClosingdComplete
+                | cln::ChannelState::AwaitingUnilateral
+                | cln::ChannelState::FundingSpendSeen => {
+                    a + b.our_amount_msat.clone().unwrap_or_default().msat
+                }
+                _ => a,
+            });
+
+        Ok(pending_closing_channel_balance)
     }
 
     // Collect utxos from onchain funds
