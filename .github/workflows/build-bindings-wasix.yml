@@ -38,7 +38,7 @@ jobs:
       with: 
         ref: ${{ inputs.ref }}
         repository: ${{ inputs.repository || github.repository }}
-        
+
     - name: Install build-essential
       run: sudo apt install -y build-essential
 
@@ -87,7 +87,7 @@ jobs:
         OPENSSL_STATIC: 1 
         CC: /opt/wasi-sdk/bin/clang --sysroot=/opt/wasi-sdk/share/wasi-sysroot
         CC_WASM32_WASI: /opt/wasi-sdk/bin/clang
-        AR: /opt/wasi-sdk/bin/llvm-ar"
+        AR: /opt/wasi-sdk/bin/llvm-ar
         RUSTFLAGS: -Clink-arg=--no-check-features
       run: cargo wasix build --release
     
