@@ -38,6 +38,9 @@ jobs:
       with: 
         ref: ${{ inputs.ref }}
         repository: ${{ inputs.repository || github.repository }}
+        
+    - name: Install build-essential
+      run: sudo apt install -y build-essential
 
     - name: Install wasm-sdk
       working-directory: /opt
