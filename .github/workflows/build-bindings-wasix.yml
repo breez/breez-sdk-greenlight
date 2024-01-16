@@ -78,20 +78,21 @@ jobs:
     - name: Build sdk-wasm
       working-directory: libs/sdk-wasm
       env:
-        LIBSQLITE3_FLAGS: -DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_SHARED_CACHE -D_LARGEFILE64_SOURCE
+        LIBSQLITE3_FLAGS: -DSQLITE_OS_OTHER -USQLITE_TEMP_STORE -DSQLITE_TEMP_STORE=3 -USQLITE_THREADSAFE -DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_LOCALTIME -DSQLITE_OMIT_LOAD_EXTENSION -DLONGDOUBLE_TYPE=double
         OPENSSL_DIR: /opt/openssl-wasm32-wasi/precompiled
         OPENSSL_NO_VENDOR: 1
         OPENSSL_STATIC: 1 
         CC: /opt/wasi-sdk/bin/clang --sysroot=/opt/wasi-sdk/share/wasi-sysroot
-        CARGO_TARGET_WASM32_WASI_LINKER: /opt/wasi-sdk/bin/clang
-        CARGO_TARGET_WASM32_WASMER_WASI_LINKER: /opt/wasi-sdk/bin/clang
+        CC_WASM32_WASI: /opt/wasi-sdk/bin/clang
+        AR: /opt/wasi-sdk/bin/llvm-ar"
+        RUSTFLAGS: -Clink-arg=--no-check-features
       run: cargo wasix build --release
     
     - name: Archive release
       uses: actions/upload-artifact@v3
       with:
         name: sdk-bindings-${{ matrix.target }}
-        path: libs/sdk-wasm/target/${{ matrix.target }}/release/breez-sdk-wasm.wasm
+        path: libs/sdk-wasm/target/${{ matrix.target }}/release/breez_sdk_wasm.wasm
 
   build-dummies:
     if: ${{ inputs.use-dummy-binaries }}

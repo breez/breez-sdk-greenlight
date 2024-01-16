@@ -8,8 +8,6 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 breez-sdk-core = { path = "../sdk-core" }
-secp256k1 = { version = "0.28", features = ["global-context-less-secure"] }
-reqwest = { version = "=0.11.18", features = ["json"] }
 tokio = { version = "=1.24.2", features = ["full"] }
 rcgen = { version = "=0.10.0" }
 ring = { version = "=0.16.20", git = "https://github.com/dangeross/ring.git", branch = "wasix" }
@@ -35,4 +33,4 @@ tokio-rustls = { git = "https://github.com/dangeross/tokio-rustls.git" }
 hyper = { git = "https://github.com/wasix-org/hyper.git", branch = "v0.14.27" }
 hyper-rustls = { git = "https://github.com/dangeross/hyper-rustls.git", branch = "wasix" }
 tonic = { git = "https://github.com/dangeross/tonic.git", branch = "v0.8.3" }
-rusqlite = { git = "https://github.com/rusqlite/rusqlite.git", rev = "c2fbd167dec8b043524a11df8a471120008669dd" }
+bitcoinconsensus = { git = "https://github.com/dangeross/rust-bitcoinconsensus.git", branch = "v0.20.2-0.5.0" }
