@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:breez_sdk/bridge_generated.dart';
+import 'package:breez_sdk/exceptions.dart';
 import 'package:breez_sdk/native_toolkit.dart';
 import 'package:rxdart/rxdart.dart';
 
@@ -35,7 +36,7 @@ class BreezSDK {
         _paymentResultStream.add(event.details);
       }
       if (event is BreezEvent_PaymentFailed) {
-        _paymentResultStream.addError(Exception(event.details.error));
+        _paymentResultStream.addError(PaymentException(event.details));
       }
       if (event is BreezEvent_BackupSucceeded) {
         _backupStreamController.add(event);
@@ -44,7 +45,7 @@ class BreezSDK {
         _backupStreamController.add(event);
       }
       if (event is BreezEvent_BackupFailed) {
-        _backupStreamController.addError(Exception(event.details.error));
+        _backupStreamController.addError(BackupException(event.details));
       }
     });
     _lnToolkit.breezLogStream().listen((logEntry) {
