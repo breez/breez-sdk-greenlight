@@ -1214,7 +1214,7 @@ pub struct SwapInfo {
     pub max_allowed_deposit: i64,
     /// Error reason for when swap fails.
     pub last_redeem_error: Option<String>,
-    /// The dynamic fees which is present if a channel opening is needed.
+    /// The dynamic fees which is set if a channel opening is needed.
     pub channel_opening_fees: Option<OpeningFeeParams>,
 }
 

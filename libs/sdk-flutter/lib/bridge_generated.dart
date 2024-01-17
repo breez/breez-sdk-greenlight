@@ -1734,7 +1734,7 @@ class SwapInfo {
   /// Error reason for when swap fails.
   final String? lastRedeemError;
 
-  /// The dynamic fees which is present if a channel opening is needed.
+  /// The dynamic fees which is set if a channel opening is needed.
   final OpeningFeeParams? channelOpeningFees;
 
   const SwapInfo({
