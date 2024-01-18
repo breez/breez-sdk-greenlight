@@ -440,7 +440,7 @@ impl Greenlight {
 
     async fn pending_onchain_balance(
         &self,
-        peer_channels: &Vec<cln::ListpeersPeersChannels>,
+        peer_channels: &[cln::ListpeersPeersChannels],
     ) -> Result<u64> {
         let pending_onchain_balance = peer_channels.iter().fold(0, |a, b| match b.state() {
             ChanneldShuttingDown | ClosingdSigexchange | ClosingdComplete | AwaitingUnilateral
