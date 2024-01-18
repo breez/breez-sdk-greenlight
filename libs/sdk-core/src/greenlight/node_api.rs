@@ -428,7 +428,7 @@ impl Greenlight {
         Ok(funds)
     }
 
-    async fn on_chain_balance(&self, funds: cln::ListfundsResponse) -> Result<u64> {
+    async fn on_chain_balance(&self, funds: &cln::ListfundsResponse) -> Result<u64> {
         let on_chain_balance = funds.outputs.iter().fold(0, |a, b| {
             if b.reserved {
                 return a;
@@ -732,7 +732,7 @@ impl NodeAPI for Greenlight {
         all_channel_models.extend(forgotten_closed_channels?);
 
         // calculate onchain balance
-        let onchain_balance = self.on_chain_balance(funds.clone()).await?;
+        let onchain_balance = self.on_chain_balance(&funds).await?;
         let pending_onchain_balance = self.pending_onchain_balance(&all_channels).await?;
         let utxos: Vec<UnspentTransactionOutput> = self.utxos(funds).await?;
 
