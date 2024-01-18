@@ -59,6 +59,18 @@ enum TxStatus {
     Confirmed,
 }
 
+impl From<&Option<OnchainTx>> for TxStatus {
+    fn from(value: &Option<OnchainTx>) -> Self {
+        match value {
+            None => TxStatus::Unknown,
+            Some(tx) => match tx.status.block_height {
+                Some(_) => TxStatus::Confirmed,
+                None => TxStatus::Mempool,
+            },
+        }
+    }
+}
+
 /// This struct is responsible for sending to an onchain address using lightning payments.
 /// It uses internally an implementation of [ReverseSwapServiceAPI] that represents Boltz reverse swapper service.
 pub(crate) struct BTCSendSwap {
@@ -170,9 +182,13 @@ impl BTCSendSwap {
         // The result of the creation call can succeed or fail
         // We update the rev swap status accordingly, which would otherwise have needed a fully fledged sync() call
         match res {
-            Ok(_) => self
-                .persister
-                .update_reverse_swap_status(&created_rsi.id, &InProgress)?,
+            Ok(_) => {
+                let lockup_txid = self.get_lockup_tx(&created_rsi).await?.map(|tx| tx.txid);
+                self.persister
+                    .update_reverse_swap_status(&created_rsi.id, &InProgress)?;
+                self.persister
+                    .update_reverse_swap_lockup_txid(&created_rsi.id, lockup_txid)?
+            }
             Err(_) => self
                 .persister
                 .update_reverse_swap_status(&created_rsi.id, &Cancelled)?,
@@ -242,7 +258,11 @@ impl BTCSendSwap {
                     onchain_amount_sat: response.onchain_amount,
                     sat_per_vbyte: req.sat_per_vbyte,
                     redeem_script: response.redeem_script,
-                    cache: ReverseSwapInfoCached { status: Initial },
+                    cache: ReverseSwapInfoCached {
+                        status: Initial,
+                        lockup_txid: None,
+                        claim_txid: None,
+                    },
                 };
 
                 res.validate_hodl_invoice(req.amount_sat * 1000)?;
@@ -263,10 +283,7 @@ impl BTCSendSwap {
                 // Since this relies on the most up-to-date states of the reverse swap HODL invoice payments,
                 // a fresh [BreezServices::sync] *must* be called before this method.
                 // Therefore we specifically call this on the Synced event
-                self.refresh_monitored_reverse_swaps().await?;
-
-                // Expects the most up-to-date rev swap states to be in the cache DB, therefore the refresh above
-                self.execute_pending_reverse_swaps().await
+                self.process_monitored_reverse_swaps().await
             }
             _ => Ok(()),
         }
@@ -384,39 +401,9 @@ impl BTCSendSwap {
         }
     }
 
-    /// Executes the corresponding next steps in the pending reverse swaps.
-    ///
-    /// Expects recently refreshed rev swap statuses to be present in the DB cache
-    /// via [Self::refresh_monitored_reverse_swaps]
-    pub(crate) async fn execute_pending_reverse_swaps(&self) -> Result<()> {
-        let monitored = self.list_monitored().await?;
-        debug!("Found {} monitored reverse swaps", monitored.len());
-
-        // Depending on the new state, decide next steps and transition to the new state
-        for rs in monitored {
-            debug!("Checking monitored reverse swap {rs:?}");
-            // (Re-)Broadcast the claim tx for monitored reverse swaps that have a confirmed lockup tx
-            if matches!(self.get_lockup_tx_status(&rs).await?, TxStatus::Confirmed) {
-                info!("Lock tx is confirmed, preparing claim tx");
-                let claim_tx = self.create_claim_tx(&rs).await?;
-                let claim_tx_broadcast_res = self
-                    .chain_service
-                    .broadcast_transaction(serialize(&claim_tx))
-                    .await;
-                match claim_tx_broadcast_res {
-                    Ok(txid) => info!("Claim tx was broadcast with txid {txid}"),
-                    Err(e) => error!("Claim tx failed to broadcast: {e}"),
-                }
-            }
-        }
-
-        Ok(())
-    }
-
-    /// The claim tx is considered confirmed when it has an incoming tx from the lockup address
-    async fn get_claim_tx_status(&self, rsi: &FullReverseSwapInfo) -> Result<TxStatus> {
+    async fn get_claim_tx(&self, rsi: &FullReverseSwapInfo) -> Result<Option<OnchainTx>> {
         let lockup_addr = rsi.get_lockup_address(self.config.network)?;
-        let maybe_claim_tx = self
+        Ok(self
             .chain_service
             .address_transactions(rsi.claim_pubkey.clone())
             .await?
@@ -425,15 +412,7 @@ impl BTCSendSwap {
                 tx.vin
                     .iter()
                     .any(|vin| vin.prevout.scriptpubkey_address == lockup_addr.to_string())
-            });
-
-        match maybe_claim_tx {
-            None => Ok(TxStatus::Unknown),
-            Some(tx) => match tx.status.block_height {
-                Some(_) => Ok(TxStatus::Confirmed),
-                None => Ok(TxStatus::Mempool),
-            },
-        }
+            }))
     }
 
     async fn get_lockup_tx(&self, rsi: &FullReverseSwapInfo) -> Result<Option<OnchainTx>> {
@@ -456,25 +435,13 @@ impl BTCSendSwap {
         Ok(maybe_lockup_tx)
     }
 
-    async fn get_lockup_tx_status(&self, rsi: &FullReverseSwapInfo) -> Result<TxStatus> {
-        let lockup_addr = rsi.get_lockup_address(self.config.network)?;
-        let tx_status = match self.get_lockup_tx(rsi).await? {
-            None => TxStatus::Unknown,
-            Some(tx) => match tx.status.block_height {
-                Some(_) => TxStatus::Confirmed,
-                None => TxStatus::Mempool,
-            },
-        };
-        debug!("Lockup tx status is {tx_status:?} for lockup address {lockup_addr}");
-        Ok(tx_status)
-    }
-
     /// Determine the new active status of a monitored reverse swap.
     ///
     /// If the status has not changed, it will return [None].
-    pub(crate) async fn get_status_update_for_monitored(
+    async fn get_status_update_for_monitored(
         &self,
         rsi: &FullReverseSwapInfo,
+        claim_tx_status: TxStatus,
     ) -> Result<Option<ReverseSwapStatus>> {
         let current_status = rsi.cache.status;
         ensure!(
@@ -508,7 +475,7 @@ impl BTCSendSwap {
                     _ => None,
                 },
             },
-            InProgress => match self.get_claim_tx_status(rsi).await? {
+            InProgress => match claim_tx_status {
                 TxStatus::Unknown => {
                     let block_height = self.chain_service.current_tip().await?;
                     match block_height >= rsi.timeout_block_height {
@@ -522,7 +489,7 @@ impl BTCSendSwap {
                 TxStatus::Mempool => Some(CompletedSeen),
                 TxStatus::Confirmed => Some(CompletedConfirmed),
             },
-            CompletedSeen => match self.get_claim_tx_status(rsi).await? {
+            CompletedSeen => match claim_tx_status {
                 TxStatus::Confirmed => Some(CompletedConfirmed),
                 _ => None,
             },
@@ -532,23 +499,64 @@ impl BTCSendSwap {
         Ok(new_status)
     }
 
-    /// Updates the state of monitored reverse swaps in the cache table. This includes the blocking
+    /// Updates the cached values of monitored reverse swaps in the cache table and executes the
+    /// corresponding next steps for the pending reverse swaps. This includes the blocking
     /// reverse swaps as well, since the blocking statuses are a subset of the monitored statuses.
-    async fn refresh_monitored_reverse_swaps(&self) -> Result<()> {
-        for rsi in self.list_monitored().await? {
-            self.refresh_reverse_swap(rsi).await?;
-        }
-        Ok(())
-    }
+    async fn process_monitored_reverse_swaps(&self) -> Result<()> {
+        let monitored = self.list_monitored().await?;
+        debug!("Found {} monitored reverse swaps", monitored.len());
 
-    /// Updates the state of given reverse swap in the cache table, if the status has changed
-    async fn refresh_reverse_swap(&self, rsi: FullReverseSwapInfo) -> Result<()> {
-        match self.get_status_update_for_monitored(&rsi).await? {
-            None => Ok(()),
-            Some(new_status) => Ok(self
-                .persister
-                .update_reverse_swap_status(&rsi.id, &new_status)?),
+        for rsi in monitored {
+            debug!("Processing monitored reverse swap {rsi:?}");
+
+            // Look for lockup and claim txs on chain
+            let lockup_tx = self.get_lockup_tx(&rsi).await?;
+            let lock_tx_status = TxStatus::from(&lockup_tx);
+            let claim_tx = self.get_claim_tx(&rsi).await?;
+            let claim_tx_status = TxStatus::from(&claim_tx);
+
+            // Update cached state when new state is detected
+            if let Some(new_status) = self
+                .get_status_update_for_monitored(&rsi, claim_tx_status)
+                .await?
+            {
+                self.persister
+                    .update_reverse_swap_status(&rsi.id, &new_status)?;
+            }
+
+            // (Re-)Broadcast the claim tx for monitored reverse swaps that have a confirmed lockup tx
+            let broadcasted_claim_tx = if matches!(lock_tx_status, TxStatus::Confirmed) {
+                info!("Lock tx is confirmed, preparing claim tx");
+                let claim_tx = self.create_claim_tx(&rsi).await?;
+                let claim_tx_broadcast_res = self
+                    .chain_service
+                    .broadcast_transaction(serialize(&claim_tx))
+                    .await;
+                match claim_tx_broadcast_res {
+                    Ok(txid) => info!("Claim tx was broadcast with txid {txid}"),
+                    Err(e) => error!("Claim tx failed to broadcast: {e}"),
+                };
+                Some(claim_tx)
+            } else {
+                None
+            };
+
+            // Cache lockup and claim tx txids if not cached yet
+            if rsi.cache.lockup_txid.is_none() {
+                self.persister
+                    .update_reverse_swap_lockup_txid(&rsi.id, lockup_tx.map(|tx| tx.txid))?;
+            }
+            if rsi.cache.claim_txid.is_none() {
+                self.persister.update_reverse_swap_claim_txid(
+                    &rsi.id,
+                    claim_tx
+                        .map(|tx| tx.txid)
+                        .or(broadcasted_claim_tx.map(|tx| tx.txid().to_string())),
+                )?;
+            }
         }
+
+        Ok(())
     }
 
     /// Returns the ongoing reverse swaps which have a status that block the creation of new reverse swaps

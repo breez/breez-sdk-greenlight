@@ -1271,6 +1271,7 @@ impl support::IntoDart for LnPaymentDetails {
             self.lnurl_metadata.into_dart(),
             self.lnurl_withdraw_endpoint.into_dart(),
             self.swap_info.into_dart(),
+            self.reverse_swap_info.into_dart(),
             self.pending_expiration_block.into_dart(),
         ]
         .into_dart()

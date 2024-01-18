@@ -970,6 +970,11 @@ enum BreezSDKMapper {
             swapInfo = try asSwapInfo(swapInfo: swapInfoTmp)
         }
 
+        var reverseSwapInfo: ReverseSwapInfo?
+        if let reverseSwapInfoTmp = lnPaymentDetails["reverseSwapInfo"] as? [String: Any?] {
+            reverseSwapInfo = try asReverseSwapInfo(reverseSwapInfo: reverseSwapInfoTmp)
+        }
+
         var pendingExpirationBlock: UInt32?
         if hasNonNilKey(data: lnPaymentDetails, key: "pendingExpirationBlock") {
             guard let pendingExpirationBlockTmp = lnPaymentDetails["pendingExpirationBlock"] as? UInt32 else {
@@ -991,6 +996,7 @@ enum BreezSDKMapper {
             lnAddress: lnAddress,
             lnurlWithdrawEndpoint: lnurlWithdrawEndpoint,
             swapInfo: swapInfo,
+            reverseSwapInfo: reverseSwapInfo,
             pendingExpirationBlock: pendingExpirationBlock
         )
     }
@@ -1009,6 +1015,7 @@ enum BreezSDKMapper {
             "lnAddress": lnPaymentDetails.lnAddress == nil ? nil : lnPaymentDetails.lnAddress,
             "lnurlWithdrawEndpoint": lnPaymentDetails.lnurlWithdrawEndpoint == nil ? nil : lnPaymentDetails.lnurlWithdrawEndpoint,
             "swapInfo": lnPaymentDetails.swapInfo == nil ? nil : dictionaryOf(swapInfo: lnPaymentDetails.swapInfo!),
+            "reverseSwapInfo": lnPaymentDetails.reverseSwapInfo == nil ? nil : dictionaryOf(reverseSwapInfo: lnPaymentDetails.reverseSwapInfo!),
             "pendingExpirationBlock": lnPaymentDetails.pendingExpirationBlock == nil ? nil : lnPaymentDetails.pendingExpirationBlock,
         ]
     }
