@@ -1,9 +1,10 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:breez_sdk/bridge_generated.dart';
 import 'package:breez_sdk/exceptions.dart';
 import 'package:breez_sdk/native_toolkit.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:rxdart/rxdart.dart';
 
 class BreezSDK {
@@ -12,6 +13,7 @@ class BreezSDK {
   BreezSDK();
 
   /* Streams */
+
   /// Listen to paid Invoice events
   final StreamController<InvoicePaidDetails> _invoicePaidStream = StreamController.broadcast();
 
@@ -22,8 +24,14 @@ class BreezSDK {
 
   Stream<Payment> get paymentResultStream => _paymentResultStream.stream;
 
+  /// Initializes SDK events & log streams
   void initialize() {
-    /// Listen to BreezEvent's(new block, invoice paid, synced)
+    _initializeEventsStream();
+    _initializeLogStream();
+  }
+
+  /// Listen to BreezEvent's(new block, invoice paid, synced)
+  void _initializeEventsStream() {
     _lnToolkit.breezEventsStream().listen((event) async {
       if (event is BreezEvent_InvoicePaid) {
         _invoicePaidStream.add(event.details);
@@ -48,11 +56,25 @@ class BreezSDK {
         _backupStreamController.addError(BackupException(event.details));
       }
     });
-    _lnToolkit.breezLogStream().listen((logEntry) {
-      _logStreamController.add(logEntry);
-    }, onError: (e) {
-      _logStreamController.addError(e);
-    });
+  }
+
+  /// Listen to node logs
+  void _initializeLogStream() {
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      const EventChannel('breez_sdk_node_logs')
+          .receiveBroadcastStream()
+          .map((log) => LogEntry(line: log["line"], level: log["level"]))
+          .listen(
+            (log) => _logStreamController.add(log),
+            onError: (e) => _logStreamController.addError(e),
+          );
+    } else {
+      _lnToolkit.breezLogStream().listen((logEntry) {
+        _logStreamController.add(logEntry);
+      }, onError: (e) {
+        _logStreamController.addError(e);
+      });
+    }
   }
 
   final _logStreamController = StreamController<LogEntry>.broadcast();
