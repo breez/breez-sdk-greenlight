@@ -438,20 +438,26 @@ impl Greenlight {
         Ok(on_chain_balance)
     }
 
-    async fn pending_onchain_balance(&self, funds: cln::ListfundsResponse) -> Result<u64> {
-        let pending_closing_channel_balance =
-            funds.channels.iter().fold(0, |a, b| match b.state() {
-                cln::ChannelState::ChanneldShuttingDown
-                | cln::ChannelState::ClosingdSigexchange
-                | cln::ChannelState::ClosingdComplete
-                | cln::ChannelState::AwaitingUnilateral
-                | cln::ChannelState::FundingSpendSeen => {
-                    a + b.our_amount_msat.clone().unwrap_or_default().msat
+    async fn pending_onchain_balance(
+        &self,
+        peer_channels: &Vec<cln::ListpeersPeersChannels>,
+    ) -> Result<u64> {
+        let pending_onchain_balance = peer_channels.iter().fold(0, |a, b| match b.state() {
+            ChanneldShuttingDown | ClosingdSigexchange | ClosingdComplete | AwaitingUnilateral
+            | FundingSpendSeen => a + b.min_to_us_msat.clone().unwrap_or_default().msat,
+            Onchain => {
+                if b.closer() == cln::ChannelSide::Local
+                    && b.status[b.status.len() - 1].contains("DELAYED_OUTPUT_TO_US")
+                {
+                    a + b.min_to_us_msat.clone().unwrap_or_default().msat
+                } else {
+                    a
                 }
-                _ => a,
-            });
-
-        Ok(pending_closing_channel_balance)
+            }
+            _ => a,
+        });
+        info!("pending_onchain_balance is {}", pending_onchain_balance);
+        Ok(pending_onchain_balance)
     }
 
     // Collect utxos from onchain funds
@@ -710,7 +716,6 @@ impl NodeAPI for Greenlight {
         let funds = funds_res?;
         let closed_channels = closed_channels_res?.into_inner().closedchannels;
         let (all_channels, opened_channels, connected_peers, channels_balance) = balance_res?;
-
         let forgotten_closed_channels: NodeResult<Vec<Channel>> = closed_channels
             .into_iter()
             .filter(|cc| {
@@ -720,7 +725,6 @@ impl NodeAPI for Greenlight {
             })
             .map(TryInto::try_into)
             .collect();
-
         info!("forgotten_closed_channels {:?}", forgotten_closed_channels);
 
         let mut all_channel_models: Vec<Channel> =
@@ -729,7 +733,7 @@ impl NodeAPI for Greenlight {
 
         // calculate onchain balance
         let onchain_balance = self.on_chain_balance(funds.clone()).await?;
-        let pending_onchain_balance = self.pending_onchain_balance(funds.clone()).await?;
+        let pending_onchain_balance = self.pending_onchain_balance(&all_channels).await?;
         let utxos: Vec<UnspentTransactionOutput> = self.utxos(funds).await?;
 
         // calculate payment limits and inbound liquidity
