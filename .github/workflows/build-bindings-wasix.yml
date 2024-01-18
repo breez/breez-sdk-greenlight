@@ -52,11 +52,6 @@ jobs:
         tar xvf wasi-sdk-$WASI_MAJOR_VERSION.$WASI_MINOR_VERSION-linux.tar.gz
         mv wasi-sdk-$WASI_MAJOR_VERSION.$WASI_MINOR_VERSION wasi-sdk
 
-    - name: Install openssl
-      working-directory: /opt
-      run: |
-        git clone --recursive https://github.com/doramatadora/openssl-wasm32-wasi
-
     - name: Install rust toolchain
       run: |
         rustup set auto-self-update disable
@@ -80,15 +75,6 @@ jobs:
 
     - name: Build sdk-wasm
       working-directory: libs/sdk-wasm
-      env:
-        LIBSQLITE3_FLAGS: -DSQLITE_OS_OTHER -USQLITE_TEMP_STORE -DSQLITE_TEMP_STORE=3 -USQLITE_THREADSAFE -DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_LOCALTIME -DSQLITE_OMIT_LOAD_EXTENSION -DLONGDOUBLE_TYPE=double
-        OPENSSL_DIR: /opt/openssl-wasm32-wasi/precompiled
-        OPENSSL_NO_VENDOR: 1
-        OPENSSL_STATIC: 1 
-        CC: /opt/wasi-sdk/bin/clang --sysroot=/opt/wasi-sdk/share/wasi-sysroot
-        CC_WASM32_WASI: /opt/wasi-sdk/bin/clang
-        AR: /opt/wasi-sdk/bin/llvm-ar
-        RUSTFLAGS: -Clink-arg=--no-check-features
       run: cargo wasix build --release
     
     - name: Archive release
