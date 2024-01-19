@@ -144,6 +144,16 @@ pub(crate) enum Commands {
         /// Optional offset in payments
         #[clap(short = 'o', long = "offset")]
         offset: Option<u32>,
+        
+        /// Optional metadata filter, in the form of json_path:json_value,...
+        #[clap(short = 'm', long = "metadata", num_args = 1.., value_delimiter = ',')]
+        metadata_filters: Option<Vec<String>>,
+    },
+
+    /// Set the metadata for a given payment
+    SetPaymentMetadata {
+        payment_hash: String,
+        metadata: String,
     },
 
     /// Retrieve a payment by its hash

@@ -6,6 +6,7 @@ use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, 
 use rusqlite::Row;
 use rusqlite::{named_params, params, OptionalExtension};
 use std::collections::{HashMap, HashSet};
+use anyhow::anyhow;
 
 use serde_json::{Map, Value};
 use std::str::FromStr;
@@ -112,13 +113,22 @@ impl SqliteStorage {
     ) -> PersistResult<()> {
         ensure_sdk!(
             new_metadata.len() <= METADATA_MAX_LEN,
-            PersistError::Generic(anyhow::anyhow!(
+            PersistError::Generic(anyhow!(
                 "Max metadata size ({} characters) has been exceeded",
                 METADATA_MAX_LEN
             ))
         );
 
         let _ = serde_json::from_str::<Map<String, Value>>(&new_metadata)?;
+
+        // Check if the payment exists
+        let payment_exists = self.get_connection()?
+            .prepare("SELECT 1 FROM payments WHERE id = ?1;")?
+            .exists(params![payment_hash])?;
+
+        if !payment_exists {
+            return Err(PersistError::Generic(anyhow!("Payment not found")));
+        }
 
         self.get_connection()?.execute(
             "

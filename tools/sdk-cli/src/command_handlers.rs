@@ -1,7 +1,7 @@
 use std::fs;
 use std::sync::Arc;
 
-use anyhow::{anyhow, Error, Result};
+use anyhow::{anyhow, Error, Result, Context};
 use breez_sdk_core::InputType::{LnUrlAuth, LnUrlPay, LnUrlWithdraw};
 use breez_sdk_core::{
     parse, BreezEvent, BreezServices, BuyBitcoinRequest, CheckMessageRequest, EventListener,
@@ -9,7 +9,7 @@ use breez_sdk_core::{
     PrepareRedeemOnchainFundsRequest, PrepareRefundRequest, ReceiveOnchainRequest,
     ReceivePaymentRequest, RedeemOnchainFundsRequest, RefundRequest, ReportIssueRequest,
     ReportPaymentFailureDetails, ReverseSwapFeesRequest, SendOnchainRequest, SendPaymentRequest,
-    SendSpontaneousPaymentRequest, SignMessageRequest, StaticBackupRequest,
+    SendSpontaneousPaymentRequest, SignMessageRequest, StaticBackupRequest, MetadataFilter,
 };
 use breez_sdk_core::{Config, GreenlightNodeConfig, NodeConfig};
 use once_cell::sync::OnceCell;
@@ -215,11 +215,30 @@ pub(crate) async fn handle_command(
             include_failures,
             limit,
             offset,
+            metadata_filters: metadata_filters_raw
         } => {
+            let metadata_filters = match metadata_filters_raw {
+                Some(raw_filters) => {
+                    let mut filters = vec![];
+
+                    for filter in raw_filters.iter() {
+                        let v = filter.split(":").collect::<Vec<&str>>();
+
+                        filters.push(MetadataFilter {
+                            json_path: v.first().context("Invalid JSON path")?.to_string(),
+                            json_value: v.get(1).context("Invalid JSON value")?.to_string(),
+                        });
+                    }
+
+                    Some(filters)
+                },
+                None => None
+            };
+
             let payments = sdk()?
                 .list_payments(ListPaymentsRequest {
                     filters: None,
-                    metadata_filters: None,
+                    metadata_filters,
                     from_timestamp,
                     to_timestamp,
                     include_failures: Some(include_failures),
@@ -228,6 +247,13 @@ pub(crate) async fn handle_command(
                 })
                 .await?;
             serde_json::to_string_pretty(&payments).map_err(|e| e.into())
+        }
+        Commands::SetPaymentMetadata { payment_hash, metadata } => {
+            sdk()?
+                .set_payment_metadata(payment_hash, metadata)
+                .await?;
+
+            Ok(format!("Payment metadata was set successfully"))
         }
         Commands::PaymentByHash { hash } => {
             let payment = sdk()?.payment_by_hash(hash).await?;
