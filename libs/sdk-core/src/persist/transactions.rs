@@ -2,6 +2,7 @@ use super::db::SqliteStorage;
 use super::error::{PersistError, PersistResult};
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::{ensure_sdk, models::*};
+use anyhow::anyhow;
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use rusqlite::Row;
 use rusqlite::{named_params, params, OptionalExtension};
@@ -112,13 +113,23 @@ impl SqliteStorage {
     ) -> PersistResult<()> {
         ensure_sdk!(
             new_metadata.len() <= METADATA_MAX_LEN,
-            PersistError::Generic(anyhow::anyhow!(
+            PersistError::Generic(anyhow!(
                 "Max metadata size ({} characters) has been exceeded",
                 METADATA_MAX_LEN
             ))
         );
 
         let _ = serde_json::from_str::<Map<String, Value>>(&new_metadata)?;
+
+        // Check if the payment exists
+        let payment_exists = self
+            .get_connection()?
+            .prepare("SELECT 1 FROM payments WHERE id = ?1;")?
+            .exists(params![payment_hash])?;
+
+        if !payment_exists {
+            return Err(PersistError::Generic(anyhow!("Payment not found")));
+        }
 
         self.get_connection()?.execute(
             "
