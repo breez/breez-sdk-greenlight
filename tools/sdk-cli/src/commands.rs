@@ -145,8 +145,8 @@ pub(crate) enum Commands {
         #[clap(short = 'o', long = "offset")]
         offset: Option<u32>,
 
-        /// Optional metadata filter, in the form of json_path:json_value,...
-        #[clap(short = 'm', long = "metadata", num_args = 1.., value_delimiter = ',')]
+        /// Optional metadata filter, in the form of json_path:json_value
+        #[clap(short = 'm', long = "metadata", num_args = 1..)]
         metadata_filters: Option<Vec<String>>,
     },
 

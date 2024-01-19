@@ -222,11 +222,12 @@ pub(crate) async fn handle_command(
                     let mut filters = vec![];
 
                     for filter in raw_filters.iter() {
-                        let v = filter.split(':').collect::<Vec<&str>>();
+                        let (json_path, json_value) =
+                            filter.split_once(':').context("Invalid metadata filter")?;
 
                         filters.push(MetadataFilter {
-                            json_path: v.first().context("Invalid JSON path")?.to_string(),
-                            json_value: v.get(1).context("Invalid JSON value")?.to_string(),
+                            json_path: json_path.to_string(),
+                            json_value: json_value.to_string(),
                         });
                     }
 
