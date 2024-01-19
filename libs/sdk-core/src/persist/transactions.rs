@@ -2,11 +2,11 @@ use super::db::SqliteStorage;
 use super::error::{PersistError, PersistResult};
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::{ensure_sdk, models::*};
+use anyhow::anyhow;
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use rusqlite::Row;
 use rusqlite::{named_params, params, OptionalExtension};
 use std::collections::{HashMap, HashSet};
-use anyhow::anyhow;
 
 use serde_json::{Map, Value};
 use std::str::FromStr;
@@ -122,7 +122,8 @@ impl SqliteStorage {
         let _ = serde_json::from_str::<Map<String, Value>>(&new_metadata)?;
 
         // Check if the payment exists
-        let payment_exists = self.get_connection()?
+        let payment_exists = self
+            .get_connection()?
             .prepare("SELECT 1 FROM payments WHERE id = ?1;")?
             .exists(params![payment_hash])?;
 

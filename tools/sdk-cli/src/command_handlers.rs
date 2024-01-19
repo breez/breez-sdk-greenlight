@@ -1,15 +1,15 @@
 use std::fs;
 use std::sync::Arc;
 
-use anyhow::{anyhow, Error, Result, Context};
+use anyhow::{anyhow, Context, Error, Result};
 use breez_sdk_core::InputType::{LnUrlAuth, LnUrlPay, LnUrlWithdraw};
 use breez_sdk_core::{
     parse, BreezEvent, BreezServices, BuyBitcoinRequest, CheckMessageRequest, EventListener,
     GreenlightCredentials, ListPaymentsRequest, LnUrlPayRequest, LnUrlWithdrawRequest,
-    PrepareRedeemOnchainFundsRequest, PrepareRefundRequest, ReceiveOnchainRequest,
+    MetadataFilter, PrepareRedeemOnchainFundsRequest, PrepareRefundRequest, ReceiveOnchainRequest,
     ReceivePaymentRequest, RedeemOnchainFundsRequest, RefundRequest, ReportIssueRequest,
     ReportPaymentFailureDetails, ReverseSwapFeesRequest, SendOnchainRequest, SendPaymentRequest,
-    SendSpontaneousPaymentRequest, SignMessageRequest, StaticBackupRequest, MetadataFilter,
+    SendSpontaneousPaymentRequest, SignMessageRequest, StaticBackupRequest,
 };
 use breez_sdk_core::{Config, GreenlightNodeConfig, NodeConfig};
 use once_cell::sync::OnceCell;
@@ -215,14 +215,14 @@ pub(crate) async fn handle_command(
             include_failures,
             limit,
             offset,
-            metadata_filters: metadata_filters_raw
+            metadata_filters: metadata_filters_raw,
         } => {
             let metadata_filters = match metadata_filters_raw {
                 Some(raw_filters) => {
                     let mut filters = vec![];
 
                     for filter in raw_filters.iter() {
-                        let v = filter.split(":").collect::<Vec<&str>>();
+                        let v = filter.split(':').collect::<Vec<&str>>();
 
                         filters.push(MetadataFilter {
                             json_path: v.first().context("Invalid JSON path")?.to_string(),
@@ -231,8 +231,8 @@ pub(crate) async fn handle_command(
                     }
 
                     Some(filters)
-                },
-                None => None
+                }
+                None => None,
             };
 
             let payments = sdk()?
@@ -248,12 +248,13 @@ pub(crate) async fn handle_command(
                 .await?;
             serde_json::to_string_pretty(&payments).map_err(|e| e.into())
         }
-        Commands::SetPaymentMetadata { payment_hash, metadata } => {
-            sdk()?
-                .set_payment_metadata(payment_hash, metadata)
-                .await?;
+        Commands::SetPaymentMetadata {
+            payment_hash,
+            metadata,
+        } => {
+            sdk()?.set_payment_metadata(payment_hash, metadata).await?;
 
-            Ok(format!("Payment metadata was set successfully"))
+            Ok("Payment metadata was set successfully".to_string())
         }
         Commands::PaymentByHash { hash } => {
             let payment = sdk()?.payment_by_hash(hash).await?;
