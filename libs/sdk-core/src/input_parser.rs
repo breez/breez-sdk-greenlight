@@ -349,7 +349,7 @@ fn lnurl_decode(encoded: &str) -> LnUrlResult<(String, String, Option<String>)> 
                 let scheme_simple = &format!("{pref}:");
                 let scheme_authority = &format!("{pref}://");
                 if encoded.starts_with(scheme_simple) && !encoded.starts_with(scheme_authority) {
-                    encoded = encoded.replace(scheme_simple, scheme_authority);
+                    encoded = encoded.replacen(scheme_simple, scheme_authority, 1);
                     break;
                 }
             }
@@ -370,7 +370,7 @@ fn lnurl_decode(encoded: &str) -> LnUrlResult<(String, String, Option<String>)> 
                 false => "https",
             };
 
-            Ok((domain.into(), encoded.replace(scheme, new_scheme), None))
+            Ok((domain.into(), encoded.replacen(scheme, new_scheme, 1), None))
         }
     }
 }
@@ -1325,6 +1325,14 @@ pub(crate) mod tests {
             )
         );
         assert_eq!(
+            lnurl_decode("lnurlp://asfddf2dsf3flnurlp.onion")?,
+            (
+                "asfddf2dsf3flnurlp.onion".into(),
+                "http://asfddf2dsf3flnurlp.onion".into(),
+                None,
+            )
+        );
+        assert_eq!(
             lnurl_decode("lnurlw://asfddf2dsf3f.onion")?,
             (
                 "asfddf2dsf3f.onion".into(),
@@ -1347,12 +1355,24 @@ pub(crate) mod tests {
             ("domain.com".into(), "https://domain.com".into(), None)
         );
         assert_eq!(
+            lnurl_decode("lnurlp://lnurlp.com")?,
+            ("lnurlp.com".into(), "https://lnurlp.com".into(), None)
+        );
+        assert_eq!(
             lnurl_decode("lnurlw://domain.com")?,
             ("domain.com".into(), "https://domain.com".into(), None)
         );
         assert_eq!(
+            lnurl_decode("lnurlw://lnurlw.com")?,
+            ("lnurlw.com".into(), "https://lnurlw.com".into(), None)
+        );
+        assert_eq!(
             lnurl_decode("keyauth://domain.com")?,
             ("domain.com".into(), "https://domain.com".into(), None)
+        );
+        assert_eq!(
+            lnurl_decode("keyauth://keyauth.com")?,
+            ("keyauth.com".into(), "https://keyauth.com".into(), None)
         );
 
         // Same as above, but prefix: approach instead of prefix://
@@ -1384,6 +1404,14 @@ pub(crate) mod tests {
         assert_eq!(
             lnurl_decode("lnurlp:domain.com")?,
             ("domain.com".into(), "https://domain.com".into(), None)
+        );
+        assert_eq!(
+            lnurl_decode("lnurlp:domain.com/lnurlp:lol")?,
+            (
+                "domain.com".into(),
+                "https://domain.com/lnurlp:lol".into(),
+                None
+            )
         );
         assert_eq!(
             lnurl_decode("lnurlw:domain.com")?,
