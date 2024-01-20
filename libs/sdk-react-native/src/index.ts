@@ -62,9 +62,9 @@ export type CheckMessageResponse = {
 }
 
 export type ClosedChannelPaymentDetails = {
-    shortChannelId: string
     state: ChannelState
     fundingTxid: string
+    shortChannelId?: string
     closingTxid?: string
 }
 

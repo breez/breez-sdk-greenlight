@@ -319,7 +319,6 @@ fun asClosedChannelPaymentDetails(closedChannelPaymentDetails: ReadableMap): Clo
     if (!validateMandatoryFields(
             closedChannelPaymentDetails,
             arrayOf(
-                "shortChannelId",
                 "state",
                 "fundingTxid",
             ),
@@ -327,9 +326,18 @@ fun asClosedChannelPaymentDetails(closedChannelPaymentDetails: ReadableMap): Clo
     ) {
         return null
     }
-    val shortChannelId = closedChannelPaymentDetails.getString("shortChannelId")!!
     val state = closedChannelPaymentDetails.getString("state")?.let { asChannelState(it) }!!
     val fundingTxid = closedChannelPaymentDetails.getString("fundingTxid")!!
+    val shortChannelId =
+        if (hasNonNullKey(
+                closedChannelPaymentDetails,
+                "shortChannelId",
+            )
+        ) {
+            closedChannelPaymentDetails.getString("shortChannelId")
+        } else {
+            null
+        }
     val closingTxid =
         if (hasNonNullKey(
                 closedChannelPaymentDetails,
@@ -341,18 +349,18 @@ fun asClosedChannelPaymentDetails(closedChannelPaymentDetails: ReadableMap): Clo
             null
         }
     return ClosedChannelPaymentDetails(
-        shortChannelId,
         state,
         fundingTxid,
+        shortChannelId,
         closingTxid,
     )
 }
 
 fun readableMapOf(closedChannelPaymentDetails: ClosedChannelPaymentDetails): ReadableMap {
     return readableMapOf(
-        "shortChannelId" to closedChannelPaymentDetails.shortChannelId,
         "state" to closedChannelPaymentDetails.state.name.lowercase(),
         "fundingTxid" to closedChannelPaymentDetails.fundingTxid,
+        "shortChannelId" to closedChannelPaymentDetails.shortChannelId,
         "closingTxid" to closedChannelPaymentDetails.closingTxid,
     )
 }

@@ -1044,9 +1044,9 @@ impl rust2dart::IntoIntoDart<CheckMessageResponse> for CheckMessageResponse {
 impl support::IntoDart for ClosedChannelPaymentDetails {
     fn into_dart(self) -> support::DartAbi {
         vec![
-            self.short_channel_id.into_into_dart().into_dart(),
             self.state.into_into_dart().into_dart(),
             self.funding_txid.into_into_dart().into_dart(),
+            self.short_channel_id.into_dart(),
             self.closing_txid.into_dart(),
         ]
         .into_dart()

@@ -337,9 +337,6 @@ enum BreezSDKMapper {
     }
 
     static func asClosedChannelPaymentDetails(closedChannelPaymentDetails: [String: Any?]) throws -> ClosedChannelPaymentDetails {
-        guard let shortChannelId = closedChannelPaymentDetails["shortChannelId"] as? String else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "shortChannelId", typeName: "ClosedChannelPaymentDetails"))
-        }
         guard let stateTmp = closedChannelPaymentDetails["state"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "state", typeName: "ClosedChannelPaymentDetails"))
         }
@@ -347,6 +344,13 @@ enum BreezSDKMapper {
 
         guard let fundingTxid = closedChannelPaymentDetails["fundingTxid"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "fundingTxid", typeName: "ClosedChannelPaymentDetails"))
+        }
+        var shortChannelId: String?
+        if hasNonNilKey(data: closedChannelPaymentDetails, key: "shortChannelId") {
+            guard let shortChannelIdTmp = closedChannelPaymentDetails["shortChannelId"] as? String else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "shortChannelId"))
+            }
+            shortChannelId = shortChannelIdTmp
         }
         var closingTxid: String?
         if hasNonNilKey(data: closedChannelPaymentDetails, key: "closingTxid") {
@@ -357,18 +361,18 @@ enum BreezSDKMapper {
         }
 
         return ClosedChannelPaymentDetails(
-            shortChannelId: shortChannelId,
             state: state,
             fundingTxid: fundingTxid,
+            shortChannelId: shortChannelId,
             closingTxid: closingTxid
         )
     }
 
     static func dictionaryOf(closedChannelPaymentDetails: ClosedChannelPaymentDetails) -> [String: Any?] {
         return [
-            "shortChannelId": closedChannelPaymentDetails.shortChannelId,
             "state": valueOf(channelState: closedChannelPaymentDetails.state),
             "fundingTxid": closedChannelPaymentDetails.fundingTxid,
+            "shortChannelId": closedChannelPaymentDetails.shortChannelId == nil ? nil : closedChannelPaymentDetails.shortChannelId,
             "closingTxid": closedChannelPaymentDetails.closingTxid == nil ? nil : closedChannelPaymentDetails.closingTxid,
         ]
     }

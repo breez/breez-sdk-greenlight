@@ -727,9 +727,9 @@ pub struct LnPaymentDetails {
 /// Represents the funds that were on the user side of the channel at the time it was closed.
 #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
 pub struct ClosedChannelPaymentDetails {
-    pub short_channel_id: String,
     pub state: ChannelState,
     pub funding_txid: String,
+    pub short_channel_id: Option<String>,
     /// Can be empty for older closed channels.
     pub closing_txid: Option<String>,
 }
@@ -1114,7 +1114,7 @@ impl OpeningFeeParamsMenu {
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Channel {
     pub funding_txid: String,
-    pub short_channel_id: String,
+    pub short_channel_id: Option<String>,
     pub state: ChannelState,
     pub spendable_msat: u64,
     pub receivable_msat: u64,

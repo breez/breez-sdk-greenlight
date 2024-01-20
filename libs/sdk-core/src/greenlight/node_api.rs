@@ -1810,7 +1810,7 @@ impl From<cln::ListpeersPeersChannels> for Channel {
         };
 
         Channel {
-            short_channel_id: c.short_channel_id.unwrap_or_default(),
+            short_channel_id: c.short_channel_id,
             state,
             funding_txid: c.funding_txid.map(hex::encode).unwrap_or_default(),
             spendable_msat: c.spendable_msat.unwrap_or_default().msat,
@@ -1884,9 +1884,7 @@ impl TryFrom<ListclosedchannelsClosedchannels> for Channel {
         // To keep the conversion simple and fast, some closing-related fields (closed_at, closing_txid)
         // are left empty here in the conversion, but populated later (via chain service lookup, or DB lookup)
         Ok(Channel {
-            short_channel_id: c
-                .short_channel_id
-                .ok_or(anyhow!("short_channel_id is missing"))?,
+            short_channel_id: c.short_channel_id,
             state: ChannelState::Closed,
             funding_txid: hex::encode(c.funding_txid),
             spendable_msat: c

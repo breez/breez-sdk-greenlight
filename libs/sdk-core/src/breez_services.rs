@@ -2042,12 +2042,19 @@ impl Receiver for PaymentReceiver {
                         .find(|&c| c.state == ChannelState::Opened)
                         .ok_or_else(|| anyhow!("No open channel found"))?;
                     let hint = active_channel
-                        .clone()
                         .alias_remote
-                        .unwrap_or(active_channel.clone().short_channel_id);
+                        .clone()
+                        .or(active_channel.short_channel_id.clone());
 
-                    short_channel_id = Some(parse_short_channel_id(&hint)?);
-                    info!("Found channel ID: {short_channel_id:?} {active_channel:?}");
+                    short_channel_id = match hint {
+                        None => None,
+                        Some(hint) => {
+                            let scid = parse_short_channel_id(&hint)?;
+                            info!("Found channel ID: {scid:?} {active_channel:?}");
+                            Some(scid)
+                        }
+                    };
+
                     break;
                 }
             }

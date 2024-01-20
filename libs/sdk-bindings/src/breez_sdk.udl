@@ -293,9 +293,9 @@ dictionary LnPaymentDetails {
 };
 
 dictionary ClosedChannelPaymentDetails {
-    string short_channel_id;
     ChannelState state;
     string funding_txid;
+    string? short_channel_id;
     string? closing_txid;
 };
 
