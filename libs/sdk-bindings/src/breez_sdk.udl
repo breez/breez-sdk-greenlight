@@ -468,13 +468,13 @@ dictionary LspInformation {
 };
 
 dictionary OpenChannelFeeRequest {
-    u64 amount_msat;
+    u64? amount_msat;
     u32? expiry = null;
 };
 
 dictionary OpenChannelFeeResponse {
-    u64 fee_msat;
-    OpeningFeeParams? used_fee_params;
+    u64? fee_msat;
+    OpeningFeeParams fee_params;
 };
 
 enum SwapStatus {

@@ -1609,8 +1609,8 @@ impl rust2dart::IntoIntoDart<NodeState> for NodeState {
 impl support::IntoDart for OpenChannelFeeResponse {
     fn into_dart(self) -> support::DartAbi {
         vec![
-            self.fee_msat.into_into_dart().into_dart(),
-            self.used_fee_params.into_dart(),
+            self.fee_msat.into_dart(),
+            self.fee_params.into_into_dart().into_dart(),
         ]
         .into_dart()
     }

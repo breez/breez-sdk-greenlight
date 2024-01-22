@@ -272,13 +272,13 @@ export type NodeState = {
 }
 
 export type OpenChannelFeeRequest = {
-    amountMsat: number
+    amountMsat?: number
     expiry?: number
 }
 
 export type OpenChannelFeeResponse = {
-    feeMsat: number
-    usedFeeParams?: OpeningFeeParams
+    feeMsat?: number
+    feeParams: OpeningFeeParams
 }
 
 export type OpeningFeeParams = {
