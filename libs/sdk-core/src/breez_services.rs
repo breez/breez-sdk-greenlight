@@ -652,18 +652,18 @@ impl BreezServices {
     ) -> SdkResult<OpenChannelFeeResponse> {
         let lsp_info = self.lsp_info().await?;
         let fee_params = lsp_info
-            .cheapest_open_channel_fee(req.expiry.unwrap_or(INVOICE_PAYMENT_FEE_EXPIRY_SECONDS))?.clone();
+            .cheapest_open_channel_fee(req.expiry.unwrap_or(INVOICE_PAYMENT_FEE_EXPIRY_SECONDS))?
+            .clone();
 
         let node_state = self.node_info()?;
-        let fee_msat = req.amount_msat
-            .map(|req_amount_msat| {
-                match node_state.inbound_liquidity_msats >= req_amount_msat {
-                    // In case we have enough inbound liquidity we return zero fee.
-                    true => 0,
-                    // Otherwise we need to calculate the fee for opening a new channel.
-                    false => fee_params.get_channel_fees_msat_for(req_amount_msat)
-                }
-            });
+        let fee_msat = req.amount_msat.map(|req_amount_msat| {
+            match node_state.inbound_liquidity_msats >= req_amount_msat {
+                // In case we have enough inbound liquidity we return zero fee.
+                true => 0,
+                // Otherwise we need to calculate the fee for opening a new channel.
+                false => fee_params.get_channel_fees_msat_for(req_amount_msat),
+            }
+        });
 
         Ok(OpenChannelFeeResponse {
             fee_msat,
