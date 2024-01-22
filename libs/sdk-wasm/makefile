@@ -1,3 +1,5 @@
+WASI_SDK := /opt/wasi-sdk
+
 init:
 	rustup target add wasm32-wasi
 
@@ -8,6 +10,6 @@ clear:
 
 build:
 	cargo update
-	cargo wasix build --release --verbose
+	WASI_SDK=$(WASI_SDK) cargo wasix build --release --verbose
 
 wasix: clear build
