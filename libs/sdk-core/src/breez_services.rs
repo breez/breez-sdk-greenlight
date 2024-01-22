@@ -652,28 +652,34 @@ impl BreezServices {
         &self,
         req: OpenChannelFeeRequest,
     ) -> SdkResult<OpenChannelFeeResponse> {
-        // get the node state to fetch the current inbound liquidity.
-        let node_state = self.persister.get_node_state()?.ok_or(SdkError::Generic {
-            err: "Node info not found".into(),
-        })?;
-
-        // In case we have enough inbound liquidity we return zero fee.
-        if node_state.inbound_liquidity_msats >= req.amount_msat {
-            return Ok(OpenChannelFeeResponse {
-                fee_msat: 0,
-                used_fee_params: None,
-            });
-        }
-
-        // Otherwise we need to calculate the fee for opening a new channel.
         let lsp_info = self.lsp_info().await?;
-        let used_fee_params = lsp_info
-            .cheapest_open_channel_fee(req.expiry.unwrap_or(INVOICE_PAYMENT_FEE_EXPIRY_SECONDS))?;
-        let fee_msat = used_fee_params.get_channel_fees_msat_for(req.amount_msat);
+        let opening_fees = lsp_info.opening_fee_params_list.get_cheapest_opening_fee_params()?;
+
+        let recv_beyond_inbound_liquidity_min_fee_sat = opening_fees.min_msat / 1_000;
+        let recv_beyond_inbound_liquidity_fee_percentage = (opening_fees.proportional as f32) * 100_f32 / 1_000_000_f32;
+
+        let node_state = self.node_info()?;
+        let inbound_liquidity_sat = node_state.inbound_liquidity_msats / 1000;
+
+        let (fee_msat, used_fee_params) = match node_state.inbound_liquidity_msats >= req.amount_msat {
+            // In case we have enough inbound liquidity we return zero fee.
+            true => (0, None),
+            false => {
+                // Otherwise we need to calculate the fee for opening a new channel.
+                let lsp_info = self.lsp_info().await?;
+                let used_fee_params = lsp_info
+                    .cheapest_open_channel_fee(req.expiry.unwrap_or(INVOICE_PAYMENT_FEE_EXPIRY_SECONDS))?;
+                let fee_msat = used_fee_params.get_channel_fees_msat_for(req.amount_msat);
+                (fee_msat, Some(used_fee_params.clone()))
+            }
+        };
 
         Ok(OpenChannelFeeResponse {
+            recv_beyond_inbound_liquidity_fee_percentage,
+            recv_beyond_inbound_liquidity_min_fee_sat,
+            inbound_liquidity_sat,
             fee_msat,
-            used_fee_params: Some(used_fee_params.clone()),
+            used_fee_params,
         })
     }
 

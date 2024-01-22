@@ -885,7 +885,17 @@ pub struct OpenChannelFeeRequest {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct OpenChannelFeeResponse {
+    /// Opening fee percentage, for receiving more than the inbound liquidity. Assumes the cheapest LSP feerate.
+    pub recv_beyond_inbound_liquidity_fee_percentage: f32,
+    /// Minimum opening fee, for receiving more than the inbound liquidity. Assumes the cheapest LSP feerate.
+    pub recv_beyond_inbound_liquidity_min_fee_sat: u64,
+    /// The current inbound liquidity.
+    pub inbound_liquidity_sat: u64,
+
+    /// Opening fee for the amount set in the [OpenChannelFeeRequest]
     pub fee_msat: u64,
+    /// Opening fee params, if a channel needs to be opened, for receiving the amount set in the
+    /// [OpenChannelFeeRequest]
     pub used_fee_params: Option<OpeningFeeParams>,
 }
 
