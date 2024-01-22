@@ -13,12 +13,12 @@ class BreezSDK {
 
   /* Streams */
   /// Listen to paid Invoice events
-  final StreamController<InvoicePaidDetails> _invoicePaidStream = BehaviorSubject<InvoicePaidDetails>();
+  final StreamController<InvoicePaidDetails> _invoicePaidStream = StreamController.broadcast();
 
   Stream<InvoicePaidDetails> get invoicePaidStream => _invoicePaidStream.stream;
 
   /// Listen to payment results
-  final StreamController<Payment> _paymentResultStream = BehaviorSubject<Payment>();
+  final StreamController<Payment> _paymentResultStream = StreamController.broadcast();
 
   Stream<Payment> get paymentResultStream => _paymentResultStream.stream;
 
