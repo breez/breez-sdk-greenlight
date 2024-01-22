@@ -231,7 +231,7 @@ typedef struct wire_RefundRequest {
 } wire_RefundRequest;
 
 typedef struct wire_OpenChannelFeeRequest {
-  uint64_t amount_msat;
+  uint64_t *amount_msat;
   uint32_t *expiry;
 } wire_OpenChannelFeeRequest;
 

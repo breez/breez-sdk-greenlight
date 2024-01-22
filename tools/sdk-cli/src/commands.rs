@@ -193,7 +193,7 @@ pub(crate) enum Commands {
 
     OpenChannelFee {
         /// The received amount
-        amount_msat: u64,
+        amount_msat: Option<u64>,
 
         /// The expiration of the fee returned
         expiry: Option<u32>,

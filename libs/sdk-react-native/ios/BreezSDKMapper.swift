@@ -1878,8 +1878,12 @@ enum BreezSDKMapper {
     }
 
     static func asOpenChannelFeeRequest(openChannelFeeRequest: [String: Any?]) throws -> OpenChannelFeeRequest {
-        guard let amountMsat = openChannelFeeRequest["amountMsat"] as? UInt64 else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "amountMsat", typeName: "OpenChannelFeeRequest"))
+        var amountMsat: UInt64?
+        if hasNonNilKey(data: openChannelFeeRequest, key: "amountMsat") {
+            guard let amountMsatTmp = openChannelFeeRequest["amountMsat"] as? UInt64 else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "amountMsat"))
+            }
+            amountMsat = amountMsatTmp
         }
         var expiry: UInt32?
         if hasNonNilKey(data: openChannelFeeRequest, key: "expiry") {
@@ -1897,7 +1901,7 @@ enum BreezSDKMapper {
 
     static func dictionaryOf(openChannelFeeRequest: OpenChannelFeeRequest) -> [String: Any?] {
         return [
-            "amountMsat": openChannelFeeRequest.amountMsat,
+            "amountMsat": openChannelFeeRequest.amountMsat == nil ? nil : openChannelFeeRequest.amountMsat,
             "expiry": openChannelFeeRequest.expiry == nil ? nil : openChannelFeeRequest.expiry,
         ]
     }
@@ -1920,24 +1924,28 @@ enum BreezSDKMapper {
     }
 
     static func asOpenChannelFeeResponse(openChannelFeeResponse: [String: Any?]) throws -> OpenChannelFeeResponse {
-        guard let feeMsat = openChannelFeeResponse["feeMsat"] as? UInt64 else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "feeMsat", typeName: "OpenChannelFeeResponse"))
+        var feeMsat: UInt64?
+        if hasNonNilKey(data: openChannelFeeResponse, key: "feeMsat") {
+            guard let feeMsatTmp = openChannelFeeResponse["feeMsat"] as? UInt64 else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "feeMsat"))
+            }
+            feeMsat = feeMsatTmp
         }
-        var usedFeeParams: OpeningFeeParams?
-        if let usedFeeParamsTmp = openChannelFeeResponse["usedFeeParams"] as? [String: Any?] {
-            usedFeeParams = try asOpeningFeeParams(openingFeeParams: usedFeeParamsTmp)
+        guard let feeParamsTmp = openChannelFeeResponse["feeParams"] as? [String: Any?] else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "feeParams", typeName: "OpenChannelFeeResponse"))
         }
+        let feeParams = try asOpeningFeeParams(openingFeeParams: feeParamsTmp)
 
         return OpenChannelFeeResponse(
             feeMsat: feeMsat,
-            usedFeeParams: usedFeeParams
+            feeParams: feeParams
         )
     }
 
     static func dictionaryOf(openChannelFeeResponse: OpenChannelFeeResponse) -> [String: Any?] {
         return [
-            "feeMsat": openChannelFeeResponse.feeMsat,
-            "usedFeeParams": openChannelFeeResponse.usedFeeParams == nil ? nil : dictionaryOf(openingFeeParams: openChannelFeeResponse.usedFeeParams!),
+            "feeMsat": openChannelFeeResponse.feeMsat == nil ? nil : openChannelFeeResponse.feeMsat,
+            "feeParams": dictionaryOf(openingFeeParams: openChannelFeeResponse.feeParams),
         ]
     }
 

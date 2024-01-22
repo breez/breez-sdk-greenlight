@@ -645,35 +645,29 @@ impl BreezServices {
     }
 
     /// Gets the fees required to open a channel for a given amount.
-    /// If there is no channel needed, returns 0.
-    /// If there is a channel needed, returns the required open channel fees, with a fee params object
-    /// to pass to methods that require a channel open, like receive_payment, or receive_onchain.
+    /// If no channel is needed, returns 0. If a channel is needed, returns the required opening fees.
     pub async fn open_channel_fee(
         &self,
         req: OpenChannelFeeRequest,
     ) -> SdkResult<OpenChannelFeeResponse> {
-        // get the node state to fetch the current inbound liquidity.
-        let node_state = self.persister.get_node_state()?.ok_or(SdkError::Generic {
-            err: "Node info not found".into(),
-        })?;
-
-        // In case we have enough inbound liquidity we return zero fee.
-        if node_state.inbound_liquidity_msats >= req.amount_msat {
-            return Ok(OpenChannelFeeResponse {
-                fee_msat: 0,
-                used_fee_params: None,
-            });
-        }
-
-        // Otherwise we need to calculate the fee for opening a new channel.
         let lsp_info = self.lsp_info().await?;
-        let used_fee_params = lsp_info
-            .cheapest_open_channel_fee(req.expiry.unwrap_or(INVOICE_PAYMENT_FEE_EXPIRY_SECONDS))?;
-        let fee_msat = used_fee_params.get_channel_fees_msat_for(req.amount_msat);
+        let fee_params = lsp_info
+            .cheapest_open_channel_fee(req.expiry.unwrap_or(INVOICE_PAYMENT_FEE_EXPIRY_SECONDS))?
+            .clone();
+
+        let node_state = self.node_info()?;
+        let fee_msat = req.amount_msat.map(|req_amount_msat| {
+            match node_state.inbound_liquidity_msats >= req_amount_msat {
+                // In case we have enough inbound liquidity we return zero fee.
+                true => 0,
+                // Otherwise we need to calculate the fee for opening a new channel.
+                false => fee_params.get_channel_fees_msat_for(req_amount_msat),
+            }
+        });
 
         Ok(OpenChannelFeeResponse {
             fee_msat,
-            used_fee_params: Some(used_fee_params.clone()),
+            fee_params,
         })
     }
 

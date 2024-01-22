@@ -1705,14 +1705,21 @@ fun asNodeStateList(arr: ReadableArray): List<NodeState> {
 fun asOpenChannelFeeRequest(openChannelFeeRequest: ReadableMap): OpenChannelFeeRequest? {
     if (!validateMandatoryFields(
             openChannelFeeRequest,
-            arrayOf(
-                "amountMsat",
-            ),
+            arrayOf(),
         )
     ) {
         return null
     }
-    val amountMsat = openChannelFeeRequest.getDouble("amountMsat").toULong()
+    val amountMsat =
+        if (hasNonNullKey(
+                openChannelFeeRequest,
+                "amountMsat",
+            )
+        ) {
+            openChannelFeeRequest.getDouble("amountMsat").toULong()
+        } else {
+            null
+        }
     val expiry = if (hasNonNullKey(openChannelFeeRequest, "expiry")) openChannelFeeRequest.getInt("expiry").toUInt() else null
     return OpenChannelFeeRequest(
         amountMsat,
@@ -1742,31 +1749,24 @@ fun asOpenChannelFeeResponse(openChannelFeeResponse: ReadableMap): OpenChannelFe
     if (!validateMandatoryFields(
             openChannelFeeResponse,
             arrayOf(
-                "feeMsat",
+                "feeParams",
             ),
         )
     ) {
         return null
     }
-    val feeMsat = openChannelFeeResponse.getDouble("feeMsat").toULong()
-    val usedFeeParams =
-        if (hasNonNullKey(openChannelFeeResponse, "usedFeeParams")) {
-            openChannelFeeResponse.getMap("usedFeeParams")?.let {
-                asOpeningFeeParams(it)
-            }
-        } else {
-            null
-        }
+    val feeMsat = if (hasNonNullKey(openChannelFeeResponse, "feeMsat")) openChannelFeeResponse.getDouble("feeMsat").toULong() else null
+    val feeParams = openChannelFeeResponse.getMap("feeParams")?.let { asOpeningFeeParams(it) }!!
     return OpenChannelFeeResponse(
         feeMsat,
-        usedFeeParams,
+        feeParams,
     )
 }
 
 fun readableMapOf(openChannelFeeResponse: OpenChannelFeeResponse): ReadableMap {
     return readableMapOf(
         "feeMsat" to openChannelFeeResponse.feeMsat,
-        "usedFeeParams" to openChannelFeeResponse.usedFeeParams?.let { readableMapOf(it) },
+        "feeParams" to readableMapOf(openChannelFeeResponse.feeParams),
     )
 }
 

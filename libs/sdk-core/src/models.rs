@@ -879,14 +879,17 @@ pub struct StaticBackupResponse {
 }
 
 pub struct OpenChannelFeeRequest {
-    pub amount_msat: u64,
+    pub amount_msat: Option<u64>,
     pub expiry: Option<u32>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct OpenChannelFeeResponse {
-    pub fee_msat: u64,
-    pub used_fee_params: Option<OpeningFeeParams>,
+    /// Opening fee for receiving the amount set in the [OpenChannelFeeRequest], in case it was set.
+    /// It may be zero if no new channel needs to be opened.
+    pub fee_msat: Option<u64>,
+    /// The fee params for receiving more than the current inbound liquidity.
+    pub fee_params: OpeningFeeParams,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]

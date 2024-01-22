@@ -1105,22 +1105,26 @@ class NodeState {
 }
 
 class OpenChannelFeeRequest {
-  final int amountMsat;
+  final int? amountMsat;
   final int? expiry;
 
   const OpenChannelFeeRequest({
-    required this.amountMsat,
+    this.amountMsat,
     this.expiry,
   });
 }
 
 class OpenChannelFeeResponse {
-  final int feeMsat;
-  final OpeningFeeParams? usedFeeParams;
+  /// Opening fee for receiving the amount set in the [OpenChannelFeeRequest], in case it was set.
+  /// It may be zero if no new channel needs to be opened.
+  final int? feeMsat;
+
+  /// The fee params for receiving more than the current inbound liquidity.
+  final OpeningFeeParams feeParams;
 
   const OpenChannelFeeResponse({
-    required this.feeMsat,
-    this.usedFeeParams,
+    this.feeMsat,
+    required this.feeParams,
   });
 }
 
@@ -3421,8 +3425,8 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     final arr = raw as List<dynamic>;
     if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
     return OpenChannelFeeResponse(
-      feeMsat: _wire2api_u64(arr[0]),
-      usedFeeParams: _wire2api_opt_box_autoadd_opening_fee_params(arr[1]),
+      feeMsat: _wire2api_opt_box_autoadd_u64(arr[0]),
+      feeParams: _wire2api_opening_fee_params(arr[1]),
     );
   }
 
@@ -4442,7 +4446,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
 
   void _api_fill_to_wire_open_channel_fee_request(
       OpenChannelFeeRequest apiObj, wire_OpenChannelFeeRequest wireObj) {
-    wireObj.amount_msat = api2wire_u64(apiObj.amountMsat);
+    wireObj.amount_msat = api2wire_opt_box_autoadd_u64(apiObj.amountMsat);
     wireObj.expiry = api2wire_opt_box_autoadd_u32(apiObj.expiry);
   }
 
@@ -6088,8 +6092,7 @@ final class wire_RefundRequest extends ffi.Struct {
 }
 
 final class wire_OpenChannelFeeRequest extends ffi.Struct {
-  @ffi.Uint64()
-  external int amount_msat;
+  external ffi.Pointer<ffi.Uint64> amount_msat;
 
   external ffi.Pointer<ffi.Uint32> expiry;
 }

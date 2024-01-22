@@ -1112,7 +1112,7 @@ pub struct wire_MetadataFilter {
 #[repr(C)]
 #[derive(Clone)]
 pub struct wire_OpenChannelFeeRequest {
-    amount_msat: u64,
+    amount_msat: *mut u64,
     expiry: *mut u32,
 }
 
@@ -1519,7 +1519,7 @@ pub extern "C" fn inflate_NodeConfig_Greenlight() -> *mut NodeConfigKind {
 impl NewWithNullPtr for wire_OpenChannelFeeRequest {
     fn new_with_null_ptr() -> Self {
         Self {
-            amount_msat: Default::default(),
+            amount_msat: core::ptr::null_mut(),
             expiry: core::ptr::null_mut(),
         }
     }
