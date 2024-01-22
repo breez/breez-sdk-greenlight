@@ -72,6 +72,8 @@ jobs:
       run: |
         cargo install cargo-wasix
         cargo wasix download-toolchain
+        WASIX_SYSROOT=$(rustc +wasix --print sysroot)
+        echo "CFLAGS_wasm32_wasmer_wasi=--sysroot=${WASIX_SYSROOT}/lib/rustlib/wasm32-wasmer-wasi" >> $GITHUB_ENV
 
     - name: Build sdk-wasm
       working-directory: libs/sdk-wasm
