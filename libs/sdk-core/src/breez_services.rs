@@ -776,6 +776,7 @@ impl BreezServices {
     pub async fn max_reverse_swap_amount(&self) -> SdkResult<MaxReverseSwapAmountResponse> {
         // fetch the last hop hints from the swapper
         let last_hop = self.btc_send_swapper.last_hop_for_payment().await?;
+        info!("max_reverse_swap_amount last_hop={:?}", last_hop);
         // calculate the largest payment we can send over this route using maximum 3 hops
         // as follows:
         // User Node -> LSP Node -> Routing Node -> Swapper Node

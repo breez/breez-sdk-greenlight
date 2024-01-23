@@ -523,6 +523,12 @@ impl Greenlight {
         };
 
         // fetch a route from greenlight
+        info!(
+            "calling get_route for peer {} to node {}, max_hops: {}",
+            hex::encode(via_peer_id.clone()),
+            hex::encode(last_node.clone()),
+            max_hops - 1
+        );
         let route_result = client
             .get_route(GetrouteRequest {
                 id: last_node.clone(),
