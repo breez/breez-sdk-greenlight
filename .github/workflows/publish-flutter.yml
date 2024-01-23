@@ -59,17 +59,7 @@ jobs:
           mv android/build.gradle.production android/build.gradle
           cp -r ../breez-sdk/libs/sdk-flutter/lib .
           cp ../breez-sdk/libs/sdk-flutter/pubspec.yaml .
-          cp ../breez-sdk/libs/sdk-flutter/pubspec.lock .  
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: bindings-swift
-          path: flutter/ios/bindings-swift/Sources/BreezSDK/
-      
-      - uses: actions/download-artifact@v3
-        with:
-          name: bindings-kotlin
-          path: flutter/android/src/main/kotlin/breez_sdk
+          cp ../breez-sdk/libs/sdk-flutter/pubspec.lock .
 
       - name: Set package version
         working-directory: flutter

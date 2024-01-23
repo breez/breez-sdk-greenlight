@@ -246,7 +246,6 @@ jobs:
   publish-flutter:
     needs:
       - setup
-      - build-language-bindings
     if: ${{ needs.setup.outputs.flutter == 'true' }}
     uses: ./.github/workflows/publish-flutter.yml
     with:
