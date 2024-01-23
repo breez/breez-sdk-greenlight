@@ -40,7 +40,7 @@ jobs:
         repository: ${{ inputs.repository || github.repository }}
 
     - name: Install build-essential
-      run: sudo apt install -y build-essential
+      run: sudo apt update && sudo apt install -y build-essential
 
     - name: Install wasm-sdk
       working-directory: /opt
@@ -54,9 +54,12 @@ jobs:
 
     - name: Install rust toolchain
       run: |
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        source "$HOME/.cargo/env"
         rustup set auto-self-update disable
-        rustup toolchain install stable --profile minimal
+        rustup toolchain install stable 
         rustup target add wasm32-wasi
+        apt install linux-headers-generic -y
 
     - name: Install Protoc
       uses: arduino/setup-protoc@v2
@@ -70,16 +73,16 @@ jobs:
 
     - name: Install wasix
       run: |
-        cargo install cargo-wasix
-        cargo wasix download-toolchain
-        WASIX_SYSROOT=$(rustc +wasix --print sysroot)
+        $HOME/.cargo/bin/cargo install cargo-wasix
+        $HOME/.cargo/bin/cargo wasix download-toolchain
+        WASIX_SYSROOT=$($HOME/.cargo/bin/rustc +wasix --print sysroot)
         echo "CFLAGS_wasm32_wasmer_wasi=--sysroot=${WASIX_SYSROOT}/lib/rustlib/wasm32-wasmer-wasi" >> $GITHUB_ENV
 
     - name: Build sdk-wasm
       working-directory: libs/sdk-wasm
       env:
         WASI_SDK: /opt/wasi-sdk
-      run: cargo wasix build --release
+      run: $HOME/.cargo/bin/cargo wasix build --release
     
     - name: Archive release
       uses: actions/upload-artifact@v3
