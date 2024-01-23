@@ -11,17 +11,12 @@ init:
 ## all: Compile iOS, Android
 all: ios android
 
-## dev: Compile iOS, Android for Development environment
-dev: ios-dev android
-
 flutter_rust_bridge:
 	cargo install flutter_rust_bridge_codegen --version 1.82.6
 	flutter_rust_bridge_codegen --dart-format-line-length 110 -r ../sdk-core/src/binding.rs -d lib/bridge_generated.dart -c ios/Classes/bridge_generated.h
 
 ios: $(SOURCES) flutter_rust_bridge
 	make -C ../sdk-bindings bindings-swift
-
-ios-dev: ios
 	rm -rf ios/bindings-swift
 	cp -r ../sdk-bindings/bindings-swift ios/bindings-swift
 	rm -rf ios/bindings-swift/Tests
@@ -30,7 +25,7 @@ ios-dev: ios
 ## android: Compile the android targets (arm64, armv7 and i686)
 .PHONY: android
 android: $(SOURCES) flutter_rust_bridge
-	cd ../sdk-bindings && make kotlin
+	make -C ../sdk-bindings kotlin
 	mkdir -p ./android/src/main/jniLibs
 	cp -r ../sdk-bindings/ffi/kotlin/jniLibs/* ./android/src/main/jniLibs
 	mkdir -p ./android/src/main/kotlin/breez_sdk/
@@ -41,6 +36,7 @@ android: $(SOURCES) flutter_rust_bridge
 TARGET ?= x86_64-unknown-linux-gnu
 .PHONY: desktop
 desktop: $(SOURCES) flutter_rust_bridge
+	make -C ../sdk-bindings $(TARGET)
 	cd ../sdk-bindings && make $(TARGET)
 	mkdir -p ./$(TARGET)
 	cp ../target/$(TARGET)/release/libbreez_sdk_bindings.so ./$(TARGET)/libbreez_sdk_bindings.so
@@ -52,3 +48,5 @@ clean:
 	rm -rf ./android/src/main/jniLibs
 	rm -rf ./android/src/main/kotlin/breez_sdk/
 	rm -rf ./ios/libbreez_sdk_bindings.a
+	rm -rf ./ios/bindings-swift
+	rm -rf ./$(TARGET)/libbreez_sdk_bindings.so
