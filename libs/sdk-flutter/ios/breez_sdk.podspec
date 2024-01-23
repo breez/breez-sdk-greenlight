@@ -14,7 +14,7 @@ Pod::Spec.new do |s|
   s.source_files = 'Classes/**/*'
   s.on_demand_resources = { 'BreezSDK' => 'bindings-swift/Sources/BreezSDK/BreezSDK.swift' }
   s.dependency 'Flutter'
-  s.platform = :ios, '9.0'
+  s.platform = :ios, '11.0'
   s.static_framework = true
 
   # Flutter.framework does not contain a i386 slice.

@@ -10,15 +10,14 @@ Pod::Spec.new do |s|
   s.homepage         = 'https://breez.technology'
   s.license          = { :file => '../LICENSE' }
   s.author           = { 'Breez' => 'contact@breez.technology' }
-  s.source           = { :path => '.' }
+  s.source           = { :git => "https://github.com/breez/breez-sdk-flutter.git", :tag => "#{s.version}" }
   s.source_files = 'Classes/**/*'
-  s.on_demand_resources = { 'BreezSDK' => 'bindings-swift/Sources/BreezSDK/BreezSDK.swift' }
   s.dependency 'Flutter'
-  s.platform = :ios, '9.0'
+  s.platform = :ios, '11.0'
   s.static_framework = true
 
   # Flutter.framework does not contain a i386 slice.
   s.pod_target_xcconfig = {'STRIP_STYLE' => 'non-global', 'DEFINES_MODULE' => 'YES', 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386' }
   s.swift_version = '5.0'
-  s.dependency "breez_sdkFFI", "0.2.14"
+  s.dependency "BreezSDK", "#{s.version}"
 end
