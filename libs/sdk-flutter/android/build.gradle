@@ -41,10 +41,10 @@ android {
     }
 
     defaultConfig {
-        minSdkVersion 16
+        minSdkVersion 21
     }
 }
 
 dependencies {
-    implementation 'net.java.dev.jna:jna:5.8.0@aar'
+    implementation "net.java.dev.jna:jna:5.8.0@aar"
 }
