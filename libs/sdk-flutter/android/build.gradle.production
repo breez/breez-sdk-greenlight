@@ -47,6 +47,6 @@ android {
 }
 
 dependencies {
-    implementation("breez_sdk:bindings-android:$version")
-    implementation 'net.java.dev.jna:jna:5.8.0@aar'
+    api "breez_sdk:bindings-android:$version"
+    implementation "net.java.dev.jna:jna:5.8.0@aar"
 }
