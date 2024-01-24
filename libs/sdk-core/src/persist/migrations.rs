@@ -548,5 +548,6 @@ pub(crate) fn current_sync_migrations() -> Vec<&'static str> {
           updated_at TEXT DEFAULT CURRENT_TIMESTAMP
          ) STRICT;
         ",
+       "ALTER TABLE payments_external_info ADD COLUMN lnurl_pay_domain TEXT;",
     ]
 }
