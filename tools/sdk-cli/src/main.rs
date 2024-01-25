@@ -75,7 +75,12 @@ async fn main() -> Result<()> {
 
 fn show_results(res: Result<String>) {
     match res {
-        Ok(inner) => println!("{inner}"),
+        Ok(inner) => {
+            // Un-escape newlines and quotes, to accurately print strings containing pretty-printed protobuf structs
+            let sanitized = inner.replace("\\n", "\n");
+            let sanitized = sanitized.replace("\\\"", "\"");
+            println!("{sanitized}");
+        },
         Err(err) => eprintln!("Error: {err}"),
     }
 }

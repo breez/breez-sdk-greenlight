@@ -1211,7 +1211,7 @@ impl NodeAPI for Greenlight {
                     .list_peers(cln::ListpeersRequest::default())
                     .await?
                     .into_inner();
-                Ok(format!("{resp:?}"))
+                Ok(format!("{resp:#?}"))
             }
             NodeCommand::ListPeerChannels => {
                 let resp = self
@@ -1220,7 +1220,7 @@ impl NodeAPI for Greenlight {
                     .list_peer_channels(cln::ListpeerchannelsRequest::default())
                     .await?
                     .into_inner();
-                Ok(format!("{resp:?}"))
+                Ok(format!("{resp:#?}"))
             }
             NodeCommand::ListFunds => {
                 let resp = self
@@ -1229,7 +1229,7 @@ impl NodeAPI for Greenlight {
                     .list_funds(cln::ListfundsRequest::default())
                     .await?
                     .into_inner();
-                Ok(format!("{resp:?}"))
+                Ok(format!("{resp:#?}"))
             }
             NodeCommand::ListPayments => {
                 let resp = self
@@ -1238,7 +1238,7 @@ impl NodeAPI for Greenlight {
                     .list_pays(cln::ListpaysRequest::default())
                     .await?
                     .into_inner();
-                Ok(format!("{resp:?}"))
+                Ok(format!("{resp:#?}"))
             }
             NodeCommand::ListInvoices => {
                 let resp = self
@@ -1247,7 +1247,7 @@ impl NodeAPI for Greenlight {
                     .list_invoices(cln::ListinvoicesRequest::default())
                     .await?
                     .into_inner();
-                Ok(format!("{resp:?}"))
+                Ok(format!("{resp:#?}"))
             }
             NodeCommand::CloseAllChannels => {
                 let peers_res = self
@@ -1269,7 +1269,7 @@ impl NodeAPI for Greenlight {
                     .getinfo(cln::GetinfoRequest::default())
                     .await?
                     .into_inner();
-                Ok(format!("{resp:?}"))
+                Ok(format!("{resp:#?}"))
             }
             NodeCommand::Stop => {
                 let resp = self
@@ -1278,7 +1278,7 @@ impl NodeAPI for Greenlight {
                     .stop(cln::StopRequest::default())
                     .await?
                     .into_inner();
-                Ok(format!("{resp:?}"))
+                Ok(format!("{resp:#?}"))
             }
         }
     }
