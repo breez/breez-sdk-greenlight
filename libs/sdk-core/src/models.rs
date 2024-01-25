@@ -709,7 +709,7 @@ pub struct LnPaymentDetails {
     /// the endpoint returns a success action
     pub lnurl_success_action: Option<SuccessActionProcessed>,
 
-    /// Only set for [PaymentType::Sent] payments if it is not a payment to a Lightning Adddress
+    /// Only set for [PaymentType::Sent] payments if it is not a payment to a Lightning Address
     pub lnurl_pay_domain: Option<String>,
 
     /// Only set for [PaymentType::Sent] payments that are sent to a Lightning Address

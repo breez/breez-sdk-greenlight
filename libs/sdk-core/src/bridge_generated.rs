@@ -1248,6 +1248,7 @@ impl support::IntoDart for LnPaymentDetails {
             self.keysend.into_into_dart().into_dart(),
             self.bolt11.into_into_dart().into_dart(),
             self.lnurl_success_action.into_dart(),
+            self.lnurl_pay_domain.into_dart(),
             self.ln_address.into_dart(),
             self.lnurl_metadata.into_dart(),
             self.lnurl_withdraw_endpoint.into_dart(),

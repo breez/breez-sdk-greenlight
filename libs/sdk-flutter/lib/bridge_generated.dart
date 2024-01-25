@@ -695,6 +695,9 @@ class LnPaymentDetails {
   /// the endpoint returns a success action
   final SuccessActionProcessed? lnurlSuccessAction;
 
+  /// Only set for [PaymentType::Sent] payments if it is not a payment to a Lightning Address
+  final String? lnurlPayDomain;
+
   /// Only set for [PaymentType::Sent] payments that are sent to a Lightning Address
   final String? lnAddress;
 
@@ -718,6 +721,7 @@ class LnPaymentDetails {
     required this.keysend,
     required this.bolt11,
     this.lnurlSuccessAction,
+    this.lnurlPayDomain,
     this.lnAddress,
     this.lnurlMetadata,
     this.lnurlWithdrawEndpoint,
@@ -3178,7 +3182,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   LnPaymentDetails _wire2api_ln_payment_details(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 12) throw Exception('unexpected arr length: expect 12 but see ${arr.length}');
+    if (arr.length != 13) throw Exception('unexpected arr length: expect 13 but see ${arr.length}');
     return LnPaymentDetails(
       paymentHash: _wire2api_String(arr[0]),
       label: _wire2api_String(arr[1]),
@@ -3187,11 +3191,12 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       keysend: _wire2api_bool(arr[4]),
       bolt11: _wire2api_String(arr[5]),
       lnurlSuccessAction: _wire2api_opt_box_autoadd_success_action_processed(arr[6]),
-      lnAddress: _wire2api_opt_String(arr[7]),
-      lnurlMetadata: _wire2api_opt_String(arr[8]),
-      lnurlWithdrawEndpoint: _wire2api_opt_String(arr[9]),
-      swapInfo: _wire2api_opt_box_autoadd_swap_info(arr[10]),
-      pendingExpirationBlock: _wire2api_opt_box_autoadd_u32(arr[11]),
+      lnurlPayDomain: _wire2api_opt_String(arr[7]),
+      lnAddress: _wire2api_opt_String(arr[8]),
+      lnurlMetadata: _wire2api_opt_String(arr[9]),
+      lnurlWithdrawEndpoint: _wire2api_opt_String(arr[10]),
+      swapInfo: _wire2api_opt_box_autoadd_swap_info(arr[11]),
+      pendingExpirationBlock: _wire2api_opt_box_autoadd_u32(arr[12]),
     );
   }
 
