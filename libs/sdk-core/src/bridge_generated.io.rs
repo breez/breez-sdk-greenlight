@@ -137,6 +137,15 @@ pub extern "C" fn wire_payment_by_hash(port_: i64, hash: *mut wire_uint_8_list) 
 }
 
 #[no_mangle]
+pub extern "C" fn wire_set_payment_metadata(
+    port_: i64,
+    hash: *mut wire_uint_8_list,
+    metadata: *mut wire_uint_8_list,
+) {
+    wire_set_payment_metadata_impl(port_, hash, metadata)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_send_payment(port_: i64, req: *mut wire_SendPaymentRequest) {
     wire_send_payment_impl(port_, req)
 }

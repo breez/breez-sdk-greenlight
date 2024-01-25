@@ -261,6 +261,17 @@ pub fn payment_by_hash(hash: String) -> Result<Option<Payment>> {
         .map_err(anyhow::Error::new::<SdkError>)
 }
 
+/// See [BreezServices::set_payment_metadata]
+pub fn set_payment_metadata(hash: String, metadata: String) -> Result<()> {
+    block_on(async {
+        get_breez_services()
+            .await?
+            .set_payment_metadata(hash, metadata)
+            .await
+    })
+    .map_err(anyhow::Error::new::<SdkError>)
+}
+
 /*  Lightning Payment API's */
 
 /// See [BreezServices::send_payment]

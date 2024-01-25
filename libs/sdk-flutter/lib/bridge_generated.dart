@@ -145,6 +145,11 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kPaymentByHashConstMeta;
 
+  /// See [BreezServices::set_payment_metadata]
+  Future<void> setPaymentMetadata({required String hash, required String metadata, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kSetPaymentMetadataConstMeta;
+
   /// See [BreezServices::send_payment]
   Future<SendPaymentResponse> sendPayment({required SendPaymentRequest req, dynamic hint});
 
@@ -2304,6 +2309,24 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kPaymentByHashConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "payment_by_hash",
         argNames: ["hash"],
+      );
+
+  Future<void> setPaymentMetadata({required String hash, required String metadata, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(hash);
+    var arg1 = _platform.api2wire_String(metadata);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_set_payment_metadata(port_, arg0, arg1),
+      parseSuccessData: _wire2api_unit,
+      parseErrorData: _wire2api_FrbAnyhowException,
+      constMeta: kSetPaymentMetadataConstMeta,
+      argValues: [hash, metadata],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kSetPaymentMetadataConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "set_payment_metadata",
+        argNames: ["hash", "metadata"],
       );
 
   Future<SendPaymentResponse> sendPayment({required SendPaymentRequest req, dynamic hint}) {
@@ -5003,6 +5026,25 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
           'wire_payment_by_hash');
   late final _wire_payment_by_hash =
       _wire_payment_by_hashPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_set_payment_metadata(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> hash,
+    ffi.Pointer<wire_uint_8_list> metadata,
+  ) {
+    return _wire_set_payment_metadata(
+      port_,
+      hash,
+      metadata,
+    );
+  }
+
+  late final _wire_set_payment_metadataPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>,
+              ffi.Pointer<wire_uint_8_list>)>>('wire_set_payment_metadata');
+  late final _wire_set_payment_metadata = _wire_set_payment_metadataPtr
+      .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_uint_8_list>)>();
 
   void wire_send_payment(
     int port_,

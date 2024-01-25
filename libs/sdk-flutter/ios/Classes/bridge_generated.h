@@ -306,6 +306,10 @@ void wire_list_payments(int64_t port_, struct wire_ListPaymentsRequest *req);
 
 void wire_payment_by_hash(int64_t port_, struct wire_uint_8_list *hash);
 
+void wire_set_payment_metadata(int64_t port_,
+                               struct wire_uint_8_list *hash,
+                               struct wire_uint_8_list *metadata);
+
 void wire_send_payment(int64_t port_, struct wire_SendPaymentRequest *req);
 
 void wire_send_spontaneous_payment(int64_t port_, struct wire_SendSpontaneousPaymentRequest *req);
@@ -459,6 +463,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_parse_input);
     dummy_var ^= ((int64_t) (void*) wire_list_payments);
     dummy_var ^= ((int64_t) (void*) wire_payment_by_hash);
+    dummy_var ^= ((int64_t) (void*) wire_set_payment_metadata);
     dummy_var ^= ((int64_t) (void*) wire_send_payment);
     dummy_var ^= ((int64_t) (void*) wire_send_spontaneous_payment);
     dummy_var ^= ((int64_t) (void*) wire_receive_payment);

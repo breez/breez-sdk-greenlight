@@ -443,6 +443,24 @@ fn wire_payment_by_hash_impl(port_: MessagePort, hash: impl Wire2Api<String> + U
         },
     )
 }
+fn wire_set_payment_metadata_impl(
+    port_: MessagePort,
+    hash: impl Wire2Api<String> + UnwindSafe,
+    metadata: impl Wire2Api<String> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, (), _>(
+        WrapInfo {
+            debug_name: "set_payment_metadata",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_hash = hash.wire2api();
+            let api_metadata = metadata.wire2api();
+            move |task_callback| set_payment_metadata(api_hash, api_metadata)
+        },
+    )
+}
 fn wire_send_payment_impl(port_: MessagePort, req: impl Wire2Api<SendPaymentRequest> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, SendPaymentResponse, _>(
         WrapInfo {
