@@ -145,6 +145,7 @@ export type LnPaymentDetails = {
     keysend: boolean
     bolt11: string
     lnurlSuccessAction?: SuccessActionProcessed
+    lnurlPayDomain?: string
     lnurlMetadata?: string
     lnAddress?: string
     lnurlWithdrawEndpoint?: string

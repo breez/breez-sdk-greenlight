@@ -868,6 +868,7 @@ mod tests {
                     keysend: false,
                     bolt11: "".to_string(),
                     lnurl_success_action: None,
+                    lnurl_pay_domain: None,
                     lnurl_metadata: None,
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
