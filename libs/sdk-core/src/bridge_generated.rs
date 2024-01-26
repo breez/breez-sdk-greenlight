@@ -443,6 +443,24 @@ fn wire_payment_by_hash_impl(port_: MessagePort, hash: impl Wire2Api<String> + U
         },
     )
 }
+fn wire_set_payment_metadata_impl(
+    port_: MessagePort,
+    hash: impl Wire2Api<String> + UnwindSafe,
+    metadata: impl Wire2Api<String> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, (), _>(
+        WrapInfo {
+            debug_name: "set_payment_metadata",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_hash = hash.wire2api();
+            let api_metadata = metadata.wire2api();
+            move |task_callback| set_payment_metadata(api_hash, api_metadata)
+        },
+    )
+}
 fn wire_send_payment_impl(port_: MessagePort, req: impl Wire2Api<SendPaymentRequest> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, SendPaymentResponse, _>(
         WrapInfo {
@@ -1248,10 +1266,12 @@ impl support::IntoDart for LnPaymentDetails {
             self.keysend.into_into_dart().into_dart(),
             self.bolt11.into_into_dart().into_dart(),
             self.lnurl_success_action.into_dart(),
+            self.lnurl_pay_domain.into_dart(),
             self.ln_address.into_dart(),
             self.lnurl_metadata.into_dart(),
             self.lnurl_withdraw_endpoint.into_dart(),
             self.swap_info.into_dart(),
+            self.reverse_swap_info.into_dart(),
             self.pending_expiration_block.into_dart(),
         ]
         .into_dart()

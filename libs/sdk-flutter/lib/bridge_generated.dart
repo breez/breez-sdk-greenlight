@@ -145,6 +145,11 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kPaymentByHashConstMeta;
 
+  /// See [BreezServices::set_payment_metadata]
+  Future<void> setPaymentMetadata({required String hash, required String metadata, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kSetPaymentMetadataConstMeta;
+
   /// See [BreezServices::send_payment]
   Future<SendPaymentResponse> sendPayment({required SendPaymentRequest req, dynamic hint});
 
@@ -695,6 +700,9 @@ class LnPaymentDetails {
   /// the endpoint returns a success action
   final SuccessActionProcessed? lnurlSuccessAction;
 
+  /// Only set for [PaymentType::Sent] payments if it is not a payment to a Lightning Address
+  final String? lnurlPayDomain;
+
   /// Only set for [PaymentType::Sent] payments that are sent to a Lightning Address
   final String? lnAddress;
 
@@ -707,6 +715,9 @@ class LnPaymentDetails {
   /// Only set for [PaymentType::Received] payments that were received in the context of a swap
   final SwapInfo? swapInfo;
 
+  /// Only set for [PaymentType::Sent] payments that were sent in the context of a reverse swap
+  final ReverseSwapInfo? reverseSwapInfo;
+
   /// Only set for [PaymentType::Pending] payments that are inflight.
   final int? pendingExpirationBlock;
 
@@ -718,10 +729,12 @@ class LnPaymentDetails {
     required this.keysend,
     required this.bolt11,
     this.lnurlSuccessAction,
+    this.lnurlPayDomain,
     this.lnAddress,
     this.lnurlMetadata,
     this.lnurlWithdrawEndpoint,
     this.swapInfo,
+    this.reverseSwapInfo,
     this.pendingExpirationBlock,
   });
 }
@@ -2306,6 +2319,24 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["hash"],
       );
 
+  Future<void> setPaymentMetadata({required String hash, required String metadata, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(hash);
+    var arg1 = _platform.api2wire_String(metadata);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_set_payment_metadata(port_, arg0, arg1),
+      parseSuccessData: _wire2api_unit,
+      parseErrorData: _wire2api_FrbAnyhowException,
+      constMeta: kSetPaymentMetadataConstMeta,
+      argValues: [hash, metadata],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kSetPaymentMetadataConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "set_payment_metadata",
+        argNames: ["hash", "metadata"],
+      );
+
   Future<SendPaymentResponse> sendPayment({required SendPaymentRequest req, dynamic hint}) {
     var arg0 = _platform.api2wire_box_autoadd_send_payment_request(req);
     return _platform.executeNormal(FlutterRustBridgeTask(
@@ -2897,6 +2928,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return _wire2api_payment_failed_data(raw);
   }
 
+  ReverseSwapInfo _wire2api_box_autoadd_reverse_swap_info(dynamic raw) {
+    return _wire2api_reverse_swap_info(raw);
+  }
+
   SuccessActionProcessed _wire2api_box_autoadd_success_action_processed(dynamic raw) {
     return _wire2api_success_action_processed(raw);
   }
@@ -3178,7 +3213,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   LnPaymentDetails _wire2api_ln_payment_details(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 12) throw Exception('unexpected arr length: expect 12 but see ${arr.length}');
+    if (arr.length != 14) throw Exception('unexpected arr length: expect 14 but see ${arr.length}');
     return LnPaymentDetails(
       paymentHash: _wire2api_String(arr[0]),
       label: _wire2api_String(arr[1]),
@@ -3187,11 +3222,13 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       keysend: _wire2api_bool(arr[4]),
       bolt11: _wire2api_String(arr[5]),
       lnurlSuccessAction: _wire2api_opt_box_autoadd_success_action_processed(arr[6]),
-      lnAddress: _wire2api_opt_String(arr[7]),
-      lnurlMetadata: _wire2api_opt_String(arr[8]),
-      lnurlWithdrawEndpoint: _wire2api_opt_String(arr[9]),
-      swapInfo: _wire2api_opt_box_autoadd_swap_info(arr[10]),
-      pendingExpirationBlock: _wire2api_opt_box_autoadd_u32(arr[11]),
+      lnurlPayDomain: _wire2api_opt_String(arr[7]),
+      lnAddress: _wire2api_opt_String(arr[8]),
+      lnurlMetadata: _wire2api_opt_String(arr[9]),
+      lnurlWithdrawEndpoint: _wire2api_opt_String(arr[10]),
+      swapInfo: _wire2api_opt_box_autoadd_swap_info(arr[11]),
+      reverseSwapInfo: _wire2api_opt_box_autoadd_reverse_swap_info(arr[12]),
+      pendingExpirationBlock: _wire2api_opt_box_autoadd_u32(arr[13]),
     );
   }
 
@@ -3485,6 +3522,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   Payment? _wire2api_opt_box_autoadd_payment(dynamic raw) {
     return raw == null ? null : _wire2api_box_autoadd_payment(raw);
+  }
+
+  ReverseSwapInfo? _wire2api_opt_box_autoadd_reverse_swap_info(dynamic raw) {
+    return raw == null ? null : _wire2api_box_autoadd_reverse_swap_info(raw);
   }
 
   SuccessActionProcessed? _wire2api_opt_box_autoadd_success_action_processed(dynamic raw) {
@@ -5003,6 +5044,25 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
           'wire_payment_by_hash');
   late final _wire_payment_by_hash =
       _wire_payment_by_hashPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_set_payment_metadata(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> hash,
+    ffi.Pointer<wire_uint_8_list> metadata,
+  ) {
+    return _wire_set_payment_metadata(
+      port_,
+      hash,
+      metadata,
+    );
+  }
+
+  late final _wire_set_payment_metadataPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>,
+              ffi.Pointer<wire_uint_8_list>)>>('wire_set_payment_metadata');
+  late final _wire_set_payment_metadata = _wire_set_payment_metadataPtr
+      .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_uint_8_list>)>();
 
   void wire_send_payment(
     int port_,

@@ -285,10 +285,12 @@ dictionary LnPaymentDetails {
     boolean keysend;
     string bolt11;
     SuccessActionProcessed? lnurl_success_action;
+    string? lnurl_pay_domain;
     string? lnurl_metadata;
     string? ln_address;
     string? lnurl_withdraw_endpoint;
     SwapInfo? swap_info;
+    ReverseSwapInfo? reverse_swap_info;
     u32? pending_expiration_block;
 };
 
