@@ -1478,12 +1478,12 @@ fn update_payment_expirations(
     payments: Vec<Payment>,
     htlc_list: Vec<Htlc>,
 ) -> NodeResult<Vec<Payment>> {
-    let mut payments_res: Vec<Payment> = Vec::new();
     if htlc_list.is_empty() {
         return Ok(payments);
     }
 
-    for mut payment in payments.clone() {
+    let mut payments_res: Vec<Payment> = Vec::new();
+    for mut payment in payments {
         if payment.status == PaymentStatus::Pending {
             let new_data = payment.clone().details;
             if let PaymentDetails::Ln { data } = new_data {
