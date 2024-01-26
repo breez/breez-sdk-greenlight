@@ -715,6 +715,9 @@ class LnPaymentDetails {
   /// Only set for [PaymentType::Received] payments that were received in the context of a swap
   final SwapInfo? swapInfo;
 
+  /// Only set for [PaymentType::Sent] payments that were sent in the context of a reverse swap
+  final ReverseSwapInfo? reverseSwapInfo;
+
   /// Only set for [PaymentType::Pending] payments that are inflight.
   final int? pendingExpirationBlock;
 
@@ -731,6 +734,7 @@ class LnPaymentDetails {
     this.lnurlMetadata,
     this.lnurlWithdrawEndpoint,
     this.swapInfo,
+    this.reverseSwapInfo,
     this.pendingExpirationBlock,
   });
 }
@@ -2924,6 +2928,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return _wire2api_payment_failed_data(raw);
   }
 
+  ReverseSwapInfo _wire2api_box_autoadd_reverse_swap_info(dynamic raw) {
+    return _wire2api_reverse_swap_info(raw);
+  }
+
   SuccessActionProcessed _wire2api_box_autoadd_success_action_processed(dynamic raw) {
     return _wire2api_success_action_processed(raw);
   }
@@ -3205,7 +3213,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   LnPaymentDetails _wire2api_ln_payment_details(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 13) throw Exception('unexpected arr length: expect 13 but see ${arr.length}');
+    if (arr.length != 14) throw Exception('unexpected arr length: expect 14 but see ${arr.length}');
     return LnPaymentDetails(
       paymentHash: _wire2api_String(arr[0]),
       label: _wire2api_String(arr[1]),
@@ -3219,7 +3227,8 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       lnurlMetadata: _wire2api_opt_String(arr[9]),
       lnurlWithdrawEndpoint: _wire2api_opt_String(arr[10]),
       swapInfo: _wire2api_opt_box_autoadd_swap_info(arr[11]),
-      pendingExpirationBlock: _wire2api_opt_box_autoadd_u32(arr[12]),
+      reverseSwapInfo: _wire2api_opt_box_autoadd_reverse_swap_info(arr[12]),
+      pendingExpirationBlock: _wire2api_opt_box_autoadd_u32(arr[13]),
     );
   }
 
@@ -3513,6 +3522,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   Payment? _wire2api_opt_box_autoadd_payment(dynamic raw) {
     return raw == null ? null : _wire2api_box_autoadd_payment(raw);
+  }
+
+  ReverseSwapInfo? _wire2api_opt_box_autoadd_reverse_swap_info(dynamic raw) {
+    return raw == null ? null : _wire2api_box_autoadd_reverse_swap_info(raw);
   }
 
   SuccessActionProcessed? _wire2api_opt_box_autoadd_success_action_processed(dynamic raw) {

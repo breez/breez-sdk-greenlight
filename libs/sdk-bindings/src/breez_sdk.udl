@@ -290,6 +290,7 @@ dictionary LnPaymentDetails {
     string? ln_address;
     string? lnurl_withdraw_endpoint;
     SwapInfo? swap_info;
+    ReverseSwapInfo? reverse_swap_info;
     u32? pending_expiration_block;
 };
 

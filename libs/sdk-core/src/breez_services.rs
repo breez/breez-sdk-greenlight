@@ -1001,6 +1001,7 @@ impl BreezServices {
                         lnurl_metadata: None,
                         lnurl_withdraw_endpoint: None,
                         swap_info: None,
+                        reverse_swap_info: None,
                         pending_expiration_block: None,
                     },
                 },
@@ -2222,8 +2223,9 @@ pub(crate) mod tests {
     use crate::node_api::NodeAPI;
     use crate::{
         input_parser, parse_short_channel_id, test_utils::*, BuyBitcoinProvider, BuyBitcoinRequest,
-        InputType, ListPaymentsRequest, OpeningFeeParams, PaymentStatus, ReceivePaymentRequest,
-        SwapInfo, SwapStatus,
+        FullReverseSwapInfo, InputType, ListPaymentsRequest, OpeningFeeParams, PaymentStatus,
+        ReceivePaymentRequest, ReverseSwapInfo, ReverseSwapInfoCached, ReverseSwapStatus, SwapInfo,
+        SwapStatus,
     };
     use crate::{PaymentExternalInfo, PaymentType};
 
@@ -2278,6 +2280,33 @@ pub(crate) mod tests {
                 promise: "promise".to_string(),
             }),
         };
+        let payment_hash_rev_swap: Vec<u8> = vec![8, 7, 6, 5, 4, 3, 2, 1];
+        let preimage_rev_swap: Vec<u8> = vec![6, 6, 6, 6];
+        let full_ref_swap_info = FullReverseSwapInfo {
+            id: "rev_swap_id".to_string(),
+            created_at_block_height: 0,
+            preimage: preimage_rev_swap.clone(),
+            private_key: vec![],
+            claim_pubkey: "claim_pubkey".to_string(),
+            timeout_block_height: 600_000,
+            invoice: "645".to_string(),
+            redeem_script: "redeem_script".to_string(),
+            onchain_amount_sat: 250,
+            sat_per_vbyte: 50,
+            cache: ReverseSwapInfoCached {
+                status: ReverseSwapStatus::CompletedConfirmed,
+                lockup_txid: Some("lockup_txid".to_string()),
+                claim_txid: Some("claim_txid".to_string()),
+            },
+        };
+        let rev_swap_info = ReverseSwapInfo {
+            id: "rev_swap_id".to_string(),
+            claim_pubkey: "claim_pubkey".to_string(),
+            lockup_txid: Some("lockup_txid".to_string()),
+            claim_txid: Some("claim_txid".to_string()),
+            onchain_amount_sat: 250,
+            status: ReverseSwapStatus::CompletedConfirmed,
+        };
         let dummy_transactions = vec![
             Payment {
                 id: "1111".to_string(),
@@ -2302,6 +2331,7 @@ pub(crate) mod tests {
                         ln_address: None,
                         lnurl_withdraw_endpoint: None,
                         swap_info: None,
+                        reverse_swap_info: None,
                         pending_expiration_block: None,
                     },
                 },
@@ -2321,7 +2351,7 @@ pub(crate) mod tests {
                         payment_hash: payment_hash_lnurl_withdraw.to_string(),
                         label: "".to_string(),
                         destination_pubkey: "1111".to_string(),
-                        payment_preimage: "2222".to_string(),
+                        payment_preimage: "3333".to_string(),
                         keysend: false,
                         bolt11: "1111".to_string(),
                         lnurl_success_action: None,
@@ -2330,6 +2360,7 @@ pub(crate) mod tests {
                         ln_address: None,
                         lnurl_withdraw_endpoint: Some(test_lnurl_withdraw_endpoint.to_string()),
                         swap_info: None,
+                        reverse_swap_info: None,
                         pending_expiration_block: None,
                     },
                 },
@@ -2358,6 +2389,7 @@ pub(crate) mod tests {
                         ln_address: Some(test_ln_address.to_string()),
                         lnurl_withdraw_endpoint: None,
                         swap_info: None,
+                        reverse_swap_info: None,
                         pending_expiration_block: None,
                     },
                 },
@@ -2386,6 +2418,36 @@ pub(crate) mod tests {
                         ln_address: None,
                         lnurl_withdraw_endpoint: None,
                         swap_info: Some(swap_info.clone()),
+                        reverse_swap_info: None,
+                        pending_expiration_block: None,
+                    },
+                },
+                metadata: None,
+            },
+            Payment {
+                id: hex::encode(payment_hash_rev_swap.clone()),
+                payment_type: PaymentType::Sent,
+                payment_time: 300000,
+                amount_msat: 50_000_000,
+                fee_msat: 2_000,
+                status: PaymentStatus::Complete,
+                error: None,
+                description: Some("test send onchain".to_string()),
+                details: PaymentDetails::Ln {
+                    data: LnPaymentDetails {
+                        payment_hash: hex::encode(payment_hash_rev_swap),
+                        label: "".to_string(),
+                        destination_pubkey: "321".to_string(),
+                        payment_preimage: hex::encode(preimage_rev_swap),
+                        keysend: false,
+                        bolt11: "312".to_string(),
+                        lnurl_success_action: None,
+                        lnurl_metadata: None,
+                        lnurl_pay_domain: None,
+                        ln_address: None,
+                        lnurl_withdraw_endpoint: None,
+                        swap_info: None,
+                        reverse_swap_info: Some(rev_swap_info.clone()),
                         pending_expiration_block: None,
                     },
                 },
@@ -2427,6 +2489,12 @@ pub(crate) mod tests {
             swap_info.bitcoin_address.clone(),
             swap_info.bolt11.clone().unwrap(),
         )?;
+        persister.insert_reverse_swap(&full_ref_swap_info)?;
+        persister
+            .update_reverse_swap_status("rev_swap_id", &ReverseSwapStatus::CompletedConfirmed)?;
+        persister
+            .update_reverse_swap_lockup_txid("rev_swap_id", Some("lockup_txid".to_string()))?;
+        persister.update_reverse_swap_claim_txid("rev_swap_id", Some("claim_txid".to_string()))?;
 
         let mut builder = BreezServicesBuilder::new(test_config.clone());
         let breez_services = builder
@@ -2471,13 +2539,13 @@ pub(crate) mod tests {
                 ..Default::default()
             })
             .await?;
-        assert_eq!(sent, vec![cloned[2].clone()]);
+        assert_eq!(sent, vec![cloned[4].clone(), cloned[2].clone()]);
         assert!(matches!(
-                &sent[0].details,
+                &sent[1].details,
                 PaymentDetails::Ln {data: LnPaymentDetails {lnurl_success_action, ..}}
                 if lnurl_success_action == &Some(sa)));
         assert!(matches!(
-                &sent[0].details,
+                &sent[1].details,
                 PaymentDetails::Ln {data: LnPaymentDetails {lnurl_pay_domain, ln_address, ..}}
                 if lnurl_pay_domain.is_none() && ln_address == &Some(test_ln_address.to_string())));
         assert!(matches!(
@@ -2488,6 +2556,10 @@ pub(crate) mod tests {
                 &received[0].details,
                 PaymentDetails::Ln {data: LnPaymentDetails {swap_info: swap, ..}}
                 if swap == &Some(swap_info)));
+        assert!(matches!(
+                &sent[0].details,
+                PaymentDetails::Ln {data: LnPaymentDetails {reverse_swap_info: rev_swap, ..}}
+                if rev_swap == &Some(rev_swap_info)));
 
         Ok(())
     }

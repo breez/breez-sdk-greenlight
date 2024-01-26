@@ -171,6 +171,8 @@ pub struct FullReverseSwapInfo {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct ReverseSwapInfoCached {
     pub status: ReverseSwapStatus,
+    pub lockup_txid: Option<String>,
+    pub claim_txid: Option<String>,
 }
 
 impl FullReverseSwapInfo {
@@ -294,10 +296,22 @@ impl FullReverseSwapInfo {
     pub(crate) fn get_preimage_hash(&self) -> sha256::Hash {
         sha256::Hash::hash(&self.preimage)
     }
+
+    /// Get the user-facing info struct using cached values
+    pub(crate) fn get_reverse_swap_info_using_cached_values(&self) -> ReverseSwapInfo {
+        ReverseSwapInfo {
+            id: self.id.clone(),
+            claim_pubkey: self.claim_pubkey.clone(),
+            lockup_txid: self.cache.clone().lockup_txid,
+            claim_txid: self.cache.claim_txid.clone(),
+            onchain_amount_sat: self.onchain_amount_sat,
+            status: self.cache.status,
+        }
+    }
 }
 
 /// Simplified version of [FullReverseSwapInfo], containing only the user-relevant fields
-#[derive(Serialize)]
+#[derive(Deserialize, Serialize, PartialEq, Eq, Debug, Clone)]
 pub struct ReverseSwapInfo {
     pub id: String,
     pub claim_pubkey: String,
@@ -723,6 +737,9 @@ pub struct LnPaymentDetails {
 
     /// Only set for [PaymentType::Received] payments that were received in the context of a swap
     pub swap_info: Option<SwapInfo>,
+
+    /// Only set for [PaymentType::Sent] payments that were sent in the context of a reverse swap
+    pub reverse_swap_info: Option<ReverseSwapInfo>,
 
     /// Only set for [PaymentType::Pending] payments that are inflight.
     pub pending_expiration_block: Option<u32>,
