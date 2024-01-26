@@ -4,7 +4,6 @@ use crate::lnurl::pay::model::{CallbackResponse, SuccessAction, ValidatedCallbac
 use crate::{ensure_sdk, input_parser::*};
 use crate::{LnUrlErrorData, Network};
 use anyhow::anyhow;
-use bitcoin::hashes::{sha256, Hash};
 use std::str::FromStr;
 
 use super::error::{LnUrlError, LnUrlResult};
@@ -47,7 +46,7 @@ pub(crate) async fn validate_lnurl_pay(
             }
         }
 
-        validate_invoice(user_amount_msat, &callback_resp.pr, &req_data, network)?;
+        validate_invoice(user_amount_msat, &callback_resp.pr, network)?;
         Ok(ValidatedCallbackResponse::EndpointSuccess {
             data: callback_resp,
         })
@@ -101,32 +100,10 @@ fn validate_user_input(
     }
 }
 
-fn validate_invoice(
-    user_amount_msat: u64,
-    bolt11: &str,
-    data: &LnUrlPayRequestData,
-    network: Network,
-) -> LnUrlResult<()> {
+fn validate_invoice(user_amount_msat: u64, bolt11: &str, network: Network) -> LnUrlResult<()> {
     let invoice = parse_invoice(bolt11)?;
     // Valid the invoice network against the config network
     validate_network(invoice.clone(), network)?;
-
-    match invoice.description_hash {
-        None => {
-            return Err(LnUrlError::Generic(anyhow!(
-                "Invoice is missing description hash"
-            )))
-        }
-        Some(received_hash) => {
-            // The hash is calculated from the exact metadata string, as received from the LNURL endpoint
-            let calculated_hash = sha256::Hash::hash(data.metadata_str.as_bytes());
-            if received_hash != calculated_hash.to_string() {
-                return Err(LnUrlError::Generic(anyhow!(
-                    "Invoice has an invalid description hash"
-                )));
-            }
-        }
-    }
 
     match invoice.amount_msat {
         None => Err(LnUrlError::Generic(anyhow!(
@@ -387,6 +364,7 @@ mod tests {
     use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
     use anyhow::{anyhow, Result};
     use bitcoin::hashes::hex::ToHex;
+    use bitcoin::hashes::{sha256, Hash};
     use gl_client::signer::model::greenlight::PayStatus;
 
     use crate::{test_utils::*, LnUrlPayRequest};
@@ -682,14 +660,12 @@ mod tests {
         assert!(validate_invoice(
             inv.amount_milli_satoshis().unwrap(),
             &payreq,
-            &req,
             Network::Bitcoin
         )
         .is_ok());
         assert!(validate_invoice(
             inv.amount_milli_satoshis().unwrap() + 1000,
             &payreq,
-            &req,
             Network::Bitcoin,
         )
         .is_err());
@@ -707,14 +683,12 @@ mod tests {
         assert!(validate_invoice(
             inv.amount_milli_satoshis().unwrap(),
             &payreq,
-            &req,
             Network::Bitcoin,
         )
         .is_ok());
         assert!(validate_invoice(
             inv.amount_milli_satoshis().unwrap() + 1000,
             &payreq,
-            &req,
             Network::Bitcoin,
         )
         .is_err());
@@ -732,7 +706,6 @@ mod tests {
         assert!(validate_invoice(
             inv.amount_milli_satoshis().unwrap(),
             &payreq,
-            &req,
             Network::Testnet,
         )
         .is_err());
