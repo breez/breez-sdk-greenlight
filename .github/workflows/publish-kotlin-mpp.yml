@@ -29,7 +29,7 @@ on:
 
 jobs:
   build-package:
-    runs-on: macOS-latest
+    runs-on: macOS-13
     steps:
       - name: Checkout breez-sdk repo
         uses: actions/checkout@v3

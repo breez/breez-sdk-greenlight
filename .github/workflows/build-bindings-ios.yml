@@ -25,7 +25,7 @@ on:
 jobs:
   build:
     if: ${{ !inputs.use-dummy-binaries }}
-    runs-on: macOS-latest
+    runs-on: macOS-13
     name: build ${{ matrix.target }}
     strategy:
       matrix:

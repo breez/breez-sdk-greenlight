@@ -26,7 +26,7 @@ on:
 
 jobs:
   build-macos-wheels:
-    runs-on: macos-latest
+    runs-on: macos-13
     strategy:
       matrix:
         python: ["3.8", "3.9", "3.10", "3.11", "3.12"]

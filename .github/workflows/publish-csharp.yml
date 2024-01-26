@@ -107,7 +107,7 @@ jobs:
           windows-latest,
           ubuntu-latest,
           ubuntu-20.04,
-          macOS-latest,
+          macOS-13,
         ]
     steps:
       - name: Checkout breez-sdk repo

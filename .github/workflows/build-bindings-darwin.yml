@@ -25,7 +25,7 @@ on:
 jobs:
   build:
     if: ${{ !inputs.use-dummy-binaries }}
-    runs-on: macOS-latest
+    runs-on: macOS-13
     name: build ${{ matrix.target }}
     strategy:
       matrix:
@@ -70,7 +70,7 @@ jobs:
           libs/target/${{ matrix.target }}/release/libbreez_sdk_bindings.a
   
   merge:
-    runs-on: macOS-latest
+    runs-on: macOS-13
     needs: build
     name: build darwin-universal
     steps:
