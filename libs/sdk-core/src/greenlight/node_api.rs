@@ -1465,9 +1465,9 @@ async fn pull_transactions(
         .pays
         .into_iter()
         .filter(|p| p.created_at > since_timestamp)
-        .map(|gl_payment| {
-            let payment_status = gl_payment.status().into();
-            TryInto::<PendingPayment>::try_into(gl_payment)
+        .map(|list_pay| {
+            let payment_status = list_pay.status().into();
+            TryInto::<PendingPayment>::try_into(list_pay)
                 .map(|p| p.to_persisted(payment_status, None))
         })
         .collect();

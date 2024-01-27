@@ -309,6 +309,9 @@ impl NodeAPI for MockNodeAPI {
                 .iter()
                 .cloned()
                 .flat_map(|gl_payment| {
+                  let payment_status = gl_payment.status().into();
+                  TryInto::<PendingPayment>::try_into(gl_payment)
+                    .map(|p| p.to_persisted(payment_status, None))
                 })
                 .collect(),
             channels: Vec::new(),
