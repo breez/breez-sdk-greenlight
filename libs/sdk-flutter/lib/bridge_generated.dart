@@ -136,12 +136,12 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kParseInputConstMeta;
 
   /// See [BreezServices::list_payments]
-  Future<List<Payment>> listPayments({required ListPaymentsRequest req, dynamic hint});
+  Future<List<PaymentListItem>> listPayments({required ListPaymentsRequest req, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kListPaymentsConstMeta;
 
   /// See [BreezServices::list_payments]
-  Future<Payment?> paymentByHash({required String hash, dynamic hint});
+  Future<PaymentListItem?> paymentByHash({required String hash, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kPaymentByHashConstMeta;
 
@@ -357,7 +357,7 @@ sealed class BreezEvent with _$BreezEvent {
 
   /// Indicates that an outgoing payment has been completed successfully
   const factory BreezEvent.paymentSucceed({
-    required Payment details,
+    required PendingPayment details,
   }) = BreezEvent_PaymentSucceed;
 
   /// Indicates that an outgoing payment has been failed to complete
@@ -622,7 +622,7 @@ sealed class InputType with _$InputType {
 class InvoicePaidDetails {
   final String paymentHash;
   final String bolt11;
-  final Payment? payment;
+  final PaymentListItem? payment;
 
   const InvoicePaidDetails({
     required this.paymentHash,
@@ -1179,35 +1179,6 @@ class OpeningFeeParamsMenu {
   });
 }
 
-/// Represents a payment, including its [PaymentType] and [PaymentDetails]
-class Payment {
-  final String id;
-  final PaymentType paymentType;
-
-  /// Epoch time, in seconds
-  final int paymentTime;
-  final int amountMsat;
-  final int feeMsat;
-  final PaymentStatus status;
-  final String? error;
-  final String? description;
-  final PaymentDetails details;
-  final String? metadata;
-
-  const Payment({
-    required this.id,
-    required this.paymentType,
-    required this.paymentTime,
-    required this.amountMsat,
-    required this.feeMsat,
-    required this.status,
-    this.error,
-    this.description,
-    required this.details,
-    this.metadata,
-  });
-}
-
 @freezed
 sealed class PaymentDetails with _$PaymentDetails {
   const factory PaymentDetails.ln({
@@ -1230,6 +1201,35 @@ class PaymentFailedData {
   });
 }
 
+/// Represents a persisted payment, including its [PaymentType] and [PaymentDetails]
+class PaymentListItem {
+  final String id;
+  final PaymentType paymentType;
+
+  /// Epoch time, in seconds
+  final int paymentTime;
+  final int amountMsat;
+  final int feeMsat;
+  final PaymentStatus status;
+  final String? error;
+  final String? description;
+  final PaymentDetails details;
+  final String? metadata;
+
+  const PaymentListItem({
+    required this.id,
+    required this.paymentType,
+    required this.paymentTime,
+    required this.amountMsat,
+    required this.feeMsat,
+    required this.status,
+    this.error,
+    this.description,
+    required this.details,
+    this.metadata,
+  });
+}
+
 /// The status of a payment
 enum PaymentStatus {
   Pending,
@@ -1249,6 +1249,28 @@ enum PaymentTypeFilter {
   Sent,
   Received,
   ClosedChannel,
+}
+
+/// Represents a sent and pending payment, not yet persisted into the storage,
+/// including its [PaymentType] and [PaymentDetails]
+class PendingPayment {
+  final String id;
+
+  /// Epoch time, in seconds
+  final int paymentTime;
+  final int amountMsat;
+  final int feeMsat;
+  final String? description;
+  final PaymentDetails details;
+
+  const PendingPayment({
+    required this.id,
+    required this.paymentTime,
+    required this.amountMsat,
+    required this.feeMsat,
+    this.description,
+    required this.details,
+  });
 }
 
 /// We need to prepare a redeem_onchain_funds transaction to know what fee will be charged in satoshis.
@@ -1622,7 +1644,7 @@ class SendPaymentRequest {
 
 /// Represents a send payment response.
 class SendPaymentResponse {
-  final Payment payment;
+  final PaymentListItem payment;
 
   const SendPaymentResponse({
     required this.payment,
@@ -2285,11 +2307,11 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["input"],
       );
 
-  Future<List<Payment>> listPayments({required ListPaymentsRequest req, dynamic hint}) {
+  Future<List<PaymentListItem>> listPayments({required ListPaymentsRequest req, dynamic hint}) {
     var arg0 = _platform.api2wire_box_autoadd_list_payments_request(req);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_list_payments(port_, arg0),
-      parseSuccessData: _wire2api_list_payment,
+      parseSuccessData: _wire2api_list_payment_list_item,
       parseErrorData: _wire2api_FrbAnyhowException,
       constMeta: kListPaymentsConstMeta,
       argValues: [req],
@@ -2302,11 +2324,11 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["req"],
       );
 
-  Future<Payment?> paymentByHash({required String hash, dynamic hint}) {
+  Future<PaymentListItem?> paymentByHash({required String hash, dynamic hint}) {
     var arg0 = _platform.api2wire_String(hash);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_payment_by_hash(port_, arg0),
-      parseSuccessData: _wire2api_opt_box_autoadd_payment,
+      parseSuccessData: _wire2api_opt_box_autoadd_payment_list_item,
       parseErrorData: _wire2api_FrbAnyhowException,
       constMeta: kPaymentByHashConstMeta,
       argValues: [hash],
@@ -2920,12 +2942,16 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return _wire2api_opening_fee_params(raw);
   }
 
-  Payment _wire2api_box_autoadd_payment(dynamic raw) {
-    return _wire2api_payment(raw);
-  }
-
   PaymentFailedData _wire2api_box_autoadd_payment_failed_data(dynamic raw) {
     return _wire2api_payment_failed_data(raw);
+  }
+
+  PaymentListItem _wire2api_box_autoadd_payment_list_item(dynamic raw) {
+    return _wire2api_payment_list_item(raw);
+  }
+
+  PendingPayment _wire2api_box_autoadd_pending_payment(dynamic raw) {
+    return _wire2api_pending_payment(raw);
   }
 
   ReverseSwapInfo _wire2api_box_autoadd_reverse_swap_info(dynamic raw) {
@@ -2970,7 +2996,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         return BreezEvent_Synced();
       case 3:
         return BreezEvent_PaymentSucceed(
-          details: _wire2api_box_autoadd_payment(raw[1]),
+          details: _wire2api_box_autoadd_pending_payment(raw[1]),
         );
       case 4:
         return BreezEvent_PaymentFailed(
@@ -3140,7 +3166,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return InvoicePaidDetails(
       paymentHash: _wire2api_String(arr[0]),
       bolt11: _wire2api_String(arr[1]),
-      payment: _wire2api_opt_box_autoadd_payment(arr[2]),
+      payment: _wire2api_opt_box_autoadd_payment_list_item(arr[2]),
     );
   }
 
@@ -3164,8 +3190,8 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return (raw as List<dynamic>).map(_wire2api_opening_fee_params).toList();
   }
 
-  List<Payment> _wire2api_list_payment(dynamic raw) {
-    return (raw as List<dynamic>).map(_wire2api_payment).toList();
+  List<PaymentListItem> _wire2api_list_payment_list_item(dynamic raw) {
+    return (raw as List<dynamic>).map(_wire2api_payment_list_item).toList();
   }
 
   List<Rate> _wire2api_list_rate(dynamic raw) {
@@ -3520,8 +3546,8 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return raw == null ? null : _wire2api_box_autoadd_opening_fee_params(raw);
   }
 
-  Payment? _wire2api_opt_box_autoadd_payment(dynamic raw) {
-    return raw == null ? null : _wire2api_box_autoadd_payment(raw);
+  PaymentListItem? _wire2api_opt_box_autoadd_payment_list_item(dynamic raw) {
+    return raw == null ? null : _wire2api_box_autoadd_payment_list_item(raw);
   }
 
   ReverseSwapInfo? _wire2api_opt_box_autoadd_reverse_swap_info(dynamic raw) {
@@ -3556,23 +3582,6 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return raw == null ? null : _wire2api_list_localized_name(raw);
   }
 
-  Payment _wire2api_payment(dynamic raw) {
-    final arr = raw as List<dynamic>;
-    if (arr.length != 10) throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
-    return Payment(
-      id: _wire2api_String(arr[0]),
-      paymentType: _wire2api_payment_type(arr[1]),
-      paymentTime: _wire2api_i64(arr[2]),
-      amountMsat: _wire2api_u64(arr[3]),
-      feeMsat: _wire2api_u64(arr[4]),
-      status: _wire2api_payment_status(arr[5]),
-      error: _wire2api_opt_String(arr[6]),
-      description: _wire2api_opt_String(arr[7]),
-      details: _wire2api_payment_details(arr[8]),
-      metadata: _wire2api_opt_String(arr[9]),
-    );
-  }
-
   PaymentDetails _wire2api_payment_details(dynamic raw) {
     switch (raw[0]) {
       case 0:
@@ -3598,12 +3607,42 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     );
   }
 
+  PaymentListItem _wire2api_payment_list_item(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 10) throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
+    return PaymentListItem(
+      id: _wire2api_String(arr[0]),
+      paymentType: _wire2api_payment_type(arr[1]),
+      paymentTime: _wire2api_i64(arr[2]),
+      amountMsat: _wire2api_u64(arr[3]),
+      feeMsat: _wire2api_u64(arr[4]),
+      status: _wire2api_payment_status(arr[5]),
+      error: _wire2api_opt_String(arr[6]),
+      description: _wire2api_opt_String(arr[7]),
+      details: _wire2api_payment_details(arr[8]),
+      metadata: _wire2api_opt_String(arr[9]),
+    );
+  }
+
   PaymentStatus _wire2api_payment_status(dynamic raw) {
     return PaymentStatus.values[raw as int];
   }
 
   PaymentType _wire2api_payment_type(dynamic raw) {
     return PaymentType.values[raw as int];
+  }
+
+  PendingPayment _wire2api_pending_payment(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6) throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return PendingPayment(
+      id: _wire2api_String(arr[0]),
+      paymentTime: _wire2api_i64(arr[1]),
+      amountMsat: _wire2api_u64(arr[2]),
+      feeMsat: _wire2api_u64(arr[3]),
+      description: _wire2api_opt_String(arr[4]),
+      details: _wire2api_payment_details(arr[5]),
+    );
   }
 
   PrepareRedeemOnchainFundsResponse _wire2api_prepare_redeem_onchain_funds_response(dynamic raw) {
@@ -3736,7 +3775,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     final arr = raw as List<dynamic>;
     if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
     return SendPaymentResponse(
-      payment: _wire2api_payment(arr[0]),
+      payment: _wire2api_payment_list_item(arr[0]),
     );
   }
 

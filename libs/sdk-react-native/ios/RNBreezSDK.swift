@@ -299,7 +299,7 @@ class RNBreezSDK: RCTEventEmitter {
         do {
             let listPaymentsRequest = try BreezSDKMapper.asListPaymentsRequest(listPaymentsRequest: req)
             var res = try getBreezServices().listPayments(req: listPaymentsRequest)
-            resolve(BreezSDKMapper.arrayOf(paymentList: res))
+            resolve(BreezSDKMapper.arrayOf(paymentListItemList: res))
         } catch let err {
             rejectErr(err: err, reject: reject)
         }
@@ -310,7 +310,7 @@ class RNBreezSDK: RCTEventEmitter {
         do {
             var res = try getBreezServices().paymentByHash(hash: hash)
             if res != nil {
-                resolve(BreezSDKMapper.dictionaryOf(payment: res!))
+                resolve(BreezSDKMapper.dictionaryOf(paymentListItem: res!))
             } else {
                 resolve(nil)
             }

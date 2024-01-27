@@ -641,7 +641,14 @@ fun asInvoicePaidDetails(invoicePaidDetails: ReadableMap): InvoicePaidDetails? {
     }
     val paymentHash = invoicePaidDetails.getString("paymentHash")!!
     val bolt11 = invoicePaidDetails.getString("bolt11")!!
-    val payment = if (hasNonNullKey(invoicePaidDetails, "payment")) invoicePaidDetails.getMap("payment")?.let { asPayment(it) } else null
+    val payment =
+        if (hasNonNullKey(invoicePaidDetails, "payment")) {
+            invoicePaidDetails.getMap("payment")?.let {
+                asPaymentListItem(it)
+            }
+        } else {
+            null
+        }
     return InvoicePaidDetails(
         paymentHash,
         bolt11,
@@ -1880,72 +1887,6 @@ fun asOpeningFeeParamsMenuList(arr: ReadableArray): List<OpeningFeeParamsMenu> {
     return list
 }
 
-fun asPayment(payment: ReadableMap): Payment? {
-    if (!validateMandatoryFields(
-            payment,
-            arrayOf(
-                "id",
-                "paymentType",
-                "paymentTime",
-                "amountMsat",
-                "feeMsat",
-                "status",
-                "details",
-            ),
-        )
-    ) {
-        return null
-    }
-    val id = payment.getString("id")!!
-    val paymentType = payment.getString("paymentType")?.let { asPaymentType(it) }!!
-    val paymentTime = payment.getDouble("paymentTime").toLong()
-    val amountMsat = payment.getDouble("amountMsat").toULong()
-    val feeMsat = payment.getDouble("feeMsat").toULong()
-    val status = payment.getString("status")?.let { asPaymentStatus(it) }!!
-    val error = if (hasNonNullKey(payment, "error")) payment.getString("error") else null
-    val description = if (hasNonNullKey(payment, "description")) payment.getString("description") else null
-    val details = payment.getMap("details")?.let { asPaymentDetails(it) }!!
-    val metadata = if (hasNonNullKey(payment, "metadata")) payment.getString("metadata") else null
-    return Payment(
-        id,
-        paymentType,
-        paymentTime,
-        amountMsat,
-        feeMsat,
-        status,
-        error,
-        description,
-        details,
-        metadata,
-    )
-}
-
-fun readableMapOf(payment: Payment): ReadableMap {
-    return readableMapOf(
-        "id" to payment.id,
-        "paymentType" to payment.paymentType.name.lowercase(),
-        "paymentTime" to payment.paymentTime,
-        "amountMsat" to payment.amountMsat,
-        "feeMsat" to payment.feeMsat,
-        "status" to payment.status.name.lowercase(),
-        "error" to payment.error,
-        "description" to payment.description,
-        "details" to readableMapOf(payment.details),
-        "metadata" to payment.metadata,
-    )
-}
-
-fun asPaymentList(arr: ReadableArray): List<Payment> {
-    val list = ArrayList<Payment>()
-    for (value in arr.toArrayList()) {
-        when (value) {
-            is ReadableMap -> list.add(asPayment(value)!!)
-            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
-        }
-    }
-    return list
-}
-
 fun asPaymentFailedData(paymentFailedData: ReadableMap): PaymentFailedData? {
     if (!validateMandatoryFields(
             paymentFailedData,
@@ -1980,6 +1921,124 @@ fun asPaymentFailedDataList(arr: ReadableArray): List<PaymentFailedData> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asPaymentFailedData(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
+fun asPaymentListItem(paymentListItem: ReadableMap): PaymentListItem? {
+    if (!validateMandatoryFields(
+            paymentListItem,
+            arrayOf(
+                "id",
+                "paymentType",
+                "paymentTime",
+                "amountMsat",
+                "feeMsat",
+                "status",
+                "details",
+            ),
+        )
+    ) {
+        return null
+    }
+    val id = paymentListItem.getString("id")!!
+    val paymentType = paymentListItem.getString("paymentType")?.let { asPaymentType(it) }!!
+    val paymentTime = paymentListItem.getDouble("paymentTime").toLong()
+    val amountMsat = paymentListItem.getDouble("amountMsat").toULong()
+    val feeMsat = paymentListItem.getDouble("feeMsat").toULong()
+    val status = paymentListItem.getString("status")?.let { asPaymentStatus(it) }!!
+    val error = if (hasNonNullKey(paymentListItem, "error")) paymentListItem.getString("error") else null
+    val description = if (hasNonNullKey(paymentListItem, "description")) paymentListItem.getString("description") else null
+    val details = paymentListItem.getMap("details")?.let { asPaymentDetails(it) }!!
+    val metadata = if (hasNonNullKey(paymentListItem, "metadata")) paymentListItem.getString("metadata") else null
+    return PaymentListItem(
+        id,
+        paymentType,
+        paymentTime,
+        amountMsat,
+        feeMsat,
+        status,
+        error,
+        description,
+        details,
+        metadata,
+    )
+}
+
+fun readableMapOf(paymentListItem: PaymentListItem): ReadableMap {
+    return readableMapOf(
+        "id" to paymentListItem.id,
+        "paymentType" to paymentListItem.paymentType.name.lowercase(),
+        "paymentTime" to paymentListItem.paymentTime,
+        "amountMsat" to paymentListItem.amountMsat,
+        "feeMsat" to paymentListItem.feeMsat,
+        "status" to paymentListItem.status.name.lowercase(),
+        "error" to paymentListItem.error,
+        "description" to paymentListItem.description,
+        "details" to readableMapOf(paymentListItem.details),
+        "metadata" to paymentListItem.metadata,
+    )
+}
+
+fun asPaymentListItemList(arr: ReadableArray): List<PaymentListItem> {
+    val list = ArrayList<PaymentListItem>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asPaymentListItem(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
+fun asPendingPayment(pendingPayment: ReadableMap): PendingPayment? {
+    if (!validateMandatoryFields(
+            pendingPayment,
+            arrayOf(
+                "id",
+                "paymentTime",
+                "amountMsat",
+                "feeMsat",
+                "details",
+            ),
+        )
+    ) {
+        return null
+    }
+    val id = pendingPayment.getString("id")!!
+    val paymentTime = pendingPayment.getDouble("paymentTime").toLong()
+    val amountMsat = pendingPayment.getDouble("amountMsat").toULong()
+    val feeMsat = pendingPayment.getDouble("feeMsat").toULong()
+    val description = if (hasNonNullKey(pendingPayment, "description")) pendingPayment.getString("description") else null
+    val details = pendingPayment.getMap("details")?.let { asPaymentDetails(it) }!!
+    return PendingPayment(
+        id,
+        paymentTime,
+        amountMsat,
+        feeMsat,
+        description,
+        details,
+    )
+}
+
+fun readableMapOf(pendingPayment: PendingPayment): ReadableMap {
+    return readableMapOf(
+        "id" to pendingPayment.id,
+        "paymentTime" to pendingPayment.paymentTime,
+        "amountMsat" to pendingPayment.amountMsat,
+        "feeMsat" to pendingPayment.feeMsat,
+        "description" to pendingPayment.description,
+        "details" to readableMapOf(pendingPayment.details),
+    )
+}
+
+fun asPendingPaymentList(arr: ReadableArray): List<PendingPayment> {
+    val list = ArrayList<PendingPayment>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asPendingPayment(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
         }
     }
@@ -2952,7 +3011,7 @@ fun asSendPaymentResponse(sendPaymentResponse: ReadableMap): SendPaymentResponse
     ) {
         return null
     }
-    val payment = sendPaymentResponse.getMap("payment")?.let { asPayment(it) }!!
+    val payment = sendPaymentResponse.getMap("payment")?.let { asPaymentListItem(it) }!!
     return SendPaymentResponse(
         payment,
     )
@@ -3531,7 +3590,7 @@ fun asBreezEvent(breezEvent: ReadableMap): BreezEvent? {
         return BreezEvent.Synced
     }
     if (type == "paymentSucceed") {
-        return BreezEvent.PaymentSucceed(breezEvent.getMap("details")?.let { asPayment(it) }!!)
+        return BreezEvent.PaymentSucceed(breezEvent.getMap("details")?.let { asPendingPayment(it) }!!)
     }
     if (type == "paymentFailed") {
         return BreezEvent.PaymentFailed(breezEvent.getMap("details")?.let { asPaymentFailedData(it) }!!)
@@ -4174,7 +4233,7 @@ fun pushToArray(
         is LspInformation -> array.pushMap(readableMapOf(value))
         is MetadataFilter -> array.pushMap(readableMapOf(value))
         is OpeningFeeParams -> array.pushMap(readableMapOf(value))
-        is Payment -> array.pushMap(readableMapOf(value))
+        is PaymentListItem -> array.pushMap(readableMapOf(value))
         is PaymentTypeFilter -> array.pushString(value.name.lowercase())
         is Rate -> array.pushMap(readableMapOf(value))
         is ReverseSwapInfo -> array.pushMap(readableMapOf(value))
