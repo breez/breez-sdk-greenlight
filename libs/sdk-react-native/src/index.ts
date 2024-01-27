@@ -315,15 +315,6 @@ export type PaymentListItem = {
     metadata?: string
 }
 
-export type PendingPayment = {
-    id: string
-    paymentTime: number
-    amountMsat: number
-    feeMsat: number
-    description?: string
-    details: PaymentDetails
-}
-
 export type PrepareRedeemOnchainFundsRequest = {
     toAddress: string
     satPerVbyte: number
@@ -568,7 +559,7 @@ export type BreezEvent = {
     type: BreezEventVariant.SYNCED
 } | {
     type: BreezEventVariant.PAYMENT_SUCCEED,
-    details: PendingPayment
+    details: PaymentListItem
 } | {
     type: BreezEventVariant.PAYMENT_FAILED,
     details: PaymentFailedData

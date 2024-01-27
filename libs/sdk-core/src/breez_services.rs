@@ -81,7 +81,7 @@ pub enum BreezEvent {
     /// Indicates that the local SDK state has just been sync-ed with the remote components
     Synced,
     /// Indicates that an outgoing payment has been completed successfully
-    PaymentSucceed { details: PendingPayment },
+    PaymentSucceed { details: PaymentListItem },
     /// Indicates that an outgoing payment has been failed to complete
     PaymentFailed { details: PaymentFailedData },
     /// Indicates that the backup process has just started
@@ -1035,11 +1035,12 @@ impl BreezServices {
         self.do_sync(payment_res.is_ok()).await?;
         match payment_res {
             Ok(payment) => {
+                let payment = payment.to_persisted(PaymentStatus::Complete, None);
                 self.notify_event_listeners(BreezEvent::PaymentSucceed {
                     details: payment.clone(),
                 })
                 .await?;
-                Ok(payment.to_persisted(PaymentStatus::Complete, None))
+                Ok(payment)
             }
             Err(e) => {
                 if let Some(invoice) = invoice.clone() {

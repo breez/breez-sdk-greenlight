@@ -2213,69 +2213,6 @@ enum BreezSDKMapper {
         return paymentListItemList.map { v -> [String: Any?] in dictionaryOf(paymentListItem: v) }
     }
 
-    static func asPendingPayment(pendingPayment: [String: Any?]) throws -> PendingPayment {
-        guard let id = pendingPayment["id"] as? String else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "id", typeName: "PendingPayment"))
-        }
-        guard let paymentTime = pendingPayment["paymentTime"] as? Int64 else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "paymentTime", typeName: "PendingPayment"))
-        }
-        guard let amountMsat = pendingPayment["amountMsat"] as? UInt64 else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "amountMsat", typeName: "PendingPayment"))
-        }
-        guard let feeMsat = pendingPayment["feeMsat"] as? UInt64 else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "feeMsat", typeName: "PendingPayment"))
-        }
-        var description: String?
-        if hasNonNilKey(data: pendingPayment, key: "description") {
-            guard let descriptionTmp = pendingPayment["description"] as? String else {
-                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "description"))
-            }
-            description = descriptionTmp
-        }
-        guard let detailsTmp = pendingPayment["details"] as? [String: Any?] else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "details", typeName: "PendingPayment"))
-        }
-        let details = try asPaymentDetails(paymentDetails: detailsTmp)
-
-        return PendingPayment(
-            id: id,
-            paymentTime: paymentTime,
-            amountMsat: amountMsat,
-            feeMsat: feeMsat,
-            description: description,
-            details: details
-        )
-    }
-
-    static func dictionaryOf(pendingPayment: PendingPayment) -> [String: Any?] {
-        return [
-            "id": pendingPayment.id,
-            "paymentTime": pendingPayment.paymentTime,
-            "amountMsat": pendingPayment.amountMsat,
-            "feeMsat": pendingPayment.feeMsat,
-            "description": pendingPayment.description == nil ? nil : pendingPayment.description,
-            "details": dictionaryOf(paymentDetails: pendingPayment.details),
-        ]
-    }
-
-    static func asPendingPaymentList(arr: [Any]) throws -> [PendingPayment] {
-        var list = [PendingPayment]()
-        for value in arr {
-            if let val = value as? [String: Any?] {
-                var pendingPayment = try asPendingPayment(pendingPayment: val)
-                list.append(pendingPayment)
-            } else {
-                throw SdkError.Generic(message: errUnexpectedType(typeName: "PendingPayment"))
-            }
-        }
-        return list
-    }
-
-    static func arrayOf(pendingPaymentList: [PendingPayment]) -> [Any] {
-        return pendingPaymentList.map { v -> [String: Any?] in dictionaryOf(pendingPayment: v) }
-    }
-
     static func asPrepareRedeemOnchainFundsRequest(prepareRedeemOnchainFundsRequest: [String: Any?]) throws -> PrepareRedeemOnchainFundsRequest {
         guard let toAddress = prepareRedeemOnchainFundsRequest["toAddress"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "toAddress", typeName: "PrepareRedeemOnchainFundsRequest"))
@@ -3932,7 +3869,7 @@ enum BreezSDKMapper {
             guard let detailsTmp = breezEvent["details"] as? [String: Any?] else {
                 throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "details", typeName: "BreezEvent"))
             }
-            let _details = try asPendingPayment(pendingPayment: detailsTmp)
+            let _details = try asPaymentListItem(paymentListItem: detailsTmp)
 
             return BreezEvent.paymentSucceed(details: _details)
         }
@@ -3990,7 +3927,7 @@ enum BreezSDKMapper {
         ):
             return [
                 "type": "paymentSucceed",
-                "details": dictionaryOf(pendingPayment: details),
+                "details": dictionaryOf(paymentListItem: details),
             ]
 
         case let .paymentFailed(

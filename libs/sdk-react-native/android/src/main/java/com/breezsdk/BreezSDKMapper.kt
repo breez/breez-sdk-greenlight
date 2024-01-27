@@ -1993,58 +1993,6 @@ fun asPaymentListItemList(arr: ReadableArray): List<PaymentListItem> {
     return list
 }
 
-fun asPendingPayment(pendingPayment: ReadableMap): PendingPayment? {
-    if (!validateMandatoryFields(
-            pendingPayment,
-            arrayOf(
-                "id",
-                "paymentTime",
-                "amountMsat",
-                "feeMsat",
-                "details",
-            ),
-        )
-    ) {
-        return null
-    }
-    val id = pendingPayment.getString("id")!!
-    val paymentTime = pendingPayment.getDouble("paymentTime").toLong()
-    val amountMsat = pendingPayment.getDouble("amountMsat").toULong()
-    val feeMsat = pendingPayment.getDouble("feeMsat").toULong()
-    val description = if (hasNonNullKey(pendingPayment, "description")) pendingPayment.getString("description") else null
-    val details = pendingPayment.getMap("details")?.let { asPaymentDetails(it) }!!
-    return PendingPayment(
-        id,
-        paymentTime,
-        amountMsat,
-        feeMsat,
-        description,
-        details,
-    )
-}
-
-fun readableMapOf(pendingPayment: PendingPayment): ReadableMap {
-    return readableMapOf(
-        "id" to pendingPayment.id,
-        "paymentTime" to pendingPayment.paymentTime,
-        "amountMsat" to pendingPayment.amountMsat,
-        "feeMsat" to pendingPayment.feeMsat,
-        "description" to pendingPayment.description,
-        "details" to readableMapOf(pendingPayment.details),
-    )
-}
-
-fun asPendingPaymentList(arr: ReadableArray): List<PendingPayment> {
-    val list = ArrayList<PendingPayment>()
-    for (value in arr.toArrayList()) {
-        when (value) {
-            is ReadableMap -> list.add(asPendingPayment(value)!!)
-            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
-        }
-    }
-    return list
-}
-
 fun asPrepareRedeemOnchainFundsRequest(prepareRedeemOnchainFundsRequest: ReadableMap): PrepareRedeemOnchainFundsRequest? {
     if (!validateMandatoryFields(
             prepareRedeemOnchainFundsRequest,
@@ -3590,7 +3538,7 @@ fun asBreezEvent(breezEvent: ReadableMap): BreezEvent? {
         return BreezEvent.Synced
     }
     if (type == "paymentSucceed") {
-        return BreezEvent.PaymentSucceed(breezEvent.getMap("details")?.let { asPendingPayment(it) }!!)
+        return BreezEvent.PaymentSucceed(breezEvent.getMap("details")?.let { asPaymentListItem(it) }!!)
     }
     if (type == "paymentFailed") {
         return BreezEvent.PaymentFailed(breezEvent.getMap("details")?.let { asPaymentFailedData(it) }!!)

@@ -229,15 +229,6 @@ dictionary PaymentListItem {
     string? metadata;
 };
 
-dictionary PendingPayment {
-    string id;
-    i64 payment_time;    
-    u64 amount_msat;
-    u64 fee_msat;
-    string? description;
-    PaymentDetails details;
-};
-
 dictionary ListPaymentsRequest {
     sequence<PaymentTypeFilter>? filters = null;
     sequence<MetadataFilter>? metadata_filters = null;
@@ -387,7 +378,7 @@ interface BreezEvent {
     NewBlock(u32 block);
     InvoicePaid(InvoicePaidDetails details);
     Synced();
-    PaymentSucceed(PendingPayment details);
+    PaymentSucceed(PaymentListItem details);
     PaymentFailed(PaymentFailedData details);
     BackupStarted();
     BackupSucceeded(); 

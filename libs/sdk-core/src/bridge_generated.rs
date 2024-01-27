@@ -87,7 +87,6 @@ use crate::models::PaymentListItem;
 use crate::models::PaymentStatus;
 use crate::models::PaymentType;
 use crate::models::PaymentTypeFilter;
-use crate::models::PendingPayment;
 use crate::models::PrepareRedeemOnchainFundsRequest;
 use crate::models::PrepareRedeemOnchainFundsResponse;
 use crate::models::PrepareRefundRequest;
@@ -1761,26 +1760,6 @@ impl support::IntoDart for PaymentType {
 }
 impl support::IntoDartExceptPrimitive for PaymentType {}
 impl rust2dart::IntoIntoDart<PaymentType> for PaymentType {
-    fn into_into_dart(self) -> Self {
-        self
-    }
-}
-
-impl support::IntoDart for PendingPayment {
-    fn into_dart(self) -> support::DartAbi {
-        vec![
-            self.id.into_into_dart().into_dart(),
-            self.payment_time.into_into_dart().into_dart(),
-            self.amount_msat.into_into_dart().into_dart(),
-            self.fee_msat.into_into_dart().into_dart(),
-            self.description.into_dart(),
-            self.details.into_into_dart().into_dart(),
-        ]
-        .into_dart()
-    }
-}
-impl support::IntoDartExceptPrimitive for PendingPayment {}
-impl rust2dart::IntoIntoDart<PendingPayment> for PendingPayment {
     fn into_into_dart(self) -> Self {
         self
     }

@@ -357,7 +357,7 @@ sealed class BreezEvent with _$BreezEvent {
 
   /// Indicates that an outgoing payment has been completed successfully
   const factory BreezEvent.paymentSucceed({
-    required PendingPayment details,
+    required PaymentListItem details,
   }) = BreezEvent_PaymentSucceed;
 
   /// Indicates that an outgoing payment has been failed to complete
@@ -1249,28 +1249,6 @@ enum PaymentTypeFilter {
   Sent,
   Received,
   ClosedChannel,
-}
-
-/// Represents a sent and pending payment, not yet persisted into the storage,
-/// including its [PaymentType] and [PaymentDetails]
-class PendingPayment {
-  final String id;
-
-  /// Epoch time, in seconds
-  final int paymentTime;
-  final int amountMsat;
-  final int feeMsat;
-  final String? description;
-  final PaymentDetails details;
-
-  const PendingPayment({
-    required this.id,
-    required this.paymentTime,
-    required this.amountMsat,
-    required this.feeMsat,
-    this.description,
-    required this.details,
-  });
 }
 
 /// We need to prepare a redeem_onchain_funds transaction to know what fee will be charged in satoshis.
@@ -2950,10 +2928,6 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return _wire2api_payment_list_item(raw);
   }
 
-  PendingPayment _wire2api_box_autoadd_pending_payment(dynamic raw) {
-    return _wire2api_pending_payment(raw);
-  }
-
   ReverseSwapInfo _wire2api_box_autoadd_reverse_swap_info(dynamic raw) {
     return _wire2api_reverse_swap_info(raw);
   }
@@ -2996,7 +2970,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         return BreezEvent_Synced();
       case 3:
         return BreezEvent_PaymentSucceed(
-          details: _wire2api_box_autoadd_pending_payment(raw[1]),
+          details: _wire2api_box_autoadd_payment_list_item(raw[1]),
         );
       case 4:
         return BreezEvent_PaymentFailed(
@@ -3630,19 +3604,6 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   PaymentType _wire2api_payment_type(dynamic raw) {
     return PaymentType.values[raw as int];
-  }
-
-  PendingPayment _wire2api_pending_payment(dynamic raw) {
-    final arr = raw as List<dynamic>;
-    if (arr.length != 6) throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
-    return PendingPayment(
-      id: _wire2api_String(arr[0]),
-      paymentTime: _wire2api_i64(arr[1]),
-      amountMsat: _wire2api_u64(arr[2]),
-      feeMsat: _wire2api_u64(arr[3]),
-      description: _wire2api_opt_String(arr[4]),
-      details: _wire2api_payment_details(arr[5]),
-    );
   }
 
   PrepareRedeemOnchainFundsResponse _wire2api_prepare_redeem_onchain_funds_response(dynamic raw) {

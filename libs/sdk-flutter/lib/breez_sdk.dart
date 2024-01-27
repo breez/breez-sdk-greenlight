@@ -18,9 +18,9 @@ class BreezSDK {
   Stream<InvoicePaidDetails> get invoicePaidStream => _invoicePaidStream.stream;
 
   /// Listen to payment results
-  final StreamController<Payment> _paymentResultStream = StreamController.broadcast();
+  final StreamController<PaymentListItem> _paymentResultStream = StreamController.broadcast();
 
-  Stream<Payment> get paymentResultStream => _paymentResultStream.stream;
+  Stream<PaymentListItem> get paymentResultStream => _paymentResultStream.stream;
 
   void initialize() {
     /// Listen to BreezEvent's(new block, invoice paid, synced)
@@ -201,12 +201,12 @@ class BreezSDK {
   /* Payment API's & Streams*/
 
   /// Listen to payment list
-  final StreamController<List<Payment>> paymentsController = BehaviorSubject<List<Payment>>();
+  final StreamController<List<PaymentListItem>> paymentsController = BehaviorSubject<List<PaymentListItem>>();
 
-  Stream<List<Payment>> get paymentsStream => paymentsController.stream;
+  Stream<List<PaymentListItem>> get paymentsStream => paymentsController.stream;
 
   /// list payments (incoming/outgoing payments) from the persistent storage
-  Future<List<Payment>> listPayments({
+  Future<List<PaymentListItem>> listPayments({
     required ListPaymentsRequest req,
   }) async {
     final paymentsList = await _lnToolkit.listPayments(req: req);
@@ -215,7 +215,7 @@ class BreezSDK {
   }
 
   /// Fetch a specific payment by its hash.
-  Future<Payment?> paymentByHash({
+  Future<PaymentListItem?> paymentByHash({
     required String hash,
   }) async {
     return await _lnToolkit.paymentByHash(hash: hash);
