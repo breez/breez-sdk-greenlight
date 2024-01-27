@@ -203,7 +203,8 @@ jobs:
         working-directory: libs/sdk-react-native 
         run: |
           yarn global add tslint typescript
-          brew install kotlin ktlint swiftformat
+          brew install kotlin swiftformat
+          curl -sSLO https://github.com/pinterest/ktlint/releases/download/1.1.1/ktlint && chmod a+x ktlint && sudo mv ktlint /usr/local/bin/
           make react-native-codegen
 
       - name: Check git status
