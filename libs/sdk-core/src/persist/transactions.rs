@@ -22,7 +22,7 @@ impl SqliteStorage {
     /// can be inserted separately via [SqliteStorage::insert_payment_external_info].
     pub fn insert_or_update_payments(
         &self,
-        transactions: &[Payment],
+        transactions: &[PaymentListItem],
         delete_pending: bool,
     ) -> PersistResult<()> {
         if delete_pending {
@@ -202,7 +202,7 @@ impl SqliteStorage {
     ///
     /// This queries all payments. To query a single payment, see [Self::get_payment_by_hash]
     /// or [Self::get_completed_payment_by_hash]
-    pub fn list_payments(&self, req: ListPaymentsRequest) -> PersistResult<Vec<Payment>> {
+    pub fn list_payments(&self, req: ListPaymentsRequest) -> PersistResult<Vec<PaymentListItem>> {
         let where_clause = filter_to_where_clause(
             req.filters,
             &req.metadata_filters,
@@ -269,7 +269,7 @@ impl SqliteStorage {
             )
         }
 
-        let vec: Vec<Payment> = stmt
+        let vec: Vec<PaymentListItem> = stmt
             .query_map(
                 params
                     .iter()
@@ -289,7 +289,10 @@ impl SqliteStorage {
     /// To lookup a completed payment by hash, use [Self::get_completed_payment_by_hash]
     ///
     /// To query all payments, see [Self::list_payments]
-    pub(crate) fn get_payment_by_hash(&self, hash: &String) -> PersistResult<Option<Payment>> {
+    pub(crate) fn get_payment_by_hash(
+        &self,
+        hash: &String,
+    ) -> PersistResult<Option<PaymentListItem>> {
         Ok(self
             .get_connection()?
             .query_row(
@@ -336,19 +339,19 @@ impl SqliteStorage {
     pub(crate) fn get_completed_payment_by_hash(
         &self,
         hash: &String,
-    ) -> PersistResult<Option<Payment>> {
+    ) -> PersistResult<Option<PaymentListItem>> {
         let res = self
             .get_payment_by_hash(hash)?
             .filter(|p| p.status == PaymentStatus::Complete);
         Ok(res)
     }
 
-    fn sql_row_to_payment(&self, row: &Row) -> PersistResult<Payment, rusqlite::Error> {
+    fn sql_row_to_payment(&self, row: &Row) -> PersistResult<PaymentListItem, rusqlite::Error> {
         let payment_type_str: String = row.get(1)?;
         let amount_msat = row.get(3)?;
         let status: PaymentStatus = row.get(5)?;
         let attempted_amount_msat: Option<u64> = row.get(12)?;
-        let mut payment = Payment {
+        let mut payment = PaymentListItem {
             id: row.get(0)?,
             payment_type: PaymentType::from_str(payment_type_str.as_str()).unwrap(),
             payment_time: row.get(2)?,
@@ -505,7 +508,7 @@ impl ToSql for SuccessActionProcessed {
 fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
     use crate::lnurl::pay::model::MessageSuccessActionData;
     use crate::lnurl::pay::model::SuccessActionProcessed;
-    use crate::models::{LnPaymentDetails, Payment, PaymentDetails};
+    use crate::models::{LnPaymentDetails, PaymentDetails, PaymentListItem};
     use crate::persist::test_utils;
 
     let lnurl_metadata = "{'key': 'sample-metadata-val'}";
@@ -580,7 +583,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
         status: ReverseSwapStatus::CompletedConfirmed,
     };
     let txs = [
-        Payment {
+        PaymentListItem {
             id: payment_hash_with_lnurl_success_action.to_string(),
             payment_type: PaymentType::Sent,
             payment_time: 1001,
@@ -609,7 +612,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
             },
             metadata: None,
         },
-        Payment {
+        PaymentListItem {
             id: payment_hash_with_lnurl_withdraw.to_string(),
             payment_type: PaymentType::Received,
             payment_time: 1000,
@@ -638,7 +641,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
             },
             metadata: None,
         },
-        Payment {
+        PaymentListItem {
             id: hex::encode(payment_hash_with_swap_info.clone()),
             payment_type: PaymentType::Received,
             payment_time: 999,
@@ -667,7 +670,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
             },
             metadata: None,
         },
-        Payment {
+        PaymentListItem {
             id: hex::encode(payment_hash_with_rev_swap_info.clone()),
             payment_type: PaymentType::Sent,
             payment_time: 998,
@@ -696,7 +699,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
             },
             metadata: None,
         },
-        Payment {
+        PaymentListItem {
             id: payment_hash_with_lnurl_domain.to_string(),
             payment_type: PaymentType::Sent,
             payment_time: 998,
@@ -726,7 +729,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
             metadata: None,
         },
     ];
-    let failed_txs = [Payment {
+    let failed_txs = [PaymentListItem {
         id: "125".to_string(),
         payment_type: PaymentType::Sent,
         payment_time: 2000,

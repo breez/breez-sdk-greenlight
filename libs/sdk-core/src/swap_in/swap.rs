@@ -850,7 +850,7 @@ mod tests {
 
         // add a payment with the same hash and test that the swapper updates the paid_amount for
         // the swap.
-        let payment = Payment {
+        let payment = PaymentListItem {
             id: hex::encode(swap_info.payment_hash.clone()),
             payment_type: PaymentType::Received,
             payment_time: 0,

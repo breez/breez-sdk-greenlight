@@ -880,7 +880,11 @@ impl NodeAPI for Greenlight {
         })
     }
 
-    async fn send_payment(&self, bolt11: String, amount_msat: Option<u64>) -> NodeResult<Payment> {
+    async fn send_payment(
+        &self,
+        bolt11: String,
+        amount_msat: Option<u64>,
+    ) -> NodeResult<PendingPayment> {
         let mut description = None;
         if !bolt11.is_empty() {
             let invoice = parse_invoice(&bolt11)?;
@@ -918,7 +922,7 @@ impl NodeAPI for Greenlight {
         node_id: String,
         amount_msat: u64,
         extra_tlvs: Option<Vec<TlvEntry>>,
-    ) -> NodeResult<Payment> {
+    ) -> NodeResult<PendingPayment> {
         let mut client: node::ClnClient = self.get_node_client().await?;
         let request = cln::KeysendRequest {
             destination: hex::decode(node_id)?,
@@ -1431,7 +1435,7 @@ async fn pull_transactions(
     since_timestamp: u64,
     client: node::ClnClient,
     htlc_list: Vec<Htlc>,
-) -> NodeResult<Vec<Payment>> {
+) -> NodeResult<Vec<PaymentListItem>> {
     let mut c = client.clone();
 
     // list invoices
@@ -1440,7 +1444,7 @@ async fn pull_transactions(
         .await?
         .into_inner();
     // construct the received transactions by filtering the invoices to those paid and beyond the filter timestamp
-    let received_transactions: NodeResult<Vec<Payment>> = invoices
+    let received_transactions: NodeResult<Vec<PaymentListItem>> = invoices
         .invoices
         .into_iter()
         .filter(|i| {
@@ -1457,17 +1461,21 @@ async fn pull_transactions(
         .into_inner();
     trace!("list payments (unfiltered): {:?}", payments);
     // construct the payment transactions (pending and complete)
-    let outbound_transactions: NodeResult<Vec<Payment>> = payments
+    let outbound_transactions: NodeResult<Vec<PaymentListItem>> = payments
         .pays
         .into_iter()
         .filter(|p| p.created_at > since_timestamp)
-        .map(TryInto::try_into)
+        .map(|list_pay| {
+            let payment_status = list_pay.status().into();
+            TryInto::<PendingPayment>::try_into(list_pay)
+                .map(|p| p.to_persisted(payment_status, None))
+        })
         .collect();
 
-    let outbound_transactions: NodeResult<Vec<Payment>> =
+    let outbound_transactions: NodeResult<Vec<PaymentListItem>> =
         update_payment_expirations(outbound_transactions?, htlc_list);
 
-    let mut transactions: Vec<Payment> = Vec::new();
+    let mut transactions: Vec<PaymentListItem> = Vec::new();
     transactions.extend(received_transactions?);
     transactions.extend(outbound_transactions?);
 
@@ -1475,10 +1483,10 @@ async fn pull_transactions(
 }
 
 fn update_payment_expirations(
-    payments: Vec<Payment>,
+    payments: Vec<PaymentListItem>,
     htlc_list: Vec<Htlc>,
-) -> NodeResult<Vec<Payment>> {
-    let mut payments_res: Vec<Payment> = Vec::new();
+) -> NodeResult<Vec<PaymentListItem>> {
+    let mut payments_res: Vec<PaymentListItem> = Vec::new();
     if htlc_list.is_empty() {
         return Ok(payments);
     }
@@ -1504,12 +1512,12 @@ fn update_payment_expirations(
 }
 
 //pub(crate) fn offchain_payment_to_transaction
-impl TryFrom<OffChainPayment> for Payment {
+impl TryFrom<OffChainPayment> for PaymentListItem {
     type Error = NodeError;
 
     fn try_from(p: OffChainPayment) -> std::result::Result<Self, Self::Error> {
         let ln_invoice = parse_invoice(&p.bolt11)?;
-        Ok(Payment {
+        Ok(PaymentListItem {
             id: hex::encode(p.payment_hash.clone()),
             payment_type: PaymentType::Received,
             payment_time: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64,
@@ -1545,14 +1553,14 @@ impl TryFrom<OffChainPayment> for Payment {
 }
 
 /// Construct a lightning transaction from an invoice
-impl TryFrom<gl_client::signer::model::greenlight::Invoice> for Payment {
+impl TryFrom<gl_client::signer::model::greenlight::Invoice> for PaymentListItem {
     type Error = NodeError;
 
     fn try_from(
         invoice: gl_client::signer::model::greenlight::Invoice,
     ) -> std::result::Result<Self, Self::Error> {
         let ln_invoice = parse_invoice(&invoice.bolt11)?;
-        Ok(Payment {
+        Ok(PaymentListItem {
             id: hex::encode(invoice.payment_hash.clone()),
             payment_type: PaymentType::Received,
             payment_time: invoice.payment_time as i64,
@@ -1595,7 +1603,7 @@ impl From<PayStatus> for PaymentStatus {
 }
 
 /// Construct a lightning transaction from an invoice
-impl TryFrom<gl_client::signer::model::greenlight::Payment> for Payment {
+impl TryFrom<gl_client::signer::model::greenlight::Payment> for PendingPayment {
     type Error = NodeError;
 
     fn try_from(
@@ -1608,16 +1616,12 @@ impl TryFrom<gl_client::signer::model::greenlight::Payment> for Payment {
 
         let payment_amount = amount_to_msat(&payment.amount.clone().unwrap_or_default());
         let payment_amount_sent = amount_to_msat(&payment.amount_sent.clone().unwrap_or_default());
-        let status = payment.status().into();
 
-        Ok(Payment {
+        Ok(PendingPayment {
             id: hex::encode(payment.payment_hash.clone()),
-            payment_type: PaymentType::Sent,
             payment_time: payment.created_at as i64,
             amount_msat: payment_amount,
             fee_msat: payment_amount_sent - payment_amount,
-            status,
-            error: None,
             description,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
@@ -1637,13 +1641,12 @@ impl TryFrom<gl_client::signer::model::greenlight::Payment> for Payment {
                     pending_expiration_block: None,
                 },
             },
-            metadata: None,
         })
     }
 }
 
 /// Construct a lightning transaction from an invoice
-impl TryFrom<cln::ListinvoicesInvoices> for Payment {
+impl TryFrom<cln::ListinvoicesInvoices> for PaymentListItem {
     type Error = NodeError;
 
     fn try_from(invoice: cln::ListinvoicesInvoices) -> std::result::Result<Self, Self::Error> {
@@ -1652,7 +1655,7 @@ impl TryFrom<cln::ListinvoicesInvoices> for Payment {
             .as_ref()
             .ok_or(InvoiceError::Generic(anyhow!("No bolt11 invoice")))
             .and_then(|b| parse_invoice(b))?;
-        Ok(Payment {
+        Ok(PaymentListItem {
             id: hex::encode(invoice.payment_hash.clone()),
             payment_type: PaymentType::Received,
             payment_time: invoice.paid_at.map(|i| i as i64).unwrap_or_default(),
@@ -1697,7 +1700,7 @@ impl From<ListpaysPaysStatus> for PaymentStatus {
     }
 }
 
-impl TryFrom<cln::ListpaysPays> for Payment {
+impl TryFrom<cln::ListpaysPays> for PendingPayment {
     type Error = NodeError;
 
     fn try_from(payment: cln::ListpaysPays) -> NodeResult<Self, Self::Error> {
@@ -1718,9 +1721,8 @@ impl TryFrom<cln::ListpaysPays> for Payment {
             .unwrap_or_default();
         let status = payment.status().into();
 
-        Ok(Payment {
+        Ok(PendingPayment {
             id: hex::encode(payment.payment_hash.clone()),
-            payment_type: PaymentType::Sent,
             payment_time: payment.completed_at.unwrap_or(payment.created_at) as i64,
             amount_msat: match status {
                 PaymentStatus::Complete => payment_amount,
@@ -1729,8 +1731,6 @@ impl TryFrom<cln::ListpaysPays> for Payment {
                     .map_or(0, |i| i.amount_msat.unwrap_or_default()),
             },
             fee_msat: payment_amount_sent - payment_amount,
-            status,
-            error: None,
             description: ln_invoice.map(|i| i.description).unwrap_or_default(),
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
@@ -1750,8 +1750,37 @@ impl TryFrom<cln::ListpaysPays> for Payment {
                     pending_expiration_block: None,
                 },
             },
-            metadata: None,
         })
+    }
+}
+
+impl PendingPayment {
+    pub fn to_persisted(&self, status: PaymentStatus, error: Option<String>) -> PaymentListItem {
+        PaymentListItem {
+            id: self.id.clone(),
+            payment_type: PaymentType::Sent,
+            payment_time: self.payment_time,
+            amount_msat: self.amount_msat,
+            fee_msat: self.fee_msat,
+            status,
+            error,
+            description: self.description.clone(),
+            details: self.details.clone(),
+            metadata: None,
+        }
+    }
+}
+
+impl From<PaymentListItem> for PendingPayment {
+    fn from(p: PaymentListItem) -> Self {
+        PendingPayment {
+            id: p.id.clone(),
+            payment_time: p.payment_time,
+            amount_msat: p.amount_msat,
+            fee_msat: p.fee_msat,
+            description: p.description.clone(),
+            details: p.details.clone(),
+        }
     }
 }
 

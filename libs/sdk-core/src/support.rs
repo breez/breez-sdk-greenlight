@@ -3,7 +3,9 @@ use std::time::SystemTime;
 use crate::error::SdkResult;
 use crate::grpc::{BreezStatusRequest, ReportPaymentFailureRequest};
 use crate::{breez_services::BreezServer, error::SdkError};
-use crate::{HealthCheckStatus, NodeState, Payment, ServiceHealthCheckResponse, SupportAPI};
+use crate::{
+    HealthCheckStatus, NodeState, PaymentListItem, ServiceHealthCheckResponse, SupportAPI,
+};
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -12,7 +14,7 @@ use tonic::Request;
 #[derive(Serialize, Deserialize)]
 struct PaymentFailureReport {
     pub node_state: NodeState,
-    pub payment: Payment,
+    pub payment: PaymentListItem,
 }
 
 impl TryFrom<i32> for HealthCheckStatus {
@@ -48,7 +50,7 @@ impl SupportAPI for BreezServer {
     async fn report_payment_failure(
         &self,
         node_state: NodeState,
-        payment: Payment,
+        payment: PaymentListItem,
         lsp_id: Option<String>,
         comment: Option<String>,
     ) -> SdkResult<()> {

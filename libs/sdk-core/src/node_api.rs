@@ -1,7 +1,7 @@
 use crate::{
     invoice::InvoiceError, persist::error::PersistError, CustomMessage, MaxChannelAmount,
-    NodeCredentials, Payment, PaymentResponse, Peer, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse,
-    RouteHintHop, SyncResponse, TlvEntry,
+    NodeCredentials, PaymentResponse, Peer, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse,
+    RouteHintHop, SyncResponse, TlvEntry, PendingPayment,
 };
 use anyhow::Result;
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
@@ -68,13 +68,13 @@ pub trait NodeAPI: Send + Sync {
         balance_changed: bool,
     ) -> NodeResult<SyncResponse>;
     /// As per the `pb::PayRequest` docs, `amount_msat` is only needed when the invoice doesn't specify an amount
-    async fn send_payment(&self, bolt11: String, amount_msat: Option<u64>) -> NodeResult<Payment>;
+    async fn send_payment(&self, bolt11: String, amount_msat: Option<u64>) -> NodeResult<PendingPayment>;
     async fn send_spontaneous_payment(
         &self,
         node_id: String,
         amount_msat: u64,
         extra_tlvs: Option<Vec<TlvEntry>>,
-    ) -> NodeResult<Payment>;
+    ) -> NodeResult<PendingPayment>;
     async fn start(&self) -> NodeResult<String>;
 
     /// Attempts to find a payment path "manually" and send the htlcs in a way that will drain

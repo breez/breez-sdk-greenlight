@@ -51,7 +51,7 @@ use crate::lnurl::withdraw::validate_lnurl_withdraw;
 use crate::lsp::LspInformation;
 use crate::models::{
     parse_short_channel_id, ChannelState, ClosedChannelPaymentDetails, Config, EnvironmentType,
-    FiatAPI, LnUrlCallbackStatus, LspAPI, NodeState, Payment, PaymentDetails, PaymentType,
+    FiatAPI, LnUrlCallbackStatus, LspAPI, NodeState, PaymentDetails, PaymentType, PendingPayment,
     ReverseSwapPairInfo, ReverseSwapServiceAPI, SwapInfo, SwapperAPI,
     INVOICE_PAYMENT_FEE_EXPIRY_SECONDS,
 };
@@ -81,7 +81,7 @@ pub enum BreezEvent {
     /// Indicates that the local SDK state has just been sync-ed with the remote components
     Synced,
     /// Indicates that an outgoing payment has been completed successfully
-    PaymentSucceed { details: Payment },
+    PaymentSucceed { details: PaymentListItem },
     /// Indicates that an outgoing payment has been failed to complete
     PaymentFailed { details: PaymentFailedData },
     /// Indicates that the backup process has just started
@@ -109,7 +109,7 @@ pub struct PaymentFailedData {
 pub struct InvoicePaidDetails {
     pub payment_hash: String,
     pub bolt11: String,
-    pub payment: Option<Payment>,
+    pub payment: Option<PaymentListItem>,
 }
 
 pub trait LogStream: Send + Sync {
@@ -571,12 +571,12 @@ impl BreezServices {
     }
 
     /// List payments matching the given filters, as retrieved from persistent storage
-    pub async fn list_payments(&self, req: ListPaymentsRequest) -> SdkResult<Vec<Payment>> {
+    pub async fn list_payments(&self, req: ListPaymentsRequest) -> SdkResult<Vec<PaymentListItem>> {
         Ok(self.persister.list_payments(req)?)
     }
 
     /// Fetch a specific payment by its hash.
-    pub async fn payment_by_hash(&self, hash: String) -> SdkResult<Option<Payment>> {
+    pub async fn payment_by_hash(&self, hash: String) -> SdkResult<Option<PaymentListItem>> {
         Ok(self.persister.get_payment_by_hash(&hash)?)
     }
 
@@ -913,7 +913,7 @@ impl BreezServices {
         }
 
         //fetch closed_channel and convert them to Payment items.
-        let mut closed_channel_payments: Vec<Payment> = vec![];
+        let mut closed_channel_payments: Vec<PaymentListItem> = vec![];
         for closed_channel in
             self.persister.list_channels()?.into_iter().filter(|c| {
                 c.state == ChannelState::Closed || c.state == ChannelState::PendingClose
@@ -979,7 +979,7 @@ impl BreezServices {
         amount_msat: u64,
     ) -> Result<(), SendPaymentError> {
         self.persister.insert_or_update_payments(
-            &[Payment {
+            &[PaymentListItem {
                 id: invoice.payment_hash.clone(),
                 payment_type: PaymentType::Sent,
                 payment_time: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64,
@@ -1030,11 +1030,12 @@ impl BreezServices {
         &self,
         node_id: String,
         invoice: Option<LNInvoice>,
-        payment_res: Result<Payment, SendPaymentError>,
-    ) -> Result<Payment, SendPaymentError> {
+        payment_res: Result<PendingPayment, SendPaymentError>,
+    ) -> Result<PaymentListItem, SendPaymentError> {
         self.do_sync(payment_res.is_ok()).await?;
         match payment_res {
             Ok(payment) => {
+                let payment = payment.to_persisted(PaymentStatus::Complete, None);
                 self.notify_event_listeners(BreezEvent::PaymentSucceed {
                     details: payment.clone(),
                 })
@@ -1262,7 +1263,7 @@ impl BreezServices {
                                           Ok(Some(i)) => {
                                               debug!("invoice stream got new invoice");
                                               if let Some(gl_client::signer::model::greenlight::incoming_payment::Details::Offchain(p)) = i.details {
-                                                  let payment: Option<crate::models::Payment> = p.clone().try_into().ok();
+                                                  let payment: Option<crate::models::PaymentListItem> = p.clone().try_into().ok();
                                                   if payment.is_some() {
                                                       let res = cloned
                                                           .persister
@@ -1499,7 +1500,7 @@ impl BreezServices {
     async fn closed_channel_to_transaction(
         &self,
         channel: crate::models::Channel,
-    ) -> Result<Payment> {
+    ) -> Result<PaymentListItem> {
         let (payment_time, closing_txid) = match (channel.closed_at, channel.closing_txid.clone()) {
             (Some(closed_at), Some(closing_txid)) => (closed_at as i64, Some(closing_txid)),
             (_, _) => {
@@ -1525,7 +1526,7 @@ impl BreezServices {
             }
         };
 
-        Ok(Payment {
+        Ok(PaymentListItem {
             id: channel.funding_txid.clone(),
             payment_type: PaymentType::ClosedChannel,
             payment_time,
@@ -2220,7 +2221,9 @@ pub(crate) mod tests {
     use crate::fiat::Rate;
     use crate::lnurl::pay::model::MessageSuccessActionData;
     use crate::lnurl::pay::model::SuccessActionProcessed;
-    use crate::models::{LnPaymentDetails, NodeState, Payment, PaymentDetails, PaymentTypeFilter};
+    use crate::models::{
+        LnPaymentDetails, NodeState, PaymentDetails, PaymentListItem, PaymentTypeFilter,
+    };
     use crate::node_api::NodeAPI;
     use crate::{
         input_parser, parse_short_channel_id, test_utils::*, BuyBitcoinProvider, BuyBitcoinRequest,
@@ -2309,7 +2312,7 @@ pub(crate) mod tests {
             status: ReverseSwapStatus::CompletedConfirmed,
         };
         let dummy_transactions = vec![
-            Payment {
+            PaymentListItem {
                 id: "1111".to_string(),
                 payment_type: PaymentType::Received,
                 payment_time: 100000,
@@ -2338,7 +2341,7 @@ pub(crate) mod tests {
                 },
                 metadata: None,
             },
-            Payment {
+            PaymentListItem {
                 id: payment_hash_lnurl_withdraw.to_string(),
                 payment_type: PaymentType::Received,
                 payment_time: 150000,
@@ -2367,7 +2370,7 @@ pub(crate) mod tests {
                 },
                 metadata: None,
             },
-            Payment {
+            PaymentListItem {
                 id: payment_hash_with_lnurl_success_action.to_string(),
                 payment_type: PaymentType::Sent,
                 payment_time: 200000,
@@ -2396,7 +2399,7 @@ pub(crate) mod tests {
                 },
                 metadata: None,
             },
-            Payment {
+            PaymentListItem {
                 id: hex::encode(payment_hash_swap.clone()),
                 payment_type: PaymentType::Received,
                 payment_time: 250000,
@@ -2425,7 +2428,7 @@ pub(crate) mod tests {
                 },
                 metadata: None,
             },
-            Payment {
+            PaymentListItem {
                 id: hex::encode(payment_hash_rev_swap.clone()),
                 payment_type: PaymentType::Sent,
                 payment_time: 300000,
@@ -2673,7 +2676,7 @@ pub(crate) mod tests {
     /// Build node service for tests with a list of known payments
     pub(crate) async fn breez_services_with(
         node_api: Option<Arc<dyn NodeAPI>>,
-        known_payments: Vec<Payment>,
+        known_payments: Vec<PaymentListItem>,
     ) -> Result<Arc<BreezServices>> {
         let node_api =
             node_api.unwrap_or_else(|| Arc::new(MockNodeAPI::new(get_dummy_node_state())));

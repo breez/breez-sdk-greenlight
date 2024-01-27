@@ -33,14 +33,14 @@ use crate::fiat::{FiatCurrency, Rate};
 use crate::grpc::{PaymentInformation, RegisterPaymentNotificationResponse, RegisterPaymentReply};
 use crate::invoice::{InvoiceError, InvoiceResult};
 use crate::lsp::LspInformation;
-use crate::models::{FiatAPI, LspAPI, NodeState, Payment, Swap, SwapperAPI, SyncResponse, TlvEntry};
+use crate::models::{FiatAPI, LspAPI, NodeState, PaymentListItem, Swap, SwapperAPI, SyncResponse, TlvEntry};
 use crate::moonpay::MoonPayApi;
 use crate::node_api::{NodeAPI, NodeError, NodeResult};
 use crate::swap_in::error::SwapResult;
 use crate::swap_in::swap::create_submarine_swap_script;
 use crate::{
     parse_invoice, Config, CustomMessage, LNInvoice, MaxChannelAmount, NodeCredentials,
-    PaymentResponse, Peer, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, RouteHint, RouteHintHop,
+    PaymentResponse, Peer, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, RouteHint, RouteHintHop, PendingPayment
 };
 use crate::{OpeningFeeParams, OpeningFeeParamsMenu};
 use crate::{ReceivePaymentRequest, SwapInfo};
@@ -218,10 +218,10 @@ impl ChainService for MockChainService {
     }
 }
 
-impl TryFrom<Payment> for crate::models::PaymentResponse {
+impl TryFrom<PendingPayment> for crate::models::PaymentResponse {
     type Error = anyhow::Error;
 
-    fn try_from(payment: Payment) -> std::result::Result<Self, Self::Error> {
+    fn try_from(payment: PendingPayment) -> std::result::Result<Self, Self::Error> {
         let payment_hash: String = match payment.details.clone() {
             crate::models::PaymentDetails::Ln { data } => data.payment_hash,
             _ => "".into(),
@@ -308,7 +308,11 @@ impl NodeAPI for MockNodeAPI {
                 .await
                 .iter()
                 .cloned()
-                .flat_map(TryInto::try_into)
+                .flat_map(|gl_payment| {
+                  let payment_status = gl_payment.status().into();
+                  TryInto::<PendingPayment>::try_into(gl_payment)
+                    .map(|p| p.to_persisted(payment_status, None))
+                })
                 .collect(),
             channels: Vec::new(),
         })
@@ -318,8 +322,8 @@ impl NodeAPI for MockNodeAPI {
         Err(NodeError::Generic(anyhow!("Not implemented")))
     }
 
-    async fn send_payment(&self, bolt11: String, _amount_msat: Option<u64>) -> NodeResult<Payment> {
-        let payment = self.add_dummy_payment_for(bolt11, None, None).await?;
+    async fn send_payment(&self, bolt11: String, _amount_msat: Option<u64>) -> NodeResult<PendingPayment> {
+        let payment: PendingPayment = self.add_dummy_payment_for(bolt11, None, None).await?.into();
         Ok(payment)
     }
 
@@ -328,8 +332,8 @@ impl NodeAPI for MockNodeAPI {
         _node_id: String,
         _amount_msat: u64,
         _extra_tlvs: Option<Vec<TlvEntry>>,
-    ) -> NodeResult<Payment> {
-        let payment = self.add_dummy_payment_rand().await?;
+    ) -> NodeResult<PendingPayment> {
+        let payment: PendingPayment = self.add_dummy_payment_rand().await?.into();
         Ok(payment)
     }
 
@@ -451,7 +455,7 @@ impl MockNodeAPI {
         bolt11: String,
         preimage: Option<sha256::Hash>,
         status: Option<PayStatus>,
-    ) -> NodeResult<Payment> {
+    ) -> NodeResult<PaymentListItem> {
         let inv = bolt11
             .parse::<lightning_invoice::Bolt11Invoice>()
             .map_err(|e| NodeError::Generic(anyhow::Error::new(e)))?;
@@ -460,7 +464,7 @@ impl MockNodeAPI {
     }
 
     /// Adds a dummy payment with random attributes.
-    pub(crate) async fn add_dummy_payment_rand(&self) -> NodeResult<Payment> {
+    pub(crate) async fn add_dummy_payment_rand(&self) -> NodeResult<PaymentListItem> {
         let preimage = sha256::Hash::hash(&rand_vec_u8(10));
         let inv = rand_invoice_with_description_hash_and_preimage("test".into(), preimage)?;
 
@@ -473,7 +477,7 @@ impl MockNodeAPI {
         inv: lightning_invoice::Bolt11Invoice,
         preimage: Option<sha256::Hash>,
         status: Option<PayStatus>,
-    ) -> NodeResult<Payment> {
+    ) -> NodeResult<PaymentListItem> {
         let gl_payment = gl_client::signer::model::greenlight::Payment {
             payment_hash: hex::decode(inv.payment_hash().to_hex())?,
             bolt11: inv.to_string(),
@@ -505,7 +509,7 @@ impl MockNodeAPI {
     async fn save_payment_for_future_sync_updates(
         &self,
         gl_payment: gl_client::signer::model::greenlight::Payment,
-    ) -> NodeResult<Payment> {
+    ) -> NodeResult<PaymentListItem> {
         let mut cloud_payments = self.cloud_payments.lock().await;
 
         // Only store it if a payment with the same ID doesn't already exist
@@ -529,7 +533,9 @@ impl MockNodeAPI {
             }
         };
 
-        gl_payment.try_into()
+        let payment_status = gl_payment.status().into();
+        let pending_payment: PendingPayment = gl_payment.try_into()?;
+        Ok(pending_payment.to_persisted(payment_status, None))
     }
 
     pub fn set_on_send_custom_message(

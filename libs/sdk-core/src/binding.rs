@@ -30,7 +30,7 @@ use crate::input_parser::{self, InputType, LnUrlAuthRequestData};
 use crate::invoice::{self, LNInvoice};
 use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::lsp::LspInformation;
-use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
+use crate::models::{Config, LogEntry, NodeState, PaymentListItem, SwapInfo};
 use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
     EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus, LnUrlPayRequest,
@@ -250,13 +250,13 @@ pub fn parse_input(input: String) -> Result<InputType> {
 /*  Payment API's */
 
 /// See [BreezServices::list_payments]
-pub fn list_payments(req: ListPaymentsRequest) -> Result<Vec<Payment>> {
+pub fn list_payments(req: ListPaymentsRequest) -> Result<Vec<PaymentListItem>> {
     block_on(async { get_breez_services().await?.list_payments(req).await })
         .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// See [BreezServices::list_payments]
-pub fn payment_by_hash(hash: String) -> Result<Option<Payment>> {
+pub fn payment_by_hash(hash: String) -> Result<Option<PaymentListItem>> {
     block_on(async { get_breez_services().await?.payment_by_hash(hash).await })
         .map_err(anyhow::Error::new::<SdkError>)
 }

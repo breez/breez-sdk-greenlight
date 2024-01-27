@@ -216,7 +216,7 @@ enum PaymentType {
     "ClosedChannel"
 };
 
-dictionary Payment {
+dictionary PaymentListItem {
     string id;
     PaymentType payment_type;    
     i64 payment_time;    
@@ -360,7 +360,7 @@ dictionary LogEntry {
 dictionary InvoicePaidDetails {
     string payment_hash;
     string bolt11;
-    Payment? payment;
+    PaymentListItem? payment;
 };
 
 dictionary PaymentFailedData {
@@ -378,7 +378,7 @@ interface BreezEvent {
     NewBlock(u32 block);
     InvoicePaid(InvoicePaidDetails details);
     Synced();
-    PaymentSucceed(Payment details);
+    PaymentSucceed(PaymentListItem details);
     PaymentFailed(PaymentFailedData details);
     BackupStarted();
     BackupSucceeded(); 
@@ -697,7 +697,7 @@ dictionary SendSpontaneousPaymentRequest {
 };
 
 dictionary SendPaymentResponse {
-    Payment payment;
+    PaymentListItem payment;
 };
 
 dictionary MaxReverseSwapAmountResponse {
@@ -781,10 +781,10 @@ interface BlockingBreezServices {
    void backup();
 
    [Throws=SdkError]
-   sequence<Payment> list_payments(ListPaymentsRequest req);
+   sequence<PaymentListItem> list_payments(ListPaymentsRequest req);
 
    [Throws=SdkError]
-   Payment? payment_by_hash(string hash);
+   PaymentListItem? payment_by_hash(string hash);
 
    [Throws=SdkError]
    void set_payment_metadata(string hash, string metadata);

@@ -109,7 +109,7 @@ export type GreenlightNodeConfig = {
 export type InvoicePaidDetails = {
     paymentHash: string
     bolt11: string
-    payment?: Payment
+    payment?: PaymentListItem
 }
 
 export type LnInvoice = {
@@ -296,7 +296,13 @@ export type OpeningFeeParamsMenu = {
     values: OpeningFeeParams[]
 }
 
-export type Payment = {
+export type PaymentFailedData = {
+    error: string
+    nodeId: string
+    invoice?: LnInvoice
+}
+
+export type PaymentListItem = {
     id: string
     paymentType: PaymentType
     paymentTime: number
@@ -307,12 +313,6 @@ export type Payment = {
     description?: string
     details: PaymentDetails
     metadata?: string
-}
-
-export type PaymentFailedData = {
-    error: string
-    nodeId: string
-    invoice?: LnInvoice
 }
 
 export type PrepareRedeemOnchainFundsRequest = {
@@ -447,7 +447,7 @@ export type SendPaymentRequest = {
 }
 
 export type SendPaymentResponse = {
-    payment: Payment
+    payment: PaymentListItem
 }
 
 export type SendSpontaneousPaymentRequest = {
@@ -559,7 +559,7 @@ export type BreezEvent = {
     type: BreezEventVariant.SYNCED
 } | {
     type: BreezEventVariant.PAYMENT_SUCCEED,
-    details: Payment
+    details: PaymentListItem
 } | {
     type: BreezEventVariant.PAYMENT_FAILED,
     details: PaymentFailedData
@@ -886,12 +886,12 @@ export const backup = async (): Promise<void> => {
     await BreezSDK.backup()
 }
 
-export const listPayments = async (req: ListPaymentsRequest): Promise<Payment[]> => {
+export const listPayments = async (req: ListPaymentsRequest): Promise<PaymentListItem[]> => {
     const response = await BreezSDK.listPayments(req)
     return response
 }
 
-export const paymentByHash = async (hash: string): Promise<Payment | null> => {
+export const paymentByHash = async (hash: string): Promise<PaymentListItem | null> => {
     const response = await BreezSDK.paymentByHash(hash)
     return response
 }

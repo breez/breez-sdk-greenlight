@@ -13,7 +13,7 @@ use breez_sdk_core::{
     LocaleOverrides, LocalizedName, LogEntry, LogStream, LspInformation,
     MaxReverseSwapAmountResponse, MessageSuccessActionData, MetadataFilter, MetadataItem, Network,
     NodeConfig, NodeCredentials, NodeState, OpenChannelFeeRequest, OpenChannelFeeResponse,
-    OpeningFeeParams, OpeningFeeParamsMenu, Payment, PaymentDetails, PaymentFailedData,
+    OpeningFeeParams, OpeningFeeParamsMenu, PaymentDetails, PaymentFailedData, PaymentListItem,
     PaymentStatus, PaymentType, PaymentTypeFilter, PrepareRedeemOnchainFundsRequest,
     PrepareRedeemOnchainFundsResponse, PrepareRefundRequest, PrepareRefundResponse, Rate,
     ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees,
@@ -162,11 +162,11 @@ impl BlockingBreezServices {
         rt().block_on(self.breez_services.backup())
     }
 
-    pub fn list_payments(&self, req: ListPaymentsRequest) -> SdkResult<Vec<Payment>> {
+    pub fn list_payments(&self, req: ListPaymentsRequest) -> SdkResult<Vec<PaymentListItem>> {
         rt().block_on(self.breez_services.list_payments(req))
     }
 
-    pub fn payment_by_hash(&self, hash: String) -> SdkResult<Option<Payment>> {
+    pub fn payment_by_hash(&self, hash: String) -> SdkResult<Option<PaymentListItem>> {
         rt().block_on(self.breez_services.payment_by_hash(hash))
     }
 

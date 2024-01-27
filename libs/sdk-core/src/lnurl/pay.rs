@@ -1183,7 +1183,7 @@ mod tests {
             .add_dummy_payment_for(bolt11, Some(preimage), Some(PayStatus::Pending))
             .await?;
 
-        let known_payments: Vec<crate::models::Payment> = vec![model_payment];
+        let known_payments: Vec<crate::models::PaymentListItem> = vec![model_payment];
         let mock_breez_services = crate::breez_services::tests::breez_services_with(
             Some(Arc::new(mock_node_api)),
             known_payments,
@@ -1266,7 +1266,7 @@ mod tests {
             .add_dummy_payment_for(bolt11, Some(preimage), Some(PayStatus::Pending))
             .await?;
 
-        let known_payments: Vec<crate::models::Payment> = vec![model_payment];
+        let known_payments: Vec<crate::models::PaymentListItem> = vec![model_payment];
         let mock_breez_services = crate::breez_services::tests::breez_services_with(
             Some(Arc::new(mock_node_api)),
             known_payments,
