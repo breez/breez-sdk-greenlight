@@ -82,11 +82,12 @@ use crate::models::OpenChannelFeeRequest;
 use crate::models::OpenChannelFeeResponse;
 use crate::models::OpeningFeeParams;
 use crate::models::OpeningFeeParamsMenu;
-use crate::models::Payment;
 use crate::models::PaymentDetails;
+use crate::models::PaymentListItem;
 use crate::models::PaymentStatus;
 use crate::models::PaymentType;
 use crate::models::PaymentTypeFilter;
+use crate::models::PendingPayment;
 use crate::models::PrepareRedeemOnchainFundsRequest;
 use crate::models::PrepareRedeemOnchainFundsResponse;
 use crate::models::PrepareRefundRequest;
@@ -418,7 +419,7 @@ fn wire_list_payments_impl(
     port_: MessagePort,
     req: impl Wire2Api<ListPaymentsRequest> + UnwindSafe,
 ) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, Vec<Payment>, _>(
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, Vec<PaymentListItem>, _>(
         WrapInfo {
             debug_name: "list_payments",
             port: Some(port_),
@@ -431,7 +432,7 @@ fn wire_list_payments_impl(
     )
 }
 fn wire_payment_by_hash_impl(port_: MessagePort, hash: impl Wire2Api<String> + UnwindSafe) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, Option<Payment>, _>(
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, Option<PaymentListItem>, _>(
         WrapInfo {
             debug_name: "payment_by_hash",
             port: Some(port_),
@@ -1674,30 +1675,6 @@ impl rust2dart::IntoIntoDart<OpeningFeeParamsMenu> for OpeningFeeParamsMenu {
     }
 }
 
-impl support::IntoDart for Payment {
-    fn into_dart(self) -> support::DartAbi {
-        vec![
-            self.id.into_into_dart().into_dart(),
-            self.payment_type.into_into_dart().into_dart(),
-            self.payment_time.into_into_dart().into_dart(),
-            self.amount_msat.into_into_dart().into_dart(),
-            self.fee_msat.into_into_dart().into_dart(),
-            self.status.into_into_dart().into_dart(),
-            self.error.into_dart(),
-            self.description.into_dart(),
-            self.details.into_into_dart().into_dart(),
-            self.metadata.into_dart(),
-        ]
-        .into_dart()
-    }
-}
-impl support::IntoDartExceptPrimitive for Payment {}
-impl rust2dart::IntoIntoDart<Payment> for Payment {
-    fn into_into_dart(self) -> Self {
-        self
-    }
-}
-
 impl support::IntoDart for PaymentDetails {
     fn into_dart(self) -> support::DartAbi {
         match self {
@@ -1726,6 +1703,30 @@ impl support::IntoDart for PaymentFailedData {
 }
 impl support::IntoDartExceptPrimitive for PaymentFailedData {}
 impl rust2dart::IntoIntoDart<PaymentFailedData> for PaymentFailedData {
+    fn into_into_dart(self) -> Self {
+        self
+    }
+}
+
+impl support::IntoDart for PaymentListItem {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.id.into_into_dart().into_dart(),
+            self.payment_type.into_into_dart().into_dart(),
+            self.payment_time.into_into_dart().into_dart(),
+            self.amount_msat.into_into_dart().into_dart(),
+            self.fee_msat.into_into_dart().into_dart(),
+            self.status.into_into_dart().into_dart(),
+            self.error.into_dart(),
+            self.description.into_dart(),
+            self.details.into_into_dart().into_dart(),
+            self.metadata.into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for PaymentListItem {}
+impl rust2dart::IntoIntoDart<PaymentListItem> for PaymentListItem {
     fn into_into_dart(self) -> Self {
         self
     }
@@ -1760,6 +1761,26 @@ impl support::IntoDart for PaymentType {
 }
 impl support::IntoDartExceptPrimitive for PaymentType {}
 impl rust2dart::IntoIntoDart<PaymentType> for PaymentType {
+    fn into_into_dart(self) -> Self {
+        self
+    }
+}
+
+impl support::IntoDart for PendingPayment {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.id.into_into_dart().into_dart(),
+            self.payment_time.into_into_dart().into_dart(),
+            self.amount_msat.into_into_dart().into_dart(),
+            self.fee_msat.into_into_dart().into_dart(),
+            self.description.into_dart(),
+            self.details.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for PendingPayment {}
+impl rust2dart::IntoIntoDart<PendingPayment> for PendingPayment {
     fn into_into_dart(self) -> Self {
         self
     }

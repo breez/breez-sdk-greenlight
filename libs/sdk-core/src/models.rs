@@ -621,7 +621,7 @@ pub struct NodeState {
 /// Internal response to a [NodeAPI::pull_changed] call
 pub struct SyncResponse {
     pub node_state: NodeState,
-    pub payments: Vec<crate::models::Payment>,
+    pub payments: Vec<crate::models::PaymentListItem>,
     pub channels: Vec<crate::models::Channel>,
 }
 
@@ -633,9 +633,9 @@ pub enum PaymentStatus {
     Failed = 2,
 }
 
-/// Represents a payment, including its [PaymentType] and [PaymentDetails]
+/// Represents a persisted payment, including its [PaymentType] and [PaymentDetails]
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]
-pub struct Payment {
+pub struct PaymentListItem {
     pub id: String,
     pub payment_type: PaymentType,
     /// Epoch time, in seconds
@@ -647,6 +647,19 @@ pub struct Payment {
     pub description: Option<String>,
     pub details: PaymentDetails,
     pub metadata: Option<String>,
+}
+
+/// Represents a sent and pending payment, not yet persisted into the storage,
+/// including its [PaymentType] and [PaymentDetails]
+#[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]
+pub struct PendingPayment {
+    pub id: String,
+    /// Epoch time, in seconds
+    pub payment_time: i64,
+    pub amount_msat: u64,
+    pub fee_msat: u64,
+    pub description: Option<String>,
+    pub details: PaymentDetails,
 }
 
 /// Represents a payments external information.
@@ -844,7 +857,7 @@ pub struct SendSpontaneousPaymentRequest {
 /// Represents a send payment response.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SendPaymentResponse {
-    pub payment: Payment,
+    pub payment: PaymentListItem,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -883,7 +896,7 @@ pub trait SupportAPI: Send + Sync {
     async fn report_payment_failure(
         &self,
         node_state: NodeState,
-        payment: Payment,
+        payment: PaymentListItem,
         lsp_id: Option<String>,
         comment: Option<String>,
     ) -> SdkResult<()>;
