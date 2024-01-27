@@ -17,7 +17,7 @@ export ANDROID_NDK_HOME=<your android ndk directory>
 
 To lint the result of the code generation ktlint, swiftformat and tslint need to be installed:
 ```bash
-brew install kotlin ktlint swiftformat
+brew install kotlin ktlint@1.1.1 swiftformat
 yarn global add tslint typescript
 ```
 
