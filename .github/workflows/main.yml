@@ -203,6 +203,7 @@ jobs:
         working-directory: libs/sdk-react-native 
         run: |
           yarn global add tslint typescript
+          brew update
           brew install kotlin ktlint swiftformat
           make react-native-codegen
 
