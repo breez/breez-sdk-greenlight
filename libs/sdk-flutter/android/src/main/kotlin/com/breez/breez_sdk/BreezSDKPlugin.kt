@@ -1,23 +1,15 @@
 package com.breez.breez_sdk
 
-import android.os.Handler
-import android.os.Looper
+import com.breez.breez_sdk.SdkLogListener
 import androidx.annotation.NonNull
-import breez_sdk.LogEntry
 import breez_sdk.LogStream
 import breez_sdk.setLogStream
-
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 
 /** BreezSDKPlugin */
 class BreezSDKPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHandler {
@@ -28,7 +20,7 @@ class BreezSDKPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
     private lateinit var channel: MethodChannel
     private var eventChannel: EventChannel? = null
     private var eventSink: EventChannel.EventSink? = null
-    private var nodeLogStream: LogStream? = null
+    private var nodeLogStream: SdkLogListener? = null
 
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, "breez_sdk")
@@ -62,36 +54,15 @@ class BreezSDKPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
         eventChannel = null
     }
 
-    private fun setNodeLogStream(): LogStream? {
+    fun setNodeLogStream(): SdkLogListener {
         // Set Log Stream
         if (nodeLogStream == null) {
             try {
-                nodeLogStream = SdkLogListener()
+                nodeLogStream = SdkLogListener(eventSink!!)
                 setLogStream(nodeLogStream!!)
             } catch (ex: Throwable) {
             }
         }
         return nodeLogStream!!
-    }
-
-    inner class SdkLogListener : LogStream {
-        // Event has to be handled on main thread.
-        private var handler = Handler(Looper.getMainLooper())
-        private val _sharedFlow = MutableSharedFlow<LogEntry>() // private mutable shared flow
-
-        override fun log(l: LogEntry) {
-            produceLog(l)
-
-            val runnable = Runnable {
-                val data = mapOf("level" to l.level, "line" to l.line)
-                eventSink?.success(data)
-            }
-
-            handler.post(runnable)
-        }
-
-        private fun produceLog(log: LogEntry) = _sharedFlow.tryEmit(log)
-
-        fun subscribe(scope: CoroutineScope, block: suspend (LogEntry) -> Unit) = _sharedFlow.onEach(block).launchIn(scope)
     }
 }
