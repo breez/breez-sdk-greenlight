@@ -45,10 +45,7 @@ use crate::models::*;
 use crate::node_api::{NodeAPI, NodeError, NodeResult};
 
 use crate::persist::db::SqliteStorage;
-use crate::{
-    Channel, ChannelState, NodeConfig, PrepareRedeemOnchainFundsRequest,
-    PrepareRedeemOnchainFundsResponse,
-};
+use crate::{NodeConfig, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse};
 use std::iter::Iterator;
 
 const MAX_PAYMENT_AMOUNT_MSAT: u64 = 4294967000;
@@ -431,7 +428,7 @@ impl Greenlight {
         Ok(funds)
     }
 
-    async fn on_chain_balance(&self, funds: cln::ListfundsResponse) -> Result<u64> {
+    async fn on_chain_balance(&self, funds: &cln::ListfundsResponse) -> Result<u64> {
         let on_chain_balance = funds.outputs.iter().fold(0, |a, b| {
             if b.reserved {
                 return a;
@@ -439,6 +436,35 @@ impl Greenlight {
             a + b.amount_msat.clone().unwrap_or_default().msat
         });
         Ok(on_chain_balance)
+    }
+
+    async fn pending_onchain_balance(
+        &self,
+        peer_channels: &[cln::ListpeersPeersChannels],
+    ) -> Result<u64> {
+        let pending_onchain_balance = peer_channels.iter().fold(0, |a, b| match b.state() {
+            ChanneldShuttingDown | ClosingdSigexchange | ClosingdComplete | AwaitingUnilateral
+            | FundingSpendSeen => a + b.min_to_us_msat.clone().unwrap_or_default().msat,
+
+            // When we  unilaterally close the channel it will get status as `AwaitingUnilateral`
+            // first, but when the closing transaction is confirmed onchain the funds receive status
+            // as `Onchain`. Though if we closed the channel we'll have to wait for the timelock to
+            // pass before the funds can be spent.
+            Onchain => {
+                if b.closer() == cln::ChannelSide::Local
+                    && b.status
+                        .last()
+                        .is_some_and(|status| status.contains("DELAYED_OUTPUT_TO_US"))
+                {
+                    a + b.min_to_us_msat.clone().unwrap_or_default().msat
+                } else {
+                    a
+                }
+            }
+            _ => a,
+        });
+        info!("pending_onchain_balance is {}", pending_onchain_balance);
+        Ok(pending_onchain_balance)
     }
 
     // Collect utxos from onchain funds
@@ -697,7 +723,6 @@ impl NodeAPI for Greenlight {
         let funds = funds_res?;
         let closed_channels = closed_channels_res?.into_inner().closedchannels;
         let (all_channels, opened_channels, connected_peers, channels_balance) = balance_res?;
-
         let forgotten_closed_channels: NodeResult<Vec<Channel>> = closed_channels
             .into_iter()
             .filter(|cc| {
@@ -707,7 +732,6 @@ impl NodeAPI for Greenlight {
             })
             .map(TryInto::try_into)
             .collect();
-
         info!("forgotten_closed_channels {:?}", forgotten_closed_channels);
 
         let mut all_channel_models: Vec<Channel> =
@@ -715,8 +739,9 @@ impl NodeAPI for Greenlight {
         all_channel_models.extend(forgotten_closed_channels?);
 
         // calculate onchain balance
-        let onchain_balance = self.on_chain_balance(funds.clone()).await?;
-        let utxos = self.utxos(funds).await?;
+        let onchain_balance = self.on_chain_balance(&funds).await?;
+        let pending_onchain_balance = self.pending_onchain_balance(&all_channels).await?;
+        let utxos: Vec<UnspentTransactionOutput> = self.utxos(funds).await?;
 
         // calculate payment limits and inbound liquidity
         let mut max_payable: u64 = 0;
@@ -747,6 +772,7 @@ impl NodeAPI for Greenlight {
             block_height: node_info.blockheight,
             channels_balance_msat: channels_balance,
             onchain_balance_msat: onchain_balance,
+            pending_onchain_balance_msat: pending_onchain_balance,
             utxos,
             max_payable_msat: max_payable,
             max_receivable_msat: max_allowed_to_receive_msats,

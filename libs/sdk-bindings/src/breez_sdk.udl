@@ -166,6 +166,7 @@ dictionary NodeState {
     u32 block_height;
     u64 channels_balance_msat;
     u64 onchain_balance_msat;
+    u64 pending_onchain_balance_msat;
     sequence<UnspentTransactionOutput> utxos;
     u64 max_payable_msat;
     u64 max_receivable_msat;

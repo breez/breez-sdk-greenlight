@@ -607,6 +607,8 @@ pub struct NodeState {
     pub block_height: u32,
     pub channels_balance_msat: u64,
     pub onchain_balance_msat: u64,
+    #[serde(default)]
+    pub pending_onchain_balance_msat: u64,
 
     #[serde(default)]
     pub utxos: Vec<UnspentTransactionOutput>,

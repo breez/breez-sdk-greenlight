@@ -1094,6 +1094,7 @@ class NodeState {
   final int blockHeight;
   final int channelsBalanceMsat;
   final int onchainBalanceMsat;
+  final int pendingOnchainBalanceMsat;
   final List<UnspentTransactionOutput> utxos;
   final int maxPayableMsat;
   final int maxReceivableMsat;
@@ -1107,6 +1108,7 @@ class NodeState {
     required this.blockHeight,
     required this.channelsBalanceMsat,
     required this.onchainBalanceMsat,
+    required this.pendingOnchainBalanceMsat,
     required this.utxos,
     required this.maxPayableMsat,
     required this.maxReceivableMsat,
@@ -3442,19 +3444,20 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   NodeState _wire2api_node_state(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 11) throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
+    if (arr.length != 12) throw Exception('unexpected arr length: expect 12 but see ${arr.length}');
     return NodeState(
       id: _wire2api_String(arr[0]),
       blockHeight: _wire2api_u32(arr[1]),
       channelsBalanceMsat: _wire2api_u64(arr[2]),
       onchainBalanceMsat: _wire2api_u64(arr[3]),
-      utxos: _wire2api_list_unspent_transaction_output(arr[4]),
-      maxPayableMsat: _wire2api_u64(arr[5]),
-      maxReceivableMsat: _wire2api_u64(arr[6]),
-      maxSinglePaymentAmountMsat: _wire2api_u64(arr[7]),
-      maxChanReserveMsats: _wire2api_u64(arr[8]),
-      connectedPeers: _wire2api_StringList(arr[9]),
-      inboundLiquidityMsats: _wire2api_u64(arr[10]),
+      pendingOnchainBalanceMsat: _wire2api_u64(arr[4]),
+      utxos: _wire2api_list_unspent_transaction_output(arr[5]),
+      maxPayableMsat: _wire2api_u64(arr[6]),
+      maxReceivableMsat: _wire2api_u64(arr[7]),
+      maxSinglePaymentAmountMsat: _wire2api_u64(arr[8]),
+      maxChanReserveMsats: _wire2api_u64(arr[9]),
+      connectedPeers: _wire2api_StringList(arr[10]),
+      inboundLiquidityMsats: _wire2api_u64(arr[11]),
     );
   }
 
