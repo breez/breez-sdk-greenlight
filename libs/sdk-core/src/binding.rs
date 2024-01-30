@@ -410,6 +410,12 @@ pub fn refund(req: RefundRequest) -> Result<RefundResponse> {
         .map_err(anyhow::Error::new::<SdkError>)
 }
 
+/// See [BreezServices::rescan_swaps]
+pub fn rescan_swaps() -> Result<()> {
+    block_on(async { get_breez_services().await?.rescan_swaps().await })
+        .map_err(anyhow::Error::new::<SdkError>)
+}
+
 /*  In Progress Swap API's */
 
 /// See [BreezServices::in_progress_swap]
