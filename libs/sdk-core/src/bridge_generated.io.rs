@@ -27,8 +27,8 @@ pub extern "C" fn wire_node_info(port_: i64) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_set_node_config(port_: i64, req: *mut wire_SetNodeConfigRequest) {
-    wire_set_node_config_impl(port_, req)
+pub extern "C" fn wire_configure_node(port_: i64, req: *mut wire_ConfigureNodeRequest) {
+    wire_configure_node_impl(port_, req)
 }
 
 #[no_mangle]
@@ -309,6 +309,11 @@ pub extern "C" fn new_box_autoadd_config_0() -> *mut wire_Config {
 }
 
 #[no_mangle]
+pub extern "C" fn new_box_autoadd_configure_node_request_0() -> *mut wire_ConfigureNodeRequest {
+    support::new_leak_box_ptr(wire_ConfigureNodeRequest::new_with_null_ptr())
+}
+
+#[no_mangle]
 pub extern "C" fn new_box_autoadd_greenlight_credentials_0() -> *mut wire_GreenlightCredentials {
     support::new_leak_box_ptr(wire_GreenlightCredentials::new_with_null_ptr())
 }
@@ -424,11 +429,6 @@ pub extern "C" fn new_box_autoadd_send_spontaneous_payment_request_0(
 }
 
 #[no_mangle]
-pub extern "C" fn new_box_autoadd_set_node_config_request_0() -> *mut wire_SetNodeConfigRequest {
-    support::new_leak_box_ptr(wire_SetNodeConfigRequest::new_with_null_ptr())
-}
-
-#[no_mangle]
 pub extern "C" fn new_box_autoadd_sign_message_request_0() -> *mut wire_SignMessageRequest {
     support::new_leak_box_ptr(wire_SignMessageRequest::new_with_null_ptr())
 }
@@ -516,6 +516,12 @@ impl Wire2Api<Config> for *mut wire_Config {
     fn wire2api(self) -> Config {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
         Wire2Api::<Config>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<ConfigureNodeRequest> for *mut wire_ConfigureNodeRequest {
+    fn wire2api(self) -> ConfigureNodeRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<ConfigureNodeRequest>::wire2api(*wrap).into()
     }
 }
 impl Wire2Api<GreenlightCredentials> for *mut wire_GreenlightCredentials {
@@ -649,12 +655,6 @@ impl Wire2Api<SendSpontaneousPaymentRequest> for *mut wire_SendSpontaneousPaymen
         Wire2Api::<SendSpontaneousPaymentRequest>::wire2api(*wrap).into()
     }
 }
-impl Wire2Api<SetNodeConfigRequest> for *mut wire_SetNodeConfigRequest {
-    fn wire2api(self) -> SetNodeConfigRequest {
-        let wrap = unsafe { support::box_from_leak_ptr(self) };
-        Wire2Api::<SetNodeConfigRequest>::wire2api(*wrap).into()
-    }
-}
 impl Wire2Api<SignMessageRequest> for *mut wire_SignMessageRequest {
     fn wire2api(self) -> SignMessageRequest {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
@@ -708,6 +708,13 @@ impl Wire2Api<Config> for wire_Config {
             maxfee_percent: self.maxfee_percent.wire2api(),
             exemptfee_msat: self.exemptfee_msat.wire2api(),
             node_config: self.node_config.wire2api(),
+        }
+    }
+}
+impl Wire2Api<ConfigureNodeRequest> for wire_ConfigureNodeRequest {
+    fn wire2api(self) -> ConfigureNodeRequest {
+        ConfigureNodeRequest {
+            close_to_address: self.close_to_address.wire2api(),
         }
     }
 }
@@ -975,13 +982,6 @@ impl Wire2Api<SendSpontaneousPaymentRequest> for wire_SendSpontaneousPaymentRequ
         }
     }
 }
-impl Wire2Api<SetNodeConfigRequest> for wire_SetNodeConfigRequest {
-    fn wire2api(self) -> SetNodeConfigRequest {
-        SetNodeConfigRequest {
-            close_to_address: self.close_to_address.wire2api(),
-        }
-    }
-}
 impl Wire2Api<SignMessageRequest> for wire_SignMessageRequest {
     fn wire2api(self) -> SignMessageRequest {
         SignMessageRequest {
@@ -1043,6 +1043,12 @@ pub struct wire_Config {
     maxfee_percent: f64,
     exemptfee_msat: u64,
     node_config: wire_NodeConfig,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_ConfigureNodeRequest {
+    close_to_address: *mut wire_uint_8_list,
 }
 
 #[repr(C)]
@@ -1251,12 +1257,6 @@ pub struct wire_SendSpontaneousPaymentRequest {
 
 #[repr(C)]
 #[derive(Clone)]
-pub struct wire_SetNodeConfigRequest {
-    close_to_address: *mut wire_uint_8_list,
-}
-
-#[repr(C)]
-#[derive(Clone)]
 pub struct wire_SignMessageRequest {
     message: *mut wire_uint_8_list,
 }
@@ -1378,6 +1378,20 @@ impl NewWithNullPtr for wire_Config {
 }
 
 impl Default for wire_Config {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_ConfigureNodeRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            close_to_address: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_ConfigureNodeRequest {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }
@@ -1785,20 +1799,6 @@ impl NewWithNullPtr for wire_SendSpontaneousPaymentRequest {
 }
 
 impl Default for wire_SendSpontaneousPaymentRequest {
-    fn default() -> Self {
-        Self::new_with_null_ptr()
-    }
-}
-
-impl NewWithNullPtr for wire_SetNodeConfigRequest {
-    fn new_with_null_ptr() -> Self {
-        Self {
-            close_to_address: core::ptr::null_mut(),
-        }
-    }
-}
-
-impl Default for wire_SetNodeConfigRequest {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }

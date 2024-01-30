@@ -60,6 +60,7 @@ use crate::models::BuyBitcoinResponse;
 use crate::models::ChannelState;
 use crate::models::ClosedChannelPaymentDetails;
 use crate::models::Config;
+use crate::models::ConfigureNodeRequest;
 use crate::models::EnvironmentType;
 use crate::models::GreenlightCredentials;
 use crate::models::GreenlightNodeConfig;
@@ -110,7 +111,6 @@ use crate::models::SendPaymentRequest;
 use crate::models::SendPaymentResponse;
 use crate::models::SendSpontaneousPaymentRequest;
 use crate::models::ServiceHealthCheckResponse;
-use crate::models::SetNodeConfigRequest;
 use crate::models::StaticBackupRequest;
 use crate::models::StaticBackupResponse;
 use crate::models::SwapInfo;
@@ -178,19 +178,19 @@ fn wire_node_info_impl(port_: MessagePort) {
         move || move |task_callback| node_info(),
     )
 }
-fn wire_set_node_config_impl(
+fn wire_configure_node_impl(
     port_: MessagePort,
-    req: impl Wire2Api<SetNodeConfigRequest> + UnwindSafe,
+    req: impl Wire2Api<ConfigureNodeRequest> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, (), _>(
         WrapInfo {
-            debug_name: "set_node_config",
+            debug_name: "configure_node",
             port: Some(port_),
             mode: FfiCallMode::Normal,
         },
         move || {
             let api_req = req.wire2api();
-            move |task_callback| set_node_config(api_req)
+            move |task_callback| configure_node(api_req)
         },
     )
 }

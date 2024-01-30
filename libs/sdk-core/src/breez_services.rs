@@ -238,11 +238,11 @@ impl BreezServices {
         Ok(())
     }
 
-    /// Set the node config
+    /// Configure the node
     ///
-    /// This calls [NodeAPI::set_node_config] to make changes to the active node's configuration.
-    pub async fn set_node_config(&self, req: SetNodeConfigRequest) -> SdkResult<()> {
-        Ok(self.node_api.set_node_config(req.close_to_address).await?)
+    /// This calls [NodeAPI::configure_node] to make changes to the active node's configuration.
+    pub async fn configure_node(&self, req: ConfigureNodeRequest) -> SdkResult<()> {
+        Ok(self.node_api.configure_node(req.close_to_address).await?)
     }
 
     /// Pay a bolt11 invoice

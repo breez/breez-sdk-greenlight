@@ -316,9 +316,9 @@ pub(crate) async fn handle_command(
         Commands::NodeInfo {} => {
             serde_json::to_string_pretty(&sdk()?.node_info()?).map_err(|e| e.into())
         }
-        Commands::SetNodeConfig { close_to_address } => {
+        Commands::ConfigureNode { close_to_address } => {
             sdk()?
-                .set_node_config(breez_sdk_core::SetNodeConfigRequest { close_to_address })
+                .configure_node(breez_sdk_core::ConfigureNodeRequest { close_to_address })
                 .await?;
             Ok("Node configured successfully".to_string())
         }

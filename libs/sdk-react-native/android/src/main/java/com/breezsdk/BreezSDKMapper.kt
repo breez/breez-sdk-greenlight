@@ -443,6 +443,46 @@ fun asConfigList(arr: ReadableArray): List<Config> {
     return list
 }
 
+fun asConfigureNodeRequest(configureNodeRequest: ReadableMap): ConfigureNodeRequest? {
+    if (!validateMandatoryFields(
+            configureNodeRequest,
+            arrayOf(),
+        )
+    ) {
+        return null
+    }
+    val closeToAddress =
+        if (hasNonNullKey(
+                configureNodeRequest,
+                "closeToAddress",
+            )
+        ) {
+            configureNodeRequest.getString("closeToAddress")
+        } else {
+            null
+        }
+    return ConfigureNodeRequest(
+        closeToAddress,
+    )
+}
+
+fun readableMapOf(configureNodeRequest: ConfigureNodeRequest): ReadableMap {
+    return readableMapOf(
+        "closeToAddress" to configureNodeRequest.closeToAddress,
+    )
+}
+
+fun asConfigureNodeRequestList(arr: ReadableArray): List<ConfigureNodeRequest> {
+    val list = ArrayList<ConfigureNodeRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asConfigureNodeRequest(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
 fun asCurrencyInfo(currencyInfo: ReadableMap): CurrencyInfo? {
     if (!validateMandatoryFields(
             currencyInfo,
@@ -3057,46 +3097,6 @@ fun asServiceHealthCheckResponseList(arr: ReadableArray): List<ServiceHealthChec
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asServiceHealthCheckResponse(value)!!)
-            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
-        }
-    }
-    return list
-}
-
-fun asSetNodeConfigRequest(setNodeConfigRequest: ReadableMap): SetNodeConfigRequest? {
-    if (!validateMandatoryFields(
-            setNodeConfigRequest,
-            arrayOf(),
-        )
-    ) {
-        return null
-    }
-    val closeToAddress =
-        if (hasNonNullKey(
-                setNodeConfigRequest,
-                "closeToAddress",
-            )
-        ) {
-            setNodeConfigRequest.getString("closeToAddress")
-        } else {
-            null
-        }
-    return SetNodeConfigRequest(
-        closeToAddress,
-    )
-}
-
-fun readableMapOf(setNodeConfigRequest: SetNodeConfigRequest): ReadableMap {
-    return readableMapOf(
-        "closeToAddress" to setNodeConfigRequest.closeToAddress,
-    )
-}
-
-fun asSetNodeConfigRequestList(arr: ReadableArray): List<SetNodeConfigRequest> {
-    val list = ArrayList<SetNodeConfigRequest>()
-    for (value in arr.toArrayList()) {
-        when (value) {
-            is ReadableMap -> list.add(asSetNodeConfigRequest(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
         }
     }

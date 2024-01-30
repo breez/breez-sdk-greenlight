@@ -81,6 +81,10 @@ export type Config = {
     nodeConfig: NodeConfig
 }
 
+export type ConfigureNodeRequest = {
+    closeToAddress?: string
+}
+
 export type CurrencyInfo = {
     name: string
     fractionSize: number
@@ -461,10 +465,6 @@ export type ServiceHealthCheckResponse = {
     status: HealthCheckStatus
 }
 
-export type SetNodeConfigRequest = {
-    closeToAddress?: string
-}
-
 export type SignMessageRequest = {
     message: string
 }
@@ -828,8 +828,8 @@ export const disconnect = async (): Promise<void> => {
     await BreezSDK.disconnect()
 }
 
-export const setNodeConfig = async (req: SetNodeConfigRequest): Promise<void> => {
-    await BreezSDK.setNodeConfig(req)
+export const configureNode = async (req: ConfigureNodeRequest): Promise<void> => {
+    await BreezSDK.configureNode(req)
 }
 
 export const sendPayment = async (req: SendPaymentRequest): Promise<SendPaymentResponse> => {

@@ -556,9 +556,9 @@ impl From<Network> for bitcoin::network::constants::Network {
     }
 }
 
-/// Represents a set node config request.
+/// Represents a configure node request.
 #[derive(Default)]
-pub struct SetNodeConfigRequest {
+pub struct ConfigureNodeRequest {
     pub close_to_address: Option<String>,
 }
 

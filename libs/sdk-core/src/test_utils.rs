@@ -43,7 +43,7 @@ use crate::swap_in::swap::create_submarine_swap_script;
 use crate::{
     parse_invoice, Config, CustomMessage, LNInvoice, MaxChannelAmount, NodeCredentials,
     PaymentResponse, Peer, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse,
-    RouteHint, RouteHintHop, SetNodeConfigRequest,
+    RouteHint, RouteHintHop,
 };
 use crate::{OpeningFeeParams, OpeningFeeParamsMenu};
 use crate::{ReceivePaymentRequest, SwapInfo};
@@ -285,7 +285,7 @@ impl NodeAPI for MockNodeAPI {
         Err(NodeError::Generic(anyhow!("Not implemented")))
     }
 
-    async fn set_node_config(&self, _close_to_address: Option<String>) -> NodeResult<()> {
+    async fn configure_node(&self, _close_to_address: Option<String>) -> NodeResult<()> {
         Ok(())
     }
 

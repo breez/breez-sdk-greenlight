@@ -33,16 +33,16 @@ use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
 use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
-    EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus, LnUrlPayRequest,
-    LnUrlWithdrawRequest, LnUrlWithdrawResult, MaxReverseSwapAmountResponse, NodeConfig,
-    NodeCredentials, OpenChannelFeeRequest, OpenChannelFeeResponse,
+    ConfigureNodeRequest, EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus,
+    LnUrlPayRequest, LnUrlWithdrawRequest, LnUrlWithdrawResult, MaxReverseSwapAmountResponse,
+    NodeConfig, NodeCredentials, OpenChannelFeeRequest, OpenChannelFeeResponse,
     PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, PrepareRefundRequest,
     PrepareRefundResponse, ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse,
     RedeemOnchainFundsRequest, RedeemOnchainFundsResponse, RefundRequest, RefundResponse,
     ReportIssueRequest, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
     SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
-    SendSpontaneousPaymentRequest, ServiceHealthCheckResponse, SetNodeConfigRequest,
-    SignMessageRequest, SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
+    SendSpontaneousPaymentRequest, ServiceHealthCheckResponse, SignMessageRequest,
+    SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
 };
 
 /*
@@ -108,9 +108,9 @@ pub fn node_info() -> Result<NodeState> {
     })
 }
 
-/// See [BreezServices::set_node_config]
-pub fn set_node_config(req: SetNodeConfigRequest) -> Result<()> {
-    block_on(async { get_breez_services().await?.set_node_config(req).await })
+/// See [BreezServices::configure_node]
+pub fn configure_node(req: ConfigureNodeRequest) -> Result<()> {
+    block_on(async { get_breez_services().await?.configure_node(req).await })
         .map_err(anyhow::Error::new::<SdkError>)
 }
 

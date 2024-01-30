@@ -4,13 +4,13 @@ use breez_sdk_core::{
     parse_invoice as sdk_parse_invoice, AesSuccessActionDataDecrypted, AesSuccessActionDataResult,
     BackupFailedData, BackupStatus, BitcoinAddressData, BreezEvent, BreezServices,
     BuyBitcoinProvider, BuyBitcoinRequest, BuyBitcoinResponse, ChannelState, CheckMessageRequest,
-    CheckMessageResponse, ClosedChannelPaymentDetails, Config, CurrencyInfo, EnvironmentType,
-    EventListener, FeeratePreset, FiatCurrency, GreenlightCredentials, GreenlightNodeConfig,
-    HealthCheckStatus, InputType, InvoicePaidDetails, LNInvoice, ListPaymentsRequest,
-    LnPaymentDetails, LnUrlAuthRequestData, LnUrlCallbackStatus, LnUrlErrorData, LnUrlPayErrorData,
-    LnUrlPayRequest, LnUrlPayRequestData, LnUrlPayResult, LnUrlPaySuccessData,
-    LnUrlWithdrawRequest, LnUrlWithdrawRequestData, LnUrlWithdrawResult, LnUrlWithdrawSuccessData,
-    LocaleOverrides, LocalizedName, LogEntry, LogStream, LspInformation,
+    CheckMessageResponse, ClosedChannelPaymentDetails, Config, ConfigureNodeRequest, CurrencyInfo,
+    EnvironmentType, EventListener, FeeratePreset, FiatCurrency, GreenlightCredentials,
+    GreenlightNodeConfig, HealthCheckStatus, InputType, InvoicePaidDetails, LNInvoice,
+    ListPaymentsRequest, LnPaymentDetails, LnUrlAuthRequestData, LnUrlCallbackStatus,
+    LnUrlErrorData, LnUrlPayErrorData, LnUrlPayRequest, LnUrlPayRequestData, LnUrlPayResult,
+    LnUrlPaySuccessData, LnUrlWithdrawRequest, LnUrlWithdrawRequestData, LnUrlWithdrawResult,
+    LnUrlWithdrawSuccessData, LocaleOverrides, LocalizedName, LogEntry, LogStream, LspInformation,
     MaxReverseSwapAmountResponse, MessageSuccessActionData, MetadataFilter, MetadataItem, Network,
     NodeConfig, NodeCredentials, NodeState, OpenChannelFeeRequest, OpenChannelFeeResponse,
     OpeningFeeParams, OpeningFeeParamsMenu, Payment, PaymentDetails, PaymentFailedData,
@@ -21,9 +21,9 @@ use breez_sdk_core::{
     ReportIssueRequest, ReportPaymentFailureDetails, ReverseSwapFeesRequest, ReverseSwapInfo,
     ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop, SendOnchainRequest,
     SendOnchainResponse, SendPaymentRequest, SendPaymentResponse, SendSpontaneousPaymentRequest,
-    ServiceHealthCheckResponse, SetNodeConfigRequest, SignMessageRequest, SignMessageResponse,
-    StaticBackupRequest, StaticBackupResponse, SuccessActionProcessed, SwapInfo, SwapStatus,
-    Symbol, TlvEntry, UnspentTransactionOutput, UrlSuccessActionData,
+    ServiceHealthCheckResponse, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
+    StaticBackupResponse, SuccessActionProcessed, SwapInfo, SwapStatus, Symbol, TlvEntry,
+    UnspentTransactionOutput, UrlSuccessActionData,
 };
 use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
@@ -117,8 +117,8 @@ impl BlockingBreezServices {
         rt().block_on(self.breez_services.disconnect())
     }
 
-    pub fn set_node_config(&self, req: SetNodeConfigRequest) -> SdkResult<()> {
-        rt().block_on(self.breez_services.set_node_config(req))
+    pub fn configure_node(&self, req: ConfigureNodeRequest) -> SdkResult<()> {
+        rt().block_on(self.breez_services.configure_node(req))
     }
 
     pub fn send_payment(

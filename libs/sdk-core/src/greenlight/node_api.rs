@@ -651,15 +651,27 @@ impl NodeAPI for Greenlight {
         .map(|credentials| NodeCredentials::Greenlight { credentials }))
     }
 
-    async fn set_node_config(&self, close_to_address: Option<String>) -> NodeResult<()> {
-        let mut client = self.get_client().await?;
-        if let Some(close_to_addr) = close_to_address {
-            client
-                .configure(gl_client::pb::GlConfig { close_to_addr })
-                .await
-                .map_err(|e| {
-                    NodeError::Generic(anyhow!("Unable to set close to address: {}", e))
-                })?;
+    async fn configure_node(&self, close_to_address: Option<String>) -> NodeResult<()> {
+        match close_to_address {
+            Some(close_to_addr) => {
+                self.get_client()
+                    .await?
+                    .configure(gl_client::pb::GlConfig { close_to_addr })
+                    .await
+                    .map_err(|e| NodeError::Generic(anyhow!("Unable to set node config: {}", e)))?;
+            }
+            None => {
+                self.get_node_client()
+                    .await?
+                    .del_datastore(cln::DeldatastoreRequest {
+                        key: vec!["glconf".to_string(), "request".to_string()],
+                        generation: None,
+                    })
+                    .await
+                    .map_err(|e| {
+                        NodeError::Generic(anyhow!("Unable to delete node config: {}", e))
+                    })?;
+            }
         }
         Ok(())
     }

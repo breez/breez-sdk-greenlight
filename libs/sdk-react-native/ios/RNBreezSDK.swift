@@ -151,11 +151,11 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
-    @objc(setNodeConfig:resolve:reject:)
-    func setNodeConfig(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    @objc(configureNode:resolve:reject:)
+    func configureNode(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let setNodeConfigRequest = try BreezSDKMapper.asSetNodeConfigRequest(setNodeConfigRequest: req)
-            try getBreezServices().setNodeConfig(req: setNodeConfigRequest)
+            let configureNodeRequest = try BreezSDKMapper.asConfigureNodeRequest(configureNodeRequest: req)
+            try getBreezServices().configureNode(req: configureNodeRequest)
             resolve(["status": "ok"])
         } catch let err {
             rejectErr(err: err, reject: reject)

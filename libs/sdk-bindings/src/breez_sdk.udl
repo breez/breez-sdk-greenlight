@@ -176,7 +176,7 @@ dictionary NodeState {
     u64 inbound_liquidity_msats;    
 };
 
-dictionary SetNodeConfigRequest {
+dictionary ConfigureNodeRequest {
     string? close_to_address;
 };
 
@@ -747,7 +747,7 @@ interface BlockingBreezServices {
    void disconnect();
 
    [Throws=SdkError]
-   void set_node_config(SetNodeConfigRequest req);
+   void configure_node(ConfigureNodeRequest req);
 
    [Throws=SendPaymentError]
    SendPaymentResponse send_payment(SendPaymentRequest req);

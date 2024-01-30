@@ -483,6 +483,42 @@ enum BreezSDKMapper {
         return configList.map { v -> [String: Any?] in dictionaryOf(config: v) }
     }
 
+    static func asConfigureNodeRequest(configureNodeRequest: [String: Any?]) throws -> ConfigureNodeRequest {
+        var closeToAddress: String?
+        if hasNonNilKey(data: configureNodeRequest, key: "closeToAddress") {
+            guard let closeToAddressTmp = configureNodeRequest["closeToAddress"] as? String else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "closeToAddress"))
+            }
+            closeToAddress = closeToAddressTmp
+        }
+
+        return ConfigureNodeRequest(
+            closeToAddress: closeToAddress)
+    }
+
+    static func dictionaryOf(configureNodeRequest: ConfigureNodeRequest) -> [String: Any?] {
+        return [
+            "closeToAddress": configureNodeRequest.closeToAddress == nil ? nil : configureNodeRequest.closeToAddress,
+        ]
+    }
+
+    static func asConfigureNodeRequestList(arr: [Any]) throws -> [ConfigureNodeRequest] {
+        var list = [ConfigureNodeRequest]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var configureNodeRequest = try asConfigureNodeRequest(configureNodeRequest: val)
+                list.append(configureNodeRequest)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "ConfigureNodeRequest"))
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(configureNodeRequestList: [ConfigureNodeRequest]) -> [Any] {
+        return configureNodeRequestList.map { v -> [String: Any?] in dictionaryOf(configureNodeRequest: v) }
+    }
+
     static func asCurrencyInfo(currencyInfo: [String: Any?]) throws -> CurrencyInfo {
         guard let name = currencyInfo["name"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "name", typeName: "CurrencyInfo"))
@@ -3323,42 +3359,6 @@ enum BreezSDKMapper {
 
     static func arrayOf(serviceHealthCheckResponseList: [ServiceHealthCheckResponse]) -> [Any] {
         return serviceHealthCheckResponseList.map { v -> [String: Any?] in dictionaryOf(serviceHealthCheckResponse: v) }
-    }
-
-    static func asSetNodeConfigRequest(setNodeConfigRequest: [String: Any?]) throws -> SetNodeConfigRequest {
-        var closeToAddress: String?
-        if hasNonNilKey(data: setNodeConfigRequest, key: "closeToAddress") {
-            guard let closeToAddressTmp = setNodeConfigRequest["closeToAddress"] as? String else {
-                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "closeToAddress"))
-            }
-            closeToAddress = closeToAddressTmp
-        }
-
-        return SetNodeConfigRequest(
-            closeToAddress: closeToAddress)
-    }
-
-    static func dictionaryOf(setNodeConfigRequest: SetNodeConfigRequest) -> [String: Any?] {
-        return [
-            "closeToAddress": setNodeConfigRequest.closeToAddress == nil ? nil : setNodeConfigRequest.closeToAddress,
-        ]
-    }
-
-    static func asSetNodeConfigRequestList(arr: [Any]) throws -> [SetNodeConfigRequest] {
-        var list = [SetNodeConfigRequest]()
-        for value in arr {
-            if let val = value as? [String: Any?] {
-                var setNodeConfigRequest = try asSetNodeConfigRequest(setNodeConfigRequest: val)
-                list.append(setNodeConfigRequest)
-            } else {
-                throw SdkError.Generic(message: errUnexpectedType(typeName: "SetNodeConfigRequest"))
-            }
-        }
-        return list
-    }
-
-    static func arrayOf(setNodeConfigRequestList: [SetNodeConfigRequest]) -> [Any] {
-        return setNodeConfigRequestList.map { v -> [String: Any?] in dictionaryOf(setNodeConfigRequest: v) }
     }
 
     static func asSignMessageRequest(signMessageRequest: [String: Any?]) throws -> SignMessageRequest {

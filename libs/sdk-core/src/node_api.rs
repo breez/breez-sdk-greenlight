@@ -53,7 +53,7 @@ pub enum NodeError {
 #[tonic::async_trait]
 pub trait NodeAPI: Send + Sync {
     fn node_credentials(&self) -> NodeResult<Option<NodeCredentials>>;
-    async fn set_node_config(&self, close_to_address: Option<String>) -> NodeResult<()>;
+    async fn configure_node(&self, close_to_address: Option<String>) -> NodeResult<()>;
     async fn create_invoice(
         &self,
         amount_msat: u64,
