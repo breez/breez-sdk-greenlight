@@ -247,6 +247,11 @@ pub extern "C" fn wire_refund(port_: i64, req: *mut wire_RefundRequest) {
 }
 
 #[no_mangle]
+pub extern "C" fn wire_rescan_swaps(port_: i64) {
+    wire_rescan_swaps_impl(port_)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_in_progress_swap(port_: i64) {
     wire_in_progress_swap_impl(port_)
 }
