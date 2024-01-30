@@ -1,7 +1,7 @@
 use crate::{
     invoice::InvoiceError, persist::error::PersistError, CustomMessage, MaxChannelAmount,
-    NodeCredentials, Payment, PaymentResponse, Peer, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse,
-    RouteHintHop, SyncResponse, TlvEntry,
+    NodeCredentials, Payment, PaymentResponse, Peer, PrepareRedeemOnchainFundsRequest,
+    PrepareRedeemOnchainFundsResponse, RouteHintHop, SyncResponse, TlvEntry,
 };
 use anyhow::Result;
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
@@ -53,6 +53,7 @@ pub enum NodeError {
 #[tonic::async_trait]
 pub trait NodeAPI: Send + Sync {
     fn node_credentials(&self) -> NodeResult<Option<NodeCredentials>>;
+    async fn set_node_config(&self, close_to_address: Option<String>) -> NodeResult<()>;
     async fn create_invoice(
         &self,
         amount_msat: u64,
@@ -89,8 +90,15 @@ pub trait NodeAPI: Send + Sync {
         max_hops: u32,
         last_hop: Option<&RouteHintHop>,
     ) -> NodeResult<Vec<MaxChannelAmount>>;
-    async fn redeem_onchain_funds(&self, to_address: String, sat_per_vbyte: u32) -> NodeResult<Vec<u8>>;
-    async fn prepare_redeem_onchain_funds(&self, req: PrepareRedeemOnchainFundsRequest) -> NodeResult<PrepareRedeemOnchainFundsResponse>;
+    async fn redeem_onchain_funds(
+        &self,
+        to_address: String,
+        sat_per_vbyte: u32,
+    ) -> NodeResult<Vec<u8>>;
+    async fn prepare_redeem_onchain_funds(
+        &self,
+        req: PrepareRedeemOnchainFundsRequest,
+    ) -> NodeResult<PrepareRedeemOnchainFundsResponse>;
     async fn start_signer(&self, shutdown: mpsc::Receiver<()>);
     async fn list_peers(&self) -> NodeResult<Vec<Peer>>;
     async fn connect_peer(&self, node_id: String, addr: String) -> NodeResult<()>;

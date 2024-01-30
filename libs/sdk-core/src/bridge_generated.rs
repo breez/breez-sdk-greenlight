@@ -110,6 +110,7 @@ use crate::models::SendPaymentRequest;
 use crate::models::SendPaymentResponse;
 use crate::models::SendSpontaneousPaymentRequest;
 use crate::models::ServiceHealthCheckResponse;
+use crate::models::SetNodeConfigRequest;
 use crate::models::StaticBackupRequest;
 use crate::models::StaticBackupResponse;
 use crate::models::SwapInfo;
@@ -175,6 +176,22 @@ fn wire_node_info_impl(port_: MessagePort) {
             mode: FfiCallMode::Normal,
         },
         move || move |task_callback| node_info(),
+    )
+}
+fn wire_set_node_config_impl(
+    port_: MessagePort,
+    req: impl Wire2Api<SetNodeConfigRequest> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, (), _>(
+        WrapInfo {
+            debug_name: "set_node_config",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_req = req.wire2api();
+            move |task_callback| set_node_config(api_req)
+        },
     )
 }
 fn wire_disconnect_impl(port_: MessagePort) {

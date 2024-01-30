@@ -39,6 +39,11 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kNodeInfoConstMeta;
 
+  /// See [BreezServices::set_node_config]
+  Future<void> setNodeConfig({required SetNodeConfigRequest req, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kSetNodeConfigConstMeta;
+
   /// Cleanup node resources and stop the signer.
   Future<void> disconnect({dynamic hint});
 
@@ -1661,6 +1666,15 @@ class ServiceHealthCheckResponse {
   });
 }
 
+/// Represents a set node config request.
+class SetNodeConfigRequest {
+  final String? closeToAddress;
+
+  const SetNodeConfigRequest({
+    this.closeToAddress,
+  });
+}
+
 /// Request to sign a message with the node's private key.
 class SignMessageRequest {
   /// The message to be signed by the node's private key.
@@ -1970,6 +1984,23 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kNodeInfoConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "node_info",
         argNames: [],
+      );
+
+  Future<void> setNodeConfig({required SetNodeConfigRequest req, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_set_node_config_request(req);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_set_node_config(port_, arg0),
+      parseSuccessData: _wire2api_unit,
+      parseErrorData: _wire2api_FrbAnyhowException,
+      constMeta: kSetNodeConfigConstMeta,
+      argValues: [req],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kSetNodeConfigConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "set_node_config",
+        argNames: ["req"],
       );
 
   Future<void> disconnect({dynamic hint}) {
@@ -4152,6 +4183,14 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<wire_SetNodeConfigRequest> api2wire_box_autoadd_set_node_config_request(
+      SetNodeConfigRequest raw) {
+    final ptr = inner.new_box_autoadd_set_node_config_request_0();
+    _api_fill_to_wire_set_node_config_request(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
   ffi.Pointer<wire_SignMessageRequest> api2wire_box_autoadd_sign_message_request(SignMessageRequest raw) {
     final ptr = inner.new_box_autoadd_sign_message_request_0();
     _api_fill_to_wire_sign_message_request(raw, ptr.ref);
@@ -4397,6 +4436,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     _api_fill_to_wire_send_spontaneous_payment_request(apiObj, wireObj.ref);
   }
 
+  void _api_fill_to_wire_box_autoadd_set_node_config_request(
+      SetNodeConfigRequest apiObj, ffi.Pointer<wire_SetNodeConfigRequest> wireObj) {
+    _api_fill_to_wire_set_node_config_request(apiObj, wireObj.ref);
+  }
+
   void _api_fill_to_wire_box_autoadd_sign_message_request(
       SignMessageRequest apiObj, ffi.Pointer<wire_SignMessageRequest> wireObj) {
     _api_fill_to_wire_sign_message_request(apiObj, wireObj.ref);
@@ -4605,6 +4649,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.extra_tlvs = api2wire_opt_list_tlv_entry(apiObj.extraTlvs);
   }
 
+  void _api_fill_to_wire_set_node_config_request(
+      SetNodeConfigRequest apiObj, wire_SetNodeConfigRequest wireObj) {
+    wireObj.close_to_address = api2wire_opt_String(apiObj.closeToAddress);
+  }
+
   void _api_fill_to_wire_sign_message_request(SignMessageRequest apiObj, wire_SignMessageRequest wireObj) {
     wireObj.message = api2wire_String(apiObj.message);
   }
@@ -4767,6 +4816,22 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
 
   late final _wire_node_infoPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_node_info');
   late final _wire_node_info = _wire_node_infoPtr.asFunction<void Function(int)>();
+
+  void wire_set_node_config(
+    int port_,
+    ffi.Pointer<wire_SetNodeConfigRequest> req,
+  ) {
+    return _wire_set_node_config(
+      port_,
+      req,
+    );
+  }
+
+  late final _wire_set_node_configPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_SetNodeConfigRequest>)>>(
+          'wire_set_node_config');
+  late final _wire_set_node_config =
+      _wire_set_node_configPtr.asFunction<void Function(int, ffi.Pointer<wire_SetNodeConfigRequest>)>();
 
   void wire_disconnect(
     int port_,
@@ -5739,6 +5804,16 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
       _new_box_autoadd_send_spontaneous_payment_request_0Ptr
           .asFunction<ffi.Pointer<wire_SendSpontaneousPaymentRequest> Function()>();
 
+  ffi.Pointer<wire_SetNodeConfigRequest> new_box_autoadd_set_node_config_request_0() {
+    return _new_box_autoadd_set_node_config_request_0();
+  }
+
+  late final _new_box_autoadd_set_node_config_request_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_SetNodeConfigRequest> Function()>>(
+          'new_box_autoadd_set_node_config_request_0');
+  late final _new_box_autoadd_set_node_config_request_0 = _new_box_autoadd_set_node_config_request_0Ptr
+      .asFunction<ffi.Pointer<wire_SetNodeConfigRequest> Function()>();
+
   ffi.Pointer<wire_SignMessageRequest> new_box_autoadd_sign_message_request_0() {
     return _new_box_autoadd_sign_message_request_0();
   }
@@ -5932,6 +6007,10 @@ final class wire_Config extends ffi.Struct {
   external int exemptfee_msat;
 
   external wire_NodeConfig node_config;
+}
+
+final class wire_SetNodeConfigRequest extends ffi.Struct {
+  external ffi.Pointer<wire_uint_8_list> close_to_address;
 }
 
 final class wire_SignMessageRequest extends ffi.Struct {

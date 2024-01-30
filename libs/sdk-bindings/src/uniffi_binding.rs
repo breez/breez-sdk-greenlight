@@ -21,9 +21,9 @@ use breez_sdk_core::{
     ReportIssueRequest, ReportPaymentFailureDetails, ReverseSwapFeesRequest, ReverseSwapInfo,
     ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop, SendOnchainRequest,
     SendOnchainResponse, SendPaymentRequest, SendPaymentResponse, SendSpontaneousPaymentRequest,
-    ServiceHealthCheckResponse, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
-    StaticBackupResponse, SuccessActionProcessed, SwapInfo, SwapStatus, Symbol, TlvEntry,
-    UnspentTransactionOutput, UrlSuccessActionData,
+    ServiceHealthCheckResponse, SetNodeConfigRequest, SignMessageRequest, SignMessageResponse,
+    StaticBackupRequest, StaticBackupResponse, SuccessActionProcessed, SwapInfo, SwapStatus,
+    Symbol, TlvEntry, UnspentTransactionOutput, UrlSuccessActionData,
 };
 use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
@@ -115,6 +115,10 @@ pub struct BlockingBreezServices {
 impl BlockingBreezServices {
     pub fn disconnect(&self) -> SdkResult<()> {
         rt().block_on(self.breez_services.disconnect())
+    }
+
+    pub fn set_node_config(&self, req: SetNodeConfigRequest) -> SdkResult<()> {
+        rt().block_on(self.breez_services.set_node_config(req))
     }
 
     pub fn send_payment(

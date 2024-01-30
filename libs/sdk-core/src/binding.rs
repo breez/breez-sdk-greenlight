@@ -41,8 +41,8 @@ use crate::{
     RedeemOnchainFundsRequest, RedeemOnchainFundsResponse, RefundRequest, RefundResponse,
     ReportIssueRequest, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
     SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
-    SendSpontaneousPaymentRequest, ServiceHealthCheckResponse, SignMessageRequest,
-    SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
+    SendSpontaneousPaymentRequest, ServiceHealthCheckResponse, SetNodeConfigRequest,
+    SignMessageRequest, SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
 };
 
 /*
@@ -106,6 +106,12 @@ pub fn node_info() -> Result<NodeState> {
             .node_info()
             .map_err(anyhow::Error::new::<SdkError>)
     })
+}
+
+/// See [BreezServices::set_node_config]
+pub fn set_node_config(req: SetNodeConfigRequest) -> Result<()> {
+    block_on(async { get_breez_services().await?.set_node_config(req).await })
+        .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// Cleanup node resources and stop the signer.

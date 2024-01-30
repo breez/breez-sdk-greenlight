@@ -3063,6 +3063,46 @@ fun asServiceHealthCheckResponseList(arr: ReadableArray): List<ServiceHealthChec
     return list
 }
 
+fun asSetNodeConfigRequest(setNodeConfigRequest: ReadableMap): SetNodeConfigRequest? {
+    if (!validateMandatoryFields(
+            setNodeConfigRequest,
+            arrayOf(),
+        )
+    ) {
+        return null
+    }
+    val closeToAddress =
+        if (hasNonNullKey(
+                setNodeConfigRequest,
+                "closeToAddress",
+            )
+        ) {
+            setNodeConfigRequest.getString("closeToAddress")
+        } else {
+            null
+        }
+    return SetNodeConfigRequest(
+        closeToAddress,
+    )
+}
+
+fun readableMapOf(setNodeConfigRequest: SetNodeConfigRequest): ReadableMap {
+    return readableMapOf(
+        "closeToAddress" to setNodeConfigRequest.closeToAddress,
+    )
+}
+
+fun asSetNodeConfigRequestList(arr: ReadableArray): List<SetNodeConfigRequest> {
+    val list = ArrayList<SetNodeConfigRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asSetNodeConfigRequest(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
 fun asSignMessageRequest(signMessageRequest: ReadableMap): SignMessageRequest? {
     if (!validateMandatoryFields(
             signMessageRequest,

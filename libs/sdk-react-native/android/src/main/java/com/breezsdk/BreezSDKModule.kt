@@ -109,10 +109,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
         executor.execute {
             try {
                 val envTypeTmp = asEnvironmentType(envType)
-                val nodeConfigTmp =
-                    asNodeConfig(
-                        nodeConfig,
-                    ) ?: run { throw SdkException.Generic(errMissingMandatoryField("nodeConfig", "NodeConfig")) }
+                val nodeConfigTmp = asNodeConfig(nodeConfig) ?: run { throw SdkException.Generic(errMissingMandatoryField("nodeConfig", "NodeConfig")) }
                 val res = defaultConfig(envTypeTmp, apiKey, nodeConfigTmp)
                 val workingDir = File(reactApplicationContext.filesDir.toString() + "/breezSdk")
 
@@ -195,6 +192,25 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
+    fun setNodeConfig(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
+        executor.execute {
+            try {
+                val setNodeConfigRequest =
+                    asSetNodeConfigRequest(req) ?: run {
+                        throw SdkException.Generic(errMissingMandatoryField("req", "SetNodeConfigRequest"))
+                    }
+                getBreezServices().setNodeConfig(setNodeConfigRequest)
+                promise.resolve(readableMapOf("status" to "ok"))
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
     fun sendPayment(
         req: ReadableMap,
         promise: Promise,
@@ -258,10 +274,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     ) {
         executor.execute {
             try {
-                val lnUrlPayRequest =
-                    asLnUrlPayRequest(
-                        req,
-                    ) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "LnUrlPayRequest")) }
+                val lnUrlPayRequest = asLnUrlPayRequest(req) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "LnUrlPayRequest")) }
                 val res = getBreezServices().payLnurl(lnUrlPayRequest)
                 promise.resolve(readableMapOf(res))
             } catch (e: Exception) {
@@ -315,10 +328,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     ) {
         executor.execute {
             try {
-                val reqTmp =
-                    asReportIssueRequest(
-                        req,
-                    ) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "ReportIssueRequest")) }
+                val reqTmp = asReportIssueRequest(req) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "ReportIssueRequest")) }
                 getBreezServices().reportIssue(reqTmp)
                 promise.resolve(readableMapOf("status" to "ok"))
             } catch (e: Exception) {
@@ -699,10 +709,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     ) {
         executor.execute {
             try {
-                val refundRequest =
-                    asRefundRequest(
-                        req,
-                    ) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "RefundRequest")) }
+                val refundRequest = asRefundRequest(req) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "RefundRequest")) }
                 val res = getBreezServices().refund(refundRequest)
                 promise.resolve(readableMapOf(res))
             } catch (e: Exception) {
@@ -831,10 +838,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     ) {
         executor.execute {
             try {
-                val buyBitcoinRequest =
-                    asBuyBitcoinRequest(
-                        req,
-                    ) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "BuyBitcoinRequest")) }
+                val buyBitcoinRequest = asBuyBitcoinRequest(req) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "BuyBitcoinRequest")) }
                 val res = getBreezServices().buyBitcoin(buyBitcoinRequest)
                 promise.resolve(readableMapOf(res))
             } catch (e: Exception) {

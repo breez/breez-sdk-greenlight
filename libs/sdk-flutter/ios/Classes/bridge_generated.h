@@ -58,6 +58,10 @@ typedef struct wire_Config {
   struct wire_NodeConfig node_config;
 } wire_Config;
 
+typedef struct wire_SetNodeConfigRequest {
+  struct wire_uint_8_list *close_to_address;
+} wire_SetNodeConfigRequest;
+
 typedef struct wire_SignMessageRequest {
   struct wire_uint_8_list *message;
 } wire_SignMessageRequest;
@@ -261,6 +265,8 @@ void wire_node_credentials(int64_t port_);
 
 void wire_node_info(int64_t port_);
 
+void wire_set_node_config(int64_t port_, struct wire_SetNodeConfigRequest *req);
+
 void wire_disconnect(int64_t port_);
 
 void wire_sign_message(int64_t port_, struct wire_SignMessageRequest *req);
@@ -415,6 +421,8 @@ struct wire_SendPaymentRequest *new_box_autoadd_send_payment_request_0(void);
 
 struct wire_SendSpontaneousPaymentRequest *new_box_autoadd_send_spontaneous_payment_request_0(void);
 
+struct wire_SetNodeConfigRequest *new_box_autoadd_set_node_config_request_0(void);
+
 struct wire_SignMessageRequest *new_box_autoadd_sign_message_request_0(void);
 
 struct wire_StaticBackupRequest *new_box_autoadd_static_backup_request_0(void);
@@ -444,6 +452,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_sync);
     dummy_var ^= ((int64_t) (void*) wire_node_credentials);
     dummy_var ^= ((int64_t) (void*) wire_node_info);
+    dummy_var ^= ((int64_t) (void*) wire_set_node_config);
     dummy_var ^= ((int64_t) (void*) wire_disconnect);
     dummy_var ^= ((int64_t) (void*) wire_sign_message);
     dummy_var ^= ((int64_t) (void*) wire_check_message);
@@ -518,6 +527,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_send_onchain_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_send_payment_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_send_spontaneous_payment_request_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_set_node_config_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_sign_message_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_static_backup_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_u32_0);

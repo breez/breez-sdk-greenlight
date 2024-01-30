@@ -651,6 +651,19 @@ impl NodeAPI for Greenlight {
         .map(|credentials| NodeCredentials::Greenlight { credentials }))
     }
 
+    async fn set_node_config(&self, close_to_address: Option<String>) -> NodeResult<()> {
+        let mut client = self.get_client().await?;
+        if let Some(close_to_addr) = close_to_address {
+            client
+                .configure(gl_client::pb::GlConfig { close_to_addr })
+                .await
+                .map_err(|e| {
+                    NodeError::Generic(anyhow!("Unable to set close to address: {}", e))
+                })?;
+        }
+        Ok(())
+    }
+
     async fn create_invoice(
         &self,
         amount_msat: u64,

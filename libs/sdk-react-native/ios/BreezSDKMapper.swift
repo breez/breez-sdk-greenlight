@@ -3325,6 +3325,42 @@ enum BreezSDKMapper {
         return serviceHealthCheckResponseList.map { v -> [String: Any?] in dictionaryOf(serviceHealthCheckResponse: v) }
     }
 
+    static func asSetNodeConfigRequest(setNodeConfigRequest: [String: Any?]) throws -> SetNodeConfigRequest {
+        var closeToAddress: String?
+        if hasNonNilKey(data: setNodeConfigRequest, key: "closeToAddress") {
+            guard let closeToAddressTmp = setNodeConfigRequest["closeToAddress"] as? String else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "closeToAddress"))
+            }
+            closeToAddress = closeToAddressTmp
+        }
+
+        return SetNodeConfigRequest(
+            closeToAddress: closeToAddress)
+    }
+
+    static func dictionaryOf(setNodeConfigRequest: SetNodeConfigRequest) -> [String: Any?] {
+        return [
+            "closeToAddress": setNodeConfigRequest.closeToAddress == nil ? nil : setNodeConfigRequest.closeToAddress,
+        ]
+    }
+
+    static func asSetNodeConfigRequestList(arr: [Any]) throws -> [SetNodeConfigRequest] {
+        var list = [SetNodeConfigRequest]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var setNodeConfigRequest = try asSetNodeConfigRequest(setNodeConfigRequest: val)
+                list.append(setNodeConfigRequest)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "SetNodeConfigRequest"))
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(setNodeConfigRequestList: [SetNodeConfigRequest]) -> [Any] {
+        return setNodeConfigRequestList.map { v -> [String: Any?] in dictionaryOf(setNodeConfigRequest: v) }
+    }
+
     static func asSignMessageRequest(signMessageRequest: [String: Any?]) throws -> SignMessageRequest {
         guard let message = signMessageRequest["message"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "message", typeName: "SignMessageRequest"))

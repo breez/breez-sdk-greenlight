@@ -238,6 +238,13 @@ impl BreezServices {
         Ok(())
     }
 
+    /// Set the node config
+    ///
+    /// This calls [NodeAPI::set_node_config] to make changes to the active node's configuration.
+    pub async fn set_node_config(&self, req: SetNodeConfigRequest) -> SdkResult<()> {
+        Ok(self.node_api.set_node_config(req.close_to_address).await?)
+    }
+
     /// Pay a bolt11 invoice
     ///
     /// Calling `send_payment` ensures that the payment is not already completed, if so it will result in an error.

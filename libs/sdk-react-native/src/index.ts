@@ -461,6 +461,10 @@ export type ServiceHealthCheckResponse = {
     status: HealthCheckStatus
 }
 
+export type SetNodeConfigRequest = {
+    closeToAddress?: string
+}
+
 export type SignMessageRequest = {
     message: string
 }
@@ -822,6 +826,10 @@ export const staticBackup = async (req: StaticBackupRequest): Promise<StaticBack
 
 export const disconnect = async (): Promise<void> => {
     await BreezSDK.disconnect()
+}
+
+export const setNodeConfig = async (req: SetNodeConfigRequest): Promise<void> => {
+    await BreezSDK.setNodeConfig(req)
 }
 
 export const sendPayment = async (req: SendPaymentRequest): Promise<SendPaymentResponse> => {

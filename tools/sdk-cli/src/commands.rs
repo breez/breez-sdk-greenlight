@@ -205,6 +205,13 @@ pub(crate) enum Commands {
     /// The up to date node information
     NodeInfo {},
 
+    /// Set the current node configuration
+    SetNodeConfig {
+        // Optional address to send funds to during a channel close
+        #[clap(short = 'c', long = "close_to_address")]
+        close_to_address: Option<String>,
+    },
+
     /// List fiat currencies
     ListFiat {},
 
