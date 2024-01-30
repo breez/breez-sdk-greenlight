@@ -269,15 +269,12 @@ impl BTCReceiveSwap {
     }
 
     pub(crate) async fn rescan_swaps(&self, tip: u32) -> Result<()> {
-        _ = self
-            .refresh_swaps(self.persister.list_swaps()?, tip)
-            .await?;
-        Ok(())
+        self.refresh_swaps(self.persister.list_swaps()?, tip).await
     }
 
     pub(crate) async fn execute_pending_swaps(&self, tip: u32) -> Result<()> {
         // first refresh all swaps we monitor
-        _ = self.refresh_swaps(self.list_monitored()?, tip).await?;
+        self.refresh_swaps(self.list_monitored()?, tip).await?;
 
         // redeem swaps
         let redeemable_swaps = self.list_redeemables()?;
@@ -306,7 +303,7 @@ impl BTCReceiveSwap {
         Ok(())
     }
 
-    async fn refresh_swaps(&self, swaps: Vec<SwapInfo>, tip: u32) -> Result<Vec<SwapInfo>> {
+    async fn refresh_swaps(&self, swaps: Vec<SwapInfo>, tip: u32) -> Result<()> {
         for s in swaps {
             let address = s.bitcoin_address.clone();
             let result = self
@@ -320,7 +317,7 @@ impl BTCReceiveSwap {
                 )
             }
         }
-        self.list_monitored()
+        Ok(())
     }
 
     /// refreshes the on-chain status of the swap. This method updates the following information
