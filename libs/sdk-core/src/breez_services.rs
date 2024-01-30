@@ -737,6 +737,14 @@ impl BreezServices {
         Ok(None)
     }
 
+    /// Iterate all historical swap addresses and fetch their current status from the blockchain.
+    /// The status is then updated in the persistent storage.
+    pub async fn rescan_swaps(&self) -> SdkResult<()> {
+        let tip = self.chain_service.current_tip().await?;
+        self.btc_receive_swapper.rescan_swaps(tip).await?;
+        Ok(())
+    }
+
     /// Lookup the reverse swap fees (see [ReverseSwapServiceAPI::fetch_reverse_swap_fees]).
     ///
     /// To get the total estimated fees for a specific amount, specify the amount to be sent in

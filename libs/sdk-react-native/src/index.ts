@@ -963,6 +963,10 @@ export const inProgressSwap = async (): Promise<SwapInfo | null> => {
     return response
 }
 
+export const rescanSwaps = async (): Promise<void> => {
+    await BreezSDK.rescanSwaps()
+}
+
 export const listRefundables = async (): Promise<SwapInfo[]> => {
     const response = await BreezSDK.listRefundables()
     return response

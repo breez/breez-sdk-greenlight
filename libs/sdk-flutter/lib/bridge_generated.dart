@@ -248,6 +248,11 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kRefundConstMeta;
 
+  /// See [BreezServices::rescan_swaps]
+  Future<void> rescanSwaps({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kRescanSwapsConstMeta;
+
   /// See [BreezServices::in_progress_swap]
   Future<SwapInfo?> inProgressSwap({dynamic hint});
 
@@ -2659,6 +2664,22 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kRefundConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "refund",
         argNames: ["req"],
+      );
+
+  Future<void> rescanSwaps({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_rescan_swaps(port_),
+      parseSuccessData: _wire2api_unit,
+      parseErrorData: _wire2api_FrbAnyhowException,
+      constMeta: kRescanSwapsConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kRescanSwapsConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "rescan_swaps",
+        argNames: [],
       );
 
   Future<SwapInfo?> inProgressSwap({dynamic hint}) {
@@ -5351,6 +5372,18 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_RefundRequest>)>>(
           'wire_refund');
   late final _wire_refund = _wire_refundPtr.asFunction<void Function(int, ffi.Pointer<wire_RefundRequest>)>();
+
+  void wire_rescan_swaps(
+    int port_,
+  ) {
+    return _wire_rescan_swaps(
+      port_,
+    );
+  }
+
+  late final _wire_rescan_swapsPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_rescan_swaps');
+  late final _wire_rescan_swaps = _wire_rescan_swapsPtr.asFunction<void Function(int)>();
 
   void wire_in_progress_swap(
     int port_,

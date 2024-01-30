@@ -717,6 +717,16 @@ fn wire_refund_impl(port_: MessagePort, req: impl Wire2Api<RefundRequest> + Unwi
         },
     )
 }
+fn wire_rescan_swaps_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, (), _>(
+        WrapInfo {
+            debug_name: "rescan_swaps",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || move |task_callback| rescan_swaps(),
+    )
+}
 fn wire_in_progress_swap_impl(port_: MessagePort) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, Option<SwapInfo>, _>(
         WrapInfo {

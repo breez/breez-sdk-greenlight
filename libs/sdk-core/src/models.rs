@@ -1277,10 +1277,7 @@ impl SwapInfo {
     }
 
     pub(crate) fn redeemable(&self) -> bool {
-        self.unconfirmed_sats == 0
-            && self.confirmed_sats > 0
-            && self.paid_sats == 0
-            && self.status != SwapStatus::Expired
+        self.confirmed_sats > 0 && self.paid_sats == 0 && self.status != SwapStatus::Expired
     }
 
     pub(crate) fn refundable(&self) -> bool {

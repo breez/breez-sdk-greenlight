@@ -266,6 +266,11 @@ impl BlockingBreezServices {
         rt().block_on(self.breez_services.in_progress_swap())
     }
 
+    /// Onchain rescan_swaps API
+    pub fn rescan_swaps(&self) -> SdkResult<()> {
+        rt().block_on(self.breez_services.rescan_swaps())
+    }
+
     /// list non-completed expired swaps that should be refunded by calling [BreezServices::refund]
     pub fn list_refundables(&self) -> SdkResult<Vec<SwapInfo>> {
         rt().block_on(self.breez_services.list_refundables())

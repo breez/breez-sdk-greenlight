@@ -229,6 +229,9 @@ pub(crate) enum Commands {
     /// List refundable swap addresses
     ListRefundables {},
 
+    /// Rescan all swaps
+    RescanSwaps {},
+
     /// Prepare a refund transaction for an incomplete swap
     PrepareRefund {
         swap_address: String,
