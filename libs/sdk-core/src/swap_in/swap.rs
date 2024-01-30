@@ -268,9 +268,16 @@ impl BTCReceiveSwap {
             .ok_or_else(|| anyhow!(format!("Swap address {} was not found", address)))
     }
 
+    pub(crate) async fn rescan_swaps(&self, tip: u32) -> Result<()> {
+        _ = self
+            .refresh_swaps(self.persister.list_swaps()?, tip)
+            .await?;
+        Ok(())
+    }
+
     pub(crate) async fn execute_pending_swaps(&self, tip: u32) -> Result<()> {
         // first refresh all swaps we monitor
-        _ = self.refresh_monitored_swaps(tip).await?;
+        _ = self.refresh_swaps(self.list_monitored()?, tip).await?;
 
         // redeem swaps
         let redeemable_swaps = self.list_redeemables()?;
@@ -299,9 +306,8 @@ impl BTCReceiveSwap {
         Ok(())
     }
 
-    async fn refresh_monitored_swaps(&self, tip: u32) -> Result<Vec<SwapInfo>> {
-        let to_check = self.list_monitored()?;
-        for s in to_check {
+    async fn refresh_swaps(&self, swaps: Vec<SwapInfo>, tip: u32) -> Result<Vec<SwapInfo>> {
+        for s in swaps {
             let address = s.bitcoin_address.clone();
             let result = self
                 .refresh_swap_on_chain_status(address.clone(), tip)

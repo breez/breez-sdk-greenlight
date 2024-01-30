@@ -346,6 +346,10 @@ pub(crate) async fn handle_command(
         Commands::ListRefundables {} => {
             serde_json::to_string_pretty(&sdk()?.list_refundables().await?).map_err(|e| e.into())
         }
+        Commands::RescanSwaps {} => {
+            sdk()?.rescan_swaps().await?;
+            Ok("Rescan completed successfully".to_string())
+        }
         Commands::PrepareRefund {
             swap_address,
             to_address,
