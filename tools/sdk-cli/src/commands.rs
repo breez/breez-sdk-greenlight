@@ -207,7 +207,7 @@ pub(crate) enum Commands {
 
     /// Configurate the node
     ConfigureNode {
-        // Optional address to send funds to during a channel close
+        // Optional address to send funds to during a mutual channel close
         #[clap(short = 'c', long = "close_to_address")]
         close_to_address: Option<String>,
     },

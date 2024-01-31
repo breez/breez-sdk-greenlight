@@ -241,6 +241,9 @@ impl BreezServices {
     /// Configure the node
     ///
     /// This calls [NodeAPI::configure_node] to make changes to the active node's configuration.
+    /// Configuring the [ConfigureNodeRequest::close_to_address] only needs to be done one time
+    /// when registering the node or when the close to address need to be changed. Otherwise it is
+    /// stored by the node and used when neccessary.
     pub async fn configure_node(&self, req: ConfigureNodeRequest) -> SdkResult<()> {
         Ok(self.node_api.configure_node(req.close_to_address).await?)
     }
