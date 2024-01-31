@@ -2270,7 +2270,7 @@ pub(crate) mod tests {
             swapper_public_key: vec![],
             script: vec![],
             bolt11: Some("312".into()),
-            paid_sats: 1,
+            paid_msat: 1000,
             confirmed_sats: 1,
             unconfirmed_sats: 0,
             status: SwapStatus::Expired,

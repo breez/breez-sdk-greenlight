@@ -457,7 +457,7 @@ mod tests {
             swapper_public_key: rand_vec_u8(10),
             script: rand_vec_u8(10),
             bolt11: None,
-            paid_sats: 0,
+            paid_msat: 0,
             unconfirmed_sats: 0,
             confirmed_sats: 0,
             status: crate::models::SwapStatus::Initial,

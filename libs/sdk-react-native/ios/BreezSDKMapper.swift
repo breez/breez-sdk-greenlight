@@ -3492,8 +3492,8 @@ enum BreezSDKMapper {
             }
             bolt11 = bolt11Tmp
         }
-        guard let paidSats = swapInfo["paidSats"] as? UInt64 else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "paidSats", typeName: "SwapInfo"))
+        guard let paidMsat = swapInfo["paidMsat"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "paidMsat", typeName: "SwapInfo"))
         }
         guard let unconfirmedSats = swapInfo["unconfirmedSats"] as? UInt64 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "unconfirmedSats", typeName: "SwapInfo"))
@@ -3544,7 +3544,7 @@ enum BreezSDKMapper {
             swapperPublicKey: swapperPublicKey,
             script: script,
             bolt11: bolt11,
-            paidSats: paidSats,
+            paidMsat: paidMsat,
             unconfirmedSats: unconfirmedSats,
             confirmedSats: confirmedSats,
             status: status,
@@ -3570,7 +3570,7 @@ enum BreezSDKMapper {
             "swapperPublicKey": swapInfo.swapperPublicKey,
             "script": swapInfo.script,
             "bolt11": swapInfo.bolt11 == nil ? nil : swapInfo.bolt11,
-            "paidSats": swapInfo.paidSats,
+            "paidMsat": swapInfo.paidMsat,
             "unconfirmedSats": swapInfo.unconfirmedSats,
             "confirmedSats": swapInfo.confirmedSats,
             "status": valueOf(swapStatus: swapInfo.status),

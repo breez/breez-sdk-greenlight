@@ -1238,8 +1238,8 @@ pub struct SwapInfo {
 
     /// bolt11 invoice to claim the sent funds.
     pub bolt11: Option<String>,
-    /// Amount of sats payed to the claim address.
-    pub paid_sats: u64,
+    /// Amount of millisatoshis paid to the claim address.
+    pub paid_msat: u64,
     /// Confirmed onchain sats to be claim with an bolt11 invoice or refunded if swap fails.
     pub confirmed_sats: u64,
     /// Unconfirmed sats waiting to be confirmed onchain.
@@ -1266,22 +1266,22 @@ impl SwapInfo {
     pub(crate) fn unused(&self) -> bool {
         self.confirmed_sats == 0
             && self.unconfirmed_sats == 0
-            && self.paid_sats == 0
+            && self.paid_msat == 0
             && self.status != SwapStatus::Expired
     }
 
     pub(crate) fn in_progress(&self) -> bool {
         (self.confirmed_sats > 0 || self.unconfirmed_sats > 0)
-            && self.paid_sats == 0
+            && self.paid_msat == 0
             && self.status != SwapStatus::Expired
     }
 
     pub(crate) fn redeemable(&self) -> bool {
-        self.confirmed_sats > 0 && self.paid_sats == 0 && self.status != SwapStatus::Expired
+        self.confirmed_sats > 0 && self.paid_msat == 0 && self.status != SwapStatus::Expired
     }
 
     pub(crate) fn refundable(&self) -> bool {
-        self.confirmed_sats > self.paid_sats && self.status == SwapStatus::Expired
+        self.confirmed_sats > (self.paid_msat / 1_000) && self.status == SwapStatus::Expired
     }
 
     pub(crate) fn monitored(&self) -> bool {

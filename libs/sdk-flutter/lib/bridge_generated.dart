@@ -1756,8 +1756,8 @@ class SwapInfo {
   /// bolt11 invoice to claim the sent funds.
   final String? bolt11;
 
-  /// Amount of sats payed to the claim address.
-  final int paidSats;
+  /// Amount of millisatoshis paid to the claim address.
+  final int paidMsat;
 
   /// Confirmed onchain sats to be claim with an bolt11 invoice or refunded if swap fails.
   final int confirmedSats;
@@ -1800,7 +1800,7 @@ class SwapInfo {
     required this.swapperPublicKey,
     required this.script,
     this.bolt11,
-    required this.paidSats,
+    required this.paidMsat,
     required this.confirmedSats,
     required this.unconfirmedSats,
     required this.status,
@@ -3821,7 +3821,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       swapperPublicKey: _wire2api_uint_8_list(arr[7]),
       script: _wire2api_uint_8_list(arr[8]),
       bolt11: _wire2api_opt_String(arr[9]),
-      paidSats: _wire2api_u64(arr[10]),
+      paidMsat: _wire2api_u64(arr[10]),
       confirmedSats: _wire2api_u64(arr[11]),
       unconfirmedSats: _wire2api_u64(arr[12]),
       status: _wire2api_swap_status(arr[13]),

@@ -121,7 +121,7 @@ impl BTCReceiveSwap {
                     if payment.is_some() {
                         self.persister.update_swap_paid_amount(
                             swap_info.unwrap().bitcoin_address,
-                            payment.unwrap().amount_msat as u32,
+                            payment.unwrap().amount_msat,
                         )?;
                     }
                 }
@@ -193,7 +193,7 @@ impl BTCReceiveSwap {
             swapper_public_key: swap_reply.swapper_pubkey.clone(),
             script: our_script.as_bytes().to_vec(),
             bolt11: None,
-            paid_sats: 0,
+            paid_msat: 0,
             unconfirmed_sats: 0,
             confirmed_sats: 0,
             refund_tx_ids: Vec::new(),
@@ -379,10 +379,8 @@ impl BTCReceiveSwap {
                 &hex::encode(swap_info.payment_hash.clone()),
                 payment
             );
-            self.persister.update_swap_paid_amount(
-                bitcoin_address.clone(),
-                payment.unwrap().amount_msat as u32,
-            )?;
+            self.persister
+                .update_swap_paid_amount(bitcoin_address.clone(), payment.unwrap().amount_msat)?;
         }
 
         Ok(self.persister.update_swap_chain_info(
@@ -810,7 +808,7 @@ mod tests {
         );
 
         assert_eq!(swap.confirmed_sats, 50000);
-        assert_eq!(swap.paid_sats, 0);
+        assert_eq!(swap.paid_msat, 0);
         assert_eq!(swap.status, SwapStatus::Expired);
         assert_eq!(swapper.list_redeemables().unwrap().len(), 0);
         assert_eq!(swapper.list_refundables().unwrap().len(), 1);
@@ -857,7 +855,7 @@ mod tests {
             id: hex::encode(swap_info.payment_hash.clone()),
             payment_type: PaymentType::Received,
             payment_time: 0,
-            amount_msat: 5000,
+            amount_msat: 5_000,
             fee_msat: 0,
             status: PaymentStatus::Complete,
             error: None,
@@ -902,16 +900,16 @@ mod tests {
             vec!["ec901bcab07df7d475d98fff2933dcb56d57bbdaa029c4142aed93462b6928fe".to_string()]
         );
 
-        assert_eq!(swap.confirmed_sats, 50000);
-        assert_eq!(swap.paid_sats, 5000);
+        assert_eq!(swap.confirmed_sats, 50_000);
+        assert_eq!(swap.paid_msat, 5_000);
 
         assert_eq!(swapper.list_redeemables().unwrap().len(), 0);
         assert_eq!(swapper.list_refundables().unwrap().len(), 0);
 
-        // change payment amout and test that the InvoicePaid event triggers updating the
+        // change payment amount and test that the InvoicePaid event triggers updating the
         // paid_amount of the swap.
         let mut payment = payment.clone();
-        payment.amount_msat = 2000;
+        payment.amount_msat = 2_000;
         persister.insert_or_update_payments(&vec![payment], false)?;
         swapper
             .on_event(BreezEvent::InvoicePaid {
@@ -925,7 +923,7 @@ mod tests {
         let swap = swapper
             .get_swap_info(swap_info.clone().bitcoin_address)?
             .unwrap();
-        assert_eq!(swap.paid_sats, 2000);
+        assert_eq!(swap.paid_msat, 2_000);
 
         Ok(())
     }
