@@ -150,7 +150,7 @@ impl BTCSendSwap {
             .create_and_validate_rev_swap_on_remote(req, hex::encode(reverse_routing_node))
             .await?;
         self.persister.insert_reverse_swap(&created_rsi)?;
-        info!("Created and persisted reverse swap: {created_rsi:?}");
+        info!("Created and persisted reverse swap {}", created_rsi.id);
 
         // Wait until one of the following happens:
         // - trying to pay the HODL invoice explicitly fails from Greenlight
