@@ -443,6 +443,46 @@ fun asConfigList(arr: ReadableArray): List<Config> {
     return list
 }
 
+fun asConfigureNodeRequest(configureNodeRequest: ReadableMap): ConfigureNodeRequest? {
+    if (!validateMandatoryFields(
+            configureNodeRequest,
+            arrayOf(),
+        )
+    ) {
+        return null
+    }
+    val closeToAddress =
+        if (hasNonNullKey(
+                configureNodeRequest,
+                "closeToAddress",
+            )
+        ) {
+            configureNodeRequest.getString("closeToAddress")
+        } else {
+            null
+        }
+    return ConfigureNodeRequest(
+        closeToAddress,
+    )
+}
+
+fun readableMapOf(configureNodeRequest: ConfigureNodeRequest): ReadableMap {
+    return readableMapOf(
+        "closeToAddress" to configureNodeRequest.closeToAddress,
+    )
+}
+
+fun asConfigureNodeRequestList(arr: ReadableArray): List<ConfigureNodeRequest> {
+    val list = ArrayList<ConfigureNodeRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asConfigureNodeRequest(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
 fun asCurrencyInfo(currencyInfo: ReadableMap): CurrencyInfo? {
     if (!validateMandatoryFields(
             currencyInfo,

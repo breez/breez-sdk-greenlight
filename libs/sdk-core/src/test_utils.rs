@@ -33,14 +33,17 @@ use crate::fiat::{FiatCurrency, Rate};
 use crate::grpc::{PaymentInformation, RegisterPaymentNotificationResponse, RegisterPaymentReply};
 use crate::invoice::{InvoiceError, InvoiceResult};
 use crate::lsp::LspInformation;
-use crate::models::{FiatAPI, LspAPI, NodeState, Payment, Swap, SwapperAPI, SyncResponse, TlvEntry};
+use crate::models::{
+    FiatAPI, LspAPI, NodeState, Payment, Swap, SwapperAPI, SyncResponse, TlvEntry,
+};
 use crate::moonpay::MoonPayApi;
 use crate::node_api::{NodeAPI, NodeError, NodeResult};
 use crate::swap_in::error::SwapResult;
 use crate::swap_in::swap::create_submarine_swap_script;
 use crate::{
     parse_invoice, Config, CustomMessage, LNInvoice, MaxChannelAmount, NodeCredentials,
-    PaymentResponse, Peer, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, RouteHint, RouteHintHop,
+    PaymentResponse, Peer, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse,
+    RouteHint, RouteHintHop,
 };
 use crate::{OpeningFeeParams, OpeningFeeParamsMenu};
 use crate::{ReceivePaymentRequest, SwapInfo};
@@ -282,6 +285,10 @@ impl NodeAPI for MockNodeAPI {
         Err(NodeError::Generic(anyhow!("Not implemented")))
     }
 
+    async fn configure_node(&self, _close_to_address: Option<String>) -> NodeResult<()> {
+        Ok(())
+    }
+
     async fn create_invoice(
         &self,
         amount_sats: u64,
@@ -337,11 +344,18 @@ impl NodeAPI for MockNodeAPI {
         Ok("".to_string())
     }
 
-    async fn redeem_onchain_funds(&self, _to_address: String, _sat_per_vbyte: u32) -> NodeResult<Vec<u8>> {
+    async fn redeem_onchain_funds(
+        &self,
+        _to_address: String,
+        _sat_per_vbyte: u32,
+    ) -> NodeResult<Vec<u8>> {
         Ok(rand_vec_u8(32))
     }
 
-    async fn prepare_redeem_onchain_funds(&self, _req: PrepareRedeemOnchainFundsRequest) -> NodeResult<PrepareRedeemOnchainFundsResponse> {
+    async fn prepare_redeem_onchain_funds(
+        &self,
+        _req: PrepareRedeemOnchainFundsRequest,
+    ) -> NodeResult<PrepareRedeemOnchainFundsResponse> {
         Err(NodeError::Generic(anyhow!("Not implemented")))
     }
 

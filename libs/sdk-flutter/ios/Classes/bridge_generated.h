@@ -58,6 +58,10 @@ typedef struct wire_Config {
   struct wire_NodeConfig node_config;
 } wire_Config;
 
+typedef struct wire_ConfigureNodeRequest {
+  struct wire_uint_8_list *close_to_address;
+} wire_ConfigureNodeRequest;
+
 typedef struct wire_SignMessageRequest {
   struct wire_uint_8_list *message;
 } wire_SignMessageRequest;
@@ -261,6 +265,8 @@ void wire_node_credentials(int64_t port_);
 
 void wire_node_info(int64_t port_);
 
+void wire_configure_node(int64_t port_, struct wire_ConfigureNodeRequest *req);
+
 void wire_disconnect(int64_t port_);
 
 void wire_sign_message(int64_t port_, struct wire_SignMessageRequest *req);
@@ -371,6 +377,8 @@ struct wire_CheckMessageRequest *new_box_autoadd_check_message_request_0(void);
 
 struct wire_Config *new_box_autoadd_config_0(void);
 
+struct wire_ConfigureNodeRequest *new_box_autoadd_configure_node_request_0(void);
+
 struct wire_GreenlightCredentials *new_box_autoadd_greenlight_credentials_0(void);
 
 struct wire_GreenlightNodeConfig *new_box_autoadd_greenlight_node_config_0(void);
@@ -444,6 +452,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_sync);
     dummy_var ^= ((int64_t) (void*) wire_node_credentials);
     dummy_var ^= ((int64_t) (void*) wire_node_info);
+    dummy_var ^= ((int64_t) (void*) wire_configure_node);
     dummy_var ^= ((int64_t) (void*) wire_disconnect);
     dummy_var ^= ((int64_t) (void*) wire_sign_message);
     dummy_var ^= ((int64_t) (void*) wire_check_message);
@@ -496,6 +505,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_buy_bitcoin_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_check_message_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_config_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_configure_node_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_greenlight_credentials_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_greenlight_node_config_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_i64_0);

@@ -27,6 +27,11 @@ pub extern "C" fn wire_node_info(port_: i64) {
 }
 
 #[no_mangle]
+pub extern "C" fn wire_configure_node(port_: i64, req: *mut wire_ConfigureNodeRequest) {
+    wire_configure_node_impl(port_, req)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_disconnect(port_: i64) {
     wire_disconnect_impl(port_)
 }
@@ -304,6 +309,11 @@ pub extern "C" fn new_box_autoadd_config_0() -> *mut wire_Config {
 }
 
 #[no_mangle]
+pub extern "C" fn new_box_autoadd_configure_node_request_0() -> *mut wire_ConfigureNodeRequest {
+    support::new_leak_box_ptr(wire_ConfigureNodeRequest::new_with_null_ptr())
+}
+
+#[no_mangle]
 pub extern "C" fn new_box_autoadd_greenlight_credentials_0() -> *mut wire_GreenlightCredentials {
     support::new_leak_box_ptr(wire_GreenlightCredentials::new_with_null_ptr())
 }
@@ -508,6 +518,12 @@ impl Wire2Api<Config> for *mut wire_Config {
         Wire2Api::<Config>::wire2api(*wrap).into()
     }
 }
+impl Wire2Api<ConfigureNodeRequest> for *mut wire_ConfigureNodeRequest {
+    fn wire2api(self) -> ConfigureNodeRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<ConfigureNodeRequest>::wire2api(*wrap).into()
+    }
+}
 impl Wire2Api<GreenlightCredentials> for *mut wire_GreenlightCredentials {
     fn wire2api(self) -> GreenlightCredentials {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
@@ -692,6 +708,13 @@ impl Wire2Api<Config> for wire_Config {
             maxfee_percent: self.maxfee_percent.wire2api(),
             exemptfee_msat: self.exemptfee_msat.wire2api(),
             node_config: self.node_config.wire2api(),
+        }
+    }
+}
+impl Wire2Api<ConfigureNodeRequest> for wire_ConfigureNodeRequest {
+    fn wire2api(self) -> ConfigureNodeRequest {
+        ConfigureNodeRequest {
+            close_to_address: self.close_to_address.wire2api(),
         }
     }
 }
@@ -1024,6 +1047,12 @@ pub struct wire_Config {
 
 #[repr(C)]
 #[derive(Clone)]
+pub struct wire_ConfigureNodeRequest {
+    close_to_address: *mut wire_uint_8_list,
+}
+
+#[repr(C)]
+#[derive(Clone)]
 pub struct wire_GreenlightCredentials {
     device_key: *mut wire_uint_8_list,
     device_cert: *mut wire_uint_8_list,
@@ -1349,6 +1378,20 @@ impl NewWithNullPtr for wire_Config {
 }
 
 impl Default for wire_Config {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_ConfigureNodeRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            close_to_address: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_ConfigureNodeRequest {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }

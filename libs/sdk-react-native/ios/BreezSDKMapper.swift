@@ -483,6 +483,42 @@ enum BreezSDKMapper {
         return configList.map { v -> [String: Any?] in dictionaryOf(config: v) }
     }
 
+    static func asConfigureNodeRequest(configureNodeRequest: [String: Any?]) throws -> ConfigureNodeRequest {
+        var closeToAddress: String?
+        if hasNonNilKey(data: configureNodeRequest, key: "closeToAddress") {
+            guard let closeToAddressTmp = configureNodeRequest["closeToAddress"] as? String else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "closeToAddress"))
+            }
+            closeToAddress = closeToAddressTmp
+        }
+
+        return ConfigureNodeRequest(
+            closeToAddress: closeToAddress)
+    }
+
+    static func dictionaryOf(configureNodeRequest: ConfigureNodeRequest) -> [String: Any?] {
+        return [
+            "closeToAddress": configureNodeRequest.closeToAddress == nil ? nil : configureNodeRequest.closeToAddress,
+        ]
+    }
+
+    static func asConfigureNodeRequestList(arr: [Any]) throws -> [ConfigureNodeRequest] {
+        var list = [ConfigureNodeRequest]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var configureNodeRequest = try asConfigureNodeRequest(configureNodeRequest: val)
+                list.append(configureNodeRequest)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "ConfigureNodeRequest"))
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(configureNodeRequestList: [ConfigureNodeRequest]) -> [Any] {
+        return configureNodeRequestList.map { v -> [String: Any?] in dictionaryOf(configureNodeRequest: v) }
+    }
+
     static func asCurrencyInfo(currencyInfo: [String: Any?]) throws -> CurrencyInfo {
         guard let name = currencyInfo["name"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "name", typeName: "CurrencyInfo"))

@@ -556,6 +556,12 @@ impl From<Network> for bitcoin::network::constants::Network {
     }
 }
 
+/// Represents a configure node request.
+#[derive(Default)]
+pub struct ConfigureNodeRequest {
+    pub close_to_address: Option<String>,
+}
+
 /// Different types of supported filters which can be applied when retrieving the transaction list
 #[derive(PartialEq)]
 pub enum PaymentTypeFilter {

@@ -195,6 +195,25 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
+    fun configureNode(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
+        executor.execute {
+            try {
+                val configureNodeRequest =
+                    asConfigureNodeRequest(req) ?: run {
+                        throw SdkException.Generic(errMissingMandatoryField("req", "ConfigureNodeRequest"))
+                    }
+                getBreezServices().configureNode(configureNodeRequest)
+                promise.resolve(readableMapOf("status" to "ok"))
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
     fun sendPayment(
         req: ReadableMap,
         promise: Promise,

@@ -60,6 +60,7 @@ use crate::models::BuyBitcoinResponse;
 use crate::models::ChannelState;
 use crate::models::ClosedChannelPaymentDetails;
 use crate::models::Config;
+use crate::models::ConfigureNodeRequest;
 use crate::models::EnvironmentType;
 use crate::models::GreenlightCredentials;
 use crate::models::GreenlightNodeConfig;
@@ -175,6 +176,22 @@ fn wire_node_info_impl(port_: MessagePort) {
             mode: FfiCallMode::Normal,
         },
         move || move |task_callback| node_info(),
+    )
+}
+fn wire_configure_node_impl(
+    port_: MessagePort,
+    req: impl Wire2Api<ConfigureNodeRequest> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, (), _>(
+        WrapInfo {
+            debug_name: "configure_node",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_req = req.wire2api();
+            move |task_callback| configure_node(api_req)
+        },
     )
 }
 fn wire_disconnect_impl(port_: MessagePort) {

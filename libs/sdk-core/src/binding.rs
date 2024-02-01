@@ -33,9 +33,9 @@ use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
 use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
-    EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus, LnUrlPayRequest,
-    LnUrlWithdrawRequest, LnUrlWithdrawResult, MaxReverseSwapAmountResponse, NodeConfig,
-    NodeCredentials, OpenChannelFeeRequest, OpenChannelFeeResponse,
+    ConfigureNodeRequest, EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus,
+    LnUrlPayRequest, LnUrlWithdrawRequest, LnUrlWithdrawResult, MaxReverseSwapAmountResponse,
+    NodeConfig, NodeCredentials, OpenChannelFeeRequest, OpenChannelFeeResponse,
     PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, PrepareRefundRequest,
     PrepareRefundResponse, ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse,
     RedeemOnchainFundsRequest, RedeemOnchainFundsResponse, RefundRequest, RefundResponse,
@@ -106,6 +106,12 @@ pub fn node_info() -> Result<NodeState> {
             .node_info()
             .map_err(anyhow::Error::new::<SdkError>)
     })
+}
+
+/// See [BreezServices::configure_node]
+pub fn configure_node(req: ConfigureNodeRequest) -> Result<()> {
+    block_on(async { get_breez_services().await?.configure_node(req).await })
+        .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// Cleanup node resources and stop the signer.
