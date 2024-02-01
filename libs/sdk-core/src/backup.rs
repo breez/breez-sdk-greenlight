@@ -770,7 +770,7 @@ mod tests {
             swapper_public_key: vec![5],
             script: vec![5],
             bolt11: None,
-            paid_sats: 0,
+            paid_msat: 0,
             unconfirmed_sats: 0,
             confirmed_sats: 0,
             status: crate::models::SwapStatus::Initial,

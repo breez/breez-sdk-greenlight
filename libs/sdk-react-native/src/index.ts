@@ -492,7 +492,7 @@ export type SwapInfo = {
     swapperPublicKey: number[]
     script: number[]
     bolt11?: string
-    paidSats: number
+    paidMsat: number
     unconfirmedSats: number
     confirmedSats: number
     status: SwapStatus

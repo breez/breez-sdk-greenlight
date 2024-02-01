@@ -508,7 +508,7 @@ dictionary SwapInfo {
     sequence<u8> swapper_public_key;
     sequence<u8> script;
     string? bolt11;
-    u64 paid_sats;
+    u64 paid_msat;
     u64 unconfirmed_sats;
     u64 confirmed_sats;
     SwapStatus status;

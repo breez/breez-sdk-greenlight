@@ -3255,7 +3255,7 @@ fun asSwapInfo(swapInfo: ReadableMap): SwapInfo? {
                 "publicKey",
                 "swapperPublicKey",
                 "script",
-                "paidSats",
+                "paidMsat",
                 "unconfirmedSats",
                 "confirmedSats",
                 "status",
@@ -3279,7 +3279,7 @@ fun asSwapInfo(swapInfo: ReadableMap): SwapInfo? {
     val swapperPublicKey = swapInfo.getArray("swapperPublicKey")?.let { asUByteList(it) }!!
     val script = swapInfo.getArray("script")?.let { asUByteList(it) }!!
     val bolt11 = if (hasNonNullKey(swapInfo, "bolt11")) swapInfo.getString("bolt11") else null
-    val paidSats = swapInfo.getDouble("paidSats").toULong()
+    val paidMsat = swapInfo.getDouble("paidMsat").toULong()
     val unconfirmedSats = swapInfo.getDouble("unconfirmedSats").toULong()
     val confirmedSats = swapInfo.getDouble("confirmedSats").toULong()
     val status = swapInfo.getString("status")?.let { asSwapStatus(it) }!!
@@ -3308,7 +3308,7 @@ fun asSwapInfo(swapInfo: ReadableMap): SwapInfo? {
         swapperPublicKey,
         script,
         bolt11,
-        paidSats,
+        paidMsat,
         unconfirmedSats,
         confirmedSats,
         status,
@@ -3334,7 +3334,7 @@ fun readableMapOf(swapInfo: SwapInfo): ReadableMap {
         "swapperPublicKey" to readableArrayOf(swapInfo.swapperPublicKey),
         "script" to readableArrayOf(swapInfo.script),
         "bolt11" to swapInfo.bolt11,
-        "paidSats" to swapInfo.paidSats,
+        "paidMsat" to swapInfo.paidMsat,
         "unconfirmedSats" to swapInfo.unconfirmedSats,
         "confirmedSats" to swapInfo.confirmedSats,
         "status" to swapInfo.status.name.lowercase(),

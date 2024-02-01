@@ -419,6 +419,9 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
        "
        ALTER TABLE reverse_swaps_info ADD COLUMN lockup_txid TEXT;
        ALTER TABLE reverse_swaps_info ADD COLUMN claim_txid TEXT;",
+       "
+       ALTER TABLE swaps_info RENAME COLUMN paid_sats TO paid_msat;
+       ",
     ]
 }
 

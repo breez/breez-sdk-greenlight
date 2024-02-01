@@ -50,17 +50,17 @@ impl SqliteStorage {
           bitcoin_address, 
           status,
           bolt11,
-          paid_sats, 
+          paid_msat, 
           unconfirmed_sats, 
           unconfirmed_tx_ids, 
           confirmed_sats,
           confirmed_tx_ids
-        ) VALUES (:bitcoin_address, :status, :bolt11, :paid_sats, :unconfirmed_sats, :unconfirmed_tx_ids, :confirmed_sats, :confirmed_tx_ids)",
+        ) VALUES (:bitcoin_address, :status, :bolt11, :paid_msat, :unconfirmed_sats, :unconfirmed_tx_ids, :confirmed_sats, :confirmed_tx_ids)",
             named_params! {
                ":bitcoin_address": swap_info.bitcoin_address,
                ":status": swap_info.status as i32,
                ":bolt11": None::<String>,
-               ":paid_sats": swap_info.paid_sats,
+               ":paid_msat": swap_info.paid_msat,
                ":unconfirmed_sats": swap_info.unconfirmed_sats,
                ":unconfirmed_tx_ids": StringArray(swap_info.unconfirmed_tx_ids),
                ":confirmed_sats": swap_info.confirmed_sats,
@@ -83,12 +83,12 @@ impl SqliteStorage {
     pub(crate) fn update_swap_paid_amount(
         &self,
         bitcoin_address: String,
-        paid_sats: u32,
+        paid_msat: u64,
     ) -> PersistResult<()> {
         self.get_connection()?.execute(
-            "UPDATE swaps_info SET paid_sats=:paid_sats where bitcoin_address=:bitcoin_address",
+            "UPDATE swaps_info SET paid_msat=:paid_msat where bitcoin_address=:bitcoin_address",
             named_params! {
-             ":paid_sats": paid_sats,
+             ":paid_msat": paid_msat,
              ":bitcoin_address": bitcoin_address,
             },
         )?;
@@ -214,7 +214,7 @@ impl SqliteStorage {
              min_allowed_deposit,
              max_allowed_deposit,
              bolt11 as bolt11,
-             paid_sats as paid_sats,
+             paid_msat as paid_msat,
              unconfirmed_sats as unconfirmed_sats,
              confirmed_sats as confirmed_sats,
              status as status,             
@@ -316,8 +316,8 @@ impl SqliteStorage {
             swapper_public_key: row.get("swapper_public_key")?,
             script: row.get("script")?,
             bolt11: row.get("bolt11")?,
-            paid_sats: row
-                .get::<&str, Option<u64>>("paid_sats")?
+            paid_msat: row
+                .get::<&str, Option<u64>>("paid_msat")?
                 .unwrap_or_default(),
             unconfirmed_sats: row
                 .get::<&str, Option<u64>>("unconfirmed_sats")?
@@ -370,7 +370,7 @@ mod tests {
             swapper_public_key: vec![5],
             script: vec![5],
             bolt11: None,
-            paid_sats: 0,
+            paid_msat: 0,
             unconfirmed_sats: 0,
             confirmed_sats: 0,
             status: SwapStatus::Initial,
@@ -456,12 +456,12 @@ mod tests {
         );
 
         storage.update_swap_bolt11(tested_swap_info.bitcoin_address.clone(), "bolt11".into())?;
-        storage.update_swap_paid_amount(tested_swap_info.bitcoin_address.clone(), 30)?;
+        storage.update_swap_paid_amount(tested_swap_info.bitcoin_address.clone(), 30_000)?;
         let updated_swap = storage
             .get_swap_info_by_address(tested_swap_info.bitcoin_address)?
             .unwrap();
         assert_eq!(updated_swap.bolt11.unwrap(), "bolt11".to_string());
-        assert_eq!(updated_swap.paid_sats, 30);
+        assert_eq!(updated_swap.paid_msat, 30_000);
         assert_eq!(updated_swap.confirmed_sats, 20);
         assert_eq!(
             updated_swap.refund_tx_ids,

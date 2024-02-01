@@ -534,7 +534,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
         swapper_public_key: vec![2, 1, 3],
         script: vec![2, 3, 1],
         bolt11: Some("swap_bolt11".into()),
-        paid_sats: 50,
+        paid_msat: 50_000,
         confirmed_sats: 50,
         unconfirmed_sats: 0,
         status: SwapStatus::Expired,
