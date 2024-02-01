@@ -1756,7 +1756,7 @@ class SwapInfo {
   /// bolt11 invoice to claim the sent funds.
   final String? bolt11;
 
-  /// Amount of millisatoshis paid to the claim address.
+  /// Amount of millisatoshis claimed from sent funds and paid for via bolt11 invoice.
   final int paidMsat;
 
   /// Confirmed onchain sats to be claim with an bolt11 invoice or refunded if swap fails.

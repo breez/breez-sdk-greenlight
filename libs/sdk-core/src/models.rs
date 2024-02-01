@@ -1238,7 +1238,7 @@ pub struct SwapInfo {
 
     /// bolt11 invoice to claim the sent funds.
     pub bolt11: Option<String>,
-    /// Amount of millisatoshis paid to the claim address.
+    /// Amount of millisatoshis claimed from sent funds and paid for via bolt11 invoice.
     pub paid_msat: u64,
     /// Confirmed onchain sats to be claim with an bolt11 invoice or refunded if swap fails.
     pub confirmed_sats: u64,
