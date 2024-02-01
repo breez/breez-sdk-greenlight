@@ -59,7 +59,7 @@ jobs:
         rustup set auto-self-update disable
         rustup toolchain install stable 
         rustup target add wasm32-wasi
-        apt install linux-headers-generic -y
+        sudo apt install -y linux-headers-generic
 
     - name: Install Protoc
       uses: arduino/setup-protoc@v2
