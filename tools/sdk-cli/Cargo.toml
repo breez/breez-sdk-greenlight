@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = { version = "1.0", features = ["backtrace"] }
+anyhow = { version = "1.0.79", features = ["backtrace"] }
 breez-sdk-core = { path = "../../libs/sdk-core"}
 log = "0.4"
 once_cell = "1"
