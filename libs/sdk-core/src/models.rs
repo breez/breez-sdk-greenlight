@@ -112,7 +112,7 @@ pub trait SwapperAPI: Send + Sync {
 
 /// Details about the BTC/BTC reverse swap pair, at this point in time
 ///
-/// Maps the result of https://docs.boltz.exchange/en/latest/api/#getting-pairs for the BTC/BTC pair
+/// Maps the result of <https://docs.boltz.exchange/en/latest/api/#getting-pairs> for the BTC/BTC pair
 #[derive(Clone, PartialEq, Debug, Serialize)]
 pub struct ReverseSwapPairInfo {
     /// Minimum amount of sats a reverse swap is allowed to have on this endpoint
