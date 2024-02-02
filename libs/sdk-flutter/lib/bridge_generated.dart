@@ -723,7 +723,7 @@ class LnPaymentDetails {
   /// Only set for [PaymentType::Sent] payments that were sent in the context of a reverse swap
   final ReverseSwapInfo? reverseSwapInfo;
 
-  /// Only set for [PaymentType::Pending] payments that are inflight.
+  /// Only set for [PaymentStatus::Pending] payments that are inflight.
   final int? pendingExpirationBlock;
 
   const LnPaymentDetails({
@@ -748,7 +748,7 @@ class LnPaymentDetails {
 ///
 /// It represents the endpoint's parameters for the LNURL workflow.
 ///
-/// See https://github.com/lnurl/luds/blob/luds/04.md
+/// See <https://github.com/lnurl/luds/blob/luds/04.md>
 class LnUrlAuthRequestData {
   /// Hex encoded 32 bytes of challenge
   final String k1;
@@ -804,7 +804,7 @@ class LnUrlPayErrorData {
 
 /// Represents a LNURL-pay request.
 class LnUrlPayRequest {
-  /// The [LnUrlPayRequestData] returned by [BreezServices::parse_input]
+  /// The [LnUrlPayRequestData] returned by [crate::input_parser::parse]
   final LnUrlPayRequestData data;
 
   /// The amount in millisatoshis for this payment
@@ -824,7 +824,7 @@ class LnUrlPayRequest {
 ///
 /// It represents the endpoint's parameters for the LNURL workflow.
 ///
-/// See https://github.com/lnurl/luds/blob/luds/06.md
+/// See <https://github.com/lnurl/luds/blob/luds/06.md>
 class LnUrlPayRequestData {
   final String callback;
 
@@ -840,7 +840,7 @@ class LnUrlPayRequestData {
 
   /// The comment length accepted by this endpoint
   ///
-  /// See https://github.com/lnurl/luds/blob/luds/12.md
+  /// See <https://github.com/lnurl/luds/blob/luds/12.md>
   final int commentAllowed;
 
   /// Indicates the domain of the LNURL-pay service, to be shown to the user when asking for
@@ -911,7 +911,7 @@ class LnUrlWithdrawRequest {
 ///
 /// It represents the endpoint's parameters for the LNURL workflow.
 ///
-/// See https://github.com/lnurl/luds/blob/luds/03.md
+/// See <https://github.com/lnurl/luds/blob/luds/03.md>
 class LnUrlWithdrawRequestData {
   final String callback;
   final String k1;
@@ -1364,7 +1364,7 @@ class ReceivePaymentRequest {
 ///
 /// Breez SDK may have to open a new channel to receive this payment. In that case, the channel will
 /// be opened automatically when the invoice is paid, and the fees will be described in the
-/// [opening_fee_params] and [opening_fee_msat] fields.
+/// `opening_fee_params` and `opening_fee_msat` fields.
 class ReceivePaymentResponse {
   /// The generated invoice, including any necessary routing hints
   final LNInvoice lnInvoice;
@@ -1490,7 +1490,7 @@ class ReverseSwapInfo {
 
 /// Details about the BTC/BTC reverse swap pair, at this point in time
 ///
-/// Maps the result of https://docs.boltz.exchange/en/latest/api/#getting-pairs for the BTC/BTC pair
+/// Maps the result of <https://docs.boltz.exchange/en/latest/api/#getting-pairs> for the BTC/BTC pair
 class ReverseSwapPairInfo {
   /// Minimum amount of sats a reverse swap is allowed to have on this endpoint
   final int min;
