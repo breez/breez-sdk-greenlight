@@ -1131,9 +1131,9 @@ impl BreezServices {
         }
     }
 
-    /// Get the static backup data from the peristent storage.
+    /// Get the static backup data from the persistent storage.
     /// This data enables the user to recover the node in an external core ligntning node.
-    /// See here for instructions on how to recover using this data: https://docs.corelightning.org/docs/backup-and-recovery#backing-up-using-static-channel-backup
+    /// See here for instructions on how to recover using this data: <https://docs.corelightning.org/docs/backup-and-recovery#backing-up-using-static-channel-backup>
     pub fn static_backup(req: StaticBackupRequest) -> SdkResult<StaticBackupResponse> {
         let storage = SqliteStorage::new(req.working_dir);
         Ok(StaticBackupResponse {

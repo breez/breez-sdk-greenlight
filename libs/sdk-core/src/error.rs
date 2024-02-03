@@ -10,7 +10,7 @@ use crate::{
 
 pub type SdkResult<T, E = SdkError> = Result<T, E>;
 
-/// Error returned by [BreezServices::lnurl_auth]
+/// Error returned by [crate::breez_services::BreezServices::lnurl_auth]
 #[derive(Debug, Error)]
 pub enum LnUrlAuthError {
     #[error("Generic: {err}")]
@@ -50,7 +50,7 @@ impl From<SdkError> for LnUrlAuthError {
     }
 }
 
-/// Error returned by [BreezServices::lnurl_pay]
+/// Error returned by [crate::breez_services::BreezServices::lnurl_pay]
 #[derive(Debug, Error)]
 pub enum LnUrlPayError {
     #[error("Invoice already paid")]
@@ -175,7 +175,7 @@ impl From<SendPaymentError> for LnUrlPayError {
     }
 }
 
-/// Error returned by [BreezServices::lnurl_withdraw]
+/// Error returned by [crate::breez_services::BreezServices::lnurl_withdraw]
 #[derive(Debug, Error)]
 pub enum LnUrlWithdrawError {
     #[error("Generic: {err}")]
@@ -245,7 +245,8 @@ impl From<SdkError> for LnUrlWithdrawError {
     }
 }
 
-/// Error returned by [BreezServices::receive_onchain] and [BreezServices::buy_bitcoin]
+/// Error returned by [crate::breez_services::BreezServices::receive_onchain] and
+/// [crate::breez_services::BreezServices::buy_bitcoin]
 #[derive(Debug, Error)]
 pub enum ReceiveOnchainError {
     #[error("Generic: {err}")]
@@ -290,7 +291,7 @@ impl From<SwapError> for ReceiveOnchainError {
     }
 }
 
-/// Error returned by [BreezServices::receive_payment]
+/// Error returned by [crate::breez_services::BreezServices::receive_payment]
 #[derive(Debug, Error)]
 pub enum ReceivePaymentError {
     #[error("Generic: {err}")]
@@ -492,7 +493,7 @@ impl From<SendPaymentError> for SdkError {
     }
 }
 
-/// Error returned by [BreezServices::send_onchain]
+/// Error returned by [crate::breez_services::BreezServices::send_onchain]
 #[derive(Debug, Error)]
 pub enum SendOnchainError {
     #[error("Generic: {err}")]
@@ -569,7 +570,7 @@ impl From<ReverseSwapError> for SendOnchainError {
     }
 }
 
-/// Error returned by [BreezServices::send_payment] and [BreezServices::send_spontaneous_payment]
+/// Error returned by [crate::breez_services::BreezServices::send_payment] and [crate::breez_services::BreezServices::send_spontaneous_payment]
 #[derive(Clone, Debug, Error)]
 pub enum SendPaymentError {
     #[error("Invoice already paid")]

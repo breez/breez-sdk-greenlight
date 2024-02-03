@@ -112,7 +112,7 @@ pub trait SwapperAPI: Send + Sync {
 
 /// Details about the BTC/BTC reverse swap pair, at this point in time
 ///
-/// Maps the result of https://docs.boltz.exchange/en/latest/api/#getting-pairs for the BTC/BTC pair
+/// Maps the result of <https://docs.boltz.exchange/en/latest/api/#getting-pairs> for the BTC/BTC pair
 #[derive(Clone, PartialEq, Debug, Serialize)]
 pub struct ReverseSwapPairInfo {
     /// Minimum amount of sats a reverse swap is allowed to have on this endpoint
@@ -626,7 +626,7 @@ pub struct NodeState {
     pub inbound_liquidity_msats: u64,
 }
 
-/// Internal response to a [NodeAPI::pull_changed] call
+/// Internal response to a [crate::node_api::NodeAPI::pull_changed] call
 pub struct SyncResponse {
     pub node_state: NodeState,
     pub payments: Vec<crate::models::Payment>,
@@ -749,7 +749,7 @@ pub struct LnPaymentDetails {
     /// Only set for [PaymentType::Sent] payments that were sent in the context of a reverse swap
     pub reverse_swap_info: Option<ReverseSwapInfo>,
 
-    /// Only set for [PaymentType::Pending] payments that are inflight.
+    /// Only set for [PaymentStatus::Pending] payments that are inflight.
     pub pending_expiration_block: Option<u32>,
 }
 
@@ -809,7 +809,7 @@ pub struct ReceivePaymentRequest {
 ///
 /// Breez SDK may have to open a new channel to receive this payment. In that case, the channel will
 /// be opened automatically when the invoice is paid, and the fees will be described in the
-/// [opening_fee_params] and [opening_fee_msat] fields.
+/// `opening_fee_params` and `opening_fee_msat` fields.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReceivePaymentResponse {
     /// The generated invoice, including any necessary routing hints
@@ -1366,7 +1366,7 @@ pub struct LnUrlWithdrawRequest {
 /// Represents a LNURL-pay request.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct LnUrlPayRequest {
-    /// The [LnUrlPayRequestData] returned by [BreezServices::parse_input]
+    /// The [LnUrlPayRequestData] returned by [crate::input_parser::parse]
     pub data: LnUrlPayRequestData,
     /// The amount in millisatoshis for this payment
     pub amount_msat: u64,

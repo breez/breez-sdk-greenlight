@@ -492,7 +492,7 @@ pub struct LnUrlErrorData {
 ///
 /// It represents the endpoint's parameters for the LNURL workflow.
 ///
-/// See https://github.com/lnurl/luds/blob/luds/06.md
+/// See <https://github.com/lnurl/luds/blob/luds/06.md>
 #[derive(Clone, Deserialize, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LnUrlPayRequestData {
@@ -507,7 +507,7 @@ pub struct LnUrlPayRequestData {
     pub metadata_str: String,
     /// The comment length accepted by this endpoint
     ///
-    /// See https://github.com/lnurl/luds/blob/luds/12.md
+    /// See <https://github.com/lnurl/luds/blob/luds/12.md>
     #[serde(default)]
     pub comment_allowed: u16,
 
@@ -547,7 +547,7 @@ impl LnUrlPayRequestData {
 ///
 /// It represents the endpoint's parameters for the LNURL workflow.
 ///
-/// See https://github.com/lnurl/luds/blob/luds/03.md
+/// See <https://github.com/lnurl/luds/blob/luds/03.md>
 #[derive(Deserialize, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LnUrlWithdrawRequestData {
@@ -576,7 +576,7 @@ impl LnUrlWithdrawRequestData {
 ///
 /// It represents the endpoint's parameters for the LNURL workflow.
 ///
-/// See https://github.com/lnurl/luds/blob/luds/04.md
+/// See <https://github.com/lnurl/luds/blob/luds/04.md>
 #[derive(Deserialize, Debug, Serialize)]
 pub struct LnUrlAuthRequestData {
     /// Hex encoded 32 bytes of challenge
