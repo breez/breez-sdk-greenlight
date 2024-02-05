@@ -73,7 +73,7 @@ jobs:
 
     - name: Install wasix
       run: |
-        $HOME/.cargo/bin/cargo install --git https://github.com/dangeross/cargo-wasix --branch main
+        $HOME/.cargo/bin/cargo install cargo-wasix --git https://github.com/dangeross/cargo-wasix --branch main
         $HOME/.cargo/bin/cargo wasix build-toolchain
 
     - name: Build sdk-wasm
