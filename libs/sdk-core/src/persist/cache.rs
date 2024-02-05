@@ -7,6 +7,7 @@ const KEY_LAST_BACKUP_TIME: &str = "last_backup_time";
 const KEY_LAST_SYNC_TIME: &str = "last_sync_time";
 const KEY_NODE_STATE: &str = "node_state";
 const KEY_STATIC_BACKUP: &str = "static_backup";
+const KEY_WEBHOOK_URL: &str = "webhook_url";
 
 impl SqliteStorage {
     pub fn get_cached_item(&self, key: &str) -> PersistResult<Option<String>> {
@@ -92,6 +93,15 @@ impl SqliteStorage {
             Some(str) => serde_json::from_str(str.as_str())?,
             None => None,
         })
+    }
+
+    pub fn set_webhook_url(&self, webhook_url: String) -> PersistResult<()> {
+        self.update_cached_item(KEY_WEBHOOK_URL, webhook_url)
+    }
+
+    #[allow(dead_code)]
+    pub fn get_webhook_url(&self) -> PersistResult<Option<String>> {
+        self.get_cached_item(KEY_WEBHOOK_URL)
     }
 }
 

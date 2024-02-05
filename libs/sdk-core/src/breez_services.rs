@@ -1572,6 +1572,7 @@ impl BreezServices {
     /// More webhook types may be supported in the future.
     pub async fn register_webhook(&self, webhook_url: String) -> SdkResult<()> {
         info!("Registering for webhook notifications");
+        self.persister.set_webhook_url(webhook_url.clone())?;
 
         let message = webhook_url.clone();
         let sign_request = SignMessageRequest { message };
