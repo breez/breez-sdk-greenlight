@@ -245,6 +245,8 @@ impl From<SdkError> for LnUrlWithdrawError {
     }
 }
 
+pub type ReceiveOnchainResult<T, E = ReceiveOnchainError> = Result<T, E>;
+
 /// Error returned by [crate::breez_services::BreezServices::receive_onchain] and
 /// [crate::breez_services::BreezServices::buy_bitcoin]
 #[derive(Debug, Error)]
@@ -287,6 +289,14 @@ impl From<SwapError> for ReceiveOnchainError {
             _ => Self::Generic {
                 err: value.to_string(),
             },
+        }
+    }
+}
+
+impl From<PersistError> for ReceiveOnchainError {
+    fn from(err: PersistError) -> Self {
+        Self::Generic {
+            err: format!("Error when accessing local DB: {err}"),
         }
     }
 }
