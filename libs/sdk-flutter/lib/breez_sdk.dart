@@ -434,6 +434,7 @@ class BreezSDK {
 extension SDKConfig on Config {
   Config copyWith({
     String? breezserver,
+    String? chainnotifierUrl,
     String? mempoolspaceUrl,
     String? workingDir,
     Network? network,
@@ -446,6 +447,7 @@ extension SDKConfig on Config {
   }) {
     return Config(
       breezserver: breezserver ?? this.breezserver,
+      chainnotifierUrl: chainnotifierUrl ?? this.chainnotifierUrl,
       mempoolspaceUrl: mempoolspaceUrl ?? this.mempoolspaceUrl,
       workingDir: workingDir ?? this.workingDir,
       network: network ?? this.network,

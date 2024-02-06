@@ -445,6 +445,7 @@ pub struct LogEntry {
 #[derive(Clone)]
 pub struct Config {
     pub breezserver: String,
+    pub chainnotifier_url: String,
     pub mempoolspace_url: String,
     /// Directory in which all SDK files (DB, log) are stored. Defaults to ".", otherwise if it's customized,
     /// the folder should exist before starting the SDK.
@@ -464,6 +465,7 @@ impl Config {
     pub fn production(api_key: String, node_config: NodeConfig) -> Self {
         Config {
             breezserver: "https://bs1.breez.technology:443".to_string(),
+            chainnotifier_url: "https://chainnotifier.breez.technology".to_string(),
             mempoolspace_url: "https://mempool.space".to_string(),
             working_dir: ".".to_string(),
             network: Bitcoin,
@@ -479,6 +481,7 @@ impl Config {
     pub fn staging(api_key: String, node_config: NodeConfig) -> Self {
         Config {
             breezserver: "https://bs1-st.breez.technology:443".to_string(),
+            chainnotifier_url: "https://chainnotifier.breez.technology".to_string(),
             mempoolspace_url: "https://mempool.space".to_string(),
             working_dir: ".".to_string(),
             network: Bitcoin,

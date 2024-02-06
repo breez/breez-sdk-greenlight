@@ -699,6 +699,7 @@ impl Wire2Api<Config> for wire_Config {
     fn wire2api(self) -> Config {
         Config {
             breezserver: self.breezserver.wire2api(),
+            chainnotifier_url: self.chainnotifier_url.wire2api(),
             mempoolspace_url: self.mempoolspace_url.wire2api(),
             working_dir: self.working_dir.wire2api(),
             network: self.network.wire2api(),
@@ -1034,6 +1035,7 @@ pub struct wire_CheckMessageRequest {
 #[derive(Clone)]
 pub struct wire_Config {
     breezserver: *mut wire_uint_8_list,
+    chainnotifier_url: *mut wire_uint_8_list,
     mempoolspace_url: *mut wire_uint_8_list,
     working_dir: *mut wire_uint_8_list,
     network: i32,
@@ -1364,6 +1366,7 @@ impl NewWithNullPtr for wire_Config {
     fn new_with_null_ptr() -> Self {
         Self {
             breezserver: core::ptr::null_mut(),
+            chainnotifier_url: core::ptr::null_mut(),
             mempoolspace_url: core::ptr::null_mut(),
             working_dir: core::ptr::null_mut(),
             network: Default::default(),

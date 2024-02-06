@@ -123,6 +123,7 @@ interface NodeConfig {
 
 dictionary Config {
     string breezserver;
+    string chainnotifier_url;
     string mempoolspace_url;
     string working_dir;
     Network network;
