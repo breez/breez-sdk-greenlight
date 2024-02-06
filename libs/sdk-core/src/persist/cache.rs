@@ -2,8 +2,15 @@ use crate::models::NodeState;
 
 use super::{db::SqliteStorage, error::PersistResult};
 
+const KEY_GL_CREDENTIALS: &str = "gl_credentials";
+const KEY_LAST_BACKUP_TIME: &str = "last_backup_time";
+const KEY_LAST_SYNC_TIME: &str = "last_sync_time";
+const KEY_NODE_STATE: &str = "node_state";
+const KEY_STATIC_BACKUP: &str = "static_backup";
+const KEY_WEBHOOK_URL: &str = "webhook_url";
+
 impl SqliteStorage {
-    pub fn get_cached_item(&self, key: String) -> PersistResult<Option<String>> {
+    pub fn get_cached_item(&self, key: &str) -> PersistResult<Option<String>> {
         let res = self.get_connection()?.query_row(
             "SELECT value FROM cached_items WHERE key = ?1",
             [key],
@@ -12,7 +19,7 @@ impl SqliteStorage {
         Ok(res.ok())
     }
 
-    pub fn update_cached_item(&self, key: String, value: String) -> PersistResult<()> {
+    pub fn update_cached_item(&self, key: &str, value: String) -> PersistResult<()> {
         self.get_connection()?.execute(
             "INSERT OR REPLACE INTO cached_items (key, value) VALUES (?1,?2)",
             (key, value),
@@ -29,12 +36,11 @@ impl SqliteStorage {
 
     pub fn set_node_state(&self, state: &NodeState) -> PersistResult<()> {
         let serialized_state = serde_json::to_string(state)?;
-        self.update_cached_item("node_state".to_string(), serialized_state)?;
-        Ok(())
+        self.update_cached_item(KEY_NODE_STATE, serialized_state)
     }
 
     pub fn get_node_state(&self) -> PersistResult<Option<NodeState>> {
-        let state_str = self.get_cached_item("node_state".to_string())?;
+        let state_str = self.get_cached_item(KEY_NODE_STATE)?;
         Ok(match state_str {
             Some(str) => serde_json::from_str(str.as_str())?,
             None => None,
@@ -42,12 +48,11 @@ impl SqliteStorage {
     }
 
     pub fn set_last_backup_time(&self, t: u64) -> PersistResult<()> {
-        self.update_cached_item("last_backup_time".to_string(), t.to_string())?;
-        Ok(())
+        self.update_cached_item(KEY_LAST_BACKUP_TIME, t.to_string())
     }
 
     pub fn get_last_backup_time(&self) -> PersistResult<Option<u64>> {
-        let state_str = self.get_cached_item("last_backup_time".to_string())?;
+        let state_str = self.get_cached_item(KEY_LAST_BACKUP_TIME)?;
         Ok(match state_str {
             Some(str) => str.as_str().parse::<u64>().ok(),
             None => None,
@@ -55,12 +60,11 @@ impl SqliteStorage {
     }
 
     pub fn set_last_sync_time(&self, t: u64) -> PersistResult<()> {
-        self.update_cached_item("last_sync_time".to_string(), t.to_string())?;
-        Ok(())
+        self.update_cached_item(KEY_LAST_SYNC_TIME, t.to_string())
     }
 
     pub fn get_last_sync_time(&self) -> PersistResult<Option<u64>> {
-        let state_str = self.get_cached_item("last_sync_time".to_string())?;
+        let state_str = self.get_cached_item(KEY_LAST_SYNC_TIME)?;
         Ok(match state_str {
             Some(str) => str.as_str().parse::<u64>().ok(),
             None => None,
@@ -68,12 +72,11 @@ impl SqliteStorage {
     }
 
     pub fn set_gl_credentials(&self, creds: Vec<u8>) -> PersistResult<()> {
-        self.update_cached_item("gl_credentials".to_string(), hex::encode(creds))?;
-        Ok(())
+        self.update_cached_item(KEY_GL_CREDENTIALS, hex::encode(creds))
     }
 
     pub fn get_gl_credentials(&self) -> PersistResult<Option<Vec<u8>>> {
-        match self.get_cached_item("gl_credentials".to_string())? {
+        match self.get_cached_item(KEY_GL_CREDENTIALS)? {
             Some(str) => Ok(Some(hex::decode(str)?)),
             None => Ok(None),
         }
@@ -81,16 +84,24 @@ impl SqliteStorage {
 
     pub fn set_static_backup(&self, backup: Vec<String>) -> PersistResult<()> {
         let serialized_state = serde_json::to_string(&backup)?;
-        self.update_cached_item("static_backup".to_string(), serialized_state)?;
-        Ok(())
+        self.update_cached_item(KEY_STATIC_BACKUP, serialized_state)
     }
 
     pub fn get_static_backup(&self) -> PersistResult<Option<Vec<String>>> {
-        let backup_str = self.get_cached_item("static_backup".to_string())?;
+        let backup_str = self.get_cached_item(KEY_STATIC_BACKUP)?;
         Ok(match backup_str {
             Some(str) => serde_json::from_str(str.as_str())?,
             None => None,
         })
+    }
+
+    pub fn set_webhook_url(&self, webhook_url: String) -> PersistResult<()> {
+        self.update_cached_item(KEY_WEBHOOK_URL, webhook_url)
+    }
+
+    #[allow(dead_code)]
+    pub fn get_webhook_url(&self) -> PersistResult<Option<String>> {
+        self.get_cached_item(KEY_WEBHOOK_URL)
     }
 }
 
@@ -102,12 +113,12 @@ fn test_cached_items() {
 
     storage.init().unwrap();
     storage
-        .update_cached_item("key1".to_string(), "val1".to_string())
+        .update_cached_item("key1", "val1".to_string())
         .unwrap();
-    let item_value = storage.get_cached_item("key1".to_string()).unwrap();
+    let item_value = storage.get_cached_item("key1").unwrap();
     assert_eq!(item_value, Some("val1".to_string()));
 
     storage.delete_cached_item("key1".to_string()).unwrap();
-    let item_value = storage.get_cached_item("key1".to_string()).unwrap();
+    let item_value = storage.get_cached_item("key1").unwrap();
     assert_eq!(item_value, None);
 }
