@@ -1108,6 +1108,7 @@ impl support::IntoDart for Config {
     fn into_dart(self) -> support::DartAbi {
         vec![
             self.breezserver.into_into_dart().into_dart(),
+            self.chainnotifier_url.into_into_dart().into_dart(),
             self.mempoolspace_url.into_into_dart().into_dart(),
             self.working_dir.into_into_dart().into_dart(),
             self.network.into_into_dart().into_dart(),

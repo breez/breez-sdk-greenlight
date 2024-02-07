@@ -472,6 +472,7 @@ class ClosedChannelPaymentDetails {
 /// environments.
 class Config {
   final String breezserver;
+  final String chainnotifierUrl;
   final String mempoolspaceUrl;
 
   /// Directory in which all SDK files (DB, log) are stored. Defaults to ".", otherwise if it's customized,
@@ -491,6 +492,7 @@ class Config {
 
   const Config({
     required this.breezserver,
+    required this.chainnotifierUrl,
     required this.mempoolspaceUrl,
     required this.workingDir,
     required this.network,
@@ -3077,18 +3079,19 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   Config _wire2api_config(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 10) throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
+    if (arr.length != 11) throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
     return Config(
       breezserver: _wire2api_String(arr[0]),
-      mempoolspaceUrl: _wire2api_String(arr[1]),
-      workingDir: _wire2api_String(arr[2]),
-      network: _wire2api_network(arr[3]),
-      paymentTimeoutSec: _wire2api_u32(arr[4]),
-      defaultLspId: _wire2api_opt_String(arr[5]),
-      apiKey: _wire2api_opt_String(arr[6]),
-      maxfeePercent: _wire2api_f64(arr[7]),
-      exemptfeeMsat: _wire2api_u64(arr[8]),
-      nodeConfig: _wire2api_node_config(arr[9]),
+      chainnotifierUrl: _wire2api_String(arr[1]),
+      mempoolspaceUrl: _wire2api_String(arr[2]),
+      workingDir: _wire2api_String(arr[3]),
+      network: _wire2api_network(arr[4]),
+      paymentTimeoutSec: _wire2api_u32(arr[5]),
+      defaultLspId: _wire2api_opt_String(arr[6]),
+      apiKey: _wire2api_opt_String(arr[7]),
+      maxfeePercent: _wire2api_f64(arr[8]),
+      exemptfeeMsat: _wire2api_u64(arr[9]),
+      nodeConfig: _wire2api_node_config(arr[10]),
     );
   }
 
@@ -4464,6 +4467,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
 
   void _api_fill_to_wire_config(Config apiObj, wire_Config wireObj) {
     wireObj.breezserver = api2wire_String(apiObj.breezserver);
+    wireObj.chainnotifier_url = api2wire_String(apiObj.chainnotifierUrl);
     wireObj.mempoolspace_url = api2wire_String(apiObj.mempoolspaceUrl);
     wireObj.working_dir = api2wire_String(apiObj.workingDir);
     wireObj.network = api2wire_network(apiObj.network);
@@ -5985,6 +5989,8 @@ final class wire_NodeConfig extends ffi.Struct {
 
 final class wire_Config extends ffi.Struct {
   external ffi.Pointer<wire_uint_8_list> breezserver;
+
+  external ffi.Pointer<wire_uint_8_list> chainnotifier_url;
 
   external ffi.Pointer<wire_uint_8_list> mempoolspace_url;
 

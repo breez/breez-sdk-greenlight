@@ -398,6 +398,9 @@ enum BreezSDKMapper {
         guard let breezserver = config["breezserver"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "breezserver", typeName: "Config"))
         }
+        guard let chainnotifierUrl = config["chainnotifierUrl"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "chainnotifierUrl", typeName: "Config"))
+        }
         guard let mempoolspaceUrl = config["mempoolspaceUrl"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "mempoolspaceUrl", typeName: "Config"))
         }
@@ -439,6 +442,7 @@ enum BreezSDKMapper {
 
         return Config(
             breezserver: breezserver,
+            chainnotifierUrl: chainnotifierUrl,
             mempoolspaceUrl: mempoolspaceUrl,
             workingDir: workingDir,
             network: network,
@@ -454,6 +458,7 @@ enum BreezSDKMapper {
     static func dictionaryOf(config: Config) -> [String: Any?] {
         return [
             "breezserver": config.breezserver,
+            "chainnotifierUrl": config.chainnotifierUrl,
             "mempoolspaceUrl": config.mempoolspaceUrl,
             "workingDir": config.workingDir,
             "network": valueOf(network: config.network),

@@ -381,6 +381,7 @@ fun asConfig(config: ReadableMap): Config? {
             config,
             arrayOf(
                 "breezserver",
+                "chainnotifierUrl",
                 "mempoolspaceUrl",
                 "workingDir",
                 "network",
@@ -394,6 +395,7 @@ fun asConfig(config: ReadableMap): Config? {
         return null
     }
     val breezserver = config.getString("breezserver")!!
+    val chainnotifierUrl = config.getString("chainnotifierUrl")!!
     val mempoolspaceUrl = config.getString("mempoolspaceUrl")!!
     val workingDir = config.getString("workingDir")!!
     val network = config.getString("network")?.let { asNetwork(it) }!!
@@ -405,6 +407,7 @@ fun asConfig(config: ReadableMap): Config? {
     val nodeConfig = config.getMap("nodeConfig")?.let { asNodeConfig(it) }!!
     return Config(
         breezserver,
+        chainnotifierUrl,
         mempoolspaceUrl,
         workingDir,
         network,
@@ -420,6 +423,7 @@ fun asConfig(config: ReadableMap): Config? {
 fun readableMapOf(config: Config): ReadableMap {
     return readableMapOf(
         "breezserver" to config.breezserver,
+        "chainnotifierUrl" to config.chainnotifierUrl,
         "mempoolspaceUrl" to config.mempoolspaceUrl,
         "workingDir" to config.workingDir,
         "network" to config.network.name.lowercase(),
