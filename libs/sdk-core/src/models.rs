@@ -1268,6 +1268,10 @@ pub struct SwapInfo {
     /// Error reason for when swap fails.
     pub last_redeem_error: Option<String>,
     /// The dynamic fees which is set if a channel opening is needed.
+    ///
+    /// This is an optional field for backward compatibility with swaps created before dynamic fees.
+    ///
+    /// Swaps created after dynamic fees were introduced always have this field set.
     pub channel_opening_fees: Option<OpeningFeeParams>,
 }
 

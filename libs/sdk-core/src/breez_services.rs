@@ -719,14 +719,12 @@ impl BreezServices {
                     in_progress.bitcoin_address
                 )});
         }
-        let channel_opening_fees = match req.opening_fee_params {
-            Some(fee_params) => fee_params,
-            None => self
-                .lsp_info()
+        let channel_opening_fees = req.opening_fee_params.unwrap_or(
+            self.lsp_info()
                 .await?
                 .cheapest_open_channel_fee(SWAP_PAYMENT_FEE_EXPIRY_SECONDS)?
                 .clone(),
-        };
+        );
 
         let swap_info = self
             .btc_receive_swapper

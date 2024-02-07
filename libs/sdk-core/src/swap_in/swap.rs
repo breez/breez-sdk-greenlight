@@ -133,8 +133,6 @@ impl BTCReceiveSwap {
     }
 
     /// Create a [SwapInfo] that represents the details of an on-going swap.
-    ///
-    /// See [SwapInfo] for details.
     pub(crate) async fn create_swap_address(
         &self,
         channel_opening_fees: OpeningFeeParams,
@@ -206,11 +204,9 @@ impl BTCReceiveSwap {
             channel_opening_fees: Some(channel_opening_fees),
         };
 
-        // persist the address
+        // persist the swap info
         self.persister.insert_swap(swap_info.clone())?;
         Ok(swap_info)
-
-        // return swap.bitcoinAddress;
     }
 
     fn list_unused(&self) -> Result<Vec<SwapInfo>> {
