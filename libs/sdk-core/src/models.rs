@@ -910,6 +910,7 @@ pub struct StaticBackupResponse {
     pub backup: Option<Vec<String>>,
 }
 
+#[derive(Default)]
 pub struct OpenChannelFeeRequest {
     pub amount_msat: Option<u64>,
     pub expiry: Option<u32>,
