@@ -75,7 +75,7 @@ impl LspInformation {
         Ok(info)
     }
 
-    /// Returns the cheapeset opening channel fees from LSP that within the expiry range.
+    /// Returns the cheapest opening channel fees from LSP that within the expiry range.
     ///
     /// If the LSP fees are needed, the LSP is expected to have at least one dynamic fee entry in its menu,
     /// otherwise this will result in an error.

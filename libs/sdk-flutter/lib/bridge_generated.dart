@@ -1803,6 +1803,10 @@ class SwapInfo {
   final String? lastRedeemError;
 
   /// The dynamic fees which is set if a channel opening is needed.
+  ///
+  /// This is an optional field for backward compatibility with swaps created before dynamic fees.
+  ///
+  /// Swaps created after dynamic fees were introduced always have this field set.
   final OpeningFeeParams? channelOpeningFees;
 
   const SwapInfo({
