@@ -19,12 +19,13 @@ use crate::bitcoin::{
 };
 use crate::breez_services::{BreezEvent, BreezServer, PaymentReceiver, Receiver};
 use crate::chain::{get_utxos, AddressUtxos, ChainService, MempoolSpace, OnchainTx};
+use crate::error::ReceivePaymentError;
 use crate::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
 use crate::models::{Swap, SwapInfo, SwapStatus, SwapperAPI};
 use crate::swap_in::error::SwapError;
 use crate::{
-    OpeningFeeParams, PrepareRefundRequest, PrepareRefundResponse, ReceivePaymentRequest,
-    RefundRequest, RefundResponse, SWAP_PAYMENT_FEE_EXPIRY_SECONDS,
+    OpeningFeeParams, PaymentDetails, PrepareRefundRequest, PrepareRefundResponse,
+    ReceivePaymentRequest, RefundRequest, RefundResponse, SWAP_PAYMENT_FEE_EXPIRY_SECONDS,
 };
 
 use super::error::SwapResult;
@@ -394,7 +395,9 @@ impl BTCReceiveSwap {
             Some(bolt11) => parse_invoice(bolt11)?,
             None => {
                 // we are creating an invoice for this swap if we didn't do it already
-                let invoice = self
+
+                // Try to create invoice
+                let create_invoice_res = self
                     .payment_receiver
                     .receive_payment(ReceivePaymentRequest {
                         amount_msat: swap_info.confirmed_sats * 1000,
@@ -405,12 +408,34 @@ impl BTCReceiveSwap {
                         expiry: Some(SWAP_PAYMENT_FEE_EXPIRY_SECONDS),
                         cltv: None,
                     })
-                    .await?
-                    .ln_invoice;
-                self.persister
-                    .update_swap_bolt11(bitcoin_address.clone(), invoice.bolt11.clone())?;
+                    .await;
 
-                invoice
+                // Get the invoice, depending on the creation result
+                match create_invoice_res {
+                    // Extract created invoice
+                    Ok(create_invoice_response) => {
+                        let invoice = create_invoice_response.ln_invoice;
+                        self.persister
+                            .update_swap_bolt11(bitcoin_address, invoice.bolt11.clone())?;
+                        Ok(invoice)
+                    }
+
+                    // If the swap was crated on a different device and the invoice payment failed,
+                    // the invoice already exists. In this case, lookup the invoice from DB.
+                    Err(ReceivePaymentError::InvoicePreimageAlreadyExists { .. }) => {
+                        let found_payment = self
+                            .persister
+                            .get_payment_by_hash(&hex::encode(swap_info.payment_hash))?
+                            .ok_or(anyhow!("Preimage already known, but payment not in DB"))?;
+                        match found_payment.details {
+                            PaymentDetails::Ln { data } => parse_invoice(data.bolt11),
+                            _ => Err(anyhow!("Preimage already known, but payment is not LN")),
+                        }
+                    }
+
+                    // In all other cases: throw error
+                    Err(err) => Err(anyhow!("Failed to create invoice: {err}")),
+                }?
             }
         };
 

@@ -91,10 +91,12 @@ pub struct Swap {
     pub bitcoin_address: String,
     pub swapper_pubkey: Vec<u8>,
     pub lock_height: i64,
-    pub max_allowed_deposit: i64,
     pub error_message: String,
     pub required_reserve: i64,
+    /// Minimum amount, in sats, that should be sent to `bitcoin_address` for a successful swap
     pub min_allowed_deposit: i64,
+    /// Maximum amount, in sats, that should be sent to `bitcoin_address` for a successful swap
+    pub max_allowed_deposit: i64,
 }
 
 /// Trait covering functionality involving swaps
