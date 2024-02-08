@@ -1243,7 +1243,7 @@ pub struct SwapInfo {
     pub public_key: Vec<u8>,
     /// The public key in binary format from the swapping service. Received from [SwapperAPI::create_swap].
     pub swapper_public_key: Vec<u8>,
-    /// The lockingsscript for the generated bitcoin address. Received from [SwapperAPI::create_swap].
+    /// The locking script for the generated bitcoin address. Received from [SwapperAPI::create_swap].
     pub script: Vec<u8>,
 
     /// bolt11 invoice to claim the sent funds.

@@ -410,24 +410,23 @@ impl BTCReceiveSwap {
                 .update_swap_bolt11(bitcoin_address.clone(), invoice.bolt11)?;
             swap_info = self
                 .persister
-                .get_swap_info_by_address(bitcoin_address)?
-                .unwrap();
+                .get_swap_info_by_address(bitcoin_address.clone())?
+                .ok_or_else(|| anyhow!(format!("swap {bitcoin_address} not found after update")))?;
         }
 
         // Making sure the invoice amount matches the on-chain amount
-        let payreq = swap_info.bolt11.unwrap();
+        let payreq = swap_info.bolt11.unwrap_or_default();
         let ln_invoice = parse_invoice(payreq.clone())?;
-        debug!("swap info confirmed = {}", swap_info.confirmed_sats);
-        if ln_invoice.amount_msat.unwrap() != (swap_info.confirmed_sats * 1000) {
-            warn!(
-                "invoice amount doesn't match confirmed sats {:?}",
-                ln_invoice.amount_msat.unwrap()
-            );
+        let invoice_amount_msat = ln_invoice.amount_msat.unwrap_or_default();
+        let confirmed_sat = swap_info.confirmed_sats;
+        debug!("swap info confirmed = {confirmed_sat} sat");
+        if invoice_amount_msat != (confirmed_sat * 1000) {
+            warn!("invoice amount {invoice_amount_msat} msat doesn't match confirmed {confirmed_sat} sats");
             return Err(anyhow!("Does not match confirmed sats"));
         }
 
         // Asking the service to initiate the lightning payment.
-        self.swapper_api.complete_swap(payreq.clone()).await
+        self.swapper_api.complete_swap(payreq).await
     }
 
     pub(crate) async fn prepare_refund_swap(
