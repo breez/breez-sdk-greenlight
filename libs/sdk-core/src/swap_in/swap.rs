@@ -385,38 +385,36 @@ impl BTCReceiveSwap {
     /// redeem_swap executes the final step of receiving lightning payment
     /// in exchange for the on chain funds.
     async fn redeem_swap(&self, bitcoin_address: String) -> Result<()> {
-        let mut swap_info = self
+        let swap_info = self
             .persister
             .get_swap_info_by_address(bitcoin_address.clone())?
             .ok_or_else(|| anyhow!(format!("swap address {bitcoin_address} was not found")))?;
 
-        // we are creating and invoice for this swap if we didn't
-        // do it already
-        if swap_info.bolt11.is_none() {
-            let invoice = self
-                .payment_receiver
-                .receive_payment(ReceivePaymentRequest {
-                    amount_msat: swap_info.confirmed_sats * 1000,
-                    description: String::from("Bitcoin Transfer"),
-                    preimage: Some(swap_info.preimage),
-                    opening_fee_params: swap_info.channel_opening_fees,
-                    use_description_hash: Some(false),
-                    expiry: Some(SWAP_PAYMENT_FEE_EXPIRY_SECONDS),
-                    cltv: None,
-                })
-                .await?
-                .ln_invoice;
-            self.persister
-                .update_swap_bolt11(bitcoin_address.clone(), invoice.bolt11)?;
-            swap_info = self
-                .persister
-                .get_swap_info_by_address(bitcoin_address.clone())?
-                .ok_or_else(|| anyhow!(format!("swap {bitcoin_address} not found after update")))?;
-        }
+        let ln_invoice = match swap_info.bolt11 {
+            Some(bolt11) => parse_invoice(bolt11)?,
+            None => {
+                // we are creating an invoice for this swap if we didn't do it already
+                let invoice = self
+                    .payment_receiver
+                    .receive_payment(ReceivePaymentRequest {
+                        amount_msat: swap_info.confirmed_sats * 1000,
+                        description: String::from("Bitcoin Transfer"),
+                        preimage: Some(swap_info.preimage),
+                        opening_fee_params: swap_info.channel_opening_fees,
+                        use_description_hash: Some(false),
+                        expiry: Some(SWAP_PAYMENT_FEE_EXPIRY_SECONDS),
+                        cltv: None,
+                    })
+                    .await?
+                    .ln_invoice;
+                self.persister
+                    .update_swap_bolt11(bitcoin_address.clone(), invoice.bolt11.clone())?;
+
+                invoice
+            }
+        };
 
         // Making sure the invoice amount matches the on-chain amount
-        let payreq = swap_info.bolt11.unwrap_or_default();
-        let ln_invoice = parse_invoice(payreq.clone())?;
         let invoice_amount_msat = ln_invoice.amount_msat.unwrap_or_default();
         let confirmed_sat = swap_info.confirmed_sats;
         debug!("swap info confirmed = {confirmed_sat} sat");
@@ -426,7 +424,7 @@ impl BTCReceiveSwap {
         }
 
         // Asking the service to initiate the lightning payment.
-        self.swapper_api.complete_swap(payreq).await
+        self.swapper_api.complete_swap(ln_invoice.bolt11).await
     }
 
     pub(crate) async fn prepare_refund_swap(
