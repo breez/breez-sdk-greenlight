@@ -276,24 +276,16 @@ impl BTCReceiveSwap {
         // redeem swaps
         let redeemable_swaps = self.list_redeemables()?;
         for s in redeemable_swaps {
-            let redeem_res = self.redeem_swap(s.bitcoin_address.clone()).await;
+            let swap_address = s.bitcoin_address;
+            let bolt11 = s.bolt11.unwrap_or_default();
 
-            if redeem_res.is_err() {
-                let err = redeem_res.as_ref().err().unwrap();
-                error!(
-                    "failed to redeem swap {:?}: {} {}",
-                    err,
-                    s.bitcoin_address,
-                    s.bolt11.unwrap_or_default(),
-                );
-                self.persister
-                    .update_swap_redeem_error(s.bitcoin_address, err.to_string())?;
-            } else {
-                info!(
-                    "succeed to redeem swap {:?}: {}",
-                    s.bitcoin_address,
-                    s.bolt11.unwrap_or_default()
-                )
+            match self.redeem_swap(swap_address.clone()).await {
+                Ok(_) => info!("succeed to redeem swap {swap_address}: {bolt11}"),
+                Err(err) => {
+                    error!("failed to redeem swap {err:?}: {swap_address} {bolt11}");
+                    self.persister
+                        .update_swap_redeem_error(swap_address, err.to_string())?;
+                }
             }
         }
 
