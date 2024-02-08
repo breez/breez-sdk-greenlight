@@ -61,12 +61,17 @@ jobs:
           cp ../breez-sdk/libs/sdk-flutter/pubspec.yaml .
           cp ../breez-sdk/libs/sdk-flutter/pubspec.lock .
 
+      - uses: actions/download-artifact@v3
+        with:
+          name: bindings-swift
+          path: flutter/ios/bindings-swift/Sources/BreezSDK/
+
       - name: Set package version
         working-directory: flutter
         run: |
           sed -i.bak -e 's/version:.*/version: ${{ inputs.package-version }}/' pubspec.yaml
           sed -i.bak -e "s/^version .*/version '${{ inputs.package-version }}'/" android/build.gradle
-          sed -i.bak -e "s/s.version          = .*/s.version          = '${{ inputs.package-version }}'/" ios/breez_sdk.podspec
+          sed -i.bak -e "s/^tag_version = .*/tag_version = '${{ inputs.package-version }}'/" ios/breez_sdk.podspec
           rm pubspec.yaml.bak
           rm android/build.gradle.bak
           rm ios/breez_sdk.podspec.bak
