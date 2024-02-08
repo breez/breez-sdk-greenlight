@@ -2095,23 +2095,20 @@ impl Receiver for PaymentReceiver {
         // check if the lsp hint already exists
         info!("Existing routing hints {:?}", parsed_invoice.routing_hints);
 
-        // We only create a new invoice if we need to add routing hints because the invoice
-        // has not routing hints or change the amount due to openning a channel request.
-        if parsed_invoice.routing_hints.is_empty() || open_channel_needed {
-            // create the large amount invoice
-            let raw_invoice_with_hint = add_routing_hints(
-                invoice.clone(),
-                !open_channel_needed,
-                &routing_hints,
-                req.amount_msat,
-            )?;
+        // In the case we have liquidity we only append the routing hints we have to the gl invoice.
+        // In the case we don't have liquidity we set the lsp hint to the gl invoice and change the amount.
+        let raw_invoice_with_hint = add_routing_hints(
+            invoice.clone(),
+            !open_channel_needed,
+            &routing_hints,
+            req.amount_msat,
+        )?;
 
-            info!("Routing hint added");
-            let signed_invoice_with_hint = self.node_api.sign_invoice(raw_invoice_with_hint)?;
-            info!("Signed invoice with hint = {}", signed_invoice_with_hint);
+        info!("Routing hint added");
+        let signed_invoice_with_hint = self.node_api.sign_invoice(raw_invoice_with_hint)?;
+        info!("Signed invoice with hint = {}", signed_invoice_with_hint);
 
-            parsed_invoice = parse_invoice(&signed_invoice_with_hint)?;
-        }
+        parsed_invoice = parse_invoice(&signed_invoice_with_hint)?;
 
         // register the payment at the lsp if needed
         if open_channel_needed {
