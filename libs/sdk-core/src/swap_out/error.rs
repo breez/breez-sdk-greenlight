@@ -1,7 +1,11 @@
 use anyhow::anyhow;
-use bitcoin::{hashes, secp256k1};
 
-use crate::{error::SdkError, node_api::NodeError, persist::error::PersistError};
+use crate::{
+    bitcoin::{hashes, secp256k1},
+    error::SdkError,
+    node_api::NodeError,
+    persist::error::PersistError,
+};
 
 pub type ReverseSwapResult<T, E = ReverseSwapError> = Result<T, E>;
 

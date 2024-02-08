@@ -1,30 +1,31 @@
 use std::str::FromStr;
 use std::sync::Arc;
 
+use anyhow::{anyhow, Result};
+use rand::Rng;
+use ripemd::{Digest, Ripemd160};
+
 use crate::binding::parse_invoice;
+use crate::bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
+use crate::bitcoin::blockdata::opcodes;
+use crate::bitcoin::blockdata::script::Builder;
+use crate::bitcoin::consensus::encode;
+use crate::bitcoin::hashes::sha256;
+use crate::bitcoin::psbt::serialize::Serialize;
+use crate::bitcoin::secp256k1::{Message, PublicKey, Secp256k1, SecretKey};
+use crate::bitcoin::util::sighash::SighashCache;
+use crate::bitcoin::{
+    Address, EcdsaSighashType, Script, Sequence, Transaction, TxIn, TxOut, Witness,
+};
+use crate::breez_services::{BreezEvent, BreezServer, PaymentReceiver, Receiver};
 use crate::chain::{get_utxos, AddressUtxos, ChainService, MempoolSpace, OnchainTx};
 use crate::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
+use crate::models::{Swap, SwapInfo, SwapStatus, SwapperAPI};
 use crate::swap_in::error::SwapError;
 use crate::{
     OpeningFeeParams, PrepareRefundRequest, PrepareRefundResponse, ReceivePaymentRequest,
     RefundRequest, RefundResponse, SWAP_PAYMENT_FEE_EXPIRY_SECONDS,
 };
-use anyhow::{anyhow, Result};
-use bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
-use bitcoin::blockdata::opcodes;
-use bitcoin::blockdata::script::Builder;
-use bitcoin::consensus::encode;
-use bitcoin::psbt::serialize::Serialize;
-use bitcoin::secp256k1::{Message, PublicKey, Secp256k1, SecretKey};
-use bitcoin::{Address, EcdsaSighashType, Script, Sequence, Transaction, TxIn, TxOut, Witness};
-
-use bitcoin::hashes::sha256;
-use bitcoin::util::sighash::SighashCache;
-use rand::Rng;
-use ripemd::{Digest, Ripemd160};
-
-use crate::breez_services::{BreezEvent, BreezServer, PaymentReceiver, Receiver};
-use crate::models::{Swap, SwapInfo, SwapStatus, SwapperAPI};
 
 use super::error::SwapResult;
 
@@ -72,7 +73,7 @@ impl SwapperAPI for BreezServer {
 /// This struct is responsible for handling on-chain funds with lightning payments.
 /// It uses internally an implementation of SwapperAPI that represents the actually swapper service.
 pub(crate) struct BTCReceiveSwap {
-    network: bitcoin::Network,
+    network: crate::bitcoin::Network,
     swapper_api: Arc<dyn SwapperAPI>,
     persister: Arc<crate::persist::db::SqliteStorage>,
     chain_service: Arc<dyn ChainService>,
@@ -81,7 +82,7 @@ pub(crate) struct BTCReceiveSwap {
 
 impl BTCReceiveSwap {
     pub(crate) fn new(
-        network: bitcoin::Network,
+        network: crate::bitcoin::Network,
         swapper_api: Arc<dyn SwapperAPI>,
         persister: Arc<crate::persist::db::SqliteStorage>,
         chain_service: Arc<MempoolSpace>,
@@ -613,7 +614,7 @@ fn prepare_refund_tx(
     // construct the transaction
     let tx = Transaction {
         version: 2,
-        lock_time: bitcoin::PackedLockTime(lock_time),
+        lock_time: crate::bitcoin::PackedLockTime(lock_time),
         input: txins,
         output: tx_out,
     };
@@ -680,17 +681,17 @@ mod tests {
     use std::{sync::Arc, vec};
 
     use anyhow::Result;
-    use bitcoin::consensus::deserialize;
-    use bitcoin::hashes::{hex::FromHex, sha256};
-    use bitcoin::{
-        secp256k1::{Message, PublicKey, Secp256k1, SecretKey},
-        OutPoint, Transaction, Txid,
-    };
 
     use crate::chain::{AddressUtxos, Utxo};
     use crate::swap_in::swap::{compute_refund_tx_weight, compute_tx_fee, prepare_refund_tx};
     use crate::test_utils::get_test_ofp;
     use crate::{
+        bitcoin::consensus::deserialize,
+        bitcoin::hashes::{hex::FromHex, sha256},
+        bitcoin::{
+            secp256k1::{Message, PublicKey, Secp256k1, SecretKey},
+            OutPoint, Transaction, Txid,
+        },
         breez_services::tests::get_dummy_node_state,
         chain::{ChainService, OnchainTx},
         models::*,
@@ -741,7 +742,7 @@ mod tests {
         assert_eq!(expected_script, serialized_script);
 
         // compare the expected and created swap address
-        let address = bitcoin::Address::p2wsh(&script, bitcoin::Network::Bitcoin);
+        let address = crate::bitcoin::Address::p2wsh(&script, crate::bitcoin::Network::Bitcoin);
         let address_str = address.to_string();
         assert_eq!(address_str, expected_address);
 
@@ -1126,7 +1127,7 @@ mod tests {
         persister.set_node_state(&dummy_node_state)?;
 
         let swapper = BTCReceiveSwap {
-            network: bitcoin::Network::Bitcoin,
+            network: crate::bitcoin::Network::Bitcoin,
             swapper_api: Arc::new(MockSwapperAPI {}),
             persister: persister.clone(),
             chain_service: chain_service.clone(),

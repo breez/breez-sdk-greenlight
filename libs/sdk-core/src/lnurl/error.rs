@@ -1,8 +1,8 @@
 use std::{array::TryFromSliceError, string::FromUtf8Error};
 
 use anyhow::anyhow;
-use bitcoin::{bech32, secp256k1, util::bip32};
 
+use crate::bitcoin::{bech32, secp256k1, util::bip32};
 use crate::{invoice::InvoiceError, node_api::NodeError};
 
 pub type LnUrlResult<T, E = LnUrlError> = Result<T, E>;

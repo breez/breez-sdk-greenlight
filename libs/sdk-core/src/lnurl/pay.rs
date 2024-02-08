@@ -357,17 +357,16 @@ pub(crate) mod model {
 mod tests {
     use std::sync::Arc;
 
+    use crate::bitcoin::hashes::hex::ToHex;
+    use crate::bitcoin::hashes::{sha256, Hash};
     use crate::input_parser::tests::MOCK_HTTP_SERVER;
     use crate::lnurl::pay::*;
     use crate::{breez_services::tests::get_dummy_node_state, lnurl::pay::model::*};
+    use crate::{test_utils::*, LnUrlPayRequest};
 
     use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
     use anyhow::{anyhow, Result};
-    use bitcoin::hashes::hex::ToHex;
-    use bitcoin::hashes::{sha256, Hash};
     use gl_client::signer::model::greenlight::PayStatus;
-
-    use crate::{test_utils::*, LnUrlPayRequest};
     use mockito::Mock;
     use rand::random;
 
