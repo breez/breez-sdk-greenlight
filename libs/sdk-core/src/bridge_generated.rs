@@ -1534,8 +1534,6 @@ impl support::IntoDart for LspInformation {
             self.widget_url.into_into_dart().into_dart(),
             self.pubkey.into_into_dart().into_dart(),
             self.host.into_into_dart().into_dart(),
-            self.channel_capacity.into_into_dart().into_dart(),
-            self.target_conf.into_into_dart().into_dart(),
             self.base_fee_msat.into_into_dart().into_dart(),
             self.fee_rate.into_into_dart().into_dart(),
             self.time_lock_delta.into_into_dart().into_dart(),

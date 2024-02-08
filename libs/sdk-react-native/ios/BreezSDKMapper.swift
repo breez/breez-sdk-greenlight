@@ -1631,12 +1631,6 @@ enum BreezSDKMapper {
         guard let host = lspInformation["host"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "host", typeName: "LspInformation"))
         }
-        guard let channelCapacity = lspInformation["channelCapacity"] as? Int64 else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "channelCapacity", typeName: "LspInformation"))
-        }
-        guard let targetConf = lspInformation["targetConf"] as? Int32 else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "targetConf", typeName: "LspInformation"))
-        }
         guard let baseFeeMsat = lspInformation["baseFeeMsat"] as? Int64 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "baseFeeMsat", typeName: "LspInformation"))
         }
@@ -1663,8 +1657,6 @@ enum BreezSDKMapper {
             widgetUrl: widgetUrl,
             pubkey: pubkey,
             host: host,
-            channelCapacity: channelCapacity,
-            targetConf: targetConf,
             baseFeeMsat: baseFeeMsat,
             feeRate: feeRate,
             timeLockDelta: timeLockDelta,
@@ -1681,8 +1673,6 @@ enum BreezSDKMapper {
             "widgetUrl": lspInformation.widgetUrl,
             "pubkey": lspInformation.pubkey,
             "host": lspInformation.host,
-            "channelCapacity": lspInformation.channelCapacity,
-            "targetConf": lspInformation.targetConf,
             "baseFeeMsat": lspInformation.baseFeeMsat,
             "feeRate": lspInformation.feeRate,
             "timeLockDelta": lspInformation.timeLockDelta,

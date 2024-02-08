@@ -581,8 +581,6 @@ impl LspAPI for MockBreezServer {
             widget_url: "".to_string(),
             pubkey: self.lsp_pub_key(),
             host: "localhost".to_string(),
-            channel_capacity: 1000000,
-            target_conf: 1,
             base_fee_msat: 1,
             fee_rate: 1.0,
             time_lock_delta: 32,

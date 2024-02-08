@@ -236,8 +236,6 @@ export type LspInformation = {
     widgetUrl: string
     pubkey: string
     host: string
-    channelCapacity: number
-    targetConf: number
     baseFeeMsat: number
     feeRate: number
     timeLockDelta: number

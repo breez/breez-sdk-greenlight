@@ -1017,12 +1017,6 @@ class LspInformation {
   /// The network location of the lightning node, e.g. `12.34.56.78:9012` or `localhost:10011`
   final String host;
 
-  /// The channel capacity in satoshis
-  final int channelCapacity;
-
-  /// The target number of blocks that the funding transaction should be confirmed by
-  final int targetConf;
-
   /// The base fee charged regardless of the number of milli-satoshis sent
   final int baseFeeMsat;
 
@@ -1043,8 +1037,6 @@ class LspInformation {
     required this.widgetUrl,
     required this.pubkey,
     required this.host,
-    required this.channelCapacity,
-    required this.targetConf,
     required this.baseFeeMsat,
     required this.feeRate,
     required this.timeLockDelta,
@@ -3441,21 +3433,19 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   LspInformation _wire2api_lsp_information(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 13) throw Exception('unexpected arr length: expect 13 but see ${arr.length}');
+    if (arr.length != 11) throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
     return LspInformation(
       id: _wire2api_String(arr[0]),
       name: _wire2api_String(arr[1]),
       widgetUrl: _wire2api_String(arr[2]),
       pubkey: _wire2api_String(arr[3]),
       host: _wire2api_String(arr[4]),
-      channelCapacity: _wire2api_i64(arr[5]),
-      targetConf: _wire2api_i32(arr[6]),
-      baseFeeMsat: _wire2api_i64(arr[7]),
-      feeRate: _wire2api_f64(arr[8]),
-      timeLockDelta: _wire2api_u32(arr[9]),
-      minHtlcMsat: _wire2api_i64(arr[10]),
-      lspPubkey: _wire2api_uint_8_list(arr[11]),
-      openingFeeParamsList: _wire2api_opening_fee_params_menu(arr[12]),
+      baseFeeMsat: _wire2api_i64(arr[5]),
+      feeRate: _wire2api_f64(arr[6]),
+      timeLockDelta: _wire2api_u32(arr[7]),
+      minHtlcMsat: _wire2api_i64(arr[8]),
+      lspPubkey: _wire2api_uint_8_list(arr[9]),
+      openingFeeParamsList: _wire2api_opening_fee_params_menu(arr[10]),
     );
   }
 

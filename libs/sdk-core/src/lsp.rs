@@ -30,12 +30,6 @@ pub struct LspInformation {
     /// The network location of the lightning node, e.g. `12.34.56.78:9012` or `localhost:10011`
     pub host: String,
 
-    /// The channel capacity in satoshis
-    pub channel_capacity: i64,
-
-    /// The target number of blocks that the funding transaction should be confirmed by
-    pub target_conf: i32,
-
     /// The base fee charged regardless of the number of milli-satoshis sent
     pub base_fee_msat: i64,
 
@@ -60,8 +54,6 @@ impl LspInformation {
             widget_url: lsp_info.widget_url,
             pubkey: lsp_info.pubkey,
             host: lsp_info.host,
-            channel_capacity: lsp_info.channel_capacity,
-            target_conf: lsp_info.target_conf,
             base_fee_msat: lsp_info.base_fee_msat,
             fee_rate: lsp_info.fee_rate,
             time_lock_delta: lsp_info.time_lock_delta,
@@ -199,8 +191,6 @@ mod tests {
             widget_url: "".to_string(),
             pubkey: "pubkey".to_string(),
             host: "localhost".to_string(),
-            channel_capacity: 1000000,
-            target_conf: 1,
             base_fee_msat: 1,
             fee_rate: 1.0,
             time_lock_delta: 32,

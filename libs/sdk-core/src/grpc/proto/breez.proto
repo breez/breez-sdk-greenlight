@@ -142,17 +142,14 @@ message LSPInformation {
   string widget_url = 2 [ json_name = "widget_url" ];
   string pubkey = 3 [ json_name = "pubkey" ];
   string host = 4 [ json_name = "host" ];
-  int64 channel_capacity = 5 [ json_name = "channel_capacity" ];
-  int32 target_conf = 6 [ json_name = "target_conf" ];
+
   int64 base_fee_msat = 7 [ json_name = "base_fee_msat" ];
   double fee_rate = 8 [ json_name = "fee_rate" ];
   uint32 time_lock_delta = 9 [ json_name = "time_lock_delta" ];
   int64 min_htlc_msat = 10 [ json_name = "min_htlc_msat" ];
-  int64 channel_fee_permyriad = 11 [deprecated = true];
+
   bytes lsp_pubkey = 12;
-  // The channel can be closed if not used this duration in seconds.
-  int64 max_inactive_duration = 13 [deprecated = true];
-  int64 channel_minimum_fee_msat = 14 [deprecated = true];
+
   repeated OpeningFeeParams opening_fee_params_list = 15;
 }
 

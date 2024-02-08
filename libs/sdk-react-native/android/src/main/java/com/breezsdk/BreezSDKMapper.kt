@@ -1474,8 +1474,6 @@ fun asLspInformation(lspInformation: ReadableMap): LspInformation? {
                 "widgetUrl",
                 "pubkey",
                 "host",
-                "channelCapacity",
-                "targetConf",
                 "baseFeeMsat",
                 "feeRate",
                 "timeLockDelta",
@@ -1492,8 +1490,6 @@ fun asLspInformation(lspInformation: ReadableMap): LspInformation? {
     val widgetUrl = lspInformation.getString("widgetUrl")!!
     val pubkey = lspInformation.getString("pubkey")!!
     val host = lspInformation.getString("host")!!
-    val channelCapacity = lspInformation.getDouble("channelCapacity").toLong()
-    val targetConf = lspInformation.getInt("targetConf")
     val baseFeeMsat = lspInformation.getDouble("baseFeeMsat").toLong()
     val feeRate = lspInformation.getDouble("feeRate")
     val timeLockDelta = lspInformation.getInt("timeLockDelta").toUInt()
@@ -1506,8 +1502,6 @@ fun asLspInformation(lspInformation: ReadableMap): LspInformation? {
         widgetUrl,
         pubkey,
         host,
-        channelCapacity,
-        targetConf,
         baseFeeMsat,
         feeRate,
         timeLockDelta,
@@ -1524,8 +1518,6 @@ fun readableMapOf(lspInformation: LspInformation): ReadableMap {
         "widgetUrl" to lspInformation.widgetUrl,
         "pubkey" to lspInformation.pubkey,
         "host" to lspInformation.host,
-        "channelCapacity" to lspInformation.channelCapacity,
-        "targetConf" to lspInformation.targetConf,
         "baseFeeMsat" to lspInformation.baseFeeMsat,
         "feeRate" to lspInformation.feeRate,
         "timeLockDelta" to lspInformation.timeLockDelta,
