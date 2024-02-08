@@ -3,16 +3,15 @@ use std::time::Duration;
 
 use anyhow::{anyhow, Result};
 use bip21::Uri;
-use bitcoin::bech32;
-use bitcoin::bech32::FromBase32;
 use serde::Deserialize;
 use serde::Serialize;
 
+use crate::bitcoin::bech32;
+use crate::bitcoin::bech32::FromBase32;
 use crate::ensure_sdk;
 use crate::input_parser::InputType::*;
 use crate::input_parser::LnUrlRequestData::*;
 use crate::invoice::{parse_invoice, LNInvoice};
-
 use crate::lnurl::error::LnUrlResult;
 use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 
@@ -174,7 +173,7 @@ pub async fn parse(input: &str) -> Result<InputType> {
     }
 
     // Public key serialized in compressed form (66 hex chars)
-    if let Ok(_node_id) = bitcoin::secp256k1::PublicKey::from_str(input) {
+    if let Ok(_node_id) = crate::bitcoin::secp256k1::PublicKey::from_str(input) {
         return Ok(NodeId {
             node_id: input.into(),
         });
@@ -182,7 +181,7 @@ pub async fn parse(input: &str) -> Result<InputType> {
 
     // Possible Node URI (check for separator symbol, try to parse pubkey, ignore rest)
     if let Some('@') = input.chars().nth(66) {
-        if let Ok(_node_id) = bitcoin::secp256k1::PublicKey::from_str(&input[..66]) {
+        if let Ok(_node_id) = crate::bitcoin::secp256k1::PublicKey::from_str(&input[..66]) {
             return Ok(NodeId {
                 node_id: input.into(),
             });
@@ -631,12 +630,12 @@ pub(crate) mod tests {
 
     use anyhow::anyhow;
     use anyhow::Result;
-    use bitcoin::bech32;
-    use bitcoin::bech32::{ToBase32, Variant};
-    use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
     use mockito::{Mock, Server, ServerGuard};
     use once_cell::sync::Lazy;
 
+    use crate::bitcoin::bech32;
+    use crate::bitcoin::bech32::{ToBase32, Variant};
+    use crate::bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
     use crate::input_parser::*;
     use crate::models::Network;
 

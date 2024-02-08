@@ -4,12 +4,6 @@ use std::time::{Duration, SystemTime};
 use std::{mem, vec};
 
 use anyhow::{anyhow, Error, Result};
-use bitcoin::hashes::hex::ToHex;
-use bitcoin::hashes::{sha256, Hash};
-use bitcoin::secp256k1::ecdsa::RecoverableSignature;
-use bitcoin::secp256k1::{KeyPair, Message, PublicKey, Secp256k1, SecretKey};
-use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
-use bitcoin::Network;
 use chrono::{SecondsFormat, Utc};
 use gl_client::signer::model::greenlight::amount::Unit;
 use gl_client::signer::model::greenlight::Amount;
@@ -26,6 +20,12 @@ use tokio_stream::StreamExt;
 use tonic::Streaming;
 
 use crate::backup::{BackupState, BackupTransport};
+use crate::bitcoin::hashes::hex::ToHex;
+use crate::bitcoin::hashes::{sha256, Hash};
+use crate::bitcoin::secp256k1::ecdsa::RecoverableSignature;
+use crate::bitcoin::secp256k1::{KeyPair, Message, PublicKey, Secp256k1, SecretKey};
+use crate::bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
+use crate::bitcoin::Network;
 use crate::breez_services::Receiver;
 use crate::chain::{ChainService, OnchainTx, Outspend, RecommendedFees, TxStatus};
 use crate::error::{ReceivePaymentError, SdkError, SdkResult};
@@ -43,10 +43,8 @@ use crate::swap_in::swap::create_submarine_swap_script;
 use crate::{
     parse_invoice, Config, CustomMessage, LNInvoice, MaxChannelAmount, NodeCredentials,
     PaymentResponse, Peer, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse,
-    RouteHint, RouteHintHop,
+    RouteHint, RouteHintHop, OpeningFeeParams, OpeningFeeParamsMenu, ReceivePaymentRequest, SwapInfo
 };
-use crate::{OpeningFeeParams, OpeningFeeParamsMenu};
-use crate::{ReceivePaymentRequest, SwapInfo};
 
 pub struct MockBackupTransport {
     pub num_pushed: std::sync::Mutex<u32>,
@@ -130,7 +128,7 @@ impl SwapperAPI for MockSwapperAPI {
 
         let script =
             create_submarine_swap_script(hash, swapper_pub_key.clone(), payer_pubkey, 144).unwrap();
-        let address = bitcoin::Address::p2wsh(&script, bitcoin::Network::Bitcoin);
+        let address = crate::bitcoin::Address::p2wsh(&script, crate::bitcoin::Network::Bitcoin);
 
         Ok(Swap {
             bitcoin_address: address.to_string(),
