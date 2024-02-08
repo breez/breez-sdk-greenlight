@@ -211,4 +211,84 @@ pub(crate) fn parse_cln_error(status: tonic::Status) -> Result<JsonRpcErrCode> {
                 .map_or(None, JsonRpcErrCode::from_repr)
         })
         .ok_or(anyhow!("No code found"))
+        .or(parse_cln_error_wrapped(status))
+}
+
+/// Try to parse and extract the status code from nested tonic statuses.
+///
+/// ```ignore
+/// Example: Generic: Generic: status: Internal, message: \"converting invoice response to grpc:
+/// error calling RPC: RPC error response: RpcError { code: 901, message: \\\"preimage already used\\\",
+/// data: None }\", details: [], metadata: MetadataMap { headers: {\"content-type\": \"application/grpc\",
+/// \"date\": \"Thu, 08 Feb 2024 20:57:17 GMT\", \"content-length\": \"0\"} }
+/// ```
+///
+/// The [tonic::Status] is nested into an [tonic::Code::Internal] one here:
+/// <https://github.com/Blockstream/greenlight/blob/e87f60e473edf9395631086c48ba6234c0c052ff/libs/gl-plugin/src/node/wrapper.rs#L90-L93>
+pub(crate) fn parse_cln_error_wrapped(status: tonic::Status) -> Result<JsonRpcErrCode> {
+    let re: Regex = Regex::new(r"code: (?<code>-?\d+)")?;
+    re.captures(status.message())
+        .and_then(|caps| {
+            caps["code"]
+                .parse::<i16>()
+                .map_or(None, JsonRpcErrCode::from_repr)
+        })
+        .ok_or(anyhow!("No code found"))
+}
+
+#[cfg(test)]
+mod tests {
+    use anyhow::Result;
+    use tonic::Code;
+
+    use crate::greenlight::error::{parse_cln_error, parse_cln_error_wrapped, JsonRpcErrCode};
+
+    #[test]
+    fn test_parse_cln_error() -> Result<()> {
+        assert!(parse_cln_error(tonic::Status::new(Code::Internal, "...")).is_err());
+
+        assert!(matches!(
+            parse_cln_error(tonic::Status::new(Code::Internal, "... Some(208) ...")),
+            Ok(JsonRpcErrCode::PayNoSuchPayment)
+        ));
+
+        assert!(matches!(
+            parse_cln_error(tonic::Status::new(Code::Internal, "... Some(901) ...")),
+            Ok(JsonRpcErrCode::InvoicePreimageAlreadyExists)
+        ));
+
+        // Test if it falls back to parsing the nested status
+        assert!(matches!(
+            parse_cln_error(tonic::Status::new(
+                Code::Internal,
+                "... RpcError { code: 901, message ... } ..."
+            )),
+            Ok(JsonRpcErrCode::InvoicePreimageAlreadyExists)
+        ));
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_cln_error_wrapped() -> Result<()> {
+        assert!(parse_cln_error_wrapped(tonic::Status::new(Code::Internal, "...")).is_err());
+
+        assert!(matches!(
+            parse_cln_error_wrapped(tonic::Status::new(
+                Code::Internal,
+                "... RpcError { code: 208, message ... } ..."
+            )),
+            Ok(JsonRpcErrCode::PayNoSuchPayment)
+        ));
+
+        assert!(matches!(
+            parse_cln_error_wrapped(tonic::Status::new(
+                Code::Internal,
+                "... RpcError { code: 901, message ... } ..."
+            )),
+            Ok(JsonRpcErrCode::InvoicePreimageAlreadyExists)
+        ));
+
+        Ok(())
+    }
 }
