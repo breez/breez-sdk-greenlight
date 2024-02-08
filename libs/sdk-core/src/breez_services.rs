@@ -2095,7 +2095,8 @@ impl Receiver for PaymentReceiver {
         // check if the lsp hint already exists
         info!("Existing routing hints {:?}", parsed_invoice.routing_hints);
 
-        // We only create a new invoice if we need to add the lsp hint or change the amount
+        // We only create a new invoice if we need to add routing hints because the invoice
+        // has not routing hints or change the amount due to openning a channel request.
         if parsed_invoice.routing_hints.is_empty() || open_channel_needed {
             // create the large amount invoice
             let raw_invoice_with_hint = add_routing_hints(
