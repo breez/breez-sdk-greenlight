@@ -145,14 +145,19 @@ impl RouteHint {
     }
 }
 
-pub fn add_lsp_routing_hints(
+pub fn add_routing_hints(
     invoice: String,
-    include_route_hints: bool,
-    lsp_hint: Option<RouteHint>,
+    merge_with_existing: bool,
+    route_hints: &Vec<RouteHint>,
     new_amount_msats: u64,
 ) -> InvoiceResult<RawBolt11Invoice> {
     let signed = invoice.parse::<SignedRawBolt11Invoice>()?;
     let invoice = Bolt11Invoice::from_signed(signed)?;
+
+    let mut ldk_hints: Vec<router::RouteHint> = vec![];
+    for h in route_hints {
+        ldk_hints.push(h.to_ldk_hint()?);
+    }
 
     let mut invoice_builder = InvoiceBuilder::new(invoice.currency())
         .invoice_description(invoice.description())
@@ -166,28 +171,35 @@ pub fn add_lsp_routing_hints(
     // We make sure the hint we add does not conflict with other hints.
     // The lsp hint takes priority so in case the lsp hop is already in one of the existing hints
     // We make sure not to include them in the new hints.
-    let unique_hop_hints: Vec<lightning::routing::router::RouteHint> = match lsp_hint {
-        None => invoice.route_hints(),
-        Some(lsp_hint) => match include_route_hints {
+    let unique_hop_hints: Vec<lightning::routing::router::RouteHint> = match route_hints.len() {
+        0 => invoice.route_hints(),
+        _ => match merge_with_existing {
             true => {
-                let mut all_hints: Vec<lightning::routing::router::RouteHint> = invoice
-                    .route_hints()
-                    .into_iter()
+                let unique_to_add: Vec<&RouteHint> = route_hints
+                    .iter()
                     .filter(|hint| {
-                        hint.clone().0.into_iter().all(|hop| {
-                            lsp_hint.clone().hops.into_iter().all(|lsp_hop| {
-                                hop.src_node_id.serialize().encode_hex::<String>()
-                                    != lsp_hop.src_node_id
+                        hint.hops.clone().into_iter().all(|hop| {
+                            invoice.route_hints().into_iter().all(|invoice_hint| {
+                                invoice_hint.clone().0.into_iter().all(|invoice_hop| {
+                                    hop.src_node_id
+                                        != invoice_hop
+                                            .src_node_id
+                                            .serialize()
+                                            .encode_hex::<String>()
+                                })
                             })
                         })
                     })
                     .collect();
 
                 // Adding the lsp hint
-                all_hints.push(lsp_hint.to_ldk_hint()?);
+                let mut all_hints = invoice.route_hints();
+                for hint in unique_to_add {
+                    all_hints.push(hint.to_ldk_hint()?);
+                }
                 all_hints
             }
-            false => vec![lsp_hint.to_ldk_hint()?],
+            false => ldk_hints,
         },
     };
 
@@ -287,7 +299,7 @@ mod tests {
         let route_hint = crate::RouteHint {
             hops: vec![hint_hop],
         };
-        let encoded = add_lsp_routing_hints(payreq, true, Some(route_hint), 100).unwrap();
+        let encoded = add_routing_hints(payreq, true, &vec![route_hint], 100).unwrap();
         print!("{encoded:?}");
     }
 
@@ -314,7 +326,7 @@ mod tests {
         let route_hint = crate::RouteHint {
             hops: vec![hint_hop],
         };
-        let encoded = add_lsp_routing_hints(payreq, false, Some(route_hint), 100).unwrap();
+        let encoded = add_routing_hints(payreq, false, &vec![route_hint], 100).unwrap();
         print!("{encoded:?}");
     }
 

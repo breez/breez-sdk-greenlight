@@ -192,6 +192,9 @@ pub enum LnUrlWithdrawError {
 
     #[error("Service connectivity: {err}")]
     ServiceConnectivity { err: String },
+
+    #[error("No routing hints: {err}")]
+    InvoiceNoRoutingHints { err: String },
 }
 
 impl From<LnUrlError> for LnUrlWithdrawError {
@@ -227,6 +230,9 @@ impl From<ReceivePaymentError> for LnUrlWithdrawError {
             ReceivePaymentError::InvalidAmount { err } => Self::InvalidAmount { err },
             ReceivePaymentError::InvalidInvoice { err } => Self::InvalidInvoice { err },
             ReceivePaymentError::ServiceConnectivity { err } => Self::ServiceConnectivity { err },
+            ReceivePaymentError::InvoiceNoRoutingHints { err } => {
+                Self::InvoiceNoRoutingHints { err }
+            }
             _ => Self::Generic {
                 err: value.to_string(),
             },
@@ -314,6 +320,9 @@ pub enum ReceivePaymentError {
 
     #[error("Service connectivity: {err}")]
     ServiceConnectivity { err: String },
+
+    #[error("No routing hints: {err}")]
+    InvoiceNoRoutingHints { err: String },
 }
 
 impl From<anyhow::Error> for ReceivePaymentError {

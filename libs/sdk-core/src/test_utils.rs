@@ -441,6 +441,10 @@ impl NodeAPI for MockNodeAPI {
             tokio_stream::wrappers::ReceiverStream::new(rx).map(Ok),
         ))
     }
+
+    async fn get_routing_hints(&self) -> NodeResult<Vec<RouteHint>> {
+        Ok(vec![])
+    }
 }
 
 impl MockNodeAPI {

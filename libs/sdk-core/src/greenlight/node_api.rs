@@ -41,8 +41,8 @@ use tokio_stream::StreamExt;
 use tonic::Streaming;
 
 use crate::invoice::{parse_invoice, validate_network, InvoiceError, RouteHintHop};
-use crate::models::*;
 use crate::node_api::{NodeAPI, NodeError, NodeResult};
+use crate::{models::*, RouteHint};
 
 use crate::persist::db::SqliteStorage;
 use crate::{NodeConfig, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse};
@@ -1434,6 +1434,67 @@ impl NodeAPI for Greenlight {
             .into_inner();
         debug!("send_custom_message returned status {:?}", resp.status);
         Ok(())
+    }
+
+    // Gets the routing hints related to all private channels that the node has
+    async fn get_routing_hints(&self) -> NodeResult<Vec<RouteHint>> {
+        let mut hints: Vec<RouteHint> = vec![];
+        let mut node_client = self.get_node_client().await?;
+        let peers = node_client
+            .list_peers(cln::ListpeersRequest::default())
+            .await?
+            .into_inner();
+
+        // For each peer look for a private channel and create a routing hint from it.
+        for peer in peers.peers {
+            if !peer.channels.is_empty() {
+                let optional_opened_channel = peer
+                    .channels
+                    .iter()
+                    .find(|&c| c.state == cln::ChannelState::ChanneldNormal as i32);
+
+                if let Some(opened_channel) = optional_opened_channel {
+                    let (alias_remote, _) = match &opened_channel.alias {
+                        Some(a) => (a.remote.clone(), a.local.clone()),
+                        None => (None, None),
+                    };
+
+                    let optional_channel_id = alias_remote
+                        .clone()
+                        .or(opened_channel.short_channel_id.clone());
+
+                    if let Some(channel_id) = optional_channel_id {
+                        let scid = parse_short_channel_id(&channel_id)?;
+                        let hint = RouteHint {
+                            hops: vec![RouteHintHop {
+                                src_node_id: hex::encode(peer.id),
+                                short_channel_id: scid,
+                                fees_base_msat: opened_channel
+                                    .fee_base_msat
+                                    .clone()
+                                    .unwrap_or_default()
+                                    .msat as u32,
+                                fees_proportional_millionths: opened_channel
+                                    .fee_proportional_millionths
+                                    .unwrap_or_default(),
+                                cltv_expiry_delta: 144,
+                                htlc_minimum_msat: Some(
+                                    opened_channel
+                                        .minimum_htlc_in_msat
+                                        .clone()
+                                        .unwrap_or_default()
+                                        .msat,
+                                ),
+                                htlc_maximum_msat: None,
+                            }],
+                        };
+                        info!("Generating hint hop as routing hint: {:?}", hint);
+                        hints.push(hint);
+                    }
+                };
+            };
+        }
+        Ok(hints)
     }
 }
 
