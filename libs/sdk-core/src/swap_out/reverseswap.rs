@@ -1,8 +1,21 @@
 use std::str::FromStr;
 use std::sync::Arc;
 
+use anyhow::{anyhow, ensure, Result};
+use serde::{Deserialize, Serialize};
+use tokio::time::{sleep, Duration};
+
 use super::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus::*};
 use super::error::{ReverseSwapError, ReverseSwapResult};
+use crate::bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
+use crate::bitcoin::consensus::serialize;
+use crate::bitcoin::hashes::hex::{FromHex, ToHex};
+use crate::bitcoin::psbt::serialize::Serialize as PsbtSerialize;
+use crate::bitcoin::secp256k1::{Message, Secp256k1, SecretKey};
+use crate::bitcoin::util::sighash::SighashCache;
+use crate::bitcoin::{
+    Address, AddressType, EcdsaSighashType, Script, Sequence, Transaction, TxIn, TxOut, Witness,
+};
 use crate::chain::{get_utxos, ChainService, MempoolSpace, OnchainTx};
 use crate::models::{ReverseSwapServiceAPI, ReverseSwapperRoutingAPI};
 use crate::node_api::{NodeAPI, NodeError};
@@ -12,18 +25,6 @@ use crate::{
     ReverseSwapPairInfo, ReverseSwapStatus,
 };
 use crate::{ReverseSwapStatus::*, RouteHintHop, SendOnchainRequest};
-use anyhow::{anyhow, ensure, Result};
-use bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
-use bitcoin::consensus::serialize;
-use bitcoin::hashes::hex::{FromHex, ToHex};
-use bitcoin::psbt::serialize::Serialize as PsbtSerialize;
-use bitcoin::secp256k1::{Message, Secp256k1, SecretKey};
-use bitcoin::util::sighash::SighashCache;
-use bitcoin::{
-    Address, AddressType, EcdsaSighashType, Script, Sequence, Transaction, TxIn, TxOut, Witness,
-};
-use serde::{Deserialize, Serialize};
-use tokio::time::{sleep, Duration};
 
 // Estimates based on https://github.com/BoltzExchange/boltz-backend/blob/master/lib/rates/FeeProvider.ts#L31-L42
 pub const ESTIMATED_CLAIM_TX_VSIZE: u64 = 138;
@@ -349,7 +350,7 @@ impl BTCSendSwap {
                 // construct the transaction
                 let mut tx = Transaction {
                     version: 2,
-                    lock_time: bitcoin::PackedLockTime(0),
+                    lock_time: crate::bitcoin::PackedLockTime(0),
                     input: txins.clone(),
                     output: tx_out,
                 };

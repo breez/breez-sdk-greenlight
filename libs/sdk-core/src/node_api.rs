@@ -1,15 +1,17 @@
+use std::pin::Pin;
+
+use anyhow::Result;
+use lightning_invoice::RawBolt11Invoice;
+use tokio::sync::mpsc;
+use tokio_stream::Stream;
+use tonic::Streaming;
+
 use crate::{
+    bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey},
     invoice::InvoiceError, persist::error::PersistError, CustomMessage, MaxChannelAmount,
     NodeCredentials, Payment, PaymentResponse, Peer, PrepareRedeemOnchainFundsRequest,
     PrepareRedeemOnchainFundsResponse, RouteHint, RouteHintHop, SyncResponse, TlvEntry,
 };
-use anyhow::Result;
-use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
-use lightning_invoice::RawBolt11Invoice;
-use std::pin::Pin;
-use tokio::sync::mpsc;
-use tokio_stream::Stream;
-use tonic::Streaming;
 
 pub type NodeResult<T, E = NodeError> = Result<T, E>;
 

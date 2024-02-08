@@ -13,9 +13,7 @@ aes = "0.8"
 anyhow = { version = "1.0.79", features = ["backtrace"] }
 cbc = { version = "0.1", features = ["std"] }
 hex = "0.4"
-# v0.3 requires bitcoin 0.30, but gl-client uses bitcoin 0.29.2, so we keep this at v0.2 which also uses bitcoin 0.29
 bip21 = "0.2"
-bitcoin = "0.29.2"
 gl-client = { git = "https://github.com/Blockstream/greenlight.git", features = [
     "permissive",
 ], rev = "556eedf47a837b71c4277ba6ee84322f5cbd80de" }

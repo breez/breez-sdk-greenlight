@@ -1,8 +1,9 @@
-use crate::input_parser::{get_parse_and_log_response, get_reqwest_client};
 use anyhow::{anyhow, Result};
-use bitcoin::hashes::hex::FromHex;
-use bitcoin::{OutPoint, Txid};
 use serde::{Deserialize, Serialize};
+
+use crate::bitcoin::hashes::hex::FromHex;
+use crate::bitcoin::{OutPoint, Txid};
+use crate::input_parser::{get_parse_and_log_response, get_reqwest_client};
 
 #[tonic::async_trait]
 pub trait ChainService: Send + Sync {

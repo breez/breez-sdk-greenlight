@@ -4,13 +4,12 @@ use serde::{Deserialize, Serialize};
 use serde_json::to_string_pretty;
 
 use anyhow::{anyhow, Result};
-use bitcoin::Txid;
-use serde_json::json;
-
 use const_format::concatcp;
 use reqwest::header::CONTENT_TYPE;
 use reqwest::Body;
+use serde_json::json;
 
+use crate::bitcoin::Txid;
 use crate::input_parser::{get_parse_and_log_response, get_reqwest_client};
 use crate::models::ReverseSwapPairInfo;
 use crate::swap_out::reverseswap::CreateReverseSwapResponse;
@@ -383,9 +382,9 @@ fn build_boltz_reverse_swap_args(
 
 #[cfg(test)]
 mod tests {
-    use bitcoin::Txid;
     use std::str::FromStr;
 
+    use crate::bitcoin::Txid;
     use crate::swap_out::boltzswap::{BoltzApiReverseSwapStatus, LockTxData};
 
     #[test]

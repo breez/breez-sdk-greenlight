@@ -1,31 +1,23 @@
 use std::cmp::{min, Reverse};
+use std::iter::Iterator;
 use std::pin::Pin;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use anyhow::{anyhow, Result};
-use bitcoin::bech32::{u5, ToBase32};
-use bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
-use bitcoin::hashes::Hash;
-use bitcoin::secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
-use bitcoin::secp256k1::PublicKey;
-use bitcoin::secp256k1::Secp256k1;
-use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
-use bitcoin::{Address, OutPoint, Script, Sequence, Transaction, TxIn, TxOut, Txid, Witness};
 use ecies::symmetric::{sym_decrypt, sym_encrypt};
 use futures::Stream;
 use gl_client::node::ClnClient;
 use gl_client::pb::cln::listinvoices_invoices::ListinvoicesInvoicesStatus;
 use gl_client::pb::cln::listpays_pays::ListpaysPaysStatus;
+use gl_client::pb::cln::listpeers_peers_channels::ListpeersPeersChannelsState::*;
 use gl_client::pb::cln::{
     self, Amount, GetrouteRequest, GetrouteRoute, ListchannelsRequest,
     ListclosedchannelsClosedchannels, ListpeersPeersChannels, PreapproveinvoiceRequest,
     SendpayRequest, SendpayRoute, WaitsendpayRequest,
 };
 use gl_client::pb::{OffChainPayment, PayStatus};
-
-use gl_client::pb::cln::listpeers_peers_channels::ListpeersPeersChannelsState::*;
 use gl_client::scheduler::Scheduler;
 use gl_client::signer::model::greenlight::{amount, scheduler};
 use gl_client::signer::Signer;
@@ -40,13 +32,23 @@ use tokio::time::sleep;
 use tokio_stream::StreamExt;
 use tonic::Streaming;
 
+use crate::bitcoin::bech32::{u5, ToBase32};
+use crate::bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
+use crate::bitcoin::hashes::Hash;
+use crate::bitcoin::secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
+use crate::bitcoin::secp256k1::PublicKey;
+use crate::bitcoin::secp256k1::Secp256k1;
+use crate::bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
+use crate::bitcoin::{
+    Address, OutPoint, Script, Sequence, Transaction, TxIn, TxOut, Txid, Witness,
+};
 use crate::invoice::{parse_invoice, validate_network, InvoiceError, RouteHintHop};
 use crate::node_api::{NodeAPI, NodeError, NodeResult};
-use crate::{models::*, RouteHint};
-
 use crate::persist::db::SqliteStorage;
-use crate::{NodeConfig, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse};
-use std::iter::Iterator;
+use crate::{
+    models::*, NodeConfig, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse,
+    RouteHint,
+};
 
 const MAX_PAYMENT_AMOUNT_MSAT: u64 = 4294967000;
 const MAX_INBOUND_LIQUIDITY_MSAT: u64 = 4000000000;
@@ -1068,7 +1070,7 @@ impl NodeAPI for Greenlight {
         }];
         let mut tx = Transaction {
             version: 2,
-            lock_time: bitcoin::PackedLockTime(0),
+            lock_time: crate::bitcoin::PackedLockTime(0),
             input: txins.clone(),
             output: tx_out,
         };
