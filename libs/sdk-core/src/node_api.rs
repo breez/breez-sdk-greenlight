@@ -6,12 +6,7 @@ use tokio::sync::mpsc;
 use tokio_stream::Stream;
 use tonic::Streaming;
 
-use crate::{
-    bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey},
-    invoice::InvoiceError, persist::error::PersistError, CustomMessage, MaxChannelAmount,
-    NodeCredentials, Payment, PaymentResponse, Peer, PrepareRedeemOnchainFundsRequest,
-    PrepareRedeemOnchainFundsResponse, RouteHintHop, SyncResponse, TlvEntry,
-};
+use crate::{bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey}, invoice::InvoiceError, persist::error::PersistError, CustomMessage, MaxChannelAmount, NodeCredentials, Payment, PaymentResponse, Peer, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, RouteHintHop, SyncResponse, TlvEntry};
 
 pub type NodeResult<T, E = NodeError> = Result<T, E>;
 
@@ -65,6 +60,8 @@ pub trait NodeAPI: Send + Sync {
         expiry: Option<u32>,
         cltv: Option<u32>,
     ) -> NodeResult<String>;
+    /// Looks up an existing BOLT11 invoice by payment hash
+    async fn lookup_bolt11(&self, payment_hash: Vec<u8>) -> NodeResult<Option<String>>;
     async fn pull_changed(
         &self,
         since_timestamp: u64,

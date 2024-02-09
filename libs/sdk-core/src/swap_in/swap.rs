@@ -22,10 +22,11 @@ use crate::chain::{get_utxos, AddressUtxos, ChainService, MempoolSpace, OnchainT
 use crate::error::ReceivePaymentError;
 use crate::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
 use crate::models::{Swap, SwapInfo, SwapStatus, SwapperAPI};
+use crate::node_api::NodeAPI;
 use crate::swap_in::error::SwapError;
 use crate::{
-    OpeningFeeParams, PaymentDetails, PrepareRefundRequest, PrepareRefundResponse,
-    ReceivePaymentRequest, RefundRequest, RefundResponse, SWAP_PAYMENT_FEE_EXPIRY_SECONDS,
+    OpeningFeeParams, PrepareRefundRequest, PrepareRefundResponse, ReceivePaymentRequest,
+    RefundRequest, RefundResponse, SWAP_PAYMENT_FEE_EXPIRY_SECONDS,
 };
 
 use super::error::SwapResult;
@@ -75,6 +76,7 @@ impl SwapperAPI for BreezServer {
 /// It uses internally an implementation of SwapperAPI that represents the actually swapper service.
 pub(crate) struct BTCReceiveSwap {
     network: crate::bitcoin::Network,
+    node_api: Arc<dyn NodeAPI>,
     swapper_api: Arc<dyn SwapperAPI>,
     persister: Arc<crate::persist::db::SqliteStorage>,
     chain_service: Arc<dyn ChainService>,
@@ -84,6 +86,7 @@ pub(crate) struct BTCReceiveSwap {
 impl BTCReceiveSwap {
     pub(crate) fn new(
         network: crate::bitcoin::Network,
+        node_api: Arc<dyn NodeAPI>,
         swapper_api: Arc<dyn SwapperAPI>,
         persister: Arc<crate::persist::db::SqliteStorage>,
         chain_service: Arc<MempoolSpace>,
@@ -91,6 +94,7 @@ impl BTCReceiveSwap {
     ) -> Self {
         Self {
             network,
+            node_api,
             swapper_api,
             persister,
             chain_service,
@@ -421,15 +425,11 @@ impl BTCReceiveSwap {
                     }
 
                     // If the swap was crated on a different device and the invoice payment failed,
-                    // the invoice already exists. In this case, lookup the invoice from DB.
+                    // the invoice already exists. In this case, lookup the invoice from the node.
                     Err(ReceivePaymentError::InvoicePreimageAlreadyExists { .. }) => {
-                        let found_payment = self
-                            .persister
-                            .get_payment_by_hash(&hex::encode(swap_info.payment_hash))?
-                            .ok_or(anyhow!("Preimage already known, but payment not in DB"))?;
-                        match found_payment.details {
-                            PaymentDetails::Ln { data } => parse_invoice(data.bolt11),
-                            _ => Err(anyhow!("Preimage already known, but payment is not LN")),
+                        match self.node_api.lookup_bolt11(swap_info.payment_hash).await? {
+                            Some(bolt11) => parse_invoice(bolt11),
+                            None => Err(anyhow!("Preimage already known, but invoice not found")),
                         }
                     }
 
@@ -698,7 +698,7 @@ mod tests {
 
     use crate::chain::{AddressUtxos, Utxo};
     use crate::swap_in::swap::{compute_refund_tx_weight, compute_tx_fee, prepare_refund_tx};
-    use crate::test_utils::get_test_ofp;
+    use crate::test_utils::{get_test_ofp, MockNodeAPI};
     use crate::{
         bitcoin::consensus::deserialize,
         bitcoin::hashes::{hex::FromHex, sha256},
@@ -1142,6 +1142,7 @@ mod tests {
 
         let swapper = BTCReceiveSwap {
             network: crate::bitcoin::Network::Bitcoin,
+            node_api: Arc::new(MockNodeAPI::new(get_dummy_node_state())),
             swapper_api: Arc::new(MockSwapperAPI {}),
             persister: persister.clone(),
             chain_service: chain_service.clone(),
