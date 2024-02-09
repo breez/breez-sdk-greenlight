@@ -24,8 +24,8 @@ use crate::models::{Swap, SwapInfo, SwapStatus, SwapperAPI};
 use crate::node_api::NodeAPI;
 use crate::swap_in::error::SwapError;
 use crate::{
-    ensure_sdk, OpeningFeeParams, PrepareRefundRequest, PrepareRefundResponse,
-    ReceivePaymentRequest, RefundRequest, RefundResponse, SWAP_PAYMENT_FEE_EXPIRY_SECONDS,
+    OpeningFeeParams, PrepareRefundRequest, PrepareRefundResponse, ReceivePaymentRequest,
+    RefundRequest, RefundResponse, SWAP_PAYMENT_FEE_EXPIRY_SECONDS,
 };
 
 use super::error::SwapResult;
@@ -422,21 +422,10 @@ impl BTCReceiveSwap {
                 match create_invoice_res {
                     // Extract created invoice
                     Ok(create_invoice_response) => {
-                        let invoice = create_invoice_response.ln_invoice;
+                        let bolt11 = create_invoice_response.ln_invoice.bolt11;
                         self.persister
-                            .update_swap_bolt11(bitcoin_address, invoice.bolt11.clone())?;
-
-                        // Making sure the created invoice amount matches the on-chain amount minus opening channel opening fees
-                        let expected_invoice_amount_msat = swap_info.confirmed_sats * 1_000
-                            - create_invoice_response.opening_fee_msat.unwrap_or_default();
-                        let invoice_amount_msat = invoice.amount_msat.unwrap_or_default();
-
-                        ensure_sdk!(
-                            expected_invoice_amount_msat == invoice_amount_msat,
-                            anyhow!("Invoice amount {invoice_amount_msat} msat doesn't match expected {expected_invoice_amount_msat} msat")
-                        );
-
-                        Ok(invoice.bolt11)
+                            .update_swap_bolt11(bitcoin_address, bolt11.clone())?;
+                        Ok(bolt11)
                     }
 
                     // If the swap was crated on a different device and the invoice payment failed,
