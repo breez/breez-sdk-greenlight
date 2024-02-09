@@ -59,12 +59,16 @@ impl SwapperAPI for BreezServer {
         let req = GetSwapPaymentRequest {
             payment_request: bolt11,
         };
-        self.get_fund_manager_client()
+        let resp = self.get_fund_manager_client()
             .await?
             .get_swap_payment(req)
             .await?
             .into_inner();
-        Ok(())
+
+        match resp.swap_error() {
+            crate::grpc::get_swap_payment_reply::SwapError::NoError => Ok(()),
+            err => Err(anyhow!("Failed to complete swap: {}", err.as_str_name()))
+        }
     }
 }
 
@@ -424,7 +428,7 @@ impl BTCReceiveSwap {
 
                         ensure_sdk!(
                             expected_invoice_amount_msat == invoice_amount_msat,
-                            anyhow!("Invoice amount {invoice_amount_msat} msat doesn't match expected {expected_invoice_amount_msat} sats")
+                            anyhow!("Invoice amount {invoice_amount_msat} msat doesn't match expected {expected_invoice_amount_msat} msat")
                         );
 
                         Ok(invoice.bolt11)
