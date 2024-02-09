@@ -5,7 +5,6 @@ use anyhow::{anyhow, Result};
 use rand::Rng;
 use ripemd::{Digest, Ripemd160};
 
-use crate::binding::parse_invoice;
 use crate::bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
 use crate::bitcoin::blockdata::opcodes;
 use crate::bitcoin::blockdata::script::Builder;
@@ -24,10 +23,7 @@ use crate::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
 use crate::models::{Swap, SwapInfo, SwapStatus, SwapperAPI};
 use crate::node_api::NodeAPI;
 use crate::swap_in::error::SwapError;
-use crate::{
-    OpeningFeeParams, PrepareRefundRequest, PrepareRefundResponse, ReceivePaymentRequest,
-    RefundRequest, RefundResponse, SWAP_PAYMENT_FEE_EXPIRY_SECONDS,
-};
+use crate::{ensure_sdk, OpeningFeeParams, PrepareRefundRequest, PrepareRefundResponse, ReceivePaymentRequest, RefundRequest, RefundResponse, SWAP_PAYMENT_FEE_EXPIRY_SECONDS};
 
 use super::error::SwapResult;
 
@@ -395,8 +391,8 @@ impl BTCReceiveSwap {
             .get_swap_info_by_address(bitcoin_address.clone())?
             .ok_or_else(|| anyhow!(format!("swap address {bitcoin_address} was not found")))?;
 
-        let ln_invoice = match swap_info.bolt11 {
-            Some(bolt11) => parse_invoice(bolt11)?,
+        let bolt11 = match swap_info.bolt11 {
+            Some(bolt11) => Ok(bolt11),
             None => {
                 // we are creating an invoice for this swap if we didn't do it already
 
@@ -404,7 +400,7 @@ impl BTCReceiveSwap {
                 let create_invoice_res = self
                     .payment_receiver
                     .receive_payment(ReceivePaymentRequest {
-                        amount_msat: swap_info.confirmed_sats * 1000,
+                        amount_msat: swap_info.confirmed_sats * 1_000,
                         description: String::from("Bitcoin Transfer"),
                         preimage: Some(swap_info.preimage),
                         opening_fee_params: swap_info.channel_opening_fees,
@@ -421,35 +417,36 @@ impl BTCReceiveSwap {
                         let invoice = create_invoice_response.ln_invoice;
                         self.persister
                             .update_swap_bolt11(bitcoin_address, invoice.bolt11.clone())?;
-                        Ok(invoice)
+
+                        // Making sure the created invoice amount matches the on-chain amount minus opening channel opening fees
+                        let expected_invoice_amount_msat = swap_info.confirmed_sats * 1_000 - create_invoice_response.opening_fee_msat.unwrap_or_default();
+                        let invoice_amount_msat = invoice.amount_msat.unwrap_or_default();
+
+                        ensure_sdk!(
+                            expected_invoice_amount_msat == invoice_amount_msat,
+                            anyhow!("Invoice amount {invoice_amount_msat} msat doesn't match expected {expected_invoice_amount_msat} sats")
+                        );
+
+                        Ok(invoice.bolt11)
                     }
 
                     // If the swap was crated on a different device and the invoice payment failed,
                     // the invoice already exists. In this case, lookup the invoice from the node.
                     Err(ReceivePaymentError::InvoicePreimageAlreadyExists { .. }) => {
                         match self.node_api.lookup_bolt11(swap_info.payment_hash).await? {
-                            Some(bolt11) => parse_invoice(bolt11),
+                            Some(bolt11) => Ok(bolt11),
                             None => Err(anyhow!("Preimage already known, but invoice not found")),
                         }
                     }
 
                     // In all other cases: throw error
                     Err(err) => Err(anyhow!("Failed to create invoice: {err}")),
-                }?
+                }
             }
-        };
-
-        // Making sure the invoice amount matches the on-chain amount
-        let invoice_amount_msat = ln_invoice.amount_msat.unwrap_or_default();
-        let confirmed_sat = swap_info.confirmed_sats;
-        debug!("swap info confirmed = {confirmed_sat} sat");
-        if invoice_amount_msat != (confirmed_sat * 1000) {
-            warn!("invoice amount {invoice_amount_msat} msat doesn't match confirmed {confirmed_sat} sats");
-            return Err(anyhow!("Does not match confirmed sats"));
-        }
+        }?;
 
         // Asking the service to initiate the lightning payment.
-        self.swapper_api.complete_swap(ln_invoice.bolt11).await
+        self.swapper_api.complete_swap(bolt11).await
     }
 
     pub(crate) async fn prepare_refund_swap(
