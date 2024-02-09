@@ -169,9 +169,8 @@ pub fn add_routing_hints(
         .payment_secret(*invoice.payment_secret())
         .min_final_cltv_expiry_delta(invoice.min_final_cltv_expiry_delta());
 
-    // We make sure the hint we add does not conflict with other hints.
-    // The lsp hint takes priority so in case the lsp hop is already in one of the existing hints
-    // We make sure not to include them in the new hints.
+    // When merging route hints, only route hints are added that go through different nodes than ones in the invoice route hints.
+    // Otherwise when not merging route hints, the invoice route hints are replaced by the provided route hints.
     let unique_hop_hints: Vec<lightning::routing::router::RouteHint> = match route_hints.len() {
         0 => invoice.route_hints(),
         _ => match merge_with_existing {
