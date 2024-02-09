@@ -23,7 +23,10 @@ use crate::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
 use crate::models::{Swap, SwapInfo, SwapStatus, SwapperAPI};
 use crate::node_api::NodeAPI;
 use crate::swap_in::error::SwapError;
-use crate::{ensure_sdk, OpeningFeeParams, PrepareRefundRequest, PrepareRefundResponse, ReceivePaymentRequest, RefundRequest, RefundResponse, SWAP_PAYMENT_FEE_EXPIRY_SECONDS};
+use crate::{
+    ensure_sdk, OpeningFeeParams, PrepareRefundRequest, PrepareRefundResponse,
+    ReceivePaymentRequest, RefundRequest, RefundResponse, SWAP_PAYMENT_FEE_EXPIRY_SECONDS,
+};
 
 use super::error::SwapResult;
 
@@ -59,7 +62,8 @@ impl SwapperAPI for BreezServer {
         let req = GetSwapPaymentRequest {
             payment_request: bolt11,
         };
-        let resp = self.get_fund_manager_client()
+        let resp = self
+            .get_fund_manager_client()
             .await?
             .get_swap_payment(req)
             .await?
@@ -67,7 +71,7 @@ impl SwapperAPI for BreezServer {
 
         match resp.swap_error() {
             crate::grpc::get_swap_payment_reply::SwapError::NoError => Ok(()),
-            err => Err(anyhow!("Failed to complete swap: {}", err.as_str_name()))
+            err => Err(anyhow!("Failed to complete swap: {}", err.as_str_name())),
         }
     }
 }
@@ -423,7 +427,8 @@ impl BTCReceiveSwap {
                             .update_swap_bolt11(bitcoin_address, invoice.bolt11.clone())?;
 
                         // Making sure the created invoice amount matches the on-chain amount minus opening channel opening fees
-                        let expected_invoice_amount_msat = swap_info.confirmed_sats * 1_000 - create_invoice_response.opening_fee_msat.unwrap_or_default();
+                        let expected_invoice_amount_msat = swap_info.confirmed_sats * 1_000
+                            - create_invoice_response.opening_fee_msat.unwrap_or_default();
                         let invoice_amount_msat = invoice.amount_msat.unwrap_or_default();
 
                         ensure_sdk!(
