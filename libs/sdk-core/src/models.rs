@@ -3,12 +3,6 @@ use std::ops::Add;
 use std::str::FromStr;
 
 use anyhow::{anyhow, ensure, Result};
-use bitcoin::blockdata::opcodes;
-use bitcoin::blockdata::script::Builder;
-use bitcoin::hashes::hex::{FromHex, ToHex};
-use bitcoin::hashes::{sha256, Hash};
-use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
-use bitcoin::{Address, Script};
 use chrono::{DateTime, Duration, Utc};
 use ripemd::Digest;
 use ripemd::Ripemd160;
@@ -17,6 +11,12 @@ use rusqlite::ToSql;
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 
+use crate::bitcoin::blockdata::opcodes;
+use crate::bitcoin::blockdata::script::Builder;
+use crate::bitcoin::hashes::hex::{FromHex, ToHex};
+use crate::bitcoin::hashes::{sha256, Hash};
+use crate::bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
+use crate::bitcoin::{Address, Script};
 use crate::breez_services::BreezServer;
 use crate::error::SdkResult;
 use crate::fiat::{FiatCurrency, Rate};
@@ -537,24 +537,24 @@ pub enum Network {
     Regtest,
 }
 
-impl From<bitcoin::network::constants::Network> for Network {
-    fn from(network: bitcoin::network::constants::Network) -> Self {
+impl From<crate::bitcoin::network::constants::Network> for Network {
+    fn from(network: crate::bitcoin::network::constants::Network) -> Self {
         match network {
-            bitcoin::network::constants::Network::Bitcoin => Bitcoin,
-            bitcoin::network::constants::Network::Testnet => Testnet,
-            bitcoin::network::constants::Network::Signet => Signet,
-            bitcoin::network::constants::Network::Regtest => Regtest,
+            crate::bitcoin::network::constants::Network::Bitcoin => Bitcoin,
+            crate::bitcoin::network::constants::Network::Testnet => Testnet,
+            crate::bitcoin::network::constants::Network::Signet => Signet,
+            crate::bitcoin::network::constants::Network::Regtest => Regtest,
         }
     }
 }
 
-impl From<Network> for bitcoin::network::constants::Network {
+impl From<Network> for crate::bitcoin::network::constants::Network {
     fn from(network: Network) -> Self {
         match network {
-            Bitcoin => bitcoin::network::constants::Network::Bitcoin,
-            Testnet => bitcoin::network::constants::Network::Testnet,
-            Signet => bitcoin::network::constants::Network::Signet,
-            Regtest => bitcoin::network::constants::Network::Regtest,
+            Bitcoin => crate::bitcoin::network::constants::Network::Bitcoin,
+            Testnet => crate::bitcoin::network::constants::Network::Testnet,
+            Signet => crate::bitcoin::network::constants::Network::Signet,
+            Regtest => crate::bitcoin::network::constants::Network::Regtest,
         }
     }
 }
@@ -910,6 +910,7 @@ pub struct StaticBackupResponse {
     pub backup: Option<Vec<String>>,
 }
 
+#[derive(Default)]
 pub struct OpenChannelFeeRequest {
     pub amount_msat: Option<u64>,
     pub expiry: Option<u32>,

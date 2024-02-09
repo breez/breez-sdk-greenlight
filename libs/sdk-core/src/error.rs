@@ -1,10 +1,10 @@
-use anyhow::Result;
-use bitcoin::util::bip32;
 use std::time::SystemTimeError;
+
+use anyhow::Result;
 use thiserror::Error;
 
 use crate::{
-    invoice::InvoiceError, lnurl::error::LnUrlError, node_api::NodeError,
+    bitcoin::util::bip32, invoice::InvoiceError, lnurl::error::LnUrlError, node_api::NodeError,
     persist::error::PersistError, swap_in::error::SwapError, swap_out::error::ReverseSwapError,
 };
 
@@ -98,8 +98,8 @@ impl From<anyhow::Error> for LnUrlPayError {
     }
 }
 
-impl From<bitcoin::hashes::hex::Error> for LnUrlPayError {
-    fn from(err: bitcoin::hashes::hex::Error) -> Self {
+impl From<crate::bitcoin::hashes::hex::Error> for LnUrlPayError {
+    fn from(err: crate::bitcoin::hashes::hex::Error) -> Self {
         Self::Generic {
             err: err.to_string(),
         }
@@ -400,8 +400,8 @@ impl From<anyhow::Error> for SdkError {
     }
 }
 
-impl From<bitcoin::hashes::hex::Error> for SdkError {
-    fn from(err: bitcoin::hashes::hex::Error) -> Self {
+impl From<crate::bitcoin::hashes::hex::Error> for SdkError {
+    fn from(err: crate::bitcoin::hashes::hex::Error) -> Self {
         Self::Generic {
             err: err.to_string(),
         }

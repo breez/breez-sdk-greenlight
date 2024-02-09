@@ -1,11 +1,12 @@
 use std::{num::TryFromIntError, time::SystemTimeError};
 
 use anyhow::{anyhow, Result};
-use bitcoin::secp256k1;
 use regex::Regex;
 use strum_macros::FromRepr;
 
-use crate::{invoice::InvoiceError, node_api::NodeError, persist::error::PersistError};
+use crate::{
+    bitcoin::secp256k1, invoice::InvoiceError, node_api::NodeError, persist::error::PersistError,
+};
 
 #[derive(FromRepr, Debug, PartialEq)]
 #[repr(i16)]
@@ -117,14 +118,14 @@ impl From<anyhow::Error> for NodeError {
     }
 }
 
-impl From<bitcoin::util::address::Error> for NodeError {
-    fn from(err: bitcoin::util::address::Error) -> Self {
+impl From<crate::bitcoin::util::address::Error> for NodeError {
+    fn from(err: crate::bitcoin::util::address::Error) -> Self {
         Self::Generic(anyhow::Error::new(err))
     }
 }
 
-impl From<bitcoin::util::bip32::Error> for NodeError {
-    fn from(err: bitcoin::util::bip32::Error) -> Self {
+impl From<crate::bitcoin::util::bip32::Error> for NodeError {
+    fn from(err: crate::bitcoin::util::bip32::Error) -> Self {
         Self::Generic(anyhow::Error::new(err))
     }
 }
