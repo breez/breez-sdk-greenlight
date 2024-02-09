@@ -175,20 +175,19 @@ pub fn add_routing_hints(
         0 => invoice.route_hints(),
         _ => match merge_with_existing {
             true => {
+                let invoice_hints_hop_src_node_ids: Vec<String> = invoice
+                    .route_hints()
+                    .into_iter()
+                    .flat_map(|hint| hint.0)
+                    .map(|hop| hop.src_node_id.serialize().encode_hex::<String>())
+                    .collect();
+
                 let unique_to_add: Vec<&RouteHint> = route_hints
                     .iter()
                     .filter(|hint| {
-                        hint.hops.clone().into_iter().all(|hop| {
-                            invoice.route_hints().into_iter().all(|invoice_hint| {
-                                invoice_hint.clone().0.into_iter().all(|invoice_hop| {
-                                    hop.src_node_id
-                                        != invoice_hop
-                                            .src_node_id
-                                            .serialize()
-                                            .encode_hex::<String>()
-                                })
-                            })
-                        })
+                        hint.hops
+                            .iter()
+                            .all(|hop| !invoice_hints_hop_src_node_ids.contains(&hop.src_node_id))
                     })
                     .collect();
 
