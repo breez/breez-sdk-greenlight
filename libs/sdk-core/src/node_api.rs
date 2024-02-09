@@ -124,6 +124,7 @@ pub trait NodeAPI: Send + Sync {
     fn derive_bip32_key(&self, path: Vec<ChildNumber>) -> NodeResult<ExtendedPrivKey>;
     fn legacy_derive_bip32_key(&self, path: Vec<ChildNumber>) -> NodeResult<ExtendedPrivKey>;
 
-    // Gets the routing hints related to all private channels that the node has
-    async fn get_routing_hints(&self) -> NodeResult<Vec<RouteHint>>;
+    // Gets the routing hints related to all private channels that the node has.
+    // Also returns a boolean indicating if the node has a public channel or not.
+    async fn get_routing_hints(&self) -> NodeResult<(Vec<RouteHint>, bool)>;
 }

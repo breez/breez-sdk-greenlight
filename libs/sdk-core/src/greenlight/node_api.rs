@@ -1437,64 +1437,59 @@ impl NodeAPI for Greenlight {
     }
 
     // Gets the routing hints related to all private channels that the node has
-    async fn get_routing_hints(&self) -> NodeResult<Vec<RouteHint>> {
+    async fn get_routing_hints(&self) -> NodeResult<(Vec<RouteHint>, bool)> {
         let mut hints: Vec<RouteHint> = vec![];
         let mut node_client = self.get_node_client().await?;
-        let peers = node_client
-            .list_peers(cln::ListpeersRequest::default())
+        let channels = node_client
+            .list_peer_channels(cln::ListpeerchannelsRequest::default())
             .await?
             .into_inner();
 
-        // For each peer look for a private channel and create a routing hint from it.
-        for peer in peers.peers {
-            if !peer.channels.is_empty() {
-                let optional_opened_channel = peer
-                    .channels
-                    .iter()
-                    .find(|&c| c.state == cln::ChannelState::ChanneldNormal as i32);
+        let mut has_public_channel = false;
+        let mut open_channels: Vec<cln::ListpeerchannelsChannels> = channels
+            .channels
+            .into_iter()
+            .filter(|c| {
+                let is_private = c.private.unwrap_or_default();
+                has_public_channel |= !is_private;
+                is_private && c.state == Some(cln::ChannelState::ChanneldNormal as i32)
+            })
+            .collect();
 
-                if let Some(opened_channel) = optional_opened_channel {
-                    let (alias_remote, _) = match &opened_channel.alias {
-                        Some(a) => (a.remote.clone(), a.local.clone()),
-                        None => (None, None),
-                    };
+        // Ensure one private channel from each peer.
+        open_channels.dedup_by_key(|c| c.peer_id.clone());
 
-                    let optional_channel_id = alias_remote
-                        .clone()
-                        .or(opened_channel.short_channel_id.clone());
-
-                    if let Some(channel_id) = optional_channel_id {
-                        let scid = parse_short_channel_id(&channel_id)?;
-                        let hint = RouteHint {
-                            hops: vec![RouteHintHop {
-                                src_node_id: hex::encode(peer.id),
-                                short_channel_id: scid,
-                                fees_base_msat: opened_channel
-                                    .fee_base_msat
-                                    .clone()
-                                    .unwrap_or_default()
-                                    .msat as u32,
-                                fees_proportional_millionths: opened_channel
-                                    .fee_proportional_millionths
-                                    .unwrap_or_default(),
-                                cltv_expiry_delta: 144,
-                                htlc_minimum_msat: Some(
-                                    opened_channel
-                                        .minimum_htlc_in_msat
-                                        .clone()
-                                        .unwrap_or_default()
-                                        .msat,
-                                ),
-                                htlc_maximum_msat: None,
-                            }],
-                        };
-                        info!("Generating hint hop as routing hint: {:?}", hint);
-                        hints.push(hint);
-                    }
-                };
+        // Ceate a routing hint from each channel.
+        for c in open_channels {
+            let (alias_remote, _) = match c.alias {
+                Some(a) => (a.remote.clone(), a.local.clone()),
+                None => (None, None),
             };
+
+            let optional_channel_id = alias_remote.clone().or(c.short_channel_id.clone());
+
+            if let Some(channel_id) = optional_channel_id {
+                let scid = parse_short_channel_id(&channel_id)?;
+                let hint = RouteHint {
+                    hops: vec![RouteHintHop {
+                        src_node_id: hex::encode(c.peer_id.ok_or(anyhow!("no peer id"))?),
+                        short_channel_id: scid,
+                        fees_base_msat: c.fee_base_msat.clone().unwrap_or_default().msat as u32,
+                        fees_proportional_millionths: c
+                            .fee_proportional_millionths
+                            .unwrap_or_default(),
+                        cltv_expiry_delta: 144,
+                        htlc_minimum_msat: Some(
+                            c.minimum_htlc_in_msat.clone().unwrap_or_default().msat,
+                        ),
+                        htlc_maximum_msat: None,
+                    }],
+                };
+                info!("Generating hint hop as routing hint: {:?}", hint);
+                hints.push(hint);
+            }
         }
-        Ok(hints)
+        Ok((hints, has_public_channel))
     }
 }
 
