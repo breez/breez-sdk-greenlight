@@ -2090,7 +2090,7 @@ impl Receiver for PaymentReceiver {
             optional_lsp_hint,
             parsed_invoice.routing_hints.is_empty(),
         ) {
-            // If we need to open a channel we only need to set the decicated lsp hint.
+            // If we need to open a channel we only need to set the dedicated lsp hint.
             (true, _, _) => {
                 let open_channel_hint = RouteHint {
                     hops: vec![RouteHintHop {
