@@ -42,8 +42,9 @@ use crate::swap_in::error::SwapResult;
 use crate::swap_in::swap::create_submarine_swap_script;
 use crate::{
     parse_invoice, Config, CustomMessage, LNInvoice, MaxChannelAmount, NodeCredentials,
-    PaymentResponse, Peer, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse,
-    RouteHint, RouteHintHop, OpeningFeeParams, OpeningFeeParamsMenu, ReceivePaymentRequest, SwapInfo
+    OpeningFeeParams, OpeningFeeParamsMenu, PaymentResponse, Peer,
+    PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, ReceivePaymentRequest,
+    RouteHint, RouteHintHop, SwapInfo,
 };
 
 pub struct MockBackupTransport {
@@ -438,6 +439,10 @@ impl NodeAPI for MockNodeAPI {
         Ok(Box::pin(
             tokio_stream::wrappers::ReceiverStream::new(rx).map(Ok),
         ))
+    }
+
+    async fn get_routing_hints(&self) -> NodeResult<(Vec<RouteHint>, bool)> {
+        Ok((vec![], false))
     }
 }
 

@@ -44,6 +44,7 @@ enum LnUrlWithdrawError {
     "InvalidInvoice",
     "InvalidUri",
     "ServiceConnectivity",
+    "InvoiceNoRoutingHints",
 };
 
 [Error]
@@ -62,6 +63,7 @@ enum ReceivePaymentError {
     "InvoiceNoDescription",
     "InvoicePreimageAlreadyExists",
     "ServiceConnectivity",
+    "InvoiceNoRoutingHints",
 };
 
 [Error]
