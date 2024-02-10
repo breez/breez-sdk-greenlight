@@ -1,20 +1,11 @@
-use breez_sdk_core::{InputType, LNInvoice, error::SdkResult};
-use once_cell::sync::Lazy;
+pub mod error;
 
-static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
+struct BreezSdk;
 
-pub fn parse_invoice(invoice: String) -> SdkResult<LNInvoice> {
-    Ok(breez_sdk_core::parse_invoice(&invoice)?)
+impl breez_sdk::BreezSdk for BreezSdk {
+    fn mnemonic_to_seed(phrase: String) -> Result<Vec<u8>, breez_sdk::SdkError> {
+        Ok(breez_sdk_core::mnemonic_to_seed(phrase)?)
+    }
 }
 
-pub fn parse_input(s: String) -> SdkResult<InputType> {
-    rt().block_on(async move { Ok(breez_sdk_core::parse(&s).await?) })
-}
-
-pub fn mnemonic_to_seed(phrase: String) -> SdkResult<Vec<u8>> {
-    Ok(breez_sdk_core::mnemonic_to_seed(phrase)?)
-}
-
-fn rt() -> &'static tokio::runtime::Runtime {
-    &RT
-}
+wai_bindgen_rust::export!("breez_sdk.wai");

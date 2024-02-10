@@ -1,0 +1,6 @@
+variant sdk-error {
+    generic(string),
+    service-connectivity(string),
+}
+
+mnemonic-to-seed: func(mnemonic: string) -> expected<list<u8>, sdk-error>

@@ -75,7 +75,7 @@ jobs:
       run: |
         sudo apt-get install -y curl wget xz-utils git python3 ninja-build cmake
         $HOME/.cargo/bin/cargo install cargo-wasix --git https://github.com/dangeross/cargo-wasix --branch main
-        $HOME/.cargo/bin/cargo wasix build-toolchain
+        $HOME/.cargo/bin/cargo wasix download-toolchain
 
     - name: Build sdk-wasm
       working-directory: libs/sdk-wasm
