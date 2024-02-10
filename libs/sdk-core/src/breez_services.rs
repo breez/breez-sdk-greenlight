@@ -2114,14 +2114,19 @@ impl Receiver for PaymentReceiver {
             // In case we don't need to open a channel and we have a channel with our lsp then we only ensure it
             // exists as part of the invoice routing hints (merging).
             (false, Some(h), _) => {
-                // In case we need to open a channel and the invoice has no routing hints we replace them with ours.
-                info!("Adding lsp hint: {:?}", h);
-                Some(add_routing_hints(
-                    invoice.clone(),
-                    true,
-                    &vec![h],
-                    req.amount_msat,
-                )?)
+                match parsed_invoice.contains_hint_for_node(lsp_info.pubkey.as_str()) {
+                    false => {
+                        info!("Adding lsp hint: {:?}", h);
+                        Some(add_routing_hints(
+                            invoice.clone(),
+                            true,
+                            &vec![h],
+                            req.amount_msat,
+                        )?)
+                    }
+                    // Lsp already in routing hints, no need to modify the invoice
+                    true => None,
+                }
             }
             // In case we don't need to open a channel and the invoice has no routing hints we replace them with ours.
             (false, None, true) => {

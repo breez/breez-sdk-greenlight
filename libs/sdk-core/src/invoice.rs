@@ -79,6 +79,14 @@ pub struct LNInvoice {
     pub min_final_cltv_expiry_delta: u64,
 }
 
+impl LNInvoice {
+    pub(crate) fn contains_hint_for_node(&self, pubkey: &str) -> bool {
+        self.routing_hints
+            .iter()
+            .any(|hint| hint.hops.iter().any(|hop| hop.src_node_id == pubkey))
+    }
+}
+
 /// Details of a specific hop in a larger route hint
 #[derive(Clone, Default, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RouteHintHop {
