@@ -60,8 +60,8 @@ pub trait NodeAPI: Send + Sync {
         expiry: Option<u32>,
         cltv: Option<u32>,
     ) -> NodeResult<String>;
-    /// Looks up an existing BOLT11 invoice by payment hash
-    async fn lookup_bolt11(&self, payment_hash: Vec<u8>) -> NodeResult<Option<String>>;
+    /// Fetches an existing BOLT11 invoice from the node
+    async fn fetch_bolt11(&self, payment_hash: Vec<u8>) -> NodeResult<Option<String>>;
     async fn pull_changed(
         &self,
         since_timestamp: u64,

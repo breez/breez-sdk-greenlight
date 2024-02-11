@@ -440,7 +440,7 @@ impl NodeAPI for MockNodeAPI {
         ))
     }
 
-    async fn lookup_bolt11(&self, _payment_hash: Vec<u8>) -> NodeResult<Option<String>> {
+    async fn fetch_bolt11(&self, _payment_hash: Vec<u8>) -> NodeResult<Option<String>> {
         Ok(None)
     }
 }

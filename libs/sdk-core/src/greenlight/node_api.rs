@@ -708,7 +708,7 @@ impl NodeAPI for Greenlight {
         Ok(res.bolt11)
     }
 
-    async fn lookup_bolt11(&self, payment_hash: Vec<u8>) -> NodeResult<Option<String>> {
+    async fn fetch_bolt11(&self, payment_hash: Vec<u8>) -> NodeResult<Option<String>> {
         let request = cln::ListinvoicesRequest {
             payment_hash: Some(payment_hash),
             ..Default::default()
