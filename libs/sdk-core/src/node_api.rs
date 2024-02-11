@@ -6,7 +6,12 @@ use tokio::sync::mpsc;
 use tokio_stream::Stream;
 use tonic::Streaming;
 
-use crate::{bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey}, invoice::InvoiceError, persist::error::PersistError, CustomMessage, MaxChannelAmount, NodeCredentials, Payment, PaymentResponse, Peer, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, RouteHintHop, SyncResponse, TlvEntry};
+use crate::{
+    bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey},
+    invoice::InvoiceError, persist::error::PersistError, CustomMessage, MaxChannelAmount,
+    NodeCredentials, Payment, PaymentResponse, Peer, PrepareRedeemOnchainFundsRequest,
+    PrepareRedeemOnchainFundsResponse, RouteHint, RouteHintHop, SyncResponse, TlvEntry,
+};
 
 pub type NodeResult<T, E = NodeError> = Result<T, E>;
 
@@ -122,4 +127,8 @@ pub trait NodeAPI: Send + Sync {
     /// Gets the private key at the path specified
     fn derive_bip32_key(&self, path: Vec<ChildNumber>) -> NodeResult<ExtendedPrivKey>;
     fn legacy_derive_bip32_key(&self, path: Vec<ChildNumber>) -> NodeResult<ExtendedPrivKey>;
+
+    // Gets the routing hints related to all private channels that the node has.
+    // Also returns a boolean indicating if the node has a public channel or not.
+    async fn get_routing_hints(&self) -> NodeResult<(Vec<RouteHint>, bool)>;
 }

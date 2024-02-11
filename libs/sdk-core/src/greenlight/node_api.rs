@@ -43,10 +43,12 @@ use crate::bitcoin::{
     Address, OutPoint, Script, Sequence, Transaction, TxIn, TxOut, Txid, Witness,
 };
 use crate::invoice::{parse_invoice, validate_network, InvoiceError, RouteHintHop};
-use crate::models::*;
 use crate::node_api::{NodeAPI, NodeError, NodeResult};
 use crate::persist::db::SqliteStorage;
-use crate::{NodeConfig, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse};
+use crate::{
+    models::*, NodeConfig, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse,
+    RouteHint,
+};
 
 const MAX_PAYMENT_AMOUNT_MSAT: u64 = 4294967000;
 const MAX_INBOUND_LIQUIDITY_MSAT: u64 = 4000000000;
@@ -1453,6 +1455,62 @@ impl NodeAPI for Greenlight {
             .into_inner();
         debug!("send_custom_message returned status {:?}", resp.status);
         Ok(())
+    }
+
+    // Gets the routing hints related to all private channels that the node has
+    async fn get_routing_hints(&self) -> NodeResult<(Vec<RouteHint>, bool)> {
+        let mut hints: Vec<RouteHint> = vec![];
+        let mut node_client = self.get_node_client().await?;
+        let channels = node_client
+            .list_peer_channels(cln::ListpeerchannelsRequest::default())
+            .await?
+            .into_inner();
+
+        let mut has_public_channel = false;
+        let mut open_channels: Vec<cln::ListpeerchannelsChannels> = channels
+            .channels
+            .into_iter()
+            .filter(|c| {
+                let is_private = c.private.unwrap_or_default();
+                has_public_channel |= !is_private;
+                is_private && c.state == Some(cln::ChannelState::ChanneldNormal as i32)
+            })
+            .collect();
+
+        // Ensure one private channel from each peer.
+        open_channels.dedup_by_key(|c| c.peer_id.clone());
+
+        // Ceate a routing hint from each channel.
+        for c in open_channels {
+            let (alias_remote, _) = match c.alias {
+                Some(a) => (a.remote.clone(), a.local.clone()),
+                None => (None, None),
+            };
+
+            let optional_channel_id = alias_remote.clone().or(c.short_channel_id.clone());
+
+            if let Some(channel_id) = optional_channel_id {
+                let scid = parse_short_channel_id(&channel_id)?;
+                let hint = RouteHint {
+                    hops: vec![RouteHintHop {
+                        src_node_id: hex::encode(c.peer_id.ok_or(anyhow!("no peer id"))?),
+                        short_channel_id: scid,
+                        fees_base_msat: c.fee_base_msat.clone().unwrap_or_default().msat as u32,
+                        fees_proportional_millionths: c
+                            .fee_proportional_millionths
+                            .unwrap_or_default(),
+                        cltv_expiry_delta: 144,
+                        htlc_minimum_msat: Some(
+                            c.minimum_htlc_in_msat.clone().unwrap_or_default().msat,
+                        ),
+                        htlc_maximum_msat: None,
+                    }],
+                };
+                info!("Generating hint hop as routing hint: {:?}", hint);
+                hints.push(hint);
+            }
+        }
+        Ok((hints, has_public_channel))
     }
 }
 

@@ -39,7 +39,7 @@ use crate::grpc::support_client::SupportClient;
 use crate::grpc::swapper_client::SwapperClient;
 use crate::grpc::PaymentInformation;
 use crate::invoice::{
-    add_lsp_routing_hints, parse_invoice, validate_network, LNInvoice, RouteHint, RouteHintHop,
+    add_routing_hints, parse_invoice, validate_network, LNInvoice, RouteHint, RouteHintHop,
 };
 use crate::lnurl::auth::perform_lnurl_auth;
 use crate::lnurl::pay::model::SuccessAction::Aes;
@@ -2018,7 +2018,7 @@ impl Receiver for PaymentReceiver {
             }
         );
 
-        let mut short_channel_id = None;
+        let mut routing_hints: Vec<RouteHint> = vec![];
         let mut destination_invoice_amount_msat = req.amount_msat;
 
         let mut channel_opening_fee_params = None;
@@ -2035,7 +2035,6 @@ impl Receiver for PaymentReceiver {
                 None => lsp_info.cheapest_open_channel_fee(expiry)?.clone(),
             };
 
-            short_channel_id = Some(parse_short_channel_id("1x0x0")?);
             channel_opening_fee_params = Some(ofp.clone());
             channel_fees_msat = Some(ofp.get_channel_fees_msat_for(req.amount_msat));
             if let Some(channel_fees_msat) = channel_fees_msat {
@@ -2054,32 +2053,15 @@ impl Receiver for PaymentReceiver {
                 destination_invoice_amount_msat = req.amount_msat - channel_fees_msat;
             }
         } else {
-            // not opening a channel so we need to get the real channel id into the routing hints
-            info!("Finding channel ID for routing hint");
-            for peer in self.node_api.list_peers().await? {
-                if hex::encode(peer.id) == lsp_info.pubkey && !peer.channels.is_empty() {
-                    let active_channel = peer
-                        .channels
-                        .iter()
-                        .find(|&c| c.state == ChannelState::Opened)
-                        .ok_or_else(|| anyhow!("No open channel found"))?;
-                    let hint = active_channel
-                        .alias_remote
-                        .clone()
-                        .or(active_channel.short_channel_id.clone());
-
-                    short_channel_id = match hint {
-                        None => None,
-                        Some(hint) => {
-                            let scid = parse_short_channel_id(&hint)?;
-                            info!("Found channel ID: {scid:?} {active_channel:?}");
-                            Some(scid)
-                        }
-                    };
-
-                    break;
-                }
+            // not opening a channel so we need to get all private channels into the routing hints
+            info!("Getting routing hints from node");
+            let (hints, has_public_channel) = self.node_api.get_routing_hints().await?;
+            if !has_public_channel && hints.is_empty() {
+                return Err(ReceivePaymentError::InvoiceNoRoutingHints {
+                    err: "Must have at least one active channel".into(),
+                });
             }
+            routing_hints = hints;
         }
 
         info!("Creating invoice on NodeAPI");
@@ -2097,56 +2079,73 @@ impl Receiver for PaymentReceiver {
         info!("Invoice created {}", invoice);
 
         let mut parsed_invoice = parse_invoice(invoice)?;
-
         // check if the lsp hint already exists
         info!("Existing routing hints {:?}", parsed_invoice.routing_hints);
-        info!("lsp info pubkey = {:?}", lsp_info.pubkey.clone());
-        let has_lsp_hint = parsed_invoice.routing_hints.iter().any(|h| {
-            h.hops
-                .iter()
-                .any(|h| h.src_node_id == lsp_info.pubkey.clone())
-        });
 
-        // We only add routing hint if we need to open a channel
-        // or if the invoice doesn't have any routing hints that points to the lsp
-        let mut lsp_hint: Option<RouteHint> = None;
-        if !has_lsp_hint || open_channel_needed {
-            match short_channel_id {
-                Some(short_channel_id) => {
-                    let lsp_hop = RouteHintHop {
-                        src_node_id: lsp_info.pubkey,
-                        short_channel_id,
+        // limit the hints to max 3 and extract the lsp one.
+        let optional_lsp_hint = Self::limit_and_extract_lsp_hint(&mut routing_hints, &lsp_info);
+
+        // We here check if we need to modify the invoice.
+        let optional_modified_invoice = match (
+            open_channel_needed,
+            optional_lsp_hint,
+            parsed_invoice.routing_hints.is_empty(),
+        ) {
+            // If we need to open a channel we only need to set the dedicated lsp hint.
+            (true, _, _) => {
+                let open_channel_hint = RouteHint {
+                    hops: vec![RouteHintHop {
+                        src_node_id: lsp_info.pubkey.clone(),
+                        short_channel_id: parse_short_channel_id("1x0x0")?,
                         fees_base_msat: lsp_info.base_fee_msat as u32,
                         fees_proportional_millionths: (lsp_info.fee_rate * 1000000.0) as u32,
                         cltv_expiry_delta: lsp_info.time_lock_delta as u64,
                         htlc_minimum_msat: Some(lsp_info.min_htlc_msat as u64),
                         htlc_maximum_msat: None,
-                    };
-
-                    info!("Adding LSP hop as routing hint: {:?}", lsp_hop);
-                    lsp_hint = Some(RouteHint {
-                        hops: vec![lsp_hop],
-                    });
-                }
-                None => info!("No available channel ID for route hint"),
+                    }],
+                };
+                info!("Adding open channel hint: {:?}", open_channel_hint);
+                Some(add_routing_hints(
+                    invoice.clone(),
+                    false,
+                    &vec![open_channel_hint],
+                    req.amount_msat,
+                )?)
             }
-        }
+            // In case we don't need to open a channel and we have a channel with our lsp then we only ensure it
+            // exists as part of the invoice routing hints (merging).
+            (false, Some(h), _) => {
+                match parsed_invoice.contains_hint_for_node(lsp_info.pubkey.as_str()) {
+                    false => {
+                        info!("Adding lsp hint: {:?}", h);
+                        Some(add_routing_hints(
+                            invoice.clone(),
+                            true,
+                            &vec![h],
+                            req.amount_msat,
+                        )?)
+                    }
+                    // Lsp already in routing hints, no need to modify the invoice
+                    true => None,
+                }
+            }
+            // In case we don't need to open a channel and the invoice has no routing hints we replace them with ours.
+            (false, None, true) => {
+                info!("Adding custom hints: {:?}", routing_hints);
+                Some(add_routing_hints(
+                    invoice.clone(),
+                    false,
+                    &routing_hints,
+                    req.amount_msat,
+                )?)
+            }
+            (_, _, _) => None,
+        };
 
-        // We only create a new invoice if we need to add the lsp hint or change the amount
-        if lsp_hint.is_some() || req.amount_msat != destination_invoice_amount_msat {
-            // create the large amount invoice
-            let raw_invoice_with_hint = add_lsp_routing_hints(
-                invoice.clone(),
-                !open_channel_needed,
-                lsp_hint,
-                req.amount_msat,
-            )?;
-
-            info!("Routing hint added");
-            let signed_invoice_with_hint = self.node_api.sign_invoice(raw_invoice_with_hint)?;
-            info!("Signed invoice with hint = {}", signed_invoice_with_hint);
-
-            parsed_invoice = parse_invoice(&signed_invoice_with_hint)?;
+        if let Some(raw_invoice) = optional_modified_invoice {
+            let signed_invoice = self.node_api.sign_invoice(raw_invoice)?;
+            info!("Signed invoice with hint = {}", signed_invoice);
+            parsed_invoice = parse_invoice(&signed_invoice)?;
         }
 
         // register the payment at the lsp if needed
@@ -2192,6 +2191,26 @@ impl Receiver for PaymentReceiver {
             opening_fee_params: channel_opening_fee_params,
             opening_fee_msat: channel_fees_msat,
         })
+    }
+}
+
+impl PaymentReceiver {
+    fn limit_and_extract_lsp_hint(
+        routing_hints: &mut Vec<RouteHint>,
+        lsp_info: &LspInformation,
+    ) -> Option<RouteHint> {
+        let mut lsp_hint: Option<RouteHint> = None;
+        if let Some(lsp_index) = routing_hints.iter().position(|r| {
+            r.hops
+                .iter()
+                .any(|h| h.src_node_id == lsp_info.pubkey.clone())
+        }) {
+            lsp_hint = Some(routing_hints.remove(lsp_index));
+        }
+        if routing_hints.len() > 3 {
+            routing_hints.drain(3..);
+        }
+        lsp_hint
     }
 }
 
