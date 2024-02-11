@@ -428,8 +428,8 @@ impl BTCReceiveSwap {
                         Ok(bolt11)
                     }
 
-                    // If the swap was crated on a different device and the invoice payment failed,
-                    // the invoice already exists. In this case, lookup the invoice from the node.
+                    // If the swap was created on a different device and the invoice creation failed,
+                    // then the invoice already exists. In this case, lookup the invoice from the node.
                     Err(ReceivePaymentError::InvoicePreimageAlreadyExists { .. }) => {
                         match self.node_api.fetch_bolt11(swap_info.payment_hash).await? {
                             Some(bolt11) => Ok(bolt11),
