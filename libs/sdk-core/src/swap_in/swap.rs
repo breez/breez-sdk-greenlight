@@ -400,11 +400,9 @@ impl BTCReceiveSwap {
             .ok_or_else(|| anyhow!(format!("swap address {bitcoin_address} was not found")))?;
 
         let bolt11 = match swap_info.bolt11 {
-            Some(bolt11) => Ok(bolt11),
+            Some(known_bolt11) => known_bolt11,
             None => {
-                // we are creating an invoice for this swap if we didn't do it already
-
-                // Try to create invoice
+                // No invoice known for this swap, we try to create one
                 let create_invoice_res = self
                     .payment_receiver
                     .receive_payment(ReceivePaymentRequest {
@@ -418,32 +416,30 @@ impl BTCReceiveSwap {
                     })
                     .await;
 
-                // Get the invoice, depending on the creation result
-                match create_invoice_res {
+                let new_bolt11 = match create_invoice_res {
                     // Extract created invoice
-                    Ok(create_invoice_response) => {
-                        let bolt11 = create_invoice_response.ln_invoice.bolt11;
-                        self.persister
-                            .update_swap_bolt11(bitcoin_address, bolt11.clone())?;
-                        Ok(bolt11)
-                    }
+                    Ok(create_invoice_response) => Ok(create_invoice_response.ln_invoice.bolt11),
 
                     // If settling the invoice failed on a different device (for example because the
                     // swap was initiated there), then the unsettled invoice exists on the GL node.
                     // Trying to create the invoice here will fail because we're using the same preimage.
                     // In this case, fetch the invoice from GL instead of creating it.
-                    Err(ReceivePaymentError::InvoicePreimageAlreadyExists { .. }) => {
-                        match self.node_api.fetch_bolt11(swap_info.payment_hash).await? {
-                            Some(bolt11) => Ok(bolt11),
-                            None => Err(anyhow!("Preimage already known, but invoice not found")),
-                        }
-                    }
+                    Err(ReceivePaymentError::InvoicePreimageAlreadyExists { .. }) => self
+                        .node_api
+                        .fetch_bolt11(swap_info.payment_hash)
+                        .await?
+                        .ok_or(anyhow!("Preimage already known, but invoice not found")),
 
                     // In all other cases: throw error
                     Err(err) => Err(anyhow!("Failed to create invoice: {err}")),
-                }
+                }?;
+
+                // If we have a new invoice, created or fetched from GL, associate it with the swap
+                self.persister
+                    .update_swap_bolt11(bitcoin_address, new_bolt11.clone())?;
+                new_bolt11
             }
-        }?;
+        };
 
         // Asking the service to initiate the lightning payment.
         self.swapper_api.complete_swap(bolt11).await
