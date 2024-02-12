@@ -1293,7 +1293,7 @@ impl support::IntoDart for LnPaymentDetails {
             self.payment_preimage.into_into_dart().into_dart(),
             self.keysend.into_into_dart().into_dart(),
             self.bolt11.into_into_dart().into_dart(),
-            self.payer_bolt11.into_dart(),
+            self.open_channel_bolt11.into_dart(),
             self.lnurl_success_action.into_dart(),
             self.lnurl_pay_domain.into_dart(),
             self.ln_address.into_dart(),

@@ -392,9 +392,9 @@ impl SqliteStorage {
         }
 
         // Add the payer invoice if it exists, in case of a received payment
-        if let Some(payer_bolt11) = row.get(15)? {
+        if let Some(open_channel_bolt11) = row.get(15)? {
             if let PaymentDetails::Ln { data } = &mut payment.details {
-                data.payer_bolt11 = Some(payer_bolt11);
+                data.open_channel_bolt11 = Some(open_channel_bolt11);
             }
         }
 
@@ -616,7 +616,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                     swap_info: None,
                     reverse_swap_info: None,
                     pending_expiration_block: None,
-                    payer_bolt11: None,
+                    open_channel_bolt11: None,
                 },
             },
             metadata: None,
@@ -646,7 +646,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                     swap_info: None,
                     reverse_swap_info: None,
                     pending_expiration_block: None,
-                    payer_bolt11: None,
+                    open_channel_bolt11: None,
                 },
             },
             metadata: None,
@@ -676,7 +676,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                     swap_info: Some(swap_info.clone()),
                     reverse_swap_info: None,
                     pending_expiration_block: None,
-                    payer_bolt11: None,
+                    open_channel_bolt11: None,
                 },
             },
             metadata: None,
@@ -706,7 +706,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                     swap_info: None,
                     reverse_swap_info: Some(rev_swap_info.clone()),
                     pending_expiration_block: None,
-                    payer_bolt11: None,
+                    open_channel_bolt11: None,
                 },
             },
             metadata: None,
@@ -736,7 +736,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                     swap_info: None,
                     reverse_swap_info: None,
                     pending_expiration_block: None,
-                    payer_bolt11: None,
+                    open_channel_bolt11: None,
                 },
             },
             metadata: None,
@@ -767,7 +767,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                 swap_info: None,
                 reverse_swap_info: None,
                 pending_expiration_block: None,
-                payer_bolt11: None,
+                open_channel_bolt11: None,
             },
         },
         metadata: None,
@@ -953,7 +953,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
     assert_eq!(retrieve_txs[0].id, payment_hash_with_lnurl_withdraw);
     assert_eq!(retrieve_txs[0].metadata, Some(test_json.to_string()),);
 
-    // test payer_bolt11
+    // test open_channel_bolt11
     storage.insert_open_channel_payment_info(
         payment_hash_with_lnurl_withdraw,
         150,
@@ -968,7 +968,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
         .iter()
         .filter(|p| {
             if let PaymentDetails::Ln { data } = &p.details {
-                return data.payer_bolt11 == Some("original_invoice".to_string());
+                return data.open_channel_bolt11 == Some("original_invoice".to_string());
             }
             false
         })
@@ -978,7 +978,10 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
     assert_eq!(filtered_txs[0].id, payment_hash_with_lnurl_withdraw);
     assert!(matches!(filtered_txs[0].details, PaymentDetails::Ln { .. }));
     if let PaymentDetails::Ln { data } = &filtered_txs[0].details {
-        assert_eq!(data.payer_bolt11, Some("original_invoice".to_string()));
+        assert_eq!(
+            data.open_channel_bolt11,
+            Some("original_invoice".to_string())
+        );
     }
 
     Ok(())
