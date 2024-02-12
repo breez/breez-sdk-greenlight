@@ -292,6 +292,7 @@ dictionary LnPaymentDetails {
     string payment_preimage;
     boolean keysend;
     string bolt11;
+    string? payer_bolt11;
     SuccessActionProcessed? lnurl_success_action;
     string? lnurl_pay_domain;
     string? lnurl_metadata;

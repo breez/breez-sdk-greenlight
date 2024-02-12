@@ -873,6 +873,7 @@ mod tests {
                     swap_info: None,
                     reverse_swap_info: None,
                     pending_expiration_block: None,
+                    payer_bolt11: None,
                 },
             },
             metadata: None,

@@ -717,6 +717,10 @@ class LnPaymentDetails {
   final bool keysend;
   final String bolt11;
 
+  /// Only set for [PaymentType::Received], payments which require to open a channel.
+  /// Represents the actual invoice paid by the sender
+  final String? payerBolt11;
+
   /// Only set for [PaymentType::Sent] payments that are part of a LNURL-pay workflow where
   /// the endpoint returns a success action
   final SuccessActionProcessed? lnurlSuccessAction;
@@ -749,6 +753,7 @@ class LnPaymentDetails {
     required this.paymentPreimage,
     required this.keysend,
     required this.bolt11,
+    this.payerBolt11,
     this.lnurlSuccessAction,
     this.lnurlPayDomain,
     this.lnAddress,
@@ -3274,7 +3279,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   LnPaymentDetails _wire2api_ln_payment_details(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 14) throw Exception('unexpected arr length: expect 14 but see ${arr.length}');
+    if (arr.length != 15) throw Exception('unexpected arr length: expect 15 but see ${arr.length}');
     return LnPaymentDetails(
       paymentHash: _wire2api_String(arr[0]),
       label: _wire2api_String(arr[1]),
@@ -3282,14 +3287,15 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       paymentPreimage: _wire2api_String(arr[3]),
       keysend: _wire2api_bool(arr[4]),
       bolt11: _wire2api_String(arr[5]),
-      lnurlSuccessAction: _wire2api_opt_box_autoadd_success_action_processed(arr[6]),
-      lnurlPayDomain: _wire2api_opt_String(arr[7]),
-      lnAddress: _wire2api_opt_String(arr[8]),
-      lnurlMetadata: _wire2api_opt_String(arr[9]),
-      lnurlWithdrawEndpoint: _wire2api_opt_String(arr[10]),
-      swapInfo: _wire2api_opt_box_autoadd_swap_info(arr[11]),
-      reverseSwapInfo: _wire2api_opt_box_autoadd_reverse_swap_info(arr[12]),
-      pendingExpirationBlock: _wire2api_opt_box_autoadd_u32(arr[13]),
+      payerBolt11: _wire2api_opt_String(arr[6]),
+      lnurlSuccessAction: _wire2api_opt_box_autoadd_success_action_processed(arr[7]),
+      lnurlPayDomain: _wire2api_opt_String(arr[8]),
+      lnAddress: _wire2api_opt_String(arr[9]),
+      lnurlMetadata: _wire2api_opt_String(arr[10]),
+      lnurlWithdrawEndpoint: _wire2api_opt_String(arr[11]),
+      swapInfo: _wire2api_opt_box_autoadd_swap_info(arr[12]),
+      reverseSwapInfo: _wire2api_opt_box_autoadd_reverse_swap_info(arr[13]),
+      pendingExpirationBlock: _wire2api_opt_box_autoadd_u32(arr[14]),
     );
   }
 
