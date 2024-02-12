@@ -221,6 +221,14 @@ class BreezSDK {
     return await _lnToolkit.paymentByHash(hash: hash);
   }
 
+  /// Set the external metadata of a payment as a valid JSON string
+  Future<void> setPaymentMetadata({
+    required String hash,
+    required String metadata,
+  }) async {
+    return await _lnToolkit.setPaymentMetadata(hash: hash, metadata: metadata);
+  }
+
   /* Lightning Payment API's */
 
   /// pay a bolt11 invoice
