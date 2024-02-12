@@ -732,6 +732,10 @@ pub struct LnPaymentDetails {
     pub keysend: bool,
     pub bolt11: String,
 
+    /// Only set for [PaymentType::Received], payments which require to open a channel.
+    /// Represents the actual invoice paid by the sender
+    pub open_channel_bolt11: Option<String>,
+
     /// Only set for [PaymentType::Sent] payments that are part of a LNURL-pay workflow where
     /// the endpoint returns a success action
     pub lnurl_success_action: Option<SuccessActionProcessed>,

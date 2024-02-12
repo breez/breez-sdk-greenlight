@@ -219,7 +219,8 @@ impl SqliteStorage {
         INSERT INTO sync.open_channel_payment_info
          SELECT
           payment_hash,
-          payer_amount_msat
+          payer_amount_msat,
+          open_channel_bolt11
          FROM remote_sync.open_channel_payment_info
          WHERE payment_hash NOT IN (SELECT payment_hash FROM sync.open_channel_payment_info);",
             [],
@@ -294,7 +295,7 @@ mod tests {
         remote_storage.init()?;
         remote_storage.insert_swap(remote_swap_info)?;
 
-        remote_storage.insert_open_channel_payment_info("123", 100000)?;
+        remote_storage.insert_open_channel_payment_info("123", 100000, "")?;
 
         remote_storage.import_remote_changes(&local_storage, false)?;
         local_storage.import_remote_changes(&remote_storage, true)?;

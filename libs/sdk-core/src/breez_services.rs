@@ -1020,6 +1020,7 @@ impl BreezServices {
                         swap_info: None,
                         reverse_swap_info: None,
                         pending_expiration_block: None,
+                        open_channel_bolt11: None,
                     },
                 },
                 metadata: None,
@@ -2065,7 +2066,7 @@ impl Receiver for PaymentReceiver {
         }
 
         info!("Creating invoice on NodeAPI");
-        let invoice = &self
+        let mut invoice = self
             .node_api
             .create_invoice(
                 destination_invoice_amount_msat,
@@ -2078,7 +2079,7 @@ impl Receiver for PaymentReceiver {
             .await?;
         info!("Invoice created {}", invoice);
 
-        let mut parsed_invoice = parse_invoice(invoice)?;
+        let mut parsed_invoice = parse_invoice(&invoice)?;
         // check if the lsp hint already exists
         info!("Existing routing hints {:?}", parsed_invoice.routing_hints);
 
@@ -2143,9 +2144,9 @@ impl Receiver for PaymentReceiver {
         };
 
         if let Some(raw_invoice) = optional_modified_invoice {
-            let signed_invoice = self.node_api.sign_invoice(raw_invoice)?;
-            info!("Signed invoice with hint = {}", signed_invoice);
-            parsed_invoice = parse_invoice(&signed_invoice)?;
+            invoice = self.node_api.sign_invoice(raw_invoice)?;
+            info!("Signed invoice with hint = {}", invoice);
+            parsed_invoice = parse_invoice(&invoice)?;
         }
 
         // register the payment at the lsp if needed
@@ -2181,8 +2182,11 @@ impl Receiver for PaymentReceiver {
                 .await?;
             info!("Payment registered");
             // Make sure we save the large amount so we can deduce the fees later.
-            self.persister
-                .insert_open_channel_payment_info(&parsed_invoice.payment_hash, req.amount_msat)?;
+            self.persister.insert_open_channel_payment_info(
+                &parsed_invoice.payment_hash,
+                req.amount_msat,
+                &invoice,
+            )?;
         }
 
         // return the signed, converted invoice with hints
@@ -2371,6 +2375,7 @@ pub(crate) mod tests {
                         swap_info: None,
                         reverse_swap_info: None,
                         pending_expiration_block: None,
+                        open_channel_bolt11: None,
                     },
                 },
                 metadata: None,
@@ -2400,6 +2405,7 @@ pub(crate) mod tests {
                         swap_info: None,
                         reverse_swap_info: None,
                         pending_expiration_block: None,
+                        open_channel_bolt11: None,
                     },
                 },
                 metadata: None,
@@ -2429,6 +2435,7 @@ pub(crate) mod tests {
                         swap_info: None,
                         reverse_swap_info: None,
                         pending_expiration_block: None,
+                        open_channel_bolt11: None,
                     },
                 },
                 metadata: None,
@@ -2458,6 +2465,7 @@ pub(crate) mod tests {
                         swap_info: Some(swap_info.clone()),
                         reverse_swap_info: None,
                         pending_expiration_block: None,
+                        open_channel_bolt11: None,
                     },
                 },
                 metadata: None,
@@ -2487,6 +2495,7 @@ pub(crate) mod tests {
                         swap_info: None,
                         reverse_swap_info: Some(rev_swap_info.clone()),
                         pending_expiration_block: None,
+                        open_channel_bolt11: None,
                     },
                 },
                 metadata: None,

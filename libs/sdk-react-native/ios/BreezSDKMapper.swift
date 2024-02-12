@@ -973,6 +973,13 @@ enum BreezSDKMapper {
         guard let bolt11 = lnPaymentDetails["bolt11"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "bolt11", typeName: "LnPaymentDetails"))
         }
+        var openChannelBolt11: String?
+        if hasNonNilKey(data: lnPaymentDetails, key: "openChannelBolt11") {
+            guard let openChannelBolt11Tmp = lnPaymentDetails["openChannelBolt11"] as? String else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "openChannelBolt11"))
+            }
+            openChannelBolt11 = openChannelBolt11Tmp
+        }
         var lnurlSuccessAction: SuccessActionProcessed?
         if let lnurlSuccessActionTmp = lnPaymentDetails["lnurlSuccessAction"] as? [String: Any?] {
             lnurlSuccessAction = try asSuccessActionProcessed(successActionProcessed: lnurlSuccessActionTmp)
@@ -1031,6 +1038,7 @@ enum BreezSDKMapper {
             paymentPreimage: paymentPreimage,
             keysend: keysend,
             bolt11: bolt11,
+            openChannelBolt11: openChannelBolt11,
             lnurlSuccessAction: lnurlSuccessAction,
             lnurlPayDomain: lnurlPayDomain,
             lnurlMetadata: lnurlMetadata,
@@ -1050,6 +1058,7 @@ enum BreezSDKMapper {
             "paymentPreimage": lnPaymentDetails.paymentPreimage,
             "keysend": lnPaymentDetails.keysend,
             "bolt11": lnPaymentDetails.bolt11,
+            "openChannelBolt11": lnPaymentDetails.openChannelBolt11 == nil ? nil : lnPaymentDetails.openChannelBolt11,
             "lnurlSuccessAction": lnPaymentDetails.lnurlSuccessAction == nil ? nil : dictionaryOf(successActionProcessed: lnPaymentDetails.lnurlSuccessAction!),
             "lnurlPayDomain": lnPaymentDetails.lnurlPayDomain == nil ? nil : lnPaymentDetails.lnurlPayDomain,
             "lnurlMetadata": lnPaymentDetails.lnurlMetadata == nil ? nil : lnPaymentDetails.lnurlMetadata,
