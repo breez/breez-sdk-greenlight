@@ -710,6 +710,25 @@ impl NodeAPI for Greenlight {
         Ok(res.bolt11)
     }
 
+    async fn fetch_bolt11(&self, payment_hash: Vec<u8>) -> NodeResult<Option<String>> {
+        let request = cln::ListinvoicesRequest {
+            payment_hash: Some(payment_hash),
+            ..Default::default()
+        };
+
+        let found_bolt11 = self
+            .get_node_client()
+            .await?
+            .list_invoices(request)
+            .await?
+            .into_inner()
+            .invoices
+            .first()
+            .cloned()
+            .and_then(|res| res.bolt11);
+        Ok(found_bolt11)
+    }
+
     // implement pull changes from greenlight
     async fn pull_changed(
         &self,

@@ -91,10 +91,12 @@ pub struct Swap {
     pub bitcoin_address: String,
     pub swapper_pubkey: Vec<u8>,
     pub lock_height: i64,
-    pub max_allowed_deposit: i64,
     pub error_message: String,
     pub required_reserve: i64,
+    /// Minimum amount, in sats, that should be sent to `bitcoin_address` for a successful swap
     pub min_allowed_deposit: i64,
+    /// Maximum amount, in sats, that should be sent to `bitcoin_address` for a successful swap
+    pub max_allowed_deposit: i64,
 }
 
 /// Trait covering functionality involving swaps
@@ -1243,7 +1245,7 @@ pub struct SwapInfo {
     pub public_key: Vec<u8>,
     /// The public key in binary format from the swapping service. Received from [SwapperAPI::create_swap].
     pub swapper_public_key: Vec<u8>,
-    /// The lockingsscript for the generated bitcoin address. Received from [SwapperAPI::create_swap].
+    /// The locking script for the generated bitcoin address. Received from [SwapperAPI::create_swap].
     pub script: Vec<u8>,
 
     /// bolt11 invoice to claim the sent funds.

@@ -5,7 +5,6 @@ use anyhow::{anyhow, Result};
 use rand::Rng;
 use ripemd::{Digest, Ripemd160};
 
-use crate::binding::parse_invoice;
 use crate::bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
 use crate::bitcoin::blockdata::opcodes;
 use crate::bitcoin::blockdata::script::Builder;
@@ -19,8 +18,10 @@ use crate::bitcoin::{
 };
 use crate::breez_services::{BreezEvent, BreezServer, PaymentReceiver, Receiver};
 use crate::chain::{get_utxos, AddressUtxos, ChainService, MempoolSpace, OnchainTx};
+use crate::error::ReceivePaymentError;
 use crate::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
 use crate::models::{Swap, SwapInfo, SwapStatus, SwapperAPI};
+use crate::node_api::NodeAPI;
 use crate::swap_in::error::SwapError;
 use crate::{
     OpeningFeeParams, PrepareRefundRequest, PrepareRefundResponse, ReceivePaymentRequest,
@@ -61,12 +62,17 @@ impl SwapperAPI for BreezServer {
         let req = GetSwapPaymentRequest {
             payment_request: bolt11,
         };
-        self.get_fund_manager_client()
+        let resp = self
+            .get_fund_manager_client()
             .await?
             .get_swap_payment(req)
             .await?
             .into_inner();
-        Ok(())
+
+        match resp.swap_error() {
+            crate::grpc::get_swap_payment_reply::SwapError::NoError => Ok(()),
+            err => Err(anyhow!("Failed to complete swap: {}", err.as_str_name())),
+        }
     }
 }
 
@@ -74,6 +80,7 @@ impl SwapperAPI for BreezServer {
 /// It uses internally an implementation of SwapperAPI that represents the actually swapper service.
 pub(crate) struct BTCReceiveSwap {
     network: crate::bitcoin::Network,
+    node_api: Arc<dyn NodeAPI>,
     swapper_api: Arc<dyn SwapperAPI>,
     persister: Arc<crate::persist::db::SqliteStorage>,
     chain_service: Arc<dyn ChainService>,
@@ -83,6 +90,7 @@ pub(crate) struct BTCReceiveSwap {
 impl BTCReceiveSwap {
     pub(crate) fn new(
         network: crate::bitcoin::Network,
+        node_api: Arc<dyn NodeAPI>,
         swapper_api: Arc<dyn SwapperAPI>,
         persister: Arc<crate::persist::db::SqliteStorage>,
         chain_service: Arc<MempoolSpace>,
@@ -90,6 +98,7 @@ impl BTCReceiveSwap {
     ) -> Self {
         Self {
             network,
+            node_api,
             swapper_api,
             persister,
             chain_service,
@@ -276,24 +285,16 @@ impl BTCReceiveSwap {
         // redeem swaps
         let redeemable_swaps = self.list_redeemables()?;
         for s in redeemable_swaps {
-            let redeem_res = self.redeem_swap(s.bitcoin_address.clone()).await;
+            let swap_address = s.bitcoin_address;
+            let bolt11 = s.bolt11.unwrap_or_default();
 
-            if redeem_res.is_err() {
-                let err = redeem_res.as_ref().err().unwrap();
-                error!(
-                    "failed to redeem swap {:?}: {} {}",
-                    err,
-                    s.bitcoin_address,
-                    s.bolt11.unwrap_or_default(),
-                );
-                self.persister
-                    .update_swap_redeem_error(s.bitcoin_address, err.to_string())?;
-            } else {
-                info!(
-                    "succeed to redeem swap {:?}: {}",
-                    s.bitcoin_address,
-                    s.bolt11.unwrap_or_default()
-                )
+            match self.redeem_swap(swap_address.clone()).await {
+                Ok(_) => info!("succeed to redeem swap {swap_address}: {bolt11}"),
+                Err(err) => {
+                    error!("failed to redeem swap {err:?}: {swap_address} {bolt11}");
+                    self.persister
+                        .update_swap_redeem_error(swap_address, err.to_string())?;
+                }
             }
         }
 
@@ -393,49 +394,55 @@ impl BTCReceiveSwap {
     /// redeem_swap executes the final step of receiving lightning payment
     /// in exchange for the on chain funds.
     async fn redeem_swap(&self, bitcoin_address: String) -> Result<()> {
-        let mut swap_info = self
+        let swap_info = self
             .persister
             .get_swap_info_by_address(bitcoin_address.clone())?
             .ok_or_else(|| anyhow!(format!("swap address {bitcoin_address} was not found")))?;
 
-        // we are creating and invoice for this swap if we didn't
-        // do it already
-        if swap_info.bolt11.is_none() {
-            let invoice = self
-                .payment_receiver
-                .receive_payment(ReceivePaymentRequest {
-                    amount_msat: swap_info.confirmed_sats * 1000,
-                    description: String::from("Bitcoin Transfer"),
-                    preimage: Some(swap_info.preimage),
-                    opening_fee_params: swap_info.channel_opening_fees,
-                    use_description_hash: Some(false),
-                    expiry: Some(SWAP_PAYMENT_FEE_EXPIRY_SECONDS),
-                    cltv: None,
-                })
-                .await?
-                .ln_invoice;
-            self.persister
-                .update_swap_bolt11(bitcoin_address.clone(), invoice.bolt11)?;
-            swap_info = self
-                .persister
-                .get_swap_info_by_address(bitcoin_address)?
-                .unwrap();
-        }
+        let bolt11 = match swap_info.bolt11 {
+            Some(known_bolt11) => known_bolt11,
+            None => {
+                // No invoice known for this swap, we try to create one
+                let create_invoice_res = self
+                    .payment_receiver
+                    .receive_payment(ReceivePaymentRequest {
+                        amount_msat: swap_info.confirmed_sats * 1_000,
+                        description: String::from("Bitcoin Transfer"),
+                        preimage: Some(swap_info.preimage),
+                        opening_fee_params: swap_info.channel_opening_fees,
+                        use_description_hash: Some(false),
+                        expiry: Some(SWAP_PAYMENT_FEE_EXPIRY_SECONDS),
+                        cltv: None,
+                    })
+                    .await;
 
-        // Making sure the invoice amount matches the on-chain amount
-        let payreq = swap_info.bolt11.unwrap();
-        let ln_invoice = parse_invoice(payreq.clone())?;
-        debug!("swap info confirmed = {}", swap_info.confirmed_sats);
-        if ln_invoice.amount_msat.unwrap() != (swap_info.confirmed_sats * 1000) {
-            warn!(
-                "invoice amount doesn't match confirmed sats {:?}",
-                ln_invoice.amount_msat.unwrap()
-            );
-            return Err(anyhow!("Does not match confirmed sats"));
-        }
+                let new_bolt11 = match create_invoice_res {
+                    // Extract created invoice
+                    Ok(create_invoice_response) => Ok(create_invoice_response.ln_invoice.bolt11),
+
+                    // If settling the invoice failed on a different device (for example because the
+                    // swap was initiated there), then the unsettled invoice exists on the GL node.
+                    // Trying to create the invoice here will fail because we're using the same preimage.
+                    // In this case, fetch the invoice from GL instead of creating it.
+                    Err(ReceivePaymentError::InvoicePreimageAlreadyExists { .. }) => self
+                        .node_api
+                        .fetch_bolt11(swap_info.payment_hash)
+                        .await?
+                        .ok_or(anyhow!("Preimage already known, but invoice not found")),
+
+                    // In all other cases: throw error
+                    Err(err) => Err(anyhow!("Failed to create invoice: {err}")),
+                }?;
+
+                // If we have a new invoice, created or fetched from GL, associate it with the swap
+                self.persister
+                    .update_swap_bolt11(bitcoin_address, new_bolt11.clone())?;
+                new_bolt11
+            }
+        };
 
         // Asking the service to initiate the lightning payment.
-        self.swapper_api.complete_swap(payreq.clone()).await
+        self.swapper_api.complete_swap(bolt11).await
     }
 
     pub(crate) async fn prepare_refund_swap(
@@ -684,7 +691,7 @@ mod tests {
 
     use crate::chain::{AddressUtxos, Utxo};
     use crate::swap_in::swap::{compute_refund_tx_weight, compute_tx_fee, prepare_refund_tx};
-    use crate::test_utils::get_test_ofp;
+    use crate::test_utils::{get_test_ofp, MockNodeAPI};
     use crate::{
         bitcoin::consensus::deserialize,
         bitcoin::hashes::{hex::FromHex, sha256},
@@ -1128,6 +1135,7 @@ mod tests {
 
         let swapper = BTCReceiveSwap {
             network: crate::bitcoin::Network::Bitcoin,
+            node_api: Arc::new(MockNodeAPI::new(get_dummy_node_state())),
             swapper_api: Arc::new(MockSwapperAPI {}),
             persister: persister.clone(),
             chain_service: chain_service.clone(),

@@ -1804,6 +1804,7 @@ impl BreezServicesBuilder {
 
         let btc_receive_swapper = Arc::new(BTCReceiveSwap::new(
             self.config.network.into(),
+            unwrapped_node_api.clone(),
             self.swapper_api
                 .clone()
                 .unwrap_or_else(|| breez_server.clone()),

@@ -444,6 +444,10 @@ impl NodeAPI for MockNodeAPI {
     async fn get_routing_hints(&self) -> NodeResult<(Vec<RouteHint>, bool)> {
         Ok((vec![], false))
     }
+
+    async fn fetch_bolt11(&self, _payment_hash: Vec<u8>) -> NodeResult<Option<String>> {
+        Ok(None)
+    }
 }
 
 impl MockNodeAPI {

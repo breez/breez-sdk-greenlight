@@ -1758,7 +1758,7 @@ class SwapInfo {
   /// The public key in binary format from the swapping service. Received from [SwapperAPI::create_swap].
   final Uint8List swapperPublicKey;
 
-  /// The lockingsscript for the generated bitcoin address. Received from [SwapperAPI::create_swap].
+  /// The locking script for the generated bitcoin address. Received from [SwapperAPI::create_swap].
   final Uint8List script;
 
   /// bolt11 invoice to claim the sent funds.
