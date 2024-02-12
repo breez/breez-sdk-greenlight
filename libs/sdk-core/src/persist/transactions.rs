@@ -173,7 +173,7 @@ impl SqliteStorage {
         &self,
         payment_hash: &str,
         payer_amount_msat: u64,
-        payer_bolt11: &str,
+        open_channel_bolt11: &str,
     ) -> PersistResult<()> {
         let con = self.get_connection()?;
         let mut prep_statement = con.prepare(
@@ -181,13 +181,13 @@ impl SqliteStorage {
         INSERT INTO sync.open_channel_payment_info (
           payment_hash,
           payer_amount_msat,
-          payer_bolt11
+          open_channel_bolt11
         )
         VALUES (?1,?2,?3)
        ",
         )?;
 
-        _ = prep_statement.execute((payment_hash, payer_amount_msat, payer_bolt11))?;
+        _ = prep_statement.execute((payment_hash, payer_amount_msat, open_channel_bolt11))?;
 
         Ok(())
     }
@@ -234,7 +234,7 @@ impl SqliteStorage {
              e.attempted_amount_msat,
              e.attempted_error,
              o.payer_amount_msat,
-             o.payer_bolt11,
+             o.open_channel_bolt11,
              m.metadata,
              e.lnurl_pay_domain
             FROM payments p
@@ -313,7 +313,7 @@ impl SqliteStorage {
                  e.attempted_amount_msat,
                  e.attempted_error,
                  o.payer_amount_msat,
-                 o.payer_bolt11,
+                 o.open_channel_bolt11,
                  m.metadata,
                  e.lnurl_pay_domain
                 FROM payments p

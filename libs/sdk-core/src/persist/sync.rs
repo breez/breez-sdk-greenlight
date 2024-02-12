@@ -220,7 +220,7 @@ impl SqliteStorage {
          SELECT
           payment_hash,
           payer_amount_msat,
-          payer_bolt11
+          open_channel_bolt11
          FROM remote_sync.open_channel_payment_info
          WHERE payment_hash NOT IN (SELECT payment_hash FROM sync.open_channel_payment_info);",
             [],
