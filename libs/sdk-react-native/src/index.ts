@@ -149,7 +149,7 @@ export type LnPaymentDetails = {
     paymentPreimage: string
     keysend: boolean
     bolt11: string
-    payerBolt11?: string
+    openChannelBolt11?: string
     lnurlSuccessAction?: SuccessActionProcessed
     lnurlPayDomain?: string
     lnurlMetadata?: string

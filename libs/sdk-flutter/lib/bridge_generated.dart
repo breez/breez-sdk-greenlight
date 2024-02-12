@@ -719,7 +719,7 @@ class LnPaymentDetails {
 
   /// Only set for [PaymentType::Received], payments which require to open a channel.
   /// Represents the actual invoice paid by the sender
-  final String? payerBolt11;
+  final String? openChannelBolt11;
 
   /// Only set for [PaymentType::Sent] payments that are part of a LNURL-pay workflow where
   /// the endpoint returns a success action
@@ -753,7 +753,7 @@ class LnPaymentDetails {
     required this.paymentPreimage,
     required this.keysend,
     required this.bolt11,
-    this.payerBolt11,
+    this.openChannelBolt11,
     this.lnurlSuccessAction,
     this.lnurlPayDomain,
     this.lnAddress,
@@ -3287,7 +3287,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       paymentPreimage: _wire2api_String(arr[3]),
       keysend: _wire2api_bool(arr[4]),
       bolt11: _wire2api_String(arr[5]),
-      payerBolt11: _wire2api_opt_String(arr[6]),
+      openChannelBolt11: _wire2api_opt_String(arr[6]),
       lnurlSuccessAction: _wire2api_opt_box_autoadd_success_action_processed(arr[7]),
       lnurlPayDomain: _wire2api_opt_String(arr[8]),
       lnAddress: _wire2api_opt_String(arr[9]),
