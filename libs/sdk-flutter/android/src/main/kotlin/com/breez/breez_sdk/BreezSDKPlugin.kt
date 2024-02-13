@@ -2,9 +2,8 @@ package com.breez.breez_sdk
 
 import android.os.Handler
 import android.os.Looper
-import com.breez.breez_sdk.SdkLogListener
 import androidx.annotation.NonNull
-import breez_sdk.LogStream
+import breez_sdk.LogEntry
 import breez_sdk.setLogStream
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.EventChannel
@@ -14,7 +13,6 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 
 /** BreezSDKPlugin */
 class BreezSDKPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHandler {
@@ -36,8 +34,8 @@ class BreezSDKPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
 
         eventChannel =
             EventChannel(flutterPluginBinding.binaryMessenger, "breez_sdk_node_logs")
-        eventChannel?.setStreamHandler(this)
         setNodeLogStream()
+        eventChannel?.setStreamHandler(this)
     }
 
     override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
@@ -68,7 +66,7 @@ class BreezSDKPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
             try {
                 nodeLogStream = SdkLogListener()
                 setLogStream(nodeLogStream!!)
-                nodeLogStream!!.subscribe(CoroutineScope(Dispatchers.Main)) { l ->
+                nodeLogStream!!.subscribe(CoroutineScope(Dispatchers.Main)) { l: LogEntry ->
                     val runnable = Runnable {
                         val data = mapOf("level" to l.level, "line" to l.line)
                         eventSink?.success(data)
