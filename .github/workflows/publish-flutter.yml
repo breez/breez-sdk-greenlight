@@ -35,7 +35,6 @@ jobs:
           ssh-key: ${{ secrets.REPO_SSH_KEY }}
           fetch-depth: 0
           path: flutter
-          ref: test-ios-dynamic-linking
 
       - name: Checkout breez-sdk repo
         uses: actions/checkout@v3
@@ -89,11 +88,10 @@ jobs:
         working-directory: flutter
         if: ${{ inputs.publish }}
         run: |
-          [[ $(git branch --show-current) == "test-ios-dynamic-linking" ]] || return 1
           git config --global user.email github-actions@github.com
           git config --global user.name github-actions
           git add .
           git commit -m "Update Breez SDK Flutter package to version v${{ inputs.package-version }}"
           git push
-          # git tag v${{ inputs.package-version }} -m "v${{ inputs.package-version }}"
-          # git push --tags
+          git tag v${{ inputs.package-version }} -m "v${{ inputs.package-version }}"
+          git push --tags
