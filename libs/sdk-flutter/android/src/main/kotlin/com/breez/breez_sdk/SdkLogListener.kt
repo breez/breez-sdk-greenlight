@@ -1,24 +1,28 @@
 package com.breez.breez_sdk
 
-import android.os.Handler
-import android.os.Looper
 import breez_sdk.LogEntry
 import breez_sdk.LogStream
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import io.flutter.plugin.common.EventChannel
+import kotlinx.coroutines.launch
 
 class SdkLogListener : LogStream {
-    private val _sharedFlow = MutableSharedFlow<LogEntry>() // private mutable shared flow
+    private val scope = CoroutineScope(SupervisorJob())
+
+    private val _logEvents = MutableSharedFlow<LogEntry>()
+    private val logEvents: SharedFlow<LogEntry> = _logEvents.asSharedFlow()
 
     override fun log(l: LogEntry) {
-        produceLog(l)
+        scope.launch {
+            _logEvents.emit(l)
+        }
     }
 
-    private fun produceLog(log: LogEntry) = _sharedFlow.tryEmit(log)
-
-    fun subscribe(scope: CoroutineScope, block: suspend (LogEntry) -> Unit) = _sharedFlow.onEach(block).launchIn(scope)
+    fun subscribe(scope: CoroutineScope, block: suspend (LogEntry) -> Unit) =
+        logEvents.onEach(block).launchIn(scope)
 }
