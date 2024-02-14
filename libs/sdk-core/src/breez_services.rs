@@ -732,8 +732,11 @@ impl BreezServices {
             .btc_receive_swapper
             .create_swap_address(channel_opening_fees)
             .await?;
-        self.register_swap_tx_notification(&swap_info.bitcoin_address)
-            .await?;
+        if let Some(webhook_url) = self.persister.get_webhook_url()? {
+            info!("Webhook URL found in local cache, registering for swap tx notification");
+            self.register_swap_tx_notification(&swap_info.bitcoin_address, &webhook_url)
+                .await?;
+        }
         Ok(swap_info)
     }
 
@@ -1570,53 +1573,84 @@ impl BreezServices {
         })
     }
 
-    /// Register for webhook callbacks at the given `webhook_url` whenever a new payment is received.
+    /// Register for webhook callbacks at the given `webhook_url`.
     ///
-    /// More webhook types may be supported in the future.
+    /// More specifically, it registers for the following types of callbacks:
+    /// - a payment is received
+    /// - a swap tx is confirmed
+    ///
+    /// This method should be called once on startup and any time the `webhook_url` changes. For
+    /// example, if the `webhook_url` contains a push notification token and the token changes after
+    /// the application was started, then this method should be called to register for callbacks at
+    /// the new correct `webhook_url`.
     pub async fn register_webhook(&self, webhook_url: String) -> SdkResult<()> {
         info!("Registering for webhook notifications");
-        self.persister.set_webhook_url(webhook_url.clone())?;
+        let is_new_webhook_url = match self.persister.get_webhook_url()? {
+            None => true,
+            Some(cached_webhook_url) => cached_webhook_url != webhook_url,
+        };
+        match is_new_webhook_url {
+            true => {
+                for swap in self
+                    .btc_receive_swapper
+                    .list_monitored()?
+                    .iter()
+                    .filter(|swap| !swap.refundable())
+                {
+                    let swap_address = &swap.bitcoin_address;
+                    info!("Found non-refundable monitored swap with address {swap_address}, registering for swap tx notifications");
+                    self.register_swap_tx_notification(swap_address, &webhook_url)
+                        .await?;
+                }
+            }
+            false => info!("Webhook URL not changed, skipping swap tx registration"),
+        }
 
+        // Register for LN payment notifications on every call, since these webhook registrations
+        // timeout after 14 days of not being used
         let message = webhook_url.clone();
         let sign_request = SignMessageRequest { message };
         let sign_response = self.sign_message(sign_request).await?;
-
         let lsp_info = self.lsp_info().await?;
         self.lsp_api
             .register_payment_notifications(
                 lsp_info.id,
                 lsp_info.lsp_pubkey,
-                webhook_url,
+                webhook_url.clone(),
                 sign_response.signature,
             )
             .await?;
 
+        // Only cache the webhook URL if callbacks were successfully registered for it.
+        // If any step above failed, not caching it allows the caller to re-trigger the registrations
+        // by calling the method again
+        self.persister.set_webhook_url(webhook_url)?;
         Ok(())
     }
 
     /// Registers for a swap tx notification. When a new transaction to the specified `swap_address`
-    /// is confirmed, a callback will be triggered to the specified `webhook_url`.
-    async fn register_swap_tx_notification(&self, swap_address: &str) -> SdkResult<()> {
-        if let Some(webhook_url) = self.persister.get_webhook_url()? {
-            info!("Webhook URL found in local cache, registering for swap tx notification");
-            get_reqwest_client()?
-                .post(format!("{}/api/v1/register", self.config.chainnotifier_url))
-                .header(CONTENT_TYPE, "application/json")
-                .body(Body::from(
-                    json!({
-                        "address": swap_address,
-                        "webhook": webhook_url
-                    })
-                    .to_string(),
-                ))
-                .send()
-                .await
-                .map(|_| ())
-                .map_err(|err| SdkError::ServiceConnectivity {
-                    err: format!("Failed to register for tx confirmation notifications: {err}"),
-                })?;
-        }
-        Ok(())
+    /// is confirmed, a callback will be triggered to the `webhook_url`.
+    async fn register_swap_tx_notification(
+        &self,
+        swap_address: &str,
+        webhook_url: &str,
+    ) -> SdkResult<()> {
+        get_reqwest_client()?
+            .post(format!("{}/api/v1/register", self.config.chainnotifier_url))
+            .header(CONTENT_TYPE, "application/json")
+            .body(Body::from(
+                json!({
+                    "address": swap_address,
+                    "webhook": webhook_url
+                })
+                .to_string(),
+            ))
+            .send()
+            .await
+            .map(|_| ())
+            .map_err(|err| SdkError::ServiceConnectivity {
+                err: format!("Failed to register for tx confirmation notifications: {err}"),
+            })
     }
 }
 
