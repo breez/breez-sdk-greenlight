@@ -15,7 +15,7 @@ part 'bridge_generated.freezed.dart';
 
 abstract class BreezSdkCore {
   /// Wrapper around [BreezServices::connect] which also initializes SDK logging
-  Future<void> connect({required Config config, required Uint8List seed, dynamic hint});
+  Future<void> connect({required ConnectRequest req, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kConnectConstMeta;
 
@@ -483,9 +483,6 @@ class Config {
   final String? defaultLspId;
   final String? apiKey;
 
-  /// When true only restores an existing node and otherwise returns an error
-  final bool restoreOnly;
-
   /// Maps to the CLN `maxfeepercent` config when paying invoices (`lightning-pay`)
   final double maxfeePercent;
 
@@ -502,7 +499,6 @@ class Config {
     required this.paymentTimeoutSec,
     this.defaultLspId,
     this.apiKey,
-    required this.restoreOnly,
     required this.maxfeePercent,
     required this.exemptfeeMsat,
     required this.nodeConfig,
@@ -515,6 +511,21 @@ class ConfigureNodeRequest {
 
   const ConfigureNodeRequest({
     this.closeToAddress,
+  });
+}
+
+/// Represents a connect request.
+class ConnectRequest {
+  final Config config;
+  final Uint8List seed;
+
+  /// If true, only restores an existing node and otherwise result in an error
+  final bool? restoreOnly;
+
+  const ConnectRequest({
+    required this.config,
+    required this.seed,
+    this.restoreOnly,
   });
 }
 
@@ -1911,22 +1922,21 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   /// Only valid on web/WASM platforms.
   factory BreezSdkCoreImpl.wasm(FutureOr<WasmModule> module) => BreezSdkCoreImpl(module as ExternalLibrary);
   BreezSdkCoreImpl.raw(this._platform);
-  Future<void> connect({required Config config, required Uint8List seed, dynamic hint}) {
-    var arg0 = _platform.api2wire_box_autoadd_config(config);
-    var arg1 = _platform.api2wire_uint_8_list(seed);
+  Future<void> connect({required ConnectRequest req, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_connect_request(req);
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_connect(port_, arg0, arg1),
+      callFfi: (port_) => _platform.inner.wire_connect(port_, arg0),
       parseSuccessData: _wire2api_unit,
       parseErrorData: _wire2api_FrbAnyhowException,
       constMeta: kConnectConstMeta,
-      argValues: [config, seed],
+      argValues: [req],
       hint: hint,
     ));
   }
 
   FlutterRustBridgeTaskConstMeta get kConnectConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "connect",
-        argNames: ["config", "seed"],
+        argNames: ["req"],
       );
 
   Future<bool> isInitialized({dynamic hint}) {
@@ -3084,7 +3094,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   Config _wire2api_config(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 12) throw Exception('unexpected arr length: expect 12 but see ${arr.length}');
+    if (arr.length != 11) throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
     return Config(
       breezserver: _wire2api_String(arr[0]),
       chainnotifierUrl: _wire2api_String(arr[1]),
@@ -3094,10 +3104,9 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       paymentTimeoutSec: _wire2api_u32(arr[5]),
       defaultLspId: _wire2api_opt_String(arr[6]),
       apiKey: _wire2api_opt_String(arr[7]),
-      restoreOnly: _wire2api_bool(arr[8]),
-      maxfeePercent: _wire2api_f64(arr[9]),
-      exemptfeeMsat: _wire2api_u64(arr[10]),
-      nodeConfig: _wire2api_node_config(arr[11]),
+      maxfeePercent: _wire2api_f64(arr[8]),
+      exemptfeeMsat: _wire2api_u64(arr[9]),
+      nodeConfig: _wire2api_node_config(arr[10]),
     );
   }
 
@@ -4019,17 +4028,17 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
-  ffi.Pointer<wire_Config> api2wire_box_autoadd_config(Config raw) {
-    final ptr = inner.new_box_autoadd_config_0();
-    _api_fill_to_wire_config(raw, ptr.ref);
-    return ptr;
-  }
-
-  @protected
   ffi.Pointer<wire_ConfigureNodeRequest> api2wire_box_autoadd_configure_node_request(
       ConfigureNodeRequest raw) {
     final ptr = inner.new_box_autoadd_configure_node_request_0();
     _api_fill_to_wire_configure_node_request(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
+  ffi.Pointer<wire_ConnectRequest> api2wire_box_autoadd_connect_request(ConnectRequest raw) {
+    final ptr = inner.new_box_autoadd_connect_request_0();
+    _api_fill_to_wire_connect_request(raw, ptr.ref);
     return ptr;
   }
 
@@ -4336,13 +4345,14 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     _api_fill_to_wire_check_message_request(apiObj, wireObj.ref);
   }
 
-  void _api_fill_to_wire_box_autoadd_config(Config apiObj, ffi.Pointer<wire_Config> wireObj) {
-    _api_fill_to_wire_config(apiObj, wireObj.ref);
-  }
-
   void _api_fill_to_wire_box_autoadd_configure_node_request(
       ConfigureNodeRequest apiObj, ffi.Pointer<wire_ConfigureNodeRequest> wireObj) {
     _api_fill_to_wire_configure_node_request(apiObj, wireObj.ref);
+  }
+
+  void _api_fill_to_wire_box_autoadd_connect_request(
+      ConnectRequest apiObj, ffi.Pointer<wire_ConnectRequest> wireObj) {
+    _api_fill_to_wire_connect_request(apiObj, wireObj.ref);
   }
 
   void _api_fill_to_wire_box_autoadd_greenlight_credentials(
@@ -4479,7 +4489,6 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.payment_timeout_sec = api2wire_u32(apiObj.paymentTimeoutSec);
     wireObj.default_lsp_id = api2wire_opt_String(apiObj.defaultLspId);
     wireObj.api_key = api2wire_opt_String(apiObj.apiKey);
-    wireObj.restore_only = api2wire_bool(apiObj.restoreOnly);
     wireObj.maxfee_percent = api2wire_f64(apiObj.maxfeePercent);
     wireObj.exemptfee_msat = api2wire_u64(apiObj.exemptfeeMsat);
     _api_fill_to_wire_node_config(apiObj.nodeConfig, wireObj.node_config);
@@ -4488,6 +4497,12 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   void _api_fill_to_wire_configure_node_request(
       ConfigureNodeRequest apiObj, wire_ConfigureNodeRequest wireObj) {
     wireObj.close_to_address = api2wire_opt_String(apiObj.closeToAddress);
+  }
+
+  void _api_fill_to_wire_connect_request(ConnectRequest apiObj, wire_ConnectRequest wireObj) {
+    _api_fill_to_wire_config(apiObj.config, wireObj.config);
+    wireObj.seed = api2wire_uint_8_list(apiObj.seed);
+    wireObj.restore_only = api2wire_opt_box_autoadd_bool(apiObj.restoreOnly);
   }
 
   void _api_fill_to_wire_greenlight_credentials(
@@ -4764,22 +4779,19 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
 
   void wire_connect(
     int port_,
-    ffi.Pointer<wire_Config> config,
-    ffi.Pointer<wire_uint_8_list> seed,
+    ffi.Pointer<wire_ConnectRequest> req,
   ) {
     return _wire_connect(
       port_,
-      config,
-      seed,
+      req,
     );
   }
 
-  late final _wire_connectPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Int64, ffi.Pointer<wire_Config>, ffi.Pointer<wire_uint_8_list>)>>('wire_connect');
-  late final _wire_connect = _wire_connectPtr
-      .asFunction<void Function(int, ffi.Pointer<wire_Config>, ffi.Pointer<wire_uint_8_list>)>();
+  late final _wire_connectPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_ConnectRequest>)>>(
+          'wire_connect');
+  late final _wire_connect =
+      _wire_connectPtr.asFunction<void Function(int, ffi.Pointer<wire_ConnectRequest>)>();
 
   void wire_is_initialized(
     int port_,
@@ -5578,15 +5590,6 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _new_box_autoadd_check_message_request_0 = _new_box_autoadd_check_message_request_0Ptr
       .asFunction<ffi.Pointer<wire_CheckMessageRequest> Function()>();
 
-  ffi.Pointer<wire_Config> new_box_autoadd_config_0() {
-    return _new_box_autoadd_config_0();
-  }
-
-  late final _new_box_autoadd_config_0Ptr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<wire_Config> Function()>>('new_box_autoadd_config_0');
-  late final _new_box_autoadd_config_0 =
-      _new_box_autoadd_config_0Ptr.asFunction<ffi.Pointer<wire_Config> Function()>();
-
   ffi.Pointer<wire_ConfigureNodeRequest> new_box_autoadd_configure_node_request_0() {
     return _new_box_autoadd_configure_node_request_0();
   }
@@ -5596,6 +5599,16 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
           'new_box_autoadd_configure_node_request_0');
   late final _new_box_autoadd_configure_node_request_0 = _new_box_autoadd_configure_node_request_0Ptr
       .asFunction<ffi.Pointer<wire_ConfigureNodeRequest> Function()>();
+
+  ffi.Pointer<wire_ConnectRequest> new_box_autoadd_connect_request_0() {
+    return _new_box_autoadd_connect_request_0();
+  }
+
+  late final _new_box_autoadd_connect_request_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_ConnectRequest> Function()>>(
+          'new_box_autoadd_connect_request_0');
+  late final _new_box_autoadd_connect_request_0 =
+      _new_box_autoadd_connect_request_0Ptr.asFunction<ffi.Pointer<wire_ConnectRequest> Function()>();
 
   ffi.Pointer<wire_GreenlightCredentials> new_box_autoadd_greenlight_credentials_0() {
     return _new_box_autoadd_greenlight_credentials_0();
@@ -6012,9 +6025,6 @@ final class wire_Config extends ffi.Struct {
 
   external ffi.Pointer<wire_uint_8_list> api_key;
 
-  @ffi.Bool()
-  external bool restore_only;
-
   @ffi.Double()
   external double maxfee_percent;
 
@@ -6022,6 +6032,14 @@ final class wire_Config extends ffi.Struct {
   external int exemptfee_msat;
 
   external wire_NodeConfig node_config;
+}
+
+final class wire_ConnectRequest extends ffi.Struct {
+  external wire_Config config;
+
+  external ffi.Pointer<wire_uint_8_list> seed;
+
+  external ffi.Pointer<ffi.Bool> restore_only;
 }
 
 final class wire_ConfigureNodeRequest extends ffi.Struct {

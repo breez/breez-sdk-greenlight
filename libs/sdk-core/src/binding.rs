@@ -33,16 +33,16 @@ use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
 use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
-    ConfigureNodeRequest, EnvironmentType, ListPaymentsRequest, LnUrlCallbackStatus,
-    LnUrlPayRequest, LnUrlWithdrawRequest, LnUrlWithdrawResult, MaxReverseSwapAmountResponse,
-    NodeConfig, NodeCredentials, OpenChannelFeeRequest, OpenChannelFeeResponse,
-    PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, PrepareRefundRequest,
-    PrepareRefundResponse, ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse,
-    RedeemOnchainFundsRequest, RedeemOnchainFundsResponse, RefundRequest, RefundResponse,
-    ReportIssueRequest, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
-    SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
-    SendSpontaneousPaymentRequest, ServiceHealthCheckResponse, SignMessageRequest,
-    SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
+    ConfigureNodeRequest, ConnectRequest, EnvironmentType, ListPaymentsRequest,
+    LnUrlCallbackStatus, LnUrlPayRequest, LnUrlWithdrawRequest, LnUrlWithdrawResult,
+    MaxReverseSwapAmountResponse, NodeConfig, NodeCredentials, OpenChannelFeeRequest,
+    OpenChannelFeeResponse, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse,
+    PrepareRefundRequest, PrepareRefundResponse, ReceiveOnchainRequest, ReceivePaymentRequest,
+    ReceivePaymentResponse, RedeemOnchainFundsRequest, RedeemOnchainFundsResponse, RefundRequest,
+    RefundResponse, ReportIssueRequest, ReverseSwapFeesRequest, ReverseSwapInfo,
+    ReverseSwapPairInfo, SendOnchainRequest, SendOnchainResponse, SendPaymentRequest,
+    SendPaymentResponse, SendSpontaneousPaymentRequest, ServiceHealthCheckResponse,
+    SignMessageRequest, SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
 };
 
 /*
@@ -58,13 +58,13 @@ static LOG_INIT: OnceCell<bool> = OnceCell::new();
 /*  Breez Services API's */
 
 /// Wrapper around [BreezServices::connect] which also initializes SDK logging
-pub fn connect(config: Config, seed: Vec<u8>) -> Result<()> {
+pub fn connect(req: ConnectRequest) -> Result<()> {
     block_on(async move {
         let mut locked = BREEZ_SERVICES_INSTANCE.lock().await;
         match *locked {
             None => {
                 let breez_services =
-                    BreezServices::connect(config, seed, Box::new(BindingEventListener {})).await?;
+                    BreezServices::connect(req, Box::new(BindingEventListener {})).await?;
 
                 *locked = Some(breez_services);
                 Ok(())

@@ -429,9 +429,6 @@ enum BreezSDKMapper {
             }
             apiKey = apiKeyTmp
         }
-        guard let restoreOnly = config["restoreOnly"] as? Bool else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "restoreOnly", typeName: "Config"))
-        }
         guard let maxfeePercent = config["maxfeePercent"] as? Double else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "maxfeePercent", typeName: "Config"))
         }
@@ -452,7 +449,6 @@ enum BreezSDKMapper {
             paymentTimeoutSec: paymentTimeoutSec,
             defaultLspId: defaultLspId,
             apiKey: apiKey,
-            restoreOnly: restoreOnly,
             maxfeePercent: maxfeePercent,
             exemptfeeMsat: exemptfeeMsat,
             nodeConfig: nodeConfig
@@ -469,7 +465,6 @@ enum BreezSDKMapper {
             "paymentTimeoutSec": config.paymentTimeoutSec,
             "defaultLspId": config.defaultLspId == nil ? nil : config.defaultLspId,
             "apiKey": config.apiKey == nil ? nil : config.apiKey,
-            "restoreOnly": config.restoreOnly,
             "maxfeePercent": config.maxfeePercent,
             "exemptfeeMsat": config.exemptfeeMsat,
             "nodeConfig": dictionaryOf(nodeConfig: config.nodeConfig),
@@ -527,6 +522,55 @@ enum BreezSDKMapper {
 
     static func arrayOf(configureNodeRequestList: [ConfigureNodeRequest]) -> [Any] {
         return configureNodeRequestList.map { v -> [String: Any?] in dictionaryOf(configureNodeRequest: v) }
+    }
+
+    static func asConnectRequest(connectRequest: [String: Any?]) throws -> ConnectRequest {
+        guard let configTmp = connectRequest["config"] as? [String: Any?] else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "config", typeName: "ConnectRequest"))
+        }
+        let config = try asConfig(config: configTmp)
+
+        guard let seed = connectRequest["seed"] as? [UInt8] else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "seed", typeName: "ConnectRequest"))
+        }
+        var restoreOnly: Bool?
+        if hasNonNilKey(data: connectRequest, key: "restoreOnly") {
+            guard let restoreOnlyTmp = connectRequest["restoreOnly"] as? Bool else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "restoreOnly"))
+            }
+            restoreOnly = restoreOnlyTmp
+        }
+
+        return ConnectRequest(
+            config: config,
+            seed: seed,
+            restoreOnly: restoreOnly
+        )
+    }
+
+    static func dictionaryOf(connectRequest: ConnectRequest) -> [String: Any?] {
+        return [
+            "config": dictionaryOf(config: connectRequest.config),
+            "seed": connectRequest.seed,
+            "restoreOnly": connectRequest.restoreOnly == nil ? nil : connectRequest.restoreOnly,
+        ]
+    }
+
+    static func asConnectRequestList(arr: [Any]) throws -> [ConnectRequest] {
+        var list = [ConnectRequest]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var connectRequest = try asConnectRequest(connectRequest: val)
+                list.append(connectRequest)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "ConnectRequest"))
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(connectRequestList: [ConnectRequest]) -> [Any] {
+        return connectRequestList.map { v -> [String: Any?] in dictionaryOf(connectRequest: v) }
     }
 
     static func asCurrencyInfo(currencyInfo: [String: Any?]) throws -> CurrencyInfo {

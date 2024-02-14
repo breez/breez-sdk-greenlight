@@ -386,7 +386,6 @@ fun asConfig(config: ReadableMap): Config? {
                 "workingDir",
                 "network",
                 "paymentTimeoutSec",
-                "restoreOnly",
                 "maxfeePercent",
                 "exemptfeeMsat",
                 "nodeConfig",
@@ -403,7 +402,6 @@ fun asConfig(config: ReadableMap): Config? {
     val paymentTimeoutSec = config.getInt("paymentTimeoutSec").toUInt()
     val defaultLspId = if (hasNonNullKey(config, "defaultLspId")) config.getString("defaultLspId") else null
     val apiKey = if (hasNonNullKey(config, "apiKey")) config.getString("apiKey") else null
-    val restoreOnly = config.getBoolean("restoreOnly")
     val maxfeePercent = config.getDouble("maxfeePercent")
     val exemptfeeMsat = config.getDouble("exemptfeeMsat").toULong()
     val nodeConfig = config.getMap("nodeConfig")?.let { asNodeConfig(it) }!!
@@ -416,7 +414,6 @@ fun asConfig(config: ReadableMap): Config? {
         paymentTimeoutSec,
         defaultLspId,
         apiKey,
-        restoreOnly,
         maxfeePercent,
         exemptfeeMsat,
         nodeConfig,
@@ -433,7 +430,6 @@ fun readableMapOf(config: Config): ReadableMap {
         "paymentTimeoutSec" to config.paymentTimeoutSec,
         "defaultLspId" to config.defaultLspId,
         "apiKey" to config.apiKey,
-        "restoreOnly" to config.restoreOnly,
         "maxfeePercent" to config.maxfeePercent,
         "exemptfeeMsat" to config.exemptfeeMsat,
         "nodeConfig" to readableMapOf(config.nodeConfig),
@@ -485,6 +481,46 @@ fun asConfigureNodeRequestList(arr: ReadableArray): List<ConfigureNodeRequest> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asConfigureNodeRequest(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
+fun asConnectRequest(connectRequest: ReadableMap): ConnectRequest? {
+    if (!validateMandatoryFields(
+            connectRequest,
+            arrayOf(
+                "config",
+                "seed",
+            ),
+        )
+    ) {
+        return null
+    }
+    val config = connectRequest.getMap("config")?.let { asConfig(it) }!!
+    val seed = connectRequest.getArray("seed")?.let { asUByteList(it) }!!
+    val restoreOnly = if (hasNonNullKey(connectRequest, "restoreOnly")) connectRequest.getBoolean("restoreOnly") else null
+    return ConnectRequest(
+        config,
+        seed,
+        restoreOnly,
+    )
+}
+
+fun readableMapOf(connectRequest: ConnectRequest): ReadableMap {
+    return readableMapOf(
+        "config" to readableMapOf(connectRequest.config),
+        "seed" to readableArrayOf(connectRequest.seed),
+        "restoreOnly" to connectRequest.restoreOnly,
+    )
+}
+
+fun asConnectRequestList(arr: ReadableArray): List<ConnectRequest> {
+    val list = ArrayList<ConnectRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asConnectRequest(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
         }
     }

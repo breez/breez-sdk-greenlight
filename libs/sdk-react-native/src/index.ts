@@ -77,7 +77,6 @@ export type Config = {
     paymentTimeoutSec: number
     defaultLspId?: string
     apiKey?: string
-    restoreOnly: boolean
     maxfeePercent: number
     exemptfeeMsat: number
     nodeConfig: NodeConfig
@@ -85,6 +84,12 @@ export type Config = {
 
 export type ConfigureNodeRequest = {
     closeToAddress?: string
+}
+
+export type ConnectRequest = {
+    config: Config
+    seed: number[]
+    restoreOnly?: boolean
 }
 
 export type CurrencyInfo = {

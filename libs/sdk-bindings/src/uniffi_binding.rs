@@ -4,10 +4,10 @@ use breez_sdk_core::{
     parse_invoice as sdk_parse_invoice, AesSuccessActionDataDecrypted, AesSuccessActionDataResult,
     BackupFailedData, BackupStatus, BitcoinAddressData, BreezEvent, BreezServices,
     BuyBitcoinProvider, BuyBitcoinRequest, BuyBitcoinResponse, ChannelState, CheckMessageRequest,
-    CheckMessageResponse, ClosedChannelPaymentDetails, Config, ConfigureNodeRequest, CurrencyInfo,
-    EnvironmentType, EventListener, FeeratePreset, FiatCurrency, GreenlightCredentials,
-    GreenlightNodeConfig, HealthCheckStatus, InputType, InvoicePaidDetails, LNInvoice,
-    ListPaymentsRequest, LnPaymentDetails, LnUrlAuthRequestData, LnUrlCallbackStatus,
+    CheckMessageResponse, ClosedChannelPaymentDetails, Config, ConfigureNodeRequest,
+    ConnectRequest, CurrencyInfo, EnvironmentType, EventListener, FeeratePreset, FiatCurrency,
+    GreenlightCredentials, GreenlightNodeConfig, HealthCheckStatus, InputType, InvoicePaidDetails,
+    LNInvoice, ListPaymentsRequest, LnPaymentDetails, LnUrlAuthRequestData, LnUrlCallbackStatus,
     LnUrlErrorData, LnUrlPayErrorData, LnUrlPayRequest, LnUrlPayRequestData, LnUrlPayResult,
     LnUrlPaySuccessData, LnUrlWithdrawRequest, LnUrlWithdrawRequestData, LnUrlWithdrawResult,
     LnUrlWithdrawSuccessData, LocaleOverrides, LocalizedName, LogEntry, LogStream, LspInformation,
@@ -88,12 +88,11 @@ pub fn static_backup(req: StaticBackupRequest) -> SdkResult<StaticBackupResponse
 /// * `event_listener` - Listener to SDK events
 ///
 pub fn connect(
-    config: Config,
-    seed: Vec<u8>,
+    req: ConnectRequest,
     event_listener: Box<dyn EventListener>,
 ) -> Result<Arc<BlockingBreezServices>, ConnectError> {
     rt().block_on(async move {
-        let breez_services = BreezServices::connect(config, seed, event_listener).await?;
+        let breez_services = BreezServices::connect(req, event_listener).await?;
 
         Ok(Arc::new(BlockingBreezServices { breez_services }))
     })

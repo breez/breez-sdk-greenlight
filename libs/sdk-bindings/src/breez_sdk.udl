@@ -139,7 +139,6 @@ dictionary Config {
     u32 payment_timeout_sec;
     string? default_lsp_id;
     string? api_key;
-    boolean restore_only;
     f64 maxfee_percent;
     u64 exemptfee_msat;
     NodeConfig node_config;
@@ -189,6 +188,12 @@ dictionary NodeState {
 
 dictionary ConfigureNodeRequest {
     string? close_to_address;
+};
+
+dictionary ConnectRequest {
+    Config config;
+    sequence<u8> seed;
+    boolean? restore_only = null;
 };
 
 dictionary SignMessageRequest {
@@ -892,7 +897,7 @@ interface BlockingBreezServices {
 namespace breez_sdk {  
 
  [Throws=ConnectError]
- BlockingBreezServices connect(Config config, sequence<u8> seed, EventListener listener);
+ BlockingBreezServices connect(ConnectRequest req, EventListener listener);
 
  [Throws=SdkError]
  void set_log_stream(LogStream log_stream);

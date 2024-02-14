@@ -72,6 +72,7 @@ impl Greenlight {
     pub async fn connect(
         config: Config,
         seed: Vec<u8>,
+        restore_only: Option<bool>,
         persister: Arc<SqliteStorage>,
     ) -> NodeResult<Self> {
         // Derive the encryption key from the seed
@@ -98,7 +99,7 @@ impl Greenlight {
             parsed_credentials = match Self::recover(config.network, seed.clone()).await {
                 Ok(creds) => Ok(creds),
                 Err(_) => {
-                    match config.restore_only {
+                    match restore_only.unwrap_or(false) {
                         false => {
                             // If we got here it means we failed to recover so we need to register a new node
                             info!("Failed to recover node, registering new one");
