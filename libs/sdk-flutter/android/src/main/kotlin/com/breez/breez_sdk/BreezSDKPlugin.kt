@@ -2,7 +2,6 @@ package com.breez.breez_sdk
 
 import android.os.Handler
 import android.os.Looper
-import androidx.annotation.NonNull
 import breez_sdk.LogEntry
 import breez_sdk.setLogStream
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -26,19 +25,26 @@ class BreezSDKPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
     private lateinit var channel: MethodChannel
     private var eventChannel: EventChannel? = null
     private var eventSink: EventChannel.EventSink? = null
-    private var nodeLogStream: SdkLogListener? = null
 
-    override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+    override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, "breez_sdk")
         channel.setMethodCallHandler(this)
 
         eventChannel =
             EventChannel(flutterPluginBinding.binaryMessenger, "breez_sdk_node_logs")
-        setNodeLogStream()
+        val nodeLogStream = setNodeLogStream()
+        nodeLogStream.subscribe(CoroutineScope(Dispatchers.Main)) { l: LogEntry ->
+            val runnable = Runnable {
+                val data = mapOf("level" to l.level, "line" to l.line)
+                eventSink?.success(data)
+            }
+
+            handler.post(runnable)
+        }
         eventChannel?.setStreamHandler(this)
     }
 
-    override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
+    override fun onMethodCall(call: MethodCall, result: Result) {
         if (call.method == "getPlatformVersion") {
             result.success("Android ${android.os.Build.VERSION.RELEASE}")
         } else {
@@ -46,10 +52,9 @@ class BreezSDKPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
         }
     }
 
-    override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
+    override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
     }
-
 
     override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
         eventSink = events
@@ -60,23 +65,23 @@ class BreezSDKPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
         eventChannel = null
     }
 
-    fun setNodeLogStream(): SdkLogListener {
-        // Set Log Stream
-        if (nodeLogStream == null) {
-            try {
-                nodeLogStream = SdkLogListener()
-                setLogStream(nodeLogStream!!)
-                nodeLogStream!!.subscribe(CoroutineScope(Dispatchers.Main)) { l: LogEntry ->
-                    val runnable = Runnable {
-                        val data = mapOf("level" to l.level, "line" to l.line)
-                        eventSink?.success(data)
-                    }
+    companion object {
+        private var nodeLogStream: SdkLogListener? = null
 
-                    handler.post(runnable)
+        fun setNodeLogStream(): SdkLogListener {
+            // Set Log Stream
+            if (nodeLogStream == null) {
+                try {
+                    nodeLogStream = SdkLogListener()
+                    setLogStream(nodeLogStream!!)
+                } catch (e: Throwable) {
+                    // Reset nodeLogStream if setting log stream fails
+                    e.printStackTrace()
+                    nodeLogStream = null
+                    throw e
                 }
-            } catch (ex: Throwable) {
             }
+            return nodeLogStream!!
         }
-        return nodeLogStream!!
     }
 }
