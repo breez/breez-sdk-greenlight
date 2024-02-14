@@ -10,6 +10,62 @@ use crate::{
 
 pub type SdkResult<T, E = SdkError> = Result<T, E>;
 
+/// Error returned by [crate::breez_services::BreezServices::connect]
+#[derive(Debug, Error)]
+pub enum BreezServicesError {
+    #[error("Generic: {err}")]
+    Generic { err: String },
+
+    #[error("Restore only: {err}")]
+    RestoreOnly { err: String },
+
+    #[error("Service connectivity: {err}")]
+    ServiceConnectivity { err: String },
+}
+
+impl From<bip32::Error> for BreezServicesError {
+    fn from(err: bip32::Error) -> Self {
+        Self::Generic {
+            err: err.to_string(),
+        }
+    }
+}
+
+impl From<NodeError> for BreezServicesError {
+    fn from(value: NodeError) -> Self {
+        match value {
+            NodeError::RestoreOnly(err) => Self::RestoreOnly {
+                err: err.to_string(),
+            },
+            NodeError::ServiceConnectivity(err) => Self::ServiceConnectivity {
+                err: err.to_string(),
+            },
+            _ => Self::Generic {
+                err: value.to_string(),
+            },
+        }
+    }
+}
+
+impl From<PersistError> for BreezServicesError {
+    fn from(err: PersistError) -> Self {
+        Self::Generic {
+            err: err.to_string(),
+        }
+    }
+}
+
+impl From<SdkError> for BreezServicesError {
+    fn from(value: SdkError) -> Self {
+        match value {
+            SdkError::ServiceConnectivity { err } => Self::ServiceConnectivity { err },
+            _ => Self::Generic {
+                err: value.to_string(),
+            },
+        }
+    }
+}
+
 /// Error returned by [crate::breez_services::BreezServices::lnurl_auth]
 #[derive(Debug, Error)]
 pub enum LnUrlAuthError {
@@ -402,14 +458,6 @@ impl From<anyhow::Error> for SdkError {
 
 impl From<crate::bitcoin::hashes::hex::Error> for SdkError {
     fn from(err: crate::bitcoin::hashes::hex::Error) -> Self {
-        Self::Generic {
-            err: err.to_string(),
-        }
-    }
-}
-
-impl From<bip32::Error> for SdkError {
-    fn from(err: bip32::Error) -> Self {
         Self::Generic {
             err: err.to_string(),
         }

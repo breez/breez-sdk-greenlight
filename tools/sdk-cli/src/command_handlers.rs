@@ -89,6 +89,7 @@ pub(crate) async fn handle_command(
             partner_cert,
             partner_key,
             invite_code,
+            restore_only,
         } => {
             let mut config = persistence
                 .get_or_create_config()?
@@ -103,6 +104,7 @@ pub(crate) async fn handle_command(
                 })
             }
 
+            config.restore_only = restore_only;
             config.node_config = NodeConfig::Greenlight {
                 config: GreenlightNodeConfig {
                     partner_credentials,
@@ -111,7 +113,7 @@ pub(crate) async fn handle_command(
             };
 
             connect(config, &persistence.get_or_create_seed()).await?;
-            Ok("Node was registered succesfully".to_string())
+            Ok("Node was connected successfully".to_string())
         }
         Commands::Sync {} => {
             sdk()?.sync().await?;

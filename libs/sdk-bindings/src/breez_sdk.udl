@@ -15,6 +15,13 @@ enum SdkError {
 };
 
 [Error]
+enum BreezServicesError {
+    "Generic",
+    "RestoreOnly",
+    "ServiceConnectivity",
+};
+
+[Error]
 enum LnUrlAuthError {
     "Generic",
     "InvalidUri",
@@ -132,6 +139,7 @@ dictionary Config {
     u32 payment_timeout_sec;
     string? default_lsp_id;
     string? api_key;
+    boolean restore_only;
     f64 maxfee_percent;
     u64 exemptfee_msat;
     NodeConfig node_config;
@@ -883,7 +891,7 @@ interface BlockingBreezServices {
 
 namespace breez_sdk {  
 
- [Throws=SdkError]
+ [Throws=BreezServicesError]
  BlockingBreezServices connect(Config config, sequence<u8> seed, EventListener listener);
 
  [Throws=SdkError]

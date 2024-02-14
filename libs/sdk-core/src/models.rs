@@ -456,6 +456,8 @@ pub struct Config {
     pub payment_timeout_sec: u32,
     pub default_lsp_id: Option<String>,
     pub api_key: Option<String>,
+    /// When true only restores an existing node and otherwise returns an error
+    pub restore_only: bool,
     /// Maps to the CLN `maxfeepercent` config when paying invoices (`lightning-pay`)
     pub maxfee_percent: f64,
     /// Maps to the CLN `exemptfee` config when paying invoices (`lightning-pay`)
@@ -474,6 +476,7 @@ impl Config {
             payment_timeout_sec: 60,
             default_lsp_id: None,
             api_key: Some(api_key),
+            restore_only: false,
             maxfee_percent: 1.0,
             exemptfee_msat: 20000,
             node_config,
@@ -490,6 +493,7 @@ impl Config {
             payment_timeout_sec: 60,
             default_lsp_id: None,
             api_key: Some(api_key),
+            restore_only: false,
             maxfee_percent: 0.5,
             exemptfee_msat: 20000,
             node_config,

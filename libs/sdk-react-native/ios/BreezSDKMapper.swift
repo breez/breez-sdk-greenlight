@@ -429,6 +429,9 @@ enum BreezSDKMapper {
             }
             apiKey = apiKeyTmp
         }
+        guard let restoreOnly = config["restoreOnly"] as? Bool else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "restoreOnly", typeName: "Config"))
+        }
         guard let maxfeePercent = config["maxfeePercent"] as? Double else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "maxfeePercent", typeName: "Config"))
         }
@@ -449,6 +452,7 @@ enum BreezSDKMapper {
             paymentTimeoutSec: paymentTimeoutSec,
             defaultLspId: defaultLspId,
             apiKey: apiKey,
+            restoreOnly: restoreOnly,
             maxfeePercent: maxfeePercent,
             exemptfeeMsat: exemptfeeMsat,
             nodeConfig: nodeConfig
@@ -465,6 +469,7 @@ enum BreezSDKMapper {
             "paymentTimeoutSec": config.paymentTimeoutSec,
             "defaultLspId": config.defaultLspId == nil ? nil : config.defaultLspId,
             "apiKey": config.apiKey == nil ? nil : config.apiKey,
+            "restoreOnly": config.restoreOnly,
             "maxfeePercent": config.maxfeePercent,
             "exemptfeeMsat": config.exemptfeeMsat,
             "nodeConfig": dictionaryOf(nodeConfig: config.nodeConfig),

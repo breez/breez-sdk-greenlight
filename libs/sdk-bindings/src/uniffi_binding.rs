@@ -91,7 +91,7 @@ pub fn connect(
     config: Config,
     seed: Vec<u8>,
     event_listener: Box<dyn EventListener>,
-) -> SdkResult<Arc<BlockingBreezServices>> {
+) -> Result<Arc<BlockingBreezServices>, BreezServicesError> {
     rt().block_on(async move {
         let breez_services = BreezServices::connect(config, seed, event_listener).await?;
 

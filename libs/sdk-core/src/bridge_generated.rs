@@ -1115,6 +1115,7 @@ impl support::IntoDart for Config {
             self.payment_timeout_sec.into_into_dart().into_dart(),
             self.default_lsp_id.into_dart(),
             self.api_key.into_dart(),
+            self.restore_only.into_into_dart().into_dart(),
             self.maxfee_percent.into_into_dart().into_dart(),
             self.exemptfee_msat.into_into_dart().into_dart(),
             self.node_config.into_into_dart().into_dart(),

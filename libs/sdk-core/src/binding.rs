@@ -22,8 +22,8 @@ use tokio::sync::Mutex;
 use crate::breez_services::{self, BreezEvent, BreezServices, EventListener};
 use crate::chain::RecommendedFees;
 use crate::error::{
-    LnUrlAuthError, LnUrlPayError, LnUrlWithdrawError, ReceiveOnchainError, ReceivePaymentError,
-    SdkError, SendOnchainError, SendPaymentError,
+    BreezServicesError, LnUrlAuthError, LnUrlPayError, LnUrlWithdrawError, ReceiveOnchainError,
+    ReceivePaymentError, SdkError, SendOnchainError, SendPaymentError,
 };
 use crate::fiat::{FiatCurrency, Rate};
 use crate::input_parser::{self, InputType, LnUrlAuthRequestData};
@@ -69,12 +69,12 @@ pub fn connect(config: Config, seed: Vec<u8>) -> Result<()> {
                 *locked = Some(breez_services);
                 Ok(())
             }
-            Some(_) => Err(SdkError::Generic {
+            Some(_) => Err(BreezServicesError::Generic {
                 err: "Static node services already set, please call disconnect() first".into(),
             }),
         }
     })
-    .map_err(anyhow::Error::new::<SdkError>)
+    .map_err(anyhow::Error::new::<BreezServicesError>)
 }
 
 /// Check whether node service is initialized or not

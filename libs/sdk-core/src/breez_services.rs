@@ -4,7 +4,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
-use anyhow::{anyhow, ensure, Result};
+use anyhow::{anyhow, Result};
 use bip39::*;
 use bitcoin::hashes::hex::ToHex;
 use bitcoin::hashes::{sha256, Hash};
@@ -63,6 +63,10 @@ use crate::swap_out::boltzswap::BoltzApi;
 use crate::swap_out::reverseswap::BTCSendSwap;
 use crate::BuyBitcoinProvider::Moonpay;
 use crate::*;
+
+use self::error::BreezServicesError;
+
+pub type BreezServicesResult<T, E = BreezServicesError> = Result<T, E>;
 
 /// Trait that can be used to react to various [BreezEvent]s emitted by the SDK.
 pub trait EventListener: Send + Sync {
@@ -186,7 +190,7 @@ impl BreezServices {
         config: Config,
         seed: Vec<u8>,
         event_listener: Box<dyn EventListener>,
-    ) -> SdkResult<Arc<BreezServices>> {
+    ) -> BreezServicesResult<Arc<BreezServices>> {
         let sdk_version = option_env!("CARGO_PKG_VERSION").unwrap_or_default();
         let sdk_git_hash = option_env!("SDK_GIT_HASH").unwrap_or_default();
         info!("SDK v{sdk_version} ({sdk_git_hash})");
@@ -208,9 +212,14 @@ impl BreezServices {
     ///
     /// It should be called only once when the app is started, regardless whether the app is sent to
     /// background and back.
-    async fn start(self: &Arc<BreezServices>) -> Result<()> {
+    async fn start(self: &Arc<BreezServices>) -> BreezServicesResult<()> {
         let mut started = self.started.lock().await;
-        ensure!(!*started, "BreezServices already started");
+        ensure_sdk!(
+            !*started,
+            BreezServicesError::Generic {
+                err: "BreezServices already started".into()
+            }
+        );
 
         let start = Instant::now();
         self.start_background_tasks().await?;
@@ -1166,7 +1175,7 @@ impl BreezServices {
     /// Starts the BreezServices background threads.
     ///
     /// Internal method. Should only be used as part of [BreezServices::start]
-    async fn start_background_tasks(self: &Arc<BreezServices>) -> Result<()> {
+    async fn start_background_tasks(self: &Arc<BreezServices>) -> SdkResult<()> {
         // start the signer
         let (shutdown_signer_sender, signer_signer_receiver) = mpsc::channel(1);
         self.start_signer(signer_signer_receiver).await;
@@ -1718,9 +1727,9 @@ impl BreezServicesBuilder {
     pub async fn build(
         &self,
         event_listener: Option<Box<dyn EventListener>>,
-    ) -> SdkResult<Arc<BreezServices>> {
+    ) -> BreezServicesResult<Arc<BreezServices>> {
         if self.node_api.is_none() && self.seed.is_none() {
-            return Err(SdkError::Generic {
+            return Err(BreezServicesError::Generic {
                 err: "Either node_api or both credentials and seed should be provided".into(),
             });
         }
@@ -1745,10 +1754,7 @@ impl BreezServicesBuilder {
                 self.seed.clone().unwrap(),
                 persister.clone(),
             )
-            .await
-            .map_err(|e| SdkError::ServiceConnectivity {
-                err: format!("(Greenlight) Failed to connect: {e}"),
-            })?;
+            .await?;
             let gl_arc = Arc::new(greenlight);
             node_api = Some(gl_arc.clone());
             if backup_transport.is_none() {
@@ -1757,7 +1763,7 @@ impl BreezServicesBuilder {
         }
 
         if backup_transport.is_none() {
-            return Err(SdkError::Generic {
+            return Err(BreezServicesError::Generic {
                 err: "State synchronizer should be provided".into(),
             });
         }

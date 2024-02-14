@@ -483,6 +483,9 @@ class Config {
   final String? defaultLspId;
   final String? apiKey;
 
+  /// When true only restores an existing node and otherwise returns an error
+  final bool restoreOnly;
+
   /// Maps to the CLN `maxfeepercent` config when paying invoices (`lightning-pay`)
   final double maxfeePercent;
 
@@ -499,6 +502,7 @@ class Config {
     required this.paymentTimeoutSec,
     this.defaultLspId,
     this.apiKey,
+    required this.restoreOnly,
     required this.maxfeePercent,
     required this.exemptfeeMsat,
     required this.nodeConfig,
@@ -3080,7 +3084,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   Config _wire2api_config(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 11) throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
+    if (arr.length != 12) throw Exception('unexpected arr length: expect 12 but see ${arr.length}');
     return Config(
       breezserver: _wire2api_String(arr[0]),
       chainnotifierUrl: _wire2api_String(arr[1]),
@@ -3090,9 +3094,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       paymentTimeoutSec: _wire2api_u32(arr[5]),
       defaultLspId: _wire2api_opt_String(arr[6]),
       apiKey: _wire2api_opt_String(arr[7]),
-      maxfeePercent: _wire2api_f64(arr[8]),
-      exemptfeeMsat: _wire2api_u64(arr[9]),
-      nodeConfig: _wire2api_node_config(arr[10]),
+      restoreOnly: _wire2api_bool(arr[8]),
+      maxfeePercent: _wire2api_f64(arr[9]),
+      exemptfeeMsat: _wire2api_u64(arr[10]),
+      nodeConfig: _wire2api_node_config(arr[11]),
     );
   }
 
@@ -4474,6 +4479,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.payment_timeout_sec = api2wire_u32(apiObj.paymentTimeoutSec);
     wireObj.default_lsp_id = api2wire_opt_String(apiObj.defaultLspId);
     wireObj.api_key = api2wire_opt_String(apiObj.apiKey);
+    wireObj.restore_only = api2wire_bool(apiObj.restoreOnly);
     wireObj.maxfee_percent = api2wire_f64(apiObj.maxfeePercent);
     wireObj.exemptfee_msat = api2wire_u64(apiObj.exemptfeeMsat);
     _api_fill_to_wire_node_config(apiObj.nodeConfig, wireObj.node_config);
@@ -6005,6 +6011,9 @@ final class wire_Config extends ffi.Struct {
   external ffi.Pointer<wire_uint_8_list> default_lsp_id;
 
   external ffi.Pointer<wire_uint_8_list> api_key;
+
+  @ffi.Bool()
+  external bool restore_only;
 
   @ffi.Double()
   external double maxfee_percent;

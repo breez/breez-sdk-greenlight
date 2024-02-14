@@ -77,6 +77,7 @@ export type Config = {
     paymentTimeoutSec: number
     defaultLspId?: string
     apiKey?: string
+    restoreOnly: boolean
     maxfeePercent: number
     exemptfeeMsat: number
     nodeConfig: NodeConfig

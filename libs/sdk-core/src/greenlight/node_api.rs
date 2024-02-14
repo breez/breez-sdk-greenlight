@@ -73,7 +73,7 @@ impl Greenlight {
         config: Config,
         seed: Vec<u8>,
         persister: Arc<SqliteStorage>,
-    ) -> Result<Self> {
+    ) -> NodeResult<Self> {
         // Derive the encryption key from the seed
         let signer = Signer::new(seed.clone(), config.network.into(), TlsConfig::new()?)?;
         let encryption_key = Self::derive_bip32_key(
@@ -92,22 +92,29 @@ impl Greenlight {
         // Query for the existing credentials
         let mut parsed_credentials =
             Self::get_node_credentials(config.network, &signer, persister.clone())?
-                .ok_or(anyhow!("No credentials found"));
+                .ok_or(NodeError::Generic(anyhow!("No credentials found")));
         if parsed_credentials.is_err() {
             info!("No credentials found, trying to recover existing node");
             parsed_credentials = match Self::recover(config.network, seed.clone()).await {
                 Ok(creds) => Ok(creds),
                 Err(_) => {
-                    // If we got here it means we failed to recover so we need to register a new node
-                    info!("Failed to recover node, registering new one");
-                    let credentials = Self::register(
-                        config.clone().network,
-                        seed.clone(),
-                        register_credentials.partner_credentials,
-                        register_credentials.invite_code,
-                    )
-                    .await?;
-                    Ok(credentials)
+                    match config.restore_only {
+                        false => {
+                            // If we got here it means we failed to recover so we need to register a new node
+                            info!("Failed to recover node, registering new one");
+                            let credentials = Self::register(
+                                config.clone().network,
+                                seed.clone(),
+                                register_credentials.partner_credentials,
+                                register_credentials.invite_code,
+                            )
+                            .await?;
+                            Ok(credentials)
+                        }
+                        true => {
+                            return Err(NodeError::RestoreOnly(anyhow!("Node does not exist")));
+                        }
+                    }
                 }
             }
         }
@@ -123,11 +130,11 @@ impl Greenlight {
                         Greenlight::new(config, seed, creds, persister)
                     }
                     None => {
-                        return Err(anyhow!("Failed to encrypt credentials"));
+                        return Err(NodeError::Generic(anyhow!("Failed to encrypt credentials")));
                     }
                 }
             }
-            Err(_) => Err(anyhow!("Failed to get gl credentials")),
+            Err(_) => Err(NodeError::Generic(anyhow!("Failed to get gl credentials"))),
         };
         res
     }
@@ -137,7 +144,7 @@ impl Greenlight {
         seed: Vec<u8>,
         connection_credentials: GreenlightCredentials,
         persister: Arc<SqliteStorage>,
-    ) -> Result<Greenlight> {
+    ) -> NodeResult<Greenlight> {
         let greenlight_network = sdk_config.network.into();
         let tls_config = TlsConfig::new()?.identity(
             connection_credentials.device_cert,

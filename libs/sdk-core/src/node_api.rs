@@ -41,6 +41,9 @@ pub enum NodeError {
     #[error(transparent)]
     Persistance(PersistError),
 
+    #[error("Restore only: {0}")]
+    RestoreOnly(anyhow::Error),
+
     #[error("Route too expensive: {0}")]
     RouteTooExpensive(anyhow::Error),
 
