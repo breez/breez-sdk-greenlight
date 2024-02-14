@@ -449,7 +449,7 @@ extension SDKConfig on Config {
     int? paymentTimeoutSec,
     String? defaultLspId,
     String? apiKey,
-    bool restoreOnly,
+    bool? restoreOnly,
     double? maxfeePercent,
     int? exemptfeeMsat,
     NodeConfig? nodeConfig,
