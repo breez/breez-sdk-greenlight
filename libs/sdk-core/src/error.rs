@@ -12,7 +12,7 @@ pub type SdkResult<T, E = SdkError> = Result<T, E>;
 
 /// Error returned by [crate::breez_services::BreezServices::connect]
 #[derive(Debug, Error)]
-pub enum BreezServicesError {
+pub enum ConnectError {
     #[error("Generic: {err}")]
     Generic { err: String },
 
@@ -23,7 +23,7 @@ pub enum BreezServicesError {
     ServiceConnectivity { err: String },
 }
 
-impl From<bip32::Error> for BreezServicesError {
+impl From<bip32::Error> for ConnectError {
     fn from(err: bip32::Error) -> Self {
         Self::Generic {
             err: err.to_string(),
@@ -31,7 +31,7 @@ impl From<bip32::Error> for BreezServicesError {
     }
 }
 
-impl From<NodeError> for BreezServicesError {
+impl From<NodeError> for ConnectError {
     fn from(value: NodeError) -> Self {
         match value {
             NodeError::RestoreOnly(err) => Self::RestoreOnly {
@@ -47,7 +47,7 @@ impl From<NodeError> for BreezServicesError {
     }
 }
 
-impl From<PersistError> for BreezServicesError {
+impl From<PersistError> for ConnectError {
     fn from(err: PersistError) -> Self {
         Self::Generic {
             err: err.to_string(),
@@ -55,7 +55,7 @@ impl From<PersistError> for BreezServicesError {
     }
 }
 
-impl From<SdkError> for BreezServicesError {
+impl From<SdkError> for ConnectError {
     fn from(value: SdkError) -> Self {
         match value {
             SdkError::ServiceConnectivity { err } => Self::ServiceConnectivity { err },

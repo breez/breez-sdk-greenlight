@@ -22,7 +22,7 @@ use tokio::sync::Mutex;
 use crate::breez_services::{self, BreezEvent, BreezServices, EventListener};
 use crate::chain::RecommendedFees;
 use crate::error::{
-    BreezServicesError, LnUrlAuthError, LnUrlPayError, LnUrlWithdrawError, ReceiveOnchainError,
+    ConnectError, LnUrlAuthError, LnUrlPayError, LnUrlWithdrawError, ReceiveOnchainError,
     ReceivePaymentError, SdkError, SendOnchainError, SendPaymentError,
 };
 use crate::fiat::{FiatCurrency, Rate};
@@ -69,12 +69,12 @@ pub fn connect(config: Config, seed: Vec<u8>) -> Result<()> {
                 *locked = Some(breez_services);
                 Ok(())
             }
-            Some(_) => Err(BreezServicesError::Generic {
+            Some(_) => Err(ConnectError::Generic {
                 err: "Static node services already set, please call disconnect() first".into(),
             }),
         }
     })
-    .map_err(anyhow::Error::new::<BreezServicesError>)
+    .map_err(anyhow::Error::new::<ConnectError>)
 }
 
 /// Check whether node service is initialized or not

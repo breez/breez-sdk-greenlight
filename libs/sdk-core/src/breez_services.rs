@@ -64,9 +64,9 @@ use crate::swap_out::reverseswap::BTCSendSwap;
 use crate::BuyBitcoinProvider::Moonpay;
 use crate::*;
 
-use self::error::BreezServicesError;
+use self::error::ConnectError;
 
-pub type BreezServicesResult<T, E = BreezServicesError> = Result<T, E>;
+pub type BreezServicesResult<T, E = ConnectError> = Result<T, E>;
 
 /// Trait that can be used to react to various [BreezEvent]s emitted by the SDK.
 pub trait EventListener: Send + Sync {
@@ -216,7 +216,7 @@ impl BreezServices {
         let mut started = self.started.lock().await;
         ensure_sdk!(
             !*started,
-            BreezServicesError::Generic {
+            ConnectError::Generic {
                 err: "BreezServices already started".into()
             }
         );
@@ -1729,7 +1729,7 @@ impl BreezServicesBuilder {
         event_listener: Option<Box<dyn EventListener>>,
     ) -> BreezServicesResult<Arc<BreezServices>> {
         if self.node_api.is_none() && self.seed.is_none() {
-            return Err(BreezServicesError::Generic {
+            return Err(ConnectError::Generic {
                 err: "Either node_api or both credentials and seed should be provided".into(),
             });
         }
@@ -1763,7 +1763,7 @@ impl BreezServicesBuilder {
         }
 
         if backup_transport.is_none() {
-            return Err(BreezServicesError::Generic {
+            return Err(ConnectError::Generic {
                 err: "State synchronizer should be provided".into(),
             });
         }

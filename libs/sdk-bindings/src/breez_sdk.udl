@@ -15,7 +15,7 @@ enum SdkError {
 };
 
 [Error]
-enum BreezServicesError {
+enum ConnectError {
     "Generic",
     "RestoreOnly",
     "ServiceConnectivity",
@@ -891,7 +891,7 @@ interface BlockingBreezServices {
 
 namespace breez_sdk {  
 
- [Throws=BreezServicesError]
+ [Throws=ConnectError]
  BlockingBreezServices connect(Config config, sequence<u8> seed, EventListener listener);
 
  [Throws=SdkError]
