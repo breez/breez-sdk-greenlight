@@ -9,7 +9,6 @@ use gl_client::signer::model::greenlight::amount::Unit;
 use gl_client::signer::model::greenlight::Amount;
 use gl_client::signer::model::greenlight::PayStatus;
 use lightning::ln::PaymentSecret;
-use lightning_invoice::{Currency, InvoiceBuilder, RawBolt11Invoice};
 use rand::distributions::{Alphanumeric, DistString, Standard};
 use rand::rngs::OsRng;
 use rand::{random, Rng};
@@ -32,6 +31,7 @@ use crate::error::{ReceivePaymentError, SdkError, SdkResult};
 use crate::fiat::{FiatCurrency, Rate};
 use crate::grpc::{PaymentInformation, RegisterPaymentNotificationResponse, RegisterPaymentReply};
 use crate::invoice::{InvoiceError, InvoiceResult};
+use crate::lightning_invoice::{Currency, InvoiceBuilder, RawBolt11Invoice};
 use crate::lsp::LspInformation;
 use crate::models::{
     FiatAPI, LspAPI, NodeState, Payment, Swap, SwapperAPI, SyncResponse, TlvEntry,
@@ -474,7 +474,7 @@ impl MockNodeAPI {
         status: Option<PayStatus>,
     ) -> NodeResult<Payment> {
         let inv = bolt11
-            .parse::<lightning_invoice::Bolt11Invoice>()
+            .parse::<crate::lightning_invoice::Bolt11Invoice>()
             .map_err(|e| NodeError::Generic(anyhow::Error::new(e)))?;
 
         self.add_dummy_payment(inv, preimage, status).await
@@ -491,7 +491,7 @@ impl MockNodeAPI {
     /// Adds a dummy payment.
     pub(crate) async fn add_dummy_payment(
         &self,
-        inv: lightning_invoice::Bolt11Invoice,
+        inv: crate::lightning_invoice::Bolt11Invoice,
         preimage: Option<sha256::Hash>,
         status: Option<PayStatus>,
     ) -> NodeResult<Payment> {
@@ -646,7 +646,7 @@ impl MoonPayApi for MockBreezServer {
 
 pub(crate) fn rand_invoice_with_description_hash(
     expected_desc: String,
-) -> InvoiceResult<lightning_invoice::Bolt11Invoice> {
+) -> InvoiceResult<crate::lightning_invoice::Bolt11Invoice> {
     let preimage = sha256::Hash::hash(&rand_vec_u8(10));
 
     rand_invoice_with_description_hash_and_preimage(expected_desc, preimage)
@@ -655,7 +655,7 @@ pub(crate) fn rand_invoice_with_description_hash(
 pub(crate) fn rand_invoice_with_description_hash_and_preimage(
     expected_desc: String,
     preimage: sha256::Hash,
-) -> InvoiceResult<lightning_invoice::Bolt11Invoice> {
+) -> InvoiceResult<crate::lightning_invoice::Bolt11Invoice> {
     let expected_desc_hash = Hash::hash(expected_desc.as_bytes());
 
     let hashed_preimage = Message::from_hashed_data::<sha256::Hash>(&preimage[..]);
