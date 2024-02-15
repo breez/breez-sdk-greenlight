@@ -4,6 +4,7 @@ import breez_sdk.LogEntry
 import breez_sdk.LogStream
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -25,4 +26,6 @@ class SdkLogListener : LogStream {
 
     fun subscribe(scope: CoroutineScope, block: suspend (LogEntry) -> Unit) =
         logEvents.onEach(block).launchIn(scope)
+
+    fun unsubscribe(scope: CoroutineScope) = scope.cancel()
 }
