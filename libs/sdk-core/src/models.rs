@@ -266,7 +266,7 @@ impl FullReverseSwapInfo {
     /// - checks if the payment hash is the same preimage hash (derived from local secret bytes)
     /// included in the create request
     pub(crate) fn validate_hodl_invoice(&self, amount_req_msat: u64) -> ReverseSwapResult<()> {
-        let inv: lightning_invoice::Bolt11Invoice = self.invoice.parse()?;
+        let inv: crate::lightning_invoice::Bolt11Invoice = self.invoice.parse()?;
 
         // Validate if received invoice has the same amount as requested by the user
         let amount_from_invoice_msat = inv.amount_milli_satoshis().unwrap_or_default();

@@ -51,8 +51,8 @@ impl From<hex::FromHexError> for ReverseSwapError {
     }
 }
 
-impl From<lightning_invoice::ParseOrSemanticError> for ReverseSwapError {
-    fn from(err: lightning_invoice::ParseOrSemanticError) -> Self {
+impl From<crate::lightning_invoice::ParseOrSemanticError> for ReverseSwapError {
+    fn from(err: crate::lightning_invoice::ParseOrSemanticError) -> Self {
         Self::Generic(anyhow::Error::new(err))
     }
 }
