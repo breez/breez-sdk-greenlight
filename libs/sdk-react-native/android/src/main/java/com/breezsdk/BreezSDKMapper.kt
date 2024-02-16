@@ -3295,7 +3295,7 @@ fun asSwapInfo(swapInfo: ReadableMap): SwapInfo? {
             swapInfo,
             arrayOf(
                 "bitcoinAddress",
-                "createdAt",
+                "confirmedAt",
                 "lockHeight",
                 "paymentHash",
                 "preimage",
@@ -3318,7 +3318,7 @@ fun asSwapInfo(swapInfo: ReadableMap): SwapInfo? {
         return null
     }
     val bitcoinAddress = swapInfo.getString("bitcoinAddress")!!
-    val createdAt = swapInfo.getDouble("createdAt").toLong()
+    val confirmedAt = swapInfo.getDouble("confirmedAt").toLong()
     val lockHeight = swapInfo.getDouble("lockHeight").toLong()
     val paymentHash = swapInfo.getArray("paymentHash")?.let { asUByteList(it) }!!
     val preimage = swapInfo.getArray("preimage")?.let { asUByteList(it) }!!
@@ -3347,7 +3347,7 @@ fun asSwapInfo(swapInfo: ReadableMap): SwapInfo? {
         }
     return SwapInfo(
         bitcoinAddress,
-        createdAt,
+        confirmedAt,
         lockHeight,
         paymentHash,
         preimage,
@@ -3373,7 +3373,7 @@ fun asSwapInfo(swapInfo: ReadableMap): SwapInfo? {
 fun readableMapOf(swapInfo: SwapInfo): ReadableMap {
     return readableMapOf(
         "bitcoinAddress" to swapInfo.bitcoinAddress,
-        "createdAt" to swapInfo.createdAt,
+        "confirmedAt" to swapInfo.confirmedAt,
         "lockHeight" to swapInfo.lockHeight,
         "paymentHash" to readableArrayOf(swapInfo.paymentHash),
         "preimage" to readableArrayOf(swapInfo.preimage),
