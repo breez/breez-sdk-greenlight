@@ -61,6 +61,7 @@ use crate::models::ChannelState;
 use crate::models::ClosedChannelPaymentDetails;
 use crate::models::Config;
 use crate::models::ConfigureNodeRequest;
+use crate::models::ConnectRequest;
 use crate::models::EnvironmentType;
 use crate::models::GreenlightCredentials;
 use crate::models::GreenlightNodeConfig;
@@ -120,11 +121,7 @@ use crate::models::UnspentTransactionOutput;
 
 // Section: wire functions
 
-fn wire_connect_impl(
-    port_: MessagePort,
-    config: impl Wire2Api<Config> + UnwindSafe,
-    seed: impl Wire2Api<Vec<u8>> + UnwindSafe,
-) {
+fn wire_connect_impl(port_: MessagePort, req: impl Wire2Api<ConnectRequest> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, (), _>(
         WrapInfo {
             debug_name: "connect",
@@ -132,9 +129,8 @@ fn wire_connect_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_config = config.wire2api();
-            let api_seed = seed.wire2api();
-            move |task_callback| connect(api_config, api_seed)
+            let api_req = req.wire2api();
+            move |task_callback| connect(api_req)
         },
     )
 }

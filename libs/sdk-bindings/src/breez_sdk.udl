@@ -15,6 +15,13 @@ enum SdkError {
 };
 
 [Error]
+enum ConnectError {
+    "Generic",
+    "RestoreOnly",
+    "ServiceConnectivity",
+};
+
+[Error]
 enum LnUrlAuthError {
     "Generic",
     "InvalidUri",
@@ -181,6 +188,12 @@ dictionary NodeState {
 
 dictionary ConfigureNodeRequest {
     string? close_to_address;
+};
+
+dictionary ConnectRequest {
+    Config config;
+    sequence<u8> seed;
+    boolean? restore_only = null;
 };
 
 dictionary SignMessageRequest {
@@ -883,8 +896,8 @@ interface BlockingBreezServices {
 
 namespace breez_sdk {  
 
- [Throws=SdkError]
- BlockingBreezServices connect(Config config, sequence<u8> seed, EventListener listener);
+ [Throws=ConnectError]
+ BlockingBreezServices connect(ConnectRequest req, EventListener listener);
 
  [Throws=SdkError]
  void set_log_stream(LogStream log_stream);

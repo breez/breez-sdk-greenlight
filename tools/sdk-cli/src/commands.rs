@@ -34,6 +34,10 @@ pub(crate) enum Commands {
         /// The optional greenlight invite code
         #[clap(name = "invite_code", short = 'i', long = "invite_code")]
         invite_code: Option<String>,
+
+        /// Only restore existing nodes
+        #[clap(short = 'r', long = "restore_only")]
+        restore_only: bool,
     },
 
     /// Sync local data with remote node

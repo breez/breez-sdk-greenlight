@@ -4,14 +4,14 @@ use std::sync::Arc;
 use anyhow::{anyhow, Context, Error, Result};
 use breez_sdk_core::InputType::{LnUrlAuth, LnUrlPay, LnUrlWithdraw};
 use breez_sdk_core::{
-    parse, BreezEvent, BreezServices, BuyBitcoinRequest, CheckMessageRequest, EventListener,
-    GreenlightCredentials, ListPaymentsRequest, LnUrlPayRequest, LnUrlWithdrawRequest,
-    MetadataFilter, PrepareRedeemOnchainFundsRequest, PrepareRefundRequest, ReceiveOnchainRequest,
-    ReceivePaymentRequest, RedeemOnchainFundsRequest, RefundRequest, ReportIssueRequest,
-    ReportPaymentFailureDetails, ReverseSwapFeesRequest, SendOnchainRequest, SendPaymentRequest,
-    SendSpontaneousPaymentRequest, SignMessageRequest, StaticBackupRequest,
+    parse, BreezEvent, BreezServices, BuyBitcoinRequest, CheckMessageRequest, ConnectRequest,
+    EventListener, GreenlightCredentials, ListPaymentsRequest, LnUrlPayRequest,
+    LnUrlWithdrawRequest, MetadataFilter, PrepareRedeemOnchainFundsRequest, PrepareRefundRequest,
+    ReceiveOnchainRequest, ReceivePaymentRequest, RedeemOnchainFundsRequest, RefundRequest,
+    ReportIssueRequest, ReportPaymentFailureDetails, ReverseSwapFeesRequest, SendOnchainRequest,
+    SendPaymentRequest, SendSpontaneousPaymentRequest, SignMessageRequest, StaticBackupRequest,
 };
-use breez_sdk_core::{Config, GreenlightNodeConfig, NodeConfig};
+use breez_sdk_core::{GreenlightNodeConfig, NodeConfig};
 use once_cell::sync::OnceCell;
 use qrcode_rs::render::unicode;
 use qrcode_rs::{EcLevel, QrCode};
@@ -45,9 +45,8 @@ impl EventListener for CliEventListener {
     }
 }
 
-async fn connect(config: Config, seed: &[u8]) -> Result<()> {
-    let service =
-        BreezServices::connect(config, seed.to_vec(), Box::new(CliEventListener {})).await?;
+async fn connect(req: ConnectRequest) -> Result<()> {
+    let service = BreezServices::connect(req, Box::new(CliEventListener {})).await?;
     BREEZ_SERVICES
         .set(service)
         .map_err(|_| anyhow!("Breez Services already initialized"))?;
@@ -89,6 +88,7 @@ pub(crate) async fn handle_command(
             partner_cert,
             partner_key,
             invite_code,
+            restore_only,
         } => {
             let mut config = persistence
                 .get_or_create_config()?
@@ -110,8 +110,13 @@ pub(crate) async fn handle_command(
                 },
             };
 
-            connect(config, &persistence.get_or_create_seed()).await?;
-            Ok("Node was registered succesfully".to_string())
+            connect(ConnectRequest {
+                config,
+                seed: persistence.get_or_create_seed(),
+                restore_only: Some(restore_only),
+            })
+            .await?;
+            Ok("Node was connected successfully".to_string())
         }
         Commands::Sync {} => {
             sdk()?.sync().await?;

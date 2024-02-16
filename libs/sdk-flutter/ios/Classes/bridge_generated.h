@@ -59,6 +59,12 @@ typedef struct wire_Config {
   struct wire_NodeConfig node_config;
 } wire_Config;
 
+typedef struct wire_ConnectRequest {
+  struct wire_Config config;
+  struct wire_uint_8_list *seed;
+  bool *restore_only;
+} wire_ConnectRequest;
+
 typedef struct wire_ConfigureNodeRequest {
   struct wire_uint_8_list *close_to_address;
 } wire_ConfigureNodeRequest;
@@ -256,7 +262,7 @@ uintptr_t new_dart_opaque(Dart_Handle handle);
 
 intptr_t init_frb_dart_api_dl(void *obj);
 
-void wire_connect(int64_t port_, struct wire_Config *config, struct wire_uint_8_list *seed);
+void wire_connect(int64_t port_, struct wire_ConnectRequest *req);
 
 void wire_is_initialized(int64_t port_);
 
@@ -376,9 +382,9 @@ struct wire_BuyBitcoinRequest *new_box_autoadd_buy_bitcoin_request_0(void);
 
 struct wire_CheckMessageRequest *new_box_autoadd_check_message_request_0(void);
 
-struct wire_Config *new_box_autoadd_config_0(void);
-
 struct wire_ConfigureNodeRequest *new_box_autoadd_configure_node_request_0(void);
+
+struct wire_ConnectRequest *new_box_autoadd_connect_request_0(void);
 
 struct wire_GreenlightCredentials *new_box_autoadd_greenlight_credentials_0(void);
 
@@ -505,8 +511,8 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_bool_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_buy_bitcoin_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_check_message_request_0);
-    dummy_var ^= ((int64_t) (void*) new_box_autoadd_config_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_configure_node_request_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_connect_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_greenlight_credentials_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_greenlight_node_config_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_i64_0);

@@ -567,6 +567,14 @@ pub struct ConfigureNodeRequest {
     pub close_to_address: Option<String>,
 }
 
+/// Represents a connect request.
+pub struct ConnectRequest {
+    pub config: Config,
+    pub seed: Vec<u8>,
+    /// If true, only restores an existing node and otherwise result in an error
+    pub restore_only: Option<bool>,
+}
+
 /// Different types of supported filters which can be applied when retrieving the transaction list
 #[derive(PartialEq)]
 pub enum PaymentTypeFilter {

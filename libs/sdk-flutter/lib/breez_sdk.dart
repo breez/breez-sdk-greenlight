@@ -79,15 +79,12 @@ class BreezSDK {
   ///
   /// # Arguments
   ///
-  /// * `config` - The sdk configuration
-  /// * `seed` - The node private key
+  /// * `req` - The connect request containing the `config` sdk configuration and `seed` node private key
   Future connect({
-    required Config config,
-    required Uint8List seed,
+    required ConnectRequest req,
   }) async {
     await _lnToolkit.connect(
-      config: config,
-      seed: seed,
+      req: req,
     );
     await fetchNodeData();
   }

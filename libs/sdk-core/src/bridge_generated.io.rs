@@ -2,8 +2,8 @@ use super::*;
 // Section: wire functions
 
 #[no_mangle]
-pub extern "C" fn wire_connect(port_: i64, config: *mut wire_Config, seed: *mut wire_uint_8_list) {
-    wire_connect_impl(port_, config, seed)
+pub extern "C" fn wire_connect(port_: i64, req: *mut wire_ConnectRequest) {
+    wire_connect_impl(port_, req)
 }
 
 #[no_mangle]
@@ -304,13 +304,13 @@ pub extern "C" fn new_box_autoadd_check_message_request_0() -> *mut wire_CheckMe
 }
 
 #[no_mangle]
-pub extern "C" fn new_box_autoadd_config_0() -> *mut wire_Config {
-    support::new_leak_box_ptr(wire_Config::new_with_null_ptr())
+pub extern "C" fn new_box_autoadd_configure_node_request_0() -> *mut wire_ConfigureNodeRequest {
+    support::new_leak_box_ptr(wire_ConfigureNodeRequest::new_with_null_ptr())
 }
 
 #[no_mangle]
-pub extern "C" fn new_box_autoadd_configure_node_request_0() -> *mut wire_ConfigureNodeRequest {
-    support::new_leak_box_ptr(wire_ConfigureNodeRequest::new_with_null_ptr())
+pub extern "C" fn new_box_autoadd_connect_request_0() -> *mut wire_ConnectRequest {
+    support::new_leak_box_ptr(wire_ConnectRequest::new_with_null_ptr())
 }
 
 #[no_mangle]
@@ -512,16 +512,16 @@ impl Wire2Api<CheckMessageRequest> for *mut wire_CheckMessageRequest {
         Wire2Api::<CheckMessageRequest>::wire2api(*wrap).into()
     }
 }
-impl Wire2Api<Config> for *mut wire_Config {
-    fn wire2api(self) -> Config {
-        let wrap = unsafe { support::box_from_leak_ptr(self) };
-        Wire2Api::<Config>::wire2api(*wrap).into()
-    }
-}
 impl Wire2Api<ConfigureNodeRequest> for *mut wire_ConfigureNodeRequest {
     fn wire2api(self) -> ConfigureNodeRequest {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
         Wire2Api::<ConfigureNodeRequest>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<ConnectRequest> for *mut wire_ConnectRequest {
+    fn wire2api(self) -> ConnectRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<ConnectRequest>::wire2api(*wrap).into()
     }
 }
 impl Wire2Api<GreenlightCredentials> for *mut wire_GreenlightCredentials {
@@ -716,6 +716,15 @@ impl Wire2Api<ConfigureNodeRequest> for wire_ConfigureNodeRequest {
     fn wire2api(self) -> ConfigureNodeRequest {
         ConfigureNodeRequest {
             close_to_address: self.close_to_address.wire2api(),
+        }
+    }
+}
+impl Wire2Api<ConnectRequest> for wire_ConnectRequest {
+    fn wire2api(self) -> ConnectRequest {
+        ConnectRequest {
+            config: self.config.wire2api(),
+            seed: self.seed.wire2api(),
+            restore_only: self.restore_only.wire2api(),
         }
     }
 }
@@ -1051,6 +1060,14 @@ pub struct wire_Config {
 #[derive(Clone)]
 pub struct wire_ConfigureNodeRequest {
     close_to_address: *mut wire_uint_8_list,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_ConnectRequest {
+    config: wire_Config,
+    seed: *mut wire_uint_8_list,
+    restore_only: *mut bool,
 }
 
 #[repr(C)]
@@ -1395,6 +1412,22 @@ impl NewWithNullPtr for wire_ConfigureNodeRequest {
 }
 
 impl Default for wire_ConfigureNodeRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_ConnectRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            config: Default::default(),
+            seed: core::ptr::null_mut(),
+            restore_only: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_ConnectRequest {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }

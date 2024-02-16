@@ -89,7 +89,7 @@ const App = () => {
                 const config = await defaultConfig(EnvironmentType.PRODUCTION, BuildConfig.BREEZ_API_KEY, nodeConfig)
                 addLine("defaultConfig", JSON.stringify(config))
 
-                await connect(config, seed, eventHandler)
+                await connect({ config, seed }, eventHandler)
                 addLine("connect", null)
 
                 const nodeState = await nodeInfo()

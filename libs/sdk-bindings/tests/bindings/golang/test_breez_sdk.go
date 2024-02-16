@@ -32,7 +32,8 @@ func main() {
 
 	inviteCode := "code"
 	config := breez_sdk.DefaultConfig(breez_sdk.EnvironmentTypeStaging, "", breez_sdk.NodeConfigGreenlight{Config: breez_sdk.GreenlightNodeConfig{PartnerCredentials: nil, InviteCode: &inviteCode}})
-	sdkServices, err := breez_sdk.Connect(config, seed, breezListener)
+	connectRequest := breez_sdk.ConnectRequest{Config: config, Seed: seed}
+	sdkServices, err := breez_sdk.Connect(connectRequest, breezListener)
 
 	if err != nil {
 		log.Fatalf("Connect failed: %#v", err)
