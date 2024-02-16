@@ -761,7 +761,7 @@ mod tests {
     fn populate_sync_table(persister: Arc<SqliteStorage>) {
         let tested_swap_info = SwapInfo {
             bitcoin_address: String::from("1"),
-            created_at: 0,
+            confirmed_at: 0,
             lock_height: 100,
             payment_hash: vec![1],
             preimage: vec![2],

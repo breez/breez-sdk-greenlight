@@ -1763,7 +1763,7 @@ class SwapInfo {
   final String bitcoinAddress;
 
   /// Relative time lock start, received from [SwapperAPI::create_swap].
-  final int createdAt;
+  final int confirmedAt;
 
   /// Relative time lock for the timeout for the script to be redeemed before swap fails.
   final int lockHeight;
@@ -1828,7 +1828,7 @@ class SwapInfo {
 
   const SwapInfo({
     required this.bitcoinAddress,
-    required this.createdAt,
+    required this.confirmedAt,
     required this.lockHeight,
     required this.paymentHash,
     required this.preimage,
@@ -3882,7 +3882,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     if (arr.length != 21) throw Exception('unexpected arr length: expect 21 but see ${arr.length}');
     return SwapInfo(
       bitcoinAddress: _wire2api_String(arr[0]),
-      createdAt: _wire2api_i64(arr[1]),
+      confirmedAt: _wire2api_i64(arr[1]),
       lockHeight: _wire2api_i64(arr[2]),
       paymentHash: _wire2api_uint_8_list(arr[3]),
       preimage: _wire2api_uint_8_list(arr[4]),

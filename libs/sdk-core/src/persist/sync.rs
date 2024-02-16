@@ -449,7 +449,7 @@ mod tests {
     fn create_test_swap_info() -> SwapInfo {
         SwapInfo {
             bitcoin_address: rand_string(10),
-            created_at: 10,
+            confirmed_at: 10,
             lock_height: random(),
             payment_hash: rand_vec_u8(10),
             preimage: rand_vec_u8(10),

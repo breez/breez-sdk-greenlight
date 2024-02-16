@@ -192,7 +192,7 @@ impl BTCReceiveSwap {
 
         let swap_info = SwapInfo {
             bitcoin_address: swap_reply.bitcoin_address,
-            created_at: 0,
+            confirmed_at: 0,
             lock_height: swap_reply.lock_height,
             payment_hash: hash.clone(),
             preimage: swap_keys.preimage,
@@ -364,8 +364,8 @@ impl BTCReceiveSwap {
         }
 
         debug!(
-            "updating swap on-chain info {:?}: confirmed_sats={:?} refund_tx_ids={:?}, confirmed_tx_ids={:?} swap_status={:?}",
-            bitcoin_address.clone(), utxos.confirmed_sats(), swap_info.refund_tx_ids, utxos.confirmed_tx_ids(), swap_status
+            "updating swap on-chain info {:?}: confirmed_sats={:?} refund_tx_ids={:?}, confirmed_tx_ids={:?} swap_status={:?}, confirmed_block={:?}",
+            bitcoin_address.clone(), utxos.confirmed_sats(), swap_info.refund_tx_ids, utxos.confirmed_tx_ids(), swap_status, confirmed_block
         );
 
         let payment = self
@@ -387,6 +387,7 @@ impl BTCReceiveSwap {
             utxos.unconfirmed_tx_ids(),
             utxos.confirmed_sats(),
             utxos.confirmed_tx_ids(),
+            confirmed_block,
             swap_status,
         )?)
     }

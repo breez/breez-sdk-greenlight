@@ -514,7 +514,7 @@ enum ReverseSwapStatus {
 
 dictionary SwapInfo {
     string bitcoin_address;
-    i64 created_at;
+    i64 confirmed_at;
     i64 lock_height;
     sequence<u8> payment_hash;
     sequence<u8> preimage;

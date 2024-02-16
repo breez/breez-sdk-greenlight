@@ -31,7 +31,7 @@ impl SqliteStorage {
          VALUES (:bitcoin_address, :created_at, :lock_height, :payment_hash, :preimage, :private_key, :public_key, :swapper_public_key, :script, :min_allowed_deposit, :max_allowed_deposit)",
          named_params! {
              ":bitcoin_address": swap_info.bitcoin_address,
-             ":created_at": swap_info.created_at,
+             ":created_at": swap_info.confirmed_at,
              ":lock_height": swap_info.lock_height,
              ":payment_hash": swap_info.payment_hash,
              ":preimage": swap_info.preimage,
@@ -182,17 +182,19 @@ impl SqliteStorage {
         unconfirmed_tx_ids: Vec<String>,
         confirmed_sats: u64,
         confirmed_tx_ids: Vec<String>,
+        confirmed_at: u32,
         status: SwapStatus,
     ) -> PersistResult<SwapInfo> {
         self.get_connection()?.execute(
-            "UPDATE swaps_info SET unconfirmed_sats=:unconfirmed_sats, unconfirmed_tx_ids=:unconfirmed_tx_ids, confirmed_sats=:confirmed_sats, confirmed_tx_ids=:confirmed_tx_ids, status=:status where bitcoin_address=:bitcoin_address",
+            "UPDATE swaps_info SET unconfirmed_sats=:unconfirmed_sats, unconfirmed_tx_ids=:unconfirmed_tx_ids, confirmed_sats=:confirmed_sats, confirmed_tx_ids=:confirmed_tx_ids, status=:status, created_at=:confirmed_at where bitcoin_address=:bitcoin_address",
             named_params! {
              ":unconfirmed_sats": unconfirmed_sats,
              ":unconfirmed_tx_ids": StringArray(unconfirmed_tx_ids),
              ":confirmed_sats": confirmed_sats,
              ":bitcoin_address": bitcoin_address,             
              ":confirmed_tx_ids": StringArray(confirmed_tx_ids),
-             ":status": status as u32
+             ":status": status as u32,
+             ":confirmed_at": confirmed_at,
             },
         )?;
         Ok(self.get_swap_info_by_address(bitcoin_address)?.unwrap())
@@ -307,7 +309,7 @@ impl SqliteStorage {
             .unwrap_or(StringArray(vec![]));
         Ok(SwapInfo {
             bitcoin_address: row.get("bitcoin_address")?,
-            created_at: row.get("created_at")?,
+            confirmed_at: row.get("created_at")?,
             lock_height: row.get("lock_height")?,
             payment_hash: row.get("payment_hash")?,
             preimage: row.get("preimage")?,
@@ -361,7 +363,7 @@ mod tests {
         storage.init()?;
         let tested_swap_info = SwapInfo {
             bitcoin_address: String::from("1"),
-            created_at: 0,
+            confirmed_at: 0,
             lock_height: 100,
             payment_hash: vec![1],
             preimage: vec![2],
