@@ -186,7 +186,7 @@ impl SqliteStorage {
         status: SwapStatus,
     ) -> PersistResult<SwapInfo> {
         self.get_connection()?.execute(
-            "UPDATE swaps_info SET unconfirmed_sats=:unconfirmed_sats, unconfirmed_tx_ids=:unconfirmed_tx_ids, confirmed_sats=:confirmed_sats, confirmed_tx_ids=:confirmed_tx_ids, status=:status, created_at=:confirmed_at where bitcoin_address=:bitcoin_address",
+            "UPDATE swaps_info SET unconfirmed_sats=:unconfirmed_sats, unconfirmed_tx_ids=:unconfirmed_tx_ids, confirmed_sats=:confirmed_sats, confirmed_tx_ids=:confirmed_tx_ids, status=:status where bitcoin_address=:bitcoin_address",
             named_params! {
              ":unconfirmed_sats": unconfirmed_sats,
              ":unconfirmed_tx_ids": StringArray(unconfirmed_tx_ids),
@@ -194,7 +194,13 @@ impl SqliteStorage {
              ":bitcoin_address": bitcoin_address,             
              ":confirmed_tx_ids": StringArray(confirmed_tx_ids),
              ":status": status as u32,
+            },
+        )?;
+        self.get_connection()?.execute(
+            "UPDATE swaps SET created_at=:confirmed_at WHERE bitcoin_address=:bitcoin_address",
+            named_params! {
              ":confirmed_at": confirmed_at,
+             ":bitcoin_address": bitcoin_address,
             },
         )?;
         Ok(self.get_swap_info_by_address(bitcoin_address)?.unwrap())
@@ -410,6 +416,7 @@ mod tests {
             vec![String::from("333"), String::from("444")],
             0,
             vec![],
+            0,
             SwapStatus::Initial,
         )?;
         let in_progress = list_in_progress_swaps(&storage)?;
@@ -421,6 +428,7 @@ mod tests {
             vec![],
             20,
             vec![String::from("333"), String::from("444")],
+            555,
             SwapStatus::Initial,
         )?;
         let in_progress = list_in_progress_swaps(&storage)?;
@@ -432,6 +440,7 @@ mod tests {
             vec![],
             20,
             vec![String::from("333"), String::from("444")],
+            555,
             SwapStatus::Expired,
         )?;
         storage.insert_swap_refund_tx_ids(
@@ -473,6 +482,7 @@ mod tests {
             updated_swap.confirmed_tx_ids,
             vec![String::from("333"), String::from("444")]
         );
+        assert_eq!(updated_swap.confirmed_at, 555);
         assert_eq!(updated_swap.status, SwapStatus::Expired);
 
         Ok(())
