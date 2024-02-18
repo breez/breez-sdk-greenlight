@@ -48,9 +48,8 @@ tonic = { version = "^0.8", features = [
     "tls-webpki-roots",
 ] }
 lazy_static = "^1.4.0"
-lightning = "0.0.118"
-# Keep in sync with version used in gl-client
-lightning-invoice = "0.26.0"
+# Keep in sync with the version used by gl-client
+lightning = "0.0.116"
 log = "0.4"
 once_cell = "1"
 openssl = { version = "0.10", features = ["vendored"] }

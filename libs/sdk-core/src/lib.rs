@@ -190,9 +190,9 @@ mod support;
 mod swap_in;
 mod swap_out;
 
-// Use the bitcoin crate version from gl_client for consistency
-// Re-export it so that others using the SDK can re-use it
-pub use gl_client::bitcoin;
+// Re-use crates from gl_client for consistency
+use gl_client::bitcoin;
+use gl_client::lightning_invoice;
 
 pub use breez_services::{
     mnemonic_to_seed, BackupFailedData, BreezEvent, BreezServices, CheckMessageRequest,

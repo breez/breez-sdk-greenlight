@@ -528,8 +528,7 @@ dependencies = [
  "gl-client",
  "hex",
  "lazy_static",
- "lightning 0.0.118",
- "lightning-invoice 0.26.0",
+ "lightning",
  "log",
  "miniz_oxide",
  "mockito",
@@ -566,7 +565,6 @@ dependencies = [
  "breez-sdk-core",
  "camino",
  "flutter_rust_bridge",
- "lightning-invoice 0.24.0",
  "log",
  "once_cell",
  "thiserror",
@@ -1776,15 +1774,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lightning"
-version = "0.0.118"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d52cec5fa9382154fe9671e8df93095b800c7d77abc66e2a5ef839d672521c5e"
-dependencies = [
- "bitcoin 0.29.2",
-]
-
-[[package]]
 name = "lightning-invoice"
 version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1793,21 +1782,7 @@ dependencies = [
  "bech32",
  "bitcoin 0.29.2",
  "bitcoin_hashes 0.11.0",
- "lightning 0.0.116",
- "num-traits",
- "secp256k1 0.24.3",
-]
-
-[[package]]
-name = "lightning-invoice"
-version = "0.26.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3eb24878b0f4ef75f020976c886d9ad1503867802329cc963e0ab4623ea3b25c"
-dependencies = [
- "bech32",
- "bitcoin 0.29.2",
- "bitcoin_hashes 0.11.0",
- "lightning 0.0.118",
+ "lightning",
  "num-traits",
  "secp256k1 0.24.3",
 ]
@@ -3690,8 +3665,8 @@ dependencies = [
  "hashbrown 0.8.2",
  "hex",
  "itertools",
- "lightning 0.0.116",
- "lightning-invoice 0.24.0",
+ "lightning",
+ "lightning-invoice",
  "log",
  "scopeguard",
  "serde",

@@ -5,11 +5,11 @@ use anyhow::anyhow;
 use hex::ToHex;
 use lightning::routing::gossip::RoutingFees;
 use lightning::routing::*;
-use lightning_invoice::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
 use crate::bitcoin::secp256k1::{self, PublicKey};
+use crate::lightning_invoice::*;
 use crate::Network;
 
 pub type InvoiceResult<T, E = InvoiceError> = Result<T, E>;
@@ -26,20 +26,20 @@ pub enum InvoiceError {
     Validation(anyhow::Error),
 }
 
-impl From<lightning_invoice::CreationError> for InvoiceError {
-    fn from(err: lightning_invoice::CreationError) -> Self {
+impl From<crate::lightning_invoice::CreationError> for InvoiceError {
+    fn from(err: crate::lightning_invoice::CreationError) -> Self {
         Self::Generic(anyhow::Error::new(err))
     }
 }
 
-impl From<lightning_invoice::Bolt11ParseError> for InvoiceError {
-    fn from(err: lightning_invoice::Bolt11ParseError) -> Self {
+impl From<crate::lightning_invoice::Bolt11ParseError> for InvoiceError {
+    fn from(err: crate::lightning_invoice::Bolt11ParseError) -> Self {
         Self::Validation(anyhow::Error::new(err))
     }
 }
 
-impl From<lightning_invoice::Bolt11SemanticError> for InvoiceError {
-    fn from(err: lightning_invoice::Bolt11SemanticError) -> Self {
+impl From<crate::lightning_invoice::Bolt11SemanticError> for InvoiceError {
+    fn from(err: crate::lightning_invoice::Bolt11SemanticError) -> Self {
         Self::Validation(anyhow::Error::new(err))
     }
 }
