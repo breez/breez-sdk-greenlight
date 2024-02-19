@@ -363,6 +363,10 @@ class BreezSDK {
     return await _lnToolkit.prepareRefund(req: req);
   }
 
+  /// Iterate all historical swap addresses and fetch their current status from the blockchain.
+  /// The status is then updated in the persistent storage.
+  Future<void> rescanSwaps() async => await _lnToolkit.rescanSwaps();
+
   /* In Progress Swap API's */
 
   /// Returns an optional in-progress [SwapInfo].
