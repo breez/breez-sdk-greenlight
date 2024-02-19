@@ -393,7 +393,7 @@ impl BTCReceiveSwap {
 
     /// redeem_swap executes the final step of receiving lightning payment
     /// in exchange for the on chain funds.
-    async fn redeem_swap(&self, bitcoin_address: String) -> Result<()> {
+    pub(crate) async fn redeem_swap(&self, bitcoin_address: String) -> Result<()> {
         let swap_info = self
             .persister
             .get_swap_info_by_address(bitcoin_address.clone())?

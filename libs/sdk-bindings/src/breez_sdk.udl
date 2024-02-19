@@ -852,7 +852,10 @@ interface BlockingBreezServices {
    SwapInfo? in_progress_swap();
   
    [Throws=SdkError]
-   void rescan_swaps();   
+   void rescan_swaps();
+
+   [Throws=SdkError]
+   void redeem_swap(string swap_address);
 
    [Throws=SdkError]
    sequence<SwapInfo> list_refundables();

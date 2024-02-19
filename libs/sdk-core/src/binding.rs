@@ -422,6 +422,12 @@ pub fn rescan_swaps() -> Result<()> {
         .map_err(anyhow::Error::new::<SdkError>)
 }
 
+/// See [BreezServices::redeem_swap]
+pub fn redeem_swap(swap_address: String) -> Result<()> {
+    block_on(async { get_breez_services().await?.redeem_swap(swap_address).await })
+        .map_err(anyhow::Error::new::<SdkError>)
+}
+
 /*  In Progress Swap API's */
 
 /// See [BreezServices::in_progress_swap]

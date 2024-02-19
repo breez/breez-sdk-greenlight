@@ -494,6 +494,16 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
+    @objc(redeemSwap:resolve:reject:)
+    func redeemSwap(_ swapAddress: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            try getBreezServices().redeemSwap(swapAddress: swapAddress)
+            resolve(["status": "ok"])
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
     @objc(listRefundables:reject:)
     func listRefundables(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {

@@ -767,6 +767,17 @@ impl BreezServices {
         Ok(())
     }
 
+    /// Redeems an individual swap.
+    ///
+    /// To be used only in the context of mobile notifications, where the notification triggers
+    /// an individual redeem.
+    ///
+    /// This is taken care of automatically in the context of typical SDK usage.
+    pub async fn redeem_swap(&self, swap_address: String) -> SdkResult<()> {
+        self.btc_receive_swapper.redeem_swap(swap_address).await?;
+        Ok(())
+    }
+
     /// Lookup the reverse swap fees (see [ReverseSwapServiceAPI::fetch_reverse_swap_fees]).
     ///
     /// To get the total estimated fees for a specific amount, specify the amount to be sent in
