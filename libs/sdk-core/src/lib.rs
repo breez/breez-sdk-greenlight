@@ -192,6 +192,7 @@ mod swap_out;
 
 // Re-use crates from gl_client for consistency
 use gl_client::bitcoin;
+use gl_client::lightning;
 use gl_client::lightning_invoice;
 
 pub use breez_services::{

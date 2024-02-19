@@ -3,12 +3,12 @@ use std::time::{SystemTimeError, UNIX_EPOCH};
 
 use anyhow::anyhow;
 use hex::ToHex;
-use lightning::routing::gossip::RoutingFees;
-use lightning::routing::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
 use crate::bitcoin::secp256k1::{self, PublicKey};
+use crate::lightning::routing::gossip::RoutingFees;
+use crate::lightning::routing::*;
 use crate::lightning_invoice::*;
 use crate::Network;
 
@@ -179,7 +179,7 @@ pub fn add_routing_hints(
 
     // When merging route hints, only route hints are added that go through different nodes than ones in the invoice route hints.
     // Otherwise when not merging route hints, the invoice route hints are replaced by the provided route hints.
-    let unique_hop_hints: Vec<lightning::routing::router::RouteHint> = match route_hints.len() {
+    let unique_hop_hints: Vec<router::RouteHint> = match route_hints.len() {
         0 => invoice.route_hints(),
         _ => match merge_with_existing {
             true => {

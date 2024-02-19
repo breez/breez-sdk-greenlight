@@ -528,7 +528,6 @@ dependencies = [
  "gl-client",
  "hex",
  "lazy_static",
- "lightning",
  "log",
  "miniz_oxide",
  "mockito",

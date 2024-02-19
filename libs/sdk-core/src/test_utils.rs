@@ -8,7 +8,6 @@ use chrono::{SecondsFormat, Utc};
 use gl_client::signer::model::greenlight::amount::Unit;
 use gl_client::signer::model::greenlight::Amount;
 use gl_client::signer::model::greenlight::PayStatus;
-use lightning::ln::PaymentSecret;
 use rand::distributions::{Alphanumeric, DistString, Standard};
 use rand::rngs::OsRng;
 use rand::{random, Rng};
@@ -31,6 +30,7 @@ use crate::error::{ReceivePaymentError, SdkError, SdkResult};
 use crate::fiat::{FiatCurrency, Rate};
 use crate::grpc::{PaymentInformation, RegisterPaymentNotificationResponse, RegisterPaymentReply};
 use crate::invoice::{InvoiceError, InvoiceResult};
+use crate::lightning::ln::PaymentSecret;
 use crate::lightning_invoice::{Currency, InvoiceBuilder, RawBolt11Invoice};
 use crate::lsp::LspInformation;
 use crate::models::{
