@@ -366,6 +366,17 @@ class BreezSDK {
   /// A [SwapInfo] is in-progress if it is waiting for confirmation to be redeemed and complete the swap.
   Future<SwapInfo?> inProgressSwap() async => await _lnToolkit.inProgressSwap();
 
+  /// Redeems an individual swap.
+  ///
+  /// To be used only in the context of mobile notifications, where the notification triggers
+  /// an individual redeem.
+  ///
+  /// This is taken care of automatically in the context of typical SDK usage.
+  Future<void> redeemSwap({
+    required String swapAddress
+  }) async =>
+    await _lnToolkit.redeemSwap(swapAddress: swapAddress);
+
   /// Returns the blocking [ReverseSwapInfo]s that are in progress
   Future<List<ReverseSwapInfo>> inProgressReverseSwaps() async => _lnToolkit.inProgressReverseSwaps();
 
