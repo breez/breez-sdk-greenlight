@@ -364,6 +364,8 @@ void wire_refund(int64_t port_, struct wire_RefundRequest *req);
 
 void wire_rescan_swaps(int64_t port_);
 
+void wire_redeem_swap(int64_t port_, struct wire_uint_8_list *swap_address);
+
 void wire_in_progress_swap(int64_t port_);
 
 void wire_in_progress_reverse_swaps(int64_t port_);
@@ -502,6 +504,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_prepare_refund);
     dummy_var ^= ((int64_t) (void*) wire_refund);
     dummy_var ^= ((int64_t) (void*) wire_rescan_swaps);
+    dummy_var ^= ((int64_t) (void*) wire_redeem_swap);
     dummy_var ^= ((int64_t) (void*) wire_in_progress_swap);
     dummy_var ^= ((int64_t) (void*) wire_in_progress_reverse_swaps);
     dummy_var ^= ((int64_t) (void*) wire_open_channel_fee);
