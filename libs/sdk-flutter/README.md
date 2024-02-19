@@ -6,7 +6,7 @@ The [flutter_rust_bridge](https://github.com/fzyzcjy/flutter_rust_bridge) is use
 ## Build
 
 ### Prerequisites:
-* Flutter version `3.13.8`
+* Flutter version `3.19.0`
 * set the ANDROID_NDK_HOME env variable to your sdk home folder
 ```
 export ANDROID_NDK_HOME=<your android ndk directory>
@@ -26,7 +26,7 @@ cargo install cargo-ndk
 ```
 * Install [flutter_rust_bridge](https://github.com/fzyzcjy/flutter_rust_bridge): 
 ```
-cargo install flutter_rust_bridge_codegen --version 1.80.1
+cargo install flutter_rust_bridge_codegen --version 1.82.6
 ```
 
 ## Building the plugin
