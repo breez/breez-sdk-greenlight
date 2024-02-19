@@ -17,7 +17,7 @@ impl SqliteStorage {
         tx.execute("
          INSERT INTO sync.swaps (
            bitcoin_address, 
-           confirmed_at,
+           created_at, 
            lock_height, 
            payment_hash, 
            preimage, 
@@ -31,7 +31,7 @@ impl SqliteStorage {
          VALUES (:bitcoin_address, :created_at, :lock_height, :payment_hash, :preimage, :private_key, :public_key, :swapper_public_key, :script, :min_allowed_deposit, :max_allowed_deposit)",
          named_params! {
              ":bitcoin_address": swap_info.bitcoin_address,
-             ":confirmed_at": swap_info.confirmed_at,
+             ":created_at": swap_info.created_at,
              ":lock_height": swap_info.lock_height,
              ":payment_hash": swap_info.payment_hash,
              ":preimage": swap_info.preimage,
@@ -182,7 +182,6 @@ impl SqliteStorage {
         unconfirmed_tx_ids: Vec<String>,
         confirmed_sats: u64,
         confirmed_tx_ids: Vec<String>,
-        confirmed_at: u32,
         status: SwapStatus,
     ) -> PersistResult<SwapInfo> {
         self.get_connection()?.execute(
@@ -193,14 +192,7 @@ impl SqliteStorage {
              ":confirmed_sats": confirmed_sats,
              ":bitcoin_address": bitcoin_address,             
              ":confirmed_tx_ids": StringArray(confirmed_tx_ids),
-             ":status": status as u32,
-            },
-        )?;
-        self.get_connection()?.execute(
-            "UPDATE swaps SET confirmed_at=:confirmed_at WHERE bitcoin_address=:bitcoin_address",
-            named_params! {
-             ":confirmed_at": confirmed_at,
-             ":bitcoin_address": bitcoin_address,
+             ":status": status as u32
             },
         )?;
         Ok(self.get_swap_info_by_address(bitcoin_address)?.unwrap())
@@ -211,7 +203,7 @@ impl SqliteStorage {
             "
             SELECT
              swaps.bitcoin_address as bitcoin_address,
-             swaps.confirmed_at as confirmed_at,
+             swaps.created_at as created_at,
              lock_height as lock_height,
              payment_hash as payment_hash,
              preimage as preimage,
@@ -315,7 +307,7 @@ impl SqliteStorage {
             .unwrap_or(StringArray(vec![]));
         Ok(SwapInfo {
             bitcoin_address: row.get("bitcoin_address")?,
-            confirmed_at: row.get("confirmed_at")?,
+            created_at: row.get("created_at")?,
             lock_height: row.get("lock_height")?,
             payment_hash: row.get("payment_hash")?,
             preimage: row.get("preimage")?,
@@ -369,7 +361,7 @@ mod tests {
         storage.init()?;
         let tested_swap_info = SwapInfo {
             bitcoin_address: String::from("1"),
-            confirmed_at: 0,
+            created_at: 0,
             lock_height: 100,
             payment_hash: vec![1],
             preimage: vec![2],
@@ -416,7 +408,6 @@ mod tests {
             vec![String::from("333"), String::from("444")],
             0,
             vec![],
-            0,
             SwapStatus::Initial,
         )?;
         let in_progress = list_in_progress_swaps(&storage)?;
@@ -428,7 +419,6 @@ mod tests {
             vec![],
             20,
             vec![String::from("333"), String::from("444")],
-            555,
             SwapStatus::Initial,
         )?;
         let in_progress = list_in_progress_swaps(&storage)?;
@@ -440,7 +430,6 @@ mod tests {
             vec![],
             20,
             vec![String::from("333"), String::from("444")],
-            555,
             SwapStatus::Expired,
         )?;
         storage.insert_swap_refund_tx_ids(
@@ -482,7 +471,6 @@ mod tests {
             updated_swap.confirmed_tx_ids,
             vec![String::from("333"), String::from("444")]
         );
-        assert_eq!(updated_swap.confirmed_at, 555);
         assert_eq!(updated_swap.status, SwapStatus::Expired);
 
         Ok(())

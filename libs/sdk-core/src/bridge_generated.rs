@@ -2090,7 +2090,7 @@ impl support::IntoDart for SwapInfo {
     fn into_dart(self) -> support::DartAbi {
         vec![
             self.bitcoin_address.into_into_dart().into_dart(),
-            self.confirmed_at.into_into_dart().into_dart(),
+            self.created_at.into_into_dart().into_dart(),
             self.lock_height.into_into_dart().into_dart(),
             self.payment_hash.into_into_dart().into_dart(),
             self.preimage.into_into_dart().into_dart(),

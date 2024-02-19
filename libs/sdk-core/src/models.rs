@@ -1244,7 +1244,7 @@ pub struct SwapInfo {
     /// Bitcoin address for this swap. Sats sent to this address will be swapped.
     pub bitcoin_address: String,
     /// Relative time lock start, received from [SwapperAPI::create_swap].
-    pub confirmed_at: i64,
+    pub created_at: i64,
     /// Relative time lock for the timeout for the script to be redeemed before swap fails.
     pub lock_height: i64,
     /// sha256 hash of preimage to used in the claim sript.

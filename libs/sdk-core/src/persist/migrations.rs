@@ -422,7 +422,6 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
        "
        ALTER TABLE swaps_info RENAME COLUMN paid_sats TO paid_msat;
        ",
-       "ALTER TABLE sync.swaps RENAME COLUMN created_at TO confirmed_at;",
     ]
 }
 
@@ -557,6 +556,5 @@ pub(crate) fn current_sync_migrations() -> Vec<&'static str> {
         ",
        "ALTER TABLE payments_external_info ADD COLUMN lnurl_pay_domain TEXT;",
        "ALTER TABLE open_channel_payment_info ADD COLUMN open_channel_bolt11 TEXT;",
-        "ALTER TABLE swaps RENAME COLUMN created_at TO confirmed_at;",
     ]
 }

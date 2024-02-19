@@ -536,7 +536,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
     let lnurl_withdraw_url = "https://test.lnurl.withdraw.link";
     let swap_info = SwapInfo {
         bitcoin_address: "123".to_string(),
-        confirmed_at: 1234567,
+        created_at: 1234567,
         lock_height: 7654321,
         payment_hash: payment_hash_with_swap_info.clone(),
         preimage: vec![1, 2, 3],

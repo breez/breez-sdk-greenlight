@@ -2374,7 +2374,7 @@ pub(crate) mod tests {
         let payment_hash_swap: Vec<u8> = vec![1, 2, 3, 4, 5, 6, 7, 8];
         let swap_info = SwapInfo {
             bitcoin_address: "123".to_string(),
-            confirmed_at: 12345678,
+            created_at: 12345678,
             lock_height: 654321,
             payment_hash: payment_hash_swap.clone(),
             preimage: vec![],
