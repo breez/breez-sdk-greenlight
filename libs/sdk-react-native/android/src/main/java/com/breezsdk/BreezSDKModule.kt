@@ -683,6 +683,21 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
+    fun redeemSwap(
+        swapAddress: String,
+        promise: Promise,
+    ) {
+        executor.execute {
+            try {
+                getBreezServices().redeemSwap(swapAddress)
+                promise.resolve(readableMapOf("status" to "ok"))
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
     fun listRefundables(promise: Promise) {
         executor.execute {
             try {

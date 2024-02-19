@@ -981,6 +981,10 @@ export const rescanSwaps = async (): Promise<void> => {
     await BreezSDK.rescanSwaps()
 }
 
+export const redeemSwap = async (swapAddress: string): Promise<void> => {
+    await BreezSDK.redeemSwap(swapAddress)
+}
+
 export const listRefundables = async (): Promise<SwapInfo[]> => {
     const response = await BreezSDK.listRefundables()
     return response
