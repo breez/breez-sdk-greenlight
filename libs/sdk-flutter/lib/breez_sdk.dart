@@ -128,6 +128,13 @@ class BreezSDK {
     return nodeState;
   }
 
+  /// Configure an optional address to send funds to during a mutual channel close
+  Future<void> configureNode({
+    required ConfigureNodeRequest req,
+  }) async {
+    return await _lnToolkit.configureNode(req: req);
+  }
+
   /// Cleanup node resources and stop the signer.
   Future<void> disconnect() async => await _lnToolkit.disconnect();
 
