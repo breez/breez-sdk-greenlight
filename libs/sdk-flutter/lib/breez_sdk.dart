@@ -372,10 +372,8 @@ class BreezSDK {
   /// an individual redeem.
   ///
   /// This is taken care of automatically in the context of typical SDK usage.
-  Future<void> redeemSwap({
-    required String swapAddress
-  }) async =>
-    await _lnToolkit.redeemSwap(swapAddress: swapAddress);
+  Future<void> redeemSwap({required String swapAddress}) async =>
+      await _lnToolkit.redeemSwap(swapAddress: swapAddress);
 
   /// Returns the blocking [ReverseSwapInfo]s that are in progress
   Future<List<ReverseSwapInfo>> inProgressReverseSwaps() async => _lnToolkit.inProgressReverseSwaps();
