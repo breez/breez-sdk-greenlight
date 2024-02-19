@@ -1288,6 +1288,8 @@ pub struct SwapInfo {
     ///
     /// Swaps created after dynamic fees were introduced always have this field set.
     pub channel_opening_fees: Option<OpeningFeeParams>,
+    /// The block height when the swap was confirmed.
+    pub confirmed_at: u32,
 }
 
 impl SwapInfo {

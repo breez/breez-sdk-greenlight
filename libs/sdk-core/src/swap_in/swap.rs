@@ -212,6 +212,7 @@ impl BTCReceiveSwap {
             max_allowed_deposit: swap_reply.max_allowed_deposit,
             last_redeem_error: None,
             channel_opening_fees: Some(channel_opening_fees),
+            confirmed_at: 0,
         };
 
         // persist the swap info
@@ -388,6 +389,7 @@ impl BTCReceiveSwap {
             utxos.confirmed_sats(),
             utxos.confirmed_tx_ids(),
             swap_status,
+            confirmed_block,
         )?)
     }
 

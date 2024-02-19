@@ -563,6 +563,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
             max_client_to_self_delay: 234,
             promise: "promise".to_string(),
         }),
+        confirmed_at: 555,
     };
     let rev_swap_preimage = vec![4, 4, 4, 4];
     let full_ref_swap_info = FullReverseSwapInfo {
