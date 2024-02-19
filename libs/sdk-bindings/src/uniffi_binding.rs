@@ -274,6 +274,11 @@ impl BlockingBreezServices {
         rt().block_on(self.breez_services.rescan_swaps())
     }
 
+    /// Redeem an individual swap
+    pub fn redeem_swap(&self, swap_address: String) -> SdkResult<()> {
+        rt().block_on(self.breez_services.redeem_swap(swap_address))
+    }
+
     /// list non-completed expired swaps that should be refunded by calling [BreezServices::refund]
     pub fn list_refundables(&self) -> SdkResult<Vec<SwapInfo>> {
         rt().block_on(self.breez_services.list_refundables())
