@@ -1,7 +1,5 @@
 package com.breez.breez_sdk
 
-import android.os.Handler
-import android.os.Looper
 import breez_sdk.LogEntry
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.EventChannel
@@ -14,9 +12,6 @@ import kotlinx.coroutines.Dispatchers
 
 /** BreezSDKPlugin */
 class BreezSDKPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHandler {
-    // Event has to be handled on main thread.
-    private var handler = Handler(Looper.getMainLooper())
-
     private lateinit var channel: MethodChannel
     private var eventChannel: EventChannel? = null
     private var eventSink: EventChannel.EventSink? = null
@@ -29,12 +24,8 @@ class BreezSDKPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
         eventChannel = EventChannel(flutterPluginBinding.binaryMessenger, "breez_sdk_node_logs")
         val nodeLogStream = SdkLogInitializer.initializeNodeLogStream()
         nodeLogStream.subscribe(scope) { l: LogEntry ->
-            val runnable = Runnable {
-                val data = mapOf("level" to l.level, "line" to l.line)
-                eventSink?.success(data)
-            }
-
-            handler.post(runnable)
+            val data = mapOf("level" to l.level, "line" to l.line)
+            eventSink?.success(data)
         }
         eventChannel?.setStreamHandler(this)
     }
