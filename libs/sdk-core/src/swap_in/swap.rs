@@ -383,12 +383,16 @@ impl BTCReceiveSwap {
                 .update_swap_paid_amount(bitcoin_address.clone(), payment.unwrap().amount_msat)?;
         }
 
+        let optional_confirmed_block = match confirmed_block {
+            0 => None,
+            b => Some(b),
+        };
         let chain_info = SwapChainInfo {
             unconfirmed_sats: utxos.unconfirmed_sats(),
             unconfirmed_tx_ids: utxos.unconfirmed_tx_ids(),
             confirmed_sats: utxos.confirmed_sats(),
             confirmed_tx_ids: utxos.confirmed_tx_ids(),
-            confirmed_at: confirmed_block,
+            confirmed_at: optional_confirmed_block,
         };
         Ok(self
             .persister

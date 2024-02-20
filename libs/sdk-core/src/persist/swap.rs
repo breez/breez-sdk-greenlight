@@ -14,7 +14,7 @@ pub(crate) struct SwapChainInfo {
     pub(crate) unconfirmed_tx_ids: Vec<String>,
     pub(crate) confirmed_sats: u64,
     pub(crate) confirmed_tx_ids: Vec<String>,
-    pub(crate) confirmed_at: u32,
+    pub(crate) confirmed_at: Option<u32>,
 }
 
 impl SqliteStorage {
@@ -419,7 +419,7 @@ mod tests {
             unconfirmed_tx_ids: vec![String::from("333"), String::from("444")],
             confirmed_sats: 0,
             confirmed_tx_ids: vec![],
-            confirmed_at: 0,
+            confirmed_at: None,
         };
         let swap_after_chain_update = storage.update_swap_chain_info(
             tested_swap_info.bitcoin_address.clone(),
@@ -434,7 +434,7 @@ mod tests {
             unconfirmed_tx_ids: vec![],
             confirmed_sats: 20,
             confirmed_tx_ids: vec![String::from("333"), String::from("444")],
-            confirmed_at: 0,
+            confirmed_at: None,
         };
         let swap_after_chain_update = storage.update_swap_chain_info(
             tested_swap_info.bitcoin_address.clone(),
@@ -449,7 +449,7 @@ mod tests {
             unconfirmed_tx_ids: vec![],
             confirmed_sats: 20,
             confirmed_tx_ids: vec![String::from("333"), String::from("444")],
-            confirmed_at: 0,
+            confirmed_at: None,
         };
         storage.update_swap_chain_info(
             tested_swap_info.bitcoin_address.clone(),
