@@ -22,6 +22,7 @@ use crate::error::ReceivePaymentError;
 use crate::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
 use crate::models::{Swap, SwapInfo, SwapStatus, SwapperAPI};
 use crate::node_api::NodeAPI;
+use crate::persist::swap::SwapChainInfo;
 use crate::swap_in::error::SwapError;
 use crate::{
     OpeningFeeParams, PrepareRefundRequest, PrepareRefundResponse, ReceivePaymentRequest,
@@ -382,15 +383,16 @@ impl BTCReceiveSwap {
                 .update_swap_paid_amount(bitcoin_address.clone(), payment.unwrap().amount_msat)?;
         }
 
-        Ok(self.persister.update_swap_chain_info(
-            bitcoin_address,
-            utxos.unconfirmed_sats(),
-            utxos.unconfirmed_tx_ids(),
-            utxos.confirmed_sats(),
-            utxos.confirmed_tx_ids(),
-            swap_status,
-            confirmed_block,
-        )?)
+        let chain_info = SwapChainInfo {
+            unconfirmed_sats: utxos.unconfirmed_sats(),
+            unconfirmed_tx_ids: utxos.unconfirmed_tx_ids(),
+            confirmed_sats: utxos.confirmed_sats(),
+            confirmed_tx_ids: utxos.confirmed_tx_ids(),
+            confirmed_at: confirmed_block,
+        };
+        Ok(self
+            .persister
+            .update_swap_chain_info(bitcoin_address, chain_info, swap_status)?)
     }
 
     /// redeem_swap executes the final step of receiving lightning payment
