@@ -213,7 +213,7 @@ impl BTCReceiveSwap {
             max_allowed_deposit: swap_reply.max_allowed_deposit,
             last_redeem_error: None,
             channel_opening_fees: Some(channel_opening_fees),
-            confirmed_at: 0,
+            confirmed_at: None,
         };
 
         // persist the swap info
@@ -796,7 +796,7 @@ mod tests {
         let swap_info = swapper
             .create_swap_address(get_test_ofp(10, 10, true).into())
             .await?;
-
+        assert_eq!(swap_info.confirmed_at, None);
         // We test the case that a confirmed transaction was detected on chain that
         // sent funds to this address but the lock timeout has expired.
         swapper.chain_service = chain_service_with_confirmed_txs(swap_info.clone().bitcoin_address);
@@ -816,6 +816,7 @@ mod tests {
         );
 
         assert_eq!(swap.confirmed_sats, 50000);
+        assert_eq!(swap.confirmed_at.unwrap(), 767637);
         assert_eq!(swap.paid_msat, 0);
         assert_eq!(swap.status, SwapStatus::Expired);
         assert_eq!(swapper.list_redeemables().unwrap().len(), 0);
@@ -908,6 +909,7 @@ mod tests {
             swap.confirmed_tx_ids,
             vec!["ec901bcab07df7d475d98fff2933dcb56d57bbdaa029c4142aed93462b6928fe".to_string()]
         );
+        assert_eq!(swap.confirmed_at.unwrap(), 767637);
 
         assert_eq!(swap.confirmed_sats, 50_000);
         assert_eq!(swap.paid_msat, 5_000);

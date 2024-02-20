@@ -342,7 +342,7 @@ impl SqliteStorage {
             max_allowed_deposit: row.get("max_allowed_deposit")?,
             last_redeem_error: row.get("last_redeem_error")?,
             channel_opening_fees: row.get("channel_opening_fees")?,
-            confirmed_at: row.get("confirmed_at").unwrap_or(0),
+            confirmed_at: row.get("confirmed_at")?,
         })
     }
 }
@@ -392,7 +392,7 @@ mod tests {
             max_allowed_deposit: 100,
             last_redeem_error: None,
             channel_opening_fees: Some(get_test_ofp_48h(1, 1).into()),
-            confirmed_at: 0,
+            confirmed_at: None,
         };
         storage.insert_swap(tested_swap_info.clone())?;
         let item_value = storage.get_swap_info_by_address("1".to_string())?.unwrap();

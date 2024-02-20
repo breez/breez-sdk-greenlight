@@ -469,7 +469,7 @@ mod tests {
             max_allowed_deposit: 100,
             last_redeem_error: None,
             channel_opening_fees: Some(get_test_ofp_48h(random(), random()).into()),
-            confirmed_at: 0,
+            confirmed_at: None,
         }
     }
 }

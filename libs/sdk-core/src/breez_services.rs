@@ -2401,7 +2401,7 @@ pub(crate) mod tests {
                 max_client_to_self_delay: 234,
                 promise: "promise".to_string(),
             }),
-            confirmed_at: 555,
+            confirmed_at: Some(555),
         };
         let payment_hash_rev_swap: Vec<u8> = vec![8, 7, 6, 5, 4, 3, 2, 1];
         let preimage_rev_swap: Vec<u8> = vec![6, 6, 6, 6];
