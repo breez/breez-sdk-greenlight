@@ -1,4 +1,5 @@
 build/
 .flutter-version
 android/src/main/kotlin/breez_sdk/
+android/src/main/kotlin/breez_sdk_notification/
 ios/bindings-swift/
