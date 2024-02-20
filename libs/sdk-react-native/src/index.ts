@@ -406,6 +406,7 @@ export type ReportPaymentFailureDetails = {
 
 export type ReverseSwapFeesRequest = {
     sendAmountSat?: number
+    claimTxFeerate?: number
 }
 
 export type ReverseSwapInfo = {
@@ -424,7 +425,7 @@ export type ReverseSwapPairInfo = {
     feesPercentage: number
     feesLockup: number
     feesClaim: number
-    totalEstimatedFees?: number
+    totalFees?: number
 }
 
 export type RouteHint = {
