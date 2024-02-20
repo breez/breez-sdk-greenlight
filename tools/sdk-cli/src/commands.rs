@@ -96,6 +96,9 @@ pub(crate) enum Commands {
     FetchOnchainFees {
         #[clap(name = "amount", short = 'a', long = "amt")]
         send_amount_sat: Option<u64>,
+
+        #[clap(name = "claim_feerate", short = 'f', long = "feerate")]
+        claim_tx_feerate: Option<u32>,
     },
 
     /// Get the current blocking in-progress reverse swaps, if any exist

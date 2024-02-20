@@ -172,9 +172,15 @@ pub(crate) async fn handle_command(
             let response = sdk()?.max_reverse_swap_amount().await?;
             serde_json::to_string_pretty(&response).map_err(|e| e.into())
         }
-        Commands::FetchOnchainFees { send_amount_sat } => {
+        Commands::FetchOnchainFees {
+            send_amount_sat,
+            claim_tx_feerate,
+        } => {
             let pair_info = sdk()?
-                .fetch_reverse_swap_fees(ReverseSwapFeesRequest { send_amount_sat })
+                .fetch_reverse_swap_fees(ReverseSwapFeesRequest {
+                    send_amount_sat,
+                    claim_tx_feerate,
+                })
                 .await
                 .map_err(|e| anyhow!("Failed to fetch reverse swap fee infos: {e}"))?;
             serde_json::to_string_pretty(&pair_info).map_err(|e| e.into())
