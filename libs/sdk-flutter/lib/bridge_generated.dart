@@ -1491,10 +1491,15 @@ class ReportPaymentFailureDetails {
 }
 
 class ReverseSwapFeesRequest {
+  /// Amount to be sent
   final int? sendAmountSat;
+
+  /// Feerate (sat / vByte) for the claim transaction
+  final int? claimTxFeerate;
 
   const ReverseSwapFeesRequest({
     this.sendAmountSat,
+    this.claimTxFeerate,
   });
 }
 
@@ -1521,14 +1526,12 @@ class ReverseSwapInfo {
   });
 }
 
-/// Details about the BTC/BTC reverse swap pair, at this point in time
-///
-/// Maps the result of <https://docs.boltz.exchange/en/latest/api/#getting-pairs> for the BTC/BTC pair
+/// Details about the reverse swap fees and parameters, at this point in time
 class ReverseSwapPairInfo {
-  /// Minimum amount of sats a reverse swap is allowed to have on this endpoint
+  /// Minimum amount of sats a reverse swap is allowed to have given the current feerate conditions
   final int min;
 
-  /// Maximum amount of sats a reverse swap is allowed to have on this endpoint
+  /// Maximum amount of sats a reverse swap is allowed to have given the current feerate conditions
   final int max;
 
   /// Hash of the pair info JSON
@@ -1537,12 +1540,10 @@ class ReverseSwapPairInfo {
   /// Percentage fee for the reverse swap service
   final double feesPercentage;
 
-  /// Estimated miner fees in sats for locking up funds, assuming a transaction virtual size of
-  /// [`crate::ESTIMATED_LOCKUP_TX_VSIZE`] vbytes
+  /// Miner fees in sats for locking up funds
   final int feesLockup;
 
-  /// Estimated miner fees in sats for claiming funds, assuming a transaction virtual size of
-  /// [`crate::ESTIMATED_CLAIM_TX_VSIZE`] vbytes
+  /// Miner fees in sats for claiming funds. Estimate or exact value, depending on the request args.
   final int feesClaim;
 
   /// Estimated total fees in sats, based on the given send amount. Only set when the send amount is known.
@@ -4680,6 +4681,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   void _api_fill_to_wire_reverse_swap_fees_request(
       ReverseSwapFeesRequest apiObj, wire_ReverseSwapFeesRequest wireObj) {
     wireObj.send_amount_sat = api2wire_opt_box_autoadd_u64(apiObj.sendAmountSat);
+    wireObj.claim_tx_feerate = api2wire_opt_box_autoadd_u32(apiObj.claimTxFeerate);
   }
 
   void _api_fill_to_wire_send_onchain_request(SendOnchainRequest apiObj, wire_SendOnchainRequest wireObj) {
@@ -6345,6 +6347,8 @@ final class wire_OpenChannelFeeRequest extends ffi.Struct {
 
 final class wire_ReverseSwapFeesRequest extends ffi.Struct {
   external ffi.Pointer<ffi.Uint64> send_amount_sat;
+
+  external ffi.Pointer<ffi.Uint32> claim_tx_feerate;
 }
 
 typedef DartPostCObjectFnType

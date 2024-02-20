@@ -248,6 +248,7 @@ typedef struct wire_OpenChannelFeeRequest {
 
 typedef struct wire_ReverseSwapFeesRequest {
   uint64_t *send_amount_sat;
+  uint32_t *claim_tx_feerate;
 } wire_ReverseSwapFeesRequest;
 
 typedef struct DartCObject *WireSyncReturn;
