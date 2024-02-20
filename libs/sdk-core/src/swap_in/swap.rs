@@ -1,10 +1,11 @@
 use std::str::FromStr;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Chain, Result};
 use rand::Rng;
 use ripemd::{Digest, Ripemd160};
+use tokio::sync::broadcast;
 
 use crate::bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
 use crate::bitcoin::blockdata::opcodes;
@@ -17,7 +18,9 @@ use crate::bitcoin::util::sighash::SighashCache;
 use crate::bitcoin::{
     Address, EcdsaSighashType, Script, Sequence, Transaction, TxIn, TxOut, Witness,
 };
-use crate::breez_services::{BreezEvent, BreezServer, PaymentReceiver, Receiver};
+use crate::breez_services::{
+    BreezEvent, BreezServer, PaymentReceiver, Receiver, SwapStatusChangedData,
+};
 use crate::chain::{get_utxos, AddressUtxos, ChainService, MempoolSpace, OnchainTx};
 use crate::error::ReceivePaymentError;
 use crate::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
@@ -87,6 +90,8 @@ pub(crate) struct BTCReceiveSwap {
     persister: Arc<crate::persist::db::SqliteStorage>,
     chain_service: Arc<dyn ChainService>,
     payment_receiver: Arc<dyn Receiver>,
+    current_tip: Mutex<u32>,
+    status_changes_notifier: broadcast::Sender<BreezEvent>,
 }
 
 impl BTCReceiveSwap {
@@ -95,9 +100,10 @@ impl BTCReceiveSwap {
         node_api: Arc<dyn NodeAPI>,
         swapper_api: Arc<dyn SwapperAPI>,
         persister: Arc<crate::persist::db::SqliteStorage>,
-        chain_service: Arc<MempoolSpace>,
-        payment_receiver: Arc<PaymentReceiver>,
+        chain_service: Arc<dyn ChainService>,
+        payment_receiver: Arc<dyn Receiver>,
     ) -> Self {
+        let (status_changes_notifier, _) = broadcast::channel::<BreezEvent>(100);
         Self {
             network,
             node_api,
@@ -105,7 +111,13 @@ impl BTCReceiveSwap {
             persister,
             chain_service,
             payment_receiver,
+            status_changes_notifier,
+            current_tip: Mutex::new(0),
         }
+    }
+
+    pub(crate) fn subscribe_status_changes(&self) -> broadcast::Receiver<BreezEvent> {
+        self.status_changes_notifier.subscribe()
     }
 
     /// Listening to events is required in order to:
@@ -117,6 +129,7 @@ impl BTCReceiveSwap {
         match e {
             BreezEvent::NewBlock { block: tip } => {
                 debug!("got chain event {:?}", e);
+                self.set_tip(tip);
                 _ = self.execute_pending_swaps(tip).await;
             }
 
@@ -126,14 +139,16 @@ impl BTCReceiveSwap {
                 debug!("swap InvoicePaid event!");
                 let hash_raw = hex::decode(details.payment_hash.clone())?;
                 let swap_info = self.persister.get_swap_info_by_hash(&hash_raw)?;
-                if swap_info.is_some() {
+                if let Some(swap_info) = swap_info {
                     let payment = self
                         .persister
                         .get_completed_payment_by_hash(&details.payment_hash)?;
-                    if payment.is_some() {
+                    if let Some(payment) = payment {
+                        let paid_amount = payment.amount_msat;
                         self.persister.update_swap_paid_amount(
-                            swap_info.unwrap().bitcoin_address,
-                            payment.unwrap().amount_msat,
+                            swap_info.clone().bitcoin_address,
+                            paid_amount,
+                            swap_info.with_paid_amount(paid_amount).status,
                         )?;
                     }
                 }
@@ -173,7 +188,7 @@ impl BTCReceiveSwap {
             .swapper_api
             .create_swap(hash.clone(), pubkey.clone(), node_state.id)
             .await?;
-
+        info!("created swap address {}", swap_reply.max_allowed_deposit);
         // calculate the submarine swap script
         let our_script = create_submarine_swap_script(
             hash.clone(),
@@ -253,7 +268,7 @@ impl BTCReceiveSwap {
     pub(crate) fn list_refundables(&self) -> Result<Vec<SwapInfo>> {
         Ok(self
             .persister
-            .list_swaps_with_status(SwapStatus::Expired)?
+            .list_swaps_with_status(SwapStatus::Refundable)?
             .into_iter()
             .filter(SwapInfo::refundable)
             .collect())
@@ -332,7 +347,7 @@ impl BTCReceiveSwap {
         bitcoin_address: String,
         current_tip: u32,
     ) -> Result<SwapInfo> {
-        let swap_info = self
+        let mut swap_info = self
             .persister
             .get_swap_info_by_address(bitcoin_address.clone())?
             .ok_or_else(|| {
@@ -364,7 +379,7 @@ impl BTCReceiveSwap {
         if !confirmed_txs.is_empty()
             && current_tip - confirmed_block >= swap_info.lock_height as u32
         {
-            swap_status = SwapStatus::Expired
+            swap_status = SwapStatus::Refundable
         }
 
         debug!(
@@ -381,8 +396,13 @@ impl BTCReceiveSwap {
                 &hex::encode(swap_info.payment_hash.clone()),
                 payment
             );
-            self.persister
-                .update_swap_paid_amount(bitcoin_address.clone(), payment.unwrap().amount_msat)?;
+            let amount_msat = payment.unwrap().amount_msat;
+            swap_info = swap_info.with_paid_amount(amount_msat);
+            self.persister.update_swap_paid_amount(
+                bitcoin_address.clone(),
+                amount_msat,
+                swap_info.status.clone(),
+            )?;
         }
 
         let optional_confirmed_block = match confirmed_block {
@@ -396,9 +416,12 @@ impl BTCReceiveSwap {
             confirmed_tx_ids: utxos.confirmed_tx_ids(),
             confirmed_at: optional_confirmed_block,
         };
+        let status = swap_info
+            .with_chain_info(chain_info.clone())
+            .calculate_status(current_tip);
         Ok(self
             .persister
-            .update_swap_chain_info(bitcoin_address, chain_info, swap_status)?)
+            .update_swap_chain_info(bitcoin_address, chain_info, status)?)
     }
 
     /// redeem_swap executes the final step of receiving lightning payment
@@ -520,6 +543,16 @@ impl BTCReceiveSwap {
             .address_transactions(address.clone())
             .await?;
         get_utxos(address, transactions)
+    }
+
+    fn set_tip(&self, tip: u32) {
+        let mut current_tip = self.current_tip.lock().unwrap();
+        *current_tip = tip;
+    }
+
+    fn tip(&self) -> u32 {
+        let current_tip = self.current_tip.lock().unwrap();
+        *current_tip
     }
 }
 
@@ -835,7 +868,7 @@ mod tests {
         assert_eq!(swap.confirmed_sats, 50000);
         assert_eq!(swap.confirmed_at.unwrap(), 767637);
         assert_eq!(swap.paid_msat, 0);
-        assert_eq!(swap.status, SwapStatus::Expired);
+        assert_eq!(swap.status, SwapStatus::Refundable);
         assert_eq!(swapper.list_redeemables().unwrap().len(), 0);
         assert_eq!(swapper.list_refundables().unwrap().len(), 1);
 
@@ -849,7 +882,7 @@ mod tests {
         let swap = swapper
             .get_swap_info(swap_info.clone().bitcoin_address)?
             .unwrap();
-        assert_eq!(swap.status, SwapStatus::Expired);
+        assert_eq!(swap.status, SwapStatus::Refundable);
         assert_eq!(swapper.list_redeemables().unwrap().len(), 0);
 
         // the swap should be refundable by now
@@ -995,7 +1028,7 @@ mod tests {
             .get_swap_info(swap_info.clone().bitcoin_address)?
             .unwrap();
 
-        assert_eq!(swap.status, SwapStatus::Expired);
+        assert_eq!(swap.status, SwapStatus::Refundable);
         assert_eq!(swapper.list_redeemables().unwrap().len(), 0);
         assert_eq!(swapper.list_refundables().unwrap().len(), 0);
 
@@ -1172,14 +1205,14 @@ mod tests {
         let dummy_node_state = get_dummy_node_state();
         persister.set_node_state(&dummy_node_state)?;
 
-        let swapper = BTCReceiveSwap {
-            network: crate::bitcoin::Network::Bitcoin,
-            node_api: Arc::new(MockNodeAPI::new(get_dummy_node_state())),
-            swapper_api: Arc::new(MockSwapperAPI {}),
-            persister: persister.clone(),
-            chain_service: chain_service.clone(),
-            payment_receiver: Arc::new(MockReceiver::default()),
-        };
+        let swapper = BTCReceiveSwap::new(
+            crate::bitcoin::Network::Bitcoin,
+            Arc::new(MockNodeAPI::new(get_dummy_node_state())),
+            Arc::new(MockSwapperAPI {}),
+            persister.clone(),
+            chain_service.clone(),
+            Arc::new(MockReceiver::default()),
+        );
         Ok((swapper, persister))
     }
 

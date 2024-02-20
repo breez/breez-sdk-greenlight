@@ -568,7 +568,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
         paid_msat: 50_000,
         confirmed_sats: 50,
         unconfirmed_sats: 0,
-        status: SwapStatus::Expired,
+        status: SwapStatus::Refundable,
         refund_tx_ids: vec![],
         unconfirmed_tx_ids: vec![],
         confirmed_tx_ids: vec![],

@@ -9,6 +9,7 @@ use crate::OpeningFeeParams;
 use anyhow::anyhow;
 use rusqlite::{named_params, OptionalExtension, Params, Row, Transaction, TransactionBehavior};
 
+#[derive(Debug, Clone)]
 pub(crate) struct SwapChainInfo {
     pub(crate) unconfirmed_sats: u64,
     pub(crate) unconfirmed_tx_ids: Vec<String>,
@@ -94,16 +95,17 @@ impl SqliteStorage {
         &self,
         bitcoin_address: String,
         paid_msat: u64,
-    ) -> PersistResult<()> {
+        status: SwapStatus,
+    ) -> PersistResult<SwapInfo> {
         self.get_connection()?.execute(
-            "UPDATE swaps_info SET paid_msat=:paid_msat where bitcoin_address=:bitcoin_address",
+            "UPDATE swaps_info SET paid_msat=:paid_msat, status=:status where bitcoin_address=:bitcoin_address",
             named_params! {
              ":paid_msat": paid_msat,
              ":bitcoin_address": bitcoin_address,
+             ":status": status as u32,
             },
         )?;
-
-        Ok(())
+        Ok(self.get_swap_info_by_address(bitcoin_address)?.unwrap())
     }
 
     pub(crate) fn update_swap_redeem_error(
@@ -404,7 +406,7 @@ mod tests {
         let non_existent_swap = storage.get_swap_info_by_address("non-existent".to_string())?;
         assert!(non_existent_swap.is_none());
 
-        let empty_swaps = storage.list_swaps_with_status(SwapStatus::Expired)?;
+        let empty_swaps = storage.list_swaps_with_status(SwapStatus::Refundable)?;
         assert_eq!(empty_swaps.len(), 0);
 
         let swaps = storage.list_swaps_with_status(SwapStatus::Initial)?;
@@ -454,7 +456,7 @@ mod tests {
         storage.update_swap_chain_info(
             tested_swap_info.bitcoin_address.clone(),
             chain_info,
-            SwapStatus::Expired,
+            SwapStatus::Refundable,
         )?;
         storage.insert_swap_refund_tx_ids(
             tested_swap_info.bitcoin_address.clone(),
@@ -480,7 +482,11 @@ mod tests {
         );
 
         storage.update_swap_bolt11(tested_swap_info.bitcoin_address.clone(), "bolt11".into())?;
-        storage.update_swap_paid_amount(tested_swap_info.bitcoin_address.clone(), 30_000)?;
+        storage.update_swap_paid_amount(
+            tested_swap_info.bitcoin_address.clone(),
+            30_000,
+            tested_swap_info.with_paid_amount(30_000).status,
+        )?;
         let updated_swap = storage
             .get_swap_info_by_address(tested_swap_info.bitcoin_address)?
             .unwrap();
@@ -495,7 +501,7 @@ mod tests {
             updated_swap.confirmed_tx_ids,
             vec![String::from("333"), String::from("444")]
         );
-        assert_eq!(updated_swap.status, SwapStatus::Expired);
+        assert_eq!(updated_swap.status, SwapStatus::Refundable);
 
         Ok(())
     }

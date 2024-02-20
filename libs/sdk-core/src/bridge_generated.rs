@@ -2126,7 +2126,10 @@ impl support::IntoDart for SwapStatus {
     fn into_dart(self) -> support::DartAbi {
         match self {
             Self::Initial => 0,
-            Self::Expired => 1,
+            Self::WaitingConfirmation => 1,
+            Self::Redeemable => 2,
+            Self::Refundable => 3,
+            Self::Completed => 4,
         }
         .into_dart()
     }

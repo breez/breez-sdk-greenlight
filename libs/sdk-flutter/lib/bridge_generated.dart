@@ -1867,11 +1867,14 @@ enum SwapStatus {
   /// or there are confirmed transactions that are bellow the lock timeout which means the funds are still
   /// eligible to be redeemed normally.
   Initial,
+  WaitingConfirmation,
+  Redeemable,
 
   /// The swap address has confirmed transactions associated with it and the lock timeout has passed since
   /// the earliest confirmed transaction. This means the only way to spend the funds from this address is by
   /// broadcasting a refund transaction.
-  Expired,
+  Refundable,
+  Completed,
 }
 
 /// Settings for the symbol representation of a currency

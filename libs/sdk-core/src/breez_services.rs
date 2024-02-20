@@ -99,6 +99,12 @@ pub enum BreezEvent {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+pub struct SwapStatusChangedData {
+    pub swap_address: String,
+    pub status: SwapStatus,
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub struct BackupFailedData {
     pub error: String,
 }
@@ -1217,6 +1223,9 @@ impl BreezServices {
         //track backup events
         self.track_backup_events().await;
 
+        //track swap events
+        self.track_swap_events().await;
+
         // track paid invoices
         self.track_invoices().await;
 
@@ -1281,6 +1290,29 @@ impl BreezServices {
                   },
                   _ = shutdown_receiver.changed() => {
                    debug!("Backup watcher task completed");
+                   break;
+                 }
+                }
+            }
+        });
+    }
+
+    async fn track_swap_events(self: &Arc<BreezServices>) {
+        let cloned = self.clone();
+        tokio::spawn(async move {
+            let mut events_stream = cloned.btc_receive_swapper.subscribe_status_changes();
+            let mut shutdown_receiver = cloned.shutdown_receiver.clone();
+            loop {
+                tokio::select! {
+                  swap_event = events_stream.recv() => {
+                   if let Ok(e) = swap_event {
+                    if let Err(err) = cloned.notify_event_listeners(e).await {
+                        error!("error handling swap event: {:?}", err);
+                    }
+                   }
+                  },
+                  _ = shutdown_receiver.changed() => {
+                   debug!("Swap events handling task completed");
                    break;
                  }
                 }
@@ -2387,7 +2419,7 @@ pub(crate) mod tests {
             paid_msat: 1000,
             confirmed_sats: 1,
             unconfirmed_sats: 0,
-            status: SwapStatus::Expired,
+            status: SwapStatus::Refundable,
             refund_tx_ids: vec![],
             unconfirmed_tx_ids: vec![],
             confirmed_tx_ids: vec![],
