@@ -514,7 +514,7 @@ enum ReverseSwapStatus {
 
 dictionary SwapInfo {
     string bitcoin_address;
-    i64 confirmed_at;
+    i64 created_at;
     i64 lock_height;
     sequence<u8> payment_hash;
     sequence<u8> preimage;
@@ -534,6 +534,7 @@ dictionary SwapInfo {
     i64 max_allowed_deposit;
     string? last_redeem_error;
     OpeningFeeParams? channel_opening_fees;
+    u32 confirmed_at;
 };
 
 dictionary ReverseSwapPairInfo {

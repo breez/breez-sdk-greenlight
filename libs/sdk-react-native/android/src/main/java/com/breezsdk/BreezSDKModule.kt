@@ -164,10 +164,7 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
         }
 
         try {
-            val connectRequest =
-                asConnectRequest(
-                    req,
-                ) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "ConnectRequest")) }
+            val connectRequest = asConnectRequest(req) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "ConnectRequest")) }
             val emitter = reactApplicationContext.getJSModule(RCTDeviceEventEmitter::class.java)
 
             ensureWorkingDir(connectRequest.config.workingDir)

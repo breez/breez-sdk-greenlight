@@ -1763,7 +1763,7 @@ class SwapInfo {
   final String bitcoinAddress;
 
   /// Relative time lock start, received from [SwapperAPI::create_swap].
-  final int confirmedAt;
+  final int createdAt;
 
   /// Relative time lock for the timeout for the script to be redeemed before swap fails.
   final int lockHeight;
@@ -1826,9 +1826,12 @@ class SwapInfo {
   /// Swaps created after dynamic fees were introduced always have this field set.
   final OpeningFeeParams? channelOpeningFees;
 
+  /// The block height when the swap was confirmed.
+  final int confirmedAt;
+
   const SwapInfo({
     required this.bitcoinAddress,
-    required this.confirmedAt,
+    required this.createdAt,
     required this.lockHeight,
     required this.paymentHash,
     required this.preimage,
@@ -1848,6 +1851,7 @@ class SwapInfo {
     required this.maxAllowedDeposit,
     this.lastRedeemError,
     this.channelOpeningFees,
+    required this.confirmedAt,
   });
 }
 
@@ -3879,10 +3883,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   SwapInfo _wire2api_swap_info(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 21) throw Exception('unexpected arr length: expect 21 but see ${arr.length}');
+    if (arr.length != 22) throw Exception('unexpected arr length: expect 22 but see ${arr.length}');
     return SwapInfo(
       bitcoinAddress: _wire2api_String(arr[0]),
-      confirmedAt: _wire2api_i64(arr[1]),
+      createdAt: _wire2api_i64(arr[1]),
       lockHeight: _wire2api_i64(arr[2]),
       paymentHash: _wire2api_uint_8_list(arr[3]),
       preimage: _wire2api_uint_8_list(arr[4]),
@@ -3902,6 +3906,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       maxAllowedDeposit: _wire2api_i64(arr[18]),
       lastRedeemError: _wire2api_opt_String(arr[19]),
       channelOpeningFees: _wire2api_opt_box_autoadd_opening_fee_params(arr[20]),
+      confirmedAt: _wire2api_u32(arr[21]),
     );
   }
 

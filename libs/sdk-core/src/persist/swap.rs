@@ -304,8 +304,6 @@ impl SqliteStorage {
         // let t: Vec<String> =
         //     serde_json::from_value(refund_txs_raw).map_err(|e| FromSqlError::InvalidType)?;
 
-        println!("created_at {:?}", row.get::<&str, Option<u32>>("created_at")?);
-        println!("confirmed_at {:?}", row.get::<&str, Option<u32>>("confirmed_at")?);
         let unconfirmed_tx_ids: StringArray = row
             .get::<&str, Option<StringArray>>("unconfirmed_tx_ids")?
             .unwrap_or(StringArray(vec![]));
@@ -340,7 +338,7 @@ impl SqliteStorage {
             max_allowed_deposit: row.get("max_allowed_deposit")?,
             last_redeem_error: row.get("last_redeem_error")?,
             channel_opening_fees: row.get("channel_opening_fees")?,
-            confirmed_at: row.get("confirmed_at")?,
+            confirmed_at: row.get("confirmed_at").unwrap_or(0),
         })
     }
 }

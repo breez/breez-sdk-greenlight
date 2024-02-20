@@ -3295,7 +3295,7 @@ fun asSwapInfo(swapInfo: ReadableMap): SwapInfo? {
             swapInfo,
             arrayOf(
                 "bitcoinAddress",
-                "confirmedAt",
+                "createdAt",
                 "lockHeight",
                 "paymentHash",
                 "preimage",
@@ -3312,13 +3312,14 @@ fun asSwapInfo(swapInfo: ReadableMap): SwapInfo? {
                 "confirmedTxIds",
                 "minAllowedDeposit",
                 "maxAllowedDeposit",
+                "confirmedAt",
             ),
         )
     ) {
         return null
     }
     val bitcoinAddress = swapInfo.getString("bitcoinAddress")!!
-    val confirmedAt = swapInfo.getDouble("confirmedAt").toLong()
+    val createdAt = swapInfo.getDouble("createdAt").toLong()
     val lockHeight = swapInfo.getDouble("lockHeight").toLong()
     val paymentHash = swapInfo.getArray("paymentHash")?.let { asUByteList(it) }!!
     val preimage = swapInfo.getArray("preimage")?.let { asUByteList(it) }!!
@@ -3345,9 +3346,10 @@ fun asSwapInfo(swapInfo: ReadableMap): SwapInfo? {
         } else {
             null
         }
+    val confirmedAt = swapInfo.getInt("confirmedAt").toUInt()
     return SwapInfo(
         bitcoinAddress,
-        confirmedAt,
+        createdAt,
         lockHeight,
         paymentHash,
         preimage,
@@ -3367,13 +3369,14 @@ fun asSwapInfo(swapInfo: ReadableMap): SwapInfo? {
         maxAllowedDeposit,
         lastRedeemError,
         channelOpeningFees,
+        confirmedAt,
     )
 }
 
 fun readableMapOf(swapInfo: SwapInfo): ReadableMap {
     return readableMapOf(
         "bitcoinAddress" to swapInfo.bitcoinAddress,
-        "confirmedAt" to swapInfo.confirmedAt,
+        "createdAt" to swapInfo.createdAt,
         "lockHeight" to swapInfo.lockHeight,
         "paymentHash" to readableArrayOf(swapInfo.paymentHash),
         "preimage" to readableArrayOf(swapInfo.preimage),
@@ -3393,6 +3396,7 @@ fun readableMapOf(swapInfo: SwapInfo): ReadableMap {
         "maxAllowedDeposit" to swapInfo.maxAllowedDeposit,
         "lastRedeemError" to swapInfo.lastRedeemError,
         "channelOpeningFees" to swapInfo.channelOpeningFees?.let { readableMapOf(it) },
+        "confirmedAt" to swapInfo.confirmedAt,
     )
 }
 

@@ -489,7 +489,7 @@ export type StaticBackupResponse = {
 
 export type SwapInfo = {
     bitcoinAddress: string
-    confirmedAt: number
+    createdAt: number
     lockHeight: number
     paymentHash: number[]
     preimage: number[]
@@ -509,6 +509,7 @@ export type SwapInfo = {
     maxAllowedDeposit: number
     lastRedeemError?: string
     channelOpeningFees?: OpeningFeeParams
+    confirmedAt: number
 }
 
 export type SymbolType = {
