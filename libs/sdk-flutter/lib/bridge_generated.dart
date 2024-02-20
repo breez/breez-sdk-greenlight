@@ -1827,7 +1827,7 @@ class SwapInfo {
   final OpeningFeeParams? channelOpeningFees;
 
   /// The block height when the swap was confirmed.
-  final int confirmedAt;
+  final int? confirmedAt;
 
   const SwapInfo({
     required this.bitcoinAddress,
@@ -1851,7 +1851,7 @@ class SwapInfo {
     required this.maxAllowedDeposit,
     this.lastRedeemError,
     this.channelOpeningFees,
-    required this.confirmedAt,
+    this.confirmedAt,
   });
 }
 
@@ -3906,7 +3906,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       maxAllowedDeposit: _wire2api_i64(arr[18]),
       lastRedeemError: _wire2api_opt_String(arr[19]),
       channelOpeningFees: _wire2api_opt_box_autoadd_opening_fee_params(arr[20]),
-      confirmedAt: _wire2api_u32(arr[21]),
+      confirmedAt: _wire2api_opt_box_autoadd_u32(arr[21]),
     );
   }
 

@@ -509,7 +509,7 @@ export type SwapInfo = {
     maxAllowedDeposit: number
     lastRedeemError?: string
     channelOpeningFees?: OpeningFeeParams
-    confirmedAt: number
+    confirmedAt?: number
 }
 
 export type SymbolType = {

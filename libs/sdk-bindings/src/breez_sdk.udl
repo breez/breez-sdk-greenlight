@@ -534,7 +534,7 @@ dictionary SwapInfo {
     i64 max_allowed_deposit;
     string? last_redeem_error;
     OpeningFeeParams? channel_opening_fees;
-    u32 confirmed_at;
+    u32? confirmed_at;
 };
 
 dictionary ReverseSwapPairInfo {

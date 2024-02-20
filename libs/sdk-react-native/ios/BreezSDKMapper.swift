@@ -3622,8 +3622,12 @@ enum BreezSDKMapper {
             channelOpeningFees = try asOpeningFeeParams(openingFeeParams: channelOpeningFeesTmp)
         }
 
-        guard let confirmedAt = swapInfo["confirmedAt"] as? UInt32 else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "confirmedAt", typeName: "SwapInfo"))
+        var confirmedAt: UInt32?
+        if hasNonNilKey(data: swapInfo, key: "confirmedAt") {
+            guard let confirmedAtTmp = swapInfo["confirmedAt"] as? UInt32 else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "confirmedAt"))
+            }
+            confirmedAt = confirmedAtTmp
         }
 
         return SwapInfo(
@@ -3675,7 +3679,7 @@ enum BreezSDKMapper {
             "maxAllowedDeposit": swapInfo.maxAllowedDeposit,
             "lastRedeemError": swapInfo.lastRedeemError == nil ? nil : swapInfo.lastRedeemError,
             "channelOpeningFees": swapInfo.channelOpeningFees == nil ? nil : dictionaryOf(openingFeeParams: swapInfo.channelOpeningFees!),
-            "confirmedAt": swapInfo.confirmedAt,
+            "confirmedAt": swapInfo.confirmedAt == nil ? nil : swapInfo.confirmedAt,
         ]
     }
 
