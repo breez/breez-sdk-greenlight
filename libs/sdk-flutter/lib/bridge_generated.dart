@@ -1546,8 +1546,13 @@ class ReverseSwapPairInfo {
   /// Miner fees in sats for claiming funds. Estimate or exact value, depending on the request args.
   final int feesClaim;
 
-  /// Estimated total fees in sats, based on the given send amount. Only set when the send amount is known.
-  final int? totalEstimatedFees;
+  /// Total fees for the reverse swap, in sats, based on the given send amount.
+  ///
+  /// The field is set only when the [ReverseSwapFeesRequest] `send_amount_sat` is known.
+  ///
+  /// If the [ReverseSwapFeesRequest] has the `claim_tx_feerate` empty, this is an estimate. If
+  /// the `claim_tx_feerate` is set, this is the exact value of the total reverse swap fees.
+  final int? totalFees;
 
   const ReverseSwapPairInfo({
     required this.min,
@@ -1556,7 +1561,7 @@ class ReverseSwapPairInfo {
     required this.feesPercentage,
     required this.feesLockup,
     required this.feesClaim,
-    this.totalEstimatedFees,
+    this.totalFees,
   });
 }
 
@@ -3789,7 +3794,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       feesPercentage: _wire2api_f64(arr[3]),
       feesLockup: _wire2api_u64(arr[4]),
       feesClaim: _wire2api_u64(arr[5]),
-      totalEstimatedFees: _wire2api_opt_box_autoadd_u64(arr[6]),
+      totalFees: _wire2api_opt_box_autoadd_u64(arr[6]),
     );
   }
 

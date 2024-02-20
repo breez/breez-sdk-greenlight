@@ -127,8 +127,13 @@ pub struct ReverseSwapPairInfo {
     pub fees_lockup: u64,
     /// Miner fees in sats for claiming funds. Estimate or exact value, depending on the request args.
     pub fees_claim: u64,
-    /// Estimated total fees in sats, based on the given send amount. Only set when the send amount is known.
-    pub total_estimated_fees: Option<u64>,
+    /// Total fees for the reverse swap, in sats, based on the given send amount.
+    ///
+    /// The field is set only when the [ReverseSwapFeesRequest] `send_amount_sat` is known.
+    ///
+    /// If the [ReverseSwapFeesRequest] has the `claim_tx_feerate` empty, this is an estimate. If
+    /// the `claim_tx_feerate` is set, this is the exact value of the total reverse swap fees.
+    pub total_fees: Option<u64>,
 }
 
 /// Details of past or ongoing reverse swaps, as stored in the Breez local DB

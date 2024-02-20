@@ -809,8 +809,7 @@ impl BreezServices {
             }
 
             let service_fee_sat = ((amt as f64) * res.fees_percentage / 100.0) as u64;
-            // TODO Rename total_estimated_fees to total_fees
-            res.total_estimated_fees = Some(service_fee_sat + res.fees_lockup + res.fees_claim);
+            res.total_fees = Some(service_fee_sat + res.fees_lockup + res.fees_claim);
         }
 
         Ok(res)

@@ -544,7 +544,7 @@ dictionary ReverseSwapPairInfo {
     f64 fees_percentage;
     u64 fees_lockup;
     u64 fees_claim;
-    u64? total_estimated_fees;
+    u64? total_fees;
 };
 
 dictionary ReverseSwapInfo {
