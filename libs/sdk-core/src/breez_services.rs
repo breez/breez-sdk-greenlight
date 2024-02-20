@@ -63,6 +63,7 @@ use crate::persist::db::SqliteStorage;
 use crate::swap_in::swap::BTCReceiveSwap;
 use crate::swap_out::boltzswap::BoltzApi;
 use crate::swap_out::reverseswap::BTCSendSwap;
+use crate::time_utils::BreezTimeUtils;
 use crate::BuyBitcoinProvider::Moonpay;
 use crate::*;
 
@@ -1883,6 +1884,8 @@ impl BreezServicesBuilder {
             persister: persister.clone(),
         });
 
+        let breez_time_utils = Arc::new(BreezTimeUtils);
+
         let btc_receive_swapper = Arc::new(BTCReceiveSwap::new(
             self.config.network.into(),
             unwrapped_node_api.clone(),
@@ -1892,6 +1895,7 @@ impl BreezServicesBuilder {
             persister.clone(),
             chain_service.clone(),
             payment_receiver.clone(),
+            breez_time_utils.clone(),
         ));
 
         let btc_send_swapper = Arc::new(BTCSendSwap::new(

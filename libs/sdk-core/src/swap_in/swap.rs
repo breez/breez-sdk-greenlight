@@ -23,6 +23,7 @@ use crate::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
 use crate::models::{Swap, SwapInfo, SwapStatus, SwapperAPI};
 use crate::node_api::NodeAPI;
 use crate::swap_in::error::SwapError;
+use crate::time_utils::TimeUtils;
 use crate::{
     OpeningFeeParams, PrepareRefundRequest, PrepareRefundResponse, ReceivePaymentRequest,
     RefundRequest, RefundResponse, SWAP_PAYMENT_FEE_EXPIRY_SECONDS,
@@ -85,6 +86,7 @@ pub(crate) struct BTCReceiveSwap {
     persister: Arc<crate::persist::db::SqliteStorage>,
     chain_service: Arc<dyn ChainService>,
     payment_receiver: Arc<dyn Receiver>,
+    time_utils: Arc<dyn TimeUtils>,
 }
 
 impl BTCReceiveSwap {
@@ -95,6 +97,7 @@ impl BTCReceiveSwap {
         persister: Arc<crate::persist::db::SqliteStorage>,
         chain_service: Arc<MempoolSpace>,
         payment_receiver: Arc<PaymentReceiver>,
+        time_utils: Arc<dyn TimeUtils>,
     ) -> Self {
         Self {
             network,
@@ -103,6 +106,7 @@ impl BTCReceiveSwap {
             persister,
             chain_service,
             payment_receiver,
+            time_utils,
         }
     }
 
@@ -192,7 +196,7 @@ impl BTCReceiveSwap {
 
         let swap_info = SwapInfo {
             bitcoin_address: swap_reply.bitcoin_address,
-            created_at: 0,
+            created_at: self.time_utils.get_current_time(),
             lock_height: swap_reply.lock_height,
             payment_hash: hash.clone(),
             preimage: swap_keys.preimage,
@@ -692,6 +696,7 @@ mod tests {
     use crate::chain::{AddressUtxos, Utxo};
     use crate::swap_in::swap::{compute_refund_tx_weight, compute_tx_fee, prepare_refund_tx};
     use crate::test_utils::{get_test_ofp, MockNodeAPI};
+    use crate::time_utils::TestTimeUtils;
     use crate::{
         bitcoin::consensus::deserialize,
         bitcoin::hashes::{hex::FromHex, sha256},
@@ -1122,6 +1127,17 @@ mod tests {
         Ok(())
     }
 
+    #[tokio::test]
+    async fn test_create_swap_address_uses_the_current_time() -> Result<()> {
+        let chain_service = Arc::new(MockChainService::default());
+        let (swapper, _) = create_swapper(chain_service.clone())?;
+        let swap_info = swapper
+            .create_swap_address(get_test_ofp(10, 10, true).into())
+            .await?;
+        assert_eq!(swap_info.created_at, CURRENT_TIME);
+        Ok(())
+    }
+
     fn create_swapper(
         chain_service: Arc<dyn ChainService>,
     ) -> Result<(BTCReceiveSwap, Arc<SqliteStorage>)> {
@@ -1141,6 +1157,9 @@ mod tests {
             persister: persister.clone(),
             chain_service: chain_service.clone(),
             payment_receiver: Arc::new(MockReceiver::default()),
+            time_utils: Arc::new(TestTimeUtils {
+                current_time: CURRENT_TIME,
+            }),
         };
         Ok((swapper, persister))
     }
@@ -1176,4 +1195,6 @@ mod tests {
 
         Arc::new(chain_service)
     }
+
+    const CURRENT_TIME: i64 = 1708437886;
 }
