@@ -24,9 +24,10 @@ rootProject.allprojects {
 
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
 
 android {
-    compileSdkVersion 31
+    compileSdkVersion 34
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -42,11 +43,17 @@ android {
     }
 
     defaultConfig {
-        minSdkVersion 21
+        minSdkVersion 24
     }
 }
 
 dependencies {
     api "breez_sdk:bindings-android:$version"
     implementation "net.java.dev.jna:jna:5.8.0@aar"
+    /* Logging */
+    implementation 'org.tinylog:tinylog-api-kotlin:2.6.2'
+    implementation 'org.tinylog:tinylog-impl:2.6.2'
+    /* JSON serialization */
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2'
+
 }

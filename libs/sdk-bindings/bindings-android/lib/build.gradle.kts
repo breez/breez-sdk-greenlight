@@ -2,6 +2,7 @@ plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android") version "1.6.10"
     id("maven-publish")
+    id("kotlinx-serialization")
 }
 
 repositories {
@@ -10,11 +11,11 @@ repositories {
 }
 
 android {
-    compileSdk = 31
+    compileSdk = 33
 
     defaultConfig {
-        minSdk = 21
-        targetSdk = 31
+        minSdk = 24
+        targetSdk = 33
         consumerProguardFiles("consumer-rules.pro")
     }
 
@@ -37,6 +38,9 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7")
     implementation("androidx.appcompat:appcompat:1.4.0")
     implementation("androidx.core:core-ktx:1.7.0")
+    implementation("org.tinylog:tinylog-api-kotlin:2.6.2")
+    implementation("org.tinylog:tinylog-impl:2.6.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
 }
 
 val libraryVersion: String by project
