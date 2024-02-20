@@ -431,6 +431,7 @@ dictionary OpeningFeeParams {
 
 dictionary ReverseSwapFeesRequest {
     u64? send_amount_sat = null;
+    u32? claim_tx_feerate = null;
 };
 
 dictionary ReceivePaymentRequest {

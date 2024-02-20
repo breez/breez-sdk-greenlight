@@ -17,6 +17,7 @@ use crate::bitcoin::{
     Address, AddressType, EcdsaSighashType, Script, Sequence, Transaction, TxIn, TxOut, Witness,
 };
 use crate::chain::{get_utxos, ChainService, MempoolSpace, OnchainTx};
+use crate::error::SdkResult;
 use crate::models::{ReverseSwapServiceAPI, ReverseSwapperRoutingAPI};
 use crate::node_api::{NodeAPI, NodeError};
 use crate::swap_in::swap::create_swap_keys;
@@ -331,6 +332,10 @@ impl BTCSendSwap {
                 // confirmed by the service provider on rev swap creation.
                 let claim_amount_sat = rs.onchain_amount_sat;
 
+                let claim_tx_fee = self.calculate_claim_tx_fees(rs.sat_per_vbyte)?;
+                debug!("Claim tx amount: {claim_amount_sat}");
+                debug!("Claim tx fees: {claim_tx_fee}");
+
                 let txins: Vec<TxIn> = utxos
                     .confirmed
                     .iter()
@@ -354,21 +359,12 @@ impl BTCSendSwap {
                     input: txins.clone(),
                     output: tx_out,
                 };
+                tx.output[0].value = claim_amount_sat - claim_tx_fee;
 
                 let claim_script_bytes = PsbtSerialize::serialize(&redeem_script);
 
-                // Based on https://github.com/breez/boltz/blob/master/boltz.go#L31
-                let claim_witness_input_size: u32 = 1 + 1 + 8 + 73 + 1 + 32 + 1 + 100;
-                let tx_weight = tx.strippedsize() as u32 * WITNESS_SCALE_FACTOR as u32
-                    + claim_witness_input_size * txins.len() as u32;
-                let fees: u64 = (tx_weight * rs.sat_per_vbyte / WITNESS_SCALE_FACTOR as u32) as u64;
-                debug!("Claim tx amount: {claim_amount_sat}");
-                debug!("Claim tx fees: {fees}");
-                tx.output[0].value = claim_amount_sat - fees;
-
-                let scpt = Secp256k1::signing_only();
-
                 // Sign inputs (iterate, even though we only have one input)
+                let scpt = Secp256k1::signing_only();
                 let mut signed_inputs: Vec<TxIn> = Vec::new();
                 for (index, input) in tx.input.iter().enumerate() {
                     let mut signer = SighashCache::new(&tx);
@@ -400,6 +396,26 @@ impl BTCSendSwap {
             Some(addr_type) => Err(anyhow!("Unexpected lock address type: {addr_type:?}")),
             None => Err(anyhow!("Could not determine lock address type")),
         }
+    }
+
+    pub(crate) fn calculate_claim_tx_fees(&self, claim_tx_feerate: u32) -> SdkResult<u64> {
+        let tx = Transaction {
+            version: 2,
+            lock_time: crate::bitcoin::PackedLockTime(0),
+            input: vec![TxIn {
+                sequence: Sequence(0),
+                ..Default::default()
+            }],
+            output: vec![TxOut::default()],
+        };
+
+        // Based on https://github.com/breez/boltz/blob/master/boltz.go#L32
+        let claim_witness_input_size: u32 = 1 + 1 + 8 + 73 + 1 + 32 + 1 + 100;
+        let tx_weight =
+            tx.strippedsize() as u32 * WITNESS_SCALE_FACTOR as u32 + claim_witness_input_size;
+        let fees: u64 = (tx_weight * claim_tx_feerate / WITNESS_SCALE_FACTOR as u32) as u64;
+
+        Ok(fees)
     }
 
     async fn get_claim_tx(&self, rsi: &FullReverseSwapInfo) -> Result<Option<OnchainTx>> {

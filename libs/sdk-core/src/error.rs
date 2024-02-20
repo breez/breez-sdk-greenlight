@@ -458,6 +458,14 @@ pub enum SdkError {
     ServiceConnectivity { err: String },
 }
 
+impl SdkError {
+    pub(crate) fn generic(err: &str) -> Self {
+        Self::Generic {
+            err: err.to_string(),
+        }
+    }
+}
+
 impl From<anyhow::Error> for SdkError {
     fn from(err: anyhow::Error) -> Self {
         Self::Generic {

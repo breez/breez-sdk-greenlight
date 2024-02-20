@@ -112,24 +112,20 @@ pub trait SwapperAPI: Send + Sync {
     async fn complete_swap(&self, bolt11: String) -> Result<()>;
 }
 
-/// Details about the BTC/BTC reverse swap pair, at this point in time
-///
-/// Maps the result of <https://docs.boltz.exchange/en/latest/api/#getting-pairs> for the BTC/BTC pair
+/// Details about the reverse swap fees and parameters, at this point in time
 #[derive(Clone, PartialEq, Debug, Serialize)]
 pub struct ReverseSwapPairInfo {
-    /// Minimum amount of sats a reverse swap is allowed to have on this endpoint
+    /// Minimum amount of sats a reverse swap is allowed to have given the current feerate conditions
     pub min: u64,
-    /// Maximum amount of sats a reverse swap is allowed to have on this endpoint
+    /// Maximum amount of sats a reverse swap is allowed to have given the current feerate conditions
     pub max: u64,
     /// Hash of the pair info JSON
     pub fees_hash: String,
     /// Percentage fee for the reverse swap service
     pub fees_percentage: f64,
-    /// Estimated miner fees in sats for locking up funds, assuming a transaction virtual size of
-    /// [`crate::ESTIMATED_LOCKUP_TX_VSIZE`] vbytes
+    /// Miner fees in sats for locking up funds
     pub fees_lockup: u64,
-    /// Estimated miner fees in sats for claiming funds, assuming a transaction virtual size of
-    /// [`crate::ESTIMATED_CLAIM_TX_VSIZE`] vbytes
+    /// Miner fees in sats for claiming funds. Estimate or exact value, depending on the request args.
     pub fees_claim: u64,
     /// Estimated total fees in sats, based on the given send amount. Only set when the send amount is known.
     pub total_estimated_fees: Option<u64>,
@@ -782,7 +778,10 @@ pub struct ClosedChannelPaymentDetails {
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct ReverseSwapFeesRequest {
+    /// Amount to be sent
     pub send_amount_sat: Option<u64>,
+    /// Feerate (sat / vByte) for the claim transaction
+    pub claim_tx_feerate: Option<u32>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
