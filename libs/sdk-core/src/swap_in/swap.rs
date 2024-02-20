@@ -22,6 +22,7 @@ use crate::error::ReceivePaymentError;
 use crate::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
 use crate::models::{Swap, SwapInfo, SwapStatus, SwapperAPI};
 use crate::node_api::NodeAPI;
+use crate::persist::swap::SwapChainInfo;
 use crate::swap_in::error::SwapError;
 use crate::{
     OpeningFeeParams, PrepareRefundRequest, PrepareRefundResponse, ReceivePaymentRequest,
@@ -212,6 +213,7 @@ impl BTCReceiveSwap {
             max_allowed_deposit: swap_reply.max_allowed_deposit,
             last_redeem_error: None,
             channel_opening_fees: Some(channel_opening_fees),
+            confirmed_at: None,
         };
 
         // persist the swap info
@@ -381,14 +383,20 @@ impl BTCReceiveSwap {
                 .update_swap_paid_amount(bitcoin_address.clone(), payment.unwrap().amount_msat)?;
         }
 
-        Ok(self.persister.update_swap_chain_info(
-            bitcoin_address,
-            utxos.unconfirmed_sats(),
-            utxos.unconfirmed_tx_ids(),
-            utxos.confirmed_sats(),
-            utxos.confirmed_tx_ids(),
-            swap_status,
-        )?)
+        let optional_confirmed_block = match confirmed_block {
+            0 => None,
+            b => Some(b),
+        };
+        let chain_info = SwapChainInfo {
+            unconfirmed_sats: utxos.unconfirmed_sats(),
+            unconfirmed_tx_ids: utxos.unconfirmed_tx_ids(),
+            confirmed_sats: utxos.confirmed_sats(),
+            confirmed_tx_ids: utxos.confirmed_tx_ids(),
+            confirmed_at: optional_confirmed_block,
+        };
+        Ok(self
+            .persister
+            .update_swap_chain_info(bitcoin_address, chain_info, swap_status)?)
     }
 
     /// redeem_swap executes the final step of receiving lightning payment
@@ -792,7 +800,7 @@ mod tests {
         let swap_info = swapper
             .create_swap_address(get_test_ofp(10, 10, true).into())
             .await?;
-
+        assert_eq!(swap_info.confirmed_at, None);
         // We test the case that a confirmed transaction was detected on chain that
         // sent funds to this address but the lock timeout has expired.
         swapper.chain_service = chain_service_with_confirmed_txs(swap_info.clone().bitcoin_address);
@@ -812,6 +820,7 @@ mod tests {
         );
 
         assert_eq!(swap.confirmed_sats, 50000);
+        assert_eq!(swap.confirmed_at.unwrap(), 767637);
         assert_eq!(swap.paid_msat, 0);
         assert_eq!(swap.status, SwapStatus::Expired);
         assert_eq!(swapper.list_redeemables().unwrap().len(), 0);
@@ -904,6 +913,7 @@ mod tests {
             swap.confirmed_tx_ids,
             vec!["ec901bcab07df7d475d98fff2933dcb56d57bbdaa029c4142aed93462b6928fe".to_string()]
         );
+        assert_eq!(swap.confirmed_at.unwrap(), 767637);
 
         assert_eq!(swap.confirmed_sats, 50_000);
         assert_eq!(swap.paid_msat, 5_000);

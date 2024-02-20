@@ -9,6 +9,14 @@ use crate::OpeningFeeParams;
 use anyhow::anyhow;
 use rusqlite::{named_params, OptionalExtension, Params, Row, Transaction};
 
+pub(crate) struct SwapChainInfo {
+    pub(crate) unconfirmed_sats: u64,
+    pub(crate) unconfirmed_tx_ids: Vec<String>,
+    pub(crate) confirmed_sats: u64,
+    pub(crate) confirmed_tx_ids: Vec<String>,
+    pub(crate) confirmed_at: Option<u32>,
+}
+
 impl SqliteStorage {
     pub(crate) fn insert_swap(&self, swap_info: SwapInfo) -> PersistResult<()> {
         let mut con = self.get_connection()?;
@@ -54,8 +62,9 @@ impl SqliteStorage {
           unconfirmed_sats, 
           unconfirmed_tx_ids, 
           confirmed_sats,
-          confirmed_tx_ids
-        ) VALUES (:bitcoin_address, :status, :bolt11, :paid_msat, :unconfirmed_sats, :unconfirmed_tx_ids, :confirmed_sats, :confirmed_tx_ids)",
+          confirmed_tx_ids,
+          confirmed_at
+        ) VALUES (:bitcoin_address, :status, :bolt11, :paid_msat, :unconfirmed_sats, :unconfirmed_tx_ids, :confirmed_sats, :confirmed_tx_ids, :confirmed_at)",
             named_params! {
                ":bitcoin_address": swap_info.bitcoin_address,
                ":status": swap_info.status as i32,
@@ -65,6 +74,7 @@ impl SqliteStorage {
                ":unconfirmed_tx_ids": StringArray(swap_info.unconfirmed_tx_ids),
                ":confirmed_sats": swap_info.confirmed_sats,
                ":confirmed_tx_ids": StringArray(swap_info.confirmed_tx_ids),
+               ":confirmed_at": swap_info.confirmed_at,
             },
         )?;
 
@@ -178,21 +188,19 @@ impl SqliteStorage {
     pub(crate) fn update_swap_chain_info(
         &self,
         bitcoin_address: String,
-        unconfirmed_sats: u64,
-        unconfirmed_tx_ids: Vec<String>,
-        confirmed_sats: u64,
-        confirmed_tx_ids: Vec<String>,
+        chain_info: SwapChainInfo,
         status: SwapStatus,
     ) -> PersistResult<SwapInfo> {
         self.get_connection()?.execute(
-            "UPDATE swaps_info SET unconfirmed_sats=:unconfirmed_sats, unconfirmed_tx_ids=:unconfirmed_tx_ids, confirmed_sats=:confirmed_sats, confirmed_tx_ids=:confirmed_tx_ids, status=:status where bitcoin_address=:bitcoin_address",
+            "UPDATE swaps_info SET unconfirmed_sats=:unconfirmed_sats, unconfirmed_tx_ids=:unconfirmed_tx_ids, confirmed_sats=:confirmed_sats, confirmed_tx_ids=:confirmed_tx_ids, status=:status, confirmed_at=:confirmed_at where bitcoin_address=:bitcoin_address",
             named_params! {
-             ":unconfirmed_sats": unconfirmed_sats,
-             ":unconfirmed_tx_ids": StringArray(unconfirmed_tx_ids),
-             ":confirmed_sats": confirmed_sats,
+             ":unconfirmed_sats": chain_info.unconfirmed_sats,
+             ":unconfirmed_tx_ids": StringArray(chain_info.unconfirmed_tx_ids),
+             ":confirmed_sats": chain_info.confirmed_sats,
              ":bitcoin_address": bitcoin_address,             
-             ":confirmed_tx_ids": StringArray(confirmed_tx_ids),
-             ":status": status as u32
+             ":confirmed_tx_ids": StringArray(chain_info.confirmed_tx_ids),
+             ":status": status as u32,
+             ":confirmed_at": chain_info.confirmed_at,
             },
         )?;
         Ok(self.get_swap_info_by_address(bitcoin_address)?.unwrap())
@@ -222,7 +230,8 @@ impl SqliteStorage {
              unconfirmed_tx_ids as unconfirmed_tx_ids,
              confirmed_tx_ids as confirmed_tx_ids,
              last_redeem_error as last_redeem_error,
-             swaps_fees.channel_opening_fees as channel_opening_fees
+             swaps_fees.channel_opening_fees as channel_opening_fees,
+             swaps_info.confirmed_at as confirmed_at
             FROM sync.swaps as swaps
              LEFT JOIN swaps_info ON swaps.bitcoin_address = swaps_info.bitcoin_address
              LEFT JOIN sync.swaps_fees as swaps_fees ON swaps.bitcoin_address = swaps_fees.bitcoin_address
@@ -333,6 +342,7 @@ impl SqliteStorage {
             max_allowed_deposit: row.get("max_allowed_deposit")?,
             last_redeem_error: row.get("last_redeem_error")?,
             channel_opening_fees: row.get("channel_opening_fees")?,
+            confirmed_at: row.get("confirmed_at")?,
         })
     }
 }
@@ -341,6 +351,7 @@ impl SqliteStorage {
 mod tests {
     use crate::persist::db::SqliteStorage;
     use crate::persist::error::PersistResult;
+    use crate::persist::swap::SwapChainInfo;
     use crate::test_utils::get_test_ofp_48h;
     use crate::{OpeningFeeParams, SwapInfo, SwapStatus};
     use rusqlite::{named_params, Connection};
@@ -381,6 +392,7 @@ mod tests {
             max_allowed_deposit: 100,
             last_redeem_error: None,
             channel_opening_fees: Some(get_test_ofp_48h(1, 1).into()),
+            confirmed_at: None,
         };
         storage.insert_swap(tested_swap_info.clone())?;
         let item_value = storage.get_swap_info_by_address("1".to_string())?.unwrap();
@@ -402,34 +414,46 @@ mod tests {
         //assert_eq!(swaps.len(), 1);
         assert!(err.is_err());
 
+        let chain_info = SwapChainInfo {
+            unconfirmed_sats: 20,
+            unconfirmed_tx_ids: vec![String::from("333"), String::from("444")],
+            confirmed_sats: 0,
+            confirmed_tx_ids: vec![],
+            confirmed_at: None,
+        };
         let swap_after_chain_update = storage.update_swap_chain_info(
             tested_swap_info.bitcoin_address.clone(),
-            20,
-            vec![String::from("333"), String::from("444")],
-            0,
-            vec![],
+            chain_info,
             SwapStatus::Initial,
         )?;
         let in_progress = list_in_progress_swaps(&storage)?;
         assert_eq!(in_progress[0], swap_after_chain_update);
 
+        let chain_info = SwapChainInfo {
+            unconfirmed_sats: 0,
+            unconfirmed_tx_ids: vec![],
+            confirmed_sats: 20,
+            confirmed_tx_ids: vec![String::from("333"), String::from("444")],
+            confirmed_at: None,
+        };
         let swap_after_chain_update = storage.update_swap_chain_info(
             tested_swap_info.bitcoin_address.clone(),
-            0,
-            vec![],
-            20,
-            vec![String::from("333"), String::from("444")],
+            chain_info,
             SwapStatus::Initial,
         )?;
         let in_progress = list_in_progress_swaps(&storage)?;
         assert_eq!(in_progress[0], swap_after_chain_update);
 
+        let chain_info = SwapChainInfo {
+            unconfirmed_sats: 0,
+            unconfirmed_tx_ids: vec![],
+            confirmed_sats: 20,
+            confirmed_tx_ids: vec![String::from("333"), String::from("444")],
+            confirmed_at: None,
+        };
         storage.update_swap_chain_info(
             tested_swap_info.bitcoin_address.clone(),
-            0,
-            vec![],
-            20,
-            vec![String::from("333"), String::from("444")],
+            chain_info,
             SwapStatus::Expired,
         )?;
         storage.insert_swap_refund_tx_ids(

@@ -3345,6 +3345,7 @@ fun asSwapInfo(swapInfo: ReadableMap): SwapInfo? {
         } else {
             null
         }
+    val confirmedAt = if (hasNonNullKey(swapInfo, "confirmedAt")) swapInfo.getInt("confirmedAt").toUInt() else null
     return SwapInfo(
         bitcoinAddress,
         createdAt,
@@ -3367,6 +3368,7 @@ fun asSwapInfo(swapInfo: ReadableMap): SwapInfo? {
         maxAllowedDeposit,
         lastRedeemError,
         channelOpeningFees,
+        confirmedAt,
     )
 }
 
@@ -3393,6 +3395,7 @@ fun readableMapOf(swapInfo: SwapInfo): ReadableMap {
         "maxAllowedDeposit" to swapInfo.maxAllowedDeposit,
         "lastRedeemError" to swapInfo.lastRedeemError,
         "channelOpeningFees" to swapInfo.channelOpeningFees?.let { readableMapOf(it) },
+        "confirmedAt" to swapInfo.confirmedAt,
     )
 }
 
