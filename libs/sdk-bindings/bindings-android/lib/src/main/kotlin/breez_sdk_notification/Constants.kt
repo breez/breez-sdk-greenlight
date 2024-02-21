@@ -14,13 +14,13 @@ object Constants {
     // Intent Extras
     const val EXTRA_REMOTE_MESSAGE = "remote_message"
 
-    // Notification Data
-    const val NOTIFICATION_DATA_TYPE = "notification_type"
-    const val NOTIFICATION_DATA_PAYLOAD = "notification_payload"
+    // Message Data
+    const val MESSAGE_DATA_TYPE = "notification_type"
+    const val MESSAGE_DATA_PAYLOAD = "notification_payload"
 
-    const val NOTIFICATION_TYPE_PAYMENT_RECEIVED = "payment_received"
-    const val NOTIFICATION_TYPE_LNURL_PAY_INFO = "lnurlpay_info"
-    const val NOTIFICATION_TYPE_LNURL_PAY_INVOICE = "lnurlpay_invoice"
+    const val MESSAGE_TYPE_PAYMENT_RECEIVED = "payment_received"
+    const val MESSAGE_TYPE_LNURL_PAY_INFO = "lnurlpay_info"
+    const val MESSAGE_TYPE_LNURL_PAY_INVOICE = "lnurlpay_invoice"
 
     // Resource Identifiers
     const val FOREGROUND_SERVICE_NOTIFICATION_CHANNEL_DESCRIPTION =
