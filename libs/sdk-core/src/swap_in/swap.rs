@@ -1,5 +1,6 @@
 use std::str::FromStr;
 use std::sync::Arc;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{anyhow, Result};
 use rand::Rng;
@@ -193,7 +194,10 @@ impl BTCReceiveSwap {
 
         let swap_info = SwapInfo {
             bitcoin_address: swap_reply.bitcoin_address,
-            created_at: 0,
+            created_at: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs() as i64,
             lock_height: swap_reply.lock_height,
             payment_hash: hash.clone(),
             preimage: swap_keys.preimage,
@@ -693,6 +697,7 @@ fn create_refund_tx(
 
 #[cfg(test)]
 mod tests {
+    use std::time::{SystemTime, UNIX_EPOCH};
     use std::{sync::Arc, vec};
 
     use anyhow::Result;
@@ -1129,6 +1134,21 @@ mod tests {
         */
         assert_eq!(hex::encode(refund_tx), "0200000000010130037fa97f58d7f685ce861f7862112d8377364c4898f1d63213ff949ffeb31a00000000002001000001204e00000000000016001465c96c830168b8f0b584294d3b9716bb8584c2d80347304402203285efcf44640551a56c53bde677988964ef1b4d11182d5d6634096042c320120220227b625f7827993aca5b9d2f4690c5e5fae44d8d42fdd5f3778ba21df8ba7c7b010064a9148a486ff2e31d6158bf39e2608864d63fefd09d5b876321024d4b6cd1361032ca9bd2aeb9d900aa4d45d9ead80ac9423374c451a7254d076667022001b27521031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f68ac80af0a00");
 
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_create_swap_address_uses_the_current_time() -> Result<()> {
+        let current_time = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64;
+        let chain_service = Arc::new(MockChainService::default());
+        let (swapper, _) = create_swapper(chain_service.clone())?;
+        let swap_info = swapper
+            .create_swap_address(get_test_ofp(10, 10, true).into())
+            .await?;
+        assert!(swap_info.created_at >= current_time);
         Ok(())
     }
 
