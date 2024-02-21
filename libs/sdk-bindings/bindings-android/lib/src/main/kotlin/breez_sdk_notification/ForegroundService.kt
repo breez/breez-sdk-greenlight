@@ -2,6 +2,7 @@ package breez_sdk_notification
 
 import android.app.Service
 import android.content.Intent
+import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
@@ -66,7 +67,7 @@ open class ForegroundService : SdkForegroundService, Service() {
 
         // Connect to SDK if source intent has data message with valid payload
         getConnectRequest()?.let { connectRequest ->
-            getJobFromNotification(intent)?.also { job ->
+            getJobFromIntent(intent)?.also { job ->
                 launchSdkConnection(connectRequest, job)
             } ?: run {
                 Logger.tag(TAG).warn { "Received invalid data message." }
@@ -81,31 +82,32 @@ open class ForegroundService : SdkForegroundService, Service() {
         return START_NOT_STICKY
     }
 
+    /** To be implemented by the application foreground service.
+     *  It should retrieve the Breez API key and node mnemonic then construct
+     *  a ConnectRequest to be used to call the Breez SDK connect function. */
     open fun getConnectRequest(): ConnectRequest? {
         return null
     }
 
-    open fun getNotification(intent: Intent?): Notification? {
-        return null
-    }
-
-    private fun getJobFromNotification(intent: Intent?): Job? {
-        return getNotification(intent)?.let { notification ->
-            notification.payload?.let { payload ->
-                when (notification.type) {
-                    Constants.NOTIFICATION_TYPE_PAYMENT_RECEIVED -> ReceivePaymentJob(
+    /** Get the job to be executed from the Message data in the Intent.
+     *  This can be overridden to handle custom jobs. */
+    open fun getJobFromIntent(intent: Intent?): Job? {
+        return getMessage(intent)?.let { message ->
+            message.payload?.let { payload ->
+                when (message.type) {
+                    Constants.MESSAGE_TYPE_PAYMENT_RECEIVED -> ReceivePaymentJob(
                         applicationContext,
                         this,
                         payload
                     )
 
-                    Constants.NOTIFICATION_TYPE_LNURL_PAY_INFO -> LnurlPayInfoJob(
+                    Constants.MESSAGE_TYPE_LNURL_PAY_INFO -> LnurlPayInfoJob(
                         applicationContext,
                         this,
                         payload
                     )
 
-                    Constants.NOTIFICATION_TYPE_LNURL_PAY_INVOICE -> LnurlPayInvoiceJob(
+                    Constants.MESSAGE_TYPE_LNURL_PAY_INVOICE -> LnurlPayInvoiceJob(
                         applicationContext,
                         this,
                         payload
@@ -114,6 +116,17 @@ open class ForegroundService : SdkForegroundService, Service() {
                     else -> null
                 }
             }
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    /** Get the Message parcel from the Intent. */
+    open fun getMessage(intent: Intent?): Message? {
+        return intent?.let {
+            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) it.getParcelableExtra(
+                Constants.EXTRA_REMOTE_MESSAGE,
+                Message::class.java
+            ) else it.getParcelableExtra(Constants.EXTRA_REMOTE_MESSAGE)
         }
     }
 
