@@ -16,18 +16,18 @@ interface MessagingService {
      *  the provided Message in an Intent. */
     fun startForegroundService(message: Message)
 
-    /** Check if the message has a data payload with high priority
-     *  as we cannot start foreground service from low/normal priority message. */
+    /** Check if the foreground service is needed depending on the
+     *  message type and foreground state of the application. */
     fun startServiceIfNeeded(context: Context, message: Message) {
         val isServiceNeeded = when (message.type) {
             Constants.MESSAGE_TYPE_PAYMENT_RECEIVED -> !isAppForeground(context)
             else -> true
         }
-        if (isServiceNeeded && message.priority == Message.PRIORITY_HIGH) startForegroundService(message)
+        if (isServiceNeeded) startForegroundService(message)
         else Logger.tag(TAG).warn { "Ignoring message ${message.type}: ${message.payload}" }
     }
 
-    /** Basic implementation to check if the application is in the foreground. */
+    /** Basic implementation to check if the application is in the foreground */
     fun isAppForeground(context: Context): Boolean {
         val appProcessInfo = ActivityManager.RunningAppProcessInfo()
         ActivityManager.getMyMemoryState(appProcessInfo)
