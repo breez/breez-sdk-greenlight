@@ -967,6 +967,7 @@ impl Wire2Api<ReverseSwapFeesRequest> for wire_ReverseSwapFeesRequest {
     fn wire2api(self) -> ReverseSwapFeesRequest {
         ReverseSwapFeesRequest {
             send_amount_sat: self.send_amount_sat.wire2api(),
+            claim_tx_feerate: self.claim_tx_feerate.wire2api(),
         }
     }
 }
@@ -1253,6 +1254,7 @@ pub struct wire_ReportPaymentFailureDetails {
 #[derive(Clone)]
 pub struct wire_ReverseSwapFeesRequest {
     send_amount_sat: *mut u64,
+    claim_tx_feerate: *mut u32,
 }
 
 #[repr(C)]
@@ -1787,6 +1789,7 @@ impl NewWithNullPtr for wire_ReverseSwapFeesRequest {
     fn new_with_null_ptr() -> Self {
         Self {
             send_amount_sat: core::ptr::null_mut(),
+            claim_tx_feerate: core::ptr::null_mut(),
         }
     }
 }

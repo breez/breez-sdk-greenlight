@@ -780,9 +780,12 @@ impl BreezServices {
 
     /// Lookup the reverse swap fees (see [ReverseSwapServiceAPI::fetch_reverse_swap_fees]).
     ///
-    /// To get the total estimated fees for a specific amount, specify the amount to be sent in
-    /// `send_amount_sat`. The result will then contain the total estimated fees in
-    /// [`ReverseSwapPairInfo::total_estimated_fees`].
+    /// If the request has the `send_amount_sat` set, the returned [ReverseSwapPairInfo] will have
+    /// the total estimated fees for the reverse swap in its `total_estimated_fees`.
+    ///
+    /// If, in addition to that, the request has the `claim_tx_feerate` set as well, then
+    /// - `fees_claim` will have the actual claim transaction fees, instead of an estimate, and
+    /// - `total_estimated_fees` will have the actual total fees for the given parameters
     ///
     /// ### Errors
     ///
@@ -795,21 +798,18 @@ impl BreezServices {
     ) -> SdkResult<ReverseSwapPairInfo> {
         let mut res = self.btc_send_swapper.fetch_reverse_swap_fees().await?;
 
-        if let Some(send_amount_sat) = req.send_amount_sat {
-            ensure_sdk!(
-                send_amount_sat <= res.max,
-                SdkError::Generic {
-                    err: "Send amount is too high".into()
-                }
-            );
-            ensure_sdk!(
-                send_amount_sat >= res.min,
-                SdkError::Generic {
-                    err: "Send amount is too low".into()
-                }
-            );
-            let service_fee_sat = ((send_amount_sat as f64) * res.fees_percentage / 100.0) as u64;
-            res.total_estimated_fees = Some(service_fee_sat + res.fees_lockup + res.fees_claim);
+        if let Some(amt) = req.send_amount_sat {
+            ensure_sdk!(amt <= res.max, SdkError::generic("Send amount is too high"));
+            ensure_sdk!(amt >= res.min, SdkError::generic("Send amount is too low"));
+
+            if let Some(claim_tx_feerate) = req.claim_tx_feerate {
+                res.fees_claim = self
+                    .btc_send_swapper
+                    .calculate_claim_tx_fees(claim_tx_feerate)?;
+            }
+
+            let service_fee_sat = ((amt as f64) * res.fees_percentage / 100.0) as u64;
+            res.total_fees = Some(service_fee_sat + res.fees_lockup + res.fees_claim);
         }
 
         Ok(res)

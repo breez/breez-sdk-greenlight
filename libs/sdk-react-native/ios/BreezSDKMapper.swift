@@ -2915,14 +2915,24 @@ enum BreezSDKMapper {
             }
             sendAmountSat = sendAmountSatTmp
         }
+        var claimTxFeerate: UInt32?
+        if hasNonNilKey(data: reverseSwapFeesRequest, key: "claimTxFeerate") {
+            guard let claimTxFeerateTmp = reverseSwapFeesRequest["claimTxFeerate"] as? UInt32 else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "claimTxFeerate"))
+            }
+            claimTxFeerate = claimTxFeerateTmp
+        }
 
         return ReverseSwapFeesRequest(
-            sendAmountSat: sendAmountSat)
+            sendAmountSat: sendAmountSat,
+            claimTxFeerate: claimTxFeerate
+        )
     }
 
     static func dictionaryOf(reverseSwapFeesRequest: ReverseSwapFeesRequest) -> [String: Any?] {
         return [
             "sendAmountSat": reverseSwapFeesRequest.sendAmountSat == nil ? nil : reverseSwapFeesRequest.sendAmountSat,
+            "claimTxFeerate": reverseSwapFeesRequest.claimTxFeerate == nil ? nil : reverseSwapFeesRequest.claimTxFeerate,
         ]
     }
 
@@ -3029,12 +3039,12 @@ enum BreezSDKMapper {
         guard let feesClaim = reverseSwapPairInfo["feesClaim"] as? UInt64 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "feesClaim", typeName: "ReverseSwapPairInfo"))
         }
-        var totalEstimatedFees: UInt64?
-        if hasNonNilKey(data: reverseSwapPairInfo, key: "totalEstimatedFees") {
-            guard let totalEstimatedFeesTmp = reverseSwapPairInfo["totalEstimatedFees"] as? UInt64 else {
-                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "totalEstimatedFees"))
+        var totalFees: UInt64?
+        if hasNonNilKey(data: reverseSwapPairInfo, key: "totalFees") {
+            guard let totalFeesTmp = reverseSwapPairInfo["totalFees"] as? UInt64 else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "totalFees"))
             }
-            totalEstimatedFees = totalEstimatedFeesTmp
+            totalFees = totalFeesTmp
         }
 
         return ReverseSwapPairInfo(
@@ -3044,7 +3054,7 @@ enum BreezSDKMapper {
             feesPercentage: feesPercentage,
             feesLockup: feesLockup,
             feesClaim: feesClaim,
-            totalEstimatedFees: totalEstimatedFees
+            totalFees: totalFees
         )
     }
 
@@ -3056,7 +3066,7 @@ enum BreezSDKMapper {
             "feesPercentage": reverseSwapPairInfo.feesPercentage,
             "feesLockup": reverseSwapPairInfo.feesLockup,
             "feesClaim": reverseSwapPairInfo.feesClaim,
-            "totalEstimatedFees": reverseSwapPairInfo.totalEstimatedFees == nil ? nil : reverseSwapPairInfo.totalEstimatedFees,
+            "totalFees": reverseSwapPairInfo.totalFees == nil ? nil : reverseSwapPairInfo.totalFees,
         ]
     }
 

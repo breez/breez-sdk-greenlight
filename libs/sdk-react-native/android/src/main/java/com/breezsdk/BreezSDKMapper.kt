@@ -2694,14 +2694,26 @@ fun asReverseSwapFeesRequest(reverseSwapFeesRequest: ReadableMap): ReverseSwapFe
         } else {
             null
         }
+    val claimTxFeerate =
+        if (hasNonNullKey(
+                reverseSwapFeesRequest,
+                "claimTxFeerate",
+            )
+        ) {
+            reverseSwapFeesRequest.getInt("claimTxFeerate").toUInt()
+        } else {
+            null
+        }
     return ReverseSwapFeesRequest(
         sendAmountSat,
+        claimTxFeerate,
     )
 }
 
 fun readableMapOf(reverseSwapFeesRequest: ReverseSwapFeesRequest): ReadableMap {
     return readableMapOf(
         "sendAmountSat" to reverseSwapFeesRequest.sendAmountSat,
+        "claimTxFeerate" to reverseSwapFeesRequest.claimTxFeerate,
     )
 }
 
@@ -2788,16 +2800,7 @@ fun asReverseSwapPairInfo(reverseSwapPairInfo: ReadableMap): ReverseSwapPairInfo
     val feesPercentage = reverseSwapPairInfo.getDouble("feesPercentage")
     val feesLockup = reverseSwapPairInfo.getDouble("feesLockup").toULong()
     val feesClaim = reverseSwapPairInfo.getDouble("feesClaim").toULong()
-    val totalEstimatedFees =
-        if (hasNonNullKey(
-                reverseSwapPairInfo,
-                "totalEstimatedFees",
-            )
-        ) {
-            reverseSwapPairInfo.getDouble("totalEstimatedFees").toULong()
-        } else {
-            null
-        }
+    val totalFees = if (hasNonNullKey(reverseSwapPairInfo, "totalFees")) reverseSwapPairInfo.getDouble("totalFees").toULong() else null
     return ReverseSwapPairInfo(
         min,
         max,
@@ -2805,7 +2808,7 @@ fun asReverseSwapPairInfo(reverseSwapPairInfo: ReadableMap): ReverseSwapPairInfo
         feesPercentage,
         feesLockup,
         feesClaim,
-        totalEstimatedFees,
+        totalFees,
     )
 }
 
@@ -2817,7 +2820,7 @@ fun readableMapOf(reverseSwapPairInfo: ReverseSwapPairInfo): ReadableMap {
         "feesPercentage" to reverseSwapPairInfo.feesPercentage,
         "feesLockup" to reverseSwapPairInfo.feesLockup,
         "feesClaim" to reverseSwapPairInfo.feesClaim,
-        "totalEstimatedFees" to reverseSwapPairInfo.totalEstimatedFees,
+        "totalFees" to reverseSwapPairInfo.totalFees,
     )
 }
 
