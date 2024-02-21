@@ -21,7 +21,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import org.tinylog.kotlin.Logger
 
-open class ForegroundService : SdkForegroundService, Service() {
+abstract class ForegroundService : SdkForegroundService, Service() {
     private var breezSDK: BlockingBreezServices? = null
     val serviceScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 
@@ -85,9 +85,7 @@ open class ForegroundService : SdkForegroundService, Service() {
     /** To be implemented by the application foreground service.
      *  It should retrieve the Breez API key and node mnemonic then construct
      *  a ConnectRequest to be used to call the Breez SDK connect function. */
-    open fun getConnectRequest(): ConnectRequest? {
-        return null
-    }
+    abstract fun getConnectRequest(): ConnectRequest?
 
     /** Get the job to be executed from the Message data in the Intent.
      *  This can be overridden to handle custom jobs. */
