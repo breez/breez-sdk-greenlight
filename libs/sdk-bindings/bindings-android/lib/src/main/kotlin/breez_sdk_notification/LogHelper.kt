@@ -11,10 +11,13 @@ class LogHelper {
 
         private var isInit: Boolean? = null
 
-        fun configureLogger(applicationContext: Context): Boolean? {
+        fun configureLogger(
+            applicationContext: Context,
+            relativeLogDirectory: String = "/logs/"
+        ): Boolean? {
             synchronized(this) {
                 val loggingDir =
-                    File(PathUtils.getDataDirectory(applicationContext), "/logs/").apply {
+                    File(PathUtils.getDataDirectory(applicationContext), relativeLogDirectory).apply {
                         mkdirs()
                     }
 
