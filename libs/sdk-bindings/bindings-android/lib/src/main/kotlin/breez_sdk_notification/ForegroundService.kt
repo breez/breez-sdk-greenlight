@@ -6,7 +6,6 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
-import androidx.annotation.RequiresApi
 import breez_sdk.BlockingBreezServices
 import breez_sdk.ConnectRequest
 import breez_sdk_notification.NotificationHelper.Companion.notifyForegroundService
@@ -96,7 +95,7 @@ abstract class ForegroundService : SdkForegroundService, Service() {
     /** Get the job to be executed from the Message data in the Intent.
      *  This can be overridden to handle custom jobs. */
     open fun getJobFromIntent(intent: Intent?): Job? {
-        return getMessage(intent)?.let { message ->
+        return Message.createFromIntent(intent)?.let { message ->
             message.payload?.let { payload ->
                 when (message.type) {
                     Constants.MESSAGE_TYPE_PAYMENT_RECEIVED -> ReceivePaymentJob(
@@ -120,17 +119,6 @@ abstract class ForegroundService : SdkForegroundService, Service() {
                     else -> null
                 }
             }
-        }
-    }
-
-    @Suppress("DEPRECATION")
-    /** Get the Message parcel from the Intent. */
-    open fun getMessage(intent: Intent?): Message? {
-        return intent?.let {
-            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) it.getParcelableExtra(
-                Constants.EXTRA_REMOTE_MESSAGE,
-                Message::class.java
-            ) else it.getParcelableExtra(Constants.EXTRA_REMOTE_MESSAGE)
         }
     }
 
