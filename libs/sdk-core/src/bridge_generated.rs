@@ -2128,8 +2128,9 @@ impl support::IntoDart for SwapStatus {
             Self::Initial => 0,
             Self::WaitingConfirmation => 1,
             Self::Redeemable => 2,
-            Self::Refundable => 3,
-            Self::Completed => 4,
+            Self::Redeemed => 3,
+            Self::Refundable => 4,
+            Self::Completed => 5,
         }
         .into_dart()
     }

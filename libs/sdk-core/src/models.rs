@@ -1310,7 +1310,60 @@ pub struct SwapInfo {
 }
 
 impl SwapInfo {
-    pub(crate) fn calculate_status(&self, tip: u32) -> SwapStatus {
+    pub(crate) fn with_chain_info(&self, onchain_info: SwapChainInfo, tip: u32) -> Self {
+        let new_info = Self {
+            confirmed_sats: onchain_info.confirmed_sats,
+            unconfirmed_sats: onchain_info.unconfirmed_sats,
+            confirmed_tx_ids: onchain_info.confirmed_tx_ids,
+            unconfirmed_tx_ids: onchain_info.unconfirmed_tx_ids,
+            confirmed_at: onchain_info.confirmed_at,
+            ..self.clone()
+        };
+
+        Self {
+            status: new_info.calculate_status(tip),
+            ..new_info
+        }
+    }
+
+    pub(crate) fn with_paid_amount(&self, paid_msat: u64, tip: u32) -> Self {
+        let new_info = Self {
+            paid_msat,
+            ..self.clone()
+        };
+
+        Self {
+            status: new_info.calculate_status(tip),
+            ..new_info
+        }
+    }
+
+    pub(crate) fn unused(&self) -> bool {
+        self.status == SwapStatus::Initial
+    }
+
+    pub(crate) fn in_progress(&self) -> bool {
+        [
+            SwapStatus::Redeemable,
+            SwapStatus::Redeemed,
+            SwapStatus::WaitingConfirmation,
+        ]
+        .contains(&self.status)
+    }
+
+    pub(crate) fn redeemable(&self) -> bool {
+        self.status == SwapStatus::Redeemable
+    }
+
+    pub(crate) fn refundable(&self) -> bool {
+        self.status == SwapStatus::Refundable
+    }
+
+    pub(crate) fn monitored(&self) -> bool {
+        self.unused() || self.in_progress() || self.refundable()
+    }
+
+    fn calculate_status(&self, tip: u32) -> SwapStatus {
         // The Refundable status never
         let mut passed_timelock = false;
         if let Some(confirmed_at) = self.confirmed_at {
@@ -1336,49 +1389,6 @@ impl SwapInfo {
             (_, unconfirmed, _, _) if unconfirmed > 0 => SwapStatus::WaitingConfirmation,
             _ => SwapStatus::Initial,
         }
-    }
-
-    pub(crate) fn with_chain_info(&self, onchain_info: SwapChainInfo) -> Self {
-        Self {
-            confirmed_sats: onchain_info.confirmed_sats,
-            unconfirmed_sats: onchain_info.unconfirmed_sats,
-            confirmed_tx_ids: onchain_info.confirmed_tx_ids,
-            unconfirmed_tx_ids: onchain_info.unconfirmed_tx_ids,
-            confirmed_at: onchain_info.confirmed_at,
-            ..self.clone()
-        }
-    }
-
-    pub(crate) fn with_paid_amount(&self, paid_msat: u64) -> Self {
-        Self {
-            paid_msat,
-            ..self.clone()
-        }
-    }
-
-    pub(crate) fn unused(&self) -> bool {
-        self.status == SwapStatus::Initial
-    }
-
-    pub(crate) fn in_progress(&self) -> bool {
-        vec![
-            SwapStatus::Redeemable,
-            SwapStatus::Redeemed,
-            SwapStatus::WaitingConfirmation,
-        ]
-        .contains(&self.status)
-    }
-
-    pub(crate) fn redeemable(&self) -> bool {
-        self.status == SwapStatus::Redeemable
-    }
-
-    pub(crate) fn refundable(&self) -> bool {
-        self.status == SwapStatus::Refundable
-    }
-
-    pub(crate) fn monitored(&self) -> bool {
-        self.unused() || self.in_progress() || self.refundable()
     }
 }
 

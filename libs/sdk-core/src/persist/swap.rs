@@ -363,7 +363,7 @@ mod tests {
         use crate::persist::test_utils;
         fn list_in_progress_swaps(storage: &SqliteStorage) -> PersistResult<Vec<SwapInfo>> {
             Ok(storage
-                .list_swaps_with_status(SwapStatus::Initial)?
+                .list_swaps()?
                 .into_iter()
                 .filter(SwapInfo::in_progress)
                 .collect())
@@ -423,10 +423,13 @@ mod tests {
             confirmed_tx_ids: vec![],
             confirmed_at: None,
         };
+
         let swap_after_chain_update = storage.update_swap_chain_info(
             tested_swap_info.bitcoin_address.clone(),
-            chain_info,
-            SwapStatus::Initial,
+            chain_info.clone(),
+            tested_swap_info
+                .with_chain_info(chain_info.clone(), 0)
+                .status,
         )?;
         let in_progress = list_in_progress_swaps(&storage)?;
         assert_eq!(in_progress[0], swap_after_chain_update);
@@ -436,12 +439,12 @@ mod tests {
             unconfirmed_tx_ids: vec![],
             confirmed_sats: 20,
             confirmed_tx_ids: vec![String::from("333"), String::from("444")],
-            confirmed_at: None,
+            confirmed_at: Some(1000),
         };
         let swap_after_chain_update = storage.update_swap_chain_info(
             tested_swap_info.bitcoin_address.clone(),
-            chain_info,
-            SwapStatus::Initial,
+            chain_info.clone(),
+            tested_swap_info.with_chain_info(chain_info, 1001).status,
         )?;
         let in_progress = list_in_progress_swaps(&storage)?;
         assert_eq!(in_progress[0], swap_after_chain_update);
@@ -451,12 +454,12 @@ mod tests {
             unconfirmed_tx_ids: vec![],
             confirmed_sats: 20,
             confirmed_tx_ids: vec![String::from("333"), String::from("444")],
-            confirmed_at: None,
+            confirmed_at: Some(1000),
         };
         storage.update_swap_chain_info(
             tested_swap_info.bitcoin_address.clone(),
-            chain_info,
-            SwapStatus::Refundable,
+            chain_info.clone(),
+            tested_swap_info.with_chain_info(chain_info, 10000).status,
         )?;
         storage.insert_swap_refund_tx_ids(
             tested_swap_info.bitcoin_address.clone(),
@@ -477,7 +480,7 @@ mod tests {
             .get_swap_info_by_address(tested_swap_info.bitcoin_address.clone())?
             .unwrap();
         assert_eq!(
-            updated_swap.last_redeem_error.unwrap(),
+            updated_swap.last_redeem_error.clone().unwrap(),
             String::from("test error")
         );
 
@@ -485,7 +488,7 @@ mod tests {
         storage.update_swap_paid_amount(
             tested_swap_info.bitcoin_address.clone(),
             30_000,
-            tested_swap_info.with_paid_amount(30_000).status,
+            updated_swap.with_paid_amount(30_000, 10000).status,
         )?;
         let updated_swap = storage
             .get_swap_info_by_address(tested_swap_info.bitcoin_address)?

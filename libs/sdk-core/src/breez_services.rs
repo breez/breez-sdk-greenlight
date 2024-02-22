@@ -759,7 +759,7 @@ impl BreezServices {
     pub async fn in_progress_swap(&self) -> SdkResult<Option<SwapInfo>> {
         let tip = self.chain_service.current_tip().await?;
         self.btc_receive_swapper.execute_pending_swaps(tip).await?;
-        let in_progress = self.btc_receive_swapper.list_in_progress().await?;
+        let in_progress = self.btc_receive_swapper.list_in_progress()?;
         if !in_progress.is_empty() {
             return Ok(Some(in_progress[0].clone()));
         }

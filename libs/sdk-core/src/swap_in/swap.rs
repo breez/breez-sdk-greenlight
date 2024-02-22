@@ -2,7 +2,7 @@ use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use anyhow::{anyhow, Chain, Result};
+use anyhow::{anyhow, Result};
 use rand::Rng;
 use ripemd::{Digest, Ripemd160};
 use tokio::sync::broadcast;
@@ -18,10 +18,8 @@ use crate::bitcoin::util::sighash::SighashCache;
 use crate::bitcoin::{
     Address, EcdsaSighashType, Script, Sequence, Transaction, TxIn, TxOut, Witness,
 };
-use crate::breez_services::{
-    BreezEvent, BreezServer, PaymentReceiver, Receiver, SwapStatusChangedData,
-};
-use crate::chain::{get_utxos, AddressUtxos, ChainService, MempoolSpace, OnchainTx};
+use crate::breez_services::{BreezEvent, BreezServer, Receiver};
+use crate::chain::{get_utxos, AddressUtxos, ChainService, OnchainTx};
 use crate::error::ReceivePaymentError;
 use crate::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
 use crate::models::{Swap, SwapInfo, SwapStatus, SwapperAPI};
@@ -148,7 +146,7 @@ impl BTCReceiveSwap {
                         self.persister.update_swap_paid_amount(
                             swap_info.clone().bitcoin_address,
                             paid_amount,
-                            swap_info.with_paid_amount(paid_amount).status,
+                            swap_info.with_paid_amount(paid_amount, self.tip()).status,
                         )?;
                     }
                 }
@@ -241,16 +239,16 @@ impl BTCReceiveSwap {
     fn list_unused(&self) -> Result<Vec<SwapInfo>> {
         Ok(self
             .persister
-            .list_swaps_with_status(SwapStatus::Initial)?
+            .list_swaps()?
             .into_iter()
             .filter(SwapInfo::unused)
             .collect())
     }
 
-    pub(crate) async fn list_in_progress(&self) -> Result<Vec<SwapInfo>> {
+    pub(crate) fn list_in_progress(&self) -> Result<Vec<SwapInfo>> {
         Ok(self
             .persister
-            .list_swaps_with_status(SwapStatus::Initial)?
+            .list_swaps()?
             .into_iter()
             .filter(SwapInfo::in_progress)
             .collect())
@@ -278,7 +276,7 @@ impl BTCReceiveSwap {
     pub(crate) fn list_redeemables(&self) -> Result<Vec<SwapInfo>> {
         Ok(self
             .persister
-            .list_swaps_with_status(SwapStatus::Initial)?
+            .list_swaps()?
             .into_iter()
             .filter(SwapInfo::redeemable)
             .collect())
@@ -390,14 +388,14 @@ impl BTCReceiveSwap {
         let payment = self
             .persister
             .get_completed_payment_by_hash(&hex::encode(swap_info.payment_hash.clone()))?;
-        if payment.is_some() {
+        if let Some(payment) = payment {
             debug!(
                 "found payment for hash {:?}, {:?}",
                 &hex::encode(swap_info.payment_hash.clone()),
                 payment
             );
-            let amount_msat = payment.unwrap().amount_msat;
-            swap_info = swap_info.with_paid_amount(amount_msat);
+            let amount_msat = payment.amount_msat;
+            swap_info = swap_info.with_paid_amount(amount_msat, current_tip);
             self.persister.update_swap_paid_amount(
                 bitcoin_address.clone(),
                 amount_msat,
@@ -417,8 +415,8 @@ impl BTCReceiveSwap {
             confirmed_at: optional_confirmed_block,
         };
         let status = swap_info
-            .with_chain_info(chain_info.clone())
-            .calculate_status(current_tip);
+            .with_chain_info(chain_info.clone(), current_tip)
+            .status;
         Ok(self
             .persister
             .update_swap_chain_info(bitcoin_address, chain_info, status)?)
@@ -744,6 +742,7 @@ mod tests {
     use anyhow::Result;
 
     use crate::chain::{AddressUtxos, Utxo};
+    use crate::persist::swap::SwapChainInfo;
     use crate::swap_in::swap::{compute_refund_tx_weight, compute_tx_fee, prepare_refund_tx};
     use crate::test_utils::{get_test_ofp, MockNodeAPI};
     use crate::{
@@ -832,6 +831,146 @@ mod tests {
         let utxos = get_utxos(swap_address, txs)?;
         assert_eq!(utxos.confirmed.len(), 0);
         assert_eq!(utxos.unconfirmed.len(), 1);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_swap_statuses() -> Result<()> {
+        let tip = 1000;
+        let chain_service = Arc::new(MockChainService::default());
+        let (swapper, persister) = create_swapper(chain_service.clone())?;
+        let mut swap_info = swapper
+            .create_swap_address(get_test_ofp(10, 10, true).into())
+            .await?;
+
+        // test initial status
+        assert_eq!(swap_info.status, SwapStatus::Initial);
+        assert_eq!(swapper.list_in_progress()?.len(), 0);
+        assert_eq!(swapper.list_monitored()?.len(), 1);
+        assert_eq!(swapper.list_redeemables()?.len(), 0);
+        assert_eq!(swapper.list_refundables()?.len(), 0);
+        assert_eq!(swapper.list_unused()?.len(), 1);
+
+        // test with uncormfirmed tx
+        let chain_info = SwapChainInfo {
+            confirmed_tx_ids: vec![],
+            confirmed_sats: 0,
+            confirmed_at: None,
+            unconfirmed_sats: 5000,
+            unconfirmed_tx_ids: vec!["222".into()],
+        };
+        swap_info = swap_info.with_chain_info(chain_info.clone(), tip);
+        persister.update_swap_chain_info(
+            swap_info.bitcoin_address.clone(),
+            chain_info,
+            swap_info.status.clone(),
+        )?;
+        assert_eq!(swap_info.status, SwapStatus::WaitingConfirmation);
+        assert_eq!(swapper.list_in_progress()?.len(), 1);
+        assert_eq!(swapper.list_monitored()?.len(), 1);
+        assert_eq!(swapper.list_redeemables()?.len(), 0);
+        assert_eq!(swapper.list_refundables()?.len(), 0);
+        assert_eq!(swapper.list_unused()?.len(), 0);
+
+        // test with confirmed tx
+        let chain_info = SwapChainInfo {
+            confirmed_tx_ids: vec!["222".into()],
+            confirmed_sats: 5000,
+            confirmed_at: Some(1000),
+            unconfirmed_sats: 0,
+            unconfirmed_tx_ids: vec![],
+        };
+        swap_info = swap_info.with_chain_info(chain_info.clone(), tip);
+        persister.update_swap_chain_info(
+            swap_info.bitcoin_address.clone(),
+            chain_info,
+            swap_info.status.clone(),
+        )?;
+        assert_eq!(swap_info.status, SwapStatus::Redeemable);
+        assert_eq!(swapper.list_in_progress()?.len(), 1);
+        assert_eq!(swapper.list_monitored()?.len(), 1);
+        assert_eq!(swapper.list_redeemables()?.len(), 1);
+        assert_eq!(swapper.list_refundables()?.len(), 0);
+        assert_eq!(swapper.list_unused()?.len(), 0);
+
+        // test with confirmed and uncofirmed tx
+        let chain_info = SwapChainInfo {
+            confirmed_tx_ids: vec!["222".into()],
+            confirmed_sats: 5000,
+            confirmed_at: Some(1000),
+            unconfirmed_sats: 2000,
+            unconfirmed_tx_ids: vec!["111".into()],
+        };
+        swap_info = swap_info.with_chain_info(chain_info.clone(), tip);
+        persister.update_swap_chain_info(
+            swap_info.bitcoin_address.clone(),
+            chain_info,
+            swap_info.status.clone(),
+        )?;
+        assert_eq!(swap_info.status, SwapStatus::Redeemable);
+        assert_eq!(swapper.list_in_progress()?.len(), 1);
+        assert_eq!(swapper.list_monitored()?.len(), 1);
+        assert_eq!(swapper.list_redeemables()?.len(), 1);
+        assert_eq!(swapper.list_refundables()?.len(), 0);
+        assert_eq!(swapper.list_unused()?.len(), 0);
+
+        // test with paid amount
+        swap_info = swap_info.with_paid_amount(5000000, tip);
+        persister.update_swap_paid_amount(
+            swap_info.bitcoin_address.clone(),
+            5000000,
+            swap_info.status.clone(),
+        )?;
+        assert_eq!(swap_info.status, SwapStatus::Redeemed);
+        assert_eq!(swapper.list_in_progress()?.len(), 1);
+        assert_eq!(swapper.list_monitored()?.len(), 1);
+        assert_eq!(swapper.list_redeemables()?.len(), 0);
+        assert_eq!(swapper.list_refundables()?.len(), 0);
+        assert_eq!(swapper.list_unused()?.len(), 0);
+
+        // test refundable
+        let chain_info = SwapChainInfo {
+            confirmed_tx_ids: vec!["222".into()],
+            confirmed_sats: 5000,
+            confirmed_at: Some(1000),
+            unconfirmed_sats: 2000,
+            unconfirmed_tx_ids: vec!["111".into()],
+        };
+        swap_info = swap_info.with_chain_info(chain_info.clone(), tip + 1000);
+        persister.update_swap_chain_info(
+            swap_info.bitcoin_address.clone(),
+            chain_info,
+            swap_info.status.clone(),
+        )?;
+
+        assert_eq!(swap_info.status, SwapStatus::Refundable);
+        assert_eq!(swapper.list_in_progress()?.len(), 0);
+        assert_eq!(swapper.list_monitored()?.len(), 1);
+        assert_eq!(swapper.list_redeemables()?.len(), 0);
+        assert_eq!(swapper.list_refundables()?.len(), 1);
+        assert_eq!(swapper.list_unused()?.len(), 0);
+
+        // test completed
+        let chain_info = SwapChainInfo {
+            confirmed_tx_ids: vec![],
+            confirmed_sats: 0,
+            confirmed_at: Some(1000),
+            unconfirmed_sats: 0,
+            unconfirmed_tx_ids: vec![],
+        };
+        swap_info = swap_info.with_chain_info(chain_info.clone(), tip + 1000);
+        persister.update_swap_chain_info(
+            swap_info.bitcoin_address.clone(),
+            chain_info,
+            swap_info.status.clone(),
+        )?;
+        assert_eq!(swap_info.status, SwapStatus::Completed);
+        assert_eq!(swapper.list_in_progress()?.len(), 0);
+        assert_eq!(swapper.list_monitored()?.len(), 0);
+        assert_eq!(swapper.list_redeemables()?.len(), 0);
+        assert_eq!(swapper.list_refundables()?.len(), 0);
+        assert_eq!(swapper.list_unused()?.len(), 0);
 
         Ok(())
     }
@@ -1028,7 +1167,7 @@ mod tests {
             .get_swap_info(swap_info.clone().bitcoin_address)?
             .unwrap();
 
-        assert_eq!(swap.status, SwapStatus::Refundable);
+        assert_eq!(swap.status, SwapStatus::Completed);
         assert_eq!(swapper.list_redeemables().unwrap().len(), 0);
         assert_eq!(swapper.list_refundables().unwrap().len(), 0);
 

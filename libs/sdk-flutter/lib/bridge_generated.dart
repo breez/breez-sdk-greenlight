@@ -1869,6 +1869,7 @@ enum SwapStatus {
   Initial,
   WaitingConfirmation,
   Redeemable,
+  Redeemed,
 
   /// The swap address has confirmed transactions associated with it and the lock timeout has passed since
   /// the earliest confirmed transaction. This means the only way to spend the funds from this address is by
