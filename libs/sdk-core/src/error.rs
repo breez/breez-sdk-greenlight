@@ -666,7 +666,7 @@ pub enum SendPaymentError {
     #[error("Invoice expired: {err}")]
     InvoiceExpired { err: String },
 
-    #[error("No connected peers at this moment. Please try again later.")]
+    #[error("No connected peers")]
     NoConnectedPeers,
 
     #[error(
