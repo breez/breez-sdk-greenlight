@@ -294,6 +294,9 @@ impl BreezServices {
         {
             Some(_) => Err(SendPaymentError::AlreadyPaid),
             None => {
+                self.validate_peers_connected()?;
+                self.validate_liquidity(amount_msat)?;
+
                 self.persist_pending_payment(&parsed_invoice, amount_msat)?;
                 let payment_res = self
                     .node_api
@@ -1589,6 +1592,29 @@ impl BreezServices {
             error: None,
             metadata: None,
         })
+    }
+
+    fn validate_peers_connected(&self) -> Result<(), SendPaymentError> {
+        ensure_sdk!(
+            !self.node_info()?.connected_peers.is_empty(),
+            SendPaymentError::NoConnectedPeers
+        );
+        Ok(())
+    }
+
+    fn validate_liquidity(&self, payment_amount_msat: u64) -> Result<(), SendPaymentError> {
+        let node_info = self.node_info()?;
+        let channels_balance_msat = node_info.channels_balance_msat;
+        ensure_sdk!(
+            payment_amount_msat <= channels_balance_msat,
+            SendPaymentError::not_enough_liquidity(
+                payment_amount_msat,
+                channels_balance_msat,
+                node_info.onchain_balance_msat,
+                node_info.pending_onchain_balance_msat
+            )
+        );
+        Ok(())
     }
 
     /// Register for webhook callbacks at the given `webhook_url`.

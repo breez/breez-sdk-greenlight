@@ -666,6 +666,22 @@ pub enum SendPaymentError {
     #[error("Invoice expired: {err}")]
     InvoiceExpired { err: String },
 
+    #[error("No connected peers at this moment. Please try again later.")]
+    NoConnectedPeers,
+
+    #[error(
+        "Not enough liquidity to pay {amount_msat} msat: \
+        channel balance {channels_balance_msat} msat, \
+        onchain balance {onchain_balance_msat} msat, \
+        pending onchain balance {pending_onchain_balance_msat} msat"
+    )]
+    NotEnoughLiquidity {
+        amount_msat: u64,
+        channels_balance_msat: u64,
+        onchain_balance_msat: u64,
+        pending_onchain_balance_msat: u64,
+    },
+
     #[error("Payment failed: {err}")]
     PaymentFailed { err: String },
 
@@ -680,6 +696,22 @@ pub enum SendPaymentError {
 
     #[error("Service connectivity: {err}")]
     ServiceConnectivity { err: String },
+}
+
+impl SendPaymentError {
+    pub(crate) fn not_enough_liquidity(
+        amount_msat: u64,
+        channels_balance_msat: u64,
+        onchain_balance_msat: u64,
+        pending_onchain_balance_msat: u64,
+    ) -> Self {
+        Self::NotEnoughLiquidity {
+            amount_msat,
+            channels_balance_msat,
+            onchain_balance_msat,
+            pending_onchain_balance_msat,
+        }
+    }
 }
 
 impl From<anyhow::Error> for SendPaymentError {

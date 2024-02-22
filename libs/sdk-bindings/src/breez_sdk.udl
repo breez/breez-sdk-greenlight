@@ -91,6 +91,8 @@ enum SendPaymentError {
     "InvalidInvoice",
     "InvoiceExpired",
     "InvalidNetwork",
+    "NoConnectedPeers",
+    "NotEnoughLiquidity",
     "PaymentFailed",
     "PaymentTimeout",
     "RouteNotFound",

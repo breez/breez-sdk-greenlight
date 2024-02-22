@@ -219,7 +219,7 @@ pub fn add_routing_hints(
 }
 
 // Validate that the LNInvoice network matches the provided network
-pub fn validate_network(invoice: LNInvoice, network: Network) -> InvoiceResult<()> {
+pub(crate) fn validate_network(invoice: LNInvoice, network: Network) -> InvoiceResult<()> {
     match invoice.network == network {
         true => Ok(()),
         false => Err(InvoiceError::InvalidNetwork(anyhow!(
