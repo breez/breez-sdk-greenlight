@@ -1,4 +1,7 @@
 use crate::models::NodeState;
+use crate::persist::error::PersistError;
+
+use anyhow::anyhow;
 
 use super::{db::SqliteStorage, error::PersistResult};
 
@@ -45,6 +48,11 @@ impl SqliteStorage {
             Some(str) => serde_json::from_str(str.as_str())?,
             None => None,
         })
+    }
+
+    pub fn node_info(&self) -> PersistResult<NodeState> {
+        self.get_node_state()?
+            .ok_or(PersistError::Generic(anyhow!("Node info not found")))
     }
 
     pub fn set_last_backup_time(&self, t: u64) -> PersistResult<()> {

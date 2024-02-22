@@ -250,7 +250,7 @@ impl BTCSendSwap {
         match boltz_response {
             BoltzApiCreateReverseSwapResponse::BoltzApiSuccess(response) => {
                 let res = FullReverseSwapInfo {
-                    created_at_block_height: self.chain_service.current_tip().await?,
+                    created_at_block_height: self.persister.node_info()?.block_height,
                     claim_pubkey: req.onchain_recipient_address,
                     invoice: response.invoice,
                     preimage: reverse_swap_keys.preimage,
@@ -494,7 +494,7 @@ impl BTCSendSwap {
             },
             InProgress => match claim_tx_status {
                 TxStatus::Unknown => {
-                    let block_height = self.chain_service.current_tip().await?;
+                    let block_height = self.persister.node_info()?.block_height;
                     match block_height >= rsi.timeout_block_height {
                         true => {
                             warn!("Reverse swap {} crossed the timeout block height", rsi.id);

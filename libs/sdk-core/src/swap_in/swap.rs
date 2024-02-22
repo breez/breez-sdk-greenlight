@@ -149,10 +149,7 @@ impl BTCReceiveSwap {
         &self,
         channel_opening_fees: OpeningFeeParams,
     ) -> SwapResult<SwapInfo> {
-        let node_state = self
-            .persister
-            .get_node_state()?
-            .ok_or(anyhow!("Node info not found"))?;
+        let node_state = self.persister.node_info()?;
 
         // check first that we don't have any swap in progress waiting for redeem.
         if let Some(in_progress_swap) = self.list_unused()?.first().cloned() {

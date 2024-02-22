@@ -541,9 +541,7 @@ impl BreezServices {
     ///
     /// Fail if it could not be retrieved or if `None` was found.
     pub fn node_info(&self) -> SdkResult<NodeState> {
-        self.persister.get_node_state()?.ok_or(SdkError::Generic {
-            err: "Node info not found".into(),
-        })
+        self.persister.node_info().map_err(Into::into)
     }
 
     /// Sign given message with the private key of the node id. Returns a zbase
@@ -750,7 +748,7 @@ impl BreezServices {
     /// Returns an optional in-progress [SwapInfo].
     /// A [SwapInfo] is in-progress if it is waiting for confirmation to be redeemed and complete the swap.
     pub async fn in_progress_swap(&self) -> SdkResult<Option<SwapInfo>> {
-        let tip = self.chain_service.current_tip().await?;
+        let tip = self.node_info()?.block_height;
         self.btc_receive_swapper.execute_pending_swaps(tip).await?;
         let in_progress = self.btc_receive_swapper.list_in_progress().await?;
         if !in_progress.is_empty() {
@@ -762,7 +760,7 @@ impl BreezServices {
     /// Iterate all historical swap addresses and fetch their current status from the blockchain.
     /// The status is then updated in the persistent storage.
     pub async fn rescan_swaps(&self) -> SdkResult<()> {
-        let tip = self.chain_service.current_tip().await?;
+        let tip = self.node_info()?.block_height;
         self.btc_receive_swapper.rescan_swaps(tip).await?;
         Ok(())
     }
@@ -2086,10 +2084,7 @@ impl Receiver for PaymentReceiver {
     ) -> Result<ReceivePaymentResponse, ReceivePaymentError> {
         self.node_api.start().await?;
         let lsp_info = get_lsp(self.persister.clone(), self.lsp.clone()).await?;
-        let node_state = self
-            .persister
-            .get_node_state()?
-            .ok_or(anyhow!("Node info not found"))?;
+        let node_state = self.persister.node_info()?;
         let expiry = req.expiry.unwrap_or(INVOICE_PAYMENT_FEE_EXPIRY_SECONDS);
 
         ensure_sdk!(
@@ -2315,10 +2310,7 @@ async fn get_lsp_by_id(
     lsp_api: Arc<dyn LspAPI>,
     lsp_id: &str,
 ) -> Result<Option<LspInformation>> {
-    let node_pubkey = persister
-        .get_node_state()?
-        .ok_or(anyhow!("Node info not found"))?
-        .id;
+    let node_pubkey = persister.node_info()?.id;
 
     Ok(lsp_api
         .list_lsps(node_pubkey)

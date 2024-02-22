@@ -12,6 +12,9 @@ pub trait ChainService: Send + Sync {
     ///
     /// See <https://mempool.space/docs/api/rest#get-address-transactions>
     async fn address_transactions(&self, address: String) -> Result<Vec<OnchainTx>>;
+    /// This should not be called directly, unless absolutely necessary.
+    ///
+    /// Instead, read the blockheight from the [crate::models::NodeState]
     async fn current_tip(&self) -> Result<u32>;
     /// Gets the spending status of all tx outputs for this tx.
     ///
