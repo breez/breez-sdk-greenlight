@@ -502,7 +502,11 @@ dictionary OpenChannelFeeResponse {
 
 enum SwapStatus {
     "Initial",
-    "Expired",
+    "WaitingConfirmation",
+    "Redeemable",
+    "Redeemed",
+    "Refundable",
+    "Completed",
 };
 
 enum ReverseSwapStatus {
