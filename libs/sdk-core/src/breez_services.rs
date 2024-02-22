@@ -2836,6 +2836,7 @@ pub(crate) mod tests {
         persister.init()?;
         persister.insert_or_update_payments(&known_payments, false)?;
         persister.set_lsp_id(MockBreezServer {}.lsp_id())?;
+        persister.set_node_state(&get_dummy_node_state())?;
 
         let mut builder = BreezServicesBuilder::new(test_config.clone());
         let breez_services = builder
@@ -2854,18 +2855,18 @@ pub(crate) mod tests {
     /// Build dummy NodeState for tests
     pub(crate) fn get_dummy_node_state() -> NodeState {
         NodeState {
-            id: "tx1".to_string(),
+            id: "node_id_1".to_string(),
             block_height: 1,
-            channels_balance_msat: 100,
-            onchain_balance_msat: 1000,
+            channels_balance_msat: 100_000,
+            onchain_balance_msat: 1_000,
             pending_onchain_balance_msat: 100,
             utxos: vec![],
-            max_payable_msat: 95,
-            max_receivable_msat: 1000,
-            max_single_payment_amount_msat: 1000,
+            max_payable_msat: 100_000,
+            max_receivable_msat: 1_000,
+            max_single_payment_amount_msat: 1_000,
             max_chan_reserve_msats: 0,
             connected_peers: vec!["1111".to_string()],
-            inbound_liquidity_msats: 2000,
+            inbound_liquidity_msats: 2_000,
         }
     }
 }
