@@ -6,6 +6,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import androidx.annotation.RequiresApi
 import breez_sdk.BlockingBreezServices
 import breez_sdk.ConnectRequest
 import breez_sdk_notification.NotificationHelper.Companion.notifyForegroundService
@@ -51,7 +52,9 @@ abstract class ForegroundService : SdkForegroundService, Service() {
 
     override fun shutdown() {
         Logger.tag(TAG).debug { "Shutting down foreground service" }
-        stopForeground(STOP_FOREGROUND_REMOVE)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        }
         stopSelf()
     }
 
@@ -65,6 +68,10 @@ abstract class ForegroundService : SdkForegroundService, Service() {
         val intentDetails = "[ intent=$intent, flag=$flags, startId=$startId ]"
         Logger.tag(TAG).debug { "Start foreground service from intent $intentDetails" }
 
+        // Display foreground service notification
+        val notification = notifyForegroundService(applicationContext)
+        startForeground(Constants.NOTIFICATION_ID_FOREGROUND_SERVICE, notification)
+
         // Connect to SDK if source intent has data message with valid payload
         getConnectRequest()?.let { connectRequest ->
             getJobFromIntent(intent)?.also { job ->
@@ -77,7 +84,6 @@ abstract class ForegroundService : SdkForegroundService, Service() {
             Logger.tag(TAG).warn { "Missing ConnectRequest." }
             shutdown()
         }
-
 
         return START_NOT_STICKY
     }
@@ -134,10 +140,6 @@ abstract class ForegroundService : SdkForegroundService, Service() {
             shutdown()
         }) {
             breezSDK ?: run {
-                // Display foreground service notification when connecting for the first time
-                val notification = notifyForegroundService(applicationContext)
-                startForeground(Constants.NOTIFICATION_ID_FOREGROUND_SERVICE, notification)
-
                 breezSDK = connectSDK(connectRequest, job)
             }
 
