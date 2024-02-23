@@ -474,7 +474,6 @@ dependencies = [
  "gl-client",
  "hex",
  "lazy_static",
- "lightning",
  "log",
  "miniz_oxide",
  "once_cell",
@@ -1201,7 +1200,7 @@ checksum = "4271d37baee1b8c7e4b708028c57d816cf9d2434acb33a549475f78c181f6253"
 [[package]]
 name = "gl-client"
 version = "0.1.9"
-source = "git+https://github.com/Blockstream/greenlight.git?rev=cd51120d8cd57324c5511247e4006bf2ff02c76f#cd51120d8cd57324c5511247e4006bf2ff02c76f"
+source = "git+https://github.com/Blockstream/greenlight.git?rev=43017c9b01a2c8c6a147b7a291f97ce2f3b89ce5#43017c9b01a2c8c6a147b7a291f97ce2f3b89ce5"
 dependencies = [
  "anyhow",
  "async-trait",
