@@ -740,8 +740,9 @@ impl BreezServices {
             .create_swap_address(channel_opening_fees)
             .await?;
         if let Some(webhook_url) = self.persister.get_webhook_url()? {
-            info!("Webhook URL found in local cache, registering for swap tx notification");
-            self.register_swap_tx_notification(&swap_info.bitcoin_address, &webhook_url)
+            let address = &swap_info.bitcoin_address;
+            info!("Registering for swap tx notification for address {address}");
+            self.register_swap_tx_notification(address, &webhook_url)
                 .await?;
         }
         Ok(swap_info)
@@ -1608,6 +1609,7 @@ impl BreezServices {
             Some(cached_webhook_url) => cached_webhook_url != webhook_url,
         };
         match is_new_webhook_url {
+            false => debug!("Webhook URL not changed, no need to (re-)register for monitored swap tx notifications"),
             true => {
                 for swap in self
                     .btc_receive_swapper
@@ -1621,7 +1623,6 @@ impl BreezServices {
                         .await?;
                 }
             }
-            false => info!("Webhook URL not changed, skipping swap tx registration"),
         }
 
         // Register for LN payment notifications on every call, since these webhook registrations

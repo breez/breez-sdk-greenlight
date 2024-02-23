@@ -154,18 +154,16 @@ impl BTCReceiveSwap {
             .get_node_state()?
             .ok_or(anyhow!("Node info not found"))?;
 
-        // check first that we don't have any swap in progress waiting for redeem.
-        if let Some(in_progress_swap) = self.list_unused()?.first().cloned() {
+        // check first that we don't already have an unused swap
+        if let Some(unused_swap) = self.list_unused()?.first().cloned() {
             info!("Found unused swap when trying to create new swap address");
 
-            self.persister.update_swap_fees(
-                in_progress_swap.bitcoin_address.clone(),
-                channel_opening_fees,
-            )?;
-            return Ok(in_progress_swap);
+            self.persister
+                .update_swap_fees(unused_swap.bitcoin_address.clone(), channel_opening_fees)?;
+            return Ok(unused_swap);
         }
 
-        // create swap keys
+        // create fresh swap keys
         let swap_keys = create_swap_keys()?;
         let pubkey = swap_keys.public_key_bytes()?;
         let hash = swap_keys.preimage_hash_bytes();
