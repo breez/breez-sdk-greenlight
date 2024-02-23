@@ -666,9 +666,6 @@ pub enum SendPaymentError {
     #[error("Invoice expired: {err}")]
     InvoiceExpired { err: String },
 
-    #[error("No connected peers")]
-    NoConnectedPeers,
-
     #[error(
         "Not enough liquidity to pay {amount_msat} msat: \
         channel balance {channels_balance_msat} msat, \

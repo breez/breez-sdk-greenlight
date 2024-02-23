@@ -294,7 +294,6 @@ impl BreezServices {
         {
             Some(_) => Err(SendPaymentError::AlreadyPaid),
             None => {
-                self.validate_peers_connected()?;
                 self.validate_liquidity(amount_msat)?;
 
                 self.persist_pending_payment(&parsed_invoice, amount_msat)?;
@@ -1592,14 +1591,6 @@ impl BreezServices {
             error: None,
             metadata: None,
         })
-    }
-
-    fn validate_peers_connected(&self) -> Result<(), SendPaymentError> {
-        ensure_sdk!(
-            !self.node_info()?.connected_peers.is_empty(),
-            SendPaymentError::NoConnectedPeers
-        );
-        Ok(())
     }
 
     fn validate_liquidity(&self, payment_amount_msat: u64) -> Result<(), SendPaymentError> {
