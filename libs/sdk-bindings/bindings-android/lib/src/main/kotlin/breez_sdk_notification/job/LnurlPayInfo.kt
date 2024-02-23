@@ -2,7 +2,6 @@ package breez_sdk_notification.job
 
 import android.content.Context
 import breez_sdk.BlockingBreezServices
-import breez_sdk.SdkException
 import breez_sdk_notification.NotificationHelper.Companion.notifyChannel
 import breez_sdk_notification.Constants
 import breez_sdk_notification.ResourceHelper.Companion.getString
@@ -40,9 +39,9 @@ class LnurlPayInfoJob(
     }
 
     override fun start(breezSDK: BlockingBreezServices) {
-        val request =
-            Json.decodeFromString<LnurlInfoRequest>(LnurlInfoRequest.serializer(), payload)
+        var request: LnurlInfoRequest? = null
         try {
+            request = Json.decodeFromString<LnurlInfoRequest>(LnurlInfoRequest.serializer(), payload)
             val nodeState = breezSDK.nodeInfo()
             val plainTextMetadata = getString(
                 context,
@@ -67,9 +66,11 @@ class LnurlPayInfoJob(
                     if (success) Constants.DEFAULT_LNURL_PAY_INFO_NOTIFICATION_TITLE else Constants.DEFAULT_LNURL_PAY_NOTIFICATION_FAILURE_TITLE
                 ),
             )
-        } catch (e: SdkException) {
+        } catch (e: Exception) {
             Logger.tag(TAG).warn { "Failed to process lnurl: ${e.message}" }
-            fail(e.message, request.replyURL)
+            if (request != null) {
+                fail(e.message, request.replyURL)
+            }
             notifyChannel(
                 context,
                 Constants.NOTIFICATION_CHANNEL_LNURL_PAY,
