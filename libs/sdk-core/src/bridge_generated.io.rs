@@ -882,6 +882,8 @@ impl Wire2Api<OpeningFeeParams> for wire_OpeningFeeParams {
             valid_until: self.valid_until.wire2api(),
             max_idle_time: self.max_idle_time.wire2api(),
             max_client_to_self_delay: self.max_client_to_self_delay.wire2api(),
+            min_payment_size_msat: self.min_payment_size_msat.wire2api(),
+            max_payment_size_msat: self.max_payment_size_msat.wire2api(),
             promise: self.promise.wire2api(),
         }
     }
@@ -1192,6 +1194,8 @@ pub struct wire_OpeningFeeParams {
     valid_until: *mut wire_uint_8_list,
     max_idle_time: u32,
     max_client_to_self_delay: u32,
+    min_payment_size_msat: u64,
+    max_payment_size_msat: u64,
     promise: *mut wire_uint_8_list,
 }
 
@@ -1639,6 +1643,8 @@ impl NewWithNullPtr for wire_OpeningFeeParams {
             valid_until: core::ptr::null_mut(),
             max_idle_time: Default::default(),
             max_client_to_self_delay: Default::default(),
+            min_payment_size_msat: Default::default(),
+            max_payment_size_msat: Default::default(),
             promise: core::ptr::null_mut(),
         }
     }

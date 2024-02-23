@@ -161,6 +161,8 @@ message OpeningFeeParams {
   uint32 max_idle_time = 4;
   uint32 max_client_to_self_delay = 5;
   string promise = 6;
+  uint64 min_payment_size_msat = 7;
+  uint64 max_payment_size_msat = 8;
 }
 message LSPListReply {
   map<string, LSPInformation> lsps = 1; // The key is the lsp id

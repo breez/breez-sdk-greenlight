@@ -300,6 +300,8 @@ export type OpeningFeeParams = {
     validUntil: string
     maxIdleTime: number
     maxClientToSelfDelay: number
+    minPaymentSizeMsat: number
+    maxPaymentSizeMsat: number
     promise: string
 }
 

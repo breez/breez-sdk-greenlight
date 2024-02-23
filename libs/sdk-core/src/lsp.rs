@@ -181,6 +181,8 @@ mod tests {
                     .to_rfc3339(),
                 max_idle_time: i as u32,
                 max_client_to_self_delay: i as u32,
+                min_payment_size_msat: i,
+                max_payment_size_msat: i,
                 promise: format!("promise {i}"),
             })
         }

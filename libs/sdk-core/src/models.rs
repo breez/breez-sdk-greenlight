@@ -1018,6 +1018,8 @@ pub struct OpeningFeeParams {
     /// The channel can be closed if not used within this duration in blocks
     pub max_idle_time: u32,
     pub max_client_to_self_delay: u32,
+    pub min_payment_size_msat: u64,
+    pub max_payment_size_msat: u64,
     pub promise: String,
 }
 
@@ -1046,6 +1048,8 @@ impl From<OpeningFeeParams> for grpc::OpeningFeeParams {
             valid_until: ofp.valid_until,
             max_idle_time: ofp.max_idle_time,
             max_client_to_self_delay: ofp.max_client_to_self_delay,
+            min_payment_size_msat: ofp.min_payment_size_msat,
+            max_payment_size_msat: ofp.max_payment_size_msat,
             promise: ofp.promise,
         }
     }
@@ -1059,6 +1063,8 @@ impl From<grpc::OpeningFeeParams> for OpeningFeeParams {
             valid_until: gofp.valid_until,
             max_idle_time: gofp.max_idle_time,
             max_client_to_self_delay: gofp.max_client_to_self_delay,
+            min_payment_size_msat: gofp.min_payment_size_msat,
+            max_payment_size_msat: gofp.max_payment_size_msat,
             promise: gofp.promise,
         }
     }

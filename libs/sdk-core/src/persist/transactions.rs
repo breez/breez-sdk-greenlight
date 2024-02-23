@@ -561,6 +561,8 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
             valid_until: "date".to_string(),
             max_idle_time: 12345,
             max_client_to_self_delay: 234,
+            min_payment_size_msat: 1000,
+            max_payment_size_msat: 4_000_000_000,
             promise: "promise".to_string(),
         }),
         confirmed_at: Some(555),

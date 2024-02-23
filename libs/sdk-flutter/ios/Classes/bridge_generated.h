@@ -135,6 +135,8 @@ typedef struct wire_OpeningFeeParams {
   struct wire_uint_8_list *valid_until;
   uint32_t max_idle_time;
   uint32_t max_client_to_self_delay;
+  uint64_t min_payment_size_msat;
+  uint64_t max_payment_size_msat;
   struct wire_uint_8_list *promise;
 } wire_OpeningFeeParams;
 

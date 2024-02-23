@@ -1895,6 +1895,8 @@ fun asOpeningFeeParams(openingFeeParams: ReadableMap): OpeningFeeParams? {
                 "validUntil",
                 "maxIdleTime",
                 "maxClientToSelfDelay",
+                "minPaymentSizeMsat",
+                "maxPaymentSizeMsat",
                 "promise",
             ),
         )
@@ -1906,6 +1908,8 @@ fun asOpeningFeeParams(openingFeeParams: ReadableMap): OpeningFeeParams? {
     val validUntil = openingFeeParams.getString("validUntil")!!
     val maxIdleTime = openingFeeParams.getInt("maxIdleTime").toUInt()
     val maxClientToSelfDelay = openingFeeParams.getInt("maxClientToSelfDelay").toUInt()
+    val minPaymentSizeMsat = openingFeeParams.getDouble("minPaymentSizeMsat").toULong()
+    val maxPaymentSizeMsat = openingFeeParams.getDouble("maxPaymentSizeMsat").toULong()
     val promise = openingFeeParams.getString("promise")!!
     return OpeningFeeParams(
         minMsat,
@@ -1913,6 +1917,8 @@ fun asOpeningFeeParams(openingFeeParams: ReadableMap): OpeningFeeParams? {
         validUntil,
         maxIdleTime,
         maxClientToSelfDelay,
+        minPaymentSizeMsat,
+        maxPaymentSizeMsat,
         promise,
     )
 }
@@ -1924,6 +1930,8 @@ fun readableMapOf(openingFeeParams: OpeningFeeParams): ReadableMap {
         "validUntil" to openingFeeParams.validUntil,
         "maxIdleTime" to openingFeeParams.maxIdleTime,
         "maxClientToSelfDelay" to openingFeeParams.maxClientToSelfDelay,
+        "minPaymentSizeMsat" to openingFeeParams.minPaymentSizeMsat,
+        "maxPaymentSizeMsat" to openingFeeParams.maxPaymentSizeMsat,
         "promise" to openingFeeParams.promise,
     )
 }

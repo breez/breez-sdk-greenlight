@@ -40,6 +40,10 @@ pub struct OpeningFeeParams {
     pub valid_until: String,
     pub min_lifetime: u32,
     pub max_client_to_self_delay: u32,
+    #[serde_as(as = "DisplayFromStr")]
+    pub min_payment_size_msat: u64,
+    #[serde_as(as = "DisplayFromStr")]
+    pub max_payment_size_msat: u64,
     pub promise: String,
 }
 
@@ -196,6 +200,8 @@ mod tests {
                     "valid_until": "2023-02-23T08:47:30.511Z",
                     "min_lifetime": 1008,
                     "max_client_to_self_delay": 2016,
+                    "min_payment_size_msat": "546000",
+                    "max_payment_size_msat": "4000000000",
                     "promise": "abcdefghijklmnopqrstuvwxyz"
                 },
                 {
@@ -204,11 +210,11 @@ mod tests {
                     "valid_until": "2023-02-27T21:23:57.984Z",
                     "min_lifetime": 1008,
                     "max_client_to_self_delay": 2016,
+                    "min_payment_size_msat": "1092000",
+                    "max_payment_size_msat": "4000000000",
                     "promise": "abcdefghijklmnopqrstuvwxyz"
                 }
-            ],
-            "min_payment_size_msat": "1000",
-            "max_payment_size_msat": "1000000"
+            ]
         }"#;
 
         let result = serde_json::from_str::<GetInfoResponse>(json).unwrap();
@@ -224,6 +230,8 @@ mod tests {
                         valid_until: String::from("2023-02-23T08:47:30.511Z"),
                         min_lifetime: 1008,
                         max_client_to_self_delay: 2016,
+                        min_payment_size_msat: 546000,
+                        max_payment_size_msat: 4_000_000_000,
                         promise: String::from("abcdefghijklmnopqrstuvwxyz")
                     },
                     OpeningFeeParams {
@@ -232,6 +240,8 @@ mod tests {
                         valid_until: String::from("2023-02-27T21:23:57.984Z"),
                         min_lifetime: 1008,
                         max_client_to_self_delay: 2016,
+                        min_payment_size_msat: 1092000,
+                        max_payment_size_msat: 4_000_000_000,
                         promise: String::from("abcdefghijklmnopqrstuvwxyz")
                     },
                 ]
@@ -249,13 +259,15 @@ mod tests {
                 valid_until: String::from("2023-02-23T08:47:30.511Z"),
                 min_lifetime: 1008,
                 max_client_to_self_delay: 2016,
+                min_payment_size_msat: 546000,
+                max_payment_size_msat: 4_000_000_000,
                 promise: String::from("abcdefghijklmnopqrstuvwxyz"),
             },
             payment_size_msat: Some(42000),
         };
         let result = serde_json::to_string(&req).unwrap();
         assert_eq!(
-            r#"{"version":1,"opening_fee_params":{"min_fee_msat":"546000","proportional":1200,"valid_until":"2023-02-23T08:47:30.511Z","min_lifetime":1008,"max_client_to_self_delay":2016,"promise":"abcdefghijklmnopqrstuvwxyz"},"payment_size_msat":"42000"}"#,
+            r#"{"version":1,"opening_fee_params":{"min_fee_msat":"546000","proportional":1200,"valid_until":"2023-02-23T08:47:30.511Z","min_lifetime":1008,"max_client_to_self_delay":2016,"min_payment_size_msat":"546000","max_payment_size_msat":"4000000000","promise":"abcdefghijklmnopqrstuvwxyz"},"payment_size_msat":"42000"}"#,
             result
         )
     }
@@ -270,13 +282,15 @@ mod tests {
                 valid_until: String::from("2023-02-23T08:47:30.511Z"),
                 min_lifetime: 1008,
                 max_client_to_self_delay: 2016,
+                min_payment_size_msat: 546000,
+                max_payment_size_msat: 4_000_000_000,
                 promise: String::from("abcdefghijklmnopqrstuvwxyz"),
             },
             payment_size_msat: None,
         };
         let result = serde_json::to_string(&req).unwrap();
         assert_eq!(
-            r#"{"version":1,"opening_fee_params":{"min_fee_msat":"546000","proportional":1200,"valid_until":"2023-02-23T08:47:30.511Z","min_lifetime":1008,"max_client_to_self_delay":2016,"promise":"abcdefghijklmnopqrstuvwxyz"}}"#,
+            r#"{"version":1,"opening_fee_params":{"min_fee_msat":"546000","proportional":1200,"valid_until":"2023-02-23T08:47:30.511Z","min_lifetime":1008,"max_client_to_self_delay":2016,"min_payment_size_msat":"546000","max_payment_size_msat":"4000000000","promise":"abcdefghijklmnopqrstuvwxyz"}}"#,
             result
         )
     }

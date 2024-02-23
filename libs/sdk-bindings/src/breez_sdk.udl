@@ -426,6 +426,8 @@ dictionary OpeningFeeParams {
     string valid_until;
     u32 max_idle_time;
     u32 max_client_to_self_delay;
+    u64 min_payment_size_msat;
+    u64 max_payment_size_msat;
     string promise;
 };
 

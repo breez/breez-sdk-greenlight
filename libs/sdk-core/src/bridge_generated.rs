@@ -1689,6 +1689,8 @@ impl support::IntoDart for OpeningFeeParams {
             self.valid_until.into_into_dart().into_dart(),
             self.max_idle_time.into_into_dart().into_dart(),
             self.max_client_to_self_delay.into_into_dart().into_dart(),
+            self.min_payment_size_msat.into_into_dart().into_dart(),
+            self.max_payment_size_msat.into_into_dart().into_dart(),
             self.promise.into_into_dart().into_dart(),
         ]
         .into_dart()

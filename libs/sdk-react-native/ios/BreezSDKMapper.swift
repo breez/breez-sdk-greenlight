@@ -2092,6 +2092,12 @@ enum BreezSDKMapper {
         guard let maxClientToSelfDelay = openingFeeParams["maxClientToSelfDelay"] as? UInt32 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "maxClientToSelfDelay", typeName: "OpeningFeeParams"))
         }
+        guard let minPaymentSizeMsat = openingFeeParams["minPaymentSizeMsat"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "minPaymentSizeMsat", typeName: "OpeningFeeParams"))
+        }
+        guard let maxPaymentSizeMsat = openingFeeParams["maxPaymentSizeMsat"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "maxPaymentSizeMsat", typeName: "OpeningFeeParams"))
+        }
         guard let promise = openingFeeParams["promise"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "promise", typeName: "OpeningFeeParams"))
         }
@@ -2102,6 +2108,8 @@ enum BreezSDKMapper {
             validUntil: validUntil,
             maxIdleTime: maxIdleTime,
             maxClientToSelfDelay: maxClientToSelfDelay,
+            minPaymentSizeMsat: minPaymentSizeMsat,
+            maxPaymentSizeMsat: maxPaymentSizeMsat,
             promise: promise
         )
     }
@@ -2113,6 +2121,8 @@ enum BreezSDKMapper {
             "validUntil": openingFeeParams.validUntil,
             "maxIdleTime": openingFeeParams.maxIdleTime,
             "maxClientToSelfDelay": openingFeeParams.maxClientToSelfDelay,
+            "minPaymentSizeMsat": openingFeeParams.minPaymentSizeMsat,
+            "maxPaymentSizeMsat": openingFeeParams.maxPaymentSizeMsat,
             "promise": openingFeeParams.promise,
         ]
     }

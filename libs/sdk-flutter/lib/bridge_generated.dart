@@ -1198,6 +1198,8 @@ class OpeningFeeParams {
   /// The channel can be closed if not used within this duration in blocks
   final int maxIdleTime;
   final int maxClientToSelfDelay;
+  final int minPaymentSizeMsat;
+  final int maxPaymentSizeMsat;
   final String promise;
 
   const OpeningFeeParams({
@@ -1206,6 +1208,8 @@ class OpeningFeeParams {
     required this.validUntil,
     required this.maxIdleTime,
     required this.maxClientToSelfDelay,
+    required this.minPaymentSizeMsat,
+    required this.maxPaymentSizeMsat,
     required this.promise,
   });
 }
@@ -3573,14 +3577,16 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   OpeningFeeParams _wire2api_opening_fee_params(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 6) throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    if (arr.length != 8) throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
     return OpeningFeeParams(
       minMsat: _wire2api_u64(arr[0]),
       proportional: _wire2api_u32(arr[1]),
       validUntil: _wire2api_String(arr[2]),
       maxIdleTime: _wire2api_u32(arr[3]),
       maxClientToSelfDelay: _wire2api_u32(arr[4]),
-      promise: _wire2api_String(arr[5]),
+      minPaymentSizeMsat: _wire2api_u64(arr[5]),
+      maxPaymentSizeMsat: _wire2api_u64(arr[6]),
+      promise: _wire2api_String(arr[7]),
     );
   }
 
@@ -4628,6 +4634,8 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.valid_until = api2wire_String(apiObj.validUntil);
     wireObj.max_idle_time = api2wire_u32(apiObj.maxIdleTime);
     wireObj.max_client_to_self_delay = api2wire_u32(apiObj.maxClientToSelfDelay);
+    wireObj.min_payment_size_msat = api2wire_u64(apiObj.minPaymentSizeMsat);
+    wireObj.max_payment_size_msat = api2wire_u64(apiObj.maxPaymentSizeMsat);
     wireObj.promise = api2wire_String(apiObj.promise);
   }
 
@@ -6191,6 +6199,12 @@ final class wire_OpeningFeeParams extends ffi.Struct {
 
   @ffi.Uint32()
   external int max_client_to_self_delay;
+
+  @ffi.Uint64()
+  external int min_payment_size_msat;
+
+  @ffi.Uint64()
+  external int max_payment_size_msat;
 
   external ffi.Pointer<wire_uint_8_list> promise;
 }

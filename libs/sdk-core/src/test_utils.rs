@@ -797,6 +797,8 @@ pub(crate) fn get_test_ofp_generic(
         valid_until: formatted,
         max_idle_time: 0,
         max_client_to_self_delay: 0,
+        min_payment_size_msat: 0,
+        max_payment_size_msat: 0,
         promise: "".to_string(),
     }
     .into()
