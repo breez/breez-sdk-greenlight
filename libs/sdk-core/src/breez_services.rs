@@ -930,6 +930,63 @@ impl BreezServices {
         Ok(self.btc_receive_swapper.refund_swap(req).await?)
     }
 
+    /// Supersedes [BreezServices::fetch_reverse_swap_fees]
+    pub async fn prepare_onchain_payment(
+        &self,
+        req: PrepareOnchainPaymentRequest,
+    ) -> SdkResult<PrepareOnchainPaymentResponse> {
+        let fee_info = self.btc_send_swapper.fetch_reverse_swap_fees().await?;
+
+        let fees_claim = self
+            .btc_send_swapper
+            .calculate_claim_tx_fees(req.claim_tx_feerate)?;
+        let fees_lockup = fee_info.fees_lockup;
+        let p = fee_info.fees_percentage;
+
+        // Calculate (send_amt, recv_amt) from the inputs and fees
+        let (send_amt, recv_amt) = match req.is_send_amount {
+            true => {
+                let temp_send_amt = req.amount_sat;
+                let service_fees = ((temp_send_amt as f64) * p / 100.0) as u64;
+                let total_fees = service_fees + fees_lockup + fees_claim;
+
+                (temp_send_amt, temp_send_amt - total_fees)
+            }
+            false => {
+                let temp_recv_amt = req.amount_sat;
+                let send_amt_and_service_fee = temp_recv_amt + fees_lockup + fees_claim;
+                let temp_send_amt = send_amt_and_service_fee as f64 * 100.0 / (100.0 - p);
+
+                (temp_send_amt as u64, temp_recv_amt)
+            }
+        };
+
+        let is_send_in_range = send_amt >= fee_info.min && send_amt <= fee_info.max;
+        let (res_send_amt, res_recv_amt, res_total_fees) = match is_send_in_range {
+            true => (Some(send_amt), Some(recv_amt), Some(send_amt - recv_amt)),
+            false => (None, None, None),
+        };
+
+        Ok(PrepareOnchainPaymentResponse {
+            min: fee_info.min,
+            max: fee_info.max,
+            fees_hash: fee_info.fees_hash,
+            fees_percentage: fee_info.fees_percentage,
+            fees_lockup,
+            fees_claim,
+            send_amount_sat: res_send_amt,
+            receive_amount_sat: res_recv_amt,
+            // TODO We might not need this field anymore, if we return both send_amt and recv_amt
+            total_fees: res_total_fees,
+        })
+    }
+
+    /// Supersedes [BreezServices::send_onchain]
+    pub async fn pay_onchain(&self, req: PrepareOnchainPaymentResponse) -> SdkResult<()> {
+        // TODO Validate user input (ensure send, receive, fees match)
+        Ok(())
+    }
+
     /// Execute a command directly on the NodeAPI interface.
     /// Mainly used to debugging.
     pub async fn execute_dev_command(&self, command: String) -> SdkResult<String> {
@@ -2873,6 +2930,7 @@ pub(crate) mod tests {
         let breez_services = builder
             .lsp_api(Arc::new(MockBreezServer {}))
             .fiat_api(Arc::new(MockBreezServer {}))
+            .reverse_swap_service_api(Arc::new(MockReverseSwapperAPI {}))
             .moonpay_api(Arc::new(MockBreezServer {}))
             .persister(persister)
             .node_api(node_api)

@@ -983,6 +983,37 @@ pub struct SendOnchainResponse {
     pub reverse_swap_info: ReverseSwapInfo,
 }
 
+/// See [ReverseSwapFeesRequest]
+pub struct PrepareOnchainPaymentRequest {
+    pub amount_sat: u64,
+
+    /// If true, amount is send_amount. If false, amount is receive_amount.
+    pub is_send_amount: bool,
+
+    /// Feerate (sat / vByte) for the claim transaction
+    pub claim_tx_feerate: u32,
+}
+
+/// See [ReverseSwapPairInfo]
+#[derive(Debug)]
+pub struct PrepareOnchainPaymentResponse {
+    // Fields from ReverseSwapPairInfo:
+    pub min: u64,
+    pub max: u64,
+    pub fees_hash: String,
+    pub fees_percentage: f64,
+    pub fees_lockup: u64,
+    pub fees_claim: u64,
+
+    // Fields set only if the resulting send amount is within range
+    // The resulting send amount is either
+    // a) user-specified, or
+    // b) calculated based on user-specified receive amount, user-specified claim tx feerate, lockup fee and Boltz service fee
+    pub send_amount_sat: Option<u64>,
+    pub receive_amount_sat: Option<u64>,
+    pub total_fees: Option<u64>,
+}
+
 pub struct PrepareRefundRequest {
     pub swap_address: String,
     pub to_address: String,
