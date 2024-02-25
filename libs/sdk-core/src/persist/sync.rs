@@ -1,7 +1,7 @@
 use crate::ReverseSwapStatus;
 
 use super::{db::SqliteStorage, error::PersistResult};
-use rusqlite::{named_params, Row, Transaction};
+use rusqlite::{named_params, Row, Transaction, TransactionBehavior};
 use std::path::Path;
 
 #[allow(dead_code)]
@@ -101,7 +101,7 @@ impl SqliteStorage {
         }
 
         let mut con = self.get_connection()?;
-        let tx = con.transaction()?;
+        let tx = con.transaction_with_behavior(TransactionBehavior::Immediate)?;
         tx.execute("ATTACH DATABASE ? AS remote_sync;", [sync_data_file])?;
 
         if to_local {

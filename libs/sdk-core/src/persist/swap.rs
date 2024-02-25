@@ -7,12 +7,12 @@ use super::{
 };
 use crate::OpeningFeeParams;
 use anyhow::anyhow;
-use rusqlite::{named_params, OptionalExtension, Params, Row, Transaction};
+use rusqlite::{named_params, OptionalExtension, Params, Row, Transaction, TransactionBehavior};
 
 impl SqliteStorage {
     pub(crate) fn insert_swap(&self, swap_info: SwapInfo) -> PersistResult<()> {
         let mut con = self.get_connection()?;
-        let tx = con.transaction()?;
+        let tx = con.transaction_with_behavior(TransactionBehavior::Immediate)?;
 
         tx.execute("
          INSERT INTO sync.swaps (
@@ -151,7 +151,7 @@ impl SqliteStorage {
         channel_opening_fees: OpeningFeeParams,
     ) -> PersistResult<()> {
         let mut con = self.get_connection()?;
-        let tx = con.transaction()?;
+        let tx = con.transaction_with_behavior(TransactionBehavior::Immediate)?;
 
         Self::insert_swaps_fees(&tx, bitcoin_address, channel_opening_fees)?;
 
