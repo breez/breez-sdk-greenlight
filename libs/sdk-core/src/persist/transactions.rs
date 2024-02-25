@@ -986,7 +986,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
         .unwrap();
     assert_eq!(open_channel_bolt11, "original_invoice");
 
-    let open_channel_bolt11 = storage.get_open_channel_bolt11_by_hash("non existing hadh")?;
+    let open_channel_bolt11 = storage.get_open_channel_bolt11_by_hash("non existing hash")?;
     assert_eq!(open_channel_bolt11, None);
 
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {
