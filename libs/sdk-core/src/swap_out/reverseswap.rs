@@ -632,3 +632,127 @@ impl BTCSendSwap {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use anyhow::Result;
+
+    use crate::test_utils::{MOCK_REVERSE_SWAP_MAX, MOCK_REVERSE_SWAP_MIN};
+    use crate::{PrepareOnchainPaymentRequest, PrepareOnchainPaymentResponse};
+
+    #[tokio::test]
+    async fn test_prepare_onchain_payment_in_range() -> Result<()> {
+        let sdk = crate::breez_services::tests::breez_services().await?;
+
+        // User-specified send amount is within range
+        assert_in_range_prep_payment_response(
+            sdk.prepare_onchain_payment(PrepareOnchainPaymentRequest {
+                amount_sat: MOCK_REVERSE_SWAP_MIN,
+                is_send_amount: true,
+                claim_tx_feerate: 1,
+            })
+            .await?,
+        )?;
+
+        // Derived send amount is within range
+        assert_in_range_prep_payment_response(
+            sdk.prepare_onchain_payment(PrepareOnchainPaymentRequest {
+                amount_sat: MOCK_REVERSE_SWAP_MIN,
+                is_send_amount: false,
+                claim_tx_feerate: 1,
+            })
+            .await?,
+        )?;
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_prepare_onchain_payment_out_of_range() -> Result<()> {
+        let sdk = crate::breez_services::tests::breez_services().await?;
+
+        // User-specified send amount is out of range (below min)
+        assert_out_of_range_prep_payment_response(
+            sdk.prepare_onchain_payment(PrepareOnchainPaymentRequest {
+                amount_sat: MOCK_REVERSE_SWAP_MIN - 1,
+                is_send_amount: true,
+                claim_tx_feerate: 1,
+            })
+            .await?,
+        )?;
+
+        // User-specified send amount is out of range (above max)
+        assert_out_of_range_prep_payment_response(
+            sdk.prepare_onchain_payment(PrepareOnchainPaymentRequest {
+                amount_sat: MOCK_REVERSE_SWAP_MAX + 1,
+                is_send_amount: true,
+                claim_tx_feerate: 1,
+            })
+            .await?,
+        )?;
+
+        // Derived send amount is out of range (below min: specified receive amount is 0)
+        assert_out_of_range_prep_payment_response(
+            sdk.prepare_onchain_payment(PrepareOnchainPaymentRequest {
+                amount_sat: 0,
+                is_send_amount: false,
+                claim_tx_feerate: 1,
+            })
+            .await?,
+        )?;
+
+        // Derived send amount is out of range (above max)
+        assert_out_of_range_prep_payment_response(
+            sdk.prepare_onchain_payment(PrepareOnchainPaymentRequest {
+                amount_sat: MOCK_REVERSE_SWAP_MAX,
+                is_send_amount: false,
+                claim_tx_feerate: 1,
+            })
+            .await?,
+        )?;
+
+        // Derived send amount is out of range (above max because the chosen claim tx feerate pushes the send above max)
+        assert_out_of_range_prep_payment_response(
+            sdk.prepare_onchain_payment(PrepareOnchainPaymentRequest {
+                amount_sat: MOCK_REVERSE_SWAP_MIN,
+                is_send_amount: false,
+                claim_tx_feerate: 1_000_000,
+            })
+            .await?,
+        )?;
+
+        Ok(())
+    }
+
+    /// Validates a [PrepareOnchainPaymentResponse] with all fields set.
+    ///
+    /// This is the case when the requested amount is within the reverse swap range.
+    fn assert_in_range_prep_payment_response(res: PrepareOnchainPaymentResponse) -> Result<()> {
+        dbg!(&res);
+
+        let send_amount_sat = res.send_amount_sat.expect("No send amount");
+        assert!(send_amount_sat >= res.min);
+        assert!(send_amount_sat <= res.max);
+
+        let receive_amount_sat = res.receive_amount_sat.expect("No recv amount");
+        let total_fees = res.total_fees.expect("No total_fees set");
+        assert_eq!(send_amount_sat - total_fees, receive_amount_sat);
+
+        let service_fees = ((send_amount_sat as f64) * res.fees_percentage / 100.0) as u64;
+        let expected_total_fees = res.fees_lockup + res.fees_claim + service_fees;
+        assert_eq!(expected_total_fees, total_fees);
+
+        Ok(())
+    }
+
+    /// Validates a [PrepareOnchainPaymentResponse] where the amount is assumed ot be out of range.
+    fn assert_out_of_range_prep_payment_response(res: PrepareOnchainPaymentResponse) -> Result<()> {
+        dbg!(&res);
+
+        assert!(res.send_amount_sat.is_none());
+        assert!(res.receive_amount_sat.is_none());
+        assert!(res.total_fees.is_none());
+
+        Ok(())
+    }
+}

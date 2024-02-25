@@ -11,6 +11,7 @@ use gl_client::signer::model::greenlight::PayStatus;
 use rand::distributions::{Alphanumeric, DistString, Standard};
 use rand::rngs::OsRng;
 use rand::{random, Rng};
+use rand::distributions::uniform::{SampleRange, SampleUniform};
 use tokio::sync::{mpsc, Mutex};
 use tokio::time::sleep;
 use tokio_stream::Stream;
@@ -33,19 +34,17 @@ use crate::invoice::{InvoiceError, InvoiceResult};
 use crate::lightning::ln::PaymentSecret;
 use crate::lightning_invoice::{Currency, InvoiceBuilder, RawBolt11Invoice};
 use crate::lsp::LspInformation;
-use crate::models::{
-    FiatAPI, LspAPI, NodeState, Payment, Swap, SwapperAPI, SyncResponse, TlvEntry,
-};
+use crate::models::{FiatAPI, LspAPI, NodeState, Payment, ReverseSwapServiceAPI, Swap, SwapperAPI, SyncResponse, TlvEntry};
 use crate::moonpay::MoonPayApi;
 use crate::node_api::{NodeAPI, NodeError, NodeResult};
 use crate::swap_in::error::SwapResult;
 use crate::swap_in::swap::create_submarine_swap_script;
-use crate::{
-    parse_invoice, Config, CustomMessage, LNInvoice, MaxChannelAmount, NodeCredentials,
-    OpeningFeeParams, OpeningFeeParamsMenu, PaymentResponse, Peer,
-    PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, ReceivePaymentRequest,
-    RouteHint, RouteHintHop, SwapInfo,
-};
+use crate::{parse_invoice, Config, CustomMessage, LNInvoice, MaxChannelAmount, NodeCredentials, OpeningFeeParams, OpeningFeeParamsMenu, PaymentResponse, Peer, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, ReceivePaymentRequest, RouteHint, RouteHintHop, SwapInfo, ReverseSwapPairInfo};
+use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
+use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
+
+pub const MOCK_REVERSE_SWAP_MIN: u64 = 50_000;
+pub const MOCK_REVERSE_SWAP_MAX: u64 = 1_000_000;
 
 pub struct MockBackupTransport {
     pub num_pushed: std::sync::Mutex<u32>,
@@ -144,6 +143,42 @@ impl SwapperAPI for MockSwapperAPI {
 
     async fn complete_swap(&self, _bolt11: String) -> Result<()> {
         Ok(())
+    }
+}
+
+pub struct MockReverseSwapperAPI {}
+
+#[tonic::async_trait]
+impl ReverseSwapServiceAPI for MockReverseSwapperAPI {
+    async fn fetch_reverse_swap_fees(&self) -> ReverseSwapResult<ReverseSwapPairInfo> {
+        Ok(ReverseSwapPairInfo {
+                min: MOCK_REVERSE_SWAP_MIN,
+                max: MOCK_REVERSE_SWAP_MAX,
+                fees_hash: rand_string(5),
+                fees_percentage: 0.5,
+                fees_lockup: 3_000 + rand_int_in_range(1..1_000),
+                fees_claim: 3_000 + rand_int_in_range(1..1_000),
+                total_fees: None,
+        })
+    }
+
+    async fn create_reverse_swap_on_remote(
+        &self,
+        _amount_sat: u64,
+        _preimage_hash_hex: String,
+        _claim_pubkey: String,
+        _pair_hash: String,
+        _routing_node: String
+    ) -> ReverseSwapResult<BoltzApiCreateReverseSwapResponse> {
+        Err(ReverseSwapError::Generic(anyhow!("Not implemented")))
+    }
+
+    async fn get_boltz_status(&self, _id: String) -> ReverseSwapResult<BoltzApiReverseSwapStatus> {
+        Err(ReverseSwapError::Generic(anyhow!("Not implemented")))
+    }
+
+    async fn get_route_hints(&self, _routing_node_id: String) -> ReverseSwapResult<Vec<RouteHint>> {
+        Err(ReverseSwapError::Generic(anyhow!("Not implemented")))
     }
 }
 
@@ -686,6 +721,14 @@ pub fn rand_string(len: usize) -> String {
 
 pub fn rand_vec_u8(len: usize) -> Vec<u8> {
     rand::thread_rng().sample_iter(Standard).take(len).collect()
+}
+
+pub fn rand_int_in_range<T, R>(range: R) -> T
+    where
+        T: SampleUniform,
+        R: SampleRange<T>
+{
+    rand::thread_rng().gen_range(range)
 }
 
 pub fn create_test_config() -> crate::models::Config {
