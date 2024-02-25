@@ -436,11 +436,21 @@ impl BTCReceiveSwap {
                     // swap was initiated there), then the unsettled invoice exists on the GL node.
                     // Trying to create the invoice here will fail because we're using the same preimage.
                     // In this case, fetch the invoice from GL instead of creating it.
-                    Err(ReceivePaymentError::InvoicePreimageAlreadyExists { .. }) => self
-                        .node_api
-                        .fetch_bolt11(swap_info.payment_hash)
-                        .await?
-                        .ok_or(anyhow!("Preimage already known, but invoice not found")),
+                    Err(ReceivePaymentError::InvoicePreimageAlreadyExists { .. }) => {
+                        // Try first to fetch the invoice from our persistent storage as it could be a modified one.
+                        let payment_hash = hex::encode(&swap_info.payment_hash);
+                        let open_channel_bolt11 = self
+                            .persister
+                            .get_open_channel_bolt11_by_hash(payment_hash.as_str())?;
+                        match open_channel_bolt11 {
+                            Some(bolt11) => Ok(bolt11),
+                            None => self
+                                .node_api
+                                .fetch_bolt11(swap_info.payment_hash)
+                                .await?
+                                .ok_or(anyhow!("Preimage already known, but invoice not found")),
+                        }
+                    }
 
                     // In all other cases: throw error
                     Err(err) => Err(anyhow!("Failed to create invoice: {err}")),
