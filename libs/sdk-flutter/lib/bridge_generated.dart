@@ -216,6 +216,11 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kSendOnchainConstMeta;
 
+  /// See [BreezServices::pay_onchain]
+  Future<PayOnchainResponse> payOnchain({required PayOnchainRequest req, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kPayOnchainConstMeta;
+
   /// See [BreezServices::receive_onchain]
   Future<SwapInfo> receiveOnchain({required ReceiveOnchainRequest req, dynamic hint});
 
@@ -282,6 +287,12 @@ abstract class BreezSdkCore {
   Future<ReverseSwapPairInfo> fetchReverseSwapFees({required ReverseSwapFeesRequest req, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kFetchReverseSwapFeesConstMeta;
+
+  /// See [BreezServices::prepare_onchain_payment]
+  Future<PrepareOnchainPaymentResponse> prepareOnchainPayment(
+      {required PrepareOnchainPaymentRequest req, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kPrepareOnchainPaymentConstMeta;
 
   /// See [BreezServices::recommended_fees]
   Future<RecommendedFees> recommendedFees({dynamic hint});
@@ -553,6 +564,11 @@ class CurrencyInfo {
     this.localizedName,
     this.localeOverrides,
   });
+}
+
+enum DesiredSwapAmountType {
+  Send,
+  Receive,
 }
 
 /// Indicates the different kinds of supported environments for [crate::BreezServices].
@@ -1219,6 +1235,28 @@ class OpeningFeeParamsMenu {
   });
 }
 
+class PayOnchainRequest {
+  final int sendAmountSat;
+  final int receiveAmountSat;
+  final String onchainRecipientAddress;
+  final String pairHash;
+
+  const PayOnchainRequest({
+    required this.sendAmountSat,
+    required this.receiveAmountSat,
+    required this.onchainRecipientAddress,
+    required this.pairHash,
+  });
+}
+
+class PayOnchainResponse {
+  final ReverseSwapInfo reverseSwapInfo;
+
+  const PayOnchainResponse({
+    required this.reverseSwapInfo,
+  });
+}
+
 /// Represents a payment, including its [PaymentType] and [PaymentDetails]
 class Payment {
   final String id;
@@ -1289,6 +1327,49 @@ enum PaymentTypeFilter {
   Sent,
   Received,
   ClosedChannel,
+}
+
+/// See [ReverseSwapFeesRequest]
+class PrepareOnchainPaymentRequest {
+  /// Depending on `amount_type`, this may be the desired send amount or the desired receive amount.
+  final int amountSat;
+  final DesiredSwapAmountType amountType;
+
+  /// Feerate (sat / vByte) for the claim transaction
+  final int claimTxFeerate;
+
+  const PrepareOnchainPaymentRequest({
+    required this.amountSat,
+    required this.amountType,
+    required this.claimTxFeerate,
+  });
+}
+
+/// Contains fields describing the reverse swap parameters (see [ReverseSwapPairInfo]), as well as
+/// the resulting send and receive amounts.
+///
+/// The `send_amount_sat` and `receive_amount_sat` are empty if the `send_amount_sat` falls outside
+/// the min / max range.
+class PrepareOnchainPaymentResponse {
+  final int min;
+  final int max;
+  final String feesHash;
+  final double feesPercentage;
+  final int feesLockup;
+  final int feesClaim;
+  final int? sendAmountSat;
+  final int? receiveAmountSat;
+
+  const PrepareOnchainPaymentResponse({
+    required this.min,
+    required this.max,
+    required this.feesHash,
+    required this.feesPercentage,
+    required this.feesLockup,
+    required this.feesClaim,
+    this.sendAmountSat,
+    this.receiveAmountSat,
+  });
 }
 
 /// We need to prepare a redeem_onchain_funds transaction to know what fee will be charged in satoshis.
@@ -2608,6 +2689,23 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["req"],
       );
 
+  Future<PayOnchainResponse> payOnchain({required PayOnchainRequest req, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_pay_onchain_request(req);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_pay_onchain(port_, arg0),
+      parseSuccessData: _wire2api_pay_onchain_response,
+      parseErrorData: _wire2api_FrbAnyhowException,
+      constMeta: kPayOnchainConstMeta,
+      argValues: [req],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kPayOnchainConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "pay_onchain",
+        argNames: ["req"],
+      );
+
   Future<SwapInfo> receiveOnchain({required ReceiveOnchainRequest req, dynamic hint}) {
     var arg0 = _platform.api2wire_box_autoadd_receive_onchain_request(req);
     return _platform.executeNormal(FlutterRustBridgeTask(
@@ -2825,6 +2923,24 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kFetchReverseSwapFeesConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "fetch_reverse_swap_fees",
+        argNames: ["req"],
+      );
+
+  Future<PrepareOnchainPaymentResponse> prepareOnchainPayment(
+      {required PrepareOnchainPaymentRequest req, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_prepare_onchain_payment_request(req);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_prepare_onchain_payment(port_, arg0),
+      parseSuccessData: _wire2api_prepare_onchain_payment_response,
+      parseErrorData: _wire2api_FrbAnyhowException,
+      constMeta: kPrepareOnchainPaymentConstMeta,
+      argValues: [req],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kPrepareOnchainPaymentConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "prepare_onchain_payment",
         argNames: ["req"],
       );
 
@@ -3660,6 +3776,14 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return raw == null ? null : _wire2api_list_localized_name(raw);
   }
 
+  PayOnchainResponse _wire2api_pay_onchain_response(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
+    return PayOnchainResponse(
+      reverseSwapInfo: _wire2api_reverse_swap_info(arr[0]),
+    );
+  }
+
   Payment _wire2api_payment(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 10) throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
@@ -3708,6 +3832,21 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   PaymentType _wire2api_payment_type(dynamic raw) {
     return PaymentType.values[raw as int];
+  }
+
+  PrepareOnchainPaymentResponse _wire2api_prepare_onchain_payment_response(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 8) throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    return PrepareOnchainPaymentResponse(
+      min: _wire2api_u64(arr[0]),
+      max: _wire2api_u64(arr[1]),
+      feesHash: _wire2api_String(arr[2]),
+      feesPercentage: _wire2api_f64(arr[3]),
+      feesLockup: _wire2api_u64(arr[4]),
+      feesClaim: _wire2api_u64(arr[5]),
+      sendAmountSat: _wire2api_opt_box_autoadd_u64(arr[6]),
+      receiveAmountSat: _wire2api_opt_box_autoadd_u64(arr[7]),
+    );
   }
 
   PrepareRedeemOnchainFundsResponse _wire2api_prepare_redeem_onchain_funds_response(dynamic raw) {
@@ -3990,6 +4129,11 @@ int api2wire_buy_bitcoin_provider(BuyBitcoinProvider raw) {
 }
 
 @protected
+int api2wire_desired_swap_amount_type(DesiredSwapAmountType raw) {
+  return api2wire_i32(raw.index);
+}
+
+@protected
 int api2wire_environment_type(EnvironmentType raw) {
   return api2wire_i32(raw.index);
 }
@@ -4145,6 +4289,21 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   ffi.Pointer<wire_OpeningFeeParams> api2wire_box_autoadd_opening_fee_params(OpeningFeeParams raw) {
     final ptr = inner.new_box_autoadd_opening_fee_params_0();
     _api_fill_to_wire_opening_fee_params(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
+  ffi.Pointer<wire_PayOnchainRequest> api2wire_box_autoadd_pay_onchain_request(PayOnchainRequest raw) {
+    final ptr = inner.new_box_autoadd_pay_onchain_request_0();
+    _api_fill_to_wire_pay_onchain_request(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
+  ffi.Pointer<wire_PrepareOnchainPaymentRequest> api2wire_box_autoadd_prepare_onchain_payment_request(
+      PrepareOnchainPaymentRequest raw) {
+    final ptr = inner.new_box_autoadd_prepare_onchain_payment_request_0();
+    _api_fill_to_wire_prepare_onchain_payment_request(raw, ptr.ref);
     return ptr;
   }
 
@@ -4432,6 +4591,16 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     _api_fill_to_wire_opening_fee_params(apiObj, wireObj.ref);
   }
 
+  void _api_fill_to_wire_box_autoadd_pay_onchain_request(
+      PayOnchainRequest apiObj, ffi.Pointer<wire_PayOnchainRequest> wireObj) {
+    _api_fill_to_wire_pay_onchain_request(apiObj, wireObj.ref);
+  }
+
+  void _api_fill_to_wire_box_autoadd_prepare_onchain_payment_request(
+      PrepareOnchainPaymentRequest apiObj, ffi.Pointer<wire_PrepareOnchainPaymentRequest> wireObj) {
+    _api_fill_to_wire_prepare_onchain_payment_request(apiObj, wireObj.ref);
+  }
+
   void _api_fill_to_wire_box_autoadd_prepare_redeem_onchain_funds_request(
       PrepareRedeemOnchainFundsRequest apiObj, ffi.Pointer<wire_PrepareRedeemOnchainFundsRequest> wireObj) {
     _api_fill_to_wire_prepare_redeem_onchain_funds_request(apiObj, wireObj.ref);
@@ -4629,6 +4798,20 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.max_idle_time = api2wire_u32(apiObj.maxIdleTime);
     wireObj.max_client_to_self_delay = api2wire_u32(apiObj.maxClientToSelfDelay);
     wireObj.promise = api2wire_String(apiObj.promise);
+  }
+
+  void _api_fill_to_wire_pay_onchain_request(PayOnchainRequest apiObj, wire_PayOnchainRequest wireObj) {
+    wireObj.send_amount_sat = api2wire_u64(apiObj.sendAmountSat);
+    wireObj.receive_amount_sat = api2wire_u64(apiObj.receiveAmountSat);
+    wireObj.onchain_recipient_address = api2wire_String(apiObj.onchainRecipientAddress);
+    wireObj.pair_hash = api2wire_String(apiObj.pairHash);
+  }
+
+  void _api_fill_to_wire_prepare_onchain_payment_request(
+      PrepareOnchainPaymentRequest apiObj, wire_PrepareOnchainPaymentRequest wireObj) {
+    wireObj.amount_sat = api2wire_u64(apiObj.amountSat);
+    wireObj.amount_type = api2wire_desired_swap_amount_type(apiObj.amountType);
+    wireObj.claim_tx_feerate = api2wire_u32(apiObj.claimTxFeerate);
   }
 
   void _api_fill_to_wire_prepare_redeem_onchain_funds_request(
@@ -5386,6 +5569,22 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_send_onchain =
       _wire_send_onchainPtr.asFunction<void Function(int, ffi.Pointer<wire_SendOnchainRequest>)>();
 
+  void wire_pay_onchain(
+    int port_,
+    ffi.Pointer<wire_PayOnchainRequest> req,
+  ) {
+    return _wire_pay_onchain(
+      port_,
+      req,
+    );
+  }
+
+  late final _wire_pay_onchainPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_PayOnchainRequest>)>>(
+          'wire_pay_onchain');
+  late final _wire_pay_onchain =
+      _wire_pay_onchainPtr.asFunction<void Function(int, ffi.Pointer<wire_PayOnchainRequest>)>();
+
   void wire_receive_onchain(
     int port_,
     ffi.Pointer<wire_ReceiveOnchainRequest> req,
@@ -5579,6 +5778,22 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_fetch_reverse_swap_fees = _wire_fetch_reverse_swap_feesPtr
       .asFunction<void Function(int, ffi.Pointer<wire_ReverseSwapFeesRequest>)>();
 
+  void wire_prepare_onchain_payment(
+    int port_,
+    ffi.Pointer<wire_PrepareOnchainPaymentRequest> req,
+  ) {
+    return _wire_prepare_onchain_payment(
+      port_,
+      req,
+    );
+  }
+
+  late final _wire_prepare_onchain_paymentPtr = _lookup<
+          ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_PrepareOnchainPaymentRequest>)>>(
+      'wire_prepare_onchain_payment');
+  late final _wire_prepare_onchain_payment = _wire_prepare_onchain_paymentPtr
+      .asFunction<void Function(int, ffi.Pointer<wire_PrepareOnchainPaymentRequest>)>();
+
   void wire_recommended_fees(
     int port_,
   ) {
@@ -5761,6 +5976,27 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
           'new_box_autoadd_opening_fee_params_0');
   late final _new_box_autoadd_opening_fee_params_0 =
       _new_box_autoadd_opening_fee_params_0Ptr.asFunction<ffi.Pointer<wire_OpeningFeeParams> Function()>();
+
+  ffi.Pointer<wire_PayOnchainRequest> new_box_autoadd_pay_onchain_request_0() {
+    return _new_box_autoadd_pay_onchain_request_0();
+  }
+
+  late final _new_box_autoadd_pay_onchain_request_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_PayOnchainRequest> Function()>>(
+          'new_box_autoadd_pay_onchain_request_0');
+  late final _new_box_autoadd_pay_onchain_request_0 =
+      _new_box_autoadd_pay_onchain_request_0Ptr.asFunction<ffi.Pointer<wire_PayOnchainRequest> Function()>();
+
+  ffi.Pointer<wire_PrepareOnchainPaymentRequest> new_box_autoadd_prepare_onchain_payment_request_0() {
+    return _new_box_autoadd_prepare_onchain_payment_request_0();
+  }
+
+  late final _new_box_autoadd_prepare_onchain_payment_request_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_PrepareOnchainPaymentRequest> Function()>>(
+          'new_box_autoadd_prepare_onchain_payment_request_0');
+  late final _new_box_autoadd_prepare_onchain_payment_request_0 =
+      _new_box_autoadd_prepare_onchain_payment_request_0Ptr
+          .asFunction<ffi.Pointer<wire_PrepareOnchainPaymentRequest> Function()>();
 
   ffi.Pointer<wire_PrepareRedeemOnchainFundsRequest>
       new_box_autoadd_prepare_redeem_onchain_funds_request_0() {
@@ -6306,6 +6542,18 @@ final class wire_SendOnchainRequest extends ffi.Struct {
   external int sat_per_vbyte;
 }
 
+final class wire_PayOnchainRequest extends ffi.Struct {
+  @ffi.Uint64()
+  external int send_amount_sat;
+
+  @ffi.Uint64()
+  external int receive_amount_sat;
+
+  external ffi.Pointer<wire_uint_8_list> onchain_recipient_address;
+
+  external ffi.Pointer<wire_uint_8_list> pair_hash;
+}
+
 final class wire_ReceiveOnchainRequest extends ffi.Struct {
   external ffi.Pointer<wire_OpeningFeeParams> opening_fee_params;
 }
@@ -6359,6 +6607,17 @@ final class wire_ReverseSwapFeesRequest extends ffi.Struct {
   external ffi.Pointer<ffi.Uint64> send_amount_sat;
 
   external ffi.Pointer<ffi.Uint32> claim_tx_feerate;
+}
+
+final class wire_PrepareOnchainPaymentRequest extends ffi.Struct {
+  @ffi.Uint64()
+  external int amount_sat;
+
+  @ffi.Int32()
+  external int amount_type;
+
+  @ffi.Uint32()
+  external int claim_tx_feerate;
 }
 
 typedef DartPostCObjectFnType

@@ -22,8 +22,8 @@ use tokio::sync::Mutex;
 use crate::breez_services::{self, BreezEvent, BreezServices, EventListener};
 use crate::chain::RecommendedFees;
 use crate::error::{
-    ConnectError, LnUrlAuthError, LnUrlPayError, LnUrlWithdrawError, ReceiveOnchainError,
-    ReceivePaymentError, SdkError, SendOnchainError, SendPaymentError,
+    ConnectError, LnUrlAuthError, LnUrlPayError, LnUrlWithdrawError, PayOnchainError,
+    ReceiveOnchainError, ReceivePaymentError, SdkError, SendOnchainError, SendPaymentError,
 };
 use crate::fiat::{FiatCurrency, Rate};
 use crate::input_parser::{self, InputType, LnUrlAuthRequestData};
@@ -36,13 +36,15 @@ use crate::{
     ConfigureNodeRequest, ConnectRequest, EnvironmentType, ListPaymentsRequest,
     LnUrlCallbackStatus, LnUrlPayRequest, LnUrlWithdrawRequest, LnUrlWithdrawResult,
     MaxReverseSwapAmountResponse, NodeConfig, NodeCredentials, OpenChannelFeeRequest,
-    OpenChannelFeeResponse, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse,
-    PrepareRefundRequest, PrepareRefundResponse, ReceiveOnchainRequest, ReceivePaymentRequest,
-    ReceivePaymentResponse, RedeemOnchainFundsRequest, RedeemOnchainFundsResponse, RefundRequest,
-    RefundResponse, ReportIssueRequest, ReverseSwapFeesRequest, ReverseSwapInfo,
-    ReverseSwapPairInfo, SendOnchainRequest, SendOnchainResponse, SendPaymentRequest,
-    SendPaymentResponse, SendSpontaneousPaymentRequest, ServiceHealthCheckResponse,
-    SignMessageRequest, SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
+    OpenChannelFeeResponse, PayOnchainRequest, PayOnchainResponse, PrepareOnchainPaymentRequest,
+    PrepareOnchainPaymentResponse, PrepareRedeemOnchainFundsRequest,
+    PrepareRedeemOnchainFundsResponse, PrepareRefundRequest, PrepareRefundResponse,
+    ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse,
+    RedeemOnchainFundsRequest, RedeemOnchainFundsResponse, RefundRequest, RefundResponse,
+    ReportIssueRequest, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
+    SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
+    SendSpontaneousPaymentRequest, ServiceHealthCheckResponse, SignMessageRequest,
+    SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
 };
 
 /*
@@ -365,6 +367,12 @@ pub fn send_onchain(req: SendOnchainRequest) -> Result<SendOnchainResponse> {
         .map_err(anyhow::Error::new::<SendOnchainError>)
 }
 
+/// See [BreezServices::pay_onchain]
+pub fn pay_onchain(req: PayOnchainRequest) -> Result<PayOnchainResponse> {
+    block_on(async { get_breez_services().await?.pay_onchain(req).await })
+        .map_err(anyhow::Error::new::<PayOnchainError>)
+}
+
 /// See [BreezServices::receive_onchain]
 pub fn receive_onchain(req: ReceiveOnchainRequest) -> Result<SwapInfo> {
     block_on(async { get_breez_services().await?.receive_onchain(req).await })
@@ -461,6 +469,19 @@ pub fn fetch_reverse_swap_fees(req: ReverseSwapFeesRequest) -> Result<ReverseSwa
         get_breez_services()
             .await?
             .fetch_reverse_swap_fees(req)
+            .await
+    })
+    .map_err(anyhow::Error::new::<SdkError>)
+}
+
+/// See [BreezServices::prepare_onchain_payment]
+pub fn prepare_onchain_payment(
+    req: PrepareOnchainPaymentRequest,
+) -> Result<PrepareOnchainPaymentResponse> {
+    block_on(async {
+        get_breez_services()
+            .await?
+            .prepare_onchain_payment(req)
             .await
     })
     .map_err(anyhow::Error::new::<SdkError>)
