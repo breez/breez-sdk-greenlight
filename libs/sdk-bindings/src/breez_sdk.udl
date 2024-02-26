@@ -405,6 +405,7 @@ interface BreezEvent {
     BackupStarted();
     BackupSucceeded(); 
     BackupFailed(BackupFailedData details);
+    SwapUpdated(SwapInfo details);
 };
 
 dictionary BackupStatus {

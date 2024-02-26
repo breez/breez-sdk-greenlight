@@ -784,7 +784,11 @@ export type SuccessActionProcessed = {
 
 export enum SwapStatus {
     INITIAL = "initial",
-    EXPIRED = "expired"
+    WAITING_CONFIRMATION = "waitingConfirmation",
+    REDEEMABLE = "redeemable",
+    REDEEMED = "redeemed",
+    REFUNDABLE = "refundable",
+    COMPLETED = "completed"
 }
 export type EventListener = (breezEvent: BreezEvent) => void
 

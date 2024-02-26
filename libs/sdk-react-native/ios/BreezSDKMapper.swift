@@ -5149,8 +5149,20 @@ enum BreezSDKMapper {
         case "initial":
             return SwapStatus.initial
 
-        case "expired":
-            return SwapStatus.expired
+        case "waitingConfirmation":
+            return SwapStatus.waitingConfirmation
+
+        case "redeemable":
+            return SwapStatus.redeemable
+
+        case "redeemed":
+            return SwapStatus.redeemed
+
+        case "refundable":
+            return SwapStatus.refundable
+
+        case "completed":
+            return SwapStatus.completed
 
         default: throw SdkError.Generic(message: "Invalid variant \(swapStatus) for enum SwapStatus")
         }
@@ -5161,8 +5173,20 @@ enum BreezSDKMapper {
         case .initial:
             return "initial"
 
-        case .expired:
-            return "expired"
+        case .waitingConfirmation:
+            return "waitingConfirmation"
+
+        case .redeemable:
+            return "redeemable"
+
+        case .redeemed:
+            return "redeemed"
+
+        case .refundable:
+            return "refundable"
+
+        case .completed:
+            return "completed"
         }
     }
 
