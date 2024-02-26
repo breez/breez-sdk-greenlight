@@ -1343,12 +1343,7 @@ impl SwapInfo {
     }
 
     pub(crate) fn in_progress(&self) -> bool {
-        [
-            SwapStatus::Redeemable,
-            SwapStatus::Redeemed,
-            SwapStatus::WaitingConfirmation,
-        ]
-        .contains(&self.status)
+        [SwapStatus::Redeemable, SwapStatus::WaitingConfirmation].contains(&self.status)
     }
 
     pub(crate) fn redeemable(&self) -> bool {
@@ -1360,7 +1355,7 @@ impl SwapInfo {
     }
 
     pub(crate) fn monitored(&self) -> bool {
-        self.unused() || self.in_progress() || self.refundable()
+        self.status != SwapStatus::Completed
     }
 
     fn calculate_status(&self, tip: u32) -> SwapStatus {
@@ -1370,6 +1365,7 @@ impl SwapInfo {
             passed_timelock = (tip - confirmed_at) as i64 > self.lock_height;
         }
 
+        // In case timelock has passed we can only be in the Refundable or Completed state.
         if passed_timelock {
             return match self.confirmed_sats {
                 0 => SwapStatus::Completed,
@@ -1383,9 +1379,13 @@ impl SwapInfo {
             self.confirmed_sats,
             self.paid_msat,
         ) {
+            // We have confirmation and both uconfirmed and confirmed balance are zero then we are done
             (Some(_), 0, 0, _) => SwapStatus::Completed,
+            // We got lightning payment so we are in redeemed state.
             (_, _, _, paid) if paid > 0 => SwapStatus::Redeemed,
+            // We have positive confirmed balance then we should redeem the funds.
             (_, _, confirmed, _) if confirmed > 0 => SwapStatus::Redeemable,
+            // We have positive unconfirmed balance then we are waiting for confirmation.
             (_, unconfirmed, _, _) if unconfirmed > 0 => SwapStatus::WaitingConfirmation,
             _ => SwapStatus::Initial,
         }
