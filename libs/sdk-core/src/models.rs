@@ -993,7 +993,11 @@ pub struct PrepareOnchainPaymentRequest {
     pub claim_tx_feerate: u32,
 }
 
-/// See [ReverseSwapPairInfo]
+/// Contains fields describing the reverse swap parameters (see [ReverseSwapPairInfo]), as well as
+/// the resulting send and receive amounts.
+///
+/// The `send_amount_sat` and `receive_amount_sat` are empty if the `send_amount_sat` falls outside
+/// the min / max range.
 #[derive(Debug)]
 pub struct PrepareOnchainPaymentResponse {
     // Fields from ReverseSwapPairInfo:
@@ -1005,9 +1009,6 @@ pub struct PrepareOnchainPaymentResponse {
     pub fees_claim: u64,
 
     // Fields set only if the resulting send amount is within range
-    // The resulting send amount is either
-    // a) user-specified, or
-    // b) calculated based on user-specified receive amount, user-specified claim tx feerate, lockup fee and Boltz service fee
     pub send_amount_sat: Option<u64>,
     pub receive_amount_sat: Option<u64>,
 }
