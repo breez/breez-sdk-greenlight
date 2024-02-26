@@ -419,14 +419,14 @@ pub(crate) trait ReverseSwapServiceAPI: Send + Sync {
     ///
     /// # Arguments
     ///
-    /// * `amount_sat` - Amount that is to be swapped
+    /// * `send_amount_sat` - Amount that is to be swapped
     /// * `preimage_hash_hex` - Hex of preimage hash
     /// * `claim_pubkey` - Pubkey of a keypair that can allow the SDK to claim the locked funds
     /// * `pair_hash` - The hash of the exchange rate, looked-up before this call
     /// * `routing_node` - Pubkey of a LN node used as routing hint
     async fn create_reverse_swap_on_remote(
         &self,
-        amount_sat: u64,
+        send_amount_sat: u64,
         preimage_hash_hex: String,
         claim_pubkey: String,
         pair_hash: String,
@@ -1021,6 +1021,17 @@ pub struct PrepareOnchainPaymentResponse {
     // Fields set only if the resulting send amount is within range
     pub send_amount_sat: Option<u64>,
     pub receive_amount_sat: Option<u64>,
+}
+
+pub struct PayOnchainRequest {
+    pub send_amount_sat: u64,
+    pub receive_amount_sat: u64,
+    pub onchain_recipient_address: String,
+    pub pair_hash: String,
+}
+
+pub struct PayOnchainResponse {
+    pub reverse_swap_info: ReverseSwapInfo,
 }
 
 pub struct PrepareRefundRequest {

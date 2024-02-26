@@ -22,8 +22,8 @@ use crate::models::{ReverseSwapServiceAPI, ReverseSwapperRoutingAPI};
 use crate::node_api::{NodeAPI, NodeError};
 use crate::swap_in::swap::create_swap_keys;
 use crate::{
-    BreezEvent, Config, FullReverseSwapInfo, PaymentStatus, ReverseSwapInfo, ReverseSwapInfoCached,
-    ReverseSwapPairInfo, ReverseSwapStatus,
+    BreezEvent, Config, FullReverseSwapInfo, PayOnchainRequest, PaymentStatus, ReverseSwapInfo,
+    ReverseSwapInfoCached, ReverseSwapPairInfo, ReverseSwapStatus,
 };
 use crate::{ReverseSwapStatus::*, RouteHintHop, SendOnchainRequest};
 
@@ -69,6 +69,33 @@ impl From<&Option<OnchainTx>> for TxStatus {
                 Some(_) => TxStatus::Confirmed,
                 None => TxStatus::Mempool,
             },
+        }
+    }
+}
+
+pub(crate) enum CreateReverseSwapArg {
+    /// Used for backward compatibility with older SDK nodes. Works with the [FullReverseSwapInfo]
+    /// `sat_per_vbyte` instead of the newer `receive_amount_sat`.
+    V1(SendOnchainRequest),
+    V2(PayOnchainRequest),
+}
+impl CreateReverseSwapArg {
+    fn pair_hash(&self) -> String {
+        match self {
+            CreateReverseSwapArg::V1(s) => s.pair_hash.clone(),
+            CreateReverseSwapArg::V2(s) => s.pair_hash.clone(),
+        }
+    }
+    fn send_amount_sat(&self) -> u64 {
+        match self {
+            CreateReverseSwapArg::V1(s) => s.amount_sat,
+            CreateReverseSwapArg::V2(s) => s.send_amount_sat,
+        }
+    }
+    fn onchain_recipient_address(&self) -> String {
+        match self {
+            CreateReverseSwapArg::V1(s) => s.onchain_recipient_address.clone(),
+            CreateReverseSwapArg::V2(s) => s.onchain_recipient_address.clone(),
         }
     }
 }
@@ -140,16 +167,17 @@ impl BTCSendSwap {
     /// status persisted.
     pub(crate) async fn create_reverse_swap(
         &self,
-        req: SendOnchainRequest,
+        req: CreateReverseSwapArg,
     ) -> ReverseSwapResult<FullReverseSwapInfo> {
-        Self::validate_rev_swap_args(&req.onchain_recipient_address)?;
+        Self::validate_rev_swap_args(&req.onchain_recipient_address())?;
 
-        let reverse_routing_node = self
+        let routing_node = self
             .reverse_swapper_api
             .fetch_reverse_routing_node()
-            .await?;
+            .await
+            .map(hex::encode)?;
         let created_rsi = self
-            .create_and_validate_rev_swap_on_remote_v1(req, hex::encode(reverse_routing_node))
+            .create_and_validate_rev_swap_on_remote(req, routing_node)
             .await?;
         self.persister.insert_reverse_swap(&created_rsi)?;
         info!("Created and persisted reverse swap {}", created_rsi.id);
@@ -230,12 +258,9 @@ impl BTCSendSwap {
 
     /// Create a new reverse swap on the remote service provider (Boltz), then validates its redeem script
     /// before returning it
-    ///
-    /// Used for backward compatibility with older SDK nodes. Works with the [FullReverseSwapInfo]
-    /// `sat_per_vbyte` instead of the newer `receive_amount_sat`.
-    async fn create_and_validate_rev_swap_on_remote_v1(
+    async fn create_and_validate_rev_swap_on_remote(
         &self,
-        req: SendOnchainRequest,
+        req: CreateReverseSwapArg,
         routing_node: String,
     ) -> ReverseSwapResult<FullReverseSwapInfo> {
         let reverse_swap_keys = create_swap_keys()?;
@@ -243,26 +268,31 @@ impl BTCSendSwap {
         let boltz_response = self
             .reverse_swap_service_api
             .create_reverse_swap_on_remote(
-                req.amount_sat,
+                req.send_amount_sat(),
                 reverse_swap_keys.preimage_hash_bytes().to_hex(),
                 reverse_swap_keys.public_key()?.to_hex(),
-                req.pair_hash.clone(),
+                req.pair_hash(),
                 routing_node,
             )
             .await?;
+        let (sat_per_vbyte, receive_amount_sat) = match &req {
+            CreateReverseSwapArg::V1(req) => (Some(req.sat_per_vbyte), None),
+            // TODO V2: Does sat_per_vbyte need to be set for older clients?
+            CreateReverseSwapArg::V2(req) => (None, Some(req.receive_amount_sat)),
+        };
         match boltz_response {
             BoltzApiCreateReverseSwapResponse::BoltzApiSuccess(response) => {
                 let res = FullReverseSwapInfo {
                     created_at_block_height: self.chain_service.current_tip().await?,
-                    claim_pubkey: req.onchain_recipient_address,
+                    claim_pubkey: req.onchain_recipient_address(),
                     invoice: response.invoice,
                     preimage: reverse_swap_keys.preimage,
                     private_key: reverse_swap_keys.priv_key,
                     timeout_block_height: response.timeout_block_height,
                     id: response.id,
                     onchain_amount_sat: response.onchain_amount,
-                    sat_per_vbyte: Some(req.sat_per_vbyte),
-                    receive_amount_sat: None,
+                    sat_per_vbyte,
+                    receive_amount_sat,
                     redeem_script: response.redeem_script,
                     cache: ReverseSwapInfoCached {
                         status: Initial,
@@ -271,7 +301,7 @@ impl BTCSendSwap {
                     },
                 };
 
-                res.validate_hodl_invoice(req.amount_sat * 1000)?;
+                res.validate_hodl_invoice(req.send_amount_sat() * 1_000)?;
                 res.validate_redeem_script(response.lockup_address, self.config.network)?;
                 Ok(res)
             }

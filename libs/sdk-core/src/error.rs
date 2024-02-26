@@ -621,6 +621,96 @@ impl From<SendPaymentError> for SdkError {
     }
 }
 
+/// Error returned by [crate::breez_services::BreezServices::pay_onchain]
+#[derive(Debug, Error)]
+pub enum PayOnchainError {
+    #[error("Generic: {err}")]
+    Generic { err: String },
+
+    #[error("Invalid destination address: {err}")]
+    InvalidDestinationAddress { err: String },
+
+    #[error("Payment failed: {err}")]
+    PaymentFailed { err: String },
+
+    #[error("Payment timeout: {err}")]
+    PaymentTimeout { err: String },
+
+    #[error("Service connectivity: {err}")]
+    ServiceConnectivity { err: String },
+}
+
+impl From<anyhow::Error> for PayOnchainError {
+    fn from(err: anyhow::Error) -> Self {
+        Self::Generic {
+            err: err.to_string(),
+        }
+    }
+}
+
+impl From<NodeError> for PayOnchainError {
+    fn from(value: NodeError) -> Self {
+        match value {
+            NodeError::PaymentFailed(err) => Self::PaymentFailed {
+                err: err.to_string(),
+            },
+            NodeError::PaymentTimeout(err) => Self::PaymentTimeout {
+                err: err.to_string(),
+            },
+            NodeError::ServiceConnectivity(err) => Self::ServiceConnectivity {
+                err: err.to_string(),
+            },
+            _ => Self::Generic {
+                err: value.to_string(),
+            },
+        }
+    }
+}
+
+impl From<SendOnchainError> for PayOnchainError {
+    fn from(value: SendOnchainError) -> Self {
+        match value {
+            SendOnchainError::Generic { err } => PayOnchainError::Generic { err },
+            SendOnchainError::InvalidDestinationAddress { err } => {
+                PayOnchainError::InvalidDestinationAddress { err }
+            }
+            SendOnchainError::PaymentFailed { err } => PayOnchainError::PaymentFailed { err },
+            SendOnchainError::PaymentTimeout { err } => PayOnchainError::PaymentTimeout { err },
+            SendOnchainError::ServiceConnectivity { err } => {
+                PayOnchainError::ServiceConnectivity { err }
+            }
+        }
+    }
+}
+
+impl From<SdkError> for PayOnchainError {
+    fn from(value: SdkError) -> Self {
+        match value {
+            SdkError::ServiceConnectivity { err } => Self::ServiceConnectivity { err },
+            _ => Self::Generic {
+                err: value.to_string(),
+            },
+        }
+    }
+}
+
+impl From<ReverseSwapError> for PayOnchainError {
+    fn from(value: ReverseSwapError) -> Self {
+        match value {
+            ReverseSwapError::InvalidDestinationAddress(err) => Self::InvalidDestinationAddress {
+                err: err.to_string(),
+            },
+            ReverseSwapError::ServiceConnectivity(err) => Self::ServiceConnectivity {
+                err: err.to_string(),
+            },
+            ReverseSwapError::Node(err) => err.into(),
+            _ => Self::Generic {
+                err: value.to_string(),
+            },
+        }
+    }
+}
+
 /// Error returned by [crate::breez_services::BreezServices::send_onchain]
 #[derive(Debug, Error)]
 pub enum SendOnchainError {
@@ -642,11 +732,6 @@ pub enum SendOnchainError {
     #[error("Payment timeout: {err}")]
     PaymentTimeout { err: String },
 
-    /// This error is raised when there is aleady one reverse swap in progress.
-    #[error("Reverse swap in progress: {err}")]
-    ReverseSwapInProgress { err: String },
-
-    /// This error is raised when a connection to an external service fails.
     #[error("Service connectivity: {err}")]
     ServiceConnectivity { err: String },
 }
