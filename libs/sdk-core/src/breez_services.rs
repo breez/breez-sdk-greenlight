@@ -9,6 +9,7 @@ use bip39::*;
 use bitcoin::hashes::hex::ToHex;
 use bitcoin::hashes::{sha256, Hash};
 use bitcoin::util::bip32::ChildNumber;
+use breez_sdk_liquid::{BreezWollet, WolletOptions};
 use chrono::Local;
 use futures::TryFutureExt;
 use log::{LevelFilter, Metadata, Record};
@@ -170,6 +171,7 @@ pub struct BreezServices {
     payment_receiver: Arc<PaymentReceiver>,
     btc_receive_swapper: Arc<BTCReceiveSwap>,
     btc_send_swapper: Arc<BTCSendSwap>,
+    liquid_wallet: Arc<Mutex<Option<BreezWollet>>>,
     event_listener: Option<Box<dyn EventListener>>,
     backup_watcher: Arc<BackupWatcher>,
     shutdown_sender: watch::Sender<()>,
@@ -905,6 +907,40 @@ impl BreezServices {
     /// Returns the txid of the refund transaction.
     pub async fn refund(&self, req: RefundRequest) -> SdkResult<RefundResponse> {
         Ok(self.btc_receive_swapper.refund_swap(req).await?)
+    }
+
+    pub async fn initialize_liquid_wallet(&self) -> SdkResult<()> {
+        let mut wollet = self.liquid_wallet.lock().await;
+
+        *wollet = Some(
+            BreezWollet::new(WolletOptions {
+                signer: todo!(),
+                desc: todo!(),
+                db_root_dir: None,
+                electrum_url: None,
+                network: breez_sdk_liquid::Network::Liquid,
+            })?
+        );
+
+        Ok(())
+    }
+
+    pub async fn send_liquid_onchain(&self, amount_sat: u64) -> SdkResult<()> {
+        let mut lock = self.liquid_wallet.lock().await;
+
+        let wollet = lock
+            .as_mut()
+            .ok_or(SdkError::Generic { err: "Liquid wallet not initialized".to_string() })?;
+
+        let invoice = self
+            .node_api
+            .create_invoice(amount_sat * 1000, "liquid swap".to_string(), None, None, None, None)
+            .await?;
+
+        wollet.send_lbtc(&invoice)?;
+        wollet.wait_balance_change()?;
+
+        Ok(())
     }
 
     /// Execute a command directly on the NodeAPI interface.
