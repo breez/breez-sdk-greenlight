@@ -962,9 +962,9 @@ impl BreezServices {
         };
 
         let is_send_in_range = send_amt >= fee_info.min && send_amt <= fee_info.max;
-        let (res_send_amt, res_recv_amt, res_total_fees) = match is_send_in_range {
-            true => (Some(send_amt), Some(recv_amt), Some(send_amt - recv_amt)),
-            false => (None, None, None),
+        let (res_send_amt, res_recv_amt) = match is_send_in_range {
+            true => (Some(send_amt), Some(recv_amt)),
+            false => (None, None),
         };
 
         Ok(PrepareOnchainPaymentResponse {
