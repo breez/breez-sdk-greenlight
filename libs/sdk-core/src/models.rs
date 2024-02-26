@@ -166,8 +166,13 @@ pub struct FullReverseSwapInfo {
     /// The final amount sent will be this value minus the claim tx fees.
     pub onchain_amount_sat: u64,
 
-    /// User-specified feerate for the claim tx
-    pub sat_per_vbyte: u32,
+    /// User-specified feerate for the claim tx.
+    ///
+    /// Used for backward-compatibility with older rev swaps. Superseded by `receive_amount_sat`.
+    pub sat_per_vbyte: Option<u32>,
+
+    /// Amount that will be received onchain in the destination address, at the end of the reverse swap.
+    pub receive_amount_sat: Option<u64>,
 
     pub cache: ReverseSwapInfoCached,
 }
@@ -985,7 +990,7 @@ pub struct SendOnchainResponse {
 
 pub enum DesiredSwapAmountType {
     Send,
-    Receive
+    Receive,
 }
 
 /// See [ReverseSwapFeesRequest]

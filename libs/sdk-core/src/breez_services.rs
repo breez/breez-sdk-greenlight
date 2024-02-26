@@ -2528,7 +2528,8 @@ pub(crate) mod tests {
             invoice: "645".to_string(),
             redeem_script: "redeem_script".to_string(),
             onchain_amount_sat: 250,
-            sat_per_vbyte: 50,
+            sat_per_vbyte: Some(50),
+            receive_amount_sat: None,
             cache: ReverseSwapInfoCached {
                 status: ReverseSwapStatus::CompletedConfirmed,
                 lockup_txid: Some("lockup_txid".to_string()),

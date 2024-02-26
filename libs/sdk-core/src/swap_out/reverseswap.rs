@@ -149,7 +149,7 @@ impl BTCSendSwap {
             .fetch_reverse_routing_node()
             .await?;
         let created_rsi = self
-            .create_and_validate_rev_swap_on_remote(req, hex::encode(reverse_routing_node))
+            .create_and_validate_rev_swap_on_remote_v1(req, hex::encode(reverse_routing_node))
             .await?;
         self.persister.insert_reverse_swap(&created_rsi)?;
         info!("Created and persisted reverse swap {}", created_rsi.id);
@@ -230,7 +230,10 @@ impl BTCSendSwap {
 
     /// Create a new reverse swap on the remote service provider (Boltz), then validates its redeem script
     /// before returning it
-    async fn create_and_validate_rev_swap_on_remote(
+    ///
+    /// Used for backward compatibility with older SDK nodes. Works with the [FullReverseSwapInfo]
+    /// `sat_per_vbyte` instead of the newer `receive_amount_sat`.
+    async fn create_and_validate_rev_swap_on_remote_v1(
         &self,
         req: SendOnchainRequest,
         routing_node: String,
@@ -258,7 +261,8 @@ impl BTCSendSwap {
                     timeout_block_height: response.timeout_block_height,
                     id: response.id,
                     onchain_amount_sat: response.onchain_amount,
-                    sat_per_vbyte: req.sat_per_vbyte,
+                    sat_per_vbyte: Some(req.sat_per_vbyte),
+                    receive_amount_sat: None,
                     redeem_script: response.redeem_script,
                     cache: ReverseSwapInfoCached {
                         status: Initial,
@@ -321,20 +325,20 @@ impl BTCSendSwap {
                 debug!("Found confirmed txs for lockup address {lockup_addr}: {confirmed_txs:?}");
                 let utxos = get_utxos(lockup_addr.to_string(), confirmed_txs, true)?;
 
-                // To decide the claim tx amount, we use the previously committed to amount
-                // We avoid trying to derive it from confirmed utxos on the lockup address, because
-                // in certain timeout scenarios (e.g. if the claim tx is not broadcast within the
-                // rev swap allocated time), then the service provider will claim the sats back
-                // and cancel the HODL invoice. Practically this results in a new utxo from the lockup
-                // address, of the same amount as was locked previously. In this scenario, relying
-                // on confirmed utxos to determine the claim tx amount will result in a panic (0 - fees < 0)
-                // Therefore we read the claim tx amount from the originally agreed upon onchain amount,
-                // confirmed by the service provider on rev swap creation.
+                // The amount locked in the claim address
                 let claim_amount_sat = rs.onchain_amount_sat;
+                debug!("Claim tx amount: {claim_amount_sat} sat");
 
-                let claim_tx_fee = self.calculate_claim_tx_fees(rs.sat_per_vbyte)?;
-                debug!("Claim tx amount: {claim_amount_sat}");
-                debug!("Claim tx fees: {claim_tx_fee}");
+                // Calculate amount sent in a backward compatible way
+                let tx_out_value = match rs.sat_per_vbyte {
+                    Some(claim_tx_feerate) => {
+                        claim_amount_sat - self.calculate_claim_tx_fees(claim_tx_feerate)?
+                    }
+                    None => rs.receive_amount_sat.ok_or(anyhow!(
+                        "Cannot create claim tx: no claim feerate or receive amount found"
+                    ))?,
+                };
+                debug!("Tx out amount: {tx_out_value} sat");
 
                 let txins: Vec<TxIn> = utxos
                     .confirmed
@@ -348,7 +352,7 @@ impl BTCSendSwap {
                     .collect();
 
                 let tx_out: Vec<TxOut> = vec![TxOut {
-                    value: claim_amount_sat,
+                    value: tx_out_value,
                     script_pubkey: claim_addr.script_pubkey(),
                 }];
 
@@ -359,7 +363,6 @@ impl BTCSendSwap {
                     input: txins.clone(),
                     output: tx_out,
                 };
-                tx.output[0].value = claim_amount_sat - claim_tx_fee;
 
                 let claim_script_bytes = PsbtSerialize::serialize(&redeem_script);
 
@@ -638,7 +641,9 @@ mod tests {
     use anyhow::Result;
 
     use crate::test_utils::{MOCK_REVERSE_SWAP_MAX, MOCK_REVERSE_SWAP_MIN};
-    use crate::{DesiredSwapAmountType, PrepareOnchainPaymentRequest, PrepareOnchainPaymentResponse};
+    use crate::{
+        DesiredSwapAmountType, PrepareOnchainPaymentRequest, PrepareOnchainPaymentResponse,
+    };
 
     #[tokio::test]
     async fn test_prepare_onchain_payment_in_range() -> Result<()> {
