@@ -26,8 +26,9 @@ use tonic::{Request, Status};
 use crate::backup::{BackupRequest, BackupTransport, BackupWatcher};
 use crate::chain::{ChainService, MempoolSpace, Outspend, RecommendedFees};
 use crate::error::{
-    LnUrlAuthError, LnUrlPayError, LnUrlWithdrawError, ReceiveOnchainError, ReceiveOnchainResult,
-    ReceivePaymentError, SdkError, SdkResult, SendOnchainError, SendPaymentError,
+    LnUrlAuthError, LnUrlPayError, LnUrlWithdrawError, PayOnchainError, ReceiveOnchainError,
+    ReceiveOnchainResult, ReceivePaymentError, SdkError, SdkResult, SendOnchainError,
+    SendPaymentError,
 };
 use crate::fiat::{FiatCurrency, Rate};
 use crate::greenlight::{GLBackupTransport, Greenlight};
@@ -62,7 +63,7 @@ use crate::node_api::NodeAPI;
 use crate::persist::db::SqliteStorage;
 use crate::swap_in::swap::BTCReceiveSwap;
 use crate::swap_out::boltzswap::BoltzApi;
-use crate::swap_out::reverseswap::BTCSendSwap;
+use crate::swap_out::reverseswap::{BTCSendSwap, CreateReverseSwapArg};
 use crate::BuyBitcoinProvider::Moonpay;
 use crate::*;
 
@@ -847,25 +848,17 @@ impl BreezServices {
     }
 
     /// Creates a reverse swap and attempts to pay the HODL invoice
+    ///
+    /// Deprecated. Please use [BreezServices::pay_onchain] instead.
+    #[deprecated(since = "0.3.2", note = "please use pay_onchain instead")]
     pub async fn send_onchain(
         &self,
         req: SendOnchainRequest,
     ) -> Result<SendOnchainResponse, SendOnchainError> {
-        ensure_sdk!(self.in_progress_reverse_swaps().await?.is_empty(), SendOnchainError::ReverseSwapInProgress { err:
-            "You can only start a new one after after the ongoing ones finish. \
-            Use the in_progress_reverse_swaps method to get an overview of currently ongoing reverse swaps".into(), 
-        });
-
-        let full_rsi = self.btc_send_swapper.create_reverse_swap(req).await?;
-        let rsi = self
-            .btc_send_swapper
-            .convert_reverse_swap_info(full_rsi)
+        let reverse_swap_info = self
+            .pay_onchain_common(CreateReverseSwapArg::V1(req))
             .await?;
-
-        self.do_sync(true).await?;
-        Ok(SendOnchainResponse {
-            reverse_swap_info: rsi,
-        })
+        Ok(SendOnchainResponse { reverse_swap_info })
     }
 
     /// Returns the blocking [ReverseSwapInfo]s that are in progress
@@ -956,10 +949,34 @@ impl BreezServices {
         })
     }
 
+    /// Creates a reverse swap and attempts to pay the HODL invoice
+    ///
     /// Supersedes [BreezServices::send_onchain]
-    pub async fn pay_onchain(&self, req: PrepareOnchainPaymentResponse) -> SdkResult<()> {
-        // TODO Validate user input (ensure send, receive, fees match)
-        Ok(())
+    pub async fn pay_onchain(
+        &self,
+        req: PayOnchainRequest,
+    ) -> Result<PayOnchainResponse, PayOnchainError> {
+        let reverse_swap_info = self
+            .pay_onchain_common(CreateReverseSwapArg::V2(req))
+            .await?;
+        Ok(PayOnchainResponse { reverse_swap_info })
+    }
+
+    async fn pay_onchain_common(&self, req: CreateReverseSwapArg) -> SdkResult<ReverseSwapInfo> {
+        ensure_sdk!(self.in_progress_reverse_swaps().await?.is_empty(), SdkError::Generic { err:
+            "You can only start a new one after after the ongoing ones finish. \
+            Use the in_progress_reverse_swaps method to get an overview of currently ongoing reverse swaps".into(),
+        });
+
+        let full_rsi = self.btc_send_swapper.create_reverse_swap(req).await?;
+        let reverse_swap_info = self
+            .btc_send_swapper
+            .convert_reverse_swap_info(full_rsi)
+            .await?;
+
+        self.do_sync(true).await?;
+
+        Ok(reverse_swap_info)
     }
 
     /// Execute a command directly on the NodeAPI interface.
