@@ -953,8 +953,6 @@ impl BreezServices {
             fees_claim,
             send_amount_sat: res_send_amt,
             receive_amount_sat: res_recv_amt,
-            // TODO We might not need this field anymore, if we return both send_amt and recv_amt
-            total_fees: res_total_fees,
         })
     }
 

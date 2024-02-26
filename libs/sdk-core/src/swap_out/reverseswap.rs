@@ -735,12 +735,11 @@ mod tests {
         assert!(send_amount_sat <= res.max);
 
         let receive_amount_sat = res.receive_amount_sat.expect("No recv amount");
-        let total_fees = res.total_fees.expect("No total_fees set");
-        assert_eq!(send_amount_sat - total_fees, receive_amount_sat);
 
         let service_fees = ((send_amount_sat as f64) * res.fees_percentage / 100.0) as u64;
         let expected_total_fees = res.fees_lockup + res.fees_claim + service_fees;
-        assert_eq!(expected_total_fees, total_fees);
+        let returned_total_fees = send_amount_sat - receive_amount_sat;
+        assert_eq!(expected_total_fees, returned_total_fees);
 
         Ok(())
     }
@@ -751,7 +750,6 @@ mod tests {
 
         assert!(res.send_amount_sat.is_none());
         assert!(res.receive_amount_sat.is_none());
-        assert!(res.total_fees.is_none());
 
         Ok(())
     }
