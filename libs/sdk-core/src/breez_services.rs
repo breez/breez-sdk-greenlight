@@ -330,7 +330,7 @@ impl BreezServices {
     }
 
     /// Second step of LNURL-pay. The first step is `parse()`, which also validates the LNURL destination
-    /// and generates the `LnUrlPayRequestData` payload needed here.
+    /// and generates the `LnUrlPayRequest` payload needed here.
     ///
     /// This call will validate the `amount_msat` and `comment` parameters of `req` against the parameters
     /// of the LNURL endpoint (`req_data`). If they match the endpoint requirements, the LNURL payment
@@ -435,7 +435,7 @@ impl BreezServices {
     }
 
     /// Second step of LNURL-withdraw. The first step is `parse()`, which also validates the LNURL destination
-    /// and generates the `LnUrlWithdrawRequestData` payload needed here.
+    /// and generates the `LnUrlWithdrawRequest` payload needed here.
     ///
     /// This call will validate the given `amount_msat` against the parameters
     /// of the LNURL endpoint (`data`). If they match the endpoint requirements, the LNURL withdraw
