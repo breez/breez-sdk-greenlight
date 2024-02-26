@@ -580,7 +580,6 @@ dictionary PrepareOnchainPaymentResponse {
     f64 fees_percentage;
     u64 fees_lockup;
     u64 fees_claim;
-    u64? total_fees;
 
     u64? send_amount_sat;
     u64? receive_amount_sat;

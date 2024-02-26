@@ -20,8 +20,9 @@ use breez_sdk_core::{
     RedeemOnchainFundsRequest, RedeemOnchainFundsResponse, RefundRequest, RefundResponse,
     ReportIssueRequest, ReportPaymentFailureDetails, ReverseSwapFeesRequest, ReverseSwapInfo,
     ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop, SendOnchainRequest,
+    PrepareOnchainPaymentResponse, PrepareOnchainPaymentRequest, PayOnchainResponse, PayOnchainRequest,
     SendOnchainResponse, SendPaymentRequest, SendPaymentResponse, SendSpontaneousPaymentRequest,
-    ServiceHealthCheckResponse, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
+    ServiceHealthCheckResponse, SignMessageRequest, SignMessageResponse, StaticBackupRequest, DesiredSwapAmountType,
     StaticBackupResponse, SuccessActionProcessed, SwapInfo, SwapStatus, Symbol, TlvEntry,
     UnspentTransactionOutput, UrlSuccessActionData,
 };
@@ -302,6 +303,13 @@ impl BlockingBreezServices {
         rt().block_on(self.breez_services.fetch_reverse_swap_fees(req))
     }
 
+    pub fn prepare_onchain_payment(
+        &self,
+        req: PrepareOnchainPaymentRequest,
+    ) -> SdkResult<PrepareOnchainPaymentResponse> {
+        rt().block_on(self.breez_services.prepare_onchain_payment(req))
+    }
+
     pub fn in_progress_reverse_swaps(&self) -> SdkResult<Vec<ReverseSwapInfo>> {
         rt().block_on(self.breez_services.in_progress_reverse_swaps())
     }
@@ -315,6 +323,13 @@ impl BlockingBreezServices {
         req: SendOnchainRequest,
     ) -> Result<SendOnchainResponse, SendOnchainError> {
         rt().block_on(self.breez_services.send_onchain(req))
+    }
+
+    pub fn pay_onchain(
+        &self,
+        req: PayOnchainRequest,
+    ) -> Result<PayOnchainResponse, PayOnchainError> {
+        rt().block_on(self.breez_services.pay_onchain(req))
     }
 
     pub fn execute_dev_command(&self, command: String) -> SdkResult<String> {
