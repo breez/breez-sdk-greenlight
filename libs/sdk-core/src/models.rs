@@ -1011,7 +1011,6 @@ pub struct PrepareOnchainPaymentResponse {
     // b) calculated based on user-specified receive amount, user-specified claim tx feerate, lockup fee and Boltz service fee
     pub send_amount_sat: Option<u64>,
     pub receive_amount_sat: Option<u64>,
-    pub total_fees: Option<u64>,
 }
 
 pub struct PrepareRefundRequest {
