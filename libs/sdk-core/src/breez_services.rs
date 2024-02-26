@@ -921,15 +921,15 @@ impl BreezServices {
         let p = fee_info.fees_percentage;
 
         // Calculate (send_amt, recv_amt) from the inputs and fees
-        let (send_amt, recv_amt) = match req.is_send_amount {
-            true => {
+        let (send_amt, recv_amt) = match req.amount_type {
+            DesiredSwapAmountType::Send => {
                 let temp_send_amt = req.amount_sat;
                 let service_fees = ((temp_send_amt as f64) * p / 100.0) as u64;
                 let total_fees = service_fees + fees_lockup + fees_claim;
 
                 (temp_send_amt, temp_send_amt - total_fees)
             }
-            false => {
+            DesiredSwapAmountType::Receive => {
                 let temp_recv_amt = req.amount_sat;
                 let send_amt_and_service_fee = temp_recv_amt + fees_lockup + fees_claim;
                 let temp_send_amt = send_amt_and_service_fee as f64 * 100.0 / (100.0 - p);

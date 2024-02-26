@@ -982,12 +982,16 @@ pub struct SendOnchainResponse {
     pub reverse_swap_info: ReverseSwapInfo,
 }
 
+pub enum DesiredSwapAmountType {
+    Send,
+    Receive
+}
+
 /// See [ReverseSwapFeesRequest]
 pub struct PrepareOnchainPaymentRequest {
+    /// Depending on `amount_type`, this may be the desired send amount or the desired receive amount.
     pub amount_sat: u64,
-
-    /// If true, amount is send_amount. If false, amount is receive_amount.
-    pub is_send_amount: bool,
+    pub amount_type: DesiredSwapAmountType,
 
     /// Feerate (sat / vByte) for the claim transaction
     pub claim_tx_feerate: u32,
