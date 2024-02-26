@@ -559,7 +559,8 @@ export enum BreezEventVariant {
     PAYMENT_FAILED = "paymentFailed",
     BACKUP_STARTED = "backupStarted",
     BACKUP_SUCCEEDED = "backupSucceeded",
-    BACKUP_FAILED = "backupFailed"
+    BACKUP_FAILED = "backupFailed",
+    SWAP_UPDATED = "swapUpdated"
 }
 
 export type BreezEvent = {
@@ -583,6 +584,9 @@ export type BreezEvent = {
 } | {
     type: BreezEventVariant.BACKUP_FAILED,
     details: BackupFailedData
+} | {
+    type: BreezEventVariant.SWAP_UPDATED,
+    details: SwapInfo
 }
 
 export enum BuyBitcoinProvider {

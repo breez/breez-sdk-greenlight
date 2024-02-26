@@ -4009,6 +4009,14 @@ enum BreezSDKMapper {
 
             return BreezEvent.backupFailed(details: _details)
         }
+        if type == "swapUpdated" {
+            guard let detailsTmp = breezEvent["details"] as? [String: Any?] else {
+                throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "details", typeName: "BreezEvent"))
+            }
+            let _details = try asSwapInfo(swapInfo: detailsTmp)
+
+            return BreezEvent.swapUpdated(details: _details)
+        }
 
         throw SdkError.Generic(message: "Unexpected type \(type) for enum BreezEvent")
     }
@@ -4068,6 +4076,14 @@ enum BreezSDKMapper {
             return [
                 "type": "backupFailed",
                 "details": dictionaryOf(backupFailedData: details),
+            ]
+
+        case let .swapUpdated(
+            details
+        ):
+            return [
+                "type": "swapUpdated",
+                "details": dictionaryOf(swapInfo: details),
             ]
         }
     }
