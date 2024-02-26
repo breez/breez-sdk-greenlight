@@ -61,6 +61,12 @@ jobs:
           cp ../breez-sdk/libs/sdk-flutter/pubspec.yaml .
           cp ../breez-sdk/libs/sdk-flutter/pubspec.lock .
 
+      - name: Copy docs
+        working-directory: flutter
+        run: |
+          cp ../breez-sdk/libs/sdk-flutter/README.pub.md README.md || true
+          cp ../breez-sdk/libs/sdk-flutter/CHANGELOG.md . || true
+
       - uses: actions/download-artifact@v3
         with:
           name: bindings-swift
