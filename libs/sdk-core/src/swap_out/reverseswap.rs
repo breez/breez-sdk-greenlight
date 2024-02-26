@@ -638,7 +638,7 @@ mod tests {
     use anyhow::Result;
 
     use crate::test_utils::{MOCK_REVERSE_SWAP_MAX, MOCK_REVERSE_SWAP_MIN};
-    use crate::{PrepareOnchainPaymentRequest, PrepareOnchainPaymentResponse};
+    use crate::{DesiredSwapAmountType, PrepareOnchainPaymentRequest, PrepareOnchainPaymentResponse};
 
     #[tokio::test]
     async fn test_prepare_onchain_payment_in_range() -> Result<()> {
@@ -648,7 +648,7 @@ mod tests {
         assert_in_range_prep_payment_response(
             sdk.prepare_onchain_payment(PrepareOnchainPaymentRequest {
                 amount_sat: MOCK_REVERSE_SWAP_MIN,
-                is_send_amount: true,
+                amount_type: DesiredSwapAmountType::Receive,
                 claim_tx_feerate: 1,
             })
             .await?,
@@ -658,7 +658,7 @@ mod tests {
         assert_in_range_prep_payment_response(
             sdk.prepare_onchain_payment(PrepareOnchainPaymentRequest {
                 amount_sat: MOCK_REVERSE_SWAP_MIN,
-                is_send_amount: false,
+                amount_type: DesiredSwapAmountType::Receive,
                 claim_tx_feerate: 1,
             })
             .await?,
@@ -675,7 +675,7 @@ mod tests {
         assert_out_of_range_prep_payment_response(
             sdk.prepare_onchain_payment(PrepareOnchainPaymentRequest {
                 amount_sat: MOCK_REVERSE_SWAP_MIN - 1,
-                is_send_amount: true,
+                amount_type: DesiredSwapAmountType::Send,
                 claim_tx_feerate: 1,
             })
             .await?,
@@ -685,7 +685,7 @@ mod tests {
         assert_out_of_range_prep_payment_response(
             sdk.prepare_onchain_payment(PrepareOnchainPaymentRequest {
                 amount_sat: MOCK_REVERSE_SWAP_MAX + 1,
-                is_send_amount: true,
+                amount_type: DesiredSwapAmountType::Send,
                 claim_tx_feerate: 1,
             })
             .await?,
@@ -695,7 +695,7 @@ mod tests {
         assert_out_of_range_prep_payment_response(
             sdk.prepare_onchain_payment(PrepareOnchainPaymentRequest {
                 amount_sat: 0,
-                is_send_amount: false,
+                amount_type: DesiredSwapAmountType::Receive,
                 claim_tx_feerate: 1,
             })
             .await?,
@@ -705,7 +705,7 @@ mod tests {
         assert_out_of_range_prep_payment_response(
             sdk.prepare_onchain_payment(PrepareOnchainPaymentRequest {
                 amount_sat: MOCK_REVERSE_SWAP_MAX,
-                is_send_amount: false,
+                amount_type: DesiredSwapAmountType::Receive,
                 claim_tx_feerate: 1,
             })
             .await?,
@@ -715,7 +715,7 @@ mod tests {
         assert_out_of_range_prep_payment_response(
             sdk.prepare_onchain_payment(PrepareOnchainPaymentRequest {
                 amount_sat: MOCK_REVERSE_SWAP_MIN,
-                is_send_amount: false,
+                amount_type: DesiredSwapAmountType::Receive,
                 claim_tx_feerate: 1_000_000,
             })
             .await?,
