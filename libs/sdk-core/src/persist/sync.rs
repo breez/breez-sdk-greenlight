@@ -207,6 +207,7 @@ impl SqliteStorage {
          invoice,
          onchain_amount_sat,
          sat_per_vbyte,
+         receive_amount_sat,
          redeem_script
         FROM remote_sync.reverse_swaps
         WHERE id NOT IN (SELECT id FROM sync.reverse_swaps);",
