@@ -75,13 +75,19 @@ impl AddressUtxos {
 }
 
 /// Gets unspent tx outputs. Specifically filters out inbound utxos that have been spent.
-pub(crate) fn get_utxos(address: String, transactions: Vec<OnchainTx>) -> Result<AddressUtxos> {
+pub(crate) fn get_utxos(
+    address: String,
+    transactions: Vec<OnchainTx>,
+    consider_unconfirmed_spends: bool,
+) -> Result<AddressUtxos> {
     // Calculate confirmed amount associated with this address
     let mut spent_outputs: Vec<OutPoint> = Vec::new();
     let mut utxos: Vec<Utxo> = Vec::new();
     for tx in transactions.iter() {
         for vin in tx.vin.iter() {
-            if vin.prevout.scriptpubkey_address == address.clone() {
+            if vin.prevout.scriptpubkey_address == address.clone()
+                && (consider_unconfirmed_spends || tx.status.confirmed)
+            {
                 spent_outputs.push(OutPoint {
                     txid: Txid::from_hex(vin.txid.as_str())?,
                     vout: vin.vout,

@@ -81,27 +81,35 @@ pub trait EventListener: Send + Sync {
 #[allow(clippy::large_enum_variant)]
 pub enum BreezEvent {
     /// Indicates that a new block has just been found
-    NewBlock { block: u32 },
+    NewBlock {
+        block: u32,
+    },
     /// Indicates that a new invoice has just been paid
-    InvoicePaid { details: InvoicePaidDetails },
+    InvoicePaid {
+        details: InvoicePaidDetails,
+    },
     /// Indicates that the local SDK state has just been sync-ed with the remote components
     Synced,
     /// Indicates that an outgoing payment has been completed successfully
-    PaymentSucceed { details: Payment },
+    PaymentSucceed {
+        details: Payment,
+    },
     /// Indicates that an outgoing payment has been failed to complete
-    PaymentFailed { details: PaymentFailedData },
+    PaymentFailed {
+        details: PaymentFailedData,
+    },
     /// Indicates that the backup process has just started
     BackupStarted,
     /// Indicates that the backup process has just finished successfully
     BackupSucceeded,
     /// Indicates that the backup process has just failed
-    BackupFailed { details: BackupFailedData },
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct SwapStatusChangedData {
-    pub swap_address: String,
-    pub status: SwapStatus,
+    BackupFailed {
+        details: BackupFailedData,
+    },
+    // Indicates that we have just updated the swap associated information
+    SwapUpdated {
+        details: SwapInfo,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq)]

@@ -1383,7 +1383,7 @@ impl SwapInfo {
             self.confirmed_sats,
             self.paid_msat,
         ) {
-            (Some(_), 0, 0, 0) => SwapStatus::Completed,
+            (Some(_), 0, 0, _) => SwapStatus::Completed,
             (_, _, _, paid) if paid > 0 => SwapStatus::Redeemed,
             (_, _, confirmed, _) if confirmed > 0 => SwapStatus::Redeemable,
             (_, unconfirmed, _, _) if unconfirmed > 0 => SwapStatus::WaitingConfirmation,

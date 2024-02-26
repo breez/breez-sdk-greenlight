@@ -1038,6 +1038,9 @@ impl support::IntoDart for BreezEvent {
             Self::BackupFailed { details } => {
                 vec![7.into_dart(), details.into_into_dart().into_dart()]
             }
+            Self::SwapUpdated { details } => {
+                vec![8.into_dart(), details.into_into_dart().into_dart()]
+            }
         }
         .into_dart()
     }

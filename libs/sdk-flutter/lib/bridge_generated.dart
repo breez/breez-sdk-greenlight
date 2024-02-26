@@ -390,6 +390,9 @@ sealed class BreezEvent with _$BreezEvent {
   const factory BreezEvent.backupFailed({
     required BackupFailedData details,
   }) = BreezEvent_BackupFailed;
+  const factory BreezEvent.swapUpdated({
+    required SwapInfo details,
+  }) = BreezEvent_SwapUpdated;
 }
 
 /// Different providers will demand different behaviours when the user is trying to buy bitcoin.
@@ -3090,6 +3093,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       case 7:
         return BreezEvent_BackupFailed(
           details: _wire2api_box_autoadd_backup_failed_data(raw[1]),
+        );
+      case 8:
+        return BreezEvent_SwapUpdated(
+          details: _wire2api_box_autoadd_swap_info(raw[1]),
         );
       default:
         throw Exception("unreachable");
