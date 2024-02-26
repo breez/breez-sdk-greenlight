@@ -935,7 +935,7 @@ mod tests {
             swap_info.status.clone(),
         )?;
         assert_eq!(swap_info.status, SwapStatus::Redeemed);
-        assert_eq!(swapper.list_in_progress()?.len(), 1);
+        assert_eq!(swapper.list_in_progress()?.len(), 0);
         assert_eq!(swapper.list_monitored()?.len(), 1);
         assert_eq!(swapper.list_redeemables()?.len(), 0);
         assert_eq!(swapper.list_refundables()?.len(), 0);
