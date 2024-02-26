@@ -62,6 +62,7 @@ use crate::models::ClosedChannelPaymentDetails;
 use crate::models::Config;
 use crate::models::ConfigureNodeRequest;
 use crate::models::ConnectRequest;
+use crate::models::DesiredSwapAmountType;
 use crate::models::EnvironmentType;
 use crate::models::GreenlightCredentials;
 use crate::models::GreenlightNodeConfig;
@@ -84,11 +85,15 @@ use crate::models::OpenChannelFeeRequest;
 use crate::models::OpenChannelFeeResponse;
 use crate::models::OpeningFeeParams;
 use crate::models::OpeningFeeParamsMenu;
+use crate::models::PayOnchainRequest;
+use crate::models::PayOnchainResponse;
 use crate::models::Payment;
 use crate::models::PaymentDetails;
 use crate::models::PaymentStatus;
 use crate::models::PaymentType;
 use crate::models::PaymentTypeFilter;
+use crate::models::PrepareOnchainPaymentRequest;
+use crate::models::PrepareOnchainPaymentResponse;
 use crate::models::PrepareRedeemOnchainFundsRequest;
 use crate::models::PrepareRedeemOnchainFundsResponse;
 use crate::models::PrepareRefundRequest;
@@ -630,6 +635,19 @@ fn wire_send_onchain_impl(port_: MessagePort, req: impl Wire2Api<SendOnchainRequ
         },
     )
 }
+fn wire_pay_onchain_impl(port_: MessagePort, req: impl Wire2Api<PayOnchainRequest> + UnwindSafe) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, PayOnchainResponse, _>(
+        WrapInfo {
+            debug_name: "pay_onchain",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_req = req.wire2api();
+            move |task_callback| pay_onchain(api_req)
+        },
+    )
+}
 fn wire_receive_onchain_impl(
     port_: MessagePort,
     req: impl Wire2Api<ReceiveOnchainRequest> + UnwindSafe,
@@ -805,6 +823,22 @@ fn wire_fetch_reverse_swap_fees_impl(
         },
     )
 }
+fn wire_prepare_onchain_payment_impl(
+    port_: MessagePort,
+    req: impl Wire2Api<PrepareOnchainPaymentRequest> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, PrepareOnchainPaymentResponse, _>(
+        WrapInfo {
+            debug_name: "prepare_onchain_payment",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_req = req.wire2api();
+            move |task_callback| prepare_onchain_payment(api_req)
+        },
+    )
+}
 fn wire_recommended_fees_impl(port_: MessagePort) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, RecommendedFees, _>(
         WrapInfo {
@@ -866,6 +900,15 @@ impl Wire2Api<BuyBitcoinProvider> for i32 {
     }
 }
 
+impl Wire2Api<DesiredSwapAmountType> for i32 {
+    fn wire2api(self) -> DesiredSwapAmountType {
+        match self {
+            0 => DesiredSwapAmountType::Send,
+            1 => DesiredSwapAmountType::Receive,
+            _ => unreachable!("Invalid variant for DesiredSwapAmountType: {}", self),
+        }
+    }
+}
 impl Wire2Api<EnvironmentType> for i32 {
     fn wire2api(self) -> EnvironmentType {
         match self {
@@ -1716,6 +1759,18 @@ impl rust2dart::IntoIntoDart<OpeningFeeParamsMenu> for OpeningFeeParamsMenu {
     }
 }
 
+impl support::IntoDart for PayOnchainResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.reverse_swap_info.into_into_dart().into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for PayOnchainResponse {}
+impl rust2dart::IntoIntoDart<PayOnchainResponse> for PayOnchainResponse {
+    fn into_into_dart(self) -> Self {
+        self
+    }
+}
+
 impl support::IntoDart for Payment {
     fn into_dart(self) -> support::DartAbi {
         vec![
@@ -1802,6 +1857,28 @@ impl support::IntoDart for PaymentType {
 }
 impl support::IntoDartExceptPrimitive for PaymentType {}
 impl rust2dart::IntoIntoDart<PaymentType> for PaymentType {
+    fn into_into_dart(self) -> Self {
+        self
+    }
+}
+
+impl support::IntoDart for PrepareOnchainPaymentResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.min.into_into_dart().into_dart(),
+            self.max.into_into_dart().into_dart(),
+            self.fees_hash.into_into_dart().into_dart(),
+            self.fees_percentage.into_into_dart().into_dart(),
+            self.fees_lockup.into_into_dart().into_dart(),
+            self.fees_claim.into_into_dart().into_dart(),
+            self.send_amount_sat.into_dart(),
+            self.receive_amount_sat.into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for PrepareOnchainPaymentResponse {}
+impl rust2dart::IntoIntoDart<PrepareOnchainPaymentResponse> for PrepareOnchainPaymentResponse {
     fn into_into_dart(self) -> Self {
         self
     }

@@ -210,6 +210,13 @@ typedef struct wire_SendOnchainRequest {
   uint32_t sat_per_vbyte;
 } wire_SendOnchainRequest;
 
+typedef struct wire_PayOnchainRequest {
+  uint64_t send_amount_sat;
+  uint64_t receive_amount_sat;
+  struct wire_uint_8_list *onchain_recipient_address;
+  struct wire_uint_8_list *pair_hash;
+} wire_PayOnchainRequest;
+
 typedef struct wire_ReceiveOnchainRequest {
   struct wire_OpeningFeeParams *opening_fee_params;
 } wire_ReceiveOnchainRequest;
@@ -250,6 +257,12 @@ typedef struct wire_ReverseSwapFeesRequest {
   uint64_t *send_amount_sat;
   uint32_t *claim_tx_feerate;
 } wire_ReverseSwapFeesRequest;
+
+typedef struct wire_PrepareOnchainPaymentRequest {
+  uint64_t amount_sat;
+  int32_t amount_type;
+  uint32_t claim_tx_feerate;
+} wire_PrepareOnchainPaymentRequest;
 
 typedef struct DartCObject *WireSyncReturn;
 
@@ -348,6 +361,8 @@ void wire_max_reverse_swap_amount(int64_t port_);
 
 void wire_send_onchain(int64_t port_, struct wire_SendOnchainRequest *req);
 
+void wire_pay_onchain(int64_t port_, struct wire_PayOnchainRequest *req);
+
 void wire_receive_onchain(int64_t port_, struct wire_ReceiveOnchainRequest *req);
 
 void wire_buy_bitcoin(int64_t port_, struct wire_BuyBitcoinRequest *req);
@@ -374,6 +389,8 @@ void wire_in_progress_reverse_swaps(int64_t port_);
 void wire_open_channel_fee(int64_t port_, struct wire_OpenChannelFeeRequest *req);
 
 void wire_fetch_reverse_swap_fees(int64_t port_, struct wire_ReverseSwapFeesRequest *req);
+
+void wire_prepare_onchain_payment(int64_t port_, struct wire_PrepareOnchainPaymentRequest *req);
 
 void wire_recommended_fees(int64_t port_);
 
@@ -408,6 +425,10 @@ struct wire_NodeConfig *new_box_autoadd_node_config_0(void);
 struct wire_OpenChannelFeeRequest *new_box_autoadd_open_channel_fee_request_0(void);
 
 struct wire_OpeningFeeParams *new_box_autoadd_opening_fee_params_0(void);
+
+struct wire_PayOnchainRequest *new_box_autoadd_pay_onchain_request_0(void);
+
+struct wire_PrepareOnchainPaymentRequest *new_box_autoadd_prepare_onchain_payment_request_0(void);
 
 struct wire_PrepareRedeemOnchainFundsRequest *new_box_autoadd_prepare_redeem_onchain_funds_request_0(void);
 
@@ -497,6 +518,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_list_fiat_currencies);
     dummy_var ^= ((int64_t) (void*) wire_max_reverse_swap_amount);
     dummy_var ^= ((int64_t) (void*) wire_send_onchain);
+    dummy_var ^= ((int64_t) (void*) wire_pay_onchain);
     dummy_var ^= ((int64_t) (void*) wire_receive_onchain);
     dummy_var ^= ((int64_t) (void*) wire_buy_bitcoin);
     dummy_var ^= ((int64_t) (void*) wire_redeem_onchain_funds);
@@ -510,6 +532,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_in_progress_reverse_swaps);
     dummy_var ^= ((int64_t) (void*) wire_open_channel_fee);
     dummy_var ^= ((int64_t) (void*) wire_fetch_reverse_swap_fees);
+    dummy_var ^= ((int64_t) (void*) wire_prepare_onchain_payment);
     dummy_var ^= ((int64_t) (void*) wire_recommended_fees);
     dummy_var ^= ((int64_t) (void*) wire_execute_command);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_bool_0);
@@ -527,6 +550,8 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_node_config_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_open_channel_fee_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_opening_fee_params_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_pay_onchain_request_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_prepare_onchain_payment_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_prepare_redeem_onchain_funds_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_prepare_refund_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_receive_onchain_request_0);
