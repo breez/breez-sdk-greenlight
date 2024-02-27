@@ -22,7 +22,7 @@ use breez_sdk_core::{
     ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop, SendOnchainRequest,
     PrepareOnchainPaymentResponse, PrepareOnchainPaymentRequest, PayOnchainResponse, PayOnchainRequest,
     SendOnchainResponse, SendPaymentRequest, SendPaymentResponse, SendSpontaneousPaymentRequest,
-    ServiceHealthCheckResponse, SignMessageRequest, SignMessageResponse, StaticBackupRequest, DesiredSwapAmountType,
+    ServiceHealthCheckResponse, SignMessageRequest, SignMessageResponse, StaticBackupRequest, SwapAmountType,
     StaticBackupResponse, SuccessActionProcessed, SwapInfo, SwapStatus, Symbol, TlvEntry,
     UnspentTransactionOutput, UrlSuccessActionData,
 };
