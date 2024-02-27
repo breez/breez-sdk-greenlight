@@ -12,9 +12,15 @@ Pod::Spec.new do |s|
   s.author           = { 'Breez' => 'contact@breez.technology' }
   s.source           = { :path => '.' }
   s.source_files = 'Classes/**/*'
-  s.on_demand_resources = { 'BreezSDK' => 'bindings-swift/Sources/BreezSDK/BreezSDK.swift' }
+  s.on_demand_resources = { 
+    'BreezSDK' => [
+      'bindings-swift/Sources/BreezSDK/BreezSDK.swift', 
+      'bindings-swift/Sources/BreezSDKNotification/*.swift', 
+      'bindings-swift/Sources/BreezSDKNotification/**/*.swift'
+    ]
+  }
   s.dependency 'Flutter'
-  s.platform = :ios, '11.0'
+  s.platform = :ios, '14.0'
   s.static_framework = true
 
   # Flutter.framework does not contain a i386 slice.
