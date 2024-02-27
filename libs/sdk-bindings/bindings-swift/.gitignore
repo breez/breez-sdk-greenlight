@@ -1,7 +1,8 @@
 .swiftpm/
 .build/
 *.xcodeproj
-Sources/
+*.podspec
+Sources/BreezSDK
 **/breez_sdkFFI.h
 **/breez_sdkFFI
 **/breez_sdkFFI.modulemap
