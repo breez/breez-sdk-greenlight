@@ -583,6 +583,7 @@ dictionary PrepareOnchainPaymentResponse {
 
     u64? send_amount_sat;
     u64? receive_amount_sat;
+    u64? total_fees;
 };
 
 dictionary ReverseSwapInfo {

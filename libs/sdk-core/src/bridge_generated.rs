@@ -1874,6 +1874,7 @@ impl support::IntoDart for PrepareOnchainPaymentResponse {
             self.fees_claim.into_into_dart().into_dart(),
             self.send_amount_sat.into_dart(),
             self.receive_amount_sat.into_dart(),
+            self.total_fees.into_dart(),
         ]
         .into_dart()
     }
