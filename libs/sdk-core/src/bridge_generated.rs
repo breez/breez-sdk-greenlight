@@ -62,7 +62,6 @@ use crate::models::ClosedChannelPaymentDetails;
 use crate::models::Config;
 use crate::models::ConfigureNodeRequest;
 use crate::models::ConnectRequest;
-use crate::models::DesiredSwapAmountType;
 use crate::models::EnvironmentType;
 use crate::models::GreenlightCredentials;
 use crate::models::GreenlightNodeConfig;
@@ -119,6 +118,7 @@ use crate::models::SendSpontaneousPaymentRequest;
 use crate::models::ServiceHealthCheckResponse;
 use crate::models::StaticBackupRequest;
 use crate::models::StaticBackupResponse;
+use crate::models::SwapAmountType;
 use crate::models::SwapInfo;
 use crate::models::SwapStatus;
 use crate::models::TlvEntry;
@@ -900,15 +900,6 @@ impl Wire2Api<BuyBitcoinProvider> for i32 {
     }
 }
 
-impl Wire2Api<DesiredSwapAmountType> for i32 {
-    fn wire2api(self) -> DesiredSwapAmountType {
-        match self {
-            0 => DesiredSwapAmountType::Send,
-            1 => DesiredSwapAmountType::Receive,
-            _ => unreachable!("Invalid variant for DesiredSwapAmountType: {}", self),
-        }
-    }
-}
 impl Wire2Api<EnvironmentType> for i32 {
     fn wire2api(self) -> EnvironmentType {
         match self {
@@ -954,6 +945,16 @@ impl Wire2Api<PaymentTypeFilter> for i32 {
             1 => PaymentTypeFilter::Received,
             2 => PaymentTypeFilter::ClosedChannel,
             _ => unreachable!("Invalid variant for PaymentTypeFilter: {}", self),
+        }
+    }
+}
+
+impl Wire2Api<SwapAmountType> for i32 {
+    fn wire2api(self) -> SwapAmountType {
+        match self {
+            0 => SwapAmountType::Send,
+            1 => SwapAmountType::Receive,
+            _ => unreachable!("Invalid variant for SwapAmountType: {}", self),
         }
     }
 }

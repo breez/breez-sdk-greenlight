@@ -1068,6 +1068,7 @@ impl Wire2Api<StaticBackupRequest> for wire_StaticBackupRequest {
         }
     }
 }
+
 impl Wire2Api<TlvEntry> for wire_TlvEntry {
     fn wire2api(self) -> TlvEntry {
         TlvEntry {

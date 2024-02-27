@@ -569,11 +569,6 @@ class CurrencyInfo {
   });
 }
 
-enum DesiredSwapAmountType {
-  Send,
-  Receive,
-}
-
 /// Indicates the different kinds of supported environments for [crate::BreezServices].
 enum EnvironmentType {
   Production,
@@ -1336,7 +1331,7 @@ enum PaymentTypeFilter {
 class PrepareOnchainPaymentRequest {
   /// Depending on `amount_type`, this may be the desired send amount or the desired receive amount.
   final int amountSat;
-  final DesiredSwapAmountType amountType;
+  final SwapAmountType amountType;
 
   /// Feerate (sat / vByte) for the claim transaction
   final int claimTxFeerate;
@@ -1839,6 +1834,11 @@ sealed class SuccessActionProcessed with _$SuccessActionProcessed {
   const factory SuccessActionProcessed.url({
     required UrlSuccessActionData data,
   }) = SuccessActionProcessed_Url;
+}
+
+enum SwapAmountType {
+  Send,
+  Receive,
 }
 
 /// Represents the details of an on-going swap.
@@ -4145,11 +4145,6 @@ int api2wire_buy_bitcoin_provider(BuyBitcoinProvider raw) {
 }
 
 @protected
-int api2wire_desired_swap_amount_type(DesiredSwapAmountType raw) {
-  return api2wire_i32(raw.index);
-}
-
-@protected
 int api2wire_environment_type(EnvironmentType raw) {
   return api2wire_i32(raw.index);
 }
@@ -4171,6 +4166,11 @@ int api2wire_network(Network raw) {
 
 @protected
 int api2wire_payment_type_filter(PaymentTypeFilter raw) {
+  return api2wire_i32(raw.index);
+}
+
+@protected
+int api2wire_swap_amount_type(SwapAmountType raw) {
   return api2wire_i32(raw.index);
 }
 
@@ -4826,7 +4826,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   void _api_fill_to_wire_prepare_onchain_payment_request(
       PrepareOnchainPaymentRequest apiObj, wire_PrepareOnchainPaymentRequest wireObj) {
     wireObj.amount_sat = api2wire_u64(apiObj.amountSat);
-    wireObj.amount_type = api2wire_desired_swap_amount_type(apiObj.amountType);
+    wireObj.amount_type = api2wire_swap_amount_type(apiObj.amountType);
     wireObj.claim_tx_feerate = api2wire_u32(apiObj.claimTxFeerate);
   }
 

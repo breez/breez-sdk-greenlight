@@ -443,14 +443,14 @@ dictionary ReverseSwapFeesRequest {
     u32? claim_tx_feerate = null;
 };
 
-enum DesiredSwapAmountType {
+enum SwapAmountType {
     "Send",
     "Receive",
 };
 
 dictionary PrepareOnchainPaymentRequest {
     u64 amount_sat;
-    DesiredSwapAmountType amount_type;
+    SwapAmountType amount_type;
     u32 claim_tx_feerate;
 };
 
