@@ -1005,8 +1005,8 @@ pub struct PrepareOnchainPaymentRequest {
 /// Contains fields describing the reverse swap parameters (see [ReverseSwapPairInfo]), as well as
 /// the resulting send and receive amounts.
 ///
-/// The `send_amount_sat` and `receive_amount_sat` are empty if the `send_amount_sat` falls outside
-/// the min / max range.
+/// The `send_amount_sat`, `receive_amount_sat` and `total_fees` are empty if the `send_amount_sat`
+/// falls outside the min / max range.
 #[derive(Debug)]
 pub struct PrepareOnchainPaymentResponse {
     // Fields from ReverseSwapPairInfo:
@@ -1020,6 +1020,7 @@ pub struct PrepareOnchainPaymentResponse {
     // Fields set only if the resulting send amount is within range
     pub send_amount_sat: Option<u64>,
     pub receive_amount_sat: Option<u64>,
+    pub total_fees: Option<u64>,
 }
 
 pub struct PayOnchainRequest {

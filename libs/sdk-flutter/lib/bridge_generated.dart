@@ -1343,8 +1343,8 @@ class PrepareOnchainPaymentRequest {
 /// Contains fields describing the reverse swap parameters (see [ReverseSwapPairInfo]), as well as
 /// the resulting send and receive amounts.
 ///
-/// The `send_amount_sat` and `receive_amount_sat` are empty if the `send_amount_sat` falls outside
-/// the min / max range.
+/// The `send_amount_sat`, `receive_amount_sat` and `total_fees` are empty if the `send_amount_sat`
+/// falls outside the min / max range.
 class PrepareOnchainPaymentResponse {
   final int min;
   final int max;
@@ -1354,6 +1354,7 @@ class PrepareOnchainPaymentResponse {
   final int feesClaim;
   final int? sendAmountSat;
   final int? receiveAmountSat;
+  final int? totalFees;
 
   const PrepareOnchainPaymentResponse({
     required this.min,
@@ -1364,6 +1365,7 @@ class PrepareOnchainPaymentResponse {
     required this.feesClaim,
     this.sendAmountSat,
     this.receiveAmountSat,
+    this.totalFees,
   });
 }
 
@@ -3836,7 +3838,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   PrepareOnchainPaymentResponse _wire2api_prepare_onchain_payment_response(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 8) throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    if (arr.length != 9) throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
     return PrepareOnchainPaymentResponse(
       min: _wire2api_u64(arr[0]),
       max: _wire2api_u64(arr[1]),
@@ -3846,6 +3848,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       feesClaim: _wire2api_u64(arr[5]),
       sendAmountSat: _wire2api_opt_box_autoadd_u64(arr[6]),
       receiveAmountSat: _wire2api_opt_box_autoadd_u64(arr[7]),
+      totalFees: _wire2api_opt_box_autoadd_u64(arr[8]),
     );
   }
 
