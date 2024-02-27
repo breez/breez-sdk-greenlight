@@ -107,6 +107,7 @@ pub enum BreezEvent {
         details: BackupFailedData,
     },
     // Indicates that we have just updated the swap associated information
+    // which may also include a status change.
     SwapUpdated {
         details: SwapInfo,
     },

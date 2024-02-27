@@ -96,7 +96,7 @@ impl SqliteStorage {
         bitcoin_address: String,
         paid_msat: u64,
         status: SwapStatus,
-    ) -> PersistResult<SwapInfo> {
+    ) -> PersistResult<()> {
         self.get_connection()?.execute(
             "UPDATE swaps_info SET paid_msat=:paid_msat, status=:status where bitcoin_address=:bitcoin_address",
             named_params! {
@@ -105,7 +105,7 @@ impl SqliteStorage {
              ":status": status as u32,
             },
         )?;
-        Ok(self.get_swap_info_by_address(bitcoin_address)?.unwrap())
+        Ok(())
     }
 
     pub(crate) fn update_swap_redeem_error(

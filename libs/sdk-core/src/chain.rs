@@ -82,7 +82,6 @@ pub(crate) fn get_utxos(
     transactions: Vec<OnchainTx>,
     include_unconfirmed_spends: bool,
 ) -> Result<AddressUtxos> {
-    // Calculate confirmed amount associated with this address
     let mut spent_outputs: Vec<OutPoint> = Vec::new();
     let mut utxos: Vec<Utxo> = Vec::new();
     for tx in transactions.iter() {

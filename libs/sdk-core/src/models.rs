@@ -1359,7 +1359,6 @@ impl SwapInfo {
     }
 
     fn calculate_status(&self, tip: u32) -> SwapStatus {
-        // The Refundable status never
         let mut passed_timelock = false;
         if let Some(confirmed_at) = self.confirmed_at {
             passed_timelock = (tip - confirmed_at) as i64 > self.lock_height;
