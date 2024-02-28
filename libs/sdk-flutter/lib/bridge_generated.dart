@@ -254,14 +254,9 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kRefundConstMeta;
 
   /// See [BreezServices::rescan_swaps]
-  Future<void> rescanSwaps({dynamic hint});
+  Future<void> rescanSwaps({List<String>? swapAddresses, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kRescanSwapsConstMeta;
-
-  /// See [BreezServices::rescan_swap]
-  Future<void> rescanSwap({required String swapAddress, dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kRescanSwapConstMeta;
 
   /// See [BreezServices::redeem_swap]
   Future<void> redeemSwap({required String swapAddress, dynamic hint});
@@ -2734,37 +2729,21 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["req"],
       );
 
-  Future<void> rescanSwaps({dynamic hint}) {
+  Future<void> rescanSwaps({List<String>? swapAddresses, dynamic hint}) {
+    var arg0 = _platform.api2wire_opt_StringList(swapAddresses);
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_rescan_swaps(port_),
+      callFfi: (port_) => _platform.inner.wire_rescan_swaps(port_, arg0),
       parseSuccessData: _wire2api_unit,
       parseErrorData: _wire2api_FrbAnyhowException,
       constMeta: kRescanSwapsConstMeta,
-      argValues: [],
+      argValues: [swapAddresses],
       hint: hint,
     ));
   }
 
   FlutterRustBridgeTaskConstMeta get kRescanSwapsConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "rescan_swaps",
-        argNames: [],
-      );
-
-  Future<void> rescanSwap({required String swapAddress, dynamic hint}) {
-    var arg0 = _platform.api2wire_String(swapAddress);
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_rescan_swap(port_, arg0),
-      parseSuccessData: _wire2api_unit,
-      parseErrorData: _wire2api_FrbAnyhowException,
-      constMeta: kRescanSwapConstMeta,
-      argValues: [swapAddress],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kRescanSwapConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "rescan_swap",
-        argNames: ["swapAddress"],
+        argNames: ["swapAddresses"],
       );
 
   Future<void> redeemSwap({required String swapAddress, dynamic hint}) {
@@ -4064,6 +4043,15 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<wire_StringList> api2wire_StringList(List<String> raw) {
+    final ans = inner.new_StringList_0(raw.length);
+    for (var i = 0; i < raw.length; i++) {
+      ans.ref.ptr[i] = api2wire_String(raw[i]);
+    }
+    return ans;
+  }
+
+  @protected
   ffi.Pointer<ffi.Bool> api2wire_box_autoadd_bool(bool raw) {
     return inner.new_box_autoadd_bool_0(api2wire_bool(raw));
   }
@@ -4321,6 +4309,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   @protected
   ffi.Pointer<wire_uint_8_list> api2wire_opt_String(String? raw) {
     return raw == null ? ffi.nullptr : api2wire_String(raw);
+  }
+
+  @protected
+  ffi.Pointer<wire_StringList> api2wire_opt_StringList(List<String>? raw) {
+    return raw == null ? ffi.nullptr : api2wire_StringList(raw);
   }
 
   @protected
@@ -5518,31 +5511,19 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
 
   void wire_rescan_swaps(
     int port_,
+    ffi.Pointer<wire_StringList> swap_addresses,
   ) {
     return _wire_rescan_swaps(
       port_,
+      swap_addresses,
     );
   }
 
   late final _wire_rescan_swapsPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_rescan_swaps');
-  late final _wire_rescan_swaps = _wire_rescan_swapsPtr.asFunction<void Function(int)>();
-
-  void wire_rescan_swap(
-    int port_,
-    ffi.Pointer<wire_uint_8_list> swap_address,
-  ) {
-    return _wire_rescan_swap(
-      port_,
-      swap_address,
-    );
-  }
-
-  late final _wire_rescan_swapPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>(
-          'wire_rescan_swap');
-  late final _wire_rescan_swap =
-      _wire_rescan_swapPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_StringList>)>>(
+          'wire_rescan_swaps');
+  late final _wire_rescan_swaps =
+      _wire_rescan_swapsPtr.asFunction<void Function(int, ffi.Pointer<wire_StringList>)>();
 
   void wire_redeem_swap(
     int port_,
@@ -5644,6 +5625,19 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
           'wire_execute_command');
   late final _wire_execute_command =
       _wire_execute_commandPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
+  ffi.Pointer<wire_StringList> new_StringList_0(
+    int len,
+  ) {
+    return _new_StringList_0(
+      len,
+    );
+  }
+
+  late final _new_StringList_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_StringList> Function(ffi.Int32)>>('new_StringList_0');
+  late final _new_StringList_0 =
+      _new_StringList_0Ptr.asFunction<ffi.Pointer<wire_StringList> Function(int)>();
 
   ffi.Pointer<ffi.Bool> new_box_autoadd_bool_0(
     bool value,
@@ -6385,6 +6379,13 @@ final class wire_RefundRequest extends ffi.Struct {
 
   @ffi.Uint32()
   external int sat_per_vbyte;
+}
+
+final class wire_StringList extends ffi.Struct {
+  external ffi.Pointer<ffi.Pointer<wire_uint_8_list>> ptr;
+
+  @ffi.Int32()
+  external int len;
 }
 
 final class wire_OpenChannelFeeRequest extends ffi.Struct {

@@ -730,26 +730,19 @@ fn wire_refund_impl(port_: MessagePort, req: impl Wire2Api<RefundRequest> + Unwi
         },
     )
 }
-fn wire_rescan_swaps_impl(port_: MessagePort) {
+fn wire_rescan_swaps_impl(
+    port_: MessagePort,
+    swap_addresses: impl Wire2Api<Option<Vec<String>>> + UnwindSafe,
+) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, (), _>(
         WrapInfo {
             debug_name: "rescan_swaps",
             port: Some(port_),
             mode: FfiCallMode::Normal,
         },
-        move || move |task_callback| rescan_swaps(),
-    )
-}
-fn wire_rescan_swap_impl(port_: MessagePort, swap_address: impl Wire2Api<String> + UnwindSafe) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, (), _>(
-        WrapInfo {
-            debug_name: "rescan_swap",
-            port: Some(port_),
-            mode: FfiCallMode::Normal,
-        },
         move || {
-            let api_swap_address = swap_address.wire2api();
-            move |task_callback| rescan_swap(api_swap_address)
+            let api_swap_addresses = swap_addresses.wire2api();
+            move |task_callback| rescan_swaps(api_swap_addresses)
         },
     )
 }

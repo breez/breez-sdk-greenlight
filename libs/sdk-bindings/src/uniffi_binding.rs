@@ -270,8 +270,8 @@ impl BlockingBreezServices {
     }
 
     /// Onchain rescan_swaps API
-    pub fn rescan_swaps(&self) -> SdkResult<()> {
-        rt().block_on(self.breez_services.rescan_swaps())
+    pub fn rescan_swaps(&self, swap_addresses: Option<Vec<String>>) -> SdkResult<()> {
+        rt().block_on(self.breez_services.rescan_swaps(swap_addresses))
     }
 
     /// Redeem an individual swap

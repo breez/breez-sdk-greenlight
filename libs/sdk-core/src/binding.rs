@@ -417,15 +417,14 @@ pub fn refund(req: RefundRequest) -> Result<RefundResponse> {
 }
 
 /// See [BreezServices::rescan_swaps]
-pub fn rescan_swaps() -> Result<()> {
-    block_on(async { get_breez_services().await?.rescan_swaps().await })
-        .map_err(anyhow::Error::new::<SdkError>)
-}
-
-/// See [BreezServices::rescan_swap]
-pub fn rescan_swap(swap_address: String) -> Result<()> {
-    block_on(async { get_breez_services().await?.rescan_swap(swap_address).await })
-        .map_err(anyhow::Error::new::<SdkError>)
+pub fn rescan_swaps(swap_addresses: Option<Vec<String>>) -> Result<()> {
+    block_on(async {
+        get_breez_services()
+            .await?
+            .rescan_swaps(swap_addresses)
+            .await
+    })
+    .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// See [BreezServices::redeem_swap]

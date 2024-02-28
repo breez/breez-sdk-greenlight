@@ -241,6 +241,11 @@ typedef struct wire_RefundRequest {
   uint32_t sat_per_vbyte;
 } wire_RefundRequest;
 
+typedef struct wire_StringList {
+  struct wire_uint_8_list **ptr;
+  int32_t len;
+} wire_StringList;
+
 typedef struct wire_OpenChannelFeeRequest {
   uint64_t *amount_msat;
   uint32_t *expiry;
@@ -363,9 +368,7 @@ void wire_prepare_refund(int64_t port_, struct wire_PrepareRefundRequest *req);
 
 void wire_refund(int64_t port_, struct wire_RefundRequest *req);
 
-void wire_rescan_swaps(int64_t port_);
-
-void wire_rescan_swap(int64_t port_, struct wire_uint_8_list *swap_address);
+void wire_rescan_swaps(int64_t port_, struct wire_StringList *swap_addresses);
 
 void wire_redeem_swap(int64_t port_, struct wire_uint_8_list *swap_address);
 
@@ -380,6 +383,8 @@ void wire_fetch_reverse_swap_fees(int64_t port_, struct wire_ReverseSwapFeesRequ
 void wire_recommended_fees(int64_t port_);
 
 void wire_execute_command(int64_t port_, struct wire_uint_8_list *command);
+
+struct wire_StringList *new_StringList_0(int32_t len);
 
 bool *new_box_autoadd_bool_0(bool value);
 
@@ -507,7 +512,6 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_prepare_refund);
     dummy_var ^= ((int64_t) (void*) wire_refund);
     dummy_var ^= ((int64_t) (void*) wire_rescan_swaps);
-    dummy_var ^= ((int64_t) (void*) wire_rescan_swap);
     dummy_var ^= ((int64_t) (void*) wire_redeem_swap);
     dummy_var ^= ((int64_t) (void*) wire_in_progress_swap);
     dummy_var ^= ((int64_t) (void*) wire_in_progress_reverse_swaps);
@@ -515,6 +519,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_fetch_reverse_swap_fees);
     dummy_var ^= ((int64_t) (void*) wire_recommended_fees);
     dummy_var ^= ((int64_t) (void*) wire_execute_command);
+    dummy_var ^= ((int64_t) (void*) new_StringList_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_bool_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_buy_bitcoin_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_check_message_request_0);

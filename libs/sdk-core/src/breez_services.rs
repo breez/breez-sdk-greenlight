@@ -760,19 +760,14 @@ impl BreezServices {
         Ok(None)
     }
 
-    /// Iterate all historical swap addresses and fetch their current status from the blockchain.
+    /// Go over the `swap_addresses` and fetch their current status from the blockchain.
     /// The status is then updated in the persistent storage.
-    pub async fn rescan_swaps(&self) -> SdkResult<()> {
-        let tip = self.chain_service.current_tip().await?;
-        self.btc_receive_swapper.rescan_swaps(tip).await?;
-        Ok(())
-    }
-
-    /// Fetch the current status of this swap from the blockchain and save it in persistent storage.
-    pub async fn rescan_swap(&self, swap_address: String) -> SdkResult<()> {
+    ///
+    /// If no `swap_addresses` are provided, this will iterate all historical swap addresses.
+    pub async fn rescan_swaps(&self, swap_addresses: Option<Vec<String>>) -> SdkResult<()> {
         let tip = self.chain_service.current_tip().await?;
         self.btc_receive_swapper
-            .refresh_swap_on_chain_status(swap_address, tip)
+            .rescan_swaps(swap_addresses, tip)
             .await?;
         Ok(())
     }
