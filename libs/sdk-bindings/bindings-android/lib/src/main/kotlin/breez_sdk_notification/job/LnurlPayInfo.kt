@@ -4,6 +4,7 @@ import android.content.Context
 import breez_sdk.BlockingBreezServices
 import breez_sdk_notification.NotificationHelper.Companion.notifyChannel
 import breez_sdk_notification.Constants
+import breez_sdk_notification.ExtensionSettings.Companion.autoChannelSetupFeeLimitMsats
 import breez_sdk_notification.ResourceHelper.Companion.getString
 import breez_sdk_notification.SdkForegroundService
 import kotlinx.serialization.SerialName
@@ -43,6 +44,8 @@ class LnurlPayInfoJob(
         try {
             request = Json.decodeFromString<LnurlInfoRequest>(LnurlInfoRequest.serializer(), payload)
             val nodeState = breezSDK.nodeInfo()
+            val maxSendableMsats: ULong =
+                maxOf(autoChannelSetupFeeLimitMsats, nodeState.inboundLiquidityMsats)
             val plainTextMetadata = getString(
                 context,
                 Constants.LNURL_PAY_METADATA_PLAIN_TEXT,
@@ -51,7 +54,7 @@ class LnurlPayInfoJob(
             val response =
                 LnurlPayInfoResponse(
                     request.callbackURL,
-                    nodeState.inboundLiquidityMsats,
+                    maxSendableMsats,
                     1000UL,
                     "[[\"text/plain\",\"$plainTextMetadata\"]]",
                     "payRequest",

@@ -5,6 +5,7 @@ import breez_sdk.BlockingBreezServices
 import breez_sdk.ReceivePaymentRequest
 import breez_sdk_notification.NotificationHelper.Companion.notifyChannel
 import breez_sdk_notification.Constants
+import breez_sdk_notification.ExtensionSettings.Companion.autoChannelSetupFeeLimitMsats
 import breez_sdk_notification.ResourceHelper.Companion.getString
 import breez_sdk_notification.SdkForegroundService
 import kotlinx.serialization.SerialName
@@ -41,7 +42,9 @@ class LnurlPayInvoiceJob(
         try {
             request = Json.decodeFromString<LnurlInvoiceRequest>(LnurlInvoiceRequest.serializer(), payload)
             val nodeState = breezSDK.nodeInfo()
-            if (request.amount < 1000UL || request.amount > nodeState.inboundLiquidityMsats) {
+            val maxSendableMsats: ULong =
+                maxOf(autoChannelSetupFeeLimitMsats, nodeState.inboundLiquidityMsats)
+            if (request.amount < 1000UL || request.amount > maxSendableMsats) {
                 fail("Invalid amount requested ${request.amount}", request.replyURL)
                 notifyChannel(
                     context,
