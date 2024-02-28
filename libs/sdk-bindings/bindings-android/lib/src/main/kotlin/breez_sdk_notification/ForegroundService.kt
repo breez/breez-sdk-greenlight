@@ -2,7 +2,6 @@ package breez_sdk_notification
 
 import android.app.Service
 import android.content.Intent
-import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
@@ -52,9 +51,7 @@ abstract class ForegroundService : SdkForegroundService, Service() {
 
     override fun shutdown() {
         Logger.tag(TAG).debug { "Shutting down foreground service" }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            stopForeground(STOP_FOREGROUND_REMOVE)
-        }
+        stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
 
