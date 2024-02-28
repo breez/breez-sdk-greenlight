@@ -11,17 +11,17 @@ pub(crate) struct SdkCli {
 #[derive(Parser, Debug, Clone, PartialEq)]
 #[clap(rename_all = "snake")]
 pub(crate) enum Commands {
-    /// Set the API key
+    /// [config] Set the API key
     SetAPIKey {
         /// The API key to use        
         key: String,
     },
-    /// Set the Environment type
+    /// [config] Set the Environment type
     SetEnv {
         /// The environment to use (staging|production)        
         env: EnvironmentType,
     },
-    /// Connect to the sdk services, make it operational
+    /// [init] Connect to the sdk services, make it operational
     Connect {
         /// The optional file location containing the greenlight partner certificate
         #[clap(name = "partner_cert", short = 'c', long = "partner_cert")]
@@ -40,22 +40,22 @@ pub(crate) enum Commands {
         restore_only: bool,
     },
 
-    /// Sync local data with remote node
+    /// [misc] Sync local data with remote node
     Sync {},
 
-    /// Triggers a backup of the local data
+    /// [misc] Triggers a backup of the local data
     Backup {},
 
-    /// Fetch the static backup data
+    /// [misc] Fetch the static backup data
     StaticBackup {},
 
-    /// Parse a generic string to get its type and relevant metadata
+    /// [misc] Parse a generic string to get its type and relevant metadata
     Parse {
         /// Generic input (URL, LNURL, BIP-21 BTC Address, LN invoice, etc)
         input: String,
     },
 
-    /// Generate a bolt11 invoice
+    /// [pay] Generate a bolt11 invoice
     ReceivePayment {
         amount_msat: u64,
         description: String,
@@ -67,22 +67,22 @@ pub(crate) enum Commands {
         cltv: Option<u32>,
     },
 
-    /// Pay using lnurl pay
+    /// [lnurl] Pay using lnurl pay
     LnurlPay {
         lnurl: String,
     },
 
-    /// Withdraw using lnurl withdraw
+    /// [lnurl] Withdraw using lnurl withdraw
     LnurlWithdraw {
         lnurl: String,
     },
 
-    /// Authenticate using lnurl auth
+    /// [lnurl] Authenticate using lnurl auth
     LnurlAuth {
         lnurl: String,
     },
 
-    /// Send on-chain using a reverse swap
+    /// [swap-out] Send on-chain using a reverse swap
     SendOnchain {
         amount_sat: u64,
         onchain_recipient_address: String,
@@ -90,9 +90,10 @@ pub(crate) enum Commands {
         sat_per_vbyte: u32,
     },
 
+    /// [swap-out] The maximum amount that can be sent onchain with a reverse swap
     MaxReverseSwapAmount {},
 
-    /// Get the current fees for a potential new reverse swap
+    /// [swap-out] Get the current fees for a potential new reverse swap
     FetchOnchainFees {
         #[clap(name = "amount", short = 'a', long = "amt")]
         send_amount_sat: Option<u64>,
@@ -101,10 +102,10 @@ pub(crate) enum Commands {
         claim_tx_feerate: Option<u32>,
     },
 
-    /// Get the current blocking in-progress reverse swaps, if any exist
+    /// [swap-out] Get the current blocking in-progress reverse swaps, if any exist
     InProgressReverseSwaps {},
 
-    /// Send a lightning payment
+    /// [pay] Send a lightning payment
     SendPayment {
         bolt11: String,
 
@@ -112,25 +113,25 @@ pub(crate) enum Commands {
         amount_msat: Option<u64>,
     },
 
-    /// Send a spontaneous (keysend) payment
+    /// [pay] Send a spontaneous (keysend) payment
     SendSpontaneousPayment {
         node_id: String,
         amount_msat: u64,
     },
 
-    /// Sign a message with the node's private key
+    /// [sign] Sign a message with the node's private key
     SignMessage {
         message: String,
     },
 
-    /// Verify a message with a node's public key
+    /// [sign] Verify a message with a node's public key
     CheckMessage {
         message: String,
         pubkey: String,
         signature: String,
     },
 
-    /// List all payments
+    /// [node-mgmt] List all payments
     ListPayments {
         /// The optional from unix timestamp
         #[clap(name = "from_timestamp", short = 'f', long = "from")]
@@ -157,18 +158,18 @@ pub(crate) enum Commands {
         metadata_filters: Option<Vec<String>>,
     },
 
-    /// Set the metadata for a given payment
+    /// [node-mgmt] Set the metadata for a given payment
     SetPaymentMetadata {
         payment_hash: String,
         metadata: String,
     },
 
-    /// Retrieve a payment by its hash
+    /// [node-mgmt] Retrieve a payment by its hash
     PaymentByHash {
         hash: String,
     },
 
-    /// Send on-chain funds to an external address
+    /// [redeem] Send on-chain funds to an external address
     RedeemOnchainFunds {
         /// The redeem_onchain_funds destination address
         to_address: String,
@@ -177,7 +178,7 @@ pub(crate) enum Commands {
         sat_per_vbyte: u32,
     },
 
-    /// Calculate the fee (in sats) for a potential transaction
+    /// [redeem] Calculate the fee (in sats) for a potential transaction
     PrepareRedeemOnchainFunds {
         /// The destination address
         to_address: String,
@@ -186,18 +187,19 @@ pub(crate) enum Commands {
         sat_per_vbyte: u32,
     },
 
-    /// The up to date lsp information
+    /// [node-mgmt] The up to date lsp information
     LspInfo {},
 
-    /// List available LSPs
+    /// [node-mgmt] List available LSPs
     ListLsps {},
 
-    /// Connect to an LSP
+    /// [node-mgmt] Connect to an LSP
     ConnectLSP {
         /// The lsp id the sdk should connect to
         lsp_id: String,
     },
 
+    /// [pay] Find the current fees for opening a new channel
     OpenChannelFee {
         /// The received amount
         amount_msat: Option<u64>,
@@ -206,78 +208,80 @@ pub(crate) enum Commands {
         expiry: Option<u32>,
     },
 
-    /// The node credentials
+    /// [node-mgmt] The node credentials
     NodeCredentials {},
 
-    /// The up to date node information
+    /// [node-mgmt] The up to date node information
     NodeInfo {},
 
-    /// Configurate the node
+    /// [node-mgmt] Configure the node
     ConfigureNode {
         // Optional address to send funds to during a mutual channel close
         #[clap(short = 'c', long = "close_to_address")]
         close_to_address: Option<String>,
     },
 
-    /// List fiat currencies
+    /// [fiat] List fiat currencies
     ListFiat {},
 
-    /// Fetch available fiat rates
+    /// [fiat] Fetch available fiat rates
     FetchFiatRates {},
 
-    /// Close all LSP channels
+    /// [node-mgmt] Close all LSP channels
     CloseLSPChannels {},
 
-    /// Stop the node and disconnect from the sdk services
+    /// [node-mgmt] Stop the node and disconnect from the sdk services
     Disconnect {},
 
-    /// List recommended fees based on the mempool
+    /// [pay] List recommended fees based on the mempool
     RecommendedFees {},
 
-    /// Generate address to receive onchain
+    /// [swap-in] Generate address to receive onchain
     ReceiveOnchain {},
 
-    /// Get the current in-progress swap if exists
+    /// [swap-in] Get the current in-progress swap if exists
     InProgressSwap {},
 
-    /// List refundable swap addresses
+    /// [swap-in] List refundable swap addresses
     ListRefundables {},
 
-    /// Rescan all swaps
+    /// [swap-in] Rescan all swaps
     RescanSwaps {},
 
-    /// Prepare a refund transaction for an incomplete swap
+    /// [swap-in] Prepare a refund transaction for an incomplete swap
     PrepareRefund {
         swap_address: String,
         to_address: String,
         sat_per_vbyte: u32,
     },
 
-    /// Broadcast a refund transaction for an incomplete swap
+    /// [swap-in] Broadcast a refund transaction for an incomplete swap
     Refund {
         swap_address: String,
         to_address: String,
         sat_per_vbyte: u32,
     },
 
-    /// Fetches the service health check
+    /// [node-mgmt] Fetches the service health check
     ServiceHealthCheck {},
 
-    /// Send a payment failure report
+    /// [node-mgmt] Send a payment failure report
     ReportPaymentFailure {
         payment_hash: String,
         comment: Option<String>,
     },
 
-    /// Execute a low level node command (used for debugging)
+    /// [dev] Execute a low level node command (used for debugging)
     ExecuteDevCommand {
         command: String,
     },
 
-    /// Generates an URL to buy bitcoin from a 3rd party provider
+    /// [buy] Generates an URL to buy bitcoin from a 3rd party provider
     BuyBitcoin {
         provider: BuyBitcoinProvider,
     },
+
+    /// [node-mgmt] Register a webhook URL, where the SDK will trigger a callback on specific events.
     RegisterWebhook {
         url: String,
     },
