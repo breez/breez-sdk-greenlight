@@ -20,6 +20,7 @@ interface MessagingService {
      *  message type and foreground state of the application. */
     fun startServiceIfNeeded(context: Context, message: Message) {
         val isServiceNeeded = when (message.type) {
+            Constants.MESSAGE_TYPE_ADDRESS_TXS_CONFIRMED -> !isAppForeground(context)
             Constants.MESSAGE_TYPE_PAYMENT_RECEIVED -> !isAppForeground(context)
             else -> true
         }
