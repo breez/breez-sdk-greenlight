@@ -14,6 +14,9 @@ pub enum ReverseSwapError {
     #[error("Generic: {0}")]
     Generic(#[from] anyhow::Error),
 
+    #[error("Claim tx feerate is too low")]
+    ClaimFeerateTooLow,
+
     #[error("Invalid destination address: {0}")]
     InvalidDestinationAddress(anyhow::Error),
 
