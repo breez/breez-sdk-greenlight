@@ -98,11 +98,28 @@ class NotificationHelper {
                 )
                 group = Constants.LNURL_PAY_WORKGROUP_ID
             }
+            val swapTxConfirmedNotificationChannel = NotificationChannel(
+                "${applicationId}.${Constants.NOTIFICATION_CHANNEL_SWAP_TX_CONFIRMED}",
+                getString(
+                    context,
+                    Constants.SWAP_TX_CONFIRMED_NOTIFICATION_CHANNEL_NAME,
+                    Constants.DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_CHANNEL_NAME
+                ),
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = getString(
+                    context,
+                    Constants.SWAP_TX_CONFIRMED_NOTIFICATION_CHANNEL_DESCRIPTION,
+                    Constants.DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_CHANNEL_DESCRIPTION
+                )
+                group = Constants.SWAP_TX_CONFIRMED_WORKGROUP_ID
+            }
             notificationManager.createNotificationChannels(
                 listOf(
                     foregroundServiceNotificationChannel,
                     receivedPaymentsNotificationChannel,
-                    lnurlPayNotificationChannel
+                    lnurlPayNotificationChannel,
+                    swapTxConfirmedNotificationChannel
                 )
             )
         }
@@ -128,6 +145,14 @@ class NotificationHelper {
                     Constants.DEFAULT_LNURL_PAY_WORKGROUP_NAME
                 ),
             )
+            val swapTxConfirmedNotificationChannelGroup = NotificationChannelGroup(
+                Constants.SWAP_TX_CONFIRMED_WORKGROUP_ID,
+                getString(
+                    context,
+                    Constants.SWAP_TX_CONFIRMED_WORKGROUP_NAME,
+                    Constants.DEFAULT_SWAP_TX_CONFIRMED_WORKGROUP_NAME
+                ),
+            )
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 offlinePaymentsNotificationChannelGroup.description = getString(
                     context,
@@ -139,12 +164,18 @@ class NotificationHelper {
                     Constants.LNURL_PAY_WORKGROUP_DESCRIPTION,
                     Constants.DEFAULT_LNURL_PAY_WORKGROUP_DESCRIPTION
                 )
+                swapTxConfirmedNotificationChannelGroup.description = getString(
+                    context,
+                    Constants.SWAP_TX_CONFIRMED_WORKGROUP_DESCRIPTION,
+                    Constants.DEFAULT_SWAP_TX_CONFIRMED_WORKGROUP_DESCRIPTION
+                )
             }
 
             notificationManager.createNotificationChannelGroups(
                 listOf(
                     offlinePaymentsNotificationChannelGroup,
-                    lnurlPayNotificationChannelGroup
+                    lnurlPayNotificationChannelGroup,
+                    swapTxConfirmedNotificationChannelGroup
                 )
             )
         }

@@ -14,6 +14,7 @@ import breez_sdk_notification.job.Job
 import breez_sdk_notification.job.LnurlPayInfoJob
 import breez_sdk_notification.job.LnurlPayInvoiceJob
 import breez_sdk_notification.job.ReceivePaymentJob
+import breez_sdk_notification.job.RedeemSwapJob
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -98,7 +99,7 @@ abstract class ForegroundService : SdkForegroundService, Service() {
         return Message.createFromIntent(intent)?.let { message ->
             message.payload?.let { payload ->
                 when (message.type) {
-                    Constants.MESSAGE_TYPE_PAYMENT_RECEIVED -> ReceivePaymentJob(
+                    Constants.MESSAGE_TYPE_ADDRESS_TXS_CONFIRMED -> RedeemSwapJob(
                         applicationContext,
                         this,
                         payload
@@ -111,6 +112,12 @@ abstract class ForegroundService : SdkForegroundService, Service() {
                     )
 
                     Constants.MESSAGE_TYPE_LNURL_PAY_INVOICE -> LnurlPayInvoiceJob(
+                        applicationContext,
+                        this,
+                        payload
+                    )
+
+                    Constants.MESSAGE_TYPE_PAYMENT_RECEIVED -> ReceivePaymentJob(
                         applicationContext,
                         this,
                         payload
