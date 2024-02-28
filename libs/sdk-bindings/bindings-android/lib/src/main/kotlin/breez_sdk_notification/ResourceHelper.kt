@@ -10,6 +10,8 @@ import android.graphics.drawable.AdaptiveIconDrawable
 import android.os.Build
 import android.os.Bundle
 import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
+
 
 class ResourceHelper {
     companion object {
@@ -37,7 +39,7 @@ class ResourceHelper {
             }
 
             return try {
-                val icon = context.resources.getDrawable(resourceId, null)
+                val icon = ResourcesCompat.getDrawable(context.resources, resourceId, context.theme)
 
                 icon !is AdaptiveIconDrawable
             } catch (_: NotFoundException) {
