@@ -827,9 +827,7 @@ impl BreezServices {
             ensure_sdk!(amt >= res.min, SdkError::generic("Send amount is too low"));
 
             if let Some(claim_tx_feerate) = req.claim_tx_feerate {
-                res.fees_claim = self
-                    .btc_send_swapper
-                    .calculate_claim_tx_fees(claim_tx_feerate)?;
+                res.fees_claim = BTCSendSwap::calculate_claim_tx_fee(claim_tx_feerate)?;
             }
 
             let service_fee_sat = ((amt as f64) * res.fees_percentage / 100.0) as u64;
@@ -928,11 +926,10 @@ impl BreezServices {
         &self,
         req: PrepareOnchainPaymentRequest,
     ) -> SdkResult<PrepareOnchainPaymentResponse> {
-        let fee_info = self.btc_send_swapper.fetch_reverse_swap_fees().await?;
+        let fees_claim = BTCSendSwap::calculate_claim_tx_fee(req.claim_tx_feerate)?;
+        BTCSendSwap::validate_claim_tx_fee(fees_claim)?;
 
-        let fees_claim = self
-            .btc_send_swapper
-            .calculate_claim_tx_fees(req.claim_tx_feerate)?;
+        let fee_info = self.btc_send_swapper.fetch_reverse_swap_fees().await?;
         let fees_lockup = fee_info.fees_lockup;
         let p = fee_info.fees_percentage;
 

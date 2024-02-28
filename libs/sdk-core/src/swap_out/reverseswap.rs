@@ -22,8 +22,8 @@ use crate::models::{ReverseSwapServiceAPI, ReverseSwapperRoutingAPI};
 use crate::node_api::{NodeAPI, NodeError};
 use crate::swap_in::swap::create_swap_keys;
 use crate::{
-    BreezEvent, Config, FullReverseSwapInfo, PayOnchainRequest, PaymentStatus, ReverseSwapInfo,
-    ReverseSwapInfoCached, ReverseSwapPairInfo, ReverseSwapStatus,
+    ensure_sdk, BreezEvent, Config, FullReverseSwapInfo, PayOnchainRequest, PaymentStatus,
+    ReverseSwapInfo, ReverseSwapInfoCached, ReverseSwapPairInfo, ReverseSwapStatus,
 };
 use crate::{ReverseSwapStatus::*, RouteHintHop, SendOnchainRequest};
 
@@ -73,6 +73,7 @@ impl From<&Option<OnchainTx>> for TxStatus {
     }
 }
 
+#[derive(Clone)]
 pub(crate) enum CreateReverseSwapArg {
     /// Used for backward compatibility with older SDK nodes. Works with the [FullReverseSwapInfo]
     /// `sat_per_vbyte` instead of the newer `receive_amount_sat`.
@@ -131,10 +132,19 @@ impl BTCSendSwap {
     }
 
     /// Validates the reverse swap arguments given by the user
-    fn validate_rev_swap_args(claim_pubkey: &str) -> ReverseSwapResult<()> {
+    fn validate_recipient_address(claim_pubkey: &str) -> ReverseSwapResult<()> {
         Address::from_str(claim_pubkey)
             .map(|_| ())
             .map_err(|e| ReverseSwapError::InvalidDestinationAddress(anyhow::Error::new(e)))
+    }
+
+    pub(crate) fn validate_claim_tx_fee(claim_fee: u64) -> ReverseSwapResult<()> {
+        let min_claim_fee = Self::calculate_claim_tx_fee(1)?;
+        ensure_sdk!(
+            claim_fee >= min_claim_fee,
+            ReverseSwapError::ClaimFeerateTooLow
+        );
+        Ok(())
     }
 
     pub(crate) async fn last_hop_for_payment(&self) -> ReverseSwapResult<RouteHintHop> {
@@ -169,7 +179,7 @@ impl BTCSendSwap {
         &self,
         req: CreateReverseSwapArg,
     ) -> ReverseSwapResult<FullReverseSwapInfo> {
-        Self::validate_rev_swap_args(&req.onchain_recipient_address())?;
+        Self::validate_recipient_address(&req.onchain_recipient_address())?;
 
         let routing_node = self
             .reverse_swapper_api
@@ -177,8 +187,14 @@ impl BTCSendSwap {
             .await
             .map(hex::encode)?;
         let created_rsi = self
-            .create_and_validate_rev_swap_on_remote(req, routing_node)
+            .create_and_validate_rev_swap_on_remote(req.clone(), routing_node)
             .await?;
+
+        if let CreateReverseSwapArg::V2(req) = req {
+            let claim_fee = created_rsi.onchain_amount_sat - req.receive_amount_sat;
+            Self::validate_claim_tx_fee(claim_fee)?;
+        }
+
         self.persister.insert_reverse_swap(&created_rsi)?;
         info!("Created and persisted reverse swap {}", created_rsi.id);
 
@@ -362,7 +378,7 @@ impl BTCSendSwap {
                 // Calculate amount sent in a backward compatible way
                 let tx_out_value = match rs.sat_per_vbyte {
                     Some(claim_tx_feerate) => {
-                        claim_amount_sat - self.calculate_claim_tx_fees(claim_tx_feerate)?
+                        claim_amount_sat - Self::calculate_claim_tx_fee(claim_tx_feerate)?
                     }
                     None => rs.receive_amount_sat.ok_or(anyhow!(
                         "Cannot create claim tx: no claim feerate or receive amount found"
@@ -431,7 +447,7 @@ impl BTCSendSwap {
         }
     }
 
-    pub(crate) fn calculate_claim_tx_fees(&self, claim_tx_feerate: u32) -> SdkResult<u64> {
+    pub(crate) fn calculate_claim_tx_fee(claim_tx_feerate: u32) -> SdkResult<u64> {
         let tx = Transaction {
             version: 2,
             lock_time: crate::bitcoin::PackedLockTime(0),

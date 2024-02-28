@@ -977,6 +977,7 @@ pub struct RedeemOnchainFundsResponse {
     pub txid: Vec<u8>,
 }
 
+#[derive(Clone)]
 pub struct SendOnchainRequest {
     pub amount_sat: u64,
     pub onchain_recipient_address: String,
@@ -1024,6 +1025,7 @@ pub struct PrepareOnchainPaymentResponse {
     pub total_fees: Option<u64>,
 }
 
+#[derive(Clone)]
 pub struct PayOnchainRequest {
     pub send_amount_sat: u64,
     pub receive_amount_sat: u64,
