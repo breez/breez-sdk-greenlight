@@ -938,6 +938,10 @@ impl BreezServices {
                 let temp_send_amt = req.amount_sat;
                 let service_fees = ((temp_send_amt as f64) * p / 100.0) as u64;
                 let total_fees = service_fees + fees_lockup + fees_claim;
+                ensure_sdk!(
+                    temp_send_amt > total_fees,
+                    SdkError::generic("Send amount is not high enough to account for all fees")
+                );
 
                 (temp_send_amt, temp_send_amt - total_fees)
             }
