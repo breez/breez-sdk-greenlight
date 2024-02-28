@@ -50,6 +50,10 @@ open class SDKNotificationService: UNNotificationServiceExtension {
         return nil
     }
     
+    open func getServiceConfig() -> ServiceConfig? {
+        return nil
+    }
+
     open func getTaskFromNotification() -> TaskProtocol? {
         guard let content = bestAttemptContent else { return nil }
         guard let notificationType = content.userInfo[Constants.MESSAGE_DATA_TYPE] as? String else { return nil }

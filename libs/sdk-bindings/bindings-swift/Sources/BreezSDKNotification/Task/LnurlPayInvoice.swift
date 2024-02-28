@@ -38,7 +38,8 @@ class LnurlPayInvoiceTask : LnurlPayTask {
             let plainTextMetadata = ResourceHelper.shared.getString(key: Constants.LNURL_PAY_METADATA_PLAIN_TEXT, fallback: Constants.DEFAULT_LNURL_PAY_METADATA_PLAIN_TEXT)
             let metadata = "[[\"text/plain\",\"\(plainTextMetadata)\"]]"
             let nodeInfo = try breezSDK.nodeInfo()
-            if lnurlInvoiceRequest!.amount < 1000 || lnurlInvoiceRequest!.amount > nodeInfo.inboundLiquidityMsats {
+            let maxSendableMsats = max(extensionSettings.autoChannelSetupFeeLimitMsats, nodeInfo.inboundLiquidityMsats)
+            if lnurlInvoiceRequest!.amount < 1000 || lnurlInvoiceRequest!.amount > maxSendableMsats {
                 fail(withError: "Invalid amount requested \(lnurlInvoiceRequest!.amount)", replyURL: lnurlInvoiceRequest!.reply_url)
                 return
             }

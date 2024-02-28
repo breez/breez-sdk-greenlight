@@ -44,7 +44,8 @@ class LnurlPayInfoTask : LnurlPayTask {
             let plainTextMetadata = ResourceHelper.shared.getString(key: Constants.LNURL_PAY_METADATA_PLAIN_TEXT, fallback: Constants.DEFAULT_LNURL_PAY_METADATA_PLAIN_TEXT)
             let metadata = "[[\"text/plain\",\"\(plainTextMetadata)\"]]"
             let nodeInfo = try breezSDK.nodeInfo()
-            replyServer(encodable: LnurlInfoResponse(callback: lnurlInfoRequest!.callback_url, maxSendable: nodeInfo.inboundLiquidityMsats, minSendable: UInt64(1000), metadata: metadata, tag: "payRequest"),
+            let maxSendableMsats = max(extensionSettings.autoChannelSetupFeeLimitMsats, nodeInfo.inboundLiquidityMsats)
+            replyServer(encodable: LnurlInfoResponse(callback: lnurlInfoRequest!.callback_url, maxSendable: maxSendableMsats, minSendable: UInt64(1000), metadata: metadata, tag: "payRequest"),
                         replyURL: lnurlInfoRequest!.reply_url)
         } catch let e {
             self.logger.error("failed to process lnurl: \(e)")
