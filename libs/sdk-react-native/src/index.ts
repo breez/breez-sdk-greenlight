@@ -801,7 +801,9 @@ export const connect = async (req: ConnectRequest, listener: EventListener): Pro
 export const setLogStream = async (logStream: LogStream): Promise<EmitterSubscription> => {
     const subscription = BreezSDKEmitter.addListener("breezSdkLog", logStream)
 
-    await BreezSDK.setLogStream()
+    try {
+        await BreezSDK.setLogStream()
+    } catch {}
 
     return subscription
 }
