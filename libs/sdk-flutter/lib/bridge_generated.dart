@@ -258,6 +258,11 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kRescanSwapsConstMeta;
 
+  /// See [BreezServices::rescan_swap]
+  Future<void> rescanSwap({required String swapAddress, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kRescanSwapConstMeta;
+
   /// See [BreezServices::redeem_swap]
   Future<void> redeemSwap({required String swapAddress, dynamic hint});
 
@@ -2743,6 +2748,23 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kRescanSwapsConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "rescan_swaps",
         argNames: [],
+      );
+
+  Future<void> rescanSwap({required String swapAddress, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(swapAddress);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_rescan_swap(port_, arg0),
+      parseSuccessData: _wire2api_unit,
+      parseErrorData: _wire2api_FrbAnyhowException,
+      constMeta: kRescanSwapConstMeta,
+      argValues: [swapAddress],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kRescanSwapConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "rescan_swap",
+        argNames: ["swapAddress"],
       );
 
   Future<void> redeemSwap({required String swapAddress, dynamic hint}) {
@@ -5505,6 +5527,22 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_rescan_swapsPtr =
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_rescan_swaps');
   late final _wire_rescan_swaps = _wire_rescan_swapsPtr.asFunction<void Function(int)>();
+
+  void wire_rescan_swap(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> swap_address,
+  ) {
+    return _wire_rescan_swap(
+      port_,
+      swap_address,
+    );
+  }
+
+  late final _wire_rescan_swapPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>(
+          'wire_rescan_swap');
+  late final _wire_rescan_swap =
+      _wire_rescan_swapPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
   void wire_redeem_swap(
     int port_,

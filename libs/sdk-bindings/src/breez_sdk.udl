@@ -857,6 +857,9 @@ interface BlockingBreezServices {
    void rescan_swaps();
 
    [Throws=SdkError]
+   void rescan_swap(string swap_address);
+
+   [Throws=SdkError]
    void redeem_swap(string swap_address);
 
    [Throws=SdkError]

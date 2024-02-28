@@ -768,10 +768,20 @@ impl BreezServices {
         Ok(())
     }
 
+    /// Fetch the current status of this swap from the blockchain and save it in persistent storage.
+    pub async fn rescan_swap(&self, swap_address: String) -> SdkResult<()> {
+        let tip = self.chain_service.current_tip().await?;
+        self.btc_receive_swapper
+            .refresh_swap_on_chain_status(swap_address, tip)
+            .await?;
+        Ok(())
+    }
+
     /// Redeems an individual swap.
     ///
     /// To be used only in the context of mobile notifications, where the notification triggers
-    /// an individual redeem.
+    /// an individual redeem. It assumes this swap's status was recently updated in persistent
+    /// storage. See [BreezServices::rescan_swap].
     ///
     /// This is taken care of automatically in the context of typical SDK usage.
     pub async fn redeem_swap(&self, swap_address: String) -> SdkResult<()> {

@@ -257,6 +257,11 @@ pub extern "C" fn wire_rescan_swaps(port_: i64) {
 }
 
 #[no_mangle]
+pub extern "C" fn wire_rescan_swap(port_: i64, swap_address: *mut wire_uint_8_list) {
+    wire_rescan_swap_impl(port_, swap_address)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_redeem_swap(port_: i64, swap_address: *mut wire_uint_8_list) {
     wire_redeem_swap_impl(port_, swap_address)
 }
