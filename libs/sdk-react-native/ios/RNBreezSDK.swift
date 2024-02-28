@@ -556,6 +556,17 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
+    @objc(prepareOnchainPayment:resolve:reject:)
+    func prepareOnchainPayment(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            let prepareOnchainPaymentRequest = try BreezSDKMapper.asPrepareOnchainPaymentRequest(prepareOnchainPaymentRequest: req)
+            var res = try getBreezServices().prepareOnchainPayment(req: prepareOnchainPaymentRequest)
+            resolve(BreezSDKMapper.dictionaryOf(prepareOnchainPaymentResponse: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
     @objc(inProgressReverseSwaps:reject:)
     func inProgressReverseSwaps(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
@@ -582,6 +593,17 @@ class RNBreezSDK: RCTEventEmitter {
             let sendOnchainRequest = try BreezSDKMapper.asSendOnchainRequest(sendOnchainRequest: req)
             var res = try getBreezServices().sendOnchain(req: sendOnchainRequest)
             resolve(BreezSDKMapper.dictionaryOf(sendOnchainResponse: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(payOnchain:resolve:reject:)
+    func payOnchain(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            let payOnchainRequest = try BreezSDKMapper.asPayOnchainRequest(payOnchainRequest: req)
+            var res = try getBreezServices().payOnchain(req: payOnchainRequest)
+            resolve(BreezSDKMapper.dictionaryOf(payOnchainResponse: res))
         } catch let err {
             rejectErr(err: err, reject: reject)
         }
