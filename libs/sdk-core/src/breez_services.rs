@@ -848,7 +848,6 @@ impl BreezServices {
     /// Creates a reverse swap and attempts to pay the HODL invoice
     ///
     /// Deprecated. Please use [BreezServices::pay_onchain] instead.
-    #[deprecated(since = "0.3.2", note = "please use pay_onchain instead")]
     pub async fn send_onchain(
         &self,
         req: SendOnchainRequest,
