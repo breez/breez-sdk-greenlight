@@ -683,6 +683,21 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
+    fun rescanSwap(
+        swapAddress: String,
+        promise: Promise,
+    ) {
+        executor.execute {
+            try {
+                getBreezServices().rescanSwap(swapAddress)
+                promise.resolve(readableMapOf("status" to "ok"))
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
     fun redeemSwap(
         swapAddress: String,
         promise: Promise,
