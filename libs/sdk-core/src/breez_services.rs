@@ -775,6 +775,10 @@ impl BreezServices {
     ///
     /// This is taken care of automatically in the context of typical SDK usage.
     pub async fn redeem_swap(&self, swap_address: String) -> SdkResult<()> {
+        let tip = self.chain_service.current_tip().await?;
+        self.btc_receive_swapper
+            .refresh_swap_on_chain_status(swap_address.clone(), tip)
+            .await?;
         self.btc_receive_swapper.redeem_swap(swap_address).await?;
         Ok(())
     }

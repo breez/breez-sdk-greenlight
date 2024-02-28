@@ -311,12 +311,8 @@ impl BTCReceiveSwap {
             let result = self
                 .refresh_swap_on_chain_status(address.clone(), tip)
                 .await;
-            if result.is_err() {
-                error!(
-                    "failed to refresh swap status for address {} {}",
-                    address.clone(),
-                    result.err().unwrap()
-                )
+            if let Err(err) = result {
+                error!("failed to refresh swap status for address {address}: {err}")
             }
         }
         Ok(())
