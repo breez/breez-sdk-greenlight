@@ -10,8 +10,8 @@ import breez_sdk_notification.Constants.LNURL_PAY_INVOICE_NOTIFICATION_TITLE
 import breez_sdk_notification.Constants.LNURL_PAY_METADATA_PLAIN_TEXT
 import breez_sdk_notification.Constants.LNURL_PAY_NOTIFICATION_FAILURE_TITLE
 import breez_sdk_notification.Constants.NOTIFICATION_CHANNEL_LNURL_PAY
+import breez_sdk_notification.ForegroundService.Companion.serviceConfig
 import breez_sdk_notification.NotificationHelper.Companion.notifyChannel
-
 import breez_sdk_notification.ResourceHelper.Companion.getString
 import breez_sdk_notification.SdkForegroundService
 import kotlinx.serialization.SerialName
@@ -48,7 +48,12 @@ class LnurlPayInvoiceJob(
         try {
             request = Json.decodeFromString(LnurlInvoiceRequest.serializer(), payload)
             val nodeState = breezSDK.nodeInfo()
-            if (request.amount < 1000UL || request.amount > nodeState.inboundLiquidityMsats) {
+            val maxSendableMsats: ULong =
+                maxOf(
+                    serviceConfig.autoChannelSetupFeeLimitMsats,
+                    nodeState.inboundLiquidityMsats
+                )
+            if (request.amount < 1000UL || request.amount > maxSendableMsats) {
                 fail("Invalid amount requested ${request.amount}", request.replyURL)
                 notifyChannel(
                     context,

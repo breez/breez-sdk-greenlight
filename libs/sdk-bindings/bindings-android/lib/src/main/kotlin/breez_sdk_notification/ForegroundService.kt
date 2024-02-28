@@ -34,6 +34,7 @@ abstract class ForegroundService : SdkForegroundService, Service() {
 
     companion object {
         private const val TAG = "ForegroundService"
+        internal var serviceConfig: ServiceConfig = ServiceConfig.default()
     }
 
     // =========================================================== //
@@ -76,6 +77,11 @@ abstract class ForegroundService : SdkForegroundService, Service() {
         val notification = notifyForegroundService(applicationContext)
         startForeground(NOTIFICATION_ID_FOREGROUND_SERVICE, notification)
 
+        // Set service configuration
+        getServiceConfig()?.let { serviceConfig ->
+            Companion.serviceConfig = serviceConfig
+        }
+
         // Connect to SDK if source intent has data message with valid payload
         getConnectRequest()?.let { connectRequest ->
             getJobFromIntent(intent)?.also { job ->
@@ -96,6 +102,10 @@ abstract class ForegroundService : SdkForegroundService, Service() {
      *  It should retrieve the Breez API key and node mnemonic then construct
      *  a ConnectRequest to be used to call the Breez SDK connect function. */
     abstract fun getConnectRequest(): ConnectRequest?
+
+    /** To be implemented by the application foreground service.
+     * Allows the user to override the default ServiceConfig. */
+    abstract fun getServiceConfig(): ServiceConfig?
 
     /** Get the job to be executed from the Message data in the Intent.
      *  This can be overridden to handle custom jobs. */
