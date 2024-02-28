@@ -66,15 +66,18 @@ extension NotificationServiceProtocol {
         }
 
         switch(notificationType) {
-        case Constants.MESSAGE_TYPE_PAYMENT_RECEIVED:
-            self.logger.info("payment_received data string: \(payload)")
-            return ReceivePaymentTask(payload: payload, logger: self.logger, contentHandler: contentHandler, bestAttemptContent: bestAttemptContent)
+        case Constants.MESSAGE_TYPE_ADDRESS_TXS_CONFIRMED:
+            self.logger.info("address_txs_confirmed data string: \(payload)")
+            return RedeemSwapTask(payload: payload, logger: self.logger, contentHandler: contentHandler, bestAttemptContent: bestAttemptContent)
         case Constants.MESSAGE_TYPE_LNURL_PAY_INFO:
             self.logger.info("lnurlpay_info data string: \(payload)")
             return LnurlPayInfoTask(payload: payload, logger: self.logger, contentHandler: contentHandler, bestAttemptContent: bestAttemptContent)
         case Constants.MESSAGE_TYPE_LNURL_PAY_INVOICE:
             self.logger.info("lnurlpay_invoice data string: \(payload)")
             return LnurlPayInvoiceTask(payload: payload, logger: self.logger, contentHandler: contentHandler, bestAttemptContent: bestAttemptContent)
+        case Constants.MESSAGE_TYPE_PAYMENT_RECEIVED:
+            self.logger.info("payment_received data string: \(payload)")
+            return ReceivePaymentTask(payload: payload, logger: self.logger, contentHandler: contentHandler, bestAttemptContent: bestAttemptContent)
         default:
             return nil
         }
