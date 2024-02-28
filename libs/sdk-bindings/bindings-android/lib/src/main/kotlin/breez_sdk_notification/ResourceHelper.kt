@@ -19,9 +19,19 @@ class ResourceHelper {
 
         private fun getBundle(context: Context): Bundle? {
             return try {
-                context.packageManager.getApplicationInfo(
-                    context.packageName, PackageManager.GET_META_DATA
-                ).metaData
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    context.packageManager.getApplicationInfo(
+                        context.packageName,
+                        PackageManager.ApplicationInfoFlags.of(0)
+                    ).metaData
+                } else {
+                    @Suppress("DEPRECATION")
+                    context.packageManager
+                        .getApplicationInfo(
+                            context.packageName,
+                            PackageManager.GET_META_DATA
+                        ).metaData
+                }
             } catch (_: NameNotFoundException) {
                 null
             }
