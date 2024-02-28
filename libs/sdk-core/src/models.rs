@@ -1008,7 +1008,7 @@ pub struct PrepareOnchainPaymentRequest {
 ///
 /// The `send_amount_sat`, `receive_amount_sat` and `total_fees` are empty if the `send_amount_sat`
 /// falls outside the min / max range.
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct PrepareOnchainPaymentResponse {
     // Fields from ReverseSwapPairInfo:
     pub min: u64,
@@ -1032,6 +1032,7 @@ pub struct PayOnchainRequest {
     pub pair_hash: String,
 }
 
+#[derive(Serialize)]
 pub struct PayOnchainResponse {
     pub reverse_swap_info: ReverseSwapInfo,
 }

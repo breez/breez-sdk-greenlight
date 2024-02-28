@@ -6,10 +6,11 @@ use breez_sdk_core::InputType::{LnUrlAuth, LnUrlPay, LnUrlWithdraw};
 use breez_sdk_core::{
     parse, BreezEvent, BreezServices, BuyBitcoinRequest, CheckMessageRequest, ConnectRequest,
     EventListener, GreenlightCredentials, ListPaymentsRequest, LnUrlPayRequest,
-    LnUrlWithdrawRequest, MetadataFilter, PrepareRedeemOnchainFundsRequest, PrepareRefundRequest,
-    ReceiveOnchainRequest, ReceivePaymentRequest, RedeemOnchainFundsRequest, RefundRequest,
-    ReportIssueRequest, ReportPaymentFailureDetails, ReverseSwapFeesRequest, SendOnchainRequest,
-    SendPaymentRequest, SendSpontaneousPaymentRequest, SignMessageRequest, StaticBackupRequest,
+    LnUrlWithdrawRequest, MetadataFilter, PayOnchainRequest, PrepareOnchainPaymentRequest,
+    PrepareRedeemOnchainFundsRequest, PrepareRefundRequest, ReceiveOnchainRequest,
+    ReceivePaymentRequest, RedeemOnchainFundsRequest, RefundRequest, ReportIssueRequest,
+    ReportPaymentFailureDetails, ReverseSwapFeesRequest, SendOnchainRequest, SendPaymentRequest,
+    SendSpontaneousPaymentRequest, SignMessageRequest, StaticBackupRequest, SwapAmountType,
 };
 use breez_sdk_core::{GreenlightNodeConfig, NodeConfig};
 use once_cell::sync::OnceCell;
@@ -171,6 +172,52 @@ pub(crate) async fn handle_command(
         Commands::MaxReverseSwapAmount {} => {
             let response = sdk()?.max_reverse_swap_amount().await?;
             serde_json::to_string_pretty(&response).map_err(|e| e.into())
+        }
+        Commands::PrepareOnchainPayment {
+            amount_sat,
+            is_send,
+            claim_tx_feerate,
+        } => {
+            let req = PrepareOnchainPaymentRequest {
+                amount_sat,
+                amount_type: match is_send {
+                    true => SwapAmountType::Send,
+                    false => SwapAmountType::Receive,
+                },
+                claim_tx_feerate,
+            };
+            let response = sdk()?.prepare_onchain_payment(req).await?;
+            serde_json::to_string_pretty(&response).map_err(|e| e.into())
+        }
+        Commands::PayOnchain {
+            amount_sat,
+            is_send,
+            claim_tx_feerate,
+            onchain_recipient_address,
+        } => {
+            let req_prepare = PrepareOnchainPaymentRequest {
+                amount_sat,
+                amount_type: match is_send {
+                    true => SwapAmountType::Send,
+                    false => SwapAmountType::Receive,
+                },
+                claim_tx_feerate,
+            };
+            let res_prepare = sdk()?.prepare_onchain_payment(req_prepare).await?;
+
+            match (res_prepare.send_amount_sat, res_prepare.receive_amount_sat) {
+                (Some(send_amount_sat), Some(receive_amount_sat)) => {
+                    let req = PayOnchainRequest {
+                        send_amount_sat,
+                        receive_amount_sat,
+                        onchain_recipient_address,
+                        pair_hash: res_prepare.fees_hash,
+                    };
+                    let response = sdk()?.pay_onchain(req).await?;
+                    serde_json::to_string_pretty(&response).map_err(|e| e.into())
+                }
+                _ => Err(anyhow!("Reverse swap amount out of range")),
+            }
         }
         Commands::FetchOnchainFees {
             send_amount_sat,

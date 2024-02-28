@@ -92,6 +92,38 @@ pub(crate) enum Commands {
 
     MaxReverseSwapAmount {},
 
+    /// Prepares, but does not initiate, a reverse swap payment
+    PrepareOnchainPayment {
+        /// Depending on `is_send`, this may be the desired send amount or the desired receive amount.
+        #[clap(name = "amount_sat", short = 'a', long = "amt")]
+        amount_sat: u64,
+
+        /// If set, the amount is the desired send amount. Otherwise, it is the desired receive amount.
+        #[clap(name = "is-send", short = 's', long = "is-send")]
+        is_send: bool,
+
+        /// The claim tx feerate
+        #[clap(name = "claim_tx_feerate", short = 'f', long = "feerate")]
+        claim_tx_feerate: u32,
+    },
+
+    /// Prepares and initiates a reverse swap payment
+    PayOnchain {
+        /// Depending on `is_send`, this may be the desired send amount or the desired receive amount.
+        #[clap(name = "amount_sat", short = 'a', long = "amt")]
+        amount_sat: u64,
+
+        /// If set, the amount is the desired send amount. Otherwise, it is the desired receive amount.
+        #[clap(name = "is-send", short = 's', long = "is-send")]
+        is_send: bool,
+
+        /// The claim tx feerate
+        #[clap(name = "claim_tx_feerate", short = 'f', long = "feerate")]
+        claim_tx_feerate: u32,
+
+        onchain_recipient_address: String,
+    },
+
     /// Get the current fees for a potential new reverse swap
     FetchOnchainFees {
         #[clap(name = "amount", short = 'a', long = "amt")]
