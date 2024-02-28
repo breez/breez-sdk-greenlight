@@ -639,6 +639,13 @@ pub enum PayOnchainError {
     #[error("Service connectivity: {err}")]
     ServiceConnectivity { err: String },
 }
+impl PayOnchainError {
+    pub(crate) fn generic(err: &str) -> Self {
+        Self::Generic {
+            err: err.to_string(),
+        }
+    }
+}
 
 impl From<anyhow::Error> for PayOnchainError {
     fn from(err: anyhow::Error) -> Self {

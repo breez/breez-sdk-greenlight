@@ -976,6 +976,10 @@ impl BreezServices {
         &self,
         req: PayOnchainRequest,
     ) -> Result<PayOnchainResponse, PayOnchainError> {
+        ensure_sdk!(
+            req.send_amount_sat > req.receive_amount_sat,
+            PayOnchainError::generic("Send amount must be bigger than receive amount")
+        );
         let reverse_swap_info = self
             .pay_onchain_common(CreateReverseSwapArg::V2(req))
             .await?;
