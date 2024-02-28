@@ -983,6 +983,10 @@ export const rescanSwaps = async (): Promise<void> => {
     await BreezSDK.rescanSwaps()
 }
 
+export const rescanSwap = async (swapAddress: string): Promise<void> => {
+    await BreezSDK.rescanSwap(swapAddress)
+}
+
 export const redeemSwap = async (swapAddress: string): Promise<void> => {
     await BreezSDK.redeemSwap(swapAddress)
 }
