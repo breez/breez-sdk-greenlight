@@ -2,27 +2,19 @@ import UserNotifications
 import XCGLogger
 import os.log
 
-public protocol NotificationServiceProtocol: UNNotificationServiceExtension {
-    var logger: XCGLogger { get set }
-    var breezSDK: BlockingBreezServices? { get set }
-    var contentHandler: ((UNNotificationContent) -> Void)? { get set }
-    var bestAttemptContent: UNMutableNotificationContent? { get set }
-    var currentTask: TaskProtocol? { get set }
+open class SDKNotificationService: UNNotificationServiceExtension {
+    var breezSDK: BlockingBreezServices?
+    var contentHandler: ((UNNotificationContent) -> Void)?
+    var bestAttemptContent: UNMutableNotificationContent?
+    var currentTask: TaskProtocol?
+    
+    var logger = {
+        let log = XCGLogger.default
+        log.setup(level: .debug, showThreadName: true, showLevel: true, showFileNames: true, showLineNumbers: true)
+        return log
+    }()
 
-    func getConnectRequest() -> ConnectRequest?
-}
-
-extension NotificationServiceProtocol {
-    init() {
-        self.init()
-        logger = {
-            let log = XCGLogger.default
-            log.setup(level: .debug, showThreadName: true, showLevel: true, showFileNames: true, showLineNumbers: true)
-            return log
-        }()
-    }
-        
-    func didReceive(
+    override open func didReceive(
         _ request: UNNotificationRequest,
         withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void
     ) {
@@ -54,7 +46,11 @@ extension NotificationServiceProtocol {
         }
     }
     
-    func getTaskFromNotification() -> TaskProtocol? {
+    open func getConnectRequest() -> ConnectRequest? {
+        return nil
+    }
+    
+    open func getTaskFromNotification() -> TaskProtocol? {
         guard let content = bestAttemptContent else { return nil }
         guard let notificationType = content.userInfo[Constants.MESSAGE_DATA_TYPE] as? String else { return nil }
         self.logger.info("Notification payload: \(content.userInfo)")
@@ -83,7 +79,7 @@ extension NotificationServiceProtocol {
         }
     }
     
-    func serviceExtensionTimeWillExpire() {
+    override open func serviceExtensionTimeWillExpire() {
         self.logger.info("serviceExtensionTimeWillExpire()")
         
         // iOS calls this function just before the extension will be terminated by the system.
