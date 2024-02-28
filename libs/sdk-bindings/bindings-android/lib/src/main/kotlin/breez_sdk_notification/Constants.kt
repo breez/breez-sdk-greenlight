@@ -7,6 +7,7 @@ object Constants {
     const val NOTIFICATION_CHANNEL_FOREGROUND_SERVICE = "FOREGROUND_SERVICE"
     const val NOTIFICATION_CHANNEL_LNURL_PAY = "LNURL_PAY"
     const val NOTIFICATION_CHANNEL_PAYMENT_RECEIVED = "PAYMENT_RECEIVED"
+    const val NOTIFICATION_CHANNEL_SWAP_TX_CONFIRMED = "SWAP_TX_CONFIRMED"
 
     // Notification Ids
     const val NOTIFICATION_ID_FOREGROUND_SERVICE = 100
@@ -18,9 +19,10 @@ object Constants {
     const val MESSAGE_DATA_TYPE = "notification_type"
     const val MESSAGE_DATA_PAYLOAD = "notification_payload"
 
-    const val MESSAGE_TYPE_PAYMENT_RECEIVED = "payment_received"
+    const val MESSAGE_TYPE_ADDRESS_TXS_CONFIRMED = "address_txs_confirmed"
     const val MESSAGE_TYPE_LNURL_PAY_INFO = "lnurlpay_info"
     const val MESSAGE_TYPE_LNURL_PAY_INVOICE = "lnurlpay_invoice"
+    const val MESSAGE_TYPE_PAYMENT_RECEIVED = "payment_received"
 
     // Resource Identifiers
     const val FOREGROUND_SERVICE_NOTIFICATION_CHANNEL_DESCRIPTION =
@@ -58,6 +60,18 @@ object Constants {
     const val OFFLINE_PAYMENTS_WORKGROUP_DESCRIPTION =
         "offline_payments_work_group_description"
     const val OFFLINE_PAYMENTS_WORKGROUP_NAME = "offline_payments_work_group_name"
+    const val SWAP_TX_CONFIRMED_NOTIFICATION_CHANNEL_DESCRIPTION =
+        "swap_tx_confirmed_notification_channel_description"
+    const val SWAP_TX_CONFIRMED_NOTIFICATION_CHANNEL_NAME =
+        "swap_tx_confirmed_notification_channel_name"
+    const val SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TITLE =
+        "swap_tx_confirmed_notification_failure_text"
+    const val SWAP_TX_CONFIRMED_NOTIFICATION_TITLE =
+        "swap_tx_confirmed_notification_title"
+    const val SWAP_TX_CONFIRMED_WORKGROUP_ID = "swap_tx"
+    const val SWAP_TX_CONFIRMED_WORKGROUP_DESCRIPTION =
+        "swap_tx_confirmed_work_group_description"
+    const val SWAP_TX_CONFIRMED_WORKGROUP_NAME = "swap_tx_confirmed_work_group_name"
 
     // Resource Identifier Defaults
     const val DEFAULT_FOREGROUND_SERVICE_NOTIFICATION_CHANNEL_DESCRIPTION =
@@ -91,4 +105,15 @@ object Constants {
     const val DEFAULT_OFFLINE_PAYMENTS_WORKGROUP_DESCRIPTION =
         "Required to receive payments when the application is in the background"
     const val DEFAULT_OFFLINE_PAYMENTS_WORKGROUP_NAME = "Offline Payments"
+    const val DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_CHANNEL_DESCRIPTION =
+        "Notifications for received swaps when the application is in the background"
+    const val DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_CHANNEL_NAME =
+        "Received Swaps"
+    const val DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TITLE =
+        "Redeem Swap Failed"
+    const val DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_TITLE =
+        "Swap Confirmed"
+    const val DEFAULT_SWAP_TX_CONFIRMED_WORKGROUP_DESCRIPTION =
+        "Required to handle swaps when the application is in the background"
+    const val DEFAULT_SWAP_TX_CONFIRMED_WORKGROUP_NAME = "Swap Transactions"
 }
