@@ -40,19 +40,18 @@ pub(crate) enum Commands {
         restore_only: bool,
     },
 
-    /// [misc] Sync local data with remote node
-    Sync {},
+    /// [pay] Send a lightning payment
+    SendPayment {
+        bolt11: String,
 
-    /// [misc] Triggers a backup of the local data
-    Backup {},
+        #[clap(name = "amount_msat", short = 'a', long = "amt")]
+        amount_msat: Option<u64>,
+    },
 
-    /// [misc] Fetch the static backup data
-    StaticBackup {},
-
-    /// [misc] Parse a generic string to get its type and relevant metadata
-    Parse {
-        /// Generic input (URL, LNURL, BIP-21 BTC Address, LN invoice, etc)
-        input: String,
+    /// [pay] Send a spontaneous (keysend) payment
+    SendSpontaneousPayment {
+        node_id: String,
+        amount_msat: u64,
     },
 
     /// [pay] Generate a bolt11 invoice
@@ -65,6 +64,18 @@ pub(crate) enum Commands {
         expiry: Option<u32>,
         #[clap(name = "cltv", short = 'c', long = "cltv")]
         cltv: Option<u32>,
+    },
+
+    /// [pay] List recommended fees based on the mempool
+    RecommendedFees {},
+
+    /// [pay] Find the current fees for opening a new channel
+    OpenChannelFee {
+        /// The received amount
+        amount_msat: Option<u64>,
+
+        /// The expiration of the fee returned
+        expiry: Option<u32>,
     },
 
     /// [lnurl] Pay using lnurl pay
@@ -80,6 +91,32 @@ pub(crate) enum Commands {
     /// [lnurl] Authenticate using lnurl auth
     LnurlAuth {
         lnurl: String,
+    },
+
+    /// [swap-in] Generate address to receive onchain
+    ReceiveOnchain {},
+
+    /// [swap-in] Get the current in-progress swap if exists
+    InProgressSwap {},
+
+    /// [swap-in] List refundable swap addresses
+    ListRefundables {},
+
+    /// [swap-in] Rescan all swaps
+    RescanSwaps {},
+
+    /// [swap-in] Prepare a refund transaction for an incomplete swap
+    PrepareRefund {
+        swap_address: String,
+        to_address: String,
+        sat_per_vbyte: u32,
+    },
+
+    /// [swap-in] Broadcast a refund transaction for an incomplete swap
+    Refund {
+        swap_address: String,
+        to_address: String,
+        sat_per_vbyte: u32,
     },
 
     /// [swap-out] Send on-chain using a reverse swap
@@ -105,20 +142,6 @@ pub(crate) enum Commands {
     /// [swap-out] Get the current blocking in-progress reverse swaps, if any exist
     InProgressReverseSwaps {},
 
-    /// [pay] Send a lightning payment
-    SendPayment {
-        bolt11: String,
-
-        #[clap(name = "amount_msat", short = 'a', long = "amt")]
-        amount_msat: Option<u64>,
-    },
-
-    /// [pay] Send a spontaneous (keysend) payment
-    SendSpontaneousPayment {
-        node_id: String,
-        amount_msat: u64,
-    },
-
     /// [sign] Sign a message with the node's private key
     SignMessage {
         message: String,
@@ -129,6 +152,40 @@ pub(crate) enum Commands {
         message: String,
         pubkey: String,
         signature: String,
+    },
+
+
+    /// [redeem] Send on-chain funds to an external address
+    RedeemOnchainFunds {
+        /// The redeem_onchain_funds destination address
+        to_address: String,
+
+        /// The fee rate for the redeem_onchain_funds transaction
+        sat_per_vbyte: u32,
+    },
+
+    /// [redeem] Calculate the fee (in sats) for a potential transaction
+    PrepareRedeemOnchainFunds {
+        /// The destination address
+        to_address: String,
+
+        /// The fee rate for the transaction in vbyte/sats
+        sat_per_vbyte: u32,
+    },
+
+    /// [node-mgmt] Sync local data with remote node
+    Sync {},
+
+    /// [node-mgmt] Triggers a backup of the local data
+    Backup {},
+
+    /// [node-mgmt] Fetch the static backup data
+    StaticBackup {},
+
+    /// [node-mgmt] Parse a generic string to get its type and relevant metadata
+    Parse {
+        /// Generic input (URL, LNURL, BIP-21 BTC Address, LN invoice, etc)
+        input: String,
     },
 
     /// [node-mgmt] List all payments
@@ -169,24 +226,6 @@ pub(crate) enum Commands {
         hash: String,
     },
 
-    /// [redeem] Send on-chain funds to an external address
-    RedeemOnchainFunds {
-        /// The redeem_onchain_funds destination address
-        to_address: String,
-
-        /// The fee rate for the redeem_onchain_funds transaction
-        sat_per_vbyte: u32,
-    },
-
-    /// [redeem] Calculate the fee (in sats) for a potential transaction
-    PrepareRedeemOnchainFunds {
-        /// The destination address
-        to_address: String,
-
-        /// The fee rate for the transaction in vbyte/sats
-        sat_per_vbyte: u32,
-    },
-
     /// [node-mgmt] The up to date lsp information
     LspInfo {},
 
@@ -197,15 +236,6 @@ pub(crate) enum Commands {
     ConnectLSP {
         /// The lsp id the sdk should connect to
         lsp_id: String,
-    },
-
-    /// [pay] Find the current fees for opening a new channel
-    OpenChannelFee {
-        /// The received amount
-        amount_msat: Option<u64>,
-
-        /// The expiration of the fee returned
-        expiry: Option<u32>,
     },
 
     /// [node-mgmt] The node credentials
@@ -221,46 +251,11 @@ pub(crate) enum Commands {
         close_to_address: Option<String>,
     },
 
-    /// [fiat] List fiat currencies
-    ListFiat {},
-
-    /// [fiat] Fetch available fiat rates
-    FetchFiatRates {},
-
     /// [node-mgmt] Close all LSP channels
     CloseLSPChannels {},
 
     /// [node-mgmt] Stop the node and disconnect from the sdk services
     Disconnect {},
-
-    /// [pay] List recommended fees based on the mempool
-    RecommendedFees {},
-
-    /// [swap-in] Generate address to receive onchain
-    ReceiveOnchain {},
-
-    /// [swap-in] Get the current in-progress swap if exists
-    InProgressSwap {},
-
-    /// [swap-in] List refundable swap addresses
-    ListRefundables {},
-
-    /// [swap-in] Rescan all swaps
-    RescanSwaps {},
-
-    /// [swap-in] Prepare a refund transaction for an incomplete swap
-    PrepareRefund {
-        swap_address: String,
-        to_address: String,
-        sat_per_vbyte: u32,
-    },
-
-    /// [swap-in] Broadcast a refund transaction for an incomplete swap
-    Refund {
-        swap_address: String,
-        to_address: String,
-        sat_per_vbyte: u32,
-    },
 
     /// [node-mgmt] Fetches the service health check
     ServiceHealthCheck {},
@@ -271,9 +266,9 @@ pub(crate) enum Commands {
         comment: Option<String>,
     },
 
-    /// [dev] Execute a low level node command (used for debugging)
-    ExecuteDevCommand {
-        command: String,
+    /// [node-mgmt] Register a webhook URL, where the SDK will trigger a callback on specific events.
+    RegisterWebhook {
+        url: String,
     },
 
     /// [buy] Generates an URL to buy bitcoin from a 3rd party provider
@@ -281,8 +276,14 @@ pub(crate) enum Commands {
         provider: BuyBitcoinProvider,
     },
 
-    /// [node-mgmt] Register a webhook URL, where the SDK will trigger a callback on specific events.
-    RegisterWebhook {
-        url: String,
+    /// [fiat] List fiat currencies
+    ListFiat {},
+
+    /// [fiat] Fetch available fiat rates
+    FetchFiatRates {},
+
+    /// [dev] Execute a low level node command (used for debugging)
+    ExecuteDevCommand {
+        command: String,
     },
 }
