@@ -25,6 +25,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.tinylog.kotlin.Logger
 
+@Suppress("unused")
 class NotificationHelper {
     companion object {
         private const val TAG = "NotificationHelper"

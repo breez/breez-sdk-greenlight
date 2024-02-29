@@ -23,6 +23,7 @@ import org.tinylog.kotlin.Logger
 
 abstract class ForegroundService : SdkForegroundService, Service() {
     private var breezSDK: BlockingBreezServices? = null
+    @Suppress("MemberVisibilityCanBePrivate")
     val serviceScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 
     companion object {
@@ -116,8 +117,7 @@ abstract class ForegroundService : SdkForegroundService, Service() {
 
                     Constants.MESSAGE_TYPE_PAYMENT_RECEIVED -> ReceivePaymentJob(
                         applicationContext,
-                        this,
-                        payload
+                        this
                     )
 
                     else -> null

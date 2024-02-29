@@ -41,7 +41,7 @@ class LnurlPayInfoJob(
     override fun start(breezSDK: BlockingBreezServices) {
         var request: LnurlInfoRequest? = null
         try {
-            request = Json.decodeFromString<LnurlInfoRequest>(LnurlInfoRequest.serializer(), payload)
+            request = Json.decodeFromString(LnurlInfoRequest.serializer(), payload)
             val nodeState = breezSDK.nodeInfo()
             val plainTextMetadata = getString(
                 context,
