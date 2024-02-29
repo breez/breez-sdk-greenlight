@@ -1281,6 +1281,8 @@ pub struct SwapInfo {
     pub bolt11: Option<String>,
     /// Amount of millisatoshis claimed from sent funds and paid for via bolt11 invoice.
     pub paid_msat: u64,
+    /// Total amount of transactions sent to the swap address.
+    pub total_incoming_txs: u64,
     /// Confirmed onchain sats to be claim with an bolt11 invoice or refunded if swap fails.
     pub confirmed_sats: u64,
     /// Unconfirmed sats waiting to be confirmed onchain.
@@ -1368,7 +1370,12 @@ impl SwapInfo {
         if passed_timelock {
             return match self.confirmed_sats {
                 0 => SwapStatus::Completed,
-                _ => SwapStatus::Refundable,
+                // This is to make sure we don't consider refundable in case we only have one transaction which was already
+                // paid by the swapper.
+                _ => match (self.paid_msat, self.total_incoming_txs) {
+                    (paid, 1) if paid > 0 => SwapStatus::Completed,
+                    _ => SwapStatus::Refundable,
+                },
             };
         }
 

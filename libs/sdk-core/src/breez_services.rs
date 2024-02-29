@@ -2428,6 +2428,7 @@ pub(crate) mod tests {
             paid_msat: 1000,
             confirmed_sats: 1,
             unconfirmed_sats: 0,
+            total_incoming_txs: 1,
             status: SwapStatus::Refundable,
             refund_tx_ids: vec![],
             unconfirmed_tx_ids: vec![],

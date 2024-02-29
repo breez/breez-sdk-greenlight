@@ -19,7 +19,7 @@ use crate::bitcoin::{
     Address, EcdsaSighashType, Script, Sequence, Transaction, TxIn, TxOut, Witness,
 };
 use crate::breez_services::{BreezEvent, BreezServer, Receiver};
-use crate::chain::{get_utxos, AddressUtxos, ChainService, OnchainTx};
+use crate::chain::{get_total_incoming_txs, get_utxos, AddressUtxos, ChainService, OnchainTx};
 use crate::error::ReceivePaymentError;
 use crate::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
 use crate::models::{Swap, SwapInfo, SwapStatus, SwapperAPI};
@@ -234,6 +234,7 @@ impl BTCReceiveSwap {
             paid_msat: 0,
             unconfirmed_sats: 0,
             confirmed_sats: 0,
+            total_incoming_txs: 0,
             refund_tx_ids: Vec::new(),
             confirmed_tx_ids: Vec::new(),
             unconfirmed_tx_ids: Vec::new(),
@@ -378,7 +379,8 @@ impl BTCReceiveSwap {
             .into_iter()
             .filter(|t| t.status.block_height.is_some())
             .collect();
-        let utxos = get_utxos(bitcoin_address.clone(), txs, false)?;
+        let utxos = get_utxos(bitcoin_address.clone(), txs.clone(), false)?;
+        let total_incoming_txs = get_total_incoming_txs(bitcoin_address.clone(), txs);
         let confirmed_block = confirmed_txs.iter().fold(0, |b, item| {
             let confirmed_block = item.status.block_height.unwrap();
             if confirmed_block != 0 || confirmed_block < b {
@@ -421,6 +423,7 @@ impl BTCReceiveSwap {
             confirmed_sats: utxos.confirmed_sats(),
             confirmed_tx_ids: utxos.confirmed_tx_ids(),
             confirmed_at: optional_confirmed_block,
+            total_incoming_txs,
         };
         let status = swap_info
             .with_chain_info(chain_info.clone(), current_tip)
@@ -871,6 +874,7 @@ mod tests {
             confirmed_at: None,
             unconfirmed_sats: 5000,
             unconfirmed_tx_ids: vec!["222".into()],
+            total_incoming_txs: 0,
         };
         swap_info = swap_info.with_chain_info(chain_info.clone(), tip);
         persister.update_swap_chain_info(
@@ -892,6 +896,7 @@ mod tests {
             confirmed_at: Some(1000),
             unconfirmed_sats: 0,
             unconfirmed_tx_ids: vec![],
+            total_incoming_txs: 1,
         };
         swap_info = swap_info.with_chain_info(chain_info.clone(), tip);
         persister.update_swap_chain_info(
@@ -913,6 +918,7 @@ mod tests {
             confirmed_at: Some(1000),
             unconfirmed_sats: 2000,
             unconfirmed_tx_ids: vec!["111".into()],
+            total_incoming_txs: 1,
         };
         swap_info = swap_info.with_chain_info(chain_info.clone(), tip);
         persister.update_swap_chain_info(
@@ -948,6 +954,7 @@ mod tests {
             confirmed_at: Some(1000),
             unconfirmed_sats: 2000,
             unconfirmed_tx_ids: vec!["111".into()],
+            total_incoming_txs: 1,
         };
         swap_info = swap_info.with_chain_info(chain_info.clone(), tip + 1000);
         persister.update_swap_chain_info(
@@ -970,6 +977,7 @@ mod tests {
             confirmed_at: Some(1000),
             unconfirmed_sats: 0,
             unconfirmed_tx_ids: vec![],
+            total_incoming_txs: 0,
         };
         swap_info = swap_info.with_chain_info(chain_info.clone(), tip + 1000);
         persister.update_swap_chain_info(
