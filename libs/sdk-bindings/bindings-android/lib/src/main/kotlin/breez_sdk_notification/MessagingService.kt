@@ -4,6 +4,8 @@ import android.app.ActivityManager
 import android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
 import android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE
 import android.content.Context
+import breez_sdk_notification.Constants.MESSAGE_TYPE_ADDRESS_TXS_CONFIRMED
+import breez_sdk_notification.Constants.MESSAGE_TYPE_PAYMENT_RECEIVED
 import org.tinylog.kotlin.Logger
 
 @Suppress("unused")
@@ -21,8 +23,8 @@ interface MessagingService {
      *  message type and foreground state of the application. */
     fun startServiceIfNeeded(context: Context, message: Message) {
         val isServiceNeeded = when (message.type) {
-            Constants.MESSAGE_TYPE_ADDRESS_TXS_CONFIRMED -> !isAppForeground(context)
-            Constants.MESSAGE_TYPE_PAYMENT_RECEIVED -> !isAppForeground(context)
+            MESSAGE_TYPE_ADDRESS_TXS_CONFIRMED -> !isAppForeground(context)
+            MESSAGE_TYPE_PAYMENT_RECEIVED -> !isAppForeground(context)
             else -> true
         }
         if (isServiceNeeded) startForegroundService(message)
