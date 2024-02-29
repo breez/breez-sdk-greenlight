@@ -16,6 +16,47 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import breez_sdk_notification.Constants.DEFAULT_FOREGROUND_SERVICE_NOTIFICATION_CHANNEL_DESCRIPTION
+import breez_sdk_notification.Constants.DEFAULT_FOREGROUND_SERVICE_NOTIFICATION_CHANNEL_NAME
+import breez_sdk_notification.Constants.DEFAULT_FOREGROUND_SERVICE_NOTIFICATION_TITLE
+import breez_sdk_notification.Constants.DEFAULT_LNURL_PAY_NOTIFICATION_CHANNEL_DESCRIPTION
+import breez_sdk_notification.Constants.DEFAULT_LNURL_PAY_NOTIFICATION_CHANNEL_NAME
+import breez_sdk_notification.Constants.DEFAULT_LNURL_PAY_WORKGROUP_DESCRIPTION
+import breez_sdk_notification.Constants.DEFAULT_LNURL_PAY_WORKGROUP_NAME
+import breez_sdk_notification.Constants.DEFAULT_NOTIFICATION_COLOR
+import breez_sdk_notification.Constants.DEFAULT_OFFLINE_PAYMENTS_WORKGROUP_DESCRIPTION
+import breez_sdk_notification.Constants.DEFAULT_OFFLINE_PAYMENTS_WORKGROUP_NAME
+import breez_sdk_notification.Constants.DEFAULT_PAYMENT_RECEIVED_NOTIFICATION_CHANNEL_DESCRIPTION
+import breez_sdk_notification.Constants.DEFAULT_PAYMENT_RECEIVED_NOTIFICATION_CHANNEL_NAME
+import breez_sdk_notification.Constants.DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_CHANNEL_DESCRIPTION
+import breez_sdk_notification.Constants.DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_CHANNEL_NAME
+import breez_sdk_notification.Constants.DEFAULT_SWAP_TX_CONFIRMED_WORKGROUP_DESCRIPTION
+import breez_sdk_notification.Constants.DEFAULT_SWAP_TX_CONFIRMED_WORKGROUP_NAME
+import breez_sdk_notification.Constants.FOREGROUND_SERVICE_NOTIFICATION_CHANNEL_DESCRIPTION
+import breez_sdk_notification.Constants.FOREGROUND_SERVICE_NOTIFICATION_CHANNEL_NAME
+import breez_sdk_notification.Constants.FOREGROUND_SERVICE_NOTIFICATION_TITLE
+import breez_sdk_notification.Constants.LNURL_PAY_NOTIFICATION_CHANNEL_DESCRIPTION
+import breez_sdk_notification.Constants.LNURL_PAY_NOTIFICATION_CHANNEL_NAME
+import breez_sdk_notification.Constants.LNURL_PAY_WORKGROUP_DESCRIPTION
+import breez_sdk_notification.Constants.LNURL_PAY_WORKGROUP_ID
+import breez_sdk_notification.Constants.LNURL_PAY_WORKGROUP_NAME
+import breez_sdk_notification.Constants.NOTIFICATION_CHANNEL_FOREGROUND_SERVICE
+import breez_sdk_notification.Constants.NOTIFICATION_CHANNEL_LNURL_PAY
+import breez_sdk_notification.Constants.NOTIFICATION_CHANNEL_PAYMENT_RECEIVED
+import breez_sdk_notification.Constants.NOTIFICATION_CHANNEL_SWAP_TX_CONFIRMED
+import breez_sdk_notification.Constants.NOTIFICATION_COLOR
+import breez_sdk_notification.Constants.NOTIFICATION_ICON
+import breez_sdk_notification.Constants.NOTIFICATION_ID_FOREGROUND_SERVICE
+import breez_sdk_notification.Constants.OFFLINE_PAYMENTS_WORKGROUP_DESCRIPTION
+import breez_sdk_notification.Constants.OFFLINE_PAYMENTS_WORKGROUP_ID
+import breez_sdk_notification.Constants.OFFLINE_PAYMENTS_WORKGROUP_NAME
+import breez_sdk_notification.Constants.PAYMENT_RECEIVED_NOTIFICATION_CHANNEL_DESCRIPTION
+import breez_sdk_notification.Constants.PAYMENT_RECEIVED_NOTIFICATION_CHANNEL_NAME
+import breez_sdk_notification.Constants.SWAP_TX_CONFIRMED_NOTIFICATION_CHANNEL_DESCRIPTION
+import breez_sdk_notification.Constants.SWAP_TX_CONFIRMED_NOTIFICATION_CHANNEL_NAME
+import breez_sdk_notification.Constants.SWAP_TX_CONFIRMED_WORKGROUP_DESCRIPTION
+import breez_sdk_notification.Constants.SWAP_TX_CONFIRMED_WORKGROUP_ID
+import breez_sdk_notification.Constants.SWAP_TX_CONFIRMED_WORKGROUP_NAME
 import breez_sdk_notification.ResourceHelper.Companion.getColor
 import breez_sdk_notification.ResourceHelper.Companion.getDrawable
 import breez_sdk_notification.ResourceHelper.Companion.getString
@@ -53,67 +94,67 @@ class NotificationHelper {
         ) {
             val applicationId = context.applicationContext.packageName
             val foregroundServiceNotificationChannel = NotificationChannel(
-                "${applicationId}.${Constants.NOTIFICATION_CHANNEL_FOREGROUND_SERVICE}",
+                "${applicationId}.${NOTIFICATION_CHANNEL_FOREGROUND_SERVICE}",
                 getString(
                     context,
-                    Constants.FOREGROUND_SERVICE_NOTIFICATION_CHANNEL_NAME,
-                    Constants.DEFAULT_FOREGROUND_SERVICE_NOTIFICATION_CHANNEL_NAME
+                    FOREGROUND_SERVICE_NOTIFICATION_CHANNEL_NAME,
+                    DEFAULT_FOREGROUND_SERVICE_NOTIFICATION_CHANNEL_NAME
                 ),
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
                 description = getString(
                     context,
-                    Constants.FOREGROUND_SERVICE_NOTIFICATION_CHANNEL_DESCRIPTION,
-                    Constants.DEFAULT_FOREGROUND_SERVICE_NOTIFICATION_CHANNEL_DESCRIPTION
+                    FOREGROUND_SERVICE_NOTIFICATION_CHANNEL_DESCRIPTION,
+                    DEFAULT_FOREGROUND_SERVICE_NOTIFICATION_CHANNEL_DESCRIPTION
                 )
             }
             val receivedPaymentsNotificationChannel = NotificationChannel(
-                "${applicationId}.${Constants.NOTIFICATION_CHANNEL_PAYMENT_RECEIVED}",
+                "${applicationId}.${NOTIFICATION_CHANNEL_PAYMENT_RECEIVED}",
                 getString(
                     context,
-                    Constants.PAYMENT_RECEIVED_NOTIFICATION_CHANNEL_NAME,
-                    Constants.DEFAULT_PAYMENT_RECEIVED_NOTIFICATION_CHANNEL_NAME
+                    PAYMENT_RECEIVED_NOTIFICATION_CHANNEL_NAME,
+                    DEFAULT_PAYMENT_RECEIVED_NOTIFICATION_CHANNEL_NAME
                 ),
                 NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
                 description = getString(
                     context,
-                    Constants.PAYMENT_RECEIVED_NOTIFICATION_CHANNEL_DESCRIPTION,
-                    Constants.DEFAULT_PAYMENT_RECEIVED_NOTIFICATION_CHANNEL_DESCRIPTION
+                    PAYMENT_RECEIVED_NOTIFICATION_CHANNEL_DESCRIPTION,
+                    DEFAULT_PAYMENT_RECEIVED_NOTIFICATION_CHANNEL_DESCRIPTION
                 )
-                group = Constants.OFFLINE_PAYMENTS_WORKGROUP_ID
+                group = OFFLINE_PAYMENTS_WORKGROUP_ID
             }
             val lnurlPayNotificationChannel = NotificationChannel(
-                "${applicationId}.${Constants.NOTIFICATION_CHANNEL_LNURL_PAY}",
+                "${applicationId}.${NOTIFICATION_CHANNEL_LNURL_PAY}",
                 getString(
                     context,
-                    Constants.LNURL_PAY_NOTIFICATION_CHANNEL_NAME,
-                    Constants.DEFAULT_LNURL_PAY_NOTIFICATION_CHANNEL_NAME
+                    LNURL_PAY_NOTIFICATION_CHANNEL_NAME,
+                    DEFAULT_LNURL_PAY_NOTIFICATION_CHANNEL_NAME
                 ),
                 NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
                 description = getString(
                     context,
-                    Constants.LNURL_PAY_NOTIFICATION_CHANNEL_DESCRIPTION,
-                    Constants.DEFAULT_LNURL_PAY_NOTIFICATION_CHANNEL_DESCRIPTION
+                    LNURL_PAY_NOTIFICATION_CHANNEL_DESCRIPTION,
+                    DEFAULT_LNURL_PAY_NOTIFICATION_CHANNEL_DESCRIPTION
                 )
-                group = Constants.LNURL_PAY_WORKGROUP_ID
+                group = LNURL_PAY_WORKGROUP_ID
             }
             val swapTxConfirmedNotificationChannel = NotificationChannel(
-                "${applicationId}.${Constants.NOTIFICATION_CHANNEL_SWAP_TX_CONFIRMED}",
+                "${applicationId}.${NOTIFICATION_CHANNEL_SWAP_TX_CONFIRMED}",
                 getString(
                     context,
-                    Constants.SWAP_TX_CONFIRMED_NOTIFICATION_CHANNEL_NAME,
-                    Constants.DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_CHANNEL_NAME
+                    SWAP_TX_CONFIRMED_NOTIFICATION_CHANNEL_NAME,
+                    DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_CHANNEL_NAME
                 ),
                 NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
                 description = getString(
                     context,
-                    Constants.SWAP_TX_CONFIRMED_NOTIFICATION_CHANNEL_DESCRIPTION,
-                    Constants.DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_CHANNEL_DESCRIPTION
+                    SWAP_TX_CONFIRMED_NOTIFICATION_CHANNEL_DESCRIPTION,
+                    DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_CHANNEL_DESCRIPTION
                 )
-                group = Constants.SWAP_TX_CONFIRMED_WORKGROUP_ID
+                group = SWAP_TX_CONFIRMED_WORKGROUP_ID
             }
             notificationManager.createNotificationChannels(
                 listOf(
@@ -131,44 +172,44 @@ class NotificationHelper {
             notificationManager: NotificationManager,
         ) {
             val offlinePaymentsNotificationChannelGroup = NotificationChannelGroup(
-                Constants.OFFLINE_PAYMENTS_WORKGROUP_ID,
+                OFFLINE_PAYMENTS_WORKGROUP_ID,
                 getString(
                     context,
-                    Constants.OFFLINE_PAYMENTS_WORKGROUP_NAME,
-                    Constants.DEFAULT_OFFLINE_PAYMENTS_WORKGROUP_NAME
+                    OFFLINE_PAYMENTS_WORKGROUP_NAME,
+                    DEFAULT_OFFLINE_PAYMENTS_WORKGROUP_NAME
                 ),
             )
             val lnurlPayNotificationChannelGroup = NotificationChannelGroup(
-                Constants.LNURL_PAY_WORKGROUP_ID,
+                LNURL_PAY_WORKGROUP_ID,
                 getString(
                     context,
-                    Constants.LNURL_PAY_WORKGROUP_NAME,
-                    Constants.DEFAULT_LNURL_PAY_WORKGROUP_NAME
+                    LNURL_PAY_WORKGROUP_NAME,
+                    DEFAULT_LNURL_PAY_WORKGROUP_NAME
                 ),
             )
             val swapTxConfirmedNotificationChannelGroup = NotificationChannelGroup(
-                Constants.SWAP_TX_CONFIRMED_WORKGROUP_ID,
+                SWAP_TX_CONFIRMED_WORKGROUP_ID,
                 getString(
                     context,
-                    Constants.SWAP_TX_CONFIRMED_WORKGROUP_NAME,
-                    Constants.DEFAULT_SWAP_TX_CONFIRMED_WORKGROUP_NAME
+                    SWAP_TX_CONFIRMED_WORKGROUP_NAME,
+                    DEFAULT_SWAP_TX_CONFIRMED_WORKGROUP_NAME
                 ),
             )
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 offlinePaymentsNotificationChannelGroup.description = getString(
                     context,
-                    Constants.OFFLINE_PAYMENTS_WORKGROUP_DESCRIPTION,
-                    Constants.DEFAULT_OFFLINE_PAYMENTS_WORKGROUP_DESCRIPTION
+                    OFFLINE_PAYMENTS_WORKGROUP_DESCRIPTION,
+                    DEFAULT_OFFLINE_PAYMENTS_WORKGROUP_DESCRIPTION
                 )
                 lnurlPayNotificationChannelGroup.description = getString(
                     context,
-                    Constants.LNURL_PAY_WORKGROUP_DESCRIPTION,
-                    Constants.DEFAULT_LNURL_PAY_WORKGROUP_DESCRIPTION
+                    LNURL_PAY_WORKGROUP_DESCRIPTION,
+                    DEFAULT_LNURL_PAY_WORKGROUP_DESCRIPTION
                 )
                 swapTxConfirmedNotificationChannelGroup.description = getString(
                     context,
-                    Constants.SWAP_TX_CONFIRMED_WORKGROUP_DESCRIPTION,
-                    Constants.DEFAULT_SWAP_TX_CONFIRMED_WORKGROUP_DESCRIPTION
+                    SWAP_TX_CONFIRMED_WORKGROUP_DESCRIPTION,
+                    DEFAULT_SWAP_TX_CONFIRMED_WORKGROUP_DESCRIPTION
                 )
             }
 
@@ -186,26 +227,26 @@ class NotificationHelper {
             val notificationColor =
                 getColor(
                     context,
-                    Constants.NOTIFICATION_COLOR,
-                    Constants.DEFAULT_NOTIFICATION_COLOR
+                    NOTIFICATION_COLOR,
+                    DEFAULT_NOTIFICATION_COLOR
                 )
 
             return NotificationCompat.Builder(
                 context,
-                "${context.applicationInfo.packageName}.${Constants.NOTIFICATION_CHANNEL_FOREGROUND_SERVICE}"
+                "${context.applicationInfo.packageName}.$NOTIFICATION_CHANNEL_FOREGROUND_SERVICE"
             )
                 .apply {
                     setContentTitle(
                         getString(
                             context,
-                            Constants.FOREGROUND_SERVICE_NOTIFICATION_TITLE,
-                            Constants.DEFAULT_FOREGROUND_SERVICE_NOTIFICATION_TITLE
+                            FOREGROUND_SERVICE_NOTIFICATION_TITLE,
+                            DEFAULT_FOREGROUND_SERVICE_NOTIFICATION_TITLE
                         )
                     )
                     setSmallIcon(
                         getDrawable(
                             context,
-                            Constants.NOTIFICATION_ICON,
+                            NOTIFICATION_ICON,
                             android.R.drawable.sym_def_app_icon
                         )
                     )
@@ -219,7 +260,7 @@ class NotificationHelper {
                         ) == PackageManager.PERMISSION_GRANTED
                     ) {
                         NotificationManagerCompat.from(context)
-                            .notify(Constants.NOTIFICATION_ID_FOREGROUND_SERVICE, it)
+                            .notify(NOTIFICATION_ID_FOREGROUND_SERVICE, it)
                     }
                 }
         }
@@ -236,8 +277,8 @@ class NotificationHelper {
             val notificationColor =
                 getColor(
                     context,
-                    Constants.NOTIFICATION_COLOR,
-                    Constants.DEFAULT_NOTIFICATION_COLOR
+                    NOTIFICATION_COLOR,
+                    DEFAULT_NOTIFICATION_COLOR
                 )
 
             val notificationIntent =
@@ -275,7 +316,7 @@ class NotificationHelper {
                     setSmallIcon(
                         getDrawable(
                             context,
-                            Constants.NOTIFICATION_ICON,
+                            NOTIFICATION_ICON,
                             android.R.drawable.sym_def_app_icon
                         )
                     )
