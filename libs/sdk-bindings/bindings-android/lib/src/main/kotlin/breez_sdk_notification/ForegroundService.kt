@@ -7,8 +7,14 @@ import android.os.IBinder
 import android.os.Looper
 import breez_sdk.BlockingBreezServices
 import breez_sdk.ConnectRequest
-import breez_sdk_notification.NotificationHelper.Companion.notifyForegroundService
 import breez_sdk_notification.BreezSdkConnector.Companion.connectSDK
+import breez_sdk_notification.Constants.MESSAGE_TYPE_ADDRESS_TXS_CONFIRMED
+import breez_sdk_notification.Constants.MESSAGE_TYPE_LNURL_PAY_INFO
+import breez_sdk_notification.Constants.MESSAGE_TYPE_LNURL_PAY_INVOICE
+import breez_sdk_notification.Constants.MESSAGE_TYPE_PAYMENT_RECEIVED
+import breez_sdk_notification.Constants.NOTIFICATION_ID_FOREGROUND_SERVICE
+import breez_sdk_notification.Constants.SHUTDOWN_DELAY_MS
+import breez_sdk_notification.NotificationHelper.Companion.notifyForegroundService
 import breez_sdk_notification.job.Job
 import breez_sdk_notification.job.LnurlPayInfoJob
 import breez_sdk_notification.job.LnurlPayInvoiceJob
@@ -47,7 +53,7 @@ abstract class ForegroundService : SdkForegroundService, Service() {
 
     override fun pushbackShutdown() {
         shutdownHandler.removeCallbacksAndMessages(null)
-        shutdownHandler.postDelayed(shutdownRunnable, Constants.SHUTDOWN_DELAY_MS)
+        shutdownHandler.postDelayed(shutdownRunnable, SHUTDOWN_DELAY_MS)
     }
 
     override fun shutdown() {
@@ -68,7 +74,7 @@ abstract class ForegroundService : SdkForegroundService, Service() {
 
         // Display foreground service notification
         val notification = notifyForegroundService(applicationContext)
-        startForeground(Constants.NOTIFICATION_ID_FOREGROUND_SERVICE, notification)
+        startForeground(NOTIFICATION_ID_FOREGROUND_SERVICE, notification)
 
         // Connect to SDK if source intent has data message with valid payload
         getConnectRequest()?.let { connectRequest ->
@@ -97,25 +103,25 @@ abstract class ForegroundService : SdkForegroundService, Service() {
         return Message.createFromIntent(intent)?.let { message ->
             message.payload?.let { payload ->
                 when (message.type) {
-                    Constants.MESSAGE_TYPE_ADDRESS_TXS_CONFIRMED -> RedeemSwapJob(
+                    MESSAGE_TYPE_ADDRESS_TXS_CONFIRMED -> RedeemSwapJob(
                         applicationContext,
                         this,
                         payload
                     )
 
-                    Constants.MESSAGE_TYPE_LNURL_PAY_INFO -> LnurlPayInfoJob(
+                    MESSAGE_TYPE_LNURL_PAY_INFO -> LnurlPayInfoJob(
                         applicationContext,
                         this,
                         payload
                     )
 
-                    Constants.MESSAGE_TYPE_LNURL_PAY_INVOICE -> LnurlPayInvoiceJob(
+                    MESSAGE_TYPE_LNURL_PAY_INVOICE -> LnurlPayInvoiceJob(
                         applicationContext,
                         this,
                         payload
                     )
 
-                    Constants.MESSAGE_TYPE_PAYMENT_RECEIVED -> ReceivePaymentJob(
+                    MESSAGE_TYPE_PAYMENT_RECEIVED -> ReceivePaymentJob(
                         applicationContext,
                         this
                     )

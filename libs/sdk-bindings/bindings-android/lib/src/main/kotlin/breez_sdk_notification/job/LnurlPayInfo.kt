@@ -2,8 +2,14 @@ package breez_sdk_notification.job
 
 import android.content.Context
 import breez_sdk.BlockingBreezServices
+import breez_sdk_notification.Constants.DEFAULT_LNURL_PAY_INFO_NOTIFICATION_TITLE
+import breez_sdk_notification.Constants.DEFAULT_LNURL_PAY_METADATA_PLAIN_TEXT
+import breez_sdk_notification.Constants.DEFAULT_LNURL_PAY_NOTIFICATION_FAILURE_TITLE
+import breez_sdk_notification.Constants.LNURL_PAY_INFO_NOTIFICATION_TITLE
+import breez_sdk_notification.Constants.LNURL_PAY_METADATA_PLAIN_TEXT
+import breez_sdk_notification.Constants.LNURL_PAY_NOTIFICATION_FAILURE_TITLE
+import breez_sdk_notification.Constants.NOTIFICATION_CHANNEL_LNURL_PAY
 import breez_sdk_notification.NotificationHelper.Companion.notifyChannel
-import breez_sdk_notification.Constants
 import breez_sdk_notification.ResourceHelper.Companion.getString
 import breez_sdk_notification.SdkForegroundService
 import kotlinx.serialization.SerialName
@@ -45,8 +51,8 @@ class LnurlPayInfoJob(
             val nodeState = breezSDK.nodeInfo()
             val plainTextMetadata = getString(
                 context,
-                Constants.LNURL_PAY_METADATA_PLAIN_TEXT,
-                Constants.DEFAULT_LNURL_PAY_METADATA_PLAIN_TEXT
+                LNURL_PAY_METADATA_PLAIN_TEXT,
+                DEFAULT_LNURL_PAY_METADATA_PLAIN_TEXT
             )
             val response =
                 LnurlPayInfoResponse(
@@ -59,11 +65,11 @@ class LnurlPayInfoJob(
             val success = replyServer(Json.encodeToString(response), request.replyURL)
             notifyChannel(
                 context,
-                Constants.NOTIFICATION_CHANNEL_LNURL_PAY,
+                NOTIFICATION_CHANNEL_LNURL_PAY,
                 getString(
                     context,
-                    if (success) Constants.LNURL_PAY_INFO_NOTIFICATION_TITLE else Constants.LNURL_PAY_NOTIFICATION_FAILURE_TITLE,
-                    if (success) Constants.DEFAULT_LNURL_PAY_INFO_NOTIFICATION_TITLE else Constants.DEFAULT_LNURL_PAY_NOTIFICATION_FAILURE_TITLE
+                    if (success) LNURL_PAY_INFO_NOTIFICATION_TITLE else LNURL_PAY_NOTIFICATION_FAILURE_TITLE,
+                    if (success) DEFAULT_LNURL_PAY_INFO_NOTIFICATION_TITLE else DEFAULT_LNURL_PAY_NOTIFICATION_FAILURE_TITLE
                 ),
             )
         } catch (e: Exception) {
@@ -73,11 +79,11 @@ class LnurlPayInfoJob(
             }
             notifyChannel(
                 context,
-                Constants.NOTIFICATION_CHANNEL_LNURL_PAY,
+                NOTIFICATION_CHANNEL_LNURL_PAY,
                 getString(
                     context,
-                    Constants.LNURL_PAY_NOTIFICATION_FAILURE_TITLE,
-                    Constants.DEFAULT_LNURL_PAY_NOTIFICATION_FAILURE_TITLE
+                    LNURL_PAY_NOTIFICATION_FAILURE_TITLE,
+                    DEFAULT_LNURL_PAY_NOTIFICATION_FAILURE_TITLE
                 ),
             )
         }
