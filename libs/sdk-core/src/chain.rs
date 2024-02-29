@@ -134,7 +134,7 @@ pub(crate) fn get_total_incoming_txs(address: String, transactions: Vec<OnchainT
     let mut total_incoming_txs = 0;
     for tx in transactions.iter() {
         if tx.status.confirmed {
-            for (_, vout) in tx.vout.iter().enumerate() {
+            for vout in tx.vout.iter() {
                 if vout.scriptpubkey_address == address {
                     total_incoming_txs += vout.value;
                 }
