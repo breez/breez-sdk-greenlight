@@ -651,6 +651,9 @@ impl BreezServices {
             true => {
                 self.persister.set_lsp_id(lsp_id)?;
                 self.sync().await?;
+                if let Some(webhook_url) = self.persister.get_webhook_url()? {
+                    self.register_payment_notifications(webhook_url).await?
+                }
                 Ok(())
             }
             false => Err(SdkError::Generic {
@@ -1631,6 +1634,19 @@ impl BreezServices {
 
         // Register for LN payment notifications on every call, since these webhook registrations
         // timeout after 14 days of not being used
+        self.register_payment_notifications(webhook_url.clone())
+            .await?;
+
+        // Only cache the webhook URL if callbacks were successfully registered for it.
+        // If any step above failed, not caching it allows the caller to re-trigger the registrations
+        // by calling the method again
+        self.persister.set_webhook_url(webhook_url)?;
+        Ok(())
+    }
+
+    /// Registers for lightning payment notifications. When a payment is intercepted by the LSP
+    /// to this node, a callback will be triggered to the `webhook_url`.
+    async fn register_payment_notifications(&self, webhook_url: String) -> SdkResult<()> {
         let message = webhook_url.clone();
         let sign_request = SignMessageRequest { message };
         let sign_response = self.sign_message(sign_request).await?;
@@ -1643,11 +1659,6 @@ impl BreezServices {
                 sign_response.signature,
             )
             .await?;
-
-        // Only cache the webhook URL if callbacks were successfully registered for it.
-        // If any step above failed, not caching it allows the caller to re-trigger the registrations
-        // by calling the method again
-        self.persister.set_webhook_url(webhook_url)?;
         Ok(())
     }
 
