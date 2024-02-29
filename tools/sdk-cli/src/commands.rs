@@ -161,6 +161,30 @@ pub(crate) enum Commands {
         sat_per_vbyte: u32,
     },
 
+    /// [lsp] The up to date lsp information
+    LspInfo {},
+
+    /// [lsp] List available LSPs
+    ListLsps {},
+
+    /// [lsp] Connect to an LSP
+    ConnectLSP {
+        /// The lsp id the sdk should connect to
+        lsp_id: String,
+    },
+
+    /// [lsp] Close all LSP channels
+    CloseLSPChannels {},
+
+    /// [support] Fetches the service health check
+    ServiceHealthCheck {},
+
+    /// [support] Send a payment failure report
+    ReportPaymentFailure {
+        payment_hash: String,
+        comment: Option<String>,
+    },
+
     /// [node-mgmt] Sync local data with remote node
     Sync {},
 
@@ -211,30 +235,6 @@ pub(crate) enum Commands {
 
     /// [node-mgmt] Retrieve a payment by its hash
     PaymentByHash { hash: String },
-
-    /// [node-mgmt] The up to date lsp information
-    LspInfo {},
-
-    /// [node-mgmt] List available LSPs
-    ListLsps {},
-
-    /// [node-mgmt] Connect to an LSP
-    ConnectLSP {
-        /// The lsp id the sdk should connect to
-        lsp_id: String,
-    },
-
-    /// [node-mgmt] Close all LSP channels
-    CloseLSPChannels {},
-
-    /// [node-mgmt] Fetches the service health check
-    ServiceHealthCheck {},
-
-    /// [node-mgmt] Send a payment failure report
-    ReportPaymentFailure {
-        payment_hash: String,
-        comment: Option<String>,
-    },
 
     /// [node-mgmt] The node credentials
     NodeCredentials {},
