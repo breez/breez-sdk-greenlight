@@ -224,6 +224,18 @@ pub(crate) enum Commands {
         lsp_id: String,
     },
 
+    /// [node-mgmt] Close all LSP channels
+    CloseLSPChannels {},
+
+    /// [node-mgmt] Fetches the service health check
+    ServiceHealthCheck {},
+
+    /// [node-mgmt] Send a payment failure report
+    ReportPaymentFailure {
+        payment_hash: String,
+        comment: Option<String>,
+    },
+
     /// [node-mgmt] The node credentials
     NodeCredentials {},
 
@@ -237,20 +249,8 @@ pub(crate) enum Commands {
         close_to_address: Option<String>,
     },
 
-    /// [node-mgmt] Close all LSP channels
-    CloseLSPChannels {},
-
     /// [node-mgmt] Stop the node and disconnect from the sdk services
     Disconnect {},
-
-    /// [node-mgmt] Fetches the service health check
-    ServiceHealthCheck {},
-
-    /// [node-mgmt] Send a payment failure report
-    ReportPaymentFailure {
-        payment_hash: String,
-        comment: Option<String>,
-    },
 
     /// [node-mgmt] Register a webhook URL, where the SDK will trigger a callback on specific events.
     RegisterWebhook { url: String },
