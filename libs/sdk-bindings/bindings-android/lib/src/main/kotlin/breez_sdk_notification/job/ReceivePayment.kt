@@ -4,8 +4,12 @@ import android.content.Context
 import breez_sdk.BlockingBreezServices
 import breez_sdk.BreezEvent
 import breez_sdk.Payment
+import breez_sdk_notification.Constants.DEFAULT_PAYMENT_RECEIVED_NOTIFICATION_TEXT
+import breez_sdk_notification.Constants.DEFAULT_PAYMENT_RECEIVED_NOTIFICATION_TITLE
+import breez_sdk_notification.Constants.NOTIFICATION_CHANNEL_PAYMENT_RECEIVED
+import breez_sdk_notification.Constants.PAYMENT_RECEIVED_NOTIFICATION_TEXT
+import breez_sdk_notification.Constants.PAYMENT_RECEIVED_NOTIFICATION_TITLE
 import breez_sdk_notification.NotificationHelper.Companion.notifyChannel
-import breez_sdk_notification.Constants
 import breez_sdk_notification.ResourceHelper.Companion.getString
 import breez_sdk_notification.SdkForegroundService
 import org.tinylog.kotlin.Logger
@@ -55,18 +59,18 @@ class ReceivePaymentJob(
         val amountSat = (amountMsat ?: ULong.MIN_VALUE) / 1000u
         notifyChannel(
             context,
-            Constants.NOTIFICATION_CHANNEL_PAYMENT_RECEIVED,
+            NOTIFICATION_CHANNEL_PAYMENT_RECEIVED,
             getString(
                 context,
-                Constants.PAYMENT_RECEIVED_NOTIFICATION_TITLE,
-                Constants.DEFAULT_PAYMENT_RECEIVED_NOTIFICATION_TITLE
+                PAYMENT_RECEIVED_NOTIFICATION_TITLE,
+                DEFAULT_PAYMENT_RECEIVED_NOTIFICATION_TITLE
             ),
             String.format(
                 getString(
                     context,
-                    Constants.PAYMENT_RECEIVED_NOTIFICATION_TEXT,
+                    PAYMENT_RECEIVED_NOTIFICATION_TEXT,
                     "%d",
-                    Constants.DEFAULT_PAYMENT_RECEIVED_NOTIFICATION_TEXT
+                    DEFAULT_PAYMENT_RECEIVED_NOTIFICATION_TEXT
                 ), amountSat.toLong()
             )
         )
