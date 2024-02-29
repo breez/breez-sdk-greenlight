@@ -16,7 +16,9 @@ object Constants {
     const val EXTRA_REMOTE_MESSAGE = "remote_message"
 
     // Message Data
+    @Suppress("unused")
     const val MESSAGE_DATA_TYPE = "notification_type"
+    @Suppress("unused")
     const val MESSAGE_DATA_PAYLOAD = "notification_payload"
 
     const val MESSAGE_TYPE_ADDRESS_TXS_CONFIRMED = "address_txs_confirmed"

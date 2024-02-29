@@ -6,6 +6,7 @@ import android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE
 import android.content.Context
 import org.tinylog.kotlin.Logger
 
+@Suppress("unused")
 interface MessagingService {
     companion object {
         private const val TAG = "MessagingService"

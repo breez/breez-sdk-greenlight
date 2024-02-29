@@ -13,7 +13,6 @@ import org.tinylog.kotlin.Logger
 class ReceivePaymentJob(
     private val context: Context,
     private val fgService: SdkForegroundService,
-    private val payload: String,
 ) : Job {
     private var receivedPayment: Payment? = null
 
