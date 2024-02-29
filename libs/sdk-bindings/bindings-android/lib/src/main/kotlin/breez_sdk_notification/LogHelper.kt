@@ -5,6 +5,7 @@ import io.flutter.util.PathUtils
 import org.tinylog.kotlin.Logger
 import java.io.File
 
+@Suppress("unused")
 class LogHelper {
     companion object {
         private const val TAG = "LogHelper"

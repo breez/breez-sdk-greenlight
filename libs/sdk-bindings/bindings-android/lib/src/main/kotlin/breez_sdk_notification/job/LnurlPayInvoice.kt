@@ -39,7 +39,7 @@ class LnurlPayInvoiceJob(
     override fun start(breezSDK: BlockingBreezServices) {
         var request: LnurlInvoiceRequest? = null
         try {
-            request = Json.decodeFromString<LnurlInvoiceRequest>(LnurlInvoiceRequest.serializer(), payload)
+            request = Json.decodeFromString(LnurlInvoiceRequest.serializer(), payload)
             val nodeState = breezSDK.nodeInfo()
             if (request.amount < 1000UL || request.amount > nodeState.inboundLiquidityMsats) {
                 fail("Invalid amount requested ${request.amount}", request.replyURL)
