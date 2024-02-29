@@ -2103,6 +2103,7 @@ impl support::IntoDart for SwapInfo {
             self.script.into_into_dart().into_dart(),
             self.bolt11.into_dart(),
             self.paid_msat.into_into_dart().into_dart(),
+            self.total_incoming_txs.into_into_dart().into_dart(),
             self.confirmed_sats.into_into_dart().into_dart(),
             self.unconfirmed_sats.into_into_dart().into_dart(),
             self.status.into_into_dart().into_dart(),

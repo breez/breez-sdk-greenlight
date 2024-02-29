@@ -532,6 +532,7 @@ dictionary SwapInfo {
     u64 paid_msat;
     u64 unconfirmed_sats;
     u64 confirmed_sats;
+    u64 total_incoming_txs;
     SwapStatus status;
     sequence<string> refund_tx_ids;
     sequence<string> unconfirmed_tx_ids;

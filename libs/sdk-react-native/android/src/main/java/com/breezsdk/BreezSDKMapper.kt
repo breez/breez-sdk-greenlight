@@ -3309,6 +3309,7 @@ fun asSwapInfo(swapInfo: ReadableMap): SwapInfo? {
                 "paidMsat",
                 "unconfirmedSats",
                 "confirmedSats",
+                "totalIncomingTxs",
                 "status",
                 "refundTxIds",
                 "unconfirmedTxIds",
@@ -3333,6 +3334,7 @@ fun asSwapInfo(swapInfo: ReadableMap): SwapInfo? {
     val paidMsat = swapInfo.getDouble("paidMsat").toULong()
     val unconfirmedSats = swapInfo.getDouble("unconfirmedSats").toULong()
     val confirmedSats = swapInfo.getDouble("confirmedSats").toULong()
+    val totalIncomingTxs = swapInfo.getDouble("totalIncomingTxs").toULong()
     val status = swapInfo.getString("status")?.let { asSwapStatus(it) }!!
     val refundTxIds = swapInfo.getArray("refundTxIds")?.let { asStringList(it) }!!
     val unconfirmedTxIds = swapInfo.getArray("unconfirmedTxIds")?.let { asStringList(it) }!!
@@ -3363,6 +3365,7 @@ fun asSwapInfo(swapInfo: ReadableMap): SwapInfo? {
         paidMsat,
         unconfirmedSats,
         confirmedSats,
+        totalIncomingTxs,
         status,
         refundTxIds,
         unconfirmedTxIds,
@@ -3390,6 +3393,7 @@ fun readableMapOf(swapInfo: SwapInfo): ReadableMap {
         "paidMsat" to swapInfo.paidMsat,
         "unconfirmedSats" to swapInfo.unconfirmedSats,
         "confirmedSats" to swapInfo.confirmedSats,
+        "totalIncomingTxs" to swapInfo.totalIncomingTxs,
         "status" to swapInfo.status.name.lowercase(),
         "refundTxIds" to readableArrayOf(swapInfo.refundTxIds),
         "unconfirmedTxIds" to readableArrayOf(swapInfo.unconfirmedTxIds),

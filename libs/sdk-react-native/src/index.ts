@@ -502,6 +502,7 @@ export type SwapInfo = {
     paidMsat: number
     unconfirmedSats: number
     confirmedSats: number
+    totalIncomingTxs: number
     status: SwapStatus
     refundTxIds: string[]
     unconfirmedTxIds: string[]

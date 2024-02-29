@@ -1801,6 +1801,9 @@ class SwapInfo {
   /// Amount of millisatoshis claimed from sent funds and paid for via bolt11 invoice.
   final int paidMsat;
 
+  /// Total amount of transactions sent to the swap address.
+  final int totalIncomingTxs;
+
   /// Confirmed onchain sats to be claim with an bolt11 invoice or refunded if swap fails.
   final int confirmedSats;
 
@@ -1850,6 +1853,7 @@ class SwapInfo {
     required this.script,
     this.bolt11,
     required this.paidMsat,
+    required this.totalIncomingTxs,
     required this.confirmedSats,
     required this.unconfirmedSats,
     required this.status,
@@ -3900,7 +3904,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   SwapInfo _wire2api_swap_info(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 22) throw Exception('unexpected arr length: expect 22 but see ${arr.length}');
+    if (arr.length != 23) throw Exception('unexpected arr length: expect 23 but see ${arr.length}');
     return SwapInfo(
       bitcoinAddress: _wire2api_String(arr[0]),
       createdAt: _wire2api_i64(arr[1]),
@@ -3913,17 +3917,18 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       script: _wire2api_uint_8_list(arr[8]),
       bolt11: _wire2api_opt_String(arr[9]),
       paidMsat: _wire2api_u64(arr[10]),
-      confirmedSats: _wire2api_u64(arr[11]),
-      unconfirmedSats: _wire2api_u64(arr[12]),
-      status: _wire2api_swap_status(arr[13]),
-      refundTxIds: _wire2api_StringList(arr[14]),
-      unconfirmedTxIds: _wire2api_StringList(arr[15]),
-      confirmedTxIds: _wire2api_StringList(arr[16]),
-      minAllowedDeposit: _wire2api_i64(arr[17]),
-      maxAllowedDeposit: _wire2api_i64(arr[18]),
-      lastRedeemError: _wire2api_opt_String(arr[19]),
-      channelOpeningFees: _wire2api_opt_box_autoadd_opening_fee_params(arr[20]),
-      confirmedAt: _wire2api_opt_box_autoadd_u32(arr[21]),
+      totalIncomingTxs: _wire2api_u64(arr[11]),
+      confirmedSats: _wire2api_u64(arr[12]),
+      unconfirmedSats: _wire2api_u64(arr[13]),
+      status: _wire2api_swap_status(arr[14]),
+      refundTxIds: _wire2api_StringList(arr[15]),
+      unconfirmedTxIds: _wire2api_StringList(arr[16]),
+      confirmedTxIds: _wire2api_StringList(arr[17]),
+      minAllowedDeposit: _wire2api_i64(arr[18]),
+      maxAllowedDeposit: _wire2api_i64(arr[19]),
+      lastRedeemError: _wire2api_opt_String(arr[20]),
+      channelOpeningFees: _wire2api_opt_box_autoadd_opening_fee_params(arr[21]),
+      confirmedAt: _wire2api_opt_box_autoadd_u32(arr[22]),
     );
   }
 

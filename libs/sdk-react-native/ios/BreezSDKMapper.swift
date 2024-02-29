@@ -3600,6 +3600,9 @@ enum BreezSDKMapper {
         guard let confirmedSats = swapInfo["confirmedSats"] as? UInt64 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "confirmedSats", typeName: "SwapInfo"))
         }
+        guard let totalIncomingTxs = swapInfo["totalIncomingTxs"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "totalIncomingTxs", typeName: "SwapInfo"))
+        }
         guard let statusTmp = swapInfo["status"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "status", typeName: "SwapInfo"))
         }
@@ -3654,6 +3657,7 @@ enum BreezSDKMapper {
             paidMsat: paidMsat,
             unconfirmedSats: unconfirmedSats,
             confirmedSats: confirmedSats,
+            totalIncomingTxs: totalIncomingTxs,
             status: status,
             refundTxIds: refundTxIds,
             unconfirmedTxIds: unconfirmedTxIds,
@@ -3681,6 +3685,7 @@ enum BreezSDKMapper {
             "paidMsat": swapInfo.paidMsat,
             "unconfirmedSats": swapInfo.unconfirmedSats,
             "confirmedSats": swapInfo.confirmedSats,
+            "totalIncomingTxs": swapInfo.totalIncomingTxs,
             "status": valueOf(swapStatus: swapInfo.status),
             "refundTxIds": swapInfo.refundTxIds,
             "unconfirmedTxIds": swapInfo.unconfirmedTxIds,
