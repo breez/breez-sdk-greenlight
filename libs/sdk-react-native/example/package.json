@@ -16,7 +16,7 @@
     "@breeztech/react-native-breez-sdk": "0.3.1",
     "@dreson4/react-native-quick-bip39": "^0.0.5",
     "react": "18.1.0",
-    "react-native": "0.70.6",
+    "react-native": "0.70.15",
     "react-native-build-config": "^0.3.2",
     "react-native-quick-base64": "^2.0.5",
     "react-native-quick-crypto": "^0.5.0",
@@ -30,7 +30,7 @@
     "babel-plugin-module-resolver": "4.1.0",
     "eslint": "^7.32.0",
     "jest": "^26.6.3",
-    "metro-react-native-babel-preset": "0.72.3",
+    "metro-react-native-babel-preset": "0.72.4",
     "react-test-renderer": "18.1.0"
   },
   "jest": {
