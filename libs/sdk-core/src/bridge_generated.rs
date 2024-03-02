@@ -1038,6 +1038,9 @@ impl support::IntoDart for BreezEvent {
             Self::BackupFailed { details } => {
                 vec![7.into_dart(), details.into_into_dart().into_dart()]
             }
+            Self::SwapUpdated { details } => {
+                vec![8.into_dart(), details.into_into_dart().into_dart()]
+            }
         }
         .into_dart()
     }
@@ -2100,6 +2103,7 @@ impl support::IntoDart for SwapInfo {
             self.script.into_into_dart().into_dart(),
             self.bolt11.into_dart(),
             self.paid_msat.into_into_dart().into_dart(),
+            self.total_incoming_txs.into_into_dart().into_dart(),
             self.confirmed_sats.into_into_dart().into_dart(),
             self.unconfirmed_sats.into_into_dart().into_dart(),
             self.status.into_into_dart().into_dart(),
@@ -2126,7 +2130,11 @@ impl support::IntoDart for SwapStatus {
     fn into_dart(self) -> support::DartAbi {
         match self {
             Self::Initial => 0,
-            Self::Expired => 1,
+            Self::WaitingConfirmation => 1,
+            Self::Redeemable => 2,
+            Self::Redeemed => 3,
+            Self::Refundable => 4,
+            Self::Completed => 5,
         }
         .into_dart()
     }

@@ -75,13 +75,20 @@ impl AddressUtxos {
 }
 
 /// Gets unspent tx outputs. Specifically filters out inbound utxos that have been spent.
-pub(crate) fn get_utxos(address: String, transactions: Vec<OnchainTx>) -> Result<AddressUtxos> {
-    // Calculate confirmed amount associated with this address
+/// If include_unconfirmed_spends is true, then the result won't include utxos that were spent
+/// in unconfirmed transactions.
+pub(crate) fn get_utxos(
+    address: String,
+    transactions: Vec<OnchainTx>,
+    include_unconfirmed_spends: bool,
+) -> Result<AddressUtxos> {
     let mut spent_outputs: Vec<OutPoint> = Vec::new();
     let mut utxos: Vec<Utxo> = Vec::new();
     for tx in transactions.iter() {
         for vin in tx.vin.iter() {
-            if vin.prevout.scriptpubkey_address == address.clone() {
+            if vin.prevout.scriptpubkey_address == address.clone()
+                && (include_unconfirmed_spends || tx.status.confirmed)
+            {
                 spent_outputs.push(OutPoint {
                     txid: Txid::from_hex(vin.txid.as_str())?,
                     vout: vin.vout,
@@ -120,6 +127,21 @@ pub(crate) fn get_utxos(address: String, transactions: Vec<OnchainTx>) -> Result
             .collect(),
     };
     Ok(address_utxos)
+}
+
+/// Get the total amount of satoshis that have been sent to the given onchain address
+pub(crate) fn get_total_incoming_txs(address: String, transactions: Vec<OnchainTx>) -> u64 {
+    let mut total_incoming_txs = 0;
+    for tx in transactions.iter() {
+        if tx.status.confirmed {
+            for vout in tx.vout.iter() {
+                if vout.scriptpubkey_address == address {
+                    total_incoming_txs += vout.value;
+                }
+            }
+        }
+    }
+    total_incoming_txs
 }
 
 #[derive(Clone)]

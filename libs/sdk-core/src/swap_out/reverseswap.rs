@@ -319,7 +319,7 @@ impl BTCSendSwap {
                     .filter(|tx| tx.status.confirmed)
                     .collect();
                 debug!("Found confirmed txs for lockup address {lockup_addr}: {confirmed_txs:?}");
-                let utxos = get_utxos(lockup_addr.to_string(), confirmed_txs)?;
+                let utxos = get_utxos(lockup_addr.to_string(), confirmed_txs, true)?;
 
                 // To decide the claim tx amount, we use the previously committed to amount
                 // We avoid trying to derive it from confirmed utxos on the lockup address, because

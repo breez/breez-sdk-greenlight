@@ -3600,6 +3600,9 @@ enum BreezSDKMapper {
         guard let confirmedSats = swapInfo["confirmedSats"] as? UInt64 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "confirmedSats", typeName: "SwapInfo"))
         }
+        guard let totalIncomingTxs = swapInfo["totalIncomingTxs"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "totalIncomingTxs", typeName: "SwapInfo"))
+        }
         guard let statusTmp = swapInfo["status"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "status", typeName: "SwapInfo"))
         }
@@ -3654,6 +3657,7 @@ enum BreezSDKMapper {
             paidMsat: paidMsat,
             unconfirmedSats: unconfirmedSats,
             confirmedSats: confirmedSats,
+            totalIncomingTxs: totalIncomingTxs,
             status: status,
             refundTxIds: refundTxIds,
             unconfirmedTxIds: unconfirmedTxIds,
@@ -3681,6 +3685,7 @@ enum BreezSDKMapper {
             "paidMsat": swapInfo.paidMsat,
             "unconfirmedSats": swapInfo.unconfirmedSats,
             "confirmedSats": swapInfo.confirmedSats,
+            "totalIncomingTxs": swapInfo.totalIncomingTxs,
             "status": valueOf(swapStatus: swapInfo.status),
             "refundTxIds": swapInfo.refundTxIds,
             "unconfirmedTxIds": swapInfo.unconfirmedTxIds,
@@ -4009,6 +4014,14 @@ enum BreezSDKMapper {
 
             return BreezEvent.backupFailed(details: _details)
         }
+        if type == "swapUpdated" {
+            guard let detailsTmp = breezEvent["details"] as? [String: Any?] else {
+                throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "details", typeName: "BreezEvent"))
+            }
+            let _details = try asSwapInfo(swapInfo: detailsTmp)
+
+            return BreezEvent.swapUpdated(details: _details)
+        }
 
         throw SdkError.Generic(message: "Unexpected type \(type) for enum BreezEvent")
     }
@@ -4068,6 +4081,14 @@ enum BreezSDKMapper {
             return [
                 "type": "backupFailed",
                 "details": dictionaryOf(backupFailedData: details),
+            ]
+
+        case let .swapUpdated(
+            details
+        ):
+            return [
+                "type": "swapUpdated",
+                "details": dictionaryOf(swapInfo: details),
             ]
         }
     }
@@ -5149,8 +5170,20 @@ enum BreezSDKMapper {
         case "initial":
             return SwapStatus.initial
 
-        case "expired":
-            return SwapStatus.expired
+        case "waitingConfirmation":
+            return SwapStatus.waitingConfirmation
+
+        case "redeemable":
+            return SwapStatus.redeemable
+
+        case "redeemed":
+            return SwapStatus.redeemed
+
+        case "refundable":
+            return SwapStatus.refundable
+
+        case "completed":
+            return SwapStatus.completed
 
         default: throw SdkError.Generic(message: "Invalid variant \(swapStatus) for enum SwapStatus")
         }
@@ -5161,8 +5194,20 @@ enum BreezSDKMapper {
         case .initial:
             return "initial"
 
-        case .expired:
-            return "expired"
+        case .waitingConfirmation:
+            return "waitingConfirmation"
+
+        case .redeemable:
+            return "redeemable"
+
+        case .redeemed:
+            return "redeemed"
+
+        case .refundable:
+            return "refundable"
+
+        case .completed:
+            return "completed"
         }
     }
 

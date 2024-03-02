@@ -81,21 +81,36 @@ pub trait EventListener: Send + Sync {
 #[allow(clippy::large_enum_variant)]
 pub enum BreezEvent {
     /// Indicates that a new block has just been found
-    NewBlock { block: u32 },
+    NewBlock {
+        block: u32,
+    },
     /// Indicates that a new invoice has just been paid
-    InvoicePaid { details: InvoicePaidDetails },
+    InvoicePaid {
+        details: InvoicePaidDetails,
+    },
     /// Indicates that the local SDK state has just been sync-ed with the remote components
     Synced,
     /// Indicates that an outgoing payment has been completed successfully
-    PaymentSucceed { details: Payment },
+    PaymentSucceed {
+        details: Payment,
+    },
     /// Indicates that an outgoing payment has been failed to complete
-    PaymentFailed { details: PaymentFailedData },
+    PaymentFailed {
+        details: PaymentFailedData,
+    },
     /// Indicates that the backup process has just started
     BackupStarted,
     /// Indicates that the backup process has just finished successfully
     BackupSucceeded,
     /// Indicates that the backup process has just failed
-    BackupFailed { details: BackupFailedData },
+    BackupFailed {
+        details: BackupFailedData,
+    },
+    // Indicates that we have just updated the swap associated information
+    // which may also include a status change.
+    SwapUpdated {
+        details: SwapInfo,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -756,7 +771,7 @@ impl BreezServices {
     pub async fn in_progress_swap(&self) -> SdkResult<Option<SwapInfo>> {
         let tip = self.chain_service.current_tip().await?;
         self.btc_receive_swapper.execute_pending_swaps(tip).await?;
-        let in_progress = self.btc_receive_swapper.list_in_progress().await?;
+        let in_progress = self.btc_receive_swapper.list_in_progress()?;
         if !in_progress.is_empty() {
             return Ok(Some(in_progress[0].clone()));
         }
@@ -1224,6 +1239,9 @@ impl BreezServices {
         //track backup events
         self.track_backup_events().await;
 
+        //track swap events
+        self.track_swap_events().await;
+
         // track paid invoices
         self.track_invoices().await;
 
@@ -1288,6 +1306,29 @@ impl BreezServices {
                   },
                   _ = shutdown_receiver.changed() => {
                    debug!("Backup watcher task completed");
+                   break;
+                 }
+                }
+            }
+        });
+    }
+
+    async fn track_swap_events(self: &Arc<BreezServices>) {
+        let cloned = self.clone();
+        tokio::spawn(async move {
+            let mut events_stream = cloned.btc_receive_swapper.subscribe_status_changes();
+            let mut shutdown_receiver = cloned.shutdown_receiver.clone();
+            loop {
+                tokio::select! {
+                  swap_event = events_stream.recv() => {
+                   if let Ok(e) = swap_event {
+                    if let Err(err) = cloned.notify_event_listeners(e).await {
+                        error!("error handling swap event: {:?}", err);
+                    }
+                   }
+                  },
+                  _ = shutdown_receiver.changed() => {
+                   debug!("Swap events handling task completed");
                    break;
                  }
                 }
@@ -2402,7 +2443,8 @@ pub(crate) mod tests {
             paid_msat: 1000,
             confirmed_sats: 1,
             unconfirmed_sats: 0,
-            status: SwapStatus::Expired,
+            total_incoming_txs: 1,
+            status: SwapStatus::Refundable,
             refund_tx_ids: vec![],
             unconfirmed_tx_ids: vec![],
             confirmed_tx_ids: vec![],
