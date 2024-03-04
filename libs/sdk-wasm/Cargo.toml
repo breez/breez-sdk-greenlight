@@ -1,12 +1,12 @@
 [package]
 name = "breez-sdk-wasm"
-version = "0.2.9"
+version = "0.2.12"
 edition = "2021"
 
 [package.metadata.wapm]
-namespace = "wasmer"
+namespace = "breez"
 abi = "wasi"
-bindings = { wai-version = "0.2.0", exports = "breez_sdk.wai" }
+bindings = { wai-version = "0.2.0", exports = "breez-sdk.wai" }
 
 [lib]
 crate-type = ["cdylib"]

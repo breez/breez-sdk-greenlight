@@ -17,3 +17,7 @@ build:
 	WASI_SDK=$(WASI_SDK) AR=$(AR) NM=$(NM) CC=$(CC) CXX=$(CXX) cargo wasix build --release --verbose
 
 wasix: clear build
+
+pack:
+	cp target/wasm32-wasmer-wasi/release/breez_sdk_wasm.wasm .
+	wasmer-pack js . --out-dir ./js

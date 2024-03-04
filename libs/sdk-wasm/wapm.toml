@@ -1,0 +1,15 @@
+[package]
+name = "breez/breez_sdk"
+version = "0.2.12"
+description = "The Breez SDK enables mobile developers to integrate Lightning and bitcoin payments into their apps"
+repository = "https://github.com/breez/breez_sdk"
+license = "MIT"
+
+[[module]]
+name = "breez_sdk_wasm"
+source = "breez_sdk_wasm.wasm"
+abi = "wasi"
+ 
+[module.bindings]
+wai-version = "0.2.0"
+exports = "breez-sdk.wai"

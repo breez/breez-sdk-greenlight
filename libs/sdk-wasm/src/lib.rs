@@ -8,4 +8,4 @@ impl breez_sdk::BreezSdk for BreezSdk {
     }
 }
 
-wai_bindgen_rust::export!("breez_sdk.wai");
+wai_bindgen_rust::export!("breez-sdk.wai");
