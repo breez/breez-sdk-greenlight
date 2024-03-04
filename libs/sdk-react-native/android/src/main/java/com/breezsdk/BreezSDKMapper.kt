@@ -3601,7 +3601,6 @@ fun readableMapOf(aesSuccessActionDataResult: AesSuccessActionDataResult): Reada
             pushToMap(map, "type", "decrypted")
             pushToMap(map, "data", readableMapOf(aesSuccessActionDataResult.data))
         }
-
         is AesSuccessActionDataResult.ErrorStatus -> {
             pushToMap(map, "type", "errorStatus")
             pushToMap(map, "reason", aesSuccessActionDataResult.reason)
@@ -3661,34 +3660,27 @@ fun readableMapOf(breezEvent: BreezEvent): ReadableMap? {
             pushToMap(map, "type", "newBlock")
             pushToMap(map, "block", breezEvent.block)
         }
-
         is BreezEvent.InvoicePaid -> {
             pushToMap(map, "type", "invoicePaid")
             pushToMap(map, "details", readableMapOf(breezEvent.details))
         }
-
         is BreezEvent.Synced -> {
             pushToMap(map, "type", "synced")
         }
-
         is BreezEvent.PaymentSucceed -> {
             pushToMap(map, "type", "paymentSucceed")
             pushToMap(map, "details", readableMapOf(breezEvent.details))
         }
-
         is BreezEvent.PaymentFailed -> {
             pushToMap(map, "type", "paymentFailed")
             pushToMap(map, "details", readableMapOf(breezEvent.details))
         }
-
         is BreezEvent.BackupStarted -> {
             pushToMap(map, "type", "backupStarted")
         }
-
         is BreezEvent.BackupSucceeded -> {
             pushToMap(map, "type", "backupSucceeded")
         }
-
         is BreezEvent.BackupFailed -> {
             pushToMap(map, "type", "backupFailed")
             pushToMap(map, "details", readableMapOf(breezEvent.details))
@@ -3824,37 +3816,30 @@ fun readableMapOf(inputType: InputType): ReadableMap? {
             pushToMap(map, "type", "bitcoinAddress")
             pushToMap(map, "address", readableMapOf(inputType.address))
         }
-
         is InputType.Bolt11 -> {
             pushToMap(map, "type", "bolt11")
             pushToMap(map, "invoice", readableMapOf(inputType.invoice))
         }
-
         is InputType.NodeId -> {
             pushToMap(map, "type", "nodeId")
             pushToMap(map, "nodeId", inputType.nodeId)
         }
-
         is InputType.Url -> {
             pushToMap(map, "type", "url")
             pushToMap(map, "url", inputType.url)
         }
-
         is InputType.LnUrlPay -> {
             pushToMap(map, "type", "lnUrlPay")
             pushToMap(map, "data", readableMapOf(inputType.data))
         }
-
         is InputType.LnUrlWithdraw -> {
             pushToMap(map, "type", "lnUrlWithdraw")
             pushToMap(map, "data", readableMapOf(inputType.data))
         }
-
         is InputType.LnUrlAuth -> {
             pushToMap(map, "type", "lnUrlAuth")
             pushToMap(map, "data", readableMapOf(inputType.data))
         }
-
         is InputType.LnUrlError -> {
             pushToMap(map, "type", "lnUrlError")
             pushToMap(map, "data", readableMapOf(inputType.data))
@@ -3892,7 +3877,6 @@ fun readableMapOf(lnUrlCallbackStatus: LnUrlCallbackStatus): ReadableMap? {
         is LnUrlCallbackStatus.Ok -> {
             pushToMap(map, "type", "ok")
         }
-
         is LnUrlCallbackStatus.ErrorStatus -> {
             pushToMap(map, "type", "errorStatus")
             pushToMap(map, "data", readableMapOf(lnUrlCallbackStatus.data))
@@ -3934,12 +3918,10 @@ fun readableMapOf(lnUrlPayResult: LnUrlPayResult): ReadableMap? {
             pushToMap(map, "type", "endpointSuccess")
             pushToMap(map, "data", readableMapOf(lnUrlPayResult.data))
         }
-
         is LnUrlPayResult.EndpointError -> {
             pushToMap(map, "type", "endpointError")
             pushToMap(map, "data", readableMapOf(lnUrlPayResult.data))
         }
-
         is LnUrlPayResult.PayError -> {
             pushToMap(map, "type", "payError")
             pushToMap(map, "data", readableMapOf(lnUrlPayResult.data))
@@ -3978,7 +3960,6 @@ fun readableMapOf(lnUrlWithdrawResult: LnUrlWithdrawResult): ReadableMap? {
             pushToMap(map, "type", "ok")
             pushToMap(map, "data", readableMapOf(lnUrlWithdrawResult.data))
         }
-
         is LnUrlWithdrawResult.ErrorStatus -> {
             pushToMap(map, "type", "errorStatus")
             pushToMap(map, "data", readableMapOf(lnUrlWithdrawResult.data))
@@ -4094,7 +4075,6 @@ fun readableMapOf(paymentDetails: PaymentDetails): ReadableMap? {
             pushToMap(map, "type", "ln")
             pushToMap(map, "data", readableMapOf(paymentDetails.data))
         }
-
         is PaymentDetails.ClosedChannel -> {
             pushToMap(map, "type", "closedChannel")
             pushToMap(map, "data", readableMapOf(paymentDetails.data))
@@ -4227,12 +4207,10 @@ fun readableMapOf(successActionProcessed: SuccessActionProcessed): ReadableMap? 
             pushToMap(map, "type", "aes")
             pushToMap(map, "result", readableMapOf(successActionProcessed.result))
         }
-
         is SuccessActionProcessed.Message -> {
             pushToMap(map, "type", "message")
             pushToMap(map, "data", readableMapOf(successActionProcessed.data))
         }
-
         is SuccessActionProcessed.Url -> {
             pushToMap(map, "type", "url")
             pushToMap(map, "data", readableMapOf(successActionProcessed.data))
