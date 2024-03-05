@@ -423,6 +423,10 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
        ALTER TABLE swaps_info RENAME COLUMN paid_sats TO paid_msat;
        ",
        "ALTER TABLE swaps_info ADD COLUMN confirmed_at INTEGER;",
+       "
+       ALTER TABLE swaps_info ADD COLUMN total_incoming_txs INTEGER;
+       UPDATE swaps_info SET status = 0;
+       ",
     ]
 }
 

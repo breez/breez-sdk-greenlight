@@ -28,6 +28,7 @@ use crate::grpc::{
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lsp::LspInformation;
 use crate::models::Network::*;
+use crate::persist::swap::SwapChainInfo;
 use crate::swap_in::error::SwapResult;
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
@@ -1304,10 +1305,18 @@ pub enum SwapStatus {
     /// eligible to be redeemed normally.
     Initial = 0,
 
+    WaitingConfirmation = 1,
+
+    Redeemable = 2,
+
+    Redeemed = 3,
+
     /// The swap address has confirmed transactions associated with it and the lock timeout has passed since
     /// the earliest confirmed transaction. This means the only way to spend the funds from this address is by
     /// broadcasting a refund transaction.
-    Expired = 1,
+    Refundable = 4,
+
+    Completed = 5,
 }
 
 impl TryFrom<i32> for SwapStatus {
@@ -1316,7 +1325,11 @@ impl TryFrom<i32> for SwapStatus {
     fn try_from(value: i32) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(SwapStatus::Initial),
-            1 => Ok(SwapStatus::Expired),
+            1 => Ok(SwapStatus::WaitingConfirmation),
+            2 => Ok(SwapStatus::Redeemable),
+            3 => Ok(SwapStatus::Redeemed),
+            4 => Ok(SwapStatus::Refundable),
+            5 => Ok(SwapStatus::Completed),
             _ => Err(anyhow!("illegal value")),
         }
     }
@@ -1355,6 +1368,8 @@ pub struct SwapInfo {
     pub bolt11: Option<String>,
     /// Amount of millisatoshis claimed from sent funds and paid for via bolt11 invoice.
     pub paid_msat: u64,
+    /// Total amount of transactions sent to the swap address.
+    pub total_incoming_txs: u64,
     /// Confirmed onchain sats to be claim with an bolt11 invoice or refunded if swap fails.
     pub confirmed_sats: u64,
     /// Unconfirmed sats waiting to be confirmed onchain.
@@ -1384,29 +1399,89 @@ pub struct SwapInfo {
 }
 
 impl SwapInfo {
+    pub(crate) fn with_chain_info(&self, onchain_info: SwapChainInfo, tip: u32) -> Self {
+        let new_info = Self {
+            confirmed_sats: onchain_info.confirmed_sats,
+            unconfirmed_sats: onchain_info.unconfirmed_sats,
+            confirmed_tx_ids: onchain_info.confirmed_tx_ids,
+            unconfirmed_tx_ids: onchain_info.unconfirmed_tx_ids,
+            confirmed_at: onchain_info.confirmed_at,
+            ..self.clone()
+        };
+
+        Self {
+            status: new_info.calculate_status(tip),
+            ..new_info
+        }
+    }
+
+    pub(crate) fn with_paid_amount(&self, paid_msat: u64, tip: u32) -> Self {
+        let new_info = Self {
+            paid_msat,
+            ..self.clone()
+        };
+
+        Self {
+            status: new_info.calculate_status(tip),
+            ..new_info
+        }
+    }
+
     pub(crate) fn unused(&self) -> bool {
-        self.confirmed_sats == 0
-            && self.unconfirmed_sats == 0
-            && self.paid_msat == 0
-            && self.status != SwapStatus::Expired
+        self.status == SwapStatus::Initial
     }
 
     pub(crate) fn in_progress(&self) -> bool {
-        (self.confirmed_sats > 0 || self.unconfirmed_sats > 0)
-            && self.paid_msat == 0
-            && self.status != SwapStatus::Expired
+        [SwapStatus::Redeemable, SwapStatus::WaitingConfirmation].contains(&self.status)
     }
 
     pub(crate) fn redeemable(&self) -> bool {
-        self.confirmed_sats > 0 && self.paid_msat == 0 && self.status != SwapStatus::Expired
+        self.status == SwapStatus::Redeemable
     }
 
     pub(crate) fn refundable(&self) -> bool {
-        self.confirmed_sats > (self.paid_msat / 1_000) && self.status == SwapStatus::Expired
+        self.status == SwapStatus::Refundable
     }
 
     pub(crate) fn monitored(&self) -> bool {
-        self.unused() || self.in_progress() || self.refundable()
+        self.status != SwapStatus::Completed
+    }
+
+    fn calculate_status(&self, tip: u32) -> SwapStatus {
+        let mut passed_timelock = false;
+        if let Some(confirmed_at) = self.confirmed_at {
+            passed_timelock = (tip - confirmed_at) as i64 > self.lock_height;
+        }
+
+        // In case timelock has passed we can only be in the Refundable or Completed state.
+        if passed_timelock {
+            return match self.confirmed_sats {
+                0 => SwapStatus::Completed,
+                // This is to make sure we don't consider refundable in case we only have one transaction which was already
+                // paid by the swapper.
+                _ => match (self.paid_msat, self.total_incoming_txs) {
+                    (paid, 1) if paid > 0 => SwapStatus::Completed,
+                    _ => SwapStatus::Refundable,
+                },
+            };
+        }
+
+        match (
+            self.confirmed_at,
+            self.unconfirmed_sats,
+            self.confirmed_sats,
+            self.paid_msat,
+        ) {
+            // We have confirmation and both uconfirmed and confirmed balance are zero then we are done
+            (Some(_), 0, 0, _) => SwapStatus::Completed,
+            // We got lightning payment so we are in redeemed state.
+            (_, _, _, paid) if paid > 0 => SwapStatus::Redeemed,
+            // We have positive confirmed balance then we should redeem the funds.
+            (_, _, confirmed, _) if confirmed > 0 => SwapStatus::Redeemable,
+            // We have positive unconfirmed balance then we are waiting for confirmation.
+            (_, unconfirmed, _, _) if unconfirmed > 0 => SwapStatus::WaitingConfirmation,
+            _ => SwapStatus::Initial,
+        }
     }
 }
 

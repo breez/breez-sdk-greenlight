@@ -67,9 +67,11 @@ const App = () => {
     }
 
     React.useEffect(() => {
+        let logSubscription, eventSubscription
+
         const asyncFn = async () => {
             try {
-                await setLogStream(logHandler)
+                logSubscription = await setLogStream(logHandler)
 
                 let mnemonic = await getSecureItem(MNEMONIC_STORE)
 
@@ -89,7 +91,7 @@ const App = () => {
                 const config = await defaultConfig(EnvironmentType.PRODUCTION, BuildConfig.BREEZ_API_KEY, nodeConfig)
                 addLine("defaultConfig", JSON.stringify(config))
 
-                await connect({ config, seed }, eventHandler)
+                eventSubscription = await connect({ config, seed }, eventHandler)
                 addLine("connect", null)
 
                 const nodeState = await nodeInfo()
@@ -149,7 +151,13 @@ const App = () => {
                 console.log(`Error: ${JSON.stringify(e)}`)
             }
         }
+
         asyncFn()
+
+        return () => {
+            logSubscription.remove()
+            eventSubscription.remove()
+        }
     }, [])
 
     return (

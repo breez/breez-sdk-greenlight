@@ -1,11 +1,11 @@
 use super::{db::SqliteStorage, error::PersistResult};
 use crate::{FullReverseSwapInfo, ReverseSwapInfoCached, ReverseSwapStatus};
-use rusqlite::{named_params, OptionalExtension, Params, Row};
+use rusqlite::{named_params, OptionalExtension, Params, Row, TransactionBehavior};
 
 impl SqliteStorage {
     pub(crate) fn insert_reverse_swap(&self, rsi: &FullReverseSwapInfo) -> PersistResult<()> {
         let mut con = self.get_connection()?;
-        let tx = con.transaction()?;
+        let tx = con.transaction_with_behavior(TransactionBehavior::Immediate)?;
 
         tx.execute(
             "INSERT INTO sync.reverse_swaps (id, created_at_block_height, preimage, private_key, claim_pubkey, timeout_block_height, invoice, onchain_amount_sat, sat_per_vbyte, receive_amount_sat, redeem_script)\

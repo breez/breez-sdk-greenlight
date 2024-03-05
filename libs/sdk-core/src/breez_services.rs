@@ -82,21 +82,36 @@ pub trait EventListener: Send + Sync {
 #[allow(clippy::large_enum_variant)]
 pub enum BreezEvent {
     /// Indicates that a new block has just been found
-    NewBlock { block: u32 },
+    NewBlock {
+        block: u32,
+    },
     /// Indicates that a new invoice has just been paid
-    InvoicePaid { details: InvoicePaidDetails },
+    InvoicePaid {
+        details: InvoicePaidDetails,
+    },
     /// Indicates that the local SDK state has just been sync-ed with the remote components
     Synced,
     /// Indicates that an outgoing payment has been completed successfully
-    PaymentSucceed { details: Payment },
+    PaymentSucceed {
+        details: Payment,
+    },
     /// Indicates that an outgoing payment has been failed to complete
-    PaymentFailed { details: PaymentFailedData },
+    PaymentFailed {
+        details: PaymentFailedData,
+    },
     /// Indicates that the backup process has just started
     BackupStarted,
     /// Indicates that the backup process has just finished successfully
     BackupSucceeded,
     /// Indicates that the backup process has just failed
-    BackupFailed { details: BackupFailedData },
+    BackupFailed {
+        details: BackupFailedData,
+    },
+    // Indicates that we have just updated the swap associated information
+    // which may also include a status change.
+    SwapUpdated {
+        details: SwapInfo,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -331,7 +346,7 @@ impl BreezServices {
     }
 
     /// Second step of LNURL-pay. The first step is `parse()`, which also validates the LNURL destination
-    /// and generates the `LnUrlPayRequestData` payload needed here.
+    /// and generates the `LnUrlPayRequest` payload needed here.
     ///
     /// This call will validate the `amount_msat` and `comment` parameters of `req` against the parameters
     /// of the LNURL endpoint (`req_data`). If they match the endpoint requirements, the LNURL payment
@@ -436,7 +451,7 @@ impl BreezServices {
     }
 
     /// Second step of LNURL-withdraw. The first step is `parse()`, which also validates the LNURL destination
-    /// and generates the `LnUrlWithdrawRequestData` payload needed here.
+    /// and generates the `LnUrlWithdrawRequest` payload needed here.
     ///
     /// This call will validate the given `amount_msat` against the parameters
     /// of the LNURL endpoint (`data`). If they match the endpoint requirements, the LNURL withdraw
@@ -652,6 +667,9 @@ impl BreezServices {
             true => {
                 self.persister.set_lsp_id(lsp_id)?;
                 self.sync().await?;
+                if let Some(webhook_url) = self.persister.get_webhook_url()? {
+                    self.register_payment_notifications(webhook_url).await?
+                }
                 Ok(())
             }
             false => Err(SdkError::Generic {
@@ -741,8 +759,9 @@ impl BreezServices {
             .create_swap_address(channel_opening_fees)
             .await?;
         if let Some(webhook_url) = self.persister.get_webhook_url()? {
-            info!("Webhook URL found in local cache, registering for swap tx notification");
-            self.register_swap_tx_notification(&swap_info.bitcoin_address, &webhook_url)
+            let address = &swap_info.bitcoin_address;
+            info!("Registering for swap tx notification for address {address}");
+            self.register_swap_tx_notification(address, &webhook_url)
                 .await?;
         }
         Ok(swap_info)
@@ -753,7 +772,7 @@ impl BreezServices {
     pub async fn in_progress_swap(&self) -> SdkResult<Option<SwapInfo>> {
         let tip = self.chain_service.current_tip().await?;
         self.btc_receive_swapper.execute_pending_swaps(tip).await?;
-        let in_progress = self.btc_receive_swapper.list_in_progress().await?;
+        let in_progress = self.btc_receive_swapper.list_in_progress()?;
         if !in_progress.is_empty() {
             return Ok(Some(in_progress[0].clone()));
         }
@@ -775,6 +794,10 @@ impl BreezServices {
     ///
     /// This is taken care of automatically in the context of typical SDK usage.
     pub async fn redeem_swap(&self, swap_address: String) -> SdkResult<()> {
+        let tip = self.chain_service.current_tip().await?;
+        self.btc_receive_swapper
+            .refresh_swap_on_chain_status(swap_address.clone(), tip)
+            .await?;
         self.btc_receive_swapper.redeem_swap(swap_address).await?;
         Ok(())
     }
@@ -1299,6 +1322,9 @@ impl BreezServices {
         //track backup events
         self.track_backup_events().await;
 
+        //track swap events
+        self.track_swap_events().await;
+
         // track paid invoices
         self.track_invoices().await;
 
@@ -1363,6 +1389,29 @@ impl BreezServices {
                   },
                   _ = shutdown_receiver.changed() => {
                    debug!("Backup watcher task completed");
+                   break;
+                 }
+                }
+            }
+        });
+    }
+
+    async fn track_swap_events(self: &Arc<BreezServices>) {
+        let cloned = self.clone();
+        tokio::spawn(async move {
+            let mut events_stream = cloned.btc_receive_swapper.subscribe_status_changes();
+            let mut shutdown_receiver = cloned.shutdown_receiver.clone();
+            loop {
+                tokio::select! {
+                  swap_event = events_stream.recv() => {
+                   if let Ok(e) = swap_event {
+                    if let Err(err) = cloned.notify_event_listeners(e).await {
+                        error!("error handling swap event: {:?}", err);
+                    }
+                   }
+                  },
+                  _ = shutdown_receiver.changed() => {
+                   debug!("Swap events handling task completed");
                    break;
                  }
                 }
@@ -1691,6 +1740,7 @@ impl BreezServices {
             Some(cached_webhook_url) => cached_webhook_url != webhook_url,
         };
         match is_new_webhook_url {
+            false => debug!("Webhook URL not changed, no need to (re-)register for monitored swap tx notifications"),
             true => {
                 for swap in self
                     .btc_receive_swapper
@@ -1704,11 +1754,23 @@ impl BreezServices {
                         .await?;
                 }
             }
-            false => info!("Webhook URL not changed, skipping swap tx registration"),
         }
 
         // Register for LN payment notifications on every call, since these webhook registrations
         // timeout after 14 days of not being used
+        self.register_payment_notifications(webhook_url.clone())
+            .await?;
+
+        // Only cache the webhook URL if callbacks were successfully registered for it.
+        // If any step above failed, not caching it allows the caller to re-trigger the registrations
+        // by calling the method again
+        self.persister.set_webhook_url(webhook_url)?;
+        Ok(())
+    }
+
+    /// Registers for lightning payment notifications. When a payment is intercepted by the LSP
+    /// to this node, a callback will be triggered to the `webhook_url`.
+    async fn register_payment_notifications(&self, webhook_url: String) -> SdkResult<()> {
         let message = webhook_url.clone();
         let sign_request = SignMessageRequest { message };
         let sign_response = self.sign_message(sign_request).await?;
@@ -1721,11 +1783,6 @@ impl BreezServices {
                 sign_response.signature,
             )
             .await?;
-
-        // Only cache the webhook URL if callbacks were successfully registered for it.
-        // If any step above failed, not caching it allows the caller to re-trigger the registrations
-        // by calling the method again
-        self.persister.set_webhook_url(webhook_url)?;
         Ok(())
     }
 
@@ -2469,7 +2526,8 @@ pub(crate) mod tests {
             paid_msat: 1000,
             confirmed_sats: 1,
             unconfirmed_sats: 0,
-            status: SwapStatus::Expired,
+            total_incoming_txs: 1,
+            status: SwapStatus::Refundable,
             refund_tx_ids: vec![],
             unconfirmed_tx_ids: vec![],
             confirmed_tx_ids: vec![],

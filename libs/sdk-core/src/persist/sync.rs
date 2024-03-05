@@ -1,7 +1,7 @@
 use crate::ReverseSwapStatus;
 
 use super::{db::SqliteStorage, error::PersistResult};
-use rusqlite::{named_params, Row, Transaction};
+use rusqlite::{named_params, Row, Transaction, TransactionBehavior};
 use std::path::Path;
 
 #[allow(dead_code)]
@@ -101,7 +101,7 @@ impl SqliteStorage {
         }
 
         let mut con = self.get_connection()?;
-        let tx = con.transaction()?;
+        let tx = con.transaction_with_behavior(TransactionBehavior::Immediate)?;
         tx.execute("ATTACH DATABASE ? AS remote_sync;", [sync_data_file])?;
 
         if to_local {
@@ -462,6 +462,7 @@ mod tests {
             paid_msat: 0,
             unconfirmed_sats: 0,
             confirmed_sats: 0,
+            total_incoming_txs: 0,
             status: crate::models::SwapStatus::Initial,
             refund_tx_ids: Vec::new(),
             unconfirmed_tx_ids: Vec::new(),

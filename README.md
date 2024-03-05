@@ -29,7 +29,7 @@ For a higher resolution video, click [here](https://youtu.be/PRVWB4K52Es).
 To get started with the Breez SDK, follow [these examples](https://sdk-doc.breez.technology/).
 
 ## API
-API documentation is [here](https://breez.github.io/breez-sdk-rustdoc/doc/breez_sdk_core/). 
+API documentation is [here](https://breez.github.io/breez-sdk/breez_sdk_core/). 
 
 ## Support
 Join [this telegram group](https://t.me/breezsdk).

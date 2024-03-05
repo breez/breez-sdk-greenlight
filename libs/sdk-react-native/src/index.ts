@@ -531,6 +531,7 @@ export type SwapInfo = {
     paidMsat: number
     unconfirmedSats: number
     confirmedSats: number
+    totalIncomingTxs: number
     status: SwapStatus
     refundTxIds: string[]
     unconfirmedTxIds: string[]
@@ -588,7 +589,8 @@ export enum BreezEventVariant {
     PAYMENT_FAILED = "paymentFailed",
     BACKUP_STARTED = "backupStarted",
     BACKUP_SUCCEEDED = "backupSucceeded",
-    BACKUP_FAILED = "backupFailed"
+    BACKUP_FAILED = "backupFailed",
+    SWAP_UPDATED = "swapUpdated"
 }
 
 export type BreezEvent = {
@@ -612,6 +614,9 @@ export type BreezEvent = {
 } | {
     type: BreezEventVariant.BACKUP_FAILED,
     details: BackupFailedData
+} | {
+    type: BreezEventVariant.SWAP_UPDATED,
+    details: SwapInfo
 }
 
 export enum BuyBitcoinProvider {
@@ -818,7 +823,11 @@ export enum SwapAmountType {
 
 export enum SwapStatus {
     INITIAL = "initial",
-    EXPIRED = "expired"
+    WAITING_CONFIRMATION = "waitingConfirmation",
+    REDEEMABLE = "redeemable",
+    REDEEMED = "redeemed",
+    REFUNDABLE = "refundable",
+    COMPLETED = "completed"
 }
 export type EventListener = (breezEvent: BreezEvent) => void
 
@@ -835,7 +844,9 @@ export const connect = async (req: ConnectRequest, listener: EventListener): Pro
 export const setLogStream = async (logStream: LogStream): Promise<EmitterSubscription> => {
     const subscription = BreezSDKEmitter.addListener("breezSdkLog", logStream)
 
-    await BreezSDK.setLogStream()
+    try {
+        await BreezSDK.setLogStream()
+    } catch {}
 
     return subscription
 }

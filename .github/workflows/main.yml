@@ -178,7 +178,7 @@ jobs:
   
   react-native:
     name: Check react native
-    runs-on: macOS-latest
+    runs-on: macOS-14
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3

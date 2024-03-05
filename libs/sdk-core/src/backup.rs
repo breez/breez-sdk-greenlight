@@ -773,6 +773,7 @@ mod tests {
             paid_msat: 0,
             unconfirmed_sats: 0,
             confirmed_sats: 0,
+            total_incoming_txs: 0,
             status: crate::models::SwapStatus::Initial,
             refund_tx_ids: Vec::new(),
             unconfirmed_tx_ids: Vec::new(),

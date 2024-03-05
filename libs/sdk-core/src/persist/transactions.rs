@@ -334,6 +334,26 @@ impl SqliteStorage {
             .optional()?)
     }
 
+    /// Look up a modified open channel bolt11 by hash.
+    pub(crate) fn get_open_channel_bolt11_by_hash(
+        &self,
+        hash: &str,
+    ) -> PersistResult<Option<String>> {
+        Ok(self
+            .get_connection()?
+            .query_row(
+                "
+          SELECT
+           o.open_channel_bolt11           
+          FROM sync.open_channel_payment_info o        
+          WHERE
+           payment_hash = ?1",
+                [hash],
+                |row| row.get(0),
+            )
+            .optional()?)
+    }
+
     /// Looks up a completed payment by hash.
     ///
     /// To include pending or failed payments in the lookup as well, use [Self::get_payment_by_hash]
@@ -548,7 +568,8 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
         paid_msat: 50_000,
         confirmed_sats: 50,
         unconfirmed_sats: 0,
-        status: SwapStatus::Expired,
+        total_incoming_txs: 1,
+        status: SwapStatus::Refundable,
         refund_tx_ids: vec![],
         unconfirmed_tx_ids: vec![],
         confirmed_tx_ids: vec![],
@@ -961,6 +982,15 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
         150,
         "original_invoice",
     )?;
+
+    let open_channel_bolt11 = storage
+        .get_open_channel_bolt11_by_hash(payment_hash_with_lnurl_withdraw)?
+        .unwrap();
+    assert_eq!(open_channel_bolt11, "original_invoice");
+
+    let open_channel_bolt11 = storage.get_open_channel_bolt11_by_hash("non existing hash")?;
+    assert_eq!(open_channel_bolt11, None);
+
     let retrieve_txs = storage.list_payments(ListPaymentsRequest {
         filters: Some(vec![PaymentTypeFilter::Received]),
         ..Default::default()
