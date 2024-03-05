@@ -937,8 +937,8 @@ impl BreezServices {
         let fee_info = self.btc_send_swapper.fetch_reverse_swap_fees().await?;
 
         // Calculate (send_amt, recv_amt) from the inputs and fees
-        let fees_lockup = fee_info.fees_lockup.clone();
-        let p = fee_info.fees_percentage.clone();
+        let fees_lockup = fee_info.fees_lockup;
+        let p = fee_info.fees_percentage;
         let fees_claim = BTCSendSwap::calculate_claim_tx_fee(req.claim_tx_feerate)?;
         let (send_amt, recv_amt) = match req.amount_type {
             SwapAmountType::Send => {

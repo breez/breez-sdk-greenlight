@@ -22,7 +22,7 @@ use crate::models::{ReverseSwapServiceAPI, ReverseSwapperRoutingAPI};
 use crate::node_api::{NodeAPI, NodeError};
 use crate::swap_in::swap::create_swap_keys;
 use crate::{
-    ensure_sdk, BreezEvent, Config, FullReverseSwapInfo, PayOnchainRequest, PaymentStatus,
+    ensure_sdk, BreezEvent, Config, FullReverseSwapInfo, PaymentStatus,
     PrepareOnchainPaymentResponseValidated, ReverseSwapInfo, ReverseSwapInfoCached,
     ReverseSwapPairInfo, ReverseSwapStatus,
 };
