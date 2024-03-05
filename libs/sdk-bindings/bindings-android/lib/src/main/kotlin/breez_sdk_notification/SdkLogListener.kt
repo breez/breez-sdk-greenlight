@@ -1,4 +1,4 @@
-package com.breez.breez_sdk
+package breez_sdk_notification
 
 import breez_sdk.LogEntry
 import breez_sdk.LogStream
@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
+@Suppress("unused")
 class SdkLogListener : LogStream {
     private val scope = CoroutineScope(SupervisorJob())
 
@@ -24,8 +25,14 @@ class SdkLogListener : LogStream {
         }
     }
 
+    // Helper method
+    fun log(tag: String, line: String, level: String) {
+        log(LogEntry(tag, line, level))
+    }
+
     fun subscribe(scope: CoroutineScope, block: suspend (LogEntry) -> Unit) =
         logEvents.onEach(block).launchIn(scope)
 
     fun unsubscribe(scope: CoroutineScope) = scope.cancel()
+
 }

@@ -1,28 +1,28 @@
 package breez_sdk_notification
 
-import org.tinylog.kotlin.Logger
-import java.io.File
+import breez_sdk.setLogStream
+import kotlinx.coroutines.CoroutineScope
 
 @Suppress("unused")
-class LogHelper {
-    companion object {
-        private const val TAG = "LogHelper"
+object LogHelper {
+    var nodeLogStream: SdkLogListener? = null
 
-        private var isInit: Boolean? = null
-
-        fun configureLogger(
-            loggingDir: File,
-        ): Boolean? {
-            synchronized(this) {
-                System.setProperty("tinylog.directory", loggingDir.absolutePath)
-                System.setProperty("tinylog.timestamp", System.currentTimeMillis().toString())
-
-                if (isInit == false) {
-                    Logger.tag(TAG).debug { "Logs directory: '$loggingDir'" }
-                    isInit = true
-                }
-                return isInit
+    fun initializeNodeLogStream(): SdkLogListener {
+        if (nodeLogStream == null) {
+            try {
+                nodeLogStream = SdkLogListener()
+                setLogStream(nodeLogStream!!)
+            } catch (e: Throwable) {
+                // Reset nodeLogStream if setting log stream fails
+                e.printStackTrace()
+                nodeLogStream = null
+                throw e
             }
         }
+        return nodeLogStream!!
+    }
+
+    fun unsubscribeNodeLogStream(scope: CoroutineScope) {
+        nodeLogStream?.unsubscribe(scope)
     }
 }
