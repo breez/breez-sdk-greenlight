@@ -92,6 +92,8 @@ pub(crate) enum Commands {
 
     MaxReverseSwapAmount {},
 
+    FetchOnchainLimits {},
+
     /// Prepares, but does not initiate, a reverse swap payment
     PrepareOnchainPayment {
         /// Depending on `is_send`, this may be the desired send amount or the desired receive amount.
@@ -121,7 +123,7 @@ pub(crate) enum Commands {
         #[clap(name = "claim_tx_feerate", short = 'f', long = "feerate")]
         claim_tx_feerate: u32,
 
-        onchain_recipient_address: String,
+        recipient_address: String,
     },
 
     /// Get the current fees for a potential new reverse swap
