@@ -556,6 +556,16 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
+    @objc(fetchOnchainLimits:reject:)
+    func fetchOnchainLimits(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            var res = try getBreezServices().fetchOnchainLimits()
+            resolve(BreezSDKMapper.dictionaryOf(fetchOnchainLimitsResponse: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
     @objc(prepareOnchainPayment:resolve:reject:)
     func prepareOnchainPayment(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {

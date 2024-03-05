@@ -767,6 +767,18 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
+    fun fetchOnchainLimits(promise: Promise) {
+        executor.execute {
+            try {
+                val res = getBreezServices().fetchOnchainLimits()
+                promise.resolve(readableMapOf(res))
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
     fun prepareOnchainPayment(
         req: ReadableMap,
         promise: Promise,

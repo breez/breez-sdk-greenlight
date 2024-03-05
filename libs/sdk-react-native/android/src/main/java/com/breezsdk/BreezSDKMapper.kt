@@ -593,6 +593,47 @@ fun asCurrencyInfoList(arr: ReadableArray): List<CurrencyInfo> {
     return list
 }
 
+fun asFetchOnchainLimitsResponse(fetchOnchainLimitsResponse: ReadableMap): FetchOnchainLimitsResponse? {
+    if (!validateMandatoryFields(
+            fetchOnchainLimitsResponse,
+            arrayOf(
+                "minSat",
+                "maxSat",
+                "feesHash",
+            ),
+        )
+    ) {
+        return null
+    }
+    val minSat = fetchOnchainLimitsResponse.getDouble("minSat").toULong()
+    val maxSat = fetchOnchainLimitsResponse.getDouble("maxSat").toULong()
+    val feesHash = fetchOnchainLimitsResponse.getString("feesHash")!!
+    return FetchOnchainLimitsResponse(
+        minSat,
+        maxSat,
+        feesHash,
+    )
+}
+
+fun readableMapOf(fetchOnchainLimitsResponse: FetchOnchainLimitsResponse): ReadableMap {
+    return readableMapOf(
+        "minSat" to fetchOnchainLimitsResponse.minSat,
+        "maxSat" to fetchOnchainLimitsResponse.maxSat,
+        "feesHash" to fetchOnchainLimitsResponse.feesHash,
+    )
+}
+
+fun asFetchOnchainLimitsResponseList(arr: ReadableArray): List<FetchOnchainLimitsResponse> {
+    val list = ArrayList<FetchOnchainLimitsResponse>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asFetchOnchainLimitsResponse(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
 fun asFiatCurrency(fiatCurrency: ReadableMap): FiatCurrency? {
     if (!validateMandatoryFields(
             fiatCurrency,
@@ -1976,33 +2017,25 @@ fun asPayOnchainRequest(payOnchainRequest: ReadableMap): PayOnchainRequest? {
     if (!validateMandatoryFields(
             payOnchainRequest,
             arrayOf(
-                "sendAmountSat",
-                "receiveAmountSat",
-                "onchainRecipientAddress",
-                "pairHash",
+                "recipientAddress",
+                "prepareRes",
             ),
         )
     ) {
         return null
     }
-    val sendAmountSat = payOnchainRequest.getDouble("sendAmountSat").toULong()
-    val receiveAmountSat = payOnchainRequest.getDouble("receiveAmountSat").toULong()
-    val onchainRecipientAddress = payOnchainRequest.getString("onchainRecipientAddress")!!
-    val pairHash = payOnchainRequest.getString("pairHash")!!
+    val recipientAddress = payOnchainRequest.getString("recipientAddress")!!
+    val prepareRes = payOnchainRequest.getMap("prepareRes")?.let { asPrepareOnchainPaymentResponse(it) }!!
     return PayOnchainRequest(
-        sendAmountSat,
-        receiveAmountSat,
-        onchainRecipientAddress,
-        pairHash,
+        recipientAddress,
+        prepareRes,
     )
 }
 
 fun readableMapOf(payOnchainRequest: PayOnchainRequest): ReadableMap {
     return readableMapOf(
-        "sendAmountSat" to payOnchainRequest.sendAmountSat,
-        "receiveAmountSat" to payOnchainRequest.receiveAmountSat,
-        "onchainRecipientAddress" to payOnchainRequest.onchainRecipientAddress,
-        "pairHash" to payOnchainRequest.pairHash,
+        "recipientAddress" to payOnchainRequest.recipientAddress,
+        "prepareRes" to readableMapOf(payOnchainRequest.prepareRes),
     )
 }
 
@@ -2163,6 +2196,7 @@ fun asPrepareOnchainPaymentRequest(prepareOnchainPaymentRequest: ReadableMap): P
                 "amountSat",
                 "amountType",
                 "claimTxFeerate",
+                "feesHash",
             ),
         )
     ) {
@@ -2171,10 +2205,12 @@ fun asPrepareOnchainPaymentRequest(prepareOnchainPaymentRequest: ReadableMap): P
     val amountSat = prepareOnchainPaymentRequest.getDouble("amountSat").toULong()
     val amountType = prepareOnchainPaymentRequest.getString("amountType")?.let { asSwapAmountType(it) }!!
     val claimTxFeerate = prepareOnchainPaymentRequest.getInt("claimTxFeerate").toUInt()
+    val feesHash = prepareOnchainPaymentRequest.getString("feesHash")!!
     return PrepareOnchainPaymentRequest(
         amountSat,
         amountType,
         claimTxFeerate,
+        feesHash,
     )
 }
 
@@ -2183,6 +2219,7 @@ fun readableMapOf(prepareOnchainPaymentRequest: PrepareOnchainPaymentRequest): R
         "amountSat" to prepareOnchainPaymentRequest.amountSat,
         "amountType" to prepareOnchainPaymentRequest.amountType.name.lowercase(),
         "claimTxFeerate" to prepareOnchainPaymentRequest.claimTxFeerate,
+        "feesHash" to prepareOnchainPaymentRequest.feesHash,
     )
 }
 
@@ -2201,56 +2238,26 @@ fun asPrepareOnchainPaymentResponse(prepareOnchainPaymentResponse: ReadableMap):
     if (!validateMandatoryFields(
             prepareOnchainPaymentResponse,
             arrayOf(
-                "min",
-                "max",
                 "feesHash",
                 "feesPercentage",
                 "feesLockup",
                 "feesClaim",
+                "sendAmountSat",
+                "receiveAmountSat",
+                "totalFees",
             ),
         )
     ) {
         return null
     }
-    val min = prepareOnchainPaymentResponse.getDouble("min").toULong()
-    val max = prepareOnchainPaymentResponse.getDouble("max").toULong()
     val feesHash = prepareOnchainPaymentResponse.getString("feesHash")!!
     val feesPercentage = prepareOnchainPaymentResponse.getDouble("feesPercentage")
     val feesLockup = prepareOnchainPaymentResponse.getDouble("feesLockup").toULong()
     val feesClaim = prepareOnchainPaymentResponse.getDouble("feesClaim").toULong()
-    val sendAmountSat =
-        if (hasNonNullKey(
-                prepareOnchainPaymentResponse,
-                "sendAmountSat",
-            )
-        ) {
-            prepareOnchainPaymentResponse.getDouble("sendAmountSat").toULong()
-        } else {
-            null
-        }
-    val receiveAmountSat =
-        if (hasNonNullKey(
-                prepareOnchainPaymentResponse,
-                "receiveAmountSat",
-            )
-        ) {
-            prepareOnchainPaymentResponse.getDouble("receiveAmountSat").toULong()
-        } else {
-            null
-        }
-    val totalFees =
-        if (hasNonNullKey(
-                prepareOnchainPaymentResponse,
-                "totalFees",
-            )
-        ) {
-            prepareOnchainPaymentResponse.getDouble("totalFees").toULong()
-        } else {
-            null
-        }
+    val sendAmountSat = prepareOnchainPaymentResponse.getDouble("sendAmountSat").toULong()
+    val receiveAmountSat = prepareOnchainPaymentResponse.getDouble("receiveAmountSat").toULong()
+    val totalFees = prepareOnchainPaymentResponse.getDouble("totalFees").toULong()
     return PrepareOnchainPaymentResponse(
-        min,
-        max,
         feesHash,
         feesPercentage,
         feesLockup,
@@ -2263,8 +2270,6 @@ fun asPrepareOnchainPaymentResponse(prepareOnchainPaymentResponse: ReadableMap):
 
 fun readableMapOf(prepareOnchainPaymentResponse: PrepareOnchainPaymentResponse): ReadableMap {
     return readableMapOf(
-        "min" to prepareOnchainPaymentResponse.min,
-        "max" to prepareOnchainPaymentResponse.max,
         "feesHash" to prepareOnchainPaymentResponse.feesHash,
         "feesPercentage" to prepareOnchainPaymentResponse.feesPercentage,
         "feesLockup" to prepareOnchainPaymentResponse.feesLockup,
