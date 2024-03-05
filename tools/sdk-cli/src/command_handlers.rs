@@ -173,11 +173,18 @@ pub(crate) async fn handle_command(
             let response = sdk()?.max_reverse_swap_amount().await?;
             serde_json::to_string_pretty(&response).map_err(|e| e.into())
         }
+        Commands::FetchOnchainLimits {} => {
+            let response = sdk()?.fetch_onchain_limits().await?;
+            serde_json::to_string_pretty(&response).map_err(|e| e.into())
+        }
         Commands::PrepareOnchainPayment {
             amount_sat,
             is_send,
             claim_tx_feerate,
         } => {
+            let fee_info = sdk()?
+                .fetch_reverse_swap_fees(ReverseSwapFeesRequest::default())
+                .await?;
             let req = PrepareOnchainPaymentRequest {
                 amount_sat,
                 amount_type: match is_send {
@@ -185,6 +192,7 @@ pub(crate) async fn handle_command(
                     false => SwapAmountType::Receive,
                 },
                 claim_tx_feerate,
+                fees_hash: fee_info.fees_hash,
             };
             let response = sdk()?.prepare_onchain_payment(req).await?;
             serde_json::to_string_pretty(&response).map_err(|e| e.into())
@@ -193,8 +201,12 @@ pub(crate) async fn handle_command(
             amount_sat,
             is_send,
             claim_tx_feerate,
-            onchain_recipient_address,
+            recipient_address,
         } => {
+            let fee_info = sdk()?
+                .fetch_reverse_swap_fees(ReverseSwapFeesRequest::default())
+                .await?;
+
             let req_prepare = PrepareOnchainPaymentRequest {
                 amount_sat,
                 amount_type: match is_send {
@@ -202,22 +214,16 @@ pub(crate) async fn handle_command(
                     false => SwapAmountType::Receive,
                 },
                 claim_tx_feerate,
+                fees_hash: fee_info.fees_hash,
             };
             let res_prepare = sdk()?.prepare_onchain_payment(req_prepare).await?;
 
-            match (res_prepare.send_amount_sat, res_prepare.receive_amount_sat) {
-                (Some(send_amount_sat), Some(receive_amount_sat)) => {
-                    let req = PayOnchainRequest {
-                        send_amount_sat,
-                        receive_amount_sat,
-                        recipient_address: onchain_recipient_address,
-                        pair_hash: res_prepare.fees_hash,
-                    };
-                    let response = sdk()?.pay_onchain(req).await?;
-                    serde_json::to_string_pretty(&response).map_err(|e| e.into())
-                }
-                _ => Err(anyhow!("Reverse swap amount out of range")),
-            }
+            let req = PayOnchainRequest {
+                recipient_address,
+                prepare_res: res_prepare,
+            };
+            let response = sdk()?.pay_onchain(req).await?;
+            serde_json::to_string_pretty(&response).map_err(|e| e.into())
         }
         Commands::FetchOnchainFees {
             send_amount_sat,

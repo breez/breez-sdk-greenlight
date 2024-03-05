@@ -1010,6 +1010,7 @@ pub struct PrepareOnchainPaymentRequest {
     pub fees_hash: String,
 }
 
+#[derive(Serialize)]
 pub struct FetchOnchainLimitsResponse {
     pub min_sat: u64,
     pub max_sat: u64,
