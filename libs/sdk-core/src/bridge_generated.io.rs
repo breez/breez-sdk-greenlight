@@ -287,6 +287,11 @@ pub extern "C" fn wire_fetch_reverse_swap_fees(port_: i64, req: *mut wire_Revers
 }
 
 #[no_mangle]
+pub extern "C" fn wire_fetch_onchain_limits(port_: i64) {
+    wire_fetch_onchain_limits_impl(port_)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_prepare_onchain_payment(
     port_: i64,
     req: *mut wire_PrepareOnchainPaymentRequest,
@@ -926,10 +931,8 @@ impl Wire2Api<OpeningFeeParams> for wire_OpeningFeeParams {
 impl Wire2Api<PayOnchainRequest> for wire_PayOnchainRequest {
     fn wire2api(self) -> PayOnchainRequest {
         PayOnchainRequest {
-            send_amount_sat: self.send_amount_sat.wire2api(),
-            receive_amount_sat: self.receive_amount_sat.wire2api(),
             onchain_recipient_address: self.onchain_recipient_address.wire2api(),
-            pair_hash: self.pair_hash.wire2api(),
+            prepare_res: self.prepare_res.wire2api(),
         }
     }
 }
@@ -940,6 +943,20 @@ impl Wire2Api<PrepareOnchainPaymentRequest> for wire_PrepareOnchainPaymentReques
             amount_sat: self.amount_sat.wire2api(),
             amount_type: self.amount_type.wire2api(),
             claim_tx_feerate: self.claim_tx_feerate.wire2api(),
+            fees_hash: self.fees_hash.wire2api(),
+        }
+    }
+}
+impl Wire2Api<PrepareOnchainPaymentResponse> for wire_PrepareOnchainPaymentResponse {
+    fn wire2api(self) -> PrepareOnchainPaymentResponse {
+        PrepareOnchainPaymentResponse {
+            fees_hash: self.fees_hash.wire2api(),
+            fees_percentage: self.fees_percentage.wire2api(),
+            fees_lockup: self.fees_lockup.wire2api(),
+            fees_claim: self.fees_claim.wire2api(),
+            send_amount_sat: self.send_amount_sat.wire2api(),
+            receive_amount_sat: self.receive_amount_sat.wire2api(),
+            total_fees: self.total_fees.wire2api(),
         }
     }
 }
@@ -1255,10 +1272,8 @@ pub struct wire_OpeningFeeParams {
 #[repr(C)]
 #[derive(Clone)]
 pub struct wire_PayOnchainRequest {
-    send_amount_sat: u64,
-    receive_amount_sat: u64,
     onchain_recipient_address: *mut wire_uint_8_list,
-    pair_hash: *mut wire_uint_8_list,
+    prepare_res: wire_PrepareOnchainPaymentResponse,
 }
 
 #[repr(C)]
@@ -1267,6 +1282,19 @@ pub struct wire_PrepareOnchainPaymentRequest {
     amount_sat: u64,
     amount_type: i32,
     claim_tx_feerate: u32,
+    fees_hash: *mut wire_uint_8_list,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_PrepareOnchainPaymentResponse {
+    fees_hash: *mut wire_uint_8_list,
+    fees_percentage: f64,
+    fees_lockup: u64,
+    fees_claim: u64,
+    send_amount_sat: u64,
+    receive_amount_sat: u64,
+    total_fees: u64,
 }
 
 #[repr(C)]
@@ -1727,10 +1755,8 @@ impl Default for wire_OpeningFeeParams {
 impl NewWithNullPtr for wire_PayOnchainRequest {
     fn new_with_null_ptr() -> Self {
         Self {
-            send_amount_sat: Default::default(),
-            receive_amount_sat: Default::default(),
             onchain_recipient_address: core::ptr::null_mut(),
-            pair_hash: core::ptr::null_mut(),
+            prepare_res: Default::default(),
         }
     }
 }
@@ -1747,11 +1773,32 @@ impl NewWithNullPtr for wire_PrepareOnchainPaymentRequest {
             amount_sat: Default::default(),
             amount_type: Default::default(),
             claim_tx_feerate: Default::default(),
+            fees_hash: core::ptr::null_mut(),
         }
     }
 }
 
 impl Default for wire_PrepareOnchainPaymentRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_PrepareOnchainPaymentResponse {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            fees_hash: core::ptr::null_mut(),
+            fees_percentage: Default::default(),
+            fees_lockup: Default::default(),
+            fees_claim: Default::default(),
+            send_amount_sat: Default::default(),
+            receive_amount_sat: Default::default(),
+            total_fees: Default::default(),
+        }
+    }
+}
+
+impl Default for wire_PrepareOnchainPaymentResponse {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }

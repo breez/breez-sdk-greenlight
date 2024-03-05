@@ -210,11 +210,19 @@ typedef struct wire_SendOnchainRequest {
   uint32_t sat_per_vbyte;
 } wire_SendOnchainRequest;
 
-typedef struct wire_PayOnchainRequest {
+typedef struct wire_PrepareOnchainPaymentResponse {
+  struct wire_uint_8_list *fees_hash;
+  double fees_percentage;
+  uint64_t fees_lockup;
+  uint64_t fees_claim;
   uint64_t send_amount_sat;
   uint64_t receive_amount_sat;
+  uint64_t total_fees;
+} wire_PrepareOnchainPaymentResponse;
+
+typedef struct wire_PayOnchainRequest {
   struct wire_uint_8_list *onchain_recipient_address;
-  struct wire_uint_8_list *pair_hash;
+  struct wire_PrepareOnchainPaymentResponse prepare_res;
 } wire_PayOnchainRequest;
 
 typedef struct wire_ReceiveOnchainRequest {
@@ -262,6 +270,7 @@ typedef struct wire_PrepareOnchainPaymentRequest {
   uint64_t amount_sat;
   int32_t amount_type;
   uint32_t claim_tx_feerate;
+  struct wire_uint_8_list *fees_hash;
 } wire_PrepareOnchainPaymentRequest;
 
 typedef struct DartCObject *WireSyncReturn;
@@ -389,6 +398,8 @@ void wire_in_progress_reverse_swaps(int64_t port_);
 void wire_open_channel_fee(int64_t port_, struct wire_OpenChannelFeeRequest *req);
 
 void wire_fetch_reverse_swap_fees(int64_t port_, struct wire_ReverseSwapFeesRequest *req);
+
+void wire_fetch_onchain_limits(int64_t port_);
 
 void wire_prepare_onchain_payment(int64_t port_, struct wire_PrepareOnchainPaymentRequest *req);
 
@@ -532,6 +543,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_in_progress_reverse_swaps);
     dummy_var ^= ((int64_t) (void*) wire_open_channel_fee);
     dummy_var ^= ((int64_t) (void*) wire_fetch_reverse_swap_fees);
+    dummy_var ^= ((int64_t) (void*) wire_fetch_onchain_limits);
     dummy_var ^= ((int64_t) (void*) wire_prepare_onchain_payment);
     dummy_var ^= ((int64_t) (void*) wire_recommended_fees);
     dummy_var ^= ((int64_t) (void*) wire_execute_command);
