@@ -210,7 +210,7 @@ pub(crate) async fn handle_command(
                     let req = PayOnchainRequest {
                         send_amount_sat,
                         receive_amount_sat,
-                        onchain_recipient_address,
+                        recipient_address: onchain_recipient_address,
                         pair_hash: res_prepare.fees_hash,
                     };
                     let response = sdk()?.pay_onchain(req).await?;

@@ -1251,11 +1251,11 @@ class OpeningFeeParamsMenu {
 }
 
 class PayOnchainRequest {
-  final String onchainRecipientAddress;
+  final String recipientAddress;
   final PrepareOnchainPaymentResponse prepareRes;
 
   const PayOnchainRequest({
-    required this.onchainRecipientAddress,
+    required this.recipientAddress,
     required this.prepareRes,
   });
 }
@@ -4852,7 +4852,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   void _api_fill_to_wire_pay_onchain_request(PayOnchainRequest apiObj, wire_PayOnchainRequest wireObj) {
-    wireObj.onchain_recipient_address = api2wire_String(apiObj.onchainRecipientAddress);
+    wireObj.recipient_address = api2wire_String(apiObj.recipientAddress);
     _api_fill_to_wire_prepare_onchain_payment_response(apiObj.prepareRes, wireObj.prepare_res);
   }
 
@@ -6638,7 +6638,7 @@ final class wire_PrepareOnchainPaymentResponse extends ffi.Struct {
 }
 
 final class wire_PayOnchainRequest extends ffi.Struct {
-  external ffi.Pointer<wire_uint_8_list> onchain_recipient_address;
+  external ffi.Pointer<wire_uint_8_list> recipient_address;
 
   external wire_PrepareOnchainPaymentResponse prepare_res;
 }

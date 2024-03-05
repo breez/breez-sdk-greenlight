@@ -777,7 +777,7 @@ dictionary SendOnchainRequest {
 };
 
 dictionary PayOnchainRequest {
-    string onchain_recipient_address;
+    string recipient_address;
     PrepareOnchainPaymentResponse prepare_res;
 };
 
