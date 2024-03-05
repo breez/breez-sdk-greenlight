@@ -1,8 +1,8 @@
 plugins {
     id("com.android.library")
-    id("org.jetbrains.kotlin.android") version "1.6.10"
+    id("org.jetbrains.kotlin.android") version "1.8.20"
     id("maven-publish")
-    kotlin("plugin.serialization") version "1.6.10"
+    kotlin("plugin.serialization") version "1.8.20"
 }
 
 repositories {
@@ -20,6 +20,7 @@ android {
 
     buildTypes {
         getByName("release") {
+            @Suppress("UnstableApiUsage")
             isMinifyEnabled = false
             proguardFiles(file("proguard-android-optimize.txt"), file("proguard-rules.pro"))
         }
