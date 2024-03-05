@@ -14,6 +14,7 @@ import breez_sdk_notification.Constants.MESSAGE_TYPE_LNURL_PAY_INVOICE
 import breez_sdk_notification.Constants.MESSAGE_TYPE_PAYMENT_RECEIVED
 import breez_sdk_notification.Constants.NOTIFICATION_ID_FOREGROUND_SERVICE
 import breez_sdk_notification.Constants.SHUTDOWN_DELAY_MS
+import breez_sdk_notification.LogHelper.nodeLogStream
 import breez_sdk_notification.NotificationHelper.Companion.notifyForegroundService
 import breez_sdk_notification.job.Job
 import breez_sdk_notification.job.LnurlPayInfoJob
@@ -25,7 +26,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import org.tinylog.kotlin.Logger
 
 abstract class ForegroundService : SdkForegroundService, Service() {
     private var breezSDK: BlockingBreezServices? = null
@@ -47,7 +47,7 @@ abstract class ForegroundService : SdkForegroundService, Service() {
     /** Stop the service */
     private val shutdownHandler = Handler(Looper.getMainLooper())
     private val shutdownRunnable: Runnable = Runnable {
-        Logger.tag(TAG).debug { "Reached scheduled shutdown..." }
+        nodeLogStream?.log(TAG, "Reached scheduled shutdown...", "DEBUG")
         shutdown()
     }
 
@@ -57,7 +57,7 @@ abstract class ForegroundService : SdkForegroundService, Service() {
     }
 
     override fun shutdown() {
-        Logger.tag(TAG).debug { "Shutting down foreground service" }
+        nodeLogStream?.log(TAG, "Shutting down foreground service", "DEBUG")
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
@@ -70,7 +70,7 @@ abstract class ForegroundService : SdkForegroundService, Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
         val intentDetails = "[ intent=$intent, flag=$flags, startId=$startId ]"
-        Logger.tag(TAG).debug { "Start foreground service from intent $intentDetails" }
+        nodeLogStream?.log(TAG, "Start foreground service from intent $intentDetails", "DEBUG")
 
         // Display foreground service notification
         val notification = notifyForegroundService(applicationContext)
@@ -81,11 +81,11 @@ abstract class ForegroundService : SdkForegroundService, Service() {
             getJobFromIntent(intent)?.also { job ->
                 launchSdkConnection(connectRequest, job)
             } ?: run {
-                Logger.tag(TAG).warn { "Received invalid data message." }
+                nodeLogStream?.log(TAG, "Received invalid data message", "WARN")
                 shutdown()
             }
         } ?: run {
-            Logger.tag(TAG).warn { "Missing ConnectRequest." }
+            nodeLogStream?.log(TAG, "Missing ConnectRequest", "WARN")
             shutdown()
         }
 
@@ -134,7 +134,7 @@ abstract class ForegroundService : SdkForegroundService, Service() {
 
     private fun launchSdkConnection(connectRequest: ConnectRequest, job: Job) {
         serviceScope.launch(Dispatchers.IO + CoroutineExceptionHandler { _, e ->
-            Logger.tag(TAG).error { "Breez SDK connection failed $e" }
+            nodeLogStream?.log(TAG, "Breez SDK connection failed $e", "ERROR")
             shutdown()
         }) {
             breezSDK ?: run {

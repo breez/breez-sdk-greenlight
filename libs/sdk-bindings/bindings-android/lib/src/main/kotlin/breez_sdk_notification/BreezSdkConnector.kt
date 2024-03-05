@@ -1,7 +1,10 @@
 package breez_sdk_notification
 
-import breez_sdk.*
-import org.tinylog.kotlin.Logger
+import breez_sdk.BlockingBreezServices
+import breez_sdk.ConnectRequest
+import breez_sdk.EventListener
+import breez_sdk.connect
+import breez_sdk_notification.LogHelper.nodeLogStream
 
 class BreezSdkConnector {
     companion object {
@@ -15,10 +18,10 @@ class BreezSdkConnector {
         ): BlockingBreezServices {
             synchronized(this) {
                 if (breezSDK == null) {
-                    Logger.tag(TAG).debug { "Connecting to Breez SDK" }
+                    nodeLogStream?.log(TAG, "Connecting to Breez SDK", "DEBUG")
                     breezSDK = connect(connectRequest, sdkListener)
-                    Logger.tag(TAG).debug { "Connected to Breez SDK" }
-                } else Logger.tag(TAG).debug { "Already connected to Breez SDK" }
+                    nodeLogStream?.log(TAG, "Connected to Breez SDK", "DEBUG")
+                } else nodeLogStream?.log(TAG, "Already connected to Breez SDK", "DEBUG")
 
                 return breezSDK!!
             }

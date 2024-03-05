@@ -6,7 +6,7 @@ import android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE
 import android.content.Context
 import breez_sdk_notification.Constants.MESSAGE_TYPE_ADDRESS_TXS_CONFIRMED
 import breez_sdk_notification.Constants.MESSAGE_TYPE_PAYMENT_RECEIVED
-import org.tinylog.kotlin.Logger
+import breez_sdk_notification.LogHelper.nodeLogStream
 
 @Suppress("unused")
 interface MessagingService {
@@ -28,7 +28,7 @@ interface MessagingService {
             else -> true
         }
         if (isServiceNeeded) startForegroundService(message)
-        else Logger.tag(TAG).warn { "Ignoring message ${message.type}: ${message.payload}" }
+        else nodeLogStream?.log(TAG, "Ignoring message ${message.type}: ${message.payload}", "WARN")
     }
 
     /** Basic implementation to check if the application is in the foreground */
