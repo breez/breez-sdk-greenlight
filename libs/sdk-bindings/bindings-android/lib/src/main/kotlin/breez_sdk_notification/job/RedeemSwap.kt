@@ -8,12 +8,12 @@ import breez_sdk_notification.Constants.DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_T
 import breez_sdk_notification.Constants.NOTIFICATION_CHANNEL_SWAP_TX_CONFIRMED
 import breez_sdk_notification.Constants.SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TITLE
 import breez_sdk_notification.Constants.SWAP_TX_CONFIRMED_NOTIFICATION_TITLE
+import breez_sdk_notification.LogHelper.nodeLogStream
 import breez_sdk_notification.NotificationHelper.Companion.notifyChannel
 import breez_sdk_notification.ResourceHelper.Companion.getString
 import breez_sdk_notification.SdkForegroundService
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.tinylog.kotlin.Logger
 
 @Serializable
 data class AddressTxsConfirmedRequest(
@@ -33,7 +33,7 @@ class RedeemSwapJob(
         try {
             val request = Json.decodeFromString(AddressTxsConfirmedRequest.serializer(), payload)
             breezSDK.redeemSwap(request.address)
-            Logger.tag(TAG).info { "Found swap for ${request.address}" }
+            nodeLogStream?.log(TAG, "Found swap for ${request.address}", "INFO")
             notifyChannel(
                 context,
                 NOTIFICATION_CHANNEL_SWAP_TX_CONFIRMED,
@@ -44,7 +44,7 @@ class RedeemSwapJob(
                 ),
             )
         } catch (e: Exception) {
-            Logger.tag(TAG).warn { "Failed to process swap notification: ${e.message}" }
+            nodeLogStream?.log(TAG, "Failed to process swap notification: ${e.message}", "WARN")
             notifyChannel(
                 context,
                 NOTIFICATION_CHANNEL_SWAP_TX_CONFIRMED,
