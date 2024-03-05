@@ -966,7 +966,7 @@ impl BreezServices {
 
         let reverse_swap_info = self
             .pay_onchain_common(CreateReverseSwapArg::V2(
-                req.onchain_recipient_address,
+                req.recipient_address,
                 req.prepare_res.validate_against_fresh_fees_info(fee_info)?,
             ))
             .await?;

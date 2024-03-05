@@ -221,7 +221,7 @@ typedef struct wire_PrepareOnchainPaymentResponse {
 } wire_PrepareOnchainPaymentResponse;
 
 typedef struct wire_PayOnchainRequest {
-  struct wire_uint_8_list *onchain_recipient_address;
+  struct wire_uint_8_list *recipient_address;
   struct wire_PrepareOnchainPaymentResponse prepare_res;
 } wire_PayOnchainRequest;
 

@@ -931,7 +931,7 @@ impl Wire2Api<OpeningFeeParams> for wire_OpeningFeeParams {
 impl Wire2Api<PayOnchainRequest> for wire_PayOnchainRequest {
     fn wire2api(self) -> PayOnchainRequest {
         PayOnchainRequest {
-            onchain_recipient_address: self.onchain_recipient_address.wire2api(),
+            recipient_address: self.recipient_address.wire2api(),
             prepare_res: self.prepare_res.wire2api(),
         }
     }
@@ -1272,7 +1272,7 @@ pub struct wire_OpeningFeeParams {
 #[repr(C)]
 #[derive(Clone)]
 pub struct wire_PayOnchainRequest {
-    onchain_recipient_address: *mut wire_uint_8_list,
+    recipient_address: *mut wire_uint_8_list,
     prepare_res: wire_PrepareOnchainPaymentResponse,
 }
 
@@ -1755,7 +1755,7 @@ impl Default for wire_OpeningFeeParams {
 impl NewWithNullPtr for wire_PayOnchainRequest {
     fn new_with_null_ptr() -> Self {
         Self {
-            onchain_recipient_address: core::ptr::null_mut(),
+            recipient_address: core::ptr::null_mut(),
             prepare_res: Default::default(),
         }
     }

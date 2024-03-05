@@ -1059,7 +1059,7 @@ pub struct PrepareOnchainPaymentResponseValidated(pub(crate) PrepareOnchainPayme
 
 #[derive(Clone)]
 pub struct PayOnchainRequest {
-    pub onchain_recipient_address: String,
+    pub recipient_address: String,
     pub prepare_res: PrepareOnchainPaymentResponse,
 }
 
