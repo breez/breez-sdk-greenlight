@@ -443,6 +443,12 @@ dictionary ReverseSwapFeesRequest {
     u32? claim_tx_feerate = null;
 };
 
+dictionary FetchOnchainLimitsResponse {
+    u64 min_sat;
+    u64 max_sat;
+    string fees_hash;
+};
+
 enum SwapAmountType {
     "Send",
     "Receive",
@@ -452,6 +458,7 @@ dictionary PrepareOnchainPaymentRequest {
     u64 amount_sat;
     SwapAmountType amount_type;
     u32 claim_tx_feerate;
+    string fees_hash;
 };
 
 dictionary ReceivePaymentRequest {
@@ -574,16 +581,14 @@ dictionary ReverseSwapPairInfo {
 };
 
 dictionary PrepareOnchainPaymentResponse {
-    u64 min;
-    u64 max;
     string fees_hash;
     f64 fees_percentage;
     u64 fees_lockup;
     u64 fees_claim;
 
-    u64? send_amount_sat;
-    u64? receive_amount_sat;
-    u64? total_fees;
+    u64 send_amount_sat;
+    u64 receive_amount_sat;
+    u64 total_fees;
 };
 
 dictionary ReverseSwapInfo {
@@ -772,10 +777,8 @@ dictionary SendOnchainRequest {
 };
 
 dictionary PayOnchainRequest {
-    u64 send_amount_sat;
-    u64 receive_amount_sat;
     string onchain_recipient_address;
-    string pair_hash;
+    PrepareOnchainPaymentResponse prepare_res;
 };
 
 dictionary SendOnchainResponse {
@@ -921,6 +924,9 @@ interface BlockingBreezServices {
    ReverseSwapPairInfo fetch_reverse_swap_fees(ReverseSwapFeesRequest req);
 
    [Throws=SdkError]
+   FetchOnchainLimitsResponse fetch_onchain_limits();
+
+   [Throws=PayOnchainError]
    PrepareOnchainPaymentResponse prepare_onchain_payment(PrepareOnchainPaymentRequest req);
 
    [Throws=SdkError]
