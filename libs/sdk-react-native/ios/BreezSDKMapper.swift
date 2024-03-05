@@ -647,6 +647,49 @@ enum BreezSDKMapper {
         return currencyInfoList.map { v -> [String: Any?] in dictionaryOf(currencyInfo: v) }
     }
 
+    static func asFetchOnchainLimitsResponse(fetchOnchainLimitsResponse: [String: Any?]) throws -> FetchOnchainLimitsResponse {
+        guard let minSat = fetchOnchainLimitsResponse["minSat"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "minSat", typeName: "FetchOnchainLimitsResponse"))
+        }
+        guard let maxSat = fetchOnchainLimitsResponse["maxSat"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "maxSat", typeName: "FetchOnchainLimitsResponse"))
+        }
+        guard let feesHash = fetchOnchainLimitsResponse["feesHash"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "feesHash", typeName: "FetchOnchainLimitsResponse"))
+        }
+
+        return FetchOnchainLimitsResponse(
+            minSat: minSat,
+            maxSat: maxSat,
+            feesHash: feesHash
+        )
+    }
+
+    static func dictionaryOf(fetchOnchainLimitsResponse: FetchOnchainLimitsResponse) -> [String: Any?] {
+        return [
+            "minSat": fetchOnchainLimitsResponse.minSat,
+            "maxSat": fetchOnchainLimitsResponse.maxSat,
+            "feesHash": fetchOnchainLimitsResponse.feesHash,
+        ]
+    }
+
+    static func asFetchOnchainLimitsResponseList(arr: [Any]) throws -> [FetchOnchainLimitsResponse] {
+        var list = [FetchOnchainLimitsResponse]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var fetchOnchainLimitsResponse = try asFetchOnchainLimitsResponse(fetchOnchainLimitsResponse: val)
+                list.append(fetchOnchainLimitsResponse)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "FetchOnchainLimitsResponse"))
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(fetchOnchainLimitsResponseList: [FetchOnchainLimitsResponse]) -> [Any] {
+        return fetchOnchainLimitsResponseList.map { v -> [String: Any?] in dictionaryOf(fetchOnchainLimitsResponse: v) }
+    }
+
     static func asFiatCurrency(fiatCurrency: [String: Any?]) throws -> FiatCurrency {
         guard let id = fiatCurrency["id"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "id", typeName: "FiatCurrency"))
@@ -2168,33 +2211,24 @@ enum BreezSDKMapper {
     }
 
     static func asPayOnchainRequest(payOnchainRequest: [String: Any?]) throws -> PayOnchainRequest {
-        guard let sendAmountSat = payOnchainRequest["sendAmountSat"] as? UInt64 else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "sendAmountSat", typeName: "PayOnchainRequest"))
+        guard let recipientAddress = payOnchainRequest["recipientAddress"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "recipientAddress", typeName: "PayOnchainRequest"))
         }
-        guard let receiveAmountSat = payOnchainRequest["receiveAmountSat"] as? UInt64 else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "receiveAmountSat", typeName: "PayOnchainRequest"))
+        guard let prepareResTmp = payOnchainRequest["prepareRes"] as? [String: Any?] else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "prepareRes", typeName: "PayOnchainRequest"))
         }
-        guard let onchainRecipientAddress = payOnchainRequest["onchainRecipientAddress"] as? String else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "onchainRecipientAddress", typeName: "PayOnchainRequest"))
-        }
-        guard let pairHash = payOnchainRequest["pairHash"] as? String else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "pairHash", typeName: "PayOnchainRequest"))
-        }
+        let prepareRes = try asPrepareOnchainPaymentResponse(prepareOnchainPaymentResponse: prepareResTmp)
 
         return PayOnchainRequest(
-            sendAmountSat: sendAmountSat,
-            receiveAmountSat: receiveAmountSat,
-            onchainRecipientAddress: onchainRecipientAddress,
-            pairHash: pairHash
+            recipientAddress: recipientAddress,
+            prepareRes: prepareRes
         )
     }
 
     static func dictionaryOf(payOnchainRequest: PayOnchainRequest) -> [String: Any?] {
         return [
-            "sendAmountSat": payOnchainRequest.sendAmountSat,
-            "receiveAmountSat": payOnchainRequest.receiveAmountSat,
-            "onchainRecipientAddress": payOnchainRequest.onchainRecipientAddress,
-            "pairHash": payOnchainRequest.pairHash,
+            "recipientAddress": payOnchainRequest.recipientAddress,
+            "prepareRes": dictionaryOf(prepareOnchainPaymentResponse: payOnchainRequest.prepareRes),
         ]
     }
 
@@ -2400,11 +2434,15 @@ enum BreezSDKMapper {
         guard let claimTxFeerate = prepareOnchainPaymentRequest["claimTxFeerate"] as? UInt32 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "claimTxFeerate", typeName: "PrepareOnchainPaymentRequest"))
         }
+        guard let feesHash = prepareOnchainPaymentRequest["feesHash"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "feesHash", typeName: "PrepareOnchainPaymentRequest"))
+        }
 
         return PrepareOnchainPaymentRequest(
             amountSat: amountSat,
             amountType: amountType,
-            claimTxFeerate: claimTxFeerate
+            claimTxFeerate: claimTxFeerate,
+            feesHash: feesHash
         )
     }
 
@@ -2413,6 +2451,7 @@ enum BreezSDKMapper {
             "amountSat": prepareOnchainPaymentRequest.amountSat,
             "amountType": valueOf(swapAmountType: prepareOnchainPaymentRequest.amountType),
             "claimTxFeerate": prepareOnchainPaymentRequest.claimTxFeerate,
+            "feesHash": prepareOnchainPaymentRequest.feesHash,
         ]
     }
 
@@ -2434,12 +2473,6 @@ enum BreezSDKMapper {
     }
 
     static func asPrepareOnchainPaymentResponse(prepareOnchainPaymentResponse: [String: Any?]) throws -> PrepareOnchainPaymentResponse {
-        guard let min = prepareOnchainPaymentResponse["min"] as? UInt64 else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "min", typeName: "PrepareOnchainPaymentResponse"))
-        }
-        guard let max = prepareOnchainPaymentResponse["max"] as? UInt64 else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "max", typeName: "PrepareOnchainPaymentResponse"))
-        }
         guard let feesHash = prepareOnchainPaymentResponse["feesHash"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "feesHash", typeName: "PrepareOnchainPaymentResponse"))
         }
@@ -2452,31 +2485,17 @@ enum BreezSDKMapper {
         guard let feesClaim = prepareOnchainPaymentResponse["feesClaim"] as? UInt64 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "feesClaim", typeName: "PrepareOnchainPaymentResponse"))
         }
-        var sendAmountSat: UInt64?
-        if hasNonNilKey(data: prepareOnchainPaymentResponse, key: "sendAmountSat") {
-            guard let sendAmountSatTmp = prepareOnchainPaymentResponse["sendAmountSat"] as? UInt64 else {
-                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "sendAmountSat"))
-            }
-            sendAmountSat = sendAmountSatTmp
+        guard let sendAmountSat = prepareOnchainPaymentResponse["sendAmountSat"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "sendAmountSat", typeName: "PrepareOnchainPaymentResponse"))
         }
-        var receiveAmountSat: UInt64?
-        if hasNonNilKey(data: prepareOnchainPaymentResponse, key: "receiveAmountSat") {
-            guard let receiveAmountSatTmp = prepareOnchainPaymentResponse["receiveAmountSat"] as? UInt64 else {
-                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "receiveAmountSat"))
-            }
-            receiveAmountSat = receiveAmountSatTmp
+        guard let receiveAmountSat = prepareOnchainPaymentResponse["receiveAmountSat"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "receiveAmountSat", typeName: "PrepareOnchainPaymentResponse"))
         }
-        var totalFees: UInt64?
-        if hasNonNilKey(data: prepareOnchainPaymentResponse, key: "totalFees") {
-            guard let totalFeesTmp = prepareOnchainPaymentResponse["totalFees"] as? UInt64 else {
-                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "totalFees"))
-            }
-            totalFees = totalFeesTmp
+        guard let totalFees = prepareOnchainPaymentResponse["totalFees"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "totalFees", typeName: "PrepareOnchainPaymentResponse"))
         }
 
         return PrepareOnchainPaymentResponse(
-            min: min,
-            max: max,
             feesHash: feesHash,
             feesPercentage: feesPercentage,
             feesLockup: feesLockup,
@@ -2489,15 +2508,13 @@ enum BreezSDKMapper {
 
     static func dictionaryOf(prepareOnchainPaymentResponse: PrepareOnchainPaymentResponse) -> [String: Any?] {
         return [
-            "min": prepareOnchainPaymentResponse.min,
-            "max": prepareOnchainPaymentResponse.max,
             "feesHash": prepareOnchainPaymentResponse.feesHash,
             "feesPercentage": prepareOnchainPaymentResponse.feesPercentage,
             "feesLockup": prepareOnchainPaymentResponse.feesLockup,
             "feesClaim": prepareOnchainPaymentResponse.feesClaim,
-            "sendAmountSat": prepareOnchainPaymentResponse.sendAmountSat == nil ? nil : prepareOnchainPaymentResponse.sendAmountSat,
-            "receiveAmountSat": prepareOnchainPaymentResponse.receiveAmountSat == nil ? nil : prepareOnchainPaymentResponse.receiveAmountSat,
-            "totalFees": prepareOnchainPaymentResponse.totalFees == nil ? nil : prepareOnchainPaymentResponse.totalFees,
+            "sendAmountSat": prepareOnchainPaymentResponse.sendAmountSat,
+            "receiveAmountSat": prepareOnchainPaymentResponse.receiveAmountSat,
+            "totalFees": prepareOnchainPaymentResponse.totalFees,
         ]
     }
 

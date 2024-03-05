@@ -102,6 +102,12 @@ export type CurrencyInfo = {
     localeOverrides?: LocaleOverrides[]
 }
 
+export type FetchOnchainLimitsResponse = {
+    minSat: number
+    maxSat: number
+    feesHash: string
+}
+
 export type FiatCurrency = {
     id: string
     info: CurrencyInfo
@@ -308,10 +314,8 @@ export type OpeningFeeParamsMenu = {
 }
 
 export type PayOnchainRequest = {
-    sendAmountSat: number
-    receiveAmountSat: number
-    onchainRecipientAddress: string
-    pairHash: string
+    recipientAddress: string
+    prepareRes: PrepareOnchainPaymentResponse
 }
 
 export type PayOnchainResponse = {
@@ -341,18 +345,17 @@ export type PrepareOnchainPaymentRequest = {
     amountSat: number
     amountType: SwapAmountType
     claimTxFeerate: number
+    feesHash: string
 }
 
 export type PrepareOnchainPaymentResponse = {
-    min: number
-    max: number
     feesHash: string
     feesPercentage: number
     feesLockup: number
     feesClaim: number
-    sendAmountSat?: number
-    receiveAmountSat?: number
-    totalFees?: number
+    sendAmountSat: number
+    receiveAmountSat: number
+    totalFees: number
 }
 
 export type PrepareRedeemOnchainFundsRequest = {
@@ -1049,6 +1052,11 @@ export const refund = async (req: RefundRequest): Promise<RefundResponse> => {
 
 export const fetchReverseSwapFees = async (req: ReverseSwapFeesRequest): Promise<ReverseSwapPairInfo> => {
     const response = await BreezSDK.fetchReverseSwapFees(req)
+    return response
+}
+
+export const fetchOnchainLimits = async (): Promise<FetchOnchainLimitsResponse> => {
+    const response = await BreezSDK.fetchOnchainLimits()
     return response
 }
 
