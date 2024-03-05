@@ -930,6 +930,16 @@ impl BreezServices {
     }
 
     /// Supersedes [BreezServices::fetch_reverse_swap_fees]
+    ///
+    /// ### Errors
+    ///
+    /// - `FeePromiseChanged`: This indicates the fee promise used in the argument is no longer valid.
+    /// Please use `fetch_onchain_limits` to get the new fee promise. Note that the returned limits
+    /// (`min_sat` and `max_sat`) may have also changed, so make sure to use these new values when
+    /// validating user input.
+    ///
+    /// - `OutOfRange`: This indicates the send amount is outside the range of minimum and maximum
+    /// values returned by `fetch_onchain_limits`.
     pub async fn prepare_onchain_payment(
         &self,
         req: PrepareOnchainPaymentRequest,
