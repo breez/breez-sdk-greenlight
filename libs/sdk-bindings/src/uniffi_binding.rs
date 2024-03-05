@@ -5,12 +5,13 @@ use breez_sdk_core::{
     BackupFailedData, BackupStatus, BitcoinAddressData, BreezEvent, BreezServices,
     BuyBitcoinProvider, BuyBitcoinRequest, BuyBitcoinResponse, ChannelState, CheckMessageRequest,
     CheckMessageResponse, ClosedChannelPaymentDetails, Config, ConfigureNodeRequest,
-    ConnectRequest, CurrencyInfo, EnvironmentType, EventListener, FeeratePreset, FiatCurrency,
-    GreenlightCredentials, GreenlightNodeConfig, HealthCheckStatus, InputType, InvoicePaidDetails,
-    LNInvoice, ListPaymentsRequest, LnPaymentDetails, LnUrlAuthRequestData, LnUrlCallbackStatus,
-    LnUrlErrorData, LnUrlPayErrorData, LnUrlPayRequest, LnUrlPayRequestData, LnUrlPayResult,
-    LnUrlPaySuccessData, LnUrlWithdrawRequest, LnUrlWithdrawRequestData, LnUrlWithdrawResult,
-    LnUrlWithdrawSuccessData, LocaleOverrides, LocalizedName, LogEntry, LogStream, LspInformation,
+    ConnectRequest, CurrencyInfo, EnvironmentType, EventListener, FeeratePreset,
+    FetchOnchainLimitsResponse, FiatCurrency, GreenlightCredentials, GreenlightNodeConfig,
+    HealthCheckStatus, InputType, InvoicePaidDetails, LNInvoice, ListPaymentsRequest,
+    LnPaymentDetails, LnUrlAuthRequestData, LnUrlCallbackStatus, LnUrlErrorData, LnUrlPayErrorData,
+    LnUrlPayRequest, LnUrlPayRequestData, LnUrlPayResult, LnUrlPaySuccessData,
+    LnUrlWithdrawRequest, LnUrlWithdrawRequestData, LnUrlWithdrawResult, LnUrlWithdrawSuccessData,
+    LocaleOverrides, LocalizedName, LogEntry, LogStream, LspInformation,
     MaxReverseSwapAmountResponse, MessageSuccessActionData, MetadataFilter, MetadataItem, Network,
     NodeConfig, NodeCredentials, NodeState, OpenChannelFeeRequest, OpenChannelFeeResponse,
     OpeningFeeParams, OpeningFeeParamsMenu, PayOnchainRequest, PayOnchainResponse, Payment,
@@ -303,10 +304,14 @@ impl BlockingBreezServices {
         rt().block_on(self.breez_services.fetch_reverse_swap_fees(req))
     }
 
+    pub fn fetch_onchain_limits(&self) -> SdkResult<FetchOnchainLimitsResponse> {
+        rt().block_on(self.breez_services.fetch_onchain_limits())
+    }
+
     pub fn prepare_onchain_payment(
         &self,
         req: PrepareOnchainPaymentRequest,
-    ) -> SdkResult<PrepareOnchainPaymentResponse> {
+    ) -> Result<PrepareOnchainPaymentResponse, PayOnchainError> {
         rt().block_on(self.breez_services.prepare_onchain_payment(req))
     }
 
