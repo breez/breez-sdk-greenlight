@@ -10,15 +10,14 @@ import breez_sdk_notification.Constants.LNURL_PAY_INVOICE_NOTIFICATION_TITLE
 import breez_sdk_notification.Constants.LNURL_PAY_METADATA_PLAIN_TEXT
 import breez_sdk_notification.Constants.LNURL_PAY_NOTIFICATION_FAILURE_TITLE
 import breez_sdk_notification.Constants.NOTIFICATION_CHANNEL_LNURL_PAY
+import breez_sdk_notification.LogHelper.nodeLogStream
 import breez_sdk_notification.NotificationHelper.Companion.notifyChannel
-
 import breez_sdk_notification.ResourceHelper.Companion.getString
 import breez_sdk_notification.SdkForegroundService
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.tinylog.kotlin.Logger
 
 @Serializable
 data class LnurlInvoiceRequest(
@@ -89,7 +88,7 @@ class LnurlPayInvoiceJob(
                 ),
             )
         } catch (e: Exception) {
-            Logger.tag(TAG).warn { "Failed to process lnurl: ${e.message}" }
+            nodeLogStream?.log(TAG, "Failed to process lnurl: ${e.message}", "WARN")
             if (request != null) {
                 fail(e.message, request.replyURL)
             }

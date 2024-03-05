@@ -57,6 +57,7 @@ import breez_sdk_notification.Constants.SWAP_TX_CONFIRMED_NOTIFICATION_CHANNEL_N
 import breez_sdk_notification.Constants.SWAP_TX_CONFIRMED_WORKGROUP_DESCRIPTION
 import breez_sdk_notification.Constants.SWAP_TX_CONFIRMED_WORKGROUP_ID
 import breez_sdk_notification.Constants.SWAP_TX_CONFIRMED_WORKGROUP_NAME
+import breez_sdk_notification.LogHelper.nodeLogStream
 import breez_sdk_notification.ResourceHelper.Companion.getColor
 import breez_sdk_notification.ResourceHelper.Companion.getDrawable
 import breez_sdk_notification.ResourceHelper.Companion.getString
@@ -64,7 +65,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.tinylog.kotlin.Logger
+
 
 @Suppress("unused")
 class NotificationHelper {
@@ -83,7 +84,7 @@ class NotificationHelper {
                     createNotificationChannelGroup(context, notificationManager)
                     createNotificationChannels(context, notificationManager)
                 }
-                Logger.tag(TAG).debug { "Registered notification channels " }
+                nodeLogStream?.log(TAG, "Registered notification channels", "DEBUG")
             }
         }
 

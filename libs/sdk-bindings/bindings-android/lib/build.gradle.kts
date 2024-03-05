@@ -36,9 +36,6 @@ dependencies {
     implementation("net.java.dev.jna:jna:5.14.0@aar")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7")
     implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("org.tinylog:tinylog-api-kotlin:2.6.2")
-    implementation("org.tinylog:tinylog-impl:2.6.2")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 }
 

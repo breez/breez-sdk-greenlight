@@ -4,8 +4,8 @@ import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import android.util.Log
 import com.it_nomads.fluttersecurestorage.ciphers.KeyCipher
-import org.tinylog.kotlin.Logger
 import java.math.BigInteger
 import java.security.Key
 import java.security.KeyPairGenerator
@@ -160,7 +160,7 @@ class StorageCipher18Implementation(context: Context, rsaCipher: KeyCipher) {
                 encrypted = Base64.decode(aesKey, Base64.DEFAULT)
                 return rsaCipher.unwrap(encrypted, KEY_ALGORITHM)
             } catch (e: java.lang.Exception) {
-                Logger.tag(TAG).error { "Unwrap key failed" + e.message; e.toString() }
+                Log.e("Unwrap key failed" + e.message, e.toString())
                 throw e
             }
         }

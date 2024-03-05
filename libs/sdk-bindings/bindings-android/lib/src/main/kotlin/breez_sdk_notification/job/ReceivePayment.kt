@@ -9,11 +9,10 @@ import breez_sdk_notification.Constants.DEFAULT_PAYMENT_RECEIVED_NOTIFICATION_TI
 import breez_sdk_notification.Constants.NOTIFICATION_CHANNEL_PAYMENT_RECEIVED
 import breez_sdk_notification.Constants.PAYMENT_RECEIVED_NOTIFICATION_TEXT
 import breez_sdk_notification.Constants.PAYMENT_RECEIVED_NOTIFICATION_TITLE
+import breez_sdk_notification.LogHelper.nodeLogStream
 import breez_sdk_notification.NotificationHelper.Companion.notifyChannel
 import breez_sdk_notification.ResourceHelper.Companion.getString
 import breez_sdk_notification.SdkForegroundService
-import org.tinylog.kotlin.Logger
-
 class ReceivePaymentJob(
     private val context: Context,
     private val fgService: SdkForegroundService,
@@ -27,7 +26,7 @@ class ReceivePaymentJob(
     override fun start(breezSDK: BlockingBreezServices) {}
 
     override fun onEvent(e: BreezEvent) {
-        Logger.tag(TAG).trace { "Received event $e" }
+        nodeLogStream?.log(TAG, "Received event $e", "TRACE")
         when (e) {
             is BreezEvent.InvoicePaid -> {
                 val pd = e.details
@@ -40,7 +39,7 @@ class ReceivePaymentJob(
 
             is BreezEvent.Synced -> {
                 receivedPayment?.let {
-                    Logger.tag(TAG).info { "Got synced event for received payment." }
+                    nodeLogStream?.log(TAG, "Got synced event for received payment", "INFO")
                     fgService.shutdown()
                 }
             }
@@ -54,8 +53,11 @@ class ReceivePaymentJob(
         paymentHash: String,
         amountMsat: ULong?,
     ) {
-        Logger.tag(TAG)
-            .info { "Received payment. Bolt11:${bolt11}\nPayment Hash:${paymentHash}" }
+        nodeLogStream?.log(
+            TAG,
+            "Received payment. Bolt11:${bolt11}\nPayment Hash:${paymentHash}",
+            "INFO"
+        )
         val amountSat = (amountMsat ?: ULong.MIN_VALUE) / 1000u
         notifyChannel(
             context,
