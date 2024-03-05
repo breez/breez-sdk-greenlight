@@ -1045,12 +1045,12 @@ impl PrepareOnchainPaymentResponse {
 
         ensure_sdk!(
             fee_info.fees_hash == self.fees_hash,
-            PayOnchainError::generic("Limits have changed")
+            PayOnchainError::FeePromiseChanged
         );
 
         let is_send_in_range =
             self.send_amount_sat >= fee_info.min && self.send_amount_sat <= fee_info.max;
-        ensure_sdk!(is_send_in_range, PayOnchainError::generic("Out of range"));
+        ensure_sdk!(is_send_in_range, PayOnchainError::OutOfRange);
 
         Ok(PrepareOnchainPaymentResponseValidated(self))
     }

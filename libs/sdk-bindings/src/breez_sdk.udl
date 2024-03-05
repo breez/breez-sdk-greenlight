@@ -84,8 +84,10 @@ enum SendOnchainError {
 
 [Error]
 enum PayOnchainError {
+    "FeePromiseChanged",
     "Generic",
     "InvalidDestinationAddress",
+    "OutOfRange",
     "PaymentFailed",
     "PaymentTimeout",
     "ServiceConnectivity",
