@@ -2,7 +2,7 @@ group 'com.breez.breez_sdk'
 version '1.0-SNAPSHOT'
 
 buildscript {
-    ext.kotlin_version = '1.7.10'
+    ext.kotlin_version = '1.8.20'
     repositories {
         google()
         mavenCentral()
@@ -47,7 +47,7 @@ android {
 }
 
 dependencies {
-    implementation "net.java.dev.jna:jna:5.8.0@aar"
+    implementation "net.java.dev.jna:jna:5.14.0@aar"
     /* JSON serialization */
-    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2'
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3'
 }
