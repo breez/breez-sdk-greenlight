@@ -920,19 +920,26 @@ impl BreezServices {
         Ok(self.btc_receive_swapper.refund_swap(req).await?)
     }
 
+    pub async fn fetch_onchain_limits(&self) -> SdkResult<FetchOnchainLimitsResponse> {
+        let fee_info = self.btc_send_swapper.fetch_reverse_swap_fees().await?;
+        Ok(FetchOnchainLimitsResponse {
+            min_sat: fee_info.min,
+            max_sat: fee_info.max,
+            fees_hash: fee_info.fees_hash,
+        })
+    }
+
     /// Supersedes [BreezServices::fetch_reverse_swap_fees]
     pub async fn prepare_onchain_payment(
         &self,
         req: PrepareOnchainPaymentRequest,
-    ) -> SdkResult<PrepareOnchainPaymentResponse> {
-        let fees_claim = BTCSendSwap::calculate_claim_tx_fee(req.claim_tx_feerate)?;
-        BTCSendSwap::validate_claim_tx_fee(fees_claim)?;
-
+    ) -> Result<PrepareOnchainPaymentResponse, PayOnchainError> {
         let fee_info = self.btc_send_swapper.fetch_reverse_swap_fees().await?;
-        let fees_lockup = fee_info.fees_lockup;
-        let p = fee_info.fees_percentage;
 
         // Calculate (send_amt, recv_amt) from the inputs and fees
+        let fees_lockup = fee_info.fees_lockup.clone();
+        let p = fee_info.fees_percentage.clone();
+        let fees_claim = BTCSendSwap::calculate_claim_tx_fee(req.claim_tx_feerate)?;
         let (send_amt, recv_amt) = match req.amount_type {
             SwapAmountType::Send => {
                 let temp_send_amt = req.amount_sat;
@@ -940,7 +947,9 @@ impl BreezServices {
                 let total_fees = service_fees + fees_lockup + fees_claim;
                 ensure_sdk!(
                     temp_send_amt > total_fees,
-                    SdkError::generic("Send amount is not high enough to account for all fees")
+                    PayOnchainError::generic(
+                        "Send amount is not high enough to account for all fees"
+                    )
                 );
 
                 (temp_send_amt, temp_send_amt - total_fees)
@@ -954,23 +963,19 @@ impl BreezServices {
             }
         };
 
-        let is_send_in_range = send_amt >= fee_info.min && send_amt <= fee_info.max;
-        let (res_send_amt, res_recv_amt, res_total_fees) = match is_send_in_range {
-            true => (Some(send_amt), Some(recv_amt), Some(send_amt - recv_amt)),
-            false => (None, None, None),
-        };
-
-        Ok(PrepareOnchainPaymentResponse {
-            min: fee_info.min,
-            max: fee_info.max,
-            fees_hash: fee_info.fees_hash,
-            fees_percentage: fee_info.fees_percentage,
+        let temp_res = PrepareOnchainPaymentResponse {
+            fees_hash: fee_info.fees_hash.clone(),
+            fees_percentage: p,
             fees_lockup,
             fees_claim,
-            send_amount_sat: res_send_amt,
-            receive_amount_sat: res_recv_amt,
-            total_fees: res_total_fees,
-        })
+            send_amount_sat: send_amt,
+            receive_amount_sat: recv_amt,
+            total_fees: send_amt - recv_amt,
+        };
+
+        temp_res
+            .validate_against_fresh_fees_info(fee_info)
+            .map(|valid| valid.0)
     }
 
     /// Creates a reverse swap and attempts to pay the HODL invoice
@@ -980,12 +985,13 @@ impl BreezServices {
         &self,
         req: PayOnchainRequest,
     ) -> Result<PayOnchainResponse, PayOnchainError> {
-        ensure_sdk!(
-            req.send_amount_sat > req.receive_amount_sat,
-            PayOnchainError::generic("Send amount must be bigger than receive amount")
-        );
+        let fee_info = self.btc_send_swapper.fetch_reverse_swap_fees().await?;
+
         let reverse_swap_info = self
-            .pay_onchain_common(CreateReverseSwapArg::V2(req))
+            .pay_onchain_common(CreateReverseSwapArg::V2(
+                req.onchain_recipient_address,
+                req.prepare_res.validate_against_fresh_fees_info(fee_info)?,
+            ))
             .await?;
         Ok(PayOnchainResponse { reverse_swap_info })
     }

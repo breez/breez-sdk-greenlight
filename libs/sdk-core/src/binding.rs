@@ -483,8 +483,8 @@ pub fn prepare_onchain_payment(
             .await?
             .prepare_onchain_payment(req)
             .await
+            .map_err(anyhow::Error::new::<PayOnchainError>)
     })
-    .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// See [BreezServices::recommended_fees]

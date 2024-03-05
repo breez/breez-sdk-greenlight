@@ -23,7 +23,8 @@ use crate::node_api::{NodeAPI, NodeError};
 use crate::swap_in::swap::create_swap_keys;
 use crate::{
     ensure_sdk, BreezEvent, Config, FullReverseSwapInfo, PayOnchainRequest, PaymentStatus,
-    ReverseSwapInfo, ReverseSwapInfoCached, ReverseSwapPairInfo, ReverseSwapStatus,
+    PrepareOnchainPaymentResponseValidated, ReverseSwapInfo, ReverseSwapInfoCached,
+    ReverseSwapPairInfo, ReverseSwapStatus,
 };
 use crate::{ReverseSwapStatus::*, RouteHintHop, SendOnchainRequest};
 
@@ -78,25 +79,27 @@ pub(crate) enum CreateReverseSwapArg {
     /// Used for backward compatibility with older SDK nodes. Works with the [FullReverseSwapInfo]
     /// `sat_per_vbyte` instead of the newer `receive_amount_sat`.
     V1(SendOnchainRequest),
-    V2(PayOnchainRequest),
+    V2(String, PrepareOnchainPaymentResponseValidated),
 }
 impl CreateReverseSwapArg {
     fn pair_hash(&self) -> String {
         match self {
             CreateReverseSwapArg::V1(s) => s.pair_hash.clone(),
-            CreateReverseSwapArg::V2(s) => s.pair_hash.clone(),
+            CreateReverseSwapArg::V2(_, s) => s.0.fees_hash.clone(),
         }
     }
     fn send_amount_sat(&self) -> u64 {
         match self {
             CreateReverseSwapArg::V1(s) => s.amount_sat,
-            CreateReverseSwapArg::V2(s) => s.send_amount_sat,
+            CreateReverseSwapArg::V2(_, s) => s.0.send_amount_sat,
         }
     }
     fn onchain_recipient_address(&self) -> String {
         match self {
             CreateReverseSwapArg::V1(s) => s.onchain_recipient_address.clone(),
-            CreateReverseSwapArg::V2(s) => s.onchain_recipient_address.clone(),
+            CreateReverseSwapArg::V2(onchain_recipient_address, _) => {
+                onchain_recipient_address.clone()
+            }
         }
     }
 }
@@ -190,8 +193,8 @@ impl BTCSendSwap {
             .create_and_validate_rev_swap_on_remote(req.clone(), routing_node)
             .await?;
 
-        if let CreateReverseSwapArg::V2(req) = req {
-            let claim_fee = created_rsi.onchain_amount_sat - req.receive_amount_sat;
+        if let CreateReverseSwapArg::V2(_, req) = req {
+            let claim_fee = created_rsi.onchain_amount_sat - req.0.receive_amount_sat;
             Self::validate_claim_tx_fee(claim_fee)?;
         }
 
@@ -293,8 +296,7 @@ impl BTCSendSwap {
             .await?;
         let (sat_per_vbyte, receive_amount_sat) = match &req {
             CreateReverseSwapArg::V1(req) => (Some(req.sat_per_vbyte), None),
-            // TODO V2: Does sat_per_vbyte need to be set for older clients?
-            CreateReverseSwapArg::V2(req) => (None, Some(req.receive_amount_sat)),
+            CreateReverseSwapArg::V2(_, req) => (None, Some(req.0.receive_amount_sat)),
         };
         match boltz_response {
             BoltzApiCreateReverseSwapResponse::BoltzApiSuccess(response) => {
