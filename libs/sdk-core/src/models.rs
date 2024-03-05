@@ -18,6 +18,7 @@ use crate::bitcoin::hashes::{sha256, Hash};
 use crate::bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use crate::bitcoin::{Address, Script};
 use crate::breez_services::BreezServer;
+use crate::error::PayOnchainError;
 use crate::error::SdkResult;
 use crate::fiat::{FiatCurrency, Rate};
 use crate::grpc::{
@@ -30,7 +31,10 @@ use crate::models::Network::*;
 use crate::swap_in::error::SwapResult;
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
-use crate::{LNInvoice, LnUrlErrorData, LnUrlPayRequestData, LnUrlWithdrawRequestData, RouteHint};
+use crate::swap_out::reverseswap::BTCSendSwap;
+use crate::{
+    ensure_sdk, LNInvoice, LnUrlErrorData, LnUrlPayRequestData, LnUrlWithdrawRequestData, RouteHint,
+};
 
 pub const SWAP_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60 * 24 * 2; // 2 days
 pub const INVOICE_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60; // 60 minutes
@@ -1001,35 +1005,62 @@ pub struct PrepareOnchainPaymentRequest {
 
     /// Feerate (sat / vByte) for the claim transaction
     pub claim_tx_feerate: u32,
+
+    pub fees_hash: String,
+}
+
+pub struct FetchOnchainLimitsResponse {
+    pub min_sat: u64,
+    pub max_sat: u64,
+    pub fees_hash: String,
 }
 
 /// Contains fields describing the reverse swap parameters (see [ReverseSwapPairInfo]), as well as
 /// the resulting send and receive amounts.
-///
-/// The `send_amount_sat`, `receive_amount_sat` and `total_fees` are empty if the `send_amount_sat`
-/// falls outside the min / max range.
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct PrepareOnchainPaymentResponse {
-    // Fields from ReverseSwapPairInfo:
-    pub min: u64,
-    pub max: u64,
     pub fees_hash: String,
     pub fees_percentage: f64,
     pub fees_lockup: u64,
     pub fees_claim: u64,
 
-    // Fields set only if the resulting send amount is within range
-    pub send_amount_sat: Option<u64>,
-    pub receive_amount_sat: Option<u64>,
-    pub total_fees: Option<u64>,
+    pub send_amount_sat: u64,
+    pub receive_amount_sat: u64,
+    pub total_fees: u64,
+}
+
+impl PrepareOnchainPaymentResponse {
+    pub(crate) fn validate_against_fresh_fees_info(
+        self,
+        fee_info: ReverseSwapPairInfo,
+    ) -> Result<PrepareOnchainPaymentResponseValidated, PayOnchainError> {
+        BTCSendSwap::validate_claim_tx_fee(self.fees_claim)?;
+
+        ensure_sdk!(
+            self.send_amount_sat > self.receive_amount_sat,
+            PayOnchainError::generic("Send amount must be bigger than receive amount")
+        );
+
+        ensure_sdk!(
+            fee_info.fees_hash == self.fees_hash,
+            PayOnchainError::generic("Limits have changed")
+        );
+
+        let is_send_in_range =
+            self.send_amount_sat >= fee_info.min && self.send_amount_sat <= fee_info.max;
+        ensure_sdk!(is_send_in_range, PayOnchainError::generic("Out of range"));
+
+        Ok(PrepareOnchainPaymentResponseValidated(self))
+    }
 }
 
 #[derive(Clone)]
+pub struct PrepareOnchainPaymentResponseValidated(pub(crate) PrepareOnchainPaymentResponse);
+
+#[derive(Clone)]
 pub struct PayOnchainRequest {
-    pub send_amount_sat: u64,
-    pub receive_amount_sat: u64,
     pub onchain_recipient_address: String,
-    pub pair_hash: String,
+    pub prepare_res: PrepareOnchainPaymentResponse,
 }
 
 #[derive(Serialize)]
