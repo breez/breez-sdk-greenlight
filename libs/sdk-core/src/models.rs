@@ -451,6 +451,7 @@ pub(crate) trait ReverseSwapServiceAPI: Send + Sync {
 /// Internal SDK log entry
 #[derive(Clone, Debug)]
 pub struct LogEntry {
+    pub tag: Option<String>,
     pub line: String,
     pub level: String,
 }

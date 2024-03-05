@@ -233,6 +233,7 @@ export type LocalizedName = {
 }
 
 export type LogEntry = {
+    tag?: string
     line: string
     level: string
 }

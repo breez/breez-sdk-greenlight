@@ -1581,6 +1581,7 @@ impl rust2dart::IntoIntoDart<LocalizedName> for LocalizedName {
 impl support::IntoDart for LogEntry {
     fn into_dart(self) -> support::DartAbi {
         vec![
+            self.tag.into_dart(),
             self.line.into_into_dart().into_dart(),
             self.level.into_into_dart().into_dart(),
         ]

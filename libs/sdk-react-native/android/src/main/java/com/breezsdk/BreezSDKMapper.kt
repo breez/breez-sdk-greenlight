@@ -1491,9 +1491,11 @@ fun asLogEntry(logEntry: ReadableMap): LogEntry? {
     ) {
         return null
     }
+    val tag = if (hasNonNullKey(logEntry, "tag")) logEntry.getString("tag") else null
     val line = logEntry.getString("line")!!
     val level = logEntry.getString("level")!!
     return LogEntry(
+        tag,
         line,
         level,
     )
@@ -1501,6 +1503,7 @@ fun asLogEntry(logEntry: ReadableMap): LogEntry? {
 
 fun readableMapOf(logEntry: LogEntry): ReadableMap {
     return readableMapOf(
+        "tag" to logEntry.tag,
         "line" to logEntry.line,
         "level" to logEntry.level,
     )
