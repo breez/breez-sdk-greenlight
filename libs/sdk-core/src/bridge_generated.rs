@@ -63,6 +63,7 @@ use crate::models::Config;
 use crate::models::ConfigureNodeRequest;
 use crate::models::ConnectRequest;
 use crate::models::EnvironmentType;
+use crate::models::FetchOnchainLimitsResponse;
 use crate::models::GreenlightCredentials;
 use crate::models::GreenlightNodeConfig;
 use crate::models::HealthCheckStatus;
@@ -823,6 +824,16 @@ fn wire_fetch_reverse_swap_fees_impl(
         },
     )
 }
+fn wire_fetch_onchain_limits_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, FetchOnchainLimitsResponse, _>(
+        WrapInfo {
+            debug_name: "fetch_onchain_limits",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || move |task_callback| fetch_onchain_limits(),
+    )
+}
 fn wire_prepare_onchain_payment_impl(
     port_: MessagePort,
     req: impl Wire2Api<PrepareOnchainPaymentRequest> + UnwindSafe,
@@ -1198,6 +1209,23 @@ impl support::IntoDart for CurrencyInfo {
 }
 impl support::IntoDartExceptPrimitive for CurrencyInfo {}
 impl rust2dart::IntoIntoDart<CurrencyInfo> for CurrencyInfo {
+    fn into_into_dart(self) -> Self {
+        self
+    }
+}
+
+impl support::IntoDart for FetchOnchainLimitsResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.min_sat.into_into_dart().into_dart(),
+            self.max_sat.into_into_dart().into_dart(),
+            self.fees_hash.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for FetchOnchainLimitsResponse {}
+impl rust2dart::IntoIntoDart<FetchOnchainLimitsResponse> for FetchOnchainLimitsResponse {
     fn into_into_dart(self) -> Self {
         self
     }
@@ -1863,15 +1891,13 @@ impl rust2dart::IntoIntoDart<PaymentType> for PaymentType {
 impl support::IntoDart for PrepareOnchainPaymentResponse {
     fn into_dart(self) -> support::DartAbi {
         vec![
-            self.min.into_into_dart().into_dart(),
-            self.max.into_into_dart().into_dart(),
             self.fees_hash.into_into_dart().into_dart(),
             self.fees_percentage.into_into_dart().into_dart(),
             self.fees_lockup.into_into_dart().into_dart(),
             self.fees_claim.into_into_dart().into_dart(),
-            self.send_amount_sat.into_dart(),
-            self.receive_amount_sat.into_dart(),
-            self.total_fees.into_dart(),
+            self.send_amount_sat.into_into_dart().into_dart(),
+            self.receive_amount_sat.into_into_dart().into_dart(),
+            self.total_fees.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
