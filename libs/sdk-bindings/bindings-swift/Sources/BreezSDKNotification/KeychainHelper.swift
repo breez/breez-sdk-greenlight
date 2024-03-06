@@ -13,7 +13,7 @@ fileprivate var log = Logger(OSLog.disabled)
 
 public class KeychainHelper {
     public static let shared = KeychainHelper()
-
+    
     private init() {/* must use shared instance */}
     
     public func getFlutterString(accessGroup: String, key: String) -> String? {

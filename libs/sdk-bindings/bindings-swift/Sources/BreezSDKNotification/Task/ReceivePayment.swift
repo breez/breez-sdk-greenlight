@@ -1,15 +1,16 @@
 import UserNotifications
 import Foundation
-import XCGLogger
 
 class ReceivePaymentTask : TaskProtocol {
+    fileprivate let TAG = "ReceivePaymentTask"
+    
     internal var payload: String
     internal var contentHandler: ((UNNotificationContent) -> Void)?
     internal var bestAttemptContent: UNMutableNotificationContent?
-    internal var logger: XCGLogger
+    internal var logger: LogStream?
     internal var receivedPayment: Payment? = nil
     
-    init(payload: String, logger: XCGLogger, contentHandler: ((UNNotificationContent) -> Void)? = nil, bestAttemptContent: UNMutableNotificationContent? = nil) {
+    init(payload: String, logger: LogStream?, contentHandler: ((UNNotificationContent) -> Void)? = nil, bestAttemptContent: UNMutableNotificationContent? = nil) {
         self.payload = payload
         self.contentHandler = contentHandler
         self.bestAttemptContent = bestAttemptContent
@@ -19,11 +20,11 @@ class ReceivePaymentTask : TaskProtocol {
     public func onEvent(e: BreezEvent) {
         switch e {
         case .invoicePaid(details: let details):
-            self.logger.info("Received payment. Bolt11: \(details.bolt11)\nPayment Hash:\(details.paymentHash)")
+            self.logger?.log(l: LogEntry(tag: TAG, line: "Received payment. Bolt11: \(details.bolt11)\nPayment Hash:\(details.paymentHash)", level: "INFO"))
             receivedPayment = details.payment
             break
         case .synced:
-            self.logger.info("got synced event")
+            self.logger?.log(l: LogEntry(tag: TAG, line: "got synced event", level: "INFO"))
             if self.receivedPayment != nil {
                 self.onShutdown()
             }
@@ -34,7 +35,7 @@ class ReceivePaymentTask : TaskProtocol {
     }
     
     func start(breezSDK: BlockingBreezServices) throws {}
-
+    
     func onShutdown() {
         let successReceivedPayment = ResourceHelper.shared.getString(key: Constants.PAYMENT_RECEIVED_NOTIFICATION_TITLE, validateContains: "%d", fallback: Constants.DEFAULT_PAYMENT_RECEIVED_NOTIFICATION_TITLE)
         let failReceivedPayment = ResourceHelper.shared.getString(key: Constants.LNURL_PAY_NOTIFICATION_FAILURE_TITLE, fallback: Constants.DEFAULT_LNURL_PAY_NOTIFICATION_FAILURE_TITLE)

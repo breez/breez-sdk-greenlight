@@ -14,11 +14,10 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/kishikawakatsumi/KeychainAccess.git", from: "4.2.2"),
-        .package(url: "https://github.com/DaveWoodCom/XCGLogger.git", from: "7.0.0"),
     ],
     targets: [
         .binaryTarget(name: "breez_sdkFFI", path: "./breez_sdkFFI.xcframework"),
-        .target(name: "BreezSDK", dependencies: ["breez_sdkFFI", "KeychainAccess", "XCGLogger"]),
+        .target(name: "BreezSDK", dependencies: ["breez_sdkFFI", "KeychainAccess"]),
         .testTarget(name: "BreezSDKTests", dependencies: ["BreezSDK"]),
     ]
 )

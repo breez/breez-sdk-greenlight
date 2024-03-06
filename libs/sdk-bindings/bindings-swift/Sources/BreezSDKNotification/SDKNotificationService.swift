@@ -1,24 +1,20 @@
 import UserNotifications
-import XCGLogger
 import os.log
 
 open class SDKNotificationService: UNNotificationServiceExtension {
+    fileprivate let TAG = "SDKNotificationService"
+    
     var breezSDK: BlockingBreezServices?
     var contentHandler: ((UNNotificationContent) -> Void)?
     var bestAttemptContent: UNMutableNotificationContent?
     var currentTask: TaskProtocol?
+    var logger: LogStream?
     
-    var logger = {
-        let log = XCGLogger.default
-        log.setup(level: .debug, showThreadName: true, showLevel: true, showFileNames: true, showLineNumbers: true)
-        return log
-    }()
-
     override open func didReceive(
         _ request: UNNotificationRequest,
         withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void
     ) {
-        self.logger.info("Notification received")
+        self.logger?.log(l: LogEntry(tag: TAG, line: "Notification received", level: "INFO"))
         self.contentHandler = contentHandler
         self.bestAttemptContent = (request.content.mutableCopy() as? UNMutableNotificationContent)
         
@@ -34,12 +30,12 @@ open class SDKNotificationService: UNNotificationServiceExtension {
             
             DispatchQueue.main.async {
                 do {
-                    self.logger.info("Breez SDK is not connected, connecting....")
+                    self.logger?.log(l: LogEntry(tag: TAG, line: "Breez SDK is not connected, connecting...", level: "INFO"))
                     self.breezSDK = try BreezSDKConnector.register(connectRequest: connectRequest, logger: self.logger, listener: currentTask)
-                    self.logger.info("Breez SDK connected successfully")
+                    self.logger?.log(l: LogEntry(tag: TAG, line: "Breez SDK connected successfully", level: "INFO"))
                     try currentTask.start(breezSDK: self.breezSDK!)
                 } catch {
-                    self.logger.error("Breez SDK connection failed \(error)")
+                    self.logger?.log(l: LogEntry(tag: TAG, line: "Breez SDK connection failed \(error)", level: "ERROR"))
                     self.shutdown()
                 }
             }
@@ -53,26 +49,23 @@ open class SDKNotificationService: UNNotificationServiceExtension {
     open func getTaskFromNotification() -> TaskProtocol? {
         guard let content = bestAttemptContent else { return nil }
         guard let notificationType = content.userInfo[Constants.MESSAGE_DATA_TYPE] as? String else { return nil }
-        self.logger.info("Notification payload: \(content.userInfo)")
-        self.logger.info("Notification type: \(notificationType)")
+        self.logger?.log(l: LogEntry(tag: TAG, line: "Notification payload: \(content.userInfo)", level: "INFO"))
+        self.logger?.log(l: LogEntry(tag: TAG, line: "Notification type: \(notificationType)", level: "INFO"))
         
         guard let payload = content.userInfo[Constants.MESSAGE_DATA_PAYLOAD] as? String else {
             contentHandler!(content)
             return nil
         }
-
+        
         switch(notificationType) {
+            self.logger?.log(l: LogEntry(tag: TAG, line: "\(notificationType) data string: \(payload)", level: "INFO"))
         case Constants.MESSAGE_TYPE_ADDRESS_TXS_CONFIRMED:
-            self.logger.info("address_txs_confirmed data string: \(payload)")
             return RedeemSwapTask(payload: payload, logger: self.logger, contentHandler: contentHandler, bestAttemptContent: bestAttemptContent)
         case Constants.MESSAGE_TYPE_LNURL_PAY_INFO:
-            self.logger.info("lnurlpay_info data string: \(payload)")
             return LnurlPayInfoTask(payload: payload, logger: self.logger, contentHandler: contentHandler, bestAttemptContent: bestAttemptContent)
         case Constants.MESSAGE_TYPE_LNURL_PAY_INVOICE:
-            self.logger.info("lnurlpay_invoice data string: \(payload)")
             return LnurlPayInvoiceTask(payload: payload, logger: self.logger, contentHandler: contentHandler, bestAttemptContent: bestAttemptContent)
         case Constants.MESSAGE_TYPE_PAYMENT_RECEIVED:
-            self.logger.info("payment_received data string: \(payload)")
             return ReceivePaymentTask(payload: payload, logger: self.logger, contentHandler: contentHandler, bestAttemptContent: bestAttemptContent)
         default:
             return nil
@@ -80,7 +73,7 @@ open class SDKNotificationService: UNNotificationServiceExtension {
     }
     
     override open func serviceExtensionTimeWillExpire() {
-        self.logger.info("serviceExtensionTimeWillExpire()")
+        self.logger?.log(l: LogEntry(tag: TAG, line: "serviceExtensionTimeWillExpire()", level: "INFO"))
         
         // iOS calls this function just before the extension will be terminated by the system.
         // Use this as an opportunity to deliver your "best attempt" at modified content,
@@ -89,9 +82,13 @@ open class SDKNotificationService: UNNotificationServiceExtension {
     }
     
     private func shutdown() -> Void {
-        self.logger.info("shutting down...")
+        self.logger?.log(l: LogEntry(tag: TAG, line: "shutting down...", level: "INFO"))
         BreezSDKConnector.unregister()
-        self.logger.info("task unregistered")
+        self.logger?.log(l: LogEntry(tag: TAG, line: "task unregistered", level: "INFO"))
         self.currentTask?.onShutdown()
+    }
+    
+    func setLogger(logger: LogStream) {
+        self.logger = logger
     }
 }
