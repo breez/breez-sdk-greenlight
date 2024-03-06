@@ -2,8 +2,6 @@ package breez_sdk_notification.job
 
 import android.content.Context
 import breez_sdk.BlockingBreezServices
-import breez_sdk.LogEntry
-import breez_sdk.LogStream
 import breez_sdk_notification.Constants.DEFAULT_LNURL_PAY_INFO_NOTIFICATION_TITLE
 import breez_sdk_notification.Constants.DEFAULT_LNURL_PAY_METADATA_PLAIN_TEXT
 import breez_sdk_notification.Constants.DEFAULT_LNURL_PAY_NOTIFICATION_FAILURE_TITLE
@@ -14,6 +12,7 @@ import breez_sdk_notification.Constants.NOTIFICATION_CHANNEL_LNURL_PAY
 import breez_sdk_notification.NotificationHelper.Companion.notifyChannel
 import breez_sdk_notification.ResourceHelper.Companion.getString
 import breez_sdk_notification.SdkForegroundService
+import breez_sdk_notification.ServiceLogger
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -40,7 +39,7 @@ class LnurlPayInfoJob(
     private val context: Context,
     private val fgService: SdkForegroundService,
     private val payload: String,
-    private val logger: LogStream?,
+    private val logger: ServiceLogger,
 ) : LnurlPayJob {
     companion object {
         private const val TAG = "LnurlPayInfoJob"
@@ -75,9 +74,7 @@ class LnurlPayInfoJob(
                 ),
             )
         } catch (e: Exception) {
-            logger?.log(
-                LogEntry(TAG, "Failed to process lnurl: ${e.message}", "WARN")
-            )
+            logger.log(TAG, "Failed to process lnurl: ${e.message}", "WARN")
             if (request != null) {
                 fail(e.message, request.replyURL)
             }
