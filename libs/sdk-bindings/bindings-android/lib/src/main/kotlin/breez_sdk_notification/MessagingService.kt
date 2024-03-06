@@ -4,9 +4,10 @@ import android.app.ActivityManager
 import android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
 import android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE
 import android.content.Context
+import breez_sdk.LogEntry
 import breez_sdk_notification.Constants.MESSAGE_TYPE_ADDRESS_TXS_CONFIRMED
 import breez_sdk_notification.Constants.MESSAGE_TYPE_PAYMENT_RECEIVED
-import breez_sdk_notification.LogHelper.nodeLogStream
+import breez_sdk_notification.ForegroundService.Companion.logger
 
 @Suppress("unused")
 interface MessagingService {
@@ -28,7 +29,13 @@ interface MessagingService {
             else -> true
         }
         if (isServiceNeeded) startForegroundService(message)
-        else nodeLogStream?.log(TAG, "Ignoring message ${message.type}: ${message.payload}", "WARN")
+        else logger?.log(
+            LogEntry(
+                TAG,
+                "Ignoring message ${message.type}: ${message.payload}",
+                "WARN"
+            )
+        )
     }
 
     /** Basic implementation to check if the application is in the foreground */
