@@ -48,9 +48,7 @@ abstract class ForegroundService : SdkForegroundService, Service() {
     /** Stop the service */
     private val shutdownHandler = Handler(Looper.getMainLooper())
     private val shutdownRunnable: Runnable = Runnable {
-        logger.log(
-            TAG, "Reached scheduled shutdown...", "DEBUG"
-        )
+        logger.log(TAG, "Reached scheduled shutdown...", "DEBUG")
         shutdown()
     }
 
@@ -73,13 +71,7 @@ abstract class ForegroundService : SdkForegroundService, Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
         val intentDetails = "[ intent=$intent, flag=$flags, startId=$startId ]"
-        logger.log(
-
-            TAG,
-            "Start foreground service from intent $intentDetails",
-            "DEBUG"
-
-        )
+        logger.log(TAG, "Start foreground service from intent $intentDetails", "DEBUG")
 
         // Display foreground service notification
         val notification = notifyForegroundService(applicationContext)

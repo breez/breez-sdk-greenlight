@@ -45,9 +45,7 @@ class RedeemSwapJob(
                 ),
             )
         } catch (e: Exception) {
-            logger.log(
-                TAG, "Failed to process swap notification: ${e.message}", "WARN"
-            )
+            logger.log(TAG, "Failed to process swap notification: ${e.message}", "WARN")
             notifyChannel(
                 context,
                 NOTIFICATION_CHANNEL_SWAP_TX_CONFIRMED,
