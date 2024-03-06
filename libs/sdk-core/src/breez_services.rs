@@ -920,7 +920,7 @@ impl BreezServices {
         Ok(self.btc_receive_swapper.refund_swap(req).await?)
     }
 
-    pub async fn fetch_onchain_limits(&self) -> SdkResult<FetchOnchainLimitsResponse> {
+    pub async fn onchain_payment_limits(&self) -> SdkResult<FetchOnchainLimitsResponse> {
         let fee_info = self.btc_send_swapper.fetch_reverse_swap_fees().await?;
         Ok(FetchOnchainLimitsResponse {
             min_sat: fee_info.min,
@@ -934,12 +934,12 @@ impl BreezServices {
     /// ### Errors
     ///
     /// - `FeePromiseChanged`: This indicates the fee promise used in the argument is no longer valid.
-    /// Please use `fetch_onchain_limits` to get the new fee promise. Note that the returned limits
+    /// Please use `onchain_payment_limits` to get the new fee promise. Note that the returned limits
     /// (`min_sat` and `max_sat`) may have also changed, so make sure to use these new values when
     /// validating user input.
     ///
     /// - `OutOfRange`: This indicates the send amount is outside the range of minimum and maximum
-    /// values returned by `fetch_onchain_limits`.
+    /// values returned by `onchain_payment_limits`.
     pub async fn prepare_onchain_payment(
         &self,
         req: PrepareOnchainPaymentRequest,
