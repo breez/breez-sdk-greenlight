@@ -66,17 +66,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-
 @Suppress("unused")
 class NotificationHelper {
     companion object {
         private const val TAG = "NotificationHelper"
         private var defaultClickAction: String? = null
 
-        fun registerNotificationChannels(
-            context: Context,
-            defaultClickAction: String? = null
-        ) {
+        fun registerNotificationChannels(context: Context, defaultClickAction: String? = null) {
             this.defaultClickAction = defaultClickAction
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
