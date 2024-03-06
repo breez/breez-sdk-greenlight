@@ -256,7 +256,7 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
-    fetchOnchainLimits: (RCTPromiseResolveBlock)resolve
+    onchainPaymentLimits: (RCTPromiseResolveBlock)resolve
     reject: (RCTPromiseRejectBlock)reject
 )
 
