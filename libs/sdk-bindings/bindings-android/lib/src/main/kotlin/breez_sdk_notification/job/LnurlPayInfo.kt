@@ -2,6 +2,7 @@ package breez_sdk_notification.job
 
 import android.content.Context
 import breez_sdk.BlockingBreezServices
+import breez_sdk.LogEntry
 import breez_sdk_notification.Constants.DEFAULT_LNURL_PAY_INFO_NOTIFICATION_TITLE
 import breez_sdk_notification.Constants.DEFAULT_LNURL_PAY_METADATA_PLAIN_TEXT
 import breez_sdk_notification.Constants.DEFAULT_LNURL_PAY_NOTIFICATION_FAILURE_TITLE
@@ -9,7 +10,7 @@ import breez_sdk_notification.Constants.LNURL_PAY_INFO_NOTIFICATION_TITLE
 import breez_sdk_notification.Constants.LNURL_PAY_METADATA_PLAIN_TEXT
 import breez_sdk_notification.Constants.LNURL_PAY_NOTIFICATION_FAILURE_TITLE
 import breez_sdk_notification.Constants.NOTIFICATION_CHANNEL_LNURL_PAY
-import breez_sdk_notification.LogHelper.nodeLogStream
+import breez_sdk_notification.ForegroundService.Companion.logger
 import breez_sdk_notification.NotificationHelper.Companion.notifyChannel
 import breez_sdk_notification.ResourceHelper.Companion.getString
 import breez_sdk_notification.SdkForegroundService
@@ -73,7 +74,9 @@ class LnurlPayInfoJob(
                 ),
             )
         } catch (e: Exception) {
-            nodeLogStream?.log(TAG, "Failed to process lnurl: ${e.message}", "WARN")
+            logger?.log(
+                LogEntry(TAG, "Failed to process lnurl: ${e.message}", "WARN")
+            )
             if (request != null) {
                 fail(e.message, request.replyURL)
             }

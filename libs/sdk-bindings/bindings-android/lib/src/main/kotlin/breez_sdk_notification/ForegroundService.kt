@@ -7,6 +7,8 @@ import android.os.IBinder
 import android.os.Looper
 import breez_sdk.BlockingBreezServices
 import breez_sdk.ConnectRequest
+import breez_sdk.LogEntry
+import breez_sdk.LogStream
 import breez_sdk_notification.BreezSdkConnector.Companion.connectSDK
 import breez_sdk_notification.Constants.MESSAGE_TYPE_ADDRESS_TXS_CONFIRMED
 import breez_sdk_notification.Constants.MESSAGE_TYPE_LNURL_PAY_INFO
@@ -14,7 +16,6 @@ import breez_sdk_notification.Constants.MESSAGE_TYPE_LNURL_PAY_INVOICE
 import breez_sdk_notification.Constants.MESSAGE_TYPE_PAYMENT_RECEIVED
 import breez_sdk_notification.Constants.NOTIFICATION_ID_FOREGROUND_SERVICE
 import breez_sdk_notification.Constants.SHUTDOWN_DELAY_MS
-import breez_sdk_notification.LogHelper.nodeLogStream
 import breez_sdk_notification.NotificationHelper.Companion.notifyForegroundService
 import breez_sdk_notification.job.Job
 import breez_sdk_notification.job.LnurlPayInfoJob
@@ -34,6 +35,8 @@ abstract class ForegroundService : SdkForegroundService, Service() {
 
     companion object {
         private const val TAG = "ForegroundService"
+
+        var logger: LogStream? = null
     }
 
     // =========================================================== //
@@ -47,7 +50,9 @@ abstract class ForegroundService : SdkForegroundService, Service() {
     /** Stop the service */
     private val shutdownHandler = Handler(Looper.getMainLooper())
     private val shutdownRunnable: Runnable = Runnable {
-        nodeLogStream?.log(TAG, "Reached scheduled shutdown...", "DEBUG")
+        logger?.log(
+            LogEntry(TAG, "Reached scheduled shutdown...", "DEBUG")
+        )
         shutdown()
     }
 
@@ -57,7 +62,7 @@ abstract class ForegroundService : SdkForegroundService, Service() {
     }
 
     override fun shutdown() {
-        nodeLogStream?.log(TAG, "Shutting down foreground service", "DEBUG")
+        logger?.log(LogEntry(TAG, "Shutting down foreground service", "DEBUG"))
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
@@ -70,7 +75,13 @@ abstract class ForegroundService : SdkForegroundService, Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
         val intentDetails = "[ intent=$intent, flag=$flags, startId=$startId ]"
-        nodeLogStream?.log(TAG, "Start foreground service from intent $intentDetails", "DEBUG")
+        logger?.log(
+            LogEntry(
+                TAG,
+                "Start foreground service from intent $intentDetails",
+                "DEBUG"
+            )
+        )
 
         // Display foreground service notification
         val notification = notifyForegroundService(applicationContext)
@@ -81,11 +92,11 @@ abstract class ForegroundService : SdkForegroundService, Service() {
             getJobFromIntent(intent)?.also { job ->
                 launchSdkConnection(connectRequest, job)
             } ?: run {
-                nodeLogStream?.log(TAG, "Received invalid data message", "WARN")
+                logger?.log(LogEntry(TAG, "Received invalid data message", "WARN"))
                 shutdown()
             }
         } ?: run {
-            nodeLogStream?.log(TAG, "Missing ConnectRequest", "WARN")
+            logger?.log(LogEntry(TAG, "Missing ConnectRequest", "WARN"))
             shutdown()
         }
 
@@ -134,7 +145,7 @@ abstract class ForegroundService : SdkForegroundService, Service() {
 
     private fun launchSdkConnection(connectRequest: ConnectRequest, job: Job) {
         serviceScope.launch(Dispatchers.IO + CoroutineExceptionHandler { _, e ->
-            nodeLogStream?.log(TAG, "Breez SDK connection failed $e", "ERROR")
+            logger?.log(LogEntry(TAG, "Breez SDK connection failed $e", "ERROR"))
             shutdown()
         }) {
             breezSDK ?: run {
@@ -148,5 +159,10 @@ abstract class ForegroundService : SdkForegroundService, Service() {
                 pushbackShutdown()
             }
         }
+    }
+
+    @Suppress("unused")
+    fun setLogger(logger: LogStream) {
+        Companion.logger = logger
     }
 }
