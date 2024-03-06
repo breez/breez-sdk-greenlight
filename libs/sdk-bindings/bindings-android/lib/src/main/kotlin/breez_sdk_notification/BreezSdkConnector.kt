@@ -4,8 +4,8 @@ import breez_sdk.BlockingBreezServices
 import breez_sdk.ConnectRequest
 import breez_sdk.EventListener
 import breez_sdk.LogEntry
+import breez_sdk.LogStream
 import breez_sdk.connect
-import breez_sdk_notification.ForegroundService.Companion.logger
 
 class BreezSdkConnector {
     companion object {
@@ -16,6 +16,7 @@ class BreezSdkConnector {
         internal fun connectSDK(
             connectRequest: ConnectRequest,
             sdkListener: EventListener,
+            logger: LogStream?
         ): BlockingBreezServices {
             synchronized(this) {
                 if (breezSDK == null) {

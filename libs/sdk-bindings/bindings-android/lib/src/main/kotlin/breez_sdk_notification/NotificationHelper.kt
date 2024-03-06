@@ -12,11 +12,11 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import breez_sdk.LogEntry
 import breez_sdk_notification.Constants.DEFAULT_FOREGROUND_SERVICE_NOTIFICATION_CHANNEL_DESCRIPTION
 import breez_sdk_notification.Constants.DEFAULT_FOREGROUND_SERVICE_NOTIFICATION_CHANNEL_NAME
 import breez_sdk_notification.Constants.DEFAULT_FOREGROUND_SERVICE_NOTIFICATION_TITLE
@@ -58,7 +58,6 @@ import breez_sdk_notification.Constants.SWAP_TX_CONFIRMED_NOTIFICATION_CHANNEL_N
 import breez_sdk_notification.Constants.SWAP_TX_CONFIRMED_WORKGROUP_DESCRIPTION
 import breez_sdk_notification.Constants.SWAP_TX_CONFIRMED_WORKGROUP_ID
 import breez_sdk_notification.Constants.SWAP_TX_CONFIRMED_WORKGROUP_NAME
-import breez_sdk_notification.ForegroundService.Companion.logger
 import breez_sdk_notification.ResourceHelper.Companion.getColor
 import breez_sdk_notification.ResourceHelper.Companion.getDrawable
 import breez_sdk_notification.ResourceHelper.Companion.getString
@@ -74,7 +73,10 @@ class NotificationHelper {
         private const val TAG = "NotificationHelper"
         private var defaultClickAction: String? = null
 
-        fun registerNotificationChannels(context: Context, defaultClickAction: String? = null) {
+        fun registerNotificationChannels(
+            context: Context,
+            defaultClickAction: String? = null
+        ) {
             this.defaultClickAction = defaultClickAction
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -85,7 +87,7 @@ class NotificationHelper {
                     createNotificationChannelGroup(context, notificationManager)
                     createNotificationChannels(context, notificationManager)
                 }
-                logger?.log(LogEntry(TAG, "Registered notification channels", "DEBUG"))
+                Log.d(TAG, "Registered notification channels")
             }
         }
 

@@ -4,12 +4,12 @@ import android.content.Context
 import breez_sdk.BlockingBreezServices
 import breez_sdk.BreezEvent
 import breez_sdk.LogEntry
+import breez_sdk.LogStream
 import breez_sdk_notification.Constants.DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TITLE
 import breez_sdk_notification.Constants.DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_TITLE
 import breez_sdk_notification.Constants.NOTIFICATION_CHANNEL_SWAP_TX_CONFIRMED
 import breez_sdk_notification.Constants.SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TITLE
 import breez_sdk_notification.Constants.SWAP_TX_CONFIRMED_NOTIFICATION_TITLE
-import breez_sdk_notification.ForegroundService.Companion.logger
 import breez_sdk_notification.NotificationHelper.Companion.notifyChannel
 import breez_sdk_notification.ResourceHelper.Companion.getString
 import breez_sdk_notification.SdkForegroundService
@@ -25,6 +25,7 @@ class RedeemSwapJob(
     private val context: Context,
     private val fgService: SdkForegroundService,
     private val payload: String,
+    private val logger: LogStream?,
 ) : Job {
     companion object {
         private const val TAG = "RedeemSwapJob"
