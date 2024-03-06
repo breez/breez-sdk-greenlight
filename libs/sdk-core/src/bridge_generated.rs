@@ -824,14 +824,14 @@ fn wire_fetch_reverse_swap_fees_impl(
         },
     )
 }
-fn wire_fetch_onchain_limits_impl(port_: MessagePort) {
+fn wire_onchain_payment_limits_impl(port_: MessagePort) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, FetchOnchainLimitsResponse, _>(
         WrapInfo {
-            debug_name: "fetch_onchain_limits",
+            debug_name: "onchain_payment_limits",
             port: Some(port_),
             mode: FfiCallMode::Normal,
         },
-        move || move |task_callback| fetch_onchain_limits(),
+        move || move |task_callback| onchain_payment_limits(),
     )
 }
 fn wire_prepare_onchain_payment_impl(

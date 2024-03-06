@@ -926,7 +926,7 @@ interface BlockingBreezServices {
    ReverseSwapPairInfo fetch_reverse_swap_fees(ReverseSwapFeesRequest req);
 
    [Throws=SdkError]
-   FetchOnchainLimitsResponse fetch_onchain_limits();
+   FetchOnchainLimitsResponse onchain_payment_limits();
 
    [Throws=PayOnchainError]
    PrepareOnchainPaymentResponse prepare_onchain_payment(PrepareOnchainPaymentRequest req);

@@ -134,7 +134,7 @@ pub(crate) enum Commands {
     InProgressReverseSwaps {},
 
     /// [swap-out-v2] The min-max range supported by Boltz at the moment
-    FetchOnchainLimits {},
+    OnchainPaymentLimits {},
 
     /// [swap-out-v2] Prepares, but does not initiate, a reverse swap payment
     PrepareOnchainPayment {

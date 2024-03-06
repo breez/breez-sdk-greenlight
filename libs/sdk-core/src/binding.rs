@@ -474,9 +474,9 @@ pub fn fetch_reverse_swap_fees(req: ReverseSwapFeesRequest) -> Result<ReverseSwa
     .map_err(anyhow::Error::new::<SdkError>)
 }
 
-/// See [BreezServices::fetch_onchain_limits]
-pub fn fetch_onchain_limits() -> Result<FetchOnchainLimitsResponse> {
-    block_on(async { get_breez_services().await?.fetch_onchain_limits().await })
+/// See [BreezServices::onchain_payment_limits]
+pub fn onchain_payment_limits() -> Result<FetchOnchainLimitsResponse> {
+    block_on(async { get_breez_services().await?.onchain_payment_limits().await })
         .map_err(anyhow::Error::new::<SdkError>)
 }
 

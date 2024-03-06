@@ -288,10 +288,10 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kFetchReverseSwapFeesConstMeta;
 
-  /// See [BreezServices::fetch_onchain_limits]
-  Future<FetchOnchainLimitsResponse> fetchOnchainLimits({dynamic hint});
+  /// See [BreezServices::onchain_payment_limits]
+  Future<FetchOnchainLimitsResponse> onchainPaymentLimits({dynamic hint});
 
-  FlutterRustBridgeTaskConstMeta get kFetchOnchainLimitsConstMeta;
+  FlutterRustBridgeTaskConstMeta get kOnchainPaymentLimitsConstMeta;
 
   /// See [BreezServices::prepare_onchain_payment]
   Future<PrepareOnchainPaymentResponse> prepareOnchainPayment(
@@ -2947,19 +2947,19 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["req"],
       );
 
-  Future<FetchOnchainLimitsResponse> fetchOnchainLimits({dynamic hint}) {
+  Future<FetchOnchainLimitsResponse> onchainPaymentLimits({dynamic hint}) {
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_fetch_onchain_limits(port_),
+      callFfi: (port_) => _platform.inner.wire_onchain_payment_limits(port_),
       parseSuccessData: _wire2api_fetch_onchain_limits_response,
       parseErrorData: _wire2api_FrbAnyhowException,
-      constMeta: kFetchOnchainLimitsConstMeta,
+      constMeta: kOnchainPaymentLimitsConstMeta,
       argValues: [],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kFetchOnchainLimitsConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "fetch_onchain_limits",
+  FlutterRustBridgeTaskConstMeta get kOnchainPaymentLimitsConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "onchain_payment_limits",
         argNames: [],
       );
 
@@ -5839,17 +5839,17 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_fetch_reverse_swap_fees = _wire_fetch_reverse_swap_feesPtr
       .asFunction<void Function(int, ffi.Pointer<wire_ReverseSwapFeesRequest>)>();
 
-  void wire_fetch_onchain_limits(
+  void wire_onchain_payment_limits(
     int port_,
   ) {
-    return _wire_fetch_onchain_limits(
+    return _wire_onchain_payment_limits(
       port_,
     );
   }
 
-  late final _wire_fetch_onchain_limitsPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_fetch_onchain_limits');
-  late final _wire_fetch_onchain_limits = _wire_fetch_onchain_limitsPtr.asFunction<void Function(int)>();
+  late final _wire_onchain_payment_limitsPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_onchain_payment_limits');
+  late final _wire_onchain_payment_limits = _wire_onchain_payment_limitsPtr.asFunction<void Function(int)>();
 
   void wire_prepare_onchain_payment(
     int port_,

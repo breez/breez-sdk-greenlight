@@ -287,8 +287,8 @@ pub extern "C" fn wire_fetch_reverse_swap_fees(port_: i64, req: *mut wire_Revers
 }
 
 #[no_mangle]
-pub extern "C" fn wire_fetch_onchain_limits(port_: i64) {
-    wire_fetch_onchain_limits_impl(port_)
+pub extern "C" fn wire_onchain_payment_limits(port_: i64) {
+    wire_onchain_payment_limits_impl(port_)
 }
 
 #[no_mangle]

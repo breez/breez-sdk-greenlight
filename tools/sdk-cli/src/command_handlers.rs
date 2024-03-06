@@ -173,8 +173,8 @@ pub(crate) async fn handle_command(
             let response = sdk()?.max_reverse_swap_amount().await?;
             serde_json::to_string_pretty(&response).map_err(|e| e.into())
         }
-        Commands::FetchOnchainLimits {} => {
-            let response = sdk()?.fetch_onchain_limits().await?;
+        Commands::OnchainPaymentLimits {} => {
+            let response = sdk()?.onchain_payment_limits().await?;
             serde_json::to_string_pretty(&response).map_err(|e| e.into())
         }
         Commands::PrepareOnchainPayment {

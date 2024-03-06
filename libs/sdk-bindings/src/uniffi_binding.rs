@@ -304,8 +304,8 @@ impl BlockingBreezServices {
         rt().block_on(self.breez_services.fetch_reverse_swap_fees(req))
     }
 
-    pub fn fetch_onchain_limits(&self) -> SdkResult<FetchOnchainLimitsResponse> {
-        rt().block_on(self.breez_services.fetch_onchain_limits())
+    pub fn onchain_payment_limits(&self) -> SdkResult<FetchOnchainLimitsResponse> {
+        rt().block_on(self.breez_services.onchain_payment_limits())
     }
 
     pub fn prepare_onchain_payment(
