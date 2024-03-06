@@ -1,5 +1,4 @@
 import UserNotifications
-import BreezSDK
 import Foundation
 
 class ReceivePaymentTask : TaskProtocol {
