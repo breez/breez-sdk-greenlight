@@ -19,7 +19,7 @@ struct LnurlInvoiceResponse: Decodable, Encodable {
 class LnurlPayInvoiceTask : LnurlPayTask {
     fileprivate let TAG = "LnurlPayInvoiceTask"
     
-    init(payload: String, logger: LogStream?, contentHandler: ((UNNotificationContent) -> Void)? = nil, bestAttemptContent: UNMutableNotificationContent? = nil) {
+    init(payload: String, logger: ServiceLogger, contentHandler: ((UNNotificationContent) -> Void)? = nil, bestAttemptContent: UNMutableNotificationContent? = nil) {
         let successNotificationTitle = ResourceHelper.shared.getString(key: Constants.LNURL_PAY_INVOICE_NOTIFICATION_TITLE, fallback: Constants.DEFAULT_LNURL_PAY_INVOICE_NOTIFICATION_TITLE)
         let failNotificationTitle = ResourceHelper.shared.getString(key: Constants.LNURL_PAY_NOTIFICATION_FAILURE_TITLE, fallback: Constants.DEFAULT_LNURL_PAY_NOTIFICATION_FAILURE_TITLE)
         super.init(payload: payload, logger: logger, contentHandler: contentHandler, bestAttemptContent: bestAttemptContent, successNotificationTitle: successNotificationTitle, failNotificationTitle: failNotificationTitle)
@@ -30,7 +30,7 @@ class LnurlPayInvoiceTask : LnurlPayTask {
         do {
             lnurlInvoiceRequest = try JSONDecoder().decode(LnurlInvoiceRequest.self, from: self.payload.data(using: .utf8)!)
         } catch let e {
-            self.logger?.log(l: LogEntry(tag: TAG, line: "failed to decode payload: \(e)", level: "ERROR"))
+            self.logger.log(tag: TAG, line: "failed to decode payload: \(e)", level: "ERROR")
             self.displayPushNotification(title: self.failNotificationTitle)
             throw e
         }
@@ -46,7 +46,7 @@ class LnurlPayInvoiceTask : LnurlPayTask {
             let receiveResponse = try breezSDK.receivePayment(req: ReceivePaymentRequest(amountMsat: lnurlInvoiceRequest!.amount, description: metadata, useDescriptionHash: true))
             self.replyServer(encodable: LnurlInvoiceResponse(pr: receiveResponse.lnInvoice.bolt11, routes: []), replyURL: lnurlInvoiceRequest!.reply_url)
         } catch let e {
-            self.logger?.log(l: LogEntry(tag: TAG, line: "failed to process lnurl: \(e)", level: "ERROR"))
+            self.logger.log(tag: TAG, line: "failed to process lnurl: \(e)", level: "ERROR")
             self.fail(withError: e.localizedDescription, replyURL: lnurlInvoiceRequest!.reply_url)
         }
     }
