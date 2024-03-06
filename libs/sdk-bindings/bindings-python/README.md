@@ -19,13 +19,13 @@ It will create wheels for the following Python versions and Platforms and upload
 
 ### Supported Wheels
 
-|                 | GNU/Linux amd64 | GNU/Linux arm64v8 | macOS x86_64 | macos aarch64 |
-|-----------------|-----------------|-------------------|--------------|---------------|
-| **Python 3.8**  | ✅               | ✅                 | ✅            | ✅             |
-| **Python 3.9**  | ✅               | ✅                 | ✅            | ✅             |
-| **Python 3.10** | ✅               | ✅                 | ✅            | ✅             |
-| **Python 3.11** | ✅               | ✅                 | ✅            | ✅             |
-| **Python 3.12** | ✅               | ✅                 | ✅            | ✅             |
+|                 | GNU/Linux amd64 | GNU/Linux arm64v8 | macOS x86_64 | macOS aarch64 | Windows x86_64 | Windows 32 |
+|-----------------|-----------------|-------------------|--------------|---------------|----------------|------------|
+| **Python 3.8**  | ✅               | ✅                 | ✅            | ✅             | ✅              | ✅         |
+| **Python 3.9**  | ✅               | ✅                 | ✅            | ✅             | ✅              | ✅         |
+| **Python 3.10** | ✅               | ✅                 | ✅            | ✅             | ✅              | ✅         |
+| **Python 3.11** | ✅               | ✅                 | ✅            | ✅             | ✅              | ✅         |
+| **Python 3.12** | ✅               | ✅                 | ✅            | ✅             | ✅              | ✅         |
 
 ## Building Manually
 
