@@ -1,5 +1,4 @@
 import UserNotifications
-import BreezSDK
 import Foundation
 
 struct LnurlInvoiceRequest: Codable {

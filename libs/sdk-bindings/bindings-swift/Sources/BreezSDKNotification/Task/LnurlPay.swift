@@ -1,5 +1,4 @@
 import UserNotifications
-import BreezSDK
 import Foundation
 
 struct LnurlErrorResponse: Decodable, Encodable {
