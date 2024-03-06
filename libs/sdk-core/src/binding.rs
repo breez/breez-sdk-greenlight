@@ -33,9 +33,9 @@ use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
 use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
-    ConfigureNodeRequest, ConnectRequest, EnvironmentType, FetchOnchainLimitsResponse,
-    ListPaymentsRequest, LnUrlCallbackStatus, LnUrlPayRequest, LnUrlWithdrawRequest,
-    LnUrlWithdrawResult, MaxReverseSwapAmountResponse, NodeConfig, NodeCredentials,
+    ConfigureNodeRequest, ConnectRequest, EnvironmentType, ListPaymentsRequest,
+    LnUrlCallbackStatus, LnUrlPayRequest, LnUrlWithdrawRequest, LnUrlWithdrawResult,
+    MaxReverseSwapAmountResponse, NodeConfig, NodeCredentials, OnchainPaymentLimitsResponse,
     OpenChannelFeeRequest, OpenChannelFeeResponse, PayOnchainRequest, PayOnchainResponse,
     PrepareOnchainPaymentRequest, PrepareOnchainPaymentResponse, PrepareRedeemOnchainFundsRequest,
     PrepareRedeemOnchainFundsResponse, PrepareRefundRequest, PrepareRefundResponse,
@@ -475,7 +475,7 @@ pub fn fetch_reverse_swap_fees(req: ReverseSwapFeesRequest) -> Result<ReverseSwa
 }
 
 /// See [BreezServices::onchain_payment_limits]
-pub fn onchain_payment_limits() -> Result<FetchOnchainLimitsResponse> {
+pub fn onchain_payment_limits() -> Result<OnchainPaymentLimitsResponse> {
     block_on(async { get_breez_services().await?.onchain_payment_limits().await })
         .map_err(anyhow::Error::new::<SdkError>)
 }

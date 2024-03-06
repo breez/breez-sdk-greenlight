@@ -5,27 +5,27 @@ use breez_sdk_core::{
     BackupFailedData, BackupStatus, BitcoinAddressData, BreezEvent, BreezServices,
     BuyBitcoinProvider, BuyBitcoinRequest, BuyBitcoinResponse, ChannelState, CheckMessageRequest,
     CheckMessageResponse, ClosedChannelPaymentDetails, Config, ConfigureNodeRequest,
-    ConnectRequest, CurrencyInfo, EnvironmentType, EventListener, FeeratePreset,
-    FetchOnchainLimitsResponse, FiatCurrency, GreenlightCredentials, GreenlightNodeConfig,
-    HealthCheckStatus, InputType, InvoicePaidDetails, LNInvoice, ListPaymentsRequest,
-    LnPaymentDetails, LnUrlAuthRequestData, LnUrlCallbackStatus, LnUrlErrorData, LnUrlPayErrorData,
-    LnUrlPayRequest, LnUrlPayRequestData, LnUrlPayResult, LnUrlPaySuccessData,
-    LnUrlWithdrawRequest, LnUrlWithdrawRequestData, LnUrlWithdrawResult, LnUrlWithdrawSuccessData,
-    LocaleOverrides, LocalizedName, LogEntry, LogStream, LspInformation,
+    ConnectRequest, CurrencyInfo, EnvironmentType, EventListener, FeeratePreset, FiatCurrency,
+    GreenlightCredentials, GreenlightNodeConfig, HealthCheckStatus, InputType, InvoicePaidDetails,
+    LNInvoice, ListPaymentsRequest, LnPaymentDetails, LnUrlAuthRequestData, LnUrlCallbackStatus,
+    LnUrlErrorData, LnUrlPayErrorData, LnUrlPayRequest, LnUrlPayRequestData, LnUrlPayResult,
+    LnUrlPaySuccessData, LnUrlWithdrawRequest, LnUrlWithdrawRequestData, LnUrlWithdrawResult,
+    LnUrlWithdrawSuccessData, LocaleOverrides, LocalizedName, LogEntry, LogStream, LspInformation,
     MaxReverseSwapAmountResponse, MessageSuccessActionData, MetadataFilter, MetadataItem, Network,
-    NodeConfig, NodeCredentials, NodeState, OpenChannelFeeRequest, OpenChannelFeeResponse,
-    OpeningFeeParams, OpeningFeeParamsMenu, PayOnchainRequest, PayOnchainResponse, Payment,
-    PaymentDetails, PaymentFailedData, PaymentStatus, PaymentType, PaymentTypeFilter,
-    PrepareOnchainPaymentRequest, PrepareOnchainPaymentResponse, PrepareRedeemOnchainFundsRequest,
-    PrepareRedeemOnchainFundsResponse, PrepareRefundRequest, PrepareRefundResponse, Rate,
-    ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees,
-    RedeemOnchainFundsRequest, RedeemOnchainFundsResponse, RefundRequest, RefundResponse,
-    ReportIssueRequest, ReportPaymentFailureDetails, ReverseSwapFeesRequest, ReverseSwapInfo,
-    ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop, SendOnchainRequest,
-    SendOnchainResponse, SendPaymentRequest, SendPaymentResponse, SendSpontaneousPaymentRequest,
-    ServiceHealthCheckResponse, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
-    StaticBackupResponse, SuccessActionProcessed, SwapAmountType, SwapInfo, SwapStatus, Symbol,
-    TlvEntry, UnspentTransactionOutput, UrlSuccessActionData,
+    NodeConfig, NodeCredentials, NodeState, OnchainPaymentLimitsResponse, OpenChannelFeeRequest,
+    OpenChannelFeeResponse, OpeningFeeParams, OpeningFeeParamsMenu, PayOnchainRequest,
+    PayOnchainResponse, Payment, PaymentDetails, PaymentFailedData, PaymentStatus, PaymentType,
+    PaymentTypeFilter, PrepareOnchainPaymentRequest, PrepareOnchainPaymentResponse,
+    PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, PrepareRefundRequest,
+    PrepareRefundResponse, Rate, ReceiveOnchainRequest, ReceivePaymentRequest,
+    ReceivePaymentResponse, RecommendedFees, RedeemOnchainFundsRequest, RedeemOnchainFundsResponse,
+    RefundRequest, RefundResponse, ReportIssueRequest, ReportPaymentFailureDetails,
+    ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint,
+    RouteHintHop, SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
+    SendSpontaneousPaymentRequest, ServiceHealthCheckResponse, SignMessageRequest,
+    SignMessageResponse, StaticBackupRequest, StaticBackupResponse, SuccessActionProcessed,
+    SwapAmountType, SwapInfo, SwapStatus, Symbol, TlvEntry, UnspentTransactionOutput,
+    UrlSuccessActionData,
 };
 use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
@@ -304,7 +304,7 @@ impl BlockingBreezServices {
         rt().block_on(self.breez_services.fetch_reverse_swap_fees(req))
     }
 
-    pub fn onchain_payment_limits(&self) -> SdkResult<FetchOnchainLimitsResponse> {
+    pub fn onchain_payment_limits(&self) -> SdkResult<OnchainPaymentLimitsResponse> {
         rt().block_on(self.breez_services.onchain_payment_limits())
     }
 
