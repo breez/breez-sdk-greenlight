@@ -12,12 +12,9 @@ let package = Package(
     products: [
         .library(name: "BreezSDK", targets: ["breez_sdkFFI", "BreezSDK", "BreezSDKNotification"]),
     ],
-    dependencies: [
-        .package(url: "https://github.com/kishikawakatsumi/KeychainAccess.git", from: "4.2.2"),
-    ],
     targets: [
         .binaryTarget(name: "breez_sdkFFI", path: "./breez_sdkFFI.xcframework"),
-        .target(name: "BreezSDK", dependencies: ["breez_sdkFFI", "KeychainAccess"]),
+        .target(name: "BreezSDK", dependencies: ["breez_sdkFFI"]),
         .testTarget(name: "BreezSDKTests", dependencies: ["BreezSDK"]),
     ]
 )
