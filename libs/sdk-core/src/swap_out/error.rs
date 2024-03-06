@@ -41,6 +41,11 @@ pub enum ReverseSwapError {
     #[error("Route not found: {0}")]
     RouteNotFound(anyhow::Error),
 }
+impl ReverseSwapError {
+    pub(crate) fn generic(err: &str) -> Self {
+        Self::Generic(anyhow!(err.to_string()))
+    }
+}
 
 impl From<hashes::hex::Error> for ReverseSwapError {
     fn from(err: hashes::hex::Error) -> Self {

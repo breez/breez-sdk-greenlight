@@ -830,7 +830,7 @@ impl BreezServices {
                 res.fees_claim = BTCSendSwap::calculate_claim_tx_fee(claim_tx_feerate)?;
             }
 
-            let service_fee_sat = ((amt as f64) * res.fees_percentage / 100.0) as u64;
+            let service_fee_sat = swap_out::calculate_service_fee_sat(amt, res.fees_percentage);
             res.total_fees = Some(service_fee_sat + res.fees_lockup + res.fees_claim);
         }
 
@@ -944,6 +944,9 @@ impl BreezServices {
         &self,
         req: PrepareOnchainPaymentRequest,
     ) -> Result<PrepareOnchainPaymentResponse, PayOnchainError> {
+        let fees_claim = BTCSendSwap::calculate_claim_tx_fee(req.claim_tx_feerate)?;
+        BTCSendSwap::validate_claim_tx_fee(fees_claim)?;
+
         let fee_info = self.btc_send_swapper.fetch_reverse_swap_fees().await?;
 
         // Calculate (send_amt, recv_amt) from the inputs and fees
@@ -973,7 +976,10 @@ impl BreezServices {
             }
         };
 
-        let temp_res = PrepareOnchainPaymentResponse {
+        let is_send_in_range = send_amt >= fee_info.min && send_amt <= fee_info.max;
+        ensure_sdk!(is_send_in_range, PayOnchainError::OutOfRange);
+
+        Ok(PrepareOnchainPaymentResponse {
             fees_hash: fee_info.fees_hash.clone(),
             fees_percentage: p,
             fees_lockup,
@@ -981,11 +987,7 @@ impl BreezServices {
             send_amount_sat: send_amt,
             receive_amount_sat: recv_amt,
             total_fees: send_amt - recv_amt,
-        };
-
-        temp_res
-            .validate_against_fresh_fees_info(fee_info)
-            .map(|valid| valid.0)
+        })
     }
 
     /// Creates a reverse swap and attempts to pay the HODL invoice
@@ -995,13 +997,13 @@ impl BreezServices {
         &self,
         req: PayOnchainRequest,
     ) -> Result<PayOnchainResponse, PayOnchainError> {
-        let fee_info = self.btc_send_swapper.fetch_reverse_swap_fees().await?;
+        ensure_sdk!(
+            req.prepare_res.send_amount_sat > req.prepare_res.receive_amount_sat,
+            PayOnchainError::generic("Send amount must be bigger than receive amount")
+        );
 
         let reverse_swap_info = self
-            .pay_onchain_common(CreateReverseSwapArg::V2(
-                req.recipient_address,
-                req.prepare_res.validate_against_fresh_fees_info(fee_info)?,
-            ))
+            .pay_onchain_common(CreateReverseSwapArg::V2(req))
             .await?;
         Ok(PayOnchainResponse { reverse_swap_info })
     }
