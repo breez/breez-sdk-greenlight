@@ -1,13 +1,21 @@
 import Foundation
+import os.log
+
+#if DEBUG && true
+fileprivate var log = Logger(
+    subsystem: Bundle.main.bundleIdentifier!,
+    category: "BreezSDKConnector"
+)
+#else
+fileprivate var log = Logger(OSLog.disabled)
+#endif
 
 class BreezSDKConnector {
-    fileprivate let TAG = "BreezSDKConnector"
-    
     private static var breezSDK: BlockingBreezServices? = nil
     fileprivate static var queue = DispatchQueue(label: "BreezSDKConnector")
     fileprivate static var sdkListener: EventListener? = nil
     
-    static func register(connectRequest: ConnectRequest, logger: LogStream, listener: EventListener) throws -> BlockingBreezServices? {
+    static func register(connectRequest: ConnectRequest, logger: LogStream?, listener: EventListener) throws -> BlockingBreezServices? {
         try BreezSDKConnector.queue.sync { [] in
             BreezSDKConnector.sdkListener = listener
             if BreezSDKConnector.breezSDK == nil {
@@ -23,13 +31,15 @@ class BreezSDKConnector {
         }
     }
     
-    static func connectSDK(connectRequest: ConnectRequest, logger: LogStream) throws -> BlockingBreezServices? {
-        try setLogStream(logStream: logger)
+    static func connectSDK(connectRequest: ConnectRequest, logger: LogStream?) throws -> BlockingBreezServices? {
+        if let logger = logger {
+            try setLogStream(logStream: logger)
+        }
         
         // Connect to the Breez SDK make it ready for use
-        logger.log(l: LogEntry(tag: TAG, line: "Connecting to Breez SDK", level: "TRACE"))
+        log.trace("Connecting to Breez SDK")
         let breezSDK = try connect(req: connectRequest, listener: BreezSDKEventListener())
-        logger.log(l: LogEntry(tag: TAG, line: "Connected to Breez SDK", level: "TRACE"))
+        log.trace("Connected to Breez SDK")
         return breezSDK
     }
 }

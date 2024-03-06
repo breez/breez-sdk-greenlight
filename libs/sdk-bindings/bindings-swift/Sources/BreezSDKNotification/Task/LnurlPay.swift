@@ -15,11 +15,11 @@ class LnurlPayTask : TaskProtocol {
     var payload: String
     var contentHandler: ((UNNotificationContent) -> Void)?
     var bestAttemptContent: UNMutableNotificationContent?
-    var logger: LogStream?
+    var logger: ServiceLogger
     var successNotifiationTitle: String
     var failNotificationTitle: String
     
-    init(payload: String, logger: LogStream?, contentHandler: ((UNNotificationContent) -> Void)? = nil, bestAttemptContent: UNMutableNotificationContent? = nil, successNotificationTitle: String, failNotificationTitle: String) {
+    init(payload: String, logger: ServiceLogger, contentHandler: ((UNNotificationContent) -> Void)? = nil, bestAttemptContent: UNMutableNotificationContent? = nil, successNotificationTitle: String, failNotificationTitle: String) {
         self.payload = payload
         self.contentHandler = contentHandler
         self.bestAttemptContent = bestAttemptContent
