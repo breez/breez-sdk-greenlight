@@ -9,7 +9,7 @@ struct Constants {
     static let MESSAGE_TYPE_LNURL_PAY_INFO = "lnurlpay_info"
     static let MESSAGE_TYPE_LNURL_PAY_INVOICE = "lnurlpay_invoice"
     static let MESSAGE_TYPE_PAYMENT_RECEIVED = "payment_received"
-
+    
     // Resource Identifiers
     static let LNURL_PAY_INFO_NOTIFICATION_TITLE = "lnurl_pay_info_notification_title"
     static let LNURL_PAY_INVOICE_NOTIFICATION_TITLE = "lnurl_pay_invoice_notification_title"
@@ -18,7 +18,7 @@ struct Constants {
     static let PAYMENT_RECEIVED_NOTIFICATION_TITLE = "payment_received_notification_title"
     static let SWAP_TX_CONFIRMED_NOTIFICATION_TITLE = "swap_tx_confirmed_notification_title"
     static let SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TITLE = "swap_tx_confirmed_notification_failure_title"
-
+    
     // Resource Identifier Defaults
     static let DEFAULT_LNURL_PAY_INFO_NOTIFICATION_TITLE = "Retrieving Payment Information"
     static let DEFAULT_LNURL_PAY_INVOICE_NOTIFICATION_TITLE = "Fetching invoice"

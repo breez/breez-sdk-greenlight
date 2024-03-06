@@ -2,7 +2,7 @@ import Foundation
 
 public class ResourceHelper {
     public static let shared = ResourceHelper()
-
+    
     private init() {/* must use shared instance */}
     
     public func getString(key: String, fallback: String) -> String {
