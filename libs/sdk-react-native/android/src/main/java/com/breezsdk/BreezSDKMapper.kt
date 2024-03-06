@@ -593,47 +593,6 @@ fun asCurrencyInfoList(arr: ReadableArray): List<CurrencyInfo> {
     return list
 }
 
-fun asFetchOnchainLimitsResponse(fetchOnchainLimitsResponse: ReadableMap): FetchOnchainLimitsResponse? {
-    if (!validateMandatoryFields(
-            fetchOnchainLimitsResponse,
-            arrayOf(
-                "minSat",
-                "maxSat",
-                "feesHash",
-            ),
-        )
-    ) {
-        return null
-    }
-    val minSat = fetchOnchainLimitsResponse.getDouble("minSat").toULong()
-    val maxSat = fetchOnchainLimitsResponse.getDouble("maxSat").toULong()
-    val feesHash = fetchOnchainLimitsResponse.getString("feesHash")!!
-    return FetchOnchainLimitsResponse(
-        minSat,
-        maxSat,
-        feesHash,
-    )
-}
-
-fun readableMapOf(fetchOnchainLimitsResponse: FetchOnchainLimitsResponse): ReadableMap {
-    return readableMapOf(
-        "minSat" to fetchOnchainLimitsResponse.minSat,
-        "maxSat" to fetchOnchainLimitsResponse.maxSat,
-        "feesHash" to fetchOnchainLimitsResponse.feesHash,
-    )
-}
-
-fun asFetchOnchainLimitsResponseList(arr: ReadableArray): List<FetchOnchainLimitsResponse> {
-    val list = ArrayList<FetchOnchainLimitsResponse>()
-    for (value in arr.toArrayList()) {
-        when (value) {
-            is ReadableMap -> list.add(asFetchOnchainLimitsResponse(value)!!)
-            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
-        }
-    }
-    return list
-}
-
 fun asFiatCurrency(fiatCurrency: ReadableMap): FiatCurrency? {
     if (!validateMandatoryFields(
             fiatCurrency,
@@ -1842,6 +1801,47 @@ fun asNodeStateList(arr: ReadableArray): List<NodeState> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asNodeState(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
+fun asOnchainPaymentLimitsResponse(onchainPaymentLimitsResponse: ReadableMap): OnchainPaymentLimitsResponse? {
+    if (!validateMandatoryFields(
+            onchainPaymentLimitsResponse,
+            arrayOf(
+                "minSat",
+                "maxSat",
+                "feesHash",
+            ),
+        )
+    ) {
+        return null
+    }
+    val minSat = onchainPaymentLimitsResponse.getDouble("minSat").toULong()
+    val maxSat = onchainPaymentLimitsResponse.getDouble("maxSat").toULong()
+    val feesHash = onchainPaymentLimitsResponse.getString("feesHash")!!
+    return OnchainPaymentLimitsResponse(
+        minSat,
+        maxSat,
+        feesHash,
+    )
+}
+
+fun readableMapOf(onchainPaymentLimitsResponse: OnchainPaymentLimitsResponse): ReadableMap {
+    return readableMapOf(
+        "minSat" to onchainPaymentLimitsResponse.minSat,
+        "maxSat" to onchainPaymentLimitsResponse.maxSat,
+        "feesHash" to onchainPaymentLimitsResponse.feesHash,
+    )
+}
+
+fun asOnchainPaymentLimitsResponseList(arr: ReadableArray): List<OnchainPaymentLimitsResponse> {
+    val list = ArrayList<OnchainPaymentLimitsResponse>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asOnchainPaymentLimitsResponse(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
         }
     }

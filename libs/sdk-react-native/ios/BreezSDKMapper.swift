@@ -647,49 +647,6 @@ enum BreezSDKMapper {
         return currencyInfoList.map { v -> [String: Any?] in dictionaryOf(currencyInfo: v) }
     }
 
-    static func asFetchOnchainLimitsResponse(fetchOnchainLimitsResponse: [String: Any?]) throws -> FetchOnchainLimitsResponse {
-        guard let minSat = fetchOnchainLimitsResponse["minSat"] as? UInt64 else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "minSat", typeName: "FetchOnchainLimitsResponse"))
-        }
-        guard let maxSat = fetchOnchainLimitsResponse["maxSat"] as? UInt64 else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "maxSat", typeName: "FetchOnchainLimitsResponse"))
-        }
-        guard let feesHash = fetchOnchainLimitsResponse["feesHash"] as? String else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "feesHash", typeName: "FetchOnchainLimitsResponse"))
-        }
-
-        return FetchOnchainLimitsResponse(
-            minSat: minSat,
-            maxSat: maxSat,
-            feesHash: feesHash
-        )
-    }
-
-    static func dictionaryOf(fetchOnchainLimitsResponse: FetchOnchainLimitsResponse) -> [String: Any?] {
-        return [
-            "minSat": fetchOnchainLimitsResponse.minSat,
-            "maxSat": fetchOnchainLimitsResponse.maxSat,
-            "feesHash": fetchOnchainLimitsResponse.feesHash,
-        ]
-    }
-
-    static func asFetchOnchainLimitsResponseList(arr: [Any]) throws -> [FetchOnchainLimitsResponse] {
-        var list = [FetchOnchainLimitsResponse]()
-        for value in arr {
-            if let val = value as? [String: Any?] {
-                var fetchOnchainLimitsResponse = try asFetchOnchainLimitsResponse(fetchOnchainLimitsResponse: val)
-                list.append(fetchOnchainLimitsResponse)
-            } else {
-                throw SdkError.Generic(message: errUnexpectedType(typeName: "FetchOnchainLimitsResponse"))
-            }
-        }
-        return list
-    }
-
-    static func arrayOf(fetchOnchainLimitsResponseList: [FetchOnchainLimitsResponse]) -> [Any] {
-        return fetchOnchainLimitsResponseList.map { v -> [String: Any?] in dictionaryOf(fetchOnchainLimitsResponse: v) }
-    }
-
     static func asFiatCurrency(fiatCurrency: [String: Any?]) throws -> FiatCurrency {
         guard let id = fiatCurrency["id"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "id", typeName: "FiatCurrency"))
@@ -2028,6 +1985,49 @@ enum BreezSDKMapper {
 
     static func arrayOf(nodeStateList: [NodeState]) -> [Any] {
         return nodeStateList.map { v -> [String: Any?] in dictionaryOf(nodeState: v) }
+    }
+
+    static func asOnchainPaymentLimitsResponse(onchainPaymentLimitsResponse: [String: Any?]) throws -> OnchainPaymentLimitsResponse {
+        guard let minSat = onchainPaymentLimitsResponse["minSat"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "minSat", typeName: "OnchainPaymentLimitsResponse"))
+        }
+        guard let maxSat = onchainPaymentLimitsResponse["maxSat"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "maxSat", typeName: "OnchainPaymentLimitsResponse"))
+        }
+        guard let feesHash = onchainPaymentLimitsResponse["feesHash"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "feesHash", typeName: "OnchainPaymentLimitsResponse"))
+        }
+
+        return OnchainPaymentLimitsResponse(
+            minSat: minSat,
+            maxSat: maxSat,
+            feesHash: feesHash
+        )
+    }
+
+    static func dictionaryOf(onchainPaymentLimitsResponse: OnchainPaymentLimitsResponse) -> [String: Any?] {
+        return [
+            "minSat": onchainPaymentLimitsResponse.minSat,
+            "maxSat": onchainPaymentLimitsResponse.maxSat,
+            "feesHash": onchainPaymentLimitsResponse.feesHash,
+        ]
+    }
+
+    static func asOnchainPaymentLimitsResponseList(arr: [Any]) throws -> [OnchainPaymentLimitsResponse] {
+        var list = [OnchainPaymentLimitsResponse]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var onchainPaymentLimitsResponse = try asOnchainPaymentLimitsResponse(onchainPaymentLimitsResponse: val)
+                list.append(onchainPaymentLimitsResponse)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "OnchainPaymentLimitsResponse"))
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(onchainPaymentLimitsResponseList: [OnchainPaymentLimitsResponse]) -> [Any] {
+        return onchainPaymentLimitsResponseList.map { v -> [String: Any?] in dictionaryOf(onchainPaymentLimitsResponse: v) }
     }
 
     static func asOpenChannelFeeRequest(openChannelFeeRequest: [String: Any?]) throws -> OpenChannelFeeRequest {

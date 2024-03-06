@@ -102,12 +102,6 @@ export type CurrencyInfo = {
     localeOverrides?: LocaleOverrides[]
 }
 
-export type FetchOnchainLimitsResponse = {
-    minSat: number
-    maxSat: number
-    feesHash: string
-}
-
 export type FiatCurrency = {
     id: string
     info: CurrencyInfo
@@ -288,6 +282,12 @@ export type NodeState = {
     maxChanReserveMsats: number
     connectedPeers: string[]
     inboundLiquidityMsats: number
+}
+
+export type OnchainPaymentLimitsResponse = {
+    minSat: number
+    maxSat: number
+    feesHash: string
 }
 
 export type OpenChannelFeeRequest = {
@@ -1055,8 +1055,8 @@ export const fetchReverseSwapFees = async (req: ReverseSwapFeesRequest): Promise
     return response
 }
 
-export const fetchOnchainLimits = async (): Promise<FetchOnchainLimitsResponse> => {
-    const response = await BreezSDK.fetchOnchainLimits()
+export const onchainPaymentLimits = async (): Promise<OnchainPaymentLimitsResponse> => {
+    const response = await BreezSDK.onchainPaymentLimits()
     return response
 }
 
