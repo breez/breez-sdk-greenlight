@@ -1,7 +1,6 @@
 package com.breez.breez_sdk
 
 import breez_sdk.LogEntry
-import breez_sdk_notification.LogHelper
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
@@ -23,7 +22,7 @@ class BreezSDKPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
         channel.setMethodCallHandler(this)
 
         eventChannel = EventChannel(flutterPluginBinding.binaryMessenger, "breez_sdk_node_logs")
-        val nodeLogStream = LogHelper.initializeNodeLogStream()
+        val nodeLogStream = SdkLogInitializer.initializeNodeLogStream()
         nodeLogStream.subscribe(scope) { l: LogEntry ->
             val data = mapOf("level" to l.level, "line" to l.line)
             eventSink?.success(data)
@@ -40,7 +39,7 @@ class BreezSDKPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-        LogHelper.unsubscribeNodeLogStream(scope)
+        SdkLogInitializer.unsubscribeNodeLogStream(scope)
         channel.setMethodCallHandler(null)
     }
 
