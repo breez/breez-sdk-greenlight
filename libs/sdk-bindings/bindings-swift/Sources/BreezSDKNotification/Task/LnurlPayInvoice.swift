@@ -1,4 +1,5 @@
 import UserNotifications
+import BreezSDK
 import Foundation
 
 struct LnurlInvoiceRequest: Codable {
@@ -31,7 +32,7 @@ class LnurlPayInvoiceTask : LnurlPayTask {
             lnurlInvoiceRequest = try JSONDecoder().decode(LnurlInvoiceRequest.self, from: self.payload.data(using: .utf8)!)
         } catch let e {
             self.logger.log(tag: TAG, line: "failed to decode payload: \(e)", level: "ERROR")
-            self.displayPushNotification(title: self.failNotificationTitle)
+            self.displayPushNotification(title: self.failNotificationTitle, logger: self.logger)
             throw e
         }
         
