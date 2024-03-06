@@ -7,10 +7,10 @@ class ReceivePaymentTask : TaskProtocol {
     internal var payload: String
     internal var contentHandler: ((UNNotificationContent) -> Void)?
     internal var bestAttemptContent: UNMutableNotificationContent?
-    internal var logger: LogStream?
+    internal var logger: ServiceLogger
     internal var receivedPayment: Payment? = nil
     
-    init(payload: String, logger: LogStream?, contentHandler: ((UNNotificationContent) -> Void)? = nil, bestAttemptContent: UNMutableNotificationContent? = nil) {
+    init(payload: String, logger: ServiceLogger, contentHandler: ((UNNotificationContent) -> Void)? = nil, bestAttemptContent: UNMutableNotificationContent? = nil) {
         self.payload = payload
         self.contentHandler = contentHandler
         self.bestAttemptContent = bestAttemptContent
@@ -20,11 +20,11 @@ class ReceivePaymentTask : TaskProtocol {
     public func onEvent(e: BreezEvent) {
         switch e {
         case .invoicePaid(details: let details):
-            self.logger?.log(l: LogEntry(tag: TAG, line: "Received payment. Bolt11: \(details.bolt11)\nPayment Hash:\(details.paymentHash)", level: "INFO"))
+            self.logger.log(tag: TAG, line: "Received payment. Bolt11: \(details.bolt11)\nPayment Hash:\(details.paymentHash)", level: "INFO")
             receivedPayment = details.payment
             break
         case .synced:
-            self.logger?.log(l: LogEntry(tag: TAG, line: "got synced event", level: "INFO"))
+            self.logger.log(tag: TAG, line: "got synced event", level: "INFO")
             if self.receivedPayment != nil {
                 self.onShutdown()
             }
