@@ -1,4 +1,5 @@
 import UserNotifications
+import BreezSDK
 import Foundation
 
 class ReceivePaymentTask : TaskProtocol {
@@ -40,6 +41,6 @@ class ReceivePaymentTask : TaskProtocol {
         let successReceivedPayment = ResourceHelper.shared.getString(key: Constants.PAYMENT_RECEIVED_NOTIFICATION_TITLE, validateContains: "%d", fallback: Constants.DEFAULT_PAYMENT_RECEIVED_NOTIFICATION_TITLE)
         let failReceivedPayment = ResourceHelper.shared.getString(key: Constants.LNURL_PAY_NOTIFICATION_FAILURE_TITLE, fallback: Constants.DEFAULT_LNURL_PAY_NOTIFICATION_FAILURE_TITLE)
         let title = self.receivedPayment != nil ? String(format: successReceivedPayment, self.receivedPayment!.amountMsat/1000) : failReceivedPayment
-        self.displayPushNotification(title: title)
+        self.displayPushNotification(title: title, logger: self.logger)
     }
 }

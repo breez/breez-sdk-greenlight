@@ -1,4 +1,5 @@
 import Foundation
+import BreezSDK
 import os.log
 
 #if DEBUG && true
@@ -19,7 +20,7 @@ class ServiceLogger {
     
     func log(tag: String?, line: String, level: String) {
         if let logger = logStream {
-            logger.log(LogEntry(tag: tag, line: line, level: level))
+            logger.log(l: LogEntry(tag: tag, line: line, level: level))
         } else {
             switch(level) {
                 case "ERROR":

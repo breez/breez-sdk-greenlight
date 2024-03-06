@@ -1,4 +1,5 @@
 import UserNotifications
+import BreezSDK
 import Foundation
 
 struct LnurlErrorResponse: Decodable, Encodable {
@@ -33,12 +34,12 @@ class LnurlPayTask : TaskProtocol {
     func start(breezSDK: BlockingBreezServices) throws {}
     
     func onShutdown() {
-        displayPushNotification(title: self.failNotificationTitle)
+        displayPushNotification(title: self.failNotificationTitle, logger: self.logger)
     }
     
     func replyServer(encodable: Encodable, replyURL: String) {
         guard let serverReplyURL = URL(string: replyURL) else {
-            self.displayPushNotification(title: self.failNotificationTitle)
+            self.displayPushNotification(title: self.failNotificationTitle, logger: self.logger)
             return
         }
         var request = URLRequest(url: serverReplyURL)
@@ -48,9 +49,9 @@ class LnurlPayTask : TaskProtocol {
             let statusCode = (response as! HTTPURLResponse).statusCode
             
             if statusCode == 200 {
-                self.displayPushNotification(title: self.successNotifiationTitle)
+                self.displayPushNotification(title: self.successNotifiationTitle, logger: self.logger)
             } else {
-                self.displayPushNotification(title: self.failNotificationTitle)
+                self.displayPushNotification(title: self.failNotificationTitle, logger: self.logger)
                 return
             }
         }
@@ -67,6 +68,6 @@ class LnurlPayTask : TaskProtocol {
             }
             task.resume()
         }
-        self.displayPushNotification(title: self.failNotificationTitle)
+        self.displayPushNotification(title: self.failNotificationTitle, logger: self.logger)
     }
 }
