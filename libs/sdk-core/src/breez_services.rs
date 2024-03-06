@@ -920,9 +920,9 @@ impl BreezServices {
         Ok(self.btc_receive_swapper.refund_swap(req).await?)
     }
 
-    pub async fn onchain_payment_limits(&self) -> SdkResult<FetchOnchainLimitsResponse> {
+    pub async fn onchain_payment_limits(&self) -> SdkResult<OnchainPaymentLimitsResponse> {
         let fee_info = self.btc_send_swapper.fetch_reverse_swap_fees().await?;
-        Ok(FetchOnchainLimitsResponse {
+        Ok(OnchainPaymentLimitsResponse {
             min_sat: fee_info.min,
             max_sat: fee_info.max,
             fees_hash: fee_info.fees_hash,

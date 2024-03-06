@@ -445,7 +445,7 @@ dictionary ReverseSwapFeesRequest {
     u32? claim_tx_feerate = null;
 };
 
-dictionary FetchOnchainLimitsResponse {
+dictionary OnchainPaymentLimitsResponse {
     u64 min_sat;
     u64 max_sat;
     string fees_hash;

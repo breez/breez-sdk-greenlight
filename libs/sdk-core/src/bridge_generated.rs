@@ -63,7 +63,6 @@ use crate::models::Config;
 use crate::models::ConfigureNodeRequest;
 use crate::models::ConnectRequest;
 use crate::models::EnvironmentType;
-use crate::models::FetchOnchainLimitsResponse;
 use crate::models::GreenlightCredentials;
 use crate::models::GreenlightNodeConfig;
 use crate::models::HealthCheckStatus;
@@ -81,6 +80,7 @@ use crate::models::Network;
 use crate::models::NodeConfig;
 use crate::models::NodeCredentials;
 use crate::models::NodeState;
+use crate::models::OnchainPaymentLimitsResponse;
 use crate::models::OpenChannelFeeRequest;
 use crate::models::OpenChannelFeeResponse;
 use crate::models::OpeningFeeParams;
@@ -825,7 +825,7 @@ fn wire_fetch_reverse_swap_fees_impl(
     )
 }
 fn wire_onchain_payment_limits_impl(port_: MessagePort) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, FetchOnchainLimitsResponse, _>(
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, OnchainPaymentLimitsResponse, _>(
         WrapInfo {
             debug_name: "onchain_payment_limits",
             port: Some(port_),
@@ -1212,23 +1212,6 @@ impl support::IntoDart for CurrencyInfo {
 }
 impl support::IntoDartExceptPrimitive for CurrencyInfo {}
 impl rust2dart::IntoIntoDart<CurrencyInfo> for CurrencyInfo {
-    fn into_into_dart(self) -> Self {
-        self
-    }
-}
-
-impl support::IntoDart for FetchOnchainLimitsResponse {
-    fn into_dart(self) -> support::DartAbi {
-        vec![
-            self.min_sat.into_into_dart().into_dart(),
-            self.max_sat.into_into_dart().into_dart(),
-            self.fees_hash.into_into_dart().into_dart(),
-        ]
-        .into_dart()
-    }
-}
-impl support::IntoDartExceptPrimitive for FetchOnchainLimitsResponse {}
-impl rust2dart::IntoIntoDart<FetchOnchainLimitsResponse> for FetchOnchainLimitsResponse {
     fn into_into_dart(self) -> Self {
         self
     }
@@ -1735,6 +1718,23 @@ impl support::IntoDart for NodeState {
 }
 impl support::IntoDartExceptPrimitive for NodeState {}
 impl rust2dart::IntoIntoDart<NodeState> for NodeState {
+    fn into_into_dart(self) -> Self {
+        self
+    }
+}
+
+impl support::IntoDart for OnchainPaymentLimitsResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.min_sat.into_into_dart().into_dart(),
+            self.max_sat.into_into_dart().into_dart(),
+            self.fees_hash.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for OnchainPaymentLimitsResponse {}
+impl rust2dart::IntoIntoDart<OnchainPaymentLimitsResponse> for OnchainPaymentLimitsResponse {
     fn into_into_dart(self) -> Self {
         self
     }

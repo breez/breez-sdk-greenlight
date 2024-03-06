@@ -289,7 +289,7 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kFetchReverseSwapFeesConstMeta;
 
   /// See [BreezServices::onchain_payment_limits]
-  Future<FetchOnchainLimitsResponse> onchainPaymentLimits({dynamic hint});
+  Future<OnchainPaymentLimitsResponse> onchainPaymentLimits({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kOnchainPaymentLimitsConstMeta;
 
@@ -578,18 +578,6 @@ class CurrencyInfo {
 enum EnvironmentType {
   Production,
   Staging,
-}
-
-class FetchOnchainLimitsResponse {
-  final int minSat;
-  final int maxSat;
-  final String feesHash;
-
-  const FetchOnchainLimitsResponse({
-    required this.minSat,
-    required this.maxSat,
-    required this.feesHash,
-  });
 }
 
 /// Wrapper around the [CurrencyInfo] of a fiat currency
@@ -1185,6 +1173,18 @@ class NodeState {
     required this.maxChanReserveMsats,
     required this.connectedPeers,
     required this.inboundLiquidityMsats,
+  });
+}
+
+class OnchainPaymentLimitsResponse {
+  final int minSat;
+  final int maxSat;
+  final String feesHash;
+
+  const OnchainPaymentLimitsResponse({
+    required this.minSat,
+    required this.maxSat,
+    required this.feesHash,
   });
 }
 
@@ -2947,10 +2947,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["req"],
       );
 
-  Future<FetchOnchainLimitsResponse> onchainPaymentLimits({dynamic hint}) {
+  Future<OnchainPaymentLimitsResponse> onchainPaymentLimits({dynamic hint}) {
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_onchain_payment_limits(port_),
-      parseSuccessData: _wire2api_fetch_onchain_limits_response,
+      parseSuccessData: _wire2api_onchain_payment_limits_response,
       parseErrorData: _wire2api_FrbAnyhowException,
       constMeta: kOnchainPaymentLimitsConstMeta,
       argValues: [],
@@ -3315,16 +3315,6 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   double _wire2api_f64(dynamic raw) {
     return raw as double;
-  }
-
-  FetchOnchainLimitsResponse _wire2api_fetch_onchain_limits_response(dynamic raw) {
-    final arr = raw as List<dynamic>;
-    if (arr.length != 3) throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
-    return FetchOnchainLimitsResponse(
-      minSat: _wire2api_u64(arr[0]),
-      maxSat: _wire2api_u64(arr[1]),
-      feesHash: _wire2api_String(arr[2]),
-    );
   }
 
   FiatCurrency _wire2api_fiat_currency(dynamic raw) {
@@ -3726,6 +3716,16 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       maxChanReserveMsats: _wire2api_u64(arr[9]),
       connectedPeers: _wire2api_StringList(arr[10]),
       inboundLiquidityMsats: _wire2api_u64(arr[11]),
+    );
+  }
+
+  OnchainPaymentLimitsResponse _wire2api_onchain_payment_limits_response(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3) throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return OnchainPaymentLimitsResponse(
+      minSat: _wire2api_u64(arr[0]),
+      maxSat: _wire2api_u64(arr[1]),
+      feesHash: _wire2api_String(arr[2]),
     );
   }
 
