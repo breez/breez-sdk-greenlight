@@ -32,11 +32,10 @@ abstract class ForegroundService : SdkForegroundService, Service() {
     private var breezSDK: BlockingBreezServices? = null
     @Suppress("MemberVisibilityCanBePrivate")
     val serviceScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
+    private var logger: LogStream? = null
 
     companion object {
         private const val TAG = "ForegroundService"
-
-        var logger: LogStream? = null
     }
 
     // =========================================================== //
@@ -117,24 +116,28 @@ abstract class ForegroundService : SdkForegroundService, Service() {
                     MESSAGE_TYPE_ADDRESS_TXS_CONFIRMED -> RedeemSwapJob(
                         applicationContext,
                         this,
-                        payload
+                        payload,
+                        logger
                     )
 
                     MESSAGE_TYPE_LNURL_PAY_INFO -> LnurlPayInfoJob(
                         applicationContext,
                         this,
-                        payload
+                        payload,
+                        logger
                     )
 
                     MESSAGE_TYPE_LNURL_PAY_INVOICE -> LnurlPayInvoiceJob(
                         applicationContext,
                         this,
-                        payload
+                        payload,
+                        logger
                     )
 
                     MESSAGE_TYPE_PAYMENT_RECEIVED -> ReceivePaymentJob(
                         applicationContext,
-                        this
+                        this,
+                        logger
                     )
 
                     else -> null
@@ -149,7 +152,7 @@ abstract class ForegroundService : SdkForegroundService, Service() {
             shutdown()
         }) {
             breezSDK ?: run {
-                breezSDK = connectSDK(connectRequest, job)
+                breezSDK = connectSDK(connectRequest, job, logger)
             }
 
             breezSDK?.let {
@@ -163,6 +166,6 @@ abstract class ForegroundService : SdkForegroundService, Service() {
 
     @Suppress("unused")
     fun setLogger(logger: LogStream) {
-        Companion.logger = logger
+        this.logger = logger
     }
 }
