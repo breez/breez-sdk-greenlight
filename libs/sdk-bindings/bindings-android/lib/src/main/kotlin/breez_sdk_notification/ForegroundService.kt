@@ -7,7 +7,6 @@ import android.os.IBinder
 import android.os.Looper
 import breez_sdk.BlockingBreezServices
 import breez_sdk.ConnectRequest
-import breez_sdk.LogEntry
 import breez_sdk.LogStream
 import breez_sdk_notification.BreezSdkConnector.Companion.connectSDK
 import breez_sdk_notification.Constants.MESSAGE_TYPE_ADDRESS_TXS_CONFIRMED
@@ -32,7 +31,7 @@ abstract class ForegroundService : SdkForegroundService, Service() {
     private var breezSDK: BlockingBreezServices? = null
     @Suppress("MemberVisibilityCanBePrivate")
     val serviceScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
-    private var logger: LogStream? = null
+    private var logger: ServiceLogger = ServiceLogger()
 
     companion object {
         private const val TAG = "ForegroundService"
@@ -49,8 +48,8 @@ abstract class ForegroundService : SdkForegroundService, Service() {
     /** Stop the service */
     private val shutdownHandler = Handler(Looper.getMainLooper())
     private val shutdownRunnable: Runnable = Runnable {
-        logger?.log(
-            LogEntry(TAG, "Reached scheduled shutdown...", "DEBUG")
+        logger.log(
+            TAG, "Reached scheduled shutdown...", "DEBUG"
         )
         shutdown()
     }
@@ -61,7 +60,7 @@ abstract class ForegroundService : SdkForegroundService, Service() {
     }
 
     override fun shutdown() {
-        logger?.log(LogEntry(TAG, "Shutting down foreground service", "DEBUG"))
+        logger.log(TAG, "Shutting down foreground service", "DEBUG")
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
@@ -74,12 +73,12 @@ abstract class ForegroundService : SdkForegroundService, Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
         val intentDetails = "[ intent=$intent, flag=$flags, startId=$startId ]"
-        logger?.log(
-            LogEntry(
-                TAG,
-                "Start foreground service from intent $intentDetails",
-                "DEBUG"
-            )
+        logger.log(
+
+            TAG,
+            "Start foreground service from intent $intentDetails",
+            "DEBUG"
+
         )
 
         // Display foreground service notification
@@ -91,11 +90,11 @@ abstract class ForegroundService : SdkForegroundService, Service() {
             getJobFromIntent(intent)?.also { job ->
                 launchSdkConnection(connectRequest, job)
             } ?: run {
-                logger?.log(LogEntry(TAG, "Received invalid data message", "WARN"))
+                logger.log(TAG, "Received invalid data message", "WARN")
                 shutdown()
             }
         } ?: run {
-            logger?.log(LogEntry(TAG, "Missing ConnectRequest", "WARN"))
+            logger.log(TAG, "Missing ConnectRequest", "WARN")
             shutdown()
         }
 
@@ -148,7 +147,7 @@ abstract class ForegroundService : SdkForegroundService, Service() {
 
     private fun launchSdkConnection(connectRequest: ConnectRequest, job: Job) {
         serviceScope.launch(Dispatchers.IO + CoroutineExceptionHandler { _, e ->
-            logger?.log(LogEntry(TAG, "Breez SDK connection failed $e", "ERROR"))
+            logger.log(TAG, "Breez SDK connection failed $e", "ERROR")
             shutdown()
         }) {
             breezSDK ?: run {
@@ -166,6 +165,6 @@ abstract class ForegroundService : SdkForegroundService, Service() {
 
     @Suppress("unused")
     fun setLogger(logger: LogStream) {
-        this.logger = logger
+        this.logger = ServiceLogger(logger)
     }
 }

@@ -3,8 +3,6 @@ package breez_sdk_notification.job
 import android.content.Context
 import breez_sdk.BlockingBreezServices
 import breez_sdk.BreezEvent
-import breez_sdk.LogEntry
-import breez_sdk.LogStream
 import breez_sdk.Payment
 import breez_sdk_notification.Constants.DEFAULT_PAYMENT_RECEIVED_NOTIFICATION_TEXT
 import breez_sdk_notification.Constants.DEFAULT_PAYMENT_RECEIVED_NOTIFICATION_TITLE
@@ -14,11 +12,12 @@ import breez_sdk_notification.Constants.PAYMENT_RECEIVED_NOTIFICATION_TITLE
 import breez_sdk_notification.NotificationHelper.Companion.notifyChannel
 import breez_sdk_notification.ResourceHelper.Companion.getString
 import breez_sdk_notification.SdkForegroundService
+import breez_sdk_notification.ServiceLogger
 
 class ReceivePaymentJob(
     private val context: Context,
     private val fgService: SdkForegroundService,
-    private val logger: LogStream?,
+    private val logger: ServiceLogger,
 ) : Job {
     private var receivedPayment: Payment? = null
 
@@ -29,7 +28,7 @@ class ReceivePaymentJob(
     override fun start(breezSDK: BlockingBreezServices) {}
 
     override fun onEvent(e: BreezEvent) {
-        logger?.log(LogEntry(TAG, "Received event $e", "TRACE"))
+        logger.log(TAG, "Received event $e", "TRACE")
         when (e) {
             is BreezEvent.InvoicePaid -> {
                 val pd = e.details
@@ -42,7 +41,7 @@ class ReceivePaymentJob(
 
             is BreezEvent.Synced -> {
                 receivedPayment?.let {
-                    logger?.log(LogEntry(TAG, "Got synced event for received payment", "INFO"))
+                    logger.log(TAG, "Got synced event for received payment", "INFO")
                     fgService.shutdown()
                 }
             }
@@ -56,13 +55,7 @@ class ReceivePaymentJob(
         paymentHash: String,
         amountMsat: ULong?,
     ) {
-        logger?.log(
-            LogEntry(
-                TAG,
-                "Received payment. Bolt11:${bolt11}\nPayment Hash:${paymentHash}",
-                "INFO"
-            )
-        )
+        logger.log(TAG, "Received payment. Bolt11:${bolt11}\nPayment Hash:${paymentHash}", "INFO")
         val amountSat = (amountMsat ?: ULong.MIN_VALUE) / 1000u
         notifyChannel(
             context,
