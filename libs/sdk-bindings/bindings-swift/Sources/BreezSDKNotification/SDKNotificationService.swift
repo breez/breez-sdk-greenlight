@@ -1,5 +1,4 @@
 import UserNotifications
-import BreezSDK
 import os.log
 
 open class SDKNotificationService: UNNotificationServiceExtension {

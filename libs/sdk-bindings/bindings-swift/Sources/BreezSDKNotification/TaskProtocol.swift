@@ -1,5 +1,4 @@
 import UserNotifications
-import BreezSDK
 
 public protocol TaskProtocol : EventListener {
     var payload: String { get set }
