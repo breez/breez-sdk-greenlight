@@ -1,6 +1,5 @@
 import UserNotifications
 import Foundation
-import XCGLogger
 
 struct LnurlErrorResponse: Decodable, Encodable {
     let status: String
@@ -16,11 +15,11 @@ class LnurlPayTask : TaskProtocol {
     var payload: String
     var contentHandler: ((UNNotificationContent) -> Void)?
     var bestAttemptContent: UNMutableNotificationContent?
-    var logger: XCGLogger
+    var logger: LogStream?
     var successNotifiationTitle: String
     var failNotificationTitle: String
     
-    init(payload: String, logger: XCGLogger, contentHandler: ((UNNotificationContent) -> Void)? = nil, bestAttemptContent: UNMutableNotificationContent? = nil, successNotificationTitle: String, failNotificationTitle: String) {
+    init(payload: String, logger: LogStream?, contentHandler: ((UNNotificationContent) -> Void)? = nil, bestAttemptContent: UNMutableNotificationContent? = nil, successNotificationTitle: String, failNotificationTitle: String) {
         self.payload = payload
         self.contentHandler = contentHandler
         self.bestAttemptContent = bestAttemptContent
@@ -30,7 +29,7 @@ class LnurlPayTask : TaskProtocol {
     }
     
     public func onEvent(e: BreezEvent) {}
-
+    
     func start(breezSDK: BlockingBreezServices) throws {}
     
     func onShutdown() {
@@ -47,7 +46,7 @@ class LnurlPayTask : TaskProtocol {
         request.httpBody = try! JSONEncoder().encode(encodable)
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             let statusCode = (response as! HTTPURLResponse).statusCode
-
+            
             if statusCode == 200 {
                 self.displayPushNotification(title: self.successNotifiationTitle)
             } else {
