@@ -18,7 +18,6 @@ use crate::bitcoin::hashes::{sha256, Hash};
 use crate::bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use crate::bitcoin::{Address, Script};
 use crate::breez_services::BreezServer;
-use crate::error::PayOnchainError;
 use crate::error::SdkResult;
 use crate::fiat::{FiatCurrency, Rate};
 use crate::grpc::{
@@ -32,10 +31,7 @@ use crate::persist::swap::SwapChainInfo;
 use crate::swap_in::error::SwapResult;
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
-use crate::swap_out::reverseswap::BTCSendSwap;
-use crate::{
-    ensure_sdk, LNInvoice, LnUrlErrorData, LnUrlPayRequestData, LnUrlWithdrawRequestData, RouteHint,
-};
+use crate::{LNInvoice, LnUrlErrorData, LnUrlPayRequestData, LnUrlWithdrawRequestData, RouteHint};
 
 pub const SWAP_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60 * 24 * 2; // 2 days
 pub const INVOICE_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60; // 60 minutes
@@ -271,31 +267,39 @@ impl FullReverseSwapInfo {
         }
     }
 
+    pub(crate) fn validate_invoice_amount(
+        &self,
+        expected_amount_msat: u64,
+    ) -> ReverseSwapResult<()> {
+        let inv: crate::lightning_invoice::Bolt11Invoice = self.invoice.parse()?;
+
+        // Validate if received invoice has the same amount as requested by the user
+        let amount_from_invoice_msat = inv.amount_milli_satoshis().unwrap_or_default();
+        match amount_from_invoice_msat == expected_amount_msat {
+            false => Err(ReverseSwapError::UnexpectedInvoiceAmount(anyhow!(
+                "Does not match the request"
+            ))),
+            true => Ok(()),
+        }
+    }
+
     /// Validates the received HODL invoice:
     ///
     /// - checks if amount matches the amount requested by the user
     /// - checks if the payment hash is the same preimage hash (derived from local secret bytes)
     /// included in the create request
-    pub(crate) fn validate_hodl_invoice(&self, amount_req_msat: u64) -> ReverseSwapResult<()> {
-        let inv: crate::lightning_invoice::Bolt11Invoice = self.invoice.parse()?;
+    pub(crate) fn validate_invoice(&self, expected_amount_msat: u64) -> ReverseSwapResult<()> {
+        self.validate_invoice_amount(expected_amount_msat)?;
 
-        // Validate if received invoice has the same amount as requested by the user
-        let amount_from_invoice_msat = inv.amount_milli_satoshis().unwrap_or_default();
-        match amount_from_invoice_msat == amount_req_msat {
-            false => Err(ReverseSwapError::UnexpectedInvoiceAmount(anyhow!(
+        // Validate if received invoice has the same payment hash as the preimage hash in the request
+        let inv: crate::lightning_invoice::Bolt11Invoice = self.invoice.parse()?;
+        let preimage_hash_from_invoice = inv.payment_hash();
+        let preimage_hash_from_req = &self.get_preimage_hash();
+        match preimage_hash_from_invoice == preimage_hash_from_req {
+            false => Err(ReverseSwapError::UnexpectedPaymentHash(anyhow!(
                 "Does not match the request"
             ))),
-            true => {
-                // Validate if received invoice has the same payment hash as the preimage hash in the request
-                let preimage_hash_from_invoice = inv.payment_hash();
-                let preimage_hash_from_req = &self.get_preimage_hash();
-                match preimage_hash_from_invoice == preimage_hash_from_req {
-                    false => Err(ReverseSwapError::UnexpectedPaymentHash(anyhow!(
-                        "Does not match the request"
-                    ))),
-                    true => Ok(()),
-                }
-            }
+            true => Ok(()),
         }
     }
 
@@ -1030,34 +1034,6 @@ pub struct PrepareOnchainPaymentResponse {
     pub receive_amount_sat: u64,
     pub total_fees: u64,
 }
-
-impl PrepareOnchainPaymentResponse {
-    pub(crate) fn validate_against_fresh_fees_info(
-        self,
-        fee_info: ReverseSwapPairInfo,
-    ) -> Result<PrepareOnchainPaymentResponseValidated, PayOnchainError> {
-        BTCSendSwap::validate_claim_tx_fee(self.fees_claim)?;
-
-        ensure_sdk!(
-            self.send_amount_sat > self.receive_amount_sat,
-            PayOnchainError::generic("Send amount must be bigger than receive amount")
-        );
-
-        ensure_sdk!(
-            fee_info.fees_hash == self.fees_hash,
-            PayOnchainError::FeePromiseChanged
-        );
-
-        let is_send_in_range =
-            self.send_amount_sat >= fee_info.min && self.send_amount_sat <= fee_info.max;
-        ensure_sdk!(is_send_in_range, PayOnchainError::OutOfRange);
-
-        Ok(PrepareOnchainPaymentResponseValidated(self))
-    }
-}
-
-#[derive(Clone)]
-pub struct PrepareOnchainPaymentResponseValidated(pub(crate) PrepareOnchainPaymentResponse);
 
 #[derive(Clone)]
 pub struct PayOnchainRequest {
