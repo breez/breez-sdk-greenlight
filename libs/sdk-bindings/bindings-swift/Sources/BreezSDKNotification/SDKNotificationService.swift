@@ -1,4 +1,5 @@
 import UserNotifications
+import BreezSDK
 import os.log
 
 open class SDKNotificationService: UNNotificationServiceExtension {
@@ -9,6 +10,14 @@ open class SDKNotificationService: UNNotificationServiceExtension {
     var bestAttemptContent: UNMutableNotificationContent?
     var currentTask: TaskProtocol?
     var logger: ServiceLogger
+    
+    init(breezSDK: BlockingBreezServices? = nil, contentHandler: ((UNNotificationContent) -> Void)? = nil, bestAttemptContent: UNMutableNotificationContent? = nil, currentTask: (any TaskProtocol)? = nil, logger: ServiceLogger) {
+        self.breezSDK = breezSDK
+        self.contentHandler = contentHandler
+        self.bestAttemptContent = bestAttemptContent
+        self.currentTask = currentTask
+        self.logger = logger
+    }
     
     override open func didReceive(
         _ request: UNNotificationRequest,
@@ -28,15 +37,15 @@ open class SDKNotificationService: UNNotificationServiceExtension {
         if let currentTask = self.getTaskFromNotification() {
             self.currentTask = currentTask
             
-            DispatchQueue.main.async {
+            DispatchQueue.main.async { [self] in
                 do {
-                    self.logger.log(tag: TAG, line: "Breez SDK is not connected, connecting...", level: "INFO")
-                    self.breezSDK = try BreezSDKConnector.register(connectRequest: connectRequest, logger: self.logger.logStream, listener: currentTask)
-                    self.logger.log(tag: TAG, line: "Breez SDK connected successfully", level: "INFO")
-                    try currentTask.start(breezSDK: self.breezSDK!)
+                    logger.log(tag: TAG, line: "Breez SDK is not connected, connecting...", level: "INFO")
+                    breezSDK = try BreezSDKConnector.register(connectRequest: connectRequest, logger: logger.logStream, listener: currentTask)
+                    logger.log(tag: TAG, line: "Breez SDK connected successfully", level: "INFO")
+                    try currentTask.start(breezSDK: breezSDK!)
                 } catch {
-                    self.logger.log(tag: TAG, line: "Breez SDK connection failed \(error)", level: "ERROR")
-                    self.shutdown()
+                    logger.log(tag: TAG, line: "Breez SDK connection failed \(error)", level: "ERROR")
+                    shutdown()
                 }
             }
         }
@@ -86,9 +95,5 @@ open class SDKNotificationService: UNNotificationServiceExtension {
         BreezSDKConnector.unregister()
         self.logger.log(tag: TAG, line: "task unregistered", level: "INFO")
         self.currentTask?.onShutdown()
-    }
-    
-    func setLogger(logger: LogStream) {
-        self.logger = ServiceLogger(logger)
     }
 }

@@ -1,20 +1,18 @@
 import UserNotifications
+import BreezSDK
 
 public protocol TaskProtocol : EventListener {
-    fileprivate let TAG = "TaskProtocol"
-    
     var payload: String { get set }
     var contentHandler: ((UNNotificationContent) -> Void)? { get set }
     var bestAttemptContent: UNMutableNotificationContent? { get set }
-    var logger: LogStream? { get set }
     
     func start(breezSDK: BlockingBreezServices) throws
     func onShutdown()
 }
 
 extension TaskProtocol {
-    func displayPushNotification(title: String) {
-        self.logger.log(tag: TAG,"displayPushNotification \(title)", level: "INFO")
+    func displayPushNotification(title: String, logger: ServiceLogger) {
+        logger.log(tag: nil, line:"displayPushNotification \(title)", level: "INFO")
         guard
             let contentHandler = contentHandler,
             let bestAttemptContent = bestAttemptContent

@@ -1,4 +1,5 @@
 import Foundation
+import BreezSDK
 import os.log
 
 #if DEBUG && true
