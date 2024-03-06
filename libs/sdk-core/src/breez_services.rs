@@ -948,6 +948,10 @@ impl BreezServices {
         BTCSendSwap::validate_claim_tx_fee(fees_claim)?;
 
         let fee_info = self.btc_send_swapper.fetch_reverse_swap_fees().await?;
+        ensure_sdk!(
+            fee_info.fees_hash == req.fees_hash,
+            PayOnchainError::FeePromiseChanged
+        );
 
         // Calculate (send_amt, recv_amt) from the inputs and fees
         let fees_lockup = fee_info.fees_lockup;
