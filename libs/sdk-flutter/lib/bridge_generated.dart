@@ -1020,12 +1020,10 @@ class LocalizedName {
 
 /// Internal SDK log entry
 class LogEntry {
-  final String? tag;
   final String line;
   final String level;
 
   const LogEntry({
-    this.tag,
     required this.line,
     required this.level,
   });
@@ -3493,11 +3491,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   LogEntry _wire2api_log_entry(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 3) throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
     return LogEntry(
-      tag: _wire2api_opt_String(arr[0]),
-      line: _wire2api_String(arr[1]),
-      level: _wire2api_String(arr[2]),
+      line: _wire2api_String(arr[0]),
+      level: _wire2api_String(arr[1]),
     );
   }
 
