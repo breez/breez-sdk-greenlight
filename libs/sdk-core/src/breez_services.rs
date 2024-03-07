@@ -932,13 +932,9 @@ impl BreezServices {
     ///
     /// ### Errors
     ///
-    /// - `FeePromiseChanged`: This indicates the fee promise used in the argument is no longer valid.
-    /// Please use `onchain_payment_limits` to get the new fee promise. Note that the returned limits
-    /// (`min_sat` and `max_sat`) may have also changed, so make sure to use these new values when
-    /// validating user input.
-    ///
     /// - `OutOfRange`: This indicates the send amount is outside the range of minimum and maximum
-    /// values returned by `onchain_payment_limits`.
+    /// values returned by `onchain_payment_limits`. When you get this error, please first call
+    /// `onchain_payment_limits` to get the new limits, before calling this method again.
     pub async fn prepare_onchain_payment(
         &self,
         req: PrepareOnchainPaymentRequest,
