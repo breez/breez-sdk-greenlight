@@ -437,7 +437,7 @@ class BreezSDK {
   /// Lookup the most recent reverse swap pair info using the Boltz API
   @Deprecated(
     'Use prepareOnchainPayment instead. '
-    'This method was deprecated after v0.3.1',
+    'This method was deprecated after v0.3.2',
   )
   Future<ReverseSwapPairInfo> fetchReverseSwapFees({
     required ReverseSwapFeesRequest req,
