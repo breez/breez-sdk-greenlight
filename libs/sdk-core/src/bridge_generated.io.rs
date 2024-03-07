@@ -214,6 +214,11 @@ pub extern "C" fn wire_send_onchain(port_: i64, req: *mut wire_SendOnchainReques
 }
 
 #[no_mangle]
+pub extern "C" fn wire_pay_onchain(port_: i64, req: *mut wire_PayOnchainRequest) {
+    wire_pay_onchain_impl(port_, req)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_receive_onchain(port_: i64, req: *mut wire_ReceiveOnchainRequest) {
     wire_receive_onchain_impl(port_, req)
 }
@@ -279,6 +284,19 @@ pub extern "C" fn wire_open_channel_fee(port_: i64, req: *mut wire_OpenChannelFe
 #[no_mangle]
 pub extern "C" fn wire_fetch_reverse_swap_fees(port_: i64, req: *mut wire_ReverseSwapFeesRequest) {
     wire_fetch_reverse_swap_fees_impl(port_, req)
+}
+
+#[no_mangle]
+pub extern "C" fn wire_onchain_payment_limits(port_: i64) {
+    wire_onchain_payment_limits_impl(port_)
+}
+
+#[no_mangle]
+pub extern "C" fn wire_prepare_onchain_payment(
+    port_: i64,
+    req: *mut wire_PrepareOnchainPaymentRequest,
+) {
+    wire_prepare_onchain_payment_impl(port_, req)
 }
 
 #[no_mangle]
@@ -366,6 +384,17 @@ pub extern "C" fn new_box_autoadd_open_channel_fee_request_0() -> *mut wire_Open
 #[no_mangle]
 pub extern "C" fn new_box_autoadd_opening_fee_params_0() -> *mut wire_OpeningFeeParams {
     support::new_leak_box_ptr(wire_OpeningFeeParams::new_with_null_ptr())
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_autoadd_pay_onchain_request_0() -> *mut wire_PayOnchainRequest {
+    support::new_leak_box_ptr(wire_PayOnchainRequest::new_with_null_ptr())
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_autoadd_prepare_onchain_payment_request_0(
+) -> *mut wire_PrepareOnchainPaymentRequest {
+    support::new_leak_box_ptr(wire_PrepareOnchainPaymentRequest::new_with_null_ptr())
 }
 
 #[no_mangle]
@@ -586,6 +615,18 @@ impl Wire2Api<OpeningFeeParams> for *mut wire_OpeningFeeParams {
     fn wire2api(self) -> OpeningFeeParams {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
         Wire2Api::<OpeningFeeParams>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<PayOnchainRequest> for *mut wire_PayOnchainRequest {
+    fn wire2api(self) -> PayOnchainRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<PayOnchainRequest>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<PrepareOnchainPaymentRequest> for *mut wire_PrepareOnchainPaymentRequest {
+    fn wire2api(self) -> PrepareOnchainPaymentRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<PrepareOnchainPaymentRequest>::wire2api(*wrap).into()
     }
 }
 impl Wire2Api<PrepareRedeemOnchainFundsRequest> for *mut wire_PrepareRedeemOnchainFundsRequest {
@@ -887,6 +928,37 @@ impl Wire2Api<OpeningFeeParams> for wire_OpeningFeeParams {
     }
 }
 
+impl Wire2Api<PayOnchainRequest> for wire_PayOnchainRequest {
+    fn wire2api(self) -> PayOnchainRequest {
+        PayOnchainRequest {
+            recipient_address: self.recipient_address.wire2api(),
+            prepare_res: self.prepare_res.wire2api(),
+        }
+    }
+}
+
+impl Wire2Api<PrepareOnchainPaymentRequest> for wire_PrepareOnchainPaymentRequest {
+    fn wire2api(self) -> PrepareOnchainPaymentRequest {
+        PrepareOnchainPaymentRequest {
+            amount_sat: self.amount_sat.wire2api(),
+            amount_type: self.amount_type.wire2api(),
+            claim_tx_feerate: self.claim_tx_feerate.wire2api(),
+        }
+    }
+}
+impl Wire2Api<PrepareOnchainPaymentResponse> for wire_PrepareOnchainPaymentResponse {
+    fn wire2api(self) -> PrepareOnchainPaymentResponse {
+        PrepareOnchainPaymentResponse {
+            fees_hash: self.fees_hash.wire2api(),
+            fees_percentage: self.fees_percentage.wire2api(),
+            fees_lockup: self.fees_lockup.wire2api(),
+            fees_claim: self.fees_claim.wire2api(),
+            sender_amount_sat: self.sender_amount_sat.wire2api(),
+            recipient_amount_sat: self.recipient_amount_sat.wire2api(),
+            total_fees: self.total_fees.wire2api(),
+        }
+    }
+}
 impl Wire2Api<PrepareRedeemOnchainFundsRequest> for wire_PrepareRedeemOnchainFundsRequest {
     fn wire2api(self) -> PrepareRedeemOnchainFundsRequest {
         PrepareRedeemOnchainFundsRequest {
@@ -1012,6 +1084,7 @@ impl Wire2Api<StaticBackupRequest> for wire_StaticBackupRequest {
         }
     }
 }
+
 impl Wire2Api<TlvEntry> for wire_TlvEntry {
     fn wire2api(self) -> TlvEntry {
         TlvEntry {
@@ -1193,6 +1266,33 @@ pub struct wire_OpeningFeeParams {
     max_idle_time: u32,
     max_client_to_self_delay: u32,
     promise: *mut wire_uint_8_list,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_PayOnchainRequest {
+    recipient_address: *mut wire_uint_8_list,
+    prepare_res: wire_PrepareOnchainPaymentResponse,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_PrepareOnchainPaymentRequest {
+    amount_sat: u64,
+    amount_type: i32,
+    claim_tx_feerate: u32,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_PrepareOnchainPaymentResponse {
+    fees_hash: *mut wire_uint_8_list,
+    fees_percentage: f64,
+    fees_lockup: u64,
+    fees_claim: u64,
+    sender_amount_sat: u64,
+    recipient_amount_sat: u64,
+    total_fees: u64,
 }
 
 #[repr(C)]
@@ -1645,6 +1745,57 @@ impl NewWithNullPtr for wire_OpeningFeeParams {
 }
 
 impl Default for wire_OpeningFeeParams {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_PayOnchainRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            recipient_address: core::ptr::null_mut(),
+            prepare_res: Default::default(),
+        }
+    }
+}
+
+impl Default for wire_PayOnchainRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_PrepareOnchainPaymentRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            amount_sat: Default::default(),
+            amount_type: Default::default(),
+            claim_tx_feerate: Default::default(),
+        }
+    }
+}
+
+impl Default for wire_PrepareOnchainPaymentRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_PrepareOnchainPaymentResponse {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            fees_hash: core::ptr::null_mut(),
+            fees_percentage: Default::default(),
+            fees_lockup: Default::default(),
+            fees_claim: Default::default(),
+            sender_amount_sat: Default::default(),
+            recipient_amount_sat: Default::default(),
+            total_fees: Default::default(),
+        }
+    }
+}
+
+impl Default for wire_PrepareOnchainPaymentResponse {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }

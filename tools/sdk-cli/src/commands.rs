@@ -133,6 +133,41 @@ pub(crate) enum Commands {
     /// [swap-out] Get the current blocking in-progress reverse swaps, if any exist
     InProgressReverseSwaps {},
 
+    /// [swap-out-v2] The min-max range supported by Boltz at the moment
+    OnchainPaymentLimits {},
+
+    /// [swap-out-v2] Prepares, but does not initiate, a reverse swap payment
+    PrepareOnchainPayment {
+        /// Depending on `is_send`, this may be the desired send amount or the desired receive amount.
+        #[clap(name = "amount_sat", short = 'a', long = "amt")]
+        amount_sat: u64,
+
+        /// If set, the amount is the desired send amount. Otherwise, it is the desired receive amount.
+        #[clap(name = "is-send", short = 's', long = "is-send")]
+        is_send: bool,
+
+        /// The claim tx feerate
+        #[clap(name = "claim_tx_feerate", short = 'f', long = "feerate")]
+        claim_tx_feerate: u32,
+    },
+
+    /// [swap-out-v2] Prepares and initiates a reverse swap payment
+    PayOnchain {
+        /// Depending on `is_send`, this may be the desired send amount or the desired receive amount.
+        #[clap(name = "amount_sat", short = 'a', long = "amt")]
+        amount_sat: u64,
+
+        /// If set, the amount is the desired send amount. Otherwise, it is the desired receive amount.
+        #[clap(name = "is-send", short = 's', long = "is-send")]
+        is_send: bool,
+
+        /// The claim tx feerate
+        #[clap(name = "claim_tx_feerate", short = 'f', long = "feerate")]
+        claim_tx_feerate: u32,
+
+        recipient_address: String,
+    },
+
     /// [sign] Sign a message with the node's private key
     SignMessage { message: String },
 

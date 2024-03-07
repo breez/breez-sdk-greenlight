@@ -1807,6 +1807,43 @@ fun asNodeStateList(arr: ReadableArray): List<NodeState> {
     return list
 }
 
+fun asOnchainPaymentLimitsResponse(onchainPaymentLimitsResponse: ReadableMap): OnchainPaymentLimitsResponse? {
+    if (!validateMandatoryFields(
+            onchainPaymentLimitsResponse,
+            arrayOf(
+                "minSat",
+                "maxSat",
+            ),
+        )
+    ) {
+        return null
+    }
+    val minSat = onchainPaymentLimitsResponse.getDouble("minSat").toULong()
+    val maxSat = onchainPaymentLimitsResponse.getDouble("maxSat").toULong()
+    return OnchainPaymentLimitsResponse(
+        minSat,
+        maxSat,
+    )
+}
+
+fun readableMapOf(onchainPaymentLimitsResponse: OnchainPaymentLimitsResponse): ReadableMap {
+    return readableMapOf(
+        "minSat" to onchainPaymentLimitsResponse.minSat,
+        "maxSat" to onchainPaymentLimitsResponse.maxSat,
+    )
+}
+
+fun asOnchainPaymentLimitsResponseList(arr: ReadableArray): List<OnchainPaymentLimitsResponse> {
+    val list = ArrayList<OnchainPaymentLimitsResponse>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asOnchainPaymentLimitsResponse(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
 fun asOpenChannelFeeRequest(openChannelFeeRequest: ReadableMap): OpenChannelFeeRequest? {
     if (!validateMandatoryFields(
             openChannelFeeRequest,
@@ -1972,6 +2009,76 @@ fun asOpeningFeeParamsMenuList(arr: ReadableArray): List<OpeningFeeParamsMenu> {
     return list
 }
 
+fun asPayOnchainRequest(payOnchainRequest: ReadableMap): PayOnchainRequest? {
+    if (!validateMandatoryFields(
+            payOnchainRequest,
+            arrayOf(
+                "recipientAddress",
+                "prepareRes",
+            ),
+        )
+    ) {
+        return null
+    }
+    val recipientAddress = payOnchainRequest.getString("recipientAddress")!!
+    val prepareRes = payOnchainRequest.getMap("prepareRes")?.let { asPrepareOnchainPaymentResponse(it) }!!
+    return PayOnchainRequest(
+        recipientAddress,
+        prepareRes,
+    )
+}
+
+fun readableMapOf(payOnchainRequest: PayOnchainRequest): ReadableMap {
+    return readableMapOf(
+        "recipientAddress" to payOnchainRequest.recipientAddress,
+        "prepareRes" to readableMapOf(payOnchainRequest.prepareRes),
+    )
+}
+
+fun asPayOnchainRequestList(arr: ReadableArray): List<PayOnchainRequest> {
+    val list = ArrayList<PayOnchainRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asPayOnchainRequest(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
+fun asPayOnchainResponse(payOnchainResponse: ReadableMap): PayOnchainResponse? {
+    if (!validateMandatoryFields(
+            payOnchainResponse,
+            arrayOf(
+                "reverseSwapInfo",
+            ),
+        )
+    ) {
+        return null
+    }
+    val reverseSwapInfo = payOnchainResponse.getMap("reverseSwapInfo")?.let { asReverseSwapInfo(it) }!!
+    return PayOnchainResponse(
+        reverseSwapInfo,
+    )
+}
+
+fun readableMapOf(payOnchainResponse: PayOnchainResponse): ReadableMap {
+    return readableMapOf(
+        "reverseSwapInfo" to readableMapOf(payOnchainResponse.reverseSwapInfo),
+    )
+}
+
+fun asPayOnchainResponseList(arr: ReadableArray): List<PayOnchainResponse> {
+    val list = ArrayList<PayOnchainResponse>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asPayOnchainResponse(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
 fun asPayment(payment: ReadableMap): Payment? {
     if (!validateMandatoryFields(
             payment,
@@ -2072,6 +2179,104 @@ fun asPaymentFailedDataList(arr: ReadableArray): List<PaymentFailedData> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asPaymentFailedData(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
+fun asPrepareOnchainPaymentRequest(prepareOnchainPaymentRequest: ReadableMap): PrepareOnchainPaymentRequest? {
+    if (!validateMandatoryFields(
+            prepareOnchainPaymentRequest,
+            arrayOf(
+                "amountSat",
+                "amountType",
+                "claimTxFeerate",
+            ),
+        )
+    ) {
+        return null
+    }
+    val amountSat = prepareOnchainPaymentRequest.getDouble("amountSat").toULong()
+    val amountType = prepareOnchainPaymentRequest.getString("amountType")?.let { asSwapAmountType(it) }!!
+    val claimTxFeerate = prepareOnchainPaymentRequest.getInt("claimTxFeerate").toUInt()
+    return PrepareOnchainPaymentRequest(
+        amountSat,
+        amountType,
+        claimTxFeerate,
+    )
+}
+
+fun readableMapOf(prepareOnchainPaymentRequest: PrepareOnchainPaymentRequest): ReadableMap {
+    return readableMapOf(
+        "amountSat" to prepareOnchainPaymentRequest.amountSat,
+        "amountType" to prepareOnchainPaymentRequest.amountType.name.lowercase(),
+        "claimTxFeerate" to prepareOnchainPaymentRequest.claimTxFeerate,
+    )
+}
+
+fun asPrepareOnchainPaymentRequestList(arr: ReadableArray): List<PrepareOnchainPaymentRequest> {
+    val list = ArrayList<PrepareOnchainPaymentRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asPrepareOnchainPaymentRequest(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
+fun asPrepareOnchainPaymentResponse(prepareOnchainPaymentResponse: ReadableMap): PrepareOnchainPaymentResponse? {
+    if (!validateMandatoryFields(
+            prepareOnchainPaymentResponse,
+            arrayOf(
+                "feesHash",
+                "feesPercentage",
+                "feesLockup",
+                "feesClaim",
+                "senderAmountSat",
+                "recipientAmountSat",
+                "totalFees",
+            ),
+        )
+    ) {
+        return null
+    }
+    val feesHash = prepareOnchainPaymentResponse.getString("feesHash")!!
+    val feesPercentage = prepareOnchainPaymentResponse.getDouble("feesPercentage")
+    val feesLockup = prepareOnchainPaymentResponse.getDouble("feesLockup").toULong()
+    val feesClaim = prepareOnchainPaymentResponse.getDouble("feesClaim").toULong()
+    val senderAmountSat = prepareOnchainPaymentResponse.getDouble("senderAmountSat").toULong()
+    val recipientAmountSat = prepareOnchainPaymentResponse.getDouble("recipientAmountSat").toULong()
+    val totalFees = prepareOnchainPaymentResponse.getDouble("totalFees").toULong()
+    return PrepareOnchainPaymentResponse(
+        feesHash,
+        feesPercentage,
+        feesLockup,
+        feesClaim,
+        senderAmountSat,
+        recipientAmountSat,
+        totalFees,
+    )
+}
+
+fun readableMapOf(prepareOnchainPaymentResponse: PrepareOnchainPaymentResponse): ReadableMap {
+    return readableMapOf(
+        "feesHash" to prepareOnchainPaymentResponse.feesHash,
+        "feesPercentage" to prepareOnchainPaymentResponse.feesPercentage,
+        "feesLockup" to prepareOnchainPaymentResponse.feesLockup,
+        "feesClaim" to prepareOnchainPaymentResponse.feesClaim,
+        "senderAmountSat" to prepareOnchainPaymentResponse.senderAmountSat,
+        "recipientAmountSat" to prepareOnchainPaymentResponse.recipientAmountSat,
+        "totalFees" to prepareOnchainPaymentResponse.totalFees,
+    )
+}
+
+fun asPrepareOnchainPaymentResponseList(arr: ReadableArray): List<PrepareOnchainPaymentResponse> {
+    val list = ArrayList<PrepareOnchainPaymentResponse>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asPrepareOnchainPaymentResponse(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
         }
     }
@@ -4224,6 +4429,21 @@ fun asSuccessActionProcessedList(arr: ReadableArray): List<SuccessActionProcesse
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asSuccessActionProcessed(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
+fun asSwapAmountType(type: String): SwapAmountType {
+    return SwapAmountType.valueOf(type.uppercase())
+}
+
+fun asSwapAmountTypeList(arr: ReadableArray): List<SwapAmountType> {
+    val list = ArrayList<SwapAmountType>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is String -> list.add(asSwapAmountType(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
         }
     }

@@ -166,8 +166,13 @@ pub struct FullReverseSwapInfo {
     /// The final amount sent will be this value minus the claim tx fees.
     pub onchain_amount_sat: u64,
 
-    /// User-specified feerate for the claim tx
-    pub sat_per_vbyte: u32,
+    /// User-specified feerate for the claim tx.
+    ///
+    /// Used for backward-compatibility with older rev swaps. Superseded by `receive_amount_sat`.
+    pub sat_per_vbyte: Option<u32>,
+
+    /// Amount that will be received onchain in the destination address, at the end of the reverse swap.
+    pub receive_amount_sat: Option<u64>,
 
     pub cache: ReverseSwapInfoCached,
 }
@@ -262,31 +267,39 @@ impl FullReverseSwapInfo {
         }
     }
 
+    pub(crate) fn validate_invoice_amount(
+        &self,
+        expected_amount_msat: u64,
+    ) -> ReverseSwapResult<()> {
+        let inv: crate::lightning_invoice::Bolt11Invoice = self.invoice.parse()?;
+
+        // Validate if received invoice has the same amount as requested by the user
+        let amount_from_invoice_msat = inv.amount_milli_satoshis().unwrap_or_default();
+        match amount_from_invoice_msat == expected_amount_msat {
+            false => Err(ReverseSwapError::UnexpectedInvoiceAmount(anyhow!(
+                "Does not match the request"
+            ))),
+            true => Ok(()),
+        }
+    }
+
     /// Validates the received HODL invoice:
     ///
     /// - checks if amount matches the amount requested by the user
     /// - checks if the payment hash is the same preimage hash (derived from local secret bytes)
     /// included in the create request
-    pub(crate) fn validate_hodl_invoice(&self, amount_req_msat: u64) -> ReverseSwapResult<()> {
-        let inv: crate::lightning_invoice::Bolt11Invoice = self.invoice.parse()?;
+    pub(crate) fn validate_invoice(&self, expected_amount_msat: u64) -> ReverseSwapResult<()> {
+        self.validate_invoice_amount(expected_amount_msat)?;
 
-        // Validate if received invoice has the same amount as requested by the user
-        let amount_from_invoice_msat = inv.amount_milli_satoshis().unwrap_or_default();
-        match amount_from_invoice_msat == amount_req_msat {
-            false => Err(ReverseSwapError::UnexpectedInvoiceAmount(anyhow!(
+        // Validate if received invoice has the same payment hash as the preimage hash in the request
+        let inv: crate::lightning_invoice::Bolt11Invoice = self.invoice.parse()?;
+        let preimage_hash_from_invoice = inv.payment_hash();
+        let preimage_hash_from_req = &self.get_preimage_hash();
+        match preimage_hash_from_invoice == preimage_hash_from_req {
+            false => Err(ReverseSwapError::UnexpectedPaymentHash(anyhow!(
                 "Does not match the request"
             ))),
-            true => {
-                // Validate if received invoice has the same payment hash as the preimage hash in the request
-                let preimage_hash_from_invoice = inv.payment_hash();
-                let preimage_hash_from_req = &self.get_preimage_hash();
-                match preimage_hash_from_invoice == preimage_hash_from_req {
-                    false => Err(ReverseSwapError::UnexpectedPaymentHash(anyhow!(
-                        "Does not match the request"
-                    ))),
-                    true => Ok(()),
-                }
-            }
+            true => Ok(()),
         }
     }
 
@@ -414,14 +427,14 @@ pub(crate) trait ReverseSwapServiceAPI: Send + Sync {
     ///
     /// # Arguments
     ///
-    /// * `amount_sat` - Amount that is to be swapped
+    /// * `send_amount_sat` - Amount that is to be swapped
     /// * `preimage_hash_hex` - Hex of preimage hash
     /// * `claim_pubkey` - Pubkey of a keypair that can allow the SDK to claim the locked funds
     /// * `pair_hash` - The hash of the exchange rate, looked-up before this call
     /// * `routing_node` - Pubkey of a LN node used as routing hint
     async fn create_reverse_swap_on_remote(
         &self,
-        amount_sat: u64,
+        send_amount_sat: u64,
         preimage_hash_hex: String,
         claim_pubkey: String,
         pair_hash: String,
@@ -972,6 +985,7 @@ pub struct RedeemOnchainFundsResponse {
     pub txid: Vec<u8>,
 }
 
+#[derive(Clone)]
 pub struct SendOnchainRequest {
     pub amount_sat: u64,
     pub onchain_recipient_address: String,
@@ -980,6 +994,52 @@ pub struct SendOnchainRequest {
 }
 
 pub struct SendOnchainResponse {
+    pub reverse_swap_info: ReverseSwapInfo,
+}
+
+pub enum SwapAmountType {
+    Send,
+    Receive,
+}
+
+/// See [ReverseSwapFeesRequest]
+pub struct PrepareOnchainPaymentRequest {
+    /// Depending on `amount_type`, this may be the desired send amount or the desired receive amount.
+    pub amount_sat: u64,
+    pub amount_type: SwapAmountType,
+
+    /// Feerate (sat / vByte) for the claim transaction
+    pub claim_tx_feerate: u32,
+}
+
+#[derive(Serialize)]
+pub struct OnchainPaymentLimitsResponse {
+    pub min_sat: u64,
+    pub max_sat: u64,
+}
+
+/// Contains fields describing the reverse swap parameters (see [ReverseSwapPairInfo]), as well as
+/// the resulting send and receive amounts.
+#[derive(Clone, Debug, Serialize)]
+pub struct PrepareOnchainPaymentResponse {
+    pub fees_hash: String,
+    pub fees_percentage: f64,
+    pub fees_lockup: u64,
+    pub fees_claim: u64,
+
+    pub sender_amount_sat: u64,
+    pub recipient_amount_sat: u64,
+    pub total_fees: u64,
+}
+
+#[derive(Clone)]
+pub struct PayOnchainRequest {
+    pub recipient_address: String,
+    pub prepare_res: PrepareOnchainPaymentResponse,
+}
+
+#[derive(Serialize)]
+pub struct PayOnchainResponse {
     pub reverse_swap_info: ReverseSwapInfo,
 }
 

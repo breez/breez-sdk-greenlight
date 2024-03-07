@@ -80,15 +80,20 @@ use crate::models::Network;
 use crate::models::NodeConfig;
 use crate::models::NodeCredentials;
 use crate::models::NodeState;
+use crate::models::OnchainPaymentLimitsResponse;
 use crate::models::OpenChannelFeeRequest;
 use crate::models::OpenChannelFeeResponse;
 use crate::models::OpeningFeeParams;
 use crate::models::OpeningFeeParamsMenu;
+use crate::models::PayOnchainRequest;
+use crate::models::PayOnchainResponse;
 use crate::models::Payment;
 use crate::models::PaymentDetails;
 use crate::models::PaymentStatus;
 use crate::models::PaymentType;
 use crate::models::PaymentTypeFilter;
+use crate::models::PrepareOnchainPaymentRequest;
+use crate::models::PrepareOnchainPaymentResponse;
 use crate::models::PrepareRedeemOnchainFundsRequest;
 use crate::models::PrepareRedeemOnchainFundsResponse;
 use crate::models::PrepareRefundRequest;
@@ -114,6 +119,7 @@ use crate::models::SendSpontaneousPaymentRequest;
 use crate::models::ServiceHealthCheckResponse;
 use crate::models::StaticBackupRequest;
 use crate::models::StaticBackupResponse;
+use crate::models::SwapAmountType;
 use crate::models::SwapInfo;
 use crate::models::SwapStatus;
 use crate::models::TlvEntry;
@@ -630,6 +636,19 @@ fn wire_send_onchain_impl(port_: MessagePort, req: impl Wire2Api<SendOnchainRequ
         },
     )
 }
+fn wire_pay_onchain_impl(port_: MessagePort, req: impl Wire2Api<PayOnchainRequest> + UnwindSafe) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, PayOnchainResponse, _>(
+        WrapInfo {
+            debug_name: "pay_onchain",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_req = req.wire2api();
+            move |task_callback| pay_onchain(api_req)
+        },
+    )
+}
 fn wire_receive_onchain_impl(
     port_: MessagePort,
     req: impl Wire2Api<ReceiveOnchainRequest> + UnwindSafe,
@@ -805,6 +824,32 @@ fn wire_fetch_reverse_swap_fees_impl(
         },
     )
 }
+fn wire_onchain_payment_limits_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, OnchainPaymentLimitsResponse, _>(
+        WrapInfo {
+            debug_name: "onchain_payment_limits",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || move |task_callback| onchain_payment_limits(),
+    )
+}
+fn wire_prepare_onchain_payment_impl(
+    port_: MessagePort,
+    req: impl Wire2Api<PrepareOnchainPaymentRequest> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, PrepareOnchainPaymentResponse, _>(
+        WrapInfo {
+            debug_name: "prepare_onchain_payment",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_req = req.wire2api();
+            move |task_callback| prepare_onchain_payment(api_req)
+        },
+    )
+}
 fn wire_recommended_fees_impl(port_: MessagePort) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, RecommendedFees, _>(
         WrapInfo {
@@ -911,6 +956,16 @@ impl Wire2Api<PaymentTypeFilter> for i32 {
             1 => PaymentTypeFilter::Received,
             2 => PaymentTypeFilter::ClosedChannel,
             _ => unreachable!("Invalid variant for PaymentTypeFilter: {}", self),
+        }
+    }
+}
+
+impl Wire2Api<SwapAmountType> for i32 {
+    fn wire2api(self) -> SwapAmountType {
+        match self {
+            0 => SwapAmountType::Send,
+            1 => SwapAmountType::Receive,
+            _ => unreachable!("Invalid variant for SwapAmountType: {}", self),
         }
     }
 }
@@ -1668,6 +1723,22 @@ impl rust2dart::IntoIntoDart<NodeState> for NodeState {
     }
 }
 
+impl support::IntoDart for OnchainPaymentLimitsResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.min_sat.into_into_dart().into_dart(),
+            self.max_sat.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for OnchainPaymentLimitsResponse {}
+impl rust2dart::IntoIntoDart<OnchainPaymentLimitsResponse> for OnchainPaymentLimitsResponse {
+    fn into_into_dart(self) -> Self {
+        self
+    }
+}
+
 impl support::IntoDart for OpenChannelFeeResponse {
     fn into_dart(self) -> support::DartAbi {
         vec![
@@ -1711,6 +1782,18 @@ impl support::IntoDart for OpeningFeeParamsMenu {
 }
 impl support::IntoDartExceptPrimitive for OpeningFeeParamsMenu {}
 impl rust2dart::IntoIntoDart<OpeningFeeParamsMenu> for OpeningFeeParamsMenu {
+    fn into_into_dart(self) -> Self {
+        self
+    }
+}
+
+impl support::IntoDart for PayOnchainResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.reverse_swap_info.into_into_dart().into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for PayOnchainResponse {}
+impl rust2dart::IntoIntoDart<PayOnchainResponse> for PayOnchainResponse {
     fn into_into_dart(self) -> Self {
         self
     }
@@ -1802,6 +1885,27 @@ impl support::IntoDart for PaymentType {
 }
 impl support::IntoDartExceptPrimitive for PaymentType {}
 impl rust2dart::IntoIntoDart<PaymentType> for PaymentType {
+    fn into_into_dart(self) -> Self {
+        self
+    }
+}
+
+impl support::IntoDart for PrepareOnchainPaymentResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.fees_hash.into_into_dart().into_dart(),
+            self.fees_percentage.into_into_dart().into_dart(),
+            self.fees_lockup.into_into_dart().into_dart(),
+            self.fees_claim.into_into_dart().into_dart(),
+            self.sender_amount_sat.into_into_dart().into_dart(),
+            self.recipient_amount_sat.into_into_dart().into_dart(),
+            self.total_fees.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for PrepareOnchainPaymentResponse {}
+impl rust2dart::IntoIntoDart<PrepareOnchainPaymentResponse> for PrepareOnchainPaymentResponse {
     fn into_into_dart(self) -> Self {
         self
     }

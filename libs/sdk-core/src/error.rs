@@ -634,6 +634,11 @@ pub enum SendOnchainError {
     #[error("Invalid destination address: {err}")]
     InvalidDestinationAddress { err: String },
 
+    /// This error is raised when a reverse swap is attempted with a send amount that is not
+    /// in the [crate::BreezServices::onchain_payment_limits] range.
+    #[error("Send amount is out of range")]
+    OutOfRange,
+
     /// This error is raised when attempting to make a pay the HODL invoice by the node fails.
     #[error("Payment failed: {err}")]
     PaymentFailed { err: String },
@@ -642,13 +647,16 @@ pub enum SendOnchainError {
     #[error("Payment timeout: {err}")]
     PaymentTimeout { err: String },
 
-    /// This error is raised when there is aleady one reverse swap in progress.
-    #[error("Reverse swap in progress: {err}")]
-    ReverseSwapInProgress { err: String },
-
     /// This error is raised when a connection to an external service fails.
     #[error("Service connectivity: {err}")]
     ServiceConnectivity { err: String },
+}
+impl SendOnchainError {
+    pub(crate) fn generic(err: &str) -> Self {
+        Self::Generic {
+            err: err.to_string(),
+        }
+    }
 }
 
 impl From<anyhow::Error> for SendOnchainError {
