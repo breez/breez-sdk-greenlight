@@ -161,6 +161,21 @@ jobs:
           name: bindings-python
           path: libs/sdk-bindings/bindings-python/src/breez_sdk
 
+      - name: Copy VC redistributable DLLs for Windows
+        if: matrix.arch == 'win_amd64'
+        working-directory: libs/sdk-bindings/bindings-python/src/breez_sdk
+        run: |
+          Copy-Item (vswhere -latest -find 'VC\Redist\MSVC\*\x64\*\msvcp140.dll') .
+          Copy-Item (vswhere -latest -find 'VC\Redist\MSVC\*\x64\*\vcruntime140.dll') .
+          Copy-Item (vswhere -latest -find 'VC\Redist\MSVC\*\x64\*\vcruntime140_1.dll') .
+
+      - name: Copy VC redistributable DLLs for Windows
+        if: matrix.arch == 'win32'
+        working-directory: libs/sdk-bindings/bindings-python/src/breez_sdk
+        run: |
+          Copy-Item (vswhere -latest -find 'VC\Redist\MSVC\*\x86\*\msvcp140.dll') .
+          Copy-Item (vswhere -latest -find 'VC\Redist\MSVC\*\x86\*\vcruntime140.dll') .
+
       - name: Update package version
         if: ${{ inputs.package-version }}
         working-directory: libs/sdk-bindings/bindings-python

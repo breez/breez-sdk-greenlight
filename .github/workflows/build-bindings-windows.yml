@@ -60,30 +60,11 @@ jobs:
       working-directory: libs/sdk-bindings
       run: cargo build --release --target ${{ matrix.target }}
 
-    - name: Copy VC redistributables to release directory for Windows
-      if: matrix.target == 'x86_64-pc-windows-msvc'
-      working-directory: libs/target/${{ matrix.target }}/release
-      run: |
-        Copy-Item (vswhere -latest -find 'VC\Redist\MSVC\*\x64\*\msvcp140.dll') .
-        Copy-Item (vswhere -latest -find 'VC\Redist\MSVC\*\x64\*\vcruntime140.dll') .
-        Copy-Item (vswhere -latest -find 'VC\Redist\MSVC\*\x64\*\vcruntime140_1.dll') .
-
-    - name: Copy VC redistributables to release directory for Windows
-      if: matrix.target == 'i686-pc-windows-msvc'
-      working-directory: libs/target/${{ matrix.target }}/release
-      run: |
-        Copy-Item (vswhere -latest -find 'VC\Redist\MSVC\*\x86\*\msvcp140.dll') .
-        Copy-Item (vswhere -latest -find 'VC\Redist\MSVC\*\x86\*\vcruntime140.dll') .
-
     - name: Archive release
       uses: actions/upload-artifact@v3
       with:
         name: sdk-bindings-${{ matrix.target }}
-        path: |
-          libs/target/${{ matrix.target }}/release/breez_sdk_bindings.dll
-          libs/target/${{ matrix.target }}/release/msvcp140.dll
-          libs/target/${{ matrix.target }}/release/vcruntime140.dll
-          libs/target/${{ matrix.target }}/release/vcruntime140_1.dll
+        path: libs/target/${{ matrix.target }}/release/breez_sdk_bindings.dll
 
   build-dummies:
     if: ${{ inputs.use-dummy-binaries }}
@@ -99,9 +80,6 @@ jobs:
       - name: Build dummy windows ${{ matrix.target }}
         run: |
           touch breez_sdk_bindings.dll
-          touch msvcp140.dll
-          touch vcruntime140.dll
-          touch vcruntime140_1.dll
 
       - name: Upload dummy windows ${{ matrix.target }} artifact
         uses: actions/upload-artifact@v3
