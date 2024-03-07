@@ -77,15 +77,6 @@ enum ReceivePaymentError {
 enum SendOnchainError {
     "Generic",
     "InvalidDestinationAddress",
-    "PaymentFailed",
-    "PaymentTimeout",
-    "ServiceConnectivity",
-};
-
-[Error]
-enum PayOnchainError {
-    "Generic",
-    "InvalidDestinationAddress",
     "OutOfRange",
     "PaymentFailed",
     "PaymentTimeout",
@@ -925,7 +916,7 @@ interface BlockingBreezServices {
    [Throws=SdkError]
    OnchainPaymentLimitsResponse onchain_payment_limits();
 
-   [Throws=PayOnchainError]
+   [Throws=SendOnchainError]
    PrepareOnchainPaymentResponse prepare_onchain_payment(PrepareOnchainPaymentRequest req);
 
    [Throws=SdkError]
@@ -937,7 +928,7 @@ interface BlockingBreezServices {
    [Throws=SendOnchainError]
    SendOnchainResponse send_onchain(SendOnchainRequest req);
 
-   [Throws=PayOnchainError]
+   [Throws=SendOnchainError]
    PayOnchainResponse pay_onchain(PayOnchainRequest req);
 
    [Throws=SdkError]

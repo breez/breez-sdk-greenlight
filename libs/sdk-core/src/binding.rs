@@ -22,8 +22,8 @@ use tokio::sync::Mutex;
 use crate::breez_services::{self, BreezEvent, BreezServices, EventListener};
 use crate::chain::RecommendedFees;
 use crate::error::{
-    ConnectError, LnUrlAuthError, LnUrlPayError, LnUrlWithdrawError, PayOnchainError,
-    ReceiveOnchainError, ReceivePaymentError, SdkError, SendOnchainError, SendPaymentError,
+    ConnectError, LnUrlAuthError, LnUrlPayError, LnUrlWithdrawError, ReceiveOnchainError,
+    ReceivePaymentError, SdkError, SendOnchainError, SendPaymentError,
 };
 use crate::fiat::{FiatCurrency, Rate};
 use crate::input_parser::{self, InputType, LnUrlAuthRequestData};
@@ -370,7 +370,7 @@ pub fn send_onchain(req: SendOnchainRequest) -> Result<SendOnchainResponse> {
 /// See [BreezServices::pay_onchain]
 pub fn pay_onchain(req: PayOnchainRequest) -> Result<PayOnchainResponse> {
     block_on(async { get_breez_services().await?.pay_onchain(req).await })
-        .map_err(anyhow::Error::new::<PayOnchainError>)
+        .map_err(anyhow::Error::new::<SendOnchainError>)
 }
 
 /// See [BreezServices::receive_onchain]
@@ -489,7 +489,7 @@ pub fn prepare_onchain_payment(
             .await?
             .prepare_onchain_payment(req)
             .await
-            .map_err(anyhow::Error::new::<PayOnchainError>)
+            .map_err(anyhow::Error::new::<SendOnchainError>)
     })
 }
 
