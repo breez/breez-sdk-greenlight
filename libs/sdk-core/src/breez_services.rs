@@ -932,8 +932,8 @@ impl BreezServices {
     /// ### Errors
     ///
     /// - `OutOfRange`: This indicates the send amount is outside the range of minimum and maximum
-    /// values returned by `onchain_payment_limits`. When you get this error, please first call
-    /// `onchain_payment_limits` to get the new limits, before calling this method again.
+    /// values returned by [BreezServices::onchain_payment_limits]. When you get this error, please first call
+    /// [BreezServices::onchain_payment_limits] to get the new limits, before calling this method again.
     pub async fn prepare_onchain_payment(
         &self,
         req: PrepareOnchainPaymentRequest,
