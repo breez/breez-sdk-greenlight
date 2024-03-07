@@ -332,7 +332,7 @@ class BreezSDK {
     return await _lnToolkit.sendOnchain(req: req);
   }
 
-  Future<PayOnchainResponse> onchainPaymentLimits() async {
+  Future<OnchainPaymentLimitsResponse> onchainPaymentLimits() async {
     return await _lnToolkit.onchainPaymentLimits();
   }
 
