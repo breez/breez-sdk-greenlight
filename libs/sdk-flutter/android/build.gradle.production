@@ -1,5 +1,5 @@
 group 'com.breez.breez_sdk'
-version '0.3.1'
+version '0.3.2'
 
 buildscript {
     ext.kotlin_version = '1.7.10'
