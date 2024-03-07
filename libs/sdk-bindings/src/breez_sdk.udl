@@ -375,7 +375,6 @@ enum FeeratePreset {
 };
 
 dictionary LogEntry {
-    string? tag;
     string line;
     string level;
 };

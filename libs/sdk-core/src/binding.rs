@@ -544,7 +544,6 @@ impl log::Log for BindingLogger {
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
             self.log_stream.add(LogEntry {
-                tag: None,
                 line: record.args().to_string(),
                 level: record.level().as_str().to_string(),
             });
