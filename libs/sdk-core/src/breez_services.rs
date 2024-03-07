@@ -978,8 +978,8 @@ impl BreezServices {
             fees_percentage: p,
             fees_lockup,
             fees_claim,
-            send_amount_sat: send_amt,
-            receive_amount_sat: recv_amt,
+            sender_amount_sat: send_amt,
+            recipient_amount_sat: recv_amt,
             total_fees: send_amt - recv_amt,
         })
     }
@@ -992,7 +992,7 @@ impl BreezServices {
         req: PayOnchainRequest,
     ) -> Result<PayOnchainResponse, SendOnchainError> {
         ensure_sdk!(
-            req.prepare_res.send_amount_sat > req.prepare_res.receive_amount_sat,
+            req.prepare_res.sender_amount_sat > req.prepare_res.recipient_amount_sat,
             SendOnchainError::generic("Send amount must be bigger than receive amount")
         );
 

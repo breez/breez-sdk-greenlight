@@ -1361,8 +1361,8 @@ class PrepareOnchainPaymentResponse {
   final double feesPercentage;
   final int feesLockup;
   final int feesClaim;
-  final int sendAmountSat;
-  final int receiveAmountSat;
+  final int senderAmountSat;
+  final int recipientAmountSat;
   final int totalFees;
 
   const PrepareOnchainPaymentResponse({
@@ -1370,8 +1370,8 @@ class PrepareOnchainPaymentResponse {
     required this.feesPercentage,
     required this.feesLockup,
     required this.feesClaim,
-    required this.sendAmountSat,
-    required this.receiveAmountSat,
+    required this.senderAmountSat,
+    required this.recipientAmountSat,
     required this.totalFees,
   });
 }
@@ -3888,8 +3888,8 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       feesPercentage: _wire2api_f64(arr[1]),
       feesLockup: _wire2api_u64(arr[2]),
       feesClaim: _wire2api_u64(arr[3]),
-      sendAmountSat: _wire2api_u64(arr[4]),
-      receiveAmountSat: _wire2api_u64(arr[5]),
+      senderAmountSat: _wire2api_u64(arr[4]),
+      recipientAmountSat: _wire2api_u64(arr[5]),
       totalFees: _wire2api_u64(arr[6]),
     );
   }
@@ -4864,8 +4864,8 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.fees_percentage = api2wire_f64(apiObj.feesPercentage);
     wireObj.fees_lockup = api2wire_u64(apiObj.feesLockup);
     wireObj.fees_claim = api2wire_u64(apiObj.feesClaim);
-    wireObj.send_amount_sat = api2wire_u64(apiObj.sendAmountSat);
-    wireObj.receive_amount_sat = api2wire_u64(apiObj.receiveAmountSat);
+    wireObj.sender_amount_sat = api2wire_u64(apiObj.senderAmountSat);
+    wireObj.recipient_amount_sat = api2wire_u64(apiObj.recipientAmountSat);
     wireObj.total_fees = api2wire_u64(apiObj.totalFees);
   }
 
@@ -6622,10 +6622,10 @@ final class wire_PrepareOnchainPaymentResponse extends ffi.Struct {
   external int fees_claim;
 
   @ffi.Uint64()
-  external int send_amount_sat;
+  external int sender_amount_sat;
 
   @ffi.Uint64()
-  external int receive_amount_sat;
+  external int recipient_amount_sat;
 
   @ffi.Uint64()
   external int total_fees;

@@ -953,8 +953,8 @@ impl Wire2Api<PrepareOnchainPaymentResponse> for wire_PrepareOnchainPaymentRespo
             fees_percentage: self.fees_percentage.wire2api(),
             fees_lockup: self.fees_lockup.wire2api(),
             fees_claim: self.fees_claim.wire2api(),
-            send_amount_sat: self.send_amount_sat.wire2api(),
-            receive_amount_sat: self.receive_amount_sat.wire2api(),
+            sender_amount_sat: self.sender_amount_sat.wire2api(),
+            recipient_amount_sat: self.recipient_amount_sat.wire2api(),
             total_fees: self.total_fees.wire2api(),
         }
     }
@@ -1290,8 +1290,8 @@ pub struct wire_PrepareOnchainPaymentResponse {
     fees_percentage: f64,
     fees_lockup: u64,
     fees_claim: u64,
-    send_amount_sat: u64,
-    receive_amount_sat: u64,
+    sender_amount_sat: u64,
+    recipient_amount_sat: u64,
     total_fees: u64,
 }
 
@@ -1788,8 +1788,8 @@ impl NewWithNullPtr for wire_PrepareOnchainPaymentResponse {
             fees_percentage: Default::default(),
             fees_lockup: Default::default(),
             fees_claim: Default::default(),
-            send_amount_sat: Default::default(),
-            receive_amount_sat: Default::default(),
+            sender_amount_sat: Default::default(),
+            recipient_amount_sat: Default::default(),
             total_fees: Default::default(),
         }
     }

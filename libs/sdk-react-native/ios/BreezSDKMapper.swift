@@ -2475,11 +2475,11 @@ enum BreezSDKMapper {
         guard let feesClaim = prepareOnchainPaymentResponse["feesClaim"] as? UInt64 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "feesClaim", typeName: "PrepareOnchainPaymentResponse"))
         }
-        guard let sendAmountSat = prepareOnchainPaymentResponse["sendAmountSat"] as? UInt64 else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "sendAmountSat", typeName: "PrepareOnchainPaymentResponse"))
+        guard let senderAmountSat = prepareOnchainPaymentResponse["senderAmountSat"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "senderAmountSat", typeName: "PrepareOnchainPaymentResponse"))
         }
-        guard let receiveAmountSat = prepareOnchainPaymentResponse["receiveAmountSat"] as? UInt64 else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "receiveAmountSat", typeName: "PrepareOnchainPaymentResponse"))
+        guard let recipientAmountSat = prepareOnchainPaymentResponse["recipientAmountSat"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "recipientAmountSat", typeName: "PrepareOnchainPaymentResponse"))
         }
         guard let totalFees = prepareOnchainPaymentResponse["totalFees"] as? UInt64 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "totalFees", typeName: "PrepareOnchainPaymentResponse"))
@@ -2490,8 +2490,8 @@ enum BreezSDKMapper {
             feesPercentage: feesPercentage,
             feesLockup: feesLockup,
             feesClaim: feesClaim,
-            sendAmountSat: sendAmountSat,
-            receiveAmountSat: receiveAmountSat,
+            senderAmountSat: senderAmountSat,
+            recipientAmountSat: recipientAmountSat,
             totalFees: totalFees
         )
     }
@@ -2502,8 +2502,8 @@ enum BreezSDKMapper {
             "feesPercentage": prepareOnchainPaymentResponse.feesPercentage,
             "feesLockup": prepareOnchainPaymentResponse.feesLockup,
             "feesClaim": prepareOnchainPaymentResponse.feesClaim,
-            "sendAmountSat": prepareOnchainPaymentResponse.sendAmountSat,
-            "receiveAmountSat": prepareOnchainPaymentResponse.receiveAmountSat,
+            "senderAmountSat": prepareOnchainPaymentResponse.senderAmountSat,
+            "recipientAmountSat": prepareOnchainPaymentResponse.recipientAmountSat,
             "totalFees": prepareOnchainPaymentResponse.totalFees,
         ]
     }
