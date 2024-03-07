@@ -1179,12 +1179,10 @@ class NodeState {
 class OnchainPaymentLimitsResponse {
   final int minSat;
   final int maxSat;
-  final String feesHash;
 
   const OnchainPaymentLimitsResponse({
     required this.minSat,
     required this.maxSat,
-    required this.feesHash,
   });
 }
 
@@ -1348,13 +1346,11 @@ class PrepareOnchainPaymentRequest {
 
   /// Feerate (sat / vByte) for the claim transaction
   final int claimTxFeerate;
-  final String feesHash;
 
   const PrepareOnchainPaymentRequest({
     required this.amountSat,
     required this.amountType,
     required this.claimTxFeerate,
-    required this.feesHash,
   });
 }
 
@@ -3721,11 +3717,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   OnchainPaymentLimitsResponse _wire2api_onchain_payment_limits_response(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 3) throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
     return OnchainPaymentLimitsResponse(
       minSat: _wire2api_u64(arr[0]),
       maxSat: _wire2api_u64(arr[1]),
-      feesHash: _wire2api_String(arr[2]),
     );
   }
 
@@ -4861,7 +4856,6 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.amount_sat = api2wire_u64(apiObj.amountSat);
     wireObj.amount_type = api2wire_swap_amount_type(apiObj.amountType);
     wireObj.claim_tx_feerate = api2wire_u32(apiObj.claimTxFeerate);
-    wireObj.fees_hash = api2wire_String(apiObj.feesHash);
   }
 
   void _api_fill_to_wire_prepare_onchain_payment_response(
@@ -6707,8 +6701,6 @@ final class wire_PrepareOnchainPaymentRequest extends ffi.Struct {
 
   @ffi.Uint32()
   external int claim_tx_feerate;
-
-  external ffi.Pointer<wire_uint_8_list> fees_hash;
 }
 
 typedef DartPostCObjectFnType

@@ -182,9 +182,6 @@ pub(crate) async fn handle_command(
             is_send,
             claim_tx_feerate,
         } => {
-            let fee_info = sdk()?
-                .fetch_reverse_swap_fees(ReverseSwapFeesRequest::default())
-                .await?;
             let req = PrepareOnchainPaymentRequest {
                 amount_sat,
                 amount_type: match is_send {
@@ -192,7 +189,6 @@ pub(crate) async fn handle_command(
                     false => SwapAmountType::Receive,
                 },
                 claim_tx_feerate,
-                fees_hash: fee_info.fees_hash,
             };
             let response = sdk()?.prepare_onchain_payment(req).await?;
             serde_json::to_string_pretty(&response).map_err(|e| e.into())
@@ -203,10 +199,6 @@ pub(crate) async fn handle_command(
             claim_tx_feerate,
             recipient_address,
         } => {
-            let fee_info = sdk()?
-                .fetch_reverse_swap_fees(ReverseSwapFeesRequest::default())
-                .await?;
-
             let req_prepare = PrepareOnchainPaymentRequest {
                 amount_sat,
                 amount_type: match is_send {
@@ -214,7 +206,6 @@ pub(crate) async fn handle_command(
                     false => SwapAmountType::Receive,
                 },
                 claim_tx_feerate,
-                fees_hash: fee_info.fees_hash,
             };
             let res_prepare = sdk()?.prepare_onchain_payment(req_prepare).await?;
 

@@ -270,7 +270,6 @@ typedef struct wire_PrepareOnchainPaymentRequest {
   uint64_t amount_sat;
   int32_t amount_type;
   uint32_t claim_tx_feerate;
-  struct wire_uint_8_list *fees_hash;
 } wire_PrepareOnchainPaymentRequest;
 
 typedef struct DartCObject *WireSyncReturn;

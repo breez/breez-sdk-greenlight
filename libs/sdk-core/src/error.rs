@@ -624,9 +624,6 @@ impl From<SendPaymentError> for SdkError {
 /// Error returned by [crate::breez_services::BreezServices::pay_onchain]
 #[derive(Debug, Error)]
 pub enum PayOnchainError {
-    #[error("Fee promise changed")]
-    FeePromiseChanged,
-
     #[error("Generic: {err}")]
     Generic { err: String },
 
