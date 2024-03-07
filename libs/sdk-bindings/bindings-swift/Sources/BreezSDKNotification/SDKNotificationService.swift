@@ -33,7 +33,7 @@ open class SDKNotificationService: UNNotificationServiceExtension {
             DispatchQueue.main.async { [self] in
                 do {
                     logger.log(tag: TAG, line: "Breez SDK is not connected, connecting...", level: "INFO")
-                    breezSDK = try BreezSDKConnector.register(connectRequest: connectRequest, logger: logger.logStream, listener: currentTask)
+                    breezSDK = try BreezSDKConnector.register(connectRequest: connectRequest, listener: currentTask)
                     logger.log(tag: TAG, line: "Breez SDK connected successfully", level: "INFO")
                     try currentTask.start(breezSDK: breezSDK!)
                 } catch {

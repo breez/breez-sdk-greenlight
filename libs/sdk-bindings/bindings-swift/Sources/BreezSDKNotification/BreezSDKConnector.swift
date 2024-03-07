@@ -15,11 +15,11 @@ class BreezSDKConnector {
     fileprivate static var queue = DispatchQueue(label: "BreezSDKConnector")
     fileprivate static var sdkListener: EventListener? = nil
     
-    static func register(connectRequest: ConnectRequest, logger: LogStream?, listener: EventListener) throws -> BlockingBreezServices? {
+    static func register(connectRequest: ConnectRequest, listener: EventListener) throws -> BlockingBreezServices? {
         try BreezSDKConnector.queue.sync { [] in
             BreezSDKConnector.sdkListener = listener
             if BreezSDKConnector.breezSDK == nil {
-                BreezSDKConnector.breezSDK = try BreezSDKConnector.connectSDK(connectRequest: connectRequest, logger: logger)
+                BreezSDKConnector.breezSDK = try BreezSDKConnector.connectSDK(connectRequest: connectRequest)
             }
             return BreezSDKConnector.breezSDK
         }
@@ -31,11 +31,7 @@ class BreezSDKConnector {
         }
     }
     
-    static func connectSDK(connectRequest: ConnectRequest, logger: LogStream?) throws -> BlockingBreezServices? {
-        if let logger = logger {
-            try setLogStream(logStream: logger)
-        }
-        
+    static func connectSDK(connectRequest: ConnectRequest) throws -> BlockingBreezServices? {
         // Connect to the Breez SDK make it ready for use
         log.trace("Connecting to Breez SDK")
         let breezSDK = try connect(req: connectRequest, listener: BreezSDKEventListener())
