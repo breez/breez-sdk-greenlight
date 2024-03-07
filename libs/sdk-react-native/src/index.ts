@@ -287,7 +287,6 @@ export type NodeState = {
 export type OnchainPaymentLimitsResponse = {
     minSat: number
     maxSat: number
-    feesHash: string
 }
 
 export type OpenChannelFeeRequest = {
@@ -345,7 +344,6 @@ export type PrepareOnchainPaymentRequest = {
     amountSat: number
     amountType: SwapAmountType
     claimTxFeerate: number
-    feesHash: string
 }
 
 export type PrepareOnchainPaymentResponse = {

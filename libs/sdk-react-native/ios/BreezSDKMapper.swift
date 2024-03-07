@@ -1994,14 +1994,10 @@ enum BreezSDKMapper {
         guard let maxSat = onchainPaymentLimitsResponse["maxSat"] as? UInt64 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "maxSat", typeName: "OnchainPaymentLimitsResponse"))
         }
-        guard let feesHash = onchainPaymentLimitsResponse["feesHash"] as? String else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "feesHash", typeName: "OnchainPaymentLimitsResponse"))
-        }
 
         return OnchainPaymentLimitsResponse(
             minSat: minSat,
-            maxSat: maxSat,
-            feesHash: feesHash
+            maxSat: maxSat
         )
     }
 
@@ -2009,7 +2005,6 @@ enum BreezSDKMapper {
         return [
             "minSat": onchainPaymentLimitsResponse.minSat,
             "maxSat": onchainPaymentLimitsResponse.maxSat,
-            "feesHash": onchainPaymentLimitsResponse.feesHash,
         ]
     }
 
@@ -2434,15 +2429,11 @@ enum BreezSDKMapper {
         guard let claimTxFeerate = prepareOnchainPaymentRequest["claimTxFeerate"] as? UInt32 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "claimTxFeerate", typeName: "PrepareOnchainPaymentRequest"))
         }
-        guard let feesHash = prepareOnchainPaymentRequest["feesHash"] as? String else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "feesHash", typeName: "PrepareOnchainPaymentRequest"))
-        }
 
         return PrepareOnchainPaymentRequest(
             amountSat: amountSat,
             amountType: amountType,
-            claimTxFeerate: claimTxFeerate,
-            feesHash: feesHash
+            claimTxFeerate: claimTxFeerate
         )
     }
 
@@ -2451,7 +2442,6 @@ enum BreezSDKMapper {
             "amountSat": prepareOnchainPaymentRequest.amountSat,
             "amountType": valueOf(swapAmountType: prepareOnchainPaymentRequest.amountType),
             "claimTxFeerate": prepareOnchainPaymentRequest.claimTxFeerate,
-            "feesHash": prepareOnchainPaymentRequest.feesHash,
         ]
     }
 

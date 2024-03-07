@@ -26,9 +26,8 @@ use tonic::{Request, Status};
 use crate::backup::{BackupRequest, BackupTransport, BackupWatcher};
 use crate::chain::{ChainService, MempoolSpace, Outspend, RecommendedFees};
 use crate::error::{
-    LnUrlAuthError, LnUrlPayError, LnUrlWithdrawError, PayOnchainError, ReceiveOnchainError,
-    ReceiveOnchainResult, ReceivePaymentError, SdkError, SdkResult, SendOnchainError,
-    SendPaymentError,
+    LnUrlAuthError, LnUrlPayError, LnUrlWithdrawError, ReceiveOnchainError, ReceiveOnchainResult,
+    ReceivePaymentError, SdkError, SdkResult, SendOnchainError, SendPaymentError,
 };
 use crate::fiat::{FiatCurrency, Rate};
 use crate::greenlight::{GLBackupTransport, Greenlight};
@@ -938,7 +937,7 @@ impl BreezServices {
     pub async fn prepare_onchain_payment(
         &self,
         req: PrepareOnchainPaymentRequest,
-    ) -> Result<PrepareOnchainPaymentResponse, PayOnchainError> {
+    ) -> Result<PrepareOnchainPaymentResponse, SendOnchainError> {
         let fees_claim = BTCSendSwap::calculate_claim_tx_fee(req.claim_tx_feerate)?;
         BTCSendSwap::validate_claim_tx_fee(fees_claim)?;
 
@@ -955,7 +954,7 @@ impl BreezServices {
                 let total_fees = service_fees + fees_lockup + fees_claim;
                 ensure_sdk!(
                     temp_send_amt > total_fees,
-                    PayOnchainError::generic(
+                    SendOnchainError::generic(
                         "Send amount is not high enough to account for all fees"
                     )
                 );
@@ -972,7 +971,7 @@ impl BreezServices {
         };
 
         let is_send_in_range = send_amt >= fee_info.min && send_amt <= fee_info.max;
-        ensure_sdk!(is_send_in_range, PayOnchainError::OutOfRange);
+        ensure_sdk!(is_send_in_range, SendOnchainError::OutOfRange);
 
         Ok(PrepareOnchainPaymentResponse {
             fees_hash: fee_info.fees_hash.clone(),
@@ -991,10 +990,10 @@ impl BreezServices {
     pub async fn pay_onchain(
         &self,
         req: PayOnchainRequest,
-    ) -> Result<PayOnchainResponse, PayOnchainError> {
+    ) -> Result<PayOnchainResponse, SendOnchainError> {
         ensure_sdk!(
             req.prepare_res.send_amount_sat > req.prepare_res.receive_amount_sat,
-            PayOnchainError::generic("Send amount must be bigger than receive amount")
+            SendOnchainError::generic("Send amount must be bigger than receive amount")
         );
 
         let reverse_swap_info = self

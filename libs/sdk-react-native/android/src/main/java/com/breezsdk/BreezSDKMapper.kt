@@ -1813,7 +1813,6 @@ fun asOnchainPaymentLimitsResponse(onchainPaymentLimitsResponse: ReadableMap): O
             arrayOf(
                 "minSat",
                 "maxSat",
-                "feesHash",
             ),
         )
     ) {
@@ -1821,11 +1820,9 @@ fun asOnchainPaymentLimitsResponse(onchainPaymentLimitsResponse: ReadableMap): O
     }
     val minSat = onchainPaymentLimitsResponse.getDouble("minSat").toULong()
     val maxSat = onchainPaymentLimitsResponse.getDouble("maxSat").toULong()
-    val feesHash = onchainPaymentLimitsResponse.getString("feesHash")!!
     return OnchainPaymentLimitsResponse(
         minSat,
         maxSat,
-        feesHash,
     )
 }
 
@@ -1833,7 +1830,6 @@ fun readableMapOf(onchainPaymentLimitsResponse: OnchainPaymentLimitsResponse): R
     return readableMapOf(
         "minSat" to onchainPaymentLimitsResponse.minSat,
         "maxSat" to onchainPaymentLimitsResponse.maxSat,
-        "feesHash" to onchainPaymentLimitsResponse.feesHash,
     )
 }
 
@@ -2196,7 +2192,6 @@ fun asPrepareOnchainPaymentRequest(prepareOnchainPaymentRequest: ReadableMap): P
                 "amountSat",
                 "amountType",
                 "claimTxFeerate",
-                "feesHash",
             ),
         )
     ) {
@@ -2205,12 +2200,10 @@ fun asPrepareOnchainPaymentRequest(prepareOnchainPaymentRequest: ReadableMap): P
     val amountSat = prepareOnchainPaymentRequest.getDouble("amountSat").toULong()
     val amountType = prepareOnchainPaymentRequest.getString("amountType")?.let { asSwapAmountType(it) }!!
     val claimTxFeerate = prepareOnchainPaymentRequest.getInt("claimTxFeerate").toUInt()
-    val feesHash = prepareOnchainPaymentRequest.getString("feesHash")!!
     return PrepareOnchainPaymentRequest(
         amountSat,
         amountType,
         claimTxFeerate,
-        feesHash,
     )
 }
 
@@ -2219,7 +2212,6 @@ fun readableMapOf(prepareOnchainPaymentRequest: PrepareOnchainPaymentRequest): R
         "amountSat" to prepareOnchainPaymentRequest.amountSat,
         "amountType" to prepareOnchainPaymentRequest.amountType.name.lowercase(),
         "claimTxFeerate" to prepareOnchainPaymentRequest.claimTxFeerate,
-        "feesHash" to prepareOnchainPaymentRequest.feesHash,
     )
 }
 

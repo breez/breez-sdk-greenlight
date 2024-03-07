@@ -311,7 +311,7 @@ impl BlockingBreezServices {
     pub fn prepare_onchain_payment(
         &self,
         req: PrepareOnchainPaymentRequest,
-    ) -> Result<PrepareOnchainPaymentResponse, PayOnchainError> {
+    ) -> Result<PrepareOnchainPaymentResponse, SendOnchainError> {
         rt().block_on(self.breez_services.prepare_onchain_payment(req))
     }
 
@@ -333,7 +333,7 @@ impl BlockingBreezServices {
     pub fn pay_onchain(
         &self,
         req: PayOnchainRequest,
-    ) -> Result<PayOnchainResponse, PayOnchainError> {
+    ) -> Result<PayOnchainResponse, SendOnchainError> {
         rt().block_on(self.breez_services.pay_onchain(req))
     }
 
