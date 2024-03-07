@@ -1,4 +1,4 @@
-package breez_sdk_notification
+package com.breez.breez_sdk
 
 import breez_sdk.LogEntry
 import breez_sdk.LogStream
