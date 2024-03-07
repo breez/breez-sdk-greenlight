@@ -943,7 +943,6 @@ impl Wire2Api<PrepareOnchainPaymentRequest> for wire_PrepareOnchainPaymentReques
             amount_sat: self.amount_sat.wire2api(),
             amount_type: self.amount_type.wire2api(),
             claim_tx_feerate: self.claim_tx_feerate.wire2api(),
-            fees_hash: self.fees_hash.wire2api(),
         }
     }
 }
@@ -1282,7 +1281,6 @@ pub struct wire_PrepareOnchainPaymentRequest {
     amount_sat: u64,
     amount_type: i32,
     claim_tx_feerate: u32,
-    fees_hash: *mut wire_uint_8_list,
 }
 
 #[repr(C)]
@@ -1773,7 +1771,6 @@ impl NewWithNullPtr for wire_PrepareOnchainPaymentRequest {
             amount_sat: Default::default(),
             amount_type: Default::default(),
             claim_tx_feerate: Default::default(),
-            fees_hash: core::ptr::null_mut(),
         }
     }
 }

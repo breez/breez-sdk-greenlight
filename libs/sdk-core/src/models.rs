@@ -1010,15 +1010,12 @@ pub struct PrepareOnchainPaymentRequest {
 
     /// Feerate (sat / vByte) for the claim transaction
     pub claim_tx_feerate: u32,
-
-    pub fees_hash: String,
 }
 
 #[derive(Serialize)]
 pub struct OnchainPaymentLimitsResponse {
     pub min_sat: u64,
     pub max_sat: u64,
-    pub fees_hash: String,
 }
 
 /// Contains fields describing the reverse swap parameters (see [ReverseSwapPairInfo]), as well as

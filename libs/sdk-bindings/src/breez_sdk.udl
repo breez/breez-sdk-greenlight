@@ -84,7 +84,6 @@ enum SendOnchainError {
 
 [Error]
 enum PayOnchainError {
-    "FeePromiseChanged",
     "Generic",
     "InvalidDestinationAddress",
     "OutOfRange",
@@ -448,7 +447,6 @@ dictionary ReverseSwapFeesRequest {
 dictionary OnchainPaymentLimitsResponse {
     u64 min_sat;
     u64 max_sat;
-    string fees_hash;
 };
 
 enum SwapAmountType {
@@ -460,7 +458,6 @@ dictionary PrepareOnchainPaymentRequest {
     u64 amount_sat;
     SwapAmountType amount_type;
     u32 claim_tx_feerate;
-    string fees_hash;
 };
 
 dictionary ReceivePaymentRequest {
