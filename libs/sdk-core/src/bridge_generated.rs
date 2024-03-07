@@ -1728,6 +1728,9 @@ impl support::IntoDart for OnchainPaymentLimitsResponse {
         vec![
             self.min_sat.into_into_dart().into_dart(),
             self.max_sat.into_into_dart().into_dart(),
+            self.max_sat_with_current_channels
+                .into_into_dart()
+                .into_dart(),
         ]
         .into_dart()
     }
