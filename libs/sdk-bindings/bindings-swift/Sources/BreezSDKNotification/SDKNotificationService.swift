@@ -8,15 +8,9 @@ open class SDKNotificationService: UNNotificationServiceExtension {
     var contentHandler: ((UNNotificationContent) -> Void)?
     var bestAttemptContent: UNMutableNotificationContent?
     var currentTask: TaskProtocol?
-    var logger: ServiceLogger
+    var logger: ServiceLogger = ServiceLogger()
     
-    init(breezSDK: BlockingBreezServices? = nil, contentHandler: ((UNNotificationContent) -> Void)? = nil, bestAttemptContent: UNMutableNotificationContent? = nil, currentTask: (any TaskProtocol)? = nil, logger: ServiceLogger) {
-        self.breezSDK = breezSDK
-        self.contentHandler = contentHandler
-        self.bestAttemptContent = bestAttemptContent
-        self.currentTask = currentTask
-        self.logger = logger
-    }
+    override init() { }
     
     override open func didReceive(
         _ request: UNNotificationRequest,
@@ -94,5 +88,9 @@ open class SDKNotificationService: UNNotificationServiceExtension {
         BreezSDKConnector.unregister()
         self.logger.log(tag: TAG, line: "task unregistered", level: "INFO")
         self.currentTask?.onShutdown()
+    }
+    
+    func setLogger(logger: LogStream) {
+        self.logger = ServiceLogger(logStream: logger)
     }
 }
