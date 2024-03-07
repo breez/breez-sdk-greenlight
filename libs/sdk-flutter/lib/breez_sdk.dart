@@ -324,7 +324,7 @@ class BreezSDK {
   /// Creates a reverse swap and attempts to pay the HODL invoice
   @Deprecated(
     'Use payOnchain instead. '
-    'This method was deprecated after v0.3.1',
+    'This method was deprecated after v0.3.2',
   )
   Future<SendOnchainResponse> sendOnchain({
     required SendOnchainRequest req,
