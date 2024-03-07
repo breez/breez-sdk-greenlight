@@ -332,6 +332,10 @@ class BreezSDK {
     return await _lnToolkit.sendOnchain(req: req);
   }
 
+  Future<PayOnchainResponse> onchainPaymentLimits() async {
+    return await _lnToolkit.onchainPaymentLimits();
+  }
+
   /// Creates a reverse swap and attempts to pay the HODL invoice
   Future<PayOnchainResponse> payOnchain({
     required PayOnchainRequest req,
