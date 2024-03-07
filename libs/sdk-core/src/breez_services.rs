@@ -841,6 +841,8 @@ impl BreezServices {
     /// minus the expected fees.
     /// This is possible since the route to the swapper node is known in advance and is expected
     /// to consist of maximum 3 hops.
+    ///
+    /// Deprecated. Please use [BreezServices::onchain_payment_limits] instead.
     pub async fn max_reverse_swap_amount(&self) -> SdkResult<MaxReverseSwapAmountResponse> {
         // fetch the last hop hints from the swapper
         let last_hop = self.btc_send_swapper.last_hop_for_payment().await?;
@@ -921,9 +923,11 @@ impl BreezServices {
 
     pub async fn onchain_payment_limits(&self) -> SdkResult<OnchainPaymentLimitsResponse> {
         let fee_info = self.btc_send_swapper.fetch_reverse_swap_fees().await?;
+        let max_amt_current_channels = self.max_reverse_swap_amount().await?;
         Ok(OnchainPaymentLimitsResponse {
             min_sat: fee_info.min,
             max_sat: fee_info.max,
+            max_sat_with_current_channels: max_amt_current_channels.total_sat,
         })
     }
 

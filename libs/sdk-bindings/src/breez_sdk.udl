@@ -438,6 +438,7 @@ dictionary ReverseSwapFeesRequest {
 dictionary OnchainPaymentLimitsResponse {
     u64 min_sat;
     u64 max_sat;
+    u64 max_sat_with_current_channels;
 };
 
 enum SwapAmountType {

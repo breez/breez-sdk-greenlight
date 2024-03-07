@@ -1016,6 +1016,8 @@ pub struct PrepareOnchainPaymentRequest {
 pub struct OnchainPaymentLimitsResponse {
     pub min_sat: u64,
     pub max_sat: u64,
+    /// Maximum amount that can be sent without requiring a new channel open
+    pub max_sat_with_current_channels: u64,
 }
 
 /// Contains fields describing the reverse swap parameters (see [ReverseSwapPairInfo]), as well as
