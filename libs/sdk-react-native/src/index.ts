@@ -351,8 +351,8 @@ export type PrepareOnchainPaymentResponse = {
     feesPercentage: number
     feesLockup: number
     feesClaim: number
-    sendAmountSat: number
-    receiveAmountSat: number
+    senderAmountSat: number
+    recipientAmountSat: number
     totalFees: number
 }
 

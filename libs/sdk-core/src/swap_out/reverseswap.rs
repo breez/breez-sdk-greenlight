@@ -90,7 +90,7 @@ impl CreateReverseSwapArg {
     fn send_amount_sat(&self) -> u64 {
         match self {
             CreateReverseSwapArg::V1(s) => s.amount_sat,
-            CreateReverseSwapArg::V2(s) => s.prepare_res.send_amount_sat,
+            CreateReverseSwapArg::V2(s) => s.prepare_res.sender_amount_sat,
         }
     }
     fn onchain_recipient_address(&self) -> String {
@@ -193,14 +193,14 @@ impl BTCSendSwap {
         // For v2 reverse swaps, we perform validation on the created swap
         if let CreateReverseSwapArg::V2(req) = req {
             // Validate send_amount
-            let request_send_amount_sat = req.prepare_res.send_amount_sat;
+            let request_send_amount_sat = req.prepare_res.sender_amount_sat;
             let request_send_amount_msat = request_send_amount_sat * 1_000;
             created_rsi.validate_invoice_amount(request_send_amount_msat)?;
 
             // Validate onchain_amount
             let lockup_fee_sat = req.prepare_res.fees_lockup;
             let service_fee_sat = super::calculate_service_fee_sat(
-                req.prepare_res.send_amount_sat,
+                req.prepare_res.sender_amount_sat,
                 req.prepare_res.fees_percentage,
             );
             let expected_onchain_amount =
@@ -212,10 +212,10 @@ impl BTCSendSwap {
 
             // Validate claim_fee. If onchain_amount and claim_fee are both valid, receive_amount is also valid.
             ensure_sdk!(
-                created_rsi.onchain_amount_sat > req.prepare_res.receive_amount_sat,
+                created_rsi.onchain_amount_sat > req.prepare_res.recipient_amount_sat,
                 ReverseSwapError::generic("Unexpected receive amount")
             );
-            let claim_fee = created_rsi.onchain_amount_sat - req.prepare_res.receive_amount_sat;
+            let claim_fee = created_rsi.onchain_amount_sat - req.prepare_res.recipient_amount_sat;
             Self::validate_claim_tx_fee(claim_fee)?;
         }
 
@@ -317,7 +317,7 @@ impl BTCSendSwap {
             .await?;
         let (sat_per_vbyte, receive_amount_sat) = match &req {
             CreateReverseSwapArg::V1(req) => (Some(req.sat_per_vbyte), None),
-            CreateReverseSwapArg::V2(req) => (None, Some(req.prepare_res.receive_amount_sat)),
+            CreateReverseSwapArg::V2(req) => (None, Some(req.prepare_res.recipient_amount_sat)),
         };
         match boltz_response {
             BoltzApiCreateReverseSwapResponse::BoltzApiSuccess(response) => {
@@ -802,8 +802,8 @@ mod tests {
     fn assert_in_range_prep_payment_response(res: PrepareOnchainPaymentResponse) -> Result<()> {
         dbg!(&res);
 
-        let send_amount_sat = res.send_amount_sat;
-        let receive_amount_sat = res.receive_amount_sat;
+        let send_amount_sat = res.sender_amount_sat;
+        let receive_amount_sat = res.recipient_amount_sat;
         let total_fees = res.total_fees;
         assert_eq!(send_amount_sat - total_fees, receive_amount_sat);
 

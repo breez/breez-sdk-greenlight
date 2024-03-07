@@ -2234,8 +2234,8 @@ fun asPrepareOnchainPaymentResponse(prepareOnchainPaymentResponse: ReadableMap):
                 "feesPercentage",
                 "feesLockup",
                 "feesClaim",
-                "sendAmountSat",
-                "receiveAmountSat",
+                "senderAmountSat",
+                "recipientAmountSat",
                 "totalFees",
             ),
         )
@@ -2246,16 +2246,16 @@ fun asPrepareOnchainPaymentResponse(prepareOnchainPaymentResponse: ReadableMap):
     val feesPercentage = prepareOnchainPaymentResponse.getDouble("feesPercentage")
     val feesLockup = prepareOnchainPaymentResponse.getDouble("feesLockup").toULong()
     val feesClaim = prepareOnchainPaymentResponse.getDouble("feesClaim").toULong()
-    val sendAmountSat = prepareOnchainPaymentResponse.getDouble("sendAmountSat").toULong()
-    val receiveAmountSat = prepareOnchainPaymentResponse.getDouble("receiveAmountSat").toULong()
+    val senderAmountSat = prepareOnchainPaymentResponse.getDouble("senderAmountSat").toULong()
+    val recipientAmountSat = prepareOnchainPaymentResponse.getDouble("recipientAmountSat").toULong()
     val totalFees = prepareOnchainPaymentResponse.getDouble("totalFees").toULong()
     return PrepareOnchainPaymentResponse(
         feesHash,
         feesPercentage,
         feesLockup,
         feesClaim,
-        sendAmountSat,
-        receiveAmountSat,
+        senderAmountSat,
+        recipientAmountSat,
         totalFees,
     )
 }
@@ -2266,8 +2266,8 @@ fun readableMapOf(prepareOnchainPaymentResponse: PrepareOnchainPaymentResponse):
         "feesPercentage" to prepareOnchainPaymentResponse.feesPercentage,
         "feesLockup" to prepareOnchainPaymentResponse.feesLockup,
         "feesClaim" to prepareOnchainPaymentResponse.feesClaim,
-        "sendAmountSat" to prepareOnchainPaymentResponse.sendAmountSat,
-        "receiveAmountSat" to prepareOnchainPaymentResponse.receiveAmountSat,
+        "senderAmountSat" to prepareOnchainPaymentResponse.senderAmountSat,
+        "recipientAmountSat" to prepareOnchainPaymentResponse.recipientAmountSat,
         "totalFees" to prepareOnchainPaymentResponse.totalFees,
     )
 }

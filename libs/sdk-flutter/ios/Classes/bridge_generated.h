@@ -215,8 +215,8 @@ typedef struct wire_PrepareOnchainPaymentResponse {
   double fees_percentage;
   uint64_t fees_lockup;
   uint64_t fees_claim;
-  uint64_t send_amount_sat;
-  uint64_t receive_amount_sat;
+  uint64_t sender_amount_sat;
+  uint64_t recipient_amount_sat;
   uint64_t total_fees;
 } wire_PrepareOnchainPaymentResponse;
 

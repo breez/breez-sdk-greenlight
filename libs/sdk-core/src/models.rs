@@ -1027,8 +1027,8 @@ pub struct PrepareOnchainPaymentResponse {
     pub fees_lockup: u64,
     pub fees_claim: u64,
 
-    pub send_amount_sat: u64,
-    pub receive_amount_sat: u64,
+    pub sender_amount_sat: u64,
+    pub recipient_amount_sat: u64,
     pub total_fees: u64,
 }
 
