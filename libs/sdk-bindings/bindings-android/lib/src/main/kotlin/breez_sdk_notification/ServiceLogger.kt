@@ -8,7 +8,7 @@ class ServiceLogger(private val logger: LogStream?) {
     constructor() : this(null)
 
     fun log(tag: String, message: String, level: String) {
-        logger?.log(LogEntry(tag, message, level)) ?: when (level) {
+        logger?.log(LogEntry(message, level)) ?: when (level) {
             "ERROR" -> Log.e(tag, message)
             "WARN" -> Log.w(tag, message)
             "INFO" -> Log.i(tag, message)

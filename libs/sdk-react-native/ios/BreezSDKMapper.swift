@@ -1636,13 +1636,6 @@ enum BreezSDKMapper {
     }
 
     static func asLogEntry(logEntry: [String: Any?]) throws -> LogEntry {
-        var tag: String?
-        if hasNonNilKey(data: logEntry, key: "tag") {
-            guard let tagTmp = logEntry["tag"] as? String else {
-                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "tag"))
-            }
-            tag = tagTmp
-        }
         guard let line = logEntry["line"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "line", typeName: "LogEntry"))
         }
@@ -1651,7 +1644,6 @@ enum BreezSDKMapper {
         }
 
         return LogEntry(
-            tag: tag,
             line: line,
             level: level
         )
@@ -1659,7 +1651,6 @@ enum BreezSDKMapper {
 
     static func dictionaryOf(logEntry: LogEntry) -> [String: Any?] {
         return [
-            "tag": logEntry.tag == nil ? nil : logEntry.tag,
             "line": logEntry.line,
             "level": logEntry.level,
         ]

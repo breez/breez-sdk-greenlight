@@ -17,25 +17,25 @@ class ServiceLogger {
         self.logStream = logStream
     }
     
-    func log(tag: String?, line: String, level: String) {
+    func log(tag: String, line: String, level: String) {
         if let logger = logStream {
-            logger.log(l: LogEntry(tag: tag, line: line, level: level))
+            logger.log(l: LogEntry(line: line, level: level))
         } else {
             switch(level) {
                 case "ERROR":
-                    os_log.error("[\(tag ?? "greenlight")] \(line)")
+                    os_log.error("[\(tag)] \(line)")
                     break
                 case "WARN":
-                    os_log.warning("[\(tag ?? "greenlight")] \(line)")
+                    os_log.warning("[\(tag)] \(line)")
                     break
                 case "INFO":
-                    os_log.info("[\(tag ?? "greenlight")] \(line)")
+                    os_log.info("[\(tag)] \(line)")
                     break
                 case "DEBUG":
-                    os_log.debug("[\(tag ?? "greenlight")] \(line)")
+                    os_log.debug("[\(tag)] \(line)")
                     break
                 case "TRACE":
-                    os_log.trace("[\(tag ?? "greenlight")] \(line)")
+                    os_log.trace("[\(tag)] \(line)")
                     break
                 default:
                     return

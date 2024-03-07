@@ -52,7 +52,6 @@ impl log::Log for BindingLogger {
 
     fn log(&self, record: &Record) {
         self.log_stream.log(LogEntry {
-            tag: None,
             line: record.args().to_string(),
             level: record.level().as_str().to_string(),
         });
