@@ -1,9 +1,10 @@
 SDK release notes can be found at [breez-sdk/releases](https://github.com/breez/breez-sdk/releases/)
-## 0.3.2 (pre-release notes)
-* Updates minimum supported SDK version to Flutter 3.3/Dart 2.19.
+## 0.3.2
+* Fixed a signer crash
 
-## 0.3.1 (pre-release notes)
-- Support notifications via a webhook after a swap transaction confirms.
+## 0.3.1
+* Support notifications via a webhook after a swap transaction confirms.
+* Reduced package size by not bundling pre-built binaries
 
 ## 0.3.0
 * Fixes compatibility issues ith `bdk-flutter` plugin.
