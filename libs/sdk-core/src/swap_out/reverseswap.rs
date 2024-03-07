@@ -722,7 +722,6 @@ mod tests {
                 amount_sat: MOCK_REVERSE_SWAP_MIN,
                 amount_type: SwapAmountType::Receive,
                 claim_tx_feerate: 1,
-                fees_hash: "1".to_string(),
             })
             .await?,
         )?;
@@ -733,7 +732,6 @@ mod tests {
                 amount_sat: MOCK_REVERSE_SWAP_MIN,
                 amount_type: SwapAmountType::Receive,
                 claim_tx_feerate: 1,
-                fees_hash: "1".to_string(),
             })
             .await?,
         )?;
@@ -751,7 +749,6 @@ mod tests {
                 amount_sat: MOCK_REVERSE_SWAP_MIN - 1,
                 amount_type: SwapAmountType::Send,
                 claim_tx_feerate: 1,
-                fees_hash: "1".to_string(),
             })
             .await
             .is_err());
@@ -762,7 +759,6 @@ mod tests {
                 amount_sat: MOCK_REVERSE_SWAP_MAX + 1,
                 amount_type: SwapAmountType::Send,
                 claim_tx_feerate: 1,
-                fees_hash: "1".to_string(),
             })
             .await
             .is_err());
@@ -773,7 +769,6 @@ mod tests {
                 amount_sat: 0,
                 amount_type: SwapAmountType::Receive,
                 claim_tx_feerate: 1,
-                fees_hash: "1".to_string(),
             })
             .await
             .is_err());
@@ -784,7 +779,6 @@ mod tests {
                 amount_sat: MOCK_REVERSE_SWAP_MAX,
                 amount_type: SwapAmountType::Receive,
                 claim_tx_feerate: 1,
-                fees_hash: "1".to_string(),
             })
             .await
             .is_err());
@@ -795,7 +789,6 @@ mod tests {
                 amount_sat: MOCK_REVERSE_SWAP_MIN,
                 amount_type: SwapAmountType::Receive,
                 claim_tx_feerate: 1_000_000,
-                fees_hash: "1".to_string(),
             })
             .await
             .is_err());
