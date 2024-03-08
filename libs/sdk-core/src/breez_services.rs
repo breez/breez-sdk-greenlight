@@ -1,3 +1,4 @@
+use std::cmp::min;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::str::FromStr;
@@ -841,6 +842,8 @@ impl BreezServices {
     /// minus the expected fees.
     /// This is possible since the route to the swapper node is known in advance and is expected
     /// to consist of maximum 3 hops.
+    ///
+    /// Deprecated. Please use [BreezServices::onchain_payment_limits] instead.
     pub async fn max_reverse_swap_amount(&self) -> SdkResult<MaxReverseSwapAmountResponse> {
         // fetch the last hop hints from the swapper
         let last_hop = self.btc_send_swapper.last_hop_for_payment().await?;
@@ -921,10 +924,20 @@ impl BreezServices {
 
     pub async fn onchain_payment_limits(&self) -> SdkResult<OnchainPaymentLimitsResponse> {
         let fee_info = self.btc_send_swapper.fetch_reverse_swap_fees().await?;
-        Ok(OnchainPaymentLimitsResponse {
-            min_sat: fee_info.min,
-            max_sat: fee_info.max,
-        })
+        debug!("Reverse swap pair info: {fee_info:?}");
+        let max_amt_current_channels = self.max_reverse_swap_amount().await?;
+        debug!("Max send amount possible with current channels: {max_amt_current_channels:?}");
+
+        let composite_max = min(fee_info.max, max_amt_current_channels.total_sat);
+        let (min_sat, max_sat) = match composite_max < fee_info.min {
+            true => {
+                warn!("Reverse swap max < min, setting limits to zero because no reverse swap is possible");
+                (0, 0)
+            }
+            false => (fee_info.min, composite_max),
+        };
+
+        Ok(OnchainPaymentLimitsResponse { min_sat, max_sat })
     }
 
     /// Supersedes [BreezServices::fetch_reverse_swap_fees]

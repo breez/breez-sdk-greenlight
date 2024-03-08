@@ -1177,7 +1177,14 @@ class NodeState {
 }
 
 class OnchainPaymentLimitsResponse {
+  /// Minimum amount that can be sent. This value is influenced by
+  /// - what can be sent given the available channels and balance
+  /// - the lower limit of what the reverse swap service accepts as a send amount
   final int minSat;
+
+  /// Maximum amount that can be sent. This value is influenced by
+  /// - what can be sent given the available channels and balance
+  /// - the upper limit of what the reverse swap service accepts as a send amount
   final int maxSat;
 
   const OnchainPaymentLimitsResponse({
