@@ -1994,14 +1994,10 @@ enum BreezSDKMapper {
         guard let maxSat = onchainPaymentLimitsResponse["maxSat"] as? UInt64 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "maxSat", typeName: "OnchainPaymentLimitsResponse"))
         }
-        guard let maxSatWithCurrentChannels = onchainPaymentLimitsResponse["maxSatWithCurrentChannels"] as? UInt64 else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "maxSatWithCurrentChannels", typeName: "OnchainPaymentLimitsResponse"))
-        }
 
         return OnchainPaymentLimitsResponse(
             minSat: minSat,
-            maxSat: maxSat,
-            maxSatWithCurrentChannels: maxSatWithCurrentChannels
+            maxSat: maxSat
         )
     }
 
@@ -2009,7 +2005,6 @@ enum BreezSDKMapper {
         return [
             "minSat": onchainPaymentLimitsResponse.minSat,
             "maxSat": onchainPaymentLimitsResponse.maxSat,
-            "maxSatWithCurrentChannels": onchainPaymentLimitsResponse.maxSatWithCurrentChannels,
         ]
     }
 

@@ -1014,10 +1014,14 @@ pub struct PrepareOnchainPaymentRequest {
 
 #[derive(Serialize)]
 pub struct OnchainPaymentLimitsResponse {
+    /// Minimum amount that can be sent. This value is influenced by
+    /// - what can be sent given the available channels and balance
+    /// - the lower limit of what the reverse swap service accepts as a send amount
     pub min_sat: u64,
+    /// Maximum amount that can be sent. This value is influenced by
+    /// - what can be sent given the available channels and balance
+    /// - the upper limit of what the reverse swap service accepts as a send amount
     pub max_sat: u64,
-    /// Maximum amount that can be sent without requiring a new channel open
-    pub max_sat_with_current_channels: u64,
 }
 
 /// Contains fields describing the reverse swap parameters (see [ReverseSwapPairInfo]), as well as

@@ -287,7 +287,6 @@ export type NodeState = {
 export type OnchainPaymentLimitsResponse = {
     minSat: number
     maxSat: number
-    maxSatWithCurrentChannels: number
 }
 
 export type OpenChannelFeeRequest = {
