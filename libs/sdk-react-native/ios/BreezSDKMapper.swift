@@ -1987,6 +1987,44 @@ enum BreezSDKMapper {
         return nodeStateList.map { v -> [String: Any?] in dictionaryOf(nodeState: v) }
     }
 
+    static func asOnchainPaymentLimitsResponse(onchainPaymentLimitsResponse: [String: Any?]) throws -> OnchainPaymentLimitsResponse {
+        guard let minSat = onchainPaymentLimitsResponse["minSat"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "minSat", typeName: "OnchainPaymentLimitsResponse"))
+        }
+        guard let maxSat = onchainPaymentLimitsResponse["maxSat"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "maxSat", typeName: "OnchainPaymentLimitsResponse"))
+        }
+
+        return OnchainPaymentLimitsResponse(
+            minSat: minSat,
+            maxSat: maxSat
+        )
+    }
+
+    static func dictionaryOf(onchainPaymentLimitsResponse: OnchainPaymentLimitsResponse) -> [String: Any?] {
+        return [
+            "minSat": onchainPaymentLimitsResponse.minSat,
+            "maxSat": onchainPaymentLimitsResponse.maxSat,
+        ]
+    }
+
+    static func asOnchainPaymentLimitsResponseList(arr: [Any]) throws -> [OnchainPaymentLimitsResponse] {
+        var list = [OnchainPaymentLimitsResponse]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var onchainPaymentLimitsResponse = try asOnchainPaymentLimitsResponse(onchainPaymentLimitsResponse: val)
+                list.append(onchainPaymentLimitsResponse)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "OnchainPaymentLimitsResponse"))
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(onchainPaymentLimitsResponseList: [OnchainPaymentLimitsResponse]) -> [Any] {
+        return onchainPaymentLimitsResponseList.map { v -> [String: Any?] in dictionaryOf(onchainPaymentLimitsResponse: v) }
+    }
+
     static func asOpenChannelFeeRequest(openChannelFeeRequest: [String: Any?]) throws -> OpenChannelFeeRequest {
         var amountMsat: UInt64?
         if hasNonNilKey(data: openChannelFeeRequest, key: "amountMsat") {
@@ -2167,6 +2205,78 @@ enum BreezSDKMapper {
         return openingFeeParamsMenuList.map { v -> [String: Any?] in dictionaryOf(openingFeeParamsMenu: v) }
     }
 
+    static func asPayOnchainRequest(payOnchainRequest: [String: Any?]) throws -> PayOnchainRequest {
+        guard let recipientAddress = payOnchainRequest["recipientAddress"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "recipientAddress", typeName: "PayOnchainRequest"))
+        }
+        guard let prepareResTmp = payOnchainRequest["prepareRes"] as? [String: Any?] else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "prepareRes", typeName: "PayOnchainRequest"))
+        }
+        let prepareRes = try asPrepareOnchainPaymentResponse(prepareOnchainPaymentResponse: prepareResTmp)
+
+        return PayOnchainRequest(
+            recipientAddress: recipientAddress,
+            prepareRes: prepareRes
+        )
+    }
+
+    static func dictionaryOf(payOnchainRequest: PayOnchainRequest) -> [String: Any?] {
+        return [
+            "recipientAddress": payOnchainRequest.recipientAddress,
+            "prepareRes": dictionaryOf(prepareOnchainPaymentResponse: payOnchainRequest.prepareRes),
+        ]
+    }
+
+    static func asPayOnchainRequestList(arr: [Any]) throws -> [PayOnchainRequest] {
+        var list = [PayOnchainRequest]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var payOnchainRequest = try asPayOnchainRequest(payOnchainRequest: val)
+                list.append(payOnchainRequest)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "PayOnchainRequest"))
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(payOnchainRequestList: [PayOnchainRequest]) -> [Any] {
+        return payOnchainRequestList.map { v -> [String: Any?] in dictionaryOf(payOnchainRequest: v) }
+    }
+
+    static func asPayOnchainResponse(payOnchainResponse: [String: Any?]) throws -> PayOnchainResponse {
+        guard let reverseSwapInfoTmp = payOnchainResponse["reverseSwapInfo"] as? [String: Any?] else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "reverseSwapInfo", typeName: "PayOnchainResponse"))
+        }
+        let reverseSwapInfo = try asReverseSwapInfo(reverseSwapInfo: reverseSwapInfoTmp)
+
+        return PayOnchainResponse(
+            reverseSwapInfo: reverseSwapInfo)
+    }
+
+    static func dictionaryOf(payOnchainResponse: PayOnchainResponse) -> [String: Any?] {
+        return [
+            "reverseSwapInfo": dictionaryOf(reverseSwapInfo: payOnchainResponse.reverseSwapInfo),
+        ]
+    }
+
+    static func asPayOnchainResponseList(arr: [Any]) throws -> [PayOnchainResponse] {
+        var list = [PayOnchainResponse]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var payOnchainResponse = try asPayOnchainResponse(payOnchainResponse: val)
+                list.append(payOnchainResponse)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "PayOnchainResponse"))
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(payOnchainResponseList: [PayOnchainResponse]) -> [Any] {
+        return payOnchainResponseList.map { v -> [String: Any?] in dictionaryOf(payOnchainResponse: v) }
+    }
+
     static func asPayment(payment: [String: Any?]) throws -> Payment {
         guard let id = payment["id"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "id", typeName: "Payment"))
@@ -2305,6 +2415,114 @@ enum BreezSDKMapper {
 
     static func arrayOf(paymentFailedDataList: [PaymentFailedData]) -> [Any] {
         return paymentFailedDataList.map { v -> [String: Any?] in dictionaryOf(paymentFailedData: v) }
+    }
+
+    static func asPrepareOnchainPaymentRequest(prepareOnchainPaymentRequest: [String: Any?]) throws -> PrepareOnchainPaymentRequest {
+        guard let amountSat = prepareOnchainPaymentRequest["amountSat"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "amountSat", typeName: "PrepareOnchainPaymentRequest"))
+        }
+        guard let amountTypeTmp = prepareOnchainPaymentRequest["amountType"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "amountType", typeName: "PrepareOnchainPaymentRequest"))
+        }
+        let amountType = try asSwapAmountType(swapAmountType: amountTypeTmp)
+
+        guard let claimTxFeerate = prepareOnchainPaymentRequest["claimTxFeerate"] as? UInt32 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "claimTxFeerate", typeName: "PrepareOnchainPaymentRequest"))
+        }
+
+        return PrepareOnchainPaymentRequest(
+            amountSat: amountSat,
+            amountType: amountType,
+            claimTxFeerate: claimTxFeerate
+        )
+    }
+
+    static func dictionaryOf(prepareOnchainPaymentRequest: PrepareOnchainPaymentRequest) -> [String: Any?] {
+        return [
+            "amountSat": prepareOnchainPaymentRequest.amountSat,
+            "amountType": valueOf(swapAmountType: prepareOnchainPaymentRequest.amountType),
+            "claimTxFeerate": prepareOnchainPaymentRequest.claimTxFeerate,
+        ]
+    }
+
+    static func asPrepareOnchainPaymentRequestList(arr: [Any]) throws -> [PrepareOnchainPaymentRequest] {
+        var list = [PrepareOnchainPaymentRequest]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var prepareOnchainPaymentRequest = try asPrepareOnchainPaymentRequest(prepareOnchainPaymentRequest: val)
+                list.append(prepareOnchainPaymentRequest)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "PrepareOnchainPaymentRequest"))
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(prepareOnchainPaymentRequestList: [PrepareOnchainPaymentRequest]) -> [Any] {
+        return prepareOnchainPaymentRequestList.map { v -> [String: Any?] in dictionaryOf(prepareOnchainPaymentRequest: v) }
+    }
+
+    static func asPrepareOnchainPaymentResponse(prepareOnchainPaymentResponse: [String: Any?]) throws -> PrepareOnchainPaymentResponse {
+        guard let feesHash = prepareOnchainPaymentResponse["feesHash"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "feesHash", typeName: "PrepareOnchainPaymentResponse"))
+        }
+        guard let feesPercentage = prepareOnchainPaymentResponse["feesPercentage"] as? Double else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "feesPercentage", typeName: "PrepareOnchainPaymentResponse"))
+        }
+        guard let feesLockup = prepareOnchainPaymentResponse["feesLockup"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "feesLockup", typeName: "PrepareOnchainPaymentResponse"))
+        }
+        guard let feesClaim = prepareOnchainPaymentResponse["feesClaim"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "feesClaim", typeName: "PrepareOnchainPaymentResponse"))
+        }
+        guard let senderAmountSat = prepareOnchainPaymentResponse["senderAmountSat"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "senderAmountSat", typeName: "PrepareOnchainPaymentResponse"))
+        }
+        guard let recipientAmountSat = prepareOnchainPaymentResponse["recipientAmountSat"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "recipientAmountSat", typeName: "PrepareOnchainPaymentResponse"))
+        }
+        guard let totalFees = prepareOnchainPaymentResponse["totalFees"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "totalFees", typeName: "PrepareOnchainPaymentResponse"))
+        }
+
+        return PrepareOnchainPaymentResponse(
+            feesHash: feesHash,
+            feesPercentage: feesPercentage,
+            feesLockup: feesLockup,
+            feesClaim: feesClaim,
+            senderAmountSat: senderAmountSat,
+            recipientAmountSat: recipientAmountSat,
+            totalFees: totalFees
+        )
+    }
+
+    static func dictionaryOf(prepareOnchainPaymentResponse: PrepareOnchainPaymentResponse) -> [String: Any?] {
+        return [
+            "feesHash": prepareOnchainPaymentResponse.feesHash,
+            "feesPercentage": prepareOnchainPaymentResponse.feesPercentage,
+            "feesLockup": prepareOnchainPaymentResponse.feesLockup,
+            "feesClaim": prepareOnchainPaymentResponse.feesClaim,
+            "senderAmountSat": prepareOnchainPaymentResponse.senderAmountSat,
+            "recipientAmountSat": prepareOnchainPaymentResponse.recipientAmountSat,
+            "totalFees": prepareOnchainPaymentResponse.totalFees,
+        ]
+    }
+
+    static func asPrepareOnchainPaymentResponseList(arr: [Any]) throws -> [PrepareOnchainPaymentResponse] {
+        var list = [PrepareOnchainPaymentResponse]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var prepareOnchainPaymentResponse = try asPrepareOnchainPaymentResponse(prepareOnchainPaymentResponse: val)
+                list.append(prepareOnchainPaymentResponse)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "PrepareOnchainPaymentResponse"))
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(prepareOnchainPaymentResponseList: [PrepareOnchainPaymentResponse]) -> [Any] {
+        return prepareOnchainPaymentResponseList.map { v -> [String: Any?] in dictionaryOf(prepareOnchainPaymentResponse: v) }
     }
 
     static func asPrepareRedeemOnchainFundsRequest(prepareRedeemOnchainFundsRequest: [String: Any?]) throws -> PrepareRedeemOnchainFundsRequest {
@@ -5160,6 +5378,45 @@ enum BreezSDKMapper {
                 list.append(successActionProcessed)
             } else {
                 throw SdkError.Generic(message: errUnexpectedType(typeName: "SuccessActionProcessed"))
+            }
+        }
+        return list
+    }
+
+    static func asSwapAmountType(swapAmountType: String) throws -> SwapAmountType {
+        switch swapAmountType {
+        case "send":
+            return SwapAmountType.send
+
+        case "receive":
+            return SwapAmountType.receive
+
+        default: throw SdkError.Generic(message: "Invalid variant \(swapAmountType) for enum SwapAmountType")
+        }
+    }
+
+    static func valueOf(swapAmountType: SwapAmountType) -> String {
+        switch swapAmountType {
+        case .send:
+            return "send"
+
+        case .receive:
+            return "receive"
+        }
+    }
+
+    static func arrayOf(swapAmountTypeList: [SwapAmountType]) -> [String] {
+        return swapAmountTypeList.map { v -> String in valueOf(swapAmountType: v) }
+    }
+
+    static func asSwapAmountTypeList(arr: [Any]) throws -> [SwapAmountType] {
+        var list = [SwapAmountType]()
+        for value in arr {
+            if let val = value as? String {
+                var swapAmountType = try asSwapAmountType(swapAmountType: val)
+                list.append(swapAmountType)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "SwapAmountType"))
             }
         }
         return list

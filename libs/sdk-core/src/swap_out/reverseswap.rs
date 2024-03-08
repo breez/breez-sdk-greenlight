@@ -22,8 +22,8 @@ use crate::models::{ReverseSwapServiceAPI, ReverseSwapperRoutingAPI};
 use crate::node_api::{NodeAPI, NodeError};
 use crate::swap_in::swap::create_swap_keys;
 use crate::{
-    BreezEvent, Config, FullReverseSwapInfo, PaymentStatus, ReverseSwapInfo, ReverseSwapInfoCached,
-    ReverseSwapPairInfo, ReverseSwapStatus,
+    ensure_sdk, BreezEvent, Config, FullReverseSwapInfo, PayOnchainRequest, PaymentStatus,
+    ReverseSwapInfo, ReverseSwapInfoCached, ReverseSwapPairInfo, ReverseSwapStatus,
 };
 use crate::{ReverseSwapStatus::*, RouteHintHop, SendOnchainRequest};
 
@@ -73,6 +73,34 @@ impl From<&Option<OnchainTx>> for TxStatus {
     }
 }
 
+#[derive(Clone)]
+pub(crate) enum CreateReverseSwapArg {
+    /// Used for backward compatibility with older SDK nodes. Works with the [FullReverseSwapInfo]
+    /// `sat_per_vbyte` instead of the newer `receive_amount_sat`.
+    V1(SendOnchainRequest),
+    V2(PayOnchainRequest),
+}
+impl CreateReverseSwapArg {
+    fn pair_hash(&self) -> String {
+        match self {
+            CreateReverseSwapArg::V1(s) => s.pair_hash.clone(),
+            CreateReverseSwapArg::V2(s) => s.prepare_res.fees_hash.clone(),
+        }
+    }
+    fn send_amount_sat(&self) -> u64 {
+        match self {
+            CreateReverseSwapArg::V1(s) => s.amount_sat,
+            CreateReverseSwapArg::V2(s) => s.prepare_res.sender_amount_sat,
+        }
+    }
+    fn onchain_recipient_address(&self) -> String {
+        match self {
+            CreateReverseSwapArg::V1(s) => s.onchain_recipient_address.clone(),
+            CreateReverseSwapArg::V2(s) => s.recipient_address.clone(),
+        }
+    }
+}
+
 /// This struct is responsible for sending to an onchain address using lightning payments.
 /// It uses internally an implementation of [ReverseSwapServiceAPI] that represents Boltz reverse swapper service.
 pub(crate) struct BTCSendSwap {
@@ -104,10 +132,19 @@ impl BTCSendSwap {
     }
 
     /// Validates the reverse swap arguments given by the user
-    fn validate_rev_swap_args(claim_pubkey: &str) -> ReverseSwapResult<()> {
+    fn validate_recipient_address(claim_pubkey: &str) -> ReverseSwapResult<()> {
         Address::from_str(claim_pubkey)
             .map(|_| ())
             .map_err(|e| ReverseSwapError::InvalidDestinationAddress(anyhow::Error::new(e)))
+    }
+
+    pub(crate) fn validate_claim_tx_fee(claim_fee: u64) -> ReverseSwapResult<()> {
+        let min_claim_fee = Self::calculate_claim_tx_fee(1)?;
+        ensure_sdk!(
+            claim_fee >= min_claim_fee,
+            ReverseSwapError::ClaimFeerateTooLow
+        );
+        Ok(())
     }
 
     pub(crate) async fn last_hop_for_payment(&self) -> ReverseSwapResult<RouteHintHop> {
@@ -140,17 +177,48 @@ impl BTCSendSwap {
     /// status persisted.
     pub(crate) async fn create_reverse_swap(
         &self,
-        req: SendOnchainRequest,
+        req: CreateReverseSwapArg,
     ) -> ReverseSwapResult<FullReverseSwapInfo> {
-        Self::validate_rev_swap_args(&req.onchain_recipient_address)?;
+        Self::validate_recipient_address(&req.onchain_recipient_address())?;
 
-        let reverse_routing_node = self
+        let routing_node = self
             .reverse_swapper_api
             .fetch_reverse_routing_node()
-            .await?;
+            .await
+            .map(hex::encode)?;
         let created_rsi = self
-            .create_and_validate_rev_swap_on_remote(req, hex::encode(reverse_routing_node))
+            .create_and_validate_rev_swap_on_remote(req.clone(), routing_node)
             .await?;
+
+        // For v2 reverse swaps, we perform validation on the created swap
+        if let CreateReverseSwapArg::V2(req) = req {
+            // Validate send_amount
+            let request_send_amount_sat = req.prepare_res.sender_amount_sat;
+            let request_send_amount_msat = request_send_amount_sat * 1_000;
+            created_rsi.validate_invoice_amount(request_send_amount_msat)?;
+
+            // Validate onchain_amount
+            let lockup_fee_sat = req.prepare_res.fees_lockup;
+            let service_fee_sat = super::calculate_service_fee_sat(
+                req.prepare_res.sender_amount_sat,
+                req.prepare_res.fees_percentage,
+            );
+            let expected_onchain_amount =
+                request_send_amount_sat - service_fee_sat - lockup_fee_sat;
+            ensure_sdk!(
+                created_rsi.onchain_amount_sat == expected_onchain_amount,
+                ReverseSwapError::generic("Unexpected onchain amount (lockup fee or service fee)")
+            );
+
+            // Validate claim_fee. If onchain_amount and claim_fee are both valid, receive_amount is also valid.
+            ensure_sdk!(
+                created_rsi.onchain_amount_sat > req.prepare_res.recipient_amount_sat,
+                ReverseSwapError::generic("Unexpected receive amount")
+            );
+            let claim_fee = created_rsi.onchain_amount_sat - req.prepare_res.recipient_amount_sat;
+            Self::validate_claim_tx_fee(claim_fee)?;
+        }
+
         self.persister.insert_reverse_swap(&created_rsi)?;
         info!("Created and persisted reverse swap {}", created_rsi.id);
 
@@ -232,7 +300,7 @@ impl BTCSendSwap {
     /// before returning it
     async fn create_and_validate_rev_swap_on_remote(
         &self,
-        req: SendOnchainRequest,
+        req: CreateReverseSwapArg,
         routing_node: String,
     ) -> ReverseSwapResult<FullReverseSwapInfo> {
         let reverse_swap_keys = create_swap_keys()?;
@@ -240,25 +308,30 @@ impl BTCSendSwap {
         let boltz_response = self
             .reverse_swap_service_api
             .create_reverse_swap_on_remote(
-                req.amount_sat,
+                req.send_amount_sat(),
                 reverse_swap_keys.preimage_hash_bytes().to_hex(),
                 reverse_swap_keys.public_key()?.to_hex(),
-                req.pair_hash.clone(),
+                req.pair_hash(),
                 routing_node,
             )
             .await?;
+        let (sat_per_vbyte, receive_amount_sat) = match &req {
+            CreateReverseSwapArg::V1(req) => (Some(req.sat_per_vbyte), None),
+            CreateReverseSwapArg::V2(req) => (None, Some(req.prepare_res.recipient_amount_sat)),
+        };
         match boltz_response {
             BoltzApiCreateReverseSwapResponse::BoltzApiSuccess(response) => {
                 let res = FullReverseSwapInfo {
                     created_at_block_height: self.chain_service.current_tip().await?,
-                    claim_pubkey: req.onchain_recipient_address,
+                    claim_pubkey: req.onchain_recipient_address(),
                     invoice: response.invoice,
                     preimage: reverse_swap_keys.preimage,
                     private_key: reverse_swap_keys.priv_key,
                     timeout_block_height: response.timeout_block_height,
                     id: response.id,
                     onchain_amount_sat: response.onchain_amount,
-                    sat_per_vbyte: req.sat_per_vbyte,
+                    sat_per_vbyte,
+                    receive_amount_sat,
                     redeem_script: response.redeem_script,
                     cache: ReverseSwapInfoCached {
                         status: Initial,
@@ -267,7 +340,7 @@ impl BTCSendSwap {
                     },
                 };
 
-                res.validate_hodl_invoice(req.amount_sat * 1000)?;
+                res.validate_invoice(req.send_amount_sat() * 1_000)?;
                 res.validate_redeem_script(response.lockup_address, self.config.network)?;
                 Ok(res)
             }
@@ -321,20 +394,20 @@ impl BTCSendSwap {
                 debug!("Found confirmed txs for lockup address {lockup_addr}: {confirmed_txs:?}");
                 let utxos = get_utxos(lockup_addr.to_string(), confirmed_txs, true)?;
 
-                // To decide the claim tx amount, we use the previously committed to amount
-                // We avoid trying to derive it from confirmed utxos on the lockup address, because
-                // in certain timeout scenarios (e.g. if the claim tx is not broadcast within the
-                // rev swap allocated time), then the service provider will claim the sats back
-                // and cancel the HODL invoice. Practically this results in a new utxo from the lockup
-                // address, of the same amount as was locked previously. In this scenario, relying
-                // on confirmed utxos to determine the claim tx amount will result in a panic (0 - fees < 0)
-                // Therefore we read the claim tx amount from the originally agreed upon onchain amount,
-                // confirmed by the service provider on rev swap creation.
+                // The amount locked in the claim address
                 let claim_amount_sat = rs.onchain_amount_sat;
+                debug!("Claim tx amount: {claim_amount_sat} sat");
 
-                let claim_tx_fee = self.calculate_claim_tx_fees(rs.sat_per_vbyte)?;
-                debug!("Claim tx amount: {claim_amount_sat}");
-                debug!("Claim tx fees: {claim_tx_fee}");
+                // Calculate amount sent in a backward compatible way
+                let tx_out_value = match rs.sat_per_vbyte {
+                    Some(claim_tx_feerate) => {
+                        claim_amount_sat - Self::calculate_claim_tx_fee(claim_tx_feerate)?
+                    }
+                    None => rs.receive_amount_sat.ok_or(anyhow!(
+                        "Cannot create claim tx: no claim feerate or receive amount found"
+                    ))?,
+                };
+                debug!("Tx out amount: {tx_out_value} sat");
 
                 let txins: Vec<TxIn> = utxos
                     .confirmed
@@ -348,7 +421,7 @@ impl BTCSendSwap {
                     .collect();
 
                 let tx_out: Vec<TxOut> = vec![TxOut {
-                    value: claim_amount_sat,
+                    value: tx_out_value,
                     script_pubkey: claim_addr.script_pubkey(),
                 }];
 
@@ -359,7 +432,6 @@ impl BTCSendSwap {
                     input: txins.clone(),
                     output: tx_out,
                 };
-                tx.output[0].value = claim_amount_sat - claim_tx_fee;
 
                 let claim_script_bytes = PsbtSerialize::serialize(&redeem_script);
 
@@ -398,7 +470,7 @@ impl BTCSendSwap {
         }
     }
 
-    pub(crate) fn calculate_claim_tx_fees(&self, claim_tx_feerate: u32) -> SdkResult<u64> {
+    pub(crate) fn calculate_claim_tx_fee(claim_tx_feerate: u32) -> SdkResult<u64> {
         let tx = Transaction {
             version: 2,
             lock_time: crate::bitcoin::PackedLockTime(0),
@@ -630,5 +702,115 @@ impl BTCSendSwap {
             onchain_amount_sat: full_rsi.onchain_amount_sat,
             status: full_rsi.cache.status,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use anyhow::Result;
+
+    use crate::test_utils::{MOCK_REVERSE_SWAP_MAX, MOCK_REVERSE_SWAP_MIN};
+    use crate::{PrepareOnchainPaymentRequest, PrepareOnchainPaymentResponse, SwapAmountType};
+
+    #[tokio::test]
+    async fn test_prepare_onchain_payment_in_range() -> Result<()> {
+        let sdk = crate::breez_services::tests::breez_services().await?;
+
+        // User-specified send amount is within range
+        assert_in_range_prep_payment_response(
+            sdk.prepare_onchain_payment(PrepareOnchainPaymentRequest {
+                amount_sat: MOCK_REVERSE_SWAP_MIN,
+                amount_type: SwapAmountType::Receive,
+                claim_tx_feerate: 1,
+            })
+            .await?,
+        )?;
+
+        // Derived send amount is within range
+        assert_in_range_prep_payment_response(
+            sdk.prepare_onchain_payment(PrepareOnchainPaymentRequest {
+                amount_sat: MOCK_REVERSE_SWAP_MIN,
+                amount_type: SwapAmountType::Receive,
+                claim_tx_feerate: 1,
+            })
+            .await?,
+        )?;
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_prepare_onchain_payment_out_of_range() -> Result<()> {
+        let sdk = crate::breez_services::tests::breez_services().await?;
+
+        // User-specified send amount is out of range (below min)
+        assert!(sdk
+            .prepare_onchain_payment(PrepareOnchainPaymentRequest {
+                amount_sat: MOCK_REVERSE_SWAP_MIN - 1,
+                amount_type: SwapAmountType::Send,
+                claim_tx_feerate: 1,
+            })
+            .await
+            .is_err());
+
+        // User-specified send amount is out of range (above max)
+        assert!(sdk
+            .prepare_onchain_payment(PrepareOnchainPaymentRequest {
+                amount_sat: MOCK_REVERSE_SWAP_MAX + 1,
+                amount_type: SwapAmountType::Send,
+                claim_tx_feerate: 1,
+            })
+            .await
+            .is_err());
+
+        // Derived send amount is out of range (below min: specified receive amount is 0)
+        assert!(sdk
+            .prepare_onchain_payment(PrepareOnchainPaymentRequest {
+                amount_sat: 0,
+                amount_type: SwapAmountType::Receive,
+                claim_tx_feerate: 1,
+            })
+            .await
+            .is_err());
+
+        // Derived send amount is out of range (above max)
+        assert!(sdk
+            .prepare_onchain_payment(PrepareOnchainPaymentRequest {
+                amount_sat: MOCK_REVERSE_SWAP_MAX,
+                amount_type: SwapAmountType::Receive,
+                claim_tx_feerate: 1,
+            })
+            .await
+            .is_err());
+
+        // Derived send amount is out of range (above max because the chosen claim tx feerate pushes the send above max)
+        assert!(sdk
+            .prepare_onchain_payment(PrepareOnchainPaymentRequest {
+                amount_sat: MOCK_REVERSE_SWAP_MIN,
+                amount_type: SwapAmountType::Receive,
+                claim_tx_feerate: 1_000_000,
+            })
+            .await
+            .is_err());
+
+        Ok(())
+    }
+
+    /// Validates a [PrepareOnchainPaymentResponse] with all fields set.
+    ///
+    /// This is the case when the requested amount is within the reverse swap range.
+    fn assert_in_range_prep_payment_response(res: PrepareOnchainPaymentResponse) -> Result<()> {
+        dbg!(&res);
+
+        let send_amount_sat = res.sender_amount_sat;
+        let receive_amount_sat = res.recipient_amount_sat;
+        let total_fees = res.total_fees;
+        assert_eq!(send_amount_sat - total_fees, receive_amount_sat);
+
+        let service_fees = ((send_amount_sat as f64) * res.fees_percentage / 100.0) as u64;
+        let expected_total_fees = res.fees_lockup + res.fees_claim + service_fees;
+        assert_eq!(expected_total_fees, total_fees);
+
+        Ok(())
     }
 }

@@ -767,6 +767,37 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
+    fun onchainPaymentLimits(promise: Promise) {
+        executor.execute {
+            try {
+                val res = getBreezServices().onchainPaymentLimits()
+                promise.resolve(readableMapOf(res))
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun prepareOnchainPayment(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
+        executor.execute {
+            try {
+                val prepareOnchainPaymentRequest =
+                    asPrepareOnchainPaymentRequest(req) ?: run {
+                        throw SdkException.Generic(errMissingMandatoryField("req", "PrepareOnchainPaymentRequest"))
+                    }
+                val res = getBreezServices().prepareOnchainPayment(prepareOnchainPaymentRequest)
+                promise.resolve(readableMapOf(res))
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
     fun inProgressReverseSwaps(promise: Promise) {
         executor.execute {
             try {
@@ -802,6 +833,25 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                         throw SdkException.Generic(errMissingMandatoryField("req", "SendOnchainRequest"))
                     }
                 val res = getBreezServices().sendOnchain(sendOnchainRequest)
+                promise.resolve(readableMapOf(res))
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun payOnchain(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
+        executor.execute {
+            try {
+                val payOnchainRequest =
+                    asPayOnchainRequest(
+                        req,
+                    ) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "PayOnchainRequest")) }
+                val res = getBreezServices().payOnchain(payOnchainRequest)
                 promise.resolve(readableMapOf(res))
             } catch (e: Exception) {
                 promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)

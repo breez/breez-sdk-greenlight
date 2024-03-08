@@ -30,6 +30,8 @@ android: $(SOURCES) flutter_rust_bridge
 	cp -r ../sdk-bindings/ffi/kotlin/jniLibs/* ./android/src/main/jniLibs
 	mkdir -p ./android/src/main/kotlin/breez_sdk/
 	cp -r ../sdk-bindings/ffi/kotlin/breez_sdk/* ./android/src/main/kotlin/breez_sdk/
+	mkdir -p ./android/src/main/kotlin/breez_sdk_notification/
+	cp -r ../sdk-bindings/bindings-android/lib/src/main/kotlin/breez_sdk_notification/* ./android/src/main/kotlin/breez_sdk_notification/
 
 ## desktop: compiles for x86_64-unknown-linux-gnu by default, other targets can be specified
 ## with the TARGET variable eg. make desktop TARGET=aarch64-unknown-linux-gnu
@@ -47,6 +49,7 @@ clean:
 	cargo clean
 	rm -rf ./android/src/main/jniLibs
 	rm -rf ./android/src/main/kotlin/breez_sdk/
+	rm -rf ./android/src/main/kotlin/breez_sdk_notification/
 	rm -rf ./ios/libbreez_sdk_bindings.a
 	rm -rf ./ios/bindings-swift
 	rm -rf ./$(TARGET)/libbreez_sdk_bindings.so

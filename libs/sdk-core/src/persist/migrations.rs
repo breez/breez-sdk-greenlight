@@ -561,5 +561,43 @@ pub(crate) fn current_sync_migrations() -> Vec<&'static str> {
         ",
        "ALTER TABLE payments_external_info ADD COLUMN lnurl_pay_domain TEXT;",
        "ALTER TABLE open_channel_payment_info ADD COLUMN open_channel_bolt11 TEXT;",
+
+       // Convert sat_per_vbyte to nullable, to keep the field for older clients, who still rely on it.
+       // Add receive_amount_sat, which is used by newer clients and replaces sat_per_vbyte.
+       // Make receive_amount_sat nullable, so older clients can still work with an upgraded sync DB.
+       "
+       ALTER TABLE reverse_swaps RENAME TO reverse_swaps_old;
+
+       CREATE TABLE reverse_swaps (
+         id TEXT PRIMARY KEY NOT NULL,
+         created_at_block_height INTEGER NOT NULL,
+         preimage BLOB NOT NULL UNIQUE,
+         private_key BLOB NOT NULL UNIQUE,
+         claim_pubkey TEXT NOT NULL,
+         timeout_block_height INTEGER NOT NULL,
+         invoice TEXT NOT NULL UNIQUE,
+         onchain_amount_sat INTEGER NOT NULL,
+         sat_per_vbyte INTEGER,
+         receive_amount_sat INTEGER,
+         redeem_script TEXT NOT NULL
+       ) STRICT;
+
+       INSERT INTO reverse_swaps
+         (id, created_at_block_height, preimage, private_key, claim_pubkey, timeout_block_height, invoice, onchain_amount_sat, sat_per_vbyte, redeem_script)
+         SELECT
+           id,
+           created_at_block_height,
+           preimage,
+           private_key,
+           claim_pubkey,
+           timeout_block_height,
+           invoice,
+           onchain_amount_sat,
+           sat_per_vbyte,
+           redeem_script
+         FROM reverse_swaps_old;
+
+       DROP TABLE reverse_swaps_old;
+       "
     ]
 }

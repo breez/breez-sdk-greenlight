@@ -128,6 +128,13 @@ class BreezSDK {
     return nodeState;
   }
 
+  /// Configure an optional address to send funds to during a mutual channel close
+  Future<void> configureNode({
+    required ConfigureNodeRequest req,
+  }) async {
+    return await _lnToolkit.configureNode(req: req);
+  }
+
   /// Cleanup node resources and stop the signer.
   Future<void> disconnect() async => await _lnToolkit.disconnect();
 
@@ -322,10 +329,25 @@ class BreezSDK {
   /* On-Chain Swap API's */
 
   /// Creates a reverse swap and attempts to pay the HODL invoice
+  @Deprecated(
+    'Use payOnchain instead. '
+    'This method was deprecated after v0.3.2',
+  )
   Future<SendOnchainResponse> sendOnchain({
     required SendOnchainRequest req,
   }) async {
     return await _lnToolkit.sendOnchain(req: req);
+  }
+
+  Future<OnchainPaymentLimitsResponse> onchainPaymentLimits() async {
+    return await _lnToolkit.onchainPaymentLimits();
+  }
+
+  /// Creates a reverse swap and attempts to pay the HODL invoice
+  Future<PayOnchainResponse> payOnchain({
+    required PayOnchainRequest req,
+  }) async {
+    return await _lnToolkit.payOnchain(req: req);
   }
 
   /// Onchain receive swap API
@@ -382,6 +404,10 @@ class BreezSDK {
     return await _lnToolkit.prepareRefund(req: req);
   }
 
+  /// Iterate all historical swap addresses and fetch their current status from the blockchain.
+  /// The status is then updated in the persistent storage.
+  Future<void> rescanSwaps() async => await _lnToolkit.rescanSwaps();
+
   /* In Progress Swap API's */
 
   /// Returns an optional in-progress [SwapInfo].
@@ -413,10 +439,21 @@ class BreezSDK {
   }
 
   /// Lookup the most recent reverse swap pair info using the Boltz API
+  @Deprecated(
+    'Use prepareOnchainPayment instead. '
+    'This method was deprecated after v0.3.2',
+  )
   Future<ReverseSwapPairInfo> fetchReverseSwapFees({
     required ReverseSwapFeesRequest req,
   }) async {
     return await _lnToolkit.fetchReverseSwapFees(req: req);
+  }
+
+  /// Lookup the most recent reverse swap pair info using the Boltz API
+  Future<PrepareOnchainPaymentResponse> prepareOnchainPayment({
+    required PrepareOnchainPaymentRequest req,
+  }) async {
+    return await _lnToolkit.prepareOnchainPayment(req: req);
   }
 
   /// Fetches the current recommended fees

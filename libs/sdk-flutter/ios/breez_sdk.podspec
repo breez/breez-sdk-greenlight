@@ -2,7 +2,7 @@
 # Run `pod lib lint breez_sdk.podspec` to validate before publishing.
 Pod::Spec.new do |s|
   s.name             = 'breez_sdk'
-  s.version          = '0.3.1'
+  s.version          = '0.3.2'
   s.summary          = 'BreezSDK flutter plugin.'
   s.description      = <<-DESC
   BreezSDK flutter plugin.
@@ -12,7 +12,13 @@ Pod::Spec.new do |s|
   s.author           = { 'Breez' => 'contact@breez.technology' }
   s.source           = { :path => '.' }
   s.source_files = 'Classes/**/*'
-  s.on_demand_resources = { 'BreezSDK' => 'bindings-swift/Sources/BreezSDK/BreezSDK.swift' }
+  s.on_demand_resources = { 
+    'BreezSDK' => [
+      'bindings-swift/Sources/BreezSDK/BreezSDK.swift', 
+      'bindings-swift/Sources/BreezSDKNotification/*.swift', 
+      'bindings-swift/Sources/BreezSDKNotification/**/*.swift'
+    ]
+  }
   s.dependency 'Flutter'
   s.platform = :ios, '11.0'
   s.static_framework = true

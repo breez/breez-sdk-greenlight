@@ -77,9 +77,9 @@ enum ReceivePaymentError {
 enum SendOnchainError {
     "Generic",
     "InvalidDestinationAddress",
+    "OutOfRange",
     "PaymentFailed",
     "PaymentTimeout",
-    "ReverseSwapInProgress",
     "ServiceConnectivity",
 };
 
@@ -435,6 +435,22 @@ dictionary ReverseSwapFeesRequest {
     u32? claim_tx_feerate = null;
 };
 
+dictionary OnchainPaymentLimitsResponse {
+    u64 min_sat;
+    u64 max_sat;
+};
+
+enum SwapAmountType {
+    "Send",
+    "Receive",
+};
+
+dictionary PrepareOnchainPaymentRequest {
+    u64 amount_sat;
+    SwapAmountType amount_type;
+    u32 claim_tx_feerate;
+};
+
 dictionary ReceivePaymentRequest {
     u64 amount_msat;
     string description;
@@ -552,6 +568,17 @@ dictionary ReverseSwapPairInfo {
     u64 fees_lockup;
     u64 fees_claim;
     u64? total_fees;
+};
+
+dictionary PrepareOnchainPaymentResponse {
+    string fees_hash;
+    f64 fees_percentage;
+    u64 fees_lockup;
+    u64 fees_claim;
+
+    u64 sender_amount_sat;
+    u64 recipient_amount_sat;
+    u64 total_fees;
 };
 
 dictionary ReverseSwapInfo {
@@ -739,7 +766,16 @@ dictionary SendOnchainRequest {
     u32 sat_per_vbyte;
 };
 
+dictionary PayOnchainRequest {
+    string recipient_address;
+    PrepareOnchainPaymentResponse prepare_res;
+};
+
 dictionary SendOnchainResponse {
+    ReverseSwapInfo reverse_swap_info;
+};
+
+dictionary PayOnchainResponse {
     ReverseSwapInfo reverse_swap_info;
 };
 
@@ -878,6 +914,12 @@ interface BlockingBreezServices {
    ReverseSwapPairInfo fetch_reverse_swap_fees(ReverseSwapFeesRequest req);
 
    [Throws=SdkError]
+   OnchainPaymentLimitsResponse onchain_payment_limits();
+
+   [Throws=SendOnchainError]
+   PrepareOnchainPaymentResponse prepare_onchain_payment(PrepareOnchainPaymentRequest req);
+
+   [Throws=SdkError]
    sequence<ReverseSwapInfo> in_progress_reverse_swaps();
    
    [Throws=SdkError]
@@ -885,6 +927,9 @@ interface BlockingBreezServices {
 
    [Throws=SendOnchainError]
    SendOnchainResponse send_onchain(SendOnchainRequest req);
+
+   [Throws=SendOnchainError]
+   PayOnchainResponse pay_onchain(PayOnchainRequest req);
 
    [Throws=SdkError]
    ServiceHealthCheckResponse service_health_check();

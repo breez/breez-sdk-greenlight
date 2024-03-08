@@ -1,4 +1,4 @@
-tag_version = '0.3.1'
+tag_version = '0.3.2'
 framework = 'breez_sdkFFI.xcframework'
 lib_name = "breez-sdkFFI.#{tag_version}"
 url = "https://github.com/breez/breez-sdk-swift/releases/download/#{tag_version}/#{framework}.zip"
@@ -27,7 +27,13 @@ Pod::Spec.new do |s|
   s.author           = { 'Breez' => 'contact@breez.technology' }
   s.source           = { :git => "https://github.com/breez/breez-sdk-flutter.git", :tag => "#{s.version}" }
   s.source_files = 'Classes/**/*'
-  s.on_demand_resources = { 'BreezSDK' => 'bindings-swift/Sources/BreezSDK/BreezSDK.swift' }
+  s.on_demand_resources = { 
+    'BreezSDK' => [
+      'bindings-swift/Sources/BreezSDK/BreezSDK.swift', 
+      'bindings-swift/Sources/BreezSDKNotification/*.swift', 
+      'bindings-swift/Sources/BreezSDKNotification/**/*.swift'
+    ]
+  }
   s.dependency 'Flutter'
   s.platform = :ios, '11.0'
 

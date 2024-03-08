@@ -8,8 +8,8 @@ impl SqliteStorage {
         let tx = con.transaction_with_behavior(TransactionBehavior::Immediate)?;
 
         tx.execute(
-            "INSERT INTO sync.reverse_swaps (id, created_at_block_height, preimage, private_key, claim_pubkey, timeout_block_height, invoice, onchain_amount_sat, sat_per_vbyte, redeem_script)\
-            VALUES (:id, :created_at_block_height, :preimage, :private_key, :claim_pubkey, :timeout_block_height, :invoice, :onchain_amount_sat, :sat_per_vbyte, :redeem_script)",
+            "INSERT INTO sync.reverse_swaps (id, created_at_block_height, preimage, private_key, claim_pubkey, timeout_block_height, invoice, onchain_amount_sat, sat_per_vbyte, receive_amount_sat, redeem_script)\
+            VALUES (:id, :created_at_block_height, :preimage, :private_key, :claim_pubkey, :timeout_block_height, :invoice, :onchain_amount_sat, :sat_per_vbyte, :receive_amount_sat, :redeem_script)",
             named_params! {
                 ":id": rsi.id,
                 ":created_at_block_height": rsi.created_at_block_height,
@@ -20,6 +20,7 @@ impl SqliteStorage {
                 ":invoice": rsi.invoice,
                 ":onchain_amount_sat": rsi.onchain_amount_sat,
                 ":sat_per_vbyte": rsi.sat_per_vbyte,
+                ":receive_amount_sat": rsi.receive_amount_sat,
                 ":redeem_script": rsi.redeem_script
             },
         )?;
@@ -142,6 +143,7 @@ impl SqliteStorage {
             invoice: row.get("invoice")?,
             onchain_amount_sat: row.get("onchain_amount_sat")?,
             sat_per_vbyte: row.get("sat_per_vbyte")?,
+            receive_amount_sat: row.get("receive_amount_sat")?,
             redeem_script: row.get("redeem_script")?,
             cache: ReverseSwapInfoCached {
                 // The status is stored in the main DB, which is empty when the node is restored.

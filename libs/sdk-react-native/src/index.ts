@@ -284,6 +284,11 @@ export type NodeState = {
     inboundLiquidityMsats: number
 }
 
+export type OnchainPaymentLimitsResponse = {
+    minSat: number
+    maxSat: number
+}
+
 export type OpenChannelFeeRequest = {
     amountMsat?: number
     expiry?: number
@@ -307,6 +312,15 @@ export type OpeningFeeParamsMenu = {
     values: OpeningFeeParams[]
 }
 
+export type PayOnchainRequest = {
+    recipientAddress: string
+    prepareRes: PrepareOnchainPaymentResponse
+}
+
+export type PayOnchainResponse = {
+    reverseSwapInfo: ReverseSwapInfo
+}
+
 export type Payment = {
     id: string
     paymentType: PaymentType
@@ -324,6 +338,22 @@ export type PaymentFailedData = {
     error: string
     nodeId: string
     invoice?: LnInvoice
+}
+
+export type PrepareOnchainPaymentRequest = {
+    amountSat: number
+    amountType: SwapAmountType
+    claimTxFeerate: number
+}
+
+export type PrepareOnchainPaymentResponse = {
+    feesHash: string
+    feesPercentage: number
+    feesLockup: number
+    feesClaim: number
+    senderAmountSat: number
+    recipientAmountSat: number
+    totalFees: number
 }
 
 export type PrepareRedeemOnchainFundsRequest = {
@@ -787,6 +817,11 @@ export type SuccessActionProcessed = {
     data: UrlSuccessActionData
 }
 
+export enum SwapAmountType {
+    SEND = "send",
+    RECEIVE = "receive"
+}
+
 export enum SwapStatus {
     INITIAL = "initial",
     WAITING_CONFIRMATION = "waitingConfirmation",
@@ -1018,6 +1053,16 @@ export const fetchReverseSwapFees = async (req: ReverseSwapFeesRequest): Promise
     return response
 }
 
+export const onchainPaymentLimits = async (): Promise<OnchainPaymentLimitsResponse> => {
+    const response = await BreezSDK.onchainPaymentLimits()
+    return response
+}
+
+export const prepareOnchainPayment = async (req: PrepareOnchainPaymentRequest): Promise<PrepareOnchainPaymentResponse> => {
+    const response = await BreezSDK.prepareOnchainPayment(req)
+    return response
+}
+
 export const inProgressReverseSwaps = async (): Promise<ReverseSwapInfo[]> => {
     const response = await BreezSDK.inProgressReverseSwaps()
     return response
@@ -1030,6 +1075,11 @@ export const maxReverseSwapAmount = async (): Promise<MaxReverseSwapAmountRespon
 
 export const sendOnchain = async (req: SendOnchainRequest): Promise<SendOnchainResponse> => {
     const response = await BreezSDK.sendOnchain(req)
+    return response
+}
+
+export const payOnchain = async (req: PayOnchainRequest): Promise<PayOnchainResponse> => {
+    const response = await BreezSDK.payOnchain(req)
     return response
 }
 

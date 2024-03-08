@@ -441,7 +441,7 @@ dependencies = [
 
 [[package]]
 name = "breez-sdk-cli"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "anyhow",
  "breez-sdk-core",
@@ -458,7 +458,7 @@ dependencies = [
 
 [[package]]
 name = "breez-sdk-core"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "aes",
  "anyhow",
@@ -584,6 +584,12 @@ dependencies = [
  "wasm-bindgen",
  "windows-targets 0.48.0",
 ]
+
+[[package]]
+name = "chunked-buffer"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fa622bd314835eb026b776af471344d0dba94705c937900656a31d0407e53689"
 
 [[package]]
 name = "cipher"
@@ -1199,8 +1205,8 @@ checksum = "4271d37baee1b8c7e4b708028c57d816cf9d2434acb33a549475f78c181f6253"
 
 [[package]]
 name = "gl-client"
-version = "0.1.9"
-source = "git+https://github.com/Blockstream/greenlight.git?rev=43017c9b01a2c8c6a147b7a291f97ce2f3b89ce5#43017c9b01a2c8c6a147b7a291f97ce2f3b89ce5"
+version = "0.1.11"
+source = "git+https://github.com/Blockstream/greenlight.git?rev=1dbe06999bac216212124779c60006bd3d135ac7#1dbe06999bac216212124779c60006bd3d135ac7"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2678,12 +2684,13 @@ dependencies = [
 
 [[package]]
 name = "serde_bolt"
-version = "0.3.1"
+version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca3ddb862d94a73280b5b6faa3c9bc37db242f6a495d49f0ffb85f040dbb9bca"
+checksum = "54f634eeb988ab754b0711815e13e6ad983bfc52f76e0af342d492c6cad4f681"
 dependencies = [
  "bitcoin 0.29.2",
  "bitcoin-consensus-derive",
+ "chunked-buffer",
  "hex",
 ]
 
@@ -2723,9 +2730,9 @@ dependencies = [
 
 [[package]]
 name = "serde_with"
-version = "3.3.0"
+version = "3.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ca3b16a3d82c4088f343b7480a93550b3eabe1a358569c2dfe38bbcead07237"
+checksum = "15d167997bd841ec232f5b2b8e0e26606df2e7caa4c31b95ea9ca52b200bd270"
 dependencies = [
  "base64 0.21.2",
  "chrono",
@@ -2733,6 +2740,7 @@ dependencies = [
  "indexmap 1.9.3",
  "indexmap 2.0.0",
  "serde",
+ "serde_derive",
  "serde_json",
  "serde_with_macros",
  "time",
@@ -2740,9 +2748,9 @@ dependencies = [
 
 [[package]]
 name = "serde_with_macros"
-version = "3.3.0"
+version = "3.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e6be15c453eb305019bfa438b1593c731f36a289a7853f7707ee29e870b3b3c"
+checksum = "865f9743393e638991566a8b7a479043c2c8da94a33e0a31f18214c9cae0a64d"
 dependencies = [
  "darling",
  "proc-macro2",
@@ -3237,13 +3245,14 @@ checksum = "3528ecfd12c466c6f163363caf2d02a71161dd5e1cc6ae7b34207ea2d42d81ed"
 
 [[package]]
 name = "txoo"
-version = "0.6.2-beta.3"
+version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "74fb0ae52e565a5e1364ed50933a2a884f2e6330e8ffe9ac32ec6c4084bd3a3a"
+checksum = "2d63e3a8a97175f205a3b101cb100568ce15e6b4e77d88207e9065da4a4e061e"
 dependencies = [
  "bitcoin 0.29.2",
  "log",
  "serde",
+ "serde_bolt 0.3.4",
 ]
 
 [[package]]
@@ -3347,9 +3356,9 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 
 [[package]]
 name = "vls-core"
-version = "0.11.0-rc.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71c9571f43c1d63d301e4f88892cc7bd570b28fb6d44e8af3fac86bce210d8f0"
+checksum = "1210aae1bc771b5ff39372466cf94ea23130a9d3ed0bbbafb6ee4443976de945"
 dependencies = [
  "anyhow",
  "backtrace",
@@ -3366,7 +3375,7 @@ dependencies = [
  "log",
  "scopeguard",
  "serde",
- "serde_bolt 0.3.1",
+ "serde_bolt 0.3.4",
  "serde_derive",
  "serde_with",
  "txoo",
@@ -3374,9 +3383,9 @@ dependencies = [
 
 [[package]]
 name = "vls-persist"
-version = "0.11.0-rc.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2bad8154243b9db47c8cd0efc3513f07499faa7e31f25c8e7027a13241362605"
+checksum = "e8a9de079c84145fd4df1f826970d140f1a364fbd0f68f1944d16149988a3931"
 dependencies = [
  "hex",
  "log",
@@ -3389,24 +3398,24 @@ dependencies = [
 
 [[package]]
 name = "vls-protocol"
-version = "0.11.0-rc.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c2b2f877b5ee624f38a61fb37fad38678514176a01da925aa265a70a977df70"
+checksum = "e01ad8baa041296e8d715fd34d052d00ee5210038cc755e0f993c8c827935a85"
 dependencies = [
  "as-any",
  "bitcoin-consensus-derive",
  "bolt-derive",
  "hex",
  "log",
- "serde_bolt 0.3.1",
+ "serde_bolt 0.3.4",
  "txoo",
 ]
 
 [[package]]
 name = "vls-protocol-signer"
-version = "0.11.0-rc.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "98a720d79fa6a2da1c5ed528312eacd15fa1b7af1d8dc4caa8775222e817ac21"
+checksum = "a4435ed40d9bab3350f0caa305685bc3ac95e268e9c3b3f09bc08b002fac19ba"
 dependencies = [
  "bit-vec",
  "log",

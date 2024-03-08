@@ -1,7 +1,8 @@
 plugins {
     id("com.android.library")
-    id("org.jetbrains.kotlin.android") version "1.6.10"
+    id("org.jetbrains.kotlin.android") version "1.8.20"
     id("maven-publish")
+    kotlin("plugin.serialization") version "1.8.20"
 }
 
 repositories {
@@ -10,16 +11,16 @@ repositories {
 }
 
 android {
-    compileSdk = 31
+    compileSdk = 33
 
     defaultConfig {
-        minSdk = 21
-        targetSdk = 31
+        minSdk = 24
         consumerProguardFiles("consumer-rules.pro")
     }
 
     buildTypes {
         getByName("release") {
+            @Suppress("UnstableApiUsage")
             isMinifyEnabled = false
             proguardFiles(file("proguard-android-optimize.txt"), file("proguard-rules.pro"))
         }
@@ -33,10 +34,10 @@ android {
 }
 
 dependencies {
-    implementation("net.java.dev.jna:jna:5.8.0@aar")
+    implementation("net.java.dev.jna:jna:5.14.0@aar")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7")
-    implementation("androidx.appcompat:appcompat:1.4.0")
-    implementation("androidx.core:core-ktx:1.7.0")
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 }
 
 val libraryVersion: String by project

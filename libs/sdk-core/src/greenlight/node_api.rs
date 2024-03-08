@@ -1069,11 +1069,11 @@ impl NodeAPI for Greenlight {
         let funds = self.list_funds().await?;
         let utxos = self.utxos(funds).await?;
 
-        let mut amount: u64 = 0;
+        let mut amount_msat: u64 = 0;
         let txins: Vec<TxIn> = utxos
             .iter()
             .map(|utxo| {
-                amount += utxo.amount_millisatoshi;
+                amount_msat += utxo.amount_millisatoshi;
                 TxIn {
                     previous_output: OutPoint {
                         txid: Txid::from_slice(&utxo.txid).unwrap(),
@@ -1086,16 +1086,13 @@ impl NodeAPI for Greenlight {
             })
             .collect();
 
-        // remove millisats lower than 1 satoshi (1-999 msat)
-        amount /= 1000;
-        amount *= 1000;
-
+        let amount_sat = amount_msat / 1_000;
         let btc_address = Address::from_str(&req.to_address)?;
         let tx_out: Vec<TxOut> = vec![TxOut {
-            value: amount,
+            value: amount_sat,
             script_pubkey: btc_address.payload.script_pubkey(),
         }];
-        let mut tx = Transaction {
+        let tx = Transaction {
             version: 2,
             lock_time: crate::bitcoin::PackedLockTime(0),
             input: txins.clone(),
@@ -1106,12 +1103,11 @@ impl NodeAPI for Greenlight {
         let tx_weight = tx.strippedsize() as u64 * WITNESS_SCALE_FACTOR as u64
             + witness_input_size * txins.len() as u64;
         let fee: u64 = tx_weight * req.sat_per_vbyte as u64 / WITNESS_SCALE_FACTOR as u64;
-        if fee >= amount {
+        if fee >= amount_sat {
             return Err(NodeError::Generic(anyhow!(
                 "Insufficient funds to pay fees"
             )));
         }
-        tx.output[0].value = amount - fee;
 
         return Ok(PrepareRedeemOnchainFundsResponse {
             tx_weight,
