@@ -2,6 +2,7 @@ package breez_sdk_notification.job
 
 import android.content.Context
 import breez_sdk.BlockingBreezServices
+import breez_sdk.OpenChannelFeeRequest
 import breez_sdk.ReceivePaymentRequest
 import breez_sdk_notification.Constants.DEFAULT_LNURL_PAY_INVOICE_NOTIFICATION_TITLE
 import breez_sdk_notification.Constants.DEFAULT_LNURL_PAY_METADATA_PLAIN_TEXT
@@ -13,6 +14,7 @@ import breez_sdk_notification.Constants.NOTIFICATION_CHANNEL_LNURL_PAY
 import breez_sdk_notification.NotificationHelper.Companion.notifyChannel
 import breez_sdk_notification.ResourceHelper.Companion.getString
 import breez_sdk_notification.SdkForegroundService
+import breez_sdk_notification.ServiceConfig
 import breez_sdk_notification.ServiceLogger
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -38,6 +40,7 @@ class LnurlPayInvoiceJob(
     private val fgService: SdkForegroundService,
     private val payload: String,
     private val logger: ServiceLogger,
+    private val config: ServiceConfig,
 ) : LnurlPayJob {
     companion object {
         private const val TAG = "LnurlPayInvoiceJob"
@@ -47,8 +50,17 @@ class LnurlPayInvoiceJob(
         var request: LnurlInvoiceRequest? = null
         try {
             request = Json.decodeFromString(LnurlInvoiceRequest.serializer(), payload)
-            val nodeState = breezSDK.nodeInfo()
-            if (request.amount < 1000UL || request.amount > nodeState.inboundLiquidityMsats) {
+            // Get channel opening fees for invoice amount
+            val ofpResp =
+                breezSDK.openChannelFee(OpenChannelFeeRequest(amountMsat = request.amount))
+            // Check if channel opening fees are within fee limits
+            val feeLimitMsats: ULong = config.autoChannelSetupFeeLimitMsats
+            val isFeeWithinLimits = ofpResp.feeMsat?.let { it == 0UL || it <= feeLimitMsats }
+            // Get minimum amount LN service is willing to receive
+            val minMsat =
+                ofpResp.feeMsat?.let { if (it == 0UL) 1000UL else ofpResp.feeParams.minMsat }!!
+            // Check whether if invoice's amount is larger than minMsat & it's fees fall within fee limits
+            if (request.amount < minMsat || isFeeWithinLimits != true) {
                 fail("Invalid amount requested ${request.amount}", request.replyURL)
                 notifyChannel(
                     context,
