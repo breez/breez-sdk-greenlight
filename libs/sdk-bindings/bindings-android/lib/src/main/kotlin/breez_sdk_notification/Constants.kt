@@ -2,7 +2,7 @@ package breez_sdk_notification
 
 object Constants {
     const val SHUTDOWN_DELAY_MS = 60 * 1000L
-
+    
     // Notification Channels
     const val NOTIFICATION_CHANNEL_FOREGROUND_SERVICE = "FOREGROUND_SERVICE"
     const val NOTIFICATION_CHANNEL_LNURL_PAY = "LNURL_PAY"

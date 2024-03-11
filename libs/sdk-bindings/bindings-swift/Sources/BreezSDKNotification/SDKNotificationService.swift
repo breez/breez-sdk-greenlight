@@ -9,6 +9,7 @@ open class SDKNotificationService: UNNotificationServiceExtension {
     var bestAttemptContent: UNMutableNotificationContent?
     var currentTask: TaskProtocol?
     var logger: ServiceLogger = ServiceLogger(logStream: nil)
+    var config: ServiceConfig = ServiceConfig.default
     
     override init() { }
     
@@ -19,6 +20,10 @@ open class SDKNotificationService: UNNotificationServiceExtension {
         self.logger.log(tag: TAG, line: "Notification received", level: "INFO")
         self.contentHandler = contentHandler
         self.bestAttemptContent = (request.content.mutableCopy() as? UNMutableNotificationContent)
+        
+        if let config = self.getServiceConfig() {
+            setConfig(config: config)
+        }
         
         guard let connectRequest = self.getConnectRequest() else {
             if let content = bestAttemptContent {
@@ -48,6 +53,10 @@ open class SDKNotificationService: UNNotificationServiceExtension {
         return nil
     }
     
+    open func getServiceConfig() -> ServiceConfig? {
+        return nil
+    }
+    
     open func getTaskFromNotification() -> TaskProtocol? {
         guard let content = bestAttemptContent else { return nil }
         guard let notificationType = content.userInfo[Constants.MESSAGE_DATA_TYPE] as? String else { return nil }
@@ -64,9 +73,9 @@ open class SDKNotificationService: UNNotificationServiceExtension {
         case Constants.MESSAGE_TYPE_ADDRESS_TXS_CONFIRMED:
             return RedeemSwapTask(payload: payload, logger: self.logger, contentHandler: contentHandler, bestAttemptContent: bestAttemptContent)
         case Constants.MESSAGE_TYPE_LNURL_PAY_INFO:
-            return LnurlPayInfoTask(payload: payload, logger: self.logger, contentHandler: contentHandler, bestAttemptContent: bestAttemptContent)
+            return LnurlPayInfoTask(payload: payload, logger: self.logger, config: self.config, contentHandler: contentHandler, bestAttemptContent: bestAttemptContent)
         case Constants.MESSAGE_TYPE_LNURL_PAY_INVOICE:
-            return LnurlPayInvoiceTask(payload: payload, logger: self.logger, contentHandler: contentHandler, bestAttemptContent: bestAttemptContent)
+            return LnurlPayInvoiceTask(payload: payload, logger: self.logger, config: self.config, contentHandler: contentHandler, bestAttemptContent: bestAttemptContent)
         case Constants.MESSAGE_TYPE_PAYMENT_RECEIVED:
             return ReceivePaymentTask(payload: payload, logger: self.logger, contentHandler: contentHandler, bestAttemptContent: bestAttemptContent)
         default:
@@ -92,5 +101,9 @@ open class SDKNotificationService: UNNotificationServiceExtension {
     
     func setLogger(logger: LogStream) {
         self.logger = ServiceLogger(logStream: logger)
+    }
+    
+    private func setConfig(config: ServiceConfig) {
+        self.config = config
     }
 }

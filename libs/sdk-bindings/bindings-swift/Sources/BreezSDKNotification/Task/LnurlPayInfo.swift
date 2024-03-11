@@ -25,10 +25,10 @@ struct LnurlInfoResponse: Decodable, Encodable {
 class LnurlPayInfoTask : LnurlPayTask {
     fileprivate let TAG = "LnurlPayInfoTask"
     
-    init(payload: String, logger: ServiceLogger, contentHandler: ((UNNotificationContent) -> Void)? = nil, bestAttemptContent: UNMutableNotificationContent? = nil) {
+    init(payload: String, logger: ServiceLogger, config: ServiceConfig, contentHandler: ((UNNotificationContent) -> Void)? = nil, bestAttemptContent: UNMutableNotificationContent? = nil) {
         let successNotificationTitle = ResourceHelper.shared.getString(key: Constants.LNURL_PAY_INFO_NOTIFICATION_TITLE, fallback: Constants.DEFAULT_LNURL_PAY_INFO_NOTIFICATION_TITLE)
         let failNotificationTitle = ResourceHelper.shared.getString(key: Constants.LNURL_PAY_NOTIFICATION_FAILURE_TITLE, fallback: Constants.DEFAULT_LNURL_PAY_NOTIFICATION_FAILURE_TITLE)
-        super.init(payload: payload, logger: logger, contentHandler: contentHandler, bestAttemptContent: bestAttemptContent, successNotificationTitle: successNotificationTitle, failNotificationTitle: failNotificationTitle)
+        super.init(payload: payload, logger: logger, config: config, contentHandler: contentHandler, bestAttemptContent: bestAttemptContent, successNotificationTitle: successNotificationTitle, failNotificationTitle: failNotificationTitle)
     }
     
     override func start(breezSDK: BlockingBreezServices) throws {
@@ -44,8 +44,17 @@ class LnurlPayInfoTask : LnurlPayTask {
         do {
             let plainTextMetadata = ResourceHelper.shared.getString(key: Constants.LNURL_PAY_METADATA_PLAIN_TEXT, fallback: Constants.DEFAULT_LNURL_PAY_METADATA_PLAIN_TEXT)
             let metadata = "[[\"text/plain\",\"\(plainTextMetadata)\"]]"
+            // Get the fee parameters offered by the LSP for opening a new channel
+            let ofp = try breezSDK.openChannelFee(req: OpenChannelFeeRequest(amountMsat: nil)).feeParams
+            // Calculate maximum receivable amount that falls within fee limits(in millisatoshis)
+            let feeLimitMsats: UInt64 = config.autoChannelSetupFeeLimitMsats
             let nodeInfo = try breezSDK.nodeInfo()
-            replyServer(encodable: LnurlInfoResponse(callback: lnurlInfoRequest!.callback_url, maxSendable: nodeInfo.inboundLiquidityMsats, minSendable: UInt64(1000), metadata: metadata, tag: "payRequest"),
+            let maxReceivableMsatsThatFallsWithinFeeLimits = min(nodeInfo.maxReceivableMsat, feeLimitMsats / (UInt64(ofp.proportional) / 1000000))
+            // Calculate maximum sendable amount(in millisatoshis)
+            let maxSendable = max(nodeInfo.inboundLiquidityMsats, maxReceivableMsatsThatFallsWithinFeeLimits)
+            // Get the minimum sendable amount(in millisatoshis), can not be less than 1 sats
+            let minSendable: UInt64 = nodeInfo.inboundLiquidityMsats == 0 ? ofp.minMsat :  UInt64(1000)
+            replyServer(encodable: LnurlInfoResponse(callback: lnurlInfoRequest!.callback_url, maxSendable: maxSendable, minSendable: minSendable, metadata: metadata, tag: "payRequest"),
                         replyURL: lnurlInfoRequest!.reply_url)
         } catch let e {
             self.logger.log(tag: TAG, line: "failed to process lnurl: \(e)", level: "ERROR")

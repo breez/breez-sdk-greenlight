@@ -32,6 +32,7 @@ abstract class ForegroundService : SdkForegroundService, Service() {
     @Suppress("MemberVisibilityCanBePrivate")
     val serviceScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
     private var logger: ServiceLogger = ServiceLogger()
+    private var config: ServiceConfig = ServiceConfig.default()
 
     companion object {
         private const val TAG = "ForegroundService"
@@ -77,6 +78,11 @@ abstract class ForegroundService : SdkForegroundService, Service() {
         val notification = notifyForegroundService(applicationContext)
         startForeground(NOTIFICATION_ID_FOREGROUND_SERVICE, notification)
 
+        // Set service configuration
+        getServiceConfig()?.let { serviceConfig ->
+            setConfig(serviceConfig)
+        }
+
         // Connect to SDK if source intent has data message with valid payload
         getConnectRequest()?.let { connectRequest ->
             getJobFromIntent(intent)?.also { job ->
@@ -98,6 +104,10 @@ abstract class ForegroundService : SdkForegroundService, Service() {
      *  a ConnectRequest to be used to call the Breez SDK connect function. */
     abstract fun getConnectRequest(): ConnectRequest?
 
+    /** To be implemented by the application foreground service.
+     * Allows the user to override the default ServiceConfig. */
+    abstract fun getServiceConfig(): ServiceConfig?
+
     /** Get the job to be executed from the Message data in the Intent.
      *  This can be overridden to handle custom jobs. */
     open fun getJobFromIntent(intent: Intent?): Job? {
@@ -115,14 +125,16 @@ abstract class ForegroundService : SdkForegroundService, Service() {
                         applicationContext,
                         this,
                         payload,
-                        logger
+                        logger,
+                        config
                     )
 
                     MESSAGE_TYPE_LNURL_PAY_INVOICE -> LnurlPayInvoiceJob(
                         applicationContext,
                         this,
                         payload,
-                        logger
+                        logger,
+                        config
                     )
 
                     MESSAGE_TYPE_PAYMENT_RECEIVED -> ReceivePaymentJob(
@@ -158,5 +170,9 @@ abstract class ForegroundService : SdkForegroundService, Service() {
     @Suppress("unused")
     fun setLogger(logger: LogStream) {
         this.logger = ServiceLogger(logger)
+    }
+
+    private fun setConfig(config: ServiceConfig) {
+        this.config = config
     }
 }
