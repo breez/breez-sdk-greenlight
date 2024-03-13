@@ -55,19 +55,19 @@ class LnurlPayInfoJob(
             // Get the fee parameters offered by the LSP for opening a new channel
             val ofp =
                 breezSDK.openChannelFee(OpenChannelFeeRequest(amountMsat = null)).feeParams
-            // Calculate maximum receivable amount that falls within fee limits(in millisatoshis)
-            val feeLimitMsats: ULong = config.autoChannelSetupFeeLimitMsats
+            // Calculate the maximum receivable amount within the fee limit (in millisatoshis)
+            val feeLimitMsat: ULong = config.channelFeeLimitMsat
             val nodeInfo = breezSDK.nodeInfo()
-            val maxReceivableMsatsThatFallsWithinFeeLimits = minOf(
+            val maxReceivableMsatFeeLimit = minOf(
                 nodeInfo.maxReceivableMsat,
-                feeLimitMsats / (ofp.proportional / 1000000u),
+                feeLimitMsat / (ofp.proportional / 1000000u),
             )
-            // Calculate maximum sendable amount(in millisatoshis)
+            // Calculate the maximum sendable amount (in millisatoshis)
             val maxSendable = maxOf(
                 nodeInfo.inboundLiquidityMsats,
-                maxReceivableMsatsThatFallsWithinFeeLimits,
+                maxReceivableMsatFeeLimit,
             )
-            // Get the minimum sendable amount(in millisatoshis), can not be less than 1 or more than maxSendable
+            // Get the minimum sendable amount (in millisatoshis), can not be less than 1 or more than maxSendable
             val minSendable: ULong =
                 if (nodeInfo.inboundLiquidityMsats < 1000UL) ofp.minMsat else 1000UL
             if (minSendable > maxSendable) {

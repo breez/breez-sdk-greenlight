@@ -50,17 +50,17 @@ class LnurlPayInvoiceJob(
         var request: LnurlInvoiceRequest? = null
         try {
             request = Json.decodeFromString(LnurlInvoiceRequest.serializer(), payload)
-            // Get channel opening fees for invoice amount
+            // Get channel setup fee for invoice amount
             val ofpResp =
                 breezSDK.openChannelFee(OpenChannelFeeRequest(amountMsat = request.amount))
-            // Check if channel opening fees are within fee limits
-            val feeLimitMsats: ULong = config.autoChannelSetupFeeLimitMsats
-            val isFeeWithinLimits = ofpResp.feeMsat?.let { it == 0UL || it <= feeLimitMsats }
+            // Check if channel setup fee is within fee limit
+            val feeLimitMsat: ULong = config.channelFeeLimitMsat
+            val isFeeWithinLimit = ofpResp.feeMsat?.let { it == 0UL || it <= feeLimitMsat }
             // Get minimum amount LN service is willing to receive
             val minMsat =
                 ofpResp.feeMsat?.let { if (it == 0UL) 1000UL else ofpResp.feeParams.minMsat }!!
-            // Check whether if invoice's amount is larger than minMsat & it's fees fall within fee limits
-            if (request.amount < minMsat || isFeeWithinLimits != true) {
+            // Check if the invoice amount is larger than minimum accepted amount and if its fee is within fee limit
+            if (request.amount < minMsat || isFeeWithinLimit != true) {
                 fail("Invalid amount requested ${request.amount}", request.replyURL)
                 notifyChannel(
                     context,
