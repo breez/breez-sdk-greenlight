@@ -52,13 +52,29 @@ class LnurlPayInfoTask : LnurlPayTask {
             let maxReceivableMsatsThatFallsWithinFeeLimits = min(nodeInfo.maxReceivableMsat, feeLimitMsats / (UInt64(ofp.proportional) / 1000000))
             // Calculate maximum sendable amount(in millisatoshis)
             let maxSendable = max(nodeInfo.inboundLiquidityMsats, maxReceivableMsatsThatFallsWithinFeeLimits)
-            // Get the minimum sendable amount(in millisatoshis), can not be less than 1 sats
+            // Get the minimum sendable amount(in millisatoshis), can not be less than 1 or more than maxSendable
             let minSendable: UInt64 = nodeInfo.inboundLiquidityMsats < UInt64(1000) ? ofp.minMsat :  UInt64(1000)
+            if(minSendable > maxSendable) {
+                throw InvalidMinSendable.largerThanMaxSendable
+            }
             replyServer(encodable: LnurlInfoResponse(callback: lnurlInfoRequest!.callback_url, maxSendable: maxSendable, minSendable: minSendable, metadata: metadata, tag: "payRequest"),
                         replyURL: lnurlInfoRequest!.reply_url)
         } catch let e {
             self.logger.log(tag: TAG, line: "failed to process lnurl: \(e)", level: "ERROR")
             fail(withError: e.localizedDescription, replyURL: lnurlInfoRequest!.reply_url)
+        }
+    }
+}
+
+private enum InvalidMinSendable: Error {
+    case largerThanMaxSendable
+}
+
+extension InvalidMinSendable: LocalizedError {
+    public var errorDescription: String? {
+        switch self {
+        case .largerThanMaxSendable:
+            return NSLocalizedString("Minimum sendable amount can't be greater than maximum sendable amount.", comment: "InvalidMinSendable")
         }
     }
 }
