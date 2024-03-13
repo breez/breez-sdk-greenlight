@@ -145,14 +145,16 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
     @ReactMethod
     fun setLogStream(promise: Promise) {
-        try {
-            val emitter = reactApplicationContext.getJSModule(RCTDeviceEventEmitter::class.java)
+        executor.execute {
+            try {
+                val emitter = reactApplicationContext.getJSModule(RCTDeviceEventEmitter::class.java)
 
-            setLogStream(BreezSDKLogStream(emitter))
-            promise.resolve(readableMapOf("status" to "ok"))
-        } catch (e: Exception) {
-            e.printStackTrace()
-            promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+                setLogStream(BreezSDKLogStream(emitter))
+                promise.resolve(readableMapOf("status" to "ok"))
+            } catch (e: Exception) {
+                e.printStackTrace()
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+            }
         }
     }
 
@@ -167,17 +169,19 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             return
         }
 
-        try {
-            val configTmp = asConfig(config) ?: run { throw SdkException.Generic(errMissingMandatoryField("config", "Config")) }
-            val emitter = reactApplicationContext.getJSModule(RCTDeviceEventEmitter::class.java)
+        executor.execute {
+            try {
+                val configTmp = asConfig(config) ?: run { throw SdkException.Generic(errMissingMandatoryField("config", "Config")) }
+                val emitter = reactApplicationContext.getJSModule(RCTDeviceEventEmitter::class.java)
 
-            ensureWorkingDir(configTmp.workingDir)
+                ensureWorkingDir(configTmp.workingDir)
 
-            breezServices = connect(configTmp, asUByteList(seed), BreezSDKListener(emitter))
-            promise.resolve(readableMapOf("status" to "ok"))
-        } catch (e: Exception) {
-            e.printStackTrace()
-            promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+                breezServices = connect(configTmp, asUByteList(seed), BreezSDKListener(emitter))
+                promise.resolve(readableMapOf("status" to "ok"))
+            } catch (e: Exception) {
+                e.printStackTrace()
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+            }
         }
     }
 
