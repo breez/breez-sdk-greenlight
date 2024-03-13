@@ -32,9 +32,9 @@ class LnurlPayInfoTask : LnurlPayTask {
     }
     
     override func start(breezSDK: BlockingBreezServices) throws {
-        var lnurlInfoRequest: LnurlInfoRequest? = nil
+        var request: LnurlInfoRequest? = nil
         do {
-            lnurlInfoRequest = try JSONDecoder().decode(LnurlInfoRequest.self, from: self.payload.data(using: .utf8)!)
+            request = try JSONDecoder().decode(LnurlInfoRequest.self, from: self.payload.data(using: .utf8)!)
         } catch let e {
             self.logger.log(tag: TAG, line: "failed to decode payload: \(e)", level: "ERROR")
             self.displayPushNotification(title: self.failNotificationTitle, logger: self.logger)
@@ -46,22 +46,22 @@ class LnurlPayInfoTask : LnurlPayTask {
             let metadata = "[[\"text/plain\",\"\(plainTextMetadata)\"]]"
             // Get the fee parameters offered by the LSP for opening a new channel
             let ofp = try breezSDK.openChannelFee(req: OpenChannelFeeRequest(amountMsat: nil)).feeParams
-            // Calculate maximum receivable amount that falls within fee limits(in millisatoshis)
-            let feeLimitMsats: UInt64 = config.autoChannelSetupFeeLimitMsats
+            // Calculate the maximum receivable amount within the fee limit (in millisatoshis)
+            let feeLimitMsat: UInt64 = config.channelFeeLimitMsat
             let nodeInfo = try breezSDK.nodeInfo()
-            let maxReceivableMsatsThatFallsWithinFeeLimits = min(nodeInfo.maxReceivableMsat, feeLimitMsats / (UInt64(ofp.proportional) / 1000000))
-            // Calculate maximum sendable amount(in millisatoshis)
-            let maxSendable = max(nodeInfo.inboundLiquidityMsats, maxReceivableMsatsThatFallsWithinFeeLimits)
-            // Get the minimum sendable amount(in millisatoshis), can not be less than 1 or more than maxSendable
+            let maxReceivableMsatFeeLimit = min(nodeInfo.maxReceivableMsat, feeLimitMsat / (UInt64(ofp.proportional) / 1000000))
+            // Calculate the maximum sendable amount (in millisatoshis)
+            let maxSendable = max(nodeInfo.inboundLiquidityMsats, maxReceivableMsatFeeLimit)
+            // Get the minimum sendable amount (in millisatoshis), can not be less than 1 or more than maxSendable
             let minSendable: UInt64 = nodeInfo.inboundLiquidityMsats < UInt64(1000) ? ofp.minMsat :  UInt64(1000)
             if(minSendable > maxSendable) {
                 throw InvalidMinSendable.largerThanMaxSendable
             }
-            replyServer(encodable: LnurlInfoResponse(callback: lnurlInfoRequest!.callback_url, maxSendable: maxSendable, minSendable: minSendable, metadata: metadata, tag: "payRequest"),
-                        replyURL: lnurlInfoRequest!.reply_url)
+            replyServer(encodable: LnurlInfoResponse(callback: request!.callback_url, maxSendable: maxSendable, minSendable: minSendable, metadata: metadata, tag: "payRequest"),
+                        replyURL: request!.reply_url)
         } catch let e {
             self.logger.log(tag: TAG, line: "failed to process lnurl: \(e)", level: "ERROR")
-            fail(withError: e.localizedDescription, replyURL: lnurlInfoRequest!.reply_url)
+            fail(withError: e.localizedDescription, replyURL: request!.reply_url)
         }
     }
 }

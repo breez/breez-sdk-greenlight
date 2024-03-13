@@ -1,14 +1,14 @@
 package breez_sdk_notification
 
 data class ServiceConfig(
-    /** Automatic channel setup fee limit (in msats) */
-    val autoChannelSetupFeeLimitMsats: ULong = defaultAutoChannelSetupFeeLimitMsats,
+    /** Channel setup fee limit (in msats) */
+    val channelFeeLimitMsat: ULong = defaultChannelFeeLimitMsat,
 ) {
     companion object {
-        /** Automatic channel setup fee limit (in msats) for the default ServiceConfig */
-        const val defaultAutoChannelSetupFeeLimitMsats: ULong = 0u
+        /** Channel setup fee limit (in msats) for the default ServiceConfig */
+        const val defaultChannelFeeLimitMsat: ULong = 0u
 
         /** The default ServiceConfig */
-        fun default(): ServiceConfig = ServiceConfig(defaultAutoChannelSetupFeeLimitMsats)
+        fun default(): ServiceConfig = ServiceConfig(defaultChannelFeeLimitMsat)
     }
 }
