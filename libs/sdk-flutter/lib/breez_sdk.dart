@@ -476,7 +476,10 @@ class BreezSDK {
   }
 
   /// Fetches the service health check from the support API.
-  Future<ServiceHealthCheckResponse> serviceHealthCheck() async => await _lnToolkit.serviceHealthCheck();
+  Future<ServiceHealthCheckResponse> serviceHealthCheck({
+    required String apiKey,
+  }) async =>
+      await _lnToolkit.serviceHealthCheck(apiKey: apiKey);
 
   /* CLI API's */
 
