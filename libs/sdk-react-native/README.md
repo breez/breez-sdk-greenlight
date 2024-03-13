@@ -71,9 +71,9 @@ const App = () => (
         console.log(`${JSON.stringify(breezEvent)}`)
     }
 
-    const payInvoice = async (bolt11: string, sats?: number) => {
+    const payInvoice = async (bolt11: string, amountMsat?: number) => {
         // Pay invoice
-        const payment = await sendPayment(bolt11, sats)
+        const payment = await sendPayment({ bolt11, amountMsat });
     }
 
     useEffect(() => {
