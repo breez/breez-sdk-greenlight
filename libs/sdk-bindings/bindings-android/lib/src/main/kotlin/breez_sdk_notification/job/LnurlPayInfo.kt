@@ -67,9 +67,12 @@ class LnurlPayInfoJob(
                 nodeInfo.inboundLiquidityMsats,
                 maxReceivableMsatsThatFallsWithinFeeLimits,
             )
-            // Get the minimum sendable amount(in millisatoshis), can not be less than 1 sats
+            // Get the minimum sendable amount(in millisatoshis), can not be less than 1 or more than maxSendable
             val minSendable: ULong =
                 if (nodeInfo.inboundLiquidityMsats < 1000UL) ofp.minMsat else 1000UL
+            if (minSendable > maxSendable) {
+                throw Exception("Minimum sendable amount can't be greater than maximum sendable amount.")
+            }
             val plainTextMetadata = getString(
                 context,
                 LNURL_PAY_METADATA_PLAIN_TEXT,
