@@ -144,15 +144,32 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
-    fun setLogStream(promise: Promise) {
-        try {
-            val emitter = reactApplicationContext.getJSModule(RCTDeviceEventEmitter::class.java)
+    fun serviceHealthCheck(
+        apiKey: String,
+        promise: Promise,
+    ) {
+        executor.execute {
+            try {
+                val res = serviceHealthCheck(apiKey)
+                promise.resolve(readableMapOf(res))
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+            }
+        }
+    }
 
-            setLogStream(BreezSDKLogStream(emitter))
-            promise.resolve(readableMapOf("status" to "ok"))
-        } catch (e: Exception) {
-            e.printStackTrace()
-            promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+    @ReactMethod
+    fun setLogStream(promise: Promise) {
+        executor.execute {
+            try {
+                val emitter = reactApplicationContext.getJSModule(RCTDeviceEventEmitter::class.java)
+
+                setLogStream(BreezSDKLogStream(emitter))
+                promise.resolve(readableMapOf("status" to "ok"))
+            } catch (e: Exception) {
+                e.printStackTrace()
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+            }
         }
     }
 
@@ -166,20 +183,22 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
             return
         }
 
-        try {
-            val connectRequest =
-                asConnectRequest(
-                    req,
-                ) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "ConnectRequest")) }
-            val emitter = reactApplicationContext.getJSModule(RCTDeviceEventEmitter::class.java)
+        executor.execute {
+            try {
+                val connectRequest =
+                    asConnectRequest(
+                        req,
+                    ) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "ConnectRequest")) }
+                val emitter = reactApplicationContext.getJSModule(RCTDeviceEventEmitter::class.java)
 
-            ensureWorkingDir(connectRequest.config.workingDir)
+                ensureWorkingDir(connectRequest.config.workingDir)
 
-            breezServices = connect(connectRequest, BreezSDKListener(emitter))
-            promise.resolve(readableMapOf("status" to "ok"))
-        } catch (e: Exception) {
-            e.printStackTrace()
-            promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+                breezServices = connect(connectRequest, BreezSDKListener(emitter))
+                promise.resolve(readableMapOf("status" to "ok"))
+            } catch (e: Exception) {
+                e.printStackTrace()
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+            }
         }
     }
 
@@ -852,18 +871,6 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                         req,
                     ) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "PayOnchainRequest")) }
                 val res = getBreezServices().payOnchain(payOnchainRequest)
-                promise.resolve(readableMapOf(res))
-            } catch (e: Exception) {
-                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
-            }
-        }
-    }
-
-    @ReactMethod
-    fun serviceHealthCheck(promise: Promise) {
-        executor.execute {
-            try {
-                val res = getBreezServices().serviceHealthCheck()
                 promise.resolve(readableMapOf(res))
             } catch (e: Exception) {
                 promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)

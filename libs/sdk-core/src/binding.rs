@@ -162,6 +162,12 @@ pub fn static_backup(req: StaticBackupRequest) -> Result<StaticBackupResponse> {
     BreezServices::static_backup(req).map_err(anyhow::Error::new::<SdkError>)
 }
 
+/// See [BreezServices::service_health_check]
+pub fn service_health_check(api_key: String) -> Result<ServiceHealthCheckResponse> {
+    block_on(async { BreezServices::service_health_check(api_key).await })
+        .map_err(anyhow::Error::new::<SdkError>)
+}
+
 /*  Stream API's */
 
 /// If used, this must be called before `connect`. It can only be called once.
@@ -325,13 +331,7 @@ pub fn lnurl_auth(req_data: LnUrlAuthRequestData) -> Result<LnUrlCallbackStatus>
         .map_err(anyhow::Error::new::<LnUrlAuthError>)
 }
 
-/*  Support API's */
-
-/// See [BreezServices::service_health_check]
-pub fn service_health_check() -> Result<ServiceHealthCheckResponse> {
-    block_on(async { get_breez_services().await?.service_health_check().await })
-        .map_err(anyhow::Error::new::<SdkError>)
-}
+/*  Support API */
 
 /// See [BreezServices::report_issue]
 pub fn report_issue(req: ReportIssueRequest) -> Result<()> {

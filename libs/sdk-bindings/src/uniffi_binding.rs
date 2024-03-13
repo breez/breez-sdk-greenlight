@@ -77,6 +77,11 @@ pub fn static_backup(req: StaticBackupRequest) -> SdkResult<StaticBackupResponse
     BreezServices::static_backup(req)
 }
 
+/// Fetches the service health check from the support API.
+pub fn service_health_check(api_key: String) -> SdkResult<ServiceHealthCheckResponse> {
+    rt().block_on(BreezServices::service_health_check(api_key))
+}
+
 /// connect initializes the SDK services, schedule the node to run in the cloud and
 /// run the signer. This must be called in order to start communicating with the node.
 ///
@@ -195,10 +200,6 @@ impl BlockingBreezServices {
         req_data: LnUrlAuthRequestData,
     ) -> Result<LnUrlCallbackStatus, LnUrlAuthError> {
         rt().block_on(self.breez_services.lnurl_auth(req_data))
-    }
-
-    pub fn service_health_check(&self) -> SdkResult<ServiceHealthCheckResponse> {
-        rt().block_on(self.breez_services.service_health_check())
     }
 
     pub fn report_issue(&self, req: ReportIssueRequest) -> SdkResult<()> {

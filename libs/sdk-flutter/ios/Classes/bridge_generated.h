@@ -311,6 +311,8 @@ void wire_default_config(int64_t port_,
 
 void wire_static_backup(int64_t port_, struct wire_StaticBackupRequest *req);
 
+void wire_service_health_check(int64_t port_, struct wire_uint_8_list *api_key);
+
 void wire_breez_events_stream(int64_t port_);
 
 void wire_breez_log_stream(int64_t port_);
@@ -356,8 +358,6 @@ void wire_lnurl_pay(int64_t port_, struct wire_LnUrlPayRequest *req);
 void wire_lnurl_withdraw(int64_t port_, struct wire_LnUrlWithdrawRequest *req);
 
 void wire_lnurl_auth(int64_t port_, struct wire_LnUrlAuthRequestData *req_data);
-
-void wire_service_health_check(int64_t port_);
 
 void wire_report_issue(int64_t port_, struct wire_ReportIssueRequest *req);
 
@@ -500,6 +500,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_mnemonic_to_seed);
     dummy_var ^= ((int64_t) (void*) wire_default_config);
     dummy_var ^= ((int64_t) (void*) wire_static_backup);
+    dummy_var ^= ((int64_t) (void*) wire_service_health_check);
     dummy_var ^= ((int64_t) (void*) wire_breez_events_stream);
     dummy_var ^= ((int64_t) (void*) wire_breez_log_stream);
     dummy_var ^= ((int64_t) (void*) wire_list_lsps);
@@ -522,7 +523,6 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_lnurl_pay);
     dummy_var ^= ((int64_t) (void*) wire_lnurl_withdraw);
     dummy_var ^= ((int64_t) (void*) wire_lnurl_auth);
-    dummy_var ^= ((int64_t) (void*) wire_service_health_check);
     dummy_var ^= ((int64_t) (void*) wire_report_issue);
     dummy_var ^= ((int64_t) (void*) wire_fetch_fiat_rates);
     dummy_var ^= ((int64_t) (void*) wire_list_fiat_currencies);

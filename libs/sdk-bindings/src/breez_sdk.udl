@@ -932,9 +932,6 @@ interface BlockingBreezServices {
    PayOnchainResponse pay_onchain(PayOnchainRequest req);
 
    [Throws=SdkError]
-   ServiceHealthCheckResponse service_health_check();
-
-   [Throws=SdkError]
    string execute_dev_command(string command);
 
    [Throws=SdkError]
@@ -971,4 +968,7 @@ namespace breez_sdk {
 
  [Throws=SdkError]
  StaticBackupResponse static_backup(StaticBackupRequest req);
+
+ [Throws=SdkError]
+ ServiceHealthCheckResponse service_health_check(string api_key);
 };

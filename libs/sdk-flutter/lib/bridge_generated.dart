@@ -78,6 +78,11 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kStaticBackupConstMeta;
 
+  /// See [BreezServices::service_health_check]
+  Future<ServiceHealthCheckResponse> serviceHealthCheck({required String apiKey, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kServiceHealthCheckConstMeta;
+
   /// If used, this must be called before `connect`. It can only be called once.
   Stream<BreezEvent> breezEventsStream({dynamic hint});
 
@@ -185,11 +190,6 @@ abstract class BreezSdkCore {
   Future<LnUrlCallbackStatus> lnurlAuth({required LnUrlAuthRequestData reqData, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kLnurlAuthConstMeta;
-
-  /// See [BreezServices::service_health_check]
-  Future<ServiceHealthCheckResponse> serviceHealthCheck({dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kServiceHealthCheckConstMeta;
 
   /// See [BreezServices::report_issue]
   Future<void> reportIssue({required ReportIssueRequest req, dynamic hint});
@@ -2247,6 +2247,23 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["req"],
       );
 
+  Future<ServiceHealthCheckResponse> serviceHealthCheck({required String apiKey, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(apiKey);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_service_health_check(port_, arg0),
+      parseSuccessData: _wire2api_service_health_check_response,
+      parseErrorData: _wire2api_FrbAnyhowException,
+      constMeta: kServiceHealthCheckConstMeta,
+      argValues: [apiKey],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kServiceHealthCheckConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "service_health_check",
+        argNames: ["apiKey"],
+      );
+
   Stream<BreezEvent> breezEventsStream({dynamic hint}) {
     return _platform.executeStream(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_breez_events_stream(port_),
@@ -2613,22 +2630,6 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kLnurlAuthConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "lnurl_auth",
         argNames: ["reqData"],
-      );
-
-  Future<ServiceHealthCheckResponse> serviceHealthCheck({dynamic hint}) {
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_service_health_check(port_),
-      parseSuccessData: _wire2api_service_health_check_response,
-      parseErrorData: _wire2api_FrbAnyhowException,
-      constMeta: kServiceHealthCheckConstMeta,
-      argValues: [],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kServiceHealthCheckConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "service_health_check",
-        argNames: [],
       );
 
   Future<void> reportIssue({required ReportIssueRequest req, dynamic hint}) {
@@ -5231,6 +5232,22 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_static_backup =
       _wire_static_backupPtr.asFunction<void Function(int, ffi.Pointer<wire_StaticBackupRequest>)>();
 
+  void wire_service_health_check(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> api_key,
+  ) {
+    return _wire_service_health_check(
+      port_,
+      api_key,
+    );
+  }
+
+  late final _wire_service_health_checkPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>(
+          'wire_service_health_check');
+  late final _wire_service_health_check =
+      _wire_service_health_checkPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
   void wire_breez_events_stream(
     int port_,
   ) {
@@ -5549,18 +5566,6 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
           'wire_lnurl_auth');
   late final _wire_lnurl_auth =
       _wire_lnurl_authPtr.asFunction<void Function(int, ffi.Pointer<wire_LnUrlAuthRequestData>)>();
-
-  void wire_service_health_check(
-    int port_,
-  ) {
-    return _wire_service_health_check(
-      port_,
-    );
-  }
-
-  late final _wire_service_health_checkPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_service_health_check');
-  late final _wire_service_health_check = _wire_service_health_checkPtr.asFunction<void Function(int)>();
 
   void wire_report_issue(
     int port_,

@@ -67,6 +67,11 @@ pub extern "C" fn wire_static_backup(port_: i64, req: *mut wire_StaticBackupRequ
 }
 
 #[no_mangle]
+pub extern "C" fn wire_service_health_check(port_: i64, api_key: *mut wire_uint_8_list) {
+    wire_service_health_check_impl(port_, api_key)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_breez_events_stream(port_: i64) {
     wire_breez_events_stream_impl(port_)
 }
@@ -181,11 +186,6 @@ pub extern "C" fn wire_lnurl_withdraw(port_: i64, req: *mut wire_LnUrlWithdrawRe
 #[no_mangle]
 pub extern "C" fn wire_lnurl_auth(port_: i64, req_data: *mut wire_LnUrlAuthRequestData) {
     wire_lnurl_auth_impl(port_, req_data)
-}
-
-#[no_mangle]
-pub extern "C" fn wire_service_health_check(port_: i64) {
-    wire_service_health_check_impl(port_)
 }
 
 #[no_mangle]
