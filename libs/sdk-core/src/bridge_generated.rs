@@ -286,6 +286,19 @@ fn wire_static_backup_impl(
         },
     )
 }
+fn wire_service_health_check_impl(port_: MessagePort, api_key: impl Wire2Api<String> + UnwindSafe) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, ServiceHealthCheckResponse, _>(
+        WrapInfo {
+            debug_name: "service_health_check",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_api_key = api_key.wire2api();
+            move |task_callback| service_health_check(api_api_key)
+        },
+    )
+}
 fn wire_breez_events_stream_impl(port_: MessagePort) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, (), _>(
         WrapInfo {
@@ -568,16 +581,6 @@ fn wire_lnurl_auth_impl(
             let api_req_data = req_data.wire2api();
             move |task_callback| lnurl_auth(api_req_data)
         },
-    )
-}
-fn wire_service_health_check_impl(port_: MessagePort) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, ServiceHealthCheckResponse, _>(
-        WrapInfo {
-            debug_name: "service_health_check",
-            port: Some(port_),
-            mode: FfiCallMode::Normal,
-        },
-        move || move |task_callback| service_health_check(),
     )
 }
 fn wire_report_issue_impl(port_: MessagePort, req: impl Wire2Api<ReportIssueRequest> + UnwindSafe) {

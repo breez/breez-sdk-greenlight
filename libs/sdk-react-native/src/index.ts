@@ -877,6 +877,11 @@ export const staticBackup = async (req: StaticBackupRequest): Promise<StaticBack
     return response
 }
 
+export const serviceHealthCheck = async (apiKey: string): Promise<ServiceHealthCheckResponse> => {
+    const response = await BreezSDK.serviceHealthCheck(apiKey)
+    return response
+}
+
 
 export const disconnect = async (): Promise<void> => {
     await BreezSDK.disconnect()
@@ -1080,11 +1085,6 @@ export const sendOnchain = async (req: SendOnchainRequest): Promise<SendOnchainR
 
 export const payOnchain = async (req: PayOnchainRequest): Promise<PayOnchainResponse> => {
     const response = await BreezSDK.payOnchain(req)
-    return response
-}
-
-export const serviceHealthCheck = async (): Promise<ServiceHealthCheckResponse> => {
-    const response = await BreezSDK.serviceHealthCheck()
     return response
 }
 

@@ -515,11 +515,6 @@ impl BreezServices {
         self.payment_receiver.receive_payment(req).await
     }
 
-    /// Fetches the service health check from the support API.
-    pub async fn service_health_check(&self) -> SdkResult<ServiceHealthCheckResponse> {
-        self.support_api.service_health_check().await
-    }
-
     /// Report an issue.
     ///
     /// Calling `report_issue` with a [ReportIssueRequest] enum param sends an issue report using the Support API.
@@ -1288,6 +1283,16 @@ impl BreezServices {
         Ok(StaticBackupResponse {
             backup: storage.get_static_backup()?,
         })
+    }
+
+    /// Fetches the service health check from the support API.
+    pub async fn service_health_check(api_key: String) -> SdkResult<ServiceHealthCheckResponse> {
+        let support_api: Arc<dyn SupportAPI> = Arc::new(BreezServer::new(
+            PRODUCTION_BREEZSERVER_URL.to_string(),
+            Some(api_key),
+        ));
+
+        support_api.service_health_check().await
     }
 
     /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency.

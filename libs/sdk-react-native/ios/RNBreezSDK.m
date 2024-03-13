@@ -34,6 +34,12 @@ RCT_EXTERN_METHOD(
     resolve: (RCTPromiseResolveBlock)resolve
     reject: (RCTPromiseRejectBlock)reject
 )
+
+RCT_EXTERN_METHOD(
+    serviceHealthCheck: (NSString*)apiKey
+    resolve: (RCTPromiseResolveBlock)resolve
+    reject: (RCTPromiseRejectBlock)reject
+)
   
 RCT_EXTERN_METHOD(
     setLogStream: (RCTPromiseResolveBlock)resolve
@@ -285,11 +291,6 @@ RCT_EXTERN_METHOD(
 RCT_EXTERN_METHOD(
     payOnchain: (NSDictionary*)req
     resolve: (RCTPromiseResolveBlock)resolve
-    reject: (RCTPromiseRejectBlock)reject
-)
-
-RCT_EXTERN_METHOD(
-    serviceHealthCheck: (RCTPromiseResolveBlock)resolve
     reject: (RCTPromiseRejectBlock)reject
 )
 

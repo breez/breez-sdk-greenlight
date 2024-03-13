@@ -478,10 +478,13 @@ pub struct Config {
     pub node_config: NodeConfig,
 }
 
+pub(crate) static PRODUCTION_BREEZSERVER_URL: &str = "https://bs1.breez.technology:443";
+pub(crate) static STAGING_BREEZSERVER_URL: &str = "https://bs1-st.breez.technology:443";
+
 impl Config {
     pub fn production(api_key: String, node_config: NodeConfig) -> Self {
         Config {
-            breezserver: "https://bs1.breez.technology:443".to_string(),
+            breezserver: PRODUCTION_BREEZSERVER_URL.to_string(),
             chainnotifier_url: "https://chainnotifier.breez.technology".to_string(),
             mempoolspace_url: "https://mempool.space".to_string(),
             working_dir: ".".to_string(),
@@ -497,7 +500,7 @@ impl Config {
 
     pub fn staging(api_key: String, node_config: NodeConfig) -> Self {
         Config {
-            breezserver: "https://bs1-st.breez.technology:443".to_string(),
+            breezserver: STAGING_BREEZSERVER_URL.to_string(),
             chainnotifier_url: "https://chainnotifier.breez.technology".to_string(),
             mempoolspace_url: "https://mempool.space".to_string(),
             working_dir: ".".to_string(),

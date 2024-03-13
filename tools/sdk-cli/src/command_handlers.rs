@@ -534,8 +534,14 @@ pub(crate) async fn handle_command(
             }
         }
         Commands::ServiceHealthCheck {} => {
-            let health_check = sdk()?.service_health_check().await?;
-            serde_json::to_string_pretty(&health_check).map_err(|e| e.into())
+            let config: crate::config::CliConfig = persistence.get_or_create_config()?;
+            match config.api_key {
+                Some(api_key) => {
+                    let health_check = BreezServices::service_health_check(api_key).await?;
+                    serde_json::to_string_pretty(&health_check).map_err(|e| e.into())
+                }
+                None => Ok("No API key set".into()),
+            }
         }
         Commands::ReportPaymentFailure {
             payment_hash,
