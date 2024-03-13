@@ -69,7 +69,7 @@ class LnurlPayInfoJob(
             )
             // Get the minimum sendable amount(in millisatoshis), can not be less than 1 sats
             val minSendable: ULong =
-                if (nodeInfo.inboundLiquidityMsats == 0UL) ofp.minMsat else 1000UL
+                if (nodeInfo.inboundLiquidityMsats < 1000UL) ofp.minMsat else 1000UL
             val plainTextMetadata = getString(
                 context,
                 LNURL_PAY_METADATA_PLAIN_TEXT,
