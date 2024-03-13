@@ -2,12 +2,12 @@ import Foundation
 import os.log
 
 #if DEBUG && true
-fileprivate var os_log = Logger(
+fileprivate var logger = OSLog(
     subsystem: Bundle.main.bundleIdentifier!,
     category: "ServiceLogger"
 )
 #else
-fileprivate var os_log = Logger(OSLog.disabled)
+fileprivate var logger = OSLog.disabled
 #endif
 
 class ServiceLogger {
@@ -23,21 +23,16 @@ class ServiceLogger {
         } else {
             switch(level) {
                 case "ERROR":
-                    os_log.error("[\(tag)] \(line)")
+                    os_log("[%{public}@] %{public}@", log: logger, type: .error, tag, line)
                     break
-                case "WARN":
-                    os_log.warning("[\(tag)] \(line)")
-                    break
-                case "INFO":
-                    os_log.info("[\(tag)] \(line)")
-                    break
-                case "DEBUG":
-                    os_log.debug("[\(tag)] \(line)")
+                case "INFO", "WARN":
+                    os_log("[%{public}@] %{public}@", log: logger, type: .info, tag, line)
                     break
                 case "TRACE":
-                    os_log.trace("[\(tag)] \(line)")
+                    os_log("[%{public}@] %{public}@", log: logger, type: .debug, tag, line)
                     break
                 default:
+                    os_log("[%{public}@] %{public}@", log: logger, type: .default, tag, line)
                     return
             }
         }
