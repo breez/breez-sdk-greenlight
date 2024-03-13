@@ -598,6 +598,13 @@ pub(crate) fn current_sync_migrations() -> Vec<&'static str> {
          FROM reverse_swaps_old;
 
        DROP TABLE reverse_swaps_old;
+       ",
        "
+        CREATE TRIGGER IF NOT EXISTS sync_payments_metadata
+         AFTER INSERT ON payments_metadata
+        BEGIN
+         INSERT INTO sync_requests(changed_table) VALUES('payments_metadata');
+        END;
+       ",
     ]
 }
