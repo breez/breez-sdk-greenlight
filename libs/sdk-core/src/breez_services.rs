@@ -59,7 +59,7 @@ use crate::models::{
     INVOICE_PAYMENT_FEE_EXPIRY_SECONDS,
 };
 use crate::moonpay::MoonPayApi;
-use crate::node_api::NodeAPI;
+use crate::node_api::{CreateInvoiceRequest, NodeAPI};
 use crate::persist::db::SqliteStorage;
 use crate::swap_in::swap::BTCReceiveSwap;
 use crate::swap_out::boltzswap::BoltzApi;
@@ -2312,14 +2312,18 @@ impl Receiver for PaymentReceiver {
         info!("Creating invoice on NodeAPI");
         let mut invoice = self
             .node_api
-            .create_invoice(
-                destination_invoice_amount_msat,
-                req.description,
-                req.preimage,
-                req.use_description_hash,
-                Some(expiry),
-                Some(req.cltv.unwrap_or(144)),
-            )
+            .create_invoice(CreateInvoiceRequest {
+                amount_msat: destination_invoice_amount_msat,
+                description: req.description,
+                payer_amount_msat: match open_channel_needed {
+                    true => Some(req.amount_msat),
+                    false => None,
+                },
+                preimage: req.preimage,
+                use_description_hash: req.use_description_hash,
+                expiry: Some(expiry),
+                cltv: Some(req.cltv.unwrap_or(144)),
+            })
             .await?;
         info!("Invoice created {}", invoice);
 
