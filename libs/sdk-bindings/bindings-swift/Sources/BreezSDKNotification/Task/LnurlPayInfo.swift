@@ -49,7 +49,12 @@ class LnurlPayInfoTask : LnurlPayTask {
             // Calculate the maximum receivable amount within the fee limit (in millisatoshis)
             let feeLimitMsat: UInt64 = config.channelFeeLimitMsat
             let nodeInfo = try breezSDK.nodeInfo()
-            let maxReceivableMsatFeeLimit = min(nodeInfo.maxReceivableMsat, feeLimitMsat / (UInt64(ofp.proportional) / 1000000))
+            let proportionalPercent = Double(ofp.proportional) / 1000000.0
+            let maxReceivableMsatFeeLimit = (proportionalPercent != 0.0 && feeLimitMsat != 0)
+            ? min(
+                nodeInfo.maxReceivableMsat,
+                UInt64(Double(feeLimitMsat) / proportionalPercent)
+            ) : nodeInfo.maxReceivableMsat
             // Calculate the maximum sendable amount (in millisatoshis)
             let maxSendable = max(nodeInfo.inboundLiquidityMsats, maxReceivableMsatFeeLimit)
             // Get the minimum sendable amount (in millisatoshis), can not be less than 1 or more than maxSendable
