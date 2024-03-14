@@ -50,6 +50,7 @@ class LnurlPayInfoTask : LnurlPayTask {
             let feeLimitMsat: UInt64 = config.channelFeeLimitMsat
             let nodeInfo = try breezSDK.nodeInfo()
             let proportionalPercent = Double(ofp.proportional) / 1000000.0
+            // Treat fee limit feature as disabled when it's set to 0
             let maxReceivableMsatFeeLimit = (proportionalPercent != 0.0 && feeLimitMsat != 0)
             ? min(
                 nodeInfo.maxReceivableMsat,
