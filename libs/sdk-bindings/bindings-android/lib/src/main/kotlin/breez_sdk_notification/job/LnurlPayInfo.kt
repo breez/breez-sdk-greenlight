@@ -59,6 +59,7 @@ class LnurlPayInfoJob(
             val feeLimitMsat: ULong = config.channelFeeLimitMsat
             val nodeInfo = breezSDK.nodeInfo()
             val proportionalPercent = ((ofp.proportional.toDouble() / 1000000.0))
+            // Treat fee limit feature as disabled when it's set to 0
             val maxReceivableMsatFeeLimit = if (proportionalPercent != 0.0 && feeLimitMsat != 0UL) {
                 minOf(
                     nodeInfo.maxReceivableMsat,
