@@ -58,10 +58,15 @@ class LnurlPayInfoJob(
             // Calculate the maximum receivable amount within the fee limit (in millisatoshis)
             val feeLimitMsat: ULong = config.channelFeeLimitMsat
             val nodeInfo = breezSDK.nodeInfo()
-            val maxReceivableMsatFeeLimit = minOf(
-                nodeInfo.maxReceivableMsat,
-                feeLimitMsat / (ofp.proportional / 1000000u),
-            )
+            val proportionalPercent = ((ofp.proportional.toDouble() / 1000000.0))
+            val maxReceivableMsatFeeLimit = if (proportionalPercent != 0.0 && feeLimitMsat != 0UL) {
+                minOf(
+                    nodeInfo.maxReceivableMsat,
+                    (feeLimitMsat.toDouble() / proportionalPercent).toULong()
+                )
+            } else {
+                nodeInfo.maxReceivableMsat
+            }
             // Calculate the maximum sendable amount (in millisatoshis)
             val maxSendable = maxOf(
                 nodeInfo.inboundLiquidityMsats,
