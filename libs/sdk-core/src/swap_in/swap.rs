@@ -217,6 +217,10 @@ impl BTCReceiveSwap {
             return Err(SwapError::Generic(anyhow!("Wrong address: {address_str}")));
         }
 
+        let max_allowed_deposit = std::cmp::min(
+            node_state.max_receivable_msat as i64,
+            swap_reply.max_allowed_deposit,
+        );
         let swap_info = SwapInfo {
             bitcoin_address: swap_reply.bitcoin_address,
             created_at: SystemTime::now()
@@ -240,7 +244,7 @@ impl BTCReceiveSwap {
             unconfirmed_tx_ids: Vec::new(),
             status: SwapStatus::Initial,
             min_allowed_deposit: swap_reply.min_allowed_deposit,
-            max_allowed_deposit: swap_reply.max_allowed_deposit,
+            max_allowed_deposit,
             last_redeem_error: None,
             channel_opening_fees: Some(channel_opening_fees),
             confirmed_at: None,
