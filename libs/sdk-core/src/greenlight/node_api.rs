@@ -44,7 +44,7 @@ use crate::invoice::{parse_invoice, validate_network, InvoiceError, RouteHintHop
 use crate::lightning::util::message_signing::verify;
 use crate::lightning_invoice::{RawBolt11Invoice, SignedRawBolt11Invoice};
 use crate::models::*;
-use crate::node_api::{NodeAPI, NodeError, NodeResult};
+use crate::node_api::{CreateInvoiceRequest, FetchBolt11Result, NodeAPI, NodeError, NodeResult};
 use crate::persist::db::SqliteStorage;
 use crate::{
     NodeConfig, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, RouteHint,
@@ -678,45 +678,45 @@ impl NodeAPI for Greenlight {
         Ok(())
     }
 
-    async fn create_invoice(
-        &self,
-        amount_msat: u64,
-        description: String,
-        preimage: Option<Vec<u8>>,
-        use_description_hash: Option<bool>,
-        expiry: Option<u32>,
-        cltv: Option<u32>,
-    ) -> NodeResult<String> {
+    async fn create_invoice(&self, request: CreateInvoiceRequest) -> NodeResult<String> {
+        // If there is a payer amount, this amount is stored in the label so it can be extracted
+        // later.
+        let label_prefix = match request.payer_amount_msat {
+            Some(payer_amount_msat) => format!("pa-{}-", payer_amount_msat),
+            None => String::from(""),
+        };
+
         let mut client = self.get_node_client().await?;
-        let request = cln::InvoiceRequest {
+        let cln_request = cln::InvoiceRequest {
             amount_msat: Some(cln::AmountOrAny {
                 value: Some(cln::amount_or_any::Value::Amount(cln::Amount {
-                    msat: amount_msat,
+                    msat: request.amount_msat,
                 })),
             }),
             label: format!(
-                "breez-{}",
+                "breez-{}{}",
+                label_prefix,
                 SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis()
             ),
-            description,
-            preimage,
-            deschashonly: use_description_hash,
-            expiry: expiry.map(|e| e as u64),
+            description: request.description,
+            preimage: request.preimage,
+            deschashonly: request.use_description_hash,
+            expiry: request.expiry.map(|e| e as u64),
             fallbacks: vec![],
-            cltv,
+            cltv: request.cltv,
         };
 
-        let res = client.invoice(request).await?.into_inner();
+        let res = client.invoice(cln_request).await?.into_inner();
         Ok(res.bolt11)
     }
 
-    async fn fetch_bolt11(&self, payment_hash: Vec<u8>) -> NodeResult<Option<String>> {
+    async fn fetch_bolt11(&self, payment_hash: Vec<u8>) -> NodeResult<Option<FetchBolt11Result>> {
         let request = cln::ListinvoicesRequest {
             payment_hash: Some(payment_hash),
             ..Default::default()
         };
 
-        let found_bolt11 = self
+        let result = self
             .get_node_client()
             .await?
             .list_invoices(request)
@@ -725,8 +725,29 @@ impl NodeAPI for Greenlight {
             .invoices
             .first()
             .cloned()
-            .and_then(|res| res.bolt11);
-        Ok(found_bolt11)
+            .and_then(|invoice| {
+                invoice.bolt11.map(|bolt11| {
+                    let split = invoice.label.split('-').collect::<Vec<&str>>();
+                    let payer_amount_msat = match split[1] {
+                        "pa" => Some(split[2].parse::<u64>().map_err(|_| {
+                            NodeError::Generic(anyhow!(
+                                "failed to extract payer amount from invoice label '{}'",
+                                invoice.label
+                            ))
+                        })?),
+                        _ => None,
+                    };
+                    Ok::<FetchBolt11Result, NodeError>(FetchBolt11Result {
+                        bolt11,
+                        payer_amount_msat,
+                    })
+                })
+            });
+
+        Ok(match result {
+            Some(result) => Some(result?),
+            None => None,
+        })
     }
 
     // implement pull changes from greenlight

@@ -37,7 +37,7 @@ use crate::models::{
     FiatAPI, LspAPI, NodeState, Payment, Swap, SwapperAPI, SyncResponse, TlvEntry,
 };
 use crate::moonpay::MoonPayApi;
-use crate::node_api::{NodeAPI, NodeError, NodeResult};
+use crate::node_api::{CreateInvoiceRequest, FetchBolt11Result, NodeAPI, NodeError, NodeResult};
 use crate::swap_in::error::SwapResult;
 use crate::swap_in::swap::create_submarine_swap_script;
 use crate::{
@@ -290,14 +290,9 @@ impl NodeAPI for MockNodeAPI {
 
     async fn create_invoice(
         &self,
-        amount_sats: u64,
-        description: String,
-        preimage: Option<Vec<u8>>,
-        _use_description_hash: Option<bool>,
-        _expiry: Option<u32>,
-        _cltv: Option<u32>,
+        request: CreateInvoiceRequest,
     ) -> NodeResult<String> {
-        let invoice = create_invoice(description, amount_sats * 1000, vec![], preimage);
+        let invoice = create_invoice(request.description, request.amount_msat, vec![], request.preimage);
         Ok(invoice.bolt11)
     }
 
@@ -445,7 +440,7 @@ impl NodeAPI for MockNodeAPI {
         Ok((vec![], false))
     }
 
-    async fn fetch_bolt11(&self, _payment_hash: Vec<u8>) -> NodeResult<Option<String>> {
+    async fn fetch_bolt11(&self, _payment_hash: Vec<u8>) -> NodeResult<Option<FetchBolt11Result>> {
         Ok(None)
     }
 }

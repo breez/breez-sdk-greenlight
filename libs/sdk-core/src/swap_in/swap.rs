@@ -447,6 +447,7 @@ impl BTCReceiveSwap {
                                 .node_api
                                 .fetch_bolt11(swap_info.payment_hash)
                                 .await?
+                                .map(|res| res.bolt11)
                                 .ok_or(anyhow!("Preimage already known, but invoice not found")),
                         }
                     }
