@@ -42,7 +42,7 @@ impl SwapperAPI for BreezServer {
         payer_pubkey: Vec<u8>,
         node_id: String,
     ) -> SwapResult<Swap> {
-        let mut fund_client = self.get_fund_manager_client().await?;
+        let mut fund_client = self.get_swapper_client().await?;
         let req = AddFundInitRequest {
             hash: hash.clone(),
             pubkey: payer_pubkey.clone(),
@@ -67,7 +67,7 @@ impl SwapperAPI for BreezServer {
             payment_request: bolt11,
         };
         let resp = self
-            .get_fund_manager_client()
+            .get_swapper_client()
             .await?
             .get_swap_payment(req)
             .await?

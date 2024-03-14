@@ -33,7 +33,6 @@ use crate::error::{
 use crate::fiat::{FiatCurrency, Rate};
 use crate::greenlight::{GLBackupTransport, Greenlight};
 use crate::grpc::channel_opener_client::ChannelOpenerClient;
-use crate::grpc::fund_manager_client::FundManagerClient;
 use crate::grpc::information_client::InformationClient;
 use crate::grpc::payment_notifier_client::PaymentNotifierClient;
 use crate::grpc::signer_client::SignerClient;
@@ -2169,13 +2168,6 @@ impl BreezServer {
             err: format!("(Breez: {}) {e}", self.server_url),
         })?;
         Ok(InformationClient::connect(url).await?)
-    }
-
-    pub(crate) async fn get_fund_manager_client(&self) -> SdkResult<FundManagerClient<Channel>> {
-        let url = Uri::from_str(&self.server_url).map_err(|e| SdkError::ServiceConnectivity {
-            err: format!("(Breez: {}) {e}", self.server_url),
-        })?;
-        Ok(FundManagerClient::connect(url).await?)
     }
 
     pub(crate) async fn get_signer_client(&self) -> SdkResult<SignerClient<Channel>> {
