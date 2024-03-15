@@ -278,6 +278,10 @@ impl BTCReceiveSwap {
         self.refresh_swaps(self.persister.list_swaps()?, tip).await
     }
 
+    pub(crate) async fn rescan_monitored_swaps(&self, tip: u32) -> Result<()> {
+        self.refresh_swaps(self.list_monitored()?, tip).await
+    }
+
     pub(crate) async fn execute_pending_swaps(&self, tip: u32) -> Result<()> {
         // first refresh all swaps we monitor
         self.refresh_swaps(self.list_monitored()?, tip).await?;
