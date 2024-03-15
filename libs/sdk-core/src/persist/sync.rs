@@ -92,6 +92,7 @@ impl SqliteStorage {
         remote_storage: &SqliteStorage,
         to_local: bool,
     ) -> PersistResult<()> {
+        info!("Importing remote changes startd local = {to_local}");
         let sync_data_file = remote_storage.sync_db_path();
         match SqliteStorage::migrate_sync_db(sync_data_file.clone()) {
             Ok(_) => {}
@@ -99,6 +100,7 @@ impl SqliteStorage {
                 log::error!("Failed to migrate sync db, probably local db is older than remote, skipping migration: {}", e);
             }
         }
+        info!("Importing remote changes migration completed local = {to_local}");
 
         let mut con = self.get_connection()?;
         let tx = con.transaction_with_behavior(TransactionBehavior::Immediate)?;
@@ -229,10 +231,11 @@ impl SqliteStorage {
         // Sync remote swaps_fees table, which contains dynamic fees used in swaps
         // created_at is used to settle conflicts, since we assume small variations in the client local times
         Self::sync_swaps_fees_local(&tx)?;
-
+        info!("Importing remote changes sync completed local = {to_local}");
         tx.commit()?;
+        info!("Importing remote changes commited local = {to_local}");
         con.execute("DETACH DATABASE remote_sync", [])?;
-
+        info!("Importing remote changes detached local = {to_local}");
         Ok(())
     }
 
