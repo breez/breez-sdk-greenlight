@@ -221,6 +221,9 @@ impl BTCReceiveSwap {
             node_state.max_receivable_msat as i64,
             swap_reply.max_allowed_deposit,
         );
+        if max_allowed_deposit < swap_reply.min_allowed_deposit {
+            return Err(SwapError::Generic(anyhow!("No allowed deposit amounts")));
+        }
         let swap_info = SwapInfo {
             bitcoin_address: swap_reply.bitcoin_address,
             created_at: SystemTime::now()
