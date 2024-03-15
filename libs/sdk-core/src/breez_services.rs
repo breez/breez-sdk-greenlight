@@ -2233,6 +2233,12 @@ pub trait Receiver: Send + Sync {
         &self,
         req: ReceivePaymentRequest,
     ) -> Result<ReceivePaymentResponse, ReceivePaymentError>;
+    async fn wrap_open_channel_invoice(
+        &self,
+        invoice: String,
+        amount_msat: u64,
+        opening_fee_params: OpeningFeeParams,
+    ) -> Result<String, ReceivePaymentError>;
 }
 
 pub(crate) struct PaymentReceiver {
@@ -2334,107 +2340,56 @@ impl Receiver for PaymentReceiver {
         // limit the hints to max 3 and extract the lsp one.
         let optional_lsp_hint = Self::limit_and_extract_lsp_hint(&mut routing_hints, &lsp_info);
 
-        // We here check if we need to modify the invoice.
-        let optional_modified_invoice = match (
-            open_channel_needed,
-            optional_lsp_hint,
-            parsed_invoice.routing_hints.is_empty(),
-        ) {
-            // If we need to open a channel we only need to set the dedicated lsp hint.
-            (true, _, _) => {
-                let open_channel_hint = RouteHint {
-                    hops: vec![RouteHintHop {
-                        src_node_id: lsp_info.pubkey.clone(),
-                        short_channel_id: parse_short_channel_id("1x0x0")?,
-                        fees_base_msat: lsp_info.base_fee_msat as u32,
-                        fees_proportional_millionths: (lsp_info.fee_rate * 1000000.0) as u32,
-                        cltv_expiry_delta: lsp_info.time_lock_delta as u64,
-                        htlc_minimum_msat: Some(lsp_info.min_htlc_msat as u64),
-                        htlc_maximum_msat: None,
-                    }],
-                };
-                info!("Adding open channel hint: {:?}", open_channel_hint);
-                Some(add_routing_hints(
+        if open_channel_needed {
+            invoice = self
+                .wrap_open_channel_invoice(
                     invoice.clone(),
-                    false,
-                    &vec![open_channel_hint],
                     req.amount_msat,
-                )?)
-            }
-            // In case we don't need to open a channel and we have a channel with our lsp then we only ensure it
-            // exists as part of the invoice routing hints (merging).
-            (false, Some(h), _) => {
-                match parsed_invoice.contains_hint_for_node(lsp_info.pubkey.as_str()) {
-                    false => {
-                        info!("Adding lsp hint: {:?}", h);
-                        Some(add_routing_hints(
-                            invoice.clone(),
-                            true,
-                            &vec![h],
-                            req.amount_msat,
-                        )?)
+                    channel_opening_fee_params
+                        .clone()
+                        .ok_or(ReceivePaymentError::Generic {
+                            err:
+                                "We need to open a channel, but no channel opening fee params found"
+                                    .into(),
+                        })?,
+                )
+                .await?;
+            parsed_invoice = parse_invoice(&invoice)?;
+        } else if let Some(raw_invoice) =
+            match (optional_lsp_hint, parsed_invoice.routing_hints.is_empty()) {
+                // In case we don't need to open a channel and we have a channel with our lsp then we only ensure it
+                // exists as part of the invoice routing hints (merging).
+                (Some(h), _) => {
+                    match parsed_invoice.contains_hint_for_node(lsp_info.pubkey.as_str()) {
+                        false => {
+                            info!("Adding lsp hint: {:?}", h);
+                            Some(add_routing_hints(
+                                invoice.clone(),
+                                true,
+                                &vec![h],
+                                req.amount_msat,
+                            )?)
+                        }
+                        // Lsp already in routing hints, no need to modify the invoice
+                        true => None,
                     }
-                    // Lsp already in routing hints, no need to modify the invoice
-                    true => None,
                 }
+                // In case we don't need to open a channel and the invoice has no routing hints we replace them with ours.
+                (None, true) => {
+                    info!("Adding custom hints: {:?}", routing_hints);
+                    Some(add_routing_hints(
+                        invoice.clone(),
+                        false,
+                        &routing_hints,
+                        req.amount_msat,
+                    )?)
+                }
+                (_, _) => None,
             }
-            // In case we don't need to open a channel and the invoice has no routing hints we replace them with ours.
-            (false, None, true) => {
-                info!("Adding custom hints: {:?}", routing_hints);
-                Some(add_routing_hints(
-                    invoice.clone(),
-                    false,
-                    &routing_hints,
-                    req.amount_msat,
-                )?)
-            }
-            (_, _, _) => None,
-        };
-
-        if let Some(raw_invoice) = optional_modified_invoice {
+        {
             invoice = self.node_api.sign_invoice(raw_invoice)?;
             info!("Signed invoice with hint = {}", invoice);
             parsed_invoice = parse_invoice(&invoice)?;
-        }
-
-        // register the payment at the lsp if needed
-        if open_channel_needed {
-            info!("Registering payment with LSP");
-
-            if channel_opening_fee_params.is_none() {
-                return Err(ReceivePaymentError::Generic {
-                    err: "We need to open a channel, but no channel opening fee params found"
-                        .into(),
-                });
-            }
-
-            let api_key = self.config.api_key.clone().unwrap_or_default();
-            let api_key_hash = sha256::Hash::hash(api_key.as_bytes()).to_hex();
-
-            self.lsp
-                .register_payment(
-                    lsp_info.id.clone(),
-                    lsp_info.lsp_pubkey.clone(),
-                    PaymentInformation {
-                        payment_hash: hex::decode(parsed_invoice.payment_hash.clone())
-                            .map_err(|e| anyhow!("Failed to decode hex payment hash: {e}"))?,
-                        payment_secret: parsed_invoice.payment_secret.clone(),
-                        destination: hex::decode(parsed_invoice.payee_pubkey.clone())
-                            .map_err(|e| anyhow!("Failed to decode hex payee pubkey: {e}"))?,
-                        incoming_amount_msat: req.amount_msat as i64,
-                        outgoing_amount_msat: destination_invoice_amount_msat as i64,
-                        tag: json!({ "apiKeyHash": api_key_hash }).to_string(),
-                        opening_fee_params: channel_opening_fee_params.clone().map(Into::into),
-                    },
-                )
-                .await?;
-            info!("Payment registered");
-            // Make sure we save the large amount so we can deduce the fees later.
-            self.persister.insert_open_channel_payment_info(
-                &parsed_invoice.payment_hash,
-                req.amount_msat,
-                &invoice,
-            )?;
         }
 
         // return the signed, converted invoice with hints
@@ -2443,6 +2398,70 @@ impl Receiver for PaymentReceiver {
             opening_fee_params: channel_opening_fee_params,
             opening_fee_msat: channel_fees_msat,
         })
+    }
+
+    async fn wrap_open_channel_invoice(
+        &self,
+        invoice: String,
+        amount_msat: u64,
+        opening_fee_params: OpeningFeeParams,
+    ) -> Result<String, ReceivePaymentError> {
+        // TODO: This is called twice now in receive_payment. Optimize.
+        let lsp_info = get_lsp(self.persister.clone(), self.lsp.clone()).await?;
+        let parsed_invoice = parse_invoice(&invoice)?;
+        let open_channel_hint = RouteHint {
+            hops: vec![RouteHintHop {
+                src_node_id: lsp_info.pubkey.clone(),
+                short_channel_id: parse_short_channel_id("1x0x0")?,
+                fees_base_msat: lsp_info.base_fee_msat as u32,
+                fees_proportional_millionths: (lsp_info.fee_rate * 1000000.0) as u32,
+                cltv_expiry_delta: lsp_info.time_lock_delta as u64,
+                htlc_minimum_msat: Some(lsp_info.min_htlc_msat as u64),
+                htlc_maximum_msat: None,
+            }],
+        };
+        info!("Adding open channel hint: {:?}", open_channel_hint);
+        let invoice_with_hint = add_routing_hints(
+            invoice.clone(),
+            false,
+            &vec![open_channel_hint],
+            amount_msat,
+        )?;
+        let signed_invoice = self.node_api.sign_invoice(invoice_with_hint)?;
+
+        info!("Registering payment with LSP");
+        let api_key = self.config.api_key.clone().unwrap_or_default();
+        let api_key_hash = sha256::Hash::hash(api_key.as_bytes()).to_hex();
+
+        self.lsp
+            .register_payment(
+                lsp_info.id.clone(),
+                lsp_info.lsp_pubkey.clone(),
+                PaymentInformation {
+                    payment_hash: hex::decode(parsed_invoice.payment_hash.clone())
+                        .map_err(|e| anyhow!("Failed to decode hex payment hash: {e}"))?,
+                    payment_secret: parsed_invoice.payment_secret.clone(),
+                    destination: hex::decode(parsed_invoice.payee_pubkey.clone())
+                        .map_err(|e| anyhow!("Failed to decode hex payee pubkey: {e}"))?,
+                    incoming_amount_msat: amount_msat as i64,
+                    outgoing_amount_msat: parsed_invoice
+                        .amount_msat
+                        .ok_or(anyhow!("Open channel invoice must have an amount"))?
+                        as i64,
+                    tag: json!({ "apiKeyHash": api_key_hash }).to_string(),
+                    opening_fee_params: Some(opening_fee_params.into()),
+                },
+            )
+            .await?;
+
+        // Make sure we save the large amount so we can deduce the fees later.
+        self.persister.insert_open_channel_payment_info(
+            &parsed_invoice.payment_hash,
+            amount_msat,
+            &invoice,
+        )?;
+
+        Ok(signed_invoice)
     }
 }
 
