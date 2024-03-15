@@ -2,12 +2,12 @@ import Foundation
 import os.log
 
 #if DEBUG && true
-fileprivate var log = Logger(
+fileprivate var logger = OSLog(
     subsystem: Bundle.main.bundleIdentifier!,
     category: "BreezSDKConnector"
 )
 #else
-fileprivate var log = Logger(OSLog.disabled)
+fileprivate var logger = OSLog.disabled
 #endif
 
 class BreezSDKConnector {
@@ -33,9 +33,9 @@ class BreezSDKConnector {
     
     static func connectSDK(connectRequest: ConnectRequest) throws -> BlockingBreezServices? {
         // Connect to the Breez SDK make it ready for use
-        log.trace("Connecting to Breez SDK")
+        os_log("Connecting to Breez SDK", log: logger, type: .debug)
         let breezSDK = try connect(req: connectRequest, listener: BreezSDKEventListener())
-        log.trace("Connected to Breez SDK")
+        os_log("Connected to Breez SDK", log: logger, type: .debug)
         return breezSDK
     }
 }
