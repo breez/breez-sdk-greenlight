@@ -264,6 +264,14 @@ impl Receiver for MockReceiver {
             opening_fee_msat: None,
         })
     }
+    async fn wrap_open_channel_invoice(
+        &self,
+        invoice: String,
+        _amount_msat: u64,
+        _opening_fee_params: OpeningFeeParams,
+    ) -> Result<String, ReceivePaymentError> {
+        Ok(invoice)
+    }
 }
 
 pub struct MockNodeAPI {
