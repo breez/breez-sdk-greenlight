@@ -62,6 +62,12 @@ pub(crate) struct Greenlight {
     persister: Arc<SqliteStorage>,
 }
 
+#[derive(Serialize, Deserialize)]
+struct InvoiceLabel {
+    pub unix_milli: u128,
+    pub payer_amount_msat: Option<u64>,
+}
+
 impl Greenlight {
     /// Connects to a live node using the provided seed and config.
     /// If the node is not registered, it will try to recover it using the seed.
@@ -679,25 +685,18 @@ impl NodeAPI for Greenlight {
     }
 
     async fn create_invoice(&self, request: CreateInvoiceRequest) -> NodeResult<String> {
-        // If there is a payer amount, this amount is stored in the label so it can be extracted
-        // later.
-        let label_prefix = match request.payer_amount_msat {
-            Some(payer_amount_msat) => format!("pa-{}-", payer_amount_msat),
-            None => String::from(""),
-        };
-
         let mut client = self.get_node_client().await?;
+        let label = serde_json::to_string(&InvoiceLabel {
+            unix_milli: SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis(),
+            payer_amount_msat: request.payer_amount_msat,
+        })?;
         let cln_request = cln::InvoiceRequest {
             amount_msat: Some(cln::AmountOrAny {
                 value: Some(cln::amount_or_any::Value::Amount(cln::Amount {
                     msat: request.amount_msat,
                 })),
             }),
-            label: format!(
-                "breez-{}{}",
-                label_prefix,
-                SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis()
-            ),
+            label,
             description: request.description,
             preimage: request.preimage,
             deschashonly: request.use_description_hash,
@@ -727,27 +726,17 @@ impl NodeAPI for Greenlight {
             .cloned()
             .and_then(|invoice| {
                 invoice.bolt11.map(|bolt11| {
-                    let split = invoice.label.split('-').collect::<Vec<&str>>();
-                    let payer_amount_msat = match split[1] {
-                        "pa" => Some(split[2].parse::<u64>().map_err(|_| {
-                            NodeError::Generic(anyhow!(
-                                "failed to extract payer amount from invoice label '{}'",
-                                invoice.label
-                            ))
-                        })?),
-                        _ => None,
-                    };
-                    Ok::<FetchBolt11Result, NodeError>(FetchBolt11Result {
-                        bolt11,
-                        payer_amount_msat,
-                    })
+                    serde_json::from_str::<InvoiceLabel>(&invoice.label)
+                        .map(|label| FetchBolt11Result {
+                            bolt11,
+                            payer_amount_msat: label.payer_amount_msat,
+                        })
+                        .ok()
                 })
-            });
+            })
+            .flatten();
 
-        Ok(match result {
-            Some(result) => Some(result?),
-            None => None,
-        })
+        Ok(result)
     }
 
     // implement pull changes from greenlight
