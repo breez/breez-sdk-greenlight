@@ -1,6 +1,7 @@
 import 'dart:ffi';
 import 'dart:io';
-import 'bridge_generated.dart';
+
+import 'package:breez_sdk/sdk.dart';
 
 BreezSdkCore? _breezSDK;
 
