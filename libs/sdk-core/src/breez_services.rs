@@ -2994,7 +2994,7 @@ pub(crate) mod tests {
             pending_onchain_balance_msat: 100,
             utxos: vec![],
             max_payable_msat: 95,
-            max_receivable_msat: 1000,
+            max_receivable_msat: 4000000000,
             max_single_payment_amount_msat: 1000,
             max_chan_reserve_msats: 0,
             connected_peers: vec!["1111".to_string()],
