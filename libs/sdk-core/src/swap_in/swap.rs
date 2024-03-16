@@ -218,7 +218,7 @@ impl BTCReceiveSwap {
         }
 
         let max_allowed_deposit = std::cmp::min(
-            node_state.max_receivable_msat as i64,
+            (node_state.max_receivable_msat / 1000) as i64,
             swap_reply.max_allowed_deposit,
         );
         if max_allowed_deposit < swap_reply.min_allowed_deposit {
