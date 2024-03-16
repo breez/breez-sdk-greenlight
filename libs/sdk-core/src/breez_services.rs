@@ -33,7 +33,6 @@ use crate::error::{
 use crate::fiat::{FiatCurrency, Rate};
 use crate::greenlight::{GLBackupTransport, Greenlight};
 use crate::grpc::channel_opener_client::ChannelOpenerClient;
-use crate::grpc::fund_manager_client::FundManagerClient;
 use crate::grpc::information_client::InformationClient;
 use crate::grpc::payment_notifier_client::PaymentNotifierClient;
 use crate::grpc::signer_client::SignerClient;
@@ -2171,13 +2170,6 @@ impl BreezServer {
         Ok(InformationClient::connect(url).await?)
     }
 
-    pub(crate) async fn get_fund_manager_client(&self) -> SdkResult<FundManagerClient<Channel>> {
-        let url = Uri::from_str(&self.server_url).map_err(|e| SdkError::ServiceConnectivity {
-            err: format!("(Breez: {}) {e}", self.server_url),
-        })?;
-        Ok(FundManagerClient::connect(url).await?)
-    }
-
     pub(crate) async fn get_signer_client(&self) -> SdkResult<SignerClient<Channel>> {
         let url = Uri::from_str(&self.server_url).map_err(|e| SdkError::ServiceConnectivity {
             err: format!("(Breez: {}) {e}", self.server_url),
@@ -3002,7 +2994,7 @@ pub(crate) mod tests {
             pending_onchain_balance_msat: 100,
             utxos: vec![],
             max_payable_msat: 95,
-            max_receivable_msat: 1000,
+            max_receivable_msat: 4000000000,
             max_single_payment_amount_msat: 1000,
             max_chan_reserve_msats: 0,
             connected_peers: vec!["1111".to_string()],

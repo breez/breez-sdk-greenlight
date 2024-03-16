@@ -42,7 +42,7 @@ impl SwapperAPI for BreezServer {
         payer_pubkey: Vec<u8>,
         node_id: String,
     ) -> SwapResult<Swap> {
-        let mut fund_client = self.get_fund_manager_client().await?;
+        let mut fund_client = self.get_swapper_client().await?;
         let req = AddFundInitRequest {
             hash: hash.clone(),
             pubkey: payer_pubkey.clone(),
@@ -67,7 +67,7 @@ impl SwapperAPI for BreezServer {
             payment_request: bolt11,
         };
         let resp = self
-            .get_fund_manager_client()
+            .get_swapper_client()
             .await?
             .get_swap_payment(req)
             .await?
@@ -217,6 +217,13 @@ impl BTCReceiveSwap {
             return Err(SwapError::Generic(anyhow!("Wrong address: {address_str}")));
         }
 
+        let max_allowed_deposit = std::cmp::min(
+            (node_state.max_receivable_msat / 1000) as i64,
+            swap_reply.max_allowed_deposit,
+        );
+        if max_allowed_deposit < swap_reply.min_allowed_deposit {
+            return Err(SwapError::Generic(anyhow!("No allowed deposit amounts")));
+        }
         let swap_info = SwapInfo {
             bitcoin_address: swap_reply.bitcoin_address,
             created_at: SystemTime::now()
@@ -240,7 +247,7 @@ impl BTCReceiveSwap {
             unconfirmed_tx_ids: Vec::new(),
             status: SwapStatus::Initial,
             min_allowed_deposit: swap_reply.min_allowed_deposit,
-            max_allowed_deposit: swap_reply.max_allowed_deposit,
+            max_allowed_deposit,
             last_redeem_error: None,
             channel_opening_fees: Some(channel_opening_fees),
             confirmed_at: None,
