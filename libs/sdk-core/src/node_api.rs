@@ -53,6 +53,21 @@ pub enum NodeError {
     ServiceConnectivity(anyhow::Error),
 }
 
+pub struct CreateInvoiceRequest {
+    pub amount_msat: u64,
+    pub description: String,
+    pub payer_amount_msat: Option<u64>,
+    pub preimage: Option<Vec<u8>>,
+    pub use_description_hash: Option<bool>,
+    pub expiry: Option<u32>,
+    pub cltv: Option<u32>,
+}
+
+pub struct FetchBolt11Result {
+    pub bolt11: String,
+    pub payer_amount_msat: Option<u64>
+}
+
 /// Trait covering functions affecting the LN node
 #[tonic::async_trait]
 pub trait NodeAPI: Send + Sync {
@@ -60,15 +75,10 @@ pub trait NodeAPI: Send + Sync {
     async fn configure_node(&self, close_to_address: Option<String>) -> NodeResult<()>;
     async fn create_invoice(
         &self,
-        amount_msat: u64,
-        description: String,
-        preimage: Option<Vec<u8>>,
-        use_description_hash: Option<bool>,
-        expiry: Option<u32>,
-        cltv: Option<u32>,
+        request: CreateInvoiceRequest,
     ) -> NodeResult<String>;
     /// Fetches an existing BOLT11 invoice from the node
-    async fn fetch_bolt11(&self, payment_hash: Vec<u8>) -> NodeResult<Option<String>>;
+    async fn fetch_bolt11(&self, payment_hash: Vec<u8>) -> NodeResult<Option<FetchBolt11Result>>;
     async fn pull_changed(
         &self,
         since_timestamp: u64,

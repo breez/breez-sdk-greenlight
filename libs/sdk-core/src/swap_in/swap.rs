@@ -460,7 +460,7 @@ impl BTCReceiveSwap {
                         amount_msat: swap_info.confirmed_sats * 1_000,
                         description: String::from("Bitcoin Transfer"),
                         preimage: Some(swap_info.preimage),
-                        opening_fee_params: swap_info.channel_opening_fees,
+                        opening_fee_params: swap_info.channel_opening_fees.clone(),
                         use_description_hash: Some(false),
                         expiry: Some(SWAP_PAYMENT_FEE_EXPIRY_SECONDS),
                         cltv: None,
@@ -483,11 +483,29 @@ impl BTCReceiveSwap {
                             .get_open_channel_bolt11_by_hash(payment_hash.as_str())?;
                         match open_channel_bolt11 {
                             Some(bolt11) => Ok(bolt11),
-                            None => self
-                                .node_api
-                                .fetch_bolt11(swap_info.payment_hash)
-                                .await?
-                                .ok_or(anyhow!("Preimage already known, but invoice not found")),
+                            None => {
+                                let res = self
+                                    .node_api
+                                    .fetch_bolt11(swap_info.payment_hash)
+                                    .await?
+                                    .ok_or(anyhow!(
+                                        "Preimage already known, but invoice not found"
+                                    ))?;
+                                Ok(match res.payer_amount_msat {
+                                    Some(payer_amount_msat) => {
+                                        self.payment_receiver
+                                            .wrap_open_channel_invoice(
+                                                res.bolt11,
+                                                payer_amount_msat,
+                                                swap_info.channel_opening_fees.ok_or(anyhow!(
+                                                    "Preimage already known, invoice found, missing opening_fee_params"
+                                                ))?,
+                                            )
+                                            .await?
+                                    }
+                                    None => res.bolt11,
+                                })
+                            }
                         }
                     }
 

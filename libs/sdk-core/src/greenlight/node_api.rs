@@ -44,7 +44,7 @@ use crate::invoice::{parse_invoice, validate_network, InvoiceError, RouteHintHop
 use crate::lightning::util::message_signing::verify;
 use crate::lightning_invoice::{RawBolt11Invoice, SignedRawBolt11Invoice};
 use crate::models::*;
-use crate::node_api::{NodeAPI, NodeError, NodeResult};
+use crate::node_api::{CreateInvoiceRequest, FetchBolt11Result, NodeAPI, NodeError, NodeResult};
 use crate::persist::db::SqliteStorage;
 use crate::{
     NodeConfig, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, RouteHint,
@@ -60,6 +60,12 @@ pub(crate) struct Greenlight {
     gl_client: Mutex<Option<node::Client>>,
     node_client: Mutex<Option<ClnClient>>,
     persister: Arc<SqliteStorage>,
+}
+
+#[derive(Serialize, Deserialize)]
+struct InvoiceLabel {
+    pub unix_milli: u128,
+    pub payer_amount_msat: Option<u64>,
 }
 
 impl Greenlight {
@@ -686,45 +692,38 @@ impl NodeAPI for Greenlight {
         Ok(())
     }
 
-    async fn create_invoice(
-        &self,
-        amount_msat: u64,
-        description: String,
-        preimage: Option<Vec<u8>>,
-        use_description_hash: Option<bool>,
-        expiry: Option<u32>,
-        cltv: Option<u32>,
-    ) -> NodeResult<String> {
+    async fn create_invoice(&self, request: CreateInvoiceRequest) -> NodeResult<String> {
         let mut client = self.get_node_client().await?;
-        let request = cln::InvoiceRequest {
+        let label = serde_json::to_string(&InvoiceLabel {
+            unix_milli: SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis(),
+            payer_amount_msat: request.payer_amount_msat,
+        })?;
+        let cln_request = cln::InvoiceRequest {
             amount_msat: Some(cln::AmountOrAny {
                 value: Some(cln::amount_or_any::Value::Amount(cln::Amount {
-                    msat: amount_msat,
+                    msat: request.amount_msat,
                 })),
             }),
-            label: format!(
-                "breez-{}",
-                SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis()
-            ),
-            description,
-            preimage,
-            deschashonly: use_description_hash,
-            expiry: expiry.map(|e| e as u64),
+            label,
+            description: request.description,
+            preimage: request.preimage,
+            deschashonly: request.use_description_hash,
+            expiry: request.expiry.map(|e| e as u64),
             fallbacks: vec![],
-            cltv,
+            cltv: request.cltv,
         };
 
-        let res = client.invoice(request).await?.into_inner();
+        let res = client.invoice(cln_request).await?.into_inner();
         Ok(res.bolt11)
     }
 
-    async fn fetch_bolt11(&self, payment_hash: Vec<u8>) -> NodeResult<Option<String>> {
+    async fn fetch_bolt11(&self, payment_hash: Vec<u8>) -> NodeResult<Option<FetchBolt11Result>> {
         let request = cln::ListinvoicesRequest {
             payment_hash: Some(payment_hash),
             ..Default::default()
         };
 
-        let found_bolt11 = self
+        let result = self
             .get_node_client()
             .await?
             .list_invoices(request)
@@ -733,8 +732,17 @@ impl NodeAPI for Greenlight {
             .invoices
             .first()
             .cloned()
-            .and_then(|res| res.bolt11);
-        Ok(found_bolt11)
+            .and_then(|invoice| {
+                invoice.bolt11.map(|bolt11| FetchBolt11Result {
+                    bolt11,
+                    payer_amount_msat: serde_json::from_str::<InvoiceLabel>(&invoice.label)
+                        .map(|label| label.payer_amount_msat)
+                        .ok()
+                        .flatten(),
+                })
+            });
+
+        Ok(result)
     }
 
     // implement pull changes from greenlight
