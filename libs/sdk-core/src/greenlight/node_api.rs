@@ -733,16 +733,14 @@ impl NodeAPI for Greenlight {
             .first()
             .cloned()
             .and_then(|invoice| {
-                invoice.bolt11.map(|bolt11| {
-                    serde_json::from_str::<InvoiceLabel>(&invoice.label)
-                        .map(|label| FetchBolt11Result {
-                            bolt11,
-                            payer_amount_msat: label.payer_amount_msat,
-                        })
+                invoice.bolt11.map(|bolt11| FetchBolt11Result {
+                    bolt11,
+                    payer_amount_msat: serde_json::from_str::<InvoiceLabel>(&invoice.label)
+                        .map(|label| label.payer_amount_msat)
                         .ok()
+                        .flatten(),
                 })
-            })
-            .flatten();
+            });
 
         Ok(result)
     }
