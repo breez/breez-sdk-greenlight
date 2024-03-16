@@ -15,7 +15,7 @@ use log::{LevelFilter, Metadata, Record};
 use reqwest::{header::CONTENT_TYPE, Body};
 use serde_json::json;
 use tokio::sync::{mpsc, watch, Mutex};
-use tokio::time::sleep;
+use tokio::time::{sleep, MissedTickBehavior};
 use tonic::codegen::InterceptedService;
 use tonic::metadata::errors::InvalidMetadataValue;
 use tonic::metadata::{Ascii, MetadataValue};
@@ -1374,6 +1374,7 @@ impl BreezServices {
             let mut current_block: u32 = 0;
             let mut shutdown_receiver = cloned.shutdown_receiver.clone();
             let mut interval = tokio::time::interval(Duration::from_secs(30));
+            interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
             loop {
                 tokio::select! {
                  _ = interval.tick() => {
