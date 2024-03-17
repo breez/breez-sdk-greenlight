@@ -154,6 +154,12 @@ impl From<secp256k1::Error> for NodeError {
     }
 }
 
+impl From<serde_json::Error> for NodeError {
+    fn from(err: serde_json::Error) -> Self {
+        Self::Generic(anyhow::Error::new(err))
+    }
+}
+
 impl From<SystemTimeError> for NodeError {
     fn from(err: SystemTimeError) -> Self {
         Self::Generic(anyhow::Error::new(err))
