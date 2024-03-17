@@ -21,7 +21,7 @@ use tonic::codegen::InterceptedService;
 use tonic::metadata::errors::InvalidMetadataValue;
 use tonic::metadata::{Ascii, MetadataValue};
 use tonic::service::Interceptor;
-use tonic::transport::{Channel, Endpoint, Uri};
+use tonic::transport::{Channel, Endpoint};
 use tonic::{Request, Status};
 
 use crate::backup::{BackupRequest, BackupTransport, BackupWatcher};
@@ -2034,7 +2034,7 @@ impl BreezServicesBuilder {
         // breez_server provides both FiatAPI & LspAPI implementations
         let breez_server = Arc::new(
             BreezServer::new(self.config.breezserver.clone(), self.config.api_key.clone())
-                .map_err(|e| ConnectError::Generic {
+                .map_err(|e| ConnectError::ServiceConnectivity {
                     err: format!("Failed to create BreezServer: {e}"),
                 })?,
         );
