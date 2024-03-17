@@ -2039,7 +2039,7 @@ impl BreezServicesBuilder {
                 })?,
         );
 
-        // Ensure breez server connection is established in the backround
+        // Ensure breez server connection is established in the background
         let cloned_breez_server = breez_server.clone();
         tokio::spawn(async move {
             if let Err(e) = cloned_breez_server.ping().await {
@@ -2184,7 +2184,6 @@ impl BreezServer {
 
     pub(crate) async fn ping(&self) -> SdkResult<String> {
         let request = Request::new(PingRequest {});
-        info!("ping request");
         let response = self
             .get_information_client()
             .await?
@@ -2192,7 +2191,6 @@ impl BreezServer {
             .await?
             .into_inner()
             .version;
-        info!("ping response");
         Ok(response)
     }
 }
