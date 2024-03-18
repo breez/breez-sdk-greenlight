@@ -1068,6 +1068,11 @@ export const prepareOnchainPayment = async (req: PrepareOnchainPaymentRequest): 
     return response
 }
 
+export const inProgressOnchainPayments = async (): Promise<ReverseSwapInfo[]> => {
+    const response = await BreezSDK.inProgressOnchainPayments()
+    return response
+}
+
 export const inProgressReverseSwaps = async (): Promise<ReverseSwapInfo[]> => {
     const response = await BreezSDK.inProgressReverseSwaps()
     return response

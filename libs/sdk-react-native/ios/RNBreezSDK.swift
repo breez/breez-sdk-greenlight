@@ -587,6 +587,16 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
+    @objc(inProgressOnchainPayments:reject:)
+    func inProgressOnchainPayments(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            var res = try getBreezServices().inProgressOnchainPayments()
+            resolve(BreezSDKMapper.arrayOf(reverseSwapInfoList: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
     @objc(inProgressReverseSwaps:reject:)
     func inProgressReverseSwaps(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
