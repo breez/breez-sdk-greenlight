@@ -817,6 +817,18 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
+    fun inProgressOnchainPayments(promise: Promise) {
+        executor.execute {
+            try {
+                val res = getBreezServices().inProgressOnchainPayments()
+                promise.resolve(readableArrayOf(res))
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
     fun inProgressReverseSwaps(promise: Promise) {
         executor.execute {
             try {

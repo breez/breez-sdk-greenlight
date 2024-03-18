@@ -493,6 +493,17 @@ pub fn prepare_onchain_payment(
     })
 }
 
+/// See [BreezServices::in_progress_onchain_payments]
+pub fn in_progress_onchain_payments() -> Result<Vec<ReverseSwapInfo>> {
+    block_on(async {
+        get_breez_services()
+            .await?
+            .in_progress_onchain_payments()
+            .await
+    })
+    .map_err(anyhow::Error::new::<SdkError>)
+}
+
 /// See [BreezServices::recommended_fees]
 pub fn recommended_fees() -> Result<RecommendedFees> {
     block_on(async { get_breez_services().await?.recommended_fees().await })

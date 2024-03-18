@@ -300,6 +300,11 @@ pub extern "C" fn wire_prepare_onchain_payment(
 }
 
 #[no_mangle]
+pub extern "C" fn wire_in_progress_onchain_payments(port_: i64) {
+    wire_in_progress_onchain_payments_impl(port_)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_recommended_fees(port_: i64) {
     wire_recommended_fees_impl(port_)
 }

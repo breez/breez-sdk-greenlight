@@ -316,6 +316,10 @@ impl BlockingBreezServices {
         rt().block_on(self.breez_services.prepare_onchain_payment(req))
     }
 
+    pub fn in_progress_onchain_payments(&self) -> SdkResult<Vec<ReverseSwapInfo>> {
+        rt().block_on(self.breez_services.in_progress_onchain_payments())
+    }
+
     pub fn in_progress_reverse_swaps(&self) -> SdkResult<Vec<ReverseSwapInfo>> {
         rt().block_on(self.breez_services.in_progress_reverse_swaps())
     }

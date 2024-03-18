@@ -427,6 +427,10 @@ class BreezSDK {
   }
 
   /// Returns the blocking [ReverseSwapInfo]s that are in progress
+  @Deprecated(
+    'Use inProgressOnchainPayments instead. '
+    'This method was deprecated after v0.3.6',
+  )
   Future<List<ReverseSwapInfo>> inProgressReverseSwaps() async => _lnToolkit.inProgressReverseSwaps();
 
   /* Swap Fee API's */
@@ -455,6 +459,9 @@ class BreezSDK {
   }) async {
     return await _lnToolkit.prepareOnchainPayment(req: req);
   }
+
+  /// Returns the blocking [ReverseSwapInfo]s that are in progress
+  Future<List<ReverseSwapInfo>> inProgressOnchainPayments() async => _lnToolkit.inProgressOnchainPayments();
 
   /// Fetches the current recommended fees
   Future<RecommendedFees> recommendedFees() async => await _lnToolkit.recommendedFees();

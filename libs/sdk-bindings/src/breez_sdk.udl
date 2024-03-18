@@ -920,6 +920,9 @@ interface BlockingBreezServices {
    PrepareOnchainPaymentResponse prepare_onchain_payment(PrepareOnchainPaymentRequest req);
 
    [Throws=SdkError]
+   sequence<ReverseSwapInfo> in_progress_onchain_payments();
+
+   [Throws=SdkError]
    sequence<ReverseSwapInfo> in_progress_reverse_swaps();
    
    [Throws=SdkError]

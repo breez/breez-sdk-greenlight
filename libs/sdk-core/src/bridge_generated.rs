@@ -853,6 +853,16 @@ fn wire_prepare_onchain_payment_impl(
         },
     )
 }
+fn wire_in_progress_onchain_payments_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, Vec<ReverseSwapInfo>, _>(
+        WrapInfo {
+            debug_name: "in_progress_onchain_payments",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || move |task_callback| in_progress_onchain_payments(),
+    )
+}
 fn wire_recommended_fees_impl(port_: MessagePort) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, RecommendedFees, _>(
         WrapInfo {
