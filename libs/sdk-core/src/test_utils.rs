@@ -25,7 +25,7 @@ use crate::bitcoin::secp256k1::ecdsa::RecoverableSignature;
 use crate::bitcoin::secp256k1::{KeyPair, Message, PublicKey, Secp256k1, SecretKey};
 use crate::bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use crate::bitcoin::Network;
-use crate::breez_services::Receiver;
+use crate::breez_services::{OpenChannelParams, Receiver};
 use crate::chain::{ChainService, OnchainTx, Outspend, RecommendedFees, TxStatus};
 use crate::error::{ReceivePaymentError, SdkError, SdkResult};
 use crate::fiat::{FiatCurrency, Rate};
@@ -299,17 +299,11 @@ impl Receiver for MockReceiver {
             opening_fee_msat: None,
         })
     }
-    async fn wrap_open_channel_invoice(
+    async fn wrap_node_invoice(
         &self,
         invoice: &str,
-        _amount_msat: u64,
-        _opening_fee_params: OpeningFeeParams,
-    ) -> Result<String, ReceivePaymentError> {
-        Ok(String::from(invoice))
-    }
-    async fn ensure_hint(
-        &self,
-        invoice: &str,
+        _params: Option<OpenChannelParams>,
+        _lsp_info: Option<LspInformation>,
     ) -> Result<String, ReceivePaymentError> {
         Ok(String::from(invoice))
     }

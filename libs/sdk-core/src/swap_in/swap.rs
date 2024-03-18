@@ -18,7 +18,7 @@ use crate::bitcoin::util::sighash::SighashCache;
 use crate::bitcoin::{
     Address, EcdsaSighashType, Script, Sequence, Transaction, TxIn, TxOut, Witness,
 };
-use crate::breez_services::{BreezEvent, BreezServer, Receiver};
+use crate::breez_services::{BreezEvent, BreezServer, OpenChannelParams, Receiver};
 use crate::chain::{get_total_incoming_txs, get_utxos, AddressUtxos, ChainService};
 use crate::error::ReceivePaymentError;
 use crate::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
@@ -458,7 +458,7 @@ impl BTCReceiveSwap {
 
                 let new_bolt11 = match create_invoice_res {
                     // Extract created invoice
-                    Ok(create_invoice_response) => Ok(create_invoice_response.ln_invoice.bolt11),
+                    Ok(create_invoice_response) => create_invoice_response.ln_invoice.bolt11,
 
                     // If settling the invoice failed on a different device (for example because the
                     // swap was initiated there), then the unsettled invoice exists on the GL node.
@@ -471,7 +471,7 @@ impl BTCReceiveSwap {
                             .persister
                             .get_open_channel_bolt11_by_hash(payment_hash.as_str())?;
                         match open_channel_bolt11 {
-                            Some(bolt11) => Ok(bolt11),
+                            Some(bolt11) => bolt11,
                             None => {
                                 let res = self
                                     .node_api
@@ -480,29 +480,28 @@ impl BTCReceiveSwap {
                                     .ok_or(anyhow!(
                                         "Preimage already known, but invoice not found"
                                     ))?;
-                                Ok(match res.payer_amount_msat {
-                                    Some(payer_amount_msat) => {
-                                        self.payment_receiver
-                                            .wrap_open_channel_invoice(
-                                                &res.bolt11,
-                                                payer_amount_msat,
-                                                swap_info.channel_opening_fees.ok_or(anyhow!(
-                                                    "Preimage already known, invoice found, missing opening_fee_params"
-                                                ))?,
-                                            )
-                                            .await?
-                                    }
-                                    None => self.payment_receiver.ensure_hint(&res.bolt11).await.map_err(|_|anyhow!(
-                                        "Preimage already known, invoice found, failed to ensure route hint"
-                                    ))?,
-                                })
+                                self.payment_receiver.wrap_node_invoice(
+                                    &res.bolt11,
+                                    match res.payer_amount_msat {
+                                        Some(payer_amount_msat) => Some(OpenChannelParams{
+                                            payer_amount_msat,
+                                            opening_fee_params: swap_info.channel_opening_fees.ok_or(anyhow!(
+                                                "Preimage already known, invoice found, missing opening_fee_params"
+                                            ))?,
+                                        }),
+                                        None => None,
+                                    },
+                                    None,
+                                ).await.map_err(|_|anyhow!(
+                                    "Preimage already known, invoice found, failed to ensure route hint"
+                                ))?
                             }
                         }
                     }
 
                     // In all other cases: throw error
-                    Err(err) => Err(anyhow!("Failed to create invoice: {err}")),
-                }?;
+                    Err(err) => return Err(anyhow!("Failed to create invoice: {err}")),
+                };
 
                 // If we have a new invoice, created or fetched from GL, associate it with the swap
                 self.persister
