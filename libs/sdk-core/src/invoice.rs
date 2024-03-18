@@ -155,10 +155,10 @@ impl RouteHint {
 }
 
 pub fn add_routing_hints(
-    invoice: String,
+    invoice: &str,
     merge_with_existing: bool,
     route_hints: &Vec<RouteHint>,
-    new_amount_msats: u64,
+    new_amount_msats: Option<u64>,
 ) -> InvoiceResult<RawBolt11Invoice> {
     let signed = invoice.parse::<SignedRawBolt11Invoice>()?;
     let invoice = Bolt11Invoice::from_signed(signed)?;
@@ -172,10 +172,12 @@ pub fn add_routing_hints(
         .invoice_description(invoice.description())
         .payment_hash(*invoice.payment_hash())
         .timestamp(invoice.timestamp())
-        .amount_milli_satoshis(new_amount_msats)
         .expiry_time(invoice.expiry_time())
         .payment_secret(*invoice.payment_secret())
         .min_final_cltv_expiry_delta(invoice.min_final_cltv_expiry_delta());
+    if let Some(new_amount_msat) = new_amount_msats {
+        invoice_builder = invoice_builder.amount_milli_satoshis(new_amount_msat)
+    }
 
     // When merging route hints, only route hints are added that go through different nodes than ones in the invoice route hints.
     // Otherwise when not merging route hints, the invoice route hints are replaced by the provided route hints.
@@ -306,7 +308,7 @@ mod tests {
         let route_hint = crate::RouteHint {
             hops: vec![hint_hop],
         };
-        let encoded = add_routing_hints(payreq, true, &vec![route_hint], 100).unwrap();
+        let encoded = add_routing_hints(&payreq, true, &vec![route_hint], Some(100)).unwrap();
         print!("{encoded:?}");
     }
 
@@ -333,7 +335,7 @@ mod tests {
         let route_hint = crate::RouteHint {
             hops: vec![hint_hop],
         };
-        let encoded = add_routing_hints(payreq, false, &vec![route_hint], 100).unwrap();
+        let encoded = add_routing_hints(&payreq, false, &vec![route_hint], Some(100)).unwrap();
         print!("{encoded:?}");
     }
 

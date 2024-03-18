@@ -301,11 +301,17 @@ impl Receiver for MockReceiver {
     }
     async fn wrap_open_channel_invoice(
         &self,
-        invoice: String,
+        invoice: &str,
         _amount_msat: u64,
         _opening_fee_params: OpeningFeeParams,
     ) -> Result<String, ReceivePaymentError> {
-        Ok(invoice)
+        Ok(String::from(invoice))
+    }
+    async fn ensure_hint(
+        &self,
+        invoice: &str,
+    ) -> Result<String, ReceivePaymentError> {
+        Ok(String::from(invoice))
     }
 }
 

@@ -484,7 +484,7 @@ impl BTCReceiveSwap {
                                     Some(payer_amount_msat) => {
                                         self.payment_receiver
                                             .wrap_open_channel_invoice(
-                                                res.bolt11,
+                                                &res.bolt11,
                                                 payer_amount_msat,
                                                 swap_info.channel_opening_fees.ok_or(anyhow!(
                                                     "Preimage already known, invoice found, missing opening_fee_params"
