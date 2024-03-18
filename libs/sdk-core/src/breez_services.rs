@@ -1462,11 +1462,16 @@ impl BreezServices {
                                               debug!("invoice stream got new invoice");
                                               if let Some(gl_client::signer::model::greenlight::incoming_payment::Details::Offchain(p)) = i.details {
                                                   let payment: Option<crate::models::Payment> = p.clone().try_into().ok();
-                                                  if payment.is_some() {
+                                                  if let Some(ref payment) = payment {
                                                       let res = cloned
                                                           .persister
-                                                          .insert_or_update_payments(&vec![payment.clone().unwrap()], false);
-                                                      debug!("paid invoice was added to payments list {:?}", res);
+                                                          .insert_or_update_payments(&vec![payment.clone()], false);
+                                                      debug!("paid invoice was added to payments list {res:?}");
+                                                      if let Ok(Some(mut node_info)) = cloned.persister.get_node_state() {
+                                                          node_info.channels_balance_msat += payment.amount_msat;
+                                                          let res = cloned.persister.set_node_state(&node_info);
+                                                          debug!("channel balance was updated {res:?}");
+                                                      }
                                                   }
                                                   _ = cloned.on_event(BreezEvent::InvoicePaid {
                                                       details: InvoicePaidDetails {
