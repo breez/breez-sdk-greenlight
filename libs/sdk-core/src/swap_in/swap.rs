@@ -19,7 +19,7 @@ use crate::bitcoin::{
     Address, EcdsaSighashType, Script, Sequence, Transaction, TxIn, TxOut, Witness,
 };
 use crate::breez_services::{BreezEvent, BreezServer, Receiver};
-use crate::chain::{get_total_incoming_txs, get_utxos, AddressUtxos, ChainService, OnchainTx};
+use crate::chain::{get_total_incoming_txs, get_utxos, AddressUtxos, ChainService};
 use crate::error::ReceivePaymentError;
 use crate::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
 use crate::models::{Swap, SwapInfo, SwapStatus, SwapperAPI};
@@ -381,21 +381,14 @@ impl BTCReceiveSwap {
             .chain_service
             .address_transactions(bitcoin_address.clone())
             .await?;
-        let confirmed_txs: Vec<OnchainTx> = txs
+        let optional_confirmed_block = txs
             .clone()
             .into_iter()
-            .filter(|t| t.status.block_height.is_some())
-            .collect();
+            .filter_map(|t| t.status.block_height)
+            .filter(|height| *height > 0)
+            .min();
         let utxos = get_utxos(bitcoin_address.clone(), txs.clone(), false)?;
         let total_incoming_txs = get_total_incoming_txs(bitcoin_address.clone(), txs);
-        let confirmed_block = confirmed_txs.iter().fold(0, |b, item| {
-            let confirmed_block = item.status.block_height.unwrap();
-            if confirmed_block != 0 || confirmed_block < b {
-                confirmed_block
-            } else {
-                b
-            }
-        });
 
         debug!(
             "updating swap on-chain info {:?}: confirmed_sats={:?} refund_tx_ids={:?}, confirmed_tx_ids={:?}",
@@ -420,10 +413,6 @@ impl BTCReceiveSwap {
             )?;
         }
 
-        let optional_confirmed_block = match confirmed_block {
-            0 => None,
-            b => Some(b),
-        };
         let chain_info = SwapChainInfo {
             unconfirmed_sats: utxos.unconfirmed_sats(),
             unconfirmed_tx_ids: utxos.unconfirmed_tx_ids(),
