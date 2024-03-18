@@ -21,7 +21,7 @@ use tonic::codegen::InterceptedService;
 use tonic::metadata::errors::InvalidMetadataValue;
 use tonic::metadata::{Ascii, MetadataValue};
 use tonic::service::Interceptor;
-use tonic::transport::{Channel, Endpoint, Uri};
+use tonic::transport::{Channel, Endpoint};
 use tonic::{Request, Status};
 
 use crate::backup::{BackupRequest, BackupTransport, BackupWatcher};
@@ -67,6 +67,7 @@ use crate::BuyBitcoinProvider::Moonpay;
 use crate::*;
 
 use self::error::ConnectError;
+use self::grpc::PingRequest;
 
 pub type BreezServicesResult<T, E = ConnectError> = Result<T, E>;
 
@@ -1289,7 +1290,7 @@ impl BreezServices {
         let support_api: Arc<dyn SupportAPI> = Arc::new(BreezServer::new(
             PRODUCTION_BREEZSERVER_URL.to_string(),
             Some(api_key),
-        ));
+        )?);
 
         support_api.service_health_check().await
     }
@@ -2031,10 +2032,20 @@ impl BreezServicesBuilder {
         );
 
         // breez_server provides both FiatAPI & LspAPI implementations
-        let breez_server = Arc::new(BreezServer::new(
-            self.config.breezserver.clone(),
-            self.config.api_key.clone(),
-        ));
+        let breez_server = Arc::new(
+            BreezServer::new(self.config.breezserver.clone(), self.config.api_key.clone())
+                .map_err(|e| ConnectError::ServiceConnectivity {
+                    err: format!("Failed to create BreezServer: {e}"),
+                })?,
+        );
+
+        // Ensure breez server connection is established in the background
+        let cloned_breez_server = breez_server.clone();
+        tokio::spawn(async move {
+            if let Err(e) = cloned_breez_server.ping().await {
+                error!("Failed to ping breez server: {e}");
+            }
+        });
 
         let current_lsp_id = persister.get_lsp_id()?;
         if current_lsp_id.is_none() && self.config.default_lsp_id.is_some() {
@@ -2108,37 +2119,24 @@ impl BreezServicesBuilder {
     }
 }
 
-#[derive(Clone)]
 pub struct BreezServer {
-    server_url: String,
+    grpc_channel: Channel,
     api_key: Option<String>,
 }
 
 impl BreezServer {
-    pub fn new(server_url: String, api_key: Option<String>) -> Self {
-        Self {
-            server_url,
+    pub fn new(server_url: String, api_key: Option<String>) -> Result<Self> {
+        Ok(Self {
+            grpc_channel: Endpoint::from_shared(server_url)?.connect_lazy(),
             api_key,
-        }
-    }
-
-    async fn channel(&self) -> SdkResult<Channel> {
-        Channel::from_shared(self.server_url.clone())
-            .map_err(|e| SdkError::ServiceConnectivity {
-                err: format!("(Breez: {}) {e}", self.server_url.clone()),
-            })?
-            .connect()
-            .await
-            .map_err(|e| SdkError::ServiceConnectivity {
-                err: format!("(Breez: {}) Failed to connect: {e}", self.server_url),
-            })
+        })
     }
 
     fn api_key_metadata(&self) -> SdkResult<Option<MetadataValue<Ascii>>> {
         match &self.api_key {
             Some(key) => Ok(Some(format!("Bearer {key}").parse().map_err(
                 |e: InvalidMetadataValue| SdkError::ServiceConnectivity {
-                    err: format!("(Breez: {}) Failed parse API key: {e}", self.server_url),
+                    err: format!("(Breez: {:?}) Failed parse API key: {e}", self.api_key),
                 },
             )?)),
             _ => Ok(None),
@@ -2148,53 +2146,52 @@ impl BreezServer {
     pub(crate) async fn get_channel_opener_client(
         &self,
     ) -> SdkResult<ChannelOpenerClient<InterceptedService<Channel, ApiKeyInterceptor>>> {
-        let channel = self.channel().await?;
         let api_key_metadata = self.api_key_metadata()?;
-        Ok(ChannelOpenerClient::with_interceptor(
-            channel,
+        let with_interceptor = ChannelOpenerClient::with_interceptor(
+            self.grpc_channel.clone(),
             ApiKeyInterceptor { api_key_metadata },
-        ))
+        );
+        Ok(with_interceptor)
     }
 
     pub(crate) async fn get_subscription_client(
         &self,
     ) -> SdkResult<PaymentNotifierClient<Channel>> {
-        let url = Uri::from_str(&self.server_url).map_err(|e| SdkError::ServiceConnectivity {
-            err: format!("(Breez: {}) {e}", self.server_url),
-        })?;
-        Ok(PaymentNotifierClient::connect(url).await?)
+        Ok(PaymentNotifierClient::new(self.grpc_channel.clone()))
     }
 
     pub(crate) async fn get_information_client(&self) -> SdkResult<InformationClient<Channel>> {
-        let url = Uri::from_str(&self.server_url).map_err(|e| SdkError::ServiceConnectivity {
-            err: format!("(Breez: {}) {e}", self.server_url),
-        })?;
-        Ok(InformationClient::connect(url).await?)
+        Ok(InformationClient::new(self.grpc_channel.clone()))
     }
 
     pub(crate) async fn get_signer_client(&self) -> SdkResult<SignerClient<Channel>> {
-        let url = Uri::from_str(&self.server_url).map_err(|e| SdkError::ServiceConnectivity {
-            err: format!("(Breez: {}) {e}", self.server_url),
-        })?;
-        Ok(SignerClient::new(Endpoint::new(url)?.connect().await?))
+        Ok(SignerClient::new(self.grpc_channel.clone()))
     }
 
     pub(crate) async fn get_support_client(
         &self,
     ) -> SdkResult<SupportClient<InterceptedService<Channel, ApiKeyInterceptor>>> {
-        let channel = self.channel().await?;
         let api_key_metadata = self.api_key_metadata()?;
         Ok(SupportClient::with_interceptor(
-            channel,
+            self.grpc_channel.clone(),
             ApiKeyInterceptor { api_key_metadata },
         ))
     }
 
     pub(crate) async fn get_swapper_client(&self) -> SdkResult<SwapperClient<Channel>> {
-        let url = Uri::from_str(&self.server_url).map_err(|e| SdkError::ServiceConnectivity {
-            err: format!("(Breez: {}) {e}", self.server_url),
-        })?;
-        Ok(SwapperClient::new(Endpoint::new(url)?.connect().await?))
+        Ok(SwapperClient::new(self.grpc_channel.clone()))
+    }
+
+    pub(crate) async fn ping(&self) -> SdkResult<String> {
+        let request = Request::new(PingRequest {});
+        let response = self
+            .get_information_client()
+            .await?
+            .ping(request)
+            .await?
+            .into_inner()
+            .version;
+        Ok(response)
     }
 }
 
@@ -2447,7 +2444,6 @@ impl Receiver for PaymentReceiver {
                 },
             )
             .await?;
-
         // Make sure we save the large amount so we can deduce the fees later.
         self.persister.insert_open_channel_payment_info(
             &parsed_invoice.payment_hash,
