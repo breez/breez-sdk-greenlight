@@ -492,7 +492,9 @@ impl BTCReceiveSwap {
                                             )
                                             .await?
                                     }
-                                    None => res.bolt11,
+                                    None => self.payment_receiver.ensure_hint(&res.bolt11).await.map_err(|_|anyhow!(
+                                        "Preimage already known, invoice found, failed to ensure route hint"
+                                    ))?,
                                 })
                             }
                         }
