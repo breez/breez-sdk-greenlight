@@ -402,6 +402,8 @@ void wire_onchain_payment_limits(int64_t port_);
 
 void wire_prepare_onchain_payment(int64_t port_, struct wire_PrepareOnchainPaymentRequest *req);
 
+void wire_in_progress_onchain_payments(int64_t port_);
+
 void wire_recommended_fees(int64_t port_);
 
 void wire_execute_command(int64_t port_, struct wire_uint_8_list *command);
@@ -544,6 +546,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_fetch_reverse_swap_fees);
     dummy_var ^= ((int64_t) (void*) wire_onchain_payment_limits);
     dummy_var ^= ((int64_t) (void*) wire_prepare_onchain_payment);
+    dummy_var ^= ((int64_t) (void*) wire_in_progress_onchain_payments);
     dummy_var ^= ((int64_t) (void*) wire_recommended_fees);
     dummy_var ^= ((int64_t) (void*) wire_execute_command);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_bool_0);

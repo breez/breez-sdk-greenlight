@@ -299,6 +299,11 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kPrepareOnchainPaymentConstMeta;
 
+  /// See [BreezServices::in_progress_onchain_payments]
+  Future<List<ReverseSwapInfo>> inProgressOnchainPayments({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kInProgressOnchainPaymentsConstMeta;
+
   /// See [BreezServices::recommended_fees]
   Future<RecommendedFees> recommendedFees({dynamic hint});
 
@@ -2983,6 +2988,23 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kPrepareOnchainPaymentConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "prepare_onchain_payment",
         argNames: ["req"],
+      );
+
+  Future<List<ReverseSwapInfo>> inProgressOnchainPayments({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_in_progress_onchain_payments(port_),
+      parseSuccessData: _wire2api_list_reverse_swap_info,
+      parseErrorData: _wire2api_FrbAnyhowException,
+      constMeta: kInProgressOnchainPaymentsConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kInProgressOnchainPaymentsConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "in_progress_onchain_payments",
+        argNames: [],
       );
 
   Future<RecommendedFees> recommendedFees({dynamic hint}) {
@@ -5872,6 +5894,19 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
       'wire_prepare_onchain_payment');
   late final _wire_prepare_onchain_payment = _wire_prepare_onchain_paymentPtr
       .asFunction<void Function(int, ffi.Pointer<wire_PrepareOnchainPaymentRequest>)>();
+
+  void wire_in_progress_onchain_payments(
+    int port_,
+  ) {
+    return _wire_in_progress_onchain_payments(
+      port_,
+    );
+  }
+
+  late final _wire_in_progress_onchain_paymentsPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_in_progress_onchain_payments');
+  late final _wire_in_progress_onchain_payments =
+      _wire_in_progress_onchain_paymentsPtr.asFunction<void Function(int)>();
 
   void wire_recommended_fees(
     int port_,

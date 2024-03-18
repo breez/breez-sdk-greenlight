@@ -879,6 +879,8 @@ impl BreezServices {
     }
 
     /// Returns the blocking [ReverseSwapInfo]s that are in progress
+    ///
+    /// Deprecated. Please use [BreezServices::in_progress_onchain_payments] instead.
     pub async fn in_progress_reverse_swaps(&self) -> SdkResult<Vec<ReverseSwapInfo>> {
         let full_rsis = self.btc_send_swapper.list_blocking().await?;
 
@@ -1025,6 +1027,13 @@ impl BreezServices {
         self.do_sync(true).await?;
 
         Ok(reverse_swap_info)
+    }
+
+    /// Returns the blocking [ReverseSwapInfo]s that are in progress.
+    ///
+    /// Supersedes [BreezServices::in_progress_reverse_swaps]
+    pub async fn in_progress_onchain_payments(&self) -> SdkResult<Vec<ReverseSwapInfo>> {
+        self.in_progress_reverse_swaps().await
     }
 
     /// Execute a command directly on the NodeAPI interface.
