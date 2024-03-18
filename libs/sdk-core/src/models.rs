@@ -637,7 +637,11 @@ pub struct BackupStatus {
     pub last_backup_time: Option<u64>,
 }
 
-/// The node state of a Greenlight LN node running in the cloud
+/// The node state of a Greenlight LN node running in the cloud.
+///
+/// Note: The implementation attempts to provide the most up-to-date values,
+/// which may result in some short-lived inconsistencies
+/// (e.g., `channels_balance_msat` may be updated before `inbound_liquidity_msats`).
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
 pub struct NodeState {
     pub id: String,
