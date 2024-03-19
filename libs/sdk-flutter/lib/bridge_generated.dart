@@ -1150,7 +1150,11 @@ sealed class NodeCredentials with _$NodeCredentials {
   }) = NodeCredentials_Greenlight;
 }
 
-/// The node state of a Greenlight LN node running in the cloud
+/// The node state of a Greenlight LN node running in the cloud.
+///
+/// Note: The implementation attempts to provide the most up-to-date values,
+/// which may result in some short-lived inconsistencies
+/// (e.g., `channels_balance_msat` may be updated before `inbound_liquidity_msats`).
 class NodeState {
   final String id;
   final int blockHeight;
