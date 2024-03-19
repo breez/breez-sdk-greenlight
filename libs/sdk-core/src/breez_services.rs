@@ -1736,8 +1736,19 @@ impl BreezServices {
                     };
 
                     match log_message_res {
-                        Some(l) => info!("node-logs: {l}"),
-                        None => {
+                        Ok(Some(l)) => match l.line.to_ascii_lowercase() {
+                            s if s.starts_with("unusual") => {
+                                error!("node-logs: {}", l.line.split_at(7).1.trim_start())
+                            }
+                            s if s.starts_with("info") => {
+                                info!("node-logs: {}", l.line.split_at(4).1.trim_start())
+                            }
+                            s if s.starts_with("debug") => {
+                                debug!("node-logs: {}", l.line.split_at(5).1.trim_start())
+                            }
+                            _ => trace!("node-logs: {}", l.line),
+                        },
+                        Ok(None) => {
                             // stream is closed, renew it
                             break;
                         }
