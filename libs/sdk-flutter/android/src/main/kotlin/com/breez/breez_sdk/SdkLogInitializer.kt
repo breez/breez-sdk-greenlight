@@ -6,10 +6,10 @@ import kotlinx.coroutines.CoroutineScope
 object SdkLogInitializer {
     private var nodeLogStream: SdkLogListener? = null
 
-    fun initializeNodeLogStream(): SdkLogListener {
+    fun initializeNodeLogStream(levelFilter: String = "TRACE"): SdkLogListener {
         if (nodeLogStream == null) {
             try {
-                nodeLogStream = SdkLogListener()
+                nodeLogStream = SdkLogListener(levelFilter)
                 setLogStream(nodeLogStream!!)
             } catch (e: Throwable) {
                 // Reset nodeLogStream if setting log stream fails

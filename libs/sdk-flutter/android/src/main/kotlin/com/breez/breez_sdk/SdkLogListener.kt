@@ -12,7 +12,15 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
-class SdkLogListener : LogStream {
+enum class LevelFilter(val weight: Int) {
+    TRACE(4),
+    DEBUG(3),
+    INFO(2),
+    WARNING(1),
+    ERROR(0)
+}
+
+class SdkLogListener(private val levelFilter: String = "TRACE") : LogStream {
     private val scope = CoroutineScope(SupervisorJob())
 
     private val _logEvents = MutableSharedFlow<LogEntry>()
@@ -20,7 +28,9 @@ class SdkLogListener : LogStream {
 
     override fun log(l: LogEntry) {
         scope.launch {
-            _logEvents.emit(l)
+            if (LevelFilter.valueOf(levelFilter).weight >= LevelFilter.valueOf(l.level).weight) {
+                _logEvents.emit(l)
+            }
         }
     }
 
