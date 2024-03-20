@@ -55,6 +55,9 @@ class BreezSDK {
       if (event is BreezEvent_BackupFailed) {
         _backupStreamController.addError(BackupException(event.details));
       }
+      if (event is BreezEvent_SwapUpdated) {
+        _swapEventsStreamController.add(event);
+      }
     });
   }
 
@@ -325,6 +328,12 @@ class BreezSDK {
 
   /// List all available fiat currencies
   Future<List<FiatCurrency>> listFiatCurrencies() async => await _lnToolkit.listFiatCurrencies();
+
+  /* Swap Stream */
+
+  final StreamController<BreezEvent?> _swapEventsStreamController = BehaviorSubject<BreezEvent?>();
+
+  Stream<BreezEvent?> get swapEventsStream => _swapEventsStreamController.stream;
 
   /* On-Chain Swap API's */
 
