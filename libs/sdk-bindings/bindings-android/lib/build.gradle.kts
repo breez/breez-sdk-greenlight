@@ -18,6 +18,10 @@ android {
         consumerProguardFiles("consumer-rules.pro")
     }
 
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+
     buildTypes {
         getByName("release") {
             @Suppress("UnstableApiUsage")
