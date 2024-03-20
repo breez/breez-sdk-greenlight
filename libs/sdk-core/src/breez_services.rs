@@ -1532,7 +1532,7 @@ impl BreezServices {
                          log_message_res = log_stream.message() => {
                           match log_message_res {
                            Ok(Some(l)) => {
-                            debug!("node-logs: {}", l.line);
+                            info!("node-logs: {}", l.line);
                            },
                            // stream is closed, renew it
                            Ok(None) => {
