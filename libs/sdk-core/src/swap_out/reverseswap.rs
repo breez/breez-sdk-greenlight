@@ -192,6 +192,9 @@ impl BTCSendSwap {
 
         // For v2 reverse swaps, we perform validation on the created swap
         if let CreateReverseSwapArg::V2(req) = req {
+            trace!("create_rev_swap v2 request: {req:?}");
+            trace!("create_rev_swap v2 created_rsi: {created_rsi:?}");
+
             // Validate send_amount
             let request_send_amount_sat = req.prepare_res.sender_amount_sat;
             let request_send_amount_msat = request_send_amount_sat * 1_000;
@@ -203,8 +206,14 @@ impl BTCSendSwap {
                 req.prepare_res.sender_amount_sat,
                 req.prepare_res.fees_percentage,
             );
+            trace!("create_rev_swap v2 service_fee_sat: {service_fee_sat} sat");
             let expected_onchain_amount =
                 request_send_amount_sat - service_fee_sat - lockup_fee_sat;
+            trace!("create_rev_swap v2 onchain_amount expected: {expected_onchain_amount} sat");
+            trace!(
+                "create_rev_swap v2 onchain_amount actual  : {} sat",
+                created_rsi.onchain_amount_sat
+            );
             ensure_sdk!(
                 created_rsi.onchain_amount_sat == expected_onchain_amount,
                 ReverseSwapError::generic("Unexpected onchain amount (lockup fee or service fee)")

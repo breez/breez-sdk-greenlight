@@ -1045,7 +1045,7 @@ pub struct PrepareOnchainPaymentResponse {
     pub total_fees: u64,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct PayOnchainRequest {
     pub recipient_address: String,
     pub prepare_res: PrepareOnchainPaymentResponse,
