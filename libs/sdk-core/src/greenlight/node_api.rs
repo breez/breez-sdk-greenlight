@@ -17,10 +17,12 @@ use gl_client::pb::cln::{
     ListclosedchannelsClosedchannels, ListpeersPeersChannels, PreapproveinvoiceRequest,
     SendpayRequest, SendpayRoute, WaitsendpayRequest,
 };
+use gl_client::pb::scheduler::scheduler_client::SchedulerClient;
+use gl_client::pb::scheduler::{NodeInfoRequest, UpgradeRequest};
 use gl_client::pb::{OffChainPayment, PayStatus};
 use gl_client::scheduler::Scheduler;
 use gl_client::signer::model::greenlight::{amount, scheduler};
-use gl_client::signer::Signer;
+use gl_client::signer::{Error, Signer};
 use gl_client::tls::TlsConfig;
 use gl_client::{node, utils};
 use serde::{Deserialize, Serialize};
@@ -28,7 +30,8 @@ use strum_macros::{Display, EnumString};
 use tokio::sync::{mpsc, Mutex};
 use tokio::time::sleep;
 use tokio_stream::StreamExt;
-use tonic::Streaming;
+use tonic::transport::{Endpoint, Uri};
+use tonic::{Code, Streaming};
 
 use crate::bitcoin::bech32::{u5, ToBase32};
 use crate::bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
@@ -167,6 +170,94 @@ impl Greenlight {
             node_client: Mutex::new(None),
             persister,
         })
+    }
+
+    async fn run_forever(&self, mut shutdown: mpsc::Receiver<()>) -> Result<(), anyhow::Error> {
+        let channel = Endpoint::from_shared(utils::scheduler_uri())?
+            .tls_config(self.tls_config.client_tls_config())?
+            .tcp_keepalive(Some(Duration::from_secs(30)))
+            .http2_keep_alive_interval(Duration::from_secs(30))
+            .keep_alive_timeout(Duration::from_secs(90))
+            .keep_alive_while_idle(true)
+            .connect_lazy();
+        let mut scheduler = SchedulerClient::new(channel);
+
+        // Upgrade node if necessary.
+        // If it fails due to connection error, sleep and retry. Re-throw all other errors.
+        info!("Entering the upgrade loop");
+        loop {
+            #[allow(deprecated)]
+            let maybe_upgrade_res = scheduler
+                .maybe_upgrade(UpgradeRequest {
+                    initmsg: self.signer.get_init(),
+                    signer_version: self.signer.version().to_owned(),
+                    startupmsgs: self
+                        .signer
+                        .get_startup_messages()
+                        .into_iter()
+                        .map(|s| s.into())
+                        .collect(),
+                })
+                .await;
+
+            if let Err(err_status) = maybe_upgrade_res {
+                match err_status.code() {
+                    Code::Unavailable => {
+                        debug!("Cannot connect to scheduler, sleeping and retrying");
+                        sleep(Duration::from_secs(3)).await;
+                        continue;
+                    }
+                    _ => {
+                        return Err(Error::Upgrade(err_status))?;
+                    }
+                }
+            }
+
+            break;
+        }
+
+        info!("Entering the signer loop");
+        loop {
+            let get_node = scheduler.get_node_info(NodeInfoRequest {
+                node_id: self.signer.node_id(),
+                // Purposely not using the `wait` parameter
+                wait: false,
+            });
+            tokio::select! {
+                info = get_node => {
+                    let node_info = match info.map(|v| v.into_inner()) {
+                        Ok(v) => {
+                            debug!("Got node_info from scheduler: {:?}", v);
+                            v
+                        }
+                        Err(e) => {
+                            trace!(
+                                "Got an error from the scheduler: {}. Sleeping before retrying",
+                                e
+                            );
+                            sleep(Duration::from_millis(1000)).await;
+                            continue;
+                        }
+                    };
+
+                    if node_info.grpc_uri.is_empty() {
+                        trace!("Got an empty GRPC URI, node is not scheduled, sleeping and retrying");
+                        sleep(Duration::from_millis(1000)).await;
+                        continue;
+                    }
+
+                    if let Err(e) = self.signer.run_once(Uri::from_maybe_shared(node_info.grpc_uri)?).await {
+                        warn!("Error running against node: {}", e);
+                    }
+                },
+                _ = shutdown.recv() => {
+                    debug!("Received the signal to exit the signer loop");
+                    break;
+                },
+            };
+        }
+        info!("Exiting the signer loop");
+        Ok(())
     }
 
     fn derive_bip32_key(
@@ -1125,7 +1216,7 @@ impl NodeAPI for Greenlight {
 
     /// Starts the signer that listens in a loop until the shutdown signal is received
     async fn start_signer(&self, shutdown: mpsc::Receiver<()>) {
-        match self.signer.run_forever(shutdown).await {
+        match self.run_forever(shutdown).await {
             Ok(_) => info!("signer exited gracefully"),
             Err(e) => error!("signer exited with error: {e}"),
         }
