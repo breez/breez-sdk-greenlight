@@ -8,7 +8,6 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use anyhow::{anyhow, Result};
 use ecies::symmetric::{sym_decrypt, sym_encrypt};
 use futures::Stream;
-use gl_client::bitcoin::bech32;
 use gl_client::node::ClnClient;
 use gl_client::pb::cln::listinvoices_invoices::ListinvoicesInvoicesStatus;
 use gl_client::pb::cln::listpays_pays::ListpaysPaysStatus;
@@ -19,7 +18,7 @@ use gl_client::pb::cln::{
     SendpayRequest, SendpayRoute, WaitsendpayRequest,
 };
 use gl_client::pb::scheduler::scheduler_client::SchedulerClient;
-use gl_client::pb::scheduler::UpgradeRequest;
+use gl_client::pb::scheduler::{NodeInfoRequest, UpgradeRequest};
 use gl_client::pb::{OffChainPayment, PayStatus};
 use gl_client::scheduler::Scheduler;
 use gl_client::signer::model::greenlight::{amount, scheduler};
@@ -173,19 +172,7 @@ impl Greenlight {
         })
     }
 
-    fn get_node_domain(&self) -> Result<Uri, anyhow::Error> {
-        let hrp = "gl";
-        let domain = "nodes.gl.blckstrm.com";
-        let raw_node_id = self.signer.node_id().to_base32();
-        let subdomain = bech32::encode(hrp, raw_node_id, bech32::Variant::Bech32m)?;
-        
-        Ok(format!("https://{}.{}", subdomain, domain).parse()?)
-    }
-
     async fn run_forever(&self, mut shutdown: mpsc::Receiver<()>) -> Result<(), anyhow::Error> {
-        let node_uri = self.get_node_domain()?;
-        debug!("Node domain is {}", &node_uri);
-
         let channel = Endpoint::from_shared(utils::scheduler_uri())?
             .tls_config(self.tls_config.client_tls_config())?
             .tcp_keepalive(Some(Duration::from_secs(30)))
@@ -231,11 +218,36 @@ impl Greenlight {
 
         info!("Entering the signer loop");
         loop {
+            let get_node = scheduler.get_node_info(NodeInfoRequest {
+                node_id: self.signer.node_id(),
+                // Purposely not using the `wait` parameter
+                wait: false,
+            });
             tokio::select! {
-            res = self.signer.run_once(node_uri.clone()) => {
-                    if let Err(e) = res {
-                        warn!("Error running against node: {}", e);
+                info = get_node => {
+                    let node_info = match info.map(|v| v.into_inner()) {
+                        Ok(v) => {
+                            debug!("Got node_info from scheduler: {:?}", v);
+                            v
+                        }
+                        Err(e) => {
+                            trace!(
+                                "Got an error from the scheduler: {}. Sleeping before retrying",
+                                e
+                            );
+                            sleep(Duration::from_millis(1000)).await;
+                            continue;
+                        }
+                    };
+
+                    if node_info.grpc_uri.is_empty() {
+                        trace!("Got an empty GRPC URI, node is not scheduled, sleeping and retrying");
                         sleep(Duration::from_millis(1000)).await;
+                        continue;
+                    }
+
+                    if let Err(e) = self.signer.run_once(Uri::from_maybe_shared(node_info.grpc_uri)?).await {
+                        warn!("Error running against node: {}", e);
                     }
                 },
                 _ = shutdown.recv() => {
