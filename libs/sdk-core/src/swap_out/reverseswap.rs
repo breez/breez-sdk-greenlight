@@ -170,7 +170,7 @@ impl BTCSendSwap {
                     "No hops found for reverse routing node {reverse_routing_node:?}"
                 ))
             })
-            .map(|r| r.clone())
+            .cloned()
     }
 
     /// Creates and persists a reverse swap. If the initial payment fails, the reverse swap has the new
