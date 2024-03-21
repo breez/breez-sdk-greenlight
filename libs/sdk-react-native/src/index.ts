@@ -704,6 +704,15 @@ export type InputType = {
     data: LnUrlErrorData
 }
 
+export enum LevelFilter {
+    OFF = "off",
+    ERROR = "error",
+    WARN = "warn",
+    INFO = "info",
+    DEBUG = "debug",
+    TRACE = "trace"
+}
+
 export enum LnUrlCallbackStatusVariant {
     OK = "ok",
     ERROR_STATUS = "errorStatus"
@@ -865,11 +874,11 @@ export const connect = async (req: ConnectRequest, listener: EventListener): Pro
     return subscription
 }
 
-export const setLogStream = async (logStream: LogStream): Promise<EmitterSubscription> => {
+export const setLogStream = async (logStream: LogStream, filterLevel?: LevelFilter): Promise<EmitterSubscription> => {
     const subscription = BreezSDKEmitter.addListener("breezSdkLog", logStream)
 
     try {
-        await BreezSDK.setLogStream()
+        await BreezSDK.setLogStream(filterLevel)
     } catch {}
 
     return subscription
