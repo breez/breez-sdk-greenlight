@@ -1691,9 +1691,7 @@ async fn pull_transactions(
     let outbound_transactions: NodeResult<Vec<Payment>> = payments
         .pays
         .into_iter()
-        .filter(|p| {
-            p.created_at > since_timestamp || p.completed_at.unwwrap_or(0) > since_timestamp
-        })
+        .filter(|p| p.created_at > since_timestamp || p.completed_at.unwrap_or(0) > since_timestamp)
         .map(TryInto::try_into)
         .collect();
 
