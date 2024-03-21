@@ -209,7 +209,6 @@ impl BTCSendSwap {
             trace!("create_rev_swap v2 service_fee_sat: {service_fee_sat} sat");
             let expected_onchain_amount =
                 request_send_amount_sat - service_fee_sat - lockup_fee_sat;
-            trace!("create_rev_swap v2 onchain_amount expected: {expected_onchain_amount} sat");
             ensure_sdk!(
                 created_rsi.onchain_amount_sat == expected_onchain_amount,
                 ReverseSwapError::generic("Unexpected onchain amount (lockup fee or service fee)")
