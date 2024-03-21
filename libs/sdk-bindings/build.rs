@@ -36,7 +36,7 @@ fn setup_x86_64_android_workaround() {
 }
 
 fn main() -> Result<()> {
-    //setup_x86_64_android_workaround();
+    setup_x86_64_android_workaround();
     uniffi_build::generate_scaffolding("./src/breez_sdk.udl").unwrap();
     Ok(())
 }
