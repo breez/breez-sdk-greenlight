@@ -155,12 +155,16 @@ class BreezSDKModule(
     }
 
     @ReactMethod
-    fun setLogStream(promise: Promise) {
+    fun setLogStream(
+        filterLevel: String?,
+        promise: Promise,
+    ) {
         executor.execute {
             try {
                 val emitter = reactApplicationContext.getJSModule(RCTDeviceEventEmitter::class.java)
+                val levelFilter = filterLevel?.let { asLevelFilter(filterLevel) }
 
-                setLogStream(BreezSDKLogStream(emitter))
+                setLogStream(BreezSDKLogStream(emitter), levelFilter)
                 promise.resolve(readableMapOf("status" to "ok"))
             } catch (e: Exception) {
                 e.printStackTrace()
