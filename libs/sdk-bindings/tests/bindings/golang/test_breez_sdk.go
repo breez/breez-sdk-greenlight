@@ -22,7 +22,7 @@ func (BreezListener) OnEvent(e breez_sdk.BreezEvent) {
 func main() {
 	breezListener := BreezListener{}
 
-	breez_sdk.SetLogStream(breezListener)
+	breez_sdk.SetLogStream(breezListener, breez_sdk.LevelFilterTrace)
 
 	seed, err := breez_sdk.MnemonicToSeed("repeat hawk combine screen network rhythm ritual social neither casual volcano powder")
 
