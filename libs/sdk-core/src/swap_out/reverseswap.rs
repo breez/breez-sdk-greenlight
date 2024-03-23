@@ -202,7 +202,7 @@ impl BTCSendSwap {
 
             // Validate onchain_amount
             let lockup_fee_sat = req.prepare_res.fees_lockup;
-            let service_fee_sat = super::calculate_service_fee_sat(
+            let service_fee_sat = super::get_service_fee_sat(
                 req.prepare_res.sender_amount_sat,
                 req.prepare_res.fees_percentage,
             );

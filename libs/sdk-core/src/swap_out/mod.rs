@@ -5,14 +5,14 @@ pub(crate) mod reverseswap;
 /// Calculate the service fee from the `invoice_amount_sat`.
 ///
 /// The fee is a percentage of the invoice amount, rounded up.
-pub(crate) fn calculate_service_fee_sat(invoice_amount_sat: u64, fees_percentage: f64) -> u64 {
+pub(crate) fn get_service_fee_sat(invoice_amount_sat: u64, fees_percentage: f64) -> u64 {
     ((invoice_amount_sat as f64) * fees_percentage / 100.0).ceil() as u64
 }
 
 /// Calculate the `invoice_amount_sat` from `invoice_amount_and_service_fee`.
 ///
 /// This calculates the initial amount going in reverse, e.g. from the resulting sum.
-pub(crate) fn calculate_invoice_amount_sat(
+pub(crate) fn get_invoice_amount_sat(
     invoice_amount_and_service_fee: u64,
     fees_percentage: f64,
 ) -> u64 {
@@ -21,23 +21,23 @@ pub(crate) fn calculate_invoice_amount_sat(
 
 #[cfg(test)]
 mod tests {
-    use crate::swap_out::{calculate_invoice_amount_sat, calculate_service_fee_sat};
+    use crate::swap_out::{get_invoice_amount_sat, get_service_fee_sat};
 
     #[test]
-    fn test_calculate_service_fee_sat() {
+    fn test_get_service_fee_sat() {
         // Round values, so rounding up plays no role
-        assert_eq!(250, calculate_service_fee_sat(50_000, 0.5));
-        assert_eq!(300, calculate_service_fee_sat(50_000, 0.6));
-        assert_eq!(750, calculate_service_fee_sat(100_000, 0.75));
+        assert_eq!(250, get_service_fee_sat(50_000, 0.5));
+        assert_eq!(300, get_service_fee_sat(50_000, 0.6));
+        assert_eq!(750, get_service_fee_sat(100_000, 0.75));
 
         // Odd values, where rounding up kicks in
-        assert_eq!(251, calculate_service_fee_sat(50_001, 0.5));
-        assert_eq!(301, calculate_service_fee_sat(50_001, 0.6));
-        assert_eq!(751, calculate_service_fee_sat(100_001, 0.75));
+        assert_eq!(251, get_service_fee_sat(50_001, 0.5));
+        assert_eq!(301, get_service_fee_sat(50_001, 0.6));
+        assert_eq!(751, get_service_fee_sat(100_001, 0.75));
     }
 
     #[test]
-    fn test_calculate_invoice_amount_sat() {
+    fn test_get_invoice_amount_sat() {
         // Round values, so rounding up plays no role
         test_fee_calculation_in_both_directions(50_000, 0.5);
         test_fee_calculation_in_both_directions(51_000, 0.5);
@@ -59,10 +59,10 @@ mod tests {
     }
 
     fn test_fee_calculation_in_both_directions(invoice_amount_sat: u64, fees_percentage: f64) {
-        let service_fee_sat = calculate_service_fee_sat(invoice_amount_sat, fees_percentage);
+        let service_fee_sat = get_service_fee_sat(invoice_amount_sat, fees_percentage);
         assert_eq!(
             invoice_amount_sat,
-            calculate_invoice_amount_sat(invoice_amount_sat + service_fee_sat, fees_percentage)
+            get_invoice_amount_sat(invoice_amount_sat + service_fee_sat, fees_percentage)
         );
     }
 }

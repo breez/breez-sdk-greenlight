@@ -825,7 +825,7 @@ impl BreezServices {
                 res.fees_claim = BTCSendSwap::calculate_claim_tx_fee(claim_tx_feerate)?;
             }
 
-            let service_fee_sat = swap_out::calculate_service_fee_sat(amt, res.fees_percentage);
+            let service_fee_sat = swap_out::get_service_fee_sat(amt, res.fees_percentage);
             res.total_fees = Some(service_fee_sat + res.fees_lockup + res.fees_claim);
         }
 
@@ -960,7 +960,7 @@ impl BreezServices {
         let (send_amt, recv_amt) = match req.amount_type {
             SwapAmountType::Send => {
                 let temp_send_amt = req.amount_sat;
-                let service_fees = swap_out::calculate_service_fee_sat(temp_send_amt, p);
+                let service_fees = swap_out::get_service_fee_sat(temp_send_amt, p);
                 let total_fees = service_fees + fees_lockup + fees_claim;
                 ensure_sdk!(
                     temp_send_amt > total_fees,
@@ -974,8 +974,7 @@ impl BreezServices {
             SwapAmountType::Receive => {
                 let temp_recv_amt = req.amount_sat;
                 let send_amt_and_service_fee = temp_recv_amt + fees_lockup + fees_claim;
-                let temp_send_amt =
-                    swap_out::calculate_invoice_amount_sat(send_amt_and_service_fee, p);
+                let temp_send_amt = swap_out::get_invoice_amount_sat(send_amt_and_service_fee, p);
 
                 (temp_send_amt, temp_recv_amt)
             }
