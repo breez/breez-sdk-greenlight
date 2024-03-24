@@ -41,26 +41,26 @@ mod tests {
     #[test]
     fn test_get_invoice_amount_sat() {
         // Round values, so rounding up plays no role
-        test_fee_calculation_in_both_directions(50_000, 0.5);
-        test_fee_calculation_in_both_directions(51_000, 0.5);
-        test_fee_calculation_in_both_directions(52_000, 0.5);
-        test_fee_calculation_in_both_directions(53_000, 0.5);
-        test_fee_calculation_in_both_directions(54_000, 0.5);
-        test_fee_calculation_in_both_directions(60_000, 0.6);
-        test_fee_calculation_in_both_directions(100_000, 0.75);
+        test_invoice_amount_calculation_in_reverse(50_000, 0.5);
+        test_invoice_amount_calculation_in_reverse(51_000, 0.5);
+        test_invoice_amount_calculation_in_reverse(52_000, 0.5);
+        test_invoice_amount_calculation_in_reverse(53_000, 0.5);
+        test_invoice_amount_calculation_in_reverse(54_000, 0.5);
+        test_invoice_amount_calculation_in_reverse(60_000, 0.6);
+        test_invoice_amount_calculation_in_reverse(100_000, 0.75);
 
         // Odd values, where the rounding up in the service fee calculation kicks in
-        test_fee_calculation_in_both_directions(50_001, 0.5);
-        test_fee_calculation_in_both_directions(50_999, 0.5);
-        test_fee_calculation_in_both_directions(51_001, 0.5);
-        test_fee_calculation_in_both_directions(52_001, 0.5);
-        test_fee_calculation_in_both_directions(53_001, 0.5);
-        test_fee_calculation_in_both_directions(54_001, 0.5);
-        test_fee_calculation_in_both_directions(60_001, 0.6);
-        test_fee_calculation_in_both_directions(75_001, 0.75);
+        test_invoice_amount_calculation_in_reverse(50_001, 0.5);
+        test_invoice_amount_calculation_in_reverse(50_999, 0.5);
+        test_invoice_amount_calculation_in_reverse(51_001, 0.5);
+        test_invoice_amount_calculation_in_reverse(52_001, 0.5);
+        test_invoice_amount_calculation_in_reverse(53_001, 0.5);
+        test_invoice_amount_calculation_in_reverse(54_001, 0.5);
+        test_invoice_amount_calculation_in_reverse(60_001, 0.6);
+        test_invoice_amount_calculation_in_reverse(75_001, 0.75);
     }
 
-    fn test_fee_calculation_in_both_directions(invoice_amount_sat: u64, fees_percentage: f64) {
+    fn test_invoice_amount_calculation_in_reverse(invoice_amount_sat: u64, fees_percentage: f64) {
         let service_fee_sat = get_service_fee_sat(invoice_amount_sat, fees_percentage);
         let calculated_invoice_amount_sat =
             get_invoice_amount_sat(invoice_amount_sat - service_fee_sat, fees_percentage);
