@@ -973,8 +973,8 @@ impl BreezServices {
             }
             SwapAmountType::Receive => {
                 let temp_recv_amt = req.amount_sat;
-                let send_amt_and_service_fee = temp_recv_amt + fees_lockup + fees_claim;
-                let temp_send_amt = swap_out::get_invoice_amount_sat(send_amt_and_service_fee, p);
+                let send_amt_minus_service_fee = temp_recv_amt + fees_lockup + fees_claim;
+                let temp_send_amt = swap_out::get_invoice_amount_sat(send_amt_minus_service_fee, p);
 
                 (temp_send_amt, temp_recv_amt)
             }
