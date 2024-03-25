@@ -208,8 +208,8 @@ impl Greenlight {
             break;
         }
 
-        info!("Entering the signer loop");
         loop {
+            debug!("Start of the signer loop, getting node_info from scheduler");
             let get_node = scheduler.get_node_info(NodeInfoRequest {
                 node_id: self.signer.node_id(),
                 // Purposely not using the `wait` parameter
