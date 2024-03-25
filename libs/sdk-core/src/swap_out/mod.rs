@@ -72,8 +72,13 @@ mod tests {
         // - invoice_amount_sat = 50_001, service_fee_sat = 251
         // both lead to an onchain_amount_sat of 49_750 and an identical receive_amount_sat of 46_040.
         //
-        // Trying to find the invoice_amount_sat in reverse can result in more than one valid result.
-        // In that case, the smaller one is preferred (user sends least amount possible for the same result).
-        assert!(calculated_invoice_amount_sat <= invoice_amount_sat);
+        // This is not case anymore for invoice_amount_sat of 50_002, as service_fee_sat stays 251, and
+        // therefore the received amount has to increase by 1 sat.
+        //
+        // Trying to find the invoice_amount_sat in reverse can result in either one or two valid results.
+        assert!(
+            (calculated_invoice_amount_sat == invoice_amount_sat)
+                || (calculated_invoice_amount_sat == invoice_amount_sat - 1)
+        );
     }
 }
