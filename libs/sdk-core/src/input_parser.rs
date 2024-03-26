@@ -256,7 +256,7 @@ where
 fn prepend_if_missing(prefix: &str, input: &str) -> String {
     match input.to_lowercase().starts_with(prefix) {
         true => input.into(),
-        false => format!("{}{}", prefix, input.trim_start_matches(prefix))
+        false => format!("{}{}", prefix, input.trim_start_matches(prefix)),
     }
 }
 
