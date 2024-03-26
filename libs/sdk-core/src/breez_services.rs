@@ -1,4 +1,5 @@
 use std::cmp::min;
+use std::fmt::format;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::str::FromStr;
@@ -1042,6 +1043,14 @@ impl BreezServices {
         Ok(self.node_api.execute_command(command).await?)
     }
 
+    // Collects various user data from the node and the sdk storage.
+    // This is used for debugging and support purposes only.
+    pub async fn collect_user_data(&self) -> SdkResult<String> {
+        let node_data = self.node_api.collect_node_data().await?;
+        let sdk_data = self.collect_sdk_data().await?;
+        Ok(format!("Node Data\n{node_data}\n\nSDK Data\n{sdk_data}"))
+    }
+
     /// This method sync the local state with the remote node state.
     /// The synced items are as follows:
     /// * node state - General information about the node and its liquidity status
@@ -1849,6 +1858,32 @@ impl BreezServices {
             .map_err(|err| SdkError::ServiceConnectivity {
                 err: format!("Failed to register for tx confirmation notifications: {err}"),
             })
+    }
+
+    async fn collect_sdk_data(&self) -> SdkResult<String> {
+        let state: String = serde_json::to_string(&self.persister.get_node_state()?)?;
+        let payments = serde_json::to_string(
+            &self
+                .persister
+                .list_payments(ListPaymentsRequest::default())?,
+        )?;
+        let channels = serde_json::to_string(&self.persister.list_channels()?)?;
+        let settings = serde_json::to_string(&self.persister.list_settings()?)?;
+        let reverse_swaps = serde_json::to_string(&self.persister.list_reverse_swaps()?)?;
+        let swaps = serde_json::to_string(&self.persister.list_swaps()?)?;
+        let list_id = serde_json::to_string(&self.persister.get_lsp_id()?)?;
+
+        let res = format!(
+            "\
+          ***Node State***\n{state}\n\n \
+          ***Payments***\n{payments}\n\n \
+          ***Channels***\n{channels}\n\n \
+          ***Settings***\n{settings}\n\n \
+          ***Reverse Swaps***\n{reverse_swaps}\n\n \
+          ***LSP ID***\n{list_id}\n\n \
+          ***Swaps***\n{swaps}\n\n"
+        );
+        Ok(res)
     }
 }
 
