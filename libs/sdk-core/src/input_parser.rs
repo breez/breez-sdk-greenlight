@@ -31,9 +31,11 @@ use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 ///     assert!(matches!( parse("1andreas3batLhQa2FawWjeyjCqyBzypd?amount=0.00002000&label=Hello").await, Ok(BitcoinAddress{address: _}) ));
 ///     assert!(matches!( parse("1andreas3batLhQa2FawWjeyjCqyBzypd?amount=0.00002000&label=Hello&message=Msg").await, Ok(BitcoinAddress{address: _}) ));
 ///
+///     assert!(matches!( parse("BITCOIN:1andreas3batLhQa2FawWjeyjCqyBzypd").await, Ok(BitcoinAddress{address: _}) ));
 ///     assert!(matches!( parse("bitcoin:1andreas3batLhQa2FawWjeyjCqyBzypd").await, Ok(BitcoinAddress{address: _}) ));
 ///     assert!(matches!( parse("bitcoin:1andreas3batLhQa2FawWjeyjCqyBzypd?amount=0.00002000").await, Ok(BitcoinAddress{address: _}) ));
 ///     assert!(matches!( parse("bitcoin:1andreas3batLhQa2FawWjeyjCqyBzypd?amount=0.00002000&label=Hello").await, Ok(BitcoinAddress{address: _}) ));
+///     assert!(matches!( parse("BITCOIN:1andreas3batLhQa2FawWjeyjCqyBzypd?amount=0.00002000&label=Hello&message=Msg").await, Ok(BitcoinAddress{address: _}) ));
 ///     assert!(matches!( parse("bitcoin:1andreas3batLhQa2FawWjeyjCqyBzypd?amount=0.00002000&label=Hello&message=Msg").await, Ok(BitcoinAddress{address: _}) ));
 /// }
 /// ```
@@ -252,7 +254,10 @@ where
 
 /// Prepends the given prefix to the input, if the input doesn't already start with it
 fn prepend_if_missing(prefix: &str, input: &str) -> String {
-    format!("{}{}", prefix, input.trim_start_matches(prefix))
+    match input.to_lowercase().starts_with(prefix) {
+        true => input.into(),
+        false => format!("{}{}", prefix, input.trim_start_matches(prefix))
+    }
 }
 
 /// Converts the LN Address to the corresponding LNURL-pay endpoint, as per LUD-16:
