@@ -17,7 +17,7 @@ use crate::bitcoin::{
     Address, EcdsaSighashType, Script, Sequence, Transaction, TxIn, TxOut, Witness,
 };
 use crate::breez_services::{BreezEvent, BreezServer, PaymentReceiver, Receiver};
-use crate::chain::{get_utxos, AddressUtxos, ChainService, MempoolSpace, OnchainTx};
+use crate::chain::{get_utxos, AddressUtxos, ChainService, MempoolSpace};
 use crate::error::ReceivePaymentError;
 use crate::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
 use crate::models::{Swap, SwapInfo, SwapStatus, SwapperAPI};
