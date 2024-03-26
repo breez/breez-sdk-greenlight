@@ -17,7 +17,7 @@ use crate::bitcoin::{
     Address, EcdsaSighashType, Script, Sequence, Transaction, TxIn, TxOut, Witness,
 };
 use crate::breez_services::{BreezEvent, BreezServer, PaymentReceiver, Receiver};
-use crate::chain::{get_utxos, AddressUtxos, ChainService, MempoolSpace, OnchainTx};
+use crate::chain::{get_utxos, AddressUtxos, ChainService, MempoolSpace};
 use crate::error::ReceivePaymentError;
 use crate::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
 use crate::models::{Swap, SwapInfo, SwapStatus, SwapperAPI};
@@ -352,24 +352,18 @@ impl BTCReceiveSwap {
             .chain_service
             .address_transactions(bitcoin_address.clone())
             .await?;
-        let confirmed_txs: Vec<OnchainTx> = txs
+        let utxos = get_utxos(bitcoin_address.clone(), txs.clone())?;
+        let confirmed_block = txs
             .clone()
             .into_iter()
-            .filter(|t| t.status.block_height.is_some())
-            .collect();
-        let utxos = get_utxos(bitcoin_address.clone(), txs)?;
-        let confirmed_block = confirmed_txs.iter().fold(0, |b, item| {
-            let confirmed_block = item.status.block_height.unwrap();
-            if confirmed_block != 0 || confirmed_block < b {
-                confirmed_block
-            } else {
-                b
-            }
-        });
+            .filter_map(|t| t.status.block_height)
+            .filter(|height| *height > 0)
+            .min()
+            .unwrap_or(0);
 
         let mut swap_status = swap_info.status.clone();
-        if !confirmed_txs.is_empty()
-            && current_tip - confirmed_block >= swap_info.lock_height as u32
+        if confirmed_block > 0
+            && current_tip.saturating_sub(confirmed_block) >= swap_info.lock_height as u32
         {
             swap_status = SwapStatus::Expired
         }
