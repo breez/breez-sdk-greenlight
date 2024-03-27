@@ -35,12 +35,12 @@ class LnurlPayTask : TaskProtocol {
     func start(breezSDK: BlockingBreezServices) throws {}
     
     func onShutdown() {
-        displayPushNotification(title: self.failNotificationTitle, logger: self.logger)
+        displayPushNotification(title: self.failNotificationTitle, logger: self.logger, threadIdentifier: Constants.NOTIFICATION_THREAD_LNURL_PAY)
     }
     
     func replyServer(encodable: Encodable, replyURL: String) {
         guard let serverReplyURL = URL(string: replyURL) else {
-            self.displayPushNotification(title: self.failNotificationTitle, logger: self.logger)
+            self.displayPushNotification(title: self.failNotificationTitle, logger: self.logger, threadIdentifier: Constants.NOTIFICATION_THREAD_LNURL_PAY)
             return
         }
         var request = URLRequest(url: serverReplyURL)
@@ -50,9 +50,9 @@ class LnurlPayTask : TaskProtocol {
             let statusCode = (response as! HTTPURLResponse).statusCode
             
             if statusCode == 200 {
-                self.displayPushNotification(title: self.successNotifiationTitle, logger: self.logger)
+                self.displayPushNotification(title: self.successNotifiationTitle, logger: self.logger, threadIdentifier: Constants.NOTIFICATION_THREAD_LNURL_PAY)
             } else {
-                self.displayPushNotification(title: self.failNotificationTitle, logger: self.logger)
+                self.displayPushNotification(title: self.failNotificationTitle, logger: self.logger, threadIdentifier: Constants.NOTIFICATION_THREAD_LNURL_PAY)
                 return
             }
         }
@@ -69,6 +69,6 @@ class LnurlPayTask : TaskProtocol {
             }
             task.resume()
         }
-        self.displayPushNotification(title: self.failNotificationTitle, logger: self.logger)
+        self.displayPushNotification(title: self.failNotificationTitle, logger: self.logger, threadIdentifier: Constants.NOTIFICATION_THREAD_LNURL_PAY)
     }
 }

@@ -37,7 +37,7 @@ class LnurlPayInfoTask : LnurlPayTask {
             request = try JSONDecoder().decode(LnurlInfoRequest.self, from: self.payload.data(using: .utf8)!)
         } catch let e {
             self.logger.log(tag: TAG, line: "failed to decode payload: \(e)", level: "ERROR")
-            self.displayPushNotification(title: self.failNotificationTitle, logger: self.logger)
+            self.displayPushNotification(title: self.failNotificationTitle, logger: self.logger, threadIdentifier: Constants.NOTIFICATION_THREAD_LNURL_PAY)
             throw e
         }
         

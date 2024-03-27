@@ -37,7 +37,7 @@ class RedeemSwapTask : TaskProtocol {
             try breezSDK.redeemSwap(swapAddress: addressTxsConfirmedRequest!.address)
             self.logger.log(tag: TAG, line: "Found swap for \(addressTxsConfirmedRequest!.address)", level: "DEBUG")
             let successRedeemSwap = ResourceHelper.shared.getString(key: Constants.SWAP_TX_CONFIRMED_NOTIFICATION_TITLE, fallback: Constants.DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_TITLE)
-            self.displayPushNotification(title: successRedeemSwap, logger: self.logger)
+            self.displayPushNotification(title: successRedeemSwap, logger: self.logger, threadIdentifier: Constants.NOTIFICATION_THREAD_SWAP_TX_CONFIRMED)
         } catch let e {
             self.logger.log(tag: TAG, line: "Failed to process swap notification: \(e)", level: "ERROR")
             self.onShutdown()
@@ -46,6 +46,6 @@ class RedeemSwapTask : TaskProtocol {
 
     func onShutdown() {
         let failRedeemSwap = ResourceHelper.shared.getString(key: Constants.SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TITLE, fallback: Constants.DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TITLE)
-        self.displayPushNotification(title: failRedeemSwap, logger: self.logger)
+        self.displayPushNotification(title: failRedeemSwap, logger: self.logger, threadIdentifier: Constants.NOTIFICATION_THREAD_SWAP_TX_CONFIRMED)
     }
 }
