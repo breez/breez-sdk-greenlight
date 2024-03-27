@@ -1379,6 +1379,8 @@ impl BreezServices {
             debug!("Received the signal to exit event polling loop");
         });
 
+        self.init_chainservice_urls().await?;
+
         Ok(())
     }
 
@@ -1593,6 +1595,29 @@ impl BreezServices {
                 }
             }
         });
+    }
+
+    async fn init_chainservice_urls(&self) -> Result<()> {
+        let breez_server = Arc::new(BreezServer::new(
+            PRODUCTION_BREEZSERVER_URL.to_string(),
+            None,
+        )?);
+        let persister = &self.persister;
+
+        let cloned_breez_server = breez_server.clone();
+        let cloned_persister = persister.clone();
+        tokio::spawn(async move {
+            match cloned_breez_server.fetch_mempoolspace_urls().await {
+                Ok(fresh_urls) => {
+                    if let Err(e) = cloned_persister.set_mempoolspace_base_urls(fresh_urls) {
+                        error!("Failed to cache mempool.space URLs: {e}");
+                    }
+                }
+                Err(e) => error!("Failed to fetch mempool.space URLs: {e}"),
+            }
+        });
+
+        Ok(())
     }
 
     /// Configures a global SDK logger that will log to file and will forward log events to
@@ -2076,9 +2101,8 @@ impl BreezServicesBuilder {
             None => {
                 let cached = persister.get_mempoolspace_base_urls()?;
                 match cached.len() {
+                    // If we have no cached values, or we cached an empty list, fetch new ones
                     0 => {
-                        // If we have no cached values, or we cached an empty list, fetch new ones
-
                         let fresh_urls = breez_server
                             .fetch_mempoolspace_urls()
                             .await
@@ -2086,27 +2110,8 @@ impl BreezServicesBuilder {
                         persister.set_mempoolspace_base_urls(fresh_urls.clone())?;
                         fresh_urls
                     }
-                    _ => {
-                        // If we already have cached values, return those
-
-                        // Start thread that refreshes cache in the background
-                        let cloned_breez_server = breez_server.clone();
-                        let cloned_persister = persister.clone();
-                        tokio::spawn(async move {
-                            match cloned_breez_server.fetch_mempoolspace_urls().await {
-                                Ok(fresh_urls) => {
-                                    if let Err(e) =
-                                        cloned_persister.set_mempoolspace_base_urls(fresh_urls)
-                                    {
-                                        error!("Failed to cache mempool.space URLs: {e}");
-                                    }
-                                }
-                                Err(e) => error!("Failed to fetch mempool.space URLs: {e}"),
-                            }
-                        });
-
-                        cached
-                    }
+                    // If we already have cached values, return those
+                    _ => cached,
                 }
             }
             Some(mempoolspace_url_from_config) => vec![mempoolspace_url_from_config],
