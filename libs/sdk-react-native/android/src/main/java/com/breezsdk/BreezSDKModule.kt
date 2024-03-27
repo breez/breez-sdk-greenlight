@@ -906,6 +906,18 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     @ReactMethod
+    fun collectUserData(promise: Promise) {
+        executor.execute {
+            try {
+                val res = getBreezServices().collectUserData()
+                promise.resolve(res)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
     fun sync(promise: Promise) {
         executor.execute {
             try {

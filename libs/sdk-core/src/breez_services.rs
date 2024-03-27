@@ -1,5 +1,4 @@
 use std::cmp::min;
-use std::fmt::format;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::str::FromStr;

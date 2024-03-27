@@ -313,6 +313,11 @@ abstract class BreezSdkCore {
   Future<String> executeCommand({required String command, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kExecuteCommandConstMeta;
+
+  /// See [BreezServices::collect_user_data]
+  Future<String> collectUserData({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kCollectUserDataConstMeta;
 }
 
 /// Wrapper for the decrypted [AesSuccessActionData] payload
@@ -3042,6 +3047,22 @@ class BreezSdkCoreImpl implements BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kExecuteCommandConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "execute_command",
         argNames: ["command"],
+      );
+
+  Future<String> collectUserData({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_collect_user_data(port_),
+      parseSuccessData: _wire2api_String,
+      parseErrorData: _wire2api_FrbAnyhowException,
+      constMeta: kCollectUserDataConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kCollectUserDataConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "collect_user_data",
+        argNames: [],
       );
 
   void dispose() {
@@ -5939,6 +5960,18 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
           'wire_execute_command');
   late final _wire_execute_command =
       _wire_execute_commandPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_collect_user_data(
+    int port_,
+  ) {
+    return _wire_collect_user_data(
+      port_,
+    );
+  }
+
+  late final _wire_collect_user_dataPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_collect_user_data');
+  late final _wire_collect_user_data = _wire_collect_user_dataPtr.asFunction<void Function(int)>();
 
   ffi.Pointer<ffi.Bool> new_box_autoadd_bool_0(
     bool value,
