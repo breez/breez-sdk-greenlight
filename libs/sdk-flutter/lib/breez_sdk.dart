@@ -331,9 +331,10 @@ class BreezSDK {
 
   /* Swap Stream */
 
-  final StreamController<BreezEvent?> _swapEventsStreamController = BehaviorSubject<BreezEvent?>();
+  final StreamController<BreezEvent_SwapUpdated> _swapEventsStreamController =
+      BehaviorSubject<BreezEvent_SwapUpdated>();
 
-  Stream<BreezEvent?> get swapEventsStream => _swapEventsStreamController.stream;
+  Stream<BreezEvent_SwapUpdated> get swapEventsStream => _swapEventsStreamController.stream;
 
   /* On-Chain Swap API's */
 
