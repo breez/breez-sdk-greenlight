@@ -27,6 +27,7 @@ use tonic::{Request, Status};
 use crate::backup::{BackupRequest, BackupTransport, BackupWatcher};
 use crate::chain::{
     ChainService, Outspend, RecommendedFees, RedundantChainService, RedundantChainServiceTrait,
+    DEFAULT_MEMPOOL_SPACE_URL,
 };
 use crate::error::{
     LnUrlAuthError, LnUrlPayError, LnUrlWithdrawError, ReceiveOnchainError, ReceiveOnchainResult,
@@ -2078,7 +2079,10 @@ impl BreezServicesBuilder {
                     0 => {
                         // If we have no cached values, or we cached an empty list, fetch new ones
 
-                        let fresh_urls = breez_server.fetch_mempoolspace_urls().await?;
+                        let fresh_urls = breez_server
+                            .fetch_mempoolspace_urls()
+                            .await
+                            .unwrap_or(vec![DEFAULT_MEMPOOL_SPACE_URL.into()]);
                         persister.set_mempoolspace_base_urls(fresh_urls.clone())?;
                         fresh_urls
                     }

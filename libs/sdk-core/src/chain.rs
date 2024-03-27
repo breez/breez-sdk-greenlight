@@ -5,6 +5,8 @@ use crate::bitcoin::hashes::hex::FromHex;
 use crate::bitcoin::{OutPoint, Txid};
 use crate::input_parser::{get_parse_and_log_response, get_reqwest_client, post_and_log_response};
 
+pub const DEFAULT_MEMPOOL_SPACE_URL: &str = "https://mempool.space/api";
+
 #[tonic::async_trait]
 pub trait ChainService: Send + Sync {
     async fn recommended_fees(&self) -> Result<RecommendedFees>;
@@ -308,7 +310,7 @@ pub struct Outspend {
 impl Default for MempoolSpace {
     fn default() -> Self {
         MempoolSpace {
-            base_url: "https://mempool.space/api".to_string(),
+            base_url: DEFAULT_MEMPOOL_SPACE_URL.into(),
         }
     }
 }
