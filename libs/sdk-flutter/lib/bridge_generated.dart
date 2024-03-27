@@ -473,7 +473,14 @@ class ClosedChannelPaymentDetails {
 class Config {
   final String breezserver;
   final String chainnotifierUrl;
-  final String mempoolspaceUrl;
+
+  /// If set, this is the mempool.space URL that will be used.
+  ///
+  /// If not set, a list of mempool.space URLs will be used to provide fault-tolerance. If calls
+  /// to the first URL fail, then the call will be repeated to the next URL, and so on.
+  ///
+  /// Note that, if specified, the URL has to be in the format: `https://mempool.space/api`
+  final String? mempoolspaceUrl;
 
   /// Directory in which all SDK files (DB, log) are stored. Defaults to ".", otherwise if it's customized,
   /// the folder should exist before starting the SDK.
@@ -493,7 +500,7 @@ class Config {
   const Config({
     required this.breezserver,
     required this.chainnotifierUrl,
-    required this.mempoolspaceUrl,
+    this.mempoolspaceUrl,
     required this.workingDir,
     required this.network,
     required this.paymentTimeoutSec,
@@ -3084,7 +3091,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return Config(
       breezserver: _wire2api_String(arr[0]),
       chainnotifierUrl: _wire2api_String(arr[1]),
-      mempoolspaceUrl: _wire2api_String(arr[2]),
+      mempoolspaceUrl: _wire2api_opt_String(arr[2]),
       workingDir: _wire2api_String(arr[3]),
       network: _wire2api_network(arr[4]),
       paymentTimeoutSec: _wire2api_u32(arr[5]),
@@ -4468,7 +4475,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   void _api_fill_to_wire_config(Config apiObj, wire_Config wireObj) {
     wireObj.breezserver = api2wire_String(apiObj.breezserver);
     wireObj.chainnotifier_url = api2wire_String(apiObj.chainnotifierUrl);
-    wireObj.mempoolspace_url = api2wire_String(apiObj.mempoolspaceUrl);
+    wireObj.mempoolspace_url = api2wire_opt_String(apiObj.mempoolspaceUrl);
     wireObj.working_dir = api2wire_String(apiObj.workingDir);
     wireObj.network = api2wire_network(apiObj.network);
     wireObj.payment_timeout_sec = api2wire_u32(apiObj.paymentTimeoutSec);

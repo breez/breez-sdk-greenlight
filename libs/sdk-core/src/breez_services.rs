@@ -24,7 +24,10 @@ use tonic::transport::{Channel, Endpoint};
 use tonic::{Request, Status};
 
 use crate::backup::{BackupRequest, BackupTransport, BackupWatcher};
-use crate::chain::{ChainService, MempoolSpace, Outspend, RecommendedFees};
+use crate::chain::{
+    ChainService, Outspend, RecommendedFees, RedundantChainService, RedundantChainServiceTrait,
+    DEFAULT_MEMPOOL_SPACE_URL,
+};
 use crate::error::{
     LnUrlAuthError, LnUrlPayError, LnUrlWithdrawError, ReceiveOnchainError, ReceiveOnchainResult,
     ReceivePaymentError, SdkError, SdkResult, SendOnchainError, SendPaymentError,
@@ -37,7 +40,7 @@ use crate::grpc::payment_notifier_client::PaymentNotifierClient;
 use crate::grpc::signer_client::SignerClient;
 use crate::grpc::support_client::SupportClient;
 use crate::grpc::swapper_client::SwapperClient;
-use crate::grpc::PaymentInformation;
+use crate::grpc::{ChainApiServersRequest, PaymentInformation};
 use crate::input_parser::get_reqwest_client;
 use crate::invoice::{
     add_routing_hints, parse_invoice, validate_network, LNInvoice, RouteHint, RouteHintHop,
@@ -1217,6 +1220,8 @@ impl BreezServices {
             debug!("Received the signal to exit event polling loop");
         });
 
+        self.init_chainservice_urls().await?;
+
         Ok(())
     }
 
@@ -1403,6 +1408,29 @@ impl BreezServices {
                 }
             }
         });
+    }
+
+    async fn init_chainservice_urls(&self) -> Result<()> {
+        let breez_server = Arc::new(BreezServer::new(
+            PRODUCTION_BREEZSERVER_URL.to_string(),
+            None,
+        )?);
+        let persister = &self.persister;
+
+        let cloned_breez_server = breez_server.clone();
+        let cloned_persister = persister.clone();
+        tokio::spawn(async move {
+            match cloned_breez_server.fetch_mempoolspace_urls().await {
+                Ok(fresh_urls) => {
+                    if let Err(e) = cloned_persister.set_mempoolspace_base_urls(fresh_urls) {
+                        error!("Failed to cache mempool.space URLs: {e}");
+                    }
+                }
+                Err(e) => error!("Failed to fetch mempool.space URLs: {e}"),
+            }
+        });
+
+        Ok(())
     }
 
     /// Configures a global SDK logger that will log to file and will forward log events to
@@ -1798,11 +1826,6 @@ impl BreezServicesBuilder {
             .unwrap_or_else(|| Arc::new(SqliteStorage::new(self.config.working_dir.clone())));
         persister.init()?;
 
-        // mempool space is used to monitor the chain
-        let chain_service = Arc::new(MempoolSpace::from_base_url(
-            self.config.mempoolspace_url.clone(),
-        ));
-
         let mut node_api = self.node_api.clone();
         let mut backup_transport = self.backup_transport.clone();
         if node_api.is_none() {
@@ -1878,6 +1901,28 @@ impl BreezServicesBuilder {
             lsp: breez_server.clone(),
             persister: persister.clone(),
         });
+
+        // mempool space is used to monitor the chain
+        let mempoolspace_urls = match self.config.mempoolspace_url.clone() {
+            None => {
+                let cached = persister.get_mempoolspace_base_urls()?;
+                match cached.len() {
+                    // If we have no cached values, or we cached an empty list, fetch new ones
+                    0 => {
+                        let fresh_urls = breez_server
+                            .fetch_mempoolspace_urls()
+                            .await
+                            .unwrap_or(vec![DEFAULT_MEMPOOL_SPACE_URL.into()]);
+                        persister.set_mempoolspace_base_urls(fresh_urls.clone())?;
+                        fresh_urls
+                    }
+                    // If we already have cached values, return those
+                    _ => cached,
+                }
+            }
+            Some(mempoolspace_url_from_config) => vec![mempoolspace_url_from_config],
+        };
+        let chain_service = Arc::new(RedundantChainService::from_base_urls(mempoolspace_urls));
 
         let btc_receive_swapper = Arc::new(BTCReceiveSwap::new(
             self.config.network.into(),
@@ -2012,6 +2057,26 @@ impl BreezServer {
             .into_inner()
             .version;
         Ok(response)
+    }
+
+    pub(crate) async fn fetch_mempoolspace_urls(&self) -> SdkResult<Vec<String>> {
+        let mut client = self.get_information_client().await?;
+
+        let chain_api_servers = client
+            .chain_api_servers(ChainApiServersRequest {})
+            .await?
+            .into_inner()
+            .servers;
+        trace!("Received chain_api_servers: {chain_api_servers:?}");
+
+        let mempoolspace_urls = chain_api_servers
+            .iter()
+            .filter(|s| s.server_type == "MEMPOOL_SPACE")
+            .map(|s| s.server_base_url.clone())
+            .collect();
+        trace!("Received mempoolspace_urls: {mempoolspace_urls:?}");
+
+        Ok(mempoolspace_urls)
     }
 }
 
