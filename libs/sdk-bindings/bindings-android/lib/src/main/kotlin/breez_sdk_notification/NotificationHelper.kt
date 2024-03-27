@@ -71,7 +71,7 @@ class NotificationHelper {
     companion object {
         private const val TAG = "NotificationHelper"
         private var defaultClickAction: String? = null
-        
+
         private fun getNotificationManager(context: Context): NotificationManager? {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val notificationManager =
@@ -84,7 +84,7 @@ class NotificationHelper {
             return null
         }
 
-        @RequiresApi(Build.VERSION_CODES.O)
+        @SuppressLint("NewApi")
         private fun createNotificationChannelGroup(
             context: Context,
             groupId: String,
@@ -104,14 +104,14 @@ class NotificationHelper {
                 manager.createNotificationChannelGroup(channelGroup)
             }
         }
-        
-        @RequiresApi(Build.VERSION_CODES.O)
+
+        @SuppressLint("NewApi")
         fun createNotificationChannel(
-            context: Context, 
-            channelId: String, 
-            channelName: String, 
-            channelDescription: String, 
-            groupId: String, 
+            context: Context,
+            channelId: String,
+            channelName: String,
+            channelDescription: String,
+            groupId: String,
             importance: Int = NotificationManager.IMPORTANCE_DEFAULT,
         ) {
             getNotificationManager(context)?.also { manager ->
@@ -129,7 +129,7 @@ class NotificationHelper {
             }
         }
 
-        @RequiresApi(Build.VERSION_CODES.O)
+        @SuppressLint("NewApi")
         fun registerNotificationChannels(context: Context, defaultClickAction: String? = null) {
             this.defaultClickAction = defaultClickAction
 
@@ -139,7 +139,7 @@ class NotificationHelper {
                 Log.d(TAG, "Registered notification channels")
             }
         }
-        
+
         @RequiresApi(Build.VERSION_CODES.O)
         private fun createNotificationChannels(
             context: Context,
@@ -218,7 +218,7 @@ class NotificationHelper {
                 )
             )
         }
-        
+
         @RequiresApi(Build.VERSION_CODES.O)
         private fun createNotificationChannelGroups(
             context: Context,
