@@ -26,6 +26,7 @@ service Information {
   rpc BreezAppVersions(BreezAppVersionsRequest)
       returns (BreezAppVersionsReply) {}
   rpc ReceiverInfo(ReceiverInfoRequest) returns (ReceiverInfoReply) {}
+  rpc ChainApiServers(ChainApiServersRequest) returns (ChainApiServersReply) {}
 }
 
 service ChannelOpener {
@@ -427,6 +428,15 @@ message BreezStatusReply {
     SERVICE_DISRUPTION = 2;
   }
   BreezStatus status = 1;
+}
+
+message ChainApiServersRequest {}
+message ChainApiServersReply {
+  message ChainAPIServer {
+    string server_type = 1;
+    string server_base_url = 2;
+  }
+  repeated ChainAPIServer servers = 1;
 }
 
 /////////////////////////////////////////////

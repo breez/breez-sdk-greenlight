@@ -38,7 +38,7 @@ use crate::grpc::payment_notifier_client::PaymentNotifierClient;
 use crate::grpc::signer_client::SignerClient;
 use crate::grpc::support_client::SupportClient;
 use crate::grpc::swapper_client::SwapperClient;
-use crate::grpc::PaymentInformation;
+use crate::grpc::{ChainApiServersRequest, PaymentInformation};
 use crate::input_parser::get_reqwest_client;
 use crate::invoice::{
     add_routing_hints, parse_invoice, validate_network, LNInvoice, RouteHint, RouteHintHop,
@@ -2066,6 +2066,9 @@ impl BreezServicesBuilder {
             persister.set_lsp_id(self.config.default_lsp_id.clone().unwrap())?;
         }
 
+        let fresh_mempool_space_endpoints = breez_server.fetch_mempool_space_endpoints().await?;
+        persister.set_mempool_space_endpoints(fresh_mempool_space_endpoints)?;
+
         let payment_receiver = Arc::new(PaymentReceiver {
             config: self.config.clone(),
             node_api: unwrapped_node_api.clone(),
@@ -2206,6 +2209,26 @@ impl BreezServer {
             .into_inner()
             .version;
         Ok(response)
+    }
+
+    pub(crate) async fn fetch_mempool_space_endpoints(&self) -> SdkResult<Vec<String>> {
+        let mut client = self.get_information_client().await?;
+
+        let chain_api_servers = client
+            .chain_api_servers(ChainApiServersRequest {})
+            .await?
+            .into_inner()
+            .servers;
+        trace!("Received chain_api_servers: {chain_api_servers:?}");
+
+        let mempool_space_endpoints = chain_api_servers
+            .iter()
+            .filter(|s| s.server_type == "MEMPOOL_SPACE")
+            .map(|s| s.server_base_url.clone())
+            .collect();
+        trace!("Received mempool_space_endpoints: {mempool_space_endpoints:?}");
+
+        Ok(mempool_space_endpoints)
     }
 }
 
