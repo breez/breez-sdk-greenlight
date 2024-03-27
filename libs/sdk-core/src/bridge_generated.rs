@@ -886,14 +886,14 @@ fn wire_execute_command_impl(port_: MessagePort, command: impl Wire2Api<String> 
         },
     )
 }
-fn wire_collect_user_data_impl(port_: MessagePort) {
+fn wire_generate_diagnostic_data_impl(port_: MessagePort) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, String, _>(
         WrapInfo {
-            debug_name: "collect_user_data",
+            debug_name: "generate_diagnostic_data",
             port: Some(port_),
             mode: FfiCallMode::Normal,
         },
-        move || move |task_callback| collect_user_data(),
+        move || move |task_callback| generate_diagnostic_data(),
     )
 }
 // Section: wrapper structs

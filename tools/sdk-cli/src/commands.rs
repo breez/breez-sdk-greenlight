@@ -321,5 +321,5 @@ pub(crate) enum Commands {
         command: String,
     },
 
-    CollectUserData {},
+    GenerateDiagnosticData {},
 }

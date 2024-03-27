@@ -314,10 +314,10 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kExecuteCommandConstMeta;
 
-  /// See [BreezServices::collect_user_data]
-  Future<String> collectUserData({dynamic hint});
+  /// See [BreezServices::generate_diagnostic_data]
+  Future<String> generateDiagnosticData({dynamic hint});
 
-  FlutterRustBridgeTaskConstMeta get kCollectUserDataConstMeta;
+  FlutterRustBridgeTaskConstMeta get kGenerateDiagnosticDataConstMeta;
 }
 
 /// Wrapper for the decrypted [AesSuccessActionData] payload
@@ -3049,19 +3049,19 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["command"],
       );
 
-  Future<String> collectUserData({dynamic hint}) {
+  Future<String> generateDiagnosticData({dynamic hint}) {
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_collect_user_data(port_),
+      callFfi: (port_) => _platform.inner.wire_generate_diagnostic_data(port_),
       parseSuccessData: _wire2api_String,
       parseErrorData: _wire2api_FrbAnyhowException,
-      constMeta: kCollectUserDataConstMeta,
+      constMeta: kGenerateDiagnosticDataConstMeta,
       argValues: [],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kCollectUserDataConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "collect_user_data",
+  FlutterRustBridgeTaskConstMeta get kGenerateDiagnosticDataConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "generate_diagnostic_data",
         argNames: [],
       );
 
@@ -5961,17 +5961,18 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_execute_command =
       _wire_execute_commandPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
-  void wire_collect_user_data(
+  void wire_generate_diagnostic_data(
     int port_,
   ) {
-    return _wire_collect_user_data(
+    return _wire_generate_diagnostic_data(
       port_,
     );
   }
 
-  late final _wire_collect_user_dataPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_collect_user_data');
-  late final _wire_collect_user_data = _wire_collect_user_dataPtr.asFunction<void Function(int)>();
+  late final _wire_generate_diagnostic_dataPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_generate_diagnostic_data');
+  late final _wire_generate_diagnostic_data =
+      _wire_generate_diagnostic_dataPtr.asFunction<void Function(int)>();
 
   ffi.Pointer<ffi.Bool> new_box_autoadd_bool_0(
     bool value,

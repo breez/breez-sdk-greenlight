@@ -1098,8 +1098,8 @@ export const executeDevCommand = async (command: string): Promise<string> => {
     return response
 }
 
-export const collectUserData = async (): Promise<string> => {
-    const response = await BreezSDK.collectUserData()
+export const generateDiagnosticData = async (): Promise<string> => {
+    const response = await BreezSDK.generateDiagnosticData()
     return response
 }
 

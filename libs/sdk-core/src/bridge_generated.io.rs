@@ -315,8 +315,8 @@ pub extern "C" fn wire_execute_command(port_: i64, command: *mut wire_uint_8_lis
 }
 
 #[no_mangle]
-pub extern "C" fn wire_collect_user_data(port_: i64) {
-    wire_collect_user_data_impl(port_)
+pub extern "C" fn wire_generate_diagnostic_data(port_: i64) {
+    wire_generate_diagnostic_data_impl(port_)
 }
 
 // Section: allocate functions

@@ -306,7 +306,7 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
-    collectUserData: (RCTPromiseResolveBlock)resolve
+    generateDiagnosticData: (RCTPromiseResolveBlock)resolve
     reject: (RCTPromiseRejectBlock)reject
 )
 

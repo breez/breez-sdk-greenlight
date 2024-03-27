@@ -408,7 +408,7 @@ void wire_recommended_fees(int64_t port_);
 
 void wire_execute_command(int64_t port_, struct wire_uint_8_list *command);
 
-void wire_collect_user_data(int64_t port_);
+void wire_generate_diagnostic_data(int64_t port_);
 
 bool *new_box_autoadd_bool_0(bool value);
 
@@ -551,7 +551,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_in_progress_onchain_payments);
     dummy_var ^= ((int64_t) (void*) wire_recommended_fees);
     dummy_var ^= ((int64_t) (void*) wire_execute_command);
-    dummy_var ^= ((int64_t) (void*) wire_collect_user_data);
+    dummy_var ^= ((int64_t) (void*) wire_generate_diagnostic_data);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_bool_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_buy_bitcoin_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_check_message_request_0);

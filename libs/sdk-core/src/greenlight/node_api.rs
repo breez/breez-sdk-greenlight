@@ -1381,7 +1381,7 @@ impl NodeAPI for Greenlight {
         Ok(hex_vec)
     }
 
-    async fn collect_node_data(&self) -> NodeResult<String> {
+    async fn generate_diagnostic_data(&self) -> NodeResult<String> {
         let all_commands = vec![
             NodeCommand::GetInfo.to_string(),
             NodeCommand::ListPeerChannels.to_string(),

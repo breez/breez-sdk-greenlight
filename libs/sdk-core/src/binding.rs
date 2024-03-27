@@ -523,9 +523,9 @@ pub fn execute_command(command: String) -> Result<String> {
     .map_err(anyhow::Error::new::<SdkError>)
 }
 
-/// See [BreezServices::collect_user_data]
-pub async fn collect_user_data() -> Result<String> {
-    block_on(async { get_breez_services().await?.collect_user_data().await })
+/// See [BreezServices::generate_diagnostic_data]
+pub fn generate_diagnostic_data() -> Result<String> {
+    block_on(async { get_breez_services().await?.generate_diagnostic_data().await })
         .map_err(anyhow::Error::new::<SdkError>)
 }
 
