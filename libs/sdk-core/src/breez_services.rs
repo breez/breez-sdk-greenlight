@@ -1994,10 +1994,12 @@ impl BreezServicesBuilder {
             .unwrap_or_else(|| Arc::new(SqliteStorage::new(self.config.working_dir.clone())));
         persister.init()?;
 
+        // TODO Read values from config or from cache
         // mempool space is used to monitor the chain
-        let chain_service = Arc::new(MempoolSpace::from_base_url(
-            self.config.mempoolspace_url.clone(),
-        ));
+        let chain_service = Arc::new(MempoolSpace::from_base_urls(vec![self
+            .config
+            .mempoolspace_url
+            .clone()]));
 
         let mut node_api = self.node_api.clone();
         let mut backup_transport = self.backup_transport.clone();
@@ -2067,7 +2069,7 @@ impl BreezServicesBuilder {
         }
 
         let fresh_mempool_space_endpoints = breez_server.fetch_mempool_space_endpoints().await?;
-        persister.set_mempool_space_endpoints(fresh_mempool_space_endpoints)?;
+        persister.set_mempool_space_base_urls(fresh_mempool_space_endpoints)?;
 
         let payment_receiver = Arc::new(PaymentReceiver {
             config: self.config.clone(),

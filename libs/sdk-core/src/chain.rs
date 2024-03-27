@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::bitcoin::hashes::hex::FromHex;
 use crate::bitcoin::{OutPoint, Txid};
-use crate::input_parser::{get_parse_and_log_response, get_reqwest_client};
+use crate::input_parser::{get_parse_and_log_response, post_and_log_response};
 
 #[tonic::async_trait]
 pub trait ChainService: Send + Sync {
@@ -146,7 +146,7 @@ pub(crate) fn get_total_incoming_txs(address: String, transactions: Vec<OnchainT
 
 #[derive(Clone)]
 pub(crate) struct MempoolSpace {
-    pub(crate) base_url: String,
+    pub(crate) base_urls: Vec<String>,
 }
 
 /// Wrapper containing the result of the recommended fees query, in sat/vByte, based on mempool.space data
@@ -225,44 +225,88 @@ pub struct Outspend {
 impl Default for MempoolSpace {
     fn default() -> Self {
         MempoolSpace {
-            base_url: "https://mempool.space".to_string(),
+            base_urls: vec!["https://mempool.space/api".to_string()],
         }
     }
 }
 
 impl MempoolSpace {
-    pub fn from_base_url(base_url: String) -> MempoolSpace {
-        MempoolSpace { base_url }
+    pub fn from_base_urls(base_urls: Vec<String>) -> MempoolSpace {
+        MempoolSpace { base_urls }
+    }
+
+    fn get_base_url_at(&self, i: usize) -> Result<&str> {
+        self.base_urls
+            .get(i)
+            .map(|url: &String| url.trim_end_matches('/'))
+            .ok_or(anyhow!("No mempool.space URL found at index {i}"))
+    }
+
+    async fn call_get_with_fallback<T>(&self, url_from: impl Fn(&str) -> String) -> Result<T>
+    where
+        for<'a> T: serde::de::Deserialize<'a>,
+    {
+        let get_fn = get_parse_and_log_response;
+
+        let mut i = 0;
+        match get_fn(&url_from(self.get_base_url_at(i)?)).await {
+            Ok(t) => Ok(t),
+            Err(err) => {
+                error!("Chain service GET call failed: {err}");
+                i += 1;
+                let fallback_url = &url_from(self.get_base_url_at(i)?);
+                info!("Re-trying GET request on fallback URL {fallback_url}");
+                get_fn(fallback_url).await
+            }
+        }
+    }
+
+    async fn call_post_with_fallback(
+        &self,
+        url_from: impl Fn(&str) -> String,
+        body: Option<String>,
+    ) -> Result<String> {
+        let post_fn = post_and_log_response;
+
+        let mut i = 0;
+        match post_fn(&url_from(self.get_base_url_at(i)?), body.clone()).await {
+            Ok(res_body) => Ok(res_body),
+            Err(err) => {
+                error!("Chain service POST call failed: {err}");
+                i += 1;
+                let fallback_url = &url_from(self.get_base_url_at(i)?);
+                post_fn(fallback_url, body).await
+            }
+        }
     }
 }
 
 #[tonic::async_trait]
 impl ChainService for MempoolSpace {
     async fn recommended_fees(&self) -> Result<RecommendedFees> {
-        get_parse_and_log_response(&format!("{}/api/v1/fees/recommended", self.base_url)).await
+        let url_from = |base_url: &str| format!("{base_url}/v1/fees/recommended");
+        self.call_get_with_fallback(url_from).await
     }
 
     async fn address_transactions(&self, address: String) -> Result<Vec<OnchainTx>> {
-        get_parse_and_log_response(&format!("{}/api/address/{address}/txs", self.base_url)).await
+        let url_from = |base_url: &str| format!("{base_url}/address/{address}/txs");
+        self.call_get_with_fallback(url_from).await
     }
 
     async fn current_tip(&self) -> Result<u32> {
-        get_parse_and_log_response(&format!("{}/api/blocks/tip/height", self.base_url)).await
+        let url_from = |base_url: &str| format!("{base_url}/blocks/tip/height");
+        self.call_get_with_fallback(url_from).await
     }
 
     async fn transaction_outspends(&self, txid: String) -> Result<Vec<Outspend>> {
-        let url = format!("{}/api/tx/{txid}/outspends", self.base_url);
-        Ok(get_reqwest_client()?.get(url).send().await?.json().await?)
+        let url_from = |base_url: &str| format!("{base_url}/tx/{txid}/outspends");
+        self.call_get_with_fallback(url_from).await
     }
 
     async fn broadcast_transaction(&self, tx: Vec<u8>) -> Result<String> {
-        let client = get_reqwest_client()?;
-        let txid_or_error = client
-            .post(format!("{}/api/tx", self.base_url))
-            .body(hex::encode(tx))
-            .send()
-            .await?
-            .text()
+        let url_from = |base_url: &str| format!("{base_url}/tx");
+        let txid_or_error = self
+            .call_post_with_fallback(url_from, Some(hex::encode(tx)))
             .await?;
         match txid_or_error.contains("error") {
             true => Err(anyhow!("Error fetching tx: {txid_or_error}")),
@@ -280,9 +324,7 @@ mod tests {
 
     #[test]
     async fn test_recommended_fees() -> Result<()> {
-        let ms = Box::new(MempoolSpace::from_base_url(
-            "https://mempool.space".to_string(),
-        ));
+        let ms = MempoolSpace::default();
         let fees = ms.recommended_fees().await?;
         assert!(fees.economy_fee > 0);
         assert!(fees.fastest_fee > 0);
@@ -294,8 +336,19 @@ mod tests {
     }
 
     #[test]
+    async fn test_recommended_fees_with_fallback() -> Result<()> {
+        let ms = MempoolSpace::from_base_urls(vec![
+            "https://mempool-url-unreachable.space/api/".into(),
+            "https://mempool.emzy.de/api/".into(),
+        ]);
+        assert!(ms.recommended_fees().await.is_ok());
+
+        Ok(())
+    }
+
+    #[test]
     async fn test_address_transactions() -> Result<()> {
-        let ms = MempoolSpace::from_base_url("https://mempool.space".to_string());
+        let ms = MempoolSpace::default();
         let txs = ms
             .address_transactions("bc1qvhykeqcpdzu0pdvy99xnh9ckhwzcfskct6h6l2".to_string())
             .await?;
@@ -312,7 +365,7 @@ mod tests {
 
     // #[test]
     // async fn test_address_transactions_mempool() {
-    //     let ms = MempoolSpace::from_base_url("https://mempool.space".to_string());
+    //     let ms = MempoolSpace::default();
     //     let txs = ms
     //         .address_transactions("1N4f3y3LYJZ2Qd9FyPt3AcHp451qt12paR".to_string())
     //         .await

@@ -486,7 +486,7 @@ impl Config {
         Config {
             breezserver: PRODUCTION_BREEZSERVER_URL.to_string(),
             chainnotifier_url: "https://chainnotifier.breez.technology".to_string(),
-            mempoolspace_url: "https://mempool.space".to_string(),
+            mempoolspace_url: "https://mempool.space/api/".to_string(),
             working_dir: ".".to_string(),
             network: Bitcoin,
             payment_timeout_sec: 60,
@@ -502,7 +502,7 @@ impl Config {
         Config {
             breezserver: STAGING_BREEZSERVER_URL.to_string(),
             chainnotifier_url: "https://chainnotifier.breez.technology".to_string(),
-            mempoolspace_url: "https://mempool.space".to_string(),
+            mempoolspace_url: "https://mempool.space/api/".to_string(),
             working_dir: ".".to_string(),
             network: Bitcoin,
             payment_timeout_sec: 60,

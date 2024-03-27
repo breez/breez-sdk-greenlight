@@ -8,7 +8,7 @@ const KEY_LAST_SYNC_TIME: &str = "last_sync_time";
 const KEY_NODE_STATE: &str = "node_state";
 const KEY_STATIC_BACKUP: &str = "static_backup";
 const KEY_WEBHOOK_URL: &str = "webhook_url";
-const KEY_MEMPOOL_SPACE_ENDPOINTS: &str = "mempool_space_endpoints";
+const KEY_MEMPOOL_SPACE_BASE_URLS: &str = "mempool_space_base_urls";
 
 impl SqliteStorage {
     pub fn get_cached_item(&self, key: &str) -> PersistResult<Option<String>> {
@@ -110,16 +110,16 @@ impl SqliteStorage {
         self.get_cached_item(KEY_WEBHOOK_URL)
     }
 
-    pub fn set_mempool_space_endpoints(
+    pub fn set_mempool_space_base_urls(
         &self,
         mempool_space_endpoints: Vec<String>,
     ) -> PersistResult<()> {
         let serialized = serde_json::to_string(&mempool_space_endpoints)?;
-        self.update_cached_item(KEY_MEMPOOL_SPACE_ENDPOINTS, serialized)
+        self.update_cached_item(KEY_MEMPOOL_SPACE_BASE_URLS, serialized)
     }
 
-    pub fn get_mempool_space_endpoints(&self) -> PersistResult<Vec<String>> {
-        let res = match self.get_cached_item(KEY_MEMPOOL_SPACE_ENDPOINTS)? {
+    pub fn get_mempool_space_base_urls(&self) -> PersistResult<Vec<String>> {
+        let res = match self.get_cached_item(KEY_MEMPOOL_SPACE_BASE_URLS)? {
             Some(str) => serde_json::from_str(str.as_str())?,
             None => vec![],
         };
