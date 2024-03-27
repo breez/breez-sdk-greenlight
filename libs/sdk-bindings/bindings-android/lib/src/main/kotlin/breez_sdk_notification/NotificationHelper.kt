@@ -71,22 +71,75 @@ class NotificationHelper {
     companion object {
         private const val TAG = "NotificationHelper"
         private var defaultClickAction: String? = null
-
-        fun registerNotificationChannels(context: Context, defaultClickAction: String? = null) {
-            this.defaultClickAction = defaultClickAction
-
+        
+        private fun getNotificationManager(context: Context): NotificationManager? {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val notificationManager =
                     context.getSystemService(Context.NOTIFICATION_SERVICE)
                             as NotificationManager
                 if (notificationManager.areNotificationsEnabled()) {
-                    createNotificationChannelGroup(context, notificationManager)
-                    createNotificationChannels(context, notificationManager)
+                    return notificationManager
                 }
-                Log.d(TAG, "Registered notification channels")
+            }
+            return null
+        }
+
+        @RequiresApi(Build.VERSION_CODES.O)
+        private fun createNotificationChannelGroup(
+            context: Context,
+            groupId: String,
+            groupName: String,
+            groupDescription: String,
+        ) {
+            getNotificationManager(context)?.also { manager ->
+                val channelGroup = NotificationChannelGroup(
+                    groupId,
+                    groupName,
+                )
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    channelGroup.description = groupDescription
+                }
+
+                manager.createNotificationChannelGroup(channelGroup)
+            }
+        }
+        
+        @RequiresApi(Build.VERSION_CODES.O)
+        fun createNotificationChannel(
+            context: Context, 
+            channelId: String, 
+            channelName: String, 
+            channelDescription: String, 
+            groupId: String, 
+            importance: Int = NotificationManager.IMPORTANCE_DEFAULT,
+        ) {
+            getNotificationManager(context)?.also { manager ->
+                val applicationId = context.applicationContext.packageName
+                val notificationChannel = NotificationChannel(
+                    "${applicationId}.${channelId}",
+                    channelName,
+                    importance
+                ).apply {
+                    description = channelDescription
+                    group = groupId
+                }
+
+                manager.createNotificationChannel(notificationChannel)
             }
         }
 
+        @RequiresApi(Build.VERSION_CODES.O)
+        fun registerNotificationChannels(context: Context, defaultClickAction: String? = null) {
+            this.defaultClickAction = defaultClickAction
+
+            getNotificationManager(context)?.also { manager ->
+                createNotificationChannelGroups(context, manager)
+                createNotificationChannels(context, manager)
+                Log.d(TAG, "Registered notification channels")
+            }
+        }
+        
         @RequiresApi(Build.VERSION_CODES.O)
         private fun createNotificationChannels(
             context: Context,
@@ -165,9 +218,9 @@ class NotificationHelper {
                 )
             )
         }
-
+        
         @RequiresApi(Build.VERSION_CODES.O)
-        private fun createNotificationChannelGroup(
+        private fun createNotificationChannelGroups(
             context: Context,
             notificationManager: NotificationManager,
         ) {
