@@ -54,3 +54,5 @@ interface LnurlPayJob : Job {
         }
     }
 }
+
+class InvalidMinSendableException(message: String) : Exception(message)

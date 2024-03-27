@@ -20,16 +20,20 @@ struct Constants {
     static let LNURL_PAY_INVOICE_NOTIFICATION_TITLE = "lnurl_pay_invoice_notification_title"
     static let LNURL_PAY_METADATA_PLAIN_TEXT = "lnurl_pay_metadata_plain_text"
     static let LNURL_PAY_NOTIFICATION_FAILURE_TITLE = "lnurl_pay_notification_failure_title"
+    static let LNURL_PAY_NOTIFICATION_LIQUIDITY_FAILURE_TITLE = "lnurl_pay_notification_liquidity_failure_title"
     static let PAYMENT_RECEIVED_NOTIFICATION_TITLE = "payment_received_notification_title"
+    static let PAYMENT_RECEIVED_NOTIFICATION_FAILURE_TITLE = "payment_received_notification_failure_title"
     static let SWAP_TX_CONFIRMED_NOTIFICATION_TITLE = "swap_tx_confirmed_notification_title"
     static let SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TITLE = "swap_tx_confirmed_notification_failure_title"
     
     // Resource Identifier Defaults
     static let DEFAULT_LNURL_PAY_INFO_NOTIFICATION_TITLE = "Retrieving Payment Information"
-    static let DEFAULT_LNURL_PAY_INVOICE_NOTIFICATION_TITLE = "Fetching invoice"
+    static let DEFAULT_LNURL_PAY_INVOICE_NOTIFICATION_TITLE = "Fetching Invoice"
     static let DEFAULT_LNURL_PAY_METADATA_PLAIN_TEXT = "Pay with LNURL"
     static let DEFAULT_LNURL_PAY_NOTIFICATION_FAILURE_TITLE = "Receive Payment Failed"
+    static let DEFAULT_LNURL_PAY_NOTIFICATION_LIQUIDITY_FAILURE_TITLE = "Fee Limit Too Low"
     static let DEFAULT_PAYMENT_RECEIVED_NOTIFICATION_TITLE = "Received %d sats"
+    static let DEFAULT_PAYMENT_RECEIVED_NOTIFICATION_FAILURE_TITLE = "Receive Payment Failed"
     static let DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_TITLE = "Swap Confirmed"
     static let DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TITLE = "Redeem Swap Failed"
 }
