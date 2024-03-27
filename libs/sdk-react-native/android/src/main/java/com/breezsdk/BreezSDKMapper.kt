@@ -382,7 +382,6 @@ fun asConfig(config: ReadableMap): Config? {
             arrayOf(
                 "breezserver",
                 "chainnotifierUrl",
-                "mempoolspaceUrl",
                 "workingDir",
                 "network",
                 "paymentTimeoutSec",
@@ -396,7 +395,7 @@ fun asConfig(config: ReadableMap): Config? {
     }
     val breezserver = config.getString("breezserver")!!
     val chainnotifierUrl = config.getString("chainnotifierUrl")!!
-    val mempoolspaceUrl = config.getString("mempoolspaceUrl")!!
+    val mempoolspaceUrl = if (hasNonNullKey(config, "mempoolspaceUrl")) config.getString("mempoolspaceUrl") else null
     val workingDir = config.getString("workingDir")!!
     val network = config.getString("network")?.let { asNetwork(it) }!!
     val paymentTimeoutSec = config.getInt("paymentTimeoutSec").toUInt()

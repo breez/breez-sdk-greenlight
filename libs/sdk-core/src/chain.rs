@@ -3,7 +3,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::bitcoin::hashes::hex::FromHex;
 use crate::bitcoin::{OutPoint, Txid};
-use crate::input_parser::{get_parse_and_log_response, get_reqwest_client};
+use crate::input_parser::{get_parse_and_log_response, get_reqwest_client, post_and_log_response};
+
+pub const DEFAULT_MEMPOOL_SPACE_URL: &str = "https://mempool.space/api";
 
 #[tonic::async_trait]
 pub trait ChainService: Send + Sync {
@@ -19,6 +21,89 @@ pub trait ChainService: Send + Sync {
     async fn transaction_outspends(&self, txid: String) -> Result<Vec<Outspend>>;
     /// If successful, it returns the transaction ID. Otherwise returns an `Err` describing the error.
     async fn broadcast_transaction(&self, tx: Vec<u8>) -> Result<String>;
+}
+
+pub trait RedundantChainServiceTrait: ChainService {
+    fn from_base_urls(base_urls: Vec<String>) -> Self;
+}
+
+#[derive(Clone)]
+pub struct RedundantChainService {
+    instances: Vec<MempoolSpace>,
+}
+impl RedundantChainServiceTrait for RedundantChainService {
+    fn from_base_urls(base_urls: Vec<String>) -> Self {
+        Self {
+            instances: base_urls
+                .iter()
+                .map(|url: &String| url.trim_end_matches('/'))
+                .map(MempoolSpace::from_base_url)
+                .collect(),
+        }
+    }
+}
+
+#[tonic::async_trait]
+impl ChainService for RedundantChainService {
+    async fn recommended_fees(&self) -> Result<RecommendedFees> {
+        for inst in &self.instances {
+            match inst.recommended_fees().await {
+                Ok(res) => {
+                    return Ok(res);
+                }
+                Err(e) => error!("Call to chain service {} failed: {e}", inst.base_url),
+            }
+        }
+        Err(anyhow!("All chain service instances failed"))
+    }
+
+    async fn address_transactions(&self, address: String) -> Result<Vec<OnchainTx>> {
+        for inst in &self.instances {
+            match inst.address_transactions(address.clone()).await {
+                Ok(res) => {
+                    return Ok(res);
+                }
+                Err(e) => error!("Call to chain service {} failed: {e}", inst.base_url),
+            }
+        }
+        Err(anyhow!("All chain service instances failed"))
+    }
+
+    async fn current_tip(&self) -> Result<u32> {
+        for inst in &self.instances {
+            match inst.current_tip().await {
+                Ok(res) => {
+                    return Ok(res);
+                }
+                Err(e) => error!("Call to chain service {} failed: {e}", inst.base_url),
+            }
+        }
+        Err(anyhow!("All chain service instances failed"))
+    }
+
+    async fn transaction_outspends(&self, txid: String) -> Result<Vec<Outspend>> {
+        for inst in &self.instances {
+            match inst.transaction_outspends(txid.clone()).await {
+                Ok(res) => {
+                    return Ok(res);
+                }
+                Err(e) => error!("Call to chain service {} failed: {e}", inst.base_url),
+            }
+        }
+        Err(anyhow!("All chain service instances failed"))
+    }
+
+    async fn broadcast_transaction(&self, tx: Vec<u8>) -> Result<String> {
+        for inst in &self.instances {
+            match inst.broadcast_transaction(tx.clone()).await {
+                Ok(res) => {
+                    return Ok(res);
+                }
+                Err(e) => error!("Call to chain service {} failed: {e}", inst.base_url),
+            }
+        }
+        Err(anyhow!("All chain service instances failed"))
+    }
 }
 
 #[derive(Clone)]
@@ -225,45 +310,41 @@ pub struct Outspend {
 impl Default for MempoolSpace {
     fn default() -> Self {
         MempoolSpace {
-            base_url: "https://mempool.space".to_string(),
+            base_url: DEFAULT_MEMPOOL_SPACE_URL.into(),
         }
     }
 }
 
 impl MempoolSpace {
-    pub fn from_base_url(base_url: String) -> MempoolSpace {
-        MempoolSpace { base_url }
+    pub fn from_base_url(base_url: &str) -> MempoolSpace {
+        MempoolSpace {
+            base_url: base_url.into(),
+        }
     }
 }
 
 #[tonic::async_trait]
 impl ChainService for MempoolSpace {
     async fn recommended_fees(&self) -> Result<RecommendedFees> {
-        get_parse_and_log_response(&format!("{}/api/v1/fees/recommended", self.base_url)).await
+        get_parse_and_log_response(&format!("{}/v1/fees/recommended", self.base_url)).await
     }
 
     async fn address_transactions(&self, address: String) -> Result<Vec<OnchainTx>> {
-        get_parse_and_log_response(&format!("{}/api/address/{address}/txs", self.base_url)).await
+        get_parse_and_log_response(&format!("{}/address/{address}/txs", self.base_url)).await
     }
 
     async fn current_tip(&self) -> Result<u32> {
-        get_parse_and_log_response(&format!("{}/api/blocks/tip/height", self.base_url)).await
+        get_parse_and_log_response(&format!("{}/blocks/tip/height", self.base_url)).await
     }
 
     async fn transaction_outspends(&self, txid: String) -> Result<Vec<Outspend>> {
-        let url = format!("{}/api/tx/{txid}/outspends", self.base_url);
+        let url = format!("{}/tx/{txid}/outspends", self.base_url);
         Ok(get_reqwest_client()?.get(url).send().await?.json().await?)
     }
 
     async fn broadcast_transaction(&self, tx: Vec<u8>) -> Result<String> {
-        let client = get_reqwest_client()?;
-        let txid_or_error = client
-            .post(format!("{}/api/tx", self.base_url))
-            .body(hex::encode(tx))
-            .send()
-            .await?
-            .text()
-            .await?;
+        let txid_or_error =
+            post_and_log_response(&format!("{}/tx", self.base_url), Some(hex::encode(tx))).await?;
         match txid_or_error.contains("error") {
             true => Err(anyhow!("Error fetching tx: {txid_or_error}")),
             false => Ok(txid_or_error),
@@ -272,7 +353,9 @@ impl ChainService for MempoolSpace {
 }
 #[cfg(test)]
 mod tests {
-    use crate::chain::{MempoolSpace, OnchainTx};
+    use crate::chain::{
+        MempoolSpace, OnchainTx, RedundantChainService, RedundantChainServiceTrait,
+    };
     use anyhow::Result;
     use tokio::test;
 
@@ -280,9 +363,7 @@ mod tests {
 
     #[test]
     async fn test_recommended_fees() -> Result<()> {
-        let ms = Box::new(MempoolSpace::from_base_url(
-            "https://mempool.space".to_string(),
-        ));
+        let ms = MempoolSpace::default();
         let fees = ms.recommended_fees().await?;
         assert!(fees.economy_fee > 0);
         assert!(fees.fastest_fee > 0);
@@ -294,8 +375,37 @@ mod tests {
     }
 
     #[test]
+    async fn test_recommended_fees_with_fallback() -> Result<()> {
+        let ms = RedundantChainService::from_base_urls(vec![
+            "https://mempool-url-unreachable.space/api/".into(),
+        ]);
+        assert!(ms.recommended_fees().await.is_err());
+
+        let ms = RedundantChainService::from_base_urls(vec![
+            "https://mempool-url-unreachable.space/api/".into(),
+            "https://mempool.emzy.de/api/".into(),
+        ]);
+        assert!(ms.recommended_fees().await.is_ok());
+
+        let ms = RedundantChainService::from_base_urls(vec![
+            "https://mempool-url-unreachable.space/api/".into(),
+            "https://another-mempool-url-unreachable.space/api/".into(),
+        ]);
+        assert!(ms.recommended_fees().await.is_err());
+
+        let ms = RedundantChainService::from_base_urls(vec![
+            "https://mempool-url-unreachable.space/api/".into(),
+            "https://another-mempool-url-unreachable.space/api/".into(),
+            "https://mempool.emzy.de/api/".into(),
+        ]);
+        assert!(ms.recommended_fees().await.is_ok());
+
+        Ok(())
+    }
+
+    #[test]
     async fn test_address_transactions() -> Result<()> {
-        let ms = MempoolSpace::from_base_url("https://mempool.space".to_string());
+        let ms = MempoolSpace::default();
         let txs = ms
             .address_transactions("bc1qvhykeqcpdzu0pdvy99xnh9ckhwzcfskct6h6l2".to_string())
             .await?;
@@ -312,7 +422,7 @@ mod tests {
 
     // #[test]
     // async fn test_address_transactions_mempool() {
-    //     let ms = MempoolSpace::from_base_url("https://mempool.space".to_string());
+    //     let ms = MempoolSpace::default();
     //     let txs = ms
     //         .address_transactions("1N4f3y3LYJZ2Qd9FyPt3AcHp451qt12paR".to_string())
     //         .await

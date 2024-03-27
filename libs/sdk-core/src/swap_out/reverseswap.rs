@@ -16,7 +16,7 @@ use crate::bitcoin::util::sighash::SighashCache;
 use crate::bitcoin::{
     Address, AddressType, EcdsaSighashType, Script, Sequence, Transaction, TxIn, TxOut, Witness,
 };
-use crate::chain::{get_utxos, ChainService, MempoolSpace, OnchainTx};
+use crate::chain::{get_utxos, ChainService, OnchainTx};
 use crate::error::SdkResult;
 use crate::models::{ReverseSwapServiceAPI, ReverseSwapperRoutingAPI};
 use crate::node_api::{NodeAPI, NodeError};
@@ -118,7 +118,7 @@ impl BTCSendSwap {
         reverse_swapper_api: Arc<dyn ReverseSwapperRoutingAPI>,
         reverse_swap_service_api: Arc<dyn ReverseSwapServiceAPI>,
         persister: Arc<crate::persist::db::SqliteStorage>,
-        chain_service: Arc<MempoolSpace>,
+        chain_service: Arc<dyn ChainService>,
         node_api: Arc<dyn NodeAPI>,
     ) -> Self {
         Self {
