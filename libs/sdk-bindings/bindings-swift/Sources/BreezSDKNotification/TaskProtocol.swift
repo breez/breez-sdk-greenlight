@@ -10,13 +10,17 @@ public protocol TaskProtocol : EventListener {
 }
 
 extension TaskProtocol {
-    func displayPushNotification(title: String, logger: ServiceLogger) {
+    func displayPushNotification(title: String, logger: ServiceLogger, threadIdentifier: String? = nil) {
         logger.log(tag: "TaskProtocol", line:"displayPushNotification \(title)", level: "INFO")
         guard
             let contentHandler = contentHandler,
             let bestAttemptContent = bestAttemptContent
         else {
             return
+        }
+        
+        if threadIdentifier != nil {
+            bestAttemptContent.threadIdentifier = threadIdentifier!
         }
         
         bestAttemptContent.title = title
