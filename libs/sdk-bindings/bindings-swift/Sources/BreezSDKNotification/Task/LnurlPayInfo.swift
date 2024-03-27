@@ -60,11 +60,15 @@ class LnurlPayInfoTask : LnurlPayTask {
             let maxSendable = max(nodeInfo.inboundLiquidityMsats, maxReceivableMsatFeeLimit)
             // Get the minimum sendable amount (in millisatoshis), can not be less than 1 or more than maxSendable
             let minSendable: UInt64 = nodeInfo.inboundLiquidityMsats < UInt64(1000) ? ofp.minMsat :  UInt64(1000)
-            if(minSendable > maxSendable) {
+            if minSendable > maxSendable {
                 throw InvalidMinSendable.largerThanMaxSendable
             }
             replyServer(encodable: LnurlInfoResponse(callback: request!.callback_url, maxSendable: maxSendable, minSendable: minSendable, metadata: metadata, tag: "payRequest"),
                         replyURL: request!.reply_url)
+        } catch let e as InvalidMinSendable.largerThanMaxSendable {
+            self.logger.log(tag: TAG, line: "failed to process lnurl: \(e)", level: "ERROR")
+            let failNotificationTitle = ResourceHelper.shared.getString(key: Constants.LNURL_PAY_NOTIFICATION_LIQUIDITY_FAILURE_TITLE, fallback: Constants.DEFAULT_LNURL_PAY_NOTIFICATION_LIQUIDITY_FAILURE_TITLE)
+            fail(withError: e.localizedDescription, replyURL: request!.reply_url, failNotificationTitle: failNotificationTitle)
         } catch let e {
             self.logger.log(tag: TAG, line: "failed to process lnurl: \(e)", level: "ERROR")
             fail(withError: e.localizedDescription, replyURL: request!.reply_url)

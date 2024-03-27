@@ -6,9 +6,11 @@ import breez_sdk.OpenChannelFeeRequest
 import breez_sdk_notification.Constants.DEFAULT_LNURL_PAY_INFO_NOTIFICATION_TITLE
 import breez_sdk_notification.Constants.DEFAULT_LNURL_PAY_METADATA_PLAIN_TEXT
 import breez_sdk_notification.Constants.DEFAULT_LNURL_PAY_NOTIFICATION_FAILURE_TITLE
+import breez_sdk_notification.Constants.DEFAULT_LNURL_PAY_NOTIFICATION_LIQUIDITY_FAILURE_TITLE
 import breez_sdk_notification.Constants.LNURL_PAY_INFO_NOTIFICATION_TITLE
 import breez_sdk_notification.Constants.LNURL_PAY_METADATA_PLAIN_TEXT
 import breez_sdk_notification.Constants.LNURL_PAY_NOTIFICATION_FAILURE_TITLE
+import breez_sdk_notification.Constants.LNURL_PAY_NOTIFICATION_LIQUIDITY_FAILURE_TITLE
 import breez_sdk_notification.Constants.NOTIFICATION_CHANNEL_LNURL_PAY
 import breez_sdk_notification.NotificationHelper.Companion.notifyChannel
 import breez_sdk_notification.ResourceHelper.Companion.getString
@@ -53,8 +55,7 @@ class LnurlPayInfoJob(
         try {
             request = Json.decodeFromString(LnurlInfoRequest.serializer(), payload)
             // Get the fee parameters offered by the LSP for opening a new channel
-            val ofp =
-                breezSDK.openChannelFee(OpenChannelFeeRequest(amountMsat = null)).feeParams
+            val ofp = breezSDK.openChannelFee(OpenChannelFeeRequest(amountMsat = null)).feeParams
             // Calculate the maximum receivable amount within the fee limit (in millisatoshis)
             val feeLimitMsat: ULong = config.channelFeeLimitMsat
             val nodeInfo = breezSDK.nodeInfo()
@@ -77,21 +78,18 @@ class LnurlPayInfoJob(
             val minSendable: ULong =
                 if (nodeInfo.inboundLiquidityMsats < 1000UL) ofp.minMsat else 1000UL
             if (minSendable > maxSendable) {
-                throw Exception("Minimum sendable amount can't be greater than maximum sendable amount.")
+                throw InvalidMinSendableException("Minimum sendable amount can't be greater than maximum sendable amount.")
             }
             val plainTextMetadata = getString(
-                context,
-                LNURL_PAY_METADATA_PLAIN_TEXT,
-                DEFAULT_LNURL_PAY_METADATA_PLAIN_TEXT
+                context, LNURL_PAY_METADATA_PLAIN_TEXT, DEFAULT_LNURL_PAY_METADATA_PLAIN_TEXT
             )
-            val response =
-                LnurlPayInfoResponse(
-                    request.callbackURL,
-                    maxSendable,
-                    minSendable,
-                    "[[\"text/plain\",\"$plainTextMetadata\"]]",
-                    "payRequest",
-                )
+            val response = LnurlPayInfoResponse(
+                request.callbackURL,
+                maxSendable,
+                minSendable,
+                "[[\"text/plain\",\"$plainTextMetadata\"]]",
+                "payRequest",
+            )
             val success = replyServer(Json.encodeToString(response), request.replyURL)
             notifyChannel(
                 context,
@@ -112,8 +110,8 @@ class LnurlPayInfoJob(
                 NOTIFICATION_CHANNEL_LNURL_PAY,
                 getString(
                     context,
-                    LNURL_PAY_NOTIFICATION_FAILURE_TITLE,
-                    DEFAULT_LNURL_PAY_NOTIFICATION_FAILURE_TITLE
+                    if (e is InvalidMinSendableException) LNURL_PAY_NOTIFICATION_LIQUIDITY_FAILURE_TITLE else LNURL_PAY_NOTIFICATION_FAILURE_TITLE,
+                    if (e is InvalidMinSendableException) DEFAULT_LNURL_PAY_NOTIFICATION_LIQUIDITY_FAILURE_TITLE else DEFAULT_LNURL_PAY_NOTIFICATION_FAILURE_TITLE
                 ),
             )
         }

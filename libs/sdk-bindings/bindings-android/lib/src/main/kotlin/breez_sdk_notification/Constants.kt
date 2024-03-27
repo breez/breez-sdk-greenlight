@@ -45,6 +45,8 @@ object Constants {
         "lnurl_pay_notification_channel_name"
     const val LNURL_PAY_NOTIFICATION_FAILURE_TITLE =
         "lnurl_pay_notification_failure_title"
+    const val LNURL_PAY_NOTIFICATION_LIQUIDITY_FAILURE_TITLE =
+        "lnurl_pay_notification_liquidity_failure_title"
     const val LNURL_PAY_WORKGROUP_ID = "lnurl_pay"
     const val LNURL_PAY_WORKGROUP_DESCRIPTION = "lnurl_pay_work_group_description"
     const val LNURL_PAY_WORKGROUP_NAME = "lnurl_pay_work_group_name"
@@ -85,7 +87,7 @@ object Constants {
     const val DEFAULT_LNURL_PAY_INFO_NOTIFICATION_TITLE =
         "Retrieving Payment Information"
     const val DEFAULT_LNURL_PAY_INVOICE_NOTIFICATION_TITLE =
-        "Fetching invoice"
+        "Fetching Invoice"
     const val DEFAULT_LNURL_PAY_METADATA_PLAIN_TEXT =
         "Pay with LNURL"
     const val DEFAULT_LNURL_PAY_NOTIFICATION_CHANNEL_DESCRIPTION =
@@ -93,6 +95,8 @@ object Constants {
     const val DEFAULT_LNURL_PAY_NOTIFICATION_CHANNEL_NAME = "Receiving Payments"
     const val DEFAULT_LNURL_PAY_NOTIFICATION_FAILURE_TITLE =
         "Receive Payment Failed"
+    const val DEFAULT_LNURL_PAY_NOTIFICATION_LIQUIDITY_FAILURE_TITLE =
+        "Fee Limit Too Low"
     const val DEFAULT_LNURL_PAY_WORKGROUP_DESCRIPTION =
         "Required to handle LNURL pay requests when the application is in the background"
     const val DEFAULT_LNURL_PAY_WORKGROUP_NAME = "LNURL Payments"

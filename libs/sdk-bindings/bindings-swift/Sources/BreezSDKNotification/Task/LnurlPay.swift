@@ -17,7 +17,7 @@ class LnurlPayTask : TaskProtocol {
     var bestAttemptContent: UNMutableNotificationContent?
     var logger: ServiceLogger
     var config: ServiceConfig
-    var successNotifiationTitle: String
+    var successNotificationTitle: String
     var failNotificationTitle: String
     
     init(payload: String, logger: ServiceLogger, config: ServiceConfig, contentHandler: ((UNNotificationContent) -> Void)? = nil, bestAttemptContent: UNMutableNotificationContent? = nil, successNotificationTitle: String, failNotificationTitle: String) {
@@ -26,7 +26,7 @@ class LnurlPayTask : TaskProtocol {
         self.bestAttemptContent = bestAttemptContent
         self.logger = logger
         self.config = config
-        self.successNotifiationTitle = successNotificationTitle;
+        self.successNotificationTitle = successNotificationTitle;
         self.failNotificationTitle = failNotificationTitle;
     }
     
@@ -50,7 +50,7 @@ class LnurlPayTask : TaskProtocol {
             let statusCode = (response as! HTTPURLResponse).statusCode
             
             if statusCode == 200 {
-                self.displayPushNotification(title: self.successNotifiationTitle, logger: self.logger, threadIdentifier: Constants.NOTIFICATION_THREAD_LNURL_PAY)
+                self.displayPushNotification(title: self.successNotificationTitle, logger: self.logger, threadIdentifier: Constants.NOTIFICATION_THREAD_LNURL_PAY)
             } else {
                 self.displayPushNotification(title: self.failNotificationTitle, logger: self.logger, threadIdentifier: Constants.NOTIFICATION_THREAD_LNURL_PAY)
                 return
@@ -59,7 +59,7 @@ class LnurlPayTask : TaskProtocol {
         task.resume()
     }
     
-    func fail(withError: String, replyURL: String) {
+    func fail(withError: String, replyURL: String, failNotificationTitle: String? = nil) {
         if let serverReplyURL = URL(string: replyURL) {
             var request = URLRequest(url: serverReplyURL)
             request.httpMethod = "POST"
@@ -69,6 +69,7 @@ class LnurlPayTask : TaskProtocol {
             }
             task.resume()
         }
-        self.displayPushNotification(title: self.failNotificationTitle, logger: self.logger, threadIdentifier: Constants.NOTIFICATION_THREAD_LNURL_PAY)
+        var title = failNotificationTitle != nil ? failNotificationTitle! : self.failNotificationTitle
+        self.displayPushNotification(title: title, logger: self.logger, threadIdentifier: Constants.NOTIFICATION_THREAD_LNURL_PAY)
     }
 }
