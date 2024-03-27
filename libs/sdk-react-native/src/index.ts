@@ -71,7 +71,7 @@ export type ClosedChannelPaymentDetails = {
 export type Config = {
     breezserver: string
     chainnotifierUrl: string
-    mempoolspaceUrl: string
+    mempoolspaceUrl?: string
     workingDir: string
     network: Network
     paymentTimeoutSec: number
