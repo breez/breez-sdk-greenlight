@@ -25,7 +25,9 @@ use tonic::transport::{Channel, Endpoint};
 use tonic::{Request, Status};
 
 use crate::backup::{BackupRequest, BackupTransport, BackupWatcher};
-use crate::chain::{ChainService, MempoolSpace, Outspend, RecommendedFees};
+use crate::chain::{
+    ChainService, Outspend, RecommendedFees, RedundantChainService, RedundantChainServiceTrait,
+};
 use crate::error::{
     LnUrlAuthError, LnUrlPayError, LnUrlWithdrawError, ReceiveOnchainError, ReceiveOnchainResult,
     ReceivePaymentError, SdkError, SdkResult, SendOnchainError, SendPaymentError,
@@ -2105,7 +2107,7 @@ impl BreezServicesBuilder {
             }
             Some(mempoolspace_url_from_config) => vec![mempoolspace_url_from_config],
         };
-        let chain_service = Arc::new(MempoolSpace::from_base_urls(mempoolspace_urls));
+        let chain_service = Arc::new(RedundantChainService::from_base_urls(mempoolspace_urls));
 
         let btc_receive_swapper = Arc::new(BTCReceiveSwap::new(
             self.config.network.into(),

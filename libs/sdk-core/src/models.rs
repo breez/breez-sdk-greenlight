@@ -467,6 +467,8 @@ pub struct Config {
     ///
     /// If not set, a list of mempool.space URLs will be used to provide fault-tolerance. If calls
     /// to the first URL fail, then the call will be repeated to the next URL, and so on.
+    ///
+    /// Note that, if specified, the URL has to be in the format: `https://mempool.space/api`
     pub mempoolspace_url: Option<String>,
     /// Directory in which all SDK files (DB, log) are stored. Defaults to ".", otherwise if it's customized,
     /// the folder should exist before starting the SDK.

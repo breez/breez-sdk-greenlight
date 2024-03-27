@@ -233,7 +233,7 @@ pub async fn parse(input: &str) -> Result<InputType> {
 pub(crate) async fn post_and_log_response(url: &str, body: Option<String>) -> Result<String> {
     debug!("Making POST request to: {url}");
 
-    let mut req = reqwest::Client::new().post(url);
+    let mut req = get_reqwest_client()?.post(url);
     if let Some(body) = body {
         req = req.body(body);
     }
