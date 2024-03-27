@@ -1994,13 +1994,6 @@ impl BreezServicesBuilder {
             .unwrap_or_else(|| Arc::new(SqliteStorage::new(self.config.working_dir.clone())));
         persister.init()?;
 
-        // TODO Read values from config or from cache
-        // mempool space is used to monitor the chain
-        let chain_service = Arc::new(MempoolSpace::from_base_urls(vec![self
-            .config
-            .mempoolspace_url
-            .clone()]));
-
         let mut node_api = self.node_api.clone();
         let mut backup_transport = self.backup_transport.clone();
         if node_api.is_none() {
@@ -2068,15 +2061,51 @@ impl BreezServicesBuilder {
             persister.set_lsp_id(self.config.default_lsp_id.clone().unwrap())?;
         }
 
-        let fresh_mempool_space_endpoints = breez_server.fetch_mempool_space_endpoints().await?;
-        persister.set_mempool_space_base_urls(fresh_mempool_space_endpoints)?;
-
         let payment_receiver = Arc::new(PaymentReceiver {
             config: self.config.clone(),
             node_api: unwrapped_node_api.clone(),
             lsp: breez_server.clone(),
             persister: persister.clone(),
         });
+
+        // mempool space is used to monitor the chain
+        let mempoolspace_urls = match self.config.mempoolspace_url.clone() {
+            None => {
+                let cached = persister.get_mempoolspace_base_urls()?;
+                match cached.len() {
+                    0 => {
+                        // If we have no cached values, or we cached an empty list, fetch new ones
+
+                        let fresh_urls = breez_server.fetch_mempoolspace_urls().await?;
+                        persister.set_mempoolspace_base_urls(fresh_urls.clone())?;
+                        fresh_urls
+                    }
+                    _ => {
+                        // If we already have cached values, return those
+
+                        // Start thread that refreshes cache in the background
+                        let cloned_breez_server = breez_server.clone();
+                        let cloned_persister = persister.clone();
+                        tokio::spawn(async move {
+                            match cloned_breez_server.fetch_mempoolspace_urls().await {
+                                Ok(fresh_urls) => {
+                                    if let Err(e) =
+                                        cloned_persister.set_mempoolspace_base_urls(fresh_urls)
+                                    {
+                                        error!("Failed to cache mempool.space URLs: {e}");
+                                    }
+                                }
+                                Err(e) => error!("Failed to fetch mempool.space URLs: {e}"),
+                            }
+                        });
+
+                        cached
+                    }
+                }
+            }
+            Some(mempoolspace_url_from_config) => vec![mempoolspace_url_from_config],
+        };
+        let chain_service = Arc::new(MempoolSpace::from_base_urls(mempoolspace_urls));
 
         let btc_receive_swapper = Arc::new(BTCReceiveSwap::new(
             self.config.network.into(),
@@ -2213,7 +2242,7 @@ impl BreezServer {
         Ok(response)
     }
 
-    pub(crate) async fn fetch_mempool_space_endpoints(&self) -> SdkResult<Vec<String>> {
+    pub(crate) async fn fetch_mempoolspace_urls(&self) -> SdkResult<Vec<String>> {
         let mut client = self.get_information_client().await?;
 
         let chain_api_servers = client
@@ -2223,14 +2252,14 @@ impl BreezServer {
             .servers;
         trace!("Received chain_api_servers: {chain_api_servers:?}");
 
-        let mempool_space_endpoints = chain_api_servers
+        let mempoolspace_urls = chain_api_servers
             .iter()
             .filter(|s| s.server_type == "MEMPOOL_SPACE")
             .map(|s| s.server_base_url.clone())
             .collect();
-        trace!("Received mempool_space_endpoints: {mempool_space_endpoints:?}");
+        trace!("Received mempoolspace_urls: {mempoolspace_urls:?}");
 
-        Ok(mempool_space_endpoints)
+        Ok(mempoolspace_urls)
     }
 }
 

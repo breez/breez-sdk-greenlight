@@ -242,40 +242,56 @@ impl MempoolSpace {
             .ok_or(anyhow!("No mempool.space URL found at index {i}"))
     }
 
-    async fn call_get_with_fallback<T>(&self, url_from: impl Fn(&str) -> String) -> Result<T>
+    async fn call_get_with_fallback<T>(
+        &self,
+        build_api_url_fn: impl Fn(&str) -> String,
+    ) -> Result<T>
     where
         for<'a> T: serde::de::Deserialize<'a>,
     {
         let get_fn = get_parse_and_log_response;
 
         let mut i = 0;
-        match get_fn(&url_from(self.get_base_url_at(i)?)).await {
-            Ok(t) => Ok(t),
-            Err(err) => {
-                error!("Chain service GET call failed: {err}");
-                i += 1;
-                let fallback_url = &url_from(self.get_base_url_at(i)?);
-                info!("Re-trying GET request on fallback URL {fallback_url}");
-                get_fn(fallback_url).await
+        loop {
+            let base_url = self.get_base_url_at(i)?;
+            let get_call_url = build_api_url_fn(base_url);
+
+            info!("Trying GET request with chain service URL {get_call_url}");
+            let res = get_fn(&get_call_url).await;
+            match res {
+                Ok(_) => {
+                    return res;
+                }
+                Err(e) => {
+                    error!("Chain service GET call failed: {e}");
+                    i += 1;
+                }
             }
         }
     }
 
     async fn call_post_with_fallback(
         &self,
-        url_from: impl Fn(&str) -> String,
+        build_api_url_fn: impl Fn(&str) -> String,
         body: Option<String>,
     ) -> Result<String> {
         let post_fn = post_and_log_response;
 
         let mut i = 0;
-        match post_fn(&url_from(self.get_base_url_at(i)?), body.clone()).await {
-            Ok(res_body) => Ok(res_body),
-            Err(err) => {
-                error!("Chain service POST call failed: {err}");
-                i += 1;
-                let fallback_url = &url_from(self.get_base_url_at(i)?);
-                post_fn(fallback_url, body).await
+        loop {
+            let base_url = self.get_base_url_at(i)?;
+            let post_call_url = build_api_url_fn(base_url);
+
+            info!("Trying POST request with chain service URL {post_call_url}");
+            let res = post_fn(&post_call_url, body.clone()).await;
+            match res {
+                Ok(_) => {
+                    return res;
+                }
+                Err(e) => {
+                    error!("Chain service POST call failed: {e}");
+                    i += 1;
+                }
             }
         }
     }
@@ -284,29 +300,29 @@ impl MempoolSpace {
 #[tonic::async_trait]
 impl ChainService for MempoolSpace {
     async fn recommended_fees(&self) -> Result<RecommendedFees> {
-        let url_from = |base_url: &str| format!("{base_url}/v1/fees/recommended");
-        self.call_get_with_fallback(url_from).await
+        let api_url_from_base_url_fn = |base_url: &str| format!("{base_url}/v1/fees/recommended");
+        self.call_get_with_fallback(api_url_from_base_url_fn).await
     }
 
     async fn address_transactions(&self, address: String) -> Result<Vec<OnchainTx>> {
-        let url_from = |base_url: &str| format!("{base_url}/address/{address}/txs");
-        self.call_get_with_fallback(url_from).await
+        let api_url_from_base_url_fn = |base_url: &str| format!("{base_url}/address/{address}/txs");
+        self.call_get_with_fallback(api_url_from_base_url_fn).await
     }
 
     async fn current_tip(&self) -> Result<u32> {
-        let url_from = |base_url: &str| format!("{base_url}/blocks/tip/height");
-        self.call_get_with_fallback(url_from).await
+        let api_url_from_base_url_fn = |base_url: &str| format!("{base_url}/blocks/tip/height");
+        self.call_get_with_fallback(api_url_from_base_url_fn).await
     }
 
     async fn transaction_outspends(&self, txid: String) -> Result<Vec<Outspend>> {
-        let url_from = |base_url: &str| format!("{base_url}/tx/{txid}/outspends");
-        self.call_get_with_fallback(url_from).await
+        let api_url_from_base_url_fn = |base_url: &str| format!("{base_url}/tx/{txid}/outspends");
+        self.call_get_with_fallback(api_url_from_base_url_fn).await
     }
 
     async fn broadcast_transaction(&self, tx: Vec<u8>) -> Result<String> {
-        let url_from = |base_url: &str| format!("{base_url}/tx");
+        let api_url_from_base_url_fn = |base_url: &str| format!("{base_url}/tx");
         let txid_or_error = self
-            .call_post_with_fallback(url_from, Some(hex::encode(tx)))
+            .call_post_with_fallback(api_url_from_base_url_fn, Some(hex::encode(tx)))
             .await?;
         match txid_or_error.contains("error") {
             true => Err(anyhow!("Error fetching tx: {txid_or_error}")),
@@ -337,8 +353,25 @@ mod tests {
 
     #[test]
     async fn test_recommended_fees_with_fallback() -> Result<()> {
+        let ms =
+            MempoolSpace::from_base_urls(vec!["https://mempool-url-unreachable.space/api/".into()]);
+        assert!(ms.recommended_fees().await.is_err());
+
         let ms = MempoolSpace::from_base_urls(vec![
             "https://mempool-url-unreachable.space/api/".into(),
+            "https://mempool.emzy.de/api/".into(),
+        ]);
+        assert!(ms.recommended_fees().await.is_ok());
+
+        let ms = MempoolSpace::from_base_urls(vec![
+            "https://mempool-url-unreachable.space/api/".into(),
+            "https://another-mempool-url-unreachable.space/api/".into(),
+        ]);
+        assert!(ms.recommended_fees().await.is_err());
+
+        let ms = MempoolSpace::from_base_urls(vec![
+            "https://mempool-url-unreachable.space/api/".into(),
+            "https://another-mempool-url-unreachable.space/api/".into(),
             "https://mempool.emzy.de/api/".into(),
         ]);
         assert!(ms.recommended_fees().await.is_ok());

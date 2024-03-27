@@ -463,7 +463,7 @@ pub struct LogEntry {
 pub struct Config {
     pub breezserver: String,
     pub chainnotifier_url: String,
-    pub mempoolspace_url: String,
+    pub mempoolspace_url: Option<String>,
     /// Directory in which all SDK files (DB, log) are stored. Defaults to ".", otherwise if it's customized,
     /// the folder should exist before starting the SDK.
     pub working_dir: String,
@@ -486,7 +486,7 @@ impl Config {
         Config {
             breezserver: PRODUCTION_BREEZSERVER_URL.to_string(),
             chainnotifier_url: "https://chainnotifier.breez.technology".to_string(),
-            mempoolspace_url: "https://mempool.space/api/".to_string(),
+            mempoolspace_url: None,
             working_dir: ".".to_string(),
             network: Bitcoin,
             payment_timeout_sec: 60,
@@ -502,7 +502,7 @@ impl Config {
         Config {
             breezserver: STAGING_BREEZSERVER_URL.to_string(),
             chainnotifier_url: "https://chainnotifier.breez.technology".to_string(),
-            mempoolspace_url: "https://mempool.space/api/".to_string(),
+            mempoolspace_url: None,
             working_dir: ".".to_string(),
             network: Bitcoin,
             payment_timeout_sec: 60,
