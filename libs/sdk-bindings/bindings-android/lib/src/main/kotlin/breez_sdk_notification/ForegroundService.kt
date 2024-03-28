@@ -140,6 +140,7 @@ abstract class ForegroundService : SdkForegroundService, Service() {
                     MESSAGE_TYPE_PAYMENT_RECEIVED -> ReceivePaymentJob(
                         applicationContext,
                         this,
+                        payload,
                         logger
                     )
 
