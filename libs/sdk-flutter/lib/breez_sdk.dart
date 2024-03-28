@@ -429,6 +429,12 @@ class BreezSDK {
     return await _lnToolkit.executeCommand(command: command);
   }
 
+  /// Generate diagnostic data.
+  /// Mainly used to debugging.
+  Future<String> generateDiagnosticData() async {
+    return await _lnToolkit.generateDiagnosticData();
+  }
+
   /* Helper Methods */
 
   /// Validate if given address is a valid BTC address

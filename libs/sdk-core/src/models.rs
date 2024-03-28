@@ -1161,7 +1161,7 @@ impl OpeningFeeParamsMenu {
 }
 
 /// Lightning channel
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize)]
 pub struct Channel {
     pub funding_txid: String,
     pub short_channel_id: Option<String>,
@@ -1181,7 +1181,7 @@ pub struct Channel {
     pub htlcs: Vec<Htlc>,
 }
 
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize)]
 pub struct Htlc {
     pub expiry: u32,
     pub payment_hash: Vec<u8>,

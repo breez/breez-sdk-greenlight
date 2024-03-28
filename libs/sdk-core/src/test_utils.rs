@@ -296,11 +296,13 @@ impl NodeAPI for MockNodeAPI {
         Ok(())
     }
 
-    async fn create_invoice(
-        &self,
-        request: CreateInvoiceRequest,
-    ) -> NodeResult<String> {
-        let invoice = create_invoice(request.description, request.amount_msat, vec![], request.preimage);
+    async fn create_invoice(&self, request: CreateInvoiceRequest) -> NodeResult<String> {
+        let invoice = create_invoice(
+            request.description,
+            request.amount_msat,
+            vec![],
+            request.preimage,
+        );
         Ok(invoice.bolt11)
     }
 
@@ -409,6 +411,10 @@ impl NodeAPI for MockNodeAPI {
 
     async fn execute_command(&self, _command: String) -> NodeResult<String> {
         Err(NodeError::Generic(anyhow!("Not implemented")))
+    }
+
+    async fn generate_diagnostic_data(&self) -> NodeResult<String> {
+        Ok("".to_string())
     }
 
     async fn max_sendable_amount(

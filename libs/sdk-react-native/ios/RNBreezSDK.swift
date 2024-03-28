@@ -6,6 +6,7 @@ class RNBreezSDK: RCTEventEmitter {
     static let TAG: String = "BreezSDK"
 
     public static var emitter: RCTEventEmitter!
+    public static var hasListeners: Bool = false
 
     private var breezServices: BlockingBreezServices!
 
@@ -32,6 +33,14 @@ class RNBreezSDK: RCTEventEmitter {
 
     override func supportedEvents() -> [String]! {
         return [BreezSDKListener.emitterName, BreezSDKLogStream.emitterName]
+    }
+
+    override func startObserving() {
+        RNBreezSDK.hasListeners = true
+    }
+
+    override func stopObserving() {
+        RNBreezSDK.hasListeners = false
     }
 
     @objc
@@ -121,19 +130,18 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
-    @objc(connect:seed:resolve:reject:)
-    func connect(_ config: [String: Any], seed: [UInt8], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    @objc(connect:resolve:reject:)
+    func connect(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         if breezServices != nil {
             reject("Generic", "BreezServices already initialized", nil)
             return
         }
 
         do {
-            let configTmp = try BreezSDKMapper.asConfig(config: config)
+            let connectRequest = try BreezSDKMapper.asConnectRequest(connectRequest: req)
+            try ensureWorkingDir(workingDir: connectRequest.config.workingDir)
 
-            try ensureWorkingDir(workingDir: configTmp.workingDir)
-
-            breezServices = try BreezSDK.connect(config: configTmp, seed: seed, listener: BreezSDKListener())
+            breezServices = try BreezSDK.connect(req: connectRequest, listener: BreezSDKListener())
             resolve(["status": "ok"])
         } catch let err {
             rejectErr(err: err, reject: reject)
@@ -583,6 +591,16 @@ class RNBreezSDK: RCTEventEmitter {
     func executeDevCommand(_ command: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
             var res = try getBreezServices().executeDevCommand(command: command)
+            resolve(res)
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(generateDiagnosticData:reject:)
+    func generateDiagnosticData(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            var res = try getBreezServices().generateDiagnosticData()
             resolve(res)
         } catch let err {
             rejectErr(err: err, reject: reject)

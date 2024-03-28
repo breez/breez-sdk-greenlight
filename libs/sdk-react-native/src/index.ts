@@ -782,10 +782,10 @@ export type EventListener = (breezEvent: BreezEvent) => void
 
 export type LogStream = (logEntry: LogEntry) => void
 
-export const connect = async (config: Config, seed: number[], listener: EventListener): Promise<EmitterSubscription> => {
+export const connect = async (req: ConnectRequest, listener: EventListener): Promise<EmitterSubscription> => {
     const subscription = BreezSDKEmitter.addListener("breezSdkEvent", listener)
     
-    await BreezSDK.connect(config, seed)
+    await BreezSDK.connect(req)
 
     return subscription
 }
@@ -793,7 +793,9 @@ export const connect = async (config: Config, seed: number[], listener: EventLis
 export const setLogStream = async (logStream: LogStream): Promise<EmitterSubscription> => {
     const subscription = BreezSDKEmitter.addListener("breezSdkLog", logStream)
 
-    await BreezSDK.setLogStream()
+    try {
+        await BreezSDK.setLogStream()
+    } catch {}
 
     return subscription
 }
@@ -1017,6 +1019,11 @@ export const serviceHealthCheck = async (): Promise<ServiceHealthCheckResponse> 
 
 export const executeDevCommand = async (command: string): Promise<string> => {
     const response = await BreezSDK.executeDevCommand(command)
+    return response
+}
+
+export const generateDiagnosticData = async (): Promise<string> => {
+    const response = await BreezSDK.generateDiagnosticData()
     return response
 }
 

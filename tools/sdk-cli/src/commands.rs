@@ -267,6 +267,8 @@ pub(crate) enum Commands {
         command: String,
     },
 
+    GenerateDiagnosticData {},
+
     /// Generates an URL to buy bitcoin from a 3rd party provider
     BuyBitcoin {
         provider: BuyBitcoinProvider,
