@@ -50,7 +50,7 @@ class RedeemSwapJob(
                     logger.log(TAG, "Received swap updated event: ${swapInfo.bitcoinAddress} current address: ${address} status: ${swapInfo.status}", "TRACE")
                     if (swapInfo.bitcoinAddress == address) {
                         if (swapInfo.paidMsat.toLong() > 0) {
-                            notifySuccessAndShutdown()
+                            notifySuccessAndShutdown(address)
                         }
                     }
                 }
@@ -60,8 +60,8 @@ class RedeemSwapJob(
         }
     }
 
-    private  fun notifySuccessAndShutdown() {
-        logger.log(TAG, "Swap address redeemed succesfully", "INFO")
+    private  fun notifySuccessAndShutdown(address: String) {
+        logger.log(TAG, "Swap address ${address} redeemed succesfully", "INFO")
         notifyChannel(
             context,
             NOTIFICATION_CHANNEL_SWAP_TX_CONFIRMED,

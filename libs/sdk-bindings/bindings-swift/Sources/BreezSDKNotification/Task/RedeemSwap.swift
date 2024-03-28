@@ -1,6 +1,5 @@
 import UserNotifications
 import Foundation
-import BreezSDK
 
 struct AddressTxsConfirmedRequest: Codable {
     let address: String
@@ -29,6 +28,7 @@ class RedeemSwapTask : TaskProtocol {
                 self.logger.log(tag: TAG, line: "Received swap updated event: \(swapInfo.bitcoinAddress), current address: \(address) status: \(swapInfo.status)\n", level: "INFO")
                 if address == swapInfo.bitcoinAddress {
                     if (swapInfo.paidMsat > 0) {
+                        self.logger.log(tag: TAG, line: "Swap address \(swapInfo.bitcoinAddress) redeemed succesfully", level: "INFO")
                         let successRedeemSwap = ResourceHelper.shared.getString(key: Constants.SWAP_TX_CONFIRMED_NOTIFICATION_TITLE, fallback: Constants.DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_TITLE)
                         self.displayPushNotification(title: successRedeemSwap, logger: self.logger, threadIdentifier: Constants.NOTIFICATION_THREAD_SWAP_TX_CONFIRMED)
                     }
@@ -53,6 +53,7 @@ class RedeemSwapTask : TaskProtocol {
         guard let address = swapAddress else {
             self.logger.log(tag: TAG, line: "Failed to process swap notification: swap address not in payload", level: "ERROR")
             self.onShutdown()
+            return
         }
         
         do {
