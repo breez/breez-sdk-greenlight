@@ -1,7 +1,7 @@
 import UserNotifications
 import Foundation
 
-struct ReceivePaymentRequest: Codable {
+struct ReceivePaymentNotificationRequest: Codable {
     let payment_hash: String
 }
 
@@ -40,7 +40,7 @@ class ReceivePaymentTask : TaskProtocol {
     
     func start(breezSDK: BlockingBreezServices) throws {
         do {
-            let request = try JSONDecoder().decode(ReceivePaymentRequest.self, from: self.payload.data(using: .utf8)!)
+            let request = try JSONDecoder().decode(ReceivePaymentNotificationRequest.self, from: self.payload.data(using: .utf8)!)
             let existingPayment = try breezSDK.paymentByHash(hash: request.payment_hash)
             if existingPayment != nil {
                 self.receivedPayment = existingPayment
