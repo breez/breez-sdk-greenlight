@@ -1393,7 +1393,10 @@ impl NodeAPI for Greenlight {
         let mut result = String::new();
         for command in all_commands {
             let command_name = command.clone();
-            let res = self.execute_command(command).await?;
+            let res = self
+                .execute_command(command)
+                .await
+                .unwrap_or_else(|e| e.to_string());
             result += &format!("***{command_name}:***\n\n {res}\n\n");
         }
         Ok(result)
