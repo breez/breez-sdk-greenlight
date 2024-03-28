@@ -17,7 +17,6 @@ use crate::bitcoin::{
     Address, AddressType, EcdsaSighashType, Script, Sequence, Transaction, TxIn, TxOut, Witness,
 };
 use crate::chain::{get_utxos, ChainService, OnchainTx};
-use crate::error::SdkResult;
 use crate::models::{ReverseSwapServiceAPI, ReverseSwapperRoutingAPI};
 use crate::node_api::{NodeAPI, NodeError};
 use crate::swap_in::swap::create_swap_keys;

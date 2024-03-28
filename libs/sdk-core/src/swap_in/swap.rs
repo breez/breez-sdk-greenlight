@@ -17,7 +17,7 @@ use crate::bitcoin::{
     Address, EcdsaSighashType, Script, Sequence, Transaction, TxIn, TxOut, Witness,
 };
 use crate::breez_services::{BreezEvent, BreezServer, PaymentReceiver, Receiver};
-use crate::chain::{get_utxos, AddressUtxos, ChainService, MempoolSpace};
+use crate::chain::{get_utxos, AddressUtxos, ChainService};
 use crate::error::ReceivePaymentError;
 use crate::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
 use crate::models::{Swap, SwapInfo, SwapStatus, SwapperAPI};
@@ -93,7 +93,7 @@ impl BTCReceiveSwap {
         node_api: Arc<dyn NodeAPI>,
         swapper_api: Arc<dyn SwapperAPI>,
         persister: Arc<crate::persist::db::SqliteStorage>,
-        chain_service: Arc<MempoolSpace>,
+        chain_service: Arc<dyn ChainService>,
         payment_receiver: Arc<PaymentReceiver>,
     ) -> Self {
         Self {

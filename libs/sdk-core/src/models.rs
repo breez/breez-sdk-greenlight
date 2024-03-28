@@ -469,6 +469,8 @@ pub struct Config {
     pub node_config: NodeConfig,
 }
 
+pub(crate) static PRODUCTION_BREEZSERVER_URL: &str = "https://bs1.breez.technology:443";
+
 impl Config {
     pub fn production(api_key: String, node_config: NodeConfig) -> Self {
         Config {
