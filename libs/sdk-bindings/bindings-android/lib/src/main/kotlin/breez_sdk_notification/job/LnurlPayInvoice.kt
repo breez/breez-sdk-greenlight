@@ -116,6 +116,6 @@ class LnurlPayInvoiceJob(
             )
         }
 
-        fgService.shutdown()
+        fgService.onFinished(this)
     }
 }
