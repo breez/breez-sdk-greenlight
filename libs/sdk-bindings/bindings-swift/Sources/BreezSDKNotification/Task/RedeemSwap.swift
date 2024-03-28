@@ -1,5 +1,6 @@
 import UserNotifications
 import Foundation
+import BreezSDK
 
 struct AddressTxsConfirmedRequest: Codable {
     let address: String
@@ -12,7 +13,7 @@ class RedeemSwapTask : TaskProtocol {
     internal var contentHandler: ((UNNotificationContent) -> Void)?
     internal var bestAttemptContent: UNMutableNotificationContent?
     internal var logger: ServiceLogger
-    internal var receivedPayment: Payment? = nil
+    internal var swapAddress: String? = nil
     
     init(payload: String, logger: ServiceLogger, contentHandler: ((UNNotificationContent) -> Void)? = nil, bestAttemptContent: UNMutableNotificationContent? = nil) {
         self.payload = payload
@@ -21,26 +22,44 @@ class RedeemSwapTask : TaskProtocol {
         self.logger = logger
     }
     
-    public func onEvent(e: BreezEvent) {}
+    public func onEvent(e: BreezEvent) {
+        if let address = self.swapAddress {
+            switch e {
+            case .swapUpdated(details: let swapInfo):
+                self.logger.log(tag: TAG, line: "Received swap updated event: \(swapInfo.bitcoinAddress), current address: \(address) status: \(swapInfo.status)\n", level: "INFO")
+                if address == swapInfo.bitcoinAddress {
+                    if (swapInfo.paidMsat > 0) {
+                        let successRedeemSwap = ResourceHelper.shared.getString(key: Constants.SWAP_TX_CONFIRMED_NOTIFICATION_TITLE, fallback: Constants.DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_TITLE)
+                        self.displayPushNotification(title: successRedeemSwap, logger: self.logger, threadIdentifier: Constants.NOTIFICATION_THREAD_SWAP_TX_CONFIRMED)
+                    }
+                }
+                break
+            default:
+                break
+            }
+        }
+    }
     
     func start(breezSDK: BlockingBreezServices) throws {
-        var addressTxsConfirmedRequest: AddressTxsConfirmedRequest? = nil
         do {
-            addressTxsConfirmedRequest = try JSONDecoder().decode(AddressTxsConfirmedRequest.self, from: self.payload.data(using: .utf8)!)
+            let addressTxsConfirmedRequest = try JSONDecoder().decode(AddressTxsConfirmedRequest.self, from: self.payload.data(using: .utf8)!)
+            swapAddress = addressTxsConfirmedRequest.address
         } catch let e {
             self.logger.log(tag: TAG, line: "failed to decode payload: \(e)", level: "ERROR")
             self.onShutdown()
             throw e
         }
-
-        do {
-            try breezSDK.redeemSwap(swapAddress: addressTxsConfirmedRequest!.address)
-            self.logger.log(tag: TAG, line: "Found swap for \(addressTxsConfirmedRequest!.address)", level: "DEBUG")
-            let successRedeemSwap = ResourceHelper.shared.getString(key: Constants.SWAP_TX_CONFIRMED_NOTIFICATION_TITLE, fallback: Constants.DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_TITLE)
-            self.displayPushNotification(title: successRedeemSwap, logger: self.logger, threadIdentifier: Constants.NOTIFICATION_THREAD_SWAP_TX_CONFIRMED)
-        } catch let e {
-            self.logger.log(tag: TAG, line: "Failed to process swap notification: \(e)", level: "ERROR")
+        
+        guard let address = swapAddress else {
+            self.logger.log(tag: TAG, line: "Failed to process swap notification: swap address not in payload", level: "ERROR")
             self.onShutdown()
+        }
+        
+        do {
+            try breezSDK.redeemSwap(swapAddress: address)
+            self.logger.log(tag: TAG, line: "Found swap for \(address)", level: "DEBUG")
+        } catch let e {
+            self.logger.log(tag: TAG, line: "Failed to manually redeem swap notification: \(e)", level: "ERROR")
         }
     }
 

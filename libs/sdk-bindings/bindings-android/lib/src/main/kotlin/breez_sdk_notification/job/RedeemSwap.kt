@@ -25,6 +25,7 @@ class RedeemSwapJob(
     private val fgService: SdkForegroundService,
     private val payload: String,
     private val logger: ServiceLogger,
+    private var bitcoinAddress: String? = null,
 ) : Job {
     companion object {
         private const val TAG = "RedeemSwapJob"
@@ -33,32 +34,43 @@ class RedeemSwapJob(
     override fun start(breezSDK: BlockingBreezServices) {
         try {
             val request = Json.decodeFromString(AddressTxsConfirmedRequest.serializer(), payload)
+            this.bitcoinAddress = request.address
             breezSDK.redeemSwap(request.address)
             logger.log(TAG, "Found swap for ${request.address}", "INFO")
-            notifyChannel(
-                context,
-                NOTIFICATION_CHANNEL_SWAP_TX_CONFIRMED,
-                getString(
-                    context,
-                    SWAP_TX_CONFIRMED_NOTIFICATION_TITLE,
-                    DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_TITLE
-                ),
-            )
         } catch (e: Exception) {
-            logger.log(TAG, "Failed to process swap notification: ${e.message}", "WARN")
-            notifyChannel(
-                context,
-                NOTIFICATION_CHANNEL_SWAP_TX_CONFIRMED,
-                getString(
-                    context,
-                    SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TITLE,
-                    DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TITLE
-                ),
-            )
+            logger.log(TAG, "Failed to manually reedeem swap notification: ${e.message}", "WARN")
         }
-
-        fgService.shutdown()
     }
 
-    override fun onEvent(e: BreezEvent) {}
+    override fun onEvent(e: BreezEvent) {
+        this.bitcoinAddress?.let {address ->
+            when (e) {
+                is BreezEvent.SwapUpdated -> {
+                    val swapInfo = e.details
+                    logger.log(TAG, "Received swap updated event: ${swapInfo.bitcoinAddress} current address: ${address} status: ${swapInfo.status}", "TRACE")
+                    if (swapInfo.bitcoinAddress == address) {
+                        if (swapInfo.paidMsat.toLong() > 0) {
+                            notifySuccessAndShutdown()
+                        }
+                    }
+                }
+
+                else -> {}
+            }
+        }
+    }
+
+    private  fun notifySuccessAndShutdown() {
+        logger.log(TAG, "Swap address redeemed succesfully", "INFO")
+        notifyChannel(
+            context,
+            NOTIFICATION_CHANNEL_SWAP_TX_CONFIRMED,
+            getString(
+                context,
+                SWAP_TX_CONFIRMED_NOTIFICATION_TITLE,
+                DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_TITLE
+            ),
+        )
+        fgService.shutdown()
+    }
 }
