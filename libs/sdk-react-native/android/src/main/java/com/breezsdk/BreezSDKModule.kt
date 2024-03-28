@@ -160,7 +160,8 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
     @ReactMethod
     fun connect(
-        req: ReadableMap,
+        config: ReadableMap,
+        seed: ReadableArray,
         promise: Promise,
     ) {
         if (breezServices != null) {
@@ -170,15 +171,12 @@ class BreezSDKModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
         executor.execute {
             try {
-                val connectRequest =
-                    asConnectRequest(
-                        req,
-                    ) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "ConnectRequest")) }
+                val configTmp = asConfig(config) ?: run { throw SdkException.Generic(errMissingMandatoryField("config", "Config")) }
                 val emitter = reactApplicationContext.getJSModule(RCTDeviceEventEmitter::class.java)
 
-                ensureWorkingDir(connectRequest.config.workingDir)
+                ensureWorkingDir(configTmp.workingDir)
 
-                breezServices = connect(connectRequest, BreezSDKListener(emitter))
+                breezServices = connect(configTmp, asUByteList(seed), BreezSDKListener(emitter))
                 promise.resolve(readableMapOf("status" to "ok"))
             } catch (e: Exception) {
                 e.printStackTrace()

@@ -41,7 +41,8 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
-    connect: (NSDictionary*)req
+    connect: (NSDictionary*)config
+    seed: (NSArray*)seed
     resolve: (RCTPromiseResolveBlock)resolve
     reject: (RCTPromiseRejectBlock)reject
 )
