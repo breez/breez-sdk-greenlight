@@ -3,6 +3,7 @@ use std::time::Duration;
 
 use anyhow::{anyhow, Result};
 use bip21::Uri;
+use flutter_rust_bridge::frb;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -501,6 +502,7 @@ impl From<LnUrlRequestData> for InputType {
 
 /// Wrapped in a [LnUrlError], this represents a LNURL-endpoint error.
 #[derive(Deserialize, Debug, Serialize)]
+#[frb(dart_metadata=("freezed"))]
 pub struct LnUrlErrorData {
     pub reason: String,
 }
@@ -512,6 +514,7 @@ pub struct LnUrlErrorData {
 /// See <https://github.com/lnurl/luds/blob/luds/06.md>
 #[derive(Clone, Deserialize, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
+#[frb(dart_metadata=("freezed"))]
 pub struct LnUrlPayRequestData {
     pub callback: String,
     /// The minimum amount, in millisats, that this LNURL-pay endpoint accepts
@@ -567,6 +570,7 @@ impl LnUrlPayRequestData {
 /// See <https://github.com/lnurl/luds/blob/luds/03.md>
 #[derive(Deserialize, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
+#[frb(dart_metadata=("freezed"))]
 pub struct LnUrlWithdrawRequestData {
     pub callback: String,
     pub k1: String,
@@ -595,6 +599,7 @@ impl LnUrlWithdrawRequestData {
 ///
 /// See <https://github.com/lnurl/luds/blob/luds/04.md>
 #[derive(Deserialize, Debug, Serialize)]
+#[frb(dart_metadata=("freezed"))]
 pub struct LnUrlAuthRequestData {
     /// Hex encoded 32 bytes of challenge
     pub k1: String,
@@ -622,6 +627,7 @@ pub struct MetadataItem {
 
 /// Wrapped in a [BitcoinAddress], this is the result of [parse] when given a plain or BIP-21 BTC address.
 #[derive(Debug, Serialize)]
+#[frb(dart_metadata=("freezed"))]
 pub struct BitcoinAddressData {
     pub address: String,
     pub network: crate::models::Network,

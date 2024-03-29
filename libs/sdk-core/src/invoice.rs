@@ -2,6 +2,7 @@ use std::str::FromStr;
 use std::time::{SystemTimeError, UNIX_EPOCH};
 
 use anyhow::anyhow;
+use flutter_rust_bridge::frb;
 use hex::ToHex;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -64,6 +65,7 @@ impl From<SystemTimeError> for InvoiceError {
 
 /// Wrapper for a BOLT11 LN invoice
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[frb(dart_metadata=("freezed"))]
 pub struct LNInvoice {
     pub bolt11: String,
     pub network: Network,
@@ -89,6 +91,7 @@ impl LNInvoice {
 
 /// Details of a specific hop in a larger route hint
 #[derive(Clone, Default, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[frb(dart_metadata=("freezed"))]
 pub struct RouteHintHop {
     /// The node_id of the non-target end of the route
     pub src_node_id: String,
@@ -108,6 +111,7 @@ pub struct RouteHintHop {
 
 /// A route hint for a LN payment
 #[derive(Clone, Default, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[frb(dart_metadata=("freezed"))]
 pub struct RouteHint {
     pub hops: Vec<RouteHintHop>,
 }

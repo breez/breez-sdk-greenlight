@@ -4,6 +4,7 @@ use std::str::FromStr;
 
 use anyhow::{anyhow, ensure, Result};
 use chrono::{DateTime, Duration, Utc};
+use flutter_rust_bridge::frb;
 use ripemd::Digest;
 use ripemd::Ripemd160;
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef};
@@ -329,6 +330,7 @@ impl FullReverseSwapInfo {
 
 /// Simplified version of [FullReverseSwapInfo], containing only the user-relevant fields
 #[derive(Deserialize, Serialize, PartialEq, Eq, Debug, Clone)]
+#[frb(dart_metadata=("freezed"))]
 pub struct ReverseSwapInfo {
     pub id: String,
     pub claim_pubkey: String,
@@ -460,6 +462,7 @@ pub struct LogEntry {
 /// Use [Config::production] or [Config::staging] for default configs of the different supported
 /// environments.
 #[derive(Clone)]
+#[frb(dart_metadata=("freezed"))]
 pub struct Config {
     pub breezserver: String,
     pub chainnotifier_url: String,
@@ -532,6 +535,7 @@ pub enum NodeCredentials {
 }
 
 #[derive(Clone)]
+#[frb(dart_metadata=("freezed"))]
 pub struct GreenlightNodeConfig {
     pub partner_credentials: Option<GreenlightCredentials>,
     pub invite_code: Option<String>,
@@ -649,6 +653,7 @@ pub struct BackupStatus {
 /// which may result in some short-lived inconsistencies
 /// (e.g., `channels_balance_msat` may be updated before `inbound_liquidity_msats`).
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
+#[frb(dart_metadata=("freezed"))]
 pub struct NodeState {
     pub id: String,
     pub block_height: u32,
@@ -684,6 +689,7 @@ pub enum PaymentStatus {
 
 /// Represents a payment, including its [PaymentType] and [PaymentDetails]
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]
+#[frb(dart_metadata=("freezed"))]
 pub struct Payment {
     pub id: String,
     pub payment_type: PaymentType,
@@ -712,6 +718,7 @@ pub struct PaymentExternalInfo {
 
 /// Represents a list payments request.
 #[derive(Default)]
+#[frb(dart_metadata=("freezed"))]
 pub struct ListPaymentsRequest {
     pub filters: Option<Vec<PaymentTypeFilter>>,
     pub metadata_filters: Option<Vec<MetadataFilter>>,
@@ -760,6 +767,7 @@ impl PaymentDetails {
 
 /// Details of a LN payment, as included in a [Payment]
 #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
+#[frb(dart_metadata=("freezed"))]
 pub struct LnPaymentDetails {
     pub payment_hash: String,
     pub label: String,
@@ -800,6 +808,7 @@ pub struct LnPaymentDetails {
 
 /// Represents the funds that were on the user side of the channel at the time it was closed.
 #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
+#[frb(dart_metadata=("freezed"))]
 pub struct ClosedChannelPaymentDetails {
     pub state: ChannelState,
     pub funding_txid: String,
@@ -834,6 +843,7 @@ pub struct MaxChannelAmount {
 
 /// Represents a receive payment request.
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[frb(dart_metadata=("freezed"))]
 pub struct ReceivePaymentRequest {
     /// The amount in satoshis for this payment request
     pub amount_msat: u64,
@@ -859,6 +869,7 @@ pub struct ReceivePaymentRequest {
 /// be opened automatically when the invoice is paid, and the fees will be described in the
 /// `opening_fee_params` and `opening_fee_msat` fields.
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[frb(dart_metadata=("freezed"))]
 pub struct ReceivePaymentResponse {
     /// The generated invoice, including any necessary routing hints
     pub ln_invoice: LNInvoice,
@@ -888,6 +899,7 @@ pub struct TlvEntry {
 
 /// Represents a send spontaneous payment request.
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[frb(dart_metadata=("freezed"))]
 pub struct SendSpontaneousPaymentRequest {
     /// The node id to send this payment is
     pub node_id: String,
@@ -899,6 +911,7 @@ pub struct SendSpontaneousPaymentRequest {
 
 /// Represents a send payment response.
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[frb(dart_metadata=("freezed"))]
 pub struct SendPaymentResponse {
     pub payment: Payment,
 }
@@ -927,6 +940,7 @@ pub enum HealthCheckStatus {
 
 /// Represents a service health check response.
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[frb(dart_metadata=("freezed"))]
 pub struct ServiceHealthCheckResponse {
     pub status: HealthCheckStatus,
 }
@@ -971,17 +985,20 @@ pub struct OpenChannelFeeResponse {
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[frb(dart_metadata=("freezed"))]
 pub struct ReceiveOnchainRequest {
     pub opening_fee_params: Option<OpeningFeeParams>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[frb(dart_metadata=("freezed"))]
 pub struct BuyBitcoinRequest {
     pub provider: BuyBitcoinProvider,
     pub opening_fee_params: Option<OpeningFeeParams>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[frb(dart_metadata=("freezed"))]
 pub struct BuyBitcoinResponse {
     pub url: String,
     pub opening_fee_params: Option<OpeningFeeParams>,
@@ -1006,6 +1023,7 @@ pub struct SendOnchainRequest {
     pub sat_per_vbyte: u32,
 }
 
+#[frb(dart_metadata=("freezed"))]
 pub struct SendOnchainResponse {
     pub reverse_swap_info: ReverseSwapInfo,
 }
@@ -1088,6 +1106,7 @@ pub struct RefundResponse {
 /// After they are received, the client shouldn't change them when calling LSP methods,
 /// otherwise the LSP may reject the call.
 #[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
+#[frb(dart_metadata=("freezed"))]
 pub struct OpeningFeeParams {
     /// The minimum value in millisatoshi we will require for incoming HTLCs on the channel
     pub min_msat: u64,
@@ -1165,6 +1184,7 @@ pub enum DynamicFeeType {
 
 /// See [OpeningFeeParamsMenu::try_from]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[frb(dart_metadata=("freezed"))]
 pub struct OpeningFeeParamsMenu {
     pub values: Vec<OpeningFeeParams>,
 }
@@ -1336,6 +1356,7 @@ impl TryFrom<i32> for SwapStatus {
 ///
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[frb(dart_metadata=("freezed"))]
 pub struct SwapInfo {
     /// Bitcoin address for this swap. Sats sent to this address will be swapped.
     pub bitcoin_address: String,
@@ -1498,6 +1519,7 @@ pub(crate) fn format_short_channel_id(id: u64) -> String {
 
 /// UTXO known to the LN node
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
+#[frb(dart_metadata=("freezed"))]
 pub struct UnspentTransactionOutput {
     pub txid: Vec<u8>,
     pub outnum: u32,
@@ -1530,6 +1552,7 @@ pub enum LnUrlCallbackStatus {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[frb(dart_metadata=("freezed"))]
 pub struct LnUrlWithdrawRequest {
     /// Request data containing information on how to call the lnurl withdraw
     /// endpoint. Typically retrieved by calling `parse()` on a lnurl withdraw
@@ -1547,6 +1570,7 @@ pub struct LnUrlWithdrawRequest {
 
 /// Represents a LNURL-pay request.
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[frb(dart_metadata=("freezed"))]
 pub struct LnUrlPayRequest {
     /// The [LnUrlPayRequestData] returned by [crate::input_parser::parse]
     pub data: LnUrlPayRequestData,

@@ -4,11 +4,13 @@ use crate::error::SdkResult;
 use crate::grpc::RatesRequest;
 use crate::models::FiatAPI;
 use crate::{breez_services::BreezServer, error::SdkError};
+use flutter_rust_bridge::frb;
 use serde::{Deserialize, Serialize};
 use tonic::Request;
 
 /// Settings for the symbol representation of a currency
 #[derive(Clone, Serialize, Deserialize, Debug)]
+#[frb(dart_metadata=("freezed"))]
 pub struct Symbol {
     pub grapheme: Option<String>,
     pub template: Option<String>,
@@ -18,6 +20,7 @@ pub struct Symbol {
 
 /// Locale-specific settings for the representation of a currency
 #[derive(Clone, Serialize, Deserialize, Debug)]
+#[frb(dart_metadata=("freezed"))]
 pub struct LocaleOverrides {
     pub locale: String,
     pub spacing: Option<u32>,
@@ -26,6 +29,7 @@ pub struct LocaleOverrides {
 
 /// Localized name of a currency
 #[derive(Clone, Serialize, Deserialize, Debug)]
+#[frb(dart_metadata=("freezed"))]
 pub struct LocalizedName {
     pub locale: String,
     pub name: String,
@@ -34,6 +38,7 @@ pub struct LocalizedName {
 /// Details about a supported currency in the fiat rate feed
 #[derive(Clone, Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
+#[frb(dart_metadata=("freezed"))]
 pub struct CurrencyInfo {
     pub name: String,
     pub fraction_size: u32,
@@ -46,6 +51,7 @@ pub struct CurrencyInfo {
 
 /// Wrapper around the [CurrencyInfo] of a fiat currency
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[frb(dart_metadata=("freezed"))]
 pub struct FiatCurrency {
     pub id: String,
     pub info: CurrencyInfo,

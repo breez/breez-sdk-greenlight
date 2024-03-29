@@ -9,12 +9,14 @@ use crate::grpc::{
 use crate::models::{LspAPI, OpeningFeeParams, OpeningFeeParamsMenu};
 
 use anyhow::{anyhow, Result};
+use flutter_rust_bridge::frb;
 use prost::Message;
 use serde::{Deserialize, Serialize};
 use tonic::Request;
 
 /// Details of supported LSP
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[frb(dart_metadata=("freezed"))]
 pub struct LspInformation {
     pub id: String,
 

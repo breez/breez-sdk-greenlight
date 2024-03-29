@@ -9,7 +9,7 @@
 //!
 //! The first option loses the `SdkError` type. The second option keeps the type, which we can retrieve
 //! with `anyhow::Error::downcast_ref` (or equivalent Dart method). We therefore use the second approach.
-
+#![allow(unused_imports)]
 use std::future::Future;
 use std::sync::Arc;
 
@@ -30,7 +30,7 @@ use crate::input_parser::{self, InputType, LnUrlAuthRequestData};
 use crate::invoice::{self, LNInvoice};
 use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::lsp::LspInformation;
-use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
+use crate::models::{Config, GreenlightCredentials, LogEntry, NodeState, Payment, SwapInfo};
 use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
     ConfigureNodeRequest, ConnectRequest, EnvironmentType, ListPaymentsRequest,

@@ -365,20 +365,15 @@ class BackupStatus {
 }
 
 /// Wrapped in a [BitcoinAddress], this is the result of [parse] when given a plain or BIP-21 BTC address.
-class BitcoinAddressData {
-  final String address;
-  final Network network;
-  final int? amountSat;
-  final String? label;
-  final String? message;
-
-  const BitcoinAddressData({
-    required this.address,
-    required this.network,
-    this.amountSat,
-    this.label,
-    this.message,
-  });
+@freezed
+class BitcoinAddressData with _$BitcoinAddressData {
+  const factory BitcoinAddressData({
+    required String address,
+    required Network network,
+    int? amountSat,
+    String? label,
+    String? message,
+  }) = _BitcoinAddressData;
 }
 
 @freezed
@@ -426,24 +421,20 @@ enum BuyBitcoinProvider {
   Moonpay,
 }
 
-class BuyBitcoinRequest {
-  final BuyBitcoinProvider provider;
-  final OpeningFeeParams? openingFeeParams;
-
-  const BuyBitcoinRequest({
-    required this.provider,
-    this.openingFeeParams,
-  });
+@freezed
+class BuyBitcoinRequest with _$BuyBitcoinRequest {
+  const factory BuyBitcoinRequest({
+    required BuyBitcoinProvider provider,
+    OpeningFeeParams? openingFeeParams,
+  }) = _BuyBitcoinRequest;
 }
 
-class BuyBitcoinResponse {
-  final String url;
-  final OpeningFeeParams? openingFeeParams;
-
-  const BuyBitcoinResponse({
-    required this.url,
-    this.openingFeeParams,
-  });
+@freezed
+class BuyBitcoinResponse with _$BuyBitcoinResponse {
+  const factory BuyBitcoinResponse({
+    required String url,
+    OpeningFeeParams? openingFeeParams,
+  }) = _BuyBitcoinResponse;
 }
 
 /// State of a Lightning channel
@@ -484,66 +475,35 @@ class CheckMessageResponse {
 }
 
 /// Represents the funds that were on the user side of the channel at the time it was closed.
-class ClosedChannelPaymentDetails {
-  final ChannelState state;
-  final String fundingTxid;
-  final String? shortChannelId;
-
-  /// Can be empty for older closed channels.
-  final String? closingTxid;
-
-  const ClosedChannelPaymentDetails({
-    required this.state,
-    required this.fundingTxid,
-    this.shortChannelId,
-    this.closingTxid,
-  });
+@freezed
+class ClosedChannelPaymentDetails with _$ClosedChannelPaymentDetails {
+  const factory ClosedChannelPaymentDetails({
+    required ChannelState state,
+    required String fundingTxid,
+    String? shortChannelId,
+    String? closingTxid,
+  }) = _ClosedChannelPaymentDetails;
 }
 
 /// Configuration for the Breez Services
 ///
 /// Use [Config::production] or [Config::staging] for default configs of the different supported
 /// environments.
-class Config {
-  final String breezserver;
-  final String chainnotifierUrl;
-
-  /// If set, this is the mempool.space URL that will be used.
-  ///
-  /// If not set, a list of mempool.space URLs will be used to provide fault-tolerance. If calls
-  /// to the first URL fail, then the call will be repeated to the next URL, and so on.
-  ///
-  /// Note that, if specified, the URL has to be in the format: `https://mempool.space/api`
-  final String? mempoolspaceUrl;
-
-  /// Directory in which all SDK files (DB, log) are stored. Defaults to ".", otherwise if it's customized,
-  /// the folder should exist before starting the SDK.
-  final String workingDir;
-  final Network network;
-  final int paymentTimeoutSec;
-  final String? defaultLspId;
-  final String? apiKey;
-
-  /// Maps to the CLN `maxfeepercent` config when paying invoices (`lightning-pay`)
-  final double maxfeePercent;
-
-  /// Maps to the CLN `exemptfee` config when paying invoices (`lightning-pay`)
-  final int exemptfeeMsat;
-  final NodeConfig nodeConfig;
-
-  const Config({
-    required this.breezserver,
-    required this.chainnotifierUrl,
-    this.mempoolspaceUrl,
-    required this.workingDir,
-    required this.network,
-    required this.paymentTimeoutSec,
-    this.defaultLspId,
-    this.apiKey,
-    required this.maxfeePercent,
-    required this.exemptfeeMsat,
-    required this.nodeConfig,
-  });
+@freezed
+class Config with _$Config {
+  const factory Config({
+    required String breezserver,
+    required String chainnotifierUrl,
+    String? mempoolspaceUrl,
+    required String workingDir,
+    required Network network,
+    required int paymentTimeoutSec,
+    String? defaultLspId,
+    String? apiKey,
+    required double maxfeePercent,
+    required int exemptfeeMsat,
+    required NodeConfig nodeConfig,
+  }) = _Config;
 }
 
 /// Represents a configure node request.
@@ -571,24 +531,17 @@ class ConnectRequest {
 }
 
 /// Details about a supported currency in the fiat rate feed
-class CurrencyInfo {
-  final String name;
-  final int fractionSize;
-  final int? spacing;
-  final Symbol? symbol;
-  final Symbol? uniqSymbol;
-  final List<LocalizedName>? localizedName;
-  final List<LocaleOverrides>? localeOverrides;
-
-  const CurrencyInfo({
-    required this.name,
-    required this.fractionSize,
-    this.spacing,
-    this.symbol,
-    this.uniqSymbol,
-    this.localizedName,
-    this.localeOverrides,
-  });
+@freezed
+class CurrencyInfo with _$CurrencyInfo {
+  const factory CurrencyInfo({
+    required String name,
+    required int fractionSize,
+    int? spacing,
+    Symbol? symbol,
+    Symbol? uniqSymbol,
+    List<LocalizedName>? localizedName,
+    List<LocaleOverrides>? localeOverrides,
+  }) = _CurrencyInfo;
 }
 
 /// Indicates the different kinds of supported environments for [crate::BreezServices].
@@ -598,14 +551,12 @@ enum EnvironmentType {
 }
 
 /// Wrapper around the [CurrencyInfo] of a fiat currency
-class FiatCurrency {
-  final String id;
-  final CurrencyInfo info;
-
-  const FiatCurrency({
-    required this.id,
-    required this.info,
-  });
+@freezed
+class FiatCurrency with _$FiatCurrency {
+  const factory FiatCurrency({
+    required String id,
+    required CurrencyInfo info,
+  }) = _FiatCurrency;
 }
 
 /// Client-specific credentials to connect to and manage a Greenlight node in the cloud
@@ -619,14 +570,12 @@ class GreenlightCredentials {
   });
 }
 
-class GreenlightNodeConfig {
-  final GreenlightCredentials? partnerCredentials;
-  final String? inviteCode;
-
-  const GreenlightNodeConfig({
-    this.partnerCredentials,
-    this.inviteCode,
-  });
+@freezed
+class GreenlightNodeConfig with _$GreenlightNodeConfig {
+  const factory GreenlightNodeConfig({
+    GreenlightCredentials? partnerCredentials,
+    String? inviteCode,
+  }) = _GreenlightNodeConfig;
 }
 
 /// Indicates the different service health check statuses.
@@ -709,116 +658,58 @@ class InvoicePaidDetails {
 }
 
 /// Represents a list payments request.
-class ListPaymentsRequest {
-  final List<PaymentTypeFilter>? filters;
-  final List<MetadataFilter>? metadataFilters;
-
-  /// Epoch time, in seconds
-  final int? fromTimestamp;
-
-  /// Epoch time, in seconds
-  final int? toTimestamp;
-  final bool? includeFailures;
-  final int? offset;
-  final int? limit;
-
-  const ListPaymentsRequest({
-    this.filters,
-    this.metadataFilters,
-    this.fromTimestamp,
-    this.toTimestamp,
-    this.includeFailures,
-    this.offset,
-    this.limit,
-  });
+@freezed
+class ListPaymentsRequest with _$ListPaymentsRequest {
+  const factory ListPaymentsRequest({
+    List<PaymentTypeFilter>? filters,
+    List<MetadataFilter>? metadataFilters,
+    int? fromTimestamp,
+    int? toTimestamp,
+    bool? includeFailures,
+    int? offset,
+    int? limit,
+  }) = _ListPaymentsRequest;
 }
 
 /// Wrapper for a BOLT11 LN invoice
-class LNInvoice {
-  final String bolt11;
-  final Network network;
-  final String payeePubkey;
-  final String paymentHash;
-  final String? description;
-  final String? descriptionHash;
-  final int? amountMsat;
-  final int timestamp;
-  final int expiry;
-  final List<RouteHint> routingHints;
-  final Uint8List paymentSecret;
-  final int minFinalCltvExpiryDelta;
-
-  const LNInvoice({
-    required this.bolt11,
-    required this.network,
-    required this.payeePubkey,
-    required this.paymentHash,
-    this.description,
-    this.descriptionHash,
-    this.amountMsat,
-    required this.timestamp,
-    required this.expiry,
-    required this.routingHints,
-    required this.paymentSecret,
-    required this.minFinalCltvExpiryDelta,
-  });
+@freezed
+class LNInvoice with _$LNInvoice {
+  const factory LNInvoice({
+    required String bolt11,
+    required Network network,
+    required String payeePubkey,
+    required String paymentHash,
+    String? description,
+    String? descriptionHash,
+    int? amountMsat,
+    required int timestamp,
+    required int expiry,
+    required List<RouteHint> routingHints,
+    required Uint8List paymentSecret,
+    required int minFinalCltvExpiryDelta,
+  }) = _LNInvoice;
 }
 
 /// Details of a LN payment, as included in a [Payment]
-class LnPaymentDetails {
-  final String paymentHash;
-  final String label;
-  final String destinationPubkey;
-  final String paymentPreimage;
-  final bool keysend;
-  final String bolt11;
-
-  /// Only set for [PaymentType::Received], payments which require to open a channel.
-  /// Represents the actual invoice paid by the sender
-  final String? openChannelBolt11;
-
-  /// Only set for [PaymentType::Sent] payments that are part of a LNURL-pay workflow where
-  /// the endpoint returns a success action
-  final SuccessActionProcessed? lnurlSuccessAction;
-
-  /// Only set for [PaymentType::Sent] payments if it is not a payment to a Lightning Address
-  final String? lnurlPayDomain;
-
-  /// Only set for [PaymentType::Sent] payments that are sent to a Lightning Address
-  final String? lnAddress;
-
-  /// Only set for [PaymentType::Sent] payments where the receiver endpoint returned LNURL metadata
-  final String? lnurlMetadata;
-
-  /// Only set for [PaymentType::Received] payments that were received as part of LNURL-withdraw
-  final String? lnurlWithdrawEndpoint;
-
-  /// Only set for [PaymentType::Received] payments that were received in the context of a swap
-  final SwapInfo? swapInfo;
-
-  /// Only set for [PaymentType::Sent] payments that were sent in the context of a reverse swap
-  final ReverseSwapInfo? reverseSwapInfo;
-
-  /// Only set for [PaymentStatus::Pending] payments that are inflight.
-  final int? pendingExpirationBlock;
-
-  const LnPaymentDetails({
-    required this.paymentHash,
-    required this.label,
-    required this.destinationPubkey,
-    required this.paymentPreimage,
-    required this.keysend,
-    required this.bolt11,
-    this.openChannelBolt11,
-    this.lnurlSuccessAction,
-    this.lnurlPayDomain,
-    this.lnAddress,
-    this.lnurlMetadata,
-    this.lnurlWithdrawEndpoint,
-    this.swapInfo,
-    this.reverseSwapInfo,
-    this.pendingExpirationBlock,
-  });
+@freezed
+class LnPaymentDetails with _$LnPaymentDetails {
+  const factory LnPaymentDetails({
+    required String paymentHash,
+    required String label,
+    required String destinationPubkey,
+    required String paymentPreimage,
+    required bool keysend,
+    required String bolt11,
+    String? openChannelBolt11,
+    SuccessActionProcessed? lnurlSuccessAction,
+    String? lnurlPayDomain,
+    String? lnAddress,
+    String? lnurlMetadata,
+    String? lnurlWithdrawEndpoint,
+    SwapInfo? swapInfo,
+    ReverseSwapInfo? reverseSwapInfo,
+    int? pendingExpirationBlock,
+  }) = _LnPaymentDetails;
 }
 
 /// Wrapped in a [LnUrlAuth], this is the result of [parse] when given a LNURL-auth endpoint.
@@ -826,27 +717,14 @@ class LnPaymentDetails {
 /// It represents the endpoint's parameters for the LNURL workflow.
 ///
 /// See <https://github.com/lnurl/luds/blob/luds/04.md>
-class LnUrlAuthRequestData {
-  /// Hex encoded 32 bytes of challenge
-  final String k1;
-
-  /// When available, one of: register, login, link, auth
-  final String? action;
-
-  /// Indicates the domain of the LNURL-auth service, to be shown to the user when asking for
-  /// auth confirmation, as per LUD-04 spec.
-  final String domain;
-
-  /// Indicates the URL of the LNURL-auth service, including the query arguments. This will be
-  /// extended with the signed challenge and the linking key, then called in the second step of the workflow.
-  final String url;
-
-  const LnUrlAuthRequestData({
-    required this.k1,
-    this.action,
-    required this.domain,
-    required this.url,
-  });
+@freezed
+class LnUrlAuthRequestData with _$LnUrlAuthRequestData {
+  const factory LnUrlAuthRequestData({
+    required String k1,
+    String? action,
+    required String domain,
+    required String url,
+  }) = _LnUrlAuthRequestData;
 }
 
 @freezed
@@ -861,12 +739,11 @@ sealed class LnUrlCallbackStatus with _$LnUrlCallbackStatus {
 }
 
 /// Wrapped in a [LnUrlError], this represents a LNURL-endpoint error.
-class LnUrlErrorData {
-  final String reason;
-
-  const LnUrlErrorData({
-    required this.reason,
-  });
+@freezed
+class LnUrlErrorData with _$LnUrlErrorData {
+  const factory LnUrlErrorData({
+    required String reason,
+  }) = _LnUrlErrorData;
 }
 
 class LnUrlPayErrorData {
@@ -880,21 +757,13 @@ class LnUrlPayErrorData {
 }
 
 /// Represents a LNURL-pay request.
-class LnUrlPayRequest {
-  /// The [LnUrlPayRequestData] returned by [crate::input_parser::parse]
-  final LnUrlPayRequestData data;
-
-  /// The amount in millisatoshis for this payment
-  final int amountMsat;
-
-  /// An optional comment for this payment
-  final String? comment;
-
-  const LnUrlPayRequest({
-    required this.data,
-    required this.amountMsat,
-    this.comment,
-  });
+@freezed
+class LnUrlPayRequest with _$LnUrlPayRequest {
+  const factory LnUrlPayRequest({
+    required LnUrlPayRequestData data,
+    required int amountMsat,
+    String? comment,
+  }) = _LnUrlPayRequest;
 }
 
 /// Wrapped in a [LnUrlPay], this is the result of [parse] when given a LNURL-pay endpoint.
@@ -902,42 +771,17 @@ class LnUrlPayRequest {
 /// It represents the endpoint's parameters for the LNURL workflow.
 ///
 /// See <https://github.com/lnurl/luds/blob/luds/06.md>
-class LnUrlPayRequestData {
-  final String callback;
-
-  /// The minimum amount, in millisats, that this LNURL-pay endpoint accepts
-  final int minSendable;
-
-  /// The maximum amount, in millisats, that this LNURL-pay endpoint accepts
-  final int maxSendable;
-
-  /// As per LUD-06, `metadata` is a raw string (e.g. a json representation of the inner map).
-  /// Use `metadata_vec()` to get the parsed items.
-  final String metadataStr;
-
-  /// The comment length accepted by this endpoint
-  ///
-  /// See <https://github.com/lnurl/luds/blob/luds/12.md>
-  final int commentAllowed;
-
-  /// Indicates the domain of the LNURL-pay service, to be shown to the user when asking for
-  /// payment input, as per LUD-06 spec.
-  ///
-  /// Note: this is not the domain of the callback, but the domain of the LNURL-pay endpoint.
-  final String domain;
-
-  /// If sending to a LN Address, this will be filled.
-  final String? lnAddress;
-
-  const LnUrlPayRequestData({
-    required this.callback,
-    required this.minSendable,
-    required this.maxSendable,
-    required this.metadataStr,
-    required this.commentAllowed,
-    required this.domain,
-    this.lnAddress,
-  });
+@freezed
+class LnUrlPayRequestData with _$LnUrlPayRequestData {
+  const factory LnUrlPayRequestData({
+    required String callback,
+    required int minSendable,
+    required int maxSendable,
+    required String metadataStr,
+    required int commentAllowed,
+    required String domain,
+    String? lnAddress,
+  }) = _LnUrlPayRequestData;
 }
 
 @freezed
@@ -963,25 +807,13 @@ class LnUrlPaySuccessData {
   });
 }
 
-class LnUrlWithdrawRequest {
-  /// Request data containing information on how to call the lnurl withdraw
-  /// endpoint. Typically retrieved by calling `parse()` on a lnurl withdraw
-  /// input.
-  final LnUrlWithdrawRequestData data;
-
-  /// The amount to withdraw from the lnurl withdraw endpoint. Must be between
-  /// `min_withdrawable` and `max_withdrawable`.
-  final int amountMsat;
-
-  /// Optional description that will be put in the payment request for the
-  /// lnurl withdraw endpoint.
-  final String? description;
-
-  const LnUrlWithdrawRequest({
-    required this.data,
-    required this.amountMsat,
-    this.description,
-  });
+@freezed
+class LnUrlWithdrawRequest with _$LnUrlWithdrawRequest {
+  const factory LnUrlWithdrawRequest({
+    required LnUrlWithdrawRequestData data,
+    required int amountMsat,
+    String? description,
+  }) = _LnUrlWithdrawRequest;
 }
 
 /// Wrapped in a [LnUrlWithdraw], this is the result of [parse] when given a LNURL-withdraw endpoint.
@@ -989,24 +821,15 @@ class LnUrlWithdrawRequest {
 /// It represents the endpoint's parameters for the LNURL workflow.
 ///
 /// See <https://github.com/lnurl/luds/blob/luds/03.md>
-class LnUrlWithdrawRequestData {
-  final String callback;
-  final String k1;
-  final String defaultDescription;
-
-  /// The minimum amount, in millisats, that this LNURL-withdraw endpoint accepts
-  final int minWithdrawable;
-
-  /// The maximum amount, in millisats, that this LNURL-withdraw endpoint accepts
-  final int maxWithdrawable;
-
-  const LnUrlWithdrawRequestData({
-    required this.callback,
-    required this.k1,
-    required this.defaultDescription,
-    required this.minWithdrawable,
-    required this.maxWithdrawable,
-  });
+@freezed
+class LnUrlWithdrawRequestData with _$LnUrlWithdrawRequestData {
+  const factory LnUrlWithdrawRequestData({
+    required String callback,
+    required String k1,
+    required String defaultDescription,
+    required int minWithdrawable,
+    required int maxWithdrawable,
+  }) = _LnUrlWithdrawRequestData;
 }
 
 @freezed
@@ -1028,27 +851,22 @@ class LnUrlWithdrawSuccessData {
 }
 
 /// Locale-specific settings for the representation of a currency
-class LocaleOverrides {
-  final String locale;
-  final int? spacing;
-  final Symbol symbol;
-
-  const LocaleOverrides({
-    required this.locale,
-    this.spacing,
-    required this.symbol,
-  });
+@freezed
+class LocaleOverrides with _$LocaleOverrides {
+  const factory LocaleOverrides({
+    required String locale,
+    int? spacing,
+    required Symbol symbol,
+  }) = _LocaleOverrides;
 }
 
 /// Localized name of a currency
-class LocalizedName {
-  final String locale;
-  final String name;
-
-  const LocalizedName({
-    required this.locale,
-    required this.name,
-  });
+@freezed
+class LocalizedName with _$LocalizedName {
+  const factory LocalizedName({
+    required String locale,
+    required String name,
+  }) = _LocalizedName;
 }
 
 /// Internal SDK log entry
@@ -1063,48 +881,21 @@ class LogEntry {
 }
 
 /// Details of supported LSP
-class LspInformation {
-  final String id;
-
-  /// The name of of LSP
-  final String name;
-
-  /// The URL of the LSP
-  final String widgetUrl;
-
-  /// The identity pubkey of the Lightning node
-  final String pubkey;
-
-  /// The network location of the lightning node, e.g. `12.34.56.78:9012` or `localhost:10011`
-  final String host;
-
-  /// The base fee charged regardless of the number of milli-satoshis sent
-  final int baseFeeMsat;
-
-  /// The effective fee rate in milli-satoshis. The precision of this value goes up to 6 decimal places, so 1e-6.
-  final double feeRate;
-
-  /// The required timelock delta for HTLCs forwarded over the channel
-  final int timeLockDelta;
-
-  /// The minimum value in millisatoshi we will require for incoming HTLCs on the channel
-  final int minHtlcMsat;
-  final Uint8List lspPubkey;
-  final OpeningFeeParamsMenu openingFeeParamsList;
-
-  const LspInformation({
-    required this.id,
-    required this.name,
-    required this.widgetUrl,
-    required this.pubkey,
-    required this.host,
-    required this.baseFeeMsat,
-    required this.feeRate,
-    required this.timeLockDelta,
-    required this.minHtlcMsat,
-    required this.lspPubkey,
-    required this.openingFeeParamsList,
-  });
+@freezed
+class LspInformation with _$LspInformation {
+  const factory LspInformation({
+    required String id,
+    required String name,
+    required String widgetUrl,
+    required String pubkey,
+    required String host,
+    required int baseFeeMsat,
+    required double feeRate,
+    required int timeLockDelta,
+    required int minHtlcMsat,
+    required Uint8List lspPubkey,
+    required OpeningFeeParamsMenu openingFeeParamsList,
+  }) = _LspInformation;
 }
 
 class MaxReverseSwapAmountResponse {
@@ -1167,34 +958,22 @@ sealed class NodeCredentials with _$NodeCredentials {
 /// Note: The implementation attempts to provide the most up-to-date values,
 /// which may result in some short-lived inconsistencies
 /// (e.g., `channels_balance_msat` may be updated before `inbound_liquidity_msats`).
-class NodeState {
-  final String id;
-  final int blockHeight;
-  final int channelsBalanceMsat;
-  final int onchainBalanceMsat;
-  final int pendingOnchainBalanceMsat;
-  final List<UnspentTransactionOutput> utxos;
-  final int maxPayableMsat;
-  final int maxReceivableMsat;
-  final int maxSinglePaymentAmountMsat;
-  final int maxChanReserveMsats;
-  final List<String> connectedPeers;
-  final int inboundLiquidityMsats;
-
-  const NodeState({
-    required this.id,
-    required this.blockHeight,
-    required this.channelsBalanceMsat,
-    required this.onchainBalanceMsat,
-    required this.pendingOnchainBalanceMsat,
-    required this.utxos,
-    required this.maxPayableMsat,
-    required this.maxReceivableMsat,
-    required this.maxSinglePaymentAmountMsat,
-    required this.maxChanReserveMsats,
-    required this.connectedPeers,
-    required this.inboundLiquidityMsats,
-  });
+@freezed
+class NodeState with _$NodeState {
+  const factory NodeState({
+    required String id,
+    required int blockHeight,
+    required int channelsBalanceMsat,
+    required int onchainBalanceMsat,
+    required int pendingOnchainBalanceMsat,
+    required List<UnspentTransactionOutput> utxos,
+    required int maxPayableMsat,
+    required int maxReceivableMsat,
+    required int maxSinglePaymentAmountMsat,
+    required int maxChanReserveMsats,
+    required List<String> connectedPeers,
+    required int inboundLiquidityMsats,
+  }) = _NodeState;
 }
 
 class OnchainPaymentLimitsResponse {
@@ -1242,38 +1021,24 @@ class OpenChannelFeeResponse {
 ///
 /// After they are received, the client shouldn't change them when calling LSP methods,
 /// otherwise the LSP may reject the call.
-class OpeningFeeParams {
-  /// The minimum value in millisatoshi we will require for incoming HTLCs on the channel
-  final int minMsat;
-
-  /// The fee in ppm charged over liquidity when buying a channel
-  final int proportional;
-
-  /// The date and time this opening fee params promise expires, in RFC 3339 / ISO 8601 format
-  final String validUntil;
-
-  /// The channel can be closed if not used within this duration in blocks
-  final int maxIdleTime;
-  final int maxClientToSelfDelay;
-  final String promise;
-
-  const OpeningFeeParams({
-    required this.minMsat,
-    required this.proportional,
-    required this.validUntil,
-    required this.maxIdleTime,
-    required this.maxClientToSelfDelay,
-    required this.promise,
-  });
+@freezed
+class OpeningFeeParams with _$OpeningFeeParams {
+  const factory OpeningFeeParams({
+    required int minMsat,
+    required int proportional,
+    required String validUntil,
+    required int maxIdleTime,
+    required int maxClientToSelfDelay,
+    required String promise,
+  }) = _OpeningFeeParams;
 }
 
 /// See [OpeningFeeParamsMenu::try_from]
-class OpeningFeeParamsMenu {
-  final List<OpeningFeeParams> values;
-
-  const OpeningFeeParamsMenu({
-    required this.values,
-  });
+@freezed
+class OpeningFeeParamsMenu with _$OpeningFeeParamsMenu {
+  const factory OpeningFeeParamsMenu({
+    required List<OpeningFeeParams> values,
+  }) = _OpeningFeeParamsMenu;
 }
 
 class PayOnchainRequest {
@@ -1295,32 +1060,20 @@ class PayOnchainResponse {
 }
 
 /// Represents a payment, including its [PaymentType] and [PaymentDetails]
-class Payment {
-  final String id;
-  final PaymentType paymentType;
-
-  /// Epoch time, in seconds
-  final int paymentTime;
-  final int amountMsat;
-  final int feeMsat;
-  final PaymentStatus status;
-  final String? error;
-  final String? description;
-  final PaymentDetails details;
-  final String? metadata;
-
-  const Payment({
-    required this.id,
-    required this.paymentType,
-    required this.paymentTime,
-    required this.amountMsat,
-    required this.feeMsat,
-    required this.status,
-    this.error,
-    this.description,
-    required this.details,
-    this.metadata,
-  });
+@freezed
+class Payment with _$Payment {
+  const factory Payment({
+    required String id,
+    required PaymentType paymentType,
+    required int paymentTime,
+    required int amountMsat,
+    required int feeMsat,
+    required PaymentStatus status,
+    String? error,
+    String? description,
+    required PaymentDetails details,
+    String? metadata,
+  }) = _Payment;
 }
 
 @freezed
@@ -1462,48 +1215,25 @@ class Rate {
   });
 }
 
-class ReceiveOnchainRequest {
-  final OpeningFeeParams? openingFeeParams;
-
-  const ReceiveOnchainRequest({
-    this.openingFeeParams,
-  });
+@freezed
+class ReceiveOnchainRequest with _$ReceiveOnchainRequest {
+  const factory ReceiveOnchainRequest({
+    OpeningFeeParams? openingFeeParams,
+  }) = _ReceiveOnchainRequest;
 }
 
 /// Represents a receive payment request.
-class ReceivePaymentRequest {
-  /// The amount in satoshis for this payment request
-  final int amountMsat;
-
-  /// The description for this payment request.
-  final String description;
-
-  /// Optional preimage for this payment request.
-  /// If specified, it will be used instead of generating a new one.
-  final Uint8List? preimage;
-
-  /// If set and valid, these fess options are used when a new channels is needed.
-  /// Otherwise the default fee options will be used.
-  final OpeningFeeParams? openingFeeParams;
-
-  /// If set to true, then the bolt11 invoice returned includes the description hash.
-  final bool? useDescriptionHash;
-
-  /// if specified, set the time the invoice is valid for, in seconds.
-  final int? expiry;
-
-  /// if specified, sets the min_final_cltv_expiry for the invoice
-  final int? cltv;
-
-  const ReceivePaymentRequest({
-    required this.amountMsat,
-    required this.description,
-    this.preimage,
-    this.openingFeeParams,
-    this.useDescriptionHash,
-    this.expiry,
-    this.cltv,
-  });
+@freezed
+class ReceivePaymentRequest with _$ReceivePaymentRequest {
+  const factory ReceivePaymentRequest({
+    required int amountMsat,
+    required String description,
+    Uint8List? preimage,
+    OpeningFeeParams? openingFeeParams,
+    bool? useDescriptionHash,
+    int? expiry,
+    int? cltv,
+  }) = _ReceivePaymentRequest;
 }
 
 /// Represents a receive payment response.
@@ -1511,21 +1241,13 @@ class ReceivePaymentRequest {
 /// Breez SDK may have to open a new channel to receive this payment. In that case, the channel will
 /// be opened automatically when the invoice is paid, and the fees will be described in the
 /// `opening_fee_params` and `opening_fee_msat` fields.
-class ReceivePaymentResponse {
-  /// The generated invoice, including any necessary routing hints
-  final LNInvoice lnInvoice;
-
-  /// If set, these are the [OpeningFeeParams] used to calculate the channel opening fees.
-  final OpeningFeeParams? openingFeeParams;
-
-  /// If set, this is the channel opening fee that will be deduced from the invoice amount.
-  final int? openingFeeMsat;
-
-  const ReceivePaymentResponse({
-    required this.lnInvoice,
-    this.openingFeeParams,
-    this.openingFeeMsat,
-  });
+@freezed
+class ReceivePaymentResponse with _$ReceivePaymentResponse {
+  const factory ReceivePaymentResponse({
+    required LNInvoice lnInvoice,
+    OpeningFeeParams? openingFeeParams,
+    int? openingFeeMsat,
+  }) = _ReceivePaymentResponse;
 }
 
 /// Wrapper containing the result of the recommended fees query, in sat/vByte, based on mempool.space data
@@ -1617,26 +1339,16 @@ class ReverseSwapFeesRequest {
 }
 
 /// Simplified version of [FullReverseSwapInfo], containing only the user-relevant fields
-class ReverseSwapInfo {
-  final String id;
-  final String claimPubkey;
-
-  /// The lockup tx id, available from the moment the lockup tx is seen in the mempool by the SDK
-  final String? lockupTxid;
-
-  /// The claim tx id, available from the moment the claim tx is broadcast by the SDK
-  final String? claimTxid;
-  final int onchainAmountSat;
-  final ReverseSwapStatus status;
-
-  const ReverseSwapInfo({
-    required this.id,
-    required this.claimPubkey,
-    this.lockupTxid,
-    this.claimTxid,
-    required this.onchainAmountSat,
-    required this.status,
-  });
+@freezed
+class ReverseSwapInfo with _$ReverseSwapInfo {
+  const factory ReverseSwapInfo({
+    required String id,
+    required String claimPubkey,
+    String? lockupTxid,
+    String? claimTxid,
+    required int onchainAmountSat,
+    required ReverseSwapStatus status,
+  }) = _ReverseSwapInfo;
 }
 
 /// Details about the reverse swap fees and parameters, at this point in time
@@ -1703,44 +1415,25 @@ enum ReverseSwapStatus {
 }
 
 /// A route hint for a LN payment
-class RouteHint {
-  final List<RouteHintHop> hops;
-
-  const RouteHint({
-    required this.hops,
-  });
+@freezed
+class RouteHint with _$RouteHint {
+  const factory RouteHint({
+    required List<RouteHintHop> hops,
+  }) = _RouteHint;
 }
 
 /// Details of a specific hop in a larger route hint
-class RouteHintHop {
-  /// The node_id of the non-target end of the route
-  final String srcNodeId;
-
-  /// The short_channel_id of this channel
-  final int shortChannelId;
-
-  /// The fees which must be paid to use this channel
-  final int feesBaseMsat;
-  final int feesProportionalMillionths;
-
-  /// The difference in CLTV values between this node and the next node.
-  final int cltvExpiryDelta;
-
-  /// The minimum value, in msat, which must be relayed to the next hop.
-  final int? htlcMinimumMsat;
-
-  /// The maximum value in msat available for routing with a single HTLC.
-  final int? htlcMaximumMsat;
-
-  const RouteHintHop({
-    required this.srcNodeId,
-    required this.shortChannelId,
-    required this.feesBaseMsat,
-    required this.feesProportionalMillionths,
-    required this.cltvExpiryDelta,
-    this.htlcMinimumMsat,
-    this.htlcMaximumMsat,
-  });
+@freezed
+class RouteHintHop with _$RouteHintHop {
+  const factory RouteHintHop({
+    required String srcNodeId,
+    required int shortChannelId,
+    required int feesBaseMsat,
+    required int feesProportionalMillionths,
+    required int cltvExpiryDelta,
+    int? htlcMinimumMsat,
+    int? htlcMaximumMsat,
+  }) = _RouteHintHop;
 }
 
 class SendOnchainRequest {
@@ -1757,12 +1450,11 @@ class SendOnchainRequest {
   });
 }
 
-class SendOnchainResponse {
-  final ReverseSwapInfo reverseSwapInfo;
-
-  const SendOnchainResponse({
-    required this.reverseSwapInfo,
-  });
+@freezed
+class SendOnchainResponse with _$SendOnchainResponse {
+  const factory SendOnchainResponse({
+    required ReverseSwapInfo reverseSwapInfo,
+  }) = _SendOnchainResponse;
 }
 
 /// Represents a send payment request.
@@ -1780,37 +1472,29 @@ class SendPaymentRequest {
 }
 
 /// Represents a send payment response.
-class SendPaymentResponse {
-  final Payment payment;
-
-  const SendPaymentResponse({
-    required this.payment,
-  });
+@freezed
+class SendPaymentResponse with _$SendPaymentResponse {
+  const factory SendPaymentResponse({
+    required Payment payment,
+  }) = _SendPaymentResponse;
 }
 
 /// Represents a send spontaneous payment request.
-class SendSpontaneousPaymentRequest {
-  /// The node id to send this payment is
-  final String nodeId;
-
-  /// The amount in millisatoshis for this payment
-  final int amountMsat;
-  final List<TlvEntry>? extraTlvs;
-
-  const SendSpontaneousPaymentRequest({
-    required this.nodeId,
-    required this.amountMsat,
-    this.extraTlvs,
-  });
+@freezed
+class SendSpontaneousPaymentRequest with _$SendSpontaneousPaymentRequest {
+  const factory SendSpontaneousPaymentRequest({
+    required String nodeId,
+    required int amountMsat,
+    List<TlvEntry>? extraTlvs,
+  }) = _SendSpontaneousPaymentRequest;
 }
 
 /// Represents a service health check response.
-class ServiceHealthCheckResponse {
-  final HealthCheckStatus status;
-
-  const ServiceHealthCheckResponse({
-    required this.status,
-  });
+@freezed
+class ServiceHealthCheckResponse with _$ServiceHealthCheckResponse {
+  const factory ServiceHealthCheckResponse({
+    required HealthCheckStatus status,
+  }) = _ServiceHealthCheckResponse;
 }
 
 /// Request to sign a message with the node's private key.
@@ -1882,105 +1566,33 @@ enum SwapAmountType {
 ///
 /// The SwapInfo has a status which changes accordingly, documented in [SwapStatus].
 ///
-class SwapInfo {
-  /// Bitcoin address for this swap. Sats sent to this address will be swapped.
-  final String bitcoinAddress;
-
-  /// Relative time lock start, received from [SwapperAPI::create_swap].
-  final int createdAt;
-
-  /// Relative time lock for the timeout for the script to be redeemed before swap fails.
-  final int lockHeight;
-
-  /// sha256 hash of preimage to used in the claim sript.
-  final Uint8List paymentHash;
-
-  /// Secret to claim the swap.
-  final Uint8List preimage;
-
-  /// Secret claim key for the bitcoin address.
-  final Uint8List privateKey;
-
-  /// Public key in binary format of the private claim private key.
-  final Uint8List publicKey;
-
-  /// The public key in binary format from the swapping service. Received from [SwapperAPI::create_swap].
-  final Uint8List swapperPublicKey;
-
-  /// The locking script for the generated bitcoin address. Received from [SwapperAPI::create_swap].
-  final Uint8List script;
-
-  /// bolt11 invoice to claim the sent funds.
-  final String? bolt11;
-
-  /// Amount of millisatoshis claimed from sent funds and paid for via bolt11 invoice.
-  final int paidMsat;
-
-  /// Total amount of transactions sent to the swap address.
-  final int totalIncomingTxs;
-
-  /// Confirmed onchain sats to be claim with an bolt11 invoice or refunded if swap fails.
-  final int confirmedSats;
-
-  /// Unconfirmed sats waiting to be confirmed onchain.
-  final int unconfirmedSats;
-
-  /// Shows the current status of the swap, either `Initial` or `Expired`.
-  final SwapStatus status;
-
-  /// Transaction IDs for failed swap attempts.
-  final List<String> refundTxIds;
-
-  /// Refund transaction IDs for ongoing swap awaiting confirmation.
-  final List<String> unconfirmedTxIds;
-
-  /// Transaction IDs that have been confirmed on-chain.
-  final List<String> confirmedTxIds;
-
-  /// The minimum amount of sats one can send in order for the swap to succeed. Received from [SwapperAPI::create_swap].
-  final int minAllowedDeposit;
-
-  /// The maximum amount of sats one can send in order for the swap to succeed. Received from [SwapperAPI::create_swap].
-  final int maxAllowedDeposit;
-
-  /// Error reason for when swap fails.
-  final String? lastRedeemError;
-
-  /// The dynamic fees which is set if a channel opening is needed.
-  ///
-  /// This is an optional field for backward compatibility with swaps created before dynamic fees.
-  ///
-  /// Swaps created after dynamic fees were introduced always have this field set.
-  final OpeningFeeParams? channelOpeningFees;
-
-  /// The block height when the swap was confirmed.
-  final int? confirmedAt;
-
-  const SwapInfo({
-    required this.bitcoinAddress,
-    required this.createdAt,
-    required this.lockHeight,
-    required this.paymentHash,
-    required this.preimage,
-    required this.privateKey,
-    required this.publicKey,
-    required this.swapperPublicKey,
-    required this.script,
-    this.bolt11,
-    required this.paidMsat,
-    required this.totalIncomingTxs,
-    required this.confirmedSats,
-    required this.unconfirmedSats,
-    required this.status,
-    required this.refundTxIds,
-    required this.unconfirmedTxIds,
-    required this.confirmedTxIds,
-    required this.minAllowedDeposit,
-    required this.maxAllowedDeposit,
-    this.lastRedeemError,
-    this.channelOpeningFees,
-    this.confirmedAt,
-  });
+@freezed
+class SwapInfo with _$SwapInfo {
+  const factory SwapInfo({
+    required String bitcoinAddress,
+    required int createdAt,
+    required int lockHeight,
+    required Uint8List paymentHash,
+    required Uint8List preimage,
+    required Uint8List privateKey,
+    required Uint8List publicKey,
+    required Uint8List swapperPublicKey,
+    required Uint8List script,
+    String? bolt11,
+    required int paidMsat,
+    required int totalIncomingTxs,
+    required int confirmedSats,
+    required int unconfirmedSats,
+    required SwapStatus status,
+    required List<String> refundTxIds,
+    required List<String> unconfirmedTxIds,
+    required List<String> confirmedTxIds,
+    required int minAllowedDeposit,
+    required int maxAllowedDeposit,
+    String? lastRedeemError,
+    OpeningFeeParams? channelOpeningFees,
+    int? confirmedAt,
+  }) = _SwapInfo;
 }
 
 /// The status of a swap
@@ -2001,18 +1613,14 @@ enum SwapStatus {
 }
 
 /// Settings for the symbol representation of a currency
-class Symbol {
-  final String? grapheme;
-  final String? template;
-  final bool? rtl;
-  final int? position;
-
-  const Symbol({
-    this.grapheme,
-    this.template,
-    this.rtl,
-    this.position,
-  });
+@freezed
+class Symbol with _$Symbol {
+  const factory Symbol({
+    String? grapheme,
+    String? template,
+    bool? rtl,
+    int? position,
+  }) = _Symbol;
 }
 
 /// Represents a TLV entry for a keysend payment.
@@ -2030,20 +1638,15 @@ class TlvEntry {
 }
 
 /// UTXO known to the LN node
-class UnspentTransactionOutput {
-  final Uint8List txid;
-  final int outnum;
-  final int amountMillisatoshi;
-  final String address;
-  final bool reserved;
-
-  const UnspentTransactionOutput({
-    required this.txid,
-    required this.outnum,
-    required this.amountMillisatoshi,
-    required this.address,
-    required this.reserved,
-  });
+@freezed
+class UnspentTransactionOutput with _$UnspentTransactionOutput {
+  const factory UnspentTransactionOutput({
+    required Uint8List txid,
+    required int outnum,
+    required int amountMillisatoshi,
+    required String address,
+    required bool reserved,
+  }) = _UnspentTransactionOutput;
 }
 
 class UrlSuccessActionData {
