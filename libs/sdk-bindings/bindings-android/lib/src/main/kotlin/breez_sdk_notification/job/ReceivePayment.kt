@@ -13,10 +13,19 @@ import breez_sdk_notification.NotificationHelper.Companion.notifyChannel
 import breez_sdk_notification.ResourceHelper.Companion.getString
 import breez_sdk_notification.SdkForegroundService
 import breez_sdk_notification.ServiceLogger
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+
+@Serializable
+data class ReceivePaymentRequest(
+    @SerialName("payment_hash") val paymentHash: String,
+)
 
 class ReceivePaymentJob(
     private val context: Context,
     private val fgService: SdkForegroundService,
+    private val payload: String,
     private val logger: ServiceLogger,
 ) : Job {
     private var receivedPayment: Payment? = null
@@ -25,7 +34,19 @@ class ReceivePaymentJob(
         private const val TAG = "ReceivePaymentJob"
     }
 
-    override fun start(breezSDK: BlockingBreezServices) {}
+    override fun start(breezSDK: BlockingBreezServices) {
+        try {
+            val request = Json.decodeFromString(ReceivePaymentRequest.serializer(), payload)
+            val payment = breezSDK.paymentByHash(request.paymentHash)
+            if (payment != null) {
+                this.receivedPayment = payment
+                logger.log(TAG, "Found payment for hash: ${request.paymentHash}", "INFO")
+                fgService.shutdown()
+            }
+        } catch (e: Exception) {
+            logger.log(TAG, "Failed to call start of receive payment notification: ${e.message}", "WARN")
+        }
+    }
 
     override fun onEvent(e: BreezEvent) {
         logger.log(TAG, "Received event $e", "TRACE")

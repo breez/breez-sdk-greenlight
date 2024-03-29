@@ -1,6 +1,10 @@
 import UserNotifications
 import Foundation
 
+struct ReceivePaymentNotificationRequest: Codable {
+    let payment_hash: String
+}
+
 class ReceivePaymentTask : TaskProtocol {
     fileprivate let TAG = "ReceivePaymentTask"
     
@@ -34,7 +38,19 @@ class ReceivePaymentTask : TaskProtocol {
         }
     }
     
-    func start(breezSDK: BlockingBreezServices) throws {}
+    func start(breezSDK: BlockingBreezServices) throws {
+        do {
+            let request = try JSONDecoder().decode(ReceivePaymentNotificationRequest.self, from: self.payload.data(using: .utf8)!)
+            let existingPayment = try breezSDK.paymentByHash(hash: request.payment_hash)
+            if existingPayment != nil {
+                self.receivedPayment = existingPayment
+                self.logger.log(tag: TAG, line: "Found payment for hash \(request.payment_hash)", level: "INFO")
+                self.onShutdown()
+            }
+        } catch let e {
+            self.logger.log(tag: TAG, line: "Failed to call start of receive payment notification: \(e)", level: "ERROR")
+        }
+    }
     
     func onShutdown() {
         let successReceivedPayment = ResourceHelper.shared.getString(key: Constants.PAYMENT_RECEIVED_NOTIFICATION_TITLE, validateContains: "%d", fallback: Constants.DEFAULT_PAYMENT_RECEIVED_NOTIFICATION_TITLE)
