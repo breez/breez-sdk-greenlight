@@ -121,7 +121,7 @@ fn validate_invoice(user_amount_msat: u64, bolt11: &str, network: Network) -> Ln
 pub(crate) mod model {
     use crate::lnurl::error::{LnUrlError, LnUrlResult};
     use crate::lnurl::pay::{Aes256CbcDec, Aes256CbcEnc};
-    use crate::{ensure_sdk, input_parser::*};
+    use crate::{ensure_sdk, input_parser::*, Payment};
 
     use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
     use anyhow::{anyhow, Result};
@@ -144,6 +144,7 @@ pub(crate) mod model {
     /// * `PayError` indicates that an error occurred while trying to pay the invoice from the LNURL endpoint.
     /// This includes the payment hash of the failed invoice and the failure reason.
     #[derive(Debug, Serialize, Deserialize)]
+    #[allow(clippy::large_enum_variant)]
     pub enum LnUrlPayResult {
         EndpointSuccess { data: LnUrlPaySuccessData },
         EndpointError { data: LnUrlErrorData },
@@ -159,6 +160,7 @@ pub(crate) mod model {
     #[derive(Serialize, Deserialize, Debug)]
     pub struct LnUrlPaySuccessData {
         pub payment_hash: String,
+        pub payment: Payment,
         pub success_action: Option<SuccessActionProcessed>,
     }
 

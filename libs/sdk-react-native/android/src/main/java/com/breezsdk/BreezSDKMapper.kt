@@ -1245,6 +1245,7 @@ fun asLnUrlPaySuccessData(lnUrlPaySuccessData: ReadableMap): LnUrlPaySuccessData
             lnUrlPaySuccessData,
             arrayOf(
                 "paymentHash",
+                "payment",
             ),
         )
     ) {
@@ -1259,9 +1260,11 @@ fun asLnUrlPaySuccessData(lnUrlPaySuccessData: ReadableMap): LnUrlPaySuccessData
             null
         }
     val paymentHash = lnUrlPaySuccessData.getString("paymentHash")!!
+    val payment = lnUrlPaySuccessData.getMap("payment")?.let { asPayment(it) }!!
     return LnUrlPaySuccessData(
         successAction,
         paymentHash,
+        payment,
     )
 }
 
@@ -1269,6 +1272,7 @@ fun readableMapOf(lnUrlPaySuccessData: LnUrlPaySuccessData): ReadableMap {
     return readableMapOf(
         "successAction" to lnUrlPaySuccessData.successAction?.let { readableMapOf(it) },
         "paymentHash" to lnUrlPaySuccessData.paymentHash,
+        "payment" to readableMapOf(lnUrlPaySuccessData.payment),
     )
 }
 
