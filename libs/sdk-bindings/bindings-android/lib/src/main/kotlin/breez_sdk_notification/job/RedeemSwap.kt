@@ -71,6 +71,6 @@ class RedeemSwapJob(
                 DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_TITLE
             ),
         )
-        fgService.shutdown()
+        fgService.onFinished(this)
     }
 }

@@ -55,15 +55,12 @@ class ReceivePaymentJob(
                 val pd = e.details
                 handleReceivedPayment(pd.bolt11, pd.paymentHash, pd.payment?.amountMsat)
                 receivedPayment = pd.payment
-
-                // Push back shutdown by SHUTDOWN_DELAY_MS for payments synced event
-                fgService.pushbackShutdown()
             }
 
             is BreezEvent.Synced -> {
                 receivedPayment?.let {
                     logger.log(TAG, "Got synced event for received payment", "INFO")
-                    fgService.shutdown()
+                    fgService.onFinished(this)
                 }
             }
 

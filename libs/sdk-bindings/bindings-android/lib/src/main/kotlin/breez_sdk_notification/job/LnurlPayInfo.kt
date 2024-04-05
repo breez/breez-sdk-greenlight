@@ -116,6 +116,6 @@ class LnurlPayInfoJob(
             )
         }
 
-        fgService.shutdown()
+        fgService.onFinished(this)
     }
 }

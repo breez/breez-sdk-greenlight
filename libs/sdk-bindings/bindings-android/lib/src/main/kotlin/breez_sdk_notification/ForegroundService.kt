@@ -6,7 +6,9 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import breez_sdk.BlockingBreezServices
+import breez_sdk.BreezEvent
 import breez_sdk.ConnectRequest
+import breez_sdk.EventListener
 import breez_sdk.LogStream
 import breez_sdk_notification.BreezSdkConnector.Companion.connectSDK
 import breez_sdk_notification.Constants.MESSAGE_TYPE_ADDRESS_TXS_CONFIRMED
@@ -27,12 +29,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
-abstract class ForegroundService : SdkForegroundService, Service() {
+interface SdkForegroundService {
+    fun onFinished(job: Job)
+}
+
+abstract class ForegroundService : SdkForegroundService, EventListener, Service() {
     private var breezSDK: BlockingBreezServices? = null
     @Suppress("MemberVisibilityCanBePrivate")
     val serviceScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
     private var logger: ServiceLogger = ServiceLogger()
     private var config: ServiceConfig = ServiceConfig.default()
+    private var jobs: MutableList<Job> = arrayListOf()
 
     companion object {
         private const val TAG = "ForegroundService"
@@ -46,6 +53,14 @@ abstract class ForegroundService : SdkForegroundService, Service() {
         return null
     }
 
+    override fun onFinished(job: Job) {
+        synchronized(this) {
+            logger.log(TAG, "Job has finished: $job", "DEBUG")
+            jobs.remove(job)
+            delayedShutdown()
+        }
+    }
+
     /** Stop the service */
     private val shutdownHandler = Handler(Looper.getMainLooper())
     private val shutdownRunnable: Runnable = Runnable {
@@ -53,12 +68,17 @@ abstract class ForegroundService : SdkForegroundService, Service() {
         shutdown()
     }
 
-    override fun pushbackShutdown() {
+    private fun resetShutdown() {
         shutdownHandler.removeCallbacksAndMessages(null)
-        shutdownHandler.postDelayed(shutdownRunnable, SHUTDOWN_DELAY_MS)
     }
 
-    override fun shutdown() {
+    private fun delayedShutdown() {
+        if (jobs.isEmpty()) {
+            shutdownHandler.postDelayed(shutdownRunnable, SHUTDOWN_DELAY_MS)
+        }
+    }
+
+    open fun shutdown() {
         logger.log(TAG, "Shutting down foreground service", "DEBUG")
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
@@ -71,6 +91,8 @@ abstract class ForegroundService : SdkForegroundService, Service() {
     /** Called when an intent is called for this service. */
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
+        resetShutdown()
+
         val intentDetails = "[ intent=$intent, flag=$flags, startId=$startId ]"
         logger.log(TAG, "Start foreground service from intent $intentDetails", "DEBUG")
 
@@ -89,11 +111,11 @@ abstract class ForegroundService : SdkForegroundService, Service() {
                 launchSdkConnection(connectRequest, job)
             } ?: run {
                 logger.log(TAG, "Received invalid data message", "WARN")
-                shutdown()
+                delayedShutdown()
             }
         } ?: run {
             logger.log(TAG, "Missing ConnectRequest", "WARN")
-            shutdown()
+            delayedShutdown()
         }
 
         return START_NOT_STICKY
@@ -151,20 +173,25 @@ abstract class ForegroundService : SdkForegroundService, Service() {
     }
 
     private fun launchSdkConnection(connectRequest: ConnectRequest, job: Job) {
+        val sdkListener = this
         serviceScope.launch(Dispatchers.IO + CoroutineExceptionHandler { _, e ->
             logger.log(TAG, "Breez SDK connection failed $e", "ERROR")
-            shutdown()
+            delayedShutdown()
         }) {
             breezSDK ?: run {
-                breezSDK = connectSDK(connectRequest, job, logger)
+                breezSDK = connectSDK(connectRequest, sdkListener, logger)
             }
 
             breezSDK?.let {
+                jobs.add(job)
                 job.start(breezSDK!!)
-
-                // Push back shutdown by SHUTDOWN_DELAY_MS
-                pushbackShutdown()
             }
+        }
+    }
+
+    override fun onEvent(e: BreezEvent) {
+        synchronized(this) {
+            jobs.forEach { job -> job.onEvent(e) }
         }
     }
 
