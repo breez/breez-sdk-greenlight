@@ -616,6 +616,7 @@ dictionary LnUrlPayRequest {
     LnUrlPayRequestData data;
     u64 amount_msat;
     string? comment = null;
+    string? payment_metadata = null;
 };
 
 dictionary LnUrlPayRequestData {
@@ -743,12 +744,14 @@ dictionary RedeemOnchainFundsResponse {
 dictionary SendPaymentRequest {
     string bolt11;
     u64? amount_msat = null;
+    string? payment_metadata = null;
 };
 
 dictionary SendSpontaneousPaymentRequest {
     string node_id;
     u64 amount_msat;
     sequence<TlvEntry>? extra_tlvs = null;
+    string? payment_metadata = null;
 };
 
 dictionary SendPaymentResponse {

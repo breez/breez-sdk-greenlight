@@ -890,10 +890,14 @@ class LnUrlPayRequest {
   /// An optional comment for this payment
   final String? comment;
 
+  /// The external metadata to be added to the [Payment]
+  final String? paymentMetadata;
+
   const LnUrlPayRequest({
     required this.data,
     required this.amountMsat,
     this.comment,
+    this.paymentMetadata,
   });
 }
 
@@ -1773,9 +1777,13 @@ class SendPaymentRequest {
   /// The amount to pay in millisatoshis. Should only be set when `bolt11` is a zero-amount invoice.
   final int? amountMsat;
 
+  /// The external metadata to be added to the [Payment]
+  final String? paymentMetadata;
+
   const SendPaymentRequest({
     required this.bolt11,
     this.amountMsat,
+    this.paymentMetadata,
   });
 }
 
@@ -1797,10 +1805,14 @@ class SendSpontaneousPaymentRequest {
   final int amountMsat;
   final List<TlvEntry>? extraTlvs;
 
+  /// The external metadata to be added to the [Payment]
+  final String? paymentMetadata;
+
   const SendSpontaneousPaymentRequest({
     required this.nodeId,
     required this.amountMsat,
     this.extraTlvs,
+    this.paymentMetadata,
   });
 }
 
@@ -4849,6 +4861,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     _api_fill_to_wire_ln_url_pay_request_data(apiObj.data, wireObj.data);
     wireObj.amount_msat = api2wire_u64(apiObj.amountMsat);
     wireObj.comment = api2wire_opt_String(apiObj.comment);
+    wireObj.payment_metadata = api2wire_opt_String(apiObj.paymentMetadata);
   }
 
   void _api_fill_to_wire_ln_url_pay_request_data(
@@ -5004,6 +5017,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   void _api_fill_to_wire_send_payment_request(SendPaymentRequest apiObj, wire_SendPaymentRequest wireObj) {
     wireObj.bolt11 = api2wire_String(apiObj.bolt11);
     wireObj.amount_msat = api2wire_opt_box_autoadd_u64(apiObj.amountMsat);
+    wireObj.payment_metadata = api2wire_opt_String(apiObj.paymentMetadata);
   }
 
   void _api_fill_to_wire_send_spontaneous_payment_request(
@@ -5011,6 +5025,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.node_id = api2wire_String(apiObj.nodeId);
     wireObj.amount_msat = api2wire_u64(apiObj.amountMsat);
     wireObj.extra_tlvs = api2wire_opt_list_tlv_entry(apiObj.extraTlvs);
+    wireObj.payment_metadata = api2wire_opt_String(apiObj.paymentMetadata);
   }
 
   void _api_fill_to_wire_sign_message_request(SignMessageRequest apiObj, wire_SignMessageRequest wireObj) {
@@ -6547,6 +6562,8 @@ final class wire_SendPaymentRequest extends ffi.Struct {
   external ffi.Pointer<wire_uint_8_list> bolt11;
 
   external ffi.Pointer<ffi.Uint64> amount_msat;
+
+  external ffi.Pointer<wire_uint_8_list> payment_metadata;
 }
 
 final class wire_TlvEntry extends ffi.Struct {
@@ -6570,6 +6587,8 @@ final class wire_SendSpontaneousPaymentRequest extends ffi.Struct {
   external int amount_msat;
 
   external ffi.Pointer<wire_list_tlv_entry> extra_tlvs;
+
+  external ffi.Pointer<wire_uint_8_list> payment_metadata;
 }
 
 final class wire_OpeningFeeParams extends ffi.Struct {
@@ -6633,6 +6652,8 @@ final class wire_LnUrlPayRequest extends ffi.Struct {
   external int amount_msat;
 
   external ffi.Pointer<wire_uint_8_list> comment;
+
+  external ffi.Pointer<wire_uint_8_list> payment_metadata;
 }
 
 final class wire_LnUrlWithdrawRequestData extends ffi.Struct {

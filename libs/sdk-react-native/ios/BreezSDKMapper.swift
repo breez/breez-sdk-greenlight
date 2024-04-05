@@ -1278,11 +1278,19 @@ enum BreezSDKMapper {
             }
             comment = commentTmp
         }
+        var paymentMetadata: String?
+        if hasNonNilKey(data: lnUrlPayRequest, key: "paymentMetadata") {
+            guard let paymentMetadataTmp = lnUrlPayRequest["paymentMetadata"] as? String else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "paymentMetadata"))
+            }
+            paymentMetadata = paymentMetadataTmp
+        }
 
         return LnUrlPayRequest(
             data: data,
             amountMsat: amountMsat,
-            comment: comment
+            comment: comment,
+            paymentMetadata: paymentMetadata
         )
     }
 
@@ -1291,6 +1299,7 @@ enum BreezSDKMapper {
             "data": dictionaryOf(lnUrlPayRequestData: lnUrlPayRequest.data),
             "amountMsat": lnUrlPayRequest.amountMsat,
             "comment": lnUrlPayRequest.comment == nil ? nil : lnUrlPayRequest.comment,
+            "paymentMetadata": lnUrlPayRequest.paymentMetadata == nil ? nil : lnUrlPayRequest.paymentMetadata,
         ]
     }
 
@@ -3505,10 +3514,18 @@ enum BreezSDKMapper {
             }
             amountMsat = amountMsatTmp
         }
+        var paymentMetadata: String?
+        if hasNonNilKey(data: sendPaymentRequest, key: "paymentMetadata") {
+            guard let paymentMetadataTmp = sendPaymentRequest["paymentMetadata"] as? String else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "paymentMetadata"))
+            }
+            paymentMetadata = paymentMetadataTmp
+        }
 
         return SendPaymentRequest(
             bolt11: bolt11,
-            amountMsat: amountMsat
+            amountMsat: amountMsat,
+            paymentMetadata: paymentMetadata
         )
     }
 
@@ -3516,6 +3533,7 @@ enum BreezSDKMapper {
         return [
             "bolt11": sendPaymentRequest.bolt11,
             "amountMsat": sendPaymentRequest.amountMsat == nil ? nil : sendPaymentRequest.amountMsat,
+            "paymentMetadata": sendPaymentRequest.paymentMetadata == nil ? nil : sendPaymentRequest.paymentMetadata,
         ]
     }
 
@@ -3581,10 +3599,19 @@ enum BreezSDKMapper {
             extraTlvs = try asTlvEntryList(arr: extraTlvsTmp)
         }
 
+        var paymentMetadata: String?
+        if hasNonNilKey(data: sendSpontaneousPaymentRequest, key: "paymentMetadata") {
+            guard let paymentMetadataTmp = sendSpontaneousPaymentRequest["paymentMetadata"] as? String else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "paymentMetadata"))
+            }
+            paymentMetadata = paymentMetadataTmp
+        }
+
         return SendSpontaneousPaymentRequest(
             nodeId: nodeId,
             amountMsat: amountMsat,
-            extraTlvs: extraTlvs
+            extraTlvs: extraTlvs,
+            paymentMetadata: paymentMetadata
         )
     }
 
@@ -3593,6 +3620,7 @@ enum BreezSDKMapper {
             "nodeId": sendSpontaneousPaymentRequest.nodeId,
             "amountMsat": sendSpontaneousPaymentRequest.amountMsat,
             "extraTlvs": sendSpontaneousPaymentRequest.extraTlvs == nil ? nil : arrayOf(tlvEntryList: sendSpontaneousPaymentRequest.extraTlvs!),
+            "paymentMetadata": sendSpontaneousPaymentRequest.paymentMetadata == nil ? nil : sendSpontaneousPaymentRequest.paymentMetadata,
         ]
     }
 

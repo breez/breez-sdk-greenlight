@@ -875,6 +875,8 @@ pub struct SendPaymentRequest {
     pub bolt11: String,
     /// The amount to pay in millisatoshis. Should only be set when `bolt11` is a zero-amount invoice.
     pub amount_msat: Option<u64>,
+    /// The external metadata to be added to the [Payment]
+    pub payment_metadata: Option<String>,
 }
 
 /// Represents a TLV entry for a keysend payment.
@@ -895,6 +897,8 @@ pub struct SendSpontaneousPaymentRequest {
     pub amount_msat: u64,
     // Optional extra TLVs
     pub extra_tlvs: Option<Vec<TlvEntry>>,
+    /// The external metadata to be added to the [Payment]
+    pub payment_metadata: Option<String>,
 }
 
 /// Represents a send payment response.
@@ -1554,6 +1558,8 @@ pub struct LnUrlPayRequest {
     pub amount_msat: u64,
     /// An optional comment for this payment
     pub comment: Option<String>,
+    /// The external metadata to be added to the [Payment]
+    pub payment_metadata: Option<String>,
 }
 
 /// [LnUrlCallbackStatus] specific to LNURL-withdraw, where the success case contains the invoice.

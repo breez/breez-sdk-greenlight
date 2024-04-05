@@ -247,6 +247,7 @@ pub(crate) async fn handle_command(
                 .send_payment(SendPaymentRequest {
                     bolt11,
                     amount_msat,
+                    payment_metadata: None,
                 })
                 .await?;
             serde_json::to_string_pretty(&payment).map_err(|e| e.into())
@@ -260,6 +261,7 @@ pub(crate) async fn handle_command(
                     node_id,
                     amount_msat,
                     extra_tlvs: None,
+                    payment_metadata: None,
                 })
                 .await?;
             serde_json::to_string_pretty(&response.payment).map_err(|e| e.into())
@@ -473,6 +475,7 @@ pub(crate) async fn handle_command(
                         data: pd,
                         amount_msat: amount_msat.parse::<u64>()?,
                         comment: None,
+                        payment_metadata: None,
                     })
                     .await?;
                 //show_results(pay_res);

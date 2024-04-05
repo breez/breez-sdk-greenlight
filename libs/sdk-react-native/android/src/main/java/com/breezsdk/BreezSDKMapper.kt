@@ -1155,10 +1155,12 @@ fun asLnUrlPayRequest(lnUrlPayRequest: ReadableMap): LnUrlPayRequest? {
     val data = lnUrlPayRequest.getMap("data")?.let { asLnUrlPayRequestData(it) }!!
     val amountMsat = lnUrlPayRequest.getDouble("amountMsat").toULong()
     val comment = if (hasNonNullKey(lnUrlPayRequest, "comment")) lnUrlPayRequest.getString("comment") else null
+    val paymentMetadata = if (hasNonNullKey(lnUrlPayRequest, "paymentMetadata")) lnUrlPayRequest.getString("paymentMetadata") else null
     return LnUrlPayRequest(
         data,
         amountMsat,
         comment,
+        paymentMetadata,
     )
 }
 
@@ -1167,6 +1169,7 @@ fun readableMapOf(lnUrlPayRequest: LnUrlPayRequest): ReadableMap {
         "data" to readableMapOf(lnUrlPayRequest.data),
         "amountMsat" to lnUrlPayRequest.amountMsat,
         "comment" to lnUrlPayRequest.comment,
+        "paymentMetadata" to lnUrlPayRequest.paymentMetadata,
     )
 }
 
@@ -3217,9 +3220,20 @@ fun asSendPaymentRequest(sendPaymentRequest: ReadableMap): SendPaymentRequest? {
     }
     val bolt11 = sendPaymentRequest.getString("bolt11")!!
     val amountMsat = if (hasNonNullKey(sendPaymentRequest, "amountMsat")) sendPaymentRequest.getDouble("amountMsat").toULong() else null
+    val paymentMetadata =
+        if (hasNonNullKey(
+                sendPaymentRequest,
+                "paymentMetadata",
+            )
+        ) {
+            sendPaymentRequest.getString("paymentMetadata")
+        } else {
+            null
+        }
     return SendPaymentRequest(
         bolt11,
         amountMsat,
+        paymentMetadata,
     )
 }
 
@@ -3227,6 +3241,7 @@ fun readableMapOf(sendPaymentRequest: SendPaymentRequest): ReadableMap {
     return readableMapOf(
         "bolt11" to sendPaymentRequest.bolt11,
         "amountMsat" to sendPaymentRequest.amountMsat,
+        "paymentMetadata" to sendPaymentRequest.paymentMetadata,
     )
 }
 
@@ -3299,10 +3314,21 @@ fun asSendSpontaneousPaymentRequest(sendSpontaneousPaymentRequest: ReadableMap):
         } else {
             null
         }
+    val paymentMetadata =
+        if (hasNonNullKey(
+                sendSpontaneousPaymentRequest,
+                "paymentMetadata",
+            )
+        ) {
+            sendSpontaneousPaymentRequest.getString("paymentMetadata")
+        } else {
+            null
+        }
     return SendSpontaneousPaymentRequest(
         nodeId,
         amountMsat,
         extraTlvs,
+        paymentMetadata,
     )
 }
 
@@ -3311,6 +3337,7 @@ fun readableMapOf(sendSpontaneousPaymentRequest: SendSpontaneousPaymentRequest):
         "nodeId" to sendSpontaneousPaymentRequest.nodeId,
         "amountMsat" to sendSpontaneousPaymentRequest.amountMsat,
         "extraTlvs" to sendSpontaneousPaymentRequest.extraTlvs?.let { readableArrayOf(it) },
+        "paymentMetadata" to sendSpontaneousPaymentRequest.paymentMetadata,
     )
 }
 
