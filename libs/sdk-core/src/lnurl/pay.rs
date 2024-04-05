@@ -875,8 +875,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_lnurl_pay_no_success_action() -> Result<()> {
-        let comment = rand_string(COMMENT_LENGHT as usize);
-        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGHT);
+        let comment = rand_string(COMMENT_LENGTH as usize);
+        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGTH);
         let temp_desc = pay_req.metadata_str.clone();
         let inv = rand_invoice_with_description_hash(temp_desc)?;
         let user_amount_msat = inv.amount_milli_satoshis().unwrap();
@@ -917,13 +917,13 @@ mod tests {
         }
     }
 
-    static COMMENT_LENGHT: u16 = 10;
+    static COMMENT_LENGTH: u16 = 10;
 
     #[tokio::test]
     async fn test_lnurl_pay_unsupported_success_action() -> Result<()> {
         let user_amount_msat = 11000;
-        let comment = rand_string(COMMENT_LENGHT as usize);
-        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGHT);
+        let comment = rand_string(COMMENT_LENGTH as usize);
+        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGTH);
         let _m =
             mock_lnurl_pay_callback_endpoint_unsupported_success_action(LnurlPayCallbackParams {
                 pay_req: &pay_req,
@@ -950,8 +950,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_lnurl_pay_success_payment_hash() -> Result<()> {
-        let comment = rand_string(COMMENT_LENGHT as usize);
-        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGHT);
+        let comment = rand_string(COMMENT_LENGTH as usize);
+        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGTH);
         let temp_desc = pay_req.metadata_str.clone();
         let inv = rand_invoice_with_description_hash(temp_desc)?;
         let user_amount_msat = inv.amount_milli_satoshis().unwrap();
@@ -983,8 +983,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_lnurl_pay_msg_success_action() -> Result<()> {
-        let comment = rand_string(COMMENT_LENGHT as usize);
-        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGHT);
+        let comment = rand_string(COMMENT_LENGTH as usize);
+        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGTH);
         let temp_desc = pay_req.metadata_str.clone();
         let inv = rand_invoice_with_description_hash(temp_desc)?;
         let user_amount_msat = inv.amount_milli_satoshis().unwrap();
@@ -1031,8 +1031,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_lnurl_pay_msg_success_action_incorrect_amount() -> Result<()> {
-        let comment = rand_string(COMMENT_LENGHT as usize);
-        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGHT);
+        let comment = rand_string(COMMENT_LENGTH as usize);
+        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGTH);
         let temp_desc = pay_req.metadata_str.clone();
         let inv = rand_invoice_with_description_hash(temp_desc)?;
         let user_amount_msat = inv.amount_milli_satoshis().unwrap() + 1000;
@@ -1060,8 +1060,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_lnurl_pay_msg_success_action_error_from_endpoint() -> Result<()> {
-        let comment = rand_string(COMMENT_LENGHT as usize);
-        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGHT);
+        let comment = rand_string(COMMENT_LENGTH as usize);
+        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGTH);
         let temp_desc = pay_req.metadata_str.clone();
         let inv = rand_invoice_with_description_hash(temp_desc)?;
         let user_amount_msat = inv.amount_milli_satoshis().unwrap();
@@ -1098,8 +1098,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_lnurl_pay_url_success_action() -> Result<()> {
-        let comment = rand_string(COMMENT_LENGHT as usize);
-        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGHT);
+        let comment = rand_string(COMMENT_LENGTH as usize);
+        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGTH);
         let temp_desc = pay_req.metadata_str.clone();
         let inv = rand_invoice_with_description_hash(temp_desc)?;
         let user_amount_msat = inv.amount_milli_satoshis().unwrap();
@@ -1166,8 +1166,8 @@ mod tests {
         // Generate preimage
         let preimage = sha256::Hash::hash(&rand_vec_u8(10));
 
-        let comment = rand_string(COMMENT_LENGHT as usize);
-        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGHT);
+        let comment = rand_string(COMMENT_LENGTH as usize);
+        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGTH);
         let temp_desc = pay_req.metadata_str.clone();
 
         // The invoice (served by LNURL-pay endpoint, matching preimage and description hash)
@@ -1243,8 +1243,8 @@ mod tests {
         // Generate preimage
         let preimage = sha256::Hash::hash(&rand_vec_u8(10));
 
-        let comment = rand_string(COMMENT_LENGHT as usize);
-        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGHT);
+        let comment = rand_string(COMMENT_LENGTH as usize);
+        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGTH);
         let temp_desc = pay_req.metadata_str.clone();
 
         // The invoice (served by LNURL-pay endpoint, matching preimage and description hash)
