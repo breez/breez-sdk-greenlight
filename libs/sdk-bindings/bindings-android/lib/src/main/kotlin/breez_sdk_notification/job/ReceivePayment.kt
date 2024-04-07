@@ -41,7 +41,7 @@ class ReceivePaymentJob(
             if (payment != null) {
                 this.receivedPayment = payment
                 logger.log(TAG, "Found payment for hash: ${request.paymentHash}", "INFO")
-                fgService.shutdown()
+                fgService.onFinished(this)
             }
         } catch (e: Exception) {
             logger.log(TAG, "Failed to call start of receive payment notification: ${e.message}", "WARN")
