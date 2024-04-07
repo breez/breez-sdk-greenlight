@@ -1,6 +1,6 @@
 use super::{db::SqliteStorage, error::PersistResult};
 use crate::{FullReverseSwapInfo, ReverseSwapInfoCached, ReverseSwapStatus};
-use rusqlite::{named_params, OptionalExtension, Params, Row, TransactionBehavior};
+use rusqlite::{named_params, Row, TransactionBehavior};
 
 impl SqliteStorage {
     pub(crate) fn insert_reverse_swap(&self, rsi: &FullReverseSwapInfo) -> PersistResult<()> {
@@ -94,73 +94,90 @@ impl SqliteStorage {
 
     pub(crate) fn list_reverse_swaps(&self) -> PersistResult<Vec<FullReverseSwapInfo>> {
         let con = self.get_connection()?;
-        let mut stmt = con.prepare(&self.select_reverse_swap_query("true"))?;
+        let mut stmt = con.prepare(&self.select_reverse_swap_query("true", ""))?;
 
         let vec: Vec<FullReverseSwapInfo> = stmt
-            .query_map([], |row| self.sql_row_to_reverse_swap(row))?
+            .query_map([], |row| self.sql_row_to_reverse_swap(row, ""))?
             .map(|i| i.unwrap())
             .collect();
 
         Ok(vec)
     }
 
-    pub(crate) fn get_reverse_swap_by_preimage(
-        &self,
-        preimage: &Vec<u8>,
-    ) -> PersistResult<Option<FullReverseSwapInfo>> {
-        self.select_single_reverse_swap("preimage = ?1", [preimage])
+    pub(crate) fn select_reverse_swap_fields(&self, prefix: &str) -> String {
+        format!(
+            "        
+        {prefix}id,
+        {prefix}created_at_block_height,
+        {prefix}preimage,
+        {prefix}private_key,
+        {prefix}timeout_block_height,
+        {prefix}claim_pubkey,
+        {prefix}invoice,
+        {prefix}onchain_amount_sat,
+        {prefix}sat_per_vbyte,
+        {prefix}receive_amount_sat,
+        {prefix}redeem_script,
+        {prefix}status,
+        {prefix}lockup_txid,
+        {prefix}claim_txid           
+        "
+        )
     }
 
-    fn select_single_reverse_swap<P>(
-        &self,
-        where_clause: &str,
-        params: P,
-    ) -> PersistResult<Option<FullReverseSwapInfo>>
-    where
-        P: Params,
-    {
-        Ok(self
-            .get_connection()?
-            .query_row(
-                &self.select_reverse_swap_query(where_clause),
-                params,
-                |row| self.sql_row_to_reverse_swap(row),
-            )
-            .optional()?)
-    }
-
-    fn sql_row_to_reverse_swap(
+    pub(crate) fn sql_row_to_reverse_swap(
         &self,
         row: &Row,
+        prefix: &str,
     ) -> PersistResult<FullReverseSwapInfo, rusqlite::Error> {
         Ok(FullReverseSwapInfo {
-            id: row.get("id")?,
-            created_at_block_height: row.get("created_at_block_height")?,
-            preimage: row.get("preimage")?,
-            private_key: row.get("private_key")?,
-            timeout_block_height: row.get("timeout_block_height")?,
-            claim_pubkey: row.get("claim_pubkey")?,
-            invoice: row.get("invoice")?,
-            onchain_amount_sat: row.get("onchain_amount_sat")?,
-            sat_per_vbyte: row.get("sat_per_vbyte")?,
-            receive_amount_sat: row.get("receive_amount_sat")?,
-            redeem_script: row.get("redeem_script")?,
+            id: row.get(format!("{prefix}id").as_str())?,
+            created_at_block_height: row
+                .get(format!("{prefix}created_at_block_height").as_str())?,
+            preimage: row.get(format!("{prefix}preimage").as_str())?,
+            private_key: row.get(format!("{prefix}private_key").as_str())?,
+            timeout_block_height: row.get(format!("{prefix}timeout_block_height").as_str())?,
+            claim_pubkey: row.get(format!("{prefix}claim_pubkey").as_str())?,
+            invoice: row.get(format!("{prefix}invoice").as_str())?,
+            onchain_amount_sat: row.get(format!("{prefix}onchain_amount_sat").as_str())?,
+            sat_per_vbyte: row.get(format!("{prefix}sat_per_vbyte").as_str())?,
+            receive_amount_sat: row.get(format!("{prefix}receive_amount_sat").as_str())?,
+            redeem_script: row.get(format!("{prefix}redeem_script").as_str())?,
             cache: ReverseSwapInfoCached {
                 // The status is stored in the main DB, which is empty when the node is restored.
                 // We therefore default to the Initial state. This will be updated at the end of sync().
-                status: serde_json::from_value(row.get("status")?)
+                status: serde_json::from_value(row.get(format!("{prefix}status").as_str())?)
                     .unwrap_or(ReverseSwapStatus::Initial),
-                lockup_txid: row.get("lockup_txid")?,
-                claim_txid: row.get("claim_txid")?,
+                lockup_txid: row.get(format!("{prefix}lockup_txid").as_str())?,
+                claim_txid: row.get(format!("{prefix}claim_txid").as_str())?,
             },
         })
     }
 
-    fn select_reverse_swap_query(&self, where_clause: &str) -> String {
+    pub(crate) fn select_reverse_swap_query(&self, where_clause: &str, prefix: &str) -> String {
+        let fields = format!(
+            "        
+            reverse_swaps.id as {prefix}id,
+            created_at_block_height as {prefix}created_at_block_height,
+            preimage as {prefix}preimage,
+            private_key as {prefix}private_key,
+            timeout_block_height as {prefix}timeout_block_height,
+            claim_pubkey as {prefix}claim_pubkey,
+            invoice as {prefix}invoice,
+            onchain_amount_sat as {prefix}onchain_amount_sat,
+            sat_per_vbyte as {prefix}sat_per_vbyte,
+            receive_amount_sat as {prefix}receive_amount_sat,
+            redeem_script as {prefix}redeem_script,
+            status as {prefix}status,
+            lockup_txid as {prefix}lockup_txid,
+            claim_txid as {prefix}claim_txid         
+            "
+        );
+
         format!(
             "
             SELECT
-             *
+             {fields}
             FROM sync.reverse_swaps
              LEFT JOIN reverse_swaps_info ON reverse_swaps.id = reverse_swaps_info.id
             WHERE {}

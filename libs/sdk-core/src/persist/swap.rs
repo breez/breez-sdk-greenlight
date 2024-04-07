@@ -212,33 +212,37 @@ impl SqliteStorage {
         Ok(self.get_swap_info_by_address(bitcoin_address)?.unwrap())
     }
     //(SELECT json_group_array(value) FROM json_each(json_group_array(refund_tx_id)) WHERE refund_tx_id is not null) as refund_tx_ids,
-    fn select_swap_query(&self, where_clause: &str) -> String {
+    pub(crate) fn select_swap_query(&self, where_clause: &str, prefix: &str) -> String {
+        let swap_fields = format!("        
+          swaps.bitcoin_address  as {prefix}bitcoin_address,
+          swaps.created_at as {prefix}created_at,
+          lock_height as {prefix}lock_height,
+          payment_hash as {prefix}payment_hash,
+          preimage as {prefix}preimage,
+          private_key as {prefix}private_key,
+          public_key as {prefix}public_key,
+          swapper_public_key as {prefix}swapper_public_key,
+          script as {prefix}script,
+          min_allowed_deposit as {prefix}min_allowed_deposit,
+          max_allowed_deposit as {prefix}max_allowed_deposit,
+          bolt11 as {prefix}bolt11,
+          paid_msat as {prefix}paid_msat,
+          unconfirmed_sats as {prefix}unconfirmed_sats,
+          confirmed_sats as {prefix}confirmed_sats,
+          total_incoming_txs as {prefix}total_incoming_txs,
+          status as {prefix}status,             
+          (SELECT json_group_array(refund_tx_id) FROM sync.swap_refunds as swap_refunds where bitcoin_address = swaps.bitcoin_address) as {prefix}refund_tx_ids,
+          unconfirmed_tx_ids as {prefix}unconfirmed_tx_ids,
+          confirmed_tx_ids as {prefix}confirmed_tx_ids,
+          last_redeem_error as {prefix}last_redeem_error,
+          swaps_fees.channel_opening_fees as {prefix}channel_opening_fees,
+          swaps_info.confirmed_at as {prefix}confirmed_at          
+        ");
+
         format!(
             "
             SELECT
-             swaps.bitcoin_address as bitcoin_address,
-             swaps.created_at as created_at,
-             lock_height as lock_height,
-             payment_hash as payment_hash,
-             preimage as preimage,
-             private_key as private_key,
-             public_key as public_key,
-             swapper_public_key as swapper_public_key,
-             script as script,
-             min_allowed_deposit,
-             max_allowed_deposit,
-             bolt11 as bolt11,
-             paid_msat as paid_msat,
-             unconfirmed_sats as unconfirmed_sats,
-             confirmed_sats as confirmed_sats,
-             total_incoming_txs as total_incoming_txs,
-             status as status,             
-             (SELECT json_group_array(refund_tx_id) FROM sync.swap_refunds as swap_refunds where bitcoin_address = swaps.bitcoin_address) as refund_tx_ids,
-             unconfirmed_tx_ids as unconfirmed_tx_ids,
-             confirmed_tx_ids as confirmed_tx_ids,
-             last_redeem_error as last_redeem_error,
-             swaps_fees.channel_opening_fees as channel_opening_fees,
-             swaps_info.confirmed_at as confirmed_at
+             {swap_fields}
             FROM sync.swaps as swaps
              LEFT JOIN swaps_info ON swaps.bitcoin_address = swaps_info.bitcoin_address
              LEFT JOIN sync.swaps_fees as swaps_fees ON swaps.bitcoin_address = swaps_fees.bitcoin_address
@@ -246,6 +250,36 @@ impl SqliteStorage {
             WHERE {}
             ",
             where_clause
+        )
+    }
+
+    pub(crate) fn select_swap_fields(&self, prefix: &str) -> String {
+        format!(
+            "        
+          {prefix}bitcoin_address,
+          {prefix}created_at,
+          {prefix}lock_height,
+          {prefix}payment_hash,
+          {prefix}preimage,
+          {prefix}private_key,
+          {prefix}public_key,
+          {prefix}swapper_public_key,
+          {prefix}script,
+          {prefix}min_allowed_deposit,
+          {prefix}max_allowed_deposit,
+          {prefix}bolt11,
+          {prefix}paid_msat,
+          {prefix}unconfirmed_sats,
+          {prefix}confirmed_sats,
+          {prefix}total_incoming_txs,
+          {prefix}status,             
+          {prefix}refund_tx_ids,
+          {prefix}unconfirmed_tx_ids,
+          {prefix}confirmed_tx_ids,
+          {prefix}last_redeem_error,
+          {prefix}channel_opening_fees,
+          {prefix}confirmed_at          
+          "
         )
     }
 
@@ -259,8 +293,8 @@ impl SqliteStorage {
     {
         Ok(self
             .get_connection()?
-            .query_row(&self.select_swap_query(where_clause), params, |row| {
-                self.sql_row_to_swap(row)
+            .query_row(&self.select_swap_query(where_clause, ""), params, |row| {
+                self.sql_row_to_swap(row, "")
             })
             .optional()?)
     }
@@ -281,10 +315,10 @@ impl SqliteStorage {
         status: SwapStatus,
     ) -> PersistResult<Vec<SwapInfo>> {
         let con = self.get_connection()?;
-        let mut stmt = con.prepare(&self.select_swap_query("status = ?1"))?;
+        let mut stmt = con.prepare(&self.select_swap_query("status = ?1", ""))?;
 
         let vec: Vec<SwapInfo> = stmt
-            .query_map([status as u32], |row| self.sql_row_to_swap(row))?
+            .query_map([status as u32], |row| self.sql_row_to_swap(row, ""))?
             .map(|i| i.unwrap())
             .collect();
 
@@ -293,66 +327,71 @@ impl SqliteStorage {
 
     pub(crate) fn list_swaps(&self) -> PersistResult<Vec<SwapInfo>> {
         let con = self.get_connection()?;
-        let mut stmt = con.prepare(&self.select_swap_query("true"))?;
+        let mut stmt = con.prepare(&self.select_swap_query("true", ""))?;
 
         let vec: Vec<SwapInfo> = stmt
-            .query_map([], |row| self.sql_row_to_swap(row))?
+            .query_map([], |row| self.sql_row_to_swap(row, ""))?
             .map(|i| i.unwrap())
             .collect();
 
         Ok(vec)
     }
 
-    fn sql_row_to_swap(&self, row: &Row) -> PersistResult<SwapInfo, rusqlite::Error> {
+    pub(crate) fn sql_row_to_swap(
+        &self,
+        row: &Row,
+        prefix: &str,
+    ) -> PersistResult<SwapInfo, rusqlite::Error> {
         let status: i32 = row
-            .get::<&str, Option<i32>>("status")?
+            .get::<&str, Option<i32>>(format!("{prefix}status").as_str())?
             .unwrap_or(SwapStatus::Initial as i32);
         let status: SwapStatus = status.try_into().unwrap_or(SwapStatus::Initial);
         let refund_txs_raw: String = row
-            .get::<&str, Option<String>>("refund_tx_ids")?
+            .get::<&str, Option<String>>(format!("{prefix}refund_tx_ids").as_str())?
             .unwrap_or("[]".to_string());
         let refund_tx_ids: Vec<String> = serde_json::from_str(refund_txs_raw.as_str()).unwrap();
         // let t: Vec<String> =
         //     serde_json::from_value(refund_txs_raw).map_err(|e| FromSqlError::InvalidType)?;
 
         let unconfirmed_tx_ids: StringArray = row
-            .get::<&str, Option<StringArray>>("unconfirmed_tx_ids")?
+            .get::<&str, Option<StringArray>>(format!("{prefix}unconfirmed_tx_ids").as_str())?
             .unwrap_or(StringArray(vec![]));
         let confirmed_txs_raw: StringArray = row
-            .get::<&str, Option<StringArray>>("confirmed_tx_ids")?
+            .get::<&str, Option<StringArray>>(format!("{prefix}confirmed_tx_ids").as_str())?
             .unwrap_or(StringArray(vec![]));
+        let bitcoin_address = row.get(format!("{prefix}bitcoin_address").as_str())?;
         Ok(SwapInfo {
-            bitcoin_address: row.get("bitcoin_address")?,
-            created_at: row.get("created_at")?,
-            lock_height: row.get("lock_height")?,
-            payment_hash: row.get("payment_hash")?,
-            preimage: row.get("preimage")?,
-            private_key: row.get("private_key")?,
-            public_key: row.get("public_key")?,
-            swapper_public_key: row.get("swapper_public_key")?,
-            script: row.get("script")?,
-            bolt11: row.get("bolt11")?,
+            bitcoin_address,
+            created_at: row.get(format!("{prefix}created_at").as_str())?,
+            lock_height: row.get(format!("{prefix}lock_height").as_str())?,
+            payment_hash: row.get(format!("{prefix}payment_hash").as_str())?,
+            preimage: row.get(format!("{prefix}preimage").as_str())?,
+            private_key: row.get(format!("{prefix}private_key").as_str())?,
+            public_key: row.get(format!("{prefix}public_key").as_str())?,
+            swapper_public_key: row.get(format!("{prefix}swapper_public_key").as_str())?,
+            script: row.get(format!("{prefix}script").as_str())?,
+            bolt11: row.get(format!("{prefix}bolt11").as_str())?,
             paid_msat: row
-                .get::<&str, Option<u64>>("paid_msat")?
+                .get::<&str, Option<u64>>(format!("{prefix}paid_msat").as_str())?
                 .unwrap_or_default(),
             unconfirmed_sats: row
-                .get::<&str, Option<u64>>("unconfirmed_sats")?
+                .get::<&str, Option<u64>>(format!("{prefix}unconfirmed_sats").as_str())?
                 .unwrap_or_default(),
             confirmed_sats: row
-                .get::<&str, Option<u64>>("confirmed_sats")?
+                .get::<&str, Option<u64>>(format!("{prefix}confirmed_sats").as_str())?
                 .unwrap_or_default(),
             total_incoming_txs: row
-                .get::<&str, Option<u64>>("total_incoming_txs")?
+                .get::<&str, Option<u64>>(format!("{prefix}total_incoming_txs").as_str())?
                 .unwrap_or_default(),
             status,
             refund_tx_ids,
             unconfirmed_tx_ids: unconfirmed_tx_ids.0,
             confirmed_tx_ids: confirmed_txs_raw.0,
-            min_allowed_deposit: row.get("min_allowed_deposit")?,
-            max_allowed_deposit: row.get("max_allowed_deposit")?,
-            last_redeem_error: row.get("last_redeem_error")?,
-            channel_opening_fees: row.get("channel_opening_fees")?,
-            confirmed_at: row.get("confirmed_at")?,
+            min_allowed_deposit: row.get(format!("{prefix}min_allowed_deposit").as_str())?,
+            max_allowed_deposit: row.get(format!("{prefix}max_allowed_deposit").as_str())?,
+            last_redeem_error: row.get(format!("{prefix}last_redeem_error").as_str())?,
+            channel_opening_fees: row.get(format!("{prefix}channel_opening_fees").as_str())?,
+            confirmed_at: row.get(format!("{prefix}confirmed_at").as_str())?,
         })
     }
 }
