@@ -664,6 +664,7 @@ impl BreezServices {
         match self.list_lsps().await?.iter().any(|lsp| lsp.id == lsp_id) {
             true => {
                 self.persister.set_lsp_id(lsp_id)?;
+                self.persister.remove_lsp_information()?;
                 self.sync().await?;
                 if let Some(webhook_url) = self.persister.get_webhook_url()? {
                     self.register_payment_notifications(webhook_url).await?
@@ -1125,16 +1126,17 @@ impl BreezServices {
     /// If not or no LSP is selected, it selects the first LSP in [`list_lsps`].
     async fn connect_lsp_peer(&self, node_pubkey: String) -> SdkResult<()> {
         let lsps = self.lsp_api.list_lsps(node_pubkey).await?;
-        if let Some(lsp) = self
+        if let Some(lsp_info) = self
             .persister
             .get_lsp_id()?
             .and_then(|lsp_id| lsps.clone().into_iter().find(|lsp| lsp.id == lsp_id))
             .or_else(|| lsps.first().cloned())
         {
-            self.persister.set_lsp_id(lsp.id)?;
+            self.persister.set_lsp_id(lsp_info.id.clone())?;
+            self.persister.set_lsp_information(&lsp_info)?;
             if let Ok(node_state) = self.node_info() {
-                let node_id = lsp.pubkey;
-                let address = lsp.host;
+                let node_id = lsp_info.pubkey;
+                let address = lsp_info.host;
                 let lsp_connected = node_state
                     .connected_peers
                     .iter()
@@ -1270,7 +1272,26 @@ impl BreezServices {
 
     /// Convenience method to look up LSP info based on current LSP ID
     pub async fn lsp_info(&self) -> SdkResult<LspInformation> {
-        Ok(get_lsp(self.persister.clone(), self.lsp_api.clone()).await?)
+        let persisted_lsp_info = self.persister.get_lsp_information()?.and_then(|lsp_info| {
+            match lsp_info.opening_fee_params_list.is_valid() {
+                true => Some(lsp_info),
+                false => {
+                    debug!("Ignoring invalid LSP information: {:?}", lsp_info);
+                    None
+                }
+            }
+        });
+        match persisted_lsp_info {
+            Some(lsp_info) => {
+                debug!("Using persisted LSP information");
+                Ok(lsp_info)
+            }
+            None => {
+                let lsp_info = get_lsp(self.persister.clone(), self.lsp_api.clone()).await?;
+                self.persister.set_lsp_information(&lsp_info)?;
+                Ok(lsp_info)
+            }
+        }
     }
 
     pub(crate) async fn start_node(&self) -> Result<()> {
