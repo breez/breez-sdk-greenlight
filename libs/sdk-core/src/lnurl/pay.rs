@@ -159,7 +159,6 @@ pub(crate) mod model {
 
     #[derive(Serialize, Deserialize, Debug)]
     pub struct LnUrlPaySuccessData {
-        pub payment_hash: String,
         pub payment: Payment,
         pub success_action: Option<SuccessActionProcessed>,
     }
@@ -973,7 +972,7 @@ mod tests {
             })
             .await?
         {
-            LnUrlPayResult::EndpointSuccess { data } => match data.payment_hash {
+            LnUrlPayResult::EndpointSuccess { data } => match data.payment.id {
                 s if s == inv.payment_hash().to_hex() => Ok(()),
                 _ => Err(anyhow!("Unexpected payment hash")),
             },

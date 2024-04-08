@@ -958,12 +958,10 @@ sealed class LnUrlPayResult with _$LnUrlPayResult {
 }
 
 class LnUrlPaySuccessData {
-  final String paymentHash;
   final Payment payment;
   final SuccessActionProcessed? successAction;
 
   const LnUrlPaySuccessData({
-    required this.paymentHash,
     required this.payment,
     this.successAction,
   });
@@ -3642,11 +3640,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   LnUrlPaySuccessData _wire2api_ln_url_pay_success_data(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 3) throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
     return LnUrlPaySuccessData(
-      paymentHash: _wire2api_String(arr[0]),
-      payment: _wire2api_payment(arr[1]),
-      successAction: _wire2api_opt_box_autoadd_success_action_processed(arr[2]),
+      payment: _wire2api_payment(arr[0]),
+      successAction: _wire2api_opt_box_autoadd_success_action_processed(arr[1]),
     );
   }
 

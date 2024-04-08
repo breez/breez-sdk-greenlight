@@ -600,7 +600,6 @@ dictionary BitcoinAddressData {
 
 dictionary LnUrlPaySuccessData {
     SuccessActionProcessed? success_action;
-    string payment_hash;
     Payment payment;
 };
 

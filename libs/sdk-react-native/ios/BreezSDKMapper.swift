@@ -1393,9 +1393,6 @@ enum BreezSDKMapper {
             successAction = try asSuccessActionProcessed(successActionProcessed: successActionTmp)
         }
 
-        guard let paymentHash = lnUrlPaySuccessData["paymentHash"] as? String else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "paymentHash", typeName: "LnUrlPaySuccessData"))
-        }
         guard let paymentTmp = lnUrlPaySuccessData["payment"] as? [String: Any?] else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "payment", typeName: "LnUrlPaySuccessData"))
         }
@@ -1403,7 +1400,6 @@ enum BreezSDKMapper {
 
         return LnUrlPaySuccessData(
             successAction: successAction,
-            paymentHash: paymentHash,
             payment: payment
         )
     }
@@ -1411,7 +1407,6 @@ enum BreezSDKMapper {
     static func dictionaryOf(lnUrlPaySuccessData: LnUrlPaySuccessData) -> [String: Any?] {
         return [
             "successAction": lnUrlPaySuccessData.successAction == nil ? nil : dictionaryOf(successActionProcessed: lnUrlPaySuccessData.successAction!),
-            "paymentHash": lnUrlPaySuccessData.paymentHash,
             "payment": dictionaryOf(payment: lnUrlPaySuccessData.payment),
         ]
     }

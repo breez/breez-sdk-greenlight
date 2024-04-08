@@ -201,7 +201,6 @@ export type LnUrlPayRequestData = {
 
 export type LnUrlPaySuccessData = {
     successAction?: SuccessActionProcessed
-    paymentHash: string
     payment: Payment
 }
 

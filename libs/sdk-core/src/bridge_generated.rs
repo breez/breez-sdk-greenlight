@@ -1508,7 +1508,6 @@ impl rust2dart::IntoIntoDart<LnUrlPayResult> for LnUrlPayResult {
 impl support::IntoDart for LnUrlPaySuccessData {
     fn into_dart(self) -> support::DartAbi {
         vec![
-            self.payment_hash.into_into_dart().into_dart(),
             self.payment.into_into_dart().into_dart(),
             self.success_action.into_dart(),
         ]
