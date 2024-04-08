@@ -249,9 +249,7 @@ jobs:
       - setup
       - build-language-bindings
       - publish-swift
-    if: |
-      always() && !failure() && !cancelled() &&
-      ${{ needs.setup.outputs.flutter == 'true' }}
+    if: always() && !failure() && !cancelled() && ${{ needs.setup.outputs.flutter == 'true' }}
     uses: ./.github/workflows/publish-flutter.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
@@ -267,9 +265,7 @@ jobs:
     needs:
       - setup
       - publish-swift
-    if: |
-      always() && !failure() && !cancelled() &&
-      ${{ needs.setup.outputs.react-native == 'true' }}
+    if: always() && !failure() && !cancelled() && ${{ needs.setup.outputs.react-native == 'true' }}
     uses: ./.github/workflows/publish-react-native.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
@@ -302,7 +298,7 @@ jobs:
       - build-bindings-darwin
       - build-bindings-ios
       - build-language-bindings
-    if: ${{ needs.setup.outputs.swift == 'true' }}
+    if: always() && !failure() && !cancelled() && ${{ needs.setup.outputs.swift == 'true' }}
     uses: ./.github/workflows/publish-swift.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
