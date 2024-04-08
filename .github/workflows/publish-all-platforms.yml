@@ -250,11 +250,8 @@ jobs:
       - build-language-bindings
       - publish-swift
     if: |
-      always() &&
-      ${{ needs.setup.outputs.flutter == 'true' }} &&
-      # If swift is also published, run flutter after publishing swift
-      # if it is not, publish flutter anyway. 
-      ${{ needs.publish-swift.result == 'success' || needs.publish-swift.result == 'skipped' }}
+      always() && !failure() && !cancelled() &&
+      ${{ needs.setup.outputs.flutter == 'true' }}
     uses: ./.github/workflows/publish-flutter.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
@@ -271,11 +268,8 @@ jobs:
       - setup
       - publish-swift
     if: |
-      always() &&
-      ${{ needs.setup.outputs.react-native == 'true' }} &&
-      # If swift is also published, run react native after publishing swift
-      # if it is not, publish react native anyway. 
-      ${{ needs.publish-swift.result == 'success' || needs.publish-swift.result == 'skipped' }}
+      always() && !failure() && !cancelled() &&
+      ${{ needs.setup.outputs.react-native == 'true' }}
     uses: ./.github/workflows/publish-react-native.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
