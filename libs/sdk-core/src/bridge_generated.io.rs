@@ -870,6 +870,8 @@ impl Wire2Api<LnUrlPayRequestData> for wire_LnUrlPayRequestData {
             metadata_str: self.metadata_str.wire2api(),
             comment_allowed: self.comment_allowed.wire2api(),
             domain: self.domain.wire2api(),
+            allows_nostr: self.allows_nostr.wire2api(),
+            nostr_pubkey: self.nostr_pubkey.wire2api(),
             ln_address: self.ln_address.wire2api(),
         }
     }
@@ -1232,6 +1234,8 @@ pub struct wire_LnUrlPayRequestData {
     metadata_str: *mut wire_uint_8_list,
     comment_allowed: u16,
     domain: *mut wire_uint_8_list,
+    allows_nostr: bool,
+    nostr_pubkey: *mut wire_uint_8_list,
     ln_address: *mut wire_uint_8_list,
 }
 
@@ -1642,6 +1646,8 @@ impl NewWithNullPtr for wire_LnUrlPayRequestData {
             metadata_str: core::ptr::null_mut(),
             comment_allowed: Default::default(),
             domain: core::ptr::null_mut(),
+            allows_nostr: Default::default(),
+            nostr_pubkey: core::ptr::null_mut(),
             ln_address: core::ptr::null_mut(),
         }
     }

@@ -926,6 +926,18 @@ class LnUrlPayRequestData {
   /// Note: this is not the domain of the callback, but the domain of the LNURL-pay endpoint.
   final String domain;
 
+  /// Value indicating whether the recipient supports Nostr Zaps through NIP-57.
+  ///
+  /// See <https://github.com/nostr-protocol/nips/blob/master/57.md>
+  final bool allowsNostr;
+
+  /// Optional recipient's lnurl provider's Nostr pubkey for NIP-57. If it exists it should be a
+  /// valid BIP 340 public key in hex.
+  ///
+  /// See <https://github.com/nostr-protocol/nips/blob/master/57.md>
+  /// See <https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki>
+  final String? nostrPubkey;
+
   /// If sending to a LN Address, this will be filled.
   final String? lnAddress;
 
@@ -936,6 +948,8 @@ class LnUrlPayRequestData {
     required this.metadataStr,
     required this.commentAllowed,
     required this.domain,
+    required this.allowsNostr,
+    this.nostrPubkey,
     this.lnAddress,
   });
 }
@@ -3599,7 +3613,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   LnUrlPayRequestData _wire2api_ln_url_pay_request_data(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 7) throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    if (arr.length != 9) throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
     return LnUrlPayRequestData(
       callback: _wire2api_String(arr[0]),
       minSendable: _wire2api_u64(arr[1]),
@@ -3607,7 +3621,9 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       metadataStr: _wire2api_String(arr[3]),
       commentAllowed: _wire2api_u16(arr[4]),
       domain: _wire2api_String(arr[5]),
-      lnAddress: _wire2api_opt_String(arr[6]),
+      allowsNostr: _wire2api_bool(arr[6]),
+      nostrPubkey: _wire2api_opt_String(arr[7]),
+      lnAddress: _wire2api_opt_String(arr[8]),
     );
   }
 
@@ -4864,6 +4880,8 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.metadata_str = api2wire_String(apiObj.metadataStr);
     wireObj.comment_allowed = api2wire_u16(apiObj.commentAllowed);
     wireObj.domain = api2wire_String(apiObj.domain);
+    wireObj.allows_nostr = api2wire_bool(apiObj.allowsNostr);
+    wireObj.nostr_pubkey = api2wire_opt_String(apiObj.nostrPubkey);
     wireObj.ln_address = api2wire_opt_String(apiObj.lnAddress);
   }
 
@@ -6627,6 +6645,11 @@ final class wire_LnUrlPayRequestData extends ffi.Struct {
   external int comment_allowed;
 
   external ffi.Pointer<wire_uint_8_list> domain;
+
+  @ffi.Bool()
+  external bool allows_nostr;
+
+  external ffi.Pointer<wire_uint_8_list> nostr_pubkey;
 
   external ffi.Pointer<wire_uint_8_list> ln_address;
 }

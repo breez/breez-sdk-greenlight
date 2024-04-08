@@ -195,6 +195,8 @@ export type LnUrlPayRequestData = {
     metadataStr: string
     commentAllowed: number
     domain: string
+    allowsNostr: boolean
+    nostrPubkey?: string
     lnAddress?: string
 }
 

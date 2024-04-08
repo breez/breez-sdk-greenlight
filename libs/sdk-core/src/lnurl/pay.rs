@@ -633,6 +633,8 @@ mod tests {
             metadata_str: "".into(),
             callback: "https://localhost/callback".into(),
             domain: "localhost".into(),
+            allows_nostr: false,
+            nostr_pubkey: None,
             ln_address: None,
         }
     }

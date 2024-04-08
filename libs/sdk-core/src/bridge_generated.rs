@@ -1474,6 +1474,8 @@ impl support::IntoDart for LnUrlPayRequestData {
             self.metadata_str.into_into_dart().into_dart(),
             self.comment_allowed.into_into_dart().into_dart(),
             self.domain.into_into_dart().into_dart(),
+            self.allows_nostr.into_into_dart().into_dart(),
+            self.nostr_pubkey.into_dart(),
             self.ln_address.into_dart(),
         ]
         .into_dart()

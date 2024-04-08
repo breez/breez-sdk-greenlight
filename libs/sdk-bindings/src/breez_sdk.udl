@@ -626,6 +626,8 @@ dictionary LnUrlPayRequestData {
     string metadata_str;
     u16 comment_allowed;
     string domain;
+    boolean allows_nostr;
+    string? nostr_pubkey;
     string? ln_address;
 };
 

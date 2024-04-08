@@ -1330,6 +1330,16 @@ enum BreezSDKMapper {
         guard let domain = lnUrlPayRequestData["domain"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "domain", typeName: "LnUrlPayRequestData"))
         }
+        guard let allowsNostr = lnUrlPayRequestData["allowsNostr"] as? Bool else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "allowsNostr", typeName: "LnUrlPayRequestData"))
+        }
+        var nostrPubkey: String?
+        if hasNonNilKey(data: lnUrlPayRequestData, key: "nostrPubkey") {
+            guard let nostrPubkeyTmp = lnUrlPayRequestData["nostrPubkey"] as? String else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "nostrPubkey"))
+            }
+            nostrPubkey = nostrPubkeyTmp
+        }
         var lnAddress: String?
         if hasNonNilKey(data: lnUrlPayRequestData, key: "lnAddress") {
             guard let lnAddressTmp = lnUrlPayRequestData["lnAddress"] as? String else {
@@ -1345,6 +1355,8 @@ enum BreezSDKMapper {
             metadataStr: metadataStr,
             commentAllowed: commentAllowed,
             domain: domain,
+            allowsNostr: allowsNostr,
+            nostrPubkey: nostrPubkey,
             lnAddress: lnAddress
         )
     }
@@ -1357,6 +1369,8 @@ enum BreezSDKMapper {
             "metadataStr": lnUrlPayRequestData.metadataStr,
             "commentAllowed": lnUrlPayRequestData.commentAllowed,
             "domain": lnUrlPayRequestData.domain,
+            "allowsNostr": lnUrlPayRequestData.allowsNostr,
+            "nostrPubkey": lnUrlPayRequestData.nostrPubkey == nil ? nil : lnUrlPayRequestData.nostrPubkey,
             "lnAddress": lnUrlPayRequestData.lnAddress == nil ? nil : lnUrlPayRequestData.lnAddress,
         ]
     }

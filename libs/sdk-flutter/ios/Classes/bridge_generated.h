@@ -155,6 +155,8 @@ typedef struct wire_LnUrlPayRequestData {
   struct wire_uint_8_list *metadata_str;
   uint16_t comment_allowed;
   struct wire_uint_8_list *domain;
+  bool allows_nostr;
+  struct wire_uint_8_list *nostr_pubkey;
   struct wire_uint_8_list *ln_address;
 } wire_LnUrlPayRequestData;
 

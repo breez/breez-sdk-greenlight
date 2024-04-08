@@ -535,6 +535,19 @@ pub struct LnUrlPayRequestData {
     #[serde(skip_serializing, skip_deserializing)]
     pub domain: String,
 
+    /// Value indicating whether the recipient supports Nostr Zaps through NIP-57.
+    ///
+    /// See <https://github.com/nostr-protocol/nips/blob/master/57.md>
+    #[serde(default)]
+    pub allows_nostr: bool,
+
+    /// Optional recipient's lnurl provider's Nostr pubkey for NIP-57. If it exists it should be a
+    /// valid BIP 340 public key in hex.
+    ///
+    /// See <https://github.com/nostr-protocol/nips/blob/master/57.md>
+    /// See <https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki>
+    pub nostr_pubkey: Option<String>,
+
     /// If sending to a LN Address, this will be filled.
     #[serde(skip_serializing, skip_deserializing)]
     pub ln_address: Option<String>,

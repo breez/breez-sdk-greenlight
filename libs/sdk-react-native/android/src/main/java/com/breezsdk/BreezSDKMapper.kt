@@ -1191,6 +1191,7 @@ fun asLnUrlPayRequestData(lnUrlPayRequestData: ReadableMap): LnUrlPayRequestData
                 "metadataStr",
                 "commentAllowed",
                 "domain",
+                "allowsNostr",
             ),
         )
     ) {
@@ -1202,6 +1203,8 @@ fun asLnUrlPayRequestData(lnUrlPayRequestData: ReadableMap): LnUrlPayRequestData
     val metadataStr = lnUrlPayRequestData.getString("metadataStr")!!
     val commentAllowed = lnUrlPayRequestData.getInt("commentAllowed").toUShort()
     val domain = lnUrlPayRequestData.getString("domain")!!
+    val allowsNostr = lnUrlPayRequestData.getBoolean("allowsNostr")
+    val nostrPubkey = if (hasNonNullKey(lnUrlPayRequestData, "nostrPubkey")) lnUrlPayRequestData.getString("nostrPubkey") else null
     val lnAddress = if (hasNonNullKey(lnUrlPayRequestData, "lnAddress")) lnUrlPayRequestData.getString("lnAddress") else null
     return LnUrlPayRequestData(
         callback,
@@ -1210,6 +1213,8 @@ fun asLnUrlPayRequestData(lnUrlPayRequestData: ReadableMap): LnUrlPayRequestData
         metadataStr,
         commentAllowed,
         domain,
+        allowsNostr,
+        nostrPubkey,
         lnAddress,
     )
 }
@@ -1222,6 +1227,8 @@ fun readableMapOf(lnUrlPayRequestData: LnUrlPayRequestData): ReadableMap {
         "metadataStr" to lnUrlPayRequestData.metadataStr,
         "commentAllowed" to lnUrlPayRequestData.commentAllowed,
         "domain" to lnUrlPayRequestData.domain,
+        "allowsNostr" to lnUrlPayRequestData.allowsNostr,
+        "nostrPubkey" to lnUrlPayRequestData.nostrPubkey,
         "lnAddress" to lnUrlPayRequestData.lnAddress,
     )
 }
