@@ -293,11 +293,11 @@ impl SqliteStorage {
            ON
             p.id = o.payment_hash
           LEFT JOIN ({swap_query}) as swaps
-            ON
-              json_extract(p.details, '$.payment_hash') = hex(swaps_payment_hash) COLLATE NOCASE
+           ON
+            p.id = hex(swaps_payment_hash) COLLATE NOCASE
           LEFT JOIN ({rev_swap_query}) as revswaps
-            ON
-              json_extract(p.details, '$.payment_preimage') = hex(revswaps_preimage) COLLATE NOCASE
+           ON
+            json_extract(p.details, '$.payment_preimage') = hex(revswaps_preimage) COLLATE NOCASE
           {where_clause}
           ORDER BY payment_time DESC
           LIMIT {limit}
