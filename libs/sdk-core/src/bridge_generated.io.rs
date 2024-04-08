@@ -858,7 +858,7 @@ impl Wire2Api<LnUrlPayRequest> for wire_LnUrlPayRequest {
             data: self.data.wire2api(),
             amount_msat: self.amount_msat.wire2api(),
             comment: self.comment.wire2api(),
-            payment_metadata: self.payment_metadata.wire2api(),
+            payment_label: self.payment_label.wire2api(),
         }
     }
 }
@@ -1069,7 +1069,7 @@ impl Wire2Api<SendPaymentRequest> for wire_SendPaymentRequest {
         SendPaymentRequest {
             bolt11: self.bolt11.wire2api(),
             amount_msat: self.amount_msat.wire2api(),
-            payment_metadata: self.payment_metadata.wire2api(),
+            label: self.label.wire2api(),
         }
     }
 }
@@ -1079,7 +1079,7 @@ impl Wire2Api<SendSpontaneousPaymentRequest> for wire_SendSpontaneousPaymentRequ
             node_id: self.node_id.wire2api(),
             amount_msat: self.amount_msat.wire2api(),
             extra_tlvs: self.extra_tlvs.wire2api(),
-            payment_metadata: self.payment_metadata.wire2api(),
+            label: self.label.wire2api(),
         }
     }
 }
@@ -1224,7 +1224,7 @@ pub struct wire_LnUrlPayRequest {
     data: wire_LnUrlPayRequestData,
     amount_msat: u64,
     comment: *mut wire_uint_8_list,
-    payment_metadata: *mut wire_uint_8_list,
+    payment_label: *mut wire_uint_8_list,
 }
 
 #[repr(C)]
@@ -1385,7 +1385,7 @@ pub struct wire_SendOnchainRequest {
 pub struct wire_SendPaymentRequest {
     bolt11: *mut wire_uint_8_list,
     amount_msat: *mut u64,
-    payment_metadata: *mut wire_uint_8_list,
+    label: *mut wire_uint_8_list,
 }
 
 #[repr(C)]
@@ -1394,7 +1394,7 @@ pub struct wire_SendSpontaneousPaymentRequest {
     node_id: *mut wire_uint_8_list,
     amount_msat: u64,
     extra_tlvs: *mut wire_list_tlv_entry,
-    payment_metadata: *mut wire_uint_8_list,
+    label: *mut wire_uint_8_list,
 }
 
 #[repr(C)]
@@ -1629,7 +1629,7 @@ impl NewWithNullPtr for wire_LnUrlPayRequest {
             data: Default::default(),
             amount_msat: Default::default(),
             comment: core::ptr::null_mut(),
-            payment_metadata: core::ptr::null_mut(),
+            payment_label: core::ptr::null_mut(),
         }
     }
 }
@@ -1990,7 +1990,7 @@ impl NewWithNullPtr for wire_SendPaymentRequest {
         Self {
             bolt11: core::ptr::null_mut(),
             amount_msat: core::ptr::null_mut(),
-            payment_metadata: core::ptr::null_mut(),
+            label: core::ptr::null_mut(),
         }
     }
 }
@@ -2007,7 +2007,7 @@ impl NewWithNullPtr for wire_SendSpontaneousPaymentRequest {
             node_id: core::ptr::null_mut(),
             amount_msat: Default::default(),
             extra_tlvs: core::ptr::null_mut(),
-            payment_metadata: core::ptr::null_mut(),
+            label: core::ptr::null_mut(),
         }
     }
 }

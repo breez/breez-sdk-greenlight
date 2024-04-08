@@ -111,7 +111,7 @@ typedef struct wire_ListPaymentsRequest {
 typedef struct wire_SendPaymentRequest {
   struct wire_uint_8_list *bolt11;
   uint64_t *amount_msat;
-  struct wire_uint_8_list *payment_metadata;
+  struct wire_uint_8_list *label;
 } wire_SendPaymentRequest;
 
 typedef struct wire_TlvEntry {
@@ -128,7 +128,7 @@ typedef struct wire_SendSpontaneousPaymentRequest {
   struct wire_uint_8_list *node_id;
   uint64_t amount_msat;
   struct wire_list_tlv_entry *extra_tlvs;
-  struct wire_uint_8_list *payment_metadata;
+  struct wire_uint_8_list *label;
 } wire_SendSpontaneousPaymentRequest;
 
 typedef struct wire_OpeningFeeParams {
@@ -164,7 +164,7 @@ typedef struct wire_LnUrlPayRequest {
   struct wire_LnUrlPayRequestData data;
   uint64_t amount_msat;
   struct wire_uint_8_list *comment;
-  struct wire_uint_8_list *payment_metadata;
+  struct wire_uint_8_list *payment_label;
 } wire_LnUrlPayRequest;
 
 typedef struct wire_LnUrlWithdrawRequestData {

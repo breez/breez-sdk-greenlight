@@ -46,12 +46,20 @@ pub(crate) enum Commands {
 
         #[clap(name = "amount_msat", short = 'a', long = "amt")]
         amount_msat: Option<u64>,
+
+        /// The external label or identifier of the payment
+        #[clap(name = "label", short = 'l', long = "label")]
+        label: Option<String>,
     },
 
     /// [pay] Send a spontaneous (keysend) payment
     SendSpontaneousPayment {
         node_id: String,
         amount_msat: u64,
+
+        /// The external label or identifier of the payment
+        #[clap(name = "label", short = 'l', long = "label")]
+        label: Option<String>,
     },
 
     /// [pay] Generate a bolt11 invoice
@@ -81,6 +89,10 @@ pub(crate) enum Commands {
     /// [lnurl] Pay using lnurl pay
     LnurlPay {
         lnurl: String,
+
+        /// The external label or identifier of the payment
+        #[clap(name = "label", short = 'l', long = "label")]
+        label: Option<String>,
     },
 
     /// [lnurl] Withdraw using lnurl withdraw

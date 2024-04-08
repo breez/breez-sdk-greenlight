@@ -242,12 +242,13 @@ pub(crate) async fn handle_command(
         Commands::SendPayment {
             bolt11,
             amount_msat,
+            label,
         } => {
             let payment = sdk()?
                 .send_payment(SendPaymentRequest {
                     bolt11,
                     amount_msat,
-                    payment_metadata: None,
+                    label,
                 })
                 .await?;
             serde_json::to_string_pretty(&payment).map_err(|e| e.into())
@@ -255,13 +256,14 @@ pub(crate) async fn handle_command(
         Commands::SendSpontaneousPayment {
             node_id,
             amount_msat,
+            label,
         } => {
             let response = sdk()?
                 .send_spontaneous_payment(SendSpontaneousPaymentRequest {
                     node_id,
                     amount_msat,
                     extra_tlvs: None,
-                    payment_metadata: None,
+                    label,
                 })
                 .await?;
             serde_json::to_string_pretty(&response.payment).map_err(|e| e.into())
@@ -462,7 +464,7 @@ pub(crate) async fn handle_command(
             let res = sdk()?.check_message(req).await?;
             Ok(format!("Message was signed by node: {}", res.is_valid))
         }
-        Commands::LnurlPay { lnurl } => match parse(&lnurl).await? {
+        Commands::LnurlPay { lnurl, label } => match parse(&lnurl).await? {
             LnUrlPay { data: pd } => {
                 let prompt = format!(
                     "Amount to pay in millisatoshi (min {} msat, max {} msat: ",
@@ -475,7 +477,7 @@ pub(crate) async fn handle_command(
                         data: pd,
                         amount_msat: amount_msat.parse::<u64>()?,
                         comment: None,
-                        payment_metadata: None,
+                        payment_label: label,
                     })
                     .await?;
                 //show_results(pay_res);

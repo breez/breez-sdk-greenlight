@@ -895,7 +895,7 @@ mod tests {
                 data: pay_req,
                 amount_msat: user_amount_msat,
                 comment: Some(comment),
-                payment_metadata: None,
+                payment_label: None,
             })
             .await?
         {
@@ -939,7 +939,7 @@ mod tests {
                 data: pay_req,
                 amount_msat: user_amount_msat,
                 comment: Some(comment),
-                payment_metadata: None,
+                payment_label: None,
             })
             .await;
         // An unsupported Success Action results in an error
@@ -969,7 +969,7 @@ mod tests {
                 data: pay_req,
                 amount_msat: user_amount_msat,
                 comment: Some(comment),
-                payment_metadata: None,
+                payment_label: None,
             })
             .await?
         {
@@ -1002,7 +1002,7 @@ mod tests {
                 data: pay_req,
                 amount_msat: user_amount_msat,
                 comment: Some(comment),
-                payment_metadata: None,
+                payment_label: None,
             })
             .await?
         {
@@ -1050,7 +1050,7 @@ mod tests {
                 data: pay_req,
                 amount_msat: user_amount_msat,
                 comment: Some(comment),
-                payment_metadata: None,
+                payment_label: None,
             })
             .await
             .is_err());
@@ -1080,7 +1080,7 @@ mod tests {
                 data: pay_req,
                 amount_msat: user_amount_msat,
                 comment: Some(comment),
-                payment_metadata: None,
+                payment_label: None,
             })
             .await;
         assert!(matches!(res, Ok(LnUrlPayResult::EndpointError { data: _ })));
@@ -1117,7 +1117,7 @@ mod tests {
                 data: pay_req,
                 amount_msat: user_amount_msat,
                 comment: Some(comment),
-                payment_metadata: None,
+                payment_label: None,
             })
             .await?
         {
@@ -1202,7 +1202,7 @@ mod tests {
                 data: pay_req,
                 amount_msat: user_amount_msat,
                 comment: Some(comment),
-                payment_metadata: None,
+                payment_label: None,
             })
             .await?
         {
@@ -1286,7 +1286,7 @@ mod tests {
                 data: pay_req,
                 amount_msat: user_amount_msat,
                 comment: Some(comment),
-                payment_metadata: None,
+                payment_label: None,
             })
             .await?
         {

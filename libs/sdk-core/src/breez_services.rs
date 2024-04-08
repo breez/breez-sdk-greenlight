@@ -313,17 +313,16 @@ impl BreezServices {
         {
             Some(_) => Err(SendPaymentError::AlreadyPaid),
             None => {
-                self.persist_pending_payment(&parsed_invoice, amount_msat)?;
+                self.persist_pending_payment(&parsed_invoice, amount_msat, req.label.clone())?;
                 let payment_res = self
                     .node_api
-                    .send_payment(parsed_invoice.bolt11.clone(), req.amount_msat)
+                    .send_payment(parsed_invoice.bolt11.clone(), req.amount_msat, req.label)
                     .map_err(Into::into)
                     .await;
                 let payment = self
                     .on_payment_completed(
                         parsed_invoice.payee_pubkey.clone(),
                         Some(parsed_invoice),
-                        req.payment_metadata,
                         payment_res,
                     )
                     .await?;
@@ -340,11 +339,16 @@ impl BreezServices {
         self.start_node().await?;
         let payment_res = self
             .node_api
-            .send_spontaneous_payment(req.node_id.clone(), req.amount_msat, req.extra_tlvs)
+            .send_spontaneous_payment(
+                req.node_id.clone(),
+                req.amount_msat,
+                req.extra_tlvs,
+                req.label,
+            )
             .map_err(Into::into)
             .await;
         let payment = self
-            .on_payment_completed(req.node_id, None, req.payment_metadata, payment_res)
+            .on_payment_completed(req.node_id, None, payment_res)
             .await?;
         Ok(SendPaymentResponse { payment })
     }
@@ -373,7 +377,7 @@ impl BreezServices {
                 let pay_req = SendPaymentRequest {
                     bolt11: cb.pr.clone(),
                     amount_msat: None,
-                    payment_metadata: req.payment_metadata,
+                    label: req.payment_label,
                 };
                 let invoice = parse_invoice(cb.pr.as_str())?;
 
@@ -1161,6 +1165,7 @@ impl BreezServices {
         &self,
         invoice: &LNInvoice,
         amount_msat: u64,
+        label: Option<String>,
     ) -> Result<(), SendPaymentError> {
         self.persister.insert_or_update_payments(
             &[Payment {
@@ -1175,7 +1180,7 @@ impl BreezServices {
                 details: PaymentDetails::Ln {
                     data: LnPaymentDetails {
                         payment_hash: invoice.payment_hash.clone(),
-                        label: String::new(),
+                        label: label.unwrap_or_default(),
                         destination_pubkey: invoice.payee_pubkey.clone(),
                         payment_preimage: String::new(),
                         keysend: false,
@@ -1215,17 +1220,11 @@ impl BreezServices {
         &self,
         node_id: String,
         invoice: Option<LNInvoice>,
-        payment_metadata: Option<String>,
         payment_res: Result<Payment, SendPaymentError>,
     ) -> Result<Payment, SendPaymentError> {
         self.do_sync(payment_res.is_ok()).await?;
         match payment_res {
-            Ok(mut payment) => {
-                if let Some(metadata) = payment_metadata.clone() {
-                    self.set_payment_metadata(payment.id.clone(), metadata)
-                        .await?;
-                    payment.metadata = payment_metadata
-                }
+            Ok(payment) => {
                 self.notify_event_listeners(BreezEvent::PaymentSucceed {
                     details: payment.clone(),
                 })
