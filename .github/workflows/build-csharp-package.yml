@@ -1,4 +1,4 @@
-name: Publish C# Bindings
+name: Build C# Package
 on:
   workflow_call:
     inputs:

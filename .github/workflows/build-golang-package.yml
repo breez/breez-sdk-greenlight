@@ -1,4 +1,4 @@
-name: Publish Go Bindings
+name: Build Go Package
 on:
   workflow_call:
     inputs:

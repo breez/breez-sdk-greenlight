@@ -1,4 +1,4 @@
-name: Publish Kotlin multiplatform Bindings
+name: Build Kotlin multiplatform Package
 on:
   workflow_call:
     inputs:

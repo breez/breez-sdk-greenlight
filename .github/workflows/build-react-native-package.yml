@@ -1,4 +1,4 @@
-name: Publish React Native Plugin
+name: Build React Native Package
 on:
   workflow_call:
     inputs:

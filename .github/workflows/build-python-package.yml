@@ -1,4 +1,4 @@
-name: Publish Python Bindings
+name: Build Python Package
 on:
   workflow_call:
     inputs:

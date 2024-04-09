@@ -1,4 +1,4 @@
-name: Publish Android Bindings
+name: Build Android Package
 on:
   workflow_call:
     inputs:

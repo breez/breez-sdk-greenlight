@@ -1,4 +1,4 @@
-name: Publish all packages
+name: Build all packages
 on:
   workflow_dispatch:
     inputs:
@@ -129,7 +129,7 @@ jobs:
   build-windows-binaries:
     needs: setup
     if: ${{ needs.setup.outputs.build-windows-binaries == 'true' }}
-    uses: ./.github/workflows/build-bindings-windows.yml
+    uses: ./.github/workflows/build-windows-binaries.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
@@ -137,7 +137,7 @@ jobs:
   build-darwin-binaries:
     needs: setup
     if: ${{ needs.setup.outputs.build-darwin-binaries == 'true' }}
-    uses: ./.github/workflows/build-bindings-darwin.yml
+    uses: ./.github/workflows/build-darwin-binaries.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
@@ -145,7 +145,7 @@ jobs:
   build-linux-binaries:
     needs: setup
     if: ${{ needs.setup.outputs.build-linux-binaries == 'true' }}
-    uses: ./.github/workflows/build-bindings-linux.yml
+    uses: ./.github/workflows/build-linux-binaries.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
@@ -153,7 +153,7 @@ jobs:
   build-android-binaries:
     needs: setup
     if: ${{ needs.setup.outputs.build-android-binaries == 'true' }}
-    uses: ./.github/workflows/build-bindings-android.yml
+    uses: ./.github/workflows/build-android-binaries.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
@@ -161,7 +161,7 @@ jobs:
   build-ios-binaries:
     needs: setup
     if: ${{ needs.setup.outputs.build-ios-binaries == 'true' }}
-    uses: ./.github/workflows/build-bindings-ios.yml
+    uses: ./.github/workflows/build-ios-binaries.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
@@ -187,7 +187,7 @@ jobs:
       - build-linux-binaries
       - build-language-bindings
     if: ${{ needs.setup.outputs.build-csharp-package == 'true' }}
-    uses: ./.github/workflows/publish-csharp.yml
+    uses: ./.github/workflows/build-csharp-package.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.csharp-ref }}
@@ -206,7 +206,7 @@ jobs:
       - build-linux-binaries
       - build-language-bindings
     if: ${{ needs.setup.outputs.build-golang-package == 'true' }}
-    uses: ./.github/workflows/publish-golang.yml
+    uses: ./.github/workflows/build-golang-package.yml
     with:
       ref: ${{ needs.setup.outputs.ref }}
       package-version: ${{ needs.setup.outputs.package-version }}
@@ -220,7 +220,7 @@ jobs:
       - build-android-binaries
       - build-language-bindings
     if: ${{ needs.setup.outputs.build-maven-package == 'true' }}
-    uses: ./.github/workflows/publish-android.yml
+    uses: ./.github/workflows/build-android-package.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
@@ -237,7 +237,7 @@ jobs:
       - build-ios-binaries
       - build-language-bindings
     if: ${{ needs.setup.outputs.build-kotlin-mpp-package == 'true' }}
-    uses: ./.github/workflows/publish-kotlin-mpp.yml
+    uses: ./.github/workflows/build-kotlin-mpp-package.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
@@ -252,7 +252,7 @@ jobs:
       - setup
       - build-language-bindings
     if: ${{ needs.setup.outputs.build-flutter-package == 'true' }}
-    uses: ./.github/workflows/publish-flutter.yml
+    uses: ./.github/workflows/build-flutter-package.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
@@ -267,7 +267,7 @@ jobs:
     needs:
       - setup
     if: ${{ needs.setup.outputs.build-react-native-package == 'true' }}
-    uses: ./.github/workflows/publish-react-native.yml
+    uses: ./.github/workflows/build-react-native-package.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
@@ -284,7 +284,7 @@ jobs:
       - build-windows-binaries
       - build-language-bindings
     if: ${{ needs.setup.outputs.build-python-package == 'true' }}
-    uses: ./.github/workflows/publish-python.yml
+    uses: ./.github/workflows/build-python-package.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}

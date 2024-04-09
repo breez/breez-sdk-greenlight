@@ -1,4 +1,4 @@
-name: Publish Flutter Package
+name: Build Flutter Package
 on:   
   workflow_call:
     inputs:
