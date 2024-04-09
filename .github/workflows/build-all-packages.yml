@@ -250,11 +250,26 @@ jobs:
       BREEZ_MVN_USERNAME: ${{ secrets.BREEZ_MVN_USERNAME }}
       BREEZ_MVN_PASSWORD: ${{ secrets.BREEZ_MVN_PASSWORD }}
   
-  build-flutter-package:
+  build-flutter-package-no-publish-swift:
     needs:
       - setup
       - build-language-bindings
-    if: ${{ needs.setup.outputs.build-flutter-package == 'true' }}
+    if: ${{ needs.setup.outputs.publish-swift-package != 'true' && needs.setup.outputs.build-flutter-package == 'true' }}
+    uses: ./.github/workflows/build-flutter-package.yml
+    with:
+      repository: ${{ needs.setup.outputs.repository }}
+      ref: ${{ needs.setup.outputs.ref }}
+      package-version: ${{ needs.setup.outputs.package-version }}
+      publish: ${{ needs.setup.outputs.publish-flutter-package == 'true' }}
+    secrets:
+      REPO_SSH_KEY: ${{ secrets.REPO_SSH_KEY }}
+
+  build-flutter-package-publish-swift:
+    needs:
+      - setup
+      - build-language-bindings
+      - build-swift-package
+    if: ${{ needs.setup.outputs.publish-swift-package == 'true' && needs.setup.outputs.build-flutter-package == 'true' }}
     uses: ./.github/workflows/build-flutter-package.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
@@ -266,10 +281,26 @@ jobs:
 
   # react native version x.y.z will at runtime require
   # ios and android packages x.y.z being published already.
-  build-react-native-package:
+  build-react-native-package-no-publish-swift:
     needs:
       - setup
-    if: ${{ needs.setup.outputs.build-react-native-package == 'true' }}
+    if: ${{ needs.setup.outputs.publish-swift-package != 'true' && needs.setup.outputs.build-react-native-package == 'true' }}
+    uses: ./.github/workflows/build-react-native-package.yml
+    with:
+      repository: ${{ needs.setup.outputs.repository }}
+      ref: ${{ needs.setup.outputs.ref }}
+      package-version: ${{ needs.setup.outputs.package-version }}
+      publish: ${{ needs.setup.outputs.publish-react-native-package == 'true' }}
+    secrets:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  # react native version x.y.z will at runtime require
+  # ios and android packages x.y.z being published already.
+  build-react-native-package-publish-swift:
+    needs:
+      - setup
+      - build-swift-package
+    if: ${{ needs.setup.outputs.publish-swift-package == 'true' && needs.setup.outputs.build-react-native-package == 'true' }}
     uses: ./.github/workflows/build-react-native-package.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
