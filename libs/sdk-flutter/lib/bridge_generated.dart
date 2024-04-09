@@ -127,6 +127,10 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kRegisterWebhookConstMeta;
 
+  Future<void> unregisterWebhook({required String webhookUrl, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kUnregisterWebhookConstMeta;
+
   /// See [BreezServices::backup]
   Future<void> backup({dynamic hint});
 
@@ -2465,6 +2469,23 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kRegisterWebhookConstMeta => const FlutterRustBridgeTaskConstMeta(
         debugName: "register_webhook",
+        argNames: ["webhookUrl"],
+      );
+
+  Future<void> unregisterWebhook({required String webhookUrl, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(webhookUrl);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_unregister_webhook(port_, arg0),
+      parseSuccessData: _wire2api_unit,
+      parseErrorData: _wire2api_FrbAnyhowException,
+      constMeta: kUnregisterWebhookConstMeta,
+      argValues: [webhookUrl],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kUnregisterWebhookConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "unregister_webhook",
         argNames: ["webhookUrl"],
       );
 
@@ -5464,6 +5485,22 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
           'wire_register_webhook');
   late final _wire_register_webhook =
       _wire_register_webhookPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_unregister_webhook(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> webhook_url,
+  ) {
+    return _wire_unregister_webhook(
+      port_,
+      webhook_url,
+    );
+  }
+
+  late final _wire_unregister_webhookPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>(
+          'wire_unregister_webhook');
+  late final _wire_unregister_webhook =
+      _wire_unregister_webhookPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
   void wire_backup(
     int port_,

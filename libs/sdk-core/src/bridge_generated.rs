@@ -400,6 +400,22 @@ fn wire_register_webhook_impl(port_: MessagePort, webhook_url: impl Wire2Api<Str
         },
     )
 }
+fn wire_unregister_webhook_impl(
+    port_: MessagePort,
+    webhook_url: impl Wire2Api<String> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, (), _>(
+        WrapInfo {
+            debug_name: "unregister_webhook",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_webhook_url = webhook_url.wire2api();
+            move |task_callback| unregister_webhook(api_webhook_url)
+        },
+    )
+}
 fn wire_backup_impl(port_: MessagePort) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, (), _>(
         WrapInfo {

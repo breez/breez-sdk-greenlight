@@ -259,6 +259,10 @@ impl BlockingBreezServices {
         rt().block_on(async { self.breez_services.register_webhook(webhook_url).await })
     }
 
+    pub fn unregister_webhook(&self, webhook_url: String) -> SdkResult<()> {
+        rt().block_on(async { self.breez_services.unregister_webhook(webhook_url).await })
+    }
+
     /// Onchain receive swap API
     pub fn receive_onchain(
         &self,

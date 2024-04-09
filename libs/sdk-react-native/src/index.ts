@@ -1028,6 +1028,10 @@ export const registerWebhook = async (webhookUrl: string): Promise<void> => {
     await BreezSDK.registerWebhook(webhookUrl)
 }
 
+export const unregisterWebhook = async (webhookUrl: string): Promise<void> => {
+    await BreezSDK.unregisterWebhook(webhookUrl)
+}
+
 export const receiveOnchain = async (req: ReceiveOnchainRequest): Promise<SwapInfo> => {
     const response = await BreezSDK.receiveOnchain(req)
     return response

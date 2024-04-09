@@ -4,7 +4,8 @@ use crate::error::{SdkError, SdkResult};
 use crate::grpc::{
     self, LspListRequest, PaymentInformation, RegisterPaymentNotificationRequest,
     RegisterPaymentNotificationResponse, RegisterPaymentReply, RegisterPaymentRequest,
-    SubscribeNotificationsRequest,
+    RemovePaymentNotificationRequest, RemovePaymentNotificationResponse,
+    SubscribeNotificationsRequest, UnsubscribeNotificationsRequest,
 };
 use crate::models::{LspAPI, OpeningFeeParams, OpeningFeeParamsMenu};
 
@@ -119,13 +120,13 @@ impl LspAPI for BreezServer {
             signature: webhook_url_signature,
         };
 
-        let mut client = self.get_subscription_client().await?;
+        let mut client = self.get_payment_notifier_client().await?;
 
         let mut buf = Vec::with_capacity(subscribe_request.encoded_len());
         subscribe_request
             .encode(&mut buf)
             .map_err(|e| SdkError::Generic {
-                err: format!("(LSP {lsp_id}) Failed to encode subscription request: {e}"),
+                err: format!("(LSP {lsp_id}) Failed to encode subscribe request: {e}"),
             })?;
 
         let request = RegisterPaymentNotificationRequest {
@@ -133,6 +134,36 @@ impl LspAPI for BreezServer {
             blob: encrypt(lsp_pubkey, buf)?,
         };
         let response = client.register_payment_notification(request).await?;
+
+        Ok(response.into_inner())
+    }
+
+    async fn unregister_payment_notifications(
+        &self,
+        lsp_id: String,
+        lsp_pubkey: Vec<u8>,
+        webhook_url: String,
+        webhook_url_signature: String,
+    ) -> SdkResult<RemovePaymentNotificationResponse> {
+        let unsubscribe_request = UnsubscribeNotificationsRequest {
+            url: webhook_url,
+            signature: webhook_url_signature,
+        };
+
+        let mut client = self.get_payment_notifier_client().await?;
+
+        let mut buf = Vec::with_capacity(unsubscribe_request.encoded_len());
+        unsubscribe_request
+            .encode(&mut buf)
+            .map_err(|e| SdkError::Generic {
+                err: format!("(LSP {lsp_id}) Failed to encode unsubscribe request: {e}"),
+            })?;
+
+        let request = RemovePaymentNotificationRequest {
+            lsp_id,
+            blob: encrypt(lsp_pubkey, buf)?,
+        };
+        let response = client.remove_payment_notification(request).await?;
 
         Ok(response.into_inner())
     }

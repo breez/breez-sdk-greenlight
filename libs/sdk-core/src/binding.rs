@@ -237,6 +237,16 @@ pub fn register_webhook(webhook_url: String) -> Result<()> {
     .map_err(anyhow::Error::new::<SdkError>)
 }
 
+pub fn unregister_webhook(webhook_url: String) -> Result<()> {
+    block_on(async {
+        get_breez_services()
+            .await?
+            .unregister_webhook(webhook_url)
+            .await
+    })
+    .map_err(anyhow::Error::new::<SdkError>)
+}
+
 /*  Backup API's */
 
 /// See [BreezServices::backup]
