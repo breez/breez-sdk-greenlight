@@ -1,4 +1,4 @@
-name: Build sdk-bindings binaries for Darwin
+name: Build sdk-bindings for Linux
 on:
   workflow_dispatch:
     inputs:
@@ -25,13 +25,13 @@ on:
 jobs:
   build:
     if: ${{ !inputs.use-dummy-binaries }}
-    runs-on: macOS-latest
+    runs-on: ubuntu-20.04
     name: build ${{ matrix.target }}
     strategy:
       matrix:
         target: [
-          aarch64-apple-darwin,
-          x86_64-apple-darwin,
+          aarch64-unknown-linux-gnu,
+          x86_64-unknown-linux-gnu,
         ]
     steps:
     - name: checkout
@@ -45,7 +45,6 @@ jobs:
         rustup set auto-self-update disable
         rustup toolchain install stable --profile minimal
         rustup target add ${{ matrix.target }}
-        cargo install cargo-lipo
 
     - name: Install Protoc
       uses: arduino/setup-protoc@v2
@@ -53,69 +52,51 @@ jobs:
         version: "23.4"
         repo-token: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Install gcc-aarch64-linux-gnu
+      if: matrix.target == 'aarch64-unknown-linux-gnu'
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu 
+
+    - name: Install gcc-x86-64-linux-gnu
+      if: matrix.target == 'x86_64-unknown-linux-gnu'
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y gcc-x86-64-linux-gnu g++-x86-64-linux-gnu 
+
     - uses: Swatinem/rust-cache@v2
       with:
         workspaces: libs
 
     - name: Build sdk-bindings
       working-directory: libs/sdk-bindings
-      run: cargo lipo --release --targets ${{ matrix.target }}
+      env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: /usr/bin/aarch64-linux-gnu-gcc
+          CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER: /usr/bin/x86_64-linux-gnu-gcc
+      run: cargo build --release --target ${{ matrix.target }}
     
     - name: Archive release
       uses: actions/upload-artifact@v3
       with:
         name: sdk-bindings-${{ matrix.target }}
-        path: |
-          libs/target/${{ matrix.target }}/release/libbreez_sdk_bindings.dylib
-          libs/target/${{ matrix.target }}/release/libbreez_sdk_bindings.a
-  
-  merge:
-    runs-on: macOS-latest
-    needs: build
-    name: build darwin-universal
-    steps:
-    - uses: actions/download-artifact@v3
-      with:
-        name: sdk-bindings-aarch64-apple-darwin
-        path: aarch64-apple-darwin
-
-    - uses: actions/download-artifact@v3
-      with:
-        name: sdk-bindings-x86_64-apple-darwin
-        path: x86_64-apple-darwin
-
-    - name: Build Darwin universal
-      run: |
-        mkdir -p darwin-universal
-        lipo -create -output darwin-universal/libbreez_sdk_bindings.dylib aarch64-apple-darwin/libbreez_sdk_bindings.dylib x86_64-apple-darwin/libbreez_sdk_bindings.dylib
-        lipo -create -output darwin-universal/libbreez_sdk_bindings.a aarch64-apple-darwin/libbreez_sdk_bindings.a x86_64-apple-darwin/libbreez_sdk_bindings.a
-
-    - name: Archive release
-      uses: actions/upload-artifact@v3
-      with:
-        name: sdk-bindings-darwin-universal
-        path: |
-          darwin-universal/libbreez_sdk_bindings.dylib
-          darwin-universal/libbreez_sdk_bindings.a
+        path: libs/target/${{ matrix.target }}/release/libbreez_sdk_bindings.so
 
   build-dummies:
     if: ${{ inputs.use-dummy-binaries }}
     runs-on: ubuntu-latest
-    name: build darwin dummies
+    name: build linux dummies
     strategy:
       matrix:
         target: [
-          aarch64-apple-darwin,
-          x86_64-apple-darwin,
-          darwin-universal
+          aarch64-unknown-linux-gnu,
+          x86_64-unknown-linux-gnu,
         ]
     steps:
-      - name: Build dummy darwin ${{ matrix.target }}
+      - name: Build dummy linux ${{ matrix.target }}
         run: |
-          touch libbreez_sdk_bindings.dylib
-          touch libbreez_sdk_bindings.a
+          touch libbreez_sdk_bindings.so
 
-      - name: Upload dummy darwin ${{ matrix.target }} artifact
+      - name: Upload dummy linux ${{ matrix.target }} artifact
         uses: actions/upload-artifact@v3
         with:
           name: sdk-bindings-${{ matrix.target }}

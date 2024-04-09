@@ -1,4 +1,4 @@
-name: Build sdk-bindings binaries for Android
+name: Build sdk-bindings for Android
 on:
   workflow_dispatch:
     inputs:

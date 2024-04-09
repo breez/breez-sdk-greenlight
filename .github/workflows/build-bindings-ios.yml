@@ -1,4 +1,4 @@
-name: Build sdk-bindings binaries for iOS
+name: Build sdk-bindings for iOS
 on:
   workflow_dispatch:
     inputs:
