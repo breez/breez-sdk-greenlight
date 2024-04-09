@@ -215,45 +215,8 @@ impl SqliteStorage {
         let offset = req.offset.unwrap_or(0u32);
         let limit = req.limit.unwrap_or(u32::MAX);
         let con = self.get_connection()?;
-        let mut stmt = con.prepare(
-            format!(
-                "
-            SELECT 
-             p.id,
-             p.payment_type,
-             p.payment_time,
-             p.amount_msat,
-             p.fee_msat,
-             p.status,
-             p.description,
-             p.details,
-             e.lnurl_success_action,
-             e.lnurl_metadata,
-             e.ln_address,
-             e.lnurl_withdraw_endpoint,
-             e.attempted_amount_msat,
-             e.attempted_error,
-             o.payer_amount_msat,
-             o.open_channel_bolt11,
-             m.metadata,
-             e.lnurl_pay_domain
-            FROM payments p
-            LEFT JOIN sync.payments_external_info e
-            ON
-             p.id = e.payment_id
-            LEFT JOIN sync.payments_metadata m
-            ON
-              p.id = m.payment_id
-            LEFT JOIN sync.open_channel_payment_info o
-             ON
-              p.id = o.payment_hash
-            {where_clause} ORDER BY payment_time DESC
-            LIMIT {limit}
-            OFFSET {offset}
-          "
-            )
-            .as_str(),
-        )?;
+        let query = self.select_payments_query(where_clause.as_str(), offset, limit)?;
+        let mut stmt = con.prepare(query.as_str())?;
 
         let mut params: HashMap<String, String> = HashMap::new();
 
@@ -283,8 +246,66 @@ impl SqliteStorage {
             )?
             .map(|i| i.unwrap())
             .collect();
-
         Ok(vec)
+    }
+
+    pub fn select_payments_query(
+        &self,
+        where_clause: &str,
+        offset: u32,
+        limit: u32,
+    ) -> PersistResult<String> {
+        let swap_fields = self.select_swap_fields("swaps_");
+        let swap_query = self.select_swap_query("true", "swaps_");
+        let rev_swap_fields = self.select_reverse_swap_fields("revswaps_");
+        let rev_swap_query = self.select_reverse_swap_query("true", "revswaps_");
+        let query = format!(
+            "
+          SELECT 
+           p.id,
+           p.payment_type,
+           p.payment_time,
+           p.amount_msat,
+           p.fee_msat,
+           p.status,
+           p.description,
+           p.details,
+           e.lnurl_success_action,
+           e.lnurl_metadata,
+           e.ln_address,
+           e.lnurl_withdraw_endpoint,
+           e.attempted_amount_msat,
+           e.attempted_error,
+           o.payer_amount_msat,
+           o.open_channel_bolt11,
+           m.metadata,
+           e.lnurl_pay_domain,
+           {swap_fields},
+           {rev_swap_fields}
+          FROM payments p
+          LEFT JOIN sync.payments_external_info e
+          ON
+           p.id = e.payment_id
+          LEFT JOIN sync.payments_metadata m
+          ON
+            p.id = m.payment_id
+          LEFT JOIN sync.open_channel_payment_info o
+           ON
+            p.id = o.payment_hash
+          LEFT JOIN ({swap_query}) as swaps
+           ON
+            p.id = hex(swaps_payment_hash) COLLATE NOCASE
+          LEFT JOIN ({rev_swap_query}) as revswaps
+           ON
+            json_extract(p.details, '$.payment_preimage') = hex(revswaps_preimage) COLLATE NOCASE
+          {where_clause}
+          ORDER BY payment_time DESC
+          LIMIT {limit}
+          OFFSET {offset}
+        "
+        );
+
+        Ok(query)
     }
 
     /// This queries a single payment by hash, which may be pending, completed or failed.
@@ -293,44 +314,10 @@ impl SqliteStorage {
     ///
     /// To query all payments, see [Self::list_payments]
     pub(crate) fn get_payment_by_hash(&self, hash: &String) -> PersistResult<Option<Payment>> {
+        let query = self.select_payments_query("where id = ?1", 0, 1)?;
         Ok(self
             .get_connection()?
-            .query_row(
-                "
-                SELECT
-                 p.id,
-                 p.payment_type,
-                 p.payment_time,
-                 p.amount_msat,
-                 p.fee_msat,
-                 p.status,
-                 p.description,
-                 p.details,
-                 e.lnurl_success_action,
-                 e.lnurl_metadata,
-                 e.ln_address,
-                 e.lnurl_withdraw_endpoint,
-                 e.attempted_amount_msat,
-                 e.attempted_error,
-                 o.payer_amount_msat,
-                 o.open_channel_bolt11,
-                 m.metadata,
-                 e.lnurl_pay_domain
-                FROM payments p
-                LEFT JOIN sync.payments_external_info e
-                ON
-                 p.id = e.payment_id
-                LEFT JOIN sync.payments_metadata m
-                ON
-                  p.id = m.payment_id
-                LEFT JOIN sync.open_channel_payment_info o
-                 ON
-                  p.id = o.payment_hash
-                WHERE
-                 id = ?1",
-                [hash],
-                |row| self.sql_row_to_payment(row),
-            )
+            .query_row(query.as_str(), [hash], |row| self.sql_row_to_payment(row))
             .optional()?)
     }
 
@@ -394,15 +381,10 @@ impl SqliteStorage {
             data.lnurl_metadata = row.get(9)?;
             data.ln_address = row.get(10)?;
             data.lnurl_withdraw_endpoint = row.get(11)?;
-            data.swap_info = self
-                .get_swap_info_by_hash(&hex::decode(&payment.id).unwrap_or_default())
-                .unwrap_or(None);
-            data.reverse_swap_info = self
-                .get_reverse_swap_by_preimage(
-                    &hex::decode(&data.payment_preimage).unwrap_or_default(),
-                )
-                .unwrap_or(None)
-                .map(|i| i.get_reverse_swap_info_using_cached_values());
+            data.swap_info = self.sql_row_to_swap(row, "swaps_").ok();
+            if let Ok(fr) = self.sql_row_to_reverse_swap(row, "revswaps_") {
+                data.reverse_swap_info = Some(fr.get_reverse_swap_info_using_cached_values());
+            }
         }
 
         // In case we have a record of the open channel fee, let's use it.
