@@ -3520,6 +3520,7 @@ fun asSwapInfo(swapInfo: ReadableMap): SwapInfo? {
                 "confirmedTxIds",
                 "minAllowedDeposit",
                 "maxAllowedDeposit",
+                "maxAllowedDepositAbs",
             ),
         )
     ) {
@@ -3545,6 +3546,7 @@ fun asSwapInfo(swapInfo: ReadableMap): SwapInfo? {
     val confirmedTxIds = swapInfo.getArray("confirmedTxIds")?.let { asStringList(it) }!!
     val minAllowedDeposit = swapInfo.getDouble("minAllowedDeposit").toLong()
     val maxAllowedDeposit = swapInfo.getDouble("maxAllowedDeposit").toLong()
+    val maxAllowedDepositAbs = swapInfo.getDouble("maxAllowedDepositAbs").toLong()
     val lastRedeemError = if (hasNonNullKey(swapInfo, "lastRedeemError")) swapInfo.getString("lastRedeemError") else null
     val channelOpeningFees =
         if (hasNonNullKey(swapInfo, "channelOpeningFees")) {
@@ -3576,6 +3578,7 @@ fun asSwapInfo(swapInfo: ReadableMap): SwapInfo? {
         confirmedTxIds,
         minAllowedDeposit,
         maxAllowedDeposit,
+        maxAllowedDepositAbs,
         lastRedeemError,
         channelOpeningFees,
         confirmedAt,
@@ -3604,6 +3607,7 @@ fun readableMapOf(swapInfo: SwapInfo): ReadableMap {
         "confirmedTxIds" to readableArrayOf(swapInfo.confirmedTxIds),
         "minAllowedDeposit" to swapInfo.minAllowedDeposit,
         "maxAllowedDeposit" to swapInfo.maxAllowedDeposit,
+        "maxAllowedDepositAbs" to swapInfo.maxAllowedDepositAbs,
         "lastRedeemError" to swapInfo.lastRedeemError,
         "channelOpeningFees" to swapInfo.channelOpeningFees?.let { readableMapOf(it) },
         "confirmedAt" to swapInfo.confirmedAt,
