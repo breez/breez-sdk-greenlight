@@ -886,6 +886,32 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_swap_max_allowed_deposit() -> Result<()> {
+        let chain_service = Arc::new(MockChainService::default());
+        let (swapper, persister) = create_swapper(chain_service.clone())?;
+        let swap_info = swapper
+            .create_swap_address(get_test_ofp(10, 10, true).into())
+            .await?;
+
+        assert_eq!(swap_info.max_allowed_deposit_abs, 4_000_000);
+        assert_eq!(swap_info.max_allowed_deposit, 4_000_000);
+
+        // After changing the node's max_receivable_msat, the swap max_allowed_deposit changes as well when the swap is fetched
+        let custom_max_receivable = 1_000_000;
+        let mut dummy_node_state = get_dummy_node_state();
+        dummy_node_state.max_receivable_msat = custom_max_receivable * 1_000;
+        persister.set_node_state(&dummy_node_state)?;
+
+        let swap_info = swapper
+            .create_swap_address(get_test_ofp(10, 10, true).into())
+            .await?;
+        assert_eq!(swap_info.max_allowed_deposit_abs, 4_000_000);
+        assert_eq!(swap_info.max_allowed_deposit, custom_max_receivable as i64);
+
+        Ok(())
+    }
+
+    #[tokio::test]
     async fn test_swap_statuses() -> Result<()> {
         let tip = 1000;
         let chain_service = Arc::new(MockChainService::default());
