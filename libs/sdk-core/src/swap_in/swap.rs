@@ -217,9 +217,10 @@ impl BTCReceiveSwap {
             return Err(SwapError::Generic(anyhow!("Wrong address: {address_str}")));
         }
 
+        let max_allowed_deposit_abs = swap_reply.max_allowed_deposit;
         let max_allowed_deposit = std::cmp::min(
             (node_state.max_receivable_msat / 1000) as i64,
-            swap_reply.max_allowed_deposit,
+            max_allowed_deposit_abs,
         );
         if max_allowed_deposit < swap_reply.min_allowed_deposit {
             return Err(SwapError::Generic(anyhow!("No allowed deposit amounts")));
@@ -248,6 +249,7 @@ impl BTCReceiveSwap {
             status: SwapStatus::Initial,
             min_allowed_deposit: swap_reply.min_allowed_deposit,
             max_allowed_deposit,
+            max_allowed_deposit_abs,
             last_redeem_error: None,
             channel_opening_fees: Some(channel_opening_fees),
             confirmed_at: None,

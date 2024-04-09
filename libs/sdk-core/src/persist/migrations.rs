@@ -427,6 +427,11 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
        ALTER TABLE swaps_info ADD COLUMN total_incoming_txs INTEGER;
        UPDATE swaps_info SET status = 0;
        ",
+       // Add max absolute value. For existing swaps, initialize it to max_allowed_deposit.
+       "
+       ALTER TABLE sync.swaps ADD COLUMN max_allowed_deposit_abs INTEGER NOT NULL;
+       UPDATE sync.swaps SET max_allowed_deposit_abs = max_allowed_deposit;
+       "
     ]
 }
 

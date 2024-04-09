@@ -1374,10 +1374,12 @@ pub struct SwapInfo {
     pub unconfirmed_tx_ids: Vec<String>,
     /// Transaction IDs that have been confirmed on-chain.
     pub confirmed_tx_ids: Vec<String>,
-    /// The minimum amount of sats one can send in order for the swap to succeed. Received from [SwapperAPI::create_swap].   
+    /// The minimum amount of sats one can send in order for the swap to succeed. Received from [SwapperAPI::create_swap].
     pub min_allowed_deposit: i64,
-    /// The maximum amount of sats one can send in order for the swap to succeed. Received from [SwapperAPI::create_swap].
+    /// The maximum amount of sats one can send in order for the swap to succeed. This is determined based on `max_allowed_deposit_abs` and the node's local balance.
     pub max_allowed_deposit: i64,
+    /// The absolute maximum value, set by the swapper. Received from [SwapperAPI::create_swap].
+    pub max_allowed_deposit_abs: i64,
     /// Error reason for when swap fails.
     pub last_redeem_error: Option<String>,
     /// The dynamic fees which is set if a channel opening is needed.
