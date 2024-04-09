@@ -14,7 +14,7 @@ on:
         description: 'array of packages to publish (remove what you do not want)'
         required: true
         type: string
-        default: '["csharp", "golang", "maven", "kotlin-mpp", "flutter", "react-native", "python"]'
+        default: '["csharp", "golang", "maven", "kotlin-mpp", "flutter", "react-native", "python", "swift"]'
       csharp-ref:
         description: 'optional commit/tag/branch reference for the C# project. Defaults to ref.'
         required: false
@@ -79,6 +79,7 @@ jobs:
       flutter: ${{ contains(fromJSON(inputs.packages-to-publish), 'flutter') }}
       react-native: ${{ contains(fromJSON(inputs.packages-to-publish), 'react-native') }}
       python: ${{ contains(fromJSON(inputs.packages-to-publish), 'python') }}
+      swift: ${{ contains(fromJSON(inputs.packages-to-publish), 'swift') }}
       use-dummy-binaries: ${{ inputs.use-dummy-binaries }}
       publish: ${{ inputs.publish }}
     steps:
@@ -96,12 +97,12 @@ jobs:
       # (e.g. bindings-windows: true) if you want to test something.
       repository: ${{ needs.pre-setup.outputs.repository }}
       build-windows-binaries: ${{ needs.pre-setup.outputs.csharp == 'true' || needs.pre-setup.outputs.golang == 'true' || needs.pre-setup.outputs.python == 'true' }}
-      build-darwin-binaries: ${{ needs.pre-setup.outputs.csharp == 'true' || needs.pre-setup.outputs.golang == 'true' || needs.pre-setup.outputs.python == 'true' }}
+      build-darwin-binaries: ${{ needs.pre-setup.outputs.csharp == 'true' || needs.pre-setup.outputs.golang == 'true' || needs.pre-setup.outputs.python == 'true' || needs.pre-setup.outputs.swift == 'true'  }}
       build-linux-binaries: ${{ needs.pre-setup.outputs.csharp == 'true' || needs.pre-setup.outputs.golang == 'true' || needs.pre-setup.outputs.python == 'true' }}
       build-android-binaries: ${{ needs.pre-setup.outputs.kotlin-mpp == 'true' || needs.pre-setup.outputs.maven == 'true' || needs.pre-setup.outputs.golang == 'true' }}
-      build-ios-binaries: ${{ needs.pre-setup.outputs.kotlin-mpp == 'true' || needs.pre-setup.outputs.maven == 'true' }}
+      build-ios-binaries: ${{ needs.pre-setup.outputs.kotlin-mpp == 'true' || needs.pre-setup.outputs.maven == 'true' || needs.pre-setup.outputs.swift == 'true'  }}
       build-kotlin-language-bindings: ${{ needs.pre-setup.outputs.kotlin-mpp == 'true' || needs.pre-setup.outputs.maven == 'true' || needs.pre-setup.outputs.flutter == 'true' }}
-      build-swift-language-bindings: ${{ needs.pre-setup.outputs.flutter == 'true' }}
+      build-swift-language-bindings: ${{  needs.pre-setup.outputs.flutter == 'true' || needs.pre-setup.outputs.swift == 'true' }}
       build-python-language-bindings: ${{ needs.pre-setup.outputs.python == 'true' }}
       build-csharp-language-bindings: ${{ needs.pre-setup.outputs.csharp == 'true' }}
       build-golang-language-bindings: ${{ needs.pre-setup.outputs.golang == 'true' }}
@@ -119,6 +120,8 @@ jobs:
       publish-react-native-package: ${{ needs.pre-setup.outputs.react-native == 'true' && needs.pre-setup.publish == 'true' }}
       build-python-package: ${{ needs.pre-setup.outputs.python == 'true' }}
       publish-python-package: ${{ needs.pre-setup.outputs.python == 'true' && needs.pre-setup.publish == 'true' }}
+      build-swift-package: ${{ needs.pre-setup.outputs.swift == 'true' }}
+      publish-swift-package: ${{ needs.pre-setup.outputs.swift == 'true' && needs.pre-setup.publish == 'true' }}
       ref: ${{ needs.pre-setup.outputs.ref }}
       csharp-ref: ${{ needs.pre-setup.outputs.csharp-ref }}
       use-dummy-binaries: ${{ needs.pre-setup.outputs.use-dummy-binaries }}
@@ -292,3 +295,20 @@ jobs:
       publish: ${{ needs.setup.outputs.publish-python-package == 'true' }}
     secrets:
       PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+
+  build-swift-package:
+    needs:
+      - setup
+      - build-darwin-binaries
+      - build-ios-binaries
+      - build-language-bindings
+    if: ${{ needs.setup.outputs.build-swift-package == 'true' }}
+    uses: ./.github/workflows/build-swift-package.yml
+    with:
+      repository: ${{ needs.setup.outputs.repository }}
+      ref: ${{ needs.setup.outputs.ref }}
+      package-version: ${{ needs.setup.outputs.package-version }}
+      publish: ${{ needs.setup.outputs.publish-swift-package == 'true' }}
+    secrets:
+      REPO_SSH_KEY: ${{ secrets.REPO_SSH_KEY }}
+      COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
