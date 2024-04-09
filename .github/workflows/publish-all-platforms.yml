@@ -70,14 +70,15 @@ jobs:
       # certain inputs.
       repository: ${{ inputs.repository || github.repository }}
       ref: ${{ inputs.ref || github.sha }}
-      csharp-package-version: ${{ (contains(fromJSON(inputs.packages-to-publish), 'csharp') && inputs.package-version) || '' }}
+      package-version: ${{ inputs.package-version || '0.0.2' }}
+      csharp: ${{ contains(fromJSON(inputs.packages-to-publish), 'csharp') }}
       csharp-ref: ${{ inputs.csharp-ref || inputs.ref || github.sha }}
-      golang-package-version: ${{ (contains(fromJSON(inputs.packages-to-publish), 'golang') && inputs.package-version) || '' }}
-      maven-package-version: ${{ (contains(fromJSON(inputs.packages-to-publish), 'maven') && inputs.package-version) || ''}}
-      kotlin-mpp-package-version: ${{ (contains(fromJSON(inputs.packages-to-publish), 'kotlin-mpp') && inputs.package-version) || '' }}
-      flutter-package-version: ${{ (contains(fromJSON(inputs.packages-to-publish), 'flutter') && inputs.package-version) || '' }}
-      react-native-package-version: ${{ (contains(fromJSON(inputs.packages-to-publish), 'react-native') && inputs.package-version) || '' }}
-      python-package-version: ${{ (contains(fromJSON(inputs.packages-to-publish), 'python') && inputs.package-version) || '' }}
+      golang: ${{ contains(fromJSON(inputs.packages-to-publish), 'golang') }}
+      maven: ${{ contains(fromJSON(inputs.packages-to-publish), 'maven') }}
+      kotlin-mpp: ${{ contains(fromJSON(inputs.packages-to-publish), 'kotlin-mpp') }}
+      flutter: ${{ contains(fromJSON(inputs.packages-to-publish), 'flutter') }}
+      react-native: ${{ contains(fromJSON(inputs.packages-to-publish), 'react-native') }}
+      python: ${{ contains(fromJSON(inputs.packages-to-publish), 'python') }}
       use-dummy-binaries: ${{ inputs.use-dummy-binaries }}
       publish: ${{ inputs.publish }}
     steps:
@@ -94,69 +95,72 @@ jobs:
       # to set these variables here to `true` or `false` 
       # (e.g. bindings-windows: true) if you want to test something.
       repository: ${{ needs.pre-setup.outputs.repository }}
-      bindings-windows: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version || !!needs.pre-setup.outputs.python-package-version }}
-      bindings-darwin: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version || !!needs.pre-setup.outputs.python-package-version }}
-      bindings-linux: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version || !!needs.pre-setup.outputs.python-package-version }}
-      bindings-android: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version || !!needs.pre-setup.outputs.golang-package-version }}
-      bindings-ios: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version }}
-      kotlin: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version || !!needs.pre-setup.outputs.flutter-package-version }}
-      swift: ${{ !!needs.pre-setup.outputs.flutter-package-version }}
-      python: ${{ !!needs.pre-setup.outputs.python-package-version }}
-      csharp: ${{ !!needs.pre-setup.outputs.csharp-package-version }}
-      golang: ${{ !!needs.pre-setup.outputs.golang-package-version }}
-      maven: ${{ !!needs.pre-setup.outputs.maven-package-version }}
-      kotlin-mpp: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version }}
-      flutter: ${{ !!needs.pre-setup.outputs.flutter-package-version }}
-      react-native: ${{ !!needs.pre-setup.outputs.react-native-package-version }}
+      build-windows-binaries: ${{ needs.pre-setup.outputs.csharp == 'true' || needs.pre-setup.outputs.golang == 'true' || needs.pre-setup.outputs.python == 'true' }}
+      build-darwin-binaries: ${{ needs.pre-setup.outputs.csharp == 'true' || needs.pre-setup.outputs.golang == 'true' || needs.pre-setup.outputs.python == 'true' }}
+      build-linux-binaries: ${{ needs.pre-setup.outputs.csharp == 'true' || needs.pre-setup.outputs.golang == 'true' || needs.pre-setup.outputs.python == 'true' }}
+      build-android-binaries: ${{ needs.pre-setup.outputs.kotlin-mpp == 'true' || needs.pre-setup.outputs.maven == 'true' || needs.pre-setup.outputs.golang == 'true' }}
+      build-ios-binaries: ${{ needs.pre-setup.outputs.kotlin-mpp == 'true' || needs.pre-setup.outputs.maven == 'true' }}
+      build-kotlin-language-bindings: ${{ needs.pre-setup.outputs.kotlin-mpp == 'true' || needs.pre-setup.outputs.maven == 'true' || needs.pre-setup.outputs.flutter == 'true' }}
+      build-swift-language-bindings: ${{ needs.pre-setup.outputs.flutter == 'true' }}
+      build-python-language-bindings: ${{ needs.pre-setup.outputs.python == 'true' }}
+      build-csharp-language-bindings: ${{ needs.pre-setup.outputs.csharp == 'true' }}
+      build-golang-language-bindings: ${{ needs.pre-setup.outputs.golang == 'true' }}
+      build-csharp-package: ${{ needs.pre-setup.outputs.csharp == 'true' }}
+      publish-csharp-package: ${{ needs.pre-setup.outputs.csharp == 'true' && needs.pre-setup.publish == 'true' }}
+      build-golang-package: ${{ needs.pre-setup.outputs.golang == 'true' }}
+      publish-golang-package: ${{ needs.pre-setup.outputs.golang == 'true' && needs.pre-setup.publish == 'true' }}
+      build-maven-package: ${{ needs.pre-setup.outputs.maven == 'true' }}
+      publish-maven-package: ${{ needs.pre-setup.outputs.maven == 'true' && needs.pre-setup.publish == 'true' }}
+      build-kotlin-mpp-package: ${{ needs.pre-setup.outputs.kotlin-mpp == 'true' }}
+      publish-kotlin-mpp-package: ${{ needs.pre-setup.outputs.kotlin-mpp == 'true' && needs.pre-setup.publish == 'true' }}
+      build-flutter-package: ${{ needs.pre-setup.outputs.flutter == 'true' }}
+      publish-flutter-package: ${{ needs.pre-setup.outputs.flutter == 'true' && needs.pre-setup.publish == 'true' }}
+      build-react-native-package: ${{ needs.pre-setup.outputs.react-native == 'true' }}
+      publish-react-native-package: ${{ needs.pre-setup.outputs.react-native == 'true' && needs.pre-setup.publish == 'true' }}
+      build-python-package: ${{ needs.pre-setup.outputs.python == 'true' }}
+      publish-python-package: ${{ needs.pre-setup.outputs.python == 'true' && needs.pre-setup.publish == 'true' }}
       ref: ${{ needs.pre-setup.outputs.ref }}
-      csharp-package-version: ${{ needs.pre-setup.outputs.csharp-package-version || '0.0.2' }}
       csharp-ref: ${{ needs.pre-setup.outputs.csharp-ref }}
-      golang-package-version: ${{ needs.pre-setup.outputs.golang-package-version || '0.0.2' }}
-      maven-package-version: ${{ needs.pre-setup.outputs.maven-package-version || '0.0.2' }}
-      kotlin-mpp-package-version: ${{ needs.pre-setup.outputs.kotlin-mpp-package-version || '0.0.2' }}
-      flutter-package-version: ${{ needs.pre-setup.outputs.flutter-package-version || '0.0.2' }}
-      react-native-package-version: ${{ needs.pre-setup.outputs.react-native-package-version || '0.0.2' }}
-      python-package-version: ${{ needs.pre-setup.outputs.python-package-version || '0.0.2' }}
-      publish: ${{ needs.pre-setup.outputs.publish }}
       use-dummy-binaries: ${{ needs.pre-setup.outputs.use-dummy-binaries }}
+      package-version: ${{ needs.pre-setup.outputs.package-version }}
     steps:
       - run: echo "set setup output variables"
 
-  build-bindings-windows:
+  build-windows-binaries:
     needs: setup
-    if: ${{ needs.setup.outputs.bindings-windows == 'true' }}
+    if: ${{ needs.setup.outputs.build-windows-binaries == 'true' }}
     uses: ./.github/workflows/build-bindings-windows.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
       use-dummy-binaries: ${{ needs.setup.outputs.use-dummy-binaries == 'true' }}
-  build-bindings-darwin:
+  build-darwin-binaries:
     needs: setup
-    if: ${{ needs.setup.outputs.bindings-darwin == 'true' }}
+    if: ${{ needs.setup.outputs.build-darwin-binaries == 'true' }}
     uses: ./.github/workflows/build-bindings-darwin.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
       use-dummy-binaries: ${{ needs.setup.outputs.use-dummy-binaries == 'true' }}
-  build-bindings-linux:
+  build-linux-binaries:
     needs: setup
-    if: ${{ needs.setup.outputs.bindings-linux == 'true' }}
+    if: ${{ needs.setup.outputs.build-linux-binaries == 'true' }}
     uses: ./.github/workflows/build-bindings-linux.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
       use-dummy-binaries: ${{ needs.setup.outputs.use-dummy-binaries == 'true' }}
-  build-bindings-android:
+  build-android-binaries:
     needs: setup
-    if: ${{ needs.setup.outputs.bindings-android == 'true' }}
+    if: ${{ needs.setup.outputs.build-android-binaries == 'true' }}
     uses: ./.github/workflows/build-bindings-android.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
       use-dummy-binaries: ${{ needs.setup.outputs.use-dummy-binaries == 'true' }}
-  build-bindings-ios:
+  build-ios-binaries:
     needs: setup
-    if: ${{ needs.setup.outputs.bindings-ios == 'true' }}
+    if: ${{ needs.setup.outputs.build-ios-binaries == 'true' }}
     uses: ./.github/workflows/build-bindings-ios.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
@@ -169,122 +173,122 @@ jobs:
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
-      kotlin: ${{ needs.setup.outputs.kotlin == 'true'}}
-      csharp: ${{ needs.setup.outputs.csharp == 'true'}}
-      golang: ${{ needs.setup.outputs.golang == 'true'}}
-      python: ${{ needs.setup.outputs.python == 'true'}}
-      swift: ${{ needs.setup.outputs.swift == 'true'}}
+      kotlin: ${{ needs.setup.outputs.build-kotlin-language-bindings == 'true'}}
+      csharp: ${{ needs.setup.outputs.build-csharp-language-bindings == 'true'}}
+      golang: ${{ needs.setup.outputs.build-golang-language-bindings == 'true'}}
+      python: ${{ needs.setup.outputs.build-python-language-bindings == 'true'}}
+      swift: ${{ needs.setup.outputs.build-swift-language-bindings == 'true'}}
 
-  publish-csharp:
+  build-csharp-package:
     needs:
       - setup
-      - build-bindings-windows
-      - build-bindings-darwin
-      - build-bindings-linux
+      - build-windows-binaries
+      - build-darwin-binaries
+      - build-linux-binaries
       - build-language-bindings
-    if: ${{ needs.setup.outputs.csharp == 'true' }}
+    if: ${{ needs.setup.outputs.build-csharp-package == 'true' }}
     uses: ./.github/workflows/publish-csharp.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.csharp-ref }}
-      package-version: ${{ needs.setup.outputs.csharp-package-version }}
-      publish: ${{ needs.setup.outputs.publish == 'true' }}
+      package-version: ${{ needs.setup.outputs.package-version }}
+      publish: ${{ needs.setup.outputs.publish-csharp-package == 'true' }}
       skip-tests: ${{ needs.setup.outputs.use-dummy-binaries == 'true' }}
     secrets:
       NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
 
-  publish-golang:
+  build-golang-package:
     needs:
       - setup
-      - build-bindings-android
-      - build-bindings-windows
-      - build-bindings-darwin
-      - build-bindings-linux
+      - build-android-binaries
+      - build-windows-binaries
+      - build-darwin-binaries
+      - build-linux-binaries
       - build-language-bindings
-    if: ${{ needs.setup.outputs.golang == 'true' }}
+    if: ${{ needs.setup.outputs.build-golang-package == 'true' }}
     uses: ./.github/workflows/publish-golang.yml
     with:
       ref: ${{ needs.setup.outputs.ref }}
-      package-version: ${{ needs.setup.outputs.golang-package-version }}
-      publish: ${{ needs.setup.outputs.publish == 'true' }}
+      package-version: ${{ needs.setup.outputs.package-version }}
+      publish: ${{ needs.setup.outputs.publish-golang-package == 'true' }}
     secrets:
       REPO_SSH_KEY: ${{ secrets.REPO_SSH_KEY }}
   
-  publish-maven:
+  build-maven-package:
     needs:
       - setup
-      - build-bindings-android
+      - build-android-binaries
       - build-language-bindings
-    if: ${{ needs.setup.outputs.maven == 'true' }}
+    if: ${{ needs.setup.outputs.build-maven-package == 'true' }}
     uses: ./.github/workflows/publish-android.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
-      package-version: ${{ needs.setup.outputs.maven-package-version }}
-      publish: ${{ needs.setup.outputs.publish == 'true' }}
+      package-version: ${{ needs.setup.outputs.package-version }}
+      publish: ${{ needs.setup.outputs.publish-maven-package == 'true' }}
     secrets:
       BREEZ_MVN_USERNAME: ${{ secrets.BREEZ_MVN_USERNAME }}
       BREEZ_MVN_PASSWORD: ${{ secrets.BREEZ_MVN_PASSWORD }}
   
-  publish-kotlin-mpp:
+  build-kotlin-mpp-package:
     needs:
       - setup
-      - build-bindings-android
-      - build-bindings-ios
+      - build-android-binaries
+      - build-ios-binaries
       - build-language-bindings
-    if: ${{ needs.setup.outputs.kotlin-mpp == 'true' }}
+    if: ${{ needs.setup.outputs.build-kotlin-mpp-package == 'true' }}
     uses: ./.github/workflows/publish-kotlin-mpp.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
-      package-version: ${{ needs.setup.outputs.kotlin-mpp-package-version }}
-      publish: ${{ needs.setup.outputs.publish == 'true' }}
+      package-version: ${{ needs.setup.outputs.package-version }}
+      publish: ${{ needs.setup.outputs.publish-kotlin-mpp-package == 'true' }}
     secrets:
       BREEZ_MVN_USERNAME: ${{ secrets.BREEZ_MVN_USERNAME }}
       BREEZ_MVN_PASSWORD: ${{ secrets.BREEZ_MVN_PASSWORD }}
   
-  publish-flutter:
+  build-flutter-package:
     needs:
       - setup
       - build-language-bindings
-    if: ${{ needs.setup.outputs.flutter == 'true' }}
+    if: ${{ needs.setup.outputs.build-flutter-package == 'true' }}
     uses: ./.github/workflows/publish-flutter.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
-      package-version: ${{ needs.setup.outputs.flutter-package-version }}
-      publish: ${{ needs.setup.outputs.publish == 'true' }}
+      package-version: ${{ needs.setup.outputs.package-version }}
+      publish: ${{ needs.setup.outputs.publish-flutter-package == 'true' }}
     secrets:
       REPO_SSH_KEY: ${{ secrets.REPO_SSH_KEY }}
 
   # react native version x.y.z will at runtime require
   # ios and android packages x.y.z being published already.
-  publish-react-native:
+  build-react-native-package:
     needs:
       - setup
-    if: ${{ needs.setup.outputs.react-native == 'true' }}
+    if: ${{ needs.setup.outputs.build-react-native-package == 'true' }}
     uses: ./.github/workflows/publish-react-native.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
-      package-version: ${{ needs.setup.outputs.react-native-package-version }}
-      publish: ${{ needs.setup.outputs.publish == 'true' }}
+      package-version: ${{ needs.setup.outputs.package-version }}
+      publish: ${{ needs.setup.outputs.publish-react-native-package == 'true' }}
     secrets:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-  publish-python:
+  build-python-package:
     needs:
       - setup
-      - build-bindings-darwin
-      - build-bindings-linux
-      - build-bindings-windows
+      - build-darwin-binaries
+      - build-linux-binaries
+      - build-windows-binaries
       - build-language-bindings
-    if: ${{ needs.setup.outputs.python == 'true' }}
+    if: ${{ needs.setup.outputs.build-python-package == 'true' }}
     uses: ./.github/workflows/publish-python.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
-      package-version: ${{ needs.setup.outputs.python-package-version }}
-      publish: ${{ needs.setup.outputs.publish == 'true' }}
+      package-version: ${{ needs.setup.outputs.package-version }}
+      publish: ${{ needs.setup.outputs.publish-python-package == 'true' }}
     secrets:
       PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
