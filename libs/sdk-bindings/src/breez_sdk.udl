@@ -555,6 +555,7 @@ dictionary SwapInfo {
     sequence<string> confirmed_tx_ids;
     i64 min_allowed_deposit;
     i64 max_allowed_deposit;
+    i64 max_allowed_deposit_abs;
     string? last_redeem_error;
     OpeningFeeParams? channel_opening_fees;
     u32? confirmed_at;
