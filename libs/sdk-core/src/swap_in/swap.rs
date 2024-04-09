@@ -55,10 +55,10 @@ impl SwapperAPI for BreezServer {
             bitcoin_address: result.address,
             swapper_pubkey: result.pubkey,
             lock_height: result.lock_height,
-            max_allowed_deposit: result.max_allowed_deposit,
+            max_allowed_deposit_abs: result.max_allowed_deposit,
             error_message: result.error_message,
             required_reserve: result.required_reserve,
-            min_allowed_deposit: result.min_allowed_deposit,
+            min_allowed_deposit_abs: result.min_allowed_deposit,
         })
     }
 
@@ -181,13 +181,38 @@ impl BTCReceiveSwap {
             .get_node_state()?
             .ok_or(anyhow!("Node info not found"))?;
 
+        // Calculate max_allowed_deposit based on absolute max and current node state
+        let fn_max_allowed_deposit = |max_allowed_deposit_abs: i64| {
+            std::cmp::min(
+                (node_state.max_receivable_msat / 1000) as i64,
+                max_allowed_deposit_abs,
+            )
+        };
+
         // check first that we don't already have an unused swap
         if let Some(unused_swap) = self.list_unused()?.first().cloned() {
             info!("Found unused swap when trying to create new swap address");
+            let bitcoin_address = unused_swap.bitcoin_address.clone();
+
+            // Check max_allowed_deposit and, if it changed, persist and validate changes
+            let current_max = fn_max_allowed_deposit(unused_swap.max_allowed_deposit_abs);
+            let res_swap = match current_max == unused_swap.max_allowed_deposit {
+                true => unused_swap,
+                false => {
+                    info!("max_allowed_deposit for this swap has changed, updating it");
+                    let mut new_swap = unused_swap.clone();
+
+                    new_swap.max_allowed_deposit = current_max;
+                    new_swap.validate_max_allowed_deposit()?;
+                    self.persister
+                        .update_swap_max_allowed_deposit(bitcoin_address.clone(), current_max)?;
+                    new_swap
+                }
+            };
 
             self.persister
-                .update_swap_fees(unused_swap.bitcoin_address.clone(), channel_opening_fees)?;
-            return Ok(unused_swap);
+                .update_swap_fees(bitcoin_address, channel_opening_fees)?;
+            return Ok(res_swap);
         }
 
         // create fresh swap keys
@@ -198,9 +223,9 @@ impl BTCReceiveSwap {
         // use swap API to fetch a new swap address
         let swap_reply = self
             .swapper_api
-            .create_swap(hash.clone(), pubkey.clone(), node_state.id)
+            .create_swap(hash.clone(), pubkey.clone(), node_state.id.clone())
             .await?;
-        info!("created swap address {}", swap_reply.max_allowed_deposit);
+        info!("created swap address {}", swap_reply.bitcoin_address);
         // calculate the submarine swap script
         let our_script = create_submarine_swap_script(
             hash.clone(),
@@ -217,14 +242,6 @@ impl BTCReceiveSwap {
             return Err(SwapError::Generic(anyhow!("Wrong address: {address_str}")));
         }
 
-        let max_allowed_deposit_abs = swap_reply.max_allowed_deposit;
-        let max_allowed_deposit = std::cmp::min(
-            (node_state.max_receivable_msat / 1000) as i64,
-            max_allowed_deposit_abs,
-        );
-        if max_allowed_deposit < swap_reply.min_allowed_deposit {
-            return Err(SwapError::Generic(anyhow!("No allowed deposit amounts")));
-        }
         let swap_info = SwapInfo {
             bitcoin_address: swap_reply.bitcoin_address,
             created_at: SystemTime::now()
@@ -247,13 +264,14 @@ impl BTCReceiveSwap {
             confirmed_tx_ids: Vec::new(),
             unconfirmed_tx_ids: Vec::new(),
             status: SwapStatus::Initial,
-            min_allowed_deposit: swap_reply.min_allowed_deposit,
-            max_allowed_deposit,
-            max_allowed_deposit_abs,
+            min_allowed_deposit: swap_reply.min_allowed_deposit_abs,
+            max_allowed_deposit: fn_max_allowed_deposit(swap_reply.max_allowed_deposit_abs),
+            max_allowed_deposit_abs: swap_reply.max_allowed_deposit_abs,
             last_redeem_error: None,
             channel_opening_fees: Some(channel_opening_fees),
             confirmed_at: None,
         };
+        swap_info.validate_max_allowed_deposit()?;
 
         // persist the swap info
         self.persister.insert_swap(swap_info.clone())?;

@@ -113,6 +113,22 @@ impl SqliteStorage {
         Ok(())
     }
 
+    pub(crate) fn update_swap_max_allowed_deposit(
+        &self,
+        bitcoin_address: String,
+        max_allowed_deposit: i64,
+    ) -> PersistResult<()> {
+        self.get_connection()?.execute(
+            "UPDATE sync.swaps SET max_allowed_deposit=:max_allowed_deposit where bitcoin_address=:bitcoin_address",
+            named_params! {
+             ":max_allowed_deposit": max_allowed_deposit,
+             ":bitcoin_address": bitcoin_address,
+            },
+        )?;
+
+        Ok(())
+    }
+
     pub(crate) fn update_swap_redeem_error(
         &self,
         bitcoin_address: String,

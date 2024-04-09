@@ -28,10 +28,12 @@ use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lsp::LspInformation;
 use crate::models::Network::*;
 use crate::persist::swap::SwapChainInfo;
-use crate::swap_in::error::SwapResult;
+use crate::swap_in::error::{SwapError, SwapResult};
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
-use crate::{LNInvoice, LnUrlErrorData, LnUrlPayRequestData, LnUrlWithdrawRequestData, RouteHint};
+use crate::{
+    ensure_sdk, LNInvoice, LnUrlErrorData, LnUrlPayRequestData, LnUrlWithdrawRequestData, RouteHint,
+};
 
 pub const SWAP_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60 * 24 * 2; // 2 days
 pub const INVOICE_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60; // 60 minutes
@@ -94,10 +96,10 @@ pub struct Swap {
     pub lock_height: i64,
     pub error_message: String,
     pub required_reserve: i64,
-    /// Minimum amount, in sats, that should be sent to `bitcoin_address` for a successful swap
-    pub min_allowed_deposit: i64,
-    /// Maximum amount, in sats, that should be sent to `bitcoin_address` for a successful swap
-    pub max_allowed_deposit: i64,
+    /// Absolute minimum amount, in sats, allowed by the swapper for a successful swap
+    pub min_allowed_deposit_abs: i64,
+    /// Absolute maximum amount, in sats, allowed by the swapper for a successful swap
+    pub max_allowed_deposit_abs: i64,
 }
 
 /// Trait covering functionality involving swaps
@@ -1476,6 +1478,14 @@ impl SwapInfo {
             (_, unconfirmed, _, _) if unconfirmed > 0 => SwapStatus::WaitingConfirmation,
             _ => SwapStatus::Initial,
         }
+    }
+
+    pub(crate) fn validate_max_allowed_deposit(&self) -> SwapResult<()> {
+        ensure_sdk!(
+            self.max_allowed_deposit >= self.min_allowed_deposit,
+            SwapError::Generic(anyhow!("No allowed deposit amounts"))
+        );
+        Ok(())
     }
 }
 
