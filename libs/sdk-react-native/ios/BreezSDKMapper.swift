@@ -3845,8 +3845,8 @@ enum BreezSDKMapper {
         guard let maxAllowedDeposit = swapInfo["maxAllowedDeposit"] as? Int64 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "maxAllowedDeposit", typeName: "SwapInfo"))
         }
-        guard let maxAllowedDepositAbs = swapInfo["maxAllowedDepositAbs"] as? Int64 else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "maxAllowedDepositAbs", typeName: "SwapInfo"))
+        guard let maxSwapperPayable = swapInfo["maxSwapperPayable"] as? Int64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "maxSwapperPayable", typeName: "SwapInfo"))
         }
         var lastRedeemError: String?
         if hasNonNilKey(data: swapInfo, key: "lastRedeemError") {
@@ -3889,7 +3889,7 @@ enum BreezSDKMapper {
             confirmedTxIds: confirmedTxIds,
             minAllowedDeposit: minAllowedDeposit,
             maxAllowedDeposit: maxAllowedDeposit,
-            maxAllowedDepositAbs: maxAllowedDepositAbs,
+            maxSwapperPayable: maxSwapperPayable,
             lastRedeemError: lastRedeemError,
             channelOpeningFees: channelOpeningFees,
             confirmedAt: confirmedAt
@@ -3918,7 +3918,7 @@ enum BreezSDKMapper {
             "confirmedTxIds": swapInfo.confirmedTxIds,
             "minAllowedDeposit": swapInfo.minAllowedDeposit,
             "maxAllowedDeposit": swapInfo.maxAllowedDeposit,
-            "maxAllowedDepositAbs": swapInfo.maxAllowedDepositAbs,
+            "maxSwapperPayable": swapInfo.maxSwapperPayable,
             "lastRedeemError": swapInfo.lastRedeemError == nil ? nil : swapInfo.lastRedeemError,
             "channelOpeningFees": swapInfo.channelOpeningFees == nil ? nil : dictionaryOf(openingFeeParams: swapInfo.channelOpeningFees!),
             "confirmedAt": swapInfo.confirmedAt == nil ? nil : swapInfo.confirmedAt,

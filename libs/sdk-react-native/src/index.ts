@@ -539,7 +539,7 @@ export type SwapInfo = {
     confirmedTxIds: string[]
     minAllowedDeposit: number
     maxAllowedDeposit: number
-    maxAllowedDepositAbs: number
+    maxSwapperPayable: number
     lastRedeemError?: string
     channelOpeningFees?: OpeningFeeParams
     confirmedAt?: number
