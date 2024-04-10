@@ -557,7 +557,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
         confirmed_tx_ids: vec![],
         min_allowed_deposit: 5_000,
         max_allowed_deposit: 1_000_000,
-        max_allowed_deposit_abs: 2_000_000,
+        max_swapper_payable: 2_000_000,
         last_redeem_error: None,
         channel_opening_fees: Some(OpeningFeeParams {
             min_msat: 5_000_000,

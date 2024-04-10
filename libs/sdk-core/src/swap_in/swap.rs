@@ -55,10 +55,10 @@ impl SwapperAPI for BreezServer {
             bitcoin_address: result.address,
             swapper_pubkey: result.pubkey,
             lock_height: result.lock_height,
-            max_allowed_deposit_abs: result.max_allowed_deposit,
+            swapper_min_payable: result.min_allowed_deposit,
+            swapper_max_payable: result.max_allowed_deposit,
             error_message: result.error_message,
             required_reserve: result.required_reserve,
-            min_allowed_deposit_abs: result.min_allowed_deposit,
         })
     }
 
@@ -195,7 +195,7 @@ impl BTCReceiveSwap {
             let bitcoin_address = unused_swap.bitcoin_address.clone();
 
             // Check max_allowed_deposit and, if it changed, persist and validate changes
-            let current_max = fn_max_allowed_deposit(unused_swap.max_allowed_deposit_abs);
+            let current_max = fn_max_allowed_deposit(unused_swap.max_swapper_payable);
             let res_swap = match current_max == unused_swap.max_allowed_deposit {
                 true => unused_swap,
                 false => {
@@ -203,7 +203,7 @@ impl BTCReceiveSwap {
                     let mut new_swap = unused_swap.clone();
 
                     new_swap.max_allowed_deposit = current_max;
-                    new_swap.validate_max_allowed_deposit()?;
+                    new_swap.validate_swap_limits()?;
                     self.persister
                         .update_swap_max_allowed_deposit(bitcoin_address.clone(), current_max)?;
                     new_swap
@@ -264,14 +264,14 @@ impl BTCReceiveSwap {
             confirmed_tx_ids: Vec::new(),
             unconfirmed_tx_ids: Vec::new(),
             status: SwapStatus::Initial,
-            min_allowed_deposit: swap_reply.min_allowed_deposit_abs,
-            max_allowed_deposit: fn_max_allowed_deposit(swap_reply.max_allowed_deposit_abs),
-            max_allowed_deposit_abs: swap_reply.max_allowed_deposit_abs,
+            min_allowed_deposit: swap_reply.swapper_min_payable,
+            max_allowed_deposit: fn_max_allowed_deposit(swap_reply.swapper_max_payable),
+            max_swapper_payable: swap_reply.swapper_max_payable,
             last_redeem_error: None,
             channel_opening_fees: Some(channel_opening_fees),
             confirmed_at: None,
         };
-        swap_info.validate_max_allowed_deposit()?;
+        swap_info.validate_swap_limits()?;
 
         // persist the swap info
         self.persister.insert_swap(swap_info.clone())?;
@@ -893,7 +893,7 @@ mod tests {
             .create_swap_address(get_test_ofp(10, 10, true).into())
             .await?;
 
-        assert_eq!(swap_info.max_allowed_deposit_abs, 4_000_000);
+        assert_eq!(swap_info.max_swapper_payable, 4_000_000);
         assert_eq!(swap_info.max_allowed_deposit, 4_000_000);
 
         // After changing the node's max_receivable_msat, the swap max_allowed_deposit changes as well when the swap is fetched
@@ -905,7 +905,7 @@ mod tests {
         let swap_info = swapper
             .create_swap_address(get_test_ofp(10, 10, true).into())
             .await?;
-        assert_eq!(swap_info.max_allowed_deposit_abs, 4_000_000);
+        assert_eq!(swap_info.max_swapper_payable, 4_000_000);
         assert_eq!(swap_info.max_allowed_deposit, custom_max_receivable as i64);
 
         Ok(())

@@ -97,9 +97,9 @@ pub struct Swap {
     pub error_message: String,
     pub required_reserve: i64,
     /// Absolute minimum amount, in sats, allowed by the swapper for a successful swap
-    pub min_allowed_deposit_abs: i64,
+    pub swapper_min_payable: i64,
     /// Absolute maximum amount, in sats, allowed by the swapper for a successful swap
-    pub max_allowed_deposit_abs: i64,
+    pub swapper_max_payable: i64,
 }
 
 /// Trait covering functionality involving swaps
@@ -1378,10 +1378,10 @@ pub struct SwapInfo {
     pub confirmed_tx_ids: Vec<String>,
     /// The minimum amount of sats one can send in order for the swap to succeed. Received from [SwapperAPI::create_swap].
     pub min_allowed_deposit: i64,
-    /// The maximum amount of sats one can send in order for the swap to succeed. This is determined based on `max_allowed_deposit_abs` and the node's local balance.
+    /// The maximum amount of sats one can send in order for the swap to succeed. This is determined based on `max_swapper_payable` and the node's local balance.
     pub max_allowed_deposit: i64,
-    /// The absolute maximum value, set by the swapper. Received from [SwapperAPI::create_swap].
-    pub max_allowed_deposit_abs: i64,
+    /// The absolute maximum value payable by the swapper. Received from [SwapperAPI::create_swap].
+    pub max_swapper_payable: i64,
     /// Error reason for when swap fails.
     pub last_redeem_error: Option<String>,
     /// The dynamic fees which is set if a channel opening is needed.
@@ -1480,10 +1480,10 @@ impl SwapInfo {
         }
     }
 
-    pub(crate) fn validate_max_allowed_deposit(&self) -> SwapResult<()> {
+    pub(crate) fn validate_swap_limits(&self) -> SwapResult<()> {
         ensure_sdk!(
             self.max_allowed_deposit >= self.min_allowed_deposit,
-            SwapError::Generic(anyhow!("No allowed deposit amounts"))
+            SwapError::unsupported_swap_limits("No allowed deposit amounts")
         );
         Ok(())
     }

@@ -1940,11 +1940,11 @@ class SwapInfo {
   /// The minimum amount of sats one can send in order for the swap to succeed. Received from [SwapperAPI::create_swap].
   final int minAllowedDeposit;
 
-  /// The maximum amount of sats one can send in order for the swap to succeed. This is determined based on `max_allowed_deposit_abs` and the node's local balance.
+  /// The maximum amount of sats one can send in order for the swap to succeed. This is determined based on `max_swapper_payable` and the node's local balance.
   final int maxAllowedDeposit;
 
-  /// The absolute maximum value, set by the swapper. Received from [SwapperAPI::create_swap].
-  final int maxAllowedDepositAbs;
+  /// The absolute maximum value payable by the swapper. Received from [SwapperAPI::create_swap].
+  final int maxSwapperPayable;
 
   /// Error reason for when swap fails.
   final String? lastRedeemError;
@@ -1980,7 +1980,7 @@ class SwapInfo {
     required this.confirmedTxIds,
     required this.minAllowedDeposit,
     required this.maxAllowedDeposit,
-    required this.maxAllowedDepositAbs,
+    required this.maxSwapperPayable,
     this.lastRedeemError,
     this.channelOpeningFees,
     this.confirmedAt,
@@ -4161,7 +4161,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       confirmedTxIds: _wire2api_StringList(arr[17]),
       minAllowedDeposit: _wire2api_i64(arr[18]),
       maxAllowedDeposit: _wire2api_i64(arr[19]),
-      maxAllowedDepositAbs: _wire2api_i64(arr[20]),
+      maxSwapperPayable: _wire2api_i64(arr[20]),
       lastRedeemError: _wire2api_opt_String(arr[21]),
       channelOpeningFees: _wire2api_opt_box_autoadd_opening_fee_params(arr[22]),
       confirmedAt: _wire2api_opt_box_autoadd_u32(arr[23]),

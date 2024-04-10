@@ -2239,7 +2239,7 @@ impl support::IntoDart for SwapInfo {
             self.confirmed_tx_ids.into_into_dart().into_dart(),
             self.min_allowed_deposit.into_into_dart().into_dart(),
             self.max_allowed_deposit.into_into_dart().into_dart(),
-            self.max_allowed_deposit_abs.into_into_dart().into_dart(),
+            self.max_swapper_payable.into_into_dart().into_dart(),
             self.last_redeem_error.into_dart(),
             self.channel_opening_fees.into_dart(),
             self.confirmed_at.into_dart(),

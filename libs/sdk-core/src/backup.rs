@@ -780,7 +780,7 @@ mod tests {
             confirmed_tx_ids: Vec::new(),
             min_allowed_deposit: 0,
             max_allowed_deposit: 100,
-            max_allowed_deposit_abs: 200,
+            max_swapper_payable: 200,
             last_redeem_error: None,
             channel_opening_fees: Some(get_test_ofp_48h(1, 1).into()),
             confirmed_at: Some(555),
