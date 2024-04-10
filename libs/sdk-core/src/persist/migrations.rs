@@ -427,11 +427,7 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
        ALTER TABLE swaps_info ADD COLUMN total_incoming_txs INTEGER;
        UPDATE swaps_info SET status = 0;
        ",
-       // Add max absolute value payable by the swapper. For existing swaps, initialize it to max_allowed_deposit.
-       "
-       ALTER TABLE sync.swaps ADD COLUMN max_swapper_payable INTEGER NOT NULL;
-       UPDATE sync.swaps SET max_swapper_payable = max_allowed_deposit;
-       "
+       "SELECT 1;"      
     ]
 }
 
@@ -611,5 +607,10 @@ pub(crate) fn current_sync_migrations() -> Vec<&'static str> {
          INSERT INTO sync_requests(changed_table) VALUES('payments_metadata');
         END;
        ",
+        // Add max absolute value payable by the swapper. For existing swaps, initialize it to max_allowed_deposit.
+        "
+        ALTER TABLE swaps ADD COLUMN max_swapper_payable INTEGER NOT NULL DEFAULT 0;
+        UPDATE swaps SET max_swapper_payable = max_allowed_deposit;
+        ",
     ]
 }
