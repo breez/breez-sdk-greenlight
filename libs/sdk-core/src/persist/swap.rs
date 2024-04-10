@@ -36,9 +36,10 @@ impl SqliteStorage {
            swapper_public_key, 
            script,
            min_allowed_deposit, 
-           max_allowed_deposit
+           max_allowed_deposit,
+           max_swapper_payable
          )
-         VALUES (:bitcoin_address, :created_at, :lock_height, :payment_hash, :preimage, :private_key, :public_key, :swapper_public_key, :script, :min_allowed_deposit, :max_allowed_deposit)",
+         VALUES (:bitcoin_address, :created_at, :lock_height, :payment_hash, :preimage, :private_key, :public_key, :swapper_public_key, :script, :min_allowed_deposit, :max_allowed_deposit, :max_swapper_payable)",
          named_params! {
              ":bitcoin_address": swap_info.bitcoin_address,
              ":created_at": swap_info.created_at,
@@ -50,7 +51,8 @@ impl SqliteStorage {
              ":swapper_public_key": swap_info.swapper_public_key,            
              ":script": swap_info.script,             
              ":min_allowed_deposit": swap_info.min_allowed_deposit,
-             ":max_allowed_deposit": swap_info.max_allowed_deposit
+             ":max_allowed_deposit": swap_info.max_allowed_deposit,
+             ":max_swapper_payable": swap_info.max_swapper_payable,
          },
         )?;
 
@@ -108,6 +110,22 @@ impl SqliteStorage {
              ":status": status as u32,
             },
         )?;
+        Ok(())
+    }
+
+    pub(crate) fn update_swap_max_allowed_deposit(
+        &self,
+        bitcoin_address: String,
+        max_allowed_deposit: i64,
+    ) -> PersistResult<()> {
+        self.get_connection()?.execute(
+            "UPDATE sync.swaps SET max_allowed_deposit=:max_allowed_deposit where bitcoin_address=:bitcoin_address",
+            named_params! {
+             ":max_allowed_deposit": max_allowed_deposit,
+             ":bitcoin_address": bitcoin_address,
+            },
+        )?;
+
         Ok(())
     }
 
@@ -225,6 +243,7 @@ impl SqliteStorage {
           script as {prefix}script,
           min_allowed_deposit as {prefix}min_allowed_deposit,
           max_allowed_deposit as {prefix}max_allowed_deposit,
+          max_swapper_payable as {prefix}max_swapper_payable,
           bolt11 as {prefix}bolt11,
           paid_msat as {prefix}paid_msat,
           unconfirmed_sats as {prefix}unconfirmed_sats,
@@ -267,6 +286,7 @@ impl SqliteStorage {
           {prefix}script,
           {prefix}min_allowed_deposit,
           {prefix}max_allowed_deposit,
+          {prefix}max_swapper_payable,
           {prefix}bolt11,
           {prefix}paid_msat,
           {prefix}unconfirmed_sats,
@@ -389,6 +409,7 @@ impl SqliteStorage {
             confirmed_tx_ids: confirmed_txs_raw.0,
             min_allowed_deposit: row.get(format!("{prefix}min_allowed_deposit").as_str())?,
             max_allowed_deposit: row.get(format!("{prefix}max_allowed_deposit").as_str())?,
+            max_swapper_payable: row.get(format!("{prefix}max_swapper_payable").as_str())?,
             last_redeem_error: row.get(format!("{prefix}last_redeem_error").as_str())?,
             channel_opening_fees: row.get(format!("{prefix}channel_opening_fees").as_str())?,
             confirmed_at: row.get(format!("{prefix}confirmed_at").as_str())?,
@@ -440,6 +461,7 @@ mod tests {
             confirmed_tx_ids: Vec::new(),
             min_allowed_deposit: 0,
             max_allowed_deposit: 100,
+            max_swapper_payable: 200,
             last_redeem_error: None,
             channel_opening_fees: Some(get_test_ofp_48h(1, 1).into()),
             confirmed_at: None,

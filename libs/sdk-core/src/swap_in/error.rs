@@ -14,6 +14,14 @@ pub enum SwapError {
 
     #[error("Service connectivity: {0}")]
     ServiceConnectivity(anyhow::Error),
+
+    #[error("Unsupported swap limits: {0}")]
+    UnsupportedSwapLimits(anyhow::Error),
+}
+impl SwapError {
+    pub(crate) fn unsupported_swap_limits(err: &str) -> Self {
+        Self::UnsupportedSwapLimits(anyhow!(err.to_string()))
+    }
 }
 
 impl From<SdkError> for SwapError {

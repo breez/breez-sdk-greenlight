@@ -142,10 +142,10 @@ impl SwapperAPI for MockSwapperAPI {
             bitcoin_address: address.to_string(),
             swapper_pubkey: swapper_pub_key,
             lock_height: 144,
-            max_allowed_deposit: 4000000,
+            swapper_max_payable: 4_000_000,
             error_message: "".to_string(),
             required_reserve: 0,
-            min_allowed_deposit: 3000,
+            swapper_min_payable: 3_000,
         })
     }
 

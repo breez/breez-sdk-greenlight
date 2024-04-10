@@ -1940,8 +1940,11 @@ class SwapInfo {
   /// The minimum amount of sats one can send in order for the swap to succeed. Received from [SwapperAPI::create_swap].
   final int minAllowedDeposit;
 
-  /// The maximum amount of sats one can send in order for the swap to succeed. Received from [SwapperAPI::create_swap].
+  /// The maximum amount of sats one can send in order for the swap to succeed. This is determined based on `max_swapper_payable` and the node's local balance.
   final int maxAllowedDeposit;
+
+  /// The absolute maximum value payable by the swapper. Received from [SwapperAPI::create_swap].
+  final int maxSwapperPayable;
 
   /// Error reason for when swap fails.
   final String? lastRedeemError;
@@ -1977,6 +1980,7 @@ class SwapInfo {
     required this.confirmedTxIds,
     required this.minAllowedDeposit,
     required this.maxAllowedDeposit,
+    required this.maxSwapperPayable,
     this.lastRedeemError,
     this.channelOpeningFees,
     this.confirmedAt,
@@ -4135,7 +4139,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   SwapInfo _wire2api_swap_info(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 23) throw Exception('unexpected arr length: expect 23 but see ${arr.length}');
+    if (arr.length != 24) throw Exception('unexpected arr length: expect 24 but see ${arr.length}');
     return SwapInfo(
       bitcoinAddress: _wire2api_String(arr[0]),
       createdAt: _wire2api_i64(arr[1]),
@@ -4157,9 +4161,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       confirmedTxIds: _wire2api_StringList(arr[17]),
       minAllowedDeposit: _wire2api_i64(arr[18]),
       maxAllowedDeposit: _wire2api_i64(arr[19]),
-      lastRedeemError: _wire2api_opt_String(arr[20]),
-      channelOpeningFees: _wire2api_opt_box_autoadd_opening_fee_params(arr[21]),
-      confirmedAt: _wire2api_opt_box_autoadd_u32(arr[22]),
+      maxSwapperPayable: _wire2api_i64(arr[20]),
+      lastRedeemError: _wire2api_opt_String(arr[21]),
+      channelOpeningFees: _wire2api_opt_box_autoadd_opening_fee_params(arr[22]),
+      confirmedAt: _wire2api_opt_box_autoadd_u32(arr[23]),
     );
   }
 

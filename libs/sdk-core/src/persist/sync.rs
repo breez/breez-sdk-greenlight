@@ -141,7 +141,8 @@ impl SqliteStorage {
            swapper_public_key,
            script,
            min_allowed_deposit,
-           max_allowed_deposit
+           max_allowed_deposit,
+           max_swapper_payable
           FROM remote_sync.swaps
           WHERE bitcoin_address NOT IN (SELECT bitcoin_address FROM sync.swaps);",
             [],
@@ -469,6 +470,7 @@ mod tests {
             confirmed_tx_ids: Vec::new(),
             min_allowed_deposit: 0,
             max_allowed_deposit: 100,
+            max_swapper_payable: 200,
             last_redeem_error: None,
             channel_opening_fees: Some(get_test_ofp_48h(random(), random()).into()),
             confirmed_at: None,

@@ -28,10 +28,12 @@ use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lsp::LspInformation;
 use crate::models::Network::*;
 use crate::persist::swap::SwapChainInfo;
-use crate::swap_in::error::SwapResult;
+use crate::swap_in::error::{SwapError, SwapResult};
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
-use crate::{LNInvoice, LnUrlErrorData, LnUrlPayRequestData, LnUrlWithdrawRequestData, RouteHint};
+use crate::{
+    ensure_sdk, LNInvoice, LnUrlErrorData, LnUrlPayRequestData, LnUrlWithdrawRequestData, RouteHint,
+};
 
 pub const SWAP_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60 * 24 * 2; // 2 days
 pub const INVOICE_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60; // 60 minutes
@@ -94,10 +96,10 @@ pub struct Swap {
     pub lock_height: i64,
     pub error_message: String,
     pub required_reserve: i64,
-    /// Minimum amount, in sats, that should be sent to `bitcoin_address` for a successful swap
-    pub min_allowed_deposit: i64,
-    /// Maximum amount, in sats, that should be sent to `bitcoin_address` for a successful swap
-    pub max_allowed_deposit: i64,
+    /// Absolute minimum amount, in sats, allowed by the swapper for a successful swap
+    pub swapper_min_payable: i64,
+    /// Absolute maximum amount, in sats, allowed by the swapper for a successful swap
+    pub swapper_max_payable: i64,
 }
 
 /// Trait covering functionality involving swaps
@@ -1374,10 +1376,12 @@ pub struct SwapInfo {
     pub unconfirmed_tx_ids: Vec<String>,
     /// Transaction IDs that have been confirmed on-chain.
     pub confirmed_tx_ids: Vec<String>,
-    /// The minimum amount of sats one can send in order for the swap to succeed. Received from [SwapperAPI::create_swap].   
+    /// The minimum amount of sats one can send in order for the swap to succeed. Received from [SwapperAPI::create_swap].
     pub min_allowed_deposit: i64,
-    /// The maximum amount of sats one can send in order for the swap to succeed. Received from [SwapperAPI::create_swap].
+    /// The maximum amount of sats one can send in order for the swap to succeed. This is determined based on `max_swapper_payable` and the node's local balance.
     pub max_allowed_deposit: i64,
+    /// The absolute maximum value payable by the swapper. Received from [SwapperAPI::create_swap].
+    pub max_swapper_payable: i64,
     /// Error reason for when swap fails.
     pub last_redeem_error: Option<String>,
     /// The dynamic fees which is set if a channel opening is needed.
@@ -1474,6 +1478,14 @@ impl SwapInfo {
             (_, unconfirmed, _, _) if unconfirmed > 0 => SwapStatus::WaitingConfirmation,
             _ => SwapStatus::Initial,
         }
+    }
+
+    pub(crate) fn validate_swap_limits(&self) -> SwapResult<()> {
+        ensure_sdk!(
+            self.max_allowed_deposit >= self.min_allowed_deposit,
+            SwapError::unsupported_swap_limits("No allowed deposit amounts")
+        );
+        Ok(())
     }
 }
 

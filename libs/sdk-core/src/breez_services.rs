@@ -2697,6 +2697,7 @@ pub(crate) mod tests {
             confirmed_tx_ids: vec![],
             min_allowed_deposit: 5_000,
             max_allowed_deposit: 1_000_000,
+            max_swapper_payable: 2_000_000,
             last_redeem_error: None,
             channel_opening_fees: Some(OpeningFeeParams {
                 min_msat: 5_000_000,
@@ -3138,15 +3139,15 @@ pub(crate) mod tests {
             id: "tx1".to_string(),
             block_height: 1,
             channels_balance_msat: 100,
-            onchain_balance_msat: 1000,
+            onchain_balance_msat: 1_000,
             pending_onchain_balance_msat: 100,
             utxos: vec![],
             max_payable_msat: 95,
-            max_receivable_msat: 4000000000,
-            max_single_payment_amount_msat: 1000,
+            max_receivable_msat: 4_000_000_000,
+            max_single_payment_amount_msat: 1_000,
             max_chan_reserve_msats: 0,
             connected_peers: vec!["1111".to_string()],
-            inbound_liquidity_msats: 2000,
+            inbound_liquidity_msats: 2_000,
         }
     }
 }
