@@ -6,7 +6,8 @@ try
  var seed = BreezSdkMethods.MnemonicToSeed("cruise clever syrup coil cute execute laundry general cover prevent law sheriff");
  BreezSdkMethods.SetLogStream(new LogStreamListener());
  var config = BreezSdkMethods.DefaultConfig(EnvironmentType.PRODUCTION, "code", new NodeConfig.Greenlight(new GreenlightNodeConfig(null, "")));
- BlockingBreezServices sdkServices = BreezSdkMethods.Connect(config, seed, new SDKListener());
+ var connectRequest = new ConnectRequest(config, seed);
+ BlockingBreezServices sdkServices = BreezSdkMethods.Connect(connectRequest, new SDKListener());
  NodeState? nodeInfo = sdkServices.NodeInfo();
  Console.WriteLine(nodeInfo!.id);
 }
