@@ -37,7 +37,7 @@ abstract class ForegroundService : SdkForegroundService, EventListener, Service(
     private var breezSDK: BlockingBreezServices? = null
     @Suppress("MemberVisibilityCanBePrivate")
     val serviceScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
-    private var logger: ServiceLogger = ServiceLogger()
+    protected var logger: ServiceLogger = ServiceLogger()
     private var config: ServiceConfig = ServiceConfig.default()
     private var jobs: MutableList<Job> = arrayListOf()
 
