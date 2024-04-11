@@ -85,12 +85,18 @@ pub trait NodeAPI: Send + Sync {
         balance_changed: bool,
     ) -> NodeResult<SyncResponse>;
     /// As per the `pb::PayRequest` docs, `amount_msat` is only needed when the invoice doesn't specify an amount
-    async fn send_payment(&self, bolt11: String, amount_msat: Option<u64>) -> NodeResult<Payment>;
+    async fn send_payment(
+        &self,
+        bolt11: String,
+        amount_msat: Option<u64>,
+        label: Option<String>,
+    ) -> NodeResult<Payment>;
     async fn send_spontaneous_payment(
         &self,
         node_id: String,
         amount_msat: u64,
         extra_tlvs: Option<Vec<TlvEntry>>,
+        label: Option<String>,
     ) -> NodeResult<Payment>;
     async fn start(&self) -> NodeResult<String>;
 

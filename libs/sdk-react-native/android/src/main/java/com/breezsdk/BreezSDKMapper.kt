@@ -1155,10 +1155,12 @@ fun asLnUrlPayRequest(lnUrlPayRequest: ReadableMap): LnUrlPayRequest? {
     val data = lnUrlPayRequest.getMap("data")?.let { asLnUrlPayRequestData(it) }!!
     val amountMsat = lnUrlPayRequest.getDouble("amountMsat").toULong()
     val comment = if (hasNonNullKey(lnUrlPayRequest, "comment")) lnUrlPayRequest.getString("comment") else null
+    val paymentLabel = if (hasNonNullKey(lnUrlPayRequest, "paymentLabel")) lnUrlPayRequest.getString("paymentLabel") else null
     return LnUrlPayRequest(
         data,
         amountMsat,
         comment,
+        paymentLabel,
     )
 }
 
@@ -1167,6 +1169,7 @@ fun readableMapOf(lnUrlPayRequest: LnUrlPayRequest): ReadableMap {
         "data" to readableMapOf(lnUrlPayRequest.data),
         "amountMsat" to lnUrlPayRequest.amountMsat,
         "comment" to lnUrlPayRequest.comment,
+        "paymentLabel" to lnUrlPayRequest.paymentLabel,
     )
 }
 
@@ -1248,7 +1251,7 @@ fun asLnUrlPaySuccessData(lnUrlPaySuccessData: ReadableMap): LnUrlPaySuccessData
     if (!validateMandatoryFields(
             lnUrlPaySuccessData,
             arrayOf(
-                "paymentHash",
+                "payment",
             ),
         )
     ) {
@@ -1262,17 +1265,17 @@ fun asLnUrlPaySuccessData(lnUrlPaySuccessData: ReadableMap): LnUrlPaySuccessData
         } else {
             null
         }
-    val paymentHash = lnUrlPaySuccessData.getString("paymentHash")!!
+    val payment = lnUrlPaySuccessData.getMap("payment")?.let { asPayment(it) }!!
     return LnUrlPaySuccessData(
         successAction,
-        paymentHash,
+        payment,
     )
 }
 
 fun readableMapOf(lnUrlPaySuccessData: LnUrlPaySuccessData): ReadableMap {
     return readableMapOf(
         "successAction" to lnUrlPaySuccessData.successAction?.let { readableMapOf(it) },
-        "paymentHash" to lnUrlPaySuccessData.paymentHash,
+        "payment" to readableMapOf(lnUrlPaySuccessData.payment),
     )
 }
 
@@ -3224,9 +3227,11 @@ fun asSendPaymentRequest(sendPaymentRequest: ReadableMap): SendPaymentRequest? {
     }
     val bolt11 = sendPaymentRequest.getString("bolt11")!!
     val amountMsat = if (hasNonNullKey(sendPaymentRequest, "amountMsat")) sendPaymentRequest.getDouble("amountMsat").toULong() else null
+    val label = if (hasNonNullKey(sendPaymentRequest, "label")) sendPaymentRequest.getString("label") else null
     return SendPaymentRequest(
         bolt11,
         amountMsat,
+        label,
     )
 }
 
@@ -3234,6 +3239,7 @@ fun readableMapOf(sendPaymentRequest: SendPaymentRequest): ReadableMap {
     return readableMapOf(
         "bolt11" to sendPaymentRequest.bolt11,
         "amountMsat" to sendPaymentRequest.amountMsat,
+        "label" to sendPaymentRequest.label,
     )
 }
 
@@ -3306,10 +3312,12 @@ fun asSendSpontaneousPaymentRequest(sendSpontaneousPaymentRequest: ReadableMap):
         } else {
             null
         }
+    val label = if (hasNonNullKey(sendSpontaneousPaymentRequest, "label")) sendSpontaneousPaymentRequest.getString("label") else null
     return SendSpontaneousPaymentRequest(
         nodeId,
         amountMsat,
         extraTlvs,
+        label,
     )
 }
 
@@ -3318,6 +3326,7 @@ fun readableMapOf(sendSpontaneousPaymentRequest: SendSpontaneousPaymentRequest):
         "nodeId" to sendSpontaneousPaymentRequest.nodeId,
         "amountMsat" to sendSpontaneousPaymentRequest.amountMsat,
         "extraTlvs" to sendSpontaneousPaymentRequest.extraTlvs?.let { readableArrayOf(it) },
+        "label" to sendSpontaneousPaymentRequest.label,
     )
 }
 

@@ -1059,7 +1059,12 @@ impl NodeAPI for Greenlight {
         })
     }
 
-    async fn send_payment(&self, bolt11: String, amount_msat: Option<u64>) -> NodeResult<Payment> {
+    async fn send_payment(
+        &self,
+        bolt11: String,
+        amount_msat: Option<u64>,
+        label: Option<String>,
+    ) -> NodeResult<Payment> {
         let mut description = None;
         if !bolt11.is_empty() {
             let invoice = parse_invoice(&bolt11)?;
@@ -1073,7 +1078,7 @@ impl NodeAPI for Greenlight {
             amount_msat: amount_msat.map(|amt| cln::Amount { msat: amt }),
             maxfeepercent: Some(self.sdk_config.maxfee_percent),
             retry_for: Some(self.sdk_config.payment_timeout_sec),
-            label: None,
+            label,
             maxdelay: None,
             riskfactor: None,
             localinvreqid: None,
@@ -1097,15 +1102,16 @@ impl NodeAPI for Greenlight {
         node_id: String,
         amount_msat: u64,
         extra_tlvs: Option<Vec<TlvEntry>>,
+        label: Option<String>,
     ) -> NodeResult<Payment> {
         let mut client: node::ClnClient = self.get_node_client().await?;
         let request = cln::KeysendRequest {
             destination: hex::decode(node_id)?,
             amount_msat: Some(cln::Amount { msat: amount_msat }),
-            label: Some(format!(
+            label: label.or(Some(format!(
                 "breez-{}",
                 SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis()
-            )),
+            ))),
             extratlvs: extra_tlvs.map(|tlvs| cln::TlvStream {
                 entries: tlvs
                     .into_iter()
@@ -1997,7 +2003,7 @@ impl TryFrom<cln::ListpaysPays> for Payment {
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
                     payment_hash: hex::encode(payment.payment_hash),
-                    label: "".to_string(),
+                    label: payment.label.unwrap_or_default(),
                     destination_pubkey: payment.destination.map(hex::encode).unwrap_or_default(),
                     payment_preimage: payment.preimage.map(hex::encode).unwrap_or_default(),
                     keysend: payment.bolt11.is_none(),

@@ -1278,11 +1278,19 @@ enum BreezSDKMapper {
             }
             comment = commentTmp
         }
+        var paymentLabel: String?
+        if hasNonNilKey(data: lnUrlPayRequest, key: "paymentLabel") {
+            guard let paymentLabelTmp = lnUrlPayRequest["paymentLabel"] as? String else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "paymentLabel"))
+            }
+            paymentLabel = paymentLabelTmp
+        }
 
         return LnUrlPayRequest(
             data: data,
             amountMsat: amountMsat,
-            comment: comment
+            comment: comment,
+            paymentLabel: paymentLabel
         )
     }
 
@@ -1291,6 +1299,7 @@ enum BreezSDKMapper {
             "data": dictionaryOf(lnUrlPayRequestData: lnUrlPayRequest.data),
             "amountMsat": lnUrlPayRequest.amountMsat,
             "comment": lnUrlPayRequest.comment == nil ? nil : lnUrlPayRequest.comment,
+            "paymentLabel": lnUrlPayRequest.paymentLabel == nil ? nil : lnUrlPayRequest.paymentLabel,
         ]
     }
 
@@ -1398,20 +1407,21 @@ enum BreezSDKMapper {
             successAction = try asSuccessActionProcessed(successActionProcessed: successActionTmp)
         }
 
-        guard let paymentHash = lnUrlPaySuccessData["paymentHash"] as? String else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "paymentHash", typeName: "LnUrlPaySuccessData"))
+        guard let paymentTmp = lnUrlPaySuccessData["payment"] as? [String: Any?] else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "payment", typeName: "LnUrlPaySuccessData"))
         }
+        let payment = try asPayment(payment: paymentTmp)
 
         return LnUrlPaySuccessData(
             successAction: successAction,
-            paymentHash: paymentHash
+            payment: payment
         )
     }
 
     static func dictionaryOf(lnUrlPaySuccessData: LnUrlPaySuccessData) -> [String: Any?] {
         return [
             "successAction": lnUrlPaySuccessData.successAction == nil ? nil : dictionaryOf(successActionProcessed: lnUrlPaySuccessData.successAction!),
-            "paymentHash": lnUrlPaySuccessData.paymentHash,
+            "payment": dictionaryOf(payment: lnUrlPaySuccessData.payment),
         ]
     }
 
@@ -3519,10 +3529,18 @@ enum BreezSDKMapper {
             }
             amountMsat = amountMsatTmp
         }
+        var label: String?
+        if hasNonNilKey(data: sendPaymentRequest, key: "label") {
+            guard let labelTmp = sendPaymentRequest["label"] as? String else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "label"))
+            }
+            label = labelTmp
+        }
 
         return SendPaymentRequest(
             bolt11: bolt11,
-            amountMsat: amountMsat
+            amountMsat: amountMsat,
+            label: label
         )
     }
 
@@ -3530,6 +3548,7 @@ enum BreezSDKMapper {
         return [
             "bolt11": sendPaymentRequest.bolt11,
             "amountMsat": sendPaymentRequest.amountMsat == nil ? nil : sendPaymentRequest.amountMsat,
+            "label": sendPaymentRequest.label == nil ? nil : sendPaymentRequest.label,
         ]
     }
 
@@ -3595,10 +3614,19 @@ enum BreezSDKMapper {
             extraTlvs = try asTlvEntryList(arr: extraTlvsTmp)
         }
 
+        var label: String?
+        if hasNonNilKey(data: sendSpontaneousPaymentRequest, key: "label") {
+            guard let labelTmp = sendSpontaneousPaymentRequest["label"] as? String else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "label"))
+            }
+            label = labelTmp
+        }
+
         return SendSpontaneousPaymentRequest(
             nodeId: nodeId,
             amountMsat: amountMsat,
-            extraTlvs: extraTlvs
+            extraTlvs: extraTlvs,
+            label: label
         )
     }
 
@@ -3607,6 +3635,7 @@ enum BreezSDKMapper {
             "nodeId": sendSpontaneousPaymentRequest.nodeId,
             "amountMsat": sendSpontaneousPaymentRequest.amountMsat,
             "extraTlvs": sendSpontaneousPaymentRequest.extraTlvs == nil ? nil : arrayOf(tlvEntryList: sendSpontaneousPaymentRequest.extraTlvs!),
+            "label": sendSpontaneousPaymentRequest.label == nil ? nil : sendSpontaneousPaymentRequest.label,
         ]
     }
 

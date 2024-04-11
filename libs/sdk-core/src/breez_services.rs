@@ -313,10 +313,10 @@ impl BreezServices {
         {
             Some(_) => Err(SendPaymentError::AlreadyPaid),
             None => {
-                self.persist_pending_payment(&parsed_invoice, amount_msat)?;
+                self.persist_pending_payment(&parsed_invoice, amount_msat, req.label.clone())?;
                 let payment_res = self
                     .node_api
-                    .send_payment(parsed_invoice.bolt11.clone(), req.amount_msat)
+                    .send_payment(parsed_invoice.bolt11.clone(), req.amount_msat, req.label)
                     .map_err(Into::into)
                     .await;
                 let payment = self
@@ -339,7 +339,12 @@ impl BreezServices {
         self.start_node().await?;
         let payment_res = self
             .node_api
-            .send_spontaneous_payment(req.node_id.clone(), req.amount_msat, req.extra_tlvs)
+            .send_spontaneous_payment(
+                req.node_id.clone(),
+                req.amount_msat,
+                req.extra_tlvs,
+                req.label,
+            )
             .map_err(Into::into)
             .await;
         let payment = self
@@ -372,6 +377,7 @@ impl BreezServices {
                 let pay_req = SendPaymentRequest {
                     bolt11: cb.pr.clone(),
                     amount_msat: None,
+                    label: req.payment_label,
                 };
                 let invoice = parse_invoice(cb.pr.as_str())?;
 
@@ -445,7 +451,7 @@ impl BreezServices {
 
                 Ok(LnUrlPayResult::EndpointSuccess {
                     data: LnUrlPaySuccessData {
-                        payment_hash: details.payment_hash.clone(),
+                        payment,
                         success_action: maybe_sa_processed,
                     },
                 })
@@ -1158,6 +1164,7 @@ impl BreezServices {
         &self,
         invoice: &LNInvoice,
         amount_msat: u64,
+        label: Option<String>,
     ) -> Result<(), SendPaymentError> {
         self.persister.insert_or_update_payments(
             &[Payment {
@@ -1172,7 +1179,7 @@ impl BreezServices {
                 details: PaymentDetails::Ln {
                     data: LnPaymentDetails {
                         payment_hash: invoice.payment_hash.clone(),
-                        label: String::new(),
+                        label: label.unwrap_or_default(),
                         destination_pubkey: invoice.payee_pubkey.clone(),
                         payment_preimage: String::new(),
                         keysend: false,

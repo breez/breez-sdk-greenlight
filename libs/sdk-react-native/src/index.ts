@@ -186,6 +186,7 @@ export type LnUrlPayRequest = {
     data: LnUrlPayRequestData
     amountMsat: number
     comment?: string
+    paymentLabel?: string
 }
 
 export type LnUrlPayRequestData = {
@@ -202,7 +203,7 @@ export type LnUrlPayRequestData = {
 
 export type LnUrlPaySuccessData = {
     successAction?: SuccessActionProcessed
-    paymentHash: string
+    payment: Payment
 }
 
 export type LnUrlWithdrawRequest = {
@@ -488,6 +489,7 @@ export type SendOnchainResponse = {
 export type SendPaymentRequest = {
     bolt11: string
     amountMsat?: number
+    label?: string
 }
 
 export type SendPaymentResponse = {
@@ -498,6 +500,7 @@ export type SendSpontaneousPaymentRequest = {
     nodeId: string
     amountMsat: number
     extraTlvs?: TlvEntry[]
+    label?: string
 }
 
 export type ServiceHealthCheckResponse = {
