@@ -14,7 +14,7 @@ fn main() {
         Some(config),
         Some(out_dir),
         None::<&Utf8Path>,
-        None
+        None,
     )
     .unwrap();
 }
