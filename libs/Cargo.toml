@@ -17,4 +17,6 @@ version = "0.3.2"
 
 [workspace.dependencies]
 uniffi = "0.23.0"
+uniffi_bindgen = "0.23.0"
+uniffi_build = "0.23.0"
 uniffi_macros = "0.23.0"
