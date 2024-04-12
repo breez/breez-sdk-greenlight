@@ -20,7 +20,7 @@ thiserror = "1.0.56"
 tokio = { version = "1", features = ["full"] }
 uniffi = { workspace = true, features = ["bindgen-tests", "cli"] }
 uniffi_bindgen = { workspace = true }
-uniffi-kotlin-multiplatform = { git = "https://gitlab.com/trixnity/uniffi-kotlin-multiplatform-bindings", rev = "bf48c5fcb153856e3055025a3cbfa56fbf213188" }
+uniffi_bindgen_kotlin_multiplatform = { git = "https://gitlab.com/trixnity/uniffi-kotlin-multiplatform-bindings", rev = "7e77634ceaa653716b85a1ea2a5283ebf72c9a92" }
 camino = "1.1.1"
 log = "*"
 once_cell = "*"
