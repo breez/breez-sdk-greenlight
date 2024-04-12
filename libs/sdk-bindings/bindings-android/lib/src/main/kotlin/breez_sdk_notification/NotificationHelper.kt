@@ -72,7 +72,7 @@ class NotificationHelper {
         private const val TAG = "NotificationHelper"
         private var defaultClickAction: String? = null
 
-        private fun getNotificationManager(context: Context): NotificationManager? {
+        fun getNotificationManager(context: Context): NotificationManager? {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val notificationManager =
                     context.getSystemService(Context.NOTIFICATION_SERVICE)
@@ -85,7 +85,7 @@ class NotificationHelper {
         }
 
         @SuppressLint("NewApi")
-        private fun createNotificationChannelGroup(
+        fun createNotificationChannelGroup(
             context: Context,
             groupId: String,
             groupName: String,
