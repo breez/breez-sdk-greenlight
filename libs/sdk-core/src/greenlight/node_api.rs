@@ -1479,6 +1479,10 @@ impl NodeAPI for Greenlight {
                     .into_inner();
                 Ok(format!("{resp:?}"))
             }
+            NodeCommand::GenerateDiagnosticData => {
+                let resp = self.generate_diagnostic_data().await?;
+                Ok(format!("{resp:?}"))
+            }
             NodeCommand::Stop => {
                 let resp = self
                     .get_node_client()
@@ -1646,6 +1650,10 @@ impl NodeAPI for Greenlight {
 
 #[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
 enum NodeCommand {
+    /// Generates diagnostic data report.
+    #[strum(serialize = "generatediagnosticdata")]
+    GenerateDiagnosticData,
+
     /// Closes all channels of all peers.
     #[strum(serialize = "closeallchannels")]
     CloseAllChannels,
