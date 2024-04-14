@@ -38,7 +38,7 @@ class RedeemSwapJob(
             breezSDK.redeemSwap(request.address)
             logger.log(TAG, "Found swap for ${request.address}", "INFO")
         } catch (e: Exception) {
-            logger.log(TAG, "Failed to manually reedeem swap notification: ${e.message}", "WARN")
+            logger.log(TAG, "Failed to manually redeem swap notification: ${e.message}", "WARN")
         }
     }
 
@@ -47,7 +47,7 @@ class RedeemSwapJob(
             when (e) {
                 is BreezEvent.SwapUpdated -> {
                     val swapInfo = e.details
-                    logger.log(TAG, "Received swap updated event: ${swapInfo.bitcoinAddress} current address: ${address} status: ${swapInfo.status}", "TRACE")
+                    logger.log(TAG, "Received swap updated event: ${swapInfo.bitcoinAddress} current address: $address status: ${swapInfo.status}", "TRACE")
                     if (swapInfo.bitcoinAddress == address) {
                         if (swapInfo.paidMsat.toLong() > 0) {
                             notifySuccessAndShutdown(address)
@@ -60,8 +60,10 @@ class RedeemSwapJob(
         }
     }
 
+    override fun onShutdown() {}
+
     private  fun notifySuccessAndShutdown(address: String) {
-        logger.log(TAG, "Swap address ${address} redeemed succesfully", "INFO")
+        logger.log(TAG, "Swap address $address redeemed successfully", "INFO")
         notifyChannel(
             context,
             NOTIFICATION_CHANNEL_SWAP_TX_CONFIRMED,
