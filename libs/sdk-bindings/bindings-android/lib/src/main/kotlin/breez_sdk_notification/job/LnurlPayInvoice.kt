@@ -118,4 +118,6 @@ class LnurlPayInvoiceJob(
 
         fgService.onFinished(this)
     }
+
+    override fun onShutdown() {}
 }

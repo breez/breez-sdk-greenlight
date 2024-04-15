@@ -68,6 +68,8 @@ class ReceivePaymentJob(
         }
     }
 
+    override fun onShutdown() {}
+
     private fun handleReceivedPayment(
         bolt11: String,
         paymentHash: String,
