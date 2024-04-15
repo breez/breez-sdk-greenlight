@@ -7,6 +7,7 @@ import android.content.Context
 import android.util.Log
 import breez_sdk_notification.Constants.MESSAGE_TYPE_ADDRESS_TXS_CONFIRMED
 import breez_sdk_notification.Constants.MESSAGE_TYPE_PAYMENT_RECEIVED
+import breez_sdk_notification.NotificationHelper.Companion.getNotificationManager
 
 @Suppress("unused")
 interface MessagingService {
@@ -22,12 +23,13 @@ interface MessagingService {
     /** Check if the foreground service is needed depending on the
      *  message type and foreground state of the application. */
     fun startServiceIfNeeded(context: Context, message: Message) {
+        val notificationManager = getNotificationManager(context)
         val isServiceNeeded = when (message.type) {
             MESSAGE_TYPE_ADDRESS_TXS_CONFIRMED -> !isAppForeground(context)
             MESSAGE_TYPE_PAYMENT_RECEIVED -> !isAppForeground(context)
             else -> true
         }
-        if (isServiceNeeded) startForegroundService(message)
+        if (notificationManager != null && isServiceNeeded) startForegroundService(message)
         else Log.w(TAG, "Ignoring message ${message.type}: ${message.payload}")
     }
 

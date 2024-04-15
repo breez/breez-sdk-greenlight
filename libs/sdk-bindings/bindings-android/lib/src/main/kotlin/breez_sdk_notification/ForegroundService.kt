@@ -16,6 +16,7 @@ import breez_sdk_notification.Constants.MESSAGE_TYPE_LNURL_PAY_INFO
 import breez_sdk_notification.Constants.MESSAGE_TYPE_LNURL_PAY_INVOICE
 import breez_sdk_notification.Constants.MESSAGE_TYPE_PAYMENT_RECEIVED
 import breez_sdk_notification.Constants.NOTIFICATION_ID_FOREGROUND_SERVICE
+import breez_sdk_notification.Constants.SERVICE_TIMEOUT_MS
 import breez_sdk_notification.Constants.SHUTDOWN_DELAY_MS
 import breez_sdk_notification.NotificationHelper.Companion.notifyForegroundService
 import breez_sdk_notification.job.Job
@@ -53,6 +54,7 @@ abstract class ForegroundService : SdkForegroundService, EventListener, Service(
         return null
     }
 
+    /** Called by a Job to signal that it is complete. */
     override fun onFinished(job: Job) {
         synchronized(this) {
             logger.log(TAG, "Job has finished: $job", "DEBUG")
@@ -62,14 +64,27 @@ abstract class ForegroundService : SdkForegroundService, EventListener, Service(
     }
 
     /** Stop the service */
+    private val serviceTimeoutHandler = Handler(Looper.getMainLooper())
+    private val serviceTimeoutRunnable: Runnable = Runnable {
+        logger.log(TAG, "Reached service timeout...", "DEBUG")
+        synchronized(this) {
+            jobs.forEach { job -> job.onShutdown() }
+        }
+
+        shutdown()
+    }
+
     private val shutdownHandler = Handler(Looper.getMainLooper())
     private val shutdownRunnable: Runnable = Runnable {
         logger.log(TAG, "Reached scheduled shutdown...", "DEBUG")
         shutdown()
     }
 
-    private fun resetShutdown() {
+    private fun resetDelayedCallbacks() {
+        serviceTimeoutHandler.removeCallbacksAndMessages(null)
         shutdownHandler.removeCallbacksAndMessages(null)
+
+        shutdownHandler.postDelayed(serviceTimeoutRunnable, SERVICE_TIMEOUT_MS)
     }
 
     private fun delayedShutdown() {
@@ -84,14 +99,10 @@ abstract class ForegroundService : SdkForegroundService, EventListener, Service(
         stopSelf()
     }
 
-    // =========================================================== //
-    //                    START COMMAND HANDLER                    //
-    // =========================================================== //
-
     /** Called when an intent is called for this service. */
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
-        resetShutdown()
+        resetDelayedCallbacks()
 
         val intentDetails = "[ intent=$intent, flag=$flags, startId=$startId ]"
         logger.log(TAG, "Start foreground service from intent $intentDetails", "DEBUG")
@@ -127,7 +138,7 @@ abstract class ForegroundService : SdkForegroundService, EventListener, Service(
     abstract fun getConnectRequest(): ConnectRequest?
 
     /** To be implemented by the application foreground service.
-     * Allows the user to override the default ServiceConfig. */
+     *  Allows the user to override the default ServiceConfig. */
     abstract fun getServiceConfig(): ServiceConfig?
 
     /** Get the job to be executed from the Message data in the Intent.
@@ -189,6 +200,7 @@ abstract class ForegroundService : SdkForegroundService, EventListener, Service(
         }
     }
 
+    /** Handles incoming events from the Breez SDK EventListener */
     override fun onEvent(e: BreezEvent) {
         synchronized(this) {
             jobs.forEach { job -> job.onEvent(e) }
