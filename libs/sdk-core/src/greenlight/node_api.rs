@@ -218,11 +218,13 @@ impl Greenlight {
 
         loop {
             debug!("Start of the signer loop, getting node_info from scheduler");
-            let node_info_res = scheduler.get_node_info(NodeInfoRequest {
-                node_id: self.signer.node_id(),
-                // Purposely not using the `wait` parameter
-                wait: false,
-            }).await;
+            let node_info_res = scheduler
+                .get_node_info(NodeInfoRequest {
+                    node_id: self.signer.node_id(),
+                    // Purposely not using the `wait` parameter
+                    wait: false,
+                })
+                .await;
 
             let node_info = match node_info_res.map(|v| v.into_inner()) {
                 Ok(v) => {
@@ -230,10 +232,7 @@ impl Greenlight {
                     v
                 }
                 Err(e) => {
-                    trace!(
-                                "Got an error from the scheduler: {}. Sleeping before retrying",
-                                e
-                            );
+                    trace!("Got an error from the scheduler: {e}. Sleeping before retrying");
                     sleep(Duration::from_millis(1000)).await;
                     continue;
                 }
@@ -245,8 +244,12 @@ impl Greenlight {
                 continue;
             }
 
-            if let Err(e) = self.signer.run_once(Uri::from_maybe_shared(node_info.grpc_uri)?).await {
-                warn!("Error running against node: {}", e);
+            if let Err(e) = self
+                .signer
+                .run_once(Uri::from_maybe_shared(node_info.grpc_uri)?)
+                .await
+            {
+                warn!("Error running against node: {e}");
             }
         }
     }
