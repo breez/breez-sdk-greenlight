@@ -187,33 +187,38 @@ impl Greenlight {
         info!("Entering the upgrade loop");
         loop {
             #[allow(deprecated)]
-            let maybe_upgrade_res = scheduler
-                .maybe_upgrade(UpgradeRequest {
-                    initmsg: self.signer.get_init(),
-                    signer_version: self.signer.version().to_owned(),
-                    startupmsgs: self
-                        .signer
-                        .get_startup_messages()
-                        .into_iter()
-                        .map(|s| s.into())
-                        .collect(),
-                })
-                .await;
-
-            if let Err(err_status) = maybe_upgrade_res {
-                match err_status.code() {
-                    Code::Unavailable => {
-                        debug!("Cannot connect to scheduler, sleeping and retrying");
-                        sleep(Duration::from_secs(3)).await;
-                        continue;
+            let maybe_upgrade_thread = scheduler.maybe_upgrade(UpgradeRequest {
+                initmsg: self.signer.get_init(),
+                signer_version: self.signer.version().to_owned(),
+                startupmsgs: self
+                    .signer
+                    .get_startup_messages()
+                    .into_iter()
+                    .map(|s| s.into())
+                    .collect(),
+            });
+            tokio::select! {
+                maybe_upgrade_res = maybe_upgrade_thread => {
+                    match maybe_upgrade_res {
+                        Ok(_) => break,
+                        Err(err_status) => match err_status.code() {
+                            Code::Unavailable => {
+                                debug!("Cannot connect to scheduler, sleeping and retrying");
+                                sleep(Duration::from_secs(3)).await;
+                                continue;
+                            }
+                            _ => {
+                                return Err(Error::Upgrade(err_status))?;
+                            }
+                        }
                     }
-                    _ => {
-                        return Err(Error::Upgrade(err_status))?;
-                    }
-                }
-            }
-
-            break;
+                },
+                _ = shutdown.recv() => {
+                    debug!("Received the signal to exit the signer upgrade loop");
+                    // Explicitly return, to make sure we don't even start the signer loop below
+                    return Ok(());
+                },
+            };
         }
 
         loop {
