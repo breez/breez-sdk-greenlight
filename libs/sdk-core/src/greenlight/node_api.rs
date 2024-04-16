@@ -172,7 +172,7 @@ impl Greenlight {
         })
     }
 
-    async fn run_forever(&self, mut shutdown: mpsc::Receiver<()>) -> Result<(), anyhow::Error> {
+    async fn run_forever_signer(&self) -> Result<(), anyhow::Error> {
         let channel = Endpoint::from_shared(utils::scheduler_uri())?
             .tls_config(self.tls_config.client_tls_config())?
             .tcp_keepalive(Some(Duration::from_secs(30)))
@@ -218,44 +218,50 @@ impl Greenlight {
 
         loop {
             debug!("Start of the signer loop, getting node_info from scheduler");
-            let get_node = scheduler.get_node_info(NodeInfoRequest {
+            let node_info_res = scheduler.get_node_info(NodeInfoRequest {
                 node_id: self.signer.node_id(),
                 // Purposely not using the `wait` parameter
                 wait: false,
-            });
-            tokio::select! {
-                info = get_node => {
-                    let node_info = match info.map(|v| v.into_inner()) {
-                        Ok(v) => {
-                            debug!("Got node_info from scheduler: {:?}", v);
-                            v
-                        }
-                        Err(e) => {
-                            trace!(
+            }).await;
+
+            let node_info = match node_info_res.map(|v| v.into_inner()) {
+                Ok(v) => {
+                    debug!("Got node_info from scheduler: {:?}", v);
+                    v
+                }
+                Err(e) => {
+                    trace!(
                                 "Got an error from the scheduler: {}. Sleeping before retrying",
                                 e
                             );
-                            sleep(Duration::from_millis(1000)).await;
-                            continue;
-                        }
-                    };
-
-                    if node_info.grpc_uri.is_empty() {
-                        trace!("Got an empty GRPC URI, node is not scheduled, sleeping and retrying");
-                        sleep(Duration::from_millis(1000)).await;
-                        continue;
-                    }
-
-                    if let Err(e) = self.signer.run_once(Uri::from_maybe_shared(node_info.grpc_uri)?).await {
-                        warn!("Error running against node: {}", e);
-                    }
-                },
-                _ = shutdown.recv() => {
-                    debug!("Received the signal to exit the signer loop");
-                    break;
-                },
+                    sleep(Duration::from_millis(1000)).await;
+                    continue;
+                }
             };
+
+            if node_info.grpc_uri.is_empty() {
+                trace!("Got an empty GRPC URI, node is not scheduled, sleeping and retrying");
+                sleep(Duration::from_millis(1000)).await;
+                continue;
+            }
+
+            if let Err(e) = self.signer.run_once(Uri::from_maybe_shared(node_info.grpc_uri)?).await {
+                warn!("Error running against node: {}", e);
+            }
         }
+    }
+
+    async fn run_forever(&self, mut shutdown: mpsc::Receiver<()>) -> Result<(), anyhow::Error> {
+        tokio::select! {
+            run_forever_res = self.run_forever_signer() => {
+                match run_forever_res {
+                    Ok(_) => info!("Inner signer loop exited"),
+                    Err(e) => error!("Inner signer loop exited with error: {e:?}"),
+                }
+            },
+            _ = shutdown.recv() => debug!("Received the signal to exit the signer loop")
+        };
+
         info!("Exiting the signer loop");
         Ok(())
     }
