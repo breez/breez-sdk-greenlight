@@ -172,7 +172,10 @@ impl Greenlight {
         })
     }
 
-    async fn run_forever_signer(&self) -> Result<(), anyhow::Error> {
+    /// The actual signer loop. Connects to, upgrades and keeps alive the connection to the signer.
+    ///
+    /// Used as inner loop for `run_forever`.
+    async fn run_forever_inner(&self) -> Result<(), anyhow::Error> {
         let channel = Endpoint::from_shared(utils::scheduler_uri())?
             .tls_config(self.tls_config.client_tls_config())?
             .tcp_keepalive(Some(Duration::from_secs(30)))
@@ -256,7 +259,7 @@ impl Greenlight {
 
     async fn run_forever(&self, mut shutdown: mpsc::Receiver<()>) -> Result<(), anyhow::Error> {
         tokio::select! {
-            run_forever_res = self.run_forever_signer() => {
+            run_forever_res = self.run_forever_inner() => {
                 match run_forever_res {
                     Ok(_) => info!("Inner signer loop exited"),
                     Err(e) => error!("Inner signer loop exited with error: {e:?}"),
