@@ -14,7 +14,7 @@ let package = Package(
     ],
     targets: [
         .binaryTarget(name: "breez_sdkFFI", path: "./breez_sdkFFI.xcframework"),
-        .target(name: "BreezSDK", dependencies: ["breez_sdkFFI"], sources: ["../BreezSDK", "../BreezSDKNotification"]),
+        .target(name: "BreezSDK", dependencies: ["breez_sdkFFI"]),
         .testTarget(name: "BreezSDKTests", dependencies: ["BreezSDK"]),
     ]
 )
