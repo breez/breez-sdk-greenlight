@@ -29,9 +29,8 @@ Pod::Spec.new do |s|
   s.source_files = 'Classes/**/*'
   s.on_demand_resources = { 
     'BreezSDK' => [
-      'bindings-swift/Sources/BreezSDK/BreezSDK.swift', 
-      'bindings-swift/Sources/BreezSDKNotification/*.swift', 
-      'bindings-swift/Sources/BreezSDKNotification/**/*.swift'
+      'bindings-swift/Sources/BreezSDK/*.swift', 
+      'bindings-swift/Sources/BreezSDK/**/*.swift'
     ]
   }
   s.dependency 'Flutter'
