@@ -172,10 +172,8 @@ impl Greenlight {
         })
     }
 
-    /// The actual signer loop. Connects to, upgrades and keeps alive the connection to the signer.
-    ///
-    /// Used as inner loop for `run_forever`.
-    async fn run_forever_inner(&self) -> Result<(), anyhow::Error> {
+    /// Create and, if necessary, upgrade the scheduler
+    async fn init_scheduler(&self) -> Result<SchedulerClient<tonic::transport::channel::Channel>> {
         let channel = Endpoint::from_shared(utils::scheduler_uri())?
             .tls_config(self.tls_config.client_tls_config())?
             .tcp_keepalive(Some(Duration::from_secs(30)))
@@ -219,6 +217,16 @@ impl Greenlight {
             break;
         }
 
+        Ok(scheduler)
+    }
+
+    /// The core signer loop. Connects to the signer and keeps the connection alive.
+    ///
+    /// Used as inner loop for `run_forever`.
+    async fn run_forever_inner(
+        &self,
+        mut scheduler: SchedulerClient<tonic::transport::channel::Channel>,
+    ) -> Result<(), anyhow::Error> {
         loop {
             debug!("Start of the signer loop, getting node_info from scheduler");
             let node_info_res = scheduler
@@ -258,12 +266,10 @@ impl Greenlight {
     }
 
     async fn run_forever(&self, mut shutdown: mpsc::Receiver<()>) -> Result<(), anyhow::Error> {
+        let scheduler = self.init_scheduler().await?;
         tokio::select! {
-            run_forever_res = self.run_forever_inner() => {
-                match run_forever_res {
-                    Ok(_) => info!("Inner signer loop exited"),
-                    Err(e) => error!("Inner signer loop exited with error: {e:?}"),
-                }
+            run_forever_inner_res = self.run_forever_inner(scheduler) => {
+                error!("Inner signer loop exited unexpectedly: {run_forever_inner_res:?}");
             },
             _ = shutdown.recv() => debug!("Received the signal to exit the signer loop")
         };
