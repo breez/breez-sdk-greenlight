@@ -1586,27 +1586,27 @@ impl BreezServices {
             interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
             loop {
                 tokio::select! {
-                 _ = interval.tick() => {
-                  let tip_res = cloned.chain_service.current_tip().await;
-                  match tip_res {
-                   Ok(next_block) => {
-                    debug!("got tip {:?}", next_block);
-                    if next_block > current_block {
-                     _ = cloned.sync().await;
-                     _  = cloned.on_event(BreezEvent::NewBlock{block: next_block}).await;
+                    _ = interval.tick() => {
+                        let tip_res = cloned.chain_service.current_tip().await;
+                        match tip_res {
+                            Ok(next_block) => {
+                                debug!("got tip {:?}", next_block);
+                                if next_block > current_block {
+                                    _ = cloned.sync().await;
+                                    _ = cloned.on_event(BreezEvent::NewBlock{block: next_block}).await;
+                                }
+                                current_block = next_block
+                            },
+                            Err(e) => {
+                                error!("failed to fetch next block {}", e)
+                            }
+                        };
                     }
-                    current_block = next_block
-                   },
-                   Err(e) => {
-                    error!("failed to fetch next block {}", e)
-                   }
-                  };
-                 }
 
-                 _ = shutdown_receiver.changed() => {
-                  debug!("New blocks task has completed");
-                  return;
-                 }
+                    _ = shutdown_receiver.changed() => {
+                        debug!("New blocks task has completed");
+                        return;
+                    }
                 }
             }
         });
