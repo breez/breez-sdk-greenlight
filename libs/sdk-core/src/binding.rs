@@ -14,7 +14,7 @@ use std::future::Future;
 use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
-use flutter_rust_bridge::StreamSink;
+use crate::frb_generated::StreamSink;
 use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
 use sdk_common::invoice;
@@ -796,7 +796,7 @@ struct BindingEventListener;
 impl EventListener for BindingEventListener {
     fn on_event(&self, e: BreezEvent) {
         if let Some(stream) = NOTIFICATION_STREAM.get() {
-            stream.add(e);
+            let _ = stream.add(e);
         }
     }
 }
@@ -820,7 +820,7 @@ impl log::Log for BindingLogger {
 
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
-            self.log_stream.add(LogEntry {
+            let _ = self.log_stream.add(LogEntry {
                 line: record.args().to_string(),
                 level: record.level().as_str().to_string(),
             });
