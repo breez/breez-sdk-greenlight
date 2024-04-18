@@ -25,7 +25,7 @@ uniffi-kotlin-multiplatform = { git = "https://gitlab.com/trixnity/uniffi-kotlin
 camino = "1.1.1"
 log = "*"
 once_cell = "*"
-flutter_rust_bridge = "2.0.0-dev.33"
+flutter_rust_bridge = "2.0.0-dev.32"
 tiny-bip39 = "*"
 tonic = { version = "^0.8", features = [
     "tls",
@@ -37,4 +37,3 @@ tonic = { version = "^0.8", features = [
 uniffi_build = { version = "0.23.0" }
 uniffi_bindgen = "0.23.0"
 anyhow = { version = "1.0.79", features = ["backtrace"] }
-glob = "0.3.1"

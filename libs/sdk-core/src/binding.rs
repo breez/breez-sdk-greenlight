@@ -13,8 +13,8 @@
 use std::future::Future;
 use std::sync::Arc;
 
-use crate::frb_generated::StreamSink;
 use anyhow::{anyhow, Result};
+use crate::frb_generated::StreamSink;
 use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
 use tokio::sync::Mutex;
@@ -232,16 +232,6 @@ pub fn register_webhook(webhook_url: String) -> Result<()> {
         get_breez_services()
             .await?
             .register_webhook(webhook_url)
-            .await
-    })
-    .map_err(anyhow::Error::new::<SdkError>)
-}
-
-pub fn unregister_webhook(webhook_url: String) -> Result<()> {
-    block_on(async {
-        get_breez_services()
-            .await?
-            .unregister_webhook(webhook_url)
             .await
     })
     .map_err(anyhow::Error::new::<SdkError>)
