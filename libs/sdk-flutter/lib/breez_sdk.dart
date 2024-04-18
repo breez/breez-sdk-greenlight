@@ -1,16 +1,16 @@
 import 'dart:async';
 
-import 'package:breez_sdk/bridge_generated.dart';
-import 'package:breez_sdk/exceptions.dart';
 import 'package:breez_sdk/native_toolkit.dart';
+import 'package:breez_sdk/sdk.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:rxdart/rxdart.dart';
+import 'generated/binding.dart' as binding;
 
 class BreezSDK {
-  final _lnToolkit = getNativeToolkit();
-
-  BreezSDK();
+  BreezSDK() {
+    verifyInitialized();
+  }
 
   /* Streams */
 
@@ -24,6 +24,16 @@ class BreezSDK {
 
   Stream<Payment> get paymentResultStream => _paymentResultStream.stream;
 
+  Future<void> verifyInitialized() async {
+    try {
+      if (!BreezSdkBindings.instance.initialized) {
+        await BreezSdkBindings.init(externalLibrary: createLibraryImpl());
+      }
+    } catch (e) {
+      throw Exception("Failed to initialize BreezSdkBindings");
+    }
+  }
+
   /// Initializes SDK events & log streams
   void initialize() {
     _initializeEventsStream();
@@ -32,7 +42,7 @@ class BreezSDK {
 
   /// Listen to BreezEvent's(new block, invoice paid, synced)
   void _initializeEventsStream() {
-    _lnToolkit.breezEventsStream().listen((event) async {
+    binding.breezEventsStream().listen((event) async {
       if (event is BreezEvent_InvoicePaid) {
         _invoicePaidStream.add(event.details);
         await fetchNodeData();
@@ -72,7 +82,7 @@ class BreezSDK {
             onError: (e) => _logStreamController.addError(e),
           );
     } else {
-      _lnToolkit.breezLogStream().listen((logEntry) {
+      binding.breezLogStream().listen((logEntry) {
         _logStreamController.add(logEntry);
       }, onError: (e) {
         _logStreamController.addError(e);
@@ -96,7 +106,7 @@ class BreezSDK {
   ///
   /// More webhook types may be supported in the future.
   Future<void> registerWebhook({required String webhookUrl}) async {
-    return _lnToolkit.registerWebhook(webhookUrl: webhookUrl);
+    return binding.registerWebhook(webhookUrl: webhookUrl);
   }
 
   /// Unregister webhook callbacks for the given `webhook_url`.
@@ -113,25 +123,25 @@ class BreezSDK {
   Future connect({
     required ConnectRequest req,
   }) async {
-    await _lnToolkit.connect(
+    await binding.connect(
       req: req,
     );
     await fetchNodeData();
   }
 
   /// Check whether node service is initialized or not
-  Future<bool> isInitialized() async => await _lnToolkit.isInitialized();
+  Future<bool> isInitialized() async => await binding.isInitialized();
 
   /// This method sync the local state with the remote node state.
   /// The synced items are as follows:
   /// * node state - General information about the node and its liquidity status
   /// * channels - The list of channels and their status
   /// * payments - The incoming/outgoing payments
-  Future<void> sync() async => await _lnToolkit.sync();
+  Future<void> sync() async => await binding.sync();
 
   /// get the node state from the persistent storage
   Future<NodeState?> nodeInfo() async {
-    final nodeState = await _lnToolkit.nodeInfo();
+    final nodeState = await binding.nodeInfo();
     nodeStateController.add(nodeState);
     return nodeState;
   }
@@ -140,18 +150,18 @@ class BreezSDK {
   Future<void> configureNode({
     required ConfigureNodeRequest req,
   }) async {
-    return await _lnToolkit.configureNode(req: req);
+    return await binding.configureNode(req: req);
   }
 
   /// Cleanup node resources and stop the signer.
-  Future<void> disconnect() async => await _lnToolkit.disconnect();
+  Future<void> disconnect() async => await binding.disconnect();
 
   /* Breez Services Helper API's */
 
   /// Attempts to convert the phrase to a mnemonic, then to a seed.
   ///
   /// If the phrase is not a valid mnemonic, an error is returned.
-  Future<Uint8List> mnemonicToSeed(String phrase) async => await _lnToolkit.mnemonicToSeed(phrase: phrase);
+  Future<Uint8List> mnemonicToSeed(String phrase) async => await binding.mnemonicToSeed(phrase: phrase);
 
   /// Get the full default config for a specific environment type
   Future<Config> defaultConfig({
@@ -159,7 +169,7 @@ class BreezSDK {
     required String apiKey,
     required NodeConfig nodeConfig,
   }) async {
-    return await _lnToolkit.defaultConfig(
+    return await binding.defaultConfig(
       envType: envType,
       apiKey: apiKey,
       nodeConfig: nodeConfig,
@@ -171,7 +181,7 @@ class BreezSDK {
   Future<SignMessageResponse> signMessage({
     required SignMessageRequest req,
   }) async {
-    return await _lnToolkit.signMessage(req: req);
+    return await binding.signMessage(req: req);
   }
 
   /// Check whether given message was signed by the private key or the given
@@ -179,30 +189,30 @@ class BreezSDK {
   Future<CheckMessageResponse> checkMessage({
     required CheckMessageRequest req,
   }) async {
-    return await _lnToolkit.checkMessage(req: req);
+    return await binding.checkMessage(req: req);
   }
 
   /* LSP API's */
 
   /// List available lsps that can be selected by the user
-  Future<List<LspInformation>> listLsps() async => await _lnToolkit.listLsps();
+  Future<List<LspInformation>> listLsps() async => await binding.listLsps();
 
   /// Select the lsp to be used and provide inbound liquidity
   Future<void> connectLSP(String lspId) async {
-    return await _lnToolkit.connectLsp(lspId: lspId);
+    return await binding.connectLsp(lspId: lspId);
   }
 
   /// Get the current LSP's ID
-  Future<String?> lspId() async => await _lnToolkit.lspId();
+  Future<String?> lspId() async => await binding.lspId();
 
   /// Convenience method to look up LSP info based on current LSP ID
-  Future<LspInformation?> lspInfo() async => await _lnToolkit.lspInfo();
+  Future<LspInformation?> lspInfo() async => await binding.lspInfo();
 
   /// Convenience method to look up [LspInformation] for a given LSP ID
-  Future<LspInformation?> fetchLspInfo(String lspId) async => await _lnToolkit.fetchLspInfo(id: lspId);
+  Future<LspInformation?> fetchLspInfo(String lspId) async => await binding.fetchLspInfo(id: lspId);
 
   /// close all channels with the current lsp
-  Future closeLspChannels() async => await _lnToolkit.closeLspChannels();
+  Future closeLspChannels() async => await binding.closeLspChannels();
 
   /* Backup API's & Streams*/
 
@@ -212,24 +222,24 @@ class BreezSDK {
   Stream<BreezEvent?> get backupStream => _backupStreamController.stream;
 
   /// Start the backup process
-  Future<void> backup() async => await _lnToolkit.backup();
+  Future<void> backup() async => await binding.backup();
 
   /// Returns the state of the backup process
-  Future<BackupStatus> backupStatus() async => await _lnToolkit.backupStatus();
+  Future<BackupStatus> backupStatus() async => await binding.backupStatus();
 
   /* Parse API's */
 
   /// Parse a BOLT11 payment request and return a structure contains the parsed fields.
-  Future<LNInvoice> parseInvoice(String invoice) async => await _lnToolkit.parseInvoice(invoice: invoice);
+  Future<LNInvoice> parseInvoice(String invoice) async => await binding.parseInvoice(invoice: invoice);
 
   /// Parses generic user input, typically pasted from clipboard or scanned from a QR.
-  Future<InputType> parseInput({required String input}) async => await _lnToolkit.parseInput(input: input);
+  Future<InputType> parseInput({required String input}) async => await binding.parseInput(input: input);
 
   /// Get the static backup data.
   Future<StaticBackupResponse> staticBackup({
     required StaticBackupRequest req,
   }) async {
-    return await _lnToolkit.staticBackup(req: req);
+    return await binding.staticBackup(req: req);
   }
 
   /* Payment API's & Streams*/
@@ -243,7 +253,7 @@ class BreezSDK {
   Future<List<Payment>> listPayments({
     required ListPaymentsRequest req,
   }) async {
-    final paymentsList = await _lnToolkit.listPayments(req: req);
+    final paymentsList = await binding.listPayments(req: req);
     paymentsController.add(paymentsList);
     return paymentsList;
   }
@@ -252,7 +262,7 @@ class BreezSDK {
   Future<Payment?> paymentByHash({
     required String hash,
   }) async {
-    return await _lnToolkit.paymentByHash(hash: hash);
+    return await binding.paymentByHash(hash: hash);
   }
 
   /// Set the external metadata of a payment as a valid JSON string
@@ -260,7 +270,7 @@ class BreezSDK {
     required String hash,
     required String metadata,
   }) async {
-    return await _lnToolkit.setPaymentMetadata(hash: hash, metadata: metadata);
+    return await binding.setPaymentMetadata(hash: hash, metadata: metadata);
   }
 
   /* Lightning Payment API's */
@@ -269,14 +279,14 @@ class BreezSDK {
   Future<SendPaymentResponse> sendPayment({
     required SendPaymentRequest req,
   }) async {
-    return await _lnToolkit.sendPayment(req: req);
+    return await binding.sendPayment(req: req);
   }
 
   /// pay directly to a node id using keysend
   Future<SendPaymentResponse> sendSpontaneousPayment({
     required SendSpontaneousPaymentRequest req,
   }) async {
-    return await _lnToolkit.sendSpontaneousPayment(req: req);
+    return await binding.sendSpontaneousPayment(req: req);
   }
 
   /// Creates an bolt11 payment request.
@@ -286,7 +296,7 @@ class BreezSDK {
   Future<ReceivePaymentResponse> receivePayment({
     required ReceivePaymentRequest req,
   }) async {
-    return await _lnToolkit.receivePayment(req: req);
+    return await binding.receivePayment(req: req);
   }
 
   /* LNURL API's */
@@ -296,7 +306,7 @@ class BreezSDK {
   Future<LnUrlPayResult> lnurlPay({
     required LnUrlPayRequest req,
   }) async {
-    return await _lnToolkit.lnurlPay(req: req);
+    return await binding.lnurlPay(req: req);
   }
 
   /// Second step of LNURL-withdraw. The first step is `parse()`, which also validates the LNURL destination
@@ -306,7 +316,7 @@ class BreezSDK {
   /// of the LNURL endpoint data in the `request`. If they match the endpoint requirements, the LNURL withdraw
   /// request is made. A successful result here means the endpoint started the payment.
   Future<LnUrlWithdrawResult> lnurlWithdraw({required LnUrlWithdrawRequest req}) async {
-    return await _lnToolkit.lnurlWithdraw(req: req);
+    return await binding.lnurlWithdraw(req: req);
   }
 
   /// Third and last step of LNURL-auth. The first step is `parse()`, which also validates the LNURL destination
@@ -317,14 +327,14 @@ class BreezSDK {
   Future<LnUrlCallbackStatus> lnurlAuth({
     required LnUrlAuthRequestData reqData,
   }) async {
-    return await _lnToolkit.lnurlAuth(reqData: reqData);
+    return await binding.lnurlAuth(reqData: reqData);
   }
 
   /* Fiat Currency API's */
 
   /// Fetch live rates of fiat currencies
   Future<Map<String, Rate>> fetchFiatRates() async {
-    final List<Rate> rates = await _lnToolkit.fetchFiatRates();
+    final List<Rate> rates = await binding.fetchFiatRates();
     return rates.fold<Map<String, Rate>>({}, (map, rate) {
       map[rate.coin] = rate;
       return map;
@@ -332,7 +342,7 @@ class BreezSDK {
   }
 
   /// List all available fiat currencies
-  Future<List<FiatCurrency>> listFiatCurrencies() async => await _lnToolkit.listFiatCurrencies();
+  Future<List<FiatCurrency>> listFiatCurrencies() async => await binding.listFiatCurrencies();
 
   /* Swap Stream */
 
@@ -351,39 +361,39 @@ class BreezSDK {
   Future<SendOnchainResponse> sendOnchain({
     required SendOnchainRequest req,
   }) async {
-    return await _lnToolkit.sendOnchain(req: req);
+    return await binding.sendOnchain(req: req);
   }
 
   Future<OnchainPaymentLimitsResponse> onchainPaymentLimits() async {
-    return await _lnToolkit.onchainPaymentLimits();
+    return await binding.onchainPaymentLimits();
   }
 
   /// Creates a reverse swap and attempts to pay the HODL invoice
   Future<PayOnchainResponse> payOnchain({
     required PayOnchainRequest req,
   }) async {
-    return await _lnToolkit.payOnchain(req: req);
+    return await binding.payOnchain(req: req);
   }
 
   /// Onchain receive swap API
   Future<SwapInfo> receiveOnchain({
     required ReceiveOnchainRequest req,
   }) async {
-    return await _lnToolkit.receiveOnchain(req: req);
+    return await binding.receiveOnchain(req: req);
   }
 
   /// Generates an url that can be used by a third part provider to buy Bitcoin with fiat currency
   Future<BuyBitcoinResponse> buyBitcoin({
     required BuyBitcoinRequest req,
   }) async {
-    return await _lnToolkit.buyBitcoin(req: req);
+    return await binding.buyBitcoin(req: req);
   }
 
   /// Withdraw on-chain funds in the wallet to an external btc address
   Future<RedeemOnchainFundsResponse> redeemOnchainFunds({
     required RedeemOnchainFundsRequest req,
   }) async {
-    final redeemOnchainFundsResponse = await _lnToolkit.redeemOnchainFunds(req: req);
+    final redeemOnchainFundsResponse = await binding.redeemOnchainFunds(req: req);
     await listPayments(req: const ListPaymentsRequest());
     return redeemOnchainFundsResponse;
   }
@@ -394,19 +404,19 @@ class BreezSDK {
   /// This is possible since the route to the swapper node is known in advance and is expected
   /// to consist of maximum 3 hops.
   Future<MaxReverseSwapAmountResponse> maxReverseSwapAmount() async {
-    return await _lnToolkit.maxReverseSwapAmount();
+    return await binding.maxReverseSwapAmount();
   }
 
   /* Refundables API's */
 
   /// list non-completed expired swaps that should be refunded by calling refund()
-  Future<List<SwapInfo>> listRefundables() async => await _lnToolkit.listRefundables();
+  Future<List<SwapInfo>> listRefundables() async => await binding.listRefundables();
 
   /// Construct and broadcast a refund transaction for a failed/expired swap
   Future<RefundResponse> refund({
     required RefundRequest req,
   }) async {
-    return await _lnToolkit.refund(req: req);
+    return await binding.refund(req: req);
   }
 
   /// Prepares a refund transaction for a failed/expired swap.
@@ -416,18 +426,18 @@ class BreezSDK {
   Future<PrepareRefundResponse> prepareRefund({
     required PrepareRefundRequest req,
   }) async {
-    return await _lnToolkit.prepareRefund(req: req);
+    return await binding.prepareRefund(req: req);
   }
 
   /// Iterate all historical swap addresses and fetch their current status from the blockchain.
   /// The status is then updated in the persistent storage.
-  Future<void> rescanSwaps() async => await _lnToolkit.rescanSwaps();
+  Future<void> rescanSwaps() async => await binding.rescanSwaps();
 
   /* In Progress Swap API's */
 
   /// Returns an optional in-progress [SwapInfo].
   /// A [SwapInfo] is in-progress if it is waiting for confirmation to be redeemed and complete the swap.
-  Future<SwapInfo?> inProgressSwap() async => await _lnToolkit.inProgressSwap();
+  Future<SwapInfo?> inProgressSwap() async => await binding.inProgressSwap();
 
   /// Redeems an individual swap.
   ///
@@ -438,7 +448,7 @@ class BreezSDK {
   Future<void> redeemSwap({
     required String swapAddress,
   }) async {
-    return await _lnToolkit.redeemSwap(swapAddress: swapAddress);
+    return await binding.redeemSwap(swapAddress: swapAddress);
   }
 
   /// Returns the blocking [ReverseSwapInfo]s that are in progress
@@ -446,7 +456,7 @@ class BreezSDK {
     'Use inProgressOnchainPayments instead. '
     'This method was deprecated after v0.3.6',
   )
-  Future<List<ReverseSwapInfo>> inProgressReverseSwaps() async => _lnToolkit.inProgressReverseSwaps();
+  Future<List<ReverseSwapInfo>> inProgressReverseSwaps() async => binding.inProgressReverseSwaps();
 
   /* Swap Fee API's */
 
@@ -454,7 +464,7 @@ class BreezSDK {
   Future<OpenChannelFeeResponse> openChannelFee({
     required OpenChannelFeeRequest req,
   }) async {
-    return await _lnToolkit.openChannelFee(req: req);
+    return await binding.openChannelFee(req: req);
   }
 
   /// Lookup the most recent reverse swap pair info using the Boltz API
@@ -465,26 +475,26 @@ class BreezSDK {
   Future<ReverseSwapPairInfo> fetchReverseSwapFees({
     required ReverseSwapFeesRequest req,
   }) async {
-    return await _lnToolkit.fetchReverseSwapFees(req: req);
+    return await binding.fetchReverseSwapFees(req: req);
   }
 
   /// Lookup the most recent reverse swap pair info using the Boltz API
   Future<PrepareOnchainPaymentResponse> prepareOnchainPayment({
     required PrepareOnchainPaymentRequest req,
   }) async {
-    return await _lnToolkit.prepareOnchainPayment(req: req);
+    return await binding.prepareOnchainPayment(req: req);
   }
 
   /// Returns the blocking [ReverseSwapInfo]s that are in progress
-  Future<List<ReverseSwapInfo>> inProgressOnchainPayments() async => _lnToolkit.inProgressOnchainPayments();
+  Future<List<ReverseSwapInfo>> inProgressOnchainPayments() async => binding.inProgressOnchainPayments();
 
   /// Fetches the current recommended fees
-  Future<RecommendedFees> recommendedFees() async => await _lnToolkit.recommendedFees();
+  Future<RecommendedFees> recommendedFees() async => await binding.recommendedFees();
 
   Future<PrepareRedeemOnchainFundsResponse> prepareRedeemOnchainFunds({
     required PrepareRedeemOnchainFundsRequest req,
   }) async =>
-      _lnToolkit.prepareRedeemOnchainFunds(req: req);
+      binding.prepareRedeemOnchainFunds(req: req);
 
   /* Support API's */
 
@@ -494,27 +504,27 @@ class BreezSDK {
   Future<void> reportIssue({
     required ReportIssueRequest req,
   }) async {
-    return await _lnToolkit.reportIssue(req: req);
+    return await binding.reportIssue(req: req);
   }
 
   /// Fetches the service health check from the support API.
   Future<ServiceHealthCheckResponse> serviceHealthCheck({
     required String apiKey,
   }) async =>
-      await _lnToolkit.serviceHealthCheck(apiKey: apiKey);
+      await binding.serviceHealthCheck(apiKey: apiKey);
 
   /* CLI API's */
 
   /// Execute a command directly on the NodeAPI interface.
   /// Mainly used to debugging.
   Future<String> executeCommand({required String command}) async {
-    return await _lnToolkit.executeCommand(command: command);
+    return await binding.executeCommand(command: command);
   }
 
   /// Generate diagnostic data.
   /// Mainly used to debugging.
   Future<String> generateDiagnosticData() async {
-    return await _lnToolkit.generateDiagnosticData();
+    return await binding.generateDiagnosticData();
   }
 
   /* Helper Methods */
@@ -524,7 +534,7 @@ class BreezSDK {
     String address,
   ) async {
     try {
-      final inputType = await _lnToolkit.parseInput(input: address);
+      final inputType = await binding.parseInput(input: address);
       return inputType is InputType_BitcoinAddress;
     } catch (e) {
       return false;
