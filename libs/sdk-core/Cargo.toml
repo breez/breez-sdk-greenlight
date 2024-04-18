@@ -8,7 +8,7 @@ name = "breez_sdk_core"
 crate-type = ["staticlib", "cdylib", "lib"]
 
 [dependencies]
-flutter_rust_bridge = "=1.82.6"
+flutter_rust_bridge = "2.0.0"
 aes = { workspace = true }
 anyhow = { workspace = true }
 hex = { workspace = true }
