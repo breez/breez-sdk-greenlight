@@ -13,8 +13,8 @@
 use std::future::Future;
 use std::sync::Arc;
 
-use anyhow::{anyhow, Result};
 use crate::frb_generated::StreamSink;
+use anyhow::{anyhow, Result};
 use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
 use tokio::sync::Mutex;

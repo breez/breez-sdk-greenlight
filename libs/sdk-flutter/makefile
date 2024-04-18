@@ -13,6 +13,7 @@ all: ios android
 
 flutter_rust_bridge:
 	cargo install flutter_rust_bridge_codegen --version 2.0.0-dev.32
+	mkdir -p ./lib/generated
 	flutter_rust_bridge_codegen generate
 
 ios: $(SOURCES) flutter_rust_bridge
@@ -47,6 +48,7 @@ desktop: $(SOURCES) flutter_rust_bridge
 .PHONY: clean
 clean:
 	cargo clean
+	rm -rf ./lib/generated/
 	rm -rf ./android/src/main/jniLibs
 	rm -rf ./android/src/main/kotlin/breez_sdk/
 	rm -rf ./android/src/main/kotlin/breez_sdk_notification/
