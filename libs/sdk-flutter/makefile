@@ -12,8 +12,8 @@ init:
 all: ios android
 
 flutter_rust_bridge:
-	cargo install flutter_rust_bridge_codegen --version 1.82.6
 	flutter_rust_bridge_codegen --dart-format-line-length 110 -r ../sdk-core/src/binding.rs -d lib/bridge_generated.dart -c ios/Classes/bridge_generated.h
+	cargo install flutter_rust_bridge_codegen --version 2.0.0-dev.32
 
 ios: $(SOURCES) flutter_rust_bridge
 	make -C ../sdk-bindings bindings-swift
