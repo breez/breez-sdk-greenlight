@@ -7,10 +7,6 @@ ExternalLibrary? _breezSDK;
 const _libName = "breez_sdk_bindings";
 const _iosLibName = "breez_sdkFFI";
 
-class UnsupportedPlatform implements Exception {
-  UnsupportedPlatform(String s);
-}
-
 ExternalLibrary createLibraryImpl() {
   if (_breezSDK == null) {
     if (Platform.isAndroid || Platform.isLinux) {
@@ -26,7 +22,7 @@ ExternalLibrary createLibraryImpl() {
         _breezSDK = ExternalLibrary.process(iKnowHowToUseIt: true);
       }
     } else {
-      throw UnsupportedPlatform('${Platform.operatingSystem} is not yet supported!');
+      throw UnsupportedError('${Platform.operatingSystem} is not yet supported!');
     }
   }
   return _breezSDK!;
