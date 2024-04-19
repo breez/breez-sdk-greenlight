@@ -1818,6 +1818,7 @@ impl TryFrom<OffChainPayment> for Payment {
                     bolt11: p.bolt11,
                     lnurl_success_action: None, // For received payments, this is None
                     lnurl_pay_domain: None,     // For received payments, this is None
+                    lnurl_pay_comment: None,    // For received payments, this is None
                     lnurl_metadata: None,       // For received payments, this is None
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
@@ -1862,6 +1863,7 @@ impl TryFrom<gl_client::signer::model::greenlight::Invoice> for Payment {
                     bolt11: invoice.bolt11,
                     lnurl_success_action: None, // For received payments, this is None
                     lnurl_pay_domain: None,     // For received payments, this is None
+                    lnurl_pay_comment: None,    // For received payments, this is None
                     lnurl_metadata: None,       // For received payments, this is None
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
@@ -1921,6 +1923,7 @@ impl TryFrom<gl_client::signer::model::greenlight::Payment> for Payment {
                     bolt11: payment.bolt11,
                     lnurl_success_action: None,
                     lnurl_pay_domain: None,
+                    lnurl_pay_comment: None,
                     lnurl_metadata: None,
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
@@ -1967,6 +1970,7 @@ impl TryFrom<cln::ListinvoicesInvoices> for Payment {
                     bolt11: invoice.bolt11.unwrap_or_default(),
                     lnurl_success_action: None, // For received payments, this is None
                     lnurl_pay_domain: None,     // For received payments, this is None
+                    lnurl_pay_comment: None,    // For received payments, this is None
                     lnurl_metadata: None,       // For received payments, this is None
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
@@ -2036,6 +2040,7 @@ impl TryFrom<cln::ListpaysPays> for Payment {
                     bolt11: payment.bolt11.unwrap_or_default(),
                     lnurl_success_action: None,
                     lnurl_pay_domain: None,
+                    lnurl_pay_comment: None,
                     lnurl_metadata: None,
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,

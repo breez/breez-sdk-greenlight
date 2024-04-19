@@ -308,6 +308,7 @@ dictionary LnPaymentDetails {
     string? open_channel_bolt11;
     SuccessActionProcessed? lnurl_success_action;
     string? lnurl_pay_domain;
+    string? lnurl_pay_comment;
     string? lnurl_metadata;
     string? ln_address;
     string? lnurl_withdraw_endpoint;

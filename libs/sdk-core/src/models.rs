@@ -705,6 +705,7 @@ pub struct Payment {
 pub struct PaymentExternalInfo {
     pub lnurl_pay_success_action: Option<SuccessActionProcessed>,
     pub lnurl_pay_domain: Option<String>,
+    pub lnurl_pay_comment: Option<String>,
     pub lnurl_metadata: Option<String>,
     pub ln_address: Option<String>,
     pub lnurl_withdraw_endpoint: Option<String>,
@@ -780,6 +781,9 @@ pub struct LnPaymentDetails {
 
     /// Only set for [PaymentType::Sent] payments if it is not a payment to a Lightning Address
     pub lnurl_pay_domain: Option<String>,
+
+    /// Only set for [PaymentType::Sent] payments if the user sent the comment using LNURL-pay
+    pub lnurl_pay_comment: Option<String>,
 
     /// Only set for [PaymentType::Sent] payments that are sent to a Lightning Address
     pub ln_address: Option<String>,
