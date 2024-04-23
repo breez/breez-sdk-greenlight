@@ -476,7 +476,11 @@ pub struct Config {
     /// the folder should exist before starting the SDK.
     pub working_dir: String,
     pub network: Network,
+    /// Maps to the CLN `retry_for` config when paying invoices (`lightning-pay`)
     pub payment_timeout_sec: u32,
+    /// The duration, in seconds, in which to return from a [crate::BreezServices::send_payment]
+    /// request with a pending payment if not already finished.
+    pub payment_request_yield_sec: u64,
     pub default_lsp_id: Option<String>,
     pub api_key: Option<String>,
     /// Maps to the CLN `maxfeepercent` config when paying invoices (`lightning-pay`)
@@ -498,6 +502,7 @@ impl Config {
             working_dir: ".".to_string(),
             network: Bitcoin,
             payment_timeout_sec: 60,
+            payment_request_yield_sec: 30,
             default_lsp_id: None,
             api_key: Some(api_key),
             maxfee_percent: 1.0,
@@ -514,6 +519,7 @@ impl Config {
             working_dir: ".".to_string(),
             network: Bitcoin,
             payment_timeout_sec: 60,
+            payment_request_yield_sec: 30,
             default_lsp_id: None,
             api_key: Some(api_key),
             maxfee_percent: 0.5,

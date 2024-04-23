@@ -137,6 +137,7 @@ dictionary Config {
     string working_dir;
     Network network;
     u32 payment_timeout_sec;
+    u64 payment_request_yield_sec;
     string? default_lsp_id;
     string? api_key;
     f64 maxfee_percent;
@@ -400,6 +401,7 @@ interface BreezEvent {
     NewBlock(u32 block);
     InvoicePaid(InvoicePaidDetails details);
     Synced();
+    PaymentStarted(Payment details);
     PaymentSucceed(Payment details);
     PaymentFailed(PaymentFailedData details);
     BackupStarted();

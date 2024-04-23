@@ -419,6 +419,9 @@ enum BreezSDKMapper {
         guard let paymentTimeoutSec = config["paymentTimeoutSec"] as? UInt32 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "paymentTimeoutSec", typeName: "Config"))
         }
+        guard let paymentRequestYieldSec = config["paymentRequestYieldSec"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "paymentRequestYieldSec", typeName: "Config"))
+        }
         var defaultLspId: String?
         if hasNonNilKey(data: config, key: "defaultLspId") {
             guard let defaultLspIdTmp = config["defaultLspId"] as? String else {
@@ -451,6 +454,7 @@ enum BreezSDKMapper {
             workingDir: workingDir,
             network: network,
             paymentTimeoutSec: paymentTimeoutSec,
+            paymentRequestYieldSec: paymentRequestYieldSec,
             defaultLspId: defaultLspId,
             apiKey: apiKey,
             maxfeePercent: maxfeePercent,
@@ -467,6 +471,7 @@ enum BreezSDKMapper {
             "workingDir": config.workingDir,
             "network": valueOf(network: config.network),
             "paymentTimeoutSec": config.paymentTimeoutSec,
+            "paymentRequestYieldSec": config.paymentRequestYieldSec,
             "defaultLspId": config.defaultLspId == nil ? nil : config.defaultLspId,
             "apiKey": config.apiKey == nil ? nil : config.apiKey,
             "maxfeePercent": config.maxfeePercent,
@@ -4254,6 +4259,14 @@ enum BreezSDKMapper {
         if type == "synced" {
             return BreezEvent.synced
         }
+        if type == "paymentStarted" {
+            guard let detailsTmp = breezEvent["details"] as? [String: Any?] else {
+                throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "details", typeName: "BreezEvent"))
+            }
+            let _details = try asPayment(payment: detailsTmp)
+
+            return BreezEvent.paymentStarted(details: _details)
+        }
         if type == "paymentSucceed" {
             guard let detailsTmp = breezEvent["details"] as? [String: Any?] else {
                 throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "details", typeName: "BreezEvent"))
@@ -4317,6 +4330,14 @@ enum BreezSDKMapper {
         case .synced:
             return [
                 "type": "synced",
+            ]
+
+        case let .paymentStarted(
+            details
+        ):
+            return [
+                "type": "paymentStarted",
+                "details": dictionaryOf(payment: details),
             ]
 
         case let .paymentSucceed(

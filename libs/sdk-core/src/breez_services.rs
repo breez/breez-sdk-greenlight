@@ -94,6 +94,10 @@ pub enum BreezEvent {
     },
     /// Indicates that the local SDK state has just been sync-ed with the remote components
     Synced,
+    /// Indicates that an outgoing payment has started
+    PaymentStarted {
+        details: Payment,
+    },
     /// Indicates that an outgoing payment has been completed successfully
     PaymentSucceed {
         details: Payment,
@@ -281,7 +285,7 @@ impl BreezServices {
     /// Calling `send_payment` ensures that the payment is not already completed, if so it will result in an error.
     /// If the invoice doesn't specify an amount, the amount is taken from the `amount_msat` arg.
     pub async fn send_payment(
-        &self,
+        self: &Arc<BreezServices>,
         req: SendPaymentRequest,
     ) -> Result<SendPaymentResponse, SendPaymentError> {
         self.start_node().await?;
@@ -313,20 +317,41 @@ impl BreezServices {
         {
             Some(_) => Err(SendPaymentError::AlreadyPaid),
             None => {
-                self.persist_pending_payment(&parsed_invoice, amount_msat, req.label.clone())?;
-                let payment_res = self
-                    .node_api
-                    .send_payment(parsed_invoice.bolt11.clone(), req.amount_msat, req.label)
-                    .map_err(Into::into)
-                    .await;
-                let payment = self
-                    .on_payment_completed(
-                        parsed_invoice.payee_pubkey.clone(),
-                        Some(parsed_invoice),
-                        payment_res,
-                    )
-                    .await?;
-                Ok(SendPaymentResponse { payment })
+                let pending_payment =
+                    self.persist_pending_payment(&parsed_invoice, amount_msat, req.label.clone())?;
+                self.notify_event_listeners(BreezEvent::PaymentStarted {
+                    details: pending_payment.clone(),
+                })
+                .await?;
+
+                let timeout = Duration::from_secs(self.config.payment_request_yield_sec);
+                let (tx, rx) = std::sync::mpsc::channel();
+                let cloned = self.clone();
+                tokio::spawn(async move {
+                    let payment_res = cloned
+                        .node_api
+                        .send_payment(
+                            parsed_invoice.bolt11.clone(),
+                            req.amount_msat,
+                            req.label.clone(),
+                        )
+                        .await;
+                    let result = cloned
+                        .on_payment_completed(
+                            parsed_invoice.payee_pubkey.clone(),
+                            Some(parsed_invoice),
+                            payment_res.map_err(Into::into),
+                        )
+                        .await;
+                    let _ = tx.send(result);
+                });
+
+                match rx.recv_timeout(timeout) {
+                    Ok(result) => result.map(|payment| SendPaymentResponse { payment }),
+                    Err(_) => Ok(SendPaymentResponse {
+                        payment: pending_payment,
+                    }),
+                }
             }
         }
     }
@@ -361,7 +386,10 @@ impl BreezServices {
     /// is made.
     ///
     /// This method will return an [anyhow::Error] when any validation check fails.
-    pub async fn lnurl_pay(&self, req: LnUrlPayRequest) -> Result<LnUrlPayResult, LnUrlPayError> {
+    pub async fn lnurl_pay(
+        self: &Arc<BreezServices>,
+        req: LnUrlPayRequest,
+    ) -> Result<LnUrlPayResult, LnUrlPayError> {
         match validate_lnurl_pay(
             req.amount_msat,
             req.comment,
@@ -1165,7 +1193,7 @@ impl BreezServices {
         invoice: &LNInvoice,
         amount_msat: u64,
         label: Option<String>,
-    ) -> Result<(), SendPaymentError> {
+    ) -> Result<Payment, SendPaymentError> {
         self.persister.insert_or_update_payments(
             &[Payment {
                 id: invoice.payment_hash.clone(),
@@ -1212,7 +1240,12 @@ impl BreezServices {
                 attempted_error: None,
             },
         )?;
-        Ok(())
+
+        self.persister
+            .get_payment_by_hash(&invoice.payment_hash)?
+            .ok_or(SendPaymentError::Generic {
+                err: "Payment not found".to_string(),
+            })
     }
 
     async fn on_payment_completed(

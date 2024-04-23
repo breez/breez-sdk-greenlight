@@ -75,6 +75,7 @@ export type Config = {
     workingDir: string
     network: Network
     paymentTimeoutSec: number
+    paymentRequestYieldSec: number
     defaultLspId?: string
     apiKey?: string
     maxfeePercent: number
@@ -592,6 +593,7 @@ export enum BreezEventVariant {
     NEW_BLOCK = "newBlock",
     INVOICE_PAID = "invoicePaid",
     SYNCED = "synced",
+    PAYMENT_STARTED = "paymentStarted",
     PAYMENT_SUCCEED = "paymentSucceed",
     PAYMENT_FAILED = "paymentFailed",
     BACKUP_STARTED = "backupStarted",
@@ -608,6 +610,9 @@ export type BreezEvent = {
     details: InvoicePaidDetails
 } | {
     type: BreezEventVariant.SYNCED
+} | {
+    type: BreezEventVariant.PAYMENT_STARTED,
+    details: Payment
 } | {
     type: BreezEventVariant.PAYMENT_SUCCEED,
     details: Payment

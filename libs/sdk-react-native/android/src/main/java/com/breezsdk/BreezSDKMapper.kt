@@ -385,6 +385,7 @@ fun asConfig(config: ReadableMap): Config? {
                 "workingDir",
                 "network",
                 "paymentTimeoutSec",
+                "paymentRequestYieldSec",
                 "maxfeePercent",
                 "exemptfeeMsat",
                 "nodeConfig",
@@ -399,6 +400,7 @@ fun asConfig(config: ReadableMap): Config? {
     val workingDir = config.getString("workingDir")!!
     val network = config.getString("network")?.let { asNetwork(it) }!!
     val paymentTimeoutSec = config.getInt("paymentTimeoutSec").toUInt()
+    val paymentRequestYieldSec = config.getDouble("paymentRequestYieldSec").toULong()
     val defaultLspId = if (hasNonNullKey(config, "defaultLspId")) config.getString("defaultLspId") else null
     val apiKey = if (hasNonNullKey(config, "apiKey")) config.getString("apiKey") else null
     val maxfeePercent = config.getDouble("maxfeePercent")
@@ -411,6 +413,7 @@ fun asConfig(config: ReadableMap): Config? {
         workingDir,
         network,
         paymentTimeoutSec,
+        paymentRequestYieldSec,
         defaultLspId,
         apiKey,
         maxfeePercent,
@@ -427,6 +430,7 @@ fun readableMapOf(config: Config): ReadableMap {
         "workingDir" to config.workingDir,
         "network" to config.network.name.lowercase(),
         "paymentTimeoutSec" to config.paymentTimeoutSec,
+        "paymentRequestYieldSec" to config.paymentRequestYieldSec,
         "defaultLspId" to config.defaultLspId,
         "apiKey" to config.apiKey,
         "maxfeePercent" to config.maxfeePercent,
@@ -3856,6 +3860,9 @@ fun asBreezEvent(breezEvent: ReadableMap): BreezEvent? {
     if (type == "synced") {
         return BreezEvent.Synced
     }
+    if (type == "paymentStarted") {
+        return BreezEvent.PaymentStarted(breezEvent.getMap("details")?.let { asPayment(it) }!!)
+    }
     if (type == "paymentSucceed") {
         return BreezEvent.PaymentSucceed(breezEvent.getMap("details")?.let { asPayment(it) }!!)
     }
@@ -3890,6 +3897,10 @@ fun readableMapOf(breezEvent: BreezEvent): ReadableMap? {
         }
         is BreezEvent.Synced -> {
             pushToMap(map, "type", "synced")
+        }
+        is BreezEvent.PaymentStarted -> {
+            pushToMap(map, "type", "paymentStarted")
+            pushToMap(map, "details", readableMapOf(breezEvent.details))
         }
         is BreezEvent.PaymentSucceed -> {
             pushToMap(map, "type", "paymentSucceed")

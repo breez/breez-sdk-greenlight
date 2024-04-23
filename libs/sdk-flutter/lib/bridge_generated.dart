@@ -396,6 +396,11 @@ sealed class BreezEvent with _$BreezEvent {
   /// Indicates that the local SDK state has just been sync-ed with the remote components
   const factory BreezEvent.synced() = BreezEvent_Synced;
 
+  /// Indicates that an outgoing payment has started
+  const factory BreezEvent.paymentStarted({
+    required Payment details,
+  }) = BreezEvent_PaymentStarted;
+
   /// Indicates that an outgoing payment has been completed successfully
   const factory BreezEvent.paymentSucceed({
     required Payment details,
@@ -520,7 +525,13 @@ class Config {
   /// the folder should exist before starting the SDK.
   final String workingDir;
   final Network network;
+
+  /// Maps to the CLN `retry_for` config when paying invoices (`lightning-pay`)
   final int paymentTimeoutSec;
+
+  /// The duration, in seconds, in which to return from a [crate::BreezServices::send_payment]
+  /// request with a pending payment if not already finished.
+  final int paymentRequestYieldSec;
   final String? defaultLspId;
   final String? apiKey;
 
@@ -538,6 +549,7 @@ class Config {
     required this.workingDir,
     required this.network,
     required this.paymentTimeoutSec,
+    required this.paymentRequestYieldSec,
     this.defaultLspId,
     this.apiKey,
     required this.maxfeePercent,
@@ -3313,22 +3325,26 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       case 2:
         return BreezEvent_Synced();
       case 3:
-        return BreezEvent_PaymentSucceed(
+        return BreezEvent_PaymentStarted(
           details: _wire2api_box_autoadd_payment(raw[1]),
         );
       case 4:
+        return BreezEvent_PaymentSucceed(
+          details: _wire2api_box_autoadd_payment(raw[1]),
+        );
+      case 5:
         return BreezEvent_PaymentFailed(
           details: _wire2api_box_autoadd_payment_failed_data(raw[1]),
         );
-      case 5:
-        return BreezEvent_BackupStarted();
       case 6:
-        return BreezEvent_BackupSucceeded();
+        return BreezEvent_BackupStarted();
       case 7:
+        return BreezEvent_BackupSucceeded();
+      case 8:
         return BreezEvent_BackupFailed(
           details: _wire2api_box_autoadd_backup_failed_data(raw[1]),
         );
-      case 8:
+      case 9:
         return BreezEvent_SwapUpdated(
           details: _wire2api_box_autoadd_swap_info(raw[1]),
         );
@@ -3371,7 +3387,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   Config _wire2api_config(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 11) throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
+    if (arr.length != 12) throw Exception('unexpected arr length: expect 12 but see ${arr.length}');
     return Config(
       breezserver: _wire2api_String(arr[0]),
       chainnotifierUrl: _wire2api_String(arr[1]),
@@ -3379,11 +3395,12 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       workingDir: _wire2api_String(arr[3]),
       network: _wire2api_network(arr[4]),
       paymentTimeoutSec: _wire2api_u32(arr[5]),
-      defaultLspId: _wire2api_opt_String(arr[6]),
-      apiKey: _wire2api_opt_String(arr[7]),
-      maxfeePercent: _wire2api_f64(arr[8]),
-      exemptfeeMsat: _wire2api_u64(arr[9]),
-      nodeConfig: _wire2api_node_config(arr[10]),
+      paymentRequestYieldSec: _wire2api_u64(arr[6]),
+      defaultLspId: _wire2api_opt_String(arr[7]),
+      apiKey: _wire2api_opt_String(arr[8]),
+      maxfeePercent: _wire2api_f64(arr[9]),
+      exemptfeeMsat: _wire2api_u64(arr[10]),
+      nodeConfig: _wire2api_node_config(arr[11]),
     );
   }
 
@@ -4830,6 +4847,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.working_dir = api2wire_String(apiObj.workingDir);
     wireObj.network = api2wire_network(apiObj.network);
     wireObj.payment_timeout_sec = api2wire_u32(apiObj.paymentTimeoutSec);
+    wireObj.payment_request_yield_sec = api2wire_u64(apiObj.paymentRequestYieldSec);
     wireObj.default_lsp_id = api2wire_opt_String(apiObj.defaultLspId);
     wireObj.api_key = api2wire_opt_String(apiObj.apiKey);
     wireObj.maxfee_percent = api2wire_f64(apiObj.maxfeePercent);
@@ -6503,6 +6521,9 @@ final class wire_Config extends ffi.Struct {
 
   @ffi.Uint32()
   external int payment_timeout_sec;
+
+  @ffi.Uint64()
+  external int payment_request_yield_sec;
 
   external ffi.Pointer<wire_uint_8_list> default_lsp_id;
 
