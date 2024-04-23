@@ -86,7 +86,7 @@ publishing {
                     }
                 }
                 scm {
-                    connection.set("scm:git:github.com/breez/breez-sdk-ffi.git")
+                    connection.set("scm:git:github.com/breez/breez-sdk.git")
                     developerConnection.set("scm:git:ssh://github.com/breez/breez-sdk.git")
                     url.set("https://github.com/breez/breez-sdk")
                 }
