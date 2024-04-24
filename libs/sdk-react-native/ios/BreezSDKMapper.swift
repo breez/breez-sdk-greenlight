@@ -419,9 +419,6 @@ enum BreezSDKMapper {
         guard let paymentTimeoutSec = config["paymentTimeoutSec"] as? UInt32 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "paymentTimeoutSec", typeName: "Config"))
         }
-        guard let paymentRequestYieldSec = config["paymentRequestYieldSec"] as? UInt64 else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "paymentRequestYieldSec", typeName: "Config"))
-        }
         var defaultLspId: String?
         if hasNonNilKey(data: config, key: "defaultLspId") {
             guard let defaultLspIdTmp = config["defaultLspId"] as? String else {
@@ -454,7 +451,6 @@ enum BreezSDKMapper {
             workingDir: workingDir,
             network: network,
             paymentTimeoutSec: paymentTimeoutSec,
-            paymentRequestYieldSec: paymentRequestYieldSec,
             defaultLspId: defaultLspId,
             apiKey: apiKey,
             maxfeePercent: maxfeePercent,
@@ -471,7 +467,6 @@ enum BreezSDKMapper {
             "workingDir": config.workingDir,
             "network": valueOf(network: config.network),
             "paymentTimeoutSec": config.paymentTimeoutSec,
-            "paymentRequestYieldSec": config.paymentRequestYieldSec,
             "defaultLspId": config.defaultLspId == nil ? nil : config.defaultLspId,
             "apiKey": config.apiKey == nil ? nil : config.apiKey,
             "maxfeePercent": config.maxfeePercent,
@@ -3541,11 +3536,19 @@ enum BreezSDKMapper {
             }
             label = labelTmp
         }
+        var pendingTimeoutSec: UInt64?
+        if hasNonNilKey(data: sendPaymentRequest, key: "pendingTimeoutSec") {
+            guard let pendingTimeoutSecTmp = sendPaymentRequest["pendingTimeoutSec"] as? UInt64 else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "pendingTimeoutSec"))
+            }
+            pendingTimeoutSec = pendingTimeoutSecTmp
+        }
 
         return SendPaymentRequest(
             bolt11: bolt11,
             amountMsat: amountMsat,
-            label: label
+            label: label,
+            pendingTimeoutSec: pendingTimeoutSec
         )
     }
 
@@ -3554,6 +3557,7 @@ enum BreezSDKMapper {
             "bolt11": sendPaymentRequest.bolt11,
             "amountMsat": sendPaymentRequest.amountMsat == nil ? nil : sendPaymentRequest.amountMsat,
             "label": sendPaymentRequest.label == nil ? nil : sendPaymentRequest.label,
+            "pendingTimeoutSec": sendPaymentRequest.pendingTimeoutSec == nil ? nil : sendPaymentRequest.pendingTimeoutSec,
         ]
     }
 

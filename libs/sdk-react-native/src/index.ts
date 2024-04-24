@@ -75,7 +75,6 @@ export type Config = {
     workingDir: string
     network: Network
     paymentTimeoutSec: number
-    paymentRequestYieldSec: number
     defaultLspId?: string
     apiKey?: string
     maxfeePercent: number
@@ -491,6 +490,7 @@ export type SendPaymentRequest = {
     bolt11: string
     amountMsat?: number
     label?: string
+    pendingTimeoutSec?: number
 }
 
 export type SendPaymentResponse = {

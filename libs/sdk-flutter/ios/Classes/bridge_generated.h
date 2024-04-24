@@ -52,7 +52,6 @@ typedef struct wire_Config {
   struct wire_uint_8_list *working_dir;
   int32_t network;
   uint32_t payment_timeout_sec;
-  uint64_t payment_request_yield_sec;
   struct wire_uint_8_list *default_lsp_id;
   struct wire_uint_8_list *api_key;
   double maxfee_percent;
@@ -113,6 +112,7 @@ typedef struct wire_SendPaymentRequest {
   struct wire_uint_8_list *bolt11;
   uint64_t *amount_msat;
   struct wire_uint_8_list *label;
+  uint64_t *pending_timeout_sec;
 } wire_SendPaymentRequest;
 
 typedef struct wire_TlvEntry {

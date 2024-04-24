@@ -324,33 +324,55 @@ impl BreezServices {
                 })
                 .await?;
 
-                let timeout = Duration::from_secs(self.config.payment_request_yield_sec);
-                let (tx, rx) = std::sync::mpsc::channel();
-                let cloned = self.clone();
-                tokio::spawn(async move {
-                    let payment_res = cloned
-                        .node_api
-                        .send_payment(
-                            parsed_invoice.bolt11.clone(),
-                            req.amount_msat,
-                            req.label.clone(),
-                        )
-                        .await;
-                    let result = cloned
-                        .on_payment_completed(
-                            parsed_invoice.payee_pubkey.clone(),
-                            Some(parsed_invoice),
-                            payment_res.map_err(Into::into),
-                        )
-                        .await;
-                    let _ = tx.send(result);
-                });
+                match req.pending_timeout_sec {
+                    Some(secs) => {
+                        let (tx, rx) = std::sync::mpsc::channel();
+                        let cloned = self.clone();
+                        tokio::spawn(async move {
+                            let payment_res = cloned
+                                .node_api
+                                .send_payment(
+                                    parsed_invoice.bolt11.clone(),
+                                    req.amount_msat,
+                                    req.label.clone(),
+                                )
+                                .await;
+                            let result = cloned
+                                .on_payment_completed(
+                                    parsed_invoice.payee_pubkey.clone(),
+                                    Some(parsed_invoice),
+                                    payment_res.map_err(Into::into),
+                                )
+                                .await;
+                            let _ = tx.send(result);
+                        });
 
-                match rx.recv_timeout(timeout) {
-                    Ok(result) => result.map(|payment| SendPaymentResponse { payment }),
-                    Err(_) => Ok(SendPaymentResponse {
-                        payment: pending_payment,
-                    }),
+                        match rx.recv_timeout(Duration::from_secs(secs)) {
+                            Ok(result) => result.map(|payment| SendPaymentResponse { payment }),
+                            Err(_) => Ok(SendPaymentResponse {
+                                payment: pending_payment,
+                            }),
+                        }
+                    }
+                    None => {
+                        let payment_res = self
+                            .node_api
+                            .send_payment(
+                                parsed_invoice.bolt11.clone(),
+                                req.amount_msat,
+                                req.label.clone(),
+                            )
+                            .map_err(Into::into)
+                            .await;
+                        let payment = self
+                            .on_payment_completed(
+                                parsed_invoice.payee_pubkey.clone(),
+                                Some(parsed_invoice),
+                                payment_res,
+                            )
+                            .await?;
+                        Ok(SendPaymentResponse { payment })
+                    }
                 }
             }
         }
@@ -404,8 +426,8 @@ impl BreezServices {
             ValidatedCallbackResponse::EndpointSuccess { data: cb } => {
                 let pay_req = SendPaymentRequest {
                     bolt11: cb.pr.clone(),
-                    amount_msat: None,
                     label: req.payment_label,
+                    ..Default::default()
                 };
                 let invoice = parse_invoice(cb.pr.as_str())?;
 

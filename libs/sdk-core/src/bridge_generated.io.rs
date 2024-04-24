@@ -760,7 +760,6 @@ impl Wire2Api<Config> for wire_Config {
             working_dir: self.working_dir.wire2api(),
             network: self.network.wire2api(),
             payment_timeout_sec: self.payment_timeout_sec.wire2api(),
-            payment_request_yield_sec: self.payment_request_yield_sec.wire2api(),
             default_lsp_id: self.default_lsp_id.wire2api(),
             api_key: self.api_key.wire2api(),
             maxfee_percent: self.maxfee_percent.wire2api(),
@@ -1073,6 +1072,7 @@ impl Wire2Api<SendPaymentRequest> for wire_SendPaymentRequest {
             bolt11: self.bolt11.wire2api(),
             amount_msat: self.amount_msat.wire2api(),
             label: self.label.wire2api(),
+            pending_timeout_sec: self.pending_timeout_sec.wire2api(),
         }
     }
 }
@@ -1144,7 +1144,6 @@ pub struct wire_Config {
     working_dir: *mut wire_uint_8_list,
     network: i32,
     payment_timeout_sec: u32,
-    payment_request_yield_sec: u64,
     default_lsp_id: *mut wire_uint_8_list,
     api_key: *mut wire_uint_8_list,
     maxfee_percent: f64,
@@ -1392,6 +1391,7 @@ pub struct wire_SendPaymentRequest {
     bolt11: *mut wire_uint_8_list,
     amount_msat: *mut u64,
     label: *mut wire_uint_8_list,
+    pending_timeout_sec: *mut u64,
 }
 
 #[repr(C)]
@@ -1517,7 +1517,6 @@ impl NewWithNullPtr for wire_Config {
             working_dir: core::ptr::null_mut(),
             network: Default::default(),
             payment_timeout_sec: Default::default(),
-            payment_request_yield_sec: Default::default(),
             default_lsp_id: core::ptr::null_mut(),
             api_key: core::ptr::null_mut(),
             maxfee_percent: Default::default(),
@@ -2000,6 +1999,7 @@ impl NewWithNullPtr for wire_SendPaymentRequest {
             bolt11: core::ptr::null_mut(),
             amount_msat: core::ptr::null_mut(),
             label: core::ptr::null_mut(),
+            pending_timeout_sec: core::ptr::null_mut(),
         }
     }
 }

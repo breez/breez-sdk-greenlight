@@ -385,7 +385,6 @@ fun asConfig(config: ReadableMap): Config? {
                 "workingDir",
                 "network",
                 "paymentTimeoutSec",
-                "paymentRequestYieldSec",
                 "maxfeePercent",
                 "exemptfeeMsat",
                 "nodeConfig",
@@ -400,7 +399,6 @@ fun asConfig(config: ReadableMap): Config? {
     val workingDir = config.getString("workingDir")!!
     val network = config.getString("network")?.let { asNetwork(it) }!!
     val paymentTimeoutSec = config.getInt("paymentTimeoutSec").toUInt()
-    val paymentRequestYieldSec = config.getDouble("paymentRequestYieldSec").toULong()
     val defaultLspId = if (hasNonNullKey(config, "defaultLspId")) config.getString("defaultLspId") else null
     val apiKey = if (hasNonNullKey(config, "apiKey")) config.getString("apiKey") else null
     val maxfeePercent = config.getDouble("maxfeePercent")
@@ -413,7 +411,6 @@ fun asConfig(config: ReadableMap): Config? {
         workingDir,
         network,
         paymentTimeoutSec,
-        paymentRequestYieldSec,
         defaultLspId,
         apiKey,
         maxfeePercent,
@@ -430,7 +427,6 @@ fun readableMapOf(config: Config): ReadableMap {
         "workingDir" to config.workingDir,
         "network" to config.network.name.lowercase(),
         "paymentTimeoutSec" to config.paymentTimeoutSec,
-        "paymentRequestYieldSec" to config.paymentRequestYieldSec,
         "defaultLspId" to config.defaultLspId,
         "apiKey" to config.apiKey,
         "maxfeePercent" to config.maxfeePercent,
@@ -3232,10 +3228,21 @@ fun asSendPaymentRequest(sendPaymentRequest: ReadableMap): SendPaymentRequest? {
     val bolt11 = sendPaymentRequest.getString("bolt11")!!
     val amountMsat = if (hasNonNullKey(sendPaymentRequest, "amountMsat")) sendPaymentRequest.getDouble("amountMsat").toULong() else null
     val label = if (hasNonNullKey(sendPaymentRequest, "label")) sendPaymentRequest.getString("label") else null
+    val pendingTimeoutSec =
+        if (hasNonNullKey(
+                sendPaymentRequest,
+                "pendingTimeoutSec",
+            )
+        ) {
+            sendPaymentRequest.getDouble("pendingTimeoutSec").toULong()
+        } else {
+            null
+        }
     return SendPaymentRequest(
         bolt11,
         amountMsat,
         label,
+        pendingTimeoutSec,
     )
 }
 
@@ -3244,6 +3251,7 @@ fun readableMapOf(sendPaymentRequest: SendPaymentRequest): ReadableMap {
         "bolt11" to sendPaymentRequest.bolt11,
         "amountMsat" to sendPaymentRequest.amountMsat,
         "label" to sendPaymentRequest.label,
+        "pendingTimeoutSec" to sendPaymentRequest.pendingTimeoutSec,
     )
 }
 

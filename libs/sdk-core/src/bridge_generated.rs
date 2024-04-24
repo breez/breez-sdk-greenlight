@@ -1206,7 +1206,6 @@ impl support::IntoDart for Config {
             self.working_dir.into_into_dart().into_dart(),
             self.network.into_into_dart().into_dart(),
             self.payment_timeout_sec.into_into_dart().into_dart(),
-            self.payment_request_yield_sec.into_into_dart().into_dart(),
             self.default_lsp_id.into_dart(),
             self.api_key.into_dart(),
             self.maxfee_percent.into_into_dart().into_dart(),

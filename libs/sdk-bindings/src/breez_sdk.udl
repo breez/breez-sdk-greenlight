@@ -137,7 +137,6 @@ dictionary Config {
     string working_dir;
     Network network;
     u32 payment_timeout_sec;
-    u64 payment_request_yield_sec;
     string? default_lsp_id;
     string? api_key;
     f64 maxfee_percent;
@@ -750,6 +749,7 @@ dictionary SendPaymentRequest {
     string bolt11;
     u64? amount_msat = null;
     string? label = null;
+    u64? pending_timeout_sec = null;
 };
 
 dictionary SendSpontaneousPaymentRequest {
