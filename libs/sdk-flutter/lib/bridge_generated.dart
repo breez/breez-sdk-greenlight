@@ -784,6 +784,9 @@ class LnPaymentDetails {
   /// Only set for [PaymentType::Sent] payments if it is not a payment to a Lightning Address
   final String? lnurlPayDomain;
 
+  /// Only set for [PaymentType::Sent] payments if the user sent the comment using LNURL-pay
+  final String? lnurlPayComment;
+
   /// Only set for [PaymentType::Sent] payments that are sent to a Lightning Address
   final String? lnAddress;
 
@@ -812,6 +815,7 @@ class LnPaymentDetails {
     this.openChannelBolt11,
     this.lnurlSuccessAction,
     this.lnurlPayDomain,
+    this.lnurlPayComment,
     this.lnAddress,
     this.lnurlMetadata,
     this.lnurlWithdrawEndpoint,
@@ -3562,7 +3566,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   LnPaymentDetails _wire2api_ln_payment_details(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 15) throw Exception('unexpected arr length: expect 15 but see ${arr.length}');
+    if (arr.length != 16) throw Exception('unexpected arr length: expect 16 but see ${arr.length}');
     return LnPaymentDetails(
       paymentHash: _wire2api_String(arr[0]),
       label: _wire2api_String(arr[1]),
@@ -3573,12 +3577,13 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       openChannelBolt11: _wire2api_opt_String(arr[6]),
       lnurlSuccessAction: _wire2api_opt_box_autoadd_success_action_processed(arr[7]),
       lnurlPayDomain: _wire2api_opt_String(arr[8]),
-      lnAddress: _wire2api_opt_String(arr[9]),
-      lnurlMetadata: _wire2api_opt_String(arr[10]),
-      lnurlWithdrawEndpoint: _wire2api_opt_String(arr[11]),
-      swapInfo: _wire2api_opt_box_autoadd_swap_info(arr[12]),
-      reverseSwapInfo: _wire2api_opt_box_autoadd_reverse_swap_info(arr[13]),
-      pendingExpirationBlock: _wire2api_opt_box_autoadd_u32(arr[14]),
+      lnurlPayComment: _wire2api_opt_String(arr[9]),
+      lnAddress: _wire2api_opt_String(arr[10]),
+      lnurlMetadata: _wire2api_opt_String(arr[11]),
+      lnurlWithdrawEndpoint: _wire2api_opt_String(arr[12]),
+      swapInfo: _wire2api_opt_box_autoadd_swap_info(arr[13]),
+      reverseSwapInfo: _wire2api_opt_box_autoadd_reverse_swap_info(arr[14]),
+      pendingExpirationBlock: _wire2api_opt_box_autoadd_u32(arr[15]),
     );
   }
 
