@@ -17,12 +17,12 @@ class LogStreamListener: breez_sdk.LogStream {
 
 try {
     breez_sdk.setLogStream(LogStreamListener());
-    var seed = breez_sdk.mnemonicToSeed("cruise clever syrup coil cute execute laundry general cover prevent law sheriff");
-    var config = breez_sdk.defaultConfig(breez_sdk.EnvironmentType.STAGING, "code", breez_sdk.NodeConfig.Greenlight(breez_sdk.GreenlightNodeConfig(null, "")))
+    var seed = breez_sdk.mnemonicToSeed("repeat hawk combine screen network rhythm ritual social neither casual volcano powder");
+    var config = breez_sdk.defaultConfig(breez_sdk.EnvironmentType.PRODUCTION, "code", breez_sdk.NodeConfig.Greenlight(breez_sdk.GreenlightNodeConfig(null, null)))
     var connectRequest = breez_sdk.ConnectRequest(config, seed)
     var sdkServices = breez_sdk.connect(connectRequest, SDKListener());    
     var nodeInfo = sdkServices.nodeInfo();
-    assert(nodeInfo.id.equals("0352a918bdba7d7a69893a7d52a449f3e6df8e15a0edcc7fe59060be70d6f416f0"));
+    assert(nodeInfo.id.equals("027e2b899f9f75b92a1ad210da21d74e7314e3499375213a71c6bf3e1b4b4394a1"));
 }catch (ex: Exception) {
     throw RuntimeException(ex.toString())
 }

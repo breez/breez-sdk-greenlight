@@ -9,12 +9,12 @@ class SDKListener: EventListener {
 
 final class BreezSDKTests: XCTestCase {
     func testExample() throws {
-        let seedPhraseForTesting = "cruise clever syrup coil cute execute laundry general cover prevent law sheriff"
+        let seedPhraseForTesting = "repeat hawk combine screen network rhythm ritual social neither casual volcano powder"
         let seedForTesting = try mnemonicToSeed(phrase: seedPhraseForTesting)
         let credentials = try recoverNode(network: Network.bitcoin, seed: seedForTesting)
         
         let sdkServices = try initServices(
-            config: BreezSDK.defaultConfig(envType: EnvironmentType.staging),
+            config: BreezSDK.defaultConfig(envType: EnvironmentType.production),
             seed: seedForTesting,
             creds: credentials,
             listener: SDKListener()

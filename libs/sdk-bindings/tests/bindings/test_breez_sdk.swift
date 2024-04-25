@@ -17,12 +17,12 @@ class LogStreamListener: LogStream {
 
 do {
     try setLogStream(logStream: LogStreamListener());
-    let seed = try mnemonicToSeed(phrase: "cruise clever syrup coil cute execute laundry general cover prevent law sheriff");
-    let config = breez_sdk.defaultConfig(envType: EnvironmentType.staging, apiKey: "", nodeConfig: NodeConfig.greenlight(config: GreenlightNodeConfig(partnerCredentials: nil,inviteCode:  "code")));
+    let seed = try mnemonicToSeed(phrase: "repeat hawk combine screen network rhythm ritual social neither casual volcano powder");
+    let config = breez_sdk.defaultConfig(envType: EnvironmentType.production, apiKey: "code", nodeConfig: NodeConfig.greenlight(config: GreenlightNodeConfig(partnerCredentials: nil, inviteCode: nil)));
     let connectRequest = ConnectRequest(config: config, seed: seed)
     let sdkServices = try connect(req: connectRequest, listener: SDKListener());    
     let nodeInfo = try sdkServices.nodeInfo();
-    assert(nodeInfo.id == "0352a918bdba7d7a69893a7d52a449f3e6df8e15a0edcc7fe59060be70d6f416f0", "nodeInfo.id");
+    assert(nodeInfo.id == "027e2b899f9f75b92a1ad210da21d74e7314e3499375213a71c6bf3e1b4b4394a1", "nodeInfo.id");
 }catch {
  fatalError("Should have not thrown!")
 }
