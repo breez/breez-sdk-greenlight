@@ -24,14 +24,18 @@ func main() {
 
 	breez_sdk.SetLogStream(breezListener)
 
-	seed, err := breez_sdk.MnemonicToSeed("cruise clever syrup coil cute execute laundry general cover prevent law sheriff")
+	seed, err := breez_sdk.MnemonicToSeed("repeat hawk combine screen network rhythm ritual social neither casual volcano powder")
 
 	if err != nil {
 		log.Fatalf("MnemonicToSeed failed: %#v", err)
 	}
 
-	inviteCode := "code"
-	config := breez_sdk.DefaultConfig(breez_sdk.EnvironmentTypeStaging, "", breez_sdk.NodeConfigGreenlight{Config: breez_sdk.GreenlightNodeConfig{PartnerCredentials: nil, InviteCode: &inviteCode}})
+	config := breez_sdk.DefaultConfig(breez_sdk.EnvironmentTypeProduction, "code", breez_sdk.NodeConfigGreenlight{
+		Config: breez_sdk.GreenlightNodeConfig{
+			PartnerCredentials: nil,
+			InviteCode:         nil,
+		},
+	})
 	connectRequest := breez_sdk.ConnectRequest{Config: config, Seed: seed}
 	sdkServices, err := breez_sdk.Connect(connectRequest, breezListener)
 

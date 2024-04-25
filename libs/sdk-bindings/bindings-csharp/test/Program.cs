@@ -3,10 +3,11 @@ using Breez.Sdk;
 
 try
 {
- var seed = BreezSdkMethods.MnemonicToSeed("cruise clever syrup coil cute execute laundry general cover prevent law sheriff");
+ var seed = BreezSdkMethods.MnemonicToSeed("repeat hawk combine screen network rhythm ritual social neither casual volcano powder");
  BreezSdkMethods.SetLogStream(new LogStreamListener());
- var config = BreezSdkMethods.DefaultConfig(EnvironmentType.STAGING, "code", new NodeConfig.Greenlight(new GreenlightNodeConfig(null, "")));
- BlockingBreezServices sdkServices = BreezSdkMethods.Connect(config, seed, new SDKListener());
+ var config = BreezSdkMethods.DefaultConfig(EnvironmentType.PRODUCTION, "code", new NodeConfig.Greenlight(new GreenlightNodeConfig(null, null)));
+ var connectRequest = new ConnectRequest(config, seed);
+ BlockingBreezServices sdkServices = BreezSdkMethods.Connect(connectRequest, new SDKListener());
  NodeState? nodeInfo = sdkServices.NodeInfo();
  Console.WriteLine(nodeInfo!.id);
 }
