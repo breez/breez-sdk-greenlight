@@ -6,6 +6,7 @@ use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use anyhow::{anyhow, Result};
+use clap::Parser;
 use ecies::symmetric::{sym_decrypt, sym_encrypt};
 use futures::Stream;
 use gl_client::node::ClnClient;
@@ -1427,9 +1428,10 @@ impl NodeAPI for Greenlight {
     }
 
     async fn execute_command(&self, command: String) -> NodeResult<String> {
-        let node_cmd =
-            NodeCommand::from_str(&command).map_err(|_| anyhow!("Command not found: {command}"))?;
-        match node_cmd {
+        let mut args = shlex::split(&command).ok_or(anyhow!("Command not found: {command}"))?;
+        args.insert(0, String::from(" "));
+        let command = NodeCommand::try_parse_from(args)?;
+        match command {
             NodeCommand::ListPeers => {
                 let resp = self
                     .get_node_client()
@@ -1666,37 +1668,45 @@ impl NodeAPI for Greenlight {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
+#[derive(Parser, Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
 enum NodeCommand {
     /// Generates diagnostic data report.
+    #[command(name = "generatediagnosticdata")]
     #[strum(serialize = "generatediagnosticdata")]
     GenerateDiagnosticData,
 
     /// Closes all channels of all peers.
+    #[command(name = "closeallchannels")]
     #[strum(serialize = "closeallchannels")]
     CloseAllChannels,
 
     /// See <https://docs.corelightning.org/reference/lightning-getinfo>
+    #[command(name = "getinfo")]
     #[strum(serialize = "getinfo")]
     GetInfo,
 
     /// See <https://docs.corelightning.org/reference/lightning-listfunds>
+    #[command(name = "listfunds")]
     #[strum(serialize = "listfunds")]
     ListFunds,
 
     /// See <https://docs.corelightning.org/reference/lightning-listinvoices>
+    #[command(name = "listinvoices")]
     #[strum(serialize = "listinvoices")]
     ListInvoices,
 
     /// See <https://docs.corelightning.org/reference/lightning-listpays>
+    #[command(name = "listpayments")]
     #[strum(serialize = "listpayments")]
     ListPayments,
 
     /// See <https://docs.corelightning.org/reference/lightning-listpeers>
+    #[command(name = "listpeers")]
     #[strum(serialize = "listpeers")]
     ListPeers,
 
     /// See <https://docs.corelightning.org/reference/lightning-listpeerchannels>
+    #[command(name = "listpeerchannels")]
     #[strum(serialize = "listpeerchannels")]
     ListPeerChannels,
 
@@ -1705,6 +1715,7 @@ enum NodeCommand {
     /// Note that this command will return an error, as the node is stopped before it can reply.
     ///
     /// See <https://docs.corelightning.org/reference/lightning-stop>
+    #[command(name = "stop")]
     #[strum(serialize = "stop")]
     Stop,
 }
