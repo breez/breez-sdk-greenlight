@@ -19,41 +19,47 @@ pub type NodeResult<T, E = NodeError> = Result<T, E>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum NodeError {
-    #[error("Generic: {0}")]
-    Generic(anyhow::Error),
+    #[error("{0}")]
+    Generic(String),
 
     #[error(transparent)]
-    InvalidInvoice(InvoiceError),
+    InvalidInvoice(#[from] InvoiceError),
 
-    #[error("Invoice expired: {0}")]
-    InvoiceExpired(anyhow::Error),
+    #[error("{0}")]
+    InvoiceExpired(String),
 
-    #[error("Invoice no description: {0}")]
-    InvoiceNoDescription(anyhow::Error),
+    #[error("{0}")]
+    InvoiceNoDescription(String),
 
-    #[error("Invoice preimage already exists: {0}")]
-    InvoicePreimageAlreadyExists(anyhow::Error),
+    #[error("{0}")]
+    InvoicePreimageAlreadyExists(String),
 
-    #[error("Payment failed: {0}")]
-    PaymentFailed(anyhow::Error),
+    #[error("{0}")]
+    PaymentFailed(String),
 
-    #[error("Payment timeout: {0}")]
-    PaymentTimeout(anyhow::Error),
+    #[error("{0}")]
+    PaymentTimeout(String),
 
     #[error(transparent)]
-    Persistance(PersistError),
+    Persistance(#[from] PersistError),
 
-    #[error("Restore only: {0}")]
-    RestoreOnly(anyhow::Error),
+    #[error("{0}")]
+    RestoreOnly(String),
 
-    #[error("Route too expensive: {0}")]
-    RouteTooExpensive(anyhow::Error),
+    #[error("{0}")]
+    RouteTooExpensive(String),
 
-    #[error("Route not found: {0}")]
-    RouteNotFound(anyhow::Error),
+    #[error("{0}")]
+    RouteNotFound(String),
 
-    #[error("Service connectivity: {0}")]
-    ServiceConnectivity(anyhow::Error),
+    #[error("{0}")]
+    ServiceConnectivity(String),
+}
+
+impl NodeError {
+    pub(crate) fn generic(err: &str) -> Self {
+        Self::Generic(err.to_string())
+    }
 }
 
 pub struct CreateInvoiceRequest {

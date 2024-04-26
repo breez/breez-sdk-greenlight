@@ -689,7 +689,7 @@ impl BreezServices {
 
     /// Convenience method to look up [LspInformation] for a given LSP ID
     pub async fn fetch_lsp_info(&self, id: String) -> SdkResult<Option<LspInformation>> {
-        Ok(get_lsp_by_id(self.persister.clone(), self.lsp_api.clone(), id.as_str()).await?)
+        get_lsp_by_id(self.persister.clone(), self.lsp_api.clone(), id.as_str()).await
     }
 
     /// Gets the fees required to open a channel for a given amount.
@@ -1277,7 +1277,7 @@ impl BreezServices {
 
     /// Convenience method to look up LSP info based on current LSP ID
     pub async fn lsp_info(&self) -> SdkResult<LspInformation> {
-        Ok(get_lsp(self.persister.clone(), self.lsp_api.clone()).await?)
+        get_lsp(self.persister.clone(), self.lsp_api.clone()).await
     }
 
     pub(crate) async fn start_node(&self) -> Result<()> {
@@ -1287,7 +1287,7 @@ impl BreezServices {
 
     /// Get the recommended fees for onchain transactions
     pub async fn recommended_fees(&self) -> SdkResult<RecommendedFees> {
-        Ok(self.chain_service.recommended_fees().await?)
+        self.chain_service.recommended_fees().await
     }
 
     /// Get the full default config for a specific environment type
@@ -1889,8 +1889,8 @@ impl BreezServices {
             .send()
             .await
             .map(|_| ())
-            .map_err(|err| SdkError::ServiceConnectivity {
-                err: format!("Failed to register for tx confirmation notifications: {err}"),
+            .map_err(|e| SdkError::ServiceConnectivity {
+                err: format!("Failed to register for tx confirmation notifications: {e}"),
             })
     }
 
@@ -2375,7 +2375,9 @@ impl Receiver for PaymentReceiver {
         let node_state = self
             .persister
             .get_node_state()?
-            .ok_or(anyhow!("Node info not found"))?;
+            .ok_or(ReceivePaymentError::Generic {
+                err: "Node info not found".into(),
+            })?;
         let expiry = req.expiry.unwrap_or(INVOICE_PAYMENT_FEE_EXPIRY_SECONDS);
 
         ensure_sdk!(
@@ -2613,22 +2615,26 @@ impl PaymentReceiver {
 async fn get_lsp(
     persister: Arc<SqliteStorage>,
     lsp_api: Arc<dyn LspAPI>,
-) -> Result<LspInformation> {
-    let lsp_id = persister.get_lsp_id()?.ok_or(anyhow!("No LSP ID found"))?;
+) -> SdkResult<LspInformation> {
+    let lsp_id = persister
+        .get_lsp_id()?
+        .ok_or(SdkError::generic("No LSP ID found"))?;
 
     get_lsp_by_id(persister, lsp_api, lsp_id.as_str())
         .await?
-        .ok_or_else(|| anyhow!("No LSP found for id {lsp_id}"))
+        .ok_or_else(|| SdkError::Generic {
+            err: format!("No LSP found for id {lsp_id}"),
+        })
 }
 
 async fn get_lsp_by_id(
     persister: Arc<SqliteStorage>,
     lsp_api: Arc<dyn LspAPI>,
     lsp_id: &str,
-) -> Result<Option<LspInformation>> {
+) -> SdkResult<Option<LspInformation>> {
     let node_pubkey = persister
         .get_node_state()?
-        .ok_or(anyhow!("Node info not found"))?
+        .ok_or(SdkError::generic("Node info not found"))?
         .id;
 
     Ok(lsp_api

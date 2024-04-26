@@ -278,9 +278,9 @@ impl FullReverseSwapInfo {
         // Validate if received invoice has the same amount as requested by the user
         let amount_from_invoice_msat = inv.amount_milli_satoshis().unwrap_or_default();
         match amount_from_invoice_msat == expected_amount_msat {
-            false => Err(ReverseSwapError::UnexpectedInvoiceAmount(anyhow!(
-                "Does not match the request"
-            ))),
+            false => Err(ReverseSwapError::unexpected_invoice_amount(
+                "Does not match the request",
+            )),
             true => Ok(()),
         }
     }
@@ -298,9 +298,9 @@ impl FullReverseSwapInfo {
         let preimage_hash_from_invoice = inv.payment_hash();
         let preimage_hash_from_req = &self.get_preimage_hash();
         match preimage_hash_from_invoice == preimage_hash_from_req {
-            false => Err(ReverseSwapError::UnexpectedPaymentHash(anyhow!(
-                "Does not match the request"
-            ))),
+            false => Err(ReverseSwapError::unexpected_payment_hash(
+                "Does not match the request",
+            )),
             true => Ok(()),
         }
     }

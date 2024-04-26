@@ -1,7 +1,6 @@
 use std::str::FromStr;
 use std::sync::Arc;
 
-use anyhow::anyhow;
 use reqwest::Url;
 
 use crate::bitcoin::hashes::{hex::ToHex, sha256, Hash, HashEngine, Hmac, HmacEngine};
@@ -21,19 +20,18 @@ pub(crate) async fn perform_lnurl_auth(
     node_api: Arc<dyn NodeAPI>,
     req_data: LnUrlAuthRequestData,
 ) -> LnUrlResult<LnUrlCallbackStatus> {
-    let url =
-        Url::from_str(&req_data.url).map_err(|e| LnUrlError::InvalidUri(anyhow::Error::new(e)))?;
+    let url = Url::from_str(&req_data.url).map_err(|e| LnUrlError::InvalidUri(e.to_string()))?;
     let linking_keys = derive_linking_keys(node_api, url)?;
 
     let k1_to_sign = Message::from_slice(
         &hex::decode(req_data.k1)
-            .map_err(|e| LnUrlError::Generic(anyhow!("Error decoding k1: {e}")))?,
+            .map_err(|e| LnUrlError::Generic(format!("Error decoding k1: {e}")))?,
     )?;
     let sig = Secp256k1::new().sign_ecdsa(&k1_to_sign, &linking_keys.secret_key());
 
     // <LNURL_hostname_and_path>?<LNURL_existing_query_parameters>&sig=<hex(sign(utf8ToBytes(k1), linkingPrivKey))>&key=<hex(linkingKey)>
     let mut callback_url =
-        Url::from_str(&req_data.url).map_err(|e| LnUrlError::InvalidUri(anyhow::Error::new(e)))?;
+        Url::from_str(&req_data.url).map_err(|e| LnUrlError::InvalidUri(e.to_string()))?;
     callback_url
         .query_pairs_mut()
         .append_pair("sig", &sig.serialize_der().to_hex());
@@ -43,22 +41,22 @@ pub(crate) async fn perform_lnurl_auth(
 
     get_parse_and_log_response(callback_url.as_ref())
         .await
-        .map_err(LnUrlError::ServiceConnectivity)
+        .map_err(|e| LnUrlError::ServiceConnectivity(e.to_string()))
 }
 
 pub(crate) fn validate_request(
     domain: String,
     lnurl_endpoint: String,
 ) -> LnUrlResult<LnUrlAuthRequestData> {
-    let query = Url::from_str(&lnurl_endpoint)
-        .map_err(|e| LnUrlError::InvalidUri(anyhow::Error::new(e)))?;
+    let query =
+        Url::from_str(&lnurl_endpoint).map_err(|e| LnUrlError::InvalidUri(e.to_string()))?;
     let query_pairs = query.query_pairs();
 
     let k1 = query_pairs
         .into_iter()
         .find(|(key, _)| key == "k1")
         .map(|(_, v)| v.to_string())
-        .ok_or(LnUrlError::Generic(anyhow!("LNURL-auth k1 arg not found")))?;
+        .ok_or(LnUrlError::generic("LNURL-auth k1 arg not found"))?;
 
     let maybe_action = query_pairs
         .into_iter()
@@ -66,18 +64,16 @@ pub(crate) fn validate_request(
         .map(|(_, v)| v.to_string());
 
     let k1_bytes =
-        hex::decode(&k1).map_err(|e| LnUrlError::Generic(anyhow!("Error decoding k1: {e}")))?;
+        hex::decode(&k1).map_err(|e| LnUrlError::Generic(format!("Error decoding k1: {e}")))?;
     if k1_bytes.len() != 32 {
-        return Err(LnUrlError::Generic(anyhow!(
-            "LNURL-auth k1 is of unexpected length"
-        )));
+        return Err(LnUrlError::generic("LNURL-auth k1 is of unexpected length"));
     }
 
     if let Some(action) = &maybe_action {
         if !["register", "login", "link", "auth"].contains(&action.as_str()) {
-            return Err(LnUrlError::Generic(anyhow!(
-                "LNURL-auth action is of unexpected type"
-            )));
+            return Err(LnUrlError::generic(
+                "LNURL-auth action is of unexpected type",
+            ));
         }
     }
 
@@ -99,9 +95,9 @@ fn hmac_sha256(key: &[u8], input: &[u8]) -> Hmac<sha256::Hash> {
 ///
 /// https://github.com/lnurl/luds/blob/luds/05.md
 fn derive_linking_keys(node_api: Arc<dyn NodeAPI>, url: Url) -> LnUrlResult<KeyPair> {
-    let domain = url.domain().ok_or(LnUrlError::InvalidUri(anyhow!(
-        "Could not determine domain"
-    )))?;
+    let domain = url
+        .domain()
+        .ok_or(LnUrlError::invalid_uri("Could not determine domain"))?;
 
     // m/138'/0
     let hashing_key = node_api.derive_bip32_key(vec![

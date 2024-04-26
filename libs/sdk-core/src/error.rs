@@ -39,12 +39,8 @@ impl From<bip32::Error> for ConnectError {
 impl From<NodeError> for ConnectError {
     fn from(value: NodeError) -> Self {
         match value {
-            NodeError::RestoreOnly(err) => Self::RestoreOnly {
-                err: err.to_string(),
-            },
-            NodeError::ServiceConnectivity(err) => Self::ServiceConnectivity {
-                err: err.to_string(),
-            },
+            NodeError::RestoreOnly(err) => Self::RestoreOnly { err },
+            NodeError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
             _ => Self::Generic {
                 err: value.to_string(),
             },
@@ -63,10 +59,8 @@ impl From<PersistError> for ConnectError {
 impl From<SdkError> for ConnectError {
     fn from(value: SdkError) -> Self {
         match value {
+            SdkError::Generic { err } => Self::Generic { err },
             SdkError::ServiceConnectivity { err } => Self::ServiceConnectivity { err },
-            _ => Self::Generic {
-                err: value.to_string(),
-            },
         }
     }
 }
@@ -91,12 +85,8 @@ pub enum LnUrlAuthError {
 impl From<LnUrlError> for LnUrlAuthError {
     fn from(value: LnUrlError) -> Self {
         match value {
-            LnUrlError::InvalidUri(err) => Self::InvalidUri {
-                err: err.to_string(),
-            },
-            LnUrlError::ServiceConnectivity(err) => Self::ServiceConnectivity {
-                err: err.to_string(),
-            },
+            LnUrlError::InvalidUri(err) => Self::InvalidUri { err },
+            LnUrlError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
             _ => Self::Generic {
                 err: value.to_string(),
             },
@@ -107,10 +97,8 @@ impl From<LnUrlError> for LnUrlAuthError {
 impl From<SdkError> for LnUrlAuthError {
     fn from(value: SdkError) -> Self {
         match value {
+            SdkError::Generic { err } => Self::Generic { err },
             SdkError::ServiceConnectivity { err } => Self::ServiceConnectivity { err },
-            _ => Self::Generic {
-                err: value.to_string(),
-            },
         }
     }
 }
@@ -189,12 +177,9 @@ impl From<crate::bitcoin::hashes::hex::Error> for LnUrlPayError {
 impl From<InvoiceError> for LnUrlPayError {
     fn from(value: InvoiceError) -> Self {
         match value {
-            InvoiceError::InvalidNetwork(err) => Self::InvalidNetwork {
-                err: err.to_string(),
-            },
-            _ => Self::InvalidInvoice {
-                err: value.to_string(),
-            },
+            InvoiceError::InvalidNetwork(err) => Self::InvalidNetwork { err },
+            InvoiceError::Validation(err) => Self::InvalidInvoice { err },
+            InvoiceError::Generic(err) => Self::Generic { err },
         }
     }
 }
@@ -202,13 +187,9 @@ impl From<InvoiceError> for LnUrlPayError {
 impl From<LnUrlError> for LnUrlPayError {
     fn from(value: LnUrlError) -> Self {
         match value {
-            LnUrlError::InvalidUri(err) => Self::InvalidUri {
-                err: err.to_string(),
-            },
+            LnUrlError::InvalidUri(err) => Self::InvalidUri { err },
             LnUrlError::InvalidInvoice(err) => err.into(),
-            LnUrlError::ServiceConnectivity(err) => Self::ServiceConnectivity {
-                err: err.to_string(),
-            },
+            LnUrlError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
             _ => Self::Generic {
                 err: value.to_string(),
             },
@@ -227,10 +208,8 @@ impl From<PersistError> for LnUrlPayError {
 impl From<SdkError> for LnUrlPayError {
     fn from(value: SdkError) -> Self {
         match value {
+            SdkError::Generic { err } => Self::Generic { err },
             SdkError::ServiceConnectivity { err } => Self::ServiceConnectivity { err },
-            _ => Self::Generic {
-                err: value.to_string(),
-            },
         }
     }
 }
@@ -239,6 +218,7 @@ impl From<SendPaymentError> for LnUrlPayError {
     fn from(value: SendPaymentError) -> Self {
         match value {
             SendPaymentError::AlreadyPaid => Self::AlreadyPaid,
+            SendPaymentError::Generic { err } => Self::Generic { err },
             SendPaymentError::InvalidAmount { err } => Self::InvalidAmount { err },
             SendPaymentError::InvalidInvoice { err } => Self::InvalidInvoice { err },
             SendPaymentError::InvalidNetwork { err } => Self::InvalidNetwork { err },
@@ -248,9 +228,6 @@ impl From<SendPaymentError> for LnUrlPayError {
             SendPaymentError::RouteNotFound { err } => Self::RouteNotFound { err },
             SendPaymentError::RouteTooExpensive { err } => Self::RouteTooExpensive { err },
             SendPaymentError::ServiceConnectivity { err } => Self::ServiceConnectivity { err },
-            _ => Self::Generic {
-                err: value.to_string(),
-            },
         }
     }
 }
@@ -286,21 +263,24 @@ pub enum LnUrlWithdrawError {
     ServiceConnectivity { err: String },
 }
 
-impl From<LnUrlError> for LnUrlWithdrawError {
-    fn from(value: LnUrlError) -> Self {
+impl From<InvoiceError> for LnUrlWithdrawError {
+    fn from(value: InvoiceError) -> Self {
         match value {
-            LnUrlError::InvalidUri(err) => Self::InvalidUri {
-                err: err.to_string(),
-            },
-            LnUrlError::InvalidInvoice(err) => Self::InvalidInvoice {
-                err: err.to_string(),
-            },
-            LnUrlError::ServiceConnectivity(err) => Self::ServiceConnectivity {
-                err: err.to_string(),
-            },
+            InvoiceError::Validation(err) => Self::InvalidInvoice { err },
             _ => Self::Generic {
                 err: value.to_string(),
             },
+        }
+    }
+}
+
+impl From<LnUrlError> for LnUrlWithdrawError {
+    fn from(value: LnUrlError) -> Self {
+        match value {
+            LnUrlError::Generic(err) => Self::Generic { err },
+            LnUrlError::InvalidUri(err) => Self::InvalidUri { err },
+            LnUrlError::InvalidInvoice(err) => err.into(),
+            LnUrlError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
         }
     }
 }
@@ -316,15 +296,16 @@ impl From<PersistError> for LnUrlWithdrawError {
 impl From<ReceivePaymentError> for LnUrlWithdrawError {
     fn from(value: ReceivePaymentError) -> Self {
         match value {
+            ReceivePaymentError::Generic { err }
+            | ReceivePaymentError::InvoiceExpired { err }
+            | ReceivePaymentError::InvoiceNoDescription { err }
+            | ReceivePaymentError::InvoicePreimageAlreadyExists { err } => Self::Generic { err },
             ReceivePaymentError::InvalidAmount { err } => Self::InvalidAmount { err },
             ReceivePaymentError::InvalidInvoice { err } => Self::InvalidInvoice { err },
             ReceivePaymentError::ServiceConnectivity { err } => Self::ServiceConnectivity { err },
             ReceivePaymentError::InvoiceNoRoutingHints { err } => {
                 Self::InvoiceNoRoutingHints { err }
             }
-            _ => Self::Generic {
-                err: value.to_string(),
-            },
         }
     }
 }
@@ -332,10 +313,8 @@ impl From<ReceivePaymentError> for LnUrlWithdrawError {
 impl From<SdkError> for LnUrlWithdrawError {
     fn from(value: SdkError) -> Self {
         match value {
+            SdkError::Generic { err } => Self::Generic { err },
             SdkError::ServiceConnectivity { err } => Self::ServiceConnectivity { err },
-            _ => Self::Generic {
-                err: value.to_string(),
-            },
         }
     }
 }
@@ -372,10 +351,8 @@ impl From<anyhow::Error> for ReceiveOnchainError {
 impl From<SdkError> for ReceiveOnchainError {
     fn from(value: SdkError) -> Self {
         match value {
+            SdkError::Generic { err } => Self::Generic { err },
             SdkError::ServiceConnectivity { err } => Self::ServiceConnectivity { err },
-            _ => Self::Generic {
-                err: value.to_string(),
-            },
         }
     }
 }
@@ -383,9 +360,7 @@ impl From<SdkError> for ReceiveOnchainError {
 impl From<SwapError> for ReceiveOnchainError {
     fn from(value: SwapError) -> Self {
         match value {
-            SwapError::ServiceConnectivity(err) => Self::ServiceConnectivity {
-                err: err.to_string(),
-            },
+            SwapError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
             _ => Self::Generic {
                 err: value.to_string(),
             },
@@ -396,7 +371,7 @@ impl From<SwapError> for ReceiveOnchainError {
 impl From<PersistError> for ReceiveOnchainError {
     fn from(err: PersistError) -> Self {
         Self::Generic {
-            err: format!("Error when accessing local DB: {err}"),
+            err: err.to_string(),
         }
     }
 }
@@ -450,9 +425,12 @@ impl From<anyhow::Error> for ReceivePaymentError {
 }
 
 impl From<InvoiceError> for ReceivePaymentError {
-    fn from(err: InvoiceError) -> Self {
-        Self::InvalidInvoice {
-            err: err.to_string(),
+    fn from(value: InvoiceError) -> Self {
+        match value {
+            InvoiceError::Validation(err) => Self::InvalidInvoice { err },
+            _ => Self::Generic {
+                err: value.to_string(),
+            },
         }
     }
 }
@@ -460,18 +438,12 @@ impl From<InvoiceError> for ReceivePaymentError {
 impl From<NodeError> for ReceivePaymentError {
     fn from(value: NodeError) -> Self {
         match value {
-            NodeError::InvoiceExpired(err) => Self::InvoiceExpired {
-                err: err.to_string(),
-            },
-            NodeError::InvoiceNoDescription(err) => Self::InvoiceNoDescription {
-                err: err.to_string(),
-            },
-            NodeError::InvoicePreimageAlreadyExists(err) => Self::InvoicePreimageAlreadyExists {
-                err: err.to_string(),
-            },
-            NodeError::ServiceConnectivity(err) => Self::ServiceConnectivity {
-                err: err.to_string(),
-            },
+            NodeError::InvoiceExpired(err) => Self::InvoiceExpired { err },
+            NodeError::InvoiceNoDescription(err) => Self::InvoiceNoDescription { err },
+            NodeError::InvoicePreimageAlreadyExists(err) => {
+                Self::InvoicePreimageAlreadyExists { err }
+            }
+            NodeError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
             _ => Self::Generic {
                 err: value.to_string(),
             },
@@ -490,10 +462,8 @@ impl From<PersistError> for ReceivePaymentError {
 impl From<SdkError> for ReceivePaymentError {
     fn from(value: SdkError) -> Self {
         match value {
+            SdkError::Generic { err } => Self::Generic { err },
             SdkError::ServiceConnectivity { err } => Self::ServiceConnectivity { err },
-            _ => Self::Generic {
-                err: value.to_string(),
-            },
         }
     }
 }
@@ -514,6 +484,12 @@ pub enum SdkError {
 impl SdkError {
     pub(crate) fn generic(err: &str) -> Self {
         Self::Generic {
+            err: err.to_string(),
+        }
+    }
+
+    pub(crate) fn service_connectivity(err: &str) -> Self {
+        Self::ServiceConnectivity {
             err: err.to_string(),
         }
     }
@@ -554,9 +530,7 @@ impl From<LnUrlError> for SdkError {
 impl From<NodeError> for SdkError {
     fn from(value: NodeError) -> Self {
         match value {
-            NodeError::ServiceConnectivity(err) => Self::ServiceConnectivity {
-                err: err.to_string(),
-            },
+            NodeError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
             _ => Self::Generic {
                 err: value.to_string(),
             },
@@ -575,9 +549,7 @@ impl From<PersistError> for SdkError {
 impl From<ReverseSwapError> for SdkError {
     fn from(value: ReverseSwapError) -> Self {
         match value {
-            ReverseSwapError::ServiceConnectivity(err) => Self::ServiceConnectivity {
-                err: err.to_string(),
-            },
+            ReverseSwapError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
             _ => Self::Generic {
                 err: value.to_string(),
             },
@@ -612,11 +584,19 @@ impl From<tonic::Status> for SdkError {
 impl From<SendPaymentError> for SdkError {
     fn from(value: SendPaymentError) -> Self {
         match value {
-            SendPaymentError::Generic { err } => Self::Generic { err },
-            SendPaymentError::ServiceConnectivity { err } => Self::ServiceConnectivity { err },
-            _ => Self::Generic {
+            SendPaymentError::AlreadyPaid => Self::Generic {
                 err: value.to_string(),
             },
+            SendPaymentError::Generic { err }
+            | SendPaymentError::InvalidAmount { err }
+            | SendPaymentError::InvalidInvoice { err }
+            | SendPaymentError::InvalidNetwork { err }
+            | SendPaymentError::InvoiceExpired { err }
+            | SendPaymentError::PaymentFailed { err }
+            | SendPaymentError::PaymentTimeout { err }
+            | SendPaymentError::RouteNotFound { err }
+            | SendPaymentError::RouteTooExpensive { err } => Self::Generic { err },
+            SendPaymentError::ServiceConnectivity { err } => Self::ServiceConnectivity { err },
         }
     }
 }
@@ -670,15 +650,9 @@ impl From<anyhow::Error> for SendOnchainError {
 impl From<NodeError> for SendOnchainError {
     fn from(value: NodeError) -> Self {
         match value {
-            NodeError::PaymentFailed(err) => Self::PaymentFailed {
-                err: err.to_string(),
-            },
-            NodeError::PaymentTimeout(err) => Self::PaymentTimeout {
-                err: err.to_string(),
-            },
-            NodeError::ServiceConnectivity(err) => Self::ServiceConnectivity {
-                err: err.to_string(),
-            },
+            NodeError::PaymentFailed(err) => Self::PaymentFailed { err },
+            NodeError::PaymentTimeout(err) => Self::PaymentTimeout { err },
+            NodeError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
             _ => Self::Generic {
                 err: value.to_string(),
             },
@@ -689,10 +663,8 @@ impl From<NodeError> for SendOnchainError {
 impl From<SdkError> for SendOnchainError {
     fn from(value: SdkError) -> Self {
         match value {
+            SdkError::Generic { err } => Self::Generic { err },
             SdkError::ServiceConnectivity { err } => Self::ServiceConnectivity { err },
-            _ => Self::Generic {
-                err: value.to_string(),
-            },
         }
     }
 }
@@ -700,12 +672,10 @@ impl From<SdkError> for SendOnchainError {
 impl From<ReverseSwapError> for SendOnchainError {
     fn from(value: ReverseSwapError) -> Self {
         match value {
-            ReverseSwapError::InvalidDestinationAddress(err) => Self::InvalidDestinationAddress {
-                err: err.to_string(),
-            },
-            ReverseSwapError::ServiceConnectivity(err) => Self::ServiceConnectivity {
-                err: err.to_string(),
-            },
+            ReverseSwapError::InvalidDestinationAddress(err) => {
+                Self::InvalidDestinationAddress { err }
+            }
+            ReverseSwapError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
             ReverseSwapError::Node(err) => err.into(),
             _ => Self::Generic {
                 err: value.to_string(),
@@ -777,12 +747,9 @@ impl From<anyhow::Error> for SendPaymentError {
 impl From<InvoiceError> for SendPaymentError {
     fn from(value: InvoiceError) -> Self {
         match value {
-            InvoiceError::InvalidNetwork(err) => Self::InvalidNetwork {
-                err: err.to_string(),
-            },
-            _ => Self::InvalidInvoice {
-                err: value.to_string(),
-            },
+            InvoiceError::InvalidNetwork(err) => Self::InvalidNetwork { err },
+            InvoiceError::Validation(err) => Self::InvalidInvoice { err },
+            InvoiceError::Generic(err) => Self::Generic { err },
         }
     }
 }
@@ -790,24 +757,12 @@ impl From<InvoiceError> for SendPaymentError {
 impl From<NodeError> for SendPaymentError {
     fn from(value: NodeError) -> Self {
         match value {
-            NodeError::InvoiceExpired(err) => Self::InvoiceExpired {
-                err: err.to_string(),
-            },
-            NodeError::PaymentFailed(err) => Self::PaymentFailed {
-                err: err.to_string(),
-            },
-            NodeError::PaymentTimeout(err) => Self::PaymentTimeout {
-                err: err.to_string(),
-            },
-            NodeError::RouteNotFound(err) => Self::RouteNotFound {
-                err: err.to_string(),
-            },
-            NodeError::RouteTooExpensive(err) => Self::RouteTooExpensive {
-                err: err.to_string(),
-            },
-            NodeError::ServiceConnectivity(err) => Self::ServiceConnectivity {
-                err: err.to_string(),
-            },
+            NodeError::InvoiceExpired(err) => Self::InvoiceExpired { err },
+            NodeError::PaymentFailed(err) => Self::PaymentFailed { err },
+            NodeError::PaymentTimeout(err) => Self::PaymentTimeout { err },
+            NodeError::RouteNotFound(err) => Self::RouteNotFound { err },
+            NodeError::RouteTooExpensive(err) => Self::RouteTooExpensive { err },
+            NodeError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
             _ => Self::Generic {
                 err: value.to_string(),
             },
@@ -826,10 +781,8 @@ impl From<PersistError> for SendPaymentError {
 impl From<SdkError> for SendPaymentError {
     fn from(value: SdkError) -> Self {
         match value {
+            SdkError::Generic { err } => Self::Generic { err },
             SdkError::ServiceConnectivity { err } => Self::ServiceConnectivity { err },
-            _ => Self::Generic {
-                err: value.to_string(),
-            },
         }
     }
 }

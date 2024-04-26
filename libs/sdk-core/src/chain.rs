@@ -1,26 +1,27 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 use crate::bitcoin::hashes::hex::FromHex;
 use crate::bitcoin::{OutPoint, Txid};
+use crate::error::{SdkError, SdkResult};
 use crate::input_parser::{get_parse_and_log_response, get_reqwest_client, post_and_log_response};
 
 pub const DEFAULT_MEMPOOL_SPACE_URL: &str = "https://mempool.space/api";
 
 #[tonic::async_trait]
 pub trait ChainService: Send + Sync {
-    async fn recommended_fees(&self) -> Result<RecommendedFees>;
+    async fn recommended_fees(&self) -> SdkResult<RecommendedFees>;
     /// Gets up to 50 onchain and up to 25 mempool transactions associated with this address.
     ///
     /// See <https://mempool.space/docs/api/rest#get-address-transactions>
-    async fn address_transactions(&self, address: String) -> Result<Vec<OnchainTx>>;
-    async fn current_tip(&self) -> Result<u32>;
+    async fn address_transactions(&self, address: String) -> SdkResult<Vec<OnchainTx>>;
+    async fn current_tip(&self) -> SdkResult<u32>;
     /// Gets the spending status of all tx outputs for this tx.
     ///
     /// See <https://mempool.space/docs/api/rest#get-transaction-outspends>
-    async fn transaction_outspends(&self, txid: String) -> Result<Vec<Outspend>>;
+    async fn transaction_outspends(&self, txid: String) -> SdkResult<Vec<Outspend>>;
     /// If successful, it returns the transaction ID. Otherwise returns an `Err` describing the error.
-    async fn broadcast_transaction(&self, tx: Vec<u8>) -> Result<String>;
+    async fn broadcast_transaction(&self, tx: Vec<u8>) -> SdkResult<String>;
 }
 
 pub trait RedundantChainServiceTrait: ChainService {
@@ -45,7 +46,7 @@ impl RedundantChainServiceTrait for RedundantChainService {
 
 #[tonic::async_trait]
 impl ChainService for RedundantChainService {
-    async fn recommended_fees(&self) -> Result<RecommendedFees> {
+    async fn recommended_fees(&self) -> SdkResult<RecommendedFees> {
         for inst in &self.instances {
             match inst.recommended_fees().await {
                 Ok(res) => {
@@ -54,10 +55,12 @@ impl ChainService for RedundantChainService {
                 Err(e) => error!("Call to chain service {} failed: {e}", inst.base_url),
             }
         }
-        Err(anyhow!("All chain service instances failed"))
+        Err(SdkError::service_connectivity(
+            "All chain service instances failed",
+        ))
     }
 
-    async fn address_transactions(&self, address: String) -> Result<Vec<OnchainTx>> {
+    async fn address_transactions(&self, address: String) -> SdkResult<Vec<OnchainTx>> {
         for inst in &self.instances {
             match inst.address_transactions(address.clone()).await {
                 Ok(res) => {
@@ -66,10 +69,12 @@ impl ChainService for RedundantChainService {
                 Err(e) => error!("Call to chain service {} failed: {e}", inst.base_url),
             }
         }
-        Err(anyhow!("All chain service instances failed"))
+        Err(SdkError::service_connectivity(
+            "All chain service instances failed",
+        ))
     }
 
-    async fn current_tip(&self) -> Result<u32> {
+    async fn current_tip(&self) -> SdkResult<u32> {
         for inst in &self.instances {
             match inst.current_tip().await {
                 Ok(res) => {
@@ -78,10 +83,12 @@ impl ChainService for RedundantChainService {
                 Err(e) => error!("Call to chain service {} failed: {e}", inst.base_url),
             }
         }
-        Err(anyhow!("All chain service instances failed"))
+        Err(SdkError::service_connectivity(
+            "All chain service instances failed",
+        ))
     }
 
-    async fn transaction_outspends(&self, txid: String) -> Result<Vec<Outspend>> {
+    async fn transaction_outspends(&self, txid: String) -> SdkResult<Vec<Outspend>> {
         for inst in &self.instances {
             match inst.transaction_outspends(txid.clone()).await {
                 Ok(res) => {
@@ -90,10 +97,12 @@ impl ChainService for RedundantChainService {
                 Err(e) => error!("Call to chain service {} failed: {e}", inst.base_url),
             }
         }
-        Err(anyhow!("All chain service instances failed"))
+        Err(SdkError::service_connectivity(
+            "All chain service instances failed",
+        ))
     }
 
-    async fn broadcast_transaction(&self, tx: Vec<u8>) -> Result<String> {
+    async fn broadcast_transaction(&self, tx: Vec<u8>) -> SdkResult<String> {
         for inst in &self.instances {
             match inst.broadcast_transaction(tx.clone()).await {
                 Ok(res) => {
@@ -102,7 +111,9 @@ impl ChainService for RedundantChainService {
                 Err(e) => error!("Call to chain service {} failed: {e}", inst.base_url),
             }
         }
-        Err(anyhow!("All chain service instances failed"))
+        Err(SdkError::service_connectivity(
+            "All chain service instances failed",
+        ))
     }
 }
 
@@ -325,28 +336,37 @@ impl MempoolSpace {
 
 #[tonic::async_trait]
 impl ChainService for MempoolSpace {
-    async fn recommended_fees(&self) -> Result<RecommendedFees> {
+    async fn recommended_fees(&self) -> SdkResult<RecommendedFees> {
         get_parse_and_log_response(&format!("{}/v1/fees/recommended", self.base_url)).await
     }
 
-    async fn address_transactions(&self, address: String) -> Result<Vec<OnchainTx>> {
+    async fn address_transactions(&self, address: String) -> SdkResult<Vec<OnchainTx>> {
         get_parse_and_log_response(&format!("{}/address/{address}/txs", self.base_url)).await
     }
 
-    async fn current_tip(&self) -> Result<u32> {
+    async fn current_tip(&self) -> SdkResult<u32> {
         get_parse_and_log_response(&format!("{}/blocks/tip/height", self.base_url)).await
     }
 
-    async fn transaction_outspends(&self, txid: String) -> Result<Vec<Outspend>> {
+    async fn transaction_outspends(&self, txid: String) -> SdkResult<Vec<Outspend>> {
         let url = format!("{}/tx/{txid}/outspends", self.base_url);
-        Ok(get_reqwest_client()?.get(url).send().await?.json().await?)
+        Ok(get_reqwest_client()?
+            .get(url)
+            .send()
+            .await
+            .map_err(|e| SdkError::ServiceConnectivity { err: e.to_string() })?
+            .json()
+            .await
+            .map_err(|e| SdkError::ServiceConnectivity { err: e.to_string() })?)
     }
 
-    async fn broadcast_transaction(&self, tx: Vec<u8>) -> Result<String> {
+    async fn broadcast_transaction(&self, tx: Vec<u8>) -> SdkResult<String> {
         let txid_or_error =
             post_and_log_response(&format!("{}/tx", self.base_url), Some(hex::encode(tx))).await?;
         match txid_or_error.contains("error") {
-            true => Err(anyhow!("Error fetching tx: {txid_or_error}")),
+            true => Err(SdkError::Generic {
+                err: format!("Error fetching tx: {txid_or_error}"),
+            }),
             false => Ok(txid_or_error),
         }
     }

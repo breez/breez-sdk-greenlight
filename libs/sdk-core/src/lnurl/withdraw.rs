@@ -6,7 +6,6 @@ use crate::{
     ensure_sdk, lnurl::*, LnUrlCallbackStatus, LnUrlWithdrawResult, LnUrlWithdrawSuccessData,
 };
 use crate::{LNInvoice, LnUrlWithdrawRequestData};
-use anyhow::anyhow;
 
 /// Validates invoice and performs the second and last step of LNURL-withdraw, as per
 /// <https://github.com/lnurl/luds/blob/luds/03.md>
@@ -20,28 +19,28 @@ pub(crate) async fn validate_lnurl_withdraw(
     req_data: LnUrlWithdrawRequestData,
     invoice: LNInvoice,
 ) -> LnUrlResult<LnUrlWithdrawResult> {
-    let amount_msat = invoice.amount_msat.ok_or(LnUrlError::Generic(anyhow!(
-        "Expected invoice amount, but found none"
-    )))?;
+    let amount_msat = invoice.amount_msat.ok_or(LnUrlError::generic(
+        "Expected invoice amount, but found none",
+    ))?;
 
     ensure_sdk!(
         amount_msat >= req_data.min_withdrawable,
-        LnUrlError::Generic(anyhow!(
+        LnUrlError::generic(
             "Amount is smaller than the minimum allowed by the LNURL-withdraw endpoint"
-        ))
+        )
     );
     ensure_sdk!(
         amount_msat <= req_data.max_withdrawable,
-        LnUrlError::Generic(anyhow!(
+        LnUrlError::generic(
             "Amount is bigger than the maximum allowed by the LNURL-withdraw endpoint"
-        ))
+        )
     );
 
     // Send invoice to the LNURL-w endpoint via the callback
     let callback_url = build_withdraw_callback_url(&req_data, &invoice)?;
     let callback_res: LnUrlCallbackStatus = get_parse_and_log_response(&callback_url)
         .await
-        .map_err(LnUrlError::ServiceConnectivity)?;
+        .map_err(|e| LnUrlError::ServiceConnectivity(e.to_string()))?;
     let withdraw_status = match callback_res {
         LnUrlCallbackStatus::Ok => LnUrlWithdrawResult::Ok {
             data: LnUrlWithdrawSuccessData { invoice },
@@ -57,7 +56,7 @@ fn build_withdraw_callback_url(
     invoice: &LNInvoice,
 ) -> LnUrlResult<String> {
     let mut url = reqwest::Url::from_str(&req_data.callback)
-        .map_err(|e| LnUrlError::InvalidUri(anyhow::Error::new(e)))?;
+        .map_err(|e| LnUrlError::InvalidUri(e.to_string()))?;
 
     url.query_pairs_mut().append_pair("k1", &req_data.k1);
     url.query_pairs_mut().append_pair("pr", &invoice.bolt11);

@@ -135,7 +135,7 @@ impl BTCSendSwap {
     fn validate_recipient_address(claim_pubkey: &str) -> ReverseSwapResult<()> {
         Address::from_str(claim_pubkey)
             .map(|_| ())
-            .map_err(|e| ReverseSwapError::InvalidDestinationAddress(anyhow::Error::new(e)))
+            .map_err(|e| ReverseSwapError::InvalidDestinationAddress(e.to_string()))
     }
 
     pub(crate) fn validate_claim_tx_fee(claim_fee: u64) -> ReverseSwapResult<()> {
@@ -159,14 +159,14 @@ impl BTCSendSwap {
         routing_hints
             .first()
             .ok_or_else(|| {
-                ReverseSwapError::RouteNotFound(anyhow!(
+                ReverseSwapError::RouteNotFound(format!(
                     "No route hints found for reverse routing node {reverse_routing_node:?}"
                 ))
             })?
             .hops
             .first()
             .ok_or_else(|| {
-                ReverseSwapError::RouteNotFound(anyhow!(
+                ReverseSwapError::RouteNotFound(format!(
                     "No hops found for reverse routing node {reverse_routing_node:?}"
                 ))
             })
@@ -239,17 +239,17 @@ impl BTCSendSwap {
                 // TODO It doesn't fail when trying to pay more sats than max_payable?
                 match pay_thread_res {
                     // Paying a HODL invoice does not typically return, so if send_payment() returned, it's an abnormal situation
-                    Ok(Ok(res)) => Err(NodeError::PaymentFailed(anyhow!("Payment of HODL invoice unexpectedly returned: {res:?}"))),
+                    Ok(Ok(res)) => Err(NodeError::PaymentFailed(format!("Payment of HODL invoice unexpectedly returned: {res:?}"))),
 
                     // send_payment() returned an error, so we know paying the HODL invoice failed
-                    Ok(Err(e)) => Err(NodeError::PaymentFailed(anyhow!("Failed to pay HODL invoice: {e}"))),
+                    Ok(Err(e)) => Err(NodeError::PaymentFailed(format!("Failed to pay HODL invoice: {e}"))),
 
                     // send_payment() has been trying to pay for longer than the payment timeout
-                    Err(e) => Err(NodeError::PaymentTimeout(anyhow!("Trying to pay the HODL invoice timed out: {e}")))
+                    Err(e) => Err(NodeError::PaymentTimeout(format!("Trying to pay the HODL invoice timed out: {e}")))
                 }
             },
             paid_invoice_res = self.poll_initial_boltz_status_transition(&created_rsi.id) => {
-                paid_invoice_res.map(|_| created_rsi.clone()).map_err(NodeError::Generic)
+                paid_invoice_res.map(|_| created_rsi.clone()).map_err(|e| NodeError::Generic(e.to_string()))
             }
         };
 
@@ -349,7 +349,7 @@ impl BTCSendSwap {
                 Ok(res)
             }
             BoltzApiCreateReverseSwapResponse::BoltzApiError { error } => {
-                Err(ReverseSwapError::ServiceConnectivity(anyhow!(
+                Err(ReverseSwapError::ServiceConnectivity(format!(
                     "(Boltz) Failed to create reverse swap: {error}"
                 )))
             }

@@ -3,7 +3,7 @@ use std::pin::Pin;
 use std::time::{Duration, SystemTime};
 use std::{mem, vec};
 
-use anyhow::{anyhow, Error, Result};
+use anyhow::{Error, Result};
 use chrono::{SecondsFormat, Utc};
 use gl_client::signer::model::greenlight::amount::Unit;
 use gl_client::signer::model::greenlight::Amount;
@@ -178,15 +178,15 @@ impl ReverseSwapServiceAPI for MockReverseSwapperAPI {
         _pair_hash: String,
         _routing_node: String,
     ) -> ReverseSwapResult<BoltzApiCreateReverseSwapResponse> {
-        Err(ReverseSwapError::Generic(anyhow!("Not implemented")))
+        Err(ReverseSwapError::generic("Not implemented"))
     }
 
     async fn get_boltz_status(&self, _id: String) -> ReverseSwapResult<BoltzApiReverseSwapStatus> {
-        Err(ReverseSwapError::Generic(anyhow!("Not implemented")))
+        Err(ReverseSwapError::generic("Not implemented"))
     }
 
     async fn get_route_hints(&self, _routing_node_id: String) -> ReverseSwapResult<Vec<RouteHint>> {
-        Err(ReverseSwapError::Generic(anyhow!("Not implemented")))
+        Err(ReverseSwapError::generic("Not implemented"))
     }
 }
 
@@ -226,11 +226,11 @@ impl Default for MockChainService {
 
 #[tonic::async_trait]
 impl ChainService for MockChainService {
-    async fn recommended_fees(&self) -> Result<RecommendedFees> {
+    async fn recommended_fees(&self) -> SdkResult<RecommendedFees> {
         Ok(self.recommended_fees.clone())
     }
 
-    async fn address_transactions(&self, address: String) -> Result<Vec<OnchainTx>> {
+    async fn address_transactions(&self, address: String) -> SdkResult<Vec<OnchainTx>> {
         Ok(self
             .address_to_transactions
             .get(&address)
@@ -238,11 +238,11 @@ impl ChainService for MockChainService {
             .clone())
     }
 
-    async fn current_tip(&self) -> Result<u32> {
+    async fn current_tip(&self) -> SdkResult<u32> {
         Ok(self.tip)
     }
 
-    async fn transaction_outspends(&self, _txid: String) -> Result<Vec<Outspend>> {
+    async fn transaction_outspends(&self, _txid: String) -> SdkResult<Vec<Outspend>> {
         Ok(vec![Outspend {
             spent: true,
             txid: Some("test-tx-id".into()),
@@ -256,7 +256,7 @@ impl ChainService for MockChainService {
         }])
     }
 
-    async fn broadcast_transaction(&self, _tx: Vec<u8>) -> Result<String> {
+    async fn broadcast_transaction(&self, _tx: Vec<u8>) -> SdkResult<String> {
         let mut array = [0; 32];
         rand::thread_rng().fill(&mut array);
         Ok(hex::encode(array))
@@ -332,7 +332,7 @@ pub struct MockNodeAPI {
 #[tonic::async_trait]
 impl NodeAPI for MockNodeAPI {
     fn node_credentials(&self) -> NodeResult<Option<NodeCredentials>> {
-        Err(NodeError::Generic(anyhow!("Not implemented")))
+        Err(NodeError::Generic("Not implemented".to_string()))
     }
 
     async fn configure_node(&self, _close_to_address: Option<String>) -> NodeResult<()> {
@@ -369,7 +369,7 @@ impl NodeAPI for MockNodeAPI {
     }
 
     async fn send_pay(&self, _bolt11: String, _max_hops: u32) -> NodeResult<PaymentResponse> {
-        Err(NodeError::Generic(anyhow!("Not implemented")))
+        Err(NodeError::Generic("Not implemented".to_string()))
     }
 
     async fn send_payment(
@@ -409,7 +409,7 @@ impl NodeAPI for MockNodeAPI {
         &self,
         _req: PrepareRedeemOnchainFundsRequest,
     ) -> NodeResult<PrepareRedeemOnchainFundsResponse> {
-        Err(NodeError::Generic(anyhow!("Not implemented")))
+        Err(NodeError::Generic("Not implemented".to_string()))
     }
 
     async fn start_signer(&self, _shutdown: mpsc::Receiver<()>) {}
@@ -445,13 +445,13 @@ impl NodeAPI for MockNodeAPI {
     async fn stream_incoming_payments(
         &self,
     ) -> NodeResult<Streaming<gl_client::signer::model::greenlight::IncomingPayment>> {
-        Err(NodeError::Generic(anyhow!("Not implemented")))
+        Err(NodeError::Generic("Not implemented".to_string()))
     }
 
     async fn stream_log_messages(
         &self,
     ) -> NodeResult<Streaming<gl_client::signer::model::greenlight::LogEntry>> {
-        Err(NodeError::Generic(anyhow!("Not implemented")))
+        Err(NodeError::Generic("Not implemented".to_string()))
     }
 
     async fn static_backup(&self) -> NodeResult<Vec<String>> {
@@ -459,7 +459,7 @@ impl NodeAPI for MockNodeAPI {
     }
 
     async fn execute_command(&self, _command: String) -> NodeResult<String> {
-        Err(NodeError::Generic(anyhow!("Not implemented")))
+        Err(NodeError::Generic("Not implemented".to_string()))
     }
 
     async fn generate_diagnostic_data(&self) -> NodeResult<String> {
@@ -472,7 +472,7 @@ impl NodeAPI for MockNodeAPI {
         _max_hops: u32,
         _last_hop: Option<&RouteHintHop>,
     ) -> NodeResult<Vec<MaxChannelAmount>> {
-        Err(NodeError::Generic(anyhow!("Not implemented")))
+        Err(NodeError::Generic("Not implemented".to_string()))
     }
 
     fn derive_bip32_key(&self, _path: Vec<ChildNumber>) -> NodeResult<ExtendedPrivKey> {
@@ -533,7 +533,7 @@ impl MockNodeAPI {
     ) -> NodeResult<Payment> {
         let inv = bolt11
             .parse::<crate::lightning_invoice::Bolt11Invoice>()
-            .map_err(|e| NodeError::Generic(anyhow::Error::new(e)))?;
+            .map_err(|e| NodeError::Generic(e.to_string()))?;
 
         self.add_dummy_payment(inv, preimage, status).await
     }
@@ -729,8 +729,7 @@ pub(crate) fn rand_invoice_with_description_hash_and_preimage(
         .description_hash(expected_desc_hash)
         .amount_milli_satoshis(50 * 1000)
         .payment_hash(
-            Hash::from_slice(payment_hash)
-                .map_err(|e| InvoiceError::Generic(anyhow::Error::new(e)))?,
+            Hash::from_slice(payment_hash).map_err(|e| InvoiceError::Generic(e.to_string()))?,
         )
         .payment_secret(payment_secret)
         .current_timestamp()

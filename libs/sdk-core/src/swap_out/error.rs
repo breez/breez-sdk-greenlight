@@ -1,5 +1,3 @@
-use anyhow::anyhow;
-
 use crate::{
     bitcoin::{hashes, secp256k1},
     error::SdkError,
@@ -11,95 +9,110 @@ pub type ReverseSwapResult<T, E = ReverseSwapError> = Result<T, E>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ReverseSwapError {
-    #[error("Generic: {0}")]
-    Generic(#[from] anyhow::Error),
+    #[error("{0}")]
+    Generic(String),
 
     #[error("Claim tx feerate is too low")]
     ClaimFeerateTooLow,
 
-    #[error("Invalid destination address: {0}")]
-    InvalidDestinationAddress(anyhow::Error),
+    #[error("{0}")]
+    InvalidDestinationAddress(String),
 
     #[error(transparent)]
     Node(#[from] NodeError),
 
-    #[error("Service connectivity: {0}")]
-    ServiceConnectivity(anyhow::Error),
+    #[error("{0}")]
+    RouteNotFound(String),
 
-    #[error("Unexpected invoice amount: {0}")]
-    UnexpectedInvoiceAmount(anyhow::Error),
+    #[error("{0}")]
+    ServiceConnectivity(String),
+
+    #[error("{0}")]
+    UnexpectedInvoiceAmount(String),
 
     #[error("Unexpected lockup address")]
     UnexpectedLockupAddress,
 
-    #[error("Unexpected payment hash: {0}")]
-    UnexpectedPaymentHash(anyhow::Error),
+    #[error("{0}")]
+    UnexpectedPaymentHash(String),
 
     #[error("Unexpected redeem script")]
     UnexpectedRedeemScript,
-
-    #[error("Route not found: {0}")]
-    RouteNotFound(anyhow::Error),
 }
+
 impl ReverseSwapError {
     pub(crate) fn generic(err: &str) -> Self {
-        Self::Generic(anyhow!(err.to_string()))
+        Self::Generic(err.to_string())
+    }
+
+    pub(crate) fn unexpected_invoice_amount(err: &str) -> Self {
+        Self::UnexpectedInvoiceAmount(err.to_string())
+    }
+
+    pub(crate) fn unexpected_payment_hash(err: &str) -> Self {
+        Self::UnexpectedPaymentHash(err.to_string())
+    }
+}
+
+impl From<anyhow::Error> for ReverseSwapError {
+    fn from(err: anyhow::Error) -> Self {
+        Self::Generic(err.to_string())
     }
 }
 
 impl From<hashes::hex::Error> for ReverseSwapError {
     fn from(err: hashes::hex::Error) -> Self {
-        Self::Generic(anyhow::Error::new(err))
+        Self::Generic(err.to_string())
     }
 }
 
 impl From<hex::FromHexError> for ReverseSwapError {
     fn from(err: hex::FromHexError) -> Self {
-        Self::Generic(anyhow::Error::new(err))
+        Self::Generic(err.to_string())
     }
 }
 
 impl From<crate::lightning_invoice::ParseOrSemanticError> for ReverseSwapError {
     fn from(err: crate::lightning_invoice::ParseOrSemanticError) -> Self {
-        Self::Generic(anyhow::Error::new(err))
+        Self::Generic(err.to_string())
     }
 }
 
 impl From<PersistError> for ReverseSwapError {
     fn from(err: PersistError) -> Self {
-        Self::Generic(anyhow::Error::new(err))
+        Self::Generic(err.to_string())
     }
 }
 
 impl From<reqwest::Error> for ReverseSwapError {
     fn from(err: reqwest::Error) -> Self {
-        Self::Generic(anyhow::Error::new(err))
+        Self::Generic(err.to_string())
     }
 }
 
 impl From<SdkError> for ReverseSwapError {
     fn from(value: SdkError) -> Self {
         match value {
-            SdkError::Generic { err } => Self::Generic(anyhow!(err)),
-            SdkError::ServiceConnectivity { err } => Self::ServiceConnectivity(anyhow!(err)),
+            SdkError::Generic { err } => Self::Generic(err),
+            SdkError::ServiceConnectivity { err } => Self::ServiceConnectivity(err),
         }
     }
 }
 
 impl From<secp256k1::Error> for ReverseSwapError {
     fn from(err: secp256k1::Error) -> Self {
-        Self::Generic(anyhow::Error::new(err))
+        Self::Generic(err.to_string())
     }
 }
 
 impl From<serde_json::Error> for ReverseSwapError {
     fn from(err: serde_json::Error) -> Self {
-        Self::ServiceConnectivity(anyhow::Error::new(err))
+        Self::ServiceConnectivity(err.to_string())
     }
 }
 
 impl From<tonic::Status> for ReverseSwapError {
     fn from(err: tonic::Status) -> Self {
-        Self::Generic(anyhow::Error::new(err))
+        Self::Generic(err.to_string())
     }
 }

@@ -3,7 +3,6 @@ use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 use crate::lnurl::pay::model::{CallbackResponse, SuccessAction, ValidatedCallbackResponse};
 use crate::{ensure_sdk, input_parser::*};
 use crate::{LnUrlErrorData, Network};
-use anyhow::anyhow;
 use std::str::FromStr;
 
 use super::error::{LnUrlError, LnUrlResult};
@@ -32,7 +31,7 @@ pub(crate) async fn validate_lnurl_pay(
     let callback_url = build_pay_callback_url(user_amount_msat, &comment, &req_data)?;
     let callback_resp_text = get_and_log_response(&callback_url)
         .await
-        .map_err(LnUrlError::ServiceConnectivity)?;
+        .map_err(|e| LnUrlError::ServiceConnectivity(e.to_string()))?;
 
     if let Ok(err) = serde_json::from_str::<LnUrlErrorData>(&callback_resp_text) {
         Ok(ValidatedCallbackResponse::EndpointError { data: err })
@@ -60,7 +59,7 @@ fn build_pay_callback_url(
 ) -> LnUrlResult<String> {
     let amount_msat = user_amount_msat.to_string();
     let mut url = reqwest::Url::from_str(&data.callback)
-        .map_err(|e| LnUrlError::InvalidUri(anyhow::Error::new(e)))?;
+        .map_err(|e| LnUrlError::InvalidUri(e.to_string()))?;
 
     url.query_pairs_mut().append_pair("amount", &amount_msat);
     if let Some(comment) = user_comment {
@@ -81,21 +80,21 @@ fn validate_user_input(
 ) -> LnUrlResult<()> {
     ensure_sdk!(
         user_amount_msat >= condition_min_amount_msat,
-        LnUrlError::Generic(anyhow!("Amount is smaller than the minimum allowed"))
+        LnUrlError::generic("Amount is smaller than the minimum allowed")
     );
 
     ensure_sdk!(
         user_amount_msat <= condition_max_amount_msat,
-        LnUrlError::Generic(anyhow!("Amount is bigger than the maximum allowed"))
+        LnUrlError::generic("Amount is bigger than the maximum allowed")
     );
 
     match comment {
         None => Ok(()),
         Some(msg) => match msg.len() <= condition_max_comment_len as usize {
             true => Ok(()),
-            false => Err(LnUrlError::Generic(anyhow!(
-                "Comment is longer than the maximum allowed comment length"
-            ))),
+            false => Err(LnUrlError::generic(
+                "Comment is longer than the maximum allowed comment length",
+            )),
         },
     }
 }
@@ -106,14 +105,14 @@ fn validate_invoice(user_amount_msat: u64, bolt11: &str, network: Network) -> Ln
     validate_network(invoice.clone(), network)?;
 
     match invoice.amount_msat {
-        None => Err(LnUrlError::Generic(anyhow!(
-            "Amount is bigger than the maximum allowed"
-        ))),
+        None => Err(LnUrlError::generic(
+            "Amount is bigger than the maximum allowed",
+        )),
         Some(invoice_amount_msat) => match invoice_amount_msat == user_amount_msat {
             true => Ok(()),
-            false => Err(LnUrlError::Generic(anyhow!(
-                "Invoice amount is different than the user chosen amount"
-            ))),
+            false => Err(LnUrlError::generic(
+                "Invoice amount is different than the user chosen amount",
+            )),
         },
     }
 }
@@ -124,7 +123,7 @@ pub(crate) mod model {
     use crate::{ensure_sdk, input_parser::*, Payment};
 
     use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
-    use anyhow::{anyhow, Result};
+    use anyhow::Result;
     use serde::{Deserialize, Serialize};
 
     pub(crate) enum ValidatedCallbackResponse {
@@ -253,23 +252,23 @@ pub(crate) mod model {
         pub fn validate(&self) -> LnUrlResult<()> {
             ensure_sdk!(
                 self.description.len() <= 144,
-                LnUrlError::Generic(anyhow!(
+                LnUrlError::generic(
                     "AES action description length is larger than the maximum allowed"
-                ))
+                )
             );
 
             ensure_sdk!(
                 self.ciphertext.len() <= 4096,
-                LnUrlError::Generic(anyhow!(
+                LnUrlError::generic(
                     "AES action ciphertext length is larger than the maximum allowed"
-                ))
+                )
             );
 
             base64::decode(&self.ciphertext)?;
 
             ensure_sdk!(
                 self.iv.len() == 24,
-                LnUrlError::Generic(anyhow!("AES action iv has unexpected length"))
+                LnUrlError::generic("AES action iv has unexpected length")
             );
 
             base64::decode(&self.iv)?;
@@ -315,9 +314,9 @@ pub(crate) mod model {
         pub fn validate(&self) -> LnUrlResult<()> {
             match self.message.len() <= 144 {
                 true => Ok(()),
-                false => Err(LnUrlError::Generic(anyhow!(
-                    "Success action message is longer than the maximum allowed length"
-                ))),
+                false => Err(LnUrlError::generic(
+                    "Success action message is longer than the maximum allowed length",
+                )),
             }
         }
     }
@@ -326,28 +325,28 @@ pub(crate) mod model {
         pub fn validate(&self, data: &LnUrlPayRequestData) -> LnUrlResult<()> {
             match self.description.len() <= 144 {
                 true => Ok(()),
-                false => Err(LnUrlError::Generic(anyhow!(
-                    "Success action description is longer than the maximum allowed length"
-                ))),
+                false => Err(LnUrlError::generic(
+                    "Success action description is longer than the maximum allowed length",
+                )),
             }
             .and_then(|_| {
                 let req_url = reqwest::Url::parse(&data.callback)
-                    .map_err(|e| LnUrlError::InvalidUri(anyhow::Error::new(e)))?;
+                    .map_err(|e| LnUrlError::InvalidUri(e.to_string()))?;
                 let req_domain = req_url.domain().ok_or_else(|| {
-                    LnUrlError::InvalidUri(anyhow!("Could not determine callback domain"))
+                    LnUrlError::invalid_uri("Could not determine callback domain")
                 })?;
 
                 let action_res_url = reqwest::Url::parse(&self.url)
-                    .map_err(|e| LnUrlError::InvalidUri(anyhow::Error::new(e)))?;
+                    .map_err(|e| LnUrlError::InvalidUri(e.to_string()))?;
                 let action_res_domain = action_res_url.domain().ok_or_else(|| {
-                    LnUrlError::InvalidUri(anyhow!("Could not determine Success Action URL domain"))
+                    LnUrlError::invalid_uri("Could not determine Success Action URL domain")
                 })?;
 
                 match req_domain == action_res_domain {
                     true => Ok(()),
-                    false => Err(LnUrlError::Generic(anyhow!(
-                        "Success Action URL has different domain than the callback domain"
-                    ))),
+                    false => Err(LnUrlError::generic(
+                        "Success Action URL has different domain than the callback domain",
+                    )),
                 }
             })
         }
