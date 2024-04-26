@@ -205,7 +205,7 @@ jobs:
           yarn global add tslint typescript
           brew update
           brew install kotlin ktlint swiftformat
-          make react-native-codegen
+          make react-native
 
       - name: Check git status
         env: 

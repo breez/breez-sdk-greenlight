@@ -16,4 +16,4 @@ flutter-codegen:
 	make -C ./libs/sdk-flutter flutter_rust_bridge
 
 react-native-codegen:
-	make -C ./libs/sdk-react-native react-native-codegen
+	make -C ./libs/sdk-react-native react-native
