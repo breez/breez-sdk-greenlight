@@ -341,6 +341,7 @@ export type PaymentFailedData = {
     error: string
     nodeId: string
     invoice?: LnInvoice
+    label?: string
 }
 
 export type PrepareOnchainPaymentRequest = {

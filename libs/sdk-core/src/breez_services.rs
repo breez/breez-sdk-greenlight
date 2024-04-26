@@ -127,6 +127,7 @@ pub struct PaymentFailedData {
     pub error: String,
     pub node_id: String,
     pub invoice: Option<LNInvoice>,
+    pub label: Option<String>,
 }
 
 /// Details of an invoice that has been paid, included as payload in an emitted [BreezEvent]
@@ -316,13 +317,18 @@ impl BreezServices {
                 self.persist_pending_payment(&parsed_invoice, amount_msat, req.label.clone())?;
                 let payment_res = self
                     .node_api
-                    .send_payment(parsed_invoice.bolt11.clone(), req.amount_msat, req.label)
+                    .send_payment(
+                        parsed_invoice.bolt11.clone(),
+                        req.amount_msat,
+                        req.label.clone(),
+                    )
                     .map_err(Into::into)
                     .await;
                 let payment = self
                     .on_payment_completed(
                         parsed_invoice.payee_pubkey.clone(),
                         Some(parsed_invoice),
+                        req.label,
                         payment_res,
                     )
                     .await?;
@@ -343,12 +349,12 @@ impl BreezServices {
                 req.node_id.clone(),
                 req.amount_msat,
                 req.extra_tlvs,
-                req.label,
+                req.label.clone(),
             )
             .map_err(Into::into)
             .await;
         let payment = self
-            .on_payment_completed(req.node_id, None, payment_res)
+            .on_payment_completed(req.node_id, None, req.label, payment_res)
             .await?;
         Ok(SendPaymentResponse { payment })
     }
@@ -1219,6 +1225,7 @@ impl BreezServices {
         &self,
         node_id: String,
         invoice: Option<LNInvoice>,
+        label: Option<String>,
         payment_res: Result<Payment, SendPaymentError>,
     ) -> Result<Payment, SendPaymentError> {
         self.do_sync(payment_res.is_ok()).await?;
@@ -1242,6 +1249,7 @@ impl BreezServices {
                         error: e.to_string(),
                         node_id,
                         invoice,
+                        label,
                     },
                 })
                 .await?;

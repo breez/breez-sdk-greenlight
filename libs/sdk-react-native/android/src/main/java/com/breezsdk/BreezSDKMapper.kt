@@ -2168,10 +2168,12 @@ fun asPaymentFailedData(paymentFailedData: ReadableMap): PaymentFailedData? {
     val error = paymentFailedData.getString("error")!!
     val nodeId = paymentFailedData.getString("nodeId")!!
     val invoice = if (hasNonNullKey(paymentFailedData, "invoice")) paymentFailedData.getMap("invoice")?.let { asLnInvoice(it) } else null
+    val label = if (hasNonNullKey(paymentFailedData, "label")) paymentFailedData.getString("label") else null
     return PaymentFailedData(
         error,
         nodeId,
         invoice,
+        label,
     )
 }
 
@@ -2180,6 +2182,7 @@ fun readableMapOf(paymentFailedData: PaymentFailedData): ReadableMap {
         "error" to paymentFailedData.error,
         "nodeId" to paymentFailedData.nodeId,
         "invoice" to paymentFailedData.invoice?.let { readableMapOf(it) },
+        "label" to paymentFailedData.label,
     )
 }
 

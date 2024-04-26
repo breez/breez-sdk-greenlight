@@ -389,6 +389,7 @@ dictionary PaymentFailedData {
     string error;
     string node_id;
     LNInvoice? invoice;
+    string? label;
 };
 
 dictionary BackupFailedData {
