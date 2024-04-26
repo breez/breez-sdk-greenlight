@@ -48,7 +48,9 @@ use crate::invoice::{parse_invoice, validate_network, InvoiceError, RouteHintHop
 use crate::lightning::util::message_signing::verify;
 use crate::lightning_invoice::{RawBolt11Invoice, SignedRawBolt11Invoice};
 use crate::models::*;
-use crate::node_api::{CreateInvoiceRequest, FetchBolt11Result, NodeAPI, NodeError, NodeResult};
+use crate::node_api::{
+    CreateInvoiceRequest, FetchBolt11Result, GraphChannel, NodeAPI, NodeError, NodeResult,
+};
 use crate::persist::db::SqliteStorage;
 use crate::{
     NodeConfig, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, RouteHint,
@@ -1512,6 +1514,40 @@ impl NodeAPI for Greenlight {
                     .into_inner();
                 Ok(format!("{resp:?}"))
             }
+            NodeCommand::ListChannels {
+                source,
+                destination,
+                short_channel_id,
+            } => {
+                let resp = self
+                    .get_node_client()
+                    .await?
+                    .list_channels(cln::ListchannelsRequest {
+                        source: source.and_then(|d| hex::decode(d).ok()),
+                        destination: destination.and_then(|d| hex::decode(d).ok()),
+                        short_channel_id,
+                    })
+                    .await?
+                    .into_inner()
+                    .channels
+                    .iter()
+                    .map(|c| GraphChannel {
+                        active: c.active,
+                        public: c.public,
+                        base_fee_msat: c.base_fee_millisatoshi,
+                        capacity_sat: c.amount_msat.clone().map(|a| a.msat / 1000),
+                        cltv_delta: c.delay,
+                        fee_per_millionth: c.fee_per_millionth as u64,
+                        htlc_max_msat: c.htlc_maximum_msat.clone().map(|m| m.msat),
+                        destination: hex::encode(c.destination.clone()),
+                        short_channel_id: c.short_channel_id.clone(),
+                        source: hex::encode(c.source.clone()),
+                        htlc_min_msat: c.htlc_minimum_msat.clone().map(|m| m.msat),
+                        last_update: c.last_update,
+                    })
+                    .collect::<Vec<GraphChannel>>();
+                Ok(format!("{resp:?}"))
+            }
         }
     }
 
@@ -1709,6 +1745,18 @@ enum NodeCommand {
     #[command(name = "listpeerchannels")]
     #[strum(serialize = "listpeerchannels")]
     ListPeerChannels,
+
+    /// See <https://docs.corelightning.org/reference/lightning-listchannels>
+    #[command(name = "listchannels")]
+    #[strum(serialize = "listchannels")]
+    ListChannels {
+        #[arg(long)]
+        source: Option<String>,
+        #[arg(long)]
+        destination: Option<String>,
+        #[arg(long)]
+        short_channel_id: Option<String>,
+    },
 
     /// Stops the node.
     ///
