@@ -324,55 +324,35 @@ impl BreezServices {
                 })
                 .await?;
 
-                match req.pending_timeout_sec {
+                let payment_res = self
+                    .node_api
+                    .send_payment(parsed_invoice.bolt11.clone(), req.amount_msat, req.label)
+                    .map_err(Into::into)
+                    .await;
+
+                let payee_pk = parsed_invoice.payee_pubkey.clone();
+                match &req.pending_timeout_sec {
                     Some(secs) => {
                         let (tx, rx) = std::sync::mpsc::channel();
                         let cloned = self.clone();
                         tokio::spawn(async move {
-                            let payment_res = cloned
-                                .node_api
-                                .send_payment(
-                                    parsed_invoice.bolt11.clone(),
-                                    req.amount_msat,
-                                    req.label.clone(),
-                                )
-                                .await;
                             let result = cloned
-                                .on_payment_completed(
-                                    parsed_invoice.payee_pubkey.clone(),
-                                    Some(parsed_invoice),
-                                    payment_res.map_err(Into::into),
-                                )
+                                .on_payment_completed(payee_pk, Some(parsed_invoice), payment_res)
                                 .await;
                             let _ = tx.send(result);
                         });
 
-                        match rx.recv_timeout(Duration::from_secs(secs)) {
+                        match rx.recv_timeout(Duration::from_secs(*secs)) {
                             Ok(result) => result.map(|payment| SendPaymentResponse { payment }),
                             Err(_) => Ok(SendPaymentResponse {
                                 payment: pending_payment,
                             }),
                         }
                     }
-                    None => {
-                        let payment_res = self
-                            .node_api
-                            .send_payment(
-                                parsed_invoice.bolt11.clone(),
-                                req.amount_msat,
-                                req.label.clone(),
-                            )
-                            .map_err(Into::into)
-                            .await;
-                        let payment = self
-                            .on_payment_completed(
-                                parsed_invoice.payee_pubkey.clone(),
-                                Some(parsed_invoice),
-                                payment_res,
-                            )
-                            .await?;
-                        Ok(SendPaymentResponse { payment })
-                    }
+                    None => self
+                        .on_payment_completed(payee_pk, Some(parsed_invoice), payment_res)
+                        .await
+                        .map(|payment| SendPaymentResponse { payment }),
                 }
             }
         }
