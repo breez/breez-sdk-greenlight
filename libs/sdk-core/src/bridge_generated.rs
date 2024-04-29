@@ -1870,6 +1870,7 @@ impl support::IntoDart for PaymentFailedData {
             self.error.into_into_dart().into_dart(),
             self.node_id.into_into_dart().into_dart(),
             self.invoice.into_dart(),
+            self.label.into_dart(),
         ]
         .into_dart()
     }

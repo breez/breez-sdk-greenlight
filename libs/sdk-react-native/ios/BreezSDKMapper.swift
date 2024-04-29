@@ -2413,10 +2413,19 @@ enum BreezSDKMapper {
             invoice = try asLnInvoice(lnInvoice: invoiceTmp)
         }
 
+        var label: String?
+        if hasNonNilKey(data: paymentFailedData, key: "label") {
+            guard let labelTmp = paymentFailedData["label"] as? String else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "label"))
+            }
+            label = labelTmp
+        }
+
         return PaymentFailedData(
             error: error,
             nodeId: nodeId,
-            invoice: invoice
+            invoice: invoice,
+            label: label
         )
     }
 
@@ -2425,6 +2434,7 @@ enum BreezSDKMapper {
             "error": paymentFailedData.error,
             "nodeId": paymentFailedData.nodeId,
             "invoice": paymentFailedData.invoice == nil ? nil : dictionaryOf(lnInvoice: paymentFailedData.invoice!),
+            "label": paymentFailedData.label == nil ? nil : paymentFailedData.label,
         ]
     }
 

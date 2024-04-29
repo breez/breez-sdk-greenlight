@@ -1355,11 +1355,13 @@ class PaymentFailedData {
   final String error;
   final String nodeId;
   final LNInvoice? invoice;
+  final String? label;
 
   const PaymentFailedData({
     required this.error,
     required this.nodeId,
     this.invoice,
+    this.label,
   });
 }
 
@@ -3958,11 +3960,12 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   PaymentFailedData _wire2api_payment_failed_data(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 3) throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    if (arr.length != 4) throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
     return PaymentFailedData(
       error: _wire2api_String(arr[0]),
       nodeId: _wire2api_String(arr[1]),
       invoice: _wire2api_opt_box_autoadd_ln_invoice(arr[2]),
+      label: _wire2api_opt_String(arr[3]),
     );
   }
 
