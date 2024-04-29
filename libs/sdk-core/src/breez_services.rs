@@ -120,6 +120,11 @@ pub enum BreezEvent {
         details: SwapInfo,
     },
 }
+impl BreezEvent {
+    pub(crate) fn payment_started(payment: Payment) -> Self {
+        Self::PaymentStarted { details: payment }
+    }
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct BackupFailedData {
@@ -319,10 +324,8 @@ impl BreezServices {
             None => {
                 let pending_payment =
                     self.persist_pending_payment(&parsed_invoice, amount_msat, req.label.clone())?;
-                self.notify_event_listeners(BreezEvent::PaymentStarted {
-                    details: pending_payment.clone(),
-                })
-                .await?;
+                self.notify_event_listeners(BreezEvent::payment_started(pending_payment.clone()))
+                    .await?;
 
                 let payment_res = self
                     .node_api
@@ -343,16 +346,14 @@ impl BreezServices {
                         });
 
                         match rx.recv_timeout(Duration::from_secs(*secs)) {
-                            Ok(result) => result.map(|payment| SendPaymentResponse { payment }),
-                            Err(_) => Ok(SendPaymentResponse {
-                                payment: pending_payment,
-                            }),
+                            Ok(result) => result.map(SendPaymentResponse::from_payment),
+                            Err(_) => Ok(SendPaymentResponse::from_payment(pending_payment)),
                         }
                     }
                     None => self
                         .on_payment_completed(payee_pk, Some(parsed_invoice), payment_res)
                         .await
-                        .map(|payment| SendPaymentResponse { payment }),
+                        .map(SendPaymentResponse::from_payment),
                 }
             }
         }

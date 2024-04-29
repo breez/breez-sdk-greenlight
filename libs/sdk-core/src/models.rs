@@ -912,6 +912,11 @@ pub struct SendSpontaneousPaymentRequest {
 pub struct SendPaymentResponse {
     pub payment: Payment,
 }
+impl SendPaymentResponse {
+    pub(crate) fn from_payment(payment: Payment) -> Self {
+        Self { payment }
+    }
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReportPaymentFailureDetails {
