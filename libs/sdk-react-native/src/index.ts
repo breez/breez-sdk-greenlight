@@ -491,6 +491,7 @@ export type SendPaymentRequest = {
     bolt11: string
     amountMsat?: number
     label?: string
+    pendingTimeoutSec?: number
 }
 
 export type SendPaymentResponse = {
@@ -593,6 +594,7 @@ export enum BreezEventVariant {
     NEW_BLOCK = "newBlock",
     INVOICE_PAID = "invoicePaid",
     SYNCED = "synced",
+    PAYMENT_STARTED = "paymentStarted",
     PAYMENT_SUCCEED = "paymentSucceed",
     PAYMENT_FAILED = "paymentFailed",
     BACKUP_STARTED = "backupStarted",
@@ -609,6 +611,9 @@ export type BreezEvent = {
     details: InvoicePaidDetails
 } | {
     type: BreezEventVariant.SYNCED
+} | {
+    type: BreezEventVariant.PAYMENT_STARTED,
+    details: Payment
 } | {
     type: BreezEventVariant.PAYMENT_SUCCEED,
     details: Payment

@@ -3546,11 +3546,19 @@ enum BreezSDKMapper {
             }
             label = labelTmp
         }
+        var pendingTimeoutSec: UInt64?
+        if hasNonNilKey(data: sendPaymentRequest, key: "pendingTimeoutSec") {
+            guard let pendingTimeoutSecTmp = sendPaymentRequest["pendingTimeoutSec"] as? UInt64 else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "pendingTimeoutSec"))
+            }
+            pendingTimeoutSec = pendingTimeoutSecTmp
+        }
 
         return SendPaymentRequest(
             bolt11: bolt11,
             amountMsat: amountMsat,
-            label: label
+            label: label,
+            pendingTimeoutSec: pendingTimeoutSec
         )
     }
 
@@ -3559,6 +3567,7 @@ enum BreezSDKMapper {
             "bolt11": sendPaymentRequest.bolt11,
             "amountMsat": sendPaymentRequest.amountMsat == nil ? nil : sendPaymentRequest.amountMsat,
             "label": sendPaymentRequest.label == nil ? nil : sendPaymentRequest.label,
+            "pendingTimeoutSec": sendPaymentRequest.pendingTimeoutSec == nil ? nil : sendPaymentRequest.pendingTimeoutSec,
         ]
     }
 
@@ -4264,6 +4273,14 @@ enum BreezSDKMapper {
         if type == "synced" {
             return BreezEvent.synced
         }
+        if type == "paymentStarted" {
+            guard let detailsTmp = breezEvent["details"] as? [String: Any?] else {
+                throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "details", typeName: "BreezEvent"))
+            }
+            let _details = try asPayment(payment: detailsTmp)
+
+            return BreezEvent.paymentStarted(details: _details)
+        }
         if type == "paymentSucceed" {
             guard let detailsTmp = breezEvent["details"] as? [String: Any?] else {
                 throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "details", typeName: "BreezEvent"))
@@ -4327,6 +4344,14 @@ enum BreezSDKMapper {
         case .synced:
             return [
                 "type": "synced",
+            ]
+
+        case let .paymentStarted(
+            details
+        ):
+            return [
+                "type": "paymentStarted",
+                "details": dictionaryOf(payment: details),
             ]
 
         case let .paymentSucceed(

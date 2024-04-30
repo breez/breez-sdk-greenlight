@@ -1072,6 +1072,7 @@ impl Wire2Api<SendPaymentRequest> for wire_SendPaymentRequest {
             bolt11: self.bolt11.wire2api(),
             amount_msat: self.amount_msat.wire2api(),
             label: self.label.wire2api(),
+            pending_timeout_sec: self.pending_timeout_sec.wire2api(),
         }
     }
 }
@@ -1390,6 +1391,7 @@ pub struct wire_SendPaymentRequest {
     bolt11: *mut wire_uint_8_list,
     amount_msat: *mut u64,
     label: *mut wire_uint_8_list,
+    pending_timeout_sec: *mut u64,
 }
 
 #[repr(C)]
@@ -1997,6 +1999,7 @@ impl NewWithNullPtr for wire_SendPaymentRequest {
             bolt11: core::ptr::null_mut(),
             amount_msat: core::ptr::null_mut(),
             label: core::ptr::null_mut(),
+            pending_timeout_sec: core::ptr::null_mut(),
         }
     }
 }
