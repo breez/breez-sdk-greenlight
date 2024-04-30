@@ -24,6 +24,7 @@ struct Constants {
     static let PAYMENT_RECEIVED_NOTIFICATION_TITLE = "payment_received_notification_title"
     static let PAYMENT_RECEIVED_NOTIFICATION_FAILURE_TITLE = "payment_received_notification_failure_title"
     static let SWAP_TX_CONFIRMED_NOTIFICATION_TITLE = "swap_tx_confirmed_notification_title"
+    static let SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TEXT = "swap_tx_confirmed_notification_failure_text"
     static let SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TITLE = "swap_tx_confirmed_notification_failure_title"
     
     // Resource Identifier Defaults
@@ -35,5 +36,6 @@ struct Constants {
     static let DEFAULT_PAYMENT_RECEIVED_NOTIFICATION_TITLE = "Received %d sats"
     static let DEFAULT_PAYMENT_RECEIVED_NOTIFICATION_FAILURE_TITLE = "Receive Payment Failed"
     static let DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_TITLE = "Swap Confirmed"
-    static let DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TITLE = "Redeem Swap Failed"
+    static let DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TEXT = "Tap to complete swap"
+    static let DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TITLE = "Swap Ongoing"
 }
