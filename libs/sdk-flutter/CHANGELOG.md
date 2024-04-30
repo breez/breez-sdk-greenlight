@@ -1,10 +1,46 @@
 SDK release notes can be found at [breez-sdk/releases](https://github.com/breez/breez-sdk/releases/)
+## 0.4.0
+* **Breaking** Update Dart SDK range to be compatible with Flutter 3.19
+* **Breaking** Replace parameters of `connect` with `ConnectRequest`.
+* **Breaking** `serviceHealthCheck` API now requires an `apiKey` which properly conducts a health check when services are offline.
+* **Deprecation** `sendOnchain` is now deprecated. Use `payOnchain` instead.
+* **Deprecation** `inProgressReverseSwaps` is now deprecated. Use `inProgressOnchainPayments` instead.
+* **Deprecation** `fetchReverseSwapFees` is now deprecated. Use `prepareOnchainPayment` instead.
+* Introduce `swapEventsStream` to listen in on swap events.
+* Introduce `rescanSwaps` API to iterate all historical swap addresses and fetch their current status from the blockchain.
+* Introduce `configureNode` API to configure an optional address to send funds to during a mutual channel close.
+* Introduce `onchainPaymentLimits` API to fetch latest on-chain payment limits.
+* Notification Service plugins are now bundled with the Flutter package. [Setup guide](https://sdk-doc-prerelease.breez.technology/notifications/setup_plugin.html).
+* Various improvements to Notification Service plugins:  
+  - Set log stream natively on Android.  
+  - Allow setting channel setup fee limit through `ServiceConfig` that will be used to accept or decline LNURL-Payments that require a channel opening.  
+  - Notifications on iOS are now grouped.  
+  - Improved resource management.  
+  - Notification Service is no longer attempted to start without permissions to show notifications on Android, which lead to an application crash.
+
+## 0.3.9
+* Introduce `generateDiagnosticData` API to generate diagnostic data.
+* Fix swap confirmed block to be the earliest.
+
+## 0.3.8
+* Signer connects immediately on startup (fixes 30 seconds delay).
+* Adapt signer policy to allow paying zero amount invoice.
+* Update signer keep alive.
+
+## 0.3.6
+* Fix swap `INVOICE_AMOUNT_MISMATCH`.
+* Defer signer start to increase overall startup time.
+* Improve performance by reusing Breez server grpc connection.
+
+## 0.3.3
+* Upgrade to VLS 0.11.
+
 ## 0.3.2
-* Fixed a signer crash
+* Fixed a signer crash.
 
 ## 0.3.1
 * Support notifications via a webhook after a swap transaction confirms.
-* Reduced package size by not bundling pre-built binaries
+* Reduced package size by not bundling pre-built binaries.
 
 ## 0.3.0
 * Fixes compatibility issues ith `bdk-flutter` plugin.
@@ -13,9 +49,9 @@ SDK release notes can be found at [breez-sdk/releases](https://github.com/breez/
 * Introduce `setPaymentMetadata` API to set the external metadata of a payment as a valid JSON string.
 * Add optional `chainnotifierUrl` to `Config`.
 * Include `openChannelBolt11`, `lnurlPayDomain`, `reverseSwapInfo` in `LnPaymentDetails`.  
-  `openChannelBolt11` for received payments which required to open a channel.  
-  `lnurlPayDomain` for sent payments that are not to a Lightning Address.  
-  `reverseSwapInfo` for payments that were sent in the context of a reverse swap.
+  - `openChannelBolt11` for received payments which required to open a channel.  
+  - `lnurlPayDomain` for sent payments that are not to a Lightning Address.  
+  - `reverseSwapInfo` for payments that were sent in the context of a reverse swap.
 
 ## 0.2.15
 * This is a hotfix release that fixes a critical issue from previous release.
@@ -58,7 +94,7 @@ SDK release notes can be found at [breez-sdk/releases](https://github.com/breez/
 ## 0.2.7
 * **Breaking** All APIs which previously allowed multiple parameters to be
   passed now require their corresponding `Request` object.  
-  These API's include: `sendOnchain`, `sendPayment`, `sendSpontaneousPayment`, `refund`, `lnurlPay`, `lnurlWithdraw`.
+  These APIs include: `sendOnchain`, `sendPayment`, `sendSpontaneousPayment`, `refund`, `lnurlPay`, `lnurlWithdraw`.
 * **Breaking** All `request` params is renamed to `req`.
 * **Breaking** All `reqData` params that belong to a `req` object(_lnurlPay, lnurlWithdraw except lnurlAuth_) is renamed to `data`.
 * **Breaking** Use millisatoshi instead of satoshi for lightning amounts.  
