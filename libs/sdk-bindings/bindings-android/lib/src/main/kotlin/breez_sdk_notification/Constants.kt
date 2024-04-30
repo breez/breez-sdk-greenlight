@@ -69,8 +69,10 @@ object Constants {
         "swap_tx_confirmed_notification_channel_description"
     const val SWAP_TX_CONFIRMED_NOTIFICATION_CHANNEL_NAME =
         "swap_tx_confirmed_notification_channel_name"
-    const val SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TITLE =
+    const val SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TEXT =
         "swap_tx_confirmed_notification_failure_text"
+    const val SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TITLE =
+        "swap_tx_confirmed_notification_failure_title"
     const val SWAP_TX_CONFIRMED_NOTIFICATION_TITLE =
         "swap_tx_confirmed_notification_title"
     const val SWAP_TX_CONFIRMED_WORKGROUP_ID = "swap_tx"
@@ -116,8 +118,10 @@ object Constants {
         "Notifications for received swaps when the application is in the background"
     const val DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_CHANNEL_NAME =
         "Received Swaps"
+    const val DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TEXT =
+        "Tap to complete swap"
     const val DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TITLE =
-        "Redeem Swap Failed"
+        "Swap Ongoing"
     const val DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_TITLE =
         "Swap Confirmed"
     const val DEFAULT_SWAP_TX_CONFIRMED_WORKGROUP_DESCRIPTION =
