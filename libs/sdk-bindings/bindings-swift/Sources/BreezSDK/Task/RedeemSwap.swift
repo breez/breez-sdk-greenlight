@@ -29,8 +29,8 @@ class RedeemSwapTask : TaskProtocol {
                 if address == swapInfo.bitcoinAddress {
                     if (swapInfo.paidMsat > 0) {
                         self.logger.log(tag: TAG, line: "Swap address \(swapInfo.bitcoinAddress) redeemed succesfully", level: "INFO")
-                        let successRedeemSwap = ResourceHelper.shared.getString(key: Constants.SWAP_TX_CONFIRMED_NOTIFICATION_TITLE, fallback: Constants.DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_TITLE)
-                        self.displayPushNotification(title: successRedeemSwap, logger: self.logger, threadIdentifier: Constants.NOTIFICATION_THREAD_SWAP_TX_CONFIRMED)
+                        let notificationTitle = ResourceHelper.shared.getString(key: Constants.SWAP_TX_CONFIRMED_NOTIFICATION_TITLE, fallback: Constants.DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_TITLE)
+                        self.displayPushNotification(title: notificationTitle, logger: self.logger, threadIdentifier: Constants.NOTIFICATION_THREAD_SWAP_TX_CONFIRMED)
                     }
                 }
                 break
@@ -65,7 +65,8 @@ class RedeemSwapTask : TaskProtocol {
     }
 
     func onShutdown() {
-        let failRedeemSwap = ResourceHelper.shared.getString(key: Constants.SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TITLE, fallback: Constants.DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TITLE)
-        self.displayPushNotification(title: failRedeemSwap, logger: self.logger, threadIdentifier: Constants.NOTIFICATION_THREAD_SWAP_TX_CONFIRMED)
+        let notificationTitle = ResourceHelper.shared.getString(key: Constants.SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TITLE, fallback: Constants.DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TITLE)
+        let notificationBody = ResourceHelper.shared.getString(key: Constants.SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TEXT, fallback: Constants.DEFAULT_SWAP_TX_CONFIRMED_NOTIFICATION_FAILURE_TEXT)
+        self.displayPushNotification(title: notificationTitle, body: notificationBody, logger: self.logger, threadIdentifier: Constants.NOTIFICATION_THREAD_SWAP_TX_CONFIRMED)
     }
 }
