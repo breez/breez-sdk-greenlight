@@ -327,26 +327,23 @@ impl BreezServices {
                 self.notify_event_listeners(BreezEvent::payment_started(pending_payment.clone()))
                     .await?;
 
-                let pending_timeout_sec = req.pending_timeout_sec.unwrap_or(u64::MAX);
-
-                let (tx, rx) = std::sync::mpsc::channel();
-                let cloned = self.clone();
-                tokio::spawn(async move {
-                    let payment_res = cloned
+                tokio::select! {
+                    payment_res = self
                         .node_api
                         .send_payment(parsed_invoice.bolt11.clone(), req.amount_msat, req.label)
-                        .map_err(Into::into)
-                        .await;
-                    let payee_pk = parsed_invoice.payee_pubkey.clone();
-                    let result = cloned
-                        .on_payment_completed(payee_pk, Some(parsed_invoice), payment_res)
-                        .await;
-                    let _ = tx.send(result);
-                });
-
-                match rx.recv_timeout(Duration::from_secs(pending_timeout_sec)) {
-                    Ok(result) => result.map(SendPaymentResponse::from_payment),
-                    Err(_) => Ok(SendPaymentResponse::from_payment(pending_payment)),
+                        .map_err(Into::into) =>
+                    {
+                        let payee_pk = parsed_invoice.payee_pubkey.clone();
+                        self
+                            .on_payment_completed(payee_pk, Some(parsed_invoice), payment_res)
+                            .await
+                            .map(SendPaymentResponse::from_payment)
+                    },
+                    _ = tokio::time::sleep(Duration::from_secs(req.pending_timeout_sec.unwrap_or(u64::MAX))),
+                            if req.pending_timeout_sec.is_some() =>
+                    {
+                        Ok(SendPaymentResponse::from_payment(pending_payment))
+                    }
                 }
             }
         }
