@@ -11,12 +11,12 @@ SDK release notes can be found at [breez-sdk/releases](https://github.com/breez/
 * Introduce `configureNode` API to configure an optional address to send funds to during a mutual channel close.
 * Introduce `onchainPaymentLimits` API to fetch latest on-chain payment limits.
 * Notification Service plugins are now bundled with the Flutter package. [Setup guide](https://sdk-doc-prerelease.breez.technology/notifications/setup_plugin.html).
-* Various improvements to Notification Service plugins:
-  Set log stream natively on Android.
-  Allow setting channel setup fee limit through `ServiceConfig` that will be used to accept or decline LNURL-Payments that require a channel opening.
-  Notifications on iOS are now grouped.
-  Improved resource management.
-  Notification Service is no longer attempted to start without permissions to show notifications on Android, which lead to an application crash.
+* Various improvements to Notification Service plugins:  
+  - Set log stream natively on Android.  
+  - Allow setting channel setup fee limit through `ServiceConfig` that will be used to accept or decline LNURL-Payments that require a channel opening.  
+  - Notifications on iOS are now grouped.  
+  - Improved resource management.  
+  - Notification Service is no longer attempted to start without permissions to show notifications on Android, which lead to an application crash.
 
 ## 0.3.9
 * Introduce `generateDiagnosticData` API to generate diagnostic data.
@@ -49,9 +49,9 @@ SDK release notes can be found at [breez-sdk/releases](https://github.com/breez/
 * Introduce `setPaymentMetadata` API to set the external metadata of a payment as a valid JSON string.
 * Add optional `chainnotifierUrl` to `Config`.
 * Include `openChannelBolt11`, `lnurlPayDomain`, `reverseSwapInfo` in `LnPaymentDetails`.  
-  `openChannelBolt11` for received payments which required to open a channel.  
-  `lnurlPayDomain` for sent payments that are not to a Lightning Address.  
-  `reverseSwapInfo` for payments that were sent in the context of a reverse swap.
+  - `openChannelBolt11` for received payments which required to open a channel.  
+  - `lnurlPayDomain` for sent payments that are not to a Lightning Address.  
+  - `reverseSwapInfo` for payments that were sent in the context of a reverse swap.
 
 ## 0.2.15
 * This is a hotfix release that fixes a critical issue from previous release.
