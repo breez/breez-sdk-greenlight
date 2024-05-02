@@ -82,13 +82,14 @@ impl SqliteStorage {
            payment_id,
            lnurl_success_action,
            lnurl_pay_domain,
+           lnurl_pay_comment,
            lnurl_metadata,
            ln_address,
            lnurl_withdraw_endpoint,
            attempted_amount_msat,
            attempted_error
          )
-         VALUES (?1,?2,?3,?4,?5,?6,?7,?8)
+         VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9)
         ",
         )?;
 
@@ -96,6 +97,7 @@ impl SqliteStorage {
             payment_hash,
             payment_external_info.lnurl_pay_success_action,
             payment_external_info.lnurl_pay_domain,
+            payment_external_info.lnurl_pay_comment,
             payment_external_info.lnurl_metadata,
             payment_external_info.ln_address,
             payment_external_info.lnurl_withdraw_endpoint,
@@ -279,6 +281,7 @@ impl SqliteStorage {
            o.open_channel_bolt11,
            m.metadata,
            e.lnurl_pay_domain,
+           e.lnurl_pay_comment,
            {swap_fields},
            {rev_swap_fields}
           FROM payments p
@@ -377,6 +380,7 @@ impl SqliteStorage {
         if let PaymentDetails::Ln { ref mut data } = payment.details {
             data.lnurl_success_action = row.get(8)?;
             data.lnurl_pay_domain = row.get(17)?;
+            data.lnurl_pay_comment = row.get(18)?;
             data.lnurl_metadata = row.get(9)?;
             data.ln_address = row.get(10)?;
             data.lnurl_withdraw_endpoint = row.get(11)?;
@@ -523,6 +527,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
     let lnurl_metadata = "{'key': 'sample-metadata-val'}";
     let test_ln_address = "test@ln.adddress.com";
     let test_lnurl_pay_domain = "example.com";
+    let test_lnurl_pay_comment = "Thank you Satoshi!";
     let sa = SuccessActionProcessed::Message {
         data: MessageSuccessActionData {
             message: "test message".into(),
@@ -615,6 +620,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                     bolt11: "bolt11".to_string(),
                     lnurl_success_action: Some(sa.clone()),
                     lnurl_pay_domain: None,
+                    lnurl_pay_comment: None,
                     lnurl_metadata: Some(lnurl_metadata.to_string()),
                     ln_address: Some(test_ln_address.to_string()),
                     lnurl_withdraw_endpoint: None,
@@ -645,6 +651,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                     bolt11: "bolt11".to_string(),
                     lnurl_success_action: None,
                     lnurl_pay_domain: None,
+                    lnurl_pay_comment: None,
                     lnurl_metadata: None,
                     ln_address: None,
                     lnurl_withdraw_endpoint: Some(lnurl_withdraw_url.to_string()),
@@ -675,6 +682,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                     bolt11: "swap_bolt11".to_string(),
                     lnurl_success_action: None,
                     lnurl_pay_domain: None,
+                    lnurl_pay_comment: None,
                     lnurl_metadata: None,
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
@@ -706,6 +714,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                     lnurl_success_action: None,
                     lnurl_metadata: None,
                     lnurl_pay_domain: None,
+                    lnurl_pay_comment: None,
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
                     swap_info: None,
@@ -735,6 +744,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                     bolt11: "bolt11".to_string(),
                     lnurl_success_action: None,
                     lnurl_pay_domain: Some(test_lnurl_pay_domain.to_string()),
+                    lnurl_pay_comment: Some(test_lnurl_pay_comment.to_string()),
                     lnurl_metadata: Some(lnurl_metadata.to_string()),
                     ln_address: None,
                     lnurl_withdraw_endpoint: None,
@@ -766,6 +776,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                 bolt11: "bolt11".to_string(),
                 lnurl_success_action: None,
                 lnurl_pay_domain: None,
+                lnurl_pay_comment: None,
                 lnurl_metadata: None,
                 ln_address: None,
                 lnurl_withdraw_endpoint: None,
@@ -786,6 +797,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
         PaymentExternalInfo {
             lnurl_pay_success_action: Some(sa.clone()),
             lnurl_pay_domain: None,
+            lnurl_pay_comment: None,
             lnurl_metadata: Some(lnurl_metadata.to_string()),
             ln_address: Some(test_ln_address.to_string()),
             lnurl_withdraw_endpoint: None,
@@ -798,6 +810,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
         PaymentExternalInfo {
             lnurl_pay_success_action: None,
             lnurl_pay_domain: None,
+            lnurl_pay_comment: None,
             lnurl_metadata: None,
             ln_address: None,
             lnurl_withdraw_endpoint: Some(lnurl_withdraw_url.to_string()),
@@ -815,6 +828,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
         PaymentExternalInfo {
             lnurl_pay_success_action: None,
             lnurl_pay_domain: Some(test_lnurl_pay_domain.to_string()),
+            lnurl_pay_comment: Some(test_lnurl_pay_comment.to_string()),
             lnurl_metadata: Some(lnurl_metadata.to_string()),
             ln_address: None,
             lnurl_withdraw_endpoint: None,

@@ -370,8 +370,8 @@ impl BreezServices {
     pub async fn lnurl_pay(&self, req: LnUrlPayRequest) -> Result<LnUrlPayResult, LnUrlPayError> {
         match validate_lnurl_pay(
             req.amount_msat,
-            req.comment,
-            req.data.clone(),
+            &req.comment,
+            &req.data,
             self.config.network,
         )
         .await?
@@ -447,6 +447,7 @@ impl BreezServices {
                     PaymentExternalInfo {
                         lnurl_pay_success_action: maybe_sa_processed.clone(),
                         lnurl_pay_domain,
+                        lnurl_pay_comment: req.comment,
                         lnurl_metadata: Some(req.data.metadata_str),
                         ln_address: req.data.ln_address,
                         lnurl_withdraw_endpoint: None,
@@ -495,6 +496,7 @@ impl BreezServices {
                 PaymentExternalInfo {
                     lnurl_pay_success_action: None,
                     lnurl_pay_domain: None,
+                    lnurl_pay_comment: None,
                     lnurl_metadata: None,
                     ln_address: None,
                     lnurl_withdraw_endpoint: Some(lnurl_w_endpoint),
@@ -1192,6 +1194,7 @@ impl BreezServices {
                         bolt11: invoice.bolt11.clone(),
                         lnurl_success_action: None,
                         lnurl_pay_domain: None,
+                        lnurl_pay_comment: None,
                         ln_address: None,
                         lnurl_metadata: None,
                         lnurl_withdraw_endpoint: None,
@@ -1211,6 +1214,7 @@ impl BreezServices {
             PaymentExternalInfo {
                 lnurl_pay_success_action: None,
                 lnurl_pay_domain: None,
+                lnurl_pay_comment: None,
                 lnurl_metadata: None,
                 ln_address: None,
                 lnurl_withdraw_endpoint: None,
@@ -2778,6 +2782,7 @@ pub(crate) mod tests {
                         bolt11: "1111".to_string(),
                         lnurl_success_action: None,
                         lnurl_pay_domain: None,
+                        lnurl_pay_comment: None,
                         lnurl_metadata: None,
                         ln_address: None,
                         lnurl_withdraw_endpoint: None,
@@ -2808,6 +2813,7 @@ pub(crate) mod tests {
                         bolt11: "1111".to_string(),
                         lnurl_success_action: None,
                         lnurl_pay_domain: None,
+                        lnurl_pay_comment: None,
                         lnurl_metadata: None,
                         ln_address: None,
                         lnurl_withdraw_endpoint: Some(test_lnurl_withdraw_endpoint.to_string()),
@@ -2838,6 +2844,7 @@ pub(crate) mod tests {
                         bolt11: "123".to_string(),
                         lnurl_success_action: Some(sa.clone()),
                         lnurl_pay_domain: None,
+                        lnurl_pay_comment: None,
                         lnurl_metadata: Some(lnurl_metadata.to_string()),
                         ln_address: Some(test_ln_address.to_string()),
                         lnurl_withdraw_endpoint: None,
@@ -2868,6 +2875,7 @@ pub(crate) mod tests {
                         bolt11: "312".to_string(),
                         lnurl_success_action: None,
                         lnurl_pay_domain: None,
+                        lnurl_pay_comment: None,
                         lnurl_metadata: None,
                         ln_address: None,
                         lnurl_withdraw_endpoint: None,
@@ -2899,6 +2907,7 @@ pub(crate) mod tests {
                         lnurl_success_action: None,
                         lnurl_metadata: None,
                         lnurl_pay_domain: None,
+                        lnurl_pay_comment: None,
                         ln_address: None,
                         lnurl_withdraw_endpoint: None,
                         swap_info: None,
@@ -2921,6 +2930,7 @@ pub(crate) mod tests {
             PaymentExternalInfo {
                 lnurl_pay_success_action: Some(sa.clone()),
                 lnurl_pay_domain: None,
+                lnurl_pay_comment: None,
                 lnurl_metadata: Some(lnurl_metadata.to_string()),
                 ln_address: Some(test_ln_address.to_string()),
                 lnurl_withdraw_endpoint: None,
@@ -2933,6 +2943,7 @@ pub(crate) mod tests {
             PaymentExternalInfo {
                 lnurl_pay_success_action: None,
                 lnurl_pay_domain: None,
+                lnurl_pay_comment: None,
                 lnurl_metadata: None,
                 ln_address: None,
                 lnurl_withdraw_endpoint: Some(test_lnurl_withdraw_endpoint.to_string()),

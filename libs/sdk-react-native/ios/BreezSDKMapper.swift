@@ -1045,6 +1045,13 @@ enum BreezSDKMapper {
             }
             lnurlPayDomain = lnurlPayDomainTmp
         }
+        var lnurlPayComment: String?
+        if hasNonNilKey(data: lnPaymentDetails, key: "lnurlPayComment") {
+            guard let lnurlPayCommentTmp = lnPaymentDetails["lnurlPayComment"] as? String else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "lnurlPayComment"))
+            }
+            lnurlPayComment = lnurlPayCommentTmp
+        }
         var lnurlMetadata: String?
         if hasNonNilKey(data: lnPaymentDetails, key: "lnurlMetadata") {
             guard let lnurlMetadataTmp = lnPaymentDetails["lnurlMetadata"] as? String else {
@@ -1094,6 +1101,7 @@ enum BreezSDKMapper {
             openChannelBolt11: openChannelBolt11,
             lnurlSuccessAction: lnurlSuccessAction,
             lnurlPayDomain: lnurlPayDomain,
+            lnurlPayComment: lnurlPayComment,
             lnurlMetadata: lnurlMetadata,
             lnAddress: lnAddress,
             lnurlWithdrawEndpoint: lnurlWithdrawEndpoint,
@@ -1114,6 +1122,7 @@ enum BreezSDKMapper {
             "openChannelBolt11": lnPaymentDetails.openChannelBolt11 == nil ? nil : lnPaymentDetails.openChannelBolt11,
             "lnurlSuccessAction": lnPaymentDetails.lnurlSuccessAction == nil ? nil : dictionaryOf(successActionProcessed: lnPaymentDetails.lnurlSuccessAction!),
             "lnurlPayDomain": lnPaymentDetails.lnurlPayDomain == nil ? nil : lnPaymentDetails.lnurlPayDomain,
+            "lnurlPayComment": lnPaymentDetails.lnurlPayComment == nil ? nil : lnPaymentDetails.lnurlPayComment,
             "lnurlMetadata": lnPaymentDetails.lnurlMetadata == nil ? nil : lnPaymentDetails.lnurlMetadata,
             "lnAddress": lnPaymentDetails.lnAddress == nil ? nil : lnPaymentDetails.lnAddress,
             "lnurlWithdrawEndpoint": lnPaymentDetails.lnurlWithdrawEndpoint == nil ? nil : lnPaymentDetails.lnurlWithdrawEndpoint,

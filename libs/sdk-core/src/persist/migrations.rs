@@ -612,5 +612,6 @@ pub(crate) fn current_sync_migrations() -> Vec<&'static str> {
         ALTER TABLE swaps ADD COLUMN max_swapper_payable INTEGER NOT NULL DEFAULT 0;
         UPDATE swaps SET max_swapper_payable = max_allowed_deposit;
         ",
-    ]
+        "ALTER TABLE payments_external_info ADD COLUMN lnurl_pay_comment TEXT;",
+	]
 }

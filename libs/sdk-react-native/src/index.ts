@@ -158,6 +158,7 @@ export type LnPaymentDetails = {
     openChannelBolt11?: string
     lnurlSuccessAction?: SuccessActionProcessed
     lnurlPayDomain?: string
+    lnurlPayComment?: string
     lnurlMetadata?: string
     lnAddress?: string
     lnurlWithdrawEndpoint?: string

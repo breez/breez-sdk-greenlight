@@ -946,6 +946,7 @@ fun asLnPaymentDetails(lnPaymentDetails: ReadableMap): LnPaymentDetails? {
             null
         }
     val lnurlPayDomain = if (hasNonNullKey(lnPaymentDetails, "lnurlPayDomain")) lnPaymentDetails.getString("lnurlPayDomain") else null
+    val lnurlPayComment = if (hasNonNullKey(lnPaymentDetails, "lnurlPayComment")) lnPaymentDetails.getString("lnurlPayComment") else null
     val lnurlMetadata = if (hasNonNullKey(lnPaymentDetails, "lnurlMetadata")) lnPaymentDetails.getString("lnurlMetadata") else null
     val lnAddress = if (hasNonNullKey(lnPaymentDetails, "lnAddress")) lnPaymentDetails.getString("lnAddress") else null
     val lnurlWithdrawEndpoint =
@@ -987,6 +988,7 @@ fun asLnPaymentDetails(lnPaymentDetails: ReadableMap): LnPaymentDetails? {
         openChannelBolt11,
         lnurlSuccessAction,
         lnurlPayDomain,
+        lnurlPayComment,
         lnurlMetadata,
         lnAddress,
         lnurlWithdrawEndpoint,
@@ -1007,6 +1009,7 @@ fun readableMapOf(lnPaymentDetails: LnPaymentDetails): ReadableMap {
         "openChannelBolt11" to lnPaymentDetails.openChannelBolt11,
         "lnurlSuccessAction" to lnPaymentDetails.lnurlSuccessAction?.let { readableMapOf(it) },
         "lnurlPayDomain" to lnPaymentDetails.lnurlPayDomain,
+        "lnurlPayComment" to lnPaymentDetails.lnurlPayComment,
         "lnurlMetadata" to lnPaymentDetails.lnurlMetadata,
         "lnAddress" to lnPaymentDetails.lnAddress,
         "lnurlWithdrawEndpoint" to lnPaymentDetails.lnurlWithdrawEndpoint,
