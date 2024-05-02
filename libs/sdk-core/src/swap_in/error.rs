@@ -1,40 +1,49 @@
-use anyhow::anyhow;
-
 use crate::{error::SdkError, persist::error::PersistError};
 
 pub type SwapResult<T, E = SwapError> = Result<T, E>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum SwapError {
-    #[error("Generic: {0}")]
-    Generic(#[from] anyhow::Error),
+    #[error("{0}")]
+    Generic(String),
 
     #[error(transparent)]
     Persistance(#[from] PersistError),
 
-    #[error("Service connectivity: {0}")]
-    ServiceConnectivity(anyhow::Error),
+    #[error("{0}")]
+    ServiceConnectivity(String),
 
-    #[error("Unsupported swap limits: {0}")]
-    UnsupportedSwapLimits(anyhow::Error),
+    #[error("{0}")]
+    UnsupportedSwapLimits(String),
 }
+
 impl SwapError {
+    pub(crate) fn generic(err: &str) -> Self {
+        Self::Generic(err.to_string())
+    }
+
     pub(crate) fn unsupported_swap_limits(err: &str) -> Self {
-        Self::UnsupportedSwapLimits(anyhow!(err.to_string()))
+        Self::UnsupportedSwapLimits(err.to_string())
+    }
+}
+
+impl From<anyhow::Error> for SwapError {
+    fn from(err: anyhow::Error) -> Self {
+        Self::Generic(err.to_string())
     }
 }
 
 impl From<SdkError> for SwapError {
     fn from(value: SdkError) -> Self {
         match value {
-            SdkError::Generic { err } => Self::Generic(anyhow!(err)),
-            SdkError::ServiceConnectivity { err } => Self::ServiceConnectivity(anyhow!(err)),
+            SdkError::Generic { err } => Self::Generic(err),
+            SdkError::ServiceConnectivity { err } => Self::ServiceConnectivity(err),
         }
     }
 }
 
 impl From<tonic::Status> for SwapError {
-    fn from(err: tonic::Status) -> Self {
-        Self::Generic(anyhow::Error::new(err))
+    fn from(status: tonic::Status) -> Self {
+        Self::Generic(status.to_string())
     }
 }

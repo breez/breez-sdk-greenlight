@@ -179,7 +179,7 @@ impl BTCReceiveSwap {
         let node_state = self
             .persister
             .get_node_state()?
-            .ok_or(anyhow!("Node info not found"))?;
+            .ok_or(SwapError::generic("Node info not found"))?;
 
         // Calculate max_allowed_deposit based on absolute max and current node state
         let fn_max_allowed_deposit = |max_allowed_deposit_abs: i64| {
@@ -239,7 +239,7 @@ impl BTCReceiveSwap {
 
         // Ensure our address generation match the service
         if address_str != swap_reply.bitcoin_address {
-            return Err(SwapError::Generic(anyhow!("Wrong address: {address_str}")));
+            return Err(SwapError::Generic(format!("Wrong address: {address_str}")));
         }
 
         let swap_info = SwapInfo {

@@ -4,9 +4,7 @@ use anyhow::{anyhow, Result};
 use regex::Regex;
 use strum_macros::FromRepr;
 
-use crate::{
-    bitcoin::secp256k1, invoice::InvoiceError, node_api::NodeError, persist::error::PersistError,
-};
+use crate::{bitcoin::secp256k1, node_api::NodeError};
 
 #[derive(FromRepr, Debug, PartialEq)]
 #[repr(i16)]
@@ -114,55 +112,43 @@ pub(crate) enum JsonRpcErrCode {
 
 impl From<anyhow::Error> for NodeError {
     fn from(err: anyhow::Error) -> Self {
-        Self::Generic(err)
+        Self::Generic(err.to_string())
     }
 }
 
 impl From<crate::bitcoin::util::address::Error> for NodeError {
     fn from(err: crate::bitcoin::util::address::Error) -> Self {
-        Self::Generic(anyhow::Error::new(err))
+        Self::Generic(err.to_string())
     }
 }
 
 impl From<crate::bitcoin::util::bip32::Error> for NodeError {
     fn from(err: crate::bitcoin::util::bip32::Error) -> Self {
-        Self::Generic(anyhow::Error::new(err))
+        Self::Generic(err.to_string())
     }
 }
 
 impl From<hex::FromHexError> for NodeError {
     fn from(err: hex::FromHexError) -> Self {
-        Self::Generic(anyhow::Error::new(err))
-    }
-}
-
-impl From<InvoiceError> for NodeError {
-    fn from(err: InvoiceError) -> Self {
-        Self::InvalidInvoice(err)
-    }
-}
-
-impl From<PersistError> for NodeError {
-    fn from(err: PersistError) -> Self {
-        Self::Persistance(err)
+        Self::Generic(err.to_string())
     }
 }
 
 impl From<secp256k1::Error> for NodeError {
     fn from(err: secp256k1::Error) -> Self {
-        Self::Generic(anyhow::Error::new(err))
+        Self::Generic(err.to_string())
     }
 }
 
 impl From<serde_json::Error> for NodeError {
     fn from(err: serde_json::Error) -> Self {
-        Self::Generic(anyhow::Error::new(err))
+        Self::Generic(err.to_string())
     }
 }
 
 impl From<SystemTimeError> for NodeError {
     fn from(err: SystemTimeError) -> Self {
-        Self::Generic(anyhow::Error::new(err))
+        Self::Generic(err.to_string())
     }
 }
 
@@ -171,12 +157,12 @@ impl From<tonic::Status> for NodeError {
         match parse_cln_error(status.clone()) {
             Ok(code) => match code {
                 // Pay errors
-                JsonRpcErrCode::PayInvoiceExpired => Self::InvoiceExpired(status.into()),
+                JsonRpcErrCode::PayInvoiceExpired => Self::InvoiceExpired(status.to_string()),
                 JsonRpcErrCode::PayTryOtherRoute | JsonRpcErrCode::PayRouteNotFound => {
-                    Self::RouteNotFound(status.into())
+                    Self::RouteNotFound(status.to_string())
                 }
-                JsonRpcErrCode::PayRouteTooExpensive => Self::RouteTooExpensive(status.into()),
-                JsonRpcErrCode::PayStoppedRetrying => Self::PaymentTimeout(status.into()),
+                JsonRpcErrCode::PayRouteTooExpensive => Self::RouteTooExpensive(status.to_string()),
+                JsonRpcErrCode::PayStoppedRetrying => Self::PaymentTimeout(status.to_string()),
                 JsonRpcErrCode::PayRhashAlreadyUsed
                 | JsonRpcErrCode::PayUnparseableOnion
                 | JsonRpcErrCode::PayDestinationPermFail
@@ -186,24 +172,28 @@ impl From<tonic::Status> for NodeError {
                 | JsonRpcErrCode::PayInvoiceRequestInvalid
                 | JsonRpcErrCode::PayInvoicePreapprovalDeclined
                 | JsonRpcErrCode::PayKeysendPreapprovalDeclined => {
-                    Self::PaymentFailed(status.into())
+                    Self::PaymentFailed(status.to_string())
                 }
                 // Invoice errors
-                JsonRpcErrCode::InvoiceExpiredDuringWait => Self::InvoiceExpired(status.into()),
-                JsonRpcErrCode::InvoiceNoDescription => Self::InvoiceNoDescription(status.into()),
-                JsonRpcErrCode::InvoicePreimageAlreadyExists => {
-                    Self::InvoicePreimageAlreadyExists(status.into())
+                JsonRpcErrCode::InvoiceExpiredDuringWait => {
+                    Self::InvoiceExpired(status.to_string())
                 }
-                _ => Self::Generic(status.into()),
+                JsonRpcErrCode::InvoiceNoDescription => {
+                    Self::InvoiceNoDescription(status.to_string())
+                }
+                JsonRpcErrCode::InvoicePreimageAlreadyExists => {
+                    Self::InvoicePreimageAlreadyExists(status.to_string())
+                }
+                _ => Self::Generic(status.to_string()),
             },
-            _ => Self::Generic(status.into()),
+            _ => Self::Generic(status.to_string()),
         }
     }
 }
 
 impl From<TryFromIntError> for NodeError {
     fn from(err: TryFromIntError) -> Self {
-        Self::Generic(anyhow::Error::new(err))
+        Self::Generic(err.to_string())
     }
 }
 

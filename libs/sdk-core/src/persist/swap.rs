@@ -6,7 +6,6 @@ use super::{
     error::PersistResult,
 };
 use crate::OpeningFeeParams;
-use anyhow::anyhow;
 use rusqlite::{named_params, OptionalExtension, Params, Row, Transaction, TransactionBehavior};
 
 #[derive(Debug, Clone)]
@@ -88,7 +87,7 @@ impl SqliteStorage {
             &tx,
             swap_info.bitcoin_address,
             swap_info.channel_opening_fees.ok_or_else(|| {
-                PersistError::Generic(anyhow!("Dynamic fees must be set when creating a new swap"))
+                PersistError::generic("Dynamic fees must be set when creating a new swap")
             })?,
         )?;
 

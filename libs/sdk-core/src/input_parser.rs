@@ -9,6 +9,9 @@ use serde::Serialize;
 use crate::bitcoin::bech32;
 use crate::bitcoin::bech32::FromBase32;
 use crate::ensure_sdk;
+use crate::error::SdkError;
+use crate::error::SdkError::ServiceConnectivity;
+use crate::error::SdkResult;
 use crate::input_parser::InputType::*;
 use crate::input_parser::LnUrlRequestData::*;
 use crate::invoice::{parse_invoice, LNInvoice};
@@ -230,14 +233,20 @@ pub async fn parse(input: &str) -> Result<InputType> {
     Err(anyhow!("Unrecognized input type"))
 }
 
-pub(crate) async fn post_and_log_response(url: &str, body: Option<String>) -> Result<String> {
+pub(crate) async fn post_and_log_response(url: &str, body: Option<String>) -> SdkResult<String> {
     debug!("Making POST request to: {url}");
 
     let mut req = get_reqwest_client()?.post(url);
     if let Some(body) = body {
         req = req.body(body);
     }
-    let raw_body = req.send().await?.text().await?;
+    let raw_body = req
+        .send()
+        .await
+        .map_err(|e| SdkError::ServiceConnectivity { err: e.to_string() })?
+        .text()
+        .await
+        .map_err(|e| SdkError::ServiceConnectivity { err: e.to_string() })?;
     debug!("Received raw response body: {raw_body}");
 
     Ok(raw_body)
@@ -246,17 +255,24 @@ pub(crate) async fn post_and_log_response(url: &str, body: Option<String>) -> Re
 /// Makes a GET request to the specified `url` and logs on DEBUG:
 /// - the URL
 /// - the raw response body
-pub(crate) async fn get_and_log_response(url: &str) -> Result<String> {
+pub(crate) async fn get_and_log_response(url: &str) -> SdkResult<String> {
     debug!("Making GET request to: {url}");
 
-    let raw_body = get_reqwest_client()?.get(url).send().await?.text().await?;
+    let raw_body = get_reqwest_client()?
+        .get(url)
+        .send()
+        .await
+        .map_err(|e| SdkError::ServiceConnectivity { err: e.to_string() })?
+        .text()
+        .await
+        .map_err(|e| SdkError::ServiceConnectivity { err: e.to_string() })?;
     debug!("Received raw response body: {raw_body}");
 
     Ok(raw_body)
 }
 
 /// Wrapper around [get_and_log_response] that, in addition, parses the payload into an expected type
-pub(crate) async fn get_parse_and_log_response<T>(url: &str) -> Result<T>
+pub(crate) async fn get_parse_and_log_response<T>(url: &str) -> SdkResult<T>
 where
     for<'a> T: serde::de::Deserialize<'a>,
 {
@@ -338,20 +354,20 @@ fn lnurl_decode(encoded: &str) -> LnUrlResult<(String, String, Option<String>)> 
             let decoded = String::from_utf8(Vec::from_base32(&payload)?)?;
 
             let url = reqwest::Url::parse(&decoded)
-                .map_err(|e| super::lnurl::error::LnUrlError::InvalidUri(anyhow::Error::new(e)))?;
+                .map_err(|e| super::lnurl::error::LnUrlError::InvalidUri(e.to_string()))?;
             let domain = url.domain().ok_or_else(|| {
-                super::lnurl::error::LnUrlError::InvalidUri(anyhow!("Could not determine domain"))
+                super::lnurl::error::LnUrlError::invalid_uri("Could not determine domain")
             })?;
 
             if url.scheme() == "http" && !domain.ends_with(".onion") {
-                return Err(super::lnurl::error::LnUrlError::Generic(anyhow!(
-                    "HTTP scheme only allowed for onion domains"
-                )));
+                return Err(super::lnurl::error::LnUrlError::generic(
+                    "HTTP scheme only allowed for onion domains",
+                ));
             }
             if url.scheme() == "https" && domain.ends_with(".onion") {
-                return Err(super::lnurl::error::LnUrlError::Generic(anyhow!(
-                    "HTTPS scheme not allowed for onion domains"
-                )));
+                return Err(super::lnurl::error::LnUrlError::generic(
+                    "HTTPS scheme not allowed for onion domains",
+                ));
             }
 
             Ok((domain.into(), decoded, None))
@@ -372,13 +388,13 @@ fn lnurl_decode(encoded: &str) -> LnUrlResult<(String, String, Option<String>)> 
             }
 
             let url = reqwest::Url::parse(&encoded)
-                .map_err(|e| super::lnurl::error::LnUrlError::InvalidUri(anyhow::Error::new(e)))?;
+                .map_err(|e| super::lnurl::error::LnUrlError::InvalidUri(e.to_string()))?;
             let domain = url.domain().ok_or_else(|| {
-                super::lnurl::error::LnUrlError::InvalidUri(anyhow!("Could not determine domain"))
+                super::lnurl::error::LnUrlError::invalid_uri("Could not determine domain")
             })?;
             ensure_sdk!(
                 supported_prefixes.contains(&url.scheme()),
-                super::lnurl::error::LnUrlError::Generic(anyhow!("Invalid prefix scheme"))
+                super::lnurl::error::LnUrlError::generic("Invalid prefix scheme")
             );
 
             let scheme = url.scheme();
@@ -393,11 +409,11 @@ fn lnurl_decode(encoded: &str) -> LnUrlResult<(String, String, Option<String>)> 
 }
 
 /// Creates an HTTP client with a built-in connection timeout
-pub(crate) fn get_reqwest_client() -> Result<reqwest::Client> {
+pub(crate) fn get_reqwest_client() -> SdkResult<reqwest::Client> {
     reqwest::Client::builder()
         .timeout(Duration::from_secs(30))
         .build()
-        .map_err(Into::into)
+        .map_err(|e| ServiceConnectivity { err: e.to_string() })
 }
 
 /// Different kinds of inputs supported by [parse], including any relevant details extracted from the input

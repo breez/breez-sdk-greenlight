@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use serde_json::to_string_pretty;
 
-use anyhow::{anyhow, Result};
 use const_format::concatcp;
 use reqwest::header::CONTENT_TYPE;
 use reqwest::Body;
@@ -223,7 +222,7 @@ pub struct BoltzApi {}
 #[tonic::async_trait]
 impl ReverseSwapServiceAPI for BoltzApi {
     async fn fetch_reverse_swap_fees(&self) -> ReverseSwapResult<ReverseSwapPairInfo> {
-        Ok(reverse_swap_pair_info().await?)
+        reverse_swap_pair_info().await
     }
 
     /// Call Boltz API and parse response as per https://docs.boltz.exchange/en/latest/api/#creating-reverse-swaps
@@ -254,18 +253,19 @@ impl ReverseSwapServiceAPI for BoltzApi {
                 routing_node,
             ))
             .send()
-            .await?
+            .await
+            .map_err(|e| ReverseSwapError::ServiceConnectivity(e.to_string()))?
             .text()
             .await
             .map_err(|e| {
-                ReverseSwapError::ServiceConnectivity(anyhow!(
+                ReverseSwapError::ServiceConnectivity(format!(
                     "(Boltz {CREATE_REVERSE_SWAP_ENDPOINT}) Failed to request creation of reverse swap: {e}"
                 ))
             })
             .and_then(|res| {
                 trace!("Boltz API create raw response {}", to_string_pretty(&res)?);
                 serde_json::from_str::<BoltzApiCreateReverseSwapResponse>(&res).map_err(|e| {
-                    ReverseSwapError::ServiceConnectivity(anyhow!(
+                    ReverseSwapError::ServiceConnectivity(format!(
                         "(Boltz {CREATE_REVERSE_SWAP_ENDPOINT}) Failed to parse create swap response: {e}"
                     ))
                 })
@@ -287,18 +287,19 @@ impl ReverseSwapServiceAPI for BoltzApi {
             .header(CONTENT_TYPE, "application/json")
             .body(Body::from(json!({ "id": id }).to_string()))
             .send()
-            .await?
+            .await
+            .map_err(|e| ReverseSwapError::ServiceConnectivity(e.to_string()))?
             .text()
             .await
             .map_err(|e| {
-                ReverseSwapError::ServiceConnectivity(anyhow!(
+                ReverseSwapError::ServiceConnectivity(format!(
                     "(Boltz {GET_SWAP_STATUS_ENDPOINT}) Failed to request swap status: {e}"
                 ))
             })
             .and_then(|res| {
                 trace!("Boltz API status raw response {}", to_string_pretty(&res)?);
                 serde_json::from_str::<BoltzApiReverseSwapStatus>(&res).map_err(|e| {
-                    ReverseSwapError::ServiceConnectivity(anyhow!(
+                    ReverseSwapError::ServiceConnectivity(format!(
                         "(Boltz {GET_SWAP_STATUS_ENDPOINT}) Failed to parse get status response: {e}"
                     ))
                 })
@@ -313,11 +314,12 @@ impl ReverseSwapServiceAPI for BoltzApi {
                 json!({ "routingNode": routing_node_id, "symbol": "BTC" }).to_string(),
             ))
             .send()
-            .await?
+            .await
+            .map_err(|e| ReverseSwapError::ServiceConnectivity(e.to_string()))?
             .text()
             .await
             .map_err(|e| {
-                ReverseSwapError::ServiceConnectivity(anyhow!(
+                ReverseSwapError::ServiceConnectivity(format!(
                     "(Boltz {GET_ROUTE_HINTS_ENDPOINT}) Failed to get routing hints: {e}"
                 ))
             })
@@ -328,7 +330,7 @@ impl ReverseSwapServiceAPI for BoltzApi {
                 );
                 serde_json::from_str::<BoltzRouteHints>(&res)
                 .map_err(|e| {
-                    ReverseSwapError::ServiceConnectivity(anyhow!(
+                    ReverseSwapError::ServiceConnectivity(format!(
                         "(Boltz {GET_ROUTE_HINTS_ENDPOINT}) Failed to parse get route hints response: {e}"
                     ))
                 })
@@ -337,10 +339,10 @@ impl ReverseSwapServiceAPI for BoltzApi {
     }
 }
 
-pub async fn reverse_swap_pair_info() -> Result<ReverseSwapPairInfo> {
+pub async fn reverse_swap_pair_info() -> ReverseSwapResult<ReverseSwapPairInfo> {
     let pairs: Pairs = get_parse_and_log_response(GET_PAIRS_ENDPOINT).await?;
     match pairs.pairs.get("BTC/BTC") {
-        None => Err(anyhow!("BTC pair not found")),
+        None => Err(ReverseSwapError::generic("BTC pair not found")),
         Some(btc_pair) => {
             debug!(
                 "Boltz API pair: {}",

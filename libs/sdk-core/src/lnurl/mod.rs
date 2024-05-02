@@ -16,14 +16,14 @@ pub(crate) fn maybe_replace_host_with_mockito_test_host(
     use self::error::LnUrlError;
 
     let server = crate::input_parser::tests::MOCK_HTTP_SERVER.lock().unwrap();
-    let mockito_endpoint_url = reqwest::Url::parse(&server.url())
-        .map_err(|e| LnUrlError::InvalidUri(anyhow::Error::new(e)))?;
-    let mut parsed_lnurl_endpoint = reqwest::Url::parse(&lnurl_endpoint)
-        .map_err(|e| LnUrlError::InvalidUri(anyhow::Error::new(e)))?;
+    let mockito_endpoint_url =
+        reqwest::Url::parse(&server.url()).map_err(|e| LnUrlError::InvalidUri(e.to_string()))?;
+    let mut parsed_lnurl_endpoint =
+        reqwest::Url::parse(&lnurl_endpoint).map_err(|e| LnUrlError::InvalidUri(e.to_string()))?;
 
     parsed_lnurl_endpoint
         .set_host(mockito_endpoint_url.host_str())
-        .map_err(|e| LnUrlError::InvalidUri(anyhow::Error::new(e)))?;
+        .map_err(|e| LnUrlError::InvalidUri(e.to_string()))?;
     let _ = parsed_lnurl_endpoint.set_scheme(mockito_endpoint_url.scheme());
     let _ = parsed_lnurl_endpoint.set_port(mockito_endpoint_url.port());
 

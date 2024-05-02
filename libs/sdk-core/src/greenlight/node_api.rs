@@ -102,7 +102,7 @@ impl Greenlight {
         // Query for the existing credentials
         let mut parsed_credentials =
             Self::get_node_credentials(config.network, &signer, persister.clone())?
-                .ok_or(NodeError::Generic(anyhow!("No credentials found")));
+                .ok_or(NodeError::generic("No credentials found"));
         if parsed_credentials.is_err() {
             info!("No credentials found, trying to recover existing node");
             parsed_credentials = match Self::recover(config.network, seed.clone()).await {
@@ -122,7 +122,7 @@ impl Greenlight {
                             Ok(credentials)
                         }
                         true => {
-                            return Err(NodeError::RestoreOnly(anyhow!("Node does not exist")));
+                            return Err(NodeError::RestoreOnly("Node does not exist".to_string()));
                         }
                     }
                 }
@@ -140,11 +140,11 @@ impl Greenlight {
                         Greenlight::new(config, seed, creds, persister)
                     }
                     None => {
-                        return Err(NodeError::Generic(anyhow!("Failed to encrypt credentials")));
+                        return Err(NodeError::generic("Failed to encrypt credentials"));
                     }
                 }
             }
-            Err(_) => Err(NodeError::Generic(anyhow!("Failed to get gl credentials"))),
+            Err(_) => Err(NodeError::generic("Failed to get gl credentials")),
         };
         res
     }
@@ -353,12 +353,12 @@ impl Greenlight {
         if gl_client.is_none() {
             let scheduler = Scheduler::new(self.signer.node_id(), self.sdk_config.network.into())
                 .await
-                .map_err(NodeError::ServiceConnectivity)?;
+                .map_err(|e| NodeError::ServiceConnectivity(e.to_string()))?;
             *gl_client = Some(
                 scheduler
                     .schedule(self.tls_config.clone())
                     .await
-                    .map_err(NodeError::ServiceConnectivity)?,
+                    .map_err(|e| NodeError::ServiceConnectivity(e.to_string()))?,
             );
         }
         Ok(gl_client.clone().unwrap())
@@ -369,12 +369,12 @@ impl Greenlight {
         if node_client.is_none() {
             let scheduler = Scheduler::new(self.signer.node_id(), self.sdk_config.network.into())
                 .await
-                .map_err(NodeError::ServiceConnectivity)?;
+                .map_err(|e| NodeError::ServiceConnectivity(e.to_string()))?;
             *node_client = Some(
                 scheduler
                     .schedule(self.tls_config.clone())
                     .await
-                    .map_err(NodeError::ServiceConnectivity)?,
+                    .map_err(|e| NodeError::ServiceConnectivity(e.to_string()))?,
             );
         }
         Ok(node_client.clone().unwrap())
@@ -416,14 +416,13 @@ impl Greenlight {
                 match decrypted_credentials {
                     Some(decrypted_creds) => {
                         let credentials: GreenlightCredentials =
-                            serde_json::from_slice(decrypted_creds.as_slice()).map_err(|e| {
-                                NodeError::Generic(anyhow!("Unable to parse credentials: {e}"))
-                            })?;
+                            serde_json::from_slice(decrypted_creds.as_slice())
+                                .map_err(|_| NodeError::generic("Unable to parse credentials"))?;
                         Ok(Some(credentials))
                     }
-                    None => Err(NodeError::Generic(anyhow!(
-                        "Failed to decrypt credentials, seed doesn't match existing node"
-                    ))),
+                    None => Err(NodeError::generic(
+                        "Failed to decrypt credentials, seed doesn't match existing node",
+                    )),
                 }
             }
             None => Ok(None),
@@ -631,8 +630,8 @@ impl Greenlight {
                 .into_inner()
                 .channels;
 
-            let first_channel = hopchannels.first().ok_or(NodeError::RouteNotFound(anyhow!(
-                "channel not found {}",
+            let first_channel = hopchannels.first().ok_or(NodeError::RouteNotFound(format!(
+                "Channel not found {}",
                 hop.channel.clone()
             )))?;
 
@@ -666,9 +665,10 @@ impl Greenlight {
             None => match payee_node_id.clone() {
                 Some(node_id) => (node_id, max_hops),
                 None => {
-                    return Err(NodeError::RouteNotFound(anyhow!(
+                    return Err(NodeError::RouteNotFound(
                         "No payee node id or last hop hints provided, cannot calculate max amount"
-                    )));
+                            .to_string(),
+                    ));
                 }
             },
         };
@@ -722,7 +722,7 @@ impl Greenlight {
             let chan_id = c
                 .clone()
                 .channel_id
-                .ok_or(NodeError::Generic(anyhow!("Empty channel id")))?;
+                .ok_or(NodeError::generic("Empty channel id"))?;
 
             // First hop is forwarding so no fees and delays.
             let first_edge = PaymentPathEdge {
@@ -783,7 +783,7 @@ impl NodeAPI for Greenlight {
                     .await?
                     .configure(gl_client::pb::GlConfig { close_to_addr })
                     .await
-                    .map_err(|e| NodeError::Generic(anyhow!("Unable to set node config: {}", e)))?;
+                    .map_err(|e| NodeError::Generic(format!("Unable to set node config: {}", e)))?;
             }
             None => {
                 self.get_node_client()
@@ -794,7 +794,7 @@ impl NodeAPI for Greenlight {
                     })
                     .await
                     .map_err(|e| {
-                        NodeError::Generic(anyhow!("Unable to delete node config: {}", e))
+                        NodeError::Generic(format!("Unable to delete node config: {}", e))
                     })?;
             }
         }
@@ -987,12 +987,12 @@ impl NodeAPI for Greenlight {
 
         let amount_to_pay_msat = match invoice.amount_msat {
             Some(amount) => Ok(amount),
-            None => Err(NodeError::Generic(anyhow!("Invoice has no amount"))),
+            None => Err(NodeError::generic("Invoice has no amount")),
         }?;
 
         if amount_to_pay_msat > total_msat {
-            return Err(NodeError::RouteNotFound(anyhow!(
-                "amount too high, max amount is {} msat",
+            return Err(NodeError::RouteNotFound(format!(
+                "Amount too high, max amount is {} msat",
                 total_msat
             )));
         }
@@ -1158,7 +1158,8 @@ impl NodeAPI for Greenlight {
             .get_node_client()
             .await?
             .getinfo(cln::GetinfoRequest {})
-            .await?
+            .await
+            .map_err(|e| NodeError::ServiceConnectivity(e.to_string()))?
             .into_inner();
         Ok(hex::encode(node_info.id))
     }
@@ -1227,9 +1228,7 @@ impl NodeAPI for Greenlight {
             + witness_input_size * txins.len() as u64;
         let fee: u64 = tx_weight * req.sat_per_vbyte as u64 / WITNESS_SCALE_FACTOR as u64;
         if fee >= amount_sat {
-            return Err(NodeError::Generic(anyhow!(
-                "Insufficient funds to pay fees"
-            )));
+            return Err(NodeError::generic("Insufficient funds to pay fees"));
         }
 
         return Ok(PrepareRedeemOnchainFundsResponse {
@@ -1943,7 +1942,7 @@ impl TryFrom<cln::ListinvoicesInvoices> for Payment {
         let ln_invoice = invoice
             .bolt11
             .as_ref()
-            .ok_or(InvoiceError::Generic(anyhow!("No bolt11 invoice")))
+            .ok_or(InvoiceError::generic("No bolt11 invoice"))
             .and_then(|b| parse_invoice(b))?;
         Ok(Payment {
             id: hex::encode(invoice.payment_hash.clone()),
@@ -1998,7 +1997,7 @@ impl TryFrom<cln::ListpaysPays> for Payment {
         let ln_invoice = payment
             .bolt11
             .as_ref()
-            .ok_or(InvoiceError::Generic(anyhow!("No bolt11 invoice")))
+            .ok_or(InvoiceError::generic("No bolt11 invoice"))
             .and_then(|b| parse_invoice(b));
         let payment_amount = payment
             .amount_msat

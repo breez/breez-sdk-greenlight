@@ -1,7 +1,6 @@
 use std::str::FromStr;
 use std::time::{SystemTimeError, UNIX_EPOCH};
 
-use anyhow::anyhow;
 use hex::ToHex;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -16,49 +15,63 @@ pub type InvoiceResult<T, E = InvoiceError> = Result<T, E>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum InvoiceError {
-    #[error("Generic: {0}")]
-    Generic(#[from] anyhow::Error),
+    #[error("{0}")]
+    Generic(String),
 
-    #[error("Invalid network: {0}")]
-    InvalidNetwork(anyhow::Error),
+    #[error("{0}")]
+    InvalidNetwork(String),
 
-    #[error("Validation: {0}")]
-    Validation(anyhow::Error),
+    #[error("{0}")]
+    Validation(String),
+}
+
+impl InvoiceError {
+    pub(crate) fn generic(err: &str) -> Self {
+        Self::Generic(err.to_string())
+    }
+
+    pub(crate) fn invalid_network(err: &str) -> Self {
+        Self::InvalidNetwork(err.to_string())
+    }
+
+    pub(crate) fn validation(err: &str) -> Self {
+        Self::Validation(err.to_string())
+    }
 }
 
 impl From<crate::lightning_invoice::CreationError> for InvoiceError {
     fn from(err: crate::lightning_invoice::CreationError) -> Self {
-        Self::Generic(anyhow::Error::new(err))
+        Self::Generic(err.to_string())
     }
 }
 
 impl From<crate::lightning_invoice::Bolt11ParseError> for InvoiceError {
     fn from(err: crate::lightning_invoice::Bolt11ParseError) -> Self {
-        Self::Validation(anyhow::Error::new(err))
+        Self::Validation(err.to_string())
     }
 }
 
 impl From<crate::lightning_invoice::Bolt11SemanticError> for InvoiceError {
     fn from(err: crate::lightning_invoice::Bolt11SemanticError) -> Self {
-        Self::Validation(anyhow::Error::new(err))
+        Self::Validation(err.to_string())
     }
 }
 
 impl From<regex::Error> for InvoiceError {
     fn from(err: regex::Error) -> Self {
-        Self::Generic(anyhow::Error::new(err))
+        Self::Generic(err.to_string())
     }
 }
 
 impl From<secp256k1::Error> for InvoiceError {
     fn from(err: secp256k1::Error) -> Self {
-        Self::Generic(anyhow::Error::new(err))
+        Self::Generic(err.to_string())
     }
 }
 
 impl From<SystemTimeError> for InvoiceError {
     fn from(err: SystemTimeError) -> Self {
-        Self::Generic(anyhow::Error::new(err))
+        Self::Generic(err.to_string())
     }
 }
 
@@ -224,18 +237,16 @@ pub fn add_routing_hints(
 pub fn validate_network(invoice: LNInvoice, network: Network) -> InvoiceResult<()> {
     match invoice.network == network {
         true => Ok(()),
-        false => Err(InvoiceError::InvalidNetwork(anyhow!(
-            "Invoice network does not match config"
-        ))),
+        false => Err(InvoiceError::invalid_network(
+            "Invoice network does not match config",
+        )),
     }
 }
 
 /// Parse a BOLT11 payment request and return a structure contains the parsed fields.
 pub fn parse_invoice(bolt11: &str) -> InvoiceResult<LNInvoice> {
     if bolt11.trim().is_empty() {
-        return Err(InvoiceError::Validation(anyhow!(
-            "bolt11 is an empty string"
-        )));
+        return Err(InvoiceError::validation("Bolt11 is an empty string"));
     }
     let re = Regex::new(r"(?i)^lightning:")?;
     let bolt11 = re.replace_all(bolt11, "");
