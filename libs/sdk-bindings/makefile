@@ -137,7 +137,9 @@ bindings-kotlin-multiplatform: ios-universal kotlin
 	cp ../target/aarch64-apple-ios-sim/release/libbreez_sdk_bindings.a bindings-kotlin-multiplatform/breez-sdk-kmp/src/libs/ios-simulator-arm64/
 	cp ../target/x86_64-apple-ios/release/libbreez_sdk_bindings.a bindings-kotlin-multiplatform/breez-sdk-kmp/src/libs/ios-simulator-x64/
 	cd bindings-kotlin-multiplatform && ./gradlew :breez-sdk-kmp:assemble
-
+	
+react-native:
+	make -C bindings-react-native codegen
 
 .PHONY: ndk-home
 ndk-home:

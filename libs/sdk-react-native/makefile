@@ -14,11 +14,13 @@ ndk-home:
 		exit 1 ; \
 	fi
 
-all: android ios
+all: android ios react-native
 
-react-native-codegen:
-	cargo install breez-sdk-rn-generator --git https://github.com/breez/breez-sdk-rn-generator
-	breez-sdk-rn-generator -b ../sdk-bindings -o ./
+react-native:
+	make -C ../sdk-bindings react-native
+	cp -r ../sdk-bindings/bindings-react-native/android/* android/
+	cp -r ../sdk-bindings/bindings-react-native/ios/* ios/
+	cp -r ../sdk-bindings/bindings-react-native/ts/src/* src/
 
 android-make:
 	make -C ../sdk-bindings kotlin

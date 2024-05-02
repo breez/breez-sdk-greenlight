@@ -1,0 +1,6 @@
+[general]
+# Directories to search for templates, relative to the crate root.
+dirs = [ "src/gen_kotlin/templates", "src/gen_swift/templates", "src/gen_typescript/templates" ]
+
+[[syntax]]
+name = "rn"
