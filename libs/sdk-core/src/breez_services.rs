@@ -1787,7 +1787,7 @@ impl BreezServices {
                 let mut updated_channel = channel.clone();
                 updated_channel.closed_at = Some(processed_closed_at);
                 // If no closing txid found, we persist it as None, so it will be looked-up next time
-                updated_channel.closing_txid = maybe_closing_txid.clone();
+                updated_channel.closing_txid.clone_from(&maybe_closing_txid);
                 self.persister.insert_or_update_channel(updated_channel)?;
 
                 (processed_closed_at as i64, maybe_closing_txid)

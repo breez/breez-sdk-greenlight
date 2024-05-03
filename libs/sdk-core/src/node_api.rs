@@ -10,7 +10,7 @@ use crate::{
     invoice::InvoiceError,
     lightning_invoice::RawBolt11Invoice,
     persist::error::PersistError,
-    CustomMessage, MaxChannelAmount, NodeCredentials, Payment, PaymentResponse, Peer,
+    CustomMessage, MaxChannelAmount, NodeCredentials, Payment, PaymentResponse,
     PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, RouteHint, RouteHintHop,
     SyncResponse, TlvEntry,
 };
@@ -128,7 +128,6 @@ pub trait NodeAPI: Send + Sync {
         req: PrepareRedeemOnchainFundsRequest,
     ) -> NodeResult<PrepareRedeemOnchainFundsResponse>;
     async fn start_signer(&self, shutdown: mpsc::Receiver<()>);
-    async fn list_peers(&self) -> NodeResult<Vec<Peer>>;
     async fn connect_peer(&self, node_id: String, addr: String) -> NodeResult<()>;
     fn sign_invoice(&self, invoice: RawBolt11Invoice) -> NodeResult<String>;
     async fn close_peer_channels(&self, node_id: String) -> NodeResult<Vec<String>>;
