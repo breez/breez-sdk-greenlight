@@ -1824,8 +1824,8 @@ impl BreezServices {
     /// - a payment is received
     /// - a swap tx is confirmed
     ///
-    /// This method should be called once on startup and any time the `webhook_url` changes. For
-    /// example, if the `webhook_url` contains a push notification token and the token changes after
+    /// This method should be called every time the application is started and when the `webhook_url` changes.
+    /// For example, if the `webhook_url` contains a push notification token and the token changes after
     /// the application was started, then this method should be called to register for callbacks at
     /// the new correct `webhook_url`.
     pub async fn register_webhook(&self, webhook_url: String) -> SdkResult<()> {
