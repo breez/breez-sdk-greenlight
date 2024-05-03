@@ -189,6 +189,7 @@ mod persist;
 mod support;
 mod swap_in;
 mod swap_out;
+mod tonic_wrap;
 
 // Re-use crates from gl_client for consistency
 use gl_client::bitcoin;
