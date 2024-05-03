@@ -46,9 +46,9 @@ use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReve
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
 use crate::{
     parse_invoice, Config, CustomMessage, LNInvoice, MaxChannelAmount, NodeCredentials,
-    OpeningFeeParams, OpeningFeeParamsMenu, PaymentResponse, Peer,
-    PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, ReceivePaymentRequest,
-    ReverseSwapPairInfo, RouteHint, RouteHintHop, SwapInfo,
+    OpeningFeeParams, OpeningFeeParamsMenu, PaymentResponse, PrepareRedeemOnchainFundsRequest,
+    PrepareRedeemOnchainFundsResponse, ReceivePaymentRequest, ReverseSwapPairInfo, RouteHint,
+    RouteHintHop, SwapInfo,
 };
 
 pub const MOCK_REVERSE_SWAP_MIN: u64 = 50_000;
@@ -413,10 +413,6 @@ impl NodeAPI for MockNodeAPI {
     }
 
     async fn start_signer(&self, _shutdown: mpsc::Receiver<()>) {}
-
-    async fn list_peers(&self) -> NodeResult<Vec<Peer>> {
-        Ok(vec![])
-    }
 
     async fn connect_peer(&self, _node_id: String, _addr: String) -> NodeResult<()> {
         Ok(())

@@ -1245,18 +1245,6 @@ impl NodeAPI for Greenlight {
         }
     }
 
-    async fn list_peers(&self) -> NodeResult<Vec<Peer>> {
-        let mut client = self.get_node_client().await?;
-
-        let res: cln::ListpeersResponse = client
-            .list_peers(cln::ListpeersRequest::default())
-            .await?
-            .into_inner();
-
-        let peers_models: Vec<Peer> = res.peers.into_iter().map(|p| p.into()).collect();
-        Ok(peers_models)
-    }
-
     async fn connect_peer(&self, id: String, addr: String) -> NodeResult<()> {
         let mut client = self.get_node_client().await?;
         let connect_req = cln::ConnectRequest {

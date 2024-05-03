@@ -27,7 +27,9 @@ impl SqliteStorage {
                 let mut cloned_channel = c.clone();
                 if let Some(unwrapped_channel) = persisted_channel {
                     cloned_channel.closed_at = unwrapped_channel.closed_at;
-                    cloned_channel.closing_txid = unwrapped_channel.closing_txid.clone();
+                    cloned_channel
+                        .closing_txid
+                        .clone_from(&unwrapped_channel.closing_txid);
                 }
                 cloned_channel
             })
