@@ -94,3 +94,8 @@ fun errUnexpectedType(typeName: String): String {
 fun errUnexpectedValue(fieldName: String): String {
     return "Unexpected value for optional field ${fieldName}"
 }
+
+fun camelToUpperSnakeCase(str: String): String {
+    val pattern = "(?<=.)[A-Z]".toRegex()
+    return str.replace(pattern, "_$0").uppercase()
+}
