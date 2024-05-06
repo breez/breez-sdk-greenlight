@@ -3935,7 +3935,7 @@ fun asBreezEventList(arr: ReadableArray): List<BreezEvent> {
 }
 
 fun asBuyBitcoinProvider(type: String): BuyBitcoinProvider {
-    return BuyBitcoinProvider.valueOf(type.uppercase())
+    return BuyBitcoinProvider.valueOf(camelToUpperSnakeCase(type))
 }
 
 fun asBuyBitcoinProviderList(arr: ReadableArray): List<BuyBitcoinProvider> {
@@ -3950,7 +3950,7 @@ fun asBuyBitcoinProviderList(arr: ReadableArray): List<BuyBitcoinProvider> {
 }
 
 fun asChannelState(type: String): ChannelState {
-    return ChannelState.valueOf(type.uppercase())
+    return ChannelState.valueOf(camelToUpperSnakeCase(type))
 }
 
 fun asChannelStateList(arr: ReadableArray): List<ChannelState> {
@@ -3965,7 +3965,7 @@ fun asChannelStateList(arr: ReadableArray): List<ChannelState> {
 }
 
 fun asEnvironmentType(type: String): EnvironmentType {
-    return EnvironmentType.valueOf(type.uppercase())
+    return EnvironmentType.valueOf(camelToUpperSnakeCase(type))
 }
 
 fun asEnvironmentTypeList(arr: ReadableArray): List<EnvironmentType> {
@@ -3980,7 +3980,7 @@ fun asEnvironmentTypeList(arr: ReadableArray): List<EnvironmentType> {
 }
 
 fun asFeeratePreset(type: String): FeeratePreset {
-    return FeeratePreset.valueOf(type.uppercase())
+    return FeeratePreset.valueOf(camelToUpperSnakeCase(type))
 }
 
 fun asFeeratePresetList(arr: ReadableArray): List<FeeratePreset> {
@@ -3995,7 +3995,7 @@ fun asFeeratePresetList(arr: ReadableArray): List<FeeratePreset> {
 }
 
 fun asHealthCheckStatus(type: String): HealthCheckStatus {
-    return HealthCheckStatus.valueOf(type.uppercase())
+    return HealthCheckStatus.valueOf(camelToUpperSnakeCase(type))
 }
 
 fun asHealthCheckStatusList(arr: ReadableArray): List<HealthCheckStatus> {
@@ -4210,7 +4210,7 @@ fun asLnUrlWithdrawResultList(arr: ReadableArray): List<LnUrlWithdrawResult> {
 }
 
 fun asNetwork(type: String): Network {
-    return Network.valueOf(type.uppercase())
+    return Network.valueOf(camelToUpperSnakeCase(type))
 }
 
 fun asNetworkList(arr: ReadableArray): List<Network> {
@@ -4325,7 +4325,7 @@ fun asPaymentDetailsList(arr: ReadableArray): List<PaymentDetails> {
 }
 
 fun asPaymentStatus(type: String): PaymentStatus {
-    return PaymentStatus.valueOf(type.uppercase())
+    return PaymentStatus.valueOf(camelToUpperSnakeCase(type))
 }
 
 fun asPaymentStatusList(arr: ReadableArray): List<PaymentStatus> {
@@ -4340,7 +4340,7 @@ fun asPaymentStatusList(arr: ReadableArray): List<PaymentStatus> {
 }
 
 fun asPaymentType(type: String): PaymentType {
-    return PaymentType.valueOf(type.uppercase())
+    return PaymentType.valueOf(camelToUpperSnakeCase(type))
 }
 
 fun asPaymentTypeList(arr: ReadableArray): List<PaymentType> {
@@ -4355,7 +4355,7 @@ fun asPaymentTypeList(arr: ReadableArray): List<PaymentType> {
 }
 
 fun asPaymentTypeFilter(type: String): PaymentTypeFilter {
-    return PaymentTypeFilter.valueOf(type.uppercase())
+    return PaymentTypeFilter.valueOf(camelToUpperSnakeCase(type))
 }
 
 fun asPaymentTypeFilterList(arr: ReadableArray): List<PaymentTypeFilter> {
@@ -4401,7 +4401,7 @@ fun asReportIssueRequestList(arr: ReadableArray): List<ReportIssueRequest> {
 }
 
 fun asReverseSwapStatus(type: String): ReverseSwapStatus {
-    return ReverseSwapStatus.valueOf(type.uppercase())
+    return ReverseSwapStatus.valueOf(camelToUpperSnakeCase(type))
 }
 
 fun asReverseSwapStatusList(arr: ReadableArray): List<ReverseSwapStatus> {
@@ -4461,7 +4461,7 @@ fun asSuccessActionProcessedList(arr: ReadableArray): List<SuccessActionProcesse
 }
 
 fun asSwapAmountType(type: String): SwapAmountType {
-    return SwapAmountType.valueOf(type.uppercase())
+    return SwapAmountType.valueOf(camelToUpperSnakeCase(type))
 }
 
 fun asSwapAmountTypeList(arr: ReadableArray): List<SwapAmountType> {
@@ -4476,7 +4476,7 @@ fun asSwapAmountTypeList(arr: ReadableArray): List<SwapAmountType> {
 }
 
 fun asSwapStatus(type: String): SwapStatus {
-    return SwapStatus.valueOf(type.uppercase())
+    return SwapStatus.valueOf(camelToUpperSnakeCase(type))
 }
 
 fun asSwapStatusList(arr: ReadableArray): List<SwapStatus> {
@@ -4615,4 +4615,9 @@ fun errUnexpectedType(typeName: String): String {
 
 fun errUnexpectedValue(fieldName: String): String {
     return "Unexpected value for optional field $fieldName"
+}
+
+fun camelToUpperSnakeCase(str: String): String {
+    val pattern = "(?<=.)[A-Z]".toRegex()
+    return str.replace(pattern, "_$0").uppercase()
 }

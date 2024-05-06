@@ -2,7 +2,7 @@
 {%- if e.is_flat() %}
 
 fun as{{ type_name }}(type: String): {{ type_name }} {
-    return {{ type_name }}.valueOf(type.uppercase())
+    return {{ type_name }}.valueOf(camelToUpperSnakeCase(type))
 }
 
 {%- else %}
