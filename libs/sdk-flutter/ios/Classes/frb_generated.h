@@ -407,6 +407,7 @@ typedef struct wire_cst_ln_payment_details {
   struct wire_cst_list_prim_u_8_strict *open_channel_bolt11;
   struct wire_cst_success_action_processed *lnurl_success_action;
   struct wire_cst_list_prim_u_8_strict *lnurl_pay_domain;
+  struct wire_cst_list_prim_u_8_strict *lnurl_pay_comment;
   struct wire_cst_list_prim_u_8_strict *ln_address;
   struct wire_cst_list_prim_u_8_strict *lnurl_metadata;
   struct wire_cst_list_prim_u_8_strict *lnurl_withdraw_endpoint;
@@ -549,11 +550,12 @@ typedef struct wire_cst_payment_failed_data {
   struct wire_cst_list_prim_u_8_strict *error;
   struct wire_cst_list_prim_u_8_strict *node_id;
   struct wire_cst_ln_invoice *invoice;
+  struct wire_cst_list_prim_u_8_strict *label;
 } wire_cst_payment_failed_data;
 
 typedef struct wire_cst_symbol {
   struct wire_cst_list_prim_u_8_strict *grapheme;
-  struct wire_cst_list_prim_u_8_strict *template;
+  struct wire_cst_list_prim_u_8_strict *template_;
   bool *rtl;
   uint32_t *position;
 } wire_cst_symbol;
