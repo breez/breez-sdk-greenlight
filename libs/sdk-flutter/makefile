@@ -59,6 +59,7 @@ clean:
 ## bootstrap:
 .PHONY: bootstrap
 bootstrap:
+	rm -rf ./lib/generated/
 	flutter clean
 	cargo clean --package breez-sdk-core --manifest-path ../Cargo.toml
 	cargo install cargo-ndk
@@ -91,7 +92,7 @@ bootstrap:
 	lipo -create -output ios-sim-lipo/libbreez_sdk_core.a ../../target/aarch64-apple-ios-sim/debug/libbreez_sdk_core.a
 	lipo -create -output ios-sim-lipo/libbreez_sdk_core.a ../../target/x86_64-apple-darwin/debug/libbreez_sdk_core.a
 	lipo -create -output ios-sim-lipo/libbreez_sdk_core.a ../../target/aarch64-apple-darwin/debug/libbreez_sdk_core.a
-	xcodebuild -create-xcframework -library ios-sim-lipo/libbreez_sdk_core.a -headers ios/Classes/breez_sdk_core.h -output breez_sdk_core.xcframework
+	xcodebuild -create-xcframework -library ios-sim-lipo/libbreez_sdk_core.a -headers ../ios/Classes/breez_sdk_core.h -output breez_sdk_core.xcframework
 	zip -ry  breez_sdk_core.xcframework.zip breez_sdk_core.xcframework
 	rm -rf ios-sim-lipo
 	rm -rf breez_sdk_core.xcframework
