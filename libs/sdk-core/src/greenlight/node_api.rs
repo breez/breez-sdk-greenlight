@@ -2117,6 +2117,7 @@ impl From<cln::ListpeersPeersChannels> for Channel {
             state,
             funding_txid: c.funding_txid.map(hex::encode).unwrap_or_default(),
             spendable_msat: c.spendable_msat.unwrap_or_default().msat,
+            local_balance_msat: c.to_us_msat.unwrap_or_default().msat,
             receivable_msat: c.receivable_msat.unwrap_or_default().msat,
             closed_at: None,
             funding_outnum: c.funding_outnum,
@@ -2186,14 +2187,16 @@ impl TryFrom<ListclosedchannelsClosedchannels> for Channel {
 
         // To keep the conversion simple and fast, some closing-related fields (closed_at, closing_txid)
         // are left empty here in the conversion, but populated later (via chain service lookup, or DB lookup)
+        let local_balance_msat = c
+            .final_to_us_msat
+            .ok_or(anyhow!("final_to_us_msat is missing"))?
+            .msat;
         Ok(Channel {
             short_channel_id: c.short_channel_id,
             state: ChannelState::Closed,
             funding_txid: hex::encode(c.funding_txid),
-            spendable_msat: c
-                .final_to_us_msat
-                .ok_or(anyhow!("final_to_us_msat is missing"))?
-                .msat,
+            spendable_msat: local_balance_msat,
+            local_balance_msat,
             receivable_msat: 0,
             closed_at: None,
             funding_outnum: Some(c.funding_outnum),

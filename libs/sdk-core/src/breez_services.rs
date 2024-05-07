@@ -1798,7 +1798,7 @@ impl BreezServices {
             id: channel.funding_txid.clone(),
             payment_type: PaymentType::ClosedChannel,
             payment_time,
-            amount_msat: channel.spendable_msat,
+            amount_msat: channel.local_balance_msat,
             fee_msat: 0,
             status: match channel.state {
                 ChannelState::PendingClose => PaymentStatus::Pending,

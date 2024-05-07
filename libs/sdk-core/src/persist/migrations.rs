@@ -427,7 +427,11 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
        ALTER TABLE swaps_info ADD COLUMN total_incoming_txs INTEGER;
        UPDATE swaps_info SET status = 0;
        ",
-       "SELECT 1;"      
+       "SELECT 1;",
+       "
+        ALTER TABLE channels ADD COLUMN local_balance_msat INTEGER;
+        UPDATE channels SET local_balance_msat = spendable_msat;
+       "
     ]
 }
 

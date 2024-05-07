@@ -67,7 +67,7 @@ impl SqliteStorage {
     }
 
     pub(crate) fn get_connection(&self) -> PersistResult<Connection> {
-        let mut con = Connection::open(self.main_db_file.clone())?;
+        let con = Connection::open(self.main_db_file.clone())?;
         let sql = "ATTACH DATABASE ? AS sync;";
         con.execute(sql, [self.sync_db_file.clone()])?;
         // We want to notify any subscribers with hook events.
@@ -76,9 +76,6 @@ impl SqliteStorage {
             if action == Action::SQLITE_INSERT && db == "sync" {
                 _ = events_publisher.send(HookEvent::Insert { table: t.into() });
             }
-        }));
-        con.trace(Some(|sql| {
-            debug!("SQLite connection log: {}", sql);
         }));
         Ok(con)
     }
