@@ -44,10 +44,12 @@ gen: codegen && ffigen
 codegen:
 	mkdir -p ./lib/generated
 	flutter_rust_bridge_codegen generate
+	dart format -l 110 ./lib/generated
 
 # Generate FFI bindings
 ffigen:
 	flutter pub run ffigen --config ffigen.yaml
+	dart format -l 110 ./lib/breez_sdk_core_bindings_generated.dart
 
 # Builds local library
 build:
@@ -116,4 +118,4 @@ link:
 # Static code analysis
 check:
 	flutter analyze --fatal-infos .
-#	dart format -o none --set-exit-if-changed -l 110 .
+	dart format -o none --set-exit-if-changed -l 110 .
