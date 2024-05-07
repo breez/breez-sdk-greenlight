@@ -52,7 +52,7 @@ tonic = { version = "^0.8", features = [
 lazy_static = "^1.4.0"
 log = "0.4"
 once_cell = "1"
-openssl = { version = "0.10", features = ["vendored"]}
+openssl = { version = "0.10", features = ["vendored"] }
 strum = "0.25"
 strum_macros = "0.25"
 tempfile = "3"
