@@ -12,7 +12,7 @@ dependencies:
     sdk: flutter
   ### flutter_rust_bridge_codegen dependencies
   ffi: ^2.1.2 # requires Dart >=3.3.0(Flutter 3.19)
-  flutter_rust_bridge: '>= 2.0.0-dev.0 <=2.0.0-dev.32'
+  flutter_rust_bridge: 2.0.0-dev.33
   freezed_annotation: ^2.4.1
   ###
   rxdart: ^0.27.7
