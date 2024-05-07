@@ -1261,6 +1261,7 @@ pub struct Channel {
     pub short_channel_id: Option<String>,
     pub state: ChannelState,
     pub spendable_msat: u64,
+    pub local_balance_msat: u64,
     pub receivable_msat: u64,
     pub closed_at: Option<u64>,
     /// The output number of the funding tx which opened the channel
