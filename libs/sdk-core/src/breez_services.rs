@@ -1364,6 +1364,8 @@ impl BreezServices {
         // start the signer
         let (shutdown_signer_sender, signer_signer_receiver) = mpsc::channel(1);
         self.start_signer(signer_signer_receiver).await;
+        self.start_node_keep_alive(self.shutdown_receiver.clone())
+            .await;
 
         // Sync node state
         let sync_breez_services = self.clone();
@@ -1416,6 +1418,20 @@ impl BreezServices {
         tokio::spawn(async move {
             tokio::time::sleep(std::time::Duration::from_secs(2)).await;
             signer_api.node_api.start_signer(shutdown_receiver).await;
+        });
+    }
+
+    async fn start_node_keep_alive(
+        self: &Arc<BreezServices>,
+        shutdown_receiver: watch::Receiver<()>,
+    ) {
+        let signer_api = self.clone();
+        tokio::spawn(async move {
+            tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+            signer_api
+                .node_api
+                .start_keep_alive(shutdown_receiver)
+                .await;
         });
     }
 

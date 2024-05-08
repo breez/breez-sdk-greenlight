@@ -12,7 +12,7 @@ use rand::distributions::uniform::{SampleRange, SampleUniform};
 use rand::distributions::{Alphanumeric, DistString, Standard};
 use rand::rngs::OsRng;
 use rand::{random, Rng};
-use tokio::sync::{mpsc, Mutex};
+use tokio::sync::{mpsc, watch, Mutex};
 use tokio::time::sleep;
 use tokio_stream::Stream;
 use tokio_stream::StreamExt;
@@ -413,6 +413,8 @@ impl NodeAPI for MockNodeAPI {
     }
 
     async fn start_signer(&self, _shutdown: mpsc::Receiver<()>) {}
+
+    async fn start_keep_alive(&self, _shutdown: watch::Receiver<()>) {}
 
     async fn connect_peer(&self, _node_id: String, _addr: String) -> NodeResult<()> {
         Ok(())
