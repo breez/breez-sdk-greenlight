@@ -1425,13 +1425,9 @@ impl BreezServices {
         self: &Arc<BreezServices>,
         shutdown_receiver: watch::Receiver<()>,
     ) {
-        let signer_api = self.clone();
+        let cloned = self.clone();
         tokio::spawn(async move {
-            tokio::time::sleep(std::time::Duration::from_secs(2)).await;
-            signer_api
-                .node_api
-                .start_keep_alive(shutdown_receiver)
-                .await;
+            cloned.node_api.start_keep_alive(shutdown_receiver).await;
         });
     }
 
