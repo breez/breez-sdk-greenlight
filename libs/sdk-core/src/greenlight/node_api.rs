@@ -1266,30 +1266,37 @@ impl NodeAPI for Greenlight {
 
     async fn start_keep_alive(&self, mut shutdown: watch::Receiver<()>) {
         info!("keep alive started");
-        let mut client = self.get_node_client().await.unwrap();
         let mut interval = tokio::time::interval(Duration::from_secs(15));
         interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
         loop {
             tokio::select! {
-              _ = shutdown.changed() => {
-                info!("keep alive exited");
-                break;
-              }
-              _ = interval.tick() => {
-                let inprogress_payments = self.inprogress_payments.load(Ordering::Relaxed);
-                if inprogress_payments == 0 {
-                  continue
-                }
-                let res = client.getinfo(cln::GetinfoRequest {}).await;
-                match res {
-                  Ok(_) => {
-                    info!("keep alive ping sent, in progress payments: {inprogress_payments}");
+                  _ = shutdown.changed() => {
+                    info!("keep alive exited");
+                    break;
                   }
-                  Err(e) => {
-                    error!("keep alive ping failed: {e}");
+                  _ = interval.tick() => {
+                    let inprogress_payments = self.inprogress_payments.load(Ordering::Relaxed);
+                    if inprogress_payments == 0 {
+                      continue
+                    }
+                    let client_res = self.get_node_client().await;
+                    match client_res {
+                      Ok(mut client) => {
+                        let res = client.getinfo(cln::GetinfoRequest {}).await;
+                        match res {
+                          Ok(_) => {
+                            info!("keep alive ping sent, in progress payments: {inprogress_payments}");
+                          }
+                          Err(e) => {
+                            error!("keep alive ping failed: {e}");
+                          }
+                        }
+                      }
+                      Err(e) => {
+                        error!("keep alive ping failed to create client: {e}");
+                      }
+                    }
                   }
-                }
-              }
             }
         }
     }
