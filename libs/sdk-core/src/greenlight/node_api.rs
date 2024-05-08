@@ -2,12 +2,13 @@ use std::cmp::{min, Reverse};
 use std::iter::Iterator;
 use std::pin::Pin;
 use std::str::FromStr;
+use std::sync::atomic::{AtomicU16, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use anyhow::{anyhow, Result};
 use ecies::symmetric::{sym_decrypt, sym_encrypt};
-use futures::Stream;
+use futures::{Future, Stream};
 use gl_client::node::ClnClient;
 use gl_client::pb::cln::listinvoices_invoices::ListinvoicesInvoicesStatus;
 use gl_client::pb::cln::listpays_pays::ListpaysPaysStatus;
@@ -27,8 +28,8 @@ use gl_client::tls::TlsConfig;
 use gl_client::{node, utils};
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
-use tokio::sync::{mpsc, Mutex};
-use tokio::time::sleep;
+use tokio::sync::{mpsc, watch, Mutex};
+use tokio::time::{sleep, MissedTickBehavior};
 use tokio_stream::StreamExt;
 use tonic::transport::{Endpoint, Uri};
 use tonic::{Code, Streaming};
@@ -63,6 +64,7 @@ pub(crate) struct Greenlight {
     gl_client: Mutex<Option<node::Client>>,
     node_client: Mutex<Option<ClnClient>>,
     persister: Arc<SqliteStorage>,
+    inprogress_payments: AtomicU16,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -169,6 +171,7 @@ impl Greenlight {
             gl_client: Mutex::new(None),
             node_client: Mutex::new(None),
             persister,
+            inprogress_payments: AtomicU16::new(0),
         })
     }
 
@@ -763,6 +766,16 @@ impl Greenlight {
 
         Ok(max_per_channel)
     }
+
+    async fn with_keep_alive<T, F>(&self, f: F) -> T
+    where
+        F: Future<Output = T>,
+    {
+        _ = self.inprogress_payments.fetch_add(1, Ordering::Relaxed);
+        let res = f.await;
+        _ = self.inprogress_payments.fetch_sub(1, Ordering::Relaxed);
+        res
+    }
 }
 
 #[tonic::async_trait]
@@ -1059,13 +1072,13 @@ impl NodeAPI for Greenlight {
 
         // Now we wait for the first part to be completed as a way to wait for the payment
         // to complete.
-        let response = client
-            .wait_send_pay(WaitsendpayRequest {
+        let response = self
+            .with_keep_alive(client.wait_send_pay(WaitsendpayRequest {
                 payment_hash: hex::decode(invoice.payment_hash.clone())?,
                 partid: Some(1),
                 timeout: Some(self.sdk_config.payment_timeout_sec),
                 groupid: Some(group_id),
-            })
+            }))
             .await?
             .into_inner();
         Ok(PaymentResponse {
@@ -1107,7 +1120,10 @@ impl NodeAPI for Greenlight {
                 msat: self.sdk_config.exemptfee_msat,
             }),
         };
-        let result: cln::PayResponse = client.pay(request).await?.into_inner();
+        let result: cln::PayResponse = self
+            .with_keep_alive(client.pay(request))
+            .await?
+            .into_inner();
 
         // Before returning from send_payment we need to make sure it is persisted in the backend node.
         // We do so by polling for the payment.
@@ -1145,7 +1161,10 @@ impl NodeAPI for Greenlight {
             retry_for: Some(self.sdk_config.payment_timeout_sec),
             maxdelay: None,
         };
-        let result = client.key_send(request).await?.into_inner();
+        let result = self
+            .with_keep_alive(client.key_send(request))
+            .await?
+            .into_inner();
 
         // Before returning from send_payment we need to make sure it is persisted in the backend node.
         // We do so by polling for the payment.
@@ -1242,6 +1261,43 @@ impl NodeAPI for Greenlight {
         match self.run_forever(shutdown).await {
             Ok(_) => info!("signer exited gracefully"),
             Err(e) => error!("signer exited with error: {e}"),
+        }
+    }
+
+    async fn start_keep_alive(&self, mut shutdown: watch::Receiver<()>) {
+        info!("keep alive started");
+        let mut interval = tokio::time::interval(Duration::from_secs(15));
+        interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
+        loop {
+            tokio::select! {
+                  _ = shutdown.changed() => {
+                    info!("keep alive exited");
+                    break;
+                  }
+                  _ = interval.tick() => {
+                    let inprogress_payments = self.inprogress_payments.load(Ordering::Relaxed);
+                    if inprogress_payments == 0 {
+                      continue
+                    }
+                    let client_res = self.get_node_client().await;
+                    match client_res {
+                      Ok(mut client) => {
+                        let res = client.getinfo(cln::GetinfoRequest {}).await;
+                        match res {
+                          Ok(_) => {
+                            info!("keep alive ping sent, in progress payments: {inprogress_payments}");
+                          }
+                          Err(e) => {
+                            error!("keep alive ping failed: {e}");
+                          }
+                        }
+                      }
+                      Err(e) => {
+                        error!("keep alive ping failed to create client: {e}");
+                      }
+                    }
+                  }
+            }
         }
     }
 
