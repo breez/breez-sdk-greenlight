@@ -29,7 +29,7 @@ use gl_client::{node, utils};
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 use tokio::sync::{mpsc, watch, Mutex};
-use tokio::time::sleep;
+use tokio::time::{sleep, MissedTickBehavior};
 use tokio_stream::StreamExt;
 use tonic::transport::{Endpoint, Uri};
 use tonic::{Code, Streaming};
@@ -1268,6 +1268,7 @@ impl NodeAPI for Greenlight {
         info!("keep alive started");
         let mut client = self.get_node_client().await.unwrap();
         let mut interval = tokio::time::interval(Duration::from_secs(15));
+        interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
         loop {
             tokio::select! {
               _ = shutdown.changed() => {
