@@ -1,7 +1,7 @@
 use std::pin::Pin;
 
 use anyhow::Result;
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, watch};
 use tokio_stream::Stream;
 use tonic::Streaming;
 
@@ -128,6 +128,7 @@ pub trait NodeAPI: Send + Sync {
         req: PrepareRedeemOnchainFundsRequest,
     ) -> NodeResult<PrepareRedeemOnchainFundsResponse>;
     async fn start_signer(&self, shutdown: mpsc::Receiver<()>);
+    async fn start_keep_alive(&self, shutdown: watch::Receiver<()>);
     async fn connect_peer(&self, node_id: String, addr: String) -> NodeResult<()>;
     fn sign_invoice(&self, invoice: RawBolt11Invoice) -> NodeResult<String>;
     async fn close_peer_channels(&self, node_id: String) -> NodeResult<Vec<String>>;
