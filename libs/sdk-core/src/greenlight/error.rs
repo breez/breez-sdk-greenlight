@@ -154,15 +154,22 @@ impl From<SystemTimeError> for NodeError {
 
 impl From<tonic::Status> for NodeError {
     fn from(status: tonic::Status) -> Self {
-        match parse_cln_error(status.clone()) {
+        let wrapped_status = crate::tonic_wrap::Status(status.clone());
+        match parse_cln_error(status) {
             Ok(code) => match code {
                 // Pay errors
-                JsonRpcErrCode::PayInvoiceExpired => Self::InvoiceExpired(status.to_string()),
-                JsonRpcErrCode::PayTryOtherRoute | JsonRpcErrCode::PayRouteNotFound => {
-                    Self::RouteNotFound(status.to_string())
+                JsonRpcErrCode::PayInvoiceExpired => {
+                    Self::InvoiceExpired(wrapped_status.to_string())
                 }
-                JsonRpcErrCode::PayRouteTooExpensive => Self::RouteTooExpensive(status.to_string()),
-                JsonRpcErrCode::PayStoppedRetrying => Self::PaymentTimeout(status.to_string()),
+                JsonRpcErrCode::PayTryOtherRoute | JsonRpcErrCode::PayRouteNotFound => {
+                    Self::RouteNotFound(wrapped_status.to_string())
+                }
+                JsonRpcErrCode::PayRouteTooExpensive => {
+                    Self::RouteTooExpensive(wrapped_status.to_string())
+                }
+                JsonRpcErrCode::PayStoppedRetrying => {
+                    Self::PaymentTimeout(wrapped_status.to_string())
+                }
                 JsonRpcErrCode::PayRhashAlreadyUsed
                 | JsonRpcErrCode::PayUnparseableOnion
                 | JsonRpcErrCode::PayDestinationPermFail
@@ -172,21 +179,21 @@ impl From<tonic::Status> for NodeError {
                 | JsonRpcErrCode::PayInvoiceRequestInvalid
                 | JsonRpcErrCode::PayInvoicePreapprovalDeclined
                 | JsonRpcErrCode::PayKeysendPreapprovalDeclined => {
-                    Self::PaymentFailed(status.to_string())
+                    Self::PaymentFailed(wrapped_status.to_string())
                 }
                 // Invoice errors
                 JsonRpcErrCode::InvoiceExpiredDuringWait => {
-                    Self::InvoiceExpired(status.to_string())
+                    Self::InvoiceExpired(wrapped_status.to_string())
                 }
                 JsonRpcErrCode::InvoiceNoDescription => {
-                    Self::InvoiceNoDescription(status.to_string())
+                    Self::InvoiceNoDescription(wrapped_status.to_string())
                 }
                 JsonRpcErrCode::InvoicePreimageAlreadyExists => {
-                    Self::InvoicePreimageAlreadyExists(status.to_string())
+                    Self::InvoicePreimageAlreadyExists(wrapped_status.to_string())
                 }
-                _ => Self::Generic(status.to_string()),
+                _ => Self::Generic(wrapped_status.to_string()),
             },
-            _ => Self::Generic(status.to_string()),
+            _ => Self::Generic(wrapped_status.to_string()),
         }
     }
 }
