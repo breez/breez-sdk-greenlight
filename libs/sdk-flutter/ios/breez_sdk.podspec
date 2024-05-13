@@ -11,7 +11,7 @@ Pod::Spec.new do |s|
   s.license          = { :file => '../LICENSE' }
   s.author           = { 'Breez' => 'contact@breez.technology' }
   s.source           = { :path => '.' }
-  s.source_files = 'Classes/**/*'
+  s.source_files = 'Classes/**/*.{h,m,mm,swift}'
   s.on_demand_resources = { 
     'BreezSDK' => [
       'bindings-swift/Sources/BreezSDK/*.swift', 
