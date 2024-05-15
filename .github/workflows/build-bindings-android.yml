@@ -49,6 +49,15 @@ jobs:
         rustup target add ${{ matrix.target }}
         cargo install cargo-ndk
 
+    - name: Setup NDK
+      uses: nttld/setup-ndk@v1
+      id: setup-ndk
+      with:
+        ndk-version: r26d
+    
+    - name: Set ANDROID_NDK_HOME
+      run: echo "ANDROID_NDK_HOME=${{ steps.setup-ndk.outputs.ndk-path }}" >> "$GITHUB_ENV"
+
     - name: Install Protoc
       uses: arduino/setup-protoc@v2
       with:
