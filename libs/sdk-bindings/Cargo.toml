@@ -37,3 +37,4 @@ tonic = { version = "^0.8", features = [
 uniffi_build = { version = "0.23.0" }
 uniffi_bindgen = "0.23.0"
 anyhow = { version = "1.0.79", features = ["backtrace"] }
+glob = "0.3.1"

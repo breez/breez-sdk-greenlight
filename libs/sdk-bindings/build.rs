@@ -1,13 +1,12 @@
 use anyhow::*;
+use glob::glob;
 use std::env;
-use std::path::Path;
-
-const DEFAULT_CLANG_VERSION: &str = "17";
+use std::result::Result::Ok;
 
 /// Adds a temporary workaround for an issue with the Rust compiler and Android
 /// in x86_64 devices: https://github.com/rust-lang/rust/issues/109717.
 /// The workaround comes from: https://github.com/smartvaults/smartvaults/blob/827805a989561b78c0ea5b41f2c1c9e9e59545e0/bindings/smartvaults-sdk-ffi/build.rs
-fn setup_x86_64_android_workaround() {
+fn setup_x86_64_android_workaround() -> Result<()> {
     let target_os = env::var("CARGO_CFG_TARGET_OS").expect("CARGO_CFG_TARGET_OS not set");
     let target_arch = env::var("CARGO_CFG_TARGET_ARCH").expect("CARGO_CFG_TARGET_ARCH not set");
     if target_arch == "x86_64" && target_os == "android" {
@@ -20,23 +19,22 @@ fn setup_x86_64_android_workaround() {
                 "Unsupported OS. You must use either Linux, MacOS or Windows to build the crate."
             ),
         };
-        let clang_version =
-            env::var("NDK_CLANG_VERSION").unwrap_or_else(|_| DEFAULT_CLANG_VERSION.to_owned());
-        let linux_x86_64_lib_dir = format!(
-            "toolchains/llvm/prebuilt/{build_os}-x86_64/lib/clang/{clang_version}/lib/linux/"
+        let linux_x86_64_lib_pattern = format!(
+            "{android_ndk_home}/toolchains/llvm/prebuilt/{build_os}-x86_64/lib*/clang/**/lib/linux/"
         );
-        let linkpath = format!("{android_ndk_home}/{linux_x86_64_lib_dir}");
-        if Path::new(&linkpath).exists() {
-            println!("cargo:rustc-link-search={android_ndk_home}/{linux_x86_64_lib_dir}");
-            println!("cargo:rustc-link-lib=static=clang_rt.builtins-x86_64-android");
-        } else {
-            panic!("Path {linkpath} not exists. Try setting the NDK_CLANG_VERSION environment variable.");
+        match glob(&linux_x86_64_lib_pattern)?.last() {
+            Some(Ok(path)) => {
+                println!("cargo:rustc-link-search={}", path.to_string_lossy());
+                println!("cargo:rustc-link-lib=static=clang_rt.builtins-x86_64-android");    
+            },
+            _ => panic!("Path not found: {linux_x86_64_lib_pattern}. Try setting the NDK_CLANG_VERSION environment variable."),
         }
     }
+    Ok(())
 }
 
 fn main() -> Result<()> {
-    setup_x86_64_android_workaround();
+    setup_x86_64_android_workaround()?;
     uniffi_build::generate_scaffolding("./src/breez_sdk.udl").unwrap();
     Ok(())
 }
