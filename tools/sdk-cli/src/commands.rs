@@ -308,9 +308,7 @@ pub(crate) enum Commands {
     RegisterWebhook { url: String },
 
     /// [node-mgmt] Unregister a webhook URL.
-    UnregisterWebhook {
-        url: String,
-    },
+    UnregisterWebhook { url: String },
 
     /// [buy] Generates an URL to buy bitcoin from a 3rd party provider
     BuyBitcoin { provider: BuyBitcoinProvider },

@@ -1886,20 +1886,8 @@ impl BreezServices {
     /// To register a webhook call [BreezServices::register_webhook].
     pub async fn unregister_webhook(&self, webhook_url: String) -> SdkResult<()> {
         info!("Unregistering for webhook notifications");
-        for swap in self
-            .btc_receive_swapper
-            .list_monitored()?
-            .iter()
-            .filter(|swap| !swap.refundable())
-        {
-            let swap_address = &swap.bitcoin_address;
-            info!("Found a not yet refundable monitored swap with address {swap_address}, unregistering for swap tx notifications");
-            self.unregister_swap_tx_notification(swap_address, &webhook_url)
-                .await?;
-        }
-
-        self.unregister_payment_notifications(webhook_url.clone())
-            .await?;
+        self.unregister_swap_tx_notifications(&webhook_url).await?;
+        self.unregister_payment_notifications(webhook_url).await?;
         self.persister.remove_webhook_url()?;
         Ok(())
     }
@@ -1922,6 +1910,7 @@ impl BreezServices {
         Ok(())
     }
 
+    /// Unregisters lightning payment notifications with the current LSP for the `webhook_url`.
     async fn unregister_payment_notifications(&self, webhook_url: String) -> SdkResult<()> {
         let message = webhook_url.clone();
         let sign_request = SignMessageRequest { message };
@@ -1945,30 +1934,8 @@ impl BreezServices {
         swap_address: &str,
         webhook_url: &str,
     ) -> SdkResult<()> {
-        self.update_swap_tx_notification("/api/v1/register", swap_address, webhook_url)
-            .await
-    }
-
-    async fn unregister_swap_tx_notification(
-        &self,
-        swap_address: &str,
-        webhook_url: &str,
-    ) -> SdkResult<()> {
-        self.update_swap_tx_notification("/api/v1/unregister", swap_address, webhook_url)
-            .await
-    }
-
-    async fn update_swap_tx_notification(
-        &self,
-        chainnotifier_api_path: &str,
-        swap_address: &str,
-        webhook_url: &str,
-    ) -> SdkResult<()> {
         get_reqwest_client()?
-            .post(format!(
-                "{}{}",
-                self.config.chainnotifier_url, chainnotifier_api_path
-            ))
+            .post(format!("{}/api/v1/register", self.config.chainnotifier_url))
             .header(CONTENT_TYPE, "application/json")
             .body(Body::from(
                 json!({
@@ -1981,7 +1948,29 @@ impl BreezServices {
             .await
             .map(|_| ())
             .map_err(|e| SdkError::ServiceConnectivity {
-                err: format!("Failed to update swap tx notifications: {e}"),
+                err: format!("Failed to register for tx confirmation notifications: {e}"),
+            })
+    }
+
+    /// Unregisters all swap tx notifications for the `webhook_url`.
+    async fn unregister_swap_tx_notifications(&self, webhook_url: &str) -> SdkResult<()> {
+        get_reqwest_client()?
+            .post(format!(
+                "{}/api/v1/unregister",
+                self.config.chainnotifier_url
+            ))
+            .header(CONTENT_TYPE, "application/json")
+            .body(Body::from(
+                json!({
+                    "webhook": webhook_url
+                })
+                .to_string(),
+            ))
+            .send()
+            .await
+            .map(|_| ())
+            .map_err(|e| SdkError::ServiceConnectivity {
+                err: format!("Failed to unregister for tx confirmation notifications: {e}"),
             })
     }
 
