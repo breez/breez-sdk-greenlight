@@ -92,6 +92,7 @@ service InactiveNotifier {
 
 service PaymentNotifier {
   rpc RegisterPaymentNotification(RegisterPaymentNotificationRequest) returns (RegisterPaymentNotificationResponse) {}
+  rpc RemovePaymentNotification(RemovePaymentNotificationRequest) returns (RemovePaymentNotificationResponse) {}
 }
 
 service Signer {
@@ -122,6 +123,14 @@ message RegisterPaymentNotificationRequest {
 }
 
 message RegisterPaymentNotificationResponse {
+}
+
+message RemovePaymentNotificationRequest {
+  string lsp_id = 1;
+  bytes blob = 2;
+}
+
+message RemovePaymentNotificationResponse {
 }
 
 message ReceiverInfoRequest {}
@@ -464,3 +473,11 @@ message SubscribeNotificationsRequest {
 }
 
 message SubscribeNotificationsReply {}
+
+message UnsubscribeNotificationsRequest {
+  string url = 1;
+  string signature = 2;
+}
+
+message UnsubscribeNotificationsReply {
+}

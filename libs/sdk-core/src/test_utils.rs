@@ -29,7 +29,7 @@ use crate::breez_services::{OpenChannelParams, Receiver};
 use crate::chain::{ChainService, OnchainTx, Outspend, RecommendedFees, TxStatus};
 use crate::error::{ReceivePaymentError, SdkError, SdkResult};
 use crate::fiat::{FiatCurrency, Rate};
-use crate::grpc::{PaymentInformation, RegisterPaymentNotificationResponse, RegisterPaymentReply};
+use crate::grpc::{PaymentInformation, RegisterPaymentNotificationResponse, RegisterPaymentReply, RemovePaymentNotificationResponse};
 use crate::invoice::{InvoiceError, InvoiceResult};
 use crate::lightning::ln::PaymentSecret;
 use crate::lightning_invoice::{Currency, InvoiceBuilder, RawBolt11Invoice};
@@ -663,6 +663,16 @@ impl LspAPI for MockBreezServer {
         _webhook_url_signature: String,
     ) -> SdkResult<RegisterPaymentNotificationResponse> {
         Ok(RegisterPaymentNotificationResponse {})
+    }
+
+    async fn unregister_payment_notifications(
+        &self,
+        _lsp_id: String,
+        _lsp_pubkey: Vec<u8>,
+        _webhook_url: String,
+        _webhook_url_signature: String,
+    ) -> SdkResult<RemovePaymentNotificationResponse> {
+        Ok(RemovePaymentNotificationResponse {})
     }
 
     async fn register_payment(

@@ -336,6 +336,8 @@ void wire_close_lsp_channels(int64_t port_);
 
 void wire_register_webhook(int64_t port_, struct wire_uint_8_list *webhook_url);
 
+void wire_unregister_webhook(int64_t port_, struct wire_uint_8_list *webhook_url);
+
 void wire_backup(int64_t port_);
 
 void wire_backup_status(int64_t port_);
@@ -519,6 +521,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_lsp_info);
     dummy_var ^= ((int64_t) (void*) wire_close_lsp_channels);
     dummy_var ^= ((int64_t) (void*) wire_register_webhook);
+    dummy_var ^= ((int64_t) (void*) wire_unregister_webhook);
     dummy_var ^= ((int64_t) (void*) wire_backup);
     dummy_var ^= ((int64_t) (void*) wire_backup_status);
     dummy_var ^= ((int64_t) (void*) wire_parse_invoice);

@@ -599,6 +599,10 @@ pub(crate) async fn handle_command(
             sdk()?.register_webhook(url).await?;
             Ok("Url registered successfully".into())
         }
+        Commands::UnregisterWebhook { url } => {
+            sdk()?.unregister_webhook(url).await?;
+            Ok("Url unregistered successfully".into())
+        }
     }
 }
 

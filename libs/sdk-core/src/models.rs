@@ -22,7 +22,7 @@ use crate::error::SdkResult;
 use crate::fiat::{FiatCurrency, Rate};
 use crate::grpc::{
     self, GetReverseRoutingNodeRequest, PaymentInformation, RegisterPaymentNotificationResponse,
-    RegisterPaymentReply,
+    RegisterPaymentReply, RemovePaymentNotificationResponse,
 };
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lsp::LspInformation;
@@ -71,6 +71,17 @@ pub trait LspAPI: Send + Sync {
         webhook_url: String,
         webhook_url_signature: String,
     ) -> SdkResult<RegisterPaymentNotificationResponse>;
+
+    /// Unregister for webhook callbacks for the given `webhook_url`
+    async fn unregister_payment_notifications(
+        &self,
+        lsp_id: String,
+        lsp_pubkey: Vec<u8>,
+        webhook_url: String,
+        webhook_url_signature: String,
+    ) -> SdkResult<RemovePaymentNotificationResponse>;
+
+    /// Register a payment to open a new channel with the LSP
     async fn register_payment(
         &self,
         lsp_id: String,

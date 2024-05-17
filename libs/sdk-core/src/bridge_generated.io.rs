@@ -117,6 +117,11 @@ pub extern "C" fn wire_register_webhook(port_: i64, webhook_url: *mut wire_uint_
 }
 
 #[no_mangle]
+pub extern "C" fn wire_unregister_webhook(port_: i64, webhook_url: *mut wire_uint_8_list) {
+    wire_unregister_webhook_impl(port_, webhook_url)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_backup(port_: i64) {
     wire_backup_impl(port_)
 }

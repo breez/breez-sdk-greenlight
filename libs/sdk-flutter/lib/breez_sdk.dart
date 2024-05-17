@@ -99,6 +99,11 @@ class BreezSDK {
     return _lnToolkit.registerWebhook(webhookUrl: webhookUrl);
   }
 
+  /// Unregister webhook callbacks for the given `webhook_url`.
+  Future<void> unregisterWebhook({required String webhookUrl}) async {
+    return _lnToolkit.unregisterWebhook(webhookUrl: webhookUrl);
+  }
+
   /// connect initializes the global NodeService, schedule the node to run in the cloud and
   /// run the signer. This must be called in order to start communicate with the node
   ///
