@@ -100,6 +100,9 @@ Future<void> closeLspChannels({dynamic hint}) => BreezSdkBindings.instance.api.c
 Future<void> registerWebhook({required String webhookUrl, dynamic hint}) =>
     BreezSdkBindings.instance.api.registerWebhook(webhookUrl: webhookUrl, hint: hint);
 
+Future<void> unregisterWebhook({required String webhookUrl, dynamic hint}) =>
+    BreezSdkBindings.instance.api.unregisterWebhook(webhookUrl: webhookUrl, hint: hint);
+
 /// See [BreezServices::backup]
 Future<void> backup({dynamic hint}) => BreezSdkBindings.instance.api.backup(hint: hint);
 
