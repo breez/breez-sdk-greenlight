@@ -3611,6 +3611,14 @@ pub extern "C" fn frbgen_breez_sdk_wire__crate__binding__sync(port_: i64) {
 }
 
 #[no_mangle]
+pub extern "C" fn frbgen_breez_sdk_wire__crate__binding__unregister_webhook(
+    port_: i64,
+    webhook_url: *mut wire_cst_list_prim_u_8_strict,
+) {
+    wire__crate__binding__unregister_webhook_impl(port_, webhook_url)
+}
+
+#[no_mangle]
 pub extern "C" fn frbgen_breez_sdk_cst_new_box_autoadd_aes_success_action_data_decrypted(
 ) -> *mut wire_cst_aes_success_action_data_decrypted {
     flutter_rust_bridge::for_generated::new_leak_box_ptr(

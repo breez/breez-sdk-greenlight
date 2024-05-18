@@ -61,7 +61,7 @@ class BreezSdkBindings
   String get codegenVersion => '2.0.0-dev.34';
 
   @override
-  int get rustContentHash => -924313952;
+  int get rustContentHash => 1499828454;
 
   static const kDefaultExternalLibraryLoaderConfig = ExternalLibraryLoaderConfig(
     stem: 'breez_sdk_core',
@@ -201,6 +201,8 @@ abstract class BreezSdkBindingsApi extends BaseApi {
   Future<StaticBackupResponse> crateBindingStaticBackup({required StaticBackupRequest req, dynamic hint});
 
   Future<void> crateBindingSync({dynamic hint});
+
+  Future<void> crateBindingUnregisterWebhook({required String webhookUrl, dynamic hint});
 }
 
 class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements BreezSdkBindingsApi {
@@ -1586,6 +1588,29 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   TaskConstMeta get kCrateBindingSyncConstMeta => const TaskConstMeta(
         debugName: "sync",
         argNames: [],
+      );
+
+  @override
+  Future<void> crateBindingUnregisterWebhook({required String webhookUrl, dynamic hint}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        var arg0 = cst_encode_String(webhookUrl);
+        return wire.wire__crate__binding__unregister_webhook(port_, arg0);
+      },
+      codec: DcoCodec(
+        decodeSuccessData: dco_decode_unit,
+        decodeErrorData: dco_decode_AnyhowException,
+      ),
+      constMeta: kCrateBindingUnregisterWebhookConstMeta,
+      argValues: [webhookUrl],
+      apiImpl: this,
+      hint: hint,
+    ));
+  }
+
+  TaskConstMeta get kCrateBindingUnregisterWebhookConstMeta => const TaskConstMeta(
+        debugName: "unregister_webhook",
+        argNames: ["webhookUrl"],
       );
 
   @protected

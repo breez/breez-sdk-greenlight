@@ -581,6 +581,7 @@ dependencies = [
  "breez-sdk-core",
  "camino",
  "flutter_rust_bridge",
+ "glob",
  "log",
  "once_cell",
  "thiserror",
