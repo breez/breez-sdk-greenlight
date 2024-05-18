@@ -1043,6 +1043,9 @@ void frbgen_breez_sdk_wire_static_backup(int64_t port_, struct wire_cst_static_b
 
 void frbgen_breez_sdk_wire_sync(int64_t port_);
 
+void frbgen_breez_sdk_wire_unregister_webhook(int64_t port_,
+                                              struct wire_cst_list_prim_u_8_strict *webhook_url);
+
 struct wire_cst_aes_success_action_data_decrypted *frbgen_breez_sdk_cst_new_box_autoadd_aes_success_action_data_decrypted(void);
 
 struct wire_cst_aes_success_action_data_result *frbgen_breez_sdk_cst_new_box_autoadd_aes_success_action_data_result(void);
@@ -1326,6 +1329,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire_sign_message);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire_static_backup);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire_sync);
+    dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire_unregister_webhook);
     dummy_var ^= ((int64_t) (void*) store_dart_post_cobject);
     return dummy_var;
 }
