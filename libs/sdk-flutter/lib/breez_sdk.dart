@@ -34,15 +34,18 @@ class BreezSDK {
     }
   }
 
+  /* SDK Streams */
+
   /// Initializes SDK events & log streams
-  void initialize() {
-    _initializeEventsStream();
-    _initializeLogStream();
+  Future<void> initialize() async {
+    await _initializeEventsStream();
+    await _initializeLogStream();
   }
 
   /// Listen to BreezEvent's(new block, invoice paid, synced)
-  void _initializeEventsStream() {
-    binding.breezEventsStream().listen((event) async {
+  Future<void> _initializeEventsStream() async {
+    final Stream<BreezEvent> breezEventStream = await binding.breezEventsStream();
+    breezEventStream.listen((event) async {
       if (event is BreezEvent_InvoicePaid) {
         _invoicePaidStream.add(event.details);
         await fetchNodeData();
@@ -72,7 +75,7 @@ class BreezSDK {
   }
 
   /// Listen to node logs
-  void _initializeLogStream() {
+  Future<void> _initializeLogStream() async {
     if (defaultTargetPlatform == TargetPlatform.android) {
       const EventChannel('breez_sdk_node_logs')
           .receiveBroadcastStream()
@@ -82,7 +85,8 @@ class BreezSDK {
             onError: (e) => _logStreamController.addError(e),
           );
     } else {
-      binding.breezLogStream().listen((logEntry) {
+      final Stream<LogEntry> breezLogStream = await binding.breezLogStream();
+      breezLogStream.listen((logEntry) {
         _logStreamController.add(logEntry);
       }, onError: (e) {
         _logStreamController.addError(e);
