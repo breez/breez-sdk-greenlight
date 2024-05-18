@@ -5044,6 +5044,22 @@ class BreezSdkBindingsWire implements BaseWire {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('frbgen_breez_sdk_wire_sync');
   late final _wire_sync = _wire_syncPtr.asFunction<void Function(int)>();
 
+  void wire_unregister_webhook(
+    int port_,
+    ffi.Pointer<wire_cst_list_prim_u_8_strict> webhook_url,
+  ) {
+    return _wire_unregister_webhook(
+      port_,
+      webhook_url,
+    );
+  }
+
+  late final _wire_unregister_webhookPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_cst_list_prim_u_8_strict>)>>(
+          'frbgen_breez_sdk_wire_unregister_webhook');
+  late final _wire_unregister_webhook = _wire_unregister_webhookPtr
+      .asFunction<void Function(int, ffi.Pointer<wire_cst_list_prim_u_8_strict>)>();
+
   ffi.Pointer<wire_cst_aes_success_action_data_decrypted>
       cst_new_box_autoadd_aes_success_action_data_decrypted() {
     return _cst_new_box_autoadd_aes_success_action_data_decrypted();
@@ -5894,12 +5910,9 @@ class BreezSdkBindingsWire implements BaseWire {
       _dummy_method_to_enforce_bundlingPtr.asFunction<int Function()>();
 }
 
-typedef DartPostCObjectFnType = ffi.Pointer<ffi.NativeFunction<DartPostCObjectFnTypeFunction>>;
-typedef DartPostCObjectFnTypeFunction = ffi.Bool Function(DartPort port_id, ffi.Pointer<ffi.Void> message);
-typedef DartDartPostCObjectFnTypeFunction = bool Function(
-    DartDartPort port_id, ffi.Pointer<ffi.Void> message);
+typedef DartPostCObjectFnType
+    = ffi.Pointer<ffi.NativeFunction<ffi.Bool Function(DartPort port_id, ffi.Pointer<ffi.Void> message)>>;
 typedef DartPort = ffi.Int64;
-typedef DartDartPort = int;
 
 final class wire_cst_list_prim_u_8_strict extends ffi.Struct {
   external ffi.Pointer<ffi.Uint8> ptr;
