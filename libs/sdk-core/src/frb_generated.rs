@@ -31,7 +31,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueNom,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.0.0-dev.33";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -924313952;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1499828454;
 
 // Section: executor
 
@@ -920,6 +920,26 @@ fn wire_sync_impl(port_: flutter_rust_bridge::for_generated::MessagePort) {
             mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
         },
         move || move |context| transform_result_dco((move || crate::binding::sync())()),
+    )
+}
+fn wire_unregister_webhook_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    webhook_url: impl CstDecode<String>,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::DcoCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "unregister_webhook",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let api_webhook_url = webhook_url.cst_decode();
+            move |context| {
+                transform_result_dco((move || {
+                    crate::binding::unregister_webhook(api_webhook_url)
+                })())
+            }
+        },
     )
 }
 
