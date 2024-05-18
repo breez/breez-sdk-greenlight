@@ -136,7 +136,7 @@ pub fn disconnect() -> Result<()> {
     block_on(async {
         // To avoid deadlock: first disconnect SDK, then acquire lock and unset global instance
 
-        /// Only attempt to disconnect if there's a running BreezServices instance
+        // Only attempt to disconnect if there's a running BreezServices instance
         let breez_services = match get_breez_services().await {
             Ok(services) => services,
             Err(_) => return Ok(()), // No running BreezServices instance, return early
