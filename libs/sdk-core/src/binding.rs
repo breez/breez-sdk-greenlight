@@ -146,6 +146,16 @@ pub fn disconnect() -> Result<()> {
         let mut locked_sdk_instance = BREEZ_SERVICES_INSTANCE.lock().await;
         *locked_sdk_instance = None;
 
+        // Unset notification and log streams
+        let mut notif_stream = NOTIFICATION_STREAM.lock().await;
+        *notif_stream = None;
+        let mut log_stream = LOG_STREAM.lock().await;
+        *log_stream = None;
+
+        // Clear the event listener
+        let mut listener = EVENT_LISTENER.lock().await;
+        *listener = None;
+
         Ok(())
     })
     .map_err(anyhow::Error::new::<SdkError>)
