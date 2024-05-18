@@ -13,8 +13,9 @@
 use std::future::Future;
 use std::sync::Arc;
 
-use anyhow::{anyhow, Result};
 use crate::frb_generated::StreamSink;
+use anyhow::Result;
+use flutter_rust_bridge::frb;
 use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
 use tokio::sync::Mutex;
@@ -47,18 +48,26 @@ use crate::{
     SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
 };
 
+use lazy_static::lazy_static;
+
 /*
 The format Lazy<Mutex<Option<...>>> for the following variables allows them to be instance-global,
 meaning they can be set only once per instance, but calling disconnect() will unset them.
  */
 static BREEZ_SERVICES_INSTANCE: Lazy<Mutex<Option<Arc<BreezServices>>>> =
     Lazy::new(|| Mutex::new(None));
-static NOTIFICATION_STREAM: OnceCell<StreamSink<BreezEvent>> = OnceCell::new();
+static NOTIFICATION_STREAM: Lazy<Arc<Mutex<Option<StreamSink<BreezEvent>>>>> =
+    Lazy::new(|| Arc::new(Mutex::new(None)));
 static LOG_STREAM: Lazy<Arc<Mutex<Option<StreamSink<LogEntry>>>>> =
     Lazy::new(|| Arc::new(Mutex::new(None)));
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
 
 static LOG_INIT: OnceCell<()> = OnceCell::new();
+
+lazy_static! {
+    static ref EVENT_LISTENER: Arc<Mutex<Option<BindingEventListener>>> =
+        Arc::new(Mutex::new(None));
+}
 
 /*  Breez Services API's */
 
@@ -68,8 +77,11 @@ pub fn connect(req: ConnectRequest) -> Result<()> {
         let mut locked = BREEZ_SERVICES_INSTANCE.lock().await;
         match *locked {
             None => {
-                let breez_services =
-                    BreezServices::connect(req, Box::new(BindingEventListener {})).await?;
+                let listener = BindingEventListener {
+                    stream: Arc::clone(&NOTIFICATION_STREAM),
+                };
+                *EVENT_LISTENER.lock().await = Some(listener.clone());
+                let breez_services = BreezServices::connect(req, Box::new(listener)).await?;
 
                 *locked = Some(breez_services);
                 Ok(())
@@ -180,11 +192,18 @@ pub fn service_health_check(api_key: String) -> Result<ServiceHealthCheckRespons
 
 /*  Stream API's */
 
-/// If used, this must be called before `connect`. It can only be called once.
-pub fn breez_events_stream(s: StreamSink<BreezEvent>) -> Result<()> {
-    NOTIFICATION_STREAM
-        .set(s)
-        .map_err(|_| anyhow!("Events stream already created"))?;
+/// If used, this must be called before `connect`.
+#[frb(stream_dart_await)]
+pub async fn breez_events_stream(s: StreamSink<BreezEvent>) -> Result<()> {
+    let mut stream = NOTIFICATION_STREAM.lock().await;
+    *stream = Some(s.clone());
+
+    // Update the listener's stream if it exists
+    if let Some(listener) = &*EVENT_LISTENER.lock().await {
+        let mut listener_stream = listener.stream.lock().await;
+        *listener_stream = Some(s);
+    }
+
     Ok(())
 }
 
@@ -548,13 +567,20 @@ pub fn generate_diagnostic_data() -> Result<String> {
 
 /*  Binding Related Logic */
 
-struct BindingEventListener;
+#[derive(Clone)]
+struct BindingEventListener {
+    stream: Arc<Mutex<Option<StreamSink<BreezEvent>>>>,
+}
 
 impl EventListener for BindingEventListener {
     fn on_event(&self, e: BreezEvent) {
-        if let Some(stream) = NOTIFICATION_STREAM.get() {
-            let _ = stream.add(e);
-        }
+        let stream = Arc::clone(&self.stream);
+        tokio::spawn(async move {
+            let stream = stream.lock().await;
+            if let Some(ref stream) = *stream {
+                let _ = stream.add(e);
+            }
+        });
     }
 }
 
