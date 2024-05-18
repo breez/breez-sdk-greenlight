@@ -120,7 +120,14 @@ pub fn configure_node(req: ConfigureNodeRequest) -> Result<()> {
 pub fn disconnect() -> Result<()> {
     block_on(async {
         // To avoid deadlock: first disconnect SDK, then acquire lock and unset global instance
-        get_breez_services().await?.disconnect().await?;
+
+        /// Only attempt to disconnect if there's a running BreezServices instance
+        let breez_services = match get_breez_services().await {
+            Ok(services) => services,
+            Err(_) => return Ok(()), // No running BreezServices instance, return early
+        };
+
+        breez_services.disconnect().await?;
         let mut locked_sdk_instance = BREEZ_SERVICES_INSTANCE.lock().await;
         *locked_sdk_instance = None;
 
