@@ -56,7 +56,7 @@ meaning they can be set only once per instance, but calling disconnect() will un
  */
 static BREEZ_SERVICES_INSTANCE: Lazy<Mutex<Option<Arc<BreezServices>>>> =
     Lazy::new(|| Mutex::new(None));
-static NOTIFICATION_STREAM: Lazy<Arc<Mutex<Option<StreamSink<BreezEvent>>>>> =
+static BREEZ_EVENT_STREAM: Lazy<Arc<Mutex<Option<StreamSink<BreezEvent>>>>> =
     Lazy::new(|| Arc::new(Mutex::new(None)));
 static LOG_STREAM: Lazy<Arc<Mutex<Option<StreamSink<LogEntry>>>>> =
     Lazy::new(|| Arc::new(Mutex::new(None)));
@@ -78,7 +78,7 @@ pub fn connect(req: ConnectRequest) -> Result<()> {
         match *locked {
             None => {
                 let listener = BindingEventListener {
-                    stream: Arc::clone(&NOTIFICATION_STREAM),
+                    stream: Arc::clone(&BREEZ_EVENT_STREAM),
                 };
                 *EVENT_LISTENER.lock().await = Some(listener.clone());
                 let breez_services = BreezServices::connect(req, Box::new(listener)).await?;
@@ -146,9 +146,9 @@ pub fn disconnect() -> Result<()> {
         let mut locked_sdk_instance = BREEZ_SERVICES_INSTANCE.lock().await;
         *locked_sdk_instance = None;
 
-        // Unset notification and log streams
-        let mut notif_stream = NOTIFICATION_STREAM.lock().await;
-        *notif_stream = None;
+        // Unset breez event and log streams
+        let mut breez_event_stream = BREEZ_EVENT_STREAM.lock().await;
+        *breez_event_stream = None;
         let mut log_stream = LOG_STREAM.lock().await;
         *log_stream = None;
 
@@ -205,7 +205,7 @@ pub fn service_health_check(api_key: String) -> Result<ServiceHealthCheckRespons
 /// If used, this must be called before `connect`.
 #[frb(stream_dart_await)]
 pub async fn breez_events_stream(s: StreamSink<BreezEvent>) -> Result<()> {
-    let mut stream = NOTIFICATION_STREAM.lock().await;
+    let mut stream = BREEZ_EVENT_STREAM.lock().await;
     *stream = Some(s.clone());
 
     // Update the listener's stream if it exists
@@ -228,7 +228,6 @@ pub async fn breez_log_stream(s: StreamSink<LogEntry>) -> Result<()> {
     if LOG_INIT.get().is_none() {
         BindingLogger::init(Arc::clone(&LOG_STREAM));
     }
-   
 
     Ok(())
 }
