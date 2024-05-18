@@ -54,8 +54,11 @@ meaning they can be set only once per instance, but calling disconnect() will un
 static BREEZ_SERVICES_INSTANCE: Lazy<Mutex<Option<Arc<BreezServices>>>> =
     Lazy::new(|| Mutex::new(None));
 static NOTIFICATION_STREAM: OnceCell<StreamSink<BreezEvent>> = OnceCell::new();
+static LOG_STREAM: Lazy<Arc<Mutex<Option<StreamSink<LogEntry>>>>> =
+    Lazy::new(|| Arc::new(Mutex::new(None)));
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
-static LOG_INIT: OnceCell<bool> = OnceCell::new();
+
+static LOG_INIT: OnceCell<()> = OnceCell::new();
 
 /*  Breez Services API's */
 
@@ -185,12 +188,19 @@ pub fn breez_events_stream(s: StreamSink<BreezEvent>) -> Result<()> {
     Ok(())
 }
 
-/// If used, this must be called before `connect`. It can only be called once.
-pub fn breez_log_stream(s: StreamSink<LogEntry>) -> Result<()> {
-    LOG_INIT
-        .set(true)
-        .map_err(|_| anyhow!("Log stream already created"))?;
-    BindingLogger::init(s);
+/// If used, this must be called before `connect`.
+#[frb(stream_dart_await)]
+pub async fn breez_log_stream(s: StreamSink<LogEntry>) -> Result<()> {
+    let mut stream = LOG_STREAM.lock().await;
+    *stream = Some(s);
+
+    // Use stream on global logger
+    // TODO: Update the stream if it exists
+    if LOG_INIT.get().is_none() {
+        BindingLogger::init(Arc::clone(&LOG_STREAM));
+    }
+   
+
     Ok(())
 }
 
@@ -549,14 +559,17 @@ impl EventListener for BindingEventListener {
 }
 
 struct BindingLogger {
-    log_stream: StreamSink<LogEntry>,
+    log_stream: Arc<Mutex<Option<StreamSink<LogEntry>>>>,
 }
 
 impl BindingLogger {
-    fn init(log_stream: StreamSink<LogEntry>) {
-        let binding_logger = BindingLogger { log_stream };
-        log::set_boxed_logger(Box::new(binding_logger)).unwrap();
-        log::set_max_level(LevelFilter::Trace);
+    fn init(log_stream: Arc<Mutex<Option<StreamSink<LogEntry>>>>) {
+        if LOG_INIT.get().is_none() {
+            let binding_logger = BindingLogger { log_stream };
+            log::set_boxed_logger(Box::new(binding_logger)).unwrap();
+            log::set_max_level(LevelFilter::Trace);
+            LOG_INIT.set(()).unwrap();
+        }
     }
 }
 
@@ -567,9 +580,15 @@ impl log::Log for BindingLogger {
 
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
-            let _ = self.log_stream.add(LogEntry {
+            let log_entry = LogEntry {
                 line: record.args().to_string(),
                 level: record.level().as_str().to_string(),
+            };
+            let stream = Arc::clone(&self.log_stream);
+            tokio::spawn(async move {
+                if let Some(ref stream) = *stream.lock().await {
+                    let _ = stream.add(log_entry);
+                }
             });
         }
     }
