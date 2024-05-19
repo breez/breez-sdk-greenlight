@@ -14,14 +14,14 @@ class BreezSDK {
 
   /* Streams */
 
-  /// Listen to paid Invoice events
   final StreamController<InvoicePaidDetails> _invoicePaidStream = StreamController.broadcast();
 
+  /// Listen to paid Invoice events
   Stream<InvoicePaidDetails> get invoicePaidStream => _invoicePaidStream.stream;
 
-  /// Listen to payment results
   final StreamController<Payment> _paymentResultStream = StreamController.broadcast();
 
+  /// Listen to payment results
   Stream<Payment> get paymentResultStream => _paymentResultStream.stream;
 
   /* SDK Streams */
@@ -54,16 +54,16 @@ class BreezSDK {
     }
   }
 
+  /* Breez Services API's & Streams*/
+
   final _logStreamController = StreamController<LogEntry>.broadcast();
 
   /// Listen to log events
   Stream<LogEntry> get logStream => _logStreamController.stream;
 
-  /* Breez Services API's & Streams*/
-
-  /// Listen to node state
   final StreamController<NodeState?> nodeStateController = BehaviorSubject<NodeState?>();
 
+  /// Listen to node state
   Stream<NodeState?> get nodeStateStream => nodeStateController.stream;
 
   /// Register for webhook callbacks at the given `webhook_url` whenever a new payment is received.
