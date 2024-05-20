@@ -41,16 +41,16 @@ class BreezSDK {
   }
 
   void _initializeEventsStream() {
-    _breezEventsStream = _lnToolkit.breezEventsStream().asBroadcastStream();
+    _breezEventsStream ??= _lnToolkit.breezEventsStream().asBroadcastStream();
   }
 
   void _initializeLogStream() {
     if (defaultTargetPlatform == TargetPlatform.android) {
-      _breezLogStream = const EventChannel('breez_sdk_node_logs')
+      _breezLogStream ??= const EventChannel('breez_sdk_node_logs')
           .receiveBroadcastStream()
           .map((log) => LogEntry(line: log["line"], level: log["level"]));
     } else {
-      _breezLogStream = _lnToolkit.breezLogStream().asBroadcastStream();
+      _breezLogStream ??= _lnToolkit.breezLogStream().asBroadcastStream();
     }
   }
 
