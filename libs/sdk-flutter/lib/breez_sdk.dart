@@ -41,7 +41,7 @@ class BreezSDK {
   }
 
   void _initializeEventsStream() {
-    _breezEventsStream = _lnToolkit.breezEventsStream();
+    _breezEventsStream = _lnToolkit.breezEventsStream().asBroadcastStream();
   }
 
   void _initializeLogStream() {
@@ -50,7 +50,7 @@ class BreezSDK {
           .receiveBroadcastStream()
           .map((log) => LogEntry(line: log["line"], level: log["level"]));
     } else {
-      _breezLogStream = _lnToolkit.breezLogStream();
+      _breezLogStream = _lnToolkit.breezLogStream().asBroadcastStream();
     }
   }
 
