@@ -854,8 +854,7 @@ impl BreezServices {
     /// minus the expected fees.
     /// This is possible since the route to the swapper node is known in advance and is expected
     /// to consist of maximum 3 hops.
-    ///
-    /// Deprecated. Please use [BreezServices::onchain_payment_limits] instead.
+    #[deprecated(note = "use onchain_payment_limits instead")]
     pub async fn max_reverse_swap_amount(&self) -> SdkResult<MaxReverseSwapAmountResponse> {
         // fetch the last hop hints from the swapper
         let last_hop = self.btc_send_swapper.last_hop_for_payment().await?;
@@ -883,8 +882,7 @@ impl BreezServices {
     }
 
     /// Creates a reverse swap and attempts to pay the HODL invoice
-    ///
-    /// Deprecated. Please use [BreezServices::pay_onchain] instead.
+    #[deprecated(note = "use pay_onchain instead")]
     pub async fn send_onchain(
         &self,
         req: SendOnchainRequest,
@@ -896,8 +894,7 @@ impl BreezServices {
     }
 
     /// Returns the blocking [ReverseSwapInfo]s that are in progress
-    ///
-    /// Deprecated. Please use [BreezServices::in_progress_onchain_payments] instead.
+    #[deprecated(note = "use in_progress_onchain_payments instead")]
     pub async fn in_progress_reverse_swaps(&self) -> SdkResult<Vec<ReverseSwapInfo>> {
         let full_rsis = self.btc_send_swapper.list_blocking().await?;
 
@@ -939,6 +936,7 @@ impl BreezServices {
     pub async fn onchain_payment_limits(&self) -> SdkResult<OnchainPaymentLimitsResponse> {
         let fee_info = self.btc_send_swapper.fetch_reverse_swap_fees().await?;
         debug!("Reverse swap pair info: {fee_info:?}");
+        #[allow(deprecated)]
         let max_amt_current_channels = self.max_reverse_swap_amount().await?;
         debug!("Max send amount possible with current channels: {max_amt_current_channels:?}");
 
@@ -1030,7 +1028,7 @@ impl BreezServices {
     }
 
     async fn pay_onchain_common(&self, req: CreateReverseSwapArg) -> SdkResult<ReverseSwapInfo> {
-        ensure_sdk!(self.in_progress_reverse_swaps().await?.is_empty(), SdkError::Generic { err:
+        ensure_sdk!(self.in_progress_onchain_payments().await?.is_empty(), SdkError::Generic { err:
             "You can only start a new one after after the ongoing ones finish. \
             Use the in_progress_reverse_swaps method to get an overview of currently ongoing reverse swaps".into(),
         });
@@ -1050,6 +1048,7 @@ impl BreezServices {
     ///
     /// Supersedes [BreezServices::in_progress_reverse_swaps]
     pub async fn in_progress_onchain_payments(&self) -> SdkResult<Vec<ReverseSwapInfo>> {
+        #[allow(deprecated)]
         self.in_progress_reverse_swaps().await
     }
 

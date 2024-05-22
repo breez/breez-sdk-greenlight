@@ -325,10 +325,12 @@ impl BlockingBreezServices {
     }
 
     pub fn in_progress_reverse_swaps(&self) -> SdkResult<Vec<ReverseSwapInfo>> {
+        #[allow(deprecated)]
         rt().block_on(self.breez_services.in_progress_reverse_swaps())
     }
 
     pub fn max_reverse_swap_amount(&self) -> SdkResult<MaxReverseSwapAmountResponse> {
+        #[allow(deprecated)]
         rt().block_on(self.breez_services.max_reverse_swap_amount())
     }
 
@@ -336,6 +338,7 @@ impl BlockingBreezServices {
         &self,
         req: SendOnchainRequest,
     ) -> Result<SendOnchainResponse, SendOnchainError> {
+        #[allow(deprecated)]
         rt().block_on(self.breez_services.send_onchain(req))
     }
 

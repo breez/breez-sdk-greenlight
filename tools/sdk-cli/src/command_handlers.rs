@@ -42,7 +42,7 @@ struct CliEventListener {}
 
 impl EventListener for CliEventListener {
     fn on_event(&self, e: BreezEvent) {
-        info!("Received Breez event: {:?}", e);
+        info!("Received Breez event: {e:?}");
     }
 }
 
@@ -83,7 +83,7 @@ pub(crate) async fn handle_command(
             let mut config = persistence.get_or_create_config()?;
             config.env = env.clone();
             persistence.save_config(config)?;
-            Ok(format!("Environment was set to {:?}", env))
+            Ok(format!("Environment was set to {env:?}"))
         }
         Commands::Connect {
             partner_cert,
@@ -159,6 +159,7 @@ pub(crate) async fn handle_command(
                 .await
                 .map_err(|e| anyhow!("Failed to fetch reverse swap fee infos: {e}"))?;
 
+            #[allow(deprecated)]
             let rev_swap_res = sdk()?
                 .send_onchain(SendOnchainRequest {
                     amount_sat,
@@ -170,6 +171,7 @@ pub(crate) async fn handle_command(
             serde_json::to_string_pretty(&rev_swap_res.reverse_swap_info).map_err(|e| e.into())
         }
         Commands::MaxReverseSwapAmount {} => {
+            #[allow(deprecated)]
             let response = sdk()?.max_reverse_swap_amount().await?;
             serde_json::to_string_pretty(&response).map_err(|e| e.into())
         }
@@ -231,7 +233,7 @@ pub(crate) async fn handle_command(
         }
         Commands::InProgressReverseSwaps {} => {
             let mut res: Vec<String> = vec![];
-            for rsi in &sdk()?.in_progress_reverse_swaps().await? {
+            for rsi in &sdk()?.in_progress_onchain_payments().await? {
                 res.push(format!(
                     "Reverse swap {} is in progress with status {:?}",
                     rsi.id, rsi.status
@@ -390,7 +392,7 @@ pub(crate) async fn handle_command(
         }
         Commands::CloseLSPChannels {} => {
             let tx_ids = sdk()?.close_lsp_channels().await?;
-            Ok(format!("Closing transaction ids:\n{:?}", tx_ids))
+            Ok(format!("Closing transaction ids:\n{tx_ids:?}"))
         }
         Commands::Disconnect {} => {
             sdk()?.disconnect().await?;
@@ -498,8 +500,7 @@ pub(crate) async fn handle_command(
                     let user_input_min_msat = 2_001_000;
 
                     if user_input_max_msat < user_input_min_msat {
-                        error!("The LNURLw endpoint needs to accept at least {} msat, but min / max withdrawable are {} msat / {} msat",
-                            user_input_min_msat,
+                        error!("The LNURLw endpoint needs to accept at least {user_input_min_msat} msat, but min / max withdrawable are {} msat / {} msat",
                             wd.min_withdrawable,
                             wd.max_withdrawable
                         );
@@ -507,8 +508,7 @@ pub(crate) async fn handle_command(
                     }
 
                     let prompt = format!(
-                        "Amount to withdraw in msat (min {} msat, max {} msat: ",
-                        user_input_min_msat, user_input_max_msat,
+                        "Amount to withdraw in msat (min {user_input_min_msat} msat, max {user_input_max_msat} msat: "
                     );
                     let user_input_withdraw_amount_msat = rl.readline(&prompt)?;
 
@@ -574,7 +574,7 @@ pub(crate) async fn handle_command(
                     opening_fee_params: None,
                 })
                 .await?;
-            Ok(format!("Here your {:?} url: {}", provider, res.url))
+            Ok(format!("Here your {provider:?} url: {}", res.url))
         }
         Commands::Backup {} => {
             sdk().unwrap().backup().await?;
@@ -590,7 +590,7 @@ pub(crate) async fn handle_command(
             match backup_data.backup {
                 Some(backup) => {
                     let backup_str = serde_json::to_string_pretty(&backup)?;
-                    Ok(format!("Static backup data:\n{}", backup_str))
+                    Ok(format!("Static backup data:\n{backup_str}"))
                 }
                 None => Ok("No static backup data".into()),
             }
