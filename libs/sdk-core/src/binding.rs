@@ -367,12 +367,14 @@ pub fn list_fiat_currencies() -> Result<Vec<FiatCurrency>> {
 
 /// See [BreezServices::max_reverse_swap_amount]
 pub fn max_reverse_swap_amount() -> Result<MaxReverseSwapAmountResponse> {
+    #[allow(deprecated)]
     block_on(async { get_breez_services().await?.max_reverse_swap_amount().await })
         .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// See [BreezServices::send_onchain]
 pub fn send_onchain(req: SendOnchainRequest) -> Result<SendOnchainResponse> {
+    #[allow(deprecated)]
     block_on(async { get_breez_services().await?.send_onchain(req).await })
         .map_err(anyhow::Error::new::<SendOnchainError>)
 }
@@ -456,6 +458,7 @@ pub fn in_progress_swap() -> Result<Option<SwapInfo>> {
 
 /// See [BreezServices::in_progress_reverse_swaps]
 pub fn in_progress_reverse_swaps() -> Result<Vec<ReverseSwapInfo>> {
+    #[allow(deprecated)]
     block_on(async {
         get_breez_services()
             .await?
