@@ -179,8 +179,8 @@ impl Greenlight {
     async fn init_scheduler(&self) -> Result<SchedulerClient<tonic::transport::channel::Channel>> {
         let channel = Endpoint::from_shared(utils::scheduler_uri())?
             .tls_config(self.tls_config.client_tls_config())?
-            .tcp_keepalive(Some(Duration::from_secs(30)))
-            .http2_keep_alive_interval(Duration::from_secs(30))
+            .tcp_keepalive(Some(Duration::from_secs(5)))
+            .http2_keep_alive_interval(Duration::from_secs(5))
             .keep_alive_timeout(Duration::from_secs(90))
             .keep_alive_while_idle(true)
             .connect_lazy();
