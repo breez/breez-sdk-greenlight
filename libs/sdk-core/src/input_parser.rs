@@ -200,7 +200,10 @@ pub async fn parse(input: &str) -> Result<InputType> {
     }
 
     // Try to strip the "lightning:" prefix from possible lnurl string. If prefix is not there, default to original input
-    let input = input.strip_prefix("lightning:").unwrap_or(input);
+    let input = input
+        .strip_prefix("lightning:")
+        .or(input.strip_prefix("LIGHTNING:"))
+        .unwrap_or(input);
     if let Ok((domain, mut lnurl_endpoint, ln_address)) = lnurl_decode(input) {
         // For LNURL-auth links, their type is already known if the link contains the login tag
         // No need to query the endpoint for details
@@ -820,6 +823,26 @@ pub(crate) mod tests {
     }
 
     #[tokio::test]
+    async fn test_capitalized_bolt11() -> Result<()> {
+        let bolt11 = "LNBC110N1P38Q3GTPP5YPZ09JRD8P993SNJWNM68CPH4FTWP22LE34XD4R8FTSPWSHXHMNSDQQXQYJW5QCQPXSP5HTLG8YDPYWVSA7H3U4HDN77EHS4Z4E844EM0APJYVMQFKZQHHD2Q9QGSQQQYSSQSZPXZXT9UUQZYMR7ZXCDCCJ5G69S8Q7ZZJS7SGXN9EJHNVDH6GQJCY22MSS2YEXUNAGM5R2GQCZH8K24CWRQML3NJSKM548ARUHPWSSQ9NVRVZ";
+
+        // Invoice without prefix
+        assert!(matches!(
+            parse(bolt11).await?,
+            InputType::Bolt11 { invoice: _invoice }
+        ));
+
+        // Invoice with prefix
+        let invoice_with_prefix = format!("LIGHTNING:{bolt11}");
+        assert!(matches!(
+            parse(&invoice_with_prefix).await?,
+            InputType::Bolt11 { invoice: _invoice }
+        ));
+
+        Ok(())
+    }
+
+    #[tokio::test]
     async fn test_bolt11_with_fallback_bitcoin_address() -> Result<()> {
         let addr = "1andreas3batLhQa2FawWjeyjCqyBzypd";
         let bolt11 = "lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz";
@@ -1241,6 +1264,19 @@ pub(crate) mod tests {
             );
         }
 
+        for lnurl_pay in [
+            lnurl_pay_encoded,
+            lnurl_pay_encoded.to_uppercase().as_str(),
+            format!("lightning:{}", lnurl_pay_encoded).as_str(),
+            format!("lightning:{}", lnurl_pay_encoded.to_uppercase()).as_str(),
+            format!("LIGHTNING:{}", lnurl_pay_encoded).as_str(),
+            format!("LIGHTNING:{}", lnurl_pay_encoded.to_uppercase()).as_str(),
+        ] {
+            assert!(matches!(
+                parse(lnurl_pay).await?,
+                InputType::LnUrlPay { data: _ }
+            ));
+        }
         Ok(())
     }
 
