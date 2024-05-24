@@ -728,6 +728,38 @@ enum BreezSDKMapper {
         return greenlightCredentialsList.map { v -> [String: Any?] in dictionaryOf(greenlightCredentials: v) }
     }
 
+    static func asGreenlightDeviceCredentials(greenlightDeviceCredentials: [String: Any?]) throws -> GreenlightDeviceCredentials {
+        guard let device = greenlightDeviceCredentials["device"] as? [UInt8] else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "device", typeName: "GreenlightDeviceCredentials"))
+        }
+
+        return GreenlightDeviceCredentials(
+            device: device)
+    }
+
+    static func dictionaryOf(greenlightDeviceCredentials: GreenlightDeviceCredentials) -> [String: Any?] {
+        return [
+            "device": greenlightDeviceCredentials.device,
+        ]
+    }
+
+    static func asGreenlightDeviceCredentialsList(arr: [Any]) throws -> [GreenlightDeviceCredentials] {
+        var list = [GreenlightDeviceCredentials]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var greenlightDeviceCredentials = try asGreenlightDeviceCredentials(greenlightDeviceCredentials: val)
+                list.append(greenlightDeviceCredentials)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "GreenlightDeviceCredentials"))
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(greenlightDeviceCredentialsList: [GreenlightDeviceCredentials]) -> [Any] {
+        return greenlightDeviceCredentialsList.map { v -> [String: Any?] in dictionaryOf(greenlightDeviceCredentials: v) }
+    }
+
     static func asGreenlightNodeConfig(greenlightNodeConfig: [String: Any?]) throws -> GreenlightNodeConfig {
         var partnerCredentials: GreenlightCredentials?
         if let partnerCredentialsTmp = greenlightNodeConfig["partnerCredentials"] as? [String: Any?] {
@@ -5048,7 +5080,7 @@ enum BreezSDKMapper {
             guard let credentialsTmp = nodeCredentials["credentials"] as? [String: Any?] else {
                 throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "credentials", typeName: "NodeCredentials"))
             }
-            let _credentials = try asGreenlightCredentials(greenlightCredentials: credentialsTmp)
+            let _credentials = try asGreenlightDeviceCredentials(greenlightDeviceCredentials: credentialsTmp)
 
             return NodeCredentials.greenlight(credentials: _credentials)
         }
@@ -5063,7 +5095,7 @@ enum BreezSDKMapper {
         ):
             return [
                 "type": "greenlight",
-                "credentials": dictionaryOf(greenlightCredentials: credentials),
+                "credentials": dictionaryOf(greenlightDeviceCredentials: credentials),
             ]
         }
     }

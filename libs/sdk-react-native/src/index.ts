@@ -112,6 +112,10 @@ export interface GreenlightCredentials {
     deviceCert: number[]
 }
 
+export interface GreenlightDeviceCredentials {
+    device: number[]
+}
+
 export interface GreenlightNodeConfig {
     partnerCredentials?: GreenlightCredentials
     inviteCode?: string
@@ -757,7 +761,7 @@ export enum NodeCredentialsVariant {
 
 export interface NodeCredentials {
     type: NodeCredentialsVariant.GREENLIGHT,
-    credentials: GreenlightCredentials
+    credentials: GreenlightDeviceCredentials
 }
 
 export enum PaymentDetailsVariant {
