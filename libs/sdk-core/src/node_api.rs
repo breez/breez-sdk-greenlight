@@ -20,6 +20,9 @@ pub type NodeResult<T, E = NodeError> = Result<T, E>;
 #[derive(Debug, thiserror::Error)]
 pub enum NodeError {
     #[error("{0}")]
+    Credentials(String),
+
+    #[error("{0}")]
     Generic(String),
 
     #[error(transparent)]

@@ -134,6 +134,10 @@ impl Greenlight {
         // Persist the connection credentials for future use and return the node instance
         match parsed_credentials {
             Ok(creds) => {
+                let temp_scheduler = Scheduler::new(config.network.into(), creds.clone()).await?;
+                debug!("upgrading credentials");
+                let creds = creds.upgrade(&temp_scheduler, &temp_signer).await?;
+                debug!("upgrading credentials succeeded");
                 let encrypted_creds = sym_encrypt(encryption_key_slice, &creds.to_bytes());
                 match encrypted_creds {
                     Some(c) => {
