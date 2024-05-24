@@ -541,7 +541,9 @@ pub enum NodeConfig {
 
 #[derive(Clone, Serialize)]
 pub enum NodeCredentials {
-    Greenlight { credentials: GreenlightCredentials },
+    Greenlight {
+        credentials: GreenlightDeviceCredentials,
+    },
 }
 
 #[derive(Clone)]
@@ -564,6 +566,12 @@ pub enum EnvironmentType {
 pub struct GreenlightCredentials {
     pub device_key: Vec<u8>,
     pub device_cert: Vec<u8>,
+}
+
+/// Device credentials used to authenticate to Greenlight with the current device.
+#[derive(Clone, Serialize, Deserialize)]
+pub struct GreenlightDeviceCredentials {
+    pub device: Vec<u8>,
 }
 
 /// The different supported bitcoin networks

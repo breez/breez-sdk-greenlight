@@ -115,9 +115,13 @@ dictionary GreenlightCredentials {
     sequence<u8> device_cert;
 };
 
+dictionary GreenlightDeviceCredentials {
+    sequence<u8> device;
+};
+
 [Enum]
 interface NodeCredentials {
-    Greenlight(GreenlightCredentials credentials);
+    Greenlight(GreenlightDeviceCredentials credentials);
 };
 
 dictionary GreenlightNodeConfig {

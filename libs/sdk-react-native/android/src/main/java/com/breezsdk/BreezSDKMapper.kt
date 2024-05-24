@@ -651,6 +651,39 @@ fun asGreenlightCredentialsList(arr: ReadableArray): List<GreenlightCredentials>
     return list
 }
 
+fun asGreenlightDeviceCredentials(greenlightDeviceCredentials: ReadableMap): GreenlightDeviceCredentials? {
+    if (!validateMandatoryFields(
+            greenlightDeviceCredentials,
+            arrayOf(
+                "device",
+            ),
+        )
+    ) {
+        return null
+    }
+    val device = greenlightDeviceCredentials.getArray("device")?.let { asUByteList(it) }!!
+    return GreenlightDeviceCredentials(
+        device,
+    )
+}
+
+fun readableMapOf(greenlightDeviceCredentials: GreenlightDeviceCredentials): ReadableMap {
+    return readableMapOf(
+        "device" to readableArrayOf(greenlightDeviceCredentials.device),
+    )
+}
+
+fun asGreenlightDeviceCredentialsList(arr: ReadableArray): List<GreenlightDeviceCredentials> {
+    val list = ArrayList<GreenlightDeviceCredentials>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asGreenlightDeviceCredentials(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
 fun asGreenlightNodeConfig(greenlightNodeConfig: ReadableMap): GreenlightNodeConfig? {
     if (!validateMandatoryFields(
             greenlightNodeConfig,
@@ -4164,7 +4197,7 @@ fun asNodeCredentials(nodeCredentials: ReadableMap): NodeCredentials? {
     val type = nodeCredentials.getString("type")
 
     if (type == "greenlight") {
-        return NodeCredentials.Greenlight(nodeCredentials.getMap("credentials")?.let { asGreenlightCredentials(it) }!!)
+        return NodeCredentials.Greenlight(nodeCredentials.getMap("credentials")?.let { asGreenlightDeviceCredentials(it) }!!)
     }
     return null
 }

@@ -623,6 +623,15 @@ class GreenlightCredentials {
   });
 }
 
+/// Device credentials used to authenticate to Greenlight with the current device.
+class GreenlightDeviceCredentials {
+  final Uint8List device;
+
+  const GreenlightDeviceCredentials({
+    required this.device,
+  });
+}
+
 class GreenlightNodeConfig {
   final GreenlightCredentials? partnerCredentials;
   final String? inviteCode;
@@ -1184,7 +1193,7 @@ sealed class NodeConfig with _$NodeConfig {
 @freezed
 sealed class NodeCredentials with _$NodeCredentials {
   const factory NodeCredentials.greenlight({
-    required GreenlightCredentials credentials,
+    required GreenlightDeviceCredentials credentials,
   }) = NodeCredentials_Greenlight;
 }
 
@@ -3231,6 +3240,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return _wire2api_greenlight_credentials(raw);
   }
 
+  GreenlightDeviceCredentials _wire2api_box_autoadd_greenlight_device_credentials(dynamic raw) {
+    return _wire2api_greenlight_device_credentials(raw);
+  }
+
   GreenlightNodeConfig _wire2api_box_autoadd_greenlight_node_config(dynamic raw) {
     return _wire2api_greenlight_node_config(raw);
   }
@@ -3447,6 +3460,14 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return GreenlightCredentials(
       deviceKey: _wire2api_uint_8_list(arr[0]),
       deviceCert: _wire2api_uint_8_list(arr[1]),
+    );
+  }
+
+  GreenlightDeviceCredentials _wire2api_greenlight_device_credentials(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
+    return GreenlightDeviceCredentials(
+      device: _wire2api_uint_8_list(arr[0]),
     );
   }
 
@@ -3811,7 +3832,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     switch (raw[0]) {
       case 0:
         return NodeCredentials_Greenlight(
-          credentials: _wire2api_box_autoadd_greenlight_credentials(raw[1]),
+          credentials: _wire2api_box_autoadd_greenlight_device_credentials(raw[1]),
         );
       default:
         throw Exception("unreachable");

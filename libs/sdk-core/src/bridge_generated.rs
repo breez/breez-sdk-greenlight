@@ -64,6 +64,7 @@ use crate::models::ConfigureNodeRequest;
 use crate::models::ConnectRequest;
 use crate::models::EnvironmentType;
 use crate::models::GreenlightCredentials;
+use crate::models::GreenlightDeviceCredentials;
 use crate::models::GreenlightNodeConfig;
 use crate::models::HealthCheckStatus;
 use crate::models::ListPaymentsRequest;
@@ -1283,6 +1284,18 @@ impl support::IntoDart for GreenlightCredentials {
 }
 impl support::IntoDartExceptPrimitive for GreenlightCredentials {}
 impl rust2dart::IntoIntoDart<GreenlightCredentials> for GreenlightCredentials {
+    fn into_into_dart(self) -> Self {
+        self
+    }
+}
+
+impl support::IntoDart for GreenlightDeviceCredentials {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.device.into_into_dart().into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for GreenlightDeviceCredentials {}
+impl rust2dart::IntoIntoDart<GreenlightDeviceCredentials> for GreenlightDeviceCredentials {
     fn into_into_dart(self) -> Self {
         self
     }

@@ -764,9 +764,8 @@ impl NodeAPI for Greenlight {
             self.persister.clone(),
         )?
         .map(|credentials| NodeCredentials::Greenlight {
-            credentials: GreenlightCredentials {
-                device_cert: credentials.cert,
-                device_key: credentials.key,
+            credentials: GreenlightDeviceCredentials {
+                device: credentials.to_bytes(),
             },
         }))
     }
