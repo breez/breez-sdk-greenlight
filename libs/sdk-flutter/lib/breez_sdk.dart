@@ -14,82 +14,56 @@ class BreezSDK {
 
   /* Streams */
 
-  /// Listen to paid Invoice events
   final StreamController<InvoicePaidDetails> _invoicePaidStream = StreamController.broadcast();
 
+  /// Listen to paid Invoice events
   Stream<InvoicePaidDetails> get invoicePaidStream => _invoicePaidStream.stream;
 
-  /// Listen to payment results
   final StreamController<Payment> _paymentResultStream = StreamController.broadcast();
 
+  /// Listen to payment results
   Stream<Payment> get paymentResultStream => _paymentResultStream.stream;
 
-  /// Initializes SDK events & log streams
+  /* SDK Streams */
+
+  StreamSubscription<BreezEvent>? _breezEventsSubscription;
+  StreamSubscription<LogEntry>? _breezLogSubscription;
+
+  Stream<BreezEvent>? _breezEventsStream;
+  Stream<LogEntry>? _breezLogStream;
+
+  /// Initializes SDK events & log streams.
+  ///
+  /// Call once on your Dart entrypoint file, e.g.; `lib/main.dart`.
   void initialize() {
     _initializeEventsStream();
     _initializeLogStream();
   }
 
-  /// Listen to BreezEvent's(new block, invoice paid, synced)
   void _initializeEventsStream() {
-    _lnToolkit.breezEventsStream().listen((event) async {
-      if (event is BreezEvent_InvoicePaid) {
-        _invoicePaidStream.add(event.details);
-        await fetchNodeData();
-      }
-      if (event is BreezEvent_Synced) {
-        await fetchNodeData();
-      }
-      if (event is BreezEvent_PaymentSucceed) {
-        _paymentResultStream.add(event.details);
-      }
-      if (event is BreezEvent_PaymentFailed) {
-        _paymentResultStream.addError(PaymentException(event.details));
-      }
-      if (event is BreezEvent_BackupSucceeded) {
-        _backupStreamController.add(event);
-      }
-      if (event is BreezEvent_BackupStarted) {
-        _backupStreamController.add(event);
-      }
-      if (event is BreezEvent_BackupFailed) {
-        _backupStreamController.addError(BackupException(event.details));
-      }
-      if (event is BreezEvent_SwapUpdated) {
-        _swapEventsStreamController.add(event);
-      }
-    });
+    _breezEventsStream ??= _lnToolkit.breezEventsStream().asBroadcastStream();
   }
 
-  /// Listen to node logs
   void _initializeLogStream() {
     if (defaultTargetPlatform == TargetPlatform.android) {
-      const EventChannel('breez_sdk_node_logs')
+      _breezLogStream ??= const EventChannel('breez_sdk_node_logs')
           .receiveBroadcastStream()
-          .map((log) => LogEntry(line: log["line"], level: log["level"]))
-          .listen(
-            (log) => _logStreamController.add(log),
-            onError: (e) => _logStreamController.addError(e),
-          );
+          .map((log) => LogEntry(line: log["line"], level: log["level"]));
     } else {
-      _lnToolkit.breezLogStream().listen((logEntry) {
-        _logStreamController.add(logEntry);
-      }, onError: (e) {
-        _logStreamController.addError(e);
-      });
+      _breezLogStream ??= _lnToolkit.breezLogStream().asBroadcastStream();
     }
   }
+
+  /* Breez Services API's & Streams*/
 
   final _logStreamController = StreamController<LogEntry>.broadcast();
 
   /// Listen to log events
   Stream<LogEntry> get logStream => _logStreamController.stream;
 
-  /* Breez Services API's & Streams*/
-
-  /// Listen to node state
   final StreamController<NodeState?> nodeStateController = BehaviorSubject<NodeState?>();
 
+  /// Listen to node state
   Stream<NodeState?> get nodeStateStream => nodeStateController.stream;
 
   /// Register for webhook callbacks at the given `webhook_url` whenever a new payment is received.
@@ -113,9 +87,8 @@ class BreezSDK {
   Future connect({
     required ConnectRequest req,
   }) async {
-    await _lnToolkit.connect(
-      req: req,
-    );
+    await _lnToolkit.connect(req: req);
+    _subscribeToSdkStreams();
     await fetchNodeData();
   }
 
@@ -144,7 +117,10 @@ class BreezSDK {
   }
 
   /// Cleanup node resources and stop the signer.
-  Future<void> disconnect() async => await _lnToolkit.disconnect();
+  Future<void> disconnect() async {
+    await _lnToolkit.disconnect();
+    _unsubscribeFromSdkStreams();
+  }
 
   /* Breez Services Helper API's */
 
@@ -500,8 +476,9 @@ class BreezSDK {
   /// Fetches the service health check from the support API.
   Future<ServiceHealthCheckResponse> serviceHealthCheck({
     required String apiKey,
-  }) async =>
-      await _lnToolkit.serviceHealthCheck(apiKey: apiKey);
+  }) async {
+    return await _lnToolkit.serviceHealthCheck(apiKey: apiKey);
+  }
 
   /* CLI API's */
 
@@ -535,6 +512,60 @@ class BreezSDK {
   Future fetchNodeData() async {
     await nodeInfo();
     await listPayments(req: const ListPaymentsRequest());
+  }
+
+  /// Subscribes to SDK events & log streams.
+  void _subscribeToSdkStreams() {
+    _subscribeToEventsStream();
+    _subscribeToLogStream();
+  }
+
+  /// Subscribes to BreezEvent's(new block, invoice paid, synced) stream
+  void _subscribeToEventsStream() {
+    _breezEventsSubscription = _breezEventsStream?.listen(
+      (event) async {
+        if (event is BreezEvent_InvoicePaid) {
+          _invoicePaidStream.add(event.details);
+          await fetchNodeData();
+        }
+        if (event is BreezEvent_Synced) {
+          await fetchNodeData();
+        }
+        if (event is BreezEvent_PaymentSucceed) {
+          _paymentResultStream.add(event.details);
+        }
+        if (event is BreezEvent_PaymentFailed) {
+          _paymentResultStream.addError(PaymentException(event.details));
+        }
+        if (event is BreezEvent_BackupSucceeded) {
+          _backupStreamController.add(event);
+        }
+        if (event is BreezEvent_BackupStarted) {
+          _backupStreamController.add(event);
+        }
+        if (event is BreezEvent_BackupFailed) {
+          _backupStreamController.addError(BackupException(event.details));
+        }
+        if (event is BreezEvent_SwapUpdated) {
+          _swapEventsStreamController.add(event);
+        }
+      },
+    );
+  }
+
+  /// Subscribes to node logs stream
+  void _subscribeToLogStream() {
+    _breezLogSubscription = _breezLogStream?.listen((logEntry) {
+      _logStreamController.add(logEntry);
+    }, onError: (e) {
+      _logStreamController.addError(e);
+    });
+  }
+
+  /// Unsubscribes from SDK events & log streams.
+  void _unsubscribeFromSdkStreams() {
+    _breezEventsSubscription?.cancel();
+    _breezLogSubscription?.cancel();
   }
 }
 
