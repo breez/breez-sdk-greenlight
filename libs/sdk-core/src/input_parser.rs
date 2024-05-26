@@ -271,12 +271,15 @@ pub(crate) async fn get_and_log_response(url: &str) -> SdkResult<String> {
             .text()
             .await
             .map_err(|e| SdkError::ServiceConnectivity { err: e.to_string() }),
-        false => Err(SdkError::ServiceConnectivity {
-            err: format!(
-                "GET request {url} failed with status: {}",
+        false => {
+            let err = format!(
+                "GET request {} failed with status: {}",
+                url,
                 response.status()
-            ),
-        }),
+            );
+            error!("{err}");
+            Err(SdkError::ServiceConnectivity { err })
+        }
     }
 }
 
