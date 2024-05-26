@@ -1763,9 +1763,16 @@ impl BreezServices {
         &self,
         channel: &crate::models::Channel,
     ) -> Result<(Option<u64>, Option<String>)> {
-        let maybe_outspend = self
+        let maybe_outspend_res = self
             .lookup_chain_service_closing_outspend(channel.clone())
-            .await?;
+            .await;
+        let maybe_outspend: Option<Outspend> = match maybe_outspend_res {
+            Ok(s) => s,
+            Err(e) => {
+                error!("Failed to lookup channel closing data: {:?}", e);
+                None
+            }
+        };
 
         let maybe_closed_at = maybe_outspend
             .clone()

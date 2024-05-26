@@ -261,17 +261,23 @@ pub(crate) async fn post_and_log_response(url: &str, body: Option<String>) -> Sd
 pub(crate) async fn get_and_log_response(url: &str) -> SdkResult<String> {
     debug!("Making GET request to: {url}");
 
-    let raw_body = get_reqwest_client()?
+    let response = get_reqwest_client()?
         .get(url)
         .send()
         .await
-        .map_err(|e| SdkError::ServiceConnectivity { err: e.to_string() })?
-        .text()
-        .await
         .map_err(|e| SdkError::ServiceConnectivity { err: e.to_string() })?;
-    debug!("Received raw response body: {raw_body}");
-
-    Ok(raw_body)
+    match response.status().is_success() {
+        true => response
+            .text()
+            .await
+            .map_err(|e| SdkError::ServiceConnectivity { err: e.to_string() }),
+        false => Err(SdkError::ServiceConnectivity {
+            err: format!(
+                "GET request {url} failed with status: {}",
+                response.status()
+            ),
+        }),
+    }
 }
 
 /// Wrapper around [get_and_log_response] that, in addition, parses the payload into an expected type
