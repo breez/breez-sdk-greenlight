@@ -1075,15 +1075,24 @@ pub(crate) mod tests {
 }
         "#.replace('\n', "");
 
-        let response_body = match return_lnurl_error {
+        let response_body = match &return_lnurl_error {
             None => expected_lnurl_withdraw_data,
             Some(err_reason) => {
                 ["{\"status\": \"ERROR\", \"reason\": \"", &err_reason, "\"}"].join("")
             }
         };
 
+        let status = match &return_lnurl_error {
+            None => 200,
+            Some(_) => 400,
+        };
+
         let mut server = MOCK_HTTP_SERVER.lock().unwrap();
-        server.mock("GET", path).with_body(response_body).create()
+        server
+            .mock("GET", path)
+            .with_body(response_body)
+            .with_status(status)
+            .create()
     }
 
     #[tokio::test]
