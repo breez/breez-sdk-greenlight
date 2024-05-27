@@ -295,15 +295,13 @@ where
     for<'a> T: serde::de::Deserialize<'a>,
 {
     let (raw_body, status) = get_and_log_response(url).await?;
-    let parse_res = serde_json::from_str::<T>(&raw_body);
-
     if enforce_status_check && !status.is_success() {
         let err = format!("GET request {url} failed with status: {status}");
         error!("{err}");
         return Err(SdkError::ServiceConnectivity { err });
     }
 
-    parse_res.map_err(Into::into)
+    serde_json::from_str::<T>(&raw_body).map_err(Into::into)
 }
 
 /// Prepends the given prefix to the input, if the input doesn't already start with it
