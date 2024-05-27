@@ -1078,7 +1078,7 @@ pub(crate) mod tests {
         let (response_body, status) = match &return_lnurl_error {
             None => (expected_lnurl_withdraw_data, 200),
             Some(err_reason) => (
-                ["{\"status\": \"ERROR\", \"reason\": \"", &err_reason, "\"}"].join(""),
+                ["{\"status\": \"ERROR\", \"reason\": \"", err_reason, "\"}"].join(""),
                 400,
             ),
         };
