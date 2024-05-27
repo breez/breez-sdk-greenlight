@@ -1075,16 +1075,12 @@ pub(crate) mod tests {
 }
         "#.replace('\n', "");
 
-        let response_body = match &return_lnurl_error {
-            None => expected_lnurl_withdraw_data,
-            Some(err_reason) => {
-                ["{\"status\": \"ERROR\", \"reason\": \"", &err_reason, "\"}"].join("")
-            }
-        };
-
-        let status = match &return_lnurl_error {
-            None => 200,
-            Some(_) => 400,
+        let (response_body, status) = match &return_lnurl_error {
+            None => (expected_lnurl_withdraw_data, 200),
+            Some(err_reason) => (
+                ["{\"status\": \"ERROR\", \"reason\": \"", &err_reason, "\"}"].join(""),
+                400,
+            ),
         };
 
         let mut server = MOCK_HTTP_SERVER.lock().unwrap();
