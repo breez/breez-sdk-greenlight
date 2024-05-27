@@ -1038,8 +1038,7 @@ impl BreezServices {
             .btc_send_swapper
             .convert_reverse_swap_info(full_rsi)
             .await?;
-
-        self.do_sync(true).await?;
+        self.do_sync(false).await?;
 
         Ok(reverse_swap_info)
     }
@@ -1075,7 +1074,7 @@ impl BreezServices {
         Ok(self.do_sync(false).await?)
     }
 
-    async fn do_sync(&self, balance_changed: bool) -> Result<()> {
+    async fn do_sync(&self, match_local_balance: bool) -> Result<()> {
         let start = Instant::now();
         let node_pubkey = self.node_api.start().await?;
         self.connect_lsp_peer(node_pubkey).await?;
@@ -1084,7 +1083,7 @@ impl BreezServices {
         let since_timestamp = self.persister.get_last_sync_time()?.unwrap_or(0);
         let new_data = &self
             .node_api
-            .pull_changed(since_timestamp, balance_changed)
+            .pull_changed(since_timestamp, match_local_balance)
             .await?;
 
         debug!(
@@ -1231,7 +1230,7 @@ impl BreezServices {
         label: Option<String>,
         payment_res: Result<Payment, SendPaymentError>,
     ) -> Result<Payment, SendPaymentError> {
-        self.do_sync(payment_res.is_ok()).await?;
+        self.do_sync(false).await?;
         match payment_res {
             Ok(payment) => {
                 self.notify_event_listeners(BreezEvent::PaymentSucceed {

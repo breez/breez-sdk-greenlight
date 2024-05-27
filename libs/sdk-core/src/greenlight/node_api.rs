@@ -464,7 +464,7 @@ impl Greenlight {
     async fn fetch_channels_and_balance_with_retry(
         cln_client: node::ClnClient,
         persister: Arc<SqliteStorage>,
-        balance_changed: bool,
+        match_local_balance: bool,
     ) -> NodeResult<(
         Vec<cln::ListpeersPeersChannels>,
         Vec<cln::ListpeersPeersChannels>,
@@ -473,12 +473,12 @@ impl Greenlight {
     )> {
         let (mut all_channels, mut opened_channels, mut connected_peers, mut channels_balance) =
             Greenlight::fetch_channels_and_balance(cln_client.clone()).await?;
-        if balance_changed {
+        if match_local_balance {
             let node_state = persister.get_node_state()?;
             if let Some(state) = node_state {
                 let mut retry_count = 0;
-                while state.channels_balance_msat == channels_balance && retry_count < 10 {
-                    warn!("balance update was required but was not updated, retrying in 100ms...");
+                while state.channels_balance_msat != channels_balance && retry_count < 10 {
+                    warn!("balance matching local state is required and not yet satisfied, retrying in 100ms...");
                     sleep(Duration::from_millis(100)).await;
                     (
                         all_channels,
@@ -871,7 +871,7 @@ impl NodeAPI for Greenlight {
     async fn pull_changed(
         &self,
         since_timestamp: u64,
-        balance_changed: bool,
+        match_local_balance: bool,
     ) -> NodeResult<SyncResponse> {
         info!("pull changed since {}", since_timestamp);
         let node_client = self.get_node_client().await?;
@@ -893,7 +893,7 @@ impl NodeAPI for Greenlight {
         let balance_future = Greenlight::fetch_channels_and_balance_with_retry(
             node_client.clone(),
             self.persister.clone(),
-            balance_changed,
+            match_local_balance,
         );
 
         let (node_info_res, funds_res, closed_channels_res, balance_res) = tokio::join!(
