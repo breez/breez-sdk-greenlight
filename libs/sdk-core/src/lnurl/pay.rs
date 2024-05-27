@@ -29,7 +29,7 @@ pub(crate) async fn validate_lnurl_pay(
     )?;
 
     let callback_url = build_pay_callback_url(user_amount_msat, comment, req_data)?;
-    let callback_resp_text = get_and_log_response(&callback_url)
+    let (callback_resp_text, _) = get_and_log_response(&callback_url)
         .await
         .map_err(|e| LnUrlError::ServiceConnectivity(e.to_string()))?;
 
