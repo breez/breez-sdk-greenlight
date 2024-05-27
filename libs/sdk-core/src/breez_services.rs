@@ -1513,17 +1513,18 @@ impl BreezServices {
                                           Ok(Some(i)) => {
                                               debug!("invoice stream got new invoice");
                                               if let Some(gl_client::signer::model::greenlight::incoming_payment::Details::Offchain(p)) = i.details {
-                                                  let payment: Option<crate::models::Payment> = p.clone().try_into().ok();
-                                                  if let Some(ref payment) = payment {
+                                                  let mut payment: Option<crate::models::Payment> = p.clone().try_into().ok();
+                                                  if let Some(ref p) = payment {
                                                       let res = cloned
                                                           .persister
-                                                          .insert_or_update_payments(&vec![payment.clone()], false);
+                                                          .insert_or_update_payments(&vec![p.clone()], false);
                                                       debug!("paid invoice was added to payments list {res:?}");
                                                       if let Ok(Some(mut node_info)) = cloned.persister.get_node_state() {
-                                                          node_info.channels_balance_msat += payment.amount_msat;
+                                                          node_info.channels_balance_msat += p.amount_msat;
                                                           let res = cloned.persister.set_node_state(&node_info);
                                                           debug!("channel balance was updated {res:?}");
                                                       }
+                                                      payment = cloned.persister.get_payment_by_hash(&p.id).unwrap_or(payment);
                                                   }
                                                   _ = cloned.on_event(BreezEvent::InvoicePaid {
                                                       details: InvoicePaidDetails {
