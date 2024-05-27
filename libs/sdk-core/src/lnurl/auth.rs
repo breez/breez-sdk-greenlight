@@ -39,7 +39,7 @@ pub(crate) async fn perform_lnurl_auth(
         .query_pairs_mut()
         .append_pair("key", &linking_keys.public_key().to_hex());
 
-    get_parse_and_log_response(callback_url.as_ref())
+    get_parse_and_log_response(callback_url.as_ref(), false)
         .await
         .map_err(|e| LnUrlError::ServiceConnectivity(e.to_string()))
 }

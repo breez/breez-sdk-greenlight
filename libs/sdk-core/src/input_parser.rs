@@ -3,6 +3,7 @@ use std::time::Duration;
 
 use anyhow::{anyhow, Result};
 use bip21::Uri;
+use reqwest::StatusCode;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -249,30 +250,49 @@ pub(crate) async fn post_and_log_response(url: &str, body: Option<String>) -> Sd
 /// Makes a GET request to the specified `url` and logs on DEBUG:
 /// - the URL
 /// - the raw response body
-pub(crate) async fn get_and_log_response(url: &str) -> SdkResult<String> {
+/// - the response HTTP status code
+pub(crate) async fn get_and_log_response(url: &str) -> SdkResult<(String, StatusCode)> {
     debug!("Making GET request to: {url}");
 
-    let raw_body = get_reqwest_client()?
+    let response = get_reqwest_client()?
         .get(url)
         .send()
         .await
-        .map_err(|e| SdkError::ServiceConnectivity { err: e.to_string() })?
+        .map_err(|e| SdkError::ServiceConnectivity { err: e.to_string() })?;
+    let status = response.status();
+    let raw_body = response
         .text()
         .await
         .map_err(|e| SdkError::ServiceConnectivity { err: e.to_string() })?;
-    debug!("Received raw response body: {raw_body}");
+    debug!("Received response, status: {status}, raw response body: {raw_body}");
 
-    Ok(raw_body)
+    Ok((raw_body, status))
 }
 
-/// Wrapper around [get_and_log_response] that, in addition, parses the payload into an expected type
-pub(crate) async fn get_parse_and_log_response<T>(url: &str) -> SdkResult<T>
+/// Wrapper around [get_and_log_response] that, in addition, parses the payload into an expected type.
+///
+/// ### Arguments
+///
+/// - `url`: the URL on which GET will be called
+/// - `enforce_status_check`: if true, the HTTP status code is checked in addition to trying to
+/// parse the payload. In this case, an HTTP error code will automatically cause this function to
+/// return `Err`, regardless of the payload. If false, the result type will be determined only
+/// by the result of parsing the payload into the desired target type.
+pub(crate) async fn get_parse_and_log_response<T>(
+    url: &str,
+    enforce_status_check: bool,
+) -> SdkResult<T>
 where
     for<'a> T: serde::de::Deserialize<'a>,
 {
-    let raw_body = get_and_log_response(url).await?;
+    let (raw_body, status) = get_and_log_response(url).await?;
+    if enforce_status_check && !status.is_success() {
+        let err = format!("GET request {url} failed with status: {status}");
+        error!("{err}");
+        return Err(SdkError::ServiceConnectivity { err });
+    }
 
-    Ok(serde_json::from_str(&raw_body)?)
+    serde_json::from_str::<T>(&raw_body).map_err(Into::into)
 }
 
 /// Prepends the given prefix to the input, if the input doesn't already start with it
@@ -416,7 +436,7 @@ async fn resolve_lnurl(
     }
 
     lnurl_endpoint = maybe_replace_host_with_mockito_test_host(lnurl_endpoint)?;
-    let lnurl_data: LnUrlRequestData = get_parse_and_log_response(&lnurl_endpoint)
+    let lnurl_data: LnUrlRequestData = get_parse_and_log_response(&lnurl_endpoint, false)
         .await
         .map_err(|_| anyhow!("Failed to parse response"))?;
     let temp = lnurl_data.into();
@@ -1055,15 +1075,20 @@ pub(crate) mod tests {
 }
         "#.replace('\n', "");
 
-        let response_body = match return_lnurl_error {
-            None => expected_lnurl_withdraw_data,
-            Some(err_reason) => {
-                ["{\"status\": \"ERROR\", \"reason\": \"", &err_reason, "\"}"].join("")
-            }
+        let (response_body, status) = match &return_lnurl_error {
+            None => (expected_lnurl_withdraw_data, 200),
+            Some(err_reason) => (
+                ["{\"status\": \"ERROR\", \"reason\": \"", err_reason, "\"}"].join(""),
+                400,
+            ),
         };
 
         let mut server = MOCK_HTTP_SERVER.lock().unwrap();
-        server.mock("GET", path).with_body(response_body).create()
+        server
+            .mock("GET", path)
+            .with_body(response_body)
+            .with_status(status)
+            .create()
     }
 
     #[tokio::test]
