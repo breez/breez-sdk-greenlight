@@ -74,6 +74,17 @@ use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 /// }
 /// ```
 ///
+/// ### Web URLs with `lightning` query param with an LNURL value.
+///
+/// ```no_run
+/// use breez_sdk_core::{InputType::*, parse};
+///
+/// #[tokio::main]
+/// async fn main() {
+///     assert!(matches!( parse("https://breez.technology?lightning=lnurl1d...").await, Ok(LnUrlWithdraw{data: _}) ));
+/// }
+/// ```
+///
 /// ## LNURL
 ///
 /// Both the bech32 and the raw (non-bech32, but with specific prefixes) variants are supported.
@@ -196,6 +207,11 @@ pub async fn parse(input: &str) -> Result<InputType> {
 
     if let Ok(url) = reqwest::Url::parse(input) {
         if ["http", "https"].contains(&url.scheme()) {
+            if let Some((_key, value)) = url.query_pairs().find(|p| p.0 == "lightning") {
+                if let Ok((domain, lnurl_endpoint, ln_address)) = lnurl_decode(&value) {
+                    return resolve_lnurl(domain, lnurl_endpoint, ln_address).await;
+                }
+            }
             return Ok(Url { url: input.into() });
         }
     }
@@ -205,33 +221,8 @@ pub async fn parse(input: &str) -> Result<InputType> {
         .strip_prefix("lightning:")
         .or(input.strip_prefix("LIGHTNING:"))
         .unwrap_or(input);
-    if let Ok((domain, mut lnurl_endpoint, ln_address)) = lnurl_decode(input) {
-        // For LNURL-auth links, their type is already known if the link contains the login tag
-        // No need to query the endpoint for details
-        if lnurl_endpoint.contains("tag=login") {
-            return Ok(LnUrlAuth {
-                data: crate::lnurl::auth::validate_request(domain, lnurl_endpoint)?,
-            });
-        }
-
-        lnurl_endpoint = maybe_replace_host_with_mockito_test_host(lnurl_endpoint)?;
-        let lnurl_data: LnUrlRequestData = get_parse_and_log_response(&lnurl_endpoint, false)
-            .await
-            .map_err(|_| anyhow!("Failed to parse response"))?;
-        let temp = lnurl_data.into();
-        let temp = match temp {
-            // Modify the LnUrlPay payload by adding the domain of the LNURL endpoint
-            LnUrlPay { data } => LnUrlPay {
-                data: LnUrlPayRequestData {
-                    domain,
-                    ln_address,
-                    ..data
-                },
-            },
-            _ => temp,
-        };
-
-        return Ok(temp);
+    if let Ok((domain, lnurl_endpoint, ln_address)) = lnurl_decode(input) {
+        return resolve_lnurl(domain, lnurl_endpoint, ln_address).await;
     }
 
     Err(anyhow!("Unrecognized input type"))
@@ -429,6 +420,38 @@ fn lnurl_decode(encoded: &str) -> LnUrlResult<(String, String, Option<String>)> 
             Ok((domain.into(), encoded.replacen(scheme, new_scheme, 1), None))
         }
     }
+}
+
+async fn resolve_lnurl(
+    domain: String,
+    mut lnurl_endpoint: String,
+    ln_address: Option<String>,
+) -> Result<InputType> {
+    // For LNURL-auth links, their type is already known if the link contains the login tag
+    // No need to query the endpoint for details
+    if lnurl_endpoint.contains("tag=login") {
+        return Ok(LnUrlAuth {
+            data: crate::lnurl::auth::validate_request(domain, lnurl_endpoint)?,
+        });
+    }
+
+    lnurl_endpoint = maybe_replace_host_with_mockito_test_host(lnurl_endpoint)?;
+    let lnurl_data: LnUrlRequestData = get_parse_and_log_response(&lnurl_endpoint, false)
+        .await
+        .map_err(|_| anyhow!("Failed to parse response"))?;
+    let temp = lnurl_data.into();
+    let temp = match temp {
+        // Modify the LnUrlPay payload by adding the domain of the LNURL endpoint
+        LnUrlPay { data } => LnUrlPay {
+            data: LnUrlPayRequestData {
+                domain,
+                ln_address,
+                ..data
+            },
+        },
+        _ => temp,
+    };
+    Ok(temp)
 }
 
 /// Creates an HTTP client with a built-in connection timeout
@@ -904,6 +927,11 @@ pub(crate) mod tests {
             parse("https://breez.technology/test-path?arg1=val1&arg2=val2").await?,
             InputType::Url { url: _url }
         ));
+        // `lightning` query param is not an LNURL.
+        assert!(matches!(
+            parse("https://breez.technology?lightning=nonsense").await?,
+            InputType::Url { url: _url }
+        ));
 
         Ok(())
     }
@@ -1073,6 +1101,32 @@ pub(crate) mod tests {
         );
 
         if let LnUrlWithdraw { data: wd } = parse(lnurl_withdraw_encoded).await? {
+            assert_eq!(wd.callback, "https://localhost/lnurl-withdraw/callback/e464f841c44dbdd86cee4f09f4ccd3ced58d2e24f148730ec192748317b74538");
+            assert_eq!(
+                wd.k1,
+                "37b4c919f871c090830cc47b92a544a30097f03430bc39670b8ec0da89f01a81"
+            );
+            assert_eq!(wd.min_withdrawable, 3000);
+            assert_eq!(wd.max_withdrawable, 12000);
+            assert_eq!(wd.default_description, "sample withdraw");
+        }
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_lnurl_withdraw_in_url() -> Result<(), Box<dyn std::error::Error>> {
+        let path = "/lnurl-withdraw?session=bc893fafeb9819046781b47d68fdcf88fa39a28898784c183b42b7ac13820d81";
+        let _m = mock_lnurl_withdraw_endpoint(path, None);
+
+        let lnurl_withdraw_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4exctthd96xserjv9mn7um9wdekjmmw843xxwpexdnxzen9vgunsvfexq6rvdecx93rgdmyxcuxverrvcursenpxvukzv3c8qunsdecx33nzwpnvg6ryc3hv93nzvecxgcxgwp3h33lxk";
+        assert_eq!(
+            lnurl_decode(lnurl_withdraw_encoded)?,
+            ("localhost".into(), format!("https://localhost{path}"), None,)
+        );
+        let url = format!("https://bitcoin.org?lightning={lnurl_withdraw_encoded}");
+
+        if let LnUrlWithdraw { data: wd } = parse(&url).await? {
             assert_eq!(wd.callback, "https://localhost/lnurl-withdraw/callback/e464f841c44dbdd86cee4f09f4ccd3ced58d2e24f148730ec192748317b74538");
             assert_eq!(
                 wd.k1,
