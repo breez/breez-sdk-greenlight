@@ -50,9 +50,7 @@ static LOG_INIT: OnceCell<bool> = OnceCell::new();
 
 /// Wrapper around [BreezServices::connect] which also initializes SDK logging
 pub async fn connect(req: ConnectRequest) -> Result<BindingBreezServices, ConnectError> {
-    let breez_services = BreezServices::connect(req, Box::new(BindingEventListener {}))
-        .await
-        .map_err(anyhow::Error::new::<ConnectError>)?;
+    let breez_services = BreezServices::connect(req, Box::new(BindingEventListener {})).await?;
     Ok(BindingBreezServices { breez_services })
 }
 
