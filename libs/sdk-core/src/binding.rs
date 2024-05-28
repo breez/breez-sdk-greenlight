@@ -52,8 +52,7 @@ static LOG_INIT: OnceCell<bool> = OnceCell::new();
 pub async fn connect(req: ConnectRequest) -> Result<BindingBreezServices, ConnectError> {
     let breez_services = BreezServices::connect(req, Box::new(BindingEventListener {}))
         .await
-        .map_err(anyhow::Error::new::<ConnectError>)
-        .unwrap();
+        .map_err(anyhow::Error::new::<ConnectError>)?;
     Ok(BindingBreezServices { breez_services })
 }
 
