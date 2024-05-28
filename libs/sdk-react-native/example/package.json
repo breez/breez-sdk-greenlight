@@ -13,7 +13,7 @@
     "rebuild": "rm -rf node_modules && yarn && yarn pods"
   },
   "dependencies": {
-    "@breeztech/react-native-breez-sdk": "0.4.1",
+    "@breeztech/react-native-breez-sdk": "0.4.2-rc1",
     "@dreson4/react-native-quick-bip39": "^0.0.5",
     "react": "18.1.0",
     "react-native": "0.70.15",
