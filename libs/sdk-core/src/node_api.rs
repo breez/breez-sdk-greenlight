@@ -88,7 +88,7 @@ pub trait NodeAPI: Send + Sync {
     async fn pull_changed(
         &self,
         since_timestamp: u64,
-        balance_changed: bool,
+        match_local_balance: bool,
     ) -> NodeResult<SyncResponse>;
     /// As per the `pb::PayRequest` docs, `amount_msat` is only needed when the invoice doesn't specify an amount
     async fn send_payment(
