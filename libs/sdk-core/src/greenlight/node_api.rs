@@ -313,8 +313,8 @@ impl Greenlight {
             Some(creds) => {
                 debug!("registering with credentials");
                 Nobody {
-                    cert: creds.device_cert,
-                    key: creds.device_key,
+                    cert: creds.developer_cert,
+                    key: creds.developer_key,
                     ..Default::default()
                 }
             }

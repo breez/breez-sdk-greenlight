@@ -108,8 +108,8 @@ export interface FiatCurrency {
 }
 
 export interface GreenlightCredentials {
-    deviceKey: number[]
-    deviceCert: number[]
+    developerKey: number[]
+    developerCert: number[]
 }
 
 export interface GreenlightDeviceCredentials {

@@ -564,8 +564,8 @@ pub enum EnvironmentType {
 /// Client-specific credentials to connect to and manage a Greenlight node in the cloud
 #[derive(Clone, Serialize, Deserialize)]
 pub struct GreenlightCredentials {
-    pub device_key: Vec<u8>,
-    pub device_cert: Vec<u8>,
+    pub developer_key: Vec<u8>,
+    pub developer_cert: Vec<u8>,
 }
 
 /// Device credentials used to authenticate to Greenlight with the current device.

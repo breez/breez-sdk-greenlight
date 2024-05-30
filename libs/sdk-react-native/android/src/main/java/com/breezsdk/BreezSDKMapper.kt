@@ -22,11 +22,12 @@ fun asAesSuccessActionDataDecrypted(aesSuccessActionDataDecrypted: ReadableMap):
     )
 }
 
-fun readableMapOf(aesSuccessActionDataDecrypted: AesSuccessActionDataDecrypted): ReadableMap =
-    readableMapOf(
+fun readableMapOf(aesSuccessActionDataDecrypted: AesSuccessActionDataDecrypted): ReadableMap {
+    return readableMapOf(
         "description" to aesSuccessActionDataDecrypted.description,
         "plaintext" to aesSuccessActionDataDecrypted.plaintext,
     )
+}
 
 fun asAesSuccessActionDataDecryptedList(arr: ReadableArray): List<AesSuccessActionDataDecrypted> {
     val list = ArrayList<AesSuccessActionDataDecrypted>()
@@ -55,10 +56,11 @@ fun asBackupFailedData(backupFailedData: ReadableMap): BackupFailedData? {
     )
 }
 
-fun readableMapOf(backupFailedData: BackupFailedData): ReadableMap =
-    readableMapOf(
+fun readableMapOf(backupFailedData: BackupFailedData): ReadableMap {
+    return readableMapOf(
         "error" to backupFailedData.error,
     )
+}
 
 fun asBackupFailedDataList(arr: ReadableArray): List<BackupFailedData> {
     val list = ArrayList<BackupFailedData>()
@@ -89,11 +91,12 @@ fun asBackupStatus(backupStatus: ReadableMap): BackupStatus? {
     )
 }
 
-fun readableMapOf(backupStatus: BackupStatus): ReadableMap =
-    readableMapOf(
+fun readableMapOf(backupStatus: BackupStatus): ReadableMap {
+    return readableMapOf(
         "backedUp" to backupStatus.backedUp,
         "lastBackupTime" to backupStatus.lastBackupTime,
     )
+}
 
 fun asBackupStatusList(arr: ReadableArray): List<BackupStatus> {
     val list = ArrayList<BackupStatus>()
@@ -131,14 +134,15 @@ fun asBitcoinAddressData(bitcoinAddressData: ReadableMap): BitcoinAddressData? {
     )
 }
 
-fun readableMapOf(bitcoinAddressData: BitcoinAddressData): ReadableMap =
-    readableMapOf(
+fun readableMapOf(bitcoinAddressData: BitcoinAddressData): ReadableMap {
+    return readableMapOf(
         "address" to bitcoinAddressData.address,
         "network" to bitcoinAddressData.network.name.lowercase(),
         "amountSat" to bitcoinAddressData.amountSat,
         "label" to bitcoinAddressData.label,
         "message" to bitcoinAddressData.message,
     )
+}
 
 fun asBitcoinAddressDataList(arr: ReadableArray): List<BitcoinAddressData> {
     val list = ArrayList<BitcoinAddressData>()
@@ -176,11 +180,12 @@ fun asBuyBitcoinRequest(buyBitcoinRequest: ReadableMap): BuyBitcoinRequest? {
     )
 }
 
-fun readableMapOf(buyBitcoinRequest: BuyBitcoinRequest): ReadableMap =
-    readableMapOf(
+fun readableMapOf(buyBitcoinRequest: BuyBitcoinRequest): ReadableMap {
+    return readableMapOf(
         "provider" to buyBitcoinRequest.provider.name.lowercase(),
         "openingFeeParams" to buyBitcoinRequest.openingFeeParams?.let { readableMapOf(it) },
     )
+}
 
 fun asBuyBitcoinRequestList(arr: ReadableArray): List<BuyBitcoinRequest> {
     val list = ArrayList<BuyBitcoinRequest>()
@@ -218,11 +223,12 @@ fun asBuyBitcoinResponse(buyBitcoinResponse: ReadableMap): BuyBitcoinResponse? {
     )
 }
 
-fun readableMapOf(buyBitcoinResponse: BuyBitcoinResponse): ReadableMap =
-    readableMapOf(
+fun readableMapOf(buyBitcoinResponse: BuyBitcoinResponse): ReadableMap {
+    return readableMapOf(
         "url" to buyBitcoinResponse.url,
         "openingFeeParams" to buyBitcoinResponse.openingFeeParams?.let { readableMapOf(it) },
     )
+}
 
 fun asBuyBitcoinResponseList(arr: ReadableArray): List<BuyBitcoinResponse> {
     val list = ArrayList<BuyBitcoinResponse>()
@@ -257,12 +263,13 @@ fun asCheckMessageRequest(checkMessageRequest: ReadableMap): CheckMessageRequest
     )
 }
 
-fun readableMapOf(checkMessageRequest: CheckMessageRequest): ReadableMap =
-    readableMapOf(
+fun readableMapOf(checkMessageRequest: CheckMessageRequest): ReadableMap {
+    return readableMapOf(
         "message" to checkMessageRequest.message,
         "pubkey" to checkMessageRequest.pubkey,
         "signature" to checkMessageRequest.signature,
     )
+}
 
 fun asCheckMessageRequestList(arr: ReadableArray): List<CheckMessageRequest> {
     val list = ArrayList<CheckMessageRequest>()
@@ -291,10 +298,11 @@ fun asCheckMessageResponse(checkMessageResponse: ReadableMap): CheckMessageRespo
     )
 }
 
-fun readableMapOf(checkMessageResponse: CheckMessageResponse): ReadableMap =
-    readableMapOf(
+fun readableMapOf(checkMessageResponse: CheckMessageResponse): ReadableMap {
+    return readableMapOf(
         "isValid" to checkMessageResponse.isValid,
     )
+}
 
 fun asCheckMessageResponseList(arr: ReadableArray): List<CheckMessageResponse> {
     val list = ArrayList<CheckMessageResponse>()
@@ -348,13 +356,14 @@ fun asClosedChannelPaymentDetails(closedChannelPaymentDetails: ReadableMap): Clo
     )
 }
 
-fun readableMapOf(closedChannelPaymentDetails: ClosedChannelPaymentDetails): ReadableMap =
-    readableMapOf(
+fun readableMapOf(closedChannelPaymentDetails: ClosedChannelPaymentDetails): ReadableMap {
+    return readableMapOf(
         "state" to closedChannelPaymentDetails.state.name.lowercase(),
         "fundingTxid" to closedChannelPaymentDetails.fundingTxid,
         "shortChannelId" to closedChannelPaymentDetails.shortChannelId,
         "closingTxid" to closedChannelPaymentDetails.closingTxid,
     )
+}
 
 fun asClosedChannelPaymentDetailsList(arr: ReadableArray): List<ClosedChannelPaymentDetails> {
     val list = ArrayList<ClosedChannelPaymentDetails>()
@@ -410,8 +419,8 @@ fun asConfig(config: ReadableMap): Config? {
     )
 }
 
-fun readableMapOf(config: Config): ReadableMap =
-    readableMapOf(
+fun readableMapOf(config: Config): ReadableMap {
+    return readableMapOf(
         "breezserver" to config.breezserver,
         "chainnotifierUrl" to config.chainnotifierUrl,
         "mempoolspaceUrl" to config.mempoolspaceUrl,
@@ -424,6 +433,7 @@ fun readableMapOf(config: Config): ReadableMap =
         "exemptfeeMsat" to config.exemptfeeMsat,
         "nodeConfig" to readableMapOf(config.nodeConfig),
     )
+}
 
 fun asConfigList(arr: ReadableArray): List<Config> {
     val list = ArrayList<Config>()
@@ -459,10 +469,11 @@ fun asConfigureNodeRequest(configureNodeRequest: ReadableMap): ConfigureNodeRequ
     )
 }
 
-fun readableMapOf(configureNodeRequest: ConfigureNodeRequest): ReadableMap =
-    readableMapOf(
+fun readableMapOf(configureNodeRequest: ConfigureNodeRequest): ReadableMap {
+    return readableMapOf(
         "closeToAddress" to configureNodeRequest.closeToAddress,
     )
+}
 
 fun asConfigureNodeRequestList(arr: ReadableArray): List<ConfigureNodeRequest> {
     val list = ArrayList<ConfigureNodeRequest>()
@@ -496,12 +507,13 @@ fun asConnectRequest(connectRequest: ReadableMap): ConnectRequest? {
     )
 }
 
-fun readableMapOf(connectRequest: ConnectRequest): ReadableMap =
-    readableMapOf(
+fun readableMapOf(connectRequest: ConnectRequest): ReadableMap {
+    return readableMapOf(
         "config" to readableMapOf(connectRequest.config),
         "seed" to readableArrayOf(connectRequest.seed),
         "restoreOnly" to connectRequest.restoreOnly,
     )
+}
 
 fun asConnectRequestList(arr: ReadableArray): List<ConnectRequest> {
     val list = ArrayList<ConnectRequest>()
@@ -557,8 +569,8 @@ fun asCurrencyInfo(currencyInfo: ReadableMap): CurrencyInfo? {
     )
 }
 
-fun readableMapOf(currencyInfo: CurrencyInfo): ReadableMap =
-    readableMapOf(
+fun readableMapOf(currencyInfo: CurrencyInfo): ReadableMap {
+    return readableMapOf(
         "name" to currencyInfo.name,
         "fractionSize" to currencyInfo.fractionSize,
         "spacing" to currencyInfo.spacing,
@@ -567,6 +579,7 @@ fun readableMapOf(currencyInfo: CurrencyInfo): ReadableMap =
         "localizedName" to currencyInfo.localizedName?.let { readableArrayOf(it) },
         "localeOverrides" to currencyInfo.localeOverrides?.let { readableArrayOf(it) },
     )
+}
 
 fun asCurrencyInfoList(arr: ReadableArray): List<CurrencyInfo> {
     val list = ArrayList<CurrencyInfo>()
@@ -598,11 +611,12 @@ fun asFiatCurrency(fiatCurrency: ReadableMap): FiatCurrency? {
     )
 }
 
-fun readableMapOf(fiatCurrency: FiatCurrency): ReadableMap =
-    readableMapOf(
+fun readableMapOf(fiatCurrency: FiatCurrency): ReadableMap {
+    return readableMapOf(
         "id" to fiatCurrency.id,
         "info" to readableMapOf(fiatCurrency.info),
     )
+}
 
 fun asFiatCurrencyList(arr: ReadableArray): List<FiatCurrency> {
     val list = ArrayList<FiatCurrency>()
@@ -619,26 +633,27 @@ fun asGreenlightCredentials(greenlightCredentials: ReadableMap): GreenlightCrede
     if (!validateMandatoryFields(
             greenlightCredentials,
             arrayOf(
-                "deviceKey",
-                "deviceCert",
+                "developerKey",
+                "developerCert",
             ),
         )
     ) {
         return null
     }
-    val deviceKey = greenlightCredentials.getArray("deviceKey")?.let { asUByteList(it) }!!
-    val deviceCert = greenlightCredentials.getArray("deviceCert")?.let { asUByteList(it) }!!
+    val developerKey = greenlightCredentials.getArray("developerKey")?.let { asUByteList(it) }!!
+    val developerCert = greenlightCredentials.getArray("developerCert")?.let { asUByteList(it) }!!
     return GreenlightCredentials(
-        deviceKey,
-        deviceCert,
+        developerKey,
+        developerCert,
     )
 }
 
-fun readableMapOf(greenlightCredentials: GreenlightCredentials): ReadableMap =
-    readableMapOf(
-        "deviceKey" to readableArrayOf(greenlightCredentials.deviceKey),
-        "deviceCert" to readableArrayOf(greenlightCredentials.deviceCert),
+fun readableMapOf(greenlightCredentials: GreenlightCredentials): ReadableMap {
+    return readableMapOf(
+        "developerKey" to readableArrayOf(greenlightCredentials.developerKey),
+        "developerCert" to readableArrayOf(greenlightCredentials.developerCert),
     )
+}
 
 fun asGreenlightCredentialsList(arr: ReadableArray): List<GreenlightCredentials> {
     val list = ArrayList<GreenlightCredentials>()
@@ -711,11 +726,12 @@ fun asGreenlightNodeConfig(greenlightNodeConfig: ReadableMap): GreenlightNodeCon
     )
 }
 
-fun readableMapOf(greenlightNodeConfig: GreenlightNodeConfig): ReadableMap =
-    readableMapOf(
+fun readableMapOf(greenlightNodeConfig: GreenlightNodeConfig): ReadableMap {
+    return readableMapOf(
         "partnerCredentials" to greenlightNodeConfig.partnerCredentials?.let { readableMapOf(it) },
         "inviteCode" to greenlightNodeConfig.inviteCode,
     )
+}
 
 fun asGreenlightNodeConfigList(arr: ReadableArray): List<GreenlightNodeConfig> {
     val list = ArrayList<GreenlightNodeConfig>()
@@ -749,12 +765,13 @@ fun asInvoicePaidDetails(invoicePaidDetails: ReadableMap): InvoicePaidDetails? {
     )
 }
 
-fun readableMapOf(invoicePaidDetails: InvoicePaidDetails): ReadableMap =
-    readableMapOf(
+fun readableMapOf(invoicePaidDetails: InvoicePaidDetails): ReadableMap {
+    return readableMapOf(
         "paymentHash" to invoicePaidDetails.paymentHash,
         "bolt11" to invoicePaidDetails.bolt11,
         "payment" to invoicePaidDetails.payment?.let { readableMapOf(it) },
     )
+}
 
 fun asInvoicePaidDetailsList(arr: ReadableArray): List<InvoicePaidDetails> {
     val list = ArrayList<InvoicePaidDetails>()
@@ -813,8 +830,8 @@ fun asLnInvoice(lnInvoice: ReadableMap): LnInvoice? {
     )
 }
 
-fun readableMapOf(lnInvoice: LnInvoice): ReadableMap =
-    readableMapOf(
+fun readableMapOf(lnInvoice: LnInvoice): ReadableMap {
+    return readableMapOf(
         "bolt11" to lnInvoice.bolt11,
         "network" to lnInvoice.network.name.lowercase(),
         "payeePubkey" to lnInvoice.payeePubkey,
@@ -828,6 +845,7 @@ fun readableMapOf(lnInvoice: LnInvoice): ReadableMap =
         "paymentSecret" to readableArrayOf(lnInvoice.paymentSecret),
         "minFinalCltvExpiryDelta" to lnInvoice.minFinalCltvExpiryDelta,
     )
+}
 
 fun asLnInvoiceList(arr: ReadableArray): List<LnInvoice> {
     val list = ArrayList<LnInvoice>()
@@ -898,8 +916,8 @@ fun asListPaymentsRequest(listPaymentsRequest: ReadableMap): ListPaymentsRequest
     )
 }
 
-fun readableMapOf(listPaymentsRequest: ListPaymentsRequest): ReadableMap =
-    readableMapOf(
+fun readableMapOf(listPaymentsRequest: ListPaymentsRequest): ReadableMap {
+    return readableMapOf(
         "filters" to listPaymentsRequest.filters?.let { readableArrayOf(it) },
         "metadataFilters" to listPaymentsRequest.metadataFilters?.let { readableArrayOf(it) },
         "fromTimestamp" to listPaymentsRequest.fromTimestamp,
@@ -908,6 +926,7 @@ fun readableMapOf(listPaymentsRequest: ListPaymentsRequest): ReadableMap =
         "offset" to listPaymentsRequest.offset,
         "limit" to listPaymentsRequest.limit,
     )
+}
 
 fun asListPaymentsRequestList(arr: ReadableArray): List<ListPaymentsRequest> {
     val list = ArrayList<ListPaymentsRequest>()
@@ -1012,8 +1031,8 @@ fun asLnPaymentDetails(lnPaymentDetails: ReadableMap): LnPaymentDetails? {
     )
 }
 
-fun readableMapOf(lnPaymentDetails: LnPaymentDetails): ReadableMap =
-    readableMapOf(
+fun readableMapOf(lnPaymentDetails: LnPaymentDetails): ReadableMap {
+    return readableMapOf(
         "paymentHash" to lnPaymentDetails.paymentHash,
         "label" to lnPaymentDetails.label,
         "destinationPubkey" to lnPaymentDetails.destinationPubkey,
@@ -1031,6 +1050,7 @@ fun readableMapOf(lnPaymentDetails: LnPaymentDetails): ReadableMap =
         "reverseSwapInfo" to lnPaymentDetails.reverseSwapInfo?.let { readableMapOf(it) },
         "pendingExpirationBlock" to lnPaymentDetails.pendingExpirationBlock,
     )
+}
 
 fun asLnPaymentDetailsList(arr: ReadableArray): List<LnPaymentDetails> {
     val list = ArrayList<LnPaymentDetails>()
@@ -1067,13 +1087,14 @@ fun asLnUrlAuthRequestData(lnUrlAuthRequestData: ReadableMap): LnUrlAuthRequestD
     )
 }
 
-fun readableMapOf(lnUrlAuthRequestData: LnUrlAuthRequestData): ReadableMap =
-    readableMapOf(
+fun readableMapOf(lnUrlAuthRequestData: LnUrlAuthRequestData): ReadableMap {
+    return readableMapOf(
         "k1" to lnUrlAuthRequestData.k1,
         "domain" to lnUrlAuthRequestData.domain,
         "url" to lnUrlAuthRequestData.url,
         "action" to lnUrlAuthRequestData.action,
     )
+}
 
 fun asLnUrlAuthRequestDataList(arr: ReadableArray): List<LnUrlAuthRequestData> {
     val list = ArrayList<LnUrlAuthRequestData>()
@@ -1102,10 +1123,11 @@ fun asLnUrlErrorData(lnUrlErrorData: ReadableMap): LnUrlErrorData? {
     )
 }
 
-fun readableMapOf(lnUrlErrorData: LnUrlErrorData): ReadableMap =
-    readableMapOf(
+fun readableMapOf(lnUrlErrorData: LnUrlErrorData): ReadableMap {
+    return readableMapOf(
         "reason" to lnUrlErrorData.reason,
     )
+}
 
 fun asLnUrlErrorDataList(arr: ReadableArray): List<LnUrlErrorData> {
     val list = ArrayList<LnUrlErrorData>()
@@ -1137,11 +1159,12 @@ fun asLnUrlPayErrorData(lnUrlPayErrorData: ReadableMap): LnUrlPayErrorData? {
     )
 }
 
-fun readableMapOf(lnUrlPayErrorData: LnUrlPayErrorData): ReadableMap =
-    readableMapOf(
+fun readableMapOf(lnUrlPayErrorData: LnUrlPayErrorData): ReadableMap {
+    return readableMapOf(
         "paymentHash" to lnUrlPayErrorData.paymentHash,
         "reason" to lnUrlPayErrorData.reason,
     )
+}
 
 fun asLnUrlPayErrorDataList(arr: ReadableArray): List<LnUrlPayErrorData> {
     val list = ArrayList<LnUrlPayErrorData>()
@@ -1177,13 +1200,14 @@ fun asLnUrlPayRequest(lnUrlPayRequest: ReadableMap): LnUrlPayRequest? {
     )
 }
 
-fun readableMapOf(lnUrlPayRequest: LnUrlPayRequest): ReadableMap =
-    readableMapOf(
+fun readableMapOf(lnUrlPayRequest: LnUrlPayRequest): ReadableMap {
+    return readableMapOf(
         "data" to readableMapOf(lnUrlPayRequest.data),
         "amountMsat" to lnUrlPayRequest.amountMsat,
         "comment" to lnUrlPayRequest.comment,
         "paymentLabel" to lnUrlPayRequest.paymentLabel,
     )
+}
 
 fun asLnUrlPayRequestList(arr: ReadableArray): List<LnUrlPayRequest> {
     val list = ArrayList<LnUrlPayRequest>()
@@ -1234,8 +1258,8 @@ fun asLnUrlPayRequestData(lnUrlPayRequestData: ReadableMap): LnUrlPayRequestData
     )
 }
 
-fun readableMapOf(lnUrlPayRequestData: LnUrlPayRequestData): ReadableMap =
-    readableMapOf(
+fun readableMapOf(lnUrlPayRequestData: LnUrlPayRequestData): ReadableMap {
+    return readableMapOf(
         "callback" to lnUrlPayRequestData.callback,
         "minSendable" to lnUrlPayRequestData.minSendable,
         "maxSendable" to lnUrlPayRequestData.maxSendable,
@@ -1246,6 +1270,7 @@ fun readableMapOf(lnUrlPayRequestData: LnUrlPayRequestData): ReadableMap =
         "nostrPubkey" to lnUrlPayRequestData.nostrPubkey,
         "lnAddress" to lnUrlPayRequestData.lnAddress,
     )
+}
 
 fun asLnUrlPayRequestDataList(arr: ReadableArray): List<LnUrlPayRequestData> {
     val list = ArrayList<LnUrlPayRequestData>()
@@ -1283,11 +1308,12 @@ fun asLnUrlPaySuccessData(lnUrlPaySuccessData: ReadableMap): LnUrlPaySuccessData
     )
 }
 
-fun readableMapOf(lnUrlPaySuccessData: LnUrlPaySuccessData): ReadableMap =
-    readableMapOf(
+fun readableMapOf(lnUrlPaySuccessData: LnUrlPaySuccessData): ReadableMap {
+    return readableMapOf(
         "successAction" to lnUrlPaySuccessData.successAction?.let { readableMapOf(it) },
         "payment" to readableMapOf(lnUrlPaySuccessData.payment),
     )
+}
 
 fun asLnUrlPaySuccessDataList(arr: ReadableArray): List<LnUrlPaySuccessData> {
     val list = ArrayList<LnUrlPaySuccessData>()
@@ -1321,12 +1347,13 @@ fun asLnUrlWithdrawRequest(lnUrlWithdrawRequest: ReadableMap): LnUrlWithdrawRequ
     )
 }
 
-fun readableMapOf(lnUrlWithdrawRequest: LnUrlWithdrawRequest): ReadableMap =
-    readableMapOf(
+fun readableMapOf(lnUrlWithdrawRequest: LnUrlWithdrawRequest): ReadableMap {
+    return readableMapOf(
         "data" to readableMapOf(lnUrlWithdrawRequest.data),
         "amountMsat" to lnUrlWithdrawRequest.amountMsat,
         "description" to lnUrlWithdrawRequest.description,
     )
+}
 
 fun asLnUrlWithdrawRequestList(arr: ReadableArray): List<LnUrlWithdrawRequest> {
     val list = ArrayList<LnUrlWithdrawRequest>()
@@ -1367,14 +1394,15 @@ fun asLnUrlWithdrawRequestData(lnUrlWithdrawRequestData: ReadableMap): LnUrlWith
     )
 }
 
-fun readableMapOf(lnUrlWithdrawRequestData: LnUrlWithdrawRequestData): ReadableMap =
-    readableMapOf(
+fun readableMapOf(lnUrlWithdrawRequestData: LnUrlWithdrawRequestData): ReadableMap {
+    return readableMapOf(
         "callback" to lnUrlWithdrawRequestData.callback,
         "k1" to lnUrlWithdrawRequestData.k1,
         "defaultDescription" to lnUrlWithdrawRequestData.defaultDescription,
         "minWithdrawable" to lnUrlWithdrawRequestData.minWithdrawable,
         "maxWithdrawable" to lnUrlWithdrawRequestData.maxWithdrawable,
     )
+}
 
 fun asLnUrlWithdrawRequestDataList(arr: ReadableArray): List<LnUrlWithdrawRequestData> {
     val list = ArrayList<LnUrlWithdrawRequestData>()
@@ -1403,10 +1431,11 @@ fun asLnUrlWithdrawSuccessData(lnUrlWithdrawSuccessData: ReadableMap): LnUrlWith
     )
 }
 
-fun readableMapOf(lnUrlWithdrawSuccessData: LnUrlWithdrawSuccessData): ReadableMap =
-    readableMapOf(
+fun readableMapOf(lnUrlWithdrawSuccessData: LnUrlWithdrawSuccessData): ReadableMap {
+    return readableMapOf(
         "invoice" to readableMapOf(lnUrlWithdrawSuccessData.invoice),
     )
+}
 
 fun asLnUrlWithdrawSuccessDataList(arr: ReadableArray): List<LnUrlWithdrawSuccessData> {
     val list = ArrayList<LnUrlWithdrawSuccessData>()
@@ -1440,12 +1469,13 @@ fun asLocaleOverrides(localeOverrides: ReadableMap): LocaleOverrides? {
     )
 }
 
-fun readableMapOf(localeOverrides: LocaleOverrides): ReadableMap =
-    readableMapOf(
+fun readableMapOf(localeOverrides: LocaleOverrides): ReadableMap {
+    return readableMapOf(
         "locale" to localeOverrides.locale,
         "spacing" to localeOverrides.spacing,
         "symbol" to readableMapOf(localeOverrides.symbol),
     )
+}
 
 fun asLocaleOverridesList(arr: ReadableArray): List<LocaleOverrides> {
     val list = ArrayList<LocaleOverrides>()
@@ -1477,11 +1507,12 @@ fun asLocalizedName(localizedName: ReadableMap): LocalizedName? {
     )
 }
 
-fun readableMapOf(localizedName: LocalizedName): ReadableMap =
-    readableMapOf(
+fun readableMapOf(localizedName: LocalizedName): ReadableMap {
+    return readableMapOf(
         "locale" to localizedName.locale,
         "name" to localizedName.name,
     )
+}
 
 fun asLocalizedNameList(arr: ReadableArray): List<LocalizedName> {
     val list = ArrayList<LocalizedName>()
@@ -1513,11 +1544,12 @@ fun asLogEntry(logEntry: ReadableMap): LogEntry? {
     )
 }
 
-fun readableMapOf(logEntry: LogEntry): ReadableMap =
-    readableMapOf(
+fun readableMapOf(logEntry: LogEntry): ReadableMap {
+    return readableMapOf(
         "line" to logEntry.line,
         "level" to logEntry.level,
     )
+}
 
 fun asLogEntryList(arr: ReadableArray): List<LogEntry> {
     val list = ArrayList<LogEntry>()
@@ -1576,8 +1608,8 @@ fun asLspInformation(lspInformation: ReadableMap): LspInformation? {
     )
 }
 
-fun readableMapOf(lspInformation: LspInformation): ReadableMap =
-    readableMapOf(
+fun readableMapOf(lspInformation: LspInformation): ReadableMap {
+    return readableMapOf(
         "id" to lspInformation.id,
         "name" to lspInformation.name,
         "widgetUrl" to lspInformation.widgetUrl,
@@ -1590,6 +1622,7 @@ fun readableMapOf(lspInformation: LspInformation): ReadableMap =
         "lspPubkey" to readableArrayOf(lspInformation.lspPubkey),
         "openingFeeParamsList" to readableMapOf(lspInformation.openingFeeParamsList),
     )
+}
 
 fun asLspInformationList(arr: ReadableArray): List<LspInformation> {
     val list = ArrayList<LspInformation>()
@@ -1618,10 +1651,11 @@ fun asMaxReverseSwapAmountResponse(maxReverseSwapAmountResponse: ReadableMap): M
     )
 }
 
-fun readableMapOf(maxReverseSwapAmountResponse: MaxReverseSwapAmountResponse): ReadableMap =
-    readableMapOf(
+fun readableMapOf(maxReverseSwapAmountResponse: MaxReverseSwapAmountResponse): ReadableMap {
+    return readableMapOf(
         "totalSat" to maxReverseSwapAmountResponse.totalSat,
     )
+}
 
 fun asMaxReverseSwapAmountResponseList(arr: ReadableArray): List<MaxReverseSwapAmountResponse> {
     val list = ArrayList<MaxReverseSwapAmountResponse>()
@@ -1650,10 +1684,11 @@ fun asMessageSuccessActionData(messageSuccessActionData: ReadableMap): MessageSu
     )
 }
 
-fun readableMapOf(messageSuccessActionData: MessageSuccessActionData): ReadableMap =
-    readableMapOf(
+fun readableMapOf(messageSuccessActionData: MessageSuccessActionData): ReadableMap {
+    return readableMapOf(
         "message" to messageSuccessActionData.message,
     )
+}
 
 fun asMessageSuccessActionDataList(arr: ReadableArray): List<MessageSuccessActionData> {
     val list = ArrayList<MessageSuccessActionData>()
@@ -1685,11 +1720,12 @@ fun asMetadataFilter(metadataFilter: ReadableMap): MetadataFilter? {
     )
 }
 
-fun readableMapOf(metadataFilter: MetadataFilter): ReadableMap =
-    readableMapOf(
+fun readableMapOf(metadataFilter: MetadataFilter): ReadableMap {
+    return readableMapOf(
         "jsonPath" to metadataFilter.jsonPath,
         "jsonValue" to metadataFilter.jsonValue,
     )
+}
 
 fun asMetadataFilterList(arr: ReadableArray): List<MetadataFilter> {
     val list = ArrayList<MetadataFilter>()
@@ -1721,11 +1757,12 @@ fun asMetadataItem(metadataItem: ReadableMap): MetadataItem? {
     )
 }
 
-fun readableMapOf(metadataItem: MetadataItem): ReadableMap =
-    readableMapOf(
+fun readableMapOf(metadataItem: MetadataItem): ReadableMap {
+    return readableMapOf(
         "key" to metadataItem.key,
         "value" to metadataItem.value,
     )
+}
 
 fun asMetadataItemList(arr: ReadableArray): List<MetadataItem> {
     val list = ArrayList<MetadataItem>()
@@ -1787,8 +1824,8 @@ fun asNodeState(nodeState: ReadableMap): NodeState? {
     )
 }
 
-fun readableMapOf(nodeState: NodeState): ReadableMap =
-    readableMapOf(
+fun readableMapOf(nodeState: NodeState): ReadableMap {
+    return readableMapOf(
         "id" to nodeState.id,
         "blockHeight" to nodeState.blockHeight,
         "channelsBalanceMsat" to nodeState.channelsBalanceMsat,
@@ -1802,6 +1839,7 @@ fun readableMapOf(nodeState: NodeState): ReadableMap =
         "connectedPeers" to readableArrayOf(nodeState.connectedPeers),
         "inboundLiquidityMsats" to nodeState.inboundLiquidityMsats,
     )
+}
 
 fun asNodeStateList(arr: ReadableArray): List<NodeState> {
     val list = ArrayList<NodeState>()
@@ -1833,11 +1871,12 @@ fun asOnchainPaymentLimitsResponse(onchainPaymentLimitsResponse: ReadableMap): O
     )
 }
 
-fun readableMapOf(onchainPaymentLimitsResponse: OnchainPaymentLimitsResponse): ReadableMap =
-    readableMapOf(
+fun readableMapOf(onchainPaymentLimitsResponse: OnchainPaymentLimitsResponse): ReadableMap {
+    return readableMapOf(
         "minSat" to onchainPaymentLimitsResponse.minSat,
         "maxSat" to onchainPaymentLimitsResponse.maxSat,
     )
+}
 
 fun asOnchainPaymentLimitsResponseList(arr: ReadableArray): List<OnchainPaymentLimitsResponse> {
     val list = ArrayList<OnchainPaymentLimitsResponse>()
@@ -1875,11 +1914,12 @@ fun asOpenChannelFeeRequest(openChannelFeeRequest: ReadableMap): OpenChannelFeeR
     )
 }
 
-fun readableMapOf(openChannelFeeRequest: OpenChannelFeeRequest): ReadableMap =
-    readableMapOf(
+fun readableMapOf(openChannelFeeRequest: OpenChannelFeeRequest): ReadableMap {
+    return readableMapOf(
         "amountMsat" to openChannelFeeRequest.amountMsat,
         "expiry" to openChannelFeeRequest.expiry,
     )
+}
 
 fun asOpenChannelFeeRequestList(arr: ReadableArray): List<OpenChannelFeeRequest> {
     val list = ArrayList<OpenChannelFeeRequest>()
@@ -1910,11 +1950,12 @@ fun asOpenChannelFeeResponse(openChannelFeeResponse: ReadableMap): OpenChannelFe
     )
 }
 
-fun readableMapOf(openChannelFeeResponse: OpenChannelFeeResponse): ReadableMap =
-    readableMapOf(
+fun readableMapOf(openChannelFeeResponse: OpenChannelFeeResponse): ReadableMap {
+    return readableMapOf(
         "feeMsat" to openChannelFeeResponse.feeMsat,
         "feeParams" to readableMapOf(openChannelFeeResponse.feeParams),
     )
+}
 
 fun asOpenChannelFeeResponseList(arr: ReadableArray): List<OpenChannelFeeResponse> {
     val list = ArrayList<OpenChannelFeeResponse>()
@@ -1958,8 +1999,8 @@ fun asOpeningFeeParams(openingFeeParams: ReadableMap): OpeningFeeParams? {
     )
 }
 
-fun readableMapOf(openingFeeParams: OpeningFeeParams): ReadableMap =
-    readableMapOf(
+fun readableMapOf(openingFeeParams: OpeningFeeParams): ReadableMap {
+    return readableMapOf(
         "minMsat" to openingFeeParams.minMsat,
         "proportional" to openingFeeParams.proportional,
         "validUntil" to openingFeeParams.validUntil,
@@ -1967,6 +2008,7 @@ fun readableMapOf(openingFeeParams: OpeningFeeParams): ReadableMap =
         "maxClientToSelfDelay" to openingFeeParams.maxClientToSelfDelay,
         "promise" to openingFeeParams.promise,
     )
+}
 
 fun asOpeningFeeParamsList(arr: ReadableArray): List<OpeningFeeParams> {
     val list = ArrayList<OpeningFeeParams>()
@@ -1995,10 +2037,11 @@ fun asOpeningFeeParamsMenu(openingFeeParamsMenu: ReadableMap): OpeningFeeParamsM
     )
 }
 
-fun readableMapOf(openingFeeParamsMenu: OpeningFeeParamsMenu): ReadableMap =
-    readableMapOf(
+fun readableMapOf(openingFeeParamsMenu: OpeningFeeParamsMenu): ReadableMap {
+    return readableMapOf(
         "values" to readableArrayOf(openingFeeParamsMenu.values),
     )
+}
 
 fun asOpeningFeeParamsMenuList(arr: ReadableArray): List<OpeningFeeParamsMenu> {
     val list = ArrayList<OpeningFeeParamsMenu>()
@@ -2030,11 +2073,12 @@ fun asPayOnchainRequest(payOnchainRequest: ReadableMap): PayOnchainRequest? {
     )
 }
 
-fun readableMapOf(payOnchainRequest: PayOnchainRequest): ReadableMap =
-    readableMapOf(
+fun readableMapOf(payOnchainRequest: PayOnchainRequest): ReadableMap {
+    return readableMapOf(
         "recipientAddress" to payOnchainRequest.recipientAddress,
         "prepareRes" to readableMapOf(payOnchainRequest.prepareRes),
     )
+}
 
 fun asPayOnchainRequestList(arr: ReadableArray): List<PayOnchainRequest> {
     val list = ArrayList<PayOnchainRequest>()
@@ -2063,10 +2107,11 @@ fun asPayOnchainResponse(payOnchainResponse: ReadableMap): PayOnchainResponse? {
     )
 }
 
-fun readableMapOf(payOnchainResponse: PayOnchainResponse): ReadableMap =
-    readableMapOf(
+fun readableMapOf(payOnchainResponse: PayOnchainResponse): ReadableMap {
+    return readableMapOf(
         "reverseSwapInfo" to readableMapOf(payOnchainResponse.reverseSwapInfo),
     )
+}
 
 fun asPayOnchainResponseList(arr: ReadableArray): List<PayOnchainResponse> {
     val list = ArrayList<PayOnchainResponse>()
@@ -2119,8 +2164,8 @@ fun asPayment(payment: ReadableMap): Payment? {
     )
 }
 
-fun readableMapOf(payment: Payment): ReadableMap =
-    readableMapOf(
+fun readableMapOf(payment: Payment): ReadableMap {
+    return readableMapOf(
         "id" to payment.id,
         "paymentType" to payment.paymentType.name.lowercase(),
         "paymentTime" to payment.paymentTime,
@@ -2132,6 +2177,7 @@ fun readableMapOf(payment: Payment): ReadableMap =
         "details" to readableMapOf(payment.details),
         "metadata" to payment.metadata,
     )
+}
 
 fun asPaymentList(arr: ReadableArray): List<Payment> {
     val list = ArrayList<Payment>()
@@ -2167,13 +2213,14 @@ fun asPaymentFailedData(paymentFailedData: ReadableMap): PaymentFailedData? {
     )
 }
 
-fun readableMapOf(paymentFailedData: PaymentFailedData): ReadableMap =
-    readableMapOf(
+fun readableMapOf(paymentFailedData: PaymentFailedData): ReadableMap {
+    return readableMapOf(
         "error" to paymentFailedData.error,
         "nodeId" to paymentFailedData.nodeId,
         "invoice" to paymentFailedData.invoice?.let { readableMapOf(it) },
         "label" to paymentFailedData.label,
     )
+}
 
 fun asPaymentFailedDataList(arr: ReadableArray): List<PaymentFailedData> {
     val list = ArrayList<PaymentFailedData>()
@@ -2208,12 +2255,13 @@ fun asPrepareOnchainPaymentRequest(prepareOnchainPaymentRequest: ReadableMap): P
     )
 }
 
-fun readableMapOf(prepareOnchainPaymentRequest: PrepareOnchainPaymentRequest): ReadableMap =
-    readableMapOf(
+fun readableMapOf(prepareOnchainPaymentRequest: PrepareOnchainPaymentRequest): ReadableMap {
+    return readableMapOf(
         "amountSat" to prepareOnchainPaymentRequest.amountSat,
         "amountType" to prepareOnchainPaymentRequest.amountType.name.lowercase(),
         "claimTxFeerate" to prepareOnchainPaymentRequest.claimTxFeerate,
     )
+}
 
 fun asPrepareOnchainPaymentRequestList(arr: ReadableArray): List<PrepareOnchainPaymentRequest> {
     val list = ArrayList<PrepareOnchainPaymentRequest>()
@@ -2260,8 +2308,8 @@ fun asPrepareOnchainPaymentResponse(prepareOnchainPaymentResponse: ReadableMap):
     )
 }
 
-fun readableMapOf(prepareOnchainPaymentResponse: PrepareOnchainPaymentResponse): ReadableMap =
-    readableMapOf(
+fun readableMapOf(prepareOnchainPaymentResponse: PrepareOnchainPaymentResponse): ReadableMap {
+    return readableMapOf(
         "feesHash" to prepareOnchainPaymentResponse.feesHash,
         "feesPercentage" to prepareOnchainPaymentResponse.feesPercentage,
         "feesLockup" to prepareOnchainPaymentResponse.feesLockup,
@@ -2270,6 +2318,7 @@ fun readableMapOf(prepareOnchainPaymentResponse: PrepareOnchainPaymentResponse):
         "recipientAmountSat" to prepareOnchainPaymentResponse.recipientAmountSat,
         "totalFees" to prepareOnchainPaymentResponse.totalFees,
     )
+}
 
 fun asPrepareOnchainPaymentResponseList(arr: ReadableArray): List<PrepareOnchainPaymentResponse> {
     val list = ArrayList<PrepareOnchainPaymentResponse>()
@@ -2301,11 +2350,12 @@ fun asPrepareRedeemOnchainFundsRequest(prepareRedeemOnchainFundsRequest: Readabl
     )
 }
 
-fun readableMapOf(prepareRedeemOnchainFundsRequest: PrepareRedeemOnchainFundsRequest): ReadableMap =
-    readableMapOf(
+fun readableMapOf(prepareRedeemOnchainFundsRequest: PrepareRedeemOnchainFundsRequest): ReadableMap {
+    return readableMapOf(
         "toAddress" to prepareRedeemOnchainFundsRequest.toAddress,
         "satPerVbyte" to prepareRedeemOnchainFundsRequest.satPerVbyte,
     )
+}
 
 fun asPrepareRedeemOnchainFundsRequestList(arr: ReadableArray): List<PrepareRedeemOnchainFundsRequest> {
     val list = ArrayList<PrepareRedeemOnchainFundsRequest>()
@@ -2337,11 +2387,12 @@ fun asPrepareRedeemOnchainFundsResponse(prepareRedeemOnchainFundsResponse: Reada
     )
 }
 
-fun readableMapOf(prepareRedeemOnchainFundsResponse: PrepareRedeemOnchainFundsResponse): ReadableMap =
-    readableMapOf(
+fun readableMapOf(prepareRedeemOnchainFundsResponse: PrepareRedeemOnchainFundsResponse): ReadableMap {
+    return readableMapOf(
         "txWeight" to prepareRedeemOnchainFundsResponse.txWeight,
         "txFeeSat" to prepareRedeemOnchainFundsResponse.txFeeSat,
     )
+}
 
 fun asPrepareRedeemOnchainFundsResponseList(arr: ReadableArray): List<PrepareRedeemOnchainFundsResponse> {
     val list = ArrayList<PrepareRedeemOnchainFundsResponse>()
@@ -2376,12 +2427,13 @@ fun asPrepareRefundRequest(prepareRefundRequest: ReadableMap): PrepareRefundRequ
     )
 }
 
-fun readableMapOf(prepareRefundRequest: PrepareRefundRequest): ReadableMap =
-    readableMapOf(
+fun readableMapOf(prepareRefundRequest: PrepareRefundRequest): ReadableMap {
+    return readableMapOf(
         "swapAddress" to prepareRefundRequest.swapAddress,
         "toAddress" to prepareRefundRequest.toAddress,
         "satPerVbyte" to prepareRefundRequest.satPerVbyte,
     )
+}
 
 fun asPrepareRefundRequestList(arr: ReadableArray): List<PrepareRefundRequest> {
     val list = ArrayList<PrepareRefundRequest>()
@@ -2413,11 +2465,12 @@ fun asPrepareRefundResponse(prepareRefundResponse: ReadableMap): PrepareRefundRe
     )
 }
 
-fun readableMapOf(prepareRefundResponse: PrepareRefundResponse): ReadableMap =
-    readableMapOf(
+fun readableMapOf(prepareRefundResponse: PrepareRefundResponse): ReadableMap {
+    return readableMapOf(
         "refundTxWeight" to prepareRefundResponse.refundTxWeight,
         "refundTxFeeSat" to prepareRefundResponse.refundTxFeeSat,
     )
+}
 
 fun asPrepareRefundResponseList(arr: ReadableArray): List<PrepareRefundResponse> {
     val list = ArrayList<PrepareRefundResponse>()
@@ -2449,11 +2502,12 @@ fun asRate(rate: ReadableMap): Rate? {
     )
 }
 
-fun readableMapOf(rate: Rate): ReadableMap =
-    readableMapOf(
+fun readableMapOf(rate: Rate): ReadableMap {
+    return readableMapOf(
         "coin" to rate.coin,
         "value" to rate.value,
     )
+}
 
 fun asRateList(arr: ReadableArray): List<Rate> {
     val list = ArrayList<Rate>()
@@ -2491,10 +2545,11 @@ fun asReceiveOnchainRequest(receiveOnchainRequest: ReadableMap): ReceiveOnchainR
     )
 }
 
-fun readableMapOf(receiveOnchainRequest: ReceiveOnchainRequest): ReadableMap =
-    readableMapOf(
+fun readableMapOf(receiveOnchainRequest: ReceiveOnchainRequest): ReadableMap {
+    return readableMapOf(
         "openingFeeParams" to receiveOnchainRequest.openingFeeParams?.let { readableMapOf(it) },
     )
+}
 
 fun asReceiveOnchainRequestList(arr: ReadableArray): List<ReceiveOnchainRequest> {
     val list = ArrayList<ReceiveOnchainRequest>()
@@ -2563,8 +2618,8 @@ fun asReceivePaymentRequest(receivePaymentRequest: ReadableMap): ReceivePaymentR
     )
 }
 
-fun readableMapOf(receivePaymentRequest: ReceivePaymentRequest): ReadableMap =
-    readableMapOf(
+fun readableMapOf(receivePaymentRequest: ReceivePaymentRequest): ReadableMap {
+    return readableMapOf(
         "amountMsat" to receivePaymentRequest.amountMsat,
         "description" to receivePaymentRequest.description,
         "preimage" to receivePaymentRequest.preimage?.let { readableArrayOf(it) },
@@ -2573,6 +2628,7 @@ fun readableMapOf(receivePaymentRequest: ReceivePaymentRequest): ReadableMap =
         "expiry" to receivePaymentRequest.expiry,
         "cltv" to receivePaymentRequest.cltv,
     )
+}
 
 fun asReceivePaymentRequestList(arr: ReadableArray): List<ReceivePaymentRequest> {
     val list = ArrayList<ReceivePaymentRequest>()
@@ -2625,12 +2681,13 @@ fun asReceivePaymentResponse(receivePaymentResponse: ReadableMap): ReceivePaymen
     )
 }
 
-fun readableMapOf(receivePaymentResponse: ReceivePaymentResponse): ReadableMap =
-    readableMapOf(
+fun readableMapOf(receivePaymentResponse: ReceivePaymentResponse): ReadableMap {
+    return readableMapOf(
         "lnInvoice" to readableMapOf(receivePaymentResponse.lnInvoice),
         "openingFeeParams" to receivePaymentResponse.openingFeeParams?.let { readableMapOf(it) },
         "openingFeeMsat" to receivePaymentResponse.openingFeeMsat,
     )
+}
 
 fun asReceivePaymentResponseList(arr: ReadableArray): List<ReceivePaymentResponse> {
     val list = ArrayList<ReceivePaymentResponse>()
@@ -2671,14 +2728,15 @@ fun asRecommendedFees(recommendedFees: ReadableMap): RecommendedFees? {
     )
 }
 
-fun readableMapOf(recommendedFees: RecommendedFees): ReadableMap =
-    readableMapOf(
+fun readableMapOf(recommendedFees: RecommendedFees): ReadableMap {
+    return readableMapOf(
         "fastestFee" to recommendedFees.fastestFee,
         "halfHourFee" to recommendedFees.halfHourFee,
         "hourFee" to recommendedFees.hourFee,
         "economyFee" to recommendedFees.economyFee,
         "minimumFee" to recommendedFees.minimumFee,
     )
+}
 
 fun asRecommendedFeesList(arr: ReadableArray): List<RecommendedFees> {
     val list = ArrayList<RecommendedFees>()
@@ -2710,11 +2768,12 @@ fun asRedeemOnchainFundsRequest(redeemOnchainFundsRequest: ReadableMap): RedeemO
     )
 }
 
-fun readableMapOf(redeemOnchainFundsRequest: RedeemOnchainFundsRequest): ReadableMap =
-    readableMapOf(
+fun readableMapOf(redeemOnchainFundsRequest: RedeemOnchainFundsRequest): ReadableMap {
+    return readableMapOf(
         "toAddress" to redeemOnchainFundsRequest.toAddress,
         "satPerVbyte" to redeemOnchainFundsRequest.satPerVbyte,
     )
+}
 
 fun asRedeemOnchainFundsRequestList(arr: ReadableArray): List<RedeemOnchainFundsRequest> {
     val list = ArrayList<RedeemOnchainFundsRequest>()
@@ -2743,10 +2802,11 @@ fun asRedeemOnchainFundsResponse(redeemOnchainFundsResponse: ReadableMap): Redee
     )
 }
 
-fun readableMapOf(redeemOnchainFundsResponse: RedeemOnchainFundsResponse): ReadableMap =
-    readableMapOf(
+fun readableMapOf(redeemOnchainFundsResponse: RedeemOnchainFundsResponse): ReadableMap {
+    return readableMapOf(
         "txid" to readableArrayOf(redeemOnchainFundsResponse.txid),
     )
+}
 
 fun asRedeemOnchainFundsResponseList(arr: ReadableArray): List<RedeemOnchainFundsResponse> {
     val list = ArrayList<RedeemOnchainFundsResponse>()
@@ -2781,12 +2841,13 @@ fun asRefundRequest(refundRequest: ReadableMap): RefundRequest? {
     )
 }
 
-fun readableMapOf(refundRequest: RefundRequest): ReadableMap =
-    readableMapOf(
+fun readableMapOf(refundRequest: RefundRequest): ReadableMap {
+    return readableMapOf(
         "swapAddress" to refundRequest.swapAddress,
         "toAddress" to refundRequest.toAddress,
         "satPerVbyte" to refundRequest.satPerVbyte,
     )
+}
 
 fun asRefundRequestList(arr: ReadableArray): List<RefundRequest> {
     val list = ArrayList<RefundRequest>()
@@ -2815,10 +2876,11 @@ fun asRefundResponse(refundResponse: ReadableMap): RefundResponse? {
     )
 }
 
-fun readableMapOf(refundResponse: RefundResponse): ReadableMap =
-    readableMapOf(
+fun readableMapOf(refundResponse: RefundResponse): ReadableMap {
+    return readableMapOf(
         "refundTxId" to refundResponse.refundTxId,
     )
+}
 
 fun asRefundResponseList(arr: ReadableArray): List<RefundResponse> {
     val list = ArrayList<RefundResponse>()
@@ -2849,11 +2911,12 @@ fun asReportPaymentFailureDetails(reportPaymentFailureDetails: ReadableMap): Rep
     )
 }
 
-fun readableMapOf(reportPaymentFailureDetails: ReportPaymentFailureDetails): ReadableMap =
-    readableMapOf(
+fun readableMapOf(reportPaymentFailureDetails: ReportPaymentFailureDetails): ReadableMap {
+    return readableMapOf(
         "paymentHash" to reportPaymentFailureDetails.paymentHash,
         "comment" to reportPaymentFailureDetails.comment,
     )
+}
 
 fun asReportPaymentFailureDetailsList(arr: ReadableArray): List<ReportPaymentFailureDetails> {
     val list = ArrayList<ReportPaymentFailureDetails>()
@@ -2900,11 +2963,12 @@ fun asReverseSwapFeesRequest(reverseSwapFeesRequest: ReadableMap): ReverseSwapFe
     )
 }
 
-fun readableMapOf(reverseSwapFeesRequest: ReverseSwapFeesRequest): ReadableMap =
-    readableMapOf(
+fun readableMapOf(reverseSwapFeesRequest: ReverseSwapFeesRequest): ReadableMap {
+    return readableMapOf(
         "sendAmountSat" to reverseSwapFeesRequest.sendAmountSat,
         "claimTxFeerate" to reverseSwapFeesRequest.claimTxFeerate,
     )
+}
 
 fun asReverseSwapFeesRequestList(arr: ReadableArray): List<ReverseSwapFeesRequest> {
     val list = ArrayList<ReverseSwapFeesRequest>()
@@ -2946,8 +3010,8 @@ fun asReverseSwapInfo(reverseSwapInfo: ReadableMap): ReverseSwapInfo? {
     )
 }
 
-fun readableMapOf(reverseSwapInfo: ReverseSwapInfo): ReadableMap =
-    readableMapOf(
+fun readableMapOf(reverseSwapInfo: ReverseSwapInfo): ReadableMap {
+    return readableMapOf(
         "id" to reverseSwapInfo.id,
         "claimPubkey" to reverseSwapInfo.claimPubkey,
         "lockupTxid" to reverseSwapInfo.lockupTxid,
@@ -2955,6 +3019,7 @@ fun readableMapOf(reverseSwapInfo: ReverseSwapInfo): ReadableMap =
         "onchainAmountSat" to reverseSwapInfo.onchainAmountSat,
         "status" to reverseSwapInfo.status.name.lowercase(),
     )
+}
 
 fun asReverseSwapInfoList(arr: ReadableArray): List<ReverseSwapInfo> {
     val list = ArrayList<ReverseSwapInfo>()
@@ -3000,8 +3065,8 @@ fun asReverseSwapPairInfo(reverseSwapPairInfo: ReadableMap): ReverseSwapPairInfo
     )
 }
 
-fun readableMapOf(reverseSwapPairInfo: ReverseSwapPairInfo): ReadableMap =
-    readableMapOf(
+fun readableMapOf(reverseSwapPairInfo: ReverseSwapPairInfo): ReadableMap {
+    return readableMapOf(
         "min" to reverseSwapPairInfo.min,
         "max" to reverseSwapPairInfo.max,
         "feesHash" to reverseSwapPairInfo.feesHash,
@@ -3010,6 +3075,7 @@ fun readableMapOf(reverseSwapPairInfo: ReverseSwapPairInfo): ReadableMap =
         "feesClaim" to reverseSwapPairInfo.feesClaim,
         "totalFees" to reverseSwapPairInfo.totalFees,
     )
+}
 
 fun asReverseSwapPairInfoList(arr: ReadableArray): List<ReverseSwapPairInfo> {
     val list = ArrayList<ReverseSwapPairInfo>()
@@ -3038,10 +3104,11 @@ fun asRouteHint(routeHint: ReadableMap): RouteHint? {
     )
 }
 
-fun readableMapOf(routeHint: RouteHint): ReadableMap =
-    readableMapOf(
+fun readableMapOf(routeHint: RouteHint): ReadableMap {
+    return readableMapOf(
         "hops" to readableArrayOf(routeHint.hops),
     )
+}
 
 fun asRouteHintList(arr: ReadableArray): List<RouteHint> {
     val list = ArrayList<RouteHint>()
@@ -3086,8 +3153,8 @@ fun asRouteHintHop(routeHintHop: ReadableMap): RouteHintHop? {
     )
 }
 
-fun readableMapOf(routeHintHop: RouteHintHop): ReadableMap =
-    readableMapOf(
+fun readableMapOf(routeHintHop: RouteHintHop): ReadableMap {
+    return readableMapOf(
         "srcNodeId" to routeHintHop.srcNodeId,
         "shortChannelId" to routeHintHop.shortChannelId,
         "feesBaseMsat" to routeHintHop.feesBaseMsat,
@@ -3096,6 +3163,7 @@ fun readableMapOf(routeHintHop: RouteHintHop): ReadableMap =
         "htlcMinimumMsat" to routeHintHop.htlcMinimumMsat,
         "htlcMaximumMsat" to routeHintHop.htlcMaximumMsat,
     )
+}
 
 fun asRouteHintHopList(arr: ReadableArray): List<RouteHintHop> {
     val list = ArrayList<RouteHintHop>()
@@ -3133,13 +3201,14 @@ fun asSendOnchainRequest(sendOnchainRequest: ReadableMap): SendOnchainRequest? {
     )
 }
 
-fun readableMapOf(sendOnchainRequest: SendOnchainRequest): ReadableMap =
-    readableMapOf(
+fun readableMapOf(sendOnchainRequest: SendOnchainRequest): ReadableMap {
+    return readableMapOf(
         "amountSat" to sendOnchainRequest.amountSat,
         "onchainRecipientAddress" to sendOnchainRequest.onchainRecipientAddress,
         "pairHash" to sendOnchainRequest.pairHash,
         "satPerVbyte" to sendOnchainRequest.satPerVbyte,
     )
+}
 
 fun asSendOnchainRequestList(arr: ReadableArray): List<SendOnchainRequest> {
     val list = ArrayList<SendOnchainRequest>()
@@ -3168,10 +3237,11 @@ fun asSendOnchainResponse(sendOnchainResponse: ReadableMap): SendOnchainResponse
     )
 }
 
-fun readableMapOf(sendOnchainResponse: SendOnchainResponse): ReadableMap =
-    readableMapOf(
+fun readableMapOf(sendOnchainResponse: SendOnchainResponse): ReadableMap {
+    return readableMapOf(
         "reverseSwapInfo" to readableMapOf(sendOnchainResponse.reverseSwapInfo),
     )
+}
 
 fun asSendOnchainResponseList(arr: ReadableArray): List<SendOnchainResponse> {
     val list = ArrayList<SendOnchainResponse>()
@@ -3204,12 +3274,13 @@ fun asSendPaymentRequest(sendPaymentRequest: ReadableMap): SendPaymentRequest? {
     )
 }
 
-fun readableMapOf(sendPaymentRequest: SendPaymentRequest): ReadableMap =
-    readableMapOf(
+fun readableMapOf(sendPaymentRequest: SendPaymentRequest): ReadableMap {
+    return readableMapOf(
         "bolt11" to sendPaymentRequest.bolt11,
         "amountMsat" to sendPaymentRequest.amountMsat,
         "label" to sendPaymentRequest.label,
     )
+}
 
 fun asSendPaymentRequestList(arr: ReadableArray): List<SendPaymentRequest> {
     val list = ArrayList<SendPaymentRequest>()
@@ -3238,10 +3309,11 @@ fun asSendPaymentResponse(sendPaymentResponse: ReadableMap): SendPaymentResponse
     )
 }
 
-fun readableMapOf(sendPaymentResponse: SendPaymentResponse): ReadableMap =
-    readableMapOf(
+fun readableMapOf(sendPaymentResponse: SendPaymentResponse): ReadableMap {
+    return readableMapOf(
         "payment" to readableMapOf(sendPaymentResponse.payment),
     )
+}
 
 fun asSendPaymentResponseList(arr: ReadableArray): List<SendPaymentResponse> {
     val list = ArrayList<SendPaymentResponse>()
@@ -3288,13 +3360,14 @@ fun asSendSpontaneousPaymentRequest(sendSpontaneousPaymentRequest: ReadableMap):
     )
 }
 
-fun readableMapOf(sendSpontaneousPaymentRequest: SendSpontaneousPaymentRequest): ReadableMap =
-    readableMapOf(
+fun readableMapOf(sendSpontaneousPaymentRequest: SendSpontaneousPaymentRequest): ReadableMap {
+    return readableMapOf(
         "nodeId" to sendSpontaneousPaymentRequest.nodeId,
         "amountMsat" to sendSpontaneousPaymentRequest.amountMsat,
         "extraTlvs" to sendSpontaneousPaymentRequest.extraTlvs?.let { readableArrayOf(it) },
         "label" to sendSpontaneousPaymentRequest.label,
     )
+}
 
 fun asSendSpontaneousPaymentRequestList(arr: ReadableArray): List<SendSpontaneousPaymentRequest> {
     val list = ArrayList<SendSpontaneousPaymentRequest>()
@@ -3323,10 +3396,11 @@ fun asServiceHealthCheckResponse(serviceHealthCheckResponse: ReadableMap): Servi
     )
 }
 
-fun readableMapOf(serviceHealthCheckResponse: ServiceHealthCheckResponse): ReadableMap =
-    readableMapOf(
+fun readableMapOf(serviceHealthCheckResponse: ServiceHealthCheckResponse): ReadableMap {
+    return readableMapOf(
         "status" to serviceHealthCheckResponse.status.name.lowercase(),
     )
+}
 
 fun asServiceHealthCheckResponseList(arr: ReadableArray): List<ServiceHealthCheckResponse> {
     val list = ArrayList<ServiceHealthCheckResponse>()
@@ -3355,10 +3429,11 @@ fun asSignMessageRequest(signMessageRequest: ReadableMap): SignMessageRequest? {
     )
 }
 
-fun readableMapOf(signMessageRequest: SignMessageRequest): ReadableMap =
-    readableMapOf(
+fun readableMapOf(signMessageRequest: SignMessageRequest): ReadableMap {
+    return readableMapOf(
         "message" to signMessageRequest.message,
     )
+}
 
 fun asSignMessageRequestList(arr: ReadableArray): List<SignMessageRequest> {
     val list = ArrayList<SignMessageRequest>()
@@ -3387,10 +3462,11 @@ fun asSignMessageResponse(signMessageResponse: ReadableMap): SignMessageResponse
     )
 }
 
-fun readableMapOf(signMessageResponse: SignMessageResponse): ReadableMap =
-    readableMapOf(
+fun readableMapOf(signMessageResponse: SignMessageResponse): ReadableMap {
+    return readableMapOf(
         "signature" to signMessageResponse.signature,
     )
+}
 
 fun asSignMessageResponseList(arr: ReadableArray): List<SignMessageResponse> {
     val list = ArrayList<SignMessageResponse>()
@@ -3419,10 +3495,11 @@ fun asStaticBackupRequest(staticBackupRequest: ReadableMap): StaticBackupRequest
     )
 }
 
-fun readableMapOf(staticBackupRequest: StaticBackupRequest): ReadableMap =
-    readableMapOf(
+fun readableMapOf(staticBackupRequest: StaticBackupRequest): ReadableMap {
+    return readableMapOf(
         "workingDir" to staticBackupRequest.workingDir,
     )
+}
 
 fun asStaticBackupRequestList(arr: ReadableArray): List<StaticBackupRequest> {
     val list = ArrayList<StaticBackupRequest>()
@@ -3458,10 +3535,11 @@ fun asStaticBackupResponse(staticBackupResponse: ReadableMap): StaticBackupRespo
     )
 }
 
-fun readableMapOf(staticBackupResponse: StaticBackupResponse): ReadableMap =
-    readableMapOf(
+fun readableMapOf(staticBackupResponse: StaticBackupResponse): ReadableMap {
+    return readableMapOf(
         "backup" to staticBackupResponse.backup?.let { readableArrayOf(it) },
     )
+}
 
 fun asStaticBackupResponseList(arr: ReadableArray): List<StaticBackupResponse> {
     val list = ArrayList<StaticBackupResponse>()
@@ -3562,8 +3640,8 @@ fun asSwapInfo(swapInfo: ReadableMap): SwapInfo? {
     )
 }
 
-fun readableMapOf(swapInfo: SwapInfo): ReadableMap =
-    readableMapOf(
+fun readableMapOf(swapInfo: SwapInfo): ReadableMap {
+    return readableMapOf(
         "bitcoinAddress" to swapInfo.bitcoinAddress,
         "createdAt" to swapInfo.createdAt,
         "lockHeight" to swapInfo.lockHeight,
@@ -3589,6 +3667,7 @@ fun readableMapOf(swapInfo: SwapInfo): ReadableMap =
         "channelOpeningFees" to swapInfo.channelOpeningFees?.let { readableMapOf(it) },
         "confirmedAt" to swapInfo.confirmedAt,
     )
+}
 
 fun asSwapInfoList(arr: ReadableArray): List<SwapInfo> {
     val list = ArrayList<SwapInfo>()
@@ -3621,13 +3700,14 @@ fun asSymbol(symbol: ReadableMap): Symbol? {
     )
 }
 
-fun readableMapOf(symbol: Symbol): ReadableMap =
-    readableMapOf(
+fun readableMapOf(symbol: Symbol): ReadableMap {
+    return readableMapOf(
         "grapheme" to symbol.grapheme,
         "template" to symbol.template,
         "rtl" to symbol.rtl,
         "position" to symbol.position,
     )
+}
 
 fun asSymbolList(arr: ReadableArray): List<Symbol> {
     val list = ArrayList<Symbol>()
@@ -3659,11 +3739,12 @@ fun asTlvEntry(tlvEntry: ReadableMap): TlvEntry? {
     )
 }
 
-fun readableMapOf(tlvEntry: TlvEntry): ReadableMap =
-    readableMapOf(
+fun readableMapOf(tlvEntry: TlvEntry): ReadableMap {
+    return readableMapOf(
         "fieldNumber" to tlvEntry.fieldNumber,
         "value" to readableArrayOf(tlvEntry.value),
     )
+}
 
 fun asTlvEntryList(arr: ReadableArray): List<TlvEntry> {
     val list = ArrayList<TlvEntry>()
@@ -3704,14 +3785,15 @@ fun asUnspentTransactionOutput(unspentTransactionOutput: ReadableMap): UnspentTr
     )
 }
 
-fun readableMapOf(unspentTransactionOutput: UnspentTransactionOutput): ReadableMap =
-    readableMapOf(
+fun readableMapOf(unspentTransactionOutput: UnspentTransactionOutput): ReadableMap {
+    return readableMapOf(
         "txid" to readableArrayOf(unspentTransactionOutput.txid),
         "outnum" to unspentTransactionOutput.outnum,
         "amountMillisatoshi" to unspentTransactionOutput.amountMillisatoshi,
         "address" to unspentTransactionOutput.address,
         "reserved" to unspentTransactionOutput.reserved,
     )
+}
 
 fun asUnspentTransactionOutputList(arr: ReadableArray): List<UnspentTransactionOutput> {
     val list = ArrayList<UnspentTransactionOutput>()
@@ -3743,11 +3825,12 @@ fun asUrlSuccessActionData(urlSuccessActionData: ReadableMap): UrlSuccessActionD
     )
 }
 
-fun readableMapOf(urlSuccessActionData: UrlSuccessActionData): ReadableMap =
-    readableMapOf(
+fun readableMapOf(urlSuccessActionData: UrlSuccessActionData): ReadableMap {
+    return readableMapOf(
         "description" to urlSuccessActionData.description,
         "url" to urlSuccessActionData.url,
     )
+}
 
 fun asUrlSuccessActionDataList(arr: ReadableArray): List<UrlSuccessActionData> {
     val list = ArrayList<UrlSuccessActionData>()
@@ -3884,7 +3967,9 @@ fun asBreezEventList(arr: ReadableArray): List<BreezEvent> {
     return list
 }
 
-fun asBuyBitcoinProvider(type: String): BuyBitcoinProvider = BuyBitcoinProvider.valueOf(camelToUpperSnakeCase(type))
+fun asBuyBitcoinProvider(type: String): BuyBitcoinProvider {
+    return BuyBitcoinProvider.valueOf(camelToUpperSnakeCase(type))
+}
 
 fun asBuyBitcoinProviderList(arr: ReadableArray): List<BuyBitcoinProvider> {
     val list = ArrayList<BuyBitcoinProvider>()
@@ -3897,7 +3982,9 @@ fun asBuyBitcoinProviderList(arr: ReadableArray): List<BuyBitcoinProvider> {
     return list
 }
 
-fun asChannelState(type: String): ChannelState = ChannelState.valueOf(camelToUpperSnakeCase(type))
+fun asChannelState(type: String): ChannelState {
+    return ChannelState.valueOf(camelToUpperSnakeCase(type))
+}
 
 fun asChannelStateList(arr: ReadableArray): List<ChannelState> {
     val list = ArrayList<ChannelState>()
@@ -3910,7 +3997,9 @@ fun asChannelStateList(arr: ReadableArray): List<ChannelState> {
     return list
 }
 
-fun asEnvironmentType(type: String): EnvironmentType = EnvironmentType.valueOf(camelToUpperSnakeCase(type))
+fun asEnvironmentType(type: String): EnvironmentType {
+    return EnvironmentType.valueOf(camelToUpperSnakeCase(type))
+}
 
 fun asEnvironmentTypeList(arr: ReadableArray): List<EnvironmentType> {
     val list = ArrayList<EnvironmentType>()
@@ -3923,7 +4012,9 @@ fun asEnvironmentTypeList(arr: ReadableArray): List<EnvironmentType> {
     return list
 }
 
-fun asFeeratePreset(type: String): FeeratePreset = FeeratePreset.valueOf(camelToUpperSnakeCase(type))
+fun asFeeratePreset(type: String): FeeratePreset {
+    return FeeratePreset.valueOf(camelToUpperSnakeCase(type))
+}
 
 fun asFeeratePresetList(arr: ReadableArray): List<FeeratePreset> {
     val list = ArrayList<FeeratePreset>()
@@ -3936,7 +4027,9 @@ fun asFeeratePresetList(arr: ReadableArray): List<FeeratePreset> {
     return list
 }
 
-fun asHealthCheckStatus(type: String): HealthCheckStatus = HealthCheckStatus.valueOf(camelToUpperSnakeCase(type))
+fun asHealthCheckStatus(type: String): HealthCheckStatus {
+    return HealthCheckStatus.valueOf(camelToUpperSnakeCase(type))
+}
 
 fun asHealthCheckStatusList(arr: ReadableArray): List<HealthCheckStatus> {
     val list = ArrayList<HealthCheckStatus>()
@@ -4149,7 +4242,9 @@ fun asLnUrlWithdrawResultList(arr: ReadableArray): List<LnUrlWithdrawResult> {
     return list
 }
 
-fun asNetwork(type: String): Network = Network.valueOf(camelToUpperSnakeCase(type))
+fun asNetwork(type: String): Network {
+    return Network.valueOf(camelToUpperSnakeCase(type))
+}
 
 fun asNetworkList(arr: ReadableArray): List<Network> {
     val list = ArrayList<Network>()
@@ -4262,7 +4357,9 @@ fun asPaymentDetailsList(arr: ReadableArray): List<PaymentDetails> {
     return list
 }
 
-fun asPaymentStatus(type: String): PaymentStatus = PaymentStatus.valueOf(camelToUpperSnakeCase(type))
+fun asPaymentStatus(type: String): PaymentStatus {
+    return PaymentStatus.valueOf(camelToUpperSnakeCase(type))
+}
 
 fun asPaymentStatusList(arr: ReadableArray): List<PaymentStatus> {
     val list = ArrayList<PaymentStatus>()
@@ -4275,7 +4372,9 @@ fun asPaymentStatusList(arr: ReadableArray): List<PaymentStatus> {
     return list
 }
 
-fun asPaymentType(type: String): PaymentType = PaymentType.valueOf(camelToUpperSnakeCase(type))
+fun asPaymentType(type: String): PaymentType {
+    return PaymentType.valueOf(camelToUpperSnakeCase(type))
+}
 
 fun asPaymentTypeList(arr: ReadableArray): List<PaymentType> {
     val list = ArrayList<PaymentType>()
@@ -4288,7 +4387,9 @@ fun asPaymentTypeList(arr: ReadableArray): List<PaymentType> {
     return list
 }
 
-fun asPaymentTypeFilter(type: String): PaymentTypeFilter = PaymentTypeFilter.valueOf(camelToUpperSnakeCase(type))
+fun asPaymentTypeFilter(type: String): PaymentTypeFilter {
+    return PaymentTypeFilter.valueOf(camelToUpperSnakeCase(type))
+}
 
 fun asPaymentTypeFilterList(arr: ReadableArray): List<PaymentTypeFilter> {
     val list = ArrayList<PaymentTypeFilter>()
@@ -4332,7 +4433,9 @@ fun asReportIssueRequestList(arr: ReadableArray): List<ReportIssueRequest> {
     return list
 }
 
-fun asReverseSwapStatus(type: String): ReverseSwapStatus = ReverseSwapStatus.valueOf(camelToUpperSnakeCase(type))
+fun asReverseSwapStatus(type: String): ReverseSwapStatus {
+    return ReverseSwapStatus.valueOf(camelToUpperSnakeCase(type))
+}
 
 fun asReverseSwapStatusList(arr: ReadableArray): List<ReverseSwapStatus> {
     val list = ArrayList<ReverseSwapStatus>()
@@ -4390,7 +4493,9 @@ fun asSuccessActionProcessedList(arr: ReadableArray): List<SuccessActionProcesse
     return list
 }
 
-fun asSwapAmountType(type: String): SwapAmountType = SwapAmountType.valueOf(camelToUpperSnakeCase(type))
+fun asSwapAmountType(type: String): SwapAmountType {
+    return SwapAmountType.valueOf(camelToUpperSnakeCase(type))
+}
 
 fun asSwapAmountTypeList(arr: ReadableArray): List<SwapAmountType> {
     val list = ArrayList<SwapAmountType>()
@@ -4403,7 +4508,9 @@ fun asSwapAmountTypeList(arr: ReadableArray): List<SwapAmountType> {
     return list
 }
 
-fun asSwapStatus(type: String): SwapStatus = SwapStatus.valueOf(camelToUpperSnakeCase(type))
+fun asSwapStatus(type: String): SwapStatus {
+    return SwapStatus.valueOf(camelToUpperSnakeCase(type))
+}
 
 fun asSwapStatusList(arr: ReadableArray): List<SwapStatus> {
     val list = ArrayList<SwapStatus>()
@@ -4427,7 +4534,9 @@ fun readableMapOf(vararg values: Pair<String, *>): ReadableMap {
 fun hasNonNullKey(
     map: ReadableMap,
     key: String,
-): Boolean = map.hasKey(key) && !map.isNull(key)
+): Boolean {
+    return map.hasKey(key) && !map.isNull(key)
+}
 
 fun validateMandatoryFields(
     map: ReadableMap,
@@ -4529,11 +4638,17 @@ fun asStringList(arr: ReadableArray): List<String> {
 fun errMissingMandatoryField(
     fieldName: String,
     typeName: String,
-): String = "Missing mandatory field $fieldName for type $typeName"
+): String {
+    return "Missing mandatory field $fieldName for type $typeName"
+}
 
-fun errUnexpectedType(typeName: String): String = "Unexpected type $typeName"
+fun errUnexpectedType(typeName: String): String {
+    return "Unexpected type $typeName"
+}
 
-fun errUnexpectedValue(fieldName: String): String = "Unexpected value for optional field $fieldName"
+fun errUnexpectedValue(fieldName: String): String {
+    return "Unexpected value for optional field $fieldName"
+}
 
 fun camelToUpperSnakeCase(str: String): String {
     val pattern = "(?<=.)[A-Z]".toRegex()
