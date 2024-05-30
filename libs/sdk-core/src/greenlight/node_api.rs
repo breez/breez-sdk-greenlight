@@ -104,7 +104,7 @@ impl Greenlight {
         // Query for the existing credentials
         let mut parsed_credentials =
             Self::get_node_credentials(config.network, &temp_signer, persister.clone())?
-                .ok_or(NodeError::generic("No credentials found"));
+                .ok_or(NodeError::credentials("No credentials found"));
         if parsed_credentials.is_err() {
             info!("No credentials found, trying to recover existing node");
             parsed_credentials = match Self::recover(config.network, seed.clone()).await {
@@ -147,7 +147,7 @@ impl Greenlight {
                     None => Err(NodeError::generic("Failed to encrypt credentials")),
                 }
             }
-            Err(_) => Err(NodeError::generic("Failed to get gl credentials")),
+            Err(_) => Err(NodeError::credentials("Failed to get gl credentials")),
         }
     }
 
@@ -399,12 +399,12 @@ impl Greenlight {
                     Some(decrypted_creds) => {
                         let credentials = Device::from_bytes(decrypted_creds.as_slice());
                         if credentials.cert.is_empty() {
-                            Err(NodeError::generic("Unable to parse credentials"))
+                            Err(NodeError::credentials("Unable to parse credentials"))
                         } else {
                             Ok(Some(credentials))
                         }
                     }
-                    None => Err(NodeError::generic(
+                    None => Err(NodeError::credentials(
                         "Failed to decrypt credentials, seed doesn't match existing node",
                     )),
                 }
