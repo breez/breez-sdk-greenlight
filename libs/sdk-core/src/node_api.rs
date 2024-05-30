@@ -60,6 +60,10 @@ pub enum NodeError {
 }
 
 impl NodeError {
+    pub(crate) fn credentials(err: &str) -> Self {
+        Self::Credentials(err.to_string())
+    }
+
     pub(crate) fn generic(err: &str) -> Self {
         Self::Generic(err.to_string())
     }
