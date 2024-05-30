@@ -99,8 +99,8 @@ pub(crate) async fn handle_command(
                 let cert = fs::read(partner_cert.unwrap())?;
                 let key = fs::read(partner_key.unwrap())?;
                 partner_credentials = Some(GreenlightCredentials {
-                    device_cert: cert,
-                    device_key: key,
+                    developer_cert: cert,
+                    developer_key: key,
                 })
             }
 

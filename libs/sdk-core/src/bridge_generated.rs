@@ -1276,8 +1276,8 @@ impl rust2dart::IntoIntoDart<FiatCurrency> for FiatCurrency {
 impl support::IntoDart for GreenlightCredentials {
     fn into_dart(self) -> support::DartAbi {
         vec![
-            self.device_key.into_into_dart().into_dart(),
-            self.device_cert.into_into_dart().into_dart(),
+            self.developer_key.into_into_dart().into_dart(),
+            self.developer_cert.into_into_dart().into_dart(),
         ]
         .into_dart()
     }

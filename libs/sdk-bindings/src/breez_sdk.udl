@@ -111,8 +111,8 @@ enum Network {
 };
 
 dictionary GreenlightCredentials {
-    sequence<u8> device_key;
-    sequence<u8> device_cert;
+    sequence<u8> developer_key;
+    sequence<u8> developer_cert;
 };
 
 dictionary GreenlightDeviceCredentials {

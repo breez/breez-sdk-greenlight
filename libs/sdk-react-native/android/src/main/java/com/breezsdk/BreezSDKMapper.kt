@@ -633,25 +633,25 @@ fun asGreenlightCredentials(greenlightCredentials: ReadableMap): GreenlightCrede
     if (!validateMandatoryFields(
             greenlightCredentials,
             arrayOf(
-                "deviceKey",
-                "deviceCert",
+                "developerKey",
+                "developerCert",
             ),
         )
     ) {
         return null
     }
-    val deviceKey = greenlightCredentials.getArray("deviceKey")?.let { asUByteList(it) }!!
-    val deviceCert = greenlightCredentials.getArray("deviceCert")?.let { asUByteList(it) }!!
+    val developerKey = greenlightCredentials.getArray("developerKey")?.let { asUByteList(it) }!!
+    val developerCert = greenlightCredentials.getArray("developerCert")?.let { asUByteList(it) }!!
     return GreenlightCredentials(
-        deviceKey,
-        deviceCert,
+        developerKey,
+        developerCert,
     )
 }
 
 fun readableMapOf(greenlightCredentials: GreenlightCredentials): ReadableMap {
     return readableMapOf(
-        "deviceKey" to readableArrayOf(greenlightCredentials.deviceKey),
-        "deviceCert" to readableArrayOf(greenlightCredentials.deviceCert),
+        "developerKey" to readableArrayOf(greenlightCredentials.developerKey),
+        "developerCert" to readableArrayOf(greenlightCredentials.developerCert),
     )
 }
 
