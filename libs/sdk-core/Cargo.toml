@@ -18,7 +18,7 @@ bip21 = "0.2"
 # The switch to 0.2 will happen with https://github.com/breez/breez-sdk/pull/724
 gl-client = { git = "https://github.com/Blockstream/greenlight.git", features = [
     "permissive",
-], rev = "c46e2cec58abbc5f8d756df6653561b9fb47f3cd" }
+], rev = "76297c584711d9d11d8b5f57ce41dbe73653ce11" }
 zbase32 = "0.1.2"
 base64 = "0.13.0"
 chrono = "0.4"
