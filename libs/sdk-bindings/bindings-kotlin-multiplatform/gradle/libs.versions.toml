@@ -1,0 +1,19 @@
+[versions]
+atomicfu = "0.24.0"
+android-gradle-plugin = "8.4.1"
+jna = "5.14.0"
+kotlin = "1.9.24"
+kotlinx-datetime = "0.6.0"
+okio = "3.9.0"
+
+[libraries]
+atomicfu = { module = "org.jetbrains.kotlinx:atomicfu-gradle-plugin", version.ref = "atomicfu" }
+android-gradle-plugin = { module = "com.android.tools.build:gradle", version.ref = "android-gradle-plugin" }
+jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
+kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
+
+[plugins]
+androidLibrary = { id = "com.android.library", version.ref = "android-gradle-plugin" }
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
