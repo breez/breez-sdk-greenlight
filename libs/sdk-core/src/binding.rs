@@ -66,7 +66,7 @@ pub fn connect(req: ConnectRequest) -> Result<()> {
         match *locked {
             None => {
                 let breez_services =
-                    BreezServices::connect(req, Box::new(BindingEventListener {})).await?;
+                    BreezServices::connect(req, Box::new(BindingEventListener::new())).await?;
 
                 *locked = Some(breez_services);
                 Ok(())
@@ -544,7 +544,13 @@ pub fn generate_diagnostic_data() -> Result<String> {
 
 /*  Binding Related Logic */
 
-struct BindingEventListener;
+pub struct BindingEventListener {}
+
+impl BindingEventListener {
+    fn new() -> Self {
+        Self {}
+    }
+}
 
 impl EventListener for BindingEventListener {
     fn on_event(&self, e: BreezEvent) {
