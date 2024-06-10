@@ -1,7 +1,8 @@
 use std::str::FromStr;
 
+use sdk_lnurl::prelude::*;
+
 use crate::input_parser::get_parse_and_log_response;
-use crate::lnurl::error::LnUrlError;
 use crate::{
     ensure_sdk, lnurl::*, LnUrlCallbackStatus, LnUrlWithdrawResult, LnUrlWithdrawSuccessData,
 };

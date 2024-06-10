@@ -1,10 +1,11 @@
 use std::time::SystemTimeError;
 
 use anyhow::Result;
+use sdk_lnurl::prelude::*;
 use thiserror::Error;
 
 use crate::{
-    bitcoin::util::bip32, invoice::InvoiceError, lnurl::error::LnUrlError, node_api::NodeError,
+    bitcoin::util::bip32, invoice::InvoiceError, node_api::NodeError,
     persist::error::PersistError, swap_in::error::SwapError, swap_out::error::ReverseSwapError,
 };
 
@@ -188,7 +189,7 @@ impl From<LnUrlError> for LnUrlPayError {
     fn from(value: LnUrlError) -> Self {
         match value {
             LnUrlError::InvalidUri(err) => Self::InvalidUri { err },
-            LnUrlError::InvalidInvoice(err) => err.into(),
+            LnUrlError::InvalidInvoice(err) => Self::InvalidInvoice { err },
             LnUrlError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
             _ => Self::Generic {
                 err: value.to_string(),
@@ -279,7 +280,7 @@ impl From<LnUrlError> for LnUrlWithdrawError {
         match value {
             LnUrlError::Generic(err) => Self::Generic { err },
             LnUrlError::InvalidUri(err) => Self::InvalidUri { err },
-            LnUrlError::InvalidInvoice(err) => err.into(),
+            LnUrlError::InvalidInvoice(err) => Self::InvalidInvoice { err },
             LnUrlError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
         }
     }

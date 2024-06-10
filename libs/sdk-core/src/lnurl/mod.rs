@@ -1,9 +1,8 @@
 pub(crate) mod auth;
-pub(crate) mod error;
 pub(crate) mod pay;
 pub(crate) mod withdraw;
 
-use crate::lnurl::error::LnUrlResult;
+use sdk_lnurl::prelude::*;
 
 /// Replaces the scheme, host and port with a local mockito host. Preserves the rest of the path.
 #[cfg(test)]
@@ -12,8 +11,6 @@ pub(crate) fn maybe_replace_host_with_mockito_test_host(
 ) -> LnUrlResult<String> {
     // During tests, the mockito test URL chooses a free port. This cannot be known in advance,
     // so the URL has to be adjusted dynamically.
-
-    use self::error::LnUrlError;
 
     let server = crate::input_parser::tests::MOCK_HTTP_SERVER.lock().unwrap();
     let mockito_endpoint_url =

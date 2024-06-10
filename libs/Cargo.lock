@@ -541,6 +541,7 @@ dependencies = [
  "ripemd",
  "rusqlite",
  "rusqlite_migration",
+ "sdk-lnurl",
  "serde",
  "serde_json",
  "serde_with",
@@ -2705,6 +2706,17 @@ checksum = "da046153aa2352493d6cb7da4b6e5c0c057d8a1d0a9aa8560baffdd945acd414"
 dependencies = [
  "ring 0.17.7",
  "untrusted 0.9.0",
+]
+
+[[package]]
+name = "sdk-lnurl"
+version = "0.4.1"
+dependencies = [
+ "aes",
+ "base64 0.13.1",
+ "bitcoin 0.29.2",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]

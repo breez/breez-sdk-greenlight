@@ -16,7 +16,7 @@ crate-type = ["staticlib", "cdylib", "lib"]
 [dependencies]
 breez-sdk-core = { path = "../sdk-core" }
 anyhow = { version = "1.0.79", features = ["backtrace"] }
-thiserror = "1.0.56"
+thiserror = { workspace = true }
 tokio = { version = "1", features = ["full"] }
 uniffi = { version = "0.23.0", features = ["bindgen-tests", "cli"] }
 uniffi_bindgen = "0.23.0"

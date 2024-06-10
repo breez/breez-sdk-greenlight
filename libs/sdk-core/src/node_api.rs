@@ -62,6 +62,16 @@ impl NodeError {
     }
 }
 
+impl From<NodeError> for sdk_lnurl::prelude::LnUrlError {
+    fn from(value: NodeError) -> Self {
+        match value {
+            NodeError::InvalidInvoice(err) => Self::InvalidInvoice(format!("{err}")),
+            NodeError::ServiceConnectivity(err) => Self::ServiceConnectivity(err),
+            _ => Self::Generic(value.to_string()),
+        }
+    }
+}
+
 pub struct CreateInvoiceRequest {
     pub amount_msat: u64,
     pub description: String,

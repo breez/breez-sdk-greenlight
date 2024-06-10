@@ -1,11 +1,12 @@
+use std::str::FromStr;
+
+use sdk_lnurl::prelude::*;
+
 use crate::invoice::{parse_invoice, validate_network};
 use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 use crate::lnurl::pay::model::{CallbackResponse, SuccessAction, ValidatedCallbackResponse};
 use crate::{ensure_sdk, input_parser::*};
 use crate::{LnUrlErrorData, Network};
-use std::str::FromStr;
-
-use super::error::{LnUrlError, LnUrlResult};
 
 type Aes256CbcEnc = cbc::Encryptor<aes::Aes256>;
 type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
@@ -118,12 +119,12 @@ fn validate_invoice(user_amount_msat: u64, bolt11: &str, network: Network) -> Ln
 }
 
 pub(crate) mod model {
-    use crate::lnurl::error::{LnUrlError, LnUrlResult};
     use crate::lnurl::pay::{Aes256CbcDec, Aes256CbcEnc};
     use crate::{ensure_sdk, input_parser::*, Payment};
 
     use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
     use anyhow::Result;
+    use sdk_lnurl::prelude::*;
     use serde::{Deserialize, Serialize};
 
     pub(crate) enum ValidatedCallbackResponse {

@@ -75,6 +75,12 @@ impl From<SystemTimeError> for InvoiceError {
     }
 }
 
+impl From<InvoiceError> for sdk_lnurl::prelude::LnUrlError {
+    fn from(value: InvoiceError) -> Self {
+        sdk_lnurl::prelude::LnUrlError::InvalidInvoice(format!("{value}"))
+    }
+}
+
 /// Wrapper for a BOLT11 LN invoice
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct LNInvoice {

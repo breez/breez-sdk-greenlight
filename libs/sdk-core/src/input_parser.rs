@@ -4,6 +4,7 @@ use std::time::Duration;
 use anyhow::{anyhow, Result};
 use bip21::Uri;
 use reqwest::StatusCode;
+use sdk_lnurl::prelude::LnUrlResult;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -16,7 +17,6 @@ use crate::error::SdkResult;
 use crate::input_parser::InputType::*;
 use crate::input_parser::LnUrlRequestData::*;
 use crate::invoice::{parse_invoice, LNInvoice};
-use crate::lnurl::error::LnUrlResult;
 use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 
 /// Parses generic user input, typically pasted from clipboard or scanned from a QR.
@@ -368,18 +368,18 @@ fn lnurl_decode(encoded: &str) -> LnUrlResult<(String, String, Option<String>)> 
             let decoded = String::from_utf8(Vec::from_base32(&payload)?)?;
 
             let url = reqwest::Url::parse(&decoded)
-                .map_err(|e| super::lnurl::error::LnUrlError::InvalidUri(e.to_string()))?;
+                .map_err(|e| sdk_lnurl::prelude::LnUrlError::InvalidUri(e.to_string()))?;
             let domain = url.domain().ok_or_else(|| {
-                super::lnurl::error::LnUrlError::invalid_uri("Could not determine domain")
+                sdk_lnurl::prelude::LnUrlError::invalid_uri("Could not determine domain")
             })?;
 
             if url.scheme() == "http" && !domain.ends_with(".onion") {
-                return Err(super::lnurl::error::LnUrlError::generic(
+                return Err(sdk_lnurl::prelude::LnUrlError::generic(
                     "HTTP scheme only allowed for onion domains",
                 ));
             }
             if url.scheme() == "https" && domain.ends_with(".onion") {
-                return Err(super::lnurl::error::LnUrlError::generic(
+                return Err(sdk_lnurl::prelude::LnUrlError::generic(
                     "HTTPS scheme not allowed for onion domains",
                 ));
             }
@@ -402,13 +402,13 @@ fn lnurl_decode(encoded: &str) -> LnUrlResult<(String, String, Option<String>)> 
             }
 
             let url = reqwest::Url::parse(&encoded)
-                .map_err(|e| super::lnurl::error::LnUrlError::InvalidUri(e.to_string()))?;
+                .map_err(|e| sdk_lnurl::prelude::LnUrlError::InvalidUri(e.to_string()))?;
             let domain = url.domain().ok_or_else(|| {
-                super::lnurl::error::LnUrlError::invalid_uri("Could not determine domain")
+                sdk_lnurl::prelude::LnUrlError::invalid_uri("Could not determine domain")
             })?;
             ensure_sdk!(
                 supported_prefixes.contains(&url.scheme()),
-                super::lnurl::error::LnUrlError::generic("Invalid prefix scheme")
+                sdk_lnurl::prelude::LnUrlError::generic("Invalid prefix scheme")
             );
 
             let scheme = url.scheme();

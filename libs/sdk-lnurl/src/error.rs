@@ -1,7 +1,6 @@
 use std::{array::TryFromSliceError, string::FromUtf8Error};
 
-use crate::bitcoin::{bech32, secp256k1, util::bip32};
-use crate::{invoice::InvoiceError, node_api::NodeError};
+use bitcoin::{bech32, secp256k1, util::bip32};
 
 pub type LnUrlResult<T, E = LnUrlError> = Result<T, E>;
 
@@ -10,8 +9,8 @@ pub enum LnUrlError {
     #[error("{0}")]
     Generic(String),
 
-    #[error(transparent)]
-    InvalidInvoice(#[from] InvoiceError),
+    #[error("{0}")]
+    InvalidInvoice(String),
 
     #[error("{0}")]
     InvalidUri(String),
@@ -21,11 +20,11 @@ pub enum LnUrlError {
 }
 
 impl LnUrlError {
-    pub(crate) fn generic(err: &str) -> Self {
+    pub fn generic(err: &str) -> Self {
         Self::Generic(err.to_string())
     }
 
-    pub(crate) fn invalid_uri(err: &str) -> Self {
+    pub fn invalid_uri(err: &str) -> Self {
         Self::InvalidUri(err.to_string())
     }
 }
@@ -66,15 +65,15 @@ impl From<FromUtf8Error> for LnUrlError {
     }
 }
 
-impl From<NodeError> for LnUrlError {
-    fn from(value: NodeError) -> Self {
-        match value {
-            NodeError::InvalidInvoice(err) => Self::InvalidInvoice(err),
-            NodeError::ServiceConnectivity(err) => Self::ServiceConnectivity(err),
-            _ => Self::Generic(value.to_string()),
-        }
-    }
-}
+// impl From<NodeError> for LnUrlError {
+//     fn from(value: NodeError) -> Self {
+//         match value {
+//             NodeError::InvalidInvoice(err) => Self::InvalidInvoice(err),
+//             NodeError::ServiceConnectivity(err) => Self::ServiceConnectivity(err),
+//             _ => Self::Generic(value.to_string()),
+//         }
+//     }
+// }
 
 impl From<secp256k1::Error> for LnUrlError {
     fn from(err: secp256k1::Error) -> Self {
