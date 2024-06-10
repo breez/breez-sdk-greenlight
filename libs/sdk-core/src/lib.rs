@@ -176,6 +176,7 @@ mod fiat; // flutter_rust_bridge_codegen: has to be defined after grpc; grpc::Ra
 pub mod input_parser;
 mod invoice;
 mod lnurl;
+#[rustfmt::skip]
 mod models;
 mod lsp;
 mod lsps0;
