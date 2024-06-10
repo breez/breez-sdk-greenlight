@@ -2,6 +2,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use reqwest::Url;
+use sdk_lnurl::prelude::*;
 
 use crate::bitcoin::hashes::{hex::ToHex, sha256, Hash, HashEngine, Hmac, HmacEngine};
 use crate::bitcoin::secp256k1::{Message, Secp256k1};
@@ -9,8 +10,6 @@ use crate::bitcoin::util::bip32::ChildNumber;
 use crate::bitcoin::KeyPair;
 use crate::input_parser::get_parse_and_log_response;
 use crate::{node_api::NodeAPI, LnUrlAuthRequestData, LnUrlCallbackStatus};
-
-use super::error::{LnUrlError, LnUrlResult};
 
 /// Performs the third and last step of LNURL-auth, as per
 /// <https://github.com/lnurl/luds/blob/luds/04.md>
