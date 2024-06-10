@@ -22,10 +22,78 @@ typedef struct _Dart_Handle* Dart_Handle;
 
 #define ESTIMATED_LOCKUP_TX_VSIZE 153
 
+typedef struct wire_cst_binding_event_listener {
+
+} wire_cst_binding_event_listener;
+
+typedef struct wire_cst_BreezEvent_NewBlock {
+  uint32_t block;
+} wire_cst_BreezEvent_NewBlock;
+
 typedef struct wire_cst_list_prim_u_8_strict {
   uint8_t *ptr;
   int32_t len;
 } wire_cst_list_prim_u_8_strict;
+
+typedef struct wire_cst_aes_success_action_data_decrypted {
+  struct wire_cst_list_prim_u_8_strict *description;
+  struct wire_cst_list_prim_u_8_strict *plaintext;
+} wire_cst_aes_success_action_data_decrypted;
+
+typedef struct wire_cst_AesSuccessActionDataResult_Decrypted {
+  struct wire_cst_aes_success_action_data_decrypted *data;
+} wire_cst_AesSuccessActionDataResult_Decrypted;
+
+typedef struct wire_cst_AesSuccessActionDataResult_ErrorStatus {
+  struct wire_cst_list_prim_u_8_strict *reason;
+} wire_cst_AesSuccessActionDataResult_ErrorStatus;
+
+typedef union AesSuccessActionDataResultKind {
+  struct wire_cst_AesSuccessActionDataResult_Decrypted Decrypted;
+  struct wire_cst_AesSuccessActionDataResult_ErrorStatus ErrorStatus;
+} AesSuccessActionDataResultKind;
+
+typedef struct wire_cst_aes_success_action_data_result {
+  int32_t tag;
+  union AesSuccessActionDataResultKind kind;
+} wire_cst_aes_success_action_data_result;
+
+typedef struct wire_cst_SuccessActionProcessed_Aes {
+  struct wire_cst_aes_success_action_data_result *result;
+} wire_cst_SuccessActionProcessed_Aes;
+
+typedef struct wire_cst_message_success_action_data {
+  struct wire_cst_list_prim_u_8_strict *message;
+} wire_cst_message_success_action_data;
+
+typedef struct wire_cst_SuccessActionProcessed_Message {
+  struct wire_cst_message_success_action_data *data;
+} wire_cst_SuccessActionProcessed_Message;
+
+typedef struct wire_cst_url_success_action_data {
+  struct wire_cst_list_prim_u_8_strict *description;
+  struct wire_cst_list_prim_u_8_strict *url;
+} wire_cst_url_success_action_data;
+
+typedef struct wire_cst_SuccessActionProcessed_Url {
+  struct wire_cst_url_success_action_data *data;
+} wire_cst_SuccessActionProcessed_Url;
+
+typedef union SuccessActionProcessedKind {
+  struct wire_cst_SuccessActionProcessed_Aes Aes;
+  struct wire_cst_SuccessActionProcessed_Message Message;
+  struct wire_cst_SuccessActionProcessed_Url Url;
+} SuccessActionProcessedKind;
+
+typedef struct wire_cst_success_action_processed {
+  int32_t tag;
+  union SuccessActionProcessedKind kind;
+} wire_cst_success_action_processed;
+
+typedef struct wire_cst_list_String {
+  struct wire_cst_list_prim_u_8_strict **ptr;
+  int32_t len;
+} wire_cst_list_String;
 
 typedef struct wire_cst_opening_fee_params {
   uint64_t min_msat;
@@ -35,6 +103,189 @@ typedef struct wire_cst_opening_fee_params {
   uint32_t max_client_to_self_delay;
   struct wire_cst_list_prim_u_8_strict *promise;
 } wire_cst_opening_fee_params;
+
+typedef struct wire_cst_swap_info {
+  struct wire_cst_list_prim_u_8_strict *bitcoin_address;
+  int64_t created_at;
+  int64_t lock_height;
+  struct wire_cst_list_prim_u_8_strict *payment_hash;
+  struct wire_cst_list_prim_u_8_strict *preimage;
+  struct wire_cst_list_prim_u_8_strict *private_key;
+  struct wire_cst_list_prim_u_8_strict *public_key;
+  struct wire_cst_list_prim_u_8_strict *swapper_public_key;
+  struct wire_cst_list_prim_u_8_strict *script;
+  struct wire_cst_list_prim_u_8_strict *bolt11;
+  uint64_t paid_msat;
+  uint64_t total_incoming_txs;
+  uint64_t confirmed_sats;
+  uint64_t unconfirmed_sats;
+  int32_t status;
+  struct wire_cst_list_String *refund_tx_ids;
+  struct wire_cst_list_String *unconfirmed_tx_ids;
+  struct wire_cst_list_String *confirmed_tx_ids;
+  int64_t min_allowed_deposit;
+  int64_t max_allowed_deposit;
+  int64_t max_swapper_payable;
+  struct wire_cst_list_prim_u_8_strict *last_redeem_error;
+  struct wire_cst_opening_fee_params *channel_opening_fees;
+  uint32_t *confirmed_at;
+} wire_cst_swap_info;
+
+typedef struct wire_cst_reverse_swap_info {
+  struct wire_cst_list_prim_u_8_strict *id;
+  struct wire_cst_list_prim_u_8_strict *claim_pubkey;
+  struct wire_cst_list_prim_u_8_strict *lockup_txid;
+  struct wire_cst_list_prim_u_8_strict *claim_txid;
+  uint64_t onchain_amount_sat;
+  int32_t status;
+} wire_cst_reverse_swap_info;
+
+typedef struct wire_cst_ln_payment_details {
+  struct wire_cst_list_prim_u_8_strict *payment_hash;
+  struct wire_cst_list_prim_u_8_strict *label;
+  struct wire_cst_list_prim_u_8_strict *destination_pubkey;
+  struct wire_cst_list_prim_u_8_strict *payment_preimage;
+  bool keysend;
+  struct wire_cst_list_prim_u_8_strict *bolt11;
+  struct wire_cst_list_prim_u_8_strict *open_channel_bolt11;
+  struct wire_cst_success_action_processed *lnurl_success_action;
+  struct wire_cst_list_prim_u_8_strict *lnurl_pay_domain;
+  struct wire_cst_list_prim_u_8_strict *lnurl_pay_comment;
+  struct wire_cst_list_prim_u_8_strict *ln_address;
+  struct wire_cst_list_prim_u_8_strict *lnurl_metadata;
+  struct wire_cst_list_prim_u_8_strict *lnurl_withdraw_endpoint;
+  struct wire_cst_swap_info *swap_info;
+  struct wire_cst_reverse_swap_info *reverse_swap_info;
+  uint32_t *pending_expiration_block;
+} wire_cst_ln_payment_details;
+
+typedef struct wire_cst_PaymentDetails_Ln {
+  struct wire_cst_ln_payment_details *data;
+} wire_cst_PaymentDetails_Ln;
+
+typedef struct wire_cst_closed_channel_payment_details {
+  int32_t state;
+  struct wire_cst_list_prim_u_8_strict *funding_txid;
+  struct wire_cst_list_prim_u_8_strict *short_channel_id;
+  struct wire_cst_list_prim_u_8_strict *closing_txid;
+} wire_cst_closed_channel_payment_details;
+
+typedef struct wire_cst_PaymentDetails_ClosedChannel {
+  struct wire_cst_closed_channel_payment_details *data;
+} wire_cst_PaymentDetails_ClosedChannel;
+
+typedef union PaymentDetailsKind {
+  struct wire_cst_PaymentDetails_Ln Ln;
+  struct wire_cst_PaymentDetails_ClosedChannel ClosedChannel;
+} PaymentDetailsKind;
+
+typedef struct wire_cst_payment_details {
+  int32_t tag;
+  union PaymentDetailsKind kind;
+} wire_cst_payment_details;
+
+typedef struct wire_cst_payment {
+  struct wire_cst_list_prim_u_8_strict *id;
+  int32_t payment_type;
+  int64_t payment_time;
+  uint64_t amount_msat;
+  uint64_t fee_msat;
+  int32_t status;
+  struct wire_cst_list_prim_u_8_strict *error;
+  struct wire_cst_list_prim_u_8_strict *description;
+  struct wire_cst_payment_details details;
+  struct wire_cst_list_prim_u_8_strict *metadata;
+} wire_cst_payment;
+
+typedef struct wire_cst_invoice_paid_details {
+  struct wire_cst_list_prim_u_8_strict *payment_hash;
+  struct wire_cst_list_prim_u_8_strict *bolt11;
+  struct wire_cst_payment *payment;
+} wire_cst_invoice_paid_details;
+
+typedef struct wire_cst_BreezEvent_InvoicePaid {
+  struct wire_cst_invoice_paid_details *details;
+} wire_cst_BreezEvent_InvoicePaid;
+
+typedef struct wire_cst_BreezEvent_PaymentSucceed {
+  struct wire_cst_payment *details;
+} wire_cst_BreezEvent_PaymentSucceed;
+
+typedef struct wire_cst_route_hint_hop {
+  struct wire_cst_list_prim_u_8_strict *src_node_id;
+  uint64_t short_channel_id;
+  uint32_t fees_base_msat;
+  uint32_t fees_proportional_millionths;
+  uint64_t cltv_expiry_delta;
+  uint64_t *htlc_minimum_msat;
+  uint64_t *htlc_maximum_msat;
+} wire_cst_route_hint_hop;
+
+typedef struct wire_cst_list_route_hint_hop {
+  struct wire_cst_route_hint_hop *ptr;
+  int32_t len;
+} wire_cst_list_route_hint_hop;
+
+typedef struct wire_cst_route_hint {
+  struct wire_cst_list_route_hint_hop *hops;
+} wire_cst_route_hint;
+
+typedef struct wire_cst_list_route_hint {
+  struct wire_cst_route_hint *ptr;
+  int32_t len;
+} wire_cst_list_route_hint;
+
+typedef struct wire_cst_ln_invoice {
+  struct wire_cst_list_prim_u_8_strict *bolt11;
+  int32_t network;
+  struct wire_cst_list_prim_u_8_strict *payee_pubkey;
+  struct wire_cst_list_prim_u_8_strict *payment_hash;
+  struct wire_cst_list_prim_u_8_strict *description;
+  struct wire_cst_list_prim_u_8_strict *description_hash;
+  uint64_t *amount_msat;
+  uint64_t timestamp;
+  uint64_t expiry;
+  struct wire_cst_list_route_hint *routing_hints;
+  struct wire_cst_list_prim_u_8_strict *payment_secret;
+  uint64_t min_final_cltv_expiry_delta;
+} wire_cst_ln_invoice;
+
+typedef struct wire_cst_payment_failed_data {
+  struct wire_cst_list_prim_u_8_strict *error;
+  struct wire_cst_list_prim_u_8_strict *node_id;
+  struct wire_cst_ln_invoice *invoice;
+  struct wire_cst_list_prim_u_8_strict *label;
+} wire_cst_payment_failed_data;
+
+typedef struct wire_cst_BreezEvent_PaymentFailed {
+  struct wire_cst_payment_failed_data *details;
+} wire_cst_BreezEvent_PaymentFailed;
+
+typedef struct wire_cst_backup_failed_data {
+  struct wire_cst_list_prim_u_8_strict *error;
+} wire_cst_backup_failed_data;
+
+typedef struct wire_cst_BreezEvent_BackupFailed {
+  struct wire_cst_backup_failed_data *details;
+} wire_cst_BreezEvent_BackupFailed;
+
+typedef struct wire_cst_BreezEvent_SwapUpdated {
+  struct wire_cst_swap_info *details;
+} wire_cst_BreezEvent_SwapUpdated;
+
+typedef union BreezEventKind {
+  struct wire_cst_BreezEvent_NewBlock NewBlock;
+  struct wire_cst_BreezEvent_InvoicePaid InvoicePaid;
+  struct wire_cst_BreezEvent_PaymentSucceed PaymentSucceed;
+  struct wire_cst_BreezEvent_PaymentFailed PaymentFailed;
+  struct wire_cst_BreezEvent_BackupFailed BackupFailed;
+  struct wire_cst_BreezEvent_SwapUpdated SwapUpdated;
+} BreezEventKind;
+
+typedef struct wire_cst_breez_event {
+  int32_t tag;
+  union BreezEventKind kind;
+} wire_cst_breez_event;
 
 typedef struct wire_cst_buy_bitcoin_request {
   int32_t provider;
@@ -282,33 +533,6 @@ typedef struct wire_cst_static_backup_request {
   struct wire_cst_list_prim_u_8_strict *working_dir;
 } wire_cst_static_backup_request;
 
-typedef struct wire_cst_aes_success_action_data_decrypted {
-  struct wire_cst_list_prim_u_8_strict *description;
-  struct wire_cst_list_prim_u_8_strict *plaintext;
-} wire_cst_aes_success_action_data_decrypted;
-
-typedef struct wire_cst_AesSuccessActionDataResult_Decrypted {
-  struct wire_cst_aes_success_action_data_decrypted *data;
-} wire_cst_AesSuccessActionDataResult_Decrypted;
-
-typedef struct wire_cst_AesSuccessActionDataResult_ErrorStatus {
-  struct wire_cst_list_prim_u_8_strict *reason;
-} wire_cst_AesSuccessActionDataResult_ErrorStatus;
-
-typedef union AesSuccessActionDataResultKind {
-  struct wire_cst_AesSuccessActionDataResult_Decrypted Decrypted;
-  struct wire_cst_AesSuccessActionDataResult_ErrorStatus ErrorStatus;
-} AesSuccessActionDataResultKind;
-
-typedef struct wire_cst_aes_success_action_data_result {
-  int32_t tag;
-  union AesSuccessActionDataResultKind kind;
-} wire_cst_aes_success_action_data_result;
-
-typedef struct wire_cst_backup_failed_data {
-  struct wire_cst_list_prim_u_8_strict *error;
-} wire_cst_backup_failed_data;
-
 typedef struct wire_cst_bitcoin_address_data {
   struct wire_cst_list_prim_u_8_strict *address;
   int32_t network;
@@ -316,181 +540,6 @@ typedef struct wire_cst_bitcoin_address_data {
   struct wire_cst_list_prim_u_8_strict *label;
   struct wire_cst_list_prim_u_8_strict *message;
 } wire_cst_bitcoin_address_data;
-
-typedef struct wire_cst_closed_channel_payment_details {
-  int32_t state;
-  struct wire_cst_list_prim_u_8_strict *funding_txid;
-  struct wire_cst_list_prim_u_8_strict *short_channel_id;
-  struct wire_cst_list_prim_u_8_strict *closing_txid;
-} wire_cst_closed_channel_payment_details;
-
-typedef struct wire_cst_SuccessActionProcessed_Aes {
-  struct wire_cst_aes_success_action_data_result *result;
-} wire_cst_SuccessActionProcessed_Aes;
-
-typedef struct wire_cst_message_success_action_data {
-  struct wire_cst_list_prim_u_8_strict *message;
-} wire_cst_message_success_action_data;
-
-typedef struct wire_cst_SuccessActionProcessed_Message {
-  struct wire_cst_message_success_action_data *data;
-} wire_cst_SuccessActionProcessed_Message;
-
-typedef struct wire_cst_url_success_action_data {
-  struct wire_cst_list_prim_u_8_strict *description;
-  struct wire_cst_list_prim_u_8_strict *url;
-} wire_cst_url_success_action_data;
-
-typedef struct wire_cst_SuccessActionProcessed_Url {
-  struct wire_cst_url_success_action_data *data;
-} wire_cst_SuccessActionProcessed_Url;
-
-typedef union SuccessActionProcessedKind {
-  struct wire_cst_SuccessActionProcessed_Aes Aes;
-  struct wire_cst_SuccessActionProcessed_Message Message;
-  struct wire_cst_SuccessActionProcessed_Url Url;
-} SuccessActionProcessedKind;
-
-typedef struct wire_cst_success_action_processed {
-  int32_t tag;
-  union SuccessActionProcessedKind kind;
-} wire_cst_success_action_processed;
-
-typedef struct wire_cst_list_String {
-  struct wire_cst_list_prim_u_8_strict **ptr;
-  int32_t len;
-} wire_cst_list_String;
-
-typedef struct wire_cst_swap_info {
-  struct wire_cst_list_prim_u_8_strict *bitcoin_address;
-  int64_t created_at;
-  int64_t lock_height;
-  struct wire_cst_list_prim_u_8_strict *payment_hash;
-  struct wire_cst_list_prim_u_8_strict *preimage;
-  struct wire_cst_list_prim_u_8_strict *private_key;
-  struct wire_cst_list_prim_u_8_strict *public_key;
-  struct wire_cst_list_prim_u_8_strict *swapper_public_key;
-  struct wire_cst_list_prim_u_8_strict *script;
-  struct wire_cst_list_prim_u_8_strict *bolt11;
-  uint64_t paid_msat;
-  uint64_t total_incoming_txs;
-  uint64_t confirmed_sats;
-  uint64_t unconfirmed_sats;
-  int32_t status;
-  struct wire_cst_list_String *refund_tx_ids;
-  struct wire_cst_list_String *unconfirmed_tx_ids;
-  struct wire_cst_list_String *confirmed_tx_ids;
-  int64_t min_allowed_deposit;
-  int64_t max_allowed_deposit;
-  int64_t max_swapper_payable;
-  struct wire_cst_list_prim_u_8_strict *last_redeem_error;
-  struct wire_cst_opening_fee_params *channel_opening_fees;
-  uint32_t *confirmed_at;
-} wire_cst_swap_info;
-
-typedef struct wire_cst_reverse_swap_info {
-  struct wire_cst_list_prim_u_8_strict *id;
-  struct wire_cst_list_prim_u_8_strict *claim_pubkey;
-  struct wire_cst_list_prim_u_8_strict *lockup_txid;
-  struct wire_cst_list_prim_u_8_strict *claim_txid;
-  uint64_t onchain_amount_sat;
-  int32_t status;
-} wire_cst_reverse_swap_info;
-
-typedef struct wire_cst_ln_payment_details {
-  struct wire_cst_list_prim_u_8_strict *payment_hash;
-  struct wire_cst_list_prim_u_8_strict *label;
-  struct wire_cst_list_prim_u_8_strict *destination_pubkey;
-  struct wire_cst_list_prim_u_8_strict *payment_preimage;
-  bool keysend;
-  struct wire_cst_list_prim_u_8_strict *bolt11;
-  struct wire_cst_list_prim_u_8_strict *open_channel_bolt11;
-  struct wire_cst_success_action_processed *lnurl_success_action;
-  struct wire_cst_list_prim_u_8_strict *lnurl_pay_domain;
-  struct wire_cst_list_prim_u_8_strict *lnurl_pay_comment;
-  struct wire_cst_list_prim_u_8_strict *ln_address;
-  struct wire_cst_list_prim_u_8_strict *lnurl_metadata;
-  struct wire_cst_list_prim_u_8_strict *lnurl_withdraw_endpoint;
-  struct wire_cst_swap_info *swap_info;
-  struct wire_cst_reverse_swap_info *reverse_swap_info;
-  uint32_t *pending_expiration_block;
-} wire_cst_ln_payment_details;
-
-typedef struct wire_cst_PaymentDetails_Ln {
-  struct wire_cst_ln_payment_details *data;
-} wire_cst_PaymentDetails_Ln;
-
-typedef struct wire_cst_PaymentDetails_ClosedChannel {
-  struct wire_cst_closed_channel_payment_details *data;
-} wire_cst_PaymentDetails_ClosedChannel;
-
-typedef union PaymentDetailsKind {
-  struct wire_cst_PaymentDetails_Ln Ln;
-  struct wire_cst_PaymentDetails_ClosedChannel ClosedChannel;
-} PaymentDetailsKind;
-
-typedef struct wire_cst_payment_details {
-  int32_t tag;
-  union PaymentDetailsKind kind;
-} wire_cst_payment_details;
-
-typedef struct wire_cst_payment {
-  struct wire_cst_list_prim_u_8_strict *id;
-  int32_t payment_type;
-  int64_t payment_time;
-  uint64_t amount_msat;
-  uint64_t fee_msat;
-  int32_t status;
-  struct wire_cst_list_prim_u_8_strict *error;
-  struct wire_cst_list_prim_u_8_strict *description;
-  struct wire_cst_payment_details details;
-  struct wire_cst_list_prim_u_8_strict *metadata;
-} wire_cst_payment;
-
-typedef struct wire_cst_invoice_paid_details {
-  struct wire_cst_list_prim_u_8_strict *payment_hash;
-  struct wire_cst_list_prim_u_8_strict *bolt11;
-  struct wire_cst_payment *payment;
-} wire_cst_invoice_paid_details;
-
-typedef struct wire_cst_route_hint_hop {
-  struct wire_cst_list_prim_u_8_strict *src_node_id;
-  uint64_t short_channel_id;
-  uint32_t fees_base_msat;
-  uint32_t fees_proportional_millionths;
-  uint64_t cltv_expiry_delta;
-  uint64_t *htlc_minimum_msat;
-  uint64_t *htlc_maximum_msat;
-} wire_cst_route_hint_hop;
-
-typedef struct wire_cst_list_route_hint_hop {
-  struct wire_cst_route_hint_hop *ptr;
-  int32_t len;
-} wire_cst_list_route_hint_hop;
-
-typedef struct wire_cst_route_hint {
-  struct wire_cst_list_route_hint_hop *hops;
-} wire_cst_route_hint;
-
-typedef struct wire_cst_list_route_hint {
-  struct wire_cst_route_hint *ptr;
-  int32_t len;
-} wire_cst_list_route_hint;
-
-typedef struct wire_cst_ln_invoice {
-  struct wire_cst_list_prim_u_8_strict *bolt11;
-  int32_t network;
-  struct wire_cst_list_prim_u_8_strict *payee_pubkey;
-  struct wire_cst_list_prim_u_8_strict *payment_hash;
-  struct wire_cst_list_prim_u_8_strict *description;
-  struct wire_cst_list_prim_u_8_strict *description_hash;
-  uint64_t *amount_msat;
-  uint64_t timestamp;
-  uint64_t expiry;
-  struct wire_cst_list_route_hint *routing_hints;
-  struct wire_cst_list_prim_u_8_strict *payment_secret;
-  uint64_t min_final_cltv_expiry_delta;
-} wire_cst_ln_invoice;
 
 typedef struct wire_cst_ln_url_error_data {
   struct wire_cst_list_prim_u_8_strict *reason;
@@ -545,13 +594,6 @@ typedef struct wire_cst_node_credentials {
   int32_t tag;
   union NodeCredentialsKind kind;
 } wire_cst_node_credentials;
-
-typedef struct wire_cst_payment_failed_data {
-  struct wire_cst_list_prim_u_8_strict *error;
-  struct wire_cst_list_prim_u_8_strict *node_id;
-  struct wire_cst_ln_invoice *invoice;
-  struct wire_cst_list_prim_u_8_strict *label;
-} wire_cst_payment_failed_data;
 
 typedef struct wire_cst_symbol {
   struct wire_cst_list_prim_u_8_strict *grapheme;
@@ -648,44 +690,6 @@ typedef struct wire_cst_backup_status {
   bool backed_up;
   uint64_t *last_backup_time;
 } wire_cst_backup_status;
-
-typedef struct wire_cst_BreezEvent_NewBlock {
-  uint32_t block;
-} wire_cst_BreezEvent_NewBlock;
-
-typedef struct wire_cst_BreezEvent_InvoicePaid {
-  struct wire_cst_invoice_paid_details *details;
-} wire_cst_BreezEvent_InvoicePaid;
-
-typedef struct wire_cst_BreezEvent_PaymentSucceed {
-  struct wire_cst_payment *details;
-} wire_cst_BreezEvent_PaymentSucceed;
-
-typedef struct wire_cst_BreezEvent_PaymentFailed {
-  struct wire_cst_payment_failed_data *details;
-} wire_cst_BreezEvent_PaymentFailed;
-
-typedef struct wire_cst_BreezEvent_BackupFailed {
-  struct wire_cst_backup_failed_data *details;
-} wire_cst_BreezEvent_BackupFailed;
-
-typedef struct wire_cst_BreezEvent_SwapUpdated {
-  struct wire_cst_swap_info *details;
-} wire_cst_BreezEvent_SwapUpdated;
-
-typedef union BreezEventKind {
-  struct wire_cst_BreezEvent_NewBlock NewBlock;
-  struct wire_cst_BreezEvent_InvoicePaid InvoicePaid;
-  struct wire_cst_BreezEvent_PaymentSucceed PaymentSucceed;
-  struct wire_cst_BreezEvent_PaymentFailed PaymentFailed;
-  struct wire_cst_BreezEvent_BackupFailed BackupFailed;
-  struct wire_cst_BreezEvent_SwapUpdated SwapUpdated;
-} BreezEventKind;
-
-typedef struct wire_cst_breez_event {
-  int32_t tag;
-  union BreezEventKind kind;
-} wire_cst_breez_event;
 
 typedef struct wire_cst_buy_bitcoin_response {
   struct wire_cst_list_prim_u_8_strict *url;
@@ -902,6 +906,10 @@ void frbgen_breez_sdk_wire__crate__binding__backup(int64_t port_);
 
 void frbgen_breez_sdk_wire__crate__binding__backup_status(int64_t port_);
 
+void frbgen_breez_sdk_wire__crate__binding__binding_event_listener_on_event(int64_t port_,
+                                                                            struct wire_cst_binding_event_listener *that,
+                                                                            struct wire_cst_breez_event *e);
+
 void frbgen_breez_sdk_wire__crate__binding__breez_events_stream(int64_t port_,
                                                                 struct wire_cst_list_prim_u_8_strict *s);
 
@@ -1068,9 +1076,13 @@ struct wire_cst_aes_success_action_data_result *frbgen_breez_sdk_cst_new_box_aut
 
 struct wire_cst_backup_failed_data *frbgen_breez_sdk_cst_new_box_autoadd_backup_failed_data(void);
 
+struct wire_cst_binding_event_listener *frbgen_breez_sdk_cst_new_box_autoadd_binding_event_listener(void);
+
 struct wire_cst_bitcoin_address_data *frbgen_breez_sdk_cst_new_box_autoadd_bitcoin_address_data(void);
 
 bool *frbgen_breez_sdk_cst_new_box_autoadd_bool(bool value);
+
+struct wire_cst_breez_event *frbgen_breez_sdk_cst_new_box_autoadd_breez_event(void);
 
 struct wire_cst_buy_bitcoin_request *frbgen_breez_sdk_cst_new_box_autoadd_buy_bitcoin_request(void);
 
@@ -1214,8 +1226,10 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_aes_success_action_data_decrypted);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_aes_success_action_data_result);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_backup_failed_data);
+    dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_binding_event_listener);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_bitcoin_address_data);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_bool);
+    dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_breez_event);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_buy_bitcoin_request);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_check_message_request);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_closed_channel_payment_details);
@@ -1287,6 +1301,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_list_unspent_transaction_output);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__backup);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__backup_status);
+    dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__binding_event_listener_on_event);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__breez_events_stream);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__breez_log_stream);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__buy_bitcoin);

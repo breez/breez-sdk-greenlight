@@ -1,4 +1,5 @@
-rust_input: ../sdk-core/src/binding.rs
+rust_input: crate::binding
+rust_root: ../sdk-core/
 dart_output: lib/generated/
 c_output: ios/Classes/frb_generated.h
 dart_entrypoint_class_name: BreezSdkBindings

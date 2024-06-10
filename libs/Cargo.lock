@@ -638,7 +638,7 @@ dependencies = [
 
 [[package]]
 name = "breez-sdk-core"
-version = "0.6.4"
+version = "0.6.2"
 dependencies = [
  "aes 0.8.3",
  "anyhow",
@@ -682,7 +682,7 @@ dependencies = [
 
 [[package]]
 name = "breez_sdk"
-version = "0.6.4"
+version = "0.6.2"
 dependencies = [
  "anyhow",
  "breez-sdk-core",
@@ -1294,9 +1294,9 @@ dependencies = [
 
 [[package]]
 name = "flutter_rust_bridge"
-version = "2.6.0"
+version = "2.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93b95a1b4f20b8c037535bcda990abf0ae2bd94c93e27ebbbe00633322bc1561"
+checksum = "2f052ec223b70cbdf2248376a9ad5af9281b3fdf8ea3c7d3f66fff52a9aaf1fa"
 dependencies = [
  "allo-isolate",
  "android_logger",
@@ -1323,9 +1323,9 @@ dependencies = [
 
 [[package]]
 name = "flutter_rust_bridge_macros"
-version = "2.6.0"
+version = "2.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fafd532ccfcce8ef23e858fe07303ff572e8b302be6ec0b0f38ca6eb319206dc"
+checksum = "23414fe526f51870c6d89d27bbffbee52ebe0900164a4147b32caf1d3e131682"
 dependencies = [
  "hex",
  "md-5",
@@ -2676,9 +2676,9 @@ dependencies = [
 
 [[package]]
 name = "portable-atomic"
-version = "1.10.0"
+version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "280dc24453071f1b63954171985a0b0d30058d287960968b9b2aca264c8d4ee6"
+checksum = "cc9c68a3f6da06753e9335d63e27f6b9754dd1920d941135b7ea8224f141adb2"
 
 [[package]]
 name = "powerfmt"
@@ -3204,7 +3204,7 @@ dependencies = [
 
 [[package]]
 name = "sdk-common"
-version = "0.6.4"
+version = "0.6.2"
 dependencies = [
  "aes 0.8.3",
  "anyhow",
