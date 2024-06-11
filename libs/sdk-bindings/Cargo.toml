@@ -15,6 +15,7 @@ crate-type = ["staticlib", "cdylib", "lib"]
 
 [dependencies]
 breez-sdk-core = { path = "../sdk-core" }
+sdk-lnurl = { path = "../sdk-lnurl" }
 anyhow = { version = "1.0.79", features = ["backtrace"] }
 thiserror = { workspace = true }
 tokio = { version = "1", features = ["full"] }
@@ -23,7 +24,7 @@ uniffi_bindgen = "0.23.0"
 uniffi_macros = "0.23.0"
 uniffi-kotlin-multiplatform = { git = "https://gitlab.com/trixnity/uniffi-kotlin-multiplatform-bindings", rev = "bf48c5fcb153856e3055025a3cbfa56fbf213188" }
 camino = "1.1.1"
-log = "*"
+log = { workspace = true }
 once_cell = "*"
 flutter_rust_bridge = "=1.82.6"
 tiny-bip39 = "*"

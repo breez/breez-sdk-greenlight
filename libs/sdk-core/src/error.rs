@@ -2,11 +2,12 @@ use std::time::SystemTimeError;
 
 use anyhow::Result;
 use sdk_lnurl::prelude::*;
+use sdk_utils::prelude::ServiceConnectivityError;
 use thiserror::Error;
 
 use crate::{
-    bitcoin::util::bip32, invoice::InvoiceError, node_api::NodeError,
-    persist::error::PersistError, swap_in::error::SwapError, swap_out::error::ReverseSwapError,
+    bitcoin::util::bip32, invoice::InvoiceError, node_api::NodeError, persist::error::PersistError,
+    swap_in::error::SwapError, swap_out::error::ReverseSwapError,
 };
 
 pub type SdkResult<T, E = SdkError> = Result<T, E>;
@@ -493,6 +494,12 @@ impl SdkError {
         Self::ServiceConnectivity {
             err: err.to_string(),
         }
+    }
+}
+
+impl From<ServiceConnectivityError> for SdkError {
+    fn from(value: ServiceConnectivityError) -> Self {
+        Self::ServiceConnectivity { err: value.err }
     }
 }
 

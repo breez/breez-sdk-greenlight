@@ -1,12 +1,13 @@
 use std::str::FromStr;
 
 use sdk_lnurl::prelude::*;
+use sdk_utils::prelude::*;
 
 use crate::invoice::{parse_invoice, validate_network};
 use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 use crate::lnurl::pay::model::{CallbackResponse, SuccessAction, ValidatedCallbackResponse};
+use crate::Network;
 use crate::{ensure_sdk, input_parser::*};
-use crate::{LnUrlErrorData, Network};
 
 type Aes256CbcEnc = cbc::Encryptor<aes::Aes256>;
 type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
