@@ -1,14 +1,15 @@
-use super::db::SqliteStorage;
-use super::error::{PersistError, PersistResult};
-use crate::lnurl::pay::model::SuccessActionProcessed;
-use crate::{ensure_sdk, models::*};
+use std::collections::{HashMap, HashSet};
+use std::str::FromStr;
+
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use rusqlite::Row;
 use rusqlite::{named_params, params, OptionalExtension};
-use std::collections::{HashMap, HashSet};
-
+use sdk_common::prelude::*;
 use serde_json::{Map, Value};
-use std::str::FromStr;
+
+use super::db::SqliteStorage;
+use super::error::{PersistError, PersistResult};
+use crate::models::*;
 
 const METADATA_MAX_LEN: usize = 1000;
 
@@ -500,20 +501,6 @@ impl FromSql for PaymentStatus {
 impl ToSql for PaymentStatus {
     fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
         Ok(rusqlite::types::ToSqlOutput::from(*self as i64))
-    }
-}
-
-impl FromSql for SuccessActionProcessed {
-    fn column_result(value: rusqlite::types::ValueRef<'_>) -> rusqlite::types::FromSqlResult<Self> {
-        serde_json::from_str(value.as_str()?).map_err(|_| FromSqlError::InvalidType)
-    }
-}
-
-impl ToSql for SuccessActionProcessed {
-    fn to_sql(&self) -> rusqlite::Result<rusqlite::types::ToSqlOutput<'_>> {
-        Ok(ToSqlOutput::from(
-            serde_json::to_string(&self).map_err(|_| FromSqlError::InvalidType)?,
-        ))
     }
 }
 

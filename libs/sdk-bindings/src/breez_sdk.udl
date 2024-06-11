@@ -603,7 +603,7 @@ dictionary BitcoinAddressData {
 
 dictionary LnUrlPaySuccessData {
     SuccessActionProcessed? success_action;
-    Payment payment;
+    // Payment payment; // TODO
 };
 
 dictionary LnUrlErrorData {

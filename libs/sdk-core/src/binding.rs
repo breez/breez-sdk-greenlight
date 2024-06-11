@@ -28,7 +28,6 @@ use crate::error::{
     ReceivePaymentError, SdkError, SendOnchainError, SendPaymentError,
 };
 use crate::fiat::{FiatCurrency, Rate};
-use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
 use crate::{

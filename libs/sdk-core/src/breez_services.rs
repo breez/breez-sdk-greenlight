@@ -45,11 +45,6 @@ use crate::grpc::signer_client::SignerClient;
 use crate::grpc::support_client::SupportClient;
 use crate::grpc::swapper_client::SwapperClient;
 use crate::grpc::{ChainApiServersRequest, PaymentInformation};
-use crate::lnurl::pay::model::SuccessAction::Aes;
-use crate::lnurl::pay::model::{
-    LnUrlPayResult, SuccessAction, SuccessActionProcessed, ValidatedCallbackResponse,
-};
-use crate::lnurl::pay::validate_lnurl_pay;
 use crate::lnurl::withdraw::validate_lnurl_withdraw;
 use crate::lsp::LspInformation;
 use crate::models::{
@@ -412,7 +407,7 @@ impl BreezServices {
                     Some(sa) => {
                         let processed_sa = match sa {
                             // For AES, we decrypt the contents on the fly
-                            Aes(data) => {
+                            SuccessAction::Aes(data) => {
                                 let preimage = sha256::Hash::from_str(&details.payment_preimage)?;
                                 let preimage_arr: [u8; 32] = preimage.into_inner();
                                 let result = match (data, &preimage_arr).try_into() {
@@ -454,7 +449,7 @@ impl BreezServices {
 
                 Ok(LnUrlPayResult::EndpointSuccess {
                     data: LnUrlPaySuccessData {
-                        payment,
+                        // payment, // TODO How to handle Payment?
                         success_action: maybe_sa_processed,
                     },
                 })
