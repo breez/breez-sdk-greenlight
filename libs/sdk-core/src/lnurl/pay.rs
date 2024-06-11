@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use sdk_lnurl::prelude::*;
+use sdk_common::prelude::*;
 
 use crate::invoice::{parse_invoice, validate_network};
 use crate::lnurl::maybe_replace_host_with_mockito_test_host;
@@ -124,7 +124,7 @@ pub(crate) mod model {
 
     use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
     use anyhow::Result;
-    use sdk_lnurl::prelude::*;
+    use sdk_common::prelude::*;
     use serde::{Deserialize, Serialize};
 
     pub(crate) enum ValidatedCallbackResponse {

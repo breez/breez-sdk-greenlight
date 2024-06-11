@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use anyhow::{anyhow, Result};
 use bip21::Uri;
-use sdk_lnurl::prelude::*;
+use sdk_common::prelude::*;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -296,18 +296,18 @@ fn lnurl_decode(encoded: &str) -> LnUrlResult<(String, String, Option<String>)> 
             let decoded = String::from_utf8(Vec::from_base32(&payload)?)?;
 
             let url = reqwest::Url::parse(&decoded)
-                .map_err(|e| sdk_lnurl::prelude::LnUrlError::InvalidUri(e.to_string()))?;
+                .map_err(|e| sdk_common::prelude::LnUrlError::InvalidUri(e.to_string()))?;
             let domain = url.domain().ok_or_else(|| {
-                sdk_lnurl::prelude::LnUrlError::invalid_uri("Could not determine domain")
+                sdk_common::prelude::LnUrlError::invalid_uri("Could not determine domain")
             })?;
 
             if url.scheme() == "http" && !domain.ends_with(".onion") {
-                return Err(sdk_lnurl::prelude::LnUrlError::generic(
+                return Err(sdk_common::prelude::LnUrlError::generic(
                     "HTTP scheme only allowed for onion domains",
                 ));
             }
             if url.scheme() == "https" && domain.ends_with(".onion") {
-                return Err(sdk_lnurl::prelude::LnUrlError::generic(
+                return Err(sdk_common::prelude::LnUrlError::generic(
                     "HTTPS scheme not allowed for onion domains",
                 ));
             }
@@ -330,13 +330,13 @@ fn lnurl_decode(encoded: &str) -> LnUrlResult<(String, String, Option<String>)> 
             }
 
             let url = reqwest::Url::parse(&encoded)
-                .map_err(|e| sdk_lnurl::prelude::LnUrlError::InvalidUri(e.to_string()))?;
+                .map_err(|e| sdk_common::prelude::LnUrlError::InvalidUri(e.to_string()))?;
             let domain = url.domain().ok_or_else(|| {
-                sdk_lnurl::prelude::LnUrlError::invalid_uri("Could not determine domain")
+                sdk_common::prelude::LnUrlError::invalid_uri("Could not determine domain")
             })?;
             ensure_sdk!(
                 supported_prefixes.contains(&url.scheme()),
-                sdk_lnurl::prelude::LnUrlError::generic("Invalid prefix scheme")
+                sdk_common::prelude::LnUrlError::generic("Invalid prefix scheme")
             );
 
             let scheme = url.scheme();

@@ -541,7 +541,7 @@ dependencies = [
  "ripemd",
  "rusqlite",
  "rusqlite_migration",
- "sdk-lnurl",
+ "sdk-common",
  "serde",
  "serde_json",
  "serde_with",
@@ -568,7 +568,7 @@ dependencies = [
  "glob",
  "log",
  "once_cell",
- "sdk-lnurl",
+ "sdk-common",
  "thiserror",
  "tiny-bip39",
  "tokio",
@@ -2709,7 +2709,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sdk-lnurl"
+name = "sdk-common"
 version = "0.4.1"
 dependencies = [
  "aes",

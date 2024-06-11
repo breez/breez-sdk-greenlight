@@ -8,7 +8,7 @@ use ripemd::Digest;
 use ripemd::Ripemd160;
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef};
 use rusqlite::ToSql;
-use sdk_lnurl::prelude::LnUrlErrorData;
+use sdk_common::prelude::LnUrlErrorData;
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 

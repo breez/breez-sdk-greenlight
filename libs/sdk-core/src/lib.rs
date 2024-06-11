@@ -213,7 +213,7 @@ pub use invoice::{parse_invoice, LNInvoice, RouteHint, RouteHintHop};
 pub use lnurl::pay::model::*;
 pub use lsp::LspInformation;
 pub use models::*;
-pub use sdk_lnurl::prelude::*;
+pub use sdk_common::prelude::*;
 pub use swap_out::reverseswap::{ESTIMATED_CLAIM_TX_VSIZE, ESTIMATED_LOCKUP_TX_VSIZE};
 
 // === FRB mirroring

@@ -7,9 +7,9 @@ rpath = true
 
 [workspace]
 members = [
-  "sdk-core",
   "sdk-bindings",
-  "sdk-lnurl",
+  "sdk-common",
+  "sdk-core",
 ]
 resolver = "2"
 

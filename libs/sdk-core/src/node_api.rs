@@ -63,7 +63,7 @@ impl NodeError {
     }
 }
 
-impl From<NodeError> for sdk_lnurl::prelude::LnUrlError {
+impl From<NodeError> for sdk_common::prelude::LnUrlError {
     fn from(value: NodeError) -> Self {
         match value {
             NodeError::InvalidInvoice(err) => Self::InvalidInvoice(format!("{err}")),

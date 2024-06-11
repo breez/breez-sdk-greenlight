@@ -1,7 +1,7 @@
 use std::time::SystemTimeError;
 
 use anyhow::Result;
-use sdk_lnurl::prelude::*;
+use sdk_common::prelude::*;
 use thiserror::Error;
 
 use crate::{
