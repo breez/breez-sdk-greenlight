@@ -14,9 +14,9 @@ crate-type = ["staticlib", "cdylib", "lib"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-breez-sdk-core = { path = "../sdk-core" }
-sdk-lnurl = { path = "../sdk-lnurl" }
 anyhow = { version = "1.0.79", features = ["backtrace"] }
+breez-sdk-core = { path = "../sdk-core" }
+sdk-common = { path = "../sdk-common" }
 thiserror = { workspace = true }
 tokio = { version = "1", features = ["full"] }
 uniffi = { version = "0.23.0", features = ["bindgen-tests", "cli"] }

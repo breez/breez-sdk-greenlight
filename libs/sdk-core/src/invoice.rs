@@ -75,9 +75,9 @@ impl From<SystemTimeError> for InvoiceError {
     }
 }
 
-impl From<InvoiceError> for sdk_lnurl::prelude::LnUrlError {
+impl From<InvoiceError> for sdk_common::prelude::LnUrlError {
     fn from(value: InvoiceError) -> Self {
-        sdk_lnurl::prelude::LnUrlError::InvalidInvoice(format!("{value}"))
+        sdk_common::prelude::LnUrlError::InvalidInvoice(format!("{value}"))
     }
 }
 

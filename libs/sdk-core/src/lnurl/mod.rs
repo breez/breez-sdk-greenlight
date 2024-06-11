@@ -1,7 +1,7 @@
 pub(crate) mod pay;
 pub(crate) mod withdraw;
 
-use sdk_lnurl::prelude::*;
+use sdk_common::prelude::*;
 
 /// Replaces the scheme, host and port with a local mockito host. Preserves the rest of the path.
 #[cfg(test)]

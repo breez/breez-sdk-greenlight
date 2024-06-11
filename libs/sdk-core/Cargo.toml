@@ -42,7 +42,7 @@ rusqlite_migration = "1.0"
 reqwest = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-sdk-lnurl = { path = "../sdk-lnurl"}
+sdk-common = { path = "../sdk-common" }
 tonic = { version = "^0.8", features = [
     "tls",
     "transport",
