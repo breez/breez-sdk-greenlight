@@ -33,8 +33,9 @@ use crate::chain::{
     DEFAULT_MEMPOOL_SPACE_URL,
 };
 use crate::error::{
-    LnUrlAuthError, LnUrlPayError, LnUrlWithdrawError, ReceiveOnchainError, ReceiveOnchainResult,
-    ReceivePaymentError, SdkError, SdkResult, SendOnchainError, SendPaymentError,
+    ConnectError, LnUrlAuthError, LnUrlPayError, LnUrlWithdrawError, ReceiveOnchainError,
+    ReceiveOnchainResult, ReceivePaymentError, SdkError, SdkResult, SendOnchainError,
+    SendPaymentError,
 };
 use crate::fiat::{FiatCurrency, Rate};
 use crate::greenlight::{GLBackupTransport, Greenlight};
@@ -69,7 +70,6 @@ use crate::swap_out::reverseswap::{BTCSendSwap, CreateReverseSwapArg};
 use crate::BuyBitcoinProvider::Moonpay;
 use crate::*;
 
-use self::error::ConnectError;
 use self::grpc::PingRequest;
 
 pub type BreezServicesResult<T, E = ConnectError> = Result<T, E>;
