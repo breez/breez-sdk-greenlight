@@ -14,7 +14,7 @@ crate-type = ["staticlib", "cdylib", "lib"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = { version = "1.0.79", features = ["backtrace"] }
+anyhow = { workspace = true }
 breez-sdk-core = { path = "../sdk-core" }
 sdk-common = { path = "../sdk-common" }
 thiserror = { workspace = true }
@@ -37,5 +37,5 @@ tonic = { version = "^0.8", features = [
 [build-dependencies]
 uniffi_build = { version = "0.23.0" }
 uniffi_bindgen = "0.23.0"
-anyhow = { version = "1.0.79", features = ["backtrace"] }
+anyhow = { workspace = true }
 glob = "0.3.1"

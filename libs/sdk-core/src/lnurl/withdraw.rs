@@ -2,8 +2,7 @@ use std::str::FromStr;
 
 use sdk_common::prelude::*;
 
-use crate::{ensure_sdk, lnurl::*, LnUrlWithdrawResult, LnUrlWithdrawSuccessData};
-use crate::{LNInvoice, LnUrlWithdrawRequestData};
+use crate::{ensure_sdk, LnUrlWithdrawResult, LnUrlWithdrawSuccessData};
 
 /// Validates invoice and performs the second and last step of LNURL-withdraw, as per
 /// <https://github.com/lnurl/luds/blob/luds/03.md>

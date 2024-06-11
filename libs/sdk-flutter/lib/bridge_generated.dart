@@ -368,7 +368,6 @@ class BackupStatus {
   });
 }
 
-/// Wrapped in a [BitcoinAddress], this is the result of [parse] when given a plain or BIP-21 BTC address.
 class BitcoinAddressData {
   final String address;
   final Network network;
@@ -642,16 +641,9 @@ enum HealthCheckStatus {
 
 @freezed
 sealed class InputType with _$InputType {
-  /// # Supported standards
-  ///
-  /// - plain on-chain BTC address
-  /// - BIP21
   const factory InputType.bitcoinAddress({
     required BitcoinAddressData address,
   }) = InputType_BitcoinAddress;
-
-  /// Also covers URIs like `bitcoin:...&lightning=bolt11`. In this case, it returns the BOLT11
-  /// and discards all other data.
   const factory InputType.bolt11({
     required LNInvoice invoice,
   }) = InputType_Bolt11;
@@ -661,41 +653,15 @@ sealed class InputType with _$InputType {
   const factory InputType.url({
     required String url,
   }) = InputType_Url;
-
-  /// # Supported standards
-  ///
-  /// - LUD-01 LNURL bech32 encoding
-  /// - LUD-06 `payRequest` spec
-  /// - LUD-16 LN Address
-  /// - LUD-17 Support for lnurlp prefix with non-bech32-encoded LNURL URLs
   const factory InputType.lnUrlPay({
     required LnUrlPayRequestData data,
   }) = InputType_LnUrlPay;
-
-  /// # Supported standards
-  ///
-  /// - LUD-01 LNURL bech32 encoding
-  /// - LUD-03 `withdrawRequest` spec
-  /// - LUD-17 Support for lnurlw prefix with non-bech32-encoded LNURL URLs
-  ///
-  /// # Not supported (yet)
-  ///
-  /// - LUD-14 `balanceCheck`: reusable `withdrawRequest`s
-  /// - LUD-19 Pay link discoverable from withdraw link
   const factory InputType.lnUrlWithdraw({
     required LnUrlWithdrawRequestData data,
   }) = InputType_LnUrlWithdraw;
-
-  /// # Supported standards
-  ///
-  /// - LUD-01 LNURL bech32 encoding
-  /// - LUD-04 `auth` base spec
-  /// - LUD-17 Support for keyauth prefix with non-bech32-encoded LNURL URLs
   const factory InputType.lnUrlAuth({
     required LnUrlAuthRequestData data,
   }) = InputType_LnUrlAuth;
-
-  /// Error returned by the LNURL endpoint
   const factory InputType.lnUrlEndpointError({
     required LnUrlErrorData data,
   }) = InputType_LnUrlEndpointError;
@@ -892,48 +858,15 @@ class LnUrlPayRequest {
   });
 }
 
-/// Wrapped in a [LnUrlPay], this is the result of [parse] when given a LNURL-pay endpoint.
-///
-/// It represents the endpoint's parameters for the LNURL workflow.
-///
-/// See <https://github.com/lnurl/luds/blob/luds/06.md>
 class LnUrlPayRequestData {
   final String callback;
-
-  /// The minimum amount, in millisats, that this LNURL-pay endpoint accepts
   final int minSendable;
-
-  /// The maximum amount, in millisats, that this LNURL-pay endpoint accepts
   final int maxSendable;
-
-  /// As per LUD-06, `metadata` is a raw string (e.g. a json representation of the inner map).
-  /// Use `metadata_vec()` to get the parsed items.
   final String metadataStr;
-
-  /// The comment length accepted by this endpoint
-  ///
-  /// See <https://github.com/lnurl/luds/blob/luds/12.md>
   final int commentAllowed;
-
-  /// Indicates the domain of the LNURL-pay service, to be shown to the user when asking for
-  /// payment input, as per LUD-06 spec.
-  ///
-  /// Note: this is not the domain of the callback, but the domain of the LNURL-pay endpoint.
   final String domain;
-
-  /// Value indicating whether the recipient supports Nostr Zaps through NIP-57.
-  ///
-  /// See <https://github.com/nostr-protocol/nips/blob/master/57.md>
   final bool allowsNostr;
-
-  /// Optional recipient's lnurl provider's Nostr pubkey for NIP-57. If it exists it should be a
-  /// valid BIP 340 public key in hex.
-  ///
-  /// See <https://github.com/nostr-protocol/nips/blob/master/57.md>
-  /// See <https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki>
   final String? nostrPubkey;
-
-  /// If sending to a LN Address, this will be filled.
   final String? lnAddress;
 
   const LnUrlPayRequestData({
@@ -993,20 +926,11 @@ class LnUrlWithdrawRequest {
   });
 }
 
-/// Wrapped in a [LnUrlWithdraw], this is the result of [parse] when given a LNURL-withdraw endpoint.
-///
-/// It represents the endpoint's parameters for the LNURL workflow.
-///
-/// See <https://github.com/lnurl/luds/blob/luds/03.md>
 class LnUrlWithdrawRequestData {
   final String callback;
   final String k1;
   final String defaultDescription;
-
-  /// The minimum amount, in millisats, that this LNURL-withdraw endpoint accepts
   final int minWithdrawable;
-
-  /// The maximum amount, in millisats, that this LNURL-withdraw endpoint accepts
   final int maxWithdrawable;
 
   const LnUrlWithdrawRequestData({
