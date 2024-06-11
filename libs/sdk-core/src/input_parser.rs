@@ -11,7 +11,6 @@ use crate::bitcoin::bech32::FromBase32;
 use crate::ensure_sdk;
 use crate::input_parser::InputType::*;
 use crate::input_parser::LnUrlRequestData::*;
-use crate::invoice::{parse_invoice, LNInvoice};
 use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 
 /// Parses generic user input, typically pasted from clipboard or scanned from a QR.
@@ -590,7 +589,7 @@ pub struct MetadataItem {
 #[derive(Debug, Serialize)]
 pub struct BitcoinAddressData {
     pub address: String,
-    pub network: crate::models::Network,
+    pub network: sdk_common::prelude::Network,
     pub amount_sat: Option<u64>,
     pub label: Option<String>,
     pub message: Option<String>,

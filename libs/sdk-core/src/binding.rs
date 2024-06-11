@@ -17,6 +17,8 @@ use anyhow::{anyhow, Result};
 use flutter_rust_bridge::StreamSink;
 use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
+use sdk_common::invoice;
+use sdk_common::prelude::*;
 use tokio::sync::Mutex;
 
 use crate::breez_services::{self, BreezEvent, BreezServices, EventListener};
@@ -27,7 +29,6 @@ use crate::error::{
 };
 use crate::fiat::{FiatCurrency, Rate};
 use crate::input_parser::{self, InputType};
-use crate::invoice::{self, LNInvoice};
 use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};

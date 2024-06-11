@@ -8,7 +8,8 @@ use ripemd::Digest;
 use ripemd::Ripemd160;
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef};
 use rusqlite::ToSql;
-use sdk_common::prelude::LnUrlErrorData;
+use sdk_common::prelude::*;
+use sdk_common::prelude::Network::*;
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 
@@ -27,12 +28,11 @@ use crate::grpc::{
 };
 use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lsp::LspInformation;
-use crate::models::Network::*;
 use crate::persist::swap::SwapChainInfo;
 use crate::swap_in::error::{SwapError, SwapResult};
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
-use crate::{ensure_sdk, LNInvoice, LnUrlPayRequestData, LnUrlWithdrawRequestData, RouteHint};
+use crate::{ensure_sdk, LnUrlPayRequestData, LnUrlWithdrawRequestData};
 
 pub const SWAP_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60 * 24 * 2; // 2 days
 pub const INVOICE_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60; // 60 minutes
@@ -563,38 +563,6 @@ pub enum EnvironmentType {
 pub struct GreenlightCredentials {
     pub device_key: Vec<u8>,
     pub device_cert: Vec<u8>,
-}
-
-/// The different supported bitcoin networks
-#[derive(Clone, Copy, Debug, Display, Eq, PartialEq, Serialize, Deserialize)]
-pub enum Network {
-    /// Mainnet
-    Bitcoin,
-    Testnet,
-    Signet,
-    Regtest,
-}
-
-impl From<crate::bitcoin::network::constants::Network> for Network {
-    fn from(network: crate::bitcoin::network::constants::Network) -> Self {
-        match network {
-            crate::bitcoin::network::constants::Network::Bitcoin => Bitcoin,
-            crate::bitcoin::network::constants::Network::Testnet => Testnet,
-            crate::bitcoin::network::constants::Network::Signet => Signet,
-            crate::bitcoin::network::constants::Network::Regtest => Regtest,
-        }
-    }
-}
-
-impl From<Network> for crate::bitcoin::network::constants::Network {
-    fn from(network: Network) -> Self {
-        match network {
-            Bitcoin => crate::bitcoin::network::constants::Network::Bitcoin,
-            Testnet => crate::bitcoin::network::constants::Network::Testnet,
-            Signet => crate::bitcoin::network::constants::Network::Signet,
-            Regtest => crate::bitcoin::network::constants::Network::Regtest,
-        }
-    }
 }
 
 /// Represents a configure node request.

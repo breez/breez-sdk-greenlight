@@ -39,9 +39,6 @@ use crate::input_parser::BitcoinAddressData;
 use crate::input_parser::InputType;
 use crate::input_parser::LnUrlPayRequestData;
 use crate::input_parser::LnUrlWithdrawRequestData;
-use crate::invoice::LNInvoice;
-use crate::invoice::RouteHint;
-use crate::invoice::RouteHintHop;
 use crate::lnurl::pay::model::AesSuccessActionDataDecrypted;
 use crate::lnurl::pay::model::AesSuccessActionDataResult;
 use crate::lnurl::pay::model::LnUrlPayErrorData;
@@ -73,7 +70,6 @@ use crate::models::LnUrlWithdrawSuccessData;
 use crate::models::LogEntry;
 use crate::models::MaxReverseSwapAmountResponse;
 use crate::models::MetadataFilter;
-use crate::models::Network;
 use crate::models::NodeConfig;
 use crate::models::NodeCredentials;
 use crate::models::NodeState;
@@ -121,9 +117,13 @@ use crate::models::SwapInfo;
 use crate::models::SwapStatus;
 use crate::models::TlvEntry;
 use crate::models::UnspentTransactionOutput;
+use crate::LNInvoice;
 use crate::LnUrlAuthRequestData;
 use crate::LnUrlCallbackStatus;
 use crate::LnUrlErrorData;
+use crate::Network;
+use crate::RouteHint;
+use crate::RouteHintHop;
 
 // Section: wire functions
 
@@ -437,7 +437,7 @@ fn wire_backup_status_impl(port_: MessagePort) {
     )
 }
 fn wire_parse_invoice_impl(port_: MessagePort, invoice: impl Wire2Api<String> + UnwindSafe) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, LNInvoice, _>(
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, mirror_LNInvoice, _>(
         WrapInfo {
             debug_name: "parse_invoice",
             port: Some(port_),
@@ -915,6 +915,9 @@ fn wire_generate_diagnostic_data_impl(port_: MessagePort) {
 // Section: wrapper structs
 
 #[derive(Clone)]
+pub struct mirror_LNInvoice(LNInvoice);
+
+#[derive(Clone)]
 pub struct mirror_LnUrlAuthRequestData(LnUrlAuthRequestData);
 
 #[derive(Clone)]
@@ -923,9 +926,33 @@ pub struct mirror_LnUrlCallbackStatus(LnUrlCallbackStatus);
 #[derive(Clone)]
 pub struct mirror_LnUrlErrorData(LnUrlErrorData);
 
+#[derive(Clone)]
+pub struct mirror_Network(Network);
+
+#[derive(Clone)]
+pub struct mirror_RouteHint(RouteHint);
+
+#[derive(Clone)]
+pub struct mirror_RouteHintHop(RouteHintHop);
+
 // Section: static checks
 
 const _: fn() = || {
+    {
+        let LNInvoice = None::<LNInvoice>.unwrap();
+        let _: String = LNInvoice.bolt11;
+        let _: Network = LNInvoice.network;
+        let _: String = LNInvoice.payee_pubkey;
+        let _: String = LNInvoice.payment_hash;
+        let _: Option<String> = LNInvoice.description;
+        let _: Option<String> = LNInvoice.description_hash;
+        let _: Option<u64> = LNInvoice.amount_msat;
+        let _: u64 = LNInvoice.timestamp;
+        let _: u64 = LNInvoice.expiry;
+        let _: Vec<RouteHint> = LNInvoice.routing_hints;
+        let _: Vec<u8> = LNInvoice.payment_secret;
+        let _: u64 = LNInvoice.min_final_cltv_expiry_delta;
+    }
     {
         let LnUrlAuthRequestData = None::<LnUrlAuthRequestData>.unwrap();
         let _: String = LnUrlAuthRequestData.k1;
@@ -942,6 +969,26 @@ const _: fn() = || {
     {
         let LnUrlErrorData = None::<LnUrlErrorData>.unwrap();
         let _: String = LnUrlErrorData.reason;
+    }
+    match None::<Network>.unwrap() {
+        Network::Bitcoin => {}
+        Network::Testnet => {}
+        Network::Signet => {}
+        Network::Regtest => {}
+    }
+    {
+        let RouteHint = None::<RouteHint>.unwrap();
+        let _: Vec<RouteHintHop> = RouteHint.hops;
+    }
+    {
+        let RouteHintHop = None::<RouteHintHop>.unwrap();
+        let _: String = RouteHintHop.src_node_id;
+        let _: u64 = RouteHintHop.short_channel_id;
+        let _: u32 = RouteHintHop.fees_base_msat;
+        let _: u32 = RouteHintHop.fees_proportional_millionths;
+        let _: u64 = RouteHintHop.cltv_expiry_delta;
+        let _: Option<u64> = RouteHintHop.htlc_minimum_msat;
+        let _: Option<u64> = RouteHintHop.htlc_maximum_msat;
     }
 };
 // Section: allocate functions
@@ -1392,31 +1439,32 @@ impl rust2dart::IntoIntoDart<InvoicePaidDetails> for InvoicePaidDetails {
     }
 }
 
-impl support::IntoDart for LNInvoice {
+impl support::IntoDart for mirror_LNInvoice {
     fn into_dart(self) -> support::DartAbi {
         vec![
-            self.bolt11.into_into_dart().into_dart(),
-            self.network.into_into_dart().into_dart(),
-            self.payee_pubkey.into_into_dart().into_dart(),
-            self.payment_hash.into_into_dart().into_dart(),
-            self.description.into_dart(),
-            self.description_hash.into_dart(),
-            self.amount_msat.into_dart(),
-            self.timestamp.into_into_dart().into_dart(),
-            self.expiry.into_into_dart().into_dart(),
-            self.routing_hints.into_into_dart().into_dart(),
-            self.payment_secret.into_into_dart().into_dart(),
-            self.min_final_cltv_expiry_delta
+            self.0.bolt11.into_into_dart().into_dart(),
+            self.0.network.into_into_dart().into_dart(),
+            self.0.payee_pubkey.into_into_dart().into_dart(),
+            self.0.payment_hash.into_into_dart().into_dart(),
+            self.0.description.into_dart(),
+            self.0.description_hash.into_dart(),
+            self.0.amount_msat.into_dart(),
+            self.0.timestamp.into_into_dart().into_dart(),
+            self.0.expiry.into_into_dart().into_dart(),
+            self.0.routing_hints.into_into_dart().into_dart(),
+            self.0.payment_secret.into_into_dart().into_dart(),
+            self.0
+                .min_final_cltv_expiry_delta
                 .into_into_dart()
                 .into_dart(),
         ]
         .into_dart()
     }
 }
-impl support::IntoDartExceptPrimitive for LNInvoice {}
-impl rust2dart::IntoIntoDart<LNInvoice> for LNInvoice {
-    fn into_into_dart(self) -> Self {
-        self
+impl support::IntoDartExceptPrimitive for mirror_LNInvoice {}
+impl rust2dart::IntoIntoDart<mirror_LNInvoice> for LNInvoice {
+    fn into_into_dart(self) -> mirror_LNInvoice {
+        mirror_LNInvoice(self)
     }
 }
 
@@ -1717,21 +1765,21 @@ impl rust2dart::IntoIntoDart<MessageSuccessActionData> for MessageSuccessActionD
     }
 }
 
-impl support::IntoDart for Network {
+impl support::IntoDart for mirror_Network {
     fn into_dart(self) -> support::DartAbi {
-        match self {
-            Self::Bitcoin => 0,
-            Self::Testnet => 1,
-            Self::Signet => 2,
-            Self::Regtest => 3,
+        match self.0 {
+            Network::Bitcoin => 0,
+            Network::Testnet => 1,
+            Network::Signet => 2,
+            Network::Regtest => 3,
         }
         .into_dart()
     }
 }
-impl support::IntoDartExceptPrimitive for Network {}
-impl rust2dart::IntoIntoDart<Network> for Network {
-    fn into_into_dart(self) -> Self {
-        self
+impl support::IntoDartExceptPrimitive for mirror_Network {}
+impl rust2dart::IntoIntoDart<mirror_Network> for Network {
+    fn into_into_dart(self) -> mirror_Network {
+        mirror_Network(self)
     }
 }
 
@@ -1918,7 +1966,7 @@ impl support::IntoDart for PaymentFailedData {
         vec![
             self.error.into_into_dart().into_dart(),
             self.node_id.into_into_dart().into_dart(),
-            self.invoice.into_dart(),
+            self.invoice.map(|v| mirror_LNInvoice(v)).into_dart(),
             self.label.into_dart(),
         ]
         .into_dart()
@@ -2156,38 +2204,39 @@ impl rust2dart::IntoIntoDart<ReverseSwapStatus> for ReverseSwapStatus {
     }
 }
 
-impl support::IntoDart for RouteHint {
+impl support::IntoDart for mirror_RouteHint {
     fn into_dart(self) -> support::DartAbi {
-        vec![self.hops.into_into_dart().into_dart()].into_dart()
+        vec![self.0.hops.into_into_dart().into_dart()].into_dart()
     }
 }
-impl support::IntoDartExceptPrimitive for RouteHint {}
-impl rust2dart::IntoIntoDart<RouteHint> for RouteHint {
-    fn into_into_dart(self) -> Self {
-        self
+impl support::IntoDartExceptPrimitive for mirror_RouteHint {}
+impl rust2dart::IntoIntoDart<mirror_RouteHint> for RouteHint {
+    fn into_into_dart(self) -> mirror_RouteHint {
+        mirror_RouteHint(self)
     }
 }
 
-impl support::IntoDart for RouteHintHop {
+impl support::IntoDart for mirror_RouteHintHop {
     fn into_dart(self) -> support::DartAbi {
         vec![
-            self.src_node_id.into_into_dart().into_dart(),
-            self.short_channel_id.into_into_dart().into_dart(),
-            self.fees_base_msat.into_into_dart().into_dart(),
-            self.fees_proportional_millionths
+            self.0.src_node_id.into_into_dart().into_dart(),
+            self.0.short_channel_id.into_into_dart().into_dart(),
+            self.0.fees_base_msat.into_into_dart().into_dart(),
+            self.0
+                .fees_proportional_millionths
                 .into_into_dart()
                 .into_dart(),
-            self.cltv_expiry_delta.into_into_dart().into_dart(),
-            self.htlc_minimum_msat.into_dart(),
-            self.htlc_maximum_msat.into_dart(),
+            self.0.cltv_expiry_delta.into_into_dart().into_dart(),
+            self.0.htlc_minimum_msat.into_dart(),
+            self.0.htlc_maximum_msat.into_dart(),
         ]
         .into_dart()
     }
 }
-impl support::IntoDartExceptPrimitive for RouteHintHop {}
-impl rust2dart::IntoIntoDart<RouteHintHop> for RouteHintHop {
-    fn into_into_dart(self) -> Self {
-        self
+impl support::IntoDartExceptPrimitive for mirror_RouteHintHop {}
+impl rust2dart::IntoIntoDart<mirror_RouteHintHop> for RouteHintHop {
+    fn into_into_dart(self) -> mirror_RouteHintHop {
+        mirror_RouteHintHop(self)
     }
 }
 

@@ -5,9 +5,10 @@ use tokio::sync::{mpsc, watch};
 use tokio_stream::Stream;
 use tonic::Streaming;
 
+use sdk_common::prelude::*;
+
 use crate::{
     bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey},
-    invoice::InvoiceError,
     lightning_invoice::RawBolt11Invoice,
     persist::error::PersistError,
     CustomMessage, LspInformation, MaxChannelAmount, NodeCredentials, Payment, PaymentResponse,

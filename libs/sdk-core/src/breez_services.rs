@@ -45,9 +45,6 @@ use crate::grpc::signer_client::SignerClient;
 use crate::grpc::support_client::SupportClient;
 use crate::grpc::swapper_client::SwapperClient;
 use crate::grpc::{ChainApiServersRequest, PaymentInformation};
-use crate::invoice::{
-    add_routing_hints, parse_invoice, validate_network, LNInvoice, RouteHint, RouteHintHop,
-};
 use crate::lnurl::pay::model::SuccessAction::Aes;
 use crate::lnurl::pay::model::{
     LnUrlPayResult, SuccessAction, SuccessActionProcessed, ValidatedCallbackResponse,

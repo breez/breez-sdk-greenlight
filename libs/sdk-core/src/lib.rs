@@ -180,7 +180,6 @@ mod grpc;
 #[rustfmt::skip]
 mod fiat; // flutter_rust_bridge_codegen: has to be defined after grpc; grpc::Rate
 pub mod input_parser;
-mod invoice;
 mod lnurl;
 mod lsp;
 mod lsps0;
@@ -209,7 +208,6 @@ pub use input_parser::{
     parse, BitcoinAddressData, InputType, LnUrlPayRequestData, LnUrlRequestData,
     LnUrlWithdrawRequestData, MetadataItem,
 };
-pub use invoice::{parse_invoice, LNInvoice, RouteHint, RouteHintHop};
 pub use lnurl::pay::model::*;
 pub use lsp::LspInformation;
 pub use models::*;
@@ -242,4 +240,44 @@ pub struct _LnUrlErrorData {
 pub enum _LnUrlCallbackStatus {
     Ok,
     ErrorStatus { data: LnUrlErrorData },
+}
+
+#[frb(mirror(Network))]
+pub enum _Network {
+    Bitcoin,
+    Testnet,
+    Signet,
+    Regtest,
+}
+
+#[frb(mirror(LNInvoice))]
+pub struct _LNInvoice {
+    pub bolt11: String,
+    pub network: Network,
+    pub payee_pubkey: String,
+    pub payment_hash: String,
+    pub description: Option<String>,
+    pub description_hash: Option<String>,
+    pub amount_msat: Option<u64>,
+    pub timestamp: u64,
+    pub expiry: u64,
+    pub routing_hints: Vec<RouteHint>,
+    pub payment_secret: Vec<u8>,
+    pub min_final_cltv_expiry_delta: u64,
+}
+
+#[frb(mirror(RouteHint))]
+pub struct _RouteHint {
+    pub hops: Vec<RouteHintHop>,
+}
+
+#[frb(mirror(RouteHintHop))]
+pub struct _RouteHintHop {
+    pub src_node_id: String,
+    pub short_channel_id: u64,
+    pub fees_base_msat: u32,
+    pub fees_proportional_millionths: u32,
+    pub cltv_expiry_delta: u64,
+    pub htlc_minimum_msat: Option<u64>,
+    pub htlc_maximum_msat: Option<u64>,
 }

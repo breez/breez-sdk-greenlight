@@ -2716,10 +2716,14 @@ dependencies = [
  "base64 0.13.1",
  "bitcoin 0.29.2",
  "hex",
+ "lightning",
+ "lightning-invoice",
  "log",
+ "regex",
  "reqwest",
  "serde",
  "serde_json",
+ "strum_macros",
  "thiserror",
 ]
 

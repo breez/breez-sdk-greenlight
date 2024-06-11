@@ -2,10 +2,8 @@ use std::str::FromStr;
 
 use sdk_common::prelude::*;
 
-use crate::invoice::{parse_invoice, validate_network};
 use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 use crate::lnurl::pay::model::{CallbackResponse, SuccessAction, ValidatedCallbackResponse};
-use crate::Network;
 use crate::{ensure_sdk, input_parser::*};
 
 type Aes256CbcEnc = cbc::Encryptor<aes::Aes256>;
