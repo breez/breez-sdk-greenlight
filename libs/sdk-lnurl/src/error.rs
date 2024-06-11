@@ -65,16 +65,6 @@ impl From<FromUtf8Error> for LnUrlError {
     }
 }
 
-// impl From<NodeError> for LnUrlError {
-//     fn from(value: NodeError) -> Self {
-//         match value {
-//             NodeError::InvalidInvoice(err) => Self::InvalidInvoice(err),
-//             NodeError::ServiceConnectivity(err) => Self::ServiceConnectivity(err),
-//             _ => Self::Generic(value.to_string()),
-//         }
-//     }
-// }
-
 impl From<secp256k1::Error> for LnUrlError {
     fn from(err: secp256k1::Error) -> Self {
         Self::Generic(err.to_string())

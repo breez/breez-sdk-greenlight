@@ -1,30 +1,28 @@
 use std::str::FromStr;
-use std::sync::Arc;
 
+use bitcoin::hashes::{hex::ToHex, sha256, Hash, HashEngine, Hmac, HmacEngine};
+use bitcoin::secp256k1::{Message, Secp256k1};
+use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
+use bitcoin::KeyPair;
 use reqwest::Url;
-use sdk_lnurl::prelude::*;
+use sdk_utils::prelude::*;
 
-use crate::bitcoin::hashes::{hex::ToHex, sha256, Hash, HashEngine, Hmac, HmacEngine};
-use crate::bitcoin::secp256k1::{Message, Secp256k1};
-use crate::bitcoin::util::bip32::ChildNumber;
-use crate::bitcoin::KeyPair;
-use crate::input_parser::get_parse_and_log_response;
-use crate::{node_api::NodeAPI, LnUrlAuthRequestData, LnUrlCallbackStatus};
+use crate::prelude::*;
 
 /// Performs the third and last step of LNURL-auth, as per
 /// <https://github.com/lnurl/luds/blob/luds/04.md>
 ///
+/// Linking key is derived as per LUD-05
+/// https://github.com/lnurl/luds/blob/luds/05.md
+///
 /// See the [parse] docs for more detail on the full workflow.
-pub(crate) async fn perform_lnurl_auth(
-    node_api: Arc<dyn NodeAPI>,
+pub async fn perform_lnurl_auth(
+    linking_keys: KeyPair,
     req_data: LnUrlAuthRequestData,
 ) -> LnUrlResult<LnUrlCallbackStatus> {
-    let url = Url::from_str(&req_data.url).map_err(|e| LnUrlError::InvalidUri(e.to_string()))?;
-    let linking_keys = derive_linking_keys(node_api, url)?;
-
     let k1_to_sign = Message::from_slice(
         &hex::decode(req_data.k1)
-            .map_err(|e| LnUrlError::Generic(format!("Error decoding k1: {e}")))?,
+            .map_err(|e| LnUrlError::Generic(format!("Error decoding k1: {e}")))    ?,
     )?;
     let sig = Secp256k1::new().sign_ecdsa(&k1_to_sign, &linking_keys.secret_key());
 
@@ -43,7 +41,7 @@ pub(crate) async fn perform_lnurl_auth(
         .map_err(|e| LnUrlError::ServiceConnectivity(e.to_string()))
 }
 
-pub(crate) fn validate_request(
+pub fn validate_request(
     domain: String,
     lnurl_endpoint: String,
 ) -> LnUrlResult<LnUrlAuthRequestData> {
@@ -90,31 +88,21 @@ fn hmac_sha256(key: &[u8], input: &[u8]) -> Hmac<sha256::Hash> {
     Hmac::<sha256::Hash>::from_engine(engine)
 }
 
-/// Linking key is derived as per LUD-05
-///
-/// https://github.com/lnurl/luds/blob/luds/05.md
-fn derive_linking_keys(node_api: Arc<dyn NodeAPI>, url: Url) -> LnUrlResult<KeyPair> {
+pub fn get_derivation_path(hashing_key: ExtendedPrivKey, url: Url) -> LnUrlResult<Vec<ChildNumber>> {
     let domain = url
         .domain()
         .ok_or(LnUrlError::invalid_uri("Could not determine domain"))?;
 
-    // m/138'/0
-    let hashing_key = node_api.derive_bip32_key(vec![
-        ChildNumber::from_hardened_idx(138)?,
-        ChildNumber::from(0),
-    ])?;
     let hmac = hmac_sha256(&hashing_key.to_priv().to_bytes(), domain.as_bytes());
 
     // m/138'/<long1>/<long2>/<long3>/<long4>
-    let linking_key = node_api.derive_bip32_key(vec![
+    Ok(vec![
         ChildNumber::from_hardened_idx(138)?,
         ChildNumber::from(build_path_element_u32(hmac[0..4].try_into()?)),
         ChildNumber::from(build_path_element_u32(hmac[4..8].try_into()?)),
         ChildNumber::from(build_path_element_u32(hmac[8..12].try_into()?)),
         ChildNumber::from(build_path_element_u32(hmac[12..16].try_into()?)),
-    ])?;
-
-    Ok(linking_key.to_keypair(&Secp256k1::new()))
+    ])
 }
 
 fn build_path_element_u32(hmac_bytes: [u8; 4]) -> u32 {

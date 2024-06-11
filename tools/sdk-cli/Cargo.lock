@@ -487,6 +487,7 @@ dependencies = [
  "rusqlite",
  "rusqlite_migration",
  "sdk-lnurl",
+ "sdk-utils",
  "serde",
  "serde_json",
  "serde_with",
@@ -2597,6 +2598,22 @@ dependencies = [
  "aes",
  "base64 0.13.1",
  "bitcoin 0.29.2",
+ "hex",
+ "log",
+ "reqwest",
+ "sdk-utils",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "sdk-utils"
+version = "0.4.1"
+dependencies = [
+ "log",
+ "reqwest",
+ "serde",
  "serde_json",
  "thiserror",
 ]

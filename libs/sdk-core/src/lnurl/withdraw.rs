@@ -1,11 +1,9 @@
 use std::str::FromStr;
 
 use sdk_lnurl::prelude::*;
+use sdk_utils::prelude::*;
 
-use crate::input_parser::get_parse_and_log_response;
-use crate::{
-    ensure_sdk, lnurl::*, LnUrlCallbackStatus, LnUrlWithdrawResult, LnUrlWithdrawSuccessData,
-};
+use crate::{ensure_sdk, lnurl::*, LnUrlWithdrawResult, LnUrlWithdrawSuccessData};
 use crate::{LNInvoice, LnUrlWithdrawRequestData};
 
 /// Validates invoice and performs the second and last step of LNURL-withdraw, as per

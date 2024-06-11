@@ -8,6 +8,7 @@ use ripemd::Digest;
 use ripemd::Ripemd160;
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef};
 use rusqlite::ToSql;
+use sdk_lnurl::prelude::LnUrlErrorData;
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 
@@ -31,9 +32,7 @@ use crate::persist::swap::SwapChainInfo;
 use crate::swap_in::error::{SwapError, SwapResult};
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
-use crate::{
-    ensure_sdk, LNInvoice, LnUrlErrorData, LnUrlPayRequestData, LnUrlWithdrawRequestData, RouteHint,
-};
+use crate::{ensure_sdk, LNInvoice, LnUrlPayRequestData, LnUrlWithdrawRequestData, RouteHint};
 
 pub const SWAP_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60 * 24 * 2; // 2 days
 pub const INVOICE_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60; // 60 minutes
@@ -1537,28 +1536,6 @@ pub struct UnspentTransactionOutput {
     pub address: String,
     #[serde(default)]
     pub reserved: bool,
-}
-
-/// Contains the result of the entire LNURL interaction, as reported by the LNURL endpoint.
-///
-/// * `Ok` indicates the interaction with the endpoint was valid, and the endpoint
-///  - started to pay the invoice asynchronously in the case of LNURL-withdraw,
-///  - verified the client signature in the case of LNURL-auth,////// * `Error` indicates a generic issue the LNURL endpoint encountered, including a freetext
-/// description of the reason.
-///
-/// Both cases are described in LUD-03 <https://github.com/lnurl/luds/blob/luds/03.md> & LUD-04: <https://github.com/lnurl/luds/blob/luds/04.md>
-#[derive(Deserialize, Debug, Serialize)]
-#[serde(rename_all = "UPPERCASE")]
-#[serde(tag = "status")]
-pub enum LnUrlCallbackStatus {
-    /// On-wire format is: `{"status": "OK"}`
-    Ok,
-    /// On-wire format is: `{"status": "ERROR", "reason": "error details..."}`
-    #[serde(rename = "ERROR")]
-    ErrorStatus {
-        #[serde(flatten)]
-        data: LnUrlErrorData,
-    },
 }
 
 #[derive(Debug, Serialize, Deserialize)]

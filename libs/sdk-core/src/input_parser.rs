@@ -1,19 +1,15 @@
 use std::str::FromStr;
-use std::time::Duration;
 
 use anyhow::{anyhow, Result};
 use bip21::Uri;
-use reqwest::StatusCode;
-use sdk_lnurl::prelude::LnUrlResult;
+use sdk_lnurl::prelude::*;
+use sdk_utils::prelude::*;
 use serde::Deserialize;
 use serde::Serialize;
 
 use crate::bitcoin::bech32;
 use crate::bitcoin::bech32::FromBase32;
 use crate::ensure_sdk;
-use crate::error::SdkError;
-use crate::error::SdkError::ServiceConnectivity;
-use crate::error::SdkResult;
 use crate::input_parser::InputType::*;
 use crate::input_parser::LnUrlRequestData::*;
 use crate::invoice::{parse_invoice, LNInvoice};
@@ -231,73 +227,6 @@ pub async fn parse(input: &str) -> Result<InputType> {
     Err(anyhow!("Unrecognized input type"))
 }
 
-pub(crate) async fn post_and_log_response(url: &str, body: Option<String>) -> SdkResult<String> {
-    debug!("Making POST request to: {url}");
-
-    let mut req = get_reqwest_client()?.post(url);
-    if let Some(body) = body {
-        req = req.body(body);
-    }
-    let raw_body = req
-        .send()
-        .await
-        .map_err(|e| SdkError::ServiceConnectivity { err: e.to_string() })?
-        .text()
-        .await
-        .map_err(|e| SdkError::ServiceConnectivity { err: e.to_string() })?;
-    debug!("Received raw response body: {raw_body}");
-
-    Ok(raw_body)
-}
-
-/// Makes a GET request to the specified `url` and logs on DEBUG:
-/// - the URL
-/// - the raw response body
-/// - the response HTTP status code
-pub(crate) async fn get_and_log_response(url: &str) -> SdkResult<(String, StatusCode)> {
-    debug!("Making GET request to: {url}");
-
-    let response = get_reqwest_client()?
-        .get(url)
-        .send()
-        .await
-        .map_err(|e| SdkError::ServiceConnectivity { err: e.to_string() })?;
-    let status = response.status();
-    let raw_body = response
-        .text()
-        .await
-        .map_err(|e| SdkError::ServiceConnectivity { err: e.to_string() })?;
-    debug!("Received response, status: {status}, raw response body: {raw_body}");
-
-    Ok((raw_body, status))
-}
-
-/// Wrapper around [get_and_log_response] that, in addition, parses the payload into an expected type.
-///
-/// ### Arguments
-///
-/// - `url`: the URL on which GET will be called
-/// - `enforce_status_check`: if true, the HTTP status code is checked in addition to trying to
-/// parse the payload. In this case, an HTTP error code will automatically cause this function to
-/// return `Err`, regardless of the payload. If false, the result type will be determined only
-/// by the result of parsing the payload into the desired target type.
-pub(crate) async fn get_parse_and_log_response<T>(
-    url: &str,
-    enforce_status_check: bool,
-) -> SdkResult<T>
-where
-    for<'a> T: serde::de::Deserialize<'a>,
-{
-    let (raw_body, status) = get_and_log_response(url).await?;
-    if enforce_status_check && !status.is_success() {
-        let err = format!("GET request {url} failed with status: {status}");
-        error!("{err}");
-        return Err(SdkError::ServiceConnectivity { err });
-    }
-
-    serde_json::from_str::<T>(&raw_body).map_err(Into::into)
-}
-
 /// Prepends the given prefix to the input, if the input doesn't already start with it
 fn prepend_if_missing(prefix: &str, input: &str) -> String {
     match input.to_lowercase().starts_with(prefix) {
@@ -434,7 +363,7 @@ async fn resolve_lnurl(
     // No need to query the endpoint for details
     if lnurl_endpoint.contains("tag=login") {
         return Ok(LnUrlAuth {
-            data: crate::lnurl::auth::validate_request(domain, lnurl_endpoint)?,
+            data: validate_request(domain, lnurl_endpoint)?,
         });
     }
 
@@ -455,14 +384,6 @@ async fn resolve_lnurl(
         _ => temp,
     };
     Ok(temp)
-}
-
-/// Creates an HTTP client with a built-in connection timeout
-pub(crate) fn get_reqwest_client() -> SdkResult<reqwest::Client> {
-    reqwest::Client::builder()
-        .timeout(Duration::from_secs(30))
-        .build()
-        .map_err(|e| ServiceConnectivity { err: e.to_string() })
 }
 
 /// Different kinds of inputs supported by [parse], including any relevant details extracted from the input
@@ -521,7 +442,8 @@ pub enum InputType {
         data: LnUrlAuthRequestData,
     },
 
-    LnUrlError {
+    /// Error returned by the LNURL endpoint
+    LnUrlEndpointError {
         data: LnUrlErrorData,
     },
 }
@@ -559,15 +481,9 @@ impl From<LnUrlRequestData> for InputType {
             PayRequest { data } => LnUrlPay { data },
             WithdrawRequest { data } => LnUrlWithdraw { data },
             AuthRequest { data } => LnUrlAuth { data },
-            Error { data } => LnUrlError { data },
+            Error { data } => LnUrlEndpointError { data },
         }
     }
-}
-
-/// Wrapped in a [LnUrlError], this represents a LNURL-endpoint error.
-#[derive(Deserialize, Debug, Serialize)]
-pub struct LnUrlErrorData {
-    pub reason: String,
 }
 
 /// Wrapped in a [LnUrlPay], this is the result of [parse] when given a LNURL-pay endpoint.
@@ -665,30 +581,6 @@ impl LnUrlWithdrawRequestData {
     pub fn max_withdrawable_sats(&self) -> u64 {
         self.max_withdrawable / 1000
     }
-}
-
-/// Wrapped in a [LnUrlAuth], this is the result of [parse] when given a LNURL-auth endpoint.
-///
-/// It represents the endpoint's parameters for the LNURL workflow.
-///
-/// See <https://github.com/lnurl/luds/blob/luds/04.md>
-#[derive(Deserialize, Debug, Serialize)]
-pub struct LnUrlAuthRequestData {
-    /// Hex encoded 32 bytes of challenge
-    pub k1: String,
-
-    /// When available, one of: register, login, link, auth
-    pub action: Option<String>,
-
-    /// Indicates the domain of the LNURL-auth service, to be shown to the user when asking for
-    /// auth confirmation, as per LUD-04 spec.
-    #[serde(skip_serializing, skip_deserializing)]
-    pub domain: String,
-
-    /// Indicates the URL of the LNURL-auth service, including the query arguments. This will be
-    /// extended with the signed challenge and the linking key, then called in the second step of the workflow.
-    #[serde(skip_serializing, skip_deserializing)]
-    pub url: String,
 }
 
 /// Key-value pair in the [LnUrlPayRequestData], as returned by the LNURL-pay endpoint
@@ -1413,7 +1305,7 @@ pub(crate) mod tests {
         let expected_err = "Error msg from LNURL endpoint found via LN Address";
         let _m = mock_lnurl_ln_address_endpoint(ln_address, Some(expected_err.to_string()))?;
 
-        if let LnUrlError { data: msg } = parse(ln_address).await? {
+        if let LnUrlEndpointError { data: msg } = parse(ln_address).await? {
             assert_eq!(msg.reason, expected_err);
             return Ok(());
         }
@@ -1670,7 +1562,9 @@ pub(crate) mod tests {
         let expected_error_msg = "test pay error";
         let _m = mock_lnurl_pay_endpoint(pay_path, Some(expected_error_msg.to_string()));
 
-        if let LnUrlError { data: msg } = parse(&format!("lnurlp://localhost{pay_path}")).await? {
+        if let LnUrlEndpointError { data: msg } =
+            parse(&format!("lnurlp://localhost{pay_path}")).await?
+        {
             assert_eq!(msg.reason, expected_error_msg);
             return Ok(());
         }
@@ -1684,7 +1578,7 @@ pub(crate) mod tests {
         let expected_error_msg = "test withdraw error";
         let _m = mock_lnurl_withdraw_endpoint(withdraw_path, Some(expected_error_msg.to_string()));
 
-        if let LnUrlError { data: msg } =
+        if let LnUrlEndpointError { data: msg } =
             parse(&format!("lnurlw://localhost{withdraw_path}")).await?
         {
             assert_eq!(msg.reason, expected_error_msg);

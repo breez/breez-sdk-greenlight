@@ -37,8 +37,6 @@ use crate::fiat::Rate;
 use crate::fiat::Symbol;
 use crate::input_parser::BitcoinAddressData;
 use crate::input_parser::InputType;
-use crate::input_parser::LnUrlAuthRequestData;
-use crate::input_parser::LnUrlErrorData;
 use crate::input_parser::LnUrlPayRequestData;
 use crate::input_parser::LnUrlWithdrawRequestData;
 use crate::invoice::LNInvoice;
@@ -68,7 +66,6 @@ use crate::models::GreenlightNodeConfig;
 use crate::models::HealthCheckStatus;
 use crate::models::ListPaymentsRequest;
 use crate::models::LnPaymentDetails;
-use crate::models::LnUrlCallbackStatus;
 use crate::models::LnUrlPayRequest;
 use crate::models::LnUrlWithdrawRequest;
 use crate::models::LnUrlWithdrawResult;
@@ -124,6 +121,9 @@ use crate::models::SwapInfo;
 use crate::models::SwapStatus;
 use crate::models::TlvEntry;
 use crate::models::UnspentTransactionOutput;
+use crate::LnUrlAuthRequestData;
+use crate::LnUrlCallbackStatus;
+use crate::LnUrlErrorData;
 
 // Section: wire functions
 
@@ -587,7 +587,7 @@ fn wire_lnurl_auth_impl(
     port_: MessagePort,
     req_data: impl Wire2Api<LnUrlAuthRequestData> + UnwindSafe,
 ) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, LnUrlCallbackStatus, _>(
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, mirror_LnUrlCallbackStatus, _>(
         WrapInfo {
             debug_name: "lnurl_auth",
             port: Some(port_),
@@ -914,8 +914,36 @@ fn wire_generate_diagnostic_data_impl(port_: MessagePort) {
 }
 // Section: wrapper structs
 
+#[derive(Clone)]
+pub struct mirror_LnUrlAuthRequestData(LnUrlAuthRequestData);
+
+#[derive(Clone)]
+pub struct mirror_LnUrlCallbackStatus(LnUrlCallbackStatus);
+
+#[derive(Clone)]
+pub struct mirror_LnUrlErrorData(LnUrlErrorData);
+
 // Section: static checks
 
+const _: fn() = || {
+    {
+        let LnUrlAuthRequestData = None::<LnUrlAuthRequestData>.unwrap();
+        let _: String = LnUrlAuthRequestData.k1;
+        let _: Option<String> = LnUrlAuthRequestData.action;
+        let _: String = LnUrlAuthRequestData.domain;
+        let _: String = LnUrlAuthRequestData.url;
+    }
+    match None::<LnUrlCallbackStatus>.unwrap() {
+        LnUrlCallbackStatus::Ok => {}
+        LnUrlCallbackStatus::ErrorStatus { data } => {
+            let _: LnUrlErrorData = data;
+        }
+    }
+    {
+        let LnUrlErrorData = None::<LnUrlErrorData>.unwrap();
+        let _: String = LnUrlErrorData.reason;
+    }
+};
 // Section: allocate functions
 
 // Section: related functions
@@ -1333,7 +1361,9 @@ impl support::IntoDart for InputType {
             Self::LnUrlPay { data } => vec![4.into_dart(), data.into_into_dart().into_dart()],
             Self::LnUrlWithdraw { data } => vec![5.into_dart(), data.into_into_dart().into_dart()],
             Self::LnUrlAuth { data } => vec![6.into_dart(), data.into_into_dart().into_dart()],
-            Self::LnUrlError { data } => vec![7.into_dart(), data.into_into_dart().into_dart()],
+            Self::LnUrlEndpointError { data } => {
+                vec![7.into_dart(), data.into_into_dart().into_dart()]
+            }
         }
         .into_dart()
     }
@@ -1420,49 +1450,51 @@ impl rust2dart::IntoIntoDart<LnPaymentDetails> for LnPaymentDetails {
     }
 }
 
-impl support::IntoDart for LnUrlAuthRequestData {
+impl support::IntoDart for mirror_LnUrlAuthRequestData {
     fn into_dart(self) -> support::DartAbi {
         vec![
-            self.k1.into_into_dart().into_dart(),
-            self.action.into_dart(),
-            self.domain.into_into_dart().into_dart(),
-            self.url.into_into_dart().into_dart(),
+            self.0.k1.into_into_dart().into_dart(),
+            self.0.action.into_dart(),
+            self.0.domain.into_into_dart().into_dart(),
+            self.0.url.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
 }
-impl support::IntoDartExceptPrimitive for LnUrlAuthRequestData {}
-impl rust2dart::IntoIntoDart<LnUrlAuthRequestData> for LnUrlAuthRequestData {
-    fn into_into_dart(self) -> Self {
-        self
+impl support::IntoDartExceptPrimitive for mirror_LnUrlAuthRequestData {}
+impl rust2dart::IntoIntoDart<mirror_LnUrlAuthRequestData> for LnUrlAuthRequestData {
+    fn into_into_dart(self) -> mirror_LnUrlAuthRequestData {
+        mirror_LnUrlAuthRequestData(self)
     }
 }
 
-impl support::IntoDart for LnUrlCallbackStatus {
+impl support::IntoDart for mirror_LnUrlCallbackStatus {
     fn into_dart(self) -> support::DartAbi {
-        match self {
-            Self::Ok => vec![0.into_dart()],
-            Self::ErrorStatus { data } => vec![1.into_dart(), data.into_into_dart().into_dart()],
+        match self.0 {
+            LnUrlCallbackStatus::Ok => vec![0.into_dart()],
+            LnUrlCallbackStatus::ErrorStatus { data } => {
+                vec![1.into_dart(), data.into_into_dart().into_dart()]
+            }
         }
         .into_dart()
     }
 }
-impl support::IntoDartExceptPrimitive for LnUrlCallbackStatus {}
-impl rust2dart::IntoIntoDart<LnUrlCallbackStatus> for LnUrlCallbackStatus {
-    fn into_into_dart(self) -> Self {
-        self
+impl support::IntoDartExceptPrimitive for mirror_LnUrlCallbackStatus {}
+impl rust2dart::IntoIntoDart<mirror_LnUrlCallbackStatus> for LnUrlCallbackStatus {
+    fn into_into_dart(self) -> mirror_LnUrlCallbackStatus {
+        mirror_LnUrlCallbackStatus(self)
     }
 }
 
-impl support::IntoDart for LnUrlErrorData {
+impl support::IntoDart for mirror_LnUrlErrorData {
     fn into_dart(self) -> support::DartAbi {
-        vec![self.reason.into_into_dart().into_dart()].into_dart()
+        vec![self.0.reason.into_into_dart().into_dart()].into_dart()
     }
 }
-impl support::IntoDartExceptPrimitive for LnUrlErrorData {}
-impl rust2dart::IntoIntoDart<LnUrlErrorData> for LnUrlErrorData {
-    fn into_into_dart(self) -> Self {
-        self
+impl support::IntoDartExceptPrimitive for mirror_LnUrlErrorData {}
+impl rust2dart::IntoIntoDart<mirror_LnUrlErrorData> for LnUrlErrorData {
+    fn into_into_dart(self) -> mirror_LnUrlErrorData {
+        mirror_LnUrlErrorData(self)
     }
 }
 

@@ -6,10 +6,11 @@ use serde_json::to_string_pretty;
 use const_format::concatcp;
 use reqwest::header::CONTENT_TYPE;
 use reqwest::Body;
+use sdk_utils::prelude::*;
 use serde_json::json;
 
 use crate::bitcoin::Txid;
-use crate::input_parser::{get_parse_and_log_response, get_reqwest_client};
+use crate::error::SdkError;
 use crate::models::ReverseSwapPairInfo;
 use crate::swap_out::reverseswap::CreateReverseSwapResponse;
 use crate::{ReverseSwapServiceAPI, RouteHint, RouteHintHop};
@@ -242,7 +243,8 @@ impl ReverseSwapServiceAPI for BoltzApi {
         pair_hash: String,
         routing_node: String,
     ) -> ReverseSwapResult<BoltzApiCreateReverseSwapResponse> {
-        get_reqwest_client()?
+        get_reqwest_client()
+            .map_err(SdkError::from)?
             .post(CREATE_REVERSE_SWAP_ENDPOINT)
             .header(CONTENT_TYPE, "application/json")
             .body(build_boltz_reverse_swap_args(
@@ -282,7 +284,8 @@ impl ReverseSwapServiceAPI for BoltzApi {
     /// Boltz API errors (e.g. providing an invalid ID arg) are returned as a successful response of
     /// type [BoltzApiCreateReverseSwapResponse::BoltzApiError]
     async fn get_boltz_status(&self, id: String) -> ReverseSwapResult<BoltzApiReverseSwapStatus> {
-        get_reqwest_client()?
+        get_reqwest_client()
+            .map_err(SdkError::from)?
             .post(GET_SWAP_STATUS_ENDPOINT)
             .header(CONTENT_TYPE, "application/json")
             .body(Body::from(json!({ "id": id }).to_string()))
@@ -307,7 +310,8 @@ impl ReverseSwapServiceAPI for BoltzApi {
     }
 
     async fn get_route_hints(&self, routing_node_id: String) -> ReverseSwapResult<Vec<RouteHint>> {
-        get_reqwest_client()?
+        get_reqwest_client()
+            .map_err(SdkError::from)?
             .post(GET_ROUTE_HINTS_ENDPOINT)
             .header(CONTENT_TYPE, "application/json")
             .body(Body::from(
@@ -340,7 +344,9 @@ impl ReverseSwapServiceAPI for BoltzApi {
 }
 
 pub async fn reverse_swap_pair_info() -> ReverseSwapResult<ReverseSwapPairInfo> {
-    let pairs: Pairs = get_parse_and_log_response(GET_PAIRS_ENDPOINT, true).await?;
+    let pairs: Pairs = get_parse_and_log_response(GET_PAIRS_ENDPOINT, true)
+        .await
+        .map_err(SdkError::from)?;
     match pairs.pairs.get("BTC/BTC") {
         None => Err(ReverseSwapError::generic("BTC pair not found")),
         Some(btc_pair) => {

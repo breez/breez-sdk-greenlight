@@ -12,8 +12,11 @@ use bitcoin::hashes::{sha256, Hash};
 use bitcoin::util::bip32::ChildNumber;
 use chrono::Local;
 use futures::TryFutureExt;
+use gl_client::bitcoin::secp256k1::Secp256k1;
 use log::{LevelFilter, Metadata, Record};
-use reqwest::{header::CONTENT_TYPE, Body};
+use reqwest::{header::CONTENT_TYPE, Body, Url};
+use sdk_lnurl::prelude::*;
+use sdk_utils::prelude::*;
 use serde_json::json;
 use tokio::sync::{mpsc, watch, Mutex};
 use tokio::time::{sleep, MissedTickBehavior};
@@ -42,11 +45,9 @@ use crate::grpc::signer_client::SignerClient;
 use crate::grpc::support_client::SupportClient;
 use crate::grpc::swapper_client::SwapperClient;
 use crate::grpc::{ChainApiServersRequest, PaymentInformation};
-use crate::input_parser::get_reqwest_client;
 use crate::invoice::{
     add_routing_hints, parse_invoice, validate_network, LNInvoice, RouteHint, RouteHintHop,
 };
-use crate::lnurl::auth::perform_lnurl_auth;
 use crate::lnurl::pay::model::SuccessAction::Aes;
 use crate::lnurl::pay::model::{
     LnUrlPayResult, SuccessAction, SuccessActionProcessed, ValidatedCallbackResponse,
@@ -56,9 +57,8 @@ use crate::lnurl::withdraw::validate_lnurl_withdraw;
 use crate::lsp::LspInformation;
 use crate::models::{
     parse_short_channel_id, ChannelState, ClosedChannelPaymentDetails, Config, EnvironmentType,
-    FiatAPI, LnUrlCallbackStatus, LspAPI, NodeState, Payment, PaymentDetails, PaymentType,
-    ReverseSwapPairInfo, ReverseSwapServiceAPI, SwapInfo, SwapperAPI,
-    INVOICE_PAYMENT_FEE_EXPIRY_SECONDS,
+    FiatAPI, LspAPI, NodeState, Payment, PaymentDetails, PaymentType, ReverseSwapPairInfo,
+    ReverseSwapServiceAPI, SwapInfo, SwapperAPI, INVOICE_PAYMENT_FEE_EXPIRY_SECONDS,
 };
 use crate::moonpay::MoonPayApi;
 use crate::node_api::{CreateInvoiceRequest, NodeAPI};
@@ -518,7 +518,20 @@ impl BreezServices {
         &self,
         req_data: LnUrlAuthRequestData,
     ) -> Result<LnUrlCallbackStatus, LnUrlAuthError> {
-        Ok(perform_lnurl_auth(self.node_api.clone(), req_data).await?)
+        // m/138'/0
+        let hashing_key = self.node_api.derive_bip32_key(vec![
+            ChildNumber::from_hardened_idx(138).map_err(Into::<LnUrlError>::into)?,
+            ChildNumber::from(0),
+        ])?;
+
+        let url =
+            Url::from_str(&req_data.url).map_err(|e| LnUrlError::InvalidUri(e.to_string()))?;
+
+        let derivation_path = get_derivation_path(hashing_key, url)?;
+        let linking_key = self.node_api.derive_bip32_key(derivation_path)?;
+        let linking_keys = linking_key.to_keypair(&Secp256k1::new());
+
+        Ok(perform_lnurl_auth(linking_keys, req_data).await?)
     }
 
     /// Creates an bolt11 payment request.

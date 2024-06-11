@@ -1,10 +1,10 @@
 use anyhow::Result;
+use sdk_utils::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::bitcoin::hashes::hex::FromHex;
 use crate::bitcoin::{OutPoint, Txid};
 use crate::error::{SdkError, SdkResult};
-use crate::input_parser::{get_parse_and_log_response, post_and_log_response};
 
 pub const DEFAULT_MEMPOOL_SPACE_URL: &str = "https://mempool.space/api";
 
@@ -337,20 +337,28 @@ impl MempoolSpace {
 #[tonic::async_trait]
 impl ChainService for MempoolSpace {
     async fn recommended_fees(&self) -> SdkResult<RecommendedFees> {
-        get_parse_and_log_response(&format!("{}/v1/fees/recommended", self.base_url), true).await
+        get_parse_and_log_response(&format!("{}/v1/fees/recommended", self.base_url), true)
+            .await
+            .map_err(Into::into)
     }
 
     async fn address_transactions(&self, address: String) -> SdkResult<Vec<OnchainTx>> {
-        get_parse_and_log_response(&format!("{}/address/{address}/txs", self.base_url), true).await
+        get_parse_and_log_response(&format!("{}/address/{address}/txs", self.base_url), true)
+            .await
+            .map_err(Into::into)
     }
 
     async fn current_tip(&self) -> SdkResult<u32> {
-        get_parse_and_log_response(&format!("{}/blocks/tip/height", self.base_url), true).await
+        get_parse_and_log_response(&format!("{}/blocks/tip/height", self.base_url), true)
+            .await
+            .map_err(Into::into)
     }
 
     async fn transaction_outspends(&self, txid: String) -> SdkResult<Vec<Outspend>> {
         let url = format!("{}/tx/{txid}/outspends", self.base_url);
-        get_parse_and_log_response(&url, true).await
+        get_parse_and_log_response(&url, true)
+            .await
+            .map_err(Into::into)
     }
 
     async fn broadcast_transaction(&self, tx: Vec<u8>) -> SdkResult<String> {

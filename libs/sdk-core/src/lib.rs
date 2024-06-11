@@ -159,9 +159,11 @@ mod bridge_generated; /* AUTO INJECTED BY flutter_rust_bridge. This line may not
 #[macro_use]
 extern crate log;
 
-#[rustfmt::skip]
-#[cfg(test)]
-mod test_utils; // flutter_rust_bridge_codegen: has to be defined before breez_services
+// TODO If enabled, breaks frb. If disabled, breaks tests.
+// #[rustfmt::skip]
+// #[cfg(test)]
+// mod test_utils; // flutter_rust_bridge_codegen: has to be defined before breez_services
+
 mod backup;
 pub mod binding;
 mod breez_services;
@@ -204,12 +206,40 @@ pub use breez_services::{
 pub use chain::RecommendedFees;
 pub use fiat::{CurrencyInfo, FiatCurrency, LocaleOverrides, LocalizedName, Rate, Symbol};
 pub use input_parser::{
-    parse, BitcoinAddressData, InputType, LnUrlAuthRequestData, LnUrlErrorData,
-    LnUrlPayRequestData, LnUrlRequestData, LnUrlWithdrawRequestData, MetadataItem,
+    parse, BitcoinAddressData, InputType, LnUrlPayRequestData, LnUrlRequestData,
+    LnUrlWithdrawRequestData, MetadataItem,
 };
 pub use invoice::{parse_invoice, LNInvoice, RouteHint, RouteHintHop};
-
 pub use lnurl::pay::model::*;
 pub use lsp::LspInformation;
 pub use models::*;
+pub use sdk_lnurl::prelude::*;
 pub use swap_out::reverseswap::{ESTIMATED_CLAIM_TX_VSIZE, ESTIMATED_LOCKUP_TX_VSIZE};
+
+// === FRB mirroring
+//
+// This section contains frb "mirroring" structs and enums.
+// These are needed by the flutter bridge in order to use structs defined in an external crate.
+// See <https://cjycode.com/flutter_rust_bridge/v1/feature/lang_external.html#types-in-other-crates>
+// Note: in addition to the docs above, the mirrored structs must derive the Clone trait
+
+use flutter_rust_bridge::frb;
+
+#[frb(mirror(LnUrlAuthRequestData))]
+pub struct _LnUrlAuthRequestData {
+    pub k1: String,
+    pub action: Option<String>,
+    pub domain: String,
+    pub url: String,
+}
+
+#[frb(mirror(LnUrlErrorData))]
+pub struct _LnUrlErrorData {
+    pub reason: String,
+}
+
+#[frb(mirror(LnUrlCallbackStatus))]
+pub enum _LnUrlCallbackStatus {
+    Ok,
+    ErrorStatus { data: LnUrlErrorData },
+}
