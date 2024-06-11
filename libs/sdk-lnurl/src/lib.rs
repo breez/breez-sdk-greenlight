@@ -1,10 +1,8 @@
-mod error;
-pub mod model;
-mod specs;
+mod lnurl;
 
 pub mod prelude {
-    pub use crate::error::*;
-    pub use crate::model::*;
-    pub use crate::specs::auth::*;
-    pub use crate::*;
+    pub use crate::lnurl::error::*;
+    pub use crate::lnurl::model::*;
+    pub use crate::lnurl::specs::auth::*;
+    pub use crate::lnurl::*;
 }
