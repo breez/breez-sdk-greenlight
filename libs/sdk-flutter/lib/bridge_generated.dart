@@ -694,9 +694,11 @@ sealed class InputType with _$InputType {
   const factory InputType.lnUrlAuth({
     required LnUrlAuthRequestData data,
   }) = InputType_LnUrlAuth;
-  const factory InputType.lnUrlError({
+
+  /// Error returned by the LNURL endpoint
+  const factory InputType.lnUrlEndpointError({
     required LnUrlErrorData data,
-  }) = InputType_LnUrlError;
+  }) = InputType_LnUrlEndpointError;
 }
 
 /// Details of an invoice that has been paid, included as payload in an emitted [BreezEvent]
@@ -737,7 +739,6 @@ class ListPaymentsRequest {
   });
 }
 
-/// Wrapper for a BOLT11 LN invoice
 class LNInvoice {
   final String bolt11;
   final Network network;
@@ -829,24 +830,10 @@ class LnPaymentDetails {
   });
 }
 
-/// Wrapped in a [LnUrlAuth], this is the result of [parse] when given a LNURL-auth endpoint.
-///
-/// It represents the endpoint's parameters for the LNURL workflow.
-///
-/// See <https://github.com/lnurl/luds/blob/luds/04.md>
 class LnUrlAuthRequestData {
-  /// Hex encoded 32 bytes of challenge
   final String k1;
-
-  /// When available, one of: register, login, link, auth
   final String? action;
-
-  /// Indicates the domain of the LNURL-auth service, to be shown to the user when asking for
-  /// auth confirmation, as per LUD-04 spec.
   final String domain;
-
-  /// Indicates the URL of the LNURL-auth service, including the query arguments. This will be
-  /// extended with the signed challenge and the linking key, then called in the second step of the workflow.
   final String url;
 
   const LnUrlAuthRequestData({
@@ -859,16 +846,12 @@ class LnUrlAuthRequestData {
 
 @freezed
 sealed class LnUrlCallbackStatus with _$LnUrlCallbackStatus {
-  /// On-wire format is: `{"status": "OK"}`
   const factory LnUrlCallbackStatus.ok() = LnUrlCallbackStatus_Ok;
-
-  /// On-wire format is: `{"status": "ERROR", "reason": "error details..."}`
   const factory LnUrlCallbackStatus.errorStatus({
     required LnUrlErrorData data,
   }) = LnUrlCallbackStatus_ErrorStatus;
 }
 
-/// Wrapped in a [LnUrlError], this represents a LNURL-endpoint error.
 class LnUrlErrorData {
   final String reason;
 
@@ -1165,9 +1148,7 @@ class MetadataFilter {
   });
 }
 
-/// The different supported bitcoin networks
 enum Network {
-  /// Mainnet
   Bitcoin,
   Testnet,
   Signet,
@@ -1730,7 +1711,6 @@ enum ReverseSwapStatus {
   CompletedConfirmed,
 }
 
-/// A route hint for a LN payment
 class RouteHint {
   final List<RouteHintHop> hops;
 
@@ -1739,25 +1719,13 @@ class RouteHint {
   });
 }
 
-/// Details of a specific hop in a larger route hint
 class RouteHintHop {
-  /// The node_id of the non-target end of the route
   final String srcNodeId;
-
-  /// The short_channel_id of this channel
   final int shortChannelId;
-
-  /// The fees which must be paid to use this channel
   final int feesBaseMsat;
   final int feesProportionalMillionths;
-
-  /// The difference in CLTV values between this node and the next node.
   final int cltvExpiryDelta;
-
-  /// The minimum value, in msat, which must be relayed to the next hop.
   final int? htlcMinimumMsat;
-
-  /// The maximum value in msat available for routing with a single HTLC.
   final int? htlcMaximumMsat;
 
   const RouteHintHop({
@@ -3502,7 +3470,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
           data: _wire2api_box_autoadd_ln_url_auth_request_data(raw[1]),
         );
       case 7:
-        return InputType_LnUrlError(
+        return InputType_LnUrlEndpointError(
           data: _wire2api_box_autoadd_ln_url_error_data(raw[1]),
         );
       default:

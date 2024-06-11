@@ -5,7 +5,7 @@ use sdk_common::prelude::*;
 use thiserror::Error;
 
 use crate::{
-    bitcoin::util::bip32, invoice::InvoiceError, node_api::NodeError, persist::error::PersistError,
+    bitcoin::util::bip32, node_api::NodeError, persist::error::PersistError,
     swap_in::error::SwapError, swap_out::error::ReverseSwapError,
 };
 
