@@ -47,9 +47,9 @@ use crate::bitcoin::{
 use crate::invoice::{parse_invoice, validate_network, InvoiceError, RouteHintHop};
 use crate::lightning::util::message_signing::verify;
 use crate::lightning_invoice::{RawBolt11Invoice, SignedRawBolt11Invoice};
-use crate::models::*;
 use crate::node_api::{CreateInvoiceRequest, FetchBolt11Result, NodeAPI, NodeError, NodeResult};
 use crate::persist::db::SqliteStorage;
+use crate::{models::*, LspInformation};
 use crate::{
     NodeConfig, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, RouteHint,
 };
@@ -1653,16 +1653,20 @@ impl NodeAPI for Greenlight {
     }
 
     // Gets the routing hints related to all private channels that the node has
-    async fn get_routing_hints(&self) -> NodeResult<(Vec<RouteHint>, bool)> {
+    async fn get_routing_hints(
+        &self,
+        lsp_info: &LspInformation,
+    ) -> NodeResult<(Vec<RouteHint>, bool)> {
         let mut hints: Vec<RouteHint> = vec![];
         let mut node_client = self.get_node_client().await?;
-        let channels = node_client
+        // Get the peer channels
+        let peer_channels = node_client
             .list_peer_channels(cln::ListpeerchannelsRequest::default())
             .await?
             .into_inner();
 
         let mut has_public_channel = false;
-        let mut open_channels: Vec<cln::ListpeerchannelsChannels> = channels
+        let mut open_peer_channels: Vec<cln::ListpeerchannelsChannels> = peer_channels
             .channels
             .into_iter()
             .filter(|c| {
@@ -1671,38 +1675,90 @@ impl NodeAPI for Greenlight {
                 is_private && c.state == Some(cln::ChannelState::ChanneldNormal as i32)
             })
             .collect();
+        // Get channels where our node is the destination
+        let pubkey = self
+            .persister
+            .get_node_state()?
+            .map(|n| n.id)
+            .ok_or(NodeError::generic("Node info not found"))?;
+        let mut channels = node_client
+            .list_channels(cln::ListchannelsRequest {
+                destination: Some(hex::decode(pubkey)?),
+                ..Default::default()
+            })
+            .await?
+            .into_inner()
+            .channels;
 
         // Ensure one private channel from each peer.
-        open_channels.dedup_by_key(|c| c.peer_id.clone());
+        open_peer_channels.dedup_by_key(|c| c.peer_id.clone());
+        channels.dedup_by_key(|c| c.source.clone());
 
-        // Ceate a routing hint from each channel.
-        for c in open_channels {
-            let (alias_remote, _) = match c.alias {
+        // Create a routing hint from each channel.
+        for peer_channel in open_peer_channels {
+            let peer_id = peer_channel.clone().peer_id.ok_or(anyhow!("No peer id"))?;
+            let peer_id_str = hex::encode(peer_id.clone());
+            let (alias_remote, _) = match peer_channel.alias {
                 Some(a) => (a.remote.clone(), a.local.clone()),
                 None => (None, None),
             };
 
-            let optional_channel_id = alias_remote.clone().or(c.short_channel_id.clone());
+            let optional_channel_id = alias_remote
+                .clone()
+                .or(peer_channel.short_channel_id.clone());
 
             if let Some(channel_id) = optional_channel_id {
-                let scid = parse_short_channel_id(&channel_id)?;
-                let hint = RouteHint {
-                    hops: vec![RouteHintHop {
-                        src_node_id: hex::encode(c.peer_id.ok_or(anyhow!("no peer id"))?),
-                        short_channel_id: scid,
-                        fees_base_msat: c.fee_base_msat.clone().unwrap_or_default().msat as u32,
-                        fees_proportional_millionths: c
-                            .fee_proportional_millionths
-                            .unwrap_or_default(),
-                        cltv_expiry_delta: 144,
-                        htlc_minimum_msat: Some(
-                            c.minimum_htlc_in_msat.clone().unwrap_or_default().msat,
-                        ),
-                        htlc_maximum_msat: None,
-                    }],
+                // The local fee policy
+                let peer_fee_base_msat = peer_channel.fee_base_msat.unwrap_or_default().msat as u32;
+                let peer_fees_proportional_millionths =
+                    peer_channel.fee_proportional_millionths.unwrap_or_default();
+                // The remote fee policy
+                let maybe_channel = channels.clone().into_iter().find(|c| c.source == peer_id);
+                let (maybe_fees_base_msat, maybe_fees_proportional_millionths) = match maybe_channel
+                {
+                    Some(channel) => (
+                        Some(channel.base_fee_millisatoshi),
+                        Some(channel.fee_per_millionth),
+                    ),
+                    None if peer_id_str == lsp_info.pubkey => (
+                        Some(lsp_info.base_fee_msat as u32),
+                        Some((lsp_info.fee_rate * 1000000.0) as u32),
+                    ),
+                    _ => (None, None),
                 };
-                info!("Generating hint hop as routing hint: {:?}", hint);
-                hints.push(hint);
+                match (maybe_fees_base_msat, maybe_fees_proportional_millionths) {
+                    (Some(fees_base_msat), Some(fees_proportional_millionths)) => {
+                        debug!(
+                            "For peer {:?}: local base {:?} proportional {:?}, remote base {:?} proportional {:?}",
+                            peer_id_str,
+                            peer_fee_base_msat,
+                            peer_fees_proportional_millionths,
+                            fees_base_msat,
+                            fees_proportional_millionths
+                        );
+                        let scid = parse_short_channel_id(&channel_id)?;
+                        let hint = RouteHint {
+                            hops: vec![RouteHintHop {
+                                src_node_id: peer_id_str,
+                                short_channel_id: scid,
+                                fees_base_msat,
+                                fees_proportional_millionths,
+                                cltv_expiry_delta: 144,
+                                htlc_minimum_msat: Some(
+                                    peer_channel
+                                        .minimum_htlc_in_msat
+                                        .clone()
+                                        .unwrap_or_default()
+                                        .msat,
+                                ),
+                                htlc_maximum_msat: None,
+                            }],
+                        };
+                        info!("Generating hint hop as routing hint: {:?}", hint);
+                        hints.push(hint);
+                    }
+                    _ => debug!("No source channel found for peer: {:?}", peer_id_str),
+                };
             }
         }
         Ok((hints, has_public_channel))

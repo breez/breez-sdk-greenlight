@@ -2579,7 +2579,7 @@ impl PaymentReceiver {
         lsp_info: &LspInformation,
     ) -> Result<String, ReceivePaymentError> {
         info!("Getting routing hints from node");
-        let (mut hints, has_public_channel) = self.node_api.get_routing_hints().await?;
+        let (mut hints, has_public_channel) = self.node_api.get_routing_hints(lsp_info).await?;
         if !has_public_channel && hints.is_empty() {
             return Err(ReceivePaymentError::InvoiceNoRoutingHints {
                 err: "Must have at least one active channel".into(),

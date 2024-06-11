@@ -10,7 +10,7 @@ use crate::{
     invoice::InvoiceError,
     lightning_invoice::RawBolt11Invoice,
     persist::error::PersistError,
-    CustomMessage, MaxChannelAmount, NodeCredentials, Payment, PaymentResponse,
+    CustomMessage, LspInformation, MaxChannelAmount, NodeCredentials, Payment, PaymentResponse,
     PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, RouteHint, RouteHintHop,
     SyncResponse, TlvEntry,
 };
@@ -155,5 +155,8 @@ pub trait NodeAPI: Send + Sync {
 
     // Gets the routing hints related to all private channels that the node has.
     // Also returns a boolean indicating if the node has a public channel or not.
-    async fn get_routing_hints(&self) -> NodeResult<(Vec<RouteHint>, bool)>;
+    async fn get_routing_hints(
+        &self,
+        lsp_info: &LspInformation,
+    ) -> NodeResult<(Vec<RouteHint>, bool)>;
 }
