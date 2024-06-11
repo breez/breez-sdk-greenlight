@@ -367,3 +367,14 @@ pub struct _LnUrlPayErrorData {
     pub payment_hash: String,
     pub reason: String,
 }
+
+#[frb(mirror(LnUrlWithdrawResult))]
+pub enum _LnUrlWithdrawResult {
+    Ok { data: LnUrlWithdrawSuccessData },
+    ErrorStatus { data: LnUrlErrorData },
+}
+
+#[frb(mirror(LnUrlWithdrawSuccessData))]
+pub struct _LnUrlWithdrawSuccessData {
+    pub invoice: LNInvoice,
+}

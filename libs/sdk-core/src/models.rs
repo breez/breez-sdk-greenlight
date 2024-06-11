@@ -1534,18 +1534,6 @@ pub struct LnUrlPayRequest {
     pub payment_label: Option<String>,
 }
 
-/// [LnUrlCallbackStatus] specific to LNURL-withdraw, where the success case contains the invoice.
-#[derive(Serialize)]
-pub enum LnUrlWithdrawResult {
-    Ok { data: LnUrlWithdrawSuccessData },
-    ErrorStatus { data: LnUrlErrorData },
-}
-
-#[derive(Deserialize, Debug, Serialize)]
-pub struct LnUrlWithdrawSuccessData {
-    pub invoice: LNInvoice,
-}
-
 /// Different providers will demand different behaviours when the user is trying to buy bitcoin.
 #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
 #[serde(tag = "buy_bitcoin_provider")]

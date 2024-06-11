@@ -53,8 +53,6 @@ use crate::models::ListPaymentsRequest;
 use crate::models::LnPaymentDetails;
 use crate::models::LnUrlPayRequest;
 use crate::models::LnUrlWithdrawRequest;
-use crate::models::LnUrlWithdrawResult;
-use crate::models::LnUrlWithdrawSuccessData;
 use crate::models::LogEntry;
 use crate::models::MaxReverseSwapAmountResponse;
 use crate::models::MetadataFilter;
@@ -118,6 +116,8 @@ use crate::LnUrlPayRequestData;
 use crate::LnUrlPayResult;
 use crate::LnUrlPaySuccessData;
 use crate::LnUrlWithdrawRequestData;
+use crate::LnUrlWithdrawResult;
+use crate::LnUrlWithdrawSuccessData;
 use crate::MessageSuccessActionData;
 use crate::Network;
 use crate::RouteHint;
@@ -571,7 +571,7 @@ fn wire_lnurl_withdraw_impl(
     port_: MessagePort,
     req: impl Wire2Api<LnUrlWithdrawRequest> + UnwindSafe,
 ) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, LnUrlWithdrawResult, _>(
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, mirror_LnUrlWithdrawResult, _>(
         WrapInfo {
             debug_name: "lnurl_withdraw",
             port: Some(port_),
@@ -954,6 +954,12 @@ pub struct mirror_LnUrlPaySuccessData(LnUrlPaySuccessData);
 pub struct mirror_LnUrlWithdrawRequestData(LnUrlWithdrawRequestData);
 
 #[derive(Clone)]
+pub struct mirror_LnUrlWithdrawResult(LnUrlWithdrawResult);
+
+#[derive(Clone)]
+pub struct mirror_LnUrlWithdrawSuccessData(LnUrlWithdrawSuccessData);
+
+#[derive(Clone)]
 pub struct mirror_MessageSuccessActionData(MessageSuccessActionData);
 
 #[derive(Clone)]
@@ -1092,6 +1098,18 @@ const _: fn() = || {
         let _: String = LnUrlWithdrawRequestData.default_description;
         let _: u64 = LnUrlWithdrawRequestData.min_withdrawable;
         let _: u64 = LnUrlWithdrawRequestData.max_withdrawable;
+    }
+    match None::<LnUrlWithdrawResult>.unwrap() {
+        LnUrlWithdrawResult::Ok { data } => {
+            let _: LnUrlWithdrawSuccessData = data;
+        }
+        LnUrlWithdrawResult::ErrorStatus { data } => {
+            let _: LnUrlErrorData = data;
+        }
+    }
+    {
+        let LnUrlWithdrawSuccessData = None::<LnUrlWithdrawSuccessData>.unwrap();
+        let _: LNInvoice = LnUrlWithdrawSuccessData.invoice;
     }
     {
         let MessageSuccessActionData = None::<MessageSuccessActionData>.unwrap();
@@ -1799,31 +1817,35 @@ impl rust2dart::IntoIntoDart<mirror_LnUrlWithdrawRequestData> for LnUrlWithdrawR
     }
 }
 
-impl support::IntoDart for LnUrlWithdrawResult {
+impl support::IntoDart for mirror_LnUrlWithdrawResult {
     fn into_dart(self) -> support::DartAbi {
-        match self {
-            Self::Ok { data } => vec![0.into_dart(), data.into_into_dart().into_dart()],
-            Self::ErrorStatus { data } => vec![1.into_dart(), data.into_into_dart().into_dart()],
+        match self.0 {
+            LnUrlWithdrawResult::Ok { data } => {
+                vec![0.into_dart(), data.into_into_dart().into_dart()]
+            }
+            LnUrlWithdrawResult::ErrorStatus { data } => {
+                vec![1.into_dart(), data.into_into_dart().into_dart()]
+            }
         }
         .into_dart()
     }
 }
-impl support::IntoDartExceptPrimitive for LnUrlWithdrawResult {}
-impl rust2dart::IntoIntoDart<LnUrlWithdrawResult> for LnUrlWithdrawResult {
-    fn into_into_dart(self) -> Self {
-        self
+impl support::IntoDartExceptPrimitive for mirror_LnUrlWithdrawResult {}
+impl rust2dart::IntoIntoDart<mirror_LnUrlWithdrawResult> for LnUrlWithdrawResult {
+    fn into_into_dart(self) -> mirror_LnUrlWithdrawResult {
+        mirror_LnUrlWithdrawResult(self)
     }
 }
 
-impl support::IntoDart for LnUrlWithdrawSuccessData {
+impl support::IntoDart for mirror_LnUrlWithdrawSuccessData {
     fn into_dart(self) -> support::DartAbi {
-        vec![self.invoice.into_into_dart().into_dart()].into_dart()
+        vec![self.0.invoice.into_into_dart().into_dart()].into_dart()
     }
 }
-impl support::IntoDartExceptPrimitive for LnUrlWithdrawSuccessData {}
-impl rust2dart::IntoIntoDart<LnUrlWithdrawSuccessData> for LnUrlWithdrawSuccessData {
-    fn into_into_dart(self) -> Self {
-        self
+impl support::IntoDartExceptPrimitive for mirror_LnUrlWithdrawSuccessData {}
+impl rust2dart::IntoIntoDart<mirror_LnUrlWithdrawSuccessData> for LnUrlWithdrawSuccessData {
+    fn into_into_dart(self) -> mirror_LnUrlWithdrawSuccessData {
+        mirror_LnUrlWithdrawSuccessData(self)
     }
 }
 
