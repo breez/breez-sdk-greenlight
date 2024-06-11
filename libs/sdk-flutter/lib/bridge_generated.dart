@@ -324,12 +324,8 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kGenerateDiagnosticDataConstMeta;
 }
 
-/// Wrapper for the decrypted [AesSuccessActionData] payload
 class AesSuccessActionDataDecrypted {
-  /// Contents description, up to 144 characters
   final String description;
-
-  /// Decrypted content
   final String plaintext;
 
   const AesSuccessActionDataDecrypted({
@@ -896,11 +892,9 @@ sealed class LnUrlPayResult with _$LnUrlPayResult {
 }
 
 class LnUrlPaySuccessData {
-  final Payment payment;
   final SuccessActionProcessed? successAction;
 
   const LnUrlPaySuccessData({
-    required this.payment,
     this.successAction,
   });
 }
@@ -1780,19 +1774,12 @@ class StaticBackupResponse {
 
 @freezed
 sealed class SuccessActionProcessed with _$SuccessActionProcessed {
-  /// See [SuccessAction::Aes] for received payload
-  ///
-  /// See [AesSuccessActionDataDecrypted] for decrypted payload
   const factory SuccessActionProcessed.aes({
     required AesSuccessActionDataResult result,
   }) = SuccessActionProcessed_Aes;
-
-  /// See [SuccessAction::Message]
   const factory SuccessActionProcessed.message({
     required MessageSuccessActionData data,
   }) = SuccessActionProcessed_Message;
-
-  /// See [SuccessAction::Url]
   const factory SuccessActionProcessed.url({
     required UrlSuccessActionData data,
   }) = SuccessActionProcessed_Url;
@@ -3580,10 +3567,9 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   LnUrlPaySuccessData _wire2api_ln_url_pay_success_data(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
     return LnUrlPaySuccessData(
-      payment: _wire2api_payment(arr[0]),
-      successAction: _wire2api_opt_box_autoadd_success_action_processed(arr[1]),
+      successAction: _wire2api_opt_box_autoadd_success_action_processed(arr[0]),
     );
   }
 

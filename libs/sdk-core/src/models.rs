@@ -26,7 +26,6 @@ use crate::grpc::{
     self, GetReverseRoutingNodeRequest, PaymentInformation, RegisterPaymentNotificationResponse,
     RegisterPaymentReply, RemovePaymentNotificationResponse,
 };
-use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lsp::LspInformation;
 use crate::persist::swap::SwapChainInfo;
 use crate::swap_in::error::{SwapError, SwapResult};

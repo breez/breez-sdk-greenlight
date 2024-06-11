@@ -1,8 +1,6 @@
 use std::str::FromStr;
 
-use sdk_common::prelude::*;
-
-use crate::lnurl::pay::model::{CallbackResponse, SuccessAction, ValidatedCallbackResponse};
+use crate::prelude::*;
 
 type Aes256CbcEnc = cbc::Encryptor<aes::Aes256>;
 type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
@@ -11,7 +9,7 @@ type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
 /// <https://github.com/lnurl/luds/blob/luds/06.md>
 ///
 /// See the [parse] docs for more detail on the full workflow.
-pub(crate) async fn validate_lnurl_pay(
+pub async fn validate_lnurl_pay(
     user_amount_msat: u64,
     comment: &Option<String>,
     req_data: &LnUrlPayRequestData,
@@ -117,13 +115,15 @@ fn validate_invoice(user_amount_msat: u64, bolt11: &str, network: Network) -> Ln
 pub(crate) mod model {
     use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
     use anyhow::Result;
-    use sdk_common::prelude::*;
+    use rusqlite::types::{FromSql, FromSqlError, ToSqlOutput};
+    use rusqlite::ToSql;
     use serde::{Deserialize, Serialize};
 
-    use crate::lnurl::pay::{Aes256CbcDec, Aes256CbcEnc};
-    use crate::Payment;
+    use crate::prelude::specs::pay::{Aes256CbcDec, Aes256CbcEnc};
+    use crate::prelude::*;
+    // use crate::Payment;
 
-    pub(crate) enum ValidatedCallbackResponse {
+    pub enum ValidatedCallbackResponse {
         EndpointSuccess { data: CallbackResponse },
         EndpointError { data: LnUrlErrorData },
     }
@@ -139,7 +139,7 @@ pub(crate) mod model {
     ///
     /// * `PayError` indicates that an error occurred while trying to pay the invoice from the LNURL endpoint.
     /// This includes the payment hash of the failed invoice and the failure reason.
-    #[derive(Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Serialize, Deserialize)]
     #[allow(clippy::large_enum_variant)]
     pub enum LnUrlPayResult {
         EndpointSuccess { data: LnUrlPaySuccessData },
@@ -147,15 +147,15 @@ pub(crate) mod model {
         PayError { data: LnUrlPayErrorData },
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Clone, Serialize, Deserialize, Debug)]
     pub struct LnUrlPayErrorData {
         pub payment_hash: String,
         pub reason: String,
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Clone, Serialize, Deserialize, Debug)]
     pub struct LnUrlPaySuccessData {
-        pub payment: Payment,
+        // pub payment: Payment, // TODO How to handle Payment?
         pub success_action: Option<SuccessActionProcessed>,
     }
 
@@ -224,6 +224,22 @@ pub(crate) mod model {
 
         /// See [SuccessAction::Url]
         Url { data: UrlSuccessActionData },
+    }
+
+    impl FromSql for SuccessActionProcessed {
+        fn column_result(
+            value: rusqlite::types::ValueRef<'_>,
+        ) -> rusqlite::types::FromSqlResult<Self> {
+            serde_json::from_str(value.as_str()?).map_err(|_| FromSqlError::InvalidType)
+        }
+    }
+
+    impl ToSql for SuccessActionProcessed {
+        fn to_sql(&self) -> rusqlite::Result<rusqlite::types::ToSqlOutput<'_>> {
+            Ok(ToSqlOutput::from(
+                serde_json::to_string(&self).map_err(|_| FromSqlError::InvalidType)?,
+            ))
+        }
     }
 
     /// Supported success action types
@@ -354,15 +370,16 @@ pub(crate) mod model {
 mod tests {
     use std::sync::Arc;
 
-    use crate::bitcoin::hashes::hex::ToHex;
-    use crate::bitcoin::hashes::{sha256, Hash};
     use crate::input_parser::tests::MOCK_HTTP_SERVER;
     use crate::lnurl::pay::*;
+    use crate::prelude::*;
     use crate::{breez_services::tests::get_dummy_node_state, lnurl::pay::model::*};
     use crate::{test_utils::*, LnUrlPayRequest};
 
     use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
     use anyhow::{anyhow, Result};
+    use bitcoin::hashes::hex::ToHex;
+    use bitcoin::hashes::{sha256, Hash};
     use gl_client::signer::model::greenlight::PayStatus;
     use mockito::Mock;
     use rand::random;
@@ -1289,10 +1306,10 @@ mod tests {
         {
             LnUrlPayResult::EndpointSuccess {
                 data:
-                    LnUrlPaySuccessData {
-                        success_action: Some(received_sa),
-                        ..
-                    },
+                LnUrlPaySuccessData {
+                    success_action: Some(received_sa),
+                    ..
+                },
             } => match received_sa == sa {
                 true => Ok(()),
                 false => Err(anyhow!(
@@ -1301,10 +1318,10 @@ mod tests {
             },
             LnUrlPayResult::EndpointSuccess {
                 data:
-                    LnUrlPaySuccessData {
-                        success_action: None,
-                        ..
-                    },
+                LnUrlPaySuccessData {
+                    success_action: None,
+                    ..
+                },
             } => Err(anyhow!(
                 "Expected success action in callback, but none provided"
             )),
