@@ -27,27 +27,3 @@ pub enum LnUrlCallbackStatus {
 pub struct LnUrlErrorData {
     pub reason: String,
 }
-
-/// Wrapped in a [LnUrlAuth], this is the result of [parse] when given a LNURL-auth endpoint.
-///
-/// It represents the endpoint's parameters for the LNURL workflow.
-///
-/// See <https://github.com/lnurl/luds/blob/luds/04.md>
-#[derive(Clone, Deserialize, Debug, Serialize)]
-pub struct LnUrlAuthRequestData {
-    /// Hex encoded 32 bytes of challenge
-    pub k1: String,
-
-    /// When available, one of: register, login, link, auth
-    pub action: Option<String>,
-
-    /// Indicates the domain of the LNURL-auth service, to be shown to the user when asking for
-    /// auth confirmation, as per LUD-04 spec.
-    #[serde(skip_serializing, skip_deserializing)]
-    pub domain: String,
-
-    /// Indicates the URL of the LNURL-auth service, including the query arguments. This will be
-    /// extended with the signed challenge and the linking key, then called in the second step of the workflow.
-    #[serde(skip_serializing, skip_deserializing)]
-    pub url: String,
-}

@@ -179,7 +179,6 @@ mod greenlight;
 mod grpc;
 #[rustfmt::skip]
 mod fiat; // flutter_rust_bridge_codegen: has to be defined after grpc; grpc::Rate
-mod lnurl;
 mod lsp;
 mod lsps0;
 mod lsps2;
