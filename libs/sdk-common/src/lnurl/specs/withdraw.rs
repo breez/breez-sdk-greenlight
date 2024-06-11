@@ -1,8 +1,6 @@
 use std::str::FromStr;
 
-use sdk_common::prelude::*;
-
-use crate::{ensure_sdk, LnUrlWithdrawResult, LnUrlWithdrawSuccessData};
+use crate::prelude::*;
 
 /// Validates invoice and performs the second and last step of LNURL-withdraw, as per
 /// <https://github.com/lnurl/luds/blob/luds/03.md>
@@ -12,7 +10,7 @@ use crate::{ensure_sdk, LnUrlWithdrawResult, LnUrlWithdrawSuccessData};
 /// Note that the invoice amount has to respect two separate min/max limits:
 /// * those in the [LnUrlWithdrawRequestData] showing the limits of the LNURL endpoint, and
 /// * those of the current node, depending on the LSP settings and LN channel conditions
-pub(crate) async fn validate_lnurl_withdraw(
+pub async fn validate_lnurl_withdraw(
     req_data: LnUrlWithdrawRequestData,
     invoice: LNInvoice,
 ) -> LnUrlResult<LnUrlWithdrawResult> {
@@ -63,6 +61,24 @@ fn build_withdraw_callback_url(
     Ok(callback_url)
 }
 
+pub mod model {
+    use serde::{Serialize, Deserialize};
+
+    use crate::prelude::*;
+
+    /// [LnUrlCallbackStatus] specific to LNURL-withdraw, where the success case contains the invoice.
+    #[derive(Clone, Serialize)]
+    pub enum LnUrlWithdrawResult {
+        Ok { data: LnUrlWithdrawSuccessData },
+        ErrorStatus { data: LnUrlErrorData },
+    }
+
+    #[derive(Clone, Deserialize, Debug, Serialize)]
+    pub struct LnUrlWithdrawSuccessData {
+        pub invoice: LNInvoice,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
@@ -86,7 +102,7 @@ mod tests {
         let expected_payload = r#"
             {"status": "OK"}
         "#
-        .replace('\n', "");
+            .replace('\n', "");
 
         let response_body = match error {
             None => expected_payload,
