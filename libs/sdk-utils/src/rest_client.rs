@@ -25,7 +25,10 @@ pub fn get_reqwest_client() -> Result<reqwest::Client, ServiceConnectivityError>
         .map_err(|e| ServiceConnectivityError { err: e.to_string() })
 }
 
-pub async fn post_and_log_response(url: &str, body: Option<String>) -> Result<String, ServiceConnectivityError> {
+pub async fn post_and_log_response(
+    url: &str,
+    body: Option<String>,
+) -> Result<String, ServiceConnectivityError> {
     debug!("Making POST request to: {url}");
 
     let mut req = get_reqwest_client()?.post(url);
@@ -48,7 +51,9 @@ pub async fn post_and_log_response(url: &str, body: Option<String>) -> Result<St
 /// - the URL
 /// - the raw response body
 /// - the response HTTP status code
-pub async fn get_and_log_response(url: &str) -> Result<(String, StatusCode), ServiceConnectivityError> {
+pub async fn get_and_log_response(
+    url: &str,
+) -> Result<(String, StatusCode), ServiceConnectivityError> {
     debug!("Making GET request to: {url}");
 
     let response = get_reqwest_client()?
@@ -79,8 +84,8 @@ pub async fn get_parse_and_log_response<T>(
     url: &str,
     enforce_status_check: bool,
 ) -> Result<T, ServiceConnectivityError>
-    where
-            for<'a> T: serde::de::Deserialize<'a>,
+where
+    for<'a> T: serde::de::Deserialize<'a>,
 {
     let (raw_body, status) = get_and_log_response(url).await?;
     if enforce_status_check && !status.is_success() {
@@ -89,6 +94,5 @@ pub async fn get_parse_and_log_response<T>(
         return Err(ServiceConnectivityError::new(&err));
     }
 
-    serde_json::from_str::<T>(&raw_body)
-        .map_err(|e| ServiceConnectivityError::new(&e.to_string()))
+    serde_json::from_str::<T>(&raw_body).map_err(|e| ServiceConnectivityError::new(&e.to_string()))
 }

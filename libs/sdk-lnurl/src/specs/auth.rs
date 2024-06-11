@@ -22,7 +22,7 @@ pub async fn perform_lnurl_auth(
 ) -> LnUrlResult<LnUrlCallbackStatus> {
     let k1_to_sign = Message::from_slice(
         &hex::decode(req_data.k1)
-            .map_err(|e| LnUrlError::Generic(format!("Error decoding k1: {e}")))    ?,
+            .map_err(|e| LnUrlError::Generic(format!("Error decoding k1: {e}")))?,
     )?;
     let sig = Secp256k1::new().sign_ecdsa(&k1_to_sign, &linking_keys.secret_key());
 
@@ -88,7 +88,10 @@ fn hmac_sha256(key: &[u8], input: &[u8]) -> Hmac<sha256::Hash> {
     Hmac::<sha256::Hash>::from_engine(engine)
 }
 
-pub fn get_derivation_path(hashing_key: ExtendedPrivKey, url: Url) -> LnUrlResult<Vec<ChildNumber>> {
+pub fn get_derivation_path(
+    hashing_key: ExtendedPrivKey,
+    url: Url,
+) -> LnUrlResult<Vec<ChildNumber>> {
     let domain = url
         .domain()
         .ok_or(LnUrlError::invalid_uri("Could not determine domain"))?;
