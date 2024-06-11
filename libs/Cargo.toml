@@ -10,7 +10,6 @@ members = [
   "sdk-core",
   "sdk-bindings",
   "sdk-lnurl",
-  "sdk-utils",
 ]
 resolver = "2"
 

@@ -1,5 +1,5 @@
 use anyhow::Result;
-use sdk_utils::prelude::*;
+use sdk_lnurl::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::bitcoin::hashes::hex::FromHex;

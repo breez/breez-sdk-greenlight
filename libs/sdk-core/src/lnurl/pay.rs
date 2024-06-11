@@ -1,7 +1,6 @@
 use std::str::FromStr;
 
 use sdk_lnurl::prelude::*;
-use sdk_utils::prelude::*;
 
 use crate::invoice::{parse_invoice, validate_network};
 use crate::lnurl::maybe_replace_host_with_mockito_test_host;

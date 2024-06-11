@@ -6,7 +6,7 @@ use serde_json::to_string_pretty;
 use const_format::concatcp;
 use reqwest::header::CONTENT_TYPE;
 use reqwest::Body;
-use sdk_utils::prelude::*;
+use sdk_lnurl::prelude::*;
 use serde_json::json;
 
 use crate::bitcoin::Txid;

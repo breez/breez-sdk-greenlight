@@ -12,5 +12,4 @@ log = { workspace = true }
 reqwest = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-sdk-utils = { path = "../sdk-utils"}
 thiserror = { workspace = true }

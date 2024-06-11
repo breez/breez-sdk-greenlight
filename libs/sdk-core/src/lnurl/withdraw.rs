@@ -1,7 +1,6 @@
 use std::str::FromStr;
 
 use sdk_lnurl::prelude::*;
-use sdk_utils::prelude::*;
 
 use crate::{ensure_sdk, lnurl::*, LnUrlWithdrawResult, LnUrlWithdrawSuccessData};
 use crate::{LNInvoice, LnUrlWithdrawRequestData};

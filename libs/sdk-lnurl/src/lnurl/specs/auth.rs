@@ -5,7 +5,6 @@ use bitcoin::secp256k1::{Message, Secp256k1};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use bitcoin::KeyPair;
 use reqwest::Url;
-use sdk_utils::prelude::*;
 
 use crate::prelude::*;
 

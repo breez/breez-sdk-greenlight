@@ -2,7 +2,6 @@ use std::time::SystemTimeError;
 
 use anyhow::Result;
 use sdk_lnurl::prelude::*;
-use sdk_utils::prelude::ServiceConnectivityError;
 use thiserror::Error;
 
 use crate::{
