@@ -5,12 +5,15 @@ version.workspace = true
 
 [dependencies]
 aes = { workspace = true }
+anyhow = { workspace = true }
 base64 = { workspace = true }
+bip21 = "0.2"
 bitcoin = { workspace = true }
 hex = { workspace = true }
 lightning = { workspace = true }
 lightning-invoice = { workspace = true }
 log = { workspace = true }
+querystring = "1"
 regex = { workspace = true }
 reqwest = { workspace = true }
 serde = { workspace = true }

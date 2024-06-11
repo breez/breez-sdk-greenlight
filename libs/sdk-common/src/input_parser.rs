@@ -2,16 +2,13 @@ use std::str::FromStr;
 
 use anyhow::{anyhow, Result};
 use bip21::Uri;
-use sdk_common::prelude::*;
-use serde::Deserialize;
-use serde::Serialize;
+use bitcoin::bech32;
+use bitcoin::bech32::FromBase32;
+use serde::{Deserialize, Serialize};
+use InputType::*;
+use LnUrlRequestData::*;
 
-use crate::bitcoin::bech32;
-use crate::bitcoin::bech32::FromBase32;
-use crate::ensure_sdk;
-use crate::input_parser::InputType::*;
-use crate::input_parser::LnUrlRequestData::*;
-use crate::lnurl::maybe_replace_host_with_mockito_test_host;
+use crate::prelude::*;
 
 /// Parses generic user input, typically pasted from clipboard or scanned from a QR.
 ///
@@ -184,7 +181,7 @@ pub async fn parse(input: &str) -> Result<InputType> {
     }
 
     // Public key serialized in compressed form (66 hex chars)
-    if let Ok(_node_id) = crate::bitcoin::secp256k1::PublicKey::from_str(input) {
+    if let Ok(_node_id) = bitcoin::secp256k1::PublicKey::from_str(input) {
         return Ok(NodeId {
             node_id: input.into(),
         });
@@ -192,7 +189,7 @@ pub async fn parse(input: &str) -> Result<InputType> {
 
     // Possible Node URI (check for separator symbol, try to parse pubkey, ignore rest)
     if let Some('@') = input.chars().nth(66) {
-        if let Ok(_node_id) = crate::bitcoin::secp256k1::PublicKey::from_str(&input[..66]) {
+        if let Ok(_node_id) = bitcoin::secp256k1::PublicKey::from_str(&input[..66]) {
             return Ok(NodeId {
                 node_id: input.into(),
             });
@@ -295,18 +292,18 @@ fn lnurl_decode(encoded: &str) -> LnUrlResult<(String, String, Option<String>)> 
             let decoded = String::from_utf8(Vec::from_base32(&payload)?)?;
 
             let url = reqwest::Url::parse(&decoded)
-                .map_err(|e| sdk_common::prelude::LnUrlError::InvalidUri(e.to_string()))?;
+                .map_err(|e| super::prelude::LnUrlError::InvalidUri(e.to_string()))?;
             let domain = url.domain().ok_or_else(|| {
-                sdk_common::prelude::LnUrlError::invalid_uri("Could not determine domain")
+                super::prelude::LnUrlError::invalid_uri("Could not determine domain")
             })?;
 
             if url.scheme() == "http" && !domain.ends_with(".onion") {
-                return Err(sdk_common::prelude::LnUrlError::generic(
+                return Err(super::prelude::LnUrlError::generic(
                     "HTTP scheme only allowed for onion domains",
                 ));
             }
             if url.scheme() == "https" && domain.ends_with(".onion") {
-                return Err(sdk_common::prelude::LnUrlError::generic(
+                return Err(super::prelude::LnUrlError::generic(
                     "HTTPS scheme not allowed for onion domains",
                 ));
             }
@@ -329,13 +326,13 @@ fn lnurl_decode(encoded: &str) -> LnUrlResult<(String, String, Option<String>)> 
             }
 
             let url = reqwest::Url::parse(&encoded)
-                .map_err(|e| sdk_common::prelude::LnUrlError::InvalidUri(e.to_string()))?;
+                .map_err(|e| super::prelude::LnUrlError::InvalidUri(e.to_string()))?;
             let domain = url.domain().ok_or_else(|| {
-                sdk_common::prelude::LnUrlError::invalid_uri("Could not determine domain")
+                super::prelude::LnUrlError::invalid_uri("Could not determine domain")
             })?;
             ensure_sdk!(
                 supported_prefixes.contains(&url.scheme()),
-                sdk_common::prelude::LnUrlError::generic("Invalid prefix scheme")
+                super::prelude::LnUrlError::generic("Invalid prefix scheme")
             );
 
             let scheme = url.scheme();
@@ -382,7 +379,7 @@ async fn resolve_lnurl(
 }
 
 /// Different kinds of inputs supported by [parse], including any relevant details extracted from the input
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub enum InputType {
     /// # Supported standards
     ///
@@ -554,7 +551,7 @@ impl LnUrlPayRequestData {
 /// It represents the endpoint's parameters for the LNURL workflow.
 ///
 /// See <https://github.com/lnurl/luds/blob/luds/03.md>
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(Clone, Deserialize, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LnUrlWithdrawRequestData {
     pub callback: String,
@@ -586,10 +583,10 @@ pub struct MetadataItem {
 }
 
 /// Wrapped in a [BitcoinAddress], this is the result of [parse] when given a plain or BIP-21 BTC address.
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct BitcoinAddressData {
     pub address: String,
-    pub network: sdk_common::prelude::Network,
+    pub network: super::prelude::Network,
     pub amount_sat: Option<u64>,
     pub label: Option<String>,
     pub message: Option<String>,
@@ -616,11 +613,11 @@ pub(crate) mod tests {
     use mockito::{Mock, Server, ServerGuard};
     use once_cell::sync::Lazy;
 
-    use crate::bitcoin::bech32;
-    use crate::bitcoin::bech32::{ToBase32, Variant};
-    use crate::bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
     use crate::input_parser::*;
     use crate::models::Network;
+    use bitcoin::bech32;
+    use bitcoin::bech32::{ToBase32, Variant};
+    use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 
     /// Mock server used in tests. As the server is shared between tests,
     /// we should not mock the same url twice with two different outputs,

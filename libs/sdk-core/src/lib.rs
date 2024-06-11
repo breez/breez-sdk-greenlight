@@ -179,7 +179,6 @@ mod greenlight;
 mod grpc;
 #[rustfmt::skip]
 mod fiat; // flutter_rust_bridge_codegen: has to be defined after grpc; grpc::Rate
-pub mod input_parser;
 mod lnurl;
 mod lsp;
 mod lsps0;
@@ -204,10 +203,6 @@ pub use breez_services::{
 };
 pub use chain::RecommendedFees;
 pub use fiat::{CurrencyInfo, FiatCurrency, LocaleOverrides, LocalizedName, Rate, Symbol};
-pub use input_parser::{
-    parse, BitcoinAddressData, InputType, LnUrlPayRequestData, LnUrlRequestData,
-    LnUrlWithdrawRequestData, MetadataItem,
-};
 pub use lnurl::pay::model::*;
 pub use lsp::LspInformation;
 pub use models::*;
@@ -280,4 +275,47 @@ pub struct _RouteHintHop {
     pub cltv_expiry_delta: u64,
     pub htlc_minimum_msat: Option<u64>,
     pub htlc_maximum_msat: Option<u64>,
+}
+
+#[frb(mirror(LnUrlPayRequestData))]
+pub struct _LnUrlPayRequestData {
+    pub callback: String,
+    pub min_sendable: u64,
+    pub max_sendable: u64,
+    pub metadata_str: String,
+    pub comment_allowed: u16,
+    pub domain: String,
+    pub allows_nostr: bool,
+    pub nostr_pubkey: Option<String>,
+    pub ln_address: Option<String>,
+}
+
+#[frb(mirror(LnUrlWithdrawRequestData))]
+pub struct _LnUrlWithdrawRequestData {
+    pub callback: String,
+    pub k1: String,
+    pub default_description: String,
+    pub min_withdrawable: u64,
+    pub max_withdrawable: u64,
+}
+
+#[frb(mirror(InputType))]
+pub enum _InputType {
+    BitcoinAddress { address: BitcoinAddressData },
+    Bolt11 { invoice: LNInvoice },
+    NodeId { node_id: String },
+    Url { url: String },
+    LnUrlPay { data: LnUrlPayRequestData },
+    LnUrlWithdraw { data: LnUrlWithdrawRequestData },
+    LnUrlAuth { data: LnUrlAuthRequestData },
+    LnUrlEndpointError { data: LnUrlErrorData },
+}
+
+#[frb(mirror(BitcoinAddressData))]
+pub struct _BitcoinAddressData {
+    pub address: String,
+    pub network: crate::prelude::Network,
+    pub amount_sat: Option<u64>,
+    pub label: Option<String>,
+    pub message: Option<String>,
 }

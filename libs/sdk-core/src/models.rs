@@ -8,8 +8,8 @@ use ripemd::Digest;
 use ripemd::Ripemd160;
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef};
 use rusqlite::ToSql;
-use sdk_common::prelude::*;
 use sdk_common::prelude::Network::*;
+use sdk_common::prelude::*;
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 
