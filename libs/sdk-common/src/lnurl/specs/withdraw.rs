@@ -62,7 +62,7 @@ fn build_withdraw_callback_url(
 }
 
 pub mod model {
-    use serde::{Serialize, Deserialize};
+    use serde::{Deserialize, Serialize};
 
     use crate::prelude::*;
 
@@ -102,7 +102,7 @@ mod tests {
         let expected_payload = r#"
             {"status": "OK"}
         "#
-            .replace('\n', "");
+        .replace('\n', "");
 
         let response_body = match error {
             None => expected_payload,
