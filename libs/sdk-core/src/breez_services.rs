@@ -16,7 +16,6 @@ use gl_client::bitcoin::secp256k1::Secp256k1;
 use log::{LevelFilter, Metadata, Record};
 use reqwest::{header::CONTENT_TYPE, Body, Url};
 use sdk_lnurl::prelude::*;
-use sdk_utils::prelude::*;
 use serde_json::json;
 use tokio::sync::{mpsc, watch, Mutex};
 use tokio::time::{sleep, MissedTickBehavior};

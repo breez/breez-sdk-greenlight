@@ -3,7 +3,6 @@ use std::str::FromStr;
 use anyhow::{anyhow, Result};
 use bip21::Uri;
 use sdk_lnurl::prelude::*;
-use sdk_utils::prelude::*;
 use serde::Deserialize;
 use serde::Serialize;
 

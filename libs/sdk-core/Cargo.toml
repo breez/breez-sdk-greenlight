@@ -43,7 +43,6 @@ reqwest = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 sdk-lnurl = { path = "../sdk-lnurl"}
-sdk-utils = { path = "../sdk-utils"}
 tonic = { version = "^0.8", features = [
     "tls",
     "transport",
