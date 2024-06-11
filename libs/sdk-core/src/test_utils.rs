@@ -29,7 +29,10 @@ use crate::breez_services::{OpenChannelParams, Receiver};
 use crate::chain::{ChainService, OnchainTx, Outspend, RecommendedFees, TxStatus};
 use crate::error::{ReceivePaymentError, SdkError, SdkResult};
 use crate::fiat::{FiatCurrency, Rate};
-use crate::grpc::{PaymentInformation, RegisterPaymentNotificationResponse, RegisterPaymentReply, RemovePaymentNotificationResponse};
+use crate::grpc::{
+    PaymentInformation, RegisterPaymentNotificationResponse, RegisterPaymentReply,
+    RemovePaymentNotificationResponse,
+};
 use crate::invoice::{InvoiceError, InvoiceResult};
 use crate::lightning::ln::PaymentSecret;
 use crate::lightning_invoice::{Currency, InvoiceBuilder, RawBolt11Invoice};
@@ -497,7 +500,10 @@ impl NodeAPI for MockNodeAPI {
         ))
     }
 
-    async fn get_routing_hints(&self) -> NodeResult<(Vec<RouteHint>, bool)> {
+    async fn get_routing_hints(
+        &self,
+        _lsp_info: &LspInformation,
+    ) -> NodeResult<(Vec<RouteHint>, bool)> {
         Ok((vec![], false))
     }
 
