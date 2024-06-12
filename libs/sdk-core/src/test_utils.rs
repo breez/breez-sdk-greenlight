@@ -716,14 +716,6 @@ impl MoonPayApi for MockBreezServer {
     }
 }
 
-pub(crate) fn rand_invoice_with_description_hash(
-    expected_desc: String,
-) -> InvoiceResult<crate::lightning_invoice::Bolt11Invoice> {
-    let preimage = sha256::Hash::hash(&rand_vec_u8(10));
-
-    rand_invoice_with_description_hash_and_preimage(expected_desc, preimage)
-}
-
 pub(crate) fn rand_invoice_with_description_hash_and_preimage(
     expected_desc: String,
     preimage: sha256::Hash,

@@ -162,7 +162,7 @@ mod bridge_generated; /* AUTO INJECTED BY flutter_rust_bridge. This line may not
 extern crate log;
 
 // #[cfg(test)] // TODO Un-comment line once migrated to FRB v2
-#[cfg(not(clippy))] // TODO Remove line once migrated to FRB v2
+#[allow(clippy::all)] // TODO Remove line once migrated to FRB v2
 #[rustfmt::skip]
 mod test_utils; // flutter_rust_bridge_codegen: has to be defined before breez_services
 
