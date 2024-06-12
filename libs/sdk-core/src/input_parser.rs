@@ -207,7 +207,10 @@ pub async fn parse(input: &str) -> Result<InputType> {
 
     if let Ok(url) = reqwest::Url::parse(input) {
         if ["http", "https"].contains(&url.scheme()) {
-            if let Some((_key, value)) = url.query_pairs().find(|p| p.0 == "lightning") {
+            if let Some((_key, value)) = url
+                .query_pairs()
+                .find(|p| p.0 == "lightning" || p.0 == "LIGHTNING")
+            {
                 if let Ok((domain, lnurl_endpoint, ln_address)) = lnurl_decode(&value) {
                     return resolve_lnurl(domain, lnurl_endpoint, ln_address).await;
                 }
