@@ -551,7 +551,6 @@ typedef struct wire_cst_ln_url_pay_error_data {
 } wire_cst_ln_url_pay_error_data;
 
 typedef struct wire_cst_ln_url_pay_success_data {
-  struct wire_cst_payment payment;
   struct wire_cst_success_action_processed *success_action;
 } wire_cst_ln_url_pay_success_data;
 
@@ -728,9 +727,9 @@ typedef struct wire_cst_InputType_LnUrlAuth {
   struct wire_cst_ln_url_auth_request_data *data;
 } wire_cst_InputType_LnUrlAuth;
 
-typedef struct wire_cst_InputType_LnUrlError {
+typedef struct wire_cst_InputType_LnUrlEndpointError {
   struct wire_cst_ln_url_error_data *data;
-} wire_cst_InputType_LnUrlError;
+} wire_cst_InputType_LnUrlEndpointError;
 
 typedef union InputTypeKind {
   struct wire_cst_InputType_BitcoinAddress BitcoinAddress;
@@ -740,7 +739,7 @@ typedef union InputTypeKind {
   struct wire_cst_InputType_LnUrlPay LnUrlPay;
   struct wire_cst_InputType_LnUrlWithdraw LnUrlWithdraw;
   struct wire_cst_InputType_LnUrlAuth LnUrlAuth;
-  struct wire_cst_InputType_LnUrlError LnUrlError;
+  struct wire_cst_InputType_LnUrlEndpointError LnUrlEndpointError;
 } InputTypeKind;
 
 typedef struct wire_cst_input_type {

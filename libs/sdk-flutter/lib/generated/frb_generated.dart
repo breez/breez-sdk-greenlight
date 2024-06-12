@@ -11,9 +11,7 @@ import 'dart:convert';
 import 'fiat.dart';
 import 'frb_generated.dart';
 import 'frb_generated.io.dart' if (dart.library.html) 'frb_generated.web.dart';
-import 'input_parser.dart';
-import 'invoice.dart';
-import 'lnurl/pay/model.dart';
+import 'lib.dart';
 import 'lsp.dart';
 import 'models.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
@@ -2283,7 +2281,7 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
           data: dco_decode_box_autoadd_ln_url_auth_request_data(raw[1]),
         );
       case 7:
-        return InputType_LnUrlError(
+        return InputType_LnUrlEndpointError(
           data: dco_decode_box_autoadd_ln_url_error_data(raw[1]),
         );
       default:
@@ -2572,10 +2570,9 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   LnUrlPaySuccessData dco_decode_ln_url_pay_success_data(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
     return LnUrlPaySuccessData(
-      payment: dco_decode_payment(arr[0]),
-      successAction: dco_decode_opt_box_autoadd_success_action_processed(arr[1]),
+      successAction: dco_decode_opt_box_autoadd_success_action_processed(arr[0]),
     );
   }
 
@@ -4278,7 +4275,7 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
         return InputType_LnUrlAuth(data: var_data);
       case 7:
         var var_data = sse_decode_box_autoadd_ln_url_error_data(deserializer);
-        return InputType_LnUrlError(data: var_data);
+        return InputType_LnUrlEndpointError(data: var_data);
       default:
         throw UnimplementedError('');
     }
@@ -4679,9 +4676,8 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   @protected
   LnUrlPaySuccessData sse_decode_ln_url_pay_success_data(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    var var_payment = sse_decode_payment(deserializer);
     var var_successAction = sse_decode_opt_box_autoadd_success_action_processed(deserializer);
-    return LnUrlPaySuccessData(payment: var_payment, successAction: var_successAction);
+    return LnUrlPaySuccessData(successAction: var_successAction);
   }
 
   @protected
@@ -6518,7 +6514,7 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
       case InputType_LnUrlAuth(data: final data):
         sse_encode_i_32(6, serializer);
         sse_encode_box_autoadd_ln_url_auth_request_data(data, serializer);
-      case InputType_LnUrlError(data: final data):
+      case InputType_LnUrlEndpointError(data: final data):
         sse_encode_i_32(7, serializer);
         sse_encode_box_autoadd_ln_url_error_data(data, serializer);
       default:
@@ -6816,7 +6812,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   @protected
   void sse_encode_ln_url_pay_success_data(LnUrlPaySuccessData self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_payment(self.payment, serializer);
     sse_encode_opt_box_autoadd_success_action_processed(self.successAction, serializer);
   }
 

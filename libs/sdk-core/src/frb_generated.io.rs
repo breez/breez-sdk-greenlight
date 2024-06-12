@@ -55,32 +55,30 @@ impl CstDecode<String> for *mut wire_cst_list_prim_u_8_strict {
         String::from_utf8(vec).unwrap()
     }
 }
-impl CstDecode<crate::lnurl::pay::model::AesSuccessActionDataDecrypted>
+impl CstDecode<crate::AesSuccessActionDataDecrypted>
     for wire_cst_aes_success_action_data_decrypted
 {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::lnurl::pay::model::AesSuccessActionDataDecrypted {
-        crate::lnurl::pay::model::AesSuccessActionDataDecrypted {
+    fn cst_decode(self) -> crate::AesSuccessActionDataDecrypted {
+        crate::AesSuccessActionDataDecrypted {
             description: self.description.cst_decode(),
             plaintext: self.plaintext.cst_decode(),
         }
     }
 }
-impl CstDecode<crate::lnurl::pay::model::AesSuccessActionDataResult>
-    for wire_cst_aes_success_action_data_result
-{
+impl CstDecode<crate::AesSuccessActionDataResult> for wire_cst_aes_success_action_data_result {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::lnurl::pay::model::AesSuccessActionDataResult {
+    fn cst_decode(self) -> crate::AesSuccessActionDataResult {
         match self.tag {
             0 => {
                 let ans = unsafe { self.kind.Decrypted };
-                crate::lnurl::pay::model::AesSuccessActionDataResult::Decrypted {
+                crate::AesSuccessActionDataResult::Decrypted {
                     data: ans.data.cst_decode(),
                 }
             }
             1 => {
                 let ans = unsafe { self.kind.ErrorStatus };
-                crate::lnurl::pay::model::AesSuccessActionDataResult::ErrorStatus {
+                crate::AesSuccessActionDataResult::ErrorStatus {
                     reason: ans.reason.cst_decode(),
                 }
             }
@@ -111,10 +109,10 @@ impl CstDecode<crate::binding::BindingEventListener> for wire_cst_binding_event_
         crate::binding::BindingEventListener {}
     }
 }
-impl CstDecode<crate::input_parser::BitcoinAddressData> for wire_cst_bitcoin_address_data {
+impl CstDecode<crate::BitcoinAddressData> for wire_cst_bitcoin_address_data {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::input_parser::BitcoinAddressData {
-        crate::input_parser::BitcoinAddressData {
+    fn cst_decode(self) -> crate::BitcoinAddressData {
+        crate::BitcoinAddressData {
             address: self.address.cst_decode(),
             network: self.network.cst_decode(),
             amount_sat: self.amount_sat.cst_decode(),
@@ -123,23 +121,20 @@ impl CstDecode<crate::input_parser::BitcoinAddressData> for wire_cst_bitcoin_add
         }
     }
 }
-impl CstDecode<crate::lnurl::pay::model::AesSuccessActionDataDecrypted>
+impl CstDecode<crate::AesSuccessActionDataDecrypted>
     for *mut wire_cst_aes_success_action_data_decrypted
 {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::lnurl::pay::model::AesSuccessActionDataDecrypted {
+    fn cst_decode(self) -> crate::AesSuccessActionDataDecrypted {
         let wrap = unsafe { flutter_rust_bridge::for_generated::box_from_leak_ptr(self) };
-        CstDecode::<crate::lnurl::pay::model::AesSuccessActionDataDecrypted>::cst_decode(*wrap)
-            .into()
+        CstDecode::<crate::AesSuccessActionDataDecrypted>::cst_decode(*wrap).into()
     }
 }
-impl CstDecode<crate::lnurl::pay::model::AesSuccessActionDataResult>
-    for *mut wire_cst_aes_success_action_data_result
-{
+impl CstDecode<crate::AesSuccessActionDataResult> for *mut wire_cst_aes_success_action_data_result {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::lnurl::pay::model::AesSuccessActionDataResult {
+    fn cst_decode(self) -> crate::AesSuccessActionDataResult {
         let wrap = unsafe { flutter_rust_bridge::for_generated::box_from_leak_ptr(self) };
-        CstDecode::<crate::lnurl::pay::model::AesSuccessActionDataResult>::cst_decode(*wrap).into()
+        CstDecode::<crate::AesSuccessActionDataResult>::cst_decode(*wrap).into()
     }
 }
 impl CstDecode<crate::breez_services::BackupFailedData> for *mut wire_cst_backup_failed_data {
@@ -156,11 +151,11 @@ impl CstDecode<crate::binding::BindingEventListener> for *mut wire_cst_binding_e
         CstDecode::<crate::binding::BindingEventListener>::cst_decode(*wrap).into()
     }
 }
-impl CstDecode<crate::input_parser::BitcoinAddressData> for *mut wire_cst_bitcoin_address_data {
+impl CstDecode<crate::BitcoinAddressData> for *mut wire_cst_bitcoin_address_data {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::input_parser::BitcoinAddressData {
+    fn cst_decode(self) -> crate::BitcoinAddressData {
         let wrap = unsafe { flutter_rust_bridge::for_generated::box_from_leak_ptr(self) };
-        CstDecode::<crate::input_parser::BitcoinAddressData>::cst_decode(*wrap).into()
+        CstDecode::<crate::BitcoinAddressData>::cst_decode(*wrap).into()
     }
 }
 impl CstDecode<bool> for *mut bool {
@@ -247,11 +242,11 @@ impl CstDecode<crate::models::ListPaymentsRequest> for *mut wire_cst_list_paymen
         CstDecode::<crate::models::ListPaymentsRequest>::cst_decode(*wrap).into()
     }
 }
-impl CstDecode<crate::invoice::LNInvoice> for *mut wire_cst_ln_invoice {
+impl CstDecode<crate::LNInvoice> for *mut wire_cst_ln_invoice {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::invoice::LNInvoice {
+    fn cst_decode(self) -> crate::LNInvoice {
         let wrap = unsafe { flutter_rust_bridge::for_generated::box_from_leak_ptr(self) };
-        CstDecode::<crate::invoice::LNInvoice>::cst_decode(*wrap).into()
+        CstDecode::<crate::LNInvoice>::cst_decode(*wrap).into()
     }
 }
 impl CstDecode<crate::models::LnPaymentDetails> for *mut wire_cst_ln_payment_details {
@@ -261,29 +256,25 @@ impl CstDecode<crate::models::LnPaymentDetails> for *mut wire_cst_ln_payment_det
         CstDecode::<crate::models::LnPaymentDetails>::cst_decode(*wrap).into()
     }
 }
-impl CstDecode<crate::input_parser::LnUrlAuthRequestData>
-    for *mut wire_cst_ln_url_auth_request_data
-{
+impl CstDecode<crate::LnUrlAuthRequestData> for *mut wire_cst_ln_url_auth_request_data {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::input_parser::LnUrlAuthRequestData {
+    fn cst_decode(self) -> crate::LnUrlAuthRequestData {
         let wrap = unsafe { flutter_rust_bridge::for_generated::box_from_leak_ptr(self) };
-        CstDecode::<crate::input_parser::LnUrlAuthRequestData>::cst_decode(*wrap).into()
+        CstDecode::<crate::LnUrlAuthRequestData>::cst_decode(*wrap).into()
     }
 }
-impl CstDecode<crate::input_parser::LnUrlErrorData> for *mut wire_cst_ln_url_error_data {
+impl CstDecode<crate::LnUrlErrorData> for *mut wire_cst_ln_url_error_data {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::input_parser::LnUrlErrorData {
+    fn cst_decode(self) -> crate::LnUrlErrorData {
         let wrap = unsafe { flutter_rust_bridge::for_generated::box_from_leak_ptr(self) };
-        CstDecode::<crate::input_parser::LnUrlErrorData>::cst_decode(*wrap).into()
+        CstDecode::<crate::LnUrlErrorData>::cst_decode(*wrap).into()
     }
 }
-impl CstDecode<crate::lnurl::pay::model::LnUrlPayErrorData>
-    for *mut wire_cst_ln_url_pay_error_data
-{
+impl CstDecode<crate::LnUrlPayErrorData> for *mut wire_cst_ln_url_pay_error_data {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::lnurl::pay::model::LnUrlPayErrorData {
+    fn cst_decode(self) -> crate::LnUrlPayErrorData {
         let wrap = unsafe { flutter_rust_bridge::for_generated::box_from_leak_ptr(self) };
-        CstDecode::<crate::lnurl::pay::model::LnUrlPayErrorData>::cst_decode(*wrap).into()
+        CstDecode::<crate::LnUrlPayErrorData>::cst_decode(*wrap).into()
     }
 }
 impl CstDecode<crate::models::LnUrlPayRequest> for *mut wire_cst_ln_url_pay_request {
@@ -293,20 +284,18 @@ impl CstDecode<crate::models::LnUrlPayRequest> for *mut wire_cst_ln_url_pay_requ
         CstDecode::<crate::models::LnUrlPayRequest>::cst_decode(*wrap).into()
     }
 }
-impl CstDecode<crate::input_parser::LnUrlPayRequestData> for *mut wire_cst_ln_url_pay_request_data {
+impl CstDecode<crate::LnUrlPayRequestData> for *mut wire_cst_ln_url_pay_request_data {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::input_parser::LnUrlPayRequestData {
+    fn cst_decode(self) -> crate::LnUrlPayRequestData {
         let wrap = unsafe { flutter_rust_bridge::for_generated::box_from_leak_ptr(self) };
-        CstDecode::<crate::input_parser::LnUrlPayRequestData>::cst_decode(*wrap).into()
+        CstDecode::<crate::LnUrlPayRequestData>::cst_decode(*wrap).into()
     }
 }
-impl CstDecode<crate::lnurl::pay::model::LnUrlPaySuccessData>
-    for *mut wire_cst_ln_url_pay_success_data
-{
+impl CstDecode<crate::LnUrlPaySuccessData> for *mut wire_cst_ln_url_pay_success_data {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::lnurl::pay::model::LnUrlPaySuccessData {
+    fn cst_decode(self) -> crate::LnUrlPaySuccessData {
         let wrap = unsafe { flutter_rust_bridge::for_generated::box_from_leak_ptr(self) };
-        CstDecode::<crate::lnurl::pay::model::LnUrlPaySuccessData>::cst_decode(*wrap).into()
+        CstDecode::<crate::LnUrlPaySuccessData>::cst_decode(*wrap).into()
     }
 }
 impl CstDecode<crate::models::LnUrlWithdrawRequest> for *mut wire_cst_ln_url_withdraw_request {
@@ -316,22 +305,18 @@ impl CstDecode<crate::models::LnUrlWithdrawRequest> for *mut wire_cst_ln_url_wit
         CstDecode::<crate::models::LnUrlWithdrawRequest>::cst_decode(*wrap).into()
     }
 }
-impl CstDecode<crate::input_parser::LnUrlWithdrawRequestData>
-    for *mut wire_cst_ln_url_withdraw_request_data
-{
+impl CstDecode<crate::LnUrlWithdrawRequestData> for *mut wire_cst_ln_url_withdraw_request_data {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::input_parser::LnUrlWithdrawRequestData {
+    fn cst_decode(self) -> crate::LnUrlWithdrawRequestData {
         let wrap = unsafe { flutter_rust_bridge::for_generated::box_from_leak_ptr(self) };
-        CstDecode::<crate::input_parser::LnUrlWithdrawRequestData>::cst_decode(*wrap).into()
+        CstDecode::<crate::LnUrlWithdrawRequestData>::cst_decode(*wrap).into()
     }
 }
-impl CstDecode<crate::models::LnUrlWithdrawSuccessData>
-    for *mut wire_cst_ln_url_withdraw_success_data
-{
+impl CstDecode<crate::LnUrlWithdrawSuccessData> for *mut wire_cst_ln_url_withdraw_success_data {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::models::LnUrlWithdrawSuccessData {
+    fn cst_decode(self) -> crate::LnUrlWithdrawSuccessData {
         let wrap = unsafe { flutter_rust_bridge::for_generated::box_from_leak_ptr(self) };
-        CstDecode::<crate::models::LnUrlWithdrawSuccessData>::cst_decode(*wrap).into()
+        CstDecode::<crate::LnUrlWithdrawSuccessData>::cst_decode(*wrap).into()
     }
 }
 impl CstDecode<crate::lsp::LspInformation> for *mut wire_cst_lsp_information {
@@ -341,13 +326,11 @@ impl CstDecode<crate::lsp::LspInformation> for *mut wire_cst_lsp_information {
         CstDecode::<crate::lsp::LspInformation>::cst_decode(*wrap).into()
     }
 }
-impl CstDecode<crate::lnurl::pay::model::MessageSuccessActionData>
-    for *mut wire_cst_message_success_action_data
-{
+impl CstDecode<crate::MessageSuccessActionData> for *mut wire_cst_message_success_action_data {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::lnurl::pay::model::MessageSuccessActionData {
+    fn cst_decode(self) -> crate::MessageSuccessActionData {
         let wrap = unsafe { flutter_rust_bridge::for_generated::box_from_leak_ptr(self) };
-        CstDecode::<crate::lnurl::pay::model::MessageSuccessActionData>::cst_decode(*wrap).into()
+        CstDecode::<crate::MessageSuccessActionData>::cst_decode(*wrap).into()
     }
 }
 impl CstDecode<crate::models::NodeConfig> for *mut wire_cst_node_config {
@@ -521,13 +504,11 @@ impl CstDecode<crate::models::StaticBackupRequest> for *mut wire_cst_static_back
         CstDecode::<crate::models::StaticBackupRequest>::cst_decode(*wrap).into()
     }
 }
-impl CstDecode<crate::lnurl::pay::model::SuccessActionProcessed>
-    for *mut wire_cst_success_action_processed
-{
+impl CstDecode<crate::SuccessActionProcessed> for *mut wire_cst_success_action_processed {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::lnurl::pay::model::SuccessActionProcessed {
+    fn cst_decode(self) -> crate::SuccessActionProcessed {
         let wrap = unsafe { flutter_rust_bridge::for_generated::box_from_leak_ptr(self) };
-        CstDecode::<crate::lnurl::pay::model::SuccessActionProcessed>::cst_decode(*wrap).into()
+        CstDecode::<crate::SuccessActionProcessed>::cst_decode(*wrap).into()
     }
 }
 impl CstDecode<crate::models::SwapInfo> for *mut wire_cst_swap_info {
@@ -556,13 +537,11 @@ impl CstDecode<u64> for *mut u64 {
         unsafe { *flutter_rust_bridge::for_generated::box_from_leak_ptr(self) }
     }
 }
-impl CstDecode<crate::lnurl::pay::model::UrlSuccessActionData>
-    for *mut wire_cst_url_success_action_data
-{
+impl CstDecode<crate::UrlSuccessActionData> for *mut wire_cst_url_success_action_data {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::lnurl::pay::model::UrlSuccessActionData {
+    fn cst_decode(self) -> crate::UrlSuccessActionData {
         let wrap = unsafe { flutter_rust_bridge::for_generated::box_from_leak_ptr(self) };
-        CstDecode::<crate::lnurl::pay::model::UrlSuccessActionData>::cst_decode(*wrap).into()
+        CstDecode::<crate::UrlSuccessActionData>::cst_decode(*wrap).into()
     }
 }
 impl CstDecode<crate::breez_services::BreezEvent> for wire_cst_breez_event {
@@ -738,55 +717,55 @@ impl CstDecode<crate::models::GreenlightNodeConfig> for wire_cst_greenlight_node
         }
     }
 }
-impl CstDecode<crate::input_parser::InputType> for wire_cst_input_type {
+impl CstDecode<crate::InputType> for wire_cst_input_type {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::input_parser::InputType {
+    fn cst_decode(self) -> crate::InputType {
         match self.tag {
             0 => {
                 let ans = unsafe { self.kind.BitcoinAddress };
-                crate::input_parser::InputType::BitcoinAddress {
+                crate::InputType::BitcoinAddress {
                     address: ans.address.cst_decode(),
                 }
             }
             1 => {
                 let ans = unsafe { self.kind.Bolt11 };
-                crate::input_parser::InputType::Bolt11 {
+                crate::InputType::Bolt11 {
                     invoice: ans.invoice.cst_decode(),
                 }
             }
             2 => {
                 let ans = unsafe { self.kind.NodeId };
-                crate::input_parser::InputType::NodeId {
+                crate::InputType::NodeId {
                     node_id: ans.node_id.cst_decode(),
                 }
             }
             3 => {
                 let ans = unsafe { self.kind.Url };
-                crate::input_parser::InputType::Url {
+                crate::InputType::Url {
                     url: ans.url.cst_decode(),
                 }
             }
             4 => {
                 let ans = unsafe { self.kind.LnUrlPay };
-                crate::input_parser::InputType::LnUrlPay {
+                crate::InputType::LnUrlPay {
                     data: ans.data.cst_decode(),
                 }
             }
             5 => {
                 let ans = unsafe { self.kind.LnUrlWithdraw };
-                crate::input_parser::InputType::LnUrlWithdraw {
+                crate::InputType::LnUrlWithdraw {
                     data: ans.data.cst_decode(),
                 }
             }
             6 => {
                 let ans = unsafe { self.kind.LnUrlAuth };
-                crate::input_parser::InputType::LnUrlAuth {
+                crate::InputType::LnUrlAuth {
                     data: ans.data.cst_decode(),
                 }
             }
             7 => {
-                let ans = unsafe { self.kind.LnUrlError };
-                crate::input_parser::InputType::LnUrlError {
+                let ans = unsafe { self.kind.LnUrlEndpointError };
+                crate::InputType::LnUrlEndpointError {
                     data: ans.data.cst_decode(),
                 }
             }
@@ -937,9 +916,9 @@ impl CstDecode<Vec<crate::models::ReverseSwapInfo>> for *mut wire_cst_list_rever
         vec.into_iter().map(CstDecode::cst_decode).collect()
     }
 }
-impl CstDecode<Vec<crate::invoice::RouteHint>> for *mut wire_cst_list_route_hint {
+impl CstDecode<Vec<crate::RouteHint>> for *mut wire_cst_list_route_hint {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> Vec<crate::invoice::RouteHint> {
+    fn cst_decode(self) -> Vec<crate::RouteHint> {
         let vec = unsafe {
             let wrap = flutter_rust_bridge::for_generated::box_from_leak_ptr(self);
             flutter_rust_bridge::for_generated::vec_from_leak_ptr(wrap.ptr, wrap.len)
@@ -947,9 +926,9 @@ impl CstDecode<Vec<crate::invoice::RouteHint>> for *mut wire_cst_list_route_hint
         vec.into_iter().map(CstDecode::cst_decode).collect()
     }
 }
-impl CstDecode<Vec<crate::invoice::RouteHintHop>> for *mut wire_cst_list_route_hint_hop {
+impl CstDecode<Vec<crate::RouteHintHop>> for *mut wire_cst_list_route_hint_hop {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> Vec<crate::invoice::RouteHintHop> {
+    fn cst_decode(self) -> Vec<crate::RouteHintHop> {
         let vec = unsafe {
             let wrap = flutter_rust_bridge::for_generated::box_from_leak_ptr(self);
             flutter_rust_bridge::for_generated::vec_from_leak_ptr(wrap.ptr, wrap.len)
@@ -989,10 +968,10 @@ impl CstDecode<Vec<crate::models::UnspentTransactionOutput>>
         vec.into_iter().map(CstDecode::cst_decode).collect()
     }
 }
-impl CstDecode<crate::invoice::LNInvoice> for wire_cst_ln_invoice {
+impl CstDecode<crate::LNInvoice> for wire_cst_ln_invoice {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::invoice::LNInvoice {
-        crate::invoice::LNInvoice {
+    fn cst_decode(self) -> crate::LNInvoice {
+        crate::LNInvoice {
             bolt11: self.bolt11.cst_decode(),
             network: self.network.cst_decode(),
             payee_pubkey: self.payee_pubkey.cst_decode(),
@@ -1031,10 +1010,10 @@ impl CstDecode<crate::models::LnPaymentDetails> for wire_cst_ln_payment_details 
         }
     }
 }
-impl CstDecode<crate::input_parser::LnUrlAuthRequestData> for wire_cst_ln_url_auth_request_data {
+impl CstDecode<crate::LnUrlAuthRequestData> for wire_cst_ln_url_auth_request_data {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::input_parser::LnUrlAuthRequestData {
-        crate::input_parser::LnUrlAuthRequestData {
+    fn cst_decode(self) -> crate::LnUrlAuthRequestData {
+        crate::LnUrlAuthRequestData {
             k1: self.k1.cst_decode(),
             action: self.action.cst_decode(),
             domain: self.domain.cst_decode(),
@@ -1042,14 +1021,14 @@ impl CstDecode<crate::input_parser::LnUrlAuthRequestData> for wire_cst_ln_url_au
         }
     }
 }
-impl CstDecode<crate::models::LnUrlCallbackStatus> for wire_cst_ln_url_callback_status {
+impl CstDecode<crate::LnUrlCallbackStatus> for wire_cst_ln_url_callback_status {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::models::LnUrlCallbackStatus {
+    fn cst_decode(self) -> crate::LnUrlCallbackStatus {
         match self.tag {
-            0 => crate::models::LnUrlCallbackStatus::Ok,
+            0 => crate::LnUrlCallbackStatus::Ok,
             1 => {
                 let ans = unsafe { self.kind.ErrorStatus };
-                crate::models::LnUrlCallbackStatus::ErrorStatus {
+                crate::LnUrlCallbackStatus::ErrorStatus {
                     data: ans.data.cst_decode(),
                 }
             }
@@ -1057,18 +1036,18 @@ impl CstDecode<crate::models::LnUrlCallbackStatus> for wire_cst_ln_url_callback_
         }
     }
 }
-impl CstDecode<crate::input_parser::LnUrlErrorData> for wire_cst_ln_url_error_data {
+impl CstDecode<crate::LnUrlErrorData> for wire_cst_ln_url_error_data {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::input_parser::LnUrlErrorData {
-        crate::input_parser::LnUrlErrorData {
+    fn cst_decode(self) -> crate::LnUrlErrorData {
+        crate::LnUrlErrorData {
             reason: self.reason.cst_decode(),
         }
     }
 }
-impl CstDecode<crate::lnurl::pay::model::LnUrlPayErrorData> for wire_cst_ln_url_pay_error_data {
+impl CstDecode<crate::LnUrlPayErrorData> for wire_cst_ln_url_pay_error_data {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::lnurl::pay::model::LnUrlPayErrorData {
-        crate::lnurl::pay::model::LnUrlPayErrorData {
+    fn cst_decode(self) -> crate::LnUrlPayErrorData {
+        crate::LnUrlPayErrorData {
             payment_hash: self.payment_hash.cst_decode(),
             reason: self.reason.cst_decode(),
         }
@@ -1085,10 +1064,10 @@ impl CstDecode<crate::models::LnUrlPayRequest> for wire_cst_ln_url_pay_request {
         }
     }
 }
-impl CstDecode<crate::input_parser::LnUrlPayRequestData> for wire_cst_ln_url_pay_request_data {
+impl CstDecode<crate::LnUrlPayRequestData> for wire_cst_ln_url_pay_request_data {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::input_parser::LnUrlPayRequestData {
-        crate::input_parser::LnUrlPayRequestData {
+    fn cst_decode(self) -> crate::LnUrlPayRequestData {
+        crate::LnUrlPayRequestData {
             callback: self.callback.cst_decode(),
             min_sendable: self.min_sendable.cst_decode(),
             max_sendable: self.max_sendable.cst_decode(),
@@ -1101,25 +1080,25 @@ impl CstDecode<crate::input_parser::LnUrlPayRequestData> for wire_cst_ln_url_pay
         }
     }
 }
-impl CstDecode<crate::lnurl::pay::model::LnUrlPayResult> for wire_cst_ln_url_pay_result {
+impl CstDecode<crate::LnUrlPayResult> for wire_cst_ln_url_pay_result {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::lnurl::pay::model::LnUrlPayResult {
+    fn cst_decode(self) -> crate::LnUrlPayResult {
         match self.tag {
             0 => {
                 let ans = unsafe { self.kind.EndpointSuccess };
-                crate::lnurl::pay::model::LnUrlPayResult::EndpointSuccess {
+                crate::LnUrlPayResult::EndpointSuccess {
                     data: ans.data.cst_decode(),
                 }
             }
             1 => {
                 let ans = unsafe { self.kind.EndpointError };
-                crate::lnurl::pay::model::LnUrlPayResult::EndpointError {
+                crate::LnUrlPayResult::EndpointError {
                     data: ans.data.cst_decode(),
                 }
             }
             2 => {
                 let ans = unsafe { self.kind.PayError };
-                crate::lnurl::pay::model::LnUrlPayResult::PayError {
+                crate::LnUrlPayResult::PayError {
                     data: ans.data.cst_decode(),
                 }
             }
@@ -1127,11 +1106,10 @@ impl CstDecode<crate::lnurl::pay::model::LnUrlPayResult> for wire_cst_ln_url_pay
         }
     }
 }
-impl CstDecode<crate::lnurl::pay::model::LnUrlPaySuccessData> for wire_cst_ln_url_pay_success_data {
+impl CstDecode<crate::LnUrlPaySuccessData> for wire_cst_ln_url_pay_success_data {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::lnurl::pay::model::LnUrlPaySuccessData {
-        crate::lnurl::pay::model::LnUrlPaySuccessData {
-            payment: self.payment.cst_decode(),
+    fn cst_decode(self) -> crate::LnUrlPaySuccessData {
+        crate::LnUrlPaySuccessData {
             success_action: self.success_action.cst_decode(),
         }
     }
@@ -1146,12 +1124,10 @@ impl CstDecode<crate::models::LnUrlWithdrawRequest> for wire_cst_ln_url_withdraw
         }
     }
 }
-impl CstDecode<crate::input_parser::LnUrlWithdrawRequestData>
-    for wire_cst_ln_url_withdraw_request_data
-{
+impl CstDecode<crate::LnUrlWithdrawRequestData> for wire_cst_ln_url_withdraw_request_data {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::input_parser::LnUrlWithdrawRequestData {
-        crate::input_parser::LnUrlWithdrawRequestData {
+    fn cst_decode(self) -> crate::LnUrlWithdrawRequestData {
+        crate::LnUrlWithdrawRequestData {
             callback: self.callback.cst_decode(),
             k1: self.k1.cst_decode(),
             default_description: self.default_description.cst_decode(),
@@ -1160,19 +1136,19 @@ impl CstDecode<crate::input_parser::LnUrlWithdrawRequestData>
         }
     }
 }
-impl CstDecode<crate::models::LnUrlWithdrawResult> for wire_cst_ln_url_withdraw_result {
+impl CstDecode<crate::LnUrlWithdrawResult> for wire_cst_ln_url_withdraw_result {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::models::LnUrlWithdrawResult {
+    fn cst_decode(self) -> crate::LnUrlWithdrawResult {
         match self.tag {
             0 => {
                 let ans = unsafe { self.kind.Ok };
-                crate::models::LnUrlWithdrawResult::Ok {
+                crate::LnUrlWithdrawResult::Ok {
                     data: ans.data.cst_decode(),
                 }
             }
             1 => {
                 let ans = unsafe { self.kind.ErrorStatus };
-                crate::models::LnUrlWithdrawResult::ErrorStatus {
+                crate::LnUrlWithdrawResult::ErrorStatus {
                     data: ans.data.cst_decode(),
                 }
             }
@@ -1180,10 +1156,10 @@ impl CstDecode<crate::models::LnUrlWithdrawResult> for wire_cst_ln_url_withdraw_
         }
     }
 }
-impl CstDecode<crate::models::LnUrlWithdrawSuccessData> for wire_cst_ln_url_withdraw_success_data {
+impl CstDecode<crate::LnUrlWithdrawSuccessData> for wire_cst_ln_url_withdraw_success_data {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::models::LnUrlWithdrawSuccessData {
-        crate::models::LnUrlWithdrawSuccessData {
+    fn cst_decode(self) -> crate::LnUrlWithdrawSuccessData {
+        crate::LnUrlWithdrawSuccessData {
             invoice: self.invoice.cst_decode(),
         }
     }
@@ -1244,12 +1220,10 @@ impl CstDecode<crate::models::MaxReverseSwapAmountResponse>
         }
     }
 }
-impl CstDecode<crate::lnurl::pay::model::MessageSuccessActionData>
-    for wire_cst_message_success_action_data
-{
+impl CstDecode<crate::MessageSuccessActionData> for wire_cst_message_success_action_data {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::lnurl::pay::model::MessageSuccessActionData {
-        crate::lnurl::pay::model::MessageSuccessActionData {
+    fn cst_decode(self) -> crate::MessageSuccessActionData {
+        crate::MessageSuccessActionData {
             message: self.message.cst_decode(),
         }
     }
@@ -1645,18 +1619,18 @@ impl CstDecode<crate::models::ReverseSwapPairInfo> for wire_cst_reverse_swap_pai
         }
     }
 }
-impl CstDecode<crate::invoice::RouteHint> for wire_cst_route_hint {
+impl CstDecode<crate::RouteHint> for wire_cst_route_hint {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::invoice::RouteHint {
-        crate::invoice::RouteHint {
+    fn cst_decode(self) -> crate::RouteHint {
+        crate::RouteHint {
             hops: self.hops.cst_decode(),
         }
     }
 }
-impl CstDecode<crate::invoice::RouteHintHop> for wire_cst_route_hint_hop {
+impl CstDecode<crate::RouteHintHop> for wire_cst_route_hint_hop {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::invoice::RouteHintHop {
-        crate::invoice::RouteHintHop {
+    fn cst_decode(self) -> crate::RouteHintHop {
+        crate::RouteHintHop {
             src_node_id: self.src_node_id.cst_decode(),
             short_channel_id: self.short_channel_id.cst_decode(),
             fees_base_msat: self.fees_base_msat.cst_decode(),
@@ -1759,27 +1733,25 @@ impl CstDecode<crate::models::StaticBackupResponse> for wire_cst_static_backup_r
         }
     }
 }
-impl CstDecode<crate::lnurl::pay::model::SuccessActionProcessed>
-    for wire_cst_success_action_processed
-{
+impl CstDecode<crate::SuccessActionProcessed> for wire_cst_success_action_processed {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::lnurl::pay::model::SuccessActionProcessed {
+    fn cst_decode(self) -> crate::SuccessActionProcessed {
         match self.tag {
             0 => {
                 let ans = unsafe { self.kind.Aes };
-                crate::lnurl::pay::model::SuccessActionProcessed::Aes {
+                crate::SuccessActionProcessed::Aes {
                     result: ans.result.cst_decode(),
                 }
             }
             1 => {
                 let ans = unsafe { self.kind.Message };
-                crate::lnurl::pay::model::SuccessActionProcessed::Message {
+                crate::SuccessActionProcessed::Message {
                     data: ans.data.cst_decode(),
                 }
             }
             2 => {
                 let ans = unsafe { self.kind.Url };
-                crate::lnurl::pay::model::SuccessActionProcessed::Url {
+                crate::SuccessActionProcessed::Url {
                     data: ans.data.cst_decode(),
                 }
             }
@@ -1850,12 +1822,10 @@ impl CstDecode<crate::models::UnspentTransactionOutput> for wire_cst_unspent_tra
         }
     }
 }
-impl CstDecode<crate::lnurl::pay::model::UrlSuccessActionData>
-    for wire_cst_url_success_action_data
-{
+impl CstDecode<crate::UrlSuccessActionData> for wire_cst_url_success_action_data {
     // Codec=Cst (C-struct based), see doc to use other codecs
-    fn cst_decode(self) -> crate::lnurl::pay::model::UrlSuccessActionData {
-        crate::lnurl::pay::model::UrlSuccessActionData {
+    fn cst_decode(self) -> crate::UrlSuccessActionData {
+        crate::UrlSuccessActionData {
             description: self.description.cst_decode(),
             url: self.url.cst_decode(),
         }
@@ -2322,7 +2292,6 @@ impl Default for wire_cst_ln_url_pay_result {
 impl NewWithNullPtr for wire_cst_ln_url_pay_success_data {
     fn new_with_null_ptr() -> Self {
         Self {
-            payment: Default::default(),
             success_action: core::ptr::null_mut(),
         }
     }
@@ -4529,7 +4498,7 @@ pub union InputTypeKind {
     LnUrlPay: wire_cst_InputType_LnUrlPay,
     LnUrlWithdraw: wire_cst_InputType_LnUrlWithdraw,
     LnUrlAuth: wire_cst_InputType_LnUrlAuth,
-    LnUrlError: wire_cst_InputType_LnUrlError,
+    LnUrlEndpointError: wire_cst_InputType_LnUrlEndpointError,
     nil__: (),
 }
 #[repr(C)]
@@ -4569,7 +4538,7 @@ pub struct wire_cst_InputType_LnUrlAuth {
 }
 #[repr(C)]
 #[derive(Clone, Copy)]
-pub struct wire_cst_InputType_LnUrlError {
+pub struct wire_cst_InputType_LnUrlEndpointError {
     data: *mut wire_cst_ln_url_error_data,
 }
 #[repr(C)]
@@ -4817,7 +4786,6 @@ pub struct wire_cst_LnUrlPayResult_PayError {
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct wire_cst_ln_url_pay_success_data {
-    payment: wire_cst_payment,
     success_action: *mut wire_cst_success_action_processed,
 }
 #[repr(C)]

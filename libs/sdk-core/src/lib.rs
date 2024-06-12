@@ -159,10 +159,9 @@ mod frb_generated; /* AUTO INJECTED BY flutter_rust_bridge. This line may not be
 #[macro_use]
 extern crate log;
 
-// TODO If enabled, breaks frb. If disabled, breaks tests.
-// #[rustfmt::skip]
-// #[cfg(test)]
-// mod test_utils; // flutter_rust_bridge_codegen: has to be defined before breez_services
+#[rustfmt::skip]
+#[cfg(test)]
+mod test_utils; // flutter_rust_bridge_codegen: has to be defined before breez_services
 
 mod backup;
 pub mod binding;

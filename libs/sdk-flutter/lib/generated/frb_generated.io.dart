@@ -11,9 +11,7 @@ import 'dart:convert';
 import 'dart:ffi' as ffi;
 import 'fiat.dart';
 import 'frb_generated.dart';
-import 'input_parser.dart';
-import 'invoice.dart';
-import 'lnurl/pay/model.dart';
+import 'lib.dart';
 import 'lsp.dart';
 import 'models.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_io.dart';
@@ -2746,10 +2744,10 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
       wireObj.kind.LnUrlAuth.data = pre_data;
       return;
     }
-    if (apiObj is InputType_LnUrlError) {
+    if (apiObj is InputType_LnUrlEndpointError) {
       var pre_data = cst_encode_box_autoadd_ln_url_error_data(apiObj.data);
       wireObj.tag = 7;
-      wireObj.kind.LnUrlError.data = pre_data;
+      wireObj.kind.LnUrlEndpointError.data = pre_data;
       return;
     }
   }
@@ -2894,7 +2892,6 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   @protected
   void cst_api_fill_to_wire_ln_url_pay_success_data(
       LnUrlPaySuccessData apiObj, wire_cst_ln_url_pay_success_data wireObj) {
-    cst_api_fill_to_wire_payment(apiObj.payment, wireObj.payment);
     wireObj.success_action = cst_encode_opt_box_autoadd_success_action_processed(apiObj.successAction);
   }
 
@@ -6043,12 +6040,9 @@ class BreezSdkBindingsWire implements BaseWire {
       _dummy_method_to_enforce_bundlingPtr.asFunction<int Function()>();
 }
 
-typedef DartPostCObjectFnType = ffi.Pointer<ffi.NativeFunction<DartPostCObjectFnTypeFunction>>;
-typedef DartPostCObjectFnTypeFunction = ffi.Bool Function(DartPort port_id, ffi.Pointer<ffi.Void> message);
-typedef DartDartPostCObjectFnTypeFunction = bool Function(
-    DartDartPort port_id, ffi.Pointer<ffi.Void> message);
+typedef DartPostCObjectFnType
+    = ffi.Pointer<ffi.NativeFunction<ffi.Bool Function(DartPort port_id, ffi.Pointer<ffi.Void> message)>>;
 typedef DartPort = ffi.Int64;
-typedef DartDartPort = int;
 
 final class wire_cst_binding_event_listener extends ffi.Opaque {}
 
@@ -6842,8 +6836,6 @@ final class wire_cst_ln_url_pay_error_data extends ffi.Struct {
 }
 
 final class wire_cst_ln_url_pay_success_data extends ffi.Struct {
-  external wire_cst_payment payment;
-
   external ffi.Pointer<wire_cst_success_action_processed> success_action;
 }
 
@@ -7083,7 +7075,7 @@ final class wire_cst_InputType_LnUrlAuth extends ffi.Struct {
   external ffi.Pointer<wire_cst_ln_url_auth_request_data> data;
 }
 
-final class wire_cst_InputType_LnUrlError extends ffi.Struct {
+final class wire_cst_InputType_LnUrlEndpointError extends ffi.Struct {
   external ffi.Pointer<wire_cst_ln_url_error_data> data;
 }
 
@@ -7102,7 +7094,7 @@ final class InputTypeKind extends ffi.Union {
 
   external wire_cst_InputType_LnUrlAuth LnUrlAuth;
 
-  external wire_cst_InputType_LnUrlError LnUrlError;
+  external wire_cst_InputType_LnUrlEndpointError LnUrlEndpointError;
 }
 
 final class wire_cst_input_type extends ffi.Struct {

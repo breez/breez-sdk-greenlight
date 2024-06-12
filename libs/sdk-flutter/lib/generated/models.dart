@@ -4,9 +4,7 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import 'frb_generated.dart';
-import 'input_parser.dart';
-import 'invoice.dart';
-import 'lnurl/pay/model.dart';
+import 'lib.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 part 'models.freezed.dart';
@@ -452,19 +450,6 @@ class LnPaymentDetails {
           pendingExpirationBlock == other.pendingExpirationBlock;
 }
 
-@freezed
-sealed class LnUrlCallbackStatus with _$LnUrlCallbackStatus {
-  const LnUrlCallbackStatus._();
-
-  /// On-wire format is: `{"status": "OK"}`
-  const factory LnUrlCallbackStatus.ok() = LnUrlCallbackStatus_Ok;
-
-  /// On-wire format is: `{"status": "ERROR", "reason": "error details..."}`
-  const factory LnUrlCallbackStatus.errorStatus({
-    required LnUrlErrorData data,
-  }) = LnUrlCallbackStatus_ErrorStatus;
-}
-
 /// Represents a LNURL-pay request.
 class LnUrlPayRequest {
   /// The [LnUrlPayRequestData] returned by [crate::input_parser::parse]
@@ -533,34 +518,6 @@ class LnUrlWithdrawRequest {
           description == other.description;
 }
 
-@freezed
-sealed class LnUrlWithdrawResult with _$LnUrlWithdrawResult {
-  const LnUrlWithdrawResult._();
-
-  const factory LnUrlWithdrawResult.ok({
-    required LnUrlWithdrawSuccessData data,
-  }) = LnUrlWithdrawResult_Ok;
-  const factory LnUrlWithdrawResult.errorStatus({
-    required LnUrlErrorData data,
-  }) = LnUrlWithdrawResult_ErrorStatus;
-}
-
-class LnUrlWithdrawSuccessData {
-  final LNInvoice invoice;
-
-  const LnUrlWithdrawSuccessData({
-    required this.invoice,
-  });
-
-  @override
-  int get hashCode => invoice.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is LnUrlWithdrawSuccessData && runtimeType == other.runtimeType && invoice == other.invoice;
-}
-
 /// Internal SDK log entry
 class LogEntry {
   final String line;
@@ -621,16 +578,6 @@ class MetadataFilter {
           runtimeType == other.runtimeType &&
           jsonPath == other.jsonPath &&
           jsonValue == other.jsonValue;
-}
-
-/// The different supported bitcoin networks
-enum Network {
-  /// Mainnet
-  Bitcoin,
-  Testnet,
-  Signet,
-  Regtest,
-  ;
 }
 
 @freezed
