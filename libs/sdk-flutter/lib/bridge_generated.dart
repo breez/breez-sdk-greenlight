@@ -832,18 +832,10 @@ class LnUrlPayErrorData {
   });
 }
 
-/// Represents a LNURL-pay request.
 class LnUrlPayRequest {
-  /// The [LnUrlPayRequestData] returned by [crate::input_parser::parse]
   final LnUrlPayRequestData data;
-
-  /// The amount in millisatoshis for this payment
   final int amountMsat;
-
-  /// An optional comment for this payment
   final String? comment;
-
-  /// The external label or identifier of the [Payment]
   final String? paymentLabel;
 
   const LnUrlPayRequest({

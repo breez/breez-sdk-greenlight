@@ -31,7 +31,7 @@ use crate::persist::swap::SwapChainInfo;
 use crate::swap_in::error::{SwapError, SwapResult};
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
-use crate::{ensure_sdk, LnUrlPayRequestData, LnUrlWithdrawRequestData};
+use crate::{ensure_sdk, LnUrlWithdrawRequestData};
 
 pub const SWAP_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60 * 24 * 2; // 2 days
 pub const INVOICE_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60; // 60 minutes
@@ -1519,19 +1519,6 @@ pub struct LnUrlWithdrawRequest {
     /// Optional description that will be put in the payment request for the
     /// lnurl withdraw endpoint.
     pub description: Option<String>,
-}
-
-/// Represents a LNURL-pay request.
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct LnUrlPayRequest {
-    /// The [LnUrlPayRequestData] returned by [crate::input_parser::parse]
-    pub data: LnUrlPayRequestData,
-    /// The amount in millisatoshis for this payment
-    pub amount_msat: u64,
-    /// An optional comment for this payment
-    pub comment: Option<String>,
-    /// The external label or identifier of the [Payment]
-    pub payment_label: Option<String>,
 }
 
 /// Different providers will demand different behaviours when the user is trying to buy bitcoin.

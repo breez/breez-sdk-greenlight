@@ -123,6 +123,19 @@ pub(crate) mod model {
     use crate::prelude::*;
     // use crate::Payment;
 
+    /// Represents a LNURL-pay request.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct LnUrlPayRequest {
+        /// The [LnUrlPayRequestData] returned by [crate::input_parser::parse]
+        pub data: LnUrlPayRequestData,
+        /// The amount in millisatoshis for this payment
+        pub amount_msat: u64,
+        /// An optional comment for this payment
+        pub comment: Option<String>,
+        /// The external label or identifier of the [Payment]
+        pub payment_label: Option<String>,
+    }
+
     pub enum ValidatedCallbackResponse {
         EndpointSuccess { data: CallbackResponse },
         EndpointError { data: LnUrlErrorData },

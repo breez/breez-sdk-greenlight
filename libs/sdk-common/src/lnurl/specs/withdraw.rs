@@ -66,6 +66,23 @@ pub mod model {
 
     use crate::prelude::*;
 
+    /// Wrapped in a [LnUrlWithdraw], this is the result of [parse] when given a LNURL-withdraw endpoint.
+    ///
+    /// It represents the endpoint's parameters for the LNURL workflow.
+    ///
+    /// See <https://github.com/lnurl/luds/blob/luds/03.md>
+    #[derive(Clone, Deserialize, Debug, Serialize)]
+    #[serde(rename_all = "camelCase")]
+    pub struct LnUrlWithdrawRequestData {
+        pub callback: String,
+        pub k1: String,
+        pub default_description: String,
+        /// The minimum amount, in millisats, that this LNURL-withdraw endpoint accepts
+        pub min_withdrawable: u64,
+        /// The maximum amount, in millisats, that this LNURL-withdraw endpoint accepts
+        pub max_withdrawable: u64,
+    }
+
     /// [LnUrlCallbackStatus] specific to LNURL-withdraw, where the success case contains the invoice.
     #[derive(Clone, Serialize)]
     pub enum LnUrlWithdrawResult {

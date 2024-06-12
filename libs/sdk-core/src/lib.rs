@@ -277,6 +277,14 @@ pub struct _RouteHintHop {
     pub htlc_maximum_msat: Option<u64>,
 }
 
+#[frb(mirror(LnUrlPayRequest))]
+pub struct _LnUrlPayRequest {
+    pub data: LnUrlPayRequestData,
+    pub amount_msat: u64,
+    pub comment: Option<String>,
+    pub payment_label: Option<String>,
+}
+
 #[frb(mirror(LnUrlPayRequestData))]
 pub struct _LnUrlPayRequestData {
     pub callback: String,
