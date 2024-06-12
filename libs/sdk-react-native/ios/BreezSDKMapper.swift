@@ -1416,21 +1416,13 @@ enum BreezSDKMapper {
             successAction = try asSuccessActionProcessed(successActionProcessed: successActionTmp)
         }
 
-        guard let paymentTmp = lnUrlPaySuccessData["payment"] as? [String: Any?] else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "payment", typeName: "LnUrlPaySuccessData"))
-        }
-        let payment = try asPayment(payment: paymentTmp)
-
         return LnUrlPaySuccessData(
-            successAction: successAction,
-            payment: payment
-        )
+            successAction: successAction)
     }
 
     static func dictionaryOf(lnUrlPaySuccessData: LnUrlPaySuccessData) -> [String: Any?] {
         return [
             "successAction": lnUrlPaySuccessData.successAction == nil ? nil : dictionaryOf(successActionProcessed: lnUrlPaySuccessData.successAction!),
-            "payment": dictionaryOf(payment: lnUrlPaySuccessData.payment),
         ]
     }
 
@@ -4666,13 +4658,13 @@ enum BreezSDKMapper {
 
             return InputType.lnUrlAuth(data: _data)
         }
-        if type == "lnUrlError" {
+        if type == "lnUrlEndpointError" {
             guard let dataTmp = inputType["data"] as? [String: Any?] else {
                 throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "data", typeName: "InputType"))
             }
             let _data = try asLnUrlErrorData(lnUrlErrorData: dataTmp)
 
-            return InputType.lnUrlError(data: _data)
+            return InputType.lnUrlEndpointError(data: _data)
         }
 
         throw SdkError.Generic(message: "Unexpected type \(type) for enum InputType")
@@ -4736,11 +4728,11 @@ enum BreezSDKMapper {
                 "data": dictionaryOf(lnUrlAuthRequestData: data),
             ]
 
-        case let .lnUrlError(
+        case let .lnUrlEndpointError(
             data
         ):
             return [
-                "type": "lnUrlError",
+                "type": "lnUrlEndpointError",
                 "data": dictionaryOf(lnUrlErrorData: data),
             ]
         }

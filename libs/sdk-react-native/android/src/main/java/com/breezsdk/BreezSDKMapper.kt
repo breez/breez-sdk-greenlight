@@ -1228,9 +1228,7 @@ fun asLnUrlPayRequestDataList(arr: ReadableArray): List<LnUrlPayRequestData> {
 fun asLnUrlPaySuccessData(lnUrlPaySuccessData: ReadableMap): LnUrlPaySuccessData? {
     if (!validateMandatoryFields(
             lnUrlPaySuccessData,
-            arrayOf(
-                "payment",
-            ),
+            arrayOf(),
         )
     ) {
         return null
@@ -1243,17 +1241,14 @@ fun asLnUrlPaySuccessData(lnUrlPaySuccessData: ReadableMap): LnUrlPaySuccessData
         } else {
             null
         }
-    val payment = lnUrlPaySuccessData.getMap("payment")?.let { asPayment(it) }!!
     return LnUrlPaySuccessData(
         successAction,
-        payment,
     )
 }
 
 fun readableMapOf(lnUrlPaySuccessData: LnUrlPaySuccessData): ReadableMap =
     readableMapOf(
         "successAction" to lnUrlPaySuccessData.successAction?.let { readableMapOf(it) },
-        "payment" to readableMapOf(lnUrlPaySuccessData.payment),
     )
 
 fun asLnUrlPaySuccessDataList(arr: ReadableArray): List<LnUrlPaySuccessData> {
@@ -3940,8 +3935,8 @@ fun asInputType(inputType: ReadableMap): InputType? {
     if (type == "lnUrlAuth") {
         return InputType.LnUrlAuth(inputType.getMap("data")?.let { asLnUrlAuthRequestData(it) }!!)
     }
-    if (type == "lnUrlError") {
-        return InputType.LnUrlError(inputType.getMap("data")?.let { asLnUrlErrorData(it) }!!)
+    if (type == "lnUrlEndpointError") {
+        return InputType.LnUrlEndpointError(inputType.getMap("data")?.let { asLnUrlErrorData(it) }!!)
     }
     return null
 }
@@ -3977,8 +3972,8 @@ fun readableMapOf(inputType: InputType): ReadableMap? {
             pushToMap(map, "type", "lnUrlAuth")
             pushToMap(map, "data", readableMapOf(inputType.data))
         }
-        is InputType.LnUrlError -> {
-            pushToMap(map, "type", "lnUrlError")
+        is InputType.LnUrlEndpointError -> {
+            pushToMap(map, "type", "lnUrlEndpointError")
             pushToMap(map, "data", readableMapOf(inputType.data))
         }
     }
