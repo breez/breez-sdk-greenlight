@@ -377,6 +377,22 @@ pub struct _LnUrlPayErrorData {
     pub reason: String,
 }
 
+#[frb(mirror(LnUrlPayError))]
+pub enum _LnUrlPayError {
+    AlreadyPaid,
+    Generic { err: String },
+    InvalidAmount { err: String },
+    InvalidInvoice { err: String },
+    InvalidNetwork { err: String },
+    InvalidUri { err: String },
+    InvoiceExpired { err: String },
+    PaymentFailed { err: String },
+    PaymentTimeout { err: String },
+    RouteNotFound { err: String },
+    RouteTooExpensive { err: String },
+    ServiceConnectivity { err: String },
+}
+
 #[frb(mirror(LnUrlWithdrawResult))]
 pub enum _LnUrlWithdrawResult {
     Ok { data: LnUrlWithdrawSuccessData },

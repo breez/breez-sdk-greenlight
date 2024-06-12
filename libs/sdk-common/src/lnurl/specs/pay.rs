@@ -118,6 +118,7 @@ pub(crate) mod model {
     use rusqlite::types::{FromSql, FromSqlError, ToSqlOutput};
     use rusqlite::ToSql;
     use serde::{Deserialize, Serialize};
+    use thiserror::Error;
 
     use crate::prelude::specs::pay::{Aes256CbcDec, Aes256CbcEnc};
     use crate::prelude::*;
@@ -375,6 +376,100 @@ pub(crate) mod model {
                     )),
                 }
             })
+        }
+    }
+
+    /// Error returned by [crate::breez_services::BreezServices::lnurl_pay]
+    #[derive(Clone, Debug, Error)]
+    pub enum LnUrlPayError {
+        /// This error is raised when attempting to pay an invoice that has already being paid.
+        #[error("Invoice already paid")]
+        AlreadyPaid,
+
+        /// This error is raised when a general error occurs not specific to other error variants
+        /// in this enum.
+        #[error("Generic: {err}")]
+        Generic { err: String },
+
+        /// This error is raised when the amount from the parsed invoice is not set.
+        #[error("Invalid amount: {err}")]
+        InvalidAmount { err: String },
+
+        /// This error is raised when the lightning invoice cannot be parsed.
+        #[error("Invalid invoice: {err}")]
+        InvalidInvoice { err: String },
+
+        /// This error is raised when the lightning invoice is for a different Bitcoin network.
+        #[error("Invalid network: {err}")]
+        InvalidNetwork { err: String },
+
+        /// This error is raised when the decoded LNURL URI is not compliant to the specification.
+        #[error("Invalid uri: {err}")]
+        InvalidUri { err: String },
+
+        /// This error is raised when the lightning invoice has passed it's expiry time.
+        #[error("Invoice expired: {err}")]
+        InvoiceExpired { err: String },
+
+        /// This error is raised when attempting to make a payment by the node fails.
+        #[error("Payment failed: {err}")]
+        PaymentFailed { err: String },
+
+        /// This error is raised when attempting to make a payment takes too long.
+        #[error("Payment timeout: {err}")]
+        PaymentTimeout { err: String },
+
+        /// This error is raised when no route can be found when attempting to make a
+        /// payment by the node.
+        #[error("Route not found: {err}")]
+        RouteNotFound { err: String },
+
+        /// This error is raised when the route is considered too expensive when
+        /// attempting to make a payment by the node.
+        #[error("Route too expensive: {err}")]
+        RouteTooExpensive { err: String },
+
+        /// This error is raised when a connection to an external service fails.
+        #[error("Service connectivity: {err}")]
+        ServiceConnectivity { err: String },
+    }
+
+    impl From<anyhow::Error> for LnUrlPayError {
+        fn from(err: anyhow::Error) -> Self {
+            Self::Generic {
+                err: err.to_string(),
+            }
+        }
+    }
+
+    impl From<bitcoin::hashes::hex::Error> for LnUrlPayError {
+        fn from(err: bitcoin::hashes::hex::Error) -> Self {
+            Self::Generic {
+                err: err.to_string(),
+            }
+        }
+    }
+
+    impl From<InvoiceError> for LnUrlPayError {
+        fn from(value: InvoiceError) -> Self {
+            match value {
+                InvoiceError::InvalidNetwork(err) => Self::InvalidNetwork { err },
+                InvoiceError::Validation(err) => Self::InvalidInvoice { err },
+                InvoiceError::Generic(err) => Self::Generic { err },
+            }
+        }
+    }
+
+    impl From<LnUrlError> for LnUrlPayError {
+        fn from(value: LnUrlError) -> Self {
+            match value {
+                LnUrlError::InvalidUri(err) => Self::InvalidUri { err },
+                LnUrlError::InvalidInvoice(err) => Self::InvalidInvoice { err },
+                LnUrlError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
+                _ => Self::Generic {
+                    err: value.to_string(),
+                },
+            }
         }
     }
 }
