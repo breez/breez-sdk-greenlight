@@ -4,10 +4,11 @@ pub mod specs;
 
 use super::prelude::*;
 
-// TODO return to pub(crate)
 /// Replaces the scheme, host and port with a local mockito host. Preserves the rest of the path.
 #[cfg(test)]
-pub fn maybe_replace_host_with_mockito_test_host(lnurl_endpoint: String) -> LnUrlResult<String> {
+pub(crate) fn maybe_replace_host_with_mockito_test_host(
+    lnurl_endpoint: String,
+) -> LnUrlResult<String> {
     // During tests, the mockito test URL chooses a free port. This cannot be known in advance,
     // so the URL has to be adjusted dynamically.
 
@@ -26,9 +27,10 @@ pub fn maybe_replace_host_with_mockito_test_host(lnurl_endpoint: String) -> LnUr
     Ok(parsed_lnurl_endpoint.to_string())
 }
 
-// TODO return to pub(crate)
 #[cfg(not(test))]
-pub fn maybe_replace_host_with_mockito_test_host(lnurl_endpoint: String) -> LnUrlResult<String> {
+pub(crate) fn maybe_replace_host_with_mockito_test_host(
+    lnurl_endpoint: String,
+) -> LnUrlResult<String> {
     // When not called from a test, we fallback to keeping the URL intact
     Ok(lnurl_endpoint)
 }
