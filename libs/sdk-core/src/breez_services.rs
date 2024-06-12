@@ -2745,17 +2745,10 @@ pub(crate) mod tests {
 
     use crate::breez_services::{BreezServices, BreezServicesBuilder};
     use crate::fiat::Rate;
-    use crate::lnurl::pay::model::MessageSuccessActionData;
-    use crate::lnurl::pay::model::SuccessActionProcessed;
     use crate::models::{LnPaymentDetails, NodeState, Payment, PaymentDetails, PaymentTypeFilter};
     use crate::node_api::NodeAPI;
-    use crate::{
-        input_parser, parse_short_channel_id, test_utils::*, BuyBitcoinProvider, BuyBitcoinRequest,
-        FullReverseSwapInfo, InputType, ListPaymentsRequest, OpeningFeeParams, PaymentStatus,
-        ReceivePaymentRequest, ReverseSwapInfo, ReverseSwapInfoCached, ReverseSwapStatus, SwapInfo,
-        SwapStatus,
-    };
-    use crate::{PaymentExternalInfo, PaymentType};
+    use crate::test_utils::*;
+    use crate::*;
 
     use super::{PaymentReceiver, Receiver};
 
@@ -3199,7 +3192,7 @@ pub(crate) mod tests {
         assert_eq!(parsed.host_str(), Some("mock.moonpay"));
         assert_eq!(parsed.path(), "/");
 
-        let wallet_address = input_parser::parse(query_pairs.get("wa").unwrap()).await?;
+        let wallet_address = parse(query_pairs.get("wa").unwrap()).await?;
         assert!(matches!(wallet_address, InputType::BitcoinAddress { .. }));
 
         let max_amount = query_pairs.get("ma").unwrap();

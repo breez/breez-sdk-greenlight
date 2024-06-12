@@ -4,7 +4,9 @@ mod lnurl;
 mod model;
 mod utils;
 
+#[rustfmt::skip]
 pub mod prelude {
+    pub use crate::*;
     pub use crate::input_parser::*;
     pub use crate::invoice::*;
     pub use crate::lnurl::error::*;
@@ -18,5 +20,4 @@ pub mod prelude {
     pub use crate::lnurl::*;
     pub use crate::model::*;
     pub use crate::utils::rest_client::*;
-    pub use crate::*;
 }

@@ -506,8 +506,8 @@ impl ToSql for PaymentStatus {
 
 #[test]
 fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
-    use crate::lnurl::pay::model::MessageSuccessActionData;
-    use crate::lnurl::pay::model::SuccessActionProcessed;
+    use sdk_common::prelude::*;
+
     use crate::models::{LnPaymentDetails, Payment, PaymentDetails};
     use crate::persist::test_utils;
 
