@@ -155,7 +155,7 @@
 //!
 //! Join this [telegram group](https://t.me/breezsdk).
 
-mod bridge_generated; /* AUTO INJECTED BY flutter_rust_bridge. This line may not be accurate, and you can change it according to your needs. */
+mod frb_generated; /* AUTO INJECTED BY flutter_rust_bridge. This line may not be accurate, and you can change it according to your needs. */
 #[macro_use]
 extern crate log;
 
@@ -173,22 +173,23 @@ pub mod error;
 #[rustfmt::skip]
 mod node_api; // flutter_rust_bridge_codegen: has to be defined before greenlight; greenlight::node_api
 mod greenlight;
-// GRPC structs are documented as follows:
-// - if they are mirrored in Rust model structs, documented in the model structs
-// - if there is no corresponding model struct, documented in breez.proto
-mod grpc;
 #[rustfmt::skip]
 mod fiat; // flutter_rust_bridge_codegen: has to be defined after grpc; grpc::Rate
+#[rustfmt::skip]
+mod models;
 mod lsp;
 mod lsps0;
 mod lsps2;
-mod models;
 mod moonpay;
 mod persist;
 mod support;
 mod swap_in;
 mod swap_out;
 mod tonic_wrap;
+// GRPC structs are documented as follows:
+// - if they are mirrored in Rust model structs, documented in the model structs
+// - if there is no corresponding model struct, documented in breez.proto
+mod grpc;
 
 // Re-use crates from gl_client for consistency
 use gl_client::bitcoin;
