@@ -112,7 +112,7 @@ fn validate_invoice(user_amount_msat: u64, bolt11: &str, network: Network) -> Ln
     }
 }
 
-pub(crate) mod model {
+pub mod model {
     use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
     use anyhow::Result;
     use rusqlite::types::{FromSql, FromSqlError, ToSqlOutput};
