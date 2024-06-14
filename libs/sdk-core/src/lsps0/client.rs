@@ -9,6 +9,7 @@ pub struct ListProtocolsRequest {}
 
 #[derive(Debug, Deserialize)]
 pub struct ListProtocolsResponse {
+    #[allow(dead_code)]
     pub protocols: Vec<i32>,
 }
 
