@@ -871,17 +871,8 @@ class LnUrlPayRequestData {
 }
 
 class LnUrlWithdrawRequest {
-  /// Request data containing information on how to call the lnurl withdraw
-  /// endpoint. Typically retrieved by calling `parse()` on a lnurl withdraw
-  /// input.
   final LnUrlWithdrawRequestData data;
-
-  /// The amount to withdraw from the lnurl withdraw endpoint. Must be between
-  /// `min_withdrawable` and `max_withdrawable`.
   final int amountMsat;
-
-  /// Optional description that will be put in the payment request for the
-  /// lnurl withdraw endpoint.
   final String? description;
 
   const LnUrlWithdrawRequest({

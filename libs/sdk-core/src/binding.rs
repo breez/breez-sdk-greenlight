@@ -24,7 +24,7 @@ use tokio::sync::Mutex;
 use crate::breez_services::{self, BreezEvent, BreezServices, EventListener};
 use crate::chain::RecommendedFees;
 use crate::error::{
-    ConnectError, LnUrlAuthError, LnUrlWithdrawError, ReceiveOnchainError, ReceivePaymentError,
+    ConnectError, LnUrlAuthError, ReceiveOnchainError, ReceivePaymentError,
     SdkError, SendOnchainError, SendPaymentError,
 };
 use crate::fiat::{FiatCurrency, Rate};

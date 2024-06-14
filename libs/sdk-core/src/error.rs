@@ -139,58 +139,7 @@ impl From<SendPaymentError> for LnUrlPayError {
     }
 }
 
-/// Error returned by [crate::breez_services::BreezServices::lnurl_withdraw]
-#[derive(Debug, Error)]
-pub enum LnUrlWithdrawError {
-    /// This error is raised when a general error occurs not specific to other error variants
-    /// in this enum.
-    #[error("Generic: {err}")]
-    Generic { err: String },
 
-    /// This error is raised when the amount is zero or the amount does not cover
-    /// the cost to open a new channel.
-    #[error("Invalid amount: {err}")]
-    InvalidAmount { err: String },
-
-    /// This error is raised when the lightning invoice cannot be parsed.
-    #[error("Invalid invoice: {err}")]
-    InvalidInvoice { err: String },
-
-    /// This error is raised when the decoded LNURL URI is not compliant to the specification.
-    #[error("Invalid uri: {err}")]
-    InvalidUri { err: String },
-
-    /// This error is raised when no routing hints were able to be added to the invoice
-    /// while trying to receive a payment.
-    #[error("No routing hints: {err}")]
-    InvoiceNoRoutingHints { err: String },
-
-    /// This error is raised when a connection to an external service fails.
-    #[error("Service connectivity: {err}")]
-    ServiceConnectivity { err: String },
-}
-
-impl From<InvoiceError> for LnUrlWithdrawError {
-    fn from(value: InvoiceError) -> Self {
-        match value {
-            InvoiceError::Validation(err) => Self::InvalidInvoice { err },
-            _ => Self::Generic {
-                err: value.to_string(),
-            },
-        }
-    }
-}
-
-impl From<LnUrlError> for LnUrlWithdrawError {
-    fn from(value: LnUrlError) -> Self {
-        match value {
-            LnUrlError::Generic(err) => Self::Generic { err },
-            LnUrlError::InvalidUri(err) => Self::InvalidUri { err },
-            LnUrlError::InvalidInvoice(err) => Self::InvalidInvoice { err },
-            LnUrlError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
-        }
-    }
-}
 
 impl From<PersistError> for LnUrlWithdrawError {
     fn from(err: PersistError) -> Self {

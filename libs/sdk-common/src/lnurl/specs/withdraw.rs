@@ -63,8 +63,25 @@ fn build_withdraw_callback_url(
 
 pub mod model {
     use serde::{Deserialize, Serialize};
+    use thiserror::Error;
 
     use crate::prelude::*;
+
+    #[derive(Debug, Serialize, Deserialize)]
+    pub struct LnUrlWithdrawRequest {
+        /// Request data containing information on how to call the lnurl withdraw
+        /// endpoint. Typically retrieved by calling `parse()` on a lnurl withdraw
+        /// input.
+        pub data: LnUrlWithdrawRequestData,
+
+        /// The amount to withdraw from the lnurl withdraw endpoint. Must be between
+        /// `min_withdrawable` and `max_withdrawable`.
+        pub amount_msat: u64,
+
+        /// Optional description that will be put in the payment request for the
+        /// lnurl withdraw endpoint.
+        pub description: Option<String>,
+    }
 
     /// Wrapped in a [LnUrlWithdraw], this is the result of [parse] when given a LNURL-withdraw endpoint.
     ///
@@ -93,6 +110,58 @@ pub mod model {
     #[derive(Clone, Deserialize, Debug, Serialize)]
     pub struct LnUrlWithdrawSuccessData {
         pub invoice: LNInvoice,
+    }
+
+    #[derive(Debug, Error)]
+    pub enum LnUrlWithdrawError {
+        /// This error is raised when a general error occurs not specific to other error variants
+        /// in this enum.
+        #[error("Generic: {err}")]
+        Generic { err: String },
+
+        /// This error is raised when the amount is zero or the amount does not cover
+        /// the cost to open a new channel.
+        #[error("Invalid amount: {err}")]
+        InvalidAmount { err: String },
+
+        /// This error is raised when the lightning invoice cannot be parsed.
+        #[error("Invalid invoice: {err}")]
+        InvalidInvoice { err: String },
+
+        /// This error is raised when the decoded LNURL URI is not compliant to the specification.
+        #[error("Invalid uri: {err}")]
+        InvalidUri { err: String },
+
+        /// This error is raised when no routing hints were able to be added to the invoice
+        /// while trying to receive a payment.
+        #[error("No routing hints: {err}")]
+        InvoiceNoRoutingHints { err: String },
+
+        /// This error is raised when a connection to an external service fails.
+        #[error("Service connectivity: {err}")]
+        ServiceConnectivity { err: String },
+    }
+
+    impl From<InvoiceError> for LnUrlWithdrawError {
+        fn from(value: InvoiceError) -> Self {
+            match value {
+                InvoiceError::Validation(err) => Self::InvalidInvoice { err },
+                _ => Self::Generic {
+                    err: value.to_string(),
+                },
+            }
+        }
+    }
+
+    impl From<LnUrlError> for LnUrlWithdrawError {
+        fn from(value: LnUrlError) -> Self {
+            match value {
+                LnUrlError::Generic(err) => Self::Generic { err },
+                LnUrlError::InvalidUri(err) => Self::InvalidUri { err },
+                LnUrlError::InvalidInvoice(err) => Self::InvalidInvoice { err },
+                LnUrlError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
+            }
+        }
     }
 }
 

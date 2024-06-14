@@ -31,7 +31,7 @@ use crate::persist::swap::SwapChainInfo;
 use crate::swap_in::error::{SwapError, SwapResult};
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
-use crate::{ensure_sdk, LnUrlWithdrawRequestData};
+use crate::ensure_sdk;
 
 pub const SWAP_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60 * 24 * 2; // 2 days
 pub const INVOICE_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60; // 60 minutes
@@ -1503,22 +1503,6 @@ pub struct UnspentTransactionOutput {
     pub address: String,
     #[serde(default)]
     pub reserved: bool,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct LnUrlWithdrawRequest {
-    /// Request data containing information on how to call the lnurl withdraw
-    /// endpoint. Typically retrieved by calling `parse()` on a lnurl withdraw
-    /// input.
-    pub data: LnUrlWithdrawRequestData,
-
-    /// The amount to withdraw from the lnurl withdraw endpoint. Must be between
-    /// `min_withdrawable` and `max_withdrawable`.
-    pub amount_msat: u64,
-
-    /// Optional description that will be put in the payment request for the
-    /// lnurl withdraw endpoint.
-    pub description: Option<String>,
 }
 
 /// Different providers will demand different behaviours when the user is trying to buy bitcoin.

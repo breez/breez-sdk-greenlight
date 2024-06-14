@@ -70,14 +70,6 @@ dictionary LnUrlPayRequestData {
     string? ln_address;
 };
 
-dictionary LnUrlWithdrawRequestData {
-    string callback;
-    string k1;
-    string default_description;
-    u64 min_withdrawable;
-    u64 max_withdrawable;
-};
-
 dictionary LnUrlAuthRequestData {
     string k1;
     string domain;
@@ -149,6 +141,30 @@ dictionary MetadataItem {
     string value;
 };
 
+dictionary LnUrlWithdrawRequest {
+    LnUrlWithdrawRequestData data;
+    u64 amount_msat;
+    string? description = null;
+};
+
+dictionary LnUrlWithdrawRequestData {
+    string callback;
+    string k1;
+    string default_description;
+    u64 min_withdrawable;
+    u64 max_withdrawable;
+};
+
+[Error]
+enum LnUrlWithdrawError {
+    "Generic",
+    "InvalidAmount",
+    "InvalidInvoice",
+    "InvalidUri",
+    "ServiceConnectivity",
+    "InvoiceNoRoutingHints",
+};
+
 // END sdk-common mirror imports
 ////////////////////////////////
 
@@ -191,16 +207,6 @@ enum LnUrlAuthError {
     "Generic",
     "InvalidUri",
     "ServiceConnectivity",
-};
-
-[Error]
-enum LnUrlWithdrawError {
-    "Generic",
-    "InvalidAmount",
-    "InvalidInvoice",
-    "InvalidUri",
-    "ServiceConnectivity",
-    "InvoiceNoRoutingHints",
 };
 
 [Error]
@@ -693,12 +699,6 @@ dictionary ReverseSwapInfo {
 interface LnUrlCallbackStatus {
     Ok();
     ErrorStatus(LnUrlErrorData data);
-};
-
-dictionary LnUrlWithdrawRequest {
-    LnUrlWithdrawRequestData data;
-    u64 amount_msat;
-    string? description = null;
 };
 
 [Enum]

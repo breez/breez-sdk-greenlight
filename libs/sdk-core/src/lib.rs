@@ -300,6 +300,13 @@ pub struct _LnUrlPayRequestData {
     pub ln_address: Option<String>,
 }
 
+#[frb(mirror(LnUrlWithdrawRequest))]
+pub struct _LnUrlWithdrawRequest {
+    pub data: LnUrlWithdrawRequestData,
+    pub amount_msat: u64,
+    pub description: Option<String>,
+}
+
 #[frb(mirror(LnUrlWithdrawRequestData))]
 pub struct _LnUrlWithdrawRequestData {
     pub callback: String,
