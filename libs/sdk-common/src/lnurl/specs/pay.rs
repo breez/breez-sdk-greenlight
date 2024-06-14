@@ -61,9 +61,7 @@ pub fn build_pay_callback_url(
         url.query_pairs_mut().append_pair("comment", comment);
     }
 
-    let mut callback_url = url.to_string();
-    callback_url = maybe_replace_host_with_mockito_test_host(callback_url)?;
-    Ok(callback_url)
+    Ok(url.to_string())
 }
 
 pub fn validate_user_input(

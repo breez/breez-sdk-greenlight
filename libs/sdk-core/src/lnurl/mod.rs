@@ -1,37 +1,20 @@
 pub(crate) mod pay;
+mod withdraw;
 
 #[cfg(test)]
 mod tests {
-    use sdk_common::prelude::*;
+    use std::sync::Mutex;
 
-    /// Replaces the scheme, host and port with a local mockito host. Preserves the rest of the path.
-    #[cfg(test)]
-    pub(crate) fn maybe_replace_host_with_mockito_test_host(
-        lnurl_endpoint: String,
-    ) -> LnUrlResult<String> {
-        // During tests, the mockito test URL chooses a free port. This cannot be known in advance,
-        // so the URL has to be adjusted dynamically.
+    use mockito::Server;
+    use once_cell::sync::Lazy;
 
-        let server = crate::lnurl::pay::tests::MOCK_HTTP_SERVER.lock().unwrap();
-        let mockito_endpoint_url = reqwest::Url::parse(&server.url())
-            .map_err(|e| LnUrlError::InvalidUri(e.to_string()))?;
-        let mut parsed_lnurl_endpoint = reqwest::Url::parse(&lnurl_endpoint)
-            .map_err(|e| LnUrlError::InvalidUri(e.to_string()))?;
-
-        parsed_lnurl_endpoint
-            .set_host(mockito_endpoint_url.host_str())
-            .map_err(|e| LnUrlError::InvalidUri(e.to_string()))?;
-        let _ = parsed_lnurl_endpoint.set_scheme(mockito_endpoint_url.scheme());
-        let _ = parsed_lnurl_endpoint.set_port(mockito_endpoint_url.port());
-
-        Ok(parsed_lnurl_endpoint.to_string())
-    }
-
-    #[cfg(not(test))]
-    pub(crate) fn maybe_replace_host_with_mockito_test_host(
-        lnurl_endpoint: String,
-    ) -> LnUrlResult<String> {
-        // When not called from a test, we fallback to keeping the URL intact
-        Ok(lnurl_endpoint)
-    }
+    pub(crate) static MOCK_HTTP_SERVER: Lazy<Mutex<Server>> = Lazy::new(|| {
+        let opts = mockito::ServerOpts {
+            host: "127.0.0.1",
+            port: 8080,
+            ..Default::default()
+        };
+        let server = Server::new_with_opts(opts);
+        Mutex::new(server)
+    });
 }

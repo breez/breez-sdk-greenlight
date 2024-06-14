@@ -17,7 +17,7 @@ use crate::prelude::*;
 /// ## On-chain BTC addresses (incl. BIP 21 URIs)
 ///
 /// ```
-/// use breez_sdk_core::{InputType::*, parse};
+/// use sdk_common::prelude::{InputType::*, parse};
 ///
 /// #[tokio::main]
 /// async fn main() {
@@ -38,7 +38,7 @@ use crate::prelude::*;
 /// ## BOLT 11 invoices
 ///
 /// ```
-/// use breez_sdk_core::{InputType::*, parse};
+/// use sdk_common::prelude::{InputType::*, parse};
 ///
 /// #[tokio::main]
 /// async fn main() {
@@ -55,7 +55,7 @@ use crate::prelude::*;
 /// ## Web URLs
 ///
 /// ```
-/// use breez_sdk_core::{InputType::*, parse};
+/// use sdk_common::prelude::{InputType::*, parse};
 ///
 /// #[tokio::main]
 /// async fn main() {
@@ -68,7 +68,7 @@ use crate::prelude::*;
 /// ### Web URLs with `lightning` query param with an LNURL value.
 ///
 /// ```no_run
-/// use breez_sdk_core::{InputType::*, parse};
+/// use sdk_common::prelude::{InputType::*, parse};
 ///
 /// #[tokio::main]
 /// async fn main() {
@@ -84,7 +84,7 @@ use crate::prelude::*;
 /// ### LNURL pay request
 ///
 /// ```no_run
-/// use breez_sdk_core::{InputType::*, LnUrlRequestData::*, parse};
+/// use sdk_common::prelude::{InputType::*, LnUrlRequestData::*, parse};
 /// use anyhow::Result;
 ///
 /// #[tokio::main]
@@ -112,7 +112,7 @@ use crate::prelude::*;
 /// ### LNURL withdraw request
 ///
 /// ```no_run
-/// use breez_sdk_core::{InputType::*, LnUrlRequestData::*, parse};
+/// use sdk_common::prelude::{InputType::*, LnUrlRequestData::*, parse};
 ///
 /// #[tokio::main]
 /// async fn main() {
@@ -136,7 +136,7 @@ use crate::prelude::*;
 /// ### LNURL auth request
 ///
 /// ```no_run
-/// use breez_sdk_core::{InputType::*, LnUrlRequestData::*, parse};
+/// use sdk_common::prelude::{InputType::*, LnUrlRequestData::*, parse};
 ///
 /// #[tokio::main]
 /// async fn main() {
@@ -594,23 +594,28 @@ impl From<Uri<'_>> for BitcoinAddressData {
 pub(crate) mod tests {
     use std::sync::Mutex;
 
-    use anyhow::anyhow;
-    use anyhow::Result;
-    use mockito::{Mock, Server, ServerGuard};
-    use once_cell::sync::Lazy;
-
-    use crate::input_parser::*;
-    use crate::models::Network;
+    use anyhow::{anyhow, Result};
     use bitcoin::bech32;
     use bitcoin::bech32::{ToBase32, Variant};
     use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
+    use mockito::{Mock, Server};
+    use once_cell::sync::Lazy;
+
+    use crate::input_parser::*;
 
     /// Mock server used in tests. As the server is shared between tests,
     /// we should not mock the same url twice with two different outputs,
     /// one way to do so is to add a random string that will be a differentiator
     /// in the URL.
-    pub(crate) static MOCK_HTTP_SERVER: Lazy<Mutex<ServerGuard>> =
-        Lazy::new(|| Mutex::new(Server::new()));
+    pub(crate) static MOCK_HTTP_SERVER: Lazy<Mutex<Server>> = Lazy::new(|| {
+        let opts = mockito::ServerOpts {
+            host: "127.0.0.1",
+            port: 8080,
+            ..Default::default()
+        };
+        let server = Server::new_with_opts(opts);
+        Mutex::new(server)
+    });
 
     #[tokio::test]
     async fn test_generic_invalid_input() -> Result<(), Box<dyn std::error::Error>> {

@@ -20,22 +20,20 @@ pub struct WrappedLnUrlPaySuccessData {
 
 #[cfg(test)]
 pub(crate) mod tests {
-    use std::sync::{Arc, Mutex};
-
-    use crate::bitcoin::hashes::{sha256, Hash};
-    use crate::lnurl::pay::*;
-    use crate::{breez_services::tests::get_dummy_node_state, lnurl::pay::*};
-    use crate::{test_utils::*, LnUrlPayRequest};
+    use std::sync::Arc;
 
     use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
     use anyhow::{anyhow, Result};
     use gl_client::bitcoin::hashes::hex::ToHex;
     use gl_client::signer::model::greenlight::PayStatus;
-    use mockito::{Mock, Server, ServerGuard};
-    use once_cell::sync::Lazy;
+    use mockito::Mock;
     use rand::random;
 
-    pub static MOCK_HTTP_SERVER: Lazy<Mutex<ServerGuard>> = Lazy::new(|| Mutex::new(Server::new()));
+    use crate::bitcoin::hashes::{sha256, Hash};
+    use crate::breez_services::tests::get_dummy_node_state;
+    use crate::lnurl::pay::*;
+    use crate::lnurl::tests::MOCK_HTTP_SERVER;
+    use crate::{test_utils::*, LnUrlPayRequest};
 
     struct LnurlPayCallbackParams<'a> {
         pay_req: &'a LnUrlPayRequestData,
@@ -208,7 +206,7 @@ pub(crate) mod tests {
     "successAction": {
         "tag":"url",
         "description":"test description",
-        "url":"https://localhost/test-url"
+        "url":"http://localhost:8080/test-url"
     }
 }
         "#
@@ -298,7 +296,7 @@ pub(crate) mod tests {
             max_sendable,
             comment_allowed: comment_len,
             metadata_str: "".into(),
-            callback: "https://localhost/callback".into(),
+            callback: "http://localhost:8080/callback".into(),
             domain: "localhost".into(),
             allows_nostr: false,
             nostr_pubkey: None,
@@ -798,7 +796,8 @@ pub(crate) mod tests {
                         ..
                     },
             } => {
-                if url.url == "https://localhost/test-url" && url.description == "test description"
+                if url.url == "http://localhost:8080/test-url"
+                    && url.description == "test description"
                 {
                     Ok(())
                 } else {

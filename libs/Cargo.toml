@@ -26,6 +26,8 @@ hex = "0.4"
 lightning = "=0.0.116" # Same version as used in gl-client
 lightning-invoice = "=0.24.0" # Same version as used in gl-client
 log = "0.4"
+mockito = "1"
+once_cell = "1"
 regex = "1.8.1"
 reqwest = { version = "=0.11.20", features = ["json"] }
 rusqlite = { version = "0.29", features = [
@@ -40,5 +42,6 @@ serde_json = "1.0"
 strum = "0.25"
 strum_macros = "0.25"
 thiserror = "1.0.56"
+tokio = { version = "1", features = ["full"] }
 uniffi = "0.23.0"
 uniffi_macros = "0.23.0"

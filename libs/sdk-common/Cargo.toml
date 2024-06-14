@@ -22,3 +22,8 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 strum_macros = { workspace = true }
 thiserror = { workspace = true }
+
+[dev-dependencies]
+mockito = { workspace = true }
+tokio = { workspace = true }
+once_cell = { workspace = true }
