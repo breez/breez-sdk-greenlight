@@ -463,8 +463,6 @@ dependencies = [
  "aes",
  "anyhow",
  "base64 0.13.1",
- "bip21",
- "cbc",
  "chrono",
  "const_format",
  "ecies",
@@ -479,14 +477,13 @@ dependencies = [
  "once_cell",
  "openssl",
  "prost",
- "querystring",
  "rand",
  "regex",
  "reqwest",
  "ripemd",
  "rusqlite",
  "rusqlite_migration",
- "sdk-lnurl",
+ "sdk-common",
  "serde",
  "serde_json",
  "serde_with",
@@ -2591,17 +2588,26 @@ dependencies = [
 ]
 
 [[package]]
-name = "sdk-lnurl"
+name = "sdk-common"
 version = "0.4.1"
 dependencies = [
  "aes",
+ "anyhow",
  "base64 0.13.1",
+ "bip21",
  "bitcoin 0.29.2",
+ "cbc",
  "hex",
+ "lightning",
+ "lightning-invoice",
  "log",
+ "querystring",
+ "regex",
  "reqwest",
+ "rusqlite",
  "serde",
  "serde_json",
+ "strum_macros",
  "thiserror",
 ]
 

@@ -20,6 +20,7 @@ use crate::bitcoin::hashes::{sha256, Hash};
 use crate::bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use crate::bitcoin::{Address, Script};
 use crate::breez_services::BreezServer;
+use crate::ensure_sdk;
 use crate::error::SdkResult;
 use crate::fiat::{FiatCurrency, Rate};
 use crate::grpc::{
@@ -31,7 +32,6 @@ use crate::persist::swap::SwapChainInfo;
 use crate::swap_in::error::{SwapError, SwapResult};
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
-use crate::ensure_sdk;
 
 pub const SWAP_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60 * 24 * 2; // 2 days
 pub const INVOICE_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60; // 60 minutes

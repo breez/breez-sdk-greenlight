@@ -1410,39 +1410,6 @@ enum BreezSDKMapper {
         return lnUrlPayRequestDataList.map { v -> [String: Any?] in dictionaryOf(lnUrlPayRequestData: v) }
     }
 
-    static func asLnUrlPaySuccessData(lnUrlPaySuccessData: [String: Any?]) throws -> LnUrlPaySuccessData {
-        var successAction: SuccessActionProcessed?
-        if let successActionTmp = lnUrlPaySuccessData["successAction"] as? [String: Any?] {
-            successAction = try asSuccessActionProcessed(successActionProcessed: successActionTmp)
-        }
-
-        return LnUrlPaySuccessData(
-            successAction: successAction)
-    }
-
-    static func dictionaryOf(lnUrlPaySuccessData: LnUrlPaySuccessData) -> [String: Any?] {
-        return [
-            "successAction": lnUrlPaySuccessData.successAction == nil ? nil : dictionaryOf(successActionProcessed: lnUrlPaySuccessData.successAction!),
-        ]
-    }
-
-    static func asLnUrlPaySuccessDataList(arr: [Any]) throws -> [LnUrlPaySuccessData] {
-        var list = [LnUrlPaySuccessData]()
-        for value in arr {
-            if let val = value as? [String: Any?] {
-                var lnUrlPaySuccessData = try asLnUrlPaySuccessData(lnUrlPaySuccessData: val)
-                list.append(lnUrlPaySuccessData)
-            } else {
-                throw SdkError.Generic(message: errUnexpectedType(typeName: "LnUrlPaySuccessData"))
-            }
-        }
-        return list
-    }
-
-    static func arrayOf(lnUrlPaySuccessDataList: [LnUrlPaySuccessData]) -> [Any] {
-        return lnUrlPaySuccessDataList.map { v -> [String: Any?] in dictionaryOf(lnUrlPaySuccessData: v) }
-    }
-
     static func asLnUrlWithdrawRequest(lnUrlWithdrawRequest: [String: Any?]) throws -> LnUrlWithdrawRequest {
         guard let dataTmp = lnUrlWithdrawRequest["data"] as? [String: Any?] else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "data", typeName: "LnUrlWithdrawRequest"))
@@ -4189,6 +4156,47 @@ enum BreezSDKMapper {
         return urlSuccessActionDataList.map { v -> [String: Any?] in dictionaryOf(urlSuccessActionData: v) }
     }
 
+    static func asWrappedLnUrlPaySuccessData(wrappedLnUrlPaySuccessData: [String: Any?]) throws -> WrappedLnUrlPaySuccessData {
+        var successAction: SuccessActionProcessed?
+        if let successActionTmp = wrappedLnUrlPaySuccessData["successAction"] as? [String: Any?] {
+            successAction = try asSuccessActionProcessed(successActionProcessed: successActionTmp)
+        }
+
+        guard let paymentTmp = wrappedLnUrlPaySuccessData["payment"] as? [String: Any?] else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "payment", typeName: "WrappedLnUrlPaySuccessData"))
+        }
+        let payment = try asPayment(payment: paymentTmp)
+
+        return WrappedLnUrlPaySuccessData(
+            successAction: successAction,
+            payment: payment
+        )
+    }
+
+    static func dictionaryOf(wrappedLnUrlPaySuccessData: WrappedLnUrlPaySuccessData) -> [String: Any?] {
+        return [
+            "successAction": wrappedLnUrlPaySuccessData.successAction == nil ? nil : dictionaryOf(successActionProcessed: wrappedLnUrlPaySuccessData.successAction!),
+            "payment": dictionaryOf(payment: wrappedLnUrlPaySuccessData.payment),
+        ]
+    }
+
+    static func asWrappedLnUrlPaySuccessDataList(arr: [Any]) throws -> [WrappedLnUrlPaySuccessData] {
+        var list = [WrappedLnUrlPaySuccessData]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var wrappedLnUrlPaySuccessData = try asWrappedLnUrlPaySuccessData(wrappedLnUrlPaySuccessData: val)
+                list.append(wrappedLnUrlPaySuccessData)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "WrappedLnUrlPaySuccessData"))
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(wrappedLnUrlPaySuccessDataList: [WrappedLnUrlPaySuccessData]) -> [Any] {
+        return wrappedLnUrlPaySuccessDataList.map { v -> [String: Any?] in dictionaryOf(wrappedLnUrlPaySuccessData: v) }
+    }
+
     static func asAesSuccessActionDataResult(aesSuccessActionDataResult: [String: Any?]) throws -> AesSuccessActionDataResult {
         let type = aesSuccessActionDataResult["type"] as! String
         if type == "decrypted" {
@@ -4801,81 +4809,6 @@ enum BreezSDKMapper {
                 list.append(lnUrlCallbackStatus)
             } else {
                 throw SdkError.Generic(message: errUnexpectedType(typeName: "LnUrlCallbackStatus"))
-            }
-        }
-        return list
-    }
-
-    static func asLnUrlPayResult(lnUrlPayResult: [String: Any?]) throws -> LnUrlPayResult {
-        let type = lnUrlPayResult["type"] as! String
-        if type == "endpointSuccess" {
-            guard let dataTmp = lnUrlPayResult["data"] as? [String: Any?] else {
-                throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "data", typeName: "LnUrlPayResult"))
-            }
-            let _data = try asLnUrlPaySuccessData(lnUrlPaySuccessData: dataTmp)
-
-            return LnUrlPayResult.endpointSuccess(data: _data)
-        }
-        if type == "endpointError" {
-            guard let dataTmp = lnUrlPayResult["data"] as? [String: Any?] else {
-                throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "data", typeName: "LnUrlPayResult"))
-            }
-            let _data = try asLnUrlErrorData(lnUrlErrorData: dataTmp)
-
-            return LnUrlPayResult.endpointError(data: _data)
-        }
-        if type == "payError" {
-            guard let dataTmp = lnUrlPayResult["data"] as? [String: Any?] else {
-                throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "data", typeName: "LnUrlPayResult"))
-            }
-            let _data = try asLnUrlPayErrorData(lnUrlPayErrorData: dataTmp)
-
-            return LnUrlPayResult.payError(data: _data)
-        }
-
-        throw SdkError.Generic(message: "Unexpected type \(type) for enum LnUrlPayResult")
-    }
-
-    static func dictionaryOf(lnUrlPayResult: LnUrlPayResult) -> [String: Any?] {
-        switch lnUrlPayResult {
-        case let .endpointSuccess(
-            data
-        ):
-            return [
-                "type": "endpointSuccess",
-                "data": dictionaryOf(lnUrlPaySuccessData: data),
-            ]
-
-        case let .endpointError(
-            data
-        ):
-            return [
-                "type": "endpointError",
-                "data": dictionaryOf(lnUrlErrorData: data),
-            ]
-
-        case let .payError(
-            data
-        ):
-            return [
-                "type": "payError",
-                "data": dictionaryOf(lnUrlPayErrorData: data),
-            ]
-        }
-    }
-
-    static func arrayOf(lnUrlPayResultList: [LnUrlPayResult]) -> [Any] {
-        return lnUrlPayResultList.map { v -> [String: Any?] in dictionaryOf(lnUrlPayResult: v) }
-    }
-
-    static func asLnUrlPayResultList(arr: [Any]) throws -> [LnUrlPayResult] {
-        var list = [LnUrlPayResult]()
-        for value in arr {
-            if let val = value as? [String: Any?] {
-                var lnUrlPayResult = try asLnUrlPayResult(lnUrlPayResult: val)
-                list.append(lnUrlPayResult)
-            } else {
-                throw SdkError.Generic(message: errUnexpectedType(typeName: "LnUrlPayResult"))
             }
         }
         return list
@@ -5543,6 +5476,81 @@ enum BreezSDKMapper {
                 list.append(swapStatus)
             } else {
                 throw SdkError.Generic(message: errUnexpectedType(typeName: "SwapStatus"))
+            }
+        }
+        return list
+    }
+
+    static func asWrappedLnUrlPayResult(wrappedLnUrlPayResult: [String: Any?]) throws -> WrappedLnUrlPayResult {
+        let type = wrappedLnUrlPayResult["type"] as! String
+        if type == "endpointSuccess" {
+            guard let dataTmp = wrappedLnUrlPayResult["data"] as? [String: Any?] else {
+                throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "data", typeName: "WrappedLnUrlPayResult"))
+            }
+            let _data = try asWrappedLnUrlPaySuccessData(wrappedLnUrlPaySuccessData: dataTmp)
+
+            return WrappedLnUrlPayResult.endpointSuccess(data: _data)
+        }
+        if type == "endpointError" {
+            guard let dataTmp = wrappedLnUrlPayResult["data"] as? [String: Any?] else {
+                throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "data", typeName: "WrappedLnUrlPayResult"))
+            }
+            let _data = try asLnUrlErrorData(lnUrlErrorData: dataTmp)
+
+            return WrappedLnUrlPayResult.endpointError(data: _data)
+        }
+        if type == "payError" {
+            guard let dataTmp = wrappedLnUrlPayResult["data"] as? [String: Any?] else {
+                throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "data", typeName: "WrappedLnUrlPayResult"))
+            }
+            let _data = try asLnUrlPayErrorData(lnUrlPayErrorData: dataTmp)
+
+            return WrappedLnUrlPayResult.payError(data: _data)
+        }
+
+        throw SdkError.Generic(message: "Unexpected type \(type) for enum WrappedLnUrlPayResult")
+    }
+
+    static func dictionaryOf(wrappedLnUrlPayResult: WrappedLnUrlPayResult) -> [String: Any?] {
+        switch wrappedLnUrlPayResult {
+        case let .endpointSuccess(
+            data
+        ):
+            return [
+                "type": "endpointSuccess",
+                "data": dictionaryOf(wrappedLnUrlPaySuccessData: data),
+            ]
+
+        case let .endpointError(
+            data
+        ):
+            return [
+                "type": "endpointError",
+                "data": dictionaryOf(lnUrlErrorData: data),
+            ]
+
+        case let .payError(
+            data
+        ):
+            return [
+                "type": "payError",
+                "data": dictionaryOf(lnUrlPayErrorData: data),
+            ]
+        }
+    }
+
+    static func arrayOf(wrappedLnUrlPayResultList: [WrappedLnUrlPayResult]) -> [Any] {
+        return wrappedLnUrlPayResultList.map { v -> [String: Any?] in dictionaryOf(wrappedLnUrlPayResult: v) }
+    }
+
+    static func asWrappedLnUrlPayResultList(arr: [Any]) throws -> [WrappedLnUrlPayResult] {
+        var list = [WrappedLnUrlPayResult]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var wrappedLnUrlPayResult = try asWrappedLnUrlPayResult(wrappedLnUrlPayResult: val)
+                list.append(wrappedLnUrlPayResult)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "WrappedLnUrlPayResult"))
             }
         }
         return list

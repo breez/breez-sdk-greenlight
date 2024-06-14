@@ -139,8 +139,6 @@ impl From<SendPaymentError> for LnUrlPayError {
     }
 }
 
-
-
 impl From<PersistError> for LnUrlWithdrawError {
     fn from(err: PersistError) -> Self {
         Self::Generic {
