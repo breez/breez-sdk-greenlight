@@ -6757,10 +6757,6 @@ typedef DartPostCObjectFnType
     = ffi.Pointer<ffi.NativeFunction<ffi.Bool Function(DartPort port_id, ffi.Pointer<ffi.Void> message)>>;
 typedef DartPort = ffi.Int64;
 
-const int MOCK_REVERSE_SWAP_MIN = 50000;
-
-const int MOCK_REVERSE_SWAP_MAX = 1000000;
-
 const int SWAP_PAYMENT_FEE_EXPIRY_SECONDS = 172800;
 
 const int INVOICE_PAYMENT_FEE_EXPIRY_SECONDS = 3600;

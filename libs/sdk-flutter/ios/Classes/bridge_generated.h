@@ -3,10 +3,6 @@
 #include <stdlib.h>
 typedef struct _Dart_Handle* Dart_Handle;
 
-#define MOCK_REVERSE_SWAP_MIN 50000
-
-#define MOCK_REVERSE_SWAP_MAX 1000000
-
 #define SWAP_PAYMENT_FEE_EXPIRY_SECONDS (((60 * 60) * 24) * 2)
 
 #define INVOICE_PAYMENT_FEE_EXPIRY_SECONDS (60 * 60)
