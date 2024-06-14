@@ -1,4 +1,4 @@
-mod input_parser;
+pub mod input_parser;
 pub mod invoice;
 mod lnurl;
 mod model;
