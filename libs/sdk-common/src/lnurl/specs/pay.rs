@@ -169,7 +169,6 @@ pub mod model {
 
     #[derive(Clone, Serialize, Deserialize, Debug)]
     pub struct LnUrlPaySuccessData {
-        // pub payment: Payment, // TODO How to handle Payment?
         pub success_action: Option<SuccessActionProcessed>,
     }
 

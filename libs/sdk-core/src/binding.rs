@@ -28,6 +28,7 @@ use crate::error::{
     SdkError, SendOnchainError, SendPaymentError,
 };
 use crate::fiat::{FiatCurrency, Rate};
+use crate::lnurl::pay::WrappedLnUrlPayResult;
 use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
 use crate::{
@@ -323,7 +324,7 @@ pub fn receive_payment(req: ReceivePaymentRequest) -> Result<ReceivePaymentRespo
 /*  LNURL API's */
 
 /// See [BreezServices::lnurl_pay]
-pub fn lnurl_pay(req: LnUrlPayRequest) -> Result<LnUrlPayResult> {
+pub fn lnurl_pay(req: LnUrlPayRequest) -> Result<WrappedLnUrlPayResult> {
     block_on(async { get_breez_services().await?.lnurl_pay(req).await })
         .map_err(anyhow::Error::new::<LnUrlPayError>)
 }

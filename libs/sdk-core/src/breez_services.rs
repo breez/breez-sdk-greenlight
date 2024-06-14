@@ -44,6 +44,7 @@ use crate::grpc::signer_client::SignerClient;
 use crate::grpc::support_client::SupportClient;
 use crate::grpc::swapper_client::SwapperClient;
 use crate::grpc::{ChainApiServersRequest, PaymentInformation};
+use crate::lnurl::pay::*;
 use crate::lsp::LspInformation;
 use crate::models::{
     parse_short_channel_id, ChannelState, ClosedChannelPaymentDetails, Config, EnvironmentType,
@@ -356,7 +357,10 @@ impl BreezServices {
     /// is made.
     ///
     /// This method will return an [anyhow::Error] when any validation check fails.
-    pub async fn lnurl_pay(&self, req: LnUrlPayRequest) -> Result<LnUrlPayResult, LnUrlPayError> {
+    pub async fn lnurl_pay(
+        &self,
+        req: LnUrlPayRequest,
+    ) -> Result<WrappedLnUrlPayResult, LnUrlPayError> {
         match validate_lnurl_pay(
             req.amount_msat,
             &req.comment,
@@ -366,7 +370,7 @@ impl BreezServices {
         .await?
         {
             ValidatedCallbackResponse::EndpointError { data: e } => {
-                Ok(LnUrlPayResult::EndpointError { data: e })
+                Ok(WrappedLnUrlPayResult::EndpointError { data: e })
             }
             ValidatedCallbackResponse::EndpointSuccess { data: cb } => {
                 let pay_req = SendPaymentRequest {
@@ -383,7 +387,7 @@ impl BreezServices {
                         | SendPaymentError::ServiceConnectivity { .. },
                     ) => e,
                     Err(e) => {
-                        return Ok(LnUrlPayResult::PayError {
+                        return Ok(WrappedLnUrlPayResult::PayError {
                             data: LnUrlPayErrorData {
                                 payment_hash: invoice.payment_hash,
                                 reason: e.to_string(),
@@ -445,9 +449,9 @@ impl BreezServices {
                     },
                 )?;
 
-                Ok(LnUrlPayResult::EndpointSuccess {
-                    data: LnUrlPaySuccessData {
-                        // payment, // TODO How to handle Payment?
+                Ok(WrappedLnUrlPayResult::EndpointSuccess {
+                    data: WrappedLnUrlPaySuccessData {
+                        payment,
                         success_action: maybe_sa_processed,
                     },
                 })

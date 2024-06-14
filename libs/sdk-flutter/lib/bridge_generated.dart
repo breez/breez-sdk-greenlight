@@ -181,7 +181,7 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kReceivePaymentConstMeta;
 
   /// See [BreezServices::lnurl_pay]
-  Future<LnUrlPayResult> lnurlPay({required LnUrlPayRequest req, dynamic hint});
+  Future<WrappedLnUrlPayResult> lnurlPay({required LnUrlPayRequest req, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kLnurlPayConstMeta;
 
@@ -867,27 +867,6 @@ class LnUrlPayRequestData {
     required this.allowsNostr,
     this.nostrPubkey,
     this.lnAddress,
-  });
-}
-
-@freezed
-sealed class LnUrlPayResult with _$LnUrlPayResult {
-  const factory LnUrlPayResult.endpointSuccess({
-    required LnUrlPaySuccessData data,
-  }) = LnUrlPayResult_EndpointSuccess;
-  const factory LnUrlPayResult.endpointError({
-    required LnUrlErrorData data,
-  }) = LnUrlPayResult_EndpointError;
-  const factory LnUrlPayResult.payError({
-    required LnUrlPayErrorData data,
-  }) = LnUrlPayResult_PayError;
-}
-
-class LnUrlPaySuccessData {
-  final SuccessActionProcessed? successAction;
-
-  const LnUrlPaySuccessData({
-    this.successAction,
   });
 }
 
@@ -1967,6 +1946,29 @@ class UrlSuccessActionData {
   });
 }
 
+@freezed
+sealed class WrappedLnUrlPayResult with _$WrappedLnUrlPayResult {
+  const factory WrappedLnUrlPayResult.endpointSuccess({
+    required WrappedLnUrlPaySuccessData data,
+  }) = WrappedLnUrlPayResult_EndpointSuccess;
+  const factory WrappedLnUrlPayResult.endpointError({
+    required LnUrlErrorData data,
+  }) = WrappedLnUrlPayResult_EndpointError;
+  const factory WrappedLnUrlPayResult.payError({
+    required LnUrlPayErrorData data,
+  }) = WrappedLnUrlPayResult_PayError;
+}
+
+class WrappedLnUrlPaySuccessData {
+  final Payment payment;
+  final SuccessActionProcessed? successAction;
+
+  const WrappedLnUrlPaySuccessData({
+    required this.payment,
+    this.successAction,
+  });
+}
+
 class BreezSdkCoreImpl implements BreezSdkCore {
   final BreezSdkCorePlatform _platform;
   factory BreezSdkCoreImpl(ExternalLibrary dylib) => BreezSdkCoreImpl.raw(BreezSdkCorePlatform(dylib));
@@ -2530,11 +2532,11 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["req"],
       );
 
-  Future<LnUrlPayResult> lnurlPay({required LnUrlPayRequest req, dynamic hint}) {
+  Future<WrappedLnUrlPayResult> lnurlPay({required LnUrlPayRequest req, dynamic hint}) {
     var arg0 = _platform.api2wire_box_autoadd_ln_url_pay_request(req);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_lnurl_pay(port_, arg0),
-      parseSuccessData: _wire2api_ln_url_pay_result,
+      parseSuccessData: _wire2api_wrapped_ln_url_pay_result,
       parseErrorData: _wire2api_FrbAnyhowException,
       constMeta: kLnurlPayConstMeta,
       argValues: [req],
@@ -3134,10 +3136,6 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return _wire2api_ln_url_pay_request_data(raw);
   }
 
-  LnUrlPaySuccessData _wire2api_box_autoadd_ln_url_pay_success_data(dynamic raw) {
-    return _wire2api_ln_url_pay_success_data(raw);
-  }
-
   LnUrlWithdrawRequestData _wire2api_box_autoadd_ln_url_withdraw_request_data(dynamic raw) {
     return _wire2api_ln_url_withdraw_request_data(raw);
   }
@@ -3196,6 +3194,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   UrlSuccessActionData _wire2api_box_autoadd_url_success_action_data(dynamic raw) {
     return _wire2api_url_success_action_data(raw);
+  }
+
+  WrappedLnUrlPaySuccessData _wire2api_box_autoadd_wrapped_ln_url_pay_success_data(dynamic raw) {
+    return _wire2api_wrapped_ln_url_pay_success_data(raw);
   }
 
   BreezEvent _wire2api_breez_event(dynamic raw) {
@@ -3535,33 +3537,6 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       allowsNostr: _wire2api_bool(arr[6]),
       nostrPubkey: _wire2api_opt_String(arr[7]),
       lnAddress: _wire2api_opt_String(arr[8]),
-    );
-  }
-
-  LnUrlPayResult _wire2api_ln_url_pay_result(dynamic raw) {
-    switch (raw[0]) {
-      case 0:
-        return LnUrlPayResult_EndpointSuccess(
-          data: _wire2api_box_autoadd_ln_url_pay_success_data(raw[1]),
-        );
-      case 1:
-        return LnUrlPayResult_EndpointError(
-          data: _wire2api_box_autoadd_ln_url_error_data(raw[1]),
-        );
-      case 2:
-        return LnUrlPayResult_PayError(
-          data: _wire2api_box_autoadd_ln_url_pay_error_data(raw[1]),
-        );
-      default:
-        throw Exception("unreachable");
-    }
-  }
-
-  LnUrlPaySuccessData _wire2api_ln_url_pay_success_data(dynamic raw) {
-    final arr = raw as List<dynamic>;
-    if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
-    return LnUrlPaySuccessData(
-      successAction: _wire2api_opt_box_autoadd_success_action_processed(arr[0]),
     );
   }
 
@@ -4152,6 +4127,34 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return UrlSuccessActionData(
       description: _wire2api_String(arr[0]),
       url: _wire2api_String(arr[1]),
+    );
+  }
+
+  WrappedLnUrlPayResult _wire2api_wrapped_ln_url_pay_result(dynamic raw) {
+    switch (raw[0]) {
+      case 0:
+        return WrappedLnUrlPayResult_EndpointSuccess(
+          data: _wire2api_box_autoadd_wrapped_ln_url_pay_success_data(raw[1]),
+        );
+      case 1:
+        return WrappedLnUrlPayResult_EndpointError(
+          data: _wire2api_box_autoadd_ln_url_error_data(raw[1]),
+        );
+      case 2:
+        return WrappedLnUrlPayResult_PayError(
+          data: _wire2api_box_autoadd_ln_url_pay_error_data(raw[1]),
+        );
+      default:
+        throw Exception("unreachable");
+    }
+  }
+
+  WrappedLnUrlPaySuccessData _wire2api_wrapped_ln_url_pay_success_data(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return WrappedLnUrlPaySuccessData(
+      payment: _wire2api_payment(arr[0]),
+      successAction: _wire2api_opt_box_autoadd_success_action_processed(arr[1]),
     );
   }
 }

@@ -181,6 +181,7 @@ mod greenlight;
 mod grpc;
 #[rustfmt::skip]
 mod fiat; // flutter_rust_bridge_codegen: has to be defined after grpc; grpc::Rate
+mod lnurl;
 mod lsp;
 mod lsps0;
 mod lsps2;
@@ -204,6 +205,7 @@ pub use breez_services::{
 };
 pub use chain::RecommendedFees;
 pub use fiat::{CurrencyInfo, FiatCurrency, LocaleOverrides, LocalizedName, Rate, Symbol};
+pub use lnurl::pay::*;
 pub use lsp::LspInformation;
 pub use models::*;
 pub use sdk_common::prelude::*;
@@ -356,19 +358,6 @@ pub struct _MessageSuccessActionData {
 pub struct _UrlSuccessActionData {
     pub description: String,
     pub url: String,
-}
-
-#[frb(mirror(LnUrlPayResult))]
-pub enum _LnUrlPayResult {
-    EndpointSuccess { data: LnUrlPaySuccessData },
-    EndpointError { data: LnUrlErrorData },
-    PayError { data: LnUrlPayErrorData },
-}
-
-#[frb(mirror(LnUrlPaySuccessData))]
-pub struct _LnUrlPaySuccessData {
-    // pub payment: Payment, // TODO How to handle Payment?
-    pub success_action: Option<SuccessActionProcessed>,
 }
 
 #[frb(mirror(LnUrlPayErrorData))]
