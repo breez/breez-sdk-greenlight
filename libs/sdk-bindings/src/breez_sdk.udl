@@ -2,168 +2,7 @@
 // BEGIN sdk-common mirror imports
 // These are structs defined in sdk-common, which we want to make available in this project's UDL bindings
 
-dictionary LNInvoice {
-    string bolt11;
-    Network network;
-    string payee_pubkey;
-    string payment_hash;
-    string? description;
-    string? description_hash;
-    u64? amount_msat;
-    u64 timestamp;
-    u64 expiry;
-    sequence<RouteHint> routing_hints;
-    sequence<u8> payment_secret;
-    u64 min_final_cltv_expiry_delta;
-};
-
-enum Network {
-    "Bitcoin",
-    "Testnet",
-    "Signet",
-    "Regtest",
-};
-
-dictionary RouteHint {
-    sequence<RouteHintHop> hops;
-};
-
-dictionary RouteHintHop {
-     string src_node_id;
-     u64 short_channel_id;
-     u32 fees_base_msat;
-     u32 fees_proportional_millionths;
-     u64 cltv_expiry_delta;
-     u64? htlc_minimum_msat;
-     u64? htlc_maximum_msat;
-};
-
-[Enum]
-interface InputType {
-    BitcoinAddress(BitcoinAddressData address);
-    Bolt11(LNInvoice invoice);
-    NodeId(string node_id);
-    Url(string url);
-    LnUrlPay(LnUrlPayRequestData data);
-    LnUrlWithdraw(LnUrlWithdrawRequestData data);
-    LnUrlAuth(LnUrlAuthRequestData data);
-    LnUrlEndpointError(LnUrlErrorData data);
-};
-
-dictionary BitcoinAddressData {
-    string address;
-    Network network;
-    u64? amount_sat;
-    string? label;
-    string? message;
-};
-
-dictionary LnUrlPayRequestData {
-    string callback;
-    u64 min_sendable;
-    u64 max_sendable;
-    string metadata_str;
-    u16 comment_allowed;
-    string domain;
-    boolean allows_nostr;
-    string? nostr_pubkey;
-    string? ln_address;
-};
-
-dictionary LnUrlAuthRequestData {
-    string k1;
-    string domain;
-    string url;
-    string? action = null;
-};
-
-dictionary LnUrlErrorData {
-    string reason;
-};
-
-[Enum]
-interface SuccessActionProcessed {
-    Aes(AesSuccessActionDataResult result);
-    Message(MessageSuccessActionData data);
-    Url(UrlSuccessActionData data);
-};
-
-[Enum]
-interface AesSuccessActionDataResult {
-    Decrypted(AesSuccessActionDataDecrypted data);
-    ErrorStatus(string reason);
-};
-
-dictionary AesSuccessActionDataDecrypted {
-    string description;
-    string plaintext;
-};
-
-dictionary MessageSuccessActionData {
-    string message;
-};
-
-dictionary UrlSuccessActionData {
-    string description;
-    string url;
-};
-
-dictionary LnUrlPayErrorData {
-    string payment_hash;
-    string reason;
-};
-
-dictionary LnUrlPayRequest {
-    LnUrlPayRequestData data;
-    u64 amount_msat;
-    string? comment = null;
-    string? payment_label = null;
-};
-
-[Error]
-interface LnUrlPayError {
-    AlreadyPaid();
-    Generic(string err);
-    InvalidAmount(string err);
-    InvalidInvoice(string err);
-    InvalidNetwork(string err);
-    InvalidUri(string err);
-    InvoiceExpired(string err);
-    PaymentFailed(string err);
-    PaymentTimeout(string err);
-    RouteNotFound(string err);
-    RouteTooExpensive(string err);
-    ServiceConnectivity(string err);
-};
-
-dictionary MetadataItem {
-    string key;
-    string value;
-};
-
-dictionary LnUrlWithdrawRequest {
-    LnUrlWithdrawRequestData data;
-    u64 amount_msat;
-    string? description = null;
-};
-
-dictionary LnUrlWithdrawRequestData {
-    string callback;
-    string k1;
-    string default_description;
-    u64 min_withdrawable;
-    u64 max_withdrawable;
-};
-
-[Error]
-enum LnUrlWithdrawError {
-    "Generic",
-    "InvalidAmount",
-    "InvalidInvoice",
-    "InvalidUri",
-    "ServiceConnectivity",
-    "InvoiceNoRoutingHints",
-};
+// TODO Move matching UDL segments here
 
 // END sdk-common mirror imports
 ////////////////////////////////
@@ -173,21 +12,21 @@ enum LnUrlWithdrawError {
 // BEGIN sdk-common wrappers
 // These are connecting structures that glue relevant sdk-common structs to the SDK
 
-[Enum]
-interface WrappedLnUrlPayResult {
-    EndpointSuccess(WrappedLnUrlPaySuccessData data);
-    EndpointError(LnUrlErrorData data);
-    PayError(LnUrlPayErrorData data);
-};
-
-dictionary WrappedLnUrlPaySuccessData {
-    SuccessActionProcessed? success_action;
-    Payment payment;
-};
+// TODO Move matching UDL segments here
 
 // END sdk-common wrappers
 ////////////////////////////////
 
+
+dictionary RouteHintHop {
+     string src_node_id;
+     u64 short_channel_id;
+     u32 fees_base_msat;
+     u32 fees_proportional_millionths;
+     u64 cltv_expiry_delta;
+     u64? htlc_minimum_msat;
+     u64? htlc_maximum_msat;
+ };
 
 [Error]
 enum SdkError {
@@ -207,6 +46,32 @@ enum LnUrlAuthError {
     "Generic",
     "InvalidUri",
     "ServiceConnectivity",
+};
+
+[Error]
+enum LnUrlPayError {
+    "AlreadyPaid",
+    "Generic",
+    "InvalidAmount",
+    "InvalidInvoice",
+    "InvalidNetwork",
+    "InvalidUri",
+    "InvoiceExpired",
+    "PaymentFailed",
+    "PaymentTimeout",
+    "RouteNotFound",
+    "RouteTooExpensive",
+    "ServiceConnectivity",
+};
+
+[Error]
+enum LnUrlWithdrawError {
+    "Generic",
+    "InvalidAmount",
+    "InvalidInvoice",
+    "InvalidUri",
+    "ServiceConnectivity",
+    "InvoiceNoRoutingHints",
 };
 
 [Error]
@@ -258,6 +123,13 @@ enum EnvironmentType {
     "Staging",
 };
 
+enum Network {
+    "Bitcoin",
+    "Testnet",
+    "Signet",
+    "Regtest",
+};
+
 dictionary GreenlightCredentials {
     sequence<u8> device_key;
     sequence<u8> device_cert;
@@ -292,6 +164,25 @@ dictionary Config {
     NodeConfig node_config;
 };
 
+dictionary RouteHint {
+    sequence<RouteHintHop> hops;
+};
+
+dictionary LNInvoice {
+    string bolt11;
+    Network network;
+    string payee_pubkey;
+    string payment_hash;
+    string? description;
+    string? description_hash;
+    u64? amount_msat;
+    u64 timestamp;
+    u64 expiry;
+    sequence<RouteHint> routing_hints;
+    sequence<u8> payment_secret;
+    u64 min_final_cltv_expiry_delta;
+};
+
 dictionary UnspentTransactionOutput {
     sequence<u8> txid;
     u32 outnum;
@@ -312,7 +203,7 @@ dictionary NodeState {
     u64 max_single_payment_amount_msat;
     u64 max_chan_reserve_msats;
     sequence<string> connected_peers;
-    u64 inbound_liquidity_msats;    
+    u64 inbound_liquidity_msats;
 };
 
 dictionary ConfigureNodeRequest {
@@ -368,8 +259,8 @@ enum PaymentType {
 
 dictionary Payment {
     string id;
-    PaymentType payment_type;    
-    i64 payment_time;    
+    PaymentType payment_type;
+    i64 payment_time;
     u64 amount_msat;
     u64 fee_msat;
     PaymentStatus status;
@@ -398,6 +289,33 @@ interface PaymentDetails {
 dictionary TlvEntry {
     u64 field_number;
     sequence<u8> value;
+};
+
+[Enum]
+interface AesSuccessActionDataResult {
+    Decrypted(AesSuccessActionDataDecrypted data);
+    ErrorStatus(string reason);
+};
+
+dictionary AesSuccessActionDataDecrypted {
+    string description;
+    string plaintext;
+};
+
+dictionary MessageSuccessActionData {
+    string message;
+};
+
+dictionary UrlSuccessActionData {
+    string description;
+    string url;
+};
+
+[Enum]
+interface SuccessActionProcessed {
+    Aes(AesSuccessActionDataResult result);
+    Message(MessageSuccessActionData data);
+    Url(UrlSuccessActionData data);
 };
 
 dictionary LnPaymentDetails {
@@ -496,7 +414,7 @@ dictionary PaymentFailedData {
 };
 
 dictionary BackupFailedData {
-    string error;    
+    string error;
 };
 
 [Enum]
@@ -507,7 +425,7 @@ interface BreezEvent {
     PaymentSucceed(Payment details);
     PaymentFailed(PaymentFailedData details);
     BackupStarted();
-    BackupSucceeded(); 
+    BackupSucceeded();
     BackupFailed(BackupFailedData details);
     SwapUpdated(SwapInfo details);
 };
@@ -521,7 +439,7 @@ callback interface LogStream {
     void log(LogEntry l);
 };
 
-callback interface EventListener {    
+callback interface EventListener {
     void on_event(BreezEvent e);
 };
 
@@ -695,10 +613,72 @@ dictionary ReverseSwapInfo {
     ReverseSwapStatus status;
 };
 
+dictionary BitcoinAddressData {
+    string address;
+    Network network;
+    u64? amount_sat;
+    string? label;
+    string? message;
+};
+
+dictionary WrappedLnUrlPaySuccessData {
+    SuccessActionProcessed? success_action;
+    Payment payment;
+};
+
+dictionary LnUrlErrorData {
+    string reason;
+};
+
+dictionary LnUrlPayErrorData {
+    string payment_hash;
+    string reason;
+};
+
+dictionary LnUrlPayRequest {
+    LnUrlPayRequestData data;
+    u64 amount_msat;
+    string? comment = null;
+    string? payment_label = null;
+};
+
+dictionary LnUrlPayRequestData {
+    string callback;
+    u64 min_sendable;
+    u64 max_sendable;
+    string metadata_str;
+    u16 comment_allowed;
+    string domain;
+    boolean allows_nostr;
+    string? nostr_pubkey;
+    string? ln_address;
+};
+
+dictionary LnUrlWithdrawRequestData {
+    string callback;
+    string k1;
+    string default_description;
+    u64 min_withdrawable;
+    u64 max_withdrawable;
+};
+
+[Enum]
+interface WrappedLnUrlPayResult {
+    EndpointSuccess(WrappedLnUrlPaySuccessData data);
+    EndpointError(LnUrlErrorData data);
+    PayError(LnUrlPayErrorData data);
+};
+
 [Enum]
 interface LnUrlCallbackStatus {
     Ok();
     ErrorStatus(LnUrlErrorData data);
+};
+
+dictionary LnUrlWithdrawRequest {
+    LnUrlWithdrawRequestData data;
+    u64 amount_msat;
+    string? description = null;
 };
 
 [Enum]
@@ -709,6 +689,13 @@ interface LnUrlWithdrawResult {
 
 dictionary LnUrlWithdrawSuccessData {
     LNInvoice invoice;
+};
+
+dictionary LnUrlAuthRequestData {
+    string k1;
+    string domain;
+    string url;
+    string? action = null;
 };
 
 dictionary ReportPaymentFailureDetails {
@@ -731,12 +718,29 @@ dictionary ServiceHealthCheckResponse {
     HealthCheckStatus status;
 };
 
+dictionary MetadataItem {
+    string key;
+    string value;
+};
+
 dictionary RecommendedFees {
     u64 fastest_fee;
     u64 half_hour_fee;
     u64 hour_fee;
     u64 economy_fee;
     u64 minimum_fee;
+};
+
+[Enum]
+interface InputType {
+    BitcoinAddress(BitcoinAddressData address);
+    Bolt11(LNInvoice invoice);
+    NodeId(string node_id);
+    Url(string url);
+    LnUrlPay(LnUrlPayRequestData data);
+    LnUrlWithdraw(LnUrlWithdrawRequestData data);
+    LnUrlAuth(LnUrlAuthRequestData data);
+    LnUrlEndpointError(LnUrlErrorData data);
 };
 
 enum BuyBitcoinProvider {
