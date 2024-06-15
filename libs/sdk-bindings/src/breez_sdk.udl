@@ -2,8 +2,6 @@
 // BEGIN sdk-common mirror imports
 // These are structs defined in sdk-common, which we want to make available in this project's UDL bindings
 
-// TODO Move matching UDL segments here
-
 // END sdk-common mirror imports
 ////////////////////////////////
 
@@ -11,8 +9,6 @@
 //////////////////////////////////
 // BEGIN sdk-common wrappers
 // These are connecting structures that glue relevant sdk-common structs to the SDK
-
-// TODO Move matching UDL segments here
 
 // END sdk-common wrappers
 ////////////////////////////////
