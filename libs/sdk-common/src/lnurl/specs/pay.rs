@@ -140,25 +140,6 @@ pub mod model {
         EndpointError { data: LnUrlErrorData },
     }
 
-    /// Contains the result of the entire LNURL-pay interaction, as reported by the LNURL endpoint.
-    ///
-    /// * `EndpointSuccess` indicates the payment is complete. The endpoint may return a `SuccessActionProcessed`,
-    /// in which case, the wallet has to present it to the user as described in
-    /// <https://github.com/lnurl/luds/blob/luds/09.md>
-    ///
-    /// * `EndpointError` indicates a generic issue the LNURL endpoint encountered, including a freetext
-    /// field with the reason.
-    ///
-    /// * `PayError` indicates that an error occurred while trying to pay the invoice from the LNURL endpoint.
-    /// This includes the payment hash of the failed invoice and the failure reason.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
-    #[allow(clippy::large_enum_variant)]
-    pub enum LnUrlPayResult {
-        EndpointSuccess { data: LnUrlPaySuccessData },
-        EndpointError { data: LnUrlErrorData },
-        PayError { data: LnUrlPayErrorData },
-    }
-
     #[derive(Clone, Serialize, Deserialize, Debug)]
     pub struct LnUrlPayErrorData {
         pub payment_hash: String,
