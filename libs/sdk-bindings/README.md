@@ -101,7 +101,7 @@ See [Add your AAR or JAR as a dependency](https://developer.android.com/studio/p
 
 #### Known Issues
 
-The Kotlin bindings for the Breez SDK rely on [JNA](https://github.com/java-native-access/jna) to call native methods. JNA 5.13 or greater is required. Depending on the JVM version you use, you might not have the JNA dependency in your classpath. The exception thrown will be something like:
+The Kotlin bindings for the Breez SDK rely on [JNA](https://github.com/java-native-access/jna) to call native methods. JNA 5.14 or greater is required. Depending on the JVM version you use, you might not have the JNA dependency in your classpath. The exception thrown will be something like:
 
 ```
 class file for com.sun.jna.Pointer not found
@@ -112,7 +112,7 @@ The solution is to add JNA as a dependency:
 ```
 dependencies {
     // ...
-    implementation "net.java.dev.jna:jna:5.13.0@aar"
+    implementation "net.java.dev.jna:jna:5.14.0@aar"
 }
 ```
 

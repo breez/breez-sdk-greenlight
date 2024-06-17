@@ -55,8 +55,8 @@ kotlin {
 
         val commonMain by getting {
             dependencies {
-                implementation("com.squareup.okio:okio:3.6.0")
-                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.1")
+                implementation(libs.okio)
+                implementation(libs.kotlinx.datetime)
             }
         }
 
@@ -69,15 +69,15 @@ kotlin {
         val jvmMain by getting {
             dependsOn(commonMain)
             dependencies {
-                implementation("net.java.dev.jna:jna:5.13.0")
+                implementation(libs.jna)
             }
         }
 
         val androidMain by getting {
             dependsOn(commonMain)
             dependencies {
-                implementation("net.java.dev.jna:jna:5.13.0@aar")
-                implementation("org.jetbrains.kotlinx:atomicfu:0.23.1")
+                implementation("${libs.jna.get()}@aar")
+                implementation(libs.atomicfu)
             }
         }
     }
