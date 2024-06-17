@@ -186,6 +186,9 @@ mod persist;
 mod support;
 mod swap_in;
 mod swap_out;
+#[allow(clippy::all)]
+#[allow(unused_mut)]
+#[allow(dead_code)]
 mod test_utils;
 mod tonic_wrap;
 
