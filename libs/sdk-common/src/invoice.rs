@@ -75,12 +75,6 @@ impl From<SystemTimeError> for InvoiceError {
     }
 }
 
-impl From<InvoiceError> for LnUrlError {
-    fn from(value: InvoiceError) -> Self {
-        LnUrlError::InvalidInvoice(format!("{value}"))
-    }
-}
-
 /// Wrapper for a BOLT11 LN invoice
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct LNInvoice {

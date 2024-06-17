@@ -2,6 +2,8 @@ use std::{array::TryFromSliceError, string::FromUtf8Error};
 
 use bitcoin::{bech32, secp256k1, util::bip32};
 
+use crate::prelude::InvoiceError;
+
 pub type LnUrlResult<T, E = LnUrlError> = Result<T, E>;
 
 #[derive(Debug, thiserror::Error)]
@@ -80,5 +82,11 @@ impl From<serde_json::Error> for LnUrlError {
 impl From<TryFromSliceError> for LnUrlError {
     fn from(err: TryFromSliceError) -> Self {
         Self::Generic(err.to_string())
+    }
+}
+
+impl From<InvoiceError> for LnUrlError {
+    fn from(value: InvoiceError) -> Self {
+        LnUrlError::InvalidInvoice(format!("{value}"))
     }
 }
