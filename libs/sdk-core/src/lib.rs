@@ -320,7 +320,7 @@ pub enum _InputType {
     LnUrlPay { data: LnUrlPayRequestData },
     LnUrlWithdraw { data: LnUrlWithdrawRequestData },
     LnUrlAuth { data: LnUrlAuthRequestData },
-    LnUrlEndpointError { data: LnUrlErrorData },
+    LnUrlError { data: LnUrlErrorData },
 }
 
 #[frb(mirror(BitcoinAddressData))]

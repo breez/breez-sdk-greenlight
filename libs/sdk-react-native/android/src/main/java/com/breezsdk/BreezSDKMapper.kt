@@ -3944,8 +3944,8 @@ fun asInputType(inputType: ReadableMap): InputType? {
     if (type == "lnUrlAuth") {
         return InputType.LnUrlAuth(inputType.getMap("data")?.let { asLnUrlAuthRequestData(it) }!!)
     }
-    if (type == "lnUrlEndpointError") {
-        return InputType.LnUrlEndpointError(inputType.getMap("data")?.let { asLnUrlErrorData(it) }!!)
+    if (type == "lnUrlError") {
+        return InputType.LnUrlError(inputType.getMap("data")?.let { asLnUrlErrorData(it) }!!)
     }
     return null
 }
@@ -3981,8 +3981,8 @@ fun readableMapOf(inputType: InputType): ReadableMap? {
             pushToMap(map, "type", "lnUrlAuth")
             pushToMap(map, "data", readableMapOf(inputType.data))
         }
-        is InputType.LnUrlEndpointError -> {
-            pushToMap(map, "type", "lnUrlEndpointError")
+        is InputType.LnUrlError -> {
+            pushToMap(map, "type", "lnUrlError")
             pushToMap(map, "data", readableMapOf(inputType.data))
         }
     }

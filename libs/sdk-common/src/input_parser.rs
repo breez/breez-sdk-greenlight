@@ -5,7 +5,6 @@ use bip21::Uri;
 use bitcoin::bech32;
 use bitcoin::bech32::FromBase32;
 use serde::{Deserialize, Serialize};
-use InputType::*;
 use LnUrlRequestData::*;
 
 use crate::prelude::*;
@@ -169,20 +168,20 @@ pub async fn parse(input: &str) -> Result<InputType> {
         }
 
         return match invoice_param {
-            None => Ok(BitcoinAddress {
+            None => Ok(InputType::BitcoinAddress {
                 address: bitcoin_addr_data,
             }),
-            Some(invoice) => Ok(Bolt11 { invoice }),
+            Some(invoice) => Ok(InputType::Bolt11 { invoice }),
         };
     }
 
     if let Ok(invoice) = parse_invoice(input) {
-        return Ok(Bolt11 { invoice });
+        return Ok(InputType::Bolt11 { invoice });
     }
 
     // Public key serialized in compressed form (66 hex chars)
     if let Ok(_node_id) = bitcoin::secp256k1::PublicKey::from_str(input) {
-        return Ok(NodeId {
+        return Ok(InputType::NodeId {
             node_id: input.into(),
         });
     }
@@ -190,7 +189,7 @@ pub async fn parse(input: &str) -> Result<InputType> {
     // Possible Node URI (check for separator symbol, try to parse pubkey, ignore rest)
     if let Some('@') = input.chars().nth(66) {
         if let Ok(_node_id) = bitcoin::secp256k1::PublicKey::from_str(&input[..66]) {
-            return Ok(NodeId {
+            return Ok(InputType::NodeId {
                 node_id: input.into(),
             });
         }
@@ -206,7 +205,7 @@ pub async fn parse(input: &str) -> Result<InputType> {
                     return resolve_lnurl(domain, lnurl_endpoint, ln_address).await;
                 }
             }
-            return Ok(Url { url: input.into() });
+            return Ok(InputType::Url { url: input.into() });
         }
     }
 
@@ -357,7 +356,7 @@ async fn resolve_lnurl(
     // For LNURL-auth links, their type is already known if the link contains the login tag
     // No need to query the endpoint for details
     if lnurl_endpoint.contains("tag=login") {
-        return Ok(LnUrlAuth {
+        return Ok(InputType::LnUrlAuth {
             data: validate_request(domain, lnurl_endpoint)?,
         });
     }
@@ -369,7 +368,7 @@ async fn resolve_lnurl(
     let temp = lnurl_data.into();
     let temp = match temp {
         // Modify the LnUrlPay payload by adding the domain of the LNURL endpoint
-        LnUrlPay { data } => LnUrlPay {
+        InputType::LnUrlPay { data } => InputType::LnUrlPay {
             data: LnUrlPayRequestData {
                 domain,
                 ln_address,
@@ -438,7 +437,7 @@ pub enum InputType {
     },
 
     /// Error returned by the LNURL endpoint
-    LnUrlEndpointError {
+    LnUrlError {
         data: LnUrlErrorData,
     },
 }
@@ -473,10 +472,10 @@ pub enum LnUrlRequestData {
 impl From<LnUrlRequestData> for InputType {
     fn from(lnurl_data: LnUrlRequestData) -> Self {
         match lnurl_data {
-            PayRequest { data } => LnUrlPay { data },
-            WithdrawRequest { data } => LnUrlWithdraw { data },
-            AuthRequest { data } => LnUrlAuth { data },
-            Error { data } => LnUrlEndpointError { data },
+            PayRequest { data } => Self::LnUrlPay { data },
+            WithdrawRequest { data } => Self::LnUrlWithdraw { data },
+            AuthRequest { data } => Self::LnUrlAuth { data },
+            Error { data } => Self::LnUrlError { data },
         }
     }
 }
@@ -1288,7 +1287,7 @@ pub(crate) mod tests {
         let expected_err = "Error msg from LNURL endpoint found via LN Address";
         let _m = mock_lnurl_ln_address_endpoint(ln_address, Some(expected_err.to_string()))?;
 
-        if let LnUrlEndpointError { data: msg } = parse(ln_address).await? {
+        if let InputType::LnUrlError { data: msg } = parse(ln_address).await? {
             assert_eq!(msg.reason, expected_err);
             return Ok(());
         }
@@ -1545,7 +1544,7 @@ pub(crate) mod tests {
         let expected_error_msg = "test pay error";
         let _m = mock_lnurl_pay_endpoint(pay_path, Some(expected_error_msg.to_string()));
 
-        if let LnUrlEndpointError { data: msg } =
+        if let InputType::LnUrlError { data: msg } =
             parse(&format!("lnurlp://localhost{pay_path}")).await?
         {
             assert_eq!(msg.reason, expected_error_msg);
@@ -1561,7 +1560,7 @@ pub(crate) mod tests {
         let expected_error_msg = "test withdraw error";
         let _m = mock_lnurl_withdraw_endpoint(withdraw_path, Some(expected_error_msg.to_string()));
 
-        if let LnUrlEndpointError { data: msg } =
+        if let InputType::LnUrlError { data: msg } =
             parse(&format!("lnurlw://localhost{withdraw_path}")).await?
         {
             assert_eq!(msg.reason, expected_error_msg);

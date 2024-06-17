@@ -1017,7 +1017,7 @@ const _: fn() = || {
         InputType::LnUrlAuth { data } => {
             let _: LnUrlAuthRequestData = data;
         }
-        InputType::LnUrlEndpointError { data } => {
+        InputType::LnUrlError { data } => {
             let _: LnUrlErrorData = data;
         }
     }
@@ -1558,7 +1558,7 @@ impl support::IntoDart for mirror_InputType {
                 vec![5.into_dart(), data.into_into_dart().into_dart()]
             }
             InputType::LnUrlAuth { data } => vec![6.into_dart(), data.into_into_dart().into_dart()],
-            InputType::LnUrlEndpointError { data } => {
+            InputType::LnUrlError { data } => {
                 vec![7.into_dart(), data.into_into_dart().into_dart()]
             }
         }

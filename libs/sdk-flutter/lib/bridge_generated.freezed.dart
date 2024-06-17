@@ -1942,7 +1942,7 @@ mixin _$InputType {
     required TResult Function(LnUrlPayRequestData data) lnUrlPay,
     required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
     required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
-    required TResult Function(LnUrlErrorData data) lnUrlEndpointError,
+    required TResult Function(LnUrlErrorData data) lnUrlError,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -1954,7 +1954,7 @@ mixin _$InputType {
     TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
-    TResult? Function(LnUrlErrorData data)? lnUrlEndpointError,
+    TResult? Function(LnUrlErrorData data)? lnUrlError,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -1966,7 +1966,7 @@ mixin _$InputType {
     TResult Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,
-    TResult Function(LnUrlErrorData data)? lnUrlEndpointError,
+    TResult Function(LnUrlErrorData data)? lnUrlError,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -1979,7 +1979,7 @@ mixin _$InputType {
     required TResult Function(InputType_LnUrlPay value) lnUrlPay,
     required TResult Function(InputType_LnUrlWithdraw value) lnUrlWithdraw,
     required TResult Function(InputType_LnUrlAuth value) lnUrlAuth,
-    required TResult Function(InputType_LnUrlEndpointError value) lnUrlEndpointError,
+    required TResult Function(InputType_LnUrlError value) lnUrlError,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -1991,7 +1991,7 @@ mixin _$InputType {
     TResult? Function(InputType_LnUrlPay value)? lnUrlPay,
     TResult? Function(InputType_LnUrlWithdraw value)? lnUrlWithdraw,
     TResult? Function(InputType_LnUrlAuth value)? lnUrlAuth,
-    TResult? Function(InputType_LnUrlEndpointError value)? lnUrlEndpointError,
+    TResult? Function(InputType_LnUrlError value)? lnUrlError,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -2003,7 +2003,7 @@ mixin _$InputType {
     TResult Function(InputType_LnUrlPay value)? lnUrlPay,
     TResult Function(InputType_LnUrlWithdraw value)? lnUrlWithdraw,
     TResult Function(InputType_LnUrlAuth value)? lnUrlAuth,
-    TResult Function(InputType_LnUrlEndpointError value)? lnUrlEndpointError,
+    TResult Function(InputType_LnUrlError value)? lnUrlError,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -2096,7 +2096,7 @@ class _$InputType_BitcoinAddressImpl implements InputType_BitcoinAddress {
     required TResult Function(LnUrlPayRequestData data) lnUrlPay,
     required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
     required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
-    required TResult Function(LnUrlErrorData data) lnUrlEndpointError,
+    required TResult Function(LnUrlErrorData data) lnUrlError,
   }) {
     return bitcoinAddress(address);
   }
@@ -2111,7 +2111,7 @@ class _$InputType_BitcoinAddressImpl implements InputType_BitcoinAddress {
     TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
-    TResult? Function(LnUrlErrorData data)? lnUrlEndpointError,
+    TResult? Function(LnUrlErrorData data)? lnUrlError,
   }) {
     return bitcoinAddress?.call(address);
   }
@@ -2126,7 +2126,7 @@ class _$InputType_BitcoinAddressImpl implements InputType_BitcoinAddress {
     TResult Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,
-    TResult Function(LnUrlErrorData data)? lnUrlEndpointError,
+    TResult Function(LnUrlErrorData data)? lnUrlError,
     required TResult orElse(),
   }) {
     if (bitcoinAddress != null) {
@@ -2145,7 +2145,7 @@ class _$InputType_BitcoinAddressImpl implements InputType_BitcoinAddress {
     required TResult Function(InputType_LnUrlPay value) lnUrlPay,
     required TResult Function(InputType_LnUrlWithdraw value) lnUrlWithdraw,
     required TResult Function(InputType_LnUrlAuth value) lnUrlAuth,
-    required TResult Function(InputType_LnUrlEndpointError value) lnUrlEndpointError,
+    required TResult Function(InputType_LnUrlError value) lnUrlError,
   }) {
     return bitcoinAddress(this);
   }
@@ -2160,7 +2160,7 @@ class _$InputType_BitcoinAddressImpl implements InputType_BitcoinAddress {
     TResult? Function(InputType_LnUrlPay value)? lnUrlPay,
     TResult? Function(InputType_LnUrlWithdraw value)? lnUrlWithdraw,
     TResult? Function(InputType_LnUrlAuth value)? lnUrlAuth,
-    TResult? Function(InputType_LnUrlEndpointError value)? lnUrlEndpointError,
+    TResult? Function(InputType_LnUrlError value)? lnUrlError,
   }) {
     return bitcoinAddress?.call(this);
   }
@@ -2175,7 +2175,7 @@ class _$InputType_BitcoinAddressImpl implements InputType_BitcoinAddress {
     TResult Function(InputType_LnUrlPay value)? lnUrlPay,
     TResult Function(InputType_LnUrlWithdraw value)? lnUrlWithdraw,
     TResult Function(InputType_LnUrlAuth value)? lnUrlAuth,
-    TResult Function(InputType_LnUrlEndpointError value)? lnUrlEndpointError,
+    TResult Function(InputType_LnUrlError value)? lnUrlError,
     required TResult orElse(),
   }) {
     if (bitcoinAddress != null) {
@@ -2265,7 +2265,7 @@ class _$InputType_Bolt11Impl implements InputType_Bolt11 {
     required TResult Function(LnUrlPayRequestData data) lnUrlPay,
     required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
     required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
-    required TResult Function(LnUrlErrorData data) lnUrlEndpointError,
+    required TResult Function(LnUrlErrorData data) lnUrlError,
   }) {
     return bolt11(invoice);
   }
@@ -2280,7 +2280,7 @@ class _$InputType_Bolt11Impl implements InputType_Bolt11 {
     TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
-    TResult? Function(LnUrlErrorData data)? lnUrlEndpointError,
+    TResult? Function(LnUrlErrorData data)? lnUrlError,
   }) {
     return bolt11?.call(invoice);
   }
@@ -2295,7 +2295,7 @@ class _$InputType_Bolt11Impl implements InputType_Bolt11 {
     TResult Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,
-    TResult Function(LnUrlErrorData data)? lnUrlEndpointError,
+    TResult Function(LnUrlErrorData data)? lnUrlError,
     required TResult orElse(),
   }) {
     if (bolt11 != null) {
@@ -2314,7 +2314,7 @@ class _$InputType_Bolt11Impl implements InputType_Bolt11 {
     required TResult Function(InputType_LnUrlPay value) lnUrlPay,
     required TResult Function(InputType_LnUrlWithdraw value) lnUrlWithdraw,
     required TResult Function(InputType_LnUrlAuth value) lnUrlAuth,
-    required TResult Function(InputType_LnUrlEndpointError value) lnUrlEndpointError,
+    required TResult Function(InputType_LnUrlError value) lnUrlError,
   }) {
     return bolt11(this);
   }
@@ -2329,7 +2329,7 @@ class _$InputType_Bolt11Impl implements InputType_Bolt11 {
     TResult? Function(InputType_LnUrlPay value)? lnUrlPay,
     TResult? Function(InputType_LnUrlWithdraw value)? lnUrlWithdraw,
     TResult? Function(InputType_LnUrlAuth value)? lnUrlAuth,
-    TResult? Function(InputType_LnUrlEndpointError value)? lnUrlEndpointError,
+    TResult? Function(InputType_LnUrlError value)? lnUrlError,
   }) {
     return bolt11?.call(this);
   }
@@ -2344,7 +2344,7 @@ class _$InputType_Bolt11Impl implements InputType_Bolt11 {
     TResult Function(InputType_LnUrlPay value)? lnUrlPay,
     TResult Function(InputType_LnUrlWithdraw value)? lnUrlWithdraw,
     TResult Function(InputType_LnUrlAuth value)? lnUrlAuth,
-    TResult Function(InputType_LnUrlEndpointError value)? lnUrlEndpointError,
+    TResult Function(InputType_LnUrlError value)? lnUrlError,
     required TResult orElse(),
   }) {
     if (bolt11 != null) {
@@ -2432,7 +2432,7 @@ class _$InputType_NodeIdImpl implements InputType_NodeId {
     required TResult Function(LnUrlPayRequestData data) lnUrlPay,
     required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
     required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
-    required TResult Function(LnUrlErrorData data) lnUrlEndpointError,
+    required TResult Function(LnUrlErrorData data) lnUrlError,
   }) {
     return nodeId(this.nodeId);
   }
@@ -2447,7 +2447,7 @@ class _$InputType_NodeIdImpl implements InputType_NodeId {
     TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
-    TResult? Function(LnUrlErrorData data)? lnUrlEndpointError,
+    TResult? Function(LnUrlErrorData data)? lnUrlError,
   }) {
     return nodeId?.call(this.nodeId);
   }
@@ -2462,7 +2462,7 @@ class _$InputType_NodeIdImpl implements InputType_NodeId {
     TResult Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,
-    TResult Function(LnUrlErrorData data)? lnUrlEndpointError,
+    TResult Function(LnUrlErrorData data)? lnUrlError,
     required TResult orElse(),
   }) {
     if (nodeId != null) {
@@ -2481,7 +2481,7 @@ class _$InputType_NodeIdImpl implements InputType_NodeId {
     required TResult Function(InputType_LnUrlPay value) lnUrlPay,
     required TResult Function(InputType_LnUrlWithdraw value) lnUrlWithdraw,
     required TResult Function(InputType_LnUrlAuth value) lnUrlAuth,
-    required TResult Function(InputType_LnUrlEndpointError value) lnUrlEndpointError,
+    required TResult Function(InputType_LnUrlError value) lnUrlError,
   }) {
     return nodeId(this);
   }
@@ -2496,7 +2496,7 @@ class _$InputType_NodeIdImpl implements InputType_NodeId {
     TResult? Function(InputType_LnUrlPay value)? lnUrlPay,
     TResult? Function(InputType_LnUrlWithdraw value)? lnUrlWithdraw,
     TResult? Function(InputType_LnUrlAuth value)? lnUrlAuth,
-    TResult? Function(InputType_LnUrlEndpointError value)? lnUrlEndpointError,
+    TResult? Function(InputType_LnUrlError value)? lnUrlError,
   }) {
     return nodeId?.call(this);
   }
@@ -2511,7 +2511,7 @@ class _$InputType_NodeIdImpl implements InputType_NodeId {
     TResult Function(InputType_LnUrlPay value)? lnUrlPay,
     TResult Function(InputType_LnUrlWithdraw value)? lnUrlWithdraw,
     TResult Function(InputType_LnUrlAuth value)? lnUrlAuth,
-    TResult Function(InputType_LnUrlEndpointError value)? lnUrlEndpointError,
+    TResult Function(InputType_LnUrlError value)? lnUrlError,
     required TResult orElse(),
   }) {
     if (nodeId != null) {
@@ -2597,7 +2597,7 @@ class _$InputType_UrlImpl implements InputType_Url {
     required TResult Function(LnUrlPayRequestData data) lnUrlPay,
     required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
     required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
-    required TResult Function(LnUrlErrorData data) lnUrlEndpointError,
+    required TResult Function(LnUrlErrorData data) lnUrlError,
   }) {
     return url(this.url);
   }
@@ -2612,7 +2612,7 @@ class _$InputType_UrlImpl implements InputType_Url {
     TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
-    TResult? Function(LnUrlErrorData data)? lnUrlEndpointError,
+    TResult? Function(LnUrlErrorData data)? lnUrlError,
   }) {
     return url?.call(this.url);
   }
@@ -2627,7 +2627,7 @@ class _$InputType_UrlImpl implements InputType_Url {
     TResult Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,
-    TResult Function(LnUrlErrorData data)? lnUrlEndpointError,
+    TResult Function(LnUrlErrorData data)? lnUrlError,
     required TResult orElse(),
   }) {
     if (url != null) {
@@ -2646,7 +2646,7 @@ class _$InputType_UrlImpl implements InputType_Url {
     required TResult Function(InputType_LnUrlPay value) lnUrlPay,
     required TResult Function(InputType_LnUrlWithdraw value) lnUrlWithdraw,
     required TResult Function(InputType_LnUrlAuth value) lnUrlAuth,
-    required TResult Function(InputType_LnUrlEndpointError value) lnUrlEndpointError,
+    required TResult Function(InputType_LnUrlError value) lnUrlError,
   }) {
     return url(this);
   }
@@ -2661,7 +2661,7 @@ class _$InputType_UrlImpl implements InputType_Url {
     TResult? Function(InputType_LnUrlPay value)? lnUrlPay,
     TResult? Function(InputType_LnUrlWithdraw value)? lnUrlWithdraw,
     TResult? Function(InputType_LnUrlAuth value)? lnUrlAuth,
-    TResult? Function(InputType_LnUrlEndpointError value)? lnUrlEndpointError,
+    TResult? Function(InputType_LnUrlError value)? lnUrlError,
   }) {
     return url?.call(this);
   }
@@ -2676,7 +2676,7 @@ class _$InputType_UrlImpl implements InputType_Url {
     TResult Function(InputType_LnUrlPay value)? lnUrlPay,
     TResult Function(InputType_LnUrlWithdraw value)? lnUrlWithdraw,
     TResult Function(InputType_LnUrlAuth value)? lnUrlAuth,
-    TResult Function(InputType_LnUrlEndpointError value)? lnUrlEndpointError,
+    TResult Function(InputType_LnUrlError value)? lnUrlError,
     required TResult orElse(),
   }) {
     if (url != null) {
@@ -2765,7 +2765,7 @@ class _$InputType_LnUrlPayImpl implements InputType_LnUrlPay {
     required TResult Function(LnUrlPayRequestData data) lnUrlPay,
     required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
     required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
-    required TResult Function(LnUrlErrorData data) lnUrlEndpointError,
+    required TResult Function(LnUrlErrorData data) lnUrlError,
   }) {
     return lnUrlPay(data);
   }
@@ -2780,7 +2780,7 @@ class _$InputType_LnUrlPayImpl implements InputType_LnUrlPay {
     TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
-    TResult? Function(LnUrlErrorData data)? lnUrlEndpointError,
+    TResult? Function(LnUrlErrorData data)? lnUrlError,
   }) {
     return lnUrlPay?.call(data);
   }
@@ -2795,7 +2795,7 @@ class _$InputType_LnUrlPayImpl implements InputType_LnUrlPay {
     TResult Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,
-    TResult Function(LnUrlErrorData data)? lnUrlEndpointError,
+    TResult Function(LnUrlErrorData data)? lnUrlError,
     required TResult orElse(),
   }) {
     if (lnUrlPay != null) {
@@ -2814,7 +2814,7 @@ class _$InputType_LnUrlPayImpl implements InputType_LnUrlPay {
     required TResult Function(InputType_LnUrlPay value) lnUrlPay,
     required TResult Function(InputType_LnUrlWithdraw value) lnUrlWithdraw,
     required TResult Function(InputType_LnUrlAuth value) lnUrlAuth,
-    required TResult Function(InputType_LnUrlEndpointError value) lnUrlEndpointError,
+    required TResult Function(InputType_LnUrlError value) lnUrlError,
   }) {
     return lnUrlPay(this);
   }
@@ -2829,7 +2829,7 @@ class _$InputType_LnUrlPayImpl implements InputType_LnUrlPay {
     TResult? Function(InputType_LnUrlPay value)? lnUrlPay,
     TResult? Function(InputType_LnUrlWithdraw value)? lnUrlWithdraw,
     TResult? Function(InputType_LnUrlAuth value)? lnUrlAuth,
-    TResult? Function(InputType_LnUrlEndpointError value)? lnUrlEndpointError,
+    TResult? Function(InputType_LnUrlError value)? lnUrlError,
   }) {
     return lnUrlPay?.call(this);
   }
@@ -2844,7 +2844,7 @@ class _$InputType_LnUrlPayImpl implements InputType_LnUrlPay {
     TResult Function(InputType_LnUrlPay value)? lnUrlPay,
     TResult Function(InputType_LnUrlWithdraw value)? lnUrlWithdraw,
     TResult Function(InputType_LnUrlAuth value)? lnUrlAuth,
-    TResult Function(InputType_LnUrlEndpointError value)? lnUrlEndpointError,
+    TResult Function(InputType_LnUrlError value)? lnUrlError,
     required TResult orElse(),
   }) {
     if (lnUrlPay != null) {
@@ -2934,7 +2934,7 @@ class _$InputType_LnUrlWithdrawImpl implements InputType_LnUrlWithdraw {
     required TResult Function(LnUrlPayRequestData data) lnUrlPay,
     required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
     required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
-    required TResult Function(LnUrlErrorData data) lnUrlEndpointError,
+    required TResult Function(LnUrlErrorData data) lnUrlError,
   }) {
     return lnUrlWithdraw(data);
   }
@@ -2949,7 +2949,7 @@ class _$InputType_LnUrlWithdrawImpl implements InputType_LnUrlWithdraw {
     TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
-    TResult? Function(LnUrlErrorData data)? lnUrlEndpointError,
+    TResult? Function(LnUrlErrorData data)? lnUrlError,
   }) {
     return lnUrlWithdraw?.call(data);
   }
@@ -2964,7 +2964,7 @@ class _$InputType_LnUrlWithdrawImpl implements InputType_LnUrlWithdraw {
     TResult Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,
-    TResult Function(LnUrlErrorData data)? lnUrlEndpointError,
+    TResult Function(LnUrlErrorData data)? lnUrlError,
     required TResult orElse(),
   }) {
     if (lnUrlWithdraw != null) {
@@ -2983,7 +2983,7 @@ class _$InputType_LnUrlWithdrawImpl implements InputType_LnUrlWithdraw {
     required TResult Function(InputType_LnUrlPay value) lnUrlPay,
     required TResult Function(InputType_LnUrlWithdraw value) lnUrlWithdraw,
     required TResult Function(InputType_LnUrlAuth value) lnUrlAuth,
-    required TResult Function(InputType_LnUrlEndpointError value) lnUrlEndpointError,
+    required TResult Function(InputType_LnUrlError value) lnUrlError,
   }) {
     return lnUrlWithdraw(this);
   }
@@ -2998,7 +2998,7 @@ class _$InputType_LnUrlWithdrawImpl implements InputType_LnUrlWithdraw {
     TResult? Function(InputType_LnUrlPay value)? lnUrlPay,
     TResult? Function(InputType_LnUrlWithdraw value)? lnUrlWithdraw,
     TResult? Function(InputType_LnUrlAuth value)? lnUrlAuth,
-    TResult? Function(InputType_LnUrlEndpointError value)? lnUrlEndpointError,
+    TResult? Function(InputType_LnUrlError value)? lnUrlError,
   }) {
     return lnUrlWithdraw?.call(this);
   }
@@ -3013,7 +3013,7 @@ class _$InputType_LnUrlWithdrawImpl implements InputType_LnUrlWithdraw {
     TResult Function(InputType_LnUrlPay value)? lnUrlPay,
     TResult Function(InputType_LnUrlWithdraw value)? lnUrlWithdraw,
     TResult Function(InputType_LnUrlAuth value)? lnUrlAuth,
-    TResult Function(InputType_LnUrlEndpointError value)? lnUrlEndpointError,
+    TResult Function(InputType_LnUrlError value)? lnUrlError,
     required TResult orElse(),
   }) {
     if (lnUrlWithdraw != null) {
@@ -3104,7 +3104,7 @@ class _$InputType_LnUrlAuthImpl implements InputType_LnUrlAuth {
     required TResult Function(LnUrlPayRequestData data) lnUrlPay,
     required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
     required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
-    required TResult Function(LnUrlErrorData data) lnUrlEndpointError,
+    required TResult Function(LnUrlErrorData data) lnUrlError,
   }) {
     return lnUrlAuth(data);
   }
@@ -3119,7 +3119,7 @@ class _$InputType_LnUrlAuthImpl implements InputType_LnUrlAuth {
     TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
-    TResult? Function(LnUrlErrorData data)? lnUrlEndpointError,
+    TResult? Function(LnUrlErrorData data)? lnUrlError,
   }) {
     return lnUrlAuth?.call(data);
   }
@@ -3134,7 +3134,7 @@ class _$InputType_LnUrlAuthImpl implements InputType_LnUrlAuth {
     TResult Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,
-    TResult Function(LnUrlErrorData data)? lnUrlEndpointError,
+    TResult Function(LnUrlErrorData data)? lnUrlError,
     required TResult orElse(),
   }) {
     if (lnUrlAuth != null) {
@@ -3153,7 +3153,7 @@ class _$InputType_LnUrlAuthImpl implements InputType_LnUrlAuth {
     required TResult Function(InputType_LnUrlPay value) lnUrlPay,
     required TResult Function(InputType_LnUrlWithdraw value) lnUrlWithdraw,
     required TResult Function(InputType_LnUrlAuth value) lnUrlAuth,
-    required TResult Function(InputType_LnUrlEndpointError value) lnUrlEndpointError,
+    required TResult Function(InputType_LnUrlError value) lnUrlError,
   }) {
     return lnUrlAuth(this);
   }
@@ -3168,7 +3168,7 @@ class _$InputType_LnUrlAuthImpl implements InputType_LnUrlAuth {
     TResult? Function(InputType_LnUrlPay value)? lnUrlPay,
     TResult? Function(InputType_LnUrlWithdraw value)? lnUrlWithdraw,
     TResult? Function(InputType_LnUrlAuth value)? lnUrlAuth,
-    TResult? Function(InputType_LnUrlEndpointError value)? lnUrlEndpointError,
+    TResult? Function(InputType_LnUrlError value)? lnUrlError,
   }) {
     return lnUrlAuth?.call(this);
   }
@@ -3183,7 +3183,7 @@ class _$InputType_LnUrlAuthImpl implements InputType_LnUrlAuth {
     TResult Function(InputType_LnUrlPay value)? lnUrlPay,
     TResult Function(InputType_LnUrlWithdraw value)? lnUrlWithdraw,
     TResult Function(InputType_LnUrlAuth value)? lnUrlAuth,
-    TResult Function(InputType_LnUrlEndpointError value)? lnUrlEndpointError,
+    TResult Function(InputType_LnUrlError value)? lnUrlError,
     required TResult orElse(),
   }) {
     if (lnUrlAuth != null) {
@@ -3203,20 +3203,20 @@ abstract class InputType_LnUrlAuth implements InputType {
 }
 
 /// @nodoc
-abstract class _$$InputType_LnUrlEndpointErrorImplCopyWith<$Res> {
-  factory _$$InputType_LnUrlEndpointErrorImplCopyWith(
-          _$InputType_LnUrlEndpointErrorImpl value, $Res Function(_$InputType_LnUrlEndpointErrorImpl) then) =
-      __$$InputType_LnUrlEndpointErrorImplCopyWithImpl<$Res>;
+abstract class _$$InputType_LnUrlErrorImplCopyWith<$Res> {
+  factory _$$InputType_LnUrlErrorImplCopyWith(
+          _$InputType_LnUrlErrorImpl value, $Res Function(_$InputType_LnUrlErrorImpl) then) =
+      __$$InputType_LnUrlErrorImplCopyWithImpl<$Res>;
   @useResult
   $Res call({LnUrlErrorData data});
 }
 
 /// @nodoc
-class __$$InputType_LnUrlEndpointErrorImplCopyWithImpl<$Res>
-    extends _$InputTypeCopyWithImpl<$Res, _$InputType_LnUrlEndpointErrorImpl>
-    implements _$$InputType_LnUrlEndpointErrorImplCopyWith<$Res> {
-  __$$InputType_LnUrlEndpointErrorImplCopyWithImpl(
-      _$InputType_LnUrlEndpointErrorImpl _value, $Res Function(_$InputType_LnUrlEndpointErrorImpl) _then)
+class __$$InputType_LnUrlErrorImplCopyWithImpl<$Res>
+    extends _$InputTypeCopyWithImpl<$Res, _$InputType_LnUrlErrorImpl>
+    implements _$$InputType_LnUrlErrorImplCopyWith<$Res> {
+  __$$InputType_LnUrlErrorImplCopyWithImpl(
+      _$InputType_LnUrlErrorImpl _value, $Res Function(_$InputType_LnUrlErrorImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -3224,7 +3224,7 @@ class __$$InputType_LnUrlEndpointErrorImplCopyWithImpl<$Res>
   $Res call({
     Object? data = null,
   }) {
-    return _then(_$InputType_LnUrlEndpointErrorImpl(
+    return _then(_$InputType_LnUrlErrorImpl(
       data: null == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
@@ -3235,22 +3235,22 @@ class __$$InputType_LnUrlEndpointErrorImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$InputType_LnUrlEndpointErrorImpl implements InputType_LnUrlEndpointError {
-  const _$InputType_LnUrlEndpointErrorImpl({required this.data});
+class _$InputType_LnUrlErrorImpl implements InputType_LnUrlError {
+  const _$InputType_LnUrlErrorImpl({required this.data});
 
   @override
   final LnUrlErrorData data;
 
   @override
   String toString() {
-    return 'InputType.lnUrlEndpointError(data: $data)';
+    return 'InputType.lnUrlError(data: $data)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$InputType_LnUrlEndpointErrorImpl &&
+            other is _$InputType_LnUrlErrorImpl &&
             (identical(other.data, data) || other.data == data));
   }
 
@@ -3260,8 +3260,8 @@ class _$InputType_LnUrlEndpointErrorImpl implements InputType_LnUrlEndpointError
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$InputType_LnUrlEndpointErrorImplCopyWith<_$InputType_LnUrlEndpointErrorImpl> get copyWith =>
-      __$$InputType_LnUrlEndpointErrorImplCopyWithImpl<_$InputType_LnUrlEndpointErrorImpl>(this, _$identity);
+  _$$InputType_LnUrlErrorImplCopyWith<_$InputType_LnUrlErrorImpl> get copyWith =>
+      __$$InputType_LnUrlErrorImplCopyWithImpl<_$InputType_LnUrlErrorImpl>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -3273,9 +3273,9 @@ class _$InputType_LnUrlEndpointErrorImpl implements InputType_LnUrlEndpointError
     required TResult Function(LnUrlPayRequestData data) lnUrlPay,
     required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
     required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
-    required TResult Function(LnUrlErrorData data) lnUrlEndpointError,
+    required TResult Function(LnUrlErrorData data) lnUrlError,
   }) {
-    return lnUrlEndpointError(data);
+    return lnUrlError(data);
   }
 
   @override
@@ -3288,9 +3288,9 @@ class _$InputType_LnUrlEndpointErrorImpl implements InputType_LnUrlEndpointError
     TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
-    TResult? Function(LnUrlErrorData data)? lnUrlEndpointError,
+    TResult? Function(LnUrlErrorData data)? lnUrlError,
   }) {
-    return lnUrlEndpointError?.call(data);
+    return lnUrlError?.call(data);
   }
 
   @override
@@ -3303,11 +3303,11 @@ class _$InputType_LnUrlEndpointErrorImpl implements InputType_LnUrlEndpointError
     TResult Function(LnUrlPayRequestData data)? lnUrlPay,
     TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,
-    TResult Function(LnUrlErrorData data)? lnUrlEndpointError,
+    TResult Function(LnUrlErrorData data)? lnUrlError,
     required TResult orElse(),
   }) {
-    if (lnUrlEndpointError != null) {
-      return lnUrlEndpointError(data);
+    if (lnUrlError != null) {
+      return lnUrlError(data);
     }
     return orElse();
   }
@@ -3322,9 +3322,9 @@ class _$InputType_LnUrlEndpointErrorImpl implements InputType_LnUrlEndpointError
     required TResult Function(InputType_LnUrlPay value) lnUrlPay,
     required TResult Function(InputType_LnUrlWithdraw value) lnUrlWithdraw,
     required TResult Function(InputType_LnUrlAuth value) lnUrlAuth,
-    required TResult Function(InputType_LnUrlEndpointError value) lnUrlEndpointError,
+    required TResult Function(InputType_LnUrlError value) lnUrlError,
   }) {
-    return lnUrlEndpointError(this);
+    return lnUrlError(this);
   }
 
   @override
@@ -3337,9 +3337,9 @@ class _$InputType_LnUrlEndpointErrorImpl implements InputType_LnUrlEndpointError
     TResult? Function(InputType_LnUrlPay value)? lnUrlPay,
     TResult? Function(InputType_LnUrlWithdraw value)? lnUrlWithdraw,
     TResult? Function(InputType_LnUrlAuth value)? lnUrlAuth,
-    TResult? Function(InputType_LnUrlEndpointError value)? lnUrlEndpointError,
+    TResult? Function(InputType_LnUrlError value)? lnUrlError,
   }) {
-    return lnUrlEndpointError?.call(this);
+    return lnUrlError?.call(this);
   }
 
   @override
@@ -3352,23 +3352,22 @@ class _$InputType_LnUrlEndpointErrorImpl implements InputType_LnUrlEndpointError
     TResult Function(InputType_LnUrlPay value)? lnUrlPay,
     TResult Function(InputType_LnUrlWithdraw value)? lnUrlWithdraw,
     TResult Function(InputType_LnUrlAuth value)? lnUrlAuth,
-    TResult Function(InputType_LnUrlEndpointError value)? lnUrlEndpointError,
+    TResult Function(InputType_LnUrlError value)? lnUrlError,
     required TResult orElse(),
   }) {
-    if (lnUrlEndpointError != null) {
-      return lnUrlEndpointError(this);
+    if (lnUrlError != null) {
+      return lnUrlError(this);
     }
     return orElse();
   }
 }
 
-abstract class InputType_LnUrlEndpointError implements InputType {
-  const factory InputType_LnUrlEndpointError({required final LnUrlErrorData data}) =
-      _$InputType_LnUrlEndpointErrorImpl;
+abstract class InputType_LnUrlError implements InputType {
+  const factory InputType_LnUrlError({required final LnUrlErrorData data}) = _$InputType_LnUrlErrorImpl;
 
   LnUrlErrorData get data;
   @JsonKey(ignore: true)
-  _$$InputType_LnUrlEndpointErrorImplCopyWith<_$InputType_LnUrlEndpointErrorImpl> get copyWith =>
+  _$$InputType_LnUrlErrorImplCopyWith<_$InputType_LnUrlErrorImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 

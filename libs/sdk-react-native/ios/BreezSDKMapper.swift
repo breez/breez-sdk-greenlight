@@ -4666,13 +4666,13 @@ enum BreezSDKMapper {
 
             return InputType.lnUrlAuth(data: _data)
         }
-        if type == "lnUrlEndpointError" {
+        if type == "lnUrlError" {
             guard let dataTmp = inputType["data"] as? [String: Any?] else {
                 throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "data", typeName: "InputType"))
             }
             let _data = try asLnUrlErrorData(lnUrlErrorData: dataTmp)
 
-            return InputType.lnUrlEndpointError(data: _data)
+            return InputType.lnUrlError(data: _data)
         }
 
         throw SdkError.Generic(message: "Unexpected type \(type) for enum InputType")
@@ -4736,11 +4736,11 @@ enum BreezSDKMapper {
                 "data": dictionaryOf(lnUrlAuthRequestData: data),
             ]
 
-        case let .lnUrlEndpointError(
+        case let .lnUrlError(
             data
         ):
             return [
-                "type": "lnUrlEndpointError",
+                "type": "lnUrlError",
                 "data": dictionaryOf(lnUrlErrorData: data),
             ]
         }

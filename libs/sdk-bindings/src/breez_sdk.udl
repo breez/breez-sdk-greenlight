@@ -720,7 +720,7 @@ interface InputType {
     LnUrlPay(LnUrlPayRequestData data);
     LnUrlWithdraw(LnUrlWithdrawRequestData data);
     LnUrlAuth(LnUrlAuthRequestData data);
-    LnUrlEndpointError(LnUrlErrorData data);
+    LnUrlError(LnUrlErrorData data);
 };
 
 enum BuyBitcoinProvider {

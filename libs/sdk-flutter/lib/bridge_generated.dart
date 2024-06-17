@@ -658,9 +658,9 @@ sealed class InputType with _$InputType {
   const factory InputType.lnUrlAuth({
     required LnUrlAuthRequestData data,
   }) = InputType_LnUrlAuth;
-  const factory InputType.lnUrlEndpointError({
+  const factory InputType.lnUrlError({
     required LnUrlErrorData data,
-  }) = InputType_LnUrlEndpointError;
+  }) = InputType_LnUrlError;
 }
 
 /// Details of an invoice that has been paid, included as payload in an emitted [BreezEvent]
@@ -3366,7 +3366,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
           data: _wire2api_box_autoadd_ln_url_auth_request_data(raw[1]),
         );
       case 7:
-        return InputType_LnUrlEndpointError(
+        return InputType_LnUrlError(
           data: _wire2api_box_autoadd_ln_url_error_data(raw[1]),
         );
       default:
